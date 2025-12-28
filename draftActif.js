@@ -15,7 +15,7 @@ console.log("🔍 draftClan:", localStorage.getItem("draftClan"));
 console.log("🔍 username:", localStorage.getItem("username"));
 
 
-const socket = io("http://localhost:3000");
+const socket = io(BASE_URL);
 
 socket.on("draftUpdated", (updatedData) => {
     if (updatedData[currentClan] && updatedData[currentClan].teams) {
