@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Draft Actif</title>
+  <link rel="stylesheet" href="draftactif.css" />
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <ul>
+      <li><a href="index.html">Stats</a></li>
+      <li><a href="equipes.html">Équipes</a></li>
+      <li class="active"><a href="draft.html">Draft</a></li>
+      <li id="login-link"><a href="login.html">Connexion</a></li>
+    </ul>
+  </nav>
+
+  <h2 id="draft-title">Draft NHL</h2>
+  <div id="draft-status"></div>
+  <div id="draft-picks-container" class="draft-picks-scroll">
+  <!-- Les choix seront injectés ici -->
+   
+  </div>
+
+   
+  <!-- <div id="teamsOverview" class="collapsible-section">
+  <div class="section-header">
+    <h3>Équipe</h3>
+    
+    <button id="toggleTeamsOverview" class="toggle-btn">−</button>
+  </div>
+  <div id="teamsContainer"></div>
+ </div> -->
+
+<div id="loading-container">
+  <div id="loading">
+    <span class="spinner"></span>
+  </div>
+</div>
+
+ <select id="availabilityFilter">
+  <option value="available">Joueurs disponibles</option>
+  <option value="picked">Tous les choix sélectionnés</option>
+  <option value="pickedByTeam">Mes choix</option>
+</select>
+
+  <div class="filters-container">
+  <input type="text" id="searchInput" placeholder="🔍 Rechercher un joueur..." />
+  <select id="playerFilter">
+    <option value="all">Tous les joueurs</option>
+    <option value="offensive">Offensifs</option>
+    <option value="defensive">Défensifs</option>
+    <option value="goalies">Goalies</option>
+    <option value="rookies">Rookies Players</option>
+    <option value="teams">Teams</option>
+  </select>
+  <select id="sortBy">
+    <option value="points">Points</option>
+    <option value="goals">Buts</option>
+    <option value="assists">Passes</option>
+  </select>
+  <button onclick="loadDraftData()">🔄 Rafraîchir</button>
+</div>
+
+  <div class="table-container">
+    <table id="playerTable">
+      <thead>
+        <tr id="tableHeaderRow">
+          <th>Photo</th>
+          <th>Player</th>
+          <th>GP</th>
+          <th>G</th>
+          <th>AST</th>
+          <th>PTS</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <button id="finishButton" class="nav-button" style="display: none;" onclick="window.location.href='draft.html'">Finir</button>
+
+  <script src="draftactif.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</body>
+</html>

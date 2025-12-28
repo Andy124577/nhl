@@ -1,0 +1,182 @@
+.navbar {
+        background-color: #ff2e2e;
+        padding: 10px 20px;
+        margin: 0 -20px 20px;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .navbar ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+    }
+
+    .navbar li {
+        display: inline;
+    }
+
+    .navbar a {
+        text-decoration: none;
+        color: white;
+        font-weight: bold;
+        font-size: 1rem;
+        padding: 5px 10px;
+        transition: background-color 0.2s ease;
+    }
+
+    .navbar a:hover {
+        background-color: #cc2525;
+        border-radius: 5px;
+    }
+
+    .navbar .active a {
+        background-color: white;
+        color: #ff2e2e;
+        border-radius: 5px;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        max-width: 85%;
+        margin: auto;
+        padding: 20px;
+        background-color: #ffffff;
+        color: #222;
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    h3 {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .container {
+        max-width: 500px;
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #fff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        margin-bottom: 20px;
+    }
+
+    input, select, button {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        font-size: 1rem;
+    }
+
+    button {
+        background-color: #ff2e2e;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+
+    button:hover {
+        background-color: #cc2525;
+    }
+
+    .modal {
+    position: fixed;
+    overflow: hidden;
+    padding: 15px;
+    border-radius: 10px;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
+    z-index: 9999;
+    display: block;
+    justify-content: center;
+    align-items: center; /* Centers modal in viewport */
+    }
+
+    .modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    #clan-members-content ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    }
+
+    #clan-members-content li {
+        padding: 10px;
+        margin-bottom: 5px;
+        background-color: #f0f0f0;
+        border-radius: 5px;
+    }
+
+
+
+
+    #clanModal {
+    display: none;
+    }
+
+    #clan-members-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto; /* Enables scrolling if content is too tall */
+    }
+
+
+    button {
+        background-color: #ff2e2e;
+        color: white;
+        padding: 10px;
+        border: none;
+        cursor: pointer;
+    }
+    button.disabled {
+        background-color: grey;
+        cursor: not-allowed;
+    }
+
+    .scrollable-list {
+    max-height: 200px;  /* Set a fixed height for the list */
+    overflow-y: auto;   /* Vertical scrollbar if needed */
+    margin: 10px 0;
+    padding: 0 10px;
+    list-style: none;   /* Remove default bullets */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    }
+
+    .scrollable-list li {
+        height: 30px;
+        line-height: 30px;  /* Centers text vertically */
+        background-color: #ccc;
+        border-bottom: 1px solid #000;
+        margin-bottom: 5px;
+        padding: 0 10px;
+    }

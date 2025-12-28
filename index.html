@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NHL Player Stats</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Bebas Neue from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+    <nav class="navbar">
+    <ul>
+        <li class="active"><a href="#">Stats</a></li>
+        <li><a href="equipes.html">Équipes</a></li>
+        <li><a href="draft.html">Draft</a></li>
+        <li id="login-link"><a href="login.html">Connexion</a></li>
+    </ul>
+    </nav>
+    
+    <h2>NHL Player Stats</h2>
+    <!-- Juste après les filtres existants -->
+    <label for="searchInput" class="sort-select">Search:</label>
+    <input type="text" id="searchInput" placeholder="Search player by name" style="padding: 5px; font-size: 1rem; margin: 10px 5px;">
+
+    <label for="playerFilter" class="sort-select">Filter:</label>
+    <select id="playerFilter">
+        <option value="all">All Players</option>
+        <option value="offensive">Offensive Players</option>
+        <option value="defensive">Defensive Players</option>
+        <option value="goalies">Goalies</option>
+        <option value="rookies">Rookies Players</option>
+        <option value="teams">Teams</option>
+    </select>
+
+    <label for="sortBy" class="sort-select">Sort By:</label>
+    <select id="sortBy" >
+        <option value="points">Points</option>
+        <option value="goals">Goals</option>
+        <option value="assists">Assists</option>
+    </select>
+
+    <div class="table-container">
+        <table id="playerTable">
+            <tr>
+                <th>Photo</th>
+                <th>Player</th>
+                <th>GP</th>
+                <th>G</th>
+                <th>AST</th>
+                <th>PTS</th>
+            </tr>
+        </table>
+    </div>
+    <script src="index.js"></script>
+</body>
+</html>
