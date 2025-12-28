@@ -136,6 +136,158 @@ function getTeamLogoPath(teamAbbrevs) {
 
 let currentSortBy = "points"; // Valeur par défaut globale
 
+function populateMyPicksTable(userTeam, searchTerm) {
+    const team = draftData.teams[userTeam];
+    const tableBody = $("#playerTable tbody");
+    tableBody.empty();
+
+    // Set table header for all picks
+    $("#tableHeaderRow").html(`
+        <th>Photo</th>
+        <th>Nom</th>
+        <th>Type</th>
+        <th>GP</th>
+        <th>Stats</th>
+        <th>PTS</th>
+    `);
+
+    // Collect all picks with their data
+    let allPicks = [];
+
+    // Add offensive players
+    (team.offensive || []).forEach(name => {
+        const player = fullPlayerData.find(p => p.skaterFullName === name);
+        if (player && (!searchTerm || name.toLowerCase().includes(searchTerm))) {
+            allPicks.push({
+                name: name,
+                type: "Attaquant",
+                typeCode: player.positionCode || "F",
+                data: player,
+                category: "skater"
+            });
+        }
+    });
+
+    // Add defensive players
+    (team.defensive || []).forEach(name => {
+        const player = fullPlayerData.find(p => p.skaterFullName === name);
+        if (player && (!searchTerm || name.toLowerCase().includes(searchTerm))) {
+            allPicks.push({
+                name: name,
+                type: "Défenseur",
+                typeCode: "D",
+                data: player,
+                category: "skater"
+            });
+        }
+    });
+
+    // Add rookies
+    (team.rookie || []).forEach(name => {
+        const player = fullPlayerData.find(p => p.skaterFullName === name);
+        if (player && (!searchTerm || name.toLowerCase().includes(searchTerm))) {
+            allPicks.push({
+                name: name,
+                type: "Recrue",
+                typeCode: "*",
+                data: player,
+                category: "skater"
+            });
+        }
+    });
+
+    // Add goalies
+    (team.goalie || []).forEach(name => {
+        const goalie = goalieData.find(g => g.goalieFullName === name);
+        if (goalie && (!searchTerm || name.toLowerCase().includes(searchTerm))) {
+            allPicks.push({
+                name: name,
+                type: "Gardien",
+                typeCode: "G",
+                data: goalie,
+                category: "goalie"
+            });
+        }
+    });
+
+    // Add teams
+    (team.teams || []).forEach(name => {
+        const teamObj = teamData.find(t => t.teamFullName === name);
+        if (teamObj && (!searchTerm || name.toLowerCase().includes(searchTerm))) {
+            allPicks.push({
+                name: name,
+                type: "Équipe",
+                typeCode: "T",
+                data: teamObj,
+                category: "team"
+            });
+        }
+    });
+
+    // Display message if no picks
+    if (allPicks.length === 0) {
+        const message = searchTerm
+            ? `<tr><td colspan="6">Aucun choix trouvé pour "${searchTerm}"</td></tr>`
+            : `<tr><td colspan="6">Vous n'avez pas encore fait de choix</td></tr>`;
+        tableBody.append(message);
+        return;
+    }
+
+    // Render all picks
+    allPicks.forEach(pick => {
+        let imagePath = null;
+        let logoPath = null;
+        let stats = "";
+
+        if (pick.category === "team") {
+            const abbrev = getTeamAbbreviation(pick.name);
+            imagePath = abbrev ? `teams/${abbrev}.png` : null;
+            logoPath = imagePath;
+            stats = `W: ${pick.data.wins}, L: ${pick.data.losses}`;
+        } else if (pick.category === "goalie") {
+            imagePath = getMatchingImage(pick.name);
+            logoPath = getTeamLogoPath(pick.data.teamAbbrevs);
+            stats = `W: ${pick.data.wins}, SV%: ${pick.data.savePct?.toFixed(3)}`;
+        } else {
+            imagePath = getMatchingImage(pick.name);
+            logoPath = getTeamLogoPath(pick.data.teamAbbrevs);
+            stats = `G: ${pick.data.goals}, A: ${pick.data.assists}`;
+        }
+
+        const imageHTML = imagePath
+            ? `<div class="player-photo">
+                    <img src="${imagePath}" alt="${pick.name}" class="face">
+                    ${logoPath && pick.category !== "team" ? `<img src="${logoPath}" alt="Team" class="logo">` : ""}
+               </div>`
+            : "";
+
+        const row = `
+            <tr>
+                <td>${imageHTML}</td>
+                <td><strong>${pick.name}</strong></td>
+                <td><span style="background: #ff2e2e; color: white; padding: 2px 6px; border-radius: 3px; font-size: 12px;">${pick.typeCode}</span> ${pick.type}</td>
+                <td>${pick.data.gamesPlayed || "-"}</td>
+                <td>${stats}</td>
+                <td><strong>${pick.data.points || "-"}</strong></td>
+            </tr>
+        `;
+        tableBody.append(row);
+    });
+
+    // Update draft status
+    const currentTurn = draftData.draftOrder[draftData.currentPickIndex];
+    $("#draft-title").text(`Draft : ${currentClan}`);
+    $("#draft-status").html(`
+        <div>
+            <p><strong>Tour actuel :</strong> ${currentTurn}</p>
+            <p class="${currentTurn === userTeam ? "your-turn" : "wait-turn"}">
+                ${currentTurn === userTeam ? "🎯 C'est votre tour !" : "⏳ Veuillez attendre votre tour."}
+            </p>
+            <p style="margin-top: 10px;"><strong>Total de vos choix:</strong> ${allPicks.length}</p>
+        </div>
+    `);
+}
+
 function updateTable() {
     if (draftData.draftOrder.length === 0 || checkIfUserTeamIsDone()) {
         $("#draft-status").html(`
@@ -158,6 +310,12 @@ function updateTable() {
     const searchTerm = $("#searchInput").val().toLowerCase();
     const availability = $("#availabilityFilter").val();
     const userTeam = getUserTeam();
+
+    // Special view for "Mes choix" - show ALL picks
+    if (availability === "pickedByTeam" && userTeam && draftData.teams[userTeam]) {
+        populateMyPicksTable(userTeam, searchTerm);
+        return;
+    }
 
     const allPicked = new Set();
     Object.values(draftData.teams).forEach(team => {
