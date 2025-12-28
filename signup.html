@@ -8,53 +8,255 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
 
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-        .signup-container { width: 300px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
-        .signup-container input { width: 100%; padding: 10px; margin: 10px 0; }
-        .signup-container button { width: 100%; padding: 10px; background-color: #ff2e2e; color: white; border: none; cursor: pointer; }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            background-color: #f5f5f5;
+        }
+        .signup-container {
+            width: 300px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .signup-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .signup-container input:focus {
+            outline: none;
+            border-color: #ff2e2e;
+        }
+        .signup-container button {
+            width: 100%;
+            padding: 10px;
+            background-color: #ff2e2e;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .signup-container button:hover {
+            background-color: #d92626;
+        }
+        .signup-container button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .error-message {
+            color: #ff2e2e;
+            font-size: 14px;
+            margin: 10px 0;
+            display: none;
+        }
+        .success-message {
+            color: #28a745;
+            font-size: 14px;
+            margin: 10px 0;
+            display: none;
+        }
+        .loading {
+            display: none;
+            margin: 10px 0;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #ff2e2e;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .password-requirements {
+            text-align: left;
+            font-size: 12px;
+            color: #666;
+            margin: 5px 0;
+            padding-left: 10px;
+        }
+        .requirement {
+            margin: 3px 0;
+        }
+        .requirement.met {
+            color: #28a745;
+        }
     </style>
 
     <script>
-        async function signup() {
-            const username = $("#newUsername").val();
-            const password = $("#newPassword").val();
+        const BASE_URL = window.location.hostname.includes("localhost")
+            ? "http://localhost:3000"
+            : "https://goondraft.onrender.com";
 
-            if (!username || !password) {
-                alert("Veuillez remplir tous les champs !");
+        let isSubmitting = false;
+
+        function validatePassword(password) {
+            const requirements = {
+                length: password.length >= 6,
+                hasNumber: /\d/.test(password)
+            };
+            return requirements;
+        }
+
+        function updatePasswordRequirements() {
+            const password = $("#newPassword").val();
+            const reqs = validatePassword(password);
+
+            $("#req-length").toggleClass("met", reqs.length);
+            $("#req-number").toggleClass("met", reqs.hasNumber);
+        }
+
+        async function signup() {
+            if (isSubmitting) return;
+
+            const username = $("#newUsername").val().trim();
+            const password = $("#newPassword").val();
+            const confirmPassword = $("#confirmPassword").val();
+
+            // Hide previous messages
+            $(".error-message").hide();
+            $(".success-message").hide();
+
+            // Validation
+            if (!username || !password || !confirmPassword) {
+                showError("Veuillez remplir tous les champs !");
                 return;
             }
 
+            if (username.length < 3) {
+                showError("Le nom d'utilisateur doit contenir au moins 3 caractères !");
+                return;
+            }
+
+            if (username.length > 20) {
+                showError("Le nom d'utilisateur ne peut pas dépasser 20 caractères !");
+                return;
+            }
+
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                showError("Le nom d'utilisateur ne peut contenir que des lettres, chiffres et underscores !");
+                return;
+            }
+
+            if (password.length < 6) {
+                showError("Le mot de passe doit contenir au moins 6 caractères !");
+                return;
+            }
+
+            if (!/\d/.test(password)) {
+                showError("Le mot de passe doit contenir au moins un chiffre !");
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showError("Les mots de passe ne correspondent pas !");
+                return;
+            }
+
+            // Start loading
+            isSubmitting = true;
+            $(".loading").show();
+            $("#signupBtn").prop("disabled", true).text("Inscription en cours...");
+
             try {
-                const response = await fetch("https://goondraft.onrender.com/signup", {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
+                const response = await fetch(`${BASE_URL}/signup`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({ username, password }),
+                    signal: controller.signal
                 });
+
+                clearTimeout(timeoutId);
 
                 const result = await response.json();
 
                 if (response.ok) {
                     localStorage.setItem("isLoggedIn", "true");
                     localStorage.setItem("username", username);
-                    alert(result.message);
-                    window.location.href = "index.html";
+
+                    showSuccess("Inscription réussie ! Redirection...");
+
+                    setTimeout(() => {
+                        window.location.href = "index.html";
+                    }, 500);
                 } else {
-                    alert(result.message);
+                    // Specific error messages from server
+                    showError(result.message || "Erreur lors de l'inscription");
                 }
 
             } catch (error) {
-                console.error("Erreur lors de l'inscription :", error);
-                alert("Une erreur s'est produite !");
+                console.error("❌ Erreur lors de l'inscription :", error);
+
+                if (error.name === 'AbortError') {
+                    showError("L'inscription a pris trop de temps. Veuillez réessayer.");
+                } else if (!navigator.onLine) {
+                    showError("Pas de connexion internet. Vérifiez votre réseau.");
+                } else {
+                    showError("Impossible de se connecter au serveur. Veuillez réessayer.");
+                }
+            } finally {
+                // Stop loading
+                isSubmitting = false;
+                $(".loading").hide();
+                $("#signupBtn").prop("disabled", false).text("S'inscrire");
             }
         }
+
+        function showError(message) {
+            $(".error-message").text(message).fadeIn();
+        }
+
+        function showSuccess(message) {
+            $(".success-message").text(message).fadeIn();
+        }
+
+        // Enter key support
+        $(document).ready(function() {
+            $("#newUsername, #newPassword, #confirmPassword").on("keypress", function(e) {
+                if (e.which === 13) { // Enter key
+                    signup();
+                }
+            });
+
+            // Real-time password validation feedback
+            $("#newPassword").on("input", updatePasswordRequirements);
+        });
     </script>
 </head>
 <body>
     <div class="signup-container">
         <h2>Inscription</h2>
-        <input type="text" id="newUsername" placeholder="Nom d'utilisateur" required>
-        <input type="password" id="newPassword" placeholder="Mot de passe" required>
-        <button onclick="signup()">S'inscrire</button>
+        <div class="error-message"></div>
+        <div class="success-message"></div>
+        <input type="text" id="newUsername" placeholder="Nom d'utilisateur (3-20 caractères)" required autocomplete="username">
+        <input type="password" id="newPassword" placeholder="Mot de passe" required autocomplete="new-password">
+        <div class="password-requirements">
+            <div class="requirement" id="req-length">✓ Au moins 6 caractères</div>
+            <div class="requirement" id="req-number">✓ Au moins un chiffre</div>
+        </div>
+        <input type="password" id="confirmPassword" placeholder="Confirmer le mot de passe" required autocomplete="new-password">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Inscription en cours...</p>
+        </div>
+        <button id="signupBtn" onclick="signup()">S'inscrire</button>
         <p>Déjà inscrit? <a href="login.html">Connectez-vous ici</a></p>
     </div>
 </body>
