@@ -126,6 +126,14 @@ function getMatchingImage(skaterName) {
     }) || null;
 }
 
+function getTeamLogoPath(teamAbbrevs) {
+    if (!teamAbbrevs || teamAbbrevs === "null") {
+        return null;
+    }
+    const lastTeam = teamAbbrevs.split(",").pop().trim();
+    return `teams/${lastTeam}.png`;
+}
+
 let currentSortBy = "points"; // Valeur par défaut globale
 
 function updateTable() {
@@ -315,9 +323,9 @@ function populateGoalieTable(goalies) {
     goalies.forEach(goalie => {
         const name = goalie.goalieFullName;
         const imagePath = getMatchingImage(name);
-        const logoPath = `teams/${goalie.teamAbbrevs}.png`;
+        const logoPath = getTeamLogoPath(goalie.teamAbbrevs);
 
-        const imageHTML = imagePath
+        const imageHTML = imagePath && logoPath
             ? `<div class="player-photo">
                     <img src="${imagePath}" alt="${name}" class="face">
                     <img src="${logoPath}" alt="${goalie.teamAbbrevs}" class="logo">
@@ -468,15 +476,16 @@ function populateTable(playerData) {
 
 
     playerData.forEach(player => {
-        
-        const skaterName = player.skaterFullName || player.goalieFullName || player.teamFullName;   
+
+        const skaterName = player.skaterFullName || player.goalieFullName || player.teamFullName;
         const positionCode = player.positionCode || (player.savePct ? "G" : player.teamFullName ? "T" : "R");
         const matchingImage = getMatchingImage(skaterName);
+        const logoPath = getTeamLogoPath(player.teamAbbrevs);
 
-        const imageHTML = matchingImage
+        const imageHTML = matchingImage && logoPath
             ? `<div class="player-photo">
                 <img src="${matchingImage}" alt="${skaterName}" class="face">
-                <img src="teams/${player.teamAbbrevs}.png" alt="${player.teamAbbrevs}" class="logo">
+                <img src="${logoPath}" alt="${player.teamAbbrevs}" class="logo">
               </div>`
             : "";
 
@@ -519,17 +528,16 @@ function renderDraftPicks() {
             goalieData.find(p => p.goalieFullName === playerName) ||
             teamData.find(p => p.teamFullName === playerName);
 
-        let teamLogo = "Icons/default.png";
-        if (pick.position === "teams") {
+        const isTeamPick = pick.position === "teams";
+        let logoPath = "Icons/default.png";
+
+        if (isTeamPick) {
             const abbrev = getTeamAbbreviation(playerName);
-            teamLogo = `teams/${abbrev}.png`;
+            logoPath = abbrev ? `teams/${abbrev}.png` : "Icons/default.png";
         } else if (playerData?.teamAbbrevs) {
-            teamLogo = `teams/${playerData.teamAbbrevs}.png`;
+            logoPath = getTeamLogoPath(playerData.teamAbbrevs) || "Icons/default.png";
         }
 
-        const isTeamPick = pick.position === "teams";
-        const abbrev = isTeamPick ? getTeamAbbreviation(playerName) : playerData?.teamAbbrevs;
-        const logoPath = abbrev ? `teams/${abbrev}.png` : "Icons/default.png";
         const facePath = isTeamPick ? logoPath : getMatchingImage(playerName) || "Icons/default.png";
 
         const card = `
