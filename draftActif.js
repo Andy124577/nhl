@@ -130,8 +130,8 @@ function getTeamLogoPath(teamAbbrevs) {
     if (!teamAbbrevs || teamAbbrevs === "null") {
         return null;
     }
-    const firstTeam = teamAbbrevs.split(",")[0].trim();
-    return `teams/${firstTeam}.png`;
+    const lastTeam = teamAbbrevs.split(",").pop().trim();
+    return `teams/${lastTeam}.png`;
 }
 
 let currentSortBy = "points"; // Valeur par défaut globale
