@@ -44,6 +44,14 @@ function getMatchingImage(skaterName) {
     }) || null;
 }
 
+function getTeamLogoPath(teamAbbrevs) {
+    if (!teamAbbrevs || teamAbbrevs === "null") {
+        return null;
+    }
+    const firstTeam = teamAbbrevs.split(",")[0].trim();
+    return `teams/${firstTeam}.png`;
+}
+
 function updateTable() {
     const filter = document.getElementById("playerFilter").value;
     const sortBy = document.getElementById("sortBy").value;
@@ -109,12 +117,13 @@ async function populatePlayerTable(playerData) {
     playerData.forEach(player => {
         const skaterName = player.skaterFullName;
         const matchingImage = getMatchingImage(skaterName);
+        const logoPath = getTeamLogoPath(player.teamAbbrevs);
 
-        const imageHTML = matchingImage
+        const imageHTML = matchingImage && logoPath
             ? `
             <div class="player-photo">
                 <img src="${matchingImage}" alt="${skaterName}" class="face">
-                <img src="teams/${player.teamAbbrevs}.png" alt="${player.teamAbbrevs}" class="logo">
+                <img src="${logoPath}" alt="${player.teamAbbrevs}" class="logo">
             </div>
             `
             : "";
@@ -151,9 +160,9 @@ function populateGoalieTable(goalies) {
     goalies.forEach(goalie => {
         const name = goalie.goalieFullName;
         const imagePath = getMatchingImage(name);
-        const logoPath = `teams/${goalie.teamAbbrevs}.png`;
+        const logoPath = getTeamLogoPath(goalie.teamAbbrevs);
 
-        const imageHTML = imagePath
+        const imageHTML = imagePath && logoPath
             ? `<div class="player-photo">
                     <img src="${imagePath}" alt="${name}" class="face">
                     <img src="${logoPath}" alt="${goalie.teamAbbrevs}" class="logo">
