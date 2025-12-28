@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        .login-container { width: 300px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        .login-container input { width: 100%; padding: 10px; margin: 10px 0; }
+        .login-container button { width: 100%; padding: 10px; background-color: #ff2e2e; color: white; border: none; cursor: pointer; }
+    </style>
+
+    <script>
+        async function login() {
+            const username = $("#username").val();
+            const password = $("#password").val();
+
+            if (!username || !password) {
+                alert("Veuillez remplir tous les champs !");
+                return;
+            }
+
+             try {
+                const response = await fetch("https://goondraft.onrender.com/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    localStorage.setItem("isLoggedIn", "true");
+                    localStorage.setItem("username", username);
+                    $("#login-link").html(`<a href="#" onclick="logout()">Déconnexion (${username})</a>`);
+                    window.location.href = "index.html"; // or your desired page
+                } else {
+                    alert(result.message);
+                }
+
+            } catch (error) {
+                console.error("❌ Erreur lors de la connexion :", error);
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Connexion</h2>
+        <input type="text" id="username" placeholder="Nom d'utilisateur" required>
+        <input type="password" id="password" placeholder="Mot de passe" required>
+        <button onclick="login()">Se connecter</button>
+        <p>Pas encore de compte? <a href="signup.html">Inscrivez-vous ici</a></p>
+    </div>
+</body>
+</html>

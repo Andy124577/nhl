@@ -1,0 +1,259 @@
+{
+  "qq": {
+    "maxPlayers": 2,
+    "draftOrder": [
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2"
+    ],
+    "currentPickIndex": 7,
+    "teams": {
+      "Équipe 1": {
+        "members": [
+          "1"
+        ],
+        "offensive": [
+          "Nikita Kucherov",
+          "David Pastrnak"
+        ],
+        "defensive": [],
+        "goalie": [
+          "Connor Hellebuyck"
+        ],
+        "teams": [
+          "Washington Capitals"
+        ]
+      },
+      "Équipe 2": {
+        "members": [
+          "2"
+        ],
+        "offensive": [
+          "Nathan MacKinnon"
+        ],
+        "defensive": [],
+        "teams": [
+          "Winnipeg Jets"
+        ],
+        "rookie": [
+          "Tyler Seguin"
+        ]
+      },
+      "Équipe 3": {
+        "members": [],
+        "offensive": [],
+        "defensive": []
+      },
+      "Équipe 4": {
+        "members": [],
+        "offensive": [],
+        "defensive": []
+      },
+      "Équipe 5": {
+        "members": [],
+        "offensive": [],
+        "defensive": []
+      },
+      "Équipe 6": {
+        "members": [],
+        "offensive": [],
+        "defensive": []
+      },
+      "Équipe 7": {
+        "members": [],
+        "offensive": [],
+        "defensive": []
+      },
+      "Équipe 8": {
+        "members": [],
+        "offensive": [],
+        "defensive": []
+      },
+      "Équipe 9": {
+        "members": [],
+        "offensive": [],
+        "defensive": []
+      },
+      "Équipe 10": {
+        "members": [],
+        "offensive": [],
+        "defensive": []
+      }
+    },
+    "lastPickIndex": 6,
+    "picksHistory": [
+      {
+        "team": "Équipe 1",
+        "player": "Nikita Kucherov",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Winnipeg Jets",
+        "position": "teams"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "Connor Hellebuyck",
+        "position": "goalie"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Nathan MacKinnon",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "Washington Capitals",
+        "position": "teams"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Tyler Seguin",
+        "position": "rookie"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "David Pastrnak",
+        "position": "offensive"
+      }
+    ]
+  },
+  "tester": {
+    "maxPlayers": 3,
+    "draftOrder": [
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2"
+    ],
+    "currentPickIndex": 2,
+    "teams": {
+      "Équipe 1": {
+        "members": [
+          "1"
+        ],
+        "offensive": [],
+        "defensive": [],
+        "teams": [
+          "Winnipeg Jets"
+        ]
+      },
+      "Équipe 2": {
+        "members": [
+          "2"
+        ],
+        "offensive": [
+          "Nikita Kucherov"
+        ],
+        "defensive": []
+      },
+      "Équipe 3": {
+        "members": [],
+        "offensive": [],
+        "defensive": []
+      },
+      "Équipe 4": {
+        "members": [],
+        "offensive": [],
+        "defensive": []
+      },
+      "Équipe 5": {
+        "members": [],
+        "offensive": [],
+        "defensive": []
+      },
+      "Équipe 6": {
+        "members": [],
+        "offensive": [],
+        "defensive": []
+      },
+      "Équipe 7": {
+        "members": [],
+        "offensive": [],
+        "defensive": []
+      },
+      "Équipe 8": {
+        "members": [],
+        "offensive": [],
+        "defensive": []
+      },
+      "Équipe 9": {
+        "members": [],
+        "offensive": [],
+        "defensive": []
+      },
+      "Équipe 10": {
+        "members": [],
+        "offensive": [],
+        "defensive": []
+      }
+    },
+    "lastPickIndex": 1,
+    "picksHistory": [
+      {
+        "team": "Équipe 1",
+        "player": "Winnipeg Jets",
+        "position": "teams"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Nikita Kucherov",
+        "position": "offensive"
+      }
+    ]
+  }
+}

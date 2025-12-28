@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NHL Draft</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <link rel="stylesheet" href="draft.css">
+    <script src="draft.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <ul>
+            <li><a href="index.html">Stats</a></li>
+            <li><a href="equipes.html">Équipes</a></li>
+            <li class="active"><a href="draft.html">Draft</a></li>
+            <li id="login-link"><a href="login.html">Connexion</a></li>
+        </ul>
+    </nav>
+
+    <h2>NHL Draft</h2>
+    <section class="draft-selection">
+        <h3>Choisissez un draft actif</h3>
+        <div id="draftOptions" class="draft-container">
+            <p>Chargement des drafts actifs...</p>
+        </div>
+    </section>
+</body>
+</html>
