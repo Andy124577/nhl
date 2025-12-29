@@ -580,6 +580,74 @@ app.post("/login", async (req, res) => {
     }
 });
 
+// 🔐 Admin login endpoint
+app.post("/admin-login", async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        // Hardcoded admin credentials
+        if (username === "admin" && password === "zubzub") {
+            return res.json({
+                message: "Admin connexion réussie !",
+                isAdmin: true,
+                username: "admin"
+            });
+        }
+
+        return res.status(401).json({ message: "Identifiants admin invalides !" });
+    } catch (error) {
+        console.error("Erreur lors de la connexion admin :", error);
+        res.status(500).json({ message: "Erreur interne du serveur." });
+    }
+});
+
+// 🔐 Admin switch user endpoint
+app.post("/admin-switch-user", async (req, res) => {
+    try {
+        const { adminToken, targetUsername } = req.body;
+
+        // Verify admin token (in a real app, use proper JWT or session)
+        if (adminToken !== "admin") {
+            return res.status(403).json({ message: "Accès refusé. Admin seulement." });
+        }
+
+        // Check if target user exists
+        let users = loadUsers();
+        const user = users.find(u => u.username === targetUsername);
+
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur non trouvé !" });
+        }
+
+        res.json({
+            message: `Basculé vers l'utilisateur ${targetUsername}`,
+            username: targetUsername
+        });
+    } catch (error) {
+        console.error("Erreur lors du changement d'utilisateur :", error);
+        res.status(500).json({ message: "Erreur interne du serveur." });
+    }
+});
+
+// 🔐 Get all users (admin only)
+app.get("/admin-users", async (req, res) => {
+    try {
+        const { adminToken } = req.query;
+
+        if (adminToken !== "admin") {
+            return res.status(403).json({ message: "Accès refusé. Admin seulement." });
+        }
+
+        let users = loadUsers();
+        const usernames = users.map(u => u.username);
+
+        res.json({ users: usernames });
+    } catch (error) {
+        console.error("Erreur lors de la récupération des utilisateurs :", error);
+        res.status(500).json({ message: "Erreur interne du serveur." });
+    }
+});
+
 (async () => {
     const hash = await bcrypt.hash("testpassword", 10);
     const isMatch = await bcrypt.compare("testpassword", hash);

@@ -127,7 +127,11 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-                const response = await fetch(`${BASE_URL}/login`, {
+                // Check if admin login
+                const isAdminLogin = username === "admin";
+                const endpoint = isAdminLogin ? `${BASE_URL}/admin-login` : `${BASE_URL}/login`;
+
+                const response = await fetch(endpoint, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username, password }),
@@ -142,11 +146,22 @@
                     localStorage.setItem("isLoggedIn", "true");
                     localStorage.setItem("username", username);
 
-                    showSuccess("Connexion réussie ! Redirection...");
+                    if (isAdminLogin) {
+                        // Admin login
+                        localStorage.setItem("isAdmin", "true");
+                        showSuccess("Connexion admin réussie ! Redirection...");
 
-                    setTimeout(() => {
-                        window.location.href = "index.html";
-                    }, 500);
+                        setTimeout(() => {
+                            window.location.href = "admin.html";
+                        }, 500);
+                    } else {
+                        // Regular user login
+                        showSuccess("Connexion réussie ! Redirection...");
+
+                        setTimeout(() => {
+                            window.location.href = "index.html";
+                        }, 500);
+                    }
                 } else {
                     // Specific error messages from server
                     showError(result.message || "Erreur de connexion");
