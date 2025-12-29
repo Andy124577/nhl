@@ -286,6 +286,9 @@ function populateMyPicksTable(userTeam, searchTerm) {
             <p style="margin-top: 10px;"><strong>Total de vos choix:</strong> ${allPicks.length}</p>
         </div>
     `);
+
+    // Update progress counter
+    updateProgressCounter();
 }
 
 function updateTable() {
@@ -465,6 +468,7 @@ function updateTable() {
     populateTable(filteredData);
     renderTeamsOverview();
     renderDraftPicks();
+    updateProgressCounter();
 }
 
 $("#sortBy").on("change", function () {
@@ -769,6 +773,50 @@ function renderTeamsOverview() {
         </div>
     `;
     container.append(teamBlock);
+}
+
+function updateProgressCounter() {
+    const userTeam = getUserTeam();
+    if (!userTeam || !draftData.teams[userTeam]) return;
+
+    const team = draftData.teams[userTeam];
+
+    // Define requirements
+    const requirements = {
+        offensive: { current: (team.offensive || []).length, max: 10 },
+        defensive: { current: (team.defensive || []).length, max: 5 },
+        rookie: { current: (team.rookie || []).length, max: 3 },
+        goalie: { current: (team.goalie || []).length, max: 1 },
+        team: { current: (team.teams || []).length, max: 1 }
+    };
+
+    // Update each progress bar and counter
+    Object.keys(requirements).forEach(type => {
+        const req = requirements[type];
+        const percentage = (req.current / req.max) * 100;
+
+        // Update progress bar width
+        $(`#progress-${type}`).css('width', `${percentage}%`);
+
+        // Add complete class if done
+        if (req.current >= req.max) {
+            $(`#progress-${type}`).addClass('complete');
+        } else {
+            $(`#progress-${type}`).removeClass('complete');
+        }
+
+        // Update counter text
+        $(`#count-${type}`).text(`${req.current}/${req.max}`);
+
+        // Change color based on progress
+        if (req.current >= req.max) {
+            $(`#count-${type}`).css('color', '#4ade80'); // Green
+        } else if (req.current > 0) {
+            $(`#count-${type}`).css('color', '#fbbf24'); // Yellow/Orange
+        } else {
+            $(`#count-${type}`).css('color', 'white'); // White
+        }
+    });
 }
 
 function renderSelectedPlayers() {
