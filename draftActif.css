@@ -508,79 +508,80 @@
 
 /* Progress Counter Styles */
 .pick-progress {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 15px;
-  padding: 25px;
-  margin: 20px 0;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  color: white;
+  background: white;
+  border-radius: 10px;
+  padding: 15px 20px;
+  margin: 15px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid #ff2e2e;
 }
 
 .pick-progress h3 {
-  margin: 0 0 20px 0;
-  font-size: 1.5rem;
+  margin: 0 0 12px 0;
+  font-size: 1.1rem;
   text-align: center;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  color: #ff2e2e;
+  font-weight: 600;
 }
 
 .progress-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
 }
 
 .progress-item {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 10px;
   text-align: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+  border: 1px solid #e0e0e0;
 }
 
 .progress-item:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  border-color: #ff2e2e;
 }
 
 .progress-icon {
-  font-size: 2rem;
-  margin-bottom: 8px;
+  font-size: 1.5rem;
+  margin-bottom: 5px;
 }
 
 .progress-label {
-  font-size: 0.95rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
+  color: #555;
 }
 
 .progress-bar-container {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  height: 12px;
+  background: #e0e0e0;
+  border-radius: 8px;
+  height: 8px;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #56ab2f 0%, #a8e063 100%);
-  border-radius: 10px;
-  transition: width 0.5s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background: #ff2e2e;
+  border-radius: 8px;
+  transition: width 0.4s ease;
 }
 
 .progress-bar.complete {
-  background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+  background: #28a745;
 }
 
 .progress-count {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: bold;
-  color: white;
+  color: #333;
 }
 
 /* Improved Table Styles */
@@ -705,14 +706,50 @@ tr:hover {
 /* Responsive Design */
 @media screen and (max-width: 768px) {
   .progress-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .pick-progress {
-    padding: 15px;
+    padding: 12px 15px;
+  }
+
+  .pick-progress h3 {
+    font-size: 1rem;
+  }
+
+  .progress-icon {
+    font-size: 1.2rem;
+  }
+
+  .progress-label {
+    font-size: 0.7rem;
+  }
+
+  .progress-count {
+    font-size: 0.8rem;
   }
 
   .filters-container {
     padding: 15px;
+  }
+
+  body {
+    padding: 10px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .progress-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .progress-item {
+    padding: 8px;
+  }
+
+  .pick-progress {
+    padding: 10px;
+    margin: 10px 0;
   }
 }
