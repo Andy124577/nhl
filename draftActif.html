@@ -42,7 +42,20 @@
 
       <!-- Your Progress -->
       <div class="progress-card">
-        <h3>Ma progression</h3>
+        <div class="progress-header">
+          <h3>Ma progression</h3>
+          <select id="progressFilter" class="progress-filter-select">
+            <option value="">Voir détails...</option>
+            <option value="offensive">Attaquants</option>
+            <option value="defensive">Défenseurs</option>
+            <option value="rookie">Recrues</option>
+            <option value="goalie">Gardien</option>
+            <option value="team">Équipe</option>
+          </select>
+        </div>
+        <div id="progressDetailsList" class="progress-details-list" style="display: none;">
+          <!-- Player list will be populated here -->
+        </div>
         <div class="progress-list">
           <div class="progress-line">
             <span class="progress-emoji">⚡</span>

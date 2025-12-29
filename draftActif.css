@@ -246,10 +246,19 @@ body {
 .progress-card h3,
 .draft-order-card h3 {
   font-size: 1.1rem;
-  margin: 0 0 15px 0;
+  margin: 0;
   color: #ff2e2e;
+}
+
+.draft-order-card h3 {
+  margin-bottom: 15px;
   border-bottom: 2px solid #ff2e2e;
   padding-bottom: 10px;
+}
+
+.progress-header h3 {
+  border: none;
+  padding: 0;
 }
 
 /* Progress Lines */
@@ -306,6 +315,125 @@ body {
 
 .progress-value.in-progress {
   color: #ff8c00;
+}
+
+/* Progress Header and Filter */
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.progress-filter-select {
+  padding: 6px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: white;
+  font-size: 0.85rem;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.progress-filter-select:hover {
+  border-color: #ff2e2e;
+}
+
+.progress-filter-select:focus {
+  outline: none;
+  border-color: #ff2e2e;
+  box-shadow: 0 0 0 2px rgba(255, 46, 46, 0.1);
+}
+
+/* Progress Details List */
+.progress-details-list {
+  margin-bottom: 15px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.progress-details-header {
+  font-weight: 600;
+  color: #ff2e2e;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+.progress-players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.progress-player-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  transition: all 0.2s;
+}
+
+.progress-player-item:hover {
+  border-color: #ff2e2e;
+  transform: translateY(-2px);
+}
+
+.progress-player-photo {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-player-photo .face {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.progress-player-photo .logo {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  padding: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.progress-player-photo.no-image {
+  font-size: 1.5rem;
+  color: #999;
+  font-weight: bold;
+}
+
+.progress-player-name {
+  font-size: 0.75rem;
+  text-align: center;
+  color: #333;
+  word-wrap: break-word;
+  max-width: 100%;
+}
+
+.no-picks {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 10px;
 }
 
 /* Draft Timeline */
@@ -414,7 +542,35 @@ body {
 
 /* Carousel Controls */
 .carousel-controls {
-  display: none;
+  display: flex;
+  gap: 8px;
+}
+
+.carousel-btn {
+  background: #ff2e2e;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.carousel-btn:hover:not(:disabled) {
+  background: #cc2525;
+  transform: scale(1.1);
+}
+
+.carousel-btn:disabled {
+  cursor: not-allowed;
+  background: #ccc;
 }
 
 /* Picks Carousel */
@@ -509,6 +665,12 @@ body {
   background: white;
   padding: 2px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.carousel-no-image {
+  font-size: 2rem;
+  color: #999;
+  font-weight: bold;
 }
 
 .pick-card-name {
