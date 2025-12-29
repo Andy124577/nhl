@@ -5,6 +5,8 @@ let goalieData = [];
 let teamData = [];
 let currentClan = localStorage.getItem("draftClan");
 let username = localStorage.getItem("username");
+let carouselOffset = 0;
+const PICKS_PER_PAGE = 5;
 
 const BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:3000"
@@ -915,14 +917,33 @@ function renderDraftTimeline() {
     }
 }
 
+function updateCarouselButtons(totalPicks) {
+    const canGoNext = carouselOffset + PICKS_PER_PAGE < totalPicks;
+    const canGoPrev = carouselOffset > 0;
+
+    $("#carousel-next").prop("disabled", !canGoNext).css("opacity", canGoNext ? 1 : 0.3);
+    $("#carousel-prev").prop("disabled", !canGoPrev).css("opacity", canGoPrev ? 1 : 0.3);
+}
+
 function renderRecentPicks() {
     if (!draftData || !draftData.picksHistory) return;
 
     const carousel = $("#picks-carousel");
     carousel.empty();
 
-    // Get last 5 picks from history
-    const recentHistory = draftData.picksHistory.slice(-5).reverse();
+    const totalPicks = draftData.picksHistory.length;
+
+    // Ensure offset is valid
+    if (carouselOffset < 0) carouselOffset = 0;
+    if (carouselOffset >= totalPicks) carouselOffset = Math.max(0, totalPicks - PICKS_PER_PAGE);
+
+    // Get picks for current page
+    const startIdx = Math.max(0, totalPicks - PICKS_PER_PAGE - carouselOffset);
+    const endIdx = totalPicks - carouselOffset;
+    const recentHistory = draftData.picksHistory.slice(startIdx, endIdx).reverse();
+
+    // Update carousel navigation buttons
+    updateCarouselButtons(totalPicks);
 
     recentHistory.forEach((pick, index) => {
         const playerName = pick.player;
@@ -950,12 +971,31 @@ function renderRecentPicks() {
             teamLogo = getTeamLogoPath(playerData.teamAbbrevs);
         }
 
-        const imageHTML = imagePath
-            ? `<div class="carousel-player-image">
+        // Build image HTML with team logo support
+        let imageHTML;
+        if (isTeamPick && teamLogo) {
+            // For team picks, show team logo as main image
+            imageHTML = `<div class="carousel-player-image">
+                <img src="${teamLogo}" alt="${playerName}" />
+               </div>`;
+        } else if (imagePath) {
+            // For player picks with image, show player photo + team logo overlay
+            imageHTML = `<div class="carousel-player-image">
                 <img src="${imagePath}" alt="${playerName}" />
-                ${teamLogo && !isTeamPick ? `<img src="${teamLogo}" alt="Team" class="carousel-team-logo" />` : ''}
-               </div>`
-            : `<div style="font-size: 2rem; color: #999;">${positionLabel}</div>`;
+                ${teamLogo ? `<img src="${teamLogo}" alt="Team" class="carousel-team-logo" />` : ''}
+               </div>`;
+        } else if (teamLogo) {
+            // No player image but has team logo
+            imageHTML = `<div class="carousel-player-image">
+                <div class="carousel-no-image">${positionLabel}</div>
+                <img src="${teamLogo}" alt="Team" class="carousel-team-logo" />
+               </div>`;
+        } else {
+            // No image at all
+            imageHTML = `<div class="carousel-player-image">
+                <div class="carousel-no-image">${positionLabel}</div>
+               </div>`;
+        }
 
         const pickNumber = draftData.picksHistory.length - index;
 
@@ -1064,9 +1104,112 @@ function launchConfetti() {
     }, 250);
 }
 
+function showProgressDetails(category) {
+    const detailsList = $("#progressDetailsList");
+
+    if (!category) {
+        detailsList.hide();
+        return;
+    }
+
+    const userTeam = getUserTeam();
+    if (!userTeam || !draftData.teams[userTeam]) {
+        detailsList.hide();
+        return;
+    }
+
+    const team = draftData.teams[userTeam];
+    let players = [];
+    let categoryName = "";
+
+    switch(category) {
+        case "offensive":
+            players = team.offensive || [];
+            categoryName = "Attaquants";
+            break;
+        case "defensive":
+            players = team.defensive || [];
+            categoryName = "Défenseurs";
+            break;
+        case "rookie":
+            players = team.rookie || [];
+            categoryName = "Recrues";
+            break;
+        case "goalie":
+            players = team.goalie || [];
+            categoryName = "Gardien";
+            break;
+        case "team":
+            players = team.teams || [];
+            categoryName = "Équipe";
+            break;
+    }
+
+    if (players.length === 0) {
+        detailsList.html(`<div class="no-picks">Aucun ${categoryName.toLowerCase()} sélectionné</div>`);
+    } else {
+        const playerListHTML = players.map(playerName => {
+            const playerData = fullPlayerData.find(p => p.skaterFullName === playerName) ||
+                             goalieData.find(g => g.goalieFullName === playerName) ||
+                             teamData.find(t => t.teamFullName === playerName);
+
+            const imagePath = getMatchingImage(playerName);
+            let logoPath = null;
+
+            if (category === "team") {
+                const abbrev = getTeamAbbreviation(playerName);
+                logoPath = abbrev ? `teams/${abbrev}.png` : null;
+            } else if (playerData?.teamAbbrevs) {
+                logoPath = getTeamLogoPath(playerData.teamAbbrevs);
+            }
+
+            const imageHTML = imagePath
+                ? `<div class="progress-player-photo">
+                    <img src="${imagePath}" alt="${playerName}" class="face">
+                    ${logoPath && category !== "team" ? `<img src="${logoPath}" alt="Team" class="logo">` : ''}
+                   </div>`
+                : (logoPath && category === "team"
+                    ? `<div class="progress-player-photo"><img src="${logoPath}" alt="${playerName}" class="face"></div>`
+                    : `<div class="progress-player-photo no-image">?</div>`);
+
+            return `
+                <div class="progress-player-item">
+                    ${imageHTML}
+                    <div class="progress-player-name">${playerName}</div>
+                </div>
+            `;
+        }).join('');
+
+        detailsList.html(`
+            <div class="progress-details-header">${categoryName} sélectionnés (${players.length})</div>
+            <div class="progress-players-grid">${playerListHTML}</div>
+        `);
+    }
+
+    detailsList.show();
+}
+
 
 $("#availabilityFilter").on("change", updateTable);
 $("#searchInput").on("input", updateTable);
 $("#playerFilter").on("change", updateTable);
 $("#sortBy").on("change", updateTable);
 $("#selectedFilter").on("change", renderSelectedPlayers);
+$("#progressFilter").on("change", function() {
+    const category = $(this).val();
+    showProgressDetails(category);
+});
+
+$("#carousel-prev").on("click", function() {
+    if (!$(this).prop("disabled")) {
+        carouselOffset = Math.max(0, carouselOffset - PICKS_PER_PAGE);
+        renderRecentPicks();
+    }
+});
+
+$("#carousel-next").on("click", function() {
+    if (!$(this).prop("disabled")) {
+        carouselOffset += PICKS_PER_PAGE;
+        renderRecentPicks();
+    }
+});
