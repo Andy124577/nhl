@@ -7,8 +7,8 @@ $(document).ready(function() {
         alert("⛔ Vous devez être connecté pour accéder à cette page !");
         window.location.href = "login.html"; // 🔄 Redirection vers la page de connexion
     } else {
-        if (isAdmin && username === "admin") {
-            // Admin user - show Utilisateur dropdown and normal logout
+        if (isAdmin) {
+            // Admin mode - show Utilisateur dropdown and normal logout
             $("#admin-users-link").css('display', 'block').html(`
                 <div class="admin-dropdown-container">
                     <a href="#" class="admin-dropdown-toggle" onclick="toggleAdminDropdown(event)">
@@ -92,7 +92,7 @@ async function switchToUser(event, username) {
         if (response.ok) {
             localStorage.setItem('username', username);
             localStorage.setItem('activeUser', username);
-            localStorage.removeItem('isAdmin'); // No longer in admin mode
+            // Keep isAdmin flag - admin privileges persist across user switches
             window.location.reload();
         } else {
             alert('Erreur lors du changement d\'utilisateur');
