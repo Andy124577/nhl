@@ -18,121 +18,160 @@
     </ul>
   </nav>
 
-  <h2 id="draft-title">Draft NHL</h2>
-  <div id="draft-status"></div>
-
-  <!-- Progress Counter -->
-  <div id="pick-progress-container" class="pick-progress">
-    <h3>Ma progression</h3>
-    <div class="progress-grid">
-      <div class="progress-item">
-        <div class="progress-icon">⚡</div>
-        <div class="progress-label">Attaquants</div>
-        <div class="progress-bar-container">
-          <div class="progress-bar" id="progress-offensive"></div>
-        </div>
-        <div class="progress-count" id="count-offensive">0/10</div>
+  <!-- Draft Header with Pick Number -->
+  <div class="draft-header">
+    <div class="draft-header-content">
+      <div class="draft-info">
+        <h2 id="draft-title">Draft NHL</h2>
+        <div id="draft-clan-name"></div>
       </div>
-      <div class="progress-item">
-        <div class="progress-icon">🛡️</div>
-        <div class="progress-label">Défenseurs</div>
-        <div class="progress-bar-container">
-          <div class="progress-bar" id="progress-defensive"></div>
-        </div>
-        <div class="progress-count" id="count-defensive">0/5</div>
-      </div>
-      <div class="progress-item">
-        <div class="progress-icon">⭐</div>
-        <div class="progress-label">Recrues</div>
-        <div class="progress-bar-container">
-          <div class="progress-bar" id="progress-rookie"></div>
-        </div>
-        <div class="progress-count" id="count-rookie">0/3</div>
-      </div>
-      <div class="progress-item">
-        <div class="progress-icon">🥅</div>
-        <div class="progress-label">Gardien</div>
-        <div class="progress-bar-container">
-          <div class="progress-bar" id="progress-goalie"></div>
-        </div>
-        <div class="progress-count" id="count-goalie">0/1</div>
-      </div>
-      <div class="progress-item">
-        <div class="progress-icon">🏒</div>
-        <div class="progress-label">Équipe</div>
-        <div class="progress-bar-container">
-          <div class="progress-bar" id="progress-team"></div>
-        </div>
-        <div class="progress-count" id="count-team">0/1</div>
+      <div class="current-pick-display">
+        <div class="pick-label">Choix actuel</div>
+        <div class="pick-number-large" id="current-pick-number">1</div>
+        <div class="pick-team" id="current-pick-team"></div>
       </div>
     </div>
   </div>
 
-  <div id="draft-picks-container" class="draft-picks-scroll">
-  <!-- Les choix seront injectés ici -->
+  <!-- Draft Status & Progress -->
+  <div class="draft-main-container">
+
+    <!-- Left Column: Draft Order & Progress -->
+    <div class="draft-sidebar">
+
+      <!-- Your Progress -->
+      <div class="progress-card">
+        <h3>Ma progression</h3>
+        <div class="progress-list">
+          <div class="progress-line">
+            <span class="progress-emoji">⚡</span>
+            <span class="progress-text">Attaquants</span>
+            <div class="progress-mini-bar">
+              <div class="progress-mini-fill" id="mini-progress-offensive"></div>
+            </div>
+            <span class="progress-value" id="count-offensive">0/10</span>
+          </div>
+          <div class="progress-line">
+            <span class="progress-emoji">🛡️</span>
+            <span class="progress-text">Défenseurs</span>
+            <div class="progress-mini-bar">
+              <div class="progress-mini-fill" id="mini-progress-defensive"></div>
+            </div>
+            <span class="progress-value" id="count-defensive">0/5</span>
+          </div>
+          <div class="progress-line">
+            <span class="progress-emoji">⭐</span>
+            <span class="progress-text">Recrues</span>
+            <div class="progress-mini-bar">
+              <div class="progress-mini-fill" id="mini-progress-rookie"></div>
+            </div>
+            <span class="progress-value" id="count-rookie">0/3</span>
+          </div>
+          <div class="progress-line">
+            <span class="progress-emoji">🥅</span>
+            <span class="progress-text">Gardien</span>
+            <div class="progress-mini-bar">
+              <div class="progress-mini-fill" id="mini-progress-goalie"></div>
+            </div>
+            <span class="progress-value" id="count-goalie">0/1</span>
+          </div>
+          <div class="progress-line">
+            <span class="progress-emoji">🏒</span>
+            <span class="progress-text">Équipe</span>
+            <div class="progress-mini-bar">
+              <div class="progress-mini-fill" id="mini-progress-team"></div>
+            </div>
+            <span class="progress-value" id="count-team">0/1</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Draft Order Timeline -->
+      <div class="draft-order-card">
+        <h3>Ordre du draft</h3>
+        <div id="draft-order-timeline" class="draft-timeline">
+          <!-- Timeline items will be injected here -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Center Column: Recent Picks Carousel -->
+    <div class="draft-center">
+
+      <div class="recent-picks-card">
+        <div class="card-header">
+          <h3>Derniers choix</h3>
+          <div class="carousel-controls">
+            <button class="carousel-btn" id="carousel-prev">‹</button>
+            <button class="carousel-btn" id="carousel-next">›</button>
+          </div>
+        </div>
+        <div class="picks-carousel" id="picks-carousel">
+          <!-- Recent picks will be displayed here -->
+        </div>
+      </div>
+
+      <!-- Player Selection Area -->
+      <div class="player-selection-card">
+        <div class="filters-header">
+          <h3>Sélection de joueur</h3>
+          <select id="availabilityFilter" class="filter-select">
+            <option value="available">Disponibles</option>
+            <option value="picked">Tous les choix</option>
+            <option value="pickedByTeam">Mes choix</option>
+          </select>
+        </div>
+
+        <div class="filters-row">
+          <input type="text" id="searchInput" placeholder="🔍 Rechercher..." class="search-input"/>
+          <select id="playerFilter" class="filter-select">
+            <option value="all">Tous</option>
+            <option value="offensive">Attaquants</option>
+            <option value="defensive">Défenseurs</option>
+            <option value="goalies">Gardiens</option>
+            <option value="rookies">Recrues</option>
+            <option value="teams">Équipes</option>
+          </select>
+          <select id="sortBy" class="filter-select">
+            <option value="points">Points</option>
+            <option value="goals">Buts</option>
+            <option value="assists">Passes</option>
+          </select>
+          <button onclick="loadDraftData()" class="refresh-btn">🔄</button>
+        </div>
+
+        <div class="table-wrapper">
+          <table id="playerTable">
+            <thead>
+              <tr id="tableHeaderRow">
+                <th>Photo</th>
+                <th>Joueur</th>
+                <th>GP</th>
+                <th>G</th>
+                <th>A</th>
+                <th>PTS</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
 
   </div>
 
-   
-  <!-- <div id="teamsOverview" class="collapsible-section">
-  <div class="section-header">
-    <h3>Équipe</h3>
-    
-    <button id="toggleTeamsOverview" class="toggle-btn">−</button>
-  </div>
-  <div id="teamsContainer"></div>
- </div> -->
-
-<div id="loading-container">
-  <div id="loading">
-    <span class="spinner"></span>
-  </div>
-</div>
-
- <select id="availabilityFilter">
-  <option value="available">Joueurs disponibles</option>
-  <option value="picked">Tous les choix sélectionnés</option>
-  <option value="pickedByTeam">Mes choix</option>
-</select>
-
-  <div class="filters-container">
-  <input type="text" id="searchInput" placeholder="🔍 Rechercher un joueur..." />
-  <select id="playerFilter">
-    <option value="all">Tous les joueurs</option>
-    <option value="offensive">Offensifs</option>
-    <option value="defensive">Défensifs</option>
-    <option value="goalies">Goalies</option>
-    <option value="rookies">Rookies Players</option>
-    <option value="teams">Teams</option>
-  </select>
-  <select id="sortBy">
-    <option value="points">Points</option>
-    <option value="goals">Buts</option>
-    <option value="assists">Passes</option>
-  </select>
-  <button onclick="loadDraftData()">🔄 Rafraîchir</button>
-</div>
-
-  <div class="table-container">
-    <table id="playerTable">
-      <thead>
-        <tr id="tableHeaderRow">
-          <th>Photo</th>
-          <th>Player</th>
-          <th>GP</th>
-          <th>G</th>
-          <th>AST</th>
-          <th>PTS</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+  <div id="loading-container">
+    <div id="loading">
+      <span class="spinner"></span>
+    </div>
   </div>
 
-  <button id="finishButton" class="nav-button" style="display: none;" onclick="window.location.href='draft.html'">Finir</button>
+  <button id="finishButton" class="finish-btn" style="display: none;" onclick="window.location.href='draft.html'">Terminer le draft</button>
 
-  <script src="draftactif.js"></script>
+  <script src="draftActif.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </body>
 </html>
