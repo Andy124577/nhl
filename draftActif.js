@@ -21,6 +21,10 @@ socket.on("draftUpdated", (updatedData) => {
     if (updatedData[currentClan] && updatedData[currentClan].teams) {
         draftData = updatedData[currentClan];
         updateTable();
+        updateProgressCounter();
+        updateDraftHeader();
+        renderDraftTimeline();
+        renderRecentPicks();
     } else {
         console.warn("❌ WebSocket : données incomplètes pour le clan :", currentClan);
     }
@@ -820,96 +824,51 @@ function renderDraftTimeline() {
 }
 
 function renderRecentPicks() {
-    if (!draftData || !draftData.draftOrder) return;
+    if (!draftData || !draftData.picksHistory) return;
 
     const carousel = $("#picks-carousel");
     carousel.empty();
 
-    const currentPickIndex = draftData.currentPickIndex || 0;
+    // Get last 5 picks from history
+    const recentHistory = draftData.picksHistory.slice(-5).reverse();
 
-    // Get last 10 picks
-    const picks = [];
-    for (let i = Math.max(0, currentPickIndex - 10); i < currentPickIndex; i++) {
-        const teamName = draftData.draftOrder[i];
-        const team = draftData.teams[teamName];
-        if (!team) continue;
+    recentHistory.forEach((pick, index) => {
+        const playerName = pick.player;
+        const teamName = pick.team;
+        const positionCode = pick.position;
 
-        // Find what was picked at this position
-        const allPicks = [].concat(
-            (team.offensive || []).map(p => ({ name: p, pos: "offensive" })),
-            (team.defensive || []).map(p => ({ name: p, pos: "defensive" })),
-            (team.rookie || []).map(p => ({ name: p, pos: "rookie" })),
-            (team.goalie || []).map(p => ({ name: p, pos: "goalie" })),
-            (team.teams || []).map(p => ({ name: p, pos: "teams" }))
-        );
+        const playerData = fullPlayerData.find(p => p.skaterFullName === playerName) ||
+                          goalieData.find(p => p.goalieFullName === playerName) ||
+                          teamData.find(p => p.teamFullName === playerName);
 
-        if (allPicks.length > 0) {
-            // Get the pick that corresponds to this draft position
-            const pickIndex = Math.floor(i / Object.keys(draftData.teams).length);
-            const pick = allPicks[pickIndex] || allPicks[allPicks.length - 1];
+        const imagePath = getMatchingImage(playerName);
+        const isTeamPick = positionCode === "teams" || positionCode === "T";
 
-            picks.push({
-                pickNum: i + 1,
-                teamName: teamName,
-                playerName: pick.name,
-                position: pick.pos
-            });
-        }
-    }
-
-    // Reverse to show most recent first
-    picks.reverse();
-
-    picks.forEach(pick => {
-        const playerData = fullPlayerData.find(p => p.skaterFullName === pick.playerName) ||
-                          goalieData.find(p => p.goalieFullName === pick.playerName) ||
-                          teamData.find(p => p.teamFullName === pick.playerName);
-
-        const imagePath = getMatchingImage(pick.playerName);
-        const isTeamPick = pick.position === "teams";
-
-        let positionLabel = "";
-        if (isTeamPick) {
-            positionLabel = "T";
-        } else if (pick.position === "goalie") {
-            positionLabel = "G";
-        } else if (pick.position === "rookie") {
-            positionLabel = "*";
-        } else {
-            positionLabel = playerData?.positionCode || "F";
+        let positionLabel = positionCode;
+        if (!isTeamPick && playerData?.positionCode) {
+            positionLabel = playerData.positionCode;
         }
 
         const imageHTML = imagePath
-            ? `<img src="${imagePath}" alt="${pick.playerName}" />`
-            : `<div style="font-size: 2rem;">${positionLabel}</div>`;
+            ? `<img src="${imagePath}" alt="${playerName}" />`
+            : `<div style="font-size: 2rem; color: #999;">${positionLabel}</div>`;
+
+        const pickNumber = draftData.picksHistory.length - index;
 
         const card = `
             <div class="pick-card">
-                <div class="pick-card-number">Pick #${pick.pickNum}</div>
+                <div class="pick-card-number">Pick #${pickNumber}</div>
                 <div class="pick-card-image">
                     ${imageHTML}
                 </div>
-                <div class="pick-card-name">${pick.playerName}</div>
-                <div class="pick-card-team">${pick.teamName}</div>
+                <div class="pick-card-name">${playerName}</div>
+                <div class="pick-card-team">${teamName}</div>
                 <div class="pick-card-position">${positionLabel}</div>
             </div>
         `;
         carousel.append(card);
     });
 }
-
-// Carousel controls
-let carouselScrollPosition = 0;
-
-$("#carousel-prev").on("click", function() {
-    const carousel = document.getElementById("picks-carousel");
-    carousel.scrollBy({ left: -200, behavior: 'smooth' });
-});
-
-$("#carousel-next").on("click", function() {
-    const carousel = document.getElementById("picks-carousel");
-    carousel.scrollBy({ left: 200, behavior: 'smooth' });
-});
 
 function renderSelectedPlayers() {
     const container = $("#selectedPlayersContainer");
