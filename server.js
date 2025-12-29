@@ -149,32 +149,6 @@ app.post("/join-clan", (req, res) => {
     res.json({ message: `Vous avez rejoint le clan ${name}, choisissez une équipe !`, teams: draftData[name].teams });
 });
 
-// ✅ Route to Join a Team
-app.post("/join-team", (req, res) => {
-    const { name, username, teamName } = req.body;
-    let draftData = loadDraftData();
-
-    if (!draftData[name] || !draftData[name].teams[teamName]) {
-        return res.status(400).json({ message: "Clan ou équipe introuvable !" });
-    }
-
-    if (draftData[name].teams[teamName].members.includes(username)) {
-        return res.status(400).json({ message: "Vous êtes déjà membre de cette équipe !" });
-    }
-
-    if (draftData[name].teams[teamName].members.length >= 5) {
-        return res.status(400).json({ message: "Cette équipe est complète !" });
-    }
-
-    draftData[name].teams[teamName].members.push(username);
-    saveDraftData(draftData);
-    setTimeout(() => {
-            io.emit("draftUpdated", draftData);
-        }, 2000); // ou 200ms
-        // 🔔 Notifie tous les clients
-
-    res.json({ message: `Vous avez rejoint l'équipe ${teamName} du clan ${name} avec succès !`, draftData });
-});
 
 // ✅ Route to Delete a Clan
 app.post("/delete-clan", (req, res) => {
@@ -460,6 +434,11 @@ app.post("/change-team", async (req, res) => {
             return res.status(400).json({ message: "Clan ou équipe introuvable !" });
         }
 
+        // Check if draft has already started
+        if (draftData[name].draftOrder && draftData[name].draftOrder.length > 0) {
+            return res.status(400).json({ message: "Le draft a déjà commencé ! Vous ne pouvez plus changer d'équipe." });
+        }
+
         // Vérifier que l'utilisateur est bien dans une équipe
         let currentTeam = Object.entries(draftData[name].teams)
             .find(([teamName, teamData]) => teamData.members.includes(username));
@@ -531,6 +510,11 @@ app.post("/join-team", async (req, res) => {
         return res.status(400).json({ message: "Clan ou équipe introuvable !" });
     }
 
+    // Check if draft has already started
+    if (draftData[name].draftOrder && draftData[name].draftOrder.length > 0) {
+        return res.status(400).json({ message: "Le draft a déjà commencé ! Vous ne pouvez plus rejoindre ou changer d'équipe." });
+    }
+
     if (draftData[name].teams[teamName].members.includes(username)) {
         return res.status(400).json({ message: "Vous êtes déjà membre de cette équipe !" });
     }
@@ -538,6 +522,11 @@ app.post("/join-team", async (req, res) => {
     if (draftData[name].teams[teamName].members.length >= 5) {
         return res.status(400).json({ message: "Cette équipe est complète !" });
     }
+
+    // Remove user from any other team in this clan first
+    Object.keys(draftData[name].teams).forEach(team => {
+        draftData[name].teams[team].members = draftData[name].teams[team].members.filter(m => m !== username);
+    });
 
     draftData[name].teams[teamName].members.push(username);
     saveDraftData(draftData);
