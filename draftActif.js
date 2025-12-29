@@ -754,9 +754,9 @@ function checkIfUserTeamIsDone() {
 
     const team = draftData.teams[userTeam];
     return (
-        team.offensive.length === 10 &&
-        team.defensive.length === 5 &&
-        team.rookie?.length === 3 &&
+        team.offensive.length === 6 &&
+        team.defensive.length === 4 &&
+        team.rookie?.length === 1 &&
         team.goalie?.length === 1 &&
         team.teams?.length === 1
     );
@@ -770,9 +770,9 @@ function checkIfAllTeamsAreDone() {
 
     return allTeams.every(team => {
         return (
-            (team.offensive || []).length === 10 &&
-            (team.defensive || []).length === 5 &&
-            (team.rookie || []).length === 3 &&
+            (team.offensive || []).length === 6 &&
+            (team.defensive || []).length === 4 &&
+            (team.rookie || []).length === 1 &&
             (team.goalie || []).length === 1 &&
             (team.teams || []).length === 1
         );
@@ -926,9 +926,9 @@ function updateProgressCounter() {
 
     // Define requirements
     const requirements = {
-        offensive: { current: (team.offensive || []).length, max: 10 },
-        defensive: { current: (team.defensive || []).length, max: 5 },
-        rookie: { current: (team.rookie || []).length, max: 3 },
+        offensive: { current: (team.offensive || []).length, max: 6 },
+        defensive: { current: (team.defensive || []).length, max: 4 },
+        rookie: { current: (team.rookie || []).length, max: 1 },
         goalie: { current: (team.goalie || []).length, max: 1 },
         team: { current: (team.teams || []).length, max: 1 }
     };
