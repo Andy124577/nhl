@@ -373,13 +373,42 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
 }
 
 .pick-card-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.carousel-player-image {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-player-image img:first-child {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.carousel-team-logo {
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50%;
+  background: white;
+  padding: 2px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .pick-card-name {
@@ -540,11 +569,20 @@ button.select-button {
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 button.select-button:hover {
   background: #cc2525;
   transform: scale(1.02);
+}
+
+button.select-button .select-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
 }
 
 /* Loading */

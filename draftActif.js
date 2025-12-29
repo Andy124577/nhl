@@ -849,8 +849,20 @@ function renderRecentPicks() {
             positionLabel = playerData.positionCode;
         }
 
+        // Get team logo
+        let teamLogo = null;
+        if (isTeamPick) {
+            const abbrev = getTeamAbbreviation(playerName);
+            teamLogo = abbrev ? `teams/${abbrev}.png` : null;
+        } else if (playerData?.teamAbbrevs) {
+            teamLogo = getTeamLogoPath(playerData.teamAbbrevs);
+        }
+
         const imageHTML = imagePath
-            ? `<img src="${imagePath}" alt="${playerName}" />`
+            ? `<div class="carousel-player-image">
+                <img src="${imagePath}" alt="${playerName}" />
+                ${teamLogo && !isTeamPick ? `<img src="${teamLogo}" alt="Team" class="carousel-team-logo" />` : ''}
+               </div>`
             : `<div style="font-size: 2rem; color: #999;">${positionLabel}</div>`;
 
         const pickNumber = draftData.picksHistory.length - index;
