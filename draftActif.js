@@ -467,8 +467,10 @@ function updateTable() {
 
     populateTable(filteredData);
     renderTeamsOverview();
-    renderDraftPicks();
     updateProgressCounter();
+    updateDraftHeader();
+    renderDraftTimeline();
+    renderRecentPicks();
 }
 
 $("#sortBy").on("change", function () {
@@ -674,52 +676,6 @@ function populateTable(playerData) {
     });
 }
 
-function renderDraftPicks() {
-    const container = $("#draft-picks-container");
-    container.empty();
-
-    if (!draftData || !draftData.picksHistory) return;
-
-    draftData.picksHistory.forEach((pick, index) => {
-        const playerName = pick.player;
-        const teamName = pick.team;
-        const positionCode = pick.position;
-
-        const playerData =
-            fullPlayerData.find(p => p.skaterFullName === playerName) ||
-            goalieData.find(p => p.goalieFullName === playerName) ||
-            teamData.find(p => p.teamFullName === playerName);
-
-        const isTeamPick = pick.position === "teams";
-        let logoPath = "Icons/default.png";
-
-        if (isTeamPick) {
-            const abbrev = getTeamAbbreviation(playerName);
-            logoPath = abbrev ? `teams/${abbrev}.png` : "Icons/default.png";
-        } else if (playerData?.teamAbbrevs) {
-            logoPath = getTeamLogoPath(playerData.teamAbbrevs) || "Icons/default.png";
-        }
-
-        const facePath = isTeamPick ? logoPath : getMatchingImage(playerName) || "Icons/default.png";
-
-        const card = `
-            <div class="draft-pick-card">
-                <div class="pick-number">#${index + 1}</div>
-                <div class="top-right">
-                    <span class="pos">${positionCode}</span>
-                    ${!isTeamPick && logoPath ? `<img src="${logoPath}" alt="Team" class="logo" />` : ""}
-                </div>
-                <div class="player-photo centered-photo">
-                    <img src="${facePath}" alt="${playerName}" class="face" />
-                </div>
-                <div class="player-name">${playerName}</div>
-                <div class="team-name">${teamName}</div>
-            </div>
-        `;
-        container.append(card);
-    });
-}
-
 async function selectPlayer(playerName, positionCode) {
     try {
         let positionType = "offensive"; // par défaut
@@ -795,29 +751,165 @@ function updateProgressCounter() {
         const req = requirements[type];
         const percentage = (req.current / req.max) * 100;
 
-        // Update progress bar width
-        $(`#progress-${type}`).css('width', `${percentage}%`);
+        // Update mini progress bar width
+        $(`#mini-progress-${type}`).css('width', `${percentage}%`);
 
         // Add complete class if done
         if (req.current >= req.max) {
-            $(`#progress-${type}`).addClass('complete');
+            $(`#mini-progress-${type}`).addClass('complete');
+            $(`#count-${type}`).addClass('complete').removeClass('in-progress');
+        } else if (req.current > 0) {
+            $(`#mini-progress-${type}`).removeClass('complete');
+            $(`#count-${type}`).addClass('in-progress').removeClass('complete');
         } else {
-            $(`#progress-${type}`).removeClass('complete');
+            $(`#mini-progress-${type}`).removeClass('complete');
+            $(`#count-${type}`).removeClass('complete in-progress');
         }
 
         // Update counter text
         $(`#count-${type}`).text(`${req.current}/${req.max}`);
-
-        // Change color based on progress
-        if (req.current >= req.max) {
-            $(`#count-${type}`).css('color', '#28a745'); // Green when complete
-        } else if (req.current > 0) {
-            $(`#count-${type}`).css('color', '#ff8c00'); // Orange when in progress
-        } else {
-            $(`#count-${type}`).css('color', '#999'); // Gray when empty
-        }
     });
 }
+
+function updateDraftHeader() {
+    if (!draftData || !draftData.draftOrder) return;
+
+    const currentPickIndex = draftData.currentPickIndex || 0;
+    const currentPickNumber = currentPickIndex + 1;
+    const currentTeam = draftData.draftOrder[currentPickIndex];
+
+    $("#current-pick-number").text(currentPickNumber);
+    $("#current-pick-team").text(currentTeam || "");
+    $("#draft-clan-name").text(currentClan || "");
+}
+
+function renderDraftTimeline() {
+    if (!draftData || !draftData.draftOrder) return;
+
+    const timeline = $("#draft-order-timeline");
+    timeline.empty();
+
+    const currentPickIndex = draftData.currentPickIndex || 0;
+    const startIndex = Math.max(0, currentPickIndex - 2);
+    const endIndex = Math.min(draftData.draftOrder.length, currentPickIndex + 8);
+
+    for (let i = startIndex; i < endIndex; i++) {
+        const teamName = draftData.draftOrder[i];
+        const pickNum = i + 1;
+
+        let itemClass = "timeline-item";
+        let status = "";
+
+        if (i < currentPickIndex) {
+            itemClass += " completed";
+            status = "✓";
+        } else if (i === currentPickIndex) {
+            itemClass += " current";
+            status = "▶";
+        }
+
+        const item = `
+            <div class="${itemClass}">
+                <div class="timeline-pick-num">#${pickNum}</div>
+                <div class="timeline-team-name">${teamName}</div>
+                ${status ? `<div class="timeline-status">${status}</div>` : ''}
+            </div>
+        `;
+        timeline.append(item);
+    }
+}
+
+function renderRecentPicks() {
+    if (!draftData || !draftData.draftOrder) return;
+
+    const carousel = $("#picks-carousel");
+    carousel.empty();
+
+    const currentPickIndex = draftData.currentPickIndex || 0;
+
+    // Get last 10 picks
+    const picks = [];
+    for (let i = Math.max(0, currentPickIndex - 10); i < currentPickIndex; i++) {
+        const teamName = draftData.draftOrder[i];
+        const team = draftData.teams[teamName];
+        if (!team) continue;
+
+        // Find what was picked at this position
+        const allPicks = [].concat(
+            (team.offensive || []).map(p => ({ name: p, pos: "offensive" })),
+            (team.defensive || []).map(p => ({ name: p, pos: "defensive" })),
+            (team.rookie || []).map(p => ({ name: p, pos: "rookie" })),
+            (team.goalie || []).map(p => ({ name: p, pos: "goalie" })),
+            (team.teams || []).map(p => ({ name: p, pos: "teams" }))
+        );
+
+        if (allPicks.length > 0) {
+            // Get the pick that corresponds to this draft position
+            const pickIndex = Math.floor(i / Object.keys(draftData.teams).length);
+            const pick = allPicks[pickIndex] || allPicks[allPicks.length - 1];
+
+            picks.push({
+                pickNum: i + 1,
+                teamName: teamName,
+                playerName: pick.name,
+                position: pick.pos
+            });
+        }
+    }
+
+    // Reverse to show most recent first
+    picks.reverse();
+
+    picks.forEach(pick => {
+        const playerData = fullPlayerData.find(p => p.skaterFullName === pick.playerName) ||
+                          goalieData.find(p => p.goalieFullName === pick.playerName) ||
+                          teamData.find(p => p.teamFullName === pick.playerName);
+
+        const imagePath = getMatchingImage(pick.playerName);
+        const isTeamPick = pick.position === "teams";
+
+        let positionLabel = "";
+        if (isTeamPick) {
+            positionLabel = "T";
+        } else if (pick.position === "goalie") {
+            positionLabel = "G";
+        } else if (pick.position === "rookie") {
+            positionLabel = "*";
+        } else {
+            positionLabel = playerData?.positionCode || "F";
+        }
+
+        const imageHTML = imagePath
+            ? `<img src="${imagePath}" alt="${pick.playerName}" />`
+            : `<div style="font-size: 2rem;">${positionLabel}</div>`;
+
+        const card = `
+            <div class="pick-card">
+                <div class="pick-card-number">Pick #${pick.pickNum}</div>
+                <div class="pick-card-image">
+                    ${imageHTML}
+                </div>
+                <div class="pick-card-name">${pick.playerName}</div>
+                <div class="pick-card-team">${pick.teamName}</div>
+                <div class="pick-card-position">${positionLabel}</div>
+            </div>
+        `;
+        carousel.append(card);
+    });
+}
+
+// Carousel controls
+let carouselScrollPosition = 0;
+
+$("#carousel-prev").on("click", function() {
+    const carousel = document.getElementById("picks-carousel");
+    carousel.scrollBy({ left: -200, behavior: 'smooth' });
+});
+
+$("#carousel-next").on("click", function() {
+    const carousel = document.getElementById("picks-carousel");
+    carousel.scrollBy({ left: 200, behavior: 'smooth' });
+});
 
 function renderSelectedPlayers() {
     const container = $("#selectedPlayersContainer");
