@@ -47,22 +47,19 @@ $(document).ready(function () {
 
     if (isLoggedIn) {
         if (isAdmin && username === "admin") {
-            // Admin user - show dropdown
-            $("#login-link").html(`
+            // Admin user - show Utilisateur dropdown and normal logout
+            $("#admin-users-link").css('display', 'block').html(`
                 <div class="admin-dropdown-container">
                     <a href="#" class="admin-dropdown-toggle" onclick="toggleAdminDropdown(event)">
-                        Déconnexion (${username}) ▼
+                        Utilisateur ▼
                     </a>
                     <div class="admin-dropdown-menu" id="adminDropdown">
                         <div class="admin-dropdown-header">Changer d'utilisateur</div>
                         <div id="adminUserList" class="admin-user-list">Chargement...</div>
-                        <div class="admin-dropdown-divider"></div>
-                        <a href="#" class="admin-dropdown-item logout" onclick="logout(event)">
-                            <span>🚪</span> Déconnexion
-                        </a>
                     </div>
                 </div>
             `);
+            $("#login-link").html(`<a href="#" onclick="logout(event)">Déconnexion (${username})</a>`);
             loadAdminUsers();
         } else {
             // Regular user - show normal logout
