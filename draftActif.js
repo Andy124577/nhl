@@ -810,11 +810,11 @@ function updateProgressCounter() {
 
         // Change color based on progress
         if (req.current >= req.max) {
-            $(`#count-${type}`).css('color', '#4ade80'); // Green
+            $(`#count-${type}`).css('color', '#28a745'); // Green when complete
         } else if (req.current > 0) {
-            $(`#count-${type}`).css('color', '#fbbf24'); // Yellow/Orange
+            $(`#count-${type}`).css('color', '#ff8c00'); // Orange when in progress
         } else {
-            $(`#count-${type}`).css('color', 'white'); // White
+            $(`#count-${type}`).css('color', '#999'); // Gray when empty
         }
     });
 }
