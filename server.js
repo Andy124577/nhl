@@ -220,19 +220,19 @@ app.post("/pick-player", (req, res) => {
     }
 
     if (position === "offensive") {
-        if (userTeam.offensive.length >= 10) {
-            return res.status(400).json({ message: "Votre équipe a déjà 10 joueurs offensifs." });
+        if (userTeam.offensive.length >= 6) {
+            return res.status(400).json({ message: "Votre équipe a déjà 6 joueurs offensifs." });
         }
         userTeam.offensive.push(playerName);
     } else if (position === "defensive") {
-        if (userTeam.defensive.length >= 5) {
-            return res.status(400).json({ message: "Votre équipe a déjà 5 défenseurs." });
+        if (userTeam.defensive.length >= 4) {
+            return res.status(400).json({ message: "Votre équipe a déjà 4 défenseurs." });
         }
         userTeam.defensive.push(playerName);
     } else if (position === "rookie") {
         if (!userTeam.rookie) userTeam.rookie = [];
-        if (userTeam.rookie.length >= 3) {
-            return res.status(400).json({ message: "Votre équipe a déjà 3 rookies." });
+        if (userTeam.rookie.length >= 1) {
+            return res.status(400).json({ message: "Votre équipe a déjà 1 rookie." });
         }
         userTeam.rookie.push(playerName);
     } else if (position === "goalie") {
@@ -255,8 +255,8 @@ app.post("/pick-player", (req, res) => {
     if (clan.lastPickIndex === clan.currentPickIndex) {
     // Check if the team can still pick anything
     const team = clan.teams[userTeamName];
-    const canPickOffensive = team.offensive.length < 10;
-    const canPickDefensive = team.defensive.length < 5;
+    const canPickOffensive = team.offensive.length < 6;
+    const canPickDefensive = team.defensive.length < 4;
 
     if (!canPickOffensive && !canPickDefensive) {
         // Skip this team and move to the next pick
@@ -741,9 +741,9 @@ app.post("/randomize-draft-order", (req, res) => {
 function checkIfDraftComplete(clan) {
     return Object.values(clan.teams).every(team =>
         team.members.length > 0 &&
-        team.offensive.length === 10 &&
-        team.defensive.length === 5 &&
-        team.rookie?.length === 3 &&
+        team.offensive.length === 6 &&
+        team.defensive.length === 4 &&
+        team.rookie?.length === 1 &&
         team.goalie?.length === 1 &&
         team.teams?.length === 1
     );
