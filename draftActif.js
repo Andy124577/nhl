@@ -997,7 +997,8 @@ function renderRecentPicks() {
                </div>`;
         }
 
-        const pickNumber = draftData.picksHistory.length - index;
+        // Calculate actual pick number based on position in full history
+        const pickNumber = endIdx - index;
 
         const card = `
             <div class="pick-card">
