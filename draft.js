@@ -1,3 +1,7 @@
+const BASE_URL = window.location.hostname.includes("localhost")
+  ? "http://localhost:3000"
+  : "https://goondraft.onrender.com";
+
 $(document).ready(function () {
     const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
     const username = localStorage.getItem("username");
@@ -27,10 +31,6 @@ $(document).ready(function () {
 
     loadActiveDrafts();
 });
-
-const BASE_URL = window.location.hostname.includes("localhost")
-  ? "http://localhost:3000"
-  : "https://goondraft.onrender.com";
 
 function toggleAdminDropdown(event) {
     event.preventDefault();

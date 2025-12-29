@@ -1,3 +1,7 @@
+const BASE_URL = window.location.hostname.includes("localhost")
+  ? "http://localhost:3000"
+  : "https://goondraft.onrender.com";
+
 $(document).ready(function() {
     const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
     const username = localStorage.getItem("username");
@@ -29,10 +33,6 @@ $(document).ready(function() {
         loadClans(); // 🔄 Charge les clans uniquement si l'utilisateur est connecté
     }
 });
-
-const BASE_URL = window.location.hostname.includes("localhost")
-  ? "http://localhost:3000"
-  : "https://goondraft.onrender.com";
 
 function toggleAdminDropdown(event) {
     event.preventDefault();
