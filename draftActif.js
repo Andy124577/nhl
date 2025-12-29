@@ -449,11 +449,12 @@ function populateMyPicksTable(userTeam, searchTerm) {
 }
 
 function updateTable() {
-    if (draftData.draftOrder.length === 0 || checkIfUserTeamIsDone()) {
+    if (isDraftComplete()) {
         $("#draft-status").html(`
             <div class="draft-status-box">
                 <p style='color:green; font-weight: bold;'>🎉 Le draft est terminé !</p>
                 <p>Merci à tous les participants.</p>
+                <p>Toutes les équipes ont complété leurs sélections.</p>
             </div>
         `);
         $("#playerTable tbody").empty();
@@ -761,6 +762,27 @@ function checkIfUserTeamIsDone() {
     );
 }
 
+function checkIfAllTeamsAreDone() {
+    if (!draftData || !draftData.teams) return false;
+
+    // Check if every team has completed their requirements
+    const allTeams = Object.values(draftData.teams);
+
+    return allTeams.every(team => {
+        return (
+            (team.offensive || []).length === 10 &&
+            (team.defensive || []).length === 5 &&
+            (team.rookie || []).length === 3 &&
+            (team.goalie || []).length === 1 &&
+            (team.teams || []).length === 1
+        );
+    });
+}
+
+function isDraftComplete() {
+    return draftData.draftOrder.length === 0 || checkIfAllTeamsAreDone();
+}
+
 
 
 function populateTable(playerData) {
@@ -769,11 +791,12 @@ function populateTable(playerData) {
 
     if (!draftData || !draftData.draftOrder || !draftData.teams) return;
 
-    if (draftData.draftOrder.length === 0 || checkIfUserTeamIsDone()) {
+    if (isDraftComplete()) {
         $("#draft-status").html(`
             <div class="draft-status-box">
                 <p style='color:green; font-weight: bold;'>🎉 Le draft est terminé !</p>
                 <p>Merci à tous les participants.</p>
+                <p>Toutes les équipes ont complété leurs sélections.</p>
             </div>
         `);
         $("#playerTable tbody").empty();
