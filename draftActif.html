@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Draft Actif</title>
-  <link rel="stylesheet" href="draftactif.css" />
+  <link rel="stylesheet" href="draftActif.css" />
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
@@ -20,9 +20,57 @@
 
   <h2 id="draft-title">Draft NHL</h2>
   <div id="draft-status"></div>
+
+  <!-- Progress Counter -->
+  <div id="pick-progress-container" class="pick-progress">
+    <h3>Ma progression</h3>
+    <div class="progress-grid">
+      <div class="progress-item">
+        <div class="progress-icon">⚡</div>
+        <div class="progress-label">Attaquants</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progress-offensive"></div>
+        </div>
+        <div class="progress-count" id="count-offensive">0/10</div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-icon">🛡️</div>
+        <div class="progress-label">Défenseurs</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progress-defensive"></div>
+        </div>
+        <div class="progress-count" id="count-defensive">0/5</div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-icon">⭐</div>
+        <div class="progress-label">Recrues</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progress-rookie"></div>
+        </div>
+        <div class="progress-count" id="count-rookie">0/3</div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-icon">🥅</div>
+        <div class="progress-label">Gardien</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progress-goalie"></div>
+        </div>
+        <div class="progress-count" id="count-goalie">0/1</div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-icon">🏒</div>
+        <div class="progress-label">Équipe</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progress-team"></div>
+        </div>
+        <div class="progress-count" id="count-team">0/1</div>
+      </div>
+    </div>
+  </div>
+
   <div id="draft-picks-container" class="draft-picks-scroll">
   <!-- Les choix seront injectés ici -->
-   
+
   </div>
 
    
