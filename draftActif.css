@@ -40,13 +40,14 @@
     }
     
     body {
-        font-family: Arial, sans-serif;
-        background-color: #ffffff;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         color: #222;
         margin: 0;
         padding: 20px;
         max-width: 85%;
         margin: auto;
+        min-height: 100vh;
     }
 
     h2 {
@@ -503,4 +504,215 @@
 .draft-pick-card .team-name {
   font-size: 0.75rem;
   color: #555;
+}
+
+/* Progress Counter Styles */
+.pick-progress {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15px;
+  padding: 25px;
+  margin: 20px 0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  color: white;
+}
+
+.pick-progress h3 {
+  margin: 0 0 20px 0;
+  font-size: 1.5rem;
+  text-align: center;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.progress-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+}
+
+.progress-item {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 15px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.progress-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.progress-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.progress-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.progress-bar-container {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  height: 12px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #56ab2f 0%, #a8e063 100%);
+  border-radius: 10px;
+  transition: width 0.5s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.progress-bar.complete {
+  background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+}
+
+.progress-count {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: white;
+}
+
+/* Improved Table Styles */
+table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  table-layout: fixed;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+th {
+  background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%);
+  color: white;
+  border-bottom: none;
+  padding: 12px 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.85rem;
+}
+
+tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+tr:hover {
+  background-color: #e3f2fd !important;
+  transition: background-color 0.2s ease;
+}
+
+/* Improved Filter Container */
+.filters-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 20px 0;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.filters-container input,
+.filters-container select,
+.filters-container button {
+  padding: 10px 16px;
+  font-size: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  min-width: 150px;
+  transition: all 0.3s ease;
+}
+
+.filters-container input:focus,
+.filters-container select:focus {
+  outline: none;
+  border-color: #ff2e2e;
+  box-shadow: 0 0 0 3px rgba(255, 46, 46, 0.1);
+}
+
+.filters-container button {
+  background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%);
+  color: white;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filters-container button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(255, 46, 46, 0.4);
+}
+
+.filters-container button:active {
+  transform: translateY(0);
+}
+
+/* Improved Draft Status Box */
+.draft-status-box {
+  margin: 20px auto;
+  padding: 20px 30px;
+  max-width: 700px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-left: 6px solid #ff2e2e;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  font-size: 1.1rem;
+  text-align: center;
+  line-height: 1.8;
+}
+
+#availabilityFilter {
+  margin: 20px auto;
+  display: block;
+  padding: 12px 20px;
+  font-size: 1.1rem;
+  border: 2px solid #ff2e2e;
+  border-radius: 8px;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#availabilityFilter:hover {
+  background: #ff2e2e;
+  color: white;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+  .progress-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pick-progress {
+    padding: 15px;
+  }
+
+  .filters-container {
+    padding: 15px;
+  }
 }
