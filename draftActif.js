@@ -16,6 +16,63 @@ const BASE_URL = window.location.hostname.includes("localhost")
 console.log("🔍 draftClan:", localStorage.getItem("draftClan"));
 console.log("🔍 username:", localStorage.getItem("username"));
 
+// Custom Alert Function
+function showCustomAlert(message, type = 'info') {
+    const overlay = document.getElementById('customAlertOverlay');
+    const messageEl = document.getElementById('alertMessage');
+    const iconEl = document.getElementById('alertIcon');
+    const okButton = document.getElementById('alertOkButton');
+
+    // Set message
+    messageEl.textContent = message;
+
+    // Set icon based on type
+    iconEl.className = 'custom-alert-icon ' + type;
+    switch(type) {
+        case 'success':
+            iconEl.textContent = '✓';
+            break;
+        case 'error':
+            iconEl.textContent = '✕';
+            break;
+        case 'warning':
+            iconEl.textContent = '⚠';
+            break;
+        case 'info':
+        default:
+            iconEl.textContent = 'ℹ';
+            break;
+    }
+
+    // Show overlay
+    overlay.classList.add('show');
+
+    // Handle close
+    const closeAlert = () => {
+        overlay.classList.remove('show');
+        okButton.removeEventListener('click', closeAlert);
+        overlay.removeEventListener('click', outsideClickHandler);
+    };
+
+    const outsideClickHandler = (e) => {
+        if (e.target === overlay) {
+            closeAlert();
+        }
+    };
+
+    okButton.addEventListener('click', closeAlert);
+    overlay.addEventListener('click', outsideClickHandler);
+
+    // Allow closing with Enter or Escape key
+    const keyHandler = (e) => {
+        if (e.key === 'Enter' || e.key === 'Escape') {
+            closeAlert();
+            document.removeEventListener('keydown', keyHandler);
+        }
+    };
+    document.addEventListener('keydown', keyHandler);
+}
+
 
 const socket = io(BASE_URL);
 
@@ -39,8 +96,10 @@ socket.on("forceRefresh", () => {
 
 $(document).ready(function () {
     if (!currentClan || !username) {
-        alert("Vous devez être connecté et avoir un draft actif !");
-        window.location.href = "draft.html";
+        showCustomAlert("Vous devez être connecté et avoir un draft actif !", 'error');
+        setTimeout(() => {
+            window.location.href = "draft.html";
+        }, 1500);
         return;
     }
 
@@ -134,11 +193,11 @@ async function switchToUser(event, username) {
             // Keep isAdmin flag - admin privileges persist across user switches
             window.location.reload();
         } else {
-            alert('Erreur lors du changement d\'utilisateur');
+            showCustomAlert('Erreur lors du changement d\'utilisateur', 'error');
         }
     } catch (error) {
         console.error('Error switching user:', error);
-        alert('Erreur de connexion');
+        showCustomAlert('Erreur de connexion', 'error');
     }
 }
 
@@ -800,10 +859,17 @@ async function selectPlayer(playerName, positionCode) {
         });
 
         const result = await response.json();
-        alert(result.message);
-        await loadDraftData();
+
+        // Determine alert type based on response status
+        const alertType = response.ok ? 'success' : 'error';
+        showCustomAlert(result.message, alertType);
+
+        if (response.ok) {
+            await loadDraftData();
+        }
     } catch (error) {
         console.error("Erreur lors de la sélection :", error);
+        showCustomAlert("Une erreur est survenue lors de la sélection", 'error');
     }
 }
 
