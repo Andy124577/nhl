@@ -1,4 +1,6 @@
 let fullPlayerData = [];
+let goalieData = [];
+let teamData = [];
 let imageList = [];
 const BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:3000"
@@ -12,7 +14,6 @@ function initializeAdminUI() {
 
     if (isLoggedIn) {
         if (isAdmin) {
-            // Admin mode - show Utilisateur dropdown and normal logout
             document.getElementById("admin-users-link").style.display = 'block';
             document.getElementById("admin-users-link").innerHTML = `
                 <div class="admin-dropdown-container">
@@ -28,7 +29,6 @@ function initializeAdminUI() {
             document.getElementById("login-link").innerHTML = `<a href="#" onclick="logout(event)">Déconnexion (${username})</a>`;
             loadAdminUsers();
         } else {
-            // Regular user - show normal logout
             document.getElementById("login-link").innerHTML = `<a href="#" onclick="logout(event)">Déconnexion (${username})</a>`;
         }
     }
@@ -41,7 +41,6 @@ function toggleAdminDropdown(event) {
     dropdown.classList.toggle('show');
 }
 
-// Close dropdown when clicking outside
 document.addEventListener('click', function(event) {
     const dropdown = document.getElementById('adminDropdown');
     if (dropdown && !event.target.closest('.admin-dropdown-container')) {
@@ -92,7 +91,6 @@ async function switchToUser(event, username) {
         if (response.ok) {
             localStorage.setItem('username', username);
             localStorage.setItem('activeUser', username);
-            // Keep isAdmin flag - admin privileges persist across user switches
             window.location.reload();
         } else {
             alert('Erreur lors du changement d\'utilisateur');
@@ -113,8 +111,8 @@ function logout(event) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // Initialize admin UI first
     initializeAdminUI();
+
     const clanName = localStorage.getItem("draftClan");
     if (!clanName) {
         alert("Aucun clan sélectionné.");
@@ -123,13 +121,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     try {
+        // Load player data
         const statsResponse = await fetch("nhl_filtered_stats.json");
         const statsData = await statsResponse.json();
-        fullPlayerData = [...statsData.Top_50_Defenders, ...statsData.Top_100_Offensive_Players];
+        fullPlayerData = [...statsData.Top_50_Defenders, ...statsData.Top_100_Offensive_Players, ...statsData.Top_Rookies];
+        goalieData = statsData.Top_50_Goalies;
+        teamData = statsData.Teams;
 
-        const imageResponse = await fetch("images.json");
-        imageList = await imageResponse.json();
-
+        // Load draft data
         const draftResponse = await fetch(`${BASE_URL}/draft`, { cache: "no-store" });
         const draftData = await draftResponse.json();
         const clan = draftData[clanName];
@@ -139,214 +138,149 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
         }
 
-        document.getElementById("clanTitle").textContent = `Draft terminé : ${clanName}`;
-        renderTeamLeaderboard(clan.teams);
+        document.getElementById("clanTitle").textContent = `Classement Final : ${clanName}`;
+        renderTeamStatsTable(clan.teams);
     } catch (error) {
         console.error("Erreur lors du chargement :", error);
     }
+
+    // Modal close handlers
+    const modal = document.getElementById("playerDetailsModal");
+    const closeBtn = document.querySelector(".close");
+
+    closeBtn.onclick = function() {
+        modal.classList.remove('show');
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.classList.remove('show');
+        }
+    }
 });
 
+function renderTeamStatsTable(teams) {
+    const tbody = document.getElementById("teamStatsBody");
+    tbody.innerHTML = "";
 
-
-function renderTeams(teams) {
-    const container = document.getElementById("teamsContainer");
-    container.innerHTML = "";
-
-    Object.entries(teams).forEach(([teamName, teamData]) => {
-        if (teamData.members.length === 0) return;
-
-        const teamDiv = document.createElement("div");
-        teamDiv.className = "team-card";
-
-        const members = teamData.members.join(", ") || "Aucun membre";
-
-        const allPlayers = [...teamData.offensive, ...teamData.defensive];
-        let totalPoints = 0;
-
-        const offensiveList = teamData.offensive.map(name => {
-            const stats = fullPlayerData.find(p => p.skaterFullName === name);
-            const pts = stats?.points ?? "-";
-            const ast = stats?.assists ?? "-";
-            const g = stats?.goals ?? "-";
-            totalPoints += stats?.points ?? 0;
-            return `<li>${name} – ${g} G, ${ast} A, ${pts} PTS</li>`;
-        }).join("");
-
-        const defensiveList = teamData.defensive.map(name => {
-            const stats = fullPlayerData.find(p => p.skaterFullName === name);
-            const pts = stats?.points ?? "-";
-            const ast = stats?.assists ?? "-";
-            const g = stats?.goals ?? "-";
-            totalPoints += stats?.points ?? 0;
-            return `<li>${name} – ${g} G, ${ast} A, ${pts} PTS</li>`;
-        }).join("");
-
-        teamDiv.innerHTML = `
-            <div class="team-header">
-                <h3>${teamName}</h3>
-                <div class="team-points">Total: ${totalPoints} PTS</div>
-            </div>
-            <p><strong>Membres :</strong> ${members}</p>
-            <div class="team-section">
-                <h4>🟥 Joueurs offensifs</h4>
-                <ul>${offensiveList}</ul>
-            </div>
-            <div class="team-section">
-                <h4>🟦 Défenseurs</h4>
-                <ul>${defensiveList}</ul>
-            </div>
-        `;
-
-        container.appendChild(teamDiv);
-    });
-}
-
-
-function renderTeamLeaderboard(teams) {
-    const container = document.getElementById("teamStatsContainer");
-    const podiumContainer = document.getElementById("podiumContainer");
-    container.innerHTML = "";
-    podiumContainer.innerHTML = "";
-
+    // Calculate stats for each team
     const teamStats = Object.entries(teams)
         .filter(([_, team]) => team.members.length > 0)
         .map(([teamName, team]) => {
-            const players = [...team.offensive, ...team.defensive];
-            let totalPoints = 0, totalGoals = 0, totalAssists = 0, totalGames = 0;
+            const allPlayers = [
+                ...(team.offensive || []),
+                ...(team.defensive || []),
+                ...(team.rookie || [])
+            ];
 
-            const playerStats = players.map(name => {
-                const stats = fullPlayerData.find(p => p.skaterFullName === name);
-                if (!stats) return null;
+            let totalGP = 0, totalG = 0, totalA = 0, totalPTS = 0;
+            const playerDetails = [];
 
-                totalPoints += stats.points ?? 0;
-                totalGoals += stats.goals ?? 0;
-                totalAssists += stats.assists ?? 0;
-                totalGames += stats.gamesPlayed ?? 0;
+            // Calculate stats from skaters
+            allPlayers.forEach(playerName => {
+                const player = fullPlayerData.find(p => p.skaterFullName === playerName);
+                if (player) {
+                    totalGP += player.gamesPlayed || 0;
+                    totalG += player.goals || 0;
+                    totalA += player.assists || 0;
+                    totalPTS += player.points || 0;
 
-                return {
-                    name,
-                    position: stats.positionCode,
-                    team: stats.teamAbbrevs,
-                    games: stats.gamesPlayed,
-                    goals: stats.goals,
-                    assists: stats.assists,
-                    points: stats.points,
-                    image: getMatchingImage(name)
-                };
-            }).filter(Boolean);
+                    playerDetails.push({
+                        name: player.skaterFullName,
+                        position: player.positionCode || 'F',
+                        gp: player.gamesPlayed || 0,
+                        g: player.goals || 0,
+                        a: player.assists || 0,
+                        pts: player.points || 0
+                    });
+                }
+            });
+
+            // Add goalies
+            (team.goalie || []).forEach(goalieName => {
+                const goalie = goalieData.find(g => g.goalieFullName === goalieName);
+                if (goalie) {
+                    totalGP += goalie.gamesPlayed || 0;
+                    totalPTS += goalie.points || 0;
+
+                    playerDetails.push({
+                        name: goalie.goalieFullName,
+                        position: 'G',
+                        gp: goalie.gamesPlayed || 0,
+                        g: goalie.wins || 0,
+                        a: goalie.shutouts || 0,
+                        pts: goalie.points || 0
+                    });
+                }
+            });
 
             return {
                 teamName,
                 members: team.members,
-                totalPoints,
-                totalGoals,
-                totalAssists,
-                totalGames,
-                playerStats
+                totalGP,
+                totalG,
+                totalA,
+                totalPTS,
+                playerDetails
             };
         });
 
     // Sort by total points
-    teamStats.sort((a, b) => b.totalPoints - a.totalPoints);
+    teamStats.sort((a, b) => b.totalPTS - a.totalPTS);
 
-    // Render Podium (Top 3)
-    teamStats.slice(0, 3).forEach((team, index) => {
-        const rank = index + 1;
-        const medals = ['🥇', '🥈', '🥉'];
-
-        const podiumCard = document.createElement("div");
-        podiumCard.className = `podium-card rank-${rank}`;
-
-        podiumCard.innerHTML = `
-            <div class="podium-rank">${medals[index]}</div>
-            <div class="podium-team-name">${team.teamName}</div>
-            <div class="podium-members">${team.members.join(", ")}</div>
-            <div class="podium-stats">
-                <div class="podium-stat">
-                    <div class="podium-stat-label">Points</div>
-                    <div class="podium-stat-value">${team.totalPoints}</div>
-                </div>
-                <div class="podium-stat">
-                    <div class="podium-stat-label">Buts</div>
-                    <div class="podium-stat-value">${team.totalGoals}</div>
-                </div>
-                <div class="podium-stat">
-                    <div class="podium-stat-label">Passes</div>
-                    <div class="podium-stat-value">${team.totalAssists}</div>
-                </div>
-                <div class="podium-stat">
-                    <div class="podium-stat-label">Matchs</div>
-                    <div class="podium-stat-value">${team.totalGames}</div>
-                </div>
-            </div>
-        `;
-
-        podiumContainer.appendChild(podiumCard);
-    });
-
-    // Render All Teams
+    // Render rows
     teamStats.forEach((team, index) => {
-        const teamCard = document.createElement("div");
-        teamCard.className = "team-card";
+        const position = index + 1;
+        let badgeClass = 'position-badge';
+        if (position === 1) badgeClass += ' first';
+        else if (position === 2) badgeClass += ' second';
+        else if (position === 3) badgeClass += ' third';
 
-        const playerList = team.playerStats.map(p => {
-            const teamLogo = p.team ? p.team.split(',').pop().trim() : '';
-            return `
-            <div class="player-row">
-                <div class="player-photo">
-                    ${p.image ? `<img src="${p.image}" class="face" alt="${p.name}">` : ''}
-                    ${teamLogo ? `<img src="teams/${teamLogo}.png" class="logo" alt="${teamLogo}" onerror="this.style.display='none'">` : ''}
-                </div>
-                <div class="player-info">
-                    <strong>${p.name}</strong> <span style="color: #ff2e2e;">(${p.position})</span>
-                    <div class="player-stats">
-                        <span class="stat-badge">GP: ${p.games}</span>
-                        <span class="stat-badge">G: ${p.goals}</span>
-                        <span class="stat-badge">A: ${p.assists}</span>
-                        <span class="stat-badge">PTS: ${p.points}</span>
-                    </div>
-                </div>
-            </div>
-        `}).join("");
-
-        teamCard.innerHTML = `
-            <div class="team-header" onclick="toggleTeamDetails(this)">
-                <div class="team-rank">${index + 1}</div>
-                <h3>${team.teamName}</h3>
-                <div class="team-meta">
-                    <p><strong>Membres:</strong> ${team.members.join(", ")}</p>
-                    <p><strong>Total PTS:</strong> ${team.totalPoints} | <strong>G:</strong> ${team.totalGoals} | <strong>A:</strong> ${team.totalAssists}</p>
-                </div>
-            </div>
-            <div class="expand-indicator">Cliquez pour voir les joueurs ▼</div>
-            <div class="team-details">
-                ${playerList}
-            </div>
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><span class="${badgeClass}">${position}</span></td>
+            <td><span class="team-name" onclick="showPlayerDetails('${team.teamName}', ${index})">${team.teamName}</span></td>
+            <td>${team.members.join(', ')}</td>
+            <td>${team.totalGP}</td>
+            <td>${team.totalG}</td>
+            <td>${team.totalA}</td>
+            <td class="stats-pts">${team.totalPTS}</td>
         `;
 
-        container.appendChild(teamCard);
+        // Store player details on the row for later access
+        row.dataset.playerDetails = JSON.stringify(team.playerDetails);
+        row.dataset.teamName = team.teamName;
+
+        tbody.appendChild(row);
     });
 }
 
-function toggleTeamDetails(header) {
-    const details = header.parentElement.querySelector('.team-details');
-    const indicator = header.parentElement.querySelector('.expand-indicator');
-    details.classList.toggle('expanded');
+function showPlayerDetails(teamName, rowIndex) {
+    const tbody = document.getElementById("teamStatsBody");
+    const row = tbody.rows[rowIndex];
+    const playerDetails = JSON.parse(row.dataset.playerDetails);
 
-    if (details.classList.contains('expanded')) {
-        indicator.textContent = 'Cliquez pour masquer ▲';
-    } else {
-        indicator.textContent = 'Cliquez pour voir les joueurs ▼';
-    }
+    // Set modal title
+    document.getElementById("modalTeamName").textContent = `${teamName} - Détails des joueurs`;
+
+    // Populate player details table
+    const playerDetailsBody = document.getElementById("playerDetailsBody");
+    playerDetailsBody.innerHTML = "";
+
+    playerDetails.forEach(player => {
+        const playerRow = document.createElement('tr');
+        playerRow.innerHTML = `
+            <td class="player-name-cell">${player.name}</td>
+            <td class="position-cell">${player.position}</td>
+            <td>${player.gp}</td>
+            <td>${player.g}</td>
+            <td>${player.a}</td>
+            <td class="stats-pts">${player.pts}</td>
+        `;
+        playerDetailsBody.appendChild(playerRow);
+    });
+
+    // Show modal
+    const modal = document.getElementById("playerDetailsModal");
+    modal.classList.add('show');
 }
-
-
-
-function getMatchingImage(skaterName) {
-    const formattedName = skaterName.replace(/\s/g, "_");
-    return imageList.find(imagePath => {
-        const baseName = imagePath.replace(/^faces\//, "").replace(/_\d{1,2}_\d{1,2}_\d{4}|_away/g, "").replace(".png", "");
-        return baseName === formattedName;
-    }) || null;
-}
-
