@@ -2,6 +2,7 @@ let fullPlayerData = [];
 let goalieData = [];
 let teamData = [];
 let imageList = [];
+let currentStats = null;
 const BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:3000"
   : "https://goondraft.onrender.com";
@@ -149,6 +150,22 @@ function getTeamAbbreviation(teamFullName) {
     return team ? team.teamAbbrevs : null;
 }
 
+// Helper function to get current stats for a player
+function getCurrentPlayerStats(playerName, playerId) {
+    if (!currentStats || !currentStats.players) {
+        return null;
+    }
+
+    // Try to find by playerId first (most reliable)
+    if (playerId) {
+        const stats = currentStats.players.find(p => p.playerId === playerId);
+        if (stats) return stats;
+    }
+
+    // Fallback: try to find by name
+    return currentStats.players.find(p => p.playerName === playerName);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     initializeAdminUI();
 
@@ -163,12 +180,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Load image data first
         await fetchImageData();
 
-        // Load player data
+        // Load player data (for metadata like names, positions)
         const statsResponse = await fetch("nhl_filtered_stats.json");
         const statsData = await statsResponse.json();
         fullPlayerData = [...statsData.Top_50_Defenders, ...statsData.Top_100_Offensive_Players, ...statsData.Top_Rookies];
         goalieData = statsData.Top_50_Goalies;
         teamData = statsData.Teams;
+
+        // Load current season stats from API
+        try {
+            const currentStatsResponse = await fetch(`${BASE_URL}/current-stats`, { cache: "no-store" });
+            currentStats = await currentStatsResponse.json();
+            console.log(`✅ Current stats loaded: ${currentStats.players.length} players, last updated: ${currentStats.lastUpdated}`);
+        } catch (error) {
+            console.warn("⚠️ Could not load current stats, using cached data:", error);
+        }
 
         // Load draft data
         const draftResponse = await fetch(`${BASE_URL}/draft`, { cache: "no-store" });
@@ -222,18 +248,28 @@ function renderTeamStatsTable(teams) {
             allPlayers.forEach(playerName => {
                 const player = fullPlayerData.find(p => p.skaterFullName === playerName);
                 if (player) {
-                    totalGP += player.gamesPlayed || 0;
-                    totalG += player.goals || 0;
-                    totalA += player.assists || 0;
-                    totalPTS += player.points || 0;
+                    // Try to get current stats, fallback to cached stats
+                    const currentPlayerStats = getCurrentPlayerStats(playerName, player.playerId);
+
+                    const gp = currentPlayerStats?.gamesPlayed ?? player.gamesPlayed ?? 0;
+                    const g = currentPlayerStats?.goals ?? player.goals ?? 0;
+                    const a = currentPlayerStats?.assists ?? player.assists ?? 0;
+                    const pts = currentPlayerStats?.points ?? player.points ?? 0;
+                    const todayPts = currentPlayerStats?.todayPoints ?? 0;
+
+                    totalGP += gp;
+                    totalG += g;
+                    totalA += a;
+                    totalPTS += pts;
 
                     playerDetails.push({
                         name: player.skaterFullName,
                         position: player.positionCode || 'F',
-                        gp: player.gamesPlayed || 0,
-                        g: player.goals || 0,
-                        a: player.assists || 0,
-                        pts: player.points || 0,
+                        gp: gp,
+                        g: g,
+                        a: a,
+                        pts: pts,
+                        todayPoints: todayPts,
                         playerId: player.playerId,
                         teamAbbrev: player.teamAbbrevs,
                         type: 'player'
@@ -245,16 +281,24 @@ function renderTeamStatsTable(teams) {
             (team.goalie || []).forEach(goalieName => {
                 const goalie = goalieData.find(g => g.goalieFullName === goalieName);
                 if (goalie) {
-                    totalGP += goalie.gamesPlayed || 0;
-                    totalPTS += goalie.points || 0;
+                    // Try to get current stats for goalie
+                    const currentGoalieStats = getCurrentPlayerStats(goalieName, goalie.playerId);
+
+                    const gp = currentGoalieStats?.gamesPlayed ?? goalie.gamesPlayed ?? 0;
+                    const pts = currentGoalieStats?.points ?? goalie.points ?? 0;
+                    const todayPts = currentGoalieStats?.todayPoints ?? 0;
+
+                    totalGP += gp;
+                    totalPTS += pts;
 
                     playerDetails.push({
                         name: goalie.goalieFullName,
                         position: 'G',
-                        gp: goalie.gamesPlayed || 0,
-                        g: goalie.wins || 0,
-                        a: goalie.shutouts || 0,
-                        pts: goalie.points || 0,
+                        gp: gp,
+                        g: currentGoalieStats?.goals ?? goalie.wins ?? 0,
+                        a: currentGoalieStats?.assists ?? goalie.shutouts ?? 0,
+                        pts: pts,
+                        todayPoints: todayPts,
                         playerId: goalie.playerId,
                         teamAbbrev: goalie.teamAbbrevs,
                         type: 'goalie'
@@ -266,16 +310,21 @@ function renderTeamStatsTable(teams) {
             (team.teams || []).forEach(teamName => {
                 const nhlTeam = teamData.find(t => t.teamFullName === teamName);
                 if (nhlTeam) {
-                    totalGP += nhlTeam.gamesPlayed || 0;
-                    totalPTS += nhlTeam.points || 0;
+                    // Teams use cached data (no current stats from player API)
+                    const gp = nhlTeam.gamesPlayed || 0;
+                    const pts = nhlTeam.points || 0;
+
+                    totalGP += gp;
+                    totalPTS += pts;
 
                     playerDetails.push({
                         name: nhlTeam.teamFullName,
                         position: 'TEAM',
-                        gp: nhlTeam.gamesPlayed || 0,
+                        gp: gp,
                         g: nhlTeam.wins || 0,
                         a: nhlTeam.losses || 0,
-                        pts: nhlTeam.points || 0,
+                        pts: pts,
+                        todayPoints: 0, // Teams don't have daily updates
                         teamAbbrev: nhlTeam.teamAbbrevs,
                         type: 'team'
                     });
@@ -384,7 +433,7 @@ function showPlayerDetails(teamName, rowIndex) {
                 </div>
             </div>
             <div class="player-points">
-                <span class="today-points">+0</span>
+                <span class="today-points">${player.todayPoints > 0 ? '+' : ''}${player.todayPoints || 0}</span>
                 <span class="total-points">${player.pts}</span>
             </div>
         `;
