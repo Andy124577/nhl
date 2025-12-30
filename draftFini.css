@@ -348,34 +348,124 @@ tbody td:first-child {
     overflow-y: auto;
 }
 
-#playerDetailsTable {
-    margin-top: 0;
+/* Player Details List */
+#playerDetailsList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-#playerDetailsTable thead {
+.player-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px;
     background: #f8f9fa;
-    color: #333;
+    border-radius: 8px;
+    transition: all 0.2s ease;
 }
 
-#playerDetailsTable thead th {
-    padding: 12px;
-    font-size: 0.8rem;
+.player-card:hover {
+    background: #f0f1f2;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-#playerDetailsTable tbody td {
-    padding: 12px;
+/* Pick number - bold */
+.pick-number {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #222;
+    min-width: 30px;
+    text-align: center;
 }
 
-/* Player rows in modal */
-.player-name-cell {
-    font-weight: 600;
+/* Player photo */
+.player-photo {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.player-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Player info section - ~30% width */
+.player-info {
+    flex: 0 0 30%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.player-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Player name - bold */
+.player-name {
+    font-size: 1rem;
+    font-weight: 700;
     color: #222;
 }
 
-.position-cell {
+/* NHL team logo - small */
+.nhl-team-logo {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.player-position {
     color: #ff2e2e;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+}
+
+/* Stats row */
+.player-stats-row {
+    display: flex;
+    gap: 12px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.player-stats-row span {
+    white-space: nowrap;
+}
+
+/* Points section - right side */
+.player-points {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Today points - bold */
+.today-points {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #666;
+}
+
+/* Total points - bold */
+.total-points {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ff2e2e;
+    min-width: 50px;
+    text-align: right;
 }
 
 /* Responsive Design */
@@ -400,6 +490,22 @@ tbody td:first-child {
 
     .modal-body {
         padding: 15px;
+    }
+
+    /* Adjust player cards for mobile */
+    .player-card {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .player-info {
+        flex: 1 1 100%;
+    }
+
+    .player-points {
+        margin-left: 0;
+        width: 100%;
+        justify-content: space-between;
     }
 }
 
