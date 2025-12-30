@@ -459,12 +459,15 @@ function updateTable() {
         `);
         $("#playerTable tbody").empty();
 
-        // Use localStorage to persist confetti state for this specific draft
+        // Use localStorage to persist confetti state for this specific draft (per user)
         const confettiKey = `confettiFired_${currentClan}`;
         if (!localStorage.getItem(confettiKey)) {
             localStorage.setItem(confettiKey, 'true');
             launchConfetti();
         }
+
+        // Show finish button for everyone when draft is complete
+        document.getElementById("finishButton").style.display = "block";
 
         return;
     }
@@ -1215,12 +1218,6 @@ function launchConfetti() {
 
         if (timeLeft <= 0) {
             clearInterval(interval);
-            // Only show finish button if we just launched confetti (not when consulting)
-            const finishButtonKey = `finishButtonShown_${currentClan}`;
-            if (!localStorage.getItem(finishButtonKey)) {
-                localStorage.setItem(finishButtonKey, 'true');
-                document.getElementById("finishButton").style.display = "block";
-            }
             return;
         }
 
