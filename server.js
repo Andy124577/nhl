@@ -102,36 +102,6 @@ app.post("/leave-team", async (req, res) => {
     }
 });
 
-// ✅ Route to Create a Clan
-app.post("/create-clan", (req, res) => {
-    const { name, maxPlayers } = req.body;
-    let draftData = loadDraftData();
-
-    if (draftData[name]) {
-        return res.status(400).json({ message: "Ce clan existe déjà !" });
-    }
-
-    const teams = {};
-    for (let i = 1; i <= 10; i++) {
-        teams[`Équipe ${i}`] = { members: [], offensive: [], defensive: [] };
-    }
-
-    draftData[name] = {
-        maxPlayers: parseInt(maxPlayers),
-        draftOrder: [],
-        currentPickIndex: 0, // ✅ Ajouté ici
-        teams
-    };
-
-    saveDraftData(draftData);
-    setTimeout(() => {
-        io.emit("draftUpdated", draftData);
-    }, 2000);
-
-    res.json({ message: `Clan ${name} créé avec succès !`, draftData });
-});
-
-
 // ✅ Route to Join a Clan
 app.post("/join-clan", (req, res) => {
     const { name, username } = req.body;
@@ -368,24 +338,34 @@ app.get("/draft-order/:clanName", (req, res) => {
 // 🔥 Route pour créer un clan
 app.post("/create-clan", async (req, res) => {
     try {
-        const { name, maxPlayers } = req.body;
+        const { name, maxPlayers, config } = req.body;
         let draftData = loadDraftData();
 
         if (draftData[name]) {
             return res.status(400).json({ message: "Ce clan existe déjà !" });
         }
 
+        // Default configuration values if not provided
+        const poolConfig = config || {
+            numOffensive: 6,
+            numDefensive: 4,
+            numGoalies: 1,
+            numRookies: 1,
+            numTeams: 1
+        };
+
         // 🔥 Initialize 10 teams for the new clan
         let teams = {};
         for (let i = 1; i <= 10; i++) {
-            teams[`Équipe ${i}`] = { members: [], offensive: [], defensive: [] };
+            teams[`Équipe ${i}`] = { members: [], offensive: [], defensive: [], goalie: [], rookie: [], teams: [] };
         }
 
         draftData[name] = {
             maxPlayers: parseInt(maxPlayers),
             draftOrder: [],
             currentPickIndex: 0,
-            lastPickIndex: -1, // ✅ Ajouté ici
+            lastPickIndex: -1,
+            config: poolConfig, // Store pool configuration
             teams
         };
 

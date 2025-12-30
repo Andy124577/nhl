@@ -129,7 +129,12 @@ async function loadClans() {
 // 🏗️ Créer un clan
 async function createClan() {
     const clanName = $("#clanName").val();
-    const maxPlayers = $("#maxPlayers").val();
+    const maxPlayers = parseInt($("#maxPlayers").val());
+    const numOffensive = parseInt($("#numOffensive").val());
+    const numDefensive = parseInt($("#numDefensive").val());
+    const numGoalies = parseInt($("#numGoalies").val());
+    const numRookies = parseInt($("#numRookies").val());
+    const numTeams = parseInt($("#numTeams").val());
     const username = localStorage.getItem("username");
 
     if (!clanName || !maxPlayers) {
@@ -137,18 +142,50 @@ async function createClan() {
         return;
     }
 
+    // Validation des valeurs
+    if (numOffensive < 0 || numDefensive < 0 || numGoalies < 0 || numRookies < 0 || numTeams < 0) {
+        alert("Les valeurs de configuration ne peuvent pas être négatives !");
+        return;
+    }
+
+    const poolConfig = {
+        name: clanName,
+        maxPlayers: maxPlayers,
+        username: username,
+        config: {
+            numOffensive: numOffensive,
+            numDefensive: numDefensive,
+            numGoalies: numGoalies,
+            numRookies: numRookies,
+            numTeams: numTeams
+        }
+    };
+
     try {
-        await fetch(`${BASE_URL}/create-clan`, {
+        const response = await fetch(`${BASE_URL}/create-clan`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: clanName, maxPlayers: parseInt(maxPlayers), username })
+            body: JSON.stringify(poolConfig)
         });
 
-        console.log("✅ Clan créé avec succès !");
-        await loadClans(); // 🔄 Recharge immédiatement les données
+        if (response.ok) {
+            console.log("✅ Pool créé avec succès !");
+            // Clear form
+            $("#clanName").val("");
+            $("#numOffensive").val("6");
+            $("#numDefensive").val("4");
+            $("#numGoalies").val("1");
+            $("#numRookies").val("1");
+            $("#numTeams").val("1");
+            await loadClans(); // 🔄 Recharge immédiatement les données
+        } else {
+            const error = await response.json();
+            alert(`Erreur lors de la création du pool: ${error.message || 'Erreur inconnue'}`);
+        }
 
     } catch (error) {
         console.error("❌ Erreur lors de la création du clan :", error);
+        alert("Erreur de connexion au serveur");
     }
 }
 
