@@ -1,0 +1,325 @@
+{
+  "lastUpdated": "2025-12-30T19:07:10.621Z",
+  "teams": [
+    {
+      "teamFullName": "Colorado Avalanche",
+      "teamAbbrev": "COL",
+      "gamesPlayed": 38,
+      "wins": 29,
+      "losses": 2,
+      "otLosses": 7,
+      "points": 65,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Dallas Stars",
+      "teamAbbrev": "DAL",
+      "gamesPlayed": 39,
+      "wins": 25,
+      "losses": 7,
+      "otLosses": 7,
+      "points": 57,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Minnesota Wild",
+      "teamAbbrev": "MIN",
+      "gamesPlayed": 40,
+      "wins": 24,
+      "losses": 10,
+      "otLosses": 6,
+      "points": 54,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Carolina Hurricanes",
+      "teamAbbrev": "CAR",
+      "gamesPlayed": 38,
+      "wins": 24,
+      "losses": 11,
+      "otLosses": 3,
+      "points": 51,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Detroit Red Wings",
+      "teamAbbrev": "DET",
+      "gamesPlayed": 40,
+      "wins": 23,
+      "losses": 14,
+      "otLosses": 3,
+      "points": 49,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Tampa Bay Lightning",
+      "teamAbbrev": "TBL",
+      "gamesPlayed": 38,
+      "wins": 22,
+      "losses": 13,
+      "otLosses": 3,
+      "points": 47,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Montréal Canadiens",
+      "teamAbbrev": "MTL",
+      "gamesPlayed": 38,
+      "wins": 20,
+      "losses": 12,
+      "otLosses": 6,
+      "points": 46,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "New York Islanders",
+      "teamAbbrev": "NYI",
+      "gamesPlayed": 39,
+      "wins": 21,
+      "losses": 14,
+      "otLosses": 4,
+      "points": 46,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Edmonton Oilers",
+      "teamAbbrev": "EDM",
+      "gamesPlayed": 40,
+      "wins": 20,
+      "losses": 14,
+      "otLosses": 6,
+      "points": 46,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Vegas Golden Knights",
+      "teamAbbrev": "VGK",
+      "gamesPlayed": 37,
+      "wins": 17,
+      "losses": 9,
+      "otLosses": 11,
+      "points": 45,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Philadelphia Flyers",
+      "teamAbbrev": "PHI",
+      "gamesPlayed": 37,
+      "wins": 19,
+      "losses": 11,
+      "otLosses": 7,
+      "points": 45,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Washington Capitals",
+      "teamAbbrev": "WSH",
+      "gamesPlayed": 39,
+      "wins": 20,
+      "losses": 14,
+      "otLosses": 5,
+      "points": 45,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Florida Panthers",
+      "teamAbbrev": "FLA",
+      "gamesPlayed": 38,
+      "wins": 21,
+      "losses": 15,
+      "otLosses": 2,
+      "points": 44,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Buffalo Sabres",
+      "teamAbbrev": "BUF",
+      "gamesPlayed": 38,
+      "wins": 20,
+      "losses": 14,
+      "otLosses": 4,
+      "points": 44,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Anaheim Ducks",
+      "teamAbbrev": "ANA",
+      "gamesPlayed": 39,
+      "wins": 21,
+      "losses": 16,
+      "otLosses": 2,
+      "points": 44,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "New York Rangers",
+      "teamAbbrev": "NYR",
+      "gamesPlayed": 41,
+      "wins": 19,
+      "losses": 17,
+      "otLosses": 5,
+      "points": 43,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "New Jersey Devils",
+      "teamAbbrev": "NJD",
+      "gamesPlayed": 38,
+      "wins": 20,
+      "losses": 16,
+      "otLosses": 2,
+      "points": 42,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Boston Bruins",
+      "teamAbbrev": "BOS",
+      "gamesPlayed": 40,
+      "wins": 20,
+      "losses": 18,
+      "otLosses": 2,
+      "points": 42,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Pittsburgh Penguins",
+      "teamAbbrev": "PIT",
+      "gamesPlayed": 37,
+      "wins": 16,
+      "losses": 12,
+      "otLosses": 9,
+      "points": 41,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Ottawa Senators",
+      "teamAbbrev": "OTT",
+      "gamesPlayed": 38,
+      "wins": 18,
+      "losses": 15,
+      "otLosses": 5,
+      "points": 41,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Los Angeles Kings",
+      "teamAbbrev": "LAK",
+      "gamesPlayed": 38,
+      "wins": 16,
+      "losses": 13,
+      "otLosses": 9,
+      "points": 41,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "San Jose Sharks",
+      "teamAbbrev": "SJS",
+      "gamesPlayed": 39,
+      "wins": 19,
+      "losses": 17,
+      "otLosses": 3,
+      "points": 41,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Toronto Maple Leafs",
+      "teamAbbrev": "TOR",
+      "gamesPlayed": 38,
+      "wins": 17,
+      "losses": 15,
+      "otLosses": 6,
+      "points": 40,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Columbus Blue Jackets",
+      "teamAbbrev": "CBJ",
+      "gamesPlayed": 38,
+      "wins": 17,
+      "losses": 15,
+      "otLosses": 6,
+      "points": 40,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Seattle Kraken",
+      "teamAbbrev": "SEA",
+      "gamesPlayed": 37,
+      "wins": 16,
+      "losses": 14,
+      "otLosses": 7,
+      "points": 39,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Utah Mammoth",
+      "teamAbbrev": "UTA",
+      "gamesPlayed": 40,
+      "wins": 18,
+      "losses": 19,
+      "otLosses": 3,
+      "points": 39,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Nashville Predators",
+      "teamAbbrev": "NSH",
+      "gamesPlayed": 38,
+      "wins": 17,
+      "losses": 17,
+      "otLosses": 4,
+      "points": 38,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Calgary Flames",
+      "teamAbbrev": "CGY",
+      "gamesPlayed": 39,
+      "wins": 17,
+      "losses": 18,
+      "otLosses": 4,
+      "points": 38,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "St. Louis Blues",
+      "teamAbbrev": "STL",
+      "gamesPlayed": 40,
+      "wins": 15,
+      "losses": 17,
+      "otLosses": 8,
+      "points": 38,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Vancouver Canucks",
+      "teamAbbrev": "VAN",
+      "gamesPlayed": 38,
+      "wins": 16,
+      "losses": 19,
+      "otLosses": 3,
+      "points": 35,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Winnipeg Jets",
+      "teamAbbrev": "WPG",
+      "gamesPlayed": 37,
+      "wins": 15,
+      "losses": 18,
+      "otLosses": 4,
+      "points": 34,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    },
+    {
+      "teamFullName": "Chicago Blackhawks",
+      "teamAbbrev": "CHI",
+      "gamesPlayed": 38,
+      "wins": 14,
+      "losses": 18,
+      "otLosses": 6,
+      "points": 34,
+      "lastUpdated": "2025-12-30T19:07:10.621Z"
+    }
+  ]
+}
