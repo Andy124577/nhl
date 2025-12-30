@@ -5,6 +5,27 @@
     position: sticky;
     top: 0;
     z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.navbar-logo {
+    height: 45px;
+    width: auto;
+}
+
+.navbar-title {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
 }
 
 .navbar ul {
@@ -312,6 +333,27 @@
 
 
     @media screen and (max-width: 768px) {
+        .navbar {
+            padding: 10px 15px;
+        }
+
+        .navbar-logo {
+            height: 35px;
+        }
+
+        .navbar-title {
+            font-size: 1.2rem;
+        }
+
+        .navbar ul {
+            gap: 15px;
+        }
+
+        .navbar a {
+            font-size: 0.9rem;
+            padding: 6px 12px;
+        }
+
         .page-header h1 {
             font-size: 1.8rem;
         }
@@ -354,6 +396,14 @@
     }
 
     @media screen and (max-width: 480px) {
+        .navbar-title {
+            display: none;
+        }
+
+        .navbar ul {
+            gap: 10px;
+        }
+
         .page-header {
             padding: 30px 15px;
         }
