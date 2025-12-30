@@ -808,11 +808,19 @@ function loadAllPlayers() {
         const data = JSON.parse(fs.readFileSync(NHL_STATS_FILE, "utf-8"));
         const allPlayers = [];
 
-        // Combine all sections
-        if (data.Top_50_Defenders) allPlayers.push(...data.Top_50_Defenders);
-        if (data.Top_100_Offensive_Players) allPlayers.push(...data.Top_100_Offensive_Players);
-        if (data.Top_Rookies) allPlayers.push(...data.Top_Rookies);
-        if (data.Top_50_Goalies) allPlayers.push(...data.Top_50_Goalies);
+        // Combine all sections and mark goalies
+        if (data.Top_50_Defenders) {
+            allPlayers.push(...data.Top_50_Defenders.map(p => ({ ...p, isGoalie: false })));
+        }
+        if (data.Top_100_Offensive_Players) {
+            allPlayers.push(...data.Top_100_Offensive_Players.map(p => ({ ...p, isGoalie: false })));
+        }
+        if (data.Top_Rookies) {
+            allPlayers.push(...data.Top_Rookies.map(p => ({ ...p, isGoalie: false })));
+        }
+        if (data.Top_50_Goalies) {
+            allPlayers.push(...data.Top_50_Goalies.map(p => ({ ...p, isGoalie: true })));
+        }
 
         console.log(`✅ Loaded ${allPlayers.length} players from NHL stats file`);
         return allPlayers;
@@ -823,7 +831,7 @@ function loadAllPlayers() {
 }
 
 // Function to fetch current season stats from NHL API
-async function fetchCurrentStatsForPlayer(playerId, playerName) {
+async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false) {
     try {
         const url = `https://api-web.nhle.com/v1/player/${playerId}/landing`;
         const response = await fetch(url);
@@ -843,6 +851,22 @@ async function fetchCurrentStatsForPlayer(playerId, playerName) {
             return null;
         }
 
+        let calculatedPoints;
+        let wins = 0;
+        let shutouts = 0;
+        let otLosses = 0;
+
+        if (isGoalie) {
+            // Goalie scoring: shutouts = 5pts, wins = 2pts, OTL = 1pt
+            wins = seasonStats.wins || 0;
+            shutouts = seasonStats.shutouts || 0;
+            otLosses = seasonStats.otLosses || 0;
+            calculatedPoints = (shutouts * 5) + (wins * 2) + (otLosses * 1);
+        } else {
+            // Skater: use regular points (goals + assists)
+            calculatedPoints = seasonStats.points || 0;
+        }
+
         // Return structured stats
         return {
             playerId: playerId,
@@ -850,9 +874,12 @@ async function fetchCurrentStatsForPlayer(playerId, playerName) {
             teamAbbrev: data.currentTeamAbbrev || "N/A",
             position: data.position || "N/A",
             gamesPlayed: seasonStats.gamesPlayed || 0,
-            goals: seasonStats.goals || 0,
-            assists: seasonStats.assists || 0,
-            points: seasonStats.points || 0,
+            goals: isGoalie ? wins : (seasonStats.goals || 0),
+            assists: isGoalie ? shutouts : (seasonStats.assists || 0),
+            wins: wins,
+            shutouts: shutouts,
+            otLosses: otLosses,
+            points: calculatedPoints,
             lastUpdated: new Date().toISOString()
         };
     } catch (error) {
@@ -875,11 +902,13 @@ async function updateCurrentStats() {
     // Fetch stats for each player with delay to avoid rate limiting
     for (let i = 0; i < allPlayers.length; i++) {
         const player = allPlayers[i];
-        console.log(`Fetching ${i + 1}/${allPlayers.length}: ${player.skaterFullName || player.goalieFullName}`);
+        const playerName = player.skaterFullName || player.goalieFullName;
+        console.log(`Fetching ${i + 1}/${allPlayers.length}: ${playerName}`);
 
         const stats = await fetchCurrentStatsForPlayer(
             player.playerId,
-            player.skaterFullName || player.goalieFullName
+            playerName,
+            player.isGoalie
         );
 
         if (stats) {
