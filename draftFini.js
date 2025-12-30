@@ -191,7 +191,10 @@ function renderTeamStatsTable(teams) {
                         gp: player.gamesPlayed || 0,
                         g: player.goals || 0,
                         a: player.assists || 0,
-                        pts: player.points || 0
+                        pts: player.points || 0,
+                        playerId: player.playerId,
+                        teamAbbrev: player.teamAbbrevs,
+                        type: 'player'
                     });
                 }
             });
@@ -209,7 +212,30 @@ function renderTeamStatsTable(teams) {
                         gp: goalie.gamesPlayed || 0,
                         g: goalie.wins || 0,
                         a: goalie.shutouts || 0,
-                        pts: goalie.points || 0
+                        pts: goalie.points || 0,
+                        playerId: goalie.playerId,
+                        teamAbbrev: goalie.teamAbbrevs,
+                        type: 'goalie'
+                    });
+                }
+            });
+
+            // Add teams
+            (team.teams || []).forEach(teamName => {
+                const nhlTeam = teamData.find(t => t.teamFullName === teamName);
+                if (nhlTeam) {
+                    totalGP += nhlTeam.gamesPlayed || 0;
+                    totalPTS += nhlTeam.points || 0;
+
+                    playerDetails.push({
+                        name: nhlTeam.teamFullName,
+                        position: 'TEAM',
+                        gp: nhlTeam.gamesPlayed || 0,
+                        g: nhlTeam.wins || 0,
+                        a: nhlTeam.losses || 0,
+                        pts: nhlTeam.points || 0,
+                        teamAbbrev: nhlTeam.teamAbbrevs,
+                        type: 'team'
                     });
                 }
             });
@@ -263,21 +289,52 @@ function showPlayerDetails(teamName, rowIndex) {
     // Set modal title
     document.getElementById("modalTeamName").textContent = `${teamName} - Détails des joueurs`;
 
-    // Populate player details table
-    const playerDetailsBody = document.getElementById("playerDetailsBody");
-    playerDetailsBody.innerHTML = "";
+    // Populate player details list
+    const playerDetailsList = document.getElementById("playerDetailsList");
+    playerDetailsList.innerHTML = "";
 
-    playerDetails.forEach(player => {
-        const playerRow = document.createElement('tr');
-        playerRow.innerHTML = `
-            <td class="player-name-cell">${player.name}</td>
-            <td class="position-cell">${player.position}</td>
-            <td>${player.gp}</td>
-            <td>${player.g}</td>
-            <td>${player.a}</td>
-            <td class="stats-pts">${player.pts}</td>
+    playerDetails.forEach((player, index) => {
+        const pickNumber = index + 1;
+
+        // Get photo URL
+        let photoUrl;
+        if (player.type === 'team') {
+            photoUrl = `https://assets.nhle.com/logos/nhl/svg/${player.teamAbbrev}_light.svg`;
+        } else {
+            photoUrl = `https://assets.nhle.com/mugs/nhl/20242025/${player.playerId}.png`;
+        }
+
+        // Get NHL team logo URL (small)
+        const teamLogoUrl = player.teamAbbrev
+            ? `https://assets.nhle.com/logos/nhl/svg/${player.teamAbbrev}_light.svg`
+            : '';
+
+        const playerCard = document.createElement('div');
+        playerCard.className = 'player-card';
+        playerCard.innerHTML = `
+            <div class="pick-number">${pickNumber}</div>
+            <div class="player-photo">
+                <img src="${photoUrl}" alt="${player.name}" onerror="this.style.display='none'">
+            </div>
+            <div class="player-info">
+                <div class="player-name-row">
+                    <span class="player-name">${player.name}</span>
+                    ${teamLogoUrl ? `<img src="${teamLogoUrl}" class="nhl-team-logo" alt="${player.teamAbbrev}">` : ''}
+                    <span class="player-position">${player.position}</span>
+                </div>
+                <div class="player-stats-row">
+                    <span>GP: ${player.gp}</span>
+                    <span>G: ${player.g}</span>
+                    <span>A: ${player.a}</span>
+                    <span>PTS: ${player.pts}</span>
+                </div>
+            </div>
+            <div class="player-points">
+                <span class="today-points">+0</span>
+                <span class="total-points">${player.pts}</span>
+            </div>
         `;
-        playerDetailsBody.appendChild(playerRow);
+        playerDetailsList.appendChild(playerCard);
     });
 
     // Show modal
