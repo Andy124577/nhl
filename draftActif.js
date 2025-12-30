@@ -754,18 +754,36 @@ function checkIfUserTeamIsDone() {
     const userTeam = getUserTeam();
     if (!userTeam || !draftData.teams[userTeam]) return false;
 
+    // Get pool configuration, fallback to defaults if not set
+    const config = draftData.config || {
+        numOffensive: 6,
+        numDefensive: 4,
+        numGoalies: 1,
+        numRookies: 1,
+        numTeams: 1
+    };
+
     const team = draftData.teams[userTeam];
     return (
-        team.offensive.length === 6 &&
-        team.defensive.length === 4 &&
-        team.rookie?.length === 1 &&
-        team.goalie?.length === 1 &&
-        team.teams?.length === 1
+        team.offensive.length === config.numOffensive &&
+        team.defensive.length === config.numDefensive &&
+        team.rookie?.length === config.numRookies &&
+        team.goalie?.length === config.numGoalies &&
+        team.teams?.length === config.numTeams
     );
 }
 
 function checkIfAllTeamsAreDone() {
     if (!draftData || !draftData.teams) return false;
+
+    // Get pool configuration, fallback to defaults if not set
+    const config = draftData.config || {
+        numOffensive: 6,
+        numDefensive: 4,
+        numGoalies: 1,
+        numRookies: 1,
+        numTeams: 1
+    };
 
     // Check only teams with members (active teams in the draft)
     const activeTeams = Object.values(draftData.teams).filter(team =>
@@ -776,11 +794,11 @@ function checkIfAllTeamsAreDone() {
 
     return activeTeams.every(team => {
         return (
-            (team.offensive || []).length === 6 &&
-            (team.defensive || []).length === 4 &&
-            (team.rookie || []).length === 1 &&
-            (team.goalie || []).length === 1 &&
-            (team.teams || []).length === 1
+            (team.offensive || []).length === config.numOffensive &&
+            (team.defensive || []).length === config.numDefensive &&
+            (team.rookie || []).length === config.numRookies &&
+            (team.goalie || []).length === config.numGoalies &&
+            (team.teams || []).length === config.numTeams
         );
     });
 }
@@ -930,19 +948,28 @@ function updateProgressCounter() {
 
     const team = draftData.teams[userTeam];
 
-    // Define requirements
+    // Get pool configuration, fallback to defaults if not set
+    const config = draftData.config || {
+        numOffensive: 6,
+        numDefensive: 4,
+        numGoalies: 1,
+        numRookies: 1,
+        numTeams: 1
+    };
+
+    // Define requirements using dynamic config
     const requirements = {
-        offensive: { current: (team.offensive || []).length, max: 6 },
-        defensive: { current: (team.defensive || []).length, max: 4 },
-        rookie: { current: (team.rookie || []).length, max: 1 },
-        goalie: { current: (team.goalie || []).length, max: 1 },
-        team: { current: (team.teams || []).length, max: 1 }
+        offensive: { current: (team.offensive || []).length, max: config.numOffensive },
+        defensive: { current: (team.defensive || []).length, max: config.numDefensive },
+        rookie: { current: (team.rookie || []).length, max: config.numRookies },
+        goalie: { current: (team.goalie || []).length, max: config.numGoalies },
+        team: { current: (team.teams || []).length, max: config.numTeams }
     };
 
     // Update each progress bar and counter
     Object.keys(requirements).forEach(type => {
         const req = requirements[type];
-        const percentage = (req.current / req.max) * 100;
+        const percentage = req.max > 0 ? (req.current / req.max) * 100 : 0;
 
         // Update mini progress bar width
         $(`#mini-progress-${type}`).css('width', `${percentage}%`);
