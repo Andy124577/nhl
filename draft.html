@@ -20,12 +20,56 @@
         </ul>
     </nav>
 
-    <h2>NHL Draft</h2>
-    <section class="draft-selection">
-        <h3>Choisissez un draft actif</h3>
-        <div id="draftOptions" class="draft-container">
-            <p>Chargement des drafts actifs...</p>
-        </div>
-    </section>
+    <div class="page-header">
+        <h1>NHL Draft</h1>
+        <p>Participez aux drafts actifs et consultez les classements</p>
+    </div>
+
+    <!-- Sub-navigation tabs -->
+    <div class="sub-navbar">
+        <button class="sub-nav-btn active" onclick="showTab('active')">Draft actif</button>
+        <button class="sub-nav-btn" onclick="showTab('standings')">Classement</button>
+    </div>
+
+    <!-- Active Drafts Section -->
+    <div id="active-tab" class="tab-content active">
+        <section class="draft-section">
+            <h2>Drafts actifs</h2>
+            <div id="activeDrafts" class="draft-container">
+                <p>Chargement des drafts actifs...</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Standings Section -->
+    <div id="standings-tab" class="tab-content">
+        <section class="draft-section">
+            <h2>Classements finaux</h2>
+            <div id="finishedDrafts" class="draft-container">
+                <p>Chargement des classements...</p>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.sub-nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+    </script>
 </body>
 </html>

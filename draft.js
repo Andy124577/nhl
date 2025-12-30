@@ -135,11 +135,15 @@ async function loadActiveDrafts() {
         const result = await response.json();
 
         if (!result.activeDrafts || result.activeDrafts.length === 0) {
-            document.getElementById("draftOptions").innerHTML = "<p>Aucun draft actif pour vous.</p>";
+            document.getElementById("activeDrafts").innerHTML = "<p>Aucun draft actif pour vous.</p>";
+            document.getElementById("finishedDrafts").innerHTML = "<p>Aucun draft terminé.</p>";
             return;
         }
 
-        let draftHTML = "";
+        // Separate drafts into active and finished
+        const activeDraftsList = [];
+        const finishedDraftsList = [];
+
         result.activeDrafts.forEach(clanName => {
             const clan = allDrafts[clanName];
 
@@ -168,20 +172,51 @@ async function loadActiveDrafts() {
                 );
             }
 
-            draftHTML += `
-                <div class="draft-card">
-                    <h4>${clanName}</h4>
-                    <button onclick="${isDraftComplete ? `viewFinishedDraft('${clanName}')` : `joinDraft('${clanName}')`}">
-                        ${isDraftComplete ? "Consulter" : "Rejoindre"}
-                    </button>
-                </div>
-            `;
+            if (isDraftComplete) {
+                finishedDraftsList.push(clanName);
+            } else {
+                activeDraftsList.push(clanName);
+            }
         });
 
-        document.getElementById("draftOptions").innerHTML = draftHTML;
+        // Populate Active Drafts tab
+        if (activeDraftsList.length === 0) {
+            document.getElementById("activeDrafts").innerHTML = "<p style='text-align: center; color: #666; padding: 20px;'>Aucun draft actif en cours.</p>";
+        } else {
+            let activeDraftsHTML = "";
+            activeDraftsList.forEach(clanName => {
+                activeDraftsHTML += `
+                    <div class="draft-card">
+                        <h4>${clanName}</h4>
+                        <p>Draft en cours - Sélections en attente</p>
+                        <button onclick="joinDraft('${clanName}')">Rejoindre</button>
+                    </div>
+                `;
+            });
+            document.getElementById("activeDrafts").innerHTML = activeDraftsHTML;
+        }
+
+        // Populate Finished Drafts tab
+        if (finishedDraftsList.length === 0) {
+            document.getElementById("finishedDrafts").innerHTML = "<p style='text-align: center; color: #666; padding: 20px;'>Aucun draft terminé.</p>";
+        } else {
+            let finishedDraftsHTML = "";
+            finishedDraftsList.forEach(clanName => {
+                finishedDraftsHTML += `
+                    <div class="draft-card">
+                        <h4>${clanName}</h4>
+                        <p>Draft terminé - Classement disponible</p>
+                        <button onclick="viewFinishedDraft('${clanName}')">Consulter</button>
+                    </div>
+                `;
+            });
+            document.getElementById("finishedDrafts").innerHTML = finishedDraftsHTML;
+        }
 
     } catch (error) {
         console.error("❌ Erreur lors du chargement des drafts actifs :", error);
+        document.getElementById("activeDrafts").innerHTML = "<p style='text-align: center; color: #ff2e2e;'>Erreur de chargement.</p>";
+        document.getElementById("finishedDrafts").innerHTML = "<p style='text-align: center; color: #ff2e2e;'>Erreur de chargement.</p>";
     }
 }
 
