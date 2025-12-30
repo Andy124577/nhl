@@ -477,11 +477,26 @@ tbody td:first-child {
     gap: 20px;
 }
 
+.player-points > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
 /* Today points - bold */
 .today-points {
     font-size: 1rem;
     font-weight: 700;
     color: #666;
+}
+
+.today-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Total points - bold */
@@ -490,7 +505,15 @@ tbody td:first-child {
     font-weight: 700;
     color: #ff2e2e;
     min-width: 50px;
-    text-align: right;
+    text-align: center;
+}
+
+.pts-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #ff2e2e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Responsive Design */

@@ -1,43 +1,43 @@
 .navbar {
-    background-color: #ff2e2e;
-    padding: 10px 20px;
-    margin: 0 -20px 20px; /* adjust for body padding */
-    border-radius: 0 0 10px 10px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    }
+    background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%);
+    padding: 12px 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
 
-    .navbar ul {
-        list-style-type: none;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        justify-content: center;
-        gap: 30px;
-    }
+.navbar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+}
 
-    .navbar li {
-        display: inline;
-    }
+.navbar li {
+    display: inline;
+}
 
-    .navbar a {
-        text-decoration: none;
-        color: white;
-        font-weight: bold;
-        font-size: 1rem;
-        padding: 5px 10px;
-        transition: background-color 0.2s ease;
-    }
+.navbar a {
+    text-decoration: none;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
 
-    .navbar a:hover {
-        background-color: #cc2525;
-        border-radius: 5px;
-    }
+.navbar a:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
 
-    .navbar .active a {
-        background-color: white;
-        color: #ff2e2e;
-        border-radius: 5px;
-    }
+.navbar .active a {
+    background-color: white;
+    color: #ff2e2e;
+}
 
     /* Admin dropdown styles */
     .admin-dropdown-container {

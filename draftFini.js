@@ -497,8 +497,14 @@ function showPlayerDetails(teamName, rowIndex) {
                 </div>
             </div>
             <div class="player-points">
-                <span class="today-points">${player.todayPoints > 0 ? '+' : ''}${player.todayPoints || 0}</span>
-                <span class="total-points">${player.pts}</span>
+                <div>
+                    <span class="today-points">${player.todayPoints > 0 ? '+' : ''}${player.todayPoints || 0}</span>
+                    <span class="today-label">Today</span>
+                </div>
+                <div>
+                    <span class="total-points">${player.pts}</span>
+                    <span class="pts-label">PTS</span>
+                </div>
             </div>
         `;
         playerDetailsList.appendChild(playerCard);
