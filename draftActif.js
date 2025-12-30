@@ -765,10 +765,14 @@ function checkIfUserTeamIsDone() {
 function checkIfAllTeamsAreDone() {
     if (!draftData || !draftData.teams) return false;
 
-    // Check if every team has completed their requirements
-    const allTeams = Object.values(draftData.teams);
+    // Check only teams with members (active teams in the draft)
+    const activeTeams = Object.values(draftData.teams).filter(team =>
+        team.members && team.members.length > 0
+    );
 
-    return allTeams.every(team => {
+    if (activeTeams.length === 0) return false;
+
+    return activeTeams.every(team => {
         return (
             (team.offensive || []).length === 6 &&
             (team.defensive || []).length === 4 &&
