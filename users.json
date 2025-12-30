@@ -38,5 +38,13 @@
   {
     "username": "3",
     "password": "$2b$10$Ke9A367dI2duOkPr3YNhw.f8jsCVA5ufK6KWXAKW7p1jjm6JxqNyq"
+  },
+  {
+    "username": "aaa",
+    "password": "$2b$10$IupsISCycoT5vX0YB8kwAuYTfbdXIeXLNv4rHt6jjcaQeACWZE/PO"
+  },
+  {
+    "username": "bbb",
+    "password": "$2b$10$VeUqhcZ3qrjRg0uj8htnsOB8DzYwh3cfnpxKAiq7TZc0fc7aQn7Wu"
   }
 ]
