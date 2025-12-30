@@ -30,77 +30,91 @@
         <p>Créez et rejoignez des pools de hockey</p>
     </div>
 
-    <div id="clan-options" class="create-pool-container">
-        <h2>Créer un nouveau pool</h2>
-
-        <div class="form-group">
-            <label for="clanName">Nom du pool</label>
-            <input type="text" id="clanName" placeholder="Ex: Pool des champions 2025" required>
-        </div>
-
-        <div class="form-section">
-            <h3>Configuration des sélections</h3>
-            <p class="section-description">Définissez combien de joueurs chaque équipe doit sélectionner</p>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="numOffensive">Attaquants</label>
-                    <input type="number" id="numOffensive" value="6" min="0" max="20">
-                </div>
-
-                <div class="form-group">
-                    <label for="numDefensive">Défenseurs</label>
-                    <input type="number" id="numDefensive" value="4" min="0" max="20">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="numGoalies">Gardiens</label>
-                    <input type="number" id="numGoalies" value="1" min="0" max="10">
-                </div>
-
-                <div class="form-group">
-                    <label for="numRookies">Rookies</label>
-                    <input type="number" id="numRookies" value="1" min="0" max="10">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="numTeams">Équipes NHL</label>
-                    <input type="number" id="numTeams" value="1" min="0" max="10">
-                </div>
-            </div>
-        </div>
-
-        <div class="form-section">
-            <h3>Nombre de participants</h3>
-            <div class="form-group">
-                <label for="maxPlayers">Maximum de participants</label>
-                <select id="maxPlayers">
-                    <option value="2">2 participants</option>
-                    <option value="3">3 participants</option>
-                    <option value="4">4 participants</option>
-                    <option value="5">5 participants</option>
-                    <option value="6">6 participants</option>
-                    <option value="7">7 participants</option>
-                    <option value="8">8 participants</option>
-                    <option value="9">9 participants</option>
-                    <option value="10">10 participants</option>
-                </select>
-            </div>
-        </div>
-
-        <button class="create-btn" onclick="createClan()">Créer le pool</button>
+    <!-- Sub-navigation tabs -->
+    <div class="sub-navbar">
+        <button class="sub-nav-btn active" onclick="showTab('create')">Créer un pool</button>
+        <button class="sub-nav-btn" onclick="showTab('mypools')">Mes pools</button>
+        <button class="sub-nav-btn" onclick="showTab('available')">Pools disponibles</button>
     </div>
 
-    <div class="pools-container">
+    <!-- Create Pool Section -->
+    <div id="create-tab" class="tab-content active">
+        <div id="clan-options" class="create-pool-container">
+            <h2>Créer un nouveau pool</h2>
+
+            <div class="form-group">
+                <label for="clanName">Nom du pool</label>
+                <input type="text" id="clanName" placeholder="Ex: Pool des champions 2025" required>
+            </div>
+
+            <div class="form-section">
+                <h3>Configuration des sélections</h3>
+                <p class="section-description">Définissez combien de joueurs chaque équipe doit sélectionner</p>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="numOffensive">Attaquants</label>
+                        <input type="number" id="numOffensive" value="6" min="0" max="20">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="numDefensive">Défenseurs</label>
+                        <input type="number" id="numDefensive" value="4" min="0" max="20">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="numGoalies">Gardiens</label>
+                        <input type="number" id="numGoalies" value="1" min="0" max="10">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="numRookies">Rookies</label>
+                        <input type="number" id="numRookies" value="1" min="0" max="10">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="numTeams">Équipes NHL</label>
+                        <input type="number" id="numTeams" value="1" min="0" max="10">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Nombre de participants</h3>
+                <div class="form-group">
+                    <label for="maxPlayers">Maximum de participants</label>
+                    <select id="maxPlayers">
+                        <option value="2">2 participants</option>
+                        <option value="3">3 participants</option>
+                        <option value="4">4 participants</option>
+                        <option value="5">5 participants</option>
+                        <option value="6">6 participants</option>
+                        <option value="7">7 participants</option>
+                        <option value="8">8 participants</option>
+                        <option value="9">9 participants</option>
+                        <option value="10">10 participants</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="create-btn" onclick="createClan()">Créer le pool</button>
+        </div>
+    </div>
+
+    <!-- My Pools Section -->
+    <div id="mypools-tab" class="tab-content">
         <div class="pool-section">
             <h2>Mes pools</h2>
             <ul id="clans-list" class="pool-list"></ul>
         </div>
+    </div>
 
+    <!-- Available Pools Section -->
+    <div id="available-tab" class="tab-content">
         <div class="pool-section">
             <h2>Pools disponibles</h2>
             <ul id="available-clans-list" class="pool-list"></ul>
@@ -125,5 +139,26 @@
     </div>
 
     <!-- <div id="clan-members-modal" class="container" style="display: none;"></div>   -->
+
+    <script>
+        // Tab switching functionality
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.sub-nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+    </script>
 </body>
 </html>
