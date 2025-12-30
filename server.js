@@ -14,6 +14,7 @@ const USERS_FILE = "./users.json";
 const DRAFT_FILE = "./draft.json";
 const NHL_STATS_FILE = "./nhl_filtered_stats.json";
 const CURRENT_STATS_FILE = "./current_stats.json";
+const CURRENT_TEAMS_FILE = "./current_teams.json";
 const server = http.createServer(app);
 const io = socketIo(server, { cors: { origin: "*" } }); // ✅ allow public access for now
 
@@ -986,6 +987,7 @@ app.get("/current-stats", async (req, res) => {
 cron.schedule('0 0 * * *', async () => {
     console.log("⏰ Daily stats update triggered at midnight");
     await updateCurrentStats();
+    await updateTeamStandings();
 }, {
     timezone: "America/New_York" // Adjust to your timezone
 });
@@ -995,9 +997,11 @@ app.post("/refresh-stats", async (req, res) => {
     try {
         console.log("🔄 Manual stats refresh triggered");
         const stats = await updateCurrentStats();
+        const teams = await updateTeamStandings();
         res.json({
             message: "Stats refreshed successfully",
             playersUpdated: stats.players.length,
+            teamsUpdated: teams.teams.length,
             lastUpdated: stats.lastUpdated
         });
     } catch (error) {
@@ -1006,5 +1010,115 @@ app.post("/refresh-stats", async (req, res) => {
     }
 });
 
+// ==================== NHL TEAM STANDINGS SYSTEM ====================
+
+// Function to fetch current team standings from NHL API
+async function fetchCurrentTeamStandings() {
+    try {
+        const url = 'https://api-web.nhle.com/v1/standings/now';
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            console.log('⚠️ Failed to fetch team standings');
+            return null;
+        }
+
+        const data = await response.json();
+        const teams = [];
+
+        // Extract team data from standings
+        if (data.standings) {
+            data.standings.forEach(team => {
+                // Calculate points using custom scoring: wins * 2 + OTL * 1
+                const calculatedPoints = (team.wins * 2) + (team.otLosses * 1);
+
+                teams.push({
+                    teamFullName: team.teamName?.default || team.teamCommonName?.default,
+                    teamAbbrev: team.teamAbbrev?.default,
+                    teamId: team.teamId,
+                    gamesPlayed: team.gamesPlayed || 0,
+                    wins: team.wins || 0,
+                    losses: team.losses || 0,
+                    otLosses: team.otLosses || 0,
+                    points: calculatedPoints,
+                    lastUpdated: new Date().toISOString()
+                });
+            });
+        }
+
+        console.log(`✅ Fetched standings for ${teams.length} teams`);
+        return teams;
+    } catch (error) {
+        console.error('❌ Error fetching team standings:', error.message);
+        return null;
+    }
+}
+
+// Function to update and cache team standings
+async function updateTeamStandings() {
+    console.log('🔄 Updating team standings...');
+
+    const teams = await fetchCurrentTeamStandings();
+
+    if (!teams || teams.length === 0) {
+        console.log('⚠️ No team data fetched');
+        return loadCurrentTeams();
+    }
+
+    const teamStats = {
+        lastUpdated: new Date().toISOString(),
+        teams: teams
+    };
+
+    // Save to file
+    fs.writeFileSync(CURRENT_TEAMS_FILE, JSON.stringify(teamStats, null, 2));
+    console.log(`✅ Team standings updated successfully! ${teams.length} teams cached.`);
+
+    return teamStats;
+}
+
+// Load cached team standings
+function loadCurrentTeams() {
+    try {
+        if (fs.existsSync(CURRENT_TEAMS_FILE)) {
+            return JSON.parse(fs.readFileSync(CURRENT_TEAMS_FILE, 'utf-8'));
+        }
+    } catch (error) {
+        console.error('❌ Error loading current teams:', error);
+    }
+
+    return {
+        lastUpdated: null,
+        teams: []
+    };
+}
+
+// Route to get current team standings
+app.get('/current-teams', async (req, res) => {
+    try {
+        let stats = loadCurrentTeams();
+
+        // If no cached stats or cache is older than 24 hours, update
+        if (!stats.lastUpdated) {
+            console.log('📊 No cached team standings found, fetching fresh data...');
+            stats = await updateTeamStandings();
+        } else {
+            const lastUpdate = new Date(stats.lastUpdated);
+            const hoursSinceUpdate = (Date.now() - lastUpdate.getTime()) / (1000 * 60 * 60);
+
+            if (hoursSinceUpdate > 24) {
+                console.log('📊 Cached team standings are old, fetching fresh data...');
+                stats = await updateTeamStandings();
+            }
+        }
+
+        res.json(stats);
+    } catch (error) {
+        console.error('❌ Error in /current-teams route:', error);
+        res.status(500).json({ message: 'Error fetching current team standings' });
+    }
+});
+
 console.log("✅ NHL current stats system initialized");
+console.log("✅ NHL team standings system initialized");
 

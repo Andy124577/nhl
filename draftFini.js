@@ -3,6 +3,7 @@ let goalieData = [];
 let teamData = [];
 let imageList = [];
 let currentStats = null;
+let currentTeams = null;
 const BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:3000"
   : "https://goondraft.onrender.com";
@@ -166,6 +167,16 @@ function getCurrentPlayerStats(playerName, playerId) {
     return currentStats.players.find(p => p.playerName === playerName);
 }
 
+// Helper function to get current team standings
+function getCurrentTeamStats(teamFullName) {
+    if (!currentTeams || !currentTeams.teams) {
+        return null;
+    }
+
+    // Try to find by full name
+    return currentTeams.teams.find(t => t.teamFullName === teamFullName);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     initializeAdminUI();
 
@@ -194,6 +205,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             console.log(`✅ Current stats loaded: ${currentStats.players.length} players, last updated: ${currentStats.lastUpdated}`);
         } catch (error) {
             console.warn("⚠️ Could not load current stats, using cached data:", error);
+        }
+
+        // Load current team standings from API
+        try {
+            const currentTeamsResponse = await fetch(`${BASE_URL}/current-teams`, { cache: "no-store" });
+            currentTeams = await currentTeamsResponse.json();
+            console.log(`✅ Current team standings loaded: ${currentTeams.teams.length} teams, last updated: ${currentTeams.lastUpdated}`);
+        } catch (error) {
+            console.warn("⚠️ Could not load current team standings, using cached data:", error);
         }
 
         // Load draft data
@@ -326,25 +346,37 @@ function renderTeamStatsTable(teams) {
             (team.teams || []).forEach(teamName => {
                 const nhlTeam = teamData.find(t => t.teamFullName === teamName);
                 if (nhlTeam) {
-                    // Teams use cached data (no current stats from player API)
-                    // Calculate team points: wins * 2 + OTL * 1
-                    const gp = nhlTeam.gamesPlayed || 0;
-                    const wins = nhlTeam.wins || 0;
-                    const otl = nhlTeam.otLosses || 0;
-                    const pts = (wins * 2) + (otl * 1);
+                    // Try to get current team standings
+                    const currentTeamStats = getCurrentTeamStats(teamName);
+
+                    let gp, wins, otl, pts;
+
+                    if (currentTeamStats) {
+                        // Use current season standings
+                        gp = currentTeamStats.gamesPlayed || 0;
+                        wins = currentTeamStats.wins || 0;
+                        otl = currentTeamStats.otLosses || 0;
+                        pts = currentTeamStats.points || ((wins * 2) + (otl * 1));
+                    } else {
+                        // Fallback to cached data
+                        gp = nhlTeam.gamesPlayed || 0;
+                        wins = nhlTeam.wins || 0;
+                        otl = nhlTeam.otLosses || 0;
+                        pts = (wins * 2) + (otl * 1);
+                    }
 
                     totalGP += gp;
                     totalPTS += pts;
 
                     playerDetails.push({
-                        name: nhlTeam.teamFullName,
+                        name: teamName,
                         position: 'TEAM',
                         gp: gp,
                         g: wins,
                         a: otl,
                         pts: pts,
                         todayPoints: 0, // Teams don't have daily updates
-                        teamAbbrev: nhlTeam.teamAbbrevs,
+                        teamAbbrev: currentTeamStats?.teamAbbrev || nhlTeam.teamAbbrevs,
                         type: 'team'
                     });
                 }
