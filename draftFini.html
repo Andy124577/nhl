@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Draft Terminé</title>
+    <title>Classement Final</title>
     <link rel="stylesheet" href="draftFini.css" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
@@ -19,23 +19,54 @@
         </ul>
     </nav>
 
-    <!-- Hero Section -->
-    <div class="hero-section">
-        <div class="trophy-icon">🏆</div>
-        <h1 id="clanTitle" class="hero-title">Classement Final du Draft</h1>
-        <p class="hero-subtitle">Résultats et statistiques complètes</p>
-    </div>
+    <div class="container">
+        <h1 id="clanTitle">Classement Final</h1>
 
-    <!-- Podium Section (Top 3) -->
-    <div id="podiumContainer" class="podium-container"></div>
+        <div class="table-container">
+            <table id="teamStatsTable">
+                <thead>
+                    <tr>
+                        <th>POS</th>
+                        <th>Équipe</th>
+                        <th>Membres</th>
+                        <th>GP</th>
+                        <th>G</th>
+                        <th>A</th>
+                        <th>PTS</th>
+                    </tr>
+                </thead>
+                <tbody id="teamStatsBody">
+                    <!-- Rows will be injected here -->
+                </tbody>
+            </table>
+        </div>
 
-    <!-- All Teams Leaderboard -->
-    <div class="leaderboard-section">
-        <h2 class="section-title">
-            <span class="icon">📊</span>
-            Classement Complet
-        </h2>
-        <div id="teamStatsContainer" class="teams-grid"></div>
+        <!-- Player Details Modal -->
+        <div id="playerDetailsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTeamName"></h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <table id="playerDetailsTable">
+                        <thead>
+                            <tr>
+                                <th>Joueur</th>
+                                <th>Pos</th>
+                                <th>GP</th>
+                                <th>G</th>
+                                <th>A</th>
+                                <th>PTS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="playerDetailsBody">
+                            <!-- Player rows will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="draftFini.js"></script>
