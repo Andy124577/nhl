@@ -146,16 +146,25 @@ async function loadActiveDrafts() {
             // Check if draft is complete - only check teams with members
             let isDraftComplete = false;
             if (clan && clan.draftOrder && clan.draftOrder.length > 0) {
+                // Get pool configuration, fallback to defaults if not set
+                const config = clan.config || {
+                    numOffensive: 6,
+                    numDefensive: 4,
+                    numGoalies: 1,
+                    numRookies: 1,
+                    numTeams: 1
+                };
+
                 const activeTeams = Object.values(clan.teams).filter(team =>
                     team.members && team.members.length > 0
                 );
 
                 isDraftComplete = activeTeams.length > 0 && activeTeams.every(team =>
-                    (team.offensive || []).length === 6 &&
-                    (team.defensive || []).length === 4 &&
-                    (team.rookie || []).length === 1 &&
-                    (team.goalie || []).length === 1 &&
-                    (team.teams || []).length === 1
+                    (team.offensive || []).length === config.numOffensive &&
+                    (team.defensive || []).length === config.numDefensive &&
+                    (team.rookie || []).length === config.numRookies &&
+                    (team.goalie || []).length === config.numGoalies &&
+                    (team.teams || []).length === config.numTeams
                 );
             }
 
