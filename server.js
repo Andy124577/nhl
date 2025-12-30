@@ -739,8 +739,14 @@ app.post("/randomize-draft-order", (req, res) => {
 
 
 function checkIfDraftComplete(clan) {
-    return Object.values(clan.teams).every(team =>
-        team.members.length > 0 &&
+    // Check only teams with members (active teams in the draft)
+    const activeTeams = Object.values(clan.teams).filter(team =>
+        team.members && team.members.length > 0
+    );
+
+    if (activeTeams.length === 0) return false;
+
+    return activeTeams.every(team =>
         team.offensive.length === 6 &&
         team.defensive.length === 4 &&
         team.rookie?.length === 1 &&
