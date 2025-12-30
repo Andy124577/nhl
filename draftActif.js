@@ -459,8 +459,10 @@ function updateTable() {
         `);
         $("#playerTable tbody").empty();
 
-        if (!window.confettiFired) {
-            window.confettiFired = true;
+        // Use localStorage to persist confetti state for this specific draft
+        const confettiKey = `confettiFired_${currentClan}`;
+        if (!localStorage.getItem(confettiKey)) {
+            localStorage.setItem(confettiKey, 'true');
             launchConfetti();
         }
 
@@ -1186,7 +1188,12 @@ function launchConfetti() {
 
         if (timeLeft <= 0) {
             clearInterval(interval);
-            document.getElementById("finishButton").style.display = "block"; // 👈 Show the button
+            // Only show finish button if we just launched confetti (not when consulting)
+            const finishButtonKey = `finishButtonShown_${currentClan}`;
+            if (!localStorage.getItem(finishButtonKey)) {
+                localStorage.setItem(finishButtonKey, 'true');
+                document.getElementById("finishButton").style.display = "block";
+            }
             return;
         }
 
