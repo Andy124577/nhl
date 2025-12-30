@@ -2,10 +2,37 @@ let fullPlayerData = [];
 let teamData = [];
 let imageList = [];
 let goalieData = [];
+let lastYearData = {}; // Données de l'année passée
 
-async function fetchPlayerData() {
+const BASE_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:3000'
+    : 'https://nhl-draft.onrender.com';
+
+// Charger les stats de l'année passée (2023-2024)
+async function fetchLastYearData() {
     try {
         const response = await fetch("nhl_filtered_stats.json");
+        if (!response.ok) throw new Error(`Error: ${response.status} - ${response.statusText}`);
+        const data = await response.json();
+
+        lastYearData = {
+            players: [
+                ...data.Top_50_Defenders,
+                ...data.Top_100_Offensive_Players,
+                ...data.Top_Rookies
+            ],
+            teams: data.Teams,
+            goalies: data.Top_50_Goalies
+        };
+    } catch (error) {
+        console.error("Failed to fetch last year data:", error);
+    }
+}
+
+// Charger les stats de la saison en cours
+async function fetchPlayerData() {
+    try {
+        const response = await fetch(`${BASE_URL}/current-stats`);
         if (!response.ok) throw new Error(`Error: ${response.status} - ${response.statusText}`);
         const data = await response.json();
 
@@ -19,7 +46,22 @@ async function fetchPlayerData() {
 
         updateTable();
     } catch (error) {
-        console.error("Failed to fetch player data:", error);
+        console.error("Failed to fetch current player data:", error);
+        // Fallback to last year data if current stats fail
+        try {
+            const response = await fetch("nhl_filtered_stats.json");
+            const data = await response.json();
+            fullPlayerData = [
+                ...data.Top_50_Defenders,
+                ...data.Top_100_Offensive_Players,
+                ...data.Top_Rookies
+            ];
+            teamData = data.Teams;
+            goalieData = data.Top_50_Goalies;
+            updateTable();
+        } catch (fallbackError) {
+            console.error("Failed to fetch fallback data:", fallbackError);
+        }
     }
 }
 
@@ -106,7 +148,7 @@ async function populatePlayerTable(playerData) {
     table.innerHTML = `
         <tr>
             <th>Photo</th>
-            <th>Player</th>
+            <th>Joueur</th>
             <th>GP</th>
             <th>G</th>
             <th>AST</th>
@@ -137,6 +179,11 @@ async function populatePlayerTable(playerData) {
             <td>${player.assists}</td>
             <td class="points-column">${player.points}</td>
         `;
+
+        // Add click handler to show last year stats
+        row.style.cursor = 'pointer';
+        row.onclick = () => showLastYearStats(player, 'player');
+
         table.appendChild(row);
     });
 }
@@ -146,7 +193,7 @@ function populateGoalieTable(goalies) {
     table.innerHTML = `
         <tr>
             <th>Photo</th>
-            <th>Goalie</th>
+            <th>Gardien</th>
             <th>GP</th>
             <th>W</th>
             <th>L</th>
@@ -181,6 +228,11 @@ function populateGoalieTable(goalies) {
             <td>${goalie.shutouts}</td>
             <td>${goalie.points}</td>
         `;
+
+        // Add click handler to show last year stats
+        row.style.cursor = 'pointer';
+        row.onclick = () => showLastYearStats(goalie, 'goalie');
+
         table.appendChild(row);
     });
 }
@@ -217,11 +269,11 @@ function populateTeamTable(teamStats) {
     table.innerHTML = `
         <tr>
             <th>Logo</th>
-            <th>Team</th>
+            <th>Équipe</th>
             <th>GP</th>
-            <th>Wins</th>
-            <th>Losses</th>
-            <th>OTL</th>
+            <th>V</th>
+            <th>D</th>
+            <th>DP</th>
             <th>Points</th>
         </tr>
     `;
@@ -240,6 +292,11 @@ function populateTeamTable(teamStats) {
             <td>${team.otLosses}</td>
             <td>${team.points}</td>
         `;
+
+        // Add click handler to show last year stats
+        row.style.cursor = 'pointer';
+        row.onclick = () => showLastYearStats(team, 'team');
+
         table.appendChild(row);
     });
 }
@@ -247,15 +304,142 @@ function populateTeamTable(teamStats) {
 
 
 
+// Modal functions for last year stats
+function showLastYearStats(currentData, type) {
+    const modal = document.getElementById('lastYearModal');
+    const modalPlayerName = document.getElementById('modalPlayerName');
+    const modalStats = document.getElementById('modalStats');
+
+    let lastYearPlayer = null;
+    let playerName = '';
+
+    // Find the player/goalie/team in last year's data
+    if (type === 'player') {
+        playerName = currentData.skaterFullName;
+        lastYearPlayer = lastYearData.players?.find(p => p.skaterFullName === playerName);
+    } else if (type === 'goalie') {
+        playerName = currentData.goalieFullName;
+        lastYearPlayer = lastYearData.goalies?.find(g => g.goalieFullName === playerName);
+    } else if (type === 'team') {
+        playerName = currentData.teamFullName;
+        lastYearPlayer = lastYearData.teams?.find(t => t.teamFullName === playerName);
+    }
+
+    modalPlayerName.textContent = playerName;
+
+    if (!lastYearPlayer) {
+        modalStats.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Aucune statistique disponible pour 2023-2024</p>';
+    } else {
+        let statsHTML = '';
+
+        if (type === 'player') {
+            statsHTML = `
+                <div class="stat-item">
+                    <div class="stat-label">Matchs joués</div>
+                    <div class="stat-value">${lastYearPlayer.gamesPlayed || 0}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Buts</div>
+                    <div class="stat-value">${lastYearPlayer.goals || 0}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Passes</div>
+                    <div class="stat-value">${lastYearPlayer.assists || 0}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Points</div>
+                    <div class="stat-value">${lastYearPlayer.points || 0}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">+/-</div>
+                    <div class="stat-value">${lastYearPlayer.plusMinus || 0}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">PIM</div>
+                    <div class="stat-value">${lastYearPlayer.penaltyMinutes || 0}</div>
+                </div>
+            `;
+        } else if (type === 'goalie') {
+            statsHTML = `
+                <div class="stat-item">
+                    <div class="stat-label">Matchs joués</div>
+                    <div class="stat-value">${lastYearPlayer.gamesPlayed || 0}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Victoires</div>
+                    <div class="stat-value">${lastYearPlayer.wins || 0}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Défaites</div>
+                    <div class="stat-value">${lastYearPlayer.losses || 0}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Prol.</div>
+                    <div class="stat-value">${lastYearPlayer.otLosses || 0}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">% Arrêts</div>
+                    <div class="stat-value">${lastYearPlayer.savePct?.toFixed(3) || '0.000'}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Blanchissages</div>
+                    <div class="stat-value">${lastYearPlayer.shutouts || 0}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Points</div>
+                    <div class="stat-value">${lastYearPlayer.points || 0}</div>
+                </div>
+            `;
+        } else if (type === 'team') {
+            statsHTML = `
+                <div class="stat-item">
+                    <div class="stat-label">Matchs joués</div>
+                    <div class="stat-value">${lastYearPlayer.gamesPlayed || 0}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Victoires</div>
+                    <div class="stat-value">${lastYearPlayer.wins || 0}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Défaites</div>
+                    <div class="stat-value">${lastYearPlayer.losses || 0}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Prol.</div>
+                    <div class="stat-value">${lastYearPlayer.otLosses || 0}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Points</div>
+                    <div class="stat-value">${lastYearPlayer.points || 0}</div>
+                </div>
+            `;
+        }
+
+        modalStats.innerHTML = statsHTML;
+    }
+
+    modal.style.display = 'block';
+}
+
+function closeLastYearModal() {
+    document.getElementById('lastYearModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('lastYearModal');
+    if (event.target === modal) {
+        closeLastYearModal();
+    }
+}
+
 document.getElementById("searchInput").addEventListener("input", updateTable);
 document.getElementById("playerFilter").addEventListener("change", updateTable);
 document.getElementById("sortBy").addEventListener("change", updateTable);
 
-fetchPlayerData();
-
-const BASE_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:3000'
-    : 'https://nhl-draft.onrender.com';
+// Load data
+fetchLastYearData(); // Load last year data for modal
+fetchPlayerData(); // Load current season data
 
 $(document).ready(function () {
     const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
