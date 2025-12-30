@@ -142,11 +142,22 @@ async function loadActiveDrafts() {
         let draftHTML = "";
         result.activeDrafts.forEach(clanName => {
             const clan = allDrafts[clanName];
-            const isDraftComplete = clan && clan.draftOrder.length > 0 &&
-                Object.values(clan.teams).every(team =>
-                    team.members.length === 0 ||
-                    (team.offensive.length >= 10 && team.defensive.length >= 5)
+
+            // Check if draft is complete - only check teams with members
+            let isDraftComplete = false;
+            if (clan && clan.draftOrder && clan.draftOrder.length > 0) {
+                const activeTeams = Object.values(clan.teams).filter(team =>
+                    team.members && team.members.length > 0
                 );
+
+                isDraftComplete = activeTeams.length > 0 && activeTeams.every(team =>
+                    (team.offensive || []).length === 6 &&
+                    (team.defensive || []).length === 4 &&
+                    (team.rookie || []).length === 1 &&
+                    (team.goalie || []).length === 1 &&
+                    (team.teams || []).length === 1
+                );
+            }
 
             draftHTML += `
                 <div class="draft-card">
