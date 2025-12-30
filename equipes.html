@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Équipes</title>
+    <title>Pool</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="equipes.css">
     <!-- ✅ Add Socket.IO client -->
@@ -11,50 +11,100 @@
       ? "http://localhost:3000"
       : "https://goondraft.onrender.com";
     "></script>
-    <script src="BASE_URL/socket.io/socket.io.js"></script> 
+    <script src="BASE_URL/socket.io/socket.io.js"></script>
     <script src="equipes.js"></script>
 </head>
 <body>
     <nav class="navbar">
         <ul>
             <li><a href="index.html">Stats</a></li>
-            <li class="active"><a href="#">Équipes</a></li>
+            <li class="active"><a href="#">Pool</a></li>
             <li><a href="draft.html">Draft</a></li>
             <li id="admin-users-link" style="display: none;"></li>
             <li id="login-link"><a href="login.html">Connexion</a></li>
         </ul>
     </nav>
 
-    <h2>Équipes NHL</h2>
-
-    <!-- <div id="team-selection-modal" style="display:none; background:white; padding:20px; border:1px solid #ccc;"></div> -->
-
-    <div id="clan-options" class="container">
-        <h3>Créer un pool</h3>
-        <input type="text" id="clanName" placeholder="Nom du pool" required>
-        <label for="maxPlayers">Nombre de joueurs maximum :</label>
-        <select id="maxPlayers" title="Sélectionnez le nombre maximum de joueurs">
-            <option value="2">2 joueurs</option>
-            <option value="3">3 joueurs</option>
-            <option value="4">4 joueurs</option>
-            <option value="5">5 joueurs</option>
-            <option value="6">6 joueurs</option>
-            <option value="7">7 joueurs</option>
-            <option value="8">8 joueurs</option>
-            <option value="9">9 joueurs</option>
-            <option value="10">10 joueurs</option>
-        </select>
-        <button onclick="createClan()">Créer le pool</button>
+    <div class="page-header">
+        <h1>Gestion des Pools</h1>
+        <p>Créez et rejoignez des pools de hockey</p>
     </div>
 
-    <div class="container">
-    <h3>Mes pools</h3>
-    <ul id="clans-list"></ul>
+    <div id="clan-options" class="create-pool-container">
+        <h2>Créer un nouveau pool</h2>
+
+        <div class="form-group">
+            <label for="clanName">Nom du pool</label>
+            <input type="text" id="clanName" placeholder="Ex: Pool des champions 2025" required>
+        </div>
+
+        <div class="form-section">
+            <h3>Configuration des sélections</h3>
+            <p class="section-description">Définissez combien de joueurs chaque équipe doit sélectionner</p>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="numOffensive">Attaquants</label>
+                    <input type="number" id="numOffensive" value="6" min="0" max="20">
+                </div>
+
+                <div class="form-group">
+                    <label for="numDefensive">Défenseurs</label>
+                    <input type="number" id="numDefensive" value="4" min="0" max="20">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="numGoalies">Gardiens</label>
+                    <input type="number" id="numGoalies" value="1" min="0" max="10">
+                </div>
+
+                <div class="form-group">
+                    <label for="numRookies">Rookies</label>
+                    <input type="number" id="numRookies" value="1" min="0" max="10">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="numTeams">Équipes NHL</label>
+                    <input type="number" id="numTeams" value="1" min="0" max="10">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Nombre de participants</h3>
+            <div class="form-group">
+                <label for="maxPlayers">Maximum de participants</label>
+                <select id="maxPlayers">
+                    <option value="2">2 participants</option>
+                    <option value="3">3 participants</option>
+                    <option value="4">4 participants</option>
+                    <option value="5">5 participants</option>
+                    <option value="6">6 participants</option>
+                    <option value="7">7 participants</option>
+                    <option value="8">8 participants</option>
+                    <option value="9">9 participants</option>
+                    <option value="10">10 participants</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="create-btn" onclick="createClan()">Créer le pool</button>
     </div>
 
-    <div id="available-clans" class="container">
-        <h3>Pools disponibles</h3>
-        <ul id="available-clans-list"></ul>
+    <div class="pools-container">
+        <div class="pool-section">
+            <h2>Mes pools</h2>
+            <ul id="clans-list" class="pool-list"></ul>
+        </div>
+
+        <div class="pool-section">
+            <h2>Pools disponibles</h2>
+            <ul id="available-clans-list" class="pool-list"></ul>
+        </div>
     </div>
 
     <div id="clanModal" class="modal">
