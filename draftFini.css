@@ -390,12 +390,37 @@ tbody td:first-child {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    position: relative;
 }
 
-.player-photo img {
+.player-photo .player-face {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.player-photo .player-team-logo-overlay {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    background: white;
+    border-radius: 50%;
+    padding: 2px;
+}
+
+.player-photo .no-photo {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    color: #999;
+    font-weight: 600;
+    font-size: 0.9rem;
 }
 
 /* Player info section - ~30% width */
