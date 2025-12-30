@@ -110,6 +110,45 @@ function logout(event) {
     location.reload();
 }
 
+async function fetchImageData() {
+    try {
+        const cachedImages = localStorage.getItem("imageList");
+        if (cachedImages) {
+            imageList = JSON.parse(cachedImages);
+            console.log("✅ Images chargées depuis le cache local.");
+            return;
+        }
+
+        const response = await fetch("images.json", { cache: "no-store" });
+        imageList = await response.json();
+        localStorage.setItem("imageList", JSON.stringify(imageList));
+        console.log("✅ Images chargées depuis le serveur et mises en cache.");
+    } catch (error) {
+        console.error("❌ Erreur chargement images :", error);
+    }
+}
+
+function getMatchingImage(skaterName) {
+    const formattedName = skaterName.replace(/\s/g, "_");
+    return imageList.find(imagePath => {
+        const baseName = imagePath.replace(/^faces\//, "").replace(/_\d{1,2}_\d{1,2}_\d{4}|_away/g, "").replace(".png", "");
+        return baseName === formattedName;
+    }) || null;
+}
+
+function getTeamLogoPath(teamAbbrevs) {
+    if (!teamAbbrevs || teamAbbrevs === "null") {
+        return null;
+    }
+    const lastTeam = teamAbbrevs.split(",").pop().trim();
+    return `teams/${lastTeam}.png`;
+}
+
+function getTeamAbbreviation(teamFullName) {
+    const team = teamData.find(t => t.teamFullName === teamFullName);
+    return team ? team.teamAbbrevs : null;
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     initializeAdminUI();
 
@@ -121,6 +160,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     try {
+        // Load image data first
+        await fetchImageData();
+
         // Load player data
         const statsResponse = await fetch("nhl_filtered_stats.json");
         const statsData = await statsResponse.json();
@@ -296,30 +338,42 @@ function showPlayerDetails(teamName, rowIndex) {
     playerDetails.forEach((player, index) => {
         const pickNumber = index + 1;
 
-        // Get photo URL
-        let photoUrl;
-        if (player.type === 'team') {
-            photoUrl = `https://assets.nhle.com/logos/nhl/svg/${player.teamAbbrev}_light.svg`;
-        } else {
-            photoUrl = `https://assets.nhle.com/mugs/nhl/20242025/${player.playerId}.png`;
-        }
+        // Get photo and logo using local images
+        let imagePath;
+        let logoPath;
 
-        // Get NHL team logo URL (small)
-        const teamLogoUrl = player.teamAbbrev
-            ? `https://assets.nhle.com/logos/nhl/svg/${player.teamAbbrev}_light.svg`
-            : '';
+        if (player.type === 'team') {
+            // For teams, use team logo as main image
+            const abbrev = getTeamAbbreviation(player.name);
+            imagePath = abbrev ? `teams/${abbrev}.png` : null;
+            logoPath = null; // No secondary logo for teams
+        } else {
+            // For players and goalies, get player photo and team logo
+            imagePath = getMatchingImage(player.name);
+            logoPath = getTeamLogoPath(player.teamAbbrev);
+        }
 
         const playerCard = document.createElement('div');
         playerCard.className = 'player-card';
+
+        // Build image HTML
+        let imageHTML = '';
+        if (imagePath) {
+            imageHTML = `<img src="${imagePath}" alt="${player.name}" class="player-face">`;
+        }
+        if (logoPath && player.type !== 'team') {
+            imageHTML += `<img src="${logoPath}" alt="Team logo" class="player-team-logo-overlay">`;
+        }
+
         playerCard.innerHTML = `
             <div class="pick-number">${pickNumber}</div>
             <div class="player-photo">
-                <img src="${photoUrl}" alt="${player.name}" onerror="this.style.display='none'">
+                ${imageHTML || `<div class="no-photo">${player.position}</div>`}
             </div>
             <div class="player-info">
                 <div class="player-name-row">
                     <span class="player-name">${player.name}</span>
-                    ${teamLogoUrl ? `<img src="${teamLogoUrl}" class="nhl-team-logo" alt="${player.teamAbbrev}">` : ''}
+                    ${logoPath && player.type !== 'team' ? `<img src="${logoPath}" class="nhl-team-logo" alt="${player.teamAbbrev}">` : ''}
                     <span class="player-position">${player.position}</span>
                 </div>
                 <div class="player-stats-row">
