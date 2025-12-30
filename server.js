@@ -6,11 +6,14 @@ const fs = require("fs");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path"); // ✅ for static paths
+const cron = require("node-cron");
 
 const app = express();
 const PORT = process.env.PORT || 3000; // ✅ Use Render's PORT
 const USERS_FILE = "./users.json";
 const DRAFT_FILE = "./draft.json";
+const NHL_STATS_FILE = "./nhl_filtered_stats.json";
+const CURRENT_STATS_FILE = "./current_stats.json";
 const server = http.createServer(app);
 const io = socketIo(server, { cors: { origin: "*" } }); // ✅ allow public access for now
 
@@ -796,4 +799,183 @@ app.post("/cleanup-draft", (req, res) => {
     saveDraftData(draftData);
     res.json({ message: "Nettoyage effectué.", draftData: draftData[clanName] });
 });
+
+// ==================== NHL CURRENT STATS SYSTEM ====================
+
+// Function to load all players from nhl_filtered_stats.json
+function loadAllPlayers() {
+    try {
+        const data = JSON.parse(fs.readFileSync(NHL_STATS_FILE, "utf-8"));
+        const allPlayers = [];
+
+        // Combine all sections
+        if (data.Top_50_Defenders) allPlayers.push(...data.Top_50_Defenders);
+        if (data.Top_100_Offensive_Players) allPlayers.push(...data.Top_100_Offensive_Players);
+        if (data.Top_Rookies) allPlayers.push(...data.Top_Rookies);
+        if (data.Top_50_Goalies) allPlayers.push(...data.Top_50_Goalies);
+
+        console.log(`✅ Loaded ${allPlayers.length} players from NHL stats file`);
+        return allPlayers;
+    } catch (error) {
+        console.error("❌ Error loading NHL stats file:", error);
+        return [];
+    }
+}
+
+// Function to fetch current season stats from NHL API
+async function fetchCurrentStatsForPlayer(playerId, playerName) {
+    try {
+        const url = `https://api-web.nhle.com/v1/player/${playerId}/landing`;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            console.log(`⚠️ Failed to fetch stats for ${playerName} (${playerId})`);
+            return null;
+        }
+
+        const data = await response.json();
+
+        // Extract current season stats (20242025)
+        const seasonStats = data.featuredStats?.regularSeason?.subSeason;
+
+        if (!seasonStats) {
+            console.log(`⚠️ No current season stats for ${playerName}`);
+            return null;
+        }
+
+        // Return structured stats
+        return {
+            playerId: playerId,
+            playerName: playerName,
+            teamAbbrev: data.currentTeamAbbrev || "N/A",
+            position: data.position || "N/A",
+            gamesPlayed: seasonStats.gamesPlayed || 0,
+            goals: seasonStats.goals || 0,
+            assists: seasonStats.assists || 0,
+            points: seasonStats.points || 0,
+            lastUpdated: new Date().toISOString()
+        };
+    } catch (error) {
+        console.error(`❌ Error fetching stats for ${playerName}:`, error.message);
+        return null;
+    }
+}
+
+// Function to fetch and cache all current stats
+async function updateCurrentStats() {
+    console.log("🔄 Starting NHL stats update...");
+
+    // Load existing stats to preserve as "previous"
+    const existingStats = loadCurrentStats();
+    const previousPlayers = existingStats.players || [];
+
+    const allPlayers = loadAllPlayers();
+    const newPlayers = [];
+
+    // Fetch stats for each player with delay to avoid rate limiting
+    for (let i = 0; i < allPlayers.length; i++) {
+        const player = allPlayers[i];
+        console.log(`Fetching ${i + 1}/${allPlayers.length}: ${player.skaterFullName || player.goalieFullName}`);
+
+        const stats = await fetchCurrentStatsForPlayer(
+            player.playerId,
+            player.skaterFullName || player.goalieFullName
+        );
+
+        if (stats) {
+            // Find previous stats for this player
+            const previousStats = previousPlayers.find(p => p.playerId === stats.playerId);
+            const previousPoints = previousStats ? previousStats.points : 0;
+
+            // Calculate today's points (difference from previous)
+            stats.todayPoints = stats.points - previousPoints;
+
+            newPlayers.push(stats);
+        }
+
+        // Add delay between requests (200ms) to avoid rate limiting
+        if (i < allPlayers.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+    }
+
+    const currentStats = {
+        lastUpdated: new Date().toISOString(),
+        players: newPlayers
+    };
+
+    // Save to file
+    fs.writeFileSync(CURRENT_STATS_FILE, JSON.stringify(currentStats, null, 2));
+    console.log(`✅ NHL stats updated successfully! ${currentStats.players.length} players cached.`);
+
+    return currentStats;
+}
+
+// Load cached stats or return empty structure
+function loadCurrentStats() {
+    try {
+        if (fs.existsSync(CURRENT_STATS_FILE)) {
+            return JSON.parse(fs.readFileSync(CURRENT_STATS_FILE, "utf-8"));
+        }
+    } catch (error) {
+        console.error("❌ Error loading current stats:", error);
+    }
+
+    return {
+        lastUpdated: null,
+        players: []
+    };
+}
+
+// Route to get current stats
+app.get("/current-stats", async (req, res) => {
+    try {
+        let stats = loadCurrentStats();
+
+        // If no cached stats or cache is older than 24 hours, update
+        if (!stats.lastUpdated) {
+            console.log("📊 No cached stats found, fetching fresh data...");
+            stats = await updateCurrentStats();
+        } else {
+            const lastUpdate = new Date(stats.lastUpdated);
+            const hoursSinceUpdate = (Date.now() - lastUpdate.getTime()) / (1000 * 60 * 60);
+
+            if (hoursSinceUpdate > 24) {
+                console.log("📊 Cached stats are old, fetching fresh data...");
+                stats = await updateCurrentStats();
+            }
+        }
+
+        res.json(stats);
+    } catch (error) {
+        console.error("❌ Error in /current-stats route:", error);
+        res.status(500).json({ message: "Error fetching current stats" });
+    }
+});
+
+// Schedule daily stats update at midnight (00:00)
+cron.schedule('0 0 * * *', async () => {
+    console.log("⏰ Daily stats update triggered at midnight");
+    await updateCurrentStats();
+}, {
+    timezone: "America/New_York" // Adjust to your timezone
+});
+
+// Optional: Manual trigger endpoint for testing
+app.post("/refresh-stats", async (req, res) => {
+    try {
+        console.log("🔄 Manual stats refresh triggered");
+        const stats = await updateCurrentStats();
+        res.json({
+            message: "Stats refreshed successfully",
+            playersUpdated: stats.players.length,
+            lastUpdated: stats.lastUpdated
+        });
+    } catch (error) {
+        console.error("❌ Error refreshing stats:", error);
+        res.status(500).json({ message: "Error refreshing stats" });
+    }
+});
+
+console.log("✅ NHL current stats system initialized");
 
