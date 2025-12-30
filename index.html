@@ -1,62 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NHL Player Stats</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- Bebas Neue from Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="index.css">
 </head>
 <body>
-
     <nav class="navbar">
-    <ul>
-        <li class="active"><a href="#">Stats</a></li>
-        <li><a href="pool.html">Pool</a></li>
-        <li><a href="draft.html">Draft</a></li>
-        <li id="admin-users-link" style="display: none;"></li>
-        <li id="login-link"><a href="login.html">Connexion</a></li>
-    </ul>
+        <ul>
+            <li class="active"><a href="#">Stats</a></li>
+            <li><a href="pool.html">Pool</a></li>
+            <li><a href="draft.html">Draft</a></li>
+            <li id="admin-users-link" style="display: none;"></li>
+            <li id="login-link"><a href="login.html">Connexion</a></li>
+        </ul>
     </nav>
-    
-    <h2>NHL Player Stats</h2>
-    <!-- Juste après les filtres existants -->
-    <label for="searchInput" class="sort-select">Search:</label>
-    <input type="text" id="searchInput" placeholder="Search player by name" style="padding: 5px; font-size: 1rem; margin: 10px 5px;">
 
-    <label for="playerFilter" class="sort-select">Filter:</label>
-    <select id="playerFilter">
-        <option value="all">All Players</option>
-        <option value="offensive">Offensive Players</option>
-        <option value="defensive">Defensive Players</option>
-        <option value="goalies">Goalies</option>
-        <option value="rookies">Rookies Players</option>
-        <option value="teams">Teams</option>
-    </select>
-
-    <label for="sortBy" class="sort-select">Sort By:</label>
-    <select id="sortBy" >
-        <option value="points">Points</option>
-        <option value="goals">Goals</option>
-        <option value="assists">Assists</option>
-    </select>
-
-    <div class="table-container">
-        <table id="playerTable">
-            <tr>
-                <th>Photo</th>
-                <th>Player</th>
-                <th>GP</th>
-                <th>G</th>
-                <th>AST</th>
-                <th>PTS</th>
-            </tr>
-        </table>
+    <div class="page-header">
+        <h1>Statistiques NHL</h1>
+        <p>Consultez les statistiques des joueurs de la saison en cours</p>
     </div>
+
+    <div class="stats-container">
+        <div class="filters-section">
+            <div class="filter-group">
+                <label for="searchInput">Rechercher:</label>
+                <input type="text" id="searchInput" placeholder="Nom du joueur">
+            </div>
+
+            <div class="filter-group">
+                <label for="playerFilter">Filtre:</label>
+                <select id="playerFilter">
+                    <option value="all">Tous les joueurs</option>
+                    <option value="offensive">Attaquants</option>
+                    <option value="defensive">Défenseurs</option>
+                    <option value="goalies">Gardiens</option>
+                    <option value="rookies">Recrues</option>
+                    <option value="teams">Équipes</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="sortBy">Trier par:</label>
+                <select id="sortBy">
+                    <option value="points">Points</option>
+                    <option value="goals">Buts</option>
+                    <option value="assists">Passes</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="playerTable">
+                <tr>
+                    <th>Photo</th>
+                    <th>Joueur</th>
+                    <th>GP</th>
+                    <th>G</th>
+                    <th>AST</th>
+                    <th>PTS</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+
     <script src="index.js"></script>
 </body>
 </html>
