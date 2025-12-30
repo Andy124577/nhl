@@ -189,32 +189,41 @@ app.post("/pick-player", (req, res) => {
         return res.status(400).json({ message: "Ce joueur a déjà été sélectionné." });
     }
 
+    // Get pool configuration, fallback to defaults if not set
+    const config = clan.config || {
+        numOffensive: 6,
+        numDefensive: 4,
+        numGoalies: 1,
+        numRookies: 1,
+        numTeams: 1
+    };
+
     if (position === "offensive") {
-        if (userTeam.offensive.length >= 6) {
-            return res.status(400).json({ message: "Votre équipe a déjà 6 joueurs offensifs." });
+        if (userTeam.offensive.length >= config.numOffensive) {
+            return res.status(400).json({ message: `Votre équipe a déjà ${config.numOffensive} joueur${config.numOffensive > 1 ? 's' : ''} offensif${config.numOffensive > 1 ? 's' : ''}.` });
         }
         userTeam.offensive.push(playerName);
     } else if (position === "defensive") {
-        if (userTeam.defensive.length >= 4) {
-            return res.status(400).json({ message: "Votre équipe a déjà 4 défenseurs." });
+        if (userTeam.defensive.length >= config.numDefensive) {
+            return res.status(400).json({ message: `Votre équipe a déjà ${config.numDefensive} défenseur${config.numDefensive > 1 ? 's' : ''}.` });
         }
         userTeam.defensive.push(playerName);
     } else if (position === "rookie") {
         if (!userTeam.rookie) userTeam.rookie = [];
-        if (userTeam.rookie.length >= 1) {
-            return res.status(400).json({ message: "Votre équipe a déjà 1 rookie." });
+        if (userTeam.rookie.length >= config.numRookies) {
+            return res.status(400).json({ message: `Votre équipe a déjà ${config.numRookies} rookie${config.numRookies > 1 ? 's' : ''}.` });
         }
         userTeam.rookie.push(playerName);
     } else if (position === "goalie") {
         if (!userTeam.goalie) userTeam.goalie = [];
-        if (userTeam.goalie.length >= 1) {
-            return res.status(400).json({ message: "Votre équipe a déjà un gardien." });
+        if (userTeam.goalie.length >= config.numGoalies) {
+            return res.status(400).json({ message: `Votre équipe a déjà ${config.numGoalies} gardien${config.numGoalies > 1 ? 's' : ''}.` });
         }
         userTeam.goalie.push(playerName);
     } else if (position === "teams") {
         if (!userTeam.teams) userTeam.teams = [];
-        if (userTeam.teams.length >= 1) {
-            return res.status(400).json({ message: "Votre équipe a déjà une équipe NHL." });
+        if (userTeam.teams.length >= config.numTeams) {
+            return res.status(400).json({ message: `Votre équipe a déjà ${config.numTeams} équipe${config.numTeams > 1 ? 's' : ''} NHL.` });
         }
         userTeam.teams.push(playerName);
     } else {
@@ -225,8 +234,8 @@ app.post("/pick-player", (req, res) => {
     if (clan.lastPickIndex === clan.currentPickIndex) {
     // Check if the team can still pick anything
     const team = clan.teams[userTeamName];
-    const canPickOffensive = team.offensive.length < 6;
-    const canPickDefensive = team.defensive.length < 4;
+    const canPickOffensive = team.offensive.length < config.numOffensive;
+    const canPickDefensive = team.defensive.length < config.numDefensive;
 
     if (!canPickOffensive && !canPickDefensive) {
         // Skip this team and move to the next pick
@@ -655,7 +664,17 @@ app.post("/start-draft", (req, res) => {
     }
 
     if (clan.draftOrder.length === 0) {
-        clan.draftOrder = generateSnakeOrder(eligibleTeams, 13); // 13 picks per team
+        // Calculate total picks based on pool configuration
+        const config = clan.config || {
+            numOffensive: 6,
+            numDefensive: 4,
+            numGoalies: 1,
+            numRookies: 1,
+            numTeams: 1
+        };
+        const totalPicks = config.numOffensive + config.numDefensive + config.numGoalies + config.numRookies + config.numTeams;
+
+        clan.draftOrder = generateSnakeOrder(eligibleTeams, totalPicks);
         saveDraftData(draftData);
         return res.json({ message: "✅ Draft démarré avec succès avec ordre serpentin !" });
     } else {
@@ -709,8 +728,18 @@ app.post("/randomize-draft-order", (req, res) => {
         return res.status(400).json({ message: "Pas assez d'équipes pour générer un ordre de draft." });
     }
 
+    // Calculate total picks based on pool configuration
+    const config = clan.config || {
+        numOffensive: 6,
+        numDefensive: 4,
+        numGoalies: 1,
+        numRookies: 1,
+        numTeams: 1
+    };
+    const totalPicks = config.numOffensive + config.numDefensive + config.numGoalies + config.numRookies + config.numTeams;
+
     const initialOrder = [...eligibleTeams].sort(() => Math.random() - 0.5);
-    clan.draftOrder = generateSnakeOrder(initialOrder, 13);
+    clan.draftOrder = generateSnakeOrder(initialOrder, totalPicks);
     saveDraftData(draftData);
 
     res.json({ message: "Ordre de draft généré en serpentin.", draftOrder: clan.draftOrder });
@@ -726,12 +755,21 @@ function checkIfDraftComplete(clan) {
 
     if (activeTeams.length === 0) return false;
 
+    // Get pool configuration, fallback to defaults if not set
+    const config = clan.config || {
+        numOffensive: 6,
+        numDefensive: 4,
+        numGoalies: 1,
+        numRookies: 1,
+        numTeams: 1
+    };
+
     return activeTeams.every(team =>
-        team.offensive.length === 6 &&
-        team.defensive.length === 4 &&
-        team.rookie?.length === 1 &&
-        team.goalie?.length === 1 &&
-        team.teams?.length === 1
+        team.offensive.length === config.numOffensive &&
+        team.defensive.length === config.numDefensive &&
+        team.rookie?.length === config.numRookies &&
+        team.goalie?.length === config.numGoalies &&
+        team.teams?.length === config.numTeams
     );
 }
 
