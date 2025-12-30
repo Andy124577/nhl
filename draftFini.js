@@ -285,7 +285,23 @@ function renderTeamStatsTable(teams) {
                     const currentGoalieStats = getCurrentPlayerStats(goalieName, goalie.playerId);
 
                     const gp = currentGoalieStats?.gamesPlayed ?? goalie.gamesPlayed ?? 0;
-                    const pts = currentGoalieStats?.points ?? goalie.points ?? 0;
+
+                    // Calculate goalie points: shutouts * 5 + wins * 2 + OTL * 1
+                    let pts;
+                    let wins, shutouts, otl;
+
+                    if (currentGoalieStats) {
+                        wins = currentGoalieStats.wins || 0;
+                        shutouts = currentGoalieStats.shutouts || 0;
+                        otl = currentGoalieStats.otLosses || 0;
+                        pts = (shutouts * 5) + (wins * 2) + (otl * 1);
+                    } else {
+                        wins = goalie.wins || 0;
+                        shutouts = goalie.shutouts || 0;
+                        otl = goalie.otLosses || 0;
+                        pts = goalie.points || ((shutouts * 5) + (wins * 2) + (otl * 1));
+                    }
+
                     const todayPts = currentGoalieStats?.todayPoints ?? 0;
 
                     totalGP += gp;
@@ -295,8 +311,8 @@ function renderTeamStatsTable(teams) {
                         name: goalie.goalieFullName,
                         position: 'G',
                         gp: gp,
-                        g: currentGoalieStats?.goals ?? goalie.wins ?? 0,
-                        a: currentGoalieStats?.assists ?? goalie.shutouts ?? 0,
+                        g: wins,
+                        a: shutouts,
                         pts: pts,
                         todayPoints: todayPts,
                         playerId: goalie.playerId,
@@ -311,8 +327,11 @@ function renderTeamStatsTable(teams) {
                 const nhlTeam = teamData.find(t => t.teamFullName === teamName);
                 if (nhlTeam) {
                     // Teams use cached data (no current stats from player API)
+                    // Calculate team points: wins * 2 + OTL * 1
                     const gp = nhlTeam.gamesPlayed || 0;
-                    const pts = nhlTeam.points || 0;
+                    const wins = nhlTeam.wins || 0;
+                    const otl = nhlTeam.otLosses || 0;
+                    const pts = (wins * 2) + (otl * 1);
 
                     totalGP += gp;
                     totalPTS += pts;
@@ -321,8 +340,8 @@ function renderTeamStatsTable(teams) {
                         name: nhlTeam.teamFullName,
                         position: 'TEAM',
                         gp: gp,
-                        g: nhlTeam.wins || 0,
-                        a: nhlTeam.losses || 0,
+                        g: wins,
+                        a: otl,
                         pts: pts,
                         todayPoints: 0, // Teams don't have daily updates
                         teamAbbrev: nhlTeam.teamAbbrevs,
@@ -414,6 +433,19 @@ function showPlayerDetails(teamName, rowIndex) {
             imageHTML += `<img src="${logoPath}" alt="Team logo" class="player-team-logo-overlay">`;
         }
 
+        // Determine stat labels based on player type
+        let statLabel1, statLabel2;
+        if (player.type === 'goalie') {
+            statLabel1 = 'W';  // Wins
+            statLabel2 = 'SO'; // Shutouts
+        } else if (player.type === 'team') {
+            statLabel1 = 'W';   // Wins
+            statLabel2 = 'OTL'; // Overtime Losses
+        } else {
+            statLabel1 = 'G'; // Goals
+            statLabel2 = 'A'; // Assists
+        }
+
         playerCard.innerHTML = `
             <div class="pick-number">${pickNumber}</div>
             <div class="player-photo">
@@ -427,8 +459,8 @@ function showPlayerDetails(teamName, rowIndex) {
                 </div>
                 <div class="player-stats-row">
                     <span>GP: ${player.gp}</span>
-                    <span>G: ${player.g}</span>
-                    <span>A: ${player.a}</span>
+                    <span>${statLabel1}: ${player.g}</span>
+                    <span>${statLabel2}: ${player.a}</span>
                     <span>PTS: ${player.pts}</span>
                 </div>
             </div>
