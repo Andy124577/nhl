@@ -204,7 +204,9 @@ function renderTeams(teams) {
 
 function renderTeamLeaderboard(teams) {
     const container = document.getElementById("teamStatsContainer");
+    const podiumContainer = document.getElementById("podiumContainer");
     container.innerHTML = "";
+    podiumContainer.innerHTML = "";
 
     const teamStats = Object.entries(teams)
         .filter(([_, team]) => team.members.length > 0)
@@ -247,31 +249,76 @@ function renderTeamLeaderboard(teams) {
     // Sort by total points
     teamStats.sort((a, b) => b.totalPoints - a.totalPoints);
 
+    // Render Podium (Top 3)
+    teamStats.slice(0, 3).forEach((team, index) => {
+        const rank = index + 1;
+        const medals = ['🥇', '🥈', '🥉'];
+
+        const podiumCard = document.createElement("div");
+        podiumCard.className = `podium-card rank-${rank}`;
+
+        podiumCard.innerHTML = `
+            <div class="podium-rank">${medals[index]}</div>
+            <div class="podium-team-name">${team.teamName}</div>
+            <div class="podium-members">${team.members.join(", ")}</div>
+            <div class="podium-stats">
+                <div class="podium-stat">
+                    <div class="podium-stat-label">Points</div>
+                    <div class="podium-stat-value">${team.totalPoints}</div>
+                </div>
+                <div class="podium-stat">
+                    <div class="podium-stat-label">Buts</div>
+                    <div class="podium-stat-value">${team.totalGoals}</div>
+                </div>
+                <div class="podium-stat">
+                    <div class="podium-stat-label">Passes</div>
+                    <div class="podium-stat-value">${team.totalAssists}</div>
+                </div>
+                <div class="podium-stat">
+                    <div class="podium-stat-label">Matchs</div>
+                    <div class="podium-stat-value">${team.totalGames}</div>
+                </div>
+            </div>
+        `;
+
+        podiumContainer.appendChild(podiumCard);
+    });
+
+    // Render All Teams
     teamStats.forEach((team, index) => {
         const teamCard = document.createElement("div");
-        teamCard.className = "team-card expandable";
+        teamCard.className = "team-card";
 
-        const playerList = team.playerStats.map(p => `
+        const playerList = team.playerStats.map(p => {
+            const teamLogo = p.team ? p.team.split(',').pop().trim() : '';
+            return `
             <div class="player-row">
                 <div class="player-photo">
-                    ${p.image ? `<img src="${p.image}" class="face" alt="${p.name}">` : ""}
-                    <img src="teams/${p.team}.png" class="logo" alt="${p.team}">
+                    ${p.image ? `<img src="${p.image}" class="face" alt="${p.name}">` : ''}
+                    ${teamLogo ? `<img src="teams/${teamLogo}.png" class="logo" alt="${teamLogo}" onerror="this.style.display='none'">` : ''}
                 </div>
                 <div class="player-info">
-                    <strong>${p.name}</strong> (${p.position})<br>
-                    GP: ${p.games}, G: ${p.goals}, A: ${p.assists}, PTS: ${p.points}
+                    <strong>${p.name}</strong> <span style="color: #ff2e2e;">(${p.position})</span>
+                    <div class="player-stats">
+                        <span class="stat-badge">GP: ${p.games}</span>
+                        <span class="stat-badge">G: ${p.goals}</span>
+                        <span class="stat-badge">A: ${p.assists}</span>
+                        <span class="stat-badge">PTS: ${p.points}</span>
+                    </div>
                 </div>
             </div>
-        `).join("");
+        `}).join("");
 
         teamCard.innerHTML = `
-            <div class="team-header" onclick="this.nextElementSibling.classList.toggle('expanded')">
-                <h3>${index + 1}. ${team.teamName}</h3>
+            <div class="team-header" onclick="toggleTeamDetails(this)">
+                <div class="team-rank">${index + 1}</div>
+                <h3>${team.teamName}</h3>
                 <div class="team-meta">
                     <p><strong>Membres:</strong> ${team.members.join(", ")}</p>
-                    <p><strong>PTS:</strong> ${team.totalPoints} | GP: ${team.totalGames} | G: ${team.totalGoals} | A: ${team.totalAssists}</p>
+                    <p><strong>Total PTS:</strong> ${team.totalPoints} | <strong>G:</strong> ${team.totalGoals} | <strong>A:</strong> ${team.totalAssists}</p>
                 </div>
             </div>
+            <div class="expand-indicator">Cliquez pour voir les joueurs ▼</div>
             <div class="team-details">
                 ${playerList}
             </div>
@@ -279,6 +326,18 @@ function renderTeamLeaderboard(teams) {
 
         container.appendChild(teamCard);
     });
+}
+
+function toggleTeamDetails(header) {
+    const details = header.parentElement.querySelector('.team-details');
+    const indicator = header.parentElement.querySelector('.expand-indicator');
+    details.classList.toggle('expanded');
+
+    if (details.classList.contains('expanded')) {
+        indicator.textContent = 'Cliquez pour masquer ▲';
+    } else {
+        indicator.textContent = 'Cliquez pour voir les joueurs ▼';
+    }
 }
 
 
