@@ -200,10 +200,49 @@ function updateUI(draftData) {
         const clan = draftData[clanName];
         const userInClan = Object.values(clan.teams).some(team => team.members.includes(username));
 
+        // Count active teams
+        const activeTeams = Object.values(clan.teams).filter(team => team.members.length > 0).length;
+        const totalParticipants = Object.values(clan.teams).reduce((sum, team) => sum + team.members.length, 0);
+
+        // Get pool configuration
+        const config = clan.config || {
+            numOffensive: 6,
+            numDefensive: 4,
+            numGoalies: 1,
+            numRookies: 1,
+            numTeams: 1
+        };
+
+        const totalPicks = config.numOffensive + config.numDefensive + config.numGoalies + config.numRookies + config.numTeams;
+
         if (userInClan) {
-            $("#clans-list").append(`<li>${clanName} <button onclick="viewClanTeams('${clanName}')">Consulter</button></li>`);
+            $("#clans-list").append(`
+                <li>
+                    <div class="pool-item-content">
+                        <span class="pool-item-name">${clanName}</span>
+                        <div class="pool-item-info">
+                            <span class="pool-item-badge">👥 ${totalParticipants} participants</span>
+                            <span class="pool-item-badge">📋 ${totalPicks} sélections</span>
+                            <span class="pool-item-badge">🏒 ${activeTeams} équipes</span>
+                        </div>
+                    </div>
+                    <button class="pool-action-btn" onclick="viewClanTeams('${clanName}')">Consulter</button>
+                </li>
+            `);
         } else {
-            $("#available-clans-list").append(`<li>${clanName} <button onclick="joinClan('${clanName}')">Rejoindre</button></li>`);
+            $("#available-clans-list").append(`
+                <li>
+                    <div class="pool-item-content">
+                        <span class="pool-item-name">${clanName}</span>
+                        <div class="pool-item-info">
+                            <span class="pool-item-badge">👥 ${totalParticipants}/${clan.maxPlayers || 10} participants</span>
+                            <span class="pool-item-badge">📋 ${totalPicks} sélections</span>
+                            <span class="pool-item-badge">🏒 ${activeTeams} équipes</span>
+                        </div>
+                    </div>
+                    <button class="pool-action-btn secondary" onclick="joinClan('${clanName}')">Rejoindre</button>
+                </li>
+            `);
         }
     });
 }
