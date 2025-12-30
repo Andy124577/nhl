@@ -675,7 +675,7 @@ app.post("/start-draft", (req, res) => {
     }
 
     if (clan.draftOrder.length === 0) {
-        clan.draftOrder = generateSnakeOrder(eligibleTeams, 15); // 10 rounds
+        clan.draftOrder = generateSnakeOrder(eligibleTeams, 13); // 13 picks per team
         saveDraftData(draftData);
         return res.json({ message: "✅ Draft démarré avec succès avec ordre serpentin !" });
     } else {
@@ -730,7 +730,7 @@ app.post("/randomize-draft-order", (req, res) => {
     }
 
     const initialOrder = [...eligibleTeams].sort(() => Math.random() - 0.5);
-    clan.draftOrder = generateSnakeOrder(initialOrder, 15);
+    clan.draftOrder = generateSnakeOrder(initialOrder, 13);
     saveDraftData(draftData);
 
     res.json({ message: "Ordre de draft généré en serpentin.", draftOrder: clan.draftOrder });
