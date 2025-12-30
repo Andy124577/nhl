@@ -13,18 +13,29 @@
         <ul>
             <li><a href="index.html">Stats</a></li>
             <li><a href="equipes.html">Équipes</a></li>
-            <li><a href="draft.html">Draft</a></li>
+            <li class="active"><a href="draft.html">Draft</a></li>
             <li id="admin-users-link" style="display: none;"></li>
             <li id="login-link"><a href="login.html">Connexion</a></li>
         </ul>
     </nav>
 
-    <h2 id="clanTitle">Classement des équipes</h2>
-    <div id="teamStatsContainer" class="teams-container"></div>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="trophy-icon">🏆</div>
+        <h1 id="clanTitle" class="hero-title">Classement Final du Draft</h1>
+        <p class="hero-subtitle">Résultats et statistiques complètes</p>
+    </div>
 
+    <!-- Podium Section (Top 3) -->
+    <div id="podiumContainer" class="podium-container"></div>
 
-    <div id="teamsContainer" class="teams-container">
-        <!-- Team cards will be injected here -->
+    <!-- All Teams Leaderboard -->
+    <div class="leaderboard-section">
+        <h2 class="section-title">
+            <span class="icon">📊</span>
+            Classement Complet
+        </h2>
+        <div id="teamStatsContainer" class="teams-grid"></div>
     </div>
 
     <script type="module" src="draftFini.js"></script>
