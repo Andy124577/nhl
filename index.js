@@ -215,6 +215,15 @@ async function populatePlayerTable(playerData) {
         // Get current season stats from API
         const currentPlayerStats = getCurrentPlayerStats(skaterName, player.playerId);
 
+        // Debug logging for Barkov and Tkachuk
+        if (skaterName.includes("Barkov") || skaterName.includes("Tkachuk")) {
+            console.log(`🔍 DEBUG ${skaterName}:`, {
+                hasCurrentStats: !!currentPlayerStats,
+                gamesPlayed: currentPlayerStats?.gamesPlayed,
+                currentStats: currentPlayerStats
+            });
+        }
+
         let gp, goals, assists, points;
         // Only show stats if player has played games this season (2025-26)
         if (currentPlayerStats && currentPlayerStats.gamesPlayed > 0) {
