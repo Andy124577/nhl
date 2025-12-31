@@ -30,12 +30,16 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Cache control: cache images/fonts for 1 year, but not HTML/JS/CSS
 app.use((req, res, next) => {
-    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-    next();
-});
-
-app.use((req, res, next) => {
+    const path = req.path.toLowerCase();
+    if (path.match(/\.(jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+        // Cache images and fonts for 1 year
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    } else {
+        // Don't cache HTML, JS, CSS files - always fetch fresh
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    }
     res.setHeader("X-Content-Type-Options", "nosniff");
     next();
 });
