@@ -837,11 +837,16 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
 
         const data = await response.json();
 
-        // Extract current season stats (20242025)
+        // Extract current season stats - check for 20252026 season ONLY
         const seasonStats = data.featuredStats?.regularSeason?.subSeason;
+        const season = data.featuredStats?.season;
 
-        if (!seasonStats) {
-            console.log(`⚠️ No current season stats for ${playerName}`);
+        // Only accept stats from 2025-26 season (20252026)
+        // If player has stats from an older season (like 20242025), ignore them
+        if (!seasonStats || season !== 20252026) {
+            if (season && season !== 20252026) {
+                console.log(`⚠️ ${playerName} has stats from season ${season}, not 20252026 - treating as no stats`);
+            }
             return null;
         }
 
