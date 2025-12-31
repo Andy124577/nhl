@@ -186,6 +186,14 @@ function updateTable() {
         const valueA = statsA ? (statsA[sortBy] || 0) : (a[sortBy] || 0);
         const valueB = statsB ? (statsB[sortBy] || 0) : (b[sortBy] || 0);
 
+        // Debug log for Barkov and Tkachuk sorting
+        if (a.skaterFullName.includes("Barkov") || a.skaterFullName.includes("Tkachuk")) {
+            console.log(`🔍 SORT ${a.skaterFullName}: sortBy=${sortBy}, statsA=${!!statsA}, valueA=${valueA}, cachedValue=${a[sortBy]}`);
+        }
+        if (b.skaterFullName.includes("Barkov") || b.skaterFullName.includes("Tkachuk")) {
+            console.log(`🔍 SORT ${b.skaterFullName}: sortBy=${sortBy}, statsB=${!!statsB}, valueB=${valueB}, cachedValue=${b[sortBy]}`);
+        }
+
         return valueB - valueA;
     });
 
