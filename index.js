@@ -2,13 +2,41 @@ let fullPlayerData = [];
 let teamData = [];
 let imageList = [];
 let goalieData = [];
-let lastYearData = {}; // Données de l'année passée
+let currentStats = null; // Stats actuelles de la saison 2024-2025 depuis l'API
+let currentTeams = null; // Standings actuels des équipes depuis l'API
+let lastYearData = {}; // Données de l'année passée pour la modal
 
 const BASE_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:3000'
     : 'https://nhl-draft.onrender.com';
 
-// Charger les stats de l'année passée (2023-2024)
+// Helper function to get current player stats from API data
+function getCurrentPlayerStats(playerName, playerId) {
+    if (!currentStats || !currentStats.players) {
+        return null;
+    }
+
+    // Try to find by playerId first (most reliable)
+    if (playerId) {
+        const stats = currentStats.players.find(p => p.playerId === playerId);
+        if (stats) return stats;
+    }
+
+    // Fallback: try to find by name
+    return currentStats.players.find(p => p.playerName === playerName);
+}
+
+// Helper function to get current team standings
+function getCurrentTeamStats(teamFullName) {
+    if (!currentTeams || !currentTeams.teams) {
+        return null;
+    }
+
+    // Try to find by full name
+    return currentTeams.teams.find(t => t.teamFullName === teamFullName);
+}
+
+// Charger les stats de l'année passée (2023-2024) pour la modal
 async function fetchLastYearData() {
     try {
         const response = await fetch("nhl_filtered_stats.json");
@@ -29,10 +57,11 @@ async function fetchLastYearData() {
     }
 }
 
-// Charger les stats de la saison en cours
+// Charger les métadonnées des joueurs et les stats actuelles de la saison 2024-2025
 async function fetchPlayerData() {
     try {
-        const response = await fetch(`${BASE_URL}/current-stats`);
+        // Load player metadata (names, positions, etc.)
+        const response = await fetch("nhl_filtered_stats.json");
         if (!response.ok) throw new Error(`Error: ${response.status} - ${response.statusText}`);
         const data = await response.json();
 
@@ -44,24 +73,27 @@ async function fetchPlayerData() {
         teamData = data.Teams;
         goalieData = data.Top_50_Goalies;
 
+        // Load current season stats from API (2024-2025)
+        try {
+            const currentStatsResponse = await fetch(`${BASE_URL}/current-stats`, { cache: "no-store" });
+            currentStats = await currentStatsResponse.json();
+            console.log(`✅ Current stats loaded: ${currentStats.players.length} players, last updated: ${currentStats.lastUpdated}`);
+        } catch (error) {
+            console.warn("⚠️ Could not load current stats, using cached data:", error);
+        }
+
+        // Load current team standings from API (2024-2025)
+        try {
+            const currentTeamsResponse = await fetch(`${BASE_URL}/current-teams`, { cache: "no-store" });
+            currentTeams = await currentTeamsResponse.json();
+            console.log(`✅ Current team standings loaded: ${currentTeams.teams.length} teams, last updated: ${currentTeams.lastUpdated}`);
+        } catch (error) {
+            console.warn("⚠️ Could not load current team standings, using cached data:", error);
+        }
+
         updateTable();
     } catch (error) {
-        console.error("Failed to fetch current player data:", error);
-        // Fallback to last year data if current stats fail
-        try {
-            const response = await fetch("nhl_filtered_stats.json");
-            const data = await response.json();
-            fullPlayerData = [
-                ...data.Top_50_Defenders,
-                ...data.Top_100_Offensive_Players,
-                ...data.Top_Rookies
-            ];
-            teamData = data.Teams;
-            goalieData = data.Top_50_Goalies;
-            updateTable();
-        } catch (fallbackError) {
-            console.error("Failed to fetch fallback data:", fallbackError);
-        }
+        console.error("Failed to fetch player data:", error);
     }
 }
 
@@ -100,17 +132,48 @@ function updateTable() {
     const searchTerm = document.getElementById("searchInput").value.toLowerCase();
 
     if (filter === "teams") {
-        const sortedTeams = [...teamData].sort((a, b) => b.points - a.points);
+        // Sort teams by current season standings
+        const sortedTeams = [...teamData].sort((a, b) => {
+            const statsA = getCurrentTeamStats(a.teamFullName);
+            const statsB = getCurrentTeamStats(b.teamFullName);
+
+            const pointsA = statsA ? statsA.points : a.points;
+            const pointsB = statsB ? statsB.points : b.points;
+
+            return pointsB - pointsA;
+        });
         populateTeamTable(sortedTeams);
         return;
     }
 
-    
+
     if (filter === "goalies") {
+        // Sort goalies by current season stats
         const sortedGoalies = [...goalieData].sort((a, b) => {
-        const aVal = a[sortBy] ?? 0;
-        const bVal = b[sortBy] ?? 0;
-        return bVal - aVal;
+            const statsA = getCurrentPlayerStats(a.goalieFullName, a.playerId);
+            const statsB = getCurrentPlayerStats(b.goalieFullName, b.playerId);
+
+            let aVal = 0;
+            let bVal = 0;
+
+            if (sortBy === "points") {
+                // Calculate points for goalies: shutouts * 5 + wins * 2 + OTL * 1
+                if (statsA) {
+                    aVal = (statsA.shutouts * 5) + (statsA.wins * 2) + (statsA.otLosses * 1);
+                } else {
+                    aVal = a.points || 0;
+                }
+                if (statsB) {
+                    bVal = (statsB.shutouts * 5) + (statsB.wins * 2) + (statsB.otLosses * 1);
+                } else {
+                    bVal = b.points || 0;
+                }
+            } else {
+                aVal = statsA ? (statsA[sortBy] || 0) : (a[sortBy] || 0);
+                bVal = statsB ? (statsB[sortBy] || 0) : (b[sortBy] || 0);
+            }
+
+            return bVal - aVal;
         });
         populateGoalieTable(sortedGoalies);
         return;
@@ -136,7 +199,16 @@ function updateTable() {
         );
     }
 
-    filteredData.sort((a, b) => b[sortBy] - a[sortBy]);
+    // Sort by current season stats
+    filteredData.sort((a, b) => {
+        const statsA = getCurrentPlayerStats(a.skaterFullName, a.playerId);
+        const statsB = getCurrentPlayerStats(b.skaterFullName, b.playerId);
+
+        const valueA = statsA ? (statsA[sortBy] || 0) : (a[sortBy] || 0);
+        const valueB = statsB ? (statsB[sortBy] || 0) : (b[sortBy] || 0);
+
+        return valueB - valueA;
+    });
 
     populatePlayerTable(filteredData);
 }
@@ -161,6 +233,24 @@ async function populatePlayerTable(playerData) {
         const matchingImage = getMatchingImage(skaterName);
         const logoPath = getTeamLogoPath(player.teamAbbrevs);
 
+        // Get current season stats from API
+        const currentPlayerStats = getCurrentPlayerStats(skaterName, player.playerId);
+
+        let gp, goals, assists, points;
+        if (currentPlayerStats) {
+            // Use current season stats (2024-2025)
+            gp = currentPlayerStats.gamesPlayed || 0;
+            goals = currentPlayerStats.goals || 0;
+            assists = currentPlayerStats.assists || 0;
+            points = currentPlayerStats.points || 0;
+        } else {
+            // Fallback to cached data
+            gp = player.gamesPlayed || 0;
+            goals = player.goals || 0;
+            assists = player.assists || 0;
+            points = player.points || 0;
+        }
+
         const imageHTML = matchingImage && logoPath
             ? `
             <div class="player-photo">
@@ -174,10 +264,10 @@ async function populatePlayerTable(playerData) {
         row.innerHTML = `
             <td>${imageHTML}</td>
             <td>${skaterName}, ${player.positionCode || "N/A"}</td>
-            <td>${player.gamesPlayed}</td>
-            <td>${player.goals}</td>
-            <td>${player.assists}</td>
-            <td class="points-column">${player.points}</td>
+            <td>${gp}</td>
+            <td>${goals}</td>
+            <td>${assists}</td>
+            <td class="points-column">${points}</td>
         `;
 
         // Add click handler to show last year stats
@@ -209,6 +299,31 @@ function populateGoalieTable(goalies) {
         const imagePath = getMatchingImage(name);
         const logoPath = getTeamLogoPath(goalie.teamAbbrevs);
 
+        // Get current season stats from API
+        const currentGoalieStats = getCurrentPlayerStats(name, goalie.playerId);
+
+        let gp, wins, losses, otLosses, savePct, shutouts, points;
+        if (currentGoalieStats) {
+            // Use current season stats (2024-2025)
+            gp = currentGoalieStats.gamesPlayed || 0;
+            wins = currentGoalieStats.wins || 0;
+            losses = currentGoalieStats.losses || 0;
+            otLosses = currentGoalieStats.otLosses || 0;
+            savePct = currentGoalieStats.savePct || 0;
+            shutouts = currentGoalieStats.shutouts || 0;
+            // Calculate points using custom scoring: shutouts * 5 + wins * 2 + OTL * 1
+            points = (shutouts * 5) + (wins * 2) + (otLosses * 1);
+        } else {
+            // Fallback to cached data
+            gp = goalie.gamesPlayed || 0;
+            wins = goalie.wins || 0;
+            losses = goalie.losses || 0;
+            otLosses = goalie.otLosses || 0;
+            savePct = goalie.savePct || 0;
+            shutouts = goalie.shutouts || 0;
+            points = goalie.points || 0;
+        }
+
         const imageHTML = imagePath && logoPath
             ? `<div class="player-photo">
                     <img src="${imagePath}" alt="${name}" class="face">
@@ -220,13 +335,13 @@ function populateGoalieTable(goalies) {
         row.innerHTML = `
             <td>${imageHTML}</td>
             <td>${name}</td>
-            <td>${goalie.gamesPlayed}</td>
-            <td>${goalie.wins}</td>
-            <td>${goalie.losses}</td>
-            <td>${goalie.otLosses}</td>
-            <td>${goalie.savePct?.toFixed(3)}</td>
-            <td>${goalie.shutouts}</td>
-            <td>${goalie.points}</td>
+            <td>${gp}</td>
+            <td>${wins}</td>
+            <td>${losses}</td>
+            <td>${otLosses}</td>
+            <td>${savePct?.toFixed(3)}</td>
+            <td>${shutouts}</td>
+            <td>${points}</td>
         `;
 
         // Add click handler to show last year stats
@@ -282,15 +397,36 @@ function populateTeamTable(teamStats) {
         const abbrev = getTeamAbbreviation(team.teamFullName);
         const logoPath = `teams/${abbrev}.png`;
 
+        // Get current season team standings from API
+        const currentTeamStats = getCurrentTeamStats(team.teamFullName);
+
+        let gp, wins, losses, otLosses, points;
+        if (currentTeamStats) {
+            // Use current season standings (2024-2025)
+            gp = currentTeamStats.gamesPlayed || 0;
+            wins = currentTeamStats.wins || 0;
+            losses = currentTeamStats.losses || 0;
+            otLosses = currentTeamStats.otLosses || 0;
+            // Points already calculated by server with custom scoring: wins * 2 + OTL * 1
+            points = currentTeamStats.points || ((wins * 2) + (otLosses * 1));
+        } else {
+            // Fallback to cached data
+            gp = team.gamesPlayed || 0;
+            wins = team.wins || 0;
+            losses = team.losses || 0;
+            otLosses = team.otLosses || 0;
+            points = team.points || 0;
+        }
+
         const row = document.createElement("tr");
         row.innerHTML = `
             <td><img src="${logoPath}" alt="${team.teamFullName}" class="logo" style="width:40px;"></td>
             <td>${team.teamFullName}</td>
-            <td>${team.gamesPlayed}</td>
-            <td>${team.wins}</td>
-            <td>${team.losses}</td>
-            <td>${team.otLosses}</td>
-            <td>${team.points}</td>
+            <td>${gp}</td>
+            <td>${wins}</td>
+            <td>${losses}</td>
+            <td>${otLosses}</td>
+            <td>${points}</td>
         `;
 
         // Add click handler to show last year stats
