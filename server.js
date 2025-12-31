@@ -143,12 +143,6 @@ app.post("/delete-clan", (req, res) => {
     res.json({ message: `Clan ${clanName} supprimé avec succès !` });
 });
 
-// ✅ Start Server with WebSockets
-server.listen(PORT, () => {
-    console.log(`🚀 Serveur WebSocket en cours d'exécution sur http://localhost:${PORT}`);
-});
-
-
 // 📌 Route pour récupérer tous les pools et équipes
 app.get("/draft", (req, res) => {
     const draftData = loadDraftData();
@@ -301,11 +295,6 @@ app.get("/draft-order/:clanName", (req, res) => {
     }
 
     res.json({ draftOrder: draftData[clanName].draftOrder });
-});
-
-// 🔥 Lancer le serveur
-app.listen(PORT, () => {
-    console.log(`🚀 Serveur en cours d'exécution sur http://localhost:${PORT}`);
 });
 
 // 📌 Charger et sauvegarder `users.json`
@@ -1122,3 +1111,8 @@ app.get('/current-teams', async (req, res) => {
 console.log("✅ NHL current stats system initialized");
 console.log("✅ NHL team standings system initialized");
 
+// ✅ Start Server with WebSockets (after all routes are defined)
+server.listen(PORT, () => {
+    console.log(`🚀 Serveur WebSocket en cours d'exécution sur http://localhost:${PORT}`);
+    console.log(`🚀 Serveur en cours d'exécution sur http://localhost:${PORT}`);
+});
