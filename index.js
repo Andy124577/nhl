@@ -4,7 +4,6 @@ let imageList = [];
 let goalieData = [];
 let currentStats = null; // Stats actuelles de la saison 2024-2025 depuis l'API
 let currentTeams = null; // Standings actuels des équipes depuis l'API
-let lastYearData = {}; // Données de l'année passée pour la modal
 
 const BASE_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:3000'
@@ -36,26 +35,6 @@ function getCurrentTeamStats(teamFullName) {
     return currentTeams.teams.find(t => t.teamFullName === teamFullName);
 }
 
-// Charger les stats de l'année passée (2023-2024) pour la modal
-async function fetchLastYearData() {
-    try {
-        const response = await fetch("nhl_filtered_stats.json");
-        if (!response.ok) throw new Error(`Error: ${response.status} - ${response.statusText}`);
-        const data = await response.json();
-
-        lastYearData = {
-            players: [
-                ...data.Top_50_Defenders,
-                ...data.Top_100_Offensive_Players,
-                ...data.Top_Rookies
-            ],
-            teams: data.Teams,
-            goalies: data.Top_50_Goalies
-        };
-    } catch (error) {
-        console.error("Failed to fetch last year data:", error);
-    }
-}
 
 // Charger les métadonnées des joueurs et les stats actuelles de la saison 2024-2025
 async function fetchPlayerData() {
@@ -440,31 +419,31 @@ function populateTeamTable(teamStats) {
 
 
 
-// Modal functions for last year stats
+// Modal functions to show base season stats (2024-2025 from JSON)
 function showLastYearStats(currentData, type) {
     const modal = document.getElementById('lastYearModal');
     const modalPlayerName = document.getElementById('modalPlayerName');
     const modalStats = document.getElementById('modalStats');
 
-    let lastYearPlayer = null;
+    let baseSeasonPlayer = null;
     let playerName = '';
 
-    // Find the player/goalie/team in last year's data
+    // Find the player/goalie/team in base season data (from JSON file)
     if (type === 'player') {
         playerName = currentData.skaterFullName;
-        lastYearPlayer = lastYearData.players?.find(p => p.skaterFullName === playerName);
+        baseSeasonPlayer = fullPlayerData.find(p => p.skaterFullName === playerName);
     } else if (type === 'goalie') {
         playerName = currentData.goalieFullName;
-        lastYearPlayer = lastYearData.goalies?.find(g => g.goalieFullName === playerName);
+        baseSeasonPlayer = goalieData.find(g => g.goalieFullName === playerName);
     } else if (type === 'team') {
         playerName = currentData.teamFullName;
-        lastYearPlayer = lastYearData.teams?.find(t => t.teamFullName === playerName);
+        baseSeasonPlayer = teamData.find(t => t.teamFullName === playerName);
     }
 
     modalPlayerName.textContent = playerName;
 
-    if (!lastYearPlayer) {
-        modalStats.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Aucune statistique disponible pour 2023-2024</p>';
+    if (!baseSeasonPlayer) {
+        modalStats.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Aucune statistique disponible</p>';
     } else {
         let statsHTML = '';
 
@@ -472,81 +451,82 @@ function showLastYearStats(currentData, type) {
             statsHTML = `
                 <div class="stat-item">
                     <div class="stat-label">Matchs joués</div>
-                    <div class="stat-value">${lastYearPlayer.gamesPlayed || 0}</div>
+                    <div class="stat-value">${baseSeasonPlayer.gamesPlayed || 0}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Buts</div>
-                    <div class="stat-value">${lastYearPlayer.goals || 0}</div>
+                    <div class="stat-value">${baseSeasonPlayer.goals || 0}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Passes</div>
-                    <div class="stat-value">${lastYearPlayer.assists || 0}</div>
+                    <div class="stat-value">${baseSeasonPlayer.assists || 0}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Points</div>
-                    <div class="stat-value">${lastYearPlayer.points || 0}</div>
+                    <div class="stat-value">${baseSeasonPlayer.points || 0}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">+/-</div>
-                    <div class="stat-value">${lastYearPlayer.plusMinus || 0}</div>
+                    <div class="stat-value">${baseSeasonPlayer.plusMinus || 0}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">PIM</div>
-                    <div class="stat-value">${lastYearPlayer.penaltyMinutes || 0}</div>
+                    <div class="stat-value">${baseSeasonPlayer.penaltyMinutes || 0}</div>
                 </div>
             `;
         } else if (type === 'goalie') {
+            const points = baseSeasonPlayer.points || 0;
             statsHTML = `
                 <div class="stat-item">
                     <div class="stat-label">Matchs joués</div>
-                    <div class="stat-value">${lastYearPlayer.gamesPlayed || 0}</div>
+                    <div class="stat-value">${baseSeasonPlayer.gamesPlayed || 0}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Victoires</div>
-                    <div class="stat-value">${lastYearPlayer.wins || 0}</div>
+                    <div class="stat-value">${baseSeasonPlayer.wins || 0}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Défaites</div>
-                    <div class="stat-value">${lastYearPlayer.losses || 0}</div>
+                    <div class="stat-value">${baseSeasonPlayer.losses || 0}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Prol.</div>
-                    <div class="stat-value">${lastYearPlayer.otLosses || 0}</div>
+                    <div class="stat-value">${baseSeasonPlayer.otLosses || 0}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">% Arrêts</div>
-                    <div class="stat-value">${lastYearPlayer.savePct?.toFixed(3) || '0.000'}</div>
+                    <div class="stat-value">${baseSeasonPlayer.savePct?.toFixed(3) || '0.000'}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Blanchissages</div>
-                    <div class="stat-value">${lastYearPlayer.shutouts || 0}</div>
+                    <div class="stat-value">${baseSeasonPlayer.shutouts || 0}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Points</div>
-                    <div class="stat-value">${lastYearPlayer.points || 0}</div>
+                    <div class="stat-value">${points}</div>
                 </div>
             `;
         } else if (type === 'team') {
             statsHTML = `
                 <div class="stat-item">
                     <div class="stat-label">Matchs joués</div>
-                    <div class="stat-value">${lastYearPlayer.gamesPlayed || 0}</div>
+                    <div class="stat-value">${baseSeasonPlayer.gamesPlayed || 0}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Victoires</div>
-                    <div class="stat-value">${lastYearPlayer.wins || 0}</div>
+                    <div class="stat-value">${baseSeasonPlayer.wins || 0}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Défaites</div>
-                    <div class="stat-value">${lastYearPlayer.losses || 0}</div>
+                    <div class="stat-value">${baseSeasonPlayer.losses || 0}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Prol.</div>
-                    <div class="stat-value">${lastYearPlayer.otLosses || 0}</div>
+                    <div class="stat-value">${baseSeasonPlayer.otLosses || 0}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Points</div>
-                    <div class="stat-value">${lastYearPlayer.points || 0}</div>
+                    <div class="stat-value">${baseSeasonPlayer.points || 0}</div>
                 </div>
             `;
         }
@@ -574,7 +554,6 @@ document.getElementById("playerFilter").addEventListener("change", updateTable);
 document.getElementById("sortBy").addEventListener("change", updateTable);
 
 // Load data
-fetchLastYearData(); // Load last year data for modal
 fetchPlayerData(); // Load current season data
 
 $(document).ready(function () {
