@@ -613,24 +613,28 @@ body {
 
 @media screen and (max-width: 768px) {
   .navbar {
-    padding: 10px 15px;
+    padding: 8px 10px;
+  }
+
+  .navbar-brand {
+    gap: 8px;
   }
 
   .navbar-logo {
-    height: 45px;
+    height: 40px;
   }
 
   .navbar-title {
-    font-size: 1.4rem;
+    font-size: 1.1rem;
   }
 
   .navbar ul {
-    gap: 15px;
+    gap: 10px;
   }
 
   .navbar a {
-    font-size: 0.9rem;
-    padding: 6px 12px;
+    font-size: 0.75rem;
+    padding: 6px 8px;
   }
 
   .picks-carousel {
@@ -640,7 +644,7 @@ body {
 
 @media screen and (max-width: 480px) {
   .navbar-title {
-    display: none;
+    font-size: 0.9rem;
   }
 
   .navbar ul {
@@ -1030,12 +1034,12 @@ button.select-button .select-icon {
   }
 
   .navbar ul {
-    gap: 15px;
+    gap: 10px;
   }
 
   .navbar a {
-    font-size: 0.9rem;
-    padding: 6px 12px;
+    font-size: 0.75rem;
+    padding: 6px 8px;
   }
 
   table {
