@@ -841,13 +841,27 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
         const seasonStats = data.featuredStats?.regularSeason?.subSeason;
         const season = data.featuredStats?.season;
 
-        // Only accept stats from 2025-26 season (20252026)
-        // If player has stats from an older season (like 20242025), ignore them
+        // If player has stats from wrong season or no stats, return zeros
         if (!seasonStats || season !== 20252026) {
             if (season && season !== 20252026) {
-                console.log(`⚠️ ${playerName} has stats from season ${season}, not 20252026 - treating as no stats`);
+                console.log(`⚠️ ${playerName} has stats from season ${season}, not 20252026 - returning zeros`);
             }
-            return null;
+            // Return player with all zeros (injured/hasn't played this season)
+            return {
+                playerId: playerId,
+                playerName: playerName,
+                teamAbbrev: data.currentTeamAbbrev || "N/A",
+                position: data.position || "N/A",
+                gamesPlayed: 0,
+                goals: 0,
+                assists: 0,
+                wins: 0,
+                shutouts: 0,
+                otLosses: 0,
+                savePct: 0,
+                points: 0,
+                lastUpdated: new Date().toISOString()
+            };
         }
 
         let calculatedPoints;
@@ -883,7 +897,22 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
         };
     } catch (error) {
         console.error(`❌ Error fetching stats for ${playerName}:`, error.message);
-        return null;
+        // Return zeros if fetch fails (network error, API down, etc.)
+        return {
+            playerId: playerId,
+            playerName: playerName,
+            teamAbbrev: "N/A",
+            position: "N/A",
+            gamesPlayed: 0,
+            goals: 0,
+            assists: 0,
+            wins: 0,
+            shutouts: 0,
+            otLosses: 0,
+            savePct: 0,
+            points: 0,
+            lastUpdated: new Date().toISOString()
+        };
     }
 }
 
