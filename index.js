@@ -216,18 +216,19 @@ async function populatePlayerTable(playerData) {
         const currentPlayerStats = getCurrentPlayerStats(skaterName, player.playerId);
 
         let gp, goals, assists, points;
-        if (currentPlayerStats) {
-            // Use current season stats (2024-2025)
+        // Only show stats if player has played games this season (2025-26)
+        if (currentPlayerStats && currentPlayerStats.gamesPlayed > 0) {
+            // Use current season stats (2025-26)
             gp = currentPlayerStats.gamesPlayed || 0;
             goals = currentPlayerStats.goals || 0;
             assists = currentPlayerStats.assists || 0;
             points = currentPlayerStats.points || 0;
         } else {
-            // Fallback to cached data
-            gp = player.gamesPlayed || 0;
-            goals = player.goals || 0;
-            assists = player.assists || 0;
-            points = player.points || 0;
+            // Player hasn't played this season (injured, etc.) - show 0
+            gp = 0;
+            goals = 0;
+            assists = 0;
+            points = 0;
         }
 
         const imageHTML = matchingImage && logoPath
@@ -282,8 +283,9 @@ function populateGoalieTable(goalies) {
         const currentGoalieStats = getCurrentPlayerStats(name, goalie.playerId);
 
         let gp, wins, losses, otLosses, savePct, shutouts, points;
-        if (currentGoalieStats) {
-            // Use current season stats (2024-2025)
+        // Only show stats if goalie has played games this season (2025-26)
+        if (currentGoalieStats && currentGoalieStats.gamesPlayed > 0) {
+            // Use current season stats (2025-26)
             gp = currentGoalieStats.gamesPlayed || 0;
             wins = currentGoalieStats.wins || 0;
             losses = currentGoalieStats.losses || 0;
@@ -293,14 +295,14 @@ function populateGoalieTable(goalies) {
             // Calculate points using custom scoring: shutouts * 5 + wins * 2 + OTL * 1
             points = (shutouts * 5) + (wins * 2) + (otLosses * 1);
         } else {
-            // Fallback to cached data
-            gp = goalie.gamesPlayed || 0;
-            wins = goalie.wins || 0;
-            losses = goalie.losses || 0;
-            otLosses = goalie.otLosses || 0;
-            savePct = goalie.savePct || 0;
-            shutouts = goalie.shutouts || 0;
-            points = goalie.points || 0;
+            // Goalie hasn't played this season (injured, etc.) - show 0
+            gp = 0;
+            wins = 0;
+            losses = 0;
+            otLosses = 0;
+            savePct = 0;
+            shutouts = 0;
+            points = 0;
         }
 
         const imageHTML = imagePath && logoPath
@@ -380,8 +382,9 @@ function populateTeamTable(teamStats) {
         const currentTeamStats = getCurrentTeamStats(team.teamFullName);
 
         let gp, wins, losses, otLosses, points;
-        if (currentTeamStats) {
-            // Use current season standings (2024-2025)
+        // Only show stats if team has played games this season (2025-26)
+        if (currentTeamStats && currentTeamStats.gamesPlayed > 0) {
+            // Use current season standings (2025-26)
             gp = currentTeamStats.gamesPlayed || 0;
             wins = currentTeamStats.wins || 0;
             losses = currentTeamStats.losses || 0;
@@ -389,12 +392,12 @@ function populateTeamTable(teamStats) {
             // Points already calculated by server with custom scoring: wins * 2 + OTL * 1
             points = currentTeamStats.points || ((wins * 2) + (otLosses * 1));
         } else {
-            // Fallback to cached data
-            gp = team.gamesPlayed || 0;
-            wins = team.wins || 0;
-            losses = team.losses || 0;
-            otLosses = team.otLosses || 0;
-            points = team.points || 0;
+            // Team hasn't played this season - show 0
+            gp = 0;
+            wins = 0;
+            losses = 0;
+            otLosses = 0;
+            points = 0;
         }
 
         const row = document.createElement("tr");
