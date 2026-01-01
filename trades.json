@@ -1,4 +1,91 @@
 {
-  "completed": [],
+  "completed": [
+    {
+      "id": "trade_1767283037317_9q0n9z0ph",
+      "draftName": "111111111",
+      "fromTeam": "Équipe 1",
+      "toTeam": "Équipe 2",
+      "offering": [
+        {
+          "name": "Nikita Kucherov",
+          "type": "offensive"
+        }
+      ],
+      "receiving": [
+        {
+          "name": "Nathan MacKinnon",
+          "type": "offensive"
+        }
+      ],
+      "status": "accepted",
+      "date": "2026-01-01T15:57:17.317Z",
+      "completedDate": "2026-01-01T15:58:32.960Z"
+    },
+    {
+      "id": "trade_1767283075597_yab22ja5o",
+      "draftName": "poule1223131",
+      "fromTeam": "Équipe 1",
+      "toTeam": "Équipe 2",
+      "offering": [
+        {
+          "name": "Nikita Kucherov",
+          "type": "offensive"
+        }
+      ],
+      "receiving": [
+        {
+          "name": "Nathan MacKinnon",
+          "type": "offensive"
+        }
+      ],
+      "status": "accepted",
+      "date": "2026-01-01T15:57:55.597Z",
+      "completedDate": "2026-01-01T15:58:40.872Z"
+    },
+    {
+      "id": "trade_1767284031210_q9ynox3rk",
+      "draftName": "poule1223131",
+      "fromTeam": "Équipe 2",
+      "toTeam": "Équipe 1",
+      "offering": [
+        {
+          "name": "Leon Draisaitl",
+          "type": "offensive"
+        }
+      ],
+      "receiving": [
+        {
+          "name": "David Pastrnak",
+          "type": "offensive"
+        }
+      ],
+      "status": "accepted",
+      "date": "2026-01-01T16:13:51.210Z",
+      "completedDate": "2026-01-01T16:14:12.649Z"
+    },
+    {
+      "id": "trade_1767284669937_wxelr65vj",
+      "draftName": "poule1223131",
+      "fromTeam": "Équipe 1",
+      "toTeam": "Équipe 2",
+      "offering": [
+        {
+          "name": "Nathan MacKinnon",
+          "type": "offensive",
+          "playerData": "Nathan MacKinnon"
+        }
+      ],
+      "receiving": [
+        {
+          "name": "Nikita Kucherov",
+          "type": "offensive",
+          "playerData": "Nikita Kucherov"
+        }
+      ],
+      "status": "accepted",
+      "date": "2026-01-01T16:24:29.937Z",
+      "completedDate": "2026-01-01T16:24:58.185Z"
+    }
+  ],
   "pending": []
 }

@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-12-31T00:28:45.888Z",
+  "lastUpdated": "2026-01-01T05:03:21.843Z",
   "players": [
     {
       "playerId": 8480069,
@@ -13,7 +13,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 44,
-      "lastUpdated": "2025-12-31T00:25:09.497Z",
+      "lastUpdated": "2026-01-01T05:00:00.702Z",
       "todayPoints": 0
     },
     {
@@ -28,7 +28,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 40,
-      "lastUpdated": "2025-12-31T00:25:09.984Z",
+      "lastUpdated": "2026-01-01T05:00:01.227Z",
       "todayPoints": 0
     },
     {
@@ -36,14 +36,14 @@
       "playerName": "Quinn Hughes",
       "teamAbbrev": "MIN",
       "position": "D",
-      "gamesPlayed": 34,
+      "gamesPlayed": 35,
       "goals": 3,
       "assists": 27,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 30,
-      "lastUpdated": "2025-12-31T00:25:10.379Z",
+      "lastUpdated": "2026-01-01T05:00:01.879Z",
       "todayPoints": 0
     },
     {
@@ -51,14 +51,14 @@
       "playerName": "Rasmus Dahlin",
       "teamAbbrev": "BUF",
       "position": "D",
-      "gamesPlayed": 34,
+      "gamesPlayed": 35,
       "goals": 4,
       "assists": 24,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 28,
-      "lastUpdated": "2025-12-31T00:25:10.647Z",
+      "lastUpdated": "2026-01-01T05:00:02.382Z",
       "todayPoints": 0
     },
     {
@@ -73,7 +73,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 37,
-      "lastUpdated": "2025-12-31T00:25:11.090Z",
+      "lastUpdated": "2026-01-01T05:00:02.882Z",
       "todayPoints": 0
     },
     {
@@ -88,7 +88,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:25:11.567Z",
+      "lastUpdated": "2026-01-01T05:00:03.402Z",
       "todayPoints": 0
     },
     {
@@ -96,14 +96,14 @@
       "playerName": "Lane Hutson",
       "teamAbbrev": "MTL",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 5,
-      "assists": 31,
+      "assists": 33,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 36,
-      "lastUpdated": "2025-12-31T00:25:12.026Z",
+      "points": 38,
+      "lastUpdated": "2026-01-01T05:00:03.937Z",
       "todayPoints": 0
     },
     {
@@ -111,14 +111,14 @@
       "playerName": "Josh Morrissey",
       "teamAbbrev": "WPG",
       "position": "D",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 6,
       "assists": 24,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 30,
-      "lastUpdated": "2025-12-31T00:25:12.530Z",
+      "lastUpdated": "2026-01-01T05:00:04.413Z",
       "todayPoints": 0
     },
     {
@@ -126,15 +126,15 @@
       "playerName": "Adam Fox",
       "teamAbbrev": "NYR",
       "position": "D",
-      "gamesPlayed": 27,
-      "goals": 3,
-      "assists": 23,
+      "gamesPlayed": 28,
+      "goals": 4,
+      "assists": 24,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 26,
-      "lastUpdated": "2025-12-31T00:25:13.011Z",
-      "todayPoints": 0
+      "points": 28,
+      "lastUpdated": "2026-01-01T05:00:04.810Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8477447,
@@ -148,7 +148,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 20,
-      "lastUpdated": "2025-12-31T00:25:13.567Z",
+      "lastUpdated": "2026-01-01T05:00:05.308Z",
       "todayPoints": 0
     },
     {
@@ -163,7 +163,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 27,
-      "lastUpdated": "2025-12-31T00:25:14.046Z",
+      "lastUpdated": "2026-01-01T05:00:05.646Z",
       "todayPoints": 0
     },
     {
@@ -178,7 +178,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 26,
-      "lastUpdated": "2025-12-31T00:25:14.519Z",
+      "lastUpdated": "2026-01-01T05:00:06.131Z",
       "todayPoints": 0
     },
     {
@@ -186,14 +186,14 @@
       "playerName": "Erik Karlsson",
       "teamAbbrev": "PIT",
       "position": "D",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 3,
-      "assists": 23,
+      "assists": 25,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 26,
-      "lastUpdated": "2025-12-31T00:25:15.046Z",
+      "points": 28,
+      "lastUpdated": "2026-01-01T05:00:06.605Z",
       "todayPoints": 0
     },
     {
@@ -201,14 +201,14 @@
       "playerName": "John Carlson",
       "teamAbbrev": "WSH",
       "position": "D",
-      "gamesPlayed": 35,
+      "gamesPlayed": 36,
       "goals": 8,
       "assists": 21,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 29,
-      "lastUpdated": "2025-12-31T00:25:15.509Z",
+      "lastUpdated": "2026-01-01T05:00:06.944Z",
       "todayPoints": 0
     },
     {
@@ -216,14 +216,14 @@
       "playerName": "Thomas Harley",
       "teamAbbrev": "DAL",
       "position": "D",
-      "gamesPlayed": 27,
+      "gamesPlayed": 28,
       "goals": 2,
       "assists": 12,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 14,
-      "lastUpdated": "2025-12-31T00:25:15.782Z",
+      "lastUpdated": "2026-01-01T05:00:07.226Z",
       "todayPoints": 0
     },
     {
@@ -231,14 +231,14 @@
       "playerName": "Jakob Chychrun",
       "teamAbbrev": "WSH",
       "position": "D",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 15,
       "assists": 15,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 30,
-      "lastUpdated": "2025-12-31T00:25:16.257Z",
+      "lastUpdated": "2026-01-01T05:00:07.497Z",
       "todayPoints": 0
     },
     {
@@ -253,7 +253,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:25:16.741Z",
+      "lastUpdated": "2026-01-01T05:00:07.873Z",
       "todayPoints": 0
     },
     {
@@ -261,15 +261,15 @@
       "playerName": "Moritz Seider",
       "teamAbbrev": "DET",
       "position": "D",
-      "gamesPlayed": 40,
+      "gamesPlayed": 41,
       "goals": 7,
-      "assists": 23,
+      "assists": 24,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 30,
-      "lastUpdated": "2025-12-31T00:25:17.201Z",
-      "todayPoints": 0
+      "points": 31,
+      "lastUpdated": "2026-01-01T05:00:08.157Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8478469,
@@ -283,7 +283,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:25:17.473Z",
+      "lastUpdated": "2026-01-01T05:00:08.556Z",
       "todayPoints": 0
     },
     {
@@ -298,7 +298,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 29,
-      "lastUpdated": "2025-12-31T00:25:17.928Z",
+      "lastUpdated": "2026-01-01T05:00:09.060Z",
       "todayPoints": 0
     },
     {
@@ -306,15 +306,15 @@
       "playerName": "Luke Hughes",
       "teamAbbrev": "NJD",
       "position": "D",
-      "gamesPlayed": 38,
-      "goals": 3,
-      "assists": 16,
+      "gamesPlayed": 40,
+      "goals": 4,
+      "assists": 17,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 19,
-      "lastUpdated": "2025-12-31T00:25:18.202Z",
-      "todayPoints": 0
+      "points": 21,
+      "lastUpdated": "2026-01-01T05:00:09.333Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8478038,
@@ -328,7 +328,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:25:18.460Z",
+      "lastUpdated": "2026-01-01T05:00:09.600Z",
       "todayPoints": 0
     },
     {
@@ -336,14 +336,14 @@
       "playerName": "Jackson LaCombe",
       "teamAbbrev": "ANA",
       "position": "D",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 6,
       "assists": 17,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 23,
-      "lastUpdated": "2025-12-31T00:25:18.731Z",
+      "lastUpdated": "2026-01-01T05:00:09.885Z",
       "todayPoints": 0
     },
     {
@@ -351,14 +351,14 @@
       "playerName": "Morgan Rielly",
       "teamAbbrev": "TOR",
       "position": "D",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 5,
       "assists": 20,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 25,
-      "lastUpdated": "2025-12-31T00:25:19.209Z",
+      "lastUpdated": "2026-01-01T05:00:10.341Z",
       "todayPoints": 0
     },
     {
@@ -373,7 +373,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 16,
-      "lastUpdated": "2025-12-31T00:25:19.721Z",
+      "lastUpdated": "2026-01-01T05:00:10.615Z",
       "todayPoints": 0
     },
     {
@@ -388,7 +388,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 14,
-      "lastUpdated": "2025-12-31T00:25:19.992Z",
+      "lastUpdated": "2026-01-01T05:00:10.883Z",
       "todayPoints": 0
     },
     {
@@ -396,14 +396,14 @@
       "playerName": "Matt Grzelcyk",
       "teamAbbrev": "CHI",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 0,
       "assists": 7,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 7,
-      "lastUpdated": "2025-12-31T00:25:20.410Z",
+      "lastUpdated": "2026-01-01T05:00:11.386Z",
       "todayPoints": 0
     },
     {
@@ -411,14 +411,14 @@
       "playerName": "Dougie Hamilton",
       "teamAbbrev": "NJD",
       "position": "D",
-      "gamesPlayed": 34,
+      "gamesPlayed": 36,
       "goals": 4,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 8,
-      "lastUpdated": "2025-12-31T00:25:20.805Z",
+      "lastUpdated": "2026-01-01T05:00:11.644Z",
       "todayPoints": 0
     },
     {
@@ -433,7 +433,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 10,
-      "lastUpdated": "2025-12-31T00:25:21.222Z",
+      "lastUpdated": "2026-01-01T05:00:12.076Z",
       "todayPoints": 0
     },
     {
@@ -441,44 +441,44 @@
       "playerName": "Owen Power",
       "teamAbbrev": "BUF",
       "position": "D",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 3,
-      "assists": 7,
+      "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 10,
-      "lastUpdated": "2025-12-31T00:25:21.597Z",
-      "todayPoints": 0
+      "points": 11,
+      "lastUpdated": "2026-01-01T05:00:12.359Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8478396,
       "playerName": "Noah Hanifin",
       "teamAbbrev": "VGK",
       "position": "D",
-      "gamesPlayed": 27,
+      "gamesPlayed": 28,
       "goals": 2,
-      "assists": 11,
+      "assists": 12,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 13,
-      "lastUpdated": "2025-12-31T00:25:22.027Z",
-      "todayPoints": 0
+      "points": 14,
+      "lastUpdated": "2026-01-01T05:00:12.645Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8480145,
       "playerName": "Neal Pionk",
       "teamAbbrev": "WPG",
       "position": "D",
-      "gamesPlayed": 33,
+      "gamesPlayed": 34,
       "goals": 2,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:25:22.516Z",
+      "lastUpdated": "2026-01-01T05:00:13.033Z",
       "todayPoints": 0
     },
     {
@@ -486,14 +486,14 @@
       "playerName": "Noah Dobson",
       "teamAbbrev": "MTL",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 7,
-      "assists": 18,
+      "assists": 20,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 25,
-      "lastUpdated": "2025-12-31T00:25:22.946Z",
+      "points": 27,
+      "lastUpdated": "2026-01-01T05:00:13.403Z",
       "todayPoints": 0
     },
     {
@@ -508,7 +508,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 20,
-      "lastUpdated": "2025-12-31T00:25:23.353Z",
+      "lastUpdated": "2026-01-01T05:00:13.669Z",
       "todayPoints": 0
     },
     {
@@ -516,14 +516,14 @@
       "playerName": "Roman Josi",
       "teamAbbrev": "NSH",
       "position": "D",
-      "gamesPlayed": 26,
+      "gamesPlayed": 27,
       "goals": 4,
       "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:25:23.808Z",
+      "lastUpdated": "2026-01-01T05:00:13.967Z",
       "todayPoints": 0
     },
     {
@@ -531,30 +531,30 @@
       "playerName": "Bowen Byram",
       "teamAbbrev": "BUF",
       "position": "D",
-      "gamesPlayed": 38,
-      "goals": 8,
-      "assists": 10,
+      "gamesPlayed": 39,
+      "goals": 9,
+      "assists": 11,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 18,
-      "lastUpdated": "2025-12-31T00:25:24.227Z",
-      "todayPoints": 0
+      "points": 20,
+      "lastUpdated": "2026-01-01T05:00:14.231Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8478178,
       "playerName": "Darren Raddysh",
       "teamAbbrev": "TBL",
       "position": "D",
-      "gamesPlayed": 32,
-      "goals": 8,
-      "assists": 19,
+      "gamesPlayed": 33,
+      "goals": 9,
+      "assists": 20,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 27,
-      "lastUpdated": "2025-12-31T00:25:24.718Z",
-      "todayPoints": 0
+      "points": 29,
+      "lastUpdated": "2026-01-01T05:00:14.503Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8476892,
@@ -568,7 +568,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 11,
-      "lastUpdated": "2025-12-31T00:25:25.273Z",
+      "lastUpdated": "2026-01-01T05:00:14.779Z",
       "todayPoints": 0
     },
     {
@@ -576,14 +576,14 @@
       "playerName": "Seth Jones",
       "teamAbbrev": "FLA",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 6,
-      "assists": 17,
+      "assists": 18,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 23,
-      "lastUpdated": "2025-12-31T00:25:25.654Z",
+      "points": 24,
+      "lastUpdated": "2026-01-01T05:00:15.060Z",
       "todayPoints": 0
     },
     {
@@ -591,15 +591,15 @@
       "playerName": "Brady Skjei",
       "teamAbbrev": "NSH",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 1,
-      "assists": 11,
+      "assists": 12,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 12,
-      "lastUpdated": "2025-12-31T00:25:26.126Z",
-      "todayPoints": 0
+      "points": 13,
+      "lastUpdated": "2026-01-01T05:00:15.348Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8482730,
@@ -613,7 +613,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 18,
-      "lastUpdated": "2025-12-31T00:25:26.616Z",
+      "lastUpdated": "2026-01-01T05:00:15.826Z",
       "todayPoints": 0
     },
     {
@@ -621,14 +621,14 @@
       "playerName": "Filip Hronek",
       "teamAbbrev": "VAN",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 2,
       "assists": 20,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 22,
-      "lastUpdated": "2025-12-31T00:25:27.048Z",
+      "lastUpdated": "2026-01-01T05:00:16.147Z",
       "todayPoints": 0
     },
     {
@@ -636,14 +636,15 @@
       "playerName": "Alex Pietrangelo",
       "teamAbbrev": "VGK",
       "position": "D",
-      "gamesPlayed": 71,
-      "goals": 4,
-      "assists": 29,
+      "gamesPlayed": 0,
+      "goals": 0,
+      "assists": 0,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 33,
-      "lastUpdated": "2025-12-31T00:25:27.567Z",
+      "savePct": 0,
+      "points": 0,
+      "lastUpdated": "2026-01-01T05:00:16.697Z",
       "todayPoints": 0
     },
     {
@@ -658,7 +659,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 14,
-      "lastUpdated": "2025-12-31T00:25:27.975Z",
+      "lastUpdated": "2026-01-01T05:00:16.965Z",
       "todayPoints": 0
     },
     {
@@ -673,7 +674,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:25:28.427Z",
+      "lastUpdated": "2026-01-01T05:00:17.246Z",
       "todayPoints": 0
     },
     {
@@ -681,14 +682,14 @@
       "playerName": "Aaron Ekblad",
       "teamAbbrev": "FLA",
       "position": "D",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 2,
       "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:25:28.816Z",
+      "lastUpdated": "2026-01-01T05:00:17.512Z",
       "todayPoints": 0
     },
     {
@@ -703,7 +704,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:25:29.354Z",
+      "lastUpdated": "2026-01-01T05:00:17.782Z",
       "todayPoints": 0
     },
     {
@@ -711,14 +712,14 @@
       "playerName": "Ivan Provorov",
       "teamAbbrev": "CBJ",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 5,
       "assists": 9,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 14,
-      "lastUpdated": "2025-12-31T00:25:29.790Z",
+      "lastUpdated": "2026-01-01T05:00:18.055Z",
       "todayPoints": 0
     },
     {
@@ -733,7 +734,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 20,
-      "lastUpdated": "2025-12-31T00:25:30.174Z",
+      "lastUpdated": "2026-01-01T05:00:18.331Z",
       "todayPoints": 0
     },
     {
@@ -741,14 +742,14 @@
       "playerName": "Jared Spurgeon",
       "teamAbbrev": "MIN",
       "position": "D",
-      "gamesPlayed": 40,
+      "gamesPlayed": 41,
       "goals": 3,
       "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 11,
-      "lastUpdated": "2025-12-31T00:25:30.698Z",
+      "lastUpdated": "2026-01-01T05:00:18.600Z",
       "todayPoints": 0
     },
     {
@@ -763,7 +764,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 8,
-      "lastUpdated": "2025-12-31T00:25:31.065Z",
+      "lastUpdated": "2026-01-01T05:00:18.876Z",
       "todayPoints": 0
     },
     {
@@ -771,14 +772,14 @@
       "playerName": "Gustav Forsling",
       "teamAbbrev": "FLA",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 1,
       "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 14,
-      "lastUpdated": "2025-12-31T00:25:31.501Z",
+      "lastUpdated": "2026-01-01T05:00:19.146Z",
       "todayPoints": 0
     },
     {
@@ -786,14 +787,14 @@
       "playerName": "Mike Matheson",
       "teamAbbrev": "MTL",
       "position": "D",
-      "gamesPlayed": 36,
+      "gamesPlayed": 37,
       "goals": 4,
       "assists": 14,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 18,
-      "lastUpdated": "2025-12-31T00:25:31.946Z",
+      "lastUpdated": "2026-01-01T05:00:19.409Z",
       "todayPoints": 0
     },
     {
@@ -801,14 +802,14 @@
       "playerName": "Simon Edvinsson",
       "teamAbbrev": "DET",
       "position": "D",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 5,
       "assists": 9,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 14,
-      "lastUpdated": "2025-12-31T00:25:32.450Z",
+      "lastUpdated": "2026-01-01T05:00:19.685Z",
       "todayPoints": 0
     },
     {
@@ -823,7 +824,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 25,
-      "lastUpdated": "2025-12-31T00:25:32.882Z",
+      "lastUpdated": "2026-01-01T05:00:19.968Z",
       "todayPoints": 0
     },
     {
@@ -831,14 +832,14 @@
       "playerName": "Vladislav Gavrikov",
       "teamAbbrev": "NYR",
       "position": "D",
-      "gamesPlayed": 41,
+      "gamesPlayed": 42,
       "goals": 7,
       "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:25:33.304Z",
+      "lastUpdated": "2026-01-01T05:00:20.390Z",
       "todayPoints": 0
     },
     {
@@ -846,29 +847,29 @@
       "playerName": "Rasmus Sandin",
       "teamAbbrev": "WSH",
       "position": "D",
-      "gamesPlayed": 33,
+      "gamesPlayed": 34,
       "goals": 2,
-      "assists": 9,
+      "assists": 11,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 11,
-      "lastUpdated": "2025-12-31T00:25:33.804Z",
-      "todayPoints": 0
+      "points": 13,
+      "lastUpdated": "2026-01-01T05:00:20.643Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8477948,
       "playerName": "Travis Sanheim",
       "teamAbbrev": "PHI",
       "position": "D",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 3,
-      "assists": 13,
+      "assists": 14,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 16,
-      "lastUpdated": "2025-12-31T00:25:34.251Z",
+      "points": 17,
+      "lastUpdated": "2026-01-01T05:00:20.906Z",
       "todayPoints": 0
     },
     {
@@ -876,14 +877,14 @@
       "playerName": "Alex Vlasic",
       "teamAbbrev": "CHI",
       "position": "D",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 2,
       "assists": 6,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 8,
-      "lastUpdated": "2025-12-31T00:25:34.665Z",
+      "lastUpdated": "2026-01-01T05:00:21.186Z",
       "todayPoints": 0
     },
     {
@@ -891,14 +892,14 @@
       "playerName": "Kris Letang",
       "teamAbbrev": "PIT",
       "position": "D",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 2,
       "assists": 17,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 19,
-      "lastUpdated": "2025-12-31T00:25:34.923Z",
+      "lastUpdated": "2026-01-01T05:00:21.595Z",
       "todayPoints": 0
     },
     {
@@ -906,14 +907,14 @@
       "playerName": "Oliver Ekman-Larsson",
       "teamAbbrev": "TOR",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 6,
       "assists": 17,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 23,
-      "lastUpdated": "2025-12-31T00:25:35.333Z",
+      "lastUpdated": "2026-01-01T05:00:22.048Z",
       "todayPoints": 0
     },
     {
@@ -928,7 +929,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 19,
-      "lastUpdated": "2025-12-31T00:25:35.594Z",
+      "lastUpdated": "2026-01-01T05:00:22.482Z",
       "todayPoints": 0
     },
     {
@@ -936,14 +937,14 @@
       "playerName": "Michael Kesselring",
       "teamAbbrev": "BUF",
       "position": "D",
-      "gamesPlayed": 15,
+      "gamesPlayed": 16,
       "goals": 0,
       "assists": 0,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 0,
-      "lastUpdated": "2025-12-31T00:25:36.010Z",
+      "lastUpdated": "2026-01-01T05:00:22.898Z",
       "todayPoints": 0
     },
     {
@@ -958,7 +959,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:25:36.284Z",
+      "lastUpdated": "2026-01-01T05:00:23.291Z",
       "todayPoints": 0
     },
     {
@@ -966,14 +967,14 @@
       "playerName": "Brock Faber",
       "teamAbbrev": "MIN",
       "position": "D",
-      "gamesPlayed": 40,
+      "gamesPlayed": 41,
       "goals": 8,
       "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 21,
-      "lastUpdated": "2025-12-31T00:25:36.718Z",
+      "lastUpdated": "2026-01-01T05:00:23.676Z",
       "todayPoints": 0
     },
     {
@@ -981,14 +982,14 @@
       "playerName": "Marcus Pettersson",
       "teamAbbrev": "VAN",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 1,
-      "assists": 6,
+      "assists": 7,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 7,
-      "lastUpdated": "2025-12-31T00:25:37.178Z",
+      "points": 8,
+      "lastUpdated": "2026-01-01T05:00:23.944Z",
       "todayPoints": 0
     },
     {
@@ -1003,7 +1004,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 8,
-      "lastUpdated": "2025-12-31T00:25:37.436Z",
+      "lastUpdated": "2026-01-01T05:00:24.204Z",
       "todayPoints": 0
     },
     {
@@ -1018,7 +1019,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:25:37.701Z",
+      "lastUpdated": "2026-01-01T05:00:24.472Z",
       "todayPoints": 0
     },
     {
@@ -1026,15 +1027,15 @@
       "playerName": "Dmitry Orlov",
       "teamAbbrev": "SJS",
       "position": "D",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 1,
-      "assists": 18,
+      "assists": 19,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 19,
-      "lastUpdated": "2025-12-31T00:25:37.961Z",
-      "todayPoints": 0
+      "points": 20,
+      "lastUpdated": "2026-01-01T05:00:24.742Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8476958,
@@ -1048,7 +1049,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 0,
-      "lastUpdated": "2025-12-31T00:25:38.419Z",
+      "lastUpdated": "2026-01-01T05:00:25.125Z",
       "todayPoints": 0
     },
     {
@@ -1056,14 +1057,14 @@
       "playerName": "K'Andre Miller",
       "teamAbbrev": "CAR",
       "position": "D",
-      "gamesPlayed": 30,
+      "gamesPlayed": 31,
       "goals": 2,
       "assists": 12,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 14,
-      "lastUpdated": "2025-12-31T00:25:38.837Z",
+      "lastUpdated": "2026-01-01T05:00:25.526Z",
       "todayPoints": 0
     },
     {
@@ -1071,14 +1072,14 @@
       "playerName": "Dante Fabbro",
       "teamAbbrev": "CBJ",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 2,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:25:39.337Z",
+      "lastUpdated": "2026-01-01T05:00:25.955Z",
       "todayPoints": 0
     },
     {
@@ -1086,14 +1087,14 @@
       "playerName": "Esa Lindell",
       "teamAbbrev": "DAL",
       "position": "D",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 4,
       "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:25:39.755Z",
+      "lastUpdated": "2026-01-01T05:00:26.224Z",
       "todayPoints": 0
     },
     {
@@ -1101,14 +1102,14 @@
       "playerName": "Martin Fehérváry",
       "teamAbbrev": "WSH",
       "position": "D",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 3,
       "assists": 9,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:25:40.167Z",
+      "lastUpdated": "2026-01-01T05:00:26.607Z",
       "todayPoints": 0
     },
     {
@@ -1116,29 +1117,29 @@
       "playerName": "Miro Heiskanen",
       "teamAbbrev": "DAL",
       "position": "D",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 7,
-      "assists": 27,
+      "assists": 28,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 34,
-      "lastUpdated": "2025-12-31T00:25:40.652Z",
-      "todayPoints": 0
+      "points": 35,
+      "lastUpdated": "2026-01-01T05:00:26.999Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8476967,
       "playerName": "Brett Kulak",
       "teamAbbrev": "PIT",
       "position": "D",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 0,
-      "assists": 2,
+      "assists": 3,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 2,
-      "lastUpdated": "2025-12-31T00:25:41.046Z",
+      "points": 3,
+      "lastUpdated": "2026-01-01T05:00:27.554Z",
       "todayPoints": 0
     },
     {
@@ -1146,14 +1147,14 @@
       "playerName": "Damon Severson",
       "teamAbbrev": "CBJ",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 3,
       "assists": 12,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:25:41.444Z",
+      "lastUpdated": "2026-01-01T05:00:27.974Z",
       "todayPoints": 0
     },
     {
@@ -1161,14 +1162,14 @@
       "playerName": "Alexandre Carrier",
       "teamAbbrev": "MTL",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 1,
       "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 9,
-      "lastUpdated": "2025-12-31T00:25:41.916Z",
+      "lastUpdated": "2026-01-01T05:00:28.391Z",
       "todayPoints": 0
     },
     {
@@ -1183,7 +1184,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 8,
-      "lastUpdated": "2025-12-31T00:25:42.298Z",
+      "lastUpdated": "2026-01-01T05:00:28.779Z",
       "todayPoints": 0
     },
     {
@@ -1191,15 +1192,15 @@
       "playerName": "Matt Roy",
       "teamAbbrev": "WSH",
       "position": "D",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 1,
-      "assists": 9,
+      "assists": 10,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 10,
-      "lastUpdated": "2025-12-31T00:25:42.737Z",
-      "todayPoints": 0
+      "points": 11,
+      "lastUpdated": "2026-01-01T05:00:29.041Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8479398,
@@ -1213,7 +1214,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 11,
-      "lastUpdated": "2025-12-31T00:25:43.194Z",
+      "lastUpdated": "2026-01-01T05:00:29.447Z",
       "todayPoints": 0
     },
     {
@@ -1221,14 +1222,14 @@
       "playerName": "Tyler Myers",
       "teamAbbrev": "VAN",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 1,
       "assists": 7,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 8,
-      "lastUpdated": "2025-12-31T00:25:43.616Z",
+      "lastUpdated": "2026-01-01T05:00:29.731Z",
       "todayPoints": 0
     },
     {
@@ -1243,7 +1244,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 7,
-      "lastUpdated": "2025-12-31T00:25:44.020Z",
+      "lastUpdated": "2026-01-01T05:00:29.979Z",
       "todayPoints": 0
     },
     {
@@ -1258,7 +1259,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 8,
-      "lastUpdated": "2025-12-31T00:25:44.427Z",
+      "lastUpdated": "2026-01-01T05:00:30.250Z",
       "todayPoints": 0
     },
     {
@@ -1266,14 +1267,14 @@
       "playerName": "Ryan Pulock",
       "teamAbbrev": "NYI",
       "position": "D",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 1,
       "assists": 16,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:25:44.883Z",
+      "lastUpdated": "2026-01-01T05:00:30.657Z",
       "todayPoints": 0
     },
     {
@@ -1281,14 +1282,14 @@
       "playerName": "Jake McCabe",
       "teamAbbrev": "TOR",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 3,
       "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 16,
-      "lastUpdated": "2025-12-31T00:25:45.272Z",
+      "lastUpdated": "2026-01-01T05:00:31.072Z",
       "todayPoints": 0
     },
     {
@@ -1303,7 +1304,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 19,
-      "lastUpdated": "2025-12-31T00:25:45.717Z",
+      "lastUpdated": "2026-01-01T05:00:31.339Z",
       "todayPoints": 0
     },
     {
@@ -1311,14 +1312,14 @@
       "playerName": "Niko Mikkola",
       "teamAbbrev": "FLA",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 1,
       "assists": 5,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:25:46.160Z",
+      "lastUpdated": "2026-01-01T05:00:31.787Z",
       "todayPoints": 0
     },
     {
@@ -1333,7 +1334,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 8,
-      "lastUpdated": "2025-12-31T00:25:46.562Z",
+      "lastUpdated": "2026-01-01T05:00:32.050Z",
       "todayPoints": 0
     },
     {
@@ -1348,7 +1349,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:25:46.975Z",
+      "lastUpdated": "2026-01-01T05:00:32.315Z",
       "todayPoints": 0
     },
     {
@@ -1363,7 +1364,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 5,
-      "lastUpdated": "2025-12-31T00:25:47.404Z",
+      "lastUpdated": "2026-01-01T05:00:32.751Z",
       "todayPoints": 0
     },
     {
@@ -1371,14 +1372,14 @@
       "playerName": "Erik Cernak",
       "teamAbbrev": "TBL",
       "position": "D",
-      "gamesPlayed": 19,
+      "gamesPlayed": 20,
       "goals": 0,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 4,
-      "lastUpdated": "2025-12-31T00:25:47.835Z",
+      "lastUpdated": "2026-01-01T05:00:33.018Z",
       "todayPoints": 0
     },
     {
@@ -1393,7 +1394,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 5,
-      "lastUpdated": "2025-12-31T00:25:48.256Z",
+      "lastUpdated": "2026-01-01T05:00:33.445Z",
       "todayPoints": 0
     },
     {
@@ -1401,44 +1402,44 @@
       "playerName": "Braden Schneider",
       "teamAbbrev": "NYR",
       "position": "D",
-      "gamesPlayed": 41,
-      "goals": 1,
+      "gamesPlayed": 42,
+      "goals": 2,
       "assists": 6,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 7,
-      "lastUpdated": "2025-12-31T00:25:48.527Z",
-      "todayPoints": 0
+      "points": 8,
+      "lastUpdated": "2026-01-01T05:00:33.710Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8478136,
       "playerName": "Jake Middleton",
       "teamAbbrev": "MIN",
       "position": "D",
-      "gamesPlayed": 33,
+      "gamesPlayed": 34,
       "goals": 0,
-      "assists": 7,
+      "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 7,
-      "lastUpdated": "2025-12-31T00:25:48.789Z",
-      "todayPoints": 0
+      "points": 8,
+      "lastUpdated": "2026-01-01T05:00:33.974Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8476917,
       "playerName": "Adam Pelech",
       "teamAbbrev": "NYI",
       "position": "D",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 2,
       "assists": 3,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 5,
-      "lastUpdated": "2025-12-31T00:25:49.207Z",
+      "lastUpdated": "2026-01-01T05:00:34.241Z",
       "todayPoints": 0
     },
     {
@@ -1453,7 +1454,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 8,
-      "lastUpdated": "2025-12-31T00:25:49.627Z",
+      "lastUpdated": "2026-01-01T05:00:34.523Z",
       "todayPoints": 0
     },
     {
@@ -1461,14 +1462,14 @@
       "playerName": "Brayden McNabb",
       "teamAbbrev": "VGK",
       "position": "D",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 2,
       "assists": 1,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 3,
-      "lastUpdated": "2025-12-31T00:25:50.063Z",
+      "lastUpdated": "2026-01-01T05:00:34.793Z",
       "todayPoints": 0
     },
     {
@@ -1476,14 +1477,14 @@
       "playerName": "Olen Zellweger",
       "teamAbbrev": "ANA",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 5,
       "assists": 10,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:25:50.490Z",
+      "lastUpdated": "2026-01-01T05:00:35.189Z",
       "todayPoints": 0
     },
     {
@@ -1491,14 +1492,14 @@
       "playerName": "Dylan Samberg",
       "teamAbbrev": "WPG",
       "position": "D",
-      "gamesPlayed": 21,
+      "gamesPlayed": 22,
       "goals": 0,
       "assists": 5,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 5,
-      "lastUpdated": "2025-12-31T00:25:50.910Z",
+      "lastUpdated": "2026-01-01T05:00:35.477Z",
       "todayPoints": 0
     },
     {
@@ -1513,7 +1514,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 14,
-      "lastUpdated": "2025-12-31T00:25:51.324Z",
+      "lastUpdated": "2026-01-01T05:00:35.925Z",
       "todayPoints": 0
     },
     {
@@ -1528,7 +1529,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 1,
-      "lastUpdated": "2025-12-31T00:25:51.752Z",
+      "lastUpdated": "2026-01-01T05:00:36.410Z",
       "todayPoints": 0
     },
     {
@@ -1536,14 +1537,14 @@
       "playerName": "Jamie Drysdale",
       "teamAbbrev": "PHI",
       "position": "D",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 3,
-      "assists": 14,
+      "assists": 15,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 17,
-      "lastUpdated": "2025-12-31T00:25:52.034Z",
+      "points": 18,
+      "lastUpdated": "2026-01-01T05:00:36.706Z",
       "todayPoints": 0
     },
     {
@@ -1558,7 +1559,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 7,
-      "lastUpdated": "2025-12-31T00:25:52.447Z",
+      "lastUpdated": "2026-01-01T05:00:36.976Z",
       "todayPoints": 0
     },
     {
@@ -1566,14 +1567,14 @@
       "playerName": "Jonas Brodin",
       "teamAbbrev": "MIN",
       "position": "D",
-      "gamesPlayed": 35,
+      "gamesPlayed": 36,
       "goals": 3,
       "assists": 9,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:25:52.839Z",
+      "lastUpdated": "2026-01-01T05:00:37.249Z",
       "todayPoints": 0
     },
     {
@@ -1581,14 +1582,14 @@
       "playerName": "Nick Seeler",
       "teamAbbrev": "PHI",
       "position": "D",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 0,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 4,
-      "lastUpdated": "2025-12-31T00:25:53.267Z",
+      "lastUpdated": "2026-01-01T05:00:37.519Z",
       "todayPoints": 0
     },
     {
@@ -1596,29 +1597,29 @@
       "playerName": "Pavel Mintyukov",
       "teamAbbrev": "ANA",
       "position": "D",
-      "gamesPlayed": 34,
+      "gamesPlayed": 35,
       "goals": 5,
-      "assists": 5,
+      "assists": 6,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 10,
-      "lastUpdated": "2025-12-31T00:25:53.711Z",
-      "todayPoints": 0
+      "points": 11,
+      "lastUpdated": "2026-01-01T05:00:37.922Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8476473,
       "playerName": "Connor Murphy",
       "teamAbbrev": "CHI",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 0,
       "assists": 5,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 5,
-      "lastUpdated": "2025-12-31T00:25:54.130Z",
+      "lastUpdated": "2026-01-01T05:00:38.327Z",
       "todayPoints": 0
     },
     {
@@ -1626,29 +1627,29 @@
       "playerName": "Nick Perbix",
       "teamAbbrev": "NSH",
       "position": "D",
-      "gamesPlayed": 35,
-      "goals": 2,
+      "gamesPlayed": 36,
+      "goals": 3,
       "assists": 5,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 7,
-      "lastUpdated": "2025-12-31T00:25:54.550Z",
-      "todayPoints": 0
+      "points": 8,
+      "lastUpdated": "2026-01-01T05:00:38.594Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8477950,
       "playerName": "Anthony DeAngelo",
       "teamAbbrev": "NYI",
       "position": "D",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 1,
       "assists": 12,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:25:54.970Z",
+      "lastUpdated": "2026-01-01T05:00:38.880Z",
       "todayPoints": 0
     },
     {
@@ -1656,14 +1657,14 @@
       "playerName": "Rasmus Ristolainen",
       "teamAbbrev": "PHI",
       "position": "D",
-      "gamesPlayed": 6,
+      "gamesPlayed": 7,
       "goals": 0,
-      "assists": 1,
+      "assists": 2,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 1,
-      "lastUpdated": "2025-12-31T00:25:55.411Z",
+      "points": 2,
+      "lastUpdated": "2026-01-01T05:00:39.149Z",
       "todayPoints": 0
     },
     {
@@ -1678,7 +1679,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:25:55.676Z",
+      "lastUpdated": "2026-01-01T05:00:39.430Z",
       "todayPoints": 0
     },
     {
@@ -1686,14 +1687,14 @@
       "playerName": "Dylan DeMelo",
       "teamAbbrev": "WPG",
       "position": "D",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 1,
       "assists": 12,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:25:56.150Z",
+      "lastUpdated": "2026-01-01T05:00:39.712Z",
       "todayPoints": 0
     },
     {
@@ -1708,7 +1709,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:25:56.429Z",
+      "lastUpdated": "2026-01-01T05:00:40.165Z",
       "todayPoints": 0
     },
     {
@@ -1716,14 +1717,14 @@
       "playerName": "Uvis Balinskis",
       "teamAbbrev": "FLA",
       "position": "D",
-      "gamesPlayed": 29,
+      "gamesPlayed": 30,
       "goals": 1,
       "assists": 6,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 7,
-      "lastUpdated": "2025-12-31T00:25:56.855Z",
+      "lastUpdated": "2026-01-01T05:00:40.541Z",
       "todayPoints": 0
     },
     {
@@ -1738,7 +1739,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 1,
-      "lastUpdated": "2025-12-31T00:25:57.316Z",
+      "lastUpdated": "2026-01-01T05:00:40.927Z",
       "todayPoints": 0
     },
     {
@@ -1753,7 +1754,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 2,
-      "lastUpdated": "2025-12-31T00:25:57.577Z",
+      "lastUpdated": "2026-01-01T05:00:41.316Z",
       "todayPoints": 0
     },
     {
@@ -1768,7 +1769,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 0,
-      "lastUpdated": "2025-12-31T00:25:58.078Z",
+      "lastUpdated": "2026-01-01T05:00:41.666Z",
       "todayPoints": 0
     },
     {
@@ -1776,14 +1777,14 @@
       "playerName": "Jalen Chatfield",
       "teamAbbrev": "CAR",
       "position": "D",
-      "gamesPlayed": 31,
+      "gamesPlayed": 32,
       "goals": 0,
       "assists": 7,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 7,
-      "lastUpdated": "2025-12-31T00:25:58.365Z",
+      "lastUpdated": "2026-01-01T05:00:42.053Z",
       "todayPoints": 0
     },
     {
@@ -1798,7 +1799,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 2,
-      "lastUpdated": "2025-12-31T00:25:58.776Z",
+      "lastUpdated": "2026-01-01T05:00:42.468Z",
       "todayPoints": 0
     },
     {
@@ -1806,14 +1807,14 @@
       "playerName": "Cam York",
       "teamAbbrev": "PHI",
       "position": "D",
-      "gamesPlayed": 30,
+      "gamesPlayed": 31,
       "goals": 2,
       "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:25:59.048Z",
+      "lastUpdated": "2026-01-01T05:00:42.860Z",
       "todayPoints": 0
     },
     {
@@ -1828,7 +1829,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 4,
-      "lastUpdated": "2025-12-31T00:25:59.488Z",
+      "lastUpdated": "2026-01-01T05:00:43.270Z",
       "todayPoints": 0
     },
     {
@@ -1836,14 +1837,15 @@
       "playerName": "Johnathan Kovacevic",
       "teamAbbrev": "NJD",
       "position": "D",
-      "gamesPlayed": 81,
-      "goals": 1,
-      "assists": 16,
+      "gamesPlayed": 0,
+      "goals": 0,
+      "assists": 0,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 17,
-      "lastUpdated": "2025-12-31T00:25:59.886Z",
+      "savePct": 0,
+      "points": 0,
+      "lastUpdated": "2026-01-01T05:00:43.729Z",
       "todayPoints": 0
     },
     {
@@ -1851,14 +1853,14 @@
       "playerName": "Mario Ferraro",
       "teamAbbrev": "SJS",
       "position": "D",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 2,
       "assists": 7,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 9,
-      "lastUpdated": "2025-12-31T00:26:00.270Z",
+      "lastUpdated": "2026-01-01T05:00:44.165Z",
       "todayPoints": 0
     },
     {
@@ -1873,7 +1875,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:26:00.682Z",
+      "lastUpdated": "2026-01-01T05:00:44.611Z",
       "todayPoints": 0
     },
     {
@@ -1888,7 +1890,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:26:01.104Z",
+      "lastUpdated": "2026-01-01T05:00:45.010Z",
       "todayPoints": 0
     },
     {
@@ -1903,7 +1905,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 9,
-      "lastUpdated": "2025-12-31T00:26:01.557Z",
+      "lastUpdated": "2026-01-01T05:00:45.390Z",
       "todayPoints": 0
     },
     {
@@ -1911,14 +1913,14 @@
       "playerName": "Brett Pesce",
       "teamAbbrev": "NJD",
       "position": "D",
-      "gamesPlayed": 14,
+      "gamesPlayed": 16,
       "goals": 1,
       "assists": 3,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 4,
-      "lastUpdated": "2025-12-31T00:26:01.994Z",
+      "lastUpdated": "2026-01-01T05:00:45.682Z",
       "todayPoints": 0
     },
     {
@@ -1933,7 +1935,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:26:02.424Z",
+      "lastUpdated": "2026-01-01T05:00:46.099Z",
       "todayPoints": 0
     },
     {
@@ -1941,14 +1943,14 @@
       "playerName": "Brenden Dillon",
       "teamAbbrev": "NJD",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 40,
       "goals": 3,
       "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 11,
-      "lastUpdated": "2025-12-31T00:26:02.845Z",
+      "lastUpdated": "2026-01-01T05:00:46.374Z",
       "todayPoints": 0
     },
     {
@@ -1963,7 +1965,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 8,
-      "lastUpdated": "2025-12-31T00:26:03.321Z",
+      "lastUpdated": "2026-01-01T05:00:46.785Z",
       "todayPoints": 0
     },
     {
@@ -1971,15 +1973,15 @@
       "playerName": "Nick Blankenburg",
       "teamAbbrev": "NSH",
       "position": "D",
-      "gamesPlayed": 28,
+      "gamesPlayed": 29,
       "goals": 4,
-      "assists": 12,
+      "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 16,
-      "lastUpdated": "2025-12-31T00:26:03.810Z",
-      "todayPoints": 0
+      "points": 17,
+      "lastUpdated": "2026-01-01T05:00:47.049Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8480001,
@@ -1993,7 +1995,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 3,
-      "lastUpdated": "2025-12-31T00:26:04.269Z",
+      "lastUpdated": "2026-01-01T05:00:47.316Z",
       "todayPoints": 0
     },
     {
@@ -2001,15 +2003,15 @@
       "playerName": "Zach Bogosian",
       "teamAbbrev": "MIN",
       "position": "D",
-      "gamesPlayed": 20,
+      "gamesPlayed": 21,
       "goals": 1,
-      "assists": 1,
+      "assists": 2,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 2,
-      "lastUpdated": "2025-12-31T00:26:04.543Z",
-      "todayPoints": 0
+      "points": 3,
+      "lastUpdated": "2026-01-01T05:00:47.727Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8477365,
@@ -2023,7 +2025,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 0,
-      "lastUpdated": "2025-12-31T00:26:05.090Z",
+      "lastUpdated": "2026-01-01T05:00:48.182Z",
       "todayPoints": 0
     },
     {
@@ -2031,14 +2033,14 @@
       "playerName": "Sean Walker",
       "teamAbbrev": "CAR",
       "position": "D",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 4,
       "assists": 7,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 11,
-      "lastUpdated": "2025-12-31T00:26:05.500Z",
+      "lastUpdated": "2026-01-01T05:00:48.448Z",
       "todayPoints": 0
     },
     {
@@ -2046,14 +2048,15 @@
       "playerName": "David Savard",
       "teamAbbrev": "N/A",
       "position": "D",
-      "gamesPlayed": 75,
-      "goals": 1,
-      "assists": 14,
+      "gamesPlayed": 0,
+      "goals": 0,
+      "assists": 0,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 15,
-      "lastUpdated": "2025-12-31T00:26:06.092Z",
+      "savePct": 0,
+      "points": 0,
+      "lastUpdated": "2026-01-01T05:00:48.902Z",
       "todayPoints": 0
     },
     {
@@ -2068,7 +2071,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:26:06.481Z",
+      "lastUpdated": "2026-01-01T05:00:49.316Z",
       "todayPoints": 0
     },
     {
@@ -2083,7 +2086,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 21,
-      "lastUpdated": "2025-12-31T00:26:06.883Z",
+      "lastUpdated": "2026-01-01T05:00:49.582Z",
       "todayPoints": 0
     },
     {
@@ -2098,13 +2101,13 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 0,
-      "lastUpdated": "2025-12-31T00:26:07.343Z",
+      "lastUpdated": "2026-01-01T05:00:50.061Z",
       "todayPoints": 0
     },
     {
       "playerId": 8481178,
       "playerName": "Egor Zamula",
-      "teamAbbrev": "PHI",
+      "teamAbbrev": "PIT",
       "position": "D",
       "gamesPlayed": 13,
       "goals": 0,
@@ -2113,7 +2116,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 1,
-      "lastUpdated": "2025-12-31T00:26:07.804Z",
+      "lastUpdated": "2026-01-01T05:00:50.456Z",
       "todayPoints": 0
     },
     {
@@ -2128,7 +2131,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:26:08.199Z",
+      "lastUpdated": "2026-01-01T05:00:50.724Z",
       "todayPoints": 0
     },
     {
@@ -2136,14 +2139,14 @@
       "playerName": "Will Borgen",
       "teamAbbrev": "NYR",
       "position": "D",
-      "gamesPlayed": 34,
+      "gamesPlayed": 35,
       "goals": 2,
       "assists": 2,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 4,
-      "lastUpdated": "2025-12-31T00:26:08.620Z",
+      "lastUpdated": "2026-01-01T05:00:50.990Z",
       "todayPoints": 0
     },
     {
@@ -2151,14 +2154,15 @@
       "playerName": "Ryan Suter",
       "teamAbbrev": "N/A",
       "position": "D",
-      "gamesPlayed": 82,
-      "goals": 2,
-      "assists": 13,
+      "gamesPlayed": 0,
+      "goals": 0,
+      "assists": 0,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 15,
-      "lastUpdated": "2025-12-31T00:26:09.063Z",
+      "savePct": 0,
+      "points": 0,
+      "lastUpdated": "2026-01-01T05:00:51.494Z",
       "todayPoints": 0
     },
     {
@@ -2166,15 +2170,15 @@
       "playerName": "J.J. Moser",
       "teamAbbrev": "TBL",
       "position": "D",
-      "gamesPlayed": 36,
-      "goals": 3,
+      "gamesPlayed": 37,
+      "goals": 4,
       "assists": 9,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 12,
-      "lastUpdated": "2025-12-31T00:26:09.470Z",
-      "todayPoints": 0
+      "points": 13,
+      "lastUpdated": "2026-01-01T05:00:51.751Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8478507,
@@ -2188,7 +2192,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:26:09.898Z",
+      "lastUpdated": "2026-01-01T05:00:52.017Z",
       "todayPoints": 0
     },
     {
@@ -2196,14 +2200,14 @@
       "playerName": "Jacob Trouba",
       "teamAbbrev": "ANA",
       "position": "D",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 6,
       "assists": 11,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:26:10.307Z",
+      "lastUpdated": "2026-01-01T05:00:52.281Z",
       "todayPoints": 0
     },
     {
@@ -2211,14 +2215,14 @@
       "playerName": "Mattias Samuelsson",
       "teamAbbrev": "BUF",
       "position": "D",
-      "gamesPlayed": 36,
+      "gamesPlayed": 37,
       "goals": 6,
       "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 19,
-      "lastUpdated": "2025-12-31T00:26:10.721Z",
+      "lastUpdated": "2026-01-01T05:00:52.543Z",
       "todayPoints": 0
     },
     {
@@ -2226,14 +2230,14 @@
       "playerName": "Ilya Lyubushkin",
       "teamAbbrev": "DAL",
       "position": "D",
-      "gamesPlayed": 27,
+      "gamesPlayed": 28,
       "goals": 1,
       "assists": 6,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 7,
-      "lastUpdated": "2025-12-31T00:26:11.218Z",
+      "lastUpdated": "2026-01-01T05:00:52.835Z",
       "todayPoints": 0
     },
     {
@@ -2248,7 +2252,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 1,
-      "lastUpdated": "2025-12-31T00:26:11.605Z",
+      "lastUpdated": "2026-01-01T05:00:53.118Z",
       "todayPoints": 0
     },
     {
@@ -2256,15 +2260,15 @@
       "playerName": "Nikita Kucherov",
       "teamAbbrev": "TBL",
       "position": "R",
-      "gamesPlayed": 34,
-      "goals": 17,
-      "assists": 32,
+      "gamesPlayed": 35,
+      "goals": 18,
+      "assists": 33,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 49,
-      "lastUpdated": "2025-12-31T00:26:11.873Z",
-      "todayPoints": 0
+      "points": 51,
+      "lastUpdated": "2026-01-01T05:00:53.367Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8477492,
@@ -2278,7 +2282,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 66,
-      "lastUpdated": "2025-12-31T00:26:12.159Z",
+      "lastUpdated": "2026-01-01T05:00:53.640Z",
       "todayPoints": 0
     },
     {
@@ -2293,7 +2297,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 41,
-      "lastUpdated": "2025-12-31T00:26:12.534Z",
+      "lastUpdated": "2026-01-01T05:00:54.137Z",
       "todayPoints": 0
     },
     {
@@ -2308,7 +2312,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 56,
-      "lastUpdated": "2025-12-31T00:26:12.838Z",
+      "lastUpdated": "2026-01-01T05:00:54.540Z",
       "todayPoints": 0
     },
     {
@@ -2316,14 +2320,14 @@
       "playerName": "Mitchell Marner",
       "teamAbbrev": "VGK",
       "position": "R",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 9,
       "assists": 31,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 40,
-      "lastUpdated": "2025-12-31T00:26:13.223Z",
+      "lastUpdated": "2026-01-01T05:00:55.005Z",
       "todayPoints": 0
     },
     {
@@ -2338,7 +2342,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 69,
-      "lastUpdated": "2025-12-31T00:26:13.485Z",
+      "lastUpdated": "2026-01-01T05:00:55.485Z",
       "todayPoints": 0
     },
     {
@@ -2346,14 +2350,14 @@
       "playerName": "Kyle Connor",
       "teamAbbrev": "WPG",
       "position": "L",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 18,
       "assists": 27,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 45,
-      "lastUpdated": "2025-12-31T00:26:13.745Z",
+      "lastUpdated": "2026-01-01T05:00:55.720Z",
       "todayPoints": 0
     },
     {
@@ -2368,7 +2372,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 41,
-      "lastUpdated": "2025-12-31T00:26:14.018Z",
+      "lastUpdated": "2026-01-01T05:00:56.112Z",
       "todayPoints": 0
     },
     {
@@ -2376,14 +2380,14 @@
       "playerName": "Sidney Crosby",
       "teamAbbrev": "PIT",
       "position": "C",
-      "gamesPlayed": 37,
-      "goals": 20,
+      "gamesPlayed": 38,
+      "goals": 21,
       "assists": 19,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 39,
-      "lastUpdated": "2025-12-31T00:26:14.490Z",
+      "points": 40,
+      "lastUpdated": "2026-01-01T05:00:56.386Z",
       "todayPoints": 0
     },
     {
@@ -2398,7 +2402,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 33,
-      "lastUpdated": "2025-12-31T00:26:14.891Z",
+      "lastUpdated": "2026-01-01T05:00:56.649Z",
       "todayPoints": 0
     },
     {
@@ -2406,29 +2410,29 @@
       "playerName": "Brandon Hagel",
       "teamAbbrev": "TBL",
       "position": "L",
-      "gamesPlayed": 33,
+      "gamesPlayed": 34,
       "goals": 18,
-      "assists": 13,
+      "assists": 16,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 31,
-      "lastUpdated": "2025-12-31T00:26:15.297Z",
-      "todayPoints": 0
+      "points": 34,
+      "lastUpdated": "2026-01-01T05:00:56.930Z",
+      "todayPoints": 3
     },
     {
       "playerId": 8480018,
       "playerName": "Nick Suzuki",
       "teamAbbrev": "MTL",
       "position": "C",
-      "gamesPlayed": 38,
-      "goals": 11,
+      "gamesPlayed": 39,
+      "goals": 13,
       "assists": 31,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 42,
-      "lastUpdated": "2025-12-31T00:26:15.649Z",
+      "points": 44,
+      "lastUpdated": "2026-01-01T05:00:57.198Z",
       "todayPoints": 0
     },
     {
@@ -2436,29 +2440,29 @@
       "playerName": "Artemi Panarin",
       "teamAbbrev": "NYR",
       "position": "L",
-      "gamesPlayed": 40,
+      "gamesPlayed": 41,
       "goals": 14,
-      "assists": 25,
+      "assists": 27,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 39,
-      "lastUpdated": "2025-12-31T00:26:16.089Z",
-      "todayPoints": 0
+      "points": 41,
+      "lastUpdated": "2026-01-01T05:00:57.582Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8478420,
       "playerName": "Mikko Rantanen",
       "teamAbbrev": "DAL",
       "position": "R",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 15,
       "assists": 39,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 54,
-      "lastUpdated": "2025-12-31T00:26:16.412Z",
+      "lastUpdated": "2026-01-01T05:00:57.849Z",
       "todayPoints": 0
     },
     {
@@ -2466,14 +2470,14 @@
       "playerName": "Jesper Bratt",
       "teamAbbrev": "NJD",
       "position": "L",
-      "gamesPlayed": 38,
+      "gamesPlayed": 40,
       "goals": 8,
       "assists": 23,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 31,
-      "lastUpdated": "2025-12-31T00:26:16.961Z",
+      "lastUpdated": "2026-01-01T05:00:58.127Z",
       "todayPoints": 0
     },
     {
@@ -2481,14 +2485,14 @@
       "playerName": "Mark Scheifele",
       "teamAbbrev": "WPG",
       "position": "C",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 18,
       "assists": 27,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 45,
-      "lastUpdated": "2025-12-31T00:26:17.247Z",
+      "lastUpdated": "2026-01-01T05:00:58.365Z",
       "todayPoints": 0
     },
     {
@@ -2503,7 +2507,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 41,
-      "lastUpdated": "2025-12-31T00:26:17.539Z",
+      "lastUpdated": "2026-01-01T05:00:58.634Z",
       "todayPoints": 0
     },
     {
@@ -2518,7 +2522,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 50,
-      "lastUpdated": "2025-12-31T00:26:17.808Z",
+      "lastUpdated": "2026-01-01T05:00:58.905Z",
       "todayPoints": 0
     },
     {
@@ -2526,29 +2530,29 @@
       "playerName": "Brayden Point",
       "teamAbbrev": "TBL",
       "position": "C",
-      "gamesPlayed": 31,
-      "goals": 6,
+      "gamesPlayed": 32,
+      "goals": 7,
       "assists": 15,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 21,
-      "lastUpdated": "2025-12-31T00:26:18.074Z",
-      "todayPoints": 0
+      "points": 22,
+      "lastUpdated": "2026-01-01T05:00:59.180Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8475168,
       "playerName": "Matt Duchene",
       "teamAbbrev": "DAL",
       "position": "C",
-      "gamesPlayed": 14,
+      "gamesPlayed": 15,
       "goals": 2,
       "assists": 3,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 5,
-      "lastUpdated": "2025-12-31T00:26:18.338Z",
+      "lastUpdated": "2026-01-01T05:00:59.512Z",
       "todayPoints": 0
     },
     {
@@ -2556,14 +2560,14 @@
       "playerName": "Dylan Strome",
       "teamAbbrev": "WSH",
       "position": "C",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 8,
       "assists": 23,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 31,
-      "lastUpdated": "2025-12-31T00:26:18.746Z",
+      "lastUpdated": "2026-01-01T05:00:59.872Z",
       "todayPoints": 0
     },
     {
@@ -2578,7 +2582,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 29,
-      "lastUpdated": "2025-12-31T00:26:19.154Z",
+      "lastUpdated": "2026-01-01T05:01:00.287Z",
       "todayPoints": 0
     },
     {
@@ -2586,14 +2590,14 @@
       "playerName": "Sam Reinhart",
       "teamAbbrev": "FLA",
       "position": "C",
-      "gamesPlayed": 38,
-      "goals": 21,
+      "gamesPlayed": 39,
+      "goals": 22,
       "assists": 21,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 42,
-      "lastUpdated": "2025-12-31T00:26:19.411Z",
+      "points": 43,
+      "lastUpdated": "2026-01-01T05:01:00.772Z",
       "todayPoints": 0
     },
     {
@@ -2601,14 +2605,14 @@
       "playerName": "Jake Guentzel",
       "teamAbbrev": "TBL",
       "position": "C",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 18,
       "assists": 21,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 39,
-      "lastUpdated": "2025-12-31T00:26:19.681Z",
+      "lastUpdated": "2026-01-01T05:01:01.182Z",
       "todayPoints": 0
     },
     {
@@ -2616,30 +2620,30 @@
       "playerName": "Jason Robertson",
       "teamAbbrev": "DAL",
       "position": "L",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 23,
-      "assists": 22,
+      "assists": 23,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 45,
-      "lastUpdated": "2025-12-31T00:26:19.952Z",
-      "todayPoints": 0
+      "points": 46,
+      "lastUpdated": "2026-01-01T05:01:01.680Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8482078,
       "playerName": "Lucas Raymond",
       "teamAbbrev": "DET",
       "position": "L",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 11,
-      "assists": 31,
+      "assists": 32,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 42,
-      "lastUpdated": "2025-12-31T00:26:20.229Z",
-      "todayPoints": 0
+      "points": 43,
+      "lastUpdated": "2026-01-01T05:01:02.132Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8482116,
@@ -2653,7 +2657,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 41,
-      "lastUpdated": "2025-12-31T00:26:20.654Z",
+      "lastUpdated": "2026-01-01T05:01:02.588Z",
       "todayPoints": 0
     },
     {
@@ -2668,7 +2672,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 27,
-      "lastUpdated": "2025-12-31T00:26:21.064Z",
+      "lastUpdated": "2026-01-01T05:01:03.049Z",
       "todayPoints": 0
     },
     {
@@ -2676,14 +2680,14 @@
       "playerName": "Travis Konecny",
       "teamAbbrev": "PHI",
       "position": "R",
-      "gamesPlayed": 37,
-      "goals": 11,
-      "assists": 22,
+      "gamesPlayed": 38,
+      "goals": 12,
+      "assists": 23,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 33,
-      "lastUpdated": "2025-12-31T00:26:21.572Z",
+      "points": 35,
+      "lastUpdated": "2026-01-01T05:01:03.328Z",
       "todayPoints": 0
     },
     {
@@ -2691,44 +2695,44 @@
       "playerName": "Filip Forsberg",
       "teamAbbrev": "NSH",
       "position": "L",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 16,
-      "assists": 14,
+      "assists": 15,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 30,
-      "lastUpdated": "2025-12-31T00:26:21.960Z",
-      "todayPoints": 0
+      "points": 31,
+      "lastUpdated": "2026-01-01T05:01:03.782Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8480893,
       "playerName": "Kirill Marchenko",
       "teamAbbrev": "CBJ",
       "position": "R",
-      "gamesPlayed": 34,
+      "gamesPlayed": 35,
       "goals": 14,
-      "assists": 16,
+      "assists": 17,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 30,
-      "lastUpdated": "2025-12-31T00:26:22.354Z",
-      "todayPoints": 0
+      "points": 31,
+      "lastUpdated": "2026-01-01T05:01:04.219Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8478427,
       "playerName": "Sebastian Aho",
       "teamAbbrev": "CAR",
       "position": "C",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 14,
       "assists": 21,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 35,
-      "lastUpdated": "2025-12-31T00:26:22.634Z",
+      "lastUpdated": "2026-01-01T05:01:04.706Z",
       "todayPoints": 0
     },
     {
@@ -2736,14 +2740,14 @@
       "playerName": "John Tavares",
       "teamAbbrev": "TOR",
       "position": "C",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 15,
-      "assists": 20,
+      "assists": 21,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 35,
-      "lastUpdated": "2025-12-31T00:26:23.050Z",
+      "points": 36,
+      "lastUpdated": "2026-01-01T05:01:05.165Z",
       "todayPoints": 0
     },
     {
@@ -2751,14 +2755,14 @@
       "playerName": "Matt Boldy",
       "teamAbbrev": "MIN",
       "position": "L",
-      "gamesPlayed": 40,
+      "gamesPlayed": 41,
       "goals": 25,
       "assists": 22,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 47,
-      "lastUpdated": "2025-12-31T00:26:23.511Z",
+      "lastUpdated": "2026-01-01T05:01:05.427Z",
       "todayPoints": 0
     },
     {
@@ -2773,7 +2777,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 32,
-      "lastUpdated": "2025-12-31T00:26:23.898Z",
+      "lastUpdated": "2026-01-01T05:01:05.855Z",
       "todayPoints": 0
     },
     {
@@ -2781,44 +2785,45 @@
       "playerName": "Alex Ovechkin",
       "teamAbbrev": "WSH",
       "position": "L",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 15,
-      "assists": 18,
+      "assists": 19,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 33,
-      "lastUpdated": "2025-12-31T00:26:24.162Z",
-      "todayPoints": 0
+      "points": 34,
+      "lastUpdated": "2026-01-01T05:01:06.160Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8479420,
       "playerName": "Tage Thompson",
       "teamAbbrev": "BUF",
       "position": "C",
-      "gamesPlayed": 38,
-      "goals": 18,
-      "assists": 16,
+      "gamesPlayed": 39,
+      "goals": 20,
+      "assists": 17,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 34,
-      "lastUpdated": "2025-12-31T00:26:24.479Z",
-      "todayPoints": 0
+      "points": 37,
+      "lastUpdated": "2026-01-01T05:01:06.567Z",
+      "todayPoints": 3
     },
     {
       "playerId": 8477493,
       "playerName": "Aleksander Barkov",
       "teamAbbrev": "FLA",
       "position": "C",
-      "gamesPlayed": 67,
-      "goals": 20,
-      "assists": 51,
+      "gamesPlayed": 0,
+      "goals": 0,
+      "assists": 0,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 71,
-      "lastUpdated": "2025-12-31T00:26:24.882Z",
+      "savePct": 0,
+      "points": 0,
+      "lastUpdated": "2026-01-01T05:01:07.030Z",
       "todayPoints": 0
     },
     {
@@ -2826,14 +2831,14 @@
       "playerName": "Wyatt Johnston",
       "teamAbbrev": "DAL",
       "position": "C",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 20,
       "assists": 25,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 45,
-      "lastUpdated": "2025-12-31T00:26:25.307Z",
+      "lastUpdated": "2026-01-01T05:01:07.568Z",
       "todayPoints": 0
     },
     {
@@ -2848,7 +2853,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:26:25.734Z",
+      "lastUpdated": "2026-01-01T05:01:07.987Z",
       "todayPoints": 0
     },
     {
@@ -2856,14 +2861,14 @@
       "playerName": "Cole Caufield",
       "teamAbbrev": "MTL",
       "position": "R",
-      "gamesPlayed": 38,
-      "goals": 18,
-      "assists": 19,
+      "gamesPlayed": 39,
+      "goals": 19,
+      "assists": 20,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 37,
-      "lastUpdated": "2025-12-31T00:26:26.150Z",
+      "points": 39,
+      "lastUpdated": "2026-01-01T05:01:08.308Z",
       "todayPoints": 0
     },
     {
@@ -2871,14 +2876,14 @@
       "playerName": "Alex DeBrincat",
       "teamAbbrev": "DET",
       "position": "R",
-      "gamesPlayed": 40,
+      "gamesPlayed": 41,
       "goals": 20,
       "assists": 20,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 40,
-      "lastUpdated": "2025-12-31T00:26:26.591Z",
+      "lastUpdated": "2026-01-01T05:01:08.752Z",
       "todayPoints": 0
     },
     {
@@ -2886,14 +2891,14 @@
       "playerName": "Rickard Rakell",
       "teamAbbrev": "PIT",
       "position": "R",
-      "gamesPlayed": 17,
+      "gamesPlayed": 18,
       "goals": 4,
-      "assists": 8,
+      "assists": 9,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 12,
-      "lastUpdated": "2025-12-31T00:26:26.994Z",
+      "points": 13,
+      "lastUpdated": "2026-01-01T05:01:09.186Z",
       "todayPoints": 0
     },
     {
@@ -2908,7 +2913,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 22,
-      "lastUpdated": "2025-12-31T00:26:27.381Z",
+      "lastUpdated": "2026-01-01T05:01:09.577Z",
       "todayPoints": 0
     },
     {
@@ -2916,45 +2921,45 @@
       "playerName": "Jack Hughes",
       "teamAbbrev": "NJD",
       "position": "C",
-      "gamesPlayed": 20,
+      "gamesPlayed": 22,
       "goals": 11,
-      "assists": 10,
+      "assists": 11,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 21,
-      "lastUpdated": "2025-12-31T00:26:27.772Z",
-      "todayPoints": 0
+      "points": 22,
+      "lastUpdated": "2026-01-01T05:01:09.980Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8477946,
       "playerName": "Dylan Larkin",
       "teamAbbrev": "DET",
       "position": "C",
-      "gamesPlayed": 40,
-      "goals": 20,
+      "gamesPlayed": 41,
+      "goals": 21,
       "assists": 16,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 36,
-      "lastUpdated": "2025-12-31T00:26:28.167Z",
-      "todayPoints": 0
+      "points": 37,
+      "lastUpdated": "2026-01-01T05:01:10.411Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8480002,
       "playerName": "Nico Hischier",
       "teamAbbrev": "NJD",
       "position": "C",
-      "gamesPlayed": 38,
-      "goals": 10,
+      "gamesPlayed": 40,
+      "goals": 11,
       "assists": 20,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 30,
-      "lastUpdated": "2025-12-31T00:26:28.574Z",
-      "todayPoints": 0
+      "points": 31,
+      "lastUpdated": "2026-01-01T05:01:10.678Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8482175,
@@ -2968,7 +2973,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 28,
-      "lastUpdated": "2025-12-31T00:26:29.011Z",
+      "lastUpdated": "2026-01-01T05:01:11.093Z",
       "todayPoints": 0
     },
     {
@@ -2983,7 +2988,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 37,
-      "lastUpdated": "2025-12-31T00:26:29.375Z",
+      "lastUpdated": "2026-01-01T05:01:11.523Z",
       "todayPoints": 0
     },
     {
@@ -2998,7 +3003,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 20,
-      "lastUpdated": "2025-12-31T00:26:29.784Z",
+      "lastUpdated": "2026-01-01T05:01:12.010Z",
       "todayPoints": 0
     },
     {
@@ -3013,7 +3018,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 29,
-      "lastUpdated": "2025-12-31T00:26:30.169Z",
+      "lastUpdated": "2026-01-01T05:01:12.460Z",
       "todayPoints": 0
     },
     {
@@ -3021,15 +3026,15 @@
       "playerName": "Mark Stone",
       "teamAbbrev": "VGK",
       "position": "R",
-      "gamesPlayed": 21,
-      "goals": 9,
+      "gamesPlayed": 22,
+      "goals": 10,
       "assists": 21,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 30,
-      "lastUpdated": "2025-12-31T00:26:30.574Z",
-      "todayPoints": 0
+      "points": 31,
+      "lastUpdated": "2026-01-01T05:01:12.894Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8475172,
@@ -3043,7 +3048,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 31,
-      "lastUpdated": "2025-12-31T00:26:30.836Z",
+      "lastUpdated": "2026-01-01T05:01:13.353Z",
       "todayPoints": 0
     },
     {
@@ -3051,14 +3056,14 @@
       "playerName": "Roope Hintz",
       "teamAbbrev": "DAL",
       "position": "C",
-      "gamesPlayed": 34,
+      "gamesPlayed": 35,
       "goals": 12,
       "assists": 19,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 31,
-      "lastUpdated": "2025-12-31T00:26:31.107Z",
+      "lastUpdated": "2026-01-01T05:01:13.610Z",
       "todayPoints": 0
     },
     {
@@ -3066,15 +3071,15 @@
       "playerName": "Alex Tuch",
       "teamAbbrev": "BUF",
       "position": "R",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 12,
-      "assists": 19,
+      "assists": 20,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 31,
-      "lastUpdated": "2025-12-31T00:26:31.370Z",
-      "todayPoints": 0
+      "points": 32,
+      "lastUpdated": "2026-01-01T05:01:14.066Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8484144,
@@ -3088,7 +3093,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 44,
-      "lastUpdated": "2025-12-31T00:26:31.799Z",
+      "lastUpdated": "2026-01-01T05:01:14.376Z",
       "todayPoints": 0
     },
     {
@@ -3096,14 +3101,14 @@
       "playerName": "Mikael Granlund",
       "teamAbbrev": "ANA",
       "position": "C",
-      "gamesPlayed": 21,
+      "gamesPlayed": 22,
       "goals": 7,
       "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:26:32.196Z",
+      "lastUpdated": "2026-01-01T05:01:14.680Z",
       "todayPoints": 0
     },
     {
@@ -3118,7 +3123,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 0,
-      "lastUpdated": "2025-12-31T00:26:32.623Z",
+      "lastUpdated": "2026-01-01T05:01:14.962Z",
       "todayPoints": 0
     },
     {
@@ -3126,44 +3131,44 @@
       "playerName": "Aliaksei Protas",
       "teamAbbrev": "WSH",
       "position": "C",
-      "gamesPlayed": 39,
-      "goals": 14,
-      "assists": 14,
+      "gamesPlayed": 40,
+      "goals": 15,
+      "assists": 15,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 28,
-      "lastUpdated": "2025-12-31T00:26:33.070Z",
-      "todayPoints": 0
+      "points": 30,
+      "lastUpdated": "2026-01-01T05:01:15.429Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8476880,
       "playerName": "Tom Wilson",
       "teamAbbrev": "WSH",
       "position": "R",
-      "gamesPlayed": 38,
-      "goals": 19,
-      "assists": 18,
+      "gamesPlayed": 39,
+      "goals": 21,
+      "assists": 19,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 37,
-      "lastUpdated": "2025-12-31T00:26:33.493Z",
-      "todayPoints": 0
+      "points": 40,
+      "lastUpdated": "2026-01-01T05:01:15.764Z",
+      "todayPoints": 3
     },
     {
       "playerId": 8475810,
       "playerName": "Bryan Rust",
       "teamAbbrev": "PIT",
       "position": "R",
-      "gamesPlayed": 35,
+      "gamesPlayed": 36,
       "goals": 15,
-      "assists": 17,
+      "assists": 19,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 32,
-      "lastUpdated": "2025-12-31T00:26:33.750Z",
+      "points": 34,
+      "lastUpdated": "2026-01-01T05:01:16.141Z",
       "todayPoints": 0
     },
     {
@@ -3178,7 +3183,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 23,
-      "lastUpdated": "2025-12-31T00:26:34.173Z",
+      "lastUpdated": "2026-01-01T05:01:16.410Z",
       "todayPoints": 0
     },
     {
@@ -3186,15 +3191,15 @@
       "playerName": "Macklin Celebrini",
       "teamAbbrev": "SJS",
       "position": "C",
-      "gamesPlayed": 39,
-      "goals": 21,
-      "assists": 39,
+      "gamesPlayed": 40,
+      "goals": 22,
+      "assists": 40,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 60,
-      "lastUpdated": "2025-12-31T00:26:34.573Z",
-      "todayPoints": 0
+      "points": 62,
+      "lastUpdated": "2026-01-01T05:01:16.682Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8477951,
@@ -3208,7 +3213,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 33,
-      "lastUpdated": "2025-12-31T00:26:34.879Z",
+      "lastUpdated": "2026-01-01T05:01:17.094Z",
       "todayPoints": 0
     },
     {
@@ -3223,7 +3228,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:26:35.276Z",
+      "lastUpdated": "2026-01-01T05:01:17.372Z",
       "todayPoints": 0
     },
     {
@@ -3231,14 +3236,14 @@
       "playerName": "Nikolaj Ehlers",
       "teamAbbrev": "CAR",
       "position": "L",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 8,
       "assists": 18,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 26,
-      "lastUpdated": "2025-12-31T00:26:35.715Z",
+      "lastUpdated": "2026-01-01T05:01:17.628Z",
       "todayPoints": 0
     },
     {
@@ -3246,14 +3251,14 @@
       "playerName": "Matvei Michkov",
       "teamAbbrev": "PHI",
       "position": "R",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 9,
-      "assists": 11,
+      "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 20,
-      "lastUpdated": "2025-12-31T00:26:36.142Z",
+      "points": 22,
+      "lastUpdated": "2026-01-01T05:01:17.908Z",
       "todayPoints": 0
     },
     {
@@ -3261,29 +3266,29 @@
       "playerName": "Mika Zibanejad",
       "teamAbbrev": "NYR",
       "position": "C",
-      "gamesPlayed": 40,
+      "gamesPlayed": 41,
       "goals": 12,
-      "assists": 17,
+      "assists": 18,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 29,
-      "lastUpdated": "2025-12-31T00:26:36.421Z",
-      "todayPoints": 0
+      "points": 30,
+      "lastUpdated": "2026-01-01T05:01:18.327Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8477987,
       "playerName": "Ryan Donato",
       "teamAbbrev": "CHI",
       "position": "C",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 9,
       "assists": 6,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:26:36.831Z",
+      "lastUpdated": "2026-01-01T05:01:18.745Z",
       "todayPoints": 0
     },
     {
@@ -3298,7 +3303,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 19,
-      "lastUpdated": "2025-12-31T00:26:37.101Z",
+      "lastUpdated": "2026-01-01T05:01:19.148Z",
       "todayPoints": 0
     },
     {
@@ -3306,14 +3311,14 @@
       "playerName": "Gabriel Vilardi",
       "teamAbbrev": "WPG",
       "position": "C",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 16,
       "assists": 17,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 33,
-      "lastUpdated": "2025-12-31T00:26:37.471Z",
+      "lastUpdated": "2026-01-01T05:01:19.448Z",
       "todayPoints": 0
     },
     {
@@ -3328,7 +3333,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 9,
-      "lastUpdated": "2025-12-31T00:26:37.986Z",
+      "lastUpdated": "2026-01-01T05:01:19.743Z",
       "todayPoints": 0
     },
     {
@@ -3336,15 +3341,15 @@
       "playerName": "Tomas Hertl",
       "teamAbbrev": "VGK",
       "position": "C",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 15,
-      "assists": 14,
+      "assists": 15,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 29,
-      "lastUpdated": "2025-12-31T00:26:38.259Z",
-      "todayPoints": 0
+      "points": 30,
+      "lastUpdated": "2026-01-01T05:01:20.059Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8477942,
@@ -3358,7 +3363,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 25,
-      "lastUpdated": "2025-12-31T00:26:38.698Z",
+      "lastUpdated": "2026-01-01T05:01:20.482Z",
       "todayPoints": 0
     },
     {
@@ -3373,7 +3378,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 32,
-      "lastUpdated": "2025-12-31T00:26:38.960Z",
+      "lastUpdated": "2026-01-01T05:01:20.939Z",
       "todayPoints": 0
     },
     {
@@ -3381,14 +3386,14 @@
       "playerName": "Marco Rossi",
       "teamAbbrev": "VAN",
       "position": "C",
-      "gamesPlayed": 24,
+      "gamesPlayed": 25,
       "goals": 5,
       "assists": 10,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:26:39.432Z",
+      "lastUpdated": "2026-01-01T05:01:21.350Z",
       "todayPoints": 0
     },
     {
@@ -3396,29 +3401,29 @@
       "playerName": "Vincent Trocheck",
       "teamAbbrev": "NYR",
       "position": "C",
-      "gamesPlayed": 27,
-      "goals": 8,
+      "gamesPlayed": 28,
+      "goals": 9,
       "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 21,
-      "lastUpdated": "2025-12-31T00:26:39.963Z",
-      "todayPoints": 0
+      "points": 22,
+      "lastUpdated": "2026-01-01T05:01:21.632Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8474141,
       "playerName": "Patrick Kane",
       "teamAbbrev": "DET",
       "position": "R",
-      "gamesPlayed": 25,
+      "gamesPlayed": 26,
       "goals": 6,
       "assists": 17,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 23,
-      "lastUpdated": "2025-12-31T00:26:40.374Z",
+      "lastUpdated": "2026-01-01T05:01:22.062Z",
       "todayPoints": 0
     },
     {
@@ -3426,14 +3431,14 @@
       "playerName": "Anthony Cirelli",
       "teamAbbrev": "TBL",
       "position": "C",
-      "gamesPlayed": 34,
+      "gamesPlayed": 35,
       "goals": 10,
       "assists": 12,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 22,
-      "lastUpdated": "2025-12-31T00:26:40.770Z",
+      "lastUpdated": "2026-01-01T05:01:22.477Z",
       "todayPoints": 0
     },
     {
@@ -3441,14 +3446,14 @@
       "playerName": "Matthew Knies",
       "teamAbbrev": "TOR",
       "position": "L",
-      "gamesPlayed": 35,
-      "goals": 10,
+      "gamesPlayed": 36,
+      "goals": 11,
       "assists": 24,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 34,
-      "lastUpdated": "2025-12-31T00:26:41.159Z",
+      "points": 35,
+      "lastUpdated": "2026-01-01T05:01:22.869Z",
       "todayPoints": 0
     },
     {
@@ -3456,14 +3461,14 @@
       "playerName": "Teuvo Teravainen",
       "teamAbbrev": "CHI",
       "position": "C",
-      "gamesPlayed": 37,
-      "goals": 6,
+      "gamesPlayed": 38,
+      "goals": 7,
       "assists": 11,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 17,
-      "lastUpdated": "2025-12-31T00:26:41.573Z",
+      "points": 18,
+      "lastUpdated": "2026-01-01T05:01:23.292Z",
       "todayPoints": 0
     },
     {
@@ -3471,29 +3476,29 @@
       "playerName": "William Eklund",
       "teamAbbrev": "SJS",
       "position": "L",
-      "gamesPlayed": 35,
+      "gamesPlayed": 36,
       "goals": 10,
-      "assists": 15,
+      "assists": 16,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 25,
-      "lastUpdated": "2025-12-31T00:26:41.978Z",
-      "todayPoints": 0
+      "points": 26,
+      "lastUpdated": "2026-01-01T05:01:23.711Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8477500,
       "playerName": "Bo Horvat",
       "teamAbbrev": "NYI",
       "position": "C",
-      "gamesPlayed": 34,
-      "goals": 20,
+      "gamesPlayed": 35,
+      "goals": 21,
       "assists": 12,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 32,
-      "lastUpdated": "2025-12-31T00:26:42.422Z",
+      "points": 33,
+      "lastUpdated": "2026-01-01T05:01:24.123Z",
       "todayPoints": 0
     },
     {
@@ -3508,7 +3513,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 21,
-      "lastUpdated": "2025-12-31T00:26:42.815Z",
+      "lastUpdated": "2026-01-01T05:01:24.517Z",
       "todayPoints": 0
     },
     {
@@ -3516,15 +3521,15 @@
       "playerName": "Connor McMichael",
       "teamAbbrev": "WSH",
       "position": "C",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 5,
-      "assists": 14,
+      "assists": 16,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 19,
-      "lastUpdated": "2025-12-31T00:26:43.221Z",
-      "todayPoints": 0
+      "points": 21,
+      "lastUpdated": "2026-01-01T05:01:24.798Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8477497,
@@ -3538,7 +3543,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 19,
-      "lastUpdated": "2025-12-31T00:26:43.629Z",
+      "lastUpdated": "2026-01-01T05:01:25.091Z",
       "todayPoints": 0
     },
     {
@@ -3553,7 +3558,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 40,
-      "lastUpdated": "2025-12-31T00:26:44.042Z",
+      "lastUpdated": "2026-01-01T05:01:25.448Z",
       "todayPoints": 0
     },
     {
@@ -3561,14 +3566,14 @@
       "playerName": "Kent Johnson",
       "teamAbbrev": "CBJ",
       "position": "C",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 3,
       "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 11,
-      "lastUpdated": "2025-12-31T00:26:44.515Z",
+      "lastUpdated": "2026-01-01T05:01:25.737Z",
       "todayPoints": 0
     },
     {
@@ -3576,14 +3581,15 @@
       "playerName": "Matthew Tkachuk",
       "teamAbbrev": "FLA",
       "position": "L",
-      "gamesPlayed": 52,
-      "goals": 22,
-      "assists": 35,
+      "gamesPlayed": 0,
+      "goals": 0,
+      "assists": 0,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 57,
-      "lastUpdated": "2025-12-31T00:26:45.005Z",
+      "savePct": 0,
+      "points": 0,
+      "lastUpdated": "2026-01-01T05:01:26.103Z",
       "todayPoints": 0
     },
     {
@@ -3591,14 +3597,14 @@
       "playerName": "Kirill Kaprizov",
       "teamAbbrev": "MIN",
       "position": "L",
-      "gamesPlayed": 40,
+      "gamesPlayed": 41,
       "goals": 23,
       "assists": 24,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 47,
-      "lastUpdated": "2025-12-31T00:26:45.394Z",
+      "lastUpdated": "2026-01-01T05:01:26.504Z",
       "todayPoints": 0
     },
     {
@@ -3613,7 +3619,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 10,
-      "lastUpdated": "2025-12-31T00:26:45.783Z",
+      "lastUpdated": "2026-01-01T05:01:26.752Z",
       "todayPoints": 0
     },
     {
@@ -3628,7 +3634,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 28,
-      "lastUpdated": "2025-12-31T00:26:46.176Z",
+      "lastUpdated": "2026-01-01T05:01:27.135Z",
       "todayPoints": 0
     },
     {
@@ -3636,14 +3642,14 @@
       "playerName": "Troy Terry",
       "teamAbbrev": "ANA",
       "position": "R",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 12,
       "assists": 26,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 38,
-      "lastUpdated": "2025-12-31T00:26:46.571Z",
+      "lastUpdated": "2026-01-01T05:01:27.412Z",
       "todayPoints": 0
     },
     {
@@ -3658,7 +3664,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 18,
-      "lastUpdated": "2025-12-31T00:26:46.965Z",
+      "lastUpdated": "2026-01-01T05:01:27.671Z",
       "todayPoints": 0
     },
     {
@@ -3666,14 +3672,14 @@
       "playerName": "Anders Lee",
       "teamAbbrev": "NYI",
       "position": "L",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 10,
       "assists": 15,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 25,
-      "lastUpdated": "2025-12-31T00:26:47.359Z",
+      "lastUpdated": "2026-01-01T05:01:28.063Z",
       "todayPoints": 0
     },
     {
@@ -3688,7 +3694,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 21,
-      "lastUpdated": "2025-12-31T00:26:47.794Z",
+      "lastUpdated": "2026-01-01T05:01:28.465Z",
       "todayPoints": 0
     },
     {
@@ -3696,29 +3702,29 @@
       "playerName": "Mats Zuccarello",
       "teamAbbrev": "MIN",
       "position": "R",
-      "gamesPlayed": 20,
-      "goals": 3,
+      "gamesPlayed": 21,
+      "goals": 4,
       "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 16,
-      "lastUpdated": "2025-12-31T00:26:48.177Z",
-      "todayPoints": 0
+      "points": 17,
+      "lastUpdated": "2026-01-01T05:01:28.828Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8484166,
       "playerName": "Adam Fantilli",
       "teamAbbrev": "CBJ",
       "position": "C",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 12,
       "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 25,
-      "lastUpdated": "2025-12-31T00:26:48.601Z",
+      "lastUpdated": "2026-01-01T05:01:29.098Z",
       "todayPoints": 0
     },
     {
@@ -3726,14 +3732,14 @@
       "playerName": "Tyler Toffoli",
       "teamAbbrev": "SJS",
       "position": "C",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 10,
       "assists": 16,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 26,
-      "lastUpdated": "2025-12-31T00:26:48.866Z",
+      "lastUpdated": "2026-01-01T05:01:29.509Z",
       "todayPoints": 0
     },
     {
@@ -3748,7 +3754,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 18,
-      "lastUpdated": "2025-12-31T00:26:49.254Z",
+      "lastUpdated": "2026-01-01T05:01:29.789Z",
       "todayPoints": 0
     },
     {
@@ -3756,14 +3762,14 @@
       "playerName": "Ryan O'Reilly",
       "teamAbbrev": "NSH",
       "position": "C",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 11,
       "assists": 23,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 34,
-      "lastUpdated": "2025-12-31T00:26:49.663Z",
+      "lastUpdated": "2026-01-01T05:01:30.234Z",
       "todayPoints": 0
     },
     {
@@ -3771,44 +3777,44 @@
       "playerName": "Timo Meier",
       "teamAbbrev": "NJD",
       "position": "R",
-      "gamesPlayed": 33,
+      "gamesPlayed": 35,
       "goals": 11,
-      "assists": 12,
+      "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 23,
-      "lastUpdated": "2025-12-31T00:26:50.052Z",
-      "todayPoints": 0
+      "points": 24,
+      "lastUpdated": "2026-01-01T05:01:30.622Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8474564,
       "playerName": "Steven Stamkos",
       "teamAbbrev": "NSH",
       "position": "C",
-      "gamesPlayed": 38,
-      "goals": 17,
+      "gamesPlayed": 39,
+      "goals": 18,
       "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 25,
-      "lastUpdated": "2025-12-31T00:26:50.305Z",
-      "todayPoints": 0
+      "points": 26,
+      "lastUpdated": "2026-01-01T05:01:30.886Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8477409,
       "playerName": "Carter Verhaeghe",
       "teamAbbrev": "FLA",
       "position": "C",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 11,
       "assists": 17,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 28,
-      "lastUpdated": "2025-12-31T00:26:50.577Z",
+      "lastUpdated": "2026-01-01T05:01:31.303Z",
       "todayPoints": 0
     },
     {
@@ -3816,14 +3822,14 @@
       "playerName": "Ryan McLeod",
       "teamAbbrev": "BUF",
       "position": "C",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 7,
       "assists": 15,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 22,
-      "lastUpdated": "2025-12-31T00:26:50.975Z",
+      "lastUpdated": "2026-01-01T05:01:31.719Z",
       "todayPoints": 0
     },
     {
@@ -3831,44 +3837,44 @@
       "playerName": "Mason McTavish",
       "teamAbbrev": "ANA",
       "position": "C",
-      "gamesPlayed": 39,
-      "goals": 9,
+      "gamesPlayed": 40,
+      "goals": 10,
       "assists": 15,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 24,
-      "lastUpdated": "2025-12-31T00:26:51.431Z",
-      "todayPoints": 0
+      "points": 25,
+      "lastUpdated": "2026-01-01T05:01:31.997Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8481604,
       "playerName": "Pavel Dorofeyev",
       "teamAbbrev": "VGK",
       "position": "R",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 15,
-      "assists": 11,
+      "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 26,
-      "lastUpdated": "2025-12-31T00:26:51.737Z",
-      "todayPoints": 0
+      "points": 28,
+      "lastUpdated": "2026-01-01T05:01:32.434Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8483515,
       "playerName": "Juraj Slafkovský",
       "teamAbbrev": "MTL",
       "position": "L",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 13,
       "assists": 15,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 28,
-      "lastUpdated": "2025-12-31T00:26:51.999Z",
+      "lastUpdated": "2026-01-01T05:01:32.852Z",
       "todayPoints": 0
     },
     {
@@ -3876,14 +3882,14 @@
       "playerName": "Sam Bennett",
       "teamAbbrev": "FLA",
       "position": "C",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 13,
-      "assists": 15,
+      "assists": 16,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 28,
-      "lastUpdated": "2025-12-31T00:26:52.395Z",
+      "points": 29,
+      "lastUpdated": "2026-01-01T05:01:33.119Z",
       "todayPoints": 0
     },
     {
@@ -3898,7 +3904,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 24,
-      "lastUpdated": "2025-12-31T00:26:52.819Z",
+      "lastUpdated": "2026-01-01T05:01:33.538Z",
       "todayPoints": 0
     },
     {
@@ -3906,14 +3912,14 @@
       "playerName": "Ivan Barbashev",
       "teamAbbrev": "VGK",
       "position": "L",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 12,
       "assists": 18,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 30,
-      "lastUpdated": "2025-12-31T00:26:53.263Z",
+      "lastUpdated": "2026-01-01T05:01:33.801Z",
       "todayPoints": 0
     },
     {
@@ -3921,14 +3927,14 @@
       "playerName": "Brad Marchand",
       "teamAbbrev": "FLA",
       "position": "L",
-      "gamesPlayed": 37,
-      "goals": 22,
+      "gamesPlayed": 38,
+      "goals": 23,
       "assists": 22,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 44,
-      "lastUpdated": "2025-12-31T00:26:53.666Z",
+      "points": 45,
+      "lastUpdated": "2026-01-01T05:01:34.301Z",
       "todayPoints": 0
     },
     {
@@ -3943,7 +3949,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 16,
-      "lastUpdated": "2025-12-31T00:26:53.937Z",
+      "lastUpdated": "2026-01-01T05:01:34.573Z",
       "todayPoints": 0
     },
     {
@@ -3958,7 +3964,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 29,
-      "lastUpdated": "2025-12-31T00:26:54.337Z",
+      "lastUpdated": "2026-01-01T05:01:34.848Z",
       "todayPoints": 0
     },
     {
@@ -3973,7 +3979,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 27,
-      "lastUpdated": "2025-12-31T00:26:54.613Z",
+      "lastUpdated": "2026-01-01T05:01:35.302Z",
       "todayPoints": 0
     },
     {
@@ -3981,14 +3987,14 @@
       "playerName": "Brock Boeser",
       "teamAbbrev": "VAN",
       "position": "R",
-      "gamesPlayed": 36,
+      "gamesPlayed": 37,
       "goals": 9,
       "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:26:55.008Z",
+      "lastUpdated": "2026-01-01T05:01:35.573Z",
       "todayPoints": 0
     },
     {
@@ -3996,14 +4002,14 @@
       "playerName": "Cole Perfetti",
       "teamAbbrev": "WPG",
       "position": "C",
-      "gamesPlayed": 23,
+      "gamesPlayed": 24,
       "goals": 2,
       "assists": 5,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 7,
-      "lastUpdated": "2025-12-31T00:26:55.440Z",
+      "lastUpdated": "2026-01-01T05:01:35.865Z",
       "todayPoints": 0
     },
     {
@@ -4011,14 +4017,14 @@
       "playerName": "Conor Garland",
       "teamAbbrev": "VAN",
       "position": "R",
-      "gamesPlayed": 32,
+      "gamesPlayed": 33,
       "goals": 7,
       "assists": 15,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 22,
-      "lastUpdated": "2025-12-31T00:26:55.817Z",
+      "lastUpdated": "2026-01-01T05:01:36.251Z",
       "todayPoints": 0
     },
     {
@@ -4033,7 +4039,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:26:56.213Z",
+      "lastUpdated": "2026-01-01T05:01:36.656Z",
       "todayPoints": 0
     },
     {
@@ -4041,14 +4047,14 @@
       "playerName": "Jamie Benn",
       "teamAbbrev": "DAL",
       "position": "L",
-      "gamesPlayed": 20,
+      "gamesPlayed": 21,
       "goals": 7,
       "assists": 7,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 14,
-      "lastUpdated": "2025-12-31T00:26:56.619Z",
+      "lastUpdated": "2026-01-01T05:01:37.027Z",
       "todayPoints": 0
     },
     {
@@ -4063,7 +4069,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 32,
-      "lastUpdated": "2025-12-31T00:26:56.883Z",
+      "lastUpdated": "2026-01-01T05:01:37.290Z",
       "todayPoints": 0
     },
     {
@@ -4071,14 +4077,14 @@
       "playerName": "Andrei Svechnikov",
       "teamAbbrev": "CAR",
       "position": "R",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 10,
       "assists": 17,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 27,
-      "lastUpdated": "2025-12-31T00:26:57.180Z",
+      "lastUpdated": "2026-01-01T05:01:37.681Z",
       "todayPoints": 0
     },
     {
@@ -4086,14 +4092,14 @@
       "playerName": "Jake DeBrusk",
       "teamAbbrev": "VAN",
       "position": "L",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 9,
       "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:26:57.578Z",
+      "lastUpdated": "2026-01-01T05:01:37.954Z",
       "todayPoints": 0
     },
     {
@@ -4108,7 +4114,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 18,
-      "lastUpdated": "2025-12-31T00:26:57.983Z",
+      "lastUpdated": "2026-01-01T05:01:38.224Z",
       "todayPoints": 0
     },
     {
@@ -4116,14 +4122,14 @@
       "playerName": "Dmitri Voronkov",
       "teamAbbrev": "CBJ",
       "position": "L",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 13,
       "assists": 12,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 25,
-      "lastUpdated": "2025-12-31T00:26:58.303Z",
+      "lastUpdated": "2026-01-01T05:01:38.518Z",
       "todayPoints": 0
     },
     {
@@ -4138,7 +4144,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 26,
-      "lastUpdated": "2025-12-31T00:26:58.589Z",
+      "lastUpdated": "2026-01-01T05:01:38.875Z",
       "todayPoints": 0
     },
     {
@@ -4153,7 +4159,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 20,
-      "lastUpdated": "2025-12-31T00:26:58.982Z",
+      "lastUpdated": "2026-01-01T05:01:39.151Z",
       "todayPoints": 0
     },
     {
@@ -4161,15 +4167,15 @@
       "playerName": "Mason Marchment",
       "teamAbbrev": "CBJ",
       "position": "L",
-      "gamesPlayed": 33,
-      "goals": 7,
+      "gamesPlayed": 34,
+      "goals": 8,
       "assists": 11,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 18,
-      "lastUpdated": "2025-12-31T00:26:59.408Z",
-      "todayPoints": 0
+      "points": 19,
+      "lastUpdated": "2026-01-01T05:01:39.408Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8481528,
@@ -4183,7 +4189,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 29,
-      "lastUpdated": "2025-12-31T00:26:59.798Z",
+      "lastUpdated": "2026-01-01T05:01:39.670Z",
       "todayPoints": 0
     },
     {
@@ -4198,7 +4204,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 23,
-      "lastUpdated": "2025-12-31T00:27:00.209Z",
+      "lastUpdated": "2026-01-01T05:01:40.055Z",
       "todayPoints": 0
     },
     {
@@ -4213,7 +4219,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 14,
-      "lastUpdated": "2025-12-31T00:27:00.640Z",
+      "lastUpdated": "2026-01-01T05:01:40.465Z",
       "todayPoints": 0
     },
     {
@@ -4221,14 +4227,14 @@
       "playerName": "Oliver Bjorkstrand",
       "teamAbbrev": "TBL",
       "position": "R",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 6,
       "assists": 12,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 18,
-      "lastUpdated": "2025-12-31T00:27:01.072Z",
+      "lastUpdated": "2026-01-01T05:01:40.852Z",
       "todayPoints": 0
     },
     {
@@ -4243,7 +4249,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:27:01.470Z",
+      "lastUpdated": "2026-01-01T05:01:41.228Z",
       "todayPoints": 0
     },
     {
@@ -4258,7 +4264,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 9,
-      "lastUpdated": "2025-12-31T00:27:01.919Z",
+      "lastUpdated": "2026-01-01T05:01:41.607Z",
       "todayPoints": 0
     },
     {
@@ -4273,7 +4279,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:27:02.369Z",
+      "lastUpdated": "2026-01-01T05:01:41.978Z",
       "todayPoints": 0
     },
     {
@@ -4281,14 +4287,14 @@
       "playerName": "Tyler Bertuzzi",
       "teamAbbrev": "CHI",
       "position": "L",
-      "gamesPlayed": 35,
+      "gamesPlayed": 36,
       "goals": 19,
       "assists": 10,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 29,
-      "lastUpdated": "2025-12-31T00:27:02.780Z",
+      "lastUpdated": "2026-01-01T05:01:42.336Z",
       "todayPoints": 0
     },
     {
@@ -4303,7 +4309,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:27:03.188Z",
+      "lastUpdated": "2026-01-01T05:01:42.706Z",
       "todayPoints": 0
     },
     {
@@ -4311,14 +4317,14 @@
       "playerName": "Will Cuylle",
       "teamAbbrev": "NYR",
       "position": "L",
-      "gamesPlayed": 41,
+      "gamesPlayed": 42,
       "goals": 10,
       "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 23,
-      "lastUpdated": "2025-12-31T00:27:03.678Z",
+      "lastUpdated": "2026-01-01T05:01:43.070Z",
       "todayPoints": 0
     },
     {
@@ -4326,14 +4332,14 @@
       "playerName": "Leo Carlsson",
       "teamAbbrev": "ANA",
       "position": "C",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 17,
       "assists": 25,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 42,
-      "lastUpdated": "2025-12-31T00:27:04.115Z",
+      "lastUpdated": "2026-01-01T05:01:43.475Z",
       "todayPoints": 0
     },
     {
@@ -4341,14 +4347,14 @@
       "playerName": "Simon Holmstrom",
       "teamAbbrev": "NYI",
       "position": "R",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 8,
-      "assists": 9,
+      "assists": 10,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 17,
-      "lastUpdated": "2025-12-31T00:27:04.513Z",
+      "points": 18,
+      "lastUpdated": "2026-01-01T05:01:43.857Z",
       "todayPoints": 0
     },
     {
@@ -4356,14 +4362,14 @@
       "playerName": "Alexis Lafrenière",
       "teamAbbrev": "NYR",
       "position": "L",
-      "gamesPlayed": 41,
+      "gamesPlayed": 42,
       "goals": 8,
       "assists": 12,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 20,
-      "lastUpdated": "2025-12-31T00:27:04.932Z",
+      "lastUpdated": "2026-01-01T05:01:44.137Z",
       "todayPoints": 0
     },
     {
@@ -4378,7 +4384,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 29,
-      "lastUpdated": "2025-12-31T00:27:05.346Z",
+      "lastUpdated": "2026-01-01T05:01:44.562Z",
       "todayPoints": 0
     },
     {
@@ -4386,14 +4392,14 @@
       "playerName": "Sean Couturier",
       "teamAbbrev": "PHI",
       "position": "C",
-      "gamesPlayed": 36,
+      "gamesPlayed": 37,
       "goals": 5,
       "assists": 16,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 21,
-      "lastUpdated": "2025-12-31T00:27:05.809Z",
+      "lastUpdated": "2026-01-01T05:01:44.947Z",
       "todayPoints": 0
     },
     {
@@ -4408,7 +4414,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 31,
-      "lastUpdated": "2025-12-31T00:27:06.208Z",
+      "lastUpdated": "2026-01-01T05:01:45.381Z",
       "todayPoints": 0
     },
     {
@@ -4416,14 +4422,14 @@
       "playerName": "Elias Pettersson",
       "teamAbbrev": "VAN",
       "position": "C",
-      "gamesPlayed": 30,
+      "gamesPlayed": 31,
       "goals": 9,
       "assists": 14,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 23,
-      "lastUpdated": "2025-12-31T00:27:06.589Z",
+      "lastUpdated": "2026-01-01T05:01:45.656Z",
       "todayPoints": 0
     },
     {
@@ -4431,14 +4437,14 @@
       "playerName": "Anton Lundell",
       "teamAbbrev": "FLA",
       "position": "C",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 13,
-      "assists": 17,
+      "assists": 18,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 30,
-      "lastUpdated": "2025-12-31T00:27:06.994Z",
+      "points": 31,
+      "lastUpdated": "2026-01-01T05:01:45.922Z",
       "todayPoints": 0
     },
     {
@@ -4453,7 +4459,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 14,
-      "lastUpdated": "2025-12-31T00:27:07.417Z",
+      "lastUpdated": "2026-01-01T05:01:46.322Z",
       "todayPoints": 0
     },
     {
@@ -4468,7 +4474,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 21,
-      "lastUpdated": "2025-12-31T00:27:07.672Z",
+      "lastUpdated": "2026-01-01T05:01:46.755Z",
       "todayPoints": 0
     },
     {
@@ -4476,14 +4482,14 @@
       "playerName": "Cutter Gauthier",
       "teamAbbrev": "ANA",
       "position": "L",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 19,
       "assists": 19,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 38,
-      "lastUpdated": "2025-12-31T00:27:08.076Z",
+      "lastUpdated": "2026-01-01T05:01:47.177Z",
       "todayPoints": 0
     },
     {
@@ -4498,7 +4504,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 8,
-      "lastUpdated": "2025-12-31T00:27:08.465Z",
+      "lastUpdated": "2026-01-01T05:01:47.556Z",
       "todayPoints": 0
     },
     {
@@ -4506,14 +4512,14 @@
       "playerName": "Owen Tippett",
       "teamAbbrev": "PHI",
       "position": "R",
-      "gamesPlayed": 37,
-      "goals": 11,
+      "gamesPlayed": 38,
+      "goals": 12,
       "assists": 11,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 22,
-      "lastUpdated": "2025-12-31T00:27:08.735Z",
+      "points": 23,
+      "lastUpdated": "2026-01-01T05:01:47.816Z",
       "todayPoints": 0
     },
     {
@@ -4528,7 +4534,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 21,
-      "lastUpdated": "2025-12-31T00:27:09.151Z",
+      "lastUpdated": "2026-01-01T05:01:48.224Z",
       "todayPoints": 0
     },
     {
@@ -4543,7 +4549,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:27:09.591Z",
+      "lastUpdated": "2026-01-01T05:01:48.670Z",
       "todayPoints": 0
     },
     {
@@ -4551,14 +4557,14 @@
       "playerName": "Phillip Danault",
       "teamAbbrev": "MTL",
       "position": "C",
-      "gamesPlayed": 32,
+      "gamesPlayed": 33,
       "goals": 0,
       "assists": 5,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 5,
-      "lastUpdated": "2025-12-31T00:27:10.023Z",
+      "lastUpdated": "2026-01-01T05:01:49.068Z",
       "todayPoints": 0
     },
     {
@@ -4566,14 +4572,14 @@
       "playerName": "Taylor Hall",
       "teamAbbrev": "CAR",
       "position": "L",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 7,
       "assists": 10,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:27:10.430Z",
+      "lastUpdated": "2026-01-01T05:01:49.454Z",
       "todayPoints": 0
     },
     {
@@ -4588,7 +4594,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 18,
-      "lastUpdated": "2025-12-31T00:27:10.830Z",
+      "lastUpdated": "2026-01-01T05:01:49.859Z",
       "todayPoints": 0
     },
     {
@@ -4596,14 +4602,14 @@
       "playerName": "Jean-Gabriel Pageau",
       "teamAbbrev": "NYI",
       "position": "C",
-      "gamesPlayed": 31,
+      "gamesPlayed": 32,
       "goals": 6,
       "assists": 9,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:27:11.087Z",
+      "lastUpdated": "2026-01-01T05:01:50.213Z",
       "todayPoints": 0
     },
     {
@@ -4618,7 +4624,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:27:11.515Z",
+      "lastUpdated": "2026-01-01T05:01:50.630Z",
       "todayPoints": 0
     },
     {
@@ -4626,14 +4632,14 @@
       "playerName": "Bobby Brink",
       "teamAbbrev": "PHI",
       "position": "R",
-      "gamesPlayed": 37,
-      "goals": 9,
-      "assists": 8,
+      "gamesPlayed": 38,
+      "goals": 10,
+      "assists": 9,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 17,
-      "lastUpdated": "2025-12-31T00:27:11.927Z",
+      "points": 19,
+      "lastUpdated": "2026-01-01T05:01:50.917Z",
       "todayPoints": 0
     },
     {
@@ -4641,14 +4647,14 @@
       "playerName": "Nick Paul",
       "teamAbbrev": "TBL",
       "position": "L",
-      "gamesPlayed": 19,
+      "gamesPlayed": 20,
       "goals": 4,
       "assists": 5,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 9,
-      "lastUpdated": "2025-12-31T00:27:12.189Z",
+      "lastUpdated": "2026-01-01T05:01:51.196Z",
       "todayPoints": 0
     },
     {
@@ -4663,7 +4669,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:27:12.603Z",
+      "lastUpdated": "2026-01-01T05:01:51.644Z",
       "todayPoints": 0
     },
     {
@@ -4671,14 +4677,14 @@
       "playerName": "Stefan Noesen",
       "teamAbbrev": "NJD",
       "position": "R",
-      "gamesPlayed": 32,
+      "gamesPlayed": 34,
       "goals": 3,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 7,
-      "lastUpdated": "2025-12-31T00:27:13.022Z",
+      "lastUpdated": "2026-01-01T05:01:51.910Z",
       "todayPoints": 0
     },
     {
@@ -4686,14 +4692,14 @@
       "playerName": "Brett Howden",
       "teamAbbrev": "VGK",
       "position": "C",
-      "gamesPlayed": 33,
+      "gamesPlayed": 34,
       "goals": 7,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 11,
-      "lastUpdated": "2025-12-31T00:27:13.285Z",
+      "lastUpdated": "2026-01-01T05:01:52.326Z",
       "todayPoints": 0
     },
     {
@@ -4708,7 +4714,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:27:13.679Z",
+      "lastUpdated": "2026-01-01T05:01:52.836Z",
       "todayPoints": 0
     },
     {
@@ -4723,7 +4729,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 0,
-      "lastUpdated": "2025-12-31T00:27:14.156Z",
+      "lastUpdated": "2026-01-01T05:01:53.107Z",
       "todayPoints": 0
     },
     {
@@ -4731,14 +4737,14 @@
       "playerName": "Reilly Smith",
       "teamAbbrev": "VGK",
       "position": "R",
-      "gamesPlayed": 34,
+      "gamesPlayed": 35,
       "goals": 5,
       "assists": 5,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 10,
-      "lastUpdated": "2025-12-31T00:27:14.562Z",
+      "lastUpdated": "2026-01-01T05:01:53.518Z",
       "todayPoints": 0
     },
     {
@@ -4746,14 +4752,14 @@
       "playerName": "Kiefer Sherwood",
       "teamAbbrev": "VAN",
       "position": "L",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 16,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 20,
-      "lastUpdated": "2025-12-31T00:27:14.834Z",
+      "lastUpdated": "2026-01-01T05:01:53.899Z",
       "todayPoints": 0
     },
     {
@@ -4768,7 +4774,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:27:15.228Z",
+      "lastUpdated": "2026-01-01T05:01:54.168Z",
       "todayPoints": 0
     },
     {
@@ -4783,7 +4789,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 19,
-      "lastUpdated": "2025-12-31T00:27:15.662Z",
+      "lastUpdated": "2026-01-01T05:01:54.550Z",
       "todayPoints": 0
     },
     {
@@ -4791,14 +4797,14 @@
       "playerName": "Jack Quinn",
       "teamAbbrev": "BUF",
       "position": "R",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 7,
       "assists": 15,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 22,
-      "lastUpdated": "2025-12-31T00:27:15.932Z",
+      "lastUpdated": "2026-01-01T05:01:54.989Z",
       "todayPoints": 0
     },
     {
@@ -4813,7 +4819,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 19,
-      "lastUpdated": "2025-12-31T00:27:16.376Z",
+      "lastUpdated": "2026-01-01T05:01:55.376Z",
       "todayPoints": 0
     },
     {
@@ -4821,14 +4827,14 @@
       "playerName": "Vladislav Namestnikov",
       "teamAbbrev": "WPG",
       "position": "C",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 6,
       "assists": 2,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 8,
-      "lastUpdated": "2025-12-31T00:27:16.666Z",
+      "lastUpdated": "2026-01-01T05:01:55.817Z",
       "todayPoints": 0
     },
     {
@@ -4836,29 +4842,29 @@
       "playerName": "Michael Bunting",
       "teamAbbrev": "NSH",
       "position": "L",
-      "gamesPlayed": 38,
-      "goals": 9,
+      "gamesPlayed": 39,
+      "goals": 10,
       "assists": 10,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 19,
-      "lastUpdated": "2025-12-31T00:27:16.936Z",
-      "todayPoints": 0
+      "points": 20,
+      "lastUpdated": "2026-01-01T05:01:56.234Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8482702,
       "playerName": "Logan Stankoven",
       "teamAbbrev": "CAR",
       "position": "C",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 6,
       "assists": 10,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 16,
-      "lastUpdated": "2025-12-31T00:27:17.447Z",
+      "lastUpdated": "2026-01-01T05:01:56.493Z",
       "todayPoints": 0
     },
     {
@@ -4866,14 +4872,14 @@
       "playerName": "Brendan Gallagher",
       "teamAbbrev": "MTL",
       "position": "R",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 2,
       "assists": 10,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:27:17.867Z",
+      "lastUpdated": "2026-01-01T05:01:56.878Z",
       "todayPoints": 0
     },
     {
@@ -4888,7 +4894,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 18,
-      "lastUpdated": "2025-12-31T00:27:18.270Z",
+      "lastUpdated": "2026-01-01T05:01:57.281Z",
       "todayPoints": 0
     },
     {
@@ -4903,7 +4909,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 19,
-      "lastUpdated": "2025-12-31T00:27:18.745Z",
+      "lastUpdated": "2026-01-01T05:01:57.544Z",
       "todayPoints": 0
     },
     {
@@ -4911,14 +4917,14 @@
       "playerName": "Noah Cates",
       "teamAbbrev": "PHI",
       "position": "L",
-      "gamesPlayed": 37,
-      "goals": 9,
-      "assists": 11,
+      "gamesPlayed": 38,
+      "goals": 10,
+      "assists": 12,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 20,
-      "lastUpdated": "2025-12-31T00:27:19.012Z",
+      "points": 22,
+      "lastUpdated": "2026-01-01T05:01:57.841Z",
       "todayPoints": 0
     },
     {
@@ -4926,14 +4932,14 @@
       "playerName": "Nino Niederreiter",
       "teamAbbrev": "WPG",
       "position": "R",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 6,
       "assists": 9,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:27:19.314Z",
+      "lastUpdated": "2026-01-01T05:01:58.100Z",
       "todayPoints": 0
     },
     {
@@ -4948,7 +4954,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 8,
-      "lastUpdated": "2025-12-31T00:27:19.718Z",
+      "lastUpdated": "2026-01-01T05:01:58.559Z",
       "todayPoints": 0
     },
     {
@@ -4956,14 +4962,14 @@
       "playerName": "Alex Killorn",
       "teamAbbrev": "ANA",
       "position": "L",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 2,
       "assists": 9,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 11,
-      "lastUpdated": "2025-12-31T00:27:20.190Z",
+      "lastUpdated": "2026-01-01T05:01:58.821Z",
       "todayPoints": 0
     },
     {
@@ -4971,14 +4977,14 @@
       "playerName": "Marco Kasper",
       "teamAbbrev": "DET",
       "position": "C",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 3,
       "assists": 2,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 5,
-      "lastUpdated": "2025-12-31T00:27:20.577Z",
+      "lastUpdated": "2026-01-01T05:01:59.082Z",
       "todayPoints": 0
     },
     {
@@ -4986,14 +4992,14 @@
       "playerName": "Andre Burakovsky",
       "teamAbbrev": "CHI",
       "position": "L",
-      "gamesPlayed": 33,
+      "gamesPlayed": 34,
       "goals": 9,
       "assists": 14,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 23,
-      "lastUpdated": "2025-12-31T00:27:20.971Z",
+      "lastUpdated": "2026-01-01T05:01:59.359Z",
       "todayPoints": 0
     },
     {
@@ -5001,14 +5007,14 @@
       "playerName": "Jonathan Drouin",
       "teamAbbrev": "NYI",
       "position": "L",
-      "gamesPlayed": 33,
+      "gamesPlayed": 34,
       "goals": 3,
       "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 16,
-      "lastUpdated": "2025-12-31T00:27:21.381Z",
+      "lastUpdated": "2026-01-01T05:01:59.647Z",
       "todayPoints": 0
     },
     {
@@ -5023,7 +5029,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:27:21.790Z",
+      "lastUpdated": "2026-01-01T05:02:00.020Z",
       "todayPoints": 0
     },
     {
@@ -5031,14 +5037,14 @@
       "playerName": "Dawson Mercer",
       "teamAbbrev": "NJD",
       "position": "C",
-      "gamesPlayed": 38,
+      "gamesPlayed": 40,
       "goals": 10,
       "assists": 14,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 24,
-      "lastUpdated": "2025-12-31T00:27:22.171Z",
+      "lastUpdated": "2026-01-01T05:02:00.499Z",
       "todayPoints": 0
     },
     {
@@ -5046,14 +5052,14 @@
       "playerName": "Jordan Staal",
       "teamAbbrev": "CAR",
       "position": "C",
-      "gamesPlayed": 35,
+      "gamesPlayed": 36,
       "goals": 10,
       "assists": 6,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 16,
-      "lastUpdated": "2025-12-31T00:27:22.588Z",
+      "lastUpdated": "2026-01-01T05:02:00.927Z",
       "todayPoints": 0
     },
     {
@@ -5061,14 +5067,14 @@
       "playerName": "Zachary Bolduc",
       "teamAbbrev": "MTL",
       "position": "R",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 10,
       "assists": 7,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:27:22.975Z",
+      "lastUpdated": "2026-01-01T05:02:01.393Z",
       "todayPoints": 0
     },
     {
@@ -5083,7 +5089,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 10,
-      "lastUpdated": "2025-12-31T00:27:23.385Z",
+      "lastUpdated": "2026-01-01T05:02:01.843Z",
       "todayPoints": 0
     },
     {
@@ -5091,14 +5097,14 @@
       "playerName": "James van Riemsdyk",
       "teamAbbrev": "DET",
       "position": "L",
-      "gamesPlayed": 31,
+      "gamesPlayed": 32,
       "goals": 9,
       "assists": 2,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 11,
-      "lastUpdated": "2025-12-31T00:27:23.815Z",
+      "lastUpdated": "2026-01-01T05:02:02.270Z",
       "todayPoints": 0
     },
     {
@@ -5106,14 +5112,14 @@
       "playerName": "Jordan Martinook",
       "teamAbbrev": "CAR",
       "position": "L",
-      "gamesPlayed": 35,
+      "gamesPlayed": 36,
       "goals": 6,
       "assists": 7,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:27:24.213Z",
+      "lastUpdated": "2026-01-01T05:02:02.746Z",
       "todayPoints": 0
     },
     {
@@ -5121,14 +5127,14 @@
       "playerName": "Joshua Norris",
       "teamAbbrev": "BUF",
       "position": "C",
-      "gamesPlayed": 12,
+      "gamesPlayed": 13,
       "goals": 5,
       "assists": 7,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:27:24.612Z",
+      "lastUpdated": "2026-01-01T05:02:03.162Z",
       "todayPoints": 0
     },
     {
@@ -5143,7 +5149,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 1,
-      "lastUpdated": "2025-12-31T00:27:24.996Z",
+      "lastUpdated": "2026-01-01T05:02:03.621Z",
       "todayPoints": 0
     },
     {
@@ -5151,14 +5157,14 @@
       "playerName": "Nick Foligno",
       "teamAbbrev": "CHI",
       "position": "L",
-      "gamesPlayed": 16,
+      "gamesPlayed": 17,
       "goals": 1,
       "assists": 6,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 7,
-      "lastUpdated": "2025-12-31T00:27:25.401Z",
+      "lastUpdated": "2026-01-01T05:02:04.079Z",
       "todayPoints": 0
     },
     {
@@ -5173,7 +5179,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 25,
-      "lastUpdated": "2025-12-31T00:27:25.814Z",
+      "lastUpdated": "2026-01-01T05:02:04.480Z",
       "todayPoints": 0
     },
     {
@@ -5181,29 +5187,29 @@
       "playerName": "Charlie Coyle",
       "teamAbbrev": "CBJ",
       "position": "C",
-      "gamesPlayed": 38,
-      "goals": 5,
+      "gamesPlayed": 39,
+      "goals": 6,
       "assists": 19,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 24,
-      "lastUpdated": "2025-12-31T00:27:26.215Z",
-      "todayPoints": 0
+      "points": 25,
+      "lastUpdated": "2026-01-01T05:02:04.877Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8477505,
       "playerName": "Alexander Wennberg",
       "teamAbbrev": "SJS",
       "position": "C",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 7,
       "assists": 19,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 26,
-      "lastUpdated": "2025-12-31T00:27:26.636Z",
+      "lastUpdated": "2026-01-01T05:02:05.344Z",
       "todayPoints": 0
     },
     {
@@ -5218,7 +5224,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:27:26.901Z",
+      "lastUpdated": "2026-01-01T05:02:05.746Z",
       "todayPoints": 0
     },
     {
@@ -5226,14 +5232,14 @@
       "playerName": "Bobby McMann",
       "teamAbbrev": "TOR",
       "position": "C",
-      "gamesPlayed": 37,
-      "goals": 11,
-      "assists": 7,
+      "gamesPlayed": 38,
+      "goals": 12,
+      "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 18,
-      "lastUpdated": "2025-12-31T00:27:27.161Z",
+      "points": 20,
+      "lastUpdated": "2026-01-01T05:02:06.072Z",
       "todayPoints": 0
     },
     {
@@ -5241,14 +5247,14 @@
       "playerName": "Jackson Blake",
       "teamAbbrev": "CAR",
       "position": "R",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 12,
       "assists": 12,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 24,
-      "lastUpdated": "2025-12-31T00:27:27.586Z",
+      "lastUpdated": "2026-01-01T05:02:06.466Z",
       "todayPoints": 0
     },
     {
@@ -5263,7 +5269,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 23,
-      "lastUpdated": "2025-12-31T00:27:28.069Z",
+      "lastUpdated": "2026-01-01T05:02:06.862Z",
       "todayPoints": 0
     },
     {
@@ -5271,14 +5277,14 @@
       "playerName": "Ilya Mikheyev",
       "teamAbbrev": "CHI",
       "position": "R",
-      "gamesPlayed": 34,
+      "gamesPlayed": 35,
       "goals": 6,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 10,
-      "lastUpdated": "2025-12-31T00:27:28.491Z",
+      "lastUpdated": "2026-01-01T05:02:07.294Z",
       "todayPoints": 0
     },
     {
@@ -5286,14 +5292,14 @@
       "playerName": "Adam Lowry",
       "teamAbbrev": "WPG",
       "position": "C",
-      "gamesPlayed": 25,
+      "gamesPlayed": 26,
       "goals": 2,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:27:28.895Z",
+      "lastUpdated": "2026-01-01T05:02:07.572Z",
       "todayPoints": 0
     },
     {
@@ -5301,14 +5307,14 @@
       "playerName": "Marcus Johansson",
       "teamAbbrev": "MIN",
       "position": "L",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 12,
       "assists": 20,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 32,
-      "lastUpdated": "2025-12-31T00:27:29.185Z",
+      "lastUpdated": "2026-01-01T05:02:07.847Z",
       "todayPoints": 0
     },
     {
@@ -5316,44 +5322,44 @@
       "playerName": "Cole Sillinger",
       "teamAbbrev": "CBJ",
       "position": "C",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 4,
-      "assists": 14,
+      "assists": 15,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 18,
-      "lastUpdated": "2025-12-31T00:27:29.600Z",
-      "todayPoints": 0
+      "points": 19,
+      "lastUpdated": "2026-01-01T05:02:08.243Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8475765,
       "playerName": "Vladimir Tarasenko",
       "teamAbbrev": "MIN",
       "position": "R",
-      "gamesPlayed": 33,
-      "goals": 7,
+      "gamesPlayed": 34,
+      "goals": 8,
       "assists": 12,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 19,
-      "lastUpdated": "2025-12-31T00:27:30.032Z",
-      "todayPoints": 0
+      "points": 20,
+      "lastUpdated": "2026-01-01T05:02:08.633Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8480829,
       "playerName": "Jesperi Kotkaniemi",
       "teamAbbrev": "CAR",
       "position": "C",
-      "gamesPlayed": 22,
+      "gamesPlayed": 23,
       "goals": 2,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:27:30.433Z",
+      "lastUpdated": "2026-01-01T05:02:09.105Z",
       "todayPoints": 0
     },
     {
@@ -5361,14 +5367,14 @@
       "playerName": "Christian Dvorak",
       "teamAbbrev": "PHI",
       "position": "C",
-      "gamesPlayed": 36,
-      "goals": 8,
+      "gamesPlayed": 37,
+      "goals": 9,
       "assists": 16,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 24,
-      "lastUpdated": "2025-12-31T00:27:30.821Z",
+      "points": 25,
+      "lastUpdated": "2026-01-01T05:02:09.532Z",
       "todayPoints": 0
     },
     {
@@ -5376,14 +5382,14 @@
       "playerName": "Max Domi",
       "teamAbbrev": "TOR",
       "position": "C",
-      "gamesPlayed": 36,
+      "gamesPlayed": 37,
       "goals": 4,
       "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:27:31.240Z",
+      "lastUpdated": "2026-01-01T05:02:09.812Z",
       "todayPoints": 0
     },
     {
@@ -5398,7 +5404,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 1,
-      "lastUpdated": "2025-12-31T00:27:31.676Z",
+      "lastUpdated": "2026-01-01T05:02:10.296Z",
       "todayPoints": 0
     },
     {
@@ -5406,14 +5412,14 @@
       "playerName": "Trevor Zegras",
       "teamAbbrev": "PHI",
       "position": "C",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 15,
-      "assists": 22,
+      "assists": 24,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 37,
-      "lastUpdated": "2025-12-31T00:27:32.076Z",
+      "points": 39,
+      "lastUpdated": "2026-01-01T05:02:10.709Z",
       "todayPoints": 0
     },
     {
@@ -5421,14 +5427,14 @@
       "playerName": "Mathieu Olivier",
       "teamAbbrev": "CBJ",
       "position": "R",
-      "gamesPlayed": 25,
+      "gamesPlayed": 26,
       "goals": 3,
       "assists": 6,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 9,
-      "lastUpdated": "2025-12-31T00:27:32.457Z",
+      "lastUpdated": "2026-01-01T05:02:10.985Z",
       "todayPoints": 0
     },
     {
@@ -5436,14 +5442,14 @@
       "playerName": "Evan Rodrigues",
       "teamAbbrev": "FLA",
       "position": "C",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 8,
       "assists": 11,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 19,
-      "lastUpdated": "2025-12-31T00:27:32.908Z",
+      "lastUpdated": "2026-01-01T05:02:11.385Z",
       "todayPoints": 0
     },
     {
@@ -5458,7 +5464,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:27:33.183Z",
+      "lastUpdated": "2026-01-01T05:02:11.763Z",
       "todayPoints": 0
     },
     {
@@ -5466,15 +5472,15 @@
       "playerName": "Luke Evangelista",
       "teamAbbrev": "NSH",
       "position": "R",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 6,
-      "assists": 21,
+      "assists": 23,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 27,
-      "lastUpdated": "2025-12-31T00:27:33.590Z",
-      "todayPoints": 0
+      "points": 29,
+      "lastUpdated": "2026-01-01T05:02:12.022Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8474150,
@@ -5488,7 +5494,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 24,
-      "lastUpdated": "2025-12-31T00:27:33.849Z",
+      "lastUpdated": "2026-01-01T05:02:12.432Z",
       "todayPoints": 0
     },
     {
@@ -5496,29 +5502,29 @@
       "playerName": "J.T. Compher",
       "teamAbbrev": "DET",
       "position": "L",
-      "gamesPlayed": 40,
+      "gamesPlayed": 41,
       "goals": 4,
-      "assists": 8,
+      "assists": 9,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 12,
-      "lastUpdated": "2025-12-31T00:27:34.293Z",
-      "todayPoints": 0
+      "points": 13,
+      "lastUpdated": "2026-01-01T05:02:12.841Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8480762,
       "playerName": "Eric Robinson",
       "teamAbbrev": "CAR",
       "position": "L",
-      "gamesPlayed": 32,
+      "gamesPlayed": 33,
       "goals": 9,
       "assists": 3,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:27:34.542Z",
+      "lastUpdated": "2026-01-01T05:02:13.251Z",
       "todayPoints": 0
     },
     {
@@ -5526,14 +5532,14 @@
       "playerName": "Ryan Poehling",
       "teamAbbrev": "ANA",
       "position": "C",
-      "gamesPlayed": 32,
+      "gamesPlayed": 33,
       "goals": 2,
       "assists": 12,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 14,
-      "lastUpdated": "2025-12-31T00:27:34.919Z",
+      "lastUpdated": "2026-01-01T05:02:13.534Z",
       "todayPoints": 0
     },
     {
@@ -5541,14 +5547,14 @@
       "playerName": "Nicolas Roy",
       "teamAbbrev": "TOR",
       "position": "C",
-      "gamesPlayed": 35,
-      "goals": 3,
-      "assists": 9,
+      "gamesPlayed": 36,
+      "goals": 4,
+      "assists": 10,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 12,
-      "lastUpdated": "2025-12-31T00:27:35.359Z",
+      "points": 14,
+      "lastUpdated": "2026-01-01T05:02:13.925Z",
       "todayPoints": 0
     },
     {
@@ -5556,14 +5562,14 @@
       "playerName": "Scott Laughton",
       "teamAbbrev": "TOR",
       "position": "C",
-      "gamesPlayed": 20,
+      "gamesPlayed": 21,
       "goals": 4,
       "assists": 1,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 5,
-      "lastUpdated": "2025-12-31T00:27:35.762Z",
+      "lastUpdated": "2026-01-01T05:02:14.350Z",
       "todayPoints": 0
     },
     {
@@ -5571,14 +5577,14 @@
       "playerName": "Mackie Samoskevich",
       "teamAbbrev": "FLA",
       "position": "R",
-      "gamesPlayed": 36,
+      "gamesPlayed": 37,
       "goals": 4,
       "assists": 14,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 18,
-      "lastUpdated": "2025-12-31T00:27:36.056Z",
+      "lastUpdated": "2026-01-01T05:02:14.770Z",
       "todayPoints": 0
     },
     {
@@ -5586,14 +5592,14 @@
       "playerName": "Yanni Gourde",
       "teamAbbrev": "TBL",
       "position": "C",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 5,
       "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:27:36.409Z",
+      "lastUpdated": "2026-01-01T05:02:15.042Z",
       "todayPoints": 0
     },
     {
@@ -5601,14 +5607,14 @@
       "playerName": "Alex Iafallo",
       "teamAbbrev": "WPG",
       "position": "L",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 6,
       "assists": 7,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:27:36.823Z",
+      "lastUpdated": "2026-01-01T05:02:15.500Z",
       "todayPoints": 0
     },
     {
@@ -5616,14 +5622,14 @@
       "playerName": "Keegan Kolesar",
       "teamAbbrev": "VGK",
       "position": "R",
-      "gamesPlayed": 37,
+      "gamesPlayed": 38,
       "goals": 0,
       "assists": 6,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:27:37.239Z",
+      "lastUpdated": "2026-01-01T05:02:15.803Z",
       "todayPoints": 0
     },
     {
@@ -5631,15 +5637,15 @@
       "playerName": "Connor Brown",
       "teamAbbrev": "NJD",
       "position": "R",
-      "gamesPlayed": 31,
+      "gamesPlayed": 33,
       "goals": 9,
-      "assists": 7,
+      "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 16,
-      "lastUpdated": "2025-12-31T00:27:37.643Z",
-      "todayPoints": 0
+      "points": 17,
+      "lastUpdated": "2026-01-01T05:02:16.355Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8470621,
@@ -5653,7 +5659,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:27:37.899Z",
+      "lastUpdated": "2026-01-01T05:02:16.790Z",
       "todayPoints": 0
     },
     {
@@ -5661,14 +5667,14 @@
       "playerName": "Brandon Saad",
       "teamAbbrev": "VGK",
       "position": "L",
-      "gamesPlayed": 34,
+      "gamesPlayed": 35,
       "goals": 1,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 5,
-      "lastUpdated": "2025-12-31T00:27:38.342Z",
+      "lastUpdated": "2026-01-01T05:02:17.058Z",
       "todayPoints": 0
     },
     {
@@ -5676,14 +5682,14 @@
       "playerName": "Chris Kreider",
       "teamAbbrev": "ANA",
       "position": "L",
-      "gamesPlayed": 35,
+      "gamesPlayed": 36,
       "goals": 13,
       "assists": 9,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 22,
-      "lastUpdated": "2025-12-31T00:27:38.732Z",
+      "lastUpdated": "2026-01-01T05:02:17.454Z",
       "todayPoints": 0
     },
     {
@@ -5698,7 +5704,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 7,
-      "lastUpdated": "2025-12-31T00:27:39.009Z",
+      "lastUpdated": "2026-01-01T05:02:17.727Z",
       "todayPoints": 0
     },
     {
@@ -5713,7 +5719,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 19,
-      "lastUpdated": "2025-12-31T00:27:39.266Z",
+      "lastUpdated": "2026-01-01T05:02:18.125Z",
       "todayPoints": 0
     },
     {
@@ -5728,7 +5734,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 16,
-      "lastUpdated": "2025-12-31T00:27:39.681Z",
+      "lastUpdated": "2026-01-01T05:02:18.415Z",
       "todayPoints": 0
     },
     {
@@ -5736,14 +5742,14 @@
       "playerName": "Joel Eriksson Ek",
       "teamAbbrev": "MIN",
       "position": "C",
-      "gamesPlayed": 40,
+      "gamesPlayed": 41,
       "goals": 10,
       "assists": 19,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 29,
-      "lastUpdated": "2025-12-31T00:27:39.945Z",
+      "lastUpdated": "2026-01-01T05:02:18.805Z",
       "todayPoints": 0
     },
     {
@@ -5751,15 +5757,15 @@
       "playerName": "Jeff Skinner",
       "teamAbbrev": "SJS",
       "position": "L",
-      "gamesPlayed": 26,
-      "goals": 4,
+      "gamesPlayed": 27,
+      "goals": 5,
       "assists": 3,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 7,
-      "lastUpdated": "2025-12-31T00:27:40.220Z",
-      "todayPoints": 0
+      "points": 8,
+      "lastUpdated": "2026-01-01T05:02:19.084Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8478046,
@@ -5773,7 +5779,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 2,
-      "lastUpdated": "2025-12-31T00:27:40.623Z",
+      "lastUpdated": "2026-01-01T05:02:19.358Z",
       "todayPoints": 0
     },
     {
@@ -5788,7 +5794,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:27:41.028Z",
+      "lastUpdated": "2026-01-01T05:02:19.641Z",
       "todayPoints": 0
     },
     {
@@ -5796,29 +5802,29 @@
       "playerName": "Marcus Foligno",
       "teamAbbrev": "MIN",
       "position": "L",
-      "gamesPlayed": 30,
-      "goals": 0,
+      "gamesPlayed": 31,
+      "goals": 1,
       "assists": 2,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 2,
-      "lastUpdated": "2025-12-31T00:27:41.442Z",
-      "todayPoints": 0
+      "points": 3,
+      "lastUpdated": "2026-01-01T05:02:20.087Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8481522,
       "playerName": "Peyton Krebs",
       "teamAbbrev": "BUF",
       "position": "C",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 3,
       "assists": 11,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 14,
-      "lastUpdated": "2025-12-31T00:27:41.834Z",
+      "lastUpdated": "2026-01-01T05:02:20.499Z",
       "todayPoints": 0
     },
     {
@@ -5826,14 +5832,14 @@
       "playerName": "Zach Benson",
       "teamAbbrev": "BUF",
       "position": "L",
-      "gamesPlayed": 25,
+      "gamesPlayed": 26,
       "goals": 4,
       "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:27:42.197Z",
+      "lastUpdated": "2026-01-01T05:02:20.926Z",
       "todayPoints": 0
     },
     {
@@ -5848,7 +5854,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 1,
-      "lastUpdated": "2025-12-31T00:27:42.611Z",
+      "lastUpdated": "2026-01-01T05:02:21.356Z",
       "todayPoints": 0
     },
     {
@@ -5856,14 +5862,14 @@
       "playerName": "Gustav Nyquist",
       "teamAbbrev": "WPG",
       "position": "R",
-      "gamesPlayed": 28,
+      "gamesPlayed": 29,
       "goals": 0,
       "assists": 7,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 7,
-      "lastUpdated": "2025-12-31T00:27:42.872Z",
+      "lastUpdated": "2026-01-01T05:02:21.634Z",
       "todayPoints": 0
     },
     {
@@ -5878,7 +5884,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 11,
-      "lastUpdated": "2025-12-31T00:27:43.271Z",
+      "lastUpdated": "2026-01-01T05:02:22.047Z",
       "todayPoints": 0
     },
     {
@@ -5893,7 +5899,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 10,
-      "lastUpdated": "2025-12-31T00:27:43.679Z",
+      "lastUpdated": "2026-01-01T05:02:22.439Z",
       "todayPoints": 0
     },
     {
@@ -5901,29 +5907,29 @@
       "playerName": "Ondrej Palat",
       "teamAbbrev": "NJD",
       "position": "L",
-      "gamesPlayed": 38,
+      "gamesPlayed": 40,
       "goals": 2,
-      "assists": 5,
+      "assists": 6,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 7,
-      "lastUpdated": "2025-12-31T00:27:44.048Z",
-      "todayPoints": 0
+      "points": 8,
+      "lastUpdated": "2026-01-01T05:02:22.834Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8476871,
       "playerName": "Tanner Pearson",
       "teamAbbrev": "WPG",
       "position": "L",
-      "gamesPlayed": 31,
+      "gamesPlayed": 32,
       "goals": 4,
       "assists": 2,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:27:44.495Z",
+      "lastUpdated": "2026-01-01T05:02:23.097Z",
       "todayPoints": 0
     },
     {
@@ -5938,7 +5944,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:27:44.921Z",
+      "lastUpdated": "2026-01-01T05:02:23.492Z",
       "todayPoints": 0
     },
     {
@@ -5946,14 +5952,14 @@
       "playerName": "Taylor Raddysh",
       "teamAbbrev": "NYR",
       "position": "R",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 7,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 11,
-      "lastUpdated": "2025-12-31T00:27:45.184Z",
+      "lastUpdated": "2026-01-01T05:02:23.898Z",
       "todayPoints": 0
     },
     {
@@ -5968,7 +5974,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 10,
-      "lastUpdated": "2025-12-31T00:27:45.586Z",
+      "lastUpdated": "2026-01-01T05:02:24.328Z",
       "todayPoints": 0
     },
     {
@@ -5983,7 +5989,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 10,
-      "lastUpdated": "2025-12-31T00:27:46.022Z",
+      "lastUpdated": "2026-01-01T05:02:24.758Z",
       "todayPoints": 0
     },
     {
@@ -5998,7 +6004,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 11,
-      "lastUpdated": "2025-12-31T00:27:46.296Z",
+      "lastUpdated": "2026-01-01T05:02:25.160Z",
       "todayPoints": 0
     },
     {
@@ -6013,7 +6019,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:27:46.706Z",
+      "lastUpdated": "2026-01-01T05:02:25.563Z",
       "todayPoints": 0
     },
     {
@@ -6021,14 +6027,14 @@
       "playerName": "Josh Anderson",
       "teamAbbrev": "MTL",
       "position": "R",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 8,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:27:47.110Z",
+      "lastUpdated": "2026-01-01T05:02:25.925Z",
       "todayPoints": 0
     },
     {
@@ -6036,30 +6042,30 @@
       "playerName": "Nic Dowd",
       "teamAbbrev": "WSH",
       "position": "C",
-      "gamesPlayed": 31,
+      "gamesPlayed": 32,
       "goals": 2,
-      "assists": 6,
+      "assists": 7,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 8,
-      "lastUpdated": "2025-12-31T00:27:47.535Z",
-      "todayPoints": 0
+      "points": 9,
+      "lastUpdated": "2026-01-01T05:02:26.332Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8477451,
       "playerName": "Ryan Hartman",
       "teamAbbrev": "MIN",
       "position": "R",
-      "gamesPlayed": 36,
+      "gamesPlayed": 37,
       "goals": 9,
-      "assists": 6,
+      "assists": 7,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 15,
-      "lastUpdated": "2025-12-31T00:27:47.984Z",
-      "todayPoints": 0
+      "points": 16,
+      "lastUpdated": "2026-01-01T05:02:26.827Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8481618,
@@ -6073,7 +6079,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:27:48.399Z",
+      "lastUpdated": "2026-01-01T05:02:27.095Z",
       "todayPoints": 0
     },
     {
@@ -6088,7 +6094,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 1,
-      "lastUpdated": "2025-12-31T00:27:48.788Z",
+      "lastUpdated": "2026-01-01T05:02:27.514Z",
       "todayPoints": 0
     },
     {
@@ -6103,7 +6109,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 14,
-      "lastUpdated": "2025-12-31T00:27:49.203Z",
+      "lastUpdated": "2026-01-01T05:02:27.907Z",
       "todayPoints": 0
     },
     {
@@ -6118,7 +6124,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 3,
-      "lastUpdated": "2025-12-31T00:27:49.668Z",
+      "lastUpdated": "2026-01-01T05:02:28.343Z",
       "todayPoints": 0
     },
     {
@@ -6133,7 +6139,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 21,
-      "lastUpdated": "2025-12-31T00:27:50.064Z",
+      "lastUpdated": "2026-01-01T05:02:28.762Z",
       "todayPoints": 0
     },
     {
@@ -6148,7 +6154,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 25,
-      "lastUpdated": "2025-12-31T00:27:50.456Z",
+      "lastUpdated": "2026-01-01T05:02:29.165Z",
       "todayPoints": 0
     },
     {
@@ -6156,14 +6162,15 @@
       "playerName": "Martin Pospisil",
       "teamAbbrev": "CGY",
       "position": "C",
-      "gamesPlayed": 81,
-      "goals": 4,
-      "assists": 21,
+      "gamesPlayed": 0,
+      "goals": 0,
+      "assists": 0,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 25,
-      "lastUpdated": "2025-12-31T00:27:50.936Z",
+      "savePct": 0,
+      "points": 0,
+      "lastUpdated": "2026-01-01T05:02:29.587Z",
       "todayPoints": 0
     },
     {
@@ -6178,7 +6185,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 0,
-      "lastUpdated": "2025-12-31T00:27:51.187Z",
+      "lastUpdated": "2026-01-01T05:02:29.988Z",
       "todayPoints": 0
     },
     {
@@ -6193,7 +6200,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:27:51.584Z",
+      "lastUpdated": "2026-01-01T05:02:30.401Z",
       "todayPoints": 0
     },
     {
@@ -6201,14 +6208,14 @@
       "playerName": "Sam Steel",
       "teamAbbrev": "DAL",
       "position": "C",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 6,
       "assists": 7,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:27:51.994Z",
+      "lastUpdated": "2026-01-01T05:02:30.817Z",
       "todayPoints": 0
     },
     {
@@ -6223,7 +6230,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 18,
-      "lastUpdated": "2025-12-31T00:27:52.448Z",
+      "lastUpdated": "2026-01-01T05:02:31.094Z",
       "todayPoints": 0
     },
     {
@@ -6231,29 +6238,29 @@
       "playerName": "Anthony Beauvillier",
       "teamAbbrev": "WSH",
       "position": "L",
-      "gamesPlayed": 39,
-      "goals": 7,
+      "gamesPlayed": 40,
+      "goals": 8,
       "assists": 5,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 12,
-      "lastUpdated": "2025-12-31T00:27:52.711Z",
-      "todayPoints": 0
+      "points": 13,
+      "lastUpdated": "2026-01-01T05:02:31.526Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8482055,
       "playerName": "Drew O'Connor",
       "teamAbbrev": "VAN",
       "position": "L",
-      "gamesPlayed": 38,
-      "goals": 9,
-      "assists": 5,
+      "gamesPlayed": 39,
+      "goals": 10,
+      "assists": 6,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 14,
-      "lastUpdated": "2025-12-31T00:27:52.989Z",
+      "points": 16,
+      "lastUpdated": "2026-01-01T05:02:31.964Z",
       "todayPoints": 0
     },
     {
@@ -6261,29 +6268,29 @@
       "playerName": "Mavrik Bourque",
       "teamAbbrev": "DAL",
       "position": "C",
-      "gamesPlayed": 39,
-      "goals": 5,
+      "gamesPlayed": 40,
+      "goals": 6,
       "assists": 7,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 12,
-      "lastUpdated": "2025-12-31T00:27:53.392Z",
-      "todayPoints": 0
+      "points": 13,
+      "lastUpdated": "2026-01-01T05:02:32.359Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8480185,
       "playerName": "Eetu Luostarinen",
       "teamAbbrev": "FLA",
       "position": "C",
-      "gamesPlayed": 30,
+      "gamesPlayed": 31,
       "goals": 4,
-      "assists": 13,
+      "assists": 14,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 17,
-      "lastUpdated": "2025-12-31T00:27:53.649Z",
+      "points": 18,
+      "lastUpdated": "2026-01-01T05:02:32.638Z",
       "todayPoints": 0
     },
     {
@@ -6298,14 +6305,14 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 5,
-      "lastUpdated": "2025-12-31T00:27:54.047Z",
+      "lastUpdated": "2026-01-01T05:02:33.027Z",
       "todayPoints": 0
     },
     {
       "playerId": 8481577,
       "playerName": "Philip Tomasino",
-      "teamAbbrev": "PIT",
-      "position": "R",
+      "teamAbbrev": "PHI",
+      "position": "C",
       "gamesPlayed": 9,
       "goals": 0,
       "assists": 1,
@@ -6313,7 +6320,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 1,
-      "lastUpdated": "2025-12-31T00:27:54.535Z",
+      "lastUpdated": "2026-01-01T05:02:33.458Z",
       "todayPoints": 0
     },
     {
@@ -6328,7 +6335,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 16,
-      "lastUpdated": "2025-12-31T00:27:54.801Z",
+      "lastUpdated": "2026-01-01T05:02:33.737Z",
       "todayPoints": 0
     },
     {
@@ -6343,7 +6350,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 10,
-      "lastUpdated": "2025-12-31T00:27:55.210Z",
+      "lastUpdated": "2026-01-01T05:02:34.013Z",
       "todayPoints": 0
     },
     {
@@ -6351,14 +6358,14 @@
       "playerName": "Jesper Boqvist",
       "teamAbbrev": "FLA",
       "position": "C",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 3,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 7,
-      "lastUpdated": "2025-12-31T00:27:55.635Z",
+      "lastUpdated": "2026-01-01T05:02:34.268Z",
       "todayPoints": 0
     },
     {
@@ -6366,14 +6373,14 @@
       "playerName": "Andrew Copp",
       "teamAbbrev": "DET",
       "position": "C",
-      "gamesPlayed": 40,
+      "gamesPlayed": 41,
       "goals": 4,
       "assists": 17,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 21,
-      "lastUpdated": "2025-12-31T00:27:56.074Z",
+      "lastUpdated": "2026-01-01T05:02:34.707Z",
       "todayPoints": 0
     },
     {
@@ -6388,7 +6395,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 5,
-      "lastUpdated": "2025-12-31T00:27:56.454Z",
+      "lastUpdated": "2026-01-01T05:02:34.986Z",
       "todayPoints": 0
     },
     {
@@ -6403,7 +6410,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 4,
-      "lastUpdated": "2025-12-31T00:27:56.918Z",
+      "lastUpdated": "2026-01-01T05:02:35.259Z",
       "todayPoints": 0
     },
     {
@@ -6411,14 +6418,14 @@
       "playerName": "Cody Glass",
       "teamAbbrev": "NJD",
       "position": "C",
-      "gamesPlayed": 27,
+      "gamesPlayed": 29,
       "goals": 7,
       "assists": 2,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 9,
-      "lastUpdated": "2025-12-31T00:27:57.313Z",
+      "lastUpdated": "2026-01-01T05:02:35.666Z",
       "todayPoints": 0
     },
     {
@@ -6433,7 +6440,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 5,
-      "lastUpdated": "2025-12-31T00:27:57.694Z",
+      "lastUpdated": "2026-01-01T05:02:36.057Z",
       "todayPoints": 0
     },
     {
@@ -6448,7 +6455,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 7,
-      "lastUpdated": "2025-12-31T00:27:58.137Z",
+      "lastUpdated": "2026-01-01T05:02:36.327Z",
       "todayPoints": 0
     },
     {
@@ -6456,14 +6463,14 @@
       "playerName": "Justin Brazeau",
       "teamAbbrev": "PIT",
       "position": "R",
-      "gamesPlayed": 23,
-      "goals": 11,
-      "assists": 7,
+      "gamesPlayed": 24,
+      "goals": 12,
+      "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 18,
-      "lastUpdated": "2025-12-31T00:27:58.540Z",
+      "points": 20,
+      "lastUpdated": "2026-01-01T05:02:36.728Z",
       "todayPoints": 0
     },
     {
@@ -6471,14 +6478,14 @@
       "playerName": "Thomas Novak",
       "teamAbbrev": "PIT",
       "position": "C",
-      "gamesPlayed": 37,
-      "goals": 6,
-      "assists": 12,
+      "gamesPlayed": 38,
+      "goals": 7,
+      "assists": 13,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 18,
-      "lastUpdated": "2025-12-31T00:27:58.939Z",
+      "points": 20,
+      "lastUpdated": "2026-01-01T05:02:37.106Z",
       "todayPoints": 0
     },
     {
@@ -6486,14 +6493,14 @@
       "playerName": "Nicholas Robertson",
       "teamAbbrev": "TOR",
       "position": "L",
-      "gamesPlayed": 36,
+      "gamesPlayed": 37,
       "goals": 8,
-      "assists": 9,
+      "assists": 11,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 17,
-      "lastUpdated": "2025-12-31T00:27:59.362Z",
+      "points": 19,
+      "lastUpdated": "2026-01-01T05:02:37.382Z",
       "todayPoints": 0
     },
     {
@@ -6501,15 +6508,15 @@
       "playerName": "Mason Appleton",
       "teamAbbrev": "DET",
       "position": "C",
-      "gamesPlayed": 30,
-      "goals": 4,
+      "gamesPlayed": 31,
+      "goals": 5,
       "assists": 6,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 10,
-      "lastUpdated": "2025-12-31T00:27:59.641Z",
-      "todayPoints": 0
+      "points": 11,
+      "lastUpdated": "2026-01-01T05:02:37.644Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8474189,
@@ -6523,7 +6530,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:27:59.923Z",
+      "lastUpdated": "2026-01-01T05:02:37.911Z",
       "todayPoints": 0
     },
     {
@@ -6538,7 +6545,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 1,
-      "lastUpdated": "2025-12-31T00:28:00.297Z",
+      "lastUpdated": "2026-01-01T05:02:38.183Z",
       "todayPoints": 0
     },
     {
@@ -6546,14 +6553,14 @@
       "playerName": "Paul Cotter",
       "teamAbbrev": "NJD",
       "position": "L",
-      "gamesPlayed": 38,
+      "gamesPlayed": 40,
       "goals": 5,
       "assists": 5,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 10,
-      "lastUpdated": "2025-12-31T00:28:00.713Z",
+      "lastUpdated": "2026-01-01T05:02:38.588Z",
       "todayPoints": 0
     },
     {
@@ -6561,14 +6568,14 @@
       "playerName": "Colton Sissons",
       "teamAbbrev": "VGK",
       "position": "C",
-      "gamesPlayed": 33,
+      "gamesPlayed": 34,
       "goals": 3,
       "assists": 2,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 5,
-      "lastUpdated": "2025-12-31T00:28:01.118Z",
+      "lastUpdated": "2026-01-01T05:02:38.842Z",
       "todayPoints": 0
     },
     {
@@ -6576,14 +6583,15 @@
       "playerName": "Logan O'Connor",
       "teamAbbrev": "COL",
       "position": "R",
-      "gamesPlayed": 80,
-      "goals": 10,
-      "assists": 11,
+      "gamesPlayed": 0,
+      "goals": 0,
+      "assists": 0,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 21,
-      "lastUpdated": "2025-12-31T00:28:01.626Z",
+      "savePct": 0,
+      "points": 0,
+      "lastUpdated": "2026-01-01T05:02:39.352Z",
       "todayPoints": 0
     },
     {
@@ -6598,7 +6606,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:28:02.034Z",
+      "lastUpdated": "2026-01-01T05:02:39.641Z",
       "todayPoints": 0
     },
     {
@@ -6613,7 +6621,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 0,
-      "lastUpdated": "2025-12-31T00:28:02.464Z",
+      "lastUpdated": "2026-01-01T05:02:40.029Z",
       "todayPoints": 0
     },
     {
@@ -6621,30 +6629,30 @@
       "playerName": "Erik Haula",
       "teamAbbrev": "NSH",
       "position": "L",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 5,
-      "assists": 15,
+      "assists": 16,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 20,
-      "lastUpdated": "2025-12-31T00:28:02.864Z",
-      "todayPoints": 0
+      "points": 21,
+      "lastUpdated": "2026-01-01T05:02:40.435Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8479992,
       "playerName": "Michael Rasmussen",
       "teamAbbrev": "DET",
       "position": "C",
-      "gamesPlayed": 35,
+      "gamesPlayed": 36,
       "goals": 5,
-      "assists": 7,
+      "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 12,
-      "lastUpdated": "2025-12-31T00:28:03.308Z",
-      "todayPoints": 0
+      "points": 13,
+      "lastUpdated": "2026-01-01T05:02:40.864Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8479941,
@@ -6658,7 +6666,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 0,
-      "lastUpdated": "2025-12-31T00:28:03.844Z",
+      "lastUpdated": "2026-01-01T05:02:41.280Z",
       "todayPoints": 0
     },
     {
@@ -6666,14 +6674,14 @@
       "playerName": "Brandon Duhaime",
       "teamAbbrev": "WSH",
       "position": "R",
-      "gamesPlayed": 39,
+      "gamesPlayed": 40,
       "goals": 4,
       "assists": 2,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:28:04.266Z",
+      "lastUpdated": "2026-01-01T05:02:41.661Z",
       "todayPoints": 0
     },
     {
@@ -6688,7 +6696,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 10,
-      "lastUpdated": "2025-12-31T00:28:04.529Z",
+      "lastUpdated": "2026-01-01T05:02:42.128Z",
       "todayPoints": 0
     },
     {
@@ -6696,14 +6704,15 @@
       "playerName": "Nikolai Kovalenko",
       "teamAbbrev": "N/A",
       "position": "R",
-      "gamesPlayed": 57,
-      "goals": 7,
-      "assists": 13,
+      "gamesPlayed": 0,
+      "goals": 0,
+      "assists": 0,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 20,
-      "lastUpdated": "2025-12-31T00:28:04.989Z",
+      "savePct": 0,
+      "points": 0,
+      "lastUpdated": "2026-01-01T05:02:42.581Z",
       "todayPoints": 0
     },
     {
@@ -6711,14 +6720,14 @@
       "playerName": "Blake Lizotte",
       "teamAbbrev": "PIT",
       "position": "C",
-      "gamesPlayed": 28,
+      "gamesPlayed": 29,
       "goals": 3,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 7,
-      "lastUpdated": "2025-12-31T00:28:05.424Z",
+      "lastUpdated": "2026-01-01T05:02:42.958Z",
       "todayPoints": 0
     },
     {
@@ -6726,14 +6735,14 @@
       "playerName": "Gage Goncalves",
       "teamAbbrev": "TBL",
       "position": "C",
-      "gamesPlayed": 34,
+      "gamesPlayed": 35,
       "goals": 3,
       "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 11,
-      "lastUpdated": "2025-12-31T00:28:05.822Z",
+      "lastUpdated": "2026-01-01T05:02:43.262Z",
       "todayPoints": 0
     },
     {
@@ -6741,14 +6750,14 @@
       "playerName": "Sam Carrick",
       "teamAbbrev": "NYR",
       "position": "C",
-      "gamesPlayed": 41,
+      "gamesPlayed": 42,
       "goals": 1,
       "assists": 6,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 7,
-      "lastUpdated": "2025-12-31T00:28:06.259Z",
+      "lastUpdated": "2026-01-01T05:02:43.639Z",
       "todayPoints": 0
     },
     {
@@ -6763,7 +6772,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:28:06.690Z",
+      "lastUpdated": "2026-01-01T05:02:44.033Z",
       "todayPoints": 0
     },
     {
@@ -6771,14 +6780,14 @@
       "playerName": "Matthew Wood",
       "teamAbbrev": "NSH",
       "position": "R",
-      "gamesPlayed": 31,
+      "gamesPlayed": 32,
       "goals": 8,
       "assists": 6,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 14,
-      "lastUpdated": "2025-12-31T00:28:07.759Z",
+      "lastUpdated": "2026-01-01T05:02:45.231Z",
       "todayPoints": 0
     },
     {
@@ -6786,14 +6795,14 @@
       "playerName": "Artyom Levshunov",
       "teamAbbrev": "CHI",
       "position": "D",
-      "gamesPlayed": 36,
+      "gamesPlayed": 37,
       "goals": 1,
-      "assists": 16,
+      "assists": 17,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 17,
-      "lastUpdated": "2025-12-31T00:28:08.200Z",
+      "points": 18,
+      "lastUpdated": "2026-01-01T05:02:45.622Z",
       "todayPoints": 0
     },
     {
@@ -6801,14 +6810,14 @@
       "playerName": "Ville Koivunen",
       "teamAbbrev": "PIT",
       "position": "R",
-      "gamesPlayed": 25,
+      "gamesPlayed": 26,
       "goals": 1,
       "assists": 3,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 4,
-      "lastUpdated": "2025-12-31T00:28:09.451Z",
+      "lastUpdated": "2026-01-01T05:02:46.816Z",
       "todayPoints": 0
     },
     {
@@ -6823,7 +6832,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:28:10.437Z",
+      "lastUpdated": "2026-01-01T05:02:47.762Z",
       "todayPoints": 0
     },
     {
@@ -6838,7 +6847,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 0,
-      "lastUpdated": "2025-12-31T00:28:10.920Z",
+      "lastUpdated": "2026-01-01T05:02:48.134Z",
       "todayPoints": 0
     },
     {
@@ -6853,7 +6862,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 1,
-      "lastUpdated": "2025-12-31T00:28:11.348Z",
+      "lastUpdated": "2026-01-01T05:02:48.555Z",
       "todayPoints": 0
     },
     {
@@ -6861,14 +6870,15 @@
       "playerName": "Nikita Prishchepov",
       "teamAbbrev": "COL",
       "position": "C",
-      "gamesPlayed": 10,
+      "gamesPlayed": 0,
       "goals": 0,
       "assists": 0,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
+      "savePct": 0,
       "points": 0,
-      "lastUpdated": "2025-12-31T00:28:12.117Z",
+      "lastUpdated": "2026-01-01T05:02:49.301Z",
       "todayPoints": 0
     },
     {
@@ -6876,14 +6886,14 @@
       "playerName": "Liam Ohgren",
       "teamAbbrev": "VAN",
       "position": "L",
-      "gamesPlayed": 25,
+      "gamesPlayed": 26,
       "goals": 2,
       "assists": 2,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 4,
-      "lastUpdated": "2025-12-31T00:28:12.532Z",
+      "lastUpdated": "2026-01-01T05:02:49.695Z",
       "todayPoints": 0
     },
     {
@@ -6891,14 +6901,14 @@
       "playerName": "Ivan Demidov",
       "teamAbbrev": "MTL",
       "position": "R",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "goals": 10,
-      "assists": 22,
+      "assists": 23,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 32,
-      "lastUpdated": "2025-12-31T00:28:13.177Z",
+      "points": 33,
+      "lastUpdated": "2026-01-01T05:02:50.422Z",
       "todayPoints": 0
     },
     {
@@ -6913,7 +6923,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 2,
-      "lastUpdated": "2025-12-31T00:28:13.830Z",
+      "lastUpdated": "2026-01-01T05:02:50.954Z",
       "todayPoints": 0
     },
     {
@@ -6921,15 +6931,15 @@
       "playerName": "Ryan Leonard",
       "teamAbbrev": "WSH",
       "position": "R",
-      "gamesPlayed": 32,
+      "gamesPlayed": 33,
       "goals": 7,
-      "assists": 13,
+      "assists": 14,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 20,
-      "lastUpdated": "2025-12-31T00:28:15.008Z",
-      "todayPoints": 0
+      "points": 21,
+      "lastUpdated": "2026-01-01T05:02:52.195Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8483489,
@@ -6943,7 +6953,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:28:15.452Z",
+      "lastUpdated": "2026-01-01T05:02:52.565Z",
       "todayPoints": 0
     },
     {
@@ -6951,29 +6961,30 @@
       "playerName": "Justin Sourdif",
       "teamAbbrev": "WSH",
       "position": "R",
-      "gamesPlayed": 38,
-      "goals": 3,
+      "gamesPlayed": 39,
+      "goals": 5,
       "assists": 6,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 9,
-      "lastUpdated": "2025-12-31T00:28:15.992Z",
-      "todayPoints": 0
+      "points": 11,
+      "lastUpdated": "2026-01-01T05:02:53.231Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8484406,
       "playerName": "Ty Mueller",
       "teamAbbrev": "VAN",
       "position": "C",
-      "gamesPlayed": 2,
+      "gamesPlayed": 0,
       "goals": 0,
       "assists": 0,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
+      "savePct": 0,
       "points": 0,
-      "lastUpdated": "2025-12-31T00:28:16.752Z",
+      "lastUpdated": "2026-01-01T05:02:54.011Z",
       "todayPoints": 0
     },
     {
@@ -6988,7 +6999,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 8,
-      "lastUpdated": "2025-12-31T00:28:17.038Z",
+      "lastUpdated": "2026-01-01T05:02:54.412Z",
       "todayPoints": 0
     },
     {
@@ -7003,7 +7014,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 1,
-      "lastUpdated": "2025-12-31T00:28:17.302Z",
+      "lastUpdated": "2026-01-01T05:02:54.692Z",
       "todayPoints": 0
     },
     {
@@ -7018,7 +7029,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 1,
-      "lastUpdated": "2025-12-31T00:28:18.113Z",
+      "lastUpdated": "2026-01-01T05:02:55.634Z",
       "todayPoints": 0
     },
     {
@@ -7026,14 +7037,15 @@
       "playerName": "Luca Cagnoni",
       "teamAbbrev": "SJS",
       "position": "D",
-      "gamesPlayed": 6,
+      "gamesPlayed": 0,
       "goals": 0,
-      "assists": 2,
+      "assists": 0,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 2,
-      "lastUpdated": "2025-12-31T00:28:19.088Z",
+      "savePct": 0,
+      "points": 0,
+      "lastUpdated": "2026-01-01T05:02:56.681Z",
       "todayPoints": 0
     },
     {
@@ -7048,7 +7060,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 2,
-      "lastUpdated": "2025-12-31T00:28:20.059Z",
+      "lastUpdated": "2026-01-01T05:02:57.659Z",
       "todayPoints": 0
     },
     {
@@ -7056,14 +7068,14 @@
       "playerName": "Rutger McGroarty",
       "teamAbbrev": "PIT",
       "position": "R",
-      "gamesPlayed": 13,
+      "gamesPlayed": 14,
       "goals": 2,
       "assists": 1,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
       "points": 3,
-      "lastUpdated": "2025-12-31T00:28:21.011Z",
+      "lastUpdated": "2026-01-01T05:02:58.657Z",
       "todayPoints": 0
     },
     {
@@ -7078,7 +7090,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 8,
-      "lastUpdated": "2025-12-31T00:28:21.424Z",
+      "lastUpdated": "2026-01-01T05:02:59.079Z",
       "todayPoints": 0
     },
     {
@@ -7086,14 +7098,14 @@
       "playerName": "Calum Ritchie",
       "teamAbbrev": "NYI",
       "position": "C",
-      "gamesPlayed": 28,
-      "goals": 4,
+      "gamesPlayed": 29,
+      "goals": 5,
       "assists": 4,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 8,
-      "lastUpdated": "2025-12-31T00:28:22.150Z",
+      "points": 9,
+      "lastUpdated": "2026-01-01T05:02:59.621Z",
       "todayPoints": 0
     },
     {
@@ -7101,14 +7113,14 @@
       "playerName": "Oliver Moore",
       "teamAbbrev": "CHI",
       "position": "C",
-      "gamesPlayed": 26,
+      "gamesPlayed": 27,
       "goals": 3,
-      "assists": 6,
+      "assists": 8,
       "wins": 0,
       "shutouts": 0,
       "otLosses": 0,
-      "points": 9,
-      "lastUpdated": "2025-12-31T00:28:23.059Z",
+      "points": 11,
+      "lastUpdated": "2026-01-01T05:03:00.585Z",
       "todayPoints": 0
     },
     {
@@ -7116,14 +7128,14 @@
       "playerName": "Jet Greaves",
       "teamAbbrev": "CBJ",
       "position": "G",
-      "gamesPlayed": 25,
+      "gamesPlayed": 26,
       "goals": 11,
       "assists": 0,
       "wins": 11,
       "shutouts": 0,
       "otLosses": 5,
       "points": 27,
-      "lastUpdated": "2025-12-31T00:28:23.466Z",
+      "lastUpdated": "2026-01-01T05:03:00.873Z",
       "todayPoints": 0
     },
     {
@@ -7138,7 +7150,7 @@
       "shutouts": 0,
       "otLosses": 1,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:28:23.847Z",
+      "lastUpdated": "2026-01-01T05:03:01.322Z",
       "todayPoints": 0
     },
     {
@@ -7153,7 +7165,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 8,
-      "lastUpdated": "2025-12-31T00:28:24.228Z",
+      "lastUpdated": "2026-01-01T05:03:01.932Z",
       "todayPoints": 0
     },
     {
@@ -7161,14 +7173,14 @@
       "playerName": "Connor Hellebuyck",
       "teamAbbrev": "WPG",
       "position": "G",
-      "gamesPlayed": 21,
+      "gamesPlayed": 22,
       "goals": 9,
       "assists": 0,
       "wins": 9,
       "shutouts": 0,
       "otLosses": 3,
       "points": 21,
-      "lastUpdated": "2025-12-31T00:28:24.626Z",
+      "lastUpdated": "2026-01-01T05:03:02.361Z",
       "todayPoints": 0
     },
     {
@@ -7183,7 +7195,7 @@
       "shutouts": 2,
       "otLosses": 6,
       "points": 36,
-      "lastUpdated": "2025-12-31T00:28:25.013Z",
+      "lastUpdated": "2026-01-01T05:03:02.763Z",
       "todayPoints": 0
     },
     {
@@ -7191,29 +7203,29 @@
       "playerName": "Andrei Vasilevskiy",
       "teamAbbrev": "TBL",
       "position": "G",
-      "gamesPlayed": 23,
-      "goals": 14,
+      "gamesPlayed": 24,
+      "goals": 15,
       "assists": 1,
-      "wins": 14,
+      "wins": 15,
       "shutouts": 1,
       "otLosses": 2,
-      "points": 35,
-      "lastUpdated": "2025-12-31T00:28:25.406Z",
-      "todayPoints": 0
+      "points": 37,
+      "lastUpdated": "2026-01-01T05:03:03.023Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8479193,
       "playerName": "Casey DeSmith",
       "teamAbbrev": "DAL",
       "position": "G",
-      "gamesPlayed": 14,
+      "gamesPlayed": 15,
       "goals": 9,
       "assists": 1,
       "wins": 9,
       "shutouts": 1,
       "otLosses": 4,
       "points": 27,
-      "lastUpdated": "2025-12-31T00:28:25.821Z",
+      "lastUpdated": "2026-01-01T05:03:03.439Z",
       "todayPoints": 0
     },
     {
@@ -7228,7 +7240,7 @@
       "shutouts": 0,
       "otLosses": 1,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:28:26.095Z",
+      "lastUpdated": "2026-01-01T05:03:03.820Z",
       "todayPoints": 0
     },
     {
@@ -7243,7 +7255,7 @@
       "shutouts": 3,
       "otLosses": 4,
       "points": 45,
-      "lastUpdated": "2025-12-31T00:28:26.529Z",
+      "lastUpdated": "2026-01-01T05:03:04.227Z",
       "todayPoints": 0
     },
     {
@@ -7251,15 +7263,15 @@
       "playerName": "John Gibson",
       "teamAbbrev": "DET",
       "position": "G",
-      "gamesPlayed": 22,
-      "goals": 12,
+      "gamesPlayed": 23,
+      "goals": 13,
       "assists": 2,
-      "wins": 12,
+      "wins": 13,
       "shutouts": 2,
       "otLosses": 1,
-      "points": 35,
-      "lastUpdated": "2025-12-31T00:28:26.806Z",
-      "todayPoints": 0
+      "points": 37,
+      "lastUpdated": "2026-01-01T05:03:04.656Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8478406,
@@ -7273,7 +7285,7 @@
       "shutouts": 2,
       "otLosses": 1,
       "points": 35,
-      "lastUpdated": "2025-12-31T00:28:27.224Z",
+      "lastUpdated": "2026-01-01T05:03:05.032Z",
       "todayPoints": 0
     },
     {
@@ -7288,7 +7300,7 @@
       "shutouts": 2,
       "otLosses": 3,
       "points": 43,
-      "lastUpdated": "2025-12-31T00:28:27.663Z",
+      "lastUpdated": "2026-01-01T05:03:05.452Z",
       "todayPoints": 0
     },
     {
@@ -7303,7 +7315,7 @@
       "shutouts": 1,
       "otLosses": 5,
       "points": 38,
-      "lastUpdated": "2025-12-31T00:28:28.024Z",
+      "lastUpdated": "2026-01-01T05:03:05.721Z",
       "todayPoints": 0
     },
     {
@@ -7318,7 +7330,7 @@
       "shutouts": 2,
       "otLosses": 2,
       "points": 38,
-      "lastUpdated": "2025-12-31T00:28:28.388Z",
+      "lastUpdated": "2026-01-01T05:03:06.121Z",
       "todayPoints": 0
     },
     {
@@ -7333,7 +7345,7 @@
       "shutouts": 0,
       "otLosses": 3,
       "points": 27,
-      "lastUpdated": "2025-12-31T00:28:28.799Z",
+      "lastUpdated": "2026-01-01T05:03:06.388Z",
       "todayPoints": 0
     },
     {
@@ -7348,7 +7360,7 @@
       "shutouts": 2,
       "otLosses": 3,
       "points": 45,
-      "lastUpdated": "2025-12-31T00:28:29.258Z",
+      "lastUpdated": "2026-01-01T05:03:06.657Z",
       "todayPoints": 0
     },
     {
@@ -7356,14 +7368,14 @@
       "playerName": "Joseph Woll",
       "teamAbbrev": "TOR",
       "position": "G",
-      "gamesPlayed": 12,
-      "goals": 7,
-      "assists": 0,
-      "wins": 7,
-      "shutouts": 0,
+      "gamesPlayed": 13,
+      "goals": 8,
+      "assists": 1,
+      "wins": 8,
+      "shutouts": 1,
       "otLosses": 1,
-      "points": 15,
-      "lastUpdated": "2025-12-31T00:28:29.659Z",
+      "points": 22,
+      "lastUpdated": "2026-01-01T05:03:07.032Z",
       "todayPoints": 0
     },
     {
@@ -7371,15 +7383,15 @@
       "playerName": "Jake Allen",
       "teamAbbrev": "NJD",
       "position": "G",
-      "gamesPlayed": 20,
-      "goals": 10,
+      "gamesPlayed": 21,
+      "goals": 11,
       "assists": 1,
-      "wins": 10,
+      "wins": 11,
       "shutouts": 1,
       "otLosses": 1,
-      "points": 26,
-      "lastUpdated": "2025-12-31T00:28:30.173Z",
-      "todayPoints": 0
+      "points": 28,
+      "lastUpdated": "2026-01-01T05:03:07.406Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8475809,
@@ -7393,7 +7405,7 @@
       "shutouts": 2,
       "otLosses": 4,
       "points": 48,
-      "lastUpdated": "2025-12-31T00:28:30.574Z",
+      "lastUpdated": "2026-01-01T05:03:07.790Z",
       "todayPoints": 0
     },
     {
@@ -7408,7 +7420,7 @@
       "shutouts": 3,
       "otLosses": 2,
       "points": 41,
-      "lastUpdated": "2025-12-31T00:28:31.025Z",
+      "lastUpdated": "2026-01-01T05:03:08.088Z",
       "todayPoints": 0
     },
     {
@@ -7423,7 +7435,7 @@
       "shutouts": 0,
       "otLosses": 2,
       "points": 4,
-      "lastUpdated": "2025-12-31T00:28:31.490Z",
+      "lastUpdated": "2026-01-01T05:03:08.519Z",
       "todayPoints": 0
     },
     {
@@ -7438,7 +7450,7 @@
       "shutouts": 2,
       "otLosses": 5,
       "points": 35,
-      "lastUpdated": "2025-12-31T00:28:31.896Z",
+      "lastUpdated": "2026-01-01T05:03:08.801Z",
       "todayPoints": 0
     },
     {
@@ -7453,7 +7465,7 @@
       "shutouts": 3,
       "otLosses": 1,
       "points": 50,
-      "lastUpdated": "2025-12-31T00:28:32.303Z",
+      "lastUpdated": "2026-01-01T05:03:09.056Z",
       "todayPoints": 0
     },
     {
@@ -7468,7 +7480,7 @@
       "shutouts": 1,
       "otLosses": 4,
       "points": 41,
-      "lastUpdated": "2025-12-31T00:28:32.748Z",
+      "lastUpdated": "2026-01-01T05:03:09.427Z",
       "todayPoints": 0
     },
     {
@@ -7483,7 +7495,7 @@
       "shutouts": 1,
       "otLosses": 2,
       "points": 39,
-      "lastUpdated": "2025-12-31T00:28:33.157Z",
+      "lastUpdated": "2026-01-01T05:03:09.705Z",
       "todayPoints": 0
     },
     {
@@ -7498,7 +7510,7 @@
       "shutouts": 3,
       "otLosses": 2,
       "points": 33,
-      "lastUpdated": "2025-12-31T00:28:33.538Z",
+      "lastUpdated": "2026-01-01T05:03:09.964Z",
       "todayPoints": 0
     },
     {
@@ -7506,29 +7518,29 @@
       "playerName": "Lukas Dostal",
       "teamAbbrev": "ANA",
       "position": "G",
-      "gamesPlayed": 24,
+      "gamesPlayed": 25,
       "goals": 13,
       "assists": 0,
       "wins": 13,
       "shutouts": 0,
-      "otLosses": 1,
-      "points": 27,
-      "lastUpdated": "2025-12-31T00:28:33.804Z",
-      "todayPoints": 0
+      "otLosses": 2,
+      "points": 28,
+      "lastUpdated": "2026-01-01T05:03:10.361Z",
+      "todayPoints": 1
     },
     {
       "playerId": 8481519,
       "playerName": "Spencer Knight",
       "teamAbbrev": "CHI",
       "position": "G",
-      "gamesPlayed": 26,
+      "gamesPlayed": 27,
       "goals": 10,
       "assists": 2,
       "wins": 10,
       "shutouts": 2,
-      "otLosses": 5,
-      "points": 35,
-      "lastUpdated": "2025-12-31T00:28:34.209Z",
+      "otLosses": 6,
+      "points": 36,
+      "lastUpdated": "2026-01-01T05:03:10.644Z",
       "todayPoints": 0
     },
     {
@@ -7543,7 +7555,7 @@
       "shutouts": 0,
       "otLosses": 3,
       "points": 15,
-      "lastUpdated": "2025-12-31T00:28:34.475Z",
+      "lastUpdated": "2026-01-01T05:03:11.053Z",
       "todayPoints": 0
     },
     {
@@ -7551,14 +7563,14 @@
       "playerName": "Sam Montembeault",
       "teamAbbrev": "MTL",
       "position": "G",
-      "gamesPlayed": 15,
-      "goals": 5,
+      "gamesPlayed": 16,
+      "goals": 6,
       "assists": 0,
-      "wins": 5,
+      "wins": 6,
       "shutouts": 0,
       "otLosses": 1,
-      "points": 11,
-      "lastUpdated": "2025-12-31T00:28:34.743Z",
+      "points": 13,
+      "lastUpdated": "2026-01-01T05:03:11.443Z",
       "todayPoints": 0
     },
     {
@@ -7573,7 +7585,7 @@
       "shutouts": 0,
       "otLosses": 2,
       "points": 24,
-      "lastUpdated": "2025-12-31T00:28:35.178Z",
+      "lastUpdated": "2026-01-01T05:03:11.714Z",
       "todayPoints": 0
     },
     {
@@ -7588,7 +7600,7 @@
       "shutouts": 1,
       "otLosses": 3,
       "points": 20,
-      "lastUpdated": "2025-12-31T00:28:35.622Z",
+      "lastUpdated": "2026-01-01T05:03:12.006Z",
       "todayPoints": 0
     },
     {
@@ -7603,7 +7615,7 @@
       "shutouts": 0,
       "otLosses": 6,
       "points": 20,
-      "lastUpdated": "2025-12-31T00:28:35.887Z",
+      "lastUpdated": "2026-01-01T05:03:12.398Z",
       "todayPoints": 0
     },
     {
@@ -7611,14 +7623,14 @@
       "playerName": "Jacob Markstrom",
       "teamAbbrev": "NJD",
       "position": "G",
-      "gamesPlayed": 19,
+      "gamesPlayed": 20,
       "goals": 9,
       "assists": 0,
       "wins": 9,
       "shutouts": 0,
       "otLosses": 1,
       "points": 19,
-      "lastUpdated": "2025-12-31T00:28:36.151Z",
+      "lastUpdated": "2026-01-01T05:03:12.669Z",
       "todayPoints": 0
     },
     {
@@ -7633,7 +7645,7 @@
       "shutouts": 0,
       "otLosses": 2,
       "points": 10,
-      "lastUpdated": "2025-12-31T00:28:36.415Z",
+      "lastUpdated": "2026-01-01T05:03:13.082Z",
       "todayPoints": 0
     },
     {
@@ -7641,14 +7653,14 @@
       "playerName": "Frederik Andersen",
       "teamAbbrev": "CAR",
       "position": "G",
-      "gamesPlayed": 15,
+      "gamesPlayed": 16,
       "goals": 5,
       "assists": 0,
       "wins": 5,
       "shutouts": 0,
       "otLosses": 2,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:28:36.722Z",
+      "lastUpdated": "2026-01-01T05:03:13.496Z",
       "todayPoints": 0
     },
     {
@@ -7656,14 +7668,15 @@
       "playerName": "Marc-Andre Fleury",
       "teamAbbrev": "N/A",
       "position": "G",
-      "gamesPlayed": 26,
-      "goals": 14,
-      "assists": 1,
-      "wins": 14,
-      "shutouts": 1,
-      "otLosses": 1,
-      "points": 34,
-      "lastUpdated": "2025-12-31T00:28:37.200Z",
+      "gamesPlayed": 0,
+      "goals": 0,
+      "assists": 0,
+      "wins": 0,
+      "shutouts": 0,
+      "otLosses": 0,
+      "savePct": 0,
+      "points": 0,
+      "lastUpdated": "2026-01-01T05:03:13.897Z",
       "todayPoints": 0
     },
     {
@@ -7678,7 +7691,7 @@
       "shutouts": 0,
       "otLosses": 1,
       "points": 9,
-      "lastUpdated": "2025-12-31T00:28:37.454Z",
+      "lastUpdated": "2026-01-01T05:03:14.315Z",
       "todayPoints": 0
     },
     {
@@ -7693,7 +7706,7 @@
       "shutouts": 1,
       "otLosses": 0,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:28:37.861Z",
+      "lastUpdated": "2026-01-01T05:03:14.729Z",
       "todayPoints": 0
     },
     {
@@ -7701,14 +7714,14 @@
       "playerName": "Daniel Vladar",
       "teamAbbrev": "PHI",
       "position": "G",
-      "gamesPlayed": 22,
-      "goals": 13,
+      "gamesPlayed": 23,
+      "goals": 14,
       "assists": 0,
-      "wins": 13,
+      "wins": 14,
       "shutouts": 0,
       "otLosses": 3,
-      "points": 29,
-      "lastUpdated": "2025-12-31T00:28:38.262Z",
+      "points": 31,
+      "lastUpdated": "2026-01-01T05:03:15.118Z",
       "todayPoints": 0
     },
     {
@@ -7716,14 +7729,15 @@
       "playerName": "James Reimer",
       "teamAbbrev": "N/A",
       "position": "G",
-      "gamesPlayed": 24,
-      "goals": 10,
-      "assists": 1,
-      "wins": 10,
-      "shutouts": 1,
-      "otLosses": 2,
-      "points": 27,
-      "lastUpdated": "2025-12-31T00:28:38.652Z",
+      "gamesPlayed": 0,
+      "goals": 0,
+      "assists": 0,
+      "wins": 0,
+      "shutouts": 0,
+      "otLosses": 0,
+      "savePct": 0,
+      "points": 0,
+      "lastUpdated": "2026-01-01T05:03:15.497Z",
       "todayPoints": 0
     },
     {
@@ -7738,7 +7752,7 @@
       "shutouts": 1,
       "otLosses": 3,
       "points": 28,
-      "lastUpdated": "2025-12-31T00:28:39.117Z",
+      "lastUpdated": "2026-01-01T05:03:15.775Z",
       "todayPoints": 0
     },
     {
@@ -7746,44 +7760,44 @@
       "playerName": "Charlie Lindgren",
       "teamAbbrev": "WSH",
       "position": "G",
-      "gamesPlayed": 12,
-      "goals": 5,
+      "gamesPlayed": 13,
+      "goals": 6,
       "assists": 1,
-      "wins": 5,
+      "wins": 6,
       "shutouts": 1,
       "otLosses": 2,
-      "points": 17,
-      "lastUpdated": "2025-12-31T00:28:39.395Z",
-      "todayPoints": 0
+      "points": 19,
+      "lastUpdated": "2026-01-01T05:03:16.074Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8482137,
       "playerName": "Yaroslav Askarov",
       "teamAbbrev": "SJS",
       "position": "G",
-      "gamesPlayed": 25,
-      "goals": 14,
+      "gamesPlayed": 26,
+      "goals": 15,
       "assists": 0,
-      "wins": 14,
+      "wins": 15,
       "shutouts": 0,
       "otLosses": 1,
-      "points": 29,
-      "lastUpdated": "2025-12-31T00:28:39.663Z",
-      "todayPoints": 0
+      "points": 31,
+      "lastUpdated": "2026-01-01T05:03:16.331Z",
+      "todayPoints": 2
     },
     {
       "playerId": 8479973,
       "playerName": "Stuart Skinner",
       "teamAbbrev": "PIT",
       "position": "G",
-      "gamesPlayed": 26,
-      "goals": 11,
+      "gamesPlayed": 27,
+      "goals": 12,
       "assists": 2,
-      "wins": 11,
+      "wins": 12,
       "shutouts": 2,
       "otLosses": 4,
-      "points": 36,
-      "lastUpdated": "2025-12-31T00:28:39.941Z",
+      "points": 38,
+      "lastUpdated": "2026-01-01T05:03:16.621Z",
       "todayPoints": 0
     },
     {
@@ -7798,7 +7812,7 @@
       "shutouts": 0,
       "otLosses": 3,
       "points": 33,
-      "lastUpdated": "2025-12-31T00:28:40.390Z",
+      "lastUpdated": "2026-01-01T05:03:16.892Z",
       "todayPoints": 0
     },
     {
@@ -7813,7 +7827,7 @@
       "shutouts": 0,
       "otLosses": 1,
       "points": 17,
-      "lastUpdated": "2025-12-31T00:28:40.810Z",
+      "lastUpdated": "2026-01-01T05:03:17.161Z",
       "todayPoints": 0
     },
     {
@@ -7828,7 +7842,7 @@
       "shutouts": 0,
       "otLosses": 2,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:28:41.209Z",
+      "lastUpdated": "2026-01-01T05:03:17.480Z",
       "todayPoints": 0
     },
     {
@@ -7836,14 +7850,14 @@
       "playerName": "Jonathan Quick",
       "teamAbbrev": "NYR",
       "position": "G",
-      "gamesPlayed": 9,
+      "gamesPlayed": 10,
       "goals": 3,
       "assists": 1,
       "wins": 3,
       "shutouts": 1,
       "otLosses": 1,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:28:41.616Z",
+      "lastUpdated": "2026-01-01T05:03:17.750Z",
       "todayPoints": 0
     },
     {
@@ -7858,7 +7872,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 12,
-      "lastUpdated": "2025-12-31T00:28:42.011Z",
+      "lastUpdated": "2026-01-01T05:03:18.010Z",
       "todayPoints": 0
     },
     {
@@ -7873,7 +7887,7 @@
       "shutouts": 1,
       "otLosses": 1,
       "points": 30,
-      "lastUpdated": "2025-12-31T00:28:42.441Z",
+      "lastUpdated": "2026-01-01T05:03:18.286Z",
       "todayPoints": 0
     },
     {
@@ -7888,7 +7902,7 @@
       "shutouts": 0,
       "otLosses": 2,
       "points": 30,
-      "lastUpdated": "2025-12-31T00:28:42.843Z",
+      "lastUpdated": "2026-01-01T05:03:18.553Z",
       "todayPoints": 0
     },
     {
@@ -7903,7 +7917,7 @@
       "shutouts": 0,
       "otLosses": 1,
       "points": 13,
-      "lastUpdated": "2025-12-31T00:28:43.261Z",
+      "lastUpdated": "2026-01-01T05:03:18.837Z",
       "todayPoints": 0
     },
     {
@@ -7918,7 +7932,7 @@
       "shutouts": 0,
       "otLosses": 0,
       "points": 6,
-      "lastUpdated": "2025-12-31T00:28:43.663Z",
+      "lastUpdated": "2026-01-01T05:03:19.261Z",
       "todayPoints": 0
     },
     {
@@ -7926,14 +7940,15 @@
       "playerName": "Ilya Samsonov",
       "teamAbbrev": "N/A",
       "position": "G",
-      "gamesPlayed": 29,
-      "goals": 16,
-      "assists": 2,
-      "wins": 16,
-      "shutouts": 2,
-      "otLosses": 4,
-      "points": 46,
-      "lastUpdated": "2025-12-31T00:28:44.111Z",
+      "gamesPlayed": 0,
+      "goals": 0,
+      "assists": 0,
+      "wins": 0,
+      "shutouts": 0,
+      "otLosses": 0,
+      "savePct": 0,
+      "points": 0,
+      "lastUpdated": "2026-01-01T05:03:19.787Z",
       "todayPoints": 0
     },
     {
@@ -7948,7 +7963,7 @@
       "shutouts": 0,
       "otLosses": 1,
       "points": 11,
-      "lastUpdated": "2025-12-31T00:28:44.521Z",
+      "lastUpdated": "2026-01-01T05:03:20.211Z",
       "todayPoints": 0
     },
     {
@@ -7956,14 +7971,15 @@
       "playerName": "Semyon Varlamov",
       "teamAbbrev": "NYI",
       "position": "G",
-      "gamesPlayed": 10,
-      "goals": 3,
+      "gamesPlayed": 0,
+      "goals": 0,
       "assists": 0,
-      "wins": 3,
+      "wins": 0,
       "shutouts": 0,
-      "otLosses": 3,
-      "points": 9,
-      "lastUpdated": "2025-12-31T00:28:44.926Z",
+      "otLosses": 0,
+      "savePct": 0,
+      "points": 0,
+      "lastUpdated": "2026-01-01T05:03:20.603Z",
       "todayPoints": 0
     },
     {
@@ -7971,14 +7987,14 @@
       "playerName": "Thatcher Demko",
       "teamAbbrev": "VAN",
       "position": "G",
-      "gamesPlayed": 16,
+      "gamesPlayed": 17,
       "goals": 8,
       "assists": 1,
       "wins": 8,
       "shutouts": 1,
       "otLosses": 0,
       "points": 21,
-      "lastUpdated": "2025-12-31T00:28:45.188Z",
+      "lastUpdated": "2026-01-01T05:03:21.019Z",
       "todayPoints": 0
     },
     {
@@ -7986,14 +8002,14 @@
       "playerName": "David Rittich",
       "teamAbbrev": "NYI",
       "position": "G",
-      "gamesPlayed": 15,
-      "goals": 9,
+      "gamesPlayed": 16,
+      "goals": 10,
       "assists": 2,
-      "wins": 9,
+      "wins": 10,
       "shutouts": 2,
       "otLosses": 2,
-      "points": 30,
-      "lastUpdated": "2025-12-31T00:28:45.626Z",
+      "points": 32,
+      "lastUpdated": "2026-01-01T05:03:21.462Z",
       "todayPoints": 0
     },
     {
@@ -8001,15 +8017,15 @@
       "playerName": "Ukko-Pekka Luukkonen",
       "teamAbbrev": "BUF",
       "position": "G",
-      "gamesPlayed": 12,
-      "goals": 6,
+      "gamesPlayed": 13,
+      "goals": 7,
       "assists": 0,
-      "wins": 6,
+      "wins": 7,
       "shutouts": 0,
       "otLosses": 1,
-      "points": 13,
-      "lastUpdated": "2025-12-31T00:28:45.888Z",
-      "todayPoints": 0
+      "points": 15,
+      "lastUpdated": "2026-01-01T05:03:21.843Z",
+      "todayPoints": 2
     }
   ]
 }
