@@ -1,6 +1,6 @@
-const BASE_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:3000'
-    : 'https://nhl-draft.onrender.com';
+const BASE_URL = window.location.hostname.includes("localhost")
+    ? "http://localhost:3000"
+    : "https://goondraft.onrender.com";
 
 let currentDraft = null;
 let currentUsername = null;
@@ -287,15 +287,18 @@ function addPlayerToGrid(grid, playerData, type, side = 'offering') {
         </div>
     `);
 
+    // Store the full player object on the element
+    playerItem.data('playerData', playerData);
+
     playerItem.click(function() {
-        togglePlayerSelection($(this), playerName, type, side);
+        togglePlayerSelection($(this), playerName, type, side, playerData);
     });
 
     grid.append(playerItem);
 }
 
 // Toggle player selection
-function togglePlayerSelection(element, playerName, type, side) {
+function togglePlayerSelection(element, playerName, type, side, playerData) {
     const isSelected = element.hasClass('selected');
 
     if (isSelected) {
@@ -308,9 +311,9 @@ function togglePlayerSelection(element, playerName, type, side) {
     } else {
         element.addClass('selected');
         if (side === 'offering') {
-            selectedOffering.push({ name: playerName, type: type });
+            selectedOffering.push({ name: playerName, type: type, playerData: playerData });
         } else {
-            selectedReceiving.push({ name: playerName, type: type });
+            selectedReceiving.push({ name: playerName, type: type, playerData: playerData });
         }
     }
 
