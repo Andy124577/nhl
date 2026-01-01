@@ -414,3 +414,197 @@ function closeModal() {
 jQuery('button').on('click',(e)=>{
   jQuery('ul').animate({scrollTop: jQuery('.scrolltome').offset().top}, "slow");
 });
+
+// ==================== TRADE FUNCTIONALITY ====================
+
+// Load pending trades for current user
+async function loadPendingTrades() {
+    const username = localStorage.getItem("username");
+    if (!username) return;
+
+    try {
+        const response = await fetch(`${BASE_URL}/trades/pending/${username}`, { cache: "no-store" });
+        const pendingTrades = await response.json();
+
+        displayPendingTrades(pendingTrades);
+        updateTradeBadge(pendingTrades.length);
+    } catch (error) {
+        console.error("Error loading pending trades:", error);
+        $("#pending-trades-list").html('<p class="empty-state">Erreur lors du chargement des propositions</p>');
+    }
+}
+
+// Display pending trades in the list
+function displayPendingTrades(trades) {
+    const container = $("#pending-trades-list");
+
+    if (!trades || trades.length === 0) {
+        container.html('<p class="empty-state">Aucune proposition d\'échange en attente</p>');
+        return;
+    }
+
+    container.html('');
+    trades.forEach(trade => {
+        const tradeCard = $(`
+            <div class="trade-proposal-card">
+                <div class="trade-proposal-header">
+                    <div class="trade-proposal-title">${trade.fromTeam} → ${trade.toTeam}</div>
+                    <div class="trade-proposal-date">${new Date(trade.date).toLocaleDateString('fr-CA')}</div>
+                </div>
+                <div class="trade-proposal-body">
+                    <div class="trade-proposal-side">
+                        <h4>${trade.fromTeam} offre</h4>
+                        <ul class="trade-items-list">
+                            ${trade.offering.map(item => `<li>${item.name} <span style="color: #999;">(${getPositionLabel(item.type)})</span></li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="trade-arrow-icon">⇄</div>
+                    <div class="trade-proposal-side">
+                        <h4>Vous envoyez</h4>
+                        <ul class="trade-items-list">
+                            ${trade.receiving.map(item => `<li>${item.name} <span style="color: #999;">(${getPositionLabel(item.type)})</span></li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+                <div class="trade-proposal-actions">
+                    <button class="trade-decline-btn" onclick="declineTrade('${trade.id}')">❌ Refuser</button>
+                    <button class="trade-accept-btn" onclick="acceptTrade('${trade.id}')">✅ Accepter</button>
+                </div>
+            </div>
+        `);
+        container.append(tradeCard);
+    });
+}
+
+// Get position label in French
+function getPositionLabel(type) {
+    const labels = {
+        offensive: 'Attaquant',
+        defensive: 'Défenseur',
+        goalie: 'Gardien',
+        rookie: 'Rookie',
+        team: 'Équipe NHL'
+    };
+    return labels[type] || type;
+}
+
+// Accept a trade
+async function acceptTrade(tradeId) {
+    if (!confirm("Voulez-vous vraiment accepter cet échange?")) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${BASE_URL}/trade/accept`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tradeId })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert("✅ Échange accepté avec succès!");
+            loadPendingTrades();
+        } else {
+            alert(`❌ Erreur: ${result.message}`);
+        }
+    } catch (error) {
+        console.error("Error accepting trade:", error);
+        alert("Erreur lors de l'acceptation de l'échange");
+    }
+}
+
+// Decline a trade
+async function declineTrade(tradeId) {
+    if (!confirm("Voulez-vous vraiment refuser cet échange?")) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${BASE_URL}/trade/decline`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tradeId })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert("Échange refusé");
+            loadPendingTrades();
+        } else {
+            alert(`❌ Erreur: ${result.message}`);
+        }
+    } catch (error) {
+        console.error("Error declining trade:", error);
+        alert("Erreur lors du refus de l'échange");
+    }
+}
+
+// Update trade notification badge
+function updateTradeBadge(count) {
+    const badge = $("#trade-badge");
+    const tabBadge = $("#trades-tab-badge");
+
+    if (count > 0) {
+        badge.text(count).show();
+        tabBadge.text(count).show();
+    } else {
+        badge.hide();
+        tabBadge.hide();
+    }
+}
+
+// Check for pending trades on page load
+$(document).ready(function() {
+    const username = localStorage.getItem("username");
+    if (username) {
+        // Initial load of trade badge count
+        fetch(`${BASE_URL}/trades/pending/${username}`, { cache: "no-store" })
+            .then(response => response.json())
+            .then(trades => {
+                updateTradeBadge(trades.length);
+            })
+            .catch(error => console.error("Error checking pending trades:", error));
+    }
+});
+
+// Setup WebSocket for real-time trade updates (if Socket.IO is available)
+if (typeof io !== 'undefined') {
+    const socket = io(BASE_URL);
+
+    socket.on('tradePending', () => {
+        console.log("New trade pending notification received");
+        const username = localStorage.getItem("username");
+        if (username) {
+            fetch(`${BASE_URL}/trades/pending/${username}`, { cache: "no-store" })
+                .then(response => response.json())
+                .then(trades => {
+                    updateTradeBadge(trades.length);
+                    // Reload pending trades if on trades tab
+                    if ($('#trades-tab').hasClass('active')) {
+                        loadPendingTrades();
+                    }
+                })
+                .catch(error => console.error("Error checking pending trades:", error));
+        }
+    });
+
+    socket.on('tradeUpdated', () => {
+        console.log("Trade updated notification received");
+        const username = localStorage.getItem("username");
+        if (username) {
+            fetch(`${BASE_URL}/trades/pending/${username}`, { cache: "no-store" })
+                .then(response => response.json())
+                .then(trades => {
+                    updateTradeBadge(trades.length);
+                    // Reload pending trades if on trades tab
+                    if ($('#trades-tab').hasClass('active')) {
+                        loadPendingTrades();
+                    }
+                })
+                .catch(error => console.error("Error checking pending trades:", error));
+        }
+    });
+}

@@ -12,6 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 3000; // ✅ Use Render's PORT
 const USERS_FILE = "./users.json";
 const DRAFT_FILE = "./draft.json";
+const TRADES_FILE = "./trades.json";
 const NHL_STATS_FILE = "./nhl_filtered_stats.json";
 const CURRENT_STATS_FILE = "./current_stats.json";
 const CURRENT_TEAMS_FILE = "./current_teams.json";
@@ -1148,6 +1149,232 @@ app.get('/current-teams', async (req, res) => {
 
 console.log("✅ NHL current stats system initialized");
 console.log("✅ NHL team standings system initialized");
+
+// ==================== TRADE SYSTEM ====================
+
+// Load trades data
+const loadTrades = () => {
+    try {
+        if (fs.existsSync(TRADES_FILE)) {
+            const data = fs.readFileSync(TRADES_FILE, 'utf-8');
+            return JSON.parse(data);
+        }
+    } catch (error) {
+        console.error("Error loading trades:", error);
+    }
+    return { completed: [], pending: [] };
+};
+
+// Save trades data
+const saveTrades = (tradesData) => {
+    try {
+        fs.writeFileSync(TRADES_FILE, JSON.stringify(tradesData, null, 2));
+        console.log("✅ Trades saved successfully");
+    } catch (error) {
+        console.error("Error saving trades:", error);
+    }
+};
+
+// Helper: Remove item from team
+function removeFromTeam(team, item) {
+    const arrays = {
+        'offensive': 'offensive',
+        'defensive': 'defensive',
+        'goalie': 'goalies',
+        'rookie': 'rookies',
+        'team': 'teams'
+    };
+
+    const arrayName = arrays[item.type];
+    if (!team[arrayName]) return;
+
+    const index = team[arrayName].findIndex(p => {
+        const name = p.skaterFullName || p.goalieFullName || p.teamFullName || p;
+        return name === item.name;
+    });
+
+    if (index !== -1) {
+        team[arrayName].splice(index, 1);
+    }
+}
+
+// Helper: Add item to team
+function addToTeam(team, item) {
+    const arrays = {
+        'offensive': 'offensive',
+        'defensive': 'defensive',
+        'goalie': 'goalies',
+        'rookie': 'rookies',
+        'team': 'teams'
+    };
+
+    const arrayName = arrays[item.type];
+    if (!team[arrayName]) {
+        team[arrayName] = [];
+    }
+
+    // Find the actual player object from the traded item
+    // We need to preserve the full player object structure
+    team[arrayName].push(item.playerData || item.name);
+}
+
+// Get completed trades for a draft
+app.get('/trades/:draftName', (req, res) => {
+    try {
+        const { draftName } = req.params;
+        const trades = loadTrades();
+        const draftTrades = (trades.completed || []).filter(t => t.draftName === draftName);
+        res.json(draftTrades);
+    } catch (error) {
+        console.error("Error loading trades:", error);
+        res.status(500).json({ message: "Error loading trades" });
+    }
+});
+
+// Get pending trades for a user
+app.get('/trades/pending/:username', (req, res) => {
+    try {
+        const { username } = req.params;
+        const trades = loadTrades();
+        const draftData = loadDraftData();
+
+        // Find all pending trades where user is the recipient
+        const userPendingTrades = (trades.pending || []).filter(trade => {
+            const draft = draftData[trade.draftName];
+            if (!draft) return false;
+
+            const targetTeam = draft.teams[trade.toTeam];
+            return targetTeam && targetTeam.members && targetTeam.members.includes(username);
+        });
+
+        res.json(userPendingTrades);
+    } catch (error) {
+        console.error("Error loading pending trades:", error);
+        res.status(500).json({ message: "Error loading pending trades" });
+    }
+});
+
+// Send a trade proposal
+app.post('/trade/propose', (req, res) => {
+    try {
+        const { draftName, fromTeam, toTeam, offering, receiving } = req.body;
+
+        if (!draftName || !fromTeam || !toTeam || !offering || !receiving) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const trades = loadTrades();
+        if (!trades.pending) trades.pending = [];
+
+        const tradeId = `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        const newTrade = {
+            id: tradeId,
+            draftName,
+            fromTeam,
+            toTeam,
+            offering,
+            receiving,
+            status: 'pending',
+            date: new Date().toISOString()
+        };
+
+        trades.pending.push(newTrade);
+        saveTrades(trades);
+
+        // Emit socket event for real-time notification
+        io.emit('tradePending');
+
+        res.json({ message: "Trade proposal sent successfully", tradeId });
+    } catch (error) {
+        console.error("Error sending trade proposal:", error);
+        res.status(500).json({ message: "Error sending trade proposal" });
+    }
+});
+
+// Accept a trade
+app.post('/trade/accept', (req, res) => {
+    try {
+        const { tradeId } = req.body;
+        const trades = loadTrades();
+        const draftData = loadDraftData();
+
+        // Find the trade
+        const tradeIndex = trades.pending.findIndex(t => t.id === tradeId);
+        if (tradeIndex === -1) {
+            return res.status(404).json({ message: "Trade not found" });
+        }
+
+        const trade = trades.pending[tradeIndex];
+        const draft = draftData[trade.draftName];
+        if (!draft) {
+            return res.status(404).json({ message: "Draft not found" });
+        }
+
+        const fromTeam = draft.teams[trade.fromTeam];
+        const toTeam = draft.teams[trade.toTeam];
+
+        if (!fromTeam || !toTeam) {
+            return res.status(404).json({ message: "Teams not found" });
+        }
+
+        // Execute the trade - swap items
+        trade.offering.forEach(item => {
+            removeFromTeam(fromTeam, item);
+            addToTeam(toTeam, item);
+        });
+
+        trade.receiving.forEach(item => {
+            removeFromTeam(toTeam, item);
+            addToTeam(fromTeam, item);
+        });
+
+        saveDraftData(draftData);
+
+        // Move trade from pending to completed
+        trades.pending.splice(tradeIndex, 1);
+        if (!trades.completed) trades.completed = [];
+        trade.status = 'accepted';
+        trade.completedDate = new Date().toISOString();
+        trades.completed.push(trade);
+        saveTrades(trades);
+
+        // Emit socket event
+        io.emit('tradeUpdated');
+
+        res.json({ message: "Trade accepted successfully" });
+    } catch (error) {
+        console.error("Error accepting trade:", error);
+        res.status(500).json({ message: "Error accepting trade" });
+    }
+});
+
+// Decline a trade
+app.post('/trade/decline', (req, res) => {
+    try {
+        const { tradeId } = req.body;
+        const trades = loadTrades();
+
+        // Remove from pending
+        const tradeIndex = trades.pending.findIndex(t => t.id === tradeId);
+        if (tradeIndex === -1) {
+            return res.status(404).json({ message: "Trade not found" });
+        }
+
+        trades.pending.splice(tradeIndex, 1);
+        saveTrades(trades);
+
+        // Emit socket event
+        io.emit('tradeUpdated');
+
+        res.json({ message: "Trade declined successfully" });
+    } catch (error) {
+        console.error("Error declining trade:", error);
+        res.status(500).json({ message: "Error declining trade" });
+    }
+});
+
+console.log("✅ Trade system initialized");
 
 // ✅ Start Server with WebSockets (after all routes are defined)
 server.listen(PORT, () => {
