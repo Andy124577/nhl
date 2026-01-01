@@ -21,10 +21,17 @@
             <img src="Icons/williePooler.png" alt="Willie Pooler Logo" class="navbar-logo">
             <span class="navbar-title">Willie Pooler</span>
         </div>
+        <div class="navbar-pool-selector">
+            <label for="activePoolSelector">Pool actif:</label>
+            <select id="activePoolSelector">
+                <option value="">-- Aucun pool --</option>
+            </select>
+        </div>
         <ul>
             <li><a href="index.html">Stats</a></li>
             <li class="active"><a href="#">Pool</a></li>
             <li><a href="draft.html">Draft</a></li>
+            <li><a href="classement.html">Classement</a></li>
             <li id="trade-link" style="position: relative;">
                 <a href="trade.html">Échanges</a>
                 <span id="trade-badge" class="notif-badge" style="display: none;">0</span>
@@ -184,5 +191,6 @@
             event.target.classList.add('active');
         }
     </script>
+    <script src="poolSelector.js"></script>
 </body>
 </html>
