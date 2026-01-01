@@ -128,18 +128,33 @@
 
     <div id="clanModal" class="modal">
         <div class="modal-content">
-            <h2>Détails du pool</h2>
-            <div id="clanDetails"></div>
-            <button onclick="closeClanModal()">Fermer</button>
+            <div class="modal-header">
+                <h2>Détails du pool</h2>
+                <button class="modal-close" onclick="closeClanModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="clanDetails"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeClanModal()">Fermer</button>
+            </div>
         </div>
     </div>
 
     <div id="clan-members-modal" class="modal" style="display: none;">
         <div class="modal-content">
-            <div id="clan-members-content">
-                <!-- Dynamic content will be injected here -->
+            <div class="modal-header">
+                <h2>Membres du pool</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
-            <button onclick="closeModal()">Fermer</button>
+            <div class="modal-body">
+                <div id="clan-members-content">
+                    <!-- Dynamic content will be injected here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal()">Fermer</button>
+            </div>
         </div>
     </div>
 

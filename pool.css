@@ -477,35 +477,106 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
     z-index: 9999;
     justify-content: center;
     align-items: center;
     padding: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 .modal-content {
     background: white;
-    padding: 30px;
-    border-radius: 12px;
+    padding: 0;
+    border-radius: 16px;
     max-width: 600px;
     width: 100%;
     max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.3s ease;
+    position: relative;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%);
+    padding: 24px 30px;
+    border-radius: 16px 16px 0 0;
+    position: relative;
 }
 
 .modal-content h2 {
     font-size: 1.8rem;
-    color: #222;
-    margin-bottom: 20px;
+    color: white;
+    margin: 0;
     font-weight: 700;
+    padding-right: 40px;
+}
+
+.modal-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 300;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    padding: 30px;
+    max-height: calc(90vh - 150px);
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 20px 30px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
 }
 
 .modal-content button {
-    width: 100%;
-    padding: 12px;
-    background: #ff2e2e;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -513,11 +584,29 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-top: 20px;
+    box-shadow: 0 2px 8px rgba(255, 46, 46, 0.3);
 }
 
 .modal-content button:hover {
-    background: #cc2525;
+    background: linear-gradient(135deg, #ff4040 0%, #d93030 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 46, 46, 0.4);
+}
+
+.modal-content button:active {
+    transform: translateY(0);
+}
+
+.modal-content button.secondary {
+    background: white;
+    color: #666;
+    border: 2px solid #ddd;
+    box-shadow: none;
+}
+
+.modal-content button.secondary:hover {
+    background: #f8f9fa;
+    border-color: #ccc;
 }
 
 #clan-members-content ul {
@@ -527,11 +616,37 @@ body {
 }
 
 #clan-members-content li {
-    padding: 12px 15px;
-    margin-bottom: 8px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #ff2e2e;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#clan-members-content li:hover {
+    background: #fff5f5;
+    transform: translateX(4px);
+}
+
+#clanDetails {
+    color: #333;
+    line-height: 1.8;
+}
+
+#clanDetails > div {
+    margin-bottom: 16px;
+    padding: 12px;
     background: #f8f9fa;
     border-radius: 8px;
-    border-left: 3px solid #ff2e2e;
+}
+
+#clanDetails strong {
+    color: #ff2e2e;
+    font-weight: 600;
 }
 
 /* Scrollable Lists */
@@ -613,7 +728,37 @@ body {
     }
 
     .modal-content {
+        max-width: 95%;
+        border-radius: 12px;
+    }
+
+    .modal-header {
         padding: 20px;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .modal-content h2 {
+        font-size: 1.4rem;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-footer {
+        padding: 15px 20px;
+        flex-direction: column;
+    }
+
+    .modal-footer button {
+        width: 100%;
+    }
+
+    .modal-close {
+        width: 32px;
+        height: 32px;
+        top: 16px;
+        right: 16px;
     }
 }
 
