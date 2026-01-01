@@ -1213,9 +1213,13 @@ function addToTeam(team, item) {
         team[arrayName] = [];
     }
 
-    // Find the actual player object from the traded item
-    // We need to preserve the full player object structure
-    team[arrayName].push(item.playerData || item.name);
+    // Add the full player object to preserve stats
+    if (item.playerData) {
+        team[arrayName].push(item.playerData);
+    } else {
+        // Fallback for simple strings (team names, etc.)
+        team[arrayName].push(item.name);
+    }
 }
 
 // Get completed trades for a draft
