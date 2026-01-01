@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Classement - Willie Pooler</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="classement.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <img src="Icons/williePooler.png" alt="Willie Pooler Logo" class="navbar-logo">
+            <span class="navbar-title">Willie Pooler</span>
+        </div>
+        <div class="navbar-pool-selector">
+            <label for="activePoolSelector">Pool actif:</label>
+            <select id="activePoolSelector">
+                <option value="">-- Aucun pool --</option>
+            </select>
+        </div>
+        <ul>
+            <li><a href="index.html">Stats</a></li>
+            <li><a href="pool.html">Pool</a></li>
+            <li><a href="draft.html">Draft</a></li>
+            <li class="active"><a href="#">Classement</a></li>
+            <li id="trade-link" style="position: relative;">
+                <a href="trade.html">Échanges</a>
+                <span id="trade-badge" class="notif-badge" style="display: none;">0</span>
+            </li>
+            <li id="admin-users-link" style="display: none;"></li>
+            <li id="login-link"><a href="login.html">Connexion</a></li>
+        </ul>
+    </nav>
+
+    <div class="page-header">
+        <h1>Classement du Pool</h1>
+        <p id="poolNameDisplay">Sélectionnez un pool actif pour voir le classement</p>
+    </div>
+
+    <div class="container">
+        <div id="noPoolSelected" class="empty-state-container">
+            <div class="empty-state-icon">📊</div>
+            <h2>Aucun pool sélectionné</h2>
+            <p>Veuillez sélectionner un pool actif dans la barre de navigation ci-dessus</p>
+        </div>
+
+        <div id="classementContent" style="display: none;">
+            <div class="table-container">
+                <table id="teamStatsTable">
+                    <thead>
+                        <tr>
+                            <th>POS</th>
+                            <th>Équipe</th>
+                            <th>Membres</th>
+                            <th>GP</th>
+                            <th>G</th>
+                            <th>A</th>
+                            <th>PTS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teamStatsBody">
+                        <!-- Rows will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Player Details Modal -->
+        <div id="playerDetailsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTeamName"></h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div id="playerDetailsList">
+                        <!-- Player cards will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="poolSelector.js"></script>
+    <script src="classement.js"></script>
+</body>
+</html>
