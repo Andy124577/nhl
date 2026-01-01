@@ -18,9 +18,8 @@
             <li><a href="index.html">Stats</a></li>
             <li><a href="pool.html">Pool</a></li>
             <li><a href="draft.html">Draft</a></li>
-            <li class="active"><a href="#">Échanges</a></li>
-            <li id="trade-notif-link" style="position: relative;">
-                <a href="pool.html">Propositions</a>
+            <li class="active" id="trade-link" style="position: relative;">
+                <a href="#">Échanges</a>
                 <span id="trade-badge" class="notif-badge" style="display: none;">0</span>
             </li>
             <li id="admin-users-link" style="display: none;"></li>
@@ -33,26 +32,48 @@
         <p>Proposez et consultez les échanges de votre pool</p>
     </div>
 
-    <!-- Draft Selector -->
-    <div class="draft-selector-container">
-        <label for="draftSelector">Sélectionner un pool:</label>
-        <select id="draftSelector" onchange="loadTradeHistory()">
-            <option value="">-- Choisir un pool --</option>
-        </select>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="action-buttons">
-        <button class="primary-btn" onclick="openTradeModal()" id="sendTradeBtn" disabled>
-            📤 Proposer un échange
+    <!-- Sub-navigation tabs -->
+    <div class="sub-navbar">
+        <button class="sub-nav-btn" onclick="showTab('history')">Historique des échanges</button>
+        <button class="sub-nav-btn active" onclick="showTab('proposals')" id="proposals-tab-btn" style="position: relative;">
+            Propositions reçues
+            <span id="proposals-tab-badge" class="notif-badge" style="display: none; top: -8px; right: -8px;">0</span>
         </button>
     </div>
 
-    <!-- Trade History -->
-    <div class="trade-history-section">
-        <h2>Historique des échanges</h2>
-        <div id="tradeHistoryList" class="trade-list">
-            <p class="empty-state">Sélectionnez un pool pour voir l'historique des échanges</p>
+    <!-- Trade History Tab -->
+    <div id="history-tab" class="tab-content">
+        <!-- Draft Selector -->
+        <div class="draft-selector-container">
+            <label for="draftSelector">Sélectionner un pool:</label>
+            <select id="draftSelector" onchange="loadTradeHistory()">
+                <option value="">-- Choisir un pool --</option>
+            </select>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="primary-btn" onclick="openTradeModal()" id="sendTradeBtn" disabled>
+                📤 Proposer un échange
+            </button>
+        </div>
+
+        <!-- Trade History -->
+        <div class="trade-history-section">
+            <h2>Historique des échanges complétés</h2>
+            <div id="tradeHistoryList" class="trade-list">
+                <p class="empty-state">Sélectionnez un pool pour voir l'historique des échanges</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Proposals Tab -->
+    <div id="proposals-tab" class="tab-content active">
+        <div class="trade-history-section">
+            <h2>Propositions d'échange reçues</h2>
+            <div id="pending-trades-list" class="trade-proposals-container">
+                <p class="empty-state">Aucune proposition d'échange en attente</p>
+            </div>
         </div>
     </div>
 
@@ -100,6 +121,31 @@
         </div>
     </div>
 
+    <script>
+        // Tab switching functionality
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.sub-nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+
+            // Load pending trades when proposals tab is shown
+            if (tabName === 'proposals') {
+                loadPendingTrades();
+            }
+        }
+    </script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="trade.js"></script>
 </body>

@@ -11,15 +11,40 @@ let selectedReceiving = [];
 
 // Initialize on page load
 $(document).ready(function() {
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
     currentUsername = localStorage.getItem("username");
+    const isAdmin = localStorage.getItem("isAdmin") === "true";
 
-    if (!currentUsername) {
+    if (!isLoggedIn) {
+        alert("⛔ Vous devez être connecté pour accéder à cette page !");
         window.location.href = "login.html";
         return;
     }
 
+    // Setup admin dropdown and login link
+    if (isAdmin) {
+        // Admin mode - show Utilisateur dropdown and normal logout
+        $("#admin-users-link").css('display', 'block').html(`
+            <div class="admin-dropdown-container">
+                <a href="#" class="admin-dropdown-toggle" onclick="toggleAdminDropdown(event)">
+                    Utilisateur ▼
+                </a>
+                <div class="admin-dropdown-menu" id="adminDropdown">
+                    <div class="admin-dropdown-header">Changer d'utilisateur</div>
+                    <div id="adminUserList" class="admin-user-list">Chargement...</div>
+                </div>
+            </div>
+        `);
+        $("#login-link").html(`<a href="#" onclick="logout(event)">Déconnexion (${currentUsername})</a>`);
+        loadAdminUsers();
+    } else {
+        // Regular user - show normal logout
+        $("#login-link").html(`<a href="#" onclick="logout(event)">Déconnexion (${currentUsername})</a>`);
+    }
+
     loadDrafts();
     checkPendingTrades();
+    loadPendingTrades();
 
     // Setup WebSocket for real-time updates
     setupWebSocket();
@@ -462,3 +487,200 @@ $(document).ready(function() {
         }
     });
 });
+
+// ==================== ADMIN FUNCTIONS ====================
+
+function toggleAdminDropdown(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const dropdown = document.getElementById('adminDropdown');
+    dropdown.classList.toggle('show');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('adminDropdown');
+    if (dropdown && !event.target.closest('.admin-dropdown-container')) {
+        dropdown.classList.remove('show');
+    }
+});
+
+// Load admin users list
+async function loadAdminUsers() {
+    try {
+        const response = await fetch(`${BASE_URL}/users`, { cache: "no-store" });
+        const users = await response.json();
+
+        const userList = $("#adminUserList");
+        userList.html('');
+
+        users.forEach(user => {
+            const userItem = $(`<div class="admin-user-item">${user.username}</div>`);
+            userItem.click(function() {
+                switchUser(user.username, user.isAdmin);
+            });
+            userList.append(userItem);
+        });
+    } catch (error) {
+        console.error("Error loading users:", error);
+        $("#adminUserList").html('<div style="padding: 10px; color: #999;">Erreur de chargement</div>');
+    }
+}
+
+// Switch to another user (admin only)
+function switchUser(username, isAdmin) {
+    localStorage.setItem("username", username);
+    localStorage.setItem("isAdmin", isAdmin.toString());
+    window.location.reload();
+}
+
+// Logout function
+function logout(event) {
+    event.preventDefault();
+    if (confirm("Voulez-vous vraiment vous déconnecter ?")) {
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("username");
+        localStorage.removeItem("isAdmin");
+        window.location.href = "login.html";
+    }
+}
+
+// ==================== PENDING TRADES FUNCTIONS ====================
+
+// Load pending trades for current user
+async function loadPendingTrades() {
+    if (!currentUsername) return;
+
+    try {
+        const response = await fetch(`${BASE_URL}/trades/pending/${currentUsername}`, { cache: "no-store" });
+        const pendingTrades = await response.json();
+
+        displayPendingTrades(pendingTrades);
+        updateTradeBadge(pendingTrades.length);
+    } catch (error) {
+        console.error("Error loading pending trades:", error);
+        $("#pending-trades-list").html('<p class="empty-state">Erreur lors du chargement des propositions</p>');
+    }
+}
+
+// Display pending trades in the list
+function displayPendingTrades(trades) {
+    const container = $("#pending-trades-list");
+
+    if (!trades || trades.length === 0) {
+        container.html('<p class="empty-state">Aucune proposition d\'échange en attente</p>');
+        return;
+    }
+
+    container.html('');
+    trades.forEach(trade => {
+        const tradeCard = $(`
+            <div class="trade-proposal-card">
+                <div class="trade-proposal-header">
+                    <div class="trade-proposal-title">${trade.fromTeam} → ${trade.toTeam}</div>
+                    <div class="trade-proposal-date">${new Date(trade.date).toLocaleDateString('fr-CA')}</div>
+                </div>
+                <div class="trade-proposal-body">
+                    <div class="trade-proposal-side">
+                        <h4>${trade.fromTeam} offre</h4>
+                        <ul class="trade-items-list">
+                            ${trade.offering.map(item => `<li>${item.name} <span style="color: #999;">(${getPositionLabel(item.type)})</span></li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="trade-arrow-icon">⇄</div>
+                    <div class="trade-proposal-side">
+                        <h4>Vous envoyez</h4>
+                        <ul class="trade-items-list">
+                            ${trade.receiving.map(item => `<li>${item.name} <span style="color: #999;">(${getPositionLabel(item.type)})</span></li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+                <div class="trade-proposal-actions">
+                    <button class="trade-decline-btn" onclick="declineTrade('${trade.id}')">❌ Refuser</button>
+                    <button class="trade-accept-btn" onclick="acceptTrade('${trade.id}')">✅ Accepter</button>
+                </div>
+            </div>
+        `);
+        container.append(tradeCard);
+    });
+}
+
+// Get position label in French
+function getPositionLabel(type) {
+    const labels = {
+        offensive: 'Attaquant',
+        defensive: 'Défenseur',
+        goalie: 'Gardien',
+        rookie: 'Rookie',
+        team: 'Équipe NHL'
+    };
+    return labels[type] || type;
+}
+
+// Accept a trade
+async function acceptTrade(tradeId) {
+    if (!confirm("Voulez-vous vraiment accepter cet échange?")) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${BASE_URL}/trade/accept`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tradeId })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert("✅ Échange accepté avec succès!");
+            loadPendingTrades();
+        } else {
+            alert(`❌ Erreur: ${result.message}`);
+        }
+    } catch (error) {
+        console.error("Error accepting trade:", error);
+        alert("Erreur lors de l'acceptation de l'échange");
+    }
+}
+
+// Decline a trade
+async function declineTrade(tradeId) {
+    if (!confirm("Voulez-vous vraiment refuser cet échange?")) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${BASE_URL}/trade/decline`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tradeId })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert("Échange refusé");
+            loadPendingTrades();
+        } else {
+            alert(`❌ Erreur: ${result.message}`);
+        }
+    } catch (error) {
+        console.error("Error declining trade:", error);
+        alert("Erreur lors du refus de l'échange");
+    }
+}
+
+// Update trade notification badge
+function updateTradeBadge(count) {
+    const badge = $("#trade-badge");
+    const tabBadge = $("#proposals-tab-badge");
+
+    if (count > 0) {
+        badge.text(count).show();
+        tabBadge.text(count).show();
+    } else {
+        badge.hide();
+        tabBadge.hide();
+    }
+}
