@@ -55,7 +55,6 @@
           "user1"
         ],
         "offensive": [
-          "Nikita Kucherov",
           "Connor McDavid",
           "Kyle Connor",
           "Brandon Hagel",
@@ -64,7 +63,8 @@
           "Martin Necas",
           "Robert Thomas",
           "Sam Reinhart",
-          "Auston Matthews"
+          "Auston Matthews",
+          "Nathan MacKinnon"
         ],
         "defensive": [
           "Quinn Hughes",
@@ -79,7 +79,6 @@
           "testuser"
         ],
         "offensive": [
-          "Nathan MacKinnon",
           "Mitchell Marner",
           "Jack Eichel",
           "Clayton Keller",
@@ -88,7 +87,8 @@
           "Dylan Strome",
           "Jake Guentzel",
           "Tim Stützle",
-          "Travis Konecny"
+          "Travis Konecny",
+          "Nikita Kucherov"
         ],
         "defensive": [
           "Zach Werenski",
@@ -2407,8 +2407,8 @@
           "user1"
         ],
         "offensive": [
-          "Nikita Kucherov",
-          "David Pastrnak"
+          "Leon Draisaitl",
+          "Nikita Kucherov"
         ],
         "defensive": [
           "Cale Makar",
@@ -2427,8 +2427,8 @@
           "testuser"
         ],
         "offensive": [
-          "Nathan MacKinnon",
-          "Leon Draisaitl"
+          "David Pastrnak",
+          "Nathan MacKinnon"
         ],
         "defensive": [
           "Zach Werenski",
