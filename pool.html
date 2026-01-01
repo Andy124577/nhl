@@ -25,9 +25,8 @@
             <li><a href="index.html">Stats</a></li>
             <li class="active"><a href="#">Pool</a></li>
             <li><a href="draft.html">Draft</a></li>
-            <li><a href="trade.html">Échanges</a></li>
-            <li id="trade-notif-link" style="position: relative;">
-                <a href="#pending-trades-section">Propositions</a>
+            <li id="trade-link" style="position: relative;">
+                <a href="trade.html">Échanges</a>
                 <span id="trade-badge" class="notif-badge" style="display: none;">0</span>
             </li>
             <li id="admin-users-link" style="display: none;"></li>
@@ -45,10 +44,6 @@
         <button class="sub-nav-btn active" onclick="showTab('create')">Créer un pool</button>
         <button class="sub-nav-btn" onclick="showTab('mypools')">Mes pools</button>
         <button class="sub-nav-btn" onclick="showTab('available')">Pools disponibles</button>
-        <button class="sub-nav-btn" onclick="showTab('trades')" id="trades-tab-btn" style="position: relative;">
-            Propositions
-            <span id="trades-tab-badge" class="notif-badge" style="display: none; top: -8px; right: -8px;">0</span>
-        </button>
     </div>
 
     <!-- Create Pool Section -->
@@ -135,16 +130,6 @@
         </div>
     </div>
 
-    <!-- Trade Proposals Section -->
-    <div id="trades-tab" class="tab-content">
-        <div class="pool-section">
-            <h2>Propositions d'échange reçues</h2>
-            <div id="pending-trades-list" class="trade-proposals-container">
-                <p class="empty-state">Aucune proposition d'échange en attente</p>
-            </div>
-        </div>
-    </div>
-
     <div id="clanModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -197,11 +182,6 @@
 
             // Add active class to clicked button
             event.target.classList.add('active');
-
-            // Load pending trades when trades tab is shown
-            if (tabName === 'trades') {
-                loadPendingTrades();
-            }
         }
     </script>
 </body>
