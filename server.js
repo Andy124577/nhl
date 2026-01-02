@@ -73,6 +73,153 @@ const saveDraftData = (data) => {
     }, 200); // ✅ Small delay ensures file is fully written before broadcasting
 };
 
+// ==============================================
+// HEAD-TO-HEAD HELPER FUNCTIONS
+// ==============================================
+
+// Generate random matchups for a week (avoid repeats if possible)
+function generateWeeklyMatchups(teams, previousMatchups = []) {
+    const teamNames = teams.filter(t => t.members && t.members.length > 0).map(t => t.name);
+
+    if (teamNames.length % 2 !== 0) {
+        console.error("⚠️ Cannot generate matchups: odd number of teams!");
+        return [];
+    }
+
+    // Shuffle teams randomly
+    const shuffled = [...teamNames].sort(() => Math.random() - 0.5);
+
+    // Create pairs
+    const matchups = [];
+    for (let i = 0; i < shuffled.length; i += 2) {
+        matchups.push({
+            team1: shuffled[i],
+            team2: shuffled[i + 1],
+            team1Points: 0,
+            team2Points: 0,
+            winner: null,
+            weekNumber: null // Will be set when saved
+        });
+    }
+
+    return matchups;
+}
+
+// Calculate total points for a team for a given week
+function getTeamWeeklyPoints(teamData, currentStats) {
+    let totalPoints = 0;
+
+    // Helper function to get current player stats
+    function getPlayerPoints(playerData) {
+        if (!currentStats || !currentStats.players) return 0;
+
+        const playerName = playerData.skaterFullName || playerData.goalieFullName;
+        if (!playerName) return 0;
+
+        const stats = currentStats.players.find(p => p.playerName === playerName);
+        return stats ? (stats.points || 0) : 0;
+    }
+
+    // Sum points from all positions
+    ['offensive', 'defensive', 'rookie', 'goalie'].forEach(position => {
+        const positionKey = position === 'goalie' ? 'goalies' : position;
+        if (teamData[positionKey]) {
+            teamData[positionKey].forEach(player => {
+                totalPoints += getPlayerPoints(player);
+            });
+        }
+    });
+
+    // Add team points if applicable
+    // (Teams don't have individual player stats, skip for now)
+
+    return totalPoints;
+}
+
+// Calculate results for completed week and update standings
+function calculateWeeklyResults(poolData, weekNumber, currentStats) {
+    if (!poolData.h2hData || !poolData.h2hData.matchups[weekNumber - 1]) {
+        console.error("⚠️ No matchup data for week", weekNumber);
+        return;
+    }
+
+    const weekMatchups = poolData.h2hData.matchups[weekNumber - 1];
+    const standings = poolData.h2hData.standings || {};
+
+    weekMatchups.forEach(matchup => {
+        const team1Data = poolData.teams[matchup.team1];
+        const team2Data = poolData.teams[matchup.team2];
+
+        if (!team1Data || !team2Data) return;
+
+        // Calculate points for each team
+        matchup.team1Points = getTeamWeeklyPoints(team1Data, currentStats);
+        matchup.team2Points = getTeamWeeklyPoints(team2Data, currentStats);
+
+        // Determine winner
+        if (matchup.team1Points > matchup.team2Points) {
+            matchup.winner = matchup.team1;
+        } else if (matchup.team2Points > matchup.team1Points) {
+            matchup.winner = matchup.team2;
+        } else {
+            matchup.winner = 'tie'; // Tie
+        }
+
+        // Update standings
+        if (!standings[matchup.team1]) {
+            standings[matchup.team1] = { wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0 };
+        }
+        if (!standings[matchup.team2]) {
+            standings[matchup.team2] = { wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0 };
+        }
+
+        // Update wins/losses
+        if (matchup.winner === matchup.team1) {
+            standings[matchup.team1].wins++;
+            standings[matchup.team2].losses++;
+        } else if (matchup.winner === matchup.team2) {
+            standings[matchup.team2].wins++;
+            standings[matchup.team1].losses++;
+        } else {
+            standings[matchup.team1].ties++;
+            standings[matchup.team2].ties++;
+        }
+
+        // Update points for/against
+        standings[matchup.team1].pointsFor += matchup.team1Points;
+        standings[matchup.team1].pointsAgainst += matchup.team2Points;
+        standings[matchup.team2].pointsFor += matchup.team2Points;
+        standings[matchup.team2].pointsAgainst += matchup.team1Points;
+    });
+
+    poolData.h2hData.standings = standings;
+
+    // Save to history
+    if (!poolData.h2hData.matchupHistory) {
+        poolData.h2hData.matchupHistory = [];
+    }
+    poolData.h2hData.matchupHistory.push({
+        weekNumber: weekNumber,
+        matchups: weekMatchups,
+        completedDate: new Date().toISOString()
+    });
+
+    return poolData;
+}
+
+// Get current week number based on weekStart date
+function getCurrentWeekNumber(weekStart) {
+    if (!weekStart) return 1;
+
+    const start = new Date(weekStart);
+    const now = new Date();
+    const diffTime = Math.abs(now - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const weekNumber = Math.floor(diffDays / 7) + 1;
+
+    return weekNumber;
+}
+
 // ✅ WebSocket Connection
 io.on("connection", (socket) => {
     console.log("📡 Client connecté via WebSockets");
@@ -284,6 +431,48 @@ app.post("/pick-player", (req, res) => {
 
     if (checkIfDraftComplete(clan)) {
         io.emit("draftComplete", { clanName });
+
+        // If Head-to-Head mode, generate first week's matchups
+        if (clan.poolMode === 'head-to-head' && clan.h2hData) {
+            console.log("🏒 Generating first week matchups for H2H pool:", clanName);
+
+            // Get active teams
+            const activeTeams = Object.entries(clan.teams)
+                .filter(([_, teamData]) => teamData.members && teamData.members.length > 0)
+                .map(([teamName, _]) => ({ name: teamName }));
+
+            // Generate matchups for week 1
+            const weekOneMatchups = generateWeeklyMatchups(activeTeams);
+
+            // Set week start to next Monday 00:00:00
+            const now = new Date();
+            const nextMonday = new Date(now);
+            const dayOfWeek = now.getDay();
+            const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek);
+            nextMonday.setDate(now.getDate() + daysUntilMonday);
+            nextMonday.setHours(0, 0, 0, 0);
+
+            clan.h2hData.weekStart = nextMonday.toISOString();
+            clan.h2hData.currentWeek = 1;
+            clan.h2hData.matchups = [weekOneMatchups.map(m => ({ ...m, weekNumber: 1 }))];
+
+            // Initialize standings for all active teams
+            activeTeams.forEach(team => {
+                clan.h2hData.standings[team.name] = {
+                    wins: 0,
+                    losses: 0,
+                    ties: 0,
+                    pointsFor: 0,
+                    pointsAgainst: 0
+                };
+            });
+
+            // Save updated data
+            saveDraftData(draftData);
+
+            console.log("✅ Week 1 matchups generated:", weekOneMatchups);
+            console.log("📅 Season starts:", nextMonday.toISOString());
+        }
     }
 
     res.json({ message: `✅ ${playerName} a été sélectionné par ${userTeamName}.` });
@@ -345,7 +534,7 @@ app.get("/draft-order/:clanName", (req, res) => {
 // 🔥 Route pour créer un clan
 app.post("/create-clan", async (req, res) => {
     try {
-        const { name, maxPlayers, config } = req.body;
+        const { name, maxPlayers, config, poolMode, allowTrades } = req.body;
         let draftData = loadDraftData();
 
         if (draftData[name]) {
@@ -367,15 +556,28 @@ app.post("/create-clan", async (req, res) => {
             teams[`Équipe ${i}`] = { members: [], offensive: [], defensive: [], goalie: [], rookie: [], teams: [] };
         }
 
+        // Initialize pool data
         draftData[name] = {
             maxPlayers: parseInt(maxPlayers),
             draftOrder: [],
             currentPickIndex: 0,
             lastPickIndex: -1,
-            config: poolConfig, // Store pool configuration
+            config: poolConfig,
+            poolMode: poolMode || 'cumulative', // 'cumulative' or 'head-to-head'
+            allowTrades: allowTrades !== false, // Default true
             teams
         };
 
+        // If Head-to-Head mode, initialize matchup structure
+        if (poolMode === 'head-to-head') {
+            draftData[name].h2hData = {
+                currentWeek: 1,
+                weekStart: null, // Will be set when draft completes
+                matchups: [], // Array of weekly matchups
+                standings: {}, // teamName: { wins, losses, pointsFor, pointsAgainst }
+                matchupHistory: [] // Complete history of all matchups
+            };
+        }
 
         saveDraftData(draftData);
         setTimeout(() => {
