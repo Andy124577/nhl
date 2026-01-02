@@ -20,6 +20,7 @@
             <li><a href="index.html">Stats</a></li>
             <li><a href="pool.html">Pool</a></li>
             <li class="active"><a href="draft.html">Draft</a></li>
+            <li><a href="classement.html">Classement</a></li>
             <li id="trade-link" style="position: relative;">
                 <a href="trade.html">Échanges</a>
                 <span id="trade-badge" class="notif-badge" style="display: none;">0</span>
@@ -27,6 +28,12 @@
             <li id="admin-users-link" style="display: none;"></li>
             <li id="login-link"><a href="login.html">Connexion</a></li>
         </ul>
+        <div class="navbar-pool-selector">
+            <label for="activePoolSelector">Pool actif:</label>
+            <select id="activePoolSelector">
+                <option value="">-- Aucun pool --</option>
+            </select>
+        </div>
     </nav>
 
     <div class="page-header">
@@ -37,7 +44,6 @@
     <!-- Sub-navigation tabs -->
     <div class="sub-navbar">
         <button class="sub-nav-btn active" onclick="showTab('active')">Draft actif</button>
-        <button class="sub-nav-btn" onclick="showTab('standings')">Classement</button>
     </div>
 
     <!-- Active Drafts Section -->
@@ -46,16 +52,6 @@
             <h2>Drafts actifs</h2>
             <div id="activeDrafts" class="draft-container">
                 <p>Chargement des drafts actifs...</p>
-            </div>
-        </section>
-    </div>
-
-    <!-- Standings Section -->
-    <div id="standings-tab" class="tab-content">
-        <section class="draft-section">
-            <h2>Classements finaux</h2>
-            <div id="finishedDrafts" class="draft-container">
-                <p>Chargement des classements...</p>
             </div>
         </section>
     </div>
@@ -80,5 +76,6 @@
             event.target.classList.add('active');
         }
     </script>
+    <script src="poolSelector.js"></script>
 </body>
 </html>
