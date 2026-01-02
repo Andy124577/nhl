@@ -136,13 +136,11 @@ async function loadActiveDrafts() {
 
         if (!result.activeDrafts || result.activeDrafts.length === 0) {
             document.getElementById("activeDrafts").innerHTML = "<p>Aucun draft actif pour vous.</p>";
-            document.getElementById("finishedDrafts").innerHTML = "<p>Aucun draft terminé.</p>";
             return;
         }
 
-        // Separate drafts into active and finished
+        // Get active drafts (non-completed drafts only)
         const activeDraftsList = [];
-        const finishedDraftsList = [];
 
         result.activeDrafts.forEach(clanName => {
             const clan = allDrafts[clanName];
@@ -172,9 +170,8 @@ async function loadActiveDrafts() {
                 );
             }
 
-            if (isDraftComplete) {
-                finishedDraftsList.push(clanName);
-            } else {
+            // Only add if not complete (finished drafts are shown on Classement page)
+            if (!isDraftComplete) {
                 activeDraftsList.push(clanName);
             }
         });
@@ -196,27 +193,11 @@ async function loadActiveDrafts() {
             document.getElementById("activeDrafts").innerHTML = activeDraftsHTML;
         }
 
-        // Populate Finished Drafts tab
-        if (finishedDraftsList.length === 0) {
-            document.getElementById("finishedDrafts").innerHTML = "<p style='text-align: center; color: #666; padding: 20px;'>Aucun draft terminé.</p>";
-        } else {
-            let finishedDraftsHTML = "";
-            finishedDraftsList.forEach(clanName => {
-                finishedDraftsHTML += `
-                    <div class="draft-card">
-                        <h4>${clanName}</h4>
-                        <p>Draft terminé - Classement disponible</p>
-                        <button onclick="viewFinishedDraft('${clanName}')">Consulter</button>
-                    </div>
-                `;
-            });
-            document.getElementById("finishedDrafts").innerHTML = finishedDraftsHTML;
-        }
+        // Note: Finished drafts are now shown on the separate Classement page
 
     } catch (error) {
         console.error("❌ Erreur lors du chargement des drafts actifs :", error);
         document.getElementById("activeDrafts").innerHTML = "<p style='text-align: center; color: #ff2e2e;'>Erreur de chargement.</p>";
-        document.getElementById("finishedDrafts").innerHTML = "<p style='text-align: center; color: #ff2e2e;'>Erreur de chargement.</p>";
     }
 }
 
