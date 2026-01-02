@@ -42,71 +42,68 @@ $(document).ready(function() {
         $("#login-link").html(`<a href="#" onclick="logout(event)">Déconnexion (${currentUsername})</a>`);
     }
 
-    loadDrafts();
     checkPendingTrades();
     loadPendingTrades();
 
     // Setup WebSocket for real-time updates
     setupWebSocket();
+
+    // Listen for active pool changes
+    $(document).on('activePoolChanged', async (event, poolName) => {
+        await loadDraftDataAndHistory(poolName);
+    });
+
+    // Load trade history for initially selected pool
+    const activePool = getActivePool();
+    if (activePool) {
+        loadDraftDataAndHistory(activePool);
+    }
 });
 
-// Load available drafts
-async function loadDrafts() {
+// Load draft data and trade history for active pool
+async function loadDraftDataAndHistory(poolName) {
+    if (!poolName) {
+        $("#tradeHistoryList").html('<p class="empty-state">Sélectionnez un pool actif dans la barre de navigation</p>');
+        $("#sendTradeBtn").prop("disabled", true);
+        currentDraft = null;
+        currentTeamName = null;
+        return;
+    }
+
     try {
         const response = await fetch(`${BASE_URL}/draft?timestamp=${new Date().getTime()}`, { cache: "no-store" });
         draftData = await response.json();
 
-        const selector = $("#draftSelector");
-        selector.html('<option value="">-- Choisir un pool --</option>');
+        currentDraft = poolName;
 
-        Object.keys(draftData).forEach(draftName => {
-            const draft = draftData[draftName];
-            // Check if user is in this draft
-            const userTeam = Object.entries(draft.teams || {}).find(([teamName, teamData]) =>
-                teamData.members && teamData.members.includes(currentUsername)
-            );
+        // Find user's team in this draft
+        const draft = draftData[poolName];
+        if (!draft) {
+            $("#tradeHistoryList").html('<p class="empty-state">Pool non trouvé</p>');
+            $("#sendTradeBtn").prop("disabled", true);
+            return;
+        }
 
-            if (userTeam) {
-                selector.append(`<option value="${draftName}">${draftName}</option>`);
-            }
-        });
-    } catch (error) {
-        console.error("Error loading drafts:", error);
-    }
-}
+        const userTeam = Object.entries(draft.teams || {}).find(([teamName, teamData]) =>
+            teamData.members && teamData.members.includes(currentUsername)
+        );
 
-// Load trade history when draft is selected
-async function loadTradeHistory() {
-    const selectedDraft = $("#draftSelector").val();
+        if (userTeam) {
+            currentTeamName = userTeam[0];
+            $("#sendTradeBtn").prop("disabled", false);
+        } else {
+            $("#sendTradeBtn").prop("disabled", true);
+        }
 
-    if (!selectedDraft) {
-        $("#tradeHistoryList").html('<p class="empty-state">Sélectionnez un pool pour voir l\'historique des échanges</p>');
-        $("#sendTradeBtn").prop("disabled", true);
-        return;
-    }
-
-    currentDraft = selectedDraft;
-
-    // Find user's team in this draft
-    const draft = draftData[selectedDraft];
-    const userTeam = Object.entries(draft.teams || {}).find(([teamName, teamData]) =>
-        teamData.members && teamData.members.includes(currentUsername)
-    );
-
-    if (userTeam) {
-        currentTeamName = userTeam[0];
-        $("#sendTradeBtn").prop("disabled", false);
-    }
-
-    // Load completed trades
-    try {
-        const response = await fetch(`${BASE_URL}/trades/${selectedDraft}`, { cache: "no-store" });
-        const trades = await response.json();
-
+        // Load completed trades
+        const tradesResponse = await fetch(`${BASE_URL}/trades/${poolName}`, { cache: "no-store" });
+        const trades = await tradesResponse.json();
         displayTradeHistory(trades);
+
     } catch (error) {
-        console.error("Error loading trade history:", error);
-        $("#tradeHistoryList").html('<p class="empty-state">Aucun échange pour ce pool</p>');
+        console.error("Error loading draft data and trade history:", error);
+        $("#tradeHistoryList").html('<p class="empty-state">Erreur lors du chargement</p>');
+        $("#sendTradeBtn").prop("disabled", true);
     }
 }
 
@@ -151,7 +148,7 @@ function displayTradeHistory(trades) {
 // Open trade modal
 function openTradeModal() {
     if (!currentDraft || !currentTeamName) {
-        alert("Veuillez sélectionner un pool");
+        alert("Veuillez sélectionner un pool actif dans la barre de navigation");
         return;
     }
 
