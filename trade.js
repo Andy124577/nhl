@@ -508,30 +508,60 @@ document.addEventListener('click', function(event) {
 // Load admin users list
 async function loadAdminUsers() {
     try {
-        const response = await fetch(`${BASE_URL}/users`, { cache: "no-store" });
-        const users = await response.json();
+        const response = await fetch(`${BASE_URL}/admin-users?adminToken=admin`);
+        const data = await response.json();
 
         const userList = $("#adminUserList");
-        userList.html('');
 
-        users.forEach(user => {
-            const userItem = $(`<div class="admin-user-item">${user.username}</div>`);
-            userItem.click(function() {
-                switchUser(user.username, user.isAdmin);
-            });
-            userList.append(userItem);
-        });
+        if (response.ok) {
+            const regularUsers = data.users.filter(u => u !== 'admin').slice(0, 4);
+
+            if (regularUsers.length === 0) {
+                userList.html('<div class="admin-no-users">Aucun utilisateur</div>');
+            } else {
+                userList.html(regularUsers.map(username => `
+                    <a href="#" class="admin-dropdown-item" onclick="switchToUser(event, '${username}')">
+                        <span class="user-avatar">${username.charAt(0).toUpperCase()}</span>
+                        <span class="user-name">${username}</span>
+                    </a>
+                `).join(''));
+            }
+        }
     } catch (error) {
         console.error("Error loading users:", error);
-        $("#adminUserList").html('<div style="padding: 10px; color: #999;">Erreur de chargement</div>');
+        $("#adminUserList").html('<div class="admin-no-users">Erreur</div>');
     }
 }
 
 // Switch to another user (admin only)
-function switchUser(username, isAdmin) {
-    localStorage.setItem("username", username);
-    localStorage.setItem("isAdmin", isAdmin.toString());
-    window.location.reload();
+async function switchToUser(event, username) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    try {
+        const response = await fetch(`${BASE_URL}/admin-switch-user`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                adminToken: 'admin',
+                targetUsername: username
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.user) {
+            localStorage.setItem('username', result.user.username);
+            localStorage.setItem('isAdmin', result.user.isAdmin.toString());
+            localStorage.setItem('isLoggedIn', 'true');
+            window.location.reload();
+        } else {
+            alert('Erreur lors du changement d\'utilisateur');
+        }
+    } catch (error) {
+        console.error('Error switching user:', error);
+        alert('Erreur lors du changement d\'utilisateur');
+    }
 }
 
 // Logout function
