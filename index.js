@@ -5,9 +5,9 @@ let goalieData = [];
 let currentStats = null; // Stats actuelles de la saison 2024-2025 depuis l'API
 let currentTeams = null; // Standings actuels des équipes depuis l'API
 
-const BASE_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:3000'
-    : 'https://nhl-draft.onrender.com';
+const BASE_URL = window.location.hostname.includes("localhost")
+    ? "http://localhost:3000"
+    : "https://goondraft.onrender.com";
 
 // Helper function to get current player stats from API data
 function getCurrentPlayerStats(playerName, playerId) {
