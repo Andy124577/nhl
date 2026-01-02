@@ -404,6 +404,65 @@ body {
     max-width: 50%;
 }
 
+/* Radio Buttons and Checkboxes */
+.form-group input[type="radio"],
+.form-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 12px;
+    cursor: pointer;
+}
+
+.form-group label {
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    padding: 15px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+    margin-bottom: 10px;
+}
+
+.form-group label:hover {
+    background-color: rgba(255, 46, 46, 0.05);
+}
+
+.radio-label,
+.checkbox-label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+}
+
+.radio-label strong,
+.checkbox-label {
+    font-size: 1rem;
+    color: #222;
+}
+
+.mode-description {
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: normal;
+    margin-top: 4px;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+}
+
+/* Warning Message */
+.warning-message {
+    margin-top: 15px;
+    padding: 12px 16px;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 6px;
+    color: #856404;
+    font-size: 0.9rem;
+}
+
 /* Create Button */
 .create-btn {
     width: 100%;

@@ -345,7 +345,7 @@ app.get("/draft-order/:clanName", (req, res) => {
 // 🔥 Route pour créer un clan
 app.post("/create-clan", async (req, res) => {
     try {
-        const { name, maxPlayers, config } = req.body;
+        const { name, maxPlayers, config, poolMode, allowTrades } = req.body;
         let draftData = loadDraftData();
 
         if (draftData[name]) {
@@ -367,15 +367,28 @@ app.post("/create-clan", async (req, res) => {
             teams[`Équipe ${i}`] = { members: [], offensive: [], defensive: [], goalie: [], rookie: [], teams: [] };
         }
 
+        // Initialize pool data
         draftData[name] = {
             maxPlayers: parseInt(maxPlayers),
             draftOrder: [],
             currentPickIndex: 0,
             lastPickIndex: -1,
-            config: poolConfig, // Store pool configuration
+            config: poolConfig,
+            poolMode: poolMode || 'cumulative', // 'cumulative' or 'head-to-head'
+            allowTrades: allowTrades !== false, // Default true
             teams
         };
 
+        // If Head-to-Head mode, initialize matchup structure
+        if (poolMode === 'head-to-head') {
+            draftData[name].h2hData = {
+                currentWeek: 1,
+                weekStart: null, // Will be set when draft completes
+                matchups: [], // Array of weekly matchups
+                standings: {}, // teamName: { wins, losses, pointsFor, pointsAgainst }
+                matchupHistory: [] // Complete history of all matchups
+            };
+        }
 
         saveDraftData(draftData);
         setTimeout(() => {
