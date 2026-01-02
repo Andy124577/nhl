@@ -1,7 +1,5 @@
 // Pool Selector - Common script for all pages
-const BASE_URL = window.location.hostname.includes("localhost")
-    ? "http://localhost:3000"
-    : "https://goondraft.onrender.com";
+// Note: BASE_URL is expected to be defined by the page-specific script
 
 // Load active pool selector on page load
 $(document).ready(function() {
