@@ -126,6 +126,24 @@ async function loadClans() {
     }
 }
 
+// 🔄 Update pool mode warning when mode or max players changes
+function updatePoolModeInfo() {
+    const mode = $('input[name="poolMode"]:checked').val();
+    const maxPlayers = parseInt($("#maxPlayers").val());
+    const warning = $("#h2h-warning");
+
+    if (mode === 'head-to-head' && maxPlayers % 2 !== 0) {
+        warning.show();
+    } else {
+        warning.hide();
+    }
+}
+
+// Listen to changes on max players selector
+$(document).ready(function() {
+    $("#maxPlayers").on('change', updatePoolModeInfo);
+});
+
 // 🏗️ Créer un clan
 async function createClan() {
     const clanName = $("#clanName").val();
@@ -135,6 +153,8 @@ async function createClan() {
     const numGoalies = parseInt($("#numGoalies").val());
     const numRookies = parseInt($("#numRookies").val());
     const numTeams = parseInt($("#numTeams").val());
+    const poolMode = $('input[name="poolMode"]:checked').val();
+    const allowTrades = $("#allowTrades").is(':checked');
     const username = localStorage.getItem("username");
 
     if (!clanName || !maxPlayers) {
@@ -148,10 +168,18 @@ async function createClan() {
         return;
     }
 
+    // Validation Head-to-Head: nombre pair de participants
+    if (poolMode === 'head-to-head' && maxPlayers % 2 !== 0) {
+        alert("⚠️ Le mode Head-to-Head nécessite un nombre pair de participants !\n\nVeuillez choisir 2, 4, 6, 8 ou 10 participants.");
+        return;
+    }
+
     const poolConfig = {
         name: clanName,
         maxPlayers: maxPlayers,
         username: username,
+        poolMode: poolMode || 'cumulative', // Par défaut cumulatif
+        allowTrades: allowTrades !== false, // Par défaut true
         config: {
             numOffensive: numOffensive,
             numDefensive: numDefensive,
