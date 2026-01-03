@@ -1377,6 +1377,74 @@ const saveTrades = (tradesData) => {
     }
 };
 
+// Helper: Check if team has a specific player
+function teamHasPlayer(team, item) {
+    const arrays = {
+        'offensive': 'offensive',
+        'defensive': 'defensive',
+        'goalie': 'goalies',
+        'rookie': 'rookies',
+        'team': 'teams'
+    };
+
+    const arrayName = arrays[item.type];
+    if (!team[arrayName]) return false;
+
+    const index = team[arrayName].findIndex(p => {
+        const name = p.skaterFullName || p.goalieFullName || p.teamFullName || p;
+        return name === item.name;
+    });
+
+    return index !== -1;
+}
+
+// Helper: Invalidate conflicting pending trades after a trade is accepted
+function invalidateConflictingTrades(trades, acceptedTrade, draftData) {
+    if (!trades.pending || trades.pending.length === 0) return 0;
+
+    const involvedPlayers = new Set();
+
+    // Collect all player names involved in the accepted trade
+    acceptedTrade.offering.forEach(item => {
+        involvedPlayers.add(item.name);
+    });
+    acceptedTrade.receiving.forEach(item => {
+        involvedPlayers.add(item.name);
+    });
+
+    // Find trades that involve any of these players
+    const invalidTrades = [];
+    trades.pending.forEach(trade => {
+        if (trade.draftName !== acceptedTrade.draftName) return; // Different pool
+
+        let hasConflict = false;
+
+        // Check if any player in this trade was involved in the accepted trade
+        trade.offering.forEach(item => {
+            if (involvedPlayers.has(item.name)) {
+                hasConflict = true;
+            }
+        });
+        trade.receiving.forEach(item => {
+            if (involvedPlayers.has(item.name)) {
+                hasConflict = true;
+            }
+        });
+
+        if (hasConflict) {
+            invalidTrades.push(trade.id);
+        }
+    });
+
+    // Remove invalid trades
+    if (invalidTrades.length > 0) {
+        trades.pending = trades.pending.filter(t => !invalidTrades.includes(t.id));
+        console.log(`🗑️ Cancelled ${invalidTrades.length} conflicting trade(s) after trade acceptance`);
+    }
+
+    return invalidTrades.length;
+}
+
 // Helper: Remove item from team
 function removeFromTeam(team, item) {
     const arrays = {
@@ -1479,6 +1547,25 @@ app.post('/trade/propose', (req, res) => {
             return res.status(403).json({ message: "Les échanges ne sont pas autorisés dans ce pool" });
         }
 
+        // VALIDATION: Check if fromTeam exists and has all offered players
+        const fromTeamData = pool.teams[fromTeam];
+        if (!fromTeamData) {
+            return res.status(404).json({ message: "Votre équipe n'a pas été trouvée" });
+        }
+
+        const missingPlayers = [];
+        offering.forEach(item => {
+            if (!teamHasPlayer(fromTeamData, item)) {
+                missingPlayers.push(item.name);
+            }
+        });
+
+        if (missingPlayers.length > 0) {
+            return res.status(400).json({
+                message: `Vous ne possédez pas: ${missingPlayers.join(', ')}`
+            });
+        }
+
         const trades = loadTrades();
         if (!trades.pending) trades.pending = [];
 
@@ -1500,6 +1587,8 @@ app.post('/trade/propose', (req, res) => {
 
         // Emit socket event for real-time notification
         io.emit('tradePending');
+
+        console.log(`📤 Trade proposed: ${fromTeam} → ${toTeam}`);
 
         res.json({ message: "Trade proposal sent successfully", tradeId });
     } catch (error) {
@@ -1539,6 +1628,40 @@ app.post('/trade/accept', (req, res) => {
             return res.status(404).json({ message: "Teams not found" });
         }
 
+        // VALIDATION: Check if fromTeam still has all offered players
+        const missingFromOffering = [];
+        trade.offering.forEach(item => {
+            if (!teamHasPlayer(fromTeam, item)) {
+                missingFromOffering.push(item.name);
+            }
+        });
+
+        // VALIDATION: Check if toTeam still has all receiving players
+        const missingFromReceiving = [];
+        trade.receiving.forEach(item => {
+            if (!teamHasPlayer(toTeam, item)) {
+                missingFromReceiving.push(item.name);
+            }
+        });
+
+        // If any players are missing, reject the trade
+        if (missingFromOffering.length > 0 || missingFromReceiving.length > 0) {
+            let errorMsg = "❌ Échange invalide: ";
+            if (missingFromOffering.length > 0) {
+                errorMsg += `${trade.fromTeam} ne possède plus: ${missingFromOffering.join(', ')}. `;
+            }
+            if (missingFromReceiving.length > 0) {
+                errorMsg += `${trade.toTeam} ne possède plus: ${missingFromReceiving.join(', ')}.`;
+            }
+
+            // Remove this invalid trade from pending
+            trades.pending.splice(tradeIndex, 1);
+            saveTrades(trades);
+
+            console.log(`⚠️ Trade ${tradeId} cancelled: players no longer available`);
+            return res.status(400).json({ message: errorMsg });
+        }
+
         // Execute the trade - swap items
         trade.offering.forEach(item => {
             removeFromTeam(fromTeam, item);
@@ -1558,12 +1681,21 @@ app.post('/trade/accept', (req, res) => {
         trade.status = 'accepted';
         trade.completedDate = new Date().toISOString();
         trades.completed.push(trade);
+
+        // Cancel all other pending trades that involve these players
+        const cancelledCount = invalidateConflictingTrades(trades, trade, draftData);
+
         saveTrades(trades);
 
         // Emit socket event
         io.emit('tradeUpdated');
 
-        res.json({ message: "Trade accepted successfully" });
+        console.log(`✅ Trade accepted: ${trade.fromTeam} ↔ ${trade.toTeam} (${cancelledCount} conflicting trades cancelled)`);
+
+        res.json({
+            message: "Trade accepted successfully",
+            cancelledConflictingTrades: cancelledCount
+        });
     } catch (error) {
         console.error("Error accepting trade:", error);
         res.status(500).json({ message: "Error accepting trade" });
