@@ -436,7 +436,11 @@ async function sendTradeProposal() {
         if (response.ok) {
             alert("✅ Proposition d'échange envoyée!");
             closeTradeModal();
-            loadTradeHistory();
+            // Reload trade data for current pool
+            const activePool = getActivePool();
+            if (activePool) {
+                loadDraftDataAndHistory(activePool);
+            }
         } else {
             alert(`❌ Erreur: ${result.message}`);
         }
@@ -469,7 +473,11 @@ function setupWebSocket() {
 
     socket.on('tradeUpdated', () => {
         console.log("Trade updated, reloading...");
-        loadTradeHistory();
+        // Reload trade data for current pool
+        const activePool = getActivePool();
+        if (activePool) {
+            loadDraftDataAndHistory(activePool);
+        }
         checkPendingTrades();
     });
 
