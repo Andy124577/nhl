@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-01-01T05:03:22.021Z",
+  "lastUpdated": "2026-01-02T17:03:29.561Z",
   "teams": [
     {
       "teamFullName": "Colorado Avalanche",
@@ -9,17 +9,17 @@
       "losses": 2,
       "otLosses": 7,
       "points": 67,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Dallas Stars",
       "teamAbbrev": "DAL",
-      "gamesPlayed": 40,
+      "gamesPlayed": 41,
       "wins": 25,
-      "losses": 8,
+      "losses": 9,
       "otLosses": 7,
       "points": 57,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Minnesota Wild",
@@ -29,77 +29,77 @@
       "losses": 10,
       "otLosses": 7,
       "points": 55,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
-    },
-    {
-      "teamFullName": "Carolina Hurricanes",
-      "teamAbbrev": "CAR",
-      "gamesPlayed": 39,
-      "wins": 24,
-      "losses": 12,
-      "otLosses": 3,
-      "points": 51,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Detroit Red Wings",
       "teamAbbrev": "DET",
-      "gamesPlayed": 41,
+      "gamesPlayed": 42,
       "wins": 24,
       "losses": 14,
-      "otLosses": 3,
-      "points": 51,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "otLosses": 4,
+      "points": 52,
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Tampa Bay Lightning",
       "teamAbbrev": "TBL",
-      "gamesPlayed": 39,
-      "wins": 23,
+      "gamesPlayed": 40,
+      "wins": 24,
       "losses": 13,
       "otLosses": 3,
-      "points": 49,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "points": 51,
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
+    },
+    {
+      "teamFullName": "Carolina Hurricanes",
+      "teamAbbrev": "CAR",
+      "gamesPlayed": 40,
+      "wins": 24,
+      "losses": 13,
+      "otLosses": 3,
+      "points": 51,
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Montréal Canadiens",
       "teamAbbrev": "MTL",
-      "gamesPlayed": 39,
-      "wins": 21,
+      "gamesPlayed": 40,
+      "wins": 22,
       "losses": 12,
       "otLosses": 6,
-      "points": 48,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "points": 50,
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "New York Islanders",
       "teamAbbrev": "NYI",
-      "gamesPlayed": 40,
+      "gamesPlayed": 41,
       "wins": 22,
-      "losses": 14,
+      "losses": 15,
       "otLosses": 4,
       "points": 48,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Philadelphia Flyers",
       "teamAbbrev": "PHI",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "wins": 20,
-      "losses": 11,
+      "losses": 12,
       "otLosses": 7,
       "points": 47,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Washington Capitals",
       "teamAbbrev": "WSH",
-      "gamesPlayed": 40,
+      "gamesPlayed": 41,
       "wins": 21,
-      "losses": 14,
+      "losses": 15,
       "otLosses": 5,
       "points": 47,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Buffalo Sabres",
@@ -109,17 +109,17 @@
       "losses": 14,
       "otLosses": 4,
       "points": 46,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Edmonton Oilers",
       "teamAbbrev": "EDM",
-      "gamesPlayed": 40,
+      "gamesPlayed": 41,
       "wins": 20,
-      "losses": 14,
+      "losses": 15,
       "otLosses": 6,
       "points": 46,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Vegas Golden Knights",
@@ -129,7 +129,7 @@
       "losses": 10,
       "otLosses": 11,
       "points": 45,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Florida Panthers",
@@ -139,7 +139,17 @@
       "losses": 15,
       "otLosses": 3,
       "points": 45,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
+    },
+    {
+      "teamFullName": "Pittsburgh Penguins",
+      "teamAbbrev": "PIT",
+      "gamesPlayed": 39,
+      "wins": 18,
+      "losses": 12,
+      "otLosses": 9,
+      "points": 45,
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Anaheim Ducks",
@@ -149,7 +159,17 @@
       "losses": 16,
       "otLosses": 3,
       "points": 45,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
+    },
+    {
+      "teamFullName": "Toronto Maple Leafs",
+      "teamAbbrev": "TOR",
+      "gamesPlayed": 40,
+      "wins": 19,
+      "losses": 15,
+      "otLosses": 6,
+      "points": 44,
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "New Jersey Devils",
@@ -159,17 +179,27 @@
       "losses": 17,
       "otLosses": 2,
       "points": 44,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
-      "teamFullName": "Pittsburgh Penguins",
-      "teamAbbrev": "PIT",
-      "gamesPlayed": 38,
-      "wins": 17,
-      "losses": 12,
-      "otLosses": 9,
+      "teamFullName": "Boston Bruins",
+      "teamAbbrev": "BOS",
+      "gamesPlayed": 41,
+      "wins": 21,
+      "losses": 18,
+      "otLosses": 2,
+      "points": 44,
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
+    },
+    {
+      "teamFullName": "Ottawa Senators",
+      "teamAbbrev": "OTT",
+      "gamesPlayed": 39,
+      "wins": 19,
+      "losses": 15,
+      "otLosses": 5,
       "points": 43,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "San Jose Sharks",
@@ -179,7 +209,7 @@
       "losses": 17,
       "otLosses": 3,
       "points": 43,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "New York Rangers",
@@ -189,57 +219,37 @@
       "losses": 18,
       "otLosses": 5,
       "points": 43,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
-      "teamFullName": "Toronto Maple Leafs",
-      "teamAbbrev": "TOR",
-      "gamesPlayed": 39,
-      "wins": 18,
-      "losses": 15,
-      "otLosses": 6,
-      "points": 42,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
-    },
-    {
-      "teamFullName": "Boston Bruins",
-      "teamAbbrev": "BOS",
-      "gamesPlayed": 40,
-      "wins": 20,
-      "losses": 18,
-      "otLosses": 2,
-      "points": 42,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
-    },
-    {
-      "teamFullName": "Ottawa Senators",
-      "teamAbbrev": "OTT",
+      "teamFullName": "Seattle Kraken",
+      "teamAbbrev": "SEA",
       "gamesPlayed": 38,
-      "wins": 18,
-      "losses": 15,
-      "otLosses": 5,
+      "wins": 17,
+      "losses": 14,
+      "otLosses": 7,
       "points": 41,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Los Angeles Kings",
       "teamAbbrev": "LAK",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "wins": 16,
-      "losses": 13,
+      "losses": 14,
       "otLosses": 9,
       "points": 41,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
-      "teamFullName": "Nashville Predators",
-      "teamAbbrev": "NSH",
-      "gamesPlayed": 39,
-      "wins": 18,
-      "losses": 17,
-      "otLosses": 4,
-      "points": 40,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "teamFullName": "Utah Mammoth",
+      "teamAbbrev": "UTA",
+      "gamesPlayed": 41,
+      "wins": 19,
+      "losses": 19,
+      "otLosses": 3,
+      "points": 41,
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Columbus Blue Jackets",
@@ -249,37 +259,27 @@
       "losses": 16,
       "otLosses": 6,
       "points": 40,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
-    },
-    {
-      "teamFullName": "Seattle Kraken",
-      "teamAbbrev": "SEA",
-      "gamesPlayed": 37,
-      "wins": 16,
-      "losses": 14,
-      "otLosses": 7,
-      "points": 39,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
-    },
-    {
-      "teamFullName": "Utah Mammoth",
-      "teamAbbrev": "UTA",
-      "gamesPlayed": 40,
-      "wins": 18,
-      "losses": 19,
-      "otLosses": 3,
-      "points": 39,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Calgary Flames",
       "teamAbbrev": "CGY",
-      "gamesPlayed": 39,
-      "wins": 17,
+      "gamesPlayed": 40,
+      "wins": 18,
       "losses": 18,
       "otLosses": 4,
-      "points": 38,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "points": 40,
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
+    },
+    {
+      "teamFullName": "Nashville Predators",
+      "teamAbbrev": "NSH",
+      "gamesPlayed": 40,
+      "wins": 18,
+      "losses": 18,
+      "otLosses": 4,
+      "points": 40,
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "St. Louis Blues",
@@ -289,17 +289,17 @@
       "losses": 18,
       "otLosses": 8,
       "points": 38,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Chicago Blackhawks",
       "teamAbbrev": "CHI",
-      "gamesPlayed": 39,
-      "wins": 14,
+      "gamesPlayed": 40,
+      "wins": 15,
       "losses": 18,
       "otLosses": 7,
-      "points": 35,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "points": 37,
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Vancouver Canucks",
@@ -309,17 +309,17 @@
       "losses": 20,
       "otLosses": 3,
       "points": 35,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     },
     {
       "teamFullName": "Winnipeg Jets",
       "teamAbbrev": "WPG",
-      "gamesPlayed": 38,
+      "gamesPlayed": 39,
       "wins": 15,
-      "losses": 19,
+      "losses": 20,
       "otLosses": 4,
       "points": 34,
-      "lastUpdated": "2026-01-01T05:03:22.021Z"
+      "lastUpdated": "2026-01-02T17:03:29.561Z"
     }
   ]
 }

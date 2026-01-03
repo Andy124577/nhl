@@ -85,6 +85,259 @@
       "status": "accepted",
       "date": "2026-01-01T16:24:29.937Z",
       "completedDate": "2026-01-01T16:24:58.185Z"
+    },
+    {
+      "id": "trade_1767409076286_2resqwx19",
+      "draftName": "rfrffrfrfrrfrfrf",
+      "fromTeam": "Équipe 2",
+      "toTeam": "Équipe 1",
+      "offering": [
+        {
+          "name": "Nathan MacKinnon",
+          "type": "offensive",
+          "playerData": "Nathan MacKinnon"
+        }
+      ],
+      "receiving": [
+        {
+          "name": "Nikita Kucherov",
+          "type": "offensive",
+          "playerData": "Nikita Kucherov"
+        }
+      ],
+      "status": "accepted",
+      "date": "2026-01-03T02:57:56.286Z",
+      "completedDate": "2026-01-03T02:58:25.630Z"
+    },
+    {
+      "id": "trade_1767409696434_eeyneq56w",
+      "draftName": "rfrffrfrfrrfrfrf",
+      "fromTeam": "Équipe 1",
+      "toTeam": "Équipe 2",
+      "offering": [
+        {
+          "name": "Winnipeg Jets",
+          "type": "team",
+          "playerData": "Winnipeg Jets"
+        }
+      ],
+      "receiving": [
+        {
+          "name": "Washington Capitals",
+          "type": "team",
+          "playerData": "Washington Capitals"
+        }
+      ],
+      "status": "accepted",
+      "date": "2026-01-03T03:08:16.434Z",
+      "completedDate": "2026-01-03T03:20:17.661Z"
+    },
+    {
+      "id": "trade_1767409742094_t7nb8e990",
+      "draftName": "rfrffrfrfrrfrfrf",
+      "fromTeam": "Équipe 1",
+      "toTeam": "Équipe 2",
+      "offering": [
+        {
+          "name": "Cale Makar",
+          "type": "defensive",
+          "playerData": "Cale Makar"
+        }
+      ],
+      "receiving": [
+        {
+          "name": "Zach Werenski",
+          "type": "defensive",
+          "playerData": "Zach Werenski"
+        }
+      ],
+      "status": "accepted",
+      "date": "2026-01-03T03:09:02.094Z",
+      "completedDate": "2026-01-03T03:20:20.000Z"
+    },
+    {
+      "id": "trade_1767409812668_xfvas82g7",
+      "draftName": "rfrffrfrfrrfrfrf",
+      "fromTeam": "Équipe 1",
+      "toTeam": "Équipe 2",
+      "offering": [
+        {
+          "name": "Nathan MacKinnon",
+          "type": "offensive",
+          "playerData": "Nathan MacKinnon"
+        }
+      ],
+      "receiving": [
+        {
+          "name": "Nikita Kucherov",
+          "type": "offensive",
+          "playerData": "Nikita Kucherov"
+        }
+      ],
+      "status": "accepted",
+      "date": "2026-01-03T03:10:12.668Z",
+      "completedDate": "2026-01-03T03:20:21.983Z"
+    },
+    {
+      "id": "trade_1767410284303_t5u7uqzp9",
+      "draftName": "rfrffrfrfrrfrfrf",
+      "fromTeam": "Équipe 1",
+      "toTeam": "Équipe 2",
+      "offering": [
+        {
+          "name": "Winnipeg Jets",
+          "type": "team",
+          "playerData": "Winnipeg Jets"
+        }
+      ],
+      "receiving": [
+        {
+          "name": "Washington Capitals",
+          "type": "team",
+          "playerData": "Washington Capitals"
+        }
+      ],
+      "status": "accepted",
+      "date": "2026-01-03T03:18:04.303Z",
+      "completedDate": "2026-01-03T03:20:23.756Z"
+    },
+    {
+      "id": "trade_1767410318986_7ivjzxv32",
+      "draftName": "rfrffrfrfrrfrfrf",
+      "fromTeam": "Équipe 1",
+      "toTeam": "Équipe 2",
+      "offering": [
+        {
+          "name": "Nathan MacKinnon",
+          "type": "offensive",
+          "playerData": "Nathan MacKinnon"
+        }
+      ],
+      "receiving": [
+        {
+          "name": "Nikita Kucherov",
+          "type": "offensive",
+          "playerData": "Nikita Kucherov"
+        }
+      ],
+      "status": "accepted",
+      "date": "2026-01-03T03:18:38.986Z",
+      "completedDate": "2026-01-03T03:20:25.722Z"
+    },
+    {
+      "id": "trade_1767410366722_jcln4qzqh",
+      "draftName": "rfrffrfrfrrfrfrf",
+      "fromTeam": "Équipe 1",
+      "toTeam": "Équipe 2",
+      "offering": [
+        {
+          "name": "Cale Makar",
+          "type": "defensive",
+          "playerData": "Cale Makar"
+        }
+      ],
+      "receiving": [
+        {
+          "name": "Zach Werenski",
+          "type": "defensive",
+          "playerData": "Zach Werenski"
+        }
+      ],
+      "status": "accepted",
+      "date": "2026-01-03T03:19:26.722Z",
+      "completedDate": "2026-01-03T03:20:28.055Z"
+    },
+    {
+      "id": "trade_1767410377428_cu175bq1a",
+      "draftName": "poule1223131",
+      "fromTeam": "Équipe 1",
+      "toTeam": "Équipe 2",
+      "offering": [
+        {
+          "name": "Quinn Hughes",
+          "type": "defensive",
+          "playerData": "Quinn Hughes"
+        }
+      ],
+      "receiving": [
+        {
+          "name": "Rasmus Dahlin",
+          "type": "defensive",
+          "playerData": "Rasmus Dahlin"
+        }
+      ],
+      "status": "accepted",
+      "date": "2026-01-03T03:19:37.428Z",
+      "completedDate": "2026-01-03T03:20:29.941Z"
+    },
+    {
+      "id": "trade_1767411230675_j659c00wm",
+      "draftName": "wasaaaaaaaaaaaaa-2janvier",
+      "fromTeam": "Équipe 1",
+      "toTeam": "Équipe 2",
+      "offering": [
+        {
+          "name": "Nikita Kucherov",
+          "type": "offensive",
+          "playerData": "Nikita Kucherov"
+        }
+      ],
+      "receiving": [
+        {
+          "name": "Nathan MacKinnon",
+          "type": "offensive",
+          "playerData": "Nathan MacKinnon"
+        }
+      ],
+      "status": "accepted",
+      "date": "2026-01-03T03:33:50.675Z",
+      "completedDate": "2026-01-03T03:33:59.632Z"
+    },
+    {
+      "id": "trade_1767411257996_jh832mjyw",
+      "draftName": "wasaaaaaaaaaaaaa-2janvier",
+      "fromTeam": "Équipe 2",
+      "toTeam": "Équipe 1",
+      "offering": [
+        {
+          "name": "Nikita Kucherov",
+          "type": "offensive",
+          "playerData": "Nikita Kucherov"
+        }
+      ],
+      "receiving": [
+        {
+          "name": "Nathan MacKinnon",
+          "type": "offensive",
+          "playerData": "Nathan MacKinnon"
+        }
+      ],
+      "status": "accepted",
+      "date": "2026-01-03T03:34:17.996Z",
+      "completedDate": "2026-01-03T03:34:35.930Z"
+    },
+    {
+      "id": "trade_1767411310974_8rfpjwcwc",
+      "draftName": "wasaaaaaaaaaaaaa-2janvier",
+      "fromTeam": "Équipe 1",
+      "toTeam": "Équipe 2",
+      "offering": [
+        {
+          "name": "Nikita Kucherov",
+          "type": "offensive",
+          "playerData": "Nikita Kucherov"
+        }
+      ],
+      "receiving": [
+        {
+          "name": "Nathan MacKinnon",
+          "type": "offensive",
+          "playerData": "Nathan MacKinnon"
+        }
+      ],
+      "status": "accepted",
+      "date": "2026-01-03T03:35:10.974Z",
+      "completedDate": "2026-01-03T03:35:33.442Z"
     }
   ],
   "pending": []
