@@ -746,3 +746,267 @@ tbody td:first-child {
     color: #666;
     line-height: 1.6;
 }
+
+/* Sub-navigation for H2H tabs */
+.sub-navbar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 30px;
+    padding: 10px 0;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.sub-nav-btn {
+    padding: 10px 24px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    color: #666;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sub-nav-btn:hover {
+    background: #f8f9fa;
+    border-color: #ff2e2e;
+    color: #ff2e2e;
+}
+
+.sub-nav-btn.active {
+    background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%);
+    border-color: #ff2e2e;
+    color: white;
+}
+
+/* H2H Tab Content */
+.h2h-tab-content {
+    display: none;
+}
+
+.h2h-tab-content.active {
+    display: block;
+}
+
+/* Current Matchup Cards */
+#currentWeekTitle {
+    text-align: center;
+    font-size: 1.8rem;
+    color: #222;
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+#currentMatchupsList {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.matchup-card {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+.matchup-team {
+    flex: 1;
+    text-align: center;
+    padding: 20px;
+    border-radius: 8px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.matchup-team.leading {
+    background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+    color: white;
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(76, 175, 80, 0.3);
+}
+
+.matchup-team .team-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.matchup-team .team-score {
+    font-size: 2.5rem;
+    font-weight: 800;
+    font-family: 'Bebas Neue', sans-serif;
+}
+
+.matchup-vs {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #999;
+}
+
+/* H2H Standings Table */
+#h2hStandingsTable {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+#h2hStandingsTable .team-name-col {
+    font-weight: 600;
+    color: #222;
+}
+
+#h2hStandingsTable .positive {
+    color: #4caf50;
+    font-weight: 600;
+}
+
+#h2hStandingsTable .negative {
+    color: #ff2e2e;
+    font-weight: 600;
+}
+
+/* Matchup History */
+#matchupHistoryList {
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.week-history-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.week-history-card h4 {
+    font-size: 1.4rem;
+    color: #ff2e2e;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+.week-matchups {
+    display: grid;
+    gap: 15px;
+}
+
+.history-matchup {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    position: relative;
+}
+
+.history-matchup.completed {
+    border-left: 4px solid #4caf50;
+}
+
+.history-matchup.in-progress {
+    border-left: 4px solid #ffc107;
+}
+
+.history-team {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+}
+
+.history-team.winner {
+    font-weight: 700;
+    color: #4caf50;
+}
+
+.history-team .team-name {
+    flex: 1;
+}
+
+.history-team .team-score {
+    font-size: 1.3rem;
+    font-weight: 700;
+    min-width: 40px;
+    text-align: center;
+}
+
+.history-vs {
+    color: #999;
+    font-weight: 600;
+    padding: 0 15px;
+}
+
+.winner-badge {
+    position: absolute;
+    right: 15px;
+    font-size: 1.5rem;
+}
+
+.tie-badge {
+    position: absolute;
+    right: 15px;
+    background: #ffc107;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Responsive design for H2H */
+@media (max-width: 768px) {
+    .sub-navbar {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .sub-nav-btn {
+        width: 100%;
+        padding: 12px;
+    }
+
+    .matchup-card {
+        flex-direction: column;
+        gap: 15px;
+        padding: 20px;
+    }
+
+    .matchup-team {
+        width: 100%;
+    }
+
+    .matchup-vs {
+        transform: rotate(90deg);
+    }
+
+    .history-matchup {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .history-team {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .history-vs {
+        padding: 5px 0;
+    }
+
+    .winner-badge,
+    .tie-badge {
+        position: static;
+        margin-top: 10px;
+    }
+}
