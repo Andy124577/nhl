@@ -1580,7 +1580,230 @@ app.post('/trade/decline', (req, res) => {
     }
 });
 
+// ✅ H2H: Finalize current week and advance to next week
+app.post('/h2h/finalize-week', async (req, res) => {
+    try {
+        const { poolName } = req.body;
+
+        if (!poolName) {
+            return res.status(400).json({ message: "Pool name required" });
+        }
+
+        let draftData = loadDraftData();
+        const clan = draftData[poolName];
+
+        if (!clan) {
+            return res.status(404).json({ message: "Pool not found" });
+        }
+
+        if (clan.poolMode !== 'head-to-head' || !clan.h2hData) {
+            return res.status(400).json({ message: "Pool is not in Head-to-Head mode" });
+        }
+
+        // Get current stats for points calculation
+        const currentStats = loadCurrentStats();
+
+        // Calculate results for the current week
+        const currentWeek = clan.h2hData.currentWeek;
+        const weekMatchups = clan.h2hData.matchups[currentWeek - 1];
+
+        if (!weekMatchups || weekMatchups.length === 0) {
+            return res.status(400).json({ message: "No matchups found for current week" });
+        }
+
+        // Calculate points and determine winners for each matchup
+        weekMatchups.forEach(matchup => {
+            matchup.team1Points = getTeamWeeklyPoints(clan.teams[matchup.team1], currentStats);
+            matchup.team2Points = getTeamWeeklyPoints(clan.teams[matchup.team2], currentStats);
+            matchup.weekNumber = currentWeek;
+
+            // Determine winner
+            if (matchup.team1Points > matchup.team2Points) {
+                matchup.winner = matchup.team1;
+                clan.h2hData.standings[matchup.team1].wins++;
+                clan.h2hData.standings[matchup.team2].losses++;
+            } else if (matchup.team2Points > matchup.team1Points) {
+                matchup.winner = matchup.team2;
+                clan.h2hData.standings[matchup.team2].wins++;
+                clan.h2hData.standings[matchup.team1].losses++;
+            } else {
+                matchup.winner = 'tie';
+                clan.h2hData.standings[matchup.team1].ties++;
+                clan.h2hData.standings[matchup.team2].ties++;
+            }
+
+            // Update points for/against
+            clan.h2hData.standings[matchup.team1].pointsFor += matchup.team1Points;
+            clan.h2hData.standings[matchup.team1].pointsAgainst += matchup.team2Points;
+            clan.h2hData.standings[matchup.team2].pointsFor += matchup.team2Points;
+            clan.h2hData.standings[matchup.team2].pointsAgainst += matchup.team1Points;
+        });
+
+        // Move completed week to history
+        clan.h2hData.matchupHistory.push({
+            weekNumber: currentWeek,
+            matchups: weekMatchups,
+            completedDate: new Date().toISOString()
+        });
+
+        // Advance to next week
+        clan.h2hData.currentWeek++;
+
+        // Generate new matchups for next week
+        const activeTeams = Object.entries(clan.teams)
+            .filter(([_, teamData]) => teamData.members && teamData.members.length > 0)
+            .map(([teamName, _]) => ({ name: teamName }));
+
+        const nextWeekMatchups = generateWeeklyMatchups(activeTeams);
+
+        // Add new week matchups with week number
+        clan.h2hData.matchups.push(
+            nextWeekMatchups.map(m => ({ ...m, weekNumber: clan.h2hData.currentWeek }))
+        );
+
+        // Update week start date (add 7 days)
+        const currentWeekStart = new Date(clan.h2hData.weekStart);
+        currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+        clan.h2hData.weekStart = currentWeekStart.toISOString();
+
+        // Save updated data
+        saveDraftData(draftData);
+
+        // Emit socket event to update all clients
+        io.emit('h2hWeekFinalized', { poolName, newWeek: clan.h2hData.currentWeek });
+
+        console.log(`✅ H2H Week ${currentWeek} finalized for pool: ${poolName}`);
+        console.log(`📅 Advanced to Week ${clan.h2hData.currentWeek}`);
+
+        res.json({
+            message: `Week ${currentWeek} finalized successfully`,
+            previousWeek: currentWeek,
+            currentWeek: clan.h2hData.currentWeek,
+            results: weekMatchups,
+            standings: clan.h2hData.standings
+        });
+
+    } catch (error) {
+        console.error("❌ Error finalizing H2H week:", error);
+        res.status(500).json({ message: "Error finalizing week" });
+    }
+});
+
 console.log("✅ Trade system initialized");
+
+// ✅ Auto-check and finalize completed H2H weeks
+async function checkAndFinalizeCompletedWeeks() {
+    try {
+        const draftData = loadDraftData();
+        const currentStats = loadCurrentStats();
+        let updatedAnyPool = false;
+
+        for (const [poolName, clan] of Object.entries(draftData)) {
+            // Skip non-H2H pools
+            if (clan.poolMode !== 'head-to-head' || !clan.h2hData) {
+                continue;
+            }
+
+            const weekStart = new Date(clan.h2hData.weekStart);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 7); // Add 7 days
+
+            const now = new Date();
+
+            // Check if current week has ended
+            if (now >= weekEnd) {
+                console.log(`🔔 Auto-finalizing Week ${clan.h2hData.currentWeek} for pool: ${poolName}`);
+
+                const currentWeek = clan.h2hData.currentWeek;
+                const weekMatchups = clan.h2hData.matchups[currentWeek - 1];
+
+                if (!weekMatchups || weekMatchups.length === 0) {
+                    console.log(`⚠️ No matchups found for Week ${currentWeek}, skipping...`);
+                    continue;
+                }
+
+                // Calculate points and determine winners
+                weekMatchups.forEach(matchup => {
+                    matchup.team1Points = getTeamWeeklyPoints(clan.teams[matchup.team1], currentStats);
+                    matchup.team2Points = getTeamWeeklyPoints(clan.teams[matchup.team2], currentStats);
+                    matchup.weekNumber = currentWeek;
+
+                    // Determine winner
+                    if (matchup.team1Points > matchup.team2Points) {
+                        matchup.winner = matchup.team1;
+                        clan.h2hData.standings[matchup.team1].wins++;
+                        clan.h2hData.standings[matchup.team2].losses++;
+                    } else if (matchup.team2Points > matchup.team1Points) {
+                        matchup.winner = matchup.team2;
+                        clan.h2hData.standings[matchup.team2].wins++;
+                        clan.h2hData.standings[matchup.team1].losses++;
+                    } else {
+                        matchup.winner = 'tie';
+                        clan.h2hData.standings[matchup.team1].ties++;
+                        clan.h2hData.standings[matchup.team2].ties++;
+                    }
+
+                    // Update points for/against
+                    clan.h2hData.standings[matchup.team1].pointsFor += matchup.team1Points;
+                    clan.h2hData.standings[matchup.team1].pointsAgainst += matchup.team2Points;
+                    clan.h2hData.standings[matchup.team2].pointsFor += matchup.team2Points;
+                    clan.h2hData.standings[matchup.team2].pointsAgainst += matchup.team1Points;
+                });
+
+                // Move to history
+                clan.h2hData.matchupHistory.push({
+                    weekNumber: currentWeek,
+                    matchups: weekMatchups,
+                    completedDate: new Date().toISOString()
+                });
+
+                // Advance to next week
+                clan.h2hData.currentWeek++;
+
+                // Generate new matchups
+                const activeTeams = Object.entries(clan.teams)
+                    .filter(([_, teamData]) => teamData.members && teamData.members.length > 0)
+                    .map(([teamName, _]) => ({ name: teamName }));
+
+                const nextWeekMatchups = generateWeeklyMatchups(activeTeams);
+                clan.h2hData.matchups.push(
+                    nextWeekMatchups.map(m => ({ ...m, weekNumber: clan.h2hData.currentWeek }))
+                );
+
+                // Update week start (add 7 days)
+                weekStart.setDate(weekStart.getDate() + 7);
+                clan.h2hData.weekStart = weekStart.toISOString();
+
+                console.log(`✅ Week ${currentWeek} finalized, advanced to Week ${clan.h2hData.currentWeek}`);
+
+                updatedAnyPool = true;
+            }
+        }
+
+        // Save if any pool was updated
+        if (updatedAnyPool) {
+            saveDraftData(draftData);
+            io.emit('h2hWeekAutoFinalized');
+            console.log("💾 H2H data saved after auto-finalization");
+        }
+
+    } catch (error) {
+        console.error("❌ Error in auto-check for completed weeks:", error);
+    }
+}
+
+// Run check on server startup
+console.log("🔍 Checking for completed H2H weeks on startup...");
+checkAndFinalizeCompletedWeeks();
+
+// Run check every 6 hours (21600000 ms)
+const SIX_HOURS = 6 * 60 * 60 * 1000;
+setInterval(() => {
+    console.log("🔍 Running periodic check for completed H2H weeks...");
+    checkAndFinalizeCompletedWeeks();
+}, SIX_HOURS);
+
+console.log("✅ H2H auto-finalization scheduler initialized (checks every 6 hours)");
 
 // ✅ Start Server with WebSockets (after all routes are defined)
 server.listen(PORT, () => {

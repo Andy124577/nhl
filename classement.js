@@ -239,7 +239,8 @@ async function loadClassementForPool(poolName) {
     if (!poolName) {
         // Show empty state
         document.getElementById("noPoolSelected").style.display = "block";
-        document.getElementById("classementContent").style.display = "none";
+        document.getElementById("cumulativeContent").style.display = "none";
+        document.getElementById("h2hContent").style.display = "none";
         document.getElementById("poolNameDisplay").textContent = "Sélectionnez un pool actif pour voir le classement";
         return;
     }
@@ -252,23 +253,215 @@ async function loadClassementForPool(poolName) {
 
         if (!clan) {
             document.getElementById("noPoolSelected").style.display = "block";
-            document.getElementById("classementContent").style.display = "none";
+            document.getElementById("cumulativeContent").style.display = "none";
+            document.getElementById("h2hContent").style.display = "none";
             document.getElementById("poolNameDisplay").textContent = "Pool introuvable";
             return;
         }
 
-        // Hide empty state, show content
+        // Hide empty state
         document.getElementById("noPoolSelected").style.display = "none";
-        document.getElementById("classementContent").style.display = "block";
         document.getElementById("poolNameDisplay").textContent = `Classement du pool : ${poolName}`;
 
-        renderTeamStatsTable(clan.teams);
+        // Display based on pool mode
+        const poolMode = clan.poolMode || 'cumulative';
+
+        if (poolMode === 'head-to-head') {
+            // Show H2H interface
+            document.getElementById("cumulativeContent").style.display = "none";
+            document.getElementById("h2hContent").style.display = "block";
+            renderH2HInterface(clan, poolName);
+        } else {
+            // Show cumulative interface (default)
+            document.getElementById("h2hContent").style.display = "none";
+            document.getElementById("cumulativeContent").style.display = "block";
+            renderTeamStatsTable(clan.teams);
+        }
+
     } catch (error) {
         console.error("Erreur lors du chargement du classement:", error);
         document.getElementById("noPoolSelected").style.display = "block";
-        document.getElementById("classementContent").style.display = "none";
+        document.getElementById("cumulativeContent").style.display = "none";
+        document.getElementById("h2hContent").style.display = "none";
         document.getElementById("poolNameDisplay").textContent = "Erreur lors du chargement";
     }
+}
+
+// Head-to-Head Tab Switching
+function showH2HTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.h2h-tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+
+    // Remove active class from all buttons
+    document.querySelectorAll('#h2hContent .sub-nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // Show selected tab
+    document.getElementById(`${tabName}-h2h-tab`).classList.add('active');
+
+    // Add active class to clicked button
+    event.target.classList.add('active');
+}
+
+// Render H2H Interface
+function renderH2HInterface(clan, poolName) {
+    const h2hData = clan.h2hData;
+
+    if (!h2hData) {
+        document.getElementById("currentMatchupsList").innerHTML = '<p class="empty-state">Données Head-to-Head non disponibles</p>';
+        return;
+    }
+
+    // Render current matchups
+    renderCurrentMatchups(h2hData, clan.teams);
+
+    // Render standings
+    renderH2HStandings(h2hData.standings);
+
+    // Render history
+    renderMatchupHistory(h2hData.matchupHistory || []);
+}
+
+// Render current week matchups
+function renderCurrentMatchups(h2hData, teams) {
+    const currentWeek = h2hData.currentWeek || 1;
+    const matchups = h2hData.matchups && h2hData.matchups[currentWeek - 1] ? h2hData.matchups[currentWeek - 1] : [];
+
+    document.getElementById("currentWeekTitle").textContent = `Semaine ${currentWeek}`;
+
+    const container = document.getElementById("currentMatchupsList");
+
+    if (matchups.length === 0) {
+        container.innerHTML = '<p class="empty-state">Aucun duel pour cette semaine</p>';
+        return;
+    }
+
+    container.innerHTML = matchups.map(matchup => {
+        const team1Points = calculateTeamPoints(teams[matchup.team1]);
+        const team2Points = calculateTeamPoints(teams[matchup.team2]);
+
+        const team1Leading = team1Points > team2Points;
+        const team2Leading = team2Points > team1Points;
+
+        return `
+            <div class="matchup-card">
+                <div class="matchup-team ${team1Leading ? 'leading' : ''}">
+                    <div class="team-name">${matchup.team1}</div>
+                    <div class="team-score">${team1Points}</div>
+                </div>
+                <div class="matchup-vs">VS</div>
+                <div class="matchup-team ${team2Leading ? 'leading' : ''}">
+                    <div class="team-name">${matchup.team2}</div>
+                    <div class="team-score">${team2Points}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Render H2H Standings
+function renderH2HStandings(standings) {
+    const tbody = document.getElementById("h2hStandingsBody");
+
+    if (!standings || Object.keys(standings).length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Aucune donnée de classement</td></tr>';
+        return;
+    }
+
+    // Convert to array and sort by wins (descending), then by point differential
+    const standingsArray = Object.entries(standings).map(([teamName, stats]) => ({
+        teamName,
+        ...stats,
+        diff: stats.pointsFor - stats.pointsAgainst
+    })).sort((a, b) => {
+        if (b.wins !== a.wins) return b.wins - a.wins;
+        return b.diff - a.diff;
+    });
+
+    tbody.innerHTML = standingsArray.map((team, index) => `
+        <tr>
+            <td>${index + 1}</td>
+            <td class="team-name-col">${team.teamName}</td>
+            <td>${team.wins}</td>
+            <td>${team.losses}</td>
+            <td>${team.ties || 0}</td>
+            <td>${team.pointsFor}</td>
+            <td>${team.pointsAgainst}</td>
+            <td class="${team.diff > 0 ? 'positive' : team.diff < 0 ? 'negative' : ''}">${team.diff > 0 ? '+' : ''}${team.diff}</td>
+        </tr>
+    `).join('');
+}
+
+// Render Matchup History
+function renderMatchupHistory(history) {
+    const container = document.getElementById("matchupHistoryList");
+
+    if (!history || history.length === 0) {
+        container.innerHTML = '<p class="empty-state">Aucun historique de duels</p>';
+        return;
+    }
+
+    container.innerHTML = history.reverse().map(week => `
+        <div class="week-history-card">
+            <h4>Semaine ${week.weekNumber}</h4>
+            <div class="week-matchups">
+                ${week.matchups.map(matchup => `
+                    <div class="history-matchup ${matchup.winner ? 'completed' : 'in-progress'}">
+                        <div class="history-team ${matchup.winner === matchup.team1 ? 'winner' : ''}">
+                            <span class="team-name">${matchup.team1}</span>
+                            <span class="team-score">${matchup.team1Points || 0}</span>
+                        </div>
+                        <div class="history-vs">vs</div>
+                        <div class="history-team ${matchup.winner === matchup.team2 ? 'winner' : ''}">
+                            <span class="team-name">${matchup.team2}</span>
+                            <span class="team-score">${matchup.team2Points || 0}</span>
+                        </div>
+                        ${matchup.winner && matchup.winner !== 'tie' ? `<div class="winner-badge">🏆</div>` : ''}
+                        ${matchup.winner === 'tie' ? `<div class="tie-badge">🤝 Égalité</div>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+// Helper: Calculate total points for a team
+function calculateTeamPoints(teamData) {
+    if (!teamData) return 0;
+
+    let totalPoints = 0;
+
+    // Sum all player points
+    ['offensive', 'defensive', 'rookie'].forEach(position => {
+        if (teamData[position]) {
+            teamData[position].forEach(playerName => {
+                const player = fullPlayerData.find(p => p.skaterFullName === playerName);
+                if (player) {
+                    const currentPlayerStats = getCurrentPlayerStats(playerName, player.playerId);
+                    totalPoints += currentPlayerStats?.points ?? player.points ?? 0;
+                }
+            });
+        }
+    });
+
+    // Add goalie stats if applicable
+    if (teamData.goalies) {
+        teamData.goalies.forEach(goalieName => {
+            const goalie = goalieData.find(g => g.goalieFullName === goalieName);
+            if (goalie) {
+                // For goalies, we can use wins or saves as points
+                // For now, let's use wins * 2
+                const currentGoalieStats = getCurrentPlayerStats(goalieName, goalie.playerId);
+                const wins = currentGoalieStats?.wins ?? goalie.wins ?? 0;
+                totalPoints += wins * 2;
+            }
+        });
+    }
+
+    return totalPoints;
 }
 
 function renderTeamStatsTable(teams) {
