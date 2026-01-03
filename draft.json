@@ -2412,7 +2412,7 @@
         ],
         "defensive": [
           "Cale Makar",
-          "Quinn Hughes"
+          "Rasmus Dahlin"
         ],
         "goalie": [],
         "rookie": [
@@ -2432,7 +2432,7 @@
         ],
         "defensive": [
           "Zach Werenski",
-          "Rasmus Dahlin"
+          "Quinn Hughes"
         ],
         "goalie": [],
         "rookie": [
@@ -2698,6 +2698,428 @@
         "rookie": [],
         "teams": []
       }
+    },
+    "picksHistory": [
+      {
+        "team": "Équipe 1",
+        "player": "Nikita Kucherov",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Nathan MacKinnon",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "Cale Makar",
+        "position": "defensive"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Zach Werenski",
+        "position": "defensive"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "Ville Koivunen",
+        "position": "rookie"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Artyom Levshunov",
+        "position": "rookie"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "Winnipeg Jets",
+        "position": "teams"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Washington Capitals",
+        "position": "teams"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "Connor Hellebuyck",
+        "position": "goalie"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Andrei Vasilevskiy",
+        "position": "goalie"
+      }
+    ]
+  },
+  "rfrffrfrfrrfrfrf": {
+    "maxPlayers": 2,
+    "draftOrder": [
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2"
+    ],
+    "currentPickIndex": 9,
+    "lastPickIndex": 9,
+    "config": {
+      "numOffensive": 1,
+      "numDefensive": 1,
+      "numGoalies": 1,
+      "numRookies": 1,
+      "numTeams": 1
+    },
+    "poolMode": "head-to-head",
+    "allowTrades": true,
+    "teams": {
+      "Équipe 1": {
+        "members": [
+          "user1"
+        ],
+        "offensive": [
+          "Nikita Kucherov",
+          "Nikita Kucherov"
+        ],
+        "defensive": [
+          "Zach Werenski",
+          "Zach Werenski"
+        ],
+        "goalie": [
+          "Connor Hellebuyck"
+        ],
+        "rookie": [
+          "Ville Koivunen"
+        ],
+        "teams": [
+          "Washington Capitals",
+          "Washington Capitals"
+        ]
+      },
+      "Équipe 2": {
+        "members": [
+          "testuser"
+        ],
+        "offensive": [
+          "Nathan MacKinnon",
+          "Nathan MacKinnon"
+        ],
+        "defensive": [
+          "Cale Makar",
+          "Cale Makar"
+        ],
+        "goalie": [
+          "Andrei Vasilevskiy"
+        ],
+        "rookie": [
+          "Artyom Levshunov"
+        ],
+        "teams": [
+          "Winnipeg Jets",
+          "Winnipeg Jets"
+        ]
+      },
+      "Équipe 3": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 4": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 5": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 6": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 7": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 8": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 9": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 10": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      }
+    },
+    "h2hData": {
+      "currentWeek": 1,
+      "weekStart": "2026-01-05T05:00:00.000Z",
+      "matchups": [
+        []
+      ],
+      "standings": {
+        "Équipe 1": {
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "pointsFor": 0,
+          "pointsAgainst": 0
+        },
+        "Équipe 2": {
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "pointsFor": 0,
+          "pointsAgainst": 0
+        }
+      },
+      "matchupHistory": []
+    },
+    "picksHistory": [
+      {
+        "team": "Équipe 1",
+        "player": "Nikita Kucherov",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Nathan MacKinnon",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "Cale Makar",
+        "position": "defensive"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Zach Werenski",
+        "position": "defensive"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "Connor Hellebuyck",
+        "position": "goalie"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Andrei Vasilevskiy",
+        "position": "goalie"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "Ville Koivunen",
+        "position": "rookie"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Artyom Levshunov",
+        "position": "rookie"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "Winnipeg Jets",
+        "position": "teams"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Washington Capitals",
+        "position": "teams"
+      }
+    ]
+  },
+  "wasaaaaaaaaaaaaa-2janvier": {
+    "maxPlayers": 2,
+    "draftOrder": [
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2"
+    ],
+    "currentPickIndex": 9,
+    "lastPickIndex": 9,
+    "config": {
+      "numOffensive": 1,
+      "numDefensive": 1,
+      "numGoalies": 1,
+      "numRookies": 1,
+      "numTeams": 1
+    },
+    "poolMode": "head-to-head",
+    "allowTrades": true,
+    "teams": {
+      "Équipe 1": {
+        "members": [
+          "user1"
+        ],
+        "offensive": [
+          "Nathan MacKinnon"
+        ],
+        "defensive": [
+          "Cale Makar"
+        ],
+        "goalie": [
+          "Connor Hellebuyck"
+        ],
+        "rookie": [
+          "Ville Koivunen"
+        ],
+        "teams": [
+          "Winnipeg Jets"
+        ]
+      },
+      "Équipe 2": {
+        "members": [
+          "testuser"
+        ],
+        "offensive": [
+          "Nikita Kucherov"
+        ],
+        "defensive": [
+          "Zach Werenski"
+        ],
+        "goalie": [
+          "Andrei Vasilevskiy"
+        ],
+        "rookie": [
+          "Artyom Levshunov"
+        ],
+        "teams": [
+          "Washington Capitals"
+        ]
+      },
+      "Équipe 3": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 4": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 5": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 6": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 7": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 8": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 9": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 10": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      }
+    },
+    "h2hData": {
+      "currentWeek": 1,
+      "weekStart": "2026-01-05T05:00:00.000Z",
+      "matchups": [
+        []
+      ],
+      "standings": {
+        "Équipe 1": {
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "pointsFor": 0,
+          "pointsAgainst": 0
+        },
+        "Équipe 2": {
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "pointsFor": 0,
+          "pointsAgainst": 0
+        }
+      },
+      "matchupHistory": []
     },
     "picksHistory": [
       {
