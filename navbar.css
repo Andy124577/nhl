@@ -16,6 +16,7 @@
     padding: 8px 10px;
     flex-wrap: nowrap; /* ALWAYS single line */
     gap: 5px;
+    min-height: 50px;
 }
 
 /* Brand Section */
@@ -24,6 +25,7 @@
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
+    min-width: 0;
 }
 
 .navbar-logo {
@@ -45,8 +47,10 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    flex-shrink: 1;
+    flex-shrink: 2; /* Allow more shrinking than other elements */
+    flex-grow: 0;
     min-width: 0;
+    max-width: 200px; /* Prevent taking too much space */
 }
 
 .navbar-pool-selector label {
@@ -55,6 +59,7 @@
     font-size: 0.7rem;
     white-space: nowrap;
     display: none; /* Hide on small screens */
+    flex-shrink: 0;
 }
 
 .navbar-pool-selector select {
@@ -67,7 +72,8 @@
     font-size: 0.7rem;
     cursor: pointer;
     transition: all 0.2s ease;
-    min-width: 80px;
+    width: 100%;
+    min-width: 70px;
     max-width: 110px;
 }
 
@@ -97,11 +103,14 @@
     align-items: center;
     flex-wrap: nowrap; /* CRITICAL: No wrapping */
     flex-shrink: 1;
+    min-width: 0;
+    overflow: visible;
 }
 
 .navbar li {
     display: inline-flex;
     flex-shrink: 1;
+    min-width: 0;
 }
 
 /* VERTICAL LAYOUT: Icon on top, text below */
@@ -289,6 +298,10 @@
         font-size: 1.3rem;
     }
 
+    .navbar-pool-selector {
+        max-width: 160px;
+    }
+
     .navbar-pool-selector label {
         display: block; /* Show label */
         font-size: 0.75rem;
@@ -348,6 +361,7 @@
 
     .navbar-pool-selector {
         gap: 10px;
+        max-width: 220px;
     }
 
     .navbar-pool-selector label {
@@ -407,6 +421,10 @@
         font-size: 1.6rem;
     }
 
+    .navbar-pool-selector {
+        max-width: 250px;
+    }
+
     .navbar-pool-selector select {
         min-width: 160px;
         max-width: 220px;
@@ -444,6 +462,11 @@
    Hide title to save space
    ======================================== */
 @media (max-width: 400px) {
+    .navbar {
+        gap: 3px;
+        padding: 6px 8px;
+    }
+
     .navbar-title {
         display: none;
     }
@@ -452,10 +475,24 @@
         height: 35px;
     }
 
-    .navbar-pool-selector select {
-        min-width: 70px;
+    .navbar-brand {
+        gap: 5px;
+    }
+
+    .navbar-pool-selector {
+        gap: 4px;
         max-width: 90px;
+    }
+
+    .navbar-pool-selector select {
+        min-width: 60px;
+        max-width: 85px;
         font-size: 0.65rem;
+        padding: 3px 5px;
+    }
+
+    .navbar ul {
+        gap: 1px;
     }
 
     .navbar a {
@@ -470,5 +507,29 @@
     .nav-text {
         font-size: 0.55rem;
         max-width: 45px;
+    }
+}
+
+/* ========================================
+   SMALL MOBILE (400px - 600px)
+   Slightly larger than very small
+   ======================================== */
+@media (min-width: 400px) and (max-width: 599px) {
+    .navbar {
+        gap: 4px;
+        padding: 7px 12px;
+    }
+
+    .navbar-logo {
+        height: 38px;
+    }
+
+    .navbar-pool-selector {
+        max-width: 120px;
+    }
+
+    .navbar-pool-selector select {
+        min-width: 75px;
+        max-width: 100px;
     }
 }
