@@ -1469,6 +1469,16 @@ app.post('/trade/propose', (req, res) => {
             return res.status(400).json({ message: "Missing required fields" });
         }
 
+        // Check if pool allows trades
+        const draftData = loadDraftData();
+        const pool = draftData[draftName];
+        if (!pool) {
+            return res.status(404).json({ message: "Pool not found" });
+        }
+        if (pool.allowTrades === false) {
+            return res.status(403).json({ message: "Les échanges ne sont pas autorisés dans ce pool" });
+        }
+
         const trades = loadTrades();
         if (!trades.pending) trades.pending = [];
 
@@ -1515,6 +1525,11 @@ app.post('/trade/accept', (req, res) => {
         const draft = draftData[trade.draftName];
         if (!draft) {
             return res.status(404).json({ message: "Draft not found" });
+        }
+
+        // Check if pool allows trades
+        if (draft.allowTrades === false) {
+            return res.status(403).json({ message: "Les échanges ne sont pas autorisés dans ce pool" });
         }
 
         const fromTeam = draft.teams[trade.fromTeam];
