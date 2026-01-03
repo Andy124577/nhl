@@ -319,7 +319,7 @@ function renderH2HInterface(clan, poolName) {
     renderCurrentMatchups(h2hData, clan.teams);
 
     // Render standings
-    renderH2HStandings(h2hData.standings);
+    renderH2HStandings(h2hData.standings, clan.teams);
 
     // Render history
     renderMatchupHistory(h2hData.matchupHistory || []);
@@ -363,36 +363,152 @@ function renderCurrentMatchups(h2hData, teams) {
 }
 
 // Render H2H Standings
-function renderH2HStandings(standings) {
+function renderH2HStandings(standings, teams) {
     const tbody = document.getElementById("h2hStandingsBody");
+    tbody.innerHTML = "";
 
     if (!standings || Object.keys(standings).length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Aucune donnée de classement</td></tr>';
         return;
     }
 
-    // Convert to array and sort by wins (descending), then by point differential
-    const standingsArray = Object.entries(standings).map(([teamName, stats]) => ({
-        teamName,
-        ...stats,
-        diff: stats.pointsFor - stats.pointsAgainst
-    })).sort((a, b) => {
+    // Convert to array and calculate player details for each team
+    const standingsArray = Object.entries(standings).map(([teamName, stats]) => {
+        const team = teams[teamName];
+        let playerDetails = [];
+
+        if (team) {
+            // Calculate player details for this team (same logic as renderTeamStatsTable)
+            const allPlayers = [
+                ...(team.offensive || []),
+                ...(team.defensive || []),
+                ...(team.rookie || [])
+            ];
+
+            // Add skaters
+            allPlayers.forEach(playerName => {
+                const player = fullPlayerData.find(p => p.skaterFullName === playerName);
+                if (player) {
+                    const currentPlayerStats = getCurrentPlayerStats(playerName, player.playerId);
+
+                    const gp = currentPlayerStats?.gamesPlayed ?? player.gamesPlayed ?? 0;
+                    const g = currentPlayerStats?.goals ?? player.goals ?? 0;
+                    const a = currentPlayerStats?.assists ?? player.assists ?? 0;
+                    const pts = currentPlayerStats?.points ?? player.points ?? 0;
+                    const todayPts = currentPlayerStats?.todayPoints ?? 0;
+
+                    playerDetails.push({
+                        name: player.skaterFullName,
+                        position: player.positionCode || 'F',
+                        gp: gp,
+                        g: g,
+                        a: a,
+                        pts: pts,
+                        todayPoints: todayPts,
+                        playerId: player.playerId,
+                        teamAbbrev: player.teamAbbrevs,
+                        type: 'player'
+                    });
+                }
+            });
+
+            // Add goalies
+            (team.goalie || []).forEach(goalieName => {
+                const goalie = goalieData.find(g => g.goalieFullName === goalieName);
+                if (goalie) {
+                    const currentGoalieStats = getCurrentPlayerStats(goalieName, goalie.playerId);
+
+                    const gp = currentGoalieStats?.gamesPlayed ?? goalie.gamesPlayed ?? 0;
+
+                    let pts, wins, shutouts, otl;
+                    if (currentGoalieStats) {
+                        wins = currentGoalieStats.wins || 0;
+                        shutouts = currentGoalieStats.shutouts || 0;
+                        otl = currentGoalieStats.otLosses || 0;
+                        pts = (shutouts * 5) + (wins * 2) + (otl * 1);
+                    } else {
+                        wins = goalie.wins || 0;
+                        shutouts = goalie.shutouts || 0;
+                        otl = goalie.otLosses || 0;
+                        pts = goalie.points || ((shutouts * 5) + (wins * 2) + (otl * 1));
+                    }
+
+                    const todayPts = currentGoalieStats?.todayPoints ?? 0;
+
+                    playerDetails.push({
+                        name: goalie.goalieFullName,
+                        position: 'G',
+                        gp: gp,
+                        g: wins,
+                        a: shutouts,
+                        pts: pts,
+                        todayPoints: todayPts,
+                        playerId: goalie.playerId,
+                        teamAbbrev: goalie.teamAbbrevs,
+                        type: 'goalie'
+                    });
+                }
+            });
+
+            // Add teams
+            (team.teams || []).forEach(teamName => {
+                const nhlTeam = teamData.find(t => t.teamFullName === teamName);
+                if (nhlTeam) {
+                    const currentTeamStats = getCurrentTeamStats(teamName, nhlTeam.teamId);
+
+                    const gp = currentTeamStats?.gamesPlayed ?? nhlTeam.gamesPlayed ?? 0;
+                    const wins = currentTeamStats?.wins ?? nhlTeam.wins ?? 0;
+                    const otl = currentTeamStats?.otLosses ?? nhlTeam.otLosses ?? 0;
+                    const pts = currentTeamStats?.points ?? nhlTeam.points ?? ((wins * 2) + otl);
+
+                    playerDetails.push({
+                        name: nhlTeam.teamFullName,
+                        position: 'TEAM',
+                        gp: gp,
+                        g: wins,
+                        a: otl,
+                        pts: pts,
+                        todayPoints: 0,
+                        teamAbbrev: currentTeamStats?.teamAbbrev || nhlTeam.teamAbbrevs,
+                        type: 'team'
+                    });
+                }
+            });
+        }
+
+        return {
+            teamName,
+            ...stats,
+            diff: stats.pointsFor - stats.pointsAgainst,
+            playerDetails
+        };
+    }).sort((a, b) => {
         if (b.wins !== a.wins) return b.wins - a.wins;
         return b.diff - a.diff;
     });
 
-    tbody.innerHTML = standingsArray.map((team, index) => `
-        <tr>
-            <td>${index + 1}</td>
-            <td class="team-name-col">${team.teamName}</td>
+    // Render rows
+    standingsArray.forEach((team, index) => {
+        const position = index + 1;
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${position}</td>
+            <td class="team-name-col"><span class="team-name" onclick="showPlayerDetails('${team.teamName}', ${index})">${team.teamName}</span></td>
             <td>${team.wins}</td>
             <td>${team.losses}</td>
             <td>${team.ties || 0}</td>
             <td>${team.pointsFor}</td>
             <td>${team.pointsAgainst}</td>
             <td class="${team.diff > 0 ? 'positive' : team.diff < 0 ? 'negative' : ''}">${team.diff > 0 ? '+' : ''}${team.diff}</td>
-        </tr>
-    `).join('');
+        `;
+
+        // Store player details on the row for later access
+        row.dataset.playerDetails = JSON.stringify(team.playerDetails);
+        row.dataset.teamName = team.teamName;
+
+        tbody.appendChild(row);
+    });
 }
 
 // Render Matchup History
@@ -641,8 +757,21 @@ function renderTeamStatsTable(teams) {
 }
 
 function showPlayerDetails(teamName, rowIndex) {
-    const tbody = document.getElementById("teamStatsBody");
-    const row = tbody.rows[rowIndex];
+    // Try to find the row in cumulative standings first, then in H2H standings
+    let tbody = document.getElementById("teamStatsBody");
+    let row = tbody ? tbody.rows[rowIndex] : null;
+
+    // If row not found in cumulative table, try H2H table
+    if (!row || !row.dataset.playerDetails) {
+        tbody = document.getElementById("h2hStandingsBody");
+        row = tbody ? tbody.rows[rowIndex] : null;
+    }
+
+    if (!row || !row.dataset.playerDetails) {
+        console.error("Could not find team data");
+        return;
+    }
+
     const playerDetails = JSON.parse(row.dataset.playerDetails);
 
     // Set modal title
