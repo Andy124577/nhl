@@ -47,7 +47,8 @@
             <p>Veuillez sélectionner un pool actif dans la barre de navigation ci-dessus</p>
         </div>
 
-        <div id="classementContent" style="display: none;">
+        <!-- CUMULATIVE MODE: Points totaux -->
+        <div id="cumulativeContent" style="display: none;">
             <div class="table-container">
                 <table id="teamStatsTable">
                     <thead>
@@ -65,6 +66,58 @@
                         <!-- Rows will be injected here -->
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- HEAD-TO-HEAD MODE: Duels hebdomadaires -->
+        <div id="h2hContent" style="display: none;">
+            <!-- Sub-navigation for H2H -->
+            <div class="sub-navbar">
+                <button class="sub-nav-btn active" onclick="showH2HTab('current')">Duel en cours</button>
+                <button class="sub-nav-btn" onclick="showH2HTab('standings')">Classement</button>
+                <button class="sub-nav-btn" onclick="showH2HTab('history')">Historique</button>
+            </div>
+
+            <!-- Current Matchup Tab -->
+            <div id="current-h2h-tab" class="h2h-tab-content active">
+                <div class="current-matchup-container">
+                    <h3 id="currentWeekTitle">Semaine 1</h3>
+                    <div id="currentMatchupsList">
+                        <!-- Matchups will be injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Standings Tab -->
+            <div id="standings-h2h-tab" class="h2h-tab-content">
+                <div class="h2h-standings-container">
+                    <table id="h2hStandingsTable">
+                        <thead>
+                            <tr>
+                                <th>POS</th>
+                                <th>Équipe</th>
+                                <th>V</th>
+                                <th>D</th>
+                                <th>N</th>
+                                <th>PF</th>
+                                <th>PA</th>
+                                <th>DIFF</th>
+                            </tr>
+                        </thead>
+                        <tbody id="h2hStandingsBody">
+                            <!-- Standings rows will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="history-h2h-tab" class="h2h-tab-content">
+                <div class="h2h-history-container">
+                    <div id="matchupHistoryList">
+                        <!-- Historical matchups will be injected here -->
+                    </div>
+                </div>
             </div>
         </div>
 
