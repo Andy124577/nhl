@@ -46,9 +46,19 @@ async function loadActivePoolSelector() {
                 localStorage.removeItem("activePool");
             }
 
+            // Update trade link visibility
+            updateTradeLinkVisibility(selectedPool, draftData);
+
             // Trigger event for other scripts to listen to
             $(document).trigger('activePoolChanged', [selectedPool]);
         });
+
+        // Initial check for trade link visibility
+        if (activePool && draftData[activePool]) {
+            updateTradeLinkVisibility(activePool, draftData);
+        } else {
+            updateTradeLinkVisibility(null, draftData);
+        }
 
     } catch (error) {
         console.error("Error loading active pool selector:", error);
@@ -58,4 +68,31 @@ async function loadActivePoolSelector() {
 // Get current active pool
 function getActivePool() {
     return localStorage.getItem("activePool");
+}
+
+// Update trade link visibility based on pool settings
+function updateTradeLinkVisibility(poolName, draftData) {
+    const tradeLink = $("#trade-link");
+
+    // If no trade link element exists on this page, skip
+    if (tradeLink.length === 0) {
+        return;
+    }
+
+    // If no pool is selected, hide trade link
+    if (!poolName || !draftData || !draftData[poolName]) {
+        tradeLink.hide();
+        return;
+    }
+
+    const pool = draftData[poolName];
+
+    // Check allowTrades setting (default to true for backward compatibility)
+    const allowTrades = pool.allowTrades !== false;
+
+    if (allowTrades) {
+        tradeLink.show();
+    } else {
+        tradeLink.hide();
+    }
 }
