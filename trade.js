@@ -556,12 +556,9 @@ async function switchToUser(event, username) {
             })
         });
 
-        const result = await response.json();
-
-        if (response.ok && result.user) {
-            localStorage.setItem('username', result.user.username);
-            localStorage.setItem('isAdmin', result.user.isAdmin.toString());
-            localStorage.setItem('isLoggedIn', 'true');
+        if (response.ok) {
+            localStorage.setItem('username', username);
+            localStorage.setItem('activeUser', username);
             window.location.reload();
         } else {
             alert('Erreur lors du changement d\'utilisateur');
