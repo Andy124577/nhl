@@ -1,5 +1,5 @@
 // Common Navbar Functionality
-// Handles admin dropdown, user switching, and logout
+// Handles admin dropdown, user switching, logout, and mobile menu
 
 // Initialize navbar admin UI on page load
 function initializeNavbarAdminUI() {
@@ -9,7 +9,7 @@ function initializeNavbarAdminUI() {
 
     if (isLoggedIn) {
         if (isAdmin) {
-            // Admin mode - show Utilisateur dropdown with icon
+            // Admin mode - show Utilisateur dropdown with icon (desktop only)
             $("#admin-users-link").css('display', 'block').html(`
                 <div class="admin-dropdown-container">
                     <a href="#" class="admin-dropdown-toggle" onclick="toggleAdminDropdown(event)">
@@ -30,7 +30,7 @@ function initializeNavbarAdminUI() {
             `);
             loadAdminUsers();
         } else {
-            // Regular user - just show logout with icon
+            // Regular user - just show logout with icon (desktop only)
             $("#login-link").html(`
                 <a href="#" onclick="logout(event)">
                     <img src="Icons/deconnexion.png" alt="Déconnexion" class="nav-icon">
@@ -38,6 +38,187 @@ function initializeNavbarAdminUI() {
                 </a>
             `);
         }
+
+        // Initialize mobile menu
+        initializeMobileMenu();
+    }
+}
+
+// Initialize mobile menu
+function initializeMobileMenu() {
+    // Create mobile menu elements if they don't exist
+    if (!document.getElementById('mobileMenuBtn')) {
+        // Add hamburger button after the navbar ul
+        const navbar = document.querySelector('.navbar');
+        const hamburger = document.createElement('button');
+        hamburger.id = 'mobileMenuBtn';
+        hamburger.className = 'mobile-menu-btn';
+        hamburger.innerHTML = '<span></span><span></span><span></span>';
+        hamburger.onclick = toggleMobileMenu;
+        navbar.appendChild(hamburger);
+    }
+
+    if (!document.getElementById('mobileMenuOverlay')) {
+        // Create mobile menu overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'mobileMenuOverlay';
+        overlay.className = 'mobile-menu-overlay';
+        document.body.appendChild(overlay);
+
+        // Create backdrop
+        const backdrop = document.createElement('div');
+        backdrop.id = 'mobileMenuBackdrop';
+        backdrop.className = 'mobile-menu-backdrop';
+        backdrop.onclick = closeMobileMenu;
+        document.body.appendChild(backdrop);
+    }
+
+    // Load mobile menu content
+    loadMobileMenuContent();
+}
+
+// Load mobile menu content
+function loadMobileMenuContent() {
+    const username = localStorage.getItem("username");
+    const isAdmin = localStorage.getItem("isAdmin") === "true";
+    const overlay = document.getElementById('mobileMenuOverlay');
+
+    if (!overlay) return;
+
+    let menuHTML = '';
+
+    // Pool selector section
+    menuHTML += `
+        <div class="mobile-menu-section">
+            <h3>Pool Actif</h3>
+            <label for="mobilePoolSelector">Sélectionner un pool</label>
+            <select id="mobilePoolSelector" onchange="handleMobilePoolChange(this)">
+                <option value="">-- Aucun pool --</option>
+            </select>
+        </div>
+    `;
+
+    // Admin user switching section
+    if (isAdmin) {
+        menuHTML += `
+            <div class="mobile-menu-section">
+                <h3>Changer d'utilisateur</h3>
+                <div id="mobileUserList">Chargement...</div>
+            </div>
+        `;
+    }
+
+    // Logout section
+    menuHTML += `
+        <div class="mobile-menu-section">
+            <button class="mobile-logout-btn" onclick="logout(event)">
+                <span>Déconnexion${username ? ' (' + username + ')' : ''}</span>
+            </button>
+        </div>
+    `;
+
+    overlay.innerHTML = menuHTML;
+
+    // Load pools into mobile selector
+    loadMobilePoolSelector();
+
+    // Load admin users if admin
+    if (isAdmin) {
+        loadMobileAdminUsers();
+    }
+}
+
+// Load pools into mobile selector
+function loadMobilePoolSelector() {
+    const mobileSelector = document.getElementById('mobilePoolSelector');
+    const desktopSelector = document.getElementById('activePoolSelector');
+
+    if (mobileSelector && desktopSelector) {
+        // Copy options from desktop selector
+        mobileSelector.innerHTML = desktopSelector.innerHTML;
+        mobileSelector.value = desktopSelector.value;
+    }
+}
+
+// Handle pool change from mobile menu
+function handleMobilePoolChange(select) {
+    const desktopSelector = document.getElementById('activePoolSelector');
+    if (desktopSelector) {
+        desktopSelector.value = select.value;
+        // Trigger change event on desktop selector
+        const event = new Event('change', { bubbles: true });
+        desktopSelector.dispatchEvent(event);
+    }
+    closeMobileMenu();
+}
+
+// Load admin users into mobile menu
+async function loadMobileAdminUsers() {
+    try {
+        const BASE_URL = window.location.hostname.includes("localhost")
+            ? "http://localhost:3000"
+            : "https://goondraft.onrender.com";
+
+        const response = await fetch(`${BASE_URL}/admin-users?adminToken=admin`);
+        const data = await response.json();
+
+        if (response.ok) {
+            const regularUsers = data.users.filter(u => u !== 'admin').slice(0, 4);
+            const userListEl = document.getElementById('mobileUserList');
+
+            if (!userListEl) return;
+
+            if (regularUsers.length === 0) {
+                userListEl.innerHTML = '<div style="text-align: center; color: #999; padding: 10px;">Aucun utilisateur</div>';
+            } else {
+                userListEl.innerHTML = regularUsers.map(username => `
+                    <a href="#" class="mobile-user-item" onclick="switchToUser(event, '${username}')">
+                        <span class="user-avatar">${username.charAt(0).toUpperCase()}</span>
+                        <span class="user-name">${username}</span>
+                    </a>
+                `).join('');
+            }
+        }
+    } catch (error) {
+        console.error('Error loading mobile users:', error);
+        const userListEl = document.getElementById('mobileUserList');
+        if (userListEl) {
+            userListEl.innerHTML = '<div style="text-align: center; color: #999; padding: 10px;">Erreur</div>';
+        }
+    }
+}
+
+// Toggle mobile menu
+function toggleMobileMenu() {
+    const btn = document.getElementById('mobileMenuBtn');
+    const overlay = document.getElementById('mobileMenuOverlay');
+    const backdrop = document.getElementById('mobileMenuBackdrop');
+
+    if (btn && overlay && backdrop) {
+        btn.classList.toggle('active');
+        overlay.classList.toggle('active');
+        backdrop.classList.toggle('active');
+
+        // Prevent body scroll when menu is open
+        if (overlay.classList.contains('active')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+}
+
+// Close mobile menu
+function closeMobileMenu() {
+    const btn = document.getElementById('mobileMenuBtn');
+    const overlay = document.getElementById('mobileMenuOverlay');
+    const backdrop = document.getElementById('mobileMenuBackdrop');
+
+    if (btn && overlay && backdrop) {
+        btn.classList.remove('active');
+        overlay.classList.remove('active');
+        backdrop.classList.remove('active');
+        document.body.style.overflow = '';
     }
 }
 
