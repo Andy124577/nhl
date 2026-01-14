@@ -539,7 +539,7 @@
 
 /* ========================================
    TABLET (600px - 767px)
-   Transition zone - still with icons
+   Transition zone - still with icons and hamburger
    ======================================== */
 @media (min-width: 600px) and (max-width: 767px) {
     .navbar {
@@ -553,22 +553,6 @@
 
     .navbar-title {
         font-size: 1.4rem;
-    }
-
-    .navbar-pool-selector {
-        gap: 8px;
-    }
-
-    .navbar-pool-selector label {
-        display: block; /* Show label on tablet */
-        font-size: 0.75rem;
-    }
-
-    .navbar-pool-selector select {
-        min-width: 110px;
-        max-width: 160px;
-        font-size: 0.75rem;
-        padding: 6px 10px;
     }
 
     .navbar ul {
@@ -597,14 +581,212 @@
 }
 
 /* ========================================
-   DESKTOP (768px+)
-   HORIZONTAL LAYOUT - NO ICONS
-   Professional PC layout
+   SMALL DESKTOP (768px - 1023px)
+   Keep hamburger menu, show text-only nav
    ======================================== */
-@media (min-width: 768px) {
+@media (min-width: 768px) and (max-width: 1023px) {
+    .navbar {
+        padding: 10px 20px;
+        gap: 10px;
+        min-height: 55px;
+    }
+
+    .navbar-brand {
+        gap: 10px;
+    }
+
+    .navbar-logo {
+        height: 45px;
+    }
+
+    .navbar-title {
+        font-size: 1.3rem;
+        letter-spacing: 0.5px;
+    }
+
+    /* Keep hamburger menu visible */
+    .mobile-menu-btn {
+        display: flex;
+    }
+
+    /* Keep pool selector hidden - in hamburger */
+    .navbar-pool-selector {
+        display: none;
+    }
+
+    /* Navigation - HORIZONTAL text-only but compact */
+    .navbar ul {
+        gap: 8px;
+        flex-shrink: 1;
+    }
+
+    .navbar a {
+        flex-direction: row;
+        padding: 6px 10px;
+        font-size: 0.85rem;
+        gap: 0;
+    }
+
+    /* HIDE icons on desktop */
+    .nav-icon {
+        display: none;
+    }
+
+    /* Text-only styling - compact */
+    .nav-text {
+        font-size: 0.85rem;
+        max-width: none;
+    }
+
+    /* Keep admin and login hidden - in hamburger */
+    #admin-users-link,
+    #login-link {
+        display: none !important;
+    }
+
+    .notif-badge {
+        width: 16px;
+        height: 16px;
+        font-size: 0.6rem;
+        top: -4px;
+        right: -4px;
+    }
+}
+
+/* ========================================
+   MEDIUM DESKTOP (1024px - 1279px)
+   Show everything, compact layout
+   ======================================== */
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .navbar {
+        padding: 10px 20px;
+        gap: 12px;
+        min-height: 58px;
+    }
+
+    .navbar-brand {
+        gap: 10px;
+    }
+
+    .navbar-logo {
+        height: 48px;
+    }
+
+    .navbar-title {
+        font-size: 1.4rem;
+        letter-spacing: 0.5px;
+    }
+
+    /* Hide hamburger menu */
+    .mobile-menu-btn {
+        display: none;
+    }
+
+    /* Show pool selector - compact */
+    .navbar-pool-selector {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .navbar-pool-selector label {
+        display: block;
+        font-size: 0.8rem;
+    }
+
+    .navbar-pool-selector select {
+        min-width: 140px;
+        max-width: 180px;
+        font-size: 0.8rem;
+        padding: 6px 10px;
+        border-radius: 5px;
+    }
+
+    /* Navigation - compact horizontal */
+    .navbar ul {
+        gap: 10px;
+    }
+
+    .navbar a {
+        flex-direction: row;
+        padding: 6px 12px;
+        font-size: 0.9rem;
+        gap: 0;
+    }
+
+    /* HIDE icons */
+    .nav-icon {
+        display: none;
+    }
+
+    /* Text styling */
+    .nav-text {
+        font-size: 0.9rem;
+        max-width: none;
+    }
+
+    /* Show admin and login */
+    #admin-users-link,
+    #login-link {
+        display: inline-flex !important;
+    }
+
+    /* Admin dropdown - horizontal */
+    .admin-dropdown-toggle {
+        flex-direction: row;
+        gap: 6px;
+    }
+
+    .admin-dropdown-menu {
+        min-width: 200px;
+        margin-top: 8px;
+    }
+
+    .admin-dropdown-header {
+        padding: 10px 14px;
+        font-size: 0.8rem;
+    }
+
+    .admin-user-list {
+        max-height: 200px;
+    }
+
+    .admin-dropdown-item {
+        padding: 10px 14px;
+    }
+
+    .user-avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 0.85rem;
+    }
+
+    .user-name {
+        font-size: 0.9rem;
+    }
+
+    .admin-no-users {
+        padding: 10px 14px;
+        font-size: 0.85rem;
+    }
+
+    .notif-badge {
+        width: 17px;
+        height: 17px;
+        font-size: 0.6rem;
+        top: -4px;
+        right: -4px;
+    }
+}
+
+/* ========================================
+   DESKTOP (1280px - 1599px)
+   Standard desktop layout
+   ======================================== */
+@media (min-width: 1280px) and (max-width: 1599px) {
     .navbar {
         padding: 12px 25px;
-        gap: 20px;
+        gap: 15px;
         min-height: 60px;
     }
 
@@ -617,66 +799,65 @@
     }
 
     .navbar-title {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
         letter-spacing: 1px;
     }
 
-    /* Hide hamburger menu on desktop */
+    /* Hide hamburger menu */
     .mobile-menu-btn {
         display: none;
     }
 
-    /* Show pool selector on desktop */
+    /* Show pool selector */
     .navbar-pool-selector {
-        display: flex; /* Show on desktop */
+        display: flex;
         gap: 10px;
         flex-shrink: 0;
-        order: 0;
     }
 
     .navbar-pool-selector label {
-        display: block; /* Always show label on desktop */
+        display: block;
         font-size: 0.9rem;
     }
 
     .navbar-pool-selector select {
-        min-width: 180px;
-        max-width: 250px;
+        min-width: 160px;
+        max-width: 220px;
         font-size: 0.9rem;
-        padding: 8px 14px;
+        padding: 7px 12px;
         border-radius: 6px;
     }
 
-    /* Navigation - HORIZONTAL text-only layout */
+    /* Navigation - horizontal */
     .navbar ul {
-        gap: 15px; /* More space on desktop */
+        gap: 12px;
     }
 
     .navbar a {
-        flex-direction: row; /* HORIZONTAL - No vertical stacking */
-        padding: 8px 16px;
-        font-size: 1rem; /* Larger text */
-        gap: 0; /* No gap needed */
+        flex-direction: row;
+        padding: 8px 14px;
+        font-size: 0.95rem;
+        gap: 0;
     }
 
-    /* HIDE icons on desktop */
+    /* HIDE icons */
     .nav-icon {
-        display: none; /* Icons hidden on desktop */
+        display: none;
     }
 
-    /* Text-only styling */
+    /* Text styling */
     .nav-text {
-        font-size: 1rem;
-        max-width: none; /* No limit on desktop */
+        font-size: 0.95rem;
+        max-width: none;
     }
 
-    /* Show admin and login links on desktop */
+    /* Show admin and login */
     #admin-users-link,
     #login-link {
         display: inline-flex !important;
     }
 
-    /* Admin dropdown - horizontal layout too */
+    /* Admin dropdown */
     .admin-dropdown-toggle {
         flex-direction: row;
         gap: 8px;
@@ -725,13 +906,13 @@
 }
 
 /* ========================================
-   LARGE DESKTOP (1200px+)
-   Maximum comfort layout
+   LARGE DESKTOP (1600px+)
+   Maximum comfort layout - full spacing
    ======================================== */
-@media (min-width: 1200px) {
+@media (min-width: 1600px) {
     .navbar {
         padding: 14px 40px;
-        gap: 30px;
+        gap: 25px;
     }
 
     .navbar-logo {
@@ -739,7 +920,12 @@
     }
 
     .navbar-title {
-        font-size: 1.8rem;
+        font-size: 1.7rem;
+        letter-spacing: 1.2px;
+    }
+
+    .navbar-pool-selector {
+        gap: 12px;
     }
 
     .navbar-pool-selector label {
@@ -748,22 +934,45 @@
 
     .navbar-pool-selector select {
         min-width: 200px;
-        max-width: 300px;
+        max-width: 280px;
         font-size: 1rem;
-        padding: 10px 16px;
+        padding: 9px 16px;
     }
 
     .navbar ul {
-        gap: 25px;
+        gap: 18px;
     }
 
     .navbar a {
-        padding: 10px 20px;
+        padding: 9px 18px;
         font-size: 1.05rem;
     }
 
     .nav-text {
         font-size: 1.05rem;
+    }
+
+    .admin-dropdown-menu {
+        min-width: 240px;
+    }
+
+    .admin-dropdown-header {
+        padding: 14px 18px;
+        font-size: 0.9rem;
+    }
+
+    .admin-dropdown-item {
+        padding: 14px 18px;
+    }
+
+    .user-avatar {
+        width: 34px;
+        height: 34px;
+        font-size: 0.95rem;
+    }
+
+    .user-name {
+        font-size: 1rem;
     }
 
     .notif-badge {
