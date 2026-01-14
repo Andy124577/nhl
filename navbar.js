@@ -29,6 +29,9 @@ function initModernNavbar() {
 
     // Load pool data
     loadPoolSelectors();
+
+    // Set up observers to keep navbar pool selectors in sync
+    setupPoolSelectorObservers();
 }
 
 // Build navbar HTML structure
@@ -309,6 +312,62 @@ function loadPoolSelectors() {
 
         // Update pool badge
         updatePoolBadge(pageSelector.value, pageSelector.options[pageSelector.selectedIndex]?.text);
+    }
+}
+
+// Sync navbar pool selectors with page pool selector
+function syncNavbarPoolSelectors() {
+    const desktopSelector = document.getElementById('desktopPoolSelector');
+    const mobileSelector = document.getElementById('mobilePoolSelector');
+    const pageSelector = document.getElementById('activePoolSelector');
+
+    if (!pageSelector) return;
+
+    // Only sync if page selector has options (more than just the default "Aucun pool")
+    if (pageSelector.options.length > 1) {
+        if (desktopSelector) {
+            desktopSelector.innerHTML = pageSelector.innerHTML;
+            desktopSelector.value = pageSelector.value;
+        }
+        if (mobileSelector) {
+            mobileSelector.innerHTML = pageSelector.innerHTML;
+            mobileSelector.value = pageSelector.value;
+        }
+
+        // Update pool badge
+        updatePoolBadge(pageSelector.value, pageSelector.options[pageSelector.selectedIndex]?.text);
+    }
+}
+
+// Set up observers to watch for pool selector changes
+function setupPoolSelectorObservers() {
+    const pageSelector = document.getElementById('activePoolSelector');
+
+    if (pageSelector) {
+        // Watch for changes to the options in the page selector
+        const observer = new MutationObserver(() => {
+            syncNavbarPoolSelectors();
+        });
+
+        observer.observe(pageSelector, {
+            childList: true,
+            subtree: true
+        });
+
+        // Listen for the change event on page selector
+        pageSelector.addEventListener('change', () => {
+            syncNavbarPoolSelectors();
+        });
+
+        // Listen for custom activePoolChanged event from poolSelector.js
+        $(document).on('activePoolChanged', () => {
+            syncNavbarPoolSelectors();
+        });
+
+        // Do an initial sync after a short delay to catch async loads
+        setTimeout(syncNavbarPoolSelectors, 500);
+        setTimeout(syncNavbarPoolSelectors, 1500);
+        setTimeout(syncNavbarPoolSelectors, 3000);
     }
 }
 
