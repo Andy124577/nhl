@@ -362,6 +362,16 @@
     display: none;
 }
 
+/* Desktop Pool Selector (hidden on mobile) */
+.desktop-pool-selector {
+    display: none;
+}
+
+/* Desktop User Dropdown (hidden on mobile) */
+.user-dropdown-menu {
+    display: none;
+}
+
 /* ========================================
    SMALL MOBILE LANDSCAPE / PHABLET (480px+)
    Better scaling for medium devices
