@@ -19,7 +19,14 @@ function initModernNavbar() {
     const isAdmin = localStorage.getItem("isAdmin") === "true";
     const currentPage = getCurrentPage();
 
-    if (!isLoggedIn) return;
+    const navbar = document.querySelector('.navbar');
+    if (!navbar) return;
+
+    if (!isLoggedIn) {
+        // Show navbar even if not logged in (it will be empty or show login state)
+        navbar.classList.add('navbar-ready');
+        return;
+    }
 
     // Build navbar structure
     buildNavbarStructure(username, isAdmin, currentPage);
@@ -32,6 +39,9 @@ function initModernNavbar() {
 
     // Set up observers to keep navbar pool selectors in sync
     setupPoolSelectorObservers();
+
+    // Show the navbar now that it's ready
+    navbar.classList.add('navbar-ready');
 }
 
 // Build navbar HTML structure
