@@ -25,6 +25,20 @@
     align-items: center;
     justify-content: space-between;
     padding: 0 15px;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+/* Show navbar after JS initialization */
+.navbar.navbar-ready {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Hide old navbar elements during transition */
+.navbar:not(.navbar-ready) * {
+    display: none !important;
 }
 
 /* Left Section - Hamburger Menu */
