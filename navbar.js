@@ -76,6 +76,13 @@ function buildNavbarStructure(username, isAdmin, currentPage) {
             </a>
         </div>
 
+        <!-- Hidden Pool Selector for poolSelector.js to populate -->
+        <div style="display: none;">
+            <select id="activePoolSelector">
+                <option value="">-- Aucun pool --</option>
+            </select>
+        </div>
+
         <!-- Desktop Pool Selector -->
         <div class="desktop-pool-selector">
             <label for="desktopPoolSelector">Pool:</label>
@@ -364,10 +371,22 @@ function setupPoolSelectorObservers() {
             syncNavbarPoolSelectors();
         });
 
-        // Do an initial sync after a short delay to catch async loads
-        setTimeout(syncNavbarPoolSelectors, 500);
-        setTimeout(syncNavbarPoolSelectors, 1500);
-        setTimeout(syncNavbarPoolSelectors, 3000);
+        // Use jQuery ready to ensure DOM and scripts are loaded
+        $(document).ready(() => {
+            syncNavbarPoolSelectors();
+            // Also do delayed syncs to catch async pool loading
+            setTimeout(syncNavbarPoolSelectors, 500);
+            setTimeout(syncNavbarPoolSelectors, 1500);
+            setTimeout(syncNavbarPoolSelectors, 3000);
+        });
+    } else {
+        // If no page selector exists, try again after page loads
+        $(document).ready(() => {
+            const retrySelector = document.getElementById('activePoolSelector');
+            if (retrySelector) {
+                setupPoolSelectorObservers();
+            }
+        });
     }
 }
 
