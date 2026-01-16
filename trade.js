@@ -110,6 +110,7 @@ async function loadDraftDataAndHistory(poolName) {
 // Display trade history
 function displayTradeHistory(trades) {
     const container = $("#tradeHistoryList");
+    const currentUser = localStorage.getItem("username");
 
     if (!trades || trades.length === 0) {
         container.html('<p class="empty-state">Aucun échange complété pour l\'instant</p>');
@@ -118,24 +119,59 @@ function displayTradeHistory(trades) {
 
     container.html('');
     trades.reverse().forEach(trade => {
+        // Check if current user's team is involved
+        const fromTeamIsUser = isUserTeam(trade.fromTeam, currentUser);
+        const toTeamIsUser = isUserTeam(trade.toTeam, currentUser);
+
+        // Build team labels with "Votre équipe" indicator
+        const fromTeamLabel = fromTeamIsUser
+            ? `${trade.fromTeam} <span class="your-team-badge">Votre équipe</span>`
+            : trade.fromTeam;
+        const toTeamLabel = toTeamIsUser
+            ? `${trade.toTeam} <span class="your-team-badge">Votre équipe</span>`
+            : trade.toTeam;
+
         const tradeCard = $(`
-            <div class="trade-card">
+            <div class="trade-card ${fromTeamIsUser || toTeamIsUser ? 'user-involved' : ''}">
                 <div class="trade-header">
-                    <div class="trade-teams">${trade.fromTeam} ↔ ${trade.toTeam}</div>
+                    <div class="trade-teams">
+                        <span class="team-name ${fromTeamIsUser ? 'user-team' : ''}">${fromTeamLabel}</span>
+                        <span class="trade-separator">⟷</span>
+                        <span class="team-name ${toTeamIsUser ? 'user-team' : ''}">${toTeamLabel}</span>
+                    </div>
                     <div class="trade-date">${new Date(trade.date).toLocaleDateString('fr-CA')}</div>
                 </div>
                 <div class="trade-details">
-                    <div class="trade-side">
-                        <h4>${trade.fromTeam} a envoyé</h4>
+                    <div class="trade-side gave ${fromTeamIsUser ? 'user-side' : ''}">
+                        <div class="trade-side-header">
+                            <span class="side-label">A donné</span>
+                            <span class="side-team">${trade.fromTeam}</span>
+                        </div>
                         <ul class="trade-items">
-                            ${trade.offering.map(item => `<li>${item.name} (${item.type})</li>`).join('')}
+                            ${trade.offering.map(item => `
+                                <li class="trade-item">
+                                    <span class="item-name">${item.name}</span>
+                                    <span class="item-type">${item.type}</span>
+                                </li>
+                            `).join('')}
                         </ul>
                     </div>
-                    <div class="trade-arrow">⇄</div>
-                    <div class="trade-side">
-                        <h4>${trade.toTeam} a envoyé</h4>
+                    <div class="trade-arrow">
+                        <div class="arrow-icon">→</div>
+                        <div class="arrow-label">Échange</div>
+                    </div>
+                    <div class="trade-side received ${toTeamIsUser ? 'user-side' : ''}">
+                        <div class="trade-side-header">
+                            <span class="side-label">A reçu</span>
+                            <span class="side-team">${trade.toTeam}</span>
+                        </div>
                         <ul class="trade-items">
-                            ${trade.receiving.map(item => `<li>${item.name} (${item.type})</li>`).join('')}
+                            ${trade.receiving.map(item => `
+                                <li class="trade-item">
+                                    <span class="item-name">${item.name}</span>
+                                    <span class="item-type">${item.type}</span>
+                                </li>
+                            `).join('')}
                         </ul>
                     </div>
                 </div>
@@ -143,6 +179,16 @@ function displayTradeHistory(trades) {
         `);
         container.append(tradeCard);
     });
+}
+
+// Helper function to check if a team belongs to the current user
+function isUserTeam(teamName, username) {
+    if (!currentDraft || !currentDraft.teams || !username) return false;
+
+    const team = currentDraft.teams[teamName];
+    if (!team || !team.members) return false;
+
+    return team.members.includes(username);
 }
 
 // Open trade modal
