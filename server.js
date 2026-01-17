@@ -37,7 +37,7 @@ app.use(bodyParser.json());
 app.use(express.static(__dirname));
 
 // ✅ Optional: Force / to serve index.html
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
@@ -257,15 +257,16 @@ function getCurrentWeekNumber(weekStart) {
 }
 
 // ✅ WebSocket Connection
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
     console.log("📡 Client connecté via WebSockets");
-    socket.emit("draftUpdated", loadDraftData()); // Send initial data on connection
+    const draftData = await loadDraftData();
+    socket.emit("draftUpdated", draftData); // Send initial data on connection
 });
 
 app.post("/leave-team", async (req, res) => {
     try {
         const { name, username } = req.body;
-        let draftData = loadDraftData();
+        let draftData = await loadDraftData();
 
         if (!draftData[name]) {
             return res.status(400).json({ message: "Clan introuvable !" });
@@ -279,7 +280,7 @@ app.post("/leave-team", async (req, res) => {
 
         // Supprimer l'utilisateur de son équipe actuelle
         draftData[name].teams[currentTeam[0]].members = draftData[name].teams[currentTeam[0]].members.filter(user => user !== username);
-        saveDraftData(draftData);
+        await saveDraftData(draftData);
         setTimeout(() => {
             io.emit("draftUpdated", draftData);
         }, 2000); // ou 200ms
@@ -295,9 +296,9 @@ app.post("/leave-team", async (req, res) => {
 });
 
 // ✅ Route to Join a Clan
-app.post("/join-clan", (req, res) => {
+app.post("/join-clan", async (req, res) => {
     const { name, username } = req.body;
-    let draftData = loadDraftData();
+    let draftData = await loadDraftData();
 
     if (!draftData[name]) {
         return res.status(400).json({ message: "Clan introuvable !" });
@@ -313,16 +314,16 @@ app.post("/join-clan", (req, res) => {
 
 
 // ✅ Route to Delete a Clan
-app.post("/delete-clan", (req, res) => {
+app.post("/delete-clan", async (req, res) => {
     const { clanName } = req.body;
-    let draftData = loadDraftData();
+    let draftData = await loadDraftData();
 
     if (!draftData[clanName]) {
         return res.status(400).json({ message: "Le clan n'existe pas !" });
     }
 
     delete draftData[clanName];
-    saveDraftData(draftData);
+    await saveDraftData(draftData);
     setTimeout(() => {
             io.emit("draftUpdated", draftData);
         }, 2000); // ou 200ms
@@ -344,14 +345,14 @@ app.get("/draft", async (req, res) => {
 });
 
 // 🔥 Route pour sélectionner un joueur pour une équipe
-app.post("/pick-player", (req, res) => {
+app.post("/pick-player", async (req, res) => {
     const { clanName, username, playerName, position } = req.body;
 
     if (!clanName || !username || !playerName || !position) {
         return res.status(400).json({ message: "Données incomplètes." });
     }
 
-    let draftData = loadDraftData();
+    let draftData = await loadDraftData();
     const clan = draftData[clanName];
     if (!clan) return res.status(404).json({ message: "Clan introuvable." });
 
@@ -432,7 +433,7 @@ app.post("/pick-player", (req, res) => {
         // Skip this team and move to the next pick
         if (clan.currentPickIndex < clan.draftOrder.length - 1) {
             clan.currentPickIndex += 1;
-            saveDraftData(draftData);
+            await saveDraftData(draftData);
             return res.status(200).json({ message: "Tour sauté : équipe complète." });
             } else {
                 return res.status(200).json({ message: "Dernier tour atteint." });
@@ -463,7 +464,7 @@ app.post("/pick-player", (req, res) => {
 
     console.log("✅", playerName, "ajouté à", userTeamName);
 
-    saveDraftData(draftData);
+    await saveDraftData(draftData);
 
     setTimeout(() => {
         io.emit("draftUpdated", draftData);
@@ -509,7 +510,7 @@ app.post("/pick-player", (req, res) => {
             });
 
             // Save updated data
-            saveDraftData(draftData);
+            await saveDraftData(draftData);
 
             console.log("✅ Week 1 matchups generated:", weekOneMatchups);
             console.log("📅 Season starts:", nextMonday.toISOString());
@@ -521,9 +522,9 @@ app.post("/pick-player", (req, res) => {
 
 
 // 📌 Route pour récupérer l'ordre du draft d'un clan
-app.get("/draft-order/:clanName", (req, res) => {
+app.get("/draft-order/:clanName", async (req, res) => {
     const { clanName } = req.params;
-    const draftData = loadDraftData();
+    const draftData = await loadDraftData();
 
     if (!draftData[clanName]) {
         return res.status(400).json({ message: "Clan introuvable !" });
@@ -560,18 +561,18 @@ const saveUsers = async (users) => {
     if (USE_POSTGRES) {
         // Note: With PostgreSQL, users are saved individually via createUser/deleteUser
         // This function is kept for compatibility but won't be used much
-        console.warn("⚠️ saveUsers() called with PostgreSQL - users should be created individually");
+        console.warn("⚠️ await saveUsers() called with PostgreSQL - users should be created individually");
     } else {
         fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
     }
 };
 
 // 🔥 Route pour récupérer les drafts actifs
-app.get("/active-drafts", (req, res) => {
+app.get("/active-drafts", async (req, res) => {
     const { username } = req.query;
     if (!username) return res.status(400).json({ message: "Nom d'utilisateur requis !" });
 
-    const draftData = loadDraftData();
+    const draftData = await loadDraftData();
 
     // Recherche des drafts où l'utilisateur est membre d'une équipe
     const activeDrafts = Object.keys(draftData).filter(clan =>
@@ -582,9 +583,9 @@ app.get("/active-drafts", (req, res) => {
 });
 
 // 🔥 Route pour récupérer l'ordre du draft d'un clan
-app.get("/draft-order/:clanName", (req, res) => {
+app.get("/draft-order/:clanName", async (req, res) => {
     const { clanName } = req.params;
-    const draftData = loadDraftData();
+    const draftData = await loadDraftData();
 
     if (!draftData[clanName]) {
         return res.status(400).json({ message: "Clan introuvable !" });
@@ -599,7 +600,7 @@ app.get("/draft-order/:clanName", (req, res) => {
 app.post("/create-clan", async (req, res) => {
     try {
         const { name, maxPlayers, config, poolMode, allowTrades } = req.body;
-        let draftData = loadDraftData();
+        let draftData = await loadDraftData();
 
         if (draftData[name]) {
             return res.status(400).json({ message: "Ce clan existe déjà !" });
@@ -643,7 +644,7 @@ app.post("/create-clan", async (req, res) => {
             };
         }
 
-        saveDraftData(draftData);
+        await saveDraftData(draftData);
         setTimeout(() => {
         io.emit("draftUpdated", draftData);
         }, 2000); // ou 200ms
@@ -660,7 +661,7 @@ app.post("/create-clan", async (req, res) => {
 
 app.post("/delete-clan", async (req, res) => {
     const { clanName } = req.body;
-    let draftData = loadDraftData();
+    let draftData = await loadDraftData();
 
     if (!draftData[clanName]) {
         return res.status(400).json({ message: "Le clan n'existe pas !" });
@@ -668,7 +669,7 @@ app.post("/delete-clan", async (req, res) => {
 
     // Remove the clan from the draft data
     delete draftData[clanName];
-    saveDraftData(draftData);
+    await saveDraftData(draftData);
     setTimeout(() => {
         io.emit("draftUpdated", draftData);
         }, 2000); // ou 200ms
@@ -681,7 +682,7 @@ app.post("/delete-clan", async (req, res) => {
 app.post("/change-team", async (req, res) => {
     try {
         const { name, username, newTeamNumber } = req.body;
-        let draftData = loadDraftData();
+        let draftData = await loadDraftData();
 
         if (!draftData[name] || !draftData[name].teams[newTeamNumber]) {
             return res.status(400).json({ message: "Clan ou équipe introuvable !" });
@@ -707,7 +708,7 @@ app.post("/change-team", async (req, res) => {
         draftData[name].teams[currentTeam[0]].members = draftData[name].teams[currentTeam[0]].members.filter(user => user !== username);
         draftData[name].teams[newTeamNumber].members.push(username);
 
-        saveDraftData(draftData);
+        await saveDraftData(draftData);
         setTimeout(() => {
             io.emit("draftUpdated", draftData);
         }, 2000); // ou 200ms
@@ -723,7 +724,7 @@ app.post("/change-team", async (req, res) => {
 
 app.post("/join-clan", async (req, res) => {
     const { name, username } = req.body;
-    let draftData = loadDraftData();
+    let draftData = await loadDraftData();
 
     if (!draftData[name]) {
         return res.status(400).json({ message: "Clan introuvable !" });
@@ -739,7 +740,7 @@ app.post("/join-clan", async (req, res) => {
     const availableTeam = Object.entries(draftData[name].teams).find(([teamName, teamData]) => teamData.members.length < 5);
     if (availableTeam) {
         draftData[name].teams[availableTeam[0]].members.push(username);
-        saveDraftData(draftData);
+        await saveDraftData(draftData);
         setTimeout(() => {
             io.emit("draftUpdated", draftData);
         }, 2000); // ou 200ms
@@ -757,7 +758,7 @@ app.post("/join-clan", async (req, res) => {
 // 🔥 Route pour rejoindre un clan
 app.post("/join-team", async (req, res) => {
     const { name, username, teamName } = req.body;
-    let draftData = loadDraftData();
+    let draftData = await loadDraftData();
 
     if (!draftData[name] || !draftData[name].teams[teamName]) {
         return res.status(400).json({ message: "Clan ou équipe introuvable !" });
@@ -782,7 +783,7 @@ app.post("/join-team", async (req, res) => {
     });
 
     draftData[name].teams[teamName].members.push(username);
-    saveDraftData(draftData);
+    await saveDraftData(draftData);
     setTimeout(() => {
             io.emit("draftUpdated", draftData);
         }, 2000); // ou 200ms
@@ -799,12 +800,12 @@ app.post("/signup", async (req, res) => {
         const { username, password } = req.body;
         if (!username || !password) return res.status(400).json({ message: "Nom d'utilisateur et mot de passe requis !" });
 
-        let users = loadUsers();
+        let users = await loadUsers();
         if (users.some(user => user.username === username)) return res.status(400).json({ message: "Ce nom d'utilisateur est déjà pris !" });
 
         const hashedPassword = await bcrypt.hash(password, 10);
         users.push({ username, password: hashedPassword });
-        saveUsers(users);
+        await saveUsers(users);
 
         res.json({ message: "Inscription réussie !" });
     } catch (error) {
@@ -817,7 +818,7 @@ app.post("/signup", async (req, res) => {
 app.post("/login", async (req, res) => {
     try {
         const { username, password } = req.body;
-        let users = loadUsers();
+        let users = await loadUsers();
         const user = users.find(u => u.username === username);
 
         if (!user) return res.status(400).json({ message: "Utilisateur non trouvé !" });
@@ -865,7 +866,7 @@ app.post("/admin-switch-user", async (req, res) => {
         }
 
         // Check if target user exists
-        let users = loadUsers();
+        let users = await loadUsers();
         const user = users.find(u => u.username === targetUsername);
 
         if (!user) {
@@ -891,7 +892,7 @@ app.get("/admin-users", async (req, res) => {
             return res.status(403).json({ message: "Accès refusé. Admin seulement." });
         }
 
-        let users = loadUsers();
+        let users = await loadUsers();
         const usernames = users.map(u => u.username);
 
         res.json({ users: usernames });
@@ -908,11 +909,11 @@ app.get("/admin-users", async (req, res) => {
 })();
 
 
-app.post("/start-draft", (req, res) => {
+app.post("/start-draft", async (req, res) => {
     const { clanName } = req.body;
     if (!clanName) return res.status(400).json({ message: "Nom du clan requis." });
 
-    let draftData = loadDraftData();
+    let draftData = await loadDraftData();
     const clan = draftData[clanName];
     if (!clan) return res.status(404).json({ message: "Clan introuvable." });
 
@@ -939,7 +940,7 @@ app.post("/start-draft", (req, res) => {
         const totalPicks = config.numOffensive + config.numDefensive + config.numGoalies + config.numRookies + config.numTeams;
 
         clan.draftOrder = generateSnakeOrder(eligibleTeams, totalPicks);
-        saveDraftData(draftData);
+        await saveDraftData(draftData);
         return res.json({ message: "✅ Draft démarré avec succès avec ordre serpentin !" });
     } else {
         return res.json({ message: "Le draft est déjà en cours." });
@@ -971,11 +972,11 @@ function generateSnakeOrder(teams, rounds = 15) {
 
 
 
-app.post("/randomize-draft-order", (req, res) => {
+app.post("/randomize-draft-order", async (req, res) => {
     const { clanName } = req.body;
     if (!clanName) return res.status(400).json({ message: "Nom du clan requis." });
 
-    let draftData = loadDraftData();
+    let draftData = await loadDraftData();
     const clan = draftData[clanName];
     if (!clan) return res.status(404).json({ message: "Clan introuvable." });
 
@@ -1004,7 +1005,7 @@ app.post("/randomize-draft-order", (req, res) => {
 
     const initialOrder = [...eligibleTeams].sort(() => Math.random() - 0.5);
     clan.draftOrder = generateSnakeOrder(initialOrder, totalPicks);
-    saveDraftData(draftData);
+    await saveDraftData(draftData);
 
     res.json({ message: "Ordre de draft généré en serpentin.", draftOrder: clan.draftOrder });
 });
@@ -1038,9 +1039,9 @@ function checkIfDraftComplete(clan) {
 }
 
 
-app.post("/cleanup-draft", (req, res) => {
+app.post("/cleanup-draft", async (req, res) => {
     const { clanName } = req.body;
-    let draftData = loadDraftData();
+    let draftData = await loadDraftData();
 
     if (!draftData[clanName]) {
         return res.status(400).json({ message: "Clan introuvable." });
@@ -1057,7 +1058,7 @@ app.post("/cleanup-draft", (req, res) => {
         }
     });
 
-    saveDraftData(draftData);
+    await saveDraftData(draftData);
     res.json({ message: "Nettoyage effectué.", draftData: draftData[clanName] });
 });
 
@@ -1628,10 +1629,10 @@ function addToTeam(team, item) {
 }
 
 // Get completed trades for a draft
-app.get('/trades/:draftName', (req, res) => {
+app.get('/trades/:draftName', async (req, res) => {
     try {
         const { draftName } = req.params;
-        const trades = loadTrades();
+        const trades = await loadTrades();
         const draftTrades = (trades.completed || []).filter(t => t.draftName === draftName);
         res.json(draftTrades);
     } catch (error) {
@@ -1641,11 +1642,11 @@ app.get('/trades/:draftName', (req, res) => {
 });
 
 // Get pending trades for a user
-app.get('/trades/pending/:username', (req, res) => {
+app.get('/trades/pending/:username', async (req, res) => {
     try {
         const { username } = req.params;
-        const trades = loadTrades();
-        const draftData = loadDraftData();
+        const trades = await loadTrades();
+        const draftData = await loadDraftData();
 
         // Find all pending trades where user is the recipient
         const userPendingTrades = (trades.pending || []).filter(trade => {
@@ -1664,7 +1665,7 @@ app.get('/trades/pending/:username', (req, res) => {
 });
 
 // Send a trade proposal
-app.post('/trade/propose', (req, res) => {
+app.post('/trade/propose', async (req, res) => {
     try {
         const { draftName, fromTeam, toTeam, offering, receiving } = req.body;
 
@@ -1673,7 +1674,7 @@ app.post('/trade/propose', (req, res) => {
         }
 
         // Check if pool allows trades
-        const draftData = loadDraftData();
+        const draftData = await loadDraftData();
         const pool = draftData[draftName];
         if (!pool) {
             return res.status(404).json({ message: "Pool not found" });
@@ -1701,7 +1702,7 @@ app.post('/trade/propose', (req, res) => {
             });
         }
 
-        const trades = loadTrades();
+        const trades = await loadTrades();
         if (!trades.pending) trades.pending = [];
 
         const tradeId = `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -1718,7 +1719,7 @@ app.post('/trade/propose', (req, res) => {
         };
 
         trades.pending.push(newTrade);
-        saveTrades(trades);
+        await saveTrades(trades);
 
         // Emit socket event for real-time notification
         io.emit('tradePending');
@@ -1733,11 +1734,11 @@ app.post('/trade/propose', (req, res) => {
 });
 
 // Accept a trade
-app.post('/trade/accept', (req, res) => {
+app.post('/trade/accept', async (req, res) => {
     try {
         const { tradeId } = req.body;
-        const trades = loadTrades();
-        const draftData = loadDraftData();
+        const trades = await loadTrades();
+        const draftData = await loadDraftData();
 
         // Find the trade
         const tradeIndex = trades.pending.findIndex(t => t.id === tradeId);
@@ -1791,7 +1792,7 @@ app.post('/trade/accept', (req, res) => {
 
             // Remove this invalid trade from pending
             trades.pending.splice(tradeIndex, 1);
-            saveTrades(trades);
+            await saveTrades(trades);
 
             console.log(`⚠️ Trade ${tradeId} cancelled: players no longer available`);
             return res.status(400).json({ message: errorMsg });
@@ -1808,7 +1809,7 @@ app.post('/trade/accept', (req, res) => {
             addToTeam(fromTeam, item);
         });
 
-        saveDraftData(draftData);
+        await saveDraftData(draftData);
 
         // Move trade from pending to completed
         trades.pending.splice(tradeIndex, 1);
@@ -1820,7 +1821,7 @@ app.post('/trade/accept', (req, res) => {
         // Cancel all other pending trades that involve these players
         const cancelledCount = invalidateConflictingTrades(trades, trade, draftData);
 
-        saveTrades(trades);
+        await saveTrades(trades);
 
         // Emit socket event
         io.emit('tradeUpdated');
@@ -1838,10 +1839,10 @@ app.post('/trade/accept', (req, res) => {
 });
 
 // Decline a trade
-app.post('/trade/decline', (req, res) => {
+app.post('/trade/decline', async (req, res) => {
     try {
         const { tradeId } = req.body;
-        const trades = loadTrades();
+        const trades = await loadTrades();
 
         // Remove from pending
         const tradeIndex = trades.pending.findIndex(t => t.id === tradeId);
@@ -1850,7 +1851,7 @@ app.post('/trade/decline', (req, res) => {
         }
 
         trades.pending.splice(tradeIndex, 1);
-        saveTrades(trades);
+        await saveTrades(trades);
 
         // Emit socket event
         io.emit('tradeUpdated');
@@ -1871,7 +1872,7 @@ app.post('/h2h/finalize-week', async (req, res) => {
             return res.status(400).json({ message: "Pool name required" });
         }
 
-        let draftData = loadDraftData();
+        let draftData = await loadDraftData();
         const clan = draftData[poolName];
 
         if (!clan) {
@@ -1949,7 +1950,7 @@ app.post('/h2h/finalize-week', async (req, res) => {
         clan.h2hData.weekStart = currentWeekStart.toISOString();
 
         // Save updated data
-        saveDraftData(draftData);
+        await saveDraftData(draftData);
 
         // Emit socket event to update all clients
         io.emit('h2hWeekFinalized', { poolName, newWeek: clan.h2hData.currentWeek });
@@ -1976,7 +1977,7 @@ console.log("✅ Trade system initialized");
 // ✅ Auto-check and finalize completed H2H weeks
 async function checkAndFinalizeCompletedWeeks() {
     try {
-        const draftData = loadDraftData();
+        const draftData = await loadDraftData();
         const currentStats = loadCurrentStats();
         let updatedAnyPool = false;
 
@@ -2064,7 +2065,7 @@ async function checkAndFinalizeCompletedWeeks() {
 
         // Save if any pool was updated
         if (updatedAnyPool) {
-            saveDraftData(draftData);
+            await saveDraftData(draftData);
             io.emit('h2hWeekAutoFinalized');
             console.log("💾 H2H data saved after auto-finalization");
         }
@@ -2170,16 +2171,37 @@ function initializeDataFiles() {
     }
 }
 
-// Run initialization in production or when DATA_DIR is not current directory
-if (DATA_DIR !== '.') {
-    console.log('🔧 Initializing data files for production...');
-    initializeDataFiles();
+// ===============================================
+// SERVER INITIALIZATION
+// ===============================================
+
+async function startServer() {
+    try {
+        // Initialize PostgreSQL database if using PostgreSQL
+        if (USE_POSTGRES) {
+            console.log('🗄️  Initializing PostgreSQL database...');
+            await db.initializeDatabase();
+            console.log('✅ PostgreSQL database initialized successfully');
+        } else {
+            // Initialize JSON files if not using PostgreSQL
+            if (DATA_DIR !== '.') {
+                console.log('🔧 Initializing data files for production...');
+                initializeDataFiles();
+            }
+        }
+
+        // ✅ Start Server with WebSockets (after all routes are defined)
+        server.listen(PORT, () => {
+            console.log(`🚀 Serveur WebSocket en cours d'exécution sur http://localhost:${PORT}`);
+            console.log(`🚀 Serveur en cours d'exécution sur http://localhost:${PORT}`);
+            console.log(`📁 Data directory: ${DATA_DIR}`);
+            console.log(`💾 Using ${USE_POSTGRES ? 'PostgreSQL' : 'JSON files'} for data storage`);
+        });
+    } catch (error) {
+        console.error('❌ Failed to start server:', error);
+        process.exit(1);
+    }
 }
 
-// ✅ Start Server with WebSockets (after all routes are defined)
-server.listen(PORT, () => {
-    console.log(`🚀 Serveur WebSocket en cours d'exécution sur http://localhost:${PORT}`);
-    console.log(`🚀 Serveur en cours d'exécution sur http://localhost:${PORT}`);
-    console.log(`📁 Data directory: ${DATA_DIR}`);
-    console.log(`💾 Using ${USE_POSTGRES ? 'PostgreSQL' : 'JSON files'} for data storage`);
-});
+// Start the server
+startServer();
