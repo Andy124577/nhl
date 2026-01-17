@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: willie-pooler
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+    disk:
+      name: nhl-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
