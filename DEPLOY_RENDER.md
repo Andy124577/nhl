@@ -1,8 +1,14 @@
 # Guide de déploiement sur Render.com 🚀
 
-## ✨ Déploiement simplifié (RECOMMANDÉ)
+## ✨ Déploiement avec PostgreSQL GRATUIT
 
-Grâce au fichier `render.yaml` et au script d'initialisation automatique, votre application est **prête à déployer en 3 étapes**!
+Votre application utilise maintenant PostgreSQL gratuit sur Render! Plus besoin de volumes persistants payants.
+
+**Coût total: $0/mois** 🎉
+
+---
+
+## 🚀 Déploiement en 3 étapes
 
 ### Étape 1: Préparer votre code
 
@@ -31,81 +37,148 @@ git push origin main  # ou votre branche principale
 
 Render va automatiquement:
 - ✅ Créer le service web Node.js (gratuit)
-- ✅ Créer le volume persistant de 1GB (~$0.25/mois)
-- ✅ Configurer `NODE_ENV=production`
+- ✅ Créer la base de données PostgreSQL (gratuit)
+- ✅ Créer les tables (users, pools, trades)
+- ✅ Connecter le service à la base de données
 - ✅ Installer les dépendances
-- ✅ Initialiser vos fichiers de données (users.json, draft.json, trades.json)
 - ✅ Démarrer l'application
 
-### Étape 4: Vérifier le déploiement
+---
 
-Attendez 2-5 minutes pendant que Render déploie votre app.
+## 📊 Ce qui est créé
+
+### Service Web
+- **Name**: willie-pooler
+- **Type**: Node.js
+- **Plan**: Free ($0/mois)
+- **RAM**: 512 MB
+- **Auto-deploy**: Activé
+
+### Base de données PostgreSQL
+- **Name**: willie-pooler-db
+- **Database**: nhl_pool
+- **User**: nhl_pool_user
+- **Plan**: Free ($0/mois)
+- **Storage**: 1 GB
+- **Tables**: users, pools, trades
+
+---
+
+## 🔄 Vérifier le déploiement
+
+Attendez 3-5 minutes pendant que Render déploie votre app.
 
 Vous verrez dans les logs:
 ```
-🔧 Initializing data files for production...
-✅ Created data directory: /opt/render/project/src/data
-✅ Initialized users.json from application directory
-✅ Initialized draft.json from application directory
-✅ Initialized trades.json from application directory
-✅ Data initialization complete
-🚀 Serveur en cours d'exécution sur http://localhost:10000
 📁 Data directory: /opt/render/project/src/data
-💾 Using JSON files for data storage
+🗄️  Initializing PostgreSQL database...
+✅ Users table ready
+✅ Pools table ready
+✅ Trades table ready
+✅ Database initialization complete
+✅ PostgreSQL database initialized successfully
+🚀 Serveur en cours d'exécution sur http://localhost:10000
+💾 Using PostgreSQL for data storage
 ```
 
 Votre application sera disponible à: **`https://willie-pooler.onrender.com`**
 
 ---
 
-## 📋 Déploiement manuel (alternative)
+## 📦 Migration des données existantes
 
-Si vous préférez configurer manuellement au lieu d'utiliser render.yaml:
+Si vous avez déjà des utilisateurs, pools et trades dans vos fichiers JSON locaux, vous devez les migrer vers PostgreSQL:
 
-### Étape 1: Créer un Web Service
+### Option A: Via terminal SSH (si disponible sur votre plan)
 
-1. Dashboard Render → **"New +"** → **"Web Service"**
-2. Connectez votre repository `Andy124577/nhl`
-3. Configuration:
-   - **Name**: `willie-pooler`
-   - **Runtime**: `Node`
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
-   - **Plan**: Free
+```bash
+# Se connecter au service
+render ssh willie-pooler
 
-### Étape 2: Ajouter le Volume Persistant
+# Installer les dépendances si nécessaire
+npm install
 
-1. Dans la configuration, allez à **"Disks"**
-2. Cliquez **"Add Disk"**:
-   - **Name**: `nhl-data`
-   - **Mount Path**: `/opt/render/project/src/data`
-   - **Size**: `1 GB`
+# Exécuter le script de migration
+node migrate-to-postgres.js
+```
 
-### Étape 3: Variable d'environnement
+### Option B: Via endpoint temporaire
 
-1. Allez à **"Environment"**
-2. Ajoutez:
-   - **Key**: `NODE_ENV`
-   - **Value**: `production`
+1. Ajoutez temporairement ce code dans `server.js` après les autres routes:
 
-### Étape 4: Déployer
+```javascript
+app.post('/admin/migrate-data', async (req, res) => {
+    try {
+        // Lire les fichiers JSON
+        const users = JSON.parse(fs.readFileSync('./users.json', 'utf-8'));
+        const drafts = JSON.parse(fs.readFileSync('./draft.json', 'utf-8'));
+        const trades = JSON.parse(fs.readFileSync('./trades.json', 'utf-8'));
 
-Cliquez sur **"Create Web Service"**
+        // Migrer users
+        for (const user of users) {
+            await db.createUser(user.username, user.password, user.isAdmin || false);
+        }
+
+        // Migrer pools
+        for (const [poolName, poolData] of Object.entries(drafts)) {
+            await db.createOrUpdatePool(poolName, poolData);
+        }
+
+        // Migrer trades
+        for (const [poolName, poolTrades] of Object.entries(trades)) {
+            if (poolTrades.pending) {
+                for (const trade of poolTrades.pending) {
+                    const id = await db.createTrade(poolName, trade);
+                    await db.updateTradeStatus(id, 'pending');
+                }
+            }
+            if (poolTrades.completed) {
+                for (const trade of poolTrades.completed) {
+                    const id = await db.createTrade(poolName, trade);
+                    await db.updateTradeStatus(id, 'completed');
+                }
+            }
+        }
+
+        res.json({ success: true, message: 'Migration complete!' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+```
+
+2. Déployez le code
+3. Visitez: `https://willie-pooler.onrender.com/admin/migrate-data` (POST request)
+4. **Supprimez cet endpoint après la migration!**
+
+### Option C: Commencer à zéro
+
+Si vous n'avez pas encore de données importantes, vous pouvez simplement commencer à zéro et recréer les utilisateurs et pools.
 
 ---
 
 ## 💰 Coûts
 
-- **Web Service (Free tier)**: **$0/mois**
-  - 750 heures/mois
-  - 512 MB RAM
-  - Redémarre après 15 min d'inactivité
+| Service | Plan | Prix |
+|---------|------|------|
+| Web Service | Free | **$0/mois** |
+| PostgreSQL Database | Free | **$0/mois** |
+| **TOTAL** | | **$0/mois** |
 
-- **Volume Persistant (1 GB)**: **~$0.25/mois**
-  - Données persistent entre redémarrages
-  - Backups automatiques
+### Limitations du plan gratuit
 
-**Total: ~$0.25/mois** 💰
+**Web Service:**
+- 750 heures/mois (suffisant pour 1 app)
+- 512 MB RAM
+- Service dort après 15 min d'inactivité
+- Réveil automatique à la première requête (~30 secondes)
+
+**PostgreSQL:**
+- 1 GB de stockage
+- Connexions limitées (suffisant pour petites apps)
+- Expire après 90 jours d'inactivité
+
+💡 **Astuce:** Pour éviter que votre app dorme, utilisez un service comme [UptimeRobot](https://uptimerobot.com) (gratuit) pour ping votre app toutes les 5 minutes.
 
 ---
 
@@ -113,22 +186,21 @@ Cliquez sur **"Create Web Service"**
 
 ### Déploiement automatique (recommandé)
 
-Activez auto-deploy dans les settings Render:
-1. **Settings** → **Build & Deploy**
-2. Activez **"Auto-Deploy"**
-3. Chaque `git push` déploie automatiquement!
+Render détecte automatiquement les pushs sur votre branche principale et redéploie.
+
+```bash
+git add .
+git commit -m "Update features"
+git push origin main
+```
+
+Render redéploie automatiquement en ~2-3 minutes!
 
 ### Déploiement manuel
 
-1. Commitez vos changements:
-   ```bash
-   git add .
-   git commit -m "Update features"
-   git push origin main
-   ```
-
-2. Dans Render dashboard:
-   - Cliquez sur **"Manual Deploy"** → **"Deploy latest commit"**
+Dans le dashboard Render:
+1. Sélectionnez votre service
+2. Cliquez sur **"Manual Deploy"** → **"Deploy latest commit"**
 
 ---
 
@@ -136,78 +208,130 @@ Activez auto-deploy dans les settings Render:
 
 ### Voir les logs
 
-Dans le dashboard Render:
-1. Sélectionnez votre service
-2. Allez dans **"Logs"**
-3. Vous verrez tous les `console.log()` en temps réel
+Dashboard Render → Votre service → **"Logs"**
 
-### Problèmes communs
+Tous les `console.log()` apparaissent en temps réel.
 
-**❌ Service ne démarre pas:**
+### Problèmes courants
+
+**❌ "Cannot connect to database"**
+- Vérifiez que DATABASE_URL est bien configuré dans les variables d'environnement
+- Vérifiez que la base de données PostgreSQL est bien créée et active
+- Regardez les logs pour plus de détails
+
+**❌ "Table does not exist"**
+- La base de données n'a pas été initialisée
+- Vérifiez les logs au démarrage pour voir si `initializeDatabase()` a réussi
+- Redéployez manuellement si nécessaire
+
+**❌ Service ne démarre pas**
 - Vérifiez les logs pour les erreurs
 - Assurez-vous que `npm start` fonctionne localement
-- Vérifiez que le PORT est bien `process.env.PORT`
-
-**❌ Données perdues après redémarrage:**
-- Vérifiez que le volume est bien monté à `/opt/render/project/src/data`
-- Vérifiez les logs d'initialisation des fichiers
-
-**❌ "Cannot find module":**
 - Vérifiez que toutes les dépendances sont dans `package.json`
-- Relancez le build manuellement
+
+**❌ Service dort trop souvent**
+- C'est normal sur le plan gratuit après 15 min d'inactivité
+- Utilisez UptimeRobot pour ping votre app régulièrement
+- Ou passez au plan payant ($7/mois) pour un service toujours actif
 
 ---
 
-## 📊 Vérifier les données
+## 📊 Accéder à la base de données
 
-### Via SSH (Shell Access)
+### Via Render Dashboard
 
-Render Free tier n'a pas de SSH, mais vous pouvez:
+1. Dashboard → votre base de données PostgreSQL
+2. Onglet **"Info"**
+3. Vous y trouverez:
+   - Hostname
+   - Port
+   - Database name
+   - Username
+   - Password
+   - Connection string
 
-1. Ajouter un endpoint de diagnostic temporaire dans `server.js`:
-   ```javascript
-   app.get('/admin/data-check', (req, res) => {
-       const files = fs.readdirSync(DATA_DIR);
-       const stats = files.map(file => ({
-           file,
-           size: fs.statSync(`${DATA_DIR}/${file}`).size
-       }));
-       res.json({ dataDir: DATA_DIR, files: stats });
-   });
-   ```
+### Avec un client PostgreSQL
 
-2. Visitez: `https://willie-pooler.onrender.com/admin/data-check`
+Utilisez les infos de connexion avec:
+- **pgAdmin** (GUI)
+- **psql** (CLI)
+- **DBeaver** (GUI)
+- **TablePlus** (GUI)
 
-3. **Supprimez cet endpoint après vérification!**
+Exemple avec psql:
+```bash
+psql postgresql://nhl_pool_user:PASSWORD@HOST:PORT/nhl_pool
+```
+
+### Requêtes utiles
+
+```sql
+-- Voir tous les utilisateurs
+SELECT * FROM users;
+
+-- Voir tous les pools
+SELECT pool_name, created_at FROM pools;
+
+-- Voir les échanges en attente
+SELECT * FROM trades WHERE status = 'pending';
+
+-- Compter les données
+SELECT
+    (SELECT COUNT(*) FROM users) as users_count,
+    (SELECT COUNT(*) FROM pools) as pools_count,
+    (SELECT COUNT(*) FROM trades) as trades_count;
+```
 
 ---
 
 ## 🎉 Félicitations!
 
-Votre pool NHL est maintenant en ligne 24/7! 🏒
+Votre pool NHL est maintenant en ligne 24/7 avec PostgreSQL! 🏒
 
 ### URLs importantes
 
 - **Application**: `https://willie-pooler.onrender.com`
 - **Dashboard Render**: `https://dashboard.render.com`
 - **Logs**: Dashboard → Votre service → Logs
+- **Database**: Dashboard → willie-pooler-db
 
 ### Prochaines étapes
 
 1. ✅ Testez toutes les fonctionnalités
-2. ✅ Créez des utilisateurs
-3. ✅ Configurez vos pools
-4. ✅ Invitez vos amis!
+2. ✅ Migrez vos données existantes (si applicable)
+3. ✅ Créez des utilisateurs
+4. ✅ Configurez vos pools
+5. ✅ Invitez vos amis!
+6. ✅ (Optionnel) Configurez UptimeRobot pour éviter le sommeil
 
 ---
 
-## 🔮 Migration PostgreSQL (optionnel - future)
+## 🔧 Configuration avancée
 
-Si un jour vous avez besoin de PostgreSQL (10,000+ utilisateurs):
+### Variables d'environnement
 
-1. Créez une base PostgreSQL gratuite sur Render
-2. Ajoutez `DATABASE_URL` dans les variables d'environnement
-3. Utilisez le script `migrate-to-postgres.js` pour migrer vos données
-4. Le code détectera automatiquement PostgreSQL et l'utilisera
+Pour ajouter des variables d'environnement:
+1. Dashboard → votre service → **"Environment"**
+2. Ajoutez vos variables
+3. Redéployez
 
-Mais pour votre cas d'usage, **le volume persistant est parfait!** 👌
+Variables déjà configurées:
+- `NODE_ENV=production`
+- `DATABASE_URL` (automatique depuis la base de données)
+
+### Custom Domain
+
+Pour utiliser votre propre domaine:
+1. Dashboard → votre service → **"Settings"** → **"Custom Domain"**
+2. Ajoutez votre domaine (ex: `pool.monsite.com`)
+3. Configurez les DNS selon les instructions Render
+
+---
+
+## 🆘 Support
+
+- **Documentation Render**: https://render.com/docs
+- **PostgreSQL Guide**: https://render.com/docs/databases
+- **Community Forum**: https://community.render.com
+
+Bon déploiement! 🚀
