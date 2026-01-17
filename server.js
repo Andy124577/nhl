@@ -76,18 +76,32 @@ const loadDraftData = async () => {
 };
 
 
-const saveDraftData = (data) => {
-    fs.writeFileSync(DRAFT_FILE, JSON.stringify(data, null, 2));
+const saveDraftData = async (data) => {
+    if (USE_POSTGRES) {
+        try {
+            // Save each pool to PostgreSQL
+            for (const [poolName, poolData] of Object.entries(data)) {
+                await db.createOrUpdatePool(poolName, poolData);
+            }
+        } catch (error) {
+            console.error("❌ Error saving to PostgreSQL:", error);
+            // Fallback to JSON file
+            fs.writeFileSync(DRAFT_FILE, JSON.stringify(data, null, 2));
+        }
+    } else {
+        // Use JSON file
+        fs.writeFileSync(DRAFT_FILE, JSON.stringify(data, null, 2));
+    }
 
-    setTimeout(() => {
+    setTimeout(async () => {
         console.log("✅ Reloading fresh data...");
-        const freshData = loadDraftData(); // 🔥 Ensure latest JSON is broadcast
+        const freshData = await loadDraftData(); // 🔥 Ensure latest data is broadcast
         console.log("🔥 Sending fresh draft data via WebSocket:", freshData);
         io.emit("draftUpdated", freshData); // ✅ Broadcast ONLY fresh data
         setTimeout(() => {
-    io.emit("forceRefresh"); // 🔥 Envoie un signal aux clients pour recharger /draft
-}, 500);
-    }, 200); // ✅ Small delay ensures file is fully written before broadcasting
+            io.emit("forceRefresh"); // 🔥 Envoie un signal aux clients pour recharger /draft
+        }, 500);
+    }, 200); // ✅ Small delay ensures data is fully written before broadcasting
 };
 
 // ==============================================
@@ -509,15 +523,38 @@ app.get("/draft-order/:clanName", (req, res) => {
 });
 
 // 📌 Charger et sauvegarder `users.json`
-const loadUsers = () => {
-    try {
-        return JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
-    } catch (error) {
-        console.error("Erreur de lecture des utilisateurs :", error);
-        return [];
+const loadUsers = async () => {
+    if (USE_POSTGRES) {
+        try {
+            return await db.getAllUsers();
+        } catch (error) {
+            console.error("❌ Error loading users from PostgreSQL:", error);
+            // Fallback to JSON file
+            try {
+                return JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
+            } catch (fileError) {
+                return [];
+            }
+        }
+    } else {
+        try {
+            return JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
+        } catch (error) {
+            console.error("Erreur de lecture des utilisateurs :", error);
+            return [];
+        }
     }
 };
-const saveUsers = (users) => fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+
+const saveUsers = async (users) => {
+    if (USE_POSTGRES) {
+        // Note: With PostgreSQL, users are saved individually via createUser/deleteUser
+        // This function is kept for compatibility but won't be used much
+        console.warn("⚠️ saveUsers() called with PostgreSQL - users should be created individually");
+    } else {
+        fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+    }
+};
 
 // 🔥 Route pour récupérer les drafts actifs
 app.get("/active-drafts", (req, res) => {
@@ -1372,25 +1409,96 @@ console.log("✅ NHL team standings system initialized");
 // ==================== TRADE SYSTEM ====================
 
 // Load trades data
-const loadTrades = () => {
-    try {
-        if (fs.existsSync(TRADES_FILE)) {
-            const data = fs.readFileSync(TRADES_FILE, 'utf-8');
-            return JSON.parse(data);
+const loadTrades = async () => {
+    if (USE_POSTGRES) {
+        try {
+            // Get all trades from PostgreSQL and organize by pool
+            const allTrades = await db.getAllTrades();
+            const tradesData = {};
+
+            // Organize trades by pool name
+            allTrades.forEach(trade => {
+                const poolName = trade.poolName || trade.pool_name;
+                if (!tradesData[poolName]) {
+                    tradesData[poolName] = { completed: [], pending: [] };
+                }
+
+                if (trade.status === 'completed') {
+                    tradesData[poolName].completed.push(trade);
+                } else {
+                    tradesData[poolName].pending.push(trade);
+                }
+            });
+
+            return tradesData;
+        } catch (error) {
+            console.error("❌ Error loading trades from PostgreSQL:", error);
+            // Fallback to JSON file
+            try {
+                if (fs.existsSync(TRADES_FILE)) {
+                    const data = fs.readFileSync(TRADES_FILE, 'utf-8');
+                    return JSON.parse(data);
+                }
+            } catch (fileError) {
+                return {};
+            }
         }
-    } catch (error) {
-        console.error("Error loading trades:", error);
+    } else {
+        try {
+            if (fs.existsSync(TRADES_FILE)) {
+                const data = fs.readFileSync(TRADES_FILE, 'utf-8');
+                return JSON.parse(data);
+            }
+        } catch (error) {
+            console.error("Error loading trades:", error);
+        }
     }
-    return { completed: [], pending: [] };
+    return {};
 };
 
 // Save trades data
-const saveTrades = (tradesData) => {
-    try {
-        fs.writeFileSync(TRADES_FILE, JSON.stringify(tradesData, null, 2));
-        console.log("✅ Trades saved successfully");
-    } catch (error) {
-        console.error("Error saving trades:", error);
+const saveTrades = async (tradesData) => {
+    if (USE_POSTGRES) {
+        try {
+            // Note: With PostgreSQL, trades are saved individually via createTrade
+            // This is mainly for batch operations
+            for (const [poolName, poolTrades] of Object.entries(tradesData)) {
+                // Delete existing trades for this pool
+                await db.deleteTradesByPoolName(poolName);
+
+                // Save pending trades
+                if (poolTrades.pending && Array.isArray(poolTrades.pending)) {
+                    for (const trade of poolTrades.pending) {
+                        const tradeId = await db.createTrade(poolName, trade);
+                        await db.updateTradeStatus(tradeId, 'pending');
+                    }
+                }
+
+                // Save completed trades
+                if (poolTrades.completed && Array.isArray(poolTrades.completed)) {
+                    for (const trade of poolTrades.completed) {
+                        const tradeId = await db.createTrade(poolName, trade);
+                        await db.updateTradeStatus(tradeId, 'completed');
+                    }
+                }
+            }
+            console.log("✅ Trades saved successfully to PostgreSQL");
+        } catch (error) {
+            console.error("❌ Error saving trades to PostgreSQL:", error);
+            // Fallback to JSON file
+            try {
+                fs.writeFileSync(TRADES_FILE, JSON.stringify(tradesData, null, 2));
+            } catch (fileError) {
+                console.error("Error saving trades to JSON:", fileError);
+            }
+        }
+    } else {
+        try {
+            fs.writeFileSync(TRADES_FILE, JSON.stringify(tradesData, null, 2));
+            console.log("✅ Trades saved successfully");
+        } catch (error) {
+            console.error("Error saving trades:", error);
+        }
     }
 };
 
