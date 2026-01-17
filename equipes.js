@@ -1,6 +1,6 @@
 const BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:3000"
-  : "https://goondraft.onrender.com";
+  : window.location.origin;
 
 $(document).ready(function() {
     const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";

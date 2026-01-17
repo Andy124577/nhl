@@ -446,7 +446,7 @@ async function loadAdminUsers() {
     try {
         const BASE_URL = window.location.hostname.includes("localhost")
             ? "http://localhost:3000"
-            : "https://goondraft.onrender.com";
+            : window.location.origin;
 
         const response = await fetch(`${BASE_URL}/admin-users?adminToken=admin`);
         const data = await response.json();
@@ -497,7 +497,7 @@ async function switchToUser(event, username) {
     try {
         const BASE_URL = window.location.hostname.includes("localhost")
             ? "http://localhost:3000"
-            : "https://goondraft.onrender.com";
+            : window.location.origin;
 
         const response = await fetch(`${BASE_URL}/admin-switch-user`, {
             method: 'POST',
@@ -537,7 +537,7 @@ async function checkPendingTrades() {
     try {
         const BASE_URL = window.location.hostname.includes("localhost")
             ? "http://localhost:3000"
-            : "https://goondraft.onrender.com";
+            : window.location.origin;
 
         const username = localStorage.getItem("username");
         const activePool = localStorage.getItem("activePool");
