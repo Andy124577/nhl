@@ -6,7 +6,7 @@ let currentStats = null;
 let currentTeams = null;
 const BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:3000"
-  : "https://goondraft.onrender.com";
+  : window.location.origin;
 
 // Admin functionality
 function initializeAdminUI() {
