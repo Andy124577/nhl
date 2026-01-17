@@ -332,10 +332,15 @@ app.post("/delete-clan", (req, res) => {
 });
 
 // 📌 Route pour récupérer tous les pools et équipes
-app.get("/draft", (req, res) => {
-    const draftData = loadDraftData();
-    console.log("📤 Draft envoyé :", Object.keys(draftData)); // 👈 Ajoute ceci
-    res.json(draftData);
+app.get("/draft", async (req, res) => {
+    try {
+        const draftData = await loadDraftData();
+        console.log("📤 Draft envoyé :", Object.keys(draftData));
+        res.json(draftData);
+    } catch (error) {
+        console.error("Error loading draft data:", error);
+        res.status(500).json({ error: "Failed to load draft data" });
+    }
 });
 
 // 🔥 Route pour sélectionner un joueur pour une équipe
