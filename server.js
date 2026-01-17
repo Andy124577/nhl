@@ -2082,8 +2082,99 @@ setInterval(() => {
 
 console.log("✅ H2H auto-finalization scheduler initialized (checks every 6 hours)");
 
+// ===============================================
+// DATA INITIALIZATION FOR PRODUCTION
+// ===============================================
+
+/**
+ * Initialize data files in persistent volume for production
+ * Copies initial JSON files to the volume if they don't exist
+ */
+function initializeDataFiles() {
+    try {
+        // Create data directory if it doesn't exist
+        if (!fs.existsSync(DATA_DIR)) {
+            fs.mkdirSync(DATA_DIR, { recursive: true });
+            console.log(`✅ Created data directory: ${DATA_DIR}`);
+        }
+
+        // Files to initialize with their source and destination
+        const dataFiles = [
+            {
+                name: 'users.json',
+                source: './users.json',
+                dest: USERS_FILE,
+                defaultContent: '[]'
+            },
+            {
+                name: 'draft.json',
+                source: './draft.json',
+                dest: DRAFT_FILE,
+                defaultContent: '{}'
+            },
+            {
+                name: 'trades.json',
+                source: './trades.json',
+                dest: TRADES_FILE,
+                defaultContent: '{}'
+            },
+            {
+                name: 'current_stats.json',
+                source: './current_stats.json',
+                dest: CURRENT_STATS_FILE,
+                defaultContent: '{"players":[],"lastUpdated":null}'
+            },
+            {
+                name: 'current_teams.json',
+                source: './current_teams.json',
+                dest: CURRENT_TEAMS_FILE,
+                defaultContent: '{"teams":[],"lastUpdated":null}'
+            }
+        ];
+
+        dataFiles.forEach(({ name, source, dest, defaultContent }) => {
+            // Skip if destination file already exists
+            if (fs.existsSync(dest)) {
+                console.log(`⊙ ${name} already exists in data directory`);
+                return;
+            }
+
+            // Try to copy from source file in app directory
+            if (fs.existsSync(source) && source !== dest) {
+                try {
+                    fs.copyFileSync(source, dest);
+                    console.log(`✅ Initialized ${name} from application directory`);
+                    return;
+                } catch (copyError) {
+                    console.warn(`⚠️  Could not copy ${name}:`, copyError.message);
+                }
+            }
+
+            // Create with default content if source doesn't exist
+            try {
+                fs.writeFileSync(dest, defaultContent);
+                console.log(`✅ Created ${name} with default content`);
+            } catch (writeError) {
+                console.error(`❌ Could not create ${name}:`, writeError.message);
+            }
+        });
+
+        console.log('✅ Data initialization complete');
+    } catch (error) {
+        console.error('❌ Error during data initialization:', error);
+    }
+}
+
+// Run initialization in production or when DATA_DIR is not current directory
+if (DATA_DIR !== '.') {
+    console.log('🔧 Initializing data files for production...');
+    initializeDataFiles();
+}
+
 // ✅ Start Server with WebSockets (after all routes are defined)
 server.listen(PORT, () => {
     console.log(`🚀 Serveur WebSocket en cours d'exécution sur http://localhost:${PORT}`);
     console.log(`🚀 Serveur en cours d'exécution sur http://localhost:${PORT}`);
+    console.log(`📁 Data directory: ${DATA_DIR}`);
+    console.log(`💾 Using ${USE_POSTGRES ? 'PostgreSQL' : 'JSON files'} for data storage`);
 });
