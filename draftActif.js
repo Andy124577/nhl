@@ -10,7 +10,7 @@ const PICKS_PER_PAGE = 5;
 
 const BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:3000"
-  : "https://goondraft.onrender.com";
+  : window.location.origin;
 
 
 console.log("🔍 draftClan:", localStorage.getItem("draftClan"));

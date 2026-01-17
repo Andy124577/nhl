@@ -35,7 +35,7 @@ Remplissez le formulaire:
 - Entrez: `Willie Pooler NHL`
 
 **URL (or IP):**
-- Entrez: `https://willie-pooler.onrender.com`
+- Entrez: `https://fantazy.ca`
   - (Remplacez par votre URL Render réelle)
 
 **Monitoring Interval:**
@@ -90,8 +90,8 @@ Vous serez notifié si:
 ### Moniteurs multiples (gratuit)
 
 Le plan gratuit permet **50 moniteurs**! Vous pouvez ajouter:
-- Moniteur principal: `https://willie-pooler.onrender.com`
-- Moniteur API: `https://willie-pooler.onrender.com/draft`
+- Moniteur principal: `https://fantazy.ca`
+- Moniteur API: `https://fantazy.ca/draft`
 - Moniteur santé: Un endpoint `/health` personnalisé
 
 ### Endpoint de santé personnalisé
@@ -109,7 +109,7 @@ app.get('/health', (req, res) => {
 });
 ```
 
-Puis configurez UptimeRobot pour ping: `https://willie-pooler.onrender.com/health`
+Puis configurez UptimeRobot pour ping: `https://fantazy.ca/health`
 
 ---
 
@@ -230,7 +230,7 @@ Votre configuration devrait ressembler à:
 ```
 Monitor Name: Willie Pooler NHL
 Type: HTTP(s)
-URL: https://willie-pooler.onrender.com
+URL: https://fantazy.ca
 Interval: Every 5 minutes
 Timeout: 30 seconds
 Status: Up ✅
