@@ -69,6 +69,17 @@ async function initializeDatabase() {
             CREATE INDEX IF NOT EXISTS idx_trades_status ON trades(status);
         `);
 
+        // Create cached_stats table for storing NHL API stats
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS cached_stats (
+                id SERIAL PRIMARY KEY,
+                cache_key VARCHAR(100) UNIQUE NOT NULL,
+                data JSONB NOT NULL,
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        console.log('✅ Cached stats table ready');
+
         console.log('✅ Database initialization complete');
     } catch (error) {
         console.error('❌ Error initializing database:', error);
@@ -256,6 +267,51 @@ async function deleteTradesByPoolName(poolName) {
 // EXPORTS
 // =============================================
 
+// ==================== CACHED STATS FUNCTIONS ====================
+
+// Save or update cached stats
+async function saveCachedStats(cacheKey, data) {
+    const client = await pool.connect();
+    try {
+        await client.query(`
+            INSERT INTO cached_stats (cache_key, data, last_updated)
+            VALUES ($1, $2, NOW())
+            ON CONFLICT (cache_key)
+            DO UPDATE SET data = $2, last_updated = NOW()
+        `, [cacheKey, JSON.stringify(data)]);
+        console.log(`✅ Cached stats saved: ${cacheKey}`);
+    } catch (error) {
+        console.error(`❌ Error saving cached stats for ${cacheKey}:`, error);
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
+// Load cached stats
+async function loadCachedStats(cacheKey) {
+    const client = await pool.connect();
+    try {
+        const result = await client.query(
+            'SELECT data, last_updated FROM cached_stats WHERE cache_key = $1',
+            [cacheKey]
+        );
+
+        if (result.rows.length > 0) {
+            return {
+                ...result.rows[0].data,
+                lastUpdated: result.rows[0].last_updated
+            };
+        }
+        return null;
+    } catch (error) {
+        console.error(`❌ Error loading cached stats for ${cacheKey}:`, error);
+        return null;
+    } finally {
+        client.release();
+    }
+}
+
 module.exports = {
     pool,
     initializeDatabase,
@@ -276,5 +332,8 @@ module.exports = {
     createTrade,
     updateTradeStatus,
     deleteTrade,
-    deleteTradesByPoolName
+    deleteTradesByPoolName,
+    // Cached Stats
+    saveCachedStats,
+    loadCachedStats
 };

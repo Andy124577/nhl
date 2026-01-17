@@ -1189,7 +1189,7 @@ async function updateCurrentStats() {
     console.log("🔄 Starting NHL stats update...");
 
     // Load existing stats to preserve as "previous"
-    const existingStats = loadCurrentStats();
+    const existingStats = await loadCurrentStats();
     const previousPlayers = existingStats.players || [];
 
     const allPlayers = loadAllPlayers();
@@ -1229,18 +1229,27 @@ async function updateCurrentStats() {
         players: newPlayers
     };
 
-    // Save to file
-    fs.writeFileSync(CURRENT_STATS_FILE, JSON.stringify(currentStats, null, 2));
+    // Save to database or file
+    if (USE_POSTGRES) {
+        await db.saveCachedStats('current-stats', currentStats);
+    } else {
+        fs.writeFileSync(CURRENT_STATS_FILE, JSON.stringify(currentStats, null, 2));
+    }
     console.log(`✅ NHL stats updated successfully! ${currentStats.players.length} players cached.`);
 
     return currentStats;
 }
 
 // Load cached stats or return empty structure
-function loadCurrentStats() {
+async function loadCurrentStats() {
     try {
-        if (fs.existsSync(CURRENT_STATS_FILE)) {
-            return JSON.parse(fs.readFileSync(CURRENT_STATS_FILE, "utf-8"));
+        if (USE_POSTGRES) {
+            const stats = await db.loadCachedStats('current-stats');
+            if (stats) return stats;
+        } else {
+            if (fs.existsSync(CURRENT_STATS_FILE)) {
+                return JSON.parse(fs.readFileSync(CURRENT_STATS_FILE, "utf-8"));
+            }
         }
     } catch (error) {
         console.error("❌ Error loading current stats:", error);
@@ -1255,7 +1264,7 @@ function loadCurrentStats() {
 // Route to get current stats
 app.get("/current-stats", async (req, res) => {
     try {
-        let stats = loadCurrentStats();
+        let stats = await loadCurrentStats();
 
         // If no cached stats or cache is older than 24 hours, update
         if (!stats.lastUpdated) {
@@ -1357,7 +1366,7 @@ async function updateTeamStandings() {
 
     if (!teams || teams.length === 0) {
         console.log('⚠️ No team data fetched');
-        return loadCurrentTeams();
+        return await loadCurrentTeams();
     }
 
     const teamStats = {
@@ -1365,18 +1374,27 @@ async function updateTeamStandings() {
         teams: teams
     };
 
-    // Save to file
-    fs.writeFileSync(CURRENT_TEAMS_FILE, JSON.stringify(teamStats, null, 2));
+    // Save to database or file
+    if (USE_POSTGRES) {
+        await db.saveCachedStats('current-teams', teamStats);
+    } else {
+        fs.writeFileSync(CURRENT_TEAMS_FILE, JSON.stringify(teamStats, null, 2));
+    }
     console.log(`✅ Team standings updated successfully! ${teams.length} teams cached.`);
 
     return teamStats;
 }
 
 // Load cached team standings
-function loadCurrentTeams() {
+async function loadCurrentTeams() {
     try {
-        if (fs.existsSync(CURRENT_TEAMS_FILE)) {
-            return JSON.parse(fs.readFileSync(CURRENT_TEAMS_FILE, 'utf-8'));
+        if (USE_POSTGRES) {
+            const teams = await db.loadCachedStats('current-teams');
+            if (teams) return teams;
+        } else {
+            if (fs.existsSync(CURRENT_TEAMS_FILE)) {
+                return JSON.parse(fs.readFileSync(CURRENT_TEAMS_FILE, 'utf-8'));
+            }
         }
     } catch (error) {
         console.error('❌ Error loading current teams:', error);
@@ -1391,7 +1409,7 @@ function loadCurrentTeams() {
 // Route to get current team standings
 app.get('/current-teams', async (req, res) => {
     try {
-        let stats = loadCurrentTeams();
+        let stats = await loadCurrentTeams();
 
         // If no cached stats or cache is older than 24 hours, update
         if (!stats.lastUpdated) {
@@ -1884,7 +1902,7 @@ app.post('/h2h/finalize-week', async (req, res) => {
         }
 
         // Get current stats for points calculation
-        const currentStats = loadCurrentStats();
+        const currentStats = await loadCurrentStats();
 
         // Calculate results for the current week
         const currentWeek = clan.h2hData.currentWeek;
@@ -1978,7 +1996,7 @@ console.log("✅ Trade system initialized");
 async function checkAndFinalizeCompletedWeeks() {
     try {
         const draftData = await loadDraftData();
-        const currentStats = loadCurrentStats();
+        const currentStats = await loadCurrentStats();
         let updatedAnyPool = false;
 
         for (const [poolName, clan] of Object.entries(draftData)) {
