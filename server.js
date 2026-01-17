@@ -11,15 +11,20 @@ const db = require("./db"); // ✅ PostgreSQL database module
 
 const app = express();
 const PORT = process.env.PORT || 3000; // ✅ Use Render's PORT
-const USERS_FILE = "./users.json";
-const DRAFT_FILE = "./draft.json";
-const TRADES_FILE = "./trades.json";
-const NHL_STATS_FILE = "./nhl_filtered_stats.json";
-const CURRENT_STATS_FILE = "./current_stats.json";
-const CURRENT_TEAMS_FILE = "./current_teams.json";
 
-// Use PostgreSQL if DATABASE_URL is set (production), otherwise use JSON files (development)
+// Data directory - use persistent volume in production, local directory in development
+const DATA_DIR = process.env.NODE_ENV === 'production' ? '/opt/render/project/src/data' : '.';
+const USERS_FILE = `${DATA_DIR}/users.json`;
+const DRAFT_FILE = `${DATA_DIR}/draft.json`;
+const TRADES_FILE = `${DATA_DIR}/trades.json`;
+const NHL_STATS_FILE = "./nhl_filtered_stats.json"; // Stats file stays in app directory
+const CURRENT_STATS_FILE = `${DATA_DIR}/current_stats.json`;
+const CURRENT_TEAMS_FILE = `${DATA_DIR}/current_teams.json`;
+
+// Use PostgreSQL if DATABASE_URL is set, otherwise use JSON files
 const USE_POSTGRES = !!process.env.DATABASE_URL;
+
+console.log(`📁 Data directory: ${DATA_DIR}`);
 
 const server = http.createServer(app);
 const io = socketIo(server, { cors: { origin: "*" } }); // ✅ allow public access for now
