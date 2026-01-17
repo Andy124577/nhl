@@ -7,15 +7,25 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path"); // ✅ for static paths
 const cron = require("node-cron");
+const db = require("./db"); // ✅ PostgreSQL database module
 
 const app = express();
 const PORT = process.env.PORT || 3000; // ✅ Use Render's PORT
-const USERS_FILE = "./users.json";
-const DRAFT_FILE = "./draft.json";
-const TRADES_FILE = "./trades.json";
-const NHL_STATS_FILE = "./nhl_filtered_stats.json";
-const CURRENT_STATS_FILE = "./current_stats.json";
-const CURRENT_TEAMS_FILE = "./current_teams.json";
+
+// Data directory - use persistent volume in production, local directory in development
+const DATA_DIR = process.env.NODE_ENV === 'production' ? '/opt/render/project/src/data' : '.';
+const USERS_FILE = `${DATA_DIR}/users.json`;
+const DRAFT_FILE = `${DATA_DIR}/draft.json`;
+const TRADES_FILE = `${DATA_DIR}/trades.json`;
+const NHL_STATS_FILE = "./nhl_filtered_stats.json"; // Stats file stays in app directory
+const CURRENT_STATS_FILE = `${DATA_DIR}/current_stats.json`;
+const CURRENT_TEAMS_FILE = `${DATA_DIR}/current_teams.json`;
+
+// Use PostgreSQL if DATABASE_URL is set, otherwise use JSON files
+const USE_POSTGRES = !!process.env.DATABASE_URL;
+
+console.log(`📁 Data directory: ${DATA_DIR}`);
+
 const server = http.createServer(app);
 const io = socketIo(server, { cors: { origin: "*" } }); // ✅ allow public access for now
 
@@ -45,32 +55,58 @@ app.use((req, res, next) => {
     next();
 });
 
-// ✅ Function to Load & Save Draft Data
-const loadDraftData = () => {
-    try {
-        const raw = fs.readFileSync(DRAFT_FILE, "utf-8");
-        const parsed = JSON.parse(raw);
-        console.log("✅ Contenu de draft.json :", Object.keys(parsed));
-        return parsed;
-    } catch (error) {
-        console.error("❌ Erreur de lecture du draft :", error);
-        return {};
+console.log(`🗄️  Database mode: ${USE_POSTGRES ? 'PostgreSQL' : 'JSON Files'}`);
+
+// ✅ Function to Load & Save Draft Data (supports both PostgreSQL and JSON)
+const loadDraftData = async () => {
+    if (USE_POSTGRES) {
+        try {
+            return await db.getAllPools();
+        } catch (error) {
+            console.error("❌ Error loading from PostgreSQL:", error);
+            return {};
+        }
+    } else {
+        // Fallback to JSON file
+        try {
+            const raw = fs.readFileSync(DRAFT_FILE, "utf-8");
+            const parsed = JSON.parse(raw);
+            console.log("✅ Contenu de draft.json :", Object.keys(parsed));
+            return parsed;
+        } catch (error) {
+            console.error("❌ Erreur de lecture du draft :", error);
+            return {};
+        }
     }
 };
 
 
-const saveDraftData = (data) => {
-    fs.writeFileSync(DRAFT_FILE, JSON.stringify(data, null, 2));
+const saveDraftData = async (data) => {
+    if (USE_POSTGRES) {
+        try {
+            // Save each pool to PostgreSQL
+            for (const [poolName, poolData] of Object.entries(data)) {
+                await db.createOrUpdatePool(poolName, poolData);
+            }
+        } catch (error) {
+            console.error("❌ Error saving to PostgreSQL:", error);
+            // Fallback to JSON file
+            fs.writeFileSync(DRAFT_FILE, JSON.stringify(data, null, 2));
+        }
+    } else {
+        // Use JSON file
+        fs.writeFileSync(DRAFT_FILE, JSON.stringify(data, null, 2));
+    }
 
-    setTimeout(() => {
+    setTimeout(async () => {
         console.log("✅ Reloading fresh data...");
-        const freshData = loadDraftData(); // 🔥 Ensure latest JSON is broadcast
+        const freshData = await loadDraftData(); // 🔥 Ensure latest data is broadcast
         console.log("🔥 Sending fresh draft data via WebSocket:", freshData);
         io.emit("draftUpdated", freshData); // ✅ Broadcast ONLY fresh data
         setTimeout(() => {
-    io.emit("forceRefresh"); // 🔥 Envoie un signal aux clients pour recharger /draft
-}, 500);
-    }, 200); // ✅ Small delay ensures file is fully written before broadcasting
+            io.emit("forceRefresh"); // 🔥 Envoie un signal aux clients pour recharger /draft
+        }, 500);
+    }, 200); // ✅ Small delay ensures data is fully written before broadcasting
 };
 
 // ==============================================
@@ -492,15 +528,38 @@ app.get("/draft-order/:clanName", (req, res) => {
 });
 
 // 📌 Charger et sauvegarder `users.json`
-const loadUsers = () => {
-    try {
-        return JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
-    } catch (error) {
-        console.error("Erreur de lecture des utilisateurs :", error);
-        return [];
+const loadUsers = async () => {
+    if (USE_POSTGRES) {
+        try {
+            return await db.getAllUsers();
+        } catch (error) {
+            console.error("❌ Error loading users from PostgreSQL:", error);
+            // Fallback to JSON file
+            try {
+                return JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
+            } catch (fileError) {
+                return [];
+            }
+        }
+    } else {
+        try {
+            return JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
+        } catch (error) {
+            console.error("Erreur de lecture des utilisateurs :", error);
+            return [];
+        }
     }
 };
-const saveUsers = (users) => fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+
+const saveUsers = async (users) => {
+    if (USE_POSTGRES) {
+        // Note: With PostgreSQL, users are saved individually via createUser/deleteUser
+        // This function is kept for compatibility but won't be used much
+        console.warn("⚠️ saveUsers() called with PostgreSQL - users should be created individually");
+    } else {
+        fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+    }
+};
 
 // 🔥 Route pour récupérer les drafts actifs
 app.get("/active-drafts", (req, res) => {
@@ -1355,25 +1414,96 @@ console.log("✅ NHL team standings system initialized");
 // ==================== TRADE SYSTEM ====================
 
 // Load trades data
-const loadTrades = () => {
-    try {
-        if (fs.existsSync(TRADES_FILE)) {
-            const data = fs.readFileSync(TRADES_FILE, 'utf-8');
-            return JSON.parse(data);
+const loadTrades = async () => {
+    if (USE_POSTGRES) {
+        try {
+            // Get all trades from PostgreSQL and organize by pool
+            const allTrades = await db.getAllTrades();
+            const tradesData = {};
+
+            // Organize trades by pool name
+            allTrades.forEach(trade => {
+                const poolName = trade.poolName || trade.pool_name;
+                if (!tradesData[poolName]) {
+                    tradesData[poolName] = { completed: [], pending: [] };
+                }
+
+                if (trade.status === 'completed') {
+                    tradesData[poolName].completed.push(trade);
+                } else {
+                    tradesData[poolName].pending.push(trade);
+                }
+            });
+
+            return tradesData;
+        } catch (error) {
+            console.error("❌ Error loading trades from PostgreSQL:", error);
+            // Fallback to JSON file
+            try {
+                if (fs.existsSync(TRADES_FILE)) {
+                    const data = fs.readFileSync(TRADES_FILE, 'utf-8');
+                    return JSON.parse(data);
+                }
+            } catch (fileError) {
+                return {};
+            }
         }
-    } catch (error) {
-        console.error("Error loading trades:", error);
+    } else {
+        try {
+            if (fs.existsSync(TRADES_FILE)) {
+                const data = fs.readFileSync(TRADES_FILE, 'utf-8');
+                return JSON.parse(data);
+            }
+        } catch (error) {
+            console.error("Error loading trades:", error);
+        }
     }
-    return { completed: [], pending: [] };
+    return {};
 };
 
 // Save trades data
-const saveTrades = (tradesData) => {
-    try {
-        fs.writeFileSync(TRADES_FILE, JSON.stringify(tradesData, null, 2));
-        console.log("✅ Trades saved successfully");
-    } catch (error) {
-        console.error("Error saving trades:", error);
+const saveTrades = async (tradesData) => {
+    if (USE_POSTGRES) {
+        try {
+            // Note: With PostgreSQL, trades are saved individually via createTrade
+            // This is mainly for batch operations
+            for (const [poolName, poolTrades] of Object.entries(tradesData)) {
+                // Delete existing trades for this pool
+                await db.deleteTradesByPoolName(poolName);
+
+                // Save pending trades
+                if (poolTrades.pending && Array.isArray(poolTrades.pending)) {
+                    for (const trade of poolTrades.pending) {
+                        const tradeId = await db.createTrade(poolName, trade);
+                        await db.updateTradeStatus(tradeId, 'pending');
+                    }
+                }
+
+                // Save completed trades
+                if (poolTrades.completed && Array.isArray(poolTrades.completed)) {
+                    for (const trade of poolTrades.completed) {
+                        const tradeId = await db.createTrade(poolName, trade);
+                        await db.updateTradeStatus(tradeId, 'completed');
+                    }
+                }
+            }
+            console.log("✅ Trades saved successfully to PostgreSQL");
+        } catch (error) {
+            console.error("❌ Error saving trades to PostgreSQL:", error);
+            // Fallback to JSON file
+            try {
+                fs.writeFileSync(TRADES_FILE, JSON.stringify(tradesData, null, 2));
+            } catch (fileError) {
+                console.error("Error saving trades to JSON:", fileError);
+            }
+        }
+    } else {
+        try {
+            fs.writeFileSync(TRADES_FILE, JSON.stringify(tradesData, null, 2));
+            console.log("✅ Trades saved successfully");
+        } catch (error) {
+            console.error("Error saving trades:", error);
+        }
     }
 };
 
@@ -1952,8 +2082,99 @@ setInterval(() => {
 
 console.log("✅ H2H auto-finalization scheduler initialized (checks every 6 hours)");
 
+// ===============================================
+// DATA INITIALIZATION FOR PRODUCTION
+// ===============================================
+
+/**
+ * Initialize data files in persistent volume for production
+ * Copies initial JSON files to the volume if they don't exist
+ */
+function initializeDataFiles() {
+    try {
+        // Create data directory if it doesn't exist
+        if (!fs.existsSync(DATA_DIR)) {
+            fs.mkdirSync(DATA_DIR, { recursive: true });
+            console.log(`✅ Created data directory: ${DATA_DIR}`);
+        }
+
+        // Files to initialize with their source and destination
+        const dataFiles = [
+            {
+                name: 'users.json',
+                source: './users.json',
+                dest: USERS_FILE,
+                defaultContent: '[]'
+            },
+            {
+                name: 'draft.json',
+                source: './draft.json',
+                dest: DRAFT_FILE,
+                defaultContent: '{}'
+            },
+            {
+                name: 'trades.json',
+                source: './trades.json',
+                dest: TRADES_FILE,
+                defaultContent: '{}'
+            },
+            {
+                name: 'current_stats.json',
+                source: './current_stats.json',
+                dest: CURRENT_STATS_FILE,
+                defaultContent: '{"players":[],"lastUpdated":null}'
+            },
+            {
+                name: 'current_teams.json',
+                source: './current_teams.json',
+                dest: CURRENT_TEAMS_FILE,
+                defaultContent: '{"teams":[],"lastUpdated":null}'
+            }
+        ];
+
+        dataFiles.forEach(({ name, source, dest, defaultContent }) => {
+            // Skip if destination file already exists
+            if (fs.existsSync(dest)) {
+                console.log(`⊙ ${name} already exists in data directory`);
+                return;
+            }
+
+            // Try to copy from source file in app directory
+            if (fs.existsSync(source) && source !== dest) {
+                try {
+                    fs.copyFileSync(source, dest);
+                    console.log(`✅ Initialized ${name} from application directory`);
+                    return;
+                } catch (copyError) {
+                    console.warn(`⚠️  Could not copy ${name}:`, copyError.message);
+                }
+            }
+
+            // Create with default content if source doesn't exist
+            try {
+                fs.writeFileSync(dest, defaultContent);
+                console.log(`✅ Created ${name} with default content`);
+            } catch (writeError) {
+                console.error(`❌ Could not create ${name}:`, writeError.message);
+            }
+        });
+
+        console.log('✅ Data initialization complete');
+    } catch (error) {
+        console.error('❌ Error during data initialization:', error);
+    }
+}
+
+// Run initialization in production or when DATA_DIR is not current directory
+if (DATA_DIR !== '.') {
+    console.log('🔧 Initializing data files for production...');
+    initializeDataFiles();
+}
+
 // ✅ Start Server with WebSockets (after all routes are defined)
 server.listen(PORT, () => {
     console.log(`🚀 Serveur WebSocket en cours d'exécution sur http://localhost:${PORT}`);
     console.log(`🚀 Serveur en cours d'exécution sur http://localhost:${PORT}`);
+    console.log(`📁 Data directory: ${DATA_DIR}`);
+    console.log(`💾 Using ${USE_POSTGRES ? 'PostgreSQL' : 'JSON files'} for data storage`);
 });
