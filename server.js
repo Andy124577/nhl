@@ -7,6 +7,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path"); // ✅ for static paths
 const cron = require("node-cron");
+const db = require("./db"); // ✅ PostgreSQL database module
 
 const app = express();
 const PORT = process.env.PORT || 3000; // ✅ Use Render's PORT
@@ -16,6 +17,10 @@ const TRADES_FILE = "./trades.json";
 const NHL_STATS_FILE = "./nhl_filtered_stats.json";
 const CURRENT_STATS_FILE = "./current_stats.json";
 const CURRENT_TEAMS_FILE = "./current_teams.json";
+
+// Use PostgreSQL if DATABASE_URL is set (production), otherwise use JSON files (development)
+const USE_POSTGRES = !!process.env.DATABASE_URL;
+
 const server = http.createServer(app);
 const io = socketIo(server, { cors: { origin: "*" } }); // ✅ allow public access for now
 
@@ -45,16 +50,28 @@ app.use((req, res, next) => {
     next();
 });
 
-// ✅ Function to Load & Save Draft Data
-const loadDraftData = () => {
-    try {
-        const raw = fs.readFileSync(DRAFT_FILE, "utf-8");
-        const parsed = JSON.parse(raw);
-        console.log("✅ Contenu de draft.json :", Object.keys(parsed));
-        return parsed;
-    } catch (error) {
-        console.error("❌ Erreur de lecture du draft :", error);
-        return {};
+console.log(`🗄️  Database mode: ${USE_POSTGRES ? 'PostgreSQL' : 'JSON Files'}`);
+
+// ✅ Function to Load & Save Draft Data (supports both PostgreSQL and JSON)
+const loadDraftData = async () => {
+    if (USE_POSTGRES) {
+        try {
+            return await db.getAllPools();
+        } catch (error) {
+            console.error("❌ Error loading from PostgreSQL:", error);
+            return {};
+        }
+    } else {
+        // Fallback to JSON file
+        try {
+            const raw = fs.readFileSync(DRAFT_FILE, "utf-8");
+            const parsed = JSON.parse(raw);
+            console.log("✅ Contenu de draft.json :", Object.keys(parsed));
+            return parsed;
+        } catch (error) {
+            console.error("❌ Erreur de lecture du draft :", error);
+            return {};
+        }
     }
 };
 
