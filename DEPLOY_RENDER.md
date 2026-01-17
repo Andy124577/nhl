@@ -81,7 +81,7 @@ Vous verrez dans les logs:
 💾 Using PostgreSQL for data storage
 ```
 
-Votre application sera disponible à: **`https://willie-pooler.onrender.com`**
+Votre application sera disponible à: **`https://fantazy.ca`**
 
 ---
 
@@ -148,7 +148,7 @@ app.post('/admin/migrate-data', async (req, res) => {
 ```
 
 2. Déployez le code
-3. Visitez: `https://willie-pooler.onrender.com/admin/migrate-data` (POST request)
+3. Visitez: `https://fantazy.ca/admin/migrate-data` (POST request)
 4. **Supprimez cet endpoint après la migration!**
 
 ### Option C: Commencer à zéro
@@ -290,7 +290,7 @@ Votre pool NHL est maintenant en ligne 24/7 avec PostgreSQL! 🏒
 
 ### URLs importantes
 
-- **Application**: `https://willie-pooler.onrender.com`
+- **Application**: `https://fantazy.ca`
 - **Dashboard Render**: `https://dashboard.render.com`
 - **Logs**: Dashboard → Votre service → Logs
 - **Database**: Dashboard → willie-pooler-db
