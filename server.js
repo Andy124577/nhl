@@ -599,7 +599,7 @@ app.get("/draft-order/:clanName", async (req, res) => {
 // 🔥 Route pour créer un clan
 app.post("/create-clan", async (req, res) => {
     try {
-        const { name, maxPlayers, config, poolMode, allowTrades } = req.body;
+        const { name, maxPlayers, config, poolMode, allowTrades, username } = req.body;
         let draftData = await loadDraftData();
 
         if (draftData[name]) {
@@ -619,6 +619,11 @@ app.post("/create-clan", async (req, res) => {
         let teams = {};
         for (let i = 1; i <= 10; i++) {
             teams[`Équipe ${i}`] = { members: [], offensive: [], defensive: [], goalie: [], rookie: [], teams: [] };
+        }
+
+        // ✅ Automatically add the creator to Équipe 1
+        if (username) {
+            teams['Équipe 1'].members.push(username);
         }
 
         // Initialize pool data
@@ -651,7 +656,11 @@ app.post("/create-clan", async (req, res) => {
         // 🔔 Notifie tous les clients
 
         // ✅ Return fully updated draft data
-        res.json({ message: `Clan ${name} créé avec succès !`, draftData });
+        res.json({
+            message: `Pool "${name}" créé avec succès ! Vous avez été ajouté à l'Équipe 1.`,
+            draftData,
+            autoJoined: !!username
+        });
 
     } catch (error) {
         console.error("Erreur lors de la création du clan :", error);
@@ -810,6 +819,56 @@ app.post("/signup", async (req, res) => {
         res.json({ message: "Inscription réussie !" });
     } catch (error) {
         console.error("Erreur lors de l'inscription :", error);
+        res.status(500).json({ message: "Erreur interne du serveur." });
+    }
+});
+
+// 🧪 Route to create test users (admin only - use with caution)
+app.post("/create-test-users", async (req, res) => {
+    try {
+        const { adminToken } = req.body;
+
+        // Simple security check - only allow with admin token
+        if (adminToken !== 'admin') {
+            return res.status(403).json({ message: "Accès non autorisé" });
+        }
+
+        const testUsers = [
+            { username: 'alex', password: 'test123' },
+            { username: 'marie', password: 'test123' },
+            { username: 'jean', password: 'test123' },
+            { username: 'sophie', password: 'test123' },
+            { username: 'thomas', password: 'test123' },
+            { username: 'emma', password: 'test123' },
+        ];
+
+        let users = await loadUsers();
+        const created = [];
+        const skipped = [];
+
+        for (const testUser of testUsers) {
+            if (users.some(user => user.username === testUser.username)) {
+                skipped.push(testUser.username);
+                continue;
+            }
+
+            const hashedPassword = await bcrypt.hash(testUser.password, 10);
+            users.push({ username: testUser.username, password: hashedPassword, isAdmin: false });
+            created.push(testUser.username);
+        }
+
+        if (created.length > 0) {
+            await saveUsers(users);
+        }
+
+        res.json({
+            message: `Utilisateurs de test créés avec succès!`,
+            created: created,
+            skipped: skipped,
+            info: "Mot de passe pour tous: test123"
+        });
+    } catch (error) {
+        console.error("Erreur lors de la création des utilisateurs de test:", error);
         res.status(500).json({ message: "Erreur interne du serveur." });
     }
 });
