@@ -197,7 +197,12 @@ async function createClan() {
         });
 
         if (response.ok) {
+            const result = await response.json();
             console.log("✅ Pool créé avec succès !");
+
+            // Show success message with auto-join confirmation
+            alert(`✅ ${result.message}\n\nVous pouvez maintenant inviter d'autres participants !`);
+
             // Clear form
             $("#clanName").val("");
             $("#numOffensive").val("6");
@@ -205,7 +210,10 @@ async function createClan() {
             $("#numGoalies").val("1");
             $("#numRookies").val("1");
             $("#numTeams").val("1");
-            await loadClans(); // 🔄 Recharge immédiatement les données
+
+            // Reload clans and switch to "Mes pools" tab
+            await loadClans();
+            showTab('mypools');
         } else {
             const error = await response.json();
             alert(`Erreur lors de la création du pool: ${error.message || 'Erreur inconnue'}`);
