@@ -9,12 +9,10 @@ services:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        fromDatabase:
-          name: willie-pooler-db
-          property: connectionString
+        # Set this manually in Render Dashboard with your external PostgreSQL URL
+        # Example: postgresql://user:pass@host.neon.tech/dbname?sslmode=require
+        sync: false
 
-databases:
-  - name: willie-pooler-db
-    databaseName: nhl_pool
-    user: nhl_pool_user
-    plan: free
+# External database configuration (Neon.tech, Supabase, etc.)
+# No database section needed - using external PostgreSQL to save Render hours
+# This gives you 750h/month for the web service instead of 375h
