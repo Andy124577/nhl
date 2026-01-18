@@ -23,7 +23,8 @@ function initModernNavbar() {
     if (!navbar) return;
 
     if (!isLoggedIn) {
-        // Show navbar even if not logged in (it will be empty or show login state)
+        // Show logged-out navbar with login/signup buttons
+        buildLoggedOutNavbar();
         navbar.classList.add('navbar-ready');
         return;
     }
@@ -42,6 +43,58 @@ function initModernNavbar() {
 
     // Show the navbar now that it's ready
     navbar.classList.add('navbar-ready');
+}
+
+// Build logged-out navbar (for users not connected)
+function buildLoggedOutNavbar() {
+    const navbar = document.querySelector('.navbar');
+    if (!navbar) return;
+
+    const navHTML = `
+        <!-- Center: Logo & Title -->
+        <div class="navbar-center" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 12px;">
+            <img src="Icons/williePooler.png" alt="Willie Pooler" class="navbar-logo" style="width: 40px; height: 40px;">
+            <span class="navbar-title" style="font-size: 1.5rem; font-weight: bold; color: #fff;">Willie Pooler</span>
+        </div>
+
+        <!-- Right: Login & Signup Buttons -->
+        <div class="navbar-right" style="display: flex; gap: 12px; align-items: center;">
+            <a href="login.html" class="btn-login" style="padding: 8px 20px; background: transparent; color: #fff; border: 2px solid #fff; border-radius: 8px; text-decoration: none; font-weight: 500; transition: all 0.3s ease;">
+                Connexion
+            </a>
+            <a href="signup.html" class="btn-signup" style="padding: 8px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 8px; text-decoration: none; font-weight: 500; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
+                Inscription
+            </a>
+        </div>
+    `;
+
+    navbar.innerHTML = navHTML;
+
+    // Add hover effects via JavaScript
+    const btnLogin = navbar.querySelector('.btn-login');
+    const btnSignup = navbar.querySelector('.btn-signup');
+
+    if (btnLogin) {
+        btnLogin.addEventListener('mouseenter', () => {
+            btnLogin.style.background = '#fff';
+            btnLogin.style.color = '#1a1a1a';
+        });
+        btnLogin.addEventListener('mouseleave', () => {
+            btnLogin.style.background = 'transparent';
+            btnLogin.style.color = '#fff';
+        });
+    }
+
+    if (btnSignup) {
+        btnSignup.addEventListener('mouseenter', () => {
+            btnSignup.style.transform = 'translateY(-2px)';
+            btnSignup.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
+        });
+        btnSignup.addEventListener('mouseleave', () => {
+            btnSignup.style.transform = 'translateY(0)';
+            btnSignup.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+        });
+    }
 }
 
 // Build navbar HTML structure
