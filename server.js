@@ -809,12 +809,28 @@ app.post("/signup", async (req, res) => {
         const { username, password } = req.body;
         if (!username || !password) return res.status(400).json({ message: "Nom d'utilisateur et mot de passe requis !" });
 
-        let users = await loadUsers();
-        if (users.some(user => user.username === username)) return res.status(400).json({ message: "Ce nom d'utilisateur est déjà pris !" });
+        // Check if user already exists
+        if (USE_POSTGRES) {
+            const existingUser = await db.getUserByUsername(username);
+            if (existingUser) {
+                return res.status(400).json({ message: "Ce nom d'utilisateur est déjà pris !" });
+            }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        users.push({ username, password: hashedPassword });
-        await saveUsers(users);
+            // Create user in PostgreSQL
+            const hashedPassword = await bcrypt.hash(password, 10);
+            await db.createUser(username, hashedPassword, false);
+            console.log(`✅ User "${username}" created in PostgreSQL`);
+        } else {
+            // JSON file mode
+            let users = await loadUsers();
+            if (users.some(user => user.username === username)) {
+                return res.status(400).json({ message: "Ce nom d'utilisateur est déjà pris !" });
+            }
+
+            const hashedPassword = await bcrypt.hash(password, 10);
+            users.push({ username, password: hashedPassword });
+            await saveUsers(users);
+        }
 
         res.json({ message: "Inscription réussie !" });
     } catch (error) {
@@ -877,8 +893,16 @@ app.post("/create-test-users", async (req, res) => {
 app.post("/login", async (req, res) => {
     try {
         const { username, password } = req.body;
-        let users = await loadUsers();
-        const user = users.find(u => u.username === username);
+
+        let user;
+        if (USE_POSTGRES) {
+            // Get user with password from PostgreSQL
+            user = await db.getUserByUsername(username);
+        } else {
+            // JSON file mode
+            let users = await loadUsers();
+            user = users.find(u => u.username === username);
+        }
 
         if (!user) return res.status(400).json({ message: "Utilisateur non trouvé !" });
 
