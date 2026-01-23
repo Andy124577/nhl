@@ -51,10 +51,9 @@ function buildLoggedOutNavbar() {
     if (!navbar) return;
 
     const navHTML = `
-        <!-- Center: Logo & Title -->
-        <div class="navbar-center" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 12px;">
-            <img src="Icons/fantazy.jpg" alt="Fantazy" class="navbar-logo" style="width: 40px; height: 40px;">
-            <span class="navbar-title" style="font-size: 1.5rem; font-weight: bold; color: #fff;">Fantazy</span>
+        <!-- Center: Logo -->
+        <div class="navbar-center" style="flex: 1; display: flex; align-items: center; justify-content: center;">
+            <img src="Icons/fantazy.png" alt="Fantazy" class="navbar-logo" style="height: 40px;">
         </div>
 
         <!-- Right: Login & Signup Buttons -->
@@ -113,10 +112,9 @@ function buildNavbarStructure(username, isAdmin, currentPage) {
             </button>
         </div>
 
-        <!-- Center: Logo & Title -->
+        <!-- Center: Logo -->
         <div class="navbar-center">
-            <img src="Icons/fantazy.jpg" alt="Fantazy" class="navbar-logo">
-            <span class="navbar-title">Fantazy</span>
+            <img src="Icons/fantazy.png" alt="Fantazy" class="navbar-logo">
         </div>
 
         <!-- Desktop Navigation (hidden on mobile) -->
