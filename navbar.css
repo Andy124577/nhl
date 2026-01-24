@@ -52,14 +52,15 @@ body {
 
 /* Pool Badge Button (opens pool selector modal) */
 .pool-badge {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(102, 126, 234, 0.15);
+    border: 1px solid rgba(102, 126, 234, 0.3);
     border-radius: 8px;
     padding: 6px 12px;
     color: #fff;
     font-size: 0.85rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.25s ease;
     max-width: 120px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -67,8 +68,10 @@ body {
 }
 
 .pool-badge:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(102, 126, 234, 0.25);
+    border-color: rgba(102, 126, 234, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 /* User Avatar Button */
@@ -118,48 +121,57 @@ body {
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    color: rgba(255, 255, 255, 0.6);
-    transition: all 0.3s ease;
+    color: rgba(255, 255, 255, 0.5);
+    transition: all 0.25s ease;
     position: relative;
     padding: 8px 0;
 }
 
 .bottom-nav-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
+    background: rgba(102, 126, 234, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.bottom-nav-item:hover .bottom-nav-icon {
+    transform: translateY(-2px);
+    opacity: 1;
 }
 
 .bottom-nav-item.active {
-    color: #667eea;
+    color: #fff;
+    background: rgba(102, 126, 234, 0.15);
 }
 
 .bottom-nav-item.active::before {
     content: '';
     position: absolute;
     top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 40px;
+    left: 0;
+    right: 0;
     height: 3px;
     background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
     border-radius: 0 0 3px 3px;
 }
 
 .bottom-nav-icon {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     margin-bottom: 4px;
-    opacity: 0.8;
+    opacity: 0.7;
+    transition: all 0.25s ease;
+    filter: brightness(0.9);
 }
 
 .bottom-nav-item.active .bottom-nav-icon {
     opacity: 1;
+    filter: brightness(1.1) drop-shadow(0 0 8px rgba(102, 126, 234, 0.4));
 }
 
 .bottom-nav-label {
-    font-size: 0.7rem;
-    font-weight: 500;
+    font-size: 0.72rem;
+    font-weight: 600;
     text-transform: capitalize;
+    letter-spacing: 0.3px;
 }
 
 /* Trade badge on bottom nav */
@@ -167,14 +179,16 @@ body {
     position: absolute;
     top: 8px;
     right: calc(50% - 20px);
-    background: #ff4757;
+    background: linear-gradient(135deg, #ff4757 0%, #ff6b7a 100%);
     color: #fff;
-    border-radius: 10px;
-    padding: 2px 6px;
-    font-size: 0.65rem;
-    font-weight: bold;
-    min-width: 18px;
+    border-radius: 12px;
+    padding: 3px 7px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    min-width: 20px;
     text-align: center;
+    box-shadow: 0 2px 8px rgba(255, 71, 87, 0.5);
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
 }
 
 /* ========================================
@@ -243,23 +257,29 @@ body {
 
 .pool-option {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
     padding: 12px 16px;
     margin-bottom: 10px;
-    color: #fff;
+    color: rgba(255, 255, 255, 0.9);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.25s ease;
+    font-weight: 500;
 }
 
 .pool-option:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(102, 126, 234, 0.2);
+    border-color: rgba(102, 126, 234, 0.4);
+    color: #fff;
+    transform: translateX(4px);
 }
 
 .pool-option.active {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-color: transparent;
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 /* ========================================
@@ -298,21 +318,30 @@ body {
 
 .user-dropdown-item {
     padding: 12px 16px;
-    color: #fff;
+    color: rgba(255, 255, 255, 0.9);
     cursor: pointer;
-    transition: background 0.3s ease;
+    transition: all 0.25s ease;
     display: flex;
     align-items: center;
     gap: 10px;
+    font-weight: 500;
 }
 
 .user-dropdown-item:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(102, 126, 234, 0.2);
+    color: #fff;
+    padding-left: 20px;
 }
 
 .user-dropdown-item.logout {
-    color: #ff4757;
+    color: #ff6b7a;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+}
+
+.user-dropdown-item.logout:hover {
+    background: rgba(255, 71, 87, 0.15);
+    color: #ff4757;
 }
 
 .user-avatar {
@@ -370,37 +399,42 @@ body {
 
     .desktop-nav-item {
         padding: 8px 16px;
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(255, 255, 255, 0.75);
         text-decoration: none;
         border-radius: 8px;
-        transition: all 0.3s ease;
+        transition: all 0.25s ease;
         font-size: 0.95rem;
         font-weight: 500;
         position: relative;
     }
 
     .desktop-nav-item:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(102, 126, 234, 0.15);
         color: #fff;
+        transform: translateY(-1px);
     }
 
     .desktop-nav-item.active {
-        background: rgba(102, 126, 234, 0.2);
-        color: #667eea;
+        background: rgba(102, 126, 234, 0.25);
+        color: #fff;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
     }
 
     .desktop-nav-item .notif-badge {
         position: absolute;
         top: 4px;
         right: 4px;
-        background: #ff4757;
+        background: linear-gradient(135deg, #ff4757 0%, #ff6b7a 100%);
         color: #fff;
-        border-radius: 10px;
-        padding: 2px 6px;
+        border-radius: 12px;
+        padding: 3px 7px;
         font-size: 0.7rem;
-        font-weight: bold;
-        min-width: 18px;
+        font-weight: 700;
+        min-width: 20px;
         text-align: center;
+        box-shadow: 0 2px 8px rgba(255, 71, 87, 0.5);
+        border: 1.5px solid rgba(255, 255, 255, 0.2);
     }
 
     .desktop-pool-selector {
@@ -411,23 +445,35 @@ body {
     }
 
     .desktop-pool-selector label {
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(255, 255, 255, 0.85);
         font-size: 0.9rem;
+        font-weight: 500;
     }
 
     .desktop-pool-selector select {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(102, 126, 234, 0.15);
+        border: 1px solid rgba(102, 126, 234, 0.3);
         border-radius: 8px;
         padding: 6px 12px;
         color: #fff;
         font-size: 0.9rem;
+        font-weight: 600;
         cursor: pointer;
         min-width: 150px;
+        transition: all 0.25s ease;
     }
 
     .desktop-pool-selector select:hover {
-        background: rgba(255, 255, 255, 0.15);
+        background: rgba(102, 126, 234, 0.25);
+        border-color: rgba(102, 126, 234, 0.5);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .desktop-pool-selector select option {
+        background: #2d2d2d;
+        color: #fff;
+        padding: 8px;
     }
 }
 
