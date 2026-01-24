@@ -1,6 +1,6 @@
 /* ========================================
-   MODERN NAVBAR - COMPLETE REDESIGN
-   Mobile-first, clean, practical design
+   MOBILE-FIRST NAVBAR REDESIGN
+   Bottom navigation bar like poolexpert.ca / nhl.com
    ======================================== */
 
 /* Reset and Base */
@@ -10,8 +10,12 @@
     box-sizing: border-box;
 }
 
+body {
+    padding-bottom: 70px; /* Space for bottom nav on mobile */
+}
+
 /* ========================================
-   MOBILE FIRST - BASE STYLES
+   TOP BAR (Mobile & Desktop)
    ======================================== */
 
 .navbar {
@@ -27,692 +31,489 @@
     padding: 0 15px;
 }
 
-/* Left Section - Hamburger Menu */
-.navbar-left {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.hamburger-menu {
-    width: 28px;
-    height: 28px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-}
-
-.hamburger-menu span {
-    width: 100%;
-    height: 3px;
-    background: #ff2e2e;
-    border-radius: 2px;
-    transition: all 0.3s ease;
-}
-
-.hamburger-menu.active span:nth-child(1) {
-    transform: rotate(45deg) translate(9px, 9px);
-}
-
-.hamburger-menu.active span:nth-child(2) {
-    opacity: 0;
-}
-
-.hamburger-menu.active span:nth-child(3) {
-    transform: rotate(-45deg) translate(8px, -8px);
-}
-
-/* Center Section - Logo & Title */
+/* Logo */
 .navbar-center {
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex: 1;
     justify-content: center;
 }
 
 .navbar-logo {
-    height: 40px;
+    height: 28px;
     width: auto;
 }
 
-.navbar-title {
-    color: white;
-    font-size: 1.3rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    font-family: 'Bebas Neue', 'Arial Black', sans-serif;
-    letter-spacing: 1px;
-}
-
-/* Right Section - User Controls */
+/* Right section - Profile & Pool selector */
 .navbar-right {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-/* Pool Selector Badge (Mobile) */
+/* Pool Badge Button (opens pool selector modal) */
 .pool-badge {
-    background: #ff2e2e;
-    color: white;
-    padding: 6px 10px;
-    border-radius: 20px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: #fff;
+    font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.2s ease;
-    max-width: 80px;
+    transition: all 0.3s ease;
+    max-width: 120px;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .pool-badge:hover {
-    background: #e02525;
-    transform: scale(1.05);
-}
-
-.pool-badge.no-pool {
-    background: #555;
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* User Avatar Button */
 .user-avatar-btn {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #ff2e2e, #cc2525);
-    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: 0.85rem;
+    color: #fff;
+    font-weight: bold;
     cursor: pointer;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.2s ease;
+    font-size: 1rem;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
 }
 
 .user-avatar-btn:hover {
-    border-color: rgba(255, 255, 255, 0.5);
-    transform: scale(1.1);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
 }
 
-/* Slide-out Menu */
-.slide-menu {
+/* ========================================
+   BOTTOM NAVIGATION BAR (Mobile Only)
+   ======================================== */
+
+.bottom-nav {
+    display: flex;
     position: fixed;
-    top: 0;
-    left: -100%;
-    width: 280px;
-    height: 100vh;
-    background: #1a1a1a;
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
-    z-index: 999;
-    transition: left 0.3s ease;
-    overflow-y: auto;
-    padding: 80px 0 20px;
-}
-
-.slide-menu.active {
+    bottom: 0;
     left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    height: 70px;
+    padding: 0;
 }
 
-/* Menu Header */
-.menu-header {
-    padding: 0 20px 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 10px;
-}
-
-.menu-header h3 {
-    color: #ff2e2e;
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* Menu Items */
-.menu-item {
+.bottom-nav-item {
+    flex: 1;
     display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 15px 20px;
-    color: white;
-    text-decoration: none;
-    font-size: 0.95rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    border-left: 3px solid transparent;
-}
-
-.menu-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-left-color: #ff2e2e;
-}
-
-.menu-item.active {
-    background: rgba(255, 46, 46, 0.1);
-    border-left-color: #ff2e2e;
-    color: #ff2e2e;
-}
-
-.menu-item img {
-    width: 22px;
-    height: 22px;
-    filter: brightness(0) invert(1);
-}
-
-.menu-item.active img {
-    filter: brightness(0) saturate(100%) invert(27%) sepia(94%) saturate(6289%) hue-rotate(352deg) brightness(98%) contrast(112%);
-}
-
-.menu-item .notif-badge {
-    margin-left: auto;
-    background: #4caf50;
-    color: white;
-    border-radius: 10px;
-    padding: 2px 8px;
-    font-size: 0.7rem;
-    font-weight: 700;
-}
-
-/* Pool Selector in Menu */
-.menu-pool-section {
-    padding: 15px 20px;
-    background: rgba(255, 255, 255, 0.03);
-    margin: 10px 0;
-}
-
-.menu-pool-section label {
-    color: #888;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    display: block;
-    margin-bottom: 8px;
-}
-
-.menu-pool-section select {
-    width: 100%;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-    color: white;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.menu-pool-section select:focus {
-    outline: none;
-    border-color: #ff2e2e;
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.menu-pool-section select option {
-    background: #2d2d2d;
-    color: white;
-}
-
-/* Admin Section */
-.menu-admin-section {
-    padding: 15px 20px;
-    background: rgba(255, 46, 46, 0.05);
-    margin: 10px 0;
-}
-
-.menu-admin-title {
-    color: #ff2e2e;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-}
-
-.admin-user-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 6px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-decoration: none;
-    color: white;
-}
-
-.admin-user-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.admin-user-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #ff2e2e, #cc2525);
-    color: white;
-    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: 0.85rem;
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.6);
+    transition: all 0.3s ease;
+    position: relative;
+    padding: 8px 0;
 }
 
-.admin-user-name {
-    flex: 1;
-    font-size: 0.9rem;
-    font-weight: 600;
+.bottom-nav-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
 }
 
-/* Logout Button */
-.menu-logout {
-    margin: 20px;
-    padding: 14px;
-    background: #ff2e2e;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    width: calc(100% - 40px);
+.bottom-nav-item.active {
+    color: #667eea;
 }
 
-.menu-logout:hover {
-    background: #e02525;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 46, 46, 0.3);
-}
-
-/* Backdrop */
-.menu-backdrop {
-    position: fixed;
+.bottom-nav-item.active::before {
+    content: '';
+    position: absolute;
     top: 0;
-    left: 0;
-    width: 100%;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.7);
-    z-index: 998;
-    display: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 3px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 0 0 3px 3px;
 }
 
-.menu-backdrop.active {
-    display: block;
+.bottom-nav-icon {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 4px;
+    opacity: 0.8;
+}
+
+.bottom-nav-item.active .bottom-nav-icon {
     opacity: 1;
 }
 
-/* Desktop Navigation (hidden on mobile) */
-.desktop-nav {
-    display: none;
+.bottom-nav-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: capitalize;
 }
 
-/* Desktop Pool Selector (hidden on mobile) */
-.desktop-pool-selector {
-    display: none;
+/* Trade badge on bottom nav */
+.bottom-nav-item .notif-badge {
+    position: absolute;
+    top: 8px;
+    right: calc(50% - 20px);
+    background: #ff4757;
+    color: #fff;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 0.65rem;
+    font-weight: bold;
+    min-width: 18px;
+    text-align: center;
 }
 
-/* Desktop User Dropdown (hidden on mobile) */
+/* ========================================
+   POOL SELECTOR MODAL
+   ======================================== */
+
+.pool-selector-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 2000;
+    padding: 20px;
+}
+
+.pool-selector-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pool-selector-content {
+    background: #2d2d2d;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 400px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.pool-selector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.pool-selector-header h3 {
+    color: #fff;
+    font-size: 1.2rem;
+}
+
+.pool-selector-close {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.3s ease;
+}
+
+.pool-selector-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.pool-option {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pool-option:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.pool-option.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: transparent;
+}
+
+/* ========================================
+   USER DROPDOWN MENU
+   ======================================== */
+
+.user-menu-dropdown {
+    position: relative;
+}
+
 .user-dropdown-menu {
     display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: #2d2d2d;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    min-width: 200px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-dropdown-menu.show {
+    display: block;
+}
+
+.user-dropdown-header {
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-dropdown-item {
+    padding: 12px 16px;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.user-dropdown-item.logout {
+    color: #ff4757;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.85rem;
 }
 
 /* ========================================
-   SMALL MOBILE LANDSCAPE / PHABLET (480px+)
-   Better scaling for medium devices
+   DESKTOP STYLES (768px and up)
    ======================================== */
-@media (min-width: 480px) {
-    .navbar {
-        padding: 0 20px;
-    }
 
-    .pool-badge {
-        max-width: 100px;
-        padding: 7px 12px;
-        font-size: 0.72rem;
-    }
-
-    .user-avatar-btn {
-        width: 34px;
-        height: 34px;
-        font-size: 0.88rem;
-    }
-
-    .navbar-logo {
-        height: 42px;
-    }
-
-    .navbar-title {
-        font-size: 1.35rem;
-    }
-}
-
-/* ========================================
-   TABLET (768px - 1023px)
-   Show some desktop elements
-   ======================================== */
 @media (min-width: 768px) {
-    .navbar {
-        height: 65px;
-        padding: 0 25px;
+    body {
+        padding-bottom: 0; /* Remove bottom padding on desktop */
     }
 
-    .navbar-logo {
-        height: 45px;
-    }
-
-    .navbar-title {
-        font-size: 1.5rem;
-    }
-
-    .pool-badge {
-        max-width: 120px;
-        padding: 7px 14px;
-        font-size: 0.75rem;
-    }
-
-    .user-avatar-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 0.9rem;
-    }
-
-    .slide-menu {
-        width: 320px;
-    }
-}
-
-/* ========================================
-   DESKTOP (1024px+)
-   Full horizontal navbar
-   ======================================== */
-@media (min-width: 1024px) {
-    .navbar {
-        height: 70px;
-        padding: 0 30px;
-    }
-
-    /* Hide mobile elements */
-    .hamburger-menu {
+    /* Hide bottom nav on desktop */
+    .bottom-nav {
         display: none;
-    }
-
-    .pool-badge {
-        display: none;
-    }
-
-    /* Restructure layout */
-    .navbar-center {
-        justify-content: flex-start;
-        flex: 0;
-    }
-
-    .navbar-logo {
-        height: 50px;
-    }
-
-    .navbar-title {
-        font-size: 1.6rem;
     }
 
     /* Show desktop navigation */
+    .navbar {
+        padding: 0 30px;
+    }
+
+    .navbar-left {
+        flex: 1;
+    }
+
+    .navbar-center {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .navbar-right {
+        flex: 1;
+        justify-content: flex-end;
+    }
+
+    /* Desktop horizontal navigation */
     .desktop-nav {
         display: flex;
-        align-items: center;
         gap: 8px;
-        flex: 1;
-        padding: 0 20px;
+        align-items: center;
     }
 
     .desktop-nav-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 14px;
-        color: white;
+        padding: 8px 16px;
+        color: rgba(255, 255, 255, 0.8);
         text-decoration: none;
-        font-size: 0.9rem;
-        font-weight: 600;
-        border-radius: 6px;
-        transition: all 0.2s ease;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+        font-weight: 500;
         position: relative;
     }
 
     .desktop-nav-item:hover {
         background: rgba(255, 255, 255, 0.1);
+        color: #fff;
     }
 
     .desktop-nav-item.active {
-        background: rgba(255, 46, 46, 0.15);
-        color: #ff2e2e;
+        background: rgba(102, 126, 234, 0.2);
+        color: #667eea;
     }
 
     .desktop-nav-item .notif-badge {
         position: absolute;
-        top: -4px;
-        right: -4px;
-        background: #4caf50;
-        color: white;
+        top: 4px;
+        right: 4px;
+        background: #ff4757;
+        color: #fff;
         border-radius: 10px;
         padding: 2px 6px;
-        font-size: 0.65rem;
-        font-weight: 700;
+        font-size: 0.7rem;
+        font-weight: bold;
+        min-width: 18px;
+        text-align: center;
     }
 
-    /* Pool Selector on Desktop */
     .desktop-pool-selector {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 0 15px;
-        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        gap: 8px;
+        margin-right: 20px;
     }
 
     .desktop-pool-selector label {
-        color: #888;
-        font-size: 0.8rem;
-        font-weight: 600;
-        white-space: nowrap;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9rem;
     }
 
     .desktop-pool-selector select {
-        padding: 8px 12px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 6px;
-        color: white;
-        font-size: 0.85rem;
-        font-weight: 600;
-        cursor: pointer;
-        min-width: 180px;
-        transition: all 0.2s ease;
-    }
-
-    .desktop-pool-selector select:focus {
-        outline: none;
-        border-color: #ff2e2e;
-        background: rgba(255, 255, 255, 0.08);
-    }
-
-    .desktop-pool-selector select option {
-        background: #2d2d2d;
-        color: white;
-    }
-
-    /* Desktop User Menu */
-    .navbar-right {
-        gap: 15px;
-        border-left: 1px solid rgba(255, 255, 255, 0.1);
-        padding-left: 15px;
-    }
-
-    .user-menu-dropdown {
-        position: relative;
-    }
-
-    .user-avatar-btn {
-        width: 44px;
-        height: 44px;
-        font-size: 1.1rem;
-    }
-
-    .user-dropdown-menu {
-        position: absolute;
-        top: calc(100% + 10px);
-        right: 0;
-        background: #1a1a1a;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 8px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-        min-width: 220px;
-        display: none;
-        opacity: 0;
-        transform: translateY(-10px);
-        transition: all 0.2s ease;
-        z-index: 1001;
-    }
-
-    .user-dropdown-menu.active {
-        display: block;
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    .user-dropdown-header {
-        padding: 12px 16px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        color: #888;
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .user-dropdown-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 16px;
-        color: white;
-        text-decoration: none;
+        padding: 6px 12px;
+        color: #fff;
         font-size: 0.9rem;
-        font-weight: 600;
-        transition: all 0.2s ease;
         cursor: pointer;
+        min-width: 150px;
     }
 
-    .user-dropdown-item:hover {
-        background: rgba(255, 255, 255, 0.05);
+    .desktop-pool-selector select:hover {
+        background: rgba(255, 255, 255, 0.15);
     }
+}
 
-    .user-dropdown-item.logout {
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        color: #ff2e2e;
-    }
+/* ========================================
+   MOBILE ONLY STYLES (below 768px)
+   ======================================== */
 
-    .user-dropdown-item.logout:hover {
-        background: rgba(255, 46, 46, 0.1);
-    }
-
-    /* Hide slide menu on desktop */
-    .slide-menu {
-        display: none;
-    }
-
-    .menu-backdrop {
+@media (max-width: 767px) {
+    /* Hide desktop navigation */
+    .desktop-nav {
         display: none !important;
     }
-}
-
-/* ========================================
-   LARGE DESKTOP (1280px+)
-   More spacing
-   ======================================== */
-@media (min-width: 1280px) {
-    .navbar {
-        padding: 0 40px;
-    }
-
-    .desktop-nav {
-        gap: 12px;
-        padding: 0 30px;
-    }
-
-    .desktop-nav-item {
-        padding: 10px 18px;
-        font-size: 0.95rem;
-    }
 
     .desktop-pool-selector {
-        padding: 0 20px;
+        display: none !important;
     }
 
-    .desktop-pool-selector label {
-        font-size: 0.85rem;
+    /* Show bottom nav */
+    .bottom-nav {
+        display: flex;
     }
 
-    .desktop-pool-selector select {
-        min-width: 200px;
-        font-size: 0.9rem;
-        padding: 9px 14px;
-    }
-
-    .navbar-right {
-        padding-left: 20px;
-    }
-}
-
-/* ========================================
-   EXTRA LARGE (1600px+)
-   Maximum spacing
-   ======================================== */
-@media (min-width: 1600px) {
+    /* Compact top bar on mobile */
     .navbar {
-        padding: 0 60px;
+        height: 50px;
+        padding: 0 12px;
     }
 
     .navbar-logo {
-        height: 55px;
+        height: 24px;
     }
 
-    .navbar-title {
-        font-size: 1.8rem;
-    }
-
-    .desktop-nav {
-        gap: 15px;
-        padding: 0 40px;
-    }
-
-    .desktop-nav-item {
-        padding: 12px 20px;
-        font-size: 1rem;
-    }
-
-    .desktop-pool-selector select {
-        min-width: 240px;
-        font-size: 0.95rem;
-        padding: 10px 16px;
+    .pool-badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        max-width: 80px;
     }
 
     .user-avatar-btn {
-        width: 48px;
-        height: 48px;
-        font-size: 1.2rem;
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+}
+
+/* ========================================
+   LOGGED OUT NAVBAR STYLES
+   ======================================== */
+
+.btn-login,
+.btn-signup {
+    padding: 8px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.btn-login {
+    background: transparent;
+    color: #fff;
+    border: 2px solid #fff;
+}
+
+.btn-login:hover {
+    background: #fff;
+    color: #1a1a1a;
+}
+
+.btn-signup {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-signup:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+@media (max-width: 767px) {
+    .btn-login,
+    .btn-signup {
+        padding: 6px 12px;
+        font-size: 0.85rem;
     }
 }
