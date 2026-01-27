@@ -269,6 +269,79 @@ body {
         font-weight: 700;
     }
 
+    /* Career Stats Modal - wider for table display */
+    .career-modal {
+        max-width: 95%;
+        width: 1200px;
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+
+    .loading-spinner {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+        font-size: 1.1rem;
+    }
+
+    #careerPlayerPosition {
+        color: #ff2e2e;
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+
+    #careerStatsTable {
+        margin-top: 20px;
+        overflow-x: auto;
+    }
+
+    #careerStatsTable table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+    #careerStatsTable th {
+        background-color: #ff2e2e;
+        color: white;
+        padding: 12px 8px;
+        text-align: center;
+        font-weight: 600;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    #careerStatsTable td {
+        padding: 10px 8px;
+        text-align: center;
+        border-bottom: 1px solid #eee;
+    }
+
+    #careerStatsTable tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    #careerStatsTable tr.nhl-season {
+        background-color: #fff8f0;
+    }
+
+    #careerStatsTable tr.current-season {
+        background-color: #e8f5e9;
+        font-weight: 600;
+    }
+
+    #careerStatsTable .season-col {
+        font-weight: 600;
+        color: #222;
+    }
+
+    #careerStatsTable .league-col {
+        font-size: 0.85rem;
+        color: #666;
+    }
+
 
 
 
