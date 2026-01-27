@@ -50,7 +50,7 @@ body {
     gap: 12px;
 }
 
-/* Pool Badge Button (opens pool selector modal) */
+/* Pool Badge Button (opens pool selector modal) - Mobile only */
 .pool-badge {
     background: rgba(102, 126, 234, 0.15);
     border: 1px solid rgba(102, 126, 234, 0.3);
@@ -72,6 +72,13 @@ body {
     border-color: rgba(102, 126, 234, 0.5);
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Hide pool badge on desktop (use desktop pool selector instead) */
+@media (min-width: 768px) {
+    .pool-badge {
+        display: none;
+    }
 }
 
 /* User Avatar Button */
