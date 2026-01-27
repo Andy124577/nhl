@@ -272,28 +272,164 @@ body {
     /* Career Stats Modal - wider for table display */
     .career-modal {
         max-width: 95%;
-        width: 1200px;
-        max-height: 85vh;
-        overflow-y: auto;
+        width: 1400px;
+        max-height: 90vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
     }
 
     .loading-spinner {
         text-align: center;
-        padding: 40px;
+        padding: 60px 40px;
         color: #666;
-        font-size: 1.1rem;
+        font-size: 1.2rem;
     }
 
-    #careerPlayerPosition {
-        color: #ff2e2e;
-        font-size: 1rem;
-        font-weight: 600;
-        margin-bottom: 20px;
-    }
-
-    #careerStatsTable {
+    .loading-spinner::after {
+        content: '⏳';
+        display: block;
+        font-size: 3rem;
         margin-top: 20px;
-        overflow-x: auto;
+    }
+
+    /* Career Modal Header */
+    .career-modal-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 25px 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        position: relative;
+    }
+
+    .career-modal-header .close-modal {
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        color: white;
+    }
+
+    .player-headshot-container {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .player-headshot-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .player-headshot-container .no-photo {
+        font-size: 3rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .player-info-header {
+        flex: 1;
+    }
+
+    .player-info-header h2 {
+        margin: 0 0 8px 0;
+        font-size: 2rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    .player-info-header .player-meta {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        font-size: 1.1rem;
+        opacity: 0.95;
+    }
+
+    .player-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .player-meta-item img {
+        width: 24px;
+        height: 24px;
+    }
+
+    /* Career Filters */
+    .career-filters {
+        display: flex;
+        gap: 15px;
+        padding: 20px 30px;
+        background: #f8f9fa;
+        border-bottom: 2px solid #e0e0e0;
+        flex-wrap: wrap;
+    }
+
+    .filter-group-career {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .filter-group-career label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .filter-group-career select {
+        padding: 8px 12px;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 150px;
+    }
+
+    .filter-group-career select:hover {
+        border-color: #667eea;
+    }
+
+    .filter-group-career select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    /* Stats count badge */
+    .stats-count-badge {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        padding: 8px 16px;
+        background: white;
+        border-radius: 20px;
+        font-weight: 600;
+        color: #667eea;
+        font-size: 0.95rem;
+    }
+
+    /* Career Stats Table Container */
+    #careerStatsTable {
+        flex: 1;
+        overflow: auto;
+        padding: 0 30px 30px 30px;
     }
 
     #careerStatsTable table {
@@ -303,20 +439,24 @@ body {
     }
 
     #careerStatsTable th {
-        background-color: #ff2e2e;
+        background-color: #2d3748;
         color: white;
-        padding: 12px 8px;
+        padding: 14px 10px;
         text-align: center;
         font-weight: 600;
         position: sticky;
         top: 0;
         z-index: 10;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
     }
 
     #careerStatsTable td {
-        padding: 10px 8px;
+        padding: 12px 10px;
         text-align: center;
         border-bottom: 1px solid #eee;
+        font-size: 0.95rem;
     }
 
     #careerStatsTable tr:hover {
@@ -332,6 +472,15 @@ body {
         font-weight: 600;
     }
 
+    #careerStatsTable tr.playoff-row {
+        background-color: #f0f4ff;
+        font-weight: 500;
+    }
+
+    #careerStatsTable tr.playoff-row td {
+        border-left: 3px solid #667eea;
+    }
+
     #careerStatsTable .season-col {
         font-weight: 600;
         color: #222;
@@ -340,6 +489,90 @@ body {
     #careerStatsTable .league-col {
         font-size: 0.85rem;
         color: #666;
+        font-weight: 500;
+    }
+
+    #careerStatsTable .game-type-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    #careerStatsTable .badge-regular {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    #careerStatsTable .badge-playoffs {
+        background: #e3f2fd;
+        color: #1565c0;
+    }
+
+    .no-stats-message {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999;
+        font-size: 1.1rem;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .career-modal {
+            width: 100%;
+            max-height: 95vh;
+        }
+
+        .career-modal-header {
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .player-headshot-container {
+            width: 100px;
+            height: 100px;
+        }
+
+        .player-info-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .player-info-header .player-meta {
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+
+        .career-filters {
+            flex-direction: column;
+            padding: 15px 20px;
+        }
+
+        .filter-group-career select {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .stats-count-badge {
+            margin: 0;
+            justify-content: center;
+        }
+
+        #careerStatsTable {
+            padding: 0 15px 20px 15px;
+        }
+
+        #careerStatsTable table {
+            font-size: 0.8rem;
+        }
+
+        #careerStatsTable th,
+        #careerStatsTable td {
+            padding: 8px 4px;
+        }
     }
 
 
