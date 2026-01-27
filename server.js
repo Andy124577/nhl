@@ -1523,7 +1523,7 @@ app.get('/current-teams', async (req, res) => {
     }
 });
 
-// Route to get player career stats (all seasons)
+// Route to get player career stats (all seasons including playoffs)
 app.get('/player-career/:playerId', async (req, res) => {
     try {
         const { playerId } = req.params;
@@ -1537,13 +1537,18 @@ app.get('/player-career/:playerId', async (req, res) => {
 
         const data = await response.json();
 
-        // Extract all seasons from seasonTotals
-        const allSeasons = data.seasonTotals || [];
+        // Extract player info
         const playerName = data.firstName?.default && data.lastName?.default
             ? `${data.firstName.default} ${data.lastName.default}`
             : 'Unknown Player';
         const position = data.position || 'N/A';
         const isGoalie = position === 'G';
+        const headshot = data.headshot || null;
+        const teamLogo = data.teamLogo || null;
+        const currentTeam = data.currentTeamAbbrev || null;
+
+        // Extract all seasons from seasonTotals (regular season + playoffs combined in one array)
+        const allSeasons = data.seasonTotals || [];
 
         // Format seasons for display
         const formattedSeasons = allSeasons.map(season => {
@@ -1551,12 +1556,14 @@ app.get('/player-career/:playerId', async (req, res) => {
             const seasonDisplay = `${seasonId.toString().substring(0, 4)}-${seasonId.toString().substring(6, 8)}`;
             const leagueAbbrev = season.leagueAbbrev || 'NHL';
             const teamAbbrev = season.teamName?.default || season.teamAbbrev || 'N/A';
+            const gameType = season.gameTypeId === 3 ? 'playoffs' : 'regular';
 
             if (isGoalie) {
                 return {
                     season: seasonDisplay,
                     league: leagueAbbrev,
                     team: teamAbbrev,
+                    gameType: gameType,
                     gp: season.gamesPlayed || 0,
                     wins: season.wins || 0,
                     losses: season.losses || 0,
@@ -1570,6 +1577,7 @@ app.get('/player-career/:playerId', async (req, res) => {
                     season: seasonDisplay,
                     league: leagueAbbrev,
                     team: teamAbbrev,
+                    gameType: gameType,
                     gp: season.gamesPlayed || 0,
                     goals: season.goals || 0,
                     assists: season.assists || 0,
@@ -1586,6 +1594,9 @@ app.get('/player-career/:playerId', async (req, res) => {
             playerName,
             position,
             isGoalie,
+            headshot,
+            teamLogo,
+            currentTeam,
             seasons: formattedSeasons
         });
     } catch (error) {
