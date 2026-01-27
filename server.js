@@ -1523,6 +1523,77 @@ app.get('/current-teams', async (req, res) => {
     }
 });
 
+// Route to get player career stats (all seasons)
+app.get('/player-career/:playerId', async (req, res) => {
+    try {
+        const { playerId } = req.params;
+        const url = `https://api-web.nhle.com/v1/player/${playerId}/landing`;
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            return res.status(404).json({ message: 'Player not found' });
+        }
+
+        const data = await response.json();
+
+        // Extract all seasons from seasonTotals
+        const allSeasons = data.seasonTotals || [];
+        const playerName = data.firstName?.default && data.lastName?.default
+            ? `${data.firstName.default} ${data.lastName.default}`
+            : 'Unknown Player';
+        const position = data.position || 'N/A';
+        const isGoalie = position === 'G';
+
+        // Format seasons for display
+        const formattedSeasons = allSeasons.map(season => {
+            const seasonId = season.season;
+            const seasonDisplay = `${seasonId.toString().substring(0, 4)}-${seasonId.toString().substring(6, 8)}`;
+            const leagueAbbrev = season.leagueAbbrev || 'NHL';
+            const teamAbbrev = season.teamName?.default || season.teamAbbrev || 'N/A';
+
+            if (isGoalie) {
+                return {
+                    season: seasonDisplay,
+                    league: leagueAbbrev,
+                    team: teamAbbrev,
+                    gp: season.gamesPlayed || 0,
+                    wins: season.wins || 0,
+                    losses: season.losses || 0,
+                    otLosses: season.otLosses || 0,
+                    savePct: season.savePct || season.savePercentage || 0,
+                    gaa: season.goalsAgainstAvg || 0,
+                    shutouts: season.shutouts || 0
+                };
+            } else {
+                return {
+                    season: seasonDisplay,
+                    league: leagueAbbrev,
+                    team: teamAbbrev,
+                    gp: season.gamesPlayed || 0,
+                    goals: season.goals || 0,
+                    assists: season.assists || 0,
+                    points: season.points || 0,
+                    plusMinus: season.plusMinus || 0,
+                    pim: season.pim || 0,
+                    shots: season.shots || 0
+                };
+            }
+        });
+
+        res.json({
+            playerId,
+            playerName,
+            position,
+            isGoalie,
+            seasons: formattedSeasons
+        });
+    } catch (error) {
+        console.error('❌ Error fetching player career stats:', error);
+        res.status(500).json({ message: 'Error fetching player career stats' });
+    }
+});
+
 console.log("✅ NHL current stats system initialized");
 console.log("✅ NHL team standings system initialized");
 
