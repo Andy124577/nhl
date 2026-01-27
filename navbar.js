@@ -314,14 +314,45 @@ function loadPoolData() {
         poolBadge.textContent = activePool || 'Aucun';
     }
 
-    // Sync with desktop selector
+    // Sync desktop selector with hidden activePoolSelector
     const desktopSelector = document.getElementById('desktopPoolSelector');
-    if (desktopSelector) {
+    const activePoolSelector = document.getElementById('activePoolSelector');
+
+    if (desktopSelector && activePoolSelector) {
+        // Copy all options from activePoolSelector to desktopPoolSelector
+        desktopSelector.innerHTML = '';
+        Array.from(activePoolSelector.options).forEach(option => {
+            const newOption = document.createElement('option');
+            newOption.value = option.value;
+            newOption.textContent = option.text;
+            desktopSelector.appendChild(newOption);
+        });
+
+        // Set the current value
         desktopSelector.value = activePool;
 
         desktopSelector.addEventListener('change', (e) => {
             selectPool(e.target.value);
         });
+    }
+
+    // Watch for changes in activePoolSelector (when poolSelector.js updates it)
+    if (activePoolSelector) {
+        const observer = new MutationObserver(() => {
+            if (desktopSelector) {
+                const currentValue = desktopSelector.value;
+                desktopSelector.innerHTML = '';
+                Array.from(activePoolSelector.options).forEach(option => {
+                    const newOption = document.createElement('option');
+                    newOption.value = option.value;
+                    newOption.textContent = option.text;
+                    desktopSelector.appendChild(newOption);
+                });
+                desktopSelector.value = currentValue;
+            }
+        });
+
+        observer.observe(activePoolSelector, { childList: true });
     }
 }
 
