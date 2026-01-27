@@ -1207,6 +1207,7 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
                 goals: 0,
                 assists: 0,
                 wins: 0,
+                losses: 0,
                 shutouts: 0,
                 otLosses: 0,
                 savePct: 0,
@@ -1219,12 +1220,16 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
         let wins = 0;
         let shutouts = 0;
         let otLosses = 0;
+        let losses = 0;
+        let savePct = 0;
 
         if (isGoalie) {
             // Goalie scoring: shutouts = 5pts, wins = 2pts, OTL = 1pt
             wins = seasonStats.wins || 0;
+            losses = seasonStats.losses || 0;
             shutouts = seasonStats.shutouts || 0;
             otLosses = seasonStats.otLosses || 0;
+            savePct = seasonStats.savePct || seasonStats.savePercentage || 0;
             calculatedPoints = (shutouts * 5) + (wins * 2) + (otLosses * 1);
         } else {
             // Skater: use regular points (goals + assists)
@@ -1241,8 +1246,10 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
             goals: isGoalie ? wins : (seasonStats.goals || 0),
             assists: isGoalie ? shutouts : (seasonStats.assists || 0),
             wins: wins,
+            losses: losses,
             shutouts: shutouts,
             otLosses: otLosses,
+            savePct: savePct,
             points: calculatedPoints,
             lastUpdated: new Date().toISOString()
         };
@@ -1258,6 +1265,7 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
             goals: 0,
             assists: 0,
             wins: 0,
+            losses: 0,
             shutouts: 0,
             otLosses: 0,
             savePct: 0,

@@ -318,7 +318,12 @@ function loadPoolData() {
     const desktopSelector = document.getElementById('desktopPoolSelector');
     const activePoolSelector = document.getElementById('activePoolSelector');
 
-    if (desktopSelector && activePoolSelector) {
+    // Function to sync selectors
+    function syncDesktopSelector() {
+        if (!desktopSelector || !activePoolSelector) return;
+
+        const currentActivePool = localStorage.getItem('activePool') || '';
+
         // Copy all options from activePoolSelector to desktopPoolSelector
         desktopSelector.innerHTML = '';
         Array.from(activePoolSelector.options).forEach(option => {
@@ -328,28 +333,53 @@ function loadPoolData() {
             desktopSelector.appendChild(newOption);
         });
 
-        // Set the current value
-        desktopSelector.value = activePool;
+        // Set the current value from localStorage (not from activePoolSelector.value)
+        desktopSelector.value = currentActivePool;
+    }
 
-        desktopSelector.addEventListener('change', (e) => {
-            selectPool(e.target.value);
-        });
+    // Initial sync
+    if (desktopSelector && activePoolSelector) {
+        // Wait a bit for poolSelector.js to populate options
+        setTimeout(() => {
+            syncDesktopSelector();
+        }, 100);
+
+        // Add change listener only once
+        if (!desktopSelector.dataset.listenerAdded) {
+            desktopSelector.addEventListener('change', (e) => {
+                const selectedPool = e.target.value;
+
+                // Save to localStorage
+                if (selectedPool) {
+                    localStorage.setItem('activePool', selectedPool);
+                } else {
+                    localStorage.removeItem('activePool');
+                }
+
+                // Trigger change on activePoolSelector for poolSelector.js
+                if (activePoolSelector) {
+                    activePoolSelector.value = selectedPool;
+                    const changeEvent = new Event('change', { bubbles: true });
+                    activePoolSelector.dispatchEvent(changeEvent);
+
+                    // Also trigger jQuery event for poolSelector.js
+                    if (typeof $ !== 'undefined') {
+                        $(activePoolSelector).val(selectedPool).trigger('change');
+                    }
+                }
+
+                // Reload page to update content
+                window.location.reload();
+            });
+
+            desktopSelector.dataset.listenerAdded = 'true';
+        }
     }
 
     // Watch for changes in activePoolSelector (when poolSelector.js updates it)
-    if (activePoolSelector) {
+    if (activePoolSelector && desktopSelector) {
         const observer = new MutationObserver(() => {
-            if (desktopSelector) {
-                const currentValue = desktopSelector.value;
-                desktopSelector.innerHTML = '';
-                Array.from(activePoolSelector.options).forEach(option => {
-                    const newOption = document.createElement('option');
-                    newOption.value = option.value;
-                    newOption.textContent = option.text;
-                    desktopSelector.appendChild(newOption);
-                });
-                desktopSelector.value = currentValue;
-            }
+            syncDesktopSelector();
         });
 
         observer.observe(activePoolSelector, { childList: true });
