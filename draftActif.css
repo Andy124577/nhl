@@ -1031,3 +1031,139 @@ button.select-button .select-icon {
 .custom-alert-button:active {
   transform: translateY(0);
 }
+
+/* Career Stats Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+}
+
+.modal-content {
+    background: white;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    position: relative;
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.close-modal {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-modal:hover {
+    color: #ff2e2e;
+}
+
+.modal-content h2 {
+    color: #222;
+    margin-bottom: 10px;
+    font-size: 1.8rem;
+}
+
+.modal-content h3 {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.career-modal {
+    max-width: 95%;
+    width: 1200px;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-size: 1.1rem;
+}
+
+#careerPlayerPosition {
+    color: #ff2e2e;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+#careerStatsTable {
+    margin-top: 20px;
+    overflow-x: auto;
+}
+
+#careerStatsTable table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+#careerStatsTable th {
+    background-color: #ff2e2e;
+    color: white;
+    padding: 12px 8px;
+    text-align: center;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+#careerStatsTable td {
+    padding: 10px 8px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+}
+
+#careerStatsTable tr:hover {
+    background-color: #f8f9fa;
+}
+
+#careerStatsTable tr.nhl-season {
+    background-color: #fff8f0;
+}
+
+#careerStatsTable tr.current-season {
+    background-color: #e8f5e9;
+    font-weight: 600;
+}
+
+#careerStatsTable .season-col {
+    font-weight: 600;
+    color: #222;
+}
+
+#careerStatsTable .league-col {
+    font-size: 0.85rem;
+    color: #666;
+}

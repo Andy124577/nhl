@@ -802,6 +802,24 @@ function showPlayerDetails(teamName, rowIndex) {
         const playerCard = document.createElement('div');
         playerCard.className = 'player-card';
 
+        // Make player cards clickable (except for teams)
+        if (player.type !== 'team' && player.playerId) {
+            playerCard.style.cursor = 'pointer';
+            playerCard.dataset.playerid = player.playerId;
+            playerCard.dataset.playername = player.name;
+            playerCard.dataset.isgoalie = player.type === 'goalie';
+
+            playerCard.addEventListener('click', function() {
+                const playerId = this.dataset.playerid;
+                const playerName = this.dataset.playername;
+                const isGoalie = this.dataset.isgoalie === 'true';
+
+                if (playerId && playerName) {
+                    showCareerStats(playerId, playerName, isGoalie);
+                }
+            });
+        }
+
         // Build image HTML
         let imageHTML = '';
         if (imagePath) {
@@ -859,4 +877,124 @@ function showPlayerDetails(teamName, rowIndex) {
     // Show modal
     const modal = document.getElementById("playerDetailsModal");
     modal.classList.add('show');
+}
+
+// Career Stats Modal Functions
+async function showCareerStats(playerId, playerName, isGoalie = false) {
+    const modal = document.getElementById('careerStatsModal');
+    const modalPlayerName = document.getElementById('careerPlayerName');
+    const modalPosition = document.getElementById('careerPlayerPosition');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const statsTable = document.getElementById('careerStatsTable');
+
+    // Show modal with loading state
+    modalPlayerName.textContent = playerName;
+    modalPosition.textContent = isGoalie ? 'Gardien de but' : 'Joueur';
+    loadingSpinner.style.display = 'block';
+    statsTable.innerHTML = '';
+    modal.style.display = 'block';
+
+    try {
+        const response = await fetch(`${BASE_URL}/player-career/${playerId}`);
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch career stats');
+        }
+
+        const data = await response.json();
+        loadingSpinner.style.display = 'none';
+
+        // Build table based on player type
+        if (data.seasons.length === 0) {
+            statsTable.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Aucune statistique de carrière disponible</p>';
+            return;
+        }
+
+        let tableHTML = '<table><thead><tr>';
+
+        if (data.isGoalie) {
+            tableHTML += `
+                <th class="season-col">Saison</th>
+                <th class="league-col">Ligue</th>
+                <th>Équipe</th>
+                <th>GP</th>
+                <th>W</th>
+                <th>L</th>
+                <th>OTL</th>
+                <th>SV%</th>
+                <th>GAA</th>
+                <th>SO</th>
+            `;
+        } else {
+            tableHTML += `
+                <th class="season-col">Saison</th>
+                <th class="league-col">Ligue</th>
+                <th>Équipe</th>
+                <th>GP</th>
+                <th>G</th>
+                <th>A</th>
+                <th>PTS</th>
+                <th>+/-</th>
+                <th>PIM</th>
+                <th>SOG</th>
+            `;
+        }
+
+        tableHTML += '</tr></thead><tbody>';
+
+        // Add each season row
+        data.seasons.forEach(season => {
+            const isNHL = season.league === 'NHL';
+            const isCurrent = season.season === '2025-26' || season.season === '2024-25';
+            const rowClass = isCurrent ? 'current-season' : (isNHL ? 'nhl-season' : '');
+
+            tableHTML += `<tr class="${rowClass}">`;
+            tableHTML += `<td class="season-col">${season.season}</td>`;
+            tableHTML += `<td class="league-col">${season.league}</td>`;
+            tableHTML += `<td>${season.team}</td>`;
+            tableHTML += `<td>${season.gp}</td>`;
+
+            if (data.isGoalie) {
+                tableHTML += `
+                    <td>${season.wins}</td>
+                    <td>${season.losses}</td>
+                    <td>${season.otLosses}</td>
+                    <td>${season.savePct ? season.savePct.toFixed(3) : '0.000'}</td>
+                    <td>${season.gaa ? season.gaa.toFixed(2) : '0.00'}</td>
+                    <td>${season.shutouts}</td>
+                `;
+            } else {
+                tableHTML += `
+                    <td>${season.goals}</td>
+                    <td>${season.assists}</td>
+                    <td>${season.points}</td>
+                    <td>${season.plusMinus >= 0 ? '+' + season.plusMinus : season.plusMinus}</td>
+                    <td>${season.pim}</td>
+                    <td>${season.shots}</td>
+                `;
+            }
+
+            tableHTML += '</tr>';
+        });
+
+        tableHTML += '</tbody></table>';
+        statsTable.innerHTML = tableHTML;
+
+    } catch (error) {
+        console.error('Error fetching career stats:', error);
+        loadingSpinner.style.display = 'none';
+        statsTable.innerHTML = '<p style="text-align: center; color: #ff2e2e; padding: 20px;">Erreur lors du chargement des statistiques</p>';
+    }
+}
+
+function closeCareerModal() {
+    document.getElementById('careerStatsModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const careerModal = document.getElementById('careerStatsModal');
+    if (event.target === careerModal) {
+        closeCareerModal();
+    }
 }

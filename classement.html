@@ -115,6 +115,19 @@
                 </div>
             </div>
         </div>
+
+        <!-- Career Stats Modal -->
+        <div id="careerStatsModal" class="modal">
+            <div class="modal-content career-modal">
+                <span class="close-modal" onclick="closeCareerModal()">&times;</span>
+                <h2 id="careerPlayerName"></h2>
+                <h3 id="careerPlayerPosition"></h3>
+                <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+                    <p>Chargement des statistiques...</p>
+                </div>
+                <div id="careerStatsTable"></div>
+            </div>
+        </div>
     </div>
 
     <script src="classement.js"></script>
