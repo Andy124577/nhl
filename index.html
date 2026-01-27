@@ -65,11 +65,42 @@
     <!-- Modal pour les stats de carrière -->
     <div id="careerStatsModal" class="modal">
         <div class="modal-content career-modal">
-            <span class="close-modal" onclick="closeCareerModal()">&times;</span>
-            <h2 id="careerPlayerName"></h2>
-            <h3 id="careerPlayerPosition"></h3>
-            <div class="loading-spinner" id="loadingSpinner" style="display: none;">
-                <p>Chargement des statistiques...</p>
+            <div class="career-modal-header" id="careerModalHeader" style="display: none;">
+                <div class="player-headshot-container" id="playerHeadshotContainer">
+                    <div class="no-photo">🏒</div>
+                </div>
+                <div class="player-info-header">
+                    <h2 id="careerPlayerName"></h2>
+                    <div class="player-meta">
+                        <span class="player-meta-item" id="careerPlayerPosition"></span>
+                        <span class="player-meta-item" id="careerPlayerTeam"></span>
+                    </div>
+                </div>
+                <span class="close-modal" onclick="closeCareerModal()">&times;</span>
+            </div>
+            <div class="loading-spinner" id="loadingSpinner">
+                Chargement des statistiques...
+            </div>
+            <div class="career-filters" id="careerFilters" style="display: none;">
+                <div class="filter-group-career">
+                    <label for="leagueFilter">Ligue</label>
+                    <select id="leagueFilter" onchange="filterCareerStats()">
+                        <option value="all">Toutes les ligues</option>
+                        <option value="nhl">NHL seulement</option>
+                        <option value="other">Autres ligues</option>
+                    </select>
+                </div>
+                <div class="filter-group-career">
+                    <label for="gameTypeFilter">Type de saison</label>
+                    <select id="gameTypeFilter" onchange="filterCareerStats()">
+                        <option value="all">Tous</option>
+                        <option value="regular">Saison régulière</option>
+                        <option value="playoffs">Playoffs</option>
+                    </select>
+                </div>
+                <div class="stats-count-badge" id="statsCountBadge">
+                    0 saisons affichées
+                </div>
             </div>
             <div id="careerStatsTable"></div>
         </div>
