@@ -62,13 +62,16 @@
         </div>
     </div>
 
-    <!-- Modal pour les stats de l'année passée -->
-    <div id="lastYearModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeLastYearModal()">&times;</span>
-            <h2 id="modalPlayerName"></h2>
-            <h3>Statistiques 2024-2025</h3>
-            <div id="modalStats"></div>
+    <!-- Modal pour les stats de carrière -->
+    <div id="careerStatsModal" class="modal">
+        <div class="modal-content career-modal">
+            <span class="close-modal" onclick="closeCareerModal()">&times;</span>
+            <h2 id="careerPlayerName"></h2>
+            <h3 id="careerPlayerPosition"></h3>
+            <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+                <p>Chargement des statistiques...</p>
+            </div>
+            <div id="careerStatsTable"></div>
         </div>
     </div>
 
