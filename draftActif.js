@@ -702,10 +702,8 @@ function populateGoalieTable(goalies) {
         // Get current season stats from API
         const currentGoalieStats = getCurrentPlayerStats(name, playerId);
 
-        // Construct headshot URL using current team to ensure it shows player in latest jersey
-        const playerPhoto = currentGoalieStats?.teamAbbrev && playerId
-            ? `https://assets.nhle.com/mugs/nhl/20252026/${currentGoalieStats.teamAbbrev}/${playerId}.png`
-            : getMatchingImage(name);
+        // Use local cached images for main table display
+        const playerPhoto = getMatchingImage(name);
         const teamLogo = currentGoalieStats?.teamAbbrev ? `teams/${currentGoalieStats.teamAbbrev}.png` : getTeamLogoPath(goalie.teamAbbrevs);
 
         const imageHTML = playerPhoto && teamLogo
@@ -913,10 +911,8 @@ function populateTable(playerData) {
         // Get current season stats from API
         const currentPlayerStats = getCurrentPlayerStats(skaterName, playerId);
 
-        // Construct headshot URL using current team to ensure it shows player in latest jersey
-        const playerPhoto = currentPlayerStats?.teamAbbrev && playerId
-            ? `https://assets.nhle.com/mugs/nhl/20252026/${currentPlayerStats.teamAbbrev}/${playerId}.png`
-            : getMatchingImage(skaterName);
+        // Use local cached images for main table display
+        const playerPhoto = getMatchingImage(skaterName);
         const teamLogo = currentPlayerStats?.teamAbbrev ? `teams/${currentPlayerStats.teamAbbrev}.png` : getTeamLogoPath(player.teamAbbrevs);
 
         const imageHTML = playerPhoto && teamLogo
@@ -1150,10 +1146,8 @@ function renderRecentPicks() {
 
         const isTeamPick = positionCode === "teams" || positionCode === "T";
 
-        // Construct headshot URL using current team to ensure it shows player in latest jersey
-        const imagePath = !isTeamPick && currentPlayerStats?.teamAbbrev && playerData?.playerId
-            ? `https://assets.nhle.com/mugs/nhl/20252026/${currentPlayerStats.teamAbbrev}/${playerData.playerId}.png`
-            : getMatchingImage(playerName);
+        // Use local cached images for carousel display
+        const imagePath = getMatchingImage(playerName);
 
         let positionLabel = positionCode;
         if (!isTeamPick && playerData?.positionCode) {
@@ -1367,10 +1361,8 @@ function showProgressDetails(category) {
                 logoPath = getTeamLogoPath(playerData.teamAbbrevs);
             }
 
-            // Construct headshot URL using current team to ensure it shows player in latest jersey
-            const imagePath = category !== "team" && currentPlayerStats?.teamAbbrev && playerData?.playerId
-                ? `https://assets.nhle.com/mugs/nhl/20252026/${currentPlayerStats.teamAbbrev}/${playerData.playerId}.png`
-                : getMatchingImage(playerName);
+            // Use local cached images for progress display
+            const imagePath = getMatchingImage(playerName);
 
             const imageHTML = imagePath
                 ? `<div class="progress-player-photo">

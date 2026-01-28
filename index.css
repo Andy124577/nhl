@@ -131,25 +131,21 @@ body {
         width: 70px;
         height: 70px;
         display: inline-block;
-        overflow: hidden;
-        border-radius: 5px;
     }
 
     .player-photo img.face {
-        width: 110px;
-        height: 110px;
+        width: 70px;
+        height: 70px;
         display: block;
-        object-fit: cover;
-        object-position: center 20%;
-        transform: translateX(-20px);
+        border-radius: 8px;
     }
 
     .player-photo img.logo {
         position: absolute;
-        bottom: -8px;
-        right: -8px;
+        bottom: -5px;
+        right: -5px;
         width: 25px;
-        height: auto;
+        height: 25px;
     }
 
     td.points-column {
@@ -354,17 +350,17 @@ body {
     }
 
     .player-headshot-container {
-        width: 70px;
-        height: 70px;
+        width: 210px;
+        height: 210px;
         border-radius: 50%;
         overflow: hidden;
-        border: 2px solid rgba(239, 68, 68, 0.2);
+        border: 3px solid rgba(239, 68, 68, 0.2);
         background: rgba(255, 255, 255, 0.5);
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.1);
+        box-shadow: 0 6px 25px rgba(239, 68, 68, 0.15);
     }
 
     .player-headshot-container img {
@@ -374,7 +370,7 @@ body {
     }
 
     .player-headshot-container .no-photo {
-        font-size: 1.8rem;
+        font-size: 4rem;
         color: #ef4444;
         opacity: 0.6;
     }
@@ -646,8 +642,8 @@ body {
         }
 
         .player-headshot-container {
-            width: 60px;
-            height: 60px;
+            width: 150px;
+            height: 150px;
         }
 
         .player-info-header h2 {
