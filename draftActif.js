@@ -8,10 +8,38 @@ let username = localStorage.getItem("username");
 let carouselOffset = 0;
 const PICKS_PER_PAGE = 5;
 let currentCareerData = null;
+let currentStats = null; // Stats actuelles de la saison 2024-2025 depuis l'API
+let currentTeams = null; // Standings actuels des équipes depuis l'API
 
 const BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:3000"
   : window.location.origin;
+
+// Helper function to get current player stats from API data
+function getCurrentPlayerStats(playerName, playerId) {
+    if (!currentStats || !currentStats.players) {
+        return null;
+    }
+
+    // Try to find by playerId first (most reliable)
+    if (playerId) {
+        const stats = currentStats.players.find(p => p.playerId === playerId);
+        if (stats) return stats;
+    }
+
+    // Fallback: try to find by name
+    return currentStats.players.find(p => p.playerName === playerName);
+}
+
+// Helper function to get current team standings
+function getCurrentTeamStats(teamFullName) {
+    if (!currentTeams || !currentTeams.teams) {
+        return null;
+    }
+
+    // Try to find by full name
+    return currentTeams.teams.find(t => t.teamFullName === teamFullName);
+}
 
 
 console.log("🔍 draftClan:", localStorage.getItem("draftClan"));
@@ -218,6 +246,25 @@ async function fetchPlayerData() {
         fullPlayerData = [...data.Top_50_Defenders, ...data.Top_100_Offensive_Players, ...data.Top_Rookies];
         goalieData = data.Top_50_Goalies;
         teamData = data.Teams;
+
+        // Load current season stats from API (2024-2025)
+        try {
+            const currentStatsResponse = await fetch(`${BASE_URL}/current-stats`, { cache: "no-store" });
+            currentStats = await currentStatsResponse.json();
+            console.log(`✅ Current stats loaded: ${currentStats.players.length} players, last updated: ${currentStats.lastUpdated}`);
+        } catch (error) {
+            console.warn("⚠️ Could not load current stats, using cached data:", error);
+        }
+
+        // Load current team standings from API (2024-2025)
+        try {
+            const currentTeamsResponse = await fetch(`${BASE_URL}/current-teams`, { cache: "no-store" });
+            currentTeams = await currentTeamsResponse.json();
+            console.log(`✅ Current team standings loaded: ${currentTeams.teams.length} teams, last updated: ${currentTeams.lastUpdated}`);
+        } catch (error) {
+            console.warn("⚠️ Could not load current team standings, using cached data:", error);
+        }
+
         await fetchImageData();
         setTimeout(() => loadDraftData(), 300);
     } catch (error) {
@@ -651,13 +698,18 @@ function populateGoalieTable(goalies) {
     goalies.forEach(goalie => {
         const name = goalie.goalieFullName;
         const playerId = goalie.playerId;
-        const imagePath = getMatchingImage(name);
-        const logoPath = getTeamLogoPath(goalie.teamAbbrevs);
 
-        const imageHTML = imagePath && logoPath
+        // Get current season stats from API
+        const currentGoalieStats = getCurrentPlayerStats(name, playerId);
+
+        // Use current headshot and team logo from API if available, otherwise fallback to old data
+        const playerPhoto = currentGoalieStats?.headshot || getMatchingImage(name);
+        const teamLogo = currentGoalieStats?.teamAbbrev ? `teams/${currentGoalieStats.teamAbbrev}.png` : getTeamLogoPath(goalie.teamAbbrevs);
+
+        const imageHTML = playerPhoto && teamLogo
             ? `<div class="player-photo">
-                    <img src="${imagePath}" alt="${name}" class="face">
-                    <img src="${logoPath}" alt="${goalie.teamAbbrevs}" class="logo">
+                    <img src="${playerPhoto}" alt="${name}" class="face">
+                    <img src="${teamLogo}" alt="${currentGoalieStats?.teamAbbrev || goalie.teamAbbrevs}" class="logo">
                </div>`
             : "";
 
@@ -855,13 +907,18 @@ function populateTable(playerData) {
         const playerId = player.playerId;
         const isGoalie = positionCode === 'G';
         const isTeam = positionCode === 'T';
-        const matchingImage = getMatchingImage(skaterName);
-        const logoPath = getTeamLogoPath(player.teamAbbrevs);
 
-        const imageHTML = matchingImage && logoPath
+        // Get current season stats from API
+        const currentPlayerStats = getCurrentPlayerStats(skaterName, playerId);
+
+        // Use current headshot and team logo from API if available, otherwise fallback to old data
+        const playerPhoto = currentPlayerStats?.headshot || getMatchingImage(skaterName);
+        const teamLogo = currentPlayerStats?.teamAbbrev ? `teams/${currentPlayerStats.teamAbbrev}.png` : getTeamLogoPath(player.teamAbbrevs);
+
+        const imageHTML = playerPhoto && teamLogo
             ? `<div class="player-photo">
-                <img src="${matchingImage}" alt="${skaterName}" class="face">
-                <img src="${logoPath}" alt="${player.teamAbbrevs}" class="logo">
+                <img src="${playerPhoto}" alt="${skaterName}" class="face">
+                <img src="${teamLogo}" alt="${currentPlayerStats?.teamAbbrev || player.teamAbbrevs}" class="logo">
               </div>`
             : "";
 
@@ -1084,7 +1141,11 @@ function renderRecentPicks() {
                           goalieData.find(p => p.goalieFullName === playerName) ||
                           teamData.find(p => p.teamFullName === playerName);
 
-        const imagePath = getMatchingImage(playerName);
+        // Get current season stats from API
+        const currentPlayerStats = getCurrentPlayerStats(playerName, playerData?.playerId);
+
+        // Use current headshot from API if available
+        const imagePath = currentPlayerStats?.headshot || getMatchingImage(playerName);
         const isTeamPick = positionCode === "teams" || positionCode === "T";
 
         let positionLabel = positionCode;
@@ -1092,11 +1153,13 @@ function renderRecentPicks() {
             positionLabel = playerData.positionCode;
         }
 
-        // Get team logo
+        // Get team logo (use current team from API if available)
         let teamLogo = null;
         if (isTeamPick) {
             const abbrev = getTeamAbbreviation(playerName);
             teamLogo = abbrev ? `teams/${abbrev}.png` : null;
+        } else if (currentPlayerStats?.teamAbbrev) {
+            teamLogo = `teams/${currentPlayerStats.teamAbbrev}.png`;
         } else if (playerData?.teamAbbrevs) {
             teamLogo = getTeamLogoPath(playerData.teamAbbrevs);
         }
@@ -1283,12 +1346,18 @@ function showProgressDetails(category) {
                              goalieData.find(g => g.goalieFullName === playerName) ||
                              teamData.find(t => t.teamFullName === playerName);
 
-            const imagePath = getMatchingImage(playerName);
+            // Get current season stats from API
+            const currentPlayerStats = getCurrentPlayerStats(playerName, playerData?.playerId);
+
+            // Use current headshot from API if available
+            const imagePath = currentPlayerStats?.headshot || getMatchingImage(playerName);
             let logoPath = null;
 
             if (category === "team") {
                 const abbrev = getTeamAbbreviation(playerName);
                 logoPath = abbrev ? `teams/${abbrev}.png` : null;
+            } else if (currentPlayerStats?.teamAbbrev) {
+                logoPath = `teams/${currentPlayerStats.teamAbbrev}.png`;
             } else if (playerData?.teamAbbrevs) {
                 logoPath = getTeamLogoPath(playerData.teamAbbrevs);
             }
