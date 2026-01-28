@@ -131,30 +131,21 @@ body {
         width: 70px;
         height: 70px;
         display: inline-block;
-        overflow: hidden;
-        border-radius: 8px;
-        background: #f0f0f0;
     }
 
     .player-photo img.face {
-        width: 85px;
-        height: 85px;
+        width: 70px;
+        height: 70px;
         display: block;
-        object-fit: cover;
-        object-position: center 30%;
-        transform: translateX(-7.5px);
+        border-radius: 8px;
     }
 
     .player-photo img.logo {
         position: absolute;
-        bottom: 2px;
-        right: 2px;
-        width: 28px;
-        height: 28px;
-        background: white;
-        border-radius: 50%;
-        padding: 2px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        bottom: -5px;
+        right: -5px;
+        width: 25px;
+        height: 25px;
     }
 
     td.points-column {
@@ -359,17 +350,17 @@ body {
     }
 
     .player-headshot-container {
-        width: 70px;
-        height: 70px;
+        width: 210px;
+        height: 210px;
         border-radius: 50%;
         overflow: hidden;
-        border: 2px solid rgba(239, 68, 68, 0.2);
+        border: 3px solid rgba(239, 68, 68, 0.2);
         background: rgba(255, 255, 255, 0.5);
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.1);
+        box-shadow: 0 6px 25px rgba(239, 68, 68, 0.15);
     }
 
     .player-headshot-container img {
@@ -379,7 +370,7 @@ body {
     }
 
     .player-headshot-container .no-photo {
-        font-size: 1.8rem;
+        font-size: 4rem;
         color: #ef4444;
         opacity: 0.6;
     }
@@ -651,8 +642,8 @@ body {
         }
 
         .player-headshot-container {
-            width: 60px;
-            height: 60px;
+            width: 150px;
+            height: 150px;
         }
 
         .player-info-header h2 {
