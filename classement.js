@@ -798,10 +798,8 @@ function showPlayerDetails(teamName, rowIndex) {
             imagePath = abbrev ? `teams/${abbrev}.png` : null;
             logoPath = null; // No secondary logo for teams
         } else {
-            // Construct headshot URL using current team to ensure it shows player in latest jersey
-            imagePath = currentPlayerStats?.teamAbbrev && player.playerId
-                ? `https://assets.nhle.com/mugs/nhl/20252026/${currentPlayerStats.teamAbbrev}/${player.playerId}.png`
-                : getMatchingImage(player.name);
+            // Use local cached images for team details display
+            imagePath = getMatchingImage(player.name);
             logoPath = currentPlayerStats?.teamAbbrev ? `teams/${currentPlayerStats.teamAbbrev}.png` : getTeamLogoPath(player.teamAbbrev);
         }
 

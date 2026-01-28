@@ -221,10 +221,8 @@ async function populatePlayerTable(playerData) {
         // Get current season stats from API
         const currentPlayerStats = getCurrentPlayerStats(skaterName, player.playerId);
 
-        // Construct headshot URL using current team to ensure it shows player in latest jersey
-        const playerPhoto = currentPlayerStats?.teamAbbrev && player.playerId
-            ? `https://assets.nhle.com/mugs/nhl/20252026/${currentPlayerStats.teamAbbrev}/${player.playerId}.png`
-            : getMatchingImage(skaterName);
+        // Use local cached images for main table display
+        const playerPhoto = getMatchingImage(skaterName);
         const teamLogo = currentPlayerStats?.teamAbbrev ? `teams/${currentPlayerStats.teamAbbrev}.png` : getTeamLogoPath(player.teamAbbrevs);
 
         // Debug logging for Barkov and Tkachuk
@@ -301,10 +299,8 @@ function populateGoalieTable(goalies) {
         // Get current season stats from API
         const currentGoalieStats = getCurrentPlayerStats(name, goalie.playerId);
 
-        // Construct headshot URL using current team to ensure it shows player in latest jersey
-        const playerPhoto = currentGoalieStats?.teamAbbrev && goalie.playerId
-            ? `https://assets.nhle.com/mugs/nhl/20252026/${currentGoalieStats.teamAbbrev}/${goalie.playerId}.png`
-            : getMatchingImage(name);
+        // Use local cached images for main table display
+        const playerPhoto = getMatchingImage(name);
         const teamLogo = currentGoalieStats?.teamAbbrev ? `teams/${currentGoalieStats.teamAbbrev}.png` : getTeamLogoPath(goalie.teamAbbrevs);
 
         let gp, wins, losses, otLosses, savePct, shutouts, points;
