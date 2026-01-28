@@ -534,15 +534,29 @@ body {
     }
 
     #careerStatsTable .team-col {
-        padding: 8px 16px 8px 8px;
+        padding: 8px;
+        width: 50px;
+        max-width: 50px;
+        min-width: 50px;
+        text-align: center;
+        overflow: hidden;
     }
 
     #careerStatsTable .team-col img {
         width: 28px;
         height: 28px;
         object-fit: contain;
-        display: inline-block;
-        vertical-align: middle;
+        display: block;
+        margin: 0 auto;
+    }
+
+    #careerStatsTable .team-col span {
+        font-size: 0.7rem;
+        color: #718096;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .no-stats-message {
