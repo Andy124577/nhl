@@ -798,8 +798,10 @@ function showPlayerDetails(teamName, rowIndex) {
             imagePath = abbrev ? `teams/${abbrev}.png` : null;
             logoPath = null; // No secondary logo for teams
         } else {
-            // For players and goalies, use current headshot and team logo from API if available
-            imagePath = currentPlayerStats?.headshot || getMatchingImage(player.name);
+            // Construct headshot URL using current team to ensure it shows player in latest jersey
+            imagePath = currentPlayerStats?.teamAbbrev && player.playerId
+                ? `https://assets.nhle.com/mugs/nhl/20252026/${currentPlayerStats.teamAbbrev}/${player.playerId}.png`
+                : getMatchingImage(player.name);
             logoPath = currentPlayerStats?.teamAbbrev ? `teams/${currentPlayerStats.teamAbbrev}.png` : getTeamLogoPath(player.teamAbbrev);
         }
 
