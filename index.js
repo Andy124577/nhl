@@ -681,9 +681,9 @@ function filterCareerStats() {
 
     if (currentCareerData.isGoalie) {
         tableHTML += `
-            <th class="season-col">Saison</th>
-            <th class="league-col">Ligue</th>
-            <th>Équipe</th>
+            <th class="season-col">Season</th>
+            <th class="league-col">League</th>
+            <th class="team-col">Team</th>
             <th>GP</th>
             <th>W</th>
             <th>L</th>
@@ -694,9 +694,9 @@ function filterCareerStats() {
         `;
     } else {
         tableHTML += `
-            <th class="season-col">Saison</th>
-            <th class="league-col">Ligue</th>
-            <th>Équipe</th>
+            <th class="season-col">Season</th>
+            <th class="league-col">League</th>
+            <th class="team-col">Team</th>
             <th>GP</th>
             <th>G</th>
             <th>A</th>
@@ -722,7 +722,7 @@ function filterCareerStats() {
         tableHTML += `<tr class="${rowClass}">`;
         tableHTML += `<td class="season-col">${season.season}</td>`;
         tableHTML += `<td class="league-col">${season.league}</td>`;
-        tableHTML += `<td>${season.team}</td>`;
+        tableHTML += `<td class="team-col">${season.team ? `<img src="teams/${season.team}.png" alt="${season.team}" title="${season.team}" onerror="this.style.display='none'">` : '-'}</td>`;
         tableHTML += `<td>${season.gp}</td>`;
 
         if (currentCareerData.isGoalie) {
