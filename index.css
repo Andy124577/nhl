@@ -187,6 +187,8 @@ body {
         height: 100%;
         background-color: rgba(0, 0, 0, 0.6);
         backdrop-filter: blur(3px);
+        overflow-y: auto;
+        overflow-x: hidden;
     }
 
     .modal-content {
@@ -271,14 +273,15 @@ body {
 
     /* Career Stats Modal - NHL.com style */
     .career-modal {
-        max-width: 95%;
-        width: 1400px;
-        max-height: 90vh;
+        max-width: 90%;
+        width: 950px;
+        max-height: 85vh;
         overflow: hidden;
         display: flex;
         flex-direction: column;
         padding: 0;
         background: #fff;
+        margin: 3% auto;
     }
 
     .loading-spinner {

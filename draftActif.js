@@ -1378,6 +1378,7 @@ async function showCareerStats(playerId, playerName, isGoalie = false) {
 
     // Show modal with loading state
     modal.style.display = 'block';
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
     loadingSpinner.style.display = 'block';
     modalHeader.style.display = 'none';
     filtersSection.style.display = 'none';
@@ -1540,6 +1541,7 @@ function filterCareerStats() {
 
 function closeCareerModal() {
     document.getElementById('careerStatsModal').style.display = 'none';
+    document.body.style.overflow = ''; // Restore background scrolling
     currentCareerData = null;
 }
 
