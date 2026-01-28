@@ -1427,8 +1427,16 @@ async function fetchCurrentTeamStandings() {
                 // Calculate points using custom scoring: wins * 2 + OTL * 1
                 const calculatedPoints = (team.wins * 2) + (team.otLosses * 1);
 
+                // Get team name, handling special cases
+                let teamFullName = team.teamName?.default || team.teamCommonName?.default;
+
+                // Handle Utah Hockey Club specifically (NHL API might use different naming)
+                if (team.teamAbbrev?.default === 'UTA' || teamFullName?.includes('Utah')) {
+                    teamFullName = 'Utah Hockey Club';
+                }
+
                 teams.push({
-                    teamFullName: team.teamName?.default || team.teamCommonName?.default,
+                    teamFullName: teamFullName,
                     teamAbbrev: team.teamAbbrev?.default,
                     teamId: team.teamId,
                     gamesPlayed: team.gamesPlayed || 0,

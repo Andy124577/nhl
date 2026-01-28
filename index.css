@@ -534,7 +534,7 @@ body {
     }
 
     #careerStatsTable .team-col {
-        padding: 8px;
+        padding: 8px 16px 8px 8px;
     }
 
     #careerStatsTable .team-col img {
