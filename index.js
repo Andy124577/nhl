@@ -740,6 +740,81 @@ function filterCareerStats() {
         tableHTML += '</tr>';
     });
 
+    // Add career totals row if NHL only filter is active
+    if (leagueFilter === 'nhl' && filteredSeasons.length > 0) {
+        const totals = {
+            gp: 0,
+            goals: 0,
+            assists: 0,
+            points: 0,
+            plusMinus: 0,
+            pim: 0,
+            shots: 0,
+            wins: 0,
+            losses: 0,
+            otLosses: 0,
+            shutouts: 0,
+            gamesForAvg: 0,
+            totalGAA: 0,
+            totalSVPct: 0
+        };
+
+        // Calculate totals
+        filteredSeasons.forEach(season => {
+            totals.gp += season.gp || 0;
+            if (currentCareerData.isGoalie) {
+                totals.wins += season.wins || 0;
+                totals.losses += season.losses || 0;
+                totals.otLosses += season.otLosses || 0;
+                totals.shutouts += season.shutouts || 0;
+                if (season.gaa && season.gp > 0) {
+                    totals.totalGAA += season.gaa * season.gp;
+                    totals.gamesForAvg += season.gp;
+                }
+                if (season.savePct) {
+                    totals.totalSVPct += season.savePct;
+                }
+            } else {
+                totals.goals += season.goals || 0;
+                totals.assists += season.assists || 0;
+                totals.points += season.points || 0;
+                totals.plusMinus += season.plusMinus || 0;
+                totals.pim += season.pim || 0;
+                totals.shots += season.shots || 0;
+            }
+        });
+
+        // Add career totals row
+        tableHTML += '<tr class="career-totals-row">';
+        tableHTML += `<td colspan="3" class="career-totals-label">Career NHL ${gameTypeFilter === 'regular' ? 'Regular Season' : gameTypeFilter === 'playoffs' ? 'Playoffs' : ''} Totals</td>`;
+        tableHTML += `<td>${totals.gp}</td>`;
+
+        if (currentCareerData.isGoalie) {
+            const avgGAA = totals.gamesForAvg > 0 ? (totals.totalGAA / totals.gamesForAvg).toFixed(2) : '0.00';
+            const avgSVPct = filteredSeasons.length > 0 ? (totals.totalSVPct / filteredSeasons.length).toFixed(3) : '0.000';
+
+            tableHTML += `
+                <td>${totals.wins}</td>
+                <td>${totals.losses}</td>
+                <td>${totals.otLosses}</td>
+                <td>${avgSVPct}</td>
+                <td>${avgGAA}</td>
+                <td>${totals.shutouts}</td>
+            `;
+        } else {
+            tableHTML += `
+                <td>${totals.goals}</td>
+                <td>${totals.assists}</td>
+                <td>${totals.points}</td>
+                <td>${totals.plusMinus >= 0 ? '+' + totals.plusMinus : totals.plusMinus}</td>
+                <td>${totals.pim}</td>
+                <td>${totals.shots}</td>
+            `;
+        }
+
+        tableHTML += '</tr>';
+    }
+
     tableHTML += '</tbody></table>';
     statsTable.innerHTML = tableHTML;
 }
