@@ -529,13 +529,14 @@ body {
         font-size: 0.75rem;
         color: #718096;
         font-weight: 600;
-        text-transform: uppercase;
-        width: 50px;
-        max-width: 50px;
-        min-width: 50px;
+        width: 80px;
+        max-width: 80px;
+        min-width: 80px;
+        white-space: normal;
+        line-height: 1.2;
     }
 
-    #careerStatsTable .season-col {
+    #careerStatsTable td.season-col {
         font-weight: 700;
         color: #ef4444;
         font-size: 0.9rem;
@@ -544,13 +545,21 @@ body {
         min-width: 80px;
     }
 
+    #careerStatsTable th.season-col {
+        width: 80px;
+        max-width: 80px;
+        min-width: 80px;
+    }
+
     #careerStatsTable .team-col {
         padding: 8px;
-        width: 50px;
-        max-width: 50px;
-        min-width: 50px;
+        width: 90px;
+        max-width: 90px;
+        min-width: 90px;
         text-align: center;
-        overflow: hidden;
+        white-space: normal;
+        line-height: 1.2;
+        font-size: 0.75rem;
     }
 
     #careerStatsTable .team-col img {
