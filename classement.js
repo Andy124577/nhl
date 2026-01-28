@@ -785,7 +785,10 @@ function showPlayerDetails(teamName, rowIndex) {
     playerDetails.forEach((player, index) => {
         const pickNumber = index + 1;
 
-        // Get photo and logo using local images
+        // Get current season stats from API
+        const currentPlayerStats = getCurrentPlayerStats(player.name, player.playerId);
+
+        // Get photo and logo using API data or fallback to local images
         let imagePath;
         let logoPath;
 
@@ -795,9 +798,9 @@ function showPlayerDetails(teamName, rowIndex) {
             imagePath = abbrev ? `teams/${abbrev}.png` : null;
             logoPath = null; // No secondary logo for teams
         } else {
-            // For players and goalies, get player photo and team logo
-            imagePath = getMatchingImage(player.name);
-            logoPath = getTeamLogoPath(player.teamAbbrev);
+            // For players and goalies, use current headshot and team logo from API if available
+            imagePath = currentPlayerStats?.headshot || getMatchingImage(player.name);
+            logoPath = currentPlayerStats?.teamAbbrev ? `teams/${currentPlayerStats.teamAbbrev}.png` : getTeamLogoPath(player.teamAbbrev);
         }
 
         const playerCard = document.createElement('div');
