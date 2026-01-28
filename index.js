@@ -217,11 +217,13 @@ async function populatePlayerTable(playerData) {
 
     playerData.forEach(player => {
         const skaterName = player.skaterFullName;
-        const matchingImage = getMatchingImage(skaterName);
-        const logoPath = getTeamLogoPath(player.teamAbbrevs);
 
         // Get current season stats from API
         const currentPlayerStats = getCurrentPlayerStats(skaterName, player.playerId);
+
+        // Use current headshot and team logo from API if available, otherwise fallback to old data
+        const playerPhoto = currentPlayerStats?.headshot || getMatchingImage(skaterName);
+        const teamLogo = currentPlayerStats?.teamAbbrev ? `teams/${currentPlayerStats.teamAbbrev}.png` : getTeamLogoPath(player.teamAbbrevs);
 
         // Debug logging for Barkov and Tkachuk
         if (skaterName.includes("Barkov") || skaterName.includes("Tkachuk")) {
@@ -248,11 +250,11 @@ async function populatePlayerTable(playerData) {
             points = 0;
         }
 
-        const imageHTML = matchingImage && logoPath
+        const imageHTML = playerPhoto && teamLogo
             ? `
             <div class="player-photo">
-                <img src="${matchingImage}" alt="${skaterName}" class="face">
-                <img src="${logoPath}" alt="${player.teamAbbrevs}" class="logo">
+                <img src="${playerPhoto}" alt="${skaterName}" class="face">
+                <img src="${teamLogo}" alt="${currentPlayerStats?.teamAbbrev || player.teamAbbrevs}" class="logo">
             </div>
             `
             : "";
@@ -293,11 +295,13 @@ function populateGoalieTable(goalies) {
 
     goalies.forEach(goalie => {
         const name = goalie.goalieFullName;
-        const imagePath = getMatchingImage(name);
-        const logoPath = getTeamLogoPath(goalie.teamAbbrevs);
 
         // Get current season stats from API
         const currentGoalieStats = getCurrentPlayerStats(name, goalie.playerId);
+
+        // Use current headshot and team logo from API if available, otherwise fallback to old data
+        const playerPhoto = currentGoalieStats?.headshot || getMatchingImage(name);
+        const teamLogo = currentGoalieStats?.teamAbbrev ? `teams/${currentGoalieStats.teamAbbrev}.png` : getTeamLogoPath(goalie.teamAbbrevs);
 
         let gp, wins, losses, otLosses, savePct, shutouts, points;
         // Only show stats if goalie has played games this season (2025-26)
@@ -322,10 +326,10 @@ function populateGoalieTable(goalies) {
             points = 0;
         }
 
-        const imageHTML = imagePath && logoPath
+        const imageHTML = playerPhoto && teamLogo
             ? `<div class="player-photo">
-                    <img src="${imagePath}" alt="${name}" class="face">
-                    <img src="${logoPath}" alt="${goalie.teamAbbrevs}" class="logo">
+                    <img src="${playerPhoto}" alt="${name}" class="face">
+                    <img src="${teamLogo}" alt="${currentGoalieStats?.teamAbbrev || goalie.teamAbbrevs}" class="logo">
                </div>`
             : "";
 
