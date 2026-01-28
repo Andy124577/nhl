@@ -520,15 +520,6 @@ body {
         background: rgba(90, 103, 216, 0.05);
     }
 
-    #careerStatsTable tr.playoff-row {
-        background: rgba(139, 92, 246, 0.08);
-    }
-
-    #careerStatsTable tr.current-season {
-        background: rgba(16, 185, 129, 0.12);
-        font-weight: 600;
-    }
-
     #careerStatsTable .season-col {
         font-weight: 700;
         color: #5a67d8;
