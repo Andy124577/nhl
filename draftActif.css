@@ -257,23 +257,23 @@ body {
 }
 
 .progress-player-photo .face {
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
   object-fit: cover;
-  object-position: center 20%;
-  transform: translateX(-15px);
+  object-position: center 30%;
+  transform: translateX(-5px);
 }
 
 .progress-player-photo .logo {
   position: absolute;
-  bottom: -3px;
-  right: -3px;
-  width: 18px;
-  height: 18px;
+  bottom: -2px;
+  right: -2px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: white;
   padding: 2px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .progress-player-photo.no-image {
@@ -545,22 +545,22 @@ body {
 }
 
 .carousel-player-image img:first-child {
-  width: 140%;
-  height: 140%;
+  width: 120%;
+  height: 120%;
   object-fit: cover;
-  object-position: center 25%;
+  object-position: center 30%;
 }
 
 .carousel-team-logo {
   position: absolute;
-  bottom: -5px;
-  right: -5px;
-  width: 24px !important;
-  height: 24px !important;
+  bottom: -3px;
+  right: -3px;
+  width: 26px !important;
+  height: 26px !important;
   border-radius: 50%;
   background: white;
   padding: 2px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .carousel-no-image {
@@ -702,22 +702,27 @@ tr:hover {
   display: inline-block;
   overflow: hidden;
   border-radius: 8px;
+  background: #f0f0f0;
 }
 
 .player-photo img.face {
-  width: 95px;
-  height: 95px;
+  width: 73px;
+  height: 73px;
   object-fit: cover;
-  object-position: center 20%;
-  transform: translateX(-17px);
+  object-position: center 30%;
+  transform: translateX(-6.5px);
 }
 
 .player-photo img.logo {
   position: absolute;
-  bottom: -5px;
-  right: -5px;
-  width: 20px;
-  height: 20px;
+  bottom: 2px;
+  right: 2px;
+  width: 24px;
+  height: 24px;
+  background: white;
+  border-radius: 50%;
+  padding: 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 button.select-button {

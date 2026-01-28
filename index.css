@@ -132,24 +132,29 @@ body {
         height: 70px;
         display: inline-block;
         overflow: hidden;
-        border-radius: 5px;
+        border-radius: 8px;
+        background: #f0f0f0;
     }
 
     .player-photo img.face {
-        width: 110px;
-        height: 110px;
+        width: 85px;
+        height: 85px;
         display: block;
         object-fit: cover;
-        object-position: center 20%;
-        transform: translateX(-20px);
+        object-position: center 30%;
+        transform: translateX(-7.5px);
     }
 
     .player-photo img.logo {
         position: absolute;
-        bottom: -8px;
-        right: -8px;
-        width: 25px;
-        height: auto;
+        bottom: 2px;
+        right: 2px;
+        width: 28px;
+        height: 28px;
+        background: white;
+        border-radius: 50%;
+        padding: 2px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
 
     td.points-column {
