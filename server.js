@@ -1188,6 +1188,9 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
 
         const data = await response.json();
 
+        // Construct headshot URL - NHL API provides headshots at this URL format
+        const headshotUrl = data.headshot || `https://assets.nhle.com/mugs/nhl/20252026/${data.currentTeamAbbrev || 'NJD'}/${playerId}.png`;
+
         // Extract current season stats - check for 20252026 season ONLY
         const seasonStats = data.featuredStats?.regularSeason?.subSeason;
         const season = data.featuredStats?.season;
@@ -1202,7 +1205,7 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
                 playerId: playerId,
                 playerName: playerName,
                 teamAbbrev: data.currentTeamAbbrev || "N/A",
-                headshot: data.headshot || null,
+                headshot: headshotUrl,
                 teamLogo: data.teamLogo || null,
                 position: data.position || "N/A",
                 gamesPlayed: 0,
@@ -1243,7 +1246,7 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
             playerId: playerId,
             playerName: playerName,
             teamAbbrev: data.currentTeamAbbrev || "N/A",
-            headshot: data.headshot || null,
+            headshot: headshotUrl,
             teamLogo: data.teamLogo || null,
             position: data.position || "N/A",
             gamesPlayed: seasonStats.gamesPlayed || 0,
@@ -1557,9 +1560,10 @@ app.get('/player-career/:playerId', async (req, res) => {
             : 'Unknown Player';
         const position = data.position || 'N/A';
         const isGoalie = position === 'G';
-        const headshot = data.headshot || null;
-        const teamLogo = data.teamLogo || null;
         const currentTeam = data.currentTeamAbbrev || null;
+        // Construct headshot URL - use API's headshot or construct from player ID and current team
+        const headshot = data.headshot || (currentTeam ? `https://assets.nhle.com/mugs/nhl/20252026/${currentTeam}/${playerId}.png` : null);
+        const teamLogo = data.teamLogo || null;
 
         // Extract all seasons from seasonTotals (regular season + playoffs combined in one array)
         const allSeasons = data.seasonTotals || [];
