@@ -885,9 +885,19 @@ button.select-button .select-icon {
     padding: 8px 6px;
   }
 
+  .player-photo {
+    width: 50px;
+    height: 50px;
+  }
+
   .player-photo img.face {
     width: 50px;
     height: 50px;
+  }
+
+  .player-photo img.logo {
+    width: 18px;
+    height: 18px;
   }
 }
 
