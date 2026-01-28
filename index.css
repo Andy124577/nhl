@@ -308,10 +308,10 @@ body {
         align-items: center;
         gap: 25px;
         padding: 30px 35px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
         color: white;
         position: relative;
-        border-bottom: 3px solid rgba(255, 255, 255, 0.2);
+        border-bottom: 3px solid rgba(255, 255, 255, 0.15);
     }
 
     .career-modal-header .close-modal {
@@ -320,13 +320,13 @@ body {
         top: 25px;
         color: white;
         font-size: 2.5rem;
-        opacity: 0.9;
+        opacity: 0.95;
         transition: all 0.2s;
     }
 
     .career-modal-header .close-modal:hover {
         opacity: 1;
-        transform: scale(1.1);
+        transform: scale(1.05);
     }
 
     .player-headshot-container {
@@ -334,13 +334,13 @@ body {
         height: 110px;
         border-radius: 50%;
         overflow: hidden;
-        border: 4px solid rgba(255, 255, 255, 0.4);
-        background: rgba(255, 255, 255, 0.15);
+        border: 4px solid rgba(255, 255, 255, 0.35);
+        background: rgba(255, 255, 255, 0.12);
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
     }
 
     .player-headshot-container img {
@@ -351,7 +351,7 @@ body {
 
     .player-headshot-container .no-photo {
         font-size: 2.5rem;
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(255, 255, 255, 0.85);
     }
 
     .player-info-header {
@@ -363,7 +363,7 @@ body {
         font-size: 2.2rem;
         font-weight: 700;
         color: white;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
     }
 
     .player-info-header .player-meta {
@@ -371,7 +371,7 @@ body {
         align-items: center;
         gap: 18px;
         font-size: 1rem;
-        opacity: 0.95;
+        opacity: 0.97;
         font-weight: 500;
     }
 
@@ -379,7 +379,7 @@ body {
         display: flex;
         align-items: center;
         gap: 8px;
-        background: rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.18);
         padding: 6px 12px;
         border-radius: 20px;
     }
@@ -394,8 +394,8 @@ body {
         display: flex;
         gap: 20px;
         padding: 20px 35px;
-        background: #f8f9fa;
-        border-bottom: 1px solid #e0e0e0;
+        background: #f7fafc;
+        border-bottom: 1px solid #e2e8f0;
         align-items: center;
     }
 
@@ -413,7 +413,7 @@ body {
 
     .filter-group-career select {
         padding: 8px 14px;
-        border: 2px solid #e0e0e0;
+        border: 2px solid #cbd5e0;
         border-radius: 8px;
         font-size: 0.95rem;
         font-weight: 500;
@@ -424,13 +424,13 @@ body {
     }
 
     .filter-group-career select:hover {
-        border-color: #667eea;
+        border-color: #5a67d8;
     }
 
     .filter-group-career select:focus {
         outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: #5a67d8;
+        box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.15);
     }
 
     /* Stats count badge */
@@ -439,12 +439,12 @@ body {
         display: flex;
         align-items: center;
         padding: 8px 16px;
-        background: #667eea;
+        background: #5a67d8;
         border-radius: 20px;
         font-weight: 600;
         color: white;
         font-size: 0.9rem;
-        box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 2px 8px rgba(90, 103, 216, 0.3);
     }
 
     /* Career Stats Table Container - NHL style horizontal scroll */
@@ -481,34 +481,41 @@ body {
     #careerStatsTable td {
         padding: 14px 12px;
         text-align: center;
-        border-bottom: 1px solid #f0f0f0;
+        border-bottom: 1px solid #edf2f7;
         font-size: 0.95rem;
         white-space: nowrap;
         color: #2d3748;
     }
 
     #careerStatsTable tbody tr:hover {
-        background-color: #f8f9fa;
+        background-color: #f7fafc;
     }
 
     #careerStatsTable tr.playoff-row {
-        background-color: #f0f4ff;
+        background-color: #ebf4ff;
     }
 
     #careerStatsTable tr.current-season {
-        background-color: #e8f5e9;
+        background-color: #c6f6d5;
         font-weight: 600;
     }
 
     #careerStatsTable .season-col {
         font-weight: 700;
-        color: #667eea;
+        color: #5a67d8;
     }
 
     #careerStatsTable .league-col {
         font-size: 0.85rem;
         color: #718096;
         font-weight: 600;
+    }
+
+    #careerStatsTable .team-col {
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .no-stats-message {

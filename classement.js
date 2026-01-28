@@ -4,6 +4,7 @@ let teamData = [];
 let imageList = [];
 let currentStats = null;
 let currentTeams = null;
+let currentCareerData = null;
 const BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:3000"
   : window.location.origin;
@@ -879,20 +880,37 @@ function showPlayerDetails(teamName, rowIndex) {
     modal.classList.add('show');
 }
 
-// Career Stats Modal Functions
+// Helper function to get team logo path
+function getTeamLogoPath(teamAbbrevs) {
+    if (!teamAbbrevs || teamAbbrevs === "null") {
+        return null;
+    }
+    const lastTeam = teamAbbrevs.split(",").pop().trim();
+    return `teams/${lastTeam}.png`;
+}
+
+// Career Stats Modal Functions - NHL.com Style
 async function showCareerStats(playerId, playerName, isGoalie = false) {
     const modal = document.getElementById('careerStatsModal');
+    const modalHeader = document.getElementById('careerModalHeader');
     const modalPlayerName = document.getElementById('careerPlayerName');
     const modalPosition = document.getElementById('careerPlayerPosition');
+    const modalTeam = document.getElementById('careerPlayerTeam');
+    const headshotContainer = document.getElementById('playerHeadshotContainer');
     const loadingSpinner = document.getElementById('loadingSpinner');
+    const filtersSection = document.getElementById('careerFilters');
     const statsTable = document.getElementById('careerStatsTable');
 
     // Show modal with loading state
-    modalPlayerName.textContent = playerName;
-    modalPosition.textContent = isGoalie ? 'Gardien de but' : 'Joueur';
-    loadingSpinner.style.display = 'block';
-    statsTable.innerHTML = '';
     modal.style.display = 'block';
+    loadingSpinner.style.display = 'block';
+    modalHeader.style.display = 'none';
+    filtersSection.style.display = 'none';
+    statsTable.innerHTML = '';
+
+    // Set default filters to NHL and Regular season
+    document.getElementById('leagueFilter').value = 'nhl';
+    document.getElementById('gameTypeFilter').value = 'regular';
 
     try {
         const response = await fetch(`${BASE_URL}/player-career/${playerId}`);
@@ -902,93 +920,152 @@ async function showCareerStats(playerId, playerName, isGoalie = false) {
         }
 
         const data = await response.json();
+        currentCareerData = data; // Store globally for filtering
+
+        // Hide loading, show header and filters
         loadingSpinner.style.display = 'none';
+        modalHeader.style.display = 'flex';
+        filtersSection.style.display = 'flex';
 
-        // Build table based on player type
-        if (data.seasons.length === 0) {
-            statsTable.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Aucune statistique de carrière disponible</p>';
-            return;
-        }
+        // Update header info
+        modalPlayerName.textContent = data.playerName;
+        modalPosition.textContent = data.isGoalie ? '🥅 Gardien de but' : '🏒 ' + (data.position || 'Joueur');
 
-        let tableHTML = '<table><thead><tr>';
-
-        if (data.isGoalie) {
-            tableHTML += `
-                <th class="season-col">Saison</th>
-                <th class="league-col">Ligue</th>
-                <th>Équipe</th>
-                <th>GP</th>
-                <th>W</th>
-                <th>L</th>
-                <th>OTL</th>
-                <th>SV%</th>
-                <th>GAA</th>
-                <th>SO</th>
-            `;
+        if (data.currentTeam) {
+            const teamLogo = getTeamLogoPath(data.currentTeam);
+            modalTeam.innerHTML = teamLogo ? `<img src="${teamLogo}" alt="${data.currentTeam}"> ${data.currentTeam}` : data.currentTeam;
         } else {
-            tableHTML += `
-                <th class="season-col">Saison</th>
-                <th class="league-col">Ligue</th>
-                <th>Équipe</th>
-                <th>GP</th>
-                <th>G</th>
-                <th>A</th>
-                <th>PTS</th>
-                <th>+/-</th>
-                <th>PIM</th>
-                <th>SOG</th>
-            `;
+            modalTeam.textContent = '';
         }
 
-        tableHTML += '</tr></thead><tbody>';
+        // Update headshot
+        if (data.headshot) {
+            headshotContainer.innerHTML = `<img src="${data.headshot}" alt="${data.playerName}">`;
+        } else {
+            headshotContainer.innerHTML = '<div class="no-photo">🏒</div>';
+        }
 
-        // Add each season row
-        data.seasons.forEach(season => {
-            const isNHL = season.league === 'NHL';
-            const isCurrent = season.season === '2025-26' || season.season === '2024-25';
-            const rowClass = isCurrent ? 'current-season' : (isNHL ? 'nhl-season' : '');
-
-            tableHTML += `<tr class="${rowClass}">`;
-            tableHTML += `<td class="season-col">${season.season}</td>`;
-            tableHTML += `<td class="league-col">${season.league}</td>`;
-            tableHTML += `<td>${season.team}</td>`;
-            tableHTML += `<td>${season.gp}</td>`;
-
-            if (data.isGoalie) {
-                tableHTML += `
-                    <td>${season.wins}</td>
-                    <td>${season.losses}</td>
-                    <td>${season.otLosses}</td>
-                    <td>${season.savePct ? season.savePct.toFixed(3) : '0.000'}</td>
-                    <td>${season.gaa ? season.gaa.toFixed(2) : '0.00'}</td>
-                    <td>${season.shutouts}</td>
-                `;
-            } else {
-                tableHTML += `
-                    <td>${season.goals}</td>
-                    <td>${season.assists}</td>
-                    <td>${season.points}</td>
-                    <td>${season.plusMinus >= 0 ? '+' + season.plusMinus : season.plusMinus}</td>
-                    <td>${season.pim}</td>
-                    <td>${season.shots}</td>
-                `;
-            }
-
-            tableHTML += '</tr>';
-        });
-
-        tableHTML += '</tbody></table>';
-        statsTable.innerHTML = tableHTML;
+        // Build and display table
+        filterCareerStats();
 
     } catch (error) {
         console.error('Error fetching career stats:', error);
         loadingSpinner.style.display = 'none';
-        statsTable.innerHTML = '<p style="text-align: center; color: #ff2e2e; padding: 20px;">Erreur lors du chargement des statistiques</p>';
+        statsTable.innerHTML = '<p class="no-stats-message">❌ Erreur lors du chargement des statistiques</p>';
     }
+}
+
+// Function to filter and display career stats
+function filterCareerStats() {
+    if (!currentCareerData) return;
+
+    const leagueFilter = document.getElementById('leagueFilter').value;
+    const gameTypeFilter = document.getElementById('gameTypeFilter').value;
+    const statsTable = document.getElementById('careerStatsTable');
+    const statsCountBadge = document.getElementById('statsCountBadge');
+
+    // Filter seasons
+    let filteredSeasons = currentCareerData.seasons.filter(season => {
+        // League filter
+        const leagueMatch = leagueFilter === 'all' ||
+                           (leagueFilter === 'nhl' && season.league === 'NHL') ||
+                           (leagueFilter === 'other' && season.league !== 'NHL');
+
+        // Game type filter
+        const gameTypeMatch = gameTypeFilter === 'all' ||
+                             (gameTypeFilter === 'regular' && season.gameType === 'regular') ||
+                             (gameTypeFilter === 'playoffs' && season.gameType === 'playoffs');
+
+        return leagueMatch && gameTypeMatch;
+    });
+
+    // Update count badge
+    statsCountBadge.textContent = `${filteredSeasons.length} saison${filteredSeasons.length > 1 ? 's' : ''} affichée${filteredSeasons.length > 1 ? 's' : ''}`;
+
+    if (filteredSeasons.length === 0) {
+        statsTable.innerHTML = '<p class="no-stats-message">Aucune statistique correspondant aux filtres sélectionnés</p>';
+        return;
+    }
+
+    // Build table
+    let tableHTML = '<table><thead><tr>';
+
+    if (currentCareerData.isGoalie) {
+        tableHTML += `
+            <th class="season-col">Saison</th>
+            <th class="league-col">Ligue</th>
+            <th class="team-col">Équipe</th>
+            <th>GP</th>
+            <th>W</th>
+            <th>L</th>
+            <th>OTL</th>
+            <th>SV%</th>
+            <th>GAA</th>
+            <th>SO</th>
+        `;
+    } else {
+        tableHTML += `
+            <th class="season-col">Saison</th>
+            <th class="league-col">Ligue</th>
+            <th class="team-col">Équipe</th>
+            <th>GP</th>
+            <th>G</th>
+            <th>A</th>
+            <th>PTS</th>
+            <th>+/-</th>
+            <th>PIM</th>
+            <th>SOG</th>
+        `;
+    }
+
+    tableHTML += '</tr></thead><tbody>';
+
+    // Add each season row
+    filteredSeasons.forEach(season => {
+        const isNHL = season.league === 'NHL';
+        const isCurrent = season.season === '2025-26' || season.season === '2024-25';
+        const isPlayoffs = season.gameType === 'playoffs';
+
+        let rowClass = '';
+        if (isCurrent) rowClass = 'current-season';
+        else if (isPlayoffs) rowClass = 'playoff-row';
+
+        tableHTML += `<tr class="${rowClass}">`;
+        tableHTML += `<td class="season-col">${season.season}</td>`;
+        tableHTML += `<td class="league-col">${season.league}</td>`;
+        tableHTML += `<td class="team-col">${season.team}</td>`;
+        tableHTML += `<td>${season.gp}</td>`;
+
+        if (currentCareerData.isGoalie) {
+            tableHTML += `
+                <td>${season.wins}</td>
+                <td>${season.losses}</td>
+                <td>${season.otLosses}</td>
+                <td>${season.savePct ? season.savePct.toFixed(3) : '0.000'}</td>
+                <td>${season.gaa ? season.gaa.toFixed(2) : '0.00'}</td>
+                <td>${season.shutouts}</td>
+            `;
+        } else {
+            tableHTML += `
+                <td>${season.goals}</td>
+                <td>${season.assists}</td>
+                <td>${season.points}</td>
+                <td>${season.plusMinus >= 0 ? '+' + season.plusMinus : season.plusMinus}</td>
+                <td>${season.pim}</td>
+                <td>${season.shots}</td>
+            `;
+        }
+
+        tableHTML += '</tr>';
+    });
+
+    tableHTML += '</tbody></table>';
+    statsTable.innerHTML = tableHTML;
 }
 
 function closeCareerModal() {
     document.getElementById('careerStatsModal').style.display = 'none';
+    currentCareerData = null;
 }
 
 // Close modal when clicking outside
