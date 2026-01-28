@@ -1568,18 +1568,36 @@ app.get('/player-career/:playerId', async (req, res) => {
         // Extract all seasons from seasonTotals (regular season + playoffs combined in one array)
         const allSeasons = data.seasonTotals || [];
 
+        // League name mapping
+        const leagueNames = {
+            'NHL': 'National Hockey League',
+            'AHL': 'American Hockey League',
+            'ECHL': 'East Coast Hockey League',
+            'WHL': 'Western Hockey League',
+            'OHL': 'Ontario Hockey League',
+            'QMJHL': 'Quebec Major Junior Hockey League',
+            'KHL': 'Kontinental Hockey League',
+            'SHL': 'Swedish Hockey League',
+            'Liiga': 'Finnish Elite League',
+            'NLA': 'National League A',
+            'DEL': 'Deutsche Eishockey Liga',
+            'Extraliga': 'Czech Extraliga',
+            'NCAA': 'National Collegiate Athletic Association'
+        };
+
         // Format seasons for display
         const formattedSeasons = allSeasons.map(season => {
             const seasonId = season.season;
             const seasonDisplay = `${seasonId.toString().substring(0, 4)}-${seasonId.toString().substring(6, 8)}`;
             const leagueAbbrev = season.leagueAbbrev || 'NHL';
+            const leagueName = leagueNames[leagueAbbrev] || leagueAbbrev;
             const teamAbbrev = season.teamName?.default || season.teamAbbrev || 'N/A';
             const gameType = season.gameTypeId === 3 ? 'playoffs' : 'regular';
 
             if (isGoalie) {
                 return {
                     season: seasonDisplay,
-                    league: leagueAbbrev,
+                    league: leagueName,
                     team: teamAbbrev,
                     gameType: gameType,
                     gp: season.gamesPlayed || 0,
@@ -1593,7 +1611,7 @@ app.get('/player-career/:playerId', async (req, res) => {
             } else {
                 return {
                     season: seasonDisplay,
-                    league: leagueAbbrev,
+                    league: leagueName,
                     team: teamAbbrev,
                     gameType: gameType,
                     gp: season.gamesPlayed || 0,
