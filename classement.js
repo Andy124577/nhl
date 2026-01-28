@@ -1098,7 +1098,7 @@ function filterCareerStats() {
 
         // Add career totals row
         tableHTML += '<tr class="career-totals-row">';
-        tableHTML += `<td colspan="3" class="career-totals-label">Career NHL ${gameTypeFilter === 'regular' ? 'Regular Season' : gameTypeFilter === 'playoffs' ? 'Playoffs' : ''} Totals</td>`;
+        tableHTML += `<td colspan="3" class="career-totals-label">Carrière</td>`;
         tableHTML += `<td>${totals.gp}</td>`;
 
         if (currentCareerData.isGoalie) {
