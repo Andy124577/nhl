@@ -527,7 +527,7 @@ body {
 
     #careerStatsTable .league-col {
         font-size: 0.75rem;
-        color: white;
+        color: #718096;
         font-weight: 600;
         text-transform: uppercase;
         width: 50px;
@@ -537,7 +537,7 @@ body {
 
     #careerStatsTable .season-col {
         font-weight: 700;
-        color: white;
+        color: #ef4444;
         font-size: 0.9rem;
         width: 80px;
         max-width: 80px;
