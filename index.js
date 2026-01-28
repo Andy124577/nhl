@@ -596,9 +596,9 @@ async function showCareerStats(playerId, playerName, isGoalie = false) {
     filtersSection.style.display = 'none';
     statsTable.innerHTML = '';
 
-    // Reset filters
-    document.getElementById('leagueFilter').value = 'all';
-    document.getElementById('gameTypeFilter').value = 'all';
+    // Set default filters to NHL and Regular season
+    document.getElementById('leagueFilter').value = 'nhl';
+    document.getElementById('gameTypeFilter').value = 'regular';
 
     try {
         const response = await fetch(`${BASE_URL}/player-career/${playerId}`);
@@ -683,7 +683,6 @@ function filterCareerStats() {
             <th class="season-col">Saison</th>
             <th class="league-col">Ligue</th>
             <th>Équipe</th>
-            <th>Type</th>
             <th>GP</th>
             <th>W</th>
             <th>L</th>
@@ -697,7 +696,6 @@ function filterCareerStats() {
             <th class="season-col">Saison</th>
             <th class="league-col">Ligue</th>
             <th>Équipe</th>
-            <th>Type</th>
             <th>GP</th>
             <th>G</th>
             <th>A</th>
@@ -719,18 +717,11 @@ function filterCareerStats() {
         let rowClass = '';
         if (isCurrent) rowClass = 'current-season';
         else if (isPlayoffs) rowClass = 'playoff-row';
-        else if (isNHL) rowClass = 'nhl-season';
 
         tableHTML += `<tr class="${rowClass}">`;
         tableHTML += `<td class="season-col">${season.season}</td>`;
         tableHTML += `<td class="league-col">${season.league}</td>`;
         tableHTML += `<td>${season.team}</td>`;
-
-        // Game type badge
-        const badgeClass = season.gameType === 'playoffs' ? 'badge-playoffs' : 'badge-regular';
-        const badgeText = season.gameType === 'playoffs' ? 'PO' : 'RS';
-        tableHTML += `<td><span class="game-type-badge ${badgeClass}">${badgeText}</span></td>`;
-
         tableHTML += `<td>${season.gp}</td>`;
 
         if (currentCareerData.isGoalie) {
