@@ -1023,18 +1023,10 @@ function filterCareerStats() {
 
     // Add each season row
     filteredSeasons.forEach(season => {
-        const isNHL = season.league === 'NHL';
-        const isCurrent = season.season === '2025-26' || season.season === '2024-25';
-        const isPlayoffs = season.gameType === 'playoffs';
-
-        let rowClass = '';
-        if (isCurrent) rowClass = 'current-season';
-        else if (isPlayoffs) rowClass = 'playoff-row';
-
-        tableHTML += `<tr class="${rowClass}">`;
+        tableHTML += `<tr>`;
         tableHTML += `<td class="season-col">${season.season}</td>`;
         tableHTML += `<td class="league-col">${season.league}</td>`;
-        tableHTML += `<td class="team-col">${season.team ? `<img src="teams/${season.team}.png" alt="${season.team}" title="${season.team}" onerror="this.style.display='none'">` : '-'}</td>`;
+        tableHTML += `<td class="team-col">${season.team ? `<img src="teams/${season.team}.png" alt="${season.team}" title="${season.team}" onerror="this.outerHTML='<span>${season.team}</span>'">` : '-'}</td>`;
         tableHTML += `<td>${season.gp}</td>`;
 
         if (currentCareerData.isGoalie) {
