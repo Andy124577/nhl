@@ -718,7 +718,7 @@ function filterCareerStats() {
         tableHTML += `<tr>`;
         tableHTML += `<td class="season-col">${season.season}</td>`;
         tableHTML += `<td class="league-col">${season.league}</td>`;
-        tableHTML += `<td class="team-col">${season.team ? `<img src="teams/${season.team}.png" alt="${season.team}" title="${season.team}" onerror="this.style.opacity='0.3'">` : '-'}</td>`;
+        tableHTML += `<td class="team-col">${season.team || '-'}</td>`;
         tableHTML += `<td>${season.gp}</td>`;
 
         if (currentCareerData.isGoalie) {
