@@ -732,7 +732,7 @@
         },
         {
             "playerId": 8480796,
-            "skaterFullName": "Martin Feh\u00e9rv\u00e1ry",
+            "skaterFullName": "Martin Fehérváry",
             "teamAbbrevs": "WSH",
             "positionCode": "D",
             "gamesPlayed": 81,
@@ -1152,7 +1152,7 @@
         },
         {
             "playerId": 8476874,
-            "skaterFullName": "Olli M\u00e4\u00e4tt\u00e4",
+            "skaterFullName": "Olli Määttä",
             "teamAbbrevs": "DET,UTA",
             "positionCode": "D",
             "gamesPlayed": 77,
@@ -1764,7 +1764,7 @@
         },
         {
             "playerId": 8482116,
-            "skaterFullName": "Tim St\u00fctzle",
+            "skaterFullName": "Tim Stützle",
             "teamAbbrevs": "OTT",
             "positionCode": "C",
             "gamesPlayed": 82,
@@ -2574,7 +2574,7 @@
         },
         {
             "playerId": 8483515,
-            "skaterFullName": "Juraj Slafkovsk\u00fd",
+            "skaterFullName": "Juraj Slafkovský",
             "teamAbbrevs": "MTL",
             "positionCode": "L",
             "gamesPlayed": 79,
@@ -2904,7 +2904,7 @@
         },
         {
             "playerId": 8482109,
-            "skaterFullName": "Alexis Lafreni\u00e8re",
+            "skaterFullName": "Alexis Lafrenière",
             "teamAbbrevs": "NYR",
             "positionCode": "L",
             "gamesPlayed": 82,
@@ -4585,7 +4585,7 @@
             "points": 0
         },
         {
-            "playerId": null,
+            "playerId": 8484791,
             "skaterFullName": "Cole Eiserman",
             "teamAbbrevs": null,
             "positionCode": null,
@@ -4615,7 +4615,7 @@
             "points": 0
         },
         {
-            "playerId": null,
+            "playerId": 8484789,
             "skaterFullName": "Berkly Catton",
             "teamAbbrevs": null,
             "positionCode": null,
@@ -4705,7 +4705,7 @@
             "points": 2
         },
         {
-            "playerId": null,
+            "playerId": 8484327,
             "skaterFullName": "Easton Cowan",
             "teamAbbrevs": null,
             "positionCode": null,
@@ -4725,7 +4725,7 @@
             "points": 1
         },
         {
-            "playerId": null,
+            "playerId": 8484762,
             "skaterFullName": "Beckett Sennecke",
             "teamAbbrevs": null,
             "positionCode": null,
@@ -4745,7 +4745,7 @@
             "points": 0
         },
         {
-            "playerId": null,
+            "playerId": 8483509,
             "skaterFullName": "Matthew Savoie",
             "teamAbbrevs": null,
             "positionCode": null,
@@ -4775,7 +4775,7 @@
             "points": 5
         },
         {
-            "playerId": null,
+            "playerId": 8482681,
             "skaterFullName": "Arseny Gritsyuk",
             "teamAbbrevs": null,
             "positionCode": null,
@@ -4795,7 +4795,7 @@
             "points": 1
         },
         {
-            "playerId": null,
+            "playerId": 8484788,
             "skaterFullName": "Carter Yakemchuk",
             "teamAbbrevs": null,
             "positionCode": null,
@@ -4845,7 +4845,7 @@
             "points": 0
         },
         {
-            "playerId": null,
+            "playerId": 8483498,
             "skaterFullName": "Jordan Dumais",
             "teamAbbrevs": null,
             "positionCode": null,
@@ -4865,7 +4865,7 @@
             "points": 0
         },
         {
-            "playerId": null,
+            "playerId": 8484784,
             "skaterFullName": "Zeev Buium",
             "teamAbbrevs": null,
             "positionCode": null,
@@ -4875,7 +4875,7 @@
             "points": 0
         },
         {
-            "playerId": null,
+            "playerId": 8484786,
             "skaterFullName": "Tij Iginla",
             "teamAbbrevs": null,
             "positionCode": null,
@@ -4895,7 +4895,7 @@
             "points": 2
         },
         {
-            "playerId": null,
+            "playerId": 8483544,
             "skaterFullName": "Danila Yurov",
             "teamAbbrevs": null,
             "positionCode": null,
@@ -4905,7 +4905,7 @@
             "points": 0
         },
         {
-            "playerId": null,
+            "playerId": 8485366,
             "skaterFullName": "Matthew Schaefer",
             "teamAbbrevs": null,
             "positionCode": null,
@@ -4935,7 +4935,7 @@
             "points": 0
         },
         {
-            "playerId": null,
+            "playerId": 8485702,
             "skaterFullName": "Maxim Shabanov",
             "teamAbbrevs": null,
             "positionCode": null,
@@ -4965,7 +4965,7 @@
             "points": 5
         },
         {
-            "playerId": null,
+            "playerId": 8484794,
             "skaterFullName": "Sam Dickinson",
             "teamAbbrevs": null,
             "positionCode": null,
@@ -4985,7 +4985,7 @@
             "points": 1
         },
         {
-            "playerId": null,
+            "playerId": 8484797,
             "skaterFullName": "Konsta Helenius",
             "teamAbbrevs": null,
             "positionCode": null,
@@ -4995,7 +4995,7 @@
             "points": 0
         },
         {
-            "playerId": null,
+            "playerId": 8483455,
             "skaterFullName": "Isaac Howard",
             "teamAbbrevs": null,
             "positionCode": null,
@@ -5182,7 +5182,7 @@
             "losses": 31,
             "otLosses": 11,
             "points": 91,
-            "teamFullName": "Montr\u00e9al Canadiens",
+            "teamFullName": "Montréal Canadiens",
             "teamId": 8,
             "seasonId": 20242025
         },
@@ -5366,7 +5366,7 @@
         },
         {
             "playerId": 8482447,
-            "goalieFullName": "Leevi Meril\u00e4inen",
+            "goalieFullName": "Leevi Meriläinen",
             "teamAbbrevs": "OTT",
             "gamesPlayed": 12,
             "wins": 8,
