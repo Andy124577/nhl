@@ -1192,8 +1192,9 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
         const headshotUrl = data.headshot || `https://assets.nhle.com/mugs/nhl/20252026/${data.currentTeamAbbrev || 'NJD'}/${playerId}.png`;
 
         // ALWAYS check seasonTotals first for NHL-only stats (to avoid showing WHL/AHL stats from featuredStats)
+        // Use .filter() instead of .find() to get ALL teams for traded players
         const seasonTotals = data.seasonTotals || [];
-        const nhlSeasonData = seasonTotals.find(s =>
+        const nhlSeasonEntries = seasonTotals.filter(s =>
             s.season === 20252026 &&
             s.gameTypeId === 2 && // gameTypeId 2 = NHL regular season
             s.leagueAbbrev === 'NHL' // Only NHL league - must explicitly be NHL
@@ -1201,10 +1202,29 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
 
         let seasonStats = null;
 
-        if (nhlSeasonData) {
-            // Found NHL stats in seasonTotals - use these
-            console.log(`✓ Found NHL stats for ${playerName} in seasonTotals`);
-            seasonStats = nhlSeasonData;
+        if (nhlSeasonEntries.length > 0) {
+            // Found NHL stats - combine all teams if player was traded
+            if (nhlSeasonEntries.length > 1) {
+                console.log(`✓ Found ${nhlSeasonEntries.length} NHL teams for ${playerName} (traded player) - combining stats`);
+            } else {
+                console.log(`✓ Found NHL stats for ${playerName} in seasonTotals`);
+            }
+
+            // Combine stats from all teams
+            seasonStats = nhlSeasonEntries.reduce((combined, entry) => {
+                return {
+                    gamesPlayed: (combined.gamesPlayed || 0) + (entry.gamesPlayed || 0),
+                    goals: (combined.goals || 0) + (entry.goals || 0),
+                    assists: (combined.assists || 0) + (entry.assists || 0),
+                    points: (combined.points || 0) + (entry.points || 0),
+                    wins: (combined.wins || 0) + (entry.wins || 0),
+                    losses: (combined.losses || 0) + (entry.losses || 0),
+                    shutouts: (combined.shutouts || 0) + (entry.shutouts || 0),
+                    otLosses: (combined.otLosses || 0) + (entry.otLosses || 0),
+                    // For percentages, we'll recalculate later if needed
+                    savePct: entry.savePct || entry.savePercentage || combined.savePct || 0
+                };
+            }, {});
         } else {
             // No NHL stats found for current season - return zeros
             console.log(`⚠️ ${playerName} has no NHL stats for 20252026 - returning zeros`);
