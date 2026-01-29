@@ -1492,6 +1492,43 @@ async function showCareerStats(playerId, playerName, isGoalie = false) {
             headshotContainer.innerHTML = '<div class="no-photo">🏒</div>';
         }
 
+        // Update bio section
+        document.getElementById('playerHeight').textContent = data.height || '-';
+        document.getElementById('playerWeight').textContent = data.weight ? `${data.weight} lb` : '-';
+
+        // Format birth date and calculate age
+        if (data.birthDate) {
+            const birthDate = new Date(data.birthDate);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            document.getElementById('playerBirthDate').textContent = `${data.birthDate} (Âge: ${age})`;
+        } else {
+            document.getElementById('playerBirthDate').textContent = '-';
+        }
+
+        // Format birth place
+        let birthPlace = '';
+        if (data.birthCity) birthPlace += data.birthCity;
+        if (data.birthStateProvince) birthPlace += (birthPlace ? ', ' : '') + data.birthStateProvince;
+        if (data.birthCountry) birthPlace += (birthPlace ? ', ' : '') + data.birthCountry;
+        document.getElementById('playerBirthPlace').textContent = birthPlace || '-';
+
+        // Format shoots/catches
+        document.getElementById('playerShoots').textContent = data.shootsCatches || '-';
+
+        // Format draft info
+        if (data.draftInfo) {
+            const draft = data.draftInfo;
+            const draftText = `${draft.year}, ${draft.teamAbbrev} (${draft.overallPick}e au total), ${draft.round}e ronde, ${draft.pickInRound}e choix`;
+            document.getElementById('playerDraft').textContent = draftText;
+        } else {
+            document.getElementById('playerDraft').textContent = 'Non repêché';
+        }
+
         // Build and display table
         filterCareerStats();
 
