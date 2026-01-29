@@ -221,11 +221,10 @@ async function populatePlayerTable(playerData) {
         // Get current season stats from API
         const currentPlayerStats = getCurrentPlayerStats(skaterName, player.playerId);
 
-        // Use local cached images for main table display
-        // Try to get headshot from NHL API first, fallback to local cached images
-        const apiHeadshot = currentPlayerStats?.headshot;
+        // Prioritize local cached images, fallback to NHL API headshots if no local photo
         const localPhoto = getMatchingImage(skaterName);
-        const playerPhoto = apiHeadshot || localPhoto;
+        const apiHeadshot = currentPlayerStats?.headshot;
+        const playerPhoto = localPhoto || apiHeadshot;
         const teamLogo = currentPlayerStats?.teamAbbrev ? `teams/${currentPlayerStats.teamAbbrev}.png` : getTeamLogoPath(player.teamAbbrevs);
 
         // Debug logging for Barkov and Tkachuk
@@ -262,10 +261,13 @@ async function populatePlayerTable(playerData) {
             `
             : "";
 
+        // Use API position if available, fallback to cached position
+        const position = currentPlayerStats?.position || player.positionCode || "N/A";
+
         const row = document.createElement("tr");
         row.innerHTML = `
             <td>${imageHTML}</td>
-            <td>${skaterName}, ${player.positionCode || "N/A"}</td>
+            <td>${skaterName}, ${position}</td>
             <td>${gp}</td>
             <td>${goals}</td>
             <td>${assists}</td>

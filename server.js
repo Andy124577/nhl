@@ -1203,7 +1203,7 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
             const currentSeasonData = seasonTotals.find(s =>
                 s.season === 20252026 &&
                 s.gameTypeId === 2 && // gameTypeId 2 = NHL regular season
-                (!s.leagueAbbrev || s.leagueAbbrev === 'NHL') // Only NHL league
+                s.leagueAbbrev === 'NHL' // Only NHL league - must explicitly be NHL
             );
 
             if (currentSeasonData) {
