@@ -1199,10 +1199,15 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
         if (!seasonStats || season !== 20252026) {
             // Look for current season in seasonTotals array
             const seasonTotals = data.seasonTotals || [];
-            const currentSeasonData = seasonTotals.find(s => s.season === 20252026 && s.gameTypeId === 2); // gameTypeId 2 = regular season
+            // Only show NHL stats - filter out other leagues (WHL, AHL, etc.)
+            const currentSeasonData = seasonTotals.find(s =>
+                s.season === 20252026 &&
+                s.gameTypeId === 2 && // gameTypeId 2 = NHL regular season
+                (!s.leagueAbbrev || s.leagueAbbrev === 'NHL') // Only NHL league
+            );
 
             if (currentSeasonData) {
-                console.log(`✓ Found stats for ${playerName} in seasonTotals (rookie/new player)`);
+                console.log(`✓ Found NHL stats for ${playerName} in seasonTotals (rookie/new player)`);
                 seasonStats = currentSeasonData;
                 season = 20252026;
             } else {
