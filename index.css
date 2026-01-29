@@ -375,38 +375,72 @@ body {
         opacity: 0.6;
     }
 
-    .player-info-header {
+    .player-info-section {
         flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
     }
 
-    .player-info-header h2 {
-        margin: 0 0 6px 0;
-        font-size: 1.6rem;
+    .player-name-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-right: 50px;
+    }
+
+    .player-name-row h2 {
+        margin: 0;
+        font-size: 1.8rem;
         font-weight: 700;
         color: #2d3748;
     }
 
-    .player-info-header .player-meta {
+    .player-position-team {
         display: flex;
         align-items: center;
-        gap: 10px;
-        font-size: 0.85rem;
-        font-weight: 500;
+        gap: 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #ef4444;
+        margin-bottom: 4px;
     }
 
-    .player-meta-item {
+    .player-position-team span {
         display: flex;
         align-items: center;
         gap: 6px;
-        background: rgba(239, 68, 68, 0.08);
-        padding: 4px 10px;
-        border-radius: 12px;
-        color: #ef4444;
     }
 
-    .player-meta-item img {
-        width: 18px;
-        height: 18px;
+    .player-position-team img {
+        width: 20px;
+        height: 20px;
+    }
+
+    .player-bio-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px 16px;
+    }
+
+    .bio-stat {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .bio-stat .bio-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #718096;
+        letter-spacing: 0.5px;
+    }
+
+    .bio-stat .bio-value {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #2d3748;
     }
 
     /* Career Filters - Glass Design */
@@ -466,43 +500,6 @@ body {
         border-radius: 12px;
         font-size: 0.8rem;
         font-weight: 600;
-    }
-
-    /* Player Bio Section */
-    .player-bio-section {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 12px;
-        padding: 20px 25px;
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border-radius: 12px;
-        margin: 0 25px 20px 25px;
-        border: 1px solid rgba(239, 68, 68, 0.1);
-    }
-
-    .bio-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        background: rgba(255, 255, 255, 0.6);
-        border-radius: 8px;
-        border: 1px solid rgba(239, 68, 68, 0.08);
-    }
-
-    .bio-label {
-        font-weight: 600;
-        color: #2d3748;
-        font-size: 0.85rem;
-        white-space: nowrap;
-    }
-
-    .bio-value {
-        color: #4a5568;
-        font-size: 0.85rem;
-        flex: 1;
     }
 
     /* Career Stats Table Container - Liquid Glass */
@@ -673,23 +670,34 @@ body {
         }
 
         .player-headshot-container {
-            width: 150px;
-            height: 150px;
+            width: 120px;
+            height: 120px;
         }
 
-        .player-info-header h2 {
+        .player-name-row h2 {
             font-size: 1.3rem;
         }
 
-        .player-info-header .player-meta {
-            flex-wrap: wrap;
-            gap: 8px;
-            font-size: 0.8rem;
+        .player-name-row {
+            margin-right: 40px;
         }
 
-        .player-meta-item {
-            padding: 5px 10px;
-            font-size: 0.85rem;
+        .player-position-team {
+            font-size: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .player-bio-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px 12px;
+        }
+
+        .bio-stat .bio-label {
+            font-size: 0.65rem;
+        }
+
+        .bio-stat .bio-value {
+            font-size: 0.75rem;
         }
 
         .career-filters {
@@ -712,28 +720,6 @@ body {
         .stats-count-badge {
             margin: 0;
             justify-content: center;
-        }
-
-        .player-bio-section {
-            grid-template-columns: 1fr;
-            padding: 15px;
-            margin: 0 15px 15px 15px;
-            gap: 8px;
-        }
-
-        .bio-item {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 4px;
-            padding: 10px;
-        }
-
-        .bio-label {
-            font-size: 0.75rem;
-        }
-
-        .bio-value {
-            font-size: 0.8rem;
         }
 
         /* Horizontal scroll for table on mobile */
