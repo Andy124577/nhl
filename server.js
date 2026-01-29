@@ -1191,51 +1191,41 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
         // Construct headshot URL - NHL API provides headshots at this URL format
         const headshotUrl = data.headshot || `https://assets.nhle.com/mugs/nhl/20252026/${data.currentTeamAbbrev || 'NJD'}/${playerId}.png`;
 
-        // Extract current season stats - check for 20252026 season
-        let seasonStats = data.featuredStats?.regularSeason?.subSeason;
-        let season = data.featuredStats?.season;
+        // ALWAYS check seasonTotals first for NHL-only stats (to avoid showing WHL/AHL stats from featuredStats)
+        const seasonTotals = data.seasonTotals || [];
+        const nhlSeasonData = seasonTotals.find(s =>
+            s.season === 20252026 &&
+            s.gameTypeId === 2 && // gameTypeId 2 = NHL regular season
+            s.leagueAbbrev === 'NHL' // Only NHL league - must explicitly be NHL
+        );
 
-        // Fallback for rookies/players without featuredStats: check seasonTotals
-        if (!seasonStats || season !== 20252026) {
-            // Look for current season in seasonTotals array
-            const seasonTotals = data.seasonTotals || [];
-            // Only show NHL stats - filter out other leagues (WHL, AHL, etc.)
-            const currentSeasonData = seasonTotals.find(s =>
-                s.season === 20252026 &&
-                s.gameTypeId === 2 && // gameTypeId 2 = NHL regular season
-                s.leagueAbbrev === 'NHL' // Only NHL league - must explicitly be NHL
-            );
+        let seasonStats = null;
 
-            if (currentSeasonData) {
-                console.log(`✓ Found NHL stats for ${playerName} in seasonTotals (rookie/new player)`);
-                seasonStats = currentSeasonData;
-                season = 20252026;
-            } else {
-                if (season && season !== 20252026) {
-                    console.log(`⚠️ ${playerName} has stats from season ${season}, not 20252026 - returning zeros`);
-                } else {
-                    console.log(`⚠️ ${playerName} has no stats for 20252026 - returning zeros`);
-                }
-                // Return player with all zeros (injured/hasn't played this season)
-                return {
-                    playerId: playerId,
-                    playerName: playerName,
-                    teamAbbrev: data.currentTeamAbbrev || "N/A",
-                    headshot: headshotUrl,
-                    teamLogo: data.teamLogo || null,
-                    position: data.position || "N/A",
-                    gamesPlayed: 0,
-                    goals: 0,
-                    assists: 0,
-                    wins: 0,
-                    losses: 0,
-                    shutouts: 0,
-                    otLosses: 0,
-                    savePct: 0,
-                    points: 0,
-                    lastUpdated: new Date().toISOString()
-                };
-            }
+        if (nhlSeasonData) {
+            // Found NHL stats in seasonTotals - use these
+            console.log(`✓ Found NHL stats for ${playerName} in seasonTotals`);
+            seasonStats = nhlSeasonData;
+        } else {
+            // No NHL stats found for current season - return zeros
+            console.log(`⚠️ ${playerName} has no NHL stats for 20252026 - returning zeros`);
+            return {
+                playerId: playerId,
+                playerName: playerName,
+                teamAbbrev: data.currentTeamAbbrev || "N/A",
+                headshot: headshotUrl,
+                teamLogo: data.teamLogo || null,
+                position: data.position || "N/A",
+                gamesPlayed: 0,
+                goals: 0,
+                assists: 0,
+                wins: 0,
+                losses: 0,
+                shutouts: 0,
+                otLosses: 0,
+                savePct: 0,
+                points: 0,
+                lastUpdated: new Date().toISOString()
+            };
         }
 
         let calculatedPoints;
