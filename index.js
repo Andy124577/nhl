@@ -615,10 +615,9 @@ async function showCareerStats(playerId, playerName, isGoalie = false) {
         const data = await response.json();
         currentCareerData = data; // Store globally for filtering
 
-        // Hide loading, show header, bio section and filters
+        // Hide loading, show header and filters
         loadingSpinner.style.display = 'none';
         modalHeader.style.display = 'flex';
-        document.getElementById('playerBioSection').style.display = 'grid';
         filtersSection.style.display = 'flex';
 
         // Update header info
@@ -863,7 +862,6 @@ function filterCareerStats() {
 
 function closeCareerModal() {
     document.getElementById('careerStatsModal').style.display = 'none';
-    document.getElementById('playerBioSection').style.display = 'none';
     document.body.style.overflow = ''; // Restore background scrolling
     currentCareerData = null;
 }
