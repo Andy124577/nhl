@@ -56,15 +56,14 @@
           "2"
         ],
         "offensive": [
-          "Nathan MacKinnon"
+          "Nathan MacKinnon",
+          "Tyler Seguin"
         ],
         "defensive": [],
         "teams": [
           "Winnipeg Jets"
         ],
-        "rookie": [
-          "Tyler Seguin"
-        ]
+        "rookie": []
       },
       "Équipe 3": {
         "members": [],
@@ -137,7 +136,7 @@
       {
         "team": "Équipe 2",
         "player": "Tyler Seguin",
-        "position": "rookie"
+        "position": "offensive"
       },
       {
         "team": "Équipe 1",
