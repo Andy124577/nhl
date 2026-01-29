@@ -467,6 +467,44 @@ body {
         font-size: 0.8rem;
         font-weight: 600;
     }
+
+    /* Player Bio Section */
+    .player-bio-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 12px;
+        padding: 20px 25px;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        margin: 0 25px 20px 25px;
+        border: 1px solid rgba(239, 68, 68, 0.1);
+    }
+
+    .bio-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 8px;
+        border: 1px solid rgba(239, 68, 68, 0.08);
+    }
+
+    .bio-label {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .bio-value {
+        color: #4a5568;
+        font-size: 0.85rem;
+        flex: 1;
+    }
+
     /* Career Stats Table Container - Liquid Glass */
     #careerStatsTable {
         flex: 1;
@@ -674,6 +712,28 @@ body {
         .stats-count-badge {
             margin: 0;
             justify-content: center;
+        }
+
+        .player-bio-section {
+            grid-template-columns: 1fr;
+            padding: 15px;
+            margin: 0 15px 15px 15px;
+            gap: 8px;
+        }
+
+        .bio-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            padding: 10px;
+        }
+
+        .bio-label {
+            font-size: 0.75rem;
+        }
+
+        .bio-value {
+            font-size: 0.8rem;
         }
 
         /* Horizontal scroll for table on mobile */
