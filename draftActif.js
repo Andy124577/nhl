@@ -702,8 +702,10 @@ function populateGoalieTable(goalies) {
         // Get current season stats from API
         const currentGoalieStats = getCurrentPlayerStats(name, playerId);
 
-        // Use local cached images for main table display
-        const playerPhoto = getMatchingImage(name);
+        // Try to get headshot from NHL API first, fallback to local cached images
+        const apiHeadshot = currentGoalieStats?.headshot;
+        const localPhoto = getMatchingImage(name);
+        const playerPhoto = apiHeadshot || localPhoto;
         const teamLogo = currentGoalieStats?.teamAbbrev ? `teams/${currentGoalieStats.teamAbbrev}.png` : getTeamLogoPath(goalie.teamAbbrevs);
 
         const imageHTML = playerPhoto && teamLogo
@@ -911,8 +913,10 @@ function populateTable(playerData) {
         // Get current season stats from API
         const currentPlayerStats = getCurrentPlayerStats(skaterName, playerId);
 
-        // Use local cached images for main table display
-        const playerPhoto = getMatchingImage(skaterName);
+        // Try to get headshot from NHL API first, fallback to local cached images
+        const apiHeadshot = currentPlayerStats?.headshot;
+        const localPhoto = getMatchingImage(skaterName);
+        const playerPhoto = apiHeadshot || localPhoto;
         const teamLogo = currentPlayerStats?.teamAbbrev ? `teams/${currentPlayerStats.teamAbbrev}.png` : getTeamLogoPath(player.teamAbbrevs);
 
         const imageHTML = playerPhoto && teamLogo
