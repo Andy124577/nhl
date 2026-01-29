@@ -798,8 +798,10 @@ function showPlayerDetails(teamName, rowIndex) {
             imagePath = abbrev ? `teams/${abbrev}.png` : null;
             logoPath = null; // No secondary logo for teams
         } else {
-            // Use local cached images for team details display
-            imagePath = getMatchingImage(player.name);
+            // Try to get headshot from NHL API first, fallback to local cached images
+            const apiHeadshot = currentPlayerStats?.headshot;
+            const localPhoto = getMatchingImage(player.name);
+            imagePath = apiHeadshot || localPhoto;
             logoPath = currentPlayerStats?.teamAbbrev ? `teams/${currentPlayerStats.teamAbbrev}.png` : getTeamLogoPath(player.teamAbbrev);
         }
 
