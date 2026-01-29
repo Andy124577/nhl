@@ -1565,6 +1565,29 @@ app.get('/player-career/:playerId', async (req, res) => {
         const headshot = data.headshot || (currentTeam ? `https://assets.nhle.com/mugs/nhl/20252026/${currentTeam}/${playerId}.png` : null);
         const teamLogo = data.teamLogo || null;
 
+        // Extract player bio details
+        const heightInInches = data.heightInInches || null;
+        const heightFeetInches = heightInInches ? `${Math.floor(heightInInches / 12)}′${heightInInches % 12}″` : null;
+        const weightInPounds = data.weightInPounds || null;
+        const birthDate = data.birthDate || null;
+        const birthCity = data.birthCity?.default || null;
+        const birthStateProvince = data.birthStateProvince?.default || null;
+        const birthCountry = data.birthCountry || null;
+        const shootsCatches = data.shootsCatches || null;
+
+        // Extract draft details
+        const draftDetails = data.draftDetails;
+        let draftInfo = null;
+        if (draftDetails) {
+            draftInfo = {
+                year: draftDetails.year,
+                teamAbbrev: draftDetails.teamAbbrev,
+                round: draftDetails.round,
+                pickInRound: draftDetails.pickInRound,
+                overallPick: draftDetails.overallPick
+            };
+        }
+
         // Extract all seasons from seasonTotals (regular season + playoffs combined in one array)
         const allSeasons = data.seasonTotals || [];
 
@@ -1615,7 +1638,16 @@ app.get('/player-career/:playerId', async (req, res) => {
             headshot,
             teamLogo,
             currentTeam,
-            seasons: formattedSeasons
+            seasons: formattedSeasons,
+            // Bio details
+            height: heightFeetInches,
+            weight: weightInPounds,
+            birthDate,
+            birthCity,
+            birthStateProvince,
+            birthCountry,
+            shootsCatches,
+            draftInfo
         });
     } catch (error) {
         console.error('❌ Error fetching player career stats:', error);
