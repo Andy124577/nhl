@@ -224,7 +224,10 @@ async function populatePlayerTable(playerData) {
         // Prioritize local cached images, fallback to NHL API headshots if no local photo
         const localPhoto = getMatchingImage(skaterName);
         const apiHeadshot = currentPlayerStats?.headshot;
-        const playerPhoto = localPhoto || apiHeadshot;
+        // Fallback: construct headshot URL from player ID and team if no cached photo exists
+        const teamAbbrev = currentPlayerStats?.teamAbbrev || player.teamAbbrevs?.split(',').pop().trim();
+        const fallbackHeadshot = player.playerId && teamAbbrev ? `https://assets.nhle.com/mugs/nhl/20252026/${teamAbbrev}/${player.playerId}.png` : null;
+        const playerPhoto = localPhoto || apiHeadshot || fallbackHeadshot;
         const teamLogo = currentPlayerStats?.teamAbbrev ? `teams/${currentPlayerStats.teamAbbrev}.png` : getTeamLogoPath(player.teamAbbrevs);
 
         // Debug logging for Barkov and Tkachuk
