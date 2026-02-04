@@ -318,6 +318,12 @@ function loadPoolData() {
     const desktopSelector = document.getElementById('desktopPoolSelector');
     const activePoolSelector = document.getElementById('activePoolSelector');
 
+    // Function to truncate text for display
+    function truncatePoolName(text, maxLength = 25) {
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength - 3) + '...';
+    }
+
     // Function to sync selectors
     function syncDesktopSelector() {
         if (!desktopSelector || !activePoolSelector) return;
@@ -329,7 +335,8 @@ function loadPoolData() {
         Array.from(activePoolSelector.options).forEach(option => {
             const newOption = document.createElement('option');
             newOption.value = option.value;
-            newOption.textContent = option.text;
+            // Truncate long pool names to prevent overflow
+            newOption.textContent = truncatePoolName(option.text);
             desktopSelector.appendChild(newOption);
         });
 
