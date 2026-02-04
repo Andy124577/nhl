@@ -475,12 +475,10 @@ body {
         font-size: 0.9rem;
         font-weight: 600;
         cursor: pointer;
-        min-width: 150px;
-        max-width: 250px;
+        width: 200px !important;
+        max-width: 200px !important;
+        min-width: 200px !important;
         transition: all 0.25s ease;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
     }
 
     .desktop-pool-selector select:hover {
@@ -494,9 +492,6 @@ body {
         background: #2d2d2d;
         color: #fff;
         padding: 8px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
     }
 }
 
