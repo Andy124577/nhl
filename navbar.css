@@ -35,7 +35,7 @@ body {
 .navbar-center {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: center; 
 }
 
 .navbar-logo {
@@ -425,16 +425,15 @@ body {
     }
 
     .desktop-nav-item:hover {
-        background: rgba(102, 126, 234, 0.15);
+        background: rgba(139, 139, 139, 0.15);
         color: #fff;
         transform: translateY(-1px);
     }
 
     .desktop-nav-item.active {
-        background: rgba(102, 126, 234, 0.25);
+        background: rgba(117, 117, 117, 0.25);
         color: #fff;
         font-weight: 600;
-        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
     }
 
     .desktop-nav-item .notif-badge {
@@ -463,6 +462,7 @@ body {
     .desktop-pool-selector label {
         color: rgba(255, 255, 255, 0.85);
         font-size: 0.9rem;
+        padding: 6px 12px;
         font-weight: 500;
     }
 

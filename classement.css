@@ -481,26 +481,6 @@ tbody td:first-child {
     }
 }
 
-/* Page Header */
-.page-header {
-    text-align: center;
-    padding: 40px 20px 20px;
-    background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%);
-    color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.page-header h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 10px;
-}
-
-.page-header p {
-    font-size: 1.1rem;
-    opacity: 0.9;
-}
-
 /* Empty State */
 .empty-state-container {
     text-align: center;
@@ -860,3 +840,4 @@ tbody td:first-child {
     position: sticky;
     top: 0;
     z-index: 10;
+}
