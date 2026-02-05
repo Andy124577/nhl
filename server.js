@@ -1682,6 +1682,85 @@ app.get('/player-career/:playerId', async (req, res) => {
     }
 });
 
+// Route to get player game log for current season
+app.get('/player-gamelog/:playerId', async (req, res) => {
+    try {
+        const { playerId } = req.params;
+        const currentSeason = '20252026'; // 2025-26 season
+        const gameType = '2'; // Regular season
+
+        console.log(`📊 Fetching game log for player ${playerId} - Season: ${currentSeason}`);
+
+        const url = `https://api-web.nhle.com/v1/player/${playerId}/game-log/${currentSeason}/${gameType}`;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            console.log('⚠️ No game log data found');
+            return res.json({
+                gameLog: [],
+                playerInfo: null
+            });
+        }
+
+        const data = await response.json();
+
+        if (!data || !data.gameLog) {
+            console.log('⚠️ No game log data in response');
+            return res.json({
+                gameLog: [],
+                playerInfo: null
+            });
+        }
+
+        // Format game log data
+        const formattedGameLog = data.gameLog.map(game => ({
+            gameId: game.gameId,
+            gameDate: game.gameDate,
+            homeRoadFlag: game.homeRoadFlag, // 'H' or 'R'
+            opponentAbbrev: game.opponentAbbrev,
+            teamAbbrev: game.teamAbbrev,
+            gameResult: game.gameResult, // 'W', 'L', 'OT', etc.
+            goals: game.goals || 0,
+            assists: game.assists || 0,
+            points: game.points || 0,
+            plusMinus: game.plusMinus || 0,
+            pim: game.pim || 0,
+            shots: game.shots || 0,
+            powerPlayGoals: game.powerPlayGoals || 0,
+            powerPlayPoints: game.powerPlayPoints || 0,
+            shorthandedGoals: game.shorthandedGoals || 0,
+            shorthandedPoints: game.shorthandedPoints || 0,
+            gameWinningGoals: game.gameWinningGoals || 0,
+            otGoals: game.otGoals || 0,
+            shifts: game.shifts || 0,
+            toi: game.toi || '0:00',
+            // Goalie stats
+            gamesStarted: game.gamesStarted || 0,
+            decision: game.decision || null,
+            shotsAgainst: game.shotsAgainst || 0,
+            goalsAgainst: game.goalsAgainst || 0,
+            saves: game.saves || 0,
+            savePct: game.savePct || null,
+            shutouts: game.shutouts || 0,
+            pim: game.pim || 0,
+            toi: game.toi || '0:00'
+        }));
+
+        res.json({
+            gameLog: formattedGameLog,
+            playerInfo: {
+                name: data.playerName || null,
+                position: data.position || null,
+                isGoalie: data.position === 'G'
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Error fetching player game log:', error);
+        res.status(500).json({ message: 'Error fetching player game log' });
+    }
+});
+
 // ==================== ACCUEIL PAGE - HOT PLAYERS & STREAKS ====================
 
 // Route to get hot players using cached stats from nhl_filtered_stats.json
