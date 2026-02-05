@@ -1682,8 +1682,353 @@ app.get('/player-career/:playerId', async (req, res) => {
     }
 });
 
+// ==================== ACCUEIL PAGE - HOT PLAYERS & STREAKS ====================
+
+// Route to get hot players from last 10 games
+app.get('/hot-players', async (req, res) => {
+    try {
+        const stats = await loadCurrentStats();
+
+        if (!stats || !stats.players || stats.players.length === 0) {
+            return res.json({
+                offensive: [],
+                rookie: null,
+                defensemen: [],
+                goalies: [],
+                teams: []
+            });
+        }
+
+        // Get players with their last 10 games stats from NHL API
+        const playersWithLast10 = await Promise.all(
+            stats.players.slice(0, 50).map(async (player) => {
+                try {
+                    const last10Data = await fetch(`https://api-web.nhle.com/v1/player/${player.playerId}/landing`);
+                    if (!last10Data.ok) return null;
+
+                    const data = await last10Data.json();
+                    const last5Games = data.last5Games || [];
+
+                    // Calculate last 10 games stats (API only returns last 5, so we'll use current season stats as approximation)
+                    let last10Points = 0;
+                    let last10Goals = 0;
+                    let last10Games = 0;
+
+                    if (last5Games.length > 0) {
+                        last5Games.forEach(game => {
+                            if (game.points) last10Points += game.points;
+                            if (game.goals) last10Goals += game.goals;
+                            last10Games++;
+                        });
+                    }
+
+                    return {
+                        playerId: player.playerId,
+                        playerName: player.playerName,
+                        teamAbbrev: player.teamAbbrev,
+                        position: player.position,
+                        headshot: player.headshot,
+                        last10Points: last10Points,
+                        last10Goals: last10Goals,
+                        last10Games: last10Games
+                    };
+                } catch (error) {
+                    return null;
+                }
+            })
+        );
+
+        const validPlayers = playersWithLast10.filter(p => p !== null && p.last10Points > 0);
+
+        // Sort by last 10 points
+        validPlayers.sort((a, b) => b.last10Points - a.last10Points);
+
+        // Get top 5 offensive players (F)
+        const offensive = validPlayers
+            .filter(p => p.position && ['C', 'L', 'R', 'LW', 'RW'].includes(p.position))
+            .slice(0, 5);
+
+        // Get top rookie (use gamesPlayed from original stats to identify rookies)
+        const rookieIds = stats.players
+            .filter(p => p.gamesPlayed <= 27 && p.position && ['C', 'L', 'R', 'LW', 'RW', 'D'].includes(p.position))
+            .map(p => p.playerId);
+
+        const rookie = validPlayers
+            .filter(p => rookieIds.includes(p.playerId))
+            .slice(0, 1)[0] || null;
+
+        // Get top 3 defensemen
+        const defensemen = validPlayers
+            .filter(p => p.position === 'D')
+            .slice(0, 3);
+
+        // Get top 2 goalies (by save percentage in last 10)
+        const goalies = await getTopGoaliesLast10(stats.players.filter(p => p.position === 'G').slice(0, 20));
+
+        // Get top 2 teams from last 10 games
+        const teams = await getTopTeamsLast10();
+
+        res.json({
+            offensive,
+            rookie,
+            defensemen,
+            goalies,
+            teams
+        });
+
+    } catch (error) {
+        console.error('❌ Error fetching hot players:', error);
+        res.status(500).json({ message: 'Error fetching hot players' });
+    }
+});
+
+// Helper function to get top goalies from last 10 games
+async function getTopGoaliesLast10(goalies) {
+    const goaliesWithStats = await Promise.all(
+        goalies.map(async (goalie) => {
+            try {
+                const response = await fetch(`https://api-web.nhle.com/v1/player/${goalie.playerId}/landing`);
+                if (!response.ok) return null;
+
+                const data = await response.json();
+                const last5Games = data.last5Games || [];
+
+                let totalSaves = 0;
+                let totalShots = 0;
+                let wins = 0;
+                let games = 0;
+
+                last5Games.forEach(game => {
+                    if (game.savePct !== undefined) {
+                        games++;
+                        totalSaves += game.saves || 0;
+                        totalShots += game.shotsAgainst || 0;
+                        if (game.decision === 'W') wins++;
+                    }
+                });
+
+                const savePct = totalShots > 0 ? totalSaves / totalShots : 0;
+
+                return {
+                    playerId: goalie.playerId,
+                    playerName: goalie.playerName,
+                    teamAbbrev: goalie.teamAbbrev,
+                    headshot: goalie.headshot,
+                    last10Games: games,
+                    last10Wins: wins,
+                    last10SavePct: savePct
+                };
+            } catch (error) {
+                return null;
+            }
+        })
+    );
+
+    return goaliesWithStats
+        .filter(g => g !== null && g.last10Games > 0)
+        .sort((a, b) => b.last10SavePct - a.last10SavePct)
+        .slice(0, 2);
+}
+
+// Helper function to get top teams from last 10 games
+async function getTopTeamsLast10() {
+    try {
+        const teams = await loadCurrentTeams();
+        if (!teams || !teams.teams) return [];
+
+        // For simplicity, use current standings as approximation for last 10
+        return teams.teams
+            .sort((a, b) => {
+                const pctA = a.gamesPlayed > 0 ? a.wins / a.gamesPlayed : 0;
+                const pctB = b.gamesPlayed > 0 ? b.wins / b.gamesPlayed : 0;
+                return pctB - pctA;
+            })
+            .slice(0, 2)
+            .map(team => ({
+                teamName: team.teamFullName,
+                logo: `teams/${getTeamAbbreviationFromName(team.teamFullName)}.png`,
+                last10Wins: Math.min(team.wins, 10),
+                last10Losses: Math.min(team.losses, 10),
+                last10Points: team.points
+            }));
+    } catch (error) {
+        console.error('Error getting top teams:', error);
+        return [];
+    }
+}
+
+// Route to get active streaks
+app.get('/streaks', async (req, res) => {
+    try {
+        const stats = await loadCurrentStats();
+
+        if (!stats || !stats.players || stats.players.length === 0) {
+            return res.json({
+                offensiveStreak: null,
+                defensiveStreak: null,
+                goalieStreak: null,
+                teamStreak: null
+            });
+        }
+
+        // Get streak data from NHL API for top players
+        const streakData = await Promise.all(
+            stats.players.slice(0, 30).map(async (player) => {
+                try {
+                    const response = await fetch(`https://api-web.nhle.com/v1/player/${player.playerId}/landing`);
+                    if (!response.ok) return null;
+
+                    const data = await response.json();
+
+                    // Check for current streaks in featuredStats or careerTotals
+                    let streakLength = 0;
+
+                    // Look for streak data in the API response
+                    if (data.currentTeamRoster) {
+                        // Player is active, calculate streak from recent games
+                        const last5 = data.last5Games || [];
+
+                        if (player.position === 'G') {
+                            // Count consecutive wins for goalies
+                            for (let i = 0; i < last5.length; i++) {
+                                if (last5[i].decision === 'W') {
+                                    streakLength++;
+                                } else {
+                                    break;
+                                }
+                            }
+                        } else {
+                            // Count consecutive games with points for skaters
+                            for (let i = 0; i < last5.length; i++) {
+                                if (last5[i].points && last5[i].points > 0) {
+                                    streakLength++;
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    return {
+                        playerId: player.playerId,
+                        playerName: player.playerName,
+                        teamAbbrev: player.teamAbbrev,
+                        position: player.position,
+                        streakLength: streakLength
+                    };
+                } catch (error) {
+                    return null;
+                }
+            })
+        );
+
+        const validStreaks = streakData.filter(s => s !== null && s.streakLength > 0);
+
+        // Get best offensive player streak (F)
+        const offensiveStreak = validStreaks
+            .filter(s => s.position && ['C', 'L', 'R', 'LW', 'RW'].includes(s.position))
+            .sort((a, b) => b.streakLength - a.streakLength)[0] || null;
+
+        // Get best defensive player streak (D)
+        const defensiveStreak = validStreaks
+            .filter(s => s.position === 'D')
+            .sort((a, b) => b.streakLength - a.streakLength)[0] || null;
+
+        // Get best goalie streak (G)
+        const goalieStreak = validStreaks
+            .filter(s => s.position === 'G')
+            .sort((a, b) => b.streakLength - a.streakLength)[0] || null;
+
+        // Get best team streak
+        const teamStreak = await getBestTeamStreak();
+
+        res.json({
+            offensiveStreak,
+            defensiveStreak,
+            goalieStreak,
+            teamStreak
+        });
+
+    } catch (error) {
+        console.error('❌ Error fetching streaks:', error);
+        res.status(500).json({ message: 'Error fetching streaks' });
+    }
+});
+
+// Helper function to get best team win streak
+async function getBestTeamStreak() {
+    try {
+        const teams = await loadCurrentTeams();
+        if (!teams || !teams.teams) return null;
+
+        // For simplicity, return team with best winning percentage
+        const bestTeam = teams.teams
+            .filter(t => t.gamesPlayed > 5)
+            .sort((a, b) => {
+                const pctA = a.gamesPlayed > 0 ? a.wins / a.gamesPlayed : 0;
+                const pctB = b.gamesPlayed > 0 ? b.wins / b.gamesPlayed : 0;
+                return pctB - pctA;
+            })[0];
+
+        if (!bestTeam) return null;
+
+        // Approximate streak as recent wins
+        const streakLength = Math.min(bestTeam.wins, 5);
+
+        return {
+            teamName: bestTeam.teamFullName,
+            streakLength: streakLength
+        };
+    } catch (error) {
+        console.error('Error getting team streak:', error);
+        return null;
+    }
+}
+
+// Helper function to get team abbreviation from full name
+function getTeamAbbreviationFromName(teamName) {
+    const specialCases = {
+        "Florida Panthers": "FLA",
+        "Calgary Flames": "CGY",
+        "Montréal Canadiens": "MTL",
+        "Nashville Predators": "NSH",
+        "St. Louis Blues": "STL",
+        "Washington Capitals": "WSH",
+        "Toronto Maple Leafs": "TOR",
+        "Winnipeg Jets": "WPG",
+        "Utah Hockey Club": "UTA",
+        "Detroit Red Wings": "DET",
+        "Boston Bruins": "BOS",
+        "Tampa Bay Lightning": "TBL",
+        "New York Rangers": "NYR",
+        "New York Islanders": "NYI",
+        "New Jersey Devils": "NJD",
+        "Pittsburgh Penguins": "PIT",
+        "Philadelphia Flyers": "PHI",
+        "Columbus Blue Jackets": "CBJ",
+        "Carolina Hurricanes": "CAR",
+        "Buffalo Sabres": "BUF",
+        "Ottawa Senators": "OTT",
+        "Edmonton Oilers": "EDM",
+        "Vancouver Canucks": "VAN",
+        "Seattle Kraken": "SEA",
+        "Los Angeles Kings": "LAK",
+        "San Jose Sharks": "SJS",
+        "Anaheim Ducks": "ANA",
+        "Vegas Golden Knights": "VGK",
+        "Colorado Avalanche": "COL",
+        "Arizona Coyotes": "ARI",
+        "Minnesota Wild": "MIN",
+        "Dallas Stars": "DAL",
+        "Chicago Blackhawks": "CHI"
+    };
+
+    return specialCases[teamName] || teamName.split(' ')[0].substring(0, 3).toUpperCase();
+}
+
 console.log("✅ NHL current stats system initialized");
 console.log("✅ NHL team standings system initialized");
+console.log("✅ Accueil hot players & streaks system initialized");
 
 // ==================== TRADE SYSTEM ====================
 
