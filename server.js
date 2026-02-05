@@ -1684,7 +1684,7 @@ app.get('/player-career/:playerId', async (req, res) => {
 
 // ==================== ACCUEIL PAGE - HOT PLAYERS & STREAKS ====================
 
-// Route to get hot players from current season stats
+// Route to get hot players from last 10 games using game-log API
 app.get('/hot-players', async (req, res) => {
     try {
         const stats = await loadCurrentStats();
@@ -1699,84 +1699,104 @@ app.get('/hot-players', async (req, res) => {
             });
         }
 
-        // Use current season stats (approximation for "hot" players)
-        const validPlayers = stats.players.filter(p => p.gamesPlayed > 0 && p.points > 0);
+        console.log('📊 Fetching last 10 games stats for top players...');
 
-        // Sort by points per game
-        validPlayers.sort((a, b) => {
-            const ppgA = a.gamesPlayed > 0 ? a.points / a.gamesPlayed : 0;
-            const ppgB = b.gamesPlayed > 0 ? b.points / b.gamesPlayed : 0;
-            return ppgB - ppgA;
-        });
+        // Fetch last 10 games stats for top players
+        const playersWithLast10 = await Promise.all(
+            stats.players.slice(0, 100).map(async (player) => {
+                try {
+                    const gameLogUrl = `https://api-web.nhle.com/v1/player/${player.playerId}/game-log/20252026/2`;
+                    const response = await fetch(gameLogUrl);
 
-        // Get top 5 offensive players (F)
+                    if (!response.ok) return null;
+
+                    const gameLog = await response.json();
+                    const games = gameLog.gameLog || [];
+
+                    // Get last 10 games
+                    const last10 = games.slice(0, 10);
+
+                    if (last10.length === 0) return null;
+
+                    // Calculate stats for last 10 games
+                    let goals = 0;
+                    let assists = 0;
+                    let points = 0;
+                    let wins = 0;
+                    let saves = 0;
+                    let shotsAgainst = 0;
+
+                    last10.forEach(game => {
+                        if (player.position === 'G') {
+                            if (game.decision === 'W') wins++;
+                            saves += game.saves || 0;
+                            shotsAgainst += game.shotsAgainst || 0;
+                        } else {
+                            goals += game.goals || 0;
+                            assists += game.assists || 0;
+                            points += game.points || 0;
+                        }
+                    });
+
+                    const savePct = shotsAgainst > 0 ? saves / shotsAgainst : 0;
+
+                    return {
+                        playerId: player.playerId,
+                        playerName: player.playerName,
+                        teamAbbrev: player.teamAbbrev,
+                        position: player.position,
+                        headshot: player.headshot,
+                        gamesPlayedTotal: player.gamesPlayed,
+                        last10Games: last10.length,
+                        last10Goals: goals,
+                        last10Assists: assists,
+                        last10Points: points,
+                        last10Wins: wins,
+                        last10SavePct: savePct
+                    };
+                } catch (error) {
+                    return null;
+                }
+            })
+        );
+
+        const validPlayers = playersWithLast10.filter(p => p !== null);
+
+        // Get top 5 offensive players by last 10 points
         const offensive = validPlayers
             .filter(p => p.position && ['C', 'L', 'R', 'LW', 'RW'].includes(p.position))
-            .slice(0, 5)
-            .map(p => ({
-                playerId: p.playerId,
-                playerName: p.playerName,
-                teamAbbrev: p.teamAbbrev,
-                position: p.position,
-                headshot: p.headshot,
-                last10Games: Math.min(p.gamesPlayed, 10),
-                last10Goals: p.goals,
-                last10Points: p.points
-            }));
+            .sort((a, b) => b.last10Points - a.last10Points)
+            .slice(0, 5);
 
-        // Get top rookie (gamesPlayed <= 27)
+        // Get top rookie (gamesPlayedTotal <= 27)
         const rookies = validPlayers
-            .filter(p => p.gamesPlayed <= 27 && p.position && ['C', 'L', 'R', 'LW', 'RW', 'D'].includes(p.position));
+            .filter(p => p.gamesPlayedTotal <= 27 && p.position && ['C', 'L', 'R', 'LW', 'RW', 'D'].includes(p.position))
+            .sort((a, b) => b.last10Points - a.last10Points);
 
-        const rookie = rookies.length > 0 ? {
-            playerId: rookies[0].playerId,
-            playerName: rookies[0].playerName,
-            teamAbbrev: rookies[0].teamAbbrev,
-            position: rookies[0].position,
-            headshot: rookies[0].headshot,
-            last10Games: Math.min(rookies[0].gamesPlayed, 10),
-            last10Goals: rookies[0].goals,
-            last10Points: rookies[0].points
-        } : null;
+        const rookie = rookies.length > 0 ? rookies[0] : null;
 
-        // Get top 3 defensemen
+        // Get top 3 defensemen by last 10 points
         const defensemen = validPlayers
             .filter(p => p.position === 'D')
-            .slice(0, 3)
-            .map(p => ({
-                playerId: p.playerId,
-                playerName: p.playerName,
-                teamAbbrev: p.teamAbbrev,
-                position: p.position,
-                headshot: p.headshot,
-                last10Games: Math.min(p.gamesPlayed, 10),
-                last10Goals: p.goals,
-                last10Points: p.points
-            }));
+            .sort((a, b) => b.last10Points - a.last10Points)
+            .slice(0, 3);
 
-        // Get top 2 goalies (by save percentage)
-        const goalieStats = stats.players
-            .filter(p => p.position === 'G' && p.gamesPlayed > 0 && p.savePct > 0)
-            .sort((a, b) => b.savePct - a.savePct)
-            .slice(0, 2)
-            .map(g => ({
-                playerId: g.playerId,
-                playerName: g.playerName,
-                teamAbbrev: g.teamAbbrev,
-                headshot: g.headshot,
-                last10Games: Math.min(g.gamesPlayed, 10),
-                last10Wins: g.wins,
-                last10SavePct: g.savePct
-            }));
+        // Get top 2 goalies by save percentage in last 10
+        const goalies = validPlayers
+            .filter(p => p.position === 'G' && p.last10Games > 0)
+            .sort((a, b) => b.last10SavePct - a.last10SavePct)
+            .slice(0, 2);
 
-        // Get top 2 teams
+        // Get top 2 teams by last 10 games record
         const teams = await getTopTeamsLast10();
+
+        console.log(`✅ Hot players loaded: ${offensive.length} offensive, ${defensemen.length} defensemen, ${goalies.length} goalies`);
 
         res.json({
             offensive,
             rookie,
             defensemen,
-            goalies: goalieStats,
+            goalies,
             teams
         });
 
@@ -1786,27 +1806,82 @@ app.get('/hot-players', async (req, res) => {
     }
 });
 
-// Helper function to get top teams
+// Helper function to get top teams by last 10 games record
 async function getTopTeamsLast10() {
     try {
         const teams = await loadCurrentTeams();
         if (!teams || !teams.teams) return [];
 
-        // For simplicity, use current standings as approximation for last 10
-        return teams.teams
-            .sort((a, b) => {
-                const pctA = a.gamesPlayed > 0 ? a.wins / a.gamesPlayed : 0;
-                const pctB = b.gamesPlayed > 0 ? b.wins / b.gamesPlayed : 0;
-                return pctB - pctA;
+        console.log('📊 Fetching last 10 games for teams...');
+
+        // Fetch schedule for each team and calculate last 10 record
+        const teamsWithLast10 = await Promise.all(
+            teams.teams.slice(0, 32).map(async (team) => {
+                try {
+                    const teamAbbrev = getTeamAbbreviationFromName(team.teamFullName);
+                    const scheduleUrl = `https://api-web.nhle.com/v1/club-schedule-season/${teamAbbrev}/20252026`;
+                    const response = await fetch(scheduleUrl);
+
+                    if (!response.ok) return null;
+
+                    const schedule = await response.json();
+                    const games = schedule.games || [];
+
+                    // Filter for completed games only
+                    const completedGames = games.filter(g => g.gameState === 'OFF' || g.gameState === 'FINAL');
+
+                    // Get last 10 completed games
+                    const last10 = completedGames.slice(0, 10);
+
+                    if (last10.length === 0) return null;
+
+                    // Calculate record for last 10 games
+                    let wins = 0;
+                    let losses = 0;
+                    let otLosses = 0;
+
+                    last10.forEach(game => {
+                        const isHome = game.homeTeam.abbrev === teamAbbrev;
+                        const teamScore = isHome ? game.homeTeam.score : game.awayTeam.score;
+                        const oppScore = isHome ? game.awayTeam.score : game.homeTeam.score;
+
+                        if (teamScore > oppScore) {
+                            wins++;
+                        } else if (game.periodDescriptor && game.periodDescriptor.periodType === 'OT') {
+                            otLosses++;
+                        } else {
+                            losses++;
+                        }
+                    });
+
+                    const winPct = last10.length > 0 ? wins / last10.length : 0;
+
+                    return {
+                        teamName: team.teamFullName,
+                        teamAbbrev: teamAbbrev,
+                        logo: `teams/${teamAbbrev}.png`,
+                        last10Games: last10.length,
+                        last10Wins: wins,
+                        last10Losses: losses,
+                        last10OTLosses: otLosses,
+                        last10Points: (wins * 2) + otLosses,
+                        winPct: winPct
+                    };
+                } catch (error) {
+                    console.error(`Error fetching schedule for ${team.teamFullName}:`, error.message);
+                    return null;
+                }
             })
-            .slice(0, 2)
-            .map(team => ({
-                teamName: team.teamFullName,
-                logo: `teams/${getTeamAbbreviationFromName(team.teamFullName)}.png`,
-                last10Wins: Math.min(team.wins, 10),
-                last10Losses: Math.min(team.losses, 10),
-                last10Points: team.points
-            }));
+        );
+
+        const validTeams = teamsWithLast10.filter(t => t !== null);
+
+        // Sort by win percentage in last 10 games
+        const sortedTeams = validTeams.sort((a, b) => b.winPct - a.winPct);
+
+        console.log(`✅ Top teams loaded: ${sortedTeams.slice(0, 2).map(t => `${t.teamName} (${t.last10Wins}-${t.last10Losses}-${t.last10OTLosses})`).join(', ')}`);
+
+        return sortedTeams.slice(0, 2);
     } catch (error) {
         console.error('Error getting top teams:', error);
         return [];
