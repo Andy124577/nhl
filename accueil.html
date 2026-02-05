@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accueil - Fantazy</title>
+    <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="accueil.css">
+</head>
+<body>
+    <!-- Navigation bar will be injected by navbar.js -->
+    <nav class="navbar"></nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>Bienvenue sur Fantazy</h1>
+        <p>Créez votre pool, suivez les meilleurs joueurs et dominez la compétition</p>
+    </div>
+
+    <!-- Pool Actions Section -->
+    <div class="pool-actions-container">
+        <div class="pool-action-card glass-card">
+            <div class="card-icon">🏒</div>
+            <h2>Créer un Pool</h2>
+            <p>Démarrez votre propre pool et invitez vos amis à participer</p>
+            <button class="action-btn primary" onclick="window.location.href='pool.html?tab=create'">Créer</button>
+        </div>
+
+        <div class="pool-action-card glass-card">
+            <div class="card-icon">👥</div>
+            <h2>Rejoindre un Pool</h2>
+            <p>Entrez le code d'un pool existant et commencez à jouer</p>
+            <button class="action-btn secondary" onclick="window.location.href='pool.html?tab=join'">Rejoindre</button>
+        </div>
+
+        <div class="pool-action-card glass-card">
+            <div class="card-icon">🎯</div>
+            <h2>Mes Pools</h2>
+            <p>Gérez vos pools actifs et consultez vos équipes</p>
+            <button class="action-btn tertiary" onclick="window.location.href='pool.html?tab=my-pools'">Voir mes pools</button>
+        </div>
+    </div>
+
+    <!-- Hot Players Section -->
+    <div class="content-section">
+        <div class="section-header">
+            <h2>🔥 Joueurs en feu</h2>
+            <p>Les meilleurs performances des 10 derniers matchs</p>
+        </div>
+
+        <!-- Offensive Players -->
+        <div class="stats-category">
+            <h3>⚡ Top Attaquants</h3>
+            <div class="players-grid" id="hotOffensivePlayers">
+                <div class="loading-spinner">Chargement...</div>
+            </div>
+        </div>
+
+        <!-- Rookie -->
+        <div class="stats-category">
+            <h3>⭐ Recrue en vedette</h3>
+            <div class="players-grid single" id="hotRookie">
+                <div class="loading-spinner">Chargement...</div>
+            </div>
+        </div>
+
+        <!-- Defensemen -->
+        <div class="stats-category">
+            <h3>🛡️ Top Défenseurs</h3>
+            <div class="players-grid" id="hotDefensemen">
+                <div class="loading-spinner">Chargement...</div>
+            </div>
+        </div>
+
+        <!-- Goalies -->
+        <div class="stats-category">
+            <h3>🥅 Meilleurs Gardiens</h3>
+            <div class="players-grid" id="hotGoalies">
+                <div class="loading-spinner">Chargement...</div>
+            </div>
+        </div>
+
+        <!-- Teams -->
+        <div class="stats-category">
+            <h3>🏆 Équipes dominantes</h3>
+            <div class="players-grid" id="hotTeams">
+                <div class="loading-spinner">Chargement...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Streaks Section -->
+    <div class="content-section">
+        <div class="section-header">
+            <h2>🔥 Séries en cours</h2>
+            <p>Les plus longues séries actives</p>
+        </div>
+
+        <div class="streaks-grid">
+            <div class="streak-card glass-card" id="offensiveStreak">
+                <div class="streak-icon">⚡</div>
+                <h3>Série de points (Attaquant)</h3>
+                <div class="loading-spinner">Chargement...</div>
+            </div>
+
+            <div class="streak-card glass-card" id="defensiveStreak">
+                <div class="streak-icon">🛡️</div>
+                <h3>Série de points (Défenseur)</h3>
+                <div class="loading-spinner">Chargement...</div>
+            </div>
+
+            <div class="streak-card glass-card" id="goalieStreak">
+                <div class="streak-icon">🥅</div>
+                <h3>Série de victoires (Gardien)</h3>
+                <div class="loading-spinner">Chargement...</div>
+            </div>
+
+            <div class="streak-card glass-card" id="teamStreak">
+                <div class="streak-icon">🏆</div>
+                <h3>Série de victoires (Équipe)</h3>
+                <div class="loading-spinner">Chargement...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="navbar.js"></script>
+    <script src="accueil.js"></script>
+</body>
+</html>
