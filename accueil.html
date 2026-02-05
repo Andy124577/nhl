@@ -11,6 +11,11 @@
     <!-- Navigation bar will be injected by navbar.js -->
     <nav class="navbar"></nav>
 
+    <!-- Hidden selector for poolSelector.js -->
+    <select id="activePoolSelector" style="display: none;">
+        <option value="">-- Aucun pool --</option>
+    </select>
+
     <!-- Page Header -->
     <div class="page-header">
         <h1>Bienvenue sur Fantazy</h1>
@@ -30,14 +35,14 @@
             <div class="card-icon">👥</div>
             <h2>Rejoindre un Pool</h2>
             <p>Entrez le code d'un pool existant et commencez à jouer</p>
-            <button class="action-btn secondary" onclick="window.location.href='pool.html?tab=join'">Rejoindre</button>
+            <button class="action-btn secondary" onclick="window.location.href='pool.html?tab=available'">Rejoindre</button>
         </div>
 
         <div class="pool-action-card glass-card">
             <div class="card-icon">🎯</div>
             <h2>Mes Pools</h2>
             <p>Gérez vos pools actifs et consultez vos équipes</p>
-            <button class="action-btn tertiary" onclick="window.location.href='pool.html?tab=my-pools'">Voir mes pools</button>
+            <button class="action-btn tertiary" onclick="window.location.href='pool.html?tab=mypools'">Voir mes pools</button>
         </div>
     </div>
 
@@ -124,6 +129,7 @@
     </div>
 
     <script src="navbar.js"></script>
+    <script src="poolSelector.js"></script>
     <script src="accueil.js"></script>
 </body>
 </html>
