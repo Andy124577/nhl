@@ -1760,30 +1760,50 @@ app.get('/hot-players', async (req, res) => {
             })
         );
 
-        const validPlayers = playersWithLast10.filter(p => p !== null);
+        // Filter out null results and separate skaters from goalies
+        const allValidPlayers = playersWithLast10.filter(p => p !== null);
+        const validSkaters = allValidPlayers.filter(p => p.position?.toUpperCase() !== 'G' && p.last10Points > 0);
+        const validGoalies = allValidPlayers.filter(p => p.position?.toUpperCase() === 'G' && p.last10Games > 0);
 
-        // Get top 5 offensive players by last 10 points
-        const offensive = validPlayers
-            .filter(p => p.position && ['C', 'L', 'R', 'LW', 'RW'].includes(p.position))
+        console.log(`📊 Valid skaters with last 10 stats: ${validSkaters.length}`);
+        console.log(`📊 Valid goalies with last 10 stats: ${validGoalies.length}`);
+        console.log(`📊 Positions found: ${[...new Set(allValidPlayers.map(p => p.position))].join(', ')}`);
+
+        // Get top 5 offensive players by last 10 points (forwards only)
+        const offensive = validSkaters
+            .filter(p => {
+                const pos = p.position?.toUpperCase();
+                // Check for forward positions: C, L, R, LW, RW, or contains 'W'
+                return pos && pos !== 'D' && (pos === 'C' || pos === 'L' || pos === 'R' || pos === 'LW' || pos === 'RW' || pos.includes('W'));
+            })
             .sort((a, b) => b.last10Points - a.last10Points)
             .slice(0, 5);
 
-        // Get top rookie (gamesPlayedTotal <= 27)
-        const rookies = validPlayers
-            .filter(p => p.gamesPlayedTotal <= 27 && p.position && ['C', 'L', 'R', 'LW', 'RW', 'D'].includes(p.position))
+        console.log(`📊 Offensive players found: ${offensive.length}, top: ${offensive.slice(0, 3).map(p => `${p.playerName} (${p.position}): ${p.last10Points}pts`).join(', ')}`);
+
+        // Get top rookie (gamesPlayedTotal <= 27 from Top_Rookies in nhl_filtered_stats.json)
+        const rookies = validSkaters
+            .filter(p => {
+                const pos = p.position?.toUpperCase();
+                const isSkater = pos && pos !== 'G';
+                return p.gamesPlayedTotal <= 27 && isSkater && p.last10Points > 0;
+            })
             .sort((a, b) => b.last10Points - a.last10Points);
 
         const rookie = rookies.length > 0 ? rookies[0] : null;
+        console.log(`📊 Rookies found: ${rookies.length}, best: ${rookie ? `${rookie.playerName} (${rookie.position}): ${rookie.last10Points}pts in ${rookie.gamesPlayedTotal}GP` : 'none'}`);
 
         // Get top 3 defensemen by last 10 points
-        const defensemen = validPlayers
-            .filter(p => p.position === 'D')
+        const defensemen = validSkaters
+            .filter(p => p.position?.toUpperCase() === 'D')
             .sort((a, b) => b.last10Points - a.last10Points)
             .slice(0, 3);
 
+        console.log(`📊 Defensemen found: ${defensemen.length}, top: ${defensemen.slice(0, 2).map(p => `${p.playerName}: ${p.last10Points}pts`).join(', ')}`);
+
         // Get top 2 goalies by save percentage in last 10
-        const goalies = validPlayers
-            .filter(p => p.position === 'G' && p.last10Games > 0)
+        const goalies = validGoalies
+            .filter(p => p.last10SavePct > 0)
             .sort((a, b) => b.last10SavePct - a.last10SavePct)
             .slice(0, 2);
 
@@ -1827,13 +1847,24 @@ async function getTopTeamsLast10() {
                     const schedule = await response.json();
                     const games = schedule.games || [];
 
-                    // Filter for completed games only
-                    const completedGames = games.filter(g => g.gameState === 'OFF' || g.gameState === 'FINAL');
+                    // Filter for completed games only (games that have been played)
+                    const now = new Date();
+                    const completedGames = games.filter(g => {
+                        const gameDate = new Date(g.gameDate);
+                        // Check if game is in the past and has a final state or has scores
+                        const hasScores = g.homeTeam?.score !== undefined && g.awayTeam?.score !== undefined;
+                        const isFinal = g.gameState === 'OFF' || g.gameState === 'FINAL' || g.gameOutcome;
+                        return gameDate < now && (isFinal || hasScores);
+                    });
 
-                    // Get last 10 completed games
-                    const last10 = completedGames.slice(0, 10);
+                    // Sort by date (most recent first) and get last 10
+                    const sortedGames = completedGames.sort((a, b) => new Date(b.gameDate) - new Date(a.gameDate));
+                    const last10 = sortedGames.slice(0, 10);
 
-                    if (last10.length === 0) return null;
+                    if (last10.length === 0) {
+                        console.log(`⚠️ No completed games found for ${team.teamFullName} (${teamAbbrev}), total games: ${games.length}`);
+                        return null;
+                    }
 
                     // Calculate record for last 10 games
                     let wins = 0;
@@ -1847,10 +1878,16 @@ async function getTopTeamsLast10() {
 
                         if (teamScore > oppScore) {
                             wins++;
-                        } else if (game.periodDescriptor && game.periodDescriptor.periodType === 'OT') {
-                            otLosses++;
                         } else {
-                            losses++;
+                            // Check if loss was in OT or SO
+                            const isOTorSO = game.periodDescriptor &&
+                                           (game.periodDescriptor.periodType === 'OT' ||
+                                            game.periodDescriptor.periodType === 'SO');
+                            if (isOTorSO) {
+                                otLosses++;
+                            } else {
+                                losses++;
+                            }
                         }
                     });
 
