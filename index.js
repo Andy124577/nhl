@@ -601,6 +601,9 @@ async function showCareerStats(playerId, playerName, isGoalie = false) {
     const filtersSection = document.getElementById('careerFilters');
     const statsTable = document.getElementById('careerStatsTable');
 
+    // Store current player ID for game log switching
+    currentPlayerId = playerId;
+
     // Show modal with loading state
     modal.style.display = 'block';
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
@@ -609,7 +612,8 @@ async function showCareerStats(playerId, playerName, isGoalie = false) {
     filtersSection.style.display = 'none';
     statsTable.innerHTML = '';
 
-    // Set default filters to NHL and Regular season
+    // Set default filters to NHL and Regular season and Career view
+    document.getElementById('viewFilter').value = 'career';
     document.getElementById('leagueFilter').value = 'nhl';
     document.getElementById('gameTypeFilter').value = 'regular';
 
@@ -685,6 +689,12 @@ async function showCareerStats(playerId, playerName, isGoalie = false) {
 
         // Build and display table
         filterCareerStats();
+
+        // Ensure league and game type filters are visible by default (career view)
+        const leagueFilterGroup = document.querySelector('.filter-group-career:has(#leagueFilter)');
+        const gameTypeFilterGroup = document.querySelector('.filter-group-career:has(#gameTypeFilter)');
+        if (leagueFilterGroup) leagueFilterGroup.style.display = 'flex';
+        if (gameTypeFilterGroup) gameTypeFilterGroup.style.display = 'flex';
 
     } catch (error) {
         console.error('Error fetching career stats:', error);
@@ -872,6 +882,152 @@ function closeCareerModal() {
     document.getElementById('careerStatsModal').style.display = 'none';
     document.body.style.overflow = ''; // Restore background scrolling
     currentCareerData = null;
+    currentGameLogData = null;
+}
+
+// Global variable to store current game log data
+let currentGameLogData = null;
+let currentPlayerId = null;
+
+// Handle view change between career and game log
+async function handleViewChange() {
+    const viewFilter = document.getElementById('viewFilter').value;
+    const leagueFilterGroup = document.querySelector('.filter-group-career:has(#leagueFilter)');
+    const gameTypeFilterGroup = document.querySelector('.filter-group-career:has(#gameTypeFilter)');
+    const statsCountBadge = document.getElementById('statsCountBadge');
+
+    if (viewFilter === 'gamelog') {
+        // Switch to game log view
+        // Hide league and game type filters (not relevant for current season game log)
+        if (leagueFilterGroup) leagueFilterGroup.style.display = 'none';
+        if (gameTypeFilterGroup) gameTypeFilterGroup.style.display = 'none';
+
+        // Update stats count badge
+        statsCountBadge.style.display = 'block';
+        statsCountBadge.textContent = 'Chargement...';
+
+        // Fetch and display game log
+        await showGameLog(currentPlayerId);
+    } else {
+        // Switch back to career view
+        if (leagueFilterGroup) leagueFilterGroup.style.display = 'flex';
+        if (gameTypeFilterGroup) gameTypeFilterGroup.style.display = 'flex';
+
+        // Re-apply career filters
+        filterCareerStats();
+    }
+}
+
+// Fetch and display game log
+async function showGameLog(playerId) {
+    try {
+        const response = await fetch(`/player-gamelog/${playerId}`);
+        const data = await response.json();
+
+        currentGameLogData = data;
+
+        if (!data.gameLog || data.gameLog.length === 0) {
+            document.getElementById('careerStatsTable').innerHTML = '<p style="text-align: center; padding: 20px;">Aucun match joué cette saison.</p>';
+            document.getElementById('statsCountBadge').textContent = '0 matchs';
+            return;
+        }
+
+        // Update stats count
+        const statsCountBadge = document.getElementById('statsCountBadge');
+        statsCountBadge.textContent = `${data.gameLog.length} matchs`;
+
+        // Render game log table
+        renderGameLogTable(data.gameLog, data.playerInfo.isGoalie);
+
+    } catch (error) {
+        console.error('Error fetching game log:', error);
+        document.getElementById('careerStatsTable').innerHTML = '<p style="text-align: center; padding: 20px; color: red;">Erreur lors du chargement des statistiques de match.</p>';
+    }
+}
+
+// Render game log table
+function renderGameLogTable(gameLog, isGoalie) {
+    const statsTable = document.getElementById('careerStatsTable');
+
+    let tableHTML = '<table><thead><tr>';
+
+    if (isGoalie) {
+        // Goalie columns
+        tableHTML += `
+            <th>DATE</th>
+            <th>OPP</th>
+            <th>RÉS</th>
+            <th>DÉC</th>
+            <th>GA</th>
+            <th>SA</th>
+            <th>SV</th>
+            <th>SV%</th>
+            <th>BL</th>
+            <th>PUN</th>
+            <th>TG</th>
+        `;
+    } else {
+        // Skater columns
+        tableHTML += `
+            <th>DATE</th>
+            <th>OPP</th>
+            <th>RÉS</th>
+            <th>B</th>
+            <th>P</th>
+            <th>PTS</th>
+            <th>+/-</th>
+            <th>PUN</th>
+            <th>TIR</th>
+            <th>TG</th>
+            <th>PP</th>
+            <th>SH</th>
+        `;
+    }
+
+    tableHTML += '</tr></thead><tbody>';
+
+    // Add each game
+    gameLog.forEach((game, index) => {
+        const rowClass = index % 2 === 0 ? 'even-row' : 'odd-row';
+        const homeAway = game.homeRoadFlag === 'H' ? 'vs' : '@';
+        const formattedDate = new Date(game.gameDate).toLocaleDateString('fr-CA', {
+            month: '2-digit',
+            day: '2-digit'
+        });
+
+        tableHTML += `<tr class="${rowClass}">`;
+        tableHTML += `<td>${formattedDate}</td>`;
+        tableHTML += `<td>${homeAway} ${game.opponentAbbrev}</td>`;
+        tableHTML += `<td>${game.gameResult || '-'}</td>`;
+
+        if (isGoalie) {
+            // Goalie stats
+            tableHTML += `<td>${game.decision || '-'}</td>`;
+            tableHTML += `<td>${game.goalsAgainst || 0}</td>`;
+            tableHTML += `<td>${game.shotsAgainst || 0}</td>`;
+            tableHTML += `<td>${game.saves || 0}</td>`;
+            tableHTML += `<td>${game.savePct !== null ? game.savePct.toFixed(3) : '-'}</td>`;
+            tableHTML += `<td>${game.shutouts || 0}</td>`;
+            tableHTML += `<td>${game.pim || 0}</td>`;
+            tableHTML += `<td>${game.toi || '0:00'}</td>`;
+        } else {
+            // Skater stats
+            tableHTML += `<td>${game.goals || 0}</td>`;
+            tableHTML += `<td>${game.assists || 0}</td>`;
+            tableHTML += `<td>${game.points || 0}</td>`;
+            tableHTML += `<td>${game.plusMinus >= 0 ? '+' : ''}${game.plusMinus || 0}</td>`;
+            tableHTML += `<td>${game.pim || 0}</td>`;
+            tableHTML += `<td>${game.shots || 0}</td>`;
+            tableHTML += `<td>${game.toi || '0:00'}</td>`;
+            tableHTML += `<td>${game.powerPlayPoints || 0}</td>`;
+            tableHTML += `<td>${game.shorthandedPoints || 0}</td>`;
+        }
+
+        tableHTML += '</tr>';
+    });
+
+    tableHTML += '</tbody></table>';
+    statsTable.innerHTML = tableHTML;
 }
 
 document.getElementById("searchInput").addEventListener("input", updateTable);
