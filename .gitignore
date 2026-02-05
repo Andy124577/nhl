@@ -25,3 +25,8 @@ build/
 
 # Test coverage
 coverage/
+
+# Cache files
+current_stats.json
+team-standings.json
+server.log
