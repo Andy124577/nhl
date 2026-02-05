@@ -111,6 +111,13 @@
             </div>
             <div class="career-filters" id="careerFilters" style="display: none;">
                 <div class="filter-group-career">
+                    <label for="viewFilter">Vue</label>
+                    <select id="viewFilter" onchange="handleViewChange()">
+                        <option value="career">Carrière</option>
+                        <option value="gamelog">Historique de match</option>
+                    </select>
+                </div>
+                <div class="filter-group-career">
                     <label for="leagueFilter">Ligue</label>
                     <select id="leagueFilter" onchange="filterCareerStats()">
                         <option value="all">Toutes les ligues</option>
