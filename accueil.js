@@ -69,12 +69,12 @@ function displayOffensivePlayers(players) {
                     <div class="stat-label">Matchs</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">${player.last10Goals || 0}</div>
-                    <div class="stat-label">Buts</div>
+                    <div class="stat-value">${player.last10Goals || 0}G ${player.last10Assists || 0}A</div>
+                    <div class="stat-label">Production</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value">${player.last10Points || 0}</div>
-                    <div class="stat-label">Points</div>
+                    <div class="stat-label">PTS</div>
                 </div>
             </div>
         </div>
@@ -107,12 +107,12 @@ function displayRookie(player) {
                     <div class="stat-label">Matchs</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">${player.last10Goals || 0}</div>
-                    <div class="stat-label">Buts</div>
+                    <div class="stat-value">${player.last10Goals || 0}G ${player.last10Assists || 0}A</div>
+                    <div class="stat-label">Production</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value">${player.last10Points || 0}</div>
-                    <div class="stat-label">Points</div>
+                    <div class="stat-label">PTS</div>
                 </div>
             </div>
         </div>
@@ -145,12 +145,12 @@ function displayDefensemen(players) {
                     <div class="stat-label">Matchs</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">${player.last10Goals || 0}</div>
-                    <div class="stat-label">Buts</div>
+                    <div class="stat-value">${player.last10Goals || 0}G ${player.last10Assists || 0}A</div>
+                    <div class="stat-label">Production</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value">${player.last10Points || 0}</div>
-                    <div class="stat-label">Points</div>
+                    <div class="stat-label">PTS</div>
                 </div>
             </div>
         </div>
@@ -210,8 +210,8 @@ function displayTeams(teams) {
                 ${team.logo ? `<img src="${team.logo}" alt="${team.teamName}">` : '🏆'}
             </div>
             <div class="team-name">${team.teamName}</div>
-            <div class="team-record">${team.last10Wins || 0}V - ${team.last10Losses || 0}D</div>
-            <div class="team-points">${team.last10Points || 0} points</div>
+            <div class="team-record">${team.last10Wins || 0}-${team.last10Losses || 0}-${team.last10OTLosses || 0}</div>
+            <div class="team-points">10 derniers matchs</div>
         </div>
     `).join('');
 }
