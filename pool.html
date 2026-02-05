@@ -202,6 +202,23 @@
             // Add active class to clicked button
             event.target.classList.add('active');
         }
+
+        // Check URL parameters on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tab = urlParams.get('tab');
+
+            if (tab === 'create') {
+                showTab('create');
+                document.querySelector('[onclick*="create"]').classList.add('active');
+            } else if (tab === 'join') {
+                showTab('join');
+                document.querySelector('[onclick*="join"]').classList.add('active');
+            } else if (tab === 'my-pools') {
+                showTab('my-pools');
+                document.querySelector('[onclick*="my-pools"]').classList.add('active');
+            }
+        });
     </script>
     <script src="navbar.js"></script>
     <script src="poolSelector.js"></script>

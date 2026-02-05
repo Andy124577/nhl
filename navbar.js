@@ -4,8 +4,8 @@
 // Get current page
 function getCurrentPage() {
     const path = window.location.pathname;
-    if (path.includes('index.html') || path.endsWith('/')) return 'stats';
-    if (path.includes('pool.html')) return 'pool';
+    if (path.includes('accueil.html') || path.endsWith('/')) return 'accueil';
+    if (path.includes('index.html')) return 'stats';
     if (path.includes('draft.html')) return 'draft';
     if (path.includes('classement.html')) return 'classement';
     if (path.includes('trade.html')) return 'trade';
@@ -75,11 +75,11 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
 
         <!-- Desktop Navigation (hidden on mobile) -->
         <div class="desktop-nav">
+            <a href="accueil.html" class="desktop-nav-item ${currentPage === 'accueil' ? 'active' : ''}">
+                Accueil
+            </a>
             <a href="index.html" class="desktop-nav-item ${currentPage === 'stats' ? 'active' : ''}">
                 Statistiques
-            </a>
-            <a href="pool.html" class="desktop-nav-item ${currentPage === 'pool' ? 'active' : ''}">
-                Pool
             </a>
             <a href="draft.html" class="desktop-nav-item ${currentPage === 'draft' ? 'active' : ''}">
                 Draft
@@ -138,13 +138,13 @@ function buildBottomNav(currentPage) {
     // Create bottom nav
     const bottomNavHTML = `
         <div class="bottom-nav">
+            <a href="accueil.html" class="bottom-nav-item ${currentPage === 'accueil' ? 'active' : ''}">
+                <img src="Icons/fantazy.png" alt="Accueil" class="bottom-nav-icon">
+                <span class="bottom-nav-label">Accueil</span>
+            </a>
             <a href="index.html" class="bottom-nav-item ${currentPage === 'stats' ? 'active' : ''}">
                 <img src="Icons/stats.png" alt="Stats" class="bottom-nav-icon">
                 <span class="bottom-nav-label">Statistiques</span>
-            </a>
-            <a href="pool.html" class="bottom-nav-item ${currentPage === 'pool' ? 'active' : ''}">
-                <img src="Icons/pool.png" alt="Pool" class="bottom-nav-icon">
-                <span class="bottom-nav-label">Pool</span>
             </a>
             <a href="draft.html" class="bottom-nav-item ${currentPage === 'draft' ? 'active' : ''}">
                 <img src="Icons/draft.png" alt="Draft" class="bottom-nav-icon">
