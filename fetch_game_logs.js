@@ -141,14 +141,24 @@ async function fetchPlayerGameLog(playerId, playerName, position) {
                 shorthandedPoints: game.shorthandedPoints || 0,
                 gameWinningGoals: game.gameWinningGoals || 0,
                 toi: game.toi || '0:00',
-                // Goalie stats
+                // Goalie stats - calculate saves and save percentage
                 gamesStarted: game.gamesStarted || 0,
                 decision: game.decision || null,
                 shotsAgainst: game.shotsAgainst || 0,
                 goalsAgainst: game.goalsAgainst || 0,
-                saves: game.saves || 0,
-                // Calculate save percentage if not provided or if it's 0
-                savePct: game.savePct || (game.shotsAgainst > 0 ? game.saves / game.shotsAgainst : null),
+                // Calculate saves from shots against and goals against
+                saves: game.saves || (game.shotsAgainst && game.goalsAgainst !== undefined ? game.shotsAgainst - game.goalsAgainst : 0),
+                // Calculate save percentage from saves and shots against
+                savePct: (() => {
+                    if (game.savePct && game.savePct > 0) return game.savePct;
+                    const shotsAgainst = game.shotsAgainst || 0;
+                    const goalsAgainst = game.goalsAgainst || 0;
+                    if (shotsAgainst > 0) {
+                        const saves = shotsAgainst - goalsAgainst;
+                        return saves / shotsAgainst;
+                    }
+                    return null;
+                })(),
                 shutouts: game.shutouts || 0
             }))
         };
