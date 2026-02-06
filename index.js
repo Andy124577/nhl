@@ -1001,20 +1001,27 @@ function renderGameLogTable(gameLog, isGoalie) {
         tableHTML += `<td>${game.gameResult || '-'}</td>`;
 
         if (isGoalie) {
-            // Goalie stats
-            // Calculate save percentage if not provided or is 0
+            // Goalie stats - calculate from shots against and goals against
+            const shotsAgainst = game.shotsAgainst || 0;
+            const goalsAgainst = game.goalsAgainst || 0;
+
+            // Calculate saves: Shots Against - Goals Against
+            let saves = game.saves || 0;
+            if (shotsAgainst > 0 && (!saves || saves === 0)) {
+                saves = shotsAgainst - goalsAgainst;
+            }
+
+            // Calculate save percentage: Saves / Shots Against
             let savePctDisplay = '-';
-            if (game.savePct && game.savePct > 0) {
-                savePctDisplay = game.savePct.toFixed(3);
-            } else if (game.shotsAgainst > 0) {
-                const calculatedSavePct = game.saves / game.shotsAgainst;
-                savePctDisplay = calculatedSavePct.toFixed(3);
+            if (shotsAgainst > 0) {
+                const savePct = saves / shotsAgainst;
+                savePctDisplay = savePct.toFixed(3);
             }
 
             tableHTML += `<td>${game.decision || '-'}</td>`;
-            tableHTML += `<td>${game.goalsAgainst || 0}</td>`;
-            tableHTML += `<td>${game.shotsAgainst || 0}</td>`;
-            tableHTML += `<td>${game.saves || 0}</td>`;
+            tableHTML += `<td>${goalsAgainst}</td>`;
+            tableHTML += `<td>${shotsAgainst}</td>`;
+            tableHTML += `<td>${saves}</td>`;
             tableHTML += `<td>${savePctDisplay}</td>`;
             tableHTML += `<td>${game.shutouts || 0}</td>`;
             tableHTML += `<td>${game.pim || 0}</td>`;
