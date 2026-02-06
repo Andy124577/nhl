@@ -1682,51 +1682,82 @@ app.get('/player-career/:playerId', async (req, res) => {
     }
 });
 
-// Route to get player game log for current season (from cached data)
+// Route to get player game log for current season (from PostgreSQL)
 app.get('/player-gamelog/:playerId', async (req, res) => {
     try {
         const { playerId } = req.params;
         const playerIdNum = parseInt(playerId);
+        const currentSeason = '20252026';
 
-        console.log(`📊 Loading game log for player ${playerId} from cache`);
+        console.log(`📊 Loading game log for player ${playerId} from database`);
 
-        // Load cached game logs
-        const gameLogsPath = path.join(__dirname, 'nhl_game_logs.json');
+        // Query game logs from PostgreSQL
+        const result = await db.query(`
+            SELECT
+                player_id, player_name, position,
+                game_id, game_date, home_road_flag, opponent_abbrev, team_abbrev, game_result,
+                goals, assists, points, plus_minus, pim, shots,
+                power_play_goals, power_play_points, shorthanded_goals, shorthanded_points,
+                game_winning_goals, toi,
+                games_started, decision, shots_against, goals_against, saves, save_pct, shutouts,
+                last_updated
+            FROM player_game_logs
+            WHERE player_id = $1 AND season = $2
+            ORDER BY game_date DESC
+        `, [playerIdNum, currentSeason]);
 
-        if (!fs.existsSync(gameLogsPath)) {
-            console.error('❌ nhl_game_logs.json not found');
-            console.log('💡 Run: node fetch_game_logs.js to generate cache');
+        if (result.rows.length === 0) {
+            console.log(`⚠️ Player ${playerId} not found in database`);
             return res.json({
                 gameLog: [],
                 playerInfo: null,
-                message: 'Game logs cache not found. Please generate cache first.'
+                message: 'Player game logs not found. Run: node fetch_game_logs.js'
             });
         }
 
-        const gameLogsData = JSON.parse(fs.readFileSync(gameLogsPath, 'utf-8'));
+        // Get player info from first row
+        const firstRow = result.rows[0];
+        const playerInfo = {
+            name: firstRow.player_name,
+            position: firstRow.position,
+            isGoalie: firstRow.position === 'G'
+        };
 
-        // Find player in cache
-        const playerData = gameLogsData.players.find(p => p.playerId === playerIdNum);
+        // Format game log
+        const gameLog = result.rows.map(row => ({
+            gameId: row.game_id,
+            gameDate: row.game_date,
+            homeRoadFlag: row.home_road_flag,
+            opponentAbbrev: row.opponent_abbrev,
+            teamAbbrev: row.team_abbrev,
+            gameResult: row.game_result,
+            goals: row.goals,
+            assists: row.assists,
+            points: row.points,
+            plusMinus: row.plus_minus,
+            pim: row.pim,
+            shots: row.shots,
+            powerPlayGoals: row.power_play_goals,
+            powerPlayPoints: row.power_play_points,
+            shorthandedGoals: row.shorthanded_goals,
+            shorthandedPoints: row.shorthanded_points,
+            gameWinningGoals: row.game_winning_goals,
+            toi: row.toi,
+            gamesStarted: row.games_started,
+            decision: row.decision,
+            shotsAgainst: row.shots_against,
+            goalsAgainst: row.goals_against,
+            saves: row.saves,
+            savePct: row.save_pct,
+            shutouts: row.shutouts
+        }));
 
-        if (!playerData) {
-            console.log(`⚠️ Player ${playerId} not found in cache`);
-            return res.json({
-                gameLog: [],
-                playerInfo: null,
-                message: 'Player not found in cache'
-            });
-        }
-
-        console.log(`✅ Found ${playerData.totalGames} games for ${playerData.playerName}`);
+        console.log(`✅ Found ${gameLog.length} games for ${playerInfo.name}`);
 
         res.json({
-            gameLog: playerData.gameLog,
-            playerInfo: {
-                name: playerData.playerName,
-                position: playerData.position,
-                isGoalie: playerData.position === 'G'
-            },
-            lastUpdated: playerData.lastUpdated
+            gameLog,
+            playerInfo,
+            lastUpdated: firstRow.last_updated
         });
 
     } catch (error) {

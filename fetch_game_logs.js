@@ -1,16 +1,97 @@
 const fs = require('fs');
 const path = require('path');
+const db = require('./db');
 
 // Configuration
 const CURRENT_SEASON = '20252026';
 const GAME_TYPE = '2'; // Regular season
-const OUTPUT_FILE = path.join(__dirname, 'nhl_game_logs.json');
 const STATS_FILE = path.join(__dirname, 'nhl_filtered_stats.json');
 const DELAY_BETWEEN_REQUESTS = 100; // ms to avoid rate limiting
 const MAX_CONCURRENT = 10; // Max concurrent requests
 
 // Utility: Delay function
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Save games to PostgreSQL
+async function saveGamesToDatabase(playerData) {
+    const { playerId, playerName, position, gameLog } = playerData;
+
+    if (!gameLog || gameLog.length === 0) {
+        console.log(`⚠️  No games to save for ${playerName}`);
+        return 0;
+    }
+
+    try {
+        // Use upsert (INSERT ... ON CONFLICT UPDATE) for each game
+        const queries = gameLog.map(game => {
+            return db.query(`
+                INSERT INTO player_game_logs (
+                    player_id, player_name, position, season, game_id, game_date,
+                    home_road_flag, opponent_abbrev, team_abbrev, game_result,
+                    goals, assists, points, plus_minus, pim, shots,
+                    power_play_goals, power_play_points, shorthanded_goals, shorthanded_points,
+                    game_winning_goals, toi,
+                    games_started, decision, shots_against, goals_against, saves, save_pct, shutouts,
+                    last_updated
+                )
+                VALUES (
+                    $1, $2, $3, $4, $5, $6,
+                    $7, $8, $9, $10,
+                    $11, $12, $13, $14, $15, $16,
+                    $17, $18, $19, $20,
+                    $21, $22,
+                    $23, $24, $25, $26, $27, $28, $29,
+                    NOW()
+                )
+                ON CONFLICT (player_id, game_id)
+                DO UPDATE SET
+                    player_name = EXCLUDED.player_name,
+                    position = EXCLUDED.position,
+                    game_date = EXCLUDED.game_date,
+                    home_road_flag = EXCLUDED.home_road_flag,
+                    opponent_abbrev = EXCLUDED.opponent_abbrev,
+                    team_abbrev = EXCLUDED.team_abbrev,
+                    game_result = EXCLUDED.game_result,
+                    goals = EXCLUDED.goals,
+                    assists = EXCLUDED.assists,
+                    points = EXCLUDED.points,
+                    plus_minus = EXCLUDED.plus_minus,
+                    pim = EXCLUDED.pim,
+                    shots = EXCLUDED.shots,
+                    power_play_goals = EXCLUDED.power_play_goals,
+                    power_play_points = EXCLUDED.power_play_points,
+                    shorthanded_goals = EXCLUDED.shorthanded_goals,
+                    shorthanded_points = EXCLUDED.shorthanded_points,
+                    game_winning_goals = EXCLUDED.game_winning_goals,
+                    toi = EXCLUDED.toi,
+                    games_started = EXCLUDED.games_started,
+                    decision = EXCLUDED.decision,
+                    shots_against = EXCLUDED.shots_against,
+                    goals_against = EXCLUDED.goals_against,
+                    saves = EXCLUDED.saves,
+                    save_pct = EXCLUDED.save_pct,
+                    shutouts = EXCLUDED.shutouts,
+                    last_updated = NOW()
+            `, [
+                playerId, playerName, position, CURRENT_SEASON, game.gameId, game.gameDate,
+                game.homeRoadFlag, game.opponentAbbrev, game.teamAbbrev, game.gameResult,
+                game.goals, game.assists, game.points, game.plusMinus, game.pim, game.shots,
+                game.powerPlayGoals, game.powerPlayPoints, game.shorthandedGoals, game.shorthandedPoints,
+                game.gameWinningGoals, game.toi,
+                game.gamesStarted, game.decision, game.shotsAgainst, game.goalsAgainst,
+                game.saves, game.savePct, game.shutouts
+            ]);
+        });
+
+        await Promise.all(queries);
+        console.log(`💾 Saved ${gameLog.length} games for ${playerName} to database`);
+        return gameLog.length;
+
+    } catch (error) {
+        console.error(`❌ Error saving ${playerName} to database:`, error.message);
+        return 0;
+    }
+}
 
 // Fetch game log for a single player
 async function fetchPlayerGameLog(playerId, playerName, position) {
@@ -68,8 +149,7 @@ async function fetchPlayerGameLog(playerId, playerName, position) {
                 saves: game.saves || 0,
                 savePct: game.savePct || null,
                 shutouts: game.shutouts || 0
-            })),
-            lastUpdated: new Date().toISOString()
+            }))
         };
 
     } catch (error) {
@@ -80,7 +160,7 @@ async function fetchPlayerGameLog(playerId, playerName, position) {
 
 // Process players in batches
 async function processBatch(players, batchSize = MAX_CONCURRENT) {
-    const results = [];
+    let totalGamesSaved = 0;
 
     for (let i = 0; i < players.length; i += batchSize) {
         const batch = players.slice(i, i + batchSize);
@@ -93,7 +173,11 @@ async function processBatch(players, batchSize = MAX_CONCURRENT) {
             })
         );
 
-        results.push(...batchResults.filter(r => r !== null));
+        // Save to database
+        for (const playerData of batchResults.filter(r => r !== null)) {
+            const gamesSaved = await saveGamesToDatabase(playerData);
+            totalGamesSaved += gamesSaved;
+        }
 
         // Delay between batches
         if (i + batchSize < players.length) {
@@ -102,15 +186,26 @@ async function processBatch(players, batchSize = MAX_CONCURRENT) {
         }
     }
 
-    return results;
+    return totalGamesSaved;
 }
 
 // Main function
 async function main() {
-    console.log('🏒 NHL Game Logs Fetcher');
-    console.log('========================\n');
+    console.log('🏒 NHL Game Logs Fetcher (PostgreSQL)');
+    console.log('=====================================\n');
     console.log(`Season: ${CURRENT_SEASON.substring(0, 4)}-${CURRENT_SEASON.substring(4)}`);
-    console.log(`Game Type: Regular Season\n`);
+    console.log(`Game Type: Regular Season`);
+    console.log(`Database: PostgreSQL (NeonTech)\n`);
+
+    // Check database connection
+    try {
+        await db.query('SELECT NOW()');
+        console.log('✅ Database connected\n');
+    } catch (error) {
+        console.error('❌ Database connection failed:', error.message);
+        console.log('💡 Make sure you have run the migration: node run_migration.js');
+        process.exit(1);
+    }
 
     // Load player list from nhl_filtered_stats.json
     if (!fs.existsSync(STATS_FILE)) {
@@ -160,37 +255,36 @@ async function main() {
     console.log(`   - Skaters: ${players.filter(p => p.position !== 'G').length}`);
     console.log(`   - Goalies: ${players.filter(p => p.position === 'G').length}\n`);
 
-    // Fetch game logs
+    // Fetch game logs and save to database
     const startTime = Date.now();
-    const gameLogs = await processBatch(players);
+    const totalGamesSaved = await processBatch(players);
     const endTime = Date.now();
 
     console.log(`\n✅ Completed in ${((endTime - startTime) / 1000).toFixed(1)}s`);
-    console.log(`📊 Successfully fetched: ${gameLogs.length}/${players.length} players`);
+    console.log(`💾 Total games saved to database: ${totalGamesSaved}`);
 
-    // Calculate total games
-    const totalGames = gameLogs.reduce((sum, p) => sum + p.totalGames, 0);
-    console.log(`🎮 Total games cached: ${totalGames}`);
+    // Get database stats
+    try {
+        const statsResult = await db.query(`
+            SELECT
+                COUNT(DISTINCT player_id) as total_players,
+                COUNT(*) as total_games,
+                MAX(last_updated) as last_updated
+            FROM player_game_logs
+            WHERE season = $1
+        `, [CURRENT_SEASON]);
 
-    // Save to file
-    const output = {
-        lastUpdated: new Date().toISOString(),
-        season: CURRENT_SEASON,
-        gameType: GAME_TYPE,
-        totalPlayers: gameLogs.length,
-        totalGames: totalGames,
-        players: gameLogs
-    };
-
-    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(output, null, 2));
-    console.log(`\n💾 Saved to: ${OUTPUT_FILE}`);
-
-    // Calculate file size
-    const stats = fs.statSync(OUTPUT_FILE);
-    const fileSizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
-    console.log(`📦 File size: ${fileSizeInMB} MB`);
+        const stats = statsResult.rows[0];
+        console.log(`\n📊 Database Statistics:`);
+        console.log(`   - Total players: ${stats.total_players}`);
+        console.log(`   - Total games: ${stats.total_games}`);
+        console.log(`   - Last updated: ${new Date(stats.last_updated).toLocaleString()}`);
+    } catch (error) {
+        console.error('⚠️  Could not fetch database stats:', error.message);
+    }
 
     console.log('\n🎉 Done!');
+    process.exit(0);
 }
 
 // Run
