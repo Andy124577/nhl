@@ -312,8 +312,12 @@ async function loadCachedStats(cacheKey) {
     }
 }
 
+// Helper function for direct queries (used by migration and fetch scripts)
+const query = (text, params) => pool.query(text, params);
+
 module.exports = {
     pool,
+    query, // Export query function for direct database access
     initializeDatabase,
     // Users
     getAllUsers,
