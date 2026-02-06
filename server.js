@@ -1423,6 +1423,31 @@ cron.schedule('0 0 * * *', async () => {
     timezone: "America/New_York" // Adjust to your timezone
 });
 
+// Schedule daily game logs fetch at 3 AM
+cron.schedule('0 3 * * *', async () => {
+    console.log("🏒 Daily game logs fetch triggered at 3 AM");
+
+    try {
+        const { exec } = require('child_process');
+
+        exec('node fetch_game_logs.js', (error, stdout, stderr) => {
+            if (error) {
+                console.error('❌ Game logs fetch failed:', error);
+                console.error('stderr:', stderr);
+                return;
+            }
+
+            console.log('✅ Game logs fetch completed');
+            console.log('stdout:', stdout);
+        });
+
+    } catch (error) {
+        console.error('❌ Error starting game logs fetch:', error);
+    }
+}, {
+    timezone: "America/New_York" // Adjust to your timezone
+});
+
 // Optional: Manual trigger endpoint for testing
 app.post("/refresh-stats", async (req, res) => {
     try {
@@ -1438,6 +1463,36 @@ app.post("/refresh-stats", async (req, res) => {
     } catch (error) {
         console.error("❌ Error refreshing stats:", error);
         res.status(500).json({ message: "Error refreshing stats" });
+    }
+});
+
+// Manual trigger endpoint for game logs fetch
+app.post("/fetch-game-logs", async (req, res) => {
+    try {
+        console.log("🏒 Manual game logs fetch triggered");
+
+        const { exec } = require('child_process');
+
+        // Start fetch in background
+        exec('node fetch_game_logs.js', (error, stdout, stderr) => {
+            if (error) {
+                console.error('❌ Game logs fetch failed:', error);
+                console.error('stderr:', stderr);
+            } else {
+                console.log('✅ Game logs fetch completed');
+                console.log('stdout:', stdout);
+            }
+        });
+
+        // Return immediately (fetch runs in background)
+        res.json({
+            message: "Game logs fetch started in background",
+            note: "Check server logs for progress"
+        });
+
+    } catch (error) {
+        console.error("❌ Error starting game logs fetch:", error);
+        res.status(500).json({ message: "Error starting game logs fetch" });
     }
 });
 
@@ -1682,82 +1737,87 @@ app.get('/player-career/:playerId', async (req, res) => {
     }
 });
 
-// Route to get player game log for current season
+// Route to get player game log for current season (from PostgreSQL)
 app.get('/player-gamelog/:playerId', async (req, res) => {
     try {
         const { playerId } = req.params;
-        const currentSeason = '20252026'; // 2025-26 season
-        const gameType = '2'; // Regular season
+        const playerIdNum = parseInt(playerId);
+        const currentSeason = '20252026';
 
-        console.log(`📊 Fetching game log for player ${playerId} - Season: ${currentSeason}`);
+        console.log(`📊 Loading game log for player ${playerId} from database`);
 
-        const url = `https://api-web.nhle.com/v1/player/${playerId}/game-log/${currentSeason}/${gameType}`;
-        const response = await fetch(url);
+        // Query game logs from PostgreSQL
+        const result = await db.query(`
+            SELECT
+                player_id, player_name, position,
+                game_id, game_date, home_road_flag, opponent_abbrev, team_abbrev, game_result,
+                goals, assists, points, plus_minus, pim, shots,
+                power_play_goals, power_play_points, shorthanded_goals, shorthanded_points,
+                game_winning_goals, toi,
+                games_started, decision, shots_against, goals_against, saves, save_pct, shutouts,
+                last_updated
+            FROM player_game_logs
+            WHERE player_id = $1 AND season = $2
+            ORDER BY game_date DESC
+        `, [playerIdNum, currentSeason]);
 
-        if (!response.ok) {
-            console.log('⚠️ No game log data found');
+        if (result.rows.length === 0) {
+            console.log(`⚠️ Player ${playerId} not found in database`);
             return res.json({
                 gameLog: [],
-                playerInfo: null
+                playerInfo: null,
+                message: 'Player game logs not found. Run: node fetch_game_logs.js'
             });
         }
 
-        const data = await response.json();
+        // Get player info from first row
+        const firstRow = result.rows[0];
+        const playerInfo = {
+            name: firstRow.player_name,
+            position: firstRow.position,
+            isGoalie: firstRow.position === 'G'
+        };
 
-        if (!data || !data.gameLog) {
-            console.log('⚠️ No game log data in response');
-            return res.json({
-                gameLog: [],
-                playerInfo: null
-            });
-        }
-
-        // Format game log data
-        const formattedGameLog = data.gameLog.map(game => ({
-            gameId: game.gameId,
-            gameDate: game.gameDate,
-            homeRoadFlag: game.homeRoadFlag, // 'H' or 'R'
-            opponentAbbrev: game.opponentAbbrev,
-            teamAbbrev: game.teamAbbrev,
-            gameResult: game.gameResult, // 'W', 'L', 'OT', etc.
-            goals: game.goals || 0,
-            assists: game.assists || 0,
-            points: game.points || 0,
-            plusMinus: game.plusMinus || 0,
-            pim: game.pim || 0,
-            shots: game.shots || 0,
-            powerPlayGoals: game.powerPlayGoals || 0,
-            powerPlayPoints: game.powerPlayPoints || 0,
-            shorthandedGoals: game.shorthandedGoals || 0,
-            shorthandedPoints: game.shorthandedPoints || 0,
-            gameWinningGoals: game.gameWinningGoals || 0,
-            otGoals: game.otGoals || 0,
-            shifts: game.shifts || 0,
-            toi: game.toi || '0:00',
-            // Goalie stats
-            gamesStarted: game.gamesStarted || 0,
-            decision: game.decision || null,
-            shotsAgainst: game.shotsAgainst || 0,
-            goalsAgainst: game.goalsAgainst || 0,
-            saves: game.saves || 0,
-            savePct: game.savePct || null,
-            shutouts: game.shutouts || 0,
-            pim: game.pim || 0,
-            toi: game.toi || '0:00'
+        // Format game log
+        const gameLog = result.rows.map(row => ({
+            gameId: row.game_id,
+            gameDate: row.game_date,
+            homeRoadFlag: row.home_road_flag,
+            opponentAbbrev: row.opponent_abbrev,
+            teamAbbrev: row.team_abbrev,
+            gameResult: row.game_result,
+            goals: row.goals,
+            assists: row.assists,
+            points: row.points,
+            plusMinus: row.plus_minus,
+            pim: row.pim,
+            shots: row.shots,
+            powerPlayGoals: row.power_play_goals,
+            powerPlayPoints: row.power_play_points,
+            shorthandedGoals: row.shorthanded_goals,
+            shorthandedPoints: row.shorthanded_points,
+            gameWinningGoals: row.game_winning_goals,
+            toi: row.toi,
+            gamesStarted: row.games_started,
+            decision: row.decision,
+            shotsAgainst: row.shots_against,
+            goalsAgainst: row.goals_against,
+            saves: row.saves,
+            savePct: row.save_pct,
+            shutouts: row.shutouts
         }));
 
+        console.log(`✅ Found ${gameLog.length} games for ${playerInfo.name}`);
+
         res.json({
-            gameLog: formattedGameLog,
-            playerInfo: {
-                name: data.playerName || null,
-                position: data.position || null,
-                isGoalie: data.position === 'G'
-            }
+            gameLog,
+            playerInfo,
+            lastUpdated: firstRow.last_updated
         });
 
     } catch (error) {
-        console.error('❌ Error fetching player game log:', error);
-        res.status(500).json({ message: 'Error fetching player game log' });
+        console.error('❌ Error loading player game log:', error);
+        res.status(500).json({ message: 'Error loading player game log' });
     }
 });
 
