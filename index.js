@@ -1002,11 +1002,20 @@ function renderGameLogTable(gameLog, isGoalie) {
 
         if (isGoalie) {
             // Goalie stats
+            // Calculate save percentage if not provided or is 0
+            let savePctDisplay = '-';
+            if (game.savePct && game.savePct > 0) {
+                savePctDisplay = game.savePct.toFixed(3);
+            } else if (game.shotsAgainst > 0) {
+                const calculatedSavePct = game.saves / game.shotsAgainst;
+                savePctDisplay = calculatedSavePct.toFixed(3);
+            }
+
             tableHTML += `<td>${game.decision || '-'}</td>`;
             tableHTML += `<td>${game.goalsAgainst || 0}</td>`;
             tableHTML += `<td>${game.shotsAgainst || 0}</td>`;
             tableHTML += `<td>${game.saves || 0}</td>`;
-            tableHTML += `<td>${game.savePct !== null ? game.savePct.toFixed(3) : '-'}</td>`;
+            tableHTML += `<td>${savePctDisplay}</td>`;
             tableHTML += `<td>${game.shutouts || 0}</td>`;
             tableHTML += `<td>${game.pim || 0}</td>`;
             tableHTML += `<td>${game.toi || '0:00'}</td>`;
