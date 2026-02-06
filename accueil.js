@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Load hot players from last 10 games
 async function loadHotPlayers() {
     try {
-        const response = await fetch(`${BASE_URL}/hot-players`);
+        const response = await fetch(`${BASE_URL}/hot-players-last10`);
         if (!response.ok) throw new Error('Failed to fetch hot players');
 
         const data = await response.json();
