@@ -1526,6 +1526,61 @@ app.post("/run-migration", async (req, res) => {
     }
 });
 
+// Status endpoint to check game logs setup
+app.get("/game-logs-status", async (req, res) => {
+    try {
+        // Check if table exists and get stats
+        const result = await db.query(`
+            SELECT
+                COUNT(DISTINCT player_id) as total_players,
+                COUNT(*) as total_games,
+                MAX(last_updated) as last_updated,
+                MIN(game_date) as earliest_game,
+                MAX(game_date) as latest_game
+            FROM player_game_logs
+            WHERE season = '20252026'
+        `);
+
+        const stats = result.rows[0];
+
+        if (stats.total_games > 0) {
+            res.json({
+                status: "✅ Working",
+                tableExists: true,
+                totalPlayers: parseInt(stats.total_players),
+                totalGames: parseInt(stats.total_games),
+                lastUpdated: stats.last_updated,
+                earliestGame: stats.earliest_game,
+                latestGame: stats.latest_game,
+                message: "Game logs are set up and working!"
+            });
+        } else {
+            res.json({
+                status: "⚠️ Empty",
+                tableExists: true,
+                totalPlayers: 0,
+                totalGames: 0,
+                message: "Table exists but no data. Run: curl -X POST https://fantazy.ca/fetch-game-logs"
+            });
+        }
+
+    } catch (error) {
+        if (error.message.includes('does not exist')) {
+            res.json({
+                status: "❌ Not Set Up",
+                tableExists: false,
+                message: "Table doesn't exist. Run: curl -X POST https://fantazy.ca/run-migration"
+            });
+        } else {
+            console.error('❌ Error checking status:', error);
+            res.status(500).json({
+                status: "❌ Error",
+                error: error.message
+            });
+        }
+    }
+});
+
 // ==================== NHL TEAM STANDINGS SYSTEM ====================
 
 // Function to fetch current team standings from NHL API
