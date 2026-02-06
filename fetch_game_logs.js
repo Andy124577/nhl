@@ -147,7 +147,8 @@ async function fetchPlayerGameLog(playerId, playerName, position) {
                 shotsAgainst: game.shotsAgainst || 0,
                 goalsAgainst: game.goalsAgainst || 0,
                 saves: game.saves || 0,
-                savePct: game.savePct || null,
+                // Calculate save percentage if not provided or if it's 0
+                savePct: game.savePct || (game.shotsAgainst > 0 ? game.saves / game.shotsAgainst : null),
                 shutouts: game.shutouts || 0
             }))
         };
@@ -241,6 +242,18 @@ async function main() {
         }
     });
 
+    // Add rookies
+    const rookies = statsData.Top_Rookies || [];
+    rookies.forEach(p => {
+        if (!players.find(pl => pl.playerId === p.playerId) && p.positionCode !== 'G') {
+            players.push({
+                playerId: p.playerId,
+                playerName: p.skaterFullName,
+                position: p.positionCode
+            });
+        }
+    });
+
     // Add goalies
     const goalies = statsData.Top_50_Goalies || [];
     goalies.forEach(p => {
@@ -252,8 +265,10 @@ async function main() {
     });
 
     console.log(`📊 Total players to fetch: ${players.length}`);
-    console.log(`   - Skaters: ${players.filter(p => p.position !== 'G').length}`);
-    console.log(`   - Goalies: ${players.filter(p => p.position === 'G').length}\n`);
+    console.log(`   - Forwards: ${offensivePlayers.length}`);
+    console.log(`   - Defenders: ${defenders.length}`);
+    console.log(`   - Rookies: ${rookies.length}`);
+    console.log(`   - Goalies: ${goalies.length}\n`);
 
     // Fetch game logs and save to database
     const startTime = Date.now();
