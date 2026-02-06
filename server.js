@@ -1496,6 +1496,36 @@ app.post("/fetch-game-logs", async (req, res) => {
     }
 });
 
+// Manual trigger endpoint for database migration
+app.post("/run-migration", async (req, res) => {
+    try {
+        console.log("🗄️ Database migration triggered");
+
+        const { exec } = require('child_process');
+
+        // Run migration
+        exec('node run_migration.js', (error, stdout, stderr) => {
+            if (error) {
+                console.error('❌ Migration failed:', error);
+                console.error('stderr:', stderr);
+            } else {
+                console.log('✅ Migration completed');
+                console.log('stdout:', stdout);
+            }
+        });
+
+        // Return immediately
+        res.json({
+            message: "Database migration started",
+            note: "Check server logs for results"
+        });
+
+    } catch (error) {
+        console.error("❌ Error starting migration:", error);
+        res.status(500).json({ message: "Error starting migration" });
+    }
+});
+
 // ==================== NHL TEAM STANDINGS SYSTEM ====================
 
 // Function to fetch current team standings from NHL API
