@@ -1423,6 +1423,31 @@ cron.schedule('0 0 * * *', async () => {
     timezone: "America/New_York" // Adjust to your timezone
 });
 
+// Schedule daily game logs fetch at 3 AM
+cron.schedule('0 3 * * *', async () => {
+    console.log("🏒 Daily game logs fetch triggered at 3 AM");
+
+    try {
+        const { exec } = require('child_process');
+
+        exec('node fetch_game_logs.js', (error, stdout, stderr) => {
+            if (error) {
+                console.error('❌ Game logs fetch failed:', error);
+                console.error('stderr:', stderr);
+                return;
+            }
+
+            console.log('✅ Game logs fetch completed');
+            console.log('stdout:', stdout);
+        });
+
+    } catch (error) {
+        console.error('❌ Error starting game logs fetch:', error);
+    }
+}, {
+    timezone: "America/New_York" // Adjust to your timezone
+});
+
 // Optional: Manual trigger endpoint for testing
 app.post("/refresh-stats", async (req, res) => {
     try {
@@ -1438,6 +1463,36 @@ app.post("/refresh-stats", async (req, res) => {
     } catch (error) {
         console.error("❌ Error refreshing stats:", error);
         res.status(500).json({ message: "Error refreshing stats" });
+    }
+});
+
+// Manual trigger endpoint for game logs fetch
+app.post("/fetch-game-logs", async (req, res) => {
+    try {
+        console.log("🏒 Manual game logs fetch triggered");
+
+        const { exec } = require('child_process');
+
+        // Start fetch in background
+        exec('node fetch_game_logs.js', (error, stdout, stderr) => {
+            if (error) {
+                console.error('❌ Game logs fetch failed:', error);
+                console.error('stderr:', stderr);
+            } else {
+                console.log('✅ Game logs fetch completed');
+                console.log('stdout:', stdout);
+            }
+        });
+
+        // Return immediately (fetch runs in background)
+        res.json({
+            message: "Game logs fetch started in background",
+            note: "Check server logs for progress"
+        });
+
+    } catch (error) {
+        console.error("❌ Error starting game logs fetch:", error);
+        res.status(500).json({ message: "Error starting game logs fetch" });
     }
 });
 
