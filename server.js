@@ -1763,6 +1763,338 @@ app.get('/player-gamelog/:playerId', async (req, res) => {
 
 // ==================== ACCUEIL PAGE - HOT PLAYERS & STREAKS ====================
 
+// Cache for last 10 games stats (refreshed every 6 hours)
+let last10GamesCache = {
+    lastUpdated: null,
+    data: null
+};
+
+const CACHE_DURATION = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
+
+// Helper function to calculate last 10 games stats for a player
+async function getPlayerLast10Stats(playerId, position) {
+    try {
+        const currentSeason = '20252026';
+        const gameType = '2'; // Regular season
+
+        const url = `https://api-web.nhle.com/v1/player/${playerId}/game-log/${currentSeason}/${gameType}`;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            return null;
+        }
+
+        const data = await response.json();
+
+        if (!data || !data.gameLog || data.gameLog.length === 0) {
+            return null;
+        }
+
+        // Get last 10 games (or fewer if they haven't played 10 yet)
+        const last10Games = data.gameLog.slice(-10);
+
+        if (position === 'G') {
+            // Goalie stats
+            const gamesPlayed = last10Games.length;
+            const wins = last10Games.filter(g => g.decision === 'W').length;
+            const losses = last10Games.filter(g => g.decision === 'L').length;
+            const otLosses = last10Games.filter(g => g.decision === 'O').length;
+            const shutouts = last10Games.reduce((sum, g) => sum + (g.shutouts || 0), 0);
+            const totalShotsAgainst = last10Games.reduce((sum, g) => sum + (g.shotsAgainst || 0), 0);
+            const totalGoalsAgainst = last10Games.reduce((sum, g) => sum + (g.goalsAgainst || 0), 0);
+            const totalSaves = last10Games.reduce((sum, g) => sum + (g.saves || 0), 0);
+            const savePct = totalShotsAgainst > 0 ? (totalSaves / totalShotsAgainst) : 0;
+            const gaa = gamesPlayed > 0 ? (totalGoalsAgainst / gamesPlayed) : 0;
+
+            return {
+                gamesPlayed,
+                wins,
+                losses,
+                otLosses,
+                shutouts,
+                savePct,
+                gaa,
+                totalShotsAgainst,
+                totalGoalsAgainst
+            };
+        } else {
+            // Skater stats
+            const gamesPlayed = last10Games.length;
+            const goals = last10Games.reduce((sum, g) => sum + (g.goals || 0), 0);
+            const assists = last10Games.reduce((sum, g) => sum + (g.assists || 0), 0);
+            const points = last10Games.reduce((sum, g) => sum + (g.points || 0), 0);
+            const plusMinus = last10Games.reduce((sum, g) => sum + (g.plusMinus || 0), 0);
+            const shots = last10Games.reduce((sum, g) => sum + (g.shots || 0), 0);
+            const powerPlayPoints = last10Games.reduce((sum, g) => sum + (g.powerPlayPoints || 0), 0);
+            const shorthandedPoints = last10Games.reduce((sum, g) => sum + (g.shorthandedPoints || 0), 0);
+
+            return {
+                gamesPlayed,
+                goals,
+                assists,
+                points,
+                plusMinus,
+                shots,
+                powerPlayPoints,
+                shorthandedPoints
+            };
+        }
+    } catch (error) {
+        console.error(`Error fetching last 10 games for player ${playerId}:`, error.message);
+        return null;
+    }
+}
+
+// Route to get hot players based on last 10 games
+app.get('/hot-players-last10', async (req, res) => {
+    try {
+        // Check if cache is valid
+        const now = Date.now();
+        if (last10GamesCache.data && last10GamesCache.lastUpdated &&
+            (now - last10GamesCache.lastUpdated) < CACHE_DURATION) {
+            console.log('✅ Returning cached last 10 games hot players');
+            return res.json(last10GamesCache.data);
+        }
+
+        console.log('📊 Calculating hot players based on last 10 games...');
+
+        const currentSeason = '20252026';
+
+        // Fetch top skaters and goalies from NHL API
+        const skatersUrl = `https://api-web.nhle.com/v1/skater-stats-leaders/${currentSeason}/2?limit=200`;
+        const goaliesUrl = `https://api-web.nhle.com/v1/goalie-stats-leaders/${currentSeason}/2?limit=50`;
+
+        const [skatersResponse, goaliesResponse] = await Promise.all([
+            fetch(skatersUrl),
+            fetch(goaliesUrl)
+        ]);
+
+        if (!skatersResponse.ok || !goaliesResponse.ok) {
+            throw new Error('Failed to fetch player stats from NHL API');
+        }
+
+        const skatersData = await skatersResponse.json();
+        const goaliesData = await goaliesResponse.json();
+
+        // Process skaters - get last 10 games stats for top 200
+        console.log('📊 Processing skaters...');
+        const skaterPromises = (skatersData.points || []).slice(0, 200).map(async (player) => {
+            const last10Stats = await getPlayerLast10Stats(player.playerId, player.position);
+            if (!last10Stats || last10Stats.gamesPlayed < 5) return null; // Must have played at least 5 of last 10 games
+
+            return {
+                playerId: player.playerId,
+                playerName: `${player.firstName.default} ${player.lastName.default}`,
+                teamAbbrev: player.teamAbbrev,
+                position: player.positionCode,
+                headshot: player.headshot,
+                isRookie: player.rookieFlag === 'Y',
+                ...last10Stats
+            };
+        });
+
+        const skaters = (await Promise.all(skaterPromises)).filter(p => p !== null);
+
+        // Separate forwards and defensemen
+        const forwards = skaters.filter(p => ['C', 'L', 'R', 'F'].includes(p.position));
+        const defensemen = skaters.filter(p => p.position === 'D');
+        const rookies = skaters.filter(p => p.isRookie);
+
+        // Sort forwards by points
+        forwards.sort((a, b) => b.points - a.points);
+
+        // Sort defensemen by points
+        defensemen.sort((a, b) => b.points - a.points);
+
+        // Sort rookies by points
+        rookies.sort((a, b) => b.points - a.points);
+
+        // Get top 5 offensive players (forwards)
+        const offensive = forwards.slice(0, 5).map(p => ({
+            playerId: p.playerId,
+            playerName: p.playerName,
+            teamAbbrev: p.teamAbbrev,
+            position: p.position,
+            headshot: p.headshot,
+            gamesPlayedTotal: p.gamesPlayed,
+            last10Goals: p.goals,
+            last10Assists: p.assists,
+            last10Points: p.points
+        }));
+
+        // Get top rookie
+        const rookie = rookies.length > 0 ? {
+            playerId: rookies[0].playerId,
+            playerName: rookies[0].playerName,
+            teamAbbrev: rookies[0].teamAbbrev,
+            position: rookies[0].position,
+            headshot: rookies[0].headshot,
+            gamesPlayedTotal: rookies[0].gamesPlayed,
+            last10Goals: rookies[0].goals,
+            last10Assists: rookies[0].assists,
+            last10Points: rookies[0].points
+        } : null;
+
+        // Get top 3 defensemen
+        const topDefensemen = defensemen.slice(0, 3).map(p => ({
+            playerId: p.playerId,
+            playerName: p.playerName,
+            teamAbbrev: p.teamAbbrev,
+            position: p.position,
+            headshot: p.headshot,
+            gamesPlayedTotal: p.gamesPlayed,
+            last10Goals: p.goals,
+            last10Assists: p.assists,
+            last10Points: p.points
+        }));
+
+        // Process goalies
+        console.log('📊 Processing goalies...');
+        const goaliePromises = (goaliesData.savePercentage || []).slice(0, 50).map(async (player) => {
+            const last10Stats = await getPlayerLast10Stats(player.playerId, 'G');
+            if (!last10Stats || last10Stats.gamesPlayed < 3) return null; // Must have played at least 3 of last 10 games
+
+            return {
+                playerId: player.playerId,
+                playerName: `${player.firstName.default} ${player.lastName.default}`,
+                teamAbbrev: player.teamAbbrev,
+                position: 'G',
+                headshot: player.headshot,
+                ...last10Stats
+            };
+        });
+
+        const goaliesWithStats = (await Promise.all(goaliePromises)).filter(p => p !== null);
+
+        // Sort goalies by save percentage
+        goaliesWithStats.sort((a, b) => b.savePct - a.savePct);
+
+        // Get top 2 goalies
+        const topGoalies = goaliesWithStats.slice(0, 2).map(p => ({
+            playerId: p.playerId,
+            playerName: p.playerName,
+            teamAbbrev: p.teamAbbrev,
+            position: 'G',
+            headshot: p.headshot,
+            gamesPlayedTotal: p.gamesPlayed,
+            last10Wins: p.wins,
+            last10SavePct: (p.savePct * 100).toFixed(1),
+            last10GAA: p.gaa.toFixed(2),
+            last10Shutouts: p.shutouts
+        }));
+
+        const result = {
+            offensive,
+            rookie,
+            defensemen: topDefensemen,
+            goalies: topGoalies,
+            teams: [] // Team stats can be fetched separately if needed
+        };
+
+        // Update cache
+        last10GamesCache = {
+            lastUpdated: now,
+            data: result
+        };
+
+        console.log('✅ Hot players calculation complete');
+        res.json(result);
+
+    } catch (error) {
+        console.error('❌ Error calculating hot players:', error);
+
+        // Fallback to old endpoint if new one fails
+        console.log('⚠️ Falling back to cached stats from nhl_filtered_stats.json');
+
+        try {
+            const filteredStatsPath = path.join(__dirname, 'nhl_filtered_stats.json');
+
+            if (!fs.existsSync(filteredStatsPath)) {
+                return res.json({
+                    offensive: [],
+                    rookie: null,
+                    defensemen: [],
+                    goalies: [],
+                    teams: []
+                });
+            }
+
+            const filteredStats = JSON.parse(fs.readFileSync(filteredStatsPath, 'utf-8'));
+
+            // Use old format as fallback
+            const offensivePlayers = filteredStats.Top_100_Offensive_Players || [];
+            const offensive = offensivePlayers.slice(0, 5).map(p => ({
+                playerId: p.playerId,
+                playerName: p.skaterFullName,
+                teamAbbrev: p.teamAbbrevs,
+                position: p.positionCode,
+                headshot: `https://assets.nhle.com/mugs/nhl/20252026/${p.teamAbbrevs}/${p.playerId}.png`,
+                gamesPlayedTotal: p.gamesPlayed,
+                last10Goals: p.goals,
+                last10Assists: p.assists,
+                last10Points: p.points
+            }));
+
+            const rookiePlayers = filteredStats.Top_Rookies || [];
+            const validRookies = rookiePlayers.filter(r =>
+                r.gamesPlayed > 0 &&
+                r.points > 0 &&
+                r.positionCode !== 'G'
+            );
+            const rookie = validRookies.length > 0 ? {
+                playerId: validRookies[0].playerId,
+                playerName: validRookies[0].skaterFullName,
+                teamAbbrev: validRookies[0].teamAbbrevs,
+                position: validRookies[0].positionCode,
+                headshot: `https://assets.nhle.com/mugs/nhl/20252026/${validRookies[0].teamAbbrevs}/${validRookies[0].playerId}.png`,
+                gamesPlayedTotal: validRookies[0].gamesPlayed,
+                last10Goals: validRookies[0].goals,
+                last10Assists: validRookies[0].assists,
+                last10Points: validRookies[0].points
+            } : null;
+
+            const defenderPlayers = filteredStats.Top_50_Defenders || [];
+            const defensemen = defenderPlayers.slice(0, 3).map(p => ({
+                playerId: p.playerId,
+                playerName: p.skaterFullName,
+                teamAbbrev: p.teamAbbrevs,
+                position: p.positionCode,
+                headshot: `https://assets.nhle.com/mugs/nhl/20252026/${p.teamAbbrevs}/${p.playerId}.png`,
+                gamesPlayedTotal: p.gamesPlayed,
+                last10Goals: p.goals,
+                last10Assists: p.assists,
+                last10Points: p.points
+            }));
+
+            const goaliePlayers = filteredStats.Top_50_Goalies || [];
+            const goalies = goaliePlayers.slice(0, 2).map(p => ({
+                playerId: p.playerId,
+                playerName: p.goalieFullName,
+                teamAbbrev: p.teamAbbrevs,
+                position: 'G',
+                headshot: `https://assets.nhle.com/mugs/nhl/20252026/${p.teamAbbrevs}/${p.playerId}.png`,
+                gamesPlayedTotal: p.gamesPlayed || 0,
+                last10Wins: p.wins || 0,
+                last10SavePct: p.savePct ? (p.savePct * 100).toFixed(1) : '0.0',
+                last10GAA: p.goalsAgainstAverage ? p.goalsAgainstAverage.toFixed(2) : '0.00',
+                last10Shutouts: p.shutouts || 0
+            }));
+
+            res.json({
+                offensive,
+                rookie,
+                defensemen,
+                goalies,
+                teams: []
+            });
+
+        } catch (fallbackError) {
+            console.error('❌ Fallback also failed:', fallbackError);
+            res.status(500).json({ message: 'Error fetching hot players' });
+        }
+    }
+});
+
 // Route to get hot players using cached stats from nhl_filtered_stats.json
 app.get('/hot-players', async (req, res) => {
     try {
