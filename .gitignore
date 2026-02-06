@@ -29,4 +29,5 @@ coverage/
 # Cache files
 current_stats.json
 team-standings.json
+nhl_game_logs.json
 server.log
