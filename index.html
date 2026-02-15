@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css">
     <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="skeleton-loader.css">
 </head>
 <body>
     <nav class="navbar">
@@ -48,17 +49,90 @@
             </div>
         </div>
 
-        <div class="table-container">
-            <table id="playerTable">
-                <tr>
-                    <th>Photo</th>
-                    <th>Joueur</th>
-                    <th>GP</th>
-                    <th>G</th>
-                    <th>AST</th>
-                    <th>PTS</th>
-                </tr>
-            </table>
+        <div class="table-container" id="tableContainer">
+            <!-- Skeleton Loader -->
+            <div class="skeleton-loader" id="tableSkeleton">
+                <div class="skeleton-table">
+                    <div class="skeleton-table-header">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actual Content -->
+            <div class="actual-content" id="actualTable" style="display: none;">
+                <table id="playerTable">
+                    <tr>
+                        <th>Photo</th>
+                        <th>Joueur</th>
+                        <th>GP</th>
+                        <th>G</th>
+                        <th>AST</th>
+                        <th>PTS</th>
+                    </tr>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -106,8 +180,64 @@
                     </div>
                 </div>
             </div>
-            <div class="loading-spinner" id="loadingSpinner">
-                Chargement des statistiques...
+            <!-- Modal Skeleton Loader -->
+            <div class="skeleton-loader" id="modalSkeleton">
+                <div class="skeleton-modal-header">
+                    <div class="skeleton skeleton-modal-avatar"></div>
+                    <div class="skeleton-modal-info">
+                        <div class="skeleton" style="width: 200px; height: 32px;"></div>
+                        <div class="skeleton" style="width: 150px; height: 20px;"></div>
+                    </div>
+                </div>
+                <div class="skeleton-modal-bio">
+                    <div class="skeleton-modal-bio-item">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-modal-bio-item">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-modal-bio-item">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-modal-bio-item">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-modal-bio-item">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-modal-bio-item">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                </div>
+                <div class="skeleton-table">
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                </div>
             </div>
             <div class="career-filters" id="careerFilters" style="display: none;">
                 <div class="filter-group-career">
