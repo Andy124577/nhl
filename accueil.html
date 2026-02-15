@@ -18,266 +18,114 @@
         <option value="">-- Aucun pool --</option>
     </select>
 
-    <!-- Page Header -->
-    <div class="page-header">
-        <h1>Bienvenue sur Fantazy</h1>
-        <p>Créez votre pool, suivez les meilleurs joueurs et dominez la compétition</p>
-    </div>
-
-    <!-- Pool Actions Section -->
-    <div class="pool-actions-container">
-        <div class="pool-action-card glass-card">
-            <div class="card-icon">🏒</div>
-            <h2>Créer un Pool</h2>
-            <p>Démarrez votre propre pool et invitez vos amis à participer</p>
-            <button class="action-btn primary" onclick="window.location.href='pool.html?tab=create'">Créer</button>
-        </div>
-
-        <div class="pool-action-card glass-card">
-            <div class="card-icon">👥</div>
-            <h2>Rejoindre un Pool</h2>
-            <p>Entrez le code d'un pool existant et commencez à jouer</p>
-            <button class="action-btn secondary" onclick="window.location.href='pool.html?tab=available'">Rejoindre</button>
-        </div>
-
-        <div class="pool-action-card glass-card">
-            <div class="card-icon">🎯</div>
-            <h2>Mes Pools</h2>
-            <p>Gérez vos pools actifs et consultez vos équipes</p>
-            <button class="action-btn tertiary" onclick="window.location.href='pool.html?tab=mypools'">Voir mes pools</button>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1>Défiez vos amis</h1>
+            <p class="hero-subtitle">Créez votre pool de hockey et affrontez vos amis dans une compétition enflammée</p>
+            <div class="hero-actions">
+                <button class="btn-primary" onclick="window.location.href='pool.html'">Gestion de pool</button>
+            </div>
         </div>
     </div>
 
-    <!-- Hot Players Section -->
+    <!-- Active Pools Section -->
     <div class="content-section">
         <div class="section-header">
-            <h2>🔥 Joueurs en feu</h2>
-            <p>Les meilleurs performances des 10 derniers matchs</p>
+            <h2>Vos pools actifs</h2>
+            <p>Suivez vos compétitions en cours</p>
         </div>
 
-        <!-- Offensive Players -->
-        <div class="stats-category">
-            <h3>⚡ Top Attaquants</h3>
-            <div class="players-grid" id="hotOffensivePlayers">
-                <!-- Skeleton Loader -->
-                <div class="skeleton-loader" id="offensiveSkeleton">
-                    <div class="skeleton-player-card">
-                        <div class="skeleton-avatar"></div>
-                        <div class="skeleton-player-info">
-                            <div class="skeleton" style="width: 120px; height: 16px;"></div>
-                            <div class="skeleton" style="width: 80px; height: 14px;"></div>
+        <div id="activePoolsContainer">
+            <!-- Skeleton Loader -->
+            <div class="skeleton-loader" id="activePoolsSkeleton">
+                <div class="skeleton-pools-grid">
+                    <div class="skeleton-card">
+                        <div class="skeleton-card-content">
+                            <div class="skeleton" style="width: 180px; height: 24px; margin-bottom: 12px;"></div>
+                            <div class="skeleton" style="width: 120px; height: 16px; margin-bottom: 8px;"></div>
+                            <div class="skeleton" style="width: 100%; height: 60px; margin-top: 16px;"></div>
                         </div>
                     </div>
-                    <div class="skeleton-player-card">
-                        <div class="skeleton-avatar"></div>
-                        <div class="skeleton-player-info">
-                            <div class="skeleton" style="width: 120px; height: 16px;"></div>
-                            <div class="skeleton" style="width: 80px; height: 14px;"></div>
-                        </div>
-                    </div>
-                    <div class="skeleton-player-card">
-                        <div class="skeleton-avatar"></div>
-                        <div class="skeleton-player-info">
-                            <div class="skeleton" style="width: 120px; height: 16px;"></div>
-                            <div class="skeleton" style="width: 80px; height: 14px;"></div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-card-content">
+                            <div class="skeleton" style="width: 180px; height: 24px; margin-bottom: 12px;"></div>
+                            <div class="skeleton" style="width: 120px; height: 16px; margin-bottom: 8px;"></div>
+                            <div class="skeleton" style="width: 100%; height: 60px; margin-top: 16px;"></div>
                         </div>
                     </div>
                 </div>
-                <!-- Actual Content (hidden by default) -->
-                <div class="actual-content" id="offensiveContent" style="display: none;"></div>
             </div>
-        </div>
 
-        <!-- Rookie -->
-        <div class="stats-category">
-            <h3>⭐ Recrue en vedette</h3>
-            <div class="players-grid single" id="hotRookie">
-                <!-- Skeleton Loader -->
-                <div class="skeleton-loader" id="rookieSkeleton">
-                    <div class="skeleton-player-card">
-                        <div class="skeleton-avatar"></div>
-                        <div class="skeleton-player-info">
-                            <div class="skeleton" style="width: 120px; height: 16px;"></div>
-                            <div class="skeleton" style="width: 80px; height: 14px;"></div>
-                        </div>
-                    </div>
+            <!-- Actual Content -->
+            <div class="actual-content" id="activePoolsContent" style="display: none;">
+                <div class="pools-grid" id="activePoolsList">
+                    <!-- Pools will be injected here -->
                 </div>
-                <!-- Actual Content (hidden by default) -->
-                <div class="actual-content" id="rookieContent" style="display: none;"></div>
-            </div>
-        </div>
-
-        <!-- Defensemen -->
-        <div class="stats-category">
-            <h3>🛡️ Top Défenseurs</h3>
-            <div class="players-grid" id="hotDefensemen">
-                <!-- Skeleton Loader -->
-                <div class="skeleton-loader" id="defensemenSkeleton">
-                    <div class="skeleton-player-card">
-                        <div class="skeleton-avatar"></div>
-                        <div class="skeleton-player-info">
-                            <div class="skeleton" style="width: 120px; height: 16px;"></div>
-                            <div class="skeleton" style="width: 80px; height: 14px;"></div>
-                        </div>
-                    </div>
-                    <div class="skeleton-player-card">
-                        <div class="skeleton-avatar"></div>
-                        <div class="skeleton-player-info">
-                            <div class="skeleton" style="width: 120px; height: 16px;"></div>
-                            <div class="skeleton" style="width: 80px; height: 14px;"></div>
-                        </div>
-                    </div>
-                    <div class="skeleton-player-card">
-                        <div class="skeleton-avatar"></div>
-                        <div class="skeleton-player-info">
-                            <div class="skeleton" style="width: 120px; height: 16px;"></div>
-                            <div class="skeleton" style="width: 80px; height: 14px;"></div>
-                        </div>
-                    </div>
+                <div class="empty-state" id="noActivePools" style="display: none;">
+                    <h3>Aucun pool actif</h3>
+                    <p>Créez un nouveau pool ou rejoignez-en un pour commencer à défier vos amis</p>
+                    <button class="btn-secondary" onclick="window.location.href='pool.html'">Gérer mes pools</button>
                 </div>
-                <!-- Actual Content (hidden by default) -->
-                <div class="actual-content" id="defensemenContent" style="display: none;"></div>
-            </div>
-        </div>
-
-        <!-- Goalies -->
-        <div class="stats-category">
-            <h3>🥅 Meilleurs Gardiens</h3>
-            <div class="players-grid" id="hotGoalies">
-                <!-- Skeleton Loader -->
-                <div class="skeleton-loader" id="goaliesSkeleton">
-                    <div class="skeleton-player-card">
-                        <div class="skeleton-avatar"></div>
-                        <div class="skeleton-player-info">
-                            <div class="skeleton" style="width: 120px; height: 16px;"></div>
-                            <div class="skeleton" style="width: 80px; height: 14px;"></div>
-                        </div>
-                    </div>
-                    <div class="skeleton-player-card">
-                        <div class="skeleton-avatar"></div>
-                        <div class="skeleton-player-info">
-                            <div class="skeleton" style="width: 120px; height: 16px;"></div>
-                            <div class="skeleton" style="width: 80px; height: 14px;"></div>
-                        </div>
-                    </div>
-                    <div class="skeleton-player-card">
-                        <div class="skeleton-avatar"></div>
-                        <div class="skeleton-player-info">
-                            <div class="skeleton" style="width: 120px; height: 16px;"></div>
-                            <div class="skeleton" style="width: 80px; height: 14px;"></div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Actual Content (hidden by default) -->
-                <div class="actual-content" id="goaliesContent" style="display: none;"></div>
-            </div>
-        </div>
-
-        <!-- Teams -->
-        <div class="stats-category">
-            <h3>🏆 Équipes dominantes</h3>
-            <div class="players-grid" id="hotTeams">
-                <!-- Skeleton Loader -->
-                <div class="skeleton-loader" id="teamsSkeleton">
-                    <div class="skeleton-team-card">
-                        <div class="skeleton-team-logo"></div>
-                        <div class="skeleton-team-info">
-                            <div class="skeleton" style="width: 100px; height: 16px;"></div>
-                            <div class="skeleton" style="width: 60px; height: 14px;"></div>
-                        </div>
-                    </div>
-                    <div class="skeleton-team-card">
-                        <div class="skeleton-team-logo"></div>
-                        <div class="skeleton-team-info">
-                            <div class="skeleton" style="width: 100px; height: 16px;"></div>
-                            <div class="skeleton" style="width: 60px; height: 14px;"></div>
-                        </div>
-                    </div>
-                    <div class="skeleton-team-card">
-                        <div class="skeleton-team-logo"></div>
-                        <div class="skeleton-team-info">
-                            <div class="skeleton" style="width: 100px; height: 16px;"></div>
-                            <div class="skeleton" style="width: 60px; height: 14px;"></div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Actual Content (hidden by default) -->
-                <div class="actual-content" id="teamsContent" style="display: none;"></div>
             </div>
         </div>
     </div>
 
-    <!-- Streaks Section -->
+    <!-- Leaderboard Section -->
     <div class="content-section">
         <div class="section-header">
-            <h2>🔥 Séries en cours</h2>
-            <p>Les plus longues séries actives</p>
+            <h2>Classement global</h2>
+            <p>Les meilleurs joueurs de la semaine</p>
         </div>
 
-        <div class="streaks-grid">
-            <div class="streak-card glass-card" id="offensiveStreak">
-                <!-- Skeleton Loader -->
-                <div class="skeleton-loader" id="offensiveStreakSkeleton">
-                    <div class="skeleton-card-content">
-                        <div class="skeleton" style="width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 12px;"></div>
-                        <div class="skeleton" style="width: 180px; height: 20px; margin: 0 auto 16px;"></div>
-                        <div class="skeleton" style="width: 140px; height: 16px; margin: 0 auto 8px;"></div>
-                        <div class="skeleton" style="width: 100px; height: 14px; margin: 0 auto 16px;"></div>
-                        <div class="skeleton" style="width: 60px; height: 32px; margin: 0 auto 8px;"></div>
-                        <div class="skeleton" style="width: 120px; height: 14px; margin: 0 auto;"></div>
+        <div id="leaderboardContainer">
+            <!-- Skeleton Loader -->
+            <div class="skeleton-loader" id="leaderboardSkeleton">
+                <div class="skeleton-leaderboard">
+                    <div class="skeleton-leaderboard-item">
+                        <div class="skeleton" style="width: 40px; height: 40px; border-radius: 50%;"></div>
+                        <div style="flex: 1; margin-left: 16px;">
+                            <div class="skeleton" style="width: 150px; height: 18px; margin-bottom: 6px;"></div>
+                            <div class="skeleton" style="width: 100px; height: 14px;"></div>
+                        </div>
+                        <div class="skeleton" style="width: 60px; height: 24px;"></div>
+                    </div>
+                    <div class="skeleton-leaderboard-item">
+                        <div class="skeleton" style="width: 40px; height: 40px; border-radius: 50%;"></div>
+                        <div style="flex: 1; margin-left: 16px;">
+                            <div class="skeleton" style="width: 150px; height: 18px; margin-bottom: 6px;"></div>
+                            <div class="skeleton" style="width: 100px; height: 14px;"></div>
+                        </div>
+                        <div class="skeleton" style="width: 60px; height: 24px;"></div>
+                    </div>
+                    <div class="skeleton-leaderboard-item">
+                        <div class="skeleton" style="width: 40px; height: 40px; border-radius: 50%;"></div>
+                        <div style="flex: 1; margin-left: 16px;">
+                            <div class="skeleton" style="width: 150px; height: 18px; margin-bottom: 6px;"></div>
+                            <div class="skeleton" style="width: 100px; height: 14px;"></div>
+                        </div>
+                        <div class="skeleton" style="width: 60px; height: 24px;"></div>
                     </div>
                 </div>
-                <!-- Actual Content (hidden by default) -->
-                <div class="actual-content" id="offensiveStreakContent" style="display: none;"></div>
             </div>
 
-            <div class="streak-card glass-card" id="defensiveStreak">
-                <!-- Skeleton Loader -->
-                <div class="skeleton-loader" id="defensiveStreakSkeleton">
-                    <div class="skeleton-card-content">
-                        <div class="skeleton" style="width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 12px;"></div>
-                        <div class="skeleton" style="width: 180px; height: 20px; margin: 0 auto 16px;"></div>
-                        <div class="skeleton" style="width: 140px; height: 16px; margin: 0 auto 8px;"></div>
-                        <div class="skeleton" style="width: 100px; height: 14px; margin: 0 auto 16px;"></div>
-                        <div class="skeleton" style="width: 60px; height: 32px; margin: 0 auto 8px;"></div>
-                        <div class="skeleton" style="width: 120px; height: 14px; margin: 0 auto;"></div>
-                    </div>
+            <!-- Actual Content -->
+            <div class="actual-content" id="leaderboardContent" style="display: none;">
+                <div class="leaderboard-list" id="leaderboardList">
+                    <!-- Leaderboard items will be injected here -->
                 </div>
-                <!-- Actual Content (hidden by default) -->
-                <div class="actual-content" id="defensiveStreakContent" style="display: none;"></div>
             </div>
+        </div>
+    </div>
 
-            <div class="streak-card glass-card" id="goalieStreak">
-                <!-- Skeleton Loader -->
-                <div class="skeleton-loader" id="goalieStreakSkeleton">
-                    <div class="skeleton-card-content">
-                        <div class="skeleton" style="width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 12px;"></div>
-                        <div class="skeleton" style="width: 180px; height: 20px; margin: 0 auto 16px;"></div>
-                        <div class="skeleton" style="width: 140px; height: 16px; margin: 0 auto 8px;"></div>
-                        <div class="skeleton" style="width: 100px; height: 14px; margin: 0 auto 16px;"></div>
-                        <div class="skeleton" style="width: 60px; height: 32px; margin: 0 auto 8px;"></div>
-                        <div class="skeleton" style="width: 120px; height: 14px; margin: 0 auto;"></div>
-                    </div>
-                </div>
-                <!-- Actual Content (hidden by default) -->
-                <div class="actual-content" id="goalieStreakContent" style="display: none;"></div>
-            </div>
-
-            <div class="streak-card glass-card" id="teamStreak">
-                <!-- Skeleton Loader -->
-                <div class="skeleton-loader" id="teamStreakSkeleton">
-                    <div class="skeleton-card-content">
-                        <div class="skeleton" style="width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 12px;"></div>
-                        <div class="skeleton" style="width: 180px; height: 20px; margin: 0 auto 16px;"></div>
-                        <div class="skeleton" style="width: 140px; height: 16px; margin: 0 auto 8px;"></div>
-                        <div class="skeleton" style="width: 100px; height: 14px; margin: 0 auto 16px;"></div>
-                        <div class="skeleton" style="width: 60px; height: 32px; margin: 0 auto 8px;"></div>
-                        <div class="skeleton" style="width: 120px; height: 14px; margin: 0 auto;"></div>
-                    </div>
-                </div>
-                <!-- Actual Content (hidden by default) -->
-                <div class="actual-content" id="teamStreakContent" style="display: none;"></div>
-            </div>
+    <!-- Challenge Section -->
+    <div class="content-section challenge-section">
+        <div class="section-header">
+            <h2>Prêt à relever le défi?</h2>
+            <p>Invitez vos amis et montrez-leur qui est le meilleur</p>
+        </div>
+        <div class="challenge-cta">
+            <button class="btn-primary" onclick="window.location.href='pool.html?tab=create'">Créer un nouveau pool</button>
         </div>
     </div>
 
