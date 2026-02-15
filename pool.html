@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css">
     <link rel="stylesheet" href="pool.css">
+    <link rel="stylesheet" href="skeleton-loader.css">
     <!-- ✅ Add Socket.IO client -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="equipes.js"></script>
@@ -137,7 +138,25 @@
     <div id="mypools-tab" class="tab-content">
         <div class="pool-section">
             <h2>Mes pools</h2>
-            <ul id="clans-list" class="pool-list"></ul>
+            <!-- Skeleton Loader -->
+            <div class="skeleton-loader" id="myPoolsSkeleton">
+                <div class="skeleton-list">
+                    <div class="skeleton-card">
+                        <div class="skeleton-card-content">
+                            <div class="skeleton" style="width: 200px; height: 24px; margin-bottom: 12px;"></div>
+                            <div class="skeleton" style="width: 300px; height: 16px;"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-card-content">
+                            <div class="skeleton" style="width: 200px; height: 24px; margin-bottom: 12px;"></div>
+                            <div class="skeleton" style="width: 300px; height: 16px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Actual Content -->
+            <ul id="clans-list" class="pool-list actual-content" style="display: none;"></ul>
         </div>
     </div>
 
@@ -145,7 +164,25 @@
     <div id="available-tab" class="tab-content">
         <div class="pool-section">
             <h2>Pools disponibles</h2>
-            <ul id="available-clans-list" class="pool-list"></ul>
+            <!-- Skeleton Loader -->
+            <div class="skeleton-loader" id="availablePoolsSkeleton">
+                <div class="skeleton-list">
+                    <div class="skeleton-card">
+                        <div class="skeleton-card-content">
+                            <div class="skeleton" style="width: 200px; height: 24px; margin-bottom: 12px;"></div>
+                            <div class="skeleton" style="width: 300px; height: 16px;"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-card-content">
+                            <div class="skeleton" style="width: 200px; height: 24px; margin-bottom: 12px;"></div>
+                            <div class="skeleton" style="width: 300px; height: 16px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Actual Content -->
+            <ul id="available-clans-list" class="pool-list actual-content" style="display: none;"></ul>
         </div>
     </div>
 
