@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="classement.css" />
     <link rel="stylesheet" href="index.css" />
+    <link rel="stylesheet" href="skeleton-loader.css" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="navbar.css">
 </head>
@@ -26,7 +27,49 @@
         <!-- CUMULATIVE MODE: Points totaux -->
         <div id="cumulativeContent" style="display: none;">
             <div class="table-container">
-                <table id="teamStatsTable">
+                <!-- Skeleton Loader -->
+                <div class="skeleton-loader" id="cumulativeSkeleton">
+                    <div class="skeleton-table">
+                        <div class="skeleton-table-header">
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                        </div>
+                        <div class="skeleton-table-row">
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                        </div>
+                        <div class="skeleton-table-row">
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                        </div>
+                        <div class="skeleton-table-row">
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Actual Content -->
+                <table id="teamStatsTable" class="actual-content" style="display: none;">
                     <thead>
                         <tr>
                             <th>POS</th>
@@ -59,7 +102,23 @@
                 <div class="current-matchup-container">
                     <h3 id="currentWeekTitle">Semaine 1</h3>
                     <div id="currentMatchupsList">
-                        <!-- Matchups will be injected here -->
+                        <!-- Skeleton Loader -->
+                        <div class="skeleton-loader" id="matchupsSkeleton">
+                            <div class="skeleton-card">
+                                <div class="skeleton-card-content">
+                                    <div class="skeleton" style="width: 200px; height: 24px; margin: 0 auto 16px;"></div>
+                                    <div class="skeleton" style="width: 150px; height: 40px; margin: 0 auto;"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton-card">
+                                <div class="skeleton-card-content">
+                                    <div class="skeleton" style="width: 200px; height: 24px; margin: 0 auto 16px;"></div>
+                                    <div class="skeleton" style="width: 150px; height: 40px; margin: 0 auto;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Actual Content -->
+                        <div class="actual-content" id="matchupsContent" style="display: none;"></div>
                     </div>
                 </div>
             </div>
@@ -67,7 +126,43 @@
             <!-- Standings Tab -->
             <div id="standings-h2h-tab" class="h2h-tab-content">
                 <div class="h2h-standings-container">
-                    <table id="h2hStandingsTable">
+                    <!-- Skeleton Loader -->
+                    <div class="skeleton-loader" id="h2hStandingsSkeleton">
+                        <div class="skeleton-table">
+                            <div class="skeleton-table-header">
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                            </div>
+                            <div class="skeleton-table-row">
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                            </div>
+                            <div class="skeleton-table-row">
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                                <div class="skeleton"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Actual Content -->
+                    <table id="h2hStandingsTable" class="actual-content" style="display: none;">
                         <thead>
                             <tr>
                                 <th>POS</th>
@@ -91,7 +186,25 @@
             <div id="history-h2h-tab" class="h2h-tab-content">
                 <div class="h2h-history-container">
                     <div id="matchupHistoryList">
-                        <!-- Historical matchups will be injected here -->
+                        <!-- Skeleton Loader -->
+                        <div class="skeleton-loader" id="historySkeleton">
+                            <div class="skeleton-card">
+                                <div class="skeleton-card-content">
+                                    <div class="skeleton" style="width: 120px; height: 18px; margin-bottom: 12px;"></div>
+                                    <div class="skeleton" style="width: 200px; height: 24px; margin: 0 auto 16px;"></div>
+                                    <div class="skeleton" style="width: 150px; height: 40px; margin: 0 auto;"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton-card">
+                                <div class="skeleton-card-content">
+                                    <div class="skeleton" style="width: 120px; height: 18px; margin-bottom: 12px;"></div>
+                                    <div class="skeleton" style="width: 200px; height: 24px; margin: 0 auto 16px;"></div>
+                                    <div class="skeleton" style="width: 150px; height: 40px; margin: 0 auto;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Actual Content -->
+                        <div class="actual-content" id="historyContent" style="display: none;"></div>
                     </div>
                 </div>
             </div>

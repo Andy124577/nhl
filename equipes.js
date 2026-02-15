@@ -227,6 +227,12 @@ async function createClan() {
 
 // 🔄 Met à jour l'affichage des clans
 function updateUI(draftData) {
+    // Hide skeleton loaders and show actual content
+    $("#myPoolsSkeleton").hide();
+    $("#availablePoolsSkeleton").hide();
+    $("#clans-list").show();
+    $("#available-clans-list").show();
+
     $("#clans-list").html("");
     $("#available-clans-list").html("");
 
