@@ -1,5 +1,4 @@
-// Mobile-First Navbar - Bottom Navigation Bar
-// Desktop horizontal navbar + Mobile bottom navbar
+// Fantasy Pool Navbar - UX Optimized
 
 // Get current page
 function getCurrentPage() {
@@ -9,10 +8,11 @@ function getCurrentPage() {
     if (path.includes('draft.html')) return 'draft';
     if (path.includes('classement.html')) return 'classement';
     if (path.includes('trade.html')) return 'trade';
+    if (path.includes('pool.html')) return 'pool';
     return '';
 }
 
-// Initialize modern navbar
+// Initialize navbar
 function initModernNavbar() {
     const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
     const username = localStorage.getItem("username") || "";
@@ -23,25 +23,16 @@ function initModernNavbar() {
     if (!navbar) return;
 
     if (!isLoggedIn) {
-        // Show logged-out navbar with login/signup buttons
         buildLoggedOutNavbar();
         return;
     }
 
-    // Build navbar structure
     buildLoggedInNavbar(username, isAdmin, currentPage);
-
-    // Build bottom navigation (mobile)
     buildBottomNav(currentPage);
-
-    // Initialize event listeners
     initializeEventListeners(username, isAdmin);
-
-    // Load pool data
     loadPoolData();
-
-    // Check for pending trades
     checkPendingTrades();
+    checkIncompleteActions(); // Zeigarnik Effect
 }
 
 // Build logged-out navbar
@@ -50,69 +41,92 @@ function buildLoggedOutNavbar() {
     if (!navbar) return;
 
     const navHTML = `
-        <div class="navbar-center">
+        <div class="navbar-brand">
             <img src="Icons/fantazy.png" alt="Fantazy" class="navbar-logo">
         </div>
-        <div class="navbar-right">
+        <div class="navbar-actions">
             <a href="login.html" class="btn-login">Connexion</a>
-            <a href="signup.html" class="btn-signup">Inscription</a>
+            <a href="signup.html" class="btn-signup">Commencer</a>
         </div>
     `;
 
     navbar.innerHTML = navHTML;
 }
 
-// Build logged-in navbar (top bar)
+// Build logged-in navbar - Desktop
 function buildLoggedInNavbar(username, isAdmin, currentPage) {
     const navbar = document.querySelector('.navbar');
     if (!navbar) return;
 
+    const activePool = localStorage.getItem('activePool') || '';
+
+    // Zeigarnik Effect - Show alert if no pool selected
+    const poolAlertBadge = !activePool ? '<span class="alert-dot" title="Aucun pool sélectionné"></span>' : '';
+
     const navHTML = `
-        <!-- Center: Logo -->
-        <div class="navbar-center">
-            <img src="Icons/fantazy.png" alt="Fantazy" class="navbar-logo">
-        </div>
-
-        <!-- Desktop Navigation (hidden on mobile) -->
-        <div class="desktop-nav">
-            <a href="accueil.html" class="desktop-nav-item ${currentPage === 'accueil' ? 'active' : ''}">
-                Accueil
-            </a>
-            <a href="index.html" class="desktop-nav-item ${currentPage === 'stats' ? 'active' : ''}">
-                Statistiques
-            </a>
-            <a href="draft.html" class="desktop-nav-item ${currentPage === 'draft' ? 'active' : ''}">
-                Draft
-            </a>
-            <a href="classement.html" class="desktop-nav-item ${currentPage === 'classement' ? 'active' : ''}">
-                Classement
-            </a>
-            <a href="trade.html" class="desktop-nav-item ${currentPage === 'trade' ? 'active' : ''}" id="desktopTradeLink">
-                Échanges
-                <span class="notif-badge" id="desktopTradeBadge" style="display: none;">0</span>
-            </a>
-        </div>
-
-        <!-- Desktop Pool Selector -->
-        <div class="desktop-pool-selector">
-            <label for="desktopPoolSelector">Pool:</label>
-            <select id="desktopPoolSelector">
-                <option value="">Aucun pool</option>
-            </select>
-        </div>
-
-        <!-- Right: Pool Badge & User Avatar -->
-        <div class="navbar-right">
-            <div class="pool-badge" id="poolBadge">Aucun</div>
-            <div class="user-menu-dropdown">
-                <div class="user-avatar-btn" id="userAvatarBtn">
-                    ${username.charAt(0).toUpperCase()}
+        <!-- Desktop Layout -->
+        <div class="navbar-desktop">
+            <!-- Left: Logo + Nav Links -->
+            <div class="navbar-left">
+                <div class="navbar-brand">
+                    <img src="Icons/fantazy.png" alt="Fantazy" class="navbar-logo">
                 </div>
-                <div class="user-dropdown-menu" id="userDropdownMenu">
-                    <div class="user-dropdown-header">Connecté: ${username}</div>
-                    ${isAdmin ? '<div class="user-dropdown-header">Admin</div><div id="adminUsersList"></div>' : ''}
-                    <div class="user-dropdown-item logout" onclick="logout()">
-                        Déconnexion
+
+                <!-- Hick's Law: Limited to 5 core navigation items -->
+                <nav class="nav-links">
+                    <a href="accueil.html" class="nav-link ${currentPage === 'accueil' ? 'active' : ''}">
+                        <span class="nav-icon">🏠</span>
+                        <span class="nav-text">Accueil</span>
+                    </a>
+                    <a href="index.html" class="nav-link ${currentPage === 'stats' ? 'active' : ''}">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">Stats</span>
+                    </a>
+                    <a href="classement.html" class="nav-link ${currentPage === 'classement' ? 'active' : ''}">
+                        <span class="nav-icon">🏆</span>
+                        <span class="nav-text">Classement</span>
+                    </a>
+                    <a href="trade.html" class="nav-link ${currentPage === 'trade' ? 'active' : ''}" id="desktopTradeLink">
+                        <span class="nav-icon">🔄</span>
+                        <span class="nav-text">Échanges</span>
+                        <span class="notif-badge" id="desktopTradeBadge" style="display: none;">0</span>
+                    </a>
+                    <a href="pool.html" class="nav-link ${currentPage === 'pool' ? 'active' : ''}">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-text">Pools</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Right: Pool Selector + User Menu -->
+            <div class="navbar-right">
+                <!-- Von Restorff Effect: Highlighted pool selector -->
+                <div class="pool-selector-container">
+                    ${poolAlertBadge}
+                    <label for="desktopPoolSelector">Pool actif:</label>
+                    <select id="desktopPoolSelector" class="pool-selector">
+                        <option value="">Aucun pool</option>
+                    </select>
+                </div>
+
+                <!-- User Menu -->
+                <div class="user-menu">
+                    <button class="user-avatar" id="userAvatarBtn" title="${username}">
+                        ${username.charAt(0).toUpperCase()}
+                    </button>
+                    <div class="user-dropdown" id="userDropdownMenu">
+                        <div class="user-dropdown-header">
+                            <div class="user-info">
+                                <div class="user-name">${username}</div>
+                                ${isAdmin ? '<div class="user-role">Administrateur</div>' : ''}
+                            </div>
+                        </div>
+                        ${isAdmin ? '<div class="dropdown-divider"></div><div id="adminUsersList" class="admin-users-list"></div>' : ''}
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item logout" onclick="logout()">
+                            <span>🚪</span>
+                            <span>Déconnexion</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -127,67 +141,40 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
     navbar.innerHTML = navHTML;
 }
 
-// Build bottom navigation bar (mobile only)
+// Build bottom navigation bar - Mobile (Fitts's Law: Large touch targets)
 function buildBottomNav(currentPage) {
-    // Remove existing bottom nav if any
     const existingBottomNav = document.querySelector('.bottom-nav');
     if (existingBottomNav) {
         existingBottomNav.remove();
     }
 
-    // Create bottom nav
     const bottomNavHTML = `
-        <div class="bottom-nav">
+        <nav class="bottom-nav">
             <a href="accueil.html" class="bottom-nav-item ${currentPage === 'accueil' ? 'active' : ''}">
-                <img src="Icons/fantazy.png" alt="Accueil" class="bottom-nav-icon">
+                <span class="bottom-nav-icon">🏠</span>
                 <span class="bottom-nav-label">Accueil</span>
             </a>
             <a href="index.html" class="bottom-nav-item ${currentPage === 'stats' ? 'active' : ''}">
-                <img src="Icons/stats.png" alt="Stats" class="bottom-nav-icon">
-                <span class="bottom-nav-label">Statistiques</span>
-            </a>
-            <a href="draft.html" class="bottom-nav-item ${currentPage === 'draft' ? 'active' : ''}">
-                <img src="Icons/draft.png" alt="Draft" class="bottom-nav-icon">
-                <span class="bottom-nav-label">Draft</span>
+                <span class="bottom-nav-icon">📊</span>
+                <span class="bottom-nav-label">Stats</span>
             </a>
             <a href="classement.html" class="bottom-nav-item ${currentPage === 'classement' ? 'active' : ''}">
-                <img src="Icons/classement.png" alt="Classement" class="bottom-nav-icon">
+                <span class="bottom-nav-icon">🏆</span>
                 <span class="bottom-nav-label">Classement</span>
             </a>
             <a href="trade.html" class="bottom-nav-item ${currentPage === 'trade' ? 'active' : ''}" id="bottomTradeLink">
-                <img src="Icons/echanges.png" alt="Échanges" class="bottom-nav-icon">
+                <span class="bottom-nav-icon">🔄</span>
                 <span class="bottom-nav-label">Échanges</span>
                 <span class="notif-badge" id="bottomTradeBadge" style="display: none;">0</span>
             </a>
-        </div>
+            <a href="pool.html" class="bottom-nav-item ${currentPage === 'pool' ? 'active' : ''}">
+                <span class="bottom-nav-icon">⚙️</span>
+                <span class="bottom-nav-label">Pools</span>
+            </a>
+        </nav>
     `;
 
     document.body.insertAdjacentHTML('beforeend', bottomNavHTML);
-}
-
-// Build pool selector modal
-function buildPoolSelectorModal() {
-    // Remove existing modal if any
-    const existingModal = document.querySelector('.pool-selector-modal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-
-    const modalHTML = `
-        <div class="pool-selector-modal" id="poolSelectorModal">
-            <div class="pool-selector-content">
-                <div class="pool-selector-header">
-                    <h3>Sélectionner un pool</h3>
-                    <button class="pool-selector-close" onclick="closePoolSelector()">&times;</button>
-                </div>
-                <div id="poolOptionsList">
-                    <div class="pool-option">Aucun pool disponible</div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
 // Initialize event listeners
@@ -202,24 +189,12 @@ function initializeEventListeners(username, isAdmin) {
             userDropdownMenu.classList.toggle('show');
         });
 
-        // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.user-menu-dropdown')) {
+            if (!e.target.closest('.user-menu')) {
                 userDropdownMenu.classList.remove('show');
             }
         });
     }
-
-    // Pool badge click - open pool selector modal
-    const poolBadge = document.getElementById('poolBadge');
-    if (poolBadge) {
-        poolBadge.addEventListener('click', () => {
-            openPoolSelector();
-        });
-    }
-
-    // Build and initialize pool selector modal
-    buildPoolSelectorModal();
 
     // Load admin users if admin
     if (isAdmin) {
@@ -227,155 +202,58 @@ function initializeEventListeners(username, isAdmin) {
     }
 }
 
-// Open pool selector modal
-function openPoolSelector() {
-    const modal = document.getElementById('poolSelectorModal');
-    if (modal) {
-        modal.classList.add('show');
-        loadPoolOptions();
-    }
-}
-
-// Close pool selector modal
-function closePoolSelector() {
-    const modal = document.getElementById('poolSelectorModal');
-    if (modal) {
-        modal.classList.remove('show');
-    }
-}
-
-// Load pool options into modal
-function loadPoolOptions() {
-    const currentPool = localStorage.getItem('activePool') || '';
-    const poolsList = document.getElementById('poolOptionsList');
-    if (!poolsList) return;
-
-    // Get pools from the hidden select (populated by poolSelector.js)
-    const poolSelector = document.getElementById('activePoolSelector');
-    if (!poolSelector) return;
-
-    const options = Array.from(poolSelector.options);
-
-    if (options.length <= 1) {
-        poolsList.innerHTML = '<div class="pool-option">Aucun pool disponible</div>';
-        return;
-    }
-
-    poolsList.innerHTML = options.map(option => {
-        if (option.value === '') return '';
-        const isActive = option.value === currentPool;
-        return `
-            <div class="pool-option ${isActive ? 'active' : ''}" onclick="selectPool('${option.value}')">
-                ${option.text}
-            </div>
-        `;
-    }).join('');
-}
-
-// Select pool from modal
-function selectPool(poolName) {
-    localStorage.setItem('activePool', poolName);
-
-    // Update all pool selectors
-    const selectors = ['activePoolSelector', 'desktopPoolSelector'];
-    selectors.forEach(id => {
-        const selector = document.getElementById(id);
-        if (selector) {
-            selector.value = poolName;
-        }
-    });
-
-    // Update pool badge
-    const poolBadge = document.getElementById('poolBadge');
-    if (poolBadge) {
-        poolBadge.textContent = poolName || 'Aucun';
-    }
-
-    // Close modal
-    closePoolSelector();
-
-    // Trigger change event for poolSelector.js
-    const event = new Event('change');
-    const mainSelector = document.getElementById('activePoolSelector');
-    if (mainSelector) {
-        mainSelector.dispatchEvent(event);
-    }
-
-    // Reload page to update content
-    window.location.reload();
-}
-
 // Load pool data
 function loadPoolData() {
     const activePool = localStorage.getItem('activePool') || '';
-    const poolBadge = document.getElementById('poolBadge');
-
-    if (poolBadge) {
-        poolBadge.textContent = activePool || 'Aucun';
-    }
-
-    // Sync desktop selector with hidden activePoolSelector
     const desktopSelector = document.getElementById('desktopPoolSelector');
     const activePoolSelector = document.getElementById('activePoolSelector');
 
-    // Function to truncate text for display
-    function truncatePoolName(text, maxLength = 25) {
+    function truncatePoolName(text, maxLength = 20) {
         if (text.length <= maxLength) return text;
         return text.substring(0, maxLength - 3) + '...';
     }
 
-    // Function to sync selectors
     function syncDesktopSelector() {
         if (!desktopSelector || !activePoolSelector) return;
 
         const currentActivePool = localStorage.getItem('activePool') || '';
 
-        // Copy all options from activePoolSelector to desktopPoolSelector
         desktopSelector.innerHTML = '';
         Array.from(activePoolSelector.options).forEach(option => {
             const newOption = document.createElement('option');
             newOption.value = option.value;
-            // Truncate long pool names to prevent overflow
             newOption.textContent = truncatePoolName(option.text);
             desktopSelector.appendChild(newOption);
         });
 
-        // Set the current value from localStorage (not from activePoolSelector.value)
         desktopSelector.value = currentActivePool;
     }
 
-    // Initial sync
     if (desktopSelector && activePoolSelector) {
-        // Wait a bit for poolSelector.js to populate options
         setTimeout(() => {
             syncDesktopSelector();
         }, 100);
 
-        // Add change listener only once
         if (!desktopSelector.dataset.listenerAdded) {
             desktopSelector.addEventListener('change', (e) => {
                 const selectedPool = e.target.value;
 
-                // Save to localStorage
                 if (selectedPool) {
                     localStorage.setItem('activePool', selectedPool);
                 } else {
                     localStorage.removeItem('activePool');
                 }
 
-                // Trigger change on activePoolSelector for poolSelector.js
                 if (activePoolSelector) {
                     activePoolSelector.value = selectedPool;
                     const changeEvent = new Event('change', { bubbles: true });
                     activePoolSelector.dispatchEvent(changeEvent);
 
-                    // Also trigger jQuery event for poolSelector.js
                     if (typeof $ !== 'undefined') {
                         $(activePoolSelector).val(selectedPool).trigger('change');
                     }
                 }
 
-                // Reload page to update content
                 window.location.reload();
             });
 
@@ -383,7 +261,6 @@ function loadPoolData() {
         }
     }
 
-    // Watch for changes in activePoolSelector (when poolSelector.js updates it)
     if (activePoolSelector && desktopSelector) {
         const observer = new MutationObserver(() => {
             syncDesktopSelector();
@@ -404,16 +281,19 @@ async function loadAdminUsers() {
         const data = await response.json();
 
         if (response.ok) {
-            const regularUsers = data.users.filter(u => u !== 'admin').slice(0, 4);
+            const regularUsers = data.users.filter(u => u !== 'admin').slice(0, 5);
             const adminUsersList = document.getElementById('adminUsersList');
 
             if (adminUsersList && regularUsers.length > 0) {
-                adminUsersList.innerHTML = regularUsers.map(username => `
-                    <div class="user-dropdown-item" onclick="switchToUser('${username}')">
-                        <span class="user-avatar">${username.charAt(0).toUpperCase()}</span>
-                        <span class="user-name">${username}</span>
-                    </div>
-                `).join('');
+                adminUsersList.innerHTML = `
+                    <div class="admin-section-title">Changer d'utilisateur</div>
+                    ${regularUsers.map(username => `
+                        <button class="dropdown-item" onclick="switchToUser('${username}')">
+                            <span class="user-avatar-small">${username.charAt(0).toUpperCase()}</span>
+                            <span>${username}</span>
+                        </button>
+                    `).join('')}
+                `;
             }
         }
     } catch (error) {
@@ -449,7 +329,7 @@ async function switchToUser(username) {
     }
 }
 
-// Check for pending trades
+// Check for pending trades (Zeigarnik Effect - show incomplete tasks)
 async function checkPendingTrades() {
     try {
         const BASE_URL = window.location.hostname.includes("localhost")
@@ -465,22 +345,33 @@ async function checkPendingTrades() {
         const data = await response.json();
 
         if (response.ok && data.count > 0) {
-            // Update desktop badge
             const desktopBadge = document.getElementById('desktopTradeBadge');
             if (desktopBadge) {
                 desktopBadge.textContent = data.count;
-                desktopBadge.style.display = 'block';
+                desktopBadge.style.display = 'flex';
             }
 
-            // Update mobile badge
             const bottomBadge = document.getElementById('bottomTradeBadge');
             if (bottomBadge) {
                 bottomBadge.textContent = data.count;
-                bottomBadge.style.display = 'block';
+                bottomBadge.style.display = 'flex';
             }
         }
     } catch (error) {
         console.error('Error checking pending trades:', error);
+    }
+}
+
+// Check for incomplete actions (Zeigarnik Effect)
+function checkIncompleteActions() {
+    const activePool = localStorage.getItem('activePool');
+
+    // Show visual indicator if no pool is selected
+    if (!activePool) {
+        const alertDot = document.querySelector('.alert-dot');
+        if (alertDot) {
+            alertDot.style.display = 'block';
+        }
     }
 }
 
