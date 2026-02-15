@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accueil - Fantazy</title>
+    <title>Tableau de bord - Fantazy</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="navbar.css">
     <link rel="stylesheet" href="accueil.css">
     <link rel="stylesheet" href="skeleton-loader.css">
 </head>
 <body>
-    <!-- Navigation bar will be injected by navbar.js -->
+    <!-- Navigation bar -->
     <nav class="navbar"></nav>
 
     <!-- Hidden selector for poolSelector.js -->
@@ -18,114 +18,200 @@
         <option value="">-- Aucun pool --</option>
     </select>
 
-    <!-- Hero Section -->
-    <div class="hero-section">
-        <div class="hero-content">
-            <h1>Défiez vos amis</h1>
-            <p class="hero-subtitle">Créez votre pool de hockey et affrontez vos amis dans une compétition enflammée</p>
-            <div class="hero-actions">
-                <button class="btn-primary" onclick="window.location.href='pool.html'">Gestion de pool</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Active Pools Section -->
-    <div class="content-section">
-        <div class="section-header">
-            <h2>Vos pools actifs</h2>
-            <p>Suivez vos compétitions en cours</p>
-        </div>
-
-        <div id="activePoolsContainer">
+    <div class="dashboard-container">
+        <!-- Action Center - What needs attention NOW (Zeigarnik Effect) -->
+        <div class="action-alerts" id="actionAlerts">
             <!-- Skeleton Loader -->
-            <div class="skeleton-loader" id="activePoolsSkeleton">
-                <div class="skeleton-pools-grid">
-                    <div class="skeleton-card">
-                        <div class="skeleton-card-content">
-                            <div class="skeleton" style="width: 180px; height: 24px; margin-bottom: 12px;"></div>
-                            <div class="skeleton" style="width: 120px; height: 16px; margin-bottom: 8px;"></div>
-                            <div class="skeleton" style="width: 100%; height: 60px; margin-top: 16px;"></div>
-                        </div>
-                    </div>
-                    <div class="skeleton-card">
-                        <div class="skeleton-card-content">
-                            <div class="skeleton" style="width: 180px; height: 24px; margin-bottom: 12px;"></div>
-                            <div class="skeleton" style="width: 120px; height: 16px; margin-bottom: 8px;"></div>
-                            <div class="skeleton" style="width: 100%; height: 60px; margin-top: 16px;"></div>
-                        </div>
-                    </div>
+            <div class="skeleton-loader" id="alertsSkeleton">
+                <div class="skeleton-alert">
+                    <div class="skeleton" style="width: 300px; height: 20px;"></div>
                 </div>
             </div>
-
             <!-- Actual Content -->
-            <div class="actual-content" id="activePoolsContent" style="display: none;">
-                <div class="pools-grid" id="activePoolsList">
-                    <!-- Pools will be injected here -->
+            <div class="actual-content" id="alertsContent" style="display: none;">
+                <!-- Alerts will be injected here -->
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Left Column: Active Pool & Quick Actions -->
+            <div class="dashboard-left">
+                <!-- Active Pool Card (Von Restorff - highlighted) -->
+                <div class="card primary-card">
+                    <div class="card-header">
+                        <h2>Pool actif</h2>
+                        <button class="btn-ghost" onclick="window.location.href='pool.html'">Changer</button>
+                    </div>
+                    <div class="card-body">
+                        <!-- Skeleton Loader -->
+                        <div class="skeleton-loader" id="activePoolSkeleton">
+                            <div class="skeleton" style="width: 200px; height: 28px; margin-bottom: 12px;"></div>
+                            <div class="skeleton" style="width: 150px; height: 18px; margin-bottom: 20px;"></div>
+                            <div class="skeleton" style="width: 100%; height: 60px;"></div>
+                        </div>
+                        <!-- Actual Content -->
+                        <div class="actual-content" id="activePoolContent" style="display: none;">
+                            <h3 id="activePoolName">Aucun pool sélectionné</h3>
+                            <p class="pool-meta" id="activePoolMeta"></p>
+                            <div class="pool-quick-stats" id="activePoolStats">
+                                <!-- Stats will be injected -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="empty-state" id="noActivePools" style="display: none;">
-                    <h3>Aucun pool actif</h3>
-                    <p>Créez un nouveau pool ou rejoignez-en un pour commencer à défier vos amis</p>
-                    <button class="btn-secondary" onclick="window.location.href='pool.html'">Gérer mes pools</button>
+
+                <!-- Quick Actions (Fitts's Law - large, easy targets) -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Actions rapides</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="quick-actions-grid">
+                            <button class="action-tile" onclick="window.location.href='index.html'">
+                                <span class="action-icon">👥</span>
+                                <span class="action-label">Mon Équipe</span>
+                            </button>
+                            <button class="action-tile" onclick="window.location.href='classement.html'">
+                                <span class="action-icon">📊</span>
+                                <span class="action-label">Classement</span>
+                            </button>
+                            <button class="action-tile" onclick="window.location.href='trade.html'">
+                                <span class="action-icon">🔄</span>
+                                <span class="action-label">Transactions</span>
+                            </button>
+                            <button class="action-tile" onclick="window.location.href='pool.html'">
+                                <span class="action-icon">⚙️</span>
+                                <span class="action-label">Gestion</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Games -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Matchs d'aujourd'hui</h2>
+                        <span class="badge" id="gamesCount">0</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- Skeleton Loader -->
+                        <div class="skeleton-loader" id="gamesSkeleton">
+                            <div class="skeleton-game">
+                                <div class="skeleton" style="width: 100%; height: 50px;"></div>
+                            </div>
+                            <div class="skeleton-game">
+                                <div class="skeleton" style="width: 100%; height: 50px;"></div>
+                            </div>
+                        </div>
+                        <!-- Actual Content -->
+                        <div class="actual-content" id="gamesContent" style="display: none;">
+                            <div id="todaysGamesList">
+                                <!-- Games will be injected -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Live Scoreboard & Activity Feed -->
+            <div class="dashboard-right">
+                <!-- Live Scoreboard (Jakob's Law - familiar fantasy layout) -->
+                <div class="card scoreboard-card">
+                    <div class="card-header">
+                        <h2>Ton duel cette semaine</h2>
+                        <span class="live-indicator">LIVE</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- Skeleton Loader -->
+                        <div class="skeleton-loader" id="scoreboardSkeleton">
+                            <div class="skeleton-scoreboard">
+                                <div class="skeleton" style="width: 100%; height: 120px; margin-bottom: 20px;"></div>
+                                <div class="skeleton" style="width: 100%; height: 200px;"></div>
+                            </div>
+                        </div>
+                        <!-- Actual Content -->
+                        <div class="actual-content" id="scoreboardContent" style="display: none;">
+                            <div id="matchupDisplay">
+                                <!-- Matchup will be injected -->
+                            </div>
+                            <div class="matchup-stats" id="matchupStats">
+                                <!-- Stats breakdown will be injected -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- League Activity Feed (Social engagement) -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Activité de la ligue</h2>
+                    </div>
+                    <div class="card-body">
+                        <!-- Skeleton Loader -->
+                        <div class="skeleton-loader" id="activitySkeleton">
+                            <div class="skeleton-activity">
+                                <div class="skeleton" style="width: 100%; height: 40px; margin-bottom: 12px;"></div>
+                                <div class="skeleton" style="width: 100%; height: 40px; margin-bottom: 12px;"></div>
+                                <div class="skeleton" style="width: 100%; height: 40px;"></div>
+                            </div>
+                        </div>
+                        <!-- Actual Content -->
+                        <div class="actual-content" id="activityContent" style="display: none;">
+                            <div id="activityFeed">
+                                <!-- Activity items will be injected -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Performers This Week -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Meilleurs joueurs (7 jours)</h2>
+                    </div>
+                    <div class="card-body">
+                        <!-- Skeleton Loader -->
+                        <div class="skeleton-loader" id="performersSkeleton">
+                            <div class="skeleton-performers">
+                                <div class="skeleton" style="width: 100%; height: 50px; margin-bottom: 8px;"></div>
+                                <div class="skeleton" style="width: 100%; height: 50px; margin-bottom: 8px;"></div>
+                                <div class="skeleton" style="width: 100%; height: 50px;"></div>
+                            </div>
+                        </div>
+                        <!-- Actual Content -->
+                        <div class="actual-content" id="performersContent" style="display: none;">
+                            <div id="topPerformersList">
+                                <!-- Top performers will be injected -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Leaderboard Section -->
-    <div class="content-section">
-        <div class="section-header">
-            <h2>Classement global</h2>
-            <p>Les meilleurs joueurs de la semaine</p>
-        </div>
-
-        <div id="leaderboardContainer">
-            <!-- Skeleton Loader -->
-            <div class="skeleton-loader" id="leaderboardSkeleton">
-                <div class="skeleton-leaderboard">
-                    <div class="skeleton-leaderboard-item">
-                        <div class="skeleton" style="width: 40px; height: 40px; border-radius: 50%;"></div>
-                        <div style="flex: 1; margin-left: 16px;">
-                            <div class="skeleton" style="width: 150px; height: 18px; margin-bottom: 6px;"></div>
-                            <div class="skeleton" style="width: 100px; height: 14px;"></div>
-                        </div>
-                        <div class="skeleton" style="width: 60px; height: 24px;"></div>
+        <!-- All Your Pools (Bottom section) -->
+        <div class="card pools-overview-card">
+            <div class="card-header">
+                <h2>Tous vos pools</h2>
+                <button class="btn-primary" onclick="window.location.href='pool.html?tab=create'">Créer un pool</button>
+            </div>
+            <div class="card-body">
+                <!-- Skeleton Loader -->
+                <div class="skeleton-loader" id="poolsOverviewSkeleton">
+                    <div class="skeleton-pools-horizontal">
+                        <div class="skeleton" style="width: 250px; height: 120px; margin-right: 16px;"></div>
+                        <div class="skeleton" style="width: 250px; height: 120px; margin-right: 16px;"></div>
+                        <div class="skeleton" style="width: 250px; height: 120px;"></div>
                     </div>
-                    <div class="skeleton-leaderboard-item">
-                        <div class="skeleton" style="width: 40px; height: 40px; border-radius: 50%;"></div>
-                        <div style="flex: 1; margin-left: 16px;">
-                            <div class="skeleton" style="width: 150px; height: 18px; margin-bottom: 6px;"></div>
-                            <div class="skeleton" style="width: 100px; height: 14px;"></div>
-                        </div>
-                        <div class="skeleton" style="width: 60px; height: 24px;"></div>
-                    </div>
-                    <div class="skeleton-leaderboard-item">
-                        <div class="skeleton" style="width: 40px; height: 40px; border-radius: 50%;"></div>
-                        <div style="flex: 1; margin-left: 16px;">
-                            <div class="skeleton" style="width: 150px; height: 18px; margin-bottom: 6px;"></div>
-                            <div class="skeleton" style="width: 100px; height: 14px;"></div>
-                        </div>
-                        <div class="skeleton" style="width: 60px; height: 24px;"></div>
+                </div>
+                <!-- Actual Content -->
+                <div class="actual-content" id="poolsOverviewContent" style="display: none;">
+                    <div class="pools-scroll" id="allPoolsList">
+                        <!-- All pools will be injected -->
                     </div>
                 </div>
             </div>
-
-            <!-- Actual Content -->
-            <div class="actual-content" id="leaderboardContent" style="display: none;">
-                <div class="leaderboard-list" id="leaderboardList">
-                    <!-- Leaderboard items will be injected here -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Challenge Section -->
-    <div class="content-section challenge-section">
-        <div class="section-header">
-            <h2>Prêt à relever le défi?</h2>
-            <p>Invitez vos amis et montrez-leur qui est le meilleur</p>
-        </div>
-        <div class="challenge-cta">
-            <button class="btn-primary" onclick="window.location.href='pool.html?tab=create'">Créer un nouveau pool</button>
         </div>
     </div>
 
