@@ -38,6 +38,9 @@ function getCurrentTeamStats(teamFullName) {
 
 // Charger les métadonnées des joueurs et les stats actuelles de la saison 2024-2025
 async function fetchPlayerData() {
+    // Show skeleton loader
+    showSkeletonLoader();
+
     try {
         // Load player metadata (names, positions, etc.)
         const response = await fetch("nhl_filtered_stats.json");
@@ -71,8 +74,12 @@ async function fetchPlayerData() {
         }
 
         updateTable();
+
+        // Hide skeleton loader and show actual content
+        hideSkeletonLoader();
     } catch (error) {
         console.error("Failed to fetch player data:", error);
+        hideSkeletonLoader();
     }
 }
 
@@ -597,20 +604,16 @@ async function showCareerStats(playerId, playerName, isGoalie = false) {
     const modalPosition = document.getElementById('careerPlayerPosition');
     const modalTeam = document.getElementById('careerPlayerTeam');
     const headshotContainer = document.getElementById('playerHeadshotContainer');
-    const loadingSpinner = document.getElementById('loadingSpinner');
     const filtersSection = document.getElementById('careerFilters');
     const statsTable = document.getElementById('careerStatsTable');
 
     // Store current player ID for game log switching
     currentPlayerId = playerId;
 
-    // Show modal with loading state
+    // Show modal with skeleton loader
     modal.style.display = 'block';
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
-    loadingSpinner.style.display = 'block';
-    modalHeader.style.display = 'none';
-    filtersSection.style.display = 'none';
-    statsTable.innerHTML = '';
+    showModalSkeleton();
 
     // Set default filters to NHL and Regular season and Career view
     document.getElementById('viewFilter').value = 'career';
@@ -627,8 +630,8 @@ async function showCareerStats(playerId, playerName, isGoalie = false) {
         const data = await response.json();
         currentCareerData = data; // Store globally for filtering
 
-        // Hide loading, show header and filters
-        loadingSpinner.style.display = 'none';
+        // Hide skeleton, show header and filters
+        hideModalSkeleton();
         modalHeader.style.display = 'flex';
         filtersSection.style.display = 'flex';
 
@@ -698,7 +701,8 @@ async function showCareerStats(playerId, playerName, isGoalie = false) {
 
     } catch (error) {
         console.error('Error fetching career stats:', error);
-        loadingSpinner.style.display = 'none';
+        hideModalSkeleton();
+        modalHeader.style.display = 'flex';
         statsTable.innerHTML = '<p class="no-stats-message">❌ Erreur lors du chargement des statistiques</p>';
     }
 }
@@ -1044,6 +1048,38 @@ function renderGameLogTable(gameLog, isGoalie) {
 
     tableHTML += '</tbody></table>';
     statsTable.innerHTML = tableHTML;
+}
+
+// Skeleton Loader Functions
+function showSkeletonLoader() {
+    const skeleton = document.getElementById('tableSkeleton');
+    const actualTable = document.getElementById('actualTable');
+    if (skeleton) skeleton.style.display = 'block';
+    if (actualTable) actualTable.style.display = 'none';
+}
+
+function hideSkeletonLoader() {
+    const skeleton = document.getElementById('tableSkeleton');
+    const actualTable = document.getElementById('actualTable');
+    if (skeleton) skeleton.style.display = 'none';
+    if (actualTable) actualTable.style.display = 'block';
+}
+
+function showModalSkeleton() {
+    const modalSkeleton = document.getElementById('modalSkeleton');
+    const modalContent = document.getElementById('careerModalHeader');
+    const filtersSection = document.getElementById('careerFilters');
+    const statsTable = document.getElementById('careerStatsTable');
+
+    if (modalSkeleton) modalSkeleton.style.display = 'block';
+    if (modalContent) modalContent.style.display = 'none';
+    if (filtersSection) filtersSection.style.display = 'none';
+    if (statsTable) statsTable.innerHTML = '';
+}
+
+function hideModalSkeleton() {
+    const modalSkeleton = document.getElementById('modalSkeleton');
+    if (modalSkeleton) modalSkeleton.style.display = 'none';
 }
 
 document.getElementById("searchInput").addEventListener("input", updateTable);

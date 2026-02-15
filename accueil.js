@@ -45,14 +45,18 @@ async function loadHotPlayers() {
 
 // Display offensive players
 function displayOffensivePlayers(players) {
-    const container = document.getElementById('hotOffensivePlayers');
+    const skeleton = document.getElementById('offensiveSkeleton');
+    const content = document.getElementById('offensiveContent');
+
+    if (skeleton) skeleton.style.display = 'none';
+    if (content) content.style.display = 'flex';
 
     if (players.length === 0) {
-        container.innerHTML = '<p class="loading-spinner">Aucun joueur disponible</p>';
+        content.innerHTML = '<p class="loading-spinner">Aucun joueur disponible</p>';
         return;
     }
 
-    container.innerHTML = players.map(player => `
+    content.innerHTML = players.map(player => `
         <div class="player-card" onclick="showPlayerDetails(${player.playerId})">
             <div class="player-header">
                 <div class="player-photo">
@@ -83,14 +87,18 @@ function displayOffensivePlayers(players) {
 
 // Display rookie
 function displayRookie(player) {
-    const container = document.getElementById('hotRookie');
+    const skeleton = document.getElementById('rookieSkeleton');
+    const content = document.getElementById('rookieContent');
+
+    if (skeleton) skeleton.style.display = 'none';
+    if (content) content.style.display = 'flex';
 
     if (!player) {
-        container.innerHTML = '<p class="loading-spinner">Aucune recrue disponible</p>';
+        content.innerHTML = '<p class="loading-spinner">Aucune recrue disponible</p>';
         return;
     }
 
-    container.innerHTML = `
+    content.innerHTML = `
         <div class="player-card" onclick="showPlayerDetails(${player.playerId})">
             <div class="player-header">
                 <div class="player-photo">
@@ -121,14 +129,18 @@ function displayRookie(player) {
 
 // Display defensemen
 function displayDefensemen(players) {
-    const container = document.getElementById('hotDefensemen');
+    const skeleton = document.getElementById('defensemenSkeleton');
+    const content = document.getElementById('defensemenContent');
+
+    if (skeleton) skeleton.style.display = 'none';
+    if (content) content.style.display = 'flex';
 
     if (players.length === 0) {
-        container.innerHTML = '<p class="loading-spinner">Aucun défenseur disponible</p>';
+        content.innerHTML = '<p class="loading-spinner">Aucun défenseur disponible</p>';
         return;
     }
 
-    container.innerHTML = players.map(player => `
+    content.innerHTML = players.map(player => `
         <div class="player-card" onclick="showPlayerDetails(${player.playerId})">
             <div class="player-header">
                 <div class="player-photo">
@@ -159,14 +171,18 @@ function displayDefensemen(players) {
 
 // Display goalies
 function displayGoalies(goalies) {
-    const container = document.getElementById('hotGoalies');
+    const skeleton = document.getElementById('goaliesSkeleton');
+    const content = document.getElementById('goaliesContent');
+
+    if (skeleton) skeleton.style.display = 'none';
+    if (content) content.style.display = 'flex';
 
     if (goalies.length === 0) {
-        container.innerHTML = '<p class="loading-spinner">Aucun gardien disponible</p>';
+        content.innerHTML = '<p class="loading-spinner">Aucun gardien disponible</p>';
         return;
     }
 
-    container.innerHTML = goalies.map(goalie => `
+    content.innerHTML = goalies.map(goalie => `
         <div class="player-card" onclick="showPlayerDetails(${goalie.playerId})">
             <div class="player-header">
                 <div class="player-photo">
@@ -197,14 +213,18 @@ function displayGoalies(goalies) {
 
 // Display teams
 function displayTeams(teams) {
-    const container = document.getElementById('hotTeams');
+    const skeleton = document.getElementById('teamsSkeleton');
+    const content = document.getElementById('teamsContent');
+
+    if (skeleton) skeleton.style.display = 'none';
+    if (content) content.style.display = 'flex';
 
     if (teams.length === 0) {
-        container.innerHTML = '<p class="loading-spinner">Aucune équipe disponible</p>';
+        content.innerHTML = '<p class="loading-spinner">Aucune équipe disponible</p>';
         return;
     }
 
-    container.innerHTML = teams.map(team => `
+    content.innerHTML = teams.map(team => `
         <div class="team-card">
             <div class="team-logo">
                 ${team.logo ? `<img src="${team.logo}" alt="${team.teamName}">` : '🏆'}
@@ -247,14 +267,18 @@ async function loadStreaks() {
 
 // Display offensive streak
 function displayOffensiveStreak(streak) {
-    const container = document.getElementById('offensiveStreak');
+    const skeleton = document.getElementById('offensiveStreakSkeleton');
+    const content = document.getElementById('offensiveStreakContent');
+
+    if (skeleton) skeleton.style.display = 'none';
+    if (content) content.style.display = 'block';
 
     if (!streak) {
-        container.innerHTML = '<div class="streak-icon">⚡</div><h3>Série de points (Attaquant)</h3><p class="loading-spinner">Aucune donnée</p>';
+        content.innerHTML = '<div class="streak-icon">⚡</div><h3>Série de points (Attaquant)</h3><p class="loading-spinner">Aucune donnée</p>';
         return;
     }
 
-    container.innerHTML = `
+    content.innerHTML = `
         <div class="streak-icon">⚡</div>
         <h3>Série de points (Attaquant)</h3>
         <div class="streak-player">
@@ -268,14 +292,18 @@ function displayOffensiveStreak(streak) {
 
 // Display defensive streak
 function displayDefensiveStreak(streak) {
-    const container = document.getElementById('defensiveStreak');
+    const skeleton = document.getElementById('defensiveStreakSkeleton');
+    const content = document.getElementById('defensiveStreakContent');
+
+    if (skeleton) skeleton.style.display = 'none';
+    if (content) content.style.display = 'block';
 
     if (!streak) {
-        container.innerHTML = '<div class="streak-icon">🛡️</div><h3>Série de points (Défenseur)</h3><p class="loading-spinner">Aucune donnée</p>';
+        content.innerHTML = '<div class="streak-icon">🛡️</div><h3>Série de points (Défenseur)</h3><p class="loading-spinner">Aucune donnée</p>';
         return;
     }
 
-    container.innerHTML = `
+    content.innerHTML = `
         <div class="streak-icon">🛡️</div>
         <h3>Série de points (Défenseur)</h3>
         <div class="streak-player">
@@ -289,14 +317,18 @@ function displayDefensiveStreak(streak) {
 
 // Display goalie streak
 function displayGoalieStreak(streak) {
-    const container = document.getElementById('goalieStreak');
+    const skeleton = document.getElementById('goalieStreakSkeleton');
+    const content = document.getElementById('goalieStreakContent');
+
+    if (skeleton) skeleton.style.display = 'none';
+    if (content) content.style.display = 'block';
 
     if (!streak) {
-        container.innerHTML = '<div class="streak-icon">🥅</div><h3>Série de victoires (Gardien)</h3><p class="loading-spinner">Aucune donnée</p>';
+        content.innerHTML = '<div class="streak-icon">🥅</div><h3>Série de victoires (Gardien)</h3><p class="loading-spinner">Aucune donnée</p>';
         return;
     }
 
-    container.innerHTML = `
+    content.innerHTML = `
         <div class="streak-icon">🥅</div>
         <h3>Série de victoires (Gardien)</h3>
         <div class="streak-player">
@@ -310,14 +342,18 @@ function displayGoalieStreak(streak) {
 
 // Display team streak
 function displayTeamStreak(streak) {
-    const container = document.getElementById('teamStreak');
+    const skeleton = document.getElementById('teamStreakSkeleton');
+    const content = document.getElementById('teamStreakContent');
+
+    if (skeleton) skeleton.style.display = 'none';
+    if (content) content.style.display = 'block';
 
     if (!streak) {
-        container.innerHTML = '<div class="streak-icon">🏆</div><h3>Série de victoires (Équipe)</h3><p class="loading-spinner">Aucune donnée</p>';
+        content.innerHTML = '<div class="streak-icon">🏆</div><h3>Série de victoires (Équipe)</h3><p class="loading-spinner">Aucune donnée</p>';
         return;
     }
 
-    container.innerHTML = `
+    content.innerHTML = `
         <div class="streak-icon">🏆</div>
         <h3>Série de victoires (Équipe)</h3>
         <div class="streak-player">
