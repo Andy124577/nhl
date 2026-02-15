@@ -333,14 +333,18 @@ function renderCurrentMatchups(h2hData, teams) {
 
     document.getElementById("currentWeekTitle").textContent = `Semaine ${currentWeek}`;
 
-    const container = document.getElementById("currentMatchupsList");
+    // Hide skeleton and show content
+    const skeleton = document.getElementById('matchupsSkeleton');
+    const content = document.getElementById('matchupsContent');
+    if (skeleton) skeleton.style.display = 'none';
+    if (content) content.style.display = 'block';
 
     if (matchups.length === 0) {
-        container.innerHTML = '<p class="empty-state">Aucun duel pour cette semaine</p>';
+        content.innerHTML = '<p class="empty-state">Aucun duel pour cette semaine</p>';
         return;
     }
 
-    container.innerHTML = matchups.map(matchup => {
+    content.innerHTML = matchups.map(matchup => {
         const team1Points = calculateTeamPoints(teams[matchup.team1]);
         const team2Points = calculateTeamPoints(teams[matchup.team2]);
 
@@ -365,6 +369,12 @@ function renderCurrentMatchups(h2hData, teams) {
 
 // Render H2H Standings
 function renderH2HStandings(standings, teams) {
+    // Hide skeleton and show table
+    const skeleton = document.getElementById('h2hStandingsSkeleton');
+    const table = document.getElementById('h2hStandingsTable');
+    if (skeleton) skeleton.style.display = 'none';
+    if (table) table.style.display = 'table';
+
     const tbody = document.getElementById("h2hStandingsBody");
     tbody.innerHTML = "";
 
@@ -514,14 +524,18 @@ function renderH2HStandings(standings, teams) {
 
 // Render Matchup History
 function renderMatchupHistory(history) {
-    const container = document.getElementById("matchupHistoryList");
+    // Hide skeleton and show content
+    const skeleton = document.getElementById('historySkeleton');
+    const content = document.getElementById('historyContent');
+    if (skeleton) skeleton.style.display = 'none';
+    if (content) content.style.display = 'block';
 
     if (!history || history.length === 0) {
-        container.innerHTML = '<p class="empty-state">Aucun historique de duels</p>';
+        content.innerHTML = '<p class="empty-state">Aucun historique de duels</p>';
         return;
     }
 
-    container.innerHTML = history.reverse().map(week => `
+    content.innerHTML = history.reverse().map(week => `
         <div class="week-history-card">
             <h4>Semaine ${week.weekNumber}</h4>
             <div class="week-matchups">
@@ -582,6 +596,12 @@ function calculateTeamPoints(teamData) {
 }
 
 function renderTeamStatsTable(teams) {
+    // Hide skeleton and show table
+    const skeleton = document.getElementById('cumulativeSkeleton');
+    const table = document.getElementById('teamStatsTable');
+    if (skeleton) skeleton.style.display = 'none';
+    if (table) table.style.display = 'table';
+
     const tbody = document.getElementById("teamStatsBody");
     tbody.innerHTML = "";
 
