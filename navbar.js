@@ -30,9 +30,7 @@ function initModernNavbar() {
     buildLoggedInNavbar(username, isAdmin, currentPage);
     buildBottomNav(currentPage);
     initializeEventListeners(username, isAdmin);
-    loadPoolData();
     checkPendingTrades();
-    checkIncompleteActions(); // Zeigarnik Effect
 }
 
 // Build logged-out navbar
@@ -57,11 +55,6 @@ function buildLoggedOutNavbar() {
 function buildLoggedInNavbar(username, isAdmin, currentPage) {
     const navbar = document.querySelector('.navbar');
     if (!navbar) return;
-
-    const activePool = localStorage.getItem('activePool') || '';
-
-    // Zeigarnik Effect - Show alert if no pool selected
-    const poolAlertBadge = !activePool ? '<span class="alert-dot" title="Aucun pool sélectionné"></span>' : '';
 
     const navHTML = `
         <!-- Desktop Layout -->
@@ -98,17 +91,8 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                 </nav>
             </div>
 
-            <!-- Right: Pool Selector + User Menu -->
+            <!-- Right: User Menu -->
             <div class="navbar-right">
-                <!-- Von Restorff Effect: Highlighted pool selector -->
-                <div class="pool-selector-container">
-                    ${poolAlertBadge}
-                    <label for="desktopPoolSelector">Pool actif:</label>
-                    <select id="desktopPoolSelector" class="pool-selector">
-                        <option value="">Aucun pool</option>
-                    </select>
-                </div>
-
                 <!-- User Menu -->
                 <div class="user-menu">
                     <button class="user-avatar" id="userAvatarBtn" title="${username}">
@@ -131,11 +115,6 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                 </div>
             </div>
         </div>
-
-        <!-- Hidden selector for poolSelector.js -->
-        <select id="activePoolSelector" style="display: none;">
-            <option value="">-- Aucun pool --</option>
-        </select>
     `;
 
     navbar.innerHTML = navHTML;
@@ -199,74 +178,6 @@ function initializeEventListeners(username, isAdmin) {
     // Load admin users if admin
     if (isAdmin) {
         loadAdminUsers();
-    }
-}
-
-// Load pool data
-function loadPoolData() {
-    const activePool = localStorage.getItem('activePool') || '';
-    const desktopSelector = document.getElementById('desktopPoolSelector');
-    const activePoolSelector = document.getElementById('activePoolSelector');
-
-    function truncatePoolName(text, maxLength = 20) {
-        if (text.length <= maxLength) return text;
-        return text.substring(0, maxLength - 3) + '...';
-    }
-
-    function syncDesktopSelector() {
-        if (!desktopSelector || !activePoolSelector) return;
-
-        const currentActivePool = localStorage.getItem('activePool') || '';
-
-        desktopSelector.innerHTML = '';
-        Array.from(activePoolSelector.options).forEach(option => {
-            const newOption = document.createElement('option');
-            newOption.value = option.value;
-            newOption.textContent = truncatePoolName(option.text);
-            desktopSelector.appendChild(newOption);
-        });
-
-        desktopSelector.value = currentActivePool;
-    }
-
-    if (desktopSelector && activePoolSelector) {
-        setTimeout(() => {
-            syncDesktopSelector();
-        }, 100);
-
-        if (!desktopSelector.dataset.listenerAdded) {
-            desktopSelector.addEventListener('change', (e) => {
-                const selectedPool = e.target.value;
-
-                if (selectedPool) {
-                    localStorage.setItem('activePool', selectedPool);
-                } else {
-                    localStorage.removeItem('activePool');
-                }
-
-                if (activePoolSelector) {
-                    activePoolSelector.value = selectedPool;
-                    const changeEvent = new Event('change', { bubbles: true });
-                    activePoolSelector.dispatchEvent(changeEvent);
-
-                    if (typeof $ !== 'undefined') {
-                        $(activePoolSelector).val(selectedPool).trigger('change');
-                    }
-                }
-
-                window.location.reload();
-            });
-
-            desktopSelector.dataset.listenerAdded = 'true';
-        }
-    }
-
-    if (activePoolSelector && desktopSelector) {
-        const observer = new MutationObserver(() => {
-            syncDesktopSelector();
-        });
-
-        observer.observe(activePoolSelector, { childList: true });
     }
 }
 
@@ -337,11 +248,11 @@ async function checkPendingTrades() {
             : window.location.origin;
 
         const username = localStorage.getItem("username");
-        const activePool = localStorage.getItem("activePool");
 
-        if (!username || !activePool) return;
+        if (!username) return;
 
-        const response = await fetch(`${BASE_URL}/pending-trades?username=${username}&poolName=${activePool}`);
+        // Check pending trades across all pools
+        const response = await fetch(`${BASE_URL}/pending-trades?username=${username}`);
         const data = await response.json();
 
         if (response.ok && data.count > 0) {
@@ -362,25 +273,11 @@ async function checkPendingTrades() {
     }
 }
 
-// Check for incomplete actions (Zeigarnik Effect)
-function checkIncompleteActions() {
-    const activePool = localStorage.getItem('activePool');
-
-    // Show visual indicator if no pool is selected
-    if (!activePool) {
-        const alertDot = document.querySelector('.alert-dot');
-        if (alertDot) {
-            alertDot.style.display = 'block';
-        }
-    }
-}
-
 // Logout function
 function logout() {
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("username");
     localStorage.removeItem("isAdmin");
-    localStorage.removeItem("activePool");
     window.location.href = "login.html";
 }
 
