@@ -33,26 +33,44 @@ app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
 
+// Cache control middleware (must come BEFORE static file serving)
+app.use((req, res, next) => {
+    const reqPath = req.path.toLowerCase();
+
+    if (reqPath.match(/\.(jpg|jpeg|png|gif|ico|svg|webp)$/)) {
+        // Cache images for 1 year (immutable means never needs revalidation)
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    } else if (reqPath.match(/\.(woff|woff2|ttf|eot|otf)$/)) {
+        // Cache fonts for 1 year
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    } else if (reqPath.match(/\.(js|css)$/)) {
+        // Cache JS/CSS for 1 week but allow revalidation
+        res.setHeader("Cache-Control", "public, max-age=604800, must-revalidate");
+    } else if (reqPath.match(/\.(html|htm)$/)) {
+        // HTML files: cache for 5 minutes with revalidation
+        res.setHeader("Cache-Control", "public, max-age=300, must-revalidate");
+    } else {
+        // Default: no cache for dynamic content
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    }
+
+    // Security headers
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
+
+    next();
+});
+
 // ✅ Serve static files like HTML, CSS, JS
-app.use(express.static(__dirname));
+app.use(express.static(__dirname, {
+    maxAge: 0, // Let our custom middleware handle caching
+    etag: true,
+    lastModified: true
+}));
 
 // ✅ Optional: Force / to serve index.html
 app.get('/', async (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Cache control: cache images/fonts for 1 year, but not HTML/JS/CSS
-app.use((req, res, next) => {
-    const path = req.path.toLowerCase();
-    if (path.match(/\.(jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
-        // Cache images and fonts for 1 year
-        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-    } else {
-        // Don't cache HTML, JS, CSS files - always fetch fresh
-        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    }
-    res.setHeader("X-Content-Type-Options", "nosniff");
-    next();
 });
 
 console.log(`🗄️  Database mode: ${USE_POSTGRES ? 'PostgreSQL' : 'JSON Files'}`);
