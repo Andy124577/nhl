@@ -223,30 +223,36 @@ body {
 
 .standing-stats {
     display: flex;
-    gap: 16px;
-    font-size: 0.9rem;
-    color: #666;
-    flex-wrap: wrap;
-}
-
-.stat-item {
-    display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 2px;
+    gap: 4px;
+    font-size: 0.9rem;
 }
 
-.stat-value {
+.stats-row-top {
+    display: flex;
+    gap: 12px;
     font-weight: 700;
     color: #222;
-    font-size: 1rem;
+    font-size: 1.1rem;
 }
 
-.stat-label {
+.stats-row-top span {
+    min-width: 35px;
+    text-align: center;
+}
+
+.stats-row-bottom {
+    display: flex;
+    gap: 12px;
     font-size: 0.75rem;
     color: #999;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+}
+
+.stats-row-bottom span {
+    min-width: 35px;
+    text-align: center;
 }
 
 .standing-points {
@@ -817,8 +823,21 @@ body {
         font-size: 1.1rem;
     }
 
-    .standing-stats {
-        gap: 12px;
+    .stats-row-top {
+        gap: 10px;
+        font-size: 1rem;
+    }
+
+    .stats-row-top span {
+        min-width: 30px;
+    }
+
+    .stats-row-bottom {
+        gap: 10px;
+    }
+
+    .stats-row-bottom span {
+        min-width: 30px;
     }
 
     .points-value {
@@ -896,13 +915,22 @@ body {
         padding: 3px 10px;
     }
 
-    .standing-stats {
-        flex-wrap: wrap;
-        gap: 10px;
+    .stats-row-top {
+        gap: 8px;
+        font-size: 0.95rem;
     }
 
-    .stat-item {
-        min-width: 60px;
+    .stats-row-top span {
+        min-width: 28px;
+    }
+
+    .stats-row-bottom {
+        gap: 8px;
+        font-size: 0.7rem;
+    }
+
+    .stats-row-bottom span {
+        min-width: 28px;
     }
 
     .player-stats-row {
