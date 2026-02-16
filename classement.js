@@ -1,1 +1,911 @@
-let fullPlayerData=[],goalieData=[],teamData=[],imageList=[],currentStats=null,currentTeams=null,currentCareerData=null;const BASE_URL=window.location.hostname.includes("localhost")?"http://localhost:3000":window.location.origin;async function fetchImageData(){try{const e=localStorage.getItem("imageList");if(e)return imageList=JSON.parse(e),void console.log("✅ Images chargées depuis le cache local.");const t=await fetch("images.json",{cache:"no-store"});imageList=await t.json(),localStorage.setItem("imageList",JSON.stringify(imageList)),console.log("✅ Images chargées depuis le serveur et mises en cache.")}catch(e){console.error("❌ Erreur chargement images :",e)}}function getMatchingImage(e){const t=e.replace(/\s/g,"_");return imageList.find(e=>e.replace(/^faces\//,"").replace(/_\d{1,2}_\d{1,2}_\d{4}|_away/g,"").replace(".png","")===t)||null}function getTeamLogoPath(e){if(!e||"null"===e)return null;return`teams/${e.split(",").pop().trim()}.png`}function getTeamAbbreviation(e){const t=teamData.find(t=>t.teamFullName===e);return t?t.teamAbbrevs:null}function getCurrentPlayerStats(e,t){if(!currentStats||!currentStats.players)return null;if(t){const e=currentStats.players.find(e=>e.playerId===t);if(e)return e}return currentStats.players.find(t=>t.playerName===e)}function getCurrentTeamStats(e){return currentTeams&&currentTeams.teams?currentTeams.teams.find(t=>t.teamFullName===e):null}async function loadAllUserPools(){const e=localStorage.getItem("username");if(!e)return document.getElementById("noPoolSelected").style.display="block",void(document.getElementById("noPoolSelected").innerHTML='\n            <div class="empty-state-icon">🔒</div>\n            <h2>Connexion requise</h2>\n            <p>Veuillez vous connecter pour voir vos pools</p>\n        ');try{const t=await fetch(`${BASE_URL}/draft`,{cache:"no-store"}),n=await t.json(),a=[];if(Object.entries(n).forEach(([t,n])=>{const s=Object.entries(n.teams||{}).find(([t,n])=>n.members&&n.members.includes(e));s&&a.push({name:t,data:n,userTeam:s[0]})}),0===a.length)return document.getElementById("noPoolSelected").style.display="block",document.getElementById("noPoolSelected").innerHTML='\n                <div class="empty-state-icon">📊</div>\n                <h2>Aucun pool trouvé</h2>\n                <p>Vous n\'êtes membre d\'aucun pool. Créez-en un ou rejoignez un pool existant.</p>\n                <a href="pool.html" class="btn-primary" style="margin-top: 20px; padding: 12px 24px; background: #ff2e2e; color: white; text-decoration: none; border-radius: 8px; display: inline-block;">Gérer mes pools</a>\n            ',document.getElementById("cumulativeContent").style.display="none",void(document.getElementById("h2hContent").style.display="none");document.getElementById("noPoolSelected").style.display="none",renderAllPools(a)}catch(e){console.error("Erreur lors du chargement des pools:",e),document.getElementById("noPoolSelected").style.display="block",document.getElementById("noPoolSelected").innerHTML='\n            <div class="empty-state-icon">⚠️</div>\n            <h2>Erreur</h2>\n            <p>Impossible de charger vos pools. Veuillez réessayer.</p>\n        '}}function renderAllPools(e){document.getElementById("cumulativeContent").style.display="none",document.getElementById("h2hContent").style.display="none";const t=document.querySelector(".page-header");t&&(t.querySelector("h1").textContent="Mes Classements",t.querySelector("p").textContent=`${e.length} pool${e.length>1?"s":""}`);let n=document.getElementById("allPoolsContainer");n||(n=document.createElement("div"),n.id="allPoolsContainer",n.style.cssText="display: block;",document.querySelector(".container").appendChild(n)),n.innerHTML="",e.forEach(e=>{const t=document.createElement("div");t.className="pool-section",t.style.cssText="margin-bottom: 40px; background: #1a1a2e; border-radius: 12px; padding: 24px; border: 1px solid rgba(255, 255, 255, 0.1);";const a=e.data.poolMode||"cumulative",s=document.createElement("div");s.style.cssText="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid rgba(255, 46, 46, 0.3);",s.innerHTML=`\n            <div>\n                <h2 style="margin: 0; font-size: 24px; color: #ffffff;">${e.name}</h2>\n                <p style="margin: 4px 0 0 0; font-size: 14px; color: rgba(255, 255, 255, 0.6);">\n                    ${"head-to-head"===a?"⚔️ Head-to-Head":"📊 Cumulatif"} •\n                    ${Object.keys(e.data.teams).length} équipes •\n                    Votre équipe: <span style="color: #ff2e2e; font-weight: bold;">${e.userTeam}</span>\n                </p>\n            </div>\n        `,t.appendChild(s),"head-to-head"===a?t.appendChild(renderH2HPoolSection(e.data,e.name)):t.appendChild(renderCumulativePoolSection(e.data)),n.appendChild(t)})}function renderCumulativePoolSection(e){const t=document.createElement("div"),n=document.createElement("table");n.className="team-stats-table",n.style.cssText="width: 100%; border-collapse: collapse;";const a=Object.entries(e.teams).map(([e,t])=>{const n=calculateTeamPoints(t);return{teamName:e,members:t.members||[],...n}});return a.sort((e,t)=>t.points-e.points),n.innerHTML=`\n        <thead>\n            <tr style="background: rgba(255, 46, 46, 0.1); border-bottom: 2px solid rgba(255, 46, 46, 0.3);">\n                <th style="padding: 12px; text-align: left;">POS</th>\n                <th style="padding: 12px; text-align: left;">Équipe</th>\n                <th style="padding: 12px; text-align: left;">Membres</th>\n                <th style="padding: 12px; text-align: center;">GP</th>\n                <th style="padding: 12px; text-align: center;">G</th>\n                <th style="padding: 12px; text-align: center;">A</th>\n                <th style="padding: 12px; text-align: center;">PTS</th>\n            </tr>\n        </thead>\n        <tbody>\n            ${a.map((t,n)=>`\n                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);" onclick="openTeamModal('${t.teamName}', '${JSON.stringify(e.teams[t.teamName]).replace(/'/g,"&#39;")}')" class="team-row">\n                    <td style="padding: 12px; font-weight: bold; color: ${0===n?"#FFD700":1===n?"#C0C0C0":2===n?"#CD7F32":"rgba(255,255,255,0.9)"};">${n+1}</td>\n                    <td style="padding: 12px; font-weight: bold; color: #ffffff;">${t.teamName}</td>\n                    <td style="padding: 12px; color: rgba(255, 255, 255, 0.7); font-size: 14px;">${t.members.join(", ")}</td>\n                    <td style="padding: 12px; text-align: center; color: rgba(255, 255, 255, 0.7);">${t.gamesPlayed}</td>\n                    <td style="padding: 12px; text-align: center; color: rgba(255, 255, 255, 0.7);">${t.goals}</td>\n                    <td style="padding: 12px; text-align: center; color: rgba(255, 255, 255, 0.7);">${t.assists}</td>\n                    <td style="padding: 12px; text-align: center; font-weight: bold; color: #ff2e2e; font-size: 16px;">${t.points}</td>\n                </tr>\n            `).join("")}\n        </tbody>\n    `,t.appendChild(n),t}function renderH2HPoolSection(e,t){const n=document.createElement("div"),a=e.h2hData;if(!a)return n.innerHTML='<p style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 40px 0;">Données Head-to-Head non disponibles</p>',n;const s=a.standings||{},o=Object.entries(s).map(([e,t])=>({teamName:e,...t}));o.sort((e,t)=>t.wins!==e.wins?t.wins-e.wins:t.pointsFor-t.pointsAgainst-(e.pointsFor-e.pointsAgainst));const l=document.createElement("table");return l.style.cssText="width: 100%; border-collapse: collapse;",l.innerHTML=`\n        <thead>\n            <tr style="background: rgba(255, 46, 46, 0.1); border-bottom: 2px solid rgba(255, 46, 46, 0.3);">\n                <th style="padding: 12px; text-align: left;">POS</th>\n                <th style="padding: 12px; text-align: left;">Équipe</th>\n                <th style="padding: 12px; text-align: center;">V</th>\n                <th style="padding: 12px; text-align: center;">D</th>\n                <th style="padding: 12px; text-align: center;">N</th>\n                <th style="padding: 12px; text-align: center;">PF</th>\n                <th style="padding: 12px; text-align: center;">PA</th>\n                <th style="padding: 12px; text-align: center;">DIFF</th>\n            </tr>\n        </thead>\n        <tbody>\n            ${o.map((e,t)=>`\n                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">\n                    <td style="padding: 12px; font-weight: bold; color: ${0===t?"#FFD700":1===t?"#C0C0C0":2===t?"#CD7F32":"rgba(255,255,255,0.9)"};">${t+1}</td>\n                    <td style="padding: 12px; font-weight: bold; color: #ffffff;">${e.teamName}</td>\n                    <td style="padding: 12px; text-align: center; color: #4ade80;">${e.wins||0}</td>\n                    <td style="padding: 12px; text-align: center; color: #f87171;">${e.losses||0}</td>\n                    <td style="padding: 12px; text-align: center; color: #fbbf24;">${e.ties||0}</td>\n                    <td style="padding: 12px; text-align: center; color: rgba(255, 255, 255, 0.7);">${e.pointsFor||0}</td>\n                    <td style="padding: 12px; text-align: center; color: rgba(255, 255, 255, 0.7);">${e.pointsAgainst||0}</td>\n                    <td style="padding: 12px; text-align: center; font-weight: bold; color: ${e.pointsFor-e.pointsAgainst>0?"#4ade80":e.pointsFor-e.pointsAgainst<0?"#f87171":"#fbbf24"};">\n                        ${e.pointsFor-e.pointsAgainst>0?"+":""}${e.pointsFor-e.pointsAgainst}\n                    </td>\n                </tr>\n            `).join("")}\n        </tbody>\n    `,n.appendChild(l),n}async function loadClassementForPool(e){if(!e)return document.getElementById("noPoolSelected").style.display="block",document.getElementById("cumulativeContent").style.display="none",document.getElementById("h2hContent").style.display="none",void(document.getElementById("poolNameDisplay").textContent="Sélectionnez un pool actif pour voir le classement");try{const t=await fetch(`${BASE_URL}/draft`,{cache:"no-store"}),n=(await t.json())[e];if(!n)return document.getElementById("noPoolSelected").style.display="block",document.getElementById("cumulativeContent").style.display="none",document.getElementById("h2hContent").style.display="none",void(document.getElementById("poolNameDisplay").textContent="Pool introuvable");document.getElementById("noPoolSelected").style.display="none",document.getElementById("poolNameDisplay").textContent=`Classement du pool : ${e}`;"head-to-head"===(n.poolMode||"cumulative")?(document.getElementById("cumulativeContent").style.display="none",document.getElementById("h2hContent").style.display="block",renderH2HInterface(n,e)):(document.getElementById("h2hContent").style.display="none",document.getElementById("cumulativeContent").style.display="block",renderTeamStatsTable(n.teams))}catch(e){console.error("Erreur lors du chargement du classement:",e),document.getElementById("noPoolSelected").style.display="block",document.getElementById("cumulativeContent").style.display="none",document.getElementById("h2hContent").style.display="none",document.getElementById("poolNameDisplay").textContent="Erreur lors du chargement"}}function showH2HTab(e){document.querySelectorAll(".h2h-tab-content").forEach(e=>{e.classList.remove("active")}),document.querySelectorAll("#h2hContent .sub-nav-btn").forEach(e=>{e.classList.remove("active")}),document.getElementById(`${e}-h2h-tab`).classList.add("active"),event.target.classList.add("active")}function renderH2HInterface(e,t){const n=e.h2hData;n?(renderCurrentMatchups(n,e.teams),renderH2HStandings(n.standings,e.teams),renderMatchupHistory(n.matchupHistory||[])):document.getElementById("currentMatchupsList").innerHTML='<p class="empty-state">Données Head-to-Head non disponibles</p>'}function renderCurrentMatchups(e,t){const n=e.currentWeek||1,a=e.matchups&&e.matchups[n-1]?e.matchups[n-1]:[];document.getElementById("currentWeekTitle").textContent=`Semaine ${n}`;const s=document.getElementById("matchupsSkeleton"),o=document.getElementById("matchupsContent");s&&(s.style.display="none"),o&&(o.style.display="block"),0!==a.length?o.innerHTML=a.map(e=>{const n=calculateTeamPoints(t[e.team1]),a=calculateTeamPoints(t[e.team2]),s=a>n;return`\n            <div class="matchup-card">\n                <div class="matchup-team ${n>a?"leading":""}">\n                    <div class="team-name">${e.team1}</div>\n                    <div class="team-score">${n}</div>\n                </div>\n                <div class="matchup-vs">VS</div>\n                <div class="matchup-team ${s?"leading":""}">\n                    <div class="team-name">${e.team2}</div>\n                    <div class="team-score">${a}</div>\n                </div>\n            </div>\n        `}).join(""):o.innerHTML='<p class="empty-state">Aucun duel pour cette semaine</p>'}function renderH2HStandings(e,t){const n=document.getElementById("h2hStandingsSkeleton"),a=document.getElementById("h2hStandingsTable");n&&(n.style.display="none"),a&&(a.style.display="table");const s=document.getElementById("h2hStandingsBody");if(s.innerHTML="",!e||0===Object.keys(e).length)return void(s.innerHTML='<tr><td colspan="8" class="empty-state">Aucune donnée de classement</td></tr>');Object.entries(e).map(([e,n])=>{const a=t[e];let s=[];if(a){[...a.offensive||[],...a.defensive||[],...a.rookie||[]].forEach(e=>{const t=fullPlayerData.find(t=>t.skaterFullName===e);if(t){const n=getCurrentPlayerStats(e,t.playerId),a=n?.gamesPlayed??t.gamesPlayed??0,o=n?.goals??t.goals??0,l=n?.assists??t.assists??0,r=n?.points??t.points??0,d=n?.todayPoints??0;s.push({name:t.skaterFullName,position:t.positionCode||"F",gp:a,g:o,a:l,pts:r,todayPoints:d,playerId:t.playerId,teamAbbrev:t.teamAbbrevs,type:"player"})}}),(a.goalie||[]).forEach(e=>{const t=goalieData.find(t=>t.goalieFullName===e);if(t){const n=getCurrentPlayerStats(e,t.playerId),a=n?.gamesPlayed??t.gamesPlayed??0;let o,l,r,d;n?(l=n.wins||0,r=n.shutouts||0,d=n.otLosses||0,o=5*r+2*l+1*d):(l=t.wins||0,r=t.shutouts||0,d=t.otLosses||0,o=t.points||5*r+2*l+1*d);const i=n?.todayPoints??0;s.push({name:t.goalieFullName,position:"G",gp:a,g:l,a:r,pts:o,todayPoints:i,playerId:t.playerId,teamAbbrev:t.teamAbbrevs,type:"goalie"})}}),(a.teams||[]).forEach(e=>{const t=teamData.find(t=>t.teamFullName===e);if(t){const n=getCurrentTeamStats(e,t.teamId),a=n?.gamesPlayed??t.gamesPlayed??0,o=n?.wins??t.wins??0,l=n?.otLosses??t.otLosses??0,r=n?.points??t.points??2*o+l;s.push({name:t.teamFullName,position:"TEAM",gp:a,g:o,a:l,pts:r,todayPoints:0,teamAbbrev:n?.teamAbbrev||t.teamAbbrevs,type:"team"})}})}return{teamName:e,...n,diff:n.pointsFor-n.pointsAgainst,playerDetails:s}}).sort((e,t)=>t.wins!==e.wins?t.wins-e.wins:t.diff-e.diff).forEach((e,t)=>{const n=t+1,a=document.createElement("tr");a.innerHTML=`\n            <td>${n}</td>\n            <td class="team-name-col"><span class="team-name" onclick="showPlayerDetails('${e.teamName}', ${t})">${e.teamName}</span></td>\n            <td>${e.wins}</td>\n            <td>${e.losses}</td>\n            <td>${e.ties||0}</td>\n            <td>${e.pointsFor}</td>\n            <td>${e.pointsAgainst}</td>\n            <td class="${e.diff>0?"positive":e.diff<0?"negative":""}">${e.diff>0?"+":""}${e.diff}</td>\n        `,a.dataset.playerDetails=JSON.stringify(e.playerDetails),a.dataset.teamName=e.teamName,s.appendChild(a)})}function renderMatchupHistory(e){const t=document.getElementById("historySkeleton"),n=document.getElementById("historyContent");t&&(t.style.display="none"),n&&(n.style.display="block"),e&&0!==e.length?n.innerHTML=e.reverse().map(e=>`\n        <div class="week-history-card">\n            <h4>Semaine ${e.weekNumber}</h4>\n            <div class="week-matchups">\n                ${e.matchups.map(e=>`\n                    <div class="history-matchup ${e.winner?"completed":"in-progress"}">\n                        <div class="history-team ${e.winner===e.team1?"winner":""}">\n                            <span class="team-name">${e.team1}</span>\n                            <span class="team-score">${e.team1Points||0}</span>\n                        </div>\n                        <div class="history-vs">vs</div>\n                        <div class="history-team ${e.winner===e.team2?"winner":""}">\n                            <span class="team-name">${e.team2}</span>\n                            <span class="team-score">${e.team2Points||0}</span>\n                        </div>\n                        ${e.winner&&"tie"!==e.winner?'<div class="winner-badge">🏆</div>':""}\n                        ${"tie"===e.winner?'<div class="tie-badge">🤝 Égalité</div>':""}\n                    </div>\n                `).join("")}\n            </div>\n        </div>\n    `).join(""):n.innerHTML='<p class="empty-state">Aucun historique de duels</p>'}function calculateTeamPoints(e){if(!e)return 0;let t=0;return["offensive","defensive","rookie"].forEach(n=>{e[n]&&e[n].forEach(e=>{const n=fullPlayerData.find(t=>t.skaterFullName===e);if(n){const a=getCurrentPlayerStats(e,n.playerId);t+=a?.points??n.points??0}})}),e.goalies&&e.goalies.forEach(e=>{const n=goalieData.find(t=>t.goalieFullName===e);if(n){const a=getCurrentPlayerStats(e,n.playerId),s=a?.wins??n.wins??0;t+=2*s}}),t}function renderTeamStatsTable(e){const t=document.getElementById("cumulativeSkeleton"),n=document.getElementById("teamStatsTable");t&&(t.style.display="none"),n&&(n.style.display="table");const a=document.getElementById("teamStatsBody");a.innerHTML="";const s=Object.entries(e).filter(([e,t])=>t.members.length>0).map(([e,t])=>{const n=[...t.offensive||[],...t.defensive||[],...t.rookie||[]];let a=0,s=0,o=0,l=0;const r=[];return n.forEach(e=>{const t=fullPlayerData.find(t=>t.skaterFullName===e);if(t){const n=getCurrentPlayerStats(e,t.playerId),d=n?.gamesPlayed??t.gamesPlayed??0,i=n?.goals??t.goals??0,c=n?.assists??t.assists??0,m=n?.points??t.points??0,p=n?.todayPoints??0;a+=d,s+=i,o+=c,l+=m,r.push({name:t.skaterFullName,position:t.positionCode||"F",gp:d,g:i,a:c,pts:m,todayPoints:p,playerId:t.playerId,teamAbbrev:t.teamAbbrevs,type:"player"})}}),(t.goalie||[]).forEach(e=>{const t=goalieData.find(t=>t.goalieFullName===e);if(t){const n=getCurrentPlayerStats(e,t.playerId),s=n?.gamesPlayed??t.gamesPlayed??0;let o,d,i,c;n?(d=n.wins||0,i=n.shutouts||0,c=n.otLosses||0,o=5*i+2*d+1*c):(d=t.wins||0,i=t.shutouts||0,c=t.otLosses||0,o=t.points||5*i+2*d+1*c);const m=n?.todayPoints??0;a+=s,l+=o,r.push({name:t.goalieFullName,position:"G",gp:s,g:d,a:i,pts:o,todayPoints:m,playerId:t.playerId,teamAbbrev:t.teamAbbrevs,type:"goalie"})}}),(t.teams||[]).forEach(e=>{const t=teamData.find(t=>t.teamFullName===e);if(t){const n=getCurrentTeamStats(e);let s,o,d,i;n?(s=n.gamesPlayed||0,o=n.wins||0,d=n.otLosses||0,i=n.points||2*o+1*d):(s=t.gamesPlayed||0,o=t.wins||0,d=t.otLosses||0,i=2*o+1*d),a+=s,l+=i,r.push({name:e,position:"TEAM",gp:s,g:o,a:d,pts:i,todayPoints:0,teamAbbrev:n?.teamAbbrev||t.teamAbbrevs,type:"team"})}}),{teamName:e,members:t.members,totalGP:a,totalG:s,totalA:o,totalPTS:l,playerDetails:r}});s.sort((e,t)=>t.totalPTS-e.totalPTS),s.forEach((e,t)=>{const n=t+1;let s="position-badge";1===n?s+=" first":2===n?s+=" second":3===n&&(s+=" third");const o=document.createElement("tr");o.innerHTML=`\n            <td><span class="${s}">${n}</span></td>\n            <td><span class="team-name" onclick="showPlayerDetails('${e.teamName}', ${t})">${e.teamName}</span></td>\n            <td>${e.members.join(", ")}</td>\n            <td>${e.totalGP}</td>\n            <td>${e.totalG}</td>\n            <td>${e.totalA}</td>\n            <td class="stats-pts">${e.totalPTS}</td>\n        `,o.dataset.playerDetails=JSON.stringify(e.playerDetails),o.dataset.teamName=e.teamName,a.appendChild(o)})}function showPlayerDetails(e,t){let n=document.getElementById("teamStatsBody"),a=n?n.rows[t]:null;if(a&&a.dataset.playerDetails||(n=document.getElementById("h2hStandingsBody"),a=n?n.rows[t]:null),!a||!a.dataset.playerDetails)return void console.error("Could not find team data");const s=JSON.parse(a.dataset.playerDetails);document.getElementById("modalTeamName").textContent=`${e} - Détails des joueurs`;const o=document.getElementById("playerDetailsList");o.innerHTML="",s.forEach((e,t)=>{const n=t+1,a=getCurrentPlayerStats(e.name,e.playerId);let s,l;if("team"===e.type){const t=getTeamAbbreviation(e.name);s=t?`teams/${t}.png`:null,l=null}else{const t=a?.headshot,n=getMatchingImage(e.name);s=t||n,l=a?.teamAbbrev?`teams/${a.teamAbbrev}.png`:getTeamLogoPath(e.teamAbbrev)}const r=document.createElement("div");r.className="player-card","team"!==e.type&&e.playerId&&(r.style.cursor="pointer",r.dataset.playerid=e.playerId,r.dataset.playername=e.name,r.dataset.isgoalie="goalie"===e.type,r.addEventListener("click",function(){const e=this.dataset.playerid,t=this.dataset.playername,n="true"===this.dataset.isgoalie;e&&t&&showCareerStats(e,t,n)}));let d,i,c="";s&&(c=`<img src="${s}" alt="${e.name}" class="player-face">`),l&&"team"!==e.type&&(c+=`<img src="${l}" alt="Team logo" class="player-team-logo-overlay">`),"goalie"===e.type?(d="W",i="SO"):"team"===e.type?(d="W",i="OTL"):(d="G",i="A"),r.innerHTML=`\n            <div class="pick-number">${n}</div>\n            <div class="player-photo">\n                ${c||`<div class="no-photo">${e.position}</div>`}\n            </div>\n            <div class="player-info">\n                <div class="player-name-row">\n                    <span class="player-name">${e.name}</span>\n                    ${l&&"team"!==e.type?`<img src="${l}" class="nhl-team-logo" alt="${e.teamAbbrev}">`:""}\n                    <span class="player-position">${e.position}</span>\n                </div>\n                <div class="player-stats-row">\n                    <span>GP: ${e.gp}</span>\n                    <span>${d}: ${e.g}</span>\n                    <span>${i}: ${e.a}</span>\n                    <span>PTS: ${e.pts}</span>\n                </div>\n            </div>\n            <div class="player-points">\n                <div>\n                    <span class="today-points">${e.todayPoints>0?"+":""}${e.todayPoints||0}</span>\n                    <span class="today-label">Today</span>\n                </div>\n                <div>\n                    <span class="total-points">${e.pts}</span>\n                    <span class="pts-label">PTS</span>\n                </div>\n            </div>\n        `,o.appendChild(r)});document.getElementById("playerDetailsModal").classList.add("show")}function getTeamLogoPath(e){if(!e||"null"===e)return null;return`teams/${e.split(",").pop().trim()}.png`}async function showCareerStats(e,t,n=!1){const a=document.getElementById("careerStatsModal"),s=document.getElementById("careerModalHeader"),o=document.getElementById("careerPlayerName"),l=document.getElementById("careerPlayerPosition"),r=document.getElementById("careerPlayerTeam"),d=document.getElementById("playerHeadshotContainer"),i=document.getElementById("loadingSpinner"),c=document.getElementById("careerFilters"),m=document.getElementById("careerStatsTable");a.style.display="block",document.body.style.overflow="hidden",i.style.display="block",s.style.display="none",c.style.display="none",m.innerHTML="",document.getElementById("leagueFilter").value="nhl",document.getElementById("gameTypeFilter").value="regular";try{const t=await fetch(`${BASE_URL}/player-career/${e}`);if(!t.ok)throw new Error("Failed to fetch career stats");const n=await t.json();if(currentCareerData=n,i.style.display="none",s.style.display="flex",c.style.display="flex",o.textContent=n.playerName,l.textContent=n.isGoalie?"🥅 Gardien de but":"🏒 "+(n.position||"Joueur"),n.currentTeam){const e=getTeamLogoPath(n.currentTeam);r.innerHTML=e?`<img src="${e}" alt="${n.currentTeam}"> ${n.currentTeam}`:n.currentTeam}else r.textContent="";if(n.headshot?d.innerHTML=`<img src="${n.headshot}" alt="${n.playerName}">`:d.innerHTML='<div class="no-photo">🏒</div>',document.getElementById("playerHeight").textContent=n.height||"-",document.getElementById("playerWeight").textContent=n.weight?`${n.weight} lb`:"-",n.birthDate){const e=new Date(n.birthDate),t=new Date;let a=t.getFullYear()-e.getFullYear();const s=t.getMonth()-e.getMonth();(s<0||0===s&&t.getDate()<e.getDate())&&a--,document.getElementById("playerBirthDate").textContent=`${n.birthDate} (Âge: ${a})`}else document.getElementById("playerBirthDate").textContent="-";let a="";if(n.birthCity&&(a+=n.birthCity),n.birthStateProvince&&(a+=(a?", ":"")+n.birthStateProvince),n.birthCountry&&(a+=(a?", ":"")+n.birthCountry),document.getElementById("playerBirthPlace").textContent=a||"-",document.getElementById("playerShoots").textContent=n.shootsCatches||"-",n.draftInfo){const e=n.draftInfo,t=`${e.year}, ${e.teamAbbrev} (${e.overallPick}e au total), ${e.round}e ronde, ${e.pickInRound}e choix`;document.getElementById("playerDraft").textContent=t}else document.getElementById("playerDraft").textContent="Non repêché";filterCareerStats()}catch(e){console.error("Error fetching career stats:",e),i.style.display="none",m.innerHTML='<p class="no-stats-message">❌ Erreur lors du chargement des statistiques</p>'}}function filterCareerStats(){if(!currentCareerData)return;const e=document.getElementById("leagueFilter").value,t=document.getElementById("gameTypeFilter").value,n=document.getElementById("careerStatsTable"),a=document.getElementById("statsCountBadge");let s=currentCareerData.seasons.filter(n=>{const a="all"===e||"nhl"===e&&"NHL"===n.league||"other"===e&&"NHL"!==n.league,s="all"===t||"regular"===t&&"regular"===n.gameType||"playoffs"===t&&"playoffs"===n.gameType;return a&&s});if(a.textContent=`${s.length} saison${s.length>1?"s":""} affichée${s.length>1?"s":""}`,0===s.length)return void(n.innerHTML='<p class="no-stats-message">Aucune statistique correspondant aux filtres sélectionnés</p>');let o="<table><thead><tr>";if(currentCareerData.isGoalie?o+='\n            <th class="season-col">Season</th>\n            <th class="league-col">League</th>\n            <th class="team-col">Team</th>\n            <th>GP</th>\n            <th>W</th>\n            <th>L</th>\n            <th>OTL</th>\n            <th>SV%</th>\n            <th>GAA</th>\n            <th>SO</th>\n        ':o+='\n            <th class="season-col">Season</th>\n            <th class="league-col">League</th>\n            <th class="team-col">Team</th>\n            <th>GP</th>\n            <th>G</th>\n            <th>A</th>\n            <th>PTS</th>\n            <th>+/-</th>\n            <th>PIM</th>\n            <th>SOG</th>\n        ',o+="</tr></thead><tbody>",s.forEach(e=>{o+="<tr>",o+=`<td class="season-col">${e.season}</td>`,o+=`<td class="league-col">${e.league}</td>`,o+=`<td class="team-col">${e.team?`<img src="teams/${e.team}.png" alt="${e.team}" title="${e.team}" onerror="this.style.opacity='0.3'">`:"-"}</td>`,o+=`<td>${e.gp}</td>`,currentCareerData.isGoalie?o+=`\n                <td>${e.wins}</td>\n                <td>${e.losses}</td>\n                <td>${e.otLosses}</td>\n                <td>${e.savePct?e.savePct.toFixed(3):"0.000"}</td>\n                <td>${e.gaa?e.gaa.toFixed(2):"0.00"}</td>\n                <td>${e.shutouts}</td>\n            `:o+=`\n                <td>${e.goals}</td>\n                <td>${e.assists}</td>\n                <td>${e.points}</td>\n                <td>${e.plusMinus>=0?"+"+e.plusMinus:e.plusMinus}</td>\n                <td>${e.pim}</td>\n                <td>${e.shots}</td>\n            `,o+="</tr>"}),"nhl"===e&&s.length>0){const e={gp:0,goals:0,assists:0,points:0,plusMinus:0,pim:0,shots:0,wins:0,losses:0,otLosses:0,shutouts:0,gamesForAvg:0,totalGAA:0,totalSVPct:0};if(s.forEach(t=>{e.gp+=t.gp||0,currentCareerData.isGoalie?(e.wins+=t.wins||0,e.losses+=t.losses||0,e.otLosses+=t.otLosses||0,e.shutouts+=t.shutouts||0,t.gaa&&t.gp>0&&(e.totalGAA+=t.gaa*t.gp,e.gamesForAvg+=t.gp),t.savePct&&(e.totalSVPct+=t.savePct)):(e.goals+=t.goals||0,e.assists+=t.assists||0,e.points+=t.points||0,e.plusMinus+=t.plusMinus||0,e.pim+=t.pim||0,e.shots+=t.shots||0)}),o+='<tr class="career-totals-row">',o+='<td colspan="3" class="career-totals-label">Carrière</td>',o+=`<td>${e.gp}</td>`,currentCareerData.isGoalie){const t=e.gamesForAvg>0?(e.totalGAA/e.gamesForAvg).toFixed(2):"0.00",n=s.length>0?(e.totalSVPct/s.length).toFixed(3):"0.000";o+=`\n                <td>${e.wins}</td>\n                <td>${e.losses}</td>\n                <td>${e.otLosses}</td>\n                <td>${n}</td>\n                <td>${t}</td>\n                <td>${e.shutouts}</td>\n            `}else o+=`\n                <td>${e.goals}</td>\n                <td>${e.assists}</td>\n                <td>${e.points}</td>\n                <td>${e.plusMinus>=0?"+"+e.plusMinus:e.plusMinus}</td>\n                <td>${e.pim}</td>\n                <td>${e.shots}</td>\n            `;o+="</tr>"}o+="</tbody></table>",n.innerHTML=o}function closeCareerModal(){document.getElementById("careerStatsModal").style.display="none",document.body.style.overflow="",currentCareerData=null}document.addEventListener("DOMContentLoaded",async()=>{await fetchImageData();const e=await fetch("nhl_filtered_stats.json"),t=await e.json();fullPlayerData=[...t.Top_50_Defenders,...t.Top_100_Offensive_Players,...t.Top_Rookies],goalieData=t.Top_50_Goalies,teamData=t.Teams;try{const e=await fetch(`${BASE_URL}/current-stats`,{cache:"no-store"});currentStats=await e.json(),console.log(`✅ Current stats loaded: ${currentStats.players.length} players, last updated: ${currentStats.lastUpdated}`)}catch(e){console.warn("⚠️ Could not load current stats, using cached data:",e)}try{const e=await fetch(`${BASE_URL}/current-teams`,{cache:"no-store"});currentTeams=await e.json(),console.log(`✅ Current team standings loaded: ${currentTeams.teams.length} teams, last updated: ${currentTeams.lastUpdated}`)}catch(e){console.warn("⚠️ Could not load current team standings, using cached data:",e)}await loadAllUserPools();const n=document.getElementById("playerDetailsModal");document.querySelector(".close").onclick=function(){n.classList.remove("show")},window.onclick=function(e){e.target==n&&n.classList.remove("show")}}),window.onclick=function(e){const t=document.getElementById("careerStatsModal");e.target===t&&closeCareerModal()};
+// ==================== GLOBAL STATE ====================
+let fullPlayerData = [];
+let goalieData = [];
+let teamData = [];
+let imageList = [];
+let currentStats = null;
+let currentTeams = null;
+let currentCareerData = null;
+let allPoolsData = {}; // Store all pools data
+let currentPoolName = null; // Track current pool
+let currentTeamName = null; // Track current team
+
+const BASE_URL = window.location.hostname.includes('localhost')
+    ? 'http://localhost:3000'
+    : window.location.origin;
+
+// ==================== NAVIGATION STATE ====================
+const VIEW_STATES = {
+    POOL_LIST: 'poolList',
+    POOL_STANDINGS: 'poolStandings',
+    TEAM_ROSTER: 'teamRoster'
+};
+
+let currentView = VIEW_STATES.POOL_LIST;
+
+// ==================== INITIALIZATION ====================
+document.addEventListener('DOMContentLoaded', async () => {
+    await fetchImageData();
+
+    // Load player data
+    const response = await fetch('nhl_filtered_stats.json');
+    const data = await response.json();
+    fullPlayerData = [...data.Top_50_Defenders, ...data.Top_100_Offensive_Players, ...data.Top_Rookies];
+    goalieData = data.Top_50_Goalies;
+    teamData = data.Teams;
+
+    // Load current stats
+    try {
+        const statsResponse = await fetch(`${BASE_URL}/current-stats`, { cache: 'no-store' });
+        currentStats = await statsResponse.json();
+        console.log(`✅ Current stats loaded: ${currentStats.players.length} players`);
+    } catch (error) {
+        console.warn('⚠️ Could not load current stats:', error);
+    }
+
+    // Load current team standings
+    try {
+        const teamsResponse = await fetch(`${BASE_URL}/current-teams`, { cache: 'no-store' });
+        currentTeams = await teamsResponse.json();
+        console.log(`✅ Current team standings loaded: ${currentTeams.teams.length} teams`);
+    } catch (error) {
+        console.warn('⚠️ Could not load current team standings:', error);
+    }
+
+    // Load user's pools
+    await loadAllUserPools();
+});
+
+// ==================== DATA LOADING ====================
+async function fetchImageData() {
+    try {
+        const cached = localStorage.getItem('imageList');
+        if (cached) {
+            imageList = JSON.parse(cached);
+            console.log('✅ Images loaded from cache');
+            return;
+        }
+
+        const response = await fetch('images.json', { cache: 'no-store' });
+        imageList = await response.json();
+        localStorage.setItem('imageList', JSON.stringify(imageList));
+        console.log('✅ Images loaded from server');
+    } catch (error) {
+        console.error('❌ Error loading images:', error);
+    }
+}
+
+async function loadAllUserPools() {
+    const username = localStorage.getItem('username');
+    if (!username) {
+        showError('Connexion requise', 'Veuillez vous connecter pour voir vos pools');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${BASE_URL}/draft`, { cache: 'no-store' });
+        allPoolsData = await response.json();
+
+        // Filter pools where user is a member
+        const userPools = [];
+        Object.entries(allPoolsData).forEach(([poolName, poolData]) => {
+            const userTeam = Object.entries(poolData.teams || {}).find(([teamName, teamData]) =>
+                teamData.members && teamData.members.includes(username)
+            );
+            if (userTeam) {
+                userPools.push({
+                    name: poolName,
+                    data: poolData,
+                    userTeam: userTeam[0]
+                });
+            }
+        });
+
+        if (userPools.length === 0) {
+            showError('Aucun pool trouvé', 'Vous n\'êtes membre d\'aucun pool.');
+            return;
+        }
+
+        renderPoolList(userPools);
+    } catch (error) {
+        console.error('Error loading pools:', error);
+        showError('Erreur', 'Impossible de charger vos pools');
+    }
+}
+
+// ==================== VIEW RENDERING ====================
+
+// Level 1: Pool List View
+function renderPoolList(pools) {
+    currentView = VIEW_STATES.POOL_LIST;
+    currentPoolName = null;
+    currentTeamName = null;
+
+    // Update UI
+    document.getElementById('pageTitle').textContent = 'Classement';
+    document.getElementById('breadcrumb').style.display = 'none';
+
+    // Hide all views
+    document.getElementById('poolListView').style.display = 'block';
+    document.getElementById('poolStandingsView').style.display = 'none';
+    document.getElementById('teamRosterView').style.display = 'none';
+
+    // Hide skeleton, show content
+    document.getElementById('poolListSkeleton').style.display = 'none';
+    const poolList = document.getElementById('poolList');
+    poolList.style.display = 'flex';
+    poolList.innerHTML = '';
+
+    pools.forEach(pool => {
+        const poolMode = pool.data.poolMode || 'cumulative';
+        const playerCount = Object.values(pool.data.teams).reduce((sum, team) =>
+            sum + (team.members ? team.members.length : 0), 0
+        );
+
+        const card = document.createElement('div');
+        card.className = 'pool-card';
+        card.onclick = () => showPoolStandings(pool.name);
+
+        card.innerHTML = `
+            <div class="pool-icon">🏒</div>
+            <div class="pool-info">
+                <div class="pool-name">${pool.name}</div>
+                <div class="pool-meta">
+                    <span class="pool-badge ${poolMode === 'head-to-head' ? 'type-h2h' : 'type-cumulative'}">
+                        ${poolMode === 'head-to-head' ? 'H2H' : 'Cumulatif'}
+                    </span>
+                    <span class="pool-badge players">${playerCount} joueurs</span>
+                </div>
+            </div>
+            <div class="pool-arrow">›</div>
+        `;
+
+        poolList.appendChild(card);
+    });
+}
+
+// Level 2: Pool Standings View
+function showPoolStandings(poolName) {
+    currentView = VIEW_STATES.POOL_STANDINGS;
+    currentPoolName = poolName;
+    currentTeamName = null;
+
+    const poolData = allPoolsData[poolName];
+    if (!poolData) return;
+
+    // Update UI
+    document.getElementById('pageTitle').textContent = poolName;
+    document.getElementById('breadcrumb').style.display = 'flex';
+    document.getElementById('poolBreadcrumb').textContent = poolName;
+    document.getElementById('poolBreadcrumb').style.display = 'inline';
+    document.getElementById('poolBreadcrumbSep').style.display = 'inline';
+    document.getElementById('teamBreadcrumb').style.display = 'none';
+    document.getElementById('teamBreadcrumbSep').style.display = 'none';
+
+    // Hide other views
+    document.getElementById('poolListView').style.display = 'none';
+    document.getElementById('poolStandingsView').style.display = 'block';
+    document.getElementById('teamRosterView').style.display = 'none';
+
+    // Show skeleton initially
+    document.getElementById('standingsSkeleton').style.display = 'flex';
+    document.getElementById('standingsList').style.display = 'none';
+
+    // Render standings after a short delay to show skeleton
+    setTimeout(() => {
+        renderPoolStandings(poolData, poolName);
+    }, 100);
+}
+
+function renderPoolStandings(poolData, poolName) {
+    const poolMode = poolData.poolMode || 'cumulative';
+    const standingsList = document.getElementById('standingsList');
+    standingsList.innerHTML = '';
+
+    // Calculate standings
+    let standings = [];
+
+    if (poolMode === 'head-to-head') {
+        // H2H mode: use wins/losses
+        const h2hData = poolData.h2hData || {};
+        const h2hStandings = h2hData.standings || {};
+
+        standings = Object.entries(poolData.teams)
+            .filter(([teamName, teamData]) => teamData.members && teamData.members.length > 0)
+            .map(([teamName, teamData]) => {
+                const h2hStats = h2hStandings[teamName] || { wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0 };
+                return {
+                    teamName,
+                    members: teamData.members,
+                    wins: h2hStats.wins,
+                    losses: h2hStats.losses,
+                    ties: h2hStats.ties,
+                    pointsFor: h2hStats.pointsFor,
+                    pointsAgainst: h2hStats.pointsAgainst,
+                    points: h2hStats.pointsFor
+                };
+            })
+            .sort((a, b) => {
+                if (b.wins !== a.wins) return b.wins - a.wins;
+                return (b.pointsFor - b.pointsAgainst) - (a.pointsFor - a.pointsAgainst);
+            });
+    } else {
+        // Cumulative mode: use total points
+        standings = Object.entries(poolData.teams)
+            .filter(([teamName, teamData]) => teamData.members && teamData.members.length > 0)
+            .map(([teamName, teamData]) => {
+                const teamPoints = calculateTeamPoints(teamData);
+                return {
+                    teamName,
+                    members: teamData.members,
+                    ...teamPoints
+                };
+            })
+            .sort((a, b) => b.points - a.points);
+    }
+
+    // Render standing cards
+    standings.forEach((standing, index) => {
+        const rank = index + 1;
+        const card = document.createElement('div');
+        card.className = 'standing-card';
+        card.onclick = () => showTeamRoster(poolName, standing.teamName);
+
+        let rankClass = 'rank-other';
+        let rankLabel = `${rank}e`;
+        if (rank === 1) {
+            rankClass = 'rank-1';
+            rankLabel = '1er';
+        } else if (rank === 2) {
+            rankClass = 'rank-2';
+            rankLabel = '2e';
+        } else if (rank === 3) {
+            rankClass = 'rank-3';
+            rankLabel = '3e';
+        }
+
+        let statsHTML = '';
+        if (poolMode === 'head-to-head') {
+            statsHTML = `
+                <div class="stat-item">
+                    <span class="stat-value">${standing.gamesPlayed || 0}</span>
+                    <span class="stat-label">PJ</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" style="color: #4caf50;">${standing.wins || 0}</span>
+                    <span class="stat-label">V</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" style="color: #f44336;">${standing.losses || 0}</span>
+                    <span class="stat-label">D</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">${standing.ties || 0}</span>
+                    <span class="stat-label">N</span>
+                </div>
+            `;
+        } else {
+            statsHTML = `
+                <div class="stat-item">
+                    <span class="stat-value">${standing.gamesPlayed || 0}</span>
+                    <span class="stat-label">PJ</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">${standing.goals || 0}</span>
+                    <span class="stat-label">B</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">${standing.assists || 0}</span>
+                    <span class="stat-label">P</span>
+                </div>
+            `;
+        }
+
+        card.innerHTML = `
+            <div class="rank-badge ${rankClass}">${rankLabel}</div>
+            <div class="standing-info">
+                <div class="standing-name">${standing.members.join(', ')}</div>
+                <div class="standing-stats">
+                    ${statsHTML}
+                </div>
+            </div>
+            <div class="standing-points">
+                <div class="points-value">${standing.points || 0}</div>
+                <div class="points-label">pts</div>
+            </div>
+            <div class="standing-arrow">›</div>
+        `;
+
+        standingsList.appendChild(card);
+    });
+
+    // Hide skeleton, show content
+    document.getElementById('standingsSkeleton').style.display = 'none';
+    standingsList.style.display = 'flex';
+}
+
+// Level 3: Team Roster View
+function showTeamRoster(poolName, teamName) {
+    currentView = VIEW_STATES.TEAM_ROSTER;
+    currentPoolName = poolName;
+    currentTeamName = teamName;
+
+    const poolData = allPoolsData[poolName];
+    const teamData = poolData.teams[teamName];
+    if (!teamData) return;
+
+    // Update UI
+    document.getElementById('pageTitle').textContent = teamName;
+    document.getElementById('breadcrumb').style.display = 'flex';
+    document.getElementById('poolBreadcrumb').textContent = poolName;
+    document.getElementById('poolBreadcrumb').style.display = 'inline';
+    document.getElementById('poolBreadcrumb').onclick = () => showPoolStandings(poolName);
+    document.getElementById('poolBreadcrumbSep').style.display = 'inline';
+    document.getElementById('teamBreadcrumb').textContent = teamName;
+    document.getElementById('teamBreadcrumb').style.display = 'inline';
+    document.getElementById('teamBreadcrumbSep').style.display = 'inline';
+
+    // Hide other views
+    document.getElementById('poolListView').style.display = 'none';
+    document.getElementById('poolStandingsView').style.display = 'none';
+    document.getElementById('teamRosterView').style.display = 'block';
+
+    // Show skeleton initially
+    document.getElementById('rosterSkeleton').style.display = 'flex';
+    document.getElementById('rosterList').style.display = 'none';
+
+    // Render roster after short delay
+    setTimeout(() => {
+        renderTeamRoster(teamData);
+    }, 100);
+}
+
+function renderTeamRoster(teamData) {
+    const rosterList = document.getElementById('rosterList');
+    rosterList.innerHTML = '';
+
+    const players = [];
+
+    // Add offensive players
+    (teamData.offensive || []).forEach(playerName => {
+        const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
+        if (playerData) {
+            const stats = getCurrentPlayerStats(playerName, playerData.playerId);
+            players.push({
+                name: playerName,
+                position: playerData.positionCode || 'F',
+                type: 'player',
+                playerId: playerData.playerId,
+                stats: stats,
+                cached: playerData,
+                teamAbbrev: stats?.teamAbbrev || playerData.teamAbbrevs
+            });
+        }
+    });
+
+    // Add defensive players
+    (teamData.defensive || []).forEach(playerName => {
+        const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
+        if (playerData) {
+            const stats = getCurrentPlayerStats(playerName, playerData.playerId);
+            players.push({
+                name: playerName,
+                position: playerData.positionCode || 'D',
+                type: 'player',
+                playerId: playerData.playerId,
+                stats: stats,
+                cached: playerData,
+                teamAbbrev: stats?.teamAbbrev || playerData.teamAbbrevs
+            });
+        }
+    });
+
+    // Add goalies
+    (teamData.goalie || []).forEach(playerName => {
+        const playerData = goalieData.find(p => p.goalieFullName === playerName);
+        if (playerData) {
+            const stats = getCurrentPlayerStats(playerName, playerData.playerId);
+            players.push({
+                name: playerName,
+                position: 'G',
+                type: 'goalie',
+                playerId: playerData.playerId,
+                stats: stats,
+                cached: playerData,
+                teamAbbrev: stats?.teamAbbrev || playerData.teamAbbrevs
+            });
+        }
+    });
+
+    // Add rookies
+    (teamData.rookie || []).forEach(playerName => {
+        const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
+        if (playerData) {
+            const stats = getCurrentPlayerStats(playerName, playerData.playerId);
+            players.push({
+                name: playerName,
+                position: playerData.positionCode || 'R',
+                type: 'player',
+                playerId: playerData.playerId,
+                stats: stats,
+                cached: playerData,
+                teamAbbrev: stats?.teamAbbrev || playerData.teamAbbrevs
+            });
+        }
+    });
+
+    // Add teams
+    (teamData.teams || []).forEach(teamName => {
+        const teamInfo = teamData.find(t => t.teamFullName === teamName);
+        if (teamInfo) {
+            const stats = getCurrentTeamStats(teamName);
+            players.push({
+                name: teamName,
+                position: 'TEAM',
+                type: 'team',
+                stats: stats,
+                cached: teamInfo,
+                teamAbbrev: stats?.teamAbbrev || teamInfo.teamAbbrevs
+            });
+        }
+    });
+
+    // Render player cards
+    players.forEach(player => {
+        const card = document.createElement('div');
+        card.className = 'roster-card';
+
+        // Only make clickable if it has a playerId (not teams)
+        if (player.playerId) {
+            card.classList.add('clickable');
+            card.onclick = () => showCareerStats(player.playerId, player.name, player.type === 'goalie');
+        }
+
+        // Get player image
+        let imageHTML = '';
+        if (player.type === 'team') {
+            const teamLogo = `teams/${player.teamAbbrev}.png`;
+            imageHTML = `<img src="${teamLogo}" alt="${player.name}" onerror="this.src='teams/NHL.png'">`;
+        } else {
+            const headshot = player.stats?.headshot || getMatchingImage(player.name);
+            if (headshot) {
+                imageHTML = `<img src="${headshot}" alt="${player.name}">`;
+                if (player.teamAbbrev) {
+                    imageHTML += `<img src="teams/${player.teamAbbrev}.png" class="player-team-logo-overlay" alt="${player.teamAbbrev}">`;
+                }
+            } else {
+                imageHTML = `<div class="no-photo">${player.position}</div>`;
+            }
+        }
+
+        // Calculate points
+        let points = 0;
+        let gp = 0;
+        let stat1 = 0;
+        let stat2 = 0;
+        let stat1Label = 'B';
+        let stat2Label = 'P';
+
+        if (player.type === 'goalie') {
+            gp = player.stats?.gamesPlayed || player.cached.gamesPlayed || 0;
+            const wins = player.stats?.wins || player.cached.wins || 0;
+            const shutouts = player.stats?.shutouts || player.cached.shutouts || 0;
+            const otLosses = player.stats?.otLosses || player.cached.otLosses || 0;
+            points = 5 * shutouts + 2 * wins + otLosses;
+            stat1 = wins;
+            stat2 = shutouts;
+            stat1Label = 'V';
+            stat2Label = 'BL';
+        } else if (player.type === 'team') {
+            gp = player.stats?.gamesPlayed || player.cached.gamesPlayed || 0;
+            const wins = player.stats?.wins || player.cached.wins || 0;
+            const otLosses = player.stats?.otLosses || player.cached.otLosses || 0;
+            points = 2 * wins + otLosses;
+            stat1 = wins;
+            stat2 = otLosses;
+            stat1Label = 'V';
+            stat2Label = 'DP';
+        } else {
+            gp = player.stats?.gamesPlayed || player.cached.gamesPlayed || 0;
+            stat1 = player.stats?.goals || player.cached.goals || 0;
+            stat2 = player.stats?.assists || player.cached.assists || 0;
+            points = player.stats?.points || player.cached.points || 0;
+        }
+
+        card.innerHTML = `
+            <div class="player-avatar">
+                ${imageHTML}
+            </div>
+            <div class="roster-info">
+                <div class="player-name-row">
+                    <div class="player-name">${player.name}</div>
+                    <div class="player-position">${player.position}</div>
+                </div>
+                <div class="player-stats-row">
+                    <span>PJ: ${gp}</span>
+                    <span>${stat1Label}: ${stat1}</span>
+                    <span>${stat2Label}: ${stat2}</span>
+                </div>
+            </div>
+            <div class="roster-points">
+                <div class="roster-points-value">${points}</div>
+                <div class="roster-points-label">pts</div>
+            </div>
+        `;
+
+        rosterList.appendChild(card);
+    });
+
+    // Hide skeleton, show content
+    document.getElementById('rosterSkeleton').style.display = 'none';
+    rosterList.style.display = 'flex';
+}
+
+// ==================== NAVIGATION HELPERS ====================
+function showPoolList() {
+    const username = localStorage.getItem('username');
+    if (!username) return;
+
+    // Reload pools to get fresh data
+    loadAllUserPools();
+}
+
+// ==================== UTILITY FUNCTIONS ====================
+function getMatchingImage(playerName) {
+    const cleanName = playerName.replace(/\s/g, '_');
+    const match = imageList.find(img =>
+        img.replace(/^faces\//, '').replace(/_\d{1,2}_\d{1,2}_\d{4}|_away/g, '').replace('.png', '') === cleanName
+    );
+    return match || null;
+}
+
+function getCurrentPlayerStats(playerName, playerId) {
+    if (!currentStats || !currentStats.players) return null;
+
+    // Try to find by playerId first
+    if (playerId) {
+        const byId = currentStats.players.find(p => p.playerId === playerId);
+        if (byId) return byId;
+    }
+
+    // Fallback to name match
+    return currentStats.players.find(p => p.playerName === playerName);
+}
+
+function getCurrentTeamStats(teamName) {
+    if (!currentTeams || !currentTeams.teams) return null;
+    return currentTeams.teams.find(t => t.teamFullName === teamName);
+}
+
+function calculateTeamPoints(teamData) {
+    let totalGP = 0;
+    let totalGoals = 0;
+    let totalAssists = 0;
+    let totalPoints = 0;
+
+    // Process skaters
+    ['offensive', 'defensive', 'rookie'].forEach(position => {
+        (teamData[position] || []).forEach(playerName => {
+            const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
+            if (playerData) {
+                const stats = getCurrentPlayerStats(playerName, playerData.playerId);
+                totalGP += stats?.gamesPlayed || playerData.gamesPlayed || 0;
+                totalGoals += stats?.goals || playerData.goals || 0;
+                totalAssists += stats?.assists || playerData.assists || 0;
+                totalPoints += stats?.points || playerData.points || 0;
+            }
+        });
+    });
+
+    // Process goalies
+    (teamData.goalie || []).forEach(playerName => {
+        const playerData = goalieData.find(p => p.goalieFullName === playerName);
+        if (playerData) {
+            const stats = getCurrentPlayerStats(playerName, playerData.playerId);
+            const gp = stats?.gamesPlayed || playerData.gamesPlayed || 0;
+            const wins = stats?.wins || playerData.wins || 0;
+            const shutouts = stats?.shutouts || playerData.shutouts || 0;
+            const otLosses = stats?.otLosses || playerData.otLosses || 0;
+            const points = 5 * shutouts + 2 * wins + otLosses;
+
+            totalGP += gp;
+            totalPoints += points;
+        }
+    });
+
+    // Process teams
+    (teamData.teams || []).forEach(teamName => {
+        const teamInfo = teamData.find(t => t.teamFullName === teamName);
+        if (teamInfo) {
+            const stats = getCurrentTeamStats(teamName);
+            const gp = stats?.gamesPlayed || teamInfo.gamesPlayed || 0;
+            const wins = stats?.wins || teamInfo.wins || 0;
+            const otLosses = stats?.otLosses || teamInfo.otLosses || 0;
+            const points = 2 * wins + otLosses;
+
+            totalGP += gp;
+            totalPoints += points;
+        }
+    });
+
+    return {
+        gamesPlayed: totalGP,
+        goals: totalGoals,
+        assists: totalAssists,
+        points: totalPoints
+    };
+}
+
+function showError(title, message) {
+    const poolList = document.getElementById('poolList');
+    poolList.style.display = 'block';
+    poolList.innerHTML = `
+        <div style="text-align: center; padding: 60px 20px; color: #999;">
+            <div style="font-size: 4rem; margin-bottom: 20px;">📊</div>
+            <h2 style="font-size: 1.8rem; color: #333; margin-bottom: 12px;">${title}</h2>
+            <p style="font-size: 1.1rem; color: #666;">${message}</p>
+        </div>
+    `;
+    document.getElementById('poolListSkeleton').style.display = 'none';
+}
+
+// ==================== CAREER STATS MODAL ====================
+async function showCareerStats(playerId, playerName, isGoalie = false) {
+    const modal = document.getElementById('careerStatsModal');
+    const header = document.getElementById('careerModalHeader');
+    const spinner = document.getElementById('loadingSpinner');
+    const filters = document.getElementById('careerFilters');
+    const statsTable = document.getElementById('careerStatsTable');
+
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+
+    // Show spinner
+    spinner.style.display = 'block';
+    header.style.display = 'none';
+    filters.style.display = 'none';
+    statsTable.innerHTML = '';
+
+    // Reset filters
+    document.getElementById('leagueFilter').value = 'nhl';
+    document.getElementById('gameTypeFilter').value = 'regular';
+
+    try {
+        const response = await fetch(`${BASE_URL}/player-career/${playerId}`);
+        if (!response.ok) throw new Error('Failed to fetch career stats');
+
+        const data = await response.json();
+        currentCareerData = data;
+
+        // Hide spinner, show content
+        spinner.style.display = 'none';
+        header.style.display = 'flex';
+        filters.style.display = 'flex';
+
+        // Populate header
+        document.getElementById('careerPlayerName').textContent = data.playerName;
+        document.getElementById('careerPlayerPosition').textContent = data.isGoalie ? '🥅 Gardien de but' : '🏒 ' + (data.position || 'Joueur');
+
+        if (data.currentTeam) {
+            const teamLogo = `teams/${data.currentTeam.split(' ').pop()}.png`;
+            document.getElementById('careerPlayerTeam').innerHTML = `<img src="${teamLogo}" alt="${data.currentTeam}" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;">${data.currentTeam}`;
+        } else {
+            document.getElementById('careerPlayerTeam').textContent = '';
+        }
+
+        // Populate headshot
+        const headshotContainer = document.getElementById('playerHeadshotContainer');
+        if (data.headshot) {
+            headshotContainer.innerHTML = `<img src="${data.headshot}" alt="${data.playerName}">`;
+        } else {
+            headshotContainer.innerHTML = '<div class="no-photo">🏒</div>';
+        }
+
+        // Populate bio
+        document.getElementById('playerHeight').textContent = data.height || '-';
+        document.getElementById('playerWeight').textContent = data.weight ? `${data.weight} lb` : '-';
+
+        if (data.birthDate) {
+            const birthDate = new Date(data.birthDate);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            document.getElementById('playerBirthDate').textContent = `${data.birthDate} (Âge: ${age})`;
+        } else {
+            document.getElementById('playerBirthDate').textContent = '-';
+        }
+
+        let birthPlace = '';
+        if (data.birthCity) birthPlace += data.birthCity;
+        if (data.birthStateProvince) birthPlace += (birthPlace ? ', ' : '') + data.birthStateProvince;
+        if (data.birthCountry) birthPlace += (birthPlace ? ', ' : '') + data.birthCountry;
+        document.getElementById('playerBirthPlace').textContent = birthPlace || '-';
+
+        document.getElementById('playerShoots').textContent = data.shootsCatches || '-';
+
+        if (data.draftInfo) {
+            const draft = data.draftInfo;
+            document.getElementById('playerDraft').textContent = `${draft.year}, ${draft.teamAbbrev} (${draft.overallPick}e au total), ${draft.round}e ronde, ${draft.pickInRound}e choix`;
+        } else {
+            document.getElementById('playerDraft').textContent = 'Non repêché';
+        }
+
+        // Render stats table
+        filterCareerStats();
+
+    } catch (error) {
+        console.error('Error fetching career stats:', error);
+        spinner.style.display = 'none';
+        statsTable.innerHTML = '<p class="no-stats-message">❌ Erreur lors du chargement des statistiques</p>';
+    }
+}
+
+function filterCareerStats() {
+    if (!currentCareerData) return;
+
+    const leagueFilter = document.getElementById('leagueFilter').value;
+    const gameTypeFilter = document.getElementById('gameTypeFilter').value;
+    const statsTable = document.getElementById('careerStatsTable');
+    const countBadge = document.getElementById('statsCountBadge');
+
+    // Filter seasons
+    let filteredSeasons = currentCareerData.seasons.filter(season => {
+        const leagueMatch = leagueFilter === 'all' ||
+                           (leagueFilter === 'nhl' && season.league === 'NHL') ||
+                           (leagueFilter === 'other' && season.league !== 'NHL');
+        const gameTypeMatch = gameTypeFilter === 'all' ||
+                             (gameTypeFilter === 'regular' && season.gameType === 'regular') ||
+                             (gameTypeFilter === 'playoffs' && season.gameType === 'playoffs');
+        return leagueMatch && gameTypeMatch;
+    });
+
+    countBadge.textContent = `${filteredSeasons.length} saison${filteredSeasons.length > 1 ? 's' : ''} affichée${filteredSeasons.length > 1 ? 's' : ''}`;
+
+    if (filteredSeasons.length === 0) {
+        statsTable.innerHTML = '<p class="no-stats-message">Aucune statistique correspondant aux filtres sélectionnés</p>';
+        return;
+    }
+
+    // Build table
+    let html = '<table><thead><tr>';
+
+    if (currentCareerData.isGoalie) {
+        html += `
+            <th class="season-col">Season</th>
+            <th class="league-col">League</th>
+            <th class="team-col">Team</th>
+            <th>GP</th>
+            <th>W</th>
+            <th>L</th>
+            <th>OTL</th>
+            <th>SV%</th>
+            <th>GAA</th>
+            <th>SO</th>
+        `;
+    } else {
+        html += `
+            <th class="season-col">Season</th>
+            <th class="league-col">League</th>
+            <th class="team-col">Team</th>
+            <th>GP</th>
+            <th>G</th>
+            <th>A</th>
+            <th>PTS</th>
+            <th>+/-</th>
+            <th>PIM</th>
+            <th>SOG</th>
+        `;
+    }
+
+    html += '</tr></thead><tbody>';
+
+    filteredSeasons.forEach(season => {
+        html += '<tr>';
+        html += `<td class="season-col">${season.season}</td>`;
+        html += `<td class="league-col">${season.league}</td>`;
+        html += `<td class="team-col">${season.team ? `<img src="teams/${season.team}.png" alt="${season.team}" title="${season.team}" onerror="this.style.opacity='0.3'">` : '-'}</td>`;
+        html += `<td>${season.gp}</td>`;
+
+        if (currentCareerData.isGoalie) {
+            html += `
+                <td>${season.wins}</td>
+                <td>${season.losses}</td>
+                <td>${season.otLosses}</td>
+                <td>${season.savePct ? season.savePct.toFixed(3) : '0.000'}</td>
+                <td>${season.gaa ? season.gaa.toFixed(2) : '0.00'}</td>
+                <td>${season.shutouts}</td>
+            `;
+        } else {
+            html += `
+                <td>${season.goals}</td>
+                <td>${season.assists}</td>
+                <td>${season.points}</td>
+                <td>${season.plusMinus >= 0 ? '+' + season.plusMinus : season.plusMinus}</td>
+                <td>${season.pim}</td>
+                <td>${season.shots}</td>
+            `;
+        }
+
+        html += '</tr>';
+    });
+
+    // Add career totals for NHL only
+    if (leagueFilter === 'nhl' && filteredSeasons.length > 0) {
+        const totals = {
+            gp: 0, goals: 0, assists: 0, points: 0, plusMinus: 0, pim: 0, shots: 0,
+            wins: 0, losses: 0, otLosses: 0, shutouts: 0, gamesForAvg: 0, totalGAA: 0, totalSVPct: 0
+        };
+
+        filteredSeasons.forEach(season => {
+            totals.gp += season.gp || 0;
+            if (currentCareerData.isGoalie) {
+                totals.wins += season.wins || 0;
+                totals.losses += season.losses || 0;
+                totals.otLosses += season.otLosses || 0;
+                totals.shutouts += season.shutouts || 0;
+                if (season.gaa && season.gp > 0) {
+                    totals.totalGAA += season.gaa * season.gp;
+                    totals.gamesForAvg += season.gp;
+                }
+                if (season.savePct) {
+                    totals.totalSVPct += season.savePct;
+                }
+            } else {
+                totals.goals += season.goals || 0;
+                totals.assists += season.assists || 0;
+                totals.points += season.points || 0;
+                totals.plusMinus += season.plusMinus || 0;
+                totals.pim += season.pim || 0;
+                totals.shots += season.shots || 0;
+            }
+        });
+
+        html += '<tr class="career-totals-row">';
+        html += '<td colspan="3" class="career-totals-label">Carrière</td>';
+        html += `<td>${totals.gp}</td>`;
+
+        if (currentCareerData.isGoalie) {
+            const avgGAA = totals.gamesForAvg > 0 ? (totals.totalGAA / totals.gamesForAvg).toFixed(2) : '0.00';
+            const avgSVPct = filteredSeasons.length > 0 ? (totals.totalSVPct / filteredSeasons.length).toFixed(3) : '0.000';
+            html += `
+                <td>${totals.wins}</td>
+                <td>${totals.losses}</td>
+                <td>${totals.otLosses}</td>
+                <td>${avgSVPct}</td>
+                <td>${avgGAA}</td>
+                <td>${totals.shutouts}</td>
+            `;
+        } else {
+            html += `
+                <td>${totals.goals}</td>
+                <td>${totals.assists}</td>
+                <td>${totals.points}</td>
+                <td>${totals.plusMinus >= 0 ? '+' + totals.plusMinus : totals.plusMinus}</td>
+                <td>${totals.pim}</td>
+                <td>${totals.shots}</td>
+            `;
+        }
+
+        html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+    statsTable.innerHTML = html;
+}
+
+function closeCareerModal() {
+    document.getElementById('careerStatsModal').style.display = 'none';
+    document.body.style.overflow = '';
+    currentCareerData = null;
+}
+
+// Close modal on outside click
+window.onclick = function(event) {
+    const modal = document.getElementById('careerStatsModal');
+    if (event.target === modal) {
+        closeCareerModal();
+    }
+};
