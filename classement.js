@@ -103,16 +103,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.warn("⚠️ Could not load current team standings, using cached data:", error);
     }
 
-    // Listen for active pool changes
-    $(document).on('activePoolChanged', async (event, poolName) => {
-        await loadClassementForPool(poolName);
-    });
-
-    // Load classement for initially selected pool
-    const activePool = getActivePool();
-    if (activePool) {
-        await loadClassementForPool(activePool);
-    }
+    // Load classement for all user's pools
+    await loadAllUserPools();
 
     // Modal close handlers
     const modal = document.getElementById("playerDetailsModal");
@@ -130,6 +122,239 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // Load classement for a specific pool
+// Load all pools the user is a member of
+async function loadAllUserPools() {
+    const username = localStorage.getItem("username");
+    if (!username) {
+        document.getElementById("noPoolSelected").style.display = "block";
+        document.getElementById("noPoolSelected").innerHTML = `
+            <div class="empty-state-icon">🔒</div>
+            <h2>Connexion requise</h2>
+            <p>Veuillez vous connecter pour voir vos pools</p>
+        `;
+        return;
+    }
+
+    try {
+        // Load draft data
+        const draftResponse = await fetch(`${BASE_URL}/draft`, { cache: "no-store" });
+        const draftData = await draftResponse.json();
+
+        // Find all pools where user is a member
+        const userPools = [];
+        Object.entries(draftData).forEach(([poolName, poolData]) => {
+            const userTeam = Object.entries(poolData.teams || {}).find(
+                ([teamName, teamData]) =>
+                    teamData.members && teamData.members.includes(username)
+            );
+            if (userTeam) {
+                userPools.push({
+                    name: poolName,
+                    data: poolData,
+                    userTeam: userTeam[0]
+                });
+            }
+        });
+
+        if (userPools.length === 0) {
+            document.getElementById("noPoolSelected").style.display = "block";
+            document.getElementById("noPoolSelected").innerHTML = `
+                <div class="empty-state-icon">📊</div>
+                <h2>Aucun pool trouvé</h2>
+                <p>Vous n'êtes membre d'aucun pool. Créez-en un ou rejoignez un pool existant.</p>
+                <a href="pool.html" class="btn-primary" style="margin-top: 20px; padding: 12px 24px; background: #ff2e2e; color: white; text-decoration: none; border-radius: 8px; display: inline-block;">Gérer mes pools</a>
+            `;
+            document.getElementById("cumulativeContent").style.display = "none";
+            document.getElementById("h2hContent").style.display = "none";
+            return;
+        }
+
+        // Hide "no pool" message
+        document.getElementById("noPoolSelected").style.display = "none";
+
+        // Render all pools
+        renderAllPools(userPools);
+
+    } catch (error) {
+        console.error("Erreur lors du chargement des pools:", error);
+        document.getElementById("noPoolSelected").style.display = "block";
+        document.getElementById("noPoolSelected").innerHTML = `
+            <div class="empty-state-icon">⚠️</div>
+            <h2>Erreur</h2>
+            <p>Impossible de charger vos pools. Veuillez réessayer.</p>
+        `;
+    }
+}
+
+// Render all user pools
+function renderAllPools(userPools) {
+    // Hide old single-pool containers
+    document.getElementById("cumulativeContent").style.display = "none";
+    document.getElementById("h2hContent").style.display = "none";
+
+    // Update page header
+    const pageHeader = document.querySelector(".page-header");
+    if (pageHeader) {
+        pageHeader.querySelector("h1").textContent = "Mes Classements";
+        pageHeader.querySelector("p").textContent = `${userPools.length} pool${userPools.length > 1 ? 's' : ''}`;
+    }
+
+    // Create container for all pools
+    let allPoolsContainer = document.getElementById("allPoolsContainer");
+    if (!allPoolsContainer) {
+        allPoolsContainer = document.createElement("div");
+        allPoolsContainer.id = "allPoolsContainer";
+        allPoolsContainer.style.cssText = "display: block;";
+        document.querySelector(".container").appendChild(allPoolsContainer);
+    }
+
+    // Clear container
+    allPoolsContainer.innerHTML = "";
+
+    // Render each pool
+    userPools.forEach(pool => {
+        const poolSection = document.createElement("div");
+        poolSection.className = "pool-section";
+        poolSection.style.cssText = "margin-bottom: 40px; background: #1a1a2e; border-radius: 12px; padding: 24px; border: 1px solid rgba(255, 255, 255, 0.1);";
+
+        const poolMode = pool.data.poolMode || 'cumulative';
+        const poolHeader = document.createElement("div");
+        poolHeader.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid rgba(255, 46, 46, 0.3);";
+        poolHeader.innerHTML = `
+            <div>
+                <h2 style="margin: 0; font-size: 24px; color: #ffffff;">${pool.name}</h2>
+                <p style="margin: 4px 0 0 0; font-size: 14px; color: rgba(255, 255, 255, 0.6);">
+                    ${poolMode === 'head-to-head' ? '⚔️ Head-to-Head' : '📊 Cumulatif'} •
+                    ${Object.keys(pool.data.teams).length} équipes •
+                    Votre équipe: <span style="color: #ff2e2e; font-weight: bold;">${pool.userTeam}</span>
+                </p>
+            </div>
+        `;
+
+        poolSection.appendChild(poolHeader);
+
+        // Render based on pool mode
+        if (poolMode === 'head-to-head') {
+            poolSection.appendChild(renderH2HPoolSection(pool.data, pool.name));
+        } else {
+            poolSection.appendChild(renderCumulativePoolSection(pool.data));
+        }
+
+        allPoolsContainer.appendChild(poolSection);
+    });
+}
+
+// Render cumulative pool section
+function renderCumulativePoolSection(poolData) {
+    const container = document.createElement("div");
+    const table = document.createElement("table");
+    table.className = "team-stats-table";
+    table.style.cssText = "width: 100%; border-collapse: collapse;";
+
+    // Calculate team stats
+    const teamStatsArray = Object.entries(poolData.teams).map(([teamName, teamData]) => {
+        const stats = calculateTeamPoints(teamData);
+        return {
+            teamName,
+            members: teamData.members || [],
+            ...stats
+        };
+    });
+
+    // Sort by points
+    teamStatsArray.sort((a, b) => b.points - a.points);
+
+    table.innerHTML = `
+        <thead>
+            <tr style="background: rgba(255, 46, 46, 0.1); border-bottom: 2px solid rgba(255, 46, 46, 0.3);">
+                <th style="padding: 12px; text-align: left;">POS</th>
+                <th style="padding: 12px; text-align: left;">Équipe</th>
+                <th style="padding: 12px; text-align: left;">Membres</th>
+                <th style="padding: 12px; text-align: center;">GP</th>
+                <th style="padding: 12px; text-align: center;">G</th>
+                <th style="padding: 12px; text-align: center;">A</th>
+                <th style="padding: 12px; text-align: center;">PTS</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${teamStatsArray.map((team, index) => `
+                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);" onclick="openTeamModal('${team.teamName}', '${JSON.stringify(poolData.teams[team.teamName]).replace(/'/g, "&#39;")}')" class="team-row">
+                    <td style="padding: 12px; font-weight: bold; color: ${index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : 'rgba(255,255,255,0.9)'};">${index + 1}</td>
+                    <td style="padding: 12px; font-weight: bold; color: #ffffff;">${team.teamName}</td>
+                    <td style="padding: 12px; color: rgba(255, 255, 255, 0.7); font-size: 14px;">${team.members.join(', ')}</td>
+                    <td style="padding: 12px; text-align: center; color: rgba(255, 255, 255, 0.7);">${team.gamesPlayed}</td>
+                    <td style="padding: 12px; text-align: center; color: rgba(255, 255, 255, 0.7);">${team.goals}</td>
+                    <td style="padding: 12px; text-align: center; color: rgba(255, 255, 255, 0.7);">${team.assists}</td>
+                    <td style="padding: 12px; text-align: center; font-weight: bold; color: #ff2e2e; font-size: 16px;">${team.points}</td>
+                </tr>
+            `).join('')}
+        </tbody>
+    `;
+
+    container.appendChild(table);
+    return container;
+}
+
+// Render H2H pool section
+function renderH2HPoolSection(poolData, poolName) {
+    const container = document.createElement("div");
+    const h2hData = poolData.h2hData;
+
+    if (!h2hData) {
+        container.innerHTML = '<p style="color: rgba(255, 255, 255, 0.6); text-align: center; padding: 40px 0;">Données Head-to-Head non disponibles</p>';
+        return container;
+    }
+
+    // Render standings table
+    const standings = h2hData.standings || {};
+    const standingsArray = Object.entries(standings).map(([teamName, record]) => ({
+        teamName,
+        ...record
+    }));
+
+    // Sort by wins, then by point differential
+    standingsArray.sort((a, b) => {
+        if (b.wins !== a.wins) return b.wins - a.wins;
+        return (b.pointsFor - b.pointsAgainst) - (a.pointsFor - a.pointsAgainst);
+    });
+
+    const table = document.createElement("table");
+    table.style.cssText = "width: 100%; border-collapse: collapse;";
+    table.innerHTML = `
+        <thead>
+            <tr style="background: rgba(255, 46, 46, 0.1); border-bottom: 2px solid rgba(255, 46, 46, 0.3);">
+                <th style="padding: 12px; text-align: left;">POS</th>
+                <th style="padding: 12px; text-align: left;">Équipe</th>
+                <th style="padding: 12px; text-align: center;">V</th>
+                <th style="padding: 12px; text-align: center;">D</th>
+                <th style="padding: 12px; text-align: center;">N</th>
+                <th style="padding: 12px; text-align: center;">PF</th>
+                <th style="padding: 12px; text-align: center;">PA</th>
+                <th style="padding: 12px; text-align: center;">DIFF</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${standingsArray.map((team, index) => `
+                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                    <td style="padding: 12px; font-weight: bold; color: ${index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : 'rgba(255,255,255,0.9)'};">${index + 1}</td>
+                    <td style="padding: 12px; font-weight: bold; color: #ffffff;">${team.teamName}</td>
+                    <td style="padding: 12px; text-align: center; color: #4ade80;">${team.wins || 0}</td>
+                    <td style="padding: 12px; text-align: center; color: #f87171;">${team.losses || 0}</td>
+                    <td style="padding: 12px; text-align: center; color: #fbbf24;">${team.ties || 0}</td>
+                    <td style="padding: 12px; text-align: center; color: rgba(255, 255, 255, 0.7);">${team.pointsFor || 0}</td>
+                    <td style="padding: 12px; text-align: center; color: rgba(255, 255, 255, 0.7);">${team.pointsAgainst || 0}</td>
+                    <td style="padding: 12px; text-align: center; font-weight: bold; color: ${(team.pointsFor - team.pointsAgainst) > 0 ? '#4ade80' : (team.pointsFor - team.pointsAgainst) < 0 ? '#f87171' : '#fbbf24'};">
+                        ${(team.pointsFor - team.pointsAgainst) > 0 ? '+' : ''}${team.pointsFor - team.pointsAgainst}
+                    </td>
+                </tr>
+            `).join('')}
+        </tbody>
+    `;
+
+    container.appendChild(table);
+    return container;
+}
+
 async function loadClassementForPool(poolName) {
     if (!poolName) {
         // Show empty state
