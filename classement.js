@@ -267,36 +267,32 @@ function renderPoolStandings(poolData, poolName) {
         let statsHTML = '';
         if (poolMode === 'head-to-head') {
             statsHTML = `
-                <div class="stat-item">
-                    <span class="stat-value">${standing.gamesPlayed || 0}</span>
-                    <span class="stat-label">PJ</span>
+                <div class="stats-row-top">
+                    <span>${standing.wins || 0}</span>
+                    <span>${standing.losses || 0}</span>
+                    <span>${standing.ties || 0}</span>
+                    <span>${standing.pointsFor || 0}</span>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-value" style="color: #4caf50;">${standing.wins || 0}</span>
-                    <span class="stat-label">V</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value" style="color: #f44336;">${standing.losses || 0}</span>
-                    <span class="stat-label">D</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">${standing.ties || 0}</span>
-                    <span class="stat-label">N</span>
+                <div class="stats-row-bottom">
+                    <span>V</span>
+                    <span>D</span>
+                    <span>N</span>
+                    <span>PTS</span>
                 </div>
             `;
         } else {
             statsHTML = `
-                <div class="stat-item">
-                    <span class="stat-value">${standing.gamesPlayed || 0}</span>
-                    <span class="stat-label">PJ</span>
+                <div class="stats-row-top">
+                    <span>${standing.gamesPlayed || 0}</span>
+                    <span>${standing.goals || 0}</span>
+                    <span>${standing.assists || 0}</span>
+                    <span>${standing.points || 0}</span>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-value">${standing.goals || 0}</span>
-                    <span class="stat-label">B</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">${standing.assists || 0}</span>
-                    <span class="stat-label">P</span>
+                <div class="stats-row-bottom">
+                    <span>PJ</span>
+                    <span>B</span>
+                    <span>P</span>
+                    <span>PTS</span>
                 </div>
             `;
         }
@@ -360,14 +356,14 @@ function showTeamRoster(poolName, teamName) {
     }, 100);
 }
 
-function renderTeamRoster(teamData) {
+function renderTeamRoster(roster) {
     const rosterList = document.getElementById('rosterList');
     rosterList.innerHTML = '';
 
     const players = [];
 
     // Add offensive players
-    (teamData.offensive || []).forEach(playerName => {
+    (roster.offensive || []).forEach(playerName => {
         const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
         if (playerData) {
             const stats = getCurrentPlayerStats(playerName, playerData.playerId);
@@ -384,7 +380,7 @@ function renderTeamRoster(teamData) {
     });
 
     // Add defensive players
-    (teamData.defensive || []).forEach(playerName => {
+    (roster.defensive || []).forEach(playerName => {
         const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
         if (playerData) {
             const stats = getCurrentPlayerStats(playerName, playerData.playerId);
@@ -401,7 +397,7 @@ function renderTeamRoster(teamData) {
     });
 
     // Add goalies
-    (teamData.goalie || []).forEach(playerName => {
+    (roster.goalie || []).forEach(playerName => {
         const playerData = goalieData.find(p => p.goalieFullName === playerName);
         if (playerData) {
             const stats = getCurrentPlayerStats(playerName, playerData.playerId);
@@ -418,7 +414,7 @@ function renderTeamRoster(teamData) {
     });
 
     // Add rookies
-    (teamData.rookie || []).forEach(playerName => {
+    (roster.rookie || []).forEach(playerName => {
         const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
         if (playerData) {
             const stats = getCurrentPlayerStats(playerName, playerData.playerId);
@@ -435,7 +431,7 @@ function renderTeamRoster(teamData) {
     });
 
     // Add teams
-    (teamData.teams || []).forEach(teamName => {
+    (roster.teams || []).forEach(teamName => {
         const teamInfo = teamData.find(t => t.teamFullName === teamName);
         if (teamInfo) {
             const stats = getCurrentTeamStats(teamName);
@@ -577,7 +573,7 @@ function getCurrentTeamStats(teamName) {
     return currentTeams.teams.find(t => t.teamFullName === teamName);
 }
 
-function calculateTeamPoints(teamData) {
+function calculateTeamPoints(roster) {
     let totalGP = 0;
     let totalGoals = 0;
     let totalAssists = 0;
@@ -585,7 +581,7 @@ function calculateTeamPoints(teamData) {
 
     // Process skaters
     ['offensive', 'defensive', 'rookie'].forEach(position => {
-        (teamData[position] || []).forEach(playerName => {
+        (roster[position] || []).forEach(playerName => {
             const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
             if (playerData) {
                 const stats = getCurrentPlayerStats(playerName, playerData.playerId);
@@ -598,7 +594,7 @@ function calculateTeamPoints(teamData) {
     });
 
     // Process goalies
-    (teamData.goalie || []).forEach(playerName => {
+    (roster.goalie || []).forEach(playerName => {
         const playerData = goalieData.find(p => p.goalieFullName === playerName);
         if (playerData) {
             const stats = getCurrentPlayerStats(playerName, playerData.playerId);
@@ -614,7 +610,7 @@ function calculateTeamPoints(teamData) {
     });
 
     // Process teams
-    (teamData.teams || []).forEach(teamName => {
+    (roster.teams || []).forEach(teamName => {
         const teamInfo = teamData.find(t => t.teamFullName === teamName);
         if (teamInfo) {
             const stats = getCurrentTeamStats(teamName);
