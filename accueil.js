@@ -6,8 +6,7 @@ const BASE_URL = window.location.hostname.includes("localhost")
 
 let userData = {
     username: null,
-    activePools: [],
-    activePool: null
+    userPools: []
 };
 
 // Initialize dashboard
@@ -19,147 +18,95 @@ document.addEventListener('DOMContentLoaded', () => {
 // Load all dashboard components
 async function loadDashboard() {
     await Promise.all([
-        loadActionAlerts(),
-        loadActivePool(),
+        loadAllUserPools(),
         loadTodaysGames(),
-        loadLiveScoreboard(),
         loadActivityFeed(),
-        loadTopPerformers(),
-        loadAllPools()
+        loadTopPerformers()
     ]);
 }
 
-// Load action alerts (Zeigarnik Effect - incomplete tasks)
-async function loadActionAlerts() {
-    const skeleton = document.getElementById('alertsSkeleton');
-    const content = document.getElementById('alertsContent');
-
-    try {
-        const alerts = [];
-        const activePoolName = localStorage.getItem('activePool');
-
-        if (!activePoolName) {
-            alerts.push({
-                type: 'warning',
-                message: 'Sélectionnez un pool actif pour commencer',
-                action: () => window.location.href = 'pool.html'
-            });
-        }
-
-        // Check for draft status, pending trades, etc.
-        // This would be populated from your backend
-
-        if (skeleton) skeleton.style.display = 'none';
-        if (content) content.style.display = 'block';
-
-        if (alerts.length > 0) {
-            content.innerHTML = alerts.map(alert => `
-                <div class="alert alert-${alert.type}" onclick="${alert.action ? 'this.onclick = ' + alert.action : ''}">
-                    <span class="alert-icon">⚠️</span>
-                    <span class="alert-message">${alert.message}</span>
-                </div>
-            `).join('');
-        } else {
-            content.innerHTML = '';
-            document.getElementById('actionAlerts').style.display = 'none';
-        }
-    } catch (error) {
-        console.error('Error loading alerts:', error);
-        if (skeleton) skeleton.style.display = 'none';
-        if (content) content.style.display = 'none';
+// Load all user pools
+async function loadAllUserPools() {
+    const username = localStorage.getItem("username");
+    if (!username) {
+        return;
     }
-}
-
-// Load active pool info
-async function loadActivePool() {
-    const skeleton = document.getElementById('activePoolSkeleton');
-    const content = document.getElementById('activePoolContent');
 
     try {
-        const activePoolName = localStorage.getItem('activePool');
-
-        if (!activePoolName) {
-            if (skeleton) skeleton.style.display = 'none';
-            if (content) content.style.display = 'block';
-            return;
-        }
-
         const response = await fetch(`${BASE_URL}/draft`, { cache: "no-store" });
         const draftData = await response.json();
-        const pool = draftData[activePoolName];
 
-        if (!pool) {
-            if (skeleton) skeleton.style.display = 'none';
-            if (content) content.style.display = 'block';
-            return;
-        }
+        // Find all pools where user is a member
+        userData.userPools = [];
+        Object.entries(draftData).forEach(([poolName, poolData]) => {
+            const userTeam = Object.entries(poolData.teams || {}).find(
+                ([teamName, teamData]) =>
+                    teamData.members && teamData.members.includes(username)
+            );
+            if (userTeam) {
+                userData.userPools.push({
+                    name: poolName,
+                    data: poolData,
+                    userTeam: userTeam[0],
+                    userTeamData: userTeam[1]
+                });
+            }
+        });
 
-        userData.activePool = pool;
-
-        // Get user's team
-        const userTeam = Object.entries(pool.teams).find(([teamName, team]) =>
-            team.members.includes(userData.username)
-        );
-
-        if (skeleton) skeleton.style.display = 'none';
-        if (content) content.style.display = 'block';
-
-        document.getElementById('activePoolName').textContent = activePoolName;
-        document.getElementById('activePoolMeta').textContent =
-            `${pool.poolMode === 'head-to-head' ? 'Head-to-Head' : 'Cumulatif'} • ${Object.keys(pool.teams).length} équipes`;
-
-        if (userTeam) {
-            const [teamName, teamData] = userTeam;
-            const allTeams = Object.entries(pool.teams)
-                .map(([name, team]) => ({
-                    name,
-                    points: calculateTeamPoints(team, pool)
-                }))
-                .sort((a, b) => b.points - a.points);
-
-            const rank = allTeams.findIndex(t => t.name === teamName) + 1;
-            const userPoints = allTeams.find(t => t.name === teamName)?.points || 0;
-
-            document.getElementById('activePoolStats').innerHTML = `
-                <div class="stat-row">
-                    <span class="stat-label">Votre équipe</span>
-                    <span class="stat-value">${teamName}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Position</span>
-                    <span class="stat-value highlight">#${rank}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Points</span>
-                    <span class="stat-value highlight">${userPoints}</span>
-                </div>
-            `;
-        }
+        // Update dashboard with pool info
+        updatePoolsDisplay();
     } catch (error) {
-        console.error('Error loading active pool:', error);
-        if (skeleton) skeleton.style.display = 'none';
-        if (content) content.style.display = 'block';
+        console.error('Error loading user pools:', error);
     }
 }
 
-// Calculate team points
-function calculateTeamPoints(team, pool) {
-    // Simplified calculation - adjust based on your actual scoring
-    let totalPoints = 0;
+// Update pools display on dashboard
+function updatePoolsDisplay() {
+    const container = document.getElementById('activePoolContent') || document.querySelector('.dashboard-left .card.primary-card');
 
-    const allPlayers = [
-        ...(team.offensive || []),
-        ...(team.defensive || []),
-        ...(team.rookie || [])
-    ];
+    if (!container) return;
 
-    // This should use actual player stats from your data
-    allPlayers.forEach(playerName => {
-        totalPoints += Math.floor(Math.random() * 50); // Placeholder
-    });
+    if (userData.userPools.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                <h3 style="margin: 0 0 8px 0; color: #ffffff;">Aucun pool actif</h3>
+                <p style="margin: 0 0 20px 0; color: rgba(255, 255, 255, 0.6);">Créez ou rejoignez un pool pour commencer</p>
+                <a href="pool.html" style="display: inline-block; padding: 12px 24px; background: #ff2e2e; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Gérer mes pools</a>
+            </div>
+        `;
+        return;
+    }
 
-    return totalPoints;
+    // Show summary of all pools
+    container.innerHTML = `
+        <div style="padding: 20px;">
+            <h3 style="margin: 0 0 20px 0; color: #ffffff; font-size: 20px;">Mes Pools (${userData.userPools.length})</h3>
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                ${userData.userPools.map(pool => {
+                    const poolMode = pool.data.poolMode || 'cumulative';
+                    return `
+                        <div style="background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 16px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <div>
+                                    <h4 style="margin: 0 0 4px 0; color: #ff2e2e; font-size: 16px;">${pool.name}</h4>
+                                    <p style="margin: 0; font-size: 13px; color: rgba(255, 255, 255, 0.5);">
+                                        ${poolMode === 'head-to-head' ? '⚔️ Head-to-Head' : '📊 Cumulatif'}
+                                    </p>
+                                </div>
+                                <a href="classement.html" style="padding: 6px 12px; background: rgba(255, 46, 46, 0.2); color: #ff2e2e; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: bold; border: 1px solid rgba(255, 46, 46, 0.3);">Voir</a>
+                            </div>
+                            <div style="font-size: 14px; color: rgba(255, 255, 255, 0.7);">
+                                <strong>Votre équipe:</strong> ${pool.userTeam}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
 }
+
 
 // Load today's NHL games
 async function loadTodaysGames() {
@@ -197,117 +144,6 @@ async function loadTodaysGames() {
         if (skeleton) skeleton.style.display = 'none';
         if (content) content.style.display = 'block';
         container.innerHTML = '<p class="empty-message">Aucun match aujourd\'hui</p>';
-    }
-}
-
-// Load live H2H scoreboard
-async function loadLiveScoreboard() {
-    const skeleton = document.getElementById('scoreboardSkeleton');
-    const content = document.getElementById('scoreboardContent');
-    const matchupDisplay = document.getElementById('matchupDisplay');
-    const matchupStats = document.getElementById('matchupStats');
-
-    try {
-        const activePoolName = localStorage.getItem('activePool');
-
-        if (!activePoolName || !userData.activePool) {
-            if (skeleton) skeleton.style.display = 'none';
-            if (content) content.style.display = 'block';
-            matchupDisplay.innerHTML = '<p class="empty-message">Sélectionnez un pool actif</p>';
-            matchupStats.innerHTML = '';
-            return;
-        }
-
-        const pool = userData.activePool;
-
-        if (pool.poolMode === 'head-to-head') {
-            // Get current week's matchup
-            const h2hData = pool.h2hData;
-            if (h2hData && h2hData.matchups) {
-                const currentWeek = h2hData.currentWeek || 1;
-                const currentMatchups = h2hData.matchups[currentWeek - 1] || [];
-
-                // Find user's matchup
-                const userMatchup = currentMatchups.find(m =>
-                    (pool.teams[m.team1]?.members.includes(userData.username)) ||
-                    (pool.teams[m.team2]?.members.includes(userData.username))
-                );
-
-                if (userMatchup) {
-                    const team1Points = calculateTeamPoints(pool.teams[userMatchup.team1], pool);
-                    const team2Points = calculateTeamPoints(pool.teams[userMatchup.team2], pool);
-
-                    matchupDisplay.innerHTML = `
-                        <div class="matchup-display">
-                            <div class="matchup-team ${team1Points > team2Points ? 'winning' : ''}">
-                                <div class="team-name">${userMatchup.team1}</div>
-                                <div class="team-score">${team1Points}</div>
-                            </div>
-                            <div class="matchup-vs">VS</div>
-                            <div class="matchup-team ${team2Points > team1Points ? 'winning' : ''}">
-                                <div class="team-name">${userMatchup.team2}</div>
-                                <div class="team-score">${team2Points}</div>
-                            </div>
-                        </div>
-                    `;
-
-                    matchupStats.innerHTML = `
-                        <div class="stats-breakdown">
-                            <div class="stat-category">
-                                <span>Buts</span>
-                                <span class="stat-numbers">12 - 15</span>
-                            </div>
-                            <div class="stat-category">
-                                <span>Passes</span>
-                                <span class="stat-numbers">18 - 16</span>
-                            </div>
-                            <div class="stat-category">
-                                <span>Points</span>
-                                <span class="stat-numbers">30 - 31</span>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    matchupDisplay.innerHTML = '<p class="empty-message">Pas de duel cette semaine</p>';
-                    matchupStats.innerHTML = '';
-                }
-            } else {
-                matchupDisplay.innerHTML = '<p class="empty-message">Pas de duel cette semaine</p>';
-                matchupStats.innerHTML = '';
-            }
-        } else {
-            // Cumulative mode - show standings
-            const allTeams = Object.entries(pool.teams)
-                .map(([name, team]) => ({
-                    name,
-                    points: calculateTeamPoints(team, pool)
-                }))
-                .sort((a, b) => b.points - a.points)
-                .slice(0, 3);
-
-            matchupDisplay.innerHTML = `
-                <div class="standings-preview">
-                    <h4>Top 3</h4>
-                    ${allTeams.map((team, idx) => `
-                        <div class="standing-item">
-                            <span class="rank">${idx + 1}</span>
-                            <span class="team-name">${team.name}</span>
-                            <span class="points">${team.points} pts</span>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            matchupStats.innerHTML = '';
-        }
-
-        if (skeleton) skeleton.style.display = 'none';
-        if (content) content.style.display = 'block';
-    } catch (error) {
-        console.error('Error loading scoreboard:', error);
-        if (skeleton) skeleton.style.display = 'none';
-        if (content) content.style.display = 'block';
-        matchupDisplay.innerHTML = '<p class="empty-message">Erreur de chargement</p>';
-        matchupStats.innerHTML = '';
     }
 }
 
@@ -384,77 +220,6 @@ async function loadTopPerformers() {
         if (content) content.style.display = 'block';
         container.innerHTML = '<p class="empty-message">Erreur de chargement</p>';
     }
-}
-
-// Load all pools overview
-async function loadAllPools() {
-    const skeleton = document.getElementById('poolsOverviewSkeleton');
-    const content = document.getElementById('poolsOverviewContent');
-    const container = document.getElementById('allPoolsList');
-
-    try {
-        const response = await fetch(`${BASE_URL}/draft`, { cache: "no-store" });
-        const draftData = await response.json();
-
-        const userPools = Object.entries(draftData).filter(([poolName, pool]) => {
-            return Object.values(pool.teams).some(team => team.members.includes(userData.username));
-        });
-
-        if (skeleton) skeleton.style.display = 'none';
-        if (content) content.style.display = 'block';
-
-        if (userPools.length === 0) {
-            container.innerHTML = '<p class="empty-message">Aucun pool. <a href="pool.html">Créez-en un!</a></p>';
-        } else {
-            container.innerHTML = userPools.map(([poolName, pool]) => {
-                const userTeam = Object.entries(pool.teams).find(([teamName, team]) =>
-                    team.members.includes(userData.username)
-                );
-
-                if (!userTeam) return '';
-
-                const [teamName, teamData] = userTeam;
-                const allTeams = Object.entries(pool.teams)
-                    .map(([name, team]) => ({
-                        name,
-                        points: calculateTeamPoints(team, pool)
-                    }))
-                    .sort((a, b) => b.points - a.points);
-
-                const rank = allTeams.findIndex(t => t.name === teamName) + 1;
-
-                return `
-                    <div class="pool-mini-card" onclick="selectPool('${poolName}')">
-                        <div class="pool-mini-header">
-                            <h4>${poolName}</h4>
-                            <span class="pool-mini-badge">${pool.poolMode === 'head-to-head' ? 'H2H' : 'Cumul'}</span>
-                        </div>
-                        <div class="pool-mini-stats">
-                            <div class="mini-stat">
-                                <span class="mini-stat-label">Position</span>
-                                <span class="mini-stat-value">#${rank}</span>
-                            </div>
-                            <div class="mini-stat">
-                                <span class="mini-stat-label">Équipe</span>
-                                <span class="mini-stat-value">${teamName}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-    } catch (error) {
-        console.error('Error loading pools:', error);
-        if (skeleton) skeleton.style.display = 'none';
-        if (content) content.style.display = 'block';
-        container.innerHTML = '<p class="empty-message">Erreur de chargement</p>';
-    }
-}
-
-// Select a pool
-function selectPool(poolName) {
-    localStorage.setItem('activePool', poolName);
-    window.location.reload();
 }
 
 // View player details
