@@ -480,29 +480,31 @@ async function loadActiveDrafts() {
             );
             if (!userTeam) return;
 
-            // Check draft status
-            const teamInfo = userTeam[1];
-            const hasRoster = (teamInfo.offensive && teamInfo.offensive.length > 0) ||
-                             (teamInfo.defensive && teamInfo.defensive.length > 0) ||
-                             (teamInfo.goalie && teamInfo.goalie.length > 0);
-
-            const isDraftComplete = poolData.draftComplete ||
-                                   poolData.isDraftComplete ||
-                                   poolData.draftStatus === 'completed' ||
-                                   poolData.draftStatus === 'done' ||
-                                   hasRoster;
+            // Check if draft is truly complete (all teams have all positions filled per config)
+            const config = poolData.config || {
+                numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1, numTeams: 1
+            };
+            const activeTeams = Object.values(poolData.teams || {}).filter(t => t.members && t.members.length > 0);
+            const isDraftComplete = activeTeams.length > 0 && activeTeams.every(team =>
+                (team.offensive || []).length === config.numOffensive &&
+                (team.defensive || []).length === config.numDefensive &&
+                (team.rookie || []).length === config.numRookies &&
+                (team.goalie || []).length === config.numGoalies &&
+                (team.teams || []).length === config.numTeams
+            );
 
             if (isDraftComplete) return; // Skip completed drafts
 
-            const hasDraftOrder = poolData.draftOrder && poolData.draftOrder.order && poolData.draftOrder.order.length > 0;
+            // draftOrder is a flat array of team names on the server
+            const hasDraftOrder = Array.isArray(poolData.draftOrder) && poolData.draftOrder.length > 0;
             const totalMembers = Object.values(poolData.teams || {}).reduce((sum, t) => sum + (t.members?.length || 0), 0);
             const maxPlayers = poolData.maxPlayers || 10;
             const poolMode = poolData.poolMode || 'cumulative';
 
             if (hasDraftOrder) {
                 // Draft is actively in progress
-                const currentPick = poolData.draftOrder.currentPick || 0;
-                const totalPicks = poolData.draftOrder.totalPicks || 0;
+                const currentPick = poolData.currentPickIndex || 0;
+                const totalPicks = poolData.draftOrder.length;
                 activeDrafts.push({
                     name: poolName,
                     mode: poolMode,
