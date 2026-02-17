@@ -281,18 +281,26 @@ function renderPoolStandings(poolData, poolName) {
                 </div>
             `;
         } else {
+            // For cumulative: show GP, last 30 games, last 7 days, today
+            // TODO: Time-based stats require API enhancement to provide historical data
+            const totalGP = standing.gamesPlayed || 0;
+            const totalPoints = standing.points || 0;
+            const last30Points = totalPoints; // Showing total for now until API provides time-based data
+            const last7Points = 0; // Would need time-based API data
+            const todayPoints = 0; // Would need real-time daily stats from API
+
             statsHTML = `
                 <div class="stats-row-top">
-                    <span>${standing.gamesPlayed || 0}</span>
-                    <span>${standing.goals || 0}</span>
-                    <span>${standing.assists || 0}</span>
-                    <span>${standing.points || 0}</span>
+                    <span>${totalGP}</span>
+                    <span>${last30Points}</span>
+                    <span>${last7Points}</span>
+                    <span>${todayPoints}</span>
                 </div>
                 <div class="stats-row-bottom">
                     <span>PJ</span>
-                    <span>B</span>
-                    <span>P</span>
-                    <span>PTS</span>
+                    <span>30</span>
+                    <span>7</span>
+                    <span>1</span>
                 </div>
             `;
         }
@@ -447,7 +455,7 @@ function renderTeamRoster(roster) {
     });
 
     // Render player cards
-    players.forEach(player => {
+    players.forEach((player, index) => {
         const card = document.createElement('div');
         card.className = 'roster-card';
 
@@ -456,6 +464,8 @@ function renderTeamRoster(roster) {
             card.classList.add('clickable');
             card.onclick = () => showCareerStats(player.playerId, player.name, player.type === 'goalie');
         }
+
+        const pickNumber = index + 1;
 
         // Get player image
         let imageHTML = '';
@@ -508,25 +518,44 @@ function renderTeamRoster(roster) {
             points = player.stats?.points || player.cached.points || 0;
         }
 
+        // Get team abbreviation for display
+        const teamAbbrev = player.teamAbbrev || '';
+
         card.innerHTML = `
+            <div class="pick-number">${pickNumber}</div>
             <div class="player-avatar">
                 ${imageHTML}
             </div>
             <div class="roster-info">
                 <div class="player-name-row">
-                    <div class="player-name">${player.name}</div>
-                    <div class="player-position">${player.position}</div>
+                    <span class="player-name">${player.name}</span>
+                    <span class="player-team-abbrev">${teamAbbrev}</span>
+                    <span class="player-position">${player.position}</span>
                 </div>
-                <div class="player-stats-row">
-                    <span>PJ: ${gp}</span>
-                    <span>${stat1Label}: ${stat1}</span>
-                    <span>${stat2Label}: ${stat2}</span>
+                <div class="player-stats-grid">
+                    <div class="stats-row-top">
+                        <span>${gp}</span>
+                        <span>${stat1}</span>
+                        <span>${stat2}</span>
+                        <span>${points}</span>
+                    </div>
+                    <div class="stats-row-bottom">
+                        <span>PJ</span>
+                        <span>${stat1Label}</span>
+                        <span>${stat2Label}</span>
+                        <span>Pts</span>
+                    </div>
                 </div>
             </div>
-            <div class="roster-points">
-                <div class="roster-points-value">${points}</div>
-                <div class="roster-points-label">pts</div>
+            <div class="roster-points-section">
+                <div class="pptsa-value">0</div>
+                <div class="pptsa-label">PPtsA</div>
             </div>
+            <div class="roster-points-section">
+                <div class="ppts-value">${points}</div>
+                <div class="ppts-label">PPts</div>
+            </div>
+            <div class="roster-arrow">›</div>
         `;
 
         rosterList.appendChild(card);
