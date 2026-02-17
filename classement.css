@@ -205,7 +205,7 @@ body {
 }
 
 .rank-badge.rank-other {
-    background: #e0e0e0;
+    background: var(--text-main);
     color: var(--text-secondary);
 }
 
@@ -302,12 +302,12 @@ body {
     gap: 12px;
     transition: all 0.3s ease;
     border: none;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--text-main);
     box-shadow: none;
 }
 
 .roster-card:first-child {
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--text-main);
 }
 
 .roster-card.clickable {
@@ -464,7 +464,7 @@ body {
 }
 
 .skeleton {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background: linear-gradient(90deg, #f0f0f0 25%, var(--text-main) 50%, #f0f0f0 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
     border-radius: 4px;
@@ -489,7 +489,7 @@ body {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background: linear-gradient(90deg, #f0f0f0 25%, var(--text-main) 50%, #f0f0f0 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
     flex-shrink: 0;
@@ -526,7 +526,7 @@ body {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background: linear-gradient(90deg, #f0f0f0 25%, var(--text-main) 50%, #f0f0f0 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
     flex-shrink: 0;
@@ -561,7 +561,7 @@ body {
     width: 60px;
     height: 60px;
     border-radius: 8px;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background: linear-gradient(90deg, #f0f0f0 25%, var(--text-main) 50%, #f0f0f0 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
     flex-shrink: 0;
@@ -741,7 +741,7 @@ body {
     gap: 20px;
     padding: 20px 30px;
     background: #f8f9fa;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--text-main);
     flex-wrap: wrap;
 }
 
@@ -759,7 +759,7 @@ body {
 
 .filter-group-career select {
     padding: 8px 12px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--text-main);
     border-radius: 8px;
     font-size: 0.9rem;
     background: white;
