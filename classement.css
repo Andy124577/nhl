@@ -290,19 +290,24 @@ body {
 .roster-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
 }
 
 .roster-card {
     background: white;
-    border-radius: 12px;
-    padding: 16px;
+    border-radius: 0;
+    padding: 12px 16px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     transition: all 0.3s ease;
-    border: 2px solid transparent;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: none;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: none;
+}
+
+.roster-card:first-child {
+    border-top: 1px solid #e0e0e0;
 }
 
 .roster-card.clickable {
@@ -310,15 +315,21 @@ body {
 }
 
 .roster-card.clickable:hover {
-    border-color: #ff2e2e;
-    box-shadow: 0 4px 16px rgba(255, 46, 46, 0.15);
-    transform: translateY(-2px);
+    background: #f8f9fa;
+}
+
+.pick-number {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #666;
+    min-width: 25px;
+    text-align: left;
 }
 
 .player-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 8px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
     overflow: hidden;
     background: #f5f5f5;
     flex-shrink: 0;
@@ -335,80 +346,114 @@ body {
 }
 
 .player-avatar .no-photo {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     color: #999;
 }
 
 .player-team-logo-overlay {
     position: absolute;
-    bottom: 2px;
-    right: 2px;
-    width: 20px;
-    height: 20px;
+    bottom: 0;
+    right: 0;
+    width: 18px;
+    height: 18px;
     background: white;
     border-radius: 50%;
     padding: 2px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .roster-info {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .player-name-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 6px;
+    gap: 8px;
 }
 
 .player-name {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 1rem;
+    font-weight: 600;
     color: #222;
 }
 
-.player-position {
-    padding: 2px 8px;
-    background: #ff2e2e;
-    color: white;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-.player-team-logo {
-    width: 20px;
-    height: 20px;
-    object-fit: contain;
-    margin-left: auto;
-}
-
-.player-stats-row {
-    display: flex;
-    gap: 16px;
+.player-team-abbrev {
     font-size: 0.85rem;
-    color: #666;
+    color: #999;
+    font-weight: 500;
 }
 
-.roster-points {
+.player-position {
+    font-size: 0.75rem;
+    color: #999;
+    font-weight: 500;
+}
+
+.player-stats-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.player-stats-grid .stats-row-top {
+    display: flex;
+    gap: 10px;
+    font-weight: 600;
+    color: #222;
+    font-size: 0.95rem;
+}
+
+.player-stats-grid .stats-row-top span {
+    min-width: 30px;
+    text-align: left;
+}
+
+.player-stats-grid .stats-row-bottom {
+    display: flex;
+    gap: 10px;
+    font-size: 0.7rem;
+    color: #999;
+}
+
+.player-stats-grid .stats-row-bottom span {
+    min-width: 30px;
+    text-align: left;
+}
+
+.roster-points-section {
     text-align: center;
-    min-width: 70px;
+    min-width: 50px;
 }
 
-.roster-points-value {
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: #ff2e2e;
+.pptsa-value,
+.ppts-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #222;
     line-height: 1;
 }
 
-.roster-points-label {
-    font-size: 0.7rem;
+.pptsa-label,
+.ppts-label {
+    font-size: 0.65rem;
     color: #999;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
     margin-top: 2px;
+}
+
+.roster-arrow {
+    font-size: 1.5rem;
+    color: #ccc;
+    transition: transform 0.3s ease;
+}
+
+.roster-card:hover .roster-arrow {
+    transform: translateX(3px);
+    color: #999;
 }
 
 /* ==================== SKELETON LOADERS ==================== */
@@ -845,22 +890,48 @@ body {
     }
 
     .roster-card {
-        padding: 12px;
-        gap: 12px;
+        padding: 10px 12px;
+        gap: 10px;
+    }
+
+    .pick-number {
+        font-size: 1rem;
+        min-width: 20px;
     }
 
     .player-avatar {
-        width: 50px;
-        height: 50px;
+        width: 45px;
+        height: 45px;
     }
 
     .player-name {
-        font-size: 1rem;
+        font-size: 0.95rem;
     }
 
-    .player-stats-row {
-        gap: 12px;
-        font-size: 0.8rem;
+    .player-stats-grid .stats-row-top {
+        gap: 8px;
+        font-size: 0.9rem;
+    }
+
+    .player-stats-grid .stats-row-top span {
+        min-width: 28px;
+    }
+
+    .player-stats-grid .stats-row-bottom {
+        gap: 8px;
+    }
+
+    .player-stats-grid .stats-row-bottom span {
+        min-width: 28px;
+    }
+
+    .roster-points-section {
+        min-width: 45px;
+    }
+
+    .pptsa-value,
+    .ppts-value {
+        font-size: 1.1rem;
     }
 
     .career-modal-header {
@@ -933,8 +1004,56 @@ body {
         min-width: 28px;
     }
 
-    .player-stats-row {
+    .roster-card {
+        padding: 8px 10px;
+        gap: 8px;
         flex-wrap: wrap;
+    }
+
+    .pick-number {
+        font-size: 0.9rem;
+        min-width: 18px;
+    }
+
+    .player-avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    .player-name {
+        font-size: 0.9rem;
+    }
+
+    .player-team-abbrev,
+    .player-position {
+        font-size: 0.75rem;
+    }
+
+    .player-stats-grid .stats-row-top {
+        gap: 6px;
+        font-size: 0.85rem;
+    }
+
+    .player-stats-grid .stats-row-top span {
+        min-width: 24px;
+    }
+
+    .player-stats-grid .stats-row-bottom {
+        gap: 6px;
+        font-size: 0.65rem;
+    }
+
+    .player-stats-grid .stats-row-bottom span {
+        min-width: 24px;
+    }
+
+    .roster-points-section {
+        min-width: 40px;
+    }
+
+    .pptsa-value,
+    .ppts-value {
+        font-size: 1rem;
     }
 
     .modal-content {
