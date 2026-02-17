@@ -568,7 +568,7 @@ async function loadActiveDrafts() {
                             <div style="width: ${progress}%; background: linear-gradient(90deg, #ff2e2e, #ff6b6b); height: 100%; border-radius: 4px; transition: width 0.3s;"></div>
                         </div>
                     </div>
-                    <a href="draftActif.html?pool=${encodeURIComponent(draft.name)}" class="pool-action-btn" style="background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%); color: white; text-decoration: none;">Reprendre</a>
+                    <button class="pool-action-btn" style="background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%); color: white; border: none; cursor: pointer;" onclick="resumeDraft('${draft.name.replace(/'/g, "\\'")}')">Reprendre</button>
                 </li>
             `;
         });
@@ -589,7 +589,7 @@ async function loadActiveDrafts() {
                         </div>
                     </div>
                     ${isReady
-                        ? `<a href="draft.html?pool=${encodeURIComponent(draft.name)}" class="pool-action-btn" style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; text-decoration: none;">Commencer</a>`
+                        ? `<button class="pool-action-btn" style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; border: none; cursor: pointer;" onclick="startDraftFromPool('${draft.name.replace(/'/g, "\\'")}')">Commencer</button>`
                         : `<span class="pool-action-btn secondary" style="cursor: default; opacity: 0.6;">En attente</span>`
                     }
                 </li>
@@ -613,6 +613,43 @@ async function loadActiveDrafts() {
 $(document).ready(function() {
     loadActiveDrafts();
 });
+
+// Start a draft from the pool page
+async function startDraftFromPool(poolName) {
+    try {
+        // Check if draft already has an order
+        const response = await fetch(`${BASE_URL}/draft-order/${poolName}`);
+        const result = await response.json();
+
+        if (!result.draftOrder || result.draftOrder.length === 0) {
+            // No order exists, start the draft
+            const startResponse = await fetch(`${BASE_URL}/start-draft`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ clanName: poolName })
+            });
+
+            const startResult = await startResponse.json();
+            console.log("✅ Draft démarré :", startResult.message);
+        } else {
+            console.log("✅ Ordre de draft déjà existant.");
+        }
+
+        // Set pool name in localStorage and redirect to draft page
+        localStorage.setItem("draftClan", poolName);
+        window.location.href = "draftActif.html";
+    } catch (error) {
+        console.error("Erreur lors du démarrage du draft :", error);
+        alert("Erreur lors de la préparation du draft.");
+    }
+}
+
+// Resume an existing draft from the pool page
+function resumeDraft(poolName) {
+    // Set pool name in localStorage and redirect to draft page
+    localStorage.setItem("draftClan", poolName);
+    window.location.href = "draftActif.html";
+}
 
 // ==================== TRADE BADGE FUNCTIONALITY ====================
 
