@@ -34,7 +34,7 @@ body {
     gap: 10px;
     padding: 15px 0;
     font-size: 0.9rem;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .breadcrumb-item {
@@ -43,11 +43,11 @@ body {
 }
 
 .breadcrumb-item:hover {
-    color: #ff2e2e;
+    color: var(--danger);
 }
 
 .breadcrumb-item.active {
-    color: #ff2e2e;
+    color: var(--danger);
     font-weight: 600;
 }
 
@@ -81,7 +81,7 @@ body {
 }
 
 .pool-card:hover {
-    border-color: #ff2e2e;
+    border-color: var(--danger);
     box-shadow: 0 4px 16px rgba(255, 46, 46, 0.15);
     transform: translateY(-2px);
 }
@@ -90,7 +90,7 @@ body {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%);
+    background: linear-gradient(135deg, var(--danger) 0%, var(--danger) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -136,7 +136,7 @@ body {
 
 .pool-badge.players {
     background: #e8f5e9;
-    color: #388e3c;
+    color: var(--success);
 }
 
 .pool-arrow {
@@ -147,7 +147,7 @@ body {
 
 .pool-card:hover .pool-arrow {
     transform: translateX(5px);
-    color: #ff2e2e;
+    color: var(--danger);
 }
 
 /* ==================== STANDINGS VIEW (Level 2) ==================== */
@@ -171,7 +171,7 @@ body {
 }
 
 .standing-card:hover {
-    border-color: #ff2e2e;
+    border-color: var(--danger);
     box-shadow: 0 4px 16px rgba(255, 46, 46, 0.15);
     transform: translateY(-2px);
 }
@@ -206,7 +206,7 @@ body {
 
 .rank-badge.rank-other {
     background: #e0e0e0;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .standing-info {
@@ -263,7 +263,7 @@ body {
 .points-value {
     font-size: 2rem;
     font-weight: 800;
-    color: #ff2e2e;
+    color: var(--danger);
     line-height: 1;
 }
 
@@ -283,7 +283,7 @@ body {
 
 .standing-card:hover .standing-arrow {
     transform: translateX(5px);
-    color: #ff2e2e;
+    color: var(--danger);
 }
 
 /* ==================== ROSTER VIEW (Level 3) ==================== */
@@ -321,7 +321,7 @@ body {
 .pick-number {
     font-size: 1.1rem;
     font-weight: 600;
-    color: #666;
+    color: var(--text-secondary);
     min-width: 25px;
     text-align: left;
 }
@@ -632,7 +632,7 @@ body {
 }
 
 .career-modal-header {
-    background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%);
+    background: linear-gradient(135deg, var(--danger) 0%, var(--danger) 100%);
     color: white;
     padding: 30px;
     border-radius: 16px 16px 0 0;
@@ -732,7 +732,7 @@ body {
 .loading-spinner {
     text-align: center;
     padding: 40px;
-    color: #666;
+    color: var(--text-secondary);
     font-size: 1.1rem;
 }
 
@@ -754,7 +754,7 @@ body {
 .filter-group-career label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .filter-group-career select {
@@ -768,13 +768,13 @@ body {
 }
 
 .filter-group-career select:hover {
-    border-color: #ff2e2e;
+    border-color: var(--danger);
 }
 
 .stats-count-badge {
     margin-left: auto;
     padding: 8px 16px;
-    background: #ff2e2e;
+    background: var(--danger);
     color: white;
     border-radius: 12px;
     font-size: 0.85rem;
@@ -794,7 +794,7 @@ body {
 }
 
 #careerStatsTable th {
-    background: #ff2e2e;
+    background: var(--danger);
     color: white;
     padding: 12px 8px;
     text-align: center;
@@ -817,7 +817,7 @@ body {
 
 #careerStatsTable .league-col {
     font-weight: 600;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 #careerStatsTable .team-col img {
@@ -833,7 +833,7 @@ body {
 
 #careerStatsTable .career-totals-label {
     text-align: left;
-    color: #ff2e2e;
+    color: var(--danger);
 }
 
 .no-stats-message {

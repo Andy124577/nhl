@@ -28,7 +28,7 @@ body {
             background: white;
             border: none;
             border-bottom: 3px solid transparent;
-            color: #666;
+            color: var(--text-secondary);
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
@@ -38,12 +38,12 @@ body {
 
         .sub-nav-btn:hover {
             background: #f8f9fa;
-            color: #ff2e2e;
+            color: var(--danger);
         }
 
         .sub-nav-btn.active {
-            color: #ff2e2e;
-            border-bottom: 3px solid #ff2e2e;
+            color: var(--danger);
+            border-bottom: 3px solid var(--danger);
             background: white;
         }
 
@@ -82,7 +82,7 @@ body {
             font-weight: 700;
             text-align: center;
             padding-bottom: 15px;
-            border-bottom: 3px solid #ff2e2e;
+            border-bottom: 3px solid var(--danger);
         }
 
         .draft-container {
@@ -105,7 +105,7 @@ body {
         }
 
         .draft-card:hover {
-            border-color: #ff2e2e;
+            border-color: var(--danger);
             box-shadow: 0 4px 16px rgba(255, 46, 46, 0.15);
             transform: translateY(-2px);
         }
@@ -119,13 +119,13 @@ body {
 
         .draft-card p {
             font-size: 0.9rem;
-            color: #666;
+            color: var(--text-secondary);
             margin: 0;
         }
 
         .draft-card button {
             padding: 12px 24px;
-            background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%);
+            background: linear-gradient(135deg, var(--danger) 0%, var(--danger) 100%);
             color: white;
             border: none;
             border-radius: 8px;
@@ -139,7 +139,7 @@ body {
         .draft-card button:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(255, 46, 46, 0.4);
-            background: linear-gradient(135deg, #ff4040 0%, #d93030 100%);
+            background: linear-gradient(135deg, var(--danger) 0%, var(--danger) 100%);
         }
 
         .draft-card button:active {
