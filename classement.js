@@ -89,21 +89,29 @@ async function loadAllUserPools() {
         // Filter pools where user is a member AND draft is completed
         const userPools = [];
         Object.entries(allPoolsData).forEach(([poolName, poolData]) => {
+            const userTeam = Object.entries(poolData.teams || {}).find(([teamName, teamData]) =>
+                teamData.members && teamData.members.includes(username)
+            );
+
+            if (!userTeam) return; // User not in this pool
+
             // Skip pools with incomplete drafts
+            // A pool is considered complete if:
+            // 1. It has an explicit completion flag, OR
+            // 2. It has teams with rosters (offensive, defensive, goalie, etc.)
+            const teamData = poolData.teams[userTeam[0]];
+            const hasRoster = (teamData.offensive && teamData.offensive.length > 0) ||
+                            (teamData.defensive && teamData.defensive.length > 0) ||
+                            (teamData.goalie && teamData.goalie.length > 0);
+
             const isDraftComplete = poolData.draftComplete ||
                                    poolData.isDraftComplete ||
                                    poolData.draftStatus === 'completed' ||
                                    poolData.draftStatus === 'done' ||
-                                   (poolData.draftOrder && poolData.draftOrder.currentPick === poolData.draftOrder.totalPicks);
+                                   hasRoster ||
+                                   (poolData.draftOrder && poolData.draftOrder.currentPick >= poolData.draftOrder.totalPicks);
 
-            if (!isDraftComplete) {
-                return; // Skip this pool
-            }
-
-            const userTeam = Object.entries(poolData.teams || {}).find(([teamName, teamData]) =>
-                teamData.members && teamData.members.includes(username)
-            );
-            if (userTeam) {
+            if (isDraftComplete) {
                 userPools.push({
                     name: poolName,
                     data: poolData,
