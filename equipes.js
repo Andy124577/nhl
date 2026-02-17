@@ -457,6 +457,161 @@ jQuery('button').on('click',(e)=>{
   jQuery('ul').animate({scrollTop: jQuery('.scrolltome').offset().top}, "slow");
 });
 
+// ==================== ACTIVE DRAFTS FUNCTIONALITY ====================
+
+async function loadActiveDrafts() {
+    const username = localStorage.getItem("username");
+    if (!username) return;
+
+    const container = document.getElementById("activeDraftsList");
+    if (!container) return;
+
+    try {
+        const response = await fetch(`${BASE_URL}/draft?timestamp=${new Date().getTime()}`, { cache: "no-store" });
+        const draftData = await response.json();
+
+        const activeDrafts = [];
+        const pendingDrafts = [];
+
+        Object.entries(draftData).forEach(([poolName, poolData]) => {
+            // Check if user is in this pool
+            const userTeam = Object.entries(poolData.teams || {}).find(([teamName, teamData]) =>
+                teamData.members && teamData.members.includes(username)
+            );
+            if (!userTeam) return;
+
+            // Check draft status
+            const teamInfo = userTeam[1];
+            const hasRoster = (teamInfo.offensive && teamInfo.offensive.length > 0) ||
+                             (teamInfo.defensive && teamInfo.defensive.length > 0) ||
+                             (teamInfo.goalie && teamInfo.goalie.length > 0);
+
+            const isDraftComplete = poolData.draftComplete ||
+                                   poolData.isDraftComplete ||
+                                   poolData.draftStatus === 'completed' ||
+                                   poolData.draftStatus === 'done' ||
+                                   hasRoster;
+
+            if (isDraftComplete) return; // Skip completed drafts
+
+            const hasDraftOrder = poolData.draftOrder && poolData.draftOrder.order && poolData.draftOrder.order.length > 0;
+            const totalMembers = Object.values(poolData.teams || {}).reduce((sum, t) => sum + (t.members?.length || 0), 0);
+            const maxPlayers = poolData.maxPlayers || 10;
+            const poolMode = poolData.poolMode || 'cumulative';
+
+            if (hasDraftOrder) {
+                // Draft is actively in progress
+                const currentPick = poolData.draftOrder.currentPick || 0;
+                const totalPicks = poolData.draftOrder.totalPicks || 0;
+                activeDrafts.push({
+                    name: poolName,
+                    mode: poolMode,
+                    status: 'active',
+                    currentPick: currentPick,
+                    totalPicks: totalPicks,
+                    participants: totalMembers,
+                    maxPlayers: maxPlayers
+                });
+            } else {
+                // Pool exists but draft hasn't started
+                pendingDrafts.push({
+                    name: poolName,
+                    mode: poolMode,
+                    status: totalMembers >= maxPlayers ? 'ready' : 'waiting',
+                    participants: totalMembers,
+                    maxPlayers: maxPlayers
+                });
+            }
+        });
+
+        // Update badge count
+        const badgeCount = activeDrafts.length + pendingDrafts.filter(d => d.status === 'ready').length;
+        const tabBadge = document.getElementById("draftTabBadge");
+        if (tabBadge) {
+            if (badgeCount > 0) {
+                tabBadge.textContent = badgeCount;
+                tabBadge.style.display = 'inline-flex';
+            } else {
+                tabBadge.style.display = 'none';
+            }
+        }
+
+        // Render drafts
+        if (activeDrafts.length === 0 && pendingDrafts.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px 20px; color: #999;">
+                    <div style="font-size: 3rem; margin-bottom: 16px;">✅</div>
+                    <h3 style="color: #333; margin-bottom: 8px;">Aucun repêchage en cours</h3>
+                    <p>Tous vos pools ont terminé leur repêchage, ou aucun n'est prêt à commencer.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+
+        // Active drafts first (with red urgent styling)
+        activeDrafts.forEach(draft => {
+            const progress = draft.totalPicks > 0 ? Math.round((draft.currentPick / draft.totalPicks) * 100) : 0;
+            html += `
+                <li class="draft-item active-draft">
+                    <div class="pool-item-content">
+                        <span class="pool-item-name">${draft.name}</span>
+                        <div class="pool-item-info">
+                            <span class="pool-item-badge" style="background: #fff3e0; color: #e65100;">🎯 En cours</span>
+                            <span class="pool-item-badge">${draft.mode === 'head-to-head' ? '⚔️ H2H' : '📊 Cumulatif'}</span>
+                            <span class="pool-item-badge">📋 ${draft.currentPick}/${draft.totalPicks} choix</span>
+                        </div>
+                        <div style="margin-top: 8px; background: #e0e0e0; border-radius: 4px; height: 6px; overflow: hidden;">
+                            <div style="width: ${progress}%; background: linear-gradient(90deg, #ff2e2e, #ff6b6b); height: 100%; border-radius: 4px; transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                    <a href="draftActif.html?pool=${encodeURIComponent(draft.name)}" class="pool-action-btn" style="background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%); color: white; text-decoration: none;">Reprendre</a>
+                </li>
+            `;
+        });
+
+        // Pending drafts
+        pendingDrafts.forEach(draft => {
+            const isReady = draft.status === 'ready';
+            html += `
+                <li class="draft-item ${isReady ? 'ready-draft' : 'waiting-draft'}">
+                    <div class="pool-item-content">
+                        <span class="pool-item-name">${draft.name}</span>
+                        <div class="pool-item-info">
+                            <span class="pool-item-badge" style="background: ${isReady ? '#e8f5e9; color: #2e7d32' : '#f5f5f5; color: #666'};">
+                                ${isReady ? '✅ Prêt' : '⏳ En attente'}
+                            </span>
+                            <span class="pool-item-badge">${draft.mode === 'head-to-head' ? '⚔️ H2H' : '📊 Cumulatif'}</span>
+                            <span class="pool-item-badge">👥 ${draft.participants}/${draft.maxPlayers}</span>
+                        </div>
+                    </div>
+                    ${isReady
+                        ? `<a href="draft.html?pool=${encodeURIComponent(draft.name)}" class="pool-action-btn" style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; text-decoration: none;">Commencer</a>`
+                        : `<span class="pool-action-btn secondary" style="cursor: default; opacity: 0.6;">En attente</span>`
+                    }
+                </li>
+            `;
+        });
+
+        container.innerHTML = html;
+
+    } catch (error) {
+        console.error("Error loading active drafts:", error);
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px 20px; color: #999;">
+                <div style="font-size: 3rem; margin-bottom: 16px;">❌</div>
+                <p>Erreur lors du chargement des repêchages</p>
+            </div>
+        `;
+    }
+}
+
+// Load active drafts on page load (for badge count)
+$(document).ready(function() {
+    loadActiveDrafts();
+});
+
 // ==================== TRADE BADGE FUNCTIONALITY ====================
 
 // Update trade notification badge
