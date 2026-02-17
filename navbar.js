@@ -224,18 +224,19 @@ async function checkPendingTrades() {
         const username = localStorage.getItem('username');
         if (!username) return;
 
-        const response = await fetch(`${baseUrl}/pending-trades?username=${username}`);
+        const response = await fetch(`${baseUrl}/trades/pending/${username}`);
         const data = await response.json();
 
-        if (response.ok && data.count > 0) {
+        const count = Array.isArray(data) ? data.length : 0;
+        if (response.ok && count > 0) {
             const desktopBadge = document.getElementById('desktopTradeBadge');
             if (desktopBadge) {
-                desktopBadge.textContent = data.count;
+                desktopBadge.textContent = count;
                 desktopBadge.style.display = 'flex';
             }
             const bottomBadge = document.getElementById('bottomTradeBadge');
             if (bottomBadge) {
-                bottomBadge.textContent = data.count;
+                bottomBadge.textContent = count;
                 bottomBadge.style.display = 'flex';
             }
         }
