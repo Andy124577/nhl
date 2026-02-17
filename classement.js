@@ -108,8 +108,7 @@ async function loadAllUserPools() {
                                    poolData.isDraftComplete ||
                                    poolData.draftStatus === 'completed' ||
                                    poolData.draftStatus === 'done' ||
-                                   hasRoster ||
-                                   (poolData.draftOrder && poolData.draftOrder.currentPick >= poolData.draftOrder.totalPicks);
+                                   hasRoster;
 
             if (isDraftComplete) {
                 userPools.push({

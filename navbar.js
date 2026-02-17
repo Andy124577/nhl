@@ -263,19 +263,21 @@ async function checkActiveDrafts() {
             );
             if (!userTeam) return;
 
-            // Check if draft is active (started but not complete)
-            const hasRoster = userTeam[1].offensive?.length > 0 ||
-                             userTeam[1].defensive?.length > 0 ||
-                             userTeam[1].goalie?.length > 0;
+            // Check if draft is truly complete (all teams have all positions filled per config)
+            const config = poolData.config || {
+                numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1, numTeams: 1
+            };
+            const activeTeams = Object.values(poolData.teams || {}).filter(t => t.members && t.members.length > 0);
+            const isDraftComplete = activeTeams.length > 0 && activeTeams.every(team =>
+                (team.offensive || []).length === config.numOffensive &&
+                (team.defensive || []).length === config.numDefensive &&
+                (team.rookie || []).length === config.numRookies &&
+                (team.goalie || []).length === config.numGoalies &&
+                (team.teams || []).length === config.numTeams
+            );
 
-            const isDraftComplete = poolData.draftComplete ||
-                                   poolData.isDraftComplete ||
-                                   poolData.draftStatus === 'completed' ||
-                                   poolData.draftStatus === 'done' ||
-                                   hasRoster;
-
-            // Draft is active if draftOrder exists but draft is not complete
-            const hasDraftOrder = poolData.draftOrder && poolData.draftOrder.order && poolData.draftOrder.order.length > 0;
+            // draftOrder is a flat array of team names on the server
+            const hasDraftOrder = Array.isArray(poolData.draftOrder) && poolData.draftOrder.length > 0;
             const isDraftActive = hasDraftOrder && !isDraftComplete;
 
             // Also count pools awaiting draft (all teams filled, no draft started)
