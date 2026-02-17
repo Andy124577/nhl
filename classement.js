@@ -86,9 +86,20 @@ async function loadAllUserPools() {
         const response = await fetch(`${BASE_URL}/draft`, { cache: 'no-store' });
         allPoolsData = await response.json();
 
-        // Filter pools where user is a member
+        // Filter pools where user is a member AND draft is completed
         const userPools = [];
         Object.entries(allPoolsData).forEach(([poolName, poolData]) => {
+            // Skip pools with incomplete drafts
+            const isDraftComplete = poolData.draftComplete ||
+                                   poolData.isDraftComplete ||
+                                   poolData.draftStatus === 'completed' ||
+                                   poolData.draftStatus === 'done' ||
+                                   (poolData.draftOrder && poolData.draftOrder.currentPick === poolData.draftOrder.totalPicks);
+
+            if (!isDraftComplete) {
+                return; // Skip this pool
+            }
+
             const userTeam = Object.entries(poolData.teams || {}).find(([teamName, teamData]) =>
                 teamData.members && teamData.members.includes(username)
             );
@@ -473,9 +484,26 @@ function renderTeamRoster(roster) {
             const teamLogo = `teams/${player.teamAbbrev}.png`;
             imageHTML = `<img src="${teamLogo}" alt="${player.name}" onerror="this.src='teams/NHL.png'">`;
         } else {
-            const headshot = player.stats?.headshot || getMatchingImage(player.name);
+            // Try multiple sources for player headshot
+            let headshot = null;
+
+            // 1. Try stats headshot
+            if (player.stats?.headshot && !player.stats.headshot.includes('/teams/')) {
+                headshot = player.stats.headshot;
+            }
+
+            // 2. Try NHL API headshot URL
+            if (!headshot && player.playerId) {
+                headshot = `https://assets.web.nhl.com/mugs/nhl/latest/${player.playerId}.png`;
+            }
+
+            // 3. Try local image list
+            if (!headshot) {
+                headshot = getMatchingImage(player.name);
+            }
+
             if (headshot) {
-                imageHTML = `<img src="${headshot}" alt="${player.name}">`;
+                imageHTML = `<img src="${headshot}" alt="${player.name}" class="lazy-image" data-src="${headshot}" onerror="this.style.display='none'; this.nextElementSibling?.style?.display ? (this.nextElementSibling.style.display = 'flex') : null;">`;
                 if (player.teamAbbrev) {
                     imageHTML += `<img src="teams/${player.teamAbbrev}.png" class="player-team-logo-overlay" alt="${player.teamAbbrev}">`;
                 }
