@@ -46,7 +46,7 @@ table {
 }
 
 thead {
-    background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%);
+    background: linear-gradient(135deg, var(--danger) 0%, var(--danger) 100%);
     color: white;
 }
 
@@ -85,13 +85,13 @@ tbody td {
 tbody td:first-child {
     text-align: center;
     font-weight: 700;
-    color: #ff2e2e;
+    color: var(--danger);
     font-size: 1.1rem;
 }
 
 /* Team name clickable */
 .team-name {
-    color: #ff2e2e;
+    color: var(--danger);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -100,8 +100,8 @@ tbody td:first-child {
 }
 
 .team-name:hover {
-    text-decoration-color: #ff2e2e;
-    color: #cc2525;
+    text-decoration-color: var(--danger);
+    color: var(--danger);
 }
 
 /* Position badges */
@@ -109,7 +109,7 @@ tbody td:first-child {
     display: inline-block;
     width: 35px;
     height: 35px;
-    background: #ff2e2e;
+    background: var(--danger);
     color: white;
     border-radius: 50%;
     text-align: center;
@@ -136,7 +136,7 @@ tbody td:first-child {
 /* Stats highlighting */
 .stats-pts {
     font-weight: 700;
-    color: #ff2e2e;
+    color: var(--danger);
     font-size: 1.05rem;
 }
 
@@ -189,7 +189,7 @@ tbody td:first-child {
 }
 
 .modal-header {
-    background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%);
+    background: linear-gradient(135deg, var(--danger) 0%, var(--danger) 100%);
     color: white;
     padding: 20px 25px;
     border-radius: 12px 12px 0 0;
@@ -328,7 +328,7 @@ tbody td:first-child {
 }
 
 .player-position {
-    color: #ff2e2e;
+    color: var(--danger);
     font-weight: 600;
     font-size: 0.85rem;
 }
@@ -338,7 +338,7 @@ tbody td:first-child {
     display: flex;
     gap: 12px;
     font-size: 0.85rem;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .player-stats-row span {
@@ -364,7 +364,7 @@ tbody td:first-child {
 .today-points {
     font-size: 1rem;
     font-weight: 700;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .today-label {
@@ -379,7 +379,7 @@ tbody td:first-child {
 .total-points {
     font-size: 1.3rem;
     font-weight: 700;
-    color: #ff2e2e;
+    color: var(--danger);
     min-width: 50px;
     text-align: center;
 }
@@ -387,7 +387,7 @@ tbody td:first-child {
 .pts-label {
     font-size: 0.65rem;
     font-weight: 600;
-    color: #ff2e2e;
+    color: var(--danger);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -443,7 +443,7 @@ tbody td:first-child {
 .empty-state h3 {
     font-size: 1.5rem;
     margin-bottom: 10px;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 @media (max-width: 480px) {
