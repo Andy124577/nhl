@@ -7,8 +7,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="draftActif.css" />
   <link rel="stylesheet" href="index.css" />
-  <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-    <link rel="stylesheet" href="navbar.css">
+  <link rel="stylesheet" href="navbar.css">
+  <!-- Load jQuery FIRST -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- Handle query param BEFORE draftActif.js loads -->
+  <script>
+    // Check if pool is in query param and set localStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    const poolParam = urlParams.get('pool');
+    if (poolParam) {
+      localStorage.setItem('draftClan', poolParam);
+      // Clean URL without reload
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  </script>
 </head>
 <body>
   <nav class="navbar">
@@ -269,9 +282,10 @@
 
   <button id="finishButton" class="finish-btn" style="display: none;" onclick="window.location.href='draft.html'">Terminer le draft</button>
 
-  <script defer src="draftActif.js"></script>
+  <!-- Load other scripts AFTER jQuery (already loaded in head) -->
+  <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script defer src="navbar.js"></script>
+  <script defer src="navbar.js"></script>
+  <script defer src="draftActif.js"></script>
 </body>
-    <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </html>
