@@ -511,9 +511,6 @@ function renderTeamRoster(roster) {
 
             if (headshot) {
                 imageHTML = `<img src="${headshot}" alt="${player.name}" class="lazy-image" data-src="${headshot}" onerror="this.style.display='none'; this.nextElementSibling?.style?.display ? (this.nextElementSibling.style.display = 'flex') : null;">`;
-                if (player.teamAbbrev) {
-                    imageHTML += `<img src="teams/${player.teamAbbrev}.png" class="player-team-logo-overlay" alt="${player.teamAbbrev}">`;
-                }
             } else {
                 imageHTML = `<div class="no-photo">${player.position}</div>`;
             }
