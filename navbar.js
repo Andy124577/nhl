@@ -62,25 +62,25 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
 
                 <nav class="nav-links">
                     <a href="accueil.html" class="nav-link ${'accueil' === currentPage ? 'active' : ''}">
-                        <span class="nav-icon">🏠</span>
+                        <img src="Icons/fantazy.png" alt="Accueil" class="nav-icon-img">
                         <span class="nav-text">Accueil</span>
                     </a>
                     <a href="pool.html" class="nav-link ${'pool' === currentPage ? 'active' : ''}" id="desktopPoolLink">
-                        <span class="nav-icon">⚙️</span>
+                        <img src="Icons/pool.png" alt="Pools" class="nav-icon-img">
                         <span class="nav-text">Pools</span>
                         <span class="notif-badge" id="desktopDraftBadge" style="display: none;"></span>
                     </a>
                     <a href="trade.html" class="nav-link ${'trade' === currentPage ? 'active' : ''}" id="desktopTradeLink">
-                        <span class="nav-icon">🔄</span>
+                        <img src="Icons/echanges.png" alt="Échanges" class="nav-icon-img">
                         <span class="nav-text">Échanges</span>
                         <span class="notif-badge" id="desktopTradeBadge" style="display: none;">0</span>
                     </a>
                     <a href="classement.html" class="nav-link ${'classement' === currentPage ? 'active' : ''}">
-                        <span class="nav-icon">🏆</span>
+                        <img src="Icons/classement.png" alt="Classement" class="nav-icon-img">
                         <span class="nav-text">Classement</span>
                     </a>
                     <a href="index.html" class="nav-link ${'stats' === currentPage ? 'active' : ''}">
-                        <span class="nav-icon">📊</span>
+                        <img src="Icons/stats.png" alt="Stats" class="nav-icon-img">
                         <span class="nav-text">Stats</span>
                     </a>
                 </nav>
