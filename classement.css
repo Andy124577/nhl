@@ -7,8 +7,8 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f5f5f5;
-    color: #222;
+    background: var(--bg-page);
+    color: var(--text-dark);
     min-height: 100vh;
 }
 
@@ -24,7 +24,7 @@ body {
     font-weight: 700;
     text-align: center;
     margin: 30px 0 10px 0;
-    color: #222;
+    color: var(--text-dark);
 }
 
 /* ==================== BREADCRUMB NAVIGATION ==================== */
@@ -68,7 +68,7 @@ body {
 }
 
 .pool-card {
-    background: white;
+    background: var(--card-white);
     border-radius: 16px;
     padding: 20px;
     display: flex;
@@ -106,7 +106,7 @@ body {
 .pool-name {
     font-size: 1.3rem;
     font-weight: 700;
-    color: #222;
+    color: var(--text-dark);
     margin-bottom: 8px;
 }
 
@@ -158,7 +158,7 @@ body {
 }
 
 .standing-card {
-    background: white;
+    background: var(--card-white);
     border-radius: 16px;
     padding: 20px;
     display: flex;
@@ -185,7 +185,7 @@ body {
     justify-content: center;
     font-size: 1.2rem;
     font-weight: 700;
-    color: white;
+    color: var(--card-white);
     flex-shrink: 0;
 }
 
@@ -195,7 +195,7 @@ body {
 }
 
 .rank-badge.rank-2 {
-    background: linear-gradient(135deg, #C0C0C0 0%, #999999 100%);
+    background: linear-gradient(135deg, #C0C0C0 0%, var(--text-light-gray)999 100%);
     box-shadow: 0 4px 12px rgba(192, 192, 192, 0.4);
 }
 
@@ -217,7 +217,7 @@ body {
 .standing-name {
     font-size: 1.2rem;
     font-weight: 700;
-    color: #222;
+    color: var(--text-dark);
     margin-bottom: 8px;
 }
 
@@ -232,7 +232,7 @@ body {
     display: flex;
     gap: 12px;
     font-weight: 700;
-    color: #222;
+    color: var(--text-dark);
     font-size: 1.1rem;
 }
 
@@ -245,7 +245,7 @@ body {
     display: flex;
     gap: 12px;
     font-size: 0.75rem;
-    color: #999;
+    color: var(--text-light-gray);
     text-transform: uppercase;
     letter-spacing: 0.3px;
 }
@@ -269,7 +269,7 @@ body {
 
 .points-label {
     font-size: 0.75rem;
-    color: #999;
+    color: var(--text-light-gray);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-top: 4px;
@@ -294,14 +294,14 @@ body {
 }
 
 .roster-card {
-    background: white;
+    background: var(--card-white);
     border-radius: 12px;
     padding: 16px 20px;
     display: flex;
     align-items: center;
     gap: 16px;
     transition: all 0.3s ease;
-    border: 2px solid #e9ecef;
+    border: 2px solid var(--border-light);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
@@ -310,7 +310,7 @@ body {
 }
 
 .roster-card.clickable:hover {
-    background: #f8f9fa;
+    background: var(--bg-hover);
     border-color: var(--danger);
     box-shadow: 0 4px 12px rgba(255, 46, 46, 0.15);
     transform: translateY(-2px);
@@ -329,7 +329,7 @@ body {
     height: 50px;
     border-radius: 50%;
     overflow: hidden;
-    background: #f5f5f5;
+    background: var(--bg-page);
     flex-shrink: 0;
     position: relative;
     display: flex;
@@ -345,7 +345,7 @@ body {
 
 .player-avatar .no-photo {
     font-size: 1.2rem;
-    color: #999;
+    color: var(--text-light-gray);
 }
 
 .roster-info {
@@ -366,7 +366,7 @@ body {
 .player-name {
     font-size: 1.05rem;
     font-weight: 700;
-    color: #222;
+    color: var(--text-dark);
 }
 
 .player-team-abbrev {
@@ -397,7 +397,7 @@ body {
     display: flex;
     gap: 10px;
     font-weight: 600;
-    color: #222;
+    color: var(--text-dark);
     font-size: 0.95rem;
 }
 
@@ -410,7 +410,7 @@ body {
     display: flex;
     gap: 10px;
     font-size: 0.7rem;
-    color: #999;
+    color: var(--text-light-gray);
 }
 
 .player-stats-grid .stats-row-bottom span {
@@ -427,14 +427,14 @@ body {
 .ppts-value {
     font-size: 1.3rem;
     font-weight: 700;
-    color: #222;
+    color: var(--text-dark);
     line-height: 1;
 }
 
 .pptsa-label,
 .ppts-label {
     font-size: 0.65rem;
-    color: #999;
+    color: var(--text-light-gray);
     margin-top: 2px;
 }
 
@@ -446,7 +446,7 @@ body {
 
 .roster-card:hover .roster-arrow {
     transform: translateX(3px);
-    color: #999;
+    color: var(--text-light-gray);
 }
 
 /* ==================== SKELETON LOADERS ==================== */
@@ -470,7 +470,7 @@ body {
 
 /* Pool Card Skeleton */
 .pool-card-skeleton {
-    background: white;
+    background: var(--card-white);
     border-radius: 16px;
     padding: 20px;
     display: flex;
@@ -507,7 +507,7 @@ body {
 
 /* Standing Card Skeleton */
 .standing-card-skeleton {
-    background: white;
+    background: var(--card-white);
     border-radius: 16px;
     padding: 20px;
     display: flex;
@@ -542,7 +542,7 @@ body {
 
 /* Roster Card Skeleton */
 .roster-card-skeleton {
-    background: white;
+    background: var(--card-white);
     border-radius: 12px;
     padding: 16px;
     display: flex;
@@ -599,7 +599,7 @@ body {
 }
 
 .modal-content {
-    background-color: white;
+    background-color: var(--card-white);
     margin: 5% auto;
     width: 90%;
     max-width: 1200px;
@@ -626,7 +626,7 @@ body {
 
 .career-modal-header {
     background: linear-gradient(135deg, var(--danger) 0%, var(--danger) 100%);
-    color: white;
+    color: var(--card-white);
     padding: 30px;
     border-radius: 16px 16px 0 0;
     display: flex;
@@ -639,7 +639,7 @@ body {
     height: 120px;
     border-radius: 12px;
     overflow: hidden;
-    background: white;
+    background: var(--card-white);
     flex-shrink: 0;
 }
 
@@ -681,7 +681,7 @@ body {
     top: 20px;
     font-size: 2rem;
     font-weight: 700;
-    color: white;
+    color: var(--card-white);
     cursor: pointer;
     transition: transform 0.2s ease;
     line-height: 1;
@@ -733,7 +733,7 @@ body {
     display: flex;
     gap: 20px;
     padding: 20px 30px;
-    background: #f8f9fa;
+    background: var(--bg-hover);
     border-bottom: 1px solid var(--text-main);
     flex-wrap: wrap;
 }
@@ -755,7 +755,7 @@ body {
     border: 2px solid var(--text-main);
     border-radius: 8px;
     font-size: 0.9rem;
-    background: white;
+    background: var(--card-white);
     cursor: pointer;
     transition: border-color 0.2s ease;
 }
@@ -768,7 +768,7 @@ body {
     margin-left: auto;
     padding: 8px 16px;
     background: var(--danger);
-    color: white;
+    color: var(--card-white);
     border-radius: 12px;
     font-size: 0.85rem;
     font-weight: 600;
@@ -788,7 +788,7 @@ body {
 
 #careerStatsTable th {
     background: var(--danger);
-    color: white;
+    color: var(--card-white);
     padding: 12px 8px;
     text-align: center;
     font-weight: 600;
@@ -820,7 +820,7 @@ body {
 }
 
 #careerStatsTable .career-totals-row {
-    background: #f8f9fa;
+    background: var(--bg-hover);
     font-weight: 700;
 }
 
@@ -832,7 +832,7 @@ body {
 .no-stats-message {
     text-align: center;
     padding: 40px;
-    color: #999;
+    color: var(--text-light-gray);
     font-size: 1.1rem;
 }
 
