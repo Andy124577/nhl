@@ -1,8 +1,8 @@
 /* General page styling */
 body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
-            color: #222;
+            background: var(--bg-page);
+            color: var(--text-dark);
             margin: 0;
             padding: 0;
             min-height: 100vh;
@@ -11,13 +11,13 @@ body {
 
         /* Sub-navigation */
         .sub-navbar {
-            background: white;
+            background: var(--card-white);
             padding: 0;
             display: flex;
             justify-content: center;
             gap: 0;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            border-bottom: 3px solid #f0f0f0;
+            border-bottom: 3px solid var(--bg-gray-light);
             margin-bottom: 30px;
         }
 
@@ -25,7 +25,7 @@ body {
             flex: 1;
             max-width: 300px;
             padding: 18px 30px;
-            background: white;
+            background: var(--card-white);
             border: none;
             border-bottom: 3px solid transparent;
             color: var(--text-secondary);
@@ -37,14 +37,14 @@ body {
         }
 
         .sub-nav-btn:hover {
-            background: #f8f9fa;
+            background: var(--bg-hover);
             color: var(--danger);
         }
 
         .sub-nav-btn.active {
             color: var(--danger);
             border-bottom: 3px solid var(--danger);
-            background: white;
+            background: var(--card-white);
         }
 
         /* Tab content */
@@ -77,7 +77,7 @@ body {
 
         .draft-section h2 {
             font-size: 1.8rem;
-            color: #222;
+            color: var(--text-dark);
             margin-bottom: 30px;
             font-weight: 700;
             text-align: center;
@@ -94,10 +94,10 @@ body {
 
         /* Draft Cards */
         .draft-card {
-            background: white;
+            background: var(--card-white);
             padding: 20px;
             border-radius: 12px;
-            border: 2px solid #e9ecef;
+            border: 2px solid var(--border-light);
             transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
@@ -113,7 +113,7 @@ body {
         .draft-card h4 {
             font-size: 1.2rem;
             font-weight: 700;
-            color: #222;
+            color: var(--text-dark);
             margin: 0;
         }
 
@@ -126,7 +126,7 @@ body {
         .draft-card button {
             padding: 12px 24px;
             background: linear-gradient(135deg, var(--danger) 0%, var(--danger) 100%);
-            color: white;
+            color: var(--card-white);
             border: none;
             border-radius: 8px;
             font-weight: 600;
