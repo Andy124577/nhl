@@ -126,9 +126,9 @@ function renderNoPoolsState() {
         activePoolContent.innerHTML = `
             <div style="text-align: center; padding: 40px 20px;">
                 <div style="font-size: 48px; margin-bottom: 16px;">🏒</div>
-                <h3 style="margin: 0 0 8px 0; color: #ffffff;">Bienvenue sur Fantazy!</h3>
-                <p style="margin: 0 0 20px 0; color: rgba(255, 255, 255, 0.6);">Créez ou rejoignez un pool pour commencer votre aventure</p>
-                <a href="pool.html" style="display: inline-block; padding: 12px 24px; background: #ff2e2e; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Gérer mes pools</a>
+                <h3 style="margin: 0 0 8px 0; color: #192168;">Bienvenue sur Fantazy!</h3>
+                <p style="margin: 0 0 20px 0; color: #5A6B8C;">Créez ou rejoignez un pool pour commencer votre aventure</p>
+                <a href="pool.html" style="display: inline-block; padding: 12px 24px; background: #ff2e2e; color: #192168; text-decoration: none; border-radius: 8px; font-weight: bold;">Gérer mes pools</a>
             </div>
         `;
     }
@@ -137,7 +137,7 @@ function renderNoPoolsState() {
     const scoreboardContent = document.getElementById('scoreboardContent');
     if (scoreboardContent) {
         scoreboardContent.innerHTML = `
-            <div style="text-align: center; padding: 30px; color: rgba(255,255,255,0.5);">
+            <div style="text-align: center; padding: 30px; color: #8897B5;">
                 <p>Rejoignez un pool pour voir vos duels</p>
             </div>
         `;
@@ -183,27 +183,27 @@ function renderH2HHome() {
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <div>
                     <h3 style="margin: 0 0 4px 0; color: #ff2e2e; font-size: 18px;">Mon Équipe - ${pool.name}</h3>
-                    <p style="margin: 0; font-size: 13px; color: rgba(255, 255, 255, 0.5);">⚔️ Head-to-Head</p>
+                    <p style="margin: 0; font-size: 13px; color: #8897B5;">⚔️ Head-to-Head</p>
                 </div>
                 <a href="classement.html" style="padding: 8px 16px; background: rgba(255, 46, 46, 0.2); color: #ff2e2e; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: bold; border: 1px solid rgba(255, 46, 46, 0.3);">Classement</a>
             </div>
 
             <div style="display: flex; justify-content: space-between; margin-bottom: 16px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px;">
                 <div style="text-align: center; flex: 1;">
-                    <div style="font-size: 1.5rem; font-weight: 800; color: #fff;">${totalPlayers}</div>
-                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Joueurs</div>
+                    <div style="font-size: 1.5rem; font-weight: 800; color: #192168;">${totalPlayers}</div>
+                    <div style="font-size: 0.75rem; color: #8897B5;">Joueurs</div>
                 </div>
                 <div style="text-align: center; flex: 1; border-left: 1px solid rgba(255,255,255,0.1);">
                     <div style="font-size: 1.5rem; font-weight: 800; color: #4caf50;">${teamInfo.offensive?.length || 0}</div>
-                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">ATT</div>
+                    <div style="font-size: 0.75rem; color: #8897B5;">ATT</div>
                 </div>
                 <div style="text-align: center; flex: 1; border-left: 1px solid rgba(255,255,255,0.1);">
                     <div style="font-size: 1.5rem; font-weight: 800; color: #2196f3;">${teamInfo.defensive?.length || 0}</div>
-                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">DÉF</div>
+                    <div style="font-size: 0.75rem; color: #8897B5;">DÉF</div>
                 </div>
                 <div style="text-align: center; flex: 1; border-left: 1px solid rgba(255,255,255,0.1);">
                     <div style="font-size: 1.5rem; font-weight: 800; color: #ff9800;">${teamInfo.goalie?.length || 0}</div>
-                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">G</div>
+                    <div style="font-size: 0.75rem; color: #8897B5;">G</div>
                 </div>
             </div>
 
@@ -231,13 +231,13 @@ function renderMiniRoster(teamInfo) {
                           player.type === 'REC' ? '#9c27b0' : '#607d8b';
         html += `
             <div style="display: flex; align-items: center; gap: 10px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">
-                <span style="padding: 2px 8px; background: ${badgeColor}; color: white; border-radius: 4px; font-size: 0.7rem; font-weight: 700; min-width: 32px; text-align: center;">${player.type}</span>
-                <span style="color: #fff; font-size: 0.9rem; font-weight: 500;">${player.name}</span>
+                <span style="padding: 2px 8px; background: ${badgeColor}; color: #192168; border-radius: 4px; font-size: 0.7rem; font-weight: 700; min-width: 32px; text-align: center;">${player.type}</span>
+                <span style="color: #192168; font-size: 0.9rem; font-weight: 500;">${player.name}</span>
             </div>
         `;
     });
 
-    return html || '<p style="color: rgba(255,255,255,0.4); text-align: center; padding: 10px;">Aucun joueur</p>';
+    return html || '<p style="color: #A8B5D1; text-align: center; padding: 10px;">Aucun joueur</p>';
 }
 
 // ==================== CUMULATIVE HOME ====================
@@ -251,7 +251,7 @@ function renderCumulativeHome() {
 
     activePoolContent.innerHTML = `
         <div style="padding: 20px;">
-            <h3 style="margin: 0 0 20px 0; color: #ffffff; font-size: 20px;">Mes Pools (${completedPools.length})</h3>
+            <h3 style="margin: 0 0 20px 0; color: #192168; font-size: 20px;">Mes Pools (${completedPools.length})</h3>
             <div style="display: flex; flex-direction: column; gap: 16px;">
                 ${completedPools.map(pool => {
                     const poolMode = pool.mode;
@@ -260,13 +260,13 @@ function renderCumulativeHome() {
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                                 <div>
                                     <h4 style="margin: 0 0 4px 0; color: #ff2e2e; font-size: 16px;">${pool.name}</h4>
-                                    <p style="margin: 0; font-size: 13px; color: rgba(255, 255, 255, 0.5);">
+                                    <p style="margin: 0; font-size: 13px; color: #8897B5;">
                                         ${poolMode === 'head-to-head' ? '⚔️ Head-to-Head' : '📊 Cumulatif'}
                                     </p>
                                 </div>
                                 <a href="classement.html" style="padding: 6px 12px; background: rgba(255, 46, 46, 0.2); color: #ff2e2e; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: bold; border: 1px solid rgba(255, 46, 46, 0.3);">Voir</a>
                             </div>
-                            <div style="font-size: 14px; color: rgba(255, 255, 255, 0.7);">
+                            <div style="font-size: 14px; color: #192168;">
                                 <strong>Votre équipe:</strong> ${pool.userTeam}
                             </div>
                         </div>
@@ -291,10 +291,10 @@ function renderPendingDraftHome() {
     activePoolContent.innerHTML = `
         <div style="text-align: center; padding: 30px 20px;">
             <div style="font-size: 48px; margin-bottom: 16px;">🎯</div>
-            <h3 style="margin: 0 0 8px 0; color: #ffffff;">Repêchage en attente</h3>
+            <h3 style="margin: 0 0 8px 0; color: #192168;">Repêchage en attente</h3>
             <p style="margin: 0 0 8px 0; color: #ff2e2e; font-weight: 700; font-size: 1.1rem;">${pool.name}</p>
-            <p style="margin: 0 0 20px 0; color: rgba(255, 255, 255, 0.6);">Le repêchage de votre pool n'est pas encore terminé</p>
-            <a href="pool.html?tab=draft" style="display: inline-block; padding: 12px 24px; background: #ff2e2e; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Voir le repêchage</a>
+            <p style="margin: 0 0 20px 0; color: #5A6B8C;">Le repêchage de votre pool n'est pas encore terminé</p>
+            <a href="pool.html?tab=draft" style="display: inline-block; padding: 12px 24px; background: #ff2e2e; color: #192168; text-decoration: none; border-radius: 8px; font-weight: bold;">Voir le repêchage</a>
         </div>
     `;
 }
@@ -313,13 +313,13 @@ function renderMatchupSection() {
         if (cumulativePool) {
             scoreboardContent.innerHTML = `
                 <div style="text-align: center; padding: 20px;">
-                    <p style="color: rgba(255,255,255,0.5); margin-bottom: 16px;">Pool cumulatif - Pas de duel hebdomadaire</p>
+                    <p style="color: #8897B5; margin-bottom: 16px;">Pool cumulatif - Pas de duel hebdomadaire</p>
                     <a href="classement.html" style="padding: 10px 20px; background: rgba(255,46,46,0.2); color: #ff2e2e; text-decoration: none; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255,46,46,0.3);">Voir le classement complet</a>
                 </div>
             `;
         } else {
             scoreboardContent.innerHTML = `
-                <div style="text-align: center; padding: 30px; color: rgba(255,255,255,0.5);">
+                <div style="text-align: center; padding: 30px; color: #8897B5;">
                     <p>Complétez votre repêchage pour voir vos duels</p>
                 </div>
             `;
@@ -369,13 +369,13 @@ function renderMatchupSection() {
                     <div class="team-score">${oppScore}</div>
                 </div>
             </div>
-            <div style="text-align: center; color: rgba(255,255,255,0.5); font-size: 0.85rem;">
+            <div style="text-align: center; color: #8897B5; font-size: 0.85rem;">
                 Semaine ${currentWeek}
             </div>
         `;
     } else {
         scoreboardContent.innerHTML = `
-            <div style="text-align: center; padding: 30px; color: rgba(255,255,255,0.5);">
+            <div style="text-align: center; padding: 30px; color: #8897B5;">
                 <p>Aucun duel prévu cette semaine</p>
             </div>
         `;
@@ -389,7 +389,7 @@ function renderPoolsOverview() {
 
     if (userData.userPools.length === 0) {
         poolsContent.innerHTML = `
-            <div style="text-align: center; padding: 30px; color: rgba(255,255,255,0.5);">
+            <div style="text-align: center; padding: 30px; color: #8897B5;">
                 <p>Aucun pool. <a href="pool.html" style="color: #ff2e2e;">Créer ou rejoindre un pool</a></p>
             </div>
         `;
