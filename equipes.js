@@ -560,15 +560,15 @@ async function loadActiveDrafts() {
                     <div class="pool-item-content">
                         <span class="pool-item-name">${draft.name}</span>
                         <div class="pool-item-info">
-                            <span class="pool-item-badge" style="background: #fff3e0; color: #e65100;">🎯 En cours</span>
+                            <span class="pool-item-badge draft-active-badge">🎯 En cours</span>
                             <span class="pool-item-badge">${draft.mode === 'head-to-head' ? '⚔️ H2H' : '📊 Cumulatif'}</span>
                             <span class="pool-item-badge">📋 ${draft.currentPick}/${draft.totalPicks} choix</span>
                         </div>
-                        <div style="margin-top: 8px; background: #e0e0e0; border-radius: 4px; height: 6px; overflow: hidden;">
-                            <div style="width: ${progress}%; background: linear-gradient(90deg, #ff2e2e, #ff6b6b); height: 100%; border-radius: 4px; transition: width 0.3s;"></div>
+                        <div class="draft-progress-bar">
+                            <div class="draft-progress-fill" style="width: ${progress}%;"></div>
                         </div>
                     </div>
-                    <button class="pool-action-btn" style="background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%); color: white; border: none; cursor: pointer;" onclick="resumeDraft('${draft.name.replace(/'/g, "\\'")}')">Reprendre</button>
+                    <button class="pool-action-btn draft-resume-btn" onclick="resumeDraft('${draft.name.replace(/'/g, "\\'")}')">Reprendre</button>
                 </li>
             `;
         });
@@ -581,7 +581,7 @@ async function loadActiveDrafts() {
                     <div class="pool-item-content">
                         <span class="pool-item-name">${draft.name}</span>
                         <div class="pool-item-info">
-                            <span class="pool-item-badge" style="background: ${isReady ? '#e8f5e9; color: #2e7d32' : '#f5f5f5; color: #666'};">
+                            <span class="pool-item-badge ${isReady ? 'draft-ready-badge' : 'draft-waiting-badge'}">
                                 ${isReady ? '✅ Prêt' : '⏳ En attente'}
                             </span>
                             <span class="pool-item-badge">${draft.mode === 'head-to-head' ? '⚔️ H2H' : '📊 Cumulatif'}</span>
@@ -589,8 +589,8 @@ async function loadActiveDrafts() {
                         </div>
                     </div>
                     ${isReady
-                        ? `<button class="pool-action-btn" style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; border: none; cursor: pointer;" onclick="startDraftFromPool('${draft.name.replace(/'/g, "\\'")}')">Commencer</button>`
-                        : `<span class="pool-action-btn secondary" style="cursor: default; opacity: 0.6;">En attente</span>`
+                        ? `<button class="pool-action-btn draft-start-btn" onclick="startDraftFromPool('${draft.name.replace(/'/g, "\\'")}')">Commencer</button>`
+                        : `<span class="pool-action-btn secondary draft-waiting-btn">En attente</span>`
                     }
                 </li>
             `;
