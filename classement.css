@@ -52,7 +52,7 @@ body {
 }
 
 .breadcrumb-separator {
-    color: #ccc;
+    color: var(--border-gray);
 }
 
 /* ==================== VIEW CONTAINERS ==================== */
@@ -125,23 +125,23 @@ body {
 }
 
 .pool-badge.type-h2h {
-    background: #e3f2fd;
-    color: #1976d2;
+    background: rgba(33, 150, 243, 0.15);
+    color: #64B5F6;
 }
 
 .pool-badge.type-cumulative {
-    background: #f3e5f5;
-    color: #7b1fa2;
+    background: rgba(156, 39, 176, 0.15);
+    color: #CE93D8;
 }
 
 .pool-badge.players {
-    background: #e8f5e9;
+    background: rgba(0, 230, 118, 0.12);
     color: var(--success);
 }
 
 .pool-arrow {
     font-size: 1.5rem;
-    color: #ccc;
+    color: var(--border-gray);
     transition: transform 0.3s ease;
 }
 
@@ -277,7 +277,7 @@ body {
 
 .standing-arrow {
     font-size: 1.5rem;
-    color: #ccc;
+    color: var(--border-gray);
     transition: transform 0.3s ease;
 }
 
@@ -440,7 +440,7 @@ body {
 
 .roster-arrow {
     font-size: 1.5rem;
-    color: #ccc;
+    color: var(--border-gray);
     transition: transform 0.3s ease;
 }
 
@@ -656,7 +656,7 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 3rem;
-    color: #ccc;
+    color: var(--border-gray);
 }
 
 .player-info-section {
@@ -800,7 +800,7 @@ body {
 #careerStatsTable td {
     padding: 10px 8px;
     text-align: center;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border-light);
 }
 
 #careerStatsTable .season-col {
