@@ -124,11 +124,11 @@ function renderNoPoolsState() {
     const activePoolContent = document.getElementById('activePoolContent');
     if (activePoolContent) {
         activePoolContent.innerHTML = `
-            <div style="text-align: center; padding: 40px 20px;">
-                <div style="font-size: 48px; margin-bottom: 16px;">🏒</div>
-                <h3 style="margin: 0 0 8px 0; color: #192168;">Bienvenue sur Fantazy!</h3>
-                <p style="margin: 0 0 20px 0; color: #5A6B8C;">Créez ou rejoignez un pool pour commencer votre aventure</p>
-                <a href="pool.html" style="display: inline-block; padding: 12px 24px; background: #ff2e2e; color: #192168; text-decoration: none; border-radius: 8px; font-weight: bold;">Gérer mes pools</a>
+            <div class="empty-state">
+                <div class="empty-icon">🏒</div>
+                <h4>Bienvenue sur Fantazy!</h4>
+                <p>Créez ou rejoignez un pool pour commencer votre aventure de fantasy hockey</p>
+                <a href="pool.html" class="btn-primary">Gérer mes pools</a>
             </div>
         `;
     }
@@ -137,8 +137,11 @@ function renderNoPoolsState() {
     const scoreboardContent = document.getElementById('scoreboardContent');
     if (scoreboardContent) {
         scoreboardContent.innerHTML = `
-            <div style="text-align: center; padding: 30px; color: #8897B5;">
-                <p>Rejoignez un pool pour voir vos duels</p>
+            <div class="empty-state">
+                <div class="empty-icon">📅</div>
+                <h4>Aucun duel cette semaine</h4>
+                <p>Rejoignez un pool Head-to-Head pour affronter d'autres joueurs</p>
+                <a href="pool.html" class="btn-secondary">Rejoindre un pool</a>
             </div>
         `;
     }
@@ -179,33 +182,35 @@ function renderH2HHome() {
                         (teamInfo.teams?.length || 0);
 
     activePoolContent.innerHTML = `
-        <div style="padding: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <div>
-                    <h3 style="margin: 0 0 4px 0; color: #ff2e2e; font-size: 18px;">Mon Équipe - ${pool.name}</h3>
-                    <p style="margin: 0; font-size: 13px; color: #8897B5;">⚔️ Head-to-Head</p>
+        <div class="pool-actif-card card">
+            <div class="pool-header-gradient">
+                <h3 class="pool-name-truncate" title="${pool.name}">Mon Équipe - ${pool.name}</h3>
+                <div class="pool-meta">
+                    <span>⚔️ Head-to-Head</span>
+                    <span>📅 Semaine en cours</span>
+                    <span><a href="classement.html" class="btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">Voir classement →</a></span>
                 </div>
-                <a href="classement.html" style="padding: 8px 16px; background: rgba(255, 46, 46, 0.2); color: #ff2e2e; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: bold; border: 1px solid rgba(255, 46, 46, 0.3);">Classement</a>
             </div>
 
-            <div style="display: flex; justify-content: space-between; margin-bottom: 16px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                <div style="text-align: center; flex: 1;">
-                    <div style="font-size: 1.5rem; font-weight: 800; color: #192168;">${totalPlayers}</div>
-                    <div style="font-size: 0.75rem; color: #8897B5;">Joueurs</div>
+            <div style="padding: 20px;">
+                <div class="stats-grid">
+                    <div class="stat-cell">
+                        <div class="stat-cell-value">${totalPlayers}</div>
+                        <div class="stat-cell-label">Joueurs</div>
+                    </div>
+                    <div class="stat-cell">
+                        <div class="stat-cell-value">${teamInfo.offensive?.length || 0}</div>
+                        <div class="stat-cell-label">ATT</div>
+                    </div>
+                    <div class="stat-cell">
+                        <div class="stat-cell-value">${teamInfo.defensive?.length || 0}</div>
+                        <div class="stat-cell-label">DÉF</div>
+                    </div>
+                    <div class="stat-cell">
+                        <div class="stat-cell-value">${teamInfo.goalie?.length || 0}</div>
+                        <div class="stat-cell-label">G</div>
+                    </div>
                 </div>
-                <div style="text-align: center; flex: 1; border-left: 1px solid rgba(255,255,255,0.1);">
-                    <div style="font-size: 1.5rem; font-weight: 800; color: #4caf50;">${teamInfo.offensive?.length || 0}</div>
-                    <div style="font-size: 0.75rem; color: #8897B5;">ATT</div>
-                </div>
-                <div style="text-align: center; flex: 1; border-left: 1px solid rgba(255,255,255,0.1);">
-                    <div style="font-size: 1.5rem; font-weight: 800; color: #2196f3;">${teamInfo.defensive?.length || 0}</div>
-                    <div style="font-size: 0.75rem; color: #8897B5;">DÉF</div>
-                </div>
-                <div style="text-align: center; flex: 1; border-left: 1px solid rgba(255,255,255,0.1);">
-                    <div style="font-size: 1.5rem; font-weight: 800; color: #ff9800;">${teamInfo.goalie?.length || 0}</div>
-                    <div style="font-size: 0.75rem; color: #8897B5;">G</div>
-                </div>
-            </div>
 
             <div style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;">
                 ${renderMiniRoster(teamInfo)}
@@ -225,14 +230,15 @@ function renderMiniRoster(teamInfo) {
     ];
 
     allPlayers.forEach(player => {
-        const badgeColor = player.type === 'ATT' ? '#4caf50' :
-                          player.type === 'DÉF' ? '#2196f3' :
-                          player.type === 'G' ? '#ff9800' :
-                          player.type === 'REC' ? '#9c27b0' : '#607d8b';
+        const badgeClass = player.type === 'ATT' ? 'att' :
+                          player.type === 'DÉF' ? 'def' :
+                          player.type === 'G' ? 'g' : 'rec';
         html += `
-            <div style="display: flex; align-items: center; gap: 10px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">
-                <span style="padding: 2px 8px; background: ${badgeColor}; color: #192168; border-radius: 4px; font-size: 0.7rem; font-weight: 700; min-width: 32px; text-align: center;">${player.type}</span>
-                <span style="color: #192168; font-size: 0.9rem; font-weight: 500;">${player.name}</span>
+            <div class="player-row">
+                <span class="position-badge ${badgeClass}">${player.type}</span>
+                <div class="player-info">
+                    <span class="player-name">${player.name}</span>
+                </div>
             </div>
         `;
     });
@@ -312,15 +318,20 @@ function renderMatchupSection() {
         const cumulativePool = userData.userPools.find(p => p.isDraftComplete);
         if (cumulativePool) {
             scoreboardContent.innerHTML = `
-                <div style="text-align: center; padding: 20px;">
-                    <p style="color: #8897B5; margin-bottom: 16px;">Pool cumulatif - Pas de duel hebdomadaire</p>
-                    <a href="classement.html" style="padding: 10px 20px; background: rgba(255,46,46,0.2); color: #ff2e2e; text-decoration: none; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255,46,46,0.3);">Voir le classement complet</a>
+                <div class="empty-state">
+                    <div class="empty-icon">📊</div>
+                    <h4>Pool cumulatif</h4>
+                    <p>Pas de duel hebdomadaire - Mode classement général</p>
+                    <a href="classement.html" class="btn-secondary">Voir le classement complet</a>
                 </div>
             `;
         } else {
             scoreboardContent.innerHTML = `
-                <div style="text-align: center; padding: 30px; color: #8897B5;">
-                    <p>Complétez votre repêchage pour voir vos duels</p>
+                <div class="empty-state">
+                    <div class="empty-icon">🎯</div>
+                    <h4>Repêchage en cours</h4>
+                    <p>Complétez votre repêchage pour commencer à jouer</p>
+                    <a href="pool.html?tab=draft" class="btn-secondary">Aller au repêchage</a>
                 </div>
             `;
         }
@@ -375,8 +386,10 @@ function renderMatchupSection() {
         `;
     } else {
         scoreboardContent.innerHTML = `
-            <div style="text-align: center; padding: 30px; color: #8897B5;">
-                <p>Aucun duel prévu cette semaine</p>
+            <div class="empty-state">
+                <div class="empty-icon">📅</div>
+                <h4>Aucun duel prévu cette semaine</h4>
+                <p>Les matchups seront mis à jour chaque semaine</p>
             </div>
         `;
     }
@@ -389,8 +402,11 @@ function renderPoolsOverview() {
 
     if (userData.userPools.length === 0) {
         poolsContent.innerHTML = `
-            <div style="text-align: center; padding: 30px; color: #8897B5;">
-                <p>Aucun pool. <a href="pool.html" style="color: #ff2e2e;">Créer ou rejoindre un pool</a></p>
+            <div class="empty-state">
+                <div class="empty-icon">🏒</div>
+                <h4>Aucun pool actif</h4>
+                <p>Créez ou rejoignez un pool pour commencer</p>
+                <a href="pool.html" class="btn-secondary">Gérer les pools</a>
             </div>
         `;
         return;
@@ -530,7 +546,16 @@ async function loadTopPerformers() {
         console.error('Error loading performers:', error);
         if (skeleton) skeleton.style.display = 'none';
         if (content) content.style.display = 'block';
-        list.innerHTML = '<p class="empty-message">Erreur de chargement</p>';
+        list.innerHTML = `
+            <div class="error-state">
+                <div class="error-icon">⚠️</div>
+                <h4>Impossible de charger les données</h4>
+                <button class="btn-retry" onclick="location.reload()">
+                    <span>🔄</span>
+                    <span>Réessayer</span>
+                </button>
+            </div>
+        `;
     }
 }
 
