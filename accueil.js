@@ -243,7 +243,7 @@ function renderMiniRoster(teamInfo) {
         `;
     });
 
-    return html || '<p style="color: #A8B5D1; text-align: center; padding: 10px;">Aucun joueur</p>';
+    return html || '<p style="color: var(--text-secondary); text-align: center; padding: 10px;">Aucun joueur</p>';
 }
 
 // ==================== CUMULATIVE HOME ====================
@@ -257,7 +257,7 @@ function renderCumulativeHome() {
 
     activePoolContent.innerHTML = `
         <div style="padding: 20px;">
-            <h3 style="margin: 0 0 20px 0; color: #192168; font-size: 20px;">Mes Pools (${completedPools.length})</h3>
+            <h3 style="margin: 0 0 20px 0; color: var(--text-dark); font-size: 20px;">Mes Pools (${completedPools.length})</h3>
             <div style="display: flex; flex-direction: column; gap: 16px;">
                 ${completedPools.map(pool => {
                     const poolMode = pool.mode;
@@ -265,14 +265,14 @@ function renderCumulativeHome() {
                         <div style="background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 16px; border: 1px solid rgba(255, 255, 255, 0.1);">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                                 <div>
-                                    <h4 style="margin: 0 0 4px 0; color: #ff2e2e; font-size: 16px;">${pool.name}</h4>
-                                    <p style="margin: 0; font-size: 13px; color: #8897B5;">
+                                    <h4 style="margin: 0 0 4px 0; color: var(--primary); font-size: 16px;">${pool.name}</h4>
+                                    <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
                                         ${poolMode === 'head-to-head' ? '⚔️ Head-to-Head' : '📊 Cumulatif'}
                                     </p>
                                 </div>
-                                <a href="classement.html" style="padding: 6px 12px; background: rgba(255, 46, 46, 0.2); color: #ff2e2e; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: bold; border: 1px solid rgba(255, 46, 46, 0.3);">Voir</a>
+                                <a href="classement.html" style="padding: 6px 12px; background: rgba(0, 212, 255, 0.15); color: var(--primary); text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: bold; border: 1px solid rgba(0, 212, 255, 0.3);">Voir</a>
                             </div>
-                            <div style="font-size: 14px; color: #192168;">
+                            <div style="font-size: 14px; color: var(--text-dark);">
                                 <strong>Votre équipe:</strong> ${pool.userTeam}
                             </div>
                         </div>
@@ -297,10 +297,10 @@ function renderPendingDraftHome() {
     activePoolContent.innerHTML = `
         <div style="text-align: center; padding: 30px 20px;">
             <div style="font-size: 48px; margin-bottom: 16px;">🎯</div>
-            <h3 style="margin: 0 0 8px 0; color: #192168;">Repêchage en attente</h3>
-            <p style="margin: 0 0 8px 0; color: #ff2e2e; font-weight: 700; font-size: 1.1rem;">${pool.name}</p>
-            <p style="margin: 0 0 20px 0; color: #5A6B8C;">Le repêchage de votre pool n'est pas encore terminé</p>
-            <a href="pool.html?tab=draft" style="display: inline-block; padding: 12px 24px; background: #ff2e2e; color: #192168; text-decoration: none; border-radius: 8px; font-weight: bold;">Voir le repêchage</a>
+            <h3 style="margin: 0 0 8px 0; color: var(--text-dark);">Repêchage en attente</h3>
+            <p style="margin: 0 0 8px 0; color: var(--primary); font-weight: 700; font-size: 1.1rem;">${pool.name}</p>
+            <p style="margin: 0 0 20px 0; color: var(--text-gray);">Le repêchage de votre pool n'est pas encore terminé</p>
+            <a href="pool.html?tab=draft" style="display: inline-block; padding: 12px 24px; background: #ff2e2e; color: var(--text-dark); text-decoration: none; border-radius: 8px; font-weight: bold;">Voir le repêchage</a>
         </div>
     `;
 }
@@ -380,7 +380,7 @@ function renderMatchupSection() {
                     <div class="team-score">${oppScore}</div>
                 </div>
             </div>
-            <div style="text-align: center; color: #8897B5; font-size: 0.85rem;">
+            <div style="text-align: center; color: var(--text-secondary); font-size: 0.85rem;">
                 Semaine ${currentWeek}
             </div>
         `;
