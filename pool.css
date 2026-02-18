@@ -41,3 +41,55 @@
     border-color: var(--text-main) !important;
     opacity: 0.8;
 }
+
+/* Draft badge colors */
+.draft-active-badge {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: var(--danger) !important;
+}
+
+.draft-ready-badge {
+    background: rgba(34, 197, 94, 0.15) !important;
+    color: var(--success) !important;
+}
+
+.draft-waiting-badge {
+    background: var(--card) !important;
+    color: var(--text-secondary) !important;
+}
+
+/* Draft progress bar */
+.draft-progress-bar {
+    margin-top: 8px;
+    background: var(--card);
+    border-radius: 4px;
+    height: 6px;
+    overflow: hidden;
+}
+
+.draft-progress-fill {
+    background: linear-gradient(90deg, var(--danger), var(--danger));
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s;
+}
+
+/* Draft action buttons */
+.draft-resume-btn {
+    background: linear-gradient(135deg, var(--danger) 0%, var(--danger) 100%) !important;
+    color: var(--text-main) !important;
+    border: none !important;
+    cursor: pointer !important;
+}
+
+.draft-start-btn {
+    background: linear-gradient(135deg, var(--success) 0%, var(--success) 100%) !important;
+    color: var(--text-main) !important;
+    border: none !important;
+    cursor: pointer !important;
+}
+
+.draft-waiting-btn {
+    cursor: default !important;
+    opacity: 0.6 !important;
+}
