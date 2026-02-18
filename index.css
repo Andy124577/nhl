@@ -1,42 +1,42 @@
 :root {
   /* Main backgrounds */
-  --bg: #0B1220;
-  --bg-page: #f5f5f5;
-  --card: #111827;
-  --card-white: #ffffff;
+  --bg: #192168;
+  --bg-page: #F4F6F9;
+  --card: #2A3B7D;
+  --card-white: #FFFFFF;
 
   /* Navbar specific */
-  --navbar-bg: #0B1220;
-  --navbar-border: #1F2937;
+  --navbar-bg: #192168;
+  --navbar-border: #2A3B7D;
 
   /* Colors */
-  --primary: #1E90FF;
-  --success: #22C55E;
-  --danger: #EF4444;
-  --warning: #F59E0B;
+  --primary: #A6192E;
+  --success: #00843D;
+  --danger: #C8102E;
+  --warning: #FDB927;
 
   /* Text colors */
-  --text-main: #F9FAFB;
-  --text-secondary: #9CA3AF;
-  --text-dark: #222222;
-  --text-gray: #666666;
-  --text-light-gray: #999999;
+  --text-main: #F4F6F9;
+  --text-secondary: #A8B5D1;
+  --text-dark: #192168;
+  --text-gray: #5A6B8C;
+  --text-light-gray: #8897B5;
 
   /* Border colors */
-  --border-light: #e9ecef;
-  --border-gray: #ddd;
-  --border-table: #E5E7EB;
+  --border-light: #E1E7EF;
+  --border-gray: #C7D1E0;
+  --border-table: #E1E7EF;
 
   /* Background variations */
-  --bg-hover: #f8f9fa;
-  --bg-gray-light: #f0f1f2;
-  --bg-odd-row: #f9f9f9;
+  --bg-hover: #E8EDF4;
+  --bg-gray-light: #DCE3ED;
+  --bg-odd-row: #F7F9FB;
 
   /* Shadows and overlays */
-  --overlay-dark: rgba(0, 0, 0, 0.6);
-  --shadow-sm: rgba(0, 0, 0, 0.05);
-  --shadow-md: rgba(0, 0, 0, 0.08);
-  --shadow-lg: rgba(0, 0, 0, 0.3);
+  --overlay-dark: rgba(25, 33, 104, 0.7);
+  --shadow-sm: rgba(25, 33, 104, 0.08);
+  --shadow-md: rgba(25, 33, 104, 0.12);
+  --shadow-lg: rgba(25, 33, 104, 0.35);
 }
 
 @keyframes modalSlideIn{0%{transform:translateY(-50px);opacity:0}to{transform:translateY(0);opacity:1}}@keyframes pulse{0%,to{opacity:1}50%{opacity:.5}}body{font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;background:var(--bg-page);color:var(--text-dark);margin:0;padding:0;min-height:100vh;overflow-x:hidden}.stats-container{max-width:1200px;margin:0 auto;padding:30px 20px}.filters-section{background:var(--card-white);padding:20px;border-radius:12px;box-shadow:0 2px 8px var(--shadow-md);margin-bottom:30px;display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end}.filter-group{flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px}.filter-group label{font-weight:600;color:var(--text-dark);font-size:.95rem}.filter-group input,.filter-group select{padding:12px 15px;border:2px solid var(--border-table);border-radius:8px;font-size:1rem;transition:all .3s ease;background:var(--card-white)}.filter-group input:focus,.filter-group select:focus{outline:0;border-color:var(--danger);box-shadow:0 0 0 3px rgba(239,68,68,.1)}.table-container{background:var(--card-white);border-radius:12px;box-shadow:0 2px 8px var(--shadow-md);overflow-x:auto;padding:20px}table{width:100%;border-collapse:collapse;table-layout:fixed}td,th{padding:8px 5px;text-align:center;font-size:.9rem;word-wrap:break-word}th{background-color:var(--border-table);border-bottom:var(--danger) solid 2px}tr:nth-child(even){background-color:var(--border-table)}tr:nth-child(odd){background-color:var(--bg-odd-row)}tr:hover{transition:background-color .3s ease}.player-photo{position:relative;width:70px;height:70px;display:inline-block}.player-photo img.face{width:70px;height:70px;display:block;border-radius:8px}.player-photo img.logo{position:absolute;bottom:-5px;right:-5px;width:25px;height:25px}td.points-column{background-color:var(--border-table);font-weight:700}td:nth-child(2),th:nth-child(2){white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:150px}td:nth-child(6),th:nth-child(6){width:10%}table tbody tr{cursor:pointer;transition:background-color .2s ease}table tbody tr:hover{background-color:#e8f4f8!important}.modal{display:none;position:fixed;z-index:10000;left:0;top:0;width:100%;height:100%;background-color:var(--overlay-dark);backdrop-filter:blur(3px);overflow-y:auto;overflow-x:hidden}.modal-content{background:var(--card-white);margin:5%auto;padding:30px;border-radius:16px;width:90%;max-width:600px;box-shadow:0 10px 40px var(--shadow-lg);position:relative;animation:modalSlideIn .3s ease}.close-modal{position:absolute;right:20px;top:20px;font-size:2rem;font-weight:700;color:var(--text-light-gray);cursor:pointer;transition:color .2s}.close-modal:hover{color:var(--danger)}.modal-content h2{color:var(--text-dark);margin-bottom:10px;font-size:1.8rem}.modal-content h3{color:var(--text-gray);margin-bottom:20px;font-size:1.2rem;font-weight:500}#modalStats{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin-top:20px}.stat-item{background:var(--bg-hover);padding:15px;border-radius:8px;border-left:4px solid var(--danger)}.stat-label{font-size:.85rem;color:var(--text-gray);text-transform:uppercase;font-weight:600;letter-spacing:.5px;margin-bottom:5px}.player-name-row h2,.stat-value{font-size:1.8rem;color:var(--text-dark);font-weight:700}.career-modal{max-width:90%;width:850px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;padding:0;background:rgba(255,255,255,.85);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);margin:3%auto;border-radius:20px;border:1px solid rgba(255,255,255,.5);box-shadow:0 8px 32px rgba(239,68,68,.15)}.loading-spinner{text-align:center;padding:50px 30px;color:var(--danger);font-size:1.1rem;font-weight:500}.loading-spinner::after{content:"⏳";display:block;font-size:2.5rem;margin-top:15px;animation:pulse 1.5s infinite}.career-modal-header{display:flex;align-items:center;gap:15px;padding:20px 25px;background:linear-gradient(135deg,rgba(239,68,68,.08)0,rgba(220,38,38,.08) 100%);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#2d3748;position:relative;border-bottom:1px solid rgba(239,68,68,.1);border-radius:20px 20px 0 0}.career-modal-header .close-modal,.player-headshot-container{border-radius:50%;display:flex;align-items:center;justify-content:center}.career-modal-header .close-modal{position:absolute;right:20px;top:20px;color:var(--danger);font-size:1.8rem;opacity:.7;transition:all .2s;cursor:pointer;width:32px;height:32px;background:rgba(239,68,68,.1)}.career-modal-header .close-modal:hover{opacity:1;background:rgba(239,68,68,.15);transform:rotate(90deg)}.player-headshot-container{width:210px;height:210px;overflow:hidden;border:3px solid rgba(239,68,68,.2);background:rgba(255,255,255,.5);flex-shrink:0;box-shadow:0 6px 25px rgba(239,68,68,.15)}.player-headshot-container img{width:100%;height:100%;object-fit:cover}.player-headshot-container .no-photo{font-size:4rem;color:var(--danger);opacity:.6}.player-info-section{flex:1;display:flex;flex-direction:column;gap:12px}.player-name-row{display:flex;align-items:center;justify-content:space-between;margin-right:50px}.player-name-row h2{margin:0;color:#2d3748}.player-position-team{display:flex;align-items:center;gap:12px;font-size:.9rem;font-weight:600;color:var(--danger);margin-bottom:4px}.player-position-team span{display:flex;align-items:center;gap:6px}.player-position-team img{width:20px;height:20px}.player-bio-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 16px}.bio-stat{display:flex;flex-direction:column;gap:4px}.bio-stat .bio-label{font-size:.7rem;font-weight:600;text-transform:uppercase;color:#718096;letter-spacing:.5px}.bio-stat .bio-value{font-size:.85rem;font-weight:600;color:#2d3748}.career-filters,.filter-group-career select{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}.career-filters{display:flex;gap:15px;padding:15px 25px;background:rgba(247,250,252,.5);border-bottom:1px solid rgba(239,68,68,.08);align-items:center}.filter-group-career{display:flex;align-items:center;gap:8px}.filter-group-career label{font-size:.8rem;font-weight:600;color:var(--danger)}.filter-group-career select{padding:6px 12px;border:1px solid rgba(239,68,68,.2);border-radius:10px;background:rgba(255,255,255,.7);color:#2d3748;font-size:.85rem;font-weight:500;outline:0;cursor:pointer;transition:all .2s}.filter-group-career select:hover{border-color:rgba(239,68,68,.4);background:rgba(255,255,255,.9)}.filter-group-career select:focus{border-color:var(--danger);box-shadow:0 0 0 3px rgba(239,68,68,.1)}.stats-count-badge{margin-left:auto;padding:6px 14px;background:rgba(239,68,68,.1);color:var(--danger);border-radius:12px;font-size:.8rem;font-weight:600}#careerStatsTable{flex:1;overflow-x:auto;overflow-y:auto;padding:0;background:0 0}#careerStatsTable table{width:100%;min-width:700px;border-collapse:separate;border-spacing:0;font-size:.85rem}#careerStatsTable th{background:rgba(239,68,68,.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--text-main);padding:12px 10px;text-align:center;font-weight:600;position:sticky;top:0;z-index:100;text-transform:uppercase;font-size:.7rem;letter-spacing:.5px;white-space:nowrap;border-bottom:1px solid rgba(239,68,68,.15);box-shadow:0 2px 4px rgba(0,0,0,.1)}#careerStatsTable td{padding:10px 8px;text-align:center;border-bottom:1px solid rgba(239,68,68,.05);font-size:.85rem;white-space:nowrap;color:#2d3748;font-weight:500;position:relative;z-index:1}#careerStatsTable tbody tr{transition:all .2s;position:relative;z-index:1}#careerStatsTable tbody tr:hover{background:rgba(239,68,68,.05)}#careerStatsTable td.league-col{font-size:.75rem;color:#718096;font-weight:600;white-space:normal;line-height:1.2}#careerStatsTable td.league-col,#careerStatsTable td.season-col,#careerStatsTable th.league-col,#careerStatsTable th.season-col{width:80px;max-width:80px;min-width:80px}#careerStatsTable td.season-col{font-weight:700;color:var(--danger);font-size:.9rem}#careerStatsTable td.team-col{padding:8px;text-align:center;font-size:.75rem;color:#2d3748;font-weight:500;word-wrap:break-word;overflow-wrap:break-word;white-space:normal;line-height:1.3;vertical-align:middle;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}#careerStatsTable td.team-col,#careerStatsTable th.team-col{width:90px;max-width:90px;min-width:90px}#careerStatsTable .career-totals-row{background:rgba(239,68,68,.1);font-weight:700;border-top:2px solid var(--danger)}#careerStatsTable .career-totals-row td{padding:14px 8px;font-weight:700;color:var(--danger)}#careerStatsTable .career-totals-label{text-align:left!important;text-transform:uppercase;font-size:.8rem;letter-spacing:.5px}.no-stats-message{text-align:center;padding:50px 20px;color:#a0aec0;font-size:1rem;font-weight:500}@media (max-width:768px){.career-modal{width:100%;max-width:100%;max-height:90vh;margin:5vh auto;border-radius:0}.career-modal-header{padding:18px 15px;gap:12px}.career-modal-header .close-modal{right:12px;top:12px;font-size:1.5rem;width:28px;height:28px}.player-headshot-container{width:120px;height:120px}.player-name-row h2{font-size:1.3rem}.player-name-row{margin-right:40px}.player-position-team{font-size:.8rem;flex-wrap:wrap}.player-bio-grid{grid-template-columns:repeat(2,1fr);gap:10px 12px}.bio-stat .bio-label{font-size:.65rem}.bio-stat .bio-value{font-size:.75rem}.career-filters,.filter-group-career{flex-direction:column;align-items:stretch}.career-filters{padding:15px 20px;gap:12px}.filter-group-career{gap:6px}.filter-group-career select{width:100%}.stats-count-badge{margin:0;justify-content:center}#careerStatsTable{padding:0;-webkit-overflow-scrolling:touch}#careerStatsTable table{min-width:700px;font-size:.85rem}#careerStatsTable th{padding:12px 8px;font-size:.7rem}#careerStatsTable td{padding:10px 8px;font-size:.85rem}#careerStatsTable td.team-col{font-size:.65rem;padding:6px 4px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}#careerStatsTable td.team-col,#careerStatsTable th.team-col{width:70px;max-width:70px;min-width:70px}#careerStatsTable td.league-col{font-size:.65rem}#careerStatsTable td.league-col,#careerStatsTable th.league-col{width:60px;max-width:60px;min-width:60px}}@media screen and (max-width:768px){.navbar{padding:8px 10px}.navbar-brand{gap:8px}.navbar-logo{height:40px}.navbar-title{font-size:1.1rem}.navbar ul{gap:10px}.navbar a{padding:6px 8px}.page-header h1{font-size:1.8rem}.page-header p{font-size:1rem}.stats-container{padding:20px 15px}.filters-section{padding:15px}.filter-group{min-width:100%}.table-container{padding:15px}.navbar a,table,tbody,td,th,thead,tr{font-size:.75rem}.player-photo,.player-photo img.face{width:50px;height:50px}.player-photo img.logo{width:18px;height:18px}}@media screen and (max-width:480px){.navbar-title{display:none}.navbar ul{gap:10px}.page-header{padding:30px 15px}.page-header h1{font-size:1.5rem}.stats-container{padding:15px 10px}}
