@@ -588,29 +588,80 @@ function renderStatComparison() {
     const my = selectedMyPlayer.data;
     const partner = selectedPartnerPlayer.data;
 
-    container.innerHTML = `
-        <div class="stat-comp-row">
-            <span class="stat-comp-label">Buts</span>
-            <div class="stat-comp-values">
-                <span class="my-val">${my.goals || 0}</span>
-                <span class="partner-val">${partner.goals || 0}</span>
+    // Different stats for goalies vs skaters
+    if (selectedMyPlayer.category === 'G') {
+        container.innerHTML = `
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">Victoires</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">${my.wins || 0}</span>
+                    <span class="partner-val">${partner.wins || 0}</span>
+                </div>
             </div>
-        </div>
-        <div class="stat-comp-row">
-            <span class="stat-comp-label">Passes</span>
-            <div class="stat-comp-values">
-                <span class="my-val">${my.assists || 0}</span>
-                <span class="partner-val">${partner.assists || 0}</span>
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">% Arrêts</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">${(my.savePctg || 0).toFixed(3)}</span>
+                    <span class="partner-val">${(partner.savePctg || 0).toFixed(3)}</span>
+                </div>
             </div>
-        </div>
-        <div class="stat-comp-row">
-            <span class="stat-comp-label">Points</span>
-            <div class="stat-comp-values">
-                <span class="my-val">${my.points || my.wins || 0}</span>
-                <span class="partner-val">${partner.points || partner.wins || 0}</span>
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">Blanchissages</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">${my.shutouts || 0}</span>
+                    <span class="partner-val">${partner.shutouts || 0}</span>
+                </div>
             </div>
-        </div>
-    `;
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">Buts Contre</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">${my.goalsAgainst || 0}</span>
+                    <span class="partner-val">${partner.goalsAgainst || 0}</span>
+                </div>
+            </div>
+        `;
+    } else if (selectedMyPlayer.category === 'T') {
+        container.innerHTML = `
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">Équipes NHL</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">—</span>
+                    <span class="partner-val">—</span>
+                </div>
+            </div>
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">Buts</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">${my.goals || 0}</span>
+                    <span class="partner-val">${partner.goals || 0}</span>
+                </div>
+            </div>
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">Passes</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">${my.assists || 0}</span>
+                    <span class="partner-val">${partner.assists || 0}</span>
+                </div>
+            </div>
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">Points</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">${my.points || 0}</span>
+                    <span class="partner-val">${partner.points || 0}</span>
+                </div>
+            </div>
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">+/-</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">${my.plusMinus || 0}</span>
+                    <span class="partner-val">${partner.plusMinus || 0}</span>
+                </div>
+            </div>
+        `;
+    }
 }
 
 // ============================================================
