@@ -3,215 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau de bord - Fantazy</title>
+    <title>Fantazy - Fantasy NHL</title>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="accueil.css">
     <link rel="stylesheet" href="skeleton-loader.css">
-    <!-- jQuery FIRST, synchronous -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <!-- Navigation bar -->
+    <!-- Navigation -->
     <nav class="navbar"></nav>
 
-    <div class="dashboard-container">
-        <!-- Action Center - What needs attention NOW (Zeigarnik Effect) -->
-        <div class="action-alerts" id="actionAlerts">
-            <!-- Skeleton Loader -->
-            <div class="skeleton-loader" id="alertsSkeleton">
-                <div class="skeleton-alert">
-                    <div class="skeleton" style="width: 300px; height: 20px;"></div>
-                </div>
-            </div>
-            <!-- Actual Content -->
-            <div class="actual-content" id="alertsContent" style="display: none;">
-                <!-- Alerts will be injected here -->
-            </div>
+    <!-- ============================================================ -->
+    <!-- HERO SECTION                                                  -->
+    <!-- ============================================================ -->
+    <section class="hero-section">
+        <!-- Background spotlight glows -->
+        <div class="hero-spotlights">
+            <div class="spotlight sp-1"></div>
+            <div class="spotlight sp-2"></div>
+            <div class="spotlight sp-3"></div>
         </div>
 
-        <!-- Main Dashboard Grid -->
-        <div class="dashboard-grid">
-            <!-- Left Column: Active Pool & Quick Actions -->
-            <div class="dashboard-left">
-                <!-- Active Pool Card (Von Restorff - highlighted) -->
-                <div class="card primary-card">
-                    <div class="card-header">
-                        <h2>Pool actif</h2>
-                        <button class="btn-ghost" onclick="window.location.href='pool.html'">Changer</button>
-                    </div>
-                    <div class="card-body">
-                        <!-- Skeleton Loader -->
-                        <div class="skeleton-loader" id="activePoolSkeleton">
-                            <div class="skeleton" style="width: 200px; height: 28px; margin-bottom: 12px;"></div>
-                            <div class="skeleton" style="width: 150px; height: 18px; margin-bottom: 20px;"></div>
-                            <div class="skeleton" style="width: 100%; height: 60px;"></div>
-                        </div>
-                        <!-- Actual Content -->
-                        <div class="actual-content" id="activePoolContent" style="display: none;">
-                            <h3 id="activePoolName">Aucun pool sélectionné</h3>
-                            <p class="pool-meta" id="activePoolMeta"></p>
-                            <div class="pool-quick-stats" id="activePoolStats">
-                                <!-- Stats will be injected -->
-                            </div>
-                        </div>
-                    </div>
+        <div class="hero-inner">
+            <!-- Left: headline + CTAs -->
+            <div class="hero-text">
+                <div class="hero-badge">🏒 FANTASY NHL</div>
+                <h1 class="hero-headline">
+                    Dominez votre<br>
+                    <span class="gradient-text">ligue Fantasy NHL.</span>
+                </h1>
+                <p class="hero-sub">Repêchez mieux. Échangez intelligemment. Grimpez le classement.</p>
+                <div class="hero-actions">
+                    <a href="pool.html?tab=create" class="btn-hero-primary">🚀 Créer un pool</a>
+                    <a href="pool.html?tab=join" class="btn-hero-secondary">Rejoindre un pool →</a>
                 </div>
-
-                <!-- Quick Actions (Fitts's Law - large, easy targets) -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2>Actions rapides</h2>
-                    </div>
-                    <div class="card-body">
-                        <div class="quick-actions-grid">
-                            <button class="action-tile" onclick="window.location.href='pool.html?tab=mypools'">
-                                <span class="action-icon">🏒</span>
-                                <span class="action-label">Mes Pools</span>
-                            </button>
-                            <button class="action-tile" onclick="window.location.href='classement.html'">
-                                <span class="action-icon">🏆</span>
-                                <span class="action-label">Classement</span>
-                            </button>
-                            <button class="action-tile" onclick="window.location.href='trade.html'">
-                                <span class="action-icon">🔄</span>
-                                <span class="action-label">Échanges</span>
-                            </button>
-                            <button class="action-tile" onclick="window.location.href='index.html'">
-                                <span class="action-icon">📊</span>
-                                <span class="action-label">Stats</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Today's Games -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2>Matchs d'aujourd'hui</h2>
-                        <span class="badge" id="gamesCount">0</span>
-                    </div>
-                    <div class="card-body">
-                        <!-- Skeleton Loader -->
-                        <div class="skeleton-loader" id="gamesSkeleton">
-                            <div class="skeleton-game">
-                                <div class="skeleton" style="width: 100%; height: 50px;"></div>
-                            </div>
-                            <div class="skeleton-game">
-                                <div class="skeleton" style="width: 100%; height: 50px;"></div>
-                            </div>
-                        </div>
-                        <!-- Actual Content -->
-                        <div class="actual-content" id="gamesContent" style="display: none;">
-                            <div id="todaysGamesList">
-                                <!-- Games will be injected -->
-                            </div>
-                        </div>
-                    </div>
+                <!-- Quick nav pills for logged-in users -->
+                <div class="hero-quick-nav" id="heroQuickNav" style="display:none;">
+                    <a href="classement.html" class="hero-pill">🏆 Classement</a>
+                    <a href="trade.html" class="hero-pill">🔄 Échanges</a>
+                    <a href="pool.html" class="hero-pill">⚙️ Mes pools</a>
+                    <a href="index.html" class="hero-pill">📊 Stats</a>
                 </div>
             </div>
 
-            <!-- Right Column: Live Scoreboard & Activity Feed -->
-            <div class="dashboard-right">
-                <!-- Live Scoreboard (Jakob's Law - familiar fantasy layout) -->
-                <div class="card scoreboard-card">
-                    <div class="card-header">
-                        <h2>Ton duel cette semaine</h2>
-                        <span class="live-indicator">LIVE</span>
+            <!-- Right: floating leaderboard preview -->
+            <div class="hero-preview-wrap">
+                <div class="hero-floating-card">
+                    <div class="hfc-header">
+                        <span class="live-dot"></span>
+                        <span>Classement en direct</span>
+                        <a href="classement.html" class="hfc-view-all">Voir tout →</a>
                     </div>
-                    <div class="card-body">
-                        <!-- Skeleton Loader -->
-                        <div class="skeleton-loader" id="scoreboardSkeleton">
-                            <div class="skeleton-scoreboard">
-                                <div class="skeleton" style="width: 100%; height: 120px; margin-bottom: 20px;"></div>
-                                <div class="skeleton" style="width: 100%; height: 200px;"></div>
-                            </div>
-                        </div>
-                        <!-- Actual Content -->
-                        <div class="actual-content" id="scoreboardContent" style="display: none;">
-                            <div id="matchupDisplay">
-                                <!-- Matchup will be injected -->
-                            </div>
-                            <div class="matchup-stats" id="matchupStats">
-                                <!-- Stats breakdown will be injected -->
-                            </div>
+                    <div id="heroLeaderboardPreview">
+                        <div class="hfc-skeleton">
+                            <div class="skeleton" style="height:14px;width:85%;margin-bottom:12px;border-radius:6px;"></div>
+                            <div class="skeleton" style="height:14px;width:70%;margin-bottom:12px;border-radius:6px;"></div>
+                            <div class="skeleton" style="height:14px;width:60%;margin-bottom:12px;border-radius:6px;"></div>
+                            <div class="skeleton" style="height:14px;width:75%;border-radius:6px;"></div>
                         </div>
                     </div>
                 </div>
-
-                <!-- League Activity Feed (Social engagement) -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2>Activité de la ligue</h2>
-                    </div>
-                    <div class="card-body">
-                        <!-- Skeleton Loader -->
-                        <div class="skeleton-loader" id="activitySkeleton">
-                            <div class="skeleton-activity">
-                                <div class="skeleton" style="width: 100%; height: 40px; margin-bottom: 12px;"></div>
-                                <div class="skeleton" style="width: 100%; height: 40px; margin-bottom: 12px;"></div>
-                                <div class="skeleton" style="width: 100%; height: 40px;"></div>
-                            </div>
-                        </div>
-                        <!-- Actual Content -->
-                        <div class="actual-content" id="activityContent" style="display: none;">
-                            <div id="activityFeed">
-                                <!-- Activity items will be injected -->
-                            </div>
-                        </div>
-                    </div>
+                <!-- Decorative floating chips -->
+                <div class="hero-stat-chip chip-1">
+                    <span class="chip-icon">⚡</span>
+                    <span>LIVE</span>
                 </div>
-
-                <!-- Top Performers This Week -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2>Meilleurs joueurs (7 jours)</h2>
-                    </div>
-                    <div class="card-body">
-                        <!-- Skeleton Loader -->
-                        <div class="skeleton-loader" id="performersSkeleton">
-                            <div class="skeleton-performers">
-                                <div class="skeleton" style="width: 100%; height: 50px; margin-bottom: 8px;"></div>
-                                <div class="skeleton" style="width: 100%; height: 50px; margin-bottom: 8px;"></div>
-                                <div class="skeleton" style="width: 100%; height: 50px;"></div>
-                            </div>
-                        </div>
-                        <!-- Actual Content -->
-                        <div class="actual-content" id="performersContent" style="display: none;">
-                            <div id="topPerformersList">
-                                <!-- Top performers will be injected -->
-                            </div>
-                        </div>
-                    </div>
+                <div class="hero-stat-chip chip-2">
+                    <span class="chip-icon">🔥</span>
+                    <span>En feu</span>
                 </div>
             </div>
         </div>
+    </section>
 
-        <!-- All Your Pools (Bottom section) -->
-        <div class="card pools-overview-card">
-            <div class="card-header">
-                <h2>Tous vos pools</h2>
-                <button class="btn-primary" onclick="window.location.href='pool.html?tab=create'">Créer un pool</button>
-            </div>
-            <div class="card-body">
-                <!-- Skeleton Loader -->
-                <div class="skeleton-loader" id="poolsOverviewSkeleton">
-                    <div class="skeleton-pools-horizontal">
-                        <div class="skeleton" style="width: 250px; height: 120px; margin-right: 16px;"></div>
-                        <div class="skeleton" style="width: 250px; height: 120px; margin-right: 16px;"></div>
-                        <div class="skeleton" style="width: 250px; height: 120px;"></div>
-                    </div>
+    <!-- Pending draft alerts strip -->
+    <div id="actionAlerts" class="alerts-strip"></div>
+
+    <!-- ============================================================ -->
+    <!-- LIVE LEADERBOARD SECTION                                     -->
+    <!-- ============================================================ -->
+    <section class="home-section leaderboard-section">
+        <div class="section-container">
+            <div class="section-title-row">
+                <div class="section-title-group">
+                    <span class="section-icon">🔥</span>
+                    <h2 class="section-title">Classement en direct</h2>
+                    <span class="section-pool-name" id="leaderboardPoolName"></span>
                 </div>
-                <!-- Actual Content -->
-                <div class="actual-content" id="poolsOverviewContent" style="display: none;">
-                    <div class="pools-scroll" id="allPoolsList">
-                        <!-- All pools will be injected -->
-                    </div>
+                <a href="classement.html" class="section-link">Voir tout →</a>
+            </div>
+
+            <!-- Skeleton -->
+            <div class="skeleton-loader" id="leaderboardSkeleton">
+                <div class="skeleton" style="height:64px;border-radius:12px;margin-bottom:10px;"></div>
+                <div class="skeleton" style="height:64px;border-radius:12px;margin-bottom:10px;"></div>
+                <div class="skeleton" style="height:64px;border-radius:12px;margin-bottom:10px;"></div>
+                <div class="skeleton" style="height:64px;border-radius:12px;"></div>
+            </div>
+            <!-- Content -->
+            <div class="actual-content" id="leaderboardList" style="display:none;">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TOP PERFORMING PLAYERS SECTION                               -->
+    <!-- ============================================================ -->
+    <section class="home-section top-players-section">
+        <div class="section-container">
+            <div class="section-title-row">
+                <div class="section-title-group">
+                    <span class="section-icon">🏒</span>
+                    <h2 class="section-title">Meilleurs joueurs</h2>
+                    <span class="section-subtitle">7 derniers jours</span>
+                </div>
+                <a href="index.html" class="section-link">Voir tout →</a>
+            </div>
+
+            <!-- Skeleton -->
+            <div class="skeleton-loader" id="topPlayersSkeleton">
+                <div class="players-grid">
+                    <div class="skeleton" style="height:200px;border-radius:14px;"></div>
+                    <div class="skeleton" style="height:200px;border-radius:14px;"></div>
+                    <div class="skeleton" style="height:200px;border-radius:14px;"></div>
+                    <div class="skeleton" style="height:200px;border-radius:14px;"></div>
+                    <div class="skeleton" style="height:200px;border-radius:14px;"></div>
+                </div>
+            </div>
+            <!-- Content -->
+            <div class="actual-content players-grid" id="topPlayersList" style="display:none;">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- HOW IT WORKS SECTION                                         -->
+    <!-- ============================================================ -->
+    <section class="how-it-works-section">
+        <div class="section-container">
+            <div class="section-title-row center">
+                <div class="section-title-group">
+                    <span class="section-icon">⚙️</span>
+                    <h2 class="section-title">Comment ça marche</h2>
+                </div>
+            </div>
+
+            <div class="steps-grid">
+                <!-- Step 1 -->
+                <div class="step-card">
+                    <div class="step-number">01</div>
+                    <div class="step-icon-wrap">🏒</div>
+                    <h3 class="step-title">Rejoindre ou créer un pool</h3>
+                    <p class="step-desc">Invitez vos amis et configurez votre ligue personnalisée avec vos propres règles de scoring.</p>
+                    <a href="pool.html" class="step-cta">Commencer →</a>
+                </div>
+
+                <!-- Connector -->
+                <div class="step-connector">
+                    <div class="connector-line"></div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-card">
+                    <div class="step-number">02</div>
+                    <div class="step-icon-wrap">🎯</div>
+                    <h3 class="step-title">Repêcher votre équipe</h3>
+                    <p class="step-desc">Sélectionnez les meilleurs joueurs de la LNH pour bâtir l'équipe parfaite.</p>
+                    <a href="pool.html?tab=draft" class="step-cta">Voir le repêchage →</a>
+                </div>
+
+                <!-- Connector -->
+                <div class="step-connector">
+                    <div class="connector-line"></div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-card">
+                    <div class="step-number">03</div>
+                    <div class="step-icon-wrap">🏆</div>
+                    <h3 class="step-title">Compétitionner et gagner</h3>
+                    <p class="step-desc">Affrontez d'autres gérants semaine après semaine et grimpez le classement.</p>
+                    <a href="classement.html" class="step-cta">Voir le classement →</a>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
     <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script defer src="lazy-load.js"></script>
