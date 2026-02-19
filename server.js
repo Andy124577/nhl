@@ -2358,6 +2358,196 @@ app.get('/hot-players', async (req, res) => {
     }
 });
 
+// ==================== HOT PLAYERS - LAST 7 DAYS (FANTASY POINTS) ====================
+
+// Cache for last 7 days hot players
+let last7DaysCache = {
+    lastUpdated: null,
+    data: null
+};
+
+// Fantasy scoring rules
+const FANTASY_SCORING = {
+    goal: 3,
+    assist: 2,
+    shot: 0.5,
+    powerPlayGoal: 1,  // Bonus on top of goal
+    powerPlayPoint: 0.5,
+    shorthandedGoal: 2, // Bonus on top of goal
+    shorthandedPoint: 1,
+    gameWinningGoal: 1,
+    plusMinus: 0.5,
+    // Goalie stats
+    win: 5,
+    shutout: 3,
+    save: 0.2,
+    goalsAgainst: -1
+};
+
+app.get('/hot-players-last7days', async (req, res) => {
+    try {
+        const now = Date.now();
+
+        // Check cache (15 minute duration)
+        if (last7DaysCache.data && last7DaysCache.lastUpdated &&
+            (now - last7DaysCache.lastUpdated) < (15 * 60 * 1000)) {
+            console.log('✅ Returning cached last 7 days hot players');
+            return res.json(last7DaysCache.data);
+        }
+
+        console.log('📊 Calculating hot players for last 7 days...');
+
+        const currentSeason = '20252026';
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+
+        // Query all games from last 7 days
+        const result = await db.query(`
+            SELECT
+                player_id, player_name, position, team_abbrev,
+                goals, assists, points, shots, plus_minus,
+                power_play_goals, power_play_points,
+                shorthanded_goals, shorthanded_points,
+                game_winning_goals,
+                games_started, decision, saves, shots_against, goals_against, shutouts,
+                game_date
+            FROM player_game_logs
+            WHERE season = $1 AND game_date >= $2
+            ORDER BY game_date DESC
+        `, [currentSeason, sevenDaysAgoStr]);
+
+        if (result.rows.length === 0) {
+            console.log('⚠️ No games found in last 7 days');
+            return res.json({
+                topPlayers: [],
+                forwards: [],
+                defensemen: [],
+                goalies: [],
+                timeRange: '7 days',
+                message: 'No games in last 7 days. Run: node fetch_game_logs.js'
+            });
+        }
+
+        console.log(`📊 Found ${result.rows.length} game entries from last 7 days`);
+
+        // Group games by player and calculate fantasy points
+        const playerStats = new Map();
+
+        result.rows.forEach(game => {
+            const playerId = game.player_id;
+
+            if (!playerStats.has(playerId)) {
+                playerStats.set(playerId, {
+                    playerId,
+                    playerName: game.player_name,
+                    position: game.position,
+                    teamAbbrev: game.team_abbrev,
+                    gamesPlayed: 0,
+                    totalFantasyPoints: 0,
+                    goals: 0,
+                    assists: 0,
+                    points: 0,
+                    shots: 0,
+                    wins: 0,
+                    shutouts: 0,
+                    saves: 0,
+                    savePct: 0
+                });
+            }
+
+            const player = playerStats.get(playerId);
+            player.gamesPlayed++;
+
+            // Calculate fantasy points for this game
+            let fantasyPoints = 0;
+
+            if (game.position === 'G') {
+                // Goalie scoring
+                fantasyPoints += (game.decision === 'W') ? FANTASY_SCORING.win : 0;
+                fantasyPoints += (game.shutouts || 0) * FANTASY_SCORING.shutout;
+                fantasyPoints += (game.saves || 0) * FANTASY_SCORING.save;
+                fantasyPoints += (game.goals_against || 0) * FANTASY_SCORING.goalsAgainst;
+
+                player.wins += (game.decision === 'W') ? 1 : 0;
+                player.shutouts += game.shutouts || 0;
+                player.saves += game.saves || 0;
+            } else {
+                // Skater scoring
+                fantasyPoints += (game.goals || 0) * FANTASY_SCORING.goal;
+                fantasyPoints += (game.assists || 0) * FANTASY_SCORING.assist;
+                fantasyPoints += (game.shots || 0) * FANTASY_SCORING.shot;
+                fantasyPoints += (game.plus_minus || 0) * FANTASY_SCORING.plusMinus;
+                fantasyPoints += (game.power_play_goals || 0) * FANTASY_SCORING.powerPlayGoal;
+                fantasyPoints += (game.power_play_points || 0) * FANTASY_SCORING.powerPlayPoint;
+                fantasyPoints += (game.shorthanded_goals || 0) * FANTASY_SCORING.shorthandedGoal;
+                fantasyPoints += (game.shorthanded_points || 0) * FANTASY_SCORING.shorthandedPoint;
+                fantasyPoints += (game.game_winning_goals || 0) * FANTASY_SCORING.gameWinningGoal;
+
+                player.goals += game.goals || 0;
+                player.assists += game.assists || 0;
+                player.points += game.points || 0;
+                player.shots += game.shots || 0;
+            }
+
+            player.totalFantasyPoints += fantasyPoints;
+        });
+
+        // Convert to array and filter out players with < 2 games
+        const allPlayers = Array.from(playerStats.values())
+            .filter(p => p.gamesPlayed >= 2)
+            .map(p => {
+                // Calculate per-game average
+                p.fantasyPointsPerGame = p.totalFantasyPoints / p.gamesPlayed;
+                p.headshot = `https://assets.nhle.com/mugs/nhl/20252026/${p.playerId}.png`;
+                p.isHot = p.fantasyPointsPerGame >= 10; // Hot if averaging 10+ fantasy pts per game
+                return p;
+            });
+
+        // Separate by position
+        const forwards = allPlayers
+            .filter(p => ['C', 'L', 'R', 'F'].includes(p.position))
+            .sort((a, b) => b.totalFantasyPoints - a.totalFantasyPoints);
+
+        const defensemen = allPlayers
+            .filter(p => p.position === 'D')
+            .sort((a, b) => b.totalFantasyPoints - a.totalFantasyPoints);
+
+        const goalies = allPlayers
+            .filter(p => p.position === 'G')
+            .sort((a, b) => b.totalFantasyPoints - a.totalFantasyPoints);
+
+        // Get top overall (all positions)
+        const topPlayers = allPlayers
+            .sort((a, b) => b.totalFantasyPoints - a.totalFantasyPoints)
+            .slice(0, 10);
+
+        const responseData = {
+            topPlayers,
+            forwards: forwards.slice(0, 10),
+            defensemen: defensemen.slice(0, 10),
+            goalies: goalies.slice(0, 10),
+            timeRange: '7 days',
+            totalGames: result.rows.length,
+            uniquePlayers: allPlayers.length
+        };
+
+        // Update cache
+        last7DaysCache = {
+            lastUpdated: now,
+            data: responseData
+        };
+
+        console.log(`✅ Hot players calculated: ${topPlayers.length} top, ${forwards.length} forwards, ${defensemen.length} D, ${goalies.length} G`);
+
+        res.json(responseData);
+
+    } catch (error) {
+        console.error('❌ Error calculating last 7 days hot players:', error);
+        res.status(500).json({ message: 'Error fetching hot players' });
+    }
+});
+
 // Helper function to get top teams by win percentage from cached stats
 async function getTopTeamsLast10() {
     try {
