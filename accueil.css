@@ -610,3 +610,54 @@ body {
     .leaderboard-row { padding: 12px 14px; gap: 10px; }
     .lb-pts-value { font-size: 1.1rem; }
 }
+
+/* ============================================================ */
+/* TIME RANGE FILTERS                                           */
+/* ============================================================ */
+.time-range-filters {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.time-filter {
+    padding: 8px 16px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.time-filter:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.time-filter.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--bg);
+    box-shadow: var(--glow-primary);
+}
+
+@media (max-width: 768px) {
+    .section-title-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    
+    .time-range-filters {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .time-filter {
+        flex: 1;
+        text-align: center;
+    }
+}
