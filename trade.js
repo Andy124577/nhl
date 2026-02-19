@@ -25,14 +25,56 @@ let myPositionFilter = 'all';
 let partnerPositionFilter = 'all';
 
 // ============================================================
+// NOTIFICATION SYSTEM
+// ============================================================
+function showNotification(message, type = 'info') {
+    // Remove existing notification
+    const existing = document.querySelector('.trade-notification');
+    if (existing) existing.remove();
+
+    const notification = document.createElement('div');
+    notification.className = `trade-notification trade-notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-icon">${type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️'}</span>
+            <span class="notification-message">${message}</span>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Animate in
+    setTimeout(() => notification.classList.add('show'), 10);
+
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
+}
+
+function showLoading(button, text = 'Chargement...') {
+    button.disabled = true;
+    button.dataset.originalText = button.innerHTML;
+    button.innerHTML = `<span class="loading-spinner"></span> ${text}`;
+}
+
+function hideLoading(button) {
+    button.disabled = false;
+    button.innerHTML = button.dataset.originalText || button.innerHTML;
+}
+
+// ============================================================
 // INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
     currentUsername = localStorage.getItem('username');
 
     if (!currentUsername) {
-        alert('⛔ Vous devez être connecté pour accéder à cette page !');
-        window.location.href = 'login.html';
+        showNotification('⛔ Vous devez être connecté pour accéder à cette page !', 'error');
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 2000);
         return;
     }
 
@@ -249,7 +291,7 @@ function renderMyRoster() {
         return;
     }
 
-    container.innerHTML = filteredPlayers.map(player => {
+    container.innerHTML = filteredPlayers.map((player, idx) => {
         const name = player.name;
         const team = player.teamAbbrevs || player.teamAbbrev || '';
         const isSelected = selectedMyPlayer && selectedMyPlayer.name === name;
@@ -260,7 +302,9 @@ function renderMyRoster() {
 
         return `
             <div class="player-card-roster ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}"
-                 onclick="selectMyPlayer('${name.replace(/'/g, "\\'")}', '${player.category}', ${JSON.stringify(player).replace(/"/g, '&quot;')})">
+                 data-player-idx="${idx}"
+                 data-player-name="${name.replace(/"/g, '&quot;')}"
+                 data-player-category="${player.category}">
                 <div class="pcr-position ${player.category.toLowerCase()}">${getCategoryLabel(player.category)}</div>
                 <div class="pcr-info">
                     <div class="pcr-name">${name}</div>
@@ -276,6 +320,16 @@ function renderMyRoster() {
             </div>
         `;
     }).join('');
+
+    // Add click event listeners
+    const myPlayerCards = container.querySelectorAll('.player-card-roster:not(.locked)');
+    myPlayerCards.forEach((card, idx) => {
+        card.addEventListener('click', () => {
+            const playerIdx = parseInt(card.dataset.playerIdx);
+            const player = filteredPlayers[playerIdx];
+            selectMyPlayer(player.name, player.category, player);
+        });
+    });
 }
 
 function renderPartnerRoster() {
@@ -326,7 +380,7 @@ function renderPartnerRoster() {
         return;
     }
 
-    container.innerHTML = filteredPlayers.map(player => {
+    container.innerHTML = filteredPlayers.map((player, idx) => {
         const name = player.name;
         const team = player.teamAbbrevs || player.teamAbbrev || '';
         const isSelected = selectedPartnerPlayer && selectedPartnerPlayer.name === name;
@@ -336,7 +390,9 @@ function renderPartnerRoster() {
 
         return `
             <div class="player-card-roster ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}"
-                 onclick="selectPartnerPlayer('${name.replace(/'/g, "\\'")}', '${player.category}', ${JSON.stringify(player).replace(/"/g, '&quot;')})">
+                 data-player-idx="${idx}"
+                 data-player-name="${name.replace(/"/g, '&quot;')}"
+                 data-player-category="${player.category}">
                 <div class="pcr-position ${player.category.toLowerCase()}">${getCategoryLabel(player.category)}</div>
                 <div class="pcr-info">
                     <div class="pcr-name">${name}</div>
@@ -352,14 +408,22 @@ function renderPartnerRoster() {
             </div>
         `;
     }).join('');
+
+    // Add click event listeners
+    const partnerPlayerCards = container.querySelectorAll('.player-card-roster:not(.locked)');
+    partnerPlayerCards.forEach((card, idx) => {
+        card.addEventListener('click', () => {
+            const playerIdx = parseInt(card.dataset.playerIdx);
+            const player = filteredPlayers[playerIdx];
+            selectPartnerPlayer(player.name, player.category, player);
+        });
+    });
 }
 
 // ============================================================
 // PLAYER SELECTION (1-for-1 Position-Locked)
 // ============================================================
-function selectMyPlayer(name, category, playerDataStr) {
-    const playerData = JSON.parse(playerDataStr.replace(/&quot;/g, '"'));
-
+function selectMyPlayer(name, category, playerData) {
     // If already selected, deselect
     if (selectedMyPlayer && selectedMyPlayer.name === name) {
         selectedMyPlayer = null;
@@ -367,7 +431,8 @@ function selectMyPlayer(name, category, playerDataStr) {
         selectedMyPlayer = {
             name,
             category,
-            data: playerData
+            data: playerData,
+            type: getCategoryType(category)
         };
     }
 
@@ -377,13 +442,11 @@ function selectMyPlayer(name, category, playerDataStr) {
     updateTradeSummary();
 }
 
-function selectPartnerPlayer(name, category, playerDataStr) {
-    const playerData = JSON.parse(playerDataStr.replace(/&quot;/g, '"'));
-
+function selectPartnerPlayer(name, category, playerData) {
     // Validate position match
     if (selectedMyPlayer && selectedMyPlayer.category !== category) {
-        // Show shake animation or error
-        alert(`⚠️ Position invalide!\n\nVous devez échanger ${getCategoryLabel(selectedMyPlayer.category)} ↔ ${getCategoryLabel(selectedMyPlayer.category)}`);
+        // Show error message
+        showNotification(`⚠️ Position invalide! Vous devez échanger ${getCategoryLabel(selectedMyPlayer.category)} ↔ ${getCategoryLabel(selectedMyPlayer.category)}`, 'error');
         return;
     }
 
@@ -394,7 +457,8 @@ function selectPartnerPlayer(name, category, playerDataStr) {
         selectedPartnerPlayer = {
             name,
             category,
-            data: playerData
+            data: playerData,
+            type: getCategoryType(category)
         };
     }
 
@@ -535,12 +599,12 @@ function filterPosition(side, position) {
 // ============================================================
 async function proposeTrade() {
     if (!selectedMyPlayer || !selectedPartnerPlayer) {
-        alert('Veuillez sélectionner 1 joueur de chaque côté');
+        showNotification('Veuillez sélectionner 1 joueur de chaque côté', 'error');
         return;
     }
 
     if (selectedMyPlayer.category !== selectedPartnerPlayer.category) {
-        alert('⚠️ Les joueurs doivent être de la même position!');
+        showNotification('⚠️ Les joueurs doivent être de la même position!', 'error');
         return;
     }
 
@@ -554,15 +618,18 @@ async function proposeTrade() {
         toTeam: selectedPartnerTeam,
         offering: [{
             name: selectedMyPlayer.name,
-            type: getCategoryType(selectedMyPlayer.category)
+            type: selectedMyPlayer.type || getCategoryType(selectedMyPlayer.category)
         }],
         receiving: [{
             name: selectedPartnerPlayer.name,
-            type: getCategoryType(selectedPartnerPlayer.category)
+            type: selectedPartnerPlayer.type || getCategoryType(selectedPartnerPlayer.category)
         }],
         status: 'pending',
         date: new Date().toISOString()
     };
+
+    const proposeBtn = document.getElementById('btnProposeTrade');
+    showLoading(proposeBtn, 'Envoi...');
 
     try {
         const res = await fetch(`${BASE_URL}/trade/propose`, {
@@ -574,14 +641,17 @@ async function proposeTrade() {
         const data = await res.json();
 
         if (res.ok) {
-            alert('✅ Proposition d\'échange envoyée!');
-            resetTrade();
+            showNotification('✅ Proposition d\'échange envoyée avec succès!', 'success');
+            loadTradeHistory(); // Refresh history
+            setTimeout(() => resetTrade(), 1500);
         } else {
-            alert(`❌ Erreur: ${data.message}`);
+            showNotification(`❌ ${data.message}`, 'error');
         }
     } catch (err) {
         console.error('Error proposing trade:', err);
-        alert('Erreur lors de l\'envoi de la proposition');
+        showNotification('❌ Erreur lors de l\'envoi de la proposition', 'error');
+    } finally {
+        hideLoading(proposeBtn);
     }
 }
 
@@ -690,7 +760,10 @@ async function loadTradeHistory() {
 }
 
 async function acceptTradeProposal(tradeId) {
-    if (!confirm('Accepter cet échange?')) return;
+    if (!confirm('Accepter cet échange? Les joueurs seront échangés immédiatement.')) return;
+
+    const btn = event.target;
+    showLoading(btn, 'Acceptation...');
 
     try {
         const res = await fetch(`${BASE_URL}/trade/accept`, {
@@ -699,21 +772,30 @@ async function acceptTradeProposal(tradeId) {
             body: JSON.stringify({ tradeId })
         });
 
+        const data = await res.json();
+
         if (res.ok) {
-            alert('✅ Échange accepté!');
-            loadTradeHistory();
+            showNotification('✅ Échange accepté avec succès! Les joueurs ont été échangés.', 'success');
+            setTimeout(() => {
+                loadTradeHistory();
+                loadDraftData(); // Refresh draft data to show updated rosters
+            }, 1000);
         } else {
-            const data = await res.json();
-            alert(`❌ Erreur: ${data.message}`);
+            showNotification(`❌ ${data.message}`, 'error');
+            hideLoading(btn);
         }
     } catch (err) {
         console.error('Error accepting trade:', err);
-        alert('Erreur lors de l\'acceptation');
+        showNotification('❌ Erreur lors de l\'acceptation de l\'échange', 'error');
+        hideLoading(btn);
     }
 }
 
 async function declineTradeProposal(tradeId) {
     if (!confirm('Refuser cet échange?')) return;
+
+    const btn = event.target;
+    showLoading(btn, 'Refus...');
 
     try {
         const res = await fetch(`${BASE_URL}/trade/decline`, {
@@ -723,15 +805,17 @@ async function declineTradeProposal(tradeId) {
         });
 
         if (res.ok) {
-            alert('Échange refusé');
-            loadTradeHistory();
+            showNotification('Échange refusé', 'info');
+            setTimeout(() => loadTradeHistory(), 500);
         } else {
             const data = await res.json();
-            alert(`❌ Erreur: ${data.message}`);
+            showNotification(`❌ ${data.message}`, 'error');
+            hideLoading(btn);
         }
     } catch (err) {
         console.error('Error declining trade:', err);
-        alert('Erreur lors du refus');
+        showNotification('❌ Erreur lors du refus de l\'échange', 'error');
+        hideLoading(btn);
     }
 }
 
