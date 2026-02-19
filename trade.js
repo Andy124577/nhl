@@ -25,6 +25,29 @@ let myPositionFilter = 'all';
 let partnerPositionFilter = 'all';
 
 // ============================================================
+// TAB SWITCHING
+// ============================================================
+let currentTradeTab = 'propose';
+
+function switchTradeTab(tab) {
+    currentTradeTab = tab;
+
+    // Update tab buttons
+    document.querySelectorAll('.trade-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+
+    // Update sections
+    document.getElementById('proposeTradeSection').classList.toggle('active', tab === 'propose');
+    document.getElementById('receivedTradeSection').classList.toggle('active', tab === 'received');
+
+    if (tab === 'received') {
+        loadReceivedTrades();
+        loadCompletedTrades();
+    }
+}
+
+// ============================================================
 // NOTIFICATION SYSTEM
 // ============================================================
 function showNotification(message, type = 'info') {
@@ -80,7 +103,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await loadDraftData();
     renderPoolSelector();
-    loadTradeHistory();
+    loadReceivedTrades(); // Load received trades on startup
+    updateReceivedBadge(); // Update badge count
 });
 
 // ============================================================
@@ -679,53 +703,112 @@ function resetTrade() {
 }
 
 // ============================================================
-// TRADE HISTORY
+// RECEIVED TRADES
 // ============================================================
-let currentHistoryTab = 'pending';
-
-function switchHistoryTab(tab) {
-    currentHistoryTab = tab;
-
-    // Update active tab
-    document.querySelectorAll('.history-tab').forEach(t => {
-        t.classList.toggle('active', t.dataset.tab === tab);
-    });
-
-    loadTradeHistory();
-}
-
-async function loadTradeHistory() {
-    const container = document.getElementById('historyContent');
+async function loadReceivedTrades() {
+    const container = document.getElementById('receivedTradesContent');
     if (!container) return;
 
     try {
-        let trades = [];
+        const res = await fetch(`${BASE_URL}/trades/pending/${currentUsername}`, { cache: 'no-store' });
+        const trades = await res.json();
 
-        if (currentHistoryTab === 'pending') {
-            const res = await fetch(`${BASE_URL}/trades/pending/${currentUsername}`, { cache: 'no-store' });
-            trades = await res.json();
-            updatePendingBadge(trades.length);
-        } else {
-            // Load all trades and filter completed
-            if (selectedPool) {
-                const res = await fetch(`${BASE_URL}/trades/${selectedPool}`, { cache: 'no-store' });
-                const allTrades = await res.json();
-                trades = allTrades.filter(t => t.status === 'completed');
-            }
-        }
+        // Update badge
+        updateReceivedBadge(trades.length);
 
         if (!trades || trades.length === 0) {
-            container.innerHTML = `<p class="empty-msg">Aucun échange ${currentHistoryTab === 'pending' ? 'en attente' : 'complété'}</p>`;
+            container.innerHTML = `
+                <div class="empty-msg">
+                    <div style="font-size: 3rem; margin-bottom: 16px;">📭</div>
+                    <p>Aucune proposition d'échange reçue</p>
+                </div>
+            `;
             return;
         }
 
         container.innerHTML = trades.map(trade => {
             const date = new Date(trade.date);
+            const formattedDate = date.toLocaleDateString('fr-CA', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            const offering = trade.offering[0];
+            const receiving = trade.receiving[0];
+            const offeringCategory = getCategory(offering.type);
+            const receivingCategory = getCategory(receiving.type);
+
+            return `
+                <div class="received-trade-card">
+                    <div class="trade-card-header">
+                        <div class="trade-card-info">
+                            <div class="trade-card-teams">${trade.fromTeam} → Vous</div>
+                            <div class="trade-card-date">${formattedDate}</div>
+                        </div>
+                        <div class="trade-card-status">En attente</div>
+                    </div>
+
+                    <div class="trade-card-players">
+                        <div class="trade-player">
+                            <div class="trade-player-label">Vous recevez</div>
+                            <div class="trade-player-name">${offering.name}</div>
+                            <span class="trade-player-position ${offeringCategory.toLowerCase()}">${getCategoryLabel(offeringCategory)}</span>
+                        </div>
+
+                        <div class="trade-arrow-icon">⇄</div>
+
+                        <div class="trade-player">
+                            <div class="trade-player-label">Vous donnez</div>
+                            <div class="trade-player-name">${receiving.name}</div>
+                            <span class="trade-player-position ${receivingCategory.toLowerCase()}">${getCategoryLabel(receivingCategory)}</span>
+                        </div>
+                    </div>
+
+                    <div class="trade-card-actions">
+                        <button class="btn-decline-trade" onclick="declineTradeProposal('${trade.id}')">
+                            ❌ Refuser
+                        </button>
+                        <button class="btn-accept-trade" onclick="acceptTradeProposal('${trade.id}')">
+                            ✅ Accepter
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (err) {
+        console.error('Error loading received trades:', err);
+        container.innerHTML = '<p class="empty-msg">Erreur lors du chargement des échanges reçus</p>';
+    }
+}
+
+async function loadCompletedTrades() {
+    const container = document.getElementById('completedTradesContent');
+    if (!container) return;
+
+    try {
+        // Load all completed trades for the current user
+        const res = await fetch(`${BASE_URL}/trades/all`, { cache: 'no-store' });
+        const allTrades = await res.json();
+
+        // Filter to only completed trades involving current user
+        const completedTrades = allTrades.filter(t =>
+            t.status === 'accepted' &&
+            (t.fromTeam === myTeamName || t.toTeam === myTeamName)
+        );
+
+        if (!completedTrades || completedTrades.length === 0) {
+            container.innerHTML = '<p class="empty-msg">Aucun échange complété</p>';
+            return;
+        }
+
+        container.innerHTML = completedTrades.map(trade => {
+            const date = new Date(trade.completedDate || trade.date);
             const day = date.getDate();
             const month = date.toLocaleDateString('fr-CA', { month: 'short' });
-
-            const isPending = trade.status === 'pending';
-            const isForMe = trade.toTeam === myTeamName;
 
             return `
                 <div class="history-item">
@@ -737,26 +820,50 @@ async function loadTradeHistory() {
                         <div>
                             <div class="history-team">${trade.fromTeam} ⇄ ${trade.toTeam}</div>
                             <div class="history-players">
-                                ${trade.offering[0]?.name} → ${trade.receiving[0]?.name}
+                                ${trade.offering[0]?.name} ↔ ${trade.receiving[0]?.name}
                             </div>
                         </div>
                     </div>
-                    ${isPending && isForMe ? `
-                        <div class="history-actions">
-                            <button class="btn-decline" onclick="declineTradeProposal('${trade.id}')">Refuser</button>
-                            <button class="btn-accept" onclick="acceptTradeProposal('${trade.id}')">Accepter</button>
-                        </div>
-                    ` : `
-                        <div class="history-status ${trade.status}">${getStatusLabel(trade.status)}</div>
-                    `}
+                    <div class="history-status completed">✅ Complété</div>
                 </div>
             `;
         }).join('');
 
     } catch (err) {
-        console.error('Error loading trade history:', err);
+        console.error('Error loading completed trades:', err);
         container.innerHTML = '<p class="empty-msg">Erreur lors du chargement</p>';
     }
+}
+
+function updateReceivedBadge(count) {
+    const badge = document.getElementById('receivedTradeBadge');
+    if (badge) {
+        if (count === undefined) {
+            // Fetch count
+            fetch(`${BASE_URL}/trades/pending/${currentUsername}`, { cache: 'no-store' })
+                .then(res => res.json())
+                .then(trades => {
+                    const tradeCount = trades.length;
+                    badge.textContent = tradeCount;
+                    badge.style.display = tradeCount > 0 ? 'inline-block' : 'none';
+                })
+                .catch(err => console.error('Error fetching received badge count:', err));
+        } else {
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'inline-block' : 'none';
+        }
+    }
+}
+
+function getCategory(type) {
+    const categoryMap = {
+        'offensive': 'F',
+        'defensive': 'D',
+        'goalie': 'G',
+        'rookie': 'R',
+        'team': 'T'
+    };
+    return categoryMap[type] || 'F';
 }
 
 async function acceptTradeProposal(tradeId) {
@@ -777,8 +884,10 @@ async function acceptTradeProposal(tradeId) {
         if (res.ok) {
             showNotification('✅ Échange accepté avec succès! Les joueurs ont été échangés.', 'success');
             setTimeout(() => {
-                loadTradeHistory();
+                loadReceivedTrades();
+                loadCompletedTrades();
                 loadDraftData(); // Refresh draft data to show updated rosters
+                updateReceivedBadge();
             }, 1000);
         } else {
             showNotification(`❌ ${data.message}`, 'error');
@@ -806,7 +915,11 @@ async function declineTradeProposal(tradeId) {
 
         if (res.ok) {
             showNotification('Échange refusé', 'info');
-            setTimeout(() => loadTradeHistory(), 500);
+            setTimeout(() => {
+                loadReceivedTrades();
+                loadCompletedTrades();
+                updateReceivedBadge();
+            }, 500);
         } else {
             const data = await res.json();
             showNotification(`❌ ${data.message}`, 'error');
@@ -816,14 +929,6 @@ async function declineTradeProposal(tradeId) {
         console.error('Error declining trade:', err);
         showNotification('❌ Erreur lors du refus de l\'échange', 'error');
         hideLoading(btn);
-    }
-}
-
-function updatePendingBadge(count) {
-    const badge = document.getElementById('pendingCount');
-    if (badge) {
-        badge.textContent = count;
-        badge.style.display = count > 0 ? 'inline-block' : 'none';
     }
 }
 
