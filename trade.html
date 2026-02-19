@@ -19,10 +19,23 @@
     <div class="trade-container">
         <!-- Page Header -->
         <div class="page-header">
-            <h1>⚡ Proposer un échange</h1>
-            <p class="page-subtitle">Échange 1 pour 1 · Position identique requise</p>
+            <h1>⚡ Échanges</h1>
+            <p class="page-subtitle">Gérez vos propositions et échanges reçus</p>
         </div>
 
+        <!-- Sub Navigation -->
+        <div class="trade-sub-nav">
+            <button class="trade-tab active" data-tab="propose" onclick="switchTradeTab('propose')">
+                📤 Proposer un échange
+            </button>
+            <button class="trade-tab" data-tab="received" onclick="switchTradeTab('received')">
+                📥 Échanges reçus
+                <span class="trade-tab-badge" id="receivedTradeBadge" style="display:none;">0</span>
+            </button>
+        </div>
+
+        <!-- SECTION: Propose Trade -->
+        <div id="proposeTradeSection" class="trade-section active">
         <!-- Step 1: Pool Selection -->
         <div class="trade-step" id="step1">
             <div class="step-header">
@@ -154,23 +167,31 @@
                 </div>
             </div>
         </div>
+        </div>
+        <!-- END SECTION: Propose Trade -->
 
-        <!-- Trade History Section -->
-        <div class="trade-history-section">
-            <h2>📜 Historique des échanges</h2>
-            <div class="history-tabs">
-                <button class="history-tab active" data-tab="pending" onclick="switchHistoryTab('pending')">
-                    En attente <span class="badge" id="pendingCount">0</span>
-                </button>
-                <button class="history-tab" data-tab="completed" onclick="switchHistoryTab('completed')">
-                    Complétés
-                </button>
+        <!-- SECTION: Received Trades -->
+        <div id="receivedTradeSection" class="trade-section">
+            <div class="received-trades-container">
+                <div class="section-header">
+                    <h2>📥 Échanges reçus</h2>
+                    <p class="section-subtitle">Acceptez ou refusez les propositions d'échange</p>
+                </div>
+
+                <div id="receivedTradesContent" class="received-trades-list">
+                    <!-- Filled by JS -->
+                </div>
             </div>
 
-            <div class="history-content" id="historyContent">
-                <!-- Filled by JS -->
+            <!-- Completed Trades History -->
+            <div class="trade-history-section" style="margin-top: 32px;">
+                <h2>📜 Historique des échanges complétés</h2>
+                <div id="completedTradesContent" class="history-content">
+                    <!-- Filled by JS -->
+                </div>
             </div>
         </div>
+        <!-- END SECTION: Received Trades -->
     </div>
 
     <script src="navbar.js"></script>
