@@ -2958,6 +2958,17 @@ app.get('/trades/:draftName', async (req, res) => {
     }
 });
 
+// Get all trades (for completed trades history)
+app.get('/trades/all', async (req, res) => {
+    try {
+        const trades = await loadTrades();
+        res.json([...(trades.pending || []), ...(trades.completed || [])]);
+    } catch (error) {
+        console.error("Error loading all trades:", error);
+        res.status(500).json({ message: "Error loading trades" });
+    }
+});
+
 // Get pending trades for a user
 app.get('/trades/pending/:username', async (req, res) => {
     try {
