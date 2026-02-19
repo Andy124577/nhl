@@ -1,1 +1,881 @@
-const BASE_URL=window.location.hostname.includes("localhost")?"http://localhost:3000":window.location.origin;let currentDraft=null,currentUsername=null,currentTeamName=null,draftData=null,selectedOffering=[],selectedReceiving=[];async function loadDraftDataAndHistory(e){if(!e)return $("#tradeHistoryList").html('<p class="empty-state">Sélectionnez un pool actif dans la barre de navigation</p>'),$("#sendTradeBtn").prop("disabled",!0),currentDraft=null,void(currentTeamName=null);try{const a=await fetch(`${BASE_URL}/draft?timestamp=${(new Date).getTime()}`,{cache:"no-store"});draftData=await a.json(),currentDraft=e;const t=draftData[e];if(!t)return $("#tradeHistoryList").html('<p class="empty-state">Pool non trouvé</p>'),void $("#sendTradeBtn").prop("disabled",!0);const n=Object.entries(t.teams||{}).find(([e,a])=>a.members&&a.members.includes(currentUsername));n?(currentTeamName=n[0],$("#sendTradeBtn").prop("disabled",!1)):$("#sendTradeBtn").prop("disabled",!0);const r=await fetch(`${BASE_URL}/trades/${e}`,{cache:"no-store"});displayTradeHistory(await r.json())}catch(e){console.error("Error loading draft data and trade history:",e),$("#tradeHistoryList").html('<p class="empty-state">Erreur lors du chargement</p>'),$("#sendTradeBtn").prop("disabled",!0)}}function displayTradeHistory(e){const a=$("#tradeHistoryList"),t=localStorage.getItem("username");e&&0!==e.length?(a.html(""),e.reverse().forEach(e=>{const n=isUserTeam(e.fromTeam,t),r=isUserTeam(e.toTeam,t),s=n?`${e.fromTeam} <span class="your-team-badge">Votre équipe</span>`:e.fromTeam,o=r?`${e.toTeam} <span class="your-team-badge">Votre équipe</span>`:e.toTeam,i=$(`\n            <div class="trade-card ${n||r?"user-involved":""}">\n                <div class="trade-header">\n                    <div class="trade-teams">\n                        <span class="team-name ${n?"user-team":""}">${s}</span>\n                        <span class="trade-separator">⟷</span>\n                        <span class="team-name ${r?"user-team":""}">${o}</span>\n                    </div>\n                    <div class="trade-date">${new Date(e.date).toLocaleDateString("fr-CA")}</div>\n                </div>\n                <div class="trade-details">\n                    <div class="trade-side gave ${n?"user-side":""}">\n                        <div class="trade-side-header">\n                            <span class="side-label">A donné</span>\n                            <span class="side-team">${e.fromTeam}</span>\n                        </div>\n                        <ul class="trade-items">\n                            ${e.offering.map(e=>`\n                                <li class="trade-item">\n                                    <span class="item-name">${e.name}</span>\n                                    <span class="item-type">${e.type}</span>\n                                </li>\n                            `).join("")}\n                        </ul>\n                    </div>\n                    <div class="trade-arrow">\n                        <div class="arrow-icon">→</div>\n                        <div class="arrow-label">Échange</div>\n                    </div>\n                    <div class="trade-side received ${r?"user-side":""}">\n                        <div class="trade-side-header">\n                            <span class="side-label">A reçu</span>\n                            <span class="side-team">${e.toTeam}</span>\n                        </div>\n                        <ul class="trade-items">\n                            ${e.receiving.map(e=>`\n                                <li class="trade-item">\n                                    <span class="item-name">${e.name}</span>\n                                    <span class="item-type">${e.type}</span>\n                                </li>\n                            `).join("")}\n                        </ul>\n                    </div>\n                </div>\n            </div>\n        `);a.append(i)})):a.html('<p class="empty-state">Aucun échange complété pour l\'instant</p>')}function isUserTeam(e,a){if(!currentDraft||!currentDraft.teams||!a)return!1;const t=currentDraft.teams[e];return!(!t||!t.members)&&t.members.includes(a)}function openTradeModal(){currentDraft&&currentTeamName?(selectedOffering=[],selectedReceiving=[],loadTeamsForTrade(),loadUserRoster(),$("#tradeModal").css("display","flex")):alert("Veuillez sélectionner un pool actif dans la barre de navigation")}function closeTradeModal(){$("#tradeModal").css("display","none"),$("#targetTeamSelect").val(""),$("#yourOfferingGrid").html('<p class="empty-state">Vos joueurs apparaîtront ici</p>'),$("#theirOfferingGrid").html('<p class="empty-state">Sélectionnez d\'abord une équipe</p>'),$("#selectedOffering").html(""),$("#selectedReceiving").html(""),$("#validationMessage").html("")}function loadTeamsForTrade(){const e=draftData[currentDraft],a=$("#targetTeamSelect");a.html('<option value="">-- Choisir une équipe --</option>'),Object.entries(e.teams||{}).forEach(([e,t])=>{e!==currentTeamName&&t.members&&t.members.length>0&&a.append(`<option value="${e}">${e}</option>`)})}function loadUserRoster(){const e=draftData[currentDraft].teams[currentTeamName],a=$("#yourOfferingGrid");a.html(""),(e.offensive||[]).forEach(e=>{addPlayerToGrid(a,e,"offensive")}),(e.defensive||[]).forEach(e=>{addPlayerToGrid(a,e,"defensive")}),(e.goalies||[]).forEach(e=>{addPlayerToGrid(a,e,"goalie")}),(e.rookies||[]).forEach(e=>{addPlayerToGrid(a,e,"rookie")}),(e.teams||[]).forEach(e=>{addPlayerToGrid(a,e,"team")}),0===a.children().length&&a.html('<p class="empty-state">Vous n\'avez pas encore de joueurs</p>')}function loadTeamRoster(){const e=$("#targetTeamSelect").val();if(!e)return void $("#theirOfferingGrid").html('<p class="empty-state">Sélectionnez d\'abord une équipe</p>');const a=draftData[currentDraft].teams[e],t=$("#theirOfferingGrid");t.html(""),(a.offensive||[]).forEach(e=>{addPlayerToGrid(t,e,"offensive","receiving")}),(a.defensive||[]).forEach(e=>{addPlayerToGrid(t,e,"defensive","receiving")}),(a.goalies||[]).forEach(e=>{addPlayerToGrid(t,e,"goalie","receiving")}),(a.rookies||[]).forEach(e=>{addPlayerToGrid(t,e,"rookie","receiving")}),(a.teams||[]).forEach(e=>{addPlayerToGrid(t,e,"team","receiving")}),0===t.children().length&&t.html('<p class="empty-state">Cette équipe n\'a pas encore de joueurs</p>')}function addPlayerToGrid(e,a,t,n="offering"){const r=a.skaterFullName||a.goalieFullName||a.teamFullName||a,s=getPositionLabel(t),o=$(`\n        <div class="player-item" data-name="${r}" data-type="${t}" data-side="${n}">\n            <div class="player-name">${r}</div>\n            <div class="player-position">${s}</div>\n        </div>\n    `);o.data("playerData",a),o.click(function(){togglePlayerSelection($(this),r,t,n,a)}),e.append(o)}function togglePlayerSelection(e,a,t,n,r){e.hasClass("selected")?(e.removeClass("selected"),"offering"===n?selectedOffering=selectedOffering.filter(e=>e.name!==a):selectedReceiving=selectedReceiving.filter(e=>e.name!==a)):(e.addClass("selected"),"offering"===n?selectedOffering.push({name:a,type:t,playerData:r}):selectedReceiving.push({name:a,type:t,playerData:r})),updateSelectedDisplay(),validateTrade()}function updateSelectedDisplay(){const e=$("#selectedOffering");e.html(""),selectedOffering.forEach(a=>{e.append(`<span class="selected-item-badge">${a.name}</span>`)});const a=$("#selectedReceiving");a.html(""),selectedReceiving.forEach(e=>{a.append(`<span class="selected-item-badge">${e.name}</span>`)})}function validateTrade(){const e=$("#validationMessage");if(e.removeClass("error success").html(""),0===selectedOffering.length||0===selectedReceiving.length)return void $("#sendTradeProposalBtn").prop("disabled",!0);const a=countPositions(selectedOffering),t=countPositions(selectedReceiving),n=[];a.offensive!==t.offensive&&n.push(`Attaquants: ${a.offensive} offerts ≠ ${t.offensive} reçus`),a.defensive!==t.defensive&&n.push(`Défenseurs: ${a.defensive} offerts ≠ ${t.defensive} reçus`),a.goalie!==t.goalie&&n.push(`Gardiens: ${a.goalie} offerts ≠ ${t.goalie} reçus`),a.rookie!==t.rookie&&n.push(`Rookies: ${a.rookie} offerts ≠ ${t.rookie} reçus`),a.team!==t.team&&n.push(`Équipes NHL: ${a.team} offertes ≠ ${t.team} reçues`),n.length>0?(e.addClass("error").html(`\n            <strong>⚠️ Échange invalide:</strong><br>\n            ${n.join("<br>")}\n            <br><br>\n            <em>Vous devez échanger le même nombre de joueurs par position.</em>\n        `),$("#sendTradeProposalBtn").prop("disabled",!0)):(e.addClass("success").html("✅ Échange valide! Vous pouvez envoyer la proposition."),$("#sendTradeProposalBtn").prop("disabled",!1))}function countPositions(e){return{offensive:e.filter(e=>"offensive"===e.type).length,defensive:e.filter(e=>"defensive"===e.type).length,goalie:e.filter(e=>"goalie"===e.type).length,rookie:e.filter(e=>"rookie"===e.type).length,team:e.filter(e=>"team"===e.type).length}}function getPositionLabel(e){return{offensive:"Attaquant",defensive:"Défenseur",goalie:"Gardien",rookie:"Rookie",team:"Équipe NHL"}[e]||e}async function sendTradeProposal(){const e=$("#targetTeamSelect").val();if(!e||0===selectedOffering.length||0===selectedReceiving.length)return void alert("Veuillez sélectionner une équipe et des joueurs à échanger");const a={draftName:currentDraft,fromTeam:currentTeamName,toTeam:e,offering:selectedOffering,receiving:selectedReceiving,status:"pending",date:(new Date).toISOString()};try{const e=await fetch(`${BASE_URL}/trade/propose`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(a)}),t=await e.json();if(e.ok){alert("✅ Proposition d'échange envoyée!"),closeTradeModal();const e=getActivePool();e&&loadDraftDataAndHistory(e)}else alert(`❌ Erreur: ${t.message}`)}catch(e){console.error("Error sending trade proposal:",e),alert("Erreur lors de l'envoi de la proposition")}}async function checkPendingTrades(){try{const e=await fetch(`${BASE_URL}/trades/pending/${currentUsername}`,{cache:"no-store"}),a=await e.json(),t=$("#trade-badge");a&&a.length>0?t.text(a.length).show():t.hide()}catch(e){console.error("Error checking pending trades:",e)}}function setupWebSocket(){const e=io(BASE_URL);e.on("tradeUpdated",()=>{console.log("Trade updated, reloading...");const e=getActivePool();e&&loadDraftDataAndHistory(e),checkPendingTrades()}),e.on("tradePending",()=>{console.log("New pending trade"),checkPendingTrades()})}function toggleAdminDropdown(e){e.preventDefault(),e.stopPropagation();document.getElementById("adminDropdown").classList.toggle("show")}async function loadAdminUsers(){try{const e=await fetch(`${BASE_URL}/admin-users?adminToken=admin`),a=await e.json(),t=$("#adminUserList");if(e.ok){const e=a.users.filter(e=>"admin"!==e).slice(0,4);0===e.length?t.html('<div class="admin-no-users">Aucun utilisateur</div>'):t.html(e.map(e=>`\n                    <a href="#" class="admin-dropdown-item" onclick="switchToUser(event, '${e}')">\n                        <span class="user-avatar">${e.charAt(0).toUpperCase()}</span>\n                        <span class="user-name">${e}</span>\n                    </a>\n                `).join(""))}}catch(e){console.error("Error loading users:",e),$("#adminUserList").html('<div class="admin-no-users">Erreur</div>')}}async function switchToUser(e,a){e.preventDefault(),e.stopPropagation();try{(await fetch(`${BASE_URL}/admin-switch-user`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminToken:"admin",targetUsername:a})})).ok?(localStorage.setItem("username",a),localStorage.setItem("activeUser",a),window.location.reload()):alert("Erreur lors du changement d'utilisateur")}catch(e){console.error("Error switching user:",e),alert("Erreur lors du changement d'utilisateur")}}function logout(e){e.preventDefault(),confirm("Voulez-vous vraiment vous déconnecter ?")&&(localStorage.removeItem("isLoggedIn"),localStorage.removeItem("username"),localStorage.removeItem("isAdmin"),window.location.href="login.html")}async function loadPendingTrades(){if(currentUsername)try{const e=await fetch(`${BASE_URL}/trades/pending/${currentUsername}`,{cache:"no-store"}),a=await e.json();displayPendingTrades(a),updateTradeBadge(a.length)}catch(e){console.error("Error loading pending trades:",e),$("#pending-trades-list").html('<p class="empty-state">Erreur lors du chargement des propositions</p>')}}function displayPendingTrades(e){const a=$("#pending-trades-list");e&&0!==e.length?(a.html(""),e.forEach(e=>{const t=$(`\n            <div class="trade-proposal-card">\n                <div class="trade-proposal-header">\n                    <div class="trade-proposal-title">${e.fromTeam} → ${e.toTeam}</div>\n                    <div class="trade-proposal-date">${new Date(e.date).toLocaleDateString("fr-CA")}</div>\n                </div>\n                <div class="trade-proposal-body">\n                    <div class="trade-proposal-side">\n                        <h4>${e.fromTeam} offre</h4>\n                        <ul class="trade-items-list">\n                            ${e.offering.map(e=>`<li>${e.name} <span style="color: #999;">(${getPositionLabel(e.type)})</span></li>`).join("")}\n                        </ul>\n                    </div>\n                    <div class="trade-arrow-icon">⇄</div>\n                    <div class="trade-proposal-side">\n                        <h4>Vous envoyez</h4>\n                        <ul class="trade-items-list">\n                            ${e.receiving.map(e=>`<li>${e.name} <span style="color: #999;">(${getPositionLabel(e.type)})</span></li>`).join("")}\n                        </ul>\n                    </div>\n                </div>\n                <div class="trade-proposal-actions">\n                    <button class="trade-decline-btn" onclick="declineTrade('${e.id}')">❌ Refuser</button>\n                    <button class="trade-accept-btn" onclick="acceptTrade('${e.id}')">✅ Accepter</button>\n                </div>\n            </div>\n        `);a.append(t)})):a.html('<p class="empty-state">Aucune proposition d\'échange en attente</p>')}function getPositionLabel(e){return{offensive:"Attaquant",defensive:"Défenseur",goalie:"Gardien",rookie:"Rookie",team:"Équipe NHL"}[e]||e}async function acceptTrade(e){if(confirm("Voulez-vous vraiment accepter cet échange?"))try{const a=await fetch(`${BASE_URL}/trade/accept`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tradeId:e})}),t=await a.json();a.ok?(alert("✅ Échange accepté avec succès!"),loadPendingTrades()):alert(`❌ Erreur: ${t.message}`)}catch(e){console.error("Error accepting trade:",e),alert("Erreur lors de l'acceptation de l'échange")}}async function declineTrade(e){if(confirm("Voulez-vous vraiment refuser cet échange?"))try{const a=await fetch(`${BASE_URL}/trade/decline`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tradeId:e})}),t=await a.json();a.ok?(alert("Échange refusé"),loadPendingTrades()):alert(`❌ Erreur: ${t.message}`)}catch(e){console.error("Error declining trade:",e),alert("Erreur lors du refus de l'échange")}}function updateTradeBadge(e){const a=$("#trade-badge"),t=$("#proposals-tab-badge");e>0?(a.text(e).show(),t.text(e).show()):(a.hide(),t.hide())}$(document).ready(function(){const e="true"===localStorage.getItem("isLoggedIn");currentUsername=localStorage.getItem("username");const a="true"===localStorage.getItem("isAdmin");if(!e)return alert("⛔ Vous devez être connecté pour accéder à cette page !"),void(window.location.href="login.html");a?($("#admin-users-link").css("display","block").html('\n            <div class="admin-dropdown-container">\n                <a href="#" class="admin-dropdown-toggle" onclick="toggleAdminDropdown(event)">\n                    Utilisateur ▼\n                </a>\n                <div class="admin-dropdown-menu" id="adminDropdown">\n                    <div class="admin-dropdown-header">Changer d\'utilisateur</div>\n                    <div id="adminUserList" class="admin-user-list">Chargement...</div>\n                </div>\n            </div>\n        '),$("#login-link").html(`<a href="#" onclick="logout(event)">Déconnexion (${currentUsername})</a>`),loadAdminUsers()):$("#login-link").html(`<a href="#" onclick="logout(event)">Déconnexion (${currentUsername})</a>`),checkPendingTrades(),loadPendingTrades(),setupWebSocket(),$(document).on("activePoolChanged",async(e,a)=>{await loadDraftDataAndHistory(a)});const t=getActivePool();t&&loadDraftDataAndHistory(t)}),$(document).ready(function(){$("#tradeModal").click(function(e){$(e.target).is("#tradeModal")&&closeTradeModal()})}),document.addEventListener("click",function(e){const a=document.getElementById("adminDropdown");a&&!e.target.closest(".admin-dropdown-container")&&a.classList.remove("show")});
+/* ============================================================ */
+/* TRADE PAGE — Complete drag-drop trade interface             */
+/* ============================================================ */
+
+const BASE_URL = window.location.hostname.includes('localhost')
+    ? 'http://localhost:3000'
+    : window.location.origin;
+
+// State
+let currentUsername = null;
+let currentDraft = null;
+let currentTeamName = null;
+let partnerTeamName = null;
+let draftData = null;
+let statsData = null;
+let offeringPlayers = []; // Players I'm offering
+let receivingPlayers = []; // Players I'm receiving
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', async () => {
+    currentUsername = localStorage.getItem('username');
+
+    if (!currentUsername) {
+        alert('⛔ Vous devez être connecté pour accéder à cette page !');
+        window.location.href = 'login.html';
+        return;
+    }
+
+    // Setup tab navigation
+    setupTabNavigation();
+
+    // Setup reset and send buttons
+    document.getElementById('resetBtn')?.addEventListener('click', resetTrade);
+    document.getElementById('sendTradeBtn')?.addEventListener('click', sendTradeProposal);
+
+    // Setup partner selector
+    document.getElementById('partnerSelect')?.addEventListener('change', onPartnerSelect);
+
+    // Load data
+    await Promise.all([loadDraftData(), loadStats()]);
+
+    // Load initial state
+    loadPendingTrades();
+    loadTradeHistory();
+
+    // Setup WebSocket for live updates
+    setupWebSocket();
+});
+
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+function setupTabNavigation() {
+    const tabs = document.querySelectorAll('.trade-tab');
+    const panels = document.querySelectorAll('.tab-panel');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetTab = tab.dataset.tab;
+
+            // Update active tab
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // Update active panel
+            panels.forEach(p => p.classList.remove('active'));
+            document.getElementById(`${targetTab}Tab`)?.classList.add('active');
+
+            // Load data for tab
+            if (targetTab === 'proposals') {
+                loadPendingTrades();
+            } else if (targetTab === 'history') {
+                loadTradeHistory();
+            }
+        });
+    });
+}
+
+// ============================================================
+// DATA LOADING
+// ============================================================
+async function loadDraftData() {
+    try {
+        const res = await fetch(`${BASE_URL}/draft?timestamp=${Date.now()}`, { cache: 'no-store' });
+        draftData = await res.json();
+
+        // Find current user's pool and team
+        const activePool = getActivePool();
+        if (!activePool) return;
+
+        currentDraft = activePool;
+        const pool = draftData[activePool];
+        if (!pool) return;
+
+        // Find user's team
+        const userTeamEntry = Object.entries(pool.teams || {}).find(
+            ([, td]) => td.members && td.members.includes(currentUsername)
+        );
+
+        if (userTeamEntry) {
+            currentTeamName = userTeamEntry[0];
+            populatePartnerSelect();
+        }
+
+    } catch (err) {
+        console.error('Error loading draft data:', err);
+    }
+}
+
+async function loadStats() {
+    try {
+        const res = await fetch(`${BASE_URL}/stats`);
+        statsData = await res.json();
+    } catch (err) {
+        console.error('Error loading stats:', err);
+    }
+}
+
+function getActivePool() {
+    // Try to get from navbar or localStorage
+    return localStorage.getItem('activePool') || null;
+}
+
+// ============================================================
+// PARTNER SELECTION
+// ============================================================
+function populatePartnerSelect() {
+    const select = document.getElementById('partnerSelect');
+    if (!select || !draftData || !currentDraft) return;
+
+    const pool = draftData[currentDraft];
+    select.innerHTML = '<option value="">-- Choisir une équipe --</option>';
+
+    Object.entries(pool.teams || {}).forEach(([teamName, teamData]) => {
+        if (teamName !== currentTeamName && teamData.members && teamData.members.length > 0) {
+            select.innerHTML += `<option value="${teamName}">${teamName}</option>`;
+        }
+    });
+}
+
+function onPartnerSelect(e) {
+    partnerTeamName = e.target.value;
+
+    if (!partnerTeamName) {
+        document.getElementById('tradeGrid').style.display = 'none';
+        document.getElementById('tradeActionsHeader').style.display = 'none';
+        return;
+    }
+
+    // Show trade interface
+    document.getElementById('tradeGrid').style.display = 'grid';
+    document.getElementById('tradeActionsHeader').style.display = 'flex';
+
+    // Reset trade state
+    offeringPlayers = [];
+    receivingPlayers = [];
+
+    // Load rosters
+    loadMyRoster();
+    loadPartnerRoster();
+
+    // Update badges
+    document.getElementById('myTeamBadge').textContent = currentTeamName;
+    document.getElementById('partnerTeamBadge').textContent = partnerTeamName;
+
+    updateUI();
+}
+
+// ============================================================
+// ROSTER LOADING
+// ============================================================
+function loadMyRoster() {
+    const container = document.getElementById('myRoster');
+    if (!container || !currentDraft || !currentTeamName) return;
+
+    const team = draftData[currentDraft].teams[currentTeamName];
+    container.innerHTML = '';
+
+    const players = [
+        ...(team.offensive || []).map(p => ({ ...p, position: 'ATT' })),
+        ...(team.defensive || []).map(p => ({ ...p, position: 'DEF' })),
+        ...(team.goalie || []).map(p => ({ ...p, position: 'G' }))
+    ];
+
+    if (players.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:24px 12px;">Aucun joueur</p>';
+        return;
+    }
+
+    players.forEach(player => {
+        const card = createPlayerCard(player, 'my');
+        container.appendChild(card);
+    });
+
+    updateTeamCount('myTeamCount', players.length);
+}
+
+function loadPartnerRoster() {
+    const container = document.getElementById('partnerRoster');
+    if (!container || !currentDraft || !partnerTeamName) return;
+
+    const team = draftData[currentDraft].teams[partnerTeamName];
+    container.innerHTML = '';
+
+    const players = [
+        ...(team.offensive || []).map(p => ({ ...p, position: 'ATT' })),
+        ...(team.defensive || []).map(p => ({ ...p, position: 'DEF' })),
+        ...(team.goalie || []).map(p => ({ ...p, position: 'G' }))
+    ];
+
+    if (players.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:24px 12px;">Aucun joueur</p>';
+        return;
+    }
+
+    players.forEach(player => {
+        const card = createPlayerCard(player, 'partner');
+        container.appendChild(card);
+    });
+
+    updateTeamCount('partnerTeamCount', players.length);
+}
+
+function updateTeamCount(elementId, count) {
+    const el = document.getElementById(elementId);
+    if (el) {
+        el.textContent = `${count} joueur${count !== 1 ? 's' : ''}`;
+    }
+}
+
+// ============================================================
+// PLAYER CARD CREATION
+// ============================================================
+function createPlayerCard(player, side) {
+    const name = player.skaterFullName || player.goalieFullName || 'Unknown';
+    const position = player.position || 'N/A';
+    const stats = getPlayerStats(name);
+    const points = stats.points || 0;
+
+    const card = document.createElement('div');
+    card.className = 'player-card-trade';
+    card.draggable = true;
+    card.dataset.playerName = name;
+    card.dataset.side = side;
+    card.dataset.position = position;
+    card.dataset.points = points;
+
+    card.innerHTML = `
+        <div class="pct-position ${position.toLowerCase()}">${position}</div>
+        <div class="pct-info">
+            <div class="pct-name">${name}</div>
+            <div class="pct-stats">
+                ${stats.goals || 0}B · ${stats.assists || 0}A · ${stats.points || 0}PTS
+            </div>
+        </div>
+        <div class="pct-value">${points} <span style="opacity:.6;font-size:.7em">PTS</span></div>
+    `;
+
+    // Drag events
+    card.addEventListener('dragstart', (e) => onDragStart(e, player, side));
+    card.addEventListener('dragend', (e) => onDragEnd(e));
+
+    return card;
+}
+
+function getPlayerStats(playerName) {
+    if (!statsData) return { goals: 0, assists: 0, points: 0 };
+
+    const allPlayers = [
+        ...(statsData.Top_Offensive || []),
+        ...(statsData.Top_Defensive || []),
+        ...(statsData.Top_Rookies || []),
+        ...(statsData.Top_Goalies || [])
+    ];
+
+    const found = allPlayers.find(p => {
+        const name = p.skaterFullName || p.goalieFullName ||
+                     `${p.firstName || ''} ${p.lastName || ''}`.trim();
+        return name === playerName;
+    });
+
+    if (found) {
+        return {
+            goals: found.goals || 0,
+            assists: found.assists || 0,
+            points: found.points || found.wins || 0
+        };
+    }
+
+    return { goals: 0, assists: 0, points: 0 };
+}
+
+// ============================================================
+// DRAG AND DROP
+// ============================================================
+function onDragStart(e, player, side) {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('application/json', JSON.stringify({
+        player,
+        side,
+        name: player.skaterFullName || player.goalieFullName || 'Unknown',
+        position: player.position || 'N/A'
+    }));
+
+    e.currentTarget.classList.add('dragging');
+}
+
+function onDragEnd(e) {
+    e.currentTarget.classList.remove('dragging');
+}
+
+// Setup drop zones
+document.addEventListener('DOMContentLoaded', () => {
+    const offeringZone = document.getElementById('offeringDropZone');
+    const receivingZone = document.getElementById('receivingDropZone');
+
+    [offeringZone, receivingZone].forEach(zone => {
+        if (!zone) return;
+
+        zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            zone.classList.add('drag-over');
+        });
+
+        zone.addEventListener('dragleave', (e) => {
+            if (e.currentTarget === e.target || !e.currentTarget.contains(e.relatedTarget)) {
+                zone.classList.remove('drag-over');
+            }
+        });
+
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('drag-over');
+
+            const data = JSON.parse(e.dataTransfer.getData('application/json'));
+            const targetSide = zone.dataset.side;
+
+            // Validate drop: my players → offering, partner players → receiving
+            if ((data.side === 'my' && targetSide === 'offering') ||
+                (data.side === 'partner' && targetSide === 'receiving')) {
+                addPlayerToDropZone(data, targetSide);
+            }
+        });
+    });
+});
+
+function addPlayerToDropZone(data, side) {
+    const player = {
+        name: data.name,
+        position: data.position,
+        player: data.player
+    };
+
+    // Check if already added
+    const list = side === 'offering' ? offeringPlayers : receivingPlayers;
+    if (list.find(p => p.name === player.name)) return;
+
+    // Add to list
+    if (side === 'offering') {
+        offeringPlayers.push(player);
+    } else {
+        receivingPlayers.push(player);
+    }
+
+    // Mark original card as in-trade
+    const originalCard = document.querySelector(
+        `.player-card-trade[data-player-name="${player.name}"][data-side="${data.side}"]`
+    );
+    if (originalCard) {
+        originalCard.classList.add('in-trade');
+    }
+
+    updateUI();
+}
+
+function removePlayerFromDropZone(playerName, side) {
+    if (side === 'offering') {
+        offeringPlayers = offeringPlayers.filter(p => p.name !== playerName);
+    } else {
+        receivingPlayers = receivingPlayers.filter(p => p.name !== playerName);
+    }
+
+    // Unmark original card
+    const originalCard = document.querySelector(
+        `.player-card-trade[data-player-name="${playerName}"].in-trade`
+    );
+    if (originalCard) {
+        originalCard.classList.remove('in-trade');
+    }
+
+    updateUI();
+}
+
+// ============================================================
+// UI UPDATE
+// ============================================================
+function updateUI() {
+    updateDropZone('offering', offeringPlayers);
+    updateDropZone('receiving', receivingPlayers);
+    updateValueBars();
+    updateTradeBalance();
+    updateStatComparison();
+    updateSendButton();
+}
+
+function updateDropZone(side, players) {
+    const zone = document.getElementById(side === 'offering' ? 'offeringDropZone' : 'receivingDropZone');
+    const countEl = document.getElementById(side === 'offering' ? 'offeringCount' : 'receivingCount');
+
+    if (!zone) return;
+
+    // Update count
+    if (countEl) countEl.textContent = players.length;
+
+    // Clear existing chips
+    zone.querySelectorAll('.dropped-player-chip').forEach(chip => chip.remove());
+
+    // Show/hide placeholder
+    const placeholder = zone.querySelector('.dz-placeholder');
+    if (placeholder) {
+        placeholder.style.display = players.length === 0 ? 'flex' : 'none';
+    }
+
+    // Add player chips
+    players.forEach(player => {
+        const chip = document.createElement('div');
+        chip.className = 'dropped-player-chip';
+        chip.innerHTML = `
+            <span class="dpc-position ${player.position.toLowerCase()}">${player.position}</span>
+            <span class="dpc-name">${player.name}</span>
+            <button class="dpc-remove" onclick="removePlayerFromDropZone('${player.name}', '${side}')">×</button>
+        `;
+        zone.appendChild(chip);
+    });
+}
+
+function updateValueBars() {
+    const offeringValue = offeringPlayers.reduce((sum, p) => {
+        const stats = getPlayerStats(p.name);
+        return sum + (stats.points || 0);
+    }, 0);
+
+    const receivingValue = receivingPlayers.reduce((sum, p) => {
+        const stats = getPlayerStats(p.name);
+        return sum + (stats.points || 0);
+    }, 0);
+
+    const offeringEl = document.getElementById('offeringValue');
+    const receivingEl = document.getElementById('receivingValue');
+
+    if (offeringEl) offeringEl.textContent = `${offeringValue} PTS`;
+    if (receivingEl) receivingEl.textContent = `${receivingValue} PTS`;
+}
+
+function updateTradeBalance() {
+    const balance = document.getElementById('tradeBalance');
+    if (!balance) return;
+
+    const offeringValue = offeringPlayers.reduce((sum, p) => {
+        const stats = getPlayerStats(p.name);
+        return sum + (stats.points || 0);
+    }, 0);
+
+    const receivingValue = receivingPlayers.reduce((sum, p) => {
+        const stats = getPlayerStats(p.name);
+        return sum + (stats.points || 0);
+    }, 0);
+
+    const diff = Math.abs(offeringValue - receivingValue);
+    const diffPercent = offeringValue > 0 ? (diff / offeringValue) * 100 : 0;
+
+    const statusEl = balance.querySelector('.balance-status');
+    if (!statusEl) return;
+
+    if (diffPercent < 15) {
+        balance.classList.remove('unbalanced');
+        balance.classList.add('balanced');
+        statusEl.textContent = 'Équilibré';
+    } else {
+        balance.classList.remove('balanced');
+        balance.classList.add('unbalanced');
+        statusEl.textContent = `Déséquilibré (${diff} PTS)`;
+    }
+}
+
+function updateStatComparison() {
+    const statComp = document.getElementById('statComparison');
+    if (!statComp) return;
+
+    if (offeringPlayers.length === 0 && receivingPlayers.length === 0) {
+        statComp.style.display = 'none';
+        return;
+    }
+
+    statComp.style.display = 'block';
+
+    // Calculate totals
+    const offeringStats = offeringPlayers.reduce((acc, p) => {
+        const stats = getPlayerStats(p.name);
+        return {
+            goals: acc.goals + (stats.goals || 0),
+            assists: acc.assists + (stats.assists || 0),
+            points: acc.points + (stats.points || 0)
+        };
+    }, { goals: 0, assists: 0, points: 0 });
+
+    const receivingStats = receivingPlayers.reduce((acc, p) => {
+        const stats = getPlayerStats(p.name);
+        return {
+            goals: acc.goals + (stats.goals || 0),
+            assists: acc.assists + (stats.assists || 0),
+            points: acc.points + (stats.points || 0)
+        };
+    }, { goals: 0, assists: 0, points: 0 });
+
+    // Update bars
+    updateStatBar('goals', offeringStats.goals, receivingStats.goals);
+    updateStatBar('assists', offeringStats.assists, receivingStats.assists);
+    updateStatBar('pts', offeringStats.points, receivingStats.points);
+}
+
+function updateStatBar(stat, offerVal, receiveVal) {
+    const total = offerVal + receiveVal;
+    const offerPercent = total > 0 ? (offerVal / total) * 50 : 0; // Max 50% each side
+    const receivePercent = total > 0 ? (receiveVal / total) * 50 : 0;
+
+    const offerBar = document.getElementById(`${stat}OfferBar`);
+    const receiveBar = document.getElementById(`${stat}ReceiveBar`);
+    const offerValEl = document.getElementById(`${stat}OfferVal`);
+    const receiveValEl = document.getElementById(`${stat}ReceiveVal`);
+
+    if (offerBar) offerBar.style.width = `${offerPercent}%`;
+    if (receiveBar) receiveBar.style.width = `${receivePercent}%`;
+    if (offerValEl) offerValEl.textContent = offerVal;
+    if (receiveValEl) receiveValEl.textContent = receiveVal;
+}
+
+function updateSendButton() {
+    const btn = document.getElementById('sendTradeBtn');
+    if (!btn) return;
+
+    const isValid = offeringPlayers.length > 0 && receivingPlayers.length > 0;
+    btn.disabled = !isValid;
+}
+
+// ============================================================
+// TRADE ACTIONS
+// ============================================================
+function resetTrade() {
+    offeringPlayers = [];
+    receivingPlayers = [];
+
+    // Remove in-trade class from all cards
+    document.querySelectorAll('.player-card-trade.in-trade').forEach(card => {
+        card.classList.remove('in-trade');
+    });
+
+    updateUI();
+}
+
+async function sendTradeProposal() {
+    if (offeringPlayers.length === 0 || receivingPlayers.length === 0) {
+        alert('Veuillez ajouter des joueurs à l\'échange');
+        return;
+    }
+
+    if (!confirm(`Envoyer cette proposition d'échange à ${partnerTeamName}?`)) {
+        return;
+    }
+
+    const proposal = {
+        draftName: currentDraft,
+        fromTeam: currentTeamName,
+        toTeam: partnerTeamName,
+        offering: offeringPlayers.map(p => ({
+            name: p.name,
+            type: getTypeFromPosition(p.position)
+        })),
+        receiving: receivingPlayers.map(p => ({
+            name: p.name,
+            type: getTypeFromPosition(p.position)
+        })),
+        status: 'pending',
+        date: new Date().toISOString()
+    };
+
+    try {
+        const res = await fetch(`${BASE_URL}/trade/propose`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(proposal)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert('✅ Proposition d\'échange envoyée!');
+            resetTrade();
+            document.getElementById('partnerSelect').value = '';
+            document.getElementById('tradeGrid').style.display = 'none';
+            document.getElementById('tradeActionsHeader').style.display = 'none';
+        } else {
+            alert(`❌ Erreur: ${data.message}`);
+        }
+    } catch (err) {
+        console.error('Error sending trade:', err);
+        alert('Erreur lors de l\'envoi de la proposition');
+    }
+}
+
+function getTypeFromPosition(position) {
+    const map = {
+        'ATT': 'offensive',
+        'DEF': 'defensive',
+        'G': 'goalie'
+    };
+    return map[position] || 'offensive';
+}
+
+// ============================================================
+// PENDING TRADES
+// ============================================================
+async function loadPendingTrades() {
+    const container = document.getElementById('proposalsList');
+    if (!container) return;
+
+    try {
+        const res = await fetch(`${BASE_URL}/trades/pending/${currentUsername}`, {
+            cache: 'no-store'
+        });
+        const proposals = await res.json();
+
+        if (!proposals || proposals.length === 0) {
+            container.innerHTML = '<p class="empty-msg">Aucune proposition en attente</p>';
+            updateProposalBadge(0);
+            return;
+        }
+
+        container.innerHTML = '';
+        proposals.forEach(proposal => {
+            const card = createProposalCard(proposal);
+            container.appendChild(card);
+        });
+
+        updateProposalBadge(proposals.length);
+
+    } catch (err) {
+        console.error('Error loading pending trades:', err);
+        container.innerHTML = '<p class="empty-msg">Erreur lors du chargement</p>';
+    }
+}
+
+function createProposalCard(proposal) {
+    const card = document.createElement('div');
+    card.className = 'proposal-card';
+
+    const date = new Date(proposal.date);
+    const dateStr = date.toLocaleDateString('fr-CA', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+
+    card.innerHTML = `
+        <div class="prop-header">
+            <div class="prop-teams">
+                <span class="prop-from">${proposal.fromTeam}</span>
+                <span class="prop-arrow">→</span>
+                <span class="prop-to">Vous (${proposal.toTeam})</span>
+            </div>
+            <div class="prop-date">${dateStr}</div>
+        </div>
+        <div class="prop-body">
+            <div class="prop-side">
+                <div class="prop-side-title">Ils offrent</div>
+                <div class="prop-players">
+                    ${proposal.offering.map(p => `
+                        <div class="prop-player">
+                            <span class="pp-position">${getPositionFromType(p.type)}</span>
+                            <span class="pp-name">${p.name}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="prop-exchange">⇄</div>
+            <div class="prop-side">
+                <div class="prop-side-title">Vous envoyez</div>
+                <div class="prop-players">
+                    ${proposal.receiving.map(p => `
+                        <div class="prop-player">
+                            <span class="pp-position">${getPositionFromType(p.type)}</span>
+                            <span class="pp-name">${p.name}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+        <div class="prop-actions">
+            <button class="prop-decline" onclick="declineProposal('${proposal.id}')">❌ Refuser</button>
+            <button class="prop-accept" onclick="acceptProposal('${proposal.id}')">✅ Accepter</button>
+        </div>
+    `;
+
+    return card;
+}
+
+async function acceptProposal(proposalId) {
+    if (!confirm('Accepter cet échange?')) return;
+
+    try {
+        const res = await fetch(`${BASE_URL}/trade/accept`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tradeId: proposalId })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert('✅ Échange accepté!');
+            loadPendingTrades();
+            loadTradeHistory();
+        } else {
+            alert(`❌ Erreur: ${data.message}`);
+        }
+    } catch (err) {
+        console.error('Error accepting trade:', err);
+        alert('Erreur lors de l\'acceptation');
+    }
+}
+
+async function declineProposal(proposalId) {
+    if (!confirm('Refuser cet échange?')) return;
+
+    try {
+        const res = await fetch(`${BASE_URL}/trade/decline`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tradeId: proposalId })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert('Échange refusé');
+            loadPendingTrades();
+        } else {
+            alert(`❌ Erreur: ${data.message}`);
+        }
+    } catch (err) {
+        console.error('Error declining trade:', err);
+        alert('Erreur lors du refus');
+    }
+}
+
+function updateProposalBadge(count) {
+    const badge = document.getElementById('proposalsBadge');
+    if (!badge) return;
+
+    if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'inline-block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+function getPositionFromType(type) {
+    const map = {
+        'offensive': 'ATT',
+        'defensive': 'DEF',
+        'goalie': 'G'
+    };
+    return map[type] || 'N/A';
+}
+
+// ============================================================
+// TRADE HISTORY
+// ============================================================
+async function loadTradeHistory() {
+    const container = document.getElementById('historyTimeline');
+    if (!container || !currentDraft) return;
+
+    try {
+        const res = await fetch(`${BASE_URL}/trades/${currentDraft}`, {
+            cache: 'no-store'
+        });
+        const trades = await res.json();
+
+        if (!trades || trades.length === 0) {
+            container.innerHTML = '<p class="empty-msg">Aucun échange complété</p>';
+            return;
+        }
+
+        container.innerHTML = '';
+
+        // Sort by date descending
+        trades.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        trades.forEach(trade => {
+            const item = createHistoryItem(trade);
+            container.appendChild(item);
+        });
+
+    } catch (err) {
+        console.error('Error loading trade history:', err);
+        container.innerHTML = '<p class="empty-msg">Erreur lors du chargement</p>';
+    }
+}
+
+function createHistoryItem(trade) {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+
+    const date = new Date(trade.date);
+    const day = date.getDate();
+    const month = date.toLocaleDateString('fr-CA', { month: 'short' });
+
+    const isUserInvolved =
+        trade.fromTeam === currentTeamName ||
+        trade.toTeam === currentTeamName;
+
+    const status = trade.status || 'completed';
+    const statusClass = status === 'completed' ? 'status-completed' : 'status-declined';
+    const statusLabel = status === 'completed' ? 'Complété' : 'Refusé';
+
+    item.innerHTML = `
+        <div class="history-date">
+            <div class="history-day">${day}</div>
+            <div class="history-month">${month}</div>
+        </div>
+        <div class="history-content">
+            <div class="history-teams">
+                <span class="${trade.fromTeam === currentTeamName ? 'user-team' : ''}">${trade.fromTeam}</span>
+                <span class="history-arrow">⇄</span>
+                <span class="${trade.toTeam === currentTeamName ? 'user-team' : ''}">${trade.toTeam}</span>
+            </div>
+            <div class="history-players">
+                <div class="hp-side">
+                    ${trade.offering.slice(0, 3).map(p => `<span>${p.name}</span>`).join(', ')}
+                    ${trade.offering.length > 3 ? ` +${trade.offering.length - 3}` : ''}
+                </div>
+                <div class="hp-arrow">→</div>
+                <div class="hp-side">
+                    ${trade.receiving.slice(0, 3).map(p => `<span>${p.name}</span>`).join(', ')}
+                    ${trade.receiving.length > 3 ? ` +${trade.receiving.length - 3}` : ''}
+                </div>
+            </div>
+        </div>
+        <div class="history-status ${statusClass}">${statusLabel}</div>
+    `;
+
+    if (isUserInvolved) {
+        item.classList.add('user-involved');
+    }
+
+    return item;
+}
+
+// ============================================================
+// WEBSOCKET
+// ============================================================
+function setupWebSocket() {
+    if (typeof io === 'undefined') return;
+
+    const socket = io(BASE_URL);
+
+    socket.on('tradeUpdated', () => {
+        console.log('Trade updated, reloading...');
+        loadPendingTrades();
+        loadTradeHistory();
+    });
+
+    socket.on('tradePending', () => {
+        console.log('New pending trade');
+        loadPendingTrades();
+    });
+}
