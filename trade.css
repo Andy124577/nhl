@@ -29,58 +29,6 @@ body {
 }
 
 /* ============================================================ */
-/* NAVIGATION                                                   */
-/* ============================================================ */
-.main-nav {
-    background: var(--card-white);
-    border-bottom: 1px solid var(--border-light);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.nav-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 64px;
-}
-
-.nav-logo {
-    font-size: 1.4rem;
-    font-weight: 900;
-    color: var(--primary);
-    text-decoration: none;
-}
-
-.nav-links {
-    display: flex;
-    gap: 8px;
-}
-
-.nav-links a {
-    padding: 8px 16px;
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-weight: 700;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-}
-
-.nav-links a:hover {
-    color: var(--primary);
-    background: rgba(0,212,255,0.1);
-}
-
-.nav-links a.active {
-    color: var(--primary);
-    background: rgba(0,212,255,0.15);
-}
-
-/* ============================================================ */
 /* MAIN CONTAINER                                               */
 /* ============================================================ */
 .trade-container {
@@ -967,4 +915,76 @@ body {
     color: var(--text-secondary);
     padding: 48px 24px;
     font-size: 1.1rem;
+}
+
+/* ============================================================ */
+/* NOTIFICATION SYSTEM                                          */
+/* ============================================================ */
+.trade-notification {
+    position: fixed;
+    top: 80px;
+    right: -400px;
+    max-width: 400px;
+    background: var(--card-white);
+    border: 2px solid var(--border-light);
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    z-index: 9999;
+    transition: right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.trade-notification.show {
+    right: 24px;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.notification-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.notification-message {
+    color: var(--text-main);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.trade-notification-success {
+    border-left: 4px solid var(--success);
+}
+
+.trade-notification-error {
+    border-left: 4px solid var(--danger);
+}
+
+.trade-notification-info {
+    border-left: 4px solid var(--primary);
+}
+
+/* ============================================================ */
+/* LOADING SPINNER                                              */
+/* ============================================================ */
+.loading-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
 }

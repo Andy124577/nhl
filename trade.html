@@ -4,23 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Échanges | Fantasy NHL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="trade.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
-    <!-- Navigation (same as other pages) -->
-    <nav class="main-nav">
-        <div class="nav-container">
-            <a href="accueil.html" class="nav-logo">🏒 Fantasy NHL</a>
-            <div class="nav-links">
-                <a href="accueil.html">Accueil</a>
-                <a href="pool.html">Pools</a>
-                <a href="classement.html">Classement</a>
-                <a href="trade.html" class="active">Échanges</a>
-                <a href="index.html">Joueurs</a>
-            </div>
-        </div>
-    </nav>
+    <!-- Navigation -->
+    <nav class="navbar"></nav>
 
     <!-- Main Container -->
     <div class="trade-container">
@@ -180,6 +173,7 @@
         </div>
     </div>
 
+    <script src="navbar.js"></script>
     <script src="trade.js"></script>
 </body>
 </html>
