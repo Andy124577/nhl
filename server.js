@@ -2976,15 +2976,30 @@ app.get('/trades/pending/:username', async (req, res) => {
         const trades = await loadTrades();
         const draftData = await loadDraftData();
 
+        console.log(`Checking pending trades for user: ${username}`);
+        console.log(`Total pending trades: ${(trades.pending || []).length}`);
+
         // Find all pending trades where user is the recipient
         const userPendingTrades = (trades.pending || []).filter(trade => {
             const draft = draftData[trade.draftName];
-            if (!draft) return false;
+            if (!draft) {
+                console.log(`Draft ${trade.draftName} not found`);
+                return false;
+            }
 
             const targetTeam = draft.teams[trade.toTeam];
-            return targetTeam && targetTeam.members && targetTeam.members.includes(username);
+            if (!targetTeam) {
+                console.log(`Team ${trade.toTeam} not found in draft ${trade.draftName}`);
+                return false;
+            }
+
+            const isRecipient = targetTeam.members && targetTeam.members.includes(username);
+            console.log(`Trade ${trade.id}: ${trade.fromTeam} → ${trade.toTeam}, User is recipient: ${isRecipient}`);
+
+            return isRecipient;
         });
 
+        console.log(`Found ${userPendingTrades.length} pending trades for ${username}`);
         res.json(userPendingTrades);
     } catch (error) {
         console.error("Error loading pending trades:", error);

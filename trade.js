@@ -514,6 +514,19 @@ function updateTradeSummary() {
     const isValid = selectedMyPlayer.category === selectedPartnerPlayer.category;
     proposeBtn.disabled = !isValid;
 
+    // Get real stats from player data
+    const myStats = selectedMyPlayer.category === 'G'
+        ? `${selectedMyPlayer.data.wins || 0}W ${(selectedMyPlayer.data.savePctg || 0).toFixed(3)}SV%`
+        : selectedMyPlayer.category === 'T'
+        ? 'Équipe NHL'
+        : `${selectedMyPlayer.data.goals || 0}B ${selectedMyPlayer.data.assists || 0}P ${selectedMyPlayer.data.points || 0}PTS`;
+
+    const partnerStats = selectedPartnerPlayer.category === 'G'
+        ? `${selectedPartnerPlayer.data.wins || 0}W ${(selectedPartnerPlayer.data.savePctg || 0).toFixed(3)}SV%`
+        : selectedPartnerPlayer.category === 'T'
+        ? 'Équipe NHL'
+        : `${selectedPartnerPlayer.data.goals || 0}B ${selectedPartnerPlayer.data.assists || 0}P ${selectedPartnerPlayer.data.points || 0}PTS`;
+
     // Render my player
     const myPlayerHTML = `
         <div class="summary-player-photo">
@@ -522,20 +535,8 @@ function updateTradeSummary() {
         </div>
         <div class="summary-player-name">${selectedMyPlayer.name}</div>
         <div class="summary-player-info">
-            ${getCategoryLabel(selectedMyPlayer.category)} · ${selectedMyPlayer.data.teamAbbrev || ''}
-        </div>
-        <div class="summary-player-stats">
-            ${selectedMyPlayer.category === 'G' ? `
-                <div class="stat-item"><span class="stat-value">${selectedMyPlayer.data.wins || 0}</span><span class="stat-label">VIC</span></div>
-                <div class="stat-item"><span class="stat-value">${selectedMyPlayer.data.goalsAgainst || 0}</span><span class="stat-label">BC</span></div>
-                <div class="stat-item"><span class="stat-value">${(selectedMyPlayer.data.savePctg || 0).toFixed(3)}</span><span class="stat-label">%ARR</span></div>
-            ` : selectedMyPlayer.category === 'T' ? `
-                <div class="stat-item"><span class="stat-value">Équipe NHL</span></div>
-            ` : `
-                <div class="stat-item"><span class="stat-value">${selectedMyPlayer.data.goals || 0}</span><span class="stat-label">B</span></div>
-                <div class="stat-item"><span class="stat-value">${selectedMyPlayer.data.assists || 0}</span><span class="stat-label">P</span></div>
-                <div class="stat-item"><span class="stat-value">${selectedMyPlayer.data.points || 0}</span><span class="stat-label">PTS</span></div>
-            `}
+            ${getCategoryLabel(selectedMyPlayer.category)} · ${selectedMyPlayer.data.teamAbbrev || ''}<br>
+            ${myStats}
         </div>
     `;
 
@@ -547,20 +548,8 @@ function updateTradeSummary() {
         </div>
         <div class="summary-player-name">${selectedPartnerPlayer.name}</div>
         <div class="summary-player-info">
-            ${getCategoryLabel(selectedPartnerPlayer.category)} · ${selectedPartnerPlayer.data.teamAbbrev || ''}
-        </div>
-        <div class="summary-player-stats">
-            ${selectedPartnerPlayer.category === 'G' ? `
-                <div class="stat-item"><span class="stat-value">${selectedPartnerPlayer.data.wins || 0}</span><span class="stat-label">VIC</span></div>
-                <div class="stat-item"><span class="stat-value">${selectedPartnerPlayer.data.goalsAgainst || 0}</span><span class="stat-label">BC</span></div>
-                <div class="stat-item"><span class="stat-value">${(selectedPartnerPlayer.data.savePctg || 0).toFixed(3)}</span><span class="stat-label">%ARR</span></div>
-            ` : selectedPartnerPlayer.category === 'T' ? `
-                <div class="stat-item"><span class="stat-value">Équipe NHL</span></div>
-            ` : `
-                <div class="stat-item"><span class="stat-value">${selectedPartnerPlayer.data.goals || 0}</span><span class="stat-label">B</span></div>
-                <div class="stat-item"><span class="stat-value">${selectedPartnerPlayer.data.assists || 0}</span><span class="stat-label">P</span></div>
-                <div class="stat-item"><span class="stat-value">${selectedPartnerPlayer.data.points || 0}</span><span class="stat-label">PTS</span></div>
-            `}
+            ${getCategoryLabel(selectedPartnerPlayer.category)} · ${selectedPartnerPlayer.data.teamAbbrev || ''}<br>
+            ${partnerStats}
         </div>
     `;
 
@@ -787,7 +776,15 @@ async function loadReceivedTrades() {
 
     try {
         const res = await fetch(`${BASE_URL}/trades/pending/${currentUsername}`, { cache: 'no-store' });
+
+        if (!res.ok) {
+            console.error('Failed to fetch received trades:', res.status);
+            container.innerHTML = '<p class="empty-msg">Erreur lors du chargement des échanges reçus</p>';
+            return;
+        }
+
         const trades = await res.json();
+        console.log('Received trades for', currentUsername, ':', trades);
 
         // Update badge
         updateReceivedBadge(trades.length);
@@ -821,7 +818,7 @@ async function loadReceivedTrades() {
                 <div class="received-trade-card">
                     <div class="trade-card-header">
                         <div class="trade-card-info">
-                            <div class="trade-card-teams">${trade.fromTeam} → Vous</div>
+                            <div class="trade-card-teams">${trade.fromTeam} → Vous (${trade.toTeam})</div>
                             <div class="trade-card-date">${formattedDate}</div>
                         </div>
                         <div class="trade-card-status">En attente</div>
