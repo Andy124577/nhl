@@ -2990,6 +2990,27 @@ app.post('/trade/propose', async (req, res) => {
             return res.status(400).json({ message: "Missing required fields" });
         }
 
+        // ============================================================
+        // VALIDATION: 1-for-1 Position-Locked Trades ONLY
+        // ============================================================
+
+        // Validate exactly 1 player offered and 1 received
+        if (offering.length !== 1 || receiving.length !== 1) {
+            return res.status(400).json({
+                message: "❌ Échanges 1-pour-1 seulement! Vous devez échanger exactement 1 joueur contre 1 joueur."
+            });
+        }
+
+        const offeredPlayer = offering[0];
+        const receivedPlayer = receiving[0];
+
+        // Validate position/type match
+        if (offeredPlayer.type !== receivedPlayer.type) {
+            return res.status(400).json({
+                message: `❌ Position invalide! Les joueurs doivent être de la même catégorie.\nVous offrez: ${getPositionLabel(offeredPlayer.type)}\nVous recevez: ${getPositionLabel(receivedPlayer.type)}\n\nÉchanges autorisés:\n• Attaquant ↔ Attaquant\n• Défenseur ↔ Défenseur\n• Gardien ↔ Gardien`
+            });
+        }
+
         // Check if pool allows trades
         const draftData = await loadDraftData();
         const pool = draftData[draftName];
@@ -3041,7 +3062,7 @@ app.post('/trade/propose', async (req, res) => {
         // Emit socket event for real-time notification
         io.emit('tradePending');
 
-        console.log(`📤 Trade proposed: ${fromTeam} → ${toTeam}`);
+        console.log(`📤 Trade proposed: ${fromTeam} → ${toTeam} (${offeredPlayer.type}: ${offeredPlayer.name} ↔ ${receivedPlayer.name})`);
 
         res.json({ message: "Trade proposal sent successfully", tradeId });
     } catch (error) {
@@ -3049,6 +3070,18 @@ app.post('/trade/propose', async (req, res) => {
         res.status(500).json({ message: "Error sending trade proposal" });
     }
 });
+
+// Helper function to get position label for error messages
+function getPositionLabel(type) {
+    const labels = {
+        'offensive': 'Attaquant',
+        'defensive': 'Défenseur',
+        'goalie': 'Gardien',
+        'rookie': 'Rookie',
+        'team': 'Équipe NHL'
+    };
+    return labels[type] || type;
+}
 
 // Accept a trade
 app.post('/trade/accept', async (req, res) => {
