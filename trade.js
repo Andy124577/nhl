@@ -1,5 +1,5 @@
 /* ============================================================ */
-/* TRADE PAGE — Complete drag-drop trade interface             */
+/* TRADE PAGE — 1-for-1 Position-Locked Trade System           */
 /* ============================================================ */
 
 const BASE_URL = window.location.hostname.includes('localhost')
@@ -8,13 +8,21 @@ const BASE_URL = window.location.hostname.includes('localhost')
 
 // State
 let currentUsername = null;
-let currentDraft = null;
-let currentTeamName = null;
-let partnerTeamName = null;
+let selectedPool = null;
+let selectedPoolData = null;
+let selectedPartnerTeam = null;
+let myTeamName = null;
+let myTeamData = null;
+let partnerTeamData = null;
 let draftData = null;
-let statsData = null;
-let offeringPlayers = []; // Players I'm offering
-let receivingPlayers = []; // Players I'm receiving
+
+// Trade Selection State
+let selectedMyPlayer = null;
+let selectedPartnerPlayer = null;
+
+// Position Filters
+let myPositionFilter = 'all';
+let partnerPositionFilter = 'all';
 
 // ============================================================
 // INIT
@@ -28,55 +36,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Setup tab navigation
-    setupTabNavigation();
-
-    // Setup reset and send buttons
-    document.getElementById('resetBtn')?.addEventListener('click', resetTrade);
-    document.getElementById('sendTradeBtn')?.addEventListener('click', sendTradeProposal);
-
-    // Setup partner selector
-    document.getElementById('partnerSelect')?.addEventListener('change', onPartnerSelect);
-
-    // Load data
-    await Promise.all([loadDraftData(), loadStats()]);
-
-    // Load initial state
-    loadPendingTrades();
+    await loadDraftData();
+    renderPoolSelector();
     loadTradeHistory();
-
-    // Setup WebSocket for live updates
-    setupWebSocket();
 });
-
-// ============================================================
-// TAB NAVIGATION
-// ============================================================
-function setupTabNavigation() {
-    const tabs = document.querySelectorAll('.trade-tab');
-    const panels = document.querySelectorAll('.tab-panel');
-
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const targetTab = tab.dataset.tab;
-
-            // Update active tab
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-
-            // Update active panel
-            panels.forEach(p => p.classList.remove('active'));
-            document.getElementById(`${targetTab}Tab`)?.classList.add('active');
-
-            // Load data for tab
-            if (targetTab === 'proposals') {
-                loadPendingTrades();
-            } else if (targetTab === 'history') {
-                loadTradeHistory();
-            }
-        });
-    });
-}
 
 // ============================================================
 // DATA LOADING
@@ -85,504 +48,454 @@ async function loadDraftData() {
     try {
         const res = await fetch(`${BASE_URL}/draft?timestamp=${Date.now()}`, { cache: 'no-store' });
         draftData = await res.json();
-
-        // Find current user's pool and team
-        const activePool = getActivePool();
-        if (!activePool) return;
-
-        currentDraft = activePool;
-        const pool = draftData[activePool];
-        if (!pool) return;
-
-        // Find user's team
-        const userTeamEntry = Object.entries(pool.teams || {}).find(
-            ([, td]) => td.members && td.members.includes(currentUsername)
-        );
-
-        if (userTeamEntry) {
-            currentTeamName = userTeamEntry[0];
-            populatePartnerSelect();
-        }
-
     } catch (err) {
         console.error('Error loading draft data:', err);
     }
 }
 
-async function loadStats() {
-    try {
-        const res = await fetch(`${BASE_URL}/stats`);
-        statsData = await res.json();
-    } catch (err) {
-        console.error('Error loading stats:', err);
-    }
-}
-
-function getActivePool() {
-    // Try to get from navbar or localStorage
-    return localStorage.getItem('activePool') || null;
-}
-
 // ============================================================
-// PARTNER SELECTION
+// STEP 1: POOL SELECTION
 // ============================================================
-function populatePartnerSelect() {
-    const select = document.getElementById('partnerSelect');
-    if (!select || !draftData || !currentDraft) return;
+function renderPoolSelector() {
+    const container = document.getElementById('poolSelector');
+    if (!container || !draftData) return;
 
-    const pool = draftData[currentDraft];
-    select.innerHTML = '<option value="">-- Choisir une équipe --</option>';
+    // Filter pools where:
+    // 1. User is a participant
+    // 2. Draft is complete
+    const userPools = [];
 
-    Object.entries(pool.teams || {}).forEach(([teamName, teamData]) => {
-        if (teamName !== currentTeamName && teamData.members && teamData.members.length > 0) {
-            select.innerHTML += `<option value="${teamName}">${teamName}</option>`;
+    Object.entries(draftData).forEach(([poolName, poolData]) => {
+        const userTeamEntry = Object.entries(poolData.teams || {}).find(
+            ([, td]) => td.members && td.members.includes(currentUsername)
+        );
+
+        if (!userTeamEntry) return;
+
+        const [userTeamName, userTeamData] = userTeamEntry;
+        const hasRoster = (userTeamData.offensive?.length || 0) +
+                          (userTeamData.defensive?.length || 0) +
+                          (userTeamData.goalie?.length || 0) > 0;
+
+        const isDraftComplete = poolData.draftComplete ||
+                               poolData.isDraftComplete ||
+                               poolData.draftStatus === 'completed' ||
+                               hasRoster;
+
+        if (isDraftComplete) {
+            userPools.push({
+                name: poolName,
+                data: poolData,
+                userTeam: userTeamName,
+                teamCount: Object.keys(poolData.teams || {}).length
+            });
         }
     });
-}
 
-function onPartnerSelect(e) {
-    partnerTeamName = e.target.value;
-
-    if (!partnerTeamName) {
-        document.getElementById('tradeGrid').style.display = 'none';
-        document.getElementById('tradeActionsHeader').style.display = 'none';
+    if (userPools.length === 0) {
+        container.innerHTML = '<p class="empty-msg">Aucun pool actif disponible pour les échanges.<br>Complétez d\'abord un repêchage.</p>';
         return;
     }
 
-    // Show trade interface
-    document.getElementById('tradeGrid').style.display = 'grid';
-    document.getElementById('tradeActionsHeader').style.display = 'flex';
-
-    // Reset trade state
-    offeringPlayers = [];
-    receivingPlayers = [];
-
-    // Load rosters
-    loadMyRoster();
-    loadPartnerRoster();
-
-    // Update badges
-    document.getElementById('myTeamBadge').textContent = currentTeamName;
-    document.getElementById('partnerTeamBadge').textContent = partnerTeamName;
-
-    updateUI();
-}
-
-// ============================================================
-// ROSTER LOADING
-// ============================================================
-function loadMyRoster() {
-    const container = document.getElementById('myRoster');
-    if (!container || !currentDraft || !currentTeamName) return;
-
-    const team = draftData[currentDraft].teams[currentTeamName];
-    container.innerHTML = '';
-
-    const players = [
-        ...(team.offensive || []).map(p => ({ ...p, position: 'ATT' })),
-        ...(team.defensive || []).map(p => ({ ...p, position: 'DEF' })),
-        ...(team.goalie || []).map(p => ({ ...p, position: 'G' }))
-    ];
-
-    if (players.length === 0) {
-        container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:24px 12px;">Aucun joueur</p>';
-        return;
-    }
-
-    players.forEach(player => {
-        const card = createPlayerCard(player, 'my');
-        container.appendChild(card);
-    });
-
-    updateTeamCount('myTeamCount', players.length);
-}
-
-function loadPartnerRoster() {
-    const container = document.getElementById('partnerRoster');
-    if (!container || !currentDraft || !partnerTeamName) return;
-
-    const team = draftData[currentDraft].teams[partnerTeamName];
-    container.innerHTML = '';
-
-    const players = [
-        ...(team.offensive || []).map(p => ({ ...p, position: 'ATT' })),
-        ...(team.defensive || []).map(p => ({ ...p, position: 'DEF' })),
-        ...(team.goalie || []).map(p => ({ ...p, position: 'G' }))
-    ];
-
-    if (players.length === 0) {
-        container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:24px 12px;">Aucun joueur</p>';
-        return;
-    }
-
-    players.forEach(player => {
-        const card = createPlayerCard(player, 'partner');
-        container.appendChild(card);
-    });
-
-    updateTeamCount('partnerTeamCount', players.length);
-}
-
-function updateTeamCount(elementId, count) {
-    const el = document.getElementById(elementId);
-    if (el) {
-        el.textContent = `${count} joueur${count !== 1 ? 's' : ''}`;
-    }
-}
-
-// ============================================================
-// PLAYER CARD CREATION
-// ============================================================
-function createPlayerCard(player, side) {
-    const name = player.skaterFullName || player.goalieFullName || 'Unknown';
-    const position = player.position || 'N/A';
-    const stats = getPlayerStats(name);
-    const points = stats.points || 0;
-
-    const card = document.createElement('div');
-    card.className = 'player-card-trade';
-    card.draggable = true;
-    card.dataset.playerName = name;
-    card.dataset.side = side;
-    card.dataset.position = position;
-    card.dataset.points = points;
-
-    card.innerHTML = `
-        <div class="pct-position ${position.toLowerCase()}">${position}</div>
-        <div class="pct-info">
-            <div class="pct-name">${name}</div>
-            <div class="pct-stats">
-                ${stats.goals || 0}B · ${stats.assists || 0}A · ${stats.points || 0}PTS
+    container.innerHTML = userPools.map(pool => `
+        <div class="pool-card" onclick="selectPool('${pool.name}')">
+            <div class="pool-card-header">
+                <div class="pool-name">${pool.name}</div>
+                <span class="pool-status active">Actif</span>
+            </div>
+            <div class="pool-info">
+                Votre équipe: <strong>${pool.userTeam}</strong><br>
+                ${pool.teamCount} équipes dans le pool
             </div>
         </div>
-        <div class="pct-value">${points} <span style="opacity:.6;font-size:.7em">PTS</span></div>
-    `;
-
-    // Drag events
-    card.addEventListener('dragstart', (e) => onDragStart(e, player, side));
-    card.addEventListener('dragend', (e) => onDragEnd(e));
-
-    return card;
+    `).join('');
 }
 
-function getPlayerStats(playerName) {
-    if (!statsData) return { goals: 0, assists: 0, points: 0 };
+function selectPool(poolName) {
+    selectedPool = poolName;
+    selectedPoolData = draftData[poolName];
 
-    const allPlayers = [
-        ...(statsData.Top_Offensive || []),
-        ...(statsData.Top_Defensive || []),
-        ...(statsData.Top_Rookies || []),
-        ...(statsData.Top_Goalies || [])
+    // Find user's team
+    const userTeamEntry = Object.entries(selectedPoolData.teams || {}).find(
+        ([, td]) => td.members && td.members.includes(currentUsername)
+    );
+
+    if (!userTeamEntry) return;
+
+    myTeamName = userTeamEntry[0];
+    myTeamData = userTeamEntry[1];
+
+    // Show step 2
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.remove('hidden');
+
+    renderTeamGrid();
+}
+
+// ============================================================
+// STEP 2: TEAM SELECTION
+// ============================================================
+function renderTeamGrid() {
+    const container = document.getElementById('teamGrid');
+    if (!container || !selectedPoolData) return;
+
+    const teams = [];
+
+    Object.entries(selectedPoolData.teams || {}).forEach(([teamName, teamData]) => {
+        if (teamName === myTeamName) return; // Exclude user's own team
+
+        // Calculate team score (simplified)
+        const roster = [
+            ...(teamData.offensive || []),
+            ...(teamData.defensive || []),
+            ...(teamData.goalie || [])
+        ];
+
+        teams.push({
+            name: teamName,
+            manager: teamData.members?.[0] || 'Unknown',
+            players: roster.length,
+            data: teamData
+        });
+    });
+
+    if (teams.length === 0) {
+        container.innerHTML = '<p class="empty-msg">Aucune autre équipe dans ce pool</p>';
+        return;
+    }
+
+    container.innerHTML = teams.map(team => `
+        <div class="team-card" onclick="selectPartnerTeam('${team.name}')">
+            <div class="team-card-name">${team.name}</div>
+            <div class="team-card-manager">Manager: ${team.manager}</div>
+            <div class="team-card-stats">
+                <div class="team-stat">
+                    <span class="team-stat-value">${team.players}</span>
+                    <span class="team-stat-label">Joueurs</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function selectPartnerTeam(teamName) {
+    selectedPartnerTeam = teamName;
+    partnerTeamData = selectedPoolData.teams[teamName];
+
+    // Show step 3
+    document.getElementById('step2').classList.add('hidden');
+    document.getElementById('step3').classList.remove('hidden');
+
+    document.getElementById('selectedPoolTeamInfo').textContent =
+        `Pool: ${selectedPool} · ${myTeamName} ⇄ ${selectedPartnerTeam}`;
+
+    // Load rosters
+    document.getElementById('myTeamName').textContent = myTeamName;
+    document.getElementById('partnerTeamName').textContent = selectedPartnerTeam;
+
+    renderMyRoster();
+    renderPartnerRoster();
+}
+
+// ============================================================
+// STEP 3: ROSTER RENDERING
+// ============================================================
+function renderMyRoster() {
+    const container = document.getElementById('myRoster');
+    if (!container || !myTeamData) return;
+
+    const players = [
+        ...(myTeamData.offensive || []).map(p => ({ ...p, category: 'F' })),
+        ...(myTeamData.defensive || []).map(p => ({ ...p, category: 'D' })),
+        ...(myTeamData.goalie || []).map(p => ({ ...p, category: 'G' }))
     ];
 
-    const found = allPlayers.find(p => {
-        const name = p.skaterFullName || p.goalieFullName ||
-                     `${p.firstName || ''} ${p.lastName || ''}`.trim();
-        return name === playerName;
-    });
-
-    if (found) {
-        return {
-            goals: found.goals || 0,
-            assists: found.assists || 0,
-            points: found.points || found.wins || 0
-        };
+    // Apply filter
+    let filteredPlayers = players;
+    if (myPositionFilter !== 'all') {
+        filteredPlayers = players.filter(p => p.category === myPositionFilter);
     }
 
-    return { goals: 0, assists: 0, points: 0 };
-}
-
-// ============================================================
-// DRAG AND DROP
-// ============================================================
-function onDragStart(e, player, side) {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('application/json', JSON.stringify({
-        player,
-        side,
-        name: player.skaterFullName || player.goalieFullName || 'Unknown',
-        position: player.position || 'N/A'
-    }));
-
-    e.currentTarget.classList.add('dragging');
-}
-
-function onDragEnd(e) {
-    e.currentTarget.classList.remove('dragging');
-}
-
-// Setup drop zones
-document.addEventListener('DOMContentLoaded', () => {
-    const offeringZone = document.getElementById('offeringDropZone');
-    const receivingZone = document.getElementById('receivingDropZone');
-
-    [offeringZone, receivingZone].forEach(zone => {
-        if (!zone) return;
-
-        zone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            zone.classList.add('drag-over');
-        });
-
-        zone.addEventListener('dragleave', (e) => {
-            if (e.currentTarget === e.target || !e.currentTarget.contains(e.relatedTarget)) {
-                zone.classList.remove('drag-over');
-            }
-        });
-
-        zone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            zone.classList.remove('drag-over');
-
-            const data = JSON.parse(e.dataTransfer.getData('application/json'));
-            const targetSide = zone.dataset.side;
-
-            // Validate drop: my players → offering, partner players → receiving
-            if ((data.side === 'my' && targetSide === 'offering') ||
-                (data.side === 'partner' && targetSide === 'receiving')) {
-                addPlayerToDropZone(data, targetSide);
-            }
-        });
-    });
-});
-
-function addPlayerToDropZone(data, side) {
-    const player = {
-        name: data.name,
-        position: data.position,
-        player: data.player
-    };
-
-    // Check if already added
-    const list = side === 'offering' ? offeringPlayers : receivingPlayers;
-    if (list.find(p => p.name === player.name)) return;
-
-    // Add to list
-    if (side === 'offering') {
-        offeringPlayers.push(player);
-    } else {
-        receivingPlayers.push(player);
+    if (filteredPlayers.length === 0) {
+        container.innerHTML = '<p class="empty-msg">Aucun joueur dans cette catégorie</p>';
+        return;
     }
 
-    // Mark original card as in-trade
-    const originalCard = document.querySelector(
-        `.player-card-trade[data-player-name="${player.name}"][data-side="${data.side}"]`
-    );
-    if (originalCard) {
-        originalCard.classList.add('in-trade');
-    }
+    container.innerHTML = filteredPlayers.map(player => {
+        const name = player.skaterFullName || player.goalieFullName || 'Unknown';
+        const team = player.teamAbbrevs || player.teamAbbrev || 'N/A';
+        const isSelected = selectedMyPlayer && selectedMyPlayer.name === name;
+        const isLocked = selectedPartnerPlayer && selectedPartnerPlayer.category !== player.category;
 
-    updateUI();
-}
-
-function removePlayerFromDropZone(playerName, side) {
-    if (side === 'offering') {
-        offeringPlayers = offeringPlayers.filter(p => p.name !== playerName);
-    } else {
-        receivingPlayers = receivingPlayers.filter(p => p.name !== playerName);
-    }
-
-    // Unmark original card
-    const originalCard = document.querySelector(
-        `.player-card-trade[data-player-name="${playerName}"].in-trade`
-    );
-    if (originalCard) {
-        originalCard.classList.remove('in-trade');
-    }
-
-    updateUI();
-}
-
-// ============================================================
-// UI UPDATE
-// ============================================================
-function updateUI() {
-    updateDropZone('offering', offeringPlayers);
-    updateDropZone('receiving', receivingPlayers);
-    updateValueBars();
-    updateTradeBalance();
-    updateStatComparison();
-    updateSendButton();
-}
-
-function updateDropZone(side, players) {
-    const zone = document.getElementById(side === 'offering' ? 'offeringDropZone' : 'receivingDropZone');
-    const countEl = document.getElementById(side === 'offering' ? 'offeringCount' : 'receivingCount');
-
-    if (!zone) return;
-
-    // Update count
-    if (countEl) countEl.textContent = players.length;
-
-    // Clear existing chips
-    zone.querySelectorAll('.dropped-player-chip').forEach(chip => chip.remove());
-
-    // Show/hide placeholder
-    const placeholder = zone.querySelector('.dz-placeholder');
-    if (placeholder) {
-        placeholder.style.display = players.length === 0 ? 'flex' : 'none';
-    }
-
-    // Add player chips
-    players.forEach(player => {
-        const chip = document.createElement('div');
-        chip.className = 'dropped-player-chip';
-        chip.innerHTML = `
-            <span class="dpc-position ${player.position.toLowerCase()}">${player.position}</span>
-            <span class="dpc-name">${player.name}</span>
-            <button class="dpc-remove" onclick="removePlayerFromDropZone('${player.name}', '${side}')">×</button>
+        return `
+            <div class="player-card-roster ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}"
+                 onclick="selectMyPlayer('${name}', '${player.category}', ${JSON.stringify(player).replace(/"/g, '&quot;')})">
+                <div class="pcr-position ${player.category.toLowerCase()}">${getCategoryLabel(player.category)}</div>
+                <div class="pcr-info">
+                    <div class="pcr-name">${name}</div>
+                    <div class="pcr-team">${team}</div>
+                    <div class="pcr-stats">
+                        <span class="pcr-stat">${player.goals || 0}B</span>
+                        <span class="pcr-stat">${player.assists || 0}A</span>
+                        <span class="pcr-stat">${player.points || player.wins || 0}PTS</span>
+                    </div>
+                </div>
+            </div>
         `;
-        zone.appendChild(chip);
-    });
+    }).join('');
 }
 
-function updateValueBars() {
-    const offeringValue = offeringPlayers.reduce((sum, p) => {
-        const stats = getPlayerStats(p.name);
-        return sum + (stats.points || 0);
-    }, 0);
+function renderPartnerRoster() {
+    const container = document.getElementById('partnerRoster');
+    if (!container || !partnerTeamData) return;
 
-    const receivingValue = receivingPlayers.reduce((sum, p) => {
-        const stats = getPlayerStats(p.name);
-        return sum + (stats.points || 0);
-    }, 0);
+    const players = [
+        ...(partnerTeamData.offensive || []).map(p => ({ ...p, category: 'F' })),
+        ...(partnerTeamData.defensive || []).map(p => ({ ...p, category: 'D' })),
+        ...(partnerTeamData.goalie || []).map(p => ({ ...p, category: 'G' }))
+    ];
 
-    const offeringEl = document.getElementById('offeringValue');
-    const receivingEl = document.getElementById('receivingValue');
+    // Apply filter
+    let filteredPlayers = players;
+    if (partnerPositionFilter !== 'all') {
+        filteredPlayers = players.filter(p => p.category === partnerPositionFilter);
+    }
 
-    if (offeringEl) offeringEl.textContent = `${offeringValue} PTS`;
-    if (receivingEl) receivingEl.textContent = `${receivingValue} PTS`;
+    if (filteredPlayers.length === 0) {
+        container.innerHTML = '<p class="empty-msg">Aucun joueur dans cette catégorie</p>';
+        return;
+    }
+
+    container.innerHTML = filteredPlayers.map(player => {
+        const name = player.skaterFullName || player.goalieFullName || 'Unknown';
+        const team = player.teamAbbrevs || player.teamAbbrev || 'N/A';
+        const isSelected = selectedPartnerPlayer && selectedPartnerPlayer.name === name;
+        const isLocked = selectedMyPlayer && selectedMyPlayer.category !== player.category;
+
+        return `
+            <div class="player-card-roster ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}"
+                 onclick="selectPartnerPlayer('${name}', '${player.category}', ${JSON.stringify(player).replace(/"/g, '&quot;')})">
+                <div class="pcr-position ${player.category.toLowerCase()}">${getCategoryLabel(player.category)}</div>
+                <div class="pcr-info">
+                    <div class="pcr-name">${name}</div>
+                    <div class="pcr-team">${team}</div>
+                    <div class="pcr-stats">
+                        <span class="pcr-stat">${player.goals || 0}B</span>
+                        <span class="pcr-stat">${player.assists || 0}A</span>
+                        <span class="pcr-stat">${player.points || player.wins || 0}PTS</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
-function updateTradeBalance() {
-    const balance = document.getElementById('tradeBalance');
-    if (!balance) return;
+// ============================================================
+// PLAYER SELECTION (1-for-1 Position-Locked)
+// ============================================================
+function selectMyPlayer(name, category, playerDataStr) {
+    const playerData = JSON.parse(playerDataStr.replace(/&quot;/g, '"'));
 
-    const offeringValue = offeringPlayers.reduce((sum, p) => {
-        const stats = getPlayerStats(p.name);
-        return sum + (stats.points || 0);
-    }, 0);
-
-    const receivingValue = receivingPlayers.reduce((sum, p) => {
-        const stats = getPlayerStats(p.name);
-        return sum + (stats.points || 0);
-    }, 0);
-
-    const diff = Math.abs(offeringValue - receivingValue);
-    const diffPercent = offeringValue > 0 ? (diff / offeringValue) * 100 : 0;
-
-    const statusEl = balance.querySelector('.balance-status');
-    if (!statusEl) return;
-
-    if (diffPercent < 15) {
-        balance.classList.remove('unbalanced');
-        balance.classList.add('balanced');
-        statusEl.textContent = 'Équilibré';
+    // If already selected, deselect
+    if (selectedMyPlayer && selectedMyPlayer.name === name) {
+        selectedMyPlayer = null;
     } else {
-        balance.classList.remove('balanced');
-        balance.classList.add('unbalanced');
-        statusEl.textContent = `Déséquilibré (${diff} PTS)`;
+        selectedMyPlayer = {
+            name,
+            category,
+            data: playerData
+        };
     }
+
+    // Re-render rosters to show locked/unlocked states
+    renderMyRoster();
+    renderPartnerRoster();
+    updateTradeSummary();
 }
 
-function updateStatComparison() {
-    const statComp = document.getElementById('statComparison');
-    if (!statComp) return;
+function selectPartnerPlayer(name, category, playerDataStr) {
+    const playerData = JSON.parse(playerDataStr.replace(/&quot;/g, '"'));
 
-    if (offeringPlayers.length === 0 && receivingPlayers.length === 0) {
-        statComp.style.display = 'none';
+    // Validate position match
+    if (selectedMyPlayer && selectedMyPlayer.category !== category) {
+        // Show shake animation or error
+        alert(`⚠️ Position invalide!\n\nVous devez échanger ${getCategoryLabel(selectedMyPlayer.category)} ↔ ${getCategoryLabel(selectedMyPlayer.category)}`);
         return;
     }
 
-    statComp.style.display = 'block';
-
-    // Calculate totals
-    const offeringStats = offeringPlayers.reduce((acc, p) => {
-        const stats = getPlayerStats(p.name);
-        return {
-            goals: acc.goals + (stats.goals || 0),
-            assists: acc.assists + (stats.assists || 0),
-            points: acc.points + (stats.points || 0)
+    // If already selected, deselect
+    if (selectedPartnerPlayer && selectedPartnerPlayer.name === name) {
+        selectedPartnerPlayer = null;
+    } else {
+        selectedPartnerPlayer = {
+            name,
+            category,
+            data: playerData
         };
-    }, { goals: 0, assists: 0, points: 0 });
+    }
 
-    const receivingStats = receivingPlayers.reduce((acc, p) => {
-        const stats = getPlayerStats(p.name);
-        return {
-            goals: acc.goals + (stats.goals || 0),
-            assists: acc.assists + (stats.assists || 0),
-            points: acc.points + (stats.points || 0)
-        };
-    }, { goals: 0, assists: 0, points: 0 });
-
-    // Update bars
-    updateStatBar('goals', offeringStats.goals, receivingStats.goals);
-    updateStatBar('assists', offeringStats.assists, receivingStats.assists);
-    updateStatBar('pts', offeringStats.points, receivingStats.points);
-}
-
-function updateStatBar(stat, offerVal, receiveVal) {
-    const total = offerVal + receiveVal;
-    const offerPercent = total > 0 ? (offerVal / total) * 50 : 0; // Max 50% each side
-    const receivePercent = total > 0 ? (receiveVal / total) * 50 : 0;
-
-    const offerBar = document.getElementById(`${stat}OfferBar`);
-    const receiveBar = document.getElementById(`${stat}ReceiveBar`);
-    const offerValEl = document.getElementById(`${stat}OfferVal`);
-    const receiveValEl = document.getElementById(`${stat}ReceiveVal`);
-
-    if (offerBar) offerBar.style.width = `${offerPercent}%`;
-    if (receiveBar) receiveBar.style.width = `${receivePercent}%`;
-    if (offerValEl) offerValEl.textContent = offerVal;
-    if (receiveValEl) receiveValEl.textContent = receiveVal;
-}
-
-function updateSendButton() {
-    const btn = document.getElementById('sendTradeBtn');
-    if (!btn) return;
-
-    const isValid = offeringPlayers.length > 0 && receivingPlayers.length > 0;
-    btn.disabled = !isValid;
+    // Re-render rosters to show locked/unlocked states
+    renderMyRoster();
+    renderPartnerRoster();
+    updateTradeSummary();
 }
 
 // ============================================================
-// TRADE ACTIONS
+// TRADE SUMMARY UPDATE
 // ============================================================
-function resetTrade() {
-    offeringPlayers = [];
-    receivingPlayers = [];
+function updateTradeSummary() {
+    const emptyState = document.getElementById('tradeEmptyState');
+    const activeSummary = document.getElementById('tradeActiveSummary');
+    const proposeBtn = document.getElementById('btnProposeTrade');
 
-    // Remove in-trade class from all cards
-    document.querySelectorAll('.player-card-trade.in-trade').forEach(card => {
-        card.classList.remove('in-trade');
-    });
-
-    updateUI();
-}
-
-async function sendTradeProposal() {
-    if (offeringPlayers.length === 0 || receivingPlayers.length === 0) {
-        alert('Veuillez ajouter des joueurs à l\'échange');
+    if (!selectedMyPlayer || !selectedPartnerPlayer) {
+        emptyState.classList.remove('hidden');
+        activeSummary.classList.add('hidden');
+        proposeBtn.disabled = true;
         return;
     }
 
-    if (!confirm(`Envoyer cette proposition d'échange à ${partnerTeamName}?`)) {
+    emptyState.classList.add('hidden');
+    activeSummary.classList.remove('hidden');
+
+    // Validate position match
+    const isValid = selectedMyPlayer.category === selectedPartnerPlayer.category;
+    proposeBtn.disabled = !isValid;
+
+    // Render my player
+    const myPlayerHTML = `
+        <div class="summary-player-photo">
+            <img src="https://assets.nhle.com/mugs/nhl/20252026/${selectedMyPlayer.data.playerId || 0}.png"
+                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><text y=%2250%%25%22 x=%2250%%25%22 text-anchor=%22middle%22 font-size=%2240%22>🏒</text></svg>'">
+        </div>
+        <div class="summary-player-name">${selectedMyPlayer.name}</div>
+        <div class="summary-player-info">
+            ${getCategoryLabel(selectedMyPlayer.category)} ·
+            ${selectedMyPlayer.data.goals || 0}B ${selectedMyPlayer.data.assists || 0}A ${selectedMyPlayer.data.points || selectedMyPlayer.data.wins || 0}PTS
+        </div>
+    `;
+
+    // Render partner player
+    const partnerPlayerHTML = `
+        <div class="summary-player-photo">
+            <img src="https://assets.nhle.com/mugs/nhl/20252026/${selectedPartnerPlayer.data.playerId || 0}.png"
+                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><text y=%2250%%25%22 x=%2250%%25%22 text-anchor=%22middle%22 font-size=%2240%22>🏒</text></svg>'">
+        </div>
+        <div class="summary-player-name">${selectedPartnerPlayer.name}</div>
+        <div class="summary-player-info">
+            ${getCategoryLabel(selectedPartnerPlayer.category)} ·
+            ${selectedPartnerPlayer.data.goals || 0}B ${selectedPartnerPlayer.data.assists || 0}A ${selectedPartnerPlayer.data.points || selectedPartnerPlayer.data.wins || 0}PTS
+        </div>
+    `;
+
+    document.getElementById('summaryMyPlayer').innerHTML = myPlayerHTML;
+    document.getElementById('summaryPartnerPlayer').innerHTML = partnerPlayerHTML;
+
+    // Position match badge
+    const matchBadge = document.getElementById('positionMatchBadge');
+    if (isValid) {
+        matchBadge.className = 'position-match valid';
+        matchBadge.textContent = `✓ ${getCategoryLabel(selectedMyPlayer.category)} Match`;
+    } else {
+        matchBadge.className = 'position-match invalid';
+        matchBadge.textContent = '✗ Position Mismatch';
+    }
+
+    // Stat comparison
+    renderStatComparison();
+}
+
+function renderStatComparison() {
+    const container = document.getElementById('statComparison');
+    if (!selectedMyPlayer || !selectedPartnerPlayer) return;
+
+    const my = selectedMyPlayer.data;
+    const partner = selectedPartnerPlayer.data;
+
+    container.innerHTML = `
+        <div class="stat-comp-row">
+            <span class="stat-comp-label">Buts</span>
+            <div class="stat-comp-values">
+                <span class="my-val">${my.goals || 0}</span>
+                <span class="partner-val">${partner.goals || 0}</span>
+            </div>
+        </div>
+        <div class="stat-comp-row">
+            <span class="stat-comp-label">Passes</span>
+            <div class="stat-comp-values">
+                <span class="my-val">${my.assists || 0}</span>
+                <span class="partner-val">${partner.assists || 0}</span>
+            </div>
+        </div>
+        <div class="stat-comp-row">
+            <span class="stat-comp-label">Points</span>
+            <div class="stat-comp-values">
+                <span class="my-val">${my.points || my.wins || 0}</span>
+                <span class="partner-val">${partner.points || partner.wins || 0}</span>
+            </div>
+        </div>
+    `;
+}
+
+// ============================================================
+// POSITION FILTERING
+// ============================================================
+function filterPosition(side, position) {
+    if (side === 'my') {
+        myPositionFilter = position;
+
+        // Update active tab
+        document.querySelectorAll('#myRoster').forEach(() => {
+            const tabs = document.querySelectorAll('.roster-column:first-child .pos-tab');
+            tabs.forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.pos === position);
+            });
+        });
+
+        renderMyRoster();
+    } else {
+        partnerPositionFilter = position;
+
+        // Update active tab
+        const tabs = document.querySelectorAll('.roster-column:last-child .pos-tab');
+        tabs.forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.pos === position);
+        });
+
+        renderPartnerRoster();
+    }
+}
+
+// ============================================================
+// PROPOSE TRADE
+// ============================================================
+async function proposeTrade() {
+    if (!selectedMyPlayer || !selectedPartnerPlayer) {
+        alert('Veuillez sélectionner 1 joueur de chaque côté');
+        return;
+    }
+
+    if (selectedMyPlayer.category !== selectedPartnerPlayer.category) {
+        alert('⚠️ Les joueurs doivent être de la même position!');
+        return;
+    }
+
+    if (!confirm(`Proposer cet échange?\n\n${myTeamName} offre: ${selectedMyPlayer.name}\n${selectedPartnerTeam} reçoit: ${selectedPartnerPlayer.name}`)) {
         return;
     }
 
     const proposal = {
-        draftName: currentDraft,
-        fromTeam: currentTeamName,
-        toTeam: partnerTeamName,
-        offering: offeringPlayers.map(p => ({
-            name: p.name,
-            type: getTypeFromPosition(p.position)
-        })),
-        receiving: receivingPlayers.map(p => ({
-            name: p.name,
-            type: getTypeFromPosition(p.position)
-        })),
+        draftName: selectedPool,
+        fromTeam: myTeamName,
+        toTeam: selectedPartnerTeam,
+        offering: [{
+            name: selectedMyPlayer.name,
+            type: getCategoryType(selectedMyPlayer.category)
+        }],
+        receiving: [{
+            name: selectedPartnerPlayer.name,
+            type: getCategoryType(selectedPartnerPlayer.category)
+        }],
         status: 'pending',
         date: new Date().toISOString()
     };
@@ -599,131 +512,134 @@ async function sendTradeProposal() {
         if (res.ok) {
             alert('✅ Proposition d\'échange envoyée!');
             resetTrade();
-            document.getElementById('partnerSelect').value = '';
-            document.getElementById('tradeGrid').style.display = 'none';
-            document.getElementById('tradeActionsHeader').style.display = 'none';
         } else {
             alert(`❌ Erreur: ${data.message}`);
         }
     } catch (err) {
-        console.error('Error sending trade:', err);
+        console.error('Error proposing trade:', err);
         alert('Erreur lors de l\'envoi de la proposition');
     }
 }
 
-function getTypeFromPosition(position) {
-    const map = {
-        'ATT': 'offensive',
-        'DEF': 'defensive',
-        'G': 'goalie'
-    };
-    return map[position] || 'offensive';
+// ============================================================
+// RESET TRADE
+// ============================================================
+function resetTrade() {
+    selectedPool = null;
+    selectedPoolData = null;
+    selectedPartnerTeam = null;
+    myTeamName = null;
+    myTeamData = null;
+    partnerTeamData = null;
+    selectedMyPlayer = null;
+    selectedPartnerPlayer = null;
+    myPositionFilter = 'all';
+    partnerPositionFilter = 'all';
+
+    // Reset UI
+    document.getElementById('step1').classList.remove('hidden');
+    document.getElementById('step2').classList.add('hidden');
+    document.getElementById('step3').classList.add('hidden');
+
+    renderPoolSelector();
 }
 
 // ============================================================
-// PENDING TRADES
+// TRADE HISTORY
 // ============================================================
-async function loadPendingTrades() {
-    const container = document.getElementById('proposalsList');
+let currentHistoryTab = 'pending';
+
+function switchHistoryTab(tab) {
+    currentHistoryTab = tab;
+
+    // Update active tab
+    document.querySelectorAll('.history-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === tab);
+    });
+
+    loadTradeHistory();
+}
+
+async function loadTradeHistory() {
+    const container = document.getElementById('historyContent');
     if (!container) return;
 
     try {
-        const res = await fetch(`${BASE_URL}/trades/pending/${currentUsername}`, {
-            cache: 'no-store'
-        });
-        const proposals = await res.json();
+        let trades = [];
 
-        if (!proposals || proposals.length === 0) {
-            container.innerHTML = '<p class="empty-msg">Aucune proposition en attente</p>';
-            updateProposalBadge(0);
+        if (currentHistoryTab === 'pending') {
+            const res = await fetch(`${BASE_URL}/trades/pending/${currentUsername}`, { cache: 'no-store' });
+            trades = await res.json();
+            updatePendingBadge(trades.length);
+        } else {
+            // Load all trades and filter completed
+            if (selectedPool) {
+                const res = await fetch(`${BASE_URL}/trades/${selectedPool}`, { cache: 'no-store' });
+                const allTrades = await res.json();
+                trades = allTrades.filter(t => t.status === 'completed');
+            }
+        }
+
+        if (!trades || trades.length === 0) {
+            container.innerHTML = `<p class="empty-msg">Aucun échange ${currentHistoryTab === 'pending' ? 'en attente' : 'complété'}</p>`;
             return;
         }
 
-        container.innerHTML = '';
-        proposals.forEach(proposal => {
-            const card = createProposalCard(proposal);
-            container.appendChild(card);
-        });
+        container.innerHTML = trades.map(trade => {
+            const date = new Date(trade.date);
+            const day = date.getDate();
+            const month = date.toLocaleDateString('fr-CA', { month: 'short' });
 
-        updateProposalBadge(proposals.length);
+            const isPending = trade.status === 'pending';
+            const isForMe = trade.toTeam === myTeamName;
+
+            return `
+                <div class="history-item">
+                    <div class="history-date">
+                        <div class="history-day">${day}</div>
+                        <div class="history-month">${month}</div>
+                    </div>
+                    <div class="history-trade">
+                        <div>
+                            <div class="history-team">${trade.fromTeam} ⇄ ${trade.toTeam}</div>
+                            <div class="history-players">
+                                ${trade.offering[0]?.name} → ${trade.receiving[0]?.name}
+                            </div>
+                        </div>
+                    </div>
+                    ${isPending && isForMe ? `
+                        <div class="history-actions">
+                            <button class="btn-decline" onclick="declineTradeProposal('${trade.id}')">Refuser</button>
+                            <button class="btn-accept" onclick="acceptTradeProposal('${trade.id}')">Accepter</button>
+                        </div>
+                    ` : `
+                        <div class="history-status ${trade.status}">${getStatusLabel(trade.status)}</div>
+                    `}
+                </div>
+            `;
+        }).join('');
 
     } catch (err) {
-        console.error('Error loading pending trades:', err);
+        console.error('Error loading trade history:', err);
         container.innerHTML = '<p class="empty-msg">Erreur lors du chargement</p>';
     }
 }
 
-function createProposalCard(proposal) {
-    const card = document.createElement('div');
-    card.className = 'proposal-card';
-
-    const date = new Date(proposal.date);
-    const dateStr = date.toLocaleDateString('fr-CA', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    });
-
-    card.innerHTML = `
-        <div class="prop-header">
-            <div class="prop-teams">
-                <span class="prop-from">${proposal.fromTeam}</span>
-                <span class="prop-arrow">→</span>
-                <span class="prop-to">Vous (${proposal.toTeam})</span>
-            </div>
-            <div class="prop-date">${dateStr}</div>
-        </div>
-        <div class="prop-body">
-            <div class="prop-side">
-                <div class="prop-side-title">Ils offrent</div>
-                <div class="prop-players">
-                    ${proposal.offering.map(p => `
-                        <div class="prop-player">
-                            <span class="pp-position">${getPositionFromType(p.type)}</span>
-                            <span class="pp-name">${p.name}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            <div class="prop-exchange">⇄</div>
-            <div class="prop-side">
-                <div class="prop-side-title">Vous envoyez</div>
-                <div class="prop-players">
-                    ${proposal.receiving.map(p => `
-                        <div class="prop-player">
-                            <span class="pp-position">${getPositionFromType(p.type)}</span>
-                            <span class="pp-name">${p.name}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        </div>
-        <div class="prop-actions">
-            <button class="prop-decline" onclick="declineProposal('${proposal.id}')">❌ Refuser</button>
-            <button class="prop-accept" onclick="acceptProposal('${proposal.id}')">✅ Accepter</button>
-        </div>
-    `;
-
-    return card;
-}
-
-async function acceptProposal(proposalId) {
+async function acceptTradeProposal(tradeId) {
     if (!confirm('Accepter cet échange?')) return;
 
     try {
         const res = await fetch(`${BASE_URL}/trade/accept`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tradeId: proposalId })
+            body: JSON.stringify({ tradeId })
         });
-
-        const data = await res.json();
 
         if (res.ok) {
             alert('✅ Échange accepté!');
-            loadPendingTrades();
             loadTradeHistory();
         } else {
+            const data = await res.json();
             alert(`❌ Erreur: ${data.message}`);
         }
     } catch (err) {
@@ -732,22 +648,21 @@ async function acceptProposal(proposalId) {
     }
 }
 
-async function declineProposal(proposalId) {
+async function declineTradeProposal(tradeId) {
     if (!confirm('Refuser cet échange?')) return;
 
     try {
         const res = await fetch(`${BASE_URL}/trade/decline`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tradeId: proposalId })
+            body: JSON.stringify({ tradeId })
         });
-
-        const data = await res.json();
 
         if (res.ok) {
             alert('Échange refusé');
-            loadPendingTrades();
+            loadTradeHistory();
         } else {
+            const data = await res.json();
             alert(`❌ Erreur: ${data.message}`);
         }
     } catch (err) {
@@ -756,126 +671,40 @@ async function declineProposal(proposalId) {
     }
 }
 
-function updateProposalBadge(count) {
-    const badge = document.getElementById('proposalsBadge');
-    if (!badge) return;
-
-    if (count > 0) {
+function updatePendingBadge(count) {
+    const badge = document.getElementById('pendingCount');
+    if (badge) {
         badge.textContent = count;
-        badge.style.display = 'inline-block';
-    } else {
-        badge.style.display = 'none';
+        badge.style.display = count > 0 ? 'inline-block' : 'none';
     }
 }
 
-function getPositionFromType(type) {
-    const map = {
-        'offensive': 'ATT',
-        'defensive': 'DEF',
-        'goalie': 'G'
+// ============================================================
+// UTILITIES
+// ============================================================
+function getCategoryLabel(category) {
+    const labels = {
+        'F': 'ATT',
+        'D': 'DÉF',
+        'G': 'GAR'
     };
-    return map[type] || 'N/A';
+    return labels[category] || category;
 }
 
-// ============================================================
-// TRADE HISTORY
-// ============================================================
-async function loadTradeHistory() {
-    const container = document.getElementById('historyTimeline');
-    if (!container || !currentDraft) return;
-
-    try {
-        const res = await fetch(`${BASE_URL}/trades/${currentDraft}`, {
-            cache: 'no-store'
-        });
-        const trades = await res.json();
-
-        if (!trades || trades.length === 0) {
-            container.innerHTML = '<p class="empty-msg">Aucun échange complété</p>';
-            return;
-        }
-
-        container.innerHTML = '';
-
-        // Sort by date descending
-        trades.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        trades.forEach(trade => {
-            const item = createHistoryItem(trade);
-            container.appendChild(item);
-        });
-
-    } catch (err) {
-        console.error('Error loading trade history:', err);
-        container.innerHTML = '<p class="empty-msg">Erreur lors du chargement</p>';
-    }
+function getCategoryType(category) {
+    const types = {
+        'F': 'offensive',
+        'D': 'defensive',
+        'G': 'goalie'
+    };
+    return types[category] || 'offensive';
 }
 
-function createHistoryItem(trade) {
-    const item = document.createElement('div');
-    item.className = 'history-item';
-
-    const date = new Date(trade.date);
-    const day = date.getDate();
-    const month = date.toLocaleDateString('fr-CA', { month: 'short' });
-
-    const isUserInvolved =
-        trade.fromTeam === currentTeamName ||
-        trade.toTeam === currentTeamName;
-
-    const status = trade.status || 'completed';
-    const statusClass = status === 'completed' ? 'status-completed' : 'status-declined';
-    const statusLabel = status === 'completed' ? 'Complété' : 'Refusé';
-
-    item.innerHTML = `
-        <div class="history-date">
-            <div class="history-day">${day}</div>
-            <div class="history-month">${month}</div>
-        </div>
-        <div class="history-content">
-            <div class="history-teams">
-                <span class="${trade.fromTeam === currentTeamName ? 'user-team' : ''}">${trade.fromTeam}</span>
-                <span class="history-arrow">⇄</span>
-                <span class="${trade.toTeam === currentTeamName ? 'user-team' : ''}">${trade.toTeam}</span>
-            </div>
-            <div class="history-players">
-                <div class="hp-side">
-                    ${trade.offering.slice(0, 3).map(p => `<span>${p.name}</span>`).join(', ')}
-                    ${trade.offering.length > 3 ? ` +${trade.offering.length - 3}` : ''}
-                </div>
-                <div class="hp-arrow">→</div>
-                <div class="hp-side">
-                    ${trade.receiving.slice(0, 3).map(p => `<span>${p.name}</span>`).join(', ')}
-                    ${trade.receiving.length > 3 ? ` +${trade.receiving.length - 3}` : ''}
-                </div>
-            </div>
-        </div>
-        <div class="history-status ${statusClass}">${statusLabel}</div>
-    `;
-
-    if (isUserInvolved) {
-        item.classList.add('user-involved');
-    }
-
-    return item;
-}
-
-// ============================================================
-// WEBSOCKET
-// ============================================================
-function setupWebSocket() {
-    if (typeof io === 'undefined') return;
-
-    const socket = io(BASE_URL);
-
-    socket.on('tradeUpdated', () => {
-        console.log('Trade updated, reloading...');
-        loadPendingTrades();
-        loadTradeHistory();
-    });
-
-    socket.on('tradePending', () => {
-        console.log('New pending trade');
-        loadPendingTrades();
-    });
+function getStatusLabel(status) {
+    const labels = {
+        'pending': 'En attente',
+        'completed': 'Complété',
+        'rejected': 'Refusé'
+    };
+    return labels[status] || status;
 }
