@@ -522,8 +522,20 @@ function updateTradeSummary() {
         </div>
         <div class="summary-player-name">${selectedMyPlayer.name}</div>
         <div class="summary-player-info">
-            ${getCategoryLabel(selectedMyPlayer.category)} ·
-            ${selectedMyPlayer.data.goals || 0}B ${selectedMyPlayer.data.assists || 0}A ${selectedMyPlayer.data.points || selectedMyPlayer.data.wins || 0}PTS
+            ${getCategoryLabel(selectedMyPlayer.category)} · ${selectedMyPlayer.data.teamAbbrev || ''}
+        </div>
+        <div class="summary-player-stats">
+            ${selectedMyPlayer.category === 'G' ? `
+                <div class="stat-item"><span class="stat-value">${selectedMyPlayer.data.wins || 0}</span><span class="stat-label">VIC</span></div>
+                <div class="stat-item"><span class="stat-value">${selectedMyPlayer.data.goalsAgainst || 0}</span><span class="stat-label">BC</span></div>
+                <div class="stat-item"><span class="stat-value">${(selectedMyPlayer.data.savePctg || 0).toFixed(3)}</span><span class="stat-label">%ARR</span></div>
+            ` : selectedMyPlayer.category === 'T' ? `
+                <div class="stat-item"><span class="stat-value">Équipe NHL</span></div>
+            ` : `
+                <div class="stat-item"><span class="stat-value">${selectedMyPlayer.data.goals || 0}</span><span class="stat-label">B</span></div>
+                <div class="stat-item"><span class="stat-value">${selectedMyPlayer.data.assists || 0}</span><span class="stat-label">P</span></div>
+                <div class="stat-item"><span class="stat-value">${selectedMyPlayer.data.points || 0}</span><span class="stat-label">PTS</span></div>
+            `}
         </div>
     `;
 
@@ -535,8 +547,20 @@ function updateTradeSummary() {
         </div>
         <div class="summary-player-name">${selectedPartnerPlayer.name}</div>
         <div class="summary-player-info">
-            ${getCategoryLabel(selectedPartnerPlayer.category)} ·
-            ${selectedPartnerPlayer.data.goals || 0}B ${selectedPartnerPlayer.data.assists || 0}A ${selectedPartnerPlayer.data.points || selectedPartnerPlayer.data.wins || 0}PTS
+            ${getCategoryLabel(selectedPartnerPlayer.category)} · ${selectedPartnerPlayer.data.teamAbbrev || ''}
+        </div>
+        <div class="summary-player-stats">
+            ${selectedPartnerPlayer.category === 'G' ? `
+                <div class="stat-item"><span class="stat-value">${selectedPartnerPlayer.data.wins || 0}</span><span class="stat-label">VIC</span></div>
+                <div class="stat-item"><span class="stat-value">${selectedPartnerPlayer.data.goalsAgainst || 0}</span><span class="stat-label">BC</span></div>
+                <div class="stat-item"><span class="stat-value">${(selectedPartnerPlayer.data.savePctg || 0).toFixed(3)}</span><span class="stat-label">%ARR</span></div>
+            ` : selectedPartnerPlayer.category === 'T' ? `
+                <div class="stat-item"><span class="stat-value">Équipe NHL</span></div>
+            ` : `
+                <div class="stat-item"><span class="stat-value">${selectedPartnerPlayer.data.goals || 0}</span><span class="stat-label">B</span></div>
+                <div class="stat-item"><span class="stat-value">${selectedPartnerPlayer.data.assists || 0}</span><span class="stat-label">P</span></div>
+                <div class="stat-item"><span class="stat-value">${selectedPartnerPlayer.data.points || 0}</span><span class="stat-label">PTS</span></div>
+            `}
         </div>
     `;
 
@@ -564,29 +588,80 @@ function renderStatComparison() {
     const my = selectedMyPlayer.data;
     const partner = selectedPartnerPlayer.data;
 
-    container.innerHTML = `
-        <div class="stat-comp-row">
-            <span class="stat-comp-label">Buts</span>
-            <div class="stat-comp-values">
-                <span class="my-val">${my.goals || 0}</span>
-                <span class="partner-val">${partner.goals || 0}</span>
+    // Different stats for goalies vs skaters
+    if (selectedMyPlayer.category === 'G') {
+        container.innerHTML = `
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">Victoires</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">${my.wins || 0}</span>
+                    <span class="partner-val">${partner.wins || 0}</span>
+                </div>
             </div>
-        </div>
-        <div class="stat-comp-row">
-            <span class="stat-comp-label">Passes</span>
-            <div class="stat-comp-values">
-                <span class="my-val">${my.assists || 0}</span>
-                <span class="partner-val">${partner.assists || 0}</span>
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">% Arrêts</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">${(my.savePctg || 0).toFixed(3)}</span>
+                    <span class="partner-val">${(partner.savePctg || 0).toFixed(3)}</span>
+                </div>
             </div>
-        </div>
-        <div class="stat-comp-row">
-            <span class="stat-comp-label">Points</span>
-            <div class="stat-comp-values">
-                <span class="my-val">${my.points || my.wins || 0}</span>
-                <span class="partner-val">${partner.points || partner.wins || 0}</span>
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">Blanchissages</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">${my.shutouts || 0}</span>
+                    <span class="partner-val">${partner.shutouts || 0}</span>
+                </div>
             </div>
-        </div>
-    `;
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">Buts Contre</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">${my.goalsAgainst || 0}</span>
+                    <span class="partner-val">${partner.goalsAgainst || 0}</span>
+                </div>
+            </div>
+        `;
+    } else if (selectedMyPlayer.category === 'T') {
+        container.innerHTML = `
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">Équipes NHL</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">—</span>
+                    <span class="partner-val">—</span>
+                </div>
+            </div>
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">Buts</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">${my.goals || 0}</span>
+                    <span class="partner-val">${partner.goals || 0}</span>
+                </div>
+            </div>
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">Passes</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">${my.assists || 0}</span>
+                    <span class="partner-val">${partner.assists || 0}</span>
+                </div>
+            </div>
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">Points</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">${my.points || 0}</span>
+                    <span class="partner-val">${partner.points || 0}</span>
+                </div>
+            </div>
+            <div class="stat-comp-row">
+                <span class="stat-comp-label">+/-</span>
+                <div class="stat-comp-values">
+                    <span class="my-val">${my.plusMinus || 0}</span>
+                    <span class="partner-val">${partner.plusMinus || 0}</span>
+                </div>
+            </div>
+        `;
+    }
 }
 
 // ============================================================
@@ -666,7 +741,8 @@ async function proposeTrade() {
 
         if (res.ok) {
             showNotification('✅ Proposition d\'échange envoyée avec succès!', 'success');
-            loadTradeHistory(); // Refresh history
+            loadReceivedTrades(); // Refresh received trades
+            updateReceivedBadge(); // Update badge count
             setTimeout(() => resetTrade(), 1500);
         } else {
             showNotification(`❌ ${data.message}`, 'error');
