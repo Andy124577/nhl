@@ -205,9 +205,37 @@ function renderMyRoster() {
     if (!container || !myTeamData) return;
 
     const players = [
-        ...(myTeamData.offensive || []).map(p => ({ ...p, category: 'F' })),
-        ...(myTeamData.defensive || []).map(p => ({ ...p, category: 'D' })),
-        ...(myTeamData.goalie || []).map(p => ({ ...p, category: 'G' }))
+        ...(myTeamData.offensive || []).map(p => {
+            // Handle both string and object formats
+            if (typeof p === 'string') {
+                return { name: p, category: 'F', type: 'offensive' };
+            }
+            return { ...p, name: p.skaterFullName || p.goalieFullName || p, category: 'F', type: 'offensive' };
+        }),
+        ...(myTeamData.defensive || []).map(p => {
+            if (typeof p === 'string') {
+                return { name: p, category: 'D', type: 'defensive' };
+            }
+            return { ...p, name: p.skaterFullName || p.goalieFullName || p, category: 'D', type: 'defensive' };
+        }),
+        ...(myTeamData.goalie || []).map(p => {
+            if (typeof p === 'string') {
+                return { name: p, category: 'G', type: 'goalie' };
+            }
+            return { ...p, name: p.skaterFullName || p.goalieFullName || p, category: 'G', type: 'goalie' };
+        }),
+        ...(myTeamData.rookie || []).map(p => {
+            if (typeof p === 'string') {
+                return { name: p, category: 'R', type: 'rookie' };
+            }
+            return { ...p, name: p.skaterFullName || p.goalieFullName || p, category: 'R', type: 'rookie' };
+        }),
+        ...(myTeamData.teams || []).map(p => {
+            if (typeof p === 'string') {
+                return { name: p, category: 'T', type: 'team' };
+            }
+            return { ...p, name: p.teamFullName || p, category: 'T', type: 'team' };
+        })
     ];
 
     // Apply filter
@@ -222,23 +250,28 @@ function renderMyRoster() {
     }
 
     container.innerHTML = filteredPlayers.map(player => {
-        const name = player.skaterFullName || player.goalieFullName || 'Unknown';
-        const team = player.teamAbbrevs || player.teamAbbrev || 'N/A';
+        const name = player.name;
+        const team = player.teamAbbrevs || player.teamAbbrev || '';
         const isSelected = selectedMyPlayer && selectedMyPlayer.name === name;
         const isLocked = selectedPartnerPlayer && selectedPartnerPlayer.category !== player.category;
 
+        // For teams, show different stats
+        const isTeam = player.category === 'T';
+
         return `
             <div class="player-card-roster ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}"
-                 onclick="selectMyPlayer('${name}', '${player.category}', ${JSON.stringify(player).replace(/"/g, '&quot;')})">
+                 onclick="selectMyPlayer('${name.replace(/'/g, "\\'")}', '${player.category}', ${JSON.stringify(player).replace(/"/g, '&quot;')})">
                 <div class="pcr-position ${player.category.toLowerCase()}">${getCategoryLabel(player.category)}</div>
                 <div class="pcr-info">
                     <div class="pcr-name">${name}</div>
-                    <div class="pcr-team">${team}</div>
-                    <div class="pcr-stats">
-                        <span class="pcr-stat">${player.goals || 0}B</span>
-                        <span class="pcr-stat">${player.assists || 0}A</span>
-                        <span class="pcr-stat">${player.points || player.wins || 0}PTS</span>
-                    </div>
+                    ${!isTeam ? `<div class="pcr-team">${team}</div>` : ''}
+                    ${!isTeam ? `
+                        <div class="pcr-stats">
+                            <span class="pcr-stat">${player.goals || 0}B</span>
+                            <span class="pcr-stat">${player.assists || 0}A</span>
+                            <span class="pcr-stat">${player.points || player.wins || 0}PTS</span>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -250,9 +283,36 @@ function renderPartnerRoster() {
     if (!container || !partnerTeamData) return;
 
     const players = [
-        ...(partnerTeamData.offensive || []).map(p => ({ ...p, category: 'F' })),
-        ...(partnerTeamData.defensive || []).map(p => ({ ...p, category: 'D' })),
-        ...(partnerTeamData.goalie || []).map(p => ({ ...p, category: 'G' }))
+        ...(partnerTeamData.offensive || []).map(p => {
+            if (typeof p === 'string') {
+                return { name: p, category: 'F', type: 'offensive' };
+            }
+            return { ...p, name: p.skaterFullName || p.goalieFullName || p, category: 'F', type: 'offensive' };
+        }),
+        ...(partnerTeamData.defensive || []).map(p => {
+            if (typeof p === 'string') {
+                return { name: p, category: 'D', type: 'defensive' };
+            }
+            return { ...p, name: p.skaterFullName || p.goalieFullName || p, category: 'D', type: 'defensive' };
+        }),
+        ...(partnerTeamData.goalie || []).map(p => {
+            if (typeof p === 'string') {
+                return { name: p, category: 'G', type: 'goalie' };
+            }
+            return { ...p, name: p.skaterFullName || p.goalieFullName || p, category: 'G', type: 'goalie' };
+        }),
+        ...(partnerTeamData.rookie || []).map(p => {
+            if (typeof p === 'string') {
+                return { name: p, category: 'R', type: 'rookie' };
+            }
+            return { ...p, name: p.skaterFullName || p.goalieFullName || p, category: 'R', type: 'rookie' };
+        }),
+        ...(partnerTeamData.teams || []).map(p => {
+            if (typeof p === 'string') {
+                return { name: p, category: 'T', type: 'team' };
+            }
+            return { ...p, name: p.teamFullName || p, category: 'T', type: 'team' };
+        })
     ];
 
     // Apply filter
@@ -267,23 +327,27 @@ function renderPartnerRoster() {
     }
 
     container.innerHTML = filteredPlayers.map(player => {
-        const name = player.skaterFullName || player.goalieFullName || 'Unknown';
-        const team = player.teamAbbrevs || player.teamAbbrev || 'N/A';
+        const name = player.name;
+        const team = player.teamAbbrevs || player.teamAbbrev || '';
         const isSelected = selectedPartnerPlayer && selectedPartnerPlayer.name === name;
         const isLocked = selectedMyPlayer && selectedMyPlayer.category !== player.category;
 
+        const isTeam = player.category === 'T';
+
         return `
             <div class="player-card-roster ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}"
-                 onclick="selectPartnerPlayer('${name}', '${player.category}', ${JSON.stringify(player).replace(/"/g, '&quot;')})">
+                 onclick="selectPartnerPlayer('${name.replace(/'/g, "\\'")}', '${player.category}', ${JSON.stringify(player).replace(/"/g, '&quot;')})">
                 <div class="pcr-position ${player.category.toLowerCase()}">${getCategoryLabel(player.category)}</div>
                 <div class="pcr-info">
                     <div class="pcr-name">${name}</div>
-                    <div class="pcr-team">${team}</div>
-                    <div class="pcr-stats">
-                        <span class="pcr-stat">${player.goals || 0}B</span>
-                        <span class="pcr-stat">${player.assists || 0}A</span>
-                        <span class="pcr-stat">${player.points || player.wins || 0}PTS</span>
-                    </div>
+                    ${!isTeam ? `<div class="pcr-team">${team}</div>` : ''}
+                    ${!isTeam ? `
+                        <div class="pcr-stats">
+                            <span class="pcr-stat">${player.goals || 0}B</span>
+                            <span class="pcr-stat">${player.assists || 0}A</span>
+                            <span class="pcr-stat">${player.points || player.wins || 0}PTS</span>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -686,7 +750,9 @@ function getCategoryLabel(category) {
     const labels = {
         'F': 'ATT',
         'D': 'DÉF',
-        'G': 'GAR'
+        'G': 'GAR',
+        'R': 'ROO',
+        'T': 'ÉQU'
     };
     return labels[category] || category;
 }
@@ -695,7 +761,9 @@ function getCategoryType(category) {
     const types = {
         'F': 'offensive',
         'D': 'defensive',
-        'G': 'goalie'
+        'G': 'goalie',
+        'R': 'rookie',
+        'T': 'team'
     };
     return types[category] || 'offensive';
 }
