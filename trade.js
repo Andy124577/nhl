@@ -787,7 +787,15 @@ async function loadReceivedTrades() {
 
     try {
         const res = await fetch(`${BASE_URL}/trades/pending/${currentUsername}`, { cache: 'no-store' });
+
+        if (!res.ok) {
+            console.error('Failed to fetch received trades:', res.status);
+            container.innerHTML = '<p class="empty-msg">Erreur lors du chargement des échanges reçus</p>';
+            return;
+        }
+
         const trades = await res.json();
+        console.log('Received trades for', currentUsername, ':', trades);
 
         // Update badge
         updateReceivedBadge(trades.length);
@@ -821,7 +829,7 @@ async function loadReceivedTrades() {
                 <div class="received-trade-card">
                     <div class="trade-card-header">
                         <div class="trade-card-info">
-                            <div class="trade-card-teams">${trade.fromTeam} → Vous</div>
+                            <div class="trade-card-teams">${trade.fromTeam} → Vous (${trade.toTeam})</div>
                             <div class="trade-card-date">${formattedDate}</div>
                         </div>
                         <div class="trade-card-status">En attente</div>
