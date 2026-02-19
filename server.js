@@ -2358,13 +2358,12 @@ app.get('/hot-players', async (req, res) => {
     }
 });
 
-// ==================== HOT PLAYERS - LAST 7 DAYS (FANTASY POINTS) ====================
+// ==================== HOT PLAYERS - TIME RANGE (FANTASY POINTS) ====================
 
-// Cache for last 7 days hot players
-let last7DaysCache = {
-    lastUpdated: null,
-    data: null
-};
+// Caches for different time ranges
+let last7DaysCache = { lastUpdated: null, data: null };
+let last14DaysCache = { lastUpdated: null, data: null };
+let last30DaysCache = { lastUpdated: null, data: null };
 
 // Fantasy scoring rules
 const FANTASY_SCORING = {
@@ -2384,55 +2383,44 @@ const FANTASY_SCORING = {
     goalsAgainst: -1
 };
 
-app.get('/hot-players-last7days', async (req, res) => {
-    try {
-        const now = Date.now();
+// Generic function to calculate hot players for any time range
+async function calculateHotPlayers(days) {
+    const currentSeason = '20252026';
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    const startDateStr = startDate.toISOString().split('T')[0];
 
-        // Check cache (15 minute duration)
-        if (last7DaysCache.data && last7DaysCache.lastUpdated &&
-            (now - last7DaysCache.lastUpdated) < (15 * 60 * 1000)) {
-            console.log('✅ Returning cached last 7 days hot players');
-            return res.json(last7DaysCache.data);
-        }
+    // Query all games from specified time range
+    const result = await db.query(`
+        SELECT
+            player_id, player_name, position, team_abbrev,
+            goals, assists, points, shots, plus_minus,
+            power_play_goals, power_play_points,
+            shorthanded_goals, shorthanded_points,
+            game_winning_goals,
+            games_started, decision, saves, shots_against, goals_against, shutouts,
+            game_date
+        FROM player_game_logs
+        WHERE season = $1 AND game_date >= $2
+        ORDER BY game_date DESC
+    `, [currentSeason, startDateStr]);
 
-        console.log('📊 Calculating hot players for last 7 days...');
+    if (result.rows.length === 0) {
+        console.log(`⚠️ No games found in last ${days} days`);
+        return {
+            topPlayers: [],
+            forwards: [],
+            defensemen: [],
+            goalies: [],
+            timeRange: `${days} days`,
+            message: `No games in last ${days} days. Run: node fetch_game_logs.js`
+        };
+    }
 
-        const currentSeason = '20252026';
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+    console.log(`📊 Found ${result.rows.length} game entries from last ${days} days`);
 
-        // Query all games from last 7 days
-        const result = await db.query(`
-            SELECT
-                player_id, player_name, position, team_abbrev,
-                goals, assists, points, shots, plus_minus,
-                power_play_goals, power_play_points,
-                shorthanded_goals, shorthanded_points,
-                game_winning_goals,
-                games_started, decision, saves, shots_against, goals_against, shutouts,
-                game_date
-            FROM player_game_logs
-            WHERE season = $1 AND game_date >= $2
-            ORDER BY game_date DESC
-        `, [currentSeason, sevenDaysAgoStr]);
-
-        if (result.rows.length === 0) {
-            console.log('⚠️ No games found in last 7 days');
-            return res.json({
-                topPlayers: [],
-                forwards: [],
-                defensemen: [],
-                goalies: [],
-                timeRange: '7 days',
-                message: 'No games in last 7 days. Run: node fetch_game_logs.js'
-            });
-        }
-
-        console.log(`📊 Found ${result.rows.length} game entries from last 7 days`);
-
-        // Group games by player and calculate fantasy points
-        const playerStats = new Map();
+    // Group games by player and calculate fantasy points
+    const playerStats = new Map();
 
         result.rows.forEach(game => {
             const playerId = game.player_id;
@@ -2491,9 +2479,9 @@ app.get('/hot-players-last7days', async (req, res) => {
             }
 
             player.totalFantasyPoints += fantasyPoints;
-        });
+    });
 
-        // Convert to array and filter out players with < 2 games
+    // Convert to array and filter out players with < 2 games
         const allPlayers = Array.from(playerStats.values())
             .filter(p => p.gamesPlayed >= 2)
             .map(p => {
@@ -2522,28 +2510,66 @@ app.get('/hot-players-last7days', async (req, res) => {
             .sort((a, b) => b.totalFantasyPoints - a.totalFantasyPoints)
             .slice(0, 10);
 
-        const responseData = {
-            topPlayers,
-            forwards: forwards.slice(0, 10),
-            defensemen: defensemen.slice(0, 10),
-            goalies: goalies.slice(0, 10),
-            timeRange: '7 days',
-            totalGames: result.rows.length,
-            uniquePlayers: allPlayers.length
-        };
+    const responseData = {
+        topPlayers,
+        forwards: forwards.slice(0, 10),
+        defensemen: defensemen.slice(0, 10),
+        goalies: goalies.slice(0, 10),
+        timeRange: `${days} days`,
+        totalGames: result.rows.length,
+        uniquePlayers: allPlayers.length
+    };
 
-        // Update cache
-        last7DaysCache = {
-            lastUpdated: now,
-            data: responseData
-        };
+    console.log(`✅ Hot players calculated (${days} days): ${topPlayers.length} top, ${forwards.length} forwards, ${defensemen.length} D, ${goalies.length} G`);
 
-        console.log(`✅ Hot players calculated: ${topPlayers.length} top, ${forwards.length} forwards, ${defensemen.length} D, ${goalies.length} G`);
+    return responseData;
+}
 
-        res.json(responseData);
-
+// Endpoints for different time ranges
+app.get('/hot-players-last7days', async (req, res) => {
+    try {
+        const now = Date.now();
+        if (last7DaysCache.data && last7DaysCache.lastUpdated &&
+            (now - last7DaysCache.lastUpdated) < (15 * 60 * 1000)) {
+            return res.json(last7DaysCache.data);
+        }
+        const data = await calculateHotPlayers(7);
+        last7DaysCache = { lastUpdated: now, data };
+        res.json(data);
     } catch (error) {
-        console.error('❌ Error calculating last 7 days hot players:', error);
+        console.error('❌ Error:', error);
+        res.status(500).json({ message: 'Error fetching hot players' });
+    }
+});
+
+app.get('/hot-players-last14days', async (req, res) => {
+    try {
+        const now = Date.now();
+        if (last14DaysCache.data && last14DaysCache.lastUpdated &&
+            (now - last14DaysCache.lastUpdated) < (15 * 60 * 1000)) {
+            return res.json(last14DaysCache.data);
+        }
+        const data = await calculateHotPlayers(14);
+        last14DaysCache = { lastUpdated: now, data };
+        res.json(data);
+    } catch (error) {
+        console.error('❌ Error:', error);
+        res.status(500).json({ message: 'Error fetching hot players' });
+    }
+});
+
+app.get('/hot-players-last30days', async (req, res) => {
+    try {
+        const now = Date.now();
+        if (last30DaysCache.data && last30DaysCache.lastUpdated &&
+            (now - last30DaysCache.lastUpdated) < (15 * 60 * 1000)) {
+            return res.json(last30DaysCache.data);
+        }
+        const data = await calculateHotPlayers(30);
+        last30DaysCache = { lastUpdated: now, data };
+        res.json(data);
+    } catch (error) {
+        console.error('❌ Error:', error);
         res.status(500).json({ message: 'Error fetching hot players' });
     }
 });
