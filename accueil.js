@@ -91,8 +91,15 @@ async function loadPools() {
 // ============================================================
 async function loadStats() {
     try {
-        const res = await fetch(`${BASE_URL}/stats`);
-        userData.statsData = await res.json();
+        // Load both season stats and last 7 days hot players
+        const [statsRes, hotPlayersRes] = await Promise.all([
+            fetch(`${BASE_URL}/stats`),
+            fetch(`${BASE_URL}/hot-players-last7days`)
+        ]);
+
+        userData.statsData = await statsRes.json();
+        userData.hotPlayers = await hotPlayersRes.json();
+
         renderTopPlayers();
     } catch (err) {
         console.error('Error loading stats:', err);
@@ -242,7 +249,7 @@ function renderHeroLeaderboard() {
 }
 
 // ============================================================
-// TOP PLAYERS SECTION
+// TOP PLAYERS SECTION - LAST 7 DAYS
 // ============================================================
 function renderTopPlayers() {
     const skeleton = document.getElementById('topPlayersSkeleton');
@@ -253,35 +260,38 @@ function renderTopPlayers() {
 
     content.style.display = 'grid';
 
-    const stats = userData.statsData;
-    if (!stats) { renderTopPlayersError(); return; }
+    const hotPlayers = userData.hotPlayers;
+    if (!hotPlayers || !hotPlayers.topPlayers) {
+        renderTopPlayersError();
+        return;
+    }
 
-    const performers = [
-        ...(stats.Top_Offensive || []),
-        ...(stats.Top_Rookies   || [])
-    ]
-        .sort((a, b) => (b.points || 0) - (a.points || 0))
-        .slice(0, 10);
+    const performers = hotPlayers.topPlayers.slice(0, 10);
 
     if (!performers.length) {
         content.innerHTML = `<p style="grid-column:1/-1;text-align:center;
-            padding:48px;color:var(--text-secondary);">Aucune donnée disponible</p>`;
+            padding:48px;color:var(--text-secondary);">Aucun joueur trouvé dans les 7 derniers jours</p>`;
         return;
     }
 
     const rankCls = i => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'normal';
 
     content.innerHTML = performers.map((p, i) => {
-        const name    = p.skaterFullName || `${p.firstName || ''} ${p.lastName || ''}`.trim();
-        const team    = p.teamAbbrevs || p.teamAbbrev || 'N/A';
-        const pts     = p.points  || 0;
-        const goals   = p.goals   || 0;
-        const assists = p.assists || 0;
-        const isHot   = pts >= 20;
+        const name    = p.playerName || 'Unknown';
+        const team    = p.teamAbbrev || 'N/A';
+        const pos     = p.position || 'F';
+        const fantasyPts = Math.round(p.totalFantasyPoints || 0);
+        const gamesPlayed = p.gamesPlayed || 0;
+        const isHot   = p.isHot || false;
 
-        // Try headshot from data or construct from playerId
-        const headshot = p.headshot ||
-            (p.playerId ? `https://assets.nhle.com/mugs/nhl/20232024/${p.playerId}.png` : null);
+        // Display goals/assists for skaters, wins/saves for goalies
+        const goals   = p.goals || 0;
+        const assists = p.assists || 0;
+        const pts     = p.points || 0;
+        const wins    = p.wins || 0;
+        const saves   = p.saves || 0;
+
+        const headshot = p.headshot || `https://assets.nhle.com/mugs/nhl/20252026/${p.playerId}.png`;
 
         return `
         <div class="player-card" onclick="viewPlayer(${p.playerId || ''})"
@@ -289,28 +299,40 @@ function renderTopPlayers() {
             <div class="player-rank-badge ${rankCls(i)}">${i + 1}</div>
             ${isHot ? '<span class="hot-streak" title="En feu!">🔥</span>' : ''}
             <div class="player-card-photo">
-                ${headshot
-                    ? `<img src="${headshot}" alt="${name}"
-                            onerror="this.parentElement.innerHTML='<span class=\\"no-photo\\">🏒</span>'"
-                            loading="lazy">`
-                    : '<span class="no-photo">🏒</span>'
-                }
+                <img src="${headshot}" alt="${name}"
+                     onerror="this.parentElement.innerHTML='<span class=\\"no-photo\\">🏒</span>'"
+                     loading="lazy">
             </div>
             <div class="player-card-name">${name}</div>
-            <div class="player-card-team">${team}</div>
+            <div class="player-card-team">${team} · ${gamesPlayed} matchs</div>
             <div class="player-card-stats">
-                <div class="pc-stat">
-                    <span class="pc-stat-val">${goals}</span>
-                    <span class="pc-stat-label">BTS</span>
-                </div>
-                <div class="pc-stat">
-                    <span class="pc-stat-val pts">${pts}</span>
-                    <span class="pc-stat-label">PTS</span>
-                </div>
-                <div class="pc-stat">
-                    <span class="pc-stat-val">${assists}</span>
-                    <span class="pc-stat-label">ASS</span>
-                </div>
+                ${pos === 'G' ? `
+                    <div class="pc-stat">
+                        <span class="pc-stat-val">${wins}</span>
+                        <span class="pc-stat-label">VIC</span>
+                    </div>
+                    <div class="pc-stat">
+                        <span class="pc-stat-val pts">${fantasyPts}</span>
+                        <span class="pc-stat-label">FPTS</span>
+                    </div>
+                    <div class="pc-stat">
+                        <span class="pc-stat-val">${saves}</span>
+                        <span class="pc-stat-label">ARR</span>
+                    </div>
+                ` : `
+                    <div class="pc-stat">
+                        <span class="pc-stat-val">${goals}</span>
+                        <span class="pc-stat-label">BTS</span>
+                    </div>
+                    <div class="pc-stat">
+                        <span class="pc-stat-val pts">${fantasyPts}</span>
+                        <span class="pc-stat-label">FPTS</span>
+                    </div>
+                    <div class="pc-stat">
+                        <span class="pc-stat-val">${assists}</span>
+                        <span class="pc-stat-label">ASS</span>
+                    </div>
+                `}
             </div>
         </div>`;
     }).join('');
