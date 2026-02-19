@@ -10,7 +10,8 @@ let userData = {
     username: null,
     userPools: [],
     primaryPool: null,
-    statsData: null
+    statsData: null,
+    hotPlayers: null
 };
 
 // ============================================================
@@ -89,15 +90,14 @@ async function loadPools() {
 // ============================================================
 // STATS LOADING
 // ============================================================
-async function loadStats() {
-    try {
-        // Load both season stats and last 7 days hot players
-        const [statsRes, hotPlayersRes] = await Promise.all([
-            fetch(`${BASE_URL}/stats`),
-            fetch(`${BASE_URL}/hot-players-last7days`)
-        ]);
+let currentTimeRange = 7; // Default to 7 days
 
-        userData.statsData = await statsRes.json();
+async function loadStats(days = 7) {
+    try {
+        currentTimeRange = days;
+
+        // Load hot players for specified time range
+        const hotPlayersRes = await fetch(`${BASE_URL}/hot-players-last${days}days`);
         userData.hotPlayers = await hotPlayersRes.json();
 
         renderTopPlayers();
@@ -365,4 +365,23 @@ function viewPlayer(playerId) {
         localStorage.setItem('viewPlayerId', playerId);
         window.location.href = 'index.html';
     }
+}
+
+// ============================================================
+// TIME RANGE FILTER
+// ============================================================
+function changeTimeRange(days) {
+    // Update active button
+    document.querySelectorAll('.time-filter').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.days == days);
+    });
+
+    // Update label
+    const label = document.getElementById('timeRangeLabel');
+    if (label) {
+        label.textContent = `${days} derniers jours`;
+    }
+
+    // Reload stats with new range
+    loadStats(days);
 }
