@@ -3,206 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Échanges - Fantazy</title>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="navbar.css">
-    <link rel="stylesheet" href="index.css">
+    <title>Échanges | Fantasy NHL</title>
     <link rel="stylesheet" href="trade.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
-    <nav class="navbar"></nav>
-
-    <!-- ============================================================ -->
-    <!-- TAB NAVIGATION                                                -->
-    <!-- ============================================================ -->
-    <div class="trade-tabs">
-        <button class="trade-tab active" data-tab="create">
-            <span class="tab-icon">⚡</span>
-            <span>Créer un échange</span>
-        </button>
-        <button class="trade-tab" data-tab="proposals">
-            <span class="tab-icon">📥</span>
-            <span>Propositions reçues</span>
-            <span class="tab-badge" id="proposalsBadge" style="display:none;">0</span>
-        </button>
-        <button class="trade-tab" data-tab="history">
-            <span class="tab-icon">📜</span>
-            <span>Historique</span>
-        </button>
-    </div>
-
-    <!-- ============================================================ -->
-    <!-- CREATE TRADE TAB                                              -->
-    <!-- ============================================================ -->
-    <div class="tab-panel active" id="createTab">
-        <div class="trade-container">
-
-            <!-- Select Partner Header -->
-            <div class="trade-header-section">
-                <div class="select-partner-wrap">
-                    <label for="partnerSelect">Sélectionner un partenaire :</label>
-                    <select id="partnerSelect" class="partner-select">
-                        <option value="">-- Choisir une équipe --</option>
-                    </select>
-                </div>
-                <div class="trade-actions-header" id="tradeActionsHeader" style="display:none;">
-                    <button class="btn-reset" id="resetBtn">🔄 Réinitialiser</button>
-                    <button class="btn-send-trade" id="sendTradeBtn" disabled>📤 Envoyer la proposition</button>
-                </div>
+    <!-- Navigation (same as other pages) -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <a href="accueil.html" class="nav-logo">🏒 Fantasy NHL</a>
+            <div class="nav-links">
+                <a href="accueil.html">Accueil</a>
+                <a href="pool.html">Pools</a>
+                <a href="classement.html">Classement</a>
+                <a href="trade.html" class="active">Échanges</a>
+                <a href="index.html">Joueurs</a>
             </div>
-
-            <!-- Two-Column Drag-Drop Interface -->
-            <div class="trade-grid" id="tradeGrid" style="display:none;">
-
-                <!-- LEFT: My Team -->
-                <div class="team-column my-team-col">
-                    <div class="team-col-header">
-                        <div class="col-title">
-                            <span class="col-icon">👤</span>
-                            <h3>Mon équipe</h3>
-                            <span class="team-name-badge" id="myTeamBadge"></span>
-                        </div>
-                        <div class="col-count" id="myTeamCount">0 joueurs</div>
-                    </div>
-                    <div class="team-roster" id="myRoster">
-                        <!-- Player cards filled by JS -->
-                    </div>
-                </div>
-
-                <!-- CENTER: Trade Comparison Zone -->
-                <div class="trade-zone">
-                    <!-- Offering Drop Zone -->
-                    <div class="drop-zone-card offering-zone">
-                        <div class="dz-header">
-                            <span class="dz-label">⬆️ Vous offrez</span>
-                            <span class="dz-count" id="offeringCount">0</span>
-                        </div>
-                        <div class="drop-zone" id="offeringDropZone" data-side="offering">
-                            <div class="dz-placeholder">
-                                <div class="dz-icon">↓</div>
-                                <p>Glissez les joueurs ici</p>
-                            </div>
-                        </div>
-                        <div class="dz-value-bar">
-                            <div class="vb-label">Valeur totale</div>
-                            <div class="vb-value" id="offeringValue">0 PTS</div>
-                        </div>
-                    </div>
-
-                    <!-- Trade Balance Indicator -->
-                    <div class="trade-balance" id="tradeBalance">
-                        <div class="balance-icon">⚖️</div>
-                        <div class="balance-status">Équilibré</div>
-                    </div>
-
-                    <!-- Receiving Drop Zone -->
-                    <div class="drop-zone-card receiving-zone">
-                        <div class="dz-header">
-                            <span class="dz-label">⬇️ Vous recevez</span>
-                            <span class="dz-count" id="receivingCount">0</span>
-                        </div>
-                        <div class="drop-zone" id="receivingDropZone" data-side="receiving">
-                            <div class="dz-placeholder">
-                                <div class="dz-icon">↓</div>
-                                <p>Glissez les joueurs ici</p>
-                            </div>
-                        </div>
-                        <div class="dz-value-bar">
-                            <div class="vb-label">Valeur totale</div>
-                            <div class="vb-value" id="receivingValue">0 PTS</div>
-                        </div>
-                    </div>
-
-                    <!-- Stat Comparison Bars -->
-                    <div class="stat-comparison" id="statComparison" style="display:none;">
-                        <div class="stat-comp-title">📊 Comparaison projetée</div>
-                        <div class="stat-bar-row">
-                            <div class="stat-bar-label">Buts</div>
-                            <div class="stat-bar-track">
-                                <div class="stat-bar offer-bar" id="goalsOfferBar" style="width:0%"></div>
-                                <div class="stat-bar receive-bar" id="goalsReceiveBar" style="width:0%"></div>
-                            </div>
-                            <div class="stat-bar-values">
-                                <span id="goalsOfferVal">0</span> / <span id="goalsReceiveVal">0</span>
-                            </div>
-                        </div>
-                        <div class="stat-bar-row">
-                            <div class="stat-bar-label">Passes</div>
-                            <div class="stat-bar-track">
-                                <div class="stat-bar offer-bar" id="assistsOfferBar" style="width:0%"></div>
-                                <div class="stat-bar receive-bar" id="assistsReceiveBar" style="width:0%"></div>
-                            </div>
-                            <div class="stat-bar-values">
-                                <span id="assistsOfferVal">0</span> / <span id="assistsReceiveVal">0</span>
-                            </div>
-                        </div>
-                        <div class="stat-bar-row">
-                            <div class="stat-bar-label">Points</div>
-                            <div class="stat-bar-track">
-                                <div class="stat-bar offer-bar" id="ptsOfferBar" style="width:0%"></div>
-                                <div class="stat-bar receive-bar" id="ptsReceiveBar" style="width:0%"></div>
-                            </div>
-                            <div class="stat-bar-values">
-                                <span id="ptsOfferVal">0</span> / <span id="ptsReceiveVal">0</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- RIGHT: Partner Team -->
-                <div class="team-column partner-team-col">
-                    <div class="team-col-header">
-                        <div class="col-title">
-                            <span class="col-icon">🤝</span>
-                            <h3>Équipe partenaire</h3>
-                            <span class="team-name-badge" id="partnerTeamBadge"></span>
-                        </div>
-                        <div class="col-count" id="partnerTeamCount">0 joueurs</div>
-                    </div>
-                    <div class="team-roster" id="partnerRoster">
-                        <!-- Partner player cards filled by JS -->
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Validation Message -->
-            <div class="trade-validation" id="tradeValidation"></div>
-
         </div>
-    </div>
+    </nav>
 
-    <!-- ============================================================ -->
-    <!-- PROPOSALS TAB                                                 -->
-    <!-- ============================================================ -->
-    <div class="tab-panel" id="proposalsTab">
-        <div class="proposals-container">
-            <div class="proposals-header">
-                <h2>📥 Propositions d'échange reçues</h2>
+    <!-- Main Container -->
+    <div class="trade-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>⚡ Proposer un échange</h1>
+            <p class="page-subtitle">Échange 1 pour 1 · Position identique requise</p>
+        </div>
+
+        <!-- Step 1: Pool Selection -->
+        <div class="trade-step" id="step1">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <div class="step-info">
+                    <h3>Sélectionner un pool actif</h3>
+                    <p>Choisissez le pool dans lequel effectuer l'échange</p>
+                </div>
             </div>
-            <div class="proposals-list" id="proposalsList">
-                <p class="empty-msg">Aucune proposition en attente</p>
+
+            <div class="pool-selector" id="poolSelector">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+
+        <!-- Step 2: Team Selection -->
+        <div class="trade-step hidden" id="step2">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div class="step-info">
+                    <h3>Choisir un partenaire d'échange</h3>
+                    <p>Sélectionnez l'équipe avec laquelle échanger</p>
+                </div>
+            </div>
+
+            <div class="team-grid" id="teamGrid">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+
+        <!-- Step 3: Trade Interface -->
+        <div class="trade-step hidden" id="step3">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <div class="step-info">
+                    <h3>Construire l'échange 1-pour-1</h3>
+                    <p id="selectedPoolTeamInfo"><!-- Filled by JS --></p>
+                </div>
+                <button class="btn-reset" onclick="resetTrade()">🔄 Recommencer</button>
+            </div>
+
+            <!-- Three-Column Trade Layout -->
+            <div class="trade-grid-3col">
+                <!-- Left: My Team -->
+                <div class="roster-column">
+                    <div class="roster-header">
+                        <h4>Mon équipe</h4>
+                        <span class="team-badge" id="myTeamName"></span>
+                    </div>
+
+                    <!-- Position Filters -->
+                    <div class="position-tabs">
+                        <button class="pos-tab active" data-pos="all" onclick="filterPosition('my', 'all')">Tous</button>
+                        <button class="pos-tab" data-pos="F" onclick="filterPosition('my', 'F')">ATT</button>
+                        <button class="pos-tab" data-pos="D" onclick="filterPosition('my', 'D')">DÉF</button>
+                        <button class="pos-tab" data-pos="G" onclick="filterPosition('my', 'G')">GAR</button>
+                    </div>
+
+                    <div class="roster-list" id="myRoster">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Center: Trade Summary -->
+                <div class="trade-summary-column">
+                    <!-- Empty State -->
+                    <div class="trade-empty-state" id="tradeEmptyState">
+                        <div class="empty-icon">⚡</div>
+                        <h4>Sélectionnez 1 joueur de chaque côté</h4>
+                        <p>L'échange doit être 1-pour-1 avec des positions identiques</p>
+                        <div class="position-legend">
+                            <div class="legend-item"><span class="pos-badge att">ATT</span> Attaquant</div>
+                            <div class="legend-item"><span class="pos-badge def">DÉF</span> Défenseur</div>
+                            <div class="legend-item"><span class="pos-badge gar">GAR</span> Gardien</div>
+                        </div>
+                    </div>
+
+                    <!-- Active Trade Summary -->
+                    <div class="trade-active-summary hidden" id="tradeActiveSummary">
+                        <div class="summary-card">
+                            <div class="summary-player" id="summaryMyPlayer">
+                                <!-- Filled by JS -->
+                            </div>
+
+                            <div class="trade-arrow">
+                                <div class="arrow-icon">⇄</div>
+                                <div class="position-match" id="positionMatchBadge"></div>
+                            </div>
+
+                            <div class="summary-player" id="summaryPartnerPlayer">
+                                <!-- Filled by JS -->
+                            </div>
+                        </div>
+
+                        <div class="stat-comparison" id="statComparison">
+                            <!-- Filled by JS -->
+                        </div>
+
+                        <button class="btn-propose-trade" id="btnProposeTrade" onclick="proposeTrade()" disabled>
+                            ✅ Proposer l'échange
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: Partner Team -->
+                <div class="roster-column">
+                    <div class="roster-header">
+                        <h4>Équipe partenaire</h4>
+                        <span class="team-badge" id="partnerTeamName"></span>
+                    </div>
+
+                    <!-- Position Filters -->
+                    <div class="position-tabs">
+                        <button class="pos-tab active" data-pos="all" onclick="filterPosition('partner', 'all')">Tous</button>
+                        <button class="pos-tab" data-pos="F" onclick="filterPosition('partner', 'F')">ATT</button>
+                        <button class="pos-tab" data-pos="D" onclick="filterPosition('partner', 'D')">DÉF</button>
+                        <button class="pos-tab" data-pos="G" onclick="filterPosition('partner', 'G')">GAR</button>
+                    </div>
+
+                    <div class="roster-list" id="partnerRoster">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trade History Section -->
+        <div class="trade-history-section">
+            <h2>📜 Historique des échanges</h2>
+            <div class="history-tabs">
+                <button class="history-tab active" data-tab="pending" onclick="switchHistoryTab('pending')">
+                    En attente <span class="badge" id="pendingCount">0</span>
+                </button>
+                <button class="history-tab" data-tab="completed" onclick="switchHistoryTab('completed')">
+                    Complétés
+                </button>
+            </div>
+
+            <div class="history-content" id="historyContent">
+                <!-- Filled by JS -->
             </div>
         </div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- HISTORY TAB                                                   -->
-    <!-- ============================================================ -->
-    <div class="tab-panel" id="historyTab">
-        <div class="history-container">
-            <div class="history-header">
-                <h2>📜 Historique des échanges</h2>
-            </div>
-            <div class="history-timeline" id="historyTimeline">
-                <p class="empty-msg">Aucun échange complété</p>
-            </div>
-        </div>
-    </div>
-
-    <script defer src="/socket.io/socket.io.js"></script>
-    <script defer src="trade.js"></script>
-    <script defer src="navbar.js"></script>
+    <script src="trade.js"></script>
 </body>
 </html>
