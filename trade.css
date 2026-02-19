@@ -460,6 +460,18 @@ body {
     border: 2px solid var(--warning);
 }
 
+.pcr-position.r {
+    background: rgba(156,39,176,0.2);
+    color: #CE93D8;
+    border: 2px solid #CE93D8;
+}
+
+.pcr-position.t {
+    background: rgba(255,152,0,0.2);
+    color: #FFB74D;
+    border: 2px solid #FFB74D;
+}
+
 .pcr-info {
     flex: 1;
     min-width: 0;
@@ -569,6 +581,18 @@ body {
     background: rgba(255,193,7,0.2);
     color: var(--warning);
     border: 1px solid var(--warning);
+}
+
+.pos-badge.roo {
+    background: rgba(156,39,176,0.2);
+    color: #CE93D8;
+    border: 1px solid #CE93D8;
+}
+
+.pos-badge.equ {
+    background: rgba(255,152,0,0.2);
+    color: #FFB74D;
+    border: 1px solid #FFB74D;
 }
 
 /* Active Trade Summary */
