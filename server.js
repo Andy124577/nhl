@@ -2835,8 +2835,8 @@ function teamHasPlayer(team, item) {
     const arrays = {
         'offensive': 'offensive',
         'defensive': 'defensive',
-        'goalie': 'goalies',
-        'rookie': 'rookies',
+        'goalie': 'goalie',
+        'rookie': 'rookie',
         'team': 'teams'
     };
 
@@ -2903,8 +2903,8 @@ function removeFromTeam(team, item) {
     const arrays = {
         'offensive': 'offensive',
         'defensive': 'defensive',
-        'goalie': 'goalies',
-        'rookie': 'rookies',
+        'goalie': 'goalie',
+        'rookie': 'rookie',
         'team': 'teams'
     };
 
@@ -2926,8 +2926,8 @@ function addToTeam(team, item) {
     const arrays = {
         'offensive': 'offensive',
         'defensive': 'defensive',
-        'goalie': 'goalies',
-        'rookie': 'rookies',
+        'goalie': 'goalie',
+        'rookie': 'rookie',
         'team': 'teams'
     };
 
