@@ -2835,8 +2835,8 @@ function teamHasPlayer(team, item) {
     const arrays = {
         'offensive': 'offensive',
         'defensive': 'defensive',
-        'goalie': 'goalies',
-        'rookie': 'rookies',
+        'goalie': 'goalie',
+        'rookie': 'rookie',
         'team': 'teams'
     };
 
@@ -2903,8 +2903,8 @@ function removeFromTeam(team, item) {
     const arrays = {
         'offensive': 'offensive',
         'defensive': 'defensive',
-        'goalie': 'goalies',
-        'rookie': 'rookies',
+        'goalie': 'goalie',
+        'rookie': 'rookie',
         'team': 'teams'
     };
 
@@ -2926,8 +2926,8 @@ function addToTeam(team, item) {
     const arrays = {
         'offensive': 'offensive',
         'defensive': 'defensive',
-        'goalie': 'goalies',
-        'rookie': 'rookies',
+        'goalie': 'goalie',
+        'rookie': 'rookie',
         'team': 'teams'
     };
 
@@ -2976,6 +2976,71 @@ app.get('/trades/all', async (req, res) => {
     } catch (error) {
         console.error("Error loading all trades:", error);
         res.status(500).json({ message: "Error loading trades" });
+    }
+});
+
+// Get completed trades for a user
+app.get('/trades/completed/:username', async (req, res) => {
+    try {
+        const { username } = req.params;
+
+        console.log(`Fetching completed trades for user: ${username}`);
+
+        // Get all completed trades from PostgreSQL
+        const tradesResult = await db.query(
+            'SELECT id, pool_name, trade_data, created_at FROM trades WHERE status = $1 ORDER BY created_at DESC',
+            ['completed']
+        );
+
+        console.log(`Total completed trades in DB: ${tradesResult.rows.length}`);
+
+        const userCompletedTrades = [];
+
+        // Filter trades where user is involved (member of fromTeam or toTeam)
+        for (const row of tradesResult.rows) {
+            const tradeData = row.trade_data;
+            const poolName = row.pool_name;
+
+            // Get pool data
+            const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
+            if (poolResult.rows.length === 0) {
+                console.log(`Pool ${poolName} not found`);
+                continue;
+            }
+
+            const pool = poolResult.rows[0].pool_data;
+            const fromTeam = pool.teams[tradeData.fromTeam];
+            const toTeam = pool.teams[tradeData.toTeam];
+
+            if (!fromTeam || !toTeam) {
+                console.log(`Teams not found in pool ${poolName}`);
+                continue;
+            }
+
+            // Check if user is member of either team
+            const isInFromTeam = fromTeam.members && fromTeam.members.includes(username);
+            const isInToTeam = toTeam.members && toTeam.members.includes(username);
+
+            if (isInFromTeam || isInToTeam) {
+                userCompletedTrades.push({
+                    id: row.id,
+                    draftName: poolName,
+                    fromTeam: tradeData.fromTeam,
+                    toTeam: tradeData.toTeam,
+                    offering: tradeData.offering,
+                    receiving: tradeData.receiving,
+                    status: 'completed',
+                    date: tradeData.date,
+                    completedDate: tradeData.completedDate
+                });
+            }
+        }
+
+        console.log(`Found ${userCompletedTrades.length} completed trades for ${username}`);
+        res.json(userCompletedTrades);
+    } catch (error) {
+        console.error("Error loading completed trades:", error);
+        res.status(500).json({ message: "Error loading completed trades" });
     }
 });
 
