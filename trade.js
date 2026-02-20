@@ -24,6 +24,66 @@ let selectedPartnerPlayer = null;
 let myPositionFilter = 'all';
 let partnerPositionFilter = 'all';
 
+// Player images & stats
+let imageList = [];
+let currentStats = null;
+
+// ============================================================
+// IMAGE & STATS HELPERS
+// ============================================================
+function getMatchingImage(name) {
+    const normalized = name.replace(/\s/g, '_');
+    return imageList.find(path =>
+        path.replace(/^faces\//, '')
+            .replace(/_\d{1,2}_\d{1,2}_\d{4}(_away)?\.png$/, '')
+            === normalized
+    ) || null;
+}
+
+function getPlayerCurrentStats(name) {
+    if (!currentStats || !currentStats.players) return null;
+    return currentStats.players.find(p => p.playerName === name) || null;
+}
+
+function renderPlayerCardHTML(player, idx, isSelected, isLocked) {
+    const name = player.name;
+    const isTeam = player.category === 'T';
+    const face = !isTeam ? getMatchingImage(name) : null;
+    const stats = !isTeam ? getPlayerCurrentStats(name) : null;
+
+    let statsHTML = '';
+    if (!isTeam) {
+        if (player.category === 'G') {
+            const w = stats?.wins ?? 0;
+            const svPct = stats?.savePct != null ? stats.savePct.toFixed(3) : '0.000';
+            statsHTML = `<span class="pcr-stat">${w}V</span><span class="pcr-stat">${svPct}SV%</span>`;
+        } else {
+            const g = stats?.goals ?? 0;
+            const a = stats?.assists ?? 0;
+            const pts = stats?.points ?? 0;
+            statsHTML = `<span class="pcr-stat">${g}B</span><span class="pcr-stat">${a}A</span><span class="pcr-stat">${pts}PTS</span>`;
+        }
+    }
+
+    const faceHTML = face
+        ? `<img src="${face}" class="pcr-face" alt="${name}" onerror="this.style.display='none'">`
+        : '';
+
+    return `
+        <div class="player-card-roster ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}"
+             data-player-idx="${idx}"
+             data-player-name="${name.replace(/"/g, '&quot;')}"
+             data-player-category="${player.category}">
+            ${faceHTML}
+            <div class="pcr-position ${player.category.toLowerCase()}">${getCategoryLabel(player.category)}</div>
+            <div class="pcr-info">
+                <div class="pcr-name">${name}</div>
+                ${statsHTML ? `<div class="pcr-stats">${statsHTML}</div>` : ''}
+            </div>
+        </div>
+    `;
+}
+
 // ============================================================
 // TAB SWITCHING
 // ============================================================
@@ -101,10 +161,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // Load images and current stats in parallel
+    const [imagesRes, statsRes] = await Promise.allSettled([
+        fetch('images.json').then(r => r.json()),
+        fetch(`${BASE_URL}/current-stats`, { cache: 'no-store' }).then(r => r.json())
+    ]);
+    if (imagesRes.status === 'fulfilled') imageList = imagesRes.value;
+    if (statsRes.status === 'fulfilled') currentStats = statsRes.value;
+
     await loadDraftData();
     renderPoolSelector();
-    loadReceivedTrades(); // Load received trades on startup
-    updateReceivedBadge(); // Update badge count
+    loadReceivedTrades();
+    updateReceivedBadge();
 });
 
 // ============================================================
@@ -316,33 +384,9 @@ function renderMyRoster() {
     }
 
     container.innerHTML = filteredPlayers.map((player, idx) => {
-        const name = player.name;
-        const team = player.teamAbbrevs || player.teamAbbrev || '';
-        const isSelected = selectedMyPlayer && selectedMyPlayer.name === name;
+        const isSelected = selectedMyPlayer && selectedMyPlayer.name === player.name;
         const isLocked = selectedPartnerPlayer && selectedPartnerPlayer.category !== player.category;
-
-        // For teams, show different stats
-        const isTeam = player.category === 'T';
-
-        return `
-            <div class="player-card-roster ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}"
-                 data-player-idx="${idx}"
-                 data-player-name="${name.replace(/"/g, '&quot;')}"
-                 data-player-category="${player.category}">
-                <div class="pcr-position ${player.category.toLowerCase()}">${getCategoryLabel(player.category)}</div>
-                <div class="pcr-info">
-                    <div class="pcr-name">${name}</div>
-                    ${!isTeam ? `<div class="pcr-team">${team}</div>` : ''}
-                    ${!isTeam ? `
-                        <div class="pcr-stats">
-                            <span class="pcr-stat">${player.goals || 0}B</span>
-                            <span class="pcr-stat">${player.assists || 0}A</span>
-                            <span class="pcr-stat">${player.points || player.wins || 0}PTS</span>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
+        return renderPlayerCardHTML(player, idx, isSelected, isLocked);
     }).join('');
 
     // Add click event listeners
@@ -405,32 +449,9 @@ function renderPartnerRoster() {
     }
 
     container.innerHTML = filteredPlayers.map((player, idx) => {
-        const name = player.name;
-        const team = player.teamAbbrevs || player.teamAbbrev || '';
-        const isSelected = selectedPartnerPlayer && selectedPartnerPlayer.name === name;
+        const isSelected = selectedPartnerPlayer && selectedPartnerPlayer.name === player.name;
         const isLocked = selectedMyPlayer && selectedMyPlayer.category !== player.category;
-
-        const isTeam = player.category === 'T';
-
-        return `
-            <div class="player-card-roster ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}"
-                 data-player-idx="${idx}"
-                 data-player-name="${name.replace(/"/g, '&quot;')}"
-                 data-player-category="${player.category}">
-                <div class="pcr-position ${player.category.toLowerCase()}">${getCategoryLabel(player.category)}</div>
-                <div class="pcr-info">
-                    <div class="pcr-name">${name}</div>
-                    ${!isTeam ? `<div class="pcr-team">${team}</div>` : ''}
-                    ${!isTeam ? `
-                        <div class="pcr-stats">
-                            <span class="pcr-stat">${player.goals || 0}B</span>
-                            <span class="pcr-stat">${player.assists || 0}A</span>
-                            <span class="pcr-stat">${player.points || player.wins || 0}PTS</span>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
+        return renderPlayerCardHTML(player, idx, isSelected, isLocked);
     }).join('');
 
     // Add click event listeners
@@ -514,44 +535,43 @@ function updateTradeSummary() {
     const isValid = selectedMyPlayer.category === selectedPartnerPlayer.category;
     proposeBtn.disabled = !isValid;
 
-    // Get real stats from player data
-    const myStats = selectedMyPlayer.category === 'G'
-        ? `${selectedMyPlayer.data.wins || 0}W ${(selectedMyPlayer.data.savePctg || 0).toFixed(3)}SV%`
-        : selectedMyPlayer.category === 'T'
-        ? 'Équipe NHL'
-        : `${selectedMyPlayer.data.goals || 0}B ${selectedMyPlayer.data.assists || 0}P ${selectedMyPlayer.data.points || 0}PTS`;
+    // Get real stats from current-stats endpoint
+    const myLiveStats = getPlayerCurrentStats(selectedMyPlayer.name);
+    const partnerLiveStats = getPlayerCurrentStats(selectedPartnerPlayer.name);
 
-    const partnerStats = selectedPartnerPlayer.category === 'G'
-        ? `${selectedPartnerPlayer.data.wins || 0}W ${(selectedPartnerPlayer.data.savePctg || 0).toFixed(3)}SV%`
-        : selectedPartnerPlayer.category === 'T'
-        ? 'Équipe NHL'
-        : `${selectedPartnerPlayer.data.goals || 0}B ${selectedPartnerPlayer.data.assists || 0}P ${selectedPartnerPlayer.data.points || 0}PTS`;
+    const buildStats = (category, liveStats) => {
+        if (category === 'G') {
+            const w = liveStats?.wins ?? 0;
+            const sv = liveStats?.savePct != null ? liveStats.savePct.toFixed(3) : '0.000';
+            return `${w}V · ${sv}SV%`;
+        }
+        if (category === 'T') return 'Équipe NHL';
+        const g = liveStats?.goals ?? 0;
+        const a = liveStats?.assists ?? 0;
+        const pts = liveStats?.points ?? 0;
+        return `${g}B · ${a}A · ${pts}PTS`;
+    };
 
-    // Render my player
-    const myPlayerHTML = `
-        <div class="summary-player-photo">
-            <img src="https://assets.nhle.com/mugs/nhl/20252026/${selectedMyPlayer.data.playerId || 0}.png"
-                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><text y=%2250%%25%22 x=%2250%%25%22 text-anchor=%22middle%22 font-size=%2240%22>🏒</text></svg>'">
-        </div>
-        <div class="summary-player-name">${selectedMyPlayer.name}</div>
-        <div class="summary-player-info">
-            ${getCategoryLabel(selectedMyPlayer.category)} · ${selectedMyPlayer.data.teamAbbrev || ''}<br>
-            ${myStats}
-        </div>
-    `;
+    const buildSummaryPlayerHTML = (player, liveStats) => {
+        const face = getMatchingImage(player.name);
+        const teamAbbrev = liveStats?.teamAbbrev || '';
+        return `
+            <div class="summary-player-photo">
+                ${face
+                    ? `<img src="${face}" alt="${player.name}" onerror="this.style.display='none'">`
+                    : '<div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:32px;">🏒</div>'
+                }
+            </div>
+            <div class="summary-player-name">${player.name}</div>
+            <div class="summary-player-info">
+                ${getCategoryLabel(player.category)}${teamAbbrev ? ' · ' + teamAbbrev : ''}<br>
+                ${buildStats(player.category, liveStats)}
+            </div>
+        `;
+    };
 
-    // Render partner player
-    const partnerPlayerHTML = `
-        <div class="summary-player-photo">
-            <img src="https://assets.nhle.com/mugs/nhl/20252026/${selectedPartnerPlayer.data.playerId || 0}.png"
-                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><text y=%2250%%25%22 x=%2250%%25%22 text-anchor=%22middle%22 font-size=%2240%22>🏒</text></svg>'">
-        </div>
-        <div class="summary-player-name">${selectedPartnerPlayer.name}</div>
-        <div class="summary-player-info">
-            ${getCategoryLabel(selectedPartnerPlayer.category)} · ${selectedPartnerPlayer.data.teamAbbrev || ''}<br>
-            ${partnerStats}
-        </div>
-    `;
+    const myPlayerHTML = buildSummaryPlayerHTML(selectedMyPlayer, myLiveStats);
+    const partnerPlayerHTML = buildSummaryPlayerHTML(selectedPartnerPlayer, partnerLiveStats);
 
     document.getElementById('summaryMyPlayer').innerHTML = myPlayerHTML;
     document.getElementById('summaryPartnerPlayer').innerHTML = partnerPlayerHTML;
@@ -574,8 +594,8 @@ function renderStatComparison() {
     const container = document.getElementById('statComparison');
     if (!selectedMyPlayer || !selectedPartnerPlayer) return;
 
-    const my = selectedMyPlayer.data;
-    const partner = selectedPartnerPlayer.data;
+    const my = getPlayerCurrentStats(selectedMyPlayer.name) || {};
+    const partner = getPlayerCurrentStats(selectedPartnerPlayer.name) || {};
 
     // Different stats for goalies vs skaters
     if (selectedMyPlayer.category === 'G') {
@@ -590,8 +610,8 @@ function renderStatComparison() {
             <div class="stat-comp-row">
                 <span class="stat-comp-label">% Arrêts</span>
                 <div class="stat-comp-values">
-                    <span class="my-val">${(my.savePctg || 0).toFixed(3)}</span>
-                    <span class="partner-val">${(partner.savePctg || 0).toFixed(3)}</span>
+                    <span class="my-val">${(my.savePct || 0).toFixed(3)}</span>
+                    <span class="partner-val">${(partner.savePct || 0).toFixed(3)}</span>
                 </div>
             </div>
             <div class="stat-comp-row">
@@ -863,15 +883,16 @@ async function loadCompletedTrades() {
     if (!container) return;
 
     try {
-        // Load all completed trades for the current user
-        const res = await fetch(`${BASE_URL}/trades/all`, { cache: 'no-store' });
-        const allTrades = await res.json();
+        // Load completed trades for the current user
+        const res = await fetch(`${BASE_URL}/trades/completed/${currentUsername}`, { cache: 'no-store' });
 
-        // Filter to only completed trades involving current user
-        const completedTrades = allTrades.filter(t =>
-            t.status === 'accepted' &&
-            (t.fromTeam === myTeamName || t.toTeam === myTeamName)
-        );
+        if (!res.ok) {
+            console.error('Failed to fetch completed trades:', res.status);
+            container.innerHTML = '<p class="empty-msg">Erreur lors du chargement</p>';
+            return;
+        }
+
+        const completedTrades = await res.json();
 
         if (!completedTrades || completedTrades.length === 0) {
             container.innerHTML = '<p class="empty-msg">Aucun échange complété</p>';
