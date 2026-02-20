@@ -3144,6 +3144,7 @@ function getPositionLabel(type) {
 app.post('/trade/accept', async (req, res) => {
     try {
         const { tradeId } = req.body;
+        console.log(`Accepting trade ID: ${tradeId}`);
 
         // Get trade from PostgreSQL
         const tradeResult = await db.query(
@@ -3213,13 +3214,13 @@ app.post('/trade/accept', async (req, res) => {
 
         // EXECUTE TRADE: Swap players between teams
         trade.offering.forEach(item => {
-            removePlayerFromTeam(fromTeam, item);
-            addPlayerToTeam(toTeam, item);
+            removeFromTeam(fromTeam, item);
+            addToTeam(toTeam, item);
         });
 
         trade.receiving.forEach(item => {
-            removePlayerFromTeam(toTeam, item);
-            addPlayerToTeam(fromTeam, item);
+            removeFromTeam(toTeam, item);
+            addToTeam(fromTeam, item);
         });
 
         // Update pool in PostgreSQL
