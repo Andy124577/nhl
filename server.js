@@ -2961,8 +2961,18 @@ app.get('/trades/:draftName', async (req, res) => {
 // Get all trades (for completed trades history)
 app.get('/trades/all', async (req, res) => {
     try {
-        const trades = await loadTrades();
-        res.json([...(trades.pending || []), ...(trades.completed || [])]);
+        const tradesResult = await db.query(
+            'SELECT id, pool_name, trade_data, status, created_at FROM trades ORDER BY created_at DESC'
+        );
+
+        const allTrades = tradesResult.rows.map(row => ({
+            id: row.id,
+            draftName: row.pool_name,
+            ...row.trade_data,
+            status: row.status
+        }));
+
+        res.json(allTrades);
     } catch (error) {
         console.error("Error loading all trades:", error);
         res.status(500).json({ message: "Error loading trades" });
@@ -2973,31 +2983,55 @@ app.get('/trades/all', async (req, res) => {
 app.get('/trades/pending/:username', async (req, res) => {
     try {
         const { username } = req.params;
-        const trades = await loadTrades();
-        const draftData = await loadDraftData();
 
         console.log(`Checking pending trades for user: ${username}`);
-        console.log(`Total pending trades: ${(trades.pending || []).length}`);
 
-        // Find all pending trades where user is the recipient
-        const userPendingTrades = (trades.pending || []).filter(trade => {
-            const draft = draftData[trade.draftName];
-            if (!draft) {
-                console.log(`Draft ${trade.draftName} not found`);
-                return false;
+        // Get all pending trades from PostgreSQL
+        const tradesResult = await db.query(
+            'SELECT id, pool_name, trade_data, created_at FROM trades WHERE status = $1',
+            ['pending']
+        );
+
+        console.log(`Total pending trades in DB: ${tradesResult.rows.length}`);
+
+        // Filter trades where user is the recipient
+        const userPendingTrades = [];
+
+        for (const row of tradesResult.rows) {
+            const tradeData = row.trade_data;
+            const poolName = row.pool_name;
+
+            // Get pool data
+            const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
+            if (poolResult.rows.length === 0) {
+                console.log(`Pool ${poolName} not found`);
+                continue;
             }
 
-            const targetTeam = draft.teams[trade.toTeam];
+            const pool = poolResult.rows[0].pool_data;
+            const targetTeam = pool.teams[tradeData.toTeam];
+
             if (!targetTeam) {
-                console.log(`Team ${trade.toTeam} not found in draft ${trade.draftName}`);
-                return false;
+                console.log(`Team ${tradeData.toTeam} not found in pool ${poolName}`);
+                continue;
             }
 
             const isRecipient = targetTeam.members && targetTeam.members.includes(username);
-            console.log(`Trade ${trade.id}: ${trade.fromTeam} → ${trade.toTeam}, User is recipient: ${isRecipient}`);
+            console.log(`Trade ${row.id}: ${tradeData.fromTeam} → ${tradeData.toTeam}, User is recipient: ${isRecipient}`);
 
-            return isRecipient;
-        });
+            if (isRecipient) {
+                userPendingTrades.push({
+                    id: row.id,
+                    draftName: poolName,
+                    fromTeam: tradeData.fromTeam,
+                    toTeam: tradeData.toTeam,
+                    offering: tradeData.offering,
+                    receiving: tradeData.receiving,
+                    status: 'pending',
+                    date: tradeData.date
+                });
+            }
+        }
 
         console.log(`Found ${userPendingTrades.length} pending trades for ${username}`);
         res.json(userPendingTrades);
@@ -3037,17 +3071,18 @@ app.post('/trade/propose', async (req, res) => {
             });
         }
 
-        // Check if pool allows trades
-        const draftData = await loadDraftData();
-        const pool = draftData[draftName];
-        if (!pool) {
+        // Get pool data from PostgreSQL
+        const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [draftName]);
+        if (poolResult.rows.length === 0) {
             return res.status(404).json({ message: "Pool not found" });
         }
+
+        const pool = poolResult.rows[0].pool_data;
         if (pool.allowTrades === false) {
             return res.status(403).json({ message: "Les échanges ne sont pas autorisés dans ce pool" });
         }
 
-        // VALIDATION: Check if fromTeam exists and has all offered players
+        // VALIDATION: Check if fromTeam exists and has offered player
         const fromTeamData = pool.teams[fromTeam];
         if (!fromTeamData) {
             return res.status(404).json({ message: "Votre équipe n'a pas été trouvée" });
@@ -3066,21 +3101,32 @@ app.post('/trade/propose', async (req, res) => {
             });
         }
 
-        const trades = await loadTrades();
-        if (!trades.pending) trades.pending = [];
-
-        const tradeId = `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-        const newTrade = {
-            id: tradeId,
-            draftName,
+        // Insert trade into PostgreSQL
+        const tradeData = {
             fromTeam,
             toTeam,
             offering,
             receiving,
-            status: 'pending',
             date: new Date().toISOString()
         };
+
+        const insertResult = await db.query(
+            `INSERT INTO trades (pool_name, trade_data, status, created_at, updated_at)
+             VALUES ($1, $2, $3, NOW(), NOW())
+             RETURNING id`,
+            [draftName, JSON.stringify(tradeData), 'pending']
+        );
+
+        const tradeId = insertResult.rows[0].id;
+
+        console.log(`📤 Trade proposed: ${fromTeam} → ${toTeam} (${offeredPlayer.type}: ${offeredPlayer.name} ↔ ${receivedPlayer.name})`);
+
+        res.json({ message: "Trade proposal sent successfully", tradeId });
+    } catch (error) {
+        console.error("Error sending trade proposal:", error);
+        res.status(500).json({ message: "Error sending trade proposal" });
+    }
+});
 
         trades.pending.push(newTrade);
         await saveTrades(trades);
@@ -3113,34 +3159,144 @@ function getPositionLabel(type) {
 app.post('/trade/accept', async (req, res) => {
     try {
         const { tradeId } = req.body;
-        const trades = await loadTrades();
-        const draftData = await loadDraftData();
 
-        // Find the trade
-        const tradeIndex = trades.pending.findIndex(t => t.id === tradeId);
-        if (tradeIndex === -1) {
+        // Get trade from PostgreSQL
+        const tradeResult = await db.query(
+            'SELECT id, pool_name, trade_data, status FROM trades WHERE id = $1',
+            [tradeId]
+        );
+
+        if (tradeResult.rows.length === 0) {
             return res.status(404).json({ message: "Trade not found" });
         }
 
-        const trade = trades.pending[tradeIndex];
-        const draft = draftData[trade.draftName];
-        if (!draft) {
-            return res.status(404).json({ message: "Draft not found" });
+        const tradeRow = tradeResult.rows[0];
+        if (tradeRow.status !== 'pending') {
+            return res.status(400).json({ message: "Trade is no longer pending" });
         }
 
+        const trade = tradeRow.trade_data;
+        const poolName = tradeRow.pool_name;
+
+        // Get pool data
+        const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
+        if (poolResult.rows.length === 0) {
+            return res.status(404).json({ message: "Pool not found" });
+        }
+
+        const pool = poolResult.rows[0].pool_data;
+
         // Check if pool allows trades
-        if (draft.allowTrades === false) {
+        if (pool.allowTrades === false) {
             return res.status(403).json({ message: "Les échanges ne sont pas autorisés dans ce pool" });
         }
 
-        const fromTeam = draft.teams[trade.fromTeam];
-        const toTeam = draft.teams[trade.toTeam];
+        const fromTeam = pool.teams[trade.fromTeam];
+        const toTeam = pool.teams[trade.toTeam];
 
         if (!fromTeam || !toTeam) {
             return res.status(404).json({ message: "Teams not found" });
         }
 
         // VALIDATION: Check if fromTeam still has all offered players
+        const fromMissingPlayers = [];
+        trade.offering.forEach(item => {
+            if (!teamHasPlayer(fromTeam, item)) {
+                fromMissingPlayers.push(item.name);
+            }
+        });
+
+        if (fromMissingPlayers.length > 0) {
+            return res.status(400).json({
+                message: `${trade.fromTeam} no longer has: ${fromMissingPlayers.join(', ')}`
+            });
+        }
+
+        // VALIDATION: Check if toTeam still has all receiving players
+        const toMissingPlayers = [];
+        trade.receiving.forEach(item => {
+            if (!teamHasPlayer(toTeam, item)) {
+                toMissingPlayers.push(item.name);
+            }
+        });
+
+        if (toMissingPlayers.length > 0) {
+            return res.status(400).json({
+                message: `${trade.toTeam} no longer has: ${toMissingPlayers.join(', ')}`
+            });
+        }
+
+        // EXECUTE TRADE: Swap players between teams
+        trade.offering.forEach(item => {
+            removePlayerFromTeam(fromTeam, item);
+            addPlayerToTeam(toTeam, item);
+        });
+
+        trade.receiving.forEach(item => {
+            removePlayerFromTeam(toTeam, item);
+            addPlayerToTeam(fromTeam, item);
+        });
+
+        // Update pool in PostgreSQL
+        await db.query(
+            'UPDATE pools SET pool_data = $1, updated_at = NOW() WHERE pool_name = $2',
+            [JSON.stringify(pool), poolName]
+        );
+
+        // Mark trade as completed in PostgreSQL
+        const updatedTradeData = {
+            ...trade,
+            status: 'accepted',
+            completedDate: new Date().toISOString()
+        };
+
+        await db.query(
+            'UPDATE trades SET trade_data = $1, status = $2, updated_at = NOW() WHERE id = $3',
+            [JSON.stringify(updatedTradeData), 'completed', tradeId]
+        );
+
+        // Cancel conflicting trades
+        const conflictingTrades = await db.query(
+            `SELECT id, trade_data FROM trades
+             WHERE pool_name = $1 AND status = 'pending' AND id != $2`,
+            [poolName, tradeId]
+        );
+
+        let cancelledCount = 0;
+        for (const conflictRow of conflictingTrades.rows) {
+            const conflictTrade = conflictRow.trade_data;
+
+            // Check if any players in this trade were involved in the accepted trade
+            const involvesOfferedPlayers = trade.offering.some(p =>
+                conflictTrade.offering.some(cp => cp.name === p.name) ||
+                conflictTrade.receiving.some(cp => cp.name === p.name)
+            );
+
+            const involvesReceivedPlayers = trade.receiving.some(p =>
+                conflictTrade.offering.some(cp => cp.name === p.name) ||
+                conflictTrade.receiving.some(cp => cp.name === p.name)
+            );
+
+            if (involvesOfferedPlayers || involvesReceivedPlayers) {
+                await db.query(
+                    'UPDATE trades SET status = $1, updated_at = NOW() WHERE id = $2',
+                    ['cancelled', conflictRow.id]
+                );
+                cancelledCount++;
+            }
+        }
+
+        console.log(`✅ Trade accepted: ${trade.fromTeam} ↔ ${trade.toTeam} (${cancelledCount} conflicting trades cancelled)`);
+
+        res.json({
+            message: "Trade accepted successfully",
+            cancelledConflictingTrades: cancelledCount
+        });
+    } catch (error) {
+        console.error("Error accepting trade:", error);
+        res.status(500).json({ message: "Error accepting trade" });
+    }
+});
         const missingFromOffering = [];
         trade.offering.forEach(item => {
             if (!teamHasPlayer(fromTeam, item)) {
@@ -3218,20 +3374,18 @@ app.post('/trade/accept', async (req, res) => {
 app.post('/trade/decline', async (req, res) => {
     try {
         const { tradeId } = req.body;
-        const trades = await loadTrades();
 
-        // Remove from pending
-        const tradeIndex = trades.pending.findIndex(t => t.id === tradeId);
-        if (tradeIndex === -1) {
-            return res.status(404).json({ message: "Trade not found" });
+        // Update trade status to declined in PostgreSQL
+        const result = await db.query(
+            'UPDATE trades SET status = $1, updated_at = NOW() WHERE id = $2 AND status = $3',
+            ['declined', tradeId, 'pending']
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "Trade not found or already processed" });
         }
 
-        trades.pending.splice(tradeIndex, 1);
-        await saveTrades(trades);
-
-        // Emit socket event
-        io.emit('tradeUpdated');
-
+        console.log(`❌ Trade declined: ${tradeId}`);
         res.json({ message: "Trade declined successfully" });
     } catch (error) {
         console.error("Error declining trade:", error);
