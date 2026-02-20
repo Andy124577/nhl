@@ -863,15 +863,16 @@ async function loadCompletedTrades() {
     if (!container) return;
 
     try {
-        // Load all completed trades for the current user
-        const res = await fetch(`${BASE_URL}/trades/all`, { cache: 'no-store' });
-        const allTrades = await res.json();
+        // Load completed trades for the current user
+        const res = await fetch(`${BASE_URL}/trades/completed/${currentUsername}`, { cache: 'no-store' });
 
-        // Filter to only completed trades involving current user
-        const completedTrades = allTrades.filter(t =>
-            t.status === 'accepted' &&
-            (t.fromTeam === myTeamName || t.toTeam === myTeamName)
-        );
+        if (!res.ok) {
+            console.error('Failed to fetch completed trades:', res.status);
+            container.innerHTML = '<p class="empty-msg">Erreur lors du chargement</p>';
+            return;
+        }
+
+        const completedTrades = await res.json();
 
         if (!completedTrades || completedTrades.length === 0) {
             container.innerHTML = '<p class="empty-msg">Aucun échange complété</p>';
