@@ -3128,21 +3128,6 @@ app.post('/trade/propose', async (req, res) => {
     }
 });
 
-        trades.pending.push(newTrade);
-        await saveTrades(trades);
-
-        // Emit socket event for real-time notification
-        io.emit('tradePending');
-
-        console.log(`📤 Trade proposed: ${fromTeam} → ${toTeam} (${offeredPlayer.type}: ${offeredPlayer.name} ↔ ${receivedPlayer.name})`);
-
-        res.json({ message: "Trade proposal sent successfully", tradeId });
-    } catch (error) {
-        console.error("Error sending trade proposal:", error);
-        res.status(500).json({ message: "Error sending trade proposal" });
-    }
-});
-
 // Helper function to get position label for error messages
 function getPositionLabel(type) {
     const labels = {
