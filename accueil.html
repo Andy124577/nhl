@@ -38,6 +38,7 @@
                 <div class="hero-actions">
                     <a href="pool.html?tab=create" class="btn-hero-primary">🚀 Créer un pool</a>
                     <a href="pool.html?tab=join" class="btn-hero-secondary">Rejoindre un pool →</a>
+                    <button onclick="scrollToHowItWorks()" class="btn-hero-tertiary">Comment ça marche ?</button>
                 </div>
                 <!-- Quick nav pills for logged-in users -->
                 <div class="hero-quick-nav" id="heroQuickNav" style="display:none;">
@@ -78,37 +79,6 @@
         </div>
     </section>
 
-    <!-- Pending draft alerts strip -->
-    <div id="actionAlerts" class="alerts-strip"></div>
-
-    <!-- ============================================================ -->
-    <!-- LIVE LEADERBOARD SECTION                                     -->
-    <!-- ============================================================ -->
-    <section class="home-section leaderboard-section">
-        <div class="section-container">
-            <div class="section-title-row">
-                <div class="section-title-group">
-                    <span class="section-icon">🔥</span>
-                    <h2 class="section-title">Classement en direct</h2>
-                    <span class="section-pool-name" id="leaderboardPoolName"></span>
-                </div>
-                <a href="classement.html" class="section-link">Voir tout →</a>
-            </div>
-
-            <!-- Skeleton -->
-            <div class="skeleton-loader" id="leaderboardSkeleton">
-                <div class="skeleton" style="height:64px;border-radius:12px;margin-bottom:10px;"></div>
-                <div class="skeleton" style="height:64px;border-radius:12px;margin-bottom:10px;"></div>
-                <div class="skeleton" style="height:64px;border-radius:12px;margin-bottom:10px;"></div>
-                <div class="skeleton" style="height:64px;border-radius:12px;"></div>
-            </div>
-            <!-- Content -->
-            <div class="actual-content" id="leaderboardList" style="display:none;">
-                <!-- Filled by JS -->
-            </div>
-        </div>
-    </section>
-
     <!-- ============================================================ -->
     <!-- TOP PERFORMING PLAYERS SECTION                               -->
     <!-- ============================================================ -->
@@ -118,7 +88,12 @@
                 <div class="section-title-group">
                     <span class="section-icon">🏒</span>
                     <h2 class="section-title">Meilleurs joueurs</h2>
-                    <span class="section-subtitle">7 derniers jours</span>
+                    <span class="section-subtitle" id="timeRangeLabel">7 derniers jours</span>
+                </div>
+                <div class="time-filters">
+                    <button class="time-filter active" data-days="7" onclick="changeTimeRange(7)">7J</button>
+                    <button class="time-filter" data-days="14" onclick="changeTimeRange(14)">14J</button>
+                    <button class="time-filter" data-days="30" onclick="changeTimeRange(30)">30J</button>
                 </div>
                 <a href="index.html" class="section-link">Voir tout →</a>
             </div>
@@ -143,7 +118,7 @@
     <!-- ============================================================ -->
     <!-- HOW IT WORKS SECTION                                         -->
     <!-- ============================================================ -->
-    <section class="how-it-works-section">
+    <section class="how-it-works-section" id="comment-ca-marche">
         <div class="section-container">
             <div class="section-title-row center">
                 <div class="section-title-group">

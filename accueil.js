@@ -30,8 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await Promise.all([loadPools(), loadStats()]);
 
     // Render all sections
-    renderAlerts();
-    renderLeaderboard();
     renderHeroLeaderboard();
 });
 
@@ -346,8 +344,10 @@ function renderTopPlayersError() {
     content.style.display = 'grid';
     content.innerHTML = `
         <div style="grid-column:1/-1;text-align:center;padding:48px;">
-            <p style="color:var(--text-secondary);margin-bottom:18px;">
-                Impossible de charger les données des joueurs</p>
+            <p style="color:var(--text-secondary);margin-bottom:12px;font-size:1.1rem;">
+                📊 Aucune donnée disponible</p>
+            <p style="color:var(--text-gray);margin-bottom:18px;font-size:0.9rem;">
+                Les statistiques des joueurs seront disponibles une fois les logs de parties chargés dans la base de données.</p>
             <button onclick="location.reload()"
                 style="padding:11px 24px;background:var(--primary);color:var(--bg);
                        border:none;border-radius:10px;font-weight:800;cursor:pointer;
@@ -384,4 +384,14 @@ function changeTimeRange(days) {
 
     // Reload stats with new range
     loadStats(days);
+}
+
+// ============================================================
+// SMOOTH SCROLL
+// ============================================================
+function scrollToHowItWorks() {
+    const section = document.getElementById('comment-ca-marche');
+    if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }

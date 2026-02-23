@@ -1322,10 +1322,18 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
                     losses: (combined.losses || 0) + (entry.losses || 0),
                     shutouts: (combined.shutouts || 0) + (entry.shutouts || 0),
                     otLosses: (combined.otLosses || 0) + (entry.otLosses || 0),
-                    // For percentages, we'll recalculate later if needed
-                    savePct: entry.savePct || entry.savePercentage || combined.savePct || 0
+                    // Track saves and shotsAgainst for correct SV% calculation
+                    saves: (combined.saves || 0) + (entry.saves || 0),
+                    shotsAgainst: (combined.shotsAgainst || 0) + (entry.shotsAgainst || 0)
                 };
             }, {});
+
+            // Compute savePct from combined saves/shotsAgainst for traded goalies
+            if (seasonStats.shotsAgainst > 0) {
+                seasonStats.savePct = seasonStats.saves / seasonStats.shotsAgainst;
+            } else {
+                seasonStats.savePct = 0;
+            }
         } else {
             // No NHL stats found for current season - return zeros
             console.log(`⚠️ ${playerName} has no NHL stats for 20252026 - returning zeros`);
@@ -1362,7 +1370,13 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
             losses = seasonStats.losses || 0;
             shutouts = seasonStats.shutouts || 0;
             otLosses = seasonStats.otLosses || 0;
+
+            // Try savePct from API, or savePercentage, or compute from saves/shotsAgainst
             savePct = seasonStats.savePct || seasonStats.savePercentage || 0;
+            if (!savePct && seasonStats.saves && seasonStats.shotsAgainst && seasonStats.shotsAgainst > 0) {
+                savePct = seasonStats.saves / seasonStats.shotsAgainst;
+            }
+
             calculatedPoints = (shutouts * 5) + (wins * 2) + (otLosses * 1);
         } else {
             // Skater: use regular points (goals + assists)

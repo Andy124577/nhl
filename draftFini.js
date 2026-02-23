@@ -183,7 +183,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const clanName = localStorage.getItem("draftClan");
     if (!clanName) {
         alert("Aucun clan sélectionné.");
-        window.location.href = "draft.html";
+        window.location.href = "classement.html";
         return;
     }
 
