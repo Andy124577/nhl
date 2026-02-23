@@ -66,7 +66,23 @@
 
         <!-- Level 2: Pool Standings View -->
         <div id="poolStandingsView" class="view-container" style="display: none;">
-            <!-- Skeleton Loader -->
+            <!-- H2H Tabs (shown only for H2H pools) -->
+            <div id="h2hTabs" class="h2h-tabs" style="display: none;">
+                <button class="h2h-tab active" data-tab="matchups" onclick="switchH2HTab('matchups')">Duel en cours</button>
+                <button class="h2h-tab" data-tab="standings" onclick="switchH2HTab('standings')">Classement</button>
+                <button class="h2h-tab" data-tab="history" onclick="switchH2HTab('history')">Historique</button>
+            </div>
+
+            <!-- H2H: Current Matchups -->
+            <div id="h2hMatchupsView" class="h2h-section" style="display: none;">
+                <div class="h2h-week-header" id="h2hWeekHeader"></div>
+                <div id="h2hMatchupsList" class="h2h-matchups-list"></div>
+                <button id="h2hFinalizeBtn" class="h2h-finalize-btn" style="display: none;" onclick="finalizeCurrentWeek()">
+                    Finaliser la semaine
+                </button>
+            </div>
+
+            <!-- Skeleton Loader (for standings) -->
             <div class="skeleton-loader" id="standingsSkeleton">
                 <div class="standing-card-skeleton">
                     <div class="skeleton-rank"></div>
@@ -93,9 +109,14 @@
                     <div class="skeleton skeleton-points"></div>
                 </div>
             </div>
-            <!-- Actual Content -->
+            <!-- Standings Content -->
             <div id="standingsList" class="standings-list" style="display: none;">
                 <!-- Standing cards will be injected here -->
+            </div>
+
+            <!-- H2H: History -->
+            <div id="h2hHistoryView" class="h2h-section" style="display: none;">
+                <div id="h2hHistoryList" class="h2h-history-list"></div>
             </div>
         </div>
 
