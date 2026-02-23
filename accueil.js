@@ -298,7 +298,7 @@ function renderTopPlayers() {
             ${isHot ? '<span class="hot-streak" title="En feu!">🔥</span>' : ''}
             <div class="player-card-photo">
                 <img src="${headshot}" alt="${name}"
-                     onerror="this.parentElement.innerHTML='<span class=\\"no-photo\\">🏒</span>'"
+                     onerror="this.style.display='none';this.parentElement.innerHTML='<span class=&quot;no-photo&quot;>🏒</span>';"
                      loading="lazy">
             </div>
             <div class="player-card-name">${name}</div>
@@ -311,7 +311,7 @@ function renderTopPlayers() {
                     </div>
                     <div class="pc-stat">
                         <span class="pc-stat-val pts">${fantasyPts}</span>
-                        <span class="pc-stat-label">FPTS</span>
+                        <span class="pc-stat-label">PTS</span>
                     </div>
                     <div class="pc-stat">
                         <span class="pc-stat-val">${saves}</span>
@@ -324,7 +324,7 @@ function renderTopPlayers() {
                     </div>
                     <div class="pc-stat">
                         <span class="pc-stat-val pts">${fantasyPts}</span>
-                        <span class="pc-stat-label">FPTS</span>
+                        <span class="pc-stat-label">PTS</span>
                     </div>
                     <div class="pc-stat">
                         <span class="pc-stat-val">${assists}</span>
