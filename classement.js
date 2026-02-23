@@ -22,6 +22,7 @@ const VIEW_STATES = {
 };
 
 let currentView = VIEW_STATES.POOL_LIST;
+let currentH2HTab = 'matchups'; // 'matchups' | 'standings' | 'history'
 
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', async () => {
@@ -205,14 +206,31 @@ function showPoolStandings(poolName) {
     document.getElementById('poolStandingsView').style.display = 'block';
     document.getElementById('teamRosterView').style.display = 'none';
 
-    // Show skeleton initially
-    document.getElementById('standingsSkeleton').style.display = 'flex';
-    document.getElementById('standingsList').style.display = 'none';
+    const poolMode = poolData.poolMode || 'cumulative';
+    const h2hTabs = document.getElementById('h2hTabs');
+    const h2hMatchupsView = document.getElementById('h2hMatchupsView');
+    const h2hHistoryView = document.getElementById('h2hHistoryView');
 
-    // Render standings after a short delay to show skeleton
-    setTimeout(() => {
-        renderPoolStandings(poolData, poolName);
-    }, 100);
+    if (poolMode === 'head-to-head') {
+        // Show H2H tabs, default to matchups tab
+        h2hTabs.style.display = 'flex';
+        currentH2HTab = 'matchups';
+        switchH2HTab('matchups');
+        loadH2HCurrentWeek(poolName);
+    } else {
+        // Hide H2H elements for cumulative pools
+        h2hTabs.style.display = 'none';
+        h2hMatchupsView.style.display = 'none';
+        h2hHistoryView.style.display = 'none';
+
+        // Show skeleton initially
+        document.getElementById('standingsSkeleton').style.display = 'flex';
+        document.getElementById('standingsList').style.display = 'none';
+
+        setTimeout(() => {
+            renderPoolStandings(poolData, poolName);
+        }, 100);
+    }
 }
 
 function renderPoolStandings(poolData, poolName) {
@@ -691,6 +709,190 @@ function calculateTeamPoints(roster) {
         assists: totalAssists,
         points: totalPoints
     };
+}
+
+// ==================== H2H TAB SWITCHING & RENDERING ====================
+function switchH2HTab(tab) {
+    currentH2HTab = tab;
+
+    // Update tab active states
+    document.querySelectorAll('.h2h-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === tab);
+    });
+
+    // Show/hide sections
+    document.getElementById('h2hMatchupsView').style.display = (tab === 'matchups') ? 'block' : 'none';
+    document.getElementById('standingsSkeleton').style.display = 'none';
+    document.getElementById('standingsList').style.display = (tab === 'standings') ? 'flex' : 'none';
+    document.getElementById('h2hHistoryView').style.display = (tab === 'history') ? 'block' : 'none';
+
+    if (tab === 'standings' && currentPoolName) {
+        const poolData = allPoolsData[currentPoolName];
+        if (poolData) renderPoolStandings(poolData, currentPoolName);
+    }
+
+    if (tab === 'history' && currentPoolName) {
+        renderH2HHistory(currentPoolName);
+    }
+}
+
+async function loadH2HCurrentWeek(poolName) {
+    const matchupsList = document.getElementById('h2hMatchupsList');
+    const weekHeader = document.getElementById('h2hWeekHeader');
+    matchupsList.innerHTML = '<div class="h2h-loading">Chargement des scores...</div>';
+
+    try {
+        const res = await fetch(`${BASE_URL}/h2h/current-week-scores?poolName=${encodeURIComponent(poolName)}`, { cache: 'no-store' });
+        if (!res.ok) throw new Error('Failed to fetch');
+
+        const data = await res.json();
+
+        // Week header
+        const weekStartDate = new Date(data.weekStart);
+        const weekEndDate = new Date(data.weekEnd);
+        const formatDate = d => d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+
+        weekHeader.innerHTML = `
+            <div class="h2h-week-label">Semaine ${data.currentWeek}</div>
+            <div class="h2h-week-dates">${formatDate(weekStartDate)} - ${formatDate(weekEndDate)}</div>
+        `;
+
+        // Render matchups
+        if (!data.matchups || data.matchups.length === 0) {
+            matchupsList.innerHTML = '<div class="h2h-empty">Aucun duel cette semaine</div>';
+            return;
+        }
+
+        matchupsList.innerHTML = data.matchups.map(m => {
+            const t1Leading = m.team1Points > m.team2Points;
+            const t2Leading = m.team2Points > m.team1Points;
+            return `
+                <div class="h2h-matchup-card">
+                    <div class="h2h-team ${t1Leading ? 'leading' : ''}">
+                        <div class="h2h-team-name">${m.team1}</div>
+                        <div class="h2h-team-members">${getTeamMembers(poolName, m.team1)}</div>
+                    </div>
+                    <div class="h2h-score-block">
+                        <span class="h2h-score ${t1Leading ? 'leading' : ''}">${m.team1Points.toFixed(1)}</span>
+                        <span class="h2h-vs">VS</span>
+                        <span class="h2h-score ${t2Leading ? 'leading' : ''}">${m.team2Points.toFixed(1)}</span>
+                    </div>
+                    <div class="h2h-team ${t2Leading ? 'leading' : ''}">
+                        <div class="h2h-team-name">${m.team2}</div>
+                        <div class="h2h-team-members">${getTeamMembers(poolName, m.team2)}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Show finalize button for pool creator
+        const poolData = allPoolsData[poolName];
+        const username = localStorage.getItem('username');
+        const h2hFinalizeBtn = document.getElementById('h2hFinalizeBtn');
+        if (poolData && h2hFinalizeBtn) {
+            // Show button if user is in the pool (any member can finalize)
+            h2hFinalizeBtn.style.display = 'block';
+            h2hFinalizeBtn.dataset.poolName = poolName;
+        }
+
+    } catch (error) {
+        console.error('Error loading H2H scores:', error);
+        matchupsList.innerHTML = '<div class="h2h-empty">Erreur lors du chargement</div>';
+    }
+}
+
+function renderH2HHistory(poolName) {
+    const historyList = document.getElementById('h2hHistoryList');
+    const poolData = allPoolsData[poolName];
+
+    if (!poolData || !poolData.h2hData || !poolData.h2hData.matchupHistory || poolData.h2hData.matchupHistory.length === 0) {
+        historyList.innerHTML = '<div class="h2h-empty">Aucun historique disponible</div>';
+        return;
+    }
+
+    const history = [...poolData.h2hData.matchupHistory].reverse(); // Newest first
+
+    historyList.innerHTML = history.map(week => {
+        const weekStart = week.weekStart ? new Date(week.weekStart) : null;
+        const weekEnd = week.weekEnd ? new Date(week.weekEnd) : null;
+        const formatDate = d => d ? d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' }) : '';
+        const dateRange = weekStart && weekEnd ? `${formatDate(weekStart)} - ${formatDate(weekEnd)}` : '';
+
+        const matchupsHTML = week.matchups.map(m => {
+            const isT1Winner = m.winner === m.team1;
+            const isT2Winner = m.winner === m.team2;
+            const isTie = m.winner === 'tie';
+            return `
+                <div class="h2h-history-matchup">
+                    <span class="h2h-hist-team ${isT1Winner ? 'winner' : ''}">${m.team1}</span>
+                    <span class="h2h-hist-score">
+                        <span class="${isT1Winner ? 'winner' : ''}">${(m.team1Points || 0).toFixed(1)}</span>
+                        <span class="h2h-hist-sep">${isTie ? '=' : '-'}</span>
+                        <span class="${isT2Winner ? 'winner' : ''}">${(m.team2Points || 0).toFixed(1)}</span>
+                    </span>
+                    <span class="h2h-hist-team ${isT2Winner ? 'winner' : ''}">${m.team2}</span>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div class="h2h-history-week">
+                <div class="h2h-history-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                    <span class="h2h-history-title">Semaine ${week.weekNumber}</span>
+                    <span class="h2h-history-dates">${dateRange}</span>
+                    <span class="h2h-history-chevron">&#9660;</span>
+                </div>
+                <div class="h2h-history-body">
+                    ${matchupsHTML}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getTeamMembers(poolName, teamName) {
+    const poolData = allPoolsData[poolName];
+    if (!poolData || !poolData.teams[teamName]) return '';
+    return (poolData.teams[teamName].members || []).join(', ');
+}
+
+async function finalizeCurrentWeek() {
+    const btn = document.getElementById('h2hFinalizeBtn');
+    const poolName = btn.dataset.poolName;
+    if (!poolName) return;
+
+    if (!confirm(`Voulez-vous finaliser la semaine en cours pour "${poolName}" ?`)) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Finalisation...';
+
+    try {
+        const res = await fetch(`${BASE_URL}/h2h/finalize-week`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ poolName })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            alert(data.message || 'Erreur lors de la finalisation');
+            return;
+        }
+
+        alert(`Semaine ${data.previousWeek} finalisee! Semaine ${data.currentWeek} commencee.`);
+
+        // Reload pool data and refresh
+        await loadAllUserPools();
+        showPoolStandings(poolName);
+
+    } catch (error) {
+        console.error('Error finalizing week:', error);
+        alert('Erreur lors de la finalisation');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Finaliser la semaine';
+    }
 }
 
 function showError(title, message) {
