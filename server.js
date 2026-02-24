@@ -2584,7 +2584,7 @@ async function calculateHotPlayers(days) {
             .map(p => {
                 // Calculate per-game average
                 p.fantasyPointsPerGame = p.totalFantasyPoints / p.gamesPlayed;
-                p.headshot = `https://assets.nhle.com/mugs/nhl/20252026/${p.playerId}.png`;
+                p.headshot = `https://assets.nhle.com/mugs/nhl/20252026/${p.teamAbbrev}/${p.playerId}.png`;
                 p.isHot = p.fantasyPointsPerGame >= 10; // Hot if averaging 10+ fantasy pts per game
                 return p;
             });

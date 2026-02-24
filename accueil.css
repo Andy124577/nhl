@@ -532,6 +532,7 @@ body {
     background: radial-gradient(circle at 50% 0%, rgba(0,212,255,.08), transparent 60%);
     opacity: 0;
     transition: opacity .3s;
+    pointer-events: none;
 }
 .step-card:hover { border-color: var(--primary); box-shadow: var(--glow-primary); transform: translateY(-5px); }
 .step-card:hover::after { opacity: 1; }
@@ -563,6 +564,9 @@ body {
     font-size: .85rem; font-weight: 700;
     transition: all .25s;
     margin-top: auto;
+    position: relative;
+    z-index: 1;
+    cursor: pointer;
 }
 .step-cta:hover {
     background: rgba(0,212,255,.18);
