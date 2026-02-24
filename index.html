@@ -272,5 +272,24 @@
     <script defer src="lazy-load.js"></script>
     <script defer src="index.js?v=20250101-debug2"></script>
     <script defer src="navbar.js"></script>
+    <script>
+    // Auto-open player career modal when coming from accueil hot players
+    window.addEventListener('load', function() {
+        var params = new URLSearchParams(window.location.search);
+        var viewId = params.get('viewPlayer');
+        if (viewId) {
+            history.replaceState(null, '', 'index.html');
+            var attempts = 0;
+            var check = setInterval(function() {
+                attempts++;
+                if (typeof showCareerStats === 'function') {
+                    clearInterval(check);
+                    showCareerStats(parseInt(viewId), '', false);
+                }
+                if (attempts > 50) clearInterval(check);
+            }, 200);
+        }
+    });
+    </script>
 </body>
 </html>
