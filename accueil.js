@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Fetch pools and stats in parallel
-    await Promise.all([loadPools(), loadStats()]);
+    await Promise.all([loadPools(), loadCurrentStats(), loadStats()]);
 
     // Render all sections
     renderHeroLeaderboard();
@@ -86,7 +86,19 @@ async function loadPools() {
 }
 
 // ============================================================
-// STATS LOADING
+// CURRENT STATS LOADING (for leaderboard)
+// ============================================================
+async function loadCurrentStats() {
+    try {
+        const res = await fetch(`${BASE_URL}/current-stats`, { cache: 'no-store' });
+        userData.statsData = await res.json();
+    } catch (err) {
+        console.warn('Could not load current stats:', err);
+    }
+}
+
+// ============================================================
+// STATS LOADING (hot players)
 // ============================================================
 let currentTimeRange = 7; // Default to 7 days
 
@@ -94,9 +106,24 @@ async function loadStats(days = 7) {
     try {
         currentTimeRange = days;
 
-        // Load hot players for specified time range
         const hotPlayersRes = await fetch(`${BASE_URL}/hot-players-last${days}days`);
         userData.hotPlayers = await hotPlayersRes.json();
+
+        const hasPlayers = userData.hotPlayers?.topPlayers?.length > 0;
+
+        // Fallback: if no data, try larger range
+        if (!hasPlayers && days < 30) {
+            const nextDays = days === 7 ? 14 : 30;
+            console.log(`No hot players for ${days} days, trying ${nextDays} days...`);
+            return loadStats(nextDays);
+        }
+
+        // Update active button and label to reflect actual range shown
+        document.querySelectorAll('.time-filter').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.days == currentTimeRange);
+        });
+        const label = document.getElementById('timeRangeLabel');
+        if (label) label.textContent = `${currentTimeRange} derniers jours`;
 
         renderTopPlayers();
     } catch (err) {
@@ -130,19 +157,19 @@ function buildTeamScores(pool) {
     const teams  = pool.allTeams || {};
     const stats  = userData.statsData;
 
-    // Build player→points lookup
+    // Build player→points lookup from current-stats API
     const playerPts = {};
-    if (stats) {
-        const all = [
-            ...(stats.Top_Offensive || []),
-            ...(stats.Top_Rookies   || []),
-            ...(stats.Top_Defensive || []),
-            ...(stats.Top_Goalies   || [])
-        ];
-        all.forEach(p => {
-            const name = p.skaterFullName || p.goalieFullName ||
-                         `${p.firstName || ''} ${p.lastName || ''}`.trim();
-            if (name) playerPts[name] = Math.max(playerPts[name] || 0, p.points || p.wins || 0);
+    if (stats && stats.players) {
+        stats.players.forEach(p => {
+            const name = p.playerName;
+            if (!name) return;
+            if (p.position === 'G') {
+                // Goalie fantasy points: shutouts*5 + wins*2 + otLosses*1
+                playerPts[name] = (p.shutouts || 0) * 5 + (p.wins || 0) * 2 + (p.otLosses || 0) * 1;
+            } else {
+                // Skater: use points from API
+                playerPts[name] = p.points || 0;
+            }
         });
     }
 
@@ -289,7 +316,7 @@ function renderTopPlayers() {
         const wins    = p.wins || 0;
         const saves   = p.saves || 0;
 
-        const headshot = p.headshot || `https://assets.nhle.com/mugs/nhl/20252026/${p.playerId}.png`;
+        const headshot = p.headshot || `https://assets.nhle.com/mugs/nhl/20252026/${team}/${p.playerId}.png`;
 
         return `
         <div class="player-card" onclick="viewPlayer(${p.playerId || ''})"
@@ -298,20 +325,21 @@ function renderTopPlayers() {
             ${isHot ? '<span class="hot-streak" title="En feu!">🔥</span>' : ''}
             <div class="player-card-photo">
                 <img src="${headshot}" alt="${name}"
-                     onerror="this.style.display='none';this.parentElement.innerHTML='<span class=&quot;no-photo&quot;>🏒</span>';"
+                     onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';"
                      loading="lazy">
+                <span class="no-photo" style="display:none">🏒</span>
             </div>
             <div class="player-card-name">${name}</div>
             <div class="player-card-team">${team} · ${gamesPlayed} matchs</div>
             <div class="player-card-stats">
                 ${pos === 'G' ? `
                     <div class="pc-stat">
-                        <span class="pc-stat-val">${wins}</span>
-                        <span class="pc-stat-label">VIC</span>
+                        <span class="pc-stat-val pts">${fantasyPts}</span>
+                        <span class="pc-stat-label">FPTS</span>
                     </div>
                     <div class="pc-stat">
-                        <span class="pc-stat-val pts">${fantasyPts}</span>
-                        <span class="pc-stat-label">PTS</span>
+                        <span class="pc-stat-val">${wins}</span>
+                        <span class="pc-stat-label">VIC</span>
                     </div>
                     <div class="pc-stat">
                         <span class="pc-stat-val">${saves}</span>
@@ -319,12 +347,12 @@ function renderTopPlayers() {
                     </div>
                 ` : `
                     <div class="pc-stat">
-                        <span class="pc-stat-val">${goals}</span>
-                        <span class="pc-stat-label">BTS</span>
+                        <span class="pc-stat-val pts">${fantasyPts}</span>
+                        <span class="pc-stat-label">FPTS</span>
                     </div>
                     <div class="pc-stat">
-                        <span class="pc-stat-val pts">${fantasyPts}</span>
-                        <span class="pc-stat-label">PTS</span>
+                        <span class="pc-stat-val">${goals}</span>
+                        <span class="pc-stat-label">BTS</span>
                     </div>
                     <div class="pc-stat">
                         <span class="pc-stat-val">${assists}</span>
@@ -362,8 +390,7 @@ function renderTopPlayersError() {
 // ============================================================
 function viewPlayer(playerId) {
     if (playerId) {
-        localStorage.setItem('viewPlayerId', playerId);
-        window.location.href = 'index.html';
+        window.location.href = `index.html?viewPlayer=${playerId}`;
     }
 }
 
