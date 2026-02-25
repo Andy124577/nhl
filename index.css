@@ -1070,12 +1070,13 @@ tbody tr:hover .player-photo img.face {
     align-items: flex-start;
   }
 
-  /* Player name - next to photo */
+  /* Player name - takes remaining space in first row, forces wrap */
   tbody tr td:nth-child(3) {
     order: 3;
-    flex: 1 1 auto;
+    flex: 1 1 100%;
+    min-width: 0;
     text-align: left !important;
-    padding: 0 0 0 4px !important;
+    padding: 0 0 8px 4px !important;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -1084,17 +1085,17 @@ tbody tr:hover .player-photo img.face {
     font-size: .88rem !important;
   }
 
-  /* Stats - right side in a compact grid */
+  /* Stats - full width row below with 4 equal columns */
   tbody tr td:nth-child(4),
   tbody tr td:nth-child(5),
   tbody tr td:nth-child(6),
   tbody tr td:nth-child(7) {
-    flex: 0 0 calc(25% - 6px);
+    flex: 0 0 25%;
+    max-width: 25%;
     padding: 8px 4px 4px !important;
     text-align: center !important;
     font-size: .82rem !important;
     position: relative;
-    margin-top: 8px;
   }
 
   /* Add stat labels above values on mobile */
