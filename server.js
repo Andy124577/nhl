@@ -3685,6 +3685,22 @@ app.get('/h2h/current-week-scores', async (req, res) => {
             });
         }
 
+        // Check if draft has completed and weekStart is set
+        if (!clan.h2hData.weekStart) {
+            return res.json({
+                currentWeek,
+                matchups: weekMatchups.map(m => ({
+                    team1: m.team1,
+                    team2: m.team2,
+                    team1Points: 0,
+                    team2Points: 0
+                })),
+                weekStart: null,
+                weekEnd: null,
+                weekStatus: 'awaiting_draft_completion'
+            });
+        }
+
         const weekStart = new Date(clan.h2hData.weekStart);
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekEnd.getDate() + 7);
@@ -3778,6 +3794,11 @@ async function checkAndFinalizeCompletedWeeks() {
         for (const [poolName, clan] of Object.entries(draftData)) {
             // Skip non-H2H pools
             if (clan.poolMode !== 'head-to-head' || !clan.h2hData) {
+                continue;
+            }
+
+            // Skip pools where draft hasn't completed yet
+            if (!clan.h2hData.weekStart) {
                 continue;
             }
 

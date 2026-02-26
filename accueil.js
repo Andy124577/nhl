@@ -109,15 +109,6 @@ async function loadStats(days = 7) {
         const hotPlayersRes = await fetch(`${BASE_URL}/hot-players-last${days}days`);
         userData.hotPlayers = await hotPlayersRes.json();
 
-        const hasPlayers = userData.hotPlayers?.topPlayers?.length > 0;
-
-        // Fallback: if no data, try larger range
-        if (!hasPlayers && days < 30) {
-            const nextDays = days === 7 ? 14 : 30;
-            console.log(`No hot players for ${days} days, trying ${nextDays} days...`);
-            return loadStats(nextDays);
-        }
-
         // Update active button and label to reflect actual range shown
         document.querySelectorAll('.time-filter').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.days == currentTimeRange);
@@ -255,6 +246,12 @@ function renderHeroLeaderboard() {
     const el = document.getElementById('heroLeaderboardPreview');
     if (!el) return;
 
+    // Update header to show pool name
+    const headerSpan = document.querySelector('.hfc-header > span:nth-child(2)');
+    if (headerSpan && userData.primaryPool) {
+        headerSpan.textContent = `Classement en direct · ${userData.primaryPool.poolName}`;
+    }
+
     if (!userData.primaryPool) {
         el.innerHTML = `<p style="color:var(--text-secondary);font-size:.85rem;text-align:center;padding:12px 0;">
             Rejoignez un pool pour voir le classement</p>`;
@@ -267,7 +264,7 @@ function renderHeroLeaderboard() {
     el.innerHTML = scores.map((team, i) => `
         <div class="hfc-row ${team.isCurrentUser ? 'current-user' : ''}">
             <div class="hfc-rank ${rankCls(i)}">${i + 1}</div>
-            <div class="hfc-team">${team.teamName}</div>
+            <div class="hfc-team">${team.teamName}${team.isCurrentUser ? ' <span style="color:var(--primary);font-size:.82rem;">(moi)</span>' : ''}</div>
             <div class="hfc-pts">${team.score} <span style="font-size:.72rem;opacity:.7">PTS</span></div>
         </div>
     `).join('');
@@ -407,6 +404,12 @@ function changeTimeRange(days) {
     const label = document.getElementById('timeRangeLabel');
     if (label) {
         label.textContent = `${days} derniers jours`;
+    }
+
+    // Update "Voir tout" link to preserve time range
+    const viewAllLink = document.getElementById('viewAllPlayersLink');
+    if (viewAllLink) {
+        viewAllLink.href = `index.html?days=${days}`;
     }
 
     // Reload stats with new range
