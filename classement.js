@@ -747,19 +747,43 @@ async function loadH2HCurrentWeek(poolName) {
 
         const data = await res.json();
 
-        // Week header
-        const weekStartDate = new Date(data.weekStart);
-        const weekEndDate = new Date(data.weekEnd);
-        const formatDate = d => d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+        // Week header - validate dates
+        let weekDateRange = 'Dates à venir';
+        if (data.weekStart && data.weekEnd) {
+            try {
+                const weekStartDate = new Date(data.weekStart);
+                const weekEndDate = new Date(data.weekEnd);
+
+                // Check if dates are valid
+                if (!isNaN(weekStartDate.getTime()) && !isNaN(weekEndDate.getTime())) {
+                    const formatDate = d => d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+                    weekDateRange = `${formatDate(weekStartDate)} - ${formatDate(weekEndDate)}`;
+                } else {
+                    console.warn('⚠️ Invalid date values:', data.weekStart, data.weekEnd);
+                }
+            } catch (error) {
+                console.error('❌ Error parsing dates:', error);
+            }
+        } else {
+            console.warn('⚠️ Missing weekStart or weekEnd in H2H data');
+        }
 
         weekHeader.innerHTML = `
             <div class="h2h-week-label">Semaine ${data.currentWeek}</div>
-            <div class="h2h-week-dates">${formatDate(weekStartDate)} - ${formatDate(weekEndDate)}</div>
+            <div class="h2h-week-dates">${weekDateRange}</div>
         `;
 
         // Render matchups
         if (!data.matchups || data.matchups.length === 0) {
-            matchupsList.innerHTML = '<div class="h2h-empty">Aucun duel cette semaine</div>';
+            // Check if pool has active teams
+            const poolData = allPoolsData[poolName];
+            const activeTeamsCount = poolData ? Object.values(poolData.teams).filter(t => t.members && t.members.length > 0).length : 0;
+
+            if (activeTeamsCount < 2) {
+                matchupsList.innerHTML = '<div class="h2h-empty">⚠️ Pas assez d\'équipes actives pour générer des duels</div>';
+            } else {
+                matchupsList.innerHTML = '<div class="h2h-empty">Aucun duel cette semaine</div>';
+            }
             return;
         }
 

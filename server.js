@@ -140,23 +140,83 @@ function generateWeeklyMatchups(teams, previousMatchups = []) {
         return [];
     }
 
-    // Shuffle teams randomly
-    const shuffled = [...teamNames].sort(() => Math.random() - 0.5);
+    if (teamNames.length === 0) {
+        console.error("⚠️ Cannot generate matchups: no active teams!");
+        return [];
+    }
 
-    // Create pairs
-    const matchups = [];
-    for (let i = 0; i < shuffled.length; i += 2) {
-        matchups.push({
-            team1: shuffled[i],
-            team2: shuffled[i + 1],
+    // Special case: 2 teams always play each other
+    if (teamNames.length === 2) {
+        return [{
+            team1: teamNames[0],
+            team2: teamNames[1],
             team1Points: 0,
             team2Points: 0,
             winner: null,
             weekNumber: null // Will be set when saved
-        });
+        }];
     }
 
-    return matchups;
+    // For >2 teams: try to avoid immediate repetition
+    // Build a set of recent pairings from last 2-3 weeks
+    const recentPairings = new Set();
+    const recentWeeks = previousMatchups.slice(-3); // Last 3 weeks
+    recentWeeks.forEach(weekMatchups => {
+        if (Array.isArray(weekMatchups)) {
+            weekMatchups.forEach(m => {
+                if (m.team1 && m.team2) {
+                    const pair1 = [m.team1, m.team2].sort().join('|');
+                    recentPairings.add(pair1);
+                }
+            });
+        }
+    });
+
+    // Try up to 10 shuffles to find a set of matchups with minimal repetition
+    let bestMatchups = null;
+    let bestScore = Infinity;
+
+    for (let attempt = 0; attempt < 10; attempt++) {
+        // Shuffle teams randomly
+        const shuffled = [...teamNames].sort(() => Math.random() - 0.5);
+
+        // Create pairs
+        const matchups = [];
+        let repetitionScore = 0;
+
+        for (let i = 0; i < shuffled.length; i += 2) {
+            const team1 = shuffled[i];
+            const team2 = shuffled[i + 1];
+            const pairKey = [team1, team2].sort().join('|');
+
+            // Count if this pairing was recent
+            if (recentPairings.has(pairKey)) {
+                repetitionScore++;
+            }
+
+            matchups.push({
+                team1,
+                team2,
+                team1Points: 0,
+                team2Points: 0,
+                winner: null,
+                weekNumber: null // Will be set when saved
+            });
+        }
+
+        // Keep track of best matchups (fewest repetitions)
+        if (repetitionScore < bestScore) {
+            bestScore = repetitionScore;
+            bestMatchups = matchups;
+        }
+
+        // If we found a perfect solution (no repetitions), use it
+        if (repetitionScore === 0) {
+            break;
+        }
+    }
+
+    return bestMatchups || [];
 }
 
 // Calculate total points for a team for a given week
@@ -584,8 +644,8 @@ app.post("/pick-player", async (req, res) => {
                 .filter(([_, teamData]) => teamData.members && teamData.members.length > 0)
                 .map(([teamName, _]) => ({ name: teamName }));
 
-            // Generate matchups for week 1
-            const weekOneMatchups = generateWeeklyMatchups(activeTeams);
+            // Generate matchups for week 1 (no previous matchups)
+            const weekOneMatchups = generateWeeklyMatchups(activeTeams, []);
 
             // Set week start to next Monday 00:00:00
             const now = new Date();
@@ -3564,7 +3624,8 @@ app.post('/h2h/finalize-week', async (req, res) => {
             .filter(([_, teamData]) => teamData.members && teamData.members.length > 0)
             .map(([teamName, _]) => ({ name: teamName }));
 
-        const nextWeekMatchups = generateWeeklyMatchups(activeTeams);
+        // Pass all previous matchups for better rotation
+        const nextWeekMatchups = generateWeeklyMatchups(activeTeams, clan.h2hData.matchups);
 
         clan.h2hData.matchups.push(
             nextWeekMatchups.map(m => ({ ...m, weekNumber: clan.h2hData.currentWeek }))
@@ -3753,7 +3814,8 @@ async function checkAndFinalizeCompletedWeeks() {
                     .filter(([_, teamData]) => teamData.members && teamData.members.length > 0)
                     .map(([teamName, _]) => ({ name: teamName }));
 
-                const nextWeekMatchups = generateWeeklyMatchups(activeTeams);
+                // Pass all previous matchups for better rotation
+                const nextWeekMatchups = generateWeeklyMatchups(activeTeams, clan.h2hData.matchups);
                 clan.h2hData.matchups.push(
                     nextWeekMatchups.map(m => ({ ...m, weekNumber: clan.h2hData.currentWeek }))
                 );
