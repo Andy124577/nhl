@@ -765,6 +765,10 @@ async function loadH2HCurrentWeek(poolName) {
                 statusLabel = '✓ TERMINÉE';
                 statusClass = 'status-completed';
                 break;
+            case 'awaiting_draft_completion':
+                statusLabel = '⏳ EN ATTENTE';
+                statusClass = 'status-awaiting';
+                break;
         }
 
         // Week header - validate dates

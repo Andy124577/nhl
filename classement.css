@@ -1148,6 +1148,12 @@ body {
     border: 1px solid rgba(0, 230, 118, 0.3);
 }
 
+.h2h-week-status.status-awaiting {
+    background: rgba(255, 152, 0, 0.2);
+    color: #ff9800;
+    border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
 @keyframes pulse-ongoing {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
