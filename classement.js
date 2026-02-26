@@ -747,8 +747,28 @@ async function loadH2HCurrentWeek(poolName) {
 
         const data = await res.json();
 
+        // Determine week status label and styling
+        const weekStatus = data.weekStatus || 'ongoing';
+        let statusLabel = '';
+        let statusClass = '';
+
+        switch (weekStatus) {
+            case 'upcoming':
+                statusLabel = '📅 À VENIR';
+                statusClass = 'status-upcoming';
+                break;
+            case 'ongoing':
+                statusLabel = '🔴 EN COURS';
+                statusClass = 'status-ongoing';
+                break;
+            case 'completed':
+                statusLabel = '✓ TERMINÉE';
+                statusClass = 'status-completed';
+                break;
+        }
+
         // Week header - validate dates
-        let weekDateRange = 'Dates à venir';
+        let weekDateRange = '';
         if (data.weekStart && data.weekEnd) {
             try {
                 const weekStartDate = new Date(data.weekStart);
@@ -760,16 +780,21 @@ async function loadH2HCurrentWeek(poolName) {
                     weekDateRange = `${formatDate(weekStartDate)} - ${formatDate(weekEndDate)}`;
                 } else {
                     console.warn('⚠️ Invalid date values:', data.weekStart, data.weekEnd);
+                    weekDateRange = 'Dates non disponibles';
                 }
             } catch (error) {
                 console.error('❌ Error parsing dates:', error);
+                weekDateRange = 'Dates non disponibles';
             }
         } else {
-            console.warn('⚠️ Missing weekStart or weekEnd in H2H data');
+            weekDateRange = 'Dates non disponibles';
         }
 
         weekHeader.innerHTML = `
-            <div class="h2h-week-label">Semaine ${data.currentWeek}</div>
+            <div class="h2h-week-label">
+                Semaine ${data.currentWeek}
+                <span class="h2h-week-status ${statusClass}">${statusLabel}</span>
+            </div>
             <div class="h2h-week-dates">${weekDateRange}</div>
         `;
 
