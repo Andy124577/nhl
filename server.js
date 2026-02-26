@@ -3657,7 +3657,7 @@ app.post('/h2h/finalize-week', async (req, res) => {
     }
 });
 
-// ✅ H2H: Get current week live scores for a pool
+// ✅ H2H: Get current or upcoming week scores for a pool
 app.get('/h2h/current-week-scores', async (req, res) => {
     try {
         const { poolName } = req.query;
@@ -3677,41 +3677,86 @@ app.get('/h2h/current-week-scores', async (req, res) => {
         const weekMatchups = clan.h2hData.matchups[currentWeek - 1];
 
         if (!weekMatchups || weekMatchups.length === 0) {
-            return res.json({ currentWeek, matchups: [], weekStart: clan.h2hData.weekStart });
-        }
-
-        const weekStart = new Date(clan.h2hData.weekStart);
-        const now = new Date();
-
-        // Calculate live scores from weekStart to now
-        const liveMatchups = [];
-        for (const matchup of weekMatchups) {
-            let t1pts = await getTeamPointsForDateRange(clan.teams[matchup.team1], weekStart, now);
-            let t2pts = await getTeamPointsForDateRange(clan.teams[matchup.team2], weekStart, now);
-
-            // Fallback to season stats if no game logs
-            if (t1pts === null || t2pts === null) {
-                const currentStats = await loadCurrentStats();
-                if (t1pts === null) t1pts = getTeamWeeklyPoints(clan.teams[matchup.team1], currentStats);
-                if (t2pts === null) t2pts = getTeamWeeklyPoints(clan.teams[matchup.team2], currentStats);
-            }
-
-            liveMatchups.push({
-                team1: matchup.team1,
-                team2: matchup.team2,
-                team1Points: t1pts,
-                team2Points: t2pts
+            return res.json({
+                currentWeek,
+                matchups: [],
+                weekStart: clan.h2hData.weekStart,
+                weekStatus: 'no_matchups'
             });
         }
 
+        const weekStart = new Date(clan.h2hData.weekStart);
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekEnd.getDate() + 7);
+        const now = new Date();
+
+        // Determine week status
+        let weekStatus = 'ongoing'; // Default
+        let displayMatchups = [];
+
+        if (now < weekStart) {
+            // UPCOMING: Season hasn't started yet or this week is in the future
+            weekStatus = 'upcoming';
+            // Show matchups with 0 points
+            displayMatchups = weekMatchups.map(m => ({
+                team1: m.team1,
+                team2: m.team2,
+                team1Points: 0,
+                team2Points: 0
+            }));
+        } else if (now >= weekEnd) {
+            // COMPLETED: Week has ended (should have been finalized)
+            weekStatus = 'completed';
+            // Show final scores if available, otherwise calculate them
+            displayMatchups = [];
+            for (const matchup of weekMatchups) {
+                let t1pts = matchup.team1Points || await getTeamPointsForDateRange(clan.teams[matchup.team1], weekStart, weekEnd);
+                let t2pts = matchup.team2Points || await getTeamPointsForDateRange(clan.teams[matchup.team2], weekStart, weekEnd);
+
+                if (t1pts === null || t2pts === null) {
+                    const currentStats = await loadCurrentStats();
+                    if (t1pts === null) t1pts = getTeamWeeklyPoints(clan.teams[matchup.team1], currentStats);
+                    if (t2pts === null) t2pts = getTeamWeeklyPoints(clan.teams[matchup.team2], currentStats);
+                }
+
+                displayMatchups.push({
+                    team1: matchup.team1,
+                    team2: matchup.team2,
+                    team1Points: t1pts,
+                    team2Points: t2pts,
+                    winner: matchup.winner
+                });
+            }
+        } else {
+            // ONGOING: Currently in the week
+            weekStatus = 'ongoing';
+            // Calculate live scores from weekStart to now
+            for (const matchup of weekMatchups) {
+                let t1pts = await getTeamPointsForDateRange(clan.teams[matchup.team1], weekStart, now);
+                let t2pts = await getTeamPointsForDateRange(clan.teams[matchup.team2], weekStart, now);
+
+                // Fallback to season stats if no game logs
+                if (t1pts === null || t2pts === null) {
+                    const currentStats = await loadCurrentStats();
+                    if (t1pts === null) t1pts = getTeamWeeklyPoints(clan.teams[matchup.team1], currentStats);
+                    if (t2pts === null) t2pts = getTeamWeeklyPoints(clan.teams[matchup.team2], currentStats);
+                }
+
+                displayMatchups.push({
+                    team1: matchup.team1,
+                    team2: matchup.team2,
+                    team1Points: t1pts,
+                    team2Points: t2pts
+                });
+            }
+        }
 
         res.json({
             currentWeek,
             weekStart: weekStart.toISOString(),
             weekEnd: weekEnd.toISOString(),
-            matchups: liveMatchups,
+            weekStatus, // 'upcoming', 'ongoing', or 'completed'
+            matchups: displayMatchups,
             standings: clan.h2hData.standings,
             matchupHistory: clan.h2hData.matchupHistory || []
         });
