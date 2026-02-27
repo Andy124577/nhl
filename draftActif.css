@@ -91,3 +91,54 @@
     right: -4px !important;
   }
 }
+
+/* Override index.css table styles for draftActif page - PC/Desktop layout */
+@media (min-width: 481px) {
+  /* Reset any conflicting table styles from index.css */
+  .player-selection-card table,
+  .player-selection-card #playerTable {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto !important; /* Override fixed layout from index.css */
+  }
+
+  /* Column-specific widths for draftActif table structure */
+  .player-selection-card #playerTable th:nth-child(1),
+  .player-selection-card #playerTable td:nth-child(1) {
+    width: 70px !important;
+    min-width: 70px !important;
+    max-width: 70px !important;
+  }
+
+  .player-selection-card #playerTable th:nth-child(2),
+  .player-selection-card #playerTable td:nth-child(2) {
+    width: auto !important;
+    min-width: 180px !important;
+    max-width: none !important;
+    text-align: left !important;
+  }
+
+  /* GP, G, A, PTS columns - wider than index.css default */
+  .player-selection-card #playerTable th:nth-child(3),
+  .player-selection-card #playerTable td:nth-child(3),
+  .player-selection-card #playerTable th:nth-child(4),
+  .player-selection-card #playerTable td:nth-child(4),
+  .player-selection-card #playerTable th:nth-child(5),
+  .player-selection-card #playerTable td:nth-child(5),
+  .player-selection-card #playerTable th:nth-child(6),
+  .player-selection-card #playerTable td:nth-child(6) {
+    width: 65px !important;
+    min-width: 65px !important;
+    max-width: 65px !important;
+    text-align: center !important;
+  }
+
+  /* Action column */
+  .player-selection-card #playerTable th:nth-child(7),
+  .player-selection-card #playerTable td:nth-child(7) {
+    width: 90px !important;
+    min-width: 90px !important;
+    max-width: 90px !important;
+    text-align: center !important;
+  }
+}
