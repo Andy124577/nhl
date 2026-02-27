@@ -858,6 +858,371 @@ tbody tr:hover .player-photo img.face {
 }
 
 /* ============================================================ */
+/* ENHANCED PC/DESKTOP STYLES                                    */
+/* ============================================================ */
+@media (min-width: 1024px) {
+  /* Enhanced table container for larger screens */
+  .table-container {
+    background: rgba(20,20,48,.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 20px;
+    border: 1px solid var(--border-light);
+    box-shadow: 0 8px 32px rgba(0,0,0,.4), var(--glow-primary);
+    overflow: hidden;
+    transition: all .3s ease;
+  }
+
+  .table-container:hover {
+    box-shadow: 0 12px 40px rgba(0,0,0,.5), var(--glow-primary-strong);
+    border-color: rgba(0,212,255,.35);
+  }
+
+  /* Enhanced table layout */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+  }
+
+  /* Improved column widths for desktop */
+  th:nth-child(1), td:nth-child(1) { width: 60px; text-align: center; }
+  th:nth-child(2), td:nth-child(2) { width: 100px; text-align: center; }
+  th:nth-child(3), td:nth-child(3) { width: auto; min-width: 220px; text-align: left; }
+  th:nth-child(4), td:nth-child(4),
+  th:nth-child(5), td:nth-child(5),
+  th:nth-child(6), td:nth-child(6),
+  th:nth-child(7), td:nth-child(7) {
+    width: 80px;
+    min-width: 80px;
+    text-align: center;
+  }
+
+  /* Enhanced header styling */
+  thead {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  th {
+    font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
+    background: linear-gradient(180deg, rgba(0,212,255,.45) 0%, rgba(0,212,255,.35) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: var(--text-main);
+    padding: 18px 16px;
+    text-align: center;
+    font-weight: 400;
+    font-size: 1rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border-bottom: 3px solid var(--primary);
+    box-shadow: 0 4px 12px rgba(0,0,0,.2);
+    white-space: nowrap;
+    position: relative;
+    transition: all .25s ease;
+  }
+
+  th::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    opacity: 0;
+    transition: opacity .25s ease;
+  }
+
+  th:hover::after {
+    opacity: 1;
+  }
+
+  th:hover {
+    background: linear-gradient(180deg, rgba(0,212,255,.55) 0%, rgba(0,212,255,.45) 100%);
+    color: var(--primary);
+    text-shadow: 0 0 10px rgba(0,212,255,.5);
+  }
+
+  th.rank-col {
+    width: 60px;
+    padding: 18px 12px;
+    font-size: .95rem;
+  }
+
+  /* Enhanced row styling */
+  tbody tr {
+    cursor: pointer;
+    transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-bottom: 1px solid var(--border-light);
+    position: relative;
+  }
+
+  tbody tr::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--primary);
+    opacity: 0;
+    transition: opacity .3s ease;
+  }
+
+  tbody tr:nth-child(odd) {
+    background: linear-gradient(90deg, var(--bg-odd-row) 0%, rgba(19,19,40,.9) 100%);
+  }
+
+  tbody tr:nth-child(even) {
+    background: linear-gradient(90deg, rgba(30,32,72,.4) 0%, rgba(30,32,72,.3) 100%);
+  }
+
+  tbody tr:hover {
+    background: linear-gradient(90deg, var(--bg-hover) 0%, rgba(30,32,72,.8) 100%) !important;
+    transform: translateX(4px) scale(1.005);
+    box-shadow: 0 4px 20px rgba(0,212,255,.25), inset 4px 0 0 var(--primary);
+    z-index: 10;
+  }
+
+  tbody tr:hover::before {
+    opacity: 1;
+  }
+
+  /* Enhanced cell styling */
+  td {
+    padding: 16px 14px;
+    text-align: center;
+    font-size: 1rem;
+    color: var(--text-dark);
+    font-weight: 600;
+    vertical-align: middle;
+    transition: all .25s ease;
+  }
+
+  tbody tr:hover td {
+    color: var(--text-main);
+  }
+
+  td.rank-col {
+    font-weight: 900;
+    font-size: 1.05rem;
+    color: var(--text-gray);
+    width: 60px;
+    font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
+    letter-spacing: 1px;
+  }
+
+  /* Enhanced top 3 rank badges with medals */
+  tbody tr:nth-child(1) td.rank-col {
+    color: var(--warning);
+    font-size: 1.3rem;
+    text-shadow: 0 0 15px rgba(255,179,0,.5);
+    position: relative;
+  }
+
+  tbody tr:nth-child(2) td.rank-col {
+    color: #C0C0D0;
+    font-size: 1.25rem;
+    text-shadow: 0 0 15px rgba(192,192,208,.3);
+  }
+
+  tbody tr:nth-child(3) td.rank-col {
+    color: #CD7F32;
+    font-size: 1.2rem;
+    text-shadow: 0 0 15px rgba(205,127,50,.3);
+  }
+
+  /* Enhanced points column */
+  td.points-column {
+    background: linear-gradient(90deg, rgba(0,212,255,.12) 0%, rgba(0,212,255,.08) 100%);
+    font-weight: 900;
+    font-size: 1.2rem;
+    color: var(--primary);
+    font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(0,212,255,.3);
+    border-left: 2px solid rgba(0,212,255,.2);
+    border-right: 2px solid rgba(0,212,255,.2);
+  }
+
+  tbody tr:hover td.points-column {
+    background: linear-gradient(90deg, rgba(0,212,255,.20) 0%, rgba(0,212,255,.15) 100%);
+    box-shadow: 0 0 15px rgba(0,212,255,.2);
+  }
+
+  /* Enhanced player name column */
+  td:nth-child(3) {
+    text-align: left;
+    font-weight: 700;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 280px;
+    font-size: 1.05rem;
+    padding-left: 18px;
+  }
+
+  tbody tr:hover td:nth-child(3) {
+    color: var(--primary);
+    text-shadow: 0 0 8px rgba(0,212,255,.2);
+  }
+
+  th:nth-child(3) {
+    text-align: left;
+    padding-left: 18px;
+  }
+
+  /* Enhanced player photo styling */
+  .player-photo {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    display: inline-block;
+    margin: 0 auto;
+  }
+
+  .player-photo img.face {
+    width: 80px;
+    height: 80px;
+    display: block;
+    border-radius: 12px;
+    border: 2px solid var(--border-light);
+    object-fit: cover;
+    transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  }
+
+  tbody tr:hover .player-photo img.face {
+    border-color: var(--primary);
+    box-shadow: 0 0 20px rgba(0,212,255,.5), 0 8px 16px rgba(0,0,0,.4);
+    transform: scale(1.08) translateY(-2px);
+  }
+
+  .player-photo img.logo {
+    position: absolute;
+    bottom: -8px;
+    right: -8px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 3px solid var(--card);
+    background: #fff;
+    box-shadow: 0 3px 10px rgba(0,0,0,.4);
+    padding: 2px;
+    transition: all .3s ease;
+  }
+
+  tbody tr:hover .player-photo img.logo {
+    border-color: var(--primary);
+    box-shadow: 0 0 15px rgba(0,212,255,.4), 0 4px 12px rgba(0,0,0,.5);
+    transform: scale(1.1);
+  }
+
+  /* Enhanced stat cells with better typography */
+  td:nth-child(4),
+  td:nth-child(5),
+  td:nth-child(6) {
+    font-weight: 700;
+    font-size: 1.05rem;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  /* Add subtle border separation between columns */
+  td:nth-child(3),
+  th:nth-child(3) {
+    border-right: 1px solid var(--border-light);
+  }
+
+  /* Smooth scroll for table container */
+  .table-container {
+    scroll-behavior: smooth;
+  }
+
+  /* Enhanced empty state for desktop */
+  .stats-empty-state {
+    padding: 80px 32px;
+  }
+
+  .stats-empty-state .empty-icon {
+    font-size: 4.5rem;
+    margin-bottom: 24px;
+    opacity: .7;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .stats-empty-state h3 {
+    font-size: 1.6rem;
+    margin-bottom: 12px;
+  }
+
+  .stats-empty-state p {
+    font-size: 1.05rem;
+  }
+}
+
+/* Extra large screens - maximize the table experience */
+@media (min-width: 1440px) {
+  .stats-container {
+    max-width: 1400px;
+    padding: 40px 32px 80px;
+  }
+
+  .table-container {
+    border-radius: 24px;
+  }
+
+  th {
+    padding: 20px 18px;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+  }
+
+  td {
+    padding: 18px 16px;
+    font-size: 1.05rem;
+  }
+
+  .player-photo,
+  .player-photo img.face {
+    width: 90px;
+    height: 90px;
+  }
+
+  .player-photo img.logo {
+    width: 34px;
+    height: 34px;
+    bottom: -10px;
+    right: -10px;
+  }
+
+  td:nth-child(3) {
+    max-width: 320px;
+    font-size: 1.1rem;
+    padding-left: 20px;
+  }
+
+  td.points-column {
+    font-size: 1.3rem;
+  }
+
+  tbody tr:nth-child(1) td.rank-col {
+    font-size: 1.4rem;
+  }
+
+  tbody tr:nth-child(2) td.rank-col {
+    font-size: 1.35rem;
+  }
+
+  tbody tr:nth-child(3) td.rank-col {
+    font-size: 1.3rem;
+  }
+}
+
+/* ============================================================ */
 /* RESPONSIVE - MOBILE                                           */
 /* ============================================================ */
 @media (max-width: 768px) {
