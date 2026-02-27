@@ -858,17 +858,46 @@ tbody tr:hover .player-photo img.face {
     padding: 24px 16px 48px;
   }
 
+  /* Horizontal filters row on mobile */
   .filters-section {
-    padding: 18px 16px;
-    gap: 14px;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 14px 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .filter-group {
-    min-width: 100%;
+    flex: 1;
+    min-width: 110px;
+    max-width: none;
+  }
+  .filter-group.filter-search {
+    flex: 1.2;
+    min-width: 130px;
+  }
+  .filter-group label {
+    font-size: .75rem;
+    margin-bottom: 4px;
+  }
+  .filter-group input,
+  .filter-group select {
+    padding: 10px 12px;
+    font-size: .85rem;
+    min-height: 44px; /* Touch-friendly size */
+  }
+  .filter-group select {
+    background-position: right 10px center;
+    padding-right: 30px;
   }
 
+  /* Table improvements */
   .table-container {
     border-radius: 14px;
     padding: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Convert table to horizontal scroll on mobile */
@@ -886,8 +915,9 @@ tbody tr:hover .player-photo img.face {
   }
 
   th, td {
-    padding: 10px 6px;
-    font-size: .8rem;
+    padding: 12px 8px;
+    font-size: .82rem;
+    min-height: 48px; /* Better touch targets */
   }
 
   th.rank-col, td.rank-col {
@@ -896,145 +926,206 @@ tbody tr:hover .player-photo img.face {
 
   .player-photo,
   .player-photo img.face {
-    width: 55px;
-    height: 55px;
+    width: 60px;
+    height: 60px;
   }
   .player-photo img.logo {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     bottom: -4px;
     right: -4px;
   }
 
-  /* Career modal mobile */
+  tbody tr {
+    min-height: 70px;
+  }
+
+  /* Career modal mobile - full screen experience */
   .career-modal {
     width: 100%;
     max-width: 100%;
-    max-height: 92vh;
-    margin: 4vh auto;
-    border-radius: 16px;
+    max-height: 100vh;
+    height: 100vh;
+    margin: 0;
+    border-radius: 0;
+    overflow-y: auto;
   }
 
+  /* Stack header content vertically */
   .career-modal-header {
-    padding: 18px 16px;
-    gap: 14px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 60px 16px 20px;
+    gap: 16px;
   }
 
   .player-headshot-container {
-    width: 130px;
-    height: 130px;
+    width: 110px;
+    height: 110px;
+    margin-bottom: 8px;
   }
   .player-headshot-container .no-photo {
-    font-size: 3rem;
+    font-size: 2.8rem;
+  }
+
+  .player-info-section {
+    width: 100%;
   }
 
   .player-name-row {
-    margin-right: 42px;
+    margin-right: 0;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
   }
   .player-name-row h2 {
-    font-size: 1.4rem;
+    font-size: 1.5rem;
+    font-family: 'Bebas Neue', sans-serif;
+    background: linear-gradient(135deg, var(--primary) 0%, #00A8CC 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .close-modal {
-    right: 14px;
-    top: 14px;
-    width: 32px;
-    height: 32px;
-    font-size: 1.6rem;
+    right: 16px;
+    top: 16px;
+    width: 40px;
+    height: 40px;
+    font-size: 1.8rem;
+    z-index: 1000;
   }
 
   .player-position-team {
-    font-size: .82rem;
+    font-size: .85rem;
     flex-wrap: wrap;
+    justify-content: center;
   }
 
   .player-bio-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 11px 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem 1rem;
+    max-width: 400px;
+    margin: 0 auto;
   }
 
+  .bio-stat {
+    background: rgba(0, 212, 255, 0.05);
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+  }
   .bio-stat .bio-label {
-    font-size: .66rem;
+    font-size: .68rem;
   }
   .bio-stat .bio-value {
-    font-size: .78rem;
+    font-size: .82rem;
   }
 
+  /* Compact horizontal filters for mobile */
   .career-filters {
+    display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
-    padding: 14px 12px;
-    gap: 8px;
+    padding: 12px;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .filter-group-career {
     flex: 1;
-    min-width: 90px;
+    min-width: 95px;
+    display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 4px;
   }
   .filter-group-career label {
-    font-size: .7rem;
+    font-size: .72rem;
+    text-align: left;
   }
   .filter-group-career select {
     width: 100%;
-    padding: 6px 8px;
-    font-size: .72rem;
+    padding: 8px 10px;
+    font-size: .75rem;
+    min-height: 40px;
   }
 
   .stats-count-badge {
-    margin: 0;
+    flex: 1 1 100%;
+    width: 100%;
+    margin: 4px 0 0 0;
     text-align: center;
+    font-size: .76rem;
+    padding: 8px 12px;
   }
 
+  /* Career stats table - smooth horizontal scroll */
   #careerStatsTable {
     padding: 0;
+    overflow-x: auto;
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 
   #careerStatsTable table {
-    min-width: 700px;
-    font-size: .85rem;
+    min-width: 650px;
+    font-size: .82rem;
   }
 
   #careerStatsTable th {
-    padding: 12px 8px;
-    font-size: .7rem;
+    padding: 11px 7px;
+    font-size: .68rem;
+    position: sticky;
+    top: 0;
+    background: rgba(0,212,255,.14);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
   #careerStatsTable td {
-    padding: 10px 8px;
-    font-size: .84rem;
+    padding: 10px 7px;
+    font-size: .80rem;
   }
 
   #careerStatsTable th.team-col,
   #careerStatsTable td.team-col {
-    width: 75px;
-    max-width: 75px;
-    min-width: 75px;
+    width: 70px;
+    max-width: 70px;
+    min-width: 70px;
   }
 
   #careerStatsTable td.team-col {
-    font-size: .68rem;
-    padding: 7px 5px;
+    font-size: .67rem;
+    padding: 7px 4px;
     line-height: 1.25;
   }
 
   #careerStatsTable th.league-col,
   #careerStatsTable td.league-col {
-    width: 65px;
-    max-width: 65px;
-    min-width: 65px;
+    width: 60px;
+    max-width: 60px;
+    min-width: 60px;
   }
 
   #careerStatsTable td.league-col {
-    font-size: .68rem;
+    font-size: .67rem;
   }
 }
 
 @media (max-width: 480px) {
+  .stats-hero {
+    padding: 50px 16px 28px;
+  }
+
+  .stats-hero-badge {
+    font-size: .70rem;
+    padding: 6px 14px;
+  }
+
   .stats-hero-title {
     font-size: 1.8rem;
   }
@@ -1047,8 +1138,28 @@ tbody tr:hover .player-photo img.face {
     padding: 20px 12px 40px;
   }
 
+  /* Keep horizontal filters but more compact */
   .filters-section {
-    padding: 16px 14px;
+    padding: 12px 10px;
+    gap: 0.4rem;
+  }
+
+  .filter-group {
+    min-width: 90px;
+  }
+
+  .filter-group.filter-search {
+    min-width: 110px;
+  }
+
+  .filter-group label {
+    font-size: .70rem;
+  }
+
+  .filter-group input,
+  .filter-group select {
+    padding: 9px 10px;
+    font-size: .80rem;
   }
 
   /* Card-based layout for mobile */
@@ -1154,5 +1265,48 @@ tbody tr:hover .player-photo img.face {
 
   .skeleton-table-row .skeleton {
     height: 60px;
+  }
+
+  /* Modal improvements for very small screens */
+  .career-modal-header {
+    padding: 55px 12px 18px;
+  }
+
+  .player-headshot-container {
+    width: 96px;
+    height: 96px;
+  }
+
+  .player-name-row h2 {
+    font-size: 1.3rem;
+  }
+
+  .player-bio-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem 0.8rem;
+  }
+
+  .bio-stat {
+    padding: 7px 8px;
+  }
+
+  .close-modal {
+    width: 36px;
+    height: 36px;
+    font-size: 1.6rem;
+  }
+
+  .career-filters {
+    padding: 10px;
+    gap: 5px;
+  }
+
+  .filter-group-career {
+    min-width: 85px;
+  }
+
+  .stats-count-badge {
+    font-size: .72rem;
+    padding: 7px 10px;
   }
 }
