@@ -929,6 +929,23 @@ tbody tr:hover .player-photo img.face {
     width: 40px;
   }
 
+  /* Stats columns - make them narrower and align right to give more space to player name */
+  th:nth-child(4), td:nth-child(4),
+  th:nth-child(5), td:nth-child(5),
+  th:nth-child(6), td:nth-child(6),
+  th:nth-child(7), td:nth-child(7) {
+    width: 55px;
+    max-width: 55px;
+    padding: 12px 6px;
+    text-align: center;
+  }
+
+  /* Player name column - give it more space */
+  td:nth-child(3) {
+    max-width: none;
+    width: auto;
+  }
+
   .player-photo,
   .player-photo img.face {
     width: 60px;
@@ -956,36 +973,38 @@ tbody tr:hover .player-photo img.face {
     overflow-y: auto;
   }
 
-  /* Stack header content vertically */
+  /* Keep header horizontal with headshot and name side by side */
   .career-modal-header {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
     padding: 60px 16px 20px;
-    gap: 16px;
+    gap: 14px;
   }
 
   .player-headshot-container {
     width: 110px;
     height: 110px;
-    margin-bottom: 8px;
+    margin-bottom: 0;
+    flex-shrink: 0;
   }
   .player-headshot-container .no-photo {
     font-size: 2.8rem;
   }
 
   .player-info-section {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
   }
 
   .player-name-row {
-    margin-right: 0;
-    justify-content: center;
-    flex-direction: column;
-    gap: 8px;
+    margin-right: 35px;
+    justify-content: flex-start;
+    flex-direction: row;
+    gap: 0;
   }
   .player-name-row h2 {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-family: 'Bebas Neue', sans-serif;
     background: linear-gradient(135deg, var(--primary) 0%, #00A8CC 100%);
     -webkit-background-clip: text;
@@ -1005,7 +1024,7 @@ tbody tr:hover .player-photo img.face {
   .player-position-team {
     font-size: .85rem;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   /* Hide toggle button by default (desktop) */
@@ -1123,7 +1142,7 @@ tbody tr:hover .player-photo img.face {
     padding: 8px 12px;
   }
 
-  /* Career stats table - smooth horizontal scroll */
+  /* Career stats table - smooth horizontal scroll, keep it similar to desktop */
   #careerStatsTable {
     padding: 0;
     overflow-x: auto;
@@ -1132,47 +1151,60 @@ tbody tr:hover .player-photo img.face {
   }
 
   #careerStatsTable table {
-    min-width: 650px;
+    width: 100%;
+    min-width: 700px;
+    border-collapse: separate;
+    border-spacing: 0;
     font-size: .82rem;
   }
 
   #careerStatsTable th {
-    padding: 11px 7px;
-    font-size: .68rem;
+    padding: 11px 8px;
+    font-size: .70rem;
     position: sticky;
     top: 0;
+    z-index: 100;
     background: rgba(0,212,255,.14);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    white-space: nowrap;
   }
 
   #careerStatsTable td {
     padding: 10px 7px;
     font-size: .80rem;
+    white-space: nowrap;
   }
 
   #careerStatsTable th.team-col,
   #careerStatsTable td.team-col {
+    width: 85px;
+    max-width: 85px;
+    min-width: 85px;
+  }
+
+  #careerStatsTable td.team-col {
+    font-size: .72rem;
+    padding: 8px 5px;
+    line-height: 1.3;
+  }
+
+  #careerStatsTable th.league-col,
+  #careerStatsTable td.league-col {
     width: 70px;
     max-width: 70px;
     min-width: 70px;
   }
 
-  #careerStatsTable td.team-col {
-    font-size: .67rem;
-    padding: 7px 4px;
-    line-height: 1.25;
+  #careerStatsTable td.league-col {
+    font-size: .70rem;
   }
 
-  #careerStatsTable th.league-col,
-  #careerStatsTable td.league-col {
-    width: 60px;
-    max-width: 60px;
-    min-width: 60px;
-  }
-
-  #careerStatsTable td.league-col {
-    font-size: .67rem;
+  #careerStatsTable th.season-col,
+  #careerStatsTable td.season-col {
+    width: 80px;
+    max-width: 80px;
+    min-width: 80px;
   }
 }
 
@@ -1222,130 +1254,52 @@ tbody tr:hover .player-photo img.face {
     font-size: .80rem;
   }
 
-  /* Card-based layout for mobile - improved spacing */
+  /* Keep table layout like desktop - no card layout */
   tbody tr {
-    display: flex !important;
-    flex-wrap: wrap;
-    padding: 14px 12px !important;
-    gap: 0 !important;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    background: var(--card-white);
-    border: 1px solid var(--border-light);
+    display: table-row !important;
   }
 
   tbody tr td {
-    border-bottom: none !important;
+    padding: 10px 4px;
+    font-size: .82rem;
   }
 
-  tbody tr:hover {
-    border-color: rgba(0, 212, 255, 0.3);
+  /* Player name column - give it more space */
+  td:nth-child(3) {
+    max-width: 150px;
+    font-size: .85rem !important;
   }
 
-  /* Photo - left side */
-  tbody tr td:nth-child(1) {
-    order: 1;
-    flex: 0 0 65px;
-    padding: 0 12px 0 0 !important;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-  }
-
-  /* Player name - takes remaining space, wraps properly */
-  tbody tr td:nth-child(2) {
-    order: 2;
-    flex: 1 1 calc(100% - 75px);
-    min-width: 0;
-    max-width: calc(100% - 75px);
-    text-align: left !important;
-    padding: 0 8px 12px 0 !important;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    white-space: normal !important;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    font-size: .9rem !important;
-    line-height: 1.4;
-    font-weight: 700;
-    color: var(--text-main);
-  }
-
-  /* Stats - full width row below with 4 equal columns, properly aligned */
-  tbody tr td:nth-child(3),
+  /* Stats columns - make them narrower and align right */
   tbody tr td:nth-child(4),
   tbody tr td:nth-child(5),
-  tbody tr td:nth-child(6) {
-    flex: 0 0 25%;
-    max-width: 25%;
-    min-width: 0;
-    padding: 12px 6px 8px !important;
-    text-align: center !important;
-    font-size: .9rem !important;
-    font-weight: 800 !important;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 4px;
+  tbody tr td:nth-child(6),
+  tbody tr td:nth-child(7) {
+    width: 50px;
+    max-width: 50px;
+    padding: 10px 6px;
+    text-align: center;
+    font-size: .85rem;
   }
 
-  /* Add stat labels above values on mobile - better visibility */
-  tbody tr td:nth-child(3)::before {
-    content: 'GP';
-    display: block;
-    font-size: .75rem;
-    color: var(--primary);
-    margin-bottom: 3px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    opacity: 0.85;
-  }
-  tbody tr td:nth-child(4)::before {
-    content: 'G';
-    display: block;
-    font-size: .75rem;
-    color: var(--primary);
-    margin-bottom: 3px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    opacity: 0.85;
-  }
-  tbody tr td:nth-child(5)::before {
-    content: 'AST';
-    display: block;
-    font-size: .75rem;
-    color: var(--primary);
-    margin-bottom: 3px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    opacity: 0.85;
-  }
-  tbody tr td:nth-child(6)::before {
-    content: 'PTS';
-    display: block;
-    font-size: .75rem;
-    color: var(--primary);
-    margin-bottom: 3px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    opacity: 0.85;
-  }
-
-  tbody tr td:nth-child(3) { order: 3; }
-  tbody tr td:nth-child(4) { order: 4; }
-  tbody tr td:nth-child(5) { order: 5; }
-  tbody tr td:nth-child(6) { order: 6; }
-
-  /* Hide thead on mobile */
+  /* Keep thead visible */
   thead {
-    display: none;
+    display: table-header-group;
+  }
+
+  th {
+    padding: 12px 4px;
+    font-size: .75rem;
+  }
+
+  /* Stats header columns - align with narrower columns */
+  th:nth-child(4),
+  th:nth-child(5),
+  th:nth-child(6),
+  th:nth-child(7) {
+    width: 50px;
+    max-width: 50px;
+    padding: 12px 6px;
   }
 
   .player-photo,
@@ -1373,15 +1327,34 @@ tbody tr:hover .player-photo img.face {
   /* Modal improvements for very small screens */
   .career-modal-header {
     padding: 55px 12px 18px;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 12px;
   }
 
   .player-headshot-container {
-    width: 96px;
-    height: 96px;
+    width: 90px;
+    height: 90px;
+    flex-shrink: 0;
+  }
+
+  .player-info-section {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .player-name-row {
+    margin-right: 30px;
+    flex-direction: row;
   }
 
   .player-name-row h2 {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
+  }
+
+  .player-position-team {
+    font-size: .80rem;
+    justify-content: flex-start;
   }
 
   .player-bio-grid {
@@ -1411,5 +1384,41 @@ tbody tr:hover .player-photo img.face {
   .stats-count-badge {
     font-size: .72rem;
     padding: 7px 10px;
+  }
+
+  /* Career stats table at very small screens - keep thead */
+  #careerStatsTable table {
+    min-width: 650px;
+  }
+
+  #careerStatsTable th {
+    padding: 10px 6px;
+    font-size: .68rem;
+  }
+
+  #careerStatsTable td {
+    padding: 9px 6px;
+    font-size: .76rem;
+  }
+
+  #careerStatsTable th.team-col,
+  #careerStatsTable td.team-col {
+    width: 75px;
+    max-width: 75px;
+    min-width: 75px;
+  }
+
+  #careerStatsTable th.league-col,
+  #careerStatsTable td.league-col {
+    width: 65px;
+    max-width: 65px;
+    min-width: 65px;
+  }
+
+  #careerStatsTable th.season-col,
+  #careerStatsTable td.season-col {
+    width: 75px;
+    max-width: 75px;
+    min-width: 75px;
   }
 }
