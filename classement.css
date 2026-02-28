@@ -785,33 +785,56 @@ body {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.9rem;
+    /* Enable tabular numbers for perfect vertical alignment like NHL.com */
+    font-variant-numeric: tabular-nums;
+    -moz-font-feature-settings: "tnum";
+    -webkit-font-feature-settings: "tnum";
+    font-feature-settings: "tnum";
 }
 
 #careerStatsTable th {
     background: var(--danger);
     color: var(--card-white);
-    padding: 12px 8px;
-    text-align: center;
+    padding: 12px 14px;
+    text-align: right; /* Right-align numeric headers like NHL.com */
     font-weight: 600;
     position: sticky;
     top: 0;
     z-index: 10;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+}
+
+/* Left-align text column headers */
+#careerStatsTable th.season-col,
+#careerStatsTable th.league-col,
+#careerStatsTable th.team-col {
+    text-align: left;
+    padding-left: 12px;
 }
 
 #careerStatsTable td {
-    padding: 10px 8px;
-    text-align: center;
+    padding: 10px 14px;
+    text-align: right; /* Right-align all numeric data by default */
     border-bottom: 1px solid var(--border-light);
+    font-weight: 600;
 }
 
-#careerStatsTable .season-col {
+/* Left-align text columns */
+#careerStatsTable .season-col,
+#careerStatsTable .league-col {
     text-align: left;
     font-weight: 600;
+    padding-left: 12px;
 }
 
 #careerStatsTable .league-col {
-    font-weight: 600;
     color: var(--text-secondary);
+}
+
+#careerStatsTable .team-col {
+    text-align: center; /* Center team logos */
 }
 
 #careerStatsTable .team-col img {
@@ -825,9 +848,14 @@ body {
     font-weight: 700;
 }
 
+#careerStatsTable .career-totals-row td {
+    text-align: right; /* Right-align totals */
+}
+
 #careerStatsTable .career-totals-label {
-    text-align: left;
+    text-align: left !important;
     color: var(--danger);
+    padding-left: 12px;
 }
 
 .no-stats-message {
