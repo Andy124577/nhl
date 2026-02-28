@@ -265,13 +265,13 @@ table {
 }
 
 /* Fixed widths for stat columns (GP, G, AST, PTS) - ONLY for index.html table */
-.table-container th:nth-child(1), .table-container td:nth-child(1) { width: 50px; }
-.table-container th:nth-child(2), .table-container td:nth-child(2) { width: 90px; }
-.table-container th:nth-child(4), .table-container td:nth-child(4),
-.table-container th:nth-child(5), .table-container td:nth-child(5),
-.table-container th:nth-child(6), .table-container td:nth-child(6),
+.table-container th:nth-child(1), .table-container td:nth-child(1) { width: auto; }
+.table-container th:nth-child(2), .table-container td:nth-child(2) { width: auto; }
+.table-container th:nth-child(4), .table-container td:nth-child(4) { width: auto; }
+.table-container th:nth-child(5), .table-container td:nth-child(5) { width: auto; }
+.table-container th:nth-child(6), .table-container td:nth-child(6) { width: auto; }
 .table-container th:nth-child(7), .table-container td:nth-child(7) {
-  width: 64px;
+  width: auto;
   min-width: 64px;
   max-width: 64px;
 }
@@ -290,7 +290,7 @@ th {
   -webkit-backdrop-filter: blur(10px);
   color: var(--text-main);
   padding: 16px 16px;
-  text-align: right; /* Right-align headers by default for number columns */
+  text-align: center; /* Right-align headers by default for number columns */
   font-weight: 400; /* Bebas Neue is naturally bold */
   font-size: .95rem;
   letter-spacing: 1.2px;
@@ -301,7 +301,7 @@ th {
 }
 
 /* Center-align photo column */
-th:nth-child(1), th:nth-child(2) {
+th:nth-child(1), th:nth-child(2), td:nth-child(3), td:nth-child(4), th:nth-child(5), th:nth-child(6), th:nth-child(7) {
   text-align: center;
 }
 
@@ -337,7 +337,7 @@ tbody tr:hover {
 
 td {
   padding: 14px 16px;
-  text-align: right; /* Right-align all numeric data by default */
+  text-align: center; /* Right-align all numeric data by default */
   font-size: .92rem;
   color: var(--text-dark);
   font-weight: 600;
@@ -369,7 +369,7 @@ td.points-column {
   font-weight: 800;
   font-size: 1.05rem;
   color: var(--primary);
-  text-align: right; /* Right-align points like NHL.com */
+  text-align: center; /* Right-align points like NHL.com */
   padding-right: 16px;
 }
 
@@ -821,7 +821,7 @@ tbody tr:hover .player-photo img.face {
 
 #careerStatsTable th.team-col,
 #careerStatsTable td.team-col {
-  text-align: left;
+  text-align: center;
   padding-left: 16px;
   width: 140px;
   max-width: 140px;
@@ -976,7 +976,7 @@ tbody tr:hover .player-photo img.face {
   .career-modal-header {
     flex-direction: row;
     align-items: flex-start;
-    text-align: left;
+    text-align: center;
     padding: 60px 16px 20px;
     gap: 14px;
   }
@@ -1123,7 +1123,7 @@ tbody tr:hover .player-photo img.face {
   }
   .filter-group-career label {
     font-size: .72rem;
-    text-align: left;
+    text-align: center;
   }
   .filter-group-career select {
     width: 100%;
