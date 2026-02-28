@@ -355,7 +355,7 @@ td:nth-child(1), td:nth-child(2) {
 
 /* Left-align player name column */
 td:nth-child(3) {
-  text-align: left;
+  text-align: center;
   font-weight: 700;
   color: var(--text-main);
   white-space: nowrap;
