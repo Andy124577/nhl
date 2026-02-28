@@ -89,20 +89,17 @@ table {
 
 /* Column widths */
 table th:nth-child(1),
-table td:nth-child(1) {
-  width: 60px;
-}
+/* table td:nth-child(1) {
+  width: 224px;
+} */
 
 table th:nth-child(2),
-table td:nth-child(2) {
-  width: 90px;
-}
+/* table td:nth-child(2) {
+  width: 224px;
+} */
 
 table th:nth-child(3),
-table td:nth-child(3) {
-  width: auto;
-  min-width: 180px;
-}
+
 
 table th:nth-child(4),
 table td:nth-child(4),
@@ -110,10 +107,7 @@ table th:nth-child(5),
 table td:nth-child(5),
 table th:nth-child(6),
 table td:nth-child(6),
-table th:nth-child(7),
-table td:nth-child(7) {
-  width: 80px;
-}
+table th:nth-child(7)
 
 /* Table header */
 thead {
@@ -139,8 +133,7 @@ th {
 }
 
 th:nth-child(3) {
-  text-align: left;
-  padding-left: 16px;
+  text-align: center;
 }
 
 /* Table body rows */
@@ -197,10 +190,9 @@ tbody tr:nth-child(3) td:nth-child(1) {
 
 /* Player name column */
 td:nth-child(3) {
-  text-align: left;
+  text-align: center;
   font-weight: 700;
   color: var(--text-main);
-  padding-left: 16px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
