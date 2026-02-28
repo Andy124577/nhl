@@ -514,25 +514,26 @@ tbody tr:hover .player-photo img.face {
 }
 
 .career-modal {
-  max-width: 90%;
-  width: 880px;
-  max-height: 85vh;
+  max-width: 92%;
+  width: 860px;
+  max-height: 88vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   background: var(--card-white);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  margin: 3% auto;
+  margin: 2.5% auto;
+  border: 1px solid rgba(0,212,255,.12);
 }
 
 /* Modal header */
 .career-modal-header {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, rgba(0,212,255,.10) 0%, rgba(0,100,200,.08) 100%);
+  gap: 6px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(0,212,255,.08) 0%, rgba(0,100,200,.06) 100%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   color: var(--text-dark);
@@ -544,17 +545,18 @@ tbody tr:hover .player-photo img.face {
 .player-header-top {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  padding-right: 42px;
 }
 
 .player-headshot-container {
-  width: 60px;
-  height: 60px;
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
-  border: 2px solid var(--border-light);
-  box-shadow: 0 3px 10px rgba(0,0,0,.3);
+  border: 2px solid rgba(0,212,255,.25);
+  box-shadow: 0 2px 8px rgba(0,0,0,.35), 0 0 10px rgba(0,212,255,.1);
   background: var(--bg-gray-light);
   display: flex;
   align-items: center;
@@ -569,7 +571,7 @@ tbody tr:hover .player-photo img.face {
 }
 
 .player-headshot-container .no-photo {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   color: var(--text-gray);
   opacity: .5;
 }
@@ -579,11 +581,11 @@ tbody tr:hover .player-photo img.face {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .player-name-section h2 {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
   font-weight: 400;
   letter-spacing: .5px;
@@ -593,70 +595,87 @@ tbody tr:hover .player-photo img.face {
   background-clip: text;
   line-height: 1.1;
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .player-position-team {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: .9rem;
+  gap: 6px;
+  font-size: .82rem;
   color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.player-position-team img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  vertical-align: middle;
 }
 
 .player-position-team .position-badge {
   background: rgba(0,212,255,.12);
   color: var(--primary);
-  padding: 3px 10px;
-  border-radius: 6px;
+  padding: 2px 8px;
+  border-radius: 5px;
   font-weight: 700;
-  font-size: .78rem;
+  font-size: .72rem;
   letter-spacing: .5px;
 }
 
 .player-position-team .team-badge {
   background: var(--bg-gray-light);
   color: var(--text-dark);
-  padding: 3px 10px;
-  border-radius: 6px;
+  padding: 2px 8px;
+  border-radius: 5px;
   font-weight: 600;
-  font-size: .78rem;
+  font-size: .72rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .player-bio-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
+  gap: 4px;
 }
 
 .bio-stat {
-  background: rgba(0,212,255,.05);
-  padding: 6px 8px;
-  border-radius: 8px;
+  background: rgba(0,212,255,.04);
+  padding: 4px 6px;
+  border-radius: 7px;
   border: 1px solid var(--border-light);
-  transition: all .2s ease;
+  transition: background .2s ease, border-color .2s ease;
   text-align: center;
 }
 
 .bio-stat:hover {
-  background: rgba(0,212,255,.08);
-  border-color: rgba(0,212,255,.2);
+  background: rgba(0,212,255,.09);
+  border-color: rgba(0,212,255,.22);
 }
 
 .bio-stat .bio-label {
   display: block;
-  font-size: .68rem;
+  font-size: .62rem;
   color: var(--text-gray);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .5px;
-  margin-bottom: 3px;
+  letter-spacing: .4px;
+  margin-bottom: 1px;
 }
 
 .bio-stat .bio-value {
   display: block;
-  font-size: .85rem;
+  font-size: .80rem;
   color: var(--text-dark);
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .bio-toggle-btn {
@@ -665,21 +684,23 @@ tbody tr:hover .player-photo img.face {
 
 .close-modal {
   position: absolute;
-  right: 16px;
-  top: 16px;
-  width: 36px;
-  height: 36px;
+  right: 10px;
+  top: 10px;
+  width: 30px;
+  height: 30px;
   background: var(--bg-gray-light);
   border: 1px solid var(--border-light);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.6rem;
+  font-size: 1.3rem;
+  line-height: 1;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all .25s ease;
+  transition: background .2s ease, color .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
   z-index: 100;
+  padding-bottom: 1px;
 }
 
 .close-modal:hover {
@@ -693,8 +714,8 @@ tbody tr:hover .player-photo img.face {
 /* Career filters section */
 .career-filters {
   display: flex;
-  gap: 14px;
-  padding: 18px 24px;
+  gap: 10px;
+  padding: 10px 14px;
   background: rgba(10,10,26,.6);
   border-bottom: 1px solid var(--border-light);
   flex-wrap: wrap;
@@ -703,14 +724,14 @@ tbody tr:hover .player-photo img.face {
 
 .filter-group-career {
   flex: 1;
-  min-width: 140px;
+  min-width: 130px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .filter-group-career label {
-  font-size: .80rem;
+  font-size: .74rem;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -718,20 +739,20 @@ tbody tr:hover .player-photo img.face {
 }
 
 .filter-group-career select {
-  padding: 10px 14px;
+  padding: 7px 12px;
   background: var(--bg-gray-light);
   color: var(--text-dark);
   border: 2px solid var(--border-gray);
-  border-radius: 10px;
-  font-size: .88rem;
+  border-radius: 8px;
+  font-size: .84rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all .25s ease;
+  transition: border-color .2s ease, box-shadow .2s ease;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237B8CC4' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 32px;
+  background-position: right 10px center;
+  padding-right: 28px;
 }
 
 .filter-group-career select:focus {
@@ -743,14 +764,15 @@ tbody tr:hover .player-photo img.face {
 .stats-count-badge {
   background: rgba(0,212,255,.08);
   color: var(--primary);
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-size: .82rem;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: .78rem;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   margin-left: auto;
+  border: 1px solid rgba(0,212,255,.12);
 }
 
 /* Career stats table */
@@ -779,11 +801,11 @@ tbody tr:hover .player-photo img.face {
   background: rgba(0,212,255,.14);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  padding: 14px 12px;
+  padding: 10px 12px;
   text-align: center;
   font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
   font-weight: 400;
-  font-size: .88rem;
+  font-size: .86rem;
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--text-dark);
@@ -792,9 +814,9 @@ tbody tr:hover .player-photo img.face {
 }
 
 #careerStatsTable td {
-  padding: 14px 12px;
+  padding: 10px 12px;
   text-align: center;
-  font-size: .90rem;
+  font-size: .88rem;
   color: var(--text-dark);
   font-weight: 600;
   border-bottom: 1px solid var(--border-light);
@@ -980,38 +1002,40 @@ tbody tr:hover .player-photo img.face {
 
   /* Mobile player header */
   .career-modal-header {
-    padding: 50px 14px 14px;
-    gap: 8px;
+    padding: 44px 12px 10px;
+    gap: 6px;
   }
 
   .player-header-top {
-    gap: 10px;
+    gap: 8px;
+    padding-right: 36px;
   }
 
   .player-headshot-container {
-    width: 55px;
-    height: 55px;
+    width: 44px;
+    height: 44px;
   }
   .player-headshot-container .no-photo {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
   }
 
   .player-name-section h2 {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
   }
 
   .close-modal {
-    right: 12px;
-    top: 12px;
-    width: 36px;
-    height: 36px;
-    font-size: 1.5rem;
+    right: 10px;
+    top: 10px;
+    width: 30px;
+    height: 30px;
+    font-size: 1.3rem;
     z-index: 1000;
   }
 
   .player-position-team {
-    font-size: .82rem;
+    font-size: .76rem;
     flex-wrap: wrap;
+    gap: 4px;
   }
 
   /* Hide toggle button by default (desktop) */
@@ -1072,13 +1096,13 @@ tbody tr:hover .player-photo img.face {
   }
 
   .bio-stat {
-    padding: 6px 8px;
+    padding: 4px 5px;
   }
   .bio-stat .bio-label {
-    font-size: .65rem;
+    font-size: .60rem;
   }
   .bio-stat .bio-value {
-    font-size: .78rem;
+    font-size: .74rem;
   }
 
   /* Compact horizontal filters for mobile */
@@ -1300,50 +1324,54 @@ tbody tr:hover .player-photo img.face {
 
   /* Modal improvements for very small screens */
   .career-modal-header {
-    padding: 48px 10px 10px;
-    gap: 6px;
+    padding: 42px 10px 8px;
+    gap: 5px;
   }
 
   .player-header-top {
     gap: 8px;
+    padding-right: 34px;
   }
 
   .player-headshot-container {
-    width: 50px;
-    height: 50px;
+    width: 42px;
+    height: 42px;
   }
 
   .player-name-section h2 {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .player-position-team {
-    font-size: .76rem;
+    font-size: .72rem;
+    gap: 3px;
   }
 
   .player-bio-grid {
     grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
+    gap: 3px;
   }
 
   .bio-stat {
-    padding: 5px 6px;
+    padding: 3px 4px;
   }
   .bio-stat .bio-label {
-    font-size: .6rem;
+    font-size: .58rem;
   }
   .bio-stat .bio-value {
-    font-size: .72rem;
+    font-size: .70rem;
   }
 
   .close-modal {
-    width: 32px;
-    height: 32px;
-    font-size: 1.4rem;
+    width: 28px;
+    height: 28px;
+    font-size: 1.2rem;
+    right: 8px;
+    top: 8px;
   }
 
   .career-filters {
-    padding: 10px;
+    padding: 8px 10px;
     gap: 5px;
   }
 
