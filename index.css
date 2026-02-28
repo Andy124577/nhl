@@ -257,6 +257,11 @@ table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
+  /* Enable tabular numbers for perfect vertical alignment like NHL.com */
+  font-variant-numeric: tabular-nums;
+  -moz-font-feature-settings: "tnum";
+  -webkit-font-feature-settings: "tnum";
+  font-feature-settings: "tnum";
 }
 
 /* Fixed widths for stat columns (GP, G, AST, PTS) - ONLY for index.html table */
@@ -266,9 +271,9 @@ table {
 .table-container th:nth-child(5), .table-container td:nth-child(5),
 .table-container th:nth-child(6), .table-container td:nth-child(6),
 .table-container th:nth-child(7), .table-container td:nth-child(7) {
-  width: 48px;
-  min-width: 48px;
-  max-width: 48px;
+  width: 64px;
+  min-width: 64px;
+  max-width: 64px;
 }
 
 thead {
@@ -283,8 +288,8 @@ th {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: var(--text-main);
-  padding: 16px 12px;
-  text-align: center;
+  padding: 16px 16px;
+  text-align: right; /* Right-align headers by default for number columns */
   font-weight: 400; /* Bebas Neue is naturally bold */
   font-size: .95rem;
   letter-spacing: 1.2px;
@@ -294,10 +299,22 @@ th {
   white-space: nowrap;
 }
 
+/* Center-align photo column */
+th:nth-child(1), th:nth-child(2) {
+  text-align: center;
+}
+
+/* Left-align player name column header */
+th:nth-child(3) {
+  text-align: left;
+  padding-left: 12px;
+}
+
 th.rank-col {
   width: 50px;
   padding: 16px 8px;
   font-size: .85rem;
+  text-align: center;
 }
 
 tbody tr {
@@ -318,12 +335,29 @@ tbody tr:hover {
 }
 
 td {
-  padding: 14px 10px;
-  text-align: center;
+  padding: 14px 16px;
+  text-align: right; /* Right-align all numeric data by default */
   font-size: .92rem;
   color: var(--text-dark);
-  font-weight: 500;
+  font-weight: 600;
   word-wrap: break-word;
+}
+
+/* Center-align photo and rank columns */
+td:nth-child(1), td:nth-child(2) {
+  text-align: center;
+}
+
+/* Left-align player name column */
+td:nth-child(3) {
+  text-align: left;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  padding-left: 12px;
 }
 
 td.rank-col {
@@ -331,6 +365,7 @@ td.rank-col {
   font-size: .88rem;
   color: var(--text-gray);
   width: 50px;
+  text-align: center;
 }
 
 /* Top 3 rank badges */
@@ -343,20 +378,8 @@ td.points-column {
   font-weight: 800;
   font-size: 1.05rem;
   color: var(--primary);
-}
-
-td:nth-child(3) { /* Player name column */
-  text-align: left;
-  font-weight: 700;
-  color: var(--text-main);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
-}
-
-th:nth-child(3) {
-  text-align: left;
+  text-align: right; /* Right-align points like NHL.com */
+  padding-right: 16px;
 }
 
 /* Player photo styling */
@@ -665,6 +688,11 @@ tbody tr:hover .player-photo img.face {
   border-collapse: separate;
   border-spacing: 0;
   font-size: .86rem;
+  /* Enable tabular numbers for perfect vertical alignment like NHL.com */
+  font-variant-numeric: tabular-nums;
+  -moz-font-feature-settings: "tnum";
+  -webkit-font-feature-settings: "tnum";
+  font-feature-settings: "tnum";
 }
 
 #careerStatsTable th {
@@ -672,8 +700,8 @@ tbody tr:hover .player-photo img.face {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: var(--text-main);
-  padding: 13px 10px;
-  text-align: center;
+  padding: 13px 14px;
+  text-align: right; /* Right-align numeric headers like NHL.com */
   font-weight: 700;
   position: sticky;
   top: 0;
@@ -686,9 +714,17 @@ tbody tr:hover .player-photo img.face {
   box-shadow: 0 2px 5px rgba(0,0,0,.12);
 }
 
+/* Left-align text column headers (Season, League, Team) */
+#careerStatsTable th.season-col,
+#careerStatsTable th.league-col,
+#careerStatsTable th.team-col {
+  text-align: left;
+  padding-left: 12px;
+}
+
 #careerStatsTable td {
-  padding: 11px 9px;
-  text-align: center;
+  padding: 11px 14px;
+  text-align: right; /* Right-align all numeric data by default */
   border-bottom: 1px solid var(--border-light);
   font-size: .86rem;
   white-space: nowrap;
@@ -707,6 +743,13 @@ tbody tr:hover .player-photo img.face {
   background: var(--bg-hover);
 }
 
+/* Left-align and style text columns */
+#careerStatsTable td.season-col,
+#careerStatsTable td.league-col {
+  text-align: left;
+  padding-left: 12px;
+}
+
 #careerStatsTable td.league-col {
   font-size: .76rem;
   color: var(--text-gray);
@@ -719,9 +762,9 @@ tbody tr:hover .player-photo img.face {
 #careerStatsTable td.league-col,
 #careerStatsTable th.season-col,
 #careerStatsTable td.season-col {
-  width: 82px;
-  max-width: 82px;
-  min-width: 82px;
+  width: 90px;
+  max-width: 90px;
+  min-width: 90px;
 }
 
 #careerStatsTable td.season-col {
@@ -732,14 +775,14 @@ tbody tr:hover .player-photo img.face {
 
 #careerStatsTable th.team-col,
 #careerStatsTable td.team-col {
-  width: 95px;
-  max-width: 95px;
-  min-width: 95px;
+  width: 100px;
+  max-width: 100px;
+  min-width: 100px;
 }
 
 #careerStatsTable td.team-col {
   padding: 9px;
-  text-align: center;
+  text-align: center; /* Center team logos */
   font-size: .78rem;
   color: var(--text-dark);
   font-weight: 600;
@@ -760,15 +803,17 @@ tbody tr:hover .player-photo img.face {
   border-top: 2px solid var(--primary);
 }
 #careerStatsTable .career-totals-row td {
-  padding: 15px 9px;
+  padding: 15px 14px;
   font-weight: 800;
   color: var(--primary);
+  text-align: right; /* Right-align totals */
 }
 #careerStatsTable .career-totals-label {
   text-align: left !important;
   text-transform: uppercase;
   font-size: .82rem;
   letter-spacing: .6px;
+  padding-left: 12px;
 }
 
 .no-stats-message {
