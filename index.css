@@ -529,9 +529,9 @@ tbody tr:hover .player-photo img.face {
 /* Modal header */
 .career-modal-header {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 24px 28px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 20px;
   background: linear-gradient(135deg, rgba(0,212,255,.10) 0%, rgba(0,100,200,.08) 100%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -541,14 +541,20 @@ tbody tr:hover .player-photo img.face {
   border-radius: 20px 20px 0 0;
 }
 
+.player-header-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .player-headshot-container {
-  width: 130px;
-  height: 130px;
+  width: 60px;
+  height: 60px;
   flex-shrink: 0;
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
-  border: 3px solid var(--border-light);
-  box-shadow: 0 4px 12px rgba(0,0,0,.4);
+  border: 2px solid var(--border-light);
+  box-shadow: 0 3px 10px rgba(0,0,0,.3);
   background: var(--bg-gray-light);
   display: flex;
   align-items: center;
@@ -563,27 +569,21 @@ tbody tr:hover .player-photo img.face {
 }
 
 .player-headshot-container .no-photo {
-  font-size: 3.5rem;
+  font-size: 1.8rem;
   color: var(--text-gray);
   opacity: .5;
 }
 
-.player-info-section {
+.player-name-section {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
 }
 
-.player-name-row {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 6px;
-}
-
-.player-name-row h2 {
-  font-size: 1.9rem;
+.player-name-section h2 {
+  font-size: 1.5rem;
   font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
   font-weight: 400;
   letter-spacing: .5px;
@@ -591,48 +591,50 @@ tbody tr:hover .player-photo img.face {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  line-height: 1.1;
+  margin: 0;
 }
 
 .player-position-team {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: .95rem;
+  gap: 8px;
+  font-size: .9rem;
   color: var(--text-secondary);
-  margin-bottom: 12px;
 }
 
 .player-position-team .position-badge {
   background: rgba(0,212,255,.12);
   color: var(--primary);
-  padding: 4px 11px;
+  padding: 3px 10px;
   border-radius: 6px;
   font-weight: 700;
-  font-size: .82rem;
+  font-size: .78rem;
   letter-spacing: .5px;
 }
 
 .player-position-team .team-badge {
   background: var(--bg-gray-light);
   color: var(--text-dark);
-  padding: 4px 11px;
+  padding: 3px 10px;
   border-radius: 6px;
   font-weight: 600;
-  font-size: .82rem;
+  font-size: .78rem;
 }
 
 .player-bio-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
 }
 
 .bio-stat {
   background: rgba(0,212,255,.05);
-  padding: 10px 14px;
-  border-radius: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
   border: 1px solid var(--border-light);
   transition: all .2s ease;
+  text-align: center;
 }
 
 .bio-stat:hover {
@@ -642,34 +644,38 @@ tbody tr:hover .player-photo img.face {
 
 .bio-stat .bio-label {
   display: block;
-  font-size: .72rem;
+  font-size: .68rem;
   color: var(--text-gray);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .5px;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .bio-stat .bio-value {
   display: block;
-  font-size: .92rem;
+  font-size: .85rem;
   color: var(--text-dark);
   font-weight: 700;
 }
 
+.bio-toggle-btn {
+  display: none;
+}
+
 .close-modal {
   position: absolute;
-  right: 20px;
-  top: 20px;
-  width: 42px;
-  height: 42px;
+  right: 16px;
+  top: 16px;
+  width: 36px;
+  height: 36px;
   background: var(--bg-gray-light);
   border: 1px solid var(--border-light);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
+  font-size: 1.6rem;
   color: var(--text-secondary);
   cursor: pointer;
   transition: all .25s ease;
@@ -972,58 +978,40 @@ tbody tr:hover .player-photo img.face {
     overflow-y: auto;
   }
 
-  /* Keep header horizontal with headshot and name side by side */
+  /* Mobile player header */
   .career-modal-header {
-    flex-direction: row;
-    align-items: flex-start;
-    text-align: center;
-    padding: 60px 16px 20px;
-    gap: 14px;
+    padding: 50px 14px 14px;
+    gap: 8px;
+  }
+
+  .player-header-top {
+    gap: 10px;
   }
 
   .player-headshot-container {
-    width: 110px;
-    height: 110px;
-    margin-bottom: 0;
-    flex-shrink: 0;
+    width: 55px;
+    height: 55px;
   }
   .player-headshot-container .no-photo {
-    font-size: 2.8rem;
+    font-size: 1.6rem;
   }
 
-  .player-info-section {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .player-name-row {
-    margin-right: 35px;
-    justify-content: flex-start;
-    flex-direction: row;
-    gap: 0;
-  }
-  .player-name-row h2 {
-    font-size: 1.3rem;
-    font-family: 'Bebas Neue', sans-serif;
-    background: linear-gradient(135deg, var(--primary) 0%, #00A8CC 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .player-name-section h2 {
+    font-size: 1.2rem;
   }
 
   .close-modal {
-    right: 16px;
-    top: 16px;
-    width: 40px;
-    height: 40px;
-    font-size: 1.8rem;
+    right: 12px;
+    top: 12px;
+    width: 36px;
+    height: 36px;
+    font-size: 1.5rem;
     z-index: 1000;
   }
 
   .player-position-team {
-    font-size: .85rem;
+    font-size: .82rem;
     flex-wrap: wrap;
-    justify-content: flex-start;
   }
 
   /* Hide toggle button by default (desktop) */
@@ -1033,21 +1021,17 @@ tbody tr:hover .player-photo img.face {
 
   /* Mobile: show toggle button and make bio collapsible */
   .player-bio-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.5rem 1rem;
-    max-width: 400px;
-    margin: 0 auto;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
     max-height: 0;
     overflow: hidden;
     opacity: 0;
     transition: all 0.3s ease-in-out;
-    margin-top: 0;
   }
 
   .player-bio-grid.expanded {
     max-height: 500px;
     opacity: 1;
-    margin-top: 1rem;
   }
 
   .bio-toggle-btn {
@@ -1056,13 +1040,12 @@ tbody tr:hover .player-photo img.face {
     justify-content: center;
     gap: 8px;
     width: 100%;
-    padding: 10px 16px;
-    margin-top: 12px;
+    padding: 8px 14px;
     background: rgba(0, 212, 255, 0.08);
     border: 1px solid rgba(0, 212, 255, 0.2);
-    border-radius: 10px;
+    border-radius: 8px;
     color: var(--primary);
-    font-size: .85rem;
+    font-size: .82rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.25s ease;
@@ -1089,16 +1072,13 @@ tbody tr:hover .player-photo img.face {
   }
 
   .bio-stat {
-    background: rgba(0, 212, 255, 0.05);
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1px solid var(--border-light);
+    padding: 6px 8px;
   }
   .bio-stat .bio-label {
-    font-size: .68rem;
+    font-size: .65rem;
   }
   .bio-stat .bio-value {
-    font-size: .82rem;
+    font-size: .78rem;
   }
 
   /* Compact horizontal filters for mobile */
@@ -1320,50 +1300,46 @@ tbody tr:hover .player-photo img.face {
 
   /* Modal improvements for very small screens */
   .career-modal-header {
-    padding: 55px 12px 18px;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 12px;
+    padding: 48px 10px 10px;
+    gap: 6px;
+  }
+
+  .player-header-top {
+    gap: 8px;
   }
 
   .player-headshot-container {
-    width: 90px;
-    height: 90px;
-    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
   }
 
-  .player-info-section {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .player-name-row {
-    margin-right: 30px;
-    flex-direction: row;
-  }
-
-  .player-name-row h2 {
+  .player-name-section h2 {
     font-size: 1.1rem;
   }
 
   .player-position-team {
-    font-size: .80rem;
-    justify-content: flex-start;
+    font-size: .76rem;
   }
 
   .player-bio-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.4rem 0.8rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
   }
 
   .bio-stat {
-    padding: 7px 8px;
+    padding: 5px 6px;
+  }
+  .bio-stat .bio-label {
+    font-size: .6rem;
+  }
+  .bio-stat .bio-value {
+    font-size: .72rem;
   }
 
   .close-modal {
-    width: 36px;
-    height: 36px;
-    font-size: 1.6rem;
+    width: 32px;
+    height: 32px;
+    font-size: 1.4rem;
   }
 
   .career-filters {
