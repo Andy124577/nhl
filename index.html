@@ -187,42 +187,40 @@
                     <div class="player-headshot-container" id="playerHeadshotContainer">
                         <div class="no-photo">🏒</div>
                     </div>
-                    <div class="player-name-section">
-                        <h2 id="careerPlayerName"></h2>
-                        <div class="player-position-team">
-                            <span id="careerPlayerPosition"></span>
-                            <span id="careerPlayerTeam"></span>
+                    <div class="player-header-right">
+                        <div class="player-name-section">
+                            <h2 id="careerPlayerName"></h2>
+                            <div class="player-position-team">
+                                <span id="careerPlayerPosition"></span>
+                                <span id="careerPlayerTeam"></span>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <button class="bio-toggle-btn" id="bioToggleBtn" onclick="toggleBioInfo()">
-                    <span id="bioToggleText">Voir plus</span>
-                    <span class="bio-toggle-arrow">▼</span>
-                </button>
-                <div class="player-bio-grid" id="playerBioGrid">
-                    <div class="bio-stat">
-                        <span class="bio-label">Taille</span>
-                        <span class="bio-value" id="playerHeight">-</span>
-                    </div>
-                    <div class="bio-stat">
-                        <span class="bio-label">Poids</span>
-                        <span class="bio-value" id="playerWeight">-</span>
-                    </div>
-                    <div class="bio-stat">
-                        <span class="bio-label">Né le</span>
-                        <span class="bio-value" id="playerBirthDate">-</span>
-                    </div>
-                    <div class="bio-stat">
-                        <span class="bio-label">Lieu</span>
-                        <span class="bio-value" id="playerBirthPlace">-</span>
-                    </div>
-                    <div class="bio-stat">
-                        <span class="bio-label">Lance</span>
-                        <span class="bio-value" id="playerShoots">-</span>
-                    </div>
-                    <div class="bio-stat">
-                        <span class="bio-label">Repêchage</span>
-                        <span class="bio-value" id="playerDraft">-</span>
+                        <div class="player-bio-grid">
+                            <div class="bio-stat">
+                                <span class="bio-label">Taille</span>
+                                <span class="bio-value" id="playerHeight">-</span>
+                            </div>
+                            <div class="bio-stat">
+                                <span class="bio-label">Poids</span>
+                                <span class="bio-value" id="playerWeight">-</span>
+                            </div>
+                            <div class="bio-stat">
+                                <span class="bio-label">Lance</span>
+                                <span class="bio-value" id="playerShoots">-</span>
+                            </div>
+                            <div class="bio-stat">
+                                <span class="bio-label">Né le</span>
+                                <span class="bio-value" id="playerBirthDate">-</span>
+                            </div>
+                            <div class="bio-stat">
+                                <span class="bio-label">Lieu</span>
+                                <span class="bio-value" id="playerBirthPlace">-</span>
+                            </div>
+                            <div class="bio-stat">
+                                <span class="bio-label">Repêchage</span>
+                                <span class="bio-value" id="playerDraft">-</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -322,49 +320,6 @@
     <script defer src="index.js?v=20250101-debug2"></script>
     <script defer src="navbar.js"></script>
     <script>
-    // Toggle bio info on mobile
-    function toggleBioInfo() {
-        const bioGrid = document.getElementById('playerBioGrid');
-        const toggleBtn = document.getElementById('bioToggleBtn');
-        const toggleText = document.getElementById('bioToggleText');
-
-        if (bioGrid && toggleBtn) {
-            bioGrid.classList.toggle('expanded');
-            toggleBtn.classList.toggle('expanded');
-
-            if (bioGrid.classList.contains('expanded')) {
-                toggleText.textContent = 'Voir moins';
-            } else {
-                toggleText.textContent = 'Voir plus';
-            }
-        }
-    }
-
-    // Reset bio info toggle when modal opens/closes
-    function resetBioToggle() {
-        const bioGrid = document.getElementById('playerBioGrid');
-        const toggleBtn = document.getElementById('bioToggleBtn');
-        const toggleText = document.getElementById('bioToggleText');
-
-        if (bioGrid && toggleBtn && toggleText) {
-            bioGrid.classList.remove('expanded');
-            toggleBtn.classList.remove('expanded');
-            toggleText.textContent = 'Voir plus';
-        }
-    }
-
-    // Override closeCareerModal to reset bio toggle
-    const originalCloseCareerModal = window.closeCareerModal;
-    window.closeCareerModal = function() {
-        resetBioToggle();
-        if (originalCloseCareerModal) {
-            originalCloseCareerModal();
-        } else {
-            document.getElementById('careerStatsModal').style.display = 'none';
-            document.body.style.overflow = '';
-        }
-    };
-
     // Auto-open player career modal when coming from accueil hot players
     window.addEventListener('load', function() {
         var params = new URLSearchParams(window.location.search);
