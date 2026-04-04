@@ -639,23 +639,23 @@ app.post("/pick-player", async (req, res) => {
         if (clan.poolMode === 'head-to-head' && clan.h2hData) {
             console.log("🏒 Generating first week matchups for H2H pool:", clanName);
 
-            // Get active teams
+            // Get active teams (must include members so generateWeeklyMatchups can filter correctly)
             const activeTeams = Object.entries(clan.teams)
                 .filter(([_, teamData]) => teamData.members && teamData.members.length > 0)
-                .map(([teamName, _]) => ({ name: teamName }));
+                .map(([teamName, teamData]) => ({ name: teamName, members: teamData.members }));
 
             // Generate matchups for week 1 (no previous matchups)
             const weekOneMatchups = generateWeeklyMatchups(activeTeams, []);
 
-            // Set week start to next Monday 00:00:00
+            // Set week start to the current week's Monday 00:00:00
             const now = new Date();
-            const nextMonday = new Date(now);
+            const currentMonday = new Date(now);
             const dayOfWeek = now.getDay();
-            const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek);
-            nextMonday.setDate(now.getDate() + daysUntilMonday);
-            nextMonday.setHours(0, 0, 0, 0);
+            const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // 0=Sun goes back 6, else go to Mon
+            currentMonday.setDate(now.getDate() + daysToMonday);
+            currentMonday.setHours(0, 0, 0, 0);
 
-            clan.h2hData.weekStart = nextMonday.toISOString();
+            clan.h2hData.weekStart = currentMonday.toISOString();
             clan.h2hData.currentWeek = 1;
             clan.h2hData.matchups = [weekOneMatchups.map(m => ({ ...m, weekNumber: 1 }))];
 
@@ -3677,11 +3677,67 @@ app.get('/h2h/current-week-scores', async (req, res) => {
         const weekMatchups = clan.h2hData.matchups[currentWeek - 1];
 
         if (!weekMatchups || weekMatchups.length === 0) {
+            // Auto-repair: if the draft is done and teams have rosters, generate matchups now
+            const activeTeams = Object.entries(clan.teams)
+                .filter(([_, td]) => td.members && td.members.length > 0 &&
+                    ((td.offensive || []).length + (td.defensive || []).length + (td.goalie || []).length) > 0)
+                .map(([teamName, td]) => ({ name: teamName, members: td.members }));
+
+            if (activeTeams.length >= 2 && activeTeams.length % 2 === 0) {
+                console.log(`🔧 Auto-generating matchups for pool ${poolName} (${activeTeams.length} teams)`);
+
+                const previousMatchups = clan.h2hData.matchups || [];
+                const newMatchups = generateWeeklyMatchups(activeTeams, previousMatchups);
+
+                if (newMatchups.length > 0) {
+                    // Reset weekStart to current week's Monday
+                    const now = new Date();
+                    const monday = new Date(now);
+                    const dayOfWeek = now.getDay();
+                    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+                    monday.setDate(now.getDate() + daysToMonday);
+                    monday.setHours(0, 0, 0, 0);
+
+                    clan.h2hData.weekStart = monday.toISOString();
+                    clan.h2hData.currentWeek = currentWeek;
+                    clan.h2hData.matchups[currentWeek - 1] = newMatchups.map(m => ({ ...m, weekNumber: currentWeek }));
+
+                    // Ensure standings entries exist
+                    if (!clan.h2hData.standings) clan.h2hData.standings = {};
+                    activeTeams.forEach(t => ensureStandingsEntry(clan.h2hData.standings, t.name));
+
+                    const draftData2 = await loadDraftData();
+                    draftData2[poolName] = clan;
+                    await saveDraftData(draftData2);
+
+                    console.log(`✅ Auto-generated ${newMatchups.length} matchups for week ${currentWeek}, weekStart: ${monday.toISOString()}`);
+
+                    // Fall through to normal response below with new weekMatchups
+                    const weekEnd2 = new Date(monday);
+                    weekEnd2.setDate(weekEnd2.getDate() + 7);
+                    const now2 = new Date();
+                    const weekStatus2 = now2 < monday ? 'upcoming' : now2 >= weekEnd2 ? 'completed' : 'ongoing';
+                    const displayMatchups2 = newMatchups.map(m => ({
+                        team1: m.team1, team2: m.team2, team1Points: 0, team2Points: 0
+                    }));
+                    return res.json({
+                        currentWeek,
+                        weekStart: monday.toISOString(),
+                        weekEnd: weekEnd2.toISOString(),
+                        weekStatus: weekStatus2,
+                        matchups: displayMatchups2,
+                        standings: clan.h2hData.standings,
+                        matchupHistory: clan.h2hData.matchupHistory || []
+                    });
+                }
+            }
+
             return res.json({
                 currentWeek,
                 matchups: [],
                 weekStart: clan.h2hData.weekStart,
-                weekStatus: 'no_matchups'
+                weekEnd: clan.h2hData.weekStart ? new Date(new Date(clan.h2hData.weekStart).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString() : null,
+                weekStatus: activeTeams.length < 2 ? 'awaiting_draft_completion' : 'no_matchups'
             });
         }
 
