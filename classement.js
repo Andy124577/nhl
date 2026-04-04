@@ -819,34 +819,68 @@ async function loadH2HCurrentWeek(poolName) {
         matchupsList.innerHTML = data.matchups.map(m => {
             const t1Leading = m.team1Points > m.team2Points;
             const t2Leading = m.team2Points > m.team1Points;
+            const tie = m.team1Points === m.team2Points;
+
+            // Build player rows — zip the two rosters side by side
+            const t1p = m.team1Players || [];
+            const t2p = m.team2Players || [];
+            const maxRows = Math.max(t1p.length, t2p.length);
+            let playerRowsHTML = '';
+            for (let i = 0; i < maxRows; i++) {
+                const lp = t1p[i];
+                const rp = t2p[i];
+                const lpFpts = lp ? lp.fantasyPoints : null;
+                const rpFpts = rp ? rp.fantasyPoints : null;
+                const lpBetter = lpFpts !== null && rpFpts !== null && lpFpts > rpFpts;
+                const rpBetter = lpFpts !== null && rpFpts !== null && rpFpts > lpFpts;
+
+                const lpSub = lp ? (lp.position === 'G'
+                    ? `${lp.wins}V ${lp.saves}A${lp.shutouts ? ' ' + lp.shutouts + 'BL' : ''}`
+                    : `${lp.goals}B ${lp.assists}A`) : '';
+                const rpSub = rp ? (rp.position === 'G'
+                    ? `${rp.wins}V ${rp.saves}A${rp.shutouts ? ' ' + rp.shutouts + 'BL' : ''}`
+                    : `${rp.goals}B ${rp.assists}A`) : '';
+
+                playerRowsHTML += `
+                    <div class="h2h-player-row">
+                        <div class="h2h-player-left ${lpBetter ? 'h2h-player-winning' : ''}">
+                            ${lp ? `<span class="h2h-player-name">${lp.name}</span><span class="h2h-player-sub">${lpSub}</span>` : ''}
+                        </div>
+                        <div class="h2h-player-pts-block">
+                            <span class="h2h-player-pts ${lpBetter ? 'h2h-pts-leading' : ''}">${lpFpts !== null ? lpFpts.toFixed(1) : '—'}</span>
+                            <span class="h2h-player-sep">·</span>
+                            <span class="h2h-player-pts ${rpBetter ? 'h2h-pts-leading' : ''}">${rpFpts !== null ? rpFpts.toFixed(1) : '—'}</span>
+                        </div>
+                        <div class="h2h-player-right ${rpBetter ? 'h2h-player-winning' : ''}">
+                            ${rp ? `<span class="h2h-player-sub">${rpSub}</span><span class="h2h-player-name">${rp.name}</span>` : ''}
+                        </div>
+                    </div>`;
+            }
+
             return `
                 <div class="h2h-matchup-card">
-                    <div class="h2h-team ${t1Leading ? 'leading' : ''}">
-                        <div class="h2h-team-name">${m.team1}</div>
-                        <div class="h2h-team-members">${getTeamMembers(poolName, m.team1)}</div>
+                    <div class="h2h-matchup-header">
+                        <div class="h2h-header-team ${t1Leading ? 'leading' : ''}">
+                            <div class="h2h-header-team-name">${m.team1}</div>
+                            <div class="h2h-header-score ${t1Leading ? 'leading' : ''}">${m.team1Points.toFixed(1)}</div>
+                        </div>
+                        <div class="h2h-header-vs">VS</div>
+                        <div class="h2h-header-team right ${t2Leading ? 'leading' : ''}">
+                            <div class="h2h-header-score ${t2Leading ? 'leading' : ''}">${m.team2Points.toFixed(1)}</div>
+                            <div class="h2h-header-team-name">${m.team2}</div>
+                        </div>
                     </div>
-                    <div class="h2h-score-block">
-                        <span class="h2h-score ${t1Leading ? 'leading' : ''}">${m.team1Points.toFixed(1)}</span>
-                        <span class="h2h-vs">VS</span>
-                        <span class="h2h-score ${t2Leading ? 'leading' : ''}">${m.team2Points.toFixed(1)}</span>
-                    </div>
-                    <div class="h2h-team ${t2Leading ? 'leading' : ''}">
-                        <div class="h2h-team-name">${m.team2}</div>
-                        <div class="h2h-team-members">${getTeamMembers(poolName, m.team2)}</div>
+                    <div class="h2h-players-list">
+                        <div class="h2h-players-header">
+                            <span>${m.team1}</span>
+                            <span>FPTS</span>
+                            <span>${m.team2}</span>
+                        </div>
+                        ${playerRowsHTML || '<div class="h2h-no-players">Aucun joueur à afficher</div>'}
                     </div>
                 </div>
             `;
         }).join('');
-
-        // Show finalize button for pool creator
-        const poolData = allPoolsData[poolName];
-        const username = localStorage.getItem('username');
-        const h2hFinalizeBtn = document.getElementById('h2hFinalizeBtn');
-        if (poolData && h2hFinalizeBtn) {
-            // Show button if user is in the pool (any member can finalize)
-            h2hFinalizeBtn.style.display = 'block';
-            h2hFinalizeBtn.dataset.poolName = poolName;
-        }
 
     } catch (error) {
         console.error('Error loading H2H scores:', error);
