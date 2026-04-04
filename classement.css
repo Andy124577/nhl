@@ -1333,8 +1333,10 @@ body {
     flex-direction: row;
 }
 
+/* right: photo first in DOM → appears left of text, then justify pushes photo to far right */
 .h2h-player-right {
     flex-direction: row-reverse;
+    justify-content: flex-start;
 }
 
 .h2h-player-photo {
@@ -1359,10 +1361,12 @@ body {
     flex-direction: column;
     gap: 1px;
     min-width: 0;
+    flex: 1;
 }
 
 .h2h-player-info.right {
     align-items: flex-end;
+    text-align: right;
 }
 
 .h2h-player-name {
