@@ -770,11 +770,11 @@ function buildMatchupCardHTML(m, poolName, showRecord) {
                     <span class="h2h-player-pts ${rpBetter ? 'h2h-pts-leading' : ''}">${rpFpts !== null ? rpFpts.toFixed(1) : '—'}</span>
                 </div>
                 <div class="h2h-player-right ${rpBetter ? 'h2h-player-winning' : ''}">
+                    ${rpPhoto ? `<img class="h2h-player-photo" src="${rpPhoto}" alt="" onerror="this.style.display='none'">` : '<div class="h2h-player-photo-placeholder"></div>'}
                     <div class="h2h-player-info right">
                         <span class="h2h-player-name">${rp ? rp.name : ''}</span>
                         ${rp ? `<span class="h2h-player-sub">${rpSub}</span>` : ''}
                     </div>
-                    ${rpPhoto ? `<img class="h2h-player-photo" src="${rpPhoto}" alt="" onerror="this.style.display='none'">` : '<div class="h2h-player-photo-placeholder"></div>'}
                 </div>
             </div>`;
     }
@@ -789,9 +789,9 @@ function buildMatchupCardHTML(m, poolName, showRecord) {
                 </div>
                 <div class="h2h-header-vs">VS</div>
                 <div class="h2h-header-team right ${t2Leading ? 'leading' : ''}">
-                    <div class="h2h-header-score ${t2Leading ? 'leading' : ''}">${m.team2Points.toFixed(1)}</div>
-                    ${recordHTML(m.team2)}
                     <div class="h2h-header-team-name">${m.team2}</div>
+                    ${recordHTML(m.team2)}
+                    <div class="h2h-header-score ${t2Leading ? 'leading' : ''}">${m.team2Points.toFixed(1)}</div>
                 </div>
             </div>
             <div class="h2h-players-list">
