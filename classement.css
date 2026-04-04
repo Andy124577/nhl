@@ -1325,35 +1325,70 @@ body {
 .h2h-player-left,
 .h2h-player-right {
     display: flex;
-    flex-direction: column;
-    gap: 1px;
+    align-items: center;
+    gap: 8px;
 }
 
 .h2h-player-left {
-    align-items: flex-start;
+    flex-direction: row;
 }
 
 .h2h-player-right {
+    flex-direction: row-reverse;
+}
+
+.h2h-player-photo {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.05);
+}
+
+.h2h-player-photo-placeholder {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    flex-shrink: 0;
+}
+
+.h2h-player-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.h2h-player-info.right {
     align-items: flex-end;
 }
 
 .h2h-player-name {
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: rgba(255,255,255,0.75);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 130px;
+    max-width: 110px;
 }
 
 .h2h-player-sub {
-    font-size: 0.68rem;
+    font-size: 0.65rem;
     color: rgba(255,255,255,0.3);
+    white-space: nowrap;
 }
 
 .h2h-player-winning .h2h-player-name {
     color: #00e676;
+}
+
+.h2h-team-record {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.4);
+    margin-top: 2px;
 }
 
 .h2h-player-pts-block {

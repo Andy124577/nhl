@@ -349,8 +349,19 @@ async function getTeamPlayerBreakdownForDateRange(teamData, startDateISO, endDat
     const allNames = roster.map(r => r.name);
 
     try {
+        // Get latest player_id and team_abbrev for each player (for headshot URLs)
+        const metaResult = await db.query(`
+            SELECT DISTINCT ON (player_name) player_name, player_id, team_abbrev
+            FROM player_game_logs
+            WHERE player_name = ANY($1)
+            ORDER BY player_name, game_date DESC
+        `, [allNames]);
+        const playerMeta = new Map();
+        metaResult.rows.forEach(r => playerMeta.set(r.player_name, { playerId: r.player_id, teamAbbrev: r.team_abbrev }));
+
+        // Get game stats for the date range
         const result = await db.query(`
-            SELECT player_name, position,
+            SELECT player_name, player_id, team_abbrev, position,
                    goals, assists, shots, plus_minus,
                    power_play_goals, power_play_points,
                    shorthanded_goals, shorthanded_points,
@@ -371,6 +382,8 @@ async function getTeamPlayerBreakdownForDateRange(teamData, startDateISO, endDat
                 playerMap.set(key, {
                     name: key,
                     position: game.position,
+                    playerId: game.player_id,
+                    teamAbbrev: game.team_abbrev,
                     fantasyPoints: 0,
                     goals: 0, assists: 0,
                     wins: 0, saves: 0, shutouts: 0
@@ -402,11 +415,12 @@ async function getTeamPlayerBreakdownForDateRange(teamData, startDateISO, endDat
             p.fantasyPoints += fp;
         });
 
-        // Return roster order, filling in players with 0 if no game logs
+        // Return roster order with metadata, 0 FPTS for players with no games
         return roster.map(r => {
             const stats = playerMap.get(r.name);
-            if (stats) return { ...stats, fantasyPoints: Math.round(stats.fantasyPoints * 10) / 10 };
-            return { name: r.name, position: r.isGoalie ? 'G' : 'F', fantasyPoints: 0, goals: 0, assists: 0, wins: 0, saves: 0, shutouts: 0 };
+            const meta = playerMeta.get(r.name) || {};
+            if (stats) return { ...stats, ...meta, fantasyPoints: Math.round(stats.fantasyPoints * 10) / 10 };
+            return { name: r.name, position: r.isGoalie ? 'G' : 'F', fantasyPoints: 0, goals: 0, assists: 0, wins: 0, saves: 0, shutouts: 0, ...meta };
         });
     } catch (err) {
         console.error('❌ Error getting player breakdown:', err);
@@ -3916,6 +3930,54 @@ app.get('/h2h/current-week-scores', async (req, res) => {
     } catch (error) {
         console.error("❌ Error fetching H2H current week scores:", error);
         res.status(500).json({ message: "Error fetching scores" });
+    }
+});
+
+// ✅ H2H: Get today's player stats for each matchup
+app.get('/h2h/today-scores', async (req, res) => {
+    try {
+        const { poolName } = req.query;
+        if (!poolName) return res.status(400).json({ message: "poolName required" });
+
+        const draftData = await loadDraftData();
+        const clan = draftData[poolName];
+        if (!clan || clan.poolMode !== 'head-to-head' || !clan.h2hData) {
+            return res.status(400).json({ message: "Pool not found or not H2H" });
+        }
+
+        const currentWeek = clan.h2hData.currentWeek;
+        const weekMatchups = clan.h2hData.matchups[currentWeek - 1];
+        if (!weekMatchups || weekMatchups.length === 0) {
+            return res.json({ currentWeek, matchups: [], weekStatus: 'no_matchups' });
+        }
+
+        // Today: midnight to now
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const now = new Date();
+
+        const displayMatchups = [];
+        for (const matchup of weekMatchups) {
+            const t1players = await getTeamPlayerBreakdownForDateRange(clan.teams[matchup.team1], todayStart, now);
+            const t2players = await getTeamPlayerBreakdownForDateRange(clan.teams[matchup.team2], todayStart, now);
+            const t1pts = Math.round(t1players.reduce((s, p) => s + p.fantasyPoints, 0) * 10) / 10;
+            const t2pts = Math.round(t2players.reduce((s, p) => s + p.fantasyPoints, 0) * 10) / 10;
+            displayMatchups.push({
+                team1: matchup.team1, team2: matchup.team2,
+                team1Points: t1pts, team2Points: t2pts,
+                team1Players: t1players, team2Players: t2players
+            });
+        }
+
+        res.json({
+            currentWeek,
+            date: todayStart.toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long' }),
+            matchups: displayMatchups,
+            standings: clan.h2hData.standings
+        });
+    } catch (err) {
+        console.error("❌ Error fetching today scores:", err);
+        res.status(500).json({ message: "Error fetching today scores" });
     }
 });
 
