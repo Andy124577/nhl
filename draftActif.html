@@ -206,42 +206,44 @@
     <div class="modal-content career-modal">
       <!-- Career Modal Header with Player Photo -->
       <div class="career-modal-header" id="careerModalHeader" style="display: none;">
-        <div class="player-headshot-container" id="playerHeadshotContainer">
-          <div class="no-photo">🏒</div>
-        </div>
-        <div class="player-info-section">
-          <div class="player-name-row">
-            <h2 id="careerPlayerName"></h2>
-            <span class="close-modal" onclick="closeCareerModal()">&times;</span>
+        <span class="close-modal" onclick="closeCareerModal()">&times;</span>
+        <div class="player-header-top">
+          <div class="player-headshot-container" id="playerHeadshotContainer">
+            <div class="no-photo">🏒</div>
           </div>
-          <div class="player-position-team">
-            <span id="careerPlayerPosition"></span>
-            <span id="careerPlayerTeam"></span>
-          </div>
-          <div class="player-bio-grid">
-            <div class="bio-stat">
-              <span class="bio-label">Taille</span>
-              <span class="bio-value" id="playerHeight">-</span>
+          <div class="player-header-right">
+            <div class="player-name-section">
+              <h2 id="careerPlayerName"></h2>
+              <div class="player-position-team">
+                <span id="careerPlayerPosition"></span>
+                <span id="careerPlayerTeam"></span>
+              </div>
             </div>
-            <div class="bio-stat">
-              <span class="bio-label">Poids</span>
-              <span class="bio-value" id="playerWeight">-</span>
-            </div>
-            <div class="bio-stat">
-              <span class="bio-label">Né le</span>
-              <span class="bio-value" id="playerBirthDate">-</span>
-            </div>
-            <div class="bio-stat">
-              <span class="bio-label">Lieu</span>
-              <span class="bio-value" id="playerBirthPlace">-</span>
-            </div>
-            <div class="bio-stat">
-              <span class="bio-label">Lance</span>
-              <span class="bio-value" id="playerShoots">-</span>
-            </div>
-            <div class="bio-stat">
-              <span class="bio-label">Repêchage</span>
-              <span class="bio-value" id="playerDraft">-</span>
+            <div class="player-bio-grid">
+              <div class="bio-stat">
+                <span class="bio-label">Taille</span>
+                <span class="bio-value" id="playerHeight">-</span>
+              </div>
+              <div class="bio-stat">
+                <span class="bio-label">Poids</span>
+                <span class="bio-value" id="playerWeight">-</span>
+              </div>
+              <div class="bio-stat">
+                <span class="bio-label">Lance</span>
+                <span class="bio-value" id="playerShoots">-</span>
+              </div>
+              <div class="bio-stat">
+                <span class="bio-label">Né le</span>
+                <span class="bio-value" id="playerBirthDate">-</span>
+              </div>
+              <div class="bio-stat">
+                <span class="bio-label">Lieu</span>
+                <span class="bio-value" id="playerBirthPlace">-</span>
+              </div>
+              <div class="bio-stat">
+                <span class="bio-label">Repêchage</span>
+                <span class="bio-value" id="playerDraft">-</span>
+              </div>
             </div>
           </div>
         </div>
