@@ -23,6 +23,7 @@ const VIEW_STATES = {
 
 let currentView = VIEW_STATES.POOL_LIST;
 let currentH2HTab = 'matchups'; // 'matchups' | 'standings' | 'history'
+let h2hWeekCache = null; // cached full-week matchup data
 
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', async () => {
@@ -188,6 +189,7 @@ function showPoolStandings(poolName) {
     currentView = VIEW_STATES.POOL_STANDINGS;
     currentPoolName = poolName;
     currentTeamName = null;
+    h2hWeekCache = null; // clear cache when switching pools
 
     const poolData = allPoolsData[poolName];
     if (!poolData) return;
@@ -711,6 +713,126 @@ function calculateTeamPoints(roster) {
     };
 }
 
+// ==================== H2H SHARED HELPERS ====================
+
+function playerHeadshot(playerId, teamAbbrev) {
+    if (!playerId || !teamAbbrev) return null;
+    return `https://assets.nhle.com/mugs/nhl/20252026/${teamAbbrev}/${playerId}.png`;
+}
+
+function buildMatchupCardHTML(m, poolName, showRecord) {
+    const t1Leading = m.team1Points > m.team2Points;
+    const t2Leading = m.team2Points > m.team1Points;
+    const standings = (allPoolsData[poolName] && allPoolsData[poolName].h2hData && allPoolsData[poolName].h2hData.standings) || {};
+
+    const recordHTML = (teamName) => {
+        if (!showRecord) return '';
+        const s = standings[teamName] || { wins: 0, losses: 0, ties: 0 };
+        const pts = s.wins * 2 + s.ties;
+        return `<div class="h2h-team-record">${s.wins}V-${s.losses}D-${s.ties}N · ${pts}PTS</div>`;
+    };
+
+    const t1p = m.team1Players || [];
+    const t2p = m.team2Players || [];
+    const maxRows = Math.max(t1p.length, t2p.length);
+    let playerRowsHTML = '';
+
+    for (let i = 0; i < maxRows; i++) {
+        const lp = t1p[i];
+        const rp = t2p[i];
+        const lpFpts = lp ? lp.fantasyPoints : null;
+        const rpFpts = rp ? rp.fantasyPoints : null;
+        const lpBetter = lpFpts !== null && rpFpts !== null && lpFpts > rpFpts;
+        const rpBetter = lpFpts !== null && rpFpts !== null && rpFpts > lpFpts;
+
+        const lpSub = lp ? (lp.position === 'G'
+            ? `${lp.wins}V ${lp.saves}ARR${lp.shutouts ? ' ' + lp.shutouts + 'BL' : ''}`
+            : `${lp.goals}B ${lp.assists}A`) : '';
+        const rpSub = rp ? (rp.position === 'G'
+            ? `${rp.wins}V ${rp.saves}ARR${rp.shutouts ? ' ' + rp.shutouts + 'BL' : ''}`
+            : `${rp.goals}B ${rp.assists}A`) : '';
+
+        const lpPhoto = lp ? playerHeadshot(lp.playerId, lp.teamAbbrev) : null;
+        const rpPhoto = rp ? playerHeadshot(rp.playerId, rp.teamAbbrev) : null;
+
+        playerRowsHTML += `
+            <div class="h2h-player-row">
+                <div class="h2h-player-left ${lpBetter ? 'h2h-player-winning' : ''}">
+                    ${lpPhoto ? `<img class="h2h-player-photo" src="${lpPhoto}" alt="" onerror="this.style.display='none'">` : '<div class="h2h-player-photo-placeholder"></div>'}
+                    <div class="h2h-player-info">
+                        <span class="h2h-player-name">${lp ? lp.name : ''}</span>
+                        ${lp ? `<span class="h2h-player-sub">${lpSub}</span>` : ''}
+                    </div>
+                </div>
+                <div class="h2h-player-pts-block">
+                    <span class="h2h-player-pts ${lpBetter ? 'h2h-pts-leading' : ''}">${lpFpts !== null ? lpFpts.toFixed(1) : '—'}</span>
+                    <span class="h2h-player-sep">·</span>
+                    <span class="h2h-player-pts ${rpBetter ? 'h2h-pts-leading' : ''}">${rpFpts !== null ? rpFpts.toFixed(1) : '—'}</span>
+                </div>
+                <div class="h2h-player-right ${rpBetter ? 'h2h-player-winning' : ''}">
+                    <div class="h2h-player-info right">
+                        <span class="h2h-player-name">${rp ? rp.name : ''}</span>
+                        ${rp ? `<span class="h2h-player-sub">${rpSub}</span>` : ''}
+                    </div>
+                    ${rpPhoto ? `<img class="h2h-player-photo" src="${rpPhoto}" alt="" onerror="this.style.display='none'">` : '<div class="h2h-player-photo-placeholder"></div>'}
+                </div>
+            </div>`;
+    }
+
+    return `
+        <div class="h2h-matchup-card">
+            <div class="h2h-matchup-header">
+                <div class="h2h-header-team ${t1Leading ? 'leading' : ''}">
+                    <div class="h2h-header-team-name">${m.team1}</div>
+                    ${recordHTML(m.team1)}
+                    <div class="h2h-header-score ${t1Leading ? 'leading' : ''}">${m.team1Points.toFixed(1)}</div>
+                </div>
+                <div class="h2h-header-vs">VS</div>
+                <div class="h2h-header-team right ${t2Leading ? 'leading' : ''}">
+                    <div class="h2h-header-score ${t2Leading ? 'leading' : ''}">${m.team2Points.toFixed(1)}</div>
+                    ${recordHTML(m.team2)}
+                    <div class="h2h-header-team-name">${m.team2}</div>
+                </div>
+            </div>
+            <div class="h2h-players-list">
+                <div class="h2h-players-header">
+                    <span>${m.team1}</span>
+                    <span>FPTS</span>
+                    <span>${m.team2}</span>
+                </div>
+                ${playerRowsHTML || '<div class="h2h-no-players">Aucun joueur à afficher</div>'}
+            </div>
+        </div>`;
+}
+
+// Classement tab: full week matchups with photos + records
+async function renderH2HStandingsWithMatchups(poolName) {
+    const standingsList = document.getElementById('standingsList');
+    standingsList.innerHTML = '<div class="h2h-loading">Chargement des duels...</div>';
+    standingsList.style.display = 'flex';
+    document.getElementById('standingsSkeleton').style.display = 'none';
+
+    try {
+        // Use cached data if available, otherwise fetch
+        if (!h2hWeekCache || h2hWeekCache.poolName !== poolName) {
+            const res = await fetch(`${BASE_URL}/h2h/current-week-scores?poolName=${encodeURIComponent(poolName)}`, { cache: 'no-store' });
+            const data = await res.json();
+            h2hWeekCache = { poolName, data };
+        }
+        const data = h2hWeekCache.data;
+
+        if (!data.matchups || data.matchups.length === 0) {
+            standingsList.innerHTML = '<div class="h2h-empty">Aucun duel cette semaine</div>';
+            return;
+        }
+
+        standingsList.innerHTML = data.matchups.map(m => buildMatchupCardHTML(m, poolName, true)).join('');
+    } catch (err) {
+        console.error('Error loading H2H standings matchups:', err);
+        standingsList.innerHTML = '<div class="h2h-empty">Erreur lors du chargement</div>';
+    }
+}
+
 // ==================== H2H TAB SWITCHING & RENDERING ====================
 function switchH2HTab(tab) {
     currentH2HTab = tab;
@@ -728,7 +850,11 @@ function switchH2HTab(tab) {
 
     if (tab === 'standings' && currentPoolName) {
         const poolData = allPoolsData[currentPoolName];
-        if (poolData) renderPoolStandings(poolData, currentPoolName);
+        if (poolData && poolData.poolMode === 'head-to-head') {
+            renderH2HStandingsWithMatchups(currentPoolName);
+        } else if (poolData) {
+            renderPoolStandings(poolData, currentPoolName);
+        }
     }
 
     if (tab === 'history' && currentPoolName) {
@@ -739,151 +865,41 @@ function switchH2HTab(tab) {
 async function loadH2HCurrentWeek(poolName) {
     const matchupsList = document.getElementById('h2hMatchupsList');
     const weekHeader = document.getElementById('h2hWeekHeader');
-    matchupsList.innerHTML = '<div class="h2h-loading">Chargement des scores...</div>';
+    matchupsList.innerHTML = '<div class="h2h-loading">Chargement des scores du jour...</div>';
 
     try {
-        const res = await fetch(`${BASE_URL}/h2h/current-week-scores?poolName=${encodeURIComponent(poolName)}`, { cache: 'no-store' });
-        if (!res.ok) throw new Error('Failed to fetch');
+        // Also pre-fetch week data in background for the Classement tab
+        if (!h2hWeekCache || h2hWeekCache.poolName !== poolName) {
+            fetch(`${BASE_URL}/h2h/current-week-scores?poolName=${encodeURIComponent(poolName)}`, { cache: 'no-store' })
+                .then(r => r.json())
+                .then(data => { h2hWeekCache = { poolName, data }; })
+                .catch(() => {});
+        }
 
+        // Fetch today's scores
+        const res = await fetch(`${BASE_URL}/h2h/today-scores?poolName=${encodeURIComponent(poolName)}`, { cache: 'no-store' });
+        if (!res.ok) throw new Error('Failed to fetch');
         const data = await res.json();
 
-        // Determine week status label and styling
-        const weekStatus = data.weekStatus || 'ongoing';
-        let statusLabel = '';
-        let statusClass = '';
-
-        switch (weekStatus) {
-            case 'upcoming':
-                statusLabel = '📅 À VENIR';
-                statusClass = 'status-upcoming';
-                break;
-            case 'ongoing':
-                statusLabel = '🔴 EN COURS';
-                statusClass = 'status-ongoing';
-                break;
-            case 'completed':
-                statusLabel = '✓ TERMINÉE';
-                statusClass = 'status-completed';
-                break;
-            case 'awaiting_draft_completion':
-                statusLabel = '⏳ EN ATTENTE';
-                statusClass = 'status-awaiting';
-                break;
-        }
-
-        // Week header - validate dates
-        let weekDateRange = '';
-        if (data.weekStart && data.weekEnd) {
-            try {
-                const weekStartDate = new Date(data.weekStart);
-                const weekEndDate = new Date(data.weekEnd);
-
-                // Check if dates are valid
-                if (!isNaN(weekStartDate.getTime()) && !isNaN(weekEndDate.getTime())) {
-                    const formatDate = d => d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
-                    weekDateRange = `${formatDate(weekStartDate)} - ${formatDate(weekEndDate)}`;
-                } else {
-                    console.warn('⚠️ Invalid date values:', data.weekStart, data.weekEnd);
-                    weekDateRange = 'Dates non disponibles';
-                }
-            } catch (error) {
-                console.error('❌ Error parsing dates:', error);
-                weekDateRange = 'Dates non disponibles';
-            }
-        } else {
-            weekDateRange = 'Dates non disponibles';
-        }
-
+        const today = new Date();
+        const dateLabel = today.toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long' });
         weekHeader.innerHTML = `
             <div class="h2h-week-label">
                 Semaine ${data.currentWeek}
-                <span class="h2h-week-status ${statusClass}">${statusLabel}</span>
+                <span class="h2h-week-status status-ongoing">🔴 EN COURS</span>
             </div>
-            <div class="h2h-week-dates">${weekDateRange}</div>
+            <div class="h2h-week-dates">Aujourd'hui — ${data.date || dateLabel}</div>
         `;
 
-        // Render matchups
         if (!data.matchups || data.matchups.length === 0) {
-            // Check if pool has active teams
-            const poolData = allPoolsData[poolName];
-            const activeTeamsCount = poolData ? Object.values(poolData.teams).filter(t => t.members && t.members.length > 0).length : 0;
-
-            if (activeTeamsCount < 2) {
-                matchupsList.innerHTML = '<div class="h2h-empty">⚠️ Pas assez d\'équipes actives pour générer des duels</div>';
-            } else {
-                matchupsList.innerHTML = '<div class="h2h-empty">Aucun duel cette semaine</div>';
-            }
+            matchupsList.innerHTML = '<div class="h2h-empty">Aucun duel cette semaine</div>';
             return;
         }
 
-        matchupsList.innerHTML = data.matchups.map(m => {
-            const t1Leading = m.team1Points > m.team2Points;
-            const t2Leading = m.team2Points > m.team1Points;
-            const tie = m.team1Points === m.team2Points;
-
-            // Build player rows — zip the two rosters side by side
-            const t1p = m.team1Players || [];
-            const t2p = m.team2Players || [];
-            const maxRows = Math.max(t1p.length, t2p.length);
-            let playerRowsHTML = '';
-            for (let i = 0; i < maxRows; i++) {
-                const lp = t1p[i];
-                const rp = t2p[i];
-                const lpFpts = lp ? lp.fantasyPoints : null;
-                const rpFpts = rp ? rp.fantasyPoints : null;
-                const lpBetter = lpFpts !== null && rpFpts !== null && lpFpts > rpFpts;
-                const rpBetter = lpFpts !== null && rpFpts !== null && rpFpts > lpFpts;
-
-                const lpSub = lp ? (lp.position === 'G'
-                    ? `${lp.wins}V ${lp.saves}A${lp.shutouts ? ' ' + lp.shutouts + 'BL' : ''}`
-                    : `${lp.goals}B ${lp.assists}A`) : '';
-                const rpSub = rp ? (rp.position === 'G'
-                    ? `${rp.wins}V ${rp.saves}A${rp.shutouts ? ' ' + rp.shutouts + 'BL' : ''}`
-                    : `${rp.goals}B ${rp.assists}A`) : '';
-
-                playerRowsHTML += `
-                    <div class="h2h-player-row">
-                        <div class="h2h-player-left ${lpBetter ? 'h2h-player-winning' : ''}">
-                            ${lp ? `<span class="h2h-player-name">${lp.name}</span><span class="h2h-player-sub">${lpSub}</span>` : ''}
-                        </div>
-                        <div class="h2h-player-pts-block">
-                            <span class="h2h-player-pts ${lpBetter ? 'h2h-pts-leading' : ''}">${lpFpts !== null ? lpFpts.toFixed(1) : '—'}</span>
-                            <span class="h2h-player-sep">·</span>
-                            <span class="h2h-player-pts ${rpBetter ? 'h2h-pts-leading' : ''}">${rpFpts !== null ? rpFpts.toFixed(1) : '—'}</span>
-                        </div>
-                        <div class="h2h-player-right ${rpBetter ? 'h2h-player-winning' : ''}">
-                            ${rp ? `<span class="h2h-player-sub">${rpSub}</span><span class="h2h-player-name">${rp.name}</span>` : ''}
-                        </div>
-                    </div>`;
-            }
-
-            return `
-                <div class="h2h-matchup-card">
-                    <div class="h2h-matchup-header">
-                        <div class="h2h-header-team ${t1Leading ? 'leading' : ''}">
-                            <div class="h2h-header-team-name">${m.team1}</div>
-                            <div class="h2h-header-score ${t1Leading ? 'leading' : ''}">${m.team1Points.toFixed(1)}</div>
-                        </div>
-                        <div class="h2h-header-vs">VS</div>
-                        <div class="h2h-header-team right ${t2Leading ? 'leading' : ''}">
-                            <div class="h2h-header-score ${t2Leading ? 'leading' : ''}">${m.team2Points.toFixed(1)}</div>
-                            <div class="h2h-header-team-name">${m.team2}</div>
-                        </div>
-                    </div>
-                    <div class="h2h-players-list">
-                        <div class="h2h-players-header">
-                            <span>${m.team1}</span>
-                            <span>FPTS</span>
-                            <span>${m.team2}</span>
-                        </div>
-                        ${playerRowsHTML || '<div class="h2h-no-players">Aucun joueur à afficher</div>'}
-                    </div>
-                </div>
-            `;
-        }).join('');
+        matchupsList.innerHTML = data.matchups.map(m => buildMatchupCardHTML(m, poolName, false)).join('');
 
     } catch (error) {
-        console.error('Error loading H2H scores:', error);
+        console.error('Error loading H2H today scores:', error);
         matchupsList.innerHTML = '<div class="h2h-empty">Erreur lors du chargement</div>';
     }
 }
