@@ -24,6 +24,7 @@ const VIEW_STATES = {
 let currentView = VIEW_STATES.POOL_LIST;
 let currentH2HTab = 'matchups'; // 'matchups' | 'standings' | 'history'
 let h2hWeekCache = null; // cached full-week matchup data
+let h2hPeriod = 'today'; // 'today' | 'week'
 
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', async () => {
@@ -713,6 +714,13 @@ function calculateTeamPoints(roster) {
     };
 }
 
+function setH2HPeriod(period) {
+    h2hPeriod = period;
+    document.getElementById('filterToday').classList.toggle('active', period === 'today');
+    document.getElementById('filterWeek').classList.toggle('active', period === 'week');
+    if (currentPoolName) renderH2HMatchupsForPeriod(currentPoolName);
+}
+
 // ==================== H2H SHARED HELPERS ====================
 
 function playerHeadshot(playerId, teamAbbrev) {
@@ -850,11 +858,7 @@ function switchH2HTab(tab) {
 
     if (tab === 'standings' && currentPoolName) {
         const poolData = allPoolsData[currentPoolName];
-        if (poolData && poolData.poolMode === 'head-to-head') {
-            renderH2HStandingsWithMatchups(currentPoolName);
-        } else if (poolData) {
-            renderPoolStandings(poolData, currentPoolName);
-        }
+        if (poolData) renderPoolStandings(poolData, currentPoolName);
     }
 
     if (tab === 'history' && currentPoolName) {
@@ -863,33 +867,57 @@ function switchH2HTab(tab) {
 }
 
 async function loadH2HCurrentWeek(poolName) {
+    // Reset to today filter when entering the tab
+    h2hPeriod = 'today';
+    document.getElementById('filterToday').classList.add('active');
+    document.getElementById('filterWeek').classList.remove('active');
+
+    const weekHeader = document.getElementById('h2hWeekHeader');
+    weekHeader.innerHTML = '';
+
+    await renderH2HMatchupsForPeriod(poolName);
+}
+
+async function renderH2HMatchupsForPeriod(poolName) {
     const matchupsList = document.getElementById('h2hMatchupsList');
     const weekHeader = document.getElementById('h2hWeekHeader');
-    matchupsList.innerHTML = '<div class="h2h-loading">Chargement des scores du jour...</div>';
+    matchupsList.innerHTML = '<div class="h2h-loading">Chargement...</div>';
 
     try {
-        // Also pre-fetch week data in background for the Classement tab
-        if (!h2hWeekCache || h2hWeekCache.poolName !== poolName) {
-            fetch(`${BASE_URL}/h2h/current-week-scores?poolName=${encodeURIComponent(poolName)}`, { cache: 'no-store' })
-                .then(r => r.json())
-                .then(data => { h2hWeekCache = { poolName, data }; })
-                .catch(() => {});
+        let data;
+        if (h2hPeriod === 'today') {
+            const res = await fetch(`${BASE_URL}/h2h/today-scores?poolName=${encodeURIComponent(poolName)}`, { cache: 'no-store' });
+            if (!res.ok) throw new Error('Failed');
+            data = await res.json();
+
+            const today = new Date();
+            const dateLabel = today.toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long' });
+            weekHeader.innerHTML = `
+                <div class="h2h-week-label">Semaine ${data.currentWeek} <span class="h2h-week-status status-ongoing">🔴 EN COURS</span></div>
+                <div class="h2h-week-dates">Aujourd'hui — ${data.date || dateLabel}</div>`;
+        } else {
+            // Use cache if available
+            if (!h2hWeekCache || h2hWeekCache.poolName !== poolName) {
+                const res = await fetch(`${BASE_URL}/h2h/current-week-scores?poolName=${encodeURIComponent(poolName)}`, { cache: 'no-store' });
+                if (!res.ok) throw new Error('Failed');
+                data = await res.json();
+                h2hWeekCache = { poolName, data };
+            } else {
+                data = h2hWeekCache.data;
+            }
+
+            let dateRange = 'Semaine en cours';
+            if (data.weekStart && data.weekEnd) {
+                const fmt = d => new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+                dateRange = `${fmt(data.weekStart)} – ${fmt(data.weekEnd)}`;
+            }
+            const statusMap = { upcoming: '📅 À VENIR', ongoing: '🔴 EN COURS', completed: '✓ TERMINÉE' };
+            const statusClass = { upcoming: 'status-upcoming', ongoing: 'status-ongoing', completed: 'status-completed' };
+            const ws = data.weekStatus || 'ongoing';
+            weekHeader.innerHTML = `
+                <div class="h2h-week-label">Semaine ${data.currentWeek} <span class="h2h-week-status ${statusClass[ws] || ''}">${statusMap[ws] || ''}</span></div>
+                <div class="h2h-week-dates">${dateRange}</div>`;
         }
-
-        // Fetch today's scores
-        const res = await fetch(`${BASE_URL}/h2h/today-scores?poolName=${encodeURIComponent(poolName)}`, { cache: 'no-store' });
-        if (!res.ok) throw new Error('Failed to fetch');
-        const data = await res.json();
-
-        const today = new Date();
-        const dateLabel = today.toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long' });
-        weekHeader.innerHTML = `
-            <div class="h2h-week-label">
-                Semaine ${data.currentWeek}
-                <span class="h2h-week-status status-ongoing">🔴 EN COURS</span>
-            </div>
-            <div class="h2h-week-dates">Aujourd'hui — ${data.date || dateLabel}</div>
-        `;
 
         if (!data.matchups || data.matchups.length === 0) {
             matchupsList.innerHTML = '<div class="h2h-empty">Aucun duel cette semaine</div>';
@@ -898,8 +926,8 @@ async function loadH2HCurrentWeek(poolName) {
 
         matchupsList.innerHTML = data.matchups.map(m => buildMatchupCardHTML(m, poolName, false)).join('');
 
-    } catch (error) {
-        console.error('Error loading H2H today scores:', error);
+    } catch (err) {
+        console.error('Error loading H2H matchups:', err);
         matchupsList.innerHTML = '<div class="h2h-empty">Erreur lors du chargement</div>';
     }
 }

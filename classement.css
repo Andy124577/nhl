@@ -1138,6 +1138,38 @@ body {
     box-shadow: 0 0 10px rgba(0, 212, 255, 0.1);
 }
 
+/* Period filter (Aujourd'hui / Semaine) */
+.h2h-period-filter {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.h2h-period-btn {
+    padding: 6px 20px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: transparent;
+    color: rgba(255,255,255,0.45);
+    font-size: 0.82rem;
+    font-weight: 700;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    letter-spacing: 0.3px;
+}
+
+.h2h-period-btn:hover {
+    color: rgba(255,255,255,0.8);
+    border-color: rgba(255,255,255,0.25);
+}
+
+.h2h-period-btn.active {
+    background: rgba(0, 212, 255, 0.15);
+    border-color: rgba(0, 212, 255, 0.4);
+    color: #00d4ff;
+}
+
 /* Week Header */
 .h2h-week-header {
     text-align: center;

@@ -76,6 +76,10 @@
             <!-- H2H: Current Matchups -->
             <div id="h2hMatchupsView" class="h2h-section" style="display: none;">
                 <div class="h2h-week-header" id="h2hWeekHeader"></div>
+                <div class="h2h-period-filter" id="h2hPeriodFilter">
+                    <button class="h2h-period-btn active" id="filterToday" onclick="setH2HPeriod('today')">Aujourd'hui</button>
+                    <button class="h2h-period-btn" id="filterWeek" onclick="setH2HPeriod('week')">Semaine</button>
+                </div>
                 <div id="h2hMatchupsList" class="h2h-matchups-list"></div>
             </div>
 
