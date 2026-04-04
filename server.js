@@ -326,6 +326,94 @@ async function getTeamPointsForDateRange(teamData, startDateISO, endDateISO) {
     }
 }
 
+// Returns per-player FPTS breakdown for a team over a date range
+async function getTeamPlayerBreakdownForDateRange(teamData, startDateISO, endDateISO) {
+    const startDate = new Date(startDateISO).toISOString().split('T')[0];
+    const endDate = new Date(endDateISO).toISOString().split('T')[0];
+
+    // Build roster with position labels
+    const roster = [];
+    ['offensive', 'defensive', 'rookie'].forEach(pos => {
+        (teamData[pos] || []).forEach(p => {
+            const name = (typeof p === 'string') ? p : (p.skaterFullName || p.goalieFullName || p);
+            if (name) roster.push({ name, isGoalie: false });
+        });
+    });
+    (teamData.goalie || []).forEach(p => {
+        const name = (typeof p === 'string') ? p : (p.goalieFullName || p.skaterFullName || p);
+        if (name) roster.push({ name, isGoalie: true });
+    });
+
+    if (roster.length === 0) return [];
+
+    const allNames = roster.map(r => r.name);
+
+    try {
+        const result = await db.query(`
+            SELECT player_name, position,
+                   goals, assists, shots, plus_minus,
+                   power_play_goals, power_play_points,
+                   shorthanded_goals, shorthanded_points,
+                   game_winning_goals,
+                   decision, saves, goals_against, shutouts
+            FROM player_game_logs
+            WHERE season = '20252026'
+              AND game_date >= $1
+              AND game_date < $2
+              AND player_name = ANY($3)
+        `, [startDate, endDate, allNames]);
+
+        // Aggregate per player
+        const playerMap = new Map();
+        result.rows.forEach(game => {
+            const key = game.player_name;
+            if (!playerMap.has(key)) {
+                playerMap.set(key, {
+                    name: key,
+                    position: game.position,
+                    fantasyPoints: 0,
+                    goals: 0, assists: 0,
+                    wins: 0, saves: 0, shutouts: 0
+                });
+            }
+            const p = playerMap.get(key);
+            let fp = 0;
+            if (game.position === 'G') {
+                fp += (game.decision === 'W') ? FANTASY_SCORING.win : 0;
+                fp += (game.shutouts || 0) * FANTASY_SCORING.shutout;
+                fp += (game.saves || 0) * FANTASY_SCORING.save;
+                fp += (game.goals_against || 0) * FANTASY_SCORING.goalsAgainst;
+                p.wins += (game.decision === 'W') ? 1 : 0;
+                p.saves += game.saves || 0;
+                p.shutouts += game.shutouts || 0;
+            } else {
+                fp += (game.goals || 0) * FANTASY_SCORING.goal;
+                fp += (game.assists || 0) * FANTASY_SCORING.assist;
+                fp += (game.shots || 0) * FANTASY_SCORING.shot;
+                fp += (game.plus_minus || 0) * FANTASY_SCORING.plusMinus;
+                fp += (game.power_play_goals || 0) * FANTASY_SCORING.powerPlayGoal;
+                fp += (game.power_play_points || 0) * FANTASY_SCORING.powerPlayPoint;
+                fp += (game.shorthanded_goals || 0) * FANTASY_SCORING.shorthandedGoal;
+                fp += (game.shorthanded_points || 0) * FANTASY_SCORING.shorthandedPoint;
+                fp += (game.game_winning_goals || 0) * FANTASY_SCORING.gameWinningGoal;
+                p.goals += game.goals || 0;
+                p.assists += game.assists || 0;
+            }
+            p.fantasyPoints += fp;
+        });
+
+        // Return roster order, filling in players with 0 if no game logs
+        return roster.map(r => {
+            const stats = playerMap.get(r.name);
+            if (stats) return { ...stats, fantasyPoints: Math.round(stats.fantasyPoints * 10) / 10 };
+            return { name: r.name, position: r.isGoalie ? 'G' : 'F', fantasyPoints: 0, goals: 0, assists: 0, wins: 0, saves: 0, shutouts: 0 };
+        });
+    } catch (err) {
+        console.error('❌ Error getting player breakdown:', err);
+        return roster.map(r => ({ name: r.name, position: r.isGoalie ? 'G' : 'F', fantasyPoints: 0, goals: 0, assists: 0, wins: 0, saves: 0, shutouts: 0 }));
+    }
+}
+
 // Helper to ensure standings entry exists for a team
 function ensureStandingsEntry(standings, teamName) {
     if (!standings[teamName]) {
@@ -3769,56 +3857,48 @@ app.get('/h2h/current-week-scores', async (req, res) => {
         if (now < weekStart) {
             // UPCOMING: Season hasn't started yet or this week is in the future
             weekStatus = 'upcoming';
-            // Show matchups with 0 points
-            displayMatchups = weekMatchups.map(m => ({
-                team1: m.team1,
-                team2: m.team2,
-                team1Points: 0,
-                team2Points: 0
-            }));
-        } else if (now >= weekEnd) {
-            // COMPLETED: Week has ended (should have been finalized)
-            weekStatus = 'completed';
-            // Show final scores if available, otherwise calculate them
-            displayMatchups = [];
             for (const matchup of weekMatchups) {
-                let t1pts = matchup.team1Points || await getTeamPointsForDateRange(clan.teams[matchup.team1], weekStart, weekEnd);
-                let t2pts = matchup.team2Points || await getTeamPointsForDateRange(clan.teams[matchup.team2], weekStart, weekEnd);
-
-                if (t1pts === null || t2pts === null) {
-                    const currentStats = await loadCurrentStats();
-                    if (t1pts === null) t1pts = getTeamWeeklyPoints(clan.teams[matchup.team1], currentStats);
-                    if (t2pts === null) t2pts = getTeamWeeklyPoints(clan.teams[matchup.team2], currentStats);
-                }
-
+                const t1players = await getTeamPlayerBreakdownForDateRange(clan.teams[matchup.team1], weekStart, weekEnd);
+                const t2players = await getTeamPlayerBreakdownForDateRange(clan.teams[matchup.team2], weekStart, weekEnd);
                 displayMatchups.push({
-                    team1: matchup.team1,
-                    team2: matchup.team2,
-                    team1Points: t1pts,
-                    team2Points: t2pts,
+                    team1: matchup.team1, team2: matchup.team2,
+                    team1Points: 0, team2Points: 0,
+                    team1Players: t1players, team2Players: t2players
+                });
+            }
+        } else if (now >= weekEnd) {
+            // COMPLETED: Week has ended
+            weekStatus = 'completed';
+            for (const matchup of weekMatchups) {
+                const t1players = await getTeamPlayerBreakdownForDateRange(clan.teams[matchup.team1], weekStart, weekEnd);
+                const t2players = await getTeamPlayerBreakdownForDateRange(clan.teams[matchup.team2], weekStart, weekEnd);
+                let t1pts = t1players.reduce((s, p) => s + p.fantasyPoints, 0);
+                let t2pts = t2players.reduce((s, p) => s + p.fantasyPoints, 0);
+                if (t1pts === 0 && t2pts === 0) {
+                    t1pts = matchup.team1Points || 0;
+                    t2pts = matchup.team2Points || 0;
+                }
+                t1pts = Math.round(t1pts * 10) / 10;
+                t2pts = Math.round(t2pts * 10) / 10;
+                displayMatchups.push({
+                    team1: matchup.team1, team2: matchup.team2,
+                    team1Points: t1pts, team2Points: t2pts,
+                    team1Players: t1players, team2Players: t2players,
                     winner: matchup.winner
                 });
             }
         } else {
-            // ONGOING: Currently in the week
+            // ONGOING: Live scoring from weekStart to now
             weekStatus = 'ongoing';
-            // Calculate live scores from weekStart to now
             for (const matchup of weekMatchups) {
-                let t1pts = await getTeamPointsForDateRange(clan.teams[matchup.team1], weekStart, now);
-                let t2pts = await getTeamPointsForDateRange(clan.teams[matchup.team2], weekStart, now);
-
-                // Fallback to season stats if no game logs
-                if (t1pts === null || t2pts === null) {
-                    const currentStats = await loadCurrentStats();
-                    if (t1pts === null) t1pts = getTeamWeeklyPoints(clan.teams[matchup.team1], currentStats);
-                    if (t2pts === null) t2pts = getTeamWeeklyPoints(clan.teams[matchup.team2], currentStats);
-                }
-
+                const t1players = await getTeamPlayerBreakdownForDateRange(clan.teams[matchup.team1], weekStart, now);
+                const t2players = await getTeamPlayerBreakdownForDateRange(clan.teams[matchup.team2], weekStart, now);
+                const t1pts = Math.round(t1players.reduce((s, p) => s + p.fantasyPoints, 0) * 10) / 10;
+                const t2pts = Math.round(t2players.reduce((s, p) => s + p.fantasyPoints, 0) * 10) / 10;
                 displayMatchups.push({
-                    team1: matchup.team1,
-                    team2: matchup.team2,
-                    team1Points: t1pts,
-                    team2Points: t2pts
+                    team1: matchup.team1, team2: matchup.team2,
+                    team1Points: t1pts, team2Points: t2pts,
+                    team1Players: t1players, team2Players: t2players
                 });
             }
         }
