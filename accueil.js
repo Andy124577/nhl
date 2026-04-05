@@ -20,6 +20,18 @@ let userData = {
 document.addEventListener('DOMContentLoaded', async () => {
     userData.username = localStorage.getItem('username');
 
+    // Adapt hero CTAs for logged-out visitors
+    if (!userData.username) {
+        const actions = document.querySelector('.hero-actions');
+        if (actions) {
+            actions.innerHTML = `
+                <a href="signup.html" class="btn-hero-primary">🚀 Commencer gratuitement</a>
+                <a href="login.html" class="btn-hero-secondary">Se connecter →</a>
+                <button onclick="scrollToHowItWorks()" class="btn-hero-tertiary">Comment ça marche ?</button>
+            `;
+        }
+    }
+
     // Show quick-nav pills if logged in
     if (userData.username) {
         const nav = document.getElementById('heroQuickNav');
@@ -240,16 +252,48 @@ function renderLeaderboard() {
 }
 
 // ============================================================
+// DEMO LEADERBOARD DATA (shown to logged-out visitors)
+// ============================================================
+const DEMO_TEAMS = [
+    { teamName: 'Les Glorieux',      score: 214 },
+    { teamName: 'Ice Storm MTL',     score: 189 },
+    { teamName: 'Nordiques Revival', score: 163 },
+    { teamName: 'Bleu Blanc Rouge',  score: 147 },
+    { teamName: 'Hockey Royale',     score: 121 },
+];
+
+// ============================================================
 // HERO LEADERBOARD PREVIEW (floating card)
 // ============================================================
 function renderHeroLeaderboard() {
     const el = document.getElementById('heroLeaderboardPreview');
     if (!el) return;
 
+    // Logged-out: show demo data with an "Aperçu" label
+    if (!userData.username) {
+        const headerSpan = document.querySelector('.hfc-header > span:nth-child(2)');
+        if (headerSpan) headerSpan.textContent = 'Aperçu du classement';
+
+        const rankCls = i => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+        el.innerHTML = DEMO_TEAMS.map((team, i) => `
+            <div class="hfc-row">
+                <div class="hfc-rank ${rankCls(i)}">${i + 1}</div>
+                <div class="hfc-team">${team.teamName}</div>
+                <div class="hfc-pts">${team.score} <span style="font-size:.72rem;opacity:.7">PTS</span></div>
+            </div>
+        `).join('') + `
+            <div style="text-align:center;margin-top:10px;">
+                <a href="signup.html" style="font-size:.78rem;color:var(--primary);font-weight:700;text-decoration:none;">
+                    Créer votre équipe →
+                </a>
+            </div>`;
+        return;
+    }
+
     // Update header to show pool name
     const headerSpan = document.querySelector('.hfc-header > span:nth-child(2)');
     if (headerSpan && userData.primaryPool) {
-        headerSpan.textContent = `Classement en direct · ${userData.primaryPool.poolName}`;
+        headerSpan.textContent = `Classement en direct · ${userData.primaryPool.name}`;
     }
 
     if (!userData.primaryPool) {

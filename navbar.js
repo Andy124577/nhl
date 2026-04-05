@@ -35,12 +35,23 @@ function buildLoggedOutNavbar() {
     const navbar = document.querySelector('.navbar');
     if (!navbar) return;
     navbar.innerHTML = `
-        <div class="navbar-brand">
-            <img src="Icons/fantazy.png" alt="Fantazy" class="navbar-logo">
-        </div>
-        <div class="navbar-actions">
-            <a href="login.html" class="btn-login">Connexion</a>
-            <a href="signup.html" class="btn-signup">Commencer</a>
+        <div class="navbar-desktop navbar-guest">
+            <div class="navbar-brand">
+                <img src="Icons/fantazy.png" alt="Fantazy" class="navbar-logo">
+                <span class="navbar-title">Fantazy</span>
+            </div>
+            <div class="navbar-guest-actions">
+                <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Changer le thème">
+                    <span id="themeIcon">${(localStorage.getItem('theme') || 'dark') === 'dark' ? '☀️' : '🌙'}</span>
+                </button>
+                <a href="login.html" class="btn-nav-login">
+                    <span>Connexion</span>
+                </a>
+                <a href="signup.html" class="btn-nav-signup">
+                    <span>S'inscrire</span>
+                    <span class="btn-signup-arrow">→</span>
+                </a>
+            </div>
         </div>
     `;
 }
