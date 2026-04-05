@@ -722,35 +722,72 @@ body {
     flex-wrap: wrap;
 }
 
-/* Bio grid: 3 cols × 2 rows, compact next to photo */
-.player-bio-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px 10px;
+/* Bio pills: horizontal wrapping chips next to the photo */
+.player-bio-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: flex-start;
 }
 
-.bio-stat {
-    background: rgba(0,0,0,0.15);
-    border-radius: 8px;
-    padding: 6px 8px;
-    display: flex;
+.bio-pill {
+    display: inline-flex;
     flex-direction: column;
     gap: 2px;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 7px;
+    padding: 5px 10px;
 }
 
-.bio-label {
-    font-size: 0.62rem;
-    opacity: 0.75;
+.bio-pill-lbl {
+    font-size: 0.56rem;
+    opacity: 0.72;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
+    color: #fff;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
-.bio-value {
+.bio-pill-val {
     font-size: 0.82rem;
     font-weight: 700;
+    color: #fff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 160px;
+}
+
+/* Draft strip: full width below photo + pills */
+.player-draft-strip {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 7px 12px;
+    background: rgba(0,0,0,0.20);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 8px;
+    flex-wrap: wrap;
+}
+
+.draft-label {
+    font-size: 0.56rem;
+    opacity: 0.72;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.draft-value {
+    font-size: 0.80rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.92);
+    line-height: 1.3;
 }
 
 .loading-spinner {
@@ -930,20 +967,16 @@ body {
         height: 100px;
     }
 
-    .player-bio-grid {
-        gap: 4px 6px;
+    .player-bio-pills {
+        gap: 4px;
     }
 
-    .bio-stat {
-        padding: 4px 6px;
+    .bio-pill {
+        padding: 4px 8px;
     }
 
-    .bio-value {
+    .bio-pill-val {
         font-size: 0.76rem;
-    }
-
-    .bio-label {
-        font-size: 0.60rem;
     }
 }
 
@@ -1050,13 +1083,12 @@ body {
         height: 90px;
     }
 
-    .player-bio-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 5px 8px;
+    .player-bio-pills {
+        gap: 4px;
     }
 
-    .bio-value {
-        font-size: 0.75rem;
+    .bio-pill-val {
+        font-size: 0.74rem;
     }
 
     .career-filters {
@@ -1105,9 +1137,14 @@ body {
     .player-position-team {
         justify-content: center;
     }
-    .player-bio-grid {
-        grid-template-columns: repeat(3, 1fr);
+    .player-bio-pills {
         width: 100%;
+        justify-content: center;
+    }
+
+    .player-draft-strip {
+        text-align: center;
+        justify-content: center;
     }
 }
 
