@@ -940,3 +940,10 @@
 
     .form-card-title { font-size: 1.15rem; }
 }
+
+/* ============================================================ */
+/* LIGHT MODE — hardcoded rgba overrides                         */
+/* ============================================================ */
+html[data-theme="light"] .form-card {
+    background: rgba(255, 255, 255, 0.95);
+}
