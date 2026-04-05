@@ -370,7 +370,7 @@ async function getTeamPlayerBreakdownForDateRange(teamData, startDateISO, endDat
             FROM player_game_logs
             WHERE season = '20252026'
               AND game_date >= $1
-              AND game_date < $2
+              AND game_date <= $2
               AND player_name = ANY($3)
         `, [startDate, endDate, allNames]);
 
