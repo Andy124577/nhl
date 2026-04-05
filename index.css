@@ -50,6 +50,41 @@
 }
 
 /* ============================================================ */
+/* LIGHT MODE — variable overrides                               */
+/* ============================================================ */
+html[data-theme="light"] {
+  --bg: #F0F2FA;
+  --bg-page: #E8EBF5;
+  --card: #FFFFFF;
+  --card-white: #F7F9FF;
+  --navbar-bg: #FFFFFF;
+  --navbar-border: #D8DFF0;
+  --primary: #0088AA;
+  --success: #00A855;
+  --danger: #E03040;
+  --warning: #CC8800;
+  --text-main: #1A1F3C;
+  --text-secondary: #5060A0;
+  --text-dark: #1E2440;
+  --text-gray: #6575AA;
+  --text-light-gray: #9AA0C5;
+  --border-light: #D8DFF0;
+  --border-gray: #C0CAE0;
+  --border-table: #D8DFF0;
+  --bg-hover: #E0E5F5;
+  --bg-gray-light: #EEF1FA;
+  --bg-odd-row: #F7F9FF;
+  --overlay-dark: rgba(10, 15, 50, 0.55);
+  --shadow-sm: rgba(0, 136, 170, 0.06);
+  --shadow-md: rgba(0, 0, 0, 0.08);
+  --shadow-lg: rgba(0, 0, 0, 0.20);
+  --glow-primary: 0 0 20px rgba(0, 136, 170, 0.12);
+  --glow-danger: 0 0 20px rgba(224, 48, 64, 0.12);
+  --glow-success: 0 0 20px rgba(0, 168, 85, 0.12);
+  --glow-primary-strong: 0 0 30px rgba(0, 136, 170, 0.20);
+}
+
+/* ============================================================ */
 /* ANIMATIONS                                                    */
 /* ============================================================ */
 @keyframes modalSlideIn { 0% { transform: translateY(-50px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
@@ -1439,4 +1474,43 @@ tbody tr:hover .player-photo img.face {
   .player-position-team { justify-content: center; }
   .player-bio-pills { width: 100%; justify-content: center; }
   .player-draft-strip { justify-content: center; text-align: center; }
+}
+
+/* ============================================================ */
+/* LIGHT MODE — hardcoded rgba overrides                         */
+/* ============================================================ */
+html[data-theme="light"] .filters-section {
+  background: rgba(255, 255, 255, 0.95);
+}
+html[data-theme="light"] .table-container {
+  background: rgba(255, 255, 255, 0.95);
+}
+html[data-theme="light"] tbody tr:nth-child(even) {
+  background: rgba(216, 223, 240, 0.3);
+}
+html[data-theme="light"] .skeleton {
+  background: linear-gradient(90deg, rgba(0,0,0,.04) 25%, rgba(0,0,0,.08) 50%, rgba(0,0,0,.04) 75%);
+  background-size: 200% 100%;
+}
+html[data-theme="light"] .skeleton-table-header {
+  background: rgba(0, 136, 170, 0.12);
+}
+html[data-theme="light"] .career-filters {
+  background: rgba(240, 244, 255, 0.90);
+}
+html[data-theme="light"] #careerStatsTable th {
+  background: rgba(240, 244, 255, 0.98);
+  color: var(--text-dark);
+}
+html[data-theme="light"] #careerStatsTable tbody tr:nth-child(odd) {
+  background: rgba(247, 249, 255, 0.8);
+}
+html[data-theme="light"] #careerStatsTable tbody tr:nth-child(even) {
+  background: rgba(220, 228, 245, 0.4);
+}
+/* Keep the sticky th background opaque on scroll in light mode */
+@media (max-width: 768px) {
+  html[data-theme="light"] #careerStatsTable th {
+    background: rgba(240, 244, 255, 0.98);
+  }
 }

@@ -1708,3 +1708,159 @@ body {
 .h2h-hist-sep {
     color: rgba(255,255,255,0.2);
 }
+
+/* ============================================================ */
+/* LIGHT MODE — hardcoded rgba overrides                         */
+/* ============================================================ */
+
+/* --- H2H Tabs --- */
+html[data-theme="light"] .h2h-tabs {
+    background: rgba(224, 229, 248, 0.85);
+    border-color: rgba(0,0,0,0.08);
+}
+html[data-theme="light"] .h2h-tab {
+    color: rgba(30,40,100,0.5);
+}
+html[data-theme="light"] .h2h-tab:hover {
+    color: rgba(30,40,100,0.8);
+    background: rgba(0,0,0,0.04);
+}
+html[data-theme="light"] .h2h-tab.active {
+    background: rgba(0,136,170,0.15);
+    color: var(--primary);
+    box-shadow: 0 0 10px rgba(0,136,170,0.1);
+}
+
+/* --- H2H Period filter --- */
+html[data-theme="light"] .h2h-period-btn {
+    border-color: rgba(0,0,0,0.12);
+    color: rgba(30,40,100,0.45);
+}
+html[data-theme="light"] .h2h-period-btn:hover {
+    color: rgba(30,40,100,0.8);
+    border-color: rgba(0,0,0,0.25);
+}
+html[data-theme="light"] .h2h-period-btn.active {
+    background: rgba(0,136,170,0.12);
+    border-color: rgba(0,136,170,0.35);
+    color: var(--primary);
+}
+
+/* --- H2H Week header --- */
+html[data-theme="light"] .h2h-week-label {
+    color: var(--text-main);
+}
+html[data-theme="light"] .h2h-week-dates {
+    color: var(--text-secondary);
+}
+
+/* --- H2H Matchup cards --- */
+html[data-theme="light"] .h2h-matchup-card {
+    background: rgba(240, 244, 255, 0.92);
+    border-color: rgba(0,0,0,0.08);
+}
+html[data-theme="light"] .h2h-matchup-card:hover {
+    border-color: rgba(0,136,170,0.3);
+}
+html[data-theme="light"] .h2h-matchup-header {
+    background: rgba(0,0,0,0.04);
+    border-bottom-color: rgba(0,0,0,0.06);
+}
+html[data-theme="light"] .h2h-header-team-name {
+    color: rgba(30,40,100,0.6);
+}
+html[data-theme="light"] .h2h-header-score {
+    color: rgba(30,40,100,0.8);
+}
+html[data-theme="light"] .h2h-header-vs {
+    color: rgba(30,40,100,0.2);
+}
+
+/* --- H2H Player rows --- */
+html[data-theme="light"] .h2h-players-header {
+    color: rgba(30,40,100,0.35);
+    border-bottom-color: rgba(0,0,0,0.05);
+}
+html[data-theme="light"] .h2h-player-row {
+    border-bottom-color: rgba(0,0,0,0.04);
+}
+html[data-theme="light"] .h2h-player-row:hover {
+    background: rgba(0,0,0,0.02);
+}
+html[data-theme="light"] .h2h-player-name {
+    color: rgba(30,40,100,0.8);
+}
+html[data-theme="light"] .h2h-player-sub,
+html[data-theme="light"] .h2h-team-record {
+    color: rgba(30,40,100,0.4);
+}
+html[data-theme="light"] .h2h-player-pts {
+    color: rgba(30,40,100,0.5);
+}
+html[data-theme="light"] .h2h-player-sep {
+    color: rgba(30,40,100,0.15);
+}
+html[data-theme="light"] .h2h-player-photo {
+    background: rgba(0,0,0,0.06);
+}
+html[data-theme="light"] .h2h-player-photo-placeholder {
+    background: rgba(0,0,0,0.07);
+}
+html[data-theme="light"] .h2h-no-players,
+html[data-theme="light"] .h2h-loading,
+html[data-theme="light"] .h2h-empty {
+    color: rgba(30,40,100,0.35);
+}
+
+/* --- H2H History --- */
+html[data-theme="light"] .h2h-history-week {
+    background: rgba(240, 244, 255, 0.92);
+    border-color: rgba(0,0,0,0.08);
+}
+html[data-theme="light"] .h2h-history-header:hover {
+    background: rgba(0,0,0,0.025);
+}
+html[data-theme="light"] .h2h-history-title {
+    color: var(--text-main);
+}
+html[data-theme="light"] .h2h-history-dates,
+html[data-theme="light"] .h2h-history-chevron {
+    color: rgba(30,40,100,0.4);
+}
+html[data-theme="light"] .h2h-history-body {
+    border-top-color: rgba(0,0,0,0.06);
+}
+html[data-theme="light"] .h2h-history-matchup {
+    border-bottom-color: rgba(0,0,0,0.04);
+}
+html[data-theme="light"] .h2h-hist-team {
+    color: rgba(30,40,100,0.65);
+}
+html[data-theme="light"] .h2h-hist-score {
+    color: rgba(30,40,100,0.55);
+}
+html[data-theme="light"] .h2h-hist-sep {
+    color: rgba(30,40,100,0.2);
+}
+
+/* --- Career stats table (classement.css version) --- */
+html[data-theme="light"] #careerStatsTable td {
+    border-bottom-color: rgba(0,0,0,0.06);
+}
+html[data-theme="light"] #careerStatsTable tbody tr:hover {
+    background: rgba(0,0,0,0.03) !important;
+}
+html[data-theme="light"] #careerStatsTable .season-col {
+    color: var(--text-main);
+}
+html[data-theme="light"] #careerStatsTable .league-col {
+    color: var(--text-secondary);
+}
+
+/* --- Skeleton loaders (classement.css) use #f0f0f0 which already works on light bg --- */
+/* Fix for dark mode: override to dark-friendly shades */
+html[data-theme="dark"] .skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,.05) 25%, rgba(255,255,255,.10) 50%, rgba(255,255,255,.05) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
