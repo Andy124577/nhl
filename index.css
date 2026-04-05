@@ -859,14 +859,22 @@ tbody tr:hover .player-photo img.face {
 #careerStatsTable th.team-col,
 #careerStatsTable td.team-col {
   text-align: center;
-  padding-left: 16px;
-  width: 140px;
-  max-width: 140px;
+  padding-left: 8px;
+  padding-right: 8px;
+  width: 90px;
+  max-width: 90px;
+  min-width: 54px;
 }
 
 #careerStatsTable td.team-col {
   font-weight: 700;
   color: var(--text-main);
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.3;
+  font-size: clamp(0.60rem, 1.4vw, 0.82rem);
+  overflow: hidden;
 }
 
 #careerStatsTable th.league-col,
@@ -907,6 +915,35 @@ tbody tr:hover .player-photo img.face {
 /* ============================================================ */
 /* RESPONSIVE                                                    */
 /* ============================================================ */
+
+/* Bio grid: start scaling down before 768px */
+@media (max-width: 900px) {
+  .player-header-top {
+    gap: 12px;
+  }
+
+  .player-headshot-container {
+    width: 100px;
+    height: 100px;
+  }
+
+  .player-bio-grid {
+    gap: 3px 5px;
+  }
+
+  .bio-stat {
+    padding: 3px 5px;
+  }
+
+  .bio-stat .bio-value {
+    font-size: .75rem;
+  }
+
+  .bio-stat .bio-label {
+    font-size: .59rem;
+  }
+}
+
 @media (max-width: 768px) {
   .stats-hero {
     padding: 60px 20px 32px;

@@ -841,7 +841,7 @@ body {
 
 #careerStatsTable th.season-col { text-align: left; padding-left: 14px; min-width: 80px; }
 #careerStatsTable th.league-col { text-align: left; min-width: 48px; }
-#careerStatsTable th.team-col   { text-align: center; width: 44px; }
+#careerStatsTable th.team-col   { text-align: center; width: 54px; max-width: 54px; min-width: 54px; }
 
 #careerStatsTable td {
     padding: 9px 10px;
@@ -870,7 +870,19 @@ body {
 
 #careerStatsTable .team-col {
     text-align: center;
-    padding: 6px 8px;
+    padding: 6px 4px;
+}
+
+#careerStatsTable td.team-col {
+    width: 54px;
+    max-width: 54px;
+    min-width: 54px;
+    white-space: normal;
+    word-break: break-all;
+    overflow-wrap: break-word;
+    font-size: clamp(0.58rem, 1.2vw, 0.72rem);
+    line-height: 1.2;
+    overflow: hidden;
 }
 
 #careerStatsTable .team-col img {
@@ -878,6 +890,8 @@ body {
     height: 26px;
     object-fit: contain;
     vertical-align: middle;
+    display: block;
+    margin: 0 auto;
 }
 
 #careerStatsTable .career-totals-row {
@@ -904,6 +918,35 @@ body {
 }
 
 /* ==================== RESPONSIVE DESIGN ==================== */
+
+/* Bio grid: scale down when viewport narrows before the 768px breakpoint */
+@media (max-width: 900px) {
+    .player-header-top {
+        gap: 14px;
+    }
+
+    .player-headshot-container {
+        width: 100px;
+        height: 100px;
+    }
+
+    .player-bio-grid {
+        gap: 4px 6px;
+    }
+
+    .bio-stat {
+        padding: 4px 6px;
+    }
+
+    .bio-value {
+        font-size: 0.76rem;
+    }
+
+    .bio-label {
+        font-size: 0.60rem;
+    }
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 15px;

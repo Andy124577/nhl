@@ -188,3 +188,22 @@
   .player-position-team { justify-content: center; }
   .player-bio-grid { width: 100%; }
 }
+
+/* Team-col: draftActif uses logo images (26px), not text — keep column tight */
+body #careerStatsTable th.team-col,
+body #careerStatsTable td.team-col {
+  width: 54px !important;
+  max-width: 54px !important;
+  min-width: 54px !important;
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+}
+
+body #careerStatsTable td.team-col {
+  white-space: normal !important;
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+  font-size: clamp(0.58rem, 1.2vw, 0.72rem) !important;
+  line-height: 1.2 !important;
+  overflow: hidden !important;
+}
