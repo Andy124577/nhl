@@ -168,11 +168,6 @@
   padding-top: 4px;
 }
 
-.player-bio-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-}
 
 @media (max-width: 768px) {
   .player-headshot-container {
@@ -186,7 +181,8 @@
   .player-header-right { align-items: center; width: 100%; }
   .player-name-section { align-items: center; }
   .player-position-team { justify-content: center; }
-  .player-bio-grid { width: 100%; }
+  .player-bio-pills { width: 100%; justify-content: center; }
+  .player-draft-strip { justify-content: center; text-align: center; }
 }
 
 /* Team-col: draftActif uses logo images (26px), not text — keep column tight */
