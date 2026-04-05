@@ -1599,32 +1599,31 @@ async function updateCurrentStats() {
     const allPlayers = loadAllPlayers();
     const newPlayers = [];
 
-    // Fetch stats for each player with delay to avoid rate limiting
-    for (let i = 0; i < allPlayers.length; i++) {
-        const player = allPlayers[i];
-        const playerName = player.skaterFullName || player.goalieFullName;
-        console.log(`Fetching ${i + 1}/${allPlayers.length}: ${playerName}`);
+    // Fetch stats in batches of 10 with 300ms between batches to respect rate limits
+    const STATS_BATCH = 10;
+    for (let i = 0; i < allPlayers.length; i += STATS_BATCH) {
+        const batch = allPlayers.slice(i, i + STATS_BATCH);
+        console.log(`Fetching ${i + 1}–${Math.min(i + STATS_BATCH, allPlayers.length)}/${allPlayers.length}`);
 
-        const stats = await fetchCurrentStatsForPlayer(
-            player.playerId,
-            playerName,
-            player.isGoalie
-        );
+        const batchResults = await Promise.all(batch.map(async (player) => {
+            const playerName = player.skaterFullName || player.goalieFullName;
+            const stats = await fetchCurrentStatsForPlayer(
+                player.playerId,
+                playerName,
+                player.isGoalie
+            );
+            if (stats) {
+                const previousStats = previousPlayers.find(p => p.playerId === stats.playerId);
+                const previousPoints = previousStats ? previousStats.points : 0;
+                stats.todayPoints = stats.points - previousPoints;
+            }
+            return stats;
+        }));
 
-        if (stats) {
-            // Find previous stats for this player
-            const previousStats = previousPlayers.find(p => p.playerId === stats.playerId);
-            const previousPoints = previousStats ? previousStats.points : 0;
+        newPlayers.push(...batchResults.filter(Boolean));
 
-            // Calculate today's points (difference from previous)
-            stats.todayPoints = stats.points - previousPoints;
-
-            newPlayers.push(stats);
-        }
-
-        // Add delay between requests (200ms) to avoid rate limiting
-        if (i < allPlayers.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 200));
+        if (i + STATS_BATCH < allPlayers.length) {
+            await new Promise(resolve => setTimeout(resolve, 300));
         }
     }
 
@@ -1684,6 +1683,7 @@ app.get("/current-stats", async (req, res) => {
             }
         }
 
+        res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400');
         res.json(stats);
     } catch (error) {
         console.error("❌ Error in /current-stats route:", error);
@@ -2164,6 +2164,7 @@ app.get('/current-teams', async (req, res) => {
             }
         }
 
+        res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400');
         res.json(stats);
     } catch (error) {
         console.error('❌ Error in /current-teams route:', error);
@@ -2485,24 +2486,31 @@ app.get('/hot-players-last10', async (req, res) => {
         const skatersData = await skatersResponse.json();
         const goaliesData = await goaliesResponse.json();
 
-        // Process skaters - get last 10 games stats for top 200
+        // Process skaters - get last 10 games stats for top 200 (batched to avoid rate-limiting)
         console.log('📊 Processing skaters...');
-        const skaterPromises = (skatersData.points || []).slice(0, 200).map(async (player) => {
-            const last10Stats = await getPlayerLast10Stats(player.playerId, player.position);
-            if (!last10Stats || last10Stats.gamesPlayed < 5) return null; // Must have played at least 5 of last 10 games
-
-            return {
-                playerId: player.playerId,
-                playerName: `${player.firstName.default} ${player.lastName.default}`,
-                teamAbbrev: player.teamAbbrev,
-                position: player.positionCode,
-                headshot: player.headshot,
-                isRookie: player.rookieFlag === 'Y',
-                ...last10Stats
-            };
-        });
-
-        const skaters = (await Promise.all(skaterPromises)).filter(p => p !== null);
+        const skaterPlayers = (skatersData.points || []).slice(0, 200);
+        const skaters = [];
+        const SKATER_BATCH = 20;
+        for (let i = 0; i < skaterPlayers.length; i += SKATER_BATCH) {
+            const batch = skaterPlayers.slice(i, i + SKATER_BATCH);
+            const results = await Promise.all(batch.map(async (player) => {
+                const last10Stats = await getPlayerLast10Stats(player.playerId, player.position);
+                if (!last10Stats || last10Stats.gamesPlayed < 5) return null;
+                return {
+                    playerId: player.playerId,
+                    playerName: `${player.firstName.default} ${player.lastName.default}`,
+                    teamAbbrev: player.teamAbbrev,
+                    position: player.positionCode,
+                    headshot: player.headshot,
+                    isRookie: player.rookieFlag === 'Y',
+                    ...last10Stats
+                };
+            }));
+            skaters.push(...results.filter(p => p !== null));
+            if (i + SKATER_BATCH < skaterPlayers.length) {
+                await new Promise(r => setTimeout(r, 150));
+            }
+        }
 
         // Separate forwards and defensemen
         const forwards = skaters.filter(p => ['C', 'L', 'R', 'F'].includes(p.position));
@@ -2557,23 +2565,30 @@ app.get('/hot-players-last10', async (req, res) => {
             last10Points: p.points
         }));
 
-        // Process goalies
+        // Process goalies (batched to avoid rate-limiting)
         console.log('📊 Processing goalies...');
-        const goaliePromises = (goaliesData.savePercentage || []).slice(0, 50).map(async (player) => {
-            const last10Stats = await getPlayerLast10Stats(player.playerId, 'G');
-            if (!last10Stats || last10Stats.gamesPlayed < 3) return null; // Must have played at least 3 of last 10 games
-
-            return {
-                playerId: player.playerId,
-                playerName: `${player.firstName.default} ${player.lastName.default}`,
-                teamAbbrev: player.teamAbbrev,
-                position: 'G',
-                headshot: player.headshot,
-                ...last10Stats
-            };
-        });
-
-        const goaliesWithStats = (await Promise.all(goaliePromises)).filter(p => p !== null);
+        const goaliePlayers = (goaliesData.savePercentage || []).slice(0, 50);
+        const goaliesWithStats = [];
+        const GOALIE_BATCH = 15;
+        for (let i = 0; i < goaliePlayers.length; i += GOALIE_BATCH) {
+            const batch = goaliePlayers.slice(i, i + GOALIE_BATCH);
+            const results = await Promise.all(batch.map(async (player) => {
+                const last10Stats = await getPlayerLast10Stats(player.playerId, 'G');
+                if (!last10Stats || last10Stats.gamesPlayed < 3) return null;
+                return {
+                    playerId: player.playerId,
+                    playerName: `${player.firstName.default} ${player.lastName.default}`,
+                    teamAbbrev: player.teamAbbrev,
+                    position: 'G',
+                    headshot: player.headshot,
+                    ...last10Stats
+                };
+            }));
+            goaliesWithStats.push(...results.filter(p => p !== null));
+            if (i + GOALIE_BATCH < goaliePlayers.length) {
+                await new Promise(r => setTimeout(r, 150));
+            }
+        }
 
         // Sort goalies by save percentage
         goaliesWithStats.sort((a, b) => b.savePct - a.savePct);

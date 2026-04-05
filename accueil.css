@@ -40,6 +40,7 @@ body {
     border-radius: 50%;
     filter: blur(90px);
     animation: glow-pulse 5s ease-in-out infinite;
+    will-change: opacity;
 }
 .sp-1 { width: 560px; height: 560px; background: rgba(0,212,255,.14); top: -120px; left: 18%; animation-delay: 0s; }
 .sp-2 { width: 440px; height: 440px; background: rgba(110,50,220,.13); bottom: -60px; right: 8%; animation-delay: 2s; }
@@ -714,4 +715,16 @@ html[data-theme="light"] .btn-hero-secondary:hover {
 }
 html[data-theme="light"] .hfc-row:hover {
     background: rgba(0, 136, 170, 0.05);
+}
+
+/* ============================================================ */
+/* REDUCED MOTION — disable animations for users who prefer it  */
+/* ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    .spotlight,
+    .sp-1, .sp-2, .sp-3 { animation: none; }
+    .hero-floating-card { animation: none; }
+    .chip-1, .chip-2 { animation: none; }
+    .live-dot { animation: none; }
+    .hero-pill, .btn-hero-primary, .btn-hero-secondary, .btn-hero-tertiary { transition: none; }
 }

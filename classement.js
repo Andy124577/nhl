@@ -69,7 +69,7 @@ async function fetchImageData() {
             return;
         }
 
-        const response = await fetch('images.json', { cache: 'no-store' });
+        const response = await fetch('images.json');
         imageList = await response.json();
         localStorage.setItem('imageList', JSON.stringify(imageList));
         console.log('✅ Images loaded from server');

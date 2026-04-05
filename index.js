@@ -47,6 +47,7 @@ async function fetchPlayerData() {
     }
 }
 async function fetchImageData() {
+    if (imageList.length > 0) return;
     try {
         const t = await fetch("images.json");
         if (!t.ok) throw new Error(`Error: ${t.status} - ${t.statusText}`);

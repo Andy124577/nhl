@@ -119,10 +119,6 @@
         processAllImages();
     }
 
-    // Also process images shortly after to catch any late additions
-    setTimeout(processAllImages, 500);
-    setTimeout(processAllImages, 1500);
-
     // Expose function for manual triggering
     window.lazyLoadImages = processAllImages;
 })();
