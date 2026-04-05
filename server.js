@@ -1725,6 +1725,187 @@ cron.schedule('0 3 * * *', async () => {
     timezone: "America/New_York" // Adjust to your timezone
 });
 
+// ===============================================
+// SMART GAME-NIGHT STATS UPDATER
+// Polls /score/now every 15 min during game hours.
+// Only fetches player logs when a game just went Final.
+// ===============================================
+
+const gameStatusCache = new Map(); // gameId → last known gameState
+let smartUpdateRunning = false;
+
+// Fetch one player's full season game log and upsert to DB
+async function fetchAndSavePlayerLog(playerId, playerName, position) {
+    const url = `https://api-web.nhle.com/v1/player/${playerId}/game-log/20252026/2`;
+    try {
+        const response = await fetch(url);
+        if (!response.ok) return 0;
+        const data = await response.json();
+        if (!data?.gameLog?.length) return 0;
+
+        const queries = data.gameLog.map(game => {
+            const saves = game.saves ?? ((game.shotsAgainst || 0) - (game.goalsAgainst || 0));
+            return db.query(`
+                INSERT INTO player_game_logs (
+                    player_id, player_name, position, season, game_id, game_date,
+                    home_road_flag, opponent_abbrev, team_abbrev, game_result,
+                    goals, assists, points, plus_minus, pim, shots,
+                    power_play_goals, power_play_points, shorthanded_goals, shorthanded_points,
+                    game_winning_goals, toi,
+                    games_started, decision, shots_against, goals_against, saves, save_pct, shutouts,
+                    last_updated
+                ) VALUES (
+                    $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
+                    $11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
+                    $21,$22,$23,$24,$25,$26,$27,$28,$29,NOW()
+                )
+                ON CONFLICT (player_id, game_id) DO UPDATE SET
+                    goals=EXCLUDED.goals, assists=EXCLUDED.assists, points=EXCLUDED.points,
+                    plus_minus=EXCLUDED.plus_minus, shots=EXCLUDED.shots,
+                    power_play_goals=EXCLUDED.power_play_goals,
+                    power_play_points=EXCLUDED.power_play_points,
+                    shorthanded_goals=EXCLUDED.shorthanded_goals,
+                    shorthanded_points=EXCLUDED.shorthanded_points,
+                    game_winning_goals=EXCLUDED.game_winning_goals,
+                    decision=EXCLUDED.decision, saves=EXCLUDED.saves,
+                    goals_against=EXCLUDED.goals_against, shutouts=EXCLUDED.shutouts,
+                    team_abbrev=EXCLUDED.team_abbrev, last_updated=NOW()
+            `, [
+                playerId, playerName, position, '20252026',
+                game.gameId, game.gameDate, game.homeRoadFlag, game.opponentAbbrev,
+                game.teamAbbrev, game.gameResult,
+                game.goals||0, game.assists||0, game.points||0, game.plusMinus||0,
+                game.pim||0, game.shots||0,
+                game.powerPlayGoals||0, game.powerPlayPoints||0,
+                game.shorthandedGoals||0, game.shorthandedPoints||0,
+                game.gameWinningGoals||0, game.toi||'0:00',
+                game.gamesStarted||0, game.decision||null,
+                game.shotsAgainst||0, game.goalsAgainst||0,
+                saves, game.savePct||null, game.shutouts||0
+            ]);
+        });
+
+        await Promise.all(queries);
+        return data.gameLog.length;
+    } catch (err) {
+        console.error(`⚠️  Smart update: failed to fetch ${playerName}:`, err.message);
+        return 0;
+    }
+}
+
+// Return players from nhl_filtered_stats.json whose team is in the given list
+function getPlayersForTeams(teamAbbrevs) {
+    try {
+        const statsData = JSON.parse(fs.readFileSync(NHL_STATS_FILE, 'utf-8'));
+        const players = [];
+        const seen = new Set();
+
+        const add = (p, name, pos) => {
+            if (p?.playerId && !seen.has(p.playerId) && teamAbbrevs.includes(p.teamAbbrev)) {
+                seen.add(p.playerId);
+                players.push({ playerId: p.playerId, playerName: name, position: pos });
+            }
+        };
+
+        (statsData.Top_100_Offensive_Players || []).forEach(p => add(p, p.skaterFullName, p.positionCode));
+        (statsData.Top_50_Defenders        || []).forEach(p => add(p, p.skaterFullName, p.positionCode));
+        (statsData.Top_Rookies             || []).forEach(p => { if (p.positionCode !== 'G') add(p, p.skaterFullName, p.positionCode); });
+        (statsData.Top_50_Goalies          || []).forEach(p => add(p, p.goalieFullName, 'G'));
+
+        return players;
+    } catch (err) {
+        console.error('⚠️  Smart update: could not read stats file:', err.message);
+        return [];
+    }
+}
+
+// Core smart-poll: check which games just finished, update only those players
+async function checkAndUpdateFinishedGames() {
+    if (smartUpdateRunning) {
+        console.log('⏭️  Smart update: previous run still in progress, skipping');
+        return;
+    }
+    smartUpdateRunning = true;
+
+    try {
+        const response = await fetch('https://api-web.nhle.com/v1/score/now');
+        if (!response.ok) {
+            console.log('⚠️  Smart update: /score/now returned', response.status);
+            return;
+        }
+
+        const data = await response.json();
+        const games = data.games || [];
+
+        if (games.length === 0) {
+            console.log('📅 Smart update: no games scheduled today');
+            return;
+        }
+
+        const newlyFinished = [];
+        for (const game of games) {
+            const id    = game.id;
+            const state = game.gameState; // FINAL | OFF | LIVE | CRIT | FUT | PRE
+            const prev  = gameStatusCache.get(id);
+            const done  = state === 'FINAL' || state === 'OFF';
+
+            gameStatusCache.set(id, state);
+
+            if (done && prev !== 'FINAL' && prev !== 'OFF') {
+                newlyFinished.push({
+                    id,
+                    home: game.homeTeam?.abbrev,
+                    away: game.awayTeam?.abbrev,
+                    label: `${game.awayTeam?.abbrev} ${game.awayTeam?.score ?? 0}-${game.homeTeam?.score ?? 0} ${game.homeTeam?.abbrev}`
+                });
+            }
+        }
+
+        if (newlyFinished.length === 0) {
+            const live = games.filter(g => g.gameState === 'LIVE' || g.gameState === 'CRIT').length;
+            const done = games.filter(g => g.gameState === 'FINAL' || g.gameState === 'OFF').length;
+            console.log(`📊 Smart update: ${games.length} games (${live} live, ${done} final) — nothing new`);
+            return;
+        }
+
+        const teamAbbrevs = [...new Set(newlyFinished.flatMap(g => [g.home, g.away]).filter(Boolean))];
+        console.log(`🏒 Smart update: ${newlyFinished.length} game(s) just finished: ${newlyFinished.map(g => g.label).join(' | ')}`);
+        console.log(`🎯 Teams to update: ${teamAbbrevs.join(', ')}`);
+
+        const players = getPlayersForTeams(teamAbbrevs);
+        if (players.length === 0) {
+            console.log('⚠️  Smart update: no tracked fantasy players on these teams');
+            return;
+        }
+
+        console.log(`👥 Fetching logs for ${players.length} players...`);
+        let totalRows = 0;
+        const BATCH = 10;
+        for (let i = 0; i < players.length; i += BATCH) {
+            const batch = players.slice(i, i + BATCH);
+            const counts = await Promise.all(batch.map(p => fetchAndSavePlayerLog(p.playerId, p.playerName, p.position)));
+            totalRows += counts.reduce((s, n) => s + n, 0);
+            if (i + BATCH < players.length) await new Promise(r => setTimeout(r, 200));
+        }
+
+        console.log(`✅ Smart update done: ${totalRows} rows upserted for ${players.length} players`);
+
+    } catch (err) {
+        console.error('❌ Smart update error:', err.message);
+    } finally {
+        smartUpdateRunning = false;
+    }
+}
+
+// Every 15 min from 6 PM to 1:59 AM ET (covers all game windows including OT/SO)
+cron.schedule('*/15 18-23,0,1 * * *', () => {
+    console.log('🔍 Smart game-night check triggered');
+    checkAndUpdateFinishedGames();
+}, { timezone: 'America/New_York' });
+
+// Populate the cache on startup so the first poll only triggers genuinely new finals
+checkAndUpdateFinishedGames();
+
 // Optional: Manual trigger endpoint for testing
 app.post("/refresh-stats", async (req, res) => {
     try {
@@ -1771,6 +1952,12 @@ app.post("/fetch-game-logs", async (req, res) => {
         console.error("❌ Error starting game logs fetch:", error);
         res.status(500).json({ message: "Error starting game logs fetch" });
     }
+});
+
+// Manual trigger: force a smart update check right now
+app.post("/check-games-now", async (req, res) => {
+    res.json({ message: "Smart game check triggered — watch server logs" });
+    checkAndUpdateFinishedGames();
 });
 
 // Manual trigger endpoint for database migration
