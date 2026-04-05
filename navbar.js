@@ -86,8 +86,11 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                 </nav>
             </div>
 
-            <!-- Right: User Menu -->
+            <!-- Right: Theme toggle + User Menu -->
             <div class="navbar-right">
+                <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Changer le thème">
+                    <span id="themeIcon">${(localStorage.getItem('theme') || 'dark') === 'dark' ? '☀️' : '🌙'}</span>
+                </button>
                 <div class="user-menu">
                     <button class="user-avatar" id="userAvatarBtn" title="${username}">
                         ${username.charAt(0).toUpperCase()}
