@@ -1261,3 +1261,21 @@ button:disabled {
     cursor: not-allowed;
     opacity: 0.6;
 }
+
+
+/* ============================================================ */
+/* LIGHT MODE — hardcoded rgba overrides                         */
+/* ============================================================ */
+html[data-theme="light"] .player-card-roster {
+    background: rgba(255, 255, 255, 0.95);
+}
+html[data-theme="light"] .trade-player {
+    background: rgba(248, 250, 255, 0.95);
+}
+html[data-theme="light"] .player-photo-roster img {
+    border-color: rgba(0, 0, 0, 0.15);
+}
+html[data-theme="light"] .btn-propose-trade:disabled {
+    background: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.3);
+}

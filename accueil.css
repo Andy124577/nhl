@@ -687,3 +687,31 @@ body {
         text-align: center;
     }
 }
+
+/* ============================================================ */
+/* LIGHT MODE — hardcoded rgba overrides                         */
+/* ============================================================ */
+html[data-theme="light"] .hero-floating-card {
+    background: rgba(255, 255, 255, 0.95);
+}
+html[data-theme="light"] .hero-stat-chip {
+    background: rgba(255, 255, 255, 0.95);
+}
+html[data-theme="light"] .hero-pill {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.10);
+}
+html[data-theme="light"] .hero-pill:hover {
+    background: rgba(0, 136, 170, 0.10);
+    border-color: rgba(0, 136, 170, 0.30);
+}
+html[data-theme="light"] .btn-hero-secondary {
+    border-color: rgba(0, 0, 0, 0.20);
+    color: var(--text-main);
+}
+html[data-theme="light"] .btn-hero-secondary:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+html[data-theme="light"] .hfc-row:hover {
+    background: rgba(0, 136, 170, 0.05);
+}
