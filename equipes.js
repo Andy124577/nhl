@@ -310,6 +310,7 @@ async function viewClanTeams(clanName) {
         for (const [teamName, teamData] of Object.entries(teams)) {
             const isFull = teamData.members.length >= 5;
             const userInTeam = userTeam === teamName;
+            const teamId = teamName.replace(/[^a-zA-Z0-9]/g, '_');
             const membersDisplay = teamData.members.length > 0
                 ? `<div style="margin-top: 8px; padding-left: 12px;">
                      <strong style="font-size: 0.85rem; color: #666;">Membres:</strong>
@@ -318,6 +319,21 @@ async function viewClanTeams(clanName) {
                      </ul>
                    </div>`
                 : `<div style="margin-top: 8px; color: #999; font-size: 0.85rem; font-style: italic;">Aucun membre pour l'instant</div>`;
+
+            const renameSection = userInTeam ? `
+                <div id="rename-row-${teamId}" style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
+                    <input id="rename-input-${teamId}" type="text" maxlength="20"
+                        value="${teamName.replace(/"/g, '&quot;')}"
+                        placeholder="Nouveau nom (max 20)"
+                        style="flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.9rem; outline: none;"
+                        onkeydown="if(event.key==='Enter') submitRename('${clanName.replace(/'/g, "\\'")}', '${teamName.replace(/'/g, "\\'")}', '${teamId}')"
+                    />
+                    <button onclick="submitRename('${clanName.replace(/'/g, "\\'")}', '${teamName.replace(/'/g, "\\'")}', '${teamId}')"
+                        style="padding: 8px 16px; background: #4caf50; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                        ✏️ Renommer
+                    </button>
+                </div>
+            ` : '';
 
             teamHTML += `
                 <div style="margin-bottom: 16px; padding: 16px; border: 2px solid ${userInTeam ? '#4caf50' : (isFull ? '#ddd' : '#ff2e2e')}; border-radius: 10px; background: ${userInTeam ? '#e8f5e9' : (isFull ? '#f5f5f5' : '#fff')};">
@@ -331,6 +347,7 @@ async function viewClanTeams(clanName) {
                         </div>
                     </div>
                     ${membersDisplay}
+                    ${renameSection}
                     ${!userInTeam && !isFull ? `<button style="margin-top: 12px; width: 100%; padding: 10px; background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;" onclick="joinTeam('${clanName}', '${teamName}')" onmouseover="this.style.background='linear-gradient(135deg, #ff4040 0%, #d93030 100%)'" onmouseout="this.style.background='linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%)'">Rejoindre cette équipe</button>` : ''}
                     ${isFull && !userInTeam ? `<div style="margin-top: 12px; padding: 8px; background: #f8d7da; border-radius: 6px; color: #721c24; text-align: center; font-size: 0.9rem;">Équipe complète</div>` : ''}
                 </div>
@@ -345,6 +362,46 @@ async function viewClanTeams(clanName) {
     }
 }
 
+
+// ✏️ Rename user's team
+async function submitRename(clanName, oldTeamName, teamId) {
+    const input = document.getElementById(`rename-input-${teamId}`);
+    if (!input) return;
+
+    const newName = input.value.trim();
+
+    if (newName.length === 0 || newName.length > 20) {
+        alert("Le nom doit contenir entre 1 et 20 caractères.");
+        return;
+    }
+
+    if (!/^[\p{L}\p{N}\s'\-_]+$/u.test(newName)) {
+        alert("Nom invalide. Utilisez uniquement des lettres, chiffres, espaces, tirets ou apostrophes.");
+        return;
+    }
+
+    const username = localStorage.getItem("username");
+
+    try {
+        const response = await fetch(`${BASE_URL}/rename-team`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ clanName, oldTeamName, newTeamName: newName, username })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(result.message);
+            viewClanTeams(clanName);
+        } else {
+            alert(result.message || "Erreur lors du renommage.");
+        }
+    } catch (error) {
+        console.error("Erreur rename-team:", error);
+        alert("Erreur de connexion au serveur.");
+    }
+}
 
 // 🔥 Rejoindre un clan
 async function joinClan(clanName) {

@@ -1066,6 +1066,83 @@ app.post("/join-team", async (req, res) => {
     res.json({ message: `Vous avez rejoint l'équipe ${teamName} du clan ${name} avec succès !`, draftData });
 });
 
+// ✏️ Rename a team (only the member of that team can rename it)
+app.post("/rename-team", async (req, res) => {
+    try {
+        const { clanName, oldTeamName, newTeamName, username } = req.body;
+
+        if (!clanName || !oldTeamName || !newTeamName || !username) {
+            return res.status(400).json({ message: "Paramètres manquants." });
+        }
+
+        const sanitized = newTeamName.trim();
+
+        if (sanitized.length === 0 || sanitized.length > 20) {
+            return res.status(400).json({ message: "Le nom doit contenir entre 1 et 20 caractères." });
+        }
+
+        // Allow letters (incl. accented), numbers, spaces, hyphens, apostrophes, underscores
+        if (!/^[\p{L}\p{N}\s'\-_]+$/u.test(sanitized)) {
+            return res.status(400).json({ message: "Nom invalide. Caractères non autorisés." });
+        }
+
+        const draftData = await loadDraftData();
+        const clan = draftData[clanName];
+
+        if (!clan) return res.status(404).json({ message: "Pool introuvable." });
+        if (!clan.teams[oldTeamName]) return res.status(404).json({ message: "Équipe introuvable." });
+
+        if (!clan.teams[oldTeamName].members.includes(username)) {
+            return res.status(403).json({ message: "Vous ne pouvez renommer que votre propre équipe." });
+        }
+
+        if (sanitized === oldTeamName) {
+            return res.status(400).json({ message: "Le nouveau nom est identique à l'ancien." });
+        }
+
+        if (clan.teams[sanitized]) {
+            return res.status(400).json({ message: "Ce nom d'équipe est déjà utilisé." });
+        }
+
+        // Rename in teams object
+        clan.teams[sanitized] = clan.teams[oldTeamName];
+        delete clan.teams[oldTeamName];
+
+        // Update draftOrder
+        if (Array.isArray(clan.draftOrder)) {
+            clan.draftOrder = clan.draftOrder.map(t => t === oldTeamName ? sanitized : t);
+        }
+
+        // Update H2H data
+        if (clan.h2hData) {
+            if (clan.h2hData.standings && clan.h2hData.standings[oldTeamName]) {
+                clan.h2hData.standings[sanitized] = clan.h2hData.standings[oldTeamName];
+                delete clan.h2hData.standings[oldTeamName];
+            }
+            const updateMatchups = (matchups) => {
+                if (!Array.isArray(matchups)) return;
+                matchups.forEach(m => {
+                    if (m.team1 === oldTeamName) m.team1 = sanitized;
+                    if (m.team2 === oldTeamName) m.team2 = sanitized;
+                    if (m.winner === oldTeamName) m.winner = sanitized;
+                });
+            };
+            updateMatchups(clan.h2hData.matchups);
+            if (Array.isArray(clan.h2hData.matchupHistory)) {
+                clan.h2hData.matchupHistory.forEach(week => updateMatchups(week.matchups));
+            }
+        }
+
+        await saveDraftData(draftData);
+        io.emit("draftUpdated", draftData);
+
+        res.json({ message: `Équipe renommée en "${sanitized}" avec succès !`, newTeamName: sanitized });
+    } catch (error) {
+        console.error("Erreur /rename-team:", error);
+        res.status(500).json({ message: "Erreur serveur." });
+    }
+});
+
 // 🔒 Route d'inscription
 app.post("/signup", async (req, res) => {
     try {
