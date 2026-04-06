@@ -2,6 +2,41 @@ const BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:3000"
   : window.location.origin;
 
+const NHL_ABBREV = {
+    "Anaheim Ducks": "ANA", "Boston Bruins": "BOS", "Buffalo Sabres": "BUF",
+    "Calgary Flames": "CGY", "Carolina Hurricanes": "CAR", "Chicago Blackhawks": "CHI",
+    "Colorado Avalanche": "COL", "Columbus Blue Jackets": "CBJ", "Dallas Stars": "DAL",
+    "Detroit Red Wings": "DET", "Edmonton Oilers": "EDM", "Florida Panthers": "FLA",
+    "Los Angeles Kings": "LAK", "Minnesota Wild": "MIN", "Montréal Canadiens": "MTL",
+    "Montreal Canadiens": "MTL", "Nashville Predators": "NSH", "New Jersey Devils": "NJD",
+    "New York Islanders": "NYI", "New York Rangers": "NYR", "Ottawa Senators": "OTT",
+    "Philadelphia Flyers": "PHI", "Pittsburgh Penguins": "PIT", "San Jose Sharks": "SJS",
+    "Seattle Kraken": "SEA", "St. Louis Blues": "STL", "Tampa Bay Lightning": "TBL",
+    "Toronto Maple Leafs": "TOR", "Utah Hockey Club": "UTA", "Vancouver Canucks": "VAN",
+    "Vegas Golden Knights": "VGK", "Washington Capitals": "WSH", "Winnipeg Jets": "WPG"
+};
+
+// Returns the display name for a fantasy team.
+// If the key is still the default "Équipe X" and members exist,
+// use "member1 et member2 et ..." if ≤ 30 chars, otherwise keep the key.
+function getDisplayName(teamKey, members) {
+    if (/^Équipe \d+$/.test(teamKey) && members && members.length > 0) {
+        const auto = members.join(' et ');
+        if (auto.length <= 30) return auto;
+    }
+    return teamKey;
+}
+
+// Returns an <img> tag for the first chosen NHL team logo, or empty string.
+function getTeamLogoHTML(nhlTeams) {
+    if (!nhlTeams || nhlTeams.length === 0) return '';
+    const abbrev = NHL_ABBREV[nhlTeams[0]];
+    if (!abbrev) return '';
+    return `<img src="teams/${abbrev}.png" alt="${nhlTeams[0]}" title="${nhlTeams[0]}"
+        style="width:36px;height:36px;object-fit:contain;vertical-align:middle;margin-right:8px;"
+        onerror="this.style.display='none'">`;
+}
+
 $(document).ready(function() {
     const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
     const username = localStorage.getItem("username");
@@ -311,6 +346,8 @@ async function viewClanTeams(clanName) {
             const isFull = teamData.members.length >= 5;
             const userInTeam = userTeam === teamName;
             const teamId = teamName.replace(/[^a-zA-Z0-9]/g, '_');
+            const displayName = getDisplayName(teamName, teamData.members);
+            const logoHTML = getTeamLogoHTML(teamData.teams);
             const membersDisplay = teamData.members.length > 0
                 ? `<div style="margin-top: 8px; padding-left: 12px;">
                      <strong style="font-size: 0.85rem; color: #666;">Membres:</strong>
@@ -320,10 +357,13 @@ async function viewClanTeams(clanName) {
                    </div>`
                 : `<div style="margin-top: 8px; color: #999; font-size: 0.85rem; font-style: italic;">Aucun membre pour l'instant</div>`;
 
+            const prefill = (displayName !== teamName && displayName.length <= 20)
+                ? displayName
+                : teamName;
             const renameSection = userInTeam ? `
                 <div id="rename-row-${teamId}" style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
                     <input id="rename-input-${teamId}" type="text" maxlength="20"
-                        value="${teamName.replace(/"/g, '&quot;')}"
+                        value="${prefill.replace(/"/g, '&quot;')}"
                         placeholder="Nouveau nom (max 20)"
                         style="flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.9rem; outline: none;"
                         onkeydown="if(event.key==='Enter') submitRename('${clanName.replace(/'/g, "\\'")}', '${teamName.replace(/'/g, "\\'")}', '${teamId}')"
@@ -338,7 +378,7 @@ async function viewClanTeams(clanName) {
             teamHTML += `
                 <div style="margin-bottom: 16px; padding: 16px; border: 2px solid ${userInTeam ? '#4caf50' : (isFull ? '#ddd' : '#ff2e2e')}; border-radius: 10px; background: ${userInTeam ? '#e8f5e9' : (isFull ? '#f5f5f5' : '#fff')};">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <strong style="font-size: 1.1rem; color: #222;">${teamName}</strong>
+                        <strong style="font-size: 1.1rem; color: #222; display: flex; align-items: center;">${logoHTML}${displayName}</strong>
                         <div style="display: flex; gap: 8px; align-items: center;">
                             ${userInTeam ? `<span style="padding: 4px 12px; background: #4caf50; border-radius: 12px; font-size: 0.75rem; font-weight: 600; color: white;">Votre équipe</span>` : ''}
                             <span style="padding: 4px 12px; background: ${isFull ? '#ddd' : '#e3f2fd'}; border-radius: 12px; font-size: 0.85rem; font-weight: 600; color: ${isFull ? '#666' : '#1976d2'};">
