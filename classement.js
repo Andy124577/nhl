@@ -1,4 +1,36 @@
 // ==================== GLOBAL STATE ====================
+
+const NHL_ABBREV = {
+    "Anaheim Ducks": "ANA", "Boston Bruins": "BOS", "Buffalo Sabres": "BUF",
+    "Calgary Flames": "CGY", "Carolina Hurricanes": "CAR", "Chicago Blackhawks": "CHI",
+    "Colorado Avalanche": "COL", "Columbus Blue Jackets": "CBJ", "Dallas Stars": "DAL",
+    "Detroit Red Wings": "DET", "Edmonton Oilers": "EDM", "Florida Panthers": "FLA",
+    "Los Angeles Kings": "LAK", "Minnesota Wild": "MIN", "Montréal Canadiens": "MTL",
+    "Montreal Canadiens": "MTL", "Nashville Predators": "NSH", "New Jersey Devils": "NJD",
+    "New York Islanders": "NYI", "New York Rangers": "NYR", "Ottawa Senators": "OTT",
+    "Philadelphia Flyers": "PHI", "Pittsburgh Penguins": "PIT", "San Jose Sharks": "SJS",
+    "Seattle Kraken": "SEA", "St. Louis Blues": "STL", "Tampa Bay Lightning": "TBL",
+    "Toronto Maple Leafs": "TOR", "Utah Hockey Club": "UTA", "Vancouver Canucks": "VAN",
+    "Vegas Golden Knights": "VGK", "Washington Capitals": "WSH", "Winnipeg Jets": "WPG"
+};
+
+function getDisplayName(teamKey, members) {
+    if (/^Équipe \d+$/.test(teamKey) && members && members.length > 0) {
+        const auto = members.join(' et ');
+        if (auto.length <= 30) return auto;
+    }
+    return teamKey;
+}
+
+function getTeamLogoHTML(nhlTeams, size = 32) {
+    if (!nhlTeams || nhlTeams.length === 0) return '';
+    const abbrev = NHL_ABBREV[nhlTeams[0]];
+    if (!abbrev) return '';
+    return `<img src="teams/${abbrev}.png" alt="${nhlTeams[0]}" title="${nhlTeams[0]}"
+        style="width:${size}px;height:${size}px;object-fit:contain;flex-shrink:0;"
+        onerror="this.style.display='none'">`;
+}
+
 let fullPlayerData = [];
 let goalieData = [];
 let teamData = [];
@@ -256,6 +288,7 @@ function renderPoolStandings(poolData, poolName) {
                 return {
                     teamName,
                     members: teamData.members,
+                    nhlTeams: teamData.teams || [],
                     wins: h2hStats.wins,
                     losses: h2hStats.losses,
                     ties: h2hStats.ties,
@@ -277,6 +310,7 @@ function renderPoolStandings(poolData, poolName) {
                 return {
                     teamName,
                     members: teamData.members,
+                    nhlTeams: teamData.teams || [],
                     ...teamPoints
                 };
             })
@@ -344,10 +378,14 @@ function renderPoolStandings(poolData, poolName) {
             `;
         }
 
+        const displayName = getDisplayName(standing.teamName, standing.members);
+        const logoHTML = getTeamLogoHTML(standing.nhlTeams, 32);
+
         card.innerHTML = `
             <div class="rank-badge ${rankClass}">${rankLabel}</div>
+            ${logoHTML ? `<div class="standing-logo">${logoHTML}</div>` : ''}
             <div class="standing-info">
-                <div class="standing-name">${standing.members.join(', ')}</div>
+                <div class="standing-name">${displayName}</div>
                 <div class="standing-stats">
                     ${statsHTML}
                 </div>
@@ -378,13 +416,14 @@ function showTeamRoster(poolName, teamName) {
     if (!teamData) return;
 
     // Update UI
-    document.getElementById('pageTitle').textContent = teamName;
+    const displayTeamName = getDisplayName(teamName, teamData.members || []);
+    document.getElementById('pageTitle').textContent = displayTeamName;
     document.getElementById('breadcrumb').style.display = 'flex';
     document.getElementById('poolBreadcrumb').textContent = poolName;
     document.getElementById('poolBreadcrumb').style.display = 'inline';
     document.getElementById('poolBreadcrumb').onclick = () => showPoolStandings(poolName);
     document.getElementById('poolBreadcrumbSep').style.display = 'inline';
-    document.getElementById('teamBreadcrumb').textContent = teamName;
+    document.getElementById('teamBreadcrumb').textContent = displayTeamName;
     document.getElementById('teamBreadcrumb').style.display = 'inline';
     document.getElementById('teamBreadcrumbSep').style.display = 'inline';
 
