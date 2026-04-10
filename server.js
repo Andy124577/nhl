@@ -1706,6 +1706,7 @@ async function updateCurrentStats() {
 
     const currentStats = {
         lastUpdated: new Date().toISOString(),
+        season: 20252026,
         players: newPlayers
     };
 
@@ -1746,9 +1747,12 @@ app.get("/current-stats", async (req, res) => {
     try {
         let stats = await loadCurrentStats();
 
-        // If no cached stats or cache is older than 24 hours, update
+        // Force refresh if no cache, wrong season, or cache older than 24 hours
         if (!stats.lastUpdated) {
             console.log("📊 No cached stats found, fetching fresh data...");
+            stats = await updateCurrentStats();
+        } else if (stats.season !== 20252026) {
+            console.log(`📊 Cached stats are from season ${stats.season || 'unknown'}, refreshing for 2025-26...`);
             stats = await updateCurrentStats();
         } else {
             const lastUpdate = new Date(stats.lastUpdated);
