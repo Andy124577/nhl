@@ -431,7 +431,7 @@ function renderTopPlayersError() {
 // ============================================================
 function viewPlayer(playerId) {
     if (playerId) {
-        window.location.href = `index.html?viewPlayer=${playerId}`;
+        window.location.href = `stats.html?viewPlayer=${playerId}`;
     }
 }
 
@@ -453,7 +453,7 @@ function changeTimeRange(days) {
     // Update "Voir tout" link to preserve time range
     const viewAllLink = document.getElementById('viewAllPlayersLink');
     if (viewAllLink) {
-        viewAllLink.href = `index.html?days=${days}`;
+        viewAllLink.href = `stats.html?days=${days}`;
     }
 
     // Reload stats with new range

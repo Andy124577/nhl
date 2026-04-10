@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiques NHL – Fantazy</title>
+    <script src="theme.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="skeleton-loader.css">
+    <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <nav class="navbar"></nav>
+
+    <!-- ============================================================ -->
+    <!-- HERO HEADER                                                   -->
+    <!-- ============================================================ -->
+    <header class="stats-hero">
+        <div class="stats-hero-spots">
+            <div class="sh-spot sh-sp1"></div>
+            <div class="sh-spot sh-sp2"></div>
+        </div>
+        <div class="stats-hero-inner">
+            <div class="stats-hero-badge">📊 DONNÉES EN DIRECT</div>
+            <h1 class="stats-hero-title">
+                Statistiques <span class="gradient-text">NHL</span>
+            </h1>
+            <p class="stats-hero-sub">Explorez les performances des joueurs, gardiens et équipes</p>
+        </div>
+    </header>
+
+    <!-- ============================================================ -->
+    <!-- MAIN CONTAINER                                                -->
+    <!-- ============================================================ -->
+    <div class="stats-container">
+        <!-- Enhanced Filters Section -->
+        <div class="filters-section">
+            <div class="filter-group filter-search">
+                <label for="searchInput">
+                    <span class="filter-icon">🔍</span> Rechercher
+                </label>
+                <input type="text" id="searchInput" placeholder="Nom du joueur">
+            </div>
+
+            <div class="filter-group">
+                <label for="playerFilter">Filtre</label>
+                <select id="playerFilter">
+                    <option value="all">Tous les joueurs</option>
+                    <option value="offensive">Attaquants</option>
+                    <option value="defensive">Défenseurs</option>
+                    <option value="goalies">Gardiens</option>
+                    <option value="rookies">Recrues</option>
+                    <option value="teams">Équipes</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="sortBy">Trier par</label>
+                <select id="sortBy">
+                    <option value="points">Points</option>
+                    <option value="goals">Buts</option>
+                    <option value="assists">Passes</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="table-container" id="tableContainer">
+            <!-- Skeleton Loader -->
+            <div class="skeleton-loader" id="tableSkeleton">
+                <div class="skeleton-table">
+                    <div class="skeleton-table-header">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                        <div class="skeleton"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actual Content -->
+            <div class="actual-content" id="actualTable" style="display: none;">
+                <table id="playerTable">
+                    <thead>
+                        <tr>
+                            <th class="rank-col">#</th>
+                            <th>Photo</th>
+                            <th>Joueur</th>
+                            <th>GP</th>
+                            <th>G</th>
+                            <th>AST</th>
+                            <th>PTS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dynamic content filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div class="stats-empty-state" id="emptyState" style="display:none;">
+                <div class="empty-icon">🏒</div>
+                <h3>Aucun joueur trouvé</h3>
+                <p>Essayez de modifier vos filtres ou critères de recherche</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CAREER STATS MODAL                                            -->
+    <!-- ============================================================ -->
+    <div id="careerStatsModal" class="modal">
+        <div class="modal-content career-modal">
+            <div class="career-modal-header" id="careerModalHeader" style="display: none;">
+                <span class="close-modal" onclick="closeCareerModal()">&times;</span>
+                <div class="player-header-top">
+                    <div class="player-headshot-container" id="playerHeadshotContainer">
+                        <div class="no-photo">🏒</div>
+                    </div>
+                    <div class="player-header-right">
+                        <div class="player-name-section">
+                            <h2 id="careerPlayerName"></h2>
+                            <div class="player-position-team">
+                                <span id="careerPlayerPosition"></span>
+                                <span id="careerPlayerTeam"></span>
+                            </div>
+                        </div>
+                        <div class="player-bio-pills">
+                            <span class="bio-pill"><span class="bio-pill-lbl">Taille</span><strong class="bio-pill-val" id="playerHeight">-</strong></span>
+                            <span class="bio-pill"><span class="bio-pill-lbl">Poids</span><strong class="bio-pill-val" id="playerWeight">-</strong></span>
+                            <span class="bio-pill"><span class="bio-pill-lbl">Lance</span><strong class="bio-pill-val" id="playerShoots">-</strong></span>
+                            <span class="bio-pill"><span class="bio-pill-lbl">Né le</span><strong class="bio-pill-val" id="playerBirthDate">-</strong></span>
+                            <span class="bio-pill"><span class="bio-pill-lbl">Lieu</span><strong class="bio-pill-val" id="playerBirthPlace">-</strong></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="player-draft-strip">
+                    <span class="draft-label">Repêchage</span>
+                    <span class="draft-value" id="playerDraft">-</span>
+                </div>
+            </div>
+            <!-- Modal Skeleton Loader -->
+            <div class="skeleton-loader" id="modalSkeleton">
+                <div class="skeleton-modal-header">
+                    <div class="skeleton skeleton-modal-avatar"></div>
+                    <div class="skeleton-modal-info">
+                        <div class="skeleton" style="width: 200px; height: 32px; border-radius: 8px;"></div>
+                        <div class="skeleton" style="width: 150px; height: 20px; border-radius: 8px; margin-top: 12px;"></div>
+                    </div>
+                </div>
+                <div class="skeleton-modal-bio">
+                    <div class="skeleton-modal-bio-item">
+                        <div class="skeleton" style="width: 60px; height: 12px; border-radius: 6px;"></div>
+                        <div class="skeleton" style="width: 80px; height: 16px; border-radius: 6px; margin-top: 6px;"></div>
+                    </div>
+                    <div class="skeleton-modal-bio-item">
+                        <div class="skeleton" style="width: 60px; height: 12px; border-radius: 6px;"></div>
+                        <div class="skeleton" style="width: 80px; height: 16px; border-radius: 6px; margin-top: 6px;"></div>
+                    </div>
+                    <div class="skeleton-modal-bio-item">
+                        <div class="skeleton" style="width: 60px; height: 12px; border-radius: 6px;"></div>
+                        <div class="skeleton" style="width: 80px; height: 16px; border-radius: 6px; margin-top: 6px;"></div>
+                    </div>
+                    <div class="skeleton-modal-bio-item">
+                        <div class="skeleton" style="width: 60px; height: 12px; border-radius: 6px;"></div>
+                        <div class="skeleton" style="width: 80px; height: 16px; border-radius: 6px; margin-top: 6px;"></div>
+                    </div>
+                    <div class="skeleton-modal-bio-item">
+                        <div class="skeleton" style="width: 60px; height: 12px; border-radius: 6px;"></div>
+                        <div class="skeleton" style="width: 80px; height: 16px; border-radius: 6px; margin-top: 6px;"></div>
+                    </div>
+                    <div class="skeleton-modal-bio-item">
+                        <div class="skeleton" style="width: 60px; height: 12px; border-radius: 6px;"></div>
+                        <div class="skeleton" style="width: 80px; height: 16px; border-radius: 6px; margin-top: 6px;"></div>
+                    </div>
+                </div>
+                <div class="skeleton-table">
+                    <div class="skeleton-table-row">
+                        <div class="skeleton" style="border-radius: 6px;"></div>
+                        <div class="skeleton" style="border-radius: 6px;"></div>
+                        <div class="skeleton" style="border-radius: 6px;"></div>
+                        <div class="skeleton" style="border-radius: 6px;"></div>
+                        <div class="skeleton" style="border-radius: 6px;"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton" style="border-radius: 6px;"></div>
+                        <div class="skeleton" style="border-radius: 6px;"></div>
+                        <div class="skeleton" style="border-radius: 6px;"></div>
+                        <div class="skeleton" style="border-radius: 6px;"></div>
+                        <div class="skeleton" style="border-radius: 6px;"></div>
+                    </div>
+                    <div class="skeleton-table-row">
+                        <div class="skeleton" style="border-radius: 6px;"></div>
+                        <div class="skeleton" style="border-radius: 6px;"></div>
+                        <div class="skeleton" style="border-radius: 6px;"></div>
+                        <div class="skeleton" style="border-radius: 6px;"></div>
+                        <div class="skeleton" style="border-radius: 6px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="career-filters" id="careerFilters" style="display: none;">
+                <div class="filter-group-career">
+                    <label for="viewFilter">Vue</label>
+                    <select id="viewFilter" onchange="handleViewChange()">
+                        <option value="career">Carrière</option>
+                        <option value="gamelog">Historique de match</option>
+                    </select>
+                </div>
+                <div class="filter-group-career">
+                    <label for="leagueFilter">Ligue</label>
+                    <select id="leagueFilter" onchange="filterCareerStats()">
+                        <option value="all">Toutes les ligues</option>
+                        <option value="nhl">NHL seulement</option>
+                        <option value="other">Autres ligues</option>
+                    </select>
+                </div>
+                <div class="filter-group-career">
+                    <label for="gameTypeFilter">Type de saison</label>
+                    <select id="gameTypeFilter" onchange="filterCareerStats()">
+                        <option value="all">Tous</option>
+                        <option value="regular">Saison régulière</option>
+                        <option value="playoffs">Playoffs</option>
+                    </select>
+                </div>
+                <div class="stats-count-badge" id="statsCountBadge">
+                    0 saisons affichées
+                </div>
+            </div>
+            <div id="careerStatsTable"></div>
+        </div>
+    </div>
+
+    <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script defer src="lazy-load.js"></script>
+    <script defer src="index.js?v=20250101-debug2"></script>
+    <script defer src="navbar.js"></script>
+    <script>
+    // Auto-open player career modal when coming from accueil hot players
+    window.addEventListener('load', function() {
+        var params = new URLSearchParams(window.location.search);
+        var viewId = params.get('viewPlayer');
+        if (viewId) {
+            history.replaceState(null, '', 'stats.html');
+            var attempts = 0;
+            var check = setInterval(function() {
+                attempts++;
+                if (typeof showCareerStats === 'function') {
+                    clearInterval(check);
+                    showCareerStats(parseInt(viewId), '', false);
+                }
+                if (attempts > 50) clearInterval(check);
+            }, 200);
+        }
+    });
+    </script>
+</body>
+</html>

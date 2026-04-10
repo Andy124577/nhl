@@ -1,8 +1,8 @@
 // ==================== PAGE DETECTION ====================
 function getCurrentPage() {
     const n = window.location.pathname;
-    if (n.includes('accueil.html') || n.endsWith('/')) return 'accueil';
-    if (n.includes('index.html')) return 'stats';
+    if (n.includes('index.html') || n.endsWith('/')) return 'accueil';
+    if (n.includes('stats.html')) return 'stats';
     if (n.includes('draft.html') || n.includes('draftActif.html') || n.includes('draftFini.html')) return 'draft';
     if (n.includes('classement.html')) return 'classement';
     if (n.includes('trade.html')) return 'trade';
@@ -72,7 +72,7 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                 </div>
 
                 <nav class="nav-links">
-                    <a href="accueil.html" class="nav-link ${'accueil' === currentPage ? 'active' : ''}">
+                    <a href="index.html" class="nav-link ${'accueil' === currentPage ? 'active' : ''}">
                         <img src="Icons/fantazy.png" alt="Accueil" class="nav-icon-img">
                         <span class="nav-text">Accueil</span>
                     </a>
@@ -90,7 +90,7 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                         <img src="Icons/classement.png" alt="Classement" class="nav-icon-img">
                         <span class="nav-text">Classement</span>
                     </a>
-                    <a href="index.html" class="nav-link ${'stats' === currentPage ? 'active' : ''}">
+                    <a href="stats.html" class="nav-link ${'stats' === currentPage ? 'active' : ''}">
                         <img src="Icons/stats.png" alt="Stats" class="nav-icon-img">
                         <span class="nav-text">Stats</span>
                     </a>
@@ -134,7 +134,7 @@ function buildBottomNav(currentPage) {
 
     const html = `
         <nav class="bottom-nav">
-            <a href="accueil.html" class="bottom-nav-item ${'accueil' === currentPage ? 'active' : ''}">
+            <a href="index.html" class="bottom-nav-item ${'accueil' === currentPage ? 'active' : ''}">
                 <span class="bottom-nav-icon">🏠</span>
                 <span class="bottom-nav-label">Accueil</span>
             </a>
@@ -152,7 +152,7 @@ function buildBottomNav(currentPage) {
                 <span class="bottom-nav-icon">🏆</span>
                 <span class="bottom-nav-label">Classement</span>
             </a>
-            <a href="index.html" class="bottom-nav-item ${'stats' === currentPage ? 'active' : ''}">
+            <a href="stats.html" class="bottom-nav-item ${'stats' === currentPage ? 'active' : ''}">
                 <span class="bottom-nav-icon">📊</span>
                 <span class="bottom-nav-label">Stats</span>
             </a>
