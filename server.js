@@ -1753,6 +1753,32 @@ async function updateCurrentStats() {
     }
     console.log(`✅ NHL stats updated successfully! ${currentStats.players.length} players cached.`);
 
+    // Also write stats back into nhl_filtered_stats.json so the frontend fallback is always current.
+    // This guarantees correct stats even if the cache system (Postgres/file) fails to load.
+    try {
+        const statsFileData = JSON.parse(fs.readFileSync(NHL_STATS_FILE, 'utf-8'));
+        const statsById = {};
+        for (const p of newPlayers) {
+            if (p.playerId) statsById[p.playerId] = p;
+        }
+        const updateSection = (arr, isGoalie) => arr.map(player => {
+            const fresh = statsById[player.playerId];
+            if (!fresh || fresh.gamesPlayed === 0) return player;
+            if (isGoalie) {
+                return { ...player, gamesPlayed: fresh.gamesPlayed, wins: fresh.wins, losses: fresh.losses, otLosses: fresh.otLosses, savePct: fresh.savePct, shutouts: fresh.shutouts, points: fresh.points };
+            }
+            return { ...player, gamesPlayed: fresh.gamesPlayed, goals: fresh.goals, assists: fresh.assists, points: fresh.points };
+        });
+        statsFileData.Top_100_Offensive_Players = updateSection(statsFileData.Top_100_Offensive_Players || [], false);
+        statsFileData.Top_50_Defenders = updateSection(statsFileData.Top_50_Defenders || [], false);
+        statsFileData.Top_Rookies = updateSection(statsFileData.Top_Rookies || [], false);
+        statsFileData.Top_50_Goalies = updateSection(statsFileData.Top_50_Goalies || [], true);
+        fs.writeFileSync(NHL_STATS_FILE, JSON.stringify(statsFileData, null, 4));
+        console.log('✅ nhl_filtered_stats.json updated with current season stats.');
+    } catch (err) {
+        console.error('⚠️ Could not update nhl_filtered_stats.json:', err.message);
+    }
+
     return currentStats;
 }
 
