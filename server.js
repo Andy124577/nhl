@@ -1533,9 +1533,10 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
 
         // ALWAYS check seasonTotals first for NHL-only stats (to avoid showing WHL/AHL stats from featuredStats)
         // Use .filter() instead of .find() to get ALL teams for traded players
+        // Use Number() to handle both string ("20252026") and number (20252026) from NHL API
         const seasonTotals = data.seasonTotals || [];
         const nhlSeasonEntries = seasonTotals.filter(s =>
-            s.season === 20252026 &&
+            Number(s.season) === 20252026 &&
             s.gameTypeId === 2 && // gameTypeId 2 = NHL regular season
             s.leagueAbbrev === 'NHL' // Only NHL league - must explicitly be NHL
         );
@@ -1574,26 +1575,55 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
                 seasonStats.savePct = 0;
             }
         } else {
-            // No NHL stats found for current season - return zeros
-            console.log(`⚠️ ${playerName} has no NHL stats for 20252026 - returning zeros`);
-            return {
-                playerId: playerId,
-                playerName: playerName,
-                teamAbbrev: data.currentTeamAbbrev || "N/A",
-                headshot: headshotUrl,
-                teamLogo: data.teamLogo || null,
-                position: data.position || "N/A",
-                gamesPlayed: 0,
-                goals: 0,
-                assists: 0,
-                wins: 0,
-                losses: 0,
-                shutouts: 0,
-                otLosses: 0,
-                savePct: 0,
-                points: 0,
-                lastUpdated: new Date().toISOString()
-            };
+            // Fallback: try featuredStats (NHL API's explicit current-season stats)
+            const featured = data.featuredStats;
+            if (featured && Number(featured.season) === 20252026) {
+                const sub = isGoalie
+                    ? featured.regularSeason?.subSeason
+                    : featured.regularSeason?.subSeason;
+                if (sub && (sub.gamesPlayed || 0) > 0) {
+                    console.log(`✓ Using featuredStats for ${playerName} (seasonTotals filter missed)`);
+                    seasonStats = {
+                        gamesPlayed: sub.gamesPlayed || 0,
+                        goals: sub.goals || sub.wins || 0,
+                        assists: sub.assists || sub.losses || 0,
+                        points: sub.points || 0,
+                        wins: sub.wins || 0,
+                        losses: sub.losses || 0,
+                        shutouts: sub.shutouts || 0,
+                        otLosses: sub.otLosses || 0,
+                        saves: sub.saves || 0,
+                        shotsAgainst: sub.shotsAgainst || 0,
+                        savePct: sub.savePct || sub.savePercentage || 0
+                    };
+                    if (seasonStats.shotsAgainst > 0) {
+                        seasonStats.savePct = seasonStats.saves / seasonStats.shotsAgainst;
+                    }
+                }
+            }
+
+            if (!seasonStats) {
+                // No stats found at all - return zeros
+                console.log(`⚠️ ${playerName} has no NHL stats for 20252026 - returning zeros`);
+                return {
+                    playerId: playerId,
+                    playerName: playerName,
+                    teamAbbrev: data.currentTeamAbbrev || "N/A",
+                    headshot: headshotUrl,
+                    teamLogo: data.teamLogo || null,
+                    position: data.position || "N/A",
+                    gamesPlayed: 0,
+                    goals: 0,
+                    assists: 0,
+                    wins: 0,
+                    losses: 0,
+                    shutouts: 0,
+                    otLosses: 0,
+                    savePct: 0,
+                    points: 0,
+                    lastUpdated: new Date().toISOString()
+                };
+            }
         }
 
         let calculatedPoints;
