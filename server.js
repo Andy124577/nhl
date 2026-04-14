@@ -1751,7 +1751,9 @@ async function updateCurrentStats() {
     } else {
         fs.writeFileSync(CURRENT_STATS_FILE, JSON.stringify(currentStats, null, 2));
     }
-    console.log(`✅ NHL stats updated successfully! ${currentStats.players.length} players cached.`);
+    // Always update in-memory cache immediately
+    memStatsCache = currentStats;
+    console.log(`✅ NHL stats updated successfully! ${currentStats.players.length} players in memory.`);
 
     // Also write stats back into nhl_filtered_stats.json so the frontend fallback is always current.
     // This guarantees correct stats even if the cache system (Postgres/file) fails to load.
@@ -1782,57 +1784,66 @@ async function updateCurrentStats() {
     return currentStats;
 }
 
-// Load cached stats or return empty structure
+// ── In-memory stats cache (bypasses Postgres entirely) ──────────────────────
+// This is the single source of truth for /current-stats. Postgres/file cache
+// is kept as a persistence layer but the in-memory object is always served.
+let memStatsCache = { lastUpdated: null, season: null, players: [] };
+let statsRefreshInProgress = false;
+
 async function loadCurrentStats() {
+    // Return in-memory cache if populated
+    if (memStatsCache.players.length > 0) return memStatsCache;
+
+    // Cold start: try Postgres, then file
     try {
         if (USE_POSTGRES) {
             const stats = await db.loadCachedStats('current-stats');
-            if (stats) return stats;
-        } else {
-            if (fs.existsSync(CURRENT_STATS_FILE)) {
-                return JSON.parse(fs.readFileSync(CURRENT_STATS_FILE, "utf-8"));
+            if (stats && stats.players && stats.players.length > 0) {
+                memStatsCache = stats;
+                return memStatsCache;
+            }
+        } else if (fs.existsSync(CURRENT_STATS_FILE)) {
+            const stats = JSON.parse(fs.readFileSync(CURRENT_STATS_FILE, 'utf-8'));
+            if (stats && stats.players && stats.players.length > 0) {
+                memStatsCache = stats;
+                return memStatsCache;
             }
         }
     } catch (error) {
-        console.error("❌ Error loading current stats:", error);
+        console.error("❌ Error loading cached stats:", error);
     }
 
-    return {
-        lastUpdated: null,
-        players: []
-    };
+    return { lastUpdated: null, season: null, players: [] };
 }
-
-// Track if a background stats refresh is already in progress
-let statsRefreshInProgress = false;
 
 // Route to get current stats
 app.get("/current-stats", async (req, res) => {
     try {
-        let stats = await loadCurrentStats();
+        const stats = await loadCurrentStats();
 
-        const needsRefresh = !stats.lastUpdated
-            || stats.season !== 20252026
-            || ((Date.now() - new Date(stats.lastUpdated).getTime()) / (1000 * 60 * 60)) > 24;
+        const ageHours = stats.lastUpdated
+            ? (Date.now() - new Date(stats.lastUpdated).getTime()) / 3600000
+            : Infinity;
+        const needsRefresh = !stats.lastUpdated || stats.season !== 20252026 || ageHours > 24;
 
         if (!stats.lastUpdated) {
-            // No cache at all — must block and fetch synchronously
-            console.log("📊 No cached stats found, fetching fresh data...");
-            stats = await updateCurrentStats();
-        } else if (needsRefresh && !statsRefreshInProgress) {
-            // Stale season or old cache — kick off background refresh, serve stale data now
-            const reason = stats.season !== 20252026
-                ? `wrong season (${stats.season || 'unknown'} → 20252026)`
-                : 'cache older than 24h';
-            console.log(`📊 Triggering background stats refresh: ${reason}`);
+            // Nothing in memory or persistence — block and fetch now (first ever start)
+            console.log("📊 No stats in memory, fetching synchronously...");
+            const fresh = await updateCurrentStats();
+            return res.json(fresh);
+        }
+
+        if (needsRefresh && !statsRefreshInProgress) {
+            const reason = stats.season !== 20252026 ? `wrong season (${stats.season})` : 'cache >24h';
+            console.log(`📊 Background refresh triggered: ${reason}`);
             statsRefreshInProgress = true;
             updateCurrentStats()
-                .then(() => { console.log("✅ Background stats refresh complete"); })
-                .catch(e => { console.error("❌ Background stats refresh failed:", e); })
+                .then(() => console.log("✅ Background refresh done"))
+                .catch(e => console.error("❌ Background refresh failed:", e))
                 .finally(() => { statsRefreshInProgress = false; });
         }
 
-        res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400');
+        res.set('Cache-Control', 'no-store');
         res.json(stats);
     } catch (error) {
         console.error("❌ Error in /current-stats route:", error);
@@ -2054,6 +2065,17 @@ cron.schedule('*/15 18-23,0,1 * * *', () => {
 
 // Populate the cache on startup so the first poll only triggers genuinely new finals
 checkAndUpdateFinishedGames();
+
+// Populate in-memory stats cache on startup (30s delay to let server fully boot)
+setTimeout(async () => {
+    console.log("🚀 Startup: loading player stats into memory...");
+    try {
+        await updateCurrentStats();
+        console.log(`✅ Startup stats ready: ${memStatsCache.players.length} players in memory`);
+    } catch (e) {
+        console.error("❌ Startup stats load failed:", e.message);
+    }
+}, 30000);
 
 // Debug endpoint — shows raw season data from NHL API for any player
 app.get("/debug-player/:id", async (req, res) => {
