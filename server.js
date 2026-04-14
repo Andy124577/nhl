@@ -1742,26 +1742,33 @@ async function loadCurrentStats() {
     };
 }
 
+// Track if a background stats refresh is already in progress
+let statsRefreshInProgress = false;
+
 // Route to get current stats
 app.get("/current-stats", async (req, res) => {
     try {
         let stats = await loadCurrentStats();
 
-        // Force refresh if no cache, wrong season, or cache older than 24 hours
+        const needsRefresh = !stats.lastUpdated
+            || stats.season !== 20252026
+            || ((Date.now() - new Date(stats.lastUpdated).getTime()) / (1000 * 60 * 60)) > 24;
+
         if (!stats.lastUpdated) {
+            // No cache at all — must block and fetch synchronously
             console.log("📊 No cached stats found, fetching fresh data...");
             stats = await updateCurrentStats();
-        } else if (stats.season !== 20252026) {
-            console.log(`📊 Cached stats are from season ${stats.season || 'unknown'}, refreshing for 2025-26...`);
-            stats = await updateCurrentStats();
-        } else {
-            const lastUpdate = new Date(stats.lastUpdated);
-            const hoursSinceUpdate = (Date.now() - lastUpdate.getTime()) / (1000 * 60 * 60);
-
-            if (hoursSinceUpdate > 24) {
-                console.log("📊 Cached stats are old, fetching fresh data...");
-                stats = await updateCurrentStats();
-            }
+        } else if (needsRefresh && !statsRefreshInProgress) {
+            // Stale season or old cache — kick off background refresh, serve stale data now
+            const reason = stats.season !== 20252026
+                ? `wrong season (${stats.season || 'unknown'} → 20252026)`
+                : 'cache older than 24h';
+            console.log(`📊 Triggering background stats refresh: ${reason}`);
+            statsRefreshInProgress = true;
+            updateCurrentStats()
+                .then(() => { console.log("✅ Background stats refresh complete"); })
+                .catch(e => { console.error("❌ Background stats refresh failed:", e); })
+                .finally(() => { statsRefreshInProgress = false; });
         }
 
         res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400');
