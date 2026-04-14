@@ -1531,15 +1531,20 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
         // Construct headshot URL - NHL API provides headshots at this URL format
         const headshotUrl = data.headshot || `https://assets.nhle.com/mugs/nhl/20252026/${data.currentTeamAbbrev || 'NJD'}/${playerId}.png`;
 
-        // ALWAYS check seasonTotals first for NHL-only stats (to avoid showing WHL/AHL stats from featuredStats)
-        // Use .filter() instead of .find() to get ALL teams for traded players
-        // Use Number() to handle both string ("20252026") and number (20252026) from NHL API
+        // Get the most recent NHL regular season — same approach as career modal which works correctly.
+        // Never hardcode the season number; always derive it from the data to avoid type/year mismatches.
         const seasonTotals = data.seasonTotals || [];
-        const nhlSeasonEntries = seasonTotals.filter(s =>
-            Number(s.season) === 20252026 &&
-            s.gameTypeId === 2 && // gameTypeId 2 = NHL regular season
-            s.leagueAbbrev === 'NHL' // Only NHL league - must explicitly be NHL
-        );
+        const nhlRegularSeasons = seasonTotals
+            .filter(s => s.gameTypeId === 2 && s.leagueAbbrev === 'NHL')
+            .sort((a, b) => Number(b.season) - Number(a.season));
+
+        const latestSeason = nhlRegularSeasons[0] ? Number(nhlRegularSeasons[0].season) : null;
+        console.log(`📋 ${playerName}: latest NHL season found = ${latestSeason}, entries = ${nhlRegularSeasons.length}`);
+
+        // Collect all entries for the latest season (traded players may have multiple teams)
+        const nhlSeasonEntries = latestSeason
+            ? nhlRegularSeasons.filter(s => Number(s.season) === latestSeason)
+            : [];
 
         let seasonStats = null;
 
@@ -2023,6 +2028,30 @@ cron.schedule('*/15 18-23,0,1 * * *', () => {
 
 // Populate the cache on startup so the first poll only triggers genuinely new finals
 checkAndUpdateFinishedGames();
+
+// Debug endpoint — shows raw season data from NHL API for any player
+app.get("/debug-player/:id", async (req, res) => {
+    try {
+        const response = await fetch(`https://api-web.nhle.com/v1/player/${req.params.id}/landing`);
+        const data = await response.json();
+        const seasons = (data.seasonTotals || []).map(s => ({
+            season: s.season,
+            seasonType: typeof s.season,
+            gameTypeId: s.gameTypeId,
+            leagueAbbrev: s.leagueAbbrev,
+            gamesPlayed: s.gamesPlayed,
+            points: s.points
+        }));
+        res.json({
+            player: `${data.firstName?.default} ${data.lastName?.default}`,
+            currentTeam: data.currentTeamAbbrev,
+            featuredStatsSeason: data.featuredStats?.season,
+            recentSeasons: seasons.filter(s => Number(s.season) >= 20242025)
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 // Optional: Manual trigger endpoint for testing
 app.post("/refresh-stats", async (req, res) => {
