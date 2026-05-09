@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="skeleton-loader.css">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="icons.js" defer></script>
 </head>
 <body>
     <nav class="navbar"></nav>
@@ -25,7 +26,7 @@
             <div class="sh-spot sh-sp2"></div>
         </div>
         <div class="stats-hero-inner">
-            <div class="stats-hero-badge">📊 DONNÉES EN DIRECT</div>
+            <div class="stats-hero-badge"><span data-icon="chart" data-icon-size="16"></span> DONNÉES EN DIRECT</div>
             <h1 class="stats-hero-title">
                 Statistiques <span class="gradient-text">NHL</span>
             </h1>
@@ -41,7 +42,7 @@
         <div class="filters-section">
             <div class="filter-group filter-search">
                 <label for="searchInput">
-                    <span class="filter-icon">🔍</span> Rechercher
+                    <span class="filter-icon" data-icon="search" data-icon-size="17"></span> Rechercher
                 </label>
                 <input type="text" id="searchInput" placeholder="Nom du joueur">
             </div>
@@ -170,7 +171,7 @@
 
             <!-- Empty State -->
             <div class="stats-empty-state" id="emptyState" style="display:none;">
-                <div class="empty-icon">🏒</div>
+                <div class="empty-icon" data-icon="person" data-icon-size="56"></div>
                 <h3>Aucun joueur trouvé</h3>
                 <p>Essayez de modifier vos filtres ou critères de recherche</p>
             </div>
@@ -186,7 +187,7 @@
                 <span class="close-modal" onclick="closeCareerModal()">&times;</span>
                 <div class="player-header-top">
                     <div class="player-headshot-container" id="playerHeadshotContainer">
-                        <div class="no-photo">🏒</div>
+                        <div class="no-photo" data-icon="person" data-icon-size="40"></div>
                     </div>
                     <div class="player-header-right">
                         <div class="player-name-section">

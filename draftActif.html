@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="index.css" />
   <link rel="stylesheet" href="navbar.css">
   <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="icons.js" defer></script>
 
   <!-- Handle query param BEFORE draftActif.js loads -->
   <script>
@@ -67,7 +68,7 @@
         </div>
         <div class="progress-list">
           <div class="progress-line">
-            <span class="progress-emoji">⚡</span>
+            <span class="progress-emoji" data-icon="bolt" data-icon-size="16"></span>
             <span class="progress-text">Attaquants</span>
             <div class="progress-mini-bar">
               <div class="progress-mini-fill" id="mini-progress-offensive"></div>
@@ -75,7 +76,7 @@
             <span class="progress-value" id="count-offensive">0/6</span>
           </div>
           <div class="progress-line">
-            <span class="progress-emoji">🛡️</span>
+            <span class="progress-emoji" data-icon="shield" data-icon-size="16"></span>
             <span class="progress-text">Défenseurs</span>
             <div class="progress-mini-bar">
               <div class="progress-mini-fill" id="mini-progress-defensive"></div>
@@ -83,7 +84,7 @@
             <span class="progress-value" id="count-defensive">0/4</span>
           </div>
           <div class="progress-line">
-            <span class="progress-emoji">⭐</span>
+            <span class="progress-emoji" data-icon="star" data-icon-size="16"></span>
             <span class="progress-text">Recrues</span>
             <div class="progress-mini-bar">
               <div class="progress-mini-fill" id="mini-progress-rookie"></div>
@@ -91,7 +92,7 @@
             <span class="progress-value" id="count-rookie">0/1</span>
           </div>
           <div class="progress-line">
-            <span class="progress-emoji">🥅</span>
+            <span class="progress-emoji" data-icon="goal" data-icon-size="16"></span>
             <span class="progress-text">Gardien</span>
             <div class="progress-mini-bar">
               <div class="progress-mini-fill" id="mini-progress-goalie"></div>
@@ -99,7 +100,7 @@
             <span class="progress-value" id="count-goalie">0/1</span>
           </div>
           <div class="progress-line">
-            <span class="progress-emoji">🏒</span>
+            <span class="progress-emoji" data-icon="hockey" data-icon-size="16"></span>
             <span class="progress-text">Équipe</span>
             <div class="progress-mini-bar">
               <div class="progress-mini-fill" id="mini-progress-team"></div>
@@ -147,7 +148,7 @@
         </div>
 
         <div class="filters-row">
-          <input type="text" id="searchInput" placeholder="🔍 Rechercher..." class="search-input"/>
+          <input type="text" id="searchInput" placeholder="Rechercher..." class="search-input"/>
           <select id="playerFilter" class="filter-select">
             <option value="all">Tous</option>
             <option value="offensive">Attaquants</option>
@@ -161,7 +162,7 @@
             <option value="goals">Buts</option>
             <option value="assists">Passes</option>
           </select>
-          <button onclick="loadDraftData()" class="refresh-btn">🔄</button>
+          <button onclick="loadDraftData()" class="refresh-btn" title="Actualiser"><span data-icon="refresh" data-icon-size="16"></span></button>
         </div>
 
         <div class="table-wrapper">
@@ -209,7 +210,7 @@
         <span class="close-modal" onclick="closeCareerModal()">&times;</span>
         <div class="player-header-top">
           <div class="player-headshot-container" id="playerHeadshotContainer">
-            <div class="no-photo">🏒</div>
+            <div class="no-photo" data-icon="person" data-icon-size="40"></div>
           </div>
           <div class="player-header-right">
             <div class="player-name-section">

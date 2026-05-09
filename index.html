@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="accueil.css">
     <link rel="stylesheet" href="skeleton-loader.css">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="icons.js" defer></script>
 </head>
 <body>
     <!-- Navigation -->
@@ -30,23 +31,23 @@
         <div class="hero-inner">
             <!-- Left: headline + CTAs -->
             <div class="hero-text">
-                <div class="hero-badge">🏒 FANTASY NHL</div>
+                <div class="hero-badge"><span data-icon="hockey" data-icon-size="16"></span> FANTASY NHL</div>
                 <h1 class="hero-headline">
                     Dominez votre<br>
                     <span class="gradient-text">ligue Fantasy NHL.</span>
                 </h1>
                 <p class="hero-sub">Repêchez mieux. Échangez intelligemment. Grimpez le classement.</p>
                 <div class="hero-actions">
-                    <a href="pool.html?tab=create" class="btn-hero-primary">🚀 Créer un pool</a>
+                    <a href="pool.html?tab=create" class="btn-hero-primary"><span data-icon="rocket" data-icon-size="16"></span> Créer un pool</a>
                     <a href="pool.html?tab=join" class="btn-hero-secondary">Rejoindre un pool →</a>
                     <button onclick="scrollToHowItWorks()" class="btn-hero-tertiary">Comment ça marche ?</button>
                 </div>
                 <!-- Quick nav pills for logged-in users -->
                 <div class="hero-quick-nav" id="heroQuickNav" style="display:none;">
-                    <a href="classement.html" class="hero-pill">🏆 Classement</a>
-                    <a href="trade.html" class="hero-pill">🔄 Échanges</a>
-                    <a href="pool.html" class="hero-pill">⚙️ Mes pools</a>
-                    <a href="stats.html" class="hero-pill">📊 Stats</a>
+                    <a href="classement.html" class="hero-pill"><span data-icon="trophy" data-icon-size="15"></span> Classement</a>
+                    <a href="trade.html" class="hero-pill"><span data-icon="refresh" data-icon-size="15"></span> Échanges</a>
+                    <a href="pool.html" class="hero-pill"><span data-icon="settings" data-icon-size="15"></span> Mes pools</a>
+                    <a href="stats.html" class="hero-pill"><span data-icon="chart" data-icon-size="15"></span> Stats</a>
                 </div>
             </div>
 
@@ -69,11 +70,11 @@
                 </div>
                 <!-- Decorative floating chips -->
                 <div class="hero-stat-chip chip-1">
-                    <span class="chip-icon">⚡</span>
+                    <span class="chip-icon" data-icon="bolt" data-icon-size="14"></span>
                     <span>LIVE</span>
                 </div>
                 <div class="hero-stat-chip chip-2">
-                    <span class="chip-icon">🔥</span>
+                    <span class="chip-icon" data-icon="flame" data-icon-size="14"></span>
                     <span>En feu</span>
                 </div>
             </div>
@@ -87,7 +88,7 @@
         <div class="section-container">
             <div class="section-title-row">
                 <div class="section-title-group">
-                    <span class="section-icon">🏒</span>
+                    <span class="section-icon" data-icon="hockey" data-icon-size="28"></span>
                     <h2 class="section-title">Meilleurs joueurs</h2>
                     <span class="section-subtitle" id="timeRangeLabel">7 derniers jours</span>
                 </div>
@@ -123,7 +124,7 @@
         <div class="section-container">
             <div class="section-title-row center">
                 <div class="section-title-group">
-                    <span class="section-icon">⚙️</span>
+                    <span class="section-icon" data-icon="settings" data-icon-size="28"></span>
                     <h2 class="section-title">Comment ça marche</h2>
                 </div>
             </div>
@@ -132,7 +133,7 @@
                 <!-- Step 1 -->
                 <div class="step-card">
                     <div class="step-number">01</div>
-                    <div class="step-icon-wrap">🏒</div>
+                    <div class="step-icon-wrap" data-icon="hockey" data-icon-size="48"></div>
                     <h3 class="step-title">Rejoindre ou créer un pool</h3>
                     <p class="step-desc">Invitez vos amis et configurez votre ligue personnalisée avec vos propres règles de scoring.</p>
                     <a href="pool.html" class="step-cta">Commencer →</a>
@@ -146,7 +147,7 @@
                 <!-- Step 2 -->
                 <div class="step-card">
                     <div class="step-number">02</div>
-                    <div class="step-icon-wrap">🎯</div>
+                    <div class="step-icon-wrap" data-icon="target" data-icon-size="48"></div>
                     <h3 class="step-title">Repêcher votre équipe</h3>
                     <p class="step-desc">Sélectionnez les meilleurs joueurs de la LNH pour bâtir l'équipe parfaite.</p>
                     <a href="pool.html?tab=draft" class="step-cta">Voir le repêchage →</a>
@@ -160,7 +161,7 @@
                 <!-- Step 3 -->
                 <div class="step-card">
                     <div class="step-number">03</div>
-                    <div class="step-icon-wrap">🏆</div>
+                    <div class="step-icon-wrap" data-icon="trophy" data-icon-size="48"></div>
                     <h3 class="step-title">Compétitionner et gagner</h3>
                     <p class="step-desc">Affrontez d'autres gérants semaine après semaine et grimpez le classement.</p>
                     <a href="classement.html" class="step-cta">Voir le classement →</a>
