@@ -3,96 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscription</title>
+    <title>Inscription — Fantazy</title>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
+    <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a1f;
+            --card: rgba(255,255,255,0.05);
+            --border: rgba(255,255,255,0.10);
+            --primary: #00d4ff;
+            --danger: #cc1e1e;
+            --text: #e8eaf6;
+            --text-muted: #8892b0;
+            --input-bg: rgba(255,255,255,0.07);
+            --input-border: rgba(255,255,255,0.12);
+            --input-focus: rgba(0,212,255,0.4);
+            --success: #28a745;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-            background-color: #f5f5f5;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--text);
+            overflow-x: hidden;
         }
-        .signup-container {
-            width: 300px;
-            margin: auto;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .signup-container input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .signup-container input:focus {
-            outline: none;
-            border-color: #ff2e2e;
-        }
-        .signup-container button {
-            width: 100%;
-            padding: 10px;
-            background-color: #ff2e2e;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-        .signup-container button:hover {
-            background-color: #d92626;
-        }
-        .signup-container button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-        .error-message {
-            color: #ff2e2e;
-            font-size: 14px;
-            margin: 10px 0;
-            display: none;
-        }
-        .success-message {
-            color: #28a745;
-            font-size: 14px;
-            margin: 10px 0;
-            display: none;
-        }
-        .loading {
-            display: none;
-            margin: 10px 0;
-        }
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #ff2e2e;
+
+        body::before, body::after {
+            content: '';
+            position: fixed;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 10px auto;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        body::before {
+            width: 500px; height: 500px;
+            background: rgba(0,212,255,0.08);
+            top: -100px; right: -100px;
         }
-        .password-requirements {
-            text-align: left;
-            font-size: 12px;
-            color: #666;
-            margin: 5px 0;
-            padding-left: 10px;
+        body::after {
+            width: 400px; height: 400px;
+            background: rgba(204,30,30,0.08);
+            bottom: -80px; left: -80px;
         }
-        .requirement {
-            margin: 3px 0;
+
+        /* ── Minimal top bar ── */
+        .auth-topbar {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 32px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10,10,31,0.8);
+            backdrop-filter: blur(12px);
         }
-        .requirement.met {
-            color: #28a745;
+
+        .auth-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .auth-logo:hover { opacity: 0.8; }
+        .auth-logo img { height: 32px; width: auto; }
+        .auth-logo span {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: 0.5px;
+        }
+
+        .auth-topbar-link {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .auth-topbar-link:hover { color: var(--primary); }
+        .auth-topbar-link strong { color: var(--primary); }
+
+        /* ── Main content ── */
+        .auth-main {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 16px;
+        }
+
+        /* ── Card ── */
+        .auth-card {
+            width: 100%;
+            max-width: 440px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 44px 40px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 24px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+            animation: cardIn 0.4s cubic-bezier(0.16,1,0.3,1);
+        }
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-eyebrow {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .card-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+
+        .card-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+
+        /* ── Form ── */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.3px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            outline: none;
+        }
+        .form-input::placeholder { color: rgba(136,146,176,0.5); }
+        .form-input:hover { border-color: rgba(255,255,255,0.2); }
+        .form-input:focus {
+            border-color: var(--primary);
+            background: rgba(0,212,255,0.05);
+            box-shadow: 0 0 0 3px var(--input-focus);
+        }
+
+        /* ── Password requirements ── */
+        .pw-requirements {
+            display: flex;
+            gap: 12px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+        .pw-req {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+        .pw-req::before {
+            content: '○';
+            font-size: 0.7rem;
+        }
+        .pw-req.met {
+            color: var(--success);
+        }
+        .pw-req.met::before {
+            content: '✓';
+        }
+
+        /* ── Messages ── */
+        .msg {
+            display: none;
+            font-size: 0.875rem;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+        .msg-error {
+            background: rgba(204,30,30,0.15);
+            border: 1px solid rgba(204,30,30,0.4);
+            color: #ff6b7a;
+        }
+        .msg-success {
+            background: rgba(40,167,69,0.15);
+            border: 1px solid rgba(40,167,69,0.4);
+            color: #5cb85c;
+        }
+
+        /* ── Submit button ── */
+        .btn-submit {
+            width: 100%;
+            padding: 13px;
+            margin-top: 8px;
+            background: linear-gradient(135deg, #cc1e1e 0%, #a01616 100%);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 16px rgba(204,30,30,0.35);
+            letter-spacing: 0.3px;
+        }
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(204,30,30,0.5);
+            background: linear-gradient(135deg, #e02222 0%, #b81818 100%);
+        }
+        .btn-submit:active:not(:disabled) { transform: translateY(0); }
+        .btn-submit:disabled {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-spinner {
+            display: inline-block;
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0 0;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .login-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .login-link a:hover { opacity: 0.8; text-decoration: underline; }
+
+        @media (max-width: 480px) {
+            .auth-topbar { padding: 14px 20px; }
+            .auth-card { padding: 32px 24px; border-radius: 16px; }
+            .card-title { font-size: 1.5rem; }
         }
     </style>
 
@@ -103,77 +309,37 @@
 
         let isSubmitting = false;
 
-        function validatePassword(password) {
-            const requirements = {
-                length: password.length >= 6,
-                hasNumber: /\d/.test(password)
-            };
-            return requirements;
-        }
-
         function updatePasswordRequirements() {
-            const password = $("#newPassword").val();
-            const reqs = validatePassword(password);
-
-            $("#req-length").toggleClass("met", reqs.length);
-            $("#req-number").toggleClass("met", reqs.hasNumber);
+            const password = document.getElementById("newPassword").value;
+            document.getElementById("req-length").classList.toggle("met", password.length >= 6);
+            document.getElementById("req-number").classList.toggle("met", /\d/.test(password));
         }
 
         async function signup() {
             if (isSubmitting) return;
 
-            const username = $("#newUsername").val().trim();
-            const password = $("#newPassword").val();
-            const confirmPassword = $("#confirmPassword").val();
+            const username = document.getElementById("newUsername").value.trim();
+            const password = document.getElementById("newPassword").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
 
-            // Hide previous messages
-            $(".error-message").hide();
-            $(".success-message").hide();
+            hideMessages();
 
-            // Validation
-            if (!username || !password || !confirmPassword) {
-                showError("Veuillez remplir tous les champs !");
-                return;
-            }
+            if (!username || !password || !confirmPassword) { showError("Veuillez remplir tous les champs."); return; }
+            if (username.length < 3) { showError("Le nom d'utilisateur doit contenir au moins 3 caractères."); return; }
+            if (username.length > 20) { showError("Le nom d'utilisateur ne peut pas dépasser 20 caractères."); return; }
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) { showError("Lettres, chiffres et underscores uniquement."); return; }
+            if (password.length < 6) { showError("Le mot de passe doit contenir au moins 6 caractères."); return; }
+            if (!/\d/.test(password)) { showError("Le mot de passe doit contenir au moins un chiffre."); return; }
+            if (password !== confirmPassword) { showError("Les mots de passe ne correspondent pas."); return; }
 
-            if (username.length < 3) {
-                showError("Le nom d'utilisateur doit contenir au moins 3 caractères !");
-                return;
-            }
-
-            if (username.length > 20) {
-                showError("Le nom d'utilisateur ne peut pas dépasser 20 caractères !");
-                return;
-            }
-
-            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-                showError("Le nom d'utilisateur ne peut contenir que des lettres, chiffres et underscores !");
-                return;
-            }
-
-            if (password.length < 6) {
-                showError("Le mot de passe doit contenir au moins 6 caractères !");
-                return;
-            }
-
-            if (!/\d/.test(password)) {
-                showError("Le mot de passe doit contenir au moins un chiffre !");
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                showError("Les mots de passe ne correspondent pas !");
-                return;
-            }
-
-            // Start loading
             isSubmitting = true;
-            $(".loading").show();
-            $("#signupBtn").prop("disabled", true).text("Inscription en cours...");
+            const btn = document.getElementById("signupBtn");
+            btn.disabled = true;
+            btn.innerHTML = '<span class="btn-spinner"></span>Inscription en cours…';
 
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
 
                 const response = await fetch(`${BASE_URL}/signup`, {
                     method: "POST",
@@ -181,83 +347,98 @@
                     body: JSON.stringify({ username, password }),
                     signal: controller.signal
                 });
-
                 clearTimeout(timeoutId);
-
                 const result = await response.json();
 
                 if (response.ok) {
                     localStorage.setItem("isLoggedIn", "true");
                     localStorage.setItem("username", username);
-
-                    showSuccess("Inscription réussie ! Redirection...");
-
-                    setTimeout(() => {
-                        window.location.href = "index.html";
-                    }, 500);
+                    showSuccess("Compte créé ! Redirection…");
+                    setTimeout(() => { window.location.href = "index.html"; }, 500);
                 } else {
-                    // Specific error messages from server
-                    showError(result.message || "Erreur lors de l'inscription");
+                    showError(result.message || "Erreur lors de l'inscription.");
                 }
-
             } catch (error) {
-                console.error("❌ Erreur lors de l'inscription :", error);
-
-                if (error.name === 'AbortError') {
-                    showError("L'inscription a pris trop de temps. Veuillez réessayer.");
-                } else if (!navigator.onLine) {
-                    showError("Pas de connexion internet. Vérifiez votre réseau.");
-                } else {
-                    showError("Impossible de se connecter au serveur. Veuillez réessayer.");
-                }
+                if (error.name === 'AbortError') showError("L'inscription a pris trop de temps. Réessayez.");
+                else if (!navigator.onLine) showError("Pas de connexion internet. Vérifiez votre réseau.");
+                else showError("Impossible de joindre le serveur. Réessayez.");
             } finally {
-                // Stop loading
                 isSubmitting = false;
-                $(".loading").hide();
-                $("#signupBtn").prop("disabled", false).text("S'inscrire");
+                const btn = document.getElementById("signupBtn");
+                btn.disabled = false;
+                btn.textContent = "Créer mon compte";
             }
         }
 
-        function showError(message) {
-            $(".error-message").text(message).fadeIn();
+        function hideMessages() {
+            document.getElementById("errorMsg").style.display = "none";
+            document.getElementById("successMsg").style.display = "none";
+        }
+        function showError(msg) {
+            const el = document.getElementById("errorMsg");
+            el.textContent = msg;
+            el.style.display = "block";
+        }
+        function showSuccess(msg) {
+            const el = document.getElementById("successMsg");
+            el.textContent = msg;
+            el.style.display = "block";
         }
 
-        function showSuccess(message) {
-            $(".success-message").text(message).fadeIn();
-        }
-
-        // Enter key support
-        $(document).ready(function() {
-            $("#newUsername, #newPassword, #confirmPassword").on("keypress", function(e) {
-                if (e.which === 13) { // Enter key
-                    signup();
-                }
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("newPassword").addEventListener("input", updatePasswordRequirements);
+            document.querySelectorAll("#newUsername, #newPassword, #confirmPassword").forEach(el => {
+                el.addEventListener("keydown", e => { if (e.key === "Enter") signup(); });
             });
-
-            // Real-time password validation feedback
-            $("#newPassword").on("input", updatePasswordRequirements);
         });
     </script>
 </head>
 <body>
-    <div class="signup-container">
-        <h2>Inscription</h2>
-        <div class="error-message"></div>
-        <div class="success-message"></div>
-        <input type="text" id="newUsername" placeholder="Nom d'utilisateur (3-20 caractères)" required autocomplete="username">
-        <input type="password" id="newPassword" placeholder="Mot de passe" required autocomplete="new-password">
-        <div class="password-requirements">
-            <div class="requirement" id="req-length">✓ Au moins 6 caractères</div>
-            <div class="requirement" id="req-number">✓ Au moins un chiffre</div>
+
+    <!-- Minimal top bar -->
+    <header class="auth-topbar">
+        <a href="index.html" class="auth-logo">
+            <img src="Icons/fantazy.png" alt="Fantazy">
+            <span>Fantazy</span>
+        </a>
+        <a href="login.html" class="auth-topbar-link">Déjà un compte ? <strong>Se connecter</strong></a>
+    </header>
+
+    <main class="auth-main">
+        <div class="auth-card">
+            <p class="card-eyebrow">Rejoindre la ligue</p>
+            <h1 class="card-title">Créer un compte</h1>
+            <p class="card-subtitle">Créez votre compte pour participer à votre ligue fantasy NHL.</p>
+
+            <div id="errorMsg" class="msg msg-error"></div>
+            <div id="successMsg" class="msg msg-success"></div>
+
+            <div class="form-group">
+                <label class="form-label" for="newUsername">Nom d'utilisateur</label>
+                <input class="form-input" type="text" id="newUsername" placeholder="3–20 caractères, lettres et chiffres" autocomplete="username" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="newPassword">Mot de passe</label>
+                <input class="form-input" type="password" id="newPassword" placeholder="Au moins 6 caractères" autocomplete="new-password" required>
+                <div class="pw-requirements">
+                    <span class="pw-req" id="req-length">6 caractères min.</span>
+                    <span class="pw-req" id="req-number">1 chiffre</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="confirmPassword">Confirmer le mot de passe</label>
+                <input class="form-input" type="password" id="confirmPassword" placeholder="Répétez votre mot de passe" autocomplete="new-password" required>
+            </div>
+
+            <button id="signupBtn" class="btn-submit" onclick="signup()">Créer mon compte</button>
+
+            <div class="divider">ou</div>
+
+            <p class="login-link">Déjà un compte ? <a href="login.html">Se connecter</a></p>
         </div>
-        <input type="password" id="confirmPassword" placeholder="Confirmer le mot de passe" required autocomplete="new-password">
-        <div class="loading">
-            <div class="spinner"></div>
-            <p>Inscription en cours...</p>
-        </div>
-        <button id="signupBtn" onclick="signup()">S'inscrire</button>
-        <p>Déjà inscrit? <a href="login.html">Connectez-vous ici</a></p>
-    </div>
+    </main>
+
 </body>
-    <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </html>

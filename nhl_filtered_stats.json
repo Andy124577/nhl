@@ -5,29 +5,29 @@
             "skaterFullName": "Cale Makar",
             "teamAbbrevs": "COL",
             "positionCode": "D",
-            "gamesPlayed": 80,
-            "goals": 30,
-            "assists": 62,
-            "points": 92
+            "gamesPlayed": 75,
+            "goals": 20,
+            "assists": 59,
+            "points": 79
         },
         {
             "playerId": 8478460,
             "skaterFullName": "Zach Werenski",
             "teamAbbrevs": "CBJ",
             "positionCode": "D",
-            "gamesPlayed": 81,
-            "goals": 23,
+            "gamesPlayed": 75,
+            "goals": 22,
             "assists": 59,
-            "points": 82
+            "points": 81
         },
         {
             "playerId": 8480800,
             "skaterFullName": "Quinn Hughes",
             "teamAbbrevs": "VAN",
             "positionCode": "D",
-            "gamesPlayed": 68,
-            "goals": 16,
-            "assists": 60,
+            "gamesPlayed": 74,
+            "goals": 7,
+            "assists": 69,
             "points": 76
         },
         {
@@ -35,10 +35,10 @@
             "skaterFullName": "Rasmus Dahlin",
             "teamAbbrevs": "BUF",
             "positionCode": "D",
-            "gamesPlayed": 73,
-            "goals": 17,
-            "assists": 51,
-            "points": 68
+            "gamesPlayed": 77,
+            "goals": 19,
+            "assists": 55,
+            "points": 74
         },
         {
             "playerId": 8480803,
@@ -46,19 +46,19 @@
             "teamAbbrevs": "EDM",
             "positionCode": "D",
             "gamesPlayed": 82,
-            "goals": 14,
-            "assists": 53,
-            "points": 67
+            "goals": 21,
+            "assists": 74,
+            "points": 95
         },
         {
             "playerId": 8475167,
             "skaterFullName": "Victor Hedman",
             "teamAbbrevs": "TBL",
             "positionCode": "D",
-            "gamesPlayed": 79,
-            "goals": 15,
-            "assists": 51,
-            "points": 66
+            "gamesPlayed": 33,
+            "goals": 1,
+            "assists": 16,
+            "points": 17
         },
         {
             "playerId": 8483457,
@@ -66,109 +66,109 @@
             "teamAbbrevs": "MTL",
             "positionCode": "D",
             "gamesPlayed": 82,
-            "goals": 6,
-            "assists": 60,
-            "points": 66
+            "goals": 12,
+            "assists": 66,
+            "points": 78
         },
         {
             "playerId": 8477504,
             "skaterFullName": "Josh Morrissey",
             "teamAbbrevs": "WPG",
             "positionCode": "D",
-            "gamesPlayed": 80,
+            "gamesPlayed": 77,
             "goals": 14,
-            "assists": 48,
-            "points": 62
+            "assists": 41,
+            "points": 55
         },
         {
             "playerId": 8479323,
             "skaterFullName": "Adam Fox",
             "teamAbbrevs": "NYR",
             "positionCode": "D",
-            "gamesPlayed": 74,
-            "goals": 10,
-            "assists": 51,
-            "points": 61
+            "gamesPlayed": 55,
+            "goals": 9,
+            "assists": 44,
+            "points": 53
         },
         {
             "playerId": 8477447,
             "skaterFullName": "Shea Theodore",
             "teamAbbrevs": "VGK",
             "positionCode": "D",
-            "gamesPlayed": 67,
-            "goals": 7,
-            "assists": 50,
-            "points": 57
+            "gamesPlayed": 70,
+            "goals": 10,
+            "assists": 29,
+            "points": 39
         },
         {
             "playerId": 8482105,
             "skaterFullName": "Jake Sanderson",
             "teamAbbrevs": "OTT",
             "positionCode": "D",
-            "gamesPlayed": 80,
-            "goals": 11,
-            "assists": 46,
-            "points": 57
+            "gamesPlayed": 67,
+            "goals": 14,
+            "assists": 40,
+            "points": 54
         },
         {
             "playerId": 8479410,
             "skaterFullName": "Mikhail Sergachev",
             "teamAbbrevs": "UTA",
             "positionCode": "D",
-            "gamesPlayed": 77,
-            "goals": 15,
-            "assists": 38,
-            "points": 53
+            "gamesPlayed": 78,
+            "goals": 10,
+            "assists": 49,
+            "points": 59
         },
         {
             "playerId": 8474578,
             "skaterFullName": "Erik Karlsson",
             "teamAbbrevs": "PIT",
             "positionCode": "D",
-            "gamesPlayed": 82,
-            "goals": 11,
-            "assists": 42,
-            "points": 53
+            "gamesPlayed": 75,
+            "goals": 15,
+            "assists": 51,
+            "points": 66
         },
         {
             "playerId": 8474590,
             "skaterFullName": "John Carlson",
             "teamAbbrevs": "WSH",
             "positionCode": "D",
-            "gamesPlayed": 79,
-            "goals": 5,
+            "gamesPlayed": 71,
+            "goals": 14,
             "assists": 46,
-            "points": 51
+            "points": 60
         },
         {
             "playerId": 8481581,
             "skaterFullName": "Thomas Harley",
             "teamAbbrevs": "DAL",
             "positionCode": "D",
-            "gamesPlayed": 78,
-            "goals": 16,
-            "assists": 34,
-            "points": 50
+            "gamesPlayed": 70,
+            "goals": 6,
+            "assists": 30,
+            "points": 36
         },
         {
             "playerId": 8479345,
             "skaterFullName": "Jakob Chychrun",
             "teamAbbrevs": "WSH",
             "positionCode": "D",
-            "gamesPlayed": 74,
-            "goals": 20,
-            "assists": 27,
-            "points": 47
+            "gamesPlayed": 80,
+            "goals": 26,
+            "assists": 34,
+            "points": 60
         },
         {
             "playerId": 8477346,
             "skaterFullName": "MacKenzie Weegar",
             "teamAbbrevs": "CGY",
             "positionCode": "D",
-            "gamesPlayed": 81,
-            "goals": 8,
-            "assists": 39,
-            "points": 47
+            "gamesPlayed": 79,
+            "goals": 4,
+            "assists": 24,
+            "points": 28
         },
         {
             "playerId": 8481542,
@@ -176,179 +176,179 @@
             "teamAbbrevs": "DET",
             "positionCode": "D",
             "gamesPlayed": 82,
-            "goals": 8,
-            "assists": 38,
-            "points": 46
+            "goals": 10,
+            "assists": 50,
+            "points": 60
         },
         {
             "playerId": 8478469,
             "skaterFullName": "Thomas Chabot",
             "teamAbbrevs": "OTT",
             "positionCode": "D",
-            "gamesPlayed": 80,
-            "goals": 9,
-            "assists": 36,
-            "points": 45
+            "gamesPlayed": 57,
+            "goals": 7,
+            "assists": 24,
+            "points": 31
         },
         {
             "playerId": 8476906,
             "skaterFullName": "Shayne Gostisbehere",
             "teamAbbrevs": "CAR",
             "positionCode": "D",
-            "gamesPlayed": 70,
-            "goals": 7,
-            "assists": 38,
-            "points": 45
+            "gamesPlayed": 55,
+            "goals": 13,
+            "assists": 37,
+            "points": 50
         },
         {
             "playerId": 8482684,
             "skaterFullName": "Luke Hughes",
             "teamAbbrevs": "NJD",
             "positionCode": "D",
-            "gamesPlayed": 71,
-            "goals": 7,
-            "assists": 37,
-            "points": 44
+            "gamesPlayed": 68,
+            "goals": 6,
+            "assists": 29,
+            "points": 35
         },
         {
             "playerId": 8478038,
             "skaterFullName": "Devon Toews",
             "teamAbbrevs": "COL",
             "positionCode": "D",
-            "gamesPlayed": 76,
-            "goals": 10,
-            "assists": 34,
-            "points": 44
+            "gamesPlayed": 68,
+            "goals": 3,
+            "assists": 21,
+            "points": 24
         },
         {
             "playerId": 8481605,
             "skaterFullName": "Jackson LaCombe",
             "teamAbbrevs": "ANA",
             "positionCode": "D",
-            "gamesPlayed": 75,
-            "goals": 14,
-            "assists": 29,
-            "points": 43
+            "gamesPlayed": 82,
+            "goals": 10,
+            "assists": 48,
+            "points": 58
         },
         {
             "playerId": 8476853,
             "skaterFullName": "Morgan Rielly",
             "teamAbbrevs": "TOR",
             "positionCode": "D",
-            "gamesPlayed": 82,
-            "goals": 7,
-            "assists": 34,
-            "points": 41
+            "gamesPlayed": 78,
+            "goals": 11,
+            "assists": 25,
+            "points": 36
         },
         {
             "playerId": 8477986,
             "skaterFullName": "Brandon Montour",
             "teamAbbrevs": "SEA",
             "positionCode": "D",
-            "gamesPlayed": 81,
-            "goals": 18,
-            "assists": 23,
-            "points": 41
+            "gamesPlayed": 64,
+            "goals": 11,
+            "assists": 21,
+            "points": 32
         },
         {
             "playerId": 8475764,
             "skaterFullName": "Cam Fowler",
             "teamAbbrevs": "ANA,STL",
             "positionCode": "D",
-            "gamesPlayed": 68,
-            "goals": 9,
-            "assists": 31,
-            "points": 40
+            "gamesPlayed": 82,
+            "goals": 4,
+            "assists": 26,
+            "points": 30
         },
         {
             "playerId": 8476891,
             "skaterFullName": "Matt Grzelcyk",
             "teamAbbrevs": "PIT",
             "positionCode": "D",
-            "gamesPlayed": 82,
-            "goals": 1,
-            "assists": 39,
-            "points": 40
+            "gamesPlayed": 69,
+            "goals": 0,
+            "assists": 12,
+            "points": 12
         },
         {
             "playerId": 8476462,
             "skaterFullName": "Dougie Hamilton",
             "teamAbbrevs": "NJD",
             "positionCode": "D",
-            "gamesPlayed": 64,
-            "goals": 9,
-            "assists": 31,
-            "points": 40
+            "gamesPlayed": 77,
+            "goals": 12,
+            "assists": 27,
+            "points": 39
         },
         {
             "playerId": 8478013,
             "skaterFullName": "Jake Walman",
             "teamAbbrevs": "SJS,EDM",
             "positionCode": "D",
-            "gamesPlayed": 65,
-            "goals": 7,
-            "assists": 33,
-            "points": 40
+            "gamesPlayed": 53,
+            "goals": 8,
+            "assists": 12,
+            "points": 20
         },
         {
             "playerId": 8482671,
             "skaterFullName": "Owen Power",
             "teamAbbrevs": "BUF",
             "positionCode": "D",
-            "gamesPlayed": 79,
-            "goals": 7,
-            "assists": 33,
-            "points": 40
+            "gamesPlayed": 81,
+            "goals": 8,
+            "assists": 21,
+            "points": 29
         },
         {
             "playerId": 8478396,
             "skaterFullName": "Noah Hanifin",
             "teamAbbrevs": "VGK",
             "positionCode": "D",
-            "gamesPlayed": 80,
-            "goals": 10,
-            "assists": 29,
-            "points": 39
+            "gamesPlayed": 71,
+            "goals": 3,
+            "assists": 25,
+            "points": 28
         },
         {
             "playerId": 8480145,
             "skaterFullName": "Neal Pionk",
             "teamAbbrevs": "WPG",
             "positionCode": "D",
-            "gamesPlayed": 69,
-            "goals": 10,
-            "assists": 29,
-            "points": 39
+            "gamesPlayed": 51,
+            "goals": 3,
+            "assists": 9,
+            "points": 12
         },
         {
             "playerId": 8480865,
             "skaterFullName": "Noah Dobson",
             "teamAbbrevs": "NYI",
             "positionCode": "D",
-            "gamesPlayed": 71,
-            "goals": 10,
-            "assists": 29,
-            "points": 39
+            "gamesPlayed": 80,
+            "goals": 12,
+            "assists": 35,
+            "points": 47
         },
         {
             "playerId": 8478407,
             "skaterFullName": "Vince Dunn",
             "teamAbbrevs": "SEA",
             "positionCode": "D",
-            "gamesPlayed": 62,
+            "gamesPlayed": 81,
             "goals": 11,
-            "assists": 28,
-            "points": 39
+            "assists": 33,
+            "points": 44
         },
         {
             "playerId": 8474600,
             "skaterFullName": "Roman Josi",
             "teamAbbrevs": "NSH",
             "positionCode": "D",
-            "gamesPlayed": 53,
-            "goals": 9,
-            "assists": 29,
-            "points": 38
+            "gamesPlayed": 68,
+            "goals": 13,
+            "assists": 42,
+            "points": 55
         },
         {
             "playerId": 8481524,
@@ -356,9 +356,9 @@
             "teamAbbrevs": "BUF",
             "positionCode": "D",
             "gamesPlayed": 82,
-            "goals": 7,
+            "goals": 11,
             "assists": 31,
-            "points": 38
+            "points": 42
         },
         {
             "playerId": 8478178,
@@ -366,29 +366,29 @@
             "teamAbbrevs": "TBL",
             "positionCode": "D",
             "gamesPlayed": 73,
-            "goals": 6,
-            "assists": 31,
-            "points": 37
+            "goals": 22,
+            "assists": 48,
+            "points": 70
         },
         {
             "playerId": 8476892,
             "skaterFullName": "Colton Parayko",
             "teamAbbrevs": "STL",
             "positionCode": "D",
-            "gamesPlayed": 64,
-            "goals": 16,
-            "assists": 20,
-            "points": 36
+            "gamesPlayed": 77,
+            "goals": 4,
+            "assists": 14,
+            "points": 18
         },
         {
             "playerId": 8477495,
             "skaterFullName": "Seth Jones",
             "teamAbbrevs": "CHI,FLA",
             "positionCode": "D",
-            "gamesPlayed": 63,
-            "goals": 9,
-            "assists": 27,
-            "points": 36
+            "gamesPlayed": 52,
+            "goals": 7,
+            "assists": 25,
+            "points": 32
         },
         {
             "playerId": 8476869,
@@ -396,29 +396,29 @@
             "teamAbbrevs": "NSH",
             "positionCode": "D",
             "gamesPlayed": 82,
-            "goals": 10,
+            "goals": 3,
             "assists": 23,
-            "points": 33
+            "points": 26
         },
         {
             "playerId": 8482730,
             "skaterFullName": "Brandt Clarke",
             "teamAbbrevs": "LAK",
             "positionCode": "D",
-            "gamesPlayed": 78,
-            "goals": 5,
-            "assists": 28,
-            "points": 33
+            "gamesPlayed": 82,
+            "goals": 8,
+            "assists": 32,
+            "points": 40
         },
         {
             "playerId": 8479425,
             "skaterFullName": "Filip Hronek",
             "teamAbbrevs": "VAN",
             "positionCode": "D",
-            "gamesPlayed": 61,
-            "goals": 5,
-            "assists": 28,
-            "points": 33
+            "gamesPlayed": 82,
+            "goals": 8,
+            "assists": 41,
+            "points": 49
         },
         {
             "playerId": 8474565,
@@ -435,40 +435,40 @@
             "skaterFullName": "Darnell Nurse",
             "teamAbbrevs": "EDM",
             "positionCode": "D",
-            "gamesPlayed": 76,
-            "goals": 5,
-            "assists": 28,
-            "points": 33
+            "gamesPlayed": 82,
+            "goals": 7,
+            "assists": 17,
+            "points": 24
         },
         {
             "playerId": 8482511,
             "skaterFullName": "Mason Lohrei",
             "teamAbbrevs": "BOS",
             "positionCode": "D",
-            "gamesPlayed": 77,
-            "goals": 5,
-            "assists": 28,
-            "points": 33
+            "gamesPlayed": 73,
+            "goals": 7,
+            "assists": 19,
+            "points": 26
         },
         {
             "playerId": 8477932,
             "skaterFullName": "Aaron Ekblad",
             "teamAbbrevs": "FLA",
             "positionCode": "D",
-            "gamesPlayed": 56,
-            "goals": 3,
-            "assists": 30,
-            "points": 33
+            "gamesPlayed": 72,
+            "goals": 4,
+            "assists": 22,
+            "points": 26
         },
         {
             "playerId": 8475218,
             "skaterFullName": "Mattias Ekholm",
             "teamAbbrevs": "EDM",
             "positionCode": "D",
-            "gamesPlayed": 65,
-            "goals": 9,
-            "assists": 24,
-            "points": 33
+            "gamesPlayed": 82,
+            "goals": 6,
+            "assists": 35,
+            "points": 41
         },
         {
             "playerId": 8478500,
@@ -476,9 +476,9 @@
             "teamAbbrevs": "CBJ",
             "positionCode": "D",
             "gamesPlayed": 82,
-            "goals": 7,
-            "assists": 26,
-            "points": 33
+            "goals": 9,
+            "assists": 22,
+            "points": 31
         },
         {
             "playerId": 8475753,
@@ -486,29 +486,29 @@
             "teamAbbrevs": "STL",
             "positionCode": "D",
             "gamesPlayed": 78,
-            "goals": 4,
-            "assists": 28,
-            "points": 32
+            "goals": 16,
+            "assists": 24,
+            "points": 40
         },
         {
             "playerId": 8474716,
             "skaterFullName": "Jared Spurgeon",
             "teamAbbrevs": "MIN",
             "positionCode": "D",
-            "gamesPlayed": 66,
-            "goals": 7,
-            "assists": 25,
-            "points": 32
+            "gamesPlayed": 79,
+            "goals": 6,
+            "assists": 16,
+            "points": 22
         },
         {
             "playerId": 8474151,
             "skaterFullName": "Ryan McDonagh",
             "teamAbbrevs": "TBL",
             "positionCode": "D",
-            "gamesPlayed": 82,
-            "goals": 4,
-            "assists": 27,
-            "points": 31
+            "gamesPlayed": 48,
+            "goals": 6,
+            "assists": 15,
+            "points": 21
         },
         {
             "playerId": 8478055,
@@ -516,29 +516,29 @@
             "teamAbbrevs": "FLA",
             "positionCode": "D",
             "gamesPlayed": 80,
-            "goals": 11,
-            "assists": 20,
-            "points": 31
+            "goals": 2,
+            "assists": 26,
+            "points": 28
         },
         {
             "playerId": 8476875,
             "skaterFullName": "Mike Matheson",
             "teamAbbrevs": "MTL",
             "positionCode": "D",
-            "gamesPlayed": 80,
-            "goals": 6,
-            "assists": 25,
-            "points": 31
+            "gamesPlayed": 78,
+            "goals": 7,
+            "assists": 30,
+            "points": 37
         },
         {
             "playerId": 8482762,
             "skaterFullName": "Simon Edvinsson",
             "teamAbbrevs": "DET",
             "positionCode": "D",
-            "gamesPlayed": 78,
-            "goals": 7,
-            "assists": 24,
-            "points": 31
+            "gamesPlayed": 72,
+            "goals": 9,
+            "assists": 16,
+            "points": 25
         },
         {
             "playerId": 8478397,
@@ -556,39 +556,39 @@
             "teamAbbrevs": "LAK",
             "positionCode": "D",
             "gamesPlayed": 82,
-            "goals": 5,
-            "assists": 25,
-            "points": 30
+            "goals": 14,
+            "assists": 21,
+            "points": 35
         },
         {
             "playerId": 8480873,
             "skaterFullName": "Rasmus Sandin",
             "teamAbbrevs": "WSH",
             "positionCode": "D",
-            "gamesPlayed": 82,
-            "goals": 4,
-            "assists": 26,
-            "points": 30
+            "gamesPlayed": 73,
+            "goals": 5,
+            "assists": 24,
+            "points": 29
         },
         {
             "playerId": 8477948,
             "skaterFullName": "Travis Sanheim",
             "teamAbbrevs": "PHI",
             "positionCode": "D",
-            "gamesPlayed": 82,
-            "goals": 8,
-            "assists": 22,
-            "points": 30
+            "gamesPlayed": 81,
+            "goals": 11,
+            "assists": 26,
+            "points": 37
         },
         {
             "playerId": 8481568,
             "skaterFullName": "Alex Vlasic",
             "teamAbbrevs": "CHI",
             "positionCode": "D",
-            "gamesPlayed": 82,
-            "goals": 4,
-            "assists": 26,
-            "points": 30
+            "gamesPlayed": 81,
+            "goals": 2,
+            "assists": 19,
+            "points": 21
         },
         {
             "playerId": 8471724,
@@ -596,9 +596,9 @@
             "teamAbbrevs": "PIT",
             "positionCode": "D",
             "gamesPlayed": 74,
-            "goals": 9,
-            "assists": 21,
-            "points": 30
+            "goals": 3,
+            "assists": 31,
+            "points": 34
         },
         {
             "playerId": 8475171,

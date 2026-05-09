@@ -119,7 +119,7 @@ function showNotification(message, type = 'info') {
     notification.className = `trade-notification trade-notification-${type}`;
     notification.innerHTML = `
         <div class="notification-content">
-            <span class="notification-icon">${type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️'}</span>
+            <span class="notification-icon">${typeof getIcon === 'function' ? (type === 'success' ? getIcon('check',18) : type === 'error' ? getIcon('x',18) : getIcon('warning',18)) : ''}</span>
             <span class="notification-message">${message}</span>
         </div>
     `;

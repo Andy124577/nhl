@@ -36,10 +36,9 @@ function buildLoggedOutNavbar() {
     if (!navbar) return;
     navbar.innerHTML = `
         <div class="navbar-desktop navbar-guest">
-            <div class="navbar-brand">
+            <a href="https://fantazy.ca" class="navbar-brand" style="text-decoration:none;">
                 <img src="Icons/fantazy.png" alt="Fantazy" class="navbar-logo">
-                <span class="navbar-title">Fantazy</span>
-            </div>
+            </a>
             <div class="navbar-guest-actions">
                 <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Changer le thème">
                     <span id="themeIcon">${(localStorage.getItem('theme') || 'dark') === 'dark' ? '☀️' : '🌙'}</span>
@@ -67,9 +66,9 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
         <div class="navbar-desktop">
             <!-- Left: Logo + Nav Links -->
             <div class="navbar-left">
-                <div class="navbar-brand">
+                <a href="https://fantazy.ca" class="navbar-brand" style="text-decoration:none;">
                     <img src="Icons/fantazy.png" alt="Fantazy" class="navbar-logo">
-                </div>
+                </a>
 
                 <nav class="nav-links">
                     <a href="index.html" class="nav-link ${'accueil' === currentPage ? 'active' : ''}">
@@ -116,7 +115,7 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                         ${isAdmin ? '<div class="dropdown-divider"></div><div id="adminUsersList" class="admin-users-list"></div>' : ''}
                         <div class="dropdown-divider"></div>
                         <button class="dropdown-item logout" onclick="logout()">
-                            <span>🚪</span>
+                            <img src="Icons/deconnexion.png" alt="" style="width:18px;height:18px;object-fit:contain;filter:brightness(0.8);">
                             <span>Déconnexion</span>
                         </button>
                     </div>
@@ -135,25 +134,25 @@ function buildBottomNav(currentPage) {
     const html = `
         <nav class="bottom-nav">
             <a href="index.html" class="bottom-nav-item ${'accueil' === currentPage ? 'active' : ''}">
-                <span class="bottom-nav-icon">🏠</span>
+                <span class="bottom-nav-icon"><img src="Icons/fantazy.png" alt="Accueil" class="bottom-nav-img"></span>
                 <span class="bottom-nav-label">Accueil</span>
             </a>
             <a href="pool.html" class="bottom-nav-item ${'pool' === currentPage ? 'active' : ''}" id="bottomPoolLink">
-                <span class="bottom-nav-icon">⚙️</span>
+                <span class="bottom-nav-icon"><img src="Icons/pool.png" alt="Pools" class="bottom-nav-img"></span>
                 <span class="bottom-nav-label">Pools</span>
                 <span class="notif-badge" id="bottomDraftBadge" style="display: none;"></span>
             </a>
             <a href="trade.html" class="bottom-nav-item ${'trade' === currentPage ? 'active' : ''}" id="bottomTradeLink">
-                <span class="bottom-nav-icon">🔄</span>
+                <span class="bottom-nav-icon"><img src="Icons/echanges.png" alt="Échanges" class="bottom-nav-img"></span>
                 <span class="bottom-nav-label">Échanges</span>
                 <span class="notif-badge" id="bottomTradeBadge" style="display: none;">0</span>
             </a>
             <a href="classement.html" class="bottom-nav-item ${'classement' === currentPage ? 'active' : ''}">
-                <span class="bottom-nav-icon">🏆</span>
+                <span class="bottom-nav-icon"><img src="Icons/classement.png" alt="Classement" class="bottom-nav-img"></span>
                 <span class="bottom-nav-label">Classement</span>
             </a>
             <a href="stats.html" class="bottom-nav-item ${'stats' === currentPage ? 'active' : ''}">
-                <span class="bottom-nav-icon">📊</span>
+                <span class="bottom-nav-icon"><img src="Icons/stats.png" alt="Stats" class="bottom-nav-img"></span>
                 <span class="bottom-nav-label">Stats</span>
             </a>
         </nav>
@@ -328,7 +327,7 @@ function logout() {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('username');
     localStorage.removeItem('isAdmin');
-    window.location.href = 'login.html';
+    window.location.href = 'index.html';
 }
 
 // ==================== INIT ====================

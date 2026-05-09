@@ -2,6 +2,13 @@
 /* INDEX/STATS PAGE — DARK GAMING THEME (matches accueil.html)  */
 /* ============================================================ */
 
+/* SVG icon containers */
+[data-icon] { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+[data-icon] svg { display: block; flex-shrink: 0; }
+.step-icon-wrap[data-icon], .pool-empty-icon[data-icon],
+.stats-empty-state .empty-icon[data-icon], .no-photo[data-icon],
+.trade-empty-state .empty-icon[data-icon], .custom-alert-icon[data-icon] { display: flex; }
+
 :root {
   /* Main backgrounds */
   --bg: #0A0A1A;

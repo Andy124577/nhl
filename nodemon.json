@@ -1,0 +1,5 @@
+{
+  "watch": ["server.js", "db.js", "fetch_game_logs.js"],
+  "ignore": ["*.json", "faces/", "teams/", "node_modules/"],
+  "ext": "js"
+}
