@@ -3172,5 +3172,415 @@
         "position": "goalie"
       }
     ]
+  },
+  "FZPool_1778346772297": {
+    "maxPlayers": 3,
+    "draftOrder": [
+      "Équipe 1",
+      "Équipe 3",
+      "Équipe 4",
+      "Équipe 4",
+      "Équipe 3",
+      "Équipe 1",
+      "Équipe 1",
+      "Équipe 3",
+      "Équipe 4",
+      "Équipe 4",
+      "Équipe 3",
+      "Équipe 1"
+    ],
+    "currentPickIndex": 9,
+    "lastPickIndex": 8,
+    "config": {
+      "numOffensive": 2,
+      "numDefensive": 1,
+      "numGoalies": 1,
+      "numRookies": 0,
+      "numTeams": 0
+    },
+    "poolMode": "cumulative",
+    "allowTrades": true,
+    "teams": {
+      "Équipe 1": {
+        "members": [
+          "fza"
+        ],
+        "offensive": [
+          "Nikita Kucherov",
+          "Connor McDavid"
+        ],
+        "defensive": [
+          "Cale Makar"
+        ],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 2": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 3": {
+        "members": [
+          "fzc"
+        ],
+        "offensive": [
+          "Nathan MacKinnon",
+          "Mitchell Marner"
+        ],
+        "defensive": [
+          "Zach Werenski"
+        ],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 4": {
+        "members": [
+          "fzb"
+        ],
+        "offensive": [
+          "David Pastrnak",
+          "Leon Draisaitl"
+        ],
+        "defensive": [
+          "Quinn Hughes"
+        ],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 5": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 6": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 7": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 8": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 9": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 10": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      }
+    },
+    "picksHistory": [
+      {
+        "team": "Équipe 1",
+        "player": "Nikita Kucherov",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 3",
+        "player": "Nathan MacKinnon",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 4",
+        "player": "David Pastrnak",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 4",
+        "player": "Leon Draisaitl",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 3",
+        "player": "Mitchell Marner",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "Connor McDavid",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "Cale Makar",
+        "position": "defensive"
+      },
+      {
+        "team": "Équipe 3",
+        "player": "Zach Werenski",
+        "position": "defensive"
+      },
+      {
+        "team": "Équipe 4",
+        "player": "Quinn Hughes",
+        "position": "defensive"
+      }
+    ]
+  },
+  "FZPool_1778346962472": {
+    "maxPlayers": 3,
+    "draftOrder": [
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 3",
+      "Équipe 4",
+      "Équipe 4",
+      "Équipe 3",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 3",
+      "Équipe 4",
+      "Équipe 4",
+      "Équipe 3",
+      "Équipe 2",
+      "Équipe 1"
+    ],
+    "currentPickIndex": 15,
+    "lastPickIndex": 15,
+    "config": {
+      "numOffensive": 2,
+      "numDefensive": 1,
+      "numGoalies": 1,
+      "numRookies": 0,
+      "numTeams": 0
+    },
+    "poolMode": "cumulative",
+    "allowTrades": true,
+    "teams": {
+      "Équipe 1": {
+        "members": [
+          "fza"
+        ],
+        "offensive": [
+          "Nikita Kucherov",
+          "Jack Eichel"
+        ],
+        "defensive": [
+          "Cale Makar"
+        ],
+        "goalie": [
+          "Connor Hellebuyck"
+        ],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 2": {
+        "members": [
+          "fzb"
+        ],
+        "offensive": [
+          "Nathan MacKinnon",
+          "Kyle Connor"
+        ],
+        "defensive": [
+          "Zach Werenski"
+        ],
+        "goalie": [
+          "Leevi Meriläinen"
+        ],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 3": {
+        "members": [
+          "fzc"
+        ],
+        "offensive": [
+          "David Pastrnak",
+          "Connor McDavid"
+        ],
+        "defensive": [
+          "Quinn Hughes"
+        ],
+        "goalie": [
+          "Anthony Stolarz"
+        ],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 4": {
+        "members": [
+          "fzd"
+        ],
+        "offensive": [
+          "Leon Draisaitl",
+          "Mitchell Marner"
+        ],
+        "defensive": [
+          "Rasmus Dahlin"
+        ],
+        "goalie": [
+          "Jet Greaves"
+        ],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 5": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 6": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 7": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 8": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 9": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 10": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      }
+    },
+    "picksHistory": [
+      {
+        "team": "Équipe 1",
+        "player": "Nikita Kucherov",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Nathan MacKinnon",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 3",
+        "player": "David Pastrnak",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 4",
+        "player": "Leon Draisaitl",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 4",
+        "player": "Mitchell Marner",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 3",
+        "player": "Connor McDavid",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Kyle Connor",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "Jack Eichel",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "Cale Makar",
+        "position": "defensive"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Zach Werenski",
+        "position": "defensive"
+      },
+      {
+        "team": "Équipe 3",
+        "player": "Quinn Hughes",
+        "position": "defensive"
+      },
+      {
+        "team": "Équipe 4",
+        "player": "Rasmus Dahlin",
+        "position": "defensive"
+      },
+      {
+        "team": "Équipe 4",
+        "player": "Jet Greaves",
+        "position": "goalie"
+      },
+      {
+        "team": "Équipe 3",
+        "player": "Anthony Stolarz",
+        "position": "goalie"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Leevi Meriläinen",
+        "position": "goalie"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "Connor Hellebuyck",
+        "position": "goalie"
+      }
+    ]
   }
 }

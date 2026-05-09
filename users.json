@@ -46,5 +46,33 @@
   {
     "username": "bbb",
     "password": "$2b$10$VeUqhcZ3qrjRg0uj8htnsOB8DzYwh3cfnpxKAiq7TZc0fc7aQn7Wu"
+  },
+  {
+    "username": "fantazy_a",
+    "password": "$2b$10$wHoTzVL2mJwU0nU4KmqqmueY14dawdsM8dgsaU5HUl9bEtXkbYBpm"
+  },
+  {
+    "username": "fantazy_b",
+    "password": "$2b$10$AmnhsxFdL4twOOQQluc46OwKQytvq70tQC9Vdfhu3S3x/Eb2oPH0e"
+  },
+  {
+    "username": "fantazy_c",
+    "password": "$2b$10$MAIr2ABoPtiH9TPn8l8VD.eeipCg0dm36k4fbbvPZlvdtx9SnTc1u"
+  },
+  {
+    "username": "fza",
+    "password": "$2b$10$P7KovbcE2.CmoGgMDLflaezO.HSIQ1x.x5cGKwolo5Qu.Ho3YgvEy"
+  },
+  {
+    "username": "fzb",
+    "password": "$2b$10$EzlnD7pEP/X1eHxqB8sfI.x/8HgrcCZzVQ1Ln8qdgndDcvqHNPwAK"
+  },
+  {
+    "username": "fzc",
+    "password": "$2b$10$C20ea3iuqaDNk2pwA3PSSeZWxS.EmCw9u9IZN/V1c80hPuL488.OG"
+  },
+  {
+    "username": "fzd",
+    "password": "$2b$10$.mU2em0tF/MDwXT/.fhddupUicNAjm6Tz/BmdVhnnqWx8Nn7OVVZG"
   }
 ]
