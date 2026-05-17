@@ -248,6 +248,7 @@ function generateWeeklyMatchups(teams, previousMatchups = []) {
 
 // Calculate total points for a team for a given week
 function getTeamWeeklyPoints(teamData, currentStats) {
+    if (!teamData) return 0;
     let totalPoints = 0;
 
     // Helper function to get current player stats
@@ -275,6 +276,7 @@ function getTeamWeeklyPoints(teamData, currentStats) {
 
 // Calculate team fantasy points for a specific date range using player_game_logs
 async function getTeamPointsForDateRange(teamData, startDateISO, endDateISO) {
+    if (!teamData) return null;
     const startDate = new Date(startDateISO).toISOString().split('T')[0];
     const endDate = new Date(endDateISO).toISOString().split('T')[0];
 
@@ -4205,15 +4207,19 @@ app.post('/h2h/finalize-week', async (req, res) => {
 
         // Calculate points using date-range (true weekly scoring)
         for (const matchup of weekMatchups) {
-            // Try date-range scoring first, fall back to season stats
-            let t1pts = await getTeamPointsForDateRange(clan.teams[matchup.team1], weekStart, weekEnd);
-            let t2pts = await getTeamPointsForDateRange(clan.teams[matchup.team2], weekStart, weekEnd);
+            const team1Data = clan.teams[matchup.team1];
+            const team2Data = clan.teams[matchup.team2];
+            if (!team1Data) console.warn(`⚠️ finalize-week: team "${matchup.team1}" not found in pool ${poolName}`);
+            if (!team2Data) console.warn(`⚠️ finalize-week: team "${matchup.team2}" not found in pool ${poolName}`);
+
+            let t1pts = await getTeamPointsForDateRange(team1Data, weekStart, weekEnd);
+            let t2pts = await getTeamPointsForDateRange(team2Data, weekStart, weekEnd);
 
             if (t1pts === null || t2pts === null) {
                 console.log(`⚠️ Falling back to season stats for Week ${currentWeek}`);
                 const currentStats = await loadCurrentStats();
-                if (t1pts === null) t1pts = getTeamWeeklyPoints(clan.teams[matchup.team1], currentStats);
-                if (t2pts === null) t2pts = getTeamWeeklyPoints(clan.teams[matchup.team2], currentStats);
+                if (t1pts === null) t1pts = getTeamWeeklyPoints(team1Data, currentStats);
+                if (t2pts === null) t2pts = getTeamWeeklyPoints(team2Data, currentStats);
             }
 
             matchup.team1Points = t1pts;
@@ -4565,14 +4571,19 @@ async function checkAndFinalizeCompletedWeeks() {
 
                 // Calculate points using date-range scoring, fall back to season stats
                 for (const matchup of weekMatchups) {
-                    let t1pts = await getTeamPointsForDateRange(clan.teams[matchup.team1], weekStart, weekEnd);
-                    let t2pts = await getTeamPointsForDateRange(clan.teams[matchup.team2], weekStart, weekEnd);
+                    const team1Data = clan.teams[matchup.team1];
+                    const team2Data = clan.teams[matchup.team2];
+                    if (!team1Data) console.warn(`⚠️ Auto-finalize: team "${matchup.team1}" not found in pool ${poolName}`);
+                    if (!team2Data) console.warn(`⚠️ Auto-finalize: team "${matchup.team2}" not found in pool ${poolName}`);
+
+                    let t1pts = await getTeamPointsForDateRange(team1Data, weekStart, weekEnd);
+                    let t2pts = await getTeamPointsForDateRange(team2Data, weekStart, weekEnd);
 
                     if (t1pts === null || t2pts === null) {
                         console.log(`⚠️ Falling back to season stats for auto-finalize Week ${currentWeek}`);
                         const currentStats = await loadCurrentStats();
-                        if (t1pts === null) t1pts = getTeamWeeklyPoints(clan.teams[matchup.team1], currentStats);
-                        if (t2pts === null) t2pts = getTeamWeeklyPoints(clan.teams[matchup.team2], currentStats);
+                        if (t1pts === null) t1pts = getTeamWeeklyPoints(team1Data, currentStats);
+                        if (t2pts === null) t2pts = getTeamWeeklyPoints(team2Data, currentStats);
                     }
 
                     matchup.team1Points = t1pts;
