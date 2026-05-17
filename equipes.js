@@ -2,6 +2,68 @@ const BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:3000"
   : window.location.origin;
 
+let _playerMap = null; // name → { playerId, teamAbbrevs }
+
+async function loadPlayerMap() {
+    if (_playerMap) return _playerMap;
+    try {
+        const r = await fetch('nhl_filtered_stats.json');
+        const d = await r.json();
+        _playerMap = {};
+        [...(d.Top_100_Offensive_Players||[]), ...(d.Top_50_Defenders||[]), ...(d.Top_Rookies||[])].forEach(p => {
+            if (p.skaterFullName) _playerMap[p.skaterFullName] = { playerId: p.playerId, teamAbbrevs: p.teamAbbrevs };
+        });
+        (d.Top_50_Goalies||[]).forEach(p => {
+            if (p.goalieFullName) _playerMap[p.goalieFullName] = { playerId: p.playerId, teamAbbrevs: p.teamAbbrevs };
+        });
+    } catch(e) { _playerMap = {}; }
+    return _playerMap;
+}
+
+function playerHeadshotUrl(name) {
+    const info = _playerMap && _playerMap[name];
+    if (info && info.playerId) return `https://assets.web.nhl.com/mugs/nhl/latest/${info.playerId}.png`;
+    return null;
+}
+
+function buildPicksSection(teamData) {
+    const categories = [
+        { key: 'offensive', label: 'Attaquants', isTeam: false },
+        { key: 'defensive', label: 'Défenseurs', isTeam: false },
+        { key: 'rookie',    label: 'Recrues',    isTeam: false },
+        { key: 'goalie',    label: 'Gardien',    isTeam: false },
+        { key: 'teams',     label: 'Équipes NHL', isTeam: true },
+    ];
+    const hasPicks = categories.some(c => (teamData[c.key] || []).length > 0);
+    if (!hasPicks) return '';
+
+    let html = '<div class="picks-section">';
+    categories.forEach(({ key, label, isTeam }) => {
+        const picks = teamData[key] || [];
+        if (!picks.length) return;
+        html += `<div class="picks-category"><span class="picks-cat-label">${label}</span><div class="picks-players">`;
+        picks.forEach(name => {
+            if (isTeam) {
+                const abbrev = NHL_ABBREV[name];
+                const src = abbrev ? `teams/${abbrev}.png` : null;
+                html += `<div class="pick-chip" title="${name}">
+                    ${src ? `<img src="${src}" class="pick-headshot pick-team-logo" onerror="this.style.display='none'">` : ''}
+                    <span class="pick-name">${name}</span>
+                </div>`;
+            } else {
+                const url = playerHeadshotUrl(name);
+                html += `<div class="pick-chip" title="${name}">
+                    ${url ? `<img src="${url}" class="pick-headshot" onerror="this.style.display='none'">` : ''}
+                    <span class="pick-name">${name}</span>
+                </div>`;
+            }
+        });
+        html += '</div></div>';
+    });
+    html += '</div>';
+    return html;
+}
+
 const NHL_ABBREV = {
     "Anaheim Ducks": "ANA", "Boston Bruins": "BOS", "Buffalo Sabres": "BUF",
     "Calgary Flames": "CGY", "Carolina Hurricanes": "CAR", "Chicago Blackhawks": "CHI",
@@ -179,6 +241,19 @@ $(document).ready(function() {
     $("#maxPlayers").on('change', updatePoolModeInfo);
 });
 
+// Pool image preview (triggered by file input in pool.html)
+function previewPoolImage(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const preview = document.getElementById('poolImgPreview');
+    const hint = document.getElementById('poolImgUploadHint');
+    if (preview) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+        if (hint) hint.style.display = 'none';
+    }
+}
+
 // 🏗️ Créer un clan
 async function createClan() {
     const clanName = $("#clanName").val();
@@ -235,6 +310,19 @@ async function createClan() {
             const result = await response.json();
             console.log("✅ Pool créé avec succès !");
 
+            // Upload pool image if selected
+            const poolImageInput = document.getElementById('poolImageInput');
+            if (poolImageInput && poolImageInput.files[0]) {
+                const formData = new FormData();
+                formData.append('image', poolImageInput.files[0]);
+                formData.append('poolName', clanName);
+                try {
+                    await fetch(`${BASE_URL}/upload/pool-image`, { method: 'POST', body: formData });
+                } catch (e) {
+                    console.warn('Pool image upload failed:', e);
+                }
+            }
+
             // Show success message with auto-join confirmation
             alert(`✅ ${result.message}\n\nVous pouvez maintenant inviter d'autres participants !`);
 
@@ -245,6 +333,11 @@ async function createClan() {
             $("#numGoalies").val("1");
             $("#numRookies").val("1");
             $("#numTeams").val("1");
+            const poolImgPreview = document.getElementById('poolImgPreview');
+            const poolImgHint = document.getElementById('poolImgUploadHint');
+            if (poolImgPreview) { poolImgPreview.src = ''; poolImgPreview.style.display = 'none'; }
+            if (poolImgHint) poolImgHint.style.display = '';
+            if (poolImageInput) poolImageInput.value = '';
 
             // Reload clans and switch to "Mes pools" tab
             await loadClans();
@@ -292,9 +385,16 @@ function updateUI(draftData) {
 
         const totalPicks = config.numOffensive + config.numDefensive + config.numGoalies + config.numRookies + config.numTeams;
 
+        const poolImgHtml = clan.imageUrl
+            ? `<img src="${clan.imageUrl}" class="pool-item-img" alt="${clanName}" onerror="this.style.display='none'">`
+            : `<img src="Icons/grayGroup.png" class="pool-item-img pool-item-img-placeholder" alt="${clanName}">`;
+
+        const draftStarted = !!(clan.draftOrder && clan.draftOrder.length > 0);
+
         if (userInClan) {
             $("#clans-list").append(`
                 <li>
+                    <div class="pool-item-img-wrap">${poolImgHtml}</div>
                     <div class="pool-item-content">
                         <span class="pool-item-name">${clanName}</span>
                         <div class="pool-item-info">
@@ -306,9 +406,10 @@ function updateUI(draftData) {
                     <button class="pool-action-btn" onclick="viewClanTeams('${clanName}')">Consulter</button>
                 </li>
             `);
-        } else {
+        } else if (!draftStarted) {
             $("#available-clans-list").append(`
                 <li>
+                    <div class="pool-item-img-wrap">${poolImgHtml}</div>
                     <div class="pool-item-content">
                         <span class="pool-item-name">${clanName}</span>
                         <div class="pool-item-info">
@@ -331,6 +432,7 @@ async function viewClanTeams(clanName) {
         const draftData = await response.json();
         const teams = draftData[clanName].teams;
         const username = localStorage.getItem("username");
+        const draftStarted = !!(draftData[clanName].draftOrder && draftData[clanName].draftOrder.length > 0);
 
         let userTeam = null;
         for (const [teamName, teamData] of Object.entries(teams)) {
@@ -340,7 +442,22 @@ async function viewClanTeams(clanName) {
             }
         }
 
-        let teamHTML = `<h3 style="margin-bottom: 20px; color: #222;">Équipes de ${clanName}</h3>`;
+        // Pre-fetch avatars and player map in parallel
+        const allMembers = Object.values(teams).flatMap(t => t.members || []);
+        await Promise.all([
+            typeof prefetchAvatars === 'function' ? prefetchAvatars(allMembers) : Promise.resolve(),
+            loadPlayerMap()
+        ]);
+
+        const poolImgTag = draftData[clanName]?.imageUrl
+            ? `<img src="${draftData[clanName].imageUrl}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;margin-right:10px;vertical-align:middle;" onerror="this.style.display='none'" alt="${clanName}">`
+            : `<img src="Icons/grayGroup.png" style="width:36px;height:36px;border-radius:8px;object-fit:cover;margin-right:10px;flex-shrink:0;" alt="${clanName}">`;
+
+        const draftBanner = draftStarted
+            ? `<div style="margin-bottom:14px;padding:10px 14px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;color:#856404;font-size:0.9rem;font-weight:600;">🏒 Le draft est commencé — le changement d'équipe n'est plus possible.</div>`
+            : '';
+
+        let teamHTML = `<h3 style="margin-bottom:20px;color:var(--text-main,#222);display:flex;align-items:center;">${poolImgTag}Équipes de ${clanName}</h3>${draftBanner}`;
 
         for (const [teamName, teamData] of Object.entries(teams)) {
             const isFull = teamData.members.length >= 5;
@@ -351,8 +468,12 @@ async function viewClanTeams(clanName) {
             const membersDisplay = teamData.members.length > 0
                 ? `<div style="margin-top: 8px; padding-left: 12px;">
                      <strong style="font-size: 0.85rem; color: #666;">Membres:</strong>
-                     <ul style="margin: 5px 0 0 0; padding-left: 20px; list-style: disc;">
-                       ${teamData.members.map(member => `<li style="color: #444; font-size: 0.9rem;">${member}</li>`).join("")}
+                     <ul style="margin: 5px 0 0 0; padding-left: 0; list-style: none;">
+                       ${teamData.members.map(member => `
+                         <li style="display:flex;align-items:center;gap:8px;padding:4px 0;color:#444;font-size:0.9rem;">
+                           ${typeof avatarHtml === 'function' ? avatarHtml(member, 28) : `<img src="Icons/grayUser.png" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">`}
+                           <span>${member}</span>
+                         </li>`).join("")}
                      </ul>
                    </div>`
                 : `<div style="margin-top: 8px; color: #999; font-size: 0.85rem; font-style: italic;">Aucun membre pour l'instant</div>`;
@@ -387,8 +508,9 @@ async function viewClanTeams(clanName) {
                         </div>
                     </div>
                     ${membersDisplay}
+                    ${buildPicksSection(teamData)}
                     ${renameSection}
-                    ${!userInTeam && !isFull ? `<button style="margin-top: 12px; width: 100%; padding: 10px; background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;" onclick="joinTeam('${clanName}', '${teamName}')" onmouseover="this.style.background='linear-gradient(135deg, #ff4040 0%, #d93030 100%)'" onmouseout="this.style.background='linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%)'">Rejoindre cette équipe</button>` : ''}
+                    ${!userInTeam && !isFull && !draftStarted ? `<button style="margin-top: 12px; width: 100%; padding: 10px; background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;" onclick="joinTeam('${clanName}', '${teamName}')" onmouseover="this.style.background='linear-gradient(135deg, #ff4040 0%, #d93030 100%)'" onmouseout="this.style.background='linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%)'">Rejoindre cette équipe</button>` : ''}
                     ${isFull && !userInTeam ? `<div style="margin-top: 12px; padding: 8px; background: #f8d7da; border-radius: 6px; color: #721c24; text-align: center; font-size: 0.9rem;">Équipe complète</div>` : ''}
                 </div>
             `;
@@ -450,6 +572,12 @@ async function joinClan(clanName) {
     try {
         const response = await fetch(`${BASE_URL}/draft?timestamp=${new Date().getTime()}`, { cache: "no-store" });
         const draftData = await response.json();
+
+        if (draftData[clanName].draftOrder && draftData[clanName].draftOrder.length > 0) {
+            alert("Ce pool a déjà commencé son draft. Il n'est plus possible de le rejoindre.");
+            return;
+        }
+
         const teams = draftData[clanName].teams;
 
         // 🔥 Affiche les équipes disponibles pour le clan sélectionné
@@ -496,7 +624,16 @@ async function joinTeam(clanName, teamName) {
     const username = localStorage.getItem("username");
 
     try {
-        // 🔥 Supprimer l'utilisateur de son ancienne équipe
+        // Check draft status before touching anything — /leave-team has no draft guard
+        // so we must stop here to avoid orphaning the user from their current team.
+        const checkResp = await fetch(`${BASE_URL}/draft?timestamp=${new Date().getTime()}`, { cache: "no-store" });
+        const checkData = await checkResp.json();
+        if (checkData[clanName]?.draftOrder && checkData[clanName].draftOrder.length > 0) {
+            alert("Le draft a déjà commencé ! Vous ne pouvez plus changer d'équipe.");
+            return;
+        }
+
+        // Remove from current team first (only safe now that we know draft hasn't started)
         await fetch(`${BASE_URL}/leave-team`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },

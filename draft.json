@@ -51,9 +51,7 @@
     "currentPickIndex": 44,
     "teams": {
       "Équipe 1": {
-        "members": [
-          "user1"
-        ],
+        "members": [],
         "offensive": [
           "Connor McDavid",
           "Kyle Connor",
@@ -836,9 +834,7 @@
     "currentPickIndex": 44,
     "teams": {
       "Équipe 1": {
-        "members": [
-          "user1"
-        ],
+        "members": [],
         "offensive": [
           "Nikita Kucherov",
           "Connor McDavid",
@@ -1217,9 +1213,7 @@
     "currentPickIndex": 14,
     "teams": {
       "Équipe 1": {
-        "members": [
-          "user1"
-        ],
+        "members": [],
         "offensive": [
           "Nikita Kucherov",
           "David Pastrnak",
@@ -3582,5 +3576,112 @@
         "position": "goalie"
       }
     ]
+  },
+  "testPooliess": {
+    "maxPlayers": 2,
+    "draftOrder": [],
+    "currentPickIndex": 0,
+    "lastPickIndex": -1,
+    "config": {
+      "numOffensive": 1,
+      "numDefensive": 1,
+      "numGoalies": 1,
+      "numRookies": 1,
+      "numTeams": 1
+    },
+    "poolMode": "head-to-head",
+    "allowTrades": true,
+    "teams": {
+      "Équipe 1": {
+        "members": [
+          "user1"
+        ],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 2": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 3": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 4": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 5": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 6": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 7": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 8": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 9": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 10": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      }
+    },
+    "h2hData": {
+      "currentWeek": 1,
+      "weekStart": null,
+      "matchups": [],
+      "standings": {},
+      "matchupHistory": []
+    },
+    "imageUrl": "/uploads/pools/75a8040f-50ea-4bdf-900d-62ff3174a08e.jpg"
   }
 }
