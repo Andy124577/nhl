@@ -76,5 +76,21 @@
   {
     "username": "fzd",
     "password": "$2b$10$.mU2em0tF/MDwXT/.fhddupUicNAjm6Tz/BmdVhnnqWx8Nn7OVVZG"
+  },
+  {
+    "username": "h2h_alpha",
+    "password": "$2b$10$ilgaeXsHpOlrx6sEOiSUyOCkRYJh/9TeVGF.Fu7fpe4xK01Cmyr/y"
+  },
+  {
+    "username": "h2h_beta",
+    "password": "$2b$10$/SZWbLXkGHLutUV7AM08BeCmc2mSlSxqTtsUV4Wj22tw2Scx/qAjC"
+  },
+  {
+    "username": "h2h_charlie",
+    "password": "$2b$10$Eyte5naNyvAaC1R4C4mMp.ioitLBwKcqSZ/EmX9m4fhsO/.0L5f1K"
+  },
+  {
+    "username": "h2h_delta",
+    "password": "$2b$10$vP7Tb4.x./TF4ei3RhrSvurBGASbEJA0aK5grv2yh0UNxPu617Hhi"
   }
 ]

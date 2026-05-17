@@ -3683,5 +3683,373 @@
       "matchupHistory": []
     },
     "imageUrl": "/uploads/pools/75a8040f-50ea-4bdf-900d-62ff3174a08e.jpg"
+  },
+  "H2H2_1779034394675": {
+    "maxPlayers": 2,
+    "draftOrder": [
+      "Équipe 1",
+      "Équipe 2"
+    ],
+    "currentPickIndex": 1,
+    "lastPickIndex": 1,
+    "config": {
+      "numOffensive": 1,
+      "numDefensive": 0,
+      "numGoalies": 0,
+      "numRookies": 0,
+      "numTeams": 0
+    },
+    "poolMode": "head-to-head",
+    "allowTrades": false,
+    "teams": {
+      "Équipe 1": {
+        "members": [
+          "h2h_alpha"
+        ],
+        "offensive": [
+          "Nikita Kucherov"
+        ],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 2": {
+        "members": [
+          "h2h_beta"
+        ],
+        "offensive": [
+          "Nathan MacKinnon"
+        ],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 3": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 4": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 5": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 6": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 7": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 8": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 9": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 10": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      }
+    },
+    "h2hData": {
+      "currentWeek": 2,
+      "seasonStart": "2026-05-11T04:00:00.000Z",
+      "weekStart": "2026-05-18T04:00:00.000Z",
+      "matchups": [
+        [
+          {
+            "team1": "Équipe 1",
+            "team2": "Équipe 2",
+            "team1Points": 130,
+            "team2Points": 127,
+            "winner": "Équipe 1",
+            "weekNumber": 1
+          }
+        ],
+        []
+      ],
+      "standings": {
+        "Équipe 1": {
+          "wins": 1,
+          "losses": 0,
+          "ties": 0,
+          "pointsFor": 130,
+          "pointsAgainst": 127
+        },
+        "Équipe 2": {
+          "wins": 0,
+          "losses": 1,
+          "ties": 0,
+          "pointsFor": 127,
+          "pointsAgainst": 130
+        }
+      },
+      "matchupHistory": [
+        {
+          "weekNumber": 1,
+          "weekStart": "2026-05-11T04:00:00.000Z",
+          "weekEnd": "2026-05-18T04:00:00.000Z",
+          "matchups": [
+            {
+              "team1": "Équipe 1",
+              "team2": "Équipe 2",
+              "team1Points": 130,
+              "team2Points": 127,
+              "winner": "Équipe 1",
+              "weekNumber": 1
+            }
+          ],
+          "completedDate": "2026-05-17T16:13:15.617Z"
+        }
+      ]
+    },
+    "picksHistory": [
+      {
+        "team": "Équipe 1",
+        "player": "Nikita Kucherov",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Nathan MacKinnon",
+        "position": "offensive"
+      }
+    ]
+  },
+  "H2H4_1779034394683": {
+    "maxPlayers": 4,
+    "draftOrder": [
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 3",
+      "Équipe 4"
+    ],
+    "currentPickIndex": 3,
+    "lastPickIndex": 3,
+    "config": {
+      "numOffensive": 1,
+      "numDefensive": 0,
+      "numGoalies": 0,
+      "numRookies": 0,
+      "numTeams": 0
+    },
+    "poolMode": "head-to-head",
+    "allowTrades": false,
+    "teams": {
+      "Équipe 1": {
+        "members": [
+          "h2h_alpha"
+        ],
+        "offensive": [
+          "Leon Draisaitl"
+        ],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 2": {
+        "members": [
+          "h2h_beta"
+        ],
+        "offensive": [
+          "David Pastrnak"
+        ],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 3": {
+        "members": [
+          "h2h_charlie"
+        ],
+        "offensive": [
+          "Connor McDavid"
+        ],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 4": {
+        "members": [
+          "h2h_delta"
+        ],
+        "offensive": [
+          "Mitchell Marner"
+        ],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 5": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 6": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 7": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 8": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 9": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      },
+      "Équipe 10": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": []
+      }
+    },
+    "h2hData": {
+      "currentWeek": 1,
+      "seasonStart": "2026-05-11T04:00:00.000Z",
+      "weekStart": "2026-05-11T04:00:00.000Z",
+      "matchups": [
+        [
+          {
+            "team1": "Équipe 4",
+            "team2": "Équipe 3",
+            "team1Points": 0,
+            "team2Points": 0,
+            "winner": null,
+            "weekNumber": 1
+          },
+          {
+            "team1": "Équipe 2",
+            "team2": "Équipe 1",
+            "team1Points": 0,
+            "team2Points": 0,
+            "winner": null,
+            "weekNumber": 1
+          }
+        ]
+      ],
+      "standings": {
+        "Équipe 1": {
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "pointsFor": 0,
+          "pointsAgainst": 0
+        },
+        "Équipe 2": {
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "pointsFor": 0,
+          "pointsAgainst": 0
+        },
+        "Équipe 3": {
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "pointsFor": 0,
+          "pointsAgainst": 0
+        },
+        "Équipe 4": {
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "pointsFor": 0,
+          "pointsAgainst": 0
+        }
+      },
+      "matchupHistory": []
+    },
+    "picksHistory": [
+      {
+        "team": "Équipe 1",
+        "player": "Leon Draisaitl",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "David Pastrnak",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 3",
+        "player": "Connor McDavid",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 4",
+        "player": "Mitchell Marner",
+        "position": "offensive"
+      }
+    ]
   }
 }
