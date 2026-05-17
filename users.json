@@ -1,11 +1,13 @@
 [
   {
     "username": "admin",
-    "password": "$2b$10$eXAMPLEHASH"
+    "password": "$2b$10$eXAMPLEHASH",
+    "avatarUrl": "/uploads/avatars/093c83bc-3bb3-4868-bee8-f6bf7c094d51.jpg"
   },
   {
     "username": "user1",
-    "password": "$2b$10$eXAMPLEHASH"
+    "password": "$2b$10$eXAMPLEHASH",
+    "avatarUrl": "/uploads/avatars/8429e600-297c-4f72-b660-d1fb44a07d50.png"
   },
   {
     "username": "testuser",

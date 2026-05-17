@@ -199,8 +199,11 @@ function renderPoolList(pools) {
         card.className = 'pool-card';
         card.onclick = () => showPoolStandings(pool.name);
 
+        const poolImg = pool.data.imageUrl
+            ? `<img src="${pool.data.imageUrl}" class="pool-card-img" alt="${pool.name}" onerror="this.src='Icons/grayGroup.png'">`
+            : `<img src="Icons/grayGroup.png" class="pool-card-img pool-card-img-placeholder" alt="${pool.name}">`;
         card.innerHTML = `
-            <div class="pool-icon">🏒</div>
+            ${poolImg}
             <div class="pool-info">
                 <div class="pool-name">${pool.name}</div>
                 <div class="pool-meta">
@@ -227,8 +230,11 @@ function showPoolStandings(poolName) {
     const poolData = allPoolsData[poolName];
     if (!poolData) return;
 
-    // Update UI
-    document.getElementById('pageTitle').textContent = poolName;
+    // Update UI — show pool image next to pool name in page title
+    const poolImg = poolData.imageUrl
+        ? `<img src="${poolData.imageUrl}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;vertical-align:middle;margin-right:10px;" onerror="this.style.display='none'" alt="${poolName}">`
+        : `<img src="Icons/grayGroup.png" style="width:32px;height:32px;border-radius:8px;object-fit:cover;vertical-align:middle;margin-right:10px;flex-shrink:0;" alt="${poolName}">`;
+    document.getElementById('pageTitle').innerHTML = `${poolImg}${poolName}`;
     document.getElementById('breadcrumb').style.display = 'flex';
     document.getElementById('poolBreadcrumb').textContent = poolName;
     document.getElementById('poolBreadcrumb').style.display = 'inline';
@@ -263,15 +269,19 @@ function showPoolStandings(poolName) {
         document.getElementById('standingsList').style.display = 'none';
 
         setTimeout(() => {
-            renderPoolStandings(poolData, poolName);
+            renderPoolStandings(poolData, poolName).catch(console.error);
         }, 100);
     }
 }
 
-function renderPoolStandings(poolData, poolName) {
+async function renderPoolStandings(poolData, poolName) {
     const poolMode = poolData.poolMode || 'cumulative';
     const standingsList = document.getElementById('standingsList');
     standingsList.innerHTML = '';
+
+    // Pre-fetch all member avatars so avatarHtml() works synchronously
+    const allMembers = Object.values(poolData.teams || {}).flatMap(t => t.members || []);
+    if (typeof prefetchAvatars === 'function') await prefetchAvatars(allMembers);
 
     // Calculate standings
     let standings = [];
@@ -381,11 +391,15 @@ function renderPoolStandings(poolData, poolName) {
         const displayName = getDisplayName(standing.teamName, standing.members);
         const logoHTML = getTeamLogoHTML(standing.nhlTeams, 32);
 
+        const membersAvatarHtml = (standing.members || []).map(m =>
+            typeof avatarHtml === 'function' ? avatarHtml(m, 24) : `<img src="Icons/grayUser.png" style="width:24px;height:24px;border-radius:50%;object-fit:cover;">`
+        ).join('');
         card.innerHTML = `
             <div class="rank-badge ${rankClass}">${rankLabel}</div>
             ${logoHTML ? `<div class="standing-logo">${logoHTML}</div>` : ''}
             <div class="standing-info">
                 <div class="standing-name">${displayName}</div>
+                ${membersAvatarHtml ? `<div class="standing-members-avatars" style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;">${membersAvatarHtml}</div>` : ''}
                 <div class="standing-stats">
                     ${statsHTML}
                 </div>

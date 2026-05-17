@@ -30,8 +30,13 @@ async function initializeDatabase() {
                 username VARCHAR(255) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
                 is_admin BOOLEAN DEFAULT FALSE,
+                avatar_url TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+        `);
+        // Add avatar_url column to existing deployments that predate this migration
+        await client.query(`
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
         `);
         console.log('✅ Users table ready');
 
@@ -103,7 +108,7 @@ async function getAllUsers() {
 
 async function getUserByUsername(username) {
     const result = await pool.query(
-        'SELECT username, password, is_admin FROM users WHERE username = $1',
+        'SELECT username, password, is_admin, avatar_url FROM users WHERE username = $1',
         [username]
     );
     if (result.rows.length === 0) return null;
@@ -112,8 +117,16 @@ async function getUserByUsername(username) {
     return {
         username: row.username,
         password: row.password,
-        isAdmin: row.is_admin
+        isAdmin: row.is_admin,
+        avatarUrl: row.avatar_url || ''
     };
+}
+
+async function updateUserAvatar(username, avatarUrl) {
+    await pool.query(
+        'UPDATE users SET avatar_url = $1 WHERE username = $2',
+        [avatarUrl, username]
+    );
 }
 
 async function createUser(username, hashedPassword, isAdmin = false) {
@@ -324,6 +337,7 @@ module.exports = {
     getUserByUsername,
     createUser,
     deleteUser,
+    updateUserAvatar,
     // Pools
     getAllPools,
     getPoolByName,

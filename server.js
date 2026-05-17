@@ -8,6 +8,8 @@ const cors = require("cors");
 const path = require("path"); // ✅ for static paths
 const cron = require("node-cron");
 const db = require("./db"); // ✅ PostgreSQL database module
+const multer = require("multer");
+const { v4: uuidv4 } = require("uuid");
 
 const app = express();
 const PORT = process.env.PORT || 3000; // ✅ Use Render's PORT
@@ -67,6 +69,31 @@ app.use(express.static(__dirname, {
     etag: true,
     lastModified: true
 }));
+
+// ✅ Serve uploaded images (user avatars, pool images)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ─── Image upload configuration ───────────────────────────────────────────────
+const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
+const EXT_MAP = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
+
+function makeStorage(folder) {
+    return multer.diskStorage({
+        destination: (req, file, cb) => cb(null, path.join(__dirname, 'uploads', folder)),
+        filename: (req, file, cb) => cb(null, uuidv4() + EXT_MAP[file.mimetype]),
+    });
+}
+function imgFilter(req, file, cb) {
+    if (ALLOWED_MIME.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Type de fichier non autorisé. Utilisez JPEG, PNG ou WebP.'), false);
+    }
+}
+
+const uploadAvatar = multer({ storage: makeStorage('avatars'), fileFilter: imgFilter, limits: { fileSize: 2 * 1024 * 1024 } });
+const uploadPool   = multer({ storage: makeStorage('pools'),   fileFilter: imgFilter, limits: { fileSize: 2 * 1024 * 1024 } });
+// ──────────────────────────────────────────────────────────────────────────────
 
 // ✅ Optional: Force / to serve index.html
 app.get('/', async (req, res) => {
@@ -1249,7 +1276,9 @@ app.post("/login", async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: "Mot de passe incorrect !" });
 
-        res.json({ message: "Connexion réussie !" });
+        // Include avatarUrl so client can store it in localStorage
+        const avatarUrl = USE_POSTGRES ? (user.avatarUrl || '') : (user.avatarUrl || '');
+        res.json({ message: "Connexion réussie !", username, avatarUrl });
 
     } catch (error) {
         console.error("Erreur lors de la connexion :", error);
@@ -1277,6 +1306,103 @@ app.post("/admin-login", async (req, res) => {
         res.status(500).json({ message: "Erreur interne du serveur." });
     }
 });
+
+// ─── Profile picture endpoints ────────────────────────────────────────────────
+
+// GET /user-profile/:username — public profile info (no password)
+app.get("/user-profile/:username", async (req, res) => {
+    try {
+        const { username } = req.params;
+        if (USE_POSTGRES) {
+            const user = await db.getUserByUsername(username);
+            if (!user) return res.status(404).json({ message: "Utilisateur non trouvé." });
+            return res.json({ username: user.username, avatarUrl: user.avatarUrl || '' });
+        } else {
+            const users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
+            const user = users.find(u => u.username === username);
+            if (!user) return res.status(404).json({ message: "Utilisateur non trouvé." });
+            return res.json({ username: user.username, avatarUrl: user.avatarUrl || '' });
+        }
+    } catch (error) {
+        console.error("Erreur /user-profile:", error);
+        res.status(500).json({ message: "Erreur interne." });
+    }
+});
+
+// POST /upload/user-avatar — multipart, field "avatar", body param "username"
+app.post("/upload/user-avatar", uploadAvatar.single('avatar'), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ message: "Aucun fichier reçu." });
+        const { username } = req.body;
+        if (!username) return res.status(400).json({ message: "Nom d'utilisateur requis." });
+
+        const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+
+        if (USE_POSTGRES) {
+            const existing = await db.getUserByUsername(username);
+            if (!existing) return res.status(404).json({ message: "Utilisateur non trouvé." });
+            // Delete old file if it was a local upload
+            if (existing.avatarUrl && existing.avatarUrl.startsWith('/uploads/')) {
+                const oldPath = path.join(__dirname, existing.avatarUrl);
+                if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+            }
+            await db.updateUserAvatar(username, avatarUrl);
+        } else {
+            const users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
+            const idx = users.findIndex(u => u.username === username);
+            if (idx === -1) return res.status(404).json({ message: "Utilisateur non trouvé." });
+            // Delete old file
+            if (users[idx].avatarUrl && users[idx].avatarUrl.startsWith('/uploads/')) {
+                const oldPath = path.join(__dirname, users[idx].avatarUrl);
+                if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+            }
+            users[idx].avatarUrl = avatarUrl;
+            fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+        }
+
+        res.json({ avatarUrl });
+    } catch (error) {
+        console.error("Erreur upload avatar:", error);
+        res.status(500).json({ message: error.message || "Erreur interne." });
+    }
+});
+
+// POST /upload/pool-image — multipart, field "image", body param "poolName"
+app.post("/upload/pool-image", uploadPool.single('image'), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ message: "Aucun fichier reçu." });
+        const { poolName } = req.body;
+        if (!poolName) return res.status(400).json({ message: "Nom du pool requis." });
+
+        const imageUrl = `/uploads/pools/${req.file.filename}`;
+        const draftData = await loadDraftData();
+        if (!draftData[poolName]) return res.status(404).json({ message: "Pool non trouvé." });
+
+        // Delete old image if present
+        if (draftData[poolName].imageUrl && draftData[poolName].imageUrl.startsWith('/uploads/')) {
+            const oldPath = path.join(__dirname, draftData[poolName].imageUrl);
+            if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+        }
+
+        draftData[poolName].imageUrl = imageUrl;
+        await saveDraftData(draftData);
+
+        res.json({ imageUrl });
+    } catch (error) {
+        console.error("Erreur upload pool image:", error);
+        res.status(500).json({ message: error.message || "Erreur interne." });
+    }
+});
+
+// Multer error handler (file type / size rejections)
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError || err.message?.includes('non autorisé')) {
+        return res.status(400).json({ message: err.message });
+    }
+    next(err);
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
 
 // 🔐 Admin switch user endpoint
 app.post("/admin-switch-user", async (req, res) => {
@@ -1519,11 +1645,19 @@ function loadAllPlayers() {
 async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false) {
     try {
         const url = `https://api-web.nhle.com/v1/player/${playerId}/landing`;
-        const response = await fetch(url);
+        let response = await fetch(url);
 
         if (!response.ok) {
-            console.log(`⚠️ Failed to fetch stats for ${playerName} (${playerId})`);
-            return null;
+            if (response.status === 429) {
+                // Rate limited — wait 3 seconds and retry once
+                console.log(`⏳ Rate limited on ${playerName}, retrying in 3s...`);
+                await new Promise(r => setTimeout(r, 3000));
+                response = await fetch(url);
+            }
+            if (!response.ok) {
+                console.log(`⚠️ Failed to fetch stats for ${playerName} (${playerId}) — HTTP ${response.status}`);
+                return null;
+            }
         }
 
         const data = await response.json();
@@ -1711,8 +1845,8 @@ async function updateCurrentStats() {
     const allPlayers = loadAllPlayers();
     const newPlayers = [];
 
-    // Fetch stats in batches of 10 with 300ms between batches to respect rate limits
-    const STATS_BATCH = 10;
+    // Fetch stats 3 at a time with 2s between batches — NHL API rate-limits at ~50 req/burst
+    const STATS_BATCH = 3;
     for (let i = 0; i < allPlayers.length; i += STATS_BATCH) {
         const batch = allPlayers.slice(i, i + STATS_BATCH);
         console.log(`Fetching ${i + 1}–${Math.min(i + STATS_BATCH, allPlayers.length)}/${allPlayers.length}`);
@@ -1735,7 +1869,7 @@ async function updateCurrentStats() {
         newPlayers.push(...batchResults.filter(Boolean));
 
         if (i + STATS_BATCH < allPlayers.length) {
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise(resolve => setTimeout(resolve, 2000));
         }
     }
 
@@ -1824,7 +1958,13 @@ app.get("/current-stats", async (req, res) => {
         const ageHours = stats.lastUpdated
             ? (Date.now() - new Date(stats.lastUpdated).getTime()) / 3600000
             : Infinity;
-        const needsRefresh = !stats.lastUpdated || stats.season !== 20252026 || ageHours > 24;
+        const expectedPlayerCount = loadAllPlayers().length;
+        const cacheIsIncomplete = stats.players.length < Math.min(expectedPlayerCount * 0.5, 200);
+        const needsRefresh = !stats.lastUpdated || stats.season !== 20252026 || ageHours > 24 || cacheIsIncomplete;
+
+        if (cacheIsIncomplete && stats.players.length > 0) {
+            console.log(`⚠️ Stats cache is incomplete: ${stats.players.length}/${expectedPlayerCount} players — refresh triggered`);
+        }
 
         if (!stats.lastUpdated) {
             // Nothing in memory or persistence — block and fetch now (first ever start)
@@ -1834,7 +1974,9 @@ app.get("/current-stats", async (req, res) => {
         }
 
         if (needsRefresh && !statsRefreshInProgress) {
-            const reason = stats.season !== 20252026 ? `wrong season (${stats.season})` : 'cache >24h';
+            const reason = cacheIsIncomplete
+                ? `incomplete cache (${stats.players.length}/${expectedPlayerCount} players)`
+                : stats.season !== 20252026 ? `wrong season (${stats.season})` : 'cache >24h';
             console.log(`📊 Background refresh triggered: ${reason}`);
             statsRefreshInProgress = true;
             updateCurrentStats()

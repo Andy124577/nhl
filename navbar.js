@@ -25,9 +25,34 @@ function initModernNavbar() {
         initializeEventListeners(username, isAdmin);
         checkPendingTrades();
         checkActiveDrafts();
+        // Fetch latest avatar in background and update if changed
+        refreshNavbarAvatar(username);
     } else {
         buildLoggedOutNavbar();
     }
+}
+
+// ==================== AVATAR HELPERS ====================
+function _buildAvatarInner(username) {
+    const av = localStorage.getItem('avatarUrl') || '';
+    if (av) return `<img src="${av}" class="user-avatar-img" alt="${username.charAt(0).toUpperCase()}" id="navAvatarImg">`;
+    return `<img src="Icons/grayUser.png" class="user-avatar-img" alt="${username.charAt(0).toUpperCase()}" id="navAvatarImg">`;
+}
+
+async function refreshNavbarAvatar(username) {
+    try {
+        const base = window.location.hostname.includes('localhost') ? 'http://localhost:3000' : window.location.origin;
+        const r = await fetch(`${base}/user-profile/${encodeURIComponent(username)}`);
+        if (!r.ok) return;
+        const d = await r.json();
+        const url = d.avatarUrl || '';
+        localStorage.setItem('avatarUrl', url);
+        const btn = document.getElementById('userAvatarBtn');
+        if (!btn) return;
+        btn.innerHTML = url
+            ? `<img src="${url}" class="user-avatar-img" alt="${username.charAt(0).toUpperCase()}" id="navAvatarImg">`
+            : `<img src="Icons/grayUser.png" class="user-avatar-img" alt="${username.charAt(0).toUpperCase()}" id="navAvatarImg">`;
+    } catch { /* silent */ }
 }
 
 // ==================== LOGGED OUT NAVBAR ====================
@@ -103,7 +128,7 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                 </button>
                 <div class="user-menu">
                     <button class="user-avatar" id="userAvatarBtn" title="${username}">
-                        ${username.charAt(0).toUpperCase()}
+                        ${_buildAvatarInner(username)}
                     </button>
                     <div class="user-dropdown" id="userDropdownMenu">
                         <div class="user-dropdown-header">
@@ -112,6 +137,12 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                                 ${isAdmin ? '<div class="user-role">Administrateur</div>' : ''}
                             </div>
                         </div>
+                        <div class="dropdown-divider"></div>
+                        <label class="dropdown-item" style="cursor:pointer;" title="Changer la photo de profil">
+                            <img src="Icons/fantazy.png" alt="" style="width:18px;height:18px;object-fit:contain;filter:brightness(0.7);">
+                            <span>Changer la photo</span>
+                            <input type="file" id="avatarUploadInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadUserAvatar(this)">
+                        </label>
                         ${isAdmin ? '<div class="dropdown-divider"></div><div id="adminUsersList" class="admin-users-list"></div>' : ''}
                         <div class="dropdown-divider"></div>
                         <button class="dropdown-item logout" onclick="logout()">
@@ -160,6 +191,39 @@ function buildBottomNav(currentPage) {
     document.body.insertAdjacentHTML('beforeend', html);
 }
 
+// ==================== USER AVATAR UPLOAD ====================
+async function uploadUserAvatar(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const username = localStorage.getItem('username');
+    if (!username) return;
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+    formData.append('username', username);
+
+    const base = window.location.hostname.includes('localhost') ? 'http://localhost:3000' : window.location.origin;
+
+    try {
+        const r = await fetch(`${base}/upload/user-avatar`, { method: 'POST', body: formData });
+        const d = await r.json();
+        if (!r.ok) { alert(d.message || 'Erreur lors du téléversement.'); return; }
+
+        localStorage.setItem('avatarUrl', d.avatarUrl);
+        // Update navbar avatar immediately
+        const btn = document.getElementById('userAvatarBtn');
+        if (btn) {
+            btn.innerHTML = `<img src="${d.avatarUrl}" class="user-avatar-img" alt="${username.charAt(0).toUpperCase()}" id="navAvatarImg">`;
+        }
+        // Close dropdown
+        document.getElementById('userDropdownMenu')?.classList.remove('show');
+    } catch (e) {
+        alert('Erreur de connexion au serveur.');
+    }
+    // Clear the input so the same file can be re-selected
+    input.value = '';
+}
+
 // ==================== EVENT LISTENERS ====================
 function initializeEventListeners(username, isAdmin) {
     const avatarBtn = document.getElementById('userAvatarBtn');
@@ -195,7 +259,7 @@ async function loadAdminUsers() {
                     <div class="admin-section-title">Changer d'utilisateur</div>
                     ${users.map(u => `
                         <button class="dropdown-item" onclick="switchToUser('${u}')">
-                            <span class="user-avatar-small">${u.charAt(0).toUpperCase()}</span>
+                            <img src="Icons/grayUser.png" class="user-avatar-small" style="width:24px;height:24px;border-radius:50%;object-fit:cover;">
                             <span>${u}</span>
                         </button>
                     `).join('')}
@@ -218,6 +282,7 @@ async function switchToUser(username) {
 
         if (response.ok) {
             localStorage.setItem('username', username);
+            localStorage.removeItem('avatarUrl');
             window.location.reload();
         } else {
             alert('Erreur lors du changement d\'utilisateur');
@@ -327,6 +392,7 @@ function logout() {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('username');
     localStorage.removeItem('isAdmin');
+    localStorage.removeItem('avatarUrl');
     window.location.href = 'index.html';
 }
 

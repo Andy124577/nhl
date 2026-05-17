@@ -71,6 +71,18 @@
                         <label for="clanName">Nom du pool</label>
                         <input type="text" id="clanName" placeholder="Ex: Pool des champions 2025" required>
                     </div>
+                    <div class="form-group">
+                        <label>Photo du pool <span style="opacity:.6;font-weight:400;">(optionnel)</span></label>
+                        <div class="pool-img-upload-area" id="poolImgUploadArea" onclick="document.getElementById('poolImageInput').click()">
+                            <img id="poolImgPreview" style="display:none;max-height:80px;border-radius:8px;margin-bottom:8px;">
+                            <div id="poolImgUploadHint">
+                                <span style="font-size:1.4rem;">🖼️</span>
+                                <span style="display:block;margin-top:4px;font-size:.9rem;color:var(--text-secondary);">Cliquez pour ajouter une image</span>
+                                <span style="font-size:.78rem;color:var(--text-secondary);opacity:.7;">JPEG, PNG ou WebP · max 2 Mo</span>
+                            </div>
+                            <input type="file" id="poolImageInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="previewPoolImage(this)">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Card: Selection Config -->
@@ -338,6 +350,7 @@
         });
     </script>
     <script defer src="/socket.io/socket.io.js"></script>
+    <script defer src="avatars.js"></script>
     <script defer src="equipes.js"></script>
     <script defer src="navbar.js"></script>
 </body>

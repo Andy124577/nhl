@@ -193,6 +193,28 @@
     transform: translateY(-2px);
 }
 
+/* Pool image thumbnail in list cards */
+.pool-item-img-wrap { flex-shrink: 0; display: flex; align-items: center; }
+.pool-item-img { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; display: block; }
+.pool-item-img-placeholder { opacity: 0.55; }
+
+/* Pool image upload area in create form */
+.pool-img-upload-area {
+    border: 2px dashed var(--border-gray, rgba(255,255,255,.15));
+    border-radius: 10px; padding: 20px 16px;
+    text-align: center; cursor: pointer;
+    transition: border-color .2s ease, background .2s ease;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.pool-img-upload-area:hover {
+    border-color: var(--primary);
+    background: rgba(0,136,170,.06);
+}
+
+/* Member avatars inline in team detail */
+.member-avatar { border-radius: 50%; object-fit: cover; vertical-align: middle; flex-shrink: 0; }
+.member-avatar-default { opacity: 0.55; }
+
 .pool-item-content { flex: 1; min-width: 0; }
 
 .pool-item-name {
@@ -947,3 +969,72 @@
 html[data-theme="light"] .form-card {
     background: rgba(255, 255, 255, 0.95);
 }
+
+/* ============================================================ */
+/* DRAFTED PLAYERS SECTION (in viewClanTeams modal)             */
+/* ============================================================ */
+.picks-section {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,.08);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.picks-category {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+.picks-cat-label {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--primary, #0088aa);
+    min-width: 74px;
+    padding-top: 6px;
+    flex-shrink: 0;
+}
+.picks-players {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.pick-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 20px;
+    padding: 3px 10px 3px 4px;
+    font-size: .78rem;
+    color: var(--text-main, #eee);
+    transition: background .15s;
+}
+.pick-chip:hover { background: rgba(255,255,255,.12); }
+.pick-headshot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: rgba(255,255,255,.08);
+}
+.pick-team-logo {
+    border-radius: 4px;
+    object-fit: contain;
+    background: transparent;
+}
+.pick-name {
+    white-space: nowrap;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+html[data-theme="light"] .picks-section { border-top-color: rgba(0,0,0,.1); }
+html[data-theme="light"] .pick-chip { background: rgba(0,0,0,.05); border-color: rgba(0,0,0,.1); color: #222; }
+html[data-theme="light"] .pick-chip:hover { background: rgba(0,0,0,.1); }
+html[data-theme="light"] .pick-headshot { background: rgba(0,0,0,.05); }
