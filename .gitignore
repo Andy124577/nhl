@@ -13,11 +13,15 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
-# IDE
+# IDE / outils
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# Fichiers de l'outil Claude Code (répertoire verrouillé : son suivi par git
+# fait échouer tout checkout avec « Permission denied »)
+.claude/
 
 # Build files
 dist/
