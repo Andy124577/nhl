@@ -289,3 +289,132 @@ html[data-theme="light"] .navbar-logo {
 /* Action destructive dans le menu utilisateur (suppression de compte) */
 .dropdown-item.danger { color: #ff6b7a; }
 .dropdown-item.danger:hover { background: rgba(255, 71, 87, .15); color: #ff4757; }
+
+/* ==================== MODALE GÉNÉRIQUE (navbar) ====================
+   Préfixe « fz- » : navbar.css est chargé partout, alors que .modal est
+   défini différemment par pool.css / classement.css. Chaque variable a une
+   valeur de repli, car toutes les pages ne déclarent pas le même :root. */
+
+@keyframes fzModalFade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes fzModalRise {
+    from { opacity: 0; transform: translateY(16px) scale(.98) }
+    to   { opacity: 1; transform: translateY(0) scale(1) }
+}
+
+.fz-modal {
+    position: fixed;
+    inset: 0;
+    background: var(--overlay-dark, rgba(10, 15, 50, .6));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fzModalFade .2s ease;
+}
+
+.fz-modal-card {
+    background: var(--card, #161630);
+    border: 1px solid var(--border-light, #1E1E3C);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 460px;
+    overflow: hidden;
+    box-shadow: 0 28px 64px rgba(0, 0, 0, .6);
+    animation: fzModalRise .25s ease;
+}
+
+.fz-modal-header {
+    background: linear-gradient(135deg, var(--primary, #00D4FF) 0%, #00A8CC 100%);
+    padding: 20px 24px;
+}
+.fz-modal-header.danger {
+    background: linear-gradient(135deg, var(--danger, #FF4757) 0%, #C62836 100%);
+}
+.fz-modal-header h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: .3px;
+    color: var(--bg, #0A0A1A);
+}
+
+.fz-modal-body {
+    padding: 22px 24px;
+    color: var(--text-secondary, #7B8CC4);
+    font-size: .92rem;
+    line-height: 1.6;
+}
+.fz-modal-body p { margin: 0 0 12px; }
+.fz-modal-body p:last-child { margin-bottom: 0; }
+.fz-modal-body ul { margin: 0 0 12px 20px; }
+.fz-modal-body li { margin-bottom: 6px; }
+.fz-modal-body strong { color: var(--text-main, #FFF); }
+
+.fz-modal-input {
+    width: 100%;
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: var(--bg, #0A0A1A);
+    border: 1px solid var(--border-gray, #1E1E3C);
+    border-radius: 10px;
+    color: var(--text-main, #FFF);
+    font-size: .95rem;
+    box-sizing: border-box;
+}
+.fz-modal-input:focus {
+    outline: none;
+    border-color: var(--primary, #00D4FF);
+}
+
+.fz-modal-error {
+    margin-top: 10px;
+    color: var(--danger, #FF4757);
+    font-size: .85rem;
+    font-weight: 600;
+    min-height: 1.1em;
+}
+
+.fz-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-light, #1E1E3C);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.fz-modal-btn {
+    padding: 11px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: .92rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .15s ease, background .2s ease;
+    min-height: 44px;
+    background: linear-gradient(135deg, var(--primary, #00D4FF) 0%, #00A8CC 100%);
+    color: var(--bg, #0A0A1A);
+}
+.fz-modal-btn:hover { transform: translateY(-1px); }
+.fz-modal-btn.danger {
+    background: linear-gradient(135deg, var(--danger, #FF4757) 0%, #C62836 100%);
+    color: #FFF;
+}
+.fz-modal-btn.secondary {
+    background: var(--bg-hover, #1A1A38);
+    color: var(--text-secondary, #7B8CC4);
+    border: 1px solid var(--border-gray, #1E1E3C);
+}
+.fz-modal-btn.secondary:hover {
+    color: var(--text-main, #FFF);
+    border-color: var(--primary, #00D4FF);
+}
+
+@media (max-width: 480px) {
+    .fz-modal-card { border-radius: 16px; }
+    .fz-modal-footer { flex-direction: column-reverse; }
+    .fz-modal-btn { width: 100%; }
+}

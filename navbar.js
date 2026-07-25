@@ -414,74 +414,196 @@ function navbarBaseUrl() {
         : window.location.origin;
 }
 
+/**
+ * Modale générique, en remplacement de prompt()/confirm()/alert().
+ *
+ * Retourne une promesse :
+ *   - champ mot de passe  -> la valeur saisie, ou null si annulé
+ *   - sans champ          -> true si confirmé, null si annulé
+ *
+ * `onSubmit` permet de garder la modale ouverte et d'y afficher une erreur
+ * (ex. mauvais mot de passe) : retourner une chaîne = message d'erreur.
+ */
+function fzModal({ title, bodyHTML, confirmLabel = 'Confirmer', cancelLabel = 'Annuler',
+                   danger = false, password = false, onSubmit = null }) {
+    return new Promise(resolve => {
+        const overlay = document.createElement('div');
+        overlay.className = 'fz-modal';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.innerHTML = `
+            <div class="fz-modal-card">
+                <div class="fz-modal-header ${danger ? 'danger' : ''}">
+                    <h3>${title}</h3>
+                </div>
+                <div class="fz-modal-body">
+                    ${bodyHTML || ''}
+                    ${password ? `
+                        <input type="password" class="fz-modal-input"
+                               autocomplete="current-password"
+                               placeholder="Votre mot de passe">
+                        <div class="fz-modal-error" aria-live="polite"></div>` : ''}
+                </div>
+                <div class="fz-modal-footer">
+                    <button class="fz-modal-btn secondary" data-act="cancel">${cancelLabel}</button>
+                    <button class="fz-modal-btn ${danger ? 'danger' : ''}" data-act="ok">${confirmLabel}</button>
+                </div>
+            </div>`;
+
+        const previousFocus = document.activeElement;
+        document.body.appendChild(overlay);
+
+        const input = overlay.querySelector('.fz-modal-input');
+        const errorBox = overlay.querySelector('.fz-modal-error');
+        const okBtn = overlay.querySelector('[data-act="ok"]');
+        (input || okBtn).focus();
+
+        const close = value => {
+            document.removeEventListener('keydown', onKey);
+            overlay.remove();
+            if (previousFocus && previousFocus.focus) previousFocus.focus();
+            resolve(value);
+        };
+
+        const submit = async () => {
+            const value = password ? (input.value || '') : true;
+            if (password && !value) {
+                errorBox.textContent = 'Veuillez saisir votre mot de passe.';
+                return;
+            }
+            if (!onSubmit) return close(value);
+
+            okBtn.disabled = true;
+            const previousLabel = okBtn.textContent;
+            okBtn.textContent = 'Un instant…';
+            const error = await onSubmit(value);
+            okBtn.disabled = false;
+            okBtn.textContent = previousLabel;
+
+            if (error) {
+                if (errorBox) errorBox.textContent = error;
+                if (input) { input.value = ''; input.focus(); }
+                return;
+            }
+            close(value);
+        };
+
+        function onKey(e) {
+            if (e.key === 'Escape') close(null);
+            if (e.key === 'Enter' && overlay.contains(document.activeElement)) submit();
+        }
+
+        document.addEventListener('keydown', onKey);
+        overlay.addEventListener('click', e => { if (e.target === overlay) close(null); });
+        overlay.querySelector('[data-act="cancel"]').addEventListener('click', () => close(null));
+        okBtn.addEventListener('click', submit);
+    });
+}
+
+/** Message simple, en remplacement de alert(). */
+function fzNotice(title, bodyHTML, danger = false) {
+    return fzModal({
+        title, bodyHTML, danger,
+        confirmLabel: 'OK',
+        cancelLabel: 'Fermer'
+    });
+}
+
 async function exportMyData() {
     const username = localStorage.getItem('username');
     if (!username) return;
 
-    const password = prompt(
-        "Pour protéger vos renseignements, confirmez votre mot de passe :");
-    if (!password) return;
+    await fzModal({
+        title: 'Télécharger mes données',
+        bodyHTML: `
+            <p>Vous obtiendrez un fichier <strong>JSON</strong> contenant votre compte
+            et vos participations aux pools.</p>
+            <p>Votre mot de passe n'est jamais inclus dans l'export.</p>
+            <p>Confirmez votre mot de passe pour continuer :</p>`,
+        confirmLabel: 'Télécharger',
+        password: true,
+        onSubmit: async (motDePasse) => {
+            try {
+                const res = await fetch(`${navbarBaseUrl()}/account/export`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password: motDePasse })
+                });
+                const data = await res.json();
+                if (!res.ok) return data.message || 'Export impossible.';
 
-    try {
-        const res = await fetch(`${navbarBaseUrl()}/account/export`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-            alert(data.message || "Export impossible.");
-            return;
+                const blob = new Blob([JSON.stringify(data, null, 2)],
+                    { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `fantazy-donnees-${username}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                return null;
+            } catch (err) {
+                console.error('Erreur export :', err);
+                return 'Impossible de joindre le serveur.';
+            }
         }
-
-        // Téléchargement local du fichier JSON.
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `fantazy-donnees-${username}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    } catch (err) {
-        console.error('Erreur export :', err);
-        alert("Impossible de joindre le serveur.");
-    }
+    });
 }
 
 async function deleteMyAccount() {
     const username = localStorage.getItem('username');
     if (!username) return;
 
-    if (!confirm(
-        "Supprimer définitivement votre compte ?\n\n"
-        + "• Votre compte et votre photo de profil seront effacés.\n"
-        + "• Vous serez retiré de tous vos pools.\n"
-        + "• Cette action est IRRÉVERSIBLE.\n\n"
-        + "Astuce : « Télécharger mes données » vous permet d'en garder une copie.")) return;
+    // Étape 1 : avertissement clair, sans champ de saisie. On sépare la prise de
+    // décision de la confirmation d'identité pour éviter une suppression réflexe.
+    const confirme = await fzModal({
+        title: 'Supprimer mon compte',
+        bodyHTML: `
+            <p>Cette action est <strong>irréversible</strong>. Elle entraîne :</p>
+            <ul>
+                <li>la suppression de votre compte et de votre photo de profil ;</li>
+                <li>votre retrait de tous vos pools.</li>
+            </ul>
+            <p>Vos sélections passées restent visibles dans l'historique des pools,
+            dissociées de votre compte, pour ne pas fausser le classement des autres
+            participants.</p>
+            <p>Vous pouvez d'abord utiliser <strong>« Télécharger mes données »</strong>
+            pour en conserver une copie.</p>`,
+        confirmLabel: 'Continuer',
+        danger: true
+    });
+    if (!confirme) return;
 
-    const password = prompt("Confirmez votre mot de passe pour supprimer le compte :");
-    if (!password) return;
-
-    try {
-        const res = await fetch(`${navbarBaseUrl()}/account/delete`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-            alert(data.message || "Suppression impossible.");
-            return;
+    // Étape 2 : confirmation d'identité.
+    const supprime = await fzModal({
+        title: 'Confirmer la suppression',
+        bodyHTML: '<p>Saisissez votre mot de passe pour supprimer définitivement votre compte.</p>',
+        confirmLabel: 'Supprimer définitivement',
+        danger: true,
+        password: true,
+        onSubmit: async (motDePasse) => {
+            try {
+                const res = await fetch(`${navbarBaseUrl()}/account/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password: motDePasse })
+                });
+                const data = await res.json();
+                if (!res.ok) return data.message || 'Suppression impossible.';
+                return null;
+            } catch (err) {
+                console.error('Erreur suppression :', err);
+                return 'Impossible de joindre le serveur.';
+            }
         }
-        alert("Votre compte a été supprimé. Merci d'avoir utilisé Fantazy.");
-        localStorage.clear();
-        window.location.href = 'index.html';
-    } catch (err) {
-        console.error('Erreur suppression :', err);
-        alert("Impossible de joindre le serveur.");
-    }
+    });
+    if (!supprime) return;
+
+    await fzNotice('Compte supprimé',
+        "<p>Votre compte a été supprimé. Merci d'avoir utilisé Fantazy.</p>");
+    localStorage.clear();
+    window.location.href = 'index.html';
 }
 
 // ==================== PIED DE PAGE / MENTIONS LÉGALES ====================
