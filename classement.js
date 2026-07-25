@@ -93,21 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ==================== DATA LOADING ====================
 async function fetchImageData() {
-    try {
-        const cached = localStorage.getItem('imageList');
-        if (cached) {
-            imageList = JSON.parse(cached);
-            console.log('✅ Images loaded from cache');
-            return;
-        }
-
-        const response = await fetch('images.json');
-        imageList = await response.json();
-        localStorage.setItem('imageList', JSON.stringify(imageList));
-        console.log('✅ Images loaded from server');
-    } catch (error) {
-        console.error('❌ Error loading images:', error);
-    }
+    // Les photos viennent du CDN de la LNH (voir headshots.js) : rien à charger.
 }
 
 async function loadAllUserPools() {
@@ -563,7 +549,7 @@ function renderTeamRoster(roster) {
         let imageHTML = '';
         if (player.type === 'team') {
             const teamLogo = `teams/${player.teamAbbrev}.png`;
-            imageHTML = `<img src="${teamLogo}" alt="${player.name}" onerror="this.src='teams/NHL.png'">`;
+            imageHTML = `<img src="${teamLogo}" alt="${player.name}" onerror="this.style.display='none'">`;
         } else {
             // Try multiple sources for player headshot
             let headshot = null;
@@ -683,11 +669,7 @@ function showPoolList() {
 
 // ==================== UTILITY FUNCTIONS ====================
 function getMatchingImage(playerName) {
-    const cleanName = playerName.replace(/\s/g, '_');
-    const match = imageList.find(img =>
-        img.replace(/^faces\//, '').replace(/_\d{1,2}_\d{1,2}_\d{4}|_away/g, '').replace('.png', '') === cleanName
-    );
-    return match || null;
+    return resolveHeadshotByName(playerName);
 }
 
 function getCurrentPlayerStats(playerName, playerId) {

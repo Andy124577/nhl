@@ -228,3 +228,60 @@ html[data-theme="light"] .navbar-logo {
 #bottomTradeBadge {
     animation: trade-badge-pull 1.6s ease-in-out infinite;
 }
+
+/* ==================== PIED DE PAGE LÉGAL ==================== */
+.site-legal-footer {
+    margin-top: 48px;
+    padding: 28px 20px 24px;
+    border-top: 1px solid var(--navbar-border);
+    background: var(--navbar-bg);
+    text-align: center;
+}
+
+.site-legal-footer .legal-disclaimer {
+    max-width: 780px;
+    margin: 0 auto 14px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.6;
+}
+
+.site-legal-footer .legal-disclaimer strong {
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+.site-legal-footer .legal-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.site-legal-footer .legal-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 6px 2px;
+    border-radius: 6px;
+    transition: color 0.2s ease;
+}
+
+.site-legal-footer .legal-links a:hover,
+.site-legal-footer .legal-links a:focus-visible {
+    color: var(--text-main);
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .site-legal-footer {
+        margin-top: 32px;
+        padding: 22px 16px 20px;
+    }
+    .site-legal-footer .legal-disclaimer {
+        font-size: 0.75rem;
+    }
+}

@@ -113,29 +113,11 @@ function logout(event) {
 }
 
 async function fetchImageData() {
-    try {
-        const cachedImages = localStorage.getItem("imageList");
-        if (cachedImages) {
-            imageList = JSON.parse(cachedImages);
-            console.log("✅ Images chargées depuis le cache local.");
-            return;
-        }
-
-        const response = await fetch("images.json", { cache: "no-store" });
-        imageList = await response.json();
-        localStorage.setItem("imageList", JSON.stringify(imageList));
-        console.log("✅ Images chargées depuis le serveur et mises en cache.");
-    } catch (error) {
-        console.error("❌ Erreur chargement images :", error);
-    }
+    // Les photos viennent du CDN de la LNH (voir headshots.js) : rien à charger.
 }
 
 function getMatchingImage(skaterName) {
-    const formattedName = skaterName.replace(/\s/g, "_");
-    return imageList.find(imagePath => {
-        const baseName = imagePath.replace(/^faces\//, "").replace(/_\d{1,2}_\d{1,2}_\d{4}|_away/g, "").replace(".png", "");
-        return baseName === formattedName;
-    }) || null;
+    return resolveHeadshotByName(skaterName);
 }
 
 function getTeamLogoPath(teamAbbrevs) {

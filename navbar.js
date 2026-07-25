@@ -396,7 +396,37 @@ function logout() {
     window.location.href = 'index.html';
 }
 
+// ==================== PIED DE PAGE / MENTIONS LÉGALES ====================
+// Avis de non-affiliation : obligatoire pour appuyer l'usage nominatif des
+// marques et logos d'équipes. Injecté sur toutes les pages via la navbar.
+function renderLegalFooter() {
+    if (document.querySelector('.site-legal-footer')) return;
+
+    const year = new Date().getFullYear();
+    const html = `
+        <footer class="site-legal-footer">
+            <p class="legal-disclaimer">
+                Fantazy est un service indépendant, <strong>sans aucune affiliation
+                avec la Ligue nationale de hockey</strong>, ses équipes ou l'AJLNH,
+                et n'est ni commandité ni approuvé par elles. Les noms d'équipes,
+                logos et photographies demeurent la propriété de leurs titulaires
+                respectifs et sont utilisés à des fins d'identification seulement.
+                Les statistiques proviennent de sources publiques.
+            </p>
+            <p class="legal-links">
+                <a href="confidentialite.html">Politique de confidentialité</a>
+                <span aria-hidden="true">·</span>
+                <a href="conditions.html">Conditions d'utilisation</a>
+                <span aria-hidden="true">·</span>
+                <span class="legal-copy">© ${year} Fantazy</span>
+            </p>
+        </footer>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
 // ==================== INIT ====================
 document.addEventListener('DOMContentLoaded', () => {
     initModernNavbar();
+    renderLegalFooter();
 });

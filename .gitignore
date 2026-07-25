@@ -31,3 +31,14 @@ current_stats.json
 team-standings.json
 nhl_game_logs.json
 server.log
+
+# Credentials / données utilisateurs — ne jamais versionner
+users.json
+
+# Toolchain locale (JDK Oracle sous licence NFTC : ne pas redistribuer)
+Oracle_JDK-24/
+
+# Médias sous droits d'auteur — les photos de joueurs proviennent du CDN
+# de la LNH à l'exécution et ne doivent pas être copiées dans le dépôt.
+faces/
+images.json

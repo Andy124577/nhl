@@ -53,19 +53,11 @@ async function fetchPlayerData() {
     }
 }
 async function fetchImageData() {
-    if (imageList.length > 0) return;
-    try {
-        const t = await fetch("images.json");
-        if (!t.ok) throw new Error(`Error: ${t.status} - ${t.statusText}`);
-        imageList = await t.json()
-    } catch (t) {
-        console.error("Failed to fetch image data:", t)
-    }
+    // Les photos viennent du CDN de la LNH (voir headshots.js) : rien à charger.
 }
 
 function getMatchingImage(t) {
-    const e = t.replace(/\s/g, "_");
-    return imageList.find(t => t.replace(/^faces\//, "").replace(/_\d{1,2}_\d{1,2}_\d{4}|_away/g, "").replace(".png", "") === e) || null
+    return resolveHeadshotByName(t)
 }
 
 function getTeamLogoPath(t) {

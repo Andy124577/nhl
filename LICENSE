@@ -1,0 +1,58 @@
+Fantazy — Tous droits réservés / All rights reserved
+Copyright (c) 2026
+
+Ce dépôt n'est PAS publié sous une licence libre. Le code source original de
+Fantazy est protégé par le droit d'auteur ; aucune permission de copier, de
+modifier ou de redistribuer n'est accordée par la simple mise à disposition du
+code.
+
+Raison de ce choix : le dépôt contient des éléments appartenant à des tiers
+(voir NOTICE ci-dessous). Publier l'ensemble sous une licence permissive
+(MIT, ISC, etc.) laisserait faussement croire que ces éléments peuvent être
+réutilisés librement, ce qui n'est pas le cas.
+
+-------------------------------------------------------------------------------
+NOTICE — Éléments appartenant à des tiers
+-------------------------------------------------------------------------------
+
+1. LOGOS D'ÉQUIPES (répertoire `teams/`)
+
+   Les logos des clubs sont des marques de commerce déposées de la Ligue
+   nationale de hockey et de ses clubs membres. Ils sont inclus et affichés
+   uniquement à des fins d'IDENTIFICATION (indiquer l'équipe d'un joueur), au
+   titre de l'usage nominatif. Aucun droit de propriété n'est revendiqué.
+
+   Fantazy n'est ni affilié, ni autorisé, ni commandité, ni approuvé par la
+   LNH, ses clubs membres ou l'AJLNH.
+
+2. PHOTOGRAPHIES DE JOUEURS
+
+   AUCUNE photographie de joueur n'est stockée dans ce dépôt. Les photos sont
+   chargées à l'exécution depuis le CDN public de la LNH
+   (assets.nhle.com) et demeurent la propriété de leurs titulaires.
+   Voir `headshots.js`. Ne réintroduisez pas de copies locales : le répertoire
+   `faces/` est volontairement ignoré par git.
+
+3. STATISTIQUES
+
+   Les statistiques sont des données factuelles obtenues via les interfaces
+   publiques de la LNH. Elles sont utilisées à des fins d'information.
+
+4. DÉPENDANCES LOGICIELLES
+
+   Les paquets npm (voir `package.json`) demeurent soumis à leurs licences
+   respectives, consultables dans `node_modules/*/LICENSE`.
+
+5. TROUSSE JAVA ORACLE
+
+   Un JDK Oracle peut être présent localement dans `Oracle_JDK-24/`. Il est
+   soumis aux « Oracle No-Fee Terms and Conditions » (NFTC) et n'est PAS
+   versionné dans ce dépôt. La NFTC interdit notamment toute redistribution
+   assortie de frais. Ce répertoire n'est pas utilisé par l'application et
+   peut être supprimé sans risque.
+
+-------------------------------------------------------------------------------
+
+Titulaires de droits : pour toute demande de retrait concernant un contenu
+présent ici, contactez le responsable du dépôt ; les demandes légitimes sont
+traitées promptement.

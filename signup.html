@@ -295,6 +295,20 @@
         }
         .login-link a:hover { opacity: 0.8; text-decoration: underline; }
 
+        .consent-note {
+            text-align: center;
+            margin-top: 14px;
+            font-size: 0.78rem;
+            line-height: 1.55;
+            color: var(--text-muted);
+        }
+        .consent-note a {
+            color: var(--text-muted);
+            text-decoration: underline;
+            font-weight: 600;
+        }
+        .consent-note a:hover { color: var(--primary); }
+
         @media (max-width: 480px) {
             .auth-topbar { padding: 14px 20px; }
             .auth-card { padding: 32px 24px; border-radius: 16px; }
@@ -433,6 +447,13 @@
             </div>
 
             <button id="signupBtn" class="btn-submit" onclick="signup()">Créer mon compte</button>
+
+            <p class="consent-note">
+                En créant un compte, vous acceptez les
+                <a href="conditions.html">conditions d'utilisation</a> et la
+                <a href="confidentialite.html">politique de confidentialité</a>.
+                Fantazy est gratuit et sans lien avec la LNH.
+            </p>
 
             <div class="divider">ou</div>
 

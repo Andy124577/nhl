@@ -133,7 +133,7 @@ body {
   position: relative;
   overflow: hidden;
   background: var(--bg);
-  padding: 70px 24px 40px;
+  padding: 20px 2px 2px;
   text-align: center;
 }
 
@@ -159,22 +159,6 @@ body {
   margin: 0 auto;
 }
 
-.stats-hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 18px;
-  background: rgba(0,212,255,.12);
-  border: 1px solid rgba(0,212,255,.3);
-  border-radius: 100px;
-  color: var(--primary);
-  font-size: .76rem;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-bottom: 20px;
-}
-
 .stats-hero-title {
   font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
   font-size: clamp(2rem, 4.5vw, 3.6rem);
@@ -182,7 +166,6 @@ body {
   letter-spacing: 2px;
   line-height: 1.1;
   color: var(--text-main);
-  margin-bottom: 14px;
 }
 
 .stats-hero-sub {
@@ -210,17 +193,12 @@ body {
   padding: 24px 26px;
   border-radius: 18px;
   border: 1px solid var(--border-light);
-  box-shadow: 0 4px 16px rgba(0,0,0,.3), var(--glow-primary);
   margin-bottom: 28px;
   display: flex;
   gap: 18px;
   flex-wrap: wrap;
   align-items: flex-end;
   transition: all .3s ease;
-}
-.filters-section:hover {
-  border-color: rgba(0,212,255,.28);
-  box-shadow: 0 6px 20px rgba(0,0,0,.35), var(--glow-primary-strong);
 }
 
 .filter-group {
@@ -1308,7 +1286,8 @@ tbody tr:hover .player-photo img.face {
 
 @media (max-width: 480px) {
   .stats-hero {
-    padding: 50px 16px 28px;
+    padding-top: 10px;
+    padding-bottom: 0px;
   }
 
   .stats-hero-badge {

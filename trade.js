@@ -32,12 +32,7 @@ let currentStats = null;
 // IMAGE & STATS HELPERS
 // ============================================================
 function getMatchingImage(name) {
-    const normalized = name.replace(/\s/g, '_');
-    return imageList.find(path =>
-        path.replace(/^faces\//, '')
-            .replace(/_\d{1,2}_\d{1,2}_\d{4}(_away)?\.png$/, '')
-            === normalized
-    ) || null;
+    return resolveHeadshotByName(name);
 }
 
 function getPlayerCurrentStats(name) {
@@ -170,11 +165,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Load images and current stats in parallel
-    const [imagesRes, statsRes] = await Promise.allSettled([
-        fetch('images.json').then(r => r.json()),
+    const [statsRes] = await Promise.allSettled([
         fetch(`${BASE_URL}/current-stats`, { cache: 'no-store' }).then(r => r.json())
     ]);
-    if (imagesRes.status === 'fulfilled') imageList = imagesRes.value;
     if (statsRes.status === 'fulfilled') currentStats = statsRes.value;
 
     await loadDraftData();
