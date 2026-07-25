@@ -145,6 +145,14 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                         </label>
                         ${isAdmin ? '<div class="dropdown-divider"></div><div id="adminUsersList" class="admin-users-list"></div>' : ''}
                         <div class="dropdown-divider"></div>
+                        <div class="admin-section-title">Mes données</div>
+                        <button class="dropdown-item" onclick="exportMyData()">
+                            <span>Télécharger mes données</span>
+                        </button>
+                        <button class="dropdown-item danger" onclick="deleteMyAccount()">
+                            <span>Supprimer mon compte</span>
+                        </button>
+                        <div class="dropdown-divider"></div>
                         <button class="dropdown-item logout" onclick="logout()">
                             <img src="Icons/deconnexion.png" alt="" style="width:18px;height:18px;object-fit:contain;filter:brightness(0.8);">
                             <span>Déconnexion</span>
@@ -394,6 +402,86 @@ function logout() {
     localStorage.removeItem('isAdmin');
     localStorage.removeItem('avatarUrl');
     window.location.href = 'index.html';
+}
+
+// ==================== DROITS SUR LES DONNÉES (LOI 25) ====================
+// Le mot de passe est redemandé : /account/export expose l'ensemble des
+// renseignements et /account/delete est irréversible.
+
+function navbarBaseUrl() {
+    return window.location.hostname.includes('localhost')
+        ? 'http://localhost:3000'
+        : window.location.origin;
+}
+
+async function exportMyData() {
+    const username = localStorage.getItem('username');
+    if (!username) return;
+
+    const password = prompt(
+        "Pour protéger vos renseignements, confirmez votre mot de passe :");
+    if (!password) return;
+
+    try {
+        const res = await fetch(`${navbarBaseUrl()}/account/export`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.message || "Export impossible.");
+            return;
+        }
+
+        // Téléchargement local du fichier JSON.
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `fantazy-donnees-${username}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error('Erreur export :', err);
+        alert("Impossible de joindre le serveur.");
+    }
+}
+
+async function deleteMyAccount() {
+    const username = localStorage.getItem('username');
+    if (!username) return;
+
+    if (!confirm(
+        "Supprimer définitivement votre compte ?\n\n"
+        + "• Votre compte et votre photo de profil seront effacés.\n"
+        + "• Vous serez retiré de tous vos pools.\n"
+        + "• Cette action est IRRÉVERSIBLE.\n\n"
+        + "Astuce : « Télécharger mes données » vous permet d'en garder une copie.")) return;
+
+    const password = prompt("Confirmez votre mot de passe pour supprimer le compte :");
+    if (!password) return;
+
+    try {
+        const res = await fetch(`${navbarBaseUrl()}/account/delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.message || "Suppression impossible.");
+            return;
+        }
+        alert("Votre compte a été supprimé. Merci d'avoir utilisé Fantazy.");
+        localStorage.clear();
+        window.location.href = 'index.html';
+    } catch (err) {
+        console.error('Erreur suppression :', err);
+        alert("Impossible de joindre le serveur.");
+    }
 }
 
 // ==================== PIED DE PAGE / MENTIONS LÉGALES ====================

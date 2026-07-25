@@ -285,3 +285,7 @@ html[data-theme="light"] .navbar-logo {
         font-size: 0.75rem;
     }
 }
+
+/* Action destructive dans le menu utilisateur (suppression de compte) */
+.dropdown-item.danger { color: #ff6b7a; }
+.dropdown-item.danger:hover { background: rgba(255, 71, 87, .15); color: #ff4757; }

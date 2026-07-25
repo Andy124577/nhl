@@ -1308,6 +1308,120 @@ app.post("/admin-login", async (req, res) => {
     }
 });
 
+// ─── Droits Loi 25 : portabilité et suppression de compte ─────────────────────
+// La politique de confidentialité promet ces droits ; ils doivent être
+// réellement exécutables. Les deux routes exigent le mot de passe : ce sont des
+// opérations sensibles (l'une expose toutes les données, l'autre les détruit).
+
+/** Vérifie username + mot de passe. Retourne l'utilisateur ou null. */
+const authenticateUser = async (username, password) => {
+    if (!username || !password) return null;
+    let user;
+    if (USE_POSTGRES) {
+        user = await db.getUserByUsername(username);
+    } else {
+        const users = await loadUsers();
+        user = users.find(u => u.username === username);
+    }
+    if (!user) return null;
+    const isMatch = await bcrypt.compare(password, user.password);
+    return isMatch ? user : null;
+};
+
+// POST /account/export — portabilité : toutes les données de l'utilisateur.
+app.post("/account/export", async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const user = await authenticateUser(username, password);
+        if (!user) return res.status(401).json({ message: "Identifiants invalides." });
+
+        const draftData = await loadDraftData();
+        const pools = [];
+        Object.entries(draftData || {}).forEach(([poolName, poolData]) => {
+            Object.entries(poolData.teams || {}).forEach(([teamName, teamData]) => {
+                if ((teamData.members || []).includes(username)) {
+                    pools.push({
+                        pool: poolName,
+                        equipe: teamName,
+                        joueursRepeches: {
+                            offensive: teamData.offensive || [],
+                            defensive: teamData.defensive || [],
+                            goalie: teamData.goalie || [],
+                            team: teamData.team || []
+                        }
+                    });
+                }
+            });
+        });
+
+        // Le mot de passe (même haché) n'est jamais exporté.
+        res.setHeader('Content-Disposition',
+            `attachment; filename="fantazy-donnees-${username}.json"`);
+        res.json({
+            genereLe: new Date().toISOString(),
+            compte: {
+                nomUtilisateur: user.username,
+                photoProfil: user.avatarUrl || null
+            },
+            pools,
+            note: "Export complet des renseignements personnels détenus par Fantazy. "
+                + "Le mot de passe n'est conservé que sous forme de empreinte bcrypt "
+                + "et n'est pas exportable."
+        });
+    } catch (error) {
+        console.error("Erreur lors de l'export du compte :", error);
+        res.status(500).json({ message: "Erreur interne du serveur." });
+    }
+});
+
+// POST /account/delete — droit à la suppression.
+app.post("/account/delete", async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const user = await authenticateUser(username, password);
+        if (!user) return res.status(401).json({ message: "Identifiants invalides." });
+
+        // 1. Dissocier l'utilisateur de tous les pools. On retire l'appartenance
+        //    sans effacer les sélections : supprimer une équipe entière fausserait
+        //    le classement des autres participants (cf. politique, section 5).
+        const draftData = await loadDraftData();
+        let poolsTouches = 0;
+        Object.values(draftData || {}).forEach(poolData => {
+            Object.values(poolData.teams || {}).forEach(teamData => {
+                if (Array.isArray(teamData.members) && teamData.members.includes(username)) {
+                    teamData.members = teamData.members.filter(m => m !== username);
+                    poolsTouches++;
+                }
+            });
+        });
+        if (poolsTouches > 0) await saveDraftData(draftData);
+
+        // 2. Supprimer la photo de profil téléversée.
+        if (user.avatarUrl && user.avatarUrl.startsWith('/uploads/avatars/')) {
+            const avatarPath = path.join(__dirname, user.avatarUrl.replace(/^\//, ''));
+            try {
+                if (fs.existsSync(avatarPath)) fs.unlinkSync(avatarPath);
+            } catch (e) {
+                console.warn("⚠️ Photo de profil non supprimée :", e.message);
+            }
+        }
+
+        // 3. Supprimer le compte.
+        if (USE_POSTGRES) {
+            await db.deleteUser(username);
+        } else {
+            const users = await loadUsers();
+            await saveUsers(users.filter(u => u.username !== username));
+        }
+
+        console.log(`🗑️ Compte supprimé : ${username} (dissocié de ${poolsTouches} équipe(s))`);
+        res.json({ message: "Compte supprimé définitivement.", poolsTouches });
+    } catch (error) {
+        console.error("Erreur lors de la suppression du compte :", error);
+        res.status(500).json({ message: "Erreur interne du serveur." });
+    }
+});
+
 // ─── Profile picture endpoints ────────────────────────────────────────────────
 
 // GET /user-profile/:username — public profile info (no password)
