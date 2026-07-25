@@ -215,3 +215,16 @@ html[data-theme="light"] .navbar-logo {
         font-size: 0.78rem;
     }
 }
+
+/* ============================================================ */
+/* PENDING TRADE BADGE — stronger pull (Zeigarnik / Von Restorff) */
+/* ============================================================ */
+@keyframes trade-badge-pull {
+    0%, 100% { transform: scale(1); box-shadow: 0 2px 8px rgba(255,71,87,0.4); }
+    50%      { transform: scale(1.18); box-shadow: 0 0 14px rgba(255,71,87,0.85); }
+}
+
+#desktopTradeBadge,
+#bottomTradeBadge {
+    animation: trade-badge-pull 1.6s ease-in-out infinite;
+}

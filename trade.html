@@ -38,6 +38,24 @@
 
         <!-- SECTION: Propose Trade -->
         <div id="proposeTradeSection" class="trade-section active">
+        <!-- Progress Breadcrumb (Goal-Gradient Effect) -->
+        <div class="trade-progress" id="tradeProgress">
+            <div class="tp-step active" data-step="1" onclick="goToStep(1)">
+                <span class="tp-dot">1</span>
+                <span class="tp-label">Pool</span>
+            </div>
+            <div class="tp-line" data-line="1"></div>
+            <div class="tp-step" data-step="2" onclick="goToStep(2)">
+                <span class="tp-dot">2</span>
+                <span class="tp-label">Équipe</span>
+            </div>
+            <div class="tp-line" data-line="2"></div>
+            <div class="tp-step" data-step="3" onclick="goToStep(3)">
+                <span class="tp-dot">3</span>
+                <span class="tp-label">Échange</span>
+            </div>
+        </div>
+
         <!-- Step 1: Pool Selection -->
         <div class="trade-step" id="step1">
             <div class="step-header">
@@ -48,7 +66,14 @@
                 </div>
             </div>
 
-            <div class="pool-selector" id="poolSelector">
+            <!-- Skeleton (Doherty Threshold) -->
+            <div class="pool-selector" id="poolSelectorSkeleton">
+                <div class="pool-card-skeleton"></div>
+                <div class="pool-card-skeleton"></div>
+                <div class="pool-card-skeleton"></div>
+            </div>
+
+            <div class="pool-selector" id="poolSelector" style="display:none;">
                 <!-- Filled by JS -->
             </div>
         </div>
@@ -56,6 +81,9 @@
         <!-- Step 2: Team Selection -->
         <div class="trade-step hidden" id="step2">
             <div class="step-header">
+                <button class="btn-back" onclick="backToStep1()">
+                    <span data-icon="chevron-left" data-icon-size="15"></span> Retour
+                </button>
                 <div class="step-number">2</div>
                 <div class="step-info">
                     <h3>Choisir un partenaire d'échange</h3>
@@ -71,6 +99,9 @@
         <!-- Step 3: Trade Interface -->
         <div class="trade-step hidden" id="step3">
             <div class="step-header">
+                <button class="btn-back" onclick="backToStep2()">
+                    <span data-icon="chevron-left" data-icon-size="15"></span> Retour
+                </button>
                 <div class="step-number">3</div>
                 <div class="step-info">
                     <h3>Construire l'échange 1-pour-1</h3>
@@ -169,6 +200,25 @@
                 </div>
             </div>
         </div>
+
+        <!-- Trade Success Screen (Peak-End Rule) -->
+        <div class="trade-step hidden" id="tradeSuccessScreen">
+            <div class="trade-success-inner">
+                <div class="trade-success-check">
+                    <span data-icon="check" data-icon-size="48"></span>
+                </div>
+                <h2>Proposition envoyée !</h2>
+                <p id="tradeSuccessDetail"></p>
+                <div class="trade-success-actions">
+                    <button class="btn-success-primary" onclick="resetTrade()">
+                        <span data-icon="bolt" data-icon-size="16"></span> Proposer un autre échange
+                    </button>
+                    <button class="btn-success-secondary" onclick="switchTradeTab('received')">
+                        Voir mes échanges
+                    </button>
+                </div>
+            </div>
+        </div>
         </div>
         <!-- END SECTION: Propose Trade -->
 
@@ -194,6 +244,21 @@
             </div>
         </div>
         <!-- END SECTION: Received Trades -->
+    </div>
+
+    <!-- Styled trade confirmation (replaces native confirm) -->
+    <div id="tradeConfirmOverlay" class="trade-confirm-overlay">
+        <div class="trade-confirm-box">
+            <div class="trade-confirm-icon"><span data-icon="bolt" data-icon-size="32"></span></div>
+            <h3 class="trade-confirm-title">Confirmer l'échange</h3>
+            <div class="trade-confirm-body" id="tradeConfirmBody"></div>
+            <div class="trade-confirm-actions">
+                <button class="tc-btn tc-cancel" id="tradeConfirmCancel">Annuler</button>
+                <button class="tc-btn tc-ok" id="tradeConfirmOk">
+                    <span data-icon="check" data-icon-size="16"></span> Proposer l'échange
+                </button>
+            </div>
+        </div>
     </div>
 
     <script src="navbar.js"></script>

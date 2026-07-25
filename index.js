@@ -1,9 +1,15 @@
 let fullPlayerData = [],
+    rookiePlayerData = [],
     teamData = [],
     imageList = [],
     goalieData = [],
     currentStats = null,
     currentTeams = null;
+
+// Stats table pagination (Miller's Law — avoid dumping 100+ rows at once)
+const STATS_PAGE_SIZE = 25;
+let statsVisibleCount = STATS_PAGE_SIZE;
+let statsFullList = [];
 const BASE_URL = window.location.hostname.includes("localhost") ? "http://localhost:3000" : window.location.origin;
 
 function getCurrentPlayerStats(t, e) {
@@ -24,7 +30,7 @@ async function fetchPlayerData() {
         const t = await fetch("nhl_filtered_stats.json");
         if (!t.ok) throw new Error(`Error: ${t.status} - ${t.statusText}`);
         const e = await t.json();
-        fullPlayerData = [...e.Top_50_Defenders, ...e.Top_100_Offensive_Players, ...e.Top_Rookies], teamData = e.Teams, goalieData = e.Top_50_Goalies;
+        fullPlayerData = [...e.Top_50_Defenders, ...e.Top_100_Offensive_Players, ...e.Top_Rookies], rookiePlayerData = e.Top_Rookies || [], teamData = e.Teams, goalieData = e.Top_50_Goalies;
         try {
             const t = await fetch(`${BASE_URL}/current-stats`, {
                 cache: "no-store"
@@ -71,6 +77,7 @@ function updateTable() {
     const t = document.getElementById("playerFilter").value,
         e = document.getElementById("sortBy").value,
         a = document.getElementById("searchInput").value.toLowerCase();
+    clearStatsPagination();
     if ("teams" === t) {
         return void populateTeamTable([...teamData].sort((t, e) => {
             const a = getCurrentTeamStats(t.teamFullName),
@@ -89,18 +96,19 @@ function updateTable() {
         }))
     }
     let n = fullPlayerData;
-    "offensive" === t ? n = n.filter(t => ["C", "R", "L"].includes(t.positionCode)) : "defensive" === t ? n = n.filter(t => "D" === t.positionCode) : "rookies" === t && (n = n.filter(t => t.gamesPlayed <= 27 || null === t.playerId || null === t.teamAbbrevs)), a && (n = n.filter(t => t.skaterFullName.toLowerCase().includes(a))), n.sort((t, a) => {
+    "offensive" === t ? n = n.filter(t => ["C", "R", "L"].includes(t.positionCode)) : "defensive" === t ? n = n.filter(t => "D" === t.positionCode) : "rookies" === t && (n = rookiePlayerData.slice()), a && (n = n.filter(t => t.skaterFullName.toLowerCase().includes(a))), n.sort((t, a) => {
         const n = getCurrentPlayerStats(t.skaterFullName, t.playerId),
             s = getCurrentPlayerStats(a.skaterFullName, a.playerId),
             l = n ? n[e] || 0 : t[e] || 0,
             o = s ? s[e] || 0 : a[e] || 0;
-        return (t.skaterFullName.includes("Barkov") || t.skaterFullName.includes("Tkachuk")) && console.log(`🔍 SORT ${t.skaterFullName}: sortBy=${e}, statsA=${!!n}, valueA=${l}, cachedValue=${t[e]}`), (a.skaterFullName.includes("Barkov") || a.skaterFullName.includes("Tkachuk")) && console.log(`🔍 SORT ${a.skaterFullName}: sortBy=${e}, statsB=${!!s}, valueB=${o}, cachedValue=${a[e]}`), o - l
-    }), populatePlayerTable(n)
+        return o - l
+    }), statsFullList = n, statsVisibleCount = STATS_PAGE_SIZE, populatePlayerTable(n)
 }
 async function populatePlayerTable(t) {
     await fetchImageData();
     const e = document.getElementById("playerTable");
-    e.innerHTML = '\n        <tr>\n            <th>Photo</th>\n            <th>Joueur</th>\n            <th>GP</th>\n            <th>G</th>\n            <th>AST</th>\n            <th class="points-column">PTS</th>\n        </tr>\n    ', t.forEach(t => {
+    const visible = t.slice(0, statsVisibleCount);
+    e.innerHTML = '\n        <tr>\n            <th>Photo</th>\n            <th>Joueur</th>\n            <th>GP</th>\n            <th>G</th>\n            <th>AST</th>\n            <th class="points-column">PTS</th>\n        </tr>\n    ', visible.forEach(t => {
         const a = t.skaterFullName,
             n = getCurrentPlayerStats(a, t.playerId),
             s = getMatchingImage(a),
@@ -110,16 +118,42 @@ async function populatePlayerTable(t) {
             d = s || l || r,
             i = n?.teamAbbrev ? `teams/${n.teamAbbrev}.png` : getTeamLogoPath(t.teamAbbrevs);
         let c, u, m, h;
-        (a.includes("Barkov") || a.includes("Tkachuk")) && console.log(`🔍 DEBUG ${a}:`, {
-            hasCurrentStats: !!n,
-            gamesPlayed: n?.gamesPlayed,
-            currentStats: n
-        }), n && n.gamesPlayed > 0 ? (c = n.gamesPlayed || 0, u = n.goals || 0, m = n.assists || 0, h = n.points || 0) : (c = t.gamesPlayed || 0, u = t.goals || 0, m = t.assists || 0, h = t.points || 0);
+        n && n.gamesPlayed > 0 ? (c = n.gamesPlayed || 0, u = n.goals || 0, m = n.assists || 0, h = n.points || 0) : (c = t.gamesPlayed || 0, u = t.goals || 0, m = t.assists || 0, h = t.points || 0);
         const g = d && i ? `\n            <div class="player-photo">\n                <img src="${d}" alt="${a}" class="face">\n                <img src="${i}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n            </div>\n            ` : "",
             p = n?.position || t.positionCode || "N/A",
             y = document.createElement("tr");
         y.innerHTML = `\n            <td>${g}</td>\n            <td>${a}, ${p}</td>\n            <td>${c}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n            <td class="points-column">${h}</td>\n        `, y.style.cursor = "pointer", y.onclick = () => showCareerStats(t.playerId, t.skaterFullName, !1), e.appendChild(y)
-    })
+    }), renderStatsPagination(t.length)
+}
+
+// Stats pagination controls (Miller's Law)
+function renderStatsPagination(total) {
+    const container = document.getElementById("statsPagination");
+    if (!container) return;
+    const shown = Math.min(statsVisibleCount, total);
+    if (total <= STATS_PAGE_SIZE) {
+        container.innerHTML = total > 0
+            ? `<div class="stats-page-info">${total} joueur${total > 1 ? 's' : ''}</div>`
+            : '';
+        return;
+    }
+    const moreBtn = shown < total
+        ? `<button class="stats-show-more" onclick="showMorePlayers()">Voir plus (${total - shown} restant${total - shown > 1 ? 's' : ''})</button>`
+        : '';
+    container.innerHTML = `
+        <div class="stats-page-info">${shown} sur ${total} joueurs</div>
+        ${moreBtn}
+    `;
+}
+
+function showMorePlayers() {
+    statsVisibleCount += STATS_PAGE_SIZE;
+    populatePlayerTable(statsFullList);
+}
+
+function clearStatsPagination() {
+    const container = document.getElementById("statsPagination");
+    if (container) container.innerHTML = '';
 }
 
 function populateGoalieTable(t) {

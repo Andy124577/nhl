@@ -43,6 +43,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Render all sections
     renderHeroLeaderboard();
+    adaptHeroForUser();      // auth-aware primary CTA (Jakob's Law)
+    renderResumeBanner();    // open-task pull (Zeigarnik Effect)
 });
 
 // ============================================================
@@ -136,21 +138,98 @@ async function loadStats(days = 7) {
 }
 
 // ============================================================
-// ALERTS (pending drafts)
+// RESUME BANNER (Zeigarnik Effect — pull users back to open loops)
 // ============================================================
-function renderAlerts() {
-    const strip = document.getElementById('actionAlerts');
-    if (!strip || !userData.userPools.length) return;
+function findResumableDraft() {
+    // A draft is resumable when its order has started but it isn't finished.
+    return userData.userPools.find(p =>
+        Array.isArray(p.data.draftOrder) && p.data.draftOrder.length > 0 && !p.isDraftComplete
+    ) || null;
+}
 
-    const pending = userData.userPools.filter(p => !p.isDraftComplete);
-    if (!pending.length) return;
+async function fetchPendingTradeCount() {
+    if (!userData.username) return 0;
+    try {
+        const res = await fetch(`${BASE_URL}/trades/pending/${encodeURIComponent(userData.username)}`, { cache: 'no-store' });
+        if (!res.ok) return 0;
+        const trades = await res.json();
+        return Array.isArray(trades) ? trades.length : 0;
+    } catch { return 0; }
+}
 
-    strip.innerHTML = pending.map(pool => `
-        <div class="alert" onclick="window.location.href='pool.html?tab=draft'">
-            <span class="alert-icon">🎯</span>
-            <span class="alert-message">Repêchage en attente pour <strong>"${pool.name}"</strong> — Cliquez pour y accéder</span>
-        </div>
-    `).join('');
+async function renderResumeBanner() {
+    const banner = document.getElementById('homeResumeBanner');
+    if (!banner || !userData.username) return;
+
+    const items = [];
+
+    const resumable = findResumableDraft();
+    if (resumable) {
+        items.push(`
+            <a class="resume-item draft" href="draftActif.html?pool=${encodeURIComponent(resumable.name)}">
+                <span class="resume-icon">🏒</span>
+                <span class="resume-text">Repêchage en cours — <strong>${resumable.name}</strong></span>
+                <span class="resume-cta">Reprendre →</span>
+            </a>
+        `);
+    }
+
+    const pendingTrades = await fetchPendingTradeCount();
+    if (pendingTrades > 0) {
+        items.push(`
+            <a class="resume-item trade" href="trade.html">
+                <span class="resume-icon">🔄</span>
+                <span class="resume-text">${pendingTrades} échange${pendingTrades > 1 ? 's' : ''} en attente de votre réponse</span>
+                <span class="resume-cta">Voir →</span>
+            </a>
+        `);
+    }
+
+    banner.innerHTML = items.join('');
+    banner.classList.toggle('has-items', items.length > 0);
+}
+
+// ============================================================
+// HERO CTA — auth-aware (Jakob's Law: returning users want to resume)
+// ============================================================
+function adaptHeroForUser() {
+    if (!userData.username) return;
+    const actions = document.querySelector('.hero-actions');
+    if (!actions) return;
+
+    const resumable = findResumableDraft();
+    let primary;
+    if (resumable) {
+        primary = `<a href="draftActif.html?pool=${encodeURIComponent(resumable.name)}" class="btn-hero-primary"><span data-icon="hockey" data-icon-size="16"></span> Reprendre le repêchage</a>`;
+    } else if (userData.primaryPool) {
+        primary = `<a href="classement.html" class="btn-hero-primary"><span data-icon="trophy" data-icon-size="16"></span> Voir mon classement</a>`;
+    } else {
+        primary = `<a href="pool.html?tab=create" class="btn-hero-primary"><span data-icon="rocket" data-icon-size="16"></span> Créer un pool</a>`;
+    }
+
+    // Occam's Razor: returning users who already have a pool don't need the
+    // marketing "Comment ça marche" walkthrough — hide it and drop its CTA.
+    const isReturning = userData.userPools.length > 0;
+    const tertiary = isReturning
+        ? ''
+        : `<button onclick="scrollToHowItWorks()" class="btn-hero-tertiary">Comment ça marche ?</button>`;
+
+    actions.innerHTML = `
+        ${primary}
+        <a href="pool.html" class="btn-hero-secondary">Mes pools →</a>
+        ${tertiary}
+    `;
+    // The global icon scan only runs once on load; process the freshly-inserted icons.
+    if (typeof getIcon === 'function') {
+        actions.querySelectorAll('[data-icon]').forEach(el => {
+            el.innerHTML = getIcon(el.getAttribute('data-icon'), parseInt(el.getAttribute('data-icon-size') || '20'));
+        });
+    }
+
+    if (isReturning) {
+        const howItWorks = document.getElementById('comment-ca-marche');
+        if (howItWorks) howItWorks.style.display = 'none';
+    }
 }
 
 // ============================================================
