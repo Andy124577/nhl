@@ -32,6 +32,17 @@ function initModernNavbar() {
     }
 }
 
+// ==================== ICÔNES ====================
+// SVG intégrés plutôt que getIcon() : icons.js n'est pas chargé sur
+// classement.html ni draftFini.html, alors que navbar.js tourne partout.
+const NAV_ICON = {
+    camera: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
+    download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+    trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+    logout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+    shield: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`
+};
+
 // ==================== AVATAR HELPERS ====================
 function _buildAvatarInner(username) {
     const av = localStorage.getItem('avatarUrl') || '';
@@ -127,36 +138,58 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                     <span id="themeIcon">${(localStorage.getItem('theme') || 'dark') === 'dark' ? '☀️' : '🌙'}</span>
                 </button>
                 <div class="user-menu">
-                    <button class="user-avatar" id="userAvatarBtn" title="${username}">
+                    <button class="user-avatar" id="userAvatarBtn" title="${username}"
+                            aria-haspopup="true" aria-expanded="false" aria-controls="userDropdownMenu">
                         ${_buildAvatarInner(username)}
                     </button>
-                    <div class="user-dropdown" id="userDropdownMenu">
+                    <div class="user-dropdown" id="userDropdownMenu" role="menu"
+                         aria-label="Menu du compte">
+
+                        <!-- Carte de membre : l'avatar s'édite directement ici,
+                             plutôt que par une rangée « Changer la photo » séparée. -->
                         <div class="user-dropdown-header">
-                            <div class="user-info">
-                                <div class="user-name">${username}</div>
-                                ${isAdmin ? '<div class="user-role">Administrateur</div>' : ''}
+                            <label class="udh-avatar" title="Changer la photo de profil">
+                                ${_buildAvatarInner(username)}
+                                <span class="udh-avatar-edit" aria-hidden="true">${NAV_ICON.camera}</span>
+                                <input type="file" id="avatarUploadInput"
+                                       accept="image/jpeg,image/png,image/webp"
+                                       onchange="uploadUserAvatar(this)">
+                                <span class="nav-sr-only">Changer la photo de profil</span>
+                            </label>
+                            <div class="udh-identity">
+                                <span class="udh-name">${username}</span>
+                                <span class="udh-role ${isAdmin ? 'is-admin' : ''}">
+                                    ${isAdmin ? `${NAV_ICON.shield}<span>Administrateur</span>` : '<span>Membre</span>'}
+                                </span>
                             </div>
                         </div>
-                        <div class="dropdown-divider"></div>
-                        <label class="dropdown-item" style="cursor:pointer;" title="Changer la photo de profil">
-                            <img src="Icons/fantazy.png" alt="" style="width:18px;height:18px;object-fit:contain;filter:brightness(0.7);">
-                            <span>Changer la photo</span>
-                            <input type="file" id="avatarUploadInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadUserAvatar(this)">
-                        </label>
-                        ${isAdmin ? '<div class="dropdown-divider"></div><div id="adminUsersList" class="admin-users-list"></div>' : ''}
-                        <div class="dropdown-divider"></div>
-                        <div class="admin-section-title">Mes données</div>
-                        <button class="dropdown-item" onclick="exportMyData()">
-                            <span>Télécharger mes données</span>
-                        </button>
-                        <button class="dropdown-item danger" onclick="deleteMyAccount()">
-                            <span>Supprimer mon compte</span>
-                        </button>
-                        <div class="dropdown-divider"></div>
-                        <button class="dropdown-item logout" onclick="logout()">
-                            <img src="Icons/deconnexion.png" alt="" style="width:18px;height:18px;object-fit:contain;filter:brightness(0.8);">
-                            <span>Déconnexion</span>
-                        </button>
+
+                        ${isAdmin ? '<div id="adminUsersList" class="dropdown-group"></div>' : ''}
+
+                        <div class="dropdown-group">
+                            <p class="dropdown-label">Mes données</p>
+                            <button class="dropdown-item" role="menuitem" onclick="exportMyData()">
+                                <span class="dropdown-icon">${NAV_ICON.download}</span>
+                                <span class="dropdown-text">
+                                    <span class="dropdown-title">Télécharger mes données</span>
+                                    <span class="dropdown-hint">Compte et pools, en JSON</span>
+                                </span>
+                            </button>
+                            <button class="dropdown-item danger" role="menuitem" onclick="deleteMyAccount()">
+                                <span class="dropdown-icon">${NAV_ICON.trash}</span>
+                                <span class="dropdown-text">
+                                    <span class="dropdown-title">Supprimer mon compte</span>
+                                    <span class="dropdown-hint">Irréversible</span>
+                                </span>
+                            </button>
+                        </div>
+
+                        <div class="dropdown-footer">
+                            <button class="dropdown-item logout" role="menuitem" onclick="logout()">
+                                <span class="dropdown-icon">${NAV_ICON.logout}</span>
+                                <span class="dropdown-title">Déconnexion</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -238,13 +271,26 @@ function initializeEventListeners(username, isAdmin) {
     const dropdown = document.getElementById('userDropdownMenu');
 
     if (avatarBtn && dropdown) {
+        const setOpen = (open) => {
+            dropdown.classList.toggle('show', open);
+            avatarBtn.setAttribute('aria-expanded', String(open));
+        };
+
         avatarBtn.addEventListener('click', function(e) {
             e.stopPropagation();
-            dropdown.classList.toggle('show');
+            setOpen(!dropdown.classList.contains('show'));
         });
+
         document.addEventListener('click', function(e) {
-            if (!e.target.closest('.user-menu')) {
-                dropdown.classList.remove('show');
+            if (!e.target.closest('.user-menu')) setOpen(false);
+        });
+
+        // Échap ferme le menu et rend le focus au bouton : sans ça, la
+        // navigation au clavier se retrouve coincée en bas de page.
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && dropdown.classList.contains('show')) {
+                setOpen(false);
+                avatarBtn.focus();
             }
         });
     }
@@ -264,11 +310,13 @@ async function loadAdminUsers() {
             const container = document.getElementById('adminUsersList');
             if (container && users.length > 0) {
                 container.innerHTML = `
-                    <div class="admin-section-title">Changer d'utilisateur</div>
+                    <p class="dropdown-label">Changer d'utilisateur</p>
                     ${users.map(u => `
-                        <button class="dropdown-item" onclick="switchToUser('${u}')">
-                            <img src="Icons/grayUser.png" class="user-avatar-small" style="width:24px;height:24px;border-radius:50%;object-fit:cover;">
-                            <span>${u}</span>
+                        <button class="dropdown-item" role="menuitem" onclick="switchToUser('${u}')">
+                            <span class="dropdown-icon">
+                                <img src="Icons/grayUser.png" alt="" class="dropdown-user-thumb">
+                            </span>
+                            <span class="dropdown-title">${u}</span>
                         </button>
                     `).join('')}
                 `;
