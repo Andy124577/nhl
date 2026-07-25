@@ -132,6 +132,208 @@ body {
 }
 
 /* ============================================================ */
+/* WIZARD PROGRESS BREADCRUMB (Goal-Gradient Effect)           */
+/* ============================================================ */
+.trade-progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: nowrap;
+}
+
+.tp-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+    cursor: default;
+    user-select: none;
+}
+
+.tp-step.active,
+.tp-step.done {
+    opacity: 1;
+}
+
+/* Reachable steps are clickable (prerequisite selection exists) */
+.tp-step.reachable {
+    cursor: pointer;
+}
+
+.tp-step.reachable:not(.active):hover {
+    opacity: 1;
+}
+
+.tp-step.reachable:not(.active):hover .tp-dot {
+    transform: scale(1.12);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.tp-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 1rem;
+    background: rgba(255,255,255,0.08);
+    border: 2px solid var(--border-light);
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.tp-step.active .tp-dot {
+    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    border-color: var(--primary);
+    color: var(--bg);
+    box-shadow: var(--glow-primary);
+}
+
+.tp-step.done .tp-dot {
+    background: var(--success);
+    border-color: var(--success);
+    color: #fff;
+}
+
+.tp-label {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.tp-step.active .tp-label { color: var(--text-main); }
+.tp-step.done .tp-label { color: var(--success); }
+
+.tp-line {
+    flex: 0 1 60px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--border-light);
+    transition: background 0.4s ease;
+}
+
+.tp-line.filled {
+    background: var(--success);
+}
+
+@media (max-width: 640px) {
+    .tp-label { display: none; }
+    .tp-line { flex-basis: 40px; }
+}
+
+/* ============================================================ */
+/* POOL CARD SKELETON (Doherty Threshold)                      */
+/* ============================================================ */
+.pool-card-skeleton {
+    height: 120px;
+    border-radius: 12px;
+    background: linear-gradient(90deg,
+        rgba(255,255,255,0.04) 25%,
+        rgba(255,255,255,0.09) 37%,
+        rgba(255,255,255,0.04) 63%);
+    background-size: 400% 100%;
+    animation: poolSkeletonShimmer 1.4s ease infinite;
+}
+
+@keyframes poolSkeletonShimmer {
+    0%   { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+}
+
+/* ============================================================ */
+/* TRADE SUCCESS SCREEN (Peak-End Rule)                        */
+/* ============================================================ */
+.trade-success-inner {
+    text-align: center;
+    padding: 40px 24px;
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+.trade-success-check {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--success) 0%, #00C969 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--glow-success);
+    animation: successPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes successPop {
+    0%   { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.trade-success-inner h2 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    margin-bottom: 12px;
+    color: var(--text-main);
+}
+
+.trade-success-inner p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 28px;
+}
+
+.trade-success-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-success-primary,
+.btn-success-secondary {
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-success-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    border: none;
+    color: #fff;
+    box-shadow: var(--glow-primary);
+}
+
+.btn-success-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,212,255,0.4);
+}
+
+.btn-success-secondary {
+    background: transparent;
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+}
+
+.btn-success-secondary:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* ============================================================ */
 /* STEP CONTAINERS                                              */
 /* ============================================================ */
 .trade-step {
@@ -192,11 +394,37 @@ body {
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .btn-reset:hover {
     background: rgba(255,82,82,0.2);
     border-color: var(--danger);
+}
+
+.btn-back {
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.btn-back:hover {
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(255,255,255,0.25);
+    color: var(--text-main);
+    transform: translateX(-2px);
 }
 
 /* ============================================================ */
@@ -232,17 +460,42 @@ body {
 .pool-card-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 12px;
     margin-bottom: 12px;
 }
 
+.pool-card-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+}
+
+.pool-card-icon-img {
+    object-fit: cover;
+    border: 1px solid var(--border-light);
+}
+
+.pool-card-icon-letter {
+    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    color: #0A0A1A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 900;
+    box-shadow: var(--glow-primary);
+}
+
 .pool-name {
+    flex: 1;
     font-size: 1.2rem;
     font-weight: 800;
     color: var(--text-main);
 }
 
 .pool-status {
+    margin-left: auto;
     padding: 4px 12px;
     border-radius: 100px;
     font-size: 0.75rem;
@@ -380,12 +633,13 @@ body {
 
 .pos-tab {
     flex: 1;
-    padding: 8px;
+    padding: 12px 8px;
+    min-height: 44px;
     background: transparent;
     border: 1px solid var(--border-light);
-    border-radius: 6px;
+    border-radius: 8px;
     color: var(--text-secondary);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -769,6 +1023,22 @@ body {
     cursor: not-allowed;
     box-shadow: none;
     transform: none;
+}
+
+/* Von Restorff: draw the eye when the trade becomes valid */
+.btn-propose-trade.ready {
+    animation: proposeUnlock 0.5s ease, proposePulse 2s ease-in-out 0.5s infinite;
+}
+
+@keyframes proposeUnlock {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.06); }
+    100% { transform: scale(1); }
+}
+
+@keyframes proposePulse {
+    0%, 100% { box-shadow: 0 4px 24px rgba(0,230,118,0.25); }
+    50%      { box-shadow: 0 4px 32px rgba(0,230,118,0.6); }
 }
 
 /* ============================================================ */
@@ -1278,4 +1548,135 @@ html[data-theme="light"] .player-photo-roster img {
 html[data-theme="light"] .btn-propose-trade:disabled {
     background: rgba(0, 0, 0, 0.08);
     color: rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================================ */
+/* STYLED TRADE CONFIRM (Aesthetic-Usability)                  */
+/* ============================================================ */
+.trade-confirm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    animation: tcFadeIn 0.2s ease;
+}
+.trade-confirm-overlay.show { display: flex; }
+
+@keyframes tcFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tcSlideUp {
+    from { transform: translateY(16px) scale(0.97); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.trade-confirm-box {
+    background: var(--card-white);
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    padding: 28px 26px;
+    width: 90%;
+    max-width: 460px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    animation: tcSlideUp 0.28s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.trade-confirm-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--glow-primary);
+}
+
+.trade-confirm-title {
+    font-size: 1.35rem;
+    font-weight: 900;
+    margin-bottom: 18px;
+    color: var(--text-main);
+}
+
+.tc-trade-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 24px;
+}
+.tc-side {
+    flex: 1;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.tc-side-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    font-weight: 700;
+}
+.tc-side strong {
+    font-size: 0.98rem;
+    color: var(--text-main);
+}
+.tc-arrow {
+    font-size: 1.5rem;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.trade-confirm-actions {
+    display: flex;
+    gap: 12px;
+}
+.tc-btn {
+    flex: 1;
+    padding: 13px;
+    border-radius: 10px;
+    font-size: 0.98rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.tc-cancel {
+    background: transparent;
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+}
+.tc-cancel:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-main);
+}
+.tc-ok {
+    background: linear-gradient(135deg, var(--success) 0%, #00C969 100%);
+    border: none;
+    color: #fff;
+    box-shadow: var(--glow-success);
+}
+.tc-ok:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,230,118,0.4);
+}
+
+@media (max-width: 480px) {
+    .tc-trade-row { flex-direction: column; }
+    .tc-arrow { transform: rotate(90deg); }
 }

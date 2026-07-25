@@ -728,3 +728,56 @@ html[data-theme="light"] .hfc-row:hover {
     .live-dot { animation: none; }
     .hero-pill, .btn-hero-primary, .btn-hero-secondary, .btn-hero-tertiary { transition: none; }
 }
+
+/* ============================================================
+   HOME RESUME BANNER (Zeigarnik Effect)
+   ============================================================ */
+.home-resume-banner {
+    max-width: 1200px;
+    margin: 16px auto 0;
+    padding: 0 24px;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+}
+.home-resume-banner.has-items { display: flex; }
+
+.resume-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    border: 1px solid var(--border-light, rgba(255,255,255,0.08));
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.resume-item:hover { transform: translateY(-2px); }
+
+.resume-item.draft {
+    background: linear-gradient(135deg, rgba(0,212,255,0.14) 0%, rgba(0,180,220,0.10) 100%);
+    color: var(--text-main, #fff);
+    box-shadow: 0 4px 16px rgba(0,212,255,0.18);
+}
+.resume-item.trade {
+    background: linear-gradient(135deg, rgba(255,71,87,0.14) 0%, rgba(255,71,87,0.08) 100%);
+    color: var(--text-main, #fff);
+    box-shadow: 0 4px 16px rgba(255,71,87,0.15);
+}
+
+.resume-icon { font-size: 1.3rem; flex-shrink: 0; }
+.resume-text { flex: 1; }
+.resume-text strong { font-weight: 800; }
+.resume-cta {
+    font-weight: 800;
+    white-space: nowrap;
+    opacity: 0.9;
+}
+.resume-item.draft .resume-cta { color: var(--primary, #00D4FF); }
+.resume-item.trade .resume-cta { color: #ff6b7a; }
+
+@media (max-width: 600px) {
+    .resume-item { flex-wrap: wrap; font-size: 0.92rem; }
+    .resume-cta { width: 100%; }
+}

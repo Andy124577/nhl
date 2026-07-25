@@ -101,6 +101,14 @@ function switchTradeTab(tab) {
     document.getElementById('proposeTradeSection').classList.toggle('active', tab === 'propose');
     document.getElementById('receivedTradeSection').classList.toggle('active', tab === 'received');
 
+    // Returning to the propose tab from a completed trade should restart the wizard
+    if (tab === 'propose') {
+        const success = document.getElementById('tradeSuccessScreen');
+        if (success && !success.classList.contains('hidden')) {
+            resetTrade();
+        }
+    }
+
     if (tab === 'received') {
         loadReceivedTrades();
         loadCompletedTrades();
@@ -190,9 +198,50 @@ async function loadDraftData() {
 // ============================================================
 // STEP 1: POOL SELECTION
 // ============================================================
+// ============================================================
+// WIZARD PROGRESS (Goal-Gradient Effect)
+// ============================================================
+let currentTradeStep = 1;
+
+function setTradeProgress(step) {
+    currentTradeStep = step;
+    document.querySelectorAll('.tp-step').forEach(el => {
+        const s = parseInt(el.dataset.step);
+        el.classList.toggle('active', s === step);
+        el.classList.toggle('done', s < step);
+        // Only completed (earlier) steps are clickable — you can go back but
+        // not jump ahead of where you are.
+        el.classList.toggle('reachable', s < step);
+        const dot = el.querySelector('.tp-dot');
+        if (dot) dot.innerHTML = s < step ? '✓' : s;
+    });
+    document.querySelectorAll('.tp-line').forEach(el => {
+        el.classList.toggle('filled', parseInt(el.dataset.line) < step);
+    });
+}
+
+// Jump to a step via the breadcrumb — backward navigation only.
+function goToStep(step) {
+    if (step >= currentTradeStep) return; // can't jump forward or re-click current
+
+    document.getElementById('step1').classList.toggle('hidden', step !== 1);
+    document.getElementById('step2').classList.toggle('hidden', step !== 2);
+    document.getElementById('step3').classList.toggle('hidden', step !== 3);
+    setTradeProgress(step);
+
+    if (step === 1) renderPoolSelector();
+    else if (step === 2) renderTeamGrid();
+    else if (step === 3) { renderMyRoster(); renderPartnerRoster(); updateTradeSummary(); }
+}
+
 function renderPoolSelector() {
     const container = document.getElementById('poolSelector');
     if (!container || !draftData) return;
+
+    // Hide skeleton, reveal real selector (Doherty Threshold)
+    const skeleton = document.getElementById('poolSelectorSkeleton');
+    if (skeleton) skeleton.style.display = 'none';
+    container.style.display = '';
 
     // Filter pools where:
     // 1. User is a participant
@@ -231,9 +280,15 @@ function renderPoolSelector() {
         return;
     }
 
-    container.innerHTML = userPools.map(pool => `
+    container.innerHTML = userPools.map(pool => {
+        const imgUrl = pool.data.imageUrl;
+        const iconHtml = imgUrl
+            ? `<img src="${imgUrl}" class="pool-card-icon pool-card-icon-img" alt="${pool.name}">`
+            : `<div class="pool-card-icon pool-card-icon-letter">${pool.name.charAt(0).toUpperCase()}</div>`;
+        return `
         <div class="pool-card" onclick="selectPool('${pool.name}')">
             <div class="pool-card-header">
+                ${iconHtml}
                 <div class="pool-name">${pool.name}</div>
                 <span class="pool-status active">Actif</span>
             </div>
@@ -242,10 +297,23 @@ function renderPoolSelector() {
                 ${pool.teamCount} équipes dans le pool
             </div>
         </div>
-    `).join('');
+    `;}).join('');
 }
 
+// Back navigation preserves prior selections (Jakob's Law) — going back
+// to review a step should not wipe out choices already made.
+function backToStep1() { goToStep(1); }
+function backToStep2() { goToStep(2); }
+
 function selectPool(poolName) {
+    // If switching to a different pool, clear downstream selections
+    if (selectedPool && selectedPool !== poolName) {
+        selectedPartnerTeam = null;
+        partnerTeamData = null;
+        selectedMyPlayer = null;
+        selectedPartnerPlayer = null;
+    }
+
     selectedPool = poolName;
     selectedPoolData = draftData[poolName];
 
@@ -262,6 +330,7 @@ function selectPool(poolName) {
     // Show step 2
     document.getElementById('step1').classList.add('hidden');
     document.getElementById('step2').classList.remove('hidden');
+    setTradeProgress(2);
 
     renderTeamGrid();
 }
@@ -278,12 +347,15 @@ function renderTeamGrid() {
     Object.entries(selectedPoolData.teams || {}).forEach(([teamName, teamData]) => {
         if (teamName === myTeamName) return; // Exclude user's own team
 
-        // Calculate team score (simplified)
         const roster = [
             ...(teamData.offensive || []),
             ...(teamData.defensive || []),
-            ...(teamData.goalie || [])
+            ...(teamData.goalie || []),
+            ...(teamData.rookie || []),
+            ...(teamData.teams || [])
         ];
+
+        if (roster.length === 0) return; // Skip teams with no players
 
         teams.push({
             name: teamName,
@@ -313,12 +385,19 @@ function renderTeamGrid() {
 }
 
 function selectPartnerTeam(teamName) {
+    // If switching to a different partner, clear player picks
+    if (selectedPartnerTeam && selectedPartnerTeam !== teamName) {
+        selectedMyPlayer = null;
+        selectedPartnerPlayer = null;
+    }
+
     selectedPartnerTeam = teamName;
     partnerTeamData = selectedPoolData.teams[teamName];
 
     // Show step 3
     document.getElementById('step2').classList.add('hidden');
     document.getElementById('step3').classList.remove('hidden');
+    setTradeProgress(3);
 
     document.getElementById('selectedPoolTeamInfo').textContent =
         `Pool: ${selectedPool} · ${myTeamName} ⇄ ${selectedPartnerTeam}`;
@@ -525,6 +604,7 @@ function updateTradeSummary() {
         emptyState.classList.remove('hidden');
         activeSummary.classList.add('hidden');
         proposeBtn.disabled = true;
+        proposeBtn.classList.remove('ready');
         return;
     }
 
@@ -534,6 +614,8 @@ function updateTradeSummary() {
     // Validate position match
     const isValid = selectedMyPlayer.category === selectedPartnerPlayer.category;
     proposeBtn.disabled = !isValid;
+    // Von Restorff: make the unlock moment pop
+    proposeBtn.classList.toggle('ready', isValid);
 
     // Get real stats from current-stats endpoint
     const myLiveStats = getPlayerCurrentStats(selectedMyPlayer.name);
@@ -703,6 +785,48 @@ function filterPosition(side, position) {
 }
 
 // ============================================================
+// STYLED CONFIRM (Aesthetic-Usability — replaces native confirm)
+// ============================================================
+function showTradeConfirm(detailHtml) {
+    return new Promise(resolve => {
+        const overlay = document.getElementById('tradeConfirmOverlay');
+        const body = document.getElementById('tradeConfirmBody');
+        const okBtn = document.getElementById('tradeConfirmOk');
+        const cancelBtn = document.getElementById('tradeConfirmCancel');
+
+        // Fallback to native confirm if markup is missing
+        if (!overlay || !body || !okBtn || !cancelBtn) {
+            resolve(window.confirm('Proposer cet échange ?'));
+            return;
+        }
+
+        body.innerHTML = detailHtml;
+        overlay.classList.add('show');
+
+        const cleanup = (result) => {
+            overlay.classList.remove('show');
+            okBtn.removeEventListener('click', onOk);
+            cancelBtn.removeEventListener('click', onCancel);
+            overlay.removeEventListener('click', onBackdrop);
+            document.removeEventListener('keydown', onKey);
+            resolve(result);
+        };
+        const onOk = () => cleanup(true);
+        const onCancel = () => cleanup(false);
+        const onBackdrop = (e) => { if (e.target === overlay) cleanup(false); };
+        const onKey = (e) => {
+            if (e.key === 'Escape') cleanup(false);
+            else if (e.key === 'Enter') cleanup(true);
+        };
+
+        okBtn.addEventListener('click', onOk);
+        cancelBtn.addEventListener('click', onCancel);
+        overlay.addEventListener('click', onBackdrop);
+        document.addEventListener('keydown', onKey);
+    });
+}
+
+// ============================================================
 // PROPOSE TRADE
 // ============================================================
 async function proposeTrade() {
@@ -716,9 +840,20 @@ async function proposeTrade() {
         return;
     }
 
-    if (!confirm(`Proposer cet échange?\n\n${myTeamName} offre: ${selectedMyPlayer.name}\n${selectedPartnerTeam} reçoit: ${selectedPartnerPlayer.name}`)) {
-        return;
-    }
+    const confirmed = await showTradeConfirm(`
+        <div class="tc-trade-row">
+            <div class="tc-side">
+                <span class="tc-side-label">${myTeamName} offre</span>
+                <strong>${selectedMyPlayer.name}</strong>
+            </div>
+            <div class="tc-arrow">⇄</div>
+            <div class="tc-side">
+                <span class="tc-side-label">${selectedPartnerTeam} offre</span>
+                <strong>${selectedPartnerPlayer.name}</strong>
+            </div>
+        </div>
+    `);
+    if (!confirmed) return;
 
     const proposal = {
         draftName: selectedPool,
@@ -749,10 +884,9 @@ async function proposeTrade() {
         const data = await res.json();
 
         if (res.ok) {
-            showNotification('✅ Proposition d\'échange envoyée avec succès!', 'success');
             loadReceivedTrades(); // Refresh received trades
             updateReceivedBadge(); // Update badge count
-            setTimeout(() => resetTrade(), 1500);
+            showTradeSuccess(); // Peak-End Rule: satisfying final state
         } else {
             showNotification(`❌ ${data.message}`, 'error');
         }
@@ -762,6 +896,21 @@ async function proposeTrade() {
     } finally {
         hideLoading(proposeBtn);
     }
+}
+
+// ============================================================
+// TRADE SUCCESS SCREEN (Peak-End Rule)
+// ============================================================
+function showTradeSuccess() {
+    const detail = document.getElementById('tradeSuccessDetail');
+    if (detail) {
+        detail.innerHTML = `<strong>${myTeamName}</strong> offre <strong>${selectedMyPlayer.name}</strong> à <strong>${selectedPartnerTeam}</strong> pour <strong>${selectedPartnerPlayer.name}</strong>.<br>En attente de la réponse de l'autre équipe.`;
+    }
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.add('hidden');
+    document.getElementById('step3').classList.add('hidden');
+    document.getElementById('tradeProgress').style.display = 'none';
+    document.getElementById('tradeSuccessScreen').classList.remove('hidden');
 }
 
 // ============================================================
@@ -780,9 +929,12 @@ function resetTrade() {
     partnerPositionFilter = 'all';
 
     // Reset UI
+    document.getElementById('tradeSuccessScreen').classList.add('hidden');
+    document.getElementById('tradeProgress').style.display = '';
     document.getElementById('step1').classList.remove('hidden');
     document.getElementById('step2').classList.add('hidden');
     document.getElementById('step3').classList.add('hidden');
+    setTradeProgress(1);
 
     renderPoolSelector();
 }
