@@ -416,3 +416,132 @@
   vertical-align: middle;
   font-size: .74rem;
 }
+
+/* ============================================================
+   SQUELETTE DE CHARGEMENT
+   ------------------------------------------------------------
+   Il calque la structure réelle de la modale : en-tête à fond
+   débordant, grille d'informations, filtres, tableau à en-tête.
+
+   Le squelette générique de skeleton-loader.css ne correspondait à
+   rien de ce qui s'affiche ensuite — avatar rond de 120px là où la
+   photo est un carré arrondi de 48px, six cellules sur une seule
+   colonne là où la grille en compte quatre sur deux, aucun
+   emplacement pour les filtres ni pour l'en-tête du tableau. La
+   modale sautait de 345px à l'arrivée des données sur draftActif
+   en 390px.
+
+   Les valeurs ci-dessous reprennent celles des sélecteurs réels
+   plus haut dans ce fichier ; toute retouche de l'un doit suivre
+   dans l'autre.
+
+   Le squelette reste en `display: block` : le JS des deux pages
+   l'affiche par `style.display = "block"`, qui l'emporterait sur
+   toute autre valeur posée ici.
+   ============================================================ */
+.career-skeleton {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ---- En-tête : calque .career-modal-header ---- */
+.cs-header {
+  margin: -20px -20px 16px;
+  padding: 20px;
+  background:
+    linear-gradient(135deg, rgba(0, 212, 255, .14), rgba(0, 212, 255, 0) 65%),
+    var(--bg);
+  border-bottom: 1px solid var(--border-light);
+  border-radius: 18px 18px 0 0;
+}
+/* Le degrade de .skeleton part de --bg, qui est aussi le fond de
+   .cs-header : au repos les blocs y disparaissent et seule la lueur qui
+   passe les revele. On repart donc du fond des cellules reelles. */
+.cs-header .skeleton {
+  background-image: linear-gradient(90deg,
+    var(--bg-odd-row) 0, var(--card-white) 20%, var(--bg-odd-row) 40%, var(--bg-odd-row) 100%);
+}
+.cs-identity { display: flex; align-items: center; gap: 10px; }
+.cs-photo { flex: 0 0 auto; width: 48px; height: 48px; border-radius: 10px; }
+.cs-ident-text { flex: 1; min-width: 0; }
+.cs-name { display: block; width: min(70%, 240px); height: 18px; border-radius: 6px; }
+.cs-chips { display: flex; gap: 5px; margin-top: 6px; }
+.cs-chip { width: 46px; height: 20px; border-radius: 5px; }
+/* Comme .cmh-quick, masqué sur téléphone. */
+.cs-quick { display: none; gap: 8px; flex: 0 0 auto; }
+.cs-quick-item { width: 52px; height: 38px; border-radius: 8px; }
+
+/* ---- Grille d'informations : calque .cmh-grid / .cmh-cell ---- */
+.cs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 10px;
+}
+/* 60px : hauteur mesuree d'une .cmh-cell reelle, identique aux deux
+   points de rupture. */
+.cs-cell { height: 60px; border-radius: 9px; }
+
+/* ---- Filtres : calque .career-filters / .filter-group-career ---- */
+/* 51px : hauteur mesuree d'un .filter-group-career (etiquette 14 + ecart 3
+   + menu 34). */
+/* Le rembourrage vertical vient d'une autre feuille appliquee a
+   .career-filters (8px, 10px des 600px) : sans lui le squelette est 17px
+   trop court. */
+.cs-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0;
+  margin-bottom: 10px;
+}
+.cs-filter { flex: 1 1 132px; height: 51px; border-radius: 9px; }
+
+/* ---- Tableau : calque #careerStatsTable ---- */
+.cs-table {
+  margin-top: 14px;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.cs-thead { height: 27px; background: rgba(0, 212, 255, .35); }
+.cs-row {
+  display: grid;
+  grid-template-columns: 1.3fr .9fr repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  align-items: center;
+  height: 38px;
+  padding: 0 6px;
+  border-bottom: 1px solid var(--border-light);
+}
+.cs-row:last-child { border-bottom: 0; }
+/* Les cellules ne portent pas la classe .skeleton — trop de balisage pour
+   neuf colonnes sur six rangées ; le dégradé est repris ici, avec la même
+   animation `shimmer` que skeleton-loader.css déclare globalement. */
+.cs-row i {
+  height: 11px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--bg) 0, var(--card) 20%, var(--bg) 40%, var(--bg) 100%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+@media (min-width: 600px) {
+  .cs-identity { gap: 14px; }
+  .cs-photo { width: 60px; height: 60px; border-radius: 12px; }
+  .cs-name { height: 21px; }
+  .cs-quick { display: flex; }
+  .cs-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .cs-filters { padding: 10px 0; }
+  .cs-filter { flex: 0 1 200px; }
+  .cs-row { height: 32px; }
+}
+@media (min-width: 1024px) {
+  .cs-header { margin: -24px -24px 18px; padding: 24px; }
+}
+
+/* Mouvement réduit : la lueur défilante devient un simple aplat. */
+@media (prefers-reduced-motion: reduce) {
+  .cs-row i { animation: none; }
+}
