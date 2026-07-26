@@ -136,9 +136,16 @@
    dimensionnait via `.player-position-team img`, sélecteur qui ne
    s'applique plus ici : sans cette règle, l'image s'affiche à sa taille
    naturelle et fait exploser la hauteur de l'en-tête. */
+/* Même traitement dans le jeton d'équipe, mais à taille réduite : la
+   pastille doit rester compacte à côté du nom du joueur. */
 .cmh-chip img {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border-gray);
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  padding: 1px;
   object-fit: contain;
   vertical-align: middle;
 }
@@ -371,9 +378,20 @@
 #careerStatsTable td.team-col {
   white-space: nowrap;
 }
+/* Pastille blanche cerclée, comme les badges d'équipe du reste du site.
+   Sans ce fond, les logos sombres (Oilers, Bruins, Kings…) étaient
+   illisibles sur le thème sombre.
+   Le `position: absolute; bottom/right` du modèle d'origine n'est pas
+   repris : là-bas le logo est un badge posé sur une photo, ici il est dans
+   le flux d'une cellule de tableau et sortirait de la mise en page. */
 #careerStatsTable .career-team-logo {
-  width: 20px;
-  height: 20px;
+  width: var(--d-photo-logo);
+  height: var(--d-photo-logo);
+  border-radius: 50%;
+  border: 2px solid var(--border-gray);
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  padding: 2px;
   object-fit: contain;
   vertical-align: middle;
 }
