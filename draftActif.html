@@ -227,10 +227,11 @@
              Tous les id sont conservés : draftActif.js les remplit. -->
         <span class="close-modal" onclick="closeCareerModal()">&times;</span>
 
-        <!-- Identité : photo + nom + jetons position/équipe -->
+        <!-- Identité sur une seule rangée : vignette, nom, jetons, et les
+             deux mesures rapides à droite (masquées sous 768px, cf. CSS). -->
         <div class="cmh-identity">
           <div class="player-headshot-container" id="playerHeadshotContainer">
-            <div class="no-photo" data-icon="person" data-icon-size="40"></div>
+            <div class="no-photo" data-icon="person" data-icon-size="24"></div>
           </div>
           <div class="cmh-ident-text">
             <h2 id="careerPlayerName"></h2>
@@ -238,43 +239,40 @@
               <!-- Pas d'icône ajoutée ici : draftActif.js préfixe déjà la
                    position d'un emoji (« 🏒 D », « 🥅 Gardien de but »). -->
               <span class="cmh-chip"><span id="careerPlayerPosition"></span></span>
-              <span class="cmh-chip"><span id="careerPlayerTeam"></span></span>
+              <span class="cmh-chip cmh-chip-team"><span id="careerPlayerTeam"></span></span>
+            </div>
+          </div>
+          <div class="cmh-quick">
+            <div class="cmh-quick-item">
+              <span class="cmh-mini-lbl">Taille</span>
+              <span class="cmh-quick-val" id="playerHeight">-</span>
+            </div>
+            <div class="cmh-quick-item">
+              <span class="cmh-mini-lbl">Poids</span>
+              <span class="cmh-quick-val" id="playerWeight">-</span>
             </div>
           </div>
         </div>
 
-        <!-- Trois mesures courtes, en tuiles -->
-        <div class="cmh-tiles">
-          <div class="cmh-tile">
-            <span class="cmh-tile-lbl">Taille</span>
-            <strong class="cmh-tile-val" id="playerHeight">-</strong>
+        <!-- Informations secondaires en grille dense : deux colonnes sur
+             téléphone, quatre au-delà. -->
+        <div class="cmh-grid">
+          <div class="cmh-cell">
+            <span class="cmh-mini-lbl">Né le</span>
+            <span class="cmh-cell-val" id="playerBirthDate">-</span>
           </div>
-          <div class="cmh-tile">
-            <span class="cmh-tile-lbl">Poids</span>
-            <strong class="cmh-tile-val" id="playerWeight">-</strong>
+          <div class="cmh-cell">
+            <span class="cmh-mini-lbl">Lieu</span>
+            <span class="cmh-cell-val" id="playerBirthPlace">-</span>
           </div>
-          <div class="cmh-tile">
-            <span class="cmh-tile-lbl">Lance</span>
-            <strong class="cmh-tile-val" id="playerShoots">-</strong>
+          <div class="cmh-cell">
+            <span class="cmh-mini-lbl">Repêchage</span>
+            <span class="cmh-cell-val" id="playerDraft">-</span>
           </div>
-        </div>
-
-        <!-- Deux valeurs longues, en rangées libellé / valeur -->
-        <div class="cmh-rows">
-          <div class="cmh-row">
-            <span class="cmh-row-lbl">Né le</span>
-            <span class="cmh-row-val" id="playerBirthDate">-</span>
+          <div class="cmh-cell">
+            <span class="cmh-mini-lbl">Lance</span>
+            <span class="cmh-cell-val" id="playerShoots">-</span>
           </div>
-          <div class="cmh-row">
-            <span class="cmh-row-lbl">Lieu</span>
-            <span class="cmh-row-val" id="playerBirthPlace">-</span>
-          </div>
-        </div>
-
-        <!-- Repêchage : bloc distinct -->
-        <div class="cmh-draft">
-          <span class="cmh-draft-lbl">Repêchage</span>
-          <p class="cmh-draft-val" id="playerDraft">-</p>
         </div>
       </div>
 

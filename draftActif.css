@@ -969,41 +969,35 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   border-bottom: 1px solid var(--border-light);
   border-radius: 18px 18px 0 0;
 }
-/* ---------- Identité : photo + nom + jetons ---------- */
+/* ---------- Identité : une seule rangée ---------- */
 .cmh-identity {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
 }
 .player-headshot-container {
   flex: 0 0 auto;
-  width: 72px;
-  height: 72px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 3px;
-  border-radius: 16px;
+  border-radius: 10px;
   overflow: hidden;
-  background: var(--card-white);
+  background: var(--bg-gray-light);
   border: 2px solid var(--primary);
 }
-.player-headshot-container img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 12px;
-}
+.player-headshot-container img { width: 100%; height: 100%; object-fit: cover; }
 .player-headshot-container .no-photo { color: var(--text-light-gray); }
 
-.cmh-ident-text { min-width: 0; }
+.cmh-ident-text { flex: 1; min-width: 0; }
 .cmh-ident-text h2 {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -.01em;
+  line-height: 1.1;
+  letter-spacing: -.015em;
   text-transform: uppercase;
   color: var(--primary);
   overflow-wrap: break-word;
@@ -1011,126 +1005,84 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
 .cmh-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 6px;
+  gap: 5px;
+  margin-top: 4px;
 }
 .cmh-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: var(--bg-gray-light);
-  border: 1px solid var(--border-light);
-  font-size: .68rem;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(0, 212, 255, .13);
+  font-size: .64rem;
   font-weight: 800;
   letter-spacing: .06em;
   text-transform: uppercase;
   color: var(--text-main);
 }
 .cmh-chip:empty { display: none; }
-.cmh-chip-icon { display: inline-flex; color: var(--primary); }
-.cmh-chip-icon svg { width: 13px; height: 13px; }
+.cmh-chip-team { background: rgba(123, 140, 196, .16); }
 /* Le JS injecte le logo de l'équipe dans #careerPlayerTeam. index.css le
    dimensionnait via `.player-position-team img`, sélecteur qui ne
-   s'applique plus à cette structure : sans cette règle, l'image s'affiche
-   à sa taille naturelle et fait exploser la hauteur de l'en-tête. */
+   s'applique plus ici : sans cette règle, l'image s'affiche à sa taille
+   naturelle et fait exploser la hauteur de l'en-tête. */
 .cmh-chip img {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
   object-fit: contain;
   vertical-align: middle;
 }
-.cmh-chip > span { display: inline-flex; align-items: center; gap: 5px; }
+.cmh-chip > span { display: inline-flex; align-items: center; gap: 4px; }
 
-/* ---------- Trois mesures courtes, en tuiles ---------- */
-.cmh-tiles {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 14px;
-}
-.cmh-tile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 9px 6px;
-  border-radius: 12px;
+/* Mesures rapides : masquées sur téléphone pour libérer de la hauteur au
+   profit du tableau, réaffichées dès que la largeur le permet. */
+.cmh-quick { display: none; }
+.cmh-quick-item {
+  padding: 3px 10px;
+  border-radius: 8px;
   background: var(--bg-odd-row);
-  border: 1px solid var(--border-light);
+  text-align: center;
 }
-.cmh-tile-lbl {
-  font-size: .62rem;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--text-gray);
-}
-.cmh-tile-val {
-  font-size: .95rem;
+.cmh-quick-val {
+  display: block;
+  font-size: .9rem;
   font-weight: 700;
-  color: var(--text-main);
+  color: var(--primary);
 }
 
-/* ---------- Deux valeurs longues, en rangées ---------- */
-.cmh-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  margin-top: 8px;
-}
-.cmh-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 13px;
-  border-radius: 12px;
-  background: var(--bg-odd-row);
-  border: 1px solid var(--border-light);
-}
-.cmh-row-lbl {
-  flex: 0 0 auto;
-  font-size: .62rem;
+/* ---------- Libellé minuscule commun ---------- */
+.cmh-mini-lbl {
+  display: block;
+  font-size: .58rem;
   font-weight: 800;
   letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--text-gray);
 }
-.cmh-row-val {
-  text-align: right;
-  font-size: .82rem;
+
+/* ---------- Grille dense des informations secondaires ---------- */
+.cmh-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 10px;
+}
+.cmh-cell {
+  padding: 6px 9px;
+  border-radius: 9px;
+  background: var(--bg-odd-row);
+  border: 1px solid var(--border-light);
+  min-width: 0;
+}
+.cmh-cell .cmh-mini-lbl { margin-bottom: 2px; }
+.cmh-cell-val {
+  display: block;
+  font-size: .76rem;
   font-weight: 700;
   line-height: 1.3;
   color: var(--text-main);
   overflow-wrap: break-word;
-}
-
-/* ---------- Repêchage ---------- */
-.cmh-draft {
-  margin-top: 12px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: rgba(0, 212, 255, .08);
-  border: 1px solid rgba(0, 212, 255, .22);
-}
-.cmh-draft-lbl {
-  display: block;
-  margin-bottom: 3px;
-  font-size: .62rem;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--primary);
-}
-.cmh-draft-val {
-  margin: 0;
-  font-size: .82rem;
-  font-weight: 700;
-  line-height: 1.35;
-  color: var(--text-dark);
 }
 
 .loading-spinner {
@@ -1196,17 +1148,19 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   width: 100%;
   min-width: 620px;
   border-collapse: collapse;
-  font-size: .82rem;
+  font-size: .76rem;
   font-variant-numeric: tabular-nums;
 }
 #careerStatsTable th {
   position: sticky;
   top: 0;
   z-index: 2;
-  padding: 10px 8px;
+  /* Densité « nano » : le tableau est le contenu principal de la modale,
+     on lui rend la hauteur économisée sur l'en-tête. */
+  padding: 6px 6px;
   background: rgba(0, 212, 255, .35);
   color: var(--text-main);
-  font-size: .72rem;
+  font-size: .64rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: .4px;
@@ -1214,22 +1168,34 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   white-space: nowrap;
 }
 #careerStatsTable td {
-  padding: 8px;
+  padding: 4px 6px;
   text-align: center;
   border-bottom: 1px solid var(--border-light);
   color: var(--text-dark);
   white-space: nowrap;
 }
+#careerStatsTable tbody tr { height: 32px; }
 #careerStatsTable tbody tr:hover { background: rgba(0, 212, 255, .07); }
 #careerStatsTable tr.nhl-season { background: rgba(0, 212, 255, .05); }
 #careerStatsTable tr.current-season { background: rgba(0, 212, 255, .12); font-weight: 800; }
 #careerStatsTable .season-col { font-weight: 800; color: var(--text-main); }
 #careerStatsTable .league-col { font-size: .76rem; color: var(--text-secondary); }
+/* Le JS construit `teams/${e.team}.png` où e.team est le NOM COMPLET
+   renvoyé par l'API (« Anaheim Ducks ») et non l'abréviation : le fichier
+   n'existe pas et l'image tombe sur son texte alternatif. Défaut de
+   données antérieur, dans du JS minifié — non corrigé ici.
+   On borne donc les vrais logos par la hauteur (largeur libre) et on rend
+   le texte alternatif lisible sur une seule ligne : le nom de l'équipe
+   reste affiché, sans gonfler la rangée. */
 #careerStatsTable td.team-col img {
-  width: 20px;
-  height: 20px;
+  width: auto;
+  max-height: 20px;
   object-fit: contain;
   vertical-align: middle;
+  font-size: .6rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-secondary);
 }
 .career-totals-row { background: rgba(0, 212, 255, .14); font-weight: 800; }
 .career-totals-row td { border-top: 2px solid var(--primary); color: var(--text-main); }
@@ -1327,13 +1293,14 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
     min-width: 148px;
     text-align: center;
   }
-  /* Au-delà du téléphone, la place ne manque plus : photo plus grande,
-     nom plus grand, et les tuiles gardent leurs trois colonnes. */
-  .player-headshot-container { width: 92px; height: 92px; border-radius: 18px; }
-  .cmh-ident-text h2 { font-size: 1.4rem; }
-  .cmh-identity { gap: 16px; }
-  .cmh-tile-val { font-size: 1.05rem; }
-  .cmh-row-val, .cmh-draft-val { font-size: .88rem; }
+  /* Au-delà du téléphone : vignette plus grande et mesures rapides
+     réaffichées à droite du nom, comme dans le gabarit. */
+  .player-headshot-container { width: 60px; height: 60px; border-radius: 12px; }
+  .cmh-ident-text h2 { font-size: 1.2rem; }
+  .cmh-identity { gap: 14px; }
+  .cmh-quick { display: flex; gap: 8px; flex: 0 0 auto; }
+  .cmh-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .cmh-cell-val { font-size: .8rem; }
   .custom-alert-button { width: auto; min-width: 160px; }
   .finish-btn { bottom: 22px; }
 }
