@@ -307,7 +307,6 @@
    reste affiché, sans gonfler la rangée. */
 #careerStatsTable td.team-col img {
   width: auto;
-  max-height: 20px;
   object-fit: contain;
   vertical-align: middle;
   font-size: .6rem;
