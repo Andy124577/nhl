@@ -1676,3 +1676,102 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   }
   .draft-header .card-header { margin-bottom: 5px; }
 }
+
+/* ============================================================
+   17. TABLEAU SANS PHOTO, TOUT VISIBLE SANS DÉFILEMENT
+   ============================================================ */
+
+/* La vignette est la première colonne quelle que soit la forme du tableau
+   (Photo pour les joueurs, Logo pour les équipes). La masquer libère
+   79 à 94px, ce qui permet de faire tenir le reste sans défilement
+   horizontal — le bouton de sélection compris. */
+#playerTable thead th:first-child,
+#playerTable tbody td:first-child { display: none; }
+
+/* La deuxième colonne devient la première visible : c'est elle qui porte
+   désormais l'arrondi de gauche. */
+#playerTable tbody td:nth-child(2) {
+  border-left: 1px solid var(--border-light);
+  border-radius: 12px 0 0 12px;
+}
+#playerTable tbody td:first-child { border-left: 0; border-radius: 0; }
+
+/* Plus de largeur plancher : le tableau s'adapte à son cadre. */
+#playerTable { min-width: 0; }
+
+/* Colonnes resserrées pour que même la vue Gardiens (9 colonnes visibles)
+   tienne sur un écran de 360px. */
+#playerTable thead th,
+#playerTable tbody td {
+  padding-left: 3px;
+  padding-right: 3px;
+  font-size: .7rem;
+}
+#playerTable thead th { font-size: .58rem; letter-spacing: .02em; }
+#playerTable tbody td:nth-child(2) {
+  min-width: 0;
+  padding-left: 9px;
+  font-size: .76rem;
+  overflow-wrap: break-word;
+}
+#playerTable tbody td:not(:nth-child(2)) { font-size: .72rem; }
+
+/* Bouton de sélection compact, et colonne d'action collée à droite : même
+   si un tableau très large devait déborder, le bouton resterait visible. */
+#playerTable thead th:last-child,
+#playerTable tbody td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  padding-left: 4px;
+  padding-right: 6px;
+}
+button.select-button {
+  gap: 0;
+  padding: 6px 9px;
+  min-height: 34px;
+}
+button.select-button .select-icon { width: 14px; height: 14px; }
+
+/* ============================================================
+   18. MODALE DE CARRIÈRE : HAUTEUR AJUSTÉE AU CONTENU
+   ------------------------------------------------------------
+   index.css impose `.career-modal { height: 100vh }` sous 768px. Avec
+   une ou deux saisons à afficher, la modale occupait donc tout l'écran
+   et laissait un grand vide sous le tableau. Elle s'ajuste désormais à
+   son contenu, sans jamais dépasser la hauteur visible.
+   ============================================================ */
+.career-modal {
+  height: auto;
+  max-height: calc(100dvh - 24px);
+}
+/* Enfant d'un conteneur flex en colonne : sans cela le tableau s'étire
+   pour combler la hauteur restante. */
+#careerStatsTable { flex: 0 1 auto; }
+
+/* La vue Gardiens compte neuf colonnes visibles : sous 420px il faut
+   resserrer davantage pour éviter le défilement horizontal. */
+@media (max-width: 420px) {
+  #playerTable thead th,
+  #playerTable tbody td { padding-left: 2px; padding-right: 2px; }
+  #playerTable tbody td:not(:nth-child(2)) { font-size: .68rem; }
+  #playerTable thead th { font-size: .54rem; }
+  /* `width` et non `max-width` : en disposition automatique, une cellule
+     de tableau ignore largement max-width. Le nom se replie sur deux
+     lignes plutôt que d'élargir la colonne. */
+  /* Le plancher `min-width: 132px` posé plus haut vise th ET td : c'est
+     l'en-tête qui imposait alors la largeur de colonne. On le lève des
+     deux côtés, sinon la colonne ne peut pas descendre sous 132px. */
+  #playerTable tbody td:nth-child(2),
+  #playerTable thead th:nth-child(2) {
+    width: 104px;
+    min-width: 0;
+    padding-left: 7px;
+  }
+  /* Sans cela la cellule hérite du nowrap des colonnes chiffrées et ne
+     peut pas se replier : « Jake Oettinger » imposait 133px. */
+  #playerTable tbody td:nth-child(2),
+  #playerTable thead th:nth-child(2) { white-space: normal; }
+  #playerTable tbody td:nth-child(2) { font-size: .72rem; }
+  button.select-button { padding: 6px 7px; }
+}
