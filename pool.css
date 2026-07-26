@@ -1038,3 +1038,10 @@ html[data-theme="light"] .picks-section { border-top-color: rgba(0,0,0,.1); }
 html[data-theme="light"] .pick-chip { background: rgba(0,0,0,.05); border-color: rgba(0,0,0,.1); color: #222; }
 html[data-theme="light"] .pick-chip:hover { background: rgba(0,0,0,.1); }
 html[data-theme="light"] .pick-headshot { background: rgba(0,0,0,.05); }
+
+/* ==================== DENSITÉ SUR GRAND ÉCRAN ==================== */
+@media (min-width: 769px) {
+    .pool-hero { padding: 56px 24px 34px; }
+    .pool-hero-title { font-size: clamp(1.8rem, 3.1vw, 2.5rem); }
+    .pool-empty-icon { font-size: 2.4rem; margin-bottom: 12px; }
+}

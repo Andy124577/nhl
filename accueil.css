@@ -781,3 +781,14 @@ html[data-theme="light"] .hfc-row:hover {
     .resume-item { flex-wrap: wrap; font-size: 0.92rem; }
     .resume-cta { width: 100%; }
 }
+
+/* ==================== DENSITÉ SUR GRAND ÉCRAN ====================
+   Voir la note dans index.css : on resserre les valeurs qui créent le
+   volume plutôt que de mettre l'ensemble à l'échelle. */
+@media (min-width: 769px) {
+    .hero-section { padding: 58px 24px 70px; min-height: 74vh; }
+    .hero-headline { font-size: clamp(2.2rem, 3.5vw, 3.4rem); margin-bottom: 14px; }
+    .home-section { padding: 52px 24px; }
+    .how-it-works-section { padding: 60px 24px; }
+    .step-icon-wrap { font-size: 2.5rem; margin-bottom: 14px; }
+}

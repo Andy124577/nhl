@@ -54,6 +54,22 @@
   --glow-danger: 0 0 20px rgba(255, 71, 87, 0.25);
   --glow-success: 0 0 20px rgba(0, 230, 118, 0.25);
   --glow-primary-strong: 0 0 30px rgba(0, 212, 255, 0.4);
+
+  /* Densité de l'interface. Ces valeurs sont la référence (mobile) ; elles
+     sont resserrées sur grand écran dans le bloc « DENSITÉ » en fin de
+     fichier. Tout se règle ici — aucune mise à l'échelle globale. */
+  --d-hero-pad: 20px 2px 2px;
+  --d-hero-title: clamp(2rem, 4.5vw, 3.6rem);
+  --d-container-pad: 12px 20px 64px;
+  --d-filters-pad: 24px 26px;
+  --d-filters-gap: 18px;
+  --d-field-pad: 13px 16px;
+  --d-field-size: .95rem;
+  --d-th-pad: 16px 16px;
+  --d-td-pad: 14px 16px;
+  --d-td-size: .92rem;
+  --d-photo: 70px;
+  --d-photo-logo: 26px;
 }
 
 /* ============================================================ */
@@ -131,9 +147,7 @@ body {
 /* ============================================================ */
 .stats-hero {
   position: relative;
-  overflow: hidden;
-  background: var(--bg);
-  padding: 20px 2px 2px;
+  padding: var(--d-hero-pad);
   text-align: center;
 }
 
@@ -161,7 +175,7 @@ body {
 
 .stats-hero-title {
   font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
-  font-size: clamp(2rem, 4.5vw, 3.6rem);
+  font-size: var(--d-hero-title);
   font-weight: 400; /* Bebas Neue is naturally bold */
   letter-spacing: 2px;
   line-height: 1.1;
@@ -180,7 +194,7 @@ body {
 .stats-container {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 32px 20px 64px;
+  padding: var(--d-container-pad);
 }
 
 /* ============================================================ */
@@ -190,12 +204,12 @@ body {
   background: rgba(20,20,48,.85);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  padding: 24px 26px;
+  padding: var(--d-filters-pad);
   border-radius: 18px;
   border: 1px solid var(--border-light);
   margin-bottom: 28px;
   display: flex;
-  gap: 18px;
+  gap: var(--d-filters-gap);
   flex-wrap: wrap;
   align-items: flex-end;
   transition: all .3s ease;
@@ -227,10 +241,10 @@ body {
 
 .filter-group input,
 .filter-group select {
-  padding: 13px 16px;
+  padding: var(--d-field-pad);
   border: 2px solid var(--border-gray);
   border-radius: 12px;
-  font-size: .95rem;
+  font-size: var(--d-field-size);
   font-weight: 600;
   transition: all .25s ease;
   background: var(--bg-gray-light);
@@ -343,7 +357,7 @@ th {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: var(--text-main);
-  padding: 16px 16px;
+  padding: var(--d-th-pad);
   text-align: center; /* Right-align headers by default for number columns */
   font-weight: 400; /* Bebas Neue is naturally bold */
   font-size: .95rem;
@@ -390,9 +404,9 @@ tbody tr:hover {
 }
 
 td {
-  padding: 14px 16px;
+  padding: var(--d-td-pad);
   text-align: center; /* Right-align all numeric data by default */
-  font-size: .92rem;
+  font-size: var(--d-td-size);
   color: var(--text-dark);
   font-weight: 600;
   word-wrap: break-word;
@@ -430,15 +444,15 @@ td.points-column {
 /* Player photo */
 .player-photo {
   position: relative;
-  width: 70px;
-  height: 70px;
+  width: var(--d-photo);
+  height: var(--d-photo);
   display: inline-block;
   margin: 0 auto;
 }
 
 .player-photo img.face {
-  width: 70px;
-  height: 70px;
+  width: var(--d-photo);
+  height: var(--d-photo);
   display: block;
   border-radius: 10px;
   border: 2px solid var(--border-light);
@@ -455,8 +469,8 @@ tbody tr:hover .player-photo img.face {
   position: absolute;
   bottom: -6px;
   right: -6px;
-  width: 26px;
-  height: 26px;
+  width: var(--d-photo-logo);
+  height: var(--d-photo-logo);
   border-radius: 50%;
   border: 2px solid var(--border-gray);
   background: #fff;
@@ -1045,7 +1059,7 @@ tbody tr:hover .player-photo img.face {
   }
 
   .stats-container {
-    padding: 24px 14px 48px;
+    padding: 14px 14px 48px;
   }
 
   /* Keep horizontal filters for tablets */
@@ -1300,7 +1314,7 @@ tbody tr:hover .player-photo img.face {
   }
 
   .stats-container {
-    padding: 20px 12px 40px;
+    padding: 10px 12px 40px;
   }
 
   /* Keep horizontal filters but more compact */
@@ -1535,22 +1549,50 @@ html[data-theme="light"] #careerStatsTable tbody tr:nth-child(even) {
   }
 }
 
-/* ==================== DENSITÉ SUR GRAND ÉCRAN ====================
-   L'interface est dessinée en px (~1900 valeurs contre ~370 en rem), donc
-   ajuster la taille de police racine ne mettrait à l'échelle qu'une petite
-   partie du design. `zoom` réduit tout de façon homogène — texte, espacements,
-   images, bordures — exactement comme le zoom du navigateur.
 
-   Ne s'applique qu'au-delà de 768px : sur mobile les dimensions actuelles
-   sont déjà justes, et réduire nuirait aux cibles tactiles. */
+/* ==================== DENSITÉ SUR GRAND ÉCRAN ====================
+   L'interface était dessinée aux dimensions du mobile et paraissait donc
+   trop lâche sur un écran d'ordinateur. Plutôt qu'une mise à l'échelle
+   globale (`zoom`/`transform`), qui rend flou, entre en conflit avec le
+   zoom du navigateur et écrase les réglages d'accessibilité du visiteur,
+   on resserre ici les valeurs qui créent réellement le volume :
+   rembourrages, hauteurs de champ et taille des vignettes.
+
+   Le texte descend beaucoup moins que les espacements — c'est le blanc
+   qui donnait l'impression de « trop grand », pas la typographie.
+
+   Tous les media queries précédents de ce fichier sont en max-width :
+   ce bloc ne peut donc pas être écrasé par eux. */
 @media (min-width: 769px) {
-    body {
-        zoom: 0.9;
+    :root {
+        --d-hero-pad: 14px 2px 0;
+        --d-hero-title: clamp(1.9rem, 3.4vw, 2.9rem);
+        --d-container-pad: 10px 22px 52px;
+        --d-filters-pad: 18px 20px;
+        --d-filters-gap: 15px;
+        --d-field-pad: 10px 14px;
+        --d-field-size: .88rem;
+        --d-th-pad: 12px 14px;
+        --d-td-pad: 11px 14px;
+        --d-td-size: .86rem;
+        --d-photo: 56px;
+        --d-photo-logo: 22px;
     }
 
-    /* La page des statistiques est un tableau dense : on gagne à en voir
-       davantage d'un coup d'œil. */
+    /* La page des statistiques est un tableau dense : on y gagne à voir
+       plus de lignes d'un coup d'œil, donc on serre davantage. */
     body[data-page="stats"] {
-        zoom: 0.8;
+        --d-hero-pad: 8px 2px 0;
+        --d-hero-title: clamp(1.6rem, 2.8vw, 2.4rem);
+        --d-container-pad: 6px 22px 44px;
+        --d-filters-pad: 14px 16px;
+        --d-filters-gap: 12px;
+        --d-field-pad: 8px 12px;
+        --d-field-size: .82rem;
+        --d-th-pad: 9px 12px;
+        --d-td-pad: 8px 12px;
+        --d-td-size: .8rem;
+        --d-photo: 44px;
+        --d-photo-logo: 18px;
     }
 }

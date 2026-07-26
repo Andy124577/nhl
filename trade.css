@@ -1680,3 +1680,8 @@ html[data-theme="light"] .btn-propose-trade:disabled {
     .tc-trade-row { flex-direction: column; }
     .tc-arrow { transform: rotate(90deg); }
 }
+
+/* ==================== DENSITÉ SUR GRAND ÉCRAN ==================== */
+@media (min-width: 769px) {
+    .empty-icon { font-size: 3.1rem; }
+}

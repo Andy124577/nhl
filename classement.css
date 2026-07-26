@@ -1881,3 +1881,8 @@ html[data-theme="dark"] .skeleton {
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
 }
+
+/* ==================== DENSITÉ SUR GRAND ÉCRAN ==================== */
+@media (min-width: 769px) {
+    .player-headshot-container .no-photo { font-size: 2.3rem; }
+}

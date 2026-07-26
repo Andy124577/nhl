@@ -611,3 +611,16 @@ html[data-theme="light"] .user-dropdown-header::after {
     .user-dropdown.show { animation: none; }
     .dropdown-item, .dropdown-icon, .udh-avatar-edit { transition: none; }
 }
+
+/* ==================== DENSITÉ DE LA BARRE (grand écran) ====================
+   Hauteur identique sur toutes les pages : une barre qui changerait de
+   taille d'une page à l'autre serait déroutante à la navigation. */
+@media (min-width: 769px) {
+    .navbar-desktop { height: 60px; padding: 0 26px; }
+    .navbar-logo { height: 27px; }
+    .nav-link { padding: 8px 13px; font-size: .88rem; min-height: 38px; }
+    .nav-links { gap: 3px; }
+    .user-avatar { width: 38px; height: 38px; }
+    .theme-toggle-btn { width: 38px; height: 38px; }
+    .pool-selector { min-width: 158px; font-size: .86rem; padding: 7px 11px; }
+}
