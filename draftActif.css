@@ -62,41 +62,24 @@ body {
   animation: headerTurnGlow 2.4s ease-in-out infinite;
 }
 
-.draft-header-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.draft-info { min-width: 0; }
-.draft-info h2 {
-  margin: 0;
-  font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
-  font-size: clamp(1.5rem, 6vw, 2rem);
-  font-weight: 400;
-  letter-spacing: 1.5px;
-  color: var(--text-main);
-}
-#draft-clan-name {
-  margin-top: 2px;
-  font-size: .95rem;
-  font-weight: 700;
-  color: var(--primary);
-}
-
 /* ---------- Bandeau de tour ---------- */
+/* Placé au centre de .dop-info : plus de marge haute, il doit rester sur la
+   même ligne de base que le libellé et la ronde. Il se replie sur sa propre
+   ligne si les trois ne tiennent pas. */
 .turn-banner {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  padding: 8px 14px;
+  gap: 6px;
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 4px 10px;
   border: 1px solid transparent;
   border-radius: 999px;
-  font-size: .85rem;
-  font-weight: 700;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  text-align: center;
 }
 .turn-banner:empty { display: none; }
 .turn-banner.waiting {
@@ -121,36 +104,6 @@ body {
   color: var(--success);
 }
 
-/* ---------- Choix actuel ---------- */
-.current-pick-display {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--card);
-  border: 1px solid var(--border-light);
-  border-radius: 14px;
-}
-.pick-label {
-  font-size: .7rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .8px;
-  color: var(--text-secondary);
-}
-.pick-number-large {
-  font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
-  font-size: 2.4rem;
-  font-weight: 400;
-  line-height: 1;
-  color: var(--primary);
-}
-.pick-team {
-  font-size: .9rem;
-  font-weight: 700;
-  color: var(--text-main);
-}
-
 /* ---------- Progression globale ---------- */
 .draft-overall-progress {
   max-width: 1400px;
@@ -158,12 +111,18 @@ body {
 }
 .dop-info {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  align-items: baseline;
-  gap: 10px;
+  align-items: center;
+  gap: 6px 10px;
   margin-bottom: 7px;
   font-size: .78rem;
   font-weight: 700;
+}
+/* Le bandeau prend la ligne entière quand les trois éléments ne tiennent
+   pas côte à côte, plutôt que de comprimer les libellés. */
+@media (max-width: 460px) {
+  .dop-info .turn-banner { order: 3; flex: 1 1 100%; justify-content: center; }
 }
 #dop-label { color: var(--text-secondary); }
 #dop-round {
@@ -1296,20 +1255,10 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
    ============================================================ */
 @media (min-width: 600px) {
   .draft-header { padding: 20px; }
-  .draft-header-content {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
   .draft-main-container { padding: 20px 18px 48px; }
   .picks-carousel { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .search-field { flex: 1 1 220px; }
   .filter-select { flex: 0 1 158px; }
-  .current-pick-display {
-    flex-direction: column;
-    min-width: 148px;
-    text-align: center;
-  }
   /* Au-delà du téléphone : vignette plus grande et mesures rapides
      réaffichées à droite du nom, comme dans le gabarit. */
   .player-headshot-container { width: 60px; height: 60px; border-radius: 12px; }
@@ -1346,7 +1295,6 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
 
   .picks-carousel { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .draft-timeline { max-height: 360px; }
-  .pick-number-large { font-size: 2.8rem; }
 
   #playerTable { min-width: 0; }
   /* `overflow` complet et non seulement overflow-x : dès qu'un axe vaut
@@ -1396,42 +1344,6 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
    l'action réelle. On passe titre et choix actuel côte à côte. */
 @media (max-width: 599px) {
   .draft-header { padding: 11px 13px; }
-
-  .draft-header-content {
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 10px;
-  }
-
-  .draft-info h2 {
-    font-size: 1.15rem;
-    letter-spacing: 1px;
-    line-height: 1.15;
-  }
-  /* Le titre affiche déjà « Draft : <pool> » ; cette ligne répétait le
-     même nom. On la retire pour gagner une hauteur de ligne entière. */
-  #draft-clan-name { display: none; }
-
-  .turn-banner {
-    margin-top: 7px;
-    padding: 5px 11px;
-    font-size: .74rem;
-    gap: 6px;
-  }
-
-  /* Le choix actuel devient une pastille compacte à droite du titre. */
-  .current-pick-display {
-    flex: 0 0 auto;
-    flex-direction: column;
-    align-items: center;
-    gap: 1px;
-    padding: 7px 13px;
-    border-radius: 12px;
-  }
-  .pick-label { font-size: .56rem; letter-spacing: .5px; }
-  .pick-number-large { font-size: 1.7rem; }
-  .pick-team { font-size: .72rem; }
 
   .draft-overall-progress { margin-top: 9px; }
   .dop-info { margin-bottom: 4px; font-size: .68rem; }
@@ -1489,12 +1401,6 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   padding: 10px 13px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-}
-
-/* Libellé « sur le chrono » façon gabarit */
-.pick-label {
-  font-size: .58rem;
-  letter-spacing: .1em;
 }
 
 /* ---- Derniers choix : ticker horizontal ----

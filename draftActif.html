@@ -38,23 +38,15 @@
 
   <!-- Draft Header with Pick Number -->
   <div class="draft-header">
-    <div class="draft-header-content">
-      <div class="draft-info">
-        <h2 id="draft-title">Draft NHL</h2>
-        <div id="draft-clan-name"></div>
-        <div id="turn-banner" class="turn-banner"></div>
-      </div>
-      <div class="current-pick-display">
-        <div class="pick-label">Choix actuel</div>
-        <div class="pick-number-large" id="current-pick-number">1</div>
-        <div class="pick-team" id="current-pick-team"></div>
-      </div>
-    </div>
-
     <!-- Overall draft progress (Goal-Gradient + Mental Model) -->
     <div class="draft-overall-progress" id="draft-overall-progress" style="display:none;">
       <div class="dop-info">
         <span id="dop-label">Choix 1 / 1</span>
+        <!-- État du tour placé au centre de la barre de progression. Sa
+             visibilité suit désormais celle du bloc : les deux dépendent de
+             la présence d'un ordre de repêchage, donc ils apparaissent et
+             disparaissent ensemble. -->
+        <div id="turn-banner" class="turn-banner"></div>
         <span id="dop-round">Ronde 1</span>
       </div>
       <div class="dop-bar"><div class="dop-fill" id="dop-fill"></div></div>
