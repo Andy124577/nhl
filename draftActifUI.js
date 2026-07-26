@@ -99,12 +99,24 @@ function initCategoryTabs() {
         strip.appendChild(tab);
     });
 
+    const table = document.getElementById('playerTable');
+
     const refleter = () => {
         strip.querySelectorAll('.category-tab').forEach(t => {
             const actif = t.dataset.value === select.value;
             t.classList.toggle('is-active', actif);
             t.setAttribute('aria-selected', String(actif));
         });
+        // Marque la vue courante sur le tableau. Le nombre et l'ordre des
+        // colonnes changent d'une catégorie à l'autre : sans ce repère, une
+        // règle CSS ciblant « la 7e colonne » viserait SV% chez les gardiens
+        // mais la colonne Action chez les patineurs.
+        if (table) {
+            [...table.classList]
+                .filter(c => c.startsWith('cat-'))
+                .forEach(c => table.classList.remove(c));
+            table.classList.add('cat-' + select.value);
+        }
     };
     select.addEventListener('change', refleter);
     refleter();

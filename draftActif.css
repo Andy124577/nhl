@@ -1681,20 +1681,63 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
    17. TABLEAU SANS PHOTO, TOUT VISIBLE SANS DÉFILEMENT
    ============================================================ */
 
-/* La vignette est la première colonne quelle que soit la forme du tableau
-   (Photo pour les joueurs, Logo pour les équipes). La masquer libère
-   79 à 94px, ce qui permet de faire tenir le reste sans défilement
-   horizontal — le bouton de sélection compris. */
-#playerTable thead th:first-child,
-#playerTable tbody td:first-child { display: none; }
+/* Première colonne : rang + logo d'équipe, comme sur stats.html.
+   Le portrait du joueur est retiré, mais le logo d'équipe se trouve déjà
+   dans cette cellule (.player-photo contient le portrait ET le logo) : il
+   suffit de masquer le portrait et de remettre le logo dans le flux.
+   Le rang est produit par un compteur CSS, donc sans toucher au JS. */
+#playerTable tbody { counter-reset: draftrank; }
+#playerTable tbody tr { counter-increment: draftrank; }
 
-/* La deuxième colonne devient la première visible : c'est elle qui porte
-   désormais l'arrondi de gauche. */
-#playerTable tbody td:nth-child(2) {
-  border-left: 1px solid var(--border-light);
-  border-radius: 12px 0 0 12px;
+#playerTable thead th:first-child,
+#playerTable tbody td:first-child {
+  width: 1%;
+  white-space: nowrap;
+  text-align: left;
+  padding-left: 8px;
+  padding-right: 2px;
 }
-#playerTable tbody td:first-child { border-left: 0; border-radius: 0; }
+#playerTable tbody td:first-child::before {
+  content: counter(draftrank);
+  display: inline-block;
+  min-width: 15px;
+  margin-right: 6px;
+  vertical-align: middle;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: .68rem;
+  font-weight: 700;
+  color: var(--text-gray);
+}
+/* L'en-tête dit « Photo » ou « Logo » selon la vue ; on lui substitue
+   « # » sans toucher au JS qui l'écrit. */
+#playerTable thead th:first-child { font-size: 0; }
+#playerTable thead th:first-child::before {
+  content: '#';
+  font-size: .58rem;
+  letter-spacing: .05em;
+}
+
+/* Portrait retiré ; le cadre se réduit au logo, remis dans le flux. */
+#playerTable .player-photo { width: auto; height: auto; vertical-align: middle; }
+#playerTable .player-photo img.face { display: none; }
+#playerTable .player-photo img.logo {
+  position: static;
+  width: 21px;
+  height: 21px;
+  padding: 1px;
+  vertical-align: middle;
+}
+/* Vue Équipes : le logo est posé directement dans la cellule avec une
+   largeur en style en ligne (style="width:40px"), que seul !important peut
+   contrer. */
+#playerTable tbody td:first-child > img.logo {
+  width: 21px !important;
+  height: 21px;
+  border-radius: 50%;
+  background: #fff;
+  padding: 1px;
+  vertical-align: middle;
+}
 
 /* Plus de largeur plancher : le tableau s'adapte à son cadre. */
 #playerTable { min-width: 0; }
@@ -1774,4 +1817,81 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   #playerTable thead th:nth-child(2) { white-space: normal; }
   #playerTable tbody td:nth-child(2) { font-size: .72rem; }
   button.select-button { padding: 6px 7px; }
+}
+
+/* Vue Gardiens : la colonne SV% est retirée à la demande. Elle est en 7e
+   position dans cette vue seulement — chez les patineurs la 7e colonne est
+   Action —, d'où la classe de catégorie posée par draftActifUI.js.
+   Elle libère au passage la largeur qui manquait pour tenir sur 360px. */
+#playerTable.cat-goalies thead th:nth-child(7),
+#playerTable.cat-goalies tbody td:nth-child(7) { display: none; }
+
+/* La colonne rang + logo réoccupe environ 45px : il faut les reprendre
+   ailleurs pour que les vues les plus larges (Équipes, Gardiens) tiennent
+   toujours sans défilement sur un petit écran. */
+@media (max-width: 420px) {
+  #playerTable thead th:first-child,
+  #playerTable tbody td:first-child { padding-left: 5px; padding-right: 0; }
+  #playerTable tbody td:first-child::before { min-width: 12px; margin-right: 4px; font-size: .64rem; }
+  #playerTable .player-photo img.logo,
+  #playerTable tbody td:first-child > img.logo { width: 18px !important; height: 18px; }
+
+  #playerTable tbody td:nth-child(2),
+  #playerTable thead th:nth-child(2) { width: 92px; }
+
+  #playerTable thead th,
+  #playerTable tbody td { padding-left: 1px; padding-right: 1px; }
+  #playerTable tbody td:not(:nth-child(2)):not(:first-child) { font-size: .66rem; }
+  #playerTable thead th { font-size: .5rem; letter-spacing: 0; }
+  button.select-button { padding: 5px 6px; min-height: 30px; }
+  button.select-button .select-icon { width: 12px; height: 12px; }
+}
+
+/* Vue Équipes : « Wins », « Losses », « Points » sont des mots insécables
+   qui imposaient la largeur de leurs colonnes. On leur substitue les
+   abréviations françaises employées ailleurs sur le site, sans toucher au
+   JS qui écrit ces en-têtes. */
+#playerTable.cat-teams thead th:nth-child(4),
+#playerTable.cat-teams thead th:nth-child(5),
+#playerTable.cat-teams thead th:nth-child(6),
+#playerTable.cat-teams thead th:nth-child(7) { font-size: 0; }
+#playerTable.cat-teams thead th:nth-child(4)::before { content: 'V'; }
+#playerTable.cat-teams thead th:nth-child(5)::before { content: 'D'; }
+#playerTable.cat-teams thead th:nth-child(6)::before { content: 'DP'; }
+#playerTable.cat-teams thead th:nth-child(7)::before { content: 'PTS'; }
+#playerTable.cat-teams thead th::before {
+  font-size: .58rem;
+  letter-spacing: .04em;
+}
+
+/* Sous 380px, la colonne du nom cède encore quelques pixels pour que la
+   vue Gardiens tienne elle aussi. */
+@media (max-width: 380px) {
+  #playerTable tbody td:nth-child(2),
+  #playerTable thead th:nth-child(2) { width: 82px; }
+  #playerTable.cat-teams thead th::before { font-size: .5rem; }
+}
+
+/* Bloc final : plusieurs règles plus haut se disputent la largeur des deux
+   premières colonnes. Placé en dernier, celui-ci tranche.
+   - colonne 1 bornée à son contenu réel (rang + logo)
+   - colonne du nom autorisée à se replier, sinon un nom d'équipe comme
+     « Washington Capitals » impose 127px à lui seul */
+@media (max-width: 420px) {
+  #playerTable thead th:first-child,
+  #playerTable tbody td:first-child {
+    width: 42px;
+    min-width: 42px;
+    max-width: 42px;
+    overflow: hidden;
+  }
+  #playerTable tbody td:nth-child(2),
+  #playerTable thead th:nth-child(2) {
+    min-width: 0;
+    max-width: 92px;
+    /* Le nowrap posé plus haut résiste ; on tronque donc proprement plutôt
+       que de laisser le nom déborder sur la colonne voisine. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
