@@ -130,12 +130,6 @@ body {
   text-transform: uppercase;
   letter-spacing: .6px;
 }
-.dop-bar {
-  height: 6px;
-  border-radius: 999px;
-  background: var(--bg-gray-light);
-  overflow: hidden;
-}
 .dop-fill {
   height: 100%;
   width: 0;
@@ -1029,7 +1023,6 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
 
   .draft-overall-progress { margin-top: 9px; }
   .dop-info { margin-bottom: 4px; font-size: .68rem; }
-  .dop-bar { height: 5px; }
 
   /* Rapproche la sélection de joueur du haut de l'écran. */
   .draft-main-container { padding: 11px 12px 36px; gap: 12px; }
