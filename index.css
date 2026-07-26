@@ -1321,7 +1321,7 @@ tbody tr:hover .player-photo img.face {
   }
 
   .stats-container {
-    padding: 10px 12px 40px;
+    padding: 0px 2px 0px;
   }
 
   /* Keep horizontal filters but more compact */
@@ -1828,17 +1828,21 @@ td.player-col {
    étroite elle mange la place du nom, qui est l'information utile. Seul le
    logo d'équipe reste — il identifie l'équipe en une fraction de la largeur.
    Nom et logo restent sur une même ligne, logo à gauche. */
+/* Portée limitée à la page des statistiques : index.css est chargé par
+   toutes les pages, et masquer la vignette du joueur n'a de sens que dans
+   ce tableau-ci. Sans cette portée, la règle supprimait aussi les photos
+   du tableau de repêchage. */
 @media (max-width: 450px) {
-  #playerTable th.player-col,
-  #playerTable td.player-col { padding-left: 0; }
+  body[data-page="stats"] #playerTable th.player-col,
+  body[data-page="stats"] #playerTable td.player-col { padding-left: 0; }
 
-  .player-cell { gap: 8px; }
+  body[data-page="stats"] .player-cell { gap: 8px; }
 
   /* La vignette servait de cadre positionné au badge d'équipe ; sans elle,
      le badge redevient un élément de flux normal. */
-  .player-photo { width: auto; height: auto; }
-  .player-photo img.face { display: none; }
-  .player-photo img.logo {
+  body[data-page="stats"] .player-photo { width: auto; height: auto; }
+  body[data-page="stats"] .player-photo img.face { display: none; }
+  body[data-page="stats"] .player-photo img.logo {
     position: static;
     width: 26px;
     height: 26px;

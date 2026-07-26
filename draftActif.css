@@ -690,15 +690,17 @@ html[data-theme="light"] .player-selection-card {
 }
 #playerTable td.points-column { color: var(--primary); font-weight: 800; }
 
+/* Vignette : mêmes jetons de densité que la page des statistiques, pour
+   que les deux tableaux aient exactement la même échelle. */
 .player-photo {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: var(--d-photo);
+  height: var(--d-photo);
   display: inline-block;
 }
 .player-photo img.face {
-  width: 44px;
-  height: 44px;
+  width: var(--d-photo);
+  height: var(--d-photo);
   border-radius: 9px;
   object-fit: cover;
   border: 1px solid var(--border-light);
@@ -707,12 +709,42 @@ html[data-theme="light"] .player-selection-card {
   position: absolute;
   right: -4px;
   bottom: -4px;
-  width: 19px;
-  height: 19px;
+  width: var(--d-photo-logo);
+  height: var(--d-photo-logo);
   padding: 1px;
   border-radius: 50%;
   background: #fff;
 }
+
+/* Largeur des colonnes.
+   index.css impose `table-layout: fixed` à tous les tableaux. Sans largeur
+   déclarée, les colonnes se partagent alors l'espace À PARTS ÉGALES : la
+   colonne photo devenait aussi large qu'une colonne de statistiques, d'où
+   une cellule bien plus grande que l'image qu'elle contient.
+   La photo est toujours la première colonne (Photo ou Logo selon le filtre)
+   et le nom la deuxième, quel que soit le nombre total de colonnes. */
+#playerTable {
+  /* `auto` et non `fixed`. index.css impose table-layout:fixed à tous les
+     tableaux ; avec un nombre de colonnes variable et aucune largeur
+     déclarée, la cellule photo recevait la même part que les colonnes de
+     chiffres — d'où une cellule bien plus large que son image. Déclarer
+     des largeurs ne suffisait pas : en fixed, l'espace restant est
+     redistribué sur toutes les colonnes, y compris celles déjà
+     dimensionnées. En auto, chaque colonne se règle sur son contenu, ce
+     qui reste juste que le tableau ait 6, 7, 8 ou 10 colonnes. */
+  table-layout: auto;
+}
+/* `width:1%` + nowrap : la formule usuelle pour qu'une colonne se réduise
+   à son contenu en disposition automatique. */
+#playerTable th:nth-child(1),
+#playerTable td:nth-child(1) {
+  width: 1%;
+  white-space: nowrap;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+#playerTable th:nth-child(2),
+#playerTable td:nth-child(2) { min-width: 132px; }
 
 /* ---------- Bouton de sélection ---------- */
 button.select-button {
@@ -1273,4 +1305,94 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   .progress-player-item:hover,
   .finish-btn:hover,
   button.select-button:hover { transform: none; }
+}
+
+/* ============================================================
+   15. ALIGNEMENTS SUR stats.html ET COMPACITÉ TÉLÉPHONE
+   ============================================================ */
+
+/* ---- Échelle de vignette identique à la page des statistiques ----
+   index.css donne 70px sur mobile et 56px au-delà de 768px ; la page des
+   statistiques resserre à 44px via body[data-page="stats"]. On reprend
+   exactement ces valeurs ici. */
+@media (min-width: 769px) {
+  body { --d-photo: 44px; --d-photo-logo: 18px; }
+}
+
+/* ---- En-tête compact sur téléphone --------------------------------
+   L'en-tête empilait titre, nom du pool, bandeau de tour, carte « choix
+   actuel » pleine largeur puis barre de progression : cinq blocs et
+   beaucoup de vide avant d'atteindre la sélection de joueur, qui est
+   l'action réelle. On passe titre et choix actuel côte à côte. */
+@media (max-width: 599px) {
+  .draft-header { padding: 11px 13px; }
+
+  .draft-header-content {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .draft-info h2 {
+    font-size: 1.15rem;
+    letter-spacing: 1px;
+    line-height: 1.15;
+  }
+  /* Le titre affiche déjà « Draft : <pool> » ; cette ligne répétait le
+     même nom. On la retire pour gagner une hauteur de ligne entière. */
+  #draft-clan-name { display: none; }
+
+  .turn-banner {
+    margin-top: 7px;
+    padding: 5px 11px;
+    font-size: .74rem;
+    gap: 6px;
+  }
+
+  /* Le choix actuel devient une pastille compacte à droite du titre. */
+  .current-pick-display {
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    padding: 7px 13px;
+    border-radius: 12px;
+  }
+  .pick-label { font-size: .56rem; letter-spacing: .5px; }
+  .pick-number-large { font-size: 1.7rem; }
+  .pick-team { font-size: .72rem; }
+
+  .draft-overall-progress { margin-top: 9px; }
+  .dop-info { margin-bottom: 4px; font-size: .68rem; }
+  .dop-bar { height: 5px; }
+
+  /* Rapproche la sélection de joueur du haut de l'écran. */
+  .draft-main-container { padding: 11px 12px 36px; gap: 12px; }
+  .progress-card,
+  .draft-order-card,
+  .recent-picks-card,
+  .player-selection-card { padding: 13px; }
+  .card-header,
+  .progress-header,
+  .filters-header { margin-bottom: 11px; padding-bottom: 9px; }
+}
+
+/* ---- Filtres sur deux rangées nettes sous 400px -------------------
+   Quatre contrôles pour 360px de large : recherche + actualiser sur la
+   première rangée, les deux listes sur la seconde. L'ordre visuel est
+   réordonné en CSS, le bouton d'actualisation étant dernier dans le HTML. */
+@media (max-width: 480px) {
+  .filters-row { gap: 8px; }
+
+  .search-input  { order: 0; flex: 1 1 auto; min-width: 0; }
+  .refresh-btn   { order: 1; flex: 0 0 44px; }
+  .filter-select { order: 2; flex: 1 1 calc(50% - 4px); min-width: 0; }
+
+  /* Le filtre de disponibilité, dans l'en-tête de carte, prend toute la
+     largeur plutôt que d'être écrasé à côté du titre. */
+  .filters-header { flex-wrap: wrap; }
+  .filters-header .filter-select { flex: 1 1 100%; order: 0; }
+
+  .picks-carousel { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 }

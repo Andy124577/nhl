@@ -11,6 +11,7 @@
        draftActif.css en dernier évite d'avoir à recourir à !important. -->
   <link rel="stylesheet" href="index.css" />
   <link rel="stylesheet" href="navbar.css">
+  <link rel="stylesheet" href="skeleton-loader.css" />
   <link rel="stylesheet" href="draftActif.css" />
   <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="icons.js" defer></script>
@@ -248,9 +249,60 @@
         </div>
       </div>
 
-      <!-- Loading Spinner -->
-      <div class="loading-spinner" id="loadingSpinner">
-        Chargement des statistiques...
+      <!-- Squelette de chargement, identique à celui de stats.html.
+           Il conserve l'id "loadingSpinner" parce que draftActif.js pilote
+           l'affichage par cet identifiant : le renommer ferait planter
+           l'ouverture de la modale. -->
+      <div class="skeleton-loader" id="loadingSpinner">
+        <div class="skeleton-modal-header">
+          <div class="skeleton skeleton-modal-avatar"></div>
+          <div class="skeleton-modal-info">
+            <div class="skeleton" style="width: 200px; height: 32px; border-radius: 8px;"></div>
+            <div class="skeleton" style="width: 150px; height: 20px; border-radius: 8px; margin-top: 12px;"></div>
+          </div>
+        </div>
+        <div class="skeleton-modal-bio">
+          <div class="skeleton-modal-bio-item">
+            <div class="skeleton" style="width: 60px; height: 12px; border-radius: 6px;"></div>
+            <div class="skeleton" style="width: 80px; height: 16px; border-radius: 6px; margin-top: 6px;"></div>
+          </div>
+          <div class="skeleton-modal-bio-item">
+            <div class="skeleton" style="width: 60px; height: 12px; border-radius: 6px;"></div>
+            <div class="skeleton" style="width: 80px; height: 16px; border-radius: 6px; margin-top: 6px;"></div>
+          </div>
+          <div class="skeleton-modal-bio-item">
+            <div class="skeleton" style="width: 60px; height: 12px; border-radius: 6px;"></div>
+            <div class="skeleton" style="width: 80px; height: 16px; border-radius: 6px; margin-top: 6px;"></div>
+          </div>
+          <div class="skeleton-modal-bio-item">
+            <div class="skeleton" style="width: 60px; height: 12px; border-radius: 6px;"></div>
+            <div class="skeleton" style="width: 80px; height: 16px; border-radius: 6px; margin-top: 6px;"></div>
+          </div>
+          <div class="skeleton-modal-bio-item">
+            <div class="skeleton" style="width: 60px; height: 12px; border-radius: 6px;"></div>
+            <div class="skeleton" style="width: 80px; height: 16px; border-radius: 6px; margin-top: 6px;"></div>
+          </div>
+        </div>
+        <div class="skeleton-table">
+          <div class="skeleton-table-row">
+            <div class="skeleton" style="border-radius: 6px;"></div>
+            <div class="skeleton" style="border-radius: 6px;"></div>
+            <div class="skeleton" style="border-radius: 6px;"></div>
+            <div class="skeleton" style="border-radius: 6px;"></div>
+          </div>
+          <div class="skeleton-table-row">
+            <div class="skeleton" style="border-radius: 6px;"></div>
+            <div class="skeleton" style="border-radius: 6px;"></div>
+            <div class="skeleton" style="border-radius: 6px;"></div>
+            <div class="skeleton" style="border-radius: 6px;"></div>
+          </div>
+          <div class="skeleton-table-row">
+            <div class="skeleton" style="border-radius: 6px;"></div>
+            <div class="skeleton" style="border-radius: 6px;"></div>
+            <div class="skeleton" style="border-radius: 6px;"></div>
+            <div class="skeleton" style="border-radius: 6px;"></div>
+          </div>
+        </div>
       </div>
 
       <!-- Career Filters -->
