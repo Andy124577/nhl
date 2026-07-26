@@ -213,44 +213,46 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 11px;
-  margin-bottom: 14px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 .filter-group-career {
   flex: 1 1 140px;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
 }
 .filter-group-career label {
-  font-size: .74rem;
+  font-size: .66rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: .5px;
   color: var(--text-secondary);
 }
 .filter-group-career select {
-  padding: 9px 11px;
-  min-height: 42px;
+  padding: 6px 9px;
+  min-height: 34px;
   border: 1px solid var(--border-gray);
-  border-radius: 10px;
+  border-radius: 9px;
   background: var(--bg-gray-light);
   color: var(--text-main);
-  font-size: .85rem;
+  font-size: .8rem;
   font-weight: 600;
   cursor: pointer;
 }
 .filter-group-career select:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
-.stats-count-badge {
-  padding: 7px 13px;
-  border-radius: 999px;
-  background: rgba(0, 212, 255, .14);
-  color: var(--primary);
-  font-size: .76rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
+/* Compteur de saisons retiré : il répétait ce que le tableau montre déjà,
+   et sur téléphone il occupait à lui seul une rangée entière du bloc de
+   filtres — 40px pris sur la hauteur du tableau.
+
+   L'élément reste dans le DOM : filterCareerStats() et showGameLog() y
+   écrivent, et ces fonctions vivent dans du JS minifié côté draftActif.
+
+   `!important` est ici le seul recours : en passant à l'historique de match,
+   handleViewChange() applique `statsCountBadge.style.display = "block"`, et
+   une déclaration inline l'emporte sur toute règle de classe. */
+.stats-count-badge { display: none !important; }
 
 /* ---------- Tableau de carrière ---------- */
 #careerStatsTable {
@@ -332,30 +334,43 @@
 .career-totals-row td { border-top: 2px solid var(--primary); color: var(--text-main); }
 .career-totals-label { text-align: left; text-transform: uppercase; letter-spacing: .5px; }
 
+/* La modale ne défile pas : elle tient dans la fenêtre et c'est le tableau
+   qui défile en son sein. Auparavant `.modal-content` débordait de sa
+   hauteur maximale et c'était le calque de fond qui prenait le défilement,
+   emportant l'en-tête du joueur hors de vue.
+
+   La hauteur maximale retranche le rembourrage du calque (12px) ET la marge
+   de `.modal-content` (16px), en haut comme en bas : les compter pour rien
+   laissait 56px de débordement. */
 .career-modal {
+  display: flex;
+  flex-direction: column;
   height: auto;
-  max-height: calc(100dvh - 24px);
+  max-height: calc(100dvh - 56px);
+  overflow: hidden;
 }
-/* Enfant d'un conteneur flex en colonne : sans cela le tableau s'étire
-   pour combler la hauteur restante. */
-#careerStatsTable { flex: 0 1 auto; }
+.career-modal-header { flex: 0 0 auto; }
+/* `flex: 0 1 auto` : le tableau se rétracte quand la place manque, mais ne
+   s'étire jamais — une seule saison ne doit pas occuper la hauteur de dix.
+   `min-height: 0` autorise cette rétraction en contexte flex, sans quoi la
+   taille du contenu ferait plancher et le débordement reviendrait. */
+#careerStatsTable {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
 
 .career-filters {
   overflow: visible;
   flex-wrap: wrap;
+  flex: 0 0 auto;
 }
 .career-filters > * { min-width: 0; }
 .filter-group-career { flex: 1 1 132px; min-width: 0; }
-.stats-count-badge {
-  flex: 1 1 100%;
-  text-align: center;
-  white-space: normal;
-}
 @media (min-width: 600px) {
-  .stats-count-badge { flex: 0 0 auto; text-align: left; white-space: nowrap; }
-  /* Sans `flex-grow: 0`, les deux groupes occupent toute la ligne et
-     repoussent le badge sur une seconde rangée. */
-  .filter-group-career { flex: 0 1 210px; }
+  /* Sans `flex-grow: 0`, deux groupes suffisent à remplir la ligne et
+     repoussent le troisième sur une seconde rangée. */
+  .filter-group-career { flex: 0 1 200px; }
 }
 
 @media (min-width: 600px) {
@@ -371,6 +386,8 @@
   .modal { padding: 26px; }
   .modal-content { margin: 24px auto; padding: 24px; }
   .career-modal-header { margin: -24px -24px 18px; padding: 24px; }
+  /* Rembourrage et marge changent ici : la hauteur maximale suit. */
+  .career-modal { max-height: calc(100dvh - 100px); }
 }
 
 /* ---- Logo d'équipe dans le tableau de carrière ----
