@@ -221,31 +221,60 @@
     <div class="modal-content career-modal">
       <!-- Career Modal Header with Player Photo -->
       <div class="career-modal-header" id="careerModalHeader" style="display: none;">
+        <!-- Classes préfixées « cmh- » : .bio-pill et consorts sont définies
+             dans index.css et partagées avec stats.html ; des noms propres à
+             cette page évitent de modifier l'autre au passage.
+             Tous les id sont conservés : draftActif.js les remplit. -->
         <span class="close-modal" onclick="closeCareerModal()">&times;</span>
-        <div class="player-header-top">
+
+        <!-- Identité : photo + nom + jetons position/équipe -->
+        <div class="cmh-identity">
           <div class="player-headshot-container" id="playerHeadshotContainer">
             <div class="no-photo" data-icon="person" data-icon-size="40"></div>
           </div>
-          <div class="player-header-right">
-            <div class="player-name-section">
-              <h2 id="careerPlayerName"></h2>
-              <div class="player-position-team">
-                <span id="careerPlayerPosition"></span>
-                <span id="careerPlayerTeam"></span>
-              </div>
-            </div>
-            <div class="player-bio-pills">
-              <span class="bio-pill"><span class="bio-pill-lbl">Taille</span><strong class="bio-pill-val" id="playerHeight">-</strong></span>
-              <span class="bio-pill"><span class="bio-pill-lbl">Poids</span><strong class="bio-pill-val" id="playerWeight">-</strong></span>
-              <span class="bio-pill"><span class="bio-pill-lbl">Lance</span><strong class="bio-pill-val" id="playerShoots">-</strong></span>
-              <span class="bio-pill"><span class="bio-pill-lbl">Né le</span><strong class="bio-pill-val" id="playerBirthDate">-</strong></span>
-              <span class="bio-pill"><span class="bio-pill-lbl">Lieu</span><strong class="bio-pill-val" id="playerBirthPlace">-</strong></span>
+          <div class="cmh-ident-text">
+            <h2 id="careerPlayerName"></h2>
+            <div class="cmh-chips">
+              <!-- Pas d'icône ajoutée ici : draftActif.js préfixe déjà la
+                   position d'un emoji (« 🏒 D », « 🥅 Gardien de but »). -->
+              <span class="cmh-chip"><span id="careerPlayerPosition"></span></span>
+              <span class="cmh-chip"><span id="careerPlayerTeam"></span></span>
             </div>
           </div>
         </div>
-        <div class="player-draft-strip">
-          <span class="draft-label">Repêchage</span>
-          <span class="draft-value" id="playerDraft">-</span>
+
+        <!-- Trois mesures courtes, en tuiles -->
+        <div class="cmh-tiles">
+          <div class="cmh-tile">
+            <span class="cmh-tile-lbl">Taille</span>
+            <strong class="cmh-tile-val" id="playerHeight">-</strong>
+          </div>
+          <div class="cmh-tile">
+            <span class="cmh-tile-lbl">Poids</span>
+            <strong class="cmh-tile-val" id="playerWeight">-</strong>
+          </div>
+          <div class="cmh-tile">
+            <span class="cmh-tile-lbl">Lance</span>
+            <strong class="cmh-tile-val" id="playerShoots">-</strong>
+          </div>
+        </div>
+
+        <!-- Deux valeurs longues, en rangées libellé / valeur -->
+        <div class="cmh-rows">
+          <div class="cmh-row">
+            <span class="cmh-row-lbl">Né le</span>
+            <span class="cmh-row-val" id="playerBirthDate">-</span>
+          </div>
+          <div class="cmh-row">
+            <span class="cmh-row-lbl">Lieu</span>
+            <span class="cmh-row-val" id="playerBirthPlace">-</span>
+          </div>
+        </div>
+
+        <!-- Repêchage : bloc distinct -->
+        <div class="cmh-draft">
+          <span class="cmh-draft-lbl">Repêchage</span>
+          <p class="cmh-draft-val" id="playerDraft">-</p>
         </div>
       </div>
 

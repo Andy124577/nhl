@@ -969,136 +969,169 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   border-bottom: 1px solid var(--border-light);
   border-radius: 18px 18px 0 0;
 }
-/* Téléphone : photo et identité côte à côte sur une rangée, puis les
-   pastilles sur toute la largeur. En colonne centrée, l'en-tête faisait
-   388px de haut et repoussait le tableau — le contenu réel — à 590px.
-
-   `display: contents` sur .player-header-right dissout ce conteneur : ses
-   enfants deviennent des cases de cette grille. Sans cela, les pastilles
-   restaient enfermées dans une colonne de 220px et s'étalaient sur quatre
-   rangées au lieu de trois. */
-.player-header-top {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+/* ---------- Identité : photo + nom + jetons ---------- */
+.cmh-identity {
+  display: flex;
   align-items: center;
-  gap: 10px 12px;
-  text-align: left;
-}
-.player-header-right { display: contents; }
-.player-headshot-container { grid-row: 1; grid-column: 1; }
-.player-name-section {
-  grid-row: 1;
-  grid-column: 2;
+  gap: 12px;
   min-width: 0;
-  /* index.css centre cette section ; à côté de la photo, un alignement à
-     gauche se lit mieux. */
-  align-items: flex-start;
-  text-align: left;
 }
-.player-bio-pills { grid-column: 1 / -1; }
 .player-headshot-container {
   flex: 0 0 auto;
-  width: 58px;
-  height: 58px;
+  width: 72px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 3px;
   border-radius: 16px;
   overflow: hidden;
-  background: var(--bg-gray-light);
-  border: 2px solid rgba(0, 212, 255, .35);
+  background: var(--card-white);
+  border: 2px solid var(--primary);
 }
-.player-headshot-container img { width: 100%; height: 100%; object-fit: cover; }
+.player-headshot-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
 .player-headshot-container .no-photo { color: var(--text-light-gray); }
-.player-header-right { flex: 1; min-width: 0; }
-.player-name-section h2 {
+
+.cmh-ident-text { min-width: 0; }
+.cmh-ident-text h2 {
   margin: 0;
-  font-size: 1.05rem;
-  line-height: 1.2;
+  font-size: 1.15rem;
   font-weight: 800;
-  color: var(--text-main);
+  line-height: 1.15;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  color: var(--primary);
+  overflow-wrap: break-word;
 }
-.player-position-team {
+.cmh-chips {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: 7px;
-  margin-top: 3px;
-  font-size: .8rem;
-  font-weight: 600;
-  color: var(--primary);
-}
-#careerPlayerPosition { font-weight: 700; }
-/* Grille à deux colonnes plutôt que des pastilles qui s'enchaînent : les
-   valeurs longues (« 2006-01-28 (Âge: 20) », « Toronto, Ontario, CAN »)
-   étaient tronquées en pastille. Trois colonnes : taille, poids et lancer
-   tiennent sur une seule rangée maintenant que les pastilles occupent
-   toute la largeur de l'en-tête. */
-.player-bio-pills {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
-  margin-top: 11px;
+  margin-top: 6px;
 }
-.bio-pill {
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
+.cmh-chip {
+  display: inline-flex;
+  align-items: center;
   gap: 5px;
-  min-width: 0;
-  padding: 5px 9px;
+  padding: 3px 9px;
   border-radius: 999px;
   background: var(--bg-gray-light);
   border: 1px solid var(--border-light);
-}
-/* Deux colonnes : à trois, les pastilles courtes étaient trop étroites et
-   leur libellé passait sous la valeur, ce qui les rendait deux fois plus
-   hautes. La date de naissance et le lieu, nettement plus longs, prennent
-   la largeur entière et tiennent alors chacun sur une seule ligne. */
-.bio-pill:nth-child(4),
-.bio-pill:nth-child(5) { grid-column: 1 / -1; }
-.bio-pill-lbl {
-  font-size: .66rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .4px;
-  color: var(--text-gray);
-}
-/* Sélecteur à deux classes pour égaler la spécificité de la règle
-   `.bio-pill .bio-pill-val { white-space: nowrap }` d'index.css, qui
-   empêchait les valeurs longues de se replier. */
-.bio-pill .bio-pill-val {
-  font-size: .78rem;
-  font-weight: 800;
-  color: var(--text-main);
-  line-height: 1.25;
-  white-space: normal;
-  overflow-wrap: break-word;
-  /* index.css plafonne cette valeur à 110px sous petit écran, ce qui
-     tronquait « 2006-01-28 (Âge: 20) » et « Toronto, Ontario, CAN » et les
-     forçait sur deux lignes. La pastille gère désormais sa propre largeur. */
-  max-width: none;
-}
-.bio-pill .bio-pill-lbl { flex: 0 0 auto; }
-
-.player-draft-strip {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: flex-start;
-  gap: 4px 8px;
-  margin-top: 11px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-light);
-}
-.draft-label {
   font-size: .68rem;
   font-weight: 800;
+  letter-spacing: .06em;
   text-transform: uppercase;
-  letter-spacing: .5px;
+  color: var(--text-main);
+}
+.cmh-chip:empty { display: none; }
+.cmh-chip-icon { display: inline-flex; color: var(--primary); }
+.cmh-chip-icon svg { width: 13px; height: 13px; }
+/* Le JS injecte le logo de l'équipe dans #careerPlayerTeam. index.css le
+   dimensionnait via `.player-position-team img`, sélecteur qui ne
+   s'applique plus à cette structure : sans cette règle, l'image s'affiche
+   à sa taille naturelle et fait exploser la hauteur de l'en-tête. */
+.cmh-chip img {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+.cmh-chip > span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* ---------- Trois mesures courtes, en tuiles ---------- */
+.cmh-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+.cmh-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 9px 6px;
+  border-radius: 12px;
+  background: var(--bg-odd-row);
+  border: 1px solid var(--border-light);
+}
+.cmh-tile-lbl {
+  font-size: .62rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
   color: var(--text-gray);
 }
-.draft-value { font-size: .78rem; font-weight: 700; line-height: 1.35; color: var(--text-dark); }
+.cmh-tile-val {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* ---------- Deux valeurs longues, en rangées ---------- */
+.cmh-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 8px;
+}
+.cmh-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 13px;
+  border-radius: 12px;
+  background: var(--bg-odd-row);
+  border: 1px solid var(--border-light);
+}
+.cmh-row-lbl {
+  flex: 0 0 auto;
+  font-size: .62rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-gray);
+}
+.cmh-row-val {
+  text-align: right;
+  font-size: .82rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-main);
+  overflow-wrap: break-word;
+}
+
+/* ---------- Repêchage ---------- */
+.cmh-draft {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(0, 212, 255, .08);
+  border: 1px solid rgba(0, 212, 255, .22);
+}
+.cmh-draft-lbl {
+  display: block;
+  margin-bottom: 3px;
+  font-size: .62rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+.cmh-draft-val {
+  margin: 0;
+  font-size: .82rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-dark);
+}
 
 .loading-spinner {
   padding: 34px 16px;
@@ -1294,29 +1327,13 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
     min-width: 148px;
     text-align: center;
   }
-  /* Au-delà du téléphone, la place ne manque plus : photo plus grande et
-     pastilles qui s'enchaînent librement. */
-  .player-header-top {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-  }
-  .player-header-right { display: block; flex: 1; min-width: 0; }
-  .player-headshot-container { width: 82px; height: 82px; border-radius: 16px; }
-  .player-name-section h2 { font-size: 1.25rem; }
-  .player-header-top { gap: 16px; }
-  .player-bio-pills { display: flex; flex-wrap: wrap; gap: 7px; }
-  .bio-pill {
-    flex-direction: row;
-    align-items: baseline;
-    gap: 5px;
-    padding: 5px 10px;
-    border-radius: 999px;
-  }
-  .bio-pill:nth-child(4),
-  .bio-pill:nth-child(5) { grid-column: auto; }
-  .bio-pill .bio-pill-val { font-size: .8rem; }
-  .draft-value { font-size: .82rem; }
+  /* Au-delà du téléphone, la place ne manque plus : photo plus grande,
+     nom plus grand, et les tuiles gardent leurs trois colonnes. */
+  .player-headshot-container { width: 92px; height: 92px; border-radius: 18px; }
+  .cmh-ident-text h2 { font-size: 1.4rem; }
+  .cmh-identity { gap: 16px; }
+  .cmh-tile-val { font-size: 1.05rem; }
+  .cmh-row-val, .cmh-draft-val { font-size: .88rem; }
   .custom-alert-button { width: auto; min-width: 160px; }
   .finish-btn { bottom: 22px; }
 }
