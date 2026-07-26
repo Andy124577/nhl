@@ -95,8 +95,7 @@ function getTeamLogoHTML(nhlTeams) {
     const abbrev = NHL_ABBREV[nhlTeams[0]];
     if (!abbrev) return '';
     return `<img src="teams/${abbrev}.png" alt="${nhlTeams[0]}" title="${nhlTeams[0]}"
-        style="width:36px;height:36px;object-fit:contain;vertical-align:middle;margin-right:8px;"
-        onerror="this.style.display='none'">`;
+        class="cm-team-logo" onerror="this.style.display='none'">`;
 }
 
 $(document).ready(function() {
@@ -450,14 +449,14 @@ async function viewClanTeams(clanName) {
         ]);
 
         const poolImgTag = draftData[clanName]?.imageUrl
-            ? `<img src="${draftData[clanName].imageUrl}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;margin-right:10px;vertical-align:middle;" onerror="this.style.display='none'" alt="${clanName}">`
-            : `<img src="Icons/grayGroup.png" style="width:36px;height:36px;border-radius:8px;object-fit:cover;margin-right:10px;flex-shrink:0;" alt="${clanName}">`;
+            ? `<img src="${draftData[clanName].imageUrl}" class="cm-pool-img" onerror="this.style.display='none'" alt="">`
+            : `<img src="Icons/grayGroup.png" class="cm-pool-img" alt="">`;
 
         const draftBanner = draftStarted
-            ? `<div style="margin-bottom:14px;padding:10px 14px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;color:#856404;font-size:0.9rem;font-weight:600;">🏒 Le draft est commencé — le changement d'équipe n'est plus possible.</div>`
+            ? `<div class="cm-banner">Le draft est commencé — le changement d'équipe n'est plus possible.</div>`
             : '';
 
-        let teamHTML = `<h3 style="margin-bottom:20px;color:var(--text-main,#222);display:flex;align-items:center;">${poolImgTag}Équipes de ${clanName}</h3>${draftBanner}`;
+        let teamHTML = `<h3 class="cm-title">${poolImgTag}<span>Équipes de ${clanName}</span></h3>${draftBanner}`;
 
         for (const [teamName, teamData] of Object.entries(teams)) {
             const isFull = teamData.members.length >= 5;
@@ -466,52 +465,52 @@ async function viewClanTeams(clanName) {
             const displayName = getDisplayName(teamName, teamData.members);
             const logoHTML = getTeamLogoHTML(teamData.teams);
             const membersDisplay = teamData.members.length > 0
-                ? `<div style="margin-top: 8px; padding-left: 12px;">
-                     <strong style="font-size: 0.85rem; color: #666;">Membres:</strong>
-                     <ul style="margin: 5px 0 0 0; padding-left: 0; list-style: none;">
+                ? `<div class="cm-members">
+                     <span class="cm-members-label">Membres</span>
+                     <ul class="cm-member-list">
                        ${teamData.members.map(member => `
-                         <li style="display:flex;align-items:center;gap:8px;padding:4px 0;color:#444;font-size:0.9rem;">
-                           ${typeof avatarHtml === 'function' ? avatarHtml(member, 28) : `<img src="Icons/grayUser.png" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">`}
+                         <li class="cm-member">
+                           ${typeof avatarHtml === 'function' ? avatarHtml(member, 26) : `<img src="Icons/grayUser.png" class="cm-member-avatar" alt="">`}
                            <span>${member}</span>
                          </li>`).join("")}
                      </ul>
                    </div>`
-                : `<div style="margin-top: 8px; color: #999; font-size: 0.85rem; font-style: italic;">Aucun membre pour l'instant</div>`;
+                : `<div class="cm-empty">Aucun membre pour l'instant</div>`;
 
             const prefill = (displayName !== teamName && displayName.length <= 20)
                 ? displayName
                 : teamName;
             const renameSection = userInTeam ? `
-                <div id="rename-row-${teamId}" style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
-                    <input id="rename-input-${teamId}" type="text" maxlength="20"
-                        value="${prefill.replace(/"/g, '&quot;')}"
-                        placeholder="Nouveau nom (max 20)"
-                        style="flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.9rem; outline: none;"
-                        onkeydown="if(event.key==='Enter') submitRename('${clanName.replace(/'/g, "\\'")}', '${teamName.replace(/'/g, "\\'")}', '${teamId}')"
-                    />
-                    <button onclick="submitRename('${clanName.replace(/'/g, "\\'")}', '${teamName.replace(/'/g, "\\'")}', '${teamId}')"
-                        style="padding: 8px 16px; background: #4caf50; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap;">
-                        ✏️ Renommer
-                    </button>
+                <div id="rename-row-${teamId}" class="cm-rename">
+                    <label class="cm-rename-label" for="rename-input-${teamId}">Renommer mon équipe</label>
+                    <div class="cm-rename-row">
+                        <input id="rename-input-${teamId}" type="text" maxlength="20"
+                            class="cm-rename-input"
+                            value="${prefill.replace(/"/g, '&quot;')}"
+                            placeholder="Nouveau nom (max 20)"
+                            onkeydown="if(event.key==='Enter') submitRename('${clanName.replace(/'/g, "\\'")}', '${teamName.replace(/'/g, "\\'")}', '${teamId}')"
+                        />
+                        <button type="button" class="cm-rename-btn" onclick="submitRename('${clanName.replace(/'/g, "\\'")}', '${teamName.replace(/'/g, "\\'")}', '${teamId}')">
+                            Renommer
+                        </button>
+                    </div>
                 </div>
             ` : '';
 
             teamHTML += `
-                <div style="margin-bottom: 16px; padding: 16px; border: 2px solid ${userInTeam ? '#4caf50' : (isFull ? '#ddd' : '#ff2e2e')}; border-radius: 10px; background: ${userInTeam ? '#e8f5e9' : (isFull ? '#f5f5f5' : '#fff')};">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <strong style="font-size: 1.1rem; color: #222; display: flex; align-items: center;">${logoHTML}${displayName}</strong>
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            ${userInTeam ? `<span style="padding: 4px 12px; background: #4caf50; border-radius: 12px; font-size: 0.75rem; font-weight: 600; color: white;">Votre équipe</span>` : ''}
-                            <span style="padding: 4px 12px; background: ${isFull ? '#ddd' : '#e3f2fd'}; border-radius: 12px; font-size: 0.85rem; font-weight: 600; color: ${isFull ? '#666' : '#1976d2'};">
-                                ${teamData.members.length}/5 joueurs
-                            </span>
+                <div class="cm-team${userInTeam ? ' is-mine' : ''}${isFull ? ' is-full' : ''}">
+                    <div class="cm-team-head">
+                        <strong class="cm-team-name">${logoHTML}<span>${displayName}</span></strong>
+                        <div class="cm-badges">
+                            ${userInTeam ? `<span class="cm-badge cm-badge-mine">Votre équipe</span>` : ''}
+                            <span class="cm-badge cm-badge-count">${teamData.members.length}/5 joueurs</span>
                         </div>
                     </div>
                     ${membersDisplay}
                     ${buildPicksSection(teamData)}
                     ${renameSection}
-                    ${!userInTeam && !isFull && !draftStarted ? `<button style="margin-top: 12px; width: 100%; padding: 10px; background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;" onclick="joinTeam('${clanName}', '${teamName}')" onmouseover="this.style.background='linear-gradient(135deg, #ff4040 0%, #d93030 100%)'" onmouseout="this.style.background='linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%)'">Rejoindre cette équipe</button>` : ''}
-                    ${isFull && !userInTeam ? `<div style="margin-top: 12px; padding: 8px; background: #f8d7da; border-radius: 6px; color: #721c24; text-align: center; font-size: 0.9rem;">Équipe complète</div>` : ''}
+                    ${!userInTeam && !isFull && !draftStarted ? `<button type="button" class="cm-join-btn" onclick="joinTeam('${clanName}', '${teamName}')">Rejoindre cette équipe</button>` : ''}
+                    ${isFull && !userInTeam ? `<div class="cm-full-note">Équipe complète</div>` : ''}
                 </div>
             `;
         }
@@ -581,29 +580,29 @@ async function joinClan(clanName) {
         const teams = draftData[clanName].teams;
 
         // 🔥 Affiche les équipes disponibles pour le clan sélectionné
-        let teamHTML = `<h3 style="margin-bottom: 20px; color: #222;">Choisissez une équipe dans ${clanName}</h3>`;
+        let teamHTML = `<h3 class="cm-title"><span>Choisissez une équipe dans ${clanName}</span></h3>`;
 
         Object.entries(teams).forEach(([teamName, teamData]) => {
             const isFull = teamData.members.length >= 5;
             const membersDisplay = teamData.members.length > 0
-                ? `<div style="margin-top: 8px; padding-left: 12px;">
-                     <strong style="font-size: 0.85rem; color: #666;">Membres:</strong>
-                     <ul style="margin: 5px 0 0 0; padding-left: 20px; list-style: disc;">
-                       ${teamData.members.map(member => `<li style="color: #444; font-size: 0.9rem;">${member}</li>`).join("")}
+                ? `<div class="cm-members">
+                     <span class="cm-members-label">Membres</span>
+                     <ul class="cm-member-list">
+                       ${teamData.members.map(member => `<li class="cm-member"><span>${member}</span></li>`).join("")}
                      </ul>
                    </div>`
-                : `<div style="margin-top: 8px; color: #999; font-size: 0.85rem; font-style: italic;">Aucun membre pour l'instant</div>`;
+                : `<div class="cm-empty">Aucun membre pour l'instant</div>`;
 
             teamHTML += `
-                <div style="margin-bottom: 16px; padding: 16px; border: 2px solid ${isFull ? '#ddd' : '#ff2e2e'}; border-radius: 10px; background: ${isFull ? '#f5f5f5' : '#fff'};">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <strong style="font-size: 1.1rem; color: #222;">${teamName}</strong>
-                        <span style="padding: 4px 12px; background: ${isFull ? '#ddd' : '#e3f2fd'}; border-radius: 12px; font-size: 0.85rem; font-weight: 600; color: ${isFull ? '#666' : '#1976d2'};">
-                            ${teamData.members.length}/5 joueurs
-                        </span>
+                <div class="cm-team${isFull ? ' is-full' : ''}">
+                    <div class="cm-team-head">
+                        <strong class="cm-team-name"><span>${teamName}</span></strong>
+                        <div class="cm-badges">
+                            <span class="cm-badge cm-badge-count">${teamData.members.length}/5 joueurs</span>
+                        </div>
                     </div>
                     ${membersDisplay}
-                    ${!isFull ? `<button style="margin-top: 12px; width: 100%; padding: 10px; background: linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;" onclick="joinTeam('${clanName}', '${teamName}')" onmouseover="this.style.background='linear-gradient(135deg, #ff4040 0%, #d93030 100%)'" onmouseout="this.style.background='linear-gradient(135deg, #ff2e2e 0%, #cc2525 100%)'">Rejoindre cette équipe</button>` : `<div style="margin-top: 12px; padding: 8px; background: #f8d7da; border-radius: 6px; color: #721c24; text-align: center; font-size: 0.9rem;">Équipe complète</div>`}
+                    ${!isFull ? `<button type="button" class="cm-join-btn" onclick="joinTeam('${clanName}', '${teamName}')">Rejoindre cette équipe</button>` : `<div class="cm-full-note">Équipe complète</div>`}
                 </div>
             `;
         });
