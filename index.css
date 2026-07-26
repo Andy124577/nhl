@@ -156,6 +156,10 @@ body {
   inset: 0;
   pointer-events: none;
   z-index: 0;
+  /* Les halos décoratifs font 460px de large et sont positionnés en %, donc
+     ils débordent du viewport sur écran étroit et provoquent un défilement
+     horizontal. On les confine à leur conteneur. */
+  overflow: hidden;
 }
 .sh-spot {
   position: absolute;
@@ -1757,6 +1761,9 @@ td.player-col {
   padding-left: 4px;
   padding-right: 4px;
   letter-spacing: -.2px;
+  /* Un nombre coupé en deux lignes est illisible et fait enfler la rangée :
+     les colonnes chiffrées ne s'enroulent jamais. */
+  white-space: nowrap;
 }
 
 /* --- Le nom reste à droite de la vignette -----------------------------
@@ -1797,10 +1804,10 @@ td.player-col {
 .player-cell .player-photo { flex: 0 0 auto; margin: 0; }
 .player-cell, .player-ident { text-align: left; }
 
-/* Quand la largeur manque, le nom passe sous la vignette plutôt que d'être
-   comprimé à quelques caractères. Le seuil est exprimé en largeur de
-   conteneur : c'est la place réellement disponible qui décide. */
-@media (max-width: 900px) {
+/* Sous 500px seulement : en dessous, la cellule est trop étroite pour tenir
+   la vignette et le nom côte à côte sans réduire le nom à quelques
+   caractères. Au-dessus, ils restent alignés horizontalement. */
+@media (max-width: 500px) {
   .player-cell {
     flex-direction: column;
     align-items: flex-start;
