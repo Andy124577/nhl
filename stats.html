@@ -11,6 +11,9 @@
     <link rel="stylesheet" href="navbar.css">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="skeleton-loader.css">
+    <!-- Modale de carrière : même feuille que draftActif.html, chargée en
+         dernier pour que ses règles spécialisent celles d'index.css. -->
+    <link rel="stylesheet" href="career-modal.css">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
 </head>
@@ -183,31 +186,51 @@
     <div id="careerStatsModal" class="modal">
         <div class="modal-content career-modal">
             <div class="career-modal-header" id="careerModalHeader" style="display: none;">
+                <!-- Structure identique à draftActif.html, stylée par la feuille
+                     partagée career-modal.css. Tous les id sont conservés :
+                     index.js les remplit. -->
                 <span class="close-modal" onclick="closeCareerModal()">&times;</span>
-                <div class="player-header-top">
+
+                <div class="cmh-identity">
                     <div class="player-headshot-container" id="playerHeadshotContainer">
-                        <div class="no-photo" data-icon="person" data-icon-size="40"></div>
+                        <div class="no-photo" data-icon="person" data-icon-size="24"></div>
                     </div>
-                    <div class="player-header-right">
-                        <div class="player-name-section">
-                            <h2 id="careerPlayerName"></h2>
-                            <div class="player-position-team">
-                                <span id="careerPlayerPosition"></span>
-                                <span id="careerPlayerTeam"></span>
-                            </div>
+                    <div class="cmh-ident-text">
+                        <h2 id="careerPlayerName"></h2>
+                        <div class="cmh-chips">
+                            <span class="cmh-chip"><span id="careerPlayerPosition"></span></span>
+                            <span class="cmh-chip cmh-chip-team"><span id="careerPlayerTeam"></span></span>
                         </div>
-                        <div class="player-bio-pills">
-                            <span class="bio-pill"><span class="bio-pill-lbl">Taille</span><strong class="bio-pill-val" id="playerHeight">-</strong></span>
-                            <span class="bio-pill"><span class="bio-pill-lbl">Poids</span><strong class="bio-pill-val" id="playerWeight">-</strong></span>
-                            <span class="bio-pill"><span class="bio-pill-lbl">Lance</span><strong class="bio-pill-val" id="playerShoots">-</strong></span>
-                            <span class="bio-pill"><span class="bio-pill-lbl">Né le</span><strong class="bio-pill-val" id="playerBirthDate">-</strong></span>
-                            <span class="bio-pill"><span class="bio-pill-lbl">Lieu</span><strong class="bio-pill-val" id="playerBirthPlace">-</strong></span>
+                    </div>
+                    <div class="cmh-quick">
+                        <div class="cmh-quick-item">
+                            <span class="cmh-mini-lbl">Taille</span>
+                            <span class="cmh-quick-val" id="playerHeight">-</span>
+                        </div>
+                        <div class="cmh-quick-item">
+                            <span class="cmh-mini-lbl">Poids</span>
+                            <span class="cmh-quick-val" id="playerWeight">-</span>
                         </div>
                     </div>
                 </div>
-                <div class="player-draft-strip">
-                    <span class="draft-label">Repêchage</span>
-                    <span class="draft-value" id="playerDraft">-</span>
+
+                <div class="cmh-grid">
+                    <div class="cmh-cell">
+                        <span class="cmh-mini-lbl">Né le</span>
+                        <span class="cmh-cell-val" id="playerBirthDate">-</span>
+                    </div>
+                    <div class="cmh-cell">
+                        <span class="cmh-mini-lbl">Lieu</span>
+                        <span class="cmh-cell-val" id="playerBirthPlace">-</span>
+                    </div>
+                    <div class="cmh-cell">
+                        <span class="cmh-mini-lbl">Repêchage</span>
+                        <span class="cmh-cell-val" id="playerDraft">-</span>
+                    </div>
+                    <div class="cmh-cell">
+                        <span class="cmh-mini-lbl">Lance</span>
+                        <span class="cmh-cell-val" id="playerShoots">-</span>
+                    </div>
                 </div>
             </div>
             <!-- Modal Skeleton Loader -->
@@ -305,6 +328,8 @@
     <script defer src="lazy-load.js"></script>
     <script src="headshots.js"></script>
     <script defer src="index.js?v=20250101-debug2"></script>
+    <!-- Logo d'équipe du tableau de carrière, partagé avec draftActif.html. -->
+    <script defer src="careerTeamLogo.js"></script>
     <script defer src="navbar.js"></script>
     <script>
     // Auto-open player career modal when coming from accueil hot players
