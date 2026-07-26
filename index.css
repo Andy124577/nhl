@@ -276,7 +276,10 @@ body {
 .table-container {
   background: rgba(20,20,48,.75);
   border-radius: 18px;
-  overflow: hidden;
+  /* `clip` et non `hidden` : `hidden` fait de ce conteneur un conteneur de
+     défilement, ce qui neutralise le position:sticky de l'en-tête. `clip`
+     rogne les coins arrondis sans cet effet de bord. */
+  overflow: clip;
   padding: 0;
 }
 
@@ -1595,4 +1598,213 @@ html[data-theme="light"] #careerStatsTable tbody tr:nth-child(even) {
         --d-photo: 44px;
         --d-photo-logo: 18px;
     }
+}
+
+/* ==================== TABLEAU DE STATISTIQUES — UX ====================
+   Chaque bloc renvoie au principe qui le motive (lawsofux.com) et à la
+   distinction macro/micro de l'espace blanc. */
+
+/* --- En-tête collant ---------------------------------------------------
+   Charge cognitive / mémoire de travail : au-delà d'une dizaine de rangées,
+   l'utilisateur ne devrait pas avoir à remonter pour savoir ce que contient
+   la 5e colonne. Décalé de la hauteur de la barre de navigation, elle-même
+   collante. */
+#playerTable thead th {
+  position: sticky;
+  top: 60px;
+  z-index: 5;
+}
+
+/* --- Colonne de rang ---------------------------------------------------
+   Effet de position sérielle : sur un classement, le rang est le point
+   d'ancrage. Les trois premiers sont déjà distingués en or/argent/bronze
+   plus bas (effet Von Restorff). */
+th.rank-col, td.rank-col { width: 52px; }
+
+/* --- En-têtes triables -------------------------------------------------
+   Loi de Jakob : sur tout tableau de statistiques (NHL.com, RDS, ESPN), on
+   trie en cliquant l'en-tête. L'utilisateur arrive avec ce modèle mental.
+   L'indicateur rend aussi le tri visible dans les données elles-mêmes,
+   plutôt que seulement dans un sélecteur situé plus haut. */
+#playerTable th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background .18s ease, color .18s ease;
+}
+#playerTable th.sortable:hover,
+#playerTable th.sortable:focus-visible {
+  background: rgba(0, 212, 255, .5);
+}
+#playerTable th.sortable:focus-visible {
+  outline: 2px solid var(--text-main);
+  outline-offset: -3px;
+}
+#playerTable th.is-sorted { background: rgba(0, 212, 255, .55); }
+.sort-caret {
+  display: inline-block;
+  margin-left: 5px;
+  font-size: .62em;
+  vertical-align: middle;
+  opacity: .9;
+}
+
+/* --- Colonne joueur ----------------------------------------------------
+   Espace micro : la position passe sur une ligne secondaire au lieu d'être
+   collée au nom par une virgule. Deux informations de poids différent ne
+   doivent pas se lire comme une seule chaîne. */
+th.player-col, td.player-col { text-align: left; }
+td.player-col {
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.35;
+}
+.player-pos {
+  display: block;
+  font-size: .74em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: .4px;
+}
+
+.team-logo-cell { width: 34px; height: 34px; object-fit: contain; }
+
+/* --- Rangées activables ------------------------------------------------
+   Loi de Fitts : la cible est la rangée entière, pas un petit lien. Le
+   liseré latéral au survol signale que la rangée est actionnable — le seul
+   curseur en main ne se voit pas au clavier. */
+#playerTable tbody tr.is-clickable { position: relative; }
+#playerTable tbody tr.is-clickable::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--primary);
+  opacity: 0;
+  transition: opacity .18s ease;
+}
+#playerTable tbody tr.is-clickable:hover::after,
+#playerTable tbody tr.is-clickable:focus-visible::after { opacity: 1; }
+#playerTable tbody tr.is-clickable:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+/* --- État vide ---------------------------------------------------------
+   Un tableau vide sans explication laisse l'utilisateur bloqué : on nomme
+   ce qui s'est passé et l'action de sortie. */
+.table-empty-row td { padding: 0; }
+.table-empty {
+  padding: 52px 24px;
+  text-align: center;
+}
+.table-empty-title {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.table-empty-hint {
+  margin: 0;
+  font-size: .87rem;
+  color: var(--text-secondary);
+}
+
+/* --- Espace blanc macro ------------------------------------------------
+   « Plus il y a d'espace vide autour d'un élément, plus il attire
+   l'attention. » On dégage le bloc de filtres et la pagination du tableau
+   pour que les trois zones se lisent comme trois groupes distincts
+   (loi de proximité / loi de la région commune). */
+.filters-section { margin-bottom: 22px; }
+.stats-pagination { margin-top: 20px; }
+
+/* --- Largeurs de colonnes ---------------------------------------------
+   Les largeurs sont portées par <colgroup>, généré depuis la définition des
+   colonnes en JS. Les anciennes règles en nth-child avaient été écrites pour
+   un tableau à six colonnes : dès l'ajout de la colonne de rang, elles
+   désignaient les mauvaises colonnes et laissaient une bande vide à droite.
+   On les neutralise ici plutôt que de les laisser se battre avec colgroup. */
+.table-container th:nth-child(1), .table-container td:nth-child(1),
+.table-container th:nth-child(2), .table-container td:nth-child(2),
+.table-container th:nth-child(4), .table-container td:nth-child(4),
+.table-container th:nth-child(5), .table-container td:nth-child(5),
+.table-container th:nth-child(6), .table-container td:nth-child(6),
+.table-container th:nth-child(7), .table-container td:nth-child(7) {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}
+
+/* --- Nom du joueur sur deux lignes au maximum -------------------------
+   Un nom long ne doit pas faire enfler la rangée : au-delà de deux lignes
+   il est tronqué par des points de suspension. L'attribut title de la
+   rangée porte le nom complet, donc rien n'est perdu. */
+.player-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.28;
+  word-break: break-word;
+}
+
+/* --- Colonnes chiffrées condensées ------------------------------------
+   Les chiffres tiennent sur peu de place : on leur retire le rembourrage
+   latéral superflu pour rendre la largeur au nom du joueur. `tabular-nums`
+   est déjà actif sur le tableau, donc les colonnes restent alignées. */
+#playerTable tbody td:not(.player-col):not(.photo-col):not(.rank-col),
+#playerTable thead th:not(.player-col):not(.photo-col):not(.rank-col) {
+  padding-left: 4px;
+  padding-right: 4px;
+  letter-spacing: -.2px;
+}
+
+/* --- Le nom reste à droite de la vignette -----------------------------
+   La colonne photo est en pourcentage : sur écran étroit elle peut passer
+   sous la taille de la vignette, qui déborderait alors sur le nom. On
+   contraint la vignette à sa colonne et on garantit une gouttière fixe
+   avant le nom. */
+#playerTable td.photo-col { padding-left: 4px; padding-right: 4px; }
+.player-photo { max-width: 100%; }
+.player-photo img.face { max-width: 100%; }
+/* Le badge d'équipe déborde volontairement de 6px : on l'empêche de mordre
+   sur la colonne voisine en le ramenant dans le cadre. */
+.player-photo img.logo { right: -2px; bottom: -2px; }
+
+#playerTable th.player-col,
+#playerTable td.player-col { padding-left: 18px; }
+
+/* --- Identité du joueur : vignette + nom dans une seule cellule --------
+   Loi de la région commune : la photo, le nom et la position désignent une
+   seule et même personne — ils forment donc une seule cellule, et non deux
+   colonnes que rien ne relie visuellement.
+   Cela libère aussi une colonne pour les chiffres. */
+.player-cell {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.player-ident {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;   /* indispensable pour que l'ellipse fonctionne en flex */
+}
+/* margin:0 auto sur .player-photo sert au centrage dans l'ancienne colonne
+   dédiée ; en contexte flex les marges auto absorbent l'espace libre et
+   repoussent le nom à l'autre bout de la cellule. On les annule ici. */
+.player-cell .player-photo { flex: 0 0 auto; margin: 0; }
+.player-cell, .player-ident { text-align: left; }
+
+/* Quand la largeur manque, le nom passe sous la vignette plutôt que d'être
+   comprimé à quelques caractères. Le seuil est exprimé en largeur de
+   conteneur : c'est la place réellement disponible qui décide. */
+@media (max-width: 900px) {
+  .player-cell {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 7px;
+  }
+  .player-ident { width: 100%; }
 }

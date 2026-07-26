@@ -96,11 +96,79 @@ function updateTable() {
         return o - l
     }), statsFullList = n, statsVisibleCount = STATS_PAGE_SIZE, populatePlayerTable(n)
 }
+/**
+ * Colonnes du tableau des patineurs.
+ *
+ * `sort` renvoie vers la même clé que le sélecteur « Trier par » : cliquer
+ * un en-tête met à jour le sélecteur puis relance le rendu, ce qui évite
+ * d'avoir deux états de tri qui divergent.
+ *
+ * Abréviations en français (PJ/B/A/PTS) plutôt qu'en anglais : le reste du
+ * site est en français, et chacune porte une infobulle — l'utilisateur ne
+ * devrait pas avoir à deviner ce que signifie une colonne.
+ */
+const SKATER_COLUMNS = [
+    { label: '#', cls: 'rank-col', title: 'Rang', w: '6%' },
+    { label: 'Joueur', cls: 'player-col', w: '58%' },
+    { label: 'PJ', sort: 'gamesPlayed', title: 'Parties jouées', w: '9%' },
+    { label: 'B', sort: 'goals', title: 'Buts', w: '9%' },
+    { label: 'A', sort: 'assists', title: 'Passes décisives', w: '9%' },
+    { label: 'PTS', sort: 'points', title: 'Points', cls: 'points-column', w: '9%' }
+];
+
+/**
+ * Construit <colgroup> + <thead>.
+ *
+ * Les largeurs passent par <colgroup> et non par des règles CSS en
+ * nth-child : les précédentes avaient été écrites pour un tableau à six
+ * colonnes et désignaient les mauvaises colonnes dès qu'on en ajoutait une.
+ * Ici la largeur vit à côté du libellé, dans la même définition.
+ * La colonne sans largeur absorbe l'espace restant.
+ */
+function buildTableHead(columns, activeSort) {
+    const cols = columns
+        .map(c => `<col${c.w ? ` style="width:${c.w}"` : ''}>`)
+        .join('');
+    const cells = columns.map(c => {
+        const cls = [c.cls, c.sort ? 'sortable' : ''].filter(Boolean).join(' ');
+        const actif = c.sort && c.sort === activeSort;
+        return `<th${cls ? ` class="${cls}${actif ? ' is-sorted' : ''}"` : ''}`
+            + (c.title ? ` title="${c.title}"` : '')
+            + (c.sort ? ` data-sort="${c.sort}" role="button" tabindex="0"` : '')
+            + (actif ? ' aria-sort="descending"' : '')
+            + `>${c.label}${actif ? '<span class="sort-caret" aria-hidden="true">▼</span>' : ''}</th>`;
+    }).join('');
+    return `<colgroup>${cols}</colgroup><thead><tr>${cells}</tr></thead>`;
+}
+
+/** Message d'état vide : une recherche infructueuse doit expliquer quoi faire. */
+function buildEmptyState(colspan, message, hint) {
+    return `<tbody><tr class="table-empty-row"><td colspan="${colspan}">
+        <div class="table-empty">
+            <p class="table-empty-title">${message}</p>
+            ${hint ? `<p class="table-empty-hint">${hint}</p>` : ''}
+        </div>
+    </td></tr></tbody>`;
+}
+
 async function populatePlayerTable(t) {
     await fetchImageData();
     const e = document.getElementById("playerTable");
     const visible = t.slice(0, statsVisibleCount);
-    e.innerHTML = '\n        <tr>\n            <th>Photo</th>\n            <th>Joueur</th>\n            <th>GP</th>\n            <th>G</th>\n            <th>AST</th>\n            <th class="points-column">PTS</th>\n        </tr>\n    ', visible.forEach(t => {
+    const sortKey = document.getElementById("sortBy")?.value;
+
+    if (!t.length) {
+        e.innerHTML = buildTableHead(SKATER_COLUMNS, sortKey)
+            + buildEmptyState(SKATER_COLUMNS.length, 'Aucun joueur ne correspond',
+                'Vérifiez l\'orthographe ou effacez la recherche.');
+        renderStatsPagination(0);
+        return;
+    }
+
+    e.innerHTML = buildTableHead(SKATER_COLUMNS, sortKey);
+    const tbody = document.createElement("tbody");
+    e.appendChild(tbody);
+    visible.forEach((t, index) => {
         const a = t.skaterFullName,
             n = getCurrentPlayerStats(a, t.playerId),
             s = getMatchingImage(a),
@@ -111,12 +179,62 @@ async function populatePlayerTable(t) {
             i = n?.teamAbbrev ? `teams/${n.teamAbbrev}.png` : getTeamLogoPath(t.teamAbbrevs);
         let c, u, m, h;
         n && n.gamesPlayed > 0 ? (c = n.gamesPlayed || 0, u = n.goals || 0, m = n.assists || 0, h = n.points || 0) : (c = t.gamesPlayed || 0, u = t.goals || 0, m = t.assists || 0, h = t.points || 0);
-        const g = d && i ? `\n            <div class="player-photo">\n                <img src="${d}" alt="${a}" class="face">\n                <img src="${i}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n            </div>\n            ` : "",
+        const g = d && i ? `\n            <div class="player-photo">\n                <img src="${d}" alt="" class="face">\n                <img src="${i}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n            </div>\n            ` : "",
             p = n?.position || t.positionCode || "N/A",
             y = document.createElement("tr");
-        y.innerHTML = `\n            <td>${g}</td>\n            <td>${a}, ${p}</td>\n            <td>${c}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n            <td class="points-column">${h}</td>\n        `, y.style.cursor = "pointer", y.onclick = () => showCareerStats(t.playerId, t.skaterFullName, !1), e.appendChild(y)
-    }), renderStatsPagination(t.length)
+        y.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${g}<div class="player-ident"><span class="player-name">${a}</span><span class="player-pos">${p}</span></div></div></td>\n            <td>${c}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n            <td class="points-column">${h}</td>\n        `;
+        makeRowInteractive(y, () => showCareerStats(t.playerId, t.skaterFullName, !1),
+            `Voir la fiche de ${a}`);
+        tbody.appendChild(y)
+    });
+    renderStatsPagination(t.length)
 }
+
+/**
+ * Rend une rangée activable à la souris ET au clavier.
+ *
+ * Un <tr> avec un simple onclick est invisible pour la navigation au
+ * clavier : sans tabindex il n'est jamais atteignable, et sans gestion de
+ * Entrée/Espace il reste inactivable.
+ */
+function makeRowInteractive(row, action, label) {
+    row.classList.add('is-clickable');
+    row.setAttribute('role', 'button');
+    row.setAttribute('tabindex', '0');
+    if (label) row.setAttribute('aria-label', label);
+    row.onclick = action;
+    row.onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); action(); }
+    };
+}
+
+/**
+ * Tri par clic sur l'en-tête. Délégué sur le tableau parce que le contenu est
+ * reconstruit à chaque rendu — un écouteur par <th> fuirait à chaque passe.
+ */
+function initStatsHeaderSorting() {
+    const table = document.getElementById("playerTable");
+    const select = document.getElementById("sortBy");
+    if (!table || !select) return;
+
+    const trier = (th) => {
+        const key = th?.dataset?.sort;
+        if (!key) return;
+        if (![...select.options].some(o => o.value === key)) return;
+        select.value = key;
+        updateTable();
+    };
+
+    table.addEventListener('click', e => trier(e.target.closest('th[data-sort]')));
+    table.addEventListener('keydown', e => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const th = e.target.closest('th[data-sort]');
+        if (!th) return;
+        e.preventDefault();
+        trier(th);
+    });
+}
+document.addEventListener('DOMContentLoaded', initStatsHeaderSorting);
 
 // Stats pagination controls (Miller's Law)
 function renderStatsPagination(total) {
@@ -150,7 +268,26 @@ function clearStatsPagination() {
 
 function populateGoalieTable(t) {
     const e = document.getElementById("playerTable");
-    e.innerHTML = "\n        <tr>\n            <th>Photo</th>\n            <th>Gardien</th>\n            <th>GP</th>\n            <th>W</th>\n            <th>L</th>\n            <th>OTL</th>\n            <th>SV%</th>\n            <th>SO</th>\n            <th>PTS</th>\n        </tr>\n    ", t.forEach(t => {
+    const GOALIE_COLUMNS = [
+        { label: '#', cls: 'rank-col', title: 'Rang', w: '6%' },
+        { label: 'Gardien', cls: 'player-col', w: '38%' },
+        { label: 'PJ', title: 'Parties jouées', w: '8%' },
+        { label: 'V', title: 'Victoires', w: '7%' },
+        { label: 'D', title: 'Défaites', w: '7%' },
+        { label: 'DP', title: 'Défaites en prolongation', w: '8%' },
+        { label: '%ARR', title: 'Pourcentage d\'arrêts', w: '10%' },
+        { label: 'BL', title: 'Blanchissages', w: '7%' },
+        { label: 'PTS', title: 'Points', cls: 'points-column', w: '9%' }
+    ];
+    if (!t.length) {
+        e.innerHTML = buildTableHead(GOALIE_COLUMNS)
+            + buildEmptyState(GOALIE_COLUMNS.length, 'Aucun gardien à afficher');
+        return;
+    }
+    e.innerHTML = buildTableHead(GOALIE_COLUMNS);
+    const tbody = document.createElement("tbody");
+    e.appendChild(tbody);
+    t.forEach((t, index) => {
         const a = t.goalieFullName,
             n = getCurrentPlayerStats(a, t.playerId),
             s = getMatchingImage(a),
@@ -159,7 +296,10 @@ function populateGoalieTable(t) {
         n && n.gamesPlayed > 0 ? (o = n.gamesPlayed || 0, r = n.wins || 0, d = n.losses || 0, i = n.otLosses || 0, c = n.savePct || 0, u = n.shutouts || 0, m = 5 * u + 2 * r + 1 * i) : (o = t.gamesPlayed || 0, r = t.wins || 0, d = t.losses || 0, i = t.otLosses || 0, c = t.savePct || 0, u = t.shutouts || 0, m = t.points || 0);
         const h = s && l ? `<div class="player-photo">\n                    <img src="${s}" alt="${a}" class="face">\n                    <img src="${l}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n               </div>` : "",
             g = document.createElement("tr");
-        g.innerHTML = `\n            <td>${h}</td>\n            <td>${a}</td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c?.toFixed(3)}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n        `, g.style.cursor = "pointer", g.onclick = () => showCareerStats(t.playerId, t.goalieFullName, !0), e.appendChild(g)
+        g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${h}<div class="player-ident"><span class="player-name">${a}</span></div></div></td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c?.toFixed(3)}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
+        makeRowInteractive(g, () => showCareerStats(t.playerId, t.goalieFullName, !0),
+            `Voir la fiche de ${a}`);
+        tbody.appendChild(g)
     })
 }
 
@@ -182,13 +322,33 @@ function getTeamAbbreviation(t) {
 
 function populateTeamTable(t) {
     const e = document.getElementById("playerTable");
-    e.innerHTML = "\n        <tr>\n            <th>Logo</th>\n            <th>Équipe</th>\n            <th>GP</th>\n            <th>V</th>\n            <th>D</th>\n            <th>DP</th>\n            <th>Points</th>\n        </tr>\n    ", t.forEach(t => {
+    const TEAM_COLUMNS = [
+        { label: '#', cls: 'rank-col', title: 'Rang', w: '6%' },
+        { label: 'Équipe', cls: 'player-col', w: '44%' },
+        { label: 'PJ', title: 'Parties jouées', w: '12%' },
+        { label: 'V', title: 'Victoires', w: '12%' },
+        { label: 'D', title: 'Défaites', w: '10%' },
+        { label: 'DP', title: 'Défaites en prolongation', w: '8%' },
+        { label: 'PTS', title: 'Points', cls: 'points-column', w: '8%' }
+    ];
+    if (!t.length) {
+        e.innerHTML = buildTableHead(TEAM_COLUMNS)
+            + buildEmptyState(TEAM_COLUMNS.length, 'Aucune équipe à afficher');
+        return;
+    }
+    e.innerHTML = buildTableHead(TEAM_COLUMNS);
+    const tbody = document.createElement("tbody");
+    e.appendChild(tbody);
+    t.forEach((t, index) => {
         const a = `teams/${getTeamAbbreviation(t.teamFullName)}.png`,
             n = getCurrentTeamStats(t.teamFullName);
         let s, l, o, r, d;
         n && n.gamesPlayed > 0 ? (s = n.gamesPlayed || 0, l = n.wins || 0, o = n.losses || 0, r = n.otLosses || 0, d = n.points || 2 * l + 1 * r) : (s = t.gamesPlayed || 0, l = t.wins || 0, o = t.losses || 0, r = t.otLosses || 0, d = t.points || 0);
         const i = document.createElement("tr");
-        i.innerHTML = `\n            <td><img src="${a}" alt="${t.teamFullName}" class="logo" style="width:40px;"></td>\n            <td>${t.teamFullName}</td>\n            <td>${s}</td>\n            <td>${l}</td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n        `, i.style.cursor = "pointer", i.onclick = () => showLastYearStats(t, "team"), e.appendChild(i)
+        i.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell"><img src="${a}" alt="" class="team-logo-cell"><div class="player-ident"><span class="player-name">${t.teamFullName}</span></div></div></td>\n            <td>${s}</td>\n            <td>${l}</td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td class="points-column">${d}</td>\n        `;
+        makeRowInteractive(i, () => showLastYearStats(t, "team"),
+            `Voir les statistiques de ${t.teamFullName}`);
+        tbody.appendChild(i)
     })
 }
 
