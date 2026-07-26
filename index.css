@@ -1624,8 +1624,26 @@ html[data-theme="light"] #careerStatsTable tbody tr:nth-child(even) {
    d'ancrage. Les trois premiers sont déjà distingués en or/argent/bronze
    plus bas (effet Von Restorff). */
 /* Le nowrap des colonnes chiffrées exclut explicitement .rank-col : le rang
-   a donc besoin de sa propre règle pour ne jamais se couper. */
-th.rank-col, td.rank-col { width: 52px; white-space: nowrap; }
+   a donc besoin de sa propre règle pour ne jamais se couper.
+   Rembourrage resserré : le rang héritait des 16px latéraux des cellules
+   normales, ce qui dépassait à lui seul la largeur de la colonne sur petit
+   écran. */
+th.rank-col, td.rank-col {
+  width: 52px;
+  white-space: nowrap;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+/* Le rang dépasse 100 dès qu'on charge plusieurs pages (« Voir plus »).
+   En pourcentage, la colonne devient trop étroite pour trois chiffres sur
+   petit écran : on lui donne une largeur fixe, dimensionnée pour ce
+   contenu. S'applique aux trois tableaux, le rang étant toujours en tête. */
+#playerTable colgroup col { width: var(--col-w, auto); }
+
+@media (max-width: 700px) {
+  #playerTable colgroup col:first-child { width: 44px; }
+}
 
 /* --- En-têtes triables -------------------------------------------------
    Loi de Jakob : sur tout tableau de statistiques (NHL.com, RDS, ESPN), on

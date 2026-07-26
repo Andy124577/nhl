@@ -126,8 +126,11 @@ const SKATER_COLUMNS = [
  * La colonne sans largeur absorbe l'espace restant.
  */
 function buildTableHead(columns, activeSort) {
+    // La largeur passe par une variable CSS et non par `width` en ligne : un
+    // style en ligne l'emporte sur toute feuille de style, ce qui rendait les
+    // ajustements responsive impossibles sans !important.
     const cols = columns
-        .map(c => `<col${c.w ? ` style="width:${c.w}"` : ''}>`)
+        .map(c => `<col${c.w ? ` style="--col-w:${c.w}"` : ''}>`)
         .join('');
     const cells = columns.map(c => {
         const cls = [c.cls, c.sort ? 'sortable' : ''].filter(Boolean).join(' ');
