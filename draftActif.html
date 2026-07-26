@@ -6,6 +6,9 @@
   <title>Repêchage en cours – Fantazy</title>
   <script src="theme.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+  <!-- Chiffres en monospace, comme le `font-stats-numeric` du gabarit :
+       les colonnes de statistiques s'alignent et se comparent mieux. -->
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <!-- Ordre volontaire : index.css fournit les jetons et les styles de base,
        navbar.css la barre, puis draftActif.css spécialise la page. Charger
        draftActif.css en dernier évite d'avoir à recourir à !important. -->
@@ -55,6 +58,24 @@
         <span id="dop-round">Ronde 1</span>
       </div>
       <div class="dop-bar"><div class="dop-fill" id="dop-fill"></div></div>
+    </div>
+
+    <!-- Derniers choix : remonté ici pour former le bandeau collant du
+         gabarit, visible pendant qu'on parcourt la liste de joueurs.
+         Le bloc est déplacé tel quel — draftActif.js cible #picks-carousel,
+         #carousel-prev et #carousel-next par identifiant, la position dans
+         le document ne change donc rien pour lui. -->
+    <div class="recent-picks-card">
+      <div class="card-header">
+        <h3>Derniers choix</h3>
+        <div class="carousel-controls">
+          <button class="carousel-btn" id="carousel-prev">‹</button>
+          <button class="carousel-btn" id="carousel-next">›</button>
+        </div>
+      </div>
+      <div class="picks-carousel" id="picks-carousel">
+        <!-- Recent picks will be displayed here -->
+      </div>
     </div>
   </div>
 
@@ -137,19 +158,6 @@
     <!-- Center Column: Recent Picks Carousel -->
     <div class="draft-center">
 
-      <div class="recent-picks-card">
-        <div class="card-header">
-          <h3>Derniers choix</h3>
-          <div class="carousel-controls">
-            <button class="carousel-btn" id="carousel-prev">‹</button>
-            <button class="carousel-btn" id="carousel-next">›</button>
-          </div>
-        </div>
-        <div class="picks-carousel" id="picks-carousel">
-          <!-- Recent picks will be displayed here -->
-        </div>
-      </div>
-
       <!-- Player Selection Area -->
       <div class="player-selection-card">
         <div class="filters-header">
@@ -162,7 +170,12 @@
         </div>
 
         <div class="filters-row">
-          <input type="text" id="searchInput" placeholder="Rechercher..." class="search-input"/>
+          <!-- Champ enveloppé pour porter l'icône de loupe du gabarit.
+               L'input garde son id : le JS écoute dessus. -->
+          <div class="search-field">
+            <span class="search-field-icon" data-icon="search" data-icon-size="17"></span>
+            <input type="text" id="searchInput" placeholder="Rechercher un joueur..." class="search-input"/>
+          </div>
           <select id="playerFilter" class="filter-select">
             <option value="all">Tous</option>
             <option value="offensive">Attaquants</option>

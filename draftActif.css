@@ -592,7 +592,9 @@ html[data-theme="light"] .player-selection-card {
   font-weight: 600;
   transition: border-color .2s ease, background .2s ease;
 }
-.search-input { flex: 1 1 100%; min-width: 0; }
+/* C'est .search-field (l'enveloppe portant la loupe) qui est l'enfant de
+   .filters-row, plus l'input lui-même. */
+.search-field { flex: 1 1 100%; min-width: 0; }
 .search-input::placeholder { color: var(--text-gray); font-weight: 400; }
 .filter-select { flex: 1 1 calc(50% - 5px); min-width: 0; cursor: pointer; }
 .filter-select option { background: var(--navbar-bg); color: var(--text-main); }
@@ -1301,7 +1303,7 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   }
   .draft-main-container { padding: 20px 18px 48px; }
   .picks-carousel { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .search-input { flex: 1 1 220px; }
+  .search-field { flex: 1 1 220px; }
   .filter-select { flex: 0 1 158px; }
   .current-pick-display {
     flex-direction: column;
@@ -1453,7 +1455,7 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
 @media (max-width: 480px) {
   .filters-row { gap: 8px; }
 
-  .search-input  { order: 0; flex: 1 1 auto; min-width: 0; }
+  .search-field  { order: 0; flex: 1 1 auto; min-width: 0; }
   .refresh-btn   { order: 1; flex: 0 0 44px; }
   .filter-select { order: 2; flex: 1 1 calc(50% - 4px); min-width: 0; }
 
@@ -1463,4 +1465,170 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   .filters-header .filter-select { flex: 1 1 100%; order: 0; }
 
   .picks-carousel { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+}
+
+/* ============================================================
+   15. HABILLAGE « LIVE DRAFT » (gabarit fourni)
+   ------------------------------------------------------------
+   Formes et traitement typographique du gabarit — bandeau
+   collant, ticker des derniers choix, rangées en cartes,
+   chiffres en monospace — rendus avec les jetons de couleur du
+   site : la palette du gabarit est mono-thème et casserait le
+   mode sombre.
+
+   Aucune ligne de JS n'est modifiée : le rendu reste un tableau
+   et le choix se fait toujours par le bouton de chaque rangée.
+   ============================================================ */
+
+/* ---- Bandeau collant : le statut du repêchage reste visible ----
+   Décalé de la hauteur de la barre de navigation, elle-même collante. */
+.draft-header {
+  position: sticky;
+  top: 60px;
+  z-index: 20;
+  padding: 10px 13px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Libellé « sur le chrono » façon gabarit */
+.pick-label {
+  font-size: .58rem;
+  letter-spacing: .1em;
+}
+
+/* ---- Derniers choix : ticker horizontal ----
+   Dans le bandeau, la carte perd son cadre et défile latéralement
+   au lieu de s'étaler en grille. */
+.draft-header .recent-picks-card {
+  margin-top: 9px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+.draft-header .card-header {
+  margin-bottom: 7px;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.draft-header .card-header h3 {
+  font-size: .6rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.draft-header .picks-carousel {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-bottom: 2px;
+  /* Barre de défilement masquée : le ticker se manipule au doigt. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.draft-header .picks-carousel::-webkit-scrollbar { display: none; }
+.draft-header .pick-card {
+  flex: 0 0 auto;
+  width: 104px;
+  padding: 8px 7px;
+  border-radius: 11px;
+}
+.draft-header .pick-card-image { width: 40px; height: 40px; margin-bottom: 6px; }
+.draft-header .carousel-team-logo { width: 16px !important; height: 16px !important; }
+.draft-header .pick-card-number { margin-bottom: 5px; font-size: .58rem; letter-spacing: .08em; }
+.draft-header .pick-card-name { font-size: .72rem; }
+.draft-header .pick-card-team { font-size: .64rem; }
+.draft-header .pick-card-position { margin-top: 4px; font-size: .58rem; }
+.draft-header .carousel-btn { width: 30px; height: 30px; min-height: 30px; font-size: 1.1rem; }
+
+/* ---- Champ de recherche avec loupe ---- */
+/* Pas de `flex` ici : il est défini plus haut et ajusté par les media
+   queries. Le redéclarer en fin de fichier écraserait ces règles et
+   forcerait le champ à occuper une rangée entière à toutes les tailles. */
+.search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-field-icon {
+  position: absolute;
+  left: 12px;
+  display: inline-flex;
+  pointer-events: none;
+  color: var(--text-gray);
+  transition: color .2s ease;
+}
+.search-field:focus-within .search-field-icon { color: var(--primary); }
+.search-field .search-input { flex: 1 1 auto; padding-left: 38px; }
+
+/* ---- Rangées du tableau à l'allure de cartes ----
+   `border-collapse: separate` + un espacement vertical transforme les
+   rangées en cartes détachées, sans quitter la structure <table> — donc
+   sans toucher aux fonctions de rendu du JS. */
+#playerTable {
+  border-collapse: separate;
+  border-spacing: 0 7px;
+}
+#playerTable thead th {
+  border-radius: 0;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+#playerTable tbody td {
+  border-bottom: 0;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-odd-row);
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+#playerTable tbody td:first-child {
+  border-left: 1px solid var(--border-light);
+  border-radius: 12px 0 0 12px;
+}
+#playerTable tbody td:last-child {
+  border-right: 1px solid var(--border-light);
+  border-radius: 0 12px 12px 0;
+}
+/* Le zébrage n'a plus de sens une fois les rangées séparées. */
+#playerTable tbody tr:nth-child(even) { background: none; }
+#playerTable tbody tr:hover td {
+  background: rgba(0, 212, 255, .07);
+  border-color: rgba(0, 212, 255, .35);
+}
+
+/* ---- Chiffres en monospace ----
+   Colonnes numériques uniquement : la 1re est la photo et la 2e le nom. */
+#playerTable tbody td:not(:first-child):not(:nth-child(2)),
+#careerStatsTable tbody td:not(.season-col):not(.league-col):not(.team-col) {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .02em;
+}
+
+/* ---- Étiquettes en majuscules espacées, comme le gabarit ---- */
+.filters-header h3,
+.card-header h3,
+.progress-card h3,
+.draft-order-card h3 {
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+@media (min-width: 600px) {
+  .draft-header { padding: 12px 20px; }
+  .draft-header .pick-card { width: 116px; }
+}
+
+@media (min-width: 1024px) {
+  /* Le bandeau reste collant, la colonne latérale se cale dessous. */
+  .draft-header { padding: 14px 22px; }
+  .draft-sidebar { top: 92px; }
 }
