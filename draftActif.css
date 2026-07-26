@@ -1371,11 +1371,6 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   .refresh-btn   { order: 1; flex: 0 0 44px; }
   .filter-select { order: 2; flex: 1 1 calc(50% - 4px); min-width: 0; }
 
-  /* Le filtre de disponibilité, dans l'en-tête de carte, prend toute la
-     largeur plutôt que d'être écrasé à côté du titre. */
-  .filters-header { flex-wrap: wrap; }
-  .filters-header .filter-select { flex: 1 1 100%; order: 0; }
-
   .picks-carousel { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 }
 

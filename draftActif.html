@@ -161,8 +161,13 @@
       <div class="player-selection-card">
         <div class="filters-header">
           <h3>Sélection de joueur</h3>
-          <select id="availabilityFilter" class="filter-select">
-            <option value="available">Disponibles</option>
+          <!-- Retiré de l'affichage, mais conservé dans le DOM : updateTable()
+               lit sa valeur pour écarter les joueurs déjà repêchés. Sans lui,
+               $("#availabilityFilter").val() vaut undefined et la liste
+               « Tous » passait de 49 à 501 joueurs (mesuré). Figé sur
+               « available », le comportement par défaut est préservé. -->
+          <select id="availabilityFilter" class="filter-select is-replaced" hidden>
+            <option value="available" selected>Disponibles</option>
             <option value="picked">Tous les choix</option>
             <option value="pickedByTeam">Mes choix</option>
           </select>
