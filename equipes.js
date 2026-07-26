@@ -480,27 +480,22 @@ async function viewClanTeams(clanName) {
             const prefill = (displayName !== teamName && displayName.length <= 20)
                 ? displayName
                 : teamName;
-            const renameSection = userInTeam ? `
-                <div id="rename-row-${teamId}" class="cm-rename">
-                    <label class="cm-rename-label" for="rename-input-${teamId}">Renommer mon équipe</label>
-                    <div class="cm-rename-row">
-                        <input id="rename-input-${teamId}" type="text" maxlength="20"
-                            class="cm-rename-input"
-                            value="${prefill.replace(/"/g, '&quot;')}"
-                            placeholder="Nouveau nom (max 20)"
-                            onkeydown="if(event.key==='Enter') submitRename('${clanName.replace(/'/g, "\\'")}', '${teamName.replace(/'/g, "\\'")}', '${teamId}')"
-                        />
-                        <button type="button" class="cm-rename-btn" onclick="submitRename('${clanName.replace(/'/g, "\\'")}', '${teamName.replace(/'/g, "\\'")}', '${teamId}')">
-                            Renommer
-                        </button>
-                    </div>
-                </div>
+            // Le renommage tient dans un crayon posé contre le nom : le bloc
+            // « Renommer mon équipe » qui le précédait ajoutait une étiquette,
+            // un champ et un bouton visibles en permanence sous chaque carte,
+            // pour une action qu'on ne fait qu'une fois.
+            const renameBtn = userInTeam ? `
+                <button type="button" class="cm-rename-pencil"
+                        title="Renommer mon équipe" aria-label="Renommer mon équipe"
+                        onclick="startRename(this, '${clanName.replace(/'/g, "\\'")}', '${teamName.replace(/'/g, "\\'")}', '${teamId}')">
+                    ${typeof getIcon === 'function' ? getIcon('pencil', 14) : '&#9998;'}
+                </button>
             ` : '';
 
             teamHTML += `
                 <div class="cm-team${userInTeam ? ' is-mine' : ''}${isFull ? ' is-full' : ''}">
                     <div class="cm-team-head">
-                        <strong class="cm-team-name">${logoHTML}<span>${displayName}</span></strong>
+                        <strong class="cm-team-name">${logoHTML}<span class="cm-team-label">${displayName}</span>${renameBtn}</strong>
                         <div class="cm-badges">
                             ${userInTeam ? `<span class="cm-badge cm-badge-mine">Votre équipe</span>` : ''}
                             <span class="cm-badge cm-badge-count">${teamData.members.length}/5 joueurs</span>
@@ -508,7 +503,6 @@ async function viewClanTeams(clanName) {
                     </div>
                     ${membersDisplay}
                     ${buildPicksSection(teamData)}
-                    ${renameSection}
                     ${!userInTeam && !isFull && !draftStarted ? `<button type="button" class="cm-join-btn" onclick="joinTeam('${clanName}', '${teamName}')">Rejoindre cette équipe</button>` : ''}
                     ${isFull && !userInTeam ? `<div class="cm-full-note">Équipe complète</div>` : ''}
                 </div>
@@ -525,6 +519,68 @@ async function viewClanTeams(clanName) {
 
 
 // ✏️ Rename user's team
+/**
+ * Bascule le nom de l'équipe en champ de saisie, sur place.
+ *
+ * Le renommage occupait auparavant un bloc permanent sous chaque carte —
+ * étiquette, champ et bouton — pour une action qu'on ne fait qu'une fois.
+ * Il tient désormais dans un crayon posé contre le nom.
+ *
+ * Le champ garde l'identifiant `rename-input-<teamId>` : submitRename() le
+ * lit par cet identifiant et n'a pas eu à changer. En cas de succès elle
+ * recharge la modale, ce qui rétablit l'affichage normal ; l'annulation est
+ * donc le seul retour en arrière à gérer ici.
+ */
+function startRename(bouton, clanName, teamName, teamId) {
+    const titre = bouton.closest('.cm-team-name');
+    const libelle = titre && titre.querySelector('.cm-team-label');
+    if (!libelle || titre.querySelector('.cm-rename-input')) return;
+
+    const nomAffiche = libelle.textContent.trim();
+    // Le nom affiché peut être la liste des membres (« alice et bob ») quand
+    // l'équipe porte encore sa clé par défaut : trop long, et ce n'est pas un
+    // nom d'équipe. On repart alors de la clé.
+    const depart = (nomAffiche !== teamName && nomAffiche.length <= 20)
+        ? nomAffiche
+        : teamName;
+
+    const champ = document.createElement('input');
+    champ.type = 'text';
+    champ.id = `rename-input-${teamId}`;
+    champ.className = 'cm-rename-input';
+    champ.maxLength = 20;
+    champ.value = depart;
+    champ.placeholder = 'Nouveau nom (max 20)';
+    champ.setAttribute('aria-label', "Nouveau nom de l'équipe");
+
+    const annuler = () => {
+        champ.remove();
+        valider.remove();
+        libelle.hidden = false;
+        bouton.hidden = false;
+    };
+
+    const valider = document.createElement('button');
+    valider.type = 'button';
+    valider.className = 'cm-rename-ok';
+    valider.title = 'Enregistrer';
+    valider.setAttribute('aria-label', 'Enregistrer le nom');
+    valider.innerHTML = typeof getIcon === 'function' ? getIcon('check', 14) : '✓';
+    valider.addEventListener('click', () => submitRename(clanName, teamName, teamId));
+
+    champ.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); submitRename(clanName, teamName, teamId); }
+        if (e.key === 'Escape') { e.preventDefault(); annuler(); }
+    });
+
+    libelle.hidden = true;
+    bouton.hidden = true;
+    titre.appendChild(champ);
+    titre.appendChild(valider);
+    champ.focus();
+    champ.select();
+}
+
 async function submitRename(clanName, oldTeamName, teamId) {
     const input = document.getElementById(`rename-input-${teamId}`);
     if (!input) return;

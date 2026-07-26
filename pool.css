@@ -834,28 +834,27 @@
 .cm-banner::before { content: "🏒"; flex-shrink: 0; }
 
 /* ---- Carte d'équipe ---- */
+/* Fond et contour repris de .cmh-cell (modale de carrière) : c'est la
+   carte imbriquée du site. L'état se lit à la bordure et à la lueur,
+   comme .player-card-roster.selected sur la page des échanges — le
+   liseré latéral épais n'existait nulle part ailleurs. */
 .cm-team {
-    margin-bottom: 14px;
-    padding: 14px 16px;
-    background: var(--bg-hover);
+    margin-bottom: 12px;
+    padding: 13px 15px;
+    background: var(--bg-odd-row);
     border: 1px solid var(--border-light);
-    border-left: 3px solid var(--primary);
-    border-radius: 14px;
-    transition: border-color .2s ease, background .2s ease;
+    border-radius: 12px;
+    transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
 }
 .cm-team:last-child { margin-bottom: 0; }
-/* Mon équipe : accent vert, la seule carte que l'on doit repérer
-   d'un coup d'œil parmi les autres. */
+/* Mon équipe : la seule carte à repérer d'un coup d'œil parmi les autres. */
 .cm-team.is-mine {
-    border-left-color: var(--success);
-    background: color-mix(in srgb, var(--success) 8%, var(--bg-hover));
+    border-color: var(--success);
+    background: color-mix(in srgb, var(--success) 7%, var(--bg-odd-row));
+    box-shadow: var(--glow-success);
 }
-/* Équipe complète : rien à y faire, on la met en retrait plutôt
-   que de la masquer. */
-.cm-team.is-full {
-    border-left-color: var(--border-gray);
-    background: var(--bg-gray-light);
-}
+/* Équipe complète : rien à y faire, on la met en retrait sans la masquer. */
+.cm-team.is-full { background: var(--bg-gray-light); }
 
 .cm-team-head {
     display: flex;
@@ -873,7 +872,7 @@
     font-weight: 700;
     color: var(--text-main);
 }
-.cm-team-name > span {
+.cm-team-label {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -886,11 +885,14 @@
 
 /* ---- Pastilles ---- */
 .cm-badges { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+/* Mêmes mesures que .cmh-chip, le jeton du site. */
 .cm-badge {
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: .74rem;
-    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: .66rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
     white-space: nowrap;
     border: 1px solid transparent;
 }
@@ -912,14 +914,15 @@
 
 /* ---- Membres ---- */
 .cm-members { margin-top: 10px; }
+/* Mêmes mesures que .cmh-mini-lbl et .picks-cat-label. */
 .cm-members-label {
     display: block;
     margin-bottom: 6px;
-    font-size: .7rem;
-    font-weight: 700;
+    font-size: .58rem;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: .05em;
-    color: var(--text-secondary);
+    letter-spacing: .08em;
+    color: var(--text-gray);
 }
 .cm-member-list {
     list-style: none;
@@ -968,60 +971,73 @@
     color: var(--text-gray);
 }
 
-/* ---- Renommage ---- */
-.cm-rename {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border-light);
-}
-.cm-rename-label {
-    display: block;
-    margin-bottom: 6px;
-    font-size: .7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .05em;
-    color: var(--text-secondary);
-}
-.cm-rename-row { display: flex; gap: 8px; align-items: stretch; }
-.cm-rename-input {
-    flex: 1;
-    min-width: 0;
-    padding: 9px 12px;
-    background: var(--card);
-    border: 1px solid var(--border-gray);
-    border-radius: 10px;
-    color: var(--text-main);
-    font-size: .9rem;
-    font-family: inherit;
-    outline: none;
-    transition: border-color .2s ease, box-shadow .2s ease;
-}
-.cm-rename-input:focus {
-    border-color: var(--primary);
-    box-shadow: var(--glow-primary);
-}
-.cm-rename-input::placeholder { color: var(--text-light-gray); }
-/* Action secondaire : elle ne doit pas rivaliser avec
-   « Rejoindre cette équipe », d'où le contour plutôt que le
-   dégradé hérité de `.modal-content button`. */
-.modal-content .cm-rename-btn {
-    padding: 9px 16px;
-    background: color-mix(in srgb, var(--primary) 10%, transparent);
-    border: 1px solid color-mix(in srgb, var(--primary) 45%, transparent);
-    border-radius: 10px;
-    color: var(--primary);
-    font-size: .85rem;
-    font-weight: 700;
+/* ---- Renommage : crayon contre le nom ---- */
+/* Le champ, son étiquette et son bouton occupaient une rangée permanente
+   sous chaque carte pour une action qu'on ne fait qu'une fois. Le crayon
+   la remplace, et la saisie prend la place du nom quand on y touche. */
+/* `.modal-content button` porte le dégradé et le rembourrage des actions
+   principales de la modale : il faut le même poids de sélecteur pour les
+   neutraliser sur ces deux boutons d'icône. */
+.modal-content .cm-rename-pencil,
+.modal-content .cm-rename-ok {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-gray);
     box-shadow: none;
-    white-space: nowrap;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease, border-color .2s ease;
 }
-.modal-content .cm-rename-btn:hover {
-    background: color-mix(in srgb, var(--primary) 20%, transparent);
-    border-color: var(--primary);
+.modal-content .cm-rename-pencil:hover,
+.modal-content .cm-rename-pencil:focus-visible {
+    background: color-mix(in srgb, var(--primary) 14%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+    color: var(--primary);
+}
+/* Validation : même gabarit que le crayon, teinte d'accord. */
+.modal-content .cm-rename-ok {
+    background: color-mix(in srgb, var(--success) 16%, transparent);
+    border-color: color-mix(in srgb, var(--success) 45%, transparent);
+    color: var(--success);
+}
+.modal-content .cm-rename-ok:hover {
+    background: color-mix(in srgb, var(--success) 26%, transparent);
+    border-color: var(--success);
     transform: none;
     box-shadow: none;
 }
+
+/* Une déclaration `display` de classe l'emporte sur l'attribut `hidden`
+   de la feuille du navigateur : sans ces règles, le crayon resterait
+   affiché pendant la saisie. */
+.modal-content .cm-rename-pencil[hidden],
+.modal-content .cm-rename-ok[hidden] { display: none; }
+
+/* Le champ remplace le nom : il occupe la place laissée libre dans
+   l'en-tête de la carte plutôt que d'ajouter une rangée. */
+.cm-rename-input {
+    flex: 1 1 120px;
+    min-width: 0;
+    padding: 5px 9px;
+    background: var(--card);
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    color: var(--text-main);
+    font-size: .92rem;
+    font-weight: 700;
+    font-family: inherit;
+    outline: none;
+    transition: box-shadow .2s ease;
+}
+.cm-rename-input:focus { box-shadow: var(--glow-primary); }
+.cm-rename-input::placeholder { color: var(--text-light-gray); font-weight: 400; }
 
 /* ---- Rejoindre / complète ---- */
 /* L'apparence vient de `.modal-content button` : même dégradé
@@ -1053,8 +1069,6 @@
     .cm-team-name { flex: 1 1 100%; font-size: .96rem; }
     .cm-team-logo { width: 28px; height: 28px; }
     .cm-badges { flex: 1 1 100%; }
-    .cm-rename-row { flex-direction: column; }
-    .modal-content .cm-rename-btn { width: 100%; }
 
     /* Les joueurs repêchés : le libellé de catégorie passe au-dessus.
        À côté, ses 74px fixes ne laissaient pas la place à deux
