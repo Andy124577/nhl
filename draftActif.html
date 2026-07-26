@@ -89,7 +89,9 @@
       <div class="progress-card">
         <div class="progress-header">
           <h3>Ma progression</h3>
-          <select id="progressFilter" class="progress-filter-select">
+          <!-- Conservé pour la liaison de draftActif.js, mais masqué : le choix
+               se fait désormais en cliquant une position. -->
+          <select id="progressFilter" class="progress-filter-select" hidden>
             <option value="">Voir détails...</option>
             <option value="offensive">Attaquants</option>
             <option value="defensive">Défenseurs</option>
@@ -102,7 +104,8 @@
           <!-- Player list will be populated here -->
         </div>
         <div class="progress-list">
-          <div class="progress-line">
+          <div class="progress-line" data-position="offensive" role="button" tabindex="0"
+               aria-expanded="false" title="Voir les joueurs choisis">
             <span class="progress-emoji" data-icon="bolt" data-icon-size="16"></span>
             <span class="progress-text">Attaquants</span>
             <div class="progress-mini-bar">
@@ -110,7 +113,8 @@
             </div>
             <span class="progress-value" id="count-offensive">0/6</span>
           </div>
-          <div class="progress-line">
+          <div class="progress-line" data-position="defensive" role="button" tabindex="0"
+               aria-expanded="false" title="Voir les joueurs choisis">
             <span class="progress-emoji" data-icon="shield" data-icon-size="16"></span>
             <span class="progress-text">Défenseurs</span>
             <div class="progress-mini-bar">
@@ -118,7 +122,8 @@
             </div>
             <span class="progress-value" id="count-defensive">0/4</span>
           </div>
-          <div class="progress-line">
+          <div class="progress-line" data-position="rookie" role="button" tabindex="0"
+               aria-expanded="false" title="Voir les joueurs choisis">
             <span class="progress-emoji" data-icon="star" data-icon-size="16"></span>
             <span class="progress-text">Recrues</span>
             <div class="progress-mini-bar">
@@ -126,7 +131,8 @@
             </div>
             <span class="progress-value" id="count-rookie">0/1</span>
           </div>
-          <div class="progress-line">
+          <div class="progress-line" data-position="goalie" role="button" tabindex="0"
+               aria-expanded="false" title="Voir les joueurs choisis">
             <span class="progress-emoji" data-icon="goal" data-icon-size="16"></span>
             <span class="progress-text">Gardien</span>
             <div class="progress-mini-bar">
@@ -134,7 +140,8 @@
             </div>
             <span class="progress-value" id="count-goalie">0/1</span>
           </div>
-          <div class="progress-line">
+          <div class="progress-line" data-position="team" role="button" tabindex="0"
+               aria-expanded="false" title="Voir les joueurs choisis">
             <span class="progress-emoji" data-icon="hockey" data-icon-size="16"></span>
             <span class="progress-text">Équipe</span>
             <div class="progress-mini-bar">
@@ -168,6 +175,10 @@
             <option value="pickedByTeam">Mes choix</option>
           </select>
         </div>
+
+        <!-- Onglets de catégorie : pilotent le <select> #playerFilter existant,
+             donc toute la logique de filtrage reste celle de draftActif.js. -->
+        <div class="category-tabs" id="categoryTabs" role="tablist" aria-label="Catégorie de joueurs"></div>
 
         <div class="filters-row">
           <!-- Champ enveloppé pour porter l'icône de loupe du gabarit.
@@ -381,6 +392,9 @@
   <script defer src="avatars.js"></script>
   <script src="headshots.js"></script>
   <script defer src="draftActif.js"></script>
+  <!-- Couche d'interface : ne fait que piloter les contrôles déjà en place
+       (#playerFilter, showProgressDetails). Aucune logique de repêchage ici. -->
+  <script defer src="draftActifUI.js"></script>
   <script defer src="navbar.js"></script>
 </body>
 </html>

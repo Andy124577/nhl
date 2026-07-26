@@ -1632,3 +1632,146 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   .draft-header { padding: 14px 22px; }
   .draft-sidebar { top: 92px; }
 }
+
+/* ============================================================
+   16. ONGLETS ET PROGRESSION DÉPLIABLE
+   ------------------------------------------------------------
+   Composants du gabarit rendus avec les jetons du site. Ils sont
+   pilotés par draftActifUI.js, qui ne fait qu'actionner les
+   contrôles déjà en place : aucune logique de repêchage ici.
+   ============================================================ */
+
+/* ---- Contrôle segmenté (téléphone) : Disponible / Ma liste / Ordre ---- */
+.panel-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 12px 12px;
+  padding: 4px;
+  background: var(--bg-gray-light);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+}
+.panel-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 6px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease;
+}
+.panel-tab.is-active {
+  background: var(--card);
+  color: var(--primary);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, .28);
+}
+.panel-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+/* ---- Onglets de catégorie : bande soulignée, défilante ---- */
+.category-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border-bottom: 1px solid var(--border-light);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.category-tabs::-webkit-scrollbar { display: none; }
+.category-tab {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 9px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: .66rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color .18s ease, border-color .18s ease;
+}
+.category-tab:hover { color: var(--text-main); }
+.category-tab.is-active { color: var(--primary); border-bottom-color: var(--primary); }
+.category-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+
+/* Les <select> remplacés par des onglets sortent du flux, mais restent
+   dans le DOM : draftActif.js s'y est lié au chargement. */
+.filter-select.is-replaced,
+.progress-filter-select[hidden] { display: none; }
+
+/* ---- Ma liste : lignes de position dépliables ---- */
+.progress-line[data-position] {
+  /* Une colonne de plus pour le chevron. */
+  grid-template-columns: 20px minmax(0, 1fr) 46px 40px 12px;
+  margin: 0 -7px;
+  padding: 5px 7px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background .18s ease;
+}
+.progress-line[data-position]::after {
+  content: '⌄';
+  justify-self: center;
+  font-size: .82rem;
+  line-height: 1;
+  color: var(--text-gray);
+  transition: transform .2s ease, color .2s ease;
+}
+.progress-line[data-position]:hover { background: rgba(0, 212, 255, .07); }
+.progress-line[data-position]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+.progress-line.is-open { background: rgba(0, 212, 255, .11); }
+.progress-line.is-open::after { transform: rotate(180deg); color: var(--primary); }
+.progress-line.is-open .progress-text { color: var(--text-main); }
+
+/* Panneau déplié : rattaché visuellement à la ligne au-dessus. */
+.progress-details-list.is-inline {
+  margin: 6px 0 8px;
+  border-color: rgba(0, 212, 255, .25);
+}
+
+@media (min-width: 1024px) {
+  /* Deux colonnes : tout est visible en même temps, les onglets de
+     panneau n'ont plus lieu d'être (draftActifUI.js les masque aussi). */
+  .panel-tabs { display: none; }
+}
+
+/* ---- Ticker compact sur téléphone ----
+   Le bandeau collant occupait 308px sur un écran de 844px : moins de la
+   moitié de la hauteur restait pour la liste de joueurs. Le gabarit n'y
+   met que le numéro de choix et le nom ; on s'y aligne sous 600px, ce qui
+   ramène le ticker de 173px à environ 60px. Les cartes complètes
+   réapparaissent dès qu'il y a la place. */
+@media (max-width: 599px) {
+  .draft-header .pick-card {
+    width: auto;
+    min-width: 96px;
+    padding: 6px 10px;
+  }
+  .draft-header .pick-card-image,
+  .draft-header .pick-card-team,
+  .draft-header .pick-card-position { display: none; }
+  .draft-header .pick-card-number { margin-bottom: 2px; }
+  .draft-header .pick-card-name {
+    font-size: .74rem;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-weight: 700;
+  }
+  .draft-header .card-header { margin-bottom: 5px; }
+}
