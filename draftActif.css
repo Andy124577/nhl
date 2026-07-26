@@ -1197,6 +1197,21 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   line-height: 1.1;
   color: var(--text-secondary);
 }
+/* Colonne « Ligue » masquée quand le filtre vaut « NHL seulement » : toutes
+   les lignes y afficheraient la même valeur. Elle réapparaît dès qu'on
+   élargit le filtre (Toutes les ligues / Autres ligues).
+
+   Fait en CSS pur via :has() plutôt qu'en modifiant filterCareerStats(),
+   qui vit dans du JS minifié. #careerFilters précède #careerStatsTable
+   parmi ses frères, d'où le combinateur ~.
+
+   Si :has() n'est pas reconnu, la règle est ignorée et la colonne reste
+   visible — dégradation sans casse. */
+#careerFilters:has(#leagueFilter option[value="nhl"]:checked)
+  ~ #careerStatsTable .league-col {
+  display: none;
+}
+
 .career-totals-row { background: rgba(0, 212, 255, .14); font-weight: 800; }
 .career-totals-row td { border-top: 2px solid var(--primary); color: var(--text-main); }
 .career-totals-label { text-align: left; text-transform: uppercase; letter-spacing: .5px; }
