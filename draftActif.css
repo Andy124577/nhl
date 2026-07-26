@@ -969,17 +969,37 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   border-bottom: 1px solid var(--border-light);
   border-radius: 18px 18px 0 0;
 }
+/* Téléphone : photo et identité côte à côte sur une rangée, puis les
+   pastilles sur toute la largeur. En colonne centrée, l'en-tête faisait
+   388px de haut et repoussait le tableau — le contenu réel — à 590px.
+
+   `display: contents` sur .player-header-right dissout ce conteneur : ses
+   enfants deviennent des cases de cette grille. Sans cela, les pastilles
+   restaient enfermées dans une colonne de 220px et s'étalaient sur quatre
+   rangées au lieu de trois. */
 .player-header-top {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 14px;
-  text-align: center;
+  gap: 10px 12px;
+  text-align: left;
 }
+.player-header-right { display: contents; }
+.player-headshot-container { grid-row: 1; grid-column: 1; }
+.player-name-section {
+  grid-row: 1;
+  grid-column: 2;
+  min-width: 0;
+  /* index.css centre cette section ; à côté de la photo, un alignement à
+     gauche se lit mieux. */
+  align-items: flex-start;
+  text-align: left;
+}
+.player-bio-pills { grid-column: 1 / -1; }
 .player-headshot-container {
   flex: 0 0 auto;
-  width: 82px;
-  height: 82px;
+  width: 58px;
+  height: 58px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -990,39 +1010,53 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
 }
 .player-headshot-container img { width: 100%; height: 100%; object-fit: cover; }
 .player-headshot-container .no-photo { color: var(--text-light-gray); }
-.player-header-right { width: 100%; min-width: 0; }
+.player-header-right { flex: 1; min-width: 0; }
 .player-name-section h2 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.05rem;
+  line-height: 1.2;
   font-weight: 800;
   color: var(--text-main);
 }
 .player-position-team {
   display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 4px;
-  font-size: .85rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 7px;
+  margin-top: 3px;
+  font-size: .8rem;
   font-weight: 600;
   color: var(--primary);
 }
 #careerPlayerPosition { font-weight: 700; }
+/* Grille à deux colonnes plutôt que des pastilles qui s'enchaînent : les
+   valeurs longues (« 2006-01-28 (Âge: 20) », « Toronto, Ontario, CAN »)
+   étaient tronquées en pastille. Trois colonnes : taille, poids et lancer
+   tiennent sur une seule rangée maintenant que les pastilles occupent
+   toute la largeur de l'en-tête. */
 .player-bio-pills {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 7px;
-  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 11px;
 }
 .bio-pill {
-  display: inline-flex;
+  display: flex;
+  flex-direction: row;
   align-items: baseline;
   gap: 5px;
-  padding: 5px 10px;
+  min-width: 0;
+  padding: 5px 9px;
   border-radius: 999px;
   background: var(--bg-gray-light);
   border: 1px solid var(--border-light);
 }
+/* Deux colonnes : à trois, les pastilles courtes étaient trop étroites et
+   leur libellé passait sous la valeur, ce qui les rendait deux fois plus
+   hautes. La date de naissance et le lieu, nettement plus longs, prennent
+   la largeur entière et tiennent alors chacun sur une seule ligne. */
+.bio-pill:nth-child(4),
+.bio-pill:nth-child(5) { grid-column: 1 / -1; }
 .bio-pill-lbl {
   font-size: .66rem;
   font-weight: 700;
@@ -1030,15 +1064,31 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   letter-spacing: .4px;
   color: var(--text-gray);
 }
-.bio-pill-val { font-size: .8rem; font-weight: 800; color: var(--text-main); }
+/* Sélecteur à deux classes pour égaler la spécificité de la règle
+   `.bio-pill .bio-pill-val { white-space: nowrap }` d'index.css, qui
+   empêchait les valeurs longues de se replier. */
+.bio-pill .bio-pill-val {
+  font-size: .78rem;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: break-word;
+  /* index.css plafonne cette valeur à 110px sous petit écran, ce qui
+     tronquait « 2006-01-28 (Âge: 20) » et « Toronto, Ontario, CAN » et les
+     forçait sur deux lignes. La pastille gère désormais sa propre largeur. */
+  max-width: none;
+}
+.bio-pill .bio-pill-lbl { flex: 0 0 auto; }
 
 .player-draft-strip {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 14px;
-  padding-top: 12px;
+  justify-content: flex-start;
+  gap: 4px 8px;
+  margin-top: 11px;
+  padding-top: 10px;
   border-top: 1px solid var(--border-light);
 }
 .draft-label {
@@ -1048,7 +1098,7 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   letter-spacing: .5px;
   color: var(--text-gray);
 }
-.draft-value { font-size: .82rem; font-weight: 700; color: var(--text-dark); }
+.draft-value { font-size: .78rem; font-weight: 700; line-height: 1.35; color: var(--text-dark); }
 
 .loading-spinner {
   padding: 34px 16px;
@@ -1244,10 +1294,29 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
     min-width: 148px;
     text-align: center;
   }
-  .player-header-top { flex-direction: row; align-items: center; text-align: left; }
-  .player-position-team,
-  .player-bio-pills,
-  .player-draft-strip { justify-content: flex-start; }
+  /* Au-delà du téléphone, la place ne manque plus : photo plus grande et
+     pastilles qui s'enchaînent librement. */
+  .player-header-top {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+  .player-header-right { display: block; flex: 1; min-width: 0; }
+  .player-headshot-container { width: 82px; height: 82px; border-radius: 16px; }
+  .player-name-section h2 { font-size: 1.25rem; }
+  .player-header-top { gap: 16px; }
+  .player-bio-pills { display: flex; flex-wrap: wrap; gap: 7px; }
+  .bio-pill {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 999px;
+  }
+  .bio-pill:nth-child(4),
+  .bio-pill:nth-child(5) { grid-column: auto; }
+  .bio-pill .bio-pill-val { font-size: .8rem; }
+  .draft-value { font-size: .82rem; }
   .custom-alert-button { width: auto; min-width: 160px; }
   .finish-btn { bottom: 22px; }
 }
