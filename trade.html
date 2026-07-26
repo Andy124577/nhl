@@ -110,8 +110,50 @@
                 <button class="btn-reset" onclick="resetTrade()"><span data-icon="refresh" data-icon-size="15"></span> Recommencer</button>
             </div>
 
+            <!-- Vue téléphone : paniers, séparateur et onglets d'effectif.
+                 Masquée dès 901px, où la disposition à trois colonnes
+                 reprend la main. Aucune logique d'échange ici : les
+                 boutons appellent les fonctions déjà en place. -->
+            <div class="tm-baskets">
+                <div class="tm-basket">
+                    <span class="tm-basket-lbl">Vous donnez</span>
+                    <button type="button" class="tm-slot is-empty" id="tmSlotGive"
+                            onclick="tmFocusRoster('my')">
+                        <span class="tm-slot-empty">
+                            <span data-icon="plus" data-icon-size="22"></span>
+                            Ajouter un joueur
+                        </span>
+                    </button>
+                </div>
+                <div class="tm-basket">
+                    <span class="tm-basket-lbl">Vous recevez</span>
+                    <button type="button" class="tm-slot is-empty" id="tmSlotGet"
+                            onclick="tmFocusRoster('partner')">
+                        <span class="tm-slot-empty">
+                            <span data-icon="plus" data-icon-size="22"></span>
+                            Ajouter un joueur
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="tm-divider">
+                <span class="tm-divider-chip">
+                    <span data-icon="bolt" data-icon-size="13"></span> Échange 1 pour 1
+                </span>
+            </div>
+
+            <div class="tm-tabs" role="tablist">
+                <button type="button" class="tm-tab is-active" role="tab" aria-selected="true"
+                        data-cote="my" onclick="tmSwitchRoster('my')">Mon équipe</button>
+                <button type="button" class="tm-tab" role="tab" aria-selected="false"
+                        data-cote="partner" onclick="tmSwitchRoster('partner')">Équipe partenaire</button>
+            </div>
+
             <!-- Three-Column Trade Layout -->
-            <div class="trade-grid-3col">
+            <!-- data-cote pilote l'effectif visible sous 900px ; sans effet
+                 au-delà, où les deux colonnes s'affichent ensemble. -->
+            <div class="trade-grid-3col" data-cote="my">
                 <!-- Left: My Team -->
                 <div class="roster-column">
                     <div class="roster-header">
@@ -198,6 +240,30 @@
                         <!-- Filled by JS -->
                     </div>
                 </div>
+            </div>
+
+            <!-- Barre fixe : bilan de l'échange et action principale.
+                 Les points remplacent la note globale du gabarit — c'est
+                 la seule valeur que les données du pool fournissent. -->
+            <div class="tm-bottombar" id="tmBottomBar">
+                <div class="tm-balance">
+                    <div class="tm-balance-cell">
+                        <span class="tm-balance-lbl">Vous donnez</span>
+                        <span class="tm-balance-val is-give" id="tmValGive">—</span>
+                    </div>
+                    <div class="tm-balance-cell">
+                        <span class="tm-balance-lbl">Vous recevez</span>
+                        <span class="tm-balance-val is-get" id="tmValGet">—</span>
+                    </div>
+                    <div class="tm-balance-cell">
+                        <span class="tm-balance-lbl">Équité</span>
+                        <span class="tm-balance-val is-equity" id="tmValEquity">—</span>
+                    </div>
+                </div>
+                <button type="button" class="tm-cta" id="tmCta" onclick="tmProposeTrade()" disabled>
+                    Proposer l'échange
+                    <span data-icon="check" data-icon-size="16"></span>
+                </button>
             </div>
         </div>
 

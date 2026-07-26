@@ -598,6 +598,7 @@ function updateTradeSummary() {
         activeSummary.classList.add('hidden');
         proposeBtn.disabled = true;
         proposeBtn.classList.remove('ready');
+        tmSyncMobile();
         return;
     }
 
@@ -663,6 +664,9 @@ function updateTradeSummary() {
 
     // Stat comparison
     renderStatComparison();
+
+    // Paniers et barre fixe de la vue telephone.
+    tmSyncMobile();
 }
 
 function renderStatComparison() {
@@ -1203,4 +1207,169 @@ function getStatusLabel(status) {
         'rejected': 'Refusé'
     };
     return labels[status] || status;
+}
+
+// ============================================================
+// VUE TÉLÉPHONE DE L'ÉTAPE 3
+// ------------------------------------------------------------
+// Sur petit écran, les trois colonnes s'empilaient sur près de
+// trois hauteurs d'écran : il fallait défiler jusqu'en bas pour
+// voir ce qu'on donnait, et le bouton de proposition était encore
+// plus loin. Cette couche présente les deux paniers en tête, un
+// seul effectif à la fois, et le bilan avec son bouton en barre
+// fixe.
+//
+// Elle ne contient aucune logique d'échange : la sélection, le
+// verrouillage par position et l'envoi restent ceux de
+// selectMyPlayer, selectPartnerPlayer et proposeTrade. Tout ce qui
+// suit lit l'état et le reflète.
+// ============================================================
+
+let tmRosterActif = 'my';
+
+/** Bascule l'effectif affiché. Au-delà de 900px le CSS rend les deux. */
+function tmSwitchRoster(cote) {
+    tmRosterActif = cote;
+    const grille = document.querySelector('.trade-grid-3col');
+    if (grille) grille.dataset.cote = cote;
+    document.querySelectorAll('.tm-tab').forEach(t => {
+        const actif = t.dataset.cote === cote;
+        t.classList.toggle('is-active', actif);
+        t.setAttribute('aria-selected', String(actif));
+    });
+}
+
+/** Clic sur un panier : amène l'effectif correspondant sous les yeux. */
+function tmFocusRoster(cote) {
+    tmSwitchRoster(cote);
+    const onglets = document.querySelector('.tm-tabs');
+    if (onglets) onglets.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/** « Connor McDavid » → « C. McDavid ». Le panier est étroit. */
+function tmAbrege(nom) {
+    const mots = String(nom || '').trim().split(/\s+/);
+    if (mots.length < 2) return nom || '';
+    return mots[0].charAt(0) + '. ' + mots.slice(1).join(' ');
+}
+
+/**
+ * Valeur d'un joueur pour le bilan.
+ *
+ * Le gabarit affichait une note globale ; le pool n'en produit pas. Les
+ * points en tiennent lieu — c'est déjà la mesure sur laquelle le
+ * classement repose. Les gardiens n'en marquent pas : leurs victoires
+ * jouent le même rôle. Une équipe NHL n'a pas de statistique
+ * individuelle : elle reste hors du calcul.
+ */
+function tmValeur(joueur) {
+    if (!joueur) return { valeur: null, unite: '' };
+    if (joueur.category === 'T') return { valeur: null, unite: 'ÉQU' };
+    const stats = getPlayerCurrentStats(joueur.name);
+    if (joueur.category === 'G') return { valeur: stats?.wins ?? 0, unite: 'V' };
+    return { valeur: stats?.points ?? 0, unite: 'PTS' };
+}
+
+/**
+ * Écart relatif entre les deux valeurs, rapporté à leur moyenne.
+ *
+ * La forme naïve (reçu − donné) / donné explose quand on cède un joueur à
+ * zéro point. Rapporter à la moyenne des deux reste défini dès que l'un
+ * des deux est non nul, et donne le même écart au signe près selon le
+ * côté d'où on regarde.
+ */
+function tmEquite(donne, recu) {
+    if (donne == null || recu == null) return null;
+    const moyenne = (donne + recu) / 2;
+    if (moyenne === 0) return null;
+    return ((recu - donne) / moyenne) * 100;
+}
+
+/** Contenu d'un panier : joueur choisi, ou invite à en choisir un. */
+function tmRemplirPanier(id, joueur, cote) {
+    const slot = document.getElementById(id);
+    if (!slot) return;
+
+    if (!joueur) {
+        slot.classList.add('is-empty');
+        slot.innerHTML = '<span class="tm-slot-empty">'
+            + (typeof getIcon === 'function' ? getIcon('plus', 22) : '+')
+            + 'Ajouter un joueur</span>';
+        return;
+    }
+
+    slot.classList.remove('is-empty');
+    const stats = getPlayerCurrentStats(joueur.name);
+    const face = joueur.category !== 'T' ? getMatchingImage(joueur.name) : null;
+    const equipe = stats?.teamAbbrev || '';
+    const meta = [equipe, getCategoryLabel(joueur.category)].filter(Boolean).join(' · ');
+
+    slot.innerHTML = `
+        <span class="tm-slot-remove" title="Retirer">
+            ${typeof getIcon === 'function' ? getIcon('x', 14) : '×'}
+        </span>
+        ${face
+            ? `<img class="tm-slot-face" src="${face}" alt="" onerror="this.remove()">`
+            : '<span class="tm-slot-face tm-slot-face-vide"></span>'}
+        <span class="tm-slot-name">${tmAbrege(joueur.name)}</span>
+        <span class="tm-slot-meta">${meta}</span>
+    `;
+
+    // Retirer = re-sélectionner le même joueur, ce que les fonctions
+    // existantes interprètent déjà comme une désélection.
+    const retirer = slot.querySelector('.tm-slot-remove');
+    if (retirer) {
+        retirer.addEventListener('click', e => {
+            e.stopPropagation();
+            if (cote === 'my') selectMyPlayer(joueur.name, joueur.category, joueur.data);
+            else selectPartnerPlayer(joueur.name, joueur.category, joueur.data);
+        });
+    }
+}
+
+/** Reflète l'état courant dans les paniers et la barre fixe. */
+function tmSyncMobile() {
+    tmRemplirPanier('tmSlotGive', selectedMyPlayer, 'my');
+    tmRemplirPanier('tmSlotGet', selectedPartnerPlayer, 'partner');
+
+    const donne = tmValeur(selectedMyPlayer);
+    const recu = tmValeur(selectedPartnerPlayer);
+    const ecrire = (id, v) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = v.valeur == null ? '—' : `${v.valeur} ${v.unite}`;
+    };
+    ecrire('tmValGive', donne);
+    ecrire('tmValGet', recu);
+
+    const cellEq = document.getElementById('tmValEquity');
+    if (cellEq) {
+        const eq = tmEquite(donne.valeur, recu.valeur);
+        cellEq.textContent = eq == null ? '—'
+            : (eq >= 0 ? '+' : '') + eq.toFixed(1) + '%';
+        cellEq.classList.toggle('is-positive', eq != null && eq > 0);
+        cellEq.classList.toggle('is-negative', eq != null && eq < 0);
+    }
+
+    // Le bouton de la barre fixe suit exactement celui de la colonne
+    // centrale : une seule condition d'activation, définie ailleurs.
+    const source = document.getElementById('btnProposeTrade');
+    const cta = document.getElementById('tmCta');
+    if (source && cta) {
+        cta.disabled = source.disabled;
+        cta.classList.toggle('is-ready', source.classList.contains('ready'));
+    }
+}
+
+/** Enveloppe de proposeTrade() : évite le double envoi depuis la barre. */
+async function tmProposeTrade() {
+    const cta = document.getElementById('tmCta');
+    if (cta) cta.disabled = true;
+    try {
+        await proposeTrade();
+    } finally {
+        if (cta) {
+            const source = document.getElementById('btnProposeTrade');
+            cta.disabled = source ? source.disabled : true;
+        }
+    }
 }

@@ -1685,3 +1685,337 @@ html[data-theme="light"] .btn-propose-trade:disabled {
 @media (min-width: 769px) {
     .empty-icon { font-size: 3.1rem; }
 }
+
+/* ============================================================ */
+/* VUE TÉLÉPHONE DE L'ÉTAPE 3                                   */
+/* ------------------------------------------------------------ */
+/* Les trois colonnes empilées demandaient près de trois hauteurs */
+/* d'écran : on ne voyait ni ce qu'on donnait ni le bouton de     */
+/* proposition sans défiler. Sous 900px, la page présente les     */
+/* deux paniers en tête, un seul effectif à la fois, et le bilan  */
+/* en barre fixe.                                                 */
+/*                                                                */
+/* Tout est masqué par défaut : la disposition à trois colonnes   */
+/* reste la mise en page de référence.                            */
+/* ============================================================ */
+.tm-baskets,
+.tm-divider,
+.tm-tabs,
+.tm-bottombar { display: none; }
+
+@media (max-width: 900px) {
+
+  /* ---- Paniers ---- */
+  .tm-baskets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .tm-basket { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .tm-basket-lbl {
+    text-align: center;
+    font-size: .66rem;
+    font-weight: 800;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+  .tm-slot {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px;
+    width: 100%;
+    background: var(--bg-hover);
+    border: 2px solid var(--primary);
+    border-radius: 14px;
+    color: var(--text-main);
+    font-family: inherit;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color .2s ease, background .2s ease;
+  }
+  /* Panier vide : contour pointillé, comme une place à remplir. */
+  .tm-slot.is-empty {
+    background: transparent;
+    border-style: dashed;
+    border-color: var(--border-gray);
+  }
+  .tm-slot.is-empty:hover { border-color: var(--primary); }
+  .tm-slot-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+  .tm-slot-face {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--card);
+    background: var(--bg-gray-light);
+  }
+  .tm-slot-face-vide { display: block; }
+  .tm-slot-name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .84rem;
+    font-weight: 800;
+    color: var(--text-main);
+  }
+  .tm-slot-meta {
+    font-size: .62rem;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--primary);
+  }
+  .tm-slot-remove {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, .35);
+    color: var(--danger);
+  }
+
+  /* ---- Séparateur ---- */
+  .tm-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .tm-divider::before,
+  .tm-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border-light);
+  }
+  .tm-divider-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--warning) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--warning) 45%, transparent);
+    color: var(--warning);
+    font-size: .64rem;
+    font-weight: 800;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* ---- Onglets d'effectif ---- */
+  .tm-tabs {
+    display: flex;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .tm-tab {
+    flex: 1;
+    padding: 12px 6px;
+    min-height: 44px;
+    background: none;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: .88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color .2s ease, border-color .2s ease;
+  }
+  .tm-tab.is-active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: 800;
+  }
+
+  /* ---- Un seul effectif à la fois ---- */
+  /* La colonne centrale disparaît : les paniers montrent la sélection et
+     la barre fixe porte le bilan et le bouton. #btnProposeTrade y reste
+     présent, c'est lui qui définit l'état actif de la barre. */
+  .trade-grid-3col { gap: 0; margin-bottom: 0; }
+  .trade-grid-3col > .trade-summary-column { display: none; }
+  .trade-grid-3col[data-cote="my"] > :nth-child(3),
+  .trade-grid-3col[data-cote="partner"] > :nth-child(1) { display: none; }
+
+  .roster-column { border: 0; border-radius: 0; background: transparent; }
+  /* L'intitulé fait doublon avec l'onglet actif ; seul le nom d'équipe
+     apporte quelque chose. */
+  .roster-header { padding: 0 0 10px; background: none; border-bottom: 0; }
+  .roster-header h4 { display: none; }
+  .roster-list { padding: 0; }
+
+  /* Filtres de position en pastilles défilantes : six catégories
+     — dont ROO et ÉQU — ne tiennent pas en parts égales sur 360px. */
+  .position-tabs {
+    gap: 6px;
+    padding: 0 0 12px;
+    background: none;
+    border-bottom: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .position-tabs::-webkit-scrollbar { display: none; }
+  .pos-tab {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    min-height: 36px;
+    border-radius: 999px;
+    font-size: .74rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+  }
+
+  /* ---- Barre fixe ---- */
+  .tm-bottombar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 998;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: var(--card);
+    border-top: 1px solid var(--border-light);
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, .35);
+  }
+  .tm-balance {
+    display: flex;
+    padding: 8px 4px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+  }
+  .tm-balance-cell {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .tm-balance-cell + .tm-balance-cell { border-left: 1px solid var(--border-light); }
+  .tm-balance-lbl {
+    font-size: .58rem;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+  .tm-balance-val {
+    font-size: .88rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+    white-space: nowrap;
+  }
+  .tm-balance-val.is-give { color: var(--danger); }
+  .tm-balance-val.is-get { color: var(--primary); }
+  .tm-balance-val.is-equity.is-positive { color: var(--success); }
+  .tm-balance-val.is-equity.is-negative { color: var(--danger); }
+
+  .tm-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    min-height: 50px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: not-allowed;
+    transition: background .2s ease, color .2s ease, transform .1s ease;
+  }
+  .tm-cta.is-ready {
+    background: linear-gradient(135deg, var(--primary) 0%, #00A8CC 100%);
+    color: var(--bg);
+    cursor: pointer;
+    box-shadow: var(--glow-primary);
+  }
+  .tm-cta.is-ready:active { transform: scale(.98); }
+
+  /* Dégage la hauteur de la barre pour que le dernier joueur de la liste
+     reste atteignable. */
+  #step3 { padding-bottom: 150px; }
+}
+
+/* La barre de navigation du bas n'existe que sous 769px : au-dessus, la
+   barre d'échange se pose directement au bord de la fenêtre. */
+@media (max-width: 768px) {
+  .tm-bottombar { bottom: 80px; }
+  #step3 { padding-bottom: 230px; }
+}
+
+/* ------------------------------------------------------------ */
+/* Débordements horizontaux de l'étape 3 sur petit écran         */
+/* ------------------------------------------------------------ */
+@media (max-width: 900px) {
+  /* Un élément de grille a `min-width: auto` : la rangée de filtres ne
+     rétrécissait donc pas sous la largeur de ses six pastilles, et c'est
+     la page entière qui débordait au lieu de la rangée qui défile. */
+  .trade-grid-3col,
+  .trade-grid-3col > * { min-width: 0; }
+  .position-tabs { min-width: 0; max-width: 100%; }
+
+  /* L'en-tête d'étape tenait sur une seule rangée : bouton de retour,
+     pastille, titre et « Recommencer » réunis dépassaient de 95px en
+     390px. Le titre passe à la ligne, les deux boutons encadrent la
+     première. */
+  .step-header {
+    flex-wrap: wrap;
+    gap: 10px 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+  .step-header .btn-back { order: 1; }
+  .step-header .btn-reset { order: 2; margin-left: auto; }
+  .step-header .step-number {
+    order: 3;
+    width: 34px;
+    height: 34px;
+    font-size: 1.05rem;
+  }
+  /* `flex-basis: 140px` plutôt que `auto` : sur 360px le titre gardait sa
+     largeur intrinsèque et repoussait la pastille sur sa propre rangée. */
+  .step-header .step-info { order: 4; flex: 1 1 140px; min-width: 0; }
+  .step-info h3 { font-size: 1.05rem; line-height: 1.25; }
+  .step-info p { font-size: .82rem; }
+  .step-header .btn-back,
+  .step-header .btn-reset {
+    padding: 8px 12px;
+    font-size: .8rem;
+  }
+}
