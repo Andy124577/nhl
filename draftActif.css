@@ -1895,3 +1895,66 @@ button.select-button .select-icon { width: 14px; height: 14px; }
     text-overflow: ellipsis;
   }
 }
+
+/* ============================================================
+   19. FILTRES EN PASTILLES, CARRIÈRE NON DÉFILANTE
+   ============================================================ */
+
+/* ---- Filtres de la modale de carrière : jamais de défilement ----
+   index.css leur pose `overflow-x: auto` sous 768px, ce qui cachait une
+   partie des contrôles derrière un défilement horizontal. Ils se replient
+   désormais sur plusieurs lignes et restent tous visibles. */
+.career-filters {
+  overflow: visible;
+  flex-wrap: wrap;
+}
+.career-filters > * { min-width: 0; }
+.filter-group-career { flex: 1 1 132px; min-width: 0; }
+.stats-count-badge {
+  flex: 1 1 100%;
+  text-align: center;
+  white-space: normal;
+}
+@media (min-width: 600px) {
+  .stats-count-badge { flex: 0 0 auto; text-align: left; white-space: nowrap; }
+  /* Sans `flex-grow: 0`, les deux groupes occupent toute la ligne et
+     repoussent le badge sur une seconde rangée. */
+  .filter-group-career { flex: 0 1 210px; }
+}
+
+/* ---- Vue Gardiens : colonne DP (OTL) retirée ----
+   6e position dans cette vue uniquement, d'où la classe de catégorie. */
+#playerTable.cat-goalies thead th:nth-child(6),
+#playerTable.cat-goalies tbody td:nth-child(6) { display: none; }
+
+/* ---- Catégories de joueurs en pastilles ----
+   Elles se replient sur plusieurs lignes plutôt que de défiler : les six
+   catégories restent visibles d'un coup d'œil. */
+.category-tabs {
+  flex-wrap: wrap;
+  overflow: visible;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.category-tab {
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  background: var(--bg-gray-light);
+  color: var(--text-secondary);
+  font-size: .64rem;
+  transition: background .18s ease, border-color .18s ease, color .18s ease;
+}
+.category-tab:hover {
+  border-color: var(--border-gray);
+  color: var(--text-main);
+}
+.category-tab.is-active {
+  background: rgba(0, 212, 255, .16);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.category-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
