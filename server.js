@@ -126,6 +126,30 @@ const loadDraftData = async () => {
 };
 
 
+/**
+ * Version publiable des pools : l'empreinte du mot de passe ne quitte
+ * jamais le serveur.
+ *
+ * `/draft` et l'événement socket `draftUpdated` diffusent l'objet complet à
+ * tous les clients connectés. Une empreinte bcrypt exposée là serait
+ * attaquable hors ligne à volonté, exactement ce que le stockage haché doit
+ * empêcher. Elle est donc remplacée par un simple booléen — la seule chose
+ * dont l'interface a besoin pour savoir s'il faut demander le mot de passe.
+ *
+ * La copie est superficielle par pool : seul le premier niveau est
+ * réécrit, le reste est partagé avec l'original, ce qui suffit puisque
+ * l'empreinte n'y vit qu'à ce niveau.
+ */
+const poolsPublics = (data) => {
+    const publics = {};
+    for (const [nom, pool] of Object.entries(data || {})) {
+        if (!pool || typeof pool !== "object") { publics[nom] = pool; continue; }
+        const { passwordHash, ...reste } = pool;
+        publics[nom] = { ...reste, hasPassword: !!passwordHash };
+    }
+    return publics;
+};
+
 const saveDraftData = async (data) => {
     if (USE_POSTGRES) {
         try {
@@ -147,7 +171,7 @@ const saveDraftData = async (data) => {
         console.log("✅ Reloading fresh data...");
         const freshData = await loadDraftData(); // 🔥 Ensure latest data is broadcast
         console.log("🔥 Sending fresh draft data via WebSocket:", freshData);
-        io.emit("draftUpdated", freshData); // ✅ Broadcast ONLY fresh data
+        io.emit("draftUpdated", poolsPublics(freshData)); // ✅ Broadcast ONLY fresh data
         setTimeout(() => {
             io.emit("forceRefresh"); // 🔥 Envoie un signal aux clients pour recharger /draft
         }, 500);
@@ -571,7 +595,7 @@ app.post("/leave-team", async (req, res) => {
         draftData[name].teams[currentTeam[0]].members = draftData[name].teams[currentTeam[0]].members.filter(user => user !== username);
         await saveDraftData(draftData);
         setTimeout(() => {
-            io.emit("draftUpdated", draftData);
+            io.emit("draftUpdated", poolsPublics(draftData));
         }, 2000); // ou 200ms
         // 🔔 Notifie tous les clients
 
@@ -614,7 +638,7 @@ app.post("/delete-clan", async (req, res) => {
     delete draftData[clanName];
     await saveDraftData(draftData);
     setTimeout(() => {
-            io.emit("draftUpdated", draftData);
+            io.emit("draftUpdated", poolsPublics(draftData));
         }, 2000); // ou 200ms
         // 🔔 Notifie tous les clients
 
@@ -626,7 +650,7 @@ app.get("/draft", async (req, res) => {
     try {
         const draftData = await loadDraftData();
         console.log("📤 Draft envoyé :", Object.keys(draftData));
-        res.json(draftData);
+        res.json(poolsPublics(draftData));
     } catch (error) {
         console.error("Error loading draft data:", error);
         res.status(500).json({ error: "Failed to load draft data" });
@@ -756,7 +780,7 @@ app.post("/pick-player", async (req, res) => {
     await saveDraftData(draftData);
 
     setTimeout(() => {
-        io.emit("draftUpdated", draftData);
+        io.emit("draftUpdated", poolsPublics(draftData));
         io.emit("forceRefresh");
     }, 200);
 
@@ -889,11 +913,25 @@ app.get("/draft-order/:clanName", async (req, res) => {
 // 🔥 Route pour créer un clan
 app.post("/create-clan", async (req, res) => {
     try {
-        const { name, maxPlayers, config, poolMode, allowTrades, username } = req.body;
+        const { name, maxPlayers, config, poolMode, allowTrades, username, password } = req.body;
         let draftData = await loadDraftData();
 
         if (draftData[name]) {
             return res.status(400).json({ message: "Ce clan existe déjà !" });
+        }
+
+        // Mot de passe du pool : facultatif, mais traité comme celui d'un
+        // compte — même algorithme, même coût, jamais conservé en clair.
+        // La borne haute vient de bcrypt, qui ignore silencieusement tout
+        // octet au-delà du 72e : mieux vaut refuser que tronquer sans le dire.
+        let passwordHash = null;
+        if (typeof password === "string" && password.length > 0) {
+            if (password.length < 4 || password.length > 72) {
+                return res.status(400).json({
+                    message: "Le mot de passe du pool doit contenir entre 4 et 72 caractères."
+                });
+            }
+            passwordHash = await bcrypt.hash(password, 10);
         }
 
         // Default configuration values if not provided
@@ -928,6 +966,12 @@ app.post("/create-clan", async (req, res) => {
             teams
         };
 
+        // Absent du pool quand il n'y a pas de mot de passe : poolsPublics()
+        // en déduit `hasPassword: false` et l'interface n'en demande pas.
+        if (passwordHash) {
+            draftData[name].passwordHash = passwordHash;
+        }
+
         // If Head-to-Head mode, initialize matchup structure
         if (poolMode === 'head-to-head') {
             draftData[name].h2hData = {
@@ -942,7 +986,7 @@ app.post("/create-clan", async (req, res) => {
 
         await saveDraftData(draftData);
         setTimeout(() => {
-        io.emit("draftUpdated", draftData);
+        io.emit("draftUpdated", poolsPublics(draftData));
         }, 2000); // ou 200ms
         // 🔔 Notifie tous les clients
 
@@ -971,7 +1015,7 @@ app.post("/delete-clan", async (req, res) => {
     delete draftData[clanName];
     await saveDraftData(draftData);
     setTimeout(() => {
-        io.emit("draftUpdated", draftData);
+        io.emit("draftUpdated", poolsPublics(draftData));
         }, 2000); // ou 200ms
         // 🔔 Notifie tous les clients
 
@@ -1010,7 +1054,7 @@ app.post("/change-team", async (req, res) => {
 
         await saveDraftData(draftData);
         setTimeout(() => {
-            io.emit("draftUpdated", draftData);
+            io.emit("draftUpdated", poolsPublics(draftData));
         }, 2000); // ou 200ms
         // 🔔 Notifie tous les clients
 
@@ -1042,7 +1086,7 @@ app.post("/join-clan", async (req, res) => {
         draftData[name].teams[availableTeam[0]].members.push(username);
         await saveDraftData(draftData);
         setTimeout(() => {
-            io.emit("draftUpdated", draftData);
+            io.emit("draftUpdated", poolsPublics(draftData));
         }, 2000); // ou 200ms
         // 🔔 Notifie tous les clients
 
@@ -1057,11 +1101,35 @@ app.post("/join-clan", async (req, res) => {
 
 // 🔥 Route pour rejoindre un clan
 app.post("/join-team", async (req, res) => {
-    const { name, username, teamName } = req.body;
+    const { name, username, teamName, password } = req.body;
     let draftData = await loadDraftData();
 
     if (!draftData[name] || !draftData[name].teams[teamName]) {
         return res.status(400).json({ message: "Clan ou équipe introuvable !" });
+    }
+
+    // Mot de passe du pool : exigé pour entrer, pas pour changer d'équipe
+    // une fois dedans. Un membre a déjà franchi la porte ; la lui refermer
+    // au nez à chaque changement n'ajouterait rien à la sécurité.
+    if (draftData[name].passwordHash) {
+        const dejaMembre = Object.values(draftData[name].teams)
+            .some(equipe => (equipe.members || []).includes(username));
+
+        if (!dejaMembre) {
+            if (typeof password !== "string" || password.length === 0) {
+                return res.status(401).json({
+                    message: "Ce pool est protégé par un mot de passe.",
+                    passwordRequired: true
+                });
+            }
+            const correspond = await bcrypt.compare(password, draftData[name].passwordHash);
+            if (!correspond) {
+                return res.status(401).json({
+                    message: "Mot de passe incorrect.",
+                    passwordRequired: true
+                });
+            }
+        }
     }
 
     // Check if draft has already started
@@ -1085,13 +1153,16 @@ app.post("/join-team", async (req, res) => {
     draftData[name].teams[teamName].members.push(username);
     await saveDraftData(draftData);
     setTimeout(() => {
-            io.emit("draftUpdated", draftData);
+            io.emit("draftUpdated", poolsPublics(draftData));
         }, 2000); // ou 200ms
         // 🔔 Notifie tous les clients
 
 
     // ✅ Return full updated draft data so frontend refreshes
-    res.json({ message: `Vous avez rejoint l'équipe ${teamName} du clan ${name} avec succès !`, draftData });
+    res.json({
+        message: `Vous avez rejoint l'équipe ${teamName} du clan ${name} avec succès !`,
+        draftData: poolsPublics(draftData)
+    });
 });
 
 // ✏️ Rename a team (only the member of that team can rename it)
@@ -1162,7 +1233,7 @@ app.post("/rename-team", async (req, res) => {
         }
 
         await saveDraftData(draftData);
-        io.emit("draftUpdated", draftData);
+        io.emit("draftUpdated", poolsPublics(draftData));
 
         res.json({ message: `Équipe renommée en "${sanitized}" avec succès !`, newTeamName: sanitized });
     } catch (error) {
@@ -1723,7 +1794,7 @@ app.post("/cleanup-draft", async (req, res) => {
     });
 
     await saveDraftData(draftData);
-    res.json({ message: "Nettoyage effectué.", draftData: draftData[clanName] });
+    res.json({ message: "Nettoyage effectué.", draftData: poolsPublics(draftData)[clanName] });
 });
 
 // ==================== NHL CURRENT STATS SYSTEM ====================

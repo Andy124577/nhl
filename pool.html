@@ -83,6 +83,18 @@
                             <input type="file" id="poolImageInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="previewPoolImage(this)">
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label for="poolPassword">Mot de passe <span style="opacity:.6;font-weight:400;">(optionnel)</span></label>
+                        <div class="password-field">
+                            <input type="password" id="poolPassword" autocomplete="new-password"
+                                   minlength="4" maxlength="72" placeholder="Laissez vide pour un pool ouvert">
+                            <button type="button" class="password-toggle" id="poolPasswordToggle"
+                                    aria-label="Afficher le mot de passe"
+                                    onclick="togglePoolPassword(this, 'poolPassword')"><span class="pw-eye" data-icon="eye" data-icon-size="17"></span><span class="pw-eye-off" data-icon="eye-off" data-icon-size="17"></span></button>
+                        </div>
+                        <p class="form-hint">Sans mot de passe, n'importe qui peut rejoindre. Avec, il sera demandé à
+                            chaque nouvelle arrivée — 4 caractères minimum.</p>
+                    </div>
                 </div>
 
                 <!-- Card: Selection Config -->
@@ -285,6 +297,36 @@
             </div>
             <div class="modal-footer">
                 <button class="secondary" onclick="closeClanModal()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saisie du mot de passe d'un pool protégé. Piloté par
+         demanderMotDePasse() dans equipes.js, qui renvoie une promesse. -->
+    <div id="pool-password-modal" class="modal" style="display:none;">
+        <div class="modal-content pool-password-modal">
+            <div class="modal-header">
+                <h2>Pool protégé</h2>
+                <button class="modal-close" id="poolPwCancel" aria-label="Annuler">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="pool-pw-intro">Le pool <strong id="poolPwName"></strong> demande un mot de passe pour
+                    y entrer. Demandez-le à la personne qui l'a créé.</p>
+                <div class="form-group">
+                    <label for="poolPwInput">Mot de passe</label>
+                    <div class="password-field">
+                        <input type="password" id="poolPwInput" autocomplete="off" maxlength="72"
+                               placeholder="Mot de passe du pool">
+                        <button type="button" class="password-toggle" id="poolPwToggle"
+                                aria-label="Afficher le mot de passe"
+                                onclick="togglePoolPassword(this, 'poolPwInput')"><span class="pw-eye" data-icon="eye" data-icon-size="17"></span><span class="pw-eye-off" data-icon="eye-off" data-icon-size="17"></span></button>
+                    </div>
+                </div>
+                <p class="pool-pw-error" id="poolPwError" role="alert" hidden></p>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" id="poolPwCancelBtn">Annuler</button>
+                <button id="poolPwOk">Rejoindre</button>
             </div>
         </div>
     </div>

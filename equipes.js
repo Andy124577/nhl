@@ -264,6 +264,7 @@ async function createClan() {
     const numTeams = parseInt($("#numTeams").val());
     const poolMode = $('input[name="poolMode"]:checked').val();
     const allowTrades = $("#allowTrades").is(':checked');
+    const poolPassword = ($("#poolPassword").val() || "").trim();
     const username = localStorage.getItem("username");
 
     if (!clanName || !maxPlayers) {
@@ -274,6 +275,13 @@ async function createClan() {
     // Validation des valeurs
     if (numOffensive < 0 || numDefensive < 0 || numGoalies < 0 || numRookies < 0 || numTeams < 0) {
         alert("Les valeurs de configuration ne peuvent pas être négatives !");
+        return;
+    }
+
+    // Le serveur rejetterait de toute façon, mais autant le dire avant
+    // d'envoyer : la même borne y est appliquée.
+    if (poolPassword && (poolPassword.length < 4 || poolPassword.length > 72)) {
+        alert("Le mot de passe du pool doit contenir entre 4 et 72 caractères.");
         return;
     }
 
@@ -289,6 +297,9 @@ async function createClan() {
         username: username,
         poolMode: poolMode || 'cumulative', // Par défaut cumulatif
         allowTrades: allowTrades !== false, // Par défaut true
+        // Champ vide = pool ouvert. Le serveur ne hache que si la chaîne
+        // est non vide, et ne renvoie jamais l'empreinte.
+        password: poolPassword,
         config: {
             numOffensive: numOffensive,
             numDefensive: numDefensive,
@@ -327,6 +338,7 @@ async function createClan() {
 
             // Clear form
             $("#clanName").val("");
+            $("#poolPassword").val("");
             $("#numOffensive").val("6");
             $("#numDefensive").val("4");
             $("#numGoalies").val("1");
@@ -674,6 +686,87 @@ async function joinClan(clanName) {
     }
 }
 
+// ============================================================
+// MOT DE PASSE DE POOL
+// ------------------------------------------------------------
+// Le mot de passe n'est jamais conservé côté client : il est saisi,
+// envoyé à /join-team, puis oublié. Le serveur le compare à une empreinte
+// bcrypt, comme celui d'un compte, et ne renvoie que `hasPassword`.
+// ============================================================
+
+/** Bascule l'affichage en clair d'un champ de mot de passe. */
+function togglePoolPassword(bouton, champId) {
+    const champ = document.getElementById(champId);
+    if (!champ) return;
+    const enClair = champ.type === 'text';
+    champ.type = enClair ? 'password' : 'text';
+    bouton.setAttribute('aria-label', enClair ? 'Afficher le mot de passe' : 'Masquer le mot de passe');
+    bouton.classList.toggle('is-visible', !enClair);
+    champ.focus();
+}
+
+/**
+ * Ouvre la modale de saisie et résout avec le mot de passe, ou null si
+ * l'utilisateur renonce.
+ *
+ * `erreur` permet de rouvrir la modale après un refus du serveur sans
+ * perdre le contexte : c'est le seul endroit qui sait pourquoi ça a échoué.
+ */
+function demanderMotDePasse(nomPool, erreur) {
+    return new Promise(resolve => {
+        const modale = document.getElementById('pool-password-modal');
+        const champ = document.getElementById('poolPwInput');
+        const zoneErreur = document.getElementById('poolPwError');
+        const valider = document.getElementById('poolPwOk');
+        const annulerBtn = document.getElementById('poolPwCancelBtn');
+        const fermer = document.getElementById('poolPwCancel');
+        if (!modale || !champ) { resolve(null); return; }
+
+        document.getElementById('poolPwName').textContent = nomPool;
+        champ.value = '';
+        champ.type = 'password';
+        document.getElementById('poolPwToggle').classList.remove('is-visible');
+        zoneErreur.hidden = !erreur;
+        zoneErreur.textContent = erreur || '';
+
+        const terminer = (valeur) => {
+            modale.style.display = 'none';
+            valider.removeEventListener('click', surValider);
+            annulerBtn.removeEventListener('click', surAnnuler);
+            fermer.removeEventListener('click', surAnnuler);
+            champ.removeEventListener('keydown', surTouche);
+            modale.removeEventListener('click', surFond);
+            resolve(valeur);
+        };
+        const surValider = () => {
+            const v = champ.value.trim();
+            if (!v) {
+                zoneErreur.hidden = false;
+                zoneErreur.textContent = 'Entrez le mot de passe du pool.';
+                champ.focus();
+                return;
+            }
+            terminer(v);
+        };
+        const surAnnuler = () => terminer(null);
+        const surTouche = e => {
+            if (e.key === 'Enter') { e.preventDefault(); surValider(); }
+            if (e.key === 'Escape') { e.preventDefault(); surAnnuler(); }
+        };
+        // Clic sur le fond seulement, pas sur la boîte.
+        const surFond = e => { if (e.target === modale) surAnnuler(); };
+
+        valider.addEventListener('click', surValider);
+        annulerBtn.addEventListener('click', surAnnuler);
+        fermer.addEventListener('click', surAnnuler);
+        champ.addEventListener('keydown', surTouche);
+        modale.addEventListener('click', surFond);
+
+        modale.style.display = 'flex';
+        champ.focus();
+    });
+}
+
 // 🔥 Rejoindre une équipe dans un clan
 async function joinTeam(clanName, teamName) {
     const username = localStorage.getItem("username");
@@ -688,6 +781,17 @@ async function joinTeam(clanName, teamName) {
             return;
         }
 
+        // Mot de passe : demandé seulement pour entrer dans un pool protégé
+        // où l'on n'est pas encore. Changer d'équipe une fois dedans ne le
+        // redemande pas — le serveur applique exactement la même règle.
+        const dejaMembre = Object.values(checkData[clanName]?.teams || {})
+            .some(equipe => (equipe.members || []).includes(username));
+        let motDePasse = null;
+        if (checkData[clanName]?.hasPassword && !dejaMembre) {
+            motDePasse = await demanderMotDePasse(clanName);
+            if (motDePasse === null) return;   // renoncement
+        }
+
         // Remove from current team first (only safe now that we know draft hasn't started)
         await fetch(`${BASE_URL}/leave-team`, {
             method: "POST",
@@ -698,13 +802,27 @@ async function joinTeam(clanName, teamName) {
         console.log(`🚪 ${username} a quitté son ancienne équipe`);
 
         // 🔥 Ajouter l'utilisateur à la nouvelle équipe
-        const joinResponse = await fetch(`${BASE_URL}/join-team`, {
+        let joinResponse = await fetch(`${BASE_URL}/join-team`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: clanName, username, teamName })
+            body: JSON.stringify({ name: clanName, username, teamName, password: motDePasse })
         });
+        let result = await joinResponse.json();
 
-        const result = await joinResponse.json();
+        // Mot de passe refusé : on redemande sur place plutôt que de renvoyer
+        // l'utilisateur au point de départ. `/leave-team` est sans effet pour
+        // qui n'était membre de rien, donc rien n'a été perdu entre-temps.
+        while (result.passwordRequired) {
+            motDePasse = await demanderMotDePasse(clanName, result.message);
+            if (motDePasse === null) return;
+            joinResponse = await fetch(`${BASE_URL}/join-team`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: clanName, username, teamName, password: motDePasse })
+            });
+            result = await joinResponse.json();
+        }
+
         alert(result.message);
 
         // 🔄 Recharge les données après l'action
@@ -742,9 +860,10 @@ function closeModal() {
     $("#clan-members-modal").css("display", "none");
 }
 
-jQuery('button').on('click',(e)=>{
-  jQuery('ul').animate({scrollTop: jQuery('.scrolltome').offset().top}, "slow");
-});
+// Un gestionnaire lié à TOUS les boutons de la page cherchait ici un
+// élément `.scrolltome` qui n'existe nulle part dans le projet : chaque
+// clic levait « Cannot read properties of undefined (reading 'top') ».
+// Retiré — il ne pouvait rien faire d'autre que jeter.
 
 // ==================== ACTIVE DRAFTS FUNCTIONALITY ====================
 
