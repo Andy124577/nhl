@@ -1534,3 +1534,23 @@ html[data-theme="light"] #careerStatsTable tbody tr:nth-child(even) {
     background: rgba(240, 244, 255, 0.98);
   }
 }
+
+/* ==================== DENSITÉ SUR GRAND ÉCRAN ====================
+   L'interface est dessinée en px (~1900 valeurs contre ~370 en rem), donc
+   ajuster la taille de police racine ne mettrait à l'échelle qu'une petite
+   partie du design. `zoom` réduit tout de façon homogène — texte, espacements,
+   images, bordures — exactement comme le zoom du navigateur.
+
+   Ne s'applique qu'au-delà de 768px : sur mobile les dimensions actuelles
+   sont déjà justes, et réduire nuirait aux cibles tactiles. */
+@media (min-width: 769px) {
+    body {
+        zoom: 0.9;
+    }
+
+    /* La page des statistiques est un tableau dense : on gagne à en voir
+       davantage d'un coup d'œil. */
+    body[data-page="stats"] {
+        zoom: 0.8;
+    }
+}
