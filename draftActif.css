@@ -1,292 +1,1276 @@
-@keyframes spin{0%{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes fadeIn{0%{opacity:0}to{opacity:1}}@keyframes slideDown{0%{transform:translateY(-50px);opacity:0}to{transform:translateY(0);opacity:1}}@keyframes iconPop{0%{transform:scale(0)}50%{transform:scale(1.1)}to{transform:scale(1)}}@keyframes modalSlideIn{0%{transform:translateY(-50px);opacity:0}to{transform:translateY(0);opacity:1}}*,body{margin:0;padding:0}*{box-sizing:border-box}body{font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;background:var(--bg-page);color:var(--text-dark);min-height:100vh;overflow-x:hidden}.draft-header{background:var(--card-white);border-bottom:3px solid var(--danger);padding:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.1)}.draft-header-content{max-width:1400px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:20px}.draft-info h2{font-size:1.8rem;margin:0 0 5px;color:var(--text-dark)}#draft-clan-name{color:var(--danger);font-size:1.1rem;font-weight:600}.current-pick-display{text-align:center;background:rgba(0,212,255,0.1);padding:15px 30px;border-radius:12px;border:2px solid var(--danger);min-width:200px}.pick-label{font-size:.85rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}.pick-number-large{font-size:3rem;font-weight:700;color:var(--danger);line-height:1;margin:5px 0}.pick-team{font-size:1rem;color:var(--text-dark);font-weight:600}.draft-main-container{max-width:1400px;margin:0 auto;padding:0 15px 20px;display:grid;grid-template-columns:300px 1fr;gap:20px}.draft-sidebar{display:flex;flex-direction:column;gap:20px}.draft-order-card,.progress-card{background:var(--card-white);border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.1);border:1px solid var(--text-main)}.draft-order-card h3,.progress-card h3{font-size:1.1rem;margin:0;color:var(--danger)}.draft-order-card h3{margin:0 0 15px;border-bottom:2px solid var(--danger);padding-bottom:10px}.progress-header h3{border:0;padding:0}.progress-list{display:flex;flex-direction:column;gap:12px}.progress-line{display:grid;grid-template-columns:25px 1fr 60px 45px;align-items:center;gap:8px;font-size:.9rem}.progress-emoji{font-size:1.2rem}.progress-text{font-weight:500;color:#555}.progress-mini-bar{height:6px;background:var(--text-main);border-radius:3px;overflow:hidden}.progress-mini-fill{height:100%;background:var(--danger);border-radius:3px;transition:width .4s ease}.progress-mini-fill.complete{background:#28a745}.progress-value{font-weight:700;text-align:right;color:var(--text-light-gray)}.progress-value.complete{color:#28a745}.progress-value.in-progress{color:#ff8c00}.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.progress-filter-select{padding:6px 10px;border:1px solid var(--text-main);border-radius:6px;background:var(--card-white);font-size:.85rem;color:#555;cursor:pointer;transition:all .2s}.progress-filter-select:hover{border-color:var(--danger)}.progress-filter-select:focus{outline:0;border-color:var(--danger);box-shadow:0 0 0 2px rgba(0,212,255,0.1)}.progress-details-list{margin-bottom:15px;padding:12px;background:var(--bg-odd-row);border-radius:8px;border:1px solid var(--text-main)}.progress-details-header{font-weight:600;color:var(--danger);margin-bottom:12px;font-size:.95rem}.progress-players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}.progress-player-item{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;background:var(--card-white);border-radius:8px;border:1px solid var(--text-main);transition:all .2s}.progress-player-item:hover{border-color:var(--danger);transform:translateY(-2px)}.progress-player-photo{position:relative;width:50px;height:50px;border-radius:50%;overflow:hidden;background:var(--text-main);display:flex;align-items:center;justify-content:center}.pick-card-image img,.progress-player-photo .face{width:100%;height:100%;object-fit:cover}.progress-player-photo .logo{position:absolute;bottom:-3px;right:-3px;width:18px;height:18px;border-radius:50%;background:var(--card-white);padding:2px;box-shadow:0 1px 3px rgba(0,0,0,.2)}.progress-player-photo.no-image{font-size:1.5rem;color:var(--text-light-gray);font-weight:700}.progress-player-name{font-size:.75rem;text-align:center;color:var(--text-dark);word-wrap:break-word;max-width:100%}.no-picks{text-align:center;color:var(--text-light-gray);font-style:italic;padding:10px}.draft-timeline{max-height:400px;overflow-y:auto;padding-right:5px}.draft-timeline::-webkit-scrollbar{width:6px}.draft-timeline::-webkit-scrollbar-track{background:var(--bg-gray-light);border-radius:3px}.draft-timeline::-webkit-scrollbar-thumb{background:var(--danger);border-radius:3px}.timeline-item{display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:8px;border-radius:6px;background:var(--bg-odd-row);transition:all .2s;border:1px solid var(--text-main)}.timeline-item.current{background:var(--danger);transform:scale(1.05);box-shadow:0 4px 12px rgba(0,212,255,0.25)}.timeline-item.completed{opacity:.6}.timeline-pick-num{font-size:.85rem;font-weight:700;color:var(--danger);min-width:35px}.timeline-item.current .timeline-pick-num,.timeline-item.current .timeline-team-name{color:var(--text-main)}.timeline-team-name{flex:1;font-size:.9rem;font-weight:600;color:var(--text-dark)}.timeline-status{font-size:.75rem;padding:2px 8px;border-radius:10px;background:var(--danger);color:var(--text-main)}.draft-center{display:flex;flex-direction:column;gap:20px}.player-selection-card,.recent-picks-card{background:var(--card-white);border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.1);border:1px solid var(--text-main)}.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid var(--danger)}.card-header h3,.filters-header h3{font-size:1.2rem;color:var(--danger);margin:0}.carousel-controls{display:flex;gap:8px}.carousel-btn{background:var(--danger);color:var(--text-main);border:0;border-radius:50%;width:32px;height:32px;font-size:1.3rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;padding:0;line-height:1}.carousel-btn:hover:not(:disabled){background:var(--danger);transform:scale(1.1)}.carousel-btn:disabled{cursor:not-allowed;background:#ccc}.picks-carousel{display:grid;grid-template-columns:repeat(5,1fr);gap:15px;padding:10px 0}@media screen and (max-width:1200px){.picks-carousel{grid-template-columns:repeat(3,1fr)}}@media screen and (max-width:768px){.navbar{padding:8px 10px}.navbar-brand{gap:8px}.navbar-logo{height:40px}.navbar-title{font-size:1.1rem}.navbar ul{gap:10px}.navbar a{font-size:.75rem;padding:6px 8px}.picks-carousel{grid-template-columns:repeat(2,1fr)}}@media screen and (max-width:480px){.navbar-title{font-size:.9rem}.navbar ul{gap:10px}.picks-carousel{grid-template-columns:1fr}}.pick-card{background:var(--bg-odd-row);border-radius:10px;padding:15px;text-align:center;border:2px solid var(--text-main);transition:all .2s}.pick-card:hover{border-color:var(--danger);transform:translateY(-5px)}.pick-card-number{font-size:.85rem;color:var(--danger);font-weight:700;margin-bottom:8px}.carousel-player-image,.pick-card-image{position:relative;display:flex;align-items:center;justify-content:center}.pick-card-image{width:80px;height:80px;border-radius:50%;margin:0 auto 10px;background:var(--text-main);overflow:visible}.carousel-player-image{width:100%;height:100%}.carousel-player-image img:first-child{width:100%;height:100%;object-fit:cover;border-radius:50%}.carousel-team-logo{position:absolute;bottom:-5px;right:-5px;width:24px!important;height:24px!important;border-radius:50%;background:var(--card-white);padding:2px;box-shadow:0 2px 4px rgba(0,0,0,.2)}.carousel-no-image{font-size:2rem;color:var(--text-light-gray);font-weight:700}.pick-card-name{font-size:.9rem;font-weight:600;color:var(--text-dark);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pick-card-team{font-size:.75rem;color:var(--text-secondary)}.pick-card-position{display:inline-block;padding:2px 8px;background:var(--danger);color:var(--text-main);border-radius:10px;font-size:.7rem;font-weight:700;margin-top:5px}.filters-header,.filters-row{display:flex;margin-bottom:15px}.filters-header{justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:2px solid var(--danger)}.filters-row{gap:10px;flex-wrap:wrap}.filter-select,.refresh-btn,.search-input{padding:10px 15px;border:2px solid var(--text-main);border-radius:8px;background:var(--card-white);color:var(--text-dark);font-size:.95rem;transition:all .2s}.search-input{flex:1;min-width:200px}.filter-select:focus,.search-input:focus{outline:0;border-color:var(--danger)}.filter-select,.refresh-btn{min-width:140px;cursor:pointer}.refresh-btn{background:var(--danger);border-color:var(--danger);font-weight:700;min-width:50px}.refresh-btn:hover{background:var(--danger);transform:scale(1.05)}.table-wrapper{overflow-x:auto;border-radius:8px}#careerStatsTable table,table{width:100%;border-collapse:collapse}table{background:var(--card-white);border-radius:8px;overflow:hidden}#careerStatsTable th,th{color:var(--text-main);font-weight:600}button.select-button,th{background:var(--danger);font-size:.85rem}td,th{padding:12px 10px}th{text-align:left;text-transform:uppercase;letter-spacing:.5px}td{border-bottom:1px solid var(--text-main);font-size:.9rem;color:var(--text-dark)}tr:hover{background:rgba(255,46,46,.05)}.player-photo{position:relative;width:60px;height:60px;display:inline-block}.player-photo img.face{width:60px;height:60px;border-radius:8px;object-fit:cover}.player-photo img.logo{position:absolute;bottom:-5px;right:-5px;width:20px;height:20px}button.select-button{color:var(--text-main);border:0;padding:6px 12px;border-radius:4px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}button.select-button:hover{background:var(--danger);transform:scale(1.02)}button.select-button .select-icon{width:16px;height:16px;object-fit:contain}#loading-container{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999}#loading{display:none}.spinner{display:inline-block;width:40px;height:40px;border:4px solid rgba(0,212,255,0.2);border-top:4px solid var(--danger);border-radius:50%;animation:spin 1s linear infinite}.finish-btn{position:fixed;bottom:20px;right:20px;background:#28a745;color:var(--text-main);border:0;padding:15px 30px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 12px var(--shadow-lg);transition:all .2s}.finish-btn:hover{background:#218838;transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.4)}.draft-status-box{text-align:center;padding:30px;background:rgba(40,167,69,.1);border:3px solid #28a745;border-radius:12px;margin:20px 0}.draft-status-box p{margin:10px 0;font-size:1.1rem}.wait-turn,.your-turn{color:#28a745;font-weight:700}.wait-turn{color:#ff8c00}@media screen and (max-width:1200px){.draft-main-container{grid-template-columns:250px 1fr}}@media screen and (max-width:992px){.draft-main-container{grid-template-columns:1fr}.draft-sidebar{order:2}.draft-center{order:1}.draft-header-content{flex-direction:column;text-align:center}.pick-number-large{font-size:2.5rem}}@media screen and (max-width:768px){.draft-main-container{padding:0 10px 20px}.progress-line{grid-template-columns:20px 1fr 50px 40px;font-size:.85rem}.filters-row{flex-direction:column}.filter-select,.refresh-btn,.search-input{width:100%}.pick-card{min-width:150px}.navbar ul{gap:10px}.navbar a{font-size:.75rem;padding:6px 8px}table{font-size:.85rem}td,th{padding:8px 6px}.player-photo,.player-photo img.face{width:50px;height:50px}.player-photo img.logo{width:18px;height:18px}}@media screen and (max-width:480px){.draft-header{padding:15px 10px}.pick-number-large{font-size:2rem}.current-pick-display{padding:10px 20px;min-width:150px}.draft-order-card,.player-selection-card,.progress-card,.recent-picks-card{padding:15px}.pick-card{min-width:130px}}.custom-alert-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--overlay-dark);z-index:10000;align-items:center;justify-content:center;animation:fadeIn .2s ease}.custom-alert-overlay.show{display:flex}.custom-alert-box{background:var(--card-white);border-radius:16px;padding:30px;max-width:450px;width:90%;box-shadow:0 10px 40px var(--shadow-lg);text-align:center;animation:slideDown .3s ease}.custom-alert-icon{font-size:3.5rem;margin-bottom:20px;animation:iconPop .4s ease}.custom-alert-icon.success{color:#28a745}.custom-alert-icon.error{color:var(--danger)}.custom-alert-icon.info{color:#007bff}.custom-alert-icon.warning{color:#ff8c00}.custom-alert-message{font-size:1.1rem;color:var(--text-dark);line-height:1.6;margin-bottom:25px;font-weight:500}.custom-alert-button{background:var(--danger);color:var(--text-main);border:0;padding:12px 40px;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:0 4px 12px rgba(0,212,255,0.3)}.custom-alert-button:hover{background:var(--danger);transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,212,255,0.25)}.custom-alert-button:active{transform:translateY(0)}.modal{display:none;position:fixed;z-index:10000;left:0;top:0;width:100%;height:100%;background-color:var(--overlay-dark);backdrop-filter:blur(3px)}.modal-content{background:var(--card-white);margin:5%auto;padding:30px;border-radius:16px;width:90%;max-width:600px;box-shadow:0 10px 40px var(--shadow-lg);position:relative;animation:modalSlideIn .3s ease}.close-modal{position:absolute;right:20px;top:20px;font-size:2rem;font-weight:700;color:var(--text-light-gray);cursor:pointer;transition:color .2s}.close-modal:hover{color:var(--danger)}.modal-content h2{color:var(--text-dark);margin-bottom:10px;font-size:1.8rem}.modal-content h3{color:var(--text-secondary);margin-bottom:20px;font-size:1.2rem;font-weight:500}.career-modal{max-width:95%;width:1200px;max-height:85vh;overflow-y:auto}.loading-spinner{text-align:center;padding:40px;color:var(--text-secondary);font-size:1.1rem}#careerPlayerPosition{color:var(--danger);font-size:1rem;font-weight:600;margin-bottom:20px}#careerStatsTable{margin-top:20px;overflow-x:auto;-webkit-overflow-scrolling:touch}#careerStatsTable table{font-size:.9rem;min-width:480px}#careerStatsTable th{background-color:var(--danger);padding:12px 8px;text-align:center;position:sticky;top:0;z-index:100;border-bottom:2px solid var(--danger)}#careerStatsTable td{padding:10px 8px;text-align:center;border-bottom:1px solid #eee}#careerStatsTable tr:hover{background-color:var(--bg-hover)}#careerStatsTable tr.nhl-season{background-color:#fff8f0}#careerStatsTable tr.current-season{background-color:#e8f5e9;font-weight:600}#careerStatsTable .season-col{font-weight:600;color:var(--text-dark)}#careerStatsTable .league-col{font-size:.85rem;color:var(--text-secondary)}
-/* Mobile layout fix for draftActif table - prevent name/GP overlap */
-@media (max-width: 480px) {
-  /* Convert table rows to flex card layout */
-  #playerTable tbody tr {
-    display: flex !important;
-    flex-wrap: wrap;
-    padding: 12px !important;
-    gap: 0 !important;
-    border-radius: 10px;
-    margin-bottom: 8px;
-  }
+/* ============================================================
+   DRAFT ACTIF — aligné sur le système visuel du site
+   ------------------------------------------------------------
+   Écrit en mobile-first : les règles de base valent pour le
+   téléphone, les media queries `min-width` enrichissent ensuite.
 
-  #playerTable tbody tr td {
-    border-bottom: none !important;
-  }
+   Les jetons (--primary, --card, --border-light…) viennent de
+   index.css. Cette feuille est chargée APRÈS index.css afin de
+   pouvoir spécialiser sans recourir à !important.
 
-  /* Photo - left side, first row */
-  #playerTable tbody tr td:nth-child(1) {
-    order: 1;
-    flex: 0 0 55px;
-    padding: 0 8px 0 0 !important;
-    display: flex;
-    align-items: flex-start;
-  }
+   Deux corrections de fond par rapport à la version précédente :
+   - l'accent passe du rouge (--danger) au cyan (--primary), comme
+     le reste du site ; le rouge redevient réservé aux alertes ;
+   - les couleurs codées en dur (#555, #eee, #fff8f0…) sont
+     remplacées par des jetons, la page suivait mal le thème clair.
+   ============================================================ */
 
-  /* Player name - takes remaining space in first row */
-  #playerTable tbody tr td:nth-child(2) {
-    order: 2;
-    flex: 1 1 calc(100% - 63px);
-    min-width: 0;
-    text-align: left !important;
-    padding: 0 0 8px 4px !important;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    max-width: none !important;
-    white-space: normal !important;
-    font-size: .88rem !important;
-    overflow: hidden;
-  }
-
-  /* Stats - second row with equal-width columns */
-  #playerTable tbody tr td:nth-child(3),
-  #playerTable tbody tr td:nth-child(4),
-  #playerTable tbody tr td:nth-child(5),
-  #playerTable tbody tr td:nth-child(6) {
-    flex: 0 0 25%;
-    max-width: 25%;
-    padding: 8px 4px 4px !important;
-    text-align: center !important;
-    font-size: .82rem !important;
-    position: relative;
-  }
-
-  /* Add stat labels above values on mobile */
-  #playerTable tbody tr td:nth-child(3)::before { content: 'GP'; display: block; font-size: .65rem; color: rgba(255,255,255,0.5); margin-bottom: 3px; font-weight: 700; }
-  #playerTable tbody tr td:nth-child(4)::before { content: 'G'; display: block; font-size: .65rem; color: rgba(255,255,255,0.5); margin-bottom: 3px; font-weight: 700; }
-  #playerTable tbody tr td:nth-child(5)::before { content: 'A'; display: block; font-size: .65rem; color: rgba(255,255,255,0.5); margin-bottom: 3px; font-weight: 700; }
-  #playerTable tbody tr td:nth-child(6)::before { content: 'PTS'; display: block; font-size: .65rem; color: rgba(255,255,255,0.5); margin-bottom: 3px; font-weight: 700; }
-
-  #playerTable tbody tr td:nth-child(3) { order: 3; }
-  #playerTable tbody tr td:nth-child(4) { order: 4; }
-  #playerTable tbody tr td:nth-child(5) { order: 5; }
-  #playerTable tbody tr td:nth-child(6) { order: 6; }
-
-  /* Action button - third row, full width */
-  #playerTable tbody tr td:nth-child(7) {
-    order: 7;
-    flex: 1 1 100%;
-    padding: 8px 0 0 !important;
-    text-align: center !important;
-  }
-
-  /* Hide thead on mobile */
-  #playerTable thead {
-    display: none;
-  }
-
-  /* Adjust photo sizes on mobile */
-  #playerTable .player-photo,
-  #playerTable .player-photo img.face {
-    width: 55px !important;
-    height: 55px !important;
-  }
-  
-  #playerTable .player-photo img.logo {
-    width: 20px !important;
-    height: 20px !important;
-    bottom: -4px !important;
-    right: -4px !important;
-  }
+/* ---------- Animations ---------- */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slideDown {
+  from { transform: translateY(-24px); opacity: 0 }
+  to   { transform: translateY(0); opacity: 1 }
+}
+@keyframes iconPop {
+  0% { transform: scale(0) } 55% { transform: scale(1.12) } 100% { transform: scale(1) }
+}
+@keyframes modalSlideIn {
+  from { transform: translateY(24px) scale(.98); opacity: 0 }
+  to   { transform: translateY(0) scale(1); opacity: 1 }
+}
+@keyframes turnPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, .30) }
+  50%      { box-shadow: 0 0 0 10px rgba(0, 212, 255, 0) }
+}
+@keyframes headerTurnGlow {
+  0%, 100% { border-bottom-color: var(--primary) }
+  50%      { border-bottom-color: rgba(0, 212, 255, .35) }
 }
 
-/* Override index.css table styles for draftActif page - PC/Desktop layout */
-@media (min-width: 481px) {
-  /* Reset any conflicting table styles from index.css */
-  .player-selection-card table,
-  .player-selection-card #playerTable {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: auto !important; /* Override fixed layout from index.css */
-  }
-
-  /* Column-specific widths for draftActif table structure */
-  .player-selection-card #playerTable th:nth-child(1),
-  .player-selection-card #playerTable td:nth-child(1) {
-    width: 70px !important;
-    min-width: 70px !important;
-    max-width: 70px !important;
-  }
-
-  .player-selection-card #playerTable th:nth-child(2),
-  .player-selection-card #playerTable td:nth-child(2) {
-    width: auto !important;
-    min-width: 180px !important;
-    max-width: none !important;
-    text-align: left !important;
-  }
-
-  /* GP, G, A, PTS columns - wider than index.css default */
-  .player-selection-card #playerTable th:nth-child(3),
-  .player-selection-card #playerTable td:nth-child(3),
-  .player-selection-card #playerTable th:nth-child(4),
-  .player-selection-card #playerTable td:nth-child(4),
-  .player-selection-card #playerTable th:nth-child(5),
-  .player-selection-card #playerTable td:nth-child(5),
-  .player-selection-card #playerTable th:nth-child(6),
-  .player-selection-card #playerTable td:nth-child(6) {
-    width: 65px !important;
-    min-width: 65px !important;
-    max-width: 65px !important;
-    text-align: center !important;
-  }
-
-  /* Action column */
-  .player-selection-card #playerTable th:nth-child(7),
-  .player-selection-card #playerTable td:nth-child(7) {
-    width: 90px !important;
-    min-width: 90px !important;
-    max-width: 90px !important;
-    text-align: center !important;
-  }
+/* ============================================================
+   1. COQUILLE DE PAGE
+   ============================================================ */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-dark);
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-/* Career modal redesign for draftActif */
-.career-modal-header {
+.draft-header {
+  position: relative;
+  padding: 18px 16px;
+  background:
+    linear-gradient(135deg, rgba(0, 212, 255, .09), rgba(0, 212, 255, 0) 62%),
+    var(--bg);
+  border-bottom: 1px solid var(--navbar-border);
+}
+.draft-header.is-my-turn {
+  border-bottom: 2px solid var(--primary);
+  animation: headerTurnGlow 2.4s ease-in-out infinite;
+}
+
+.draft-header-content {
+  max-width: 1400px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 14px;
-  position: relative;
+  gap: 14px;
 }
 
-.player-header-top {
+.draft-info { min-width: 0; }
+.draft-info h2 {
+  margin: 0;
+  font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
+  font-size: clamp(1.5rem, 6vw, 2rem);
+  font-weight: 400;
+  letter-spacing: 1.5px;
+  color: var(--text-main);
+}
+#draft-clan-name {
+  margin-top: 2px;
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* ---------- Bandeau de tour ---------- */
+.turn-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: .85rem;
+  font-weight: 700;
+}
+.turn-banner:empty { display: none; }
+.turn-banner.waiting {
+  background: rgba(123, 140, 196, .14);
+  border-color: var(--border-light);
+  color: var(--text-secondary);
+}
+.turn-banner.waiting.next {
+  background: rgba(255, 179, 0, .14);
+  border-color: rgba(255, 179, 0, .32);
+  color: var(--warning);
+}
+.turn-banner.your-turn {
+  background: rgba(0, 212, 255, .15);
+  border-color: rgba(0, 212, 255, .38);
+  color: var(--primary);
+  animation: turnPulse 2s ease-in-out infinite;
+}
+.turn-banner.done {
+  background: rgba(0, 230, 118, .14);
+  border-color: rgba(0, 230, 118, .32);
+  color: var(--success);
+}
+
+/* ---------- Choix actuel ---------- */
+.current-pick-display {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding-right: 42px;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--card);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+}
+.pick-label {
+  font-size: .7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--text-secondary);
+}
+.pick-number-large {
+  font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
+  font-size: 2.4rem;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--primary);
+}
+.pick-team {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--text-main);
 }
 
-.player-header-right {
+/* ---------- Progression globale ---------- */
+.draft-overall-progress {
+  max-width: 1400px;
+  margin: 14px auto 0;
+}
+.dop-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 7px;
+  font-size: .78rem;
+  font-weight: 700;
+}
+#dop-label { color: var(--text-secondary); }
+#dop-round {
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+}
+.dop-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-gray-light);
+  overflow: hidden;
+}
+.dop-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary), #00A8CC);
+  transition: width .45s ease;
+}
+
+/* ============================================================
+   2. GRILLE PRINCIPALE
+   ============================================================ */
+.draft-main-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px 14px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+/* Sur téléphone, la sélection de joueur est l'action principale :
+   elle passe devant les panneaux de suivi. */
+.draft-center  { order: 1; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.draft-sidebar { order: 2; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* ---------- Carte générique ---------- */
+.progress-card,
+.draft-order-card,
+.recent-picks-card,
+.player-selection-card {
+  padding: 16px;
+  background: rgba(20, 20, 48, .85);
+  border: 1px solid var(--border-light);
+  border-radius: 18px;
+}
+html[data-theme="light"] .progress-card,
+html[data-theme="light"] .draft-order-card,
+html[data-theme="light"] .recent-picks-card,
+html[data-theme="light"] .player-selection-card {
+  background: var(--card);
+}
+
+.progress-card h3,
+.draft-order-card h3,
+.card-header h3,
+.filters-header h3 {
+  margin: 0;
+  font-size: .95rem;
+  font-weight: 800;
+  letter-spacing: .3px;
+  color: var(--text-main);
+}
+
+.card-header,
+.progress-header,
+.filters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+.draft-order-card h3 {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+/* ============================================================
+   3. MA PROGRESSION
+   ============================================================ */
+.progress-list { display: flex; flex-direction: column; gap: 11px; }
+
+.progress-line {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 56px 44px;
+  align-items: center;
+  gap: 9px;
+  font-size: .85rem;
+}
+.progress-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+}
+.progress-text {
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.progress-mini-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-gray-light);
+  overflow: hidden;
+}
+.progress-mini-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: var(--primary);
+  transition: width .4s ease;
+}
+.progress-mini-fill.complete { background: var(--success); }
+
+.progress-value {
+  font-size: .8rem;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--text-gray);
+}
+.progress-value.complete    { color: var(--success); }
+.progress-value.in-progress { color: var(--warning); }
+
+.progress-filter-select {
+  padding: 7px 11px;
+  min-height: 36px;
+  border: 1px solid var(--border-gray);
+  border-radius: 9px;
+  background: var(--bg-gray-light);
+  color: var(--text-main);
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.progress-filter-select:hover { border-color: var(--primary); }
+.progress-filter-select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.progress-details-list {
+  margin-bottom: 14px;
+  padding: 12px;
+  background: var(--bg-odd-row);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+}
+.progress-details-header {
+  margin-bottom: 10px;
+  font-size: .8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--primary);
+}
+.progress-players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+  gap: 10px;
+}
+.progress-player-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 6px;
+  background: var(--card);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  transition: border-color .2s ease, transform .2s ease;
+}
+.progress-player-item:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+.progress-player-photo {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--bg-gray-light);
+}
+.progress-player-photo .face {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.progress-player-photo .logo {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 18px;
+  height: 18px;
+  padding: 2px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+}
+.progress-player-photo.no-image {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-light-gray);
+}
+.progress-player-name {
+  font-size: .72rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--text-dark);
+  word-break: break-word;
+}
+.no-picks {
+  padding: 14px;
+  text-align: center;
+  font-size: .84rem;
+  font-style: italic;
+  color: var(--text-gray);
+}
+
+/* ============================================================
+   4. ORDRE DU DRAFT
+   ============================================================ */
+.draft-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.draft-timeline::-webkit-scrollbar { width: 6px; }
+.draft-timeline::-webkit-scrollbar-track { background: var(--bg-gray-light); border-radius: 3px; }
+.draft-timeline::-webkit-scrollbar-thumb { background: var(--border-gray); border-radius: 3px; }
+.draft-timeline::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+.timeline-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  background: var(--bg-odd-row);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  transition: border-color .2s ease, background .2s ease;
+}
+.timeline-item.current {
+  background: rgba(0, 212, 255, .12);
+  border-color: var(--primary);
+}
+.timeline-item.completed { opacity: .55; }
+
+.timeline-pick-num {
+  min-width: 30px;
+  font-size: .8rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+.timeline-team-name {
   flex: 1;
+  min-width: 0;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.timeline-item.current .timeline-pick-num,
+.timeline-item.current .timeline-team-name { color: var(--text-main); }
+.timeline-status {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(0, 212, 255, .18);
+  color: var(--primary);
+  font-size: .68rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   5. DERNIERS CHOIX (carrousel)
+   ============================================================ */
+.carousel-controls { display: flex; gap: 8px; }
+.carousel-btn {
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--border-gray);
+  border-radius: 10px;
+  background: var(--bg-gray-light);
+  color: var(--text-main);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
+}
+.carousel-btn:hover:not(:disabled) {
+  background: rgba(0, 212, 255, .14);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.carousel-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.carousel-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+.picks-carousel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pick-card {
+  padding: 12px 10px;
+  text-align: center;
+  background: var(--bg-odd-row);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  transition: border-color .2s ease, transform .2s ease;
+}
+.pick-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-3px);
+}
+.pick-card-number {
+  margin-bottom: 8px;
+  font-size: .72rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+.pick-card-image,
+.carousel-player-image {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pick-card-image {
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 9px;
+  border-radius: 50%;
+  background: var(--bg-gray-light);
+  overflow: visible;
+}
+.pick-card-image img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.carousel-player-image { width: 100%; height: 100%; }
+.carousel-player-image img:first-child {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.carousel-team-logo {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 22px !important;
+  height: 22px !important;
+  padding: 2px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .3);
+}
+.carousel-no-image {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-light-gray);
+}
+.pick-card-name {
+  margin-bottom: 3px;
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pick-card-team { font-size: .72rem; color: var(--text-secondary); }
+.pick-card-position {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(0, 212, 255, .16);
+  color: var(--primary);
+  font-size: .66rem;
+  font-weight: 800;
+}
+
+/* ============================================================
+   6. FILTRES ET CHAMPS
+   ============================================================ */
+.filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+.search-input,
+.filter-select,
+.refresh-btn {
+  padding: 10px 13px;
+  min-height: 44px;                 /* cible tactile confortable */
+  border: 1px solid var(--border-gray);
+  border-radius: 10px;
+  background: var(--bg-gray-light);
+  color: var(--text-main);
+  font-size: .88rem;
+  font-weight: 600;
+  transition: border-color .2s ease, background .2s ease;
+}
+.search-input { flex: 1 1 100%; min-width: 0; }
+.search-input::placeholder { color: var(--text-gray); font-weight: 400; }
+.filter-select { flex: 1 1 calc(50% - 5px); min-width: 0; cursor: pointer; }
+.filter-select option { background: var(--navbar-bg); color: var(--text-main); }
+.search-input:focus-visible,
+.filter-select:focus-visible,
+.refresh-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+  border-color: var(--primary);
+}
+
+.refresh-btn {
+  flex: 0 0 auto;
+  width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--primary);
+  cursor: pointer;
+}
+.refresh-btn:hover { background: rgba(0, 212, 255, .14); border-color: var(--primary); }
+
+/* ============================================================
+   7. TABLEAU DES JOUEURS
+   ------------------------------------------------------------
+   Le nombre de colonnes varie selon le filtre : 7 pour les
+   patineurs, 10 pour les gardiens, 8 pour les équipes, 6 pour
+   « mes choix ». Toute mise en carte fondée sur :nth-child
+   étiquette donc de travers dès qu'on change de filtre — c'était
+   le défaut de la version précédente, qui affichait « GP » ou
+   « G » au-dessus des mauvaises valeurs chez les gardiens.
+
+   On conserve donc un vrai tableau, rendu défilant dans son
+   cadre : la PAGE ne défile jamais latéralement, seule cette
+   zone le fait, et l'en-tête reste collé pendant le défilement.
+   ============================================================ */
+.table-wrapper {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+}
+.table-wrapper::-webkit-scrollbar { height: 7px; }
+.table-wrapper::-webkit-scrollbar-track { background: var(--bg-gray-light); }
+.table-wrapper::-webkit-scrollbar-thumb { background: var(--border-gray); border-radius: 4px; }
+.table-wrapper::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+#playerTable {
+  width: 100%;
+  min-width: 560px;                 /* en deçà, les colonnes deviennent illisibles */
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+#playerTable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 11px 10px;
+  background: rgba(0, 212, 255, .35);
+  color: var(--text-main);
+  font-size: .74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  text-align: center;
+  white-space: nowrap;
+}
+#playerTable thead th:nth-child(2) { text-align: left; }
+
+#playerTable tbody td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  text-align: center;
+  white-space: nowrap;
+}
+#playerTable tbody td:nth-child(2) {
+  min-width: 130px;
+  text-align: left;
+  white-space: normal;
+  font-weight: 700;
+  color: var(--text-main);
+}
+#playerTable tbody tr:nth-child(even) { background: var(--bg-odd-row); }
+#playerTable tbody tr:hover { background: rgba(0, 212, 255, .07); }
+#playerTable tbody tr.clickable-player-row { cursor: pointer; }
+#playerTable tbody tr.clickable-player-row:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+#playerTable td.points-column { color: var(--primary); font-weight: 800; }
+
+.player-photo {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: inline-block;
+}
+.player-photo img.face {
+  width: 44px;
+  height: 44px;
+  border-radius: 9px;
+  object-fit: cover;
+  border: 1px solid var(--border-light);
+}
+.player-photo img.logo {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 19px;
+  height: 19px;
+  padding: 1px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+/* ---------- Bouton de sélection ---------- */
+button.select-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary) 0%, #00A8CC 100%);
+  color: var(--bg);
+  font-size: .82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .2s ease;
+}
+button.select-button:hover { transform: translateY(-1px); box-shadow: var(--glow-primary); }
+button.select-button:focus-visible { outline: 2px solid var(--text-main); outline-offset: 2px; }
+button.select-button .select-icon { width: 16px; height: 16px; object-fit: contain; }
+
+/* ---------- États vides ---------- */
+.draft-empty-row td { padding: 0; }
+.draft-empty {
+  padding: 44px 20px;
+  text-align: center;
+  font-size: .9rem;
+  color: var(--text-secondary);
+}
+.draft-empty-icon {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--text-light-gray);
+}
+.no-stats-message {
+  padding: 30px 16px;
+  text-align: center;
+  font-size: .9rem;
+  color: var(--text-secondary);
+}
+
+/* ============================================================
+   8. CHARGEMENT, STATUT, BOUTON FINAL
+   ============================================================ */
+#loading-container {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+#loading { display: none; }
+.spinner {
+  display: inline-block;
+  width: 38px;
+  height: 38px;
+  border: 3px solid rgba(0, 212, 255, .2);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.draft-status-box {
+  margin: 16px 0;
+  padding: 22px 18px;
+  text-align: center;
+  background: rgba(0, 230, 118, .08);
+  border: 1px solid rgba(0, 230, 118, .35);
+  border-radius: 14px;
+}
+.draft-status-box p { margin: 8px 0; font-size: .95rem; }
+.your-turn { color: var(--success); font-weight: 800; }
+.wait-turn { color: var(--warning); font-weight: 800; }
+
+.finish-btn {
+  position: fixed;
+  right: 14px;
+  bottom: 88px;                     /* au-dessus de la barre de navigation mobile */
+  z-index: 900;
+  padding: 13px 22px;
+  min-height: 48px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--success) 0%, #00A855 100%);
+  color: var(--bg);
+  font-size: .92rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .45);
+  transition: transform .15s ease;
+}
+.finish-btn:hover { transform: translateY(-2px); }
+.finish-btn:focus-visible { outline: 2px solid var(--text-main); outline-offset: 2px; }
+
+/* ============================================================
+   9. ALERTE PERSONNALISÉE
+   ============================================================ */
+.custom-alert-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  padding: 20px;
+  background: var(--overlay-dark);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn .2s ease;
+}
+.custom-alert-overlay.show { display: flex; }
+.custom-alert-box {
+  width: 100%;
+  max-width: 400px;
+  padding: 26px 22px;
+  text-align: center;
+  background: var(--card);
+  border: 1px solid var(--border-light);
+  border-radius: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .55);
+  animation: slideDown .28s ease;
+}
+.custom-alert-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+  font-size: 2.4rem;
+  animation: iconPop .38s ease;
+}
+.custom-alert-icon.success { color: var(--success); }
+.custom-alert-icon.error   { color: var(--danger); }
+.custom-alert-icon.info    { color: var(--primary); }
+.custom-alert-icon.warning { color: var(--warning); }
+.custom-alert-message {
+  margin-bottom: 20px;
+  font-size: .95rem;
+  line-height: 1.6;
+  color: var(--text-dark);
+}
+.custom-alert-button {
+  width: 100%;
+  padding: 12px 28px;
+  min-height: 46px;
+  border: 0;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--primary) 0%, #00A8CC 100%);
+  color: var(--bg);
+  font-size: .95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .15s ease;
+}
+.custom-alert-button:hover  { transform: translateY(-1px); }
+.custom-alert-button:active { transform: translateY(0); }
+.custom-alert-button:focus-visible { outline: 2px solid var(--text-main); outline-offset: 2px; }
+
+/* ============================================================
+   10. MODALE DE CARRIÈRE
+   ============================================================ */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  padding: 12px;
+  overflow-y: auto;
+  background: var(--overlay-dark);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  margin: 16px auto;
+  padding: 20px;
+  background: var(--card);
+  border: 1px solid var(--border-light);
+  border-radius: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .55);
+  animation: modalSlideIn .28s ease;
+}
+.career-modal { max-width: 1100px; }
+
+.close-modal {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 3;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .28);
+  color: var(--text-main);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .2s ease, transform .2s ease;
+}
+.close-modal:hover { background: rgba(0, 0, 0, .45); transform: rotate(90deg); }
+
+.modal-content h2 { margin-bottom: 6px; font-size: 1.3rem; color: var(--text-main); }
+.modal-content h3 {
+  margin-bottom: 14px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.career-modal-header {
+  margin: -20px -20px 16px;
+  padding: 20px;
+  background:
+    linear-gradient(135deg, rgba(0, 212, 255, .14), rgba(0, 212, 255, 0) 65%),
+    var(--bg);
+  border-bottom: 1px solid var(--border-light);
+  border-radius: 18px 18px 0 0;
+}
+.player-header-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+.player-headshot-container {
+  flex: 0 0 auto;
+  width: 82px;
+  height: 82px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--bg-gray-light);
+  border: 2px solid rgba(0, 212, 255, .35);
+}
+.player-headshot-container img { width: 100%; height: 100%; object-fit: cover; }
+.player-headshot-container .no-photo { color: var(--text-light-gray); }
+.player-header-right { width: 100%; min-width: 0; }
+.player-name-section h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+.player-position-team {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+#careerPlayerPosition { font-weight: 700; }
+.player-bio-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 12px;
+}
+.bio-pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--bg-gray-light);
+  border: 1px solid var(--border-light);
+}
+.bio-pill-lbl {
+  font-size: .66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: var(--text-gray);
+}
+.bio-pill-val { font-size: .8rem; font-weight: 800; color: var(--text-main); }
+
+.player-draft-strip {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+}
+.draft-label {
+  font-size: .68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-gray);
+}
+.draft-value { font-size: .82rem; font-weight: 700; color: var(--text-dark); }
+
+.loading-spinner {
+  padding: 34px 16px;
+  text-align: center;
+  font-size: .95rem;
+  color: var(--text-secondary);
+}
+
+/* ---------- Filtres de carrière ---------- */
+.career-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 11px;
+  margin-bottom: 14px;
+}
+.filter-group-career {
+  flex: 1 1 140px;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-top: 4px;
+  gap: 6px;
+}
+.filter-group-career label {
+  font-size: .74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-secondary);
+}
+.filter-group-career select {
+  padding: 9px 11px;
+  min-height: 42px;
+  border: 1px solid var(--border-gray);
+  border-radius: 10px;
+  background: var(--bg-gray-light);
+  color: var(--text-main);
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.filter-group-career select:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.stats-count-badge {
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: rgba(0, 212, 255, .14);
+  color: var(--primary);
+  font-size: .76rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
-
-@media (max-width: 768px) {
-  .player-headshot-container {
-    width: 90px !important;
-    height: 90px !important;
-  }
+/* ---------- Tableau de carrière ---------- */
+#careerStatsTable {
+  margin-top: 14px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
 }
-
-@media (max-width: 500px) {
-  .player-header-top { flex-direction: column; align-items: center; }
-  .player-header-right { align-items: center; width: 100%; }
-  .player-name-section { align-items: center; }
-  .player-position-team { justify-content: center; }
-  .player-bio-pills { width: 100%; justify-content: center; }
-  .player-draft-strip { justify-content: center; text-align: center; }
+#careerStatsTable table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  font-size: .82rem;
+  font-variant-numeric: tabular-nums;
 }
-
-/* Team-col: draftActif uses logo images (26px), not text — keep column tight */
-body #careerStatsTable th.team-col,
-body #careerStatsTable td.team-col {
-  width: 54px !important;
-  max-width: 54px !important;
-  min-width: 54px !important;
-  padding-left: 4px !important;
-  padding-right: 4px !important;
+#careerStatsTable th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 10px 8px;
+  background: rgba(0, 212, 255, .35);
+  color: var(--text-main);
+  font-size: .72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  text-align: center;
+  white-space: nowrap;
 }
+#careerStatsTable td {
+  padding: 8px;
+  text-align: center;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-dark);
+  white-space: nowrap;
+}
+#careerStatsTable tbody tr:hover { background: rgba(0, 212, 255, .07); }
+#careerStatsTable tr.nhl-season { background: rgba(0, 212, 255, .05); }
+#careerStatsTable tr.current-season { background: rgba(0, 212, 255, .12); font-weight: 800; }
+#careerStatsTable .season-col { font-weight: 800; color: var(--text-main); }
+#careerStatsTable .league-col { font-size: .76rem; color: var(--text-secondary); }
+#careerStatsTable td.team-col img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+.career-totals-row { background: rgba(0, 212, 255, .14); font-weight: 800; }
+.career-totals-row td { border-top: 2px solid var(--primary); color: var(--text-main); }
+.career-totals-label { text-align: left; text-transform: uppercase; letter-spacing: .5px; }
 
-body #careerStatsTable td.team-col {
-  white-space: normal !important;
-  word-break: break-all !important;
-  overflow-wrap: break-word !important;
-  font-size: clamp(0.58rem, 1.2vw, 0.72rem) !important;
-  line-height: 1.2 !important;
-  overflow: hidden !important;
+/* ============================================================
+   11. SÉLECTEUR D'UTILISATEUR (admin)
+   ============================================================ */
+.admin-dropdown-container { position: relative; }
+.admin-dropdown-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 13px;
+  min-height: 40px;
+  border: 1px solid var(--border-gray);
+  border-radius: 10px;
+  background: var(--bg-gray-light);
+  color: var(--text-main);
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.admin-dropdown-toggle:hover { border-color: var(--primary); color: var(--primary); }
+.admin-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 1200;
+  min-width: 210px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--navbar-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .5);
+}
+.admin-dropdown-header {
+  padding: 7px 10px;
+  font-size: .68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--text-gray);
+}
+.admin-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: .85rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease;
+}
+.admin-dropdown-item:hover { background: rgba(0, 212, 255, .1); color: var(--text-main); }
+.admin-user-list { display: flex; flex-direction: column; gap: 2px; }
+.admin-no-users {
+  padding: 12px 10px;
+  font-size: .82rem;
+  font-style: italic;
+  color: var(--text-gray);
+}
+.selected-list { display: flex; flex-direction: column; gap: 6px; }
+.team-block {
+  padding: 10px 12px;
+  background: var(--bg-odd-row);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
 }
 
 /* ============================================================
-   TURN BANNER (Selective Attention + Goal-Gradient)
+   12. TABLETTE — à partir de 600px
    ============================================================ */
-@keyframes turnBannerPulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(40,167,69,0.5); }
-    50%      { box-shadow: 0 0 0 8px rgba(40,167,69,0); }
-}
-@keyframes headerTurnGlow {
-    0%, 100% { border-bottom-color: #28a745; }
-    50%      { border-bottom-color: #5cff8a; }
-}
-
-.turn-banner {
-    margin-top: 8px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    display: inline-block;
-}
-.turn-banner:empty { display: none; }
-
-.turn-banner.waiting {
-    color: #ff8c00;
-}
-.turn-banner.waiting.next {
-    color: #ff6b00;
-    font-weight: 800;
-}
-
-.turn-banner.your-turn {
-    color: #fff;
-    background: #28a745;
-    padding: 8px 16px;
-    border-radius: 20px;
-    animation: turnBannerPulse 1.4s ease-in-out infinite;
-}
-
-.turn-banner.done {
-    color: #28a745;
-}
-
-.draft-header.is-my-turn {
-    animation: headerTurnGlow 1.4s ease-in-out infinite;
-}
-
-/* ============================================================
-   OVERALL DRAFT PROGRESS (Goal-Gradient + Mental Model)
-   ============================================================ */
-.draft-overall-progress {
-    max-width: 1400px;
-    margin: 14px auto 0;
-}
-.dop-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 6px;
-    font-size: 0.9rem;
-    font-weight: 700;
-}
-#dop-label { color: var(--text-dark); }
-#dop-round { color: var(--danger); }
-.dop-bar {
-    height: 8px;
-    background: var(--text-main);
-    border-radius: 4px;
-    overflow: hidden;
-}
-.dop-fill {
-    height: 100%;
-    width: 0;
-    background: linear-gradient(90deg, var(--primary) 0%, #00B8D9 100%);
-    border-radius: 4px;
-    transition: width 0.5s ease;
-}
-
-/* Player-table empty state (Aesthetic-Usability) */
-.draft-empty-row td { text-align: center; padding: 36px 12px !important; }
-.draft-empty {
-    display: flex;
-    flex-direction: column;
+@media (min-width: 600px) {
+  .draft-header { padding: 20px; }
+  .draft-header-content {
+    flex-direction: row;
     align-items: center;
-    gap: 10px;
-    color: var(--text-light-gray);
-    font-style: italic;
+    justify-content: space-between;
+  }
+  .draft-main-container { padding: 20px 18px 48px; }
+  .picks-carousel { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .search-input { flex: 1 1 220px; }
+  .filter-select { flex: 0 1 158px; }
+  .current-pick-display {
+    flex-direction: column;
+    min-width: 148px;
+    text-align: center;
+  }
+  .player-header-top { flex-direction: row; align-items: center; text-align: left; }
+  .player-position-team,
+  .player-bio-pills,
+  .player-draft-strip { justify-content: flex-start; }
+  .custom-alert-button { width: auto; min-width: 160px; }
+  .finish-btn { bottom: 22px; }
 }
-.draft-empty-icon { font-size: 2rem; font-style: normal; opacity: 0.7; }
+
+/* ============================================================
+   13. ORDINATEUR — à partir de 1024px
+   ============================================================ */
+@media (min-width: 1024px) {
+  .draft-main-container {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    align-items: start;
+    gap: 18px;
+    padding: 22px 22px 56px;
+  }
+  /* Sur grand écran, le suivi reprend sa place à gauche et suit
+     le défilement : l'ordre du draft reste consultable pendant
+     qu'on parcourt la liste des joueurs. */
+  .draft-sidebar { order: 0; position: sticky; top: 78px; }
+  .draft-center  { order: 0; }
+
+  .progress-card,
+  .draft-order-card,
+  .recent-picks-card,
+  .player-selection-card { padding: 18px; }
+
+  .picks-carousel { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .draft-timeline { max-height: 360px; }
+  .pick-number-large { font-size: 2.8rem; }
+
+  #playerTable { min-width: 0; }
+  /* `overflow` complet et non seulement overflow-x : dès qu'un axe vaut
+     autre chose que visible, l'autre est forcé à auto par le moteur. */
+  .table-wrapper { overflow: visible; }
+
+  .modal { padding: 26px; }
+  .modal-content { margin: 24px auto; padding: 24px; }
+  .career-modal-header { margin: -24px -24px 18px; padding: 24px; }
+}
+
+@media (min-width: 1300px) {
+  .picks-carousel { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+
+/* ============================================================
+   14. MOUVEMENT RÉDUIT
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .turn-banner.your-turn,
+  .draft-header.is-my-turn,
+  .custom-alert-box,
+  .custom-alert-icon,
+  .modal-content { animation: none; }
+  .pick-card:hover,
+  .progress-player-item:hover,
+  .finish-btn:hover,
+  button.select-button:hover { transform: none; }
+}
