@@ -3370,6 +3370,7 @@ app.get('/hot-players', async (req, res) => {
 let last7DaysCache = { lastUpdated: null, data: null };
 let last14DaysCache = { lastUpdated: null, data: null };
 let last30DaysCache = { lastUpdated: null, data: null };
+let last180DaysCache = { lastUpdated: null, data: null };
 
 // Fantasy scoring rules
 const FANTASY_SCORING = {
@@ -3573,6 +3574,23 @@ app.get('/hot-players-last30days', async (req, res) => {
         }
         const data = await calculateHotPlayers(30);
         last30DaysCache = { lastUpdated: now, data };
+        res.json(data);
+    } catch (error) {
+        console.error('❌ Error:', error);
+        res.status(500).json({ message: 'Error fetching hot players' });
+    }
+});
+
+// 6-month fallback: used by the home page when no games happened in the last 30 days
+app.get('/hot-players-last180days', async (req, res) => {
+    try {
+        const now = Date.now();
+        if (last180DaysCache.data && last180DaysCache.lastUpdated &&
+            (now - last180DaysCache.lastUpdated) < (15 * 60 * 1000)) {
+            return res.json(last180DaysCache.data);
+        }
+        const data = await calculateHotPlayers(180);
+        last180DaysCache = { lastUpdated: now, data };
         res.json(data);
     } catch (error) {
         console.error('❌ Error:', error);

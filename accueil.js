@@ -115,20 +115,48 @@ async function loadCurrentStats() {
 // STATS LOADING (hot players)
 // ============================================================
 let currentTimeRange = 7; // Default to 7 days
+const SIX_MONTHS_DAYS = 180;
+
+function timeRangeText(days) {
+    return days === SIX_MONTHS_DAYS ? '6 derniers mois' : `${days} derniers jours`;
+}
+
+function hasHotPlayers(data) {
+    return !!(data && Array.isArray(data.topPlayers) && data.topPlayers.length);
+}
+
+async function fetchHotPlayers(days) {
+    const res = await fetch(`${BASE_URL}/hot-players-last${days}days`);
+    return await res.json();
+}
 
 async function loadStats(days = 7) {
     try {
-        currentTimeRange = days;
+        let data = await fetchHotPlayers(days);
 
-        const hotPlayersRes = await fetch(`${BASE_URL}/hot-players-last${days}days`);
-        userData.hotPlayers = await hotPlayersRes.json();
+        // Off-season / empty DB: if nothing happened in the last 30 days, reveal the
+        // 6-month filter and open on it instead of showing an empty section.
+        if (days === 7 && !hasHotPlayers(data)) {
+            const last30 = await fetchHotPlayers(30);
+            if (!hasHotPlayers(last30)) {
+                const sixMonthBtn = document.getElementById('timeFilter6M');
+                if (sixMonthBtn) sixMonthBtn.style.display = '';
+                days = SIX_MONTHS_DAYS;
+                data = await fetchHotPlayers(SIX_MONTHS_DAYS);
+            }
+        }
+
+        currentTimeRange = days;
+        userData.hotPlayers = data;
 
         // Update active button and label to reflect actual range shown
         document.querySelectorAll('.time-filter').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.days == currentTimeRange);
         });
         const label = document.getElementById('timeRangeLabel');
-        if (label) label.textContent = `${currentTimeRange} derniers jours`;
+        if (label) label.textContent = timeRangeText(currentTimeRange);
+        const viewAllLink = document.getElementById('viewAllPlayersLink');
+        if (viewAllLink) viewAllLink.href = `stats.html?days=${currentTimeRange}`;
 
         renderTopPlayers();
     } catch (err) {
@@ -415,7 +443,7 @@ function renderTopPlayers() {
 
     if (!performers.length) {
         content.innerHTML = `<p style="grid-column:1/-1;text-align:center;
-            padding:48px;color:var(--text-secondary);">Aucun joueur trouvé dans les 7 derniers jours</p>`;
+            padding:48px;color:var(--text-secondary);">Aucun joueur trouvé dans les ${timeRangeText(currentTimeRange)}</p>`;
         return;
     }
 
@@ -526,7 +554,7 @@ function changeTimeRange(days) {
     // Update label
     const label = document.getElementById('timeRangeLabel');
     if (label) {
-        label.textContent = `${days} derniers jours`;
+        label.textContent = timeRangeText(days);
     }
 
     // Update "Voir tout" link to preserve time range
