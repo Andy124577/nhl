@@ -6,6 +6,8 @@
     <title>Inscription — Fantazy</title>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Filtre de grossieretes, partage avec le serveur. -->
+    <script src="profanity.js"></script>
 
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -342,6 +344,11 @@
             if (username.length < 3) { showError("Le nom d'utilisateur doit contenir au moins 3 caractères."); return; }
             if (username.length > 20) { showError("Le nom d'utilisateur ne peut pas dépasser 20 caractères."); return; }
             if (!/^[a-zA-Z0-9_]+$/.test(username)) { showError("Lettres, chiffres et underscores uniquement."); return; }
+            // Le serveur refuserait de toute façon ; ici c'est pour répondre
+            // sans attendre l'aller-retour.
+            if (typeof contientGrossierete === 'function' && contientGrossierete(username)) {
+                showError("Ce nom d'utilisateur contient un terme inapproprié. Choisissez-en un autre."); return;
+            }
             if (password.length < 6) { showError("Le mot de passe doit contenir au moins 6 caractères."); return; }
             if (!/\d/.test(password)) { showError("Le mot de passe doit contenir au moins un chiffre."); return; }
             if (password !== confirmPassword) { showError("Les mots de passe ne correspondent pas."); return; }

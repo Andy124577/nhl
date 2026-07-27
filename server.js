@@ -2,6 +2,8 @@ const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
 const bcrypt = require("bcryptjs");
+// Filtre de grossieretes, partage avec le navigateur (profanity.js).
+const { contientGrossierete } = require("./profanity.js");
 const fs = require("fs");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -920,6 +922,12 @@ app.post("/create-clan", async (req, res) => {
             return res.status(400).json({ message: "Ce clan existe déjà !" });
         }
 
+        if (contientGrossierete(name)) {
+            return res.status(400).json({
+                message: "Ce nom de pool contient un terme inapproprié. Choisissez-en un autre."
+            });
+        }
+
         // Mot de passe du pool : facultatif, mais traité comme celui d'un
         // compte — même algorithme, même coût, jamais conservé en clair.
         // La borne haute vient de bcrypt, qui ignore silencieusement tout
@@ -1180,6 +1188,12 @@ app.post("/rename-team", async (req, res) => {
             return res.status(400).json({ message: "Le nom doit contenir entre 1 et 20 caractères." });
         }
 
+        if (contientGrossierete(sanitized)) {
+            return res.status(400).json({
+                message: "Ce nom d'équipe contient un terme inapproprié. Choisissez-en un autre."
+            });
+        }
+
         // Allow letters (incl. accented), numbers, spaces, hyphens, apostrophes, underscores
         if (!/^[\p{L}\p{N}\s'\-_]+$/u.test(sanitized)) {
             return res.status(400).json({ message: "Nom invalide. Caractères non autorisés." });
@@ -1247,6 +1261,14 @@ app.post("/signup", async (req, res) => {
     try {
         const { username, password } = req.body;
         if (!username || !password) return res.status(400).json({ message: "Nom d'utilisateur et mot de passe requis !" });
+
+        // Le contrôle vit ici et pas seulement dans le formulaire : la route
+        // est ouverte, un client n'est pas obligé de passer par la page.
+        if (contientGrossierete(username)) {
+            return res.status(400).json({
+                message: "Ce nom d'utilisateur contient un terme inapproprié. Choisissez-en un autre."
+            });
+        }
 
         // Check if user already exists
         if (USE_POSTGRES) {

@@ -278,6 +278,11 @@ async function createClan() {
         return;
     }
 
+    if (typeof contientGrossierete === 'function' && contientGrossierete(clanName)) {
+        alert("Ce nom de pool contient un terme inapproprié. Choisissez-en un autre.");
+        return;
+    }
+
     // Le serveur rejetterait de toute façon, mais autant le dire avant
     // d'envoyer : la même borne y est appliquée.
     if (poolPassword && (poolPassword.length < 4 || poolPassword.length > 72)) {
@@ -418,8 +423,12 @@ function updateUI(draftData) {
                 </li>
             `);
         } else if (!draftStarted) {
+            // `hasPassword` vient de poolsPublics() côté serveur ; l'empreinte
+            // elle-même n'arrive jamais jusqu'ici.
+            const protege = !!clan.hasPassword;
             $("#available-clans-list").append(`
-                <li>
+                <li data-nom="${clanName.toLowerCase().replace(/"/g, '&quot;')}"
+                    data-acces="${protege ? 'protege' : 'ouvert'}">
                     <div class="pool-item-img-wrap">${poolImgHtml}</div>
                     <div class="pool-item-content">
                         <span class="pool-item-name">${clanName}</span>
@@ -427,6 +436,9 @@ function updateUI(draftData) {
                             <span class="pool-item-badge">👥 ${totalParticipants}/${clan.maxPlayers || 10} participants</span>
                             <span class="pool-item-badge">📋 ${totalPicks} sélections</span>
                             <span class="pool-item-badge">🏒 ${activeTeams} équipes</span>
+                            <span class="pool-item-badge pool-acces-badge ${protege ? 'is-protege' : 'is-ouvert'}">
+                                ${protege ? '🔒 Mot de passe' : '🔓 Accès libre'}
+                            </span>
                         </div>
                     </div>
                     <button class="pool-action-btn secondary" onclick="joinClan('${clanName}')">Rejoindre</button>
@@ -434,7 +446,79 @@ function updateUI(draftData) {
             `);
         }
     });
+
+    // La liste vient d'être reconstruite : le filtre en cours doit s'y
+    // réappliquer, sinon un rafraîchissement socket le ferait oublier.
+    filtrerPoolsDisponibles();
 }
+
+// ============================================================
+// RECHERCHE ET FILTRES DES POOLS DISPONIBLES
+// ------------------------------------------------------------
+// Tout se passe côté client : /draft renvoie déjà l'ensemble des pools
+// ouverts, il n'y a rien à demander de plus au serveur.
+// ============================================================
+
+let filtreAcces = 'tous';
+
+function filtrerPoolsDisponibles() {
+    const champ = document.getElementById('poolSearchInput');
+    const liste = document.getElementById('available-clans-list');
+    if (!liste) return;
+
+    // Même normalisation que le filtre de grossièretés : « Éclair » se
+    // trouve en tapant « eclair ».
+    const reduire = t => (typeof normaliser === 'function')
+        ? normaliser(t)
+        : String(t || '').toLowerCase();
+
+    const recherche = reduire(champ ? champ.value.trim() : '');
+    let visibles = 0;
+
+    liste.querySelectorAll('li').forEach(item => {
+        const correspondNom = !recherche || reduire(item.dataset.nom).includes(recherche);
+        const correspondAcces = filtreAcces === 'tous' || item.dataset.acces === filtreAcces;
+        const montrer = correspondNom && correspondAcces;
+        item.hidden = !montrer;
+        if (montrer) visibles++;
+    });
+
+    const vide = document.getElementById('poolNoResult');
+    if (vide) vide.hidden = visibles > 0 || liste.children.length === 0;
+
+    const effacer = document.getElementById('poolSearchClear');
+    if (effacer) effacer.hidden = !(champ && champ.value.length);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const champ = document.getElementById('poolSearchInput');
+    if (champ) {
+        champ.addEventListener('input', filtrerPoolsDisponibles);
+        // `search` couvre la croix native du champ sur certains navigateurs.
+        champ.addEventListener('search', filtrerPoolsDisponibles);
+    }
+
+    const effacer = document.getElementById('poolSearchClear');
+    if (effacer) {
+        effacer.addEventListener('click', () => {
+            champ.value = '';
+            champ.focus();
+            filtrerPoolsDisponibles();
+        });
+    }
+
+    document.querySelectorAll('.pool-filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            filtreAcces = chip.dataset.acces;
+            document.querySelectorAll('.pool-filter-chip').forEach(c => {
+                const actif = c === chip;
+                c.classList.toggle('is-active', actif);
+                c.setAttribute('aria-pressed', String(actif));
+            });
+            filtrerPoolsDisponibles();
+        });
+    });
+});
 
 // 🔎 Voir les équipes d'un clan
 async function viewClanTeams(clanName) {
@@ -606,6 +690,11 @@ async function submitRename(clanName, oldTeamName, teamId) {
 
     if (!/^[\p{L}\p{N}\s'\-_]+$/u.test(newName)) {
         alert("Nom invalide. Utilisez uniquement des lettres, chiffres, espaces, tirets ou apostrophes.");
+        return;
+    }
+
+    if (typeof contientGrossierete === 'function' && contientGrossierete(newName)) {
+        alert("Ce nom d'équipe contient un terme inapproprié. Choisissez-en un autre.");
         return;
     }
 

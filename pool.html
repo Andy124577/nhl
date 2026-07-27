@@ -244,6 +244,23 @@
                     <h2 class="pool-section-title">Pools disponibles</h2>
                     <p class="pool-section-desc">Trouvez et rejoignez une ligue ouverte</p>
                 </div>
+                <!-- Recherche et filtres. Purement client : la liste des pools
+                     ouverts est déjà entièrement chargée. -->
+                <div class="pool-search" id="poolSearchBar">
+                    <div class="pool-search-field">
+                        <span class="pool-search-icon" data-icon="search" data-icon-size="17"></span>
+                        <input type="search" id="poolSearchInput" autocomplete="off"
+                               placeholder="Rechercher un pool par son nom"
+                               aria-label="Rechercher un pool">
+                        <button type="button" class="pool-search-clear" id="poolSearchClear"
+                                aria-label="Effacer la recherche" hidden>&times;</button>
+                    </div>
+                    <div class="pool-filter-chips" role="group" aria-label="Filtrer par accès">
+                        <button type="button" class="pool-filter-chip is-active" data-acces="tous">Tous</button>
+                        <button type="button" class="pool-filter-chip" data-acces="ouvert">Sans mot de passe</button>
+                        <button type="button" class="pool-filter-chip" data-acces="protege">Avec mot de passe</button>
+                    </div>
+                </div>
                 <!-- Skeleton Loader -->
                 <div class="skeleton-loader" id="availablePoolsSkeleton">
                     <div class="skeleton-list">
@@ -259,6 +276,7 @@
                 </div>
                 <!-- Actual Content -->
                 <ul id="available-clans-list" class="pool-list actual-content" style="display:none;"></ul>
+                <p class="pool-no-result" id="poolNoResult" hidden>Aucun pool ne correspond à votre recherche.</p>
             </div>
         </div>
     </div>
@@ -393,6 +411,9 @@
     </script>
     <script defer src="/socket.io/socket.io.js"></script>
     <script defer src="avatars.js"></script>
+    <!-- Filtre de grossieretes, partage avec le serveur. Charge avant
+         equipes.js, qui s'en sert. -->
+    <script src="profanity.js"></script>
     <script defer src="equipes.js"></script>
     <script defer src="navbar.js"></script>
 </body>

@@ -1419,3 +1419,130 @@ html[data-theme="light"] .pick-headshot { background: rgba(0,0,0,.05); }
 }
 /* `hidden` seul serait annulé par la déclaration `display` ci-dessus. */
 .pool-pw-error[hidden] { display: none; }
+
+/* ============================================================ */
+/* RECHERCHE ET FILTRES — POOLS DISPONIBLES                     */
+/* ============================================================ */
+.pool-search {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.pool-search-field { position: relative; }
+.pool-search-field input {
+    width: 100%;
+    padding: 12px 42px 12px 42px;
+    background: var(--bg-gray-light);
+    border: 2px solid var(--border-gray);
+    border-radius: 12px;
+    color: var(--text-main);
+    font-size: .95rem;
+    font-weight: 600;
+    font-family: inherit;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+.pool-search-field input::placeholder { color: var(--text-gray); font-weight: 400; }
+.pool-search-field input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 212, 255, .15);
+}
+/* La croix native ferait doublon avec la nôtre, et n'est pas stylable. */
+.pool-search-field input::-webkit-search-cancel-button { display: none; }
+
+.pool-search-icon {
+    position: absolute;
+    top: 50%;
+    left: 13px;
+    transform: translateY(-50%);
+    display: flex;
+    color: var(--text-gray);
+    pointer-events: none;
+}
+.pool-search-clear {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    color: var(--text-gray);
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease;
+}
+.pool-search-clear:hover { background: var(--bg-hover); color: var(--text-main); }
+/* Une déclaration `display` de classe l'emporte sur l'attribut `hidden`. */
+.pool-search-clear[hidden] { display: none; }
+
+.pool-filter-chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.pool-filter-chips::-webkit-scrollbar { display: none; }
+.pool-filter-chip {
+    flex: 0 0 auto;
+    padding: 8px 15px;
+    min-height: 38px;
+    background: transparent;
+    border: 1px solid var(--border-gray);
+    border-radius: 999px;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: .8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s ease;
+}
+.pool-filter-chip:hover { border-color: var(--primary); color: var(--primary); }
+.pool-filter-chip.is-active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--bg);
+}
+
+/* Pastille d'accès dans la fiche du pool. */
+.pool-acces-badge.is-protege {
+    background: color-mix(in srgb, var(--warning) 16%, transparent);
+    color: var(--warning);
+}
+.pool-acces-badge.is-ouvert {
+    background: color-mix(in srgb, var(--success) 14%, transparent);
+    color: var(--success);
+}
+
+.pool-no-result {
+    padding: 34px 20px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: .95rem;
+}
+.pool-no-result[hidden] { display: none; }
+
+/* `hidden` sur un <li> de la liste : la règle de liste pose un `display`
+   qui l'emporterait sans cela. */
+#available-clans-list li[hidden] { display: none; }
+
+@media (min-width: 700px) {
+    .pool-search {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .pool-search-field { flex: 1 1 auto; max-width: 420px; }
+    .pool-filter-chips { flex: 0 0 auto; }
+}
