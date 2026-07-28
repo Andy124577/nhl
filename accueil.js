@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await Promise.all([loadPools(), loadCurrentStats(), loadStats()]);
 
     // Render all sections
+    renderMyRankings();      // all pools you're in, with your position in each
     renderHeroLeaderboard();
     adaptHeroForUser();      // auth-aware primary CTA (Jakob's Law)
     renderResumeBanner();    // open-task pull (Zeigarnik Effect)
@@ -305,6 +306,168 @@ function buildTeamScores(pool) {
     });
 
     return rows;
+}
+
+// ============================================================
+// MY RANKINGS SECTION (every pool the user is in, expandable)
+// ============================================================
+function renderMyRankings() {
+    const section = document.getElementById('myRankingsSection');
+    const list    = document.getElementById('myRankingsList');
+    if (!section || !list) return;
+
+    // Nothing to rank for logged-out visitors or users without pools
+    if (!userData.username || !userData.userPools.length) {
+        section.style.display = 'none';
+        return;
+    }
+
+    const entries = userData.userPools.map(pool => {
+        const scores = buildTeamScores(pool);
+        const idx    = scores.findIndex(t => t.isCurrentUser);
+        return {
+            pool,
+            rank:  idx >= 0 ? idx + 1 : null,
+            total: scores.length,
+            score: idx >= 0 ? scores[idx].score : 0
+        };
+    }).sort((a, b) => (a.rank || Infinity) - (b.rank || Infinity));
+
+    const count = document.getElementById('myRankingsCount');
+    if (count) count.textContent = `${entries.length} pool${entries.length > 1 ? 's' : ''}`;
+
+    const rankCls = r => r === 1 ? 'gold' : r === 2 ? 'silver' : r === 3 ? 'bronze' : '';
+
+    list.innerHTML = entries.map(({ pool, rank, total, score }) => {
+        const mode = !pool.isDraftComplete
+            ? '<span class="rk-pool-mode pending">Repêchage en cours</span>'
+            : `<span class="rk-pool-mode">${pool.mode === 'head-to-head' ? 'Tête-à-tête' : 'Cumulatif'} · ${escapeHTML(pool.userTeam)}</span>`;
+
+        return `
+        <div class="ranking-item" data-pool="${escapeHTML(pool.name)}">
+            <button class="ranking-row" type="button" aria-expanded="false"
+                    onclick="togglePoolRanking(this)">
+                <span class="rk-pool">
+                    <span class="rk-pool-name">${escapeHTML(pool.name)}</span>
+                    ${mode}
+                </span>
+                <span class="rk-rank">
+                    <span class="rk-rank-pos ${rankCls(rank)}">${rank || '—'}</span><span class="rk-rank-total">/${total}</span>
+                </span>
+                <span class="rk-pts">
+                    <span class="rk-pts-value">${score}</span><span class="rk-pts-label">PTS</span>
+                </span>
+                <span class="rk-chevron">▼</span>
+            </button>
+            <div class="ranking-detail"></div>
+        </div>`;
+    }).join('');
+
+    section.style.display = '';
+}
+
+// Expand/collapse a pool row to reveal the roster the user drafted in it.
+// Detail markup is built on first open to keep the initial render light.
+function togglePoolRanking(rowBtn) {
+    const item   = rowBtn.parentElement;
+    const detail = item.querySelector('.ranking-detail');
+    const isOpen = item.classList.contains('open');
+
+    if (isOpen) {
+        detail.style.maxHeight = '0px';
+        item.classList.remove('open');
+        rowBtn.setAttribute('aria-expanded', 'false');
+        return;
+    }
+
+    if (!detail.innerHTML.trim()) {
+        detail.innerHTML = buildPoolRosterHTML(item.dataset.pool);
+    }
+    item.classList.add('open');
+    rowBtn.setAttribute('aria-expanded', 'true');
+    detail.style.maxHeight = `${detail.scrollHeight}px`;
+}
+
+// Player name → current-season stats, built once from /current-stats
+let playerStatsIndex = null;
+function getPlayerStats(name) {
+    if (!playerStatsIndex) {
+        playerStatsIndex = {};
+        const players = userData.statsData?.players || [];
+        players.forEach(p => { if (p.playerName) playerStatsIndex[p.playerName] = p; });
+    }
+    return playerStatsIndex[name] || null;
+}
+
+function buildPoolRosterHTML(poolName) {
+    const pool = userData.userPools.find(p => p.name === poolName);
+    if (!pool) return '<div class="rk-detail-empty">Pool introuvable</div>';
+
+    const td = pool.userTeamData || {};
+    const groups = [
+        ['Attaquants', td.offensive || []],
+        ['Défenseurs', td.defensive || []],
+        ['Gardiens',   td.goalie    || []],
+        ['Recrues',    td.rookie    || []]
+    ].filter(([, names]) => names.length);
+
+    if (!groups.length) {
+        return `
+            <div class="rk-detail-inner">
+                <div class="rk-detail-empty">Aucun joueur sélectionné pour ce pool.</div>
+                <a class="rk-detail-link" href="draftActif.html?pool=${encodeURIComponent(pool.name)}">Aller au repêchage →</a>
+            </div>`;
+    }
+
+    const body = groups.map(([title, names]) => `
+        <div class="rk-group-title">${title}</div>
+        ${names.map(name => renderRosterPlayer(name)).join('')}
+    `).join('');
+
+    return `
+        <div class="rk-detail-inner">
+            ${body}
+            <a class="rk-detail-link" href="classement.html">Voir le classement complet →</a>
+        </div>`;
+}
+
+function renderRosterPlayer(name) {
+    const s        = getPlayerStats(name);
+    const pos      = s?.position || '—';
+    const team     = s?.teamAbbrev || 'N/A';
+    const games    = s?.gamesPlayed || 0;
+    const headshot = s?.headshot ||
+        (s?.playerId && s?.teamAbbrev
+            ? `https://assets.nhle.com/mugs/nhl/20252026/${s.teamAbbrev}/${s.playerId}.png`
+            : '');
+
+    const stats = pos === 'G'
+        ? [['pts', s?.points || 0, 'PTS'], ['', s?.wins || 0, 'VIC'], ['', s?.shutouts || 0, 'BL']]
+        : [['pts', s?.points || 0, 'PTS'], ['', s?.goals || 0, 'BTS'], ['', s?.assists || 0, 'ASS']];
+
+    return `
+        <div class="rk-player">
+            ${headshot
+                ? `<img class="rk-player-photo" src="${headshot}" alt="${escapeHTML(name)}" loading="lazy"
+                        onerror="this.style.visibility='hidden'">`
+                : '<span class="rk-player-photo"></span>'}
+            <span class="rk-player-id">
+                <span class="rk-player-name">${escapeHTML(name)}</span>
+                <span class="rk-player-meta">${team} · ${pos} · ${games} PJ</span>
+            </span>
+            <span class="rk-player-stats">
+                ${stats.map(([cls, val, label]) => `
+                    <span class="rk-stat">
+                        <span class="rk-stat-val ${cls}">${val}</span>
+                        <span class="rk-stat-label">${label}</span>
+                    </span>`).join('')}
+            </span>
+        </div>`;
+}
+
+function escapeHTML(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 // ============================================================
