@@ -323,8 +323,12 @@ function renderMyRankings() {
     }
 
     const entries = userData.userPools.map(pool => {
-        const scores = buildTeamScores(pool);
-        const idx    = scores.findIndex(t => t.isCurrentUser);
+        // Pools are created with 10 empty "Équipe N" slots — rank against the
+        // teams that actually have members, not the unclaimed placeholders.
+        const allScores = buildTeamScores(pool);
+        const claimed   = allScores.filter(t => t.memberCount > 0);
+        const scores    = claimed.length ? claimed : allScores;
+        const idx       = scores.findIndex(t => t.isCurrentUser);
         return {
             pool,
             rank:  idx >= 0 ? idx + 1 : null,
