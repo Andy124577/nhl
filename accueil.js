@@ -598,7 +598,9 @@ function renderTopPlayers() {
     if (skeleton) skeleton.style.display = 'none';
     if (!content) return;
 
-    content.style.display = 'grid';
+    // Clear the inline display so .players-grid decides the layout — it's a grid
+    // on desktop and a horizontal snap-scroller on phones.
+    content.style.display = '';
 
     const hotPlayers = userData.hotPlayers;
     if (!hotPlayers || !hotPlayers.topPlayers) {
@@ -609,7 +611,7 @@ function renderTopPlayers() {
     const performers = hotPlayers.topPlayers.slice(0, 10);
 
     if (!performers.length) {
-        content.innerHTML = `<p style="grid-column:1/-1;text-align:center;
+        content.innerHTML = `<p style="grid-column:1/-1;width:100%;text-align:center;
             padding:48px;color:var(--text-secondary);">Aucun joueur trouvé dans les ${timeRangeText(currentTimeRange)}</p>`;
         return;
     }
@@ -684,9 +686,9 @@ function renderTopPlayersError() {
     const content  = document.getElementById('topPlayersList');
     if (skeleton) skeleton.style.display = 'none';
     if (!content) return;
-    content.style.display = 'grid';
+    content.style.display = '';
     content.innerHTML = `
-        <div style="grid-column:1/-1;text-align:center;padding:48px;">
+        <div style="grid-column:1/-1;text-align:center;padding:48px;width:100%;">
             <p style="color:var(--text-secondary);margin-bottom:12px;font-size:1.1rem;">
                 📊 Aucune donnée disponible</p>
             <p style="color:var(--text-gray);margin-bottom:18px;font-size:0.9rem;">

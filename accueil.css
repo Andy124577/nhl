@@ -780,7 +780,28 @@ body {
     .hero-floating-card { min-width: 280px; }
     .chip-1, .chip-2 { display: none; }
 
-    .players-grid { grid-template-columns: repeat(2, 1fr); }
+    /* Phones: one horizontal, swipeable row instead of a wrapping grid */
+    .players-grid {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+        gap: 12px;
+        /* bleed into the section padding so cards peek at both edges */
+        margin: 0 -16px;
+        padding: 4px 16px 10px;
+        scrollbar-width: none;
+    }
+    .players-grid::-webkit-scrollbar { display: none; }
+
+    .player-card,
+    .players-grid > .skeleton {
+        flex: 0 0 clamp(150px, 62%, 220px);
+        scroll-snap-align: center;
+    }
+    /* Touch devices keep :hover stuck after a tap — don't let it shift the card */
+    .player-card:hover { transform: none; }
 
     .section-title-row { flex-direction: column; align-items: flex-start; }
     .section-title-row.center { align-items: center; }
@@ -794,7 +815,6 @@ body {
     .hero-headline { font-size: 2rem; }
     .hero-actions { flex-direction: column; width: 100%; }
     .btn-hero-primary, .btn-hero-secondary { justify-content: center; }
-    .players-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
     .leaderboard-row { padding: 12px 14px; gap: 10px; }
     .lb-pts-value { font-size: 1.1rem; }
 }
