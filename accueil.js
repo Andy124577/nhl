@@ -525,16 +525,9 @@ function renderLeaderboard() {
     `).join('');
 }
 
-// ============================================================
-// DEMO LEADERBOARD DATA (shown to logged-out visitors)
-// ============================================================
-const DEMO_TEAMS = [
-    { teamName: 'Les Glorieux',      score: 214 },
-    { teamName: 'Ice Storm MTL',     score: 189 },
-    { teamName: 'Nordiques Revival', score: 163 },
-    { teamName: 'Bleu Blanc Rouge',  score: 147 },
-    { teamName: 'Hockey Royale',     score: 121 },
-];
+// Le classement de démonstration servi aux visiteurs a disparu avec la
+// carte qu'il remplissait : le héros leur montre désormais un repêchage
+// en cours, qui dit mieux ce que le site permet de faire.
 
 // ============================================================
 // HERO LEADERBOARD PREVIEW (floating card)
@@ -543,29 +536,12 @@ function renderHeroLeaderboard() {
     const el = document.getElementById('heroLeaderboardPreview');
     if (!el) return;
 
-    // Logged-out: show demo data with an "Aperçu" label
-    if (!userData.username) {
-        const headerSpan = document.querySelector('.hfc-header > span:nth-child(2)');
-        if (headerSpan) headerSpan.textContent = 'Aperçu du classement';
-
-        const rankCls = i => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-        el.innerHTML = DEMO_TEAMS.map((team, i) => `
-            <div class="hfc-row">
-                <div class="hfc-rank ${rankCls(i)}">${i + 1}</div>
-                <div class="hfc-team">${team.teamName}</div>
-                <div class="hfc-pts">${team.score} <span style="font-size:.72rem;opacity:.7">PTS</span></div>
-            </div>
-        `).join('') + `
-            <div style="text-align:center;margin-top:10px;">
-                <a href="signup.html" style="font-size:.78rem;color:var(--primary);font-weight:700;text-decoration:none;">
-                    Créer votre équipe →
-                </a>
-            </div>`;
-        return;
-    }
+    // Visiteur : cette carte est masquée, c'est le repêchage animé qui
+    // occupe le héros (demos.js). Rien à peupler ici.
+    if (!userData.username) return;
 
     // Update header to show pool name
-    const headerSpan = document.querySelector('.hfc-header > span:nth-child(2)');
+    const headerSpan = document.querySelector('#heroCardStandings .hfc-header > span:nth-child(2)');
     if (headerSpan && userData.primaryPool) {
         headerSpan.textContent = `Classement en direct · ${userData.primaryPool.name}`;
     }

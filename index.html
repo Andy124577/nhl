@@ -5,11 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fantazy — Pools de hockey entre amis</title>
     <script src="theme.js"></script>
+    <!-- Quelle carte affiche le héros ? Décidé avant le premier rendu, comme
+         le thème : sinon le visiteur verrait passer le classement d'un membre
+         avant que le script de page ne le remplace. -->
+    <script>
+        (function () {
+            var connecte = localStorage.getItem('isLoggedIn') === 'true'
+                && !!localStorage.getItem('username');
+            document.documentElement.classList.add(connecte ? 'fz-auth' : 'fz-anon');
+        })();
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css">
     <link rel="stylesheet" href="poolNav.css">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="accueil.css">
+    <link rel="stylesheet" href="demos.css">
     <link rel="stylesheet" href="skeleton-loader.css">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
@@ -57,9 +68,74 @@
                 </div>
             </div>
 
-            <!-- Right: floating leaderboard preview -->
+            <!-- Right: aperçu flottant -->
+            <!-- Deux cartes, une seule affichée : le visiteur voit ce que le
+                 site permet de faire (repêcher), le membre voit où il en est
+                 (son classement). Le choix est posé par le script en ligne
+                 du <head>, avant le premier rendu. -->
             <div class="hero-preview-wrap">
-                <div class="hero-floating-card">
+                <!-- Visiteur : la salle de repêchage en action -->
+                <div class="hero-floating-card hfc-draft" id="heroCardDraft">
+                    <div class="hfc-header">
+                        <span class="live-dot"></span>
+                        <span>Repêchage en direct</span>
+                        <span class="hfc-pick-counter" id="demoPickCounter">Choix 7 / 40</span>
+                    </div>
+
+                    <div class="dm-banner is-your-turn" id="demoTurnBanner">🎯 C'est votre tour — sélectionnez un joueur !</div>
+
+                    <div class="dm-players">
+                        <div class="dm-player">
+                            <span class="dm-mono">NM</span>
+                            <span class="dm-name">Nathan MacKinnon</span>
+                            <span class="dm-tag att">ATT</span>
+                            <span class="dm-pts">92</span>
+                            <button class="dm-pick" type="button" tabindex="-1" aria-hidden="true">
+                                <img src="Icons/sign.png" alt="">
+                            </button>
+                            <span class="dm-check">✓</span>
+                        </div>
+                        <div class="dm-player">
+                            <span class="dm-mono">CM</span>
+                            <span class="dm-name">Cale Makar</span>
+                            <span class="dm-tag def">DÉF</span>
+                            <span class="dm-pts">71</span>
+                            <button class="dm-pick" type="button" tabindex="-1" aria-hidden="true">
+                                <img src="Icons/sign.png" alt="">
+                            </button>
+                            <span class="dm-check">✓</span>
+                        </div>
+                        <div class="dm-player">
+                            <span class="dm-mono">CH</span>
+                            <span class="dm-name">Connor Hellebuyck</span>
+                            <span class="dm-tag gar">GAR</span>
+                            <span class="dm-pts">28</span>
+                            <button class="dm-pick" type="button" tabindex="-1" aria-hidden="true">
+                                <img src="Icons/sign.png" alt="">
+                            </button>
+                            <span class="dm-check">✓</span>
+                        </div>
+                    </div>
+
+                    <!-- « Ma progression », comme dans la salle de repêchage -->
+                    <div class="dm-progress">
+                        <div class="dm-line" data-cat="off">
+                            <span class="dm-line-lbl">Attaquants</span>
+                            <span class="dm-bar"><i style="width:33%"></i></span>
+                            <span class="dm-count">2/6</span>
+                        </div>
+                        <div class="dm-line" data-cat="def">
+                            <span class="dm-line-lbl">Défenseurs</span>
+                            <span class="dm-bar"><i style="width:25%"></i></span>
+                            <span class="dm-count">1/4</span>
+                        </div>
+                    </div>
+
+                    <a href="signup.html" class="dm-cta">Repêcher votre équipe →</a>
+                </div>
+
+                <!-- Membre : son classement en direct -->
+                <div class="hero-floating-card" id="heroCardStandings">
                     <div class="hfc-header">
                         <span class="live-dot"></span>
                         <span>Classement en direct</span>
@@ -168,7 +244,25 @@
                 <!-- Step 1 -->
                 <div class="step-card">
                     <div class="step-number">01</div>
-                    <div class="step-icon-wrap" data-icon="hockey" data-icon-size="48"></div>
+                    <!-- Maquette du vrai formulaire de creer-pool.html :
+                         mêmes champs, mêmes valeurs par défaut, même bouton. -->
+                    <div class="hiw-demo hiw-create" aria-hidden="true">
+                        <div class="hiw-win">
+                            <div>
+                                <span class="hiw-label">Nom du pool</span>
+                                <span class="hiw-input"><span class="hiw-typed"></span><i class="hiw-caret"></i></span>
+                            </div>
+                            <div class="hiw-chips">
+                                <span class="hiw-chip">Attaquants <b>6</b></span>
+                                <span class="hiw-chip">Défenseurs <b>4</b></span>
+                                <span class="hiw-chip">Gardiens <b>1</b></span>
+                                <span class="hiw-chip">Recrues <b>1</b></span>
+                                <span class="hiw-chip">8 participants</span>
+                            </div>
+                            <button class="hiw-btn" type="button" tabindex="-1">Créer le pool</button>
+                        </div>
+                        <span class="hiw-cursor"></span>
+                    </div>
                     <h3 class="step-title">Rejoindre ou créer un pool</h3>
                     <p class="step-desc">Invitez vos amis et configurez votre ligue personnalisée avec vos propres règles de scoring.</p>
                     <a href="mes-pools.html" class="step-cta">Commencer →</a>
@@ -182,7 +276,37 @@
                 <!-- Step 2 -->
                 <div class="step-card">
                     <div class="step-number">02</div>
-                    <div class="step-icon-wrap" data-icon="target" data-icon-size="48"></div>
+                    <!-- Maquette de draftActif.html : bandeau de tour, liste
+                         des joueurs disponibles, et « Ma progression » qui
+                         avance quand le choix est fait. -->
+                    <div class="hiw-demo hiw-draft" aria-hidden="true">
+                        <div class="hiw-win">
+                            <div class="hiw-turn">🎯 C'est votre tour</div>
+                            <div class="hiw-rows">
+                                <div class="hiw-row">
+                                    <span class="hiw-row-name">N. MacKinnon</span>
+                                    <span class="hiw-tag att">ATT</span>
+                                    <span class="hiw-row-pts">92</span>
+                                </div>
+                                <div class="hiw-row">
+                                    <span class="hiw-row-name">C. Makar</span>
+                                    <span class="hiw-tag def">DÉF</span>
+                                    <span class="hiw-row-pts">71</span>
+                                </div>
+                                <div class="hiw-row">
+                                    <span class="hiw-row-name">C. Hellebuyck</span>
+                                    <span class="hiw-tag gar">GAR</span>
+                                    <span class="hiw-row-pts">28</span>
+                                </div>
+                            </div>
+                            <div class="hiw-prog">
+                                <span class="hiw-prog-lbl">Attaquants</span>
+                                <span class="hiw-bar"><i style="width:33%"></i></span>
+                                <span class="hiw-cnt">2/6</span>
+                            </div>
+                        </div>
+                        <span class="hiw-cursor"></span>
+                    </div>
                     <h3 class="step-title">Repêcher votre équipe</h3>
                     <p class="step-desc">Sélectionnez les meilleurs joueurs de la LNH pour bâtir l'équipe parfaite.</p>
                     <a href="repechage.html" class="step-cta">Voir le repêchage →</a>
@@ -196,7 +320,31 @@
                 <!-- Step 3 -->
                 <div class="step-card">
                     <div class="step-number">03</div>
-                    <div class="step-icon-wrap" data-icon="trophy" data-icon-size="48"></div>
+                    <!-- Maquette de classement.html : les points des joueurs
+                         repêchés tombent chaque soir, et le rang bouge. -->
+                    <div class="hiw-demo hiw-rank" aria-hidden="true">
+                        <div class="hiw-win">
+                            <div class="hiw-week">Semaine 11</div>
+                            <div class="hiw-board">
+                                <div class="hiw-rrow">
+                                    <span class="hiw-pos gold">1</span>
+                                    <span class="hiw-rrow-name">Les Glorieux</span>
+                                    <span class="hiw-rrow-pts">189</span>
+                                </div>
+                                <div class="hiw-rrow">
+                                    <span class="hiw-pos silver">2</span>
+                                    <span class="hiw-rrow-name">Ice Storm MTL</span>
+                                    <span class="hiw-rrow-pts">163</span>
+                                </div>
+                                <div class="hiw-rrow is-mine">
+                                    <span class="hiw-pos bronze">3</span>
+                                    <span class="hiw-rrow-name">Mon équipe</span>
+                                    <span class="hiw-rrow-pts">147</span>
+                                </div>
+                                <span class="hiw-gain">+21</span>
+                            </div>
+                        </div>
+                    </div>
                     <h3 class="step-title">Compétitionner et gagner</h3>
                     <p class="step-desc">Affrontez d'autres gérants semaine après semaine et grimpez le classement.</p>
                     <a href="classement.html" class="step-cta">Voir le classement →</a>
@@ -208,6 +356,7 @@
     <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script defer src="lazy-load.js"></script>
     <script defer src="accueil.js"></script>
+    <script defer src="demos.js"></script>
     <script defer src="navbar.js"></script>
     <script defer src="poolNav.js"></script>
     <script defer src="notifications.js"></script>

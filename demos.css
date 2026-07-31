@@ -1,0 +1,582 @@
+/* ============================================================
+   DÉMONSTRATIONS ANIMÉES — accueil
+   ------------------------------------------------------------
+   Ces maquettes rejouent les écrans réels du site : mêmes libellés,
+   mêmes couleurs de position, même bandeau de tour que draftActif,
+   mêmes champs que la page de création. Quelqu'un qui les regarde
+   doit reconnaître ce qu'il verra ensuite.
+
+   Les couleurs de position reprennent celles de trade.css :
+   ATT vert, DÉF cyan, GAR ambre, REC violet, ÉQU orange.
+   ============================================================ */
+
+/* ==================== CHOIX DE LA CARTE HÉROS ==================== */
+/* Posé par un script en ligne dans <head> : le visiteur non connecté
+   voit le repêchage, le membre son classement, sans clignotement. */
+
+html.fz-anon #heroCardStandings { display: none; }
+html.fz-auth #heroCardDraft     { display: none; }
+
+/* ==================== CARTE « REPÊCHAGE EN DIRECT » ==================== */
+
+.hfc-pick-counter {
+    margin-left: auto;
+    font-size: .72rem;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: .02em;
+    white-space: nowrap;
+}
+
+/* L'en-tête porte trois éléments au lieu de deux : il doit tenir sur une
+   ligne pour que le compteur de choix reste lisible. */
+.hfc-draft .hfc-header { margin-bottom: 14px; }
+.hfc-draft .hfc-header > span:nth-child(2) { white-space: nowrap; font-size: .88rem; }
+
+/* Bandeau de tour — copie conforme de .turn-banner de draftActif */
+.dm-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 0 0 12px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    font-size: .8rem;
+    font-weight: 800;
+    text-align: center;
+    line-height: 1.3;
+    background: rgba(0,230,118,.14);
+    color: var(--success);
+    box-shadow: inset 0 0 0 1px rgba(0,230,118,.3);
+    transition: background .35s ease, color .35s ease, box-shadow .35s ease;
+}
+
+.dm-banner.is-waiting {
+    background: rgba(255,179,0,.13);
+    color: var(--warning);
+    box-shadow: inset 0 0 0 1px rgba(255,179,0,.28);
+    animation: none;
+}
+
+.dm-banner.is-your-turn { animation: dm-pulse 1.8s ease-in-out infinite; }
+
+@keyframes dm-pulse {
+    0%, 100% { box-shadow: inset 0 0 0 1px rgba(0,230,118,.3); }
+    50%      { box-shadow: inset 0 0 0 1px rgba(0,230,118,.75), 0 0 16px rgba(0,230,118,.22); }
+}
+
+/* ==================== RANGÉES DE JOUEURS ==================== */
+/* Reprend l'ordre de colonnes du tableau de repêchage :
+   photo · joueur · position · points · action. */
+
+.dm-players { display: flex; flex-direction: column; gap: 6px; }
+
+.dm-player {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.03);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+    overflow: hidden;
+    transition: background .3s ease, box-shadow .3s ease, transform .3s ease;
+}
+
+.dm-player.is-target {
+    background: rgba(0,212,255,.1);
+    box-shadow: inset 0 0 0 1px rgba(0,212,255,.45);
+}
+
+.dm-player.is-picked {
+    background: rgba(0,230,118,.14);
+    box-shadow: inset 0 0 0 1px rgba(0,230,118,.5);
+}
+
+/* Repli de la rangée choisie : elle quitte la liste comme dans le
+   vrai repêchage, où le joueur pris disparaît des disponibles. */
+.dm-player.is-gone {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: -6px;
+    opacity: 0;
+    transform: translateX(14px);
+    transition: all .45s cubic-bezier(.4,0,.2,1);
+}
+
+.dm-mono {
+    flex: 0 0 auto;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .66rem; font-weight: 800;
+    background: linear-gradient(135deg, rgba(0,212,255,.28), rgba(0,212,255,.08));
+    color: var(--text-main);
+}
+
+.dm-name {
+    flex: 1;
+    min-width: 0;
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dm-tag {
+    flex: 0 0 auto;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: .62rem;
+    font-weight: 900;
+    letter-spacing: .04em;
+}
+
+.dm-tag.att { background: rgba(0,230,118,.2);  color: var(--success); }
+.dm-tag.def { background: rgba(0,212,255,.2);  color: var(--primary); }
+.dm-tag.gar { background: rgba(255,193,7,.2);  color: var(--warning); }
+.dm-tag.rec { background: rgba(156,39,176,.2); color: #CE93D8; }
+.dm-tag.equ { background: rgba(255,152,0,.2);  color: #FFB74D; }
+
+.dm-pts {
+    flex: 0 0 auto;
+    font-size: .78rem;
+    font-weight: 800;
+    color: var(--primary);
+    min-width: 30px;
+    text-align: right;
+}
+
+/* Bouton de sélection — même icône que .select-button du repêchage */
+.dm-pick {
+    flex: 0 0 auto;
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    border: 0;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    cursor: default;
+    opacity: .55;
+    transition: opacity .25s ease, transform .25s ease;
+}
+
+.dm-pick img { width: 14px; height: 14px; object-fit: contain; }
+.dm-player.is-target .dm-pick { opacity: 1; transform: scale(1.12); }
+
+/* La coche se superpose au bouton plutôt que de s'ajouter à la rangée :
+   sinon la largeur changerait au moment du choix. */
+.dm-check {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    width: 26px;
+    margin-top: -11px;
+    text-align: center;
+    font-size: .95rem;
+    font-weight: 900;
+    line-height: 22px;
+    color: var(--success);
+    opacity: 0;
+    transform: scale(.4);
+    transition: opacity .25s ease, transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+
+.dm-player.is-picked .dm-check { opacity: 1; transform: scale(1); }
+.dm-player.is-picked .dm-pick  { visibility: hidden; }
+
+/* ==================== PROGRESSION DE L'EFFECTIF ==================== */
+/* Reprise de « Ma progression » du repêchage : libellé, barre, x/y. */
+
+.dm-progress {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,.07);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dm-line { display: flex; align-items: center; gap: 9px; }
+
+.dm-line-lbl {
+    flex: 0 0 76px;
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.dm-bar {
+    flex: 1;
+    height: 5px;
+    border-radius: 99px;
+    background: rgba(255,255,255,.08);
+    overflow: hidden;
+}
+
+.dm-bar i {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--primary), #00B8D9);
+    transition: width .55s cubic-bezier(.4,0,.2,1);
+}
+
+.dm-count {
+    flex: 0 0 auto;
+    font-size: .72rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    min-width: 26px;
+    text-align: right;
+}
+
+.dm-count.is-bump { animation: dm-bump .5s ease; }
+
+@keyframes dm-bump {
+    0%   { transform: scale(1);   color: var(--text-dark); }
+    40%  { transform: scale(1.35); color: var(--success); }
+    100% { transform: scale(1);   color: var(--text-dark); }
+}
+
+.dm-cta {
+    display: block;
+    margin-top: 14px;
+    text-align: center;
+    font-size: .78rem;
+    font-weight: 800;
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.dm-cta:hover { text-decoration: underline; }
+
+/* ============================================================ */
+/* MAQUETTES DES 3 ÉTAPES                                       */
+/* ============================================================ */
+
+.hiw-demo {
+    position: relative;
+    width: 100%;
+    max-width: 260px;
+    margin: 0 auto 20px;
+    /* Hauteur fixe : les trois cartes doivent rester alignées même si
+       leur contenu change au fil de l'animation. */
+    height: 186px;
+    user-select: none;
+}
+
+.hiw-win {
+    position: absolute;
+    inset: 0;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(10,10,26,.55);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.07);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+    text-align: left;
+}
+
+html[data-theme="light"] .hiw-win {
+    background: rgba(255,255,255,.7);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+}
+
+html[data-theme="light"] .dm-player { background: rgba(0,0,0,.03); box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
+html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
+
+/* Curseur qui montre où l'on clique réellement */
+.hiw-cursor {
+    position: absolute;
+    left: 0; top: 0;
+    width: 16px; height: 16px;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 3;
+    transition: transform .55s cubic-bezier(.4,0,.2,1), opacity .3s ease;
+}
+
+.hiw-cursor::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--text-main);
+    clip-path: polygon(0 0, 0 72%, 26% 56%, 44% 92%, 60% 84%, 42% 48%, 72% 44%);
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+
+.hiw-cursor.is-on { opacity: 1; }
+.hiw-cursor.is-click::after {
+    content: '';
+    position: absolute;
+    left: -6px; top: -6px;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+    animation: hiw-ripple .5s ease-out;
+}
+
+@keyframes hiw-ripple {
+    from { transform: scale(.3); opacity: .9; }
+    to   { transform: scale(1.5); opacity: 0; }
+}
+
+/* ==================== ÉTAPE 1 — CRÉER UN POOL ==================== */
+
+.hiw-label {
+    display: block;
+    font-size: .58rem;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--text-gray);
+    margin-bottom: 3px;
+}
+
+.hiw-input {
+    display: flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: rgba(255,255,255,.05);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.09);
+    font-size: .74rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.hiw-input.is-focus { box-shadow: inset 0 0 0 1px var(--primary); }
+
+.hiw-caret {
+    width: 1px;
+    height: 12px;
+    margin-left: 1px;
+    background: var(--primary);
+    animation: hiw-blink 1s step-end infinite;
+}
+
+@keyframes hiw-blink { 50% { opacity: 0; } }
+
+.hiw-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.hiw-chip {
+    padding: 3px 7px;
+    border-radius: 6px;
+    background: rgba(0,212,255,.1);
+    box-shadow: inset 0 0 0 1px rgba(0,212,255,.22);
+    font-size: .6rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    opacity: 0;
+    transform: translateY(5px);
+    transition: opacity .3s ease, transform .3s ease;
+}
+
+.hiw-chip b { color: var(--primary); font-weight: 900; }
+.hiw-chip.is-in { opacity: 1; transform: none; }
+
+.hiw-btn {
+    margin-top: auto;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    color: var(--bg);
+    font-size: .72rem;
+    font-weight: 900;
+    cursor: default;
+    transition: transform .2s ease, background .3s ease;
+}
+
+.hiw-btn.is-press { transform: scale(.96); }
+.hiw-btn.is-done  { background: linear-gradient(135deg, var(--success) 0%, #00C969 100%); }
+
+/* ==================== ÉTAPE 2 — REPÊCHER ==================== */
+
+.hiw-turn {
+    padding: 5px 8px;
+    border-radius: 7px;
+    font-size: .62rem;
+    font-weight: 800;
+    text-align: center;
+    background: rgba(0,230,118,.14);
+    color: var(--success);
+    box-shadow: inset 0 0 0 1px rgba(0,230,118,.3);
+    transition: background .35s ease, color .35s ease, box-shadow .35s ease;
+}
+
+.hiw-turn.is-waiting {
+    background: rgba(255,179,0,.13);
+    color: var(--warning);
+    box-shadow: inset 0 0 0 1px rgba(255,179,0,.28);
+}
+
+.hiw-rows { display: flex; flex-direction: column; gap: 4px; }
+
+.hiw-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 7px;
+    border-radius: 7px;
+    background: rgba(255,255,255,.035);
+    font-size: .66rem;
+    transition: background .3s ease, box-shadow .3s ease, opacity .4s ease, transform .4s ease;
+}
+
+.hiw-row.is-target { background: rgba(0,212,255,.12); box-shadow: inset 0 0 0 1px rgba(0,212,255,.4); }
+.hiw-row.is-picked { background: rgba(0,230,118,.16); box-shadow: inset 0 0 0 1px rgba(0,230,118,.45); }
+.hiw-row.is-gone   { opacity: 0; transform: translateX(20px); }
+.hiw-row.is-picked .hiw-row-pts::after { content: ' ✓'; color: var(--success); }
+
+.hiw-row-name {
+    flex: 1;
+    min-width: 0;
+    font-weight: 700;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hiw-tag {
+    padding: 1px 5px;
+    border-radius: 5px;
+    font-size: .54rem;
+    font-weight: 900;
+}
+
+.hiw-tag.att { background: rgba(0,230,118,.2);  color: var(--success); }
+.hiw-tag.def { background: rgba(0,212,255,.2);  color: var(--primary); }
+.hiw-tag.gar { background: rgba(255,193,7,.2);  color: var(--warning); }
+
+.hiw-row-pts { font-weight: 900; color: var(--primary); font-size: .64rem; }
+
+.hiw-prog { display: flex; align-items: center; gap: 6px; margin-top: auto; }
+.hiw-prog-lbl { flex: 0 0 auto; font-size: .6rem; font-weight: 700; color: var(--text-secondary); }
+
+.hiw-bar {
+    flex: 1;
+    height: 4px;
+    border-radius: 99px;
+    background: rgba(255,255,255,.09);
+    overflow: hidden;
+}
+
+.hiw-bar i {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #00B8D9);
+    transition: width .55s cubic-bezier(.4,0,.2,1);
+}
+
+.hiw-cnt { flex: 0 0 auto; font-size: .6rem; font-weight: 900; color: var(--text-dark); }
+.hiw-cnt.is-bump { animation: dm-bump .5s ease; }
+
+/* ==================== ÉTAPE 3 — CLASSEMENT ==================== */
+
+.hiw-board { display: flex; flex-direction: column; gap: 5px; position: relative; }
+
+.hiw-rrow {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: rgba(255,255,255,.035);
+    font-size: .68rem;
+    transition: transform .7s cubic-bezier(.4,0,.2,1), background .4s ease, box-shadow .4s ease;
+}
+
+.hiw-rrow.is-mine {
+    background: rgba(0,212,255,.1);
+    box-shadow: inset 0 0 0 1px rgba(0,212,255,.4);
+}
+
+.hiw-pos {
+    flex: 0 0 auto;
+    width: 18px; height: 18px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .6rem; font-weight: 900;
+    background: rgba(255,255,255,.08);
+    color: var(--text-secondary);
+    transition: background .4s ease, color .4s ease;
+}
+
+.hiw-pos.gold   { background: rgba(255,179,0,.2);   color: var(--warning); }
+.hiw-pos.silver { background: rgba(185,185,205,.16); color: #B8B8CC; }
+.hiw-pos.bronze { background: rgba(180,100,0,.2);   color: #CD7F32; }
+
+.hiw-rrow-name {
+    flex: 1;
+    min-width: 0;
+    font-weight: 700;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hiw-rrow-pts { font-weight: 900; color: var(--primary); font-size: .68rem; }
+
+/* Gain de points qui s'envole, comme une soirée de hockey qui rapporte.
+   Ancré en bas à droite : c'est de là que part la rangée « Mon équipe ». */
+.hiw-gain {
+    position: absolute;
+    right: 8px;
+    bottom: 4px;
+    font-size: .62rem;
+    font-weight: 900;
+    color: var(--success);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.hiw-gain.is-up { animation: hiw-float 1.4s ease-out; }
+
+@keyframes hiw-float {
+    0%   { opacity: 0; transform: translateY(4px); }
+    25%  { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-24px); }
+}
+
+.hiw-week {
+    font-size: .58rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-gray);
+    text-align: center;
+}
+
+/* ==================== ADAPTATIONS ==================== */
+
+/* Les maquettes sont bien plus hautes que l'icône qu'elles remplacent :
+   la flèche de liaison entre les étapes se recale sur leur milieu. */
+.step-connector { padding-top: 160px; }
+
+@media (max-width: 768px) {
+    .hiw-demo { height: 176px; max-width: 240px; }
+}
+
+/* Sans mouvement : les maquettes restent lisibles, figées sur l'état le
+   plus parlant de chaque étape — le formulaire rempli, le choix fait,
+   la première place acquise. */
+@media (prefers-reduced-motion: reduce) {
+    .hiw-cursor { display: none; }
+    .dm-banner, .dm-player, .dm-bar i, .dm-count,
+    .hiw-chip, .hiw-row, .hiw-rrow, .hiw-bar i, .hiw-gain, .hiw-btn {
+        animation: none !important;
+        transition: none !important;
+    }
+    .hiw-caret { animation: none; opacity: 0; }
+}
