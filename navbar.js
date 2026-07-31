@@ -51,6 +51,29 @@ const NAV_ICON = {
     shield: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`
 };
 
+// ==================== THÈME ====================
+// theme.js pose l'attribut sur <html> ; localStorage peut être vide au
+// tout premier passage, d'où la lecture des deux.
+function _themeIsDark() {
+    const actuel = document.documentElement.getAttribute('data-theme')
+        || localStorage.getItem('theme')
+        || 'dark';
+    return actuel === 'dark';
+}
+
+/**
+ * Bascule le thème depuis le menu du compte.
+ *
+ * toggleTheme() (theme.js) s'occupe déjà de l'attribut, du stockage et de
+ * l'icône #themeIcon ; il reste à réaccorder le libellé, qui annonce le
+ * thème vers lequel on va et non celui qu'on quitte.
+ */
+function toggleThemeFromMenu() {
+    toggleTheme();
+    const titre = document.getElementById('themeMenuTitle');
+    if (titre) titre.textContent = _themeIsDark() ? 'Thème clair' : 'Thème sombre';
+}
+
 // ==================== AVATAR HELPERS ====================
 function _buildAvatarInner(username) {
     const av = localStorage.getItem('avatarUrl') || '';
@@ -84,8 +107,9 @@ function buildLoggedOutNavbar() {
                 <img src="Icons/fantazy.png" alt="Fantazy" class="navbar-logo">
             </a>
             <div class="navbar-guest-actions">
+                <!-- Visiteur : pas de menu de compte où le loger. -->
                 <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Changer le thème">
-                    <span id="themeIcon">${(localStorage.getItem('theme') || 'dark') === 'dark' ? '☀️' : '🌙'}</span>
+                    <span id="themeIcon">${_themeIsDark() ? '☀️' : '🌙'}</span>
                 </button>
                 <a href="login.html" class="btn-nav-login">
                     <span>Connexion</span>
@@ -144,11 +168,10 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                 </nav>
             </div>
 
-            <!-- Right: Theme toggle + User Menu -->
+            <!-- Right: notifications (injectées par notifications.js) + menu -->
+            <!-- Le bouton de thème a rejoint le menu du compte : la cloche
+                 et l'avatar suffisent à remplir cette barre. -->
             <div class="navbar-right">
-                <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Changer le thème">
-                    <span id="themeIcon">${(localStorage.getItem('theme') || 'dark') === 'dark' ? '☀️' : '🌙'}</span>
-                </button>
                 <div class="user-menu">
                     <button class="user-avatar" id="userAvatarBtn" title="${username}"
                             aria-haspopup="true" aria-expanded="false" aria-controls="userDropdownMenu">
@@ -177,6 +200,17 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                         </div>
 
                         ${isAdmin ? '<div id="adminUsersList" class="dropdown-group"></div>' : ''}
+
+                        <div class="dropdown-group">
+                            <p class="dropdown-label">Apparence</p>
+                            <button class="dropdown-item" role="menuitem" onclick="toggleThemeFromMenu()">
+                                <span class="dropdown-icon" id="themeIcon">${_themeIsDark() ? '☀️' : '🌙'}</span>
+                                <span class="dropdown-text">
+                                    <span class="dropdown-title" id="themeMenuTitle">${_themeIsDark() ? 'Thème clair' : 'Thème sombre'}</span>
+                                    <span class="dropdown-hint">Basculer l'affichage</span>
+                                </span>
+                            </button>
+                        </div>
 
                         <div class="dropdown-group">
                             <p class="dropdown-label">Mes données</p>

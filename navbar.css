@@ -577,6 +577,9 @@ html[data-theme="light"] .user-dropdown-header::after {
 }
 .dropdown-icon svg { width: 18px; height: 18px; }
 .dropdown-item:hover .dropdown-icon { opacity: 1; }
+/* L'icône de thème est un emoji et non un trait SVG : l'atténuation
+   prévue pour les autres rangées le rendrait délavé. */
+#themeIcon.dropdown-icon { opacity: 1; font-size: 1rem; }
 .dropdown-user-thumb { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
 
 .dropdown-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
