@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="poolNav.css">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="skeleton-loader.css">
     <!-- Modale de carrière : même feuille que draftActif.html, chargée en
@@ -16,6 +17,8 @@
     <link rel="stylesheet" href="career-modal.css">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
+    <!-- Contexte de pool actif : doit precéder tout script de page. -->
+    <script defer src="activePool.js"></script>
 </head>
 <body data-page="stats">
     <nav class="navbar"></nav>
@@ -313,6 +316,8 @@
     <!-- Alignement de la rangée « Carrière », partagé avec draftActif.html. -->
     <script defer src="careerTotals.js"></script>
     <script defer src="navbar.js"></script>
+    <script defer src="poolNav.js"></script>
+    <script defer src="notifications.js"></script>
     <script>
     // Auto-open player career modal when coming from accueil hot players
     window.addEventListener('load', function() {

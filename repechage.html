@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repêchage – Fantazy</title>
+    <script src="theme.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="pool.css">
+    <link rel="stylesheet" href="poolNav.css">
+    <link rel="stylesheet" href="repechage.css">
+    <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="icons.js" defer></script>
+    <!-- Contexte de pool actif : doit precéder tout script de page. -->
+    <script defer src="activePool.js"></script>
+</head>
+<body>
+    <nav class="navbar"></nav>
+
+    <div data-fz-context></div>
+
+    <div class="pool-page-container rp-container">
+        <div id="rpContent" class="rp-content">
+            <!-- Rempli par repechage.js -->
+            <div class="rp-loading">
+                <div class="rp-spinner" aria-hidden="true"></div>
+                <p>Chargement du repêchage…</p>
+            </div>
+        </div>
+    </div>
+
+    <script defer src="/socket.io/socket.io.js"></script>
+    <script defer src="repechage.js"></script>
+    <script defer src="navbar.js"></script>
+    <script defer src="poolNav.js"></script>
+    <script defer src="notifications.js"></script>
+</body>
+</html>

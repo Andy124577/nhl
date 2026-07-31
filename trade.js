@@ -170,29 +170,105 @@ document.addEventListener('DOMContentLoaded', async () => {
     ]);
     if (statsRes.status === 'fulfilled') currentStats = statsRes.value;
 
-    await loadDraftData();
-    renderPoolSelector();
-    loadReceivedTrades();
-    updateReceivedBadge();
+    // FZPool a déjà lu /draft : inutile de le redemander.
+    await FZPool.ready();
+    draftData = FZPool.all();
+    applyActivePool();
+
+    // Une notification d'échange arrive avec ?trade=<id> : l'onglet des
+    // échanges reçus s'ouvre alors directement sur la proposition visée.
+    // L'onglet d'abord — switchTradeTab recharge la liste, et le ferait
+    // sans la cible s'il passait après.
+    const cible = new URLSearchParams(window.location.search).get('trade');
+    if (cible) switchTradeTab('received');
+    await loadReceivedTrades(cible);
+
+    // Changer de pool depuis le rail recompose la page sans rechargement.
+    FZPool.on(() => {
+        applyActivePool();
+        loadReceivedTrades();
+        loadCompletedTrades();
+    });
 });
+
+// Le rail n'a pas besoin de recharger : l'assistant se reconstruit ici.
+window.FZ_POOL_EN_PLACE = true;
+
+/**
+ * Amène l'assistant sur le pool actif.
+ *
+ * L'ancienne étape 1 faisait choisir un pool à chaque échange, alors que
+ * le contexte est déjà fixé ailleurs. Il ne reste qu'à vérifier que le
+ * pool actif permet réellement un échange.
+ */
+function applyActivePool() {
+    const nom = FZPool.get();
+    const pool = FZPool.mine().find(p => p.name === nom);
+    const grille = document.getElementById('teamGrid');
+    const info = document.getElementById('tradePoolInfo');
+
+    // Repartir de l'étape 1 : un échange à moitié construit appartenait au
+    // pool précédent et n'a plus de sens ici.
+    selectedPool = null;
+    selectedPoolData = null;
+    myTeamName = null;
+    myTeamData = null;
+    selectedPartnerTeam = null;
+    partnerTeamData = null;
+    selectedMyPlayer = null;
+    selectedPartnerPlayer = null;
+
+    document.getElementById('tradeSuccessScreen').classList.add('hidden');
+    document.getElementById('tradeProgress').style.display = '';
+    document.getElementById('stepTeam').classList.remove('hidden');
+    document.getElementById('stepTrade').classList.add('hidden');
+    setTradeProgress(1);
+
+    if (!pool) {
+        if (info) info.textContent = '';
+        if (grille) grille.innerHTML =
+            '<p class="empty-msg">Aucun pool actif. Créez un pool ou rejoignez-en un pour échanger.</p>';
+        return;
+    }
+
+    if (pool.data.allowTrades === false) {
+        if (info) info.textContent = pool.name;
+        if (grille) grille.innerHTML =
+            `<p class="empty-msg">Les échanges sont désactivés dans « ${pool.name} ».</p>`;
+        return;
+    }
+
+    if (!FZPool.hasRoster(pool.teamData)) {
+        if (info) info.textContent = pool.name;
+        if (grille) grille.innerHTML =
+            `<p class="empty-msg">Le repêchage de « ${pool.name} » n'est pas terminé.<br>` +
+            'Les échanges ouvriront ensuite.</p>';
+        return;
+    }
+
+    // FZPool se rafraîchit sur les évènements socket : ses données sont au
+    // moins aussi fraîches que le draftData chargé au démarrage.
+    selectedPool = pool.name;
+    selectedPoolData = pool.data || draftData[pool.name];
+    myTeamName = pool.teamName;
+    myTeamData = selectedPoolData.teams[pool.teamName];
+
+    if (info) info.textContent = `Pool : ${pool.name} · votre équipe : ${myTeamName}`;
+    renderTeamGrid();
+}
 
 // ============================================================
 // DATA LOADING
 // ============================================================
+// Après un échange accepté, les effectifs ont bougé : on repasse par le
+// contexte, qui rafraîchit /draft une seule fois pour toute la page.
 async function loadDraftData() {
-    try {
-        const res = await fetch(`${BASE_URL}/draft?timestamp=${Date.now()}`, { cache: 'no-store' });
-        draftData = await res.json();
-    } catch (err) {
-        console.error('Error loading draft data:', err);
-    }
+    await FZPool.refresh();
+    draftData = FZPool.all();
 }
 
 // ============================================================
-// STEP 1: POOL SELECTION
-// ============================================================
-// ============================================================
-// WIZARD PROGRESS (Goal-Gradient Effect)
+// ASSISTANT — deux étapes depuis que le pool est un contexte
 // ============================================================
 let currentTradeStep = 1;
 
@@ -213,120 +289,22 @@ function setTradeProgress(step) {
     });
 }
 
-// Jump to a step via the breadcrumb — backward navigation only.
+// Le fil d'Ariane ne sert qu'à revenir en arrière : on ne saute pas
+// par-dessus une étape qu'on n'a pas encore franchie.
 function goToStep(step) {
-    if (step >= currentTradeStep) return; // can't jump forward or re-click current
+    if (step >= currentTradeStep) return;
 
-    document.getElementById('step1').classList.toggle('hidden', step !== 1);
-    document.getElementById('step2').classList.toggle('hidden', step !== 2);
-    document.getElementById('step3').classList.toggle('hidden', step !== 3);
+    document.getElementById('stepTeam').classList.toggle('hidden', step !== 1);
+    document.getElementById('stepTrade').classList.toggle('hidden', step !== 2);
     setTradeProgress(step);
 
-    if (step === 1) renderPoolSelector();
-    else if (step === 2) renderTeamGrid();
-    else if (step === 3) { renderMyRoster(); renderPartnerRoster(); updateTradeSummary(); }
-}
-
-function renderPoolSelector() {
-    const container = document.getElementById('poolSelector');
-    if (!container || !draftData) return;
-
-    // Hide skeleton, reveal real selector (Doherty Threshold)
-    const skeleton = document.getElementById('poolSelectorSkeleton');
-    if (skeleton) skeleton.style.display = 'none';
-    container.style.display = '';
-
-    // Filter pools where:
-    // 1. User is a participant
-    // 2. Draft is complete
-    const userPools = [];
-
-    Object.entries(draftData).forEach(([poolName, poolData]) => {
-        const userTeamEntry = Object.entries(poolData.teams || {}).find(
-            ([, td]) => td.members && td.members.includes(currentUsername)
-        );
-
-        if (!userTeamEntry) return;
-
-        const [userTeamName, userTeamData] = userTeamEntry;
-        const hasRoster = (userTeamData.offensive?.length || 0) +
-                          (userTeamData.defensive?.length || 0) +
-                          (userTeamData.goalie?.length || 0) > 0;
-
-        const isDraftComplete = poolData.draftComplete ||
-                               poolData.isDraftComplete ||
-                               poolData.draftStatus === 'completed' ||
-                               hasRoster;
-
-        if (isDraftComplete) {
-            userPools.push({
-                name: poolName,
-                data: poolData,
-                userTeam: userTeamName,
-                teamCount: Object.keys(poolData.teams || {}).length
-            });
-        }
-    });
-
-    if (userPools.length === 0) {
-        container.innerHTML = '<p class="empty-msg">Aucun pool actif disponible pour les échanges.<br>Complétez d\'abord un repêchage.</p>';
-        return;
-    }
-
-    container.innerHTML = userPools.map(pool => {
-        const imgUrl = pool.data.imageUrl;
-        const iconHtml = imgUrl
-            ? `<img src="${imgUrl}" class="pool-card-icon pool-card-icon-img" alt="${pool.name}">`
-            : `<div class="pool-card-icon pool-card-icon-letter">${pool.name.charAt(0).toUpperCase()}</div>`;
-        return `
-        <div class="pool-card" onclick="selectPool('${pool.name}')">
-            <div class="pool-card-header">
-                ${iconHtml}
-                <div class="pool-name">${pool.name}</div>
-                <span class="pool-status active">Actif</span>
-            </div>
-            <div class="pool-info">
-                Votre équipe: <strong>${pool.userTeam}</strong><br>
-                ${pool.teamCount} équipes dans le pool
-            </div>
-        </div>
-    `;}).join('');
+    if (step === 1) renderTeamGrid();
+    else if (step === 2) { renderMyRoster(); renderPartnerRoster(); updateTradeSummary(); }
 }
 
 // Back navigation preserves prior selections (Jakob's Law) — going back
 // to review a step should not wipe out choices already made.
-function backToStep1() { goToStep(1); }
-function backToStep2() { goToStep(2); }
-
-function selectPool(poolName) {
-    // If switching to a different pool, clear downstream selections
-    if (selectedPool && selectedPool !== poolName) {
-        selectedPartnerTeam = null;
-        partnerTeamData = null;
-        selectedMyPlayer = null;
-        selectedPartnerPlayer = null;
-    }
-
-    selectedPool = poolName;
-    selectedPoolData = draftData[poolName];
-
-    // Find user's team
-    const userTeamEntry = Object.entries(selectedPoolData.teams || {}).find(
-        ([, td]) => td.members && td.members.includes(currentUsername)
-    );
-
-    if (!userTeamEntry) return;
-
-    myTeamName = userTeamEntry[0];
-    myTeamData = userTeamEntry[1];
-
-    // Show step 2
-    document.getElementById('step1').classList.add('hidden');
-    document.getElementById('step2').classList.remove('hidden');
-    setTradeProgress(2);
-
-    renderTeamGrid();
-}
+function backToTeams() { goToStep(1); }
 
 // ============================================================
 // STEP 2: TEAM SELECTION
@@ -387,10 +365,10 @@ function selectPartnerTeam(teamName) {
     selectedPartnerTeam = teamName;
     partnerTeamData = selectedPoolData.teams[teamName];
 
-    // Show step 3
-    document.getElementById('step2').classList.add('hidden');
-    document.getElementById('step3').classList.remove('hidden');
-    setTradeProgress(3);
+    // Passe à la construction de l'échange
+    document.getElementById('stepTeam').classList.add('hidden');
+    document.getElementById('stepTrade').classList.remove('hidden');
+    setTradeProgress(2);
 
     document.getElementById('selectedPoolTeamInfo').textContent =
         `Pool: ${selectedPool} · ${myTeamName} ⇄ ${selectedPartnerTeam}`;
@@ -903,9 +881,8 @@ function showTradeSuccess() {
     if (detail) {
         detail.innerHTML = `<strong>${myTeamName}</strong> offre <strong>${selectedMyPlayer.name}</strong> à <strong>${selectedPartnerTeam}</strong> pour <strong>${selectedPartnerPlayer.name}</strong>.<br>En attente de la réponse de l'autre équipe.`;
     }
-    document.getElementById('step1').classList.add('hidden');
-    document.getElementById('step2').classList.add('hidden');
-    document.getElementById('step3').classList.add('hidden');
+    document.getElementById('stepTeam').classList.add('hidden');
+    document.getElementById('stepTrade').classList.add('hidden');
     document.getElementById('tradeProgress').style.display = 'none';
     document.getElementById('tradeSuccessScreen').classList.remove('hidden');
 }
@@ -914,11 +891,9 @@ function showTradeSuccess() {
 // RESET TRADE
 // ============================================================
 function resetTrade() {
-    selectedPool = null;
-    selectedPoolData = null;
+    // Le pool, lui, ne se réinitialise pas : il vient du contexte et
+    // c'est applyActivePool() qui le remet en place.
     selectedPartnerTeam = null;
-    myTeamName = null;
-    myTeamData = null;
     partnerTeamData = null;
     selectedMyPlayer = null;
     selectedPartnerPlayer = null;
@@ -928,18 +903,24 @@ function resetTrade() {
     // Reset UI
     document.getElementById('tradeSuccessScreen').classList.add('hidden');
     document.getElementById('tradeProgress').style.display = '';
-    document.getElementById('step1').classList.remove('hidden');
-    document.getElementById('step2').classList.add('hidden');
-    document.getElementById('step3').classList.add('hidden');
+    document.getElementById('stepTeam').classList.remove('hidden');
+    document.getElementById('stepTrade').classList.add('hidden');
     setTradeProgress(1);
 
-    renderPoolSelector();
+    renderTeamGrid();
 }
 
 // ============================================================
 // RECEIVED TRADES
 // ============================================================
-async function loadReceivedTrades() {
+/**
+ * Échanges reçus dans le pool actif.
+ *
+ * `idCible` vient du lien d'une notification : la carte correspondante
+ * est mise en évidence et amenée à l'écran, pour ne pas avoir à la
+ * chercher dans la liste.
+ */
+async function loadReceivedTrades(idCible) {
     const container = document.getElementById('receivedTradesContent');
     if (!container) return;
 
@@ -952,17 +933,20 @@ async function loadReceivedTrades() {
             return;
         }
 
-        const trades = await res.json();
-        console.log('Received trades for', currentUsername, ':', trades);
+        const tous = await res.json();
+        const poolActif = FZPool.get();
+        const trades = Array.isArray(tous)
+            ? (poolActif ? tous.filter(t => t.draftName === poolActif) : tous)
+            : [];
 
         // Update badge
         updateReceivedBadge(trades.length);
 
-        if (!trades || trades.length === 0) {
+        if (trades.length === 0) {
             container.innerHTML = `
                 <div class="empty-msg">
                     <div style="font-size: 3rem; margin-bottom: 16px;">📭</div>
-                    <p>Aucune proposition d'échange reçue</p>
+                    <p>Aucune proposition d'échange reçue${poolActif ? ` dans « ${poolActif} »` : ''}</p>
                 </div>
             `;
             return;
@@ -983,8 +967,11 @@ async function loadReceivedTrades() {
             const offeringCategory = getCategory(offering.type);
             const receivingCategory = getCategory(receiving.type);
 
+            const estCible = idCible && String(trade.id) === String(idCible);
+
             return `
-                <div class="received-trade-card">
+                <div class="received-trade-card${estCible ? ' is-target' : ''}"
+                     data-trade-id="${trade.id}">
                     <div class="trade-card-header">
                         <div class="trade-card-info">
                             <div class="trade-card-teams">${trade.fromTeam} → Vous (${trade.toTeam})</div>
@@ -1021,6 +1008,11 @@ async function loadReceivedTrades() {
             `;
         }).join('');
 
+        if (idCible) {
+            const carte = container.querySelector(`[data-trade-id="${CSS.escape(String(idCible))}"]`);
+            if (carte) carte.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
     } catch (err) {
         console.error('Error loading received trades:', err);
         container.innerHTML = '<p class="empty-msg">Erreur lors du chargement des échanges reçus</p>';
@@ -1041,9 +1033,15 @@ async function loadCompletedTrades() {
             return;
         }
 
-        const completedTrades = await res.json();
+        // Même cadrage que les échanges reçus : l'historique porte sur le
+        // pool actif, pas sur toutes les ligues à la fois.
+        const tous = await res.json();
+        const poolActif = FZPool.get();
+        const completedTrades = Array.isArray(tous)
+            ? (poolActif ? tous.filter(t => t.draftName === poolActif) : tous)
+            : [];
 
-        if (!completedTrades || completedTrades.length === 0) {
+        if (completedTrades.length === 0) {
             container.innerHTML = '<p class="empty-msg">Aucun échange complété</p>';
             return;
         }
@@ -1078,24 +1076,30 @@ async function loadCompletedTrades() {
     }
 }
 
+// La pastille de l'onglet compte les échanges du pool actif, comme la
+// liste qu'elle annonce. Sans compte fourni, on refait le même filtrage
+// plutôt que d'afficher un total tous pools confondus.
 function updateReceivedBadge(count) {
     const badge = document.getElementById('receivedTradeBadge');
-    if (badge) {
-        if (count === undefined) {
-            // Fetch count
-            fetch(`${BASE_URL}/trades/pending/${currentUsername}`, { cache: 'no-store' })
-                .then(res => res.json())
-                .then(trades => {
-                    const tradeCount = trades.length;
-                    badge.textContent = tradeCount;
-                    badge.style.display = tradeCount > 0 ? 'inline-block' : 'none';
-                })
-                .catch(err => console.error('Error fetching received badge count:', err));
-        } else {
-            badge.textContent = count;
-            badge.style.display = count > 0 ? 'inline-block' : 'none';
-        }
-    }
+    if (!badge) return;
+
+    const afficher = n => {
+        badge.textContent = n;
+        badge.style.display = n > 0 ? 'inline-block' : 'none';
+    };
+
+    if (count !== undefined) { afficher(count); return; }
+
+    fetch(`${BASE_URL}/trades/pending/${currentUsername}`, { cache: 'no-store' })
+        .then(res => res.json())
+        .then(trades => {
+            const poolActif = FZPool.get();
+            const liste = Array.isArray(trades)
+                ? (poolActif ? trades.filter(t => t.draftName === poolActif) : trades)
+                : [];
+            afficher(liste.length);
+        })
+        .catch(err => console.error('Error fetching received badge count:', err));
 }
 
 function getCategory(type) {

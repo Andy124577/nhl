@@ -211,6 +211,10 @@ function logout(event) {
 
 // 🔄 Charge et met à jour la liste des clans
 async function loadClans() {
+    // Seule la page « Rejoindre un pool » affiche cette liste ; ailleurs,
+    // equipes.js n'est chargé que pour ses formulaires et ses modales.
+    if (!document.getElementById("available-clans-list")) return;
+
     try {
         const response = await fetch(`${BASE_URL}/draft?timestamp=${new Date().getTime()}`, { cache: "no-store" });
         const freshData = await response.json();
@@ -355,9 +359,13 @@ async function createClan() {
             if (poolImgHint) poolImgHint.style.display = '';
             if (poolImageInput) poolImageInput.value = '';
 
-            // Reload clans and switch to "Mes pools" tab
-            await loadClans();
-            showTab('mypools');
+            // Le pool qu'on vient de nommer devient le contexte courant :
+            // c'est celui sur lequel on va travailler, il n'y a pas d'autre
+            // candidat évident. Écrit avant la navigation pour que la page
+            // suivante le lise dès sa première ligne.
+            localStorage.setItem("activePool", clanName);
+            localStorage.setItem("draftClan", clanName);
+            window.location.href = "mes-pools.html";
         } else {
             const error = await response.json();
             alert(`Erreur lors de la création du pool: ${error.message || 'Erreur inconnue'}`);
@@ -369,16 +377,17 @@ async function createClan() {
     }
 }
 
-// 🔄 Met à jour l'affichage des clans
+// 🔄 Met à jour la liste des pools ouverts
+//
+// Les pools dont on est déjà membre ne figurent plus ici : ils sont gérés
+// par mes-pools.html, qui en montre bien plus que ce qu'une ligne de liste
+// permettait. Ne reste que ce qu'on peut rejoindre.
 function updateUI(draftData) {
-    // Hide skeleton loaders and show actual content
-    $("#myPoolsSkeleton").hide();
-    $("#availablePoolsSkeleton").hide();
-    $("#clans-list").show();
-    $("#available-clans-list").show();
+    const liste = document.getElementById("available-clans-list");
+    if (!liste) return;
 
-    $("#clans-list").html("");
-    $("#available-clans-list").html("");
+    $("#availablePoolsSkeleton").hide();
+    $("#available-clans-list").show().html("");
 
     const username = localStorage.getItem("username");
 
@@ -407,22 +416,7 @@ function updateUI(draftData) {
 
         const draftStarted = !!(clan.draftOrder && clan.draftOrder.length > 0);
 
-        if (userInClan) {
-            $("#clans-list").append(`
-                <li>
-                    <div class="pool-item-img-wrap">${poolImgHtml}</div>
-                    <div class="pool-item-content">
-                        <span class="pool-item-name">${clanName}</span>
-                        <div class="pool-item-info">
-                            <span class="pool-item-badge">👥 ${totalParticipants} participants</span>
-                            <span class="pool-item-badge">📋 ${totalPicks} sélections</span>
-                            <span class="pool-item-badge">🏒 ${activeTeams} équipes</span>
-                        </div>
-                    </div>
-                    <button class="pool-action-btn" onclick="viewClanTeams('${clanName}')">Consulter</button>
-                </li>
-            `);
-        } else if (!draftStarted) {
+        if (!userInClan && !draftStarted) {
             // `hasPassword` vient de poolsPublics() côté serveur ; l'empreinte
             // elle-même n'arrive jamais jusqu'ici.
             const protege = !!clan.hasPassword;
@@ -914,6 +908,12 @@ async function joinTeam(clanName, teamName) {
 
         alert(result.message);
 
+        // On vient d'entrer dans ce pool : il devient le contexte courant,
+        // sinon la page rechargerait sur un autre pool que celui qu'on
+        // vient de rejoindre.
+        localStorage.setItem("activePool", clanName);
+        localStorage.setItem("draftClan", clanName);
+
         // 🔄 Recharge les données après l'action
         viewClanTeams(clanName);
         setTimeout(() => {
@@ -954,199 +954,9 @@ function closeModal() {
 // clic levait « Cannot read properties of undefined (reading 'top') ».
 // Retiré — il ne pouvait rien faire d'autre que jeter.
 
-// ==================== ACTIVE DRAFTS FUNCTIONALITY ====================
-
-async function loadActiveDrafts() {
-    const username = localStorage.getItem("username");
-    if (!username) return;
-
-    const container = document.getElementById("activeDraftsList");
-    if (!container) return;
-
-    try {
-        const response = await fetch(`${BASE_URL}/draft?timestamp=${new Date().getTime()}`, { cache: "no-store" });
-        const draftData = await response.json();
-
-        const activeDrafts = [];
-        const pendingDrafts = [];
-
-        Object.entries(draftData).forEach(([poolName, poolData]) => {
-            // Check if user is in this pool
-            const userTeam = Object.entries(poolData.teams || {}).find(([teamName, teamData]) =>
-                teamData.members && teamData.members.includes(username)
-            );
-            if (!userTeam) return;
-
-            // Check if draft is truly complete (all teams have all positions filled per config)
-            const config = poolData.config || {
-                numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1, numTeams: 1
-            };
-            const activeTeams = Object.values(poolData.teams || {}).filter(t => t.members && t.members.length > 0);
-            const isDraftComplete = activeTeams.length > 0 && activeTeams.every(team =>
-                (team.offensive || []).length === config.numOffensive &&
-                (team.defensive || []).length === config.numDefensive &&
-                (team.rookie || []).length === config.numRookies &&
-                (team.goalie || []).length === config.numGoalies &&
-                (team.teams || []).length === config.numTeams
-            );
-
-            if (isDraftComplete) return; // Skip completed drafts
-
-            // draftOrder is a flat array of team names on the server
-            const hasDraftOrder = Array.isArray(poolData.draftOrder) && poolData.draftOrder.length > 0;
-            const totalMembers = Object.values(poolData.teams || {}).reduce((sum, t) => sum + (t.members?.length || 0), 0);
-            const maxPlayers = poolData.maxPlayers || 10;
-            const poolMode = poolData.poolMode || 'cumulative';
-
-            if (hasDraftOrder) {
-                // Draft is actively in progress
-                const currentPick = poolData.currentPickIndex || 0;
-                const totalPicks = poolData.draftOrder.length;
-                activeDrafts.push({
-                    name: poolName,
-                    mode: poolMode,
-                    status: 'active',
-                    currentPick: currentPick,
-                    totalPicks: totalPicks,
-                    participants: totalMembers,
-                    maxPlayers: maxPlayers
-                });
-            } else {
-                // Pool exists but draft hasn't started
-                pendingDrafts.push({
-                    name: poolName,
-                    mode: poolMode,
-                    status: totalMembers >= maxPlayers ? 'ready' : 'waiting',
-                    participants: totalMembers,
-                    maxPlayers: maxPlayers
-                });
-            }
-        });
-
-        // Update badge count
-        const badgeCount = activeDrafts.length + pendingDrafts.filter(d => d.status === 'ready').length;
-        const tabBadge = document.getElementById("draftTabBadge");
-        if (tabBadge) {
-            if (badgeCount > 0) {
-                tabBadge.textContent = badgeCount;
-                tabBadge.style.display = 'inline-flex';
-            } else {
-                tabBadge.style.display = 'none';
-            }
-        }
-
-        // Render drafts
-        if (activeDrafts.length === 0 && pendingDrafts.length === 0) {
-            container.innerHTML = `
-                <div style="text-align: center; padding: 40px 20px; color: #999;">
-                    <div style="font-size: 3rem; margin-bottom: 16px;">✅</div>
-                    <h3 style="color: #333; margin-bottom: 8px;">Aucun repêchage en cours</h3>
-                    <p>Tous vos pools ont terminé leur repêchage, ou aucun n'est prêt à commencer.</p>
-                </div>
-            `;
-            return;
-        }
-
-        let html = '';
-
-        // Active drafts first (with red urgent styling)
-        activeDrafts.forEach(draft => {
-            const progress = draft.totalPicks > 0 ? Math.round((draft.currentPick / draft.totalPicks) * 100) : 0;
-            html += `
-                <li class="draft-item active-draft">
-                    <div class="pool-item-content">
-                        <span class="pool-item-name">${draft.name}</span>
-                        <div class="pool-item-info">
-                            <span class="pool-item-badge draft-active-badge">🎯 En cours</span>
-                            <span class="pool-item-badge">${draft.mode === 'head-to-head' ? '⚔️ H2H' : '📊 Cumulatif'}</span>
-                            <span class="pool-item-badge">📋 ${draft.currentPick}/${draft.totalPicks} choix</span>
-                        </div>
-                        <div class="draft-progress-bar">
-                            <div class="draft-progress-fill" style="width: ${progress}%;"></div>
-                        </div>
-                    </div>
-                    <button class="pool-action-btn draft-resume-btn" onclick="resumeDraft('${draft.name.replace(/'/g, "\\'")}')">Reprendre</button>
-                </li>
-            `;
-        });
-
-        // Pending drafts
-        pendingDrafts.forEach(draft => {
-            const isReady = draft.status === 'ready';
-            html += `
-                <li class="draft-item ${isReady ? 'ready-draft' : 'waiting-draft'}">
-                    <div class="pool-item-content">
-                        <span class="pool-item-name">${draft.name}</span>
-                        <div class="pool-item-info">
-                            <span class="pool-item-badge ${isReady ? 'draft-ready-badge' : 'draft-waiting-badge'}">
-                                ${isReady ? '✅ Prêt' : '⏳ En attente'}
-                            </span>
-                            <span class="pool-item-badge">${draft.mode === 'head-to-head' ? '⚔️ H2H' : '📊 Cumulatif'}</span>
-                            <span class="pool-item-badge">👥 ${draft.participants}/${draft.maxPlayers}</span>
-                        </div>
-                    </div>
-                    ${isReady
-                        ? `<button class="pool-action-btn draft-start-btn" onclick="startDraftFromPool('${draft.name.replace(/'/g, "\\'")}')">Commencer</button>`
-                        : `<span class="pool-action-btn secondary draft-waiting-btn">En attente</span>`
-                    }
-                </li>
-            `;
-        });
-
-        container.innerHTML = html;
-
-    } catch (error) {
-        console.error("Error loading active drafts:", error);
-        container.innerHTML = `
-            <div style="text-align: center; padding: 40px 20px; color: #999;">
-                <div style="font-size: 3rem; margin-bottom: 16px;">❌</div>
-                <p>Erreur lors du chargement des repêchages</p>
-            </div>
-        `;
-    }
-}
-
-// Load active drafts on page load (for badge count)
-$(document).ready(function() {
-    loadActiveDrafts();
-});
-
-// Start a draft from the pool page
-async function startDraftFromPool(poolName) {
-    try {
-        // Check if draft already has an order
-        const response = await fetch(`${BASE_URL}/draft-order/${poolName}`);
-        const result = await response.json();
-
-        if (!result.draftOrder || result.draftOrder.length === 0) {
-            // No order exists, start the draft
-            const startResponse = await fetch(`${BASE_URL}/start-draft`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ clanName: poolName })
-            });
-
-            const startResult = await startResponse.json();
-            console.log("✅ Draft démarré :", startResult.message);
-        } else {
-            console.log("✅ Ordre de draft déjà existant.");
-        }
-
-        // Set pool name in localStorage and redirect to draft page
-        localStorage.setItem("draftClan", poolName);
-        window.location.href = "draftActif.html";
-    } catch (error) {
-        console.error("Erreur lors du démarrage du draft :", error);
-        alert("Erreur lors de la préparation du draft.");
-    }
-}
-
-// Resume an existing draft from the pool page
-function resumeDraft(poolName) {
-    // Set pool name in localStorage and redirect to draft page
-    localStorage.setItem("draftClan", poolName);
-    window.location.href = "draftActif.html";
-}
+// Le bloc « repêchages actifs » vivait dans l'onglet Repêchage de
+// l'ancienne page Pools. Il a été remplacé par repechage.html, qui porte
+// sur le seul pool actif : plus rien ne rendait dans #activeDraftsList.
 
 // ==================== TRADE BADGE FUNCTIONALITY ====================
 

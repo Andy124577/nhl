@@ -7,15 +7,20 @@
     <script src="theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="poolNav.css">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="trade.css">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="icons.js" defer></script>
+    <!-- Contexte de pool actif : doit precéder tout script de page. -->
+    <script defer src="activePool.js"></script>
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar"></nav>
+
+    <div data-fz-context></div>
 
     <!-- Main Container -->
     <div class="trade-container">
@@ -38,56 +43,27 @@
 
         <!-- SECTION: Propose Trade -->
         <div id="proposeTradeSection" class="trade-section active">
-        <!-- Progress Breadcrumb (Goal-Gradient Effect) -->
+        <!-- L'étape « Pool » a disparu : l'échange porte sur le pool actif,
+             choisi une fois pour toutes dans le rail ou le tiroir. -->
         <div class="trade-progress" id="tradeProgress">
             <div class="tp-step active" data-step="1" onclick="goToStep(1)">
                 <span class="tp-dot">1</span>
-                <span class="tp-label">Pool</span>
+                <span class="tp-label">Équipe</span>
             </div>
             <div class="tp-line" data-line="1"></div>
             <div class="tp-step" data-step="2" onclick="goToStep(2)">
                 <span class="tp-dot">2</span>
-                <span class="tp-label">Équipe</span>
-            </div>
-            <div class="tp-line" data-line="2"></div>
-            <div class="tp-step" data-step="3" onclick="goToStep(3)">
-                <span class="tp-dot">3</span>
                 <span class="tp-label">Échange</span>
             </div>
         </div>
 
-        <!-- Step 1: Pool Selection -->
-        <div class="trade-step" id="step1">
+        <!-- Étape 1 : équipe partenaire -->
+        <div class="trade-step" id="stepTeam">
             <div class="step-header">
                 <div class="step-number">1</div>
                 <div class="step-info">
-                    <h3>Sélectionner un pool actif</h3>
-                    <p>Choisissez le pool dans lequel effectuer l'échange</p>
-                </div>
-            </div>
-
-            <!-- Skeleton (Doherty Threshold) -->
-            <div class="pool-selector" id="poolSelectorSkeleton">
-                <div class="pool-card-skeleton"></div>
-                <div class="pool-card-skeleton"></div>
-                <div class="pool-card-skeleton"></div>
-            </div>
-
-            <div class="pool-selector" id="poolSelector" style="display:none;">
-                <!-- Filled by JS -->
-            </div>
-        </div>
-
-        <!-- Step 2: Team Selection -->
-        <div class="trade-step hidden" id="step2">
-            <div class="step-header">
-                <button class="btn-back" onclick="backToStep1()">
-                    <span data-icon="chevron-left" data-icon-size="15"></span> Retour
-                </button>
-                <div class="step-number">2</div>
-                <div class="step-info">
                     <h3>Choisir un partenaire d'échange</h3>
-                    <p>Sélectionnez l'équipe avec laquelle échanger</p>
+                    <p id="tradePoolInfo">Sélectionnez l'équipe avec laquelle échanger</p>
                 </div>
             </div>
 
@@ -96,13 +72,13 @@
             </div>
         </div>
 
-        <!-- Step 3: Trade Interface -->
-        <div class="trade-step hidden" id="step3">
+        <!-- Étape 2 : construction de l'échange -->
+        <div class="trade-step hidden" id="stepTrade">
             <div class="step-header">
-                <button class="btn-back" onclick="backToStep2()">
+                <button class="btn-back" onclick="backToTeams()">
                     <span data-icon="chevron-left" data-icon-size="15"></span> Retour
                 </button>
-                <div class="step-number">3</div>
+                <div class="step-number">2</div>
                 <div class="step-info">
                     <h3>Construire l'échange 1-pour-1</h3>
                     <p id="selectedPoolTeamInfo"><!-- Filled by JS --></p>
@@ -328,6 +304,8 @@
     </div>
 
     <script src="navbar.js"></script>
+    <script defer src="poolNav.js"></script>
+    <script defer src="notifications.js"></script>
     <script src="headshots.js"></script>
     <script src="trade.js"></script>
 </body>

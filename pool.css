@@ -144,6 +144,21 @@
     padding: 40px 24px 64px;
 }
 
+/* Passerelle entre « Créer » et « Rejoindre » : les deux pages sont
+   séparées, mais on arrive souvent sur l'une en cherchant l'autre. */
+.pool-page-foot {
+    margin-top: 28px;
+    text-align: center;
+    font-size: .9rem;
+    color: var(--text-secondary);
+}
+.pool-page-foot a {
+    color: var(--primary);
+    font-weight: 700;
+    text-decoration: none;
+}
+.pool-page-foot a:hover { text-decoration: underline; }
+
 /* Section header inside tabs */
 .pool-section-header {
     text-align: center;

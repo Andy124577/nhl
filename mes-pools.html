@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes pools – Fantazy</title>
+    <script src="theme.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="pool.css">
+    <link rel="stylesheet" href="poolNav.css">
+    <link rel="stylesheet" href="mesPools.css">
+    <link rel="stylesheet" href="skeleton-loader.css">
+    <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="icons.js" defer></script>
+    <!-- Contexte de pool actif : doit precéder tout script de page. -->
+    <script defer src="activePool.js"></script>
+</head>
+<body>
+    <nav class="navbar"></nav>
+
+    <!-- ============================================================ -->
+    <!-- EN-TÊTE                                                       -->
+    <!-- ============================================================ -->
+    <header class="pool-hero">
+        <div class="pool-hero-spots">
+            <div class="ph-spot ph-sp1"></div>
+            <div class="ph-spot ph-sp2"></div>
+        </div>
+        <div class="pool-hero-inner">
+            <div class="pool-hero-badge"><span data-icon="settings" data-icon-size="16"></span> GESTION</div>
+            <h1 class="pool-hero-title">
+                Vos équipes et <span class="gradient-text">vos réglages.</span>
+            </h1>
+            <p class="pool-hero-sub">Renommez votre équipe, changez-en, et retrouvez les règles de chaque ligue.</p>
+        </div>
+    </header>
+
+    <!-- ============================================================ -->
+    <!-- LISTE DE GESTION                                              -->
+    <!-- ============================================================ -->
+    <div class="pool-page-container">
+        <div class="skeleton-loader" id="mesPoolsSkeleton">
+            <div class="skeleton-list">
+                <div class="skeleton-card"><div class="skeleton-card-content">
+                    <div class="skeleton" style="width:220px;height:24px;margin-bottom:12px;border-radius:8px;"></div>
+                    <div class="skeleton" style="width:320px;height:16px;border-radius:8px;"></div>
+                </div></div>
+                <div class="skeleton-card"><div class="skeleton-card-content">
+                    <div class="skeleton" style="width:220px;height:24px;margin-bottom:12px;border-radius:8px;"></div>
+                    <div class="skeleton" style="width:320px;height:16px;border-radius:8px;"></div>
+                </div></div>
+            </div>
+        </div>
+
+        <div id="fzMyPools" class="mp-list" style="display:none;"></div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MODALES (réutilisées depuis equipes.js)                       -->
+    <!-- ============================================================ -->
+    <div id="clan-members-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Équipes du pool</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="clan-members-content"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pool-password-modal" class="modal" style="display:none;">
+        <div class="modal-content pool-password-modal">
+            <div class="modal-header">
+                <h2>Pool protégé</h2>
+                <button class="modal-close" id="poolPwCancel" aria-label="Annuler">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="pool-pw-intro">Le pool <strong id="poolPwName"></strong> demande un mot de passe pour
+                    y entrer.</p>
+                <div class="form-group">
+                    <label for="poolPwInput">Mot de passe</label>
+                    <div class="password-field">
+                        <input type="password" id="poolPwInput" autocomplete="off" maxlength="72"
+                               placeholder="Mot de passe du pool">
+                        <button type="button" class="password-toggle" id="poolPwToggle"
+                                aria-label="Afficher le mot de passe"
+                                onclick="togglePoolPassword(this, 'poolPwInput')"><span class="pw-eye" data-icon="eye" data-icon-size="17"></span><span class="pw-eye-off" data-icon="eye-off" data-icon-size="17"></span></button>
+                    </div>
+                </div>
+                <p class="pool-pw-error" id="poolPwError" role="alert" hidden></p>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" id="poolPwCancelBtn">Annuler</button>
+                <button id="poolPwOk">Rejoindre</button>
+            </div>
+        </div>
+    </div>
+
+    <script defer src="/socket.io/socket.io.js"></script>
+    <script defer src="avatars.js"></script>
+    <script src="profanity.js"></script>
+    <script defer src="equipes.js"></script>
+    <script defer src="mesPools.js"></script>
+    <script defer src="navbar.js"></script>
+    <script defer src="poolNav.js"></script>
+    <script defer src="notifications.js"></script>
+</body>
+</html>

@@ -87,9 +87,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn('⚠️ Could not load current team standings:', error);
     }
 
-    // Load user's pools
+    // Charge le pool actif
     await loadAllUserPools();
+
+    // Changer de pool depuis le rail rejoue le classement sur place.
+    FZPool.on(() => loadAllUserPools());
 });
+
+// Le rail ne recharge pas la page : le classement se reconstruit seul.
+window.FZ_POOL_EN_PLACE = true;
 
 // ==================== DATA LOADING ====================
 async function fetchImageData() {
@@ -104,107 +110,34 @@ async function loadAllUserPools() {
     }
 
     try {
-        const response = await fetch(`${BASE_URL}/draft`, { cache: 'no-store' });
-        allPoolsData = await response.json();
+        await FZPool.ready();
+        allPoolsData = FZPool.all();
 
-        // Filter pools where user is a member AND draft is completed
-        const userPools = [];
-        Object.entries(allPoolsData).forEach(([poolName, poolData]) => {
-            const userTeam = Object.entries(poolData.teams || {}).find(([teamName, teamData]) =>
-                teamData.members && teamData.members.includes(username)
-            );
+        const nomActif = FZPool.get();
+        const pool = FZPool.mine().find(p => p.name === nomActif);
 
-            if (!userTeam) return; // User not in this pool
-
-            // Skip pools with incomplete drafts
-            // A pool is considered complete if:
-            // 1. It has an explicit completion flag, OR
-            // 2. It has teams with rosters (offensive, defensive, goalie, etc.)
-            const teamData = poolData.teams[userTeam[0]];
-            const hasRoster = (teamData.offensive && teamData.offensive.length > 0) ||
-                            (teamData.defensive && teamData.defensive.length > 0) ||
-                            (teamData.goalie && teamData.goalie.length > 0);
-
-            const isDraftComplete = poolData.draftComplete ||
-                                   poolData.isDraftComplete ||
-                                   poolData.draftStatus === 'completed' ||
-                                   poolData.draftStatus === 'done' ||
-                                   hasRoster;
-
-            if (isDraftComplete) {
-                userPools.push({
-                    name: poolName,
-                    data: poolData,
-                    userTeam: userTeam[0]
-                });
-            }
-        });
-
-        if (userPools.length === 0) {
-            showError('Aucun pool trouvé', 'Vous n\'êtes membre d\'aucun pool.');
+        if (!pool) {
+            showError('Aucun pool actif',
+                'Créez un pool ou rejoignez-en un pour suivre un classement.');
             return;
         }
 
-        renderPoolList(userPools);
+        // Un classement sans effectif n'affiche que des zéros : mieux vaut
+        // renvoyer vers le repêchage, qui est ce qui manque réellement.
+        if (!FZPool.hasRoster(pool.teamData)) {
+            showError('Repêchage à venir',
+                `Le classement de « ${pool.name} » s'affichera une fois le repêchage terminé.`);
+            return;
+        }
+
+        showPoolStandings(pool.name);
     } catch (error) {
         console.error('Error loading pools:', error);
-        showError('Erreur', 'Impossible de charger vos pools');
+        showError('Erreur', 'Impossible de charger votre pool');
     }
 }
 
 // ==================== VIEW RENDERING ====================
-
-// Level 1: Pool List View
-function renderPoolList(pools) {
-    currentView = VIEW_STATES.POOL_LIST;
-    currentPoolName = null;
-    currentTeamName = null;
-
-    // Update UI
-    document.getElementById('pageTitle').textContent = 'Classement';
-    document.getElementById('breadcrumb').style.display = 'none';
-
-    // Hide all views
-    document.getElementById('poolListView').style.display = 'block';
-    document.getElementById('poolStandingsView').style.display = 'none';
-    document.getElementById('teamRosterView').style.display = 'none';
-
-    // Hide skeleton, show content
-    document.getElementById('poolListSkeleton').style.display = 'none';
-    const poolList = document.getElementById('poolList');
-    poolList.style.display = 'flex';
-    poolList.innerHTML = '';
-
-    pools.forEach(pool => {
-        const poolMode = pool.data.poolMode || 'cumulative';
-        const playerCount = Object.values(pool.data.teams).reduce((sum, team) =>
-            sum + (team.members ? team.members.length : 0), 0
-        );
-
-        const card = document.createElement('div');
-        card.className = 'pool-card';
-        card.onclick = () => showPoolStandings(pool.name);
-
-        const poolImg = pool.data.imageUrl
-            ? `<img src="${pool.data.imageUrl}" class="pool-card-img" alt="${pool.name}" onerror="this.src='Icons/grayGroup.png'">`
-            : `<img src="Icons/grayGroup.png" class="pool-card-img pool-card-img-placeholder" alt="${pool.name}">`;
-        card.innerHTML = `
-            ${poolImg}
-            <div class="pool-info">
-                <div class="pool-name">${pool.name}</div>
-                <div class="pool-meta">
-                    <span class="pool-badge ${poolMode === 'head-to-head' ? 'type-h2h' : 'type-cumulative'}">
-                        ${poolMode === 'head-to-head' ? 'H2H' : 'Cumulatif'}
-                    </span>
-                    <span class="pool-badge players">${playerCount} joueurs</span>
-                </div>
-            </div>
-            <div class="pool-arrow">›</div>
-        `;
-
-        poolList.appendChild(card);
-    });
-}
 
 // Level 2: Pool Standings View
 function showPoolStandings(poolName) {
@@ -659,11 +592,11 @@ function renderTeamRoster(roster) {
 }
 
 // ==================== NAVIGATION HELPERS ====================
+// Le classement porte sur le pool actif : « revenir en arrière » veut
+// dire revenir au classement de ce pool, pas à une liste de pools.
 function showPoolList() {
     const username = localStorage.getItem('username');
     if (!username) return;
-
-    // Reload pools to get fresh data
     loadAllUserPools();
 }
 
@@ -1062,6 +995,14 @@ async function finalizeCurrentWeek() {
 }
 
 function showError(title, message) {
+    // Le message remplace ce qui est à l'écran : sans ce ménage, le
+    // classement du pool précédent resterait visible sous l'erreur.
+    document.getElementById('poolListView').style.display = 'block';
+    document.getElementById('poolStandingsView').style.display = 'none';
+    document.getElementById('teamRosterView').style.display = 'none';
+    document.getElementById('breadcrumb').style.display = 'none';
+    document.getElementById('pageTitle').textContent = 'Classement';
+
     const poolList = document.getElementById('poolList');
     poolList.style.display = 'block';
     poolList.innerHTML = `

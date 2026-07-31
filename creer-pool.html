@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer un pool – Fantazy</title>
+    <script src="theme.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="pool.css">
+    <link rel="stylesheet" href="poolNav.css">
+    <link rel="stylesheet" href="skeleton-loader.css">
+    <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="icons.js" defer></script>
+    <!-- Contexte de pool actif : doit precéder tout script de page. -->
+    <script defer src="activePool.js"></script>
+</head>
+<body>
+    <nav class="navbar"></nav>
+
+    <!-- ============================================================ -->
+    <!-- EN-TÊTE                                                       -->
+    <!-- ============================================================ -->
+    <header class="pool-hero">
+        <div class="pool-hero-spots">
+            <div class="ph-spot ph-sp1"></div>
+            <div class="ph-spot ph-sp2"></div>
+        </div>
+        <div class="pool-hero-inner">
+            <div class="pool-hero-badge"><span data-icon="plus" data-icon-size="16"></span> NOUVEAU POOL</div>
+            <h1 class="pool-hero-title">
+                Créez votre <span class="gradient-text">ligue de hockey.</span>
+            </h1>
+            <p class="pool-hero-sub">Vos règles, vos participants, votre repêchage. Vous rejoignez
+                automatiquement le pool que vous créez.</p>
+        </div>
+    </header>
+
+    <!-- ============================================================ -->
+    <!-- FORMULAIRE DE CRÉATION                                        -->
+    <!-- ============================================================ -->
+    <div class="pool-page-container">
+        <div id="clan-options" class="create-pool-container">
+
+            <!-- Infos du pool -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <h2 class="form-card-title">Infos du pool</h2>
+                    <p class="form-card-desc">Donnez un nom unique à votre ligue</p>
+                </div>
+                <div class="form-group">
+                    <label for="clanName">Nom du pool</label>
+                    <input type="text" id="clanName" placeholder="Ex: Pool des champions 2025" required>
+                </div>
+                <div class="form-group">
+                    <label>Photo du pool <span style="opacity:.6;font-weight:400;">(optionnel)</span></label>
+                    <div class="pool-img-upload-area" id="poolImgUploadArea" onclick="document.getElementById('poolImageInput').click()">
+                        <img id="poolImgPreview" style="display:none;max-height:80px;border-radius:8px;margin-bottom:8px;">
+                        <div id="poolImgUploadHint">
+                            <span style="font-size:1.4rem;">🖼️</span>
+                            <span style="display:block;margin-top:4px;font-size:.9rem;color:var(--text-secondary);">Cliquez pour ajouter une image</span>
+                            <span style="font-size:.78rem;color:var(--text-secondary);opacity:.7;">JPEG, PNG ou WebP · max 2 Mo</span>
+                        </div>
+                        <input type="file" id="poolImageInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="previewPoolImage(this)">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="poolPassword">Mot de passe <span style="opacity:.6;font-weight:400;">(optionnel)</span></label>
+                    <div class="password-field">
+                        <input type="password" id="poolPassword" autocomplete="new-password"
+                               minlength="4" maxlength="72" placeholder="Laissez vide pour un pool ouvert">
+                        <button type="button" class="password-toggle" id="poolPasswordToggle"
+                                aria-label="Afficher le mot de passe"
+                                onclick="togglePoolPassword(this, 'poolPassword')"><span class="pw-eye" data-icon="eye" data-icon-size="17"></span><span class="pw-eye-off" data-icon="eye-off" data-icon-size="17"></span></button>
+                    </div>
+                    <p class="form-hint">Sans mot de passe, n'importe qui peut rejoindre. Avec, il sera demandé à
+                        chaque nouvelle arrivée — 4 caractères minimum.</p>
+                </div>
+            </div>
+
+            <!-- Configuration des sélections -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <h2 class="form-card-title">Configuration des sélections</h2>
+                    <p class="form-card-desc">Définissez combien de joueurs chaque équipe doit sélectionner</p>
+                </div>
+                <div class="form-section">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="numOffensive">Attaquants</label>
+                            <input type="number" id="numOffensive" value="6" min="0" max="20">
+                        </div>
+                        <div class="form-group">
+                            <label for="numDefensive">Défenseurs</label>
+                            <input type="number" id="numDefensive" value="4" min="0" max="20">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="numGoalies">Gardiens</label>
+                            <input type="number" id="numGoalies" value="1" min="0" max="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="numRookies">Rookies</label>
+                            <input type="number" id="numRookies" value="1" min="0" max="10">
+                        </div>
+                    </div>
+                    <div class="form-row form-row-half">
+                        <div class="form-group">
+                            <label for="numTeams">Équipes NHL</label>
+                            <input type="number" id="numTeams" value="1" min="0" max="10">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Participants -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <h2 class="form-card-title">Nombre de participants</h2>
+                    <p class="form-card-desc">Combien de gérants dans votre ligue</p>
+                </div>
+                <div class="form-group">
+                    <label for="maxPlayers">Maximum de participants</label>
+                    <select id="maxPlayers">
+                        <option value="2">2 participants</option>
+                        <option value="3">3 participants</option>
+                        <option value="4">4 participants</option>
+                        <option value="5">5 participants</option>
+                        <option value="6">6 participants</option>
+                        <option value="7">7 participants</option>
+                        <option value="8">8 participants</option>
+                        <option value="9">9 participants</option>
+                        <option value="10">10 participants</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Mode de jeu & options -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <h2 class="form-card-title">Mode de jeu & options</h2>
+                    <p class="form-card-desc">Choisissez comment le classement sera déterminé</p>
+                </div>
+                <div class="form-section">
+                    <h3>Mode de jeu</h3>
+                    <div class="mode-options">
+                        <div class="form-group">
+                            <label>
+                                <input type="radio" name="poolMode" value="cumulative" checked onchange="updatePoolModeInfo()">
+                                <span class="radio-label">
+                                    <strong><span data-icon="chart" data-icon-size="15"></span> Cumulatif</strong>
+                                    <span class="mode-description">L'équipe avec le plus de points totaux à la fin de la saison gagne</span>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="radio" name="poolMode" value="head-to-head" onchange="updatePoolModeInfo()">
+                                <span class="radio-label">
+                                    <strong><span data-icon="swords" data-icon-size="15"></span> Head-to-Head</strong>
+                                    <span class="mode-description">Duels hebdomadaires (Lun-Dim) - Équipe avec le plus de victoires gagne</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="h2h-warning" class="warning-message" style="display:none;">
+                        <span class="warning-icon" data-icon="warning" data-icon-size="17"></span>
+                        Mode Head-to-Head nécessite un nombre <strong>pair</strong> de participants
+                    </div>
+                </div>
+
+                <div class="form-section form-section-options">
+                    <h3>Options</h3>
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="allowTrades" checked>
+                            <span class="checkbox-label">Autoriser les échanges de joueurs</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <button class="create-btn" onclick="createClan()">Créer le pool</button>
+
+            <p class="pool-page-foot">
+                Vous cherchez plutôt à rejoindre une ligue existante ?
+                <a href="rejoindre-pool.html">Voir les pools disponibles →</a>
+            </p>
+        </div>
+    </div>
+
+    <script defer src="/socket.io/socket.io.js"></script>
+    <!-- Filtre de grossieretes, partage avec le serveur. Charge avant
+         equipes.js, qui s'en sert. -->
+    <script src="profanity.js"></script>
+    <script defer src="equipes.js"></script>
+    <script defer src="navbar.js"></script>
+    <script defer src="poolNav.js"></script>
+    <script defer src="notifications.js"></script>
+</body>
+</html>

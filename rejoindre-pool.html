@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rejoindre un pool – Fantazy</title>
+    <script src="theme.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="pool.css">
+    <link rel="stylesheet" href="poolNav.css">
+    <link rel="stylesheet" href="skeleton-loader.css">
+    <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="icons.js" defer></script>
+    <!-- Contexte de pool actif : doit precéder tout script de page. -->
+    <script defer src="activePool.js"></script>
+</head>
+<body>
+    <nav class="navbar"></nav>
+
+    <!-- ============================================================ -->
+    <!-- EN-TÊTE                                                       -->
+    <!-- ============================================================ -->
+    <header class="pool-hero">
+        <div class="pool-hero-spots">
+            <div class="ph-spot ph-sp1"></div>
+            <div class="ph-spot ph-sp2"></div>
+        </div>
+        <div class="pool-hero-inner">
+            <div class="pool-hero-badge"><span data-icon="globe" data-icon-size="16"></span> LIGUES OUVERTES</div>
+            <h1 class="pool-hero-title">
+                Rejoignez un <span class="gradient-text">pool existant.</span>
+            </h1>
+            <p class="pool-hero-sub">Seuls les pools dont le repêchage n'a pas commencé apparaissent ici.</p>
+        </div>
+    </header>
+
+    <!-- ============================================================ -->
+    <!-- POOLS DISPONIBLES                                             -->
+    <!-- ============================================================ -->
+    <div class="pool-page-container">
+        <div class="pool-section">
+            <div class="pool-section-header">
+                <h2 class="pool-section-title">Pools disponibles</h2>
+                <p class="pool-section-desc">Trouvez et rejoignez une ligue ouverte</p>
+            </div>
+            <!-- Recherche et filtres. Purement client : la liste des pools
+                 ouverts est déjà entièrement chargée. -->
+            <div class="pool-search" id="poolSearchBar">
+                <div class="pool-search-field">
+                    <span class="pool-search-icon" data-icon="search" data-icon-size="17"></span>
+                    <input type="search" id="poolSearchInput" autocomplete="off"
+                           placeholder="Rechercher un pool par son nom"
+                           aria-label="Rechercher un pool">
+                    <button type="button" class="pool-search-clear" id="poolSearchClear"
+                            aria-label="Effacer la recherche" hidden>&times;</button>
+                </div>
+                <div class="pool-filter-chips" role="group" aria-label="Filtrer par accès">
+                    <button type="button" class="pool-filter-chip is-active" data-acces="tous">Tous</button>
+                    <button type="button" class="pool-filter-chip" data-acces="ouvert">Sans mot de passe</button>
+                    <button type="button" class="pool-filter-chip" data-acces="protege">Avec mot de passe</button>
+                </div>
+            </div>
+            <!-- Squelette -->
+            <div class="skeleton-loader" id="availablePoolsSkeleton">
+                <div class="skeleton-list">
+                    <div class="skeleton-card"><div class="skeleton-card-content">
+                        <div class="skeleton" style="width:200px;height:24px;margin-bottom:12px;border-radius:8px;"></div>
+                        <div class="skeleton" style="width:300px;height:16px;border-radius:8px;"></div>
+                    </div></div>
+                    <div class="skeleton-card"><div class="skeleton-card-content">
+                        <div class="skeleton" style="width:200px;height:24px;margin-bottom:12px;border-radius:8px;"></div>
+                        <div class="skeleton" style="width:300px;height:16px;border-radius:8px;"></div>
+                    </div></div>
+                </div>
+            </div>
+            <!-- Contenu -->
+            <ul id="available-clans-list" class="pool-list actual-content" style="display:none;"></ul>
+            <p class="pool-no-result" id="poolNoResult" hidden>Aucun pool ne correspond à votre recherche.</p>
+
+            <p class="pool-page-foot">
+                Aucune ligue ne vous convient ?
+                <a href="creer-pool.html">Créez la vôtre →</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MODALES                                                       -->
+    <!-- ============================================================ -->
+
+    <!-- Saisie du mot de passe d'un pool protégé. Piloté par
+         demanderMotDePasse() dans equipes.js, qui renvoie une promesse. -->
+    <div id="pool-password-modal" class="modal" style="display:none;">
+        <div class="modal-content pool-password-modal">
+            <div class="modal-header">
+                <h2>Pool protégé</h2>
+                <button class="modal-close" id="poolPwCancel" aria-label="Annuler">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="pool-pw-intro">Le pool <strong id="poolPwName"></strong> demande un mot de passe pour
+                    y entrer. Demandez-le à la personne qui l'a créé.</p>
+                <div class="form-group">
+                    <label for="poolPwInput">Mot de passe</label>
+                    <div class="password-field">
+                        <input type="password" id="poolPwInput" autocomplete="off" maxlength="72"
+                               placeholder="Mot de passe du pool">
+                        <button type="button" class="password-toggle" id="poolPwToggle"
+                                aria-label="Afficher le mot de passe"
+                                onclick="togglePoolPassword(this, 'poolPwInput')"><span class="pw-eye" data-icon="eye" data-icon-size="17"></span><span class="pw-eye-off" data-icon="eye-off" data-icon-size="17"></span></button>
+                    </div>
+                </div>
+                <p class="pool-pw-error" id="poolPwError" role="alert" hidden></p>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" id="poolPwCancelBtn">Annuler</button>
+                <button id="poolPwOk">Rejoindre</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="clan-members-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Choisir une équipe</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="clan-members-content"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <script defer src="/socket.io/socket.io.js"></script>
+    <script defer src="avatars.js"></script>
+    <script src="profanity.js"></script>
+    <script defer src="equipes.js"></script>
+    <script defer src="navbar.js"></script>
+    <script defer src="poolNav.js"></script>
+    <script defer src="notifications.js"></script>
+</body>
+</html>

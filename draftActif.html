@@ -14,6 +14,7 @@
        draftActif.css en dernier évite d'avoir à recourir à !important. -->
   <link rel="stylesheet" href="index.css" />
   <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="poolNav.css">
   <link rel="stylesheet" href="skeleton-loader.css" />
   <link rel="stylesheet" href="draftActif.css" />
   <!-- Modale de carrière : feuille partagée avec stats.html, chargée en
@@ -22,17 +23,21 @@
   <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="icons.js" defer></script>
 
-  <!-- Handle query param BEFORE draftActif.js loads -->
+  <!-- ?pool= est lu ici, avant activePool.js : ce script nettoie l'URL, et
+       le contexte n'y retrouverait plus le paramètre ensuite. Les deux clés
+       sont donc écrites d'un coup, sinon le rail afficherait un pool et la
+       salle de repêchage en ouvrirait un autre. -->
   <script>
-    // Check if pool is in query param and set localStorage
     const urlParams = new URLSearchParams(window.location.search);
     const poolParam = urlParams.get('pool');
     if (poolParam) {
       localStorage.setItem('draftClan', poolParam);
-      // Clean URL without reload
+      localStorage.setItem('activePool', poolParam);
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   </script>
+    <!-- Contexte de pool actif : doit precéder tout script de page. -->
+    <script defer src="activePool.js"></script>
 </head>
 <body>
   <nav class="navbar">
@@ -385,5 +390,7 @@
   <!-- Alignement de la rangée « Carrière », partagé avec stats.html. -->
   <script defer src="careerTotals.js"></script>
   <script defer src="navbar.js"></script>
+  <script defer src="poolNav.js"></script>
+  <script defer src="notifications.js"></script>
 </body>
 </html>

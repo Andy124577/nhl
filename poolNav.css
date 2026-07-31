@@ -1,0 +1,562 @@
+/* ============================================================
+   NAVIGATION DES POOLS — rail latéral, tiroir mobile, cloche
+   ------------------------------------------------------------
+   Reprend les variables de index.css : rien n'est codé en dur, le
+   thème clair suit sans règle supplémentaire.
+
+   Répartition des surfaces :
+     ≥ 1100px  rail fixe à gauche
+     < 1100px  bouton ☰ dans la barre du haut, tiroir glissant
+     ≤ 768px   la barre d'onglets du bas garde la navigation de page
+   ============================================================ */
+
+:root {
+    --fz-rail-w: 268px;
+    --fz-nav-h: 70px;
+}
+
+/* ==================== RAIL LATÉRAL ==================== */
+
+.fz-sidebar {
+    display: none;
+    position: fixed;
+    top: var(--fz-nav-h);
+    left: 0;
+    bottom: 0;
+    width: var(--fz-rail-w);
+    padding: 20px 16px 28px;
+    background: var(--navbar-bg);
+    border-right: 1px solid var(--navbar-border);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: 900;
+}
+
+@media (min-width: 1100px) {
+    .fz-sidebar { display: block; }
+    body.fz-has-sidebar { padding-left: var(--fz-rail-w); }
+
+    /* Le décalage du contenu emporterait la barre du haut avec lui et
+       laisserait un coin vide au-dessus du rail. On la ressort à la
+       largeur de la fenêtre. */
+    body.fz-has-sidebar .navbar {
+        margin-left: calc(var(--fz-rail-w) * -1);
+        width: calc(100% + var(--fz-rail-w));
+    }
+}
+
+.fz-rail-label {
+    margin: 0 0 10px 4px;
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--text-gray);
+}
+
+/* ==================== BLOC POOL ACTIF ==================== */
+
+.fz-pool-block { position: relative; margin-bottom: 26px; }
+
+.fz-active-pool {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    padding: 11px 12px;
+    background: var(--card);
+    border: 1px solid var(--border-gray);
+    border-radius: 14px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.fz-active-pool:hover,
+.fz-active-pool.is-open {
+    border-color: var(--primary);
+    box-shadow: var(--glow-primary);
+}
+
+.fz-active-pool-img {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.fz-active-pool-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+
+.fz-active-pool-name {
+    font-weight: 800;
+    font-size: .97rem;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fz-active-pool-meta {
+    font-size: .78rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fz-chevron { width: 17px; height: 17px; color: var(--text-secondary); flex-shrink: 0; transition: transform .2s ease; }
+.fz-chevron svg { width: 100%; height: 100%; }
+.fz-active-pool.is-open .fz-chevron { transform: rotate(180deg); }
+
+/* Pastille d'état du pool actif, sous le sélecteur. */
+.fz-pool-state {
+    display: inline-block;
+    margin: 8px 0 0 4px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .02em;
+}
+
+.fz-state-encours { background: rgba(255, 71, 87, .16); color: var(--danger); }
+.fz-state-pret    { background: rgba(0, 230, 118, .15); color: var(--success); }
+.fz-state-attente { background: rgba(255, 179, 0, .15); color: var(--warning); }
+.fz-state-termine { background: rgba(0, 212, 255, .14); color: var(--primary); }
+
+/* ==================== LISTE DES POOLS ==================== */
+
+.fz-pool-list {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    background: var(--card-white);
+    border: 1px solid var(--border-gray);
+    border-radius: 14px;
+    box-shadow: 0 12px 34px var(--shadow-lg);
+    max-height: 340px;
+    overflow-y: auto;
+    z-index: 20;
+}
+
+.fz-pool-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 10px;
+    background: none;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: background .18s ease;
+}
+
+.fz-pool-option:hover { background: var(--bg-hover); }
+
+.fz-pool-option.is-active {
+    background: rgba(0, 212, 255, .12);
+    box-shadow: inset 0 0 0 1px rgba(0, 212, 255, .35);
+}
+
+.fz-pool-option.is-loading { opacity: .55; pointer-events: none; }
+
+.fz-pool-option-img { width: 32px; height: 32px; border-radius: 9px; object-fit: cover; flex-shrink: 0; }
+.fz-pool-option-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+
+.fz-pool-option-name {
+    font-weight: 700;
+    font-size: .9rem;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fz-pool-option-meta {
+    font-size: .74rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fz-pool-option-check { width: 16px; height: 16px; color: var(--primary); opacity: 0; flex-shrink: 0; }
+.fz-pool-option-check svg { width: 100%; height: 100%; }
+.fz-pool-option.is-active .fz-pool-option-check { opacity: 1; }
+
+/* ==================== AUCUN POOL ==================== */
+
+.fz-pool-empty {
+    padding: 16px 14px;
+    background: var(--card);
+    border: 1px dashed var(--border-gray);
+    border-radius: 14px;
+    text-align: center;
+}
+
+.fz-pool-empty p { margin: 0 0 12px; font-size: .85rem; color: var(--text-secondary); line-height: 1.45; }
+
+.fz-pool-empty-cta {
+    display: block;
+    padding: 9px 14px;
+    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    color: var(--bg);
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: .88rem;
+    text-decoration: none;
+}
+
+.fz-pool-empty-link {
+    display: block;
+    margin-top: 9px;
+    font-size: .78rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+.fz-pool-empty-link:hover { color: var(--primary); }
+
+/* ==================== LIENS DE GESTION ==================== */
+
+.fz-rail-nav { display: flex; flex-direction: column; gap: 4px; }
+
+.fz-rail-link {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 10px 12px;
+    border-radius: 11px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: background .18s ease, color .18s ease;
+}
+
+.fz-rail-link:hover { background: var(--bg-hover); color: var(--text-main); }
+
+.fz-rail-link.is-active {
+    background: rgba(0, 212, 255, .12);
+    color: var(--text-main);
+    box-shadow: inset 0 0 0 1px rgba(0, 212, 255, .3);
+}
+
+.fz-rail-icon { width: 19px; height: 19px; flex-shrink: 0; color: var(--primary); }
+.fz-rail-icon svg { width: 100%; height: 100%; }
+.fz-rail-txt { display: flex; flex-direction: column; min-width: 0; }
+.fz-rail-title { font-weight: 700; font-size: .92rem; }
+.fz-rail-detail { font-size: .74rem; color: var(--text-gray); }
+
+/* ==================== BOUTON ☰ ==================== */
+
+.fz-burger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    margin-right: 6px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background .2s ease, color .2s ease;
+}
+
+.fz-burger svg { width: 22px; height: 22px; }
+.fz-burger:hover { background: var(--bg-hover); color: var(--text-main); }
+
+@media (min-width: 1100px) { .fz-burger { display: none; } }
+
+/* ==================== TIROIR ==================== */
+
+.fz-drawer-scrim {
+    position: fixed;
+    inset: 0;
+    background: var(--overlay-dark);
+    z-index: 1400;
+}
+
+.fz-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(340px, 88vw);
+    padding: 0 16px 28px;
+    background: var(--navbar-bg);
+    border-right: 1px solid var(--navbar-border);
+    box-shadow: 8px 0 34px var(--shadow-lg);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transform: translateX(-100%);
+    transition: transform .22s ease;
+    z-index: 1401;
+}
+
+.fz-drawer.is-open { transform: translateX(0); }
+body.fz-drawer-open { overflow: hidden; }
+
+.fz-drawer-head {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 0 14px;
+    background: var(--navbar-bg);
+    border-bottom: 1px solid var(--navbar-border);
+    margin-bottom: 18px;
+    z-index: 2;
+}
+
+.fz-drawer-title { font-weight: 800; font-size: 1.05rem; color: var(--text-main); }
+
+.fz-drawer-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: none;
+    border: 0;
+    border-radius: 9px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.fz-drawer-close svg { width: 20px; height: 20px; }
+.fz-drawer-close:hover { background: var(--bg-hover); color: var(--text-main); }
+
+.fz-drawer-pages { display: flex; flex-direction: column; gap: 3px; margin-top: 24px; }
+
+.fz-drawer-page {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 11px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: .92rem;
+    transition: background .18s ease, color .18s ease;
+}
+
+.fz-drawer-page:hover { background: var(--bg-hover); color: var(--text-main); }
+.fz-drawer-page.is-active { background: rgba(0, 212, 255, .12); color: var(--text-main); }
+.fz-drawer-page-img { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
+
+/* ==================== CLOCHE DE NOTIFICATIONS ==================== */
+
+.fz-notif { position: relative; }
+
+.fz-notif-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    position: relative;
+    transition: background .2s ease, color .2s ease;
+}
+
+.fz-notif-btn svg { width: 21px; height: 21px; }
+.fz-notif-btn:hover { background: var(--bg-hover); color: var(--text-main); }
+.fz-notif-btn.has-unread { color: var(--primary); }
+
+.fz-notif-badge {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: var(--danger);
+    color: #fff;
+    font-size: .68rem;
+    font-weight: 800;
+    border: 2px solid var(--navbar-bg);
+}
+
+.fz-notif-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(370px, calc(100vw - 24px));
+    background: var(--card-white);
+    border: 1px solid var(--border-gray);
+    border-radius: 14px;
+    box-shadow: 0 14px 40px var(--shadow-lg);
+    overflow: hidden;
+    z-index: 1200;
+}
+
+.fz-notif-panel.is-open { display: block; }
+
+.fz-notif-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border-light);
+    font-weight: 800;
+    font-size: .9rem;
+    color: var(--text-main);
+}
+
+.fz-notif-count { font-size: .78rem; font-weight: 700; color: var(--text-gray); }
+.fz-notif-list { max-height: min(420px, 60vh); overflow-y: auto; }
+
+.fz-notif-item {
+    display: flex;
+    gap: 12px;
+    padding: 13px 16px;
+    text-decoration: none;
+    border-bottom: 1px solid var(--border-light);
+    transition: background .16s ease;
+}
+
+.fz-notif-item:last-child { border-bottom: 0; }
+.fz-notif-item:hover { background: var(--bg-hover); }
+.fz-notif-item.is-unread { background: rgba(0, 212, 255, .06); }
+.fz-notif-item.is-urgent { box-shadow: inset 3px 0 0 var(--danger); }
+
+.fz-notif-icon {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.fz-notif-icon svg { width: 18px; height: 18px; }
+.fz-notif-icon-echange { background: rgba(0, 212, 255, .14); color: var(--primary); }
+.fz-notif-icon-repechage { background: rgba(255, 71, 87, .14); color: var(--danger); }
+
+.fz-notif-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fz-notif-title { font-weight: 700; font-size: .88rem; color: var(--text-main); }
+
+.fz-notif-pool {
+    font-size: .74rem;
+    font-weight: 800;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+.fz-notif-detail { font-size: .8rem; color: var(--text-secondary); line-height: 1.35; }
+
+.fz-notif-empty { padding: 34px 20px; text-align: center; color: var(--text-secondary); }
+.fz-notif-empty-icon { display: inline-flex; width: 30px; height: 30px; margin-bottom: 10px; opacity: .5; }
+.fz-notif-empty-icon svg { width: 100%; height: 100%; }
+.fz-notif-empty p { margin: 0; font-size: .88rem; }
+
+/* ==================== BANDEAU DE CONTEXTE ==================== */
+/* Rappelle sur quel pool porte la page, là où le rail n'est pas visible. */
+
+.fz-context-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 1100px;
+    margin: 16px auto 0;
+    padding: 10px 14px;
+    background: var(--card);
+    border: 1px solid var(--border-gray);
+    border-radius: 13px;
+}
+
+.fz-context-img { width: 30px; height: 30px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.fz-context-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.fz-context-label { font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--text-gray); }
+.fz-context-name { font-weight: 800; font-size: .95rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.fz-context-switch {
+    padding: 7px 12px;
+    background: none;
+    border: 1px solid var(--border-gray);
+    border-radius: 9px;
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: .8rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.fz-context-switch:hover { border-color: var(--primary); color: var(--primary); }
+
+@media (min-width: 1100px) { .fz-context-bar { display: none; } }
+
+/* ==================== ÉTAT VIDE PARTAGÉ ==================== */
+
+.fz-empty-pool {
+    max-width: 520px;
+    margin: 60px auto;
+    padding: 36px 28px;
+    background: var(--card);
+    border: 1px solid var(--border-gray);
+    border-radius: 18px;
+    text-align: center;
+}
+
+.fz-empty-pool h2 { margin: 0 0 10px; font-size: 1.3rem; color: var(--text-main); }
+.fz-empty-pool p { margin: 0 0 20px; color: var(--text-secondary); line-height: 1.5; }
+
+.fz-empty-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+.fz-empty-actions a {
+    padding: 10px 18px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: .9rem;
+}
+
+.fz-empty-actions a.primary { background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%); color: var(--bg); }
+.fz-empty-actions a.secondary { border: 1px solid var(--border-gray); color: var(--text-secondary); }
+
+/* ==================== PETITS ÉCRANS ==================== */
+/* Trois boutons s'ajoutent à la barre du haut : sous 420px, ils doivent
+   se serrer pour ne pas repousser le logo hors de l'écran. */
+
+/* La cloche s'ajoute au thème et à l'avatar : l'écart de 20px d'origine
+   devenait trop large pour trois éléments. */
+.navbar-desktop .navbar-right { gap: 12px; }
+
+@media (max-width: 480px) {
+    .navbar-desktop .navbar-right { gap: 6px; }
+}
+
+@media (max-width: 420px) {
+    .fz-burger, .fz-notif-btn { width: 36px; height: 36px; }
+    .fz-burger { margin-right: 2px; }
+    .fz-burger svg { width: 20px; height: 20px; }
+    .fz-notif-btn svg { width: 19px; height: 19px; }
+    .fz-context-bar { margin-left: 12px; margin-right: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fz-drawer { transition: none; }
+    .fz-chevron { transition: none; }
+}

@@ -1,0 +1,372 @@
+/* ============================================================
+   NAVIGATION DES POOLS — barre latérale et tiroir mobile
+   ------------------------------------------------------------
+   Le choix du pool vivait auparavant sur chaque page : une liste sur
+   Classement, une étape 1 sur Échange, un onglet sur Pools. Il vit
+   désormais à un seul endroit, et le reste du site suit.
+
+   Ordinateur : rail fixe à gauche, sous la barre du haut.
+   Téléphone  : tiroir ouvert par le bouton ☰ de la barre du haut,
+                la barre d'onglets du bas gardant la navigation de page.
+
+   Aucun sélecteur de pool n'est dupliqué : les deux surfaces sont
+   rendues par les mêmes fonctions et se ferment l'une l'autre.
+   ============================================================ */
+(function () {
+    const ICONES = {
+        menu: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
+        fermer: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+        chevron: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`,
+        check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+        reglages: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+        plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+        entrer: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>`
+    };
+
+    const LIBELLE_ETAT = {
+        attente: 'En attente de joueurs',
+        pret:    'Prêt à repêcher',
+        encours: 'Repêchage en cours',
+        termine: 'Saison en cours'
+    };
+
+    const LIENS_PAGE = [
+        { href: 'index.html',      cle: 'accueil',    texte: 'Accueil',    img: 'Icons/fantazy.png' },
+        { href: 'repechage.html',  cle: 'repechage',  texte: 'Repêchage',  img: 'Icons/pool.png' },
+        { href: 'trade.html',      cle: 'trade',      texte: 'Échanges',   img: 'Icons/echanges.png' },
+        { href: 'classement.html', cle: 'classement', texte: 'Classement', img: 'Icons/classement.png' },
+        { href: 'stats.html',      cle: 'stats',      texte: 'Stats',      img: 'Icons/stats.png' }
+    ];
+
+    const LIENS_GESTION = [
+        { href: 'mes-pools.html',      icone: 'reglages', titre: 'Mes pools',        detail: 'Équipe, nom, paramètres' },
+        { href: 'creer-pool.html',     icone: 'plus',     titre: 'Créer un pool',    detail: 'Nouvelle ligue' },
+        { href: 'rejoindre-pool.html', icone: 'entrer',   titre: 'Rejoindre un pool', detail: 'Ligues ouvertes' }
+    ];
+
+    const echapper = texte => String(texte == null ? '' : texte)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    function pageCourante() {
+        const chemin = window.location.pathname;
+        if (chemin.includes('mes-pools')) return 'mespools';
+        if (chemin.includes('creer-pool')) return 'creer';
+        if (chemin.includes('rejoindre-pool')) return 'rejoindre';
+        if (chemin.includes('repechage') || chemin.includes('draftActif') ||
+            chemin.includes('draftFini') || chemin.includes('draft.html')) return 'repechage';
+        if (chemin.includes('classement')) return 'classement';
+        if (chemin.includes('trade')) return 'trade';
+        if (chemin.includes('stats')) return 'stats';
+        if (chemin.includes('index.html') || chemin.endsWith('/')) return 'accueil';
+        return '';
+    }
+
+    // ==================== FRAGMENTS ====================
+
+    function vignette(pool, classe) {
+        const src = FZPool.image(pool && pool.data);
+        return `<img src="${echapper(src)}" class="${classe}" alt=""
+                     onerror="this.src='Icons/grayGroup.png'">`;
+    }
+
+    /** Bloc « pool actif » : le bouton d'ouverture et la liste des pools. */
+    function blocPool(suffixe) {
+        const actif = FZPool.get();
+        const mesPools = FZPool.mine();
+
+        if (mesPools.length === 0) {
+            return `
+                <div class="fz-pool-block">
+                    <p class="fz-rail-label">Pool actif</p>
+                    <div class="fz-pool-empty">
+                        <p>Vous n'êtes dans aucun pool pour l'instant.</p>
+                        <a class="fz-pool-empty-cta" href="creer-pool.html">Créer un pool</a>
+                        <a class="fz-pool-empty-link" href="rejoindre-pool.html">ou rejoindre une ligue ouverte</a>
+                    </div>
+                </div>`;
+        }
+
+        const courant = mesPools.find(p => p.name === actif) || mesPools[0];
+        const etat = FZPool.draftState(courant.data);
+
+        const options = mesPools.map(pool => {
+            const e = FZPool.draftState(pool.data);
+            const choisi = pool.name === actif;
+            return `
+                <li>
+                    <button type="button" class="fz-pool-option${choisi ? ' is-active' : ''}"
+                            data-pool="${echapper(pool.name)}"
+                            ${choisi ? 'aria-current="true"' : ''}>
+                        ${vignette(pool, 'fz-pool-option-img')}
+                        <span class="fz-pool-option-txt">
+                            <span class="fz-pool-option-name">${echapper(pool.name)}</span>
+                            <span class="fz-pool-option-meta">${echapper(pool.teamName)} · ${LIBELLE_ETAT[e.etat]}</span>
+                        </span>
+                        <span class="fz-pool-option-check">${ICONES.check}</span>
+                    </button>
+                </li>`;
+        }).join('');
+
+        return `
+            <div class="fz-pool-block">
+                <p class="fz-rail-label">Pool actif</p>
+                <button type="button" class="fz-active-pool" id="fzActiveBtn${suffixe}"
+                        aria-expanded="false" aria-controls="fzPoolList${suffixe}">
+                    ${vignette(courant, 'fz-active-pool-img')}
+                    <span class="fz-active-pool-txt">
+                        <span class="fz-active-pool-name">${echapper(courant.name)}</span>
+                        <span class="fz-active-pool-meta">${echapper(courant.teamName)}</span>
+                    </span>
+                    <span class="fz-chevron">${ICONES.chevron}</span>
+                </button>
+                <span class="fz-pool-state fz-state-${etat.etat}">${LIBELLE_ETAT[etat.etat]}</span>
+                <ul class="fz-pool-list" id="fzPoolList${suffixe}" hidden>${options}</ul>
+            </div>`;
+    }
+
+    function blocGestion() {
+        const page = pageCourante();
+        const cleParHref = { 'mes-pools.html': 'mespools', 'creer-pool.html': 'creer', 'rejoindre-pool.html': 'rejoindre' };
+        return `
+            <nav class="fz-rail-nav" aria-label="Gestion des pools">
+                <p class="fz-rail-label">Gestion</p>
+                ${LIENS_GESTION.map(lien => `
+                    <a href="${lien.href}" class="fz-rail-link${cleParHref[lien.href] === page ? ' is-active' : ''}">
+                        <span class="fz-rail-icon">${ICONES[lien.icone]}</span>
+                        <span class="fz-rail-txt">
+                            <span class="fz-rail-title">${lien.titre}</span>
+                            <span class="fz-rail-detail">${lien.detail}</span>
+                        </span>
+                    </a>`).join('')}
+            </nav>`;
+    }
+
+    function blocPages() {
+        const page = pageCourante();
+        return `
+            <nav class="fz-drawer-pages" aria-label="Pages">
+                <p class="fz-rail-label">Naviguer</p>
+                ${LIENS_PAGE.map(lien => `
+                    <a href="${lien.href}" class="fz-drawer-page${lien.cle === page ? ' is-active' : ''}">
+                        <img src="${lien.img}" alt="" class="fz-drawer-page-img">
+                        <span>${lien.texte}</span>
+                    </a>`).join('')}
+            </nav>`;
+    }
+
+    // ==================== MONTAGE ====================
+
+    function monterBarreLaterale() {
+        let rail = document.getElementById('fzSidebar');
+        if (!rail) {
+            rail = document.createElement('aside');
+            rail.className = 'fz-sidebar';
+            rail.id = 'fzSidebar';
+            rail.setAttribute('aria-label', 'Navigation des pools');
+            document.body.appendChild(rail);
+        }
+        rail.innerHTML = blocPool('Rail') + blocGestion();
+        brancherBlocPool(rail, 'Rail');
+        document.body.classList.add('fz-has-sidebar');
+    }
+
+    function monterTiroir() {
+        let tiroir = document.getElementById('fzDrawer');
+        if (!tiroir) {
+            const html = `
+                <div class="fz-drawer-scrim" id="fzDrawerScrim" hidden></div>
+                <div class="fz-drawer" id="fzDrawer" role="dialog" aria-modal="true"
+                     aria-label="Menu des pools" hidden>
+                    <div class="fz-drawer-head">
+                        <span class="fz-drawer-title">Mes pools</span>
+                        <button type="button" class="fz-drawer-close" id="fzDrawerClose"
+                                aria-label="Fermer le menu">${ICONES.fermer}</button>
+                    </div>
+                    <div class="fz-drawer-body" id="fzDrawerBody"></div>
+                </div>`;
+            document.body.insertAdjacentHTML('beforeend', html);
+            tiroir = document.getElementById('fzDrawer');
+
+            document.getElementById('fzDrawerClose').addEventListener('click', fermerTiroir);
+            document.getElementById('fzDrawerScrim').addEventListener('click', fermerTiroir);
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && !tiroir.hidden) fermerTiroir();
+            });
+        }
+
+        const corps = document.getElementById('fzDrawerBody');
+        corps.innerHTML = blocPool('Drawer') + blocGestion() + blocPages();
+        brancherBlocPool(corps, 'Drawer');
+    }
+
+    function monterHamburger() {
+        const gauche = document.querySelector('.navbar-desktop .navbar-left');
+        if (!gauche || document.getElementById('fzBurger')) return;
+        const bouton = document.createElement('button');
+        bouton.type = 'button';
+        bouton.className = 'fz-burger';
+        bouton.id = 'fzBurger';
+        bouton.setAttribute('aria-label', 'Ouvrir le menu des pools');
+        bouton.setAttribute('aria-expanded', 'false');
+        bouton.innerHTML = ICONES.menu;
+        bouton.addEventListener('click', ouvrirTiroir);
+        gauche.insertBefore(bouton, gauche.firstChild);
+    }
+
+    // ==================== INTERACTIONS ====================
+
+    function brancherBlocPool(racine, suffixe) {
+        const bouton = racine.querySelector(`#fzActiveBtn${suffixe}`);
+        const liste = racine.querySelector(`#fzPoolList${suffixe}`);
+        if (!bouton || !liste) return;
+
+        bouton.addEventListener('click', e => {
+            e.stopPropagation();
+            const ouvert = !liste.hidden;
+            liste.hidden = ouvert;
+            bouton.setAttribute('aria-expanded', String(!ouvert));
+            bouton.classList.toggle('is-open', !ouvert);
+        });
+
+        liste.querySelectorAll('.fz-pool-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const nom = option.dataset.pool;
+                if (nom === FZPool.get()) { fermerListes(); return; }
+                option.classList.add('is-loading');
+                FZPool.set(nom);
+            });
+        });
+    }
+
+    function fermerListes() {
+        document.querySelectorAll('.fz-pool-list').forEach(liste => {
+            liste.hidden = true;
+            const bouton = liste.parentElement.querySelector('.fz-active-pool');
+            if (bouton) {
+                bouton.setAttribute('aria-expanded', 'false');
+                bouton.classList.remove('is-open');
+            }
+        });
+    }
+
+    /** Une liste ouverte ne doit pas se faire effacer sous les doigts. */
+    function listeOuverte() {
+        return [...document.querySelectorAll('.fz-pool-list')].some(l => !l.hidden);
+    }
+
+    // Un clic ailleurs referme la liste : elle recouvre le contenu du rail.
+    // Posé une seule fois — le rail, lui, se reconstruit à chaque mise à jour.
+    document.addEventListener('click', e => {
+        if (!listeOuverte()) return;
+        if (e.target.closest('.fz-pool-block')) return;
+        fermerListes();
+    });
+
+    let elementAvantTiroir = null;
+
+    function ouvrirTiroir() {
+        const tiroir = document.getElementById('fzDrawer');
+        const voile = document.getElementById('fzDrawerScrim');
+        if (!tiroir) return;
+        elementAvantTiroir = document.activeElement;
+        tiroir.hidden = false;
+        voile.hidden = false;
+        document.body.classList.add('fz-drawer-open');
+        const burger = document.getElementById('fzBurger');
+        if (burger) burger.setAttribute('aria-expanded', 'true');
+        requestAnimationFrame(() => tiroir.classList.add('is-open'));
+        const premier = tiroir.querySelector('button, a');
+        if (premier) premier.focus();
+    }
+
+    function fermerTiroir() {
+        const tiroir = document.getElementById('fzDrawer');
+        const voile = document.getElementById('fzDrawerScrim');
+        if (!tiroir || tiroir.hidden) return;
+        tiroir.classList.remove('is-open');
+        document.body.classList.remove('fz-drawer-open');
+        const burger = document.getElementById('fzBurger');
+        if (burger) burger.setAttribute('aria-expanded', 'false');
+        // Attendre la fin de la glissade avant de retirer de l'ordre de tabulation.
+        setTimeout(() => {
+            tiroir.hidden = true;
+            voile.hidden = true;
+            if (elementAvantTiroir && elementAvantTiroir.focus) elementAvantTiroir.focus();
+        }, 220);
+    }
+
+    // ==================== CYCLE DE VIE ====================
+
+    /**
+     * Bandeau de contexte : sous 1100px le rail disparaît, et une page de
+     * classement ou d'échange ne dirait plus sur quel pool elle porte.
+     * Toute page qui en veut un pose `<div data-fz-context></div>`.
+     */
+    function monterBandeaux() {
+        const actif = FZPool.get();
+        document.querySelectorAll('[data-fz-context]').forEach(hote => {
+            if (!actif) { hote.innerHTML = ''; return; }
+            const pool = FZPool.mine().find(p => p.name === actif);
+            if (!pool) { hote.innerHTML = ''; return; }
+            hote.innerHTML = `
+                <div class="fz-context-bar">
+                    ${vignette(pool, 'fz-context-img')}
+                    <span class="fz-context-txt">
+                        <span class="fz-context-label">Pool actif</span>
+                        <span class="fz-context-name">${echapper(pool.name)}</span>
+                    </span>
+                    <button type="button" class="fz-context-switch">Changer</button>
+                </div>`;
+            hote.querySelector('.fz-context-switch').addEventListener('click', ouvrirTiroir);
+        });
+    }
+
+    function rendre() {
+        if (localStorage.getItem('isLoggedIn') !== 'true') return;
+        monterBarreLaterale();
+        monterTiroir();
+        monterHamburger();
+        monterBandeaux();
+    }
+
+    async function demarrer() {
+        if (localStorage.getItem('isLoggedIn') !== 'true') return;
+        await FZPool.ready();
+        rendre();
+        // Le rail reflète l'état des repêchages : il doit suivre les mises
+        // à jour temps réel. Sauf pendant qu'on s'en sert — reconstruire le
+        // menu sous le curseur ferait rater le clic.
+        FZPool.onData(() => {
+            const tiroir = document.getElementById('fzDrawer');
+            if (listeOuverte() || (tiroir && !tiroir.hidden)) return;
+            rendre();
+        });
+        // Sur les pages qui se remettent à jour sans recharger, le tiroir
+        // resterait ouvert par-dessus le contenu qu'on vient de demander.
+        FZPool.on(() => { fermerListes(); fermerTiroir(); rendre(); });
+    }
+
+    function attendreNavbar() {
+        if (document.querySelector('.navbar-desktop .navbar-left')) { demarrer(); return; }
+        // navbar.js peut n'avoir pas encore construit son contenu selon
+        // l'ordre des scripts de la page.
+        const observateur = new MutationObserver(() => {
+            if (document.querySelector('.navbar-desktop .navbar-left')) {
+                observateur.disconnect();
+                demarrer();
+            }
+        });
+        const navbar = document.querySelector('.navbar');
+        if (navbar) observateur.observe(navbar, { childList: true, subtree: true });
+        else demarrer();   // page sans navbar : le rail suffit
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attendreNavbar);
+    } else {
+        attendreNavbar();
+    }
+
+    window.FZNav = { render: rendre, openDrawer: ouvrirTiroir, closeDrawer: fermerTiroir };
+})();

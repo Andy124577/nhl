@@ -1,0 +1,129 @@
+/* ============================================================
+   REPÊCHAGE — écran d'entrée du pool actif
+   ============================================================ */
+
+.rp-container { padding-top: 26px; padding-bottom: 40px; }
+.rp-content { max-width: 720px; margin: 0 auto; }
+
+.rp-card {
+    background: var(--card);
+    border: 1px solid var(--border-gray);
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+/* ==================== EN-TÊTE ==================== */
+
+.rp-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px;
+    background: var(--card-white);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.rp-img { width: 54px; height: 54px; border-radius: 14px; object-fit: cover; flex-shrink: 0; }
+.rp-head-txt { flex: 1; min-width: 0; }
+
+.rp-eyebrow {
+    margin: 0 0 3px;
+    font-size: .69rem;
+    font-weight: 800;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--text-gray);
+}
+
+.rp-title { margin: 0; font-size: 1.35rem; font-weight: 800; color: var(--text-main); word-break: break-word; }
+
+.rp-state {
+    flex-shrink: 0;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: .74rem;
+    font-weight: 800;
+}
+
+.rp-state-attente { background: rgba(255, 179, 0, .15); color: var(--warning); }
+.rp-state-pret    { background: rgba(0, 230, 118, .15); color: var(--success); }
+.rp-state-termine { background: rgba(0, 212, 255, .14); color: var(--primary); }
+
+/* ==================== CORPS ==================== */
+
+.rp-body { padding: 22px 20px 24px; }
+.rp-lead { margin: 0 0 16px; font-size: 1rem; color: var(--text-main); line-height: 1.55; }
+.rp-note { margin: 0 0 18px; font-size: .84rem; color: var(--text-secondary); line-height: 1.5; }
+
+.rp-progress {
+    height: 9px;
+    border-radius: 999px;
+    background: var(--bg-gray-light);
+    overflow: hidden;
+}
+
+.rp-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--primary) 0%, #00B8D9 100%);
+    transition: width .4s ease;
+}
+
+.rp-progress-lbl { margin: 8px 0 18px; font-size: .82rem; font-weight: 700; color: var(--text-secondary); }
+
+.rp-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.rp-btn {
+    padding: 11px 20px;
+    border-radius: 11px;
+    font-weight: 800;
+    font-size: .92rem;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform .18s ease, border-color .18s ease, color .18s ease;
+}
+
+.rp-btn.primary {
+    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    color: var(--bg);
+}
+
+.rp-btn.primary:hover { transform: translateY(-1px); }
+.rp-btn.primary:disabled { opacity: .6; transform: none; cursor: default; }
+
+.rp-btn.secondary {
+    background: var(--bg-gray-light);
+    border-color: var(--border-gray);
+    color: var(--text-secondary);
+}
+
+.rp-btn.secondary:hover { border-color: var(--primary); color: var(--primary); }
+
+/* ==================== CHARGEMENT ==================== */
+
+.rp-loading { padding: 70px 20px; text-align: center; color: var(--text-secondary); }
+.rp-loading p { margin: 16px 0 0; font-size: .95rem; }
+.rp-loading strong { color: var(--text-main); }
+
+.rp-spinner {
+    width: 34px;
+    height: 34px;
+    margin: 0 auto;
+    border: 3px solid var(--border-gray);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: rp-spin .8s linear infinite;
+}
+
+@keyframes rp-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+    .rp-spinner { animation-duration: 2.4s; }
+    .rp-progress-fill { transition: none; }
+}
+
+@media (max-width: 560px) {
+    .rp-head { flex-wrap: wrap; }
+    .rp-actions .rp-btn { flex: 1; text-align: center; }
+}

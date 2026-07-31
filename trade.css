@@ -1088,6 +1088,23 @@ body {
     box-shadow: var(--glow-primary);
 }
 
+/* Échange ouvert depuis une notification : sans repère, il faudrait le
+   retrouver soi-même dans la liste. */
+.received-trade-card.is-target {
+    border-color: var(--primary);
+    box-shadow: var(--glow-primary-strong);
+    animation: trade-target-pulse 1.6s ease-out 2;
+}
+
+@keyframes trade-target-pulse {
+    0%, 100% { box-shadow: var(--glow-primary-strong); }
+    50%      { box-shadow: 0 0 0 6px rgba(0, 212, 255, .12); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .received-trade-card.is-target { animation: none; }
+}
+
 .trade-card-header {
     display: flex;
     justify-content: space-between;

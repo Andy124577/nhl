@@ -7,11 +7,14 @@
     <script src="theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="poolNav.css">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="accueil.css">
     <link rel="stylesheet" href="skeleton-loader.css">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
+    <!-- Contexte de pool actif : doit precéder tout script de page. -->
+    <script defer src="activePool.js"></script>
 </head>
 <body>
     <!-- Navigation -->
@@ -41,15 +44,15 @@
                 </h1>
                 <p class="hero-sub">Repêchez mieux. Échangez intelligemment. Grimpez le classement.</p>
                 <div class="hero-actions">
-                    <a href="pool.html?tab=create" class="btn-hero-primary"><span data-icon="rocket" data-icon-size="16"></span> Créer un pool</a>
-                    <a href="pool.html?tab=join" class="btn-hero-secondary">Rejoindre un pool →</a>
+                    <a href="creer-pool.html" class="btn-hero-primary"><span data-icon="rocket" data-icon-size="16"></span> Créer un pool</a>
+                    <a href="rejoindre-pool.html" class="btn-hero-secondary">Rejoindre un pool →</a>
                     <button onclick="scrollToHowItWorks()" class="btn-hero-tertiary">Comment ça marche ?</button>
                 </div>
                 <!-- Quick nav pills for logged-in users -->
                 <div class="hero-quick-nav" id="heroQuickNav" style="display:none;">
                     <a href="classement.html" class="hero-pill"><span data-icon="trophy" data-icon-size="15"></span> Classement</a>
                     <a href="trade.html" class="hero-pill"><span data-icon="refresh" data-icon-size="15"></span> Échanges</a>
-                    <a href="pool.html" class="hero-pill"><span data-icon="settings" data-icon-size="15"></span> Mes pools</a>
+                    <a href="mes-pools.html" class="hero-pill"><span data-icon="settings" data-icon-size="15"></span> Mes pools</a>
                     <a href="stats.html" class="hero-pill"><span data-icon="chart" data-icon-size="15"></span> Stats</a>
                 </div>
             </div>
@@ -168,7 +171,7 @@
                     <div class="step-icon-wrap" data-icon="hockey" data-icon-size="48"></div>
                     <h3 class="step-title">Rejoindre ou créer un pool</h3>
                     <p class="step-desc">Invitez vos amis et configurez votre ligue personnalisée avec vos propres règles de scoring.</p>
-                    <a href="pool.html" class="step-cta">Commencer →</a>
+                    <a href="mes-pools.html" class="step-cta">Commencer →</a>
                 </div>
 
                 <!-- Connector -->
@@ -182,7 +185,7 @@
                     <div class="step-icon-wrap" data-icon="target" data-icon-size="48"></div>
                     <h3 class="step-title">Repêcher votre équipe</h3>
                     <p class="step-desc">Sélectionnez les meilleurs joueurs de la LNH pour bâtir l'équipe parfaite.</p>
-                    <a href="pool.html?tab=draft" class="step-cta">Voir le repêchage →</a>
+                    <a href="repechage.html" class="step-cta">Voir le repêchage →</a>
                 </div>
 
                 <!-- Connector -->
@@ -206,5 +209,7 @@
     <script defer src="lazy-load.js"></script>
     <script defer src="accueil.js"></script>
     <script defer src="navbar.js"></script>
+    <script defer src="poolNav.js"></script>
+    <script defer src="notifications.js"></script>
 </body>
 </html>

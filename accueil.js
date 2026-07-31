@@ -233,7 +233,7 @@ function adaptHeroForUser() {
     } else if (userData.primaryPool) {
         primary = `<a href="classement.html" class="btn-hero-primary"><span data-icon="trophy" data-icon-size="16"></span> Voir mon classement</a>`;
     } else {
-        primary = `<a href="pool.html?tab=create" class="btn-hero-primary"><span data-icon="rocket" data-icon-size="16"></span> Créer un pool</a>`;
+        primary = `<a href="creer-pool.html" class="btn-hero-primary"><span data-icon="rocket" data-icon-size="16"></span> Créer un pool</a>`;
     }
 
     // Occam's Razor: returning users who already have a pool don't need the
@@ -245,7 +245,7 @@ function adaptHeroForUser() {
 
     actions.innerHTML = `
         ${primary}
-        <a href="pool.html" class="btn-hero-secondary">Mes pools →</a>
+        <a href="mes-pools.html" class="btn-hero-secondary">Mes pools →</a>
         ${tertiary}
     `;
     // The global icon scan only runs once on load; process the freshly-inserted icons.
@@ -488,7 +488,7 @@ function renderLeaderboard() {
         content.innerHTML = `
             <div class="lb-empty">
                 <p>Rejoignez un pool pour voir le classement</p>
-                <a href="pool.html" style="margin-top:12px;display:inline-block;">→ Gérer les pools</a>
+                <a href="mes-pools.html" style="margin-top:12px;display:inline-block;">→ Gérer les pools</a>
             </div>`;
         return;
     }
