@@ -696,6 +696,52 @@ function renderLegalFooter() {
         </footer>
     `;
     document.body.insertAdjacentHTML('beforeend', html);
+    surveillerPiedDePage();
+}
+
+/**
+ * Repousse le pied de page sous la ligne de flottaison.
+ *
+ * Les mentions légales n'ont pas à accueillir qui arrive : sur les pages
+ * courtes — un repêchage en attente, un seul pool — elles se retrouvaient
+ * dans le premier écran, juste sous le contenu. On les descend d'autant
+ * qu'il manque pour que leur bord supérieur touche le bas de la fenêtre.
+ * Sur une page déjà longue, aucune marge n'est ajoutée.
+ */
+let _ajustePied = false;
+
+function ajusterPiedDePage() {
+    const pied = document.querySelector('.site-legal-footer');
+    if (!pied) return;
+
+    _ajustePied = true;
+
+    // On rend d'abord la main à la feuille de style : sans ça la marge
+    // du passage précédent s'ajouterait à elle-même, et l'écart voulu
+    // par le design (48px, 32px sur téléphone) serait perdu.
+    pied.style.marginTop = '';
+    const base = parseFloat(getComputedStyle(pied).marginTop) || 0;
+    const hautDuPied = pied.getBoundingClientRect().top + window.scrollY;
+    const manque = Math.ceil(window.innerHeight - hautDuPied);
+    const marge = manque > 0 ? `${base + manque}px` : '';
+
+    if (pied.style.marginTop !== marge) pied.style.marginTop = marge;
+
+    requestAnimationFrame(() => { _ajustePied = false; });
+}
+
+function surveillerPiedDePage() {
+    ajusterPiedDePage();
+
+    // Le contenu arrive après coup presque partout : squelettes remplacés,
+    // images chargées, rail latéral monté. La marge doit suivre.
+    if (typeof ResizeObserver !== 'undefined') {
+        new ResizeObserver(() => {
+            if (!_ajustePied) ajusterPiedDePage();
+        }).observe(document.body);
+    }
+    window.addEventListener('resize', ajusterPiedDePage);
+    window.addEventListener('load', ajusterPiedDePage);
 }
 
 // ==================== INIT ====================
