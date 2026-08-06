@@ -411,7 +411,7 @@ html[data-theme="light"] .player-selection-card {
 }
 
 /* ============================================================
-   5. DERNIERS CHOIX (carrousel)
+   5. TABLEAU DU REPÊCHAGE (bande de choix)
    ============================================================ */
 .carousel-controls { display: flex; gap: 8px; }
 .carousel-btn {
@@ -487,38 +487,43 @@ html[data-theme="light"] .player-selection-card {
 }
 
 /* ---- La carte ----
-   Fond aux couleurs de l'équipe du joueur (teamColors.js pose --team-a,
-   --team-b et --team-deep en style en ligne). Une voile sombre est posée
-   par-dessus le dégradé : elle garantit que le texte blanc reste lisible
-   aussi bien sur le marine de Toronto que sur l'or de Nashville. */
+   Fond aux couleurs de l'équipe du joueur. teamColors.js pose --team-a,
+   --team-b et --team-deep en style en ligne, DÉJÀ assourdies : les teintes
+   officielles de la LNH posées telles quelles donnaient une bande criarde
+   qui prenait le dessus sur la liste de joueurs, la vraie action de la page.
+   Seul le liseré du bas garde une couleur franche.
+
+   Colonne en drapeau plutôt que grille : la photo est une couche de fond
+   posée en absolu, elle ne participe donc pas au flux. */
 .pick-card {
   position: relative;
   flex: 0 0 auto;
   width: var(--pick-w);
   height: var(--pick-h);
-  display: grid;
-  /* `minmax(0, 1fr)` et non `auto` : un élément de grille refuse par défaut
-     de passer sous sa largeur de contenu, et un nom de joueur en une seule
-     ligne débordait alors de la carte, poussant le logo hors du cadre. */
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   scroll-snap-align: start;
   overflow: hidden;
   isolation: isolate;
-  border: 1px solid rgba(255, 255, 255, .12);
+  border: 1px solid rgba(255, 255, 255, .07);
   border-radius: 14px;
   color: #fff;
+  /* Surface franche : un dégradé d'équipe, et une rampe sombre en haut
+     uniquement là où le nom se pose. Ni reflet blanc en diagonale ni ombre
+     portée autour de la carte — sur une bande de vingt vignettes serrées,
+     ces effets se cumulaient en un halo laiteux et brouillaient la lecture.
+     Le contraste vient des surfaces, pas d'un vernis. */
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, .34) 0%, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, .58) 100%),
-    linear-gradient(145deg, var(--team-a, #3A414D) 0%, var(--team-b, #171A20) 62%, var(--team-deep, #101318) 100%);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, .28);
+    linear-gradient(180deg, rgba(0, 0, 0, .26) 0%, rgba(0, 0, 0, 0) 32%),
+    linear-gradient(158deg, var(--team-a, #232936) 0%, var(--team-b, #1a1f29) 62%, var(--team-deep, #14181f) 100%);
   user-select: none;
   -webkit-user-select: none;
-  transition: transform .2s ease, box-shadow .2s ease;
+  transition: transform .18s ease, border-color .18s ease;
 }
 .pick-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 11px 24px rgba(0, 0, 0, .38);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, .22);
 }
 /* Liseré bas dans la seconde couleur, restée vive : deux équipes au marine
    proche (Buffalo, Columbus) se distinguent d'un coup d'œil. */
@@ -528,15 +533,31 @@ html[data-theme="light"] .player-selection-card {
   right: 0;
   bottom: 0;
   left: 0;
+  z-index: 2;
   height: 3px;
   background: var(--team-accent, var(--primary));
 }
-.pick-card-sheen {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(45deg, transparent 44%, rgba(255, 255, 255, .07) 50%, transparent 56%);
-  pointer-events: none;
+/* ---- Tours sans choix : à venir, en cours, sauté ----
+   Aucune équipe de la LNH n'est connue, donc aucune couleur d'équipe : ces
+   cartes restent neutres et laissent les choix faits ressortir. */
+.pick-card.is-upcoming,
+.pick-card.is-skipped {
+  --team-a: #232936;
+  --team-b: #1a1f29;
+  --team-deep: #14181f;
+  --team-accent: rgba(255, 255, 255, .12);
+  opacity: .8;
 }
+.pick-card.is-skipped { opacity: .5; }
+.pick-card.is-current {
+  --team-a: #1d2a39;
+  --team-b: #16202b;
+  --team-deep: #111820;
+  --team-accent: var(--primary);
+  border-color: rgba(0, 212, 255, .5);
+  animation: turnPulse 2.4s ease-in-out infinite;
+}
+.pick-card.is-current .pick-card-name { color: var(--primary); }
 
 /* ---- Haut : joueur à gauche, son équipe de la LNH à droite ---- */
 .pick-card-head {
@@ -546,7 +567,7 @@ html[data-theme="light"] .player-selection-card {
   gap: 6px;
   padding: 8px 10px 0;
   min-width: 0;
-  z-index: 1;
+  z-index: 2;
 }
 .pick-card-id { flex: 1 1 auto; min-width: 0; }
 .pick-card-name {
@@ -555,7 +576,9 @@ html[data-theme="light"] .player-selection-card {
   font-weight: 800;
   line-height: 1.15;
   text-transform: uppercase;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, .55);
+  /* Ombre de texte serrée : elle détache le nom du portrait sans poser de
+     voile sur la carte. */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .7);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -576,11 +599,23 @@ html[data-theme="light"] .player-selection-card {
   align-items: center;
   gap: 2px;
 }
+/* Pastille blanche derrière le logo : les logos de la LNH à dominante sombre
+   (Boston, Los Angeles, Pittsburgh) se fondaient dans le fond d'équipe. */
+.pick-card-logo-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 3px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, .18);
+}
 .pick-card-logo {
-  width: 26px;
-  height: 26px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .5));
 }
 .pick-card-abbr {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
@@ -590,61 +625,61 @@ html[data-theme="light"] .player-selection-card {
   color: rgba(255, 255, 255, .85);
 }
 
-/* ---- Milieu : la photo ---- */
+/* ---- Le portrait ----
+   Couche de fond occupant toute la carte, et non une rangée : le PNG de la
+   LNH est détouré sur fond transparent, il se pose donc directement sur le
+   dégradé d'équipe. Aligné en bas et à ras du cadre, les épaules passent
+   derrière le pied de carte — la carte se lit comme une vignette de
+   collection plutôt que comme une fiche à vignette ronde. */
 .pick-card-photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  min-height: 0;
-  z-index: 1;
 }
 .pick-card-photo-img {
-  width: var(--pick-photo);
-  height: var(--pick-photo);
-  border-radius: 50%;
-  /* Cadrage haut : les portraits de la LNH sont serrés sur le visage et un
-     centrage par défaut coupe le menton. */
-  object-fit: cover;
-  object-position: top center;
-  background: rgba(0, 0, 0, .28);
-  border: 2px solid rgba(255, 255, 255, .3);
-  box-shadow: 0 5px 14px rgba(0, 0, 0, .42);
-}
-/* Un choix d'équipe montre le logo, pas un portrait : ni rond ni cadre. */
-.pick-card-photo.is-team .pick-card-photo-img {
-  /* Un logo n'a pas besoin du cadre rond d'un portrait, et il gagne à
-     occuper un peu plus de place puisqu'il n'est pas rogné. */
-  width: calc(var(--pick-photo) * 1.25);
-  height: calc(var(--pick-photo) * 1.25);
-  border: 0;
-  border-radius: 0;
-  background: none;
+  height: 96%;
+  width: auto;
+  max-width: 92%;
   object-fit: contain;
-  box-shadow: none;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .5));
+  object-position: bottom center;
 }
-.pick-card-initials {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--pick-photo);
-  height: var(--pick-photo);
-  border-radius: 50%;
-  background: rgba(0, 0, 0, .3);
-  border: 2px solid rgba(255, 255, 255, .24);
-  font-size: calc(var(--pick-photo) * .36);
-  font-weight: 800;
-}
+/* Un choix d'équipe montre un logo : centré, et sans le débord du bas qui
+   n'a de sens que pour une paire d'épaules. */
+.pick-card-photo.is-team { align-items: center; }
+.pick-card-photo.is-team .pick-card-photo-img { height: 62%; max-width: 62%; }
 
-/* ---- Bas : le pool qui l'a repêché, puis le repère du choix ---- */
+/* Sans portrait — tour à venir, ou photo introuvable — un grand chiffre ou
+   les initiales en filigrane occupent le centre. */
+.pick-card-photo.is-empty { align-items: center; }
+.pick-card-slot,
+.pick-card-initials {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: calc(var(--pick-h) * .38);
+  font-weight: 700;
+  line-height: 1;
+  color: rgba(255, 255, 255, .10);
+}
+.pick-card.is-current .pick-card-slot { color: rgba(0, 212, 255, .22); }
+
+/* ---- Bas : le pool qui l'a repêché, puis le repère du choix ----
+   Barre pleine, à l'arête nette, plutôt qu'un dégradé fondu sur le portrait :
+   le texte repose sur une surface franche et se lit du premier coup, quelle
+   que soit l'image derrière. Le liseré d'équipe court juste en dessous. */
 .pick-card-foot {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  padding: 0 10px 9px;
+  padding: 6px 10px 8px;
   min-width: 0;
-  z-index: 1;
+  z-index: 2;
+  background: rgba(10, 12, 16, .78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-top: 1px solid rgba(255, 255, 255, .08);
 }
 .pick-card-owner {
   flex: 0 1 auto;
@@ -654,7 +689,6 @@ html[data-theme="light"] .player-selection-card {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
 }
 .pick-card-meta {
   flex: 0 0 auto;
@@ -1134,6 +1168,7 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
 @media (prefers-reduced-motion: reduce) {
   .turn-banner.your-turn,
   .draft-header.is-my-turn,
+  .pick-card.is-current,
   .custom-alert-box,
   .custom-alert-icon,
   .modal-content { animation: none; }
@@ -1215,7 +1250,7 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* ---- Derniers choix : ticker horizontal ----
+/* ---- Tableau du repêchage : bande horizontale ----
    Dans le bandeau, le bloc perd son cadre : les cartes de choix
    portent déjà le leur (section 5) et deux encadrements imbriqués
    alourdissaient l'en-tête. */

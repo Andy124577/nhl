@@ -87,6 +87,30 @@ function shadeHex(hex, ratio) {
 }
 
 /**
+ * Mélange deux couleurs. `ratio` est la part de `vers` dans le résultat :
+ * 0 rend `depuis` intact, 1 rend `vers`.
+ */
+function mixHex(depuis, vers, ratio) {
+  const lire = hex => {
+    const clean = String(hex).replace('#', '');
+    const full = clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean;
+    return parseInt(full, 16);
+  };
+  const a = lire(depuis);
+  const b = lire(vers);
+  if (Number.isNaN(a) || Number.isNaN(b)) return depuis;
+
+  const part = Math.min(1, Math.max(0, ratio));
+  const canal = decalage => {
+    const va = (a >> decalage) & 0xff;
+    const vb = (b >> decalage) & 0xff;
+    return Math.round(va + (vb - va) * part);
+  };
+  return '#' + [canal(16), canal(8), canal(0)]
+    .map(v => v.toString(16).padStart(2, '0')).join('');
+}
+
+/**
  * Luminance relative (WCAG) — sert à choisir entre texte clair et texte
  * sombre. L'or de Nashville et le bleu marine de Toronto ne peuvent pas
  * porter la même couleur de texte.

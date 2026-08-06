@@ -1,18 +1,23 @@
 /**
- * Carrousel des derniers choix — construction des cartes et défilement.
+ * Tableau du repêchage — construction des cartes et défilement.
  *
  * Ce fichier existe pour garder la logique lisible : draftActif.js est
  * minifié, on n'y laisse donc qu'un appel. Tout ce qui touche à l'apparence
  * d'une carte de choix se modifie ici.
  *
- * Une carte = un choix. Photo du joueur au centre, équipe de la LNH en haut
- * à droite, nom de l'équipe du pool qui l'a repêché en bas à gauche, et le
- * fond prend les couleurs de l'équipe du joueur (voir teamColors.js).
+ * La bande couvre le repêchage ENTIER, pas seulement les choix déjà faits :
+ * un tour par position de `draftData.draftOrder`, du premier au dernier, de
+ * gauche à droite. Trois états se suivent donc naturellement — les choix
+ * faits, le tour en cours, puis les tours à venir avec l'équipe qui les
+ * détient. On voit l'ordre complet dès l'ouverture de la salle.
  *
- * Le carrousel défile horizontalement : au doigt sur téléphone, en glissant à
- * la souris sur ordinateur, et par les flèches ‹ › dans les deux cas. Tout
- * l'historique est rendu — le plus récent en premier — au lieu d'être paginé
- * cinq par cinq.
+ * Une carte faite = photo du joueur au centre, équipe de la LNH en haut à
+ * droite, équipe du pool qui l'a repêché en bas à gauche, fond aux couleurs
+ * (assourdies) de l'équipe du joueur — voir teamColors.js.
+ *
+ * Le défilement suit l'activité : après chaque choix, la bande se recale sur
+ * le tour en cours. Elle se manipule aussi au doigt, en glissant à la souris
+ * et par les flèches ‹ ›.
  *
  * Dépendances (globales de draftActif.js, toutes optionnelles ici) :
  * fullPlayerData, goalieData, teamData, draftData, getCurrentPlayerStats,
@@ -67,18 +72,7 @@ function resolvePickInfo(pick) {
   if (estEquipe) position = 'Équipe';
   else if (fiche && fiche.positionCode) position = fiche.positionCode;
 
-  return { nom, estEquipe, abbrev, logo, photo, position, proprietaire: pick.team || '' };
-}
-
-/** Initiales de repli quand aucune photo n'est disponible. */
-function pickInitials(nom) {
-  return String(nom)
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(m => m[0])
-    .join('')
-    .toUpperCase();
+  return { nom, estEquipe, abbrev, logo, photo, position };
 }
 
 /* ============================================================
@@ -86,31 +80,81 @@ function pickInitials(nom) {
    ============================================================ */
 
 /**
- * Une carte de choix. Construite par le DOM et non par une chaîne HTML : le
+ * Base sombre du mélange. Les couleurs d'équipe sont vives par nature ; les
+ * poser telles quelles donnait une bande criarde qui écrasait le reste de la
+ * page. Chaque teinte est donc ramenée vers ce gris bleuté, d'autant plus
+ * fort que la couleur d'origine est claire.
+ */
+const PICK_CARD_BASE = '#151922';
+const PICK_CARD_BASE_DEEP = '#0d1016';
+
+/** Dose d'assourdissement : les couleurs claires en reçoivent davantage. */
+function pickCardMuteRatio(couleur) {
+  return 0.45 + Math.min(0.30, hexLuminance(couleur) * 0.55);
+}
+
+/**
+ * Une carte du tableau. Construite par le DOM et non par une chaîne HTML : le
  * nom d'équipe du pool est saisi par l'utilisateur, l'insérer via innerHTML
  * ouvrirait une injection de balises.
+ *
+ * `etat` vaut 'done' (choix fait), 'current' (tour en cours), 'upcoming'
+ * (tour à venir) ou 'skipped' (tour sauté, équipe déjà complète).
  */
-function buildPickCard(pick, numero, ronde) {
-  const info = resolvePickInfo(pick);
-  const [couleurA, couleurB] = getTeamColors(info.abbrev);
-
-  // Les couleurs claires (l'or de Boston, le bleu ciel d'Utah) sont
-  // assombries avant d'être posées en fond : le texte blanc doit rester
-  // lisible sur les 32 équipes sans avoir à changer de couleur d'encre.
-  const fondA = hexLuminance(couleurA) > 0.42 ? shadeHex(couleurA, -0.42) : couleurA;
-  const fondB = hexLuminance(couleurB) > 0.55 ? shadeHex(couleurB, -0.34) : couleurB;
+function buildPickCard(options) {
+  const { pick, numero, ronde, equipePool, etat } = options;
+  const info = pick ? resolvePickInfo(pick) : null;
 
   const carte = document.createElement('article');
-  carte.className = 'pick-card';
-  carte.style.setProperty('--team-a', fondA);
-  carte.style.setProperty('--team-b', fondB);
-  carte.style.setProperty('--team-deep', shadeHex(fondA, -0.62));
-  carte.style.setProperty('--team-accent', couleurB); // teinte vive conservée pour les liserés
-  if (info.abbrev) carte.dataset.team = info.abbrev;
+  carte.className = 'pick-card is-' + etat;
 
-  const sheen = document.createElement('div');
-  sheen.className = 'pick-card-sheen';
-  carte.appendChild(sheen);
+  // Seules les cartes d'un choix fait portent des couleurs d'équipe ; les
+  // autres gardent le neutre défini en CSS, faute d'équipe connue.
+  if (info) {
+    const [couleurA, couleurB] = getTeamColors(info.abbrev);
+    carte.style.setProperty('--team-a', mixHex(couleurA, PICK_CARD_BASE, pickCardMuteRatio(couleurA)));
+    carte.style.setProperty('--team-b', mixHex(couleurB, PICK_CARD_BASE, pickCardMuteRatio(couleurB) + 0.10));
+    carte.style.setProperty('--team-deep', mixHex(couleurA, PICK_CARD_BASE_DEEP, 0.86));
+    // Le liseré du bas garde la teinte vive : c'est le seul repère de couleur
+    // franche, et il suffit à séparer deux marines voisins.
+    carte.style.setProperty('--team-accent', couleurB);
+    if (info.abbrev) carte.dataset.team = info.abbrev;
+  }
+
+  /* ---- Milieu : la photo, ou le numéro de tour s'il n'y a pas de choix ----
+     Posée en couche de fond plutôt qu'en rangée : le portrait peut ainsi
+     déborder derrière le nom et le pied, comme sur une carte de collection. */
+  const zonePhoto = document.createElement('div');
+  zonePhoto.className = 'pick-card-photo';
+
+  if (info && info.estEquipe) zonePhoto.classList.add('is-team');
+
+  if (info && info.photo) {
+    const img = document.createElement('img');
+    img.className = 'pick-card-photo-img';
+    img.src = info.photo;
+    img.alt = info.nom;
+    img.loading = 'lazy';
+    img.draggable = false;
+    // Une photo manquante laisserait un vide : on bascule sur les initiales.
+    img.addEventListener('error', () => {
+      img.remove();
+      zonePhoto.classList.add('is-empty');
+      zonePhoto.appendChild(buildPickInitials(info.nom));
+    });
+    zonePhoto.appendChild(img);
+  } else if (info) {
+    zonePhoto.classList.add('is-empty');
+    zonePhoto.appendChild(buildPickInitials(info.nom));
+  } else {
+    // Tour à venir : le numéro tient lieu d'illustration.
+    zonePhoto.classList.add('is-empty');
+    const chiffre = document.createElement('span');
+    chiffre.className = 'pick-card-slot';
+    chiffre.textContent = String(numero);
+    zonePhoto.appendChild(chiffre);
+  }
+  carte.appendChild(zonePhoto);
 
   /* ---- Haut : identité à gauche, équipe LNH à droite ---- */
   const haut = document.createElement('div');
@@ -121,69 +165,61 @@ function buildPickCard(pick, numero, ronde) {
 
   const nom = document.createElement('h4');
   nom.className = 'pick-card-name';
-  nom.textContent = info.nom;
+  if (info) {
+    nom.textContent = info.nom;
+  } else if (etat === 'current') {
+    nom.textContent = 'Au tour de';
+  } else if (etat === 'skipped') {
+    nom.textContent = 'Tour sauté';
+  } else {
+    nom.textContent = 'À venir';
+  }
   identite.appendChild(nom);
 
-  if (info.position) {
+  const sousTitre = info ? info.position : (etat === 'skipped' ? 'Équipe complète' : `Choix ${numero}`);
+  if (sousTitre) {
     const pos = document.createElement('span');
     pos.className = 'pick-card-pos';
-    pos.textContent = info.position;
+    pos.textContent = sousTitre;
     identite.appendChild(pos);
   }
   haut.appendChild(identite);
 
-  const club = document.createElement('div');
-  club.className = 'pick-card-club';
-  if (info.logo) {
-    const logo = document.createElement('img');
-    logo.className = 'pick-card-logo';
-    logo.src = info.logo;
-    logo.alt = info.abbrev || '';
-    logo.loading = 'lazy';
-    logo.addEventListener('error', () => logo.remove());
-    club.appendChild(logo);
+  if (info && (info.logo || info.abbrev)) {
+    const club = document.createElement('div');
+    club.className = 'pick-card-club';
+    if (info.logo) {
+      // Pastille blanche : beaucoup de logos de la LNH sont à dominante
+      // sombre et disparaissaient sur un fond d'équipe lui aussi sombre.
+      const pastille = document.createElement('span');
+      pastille.className = 'pick-card-logo-chip';
+      const logo = document.createElement('img');
+      logo.className = 'pick-card-logo';
+      logo.src = info.logo;
+      logo.alt = info.abbrev || '';
+      logo.loading = 'lazy';
+      logo.addEventListener('error', () => pastille.remove());
+      pastille.appendChild(logo);
+      club.appendChild(pastille);
+    }
+    if (info.abbrev) {
+      const code = document.createElement('span');
+      code.className = 'pick-card-abbr';
+      code.textContent = info.abbrev;
+      club.appendChild(code);
+    }
+    haut.appendChild(club);
   }
-  if (info.abbrev) {
-    const code = document.createElement('span');
-    code.className = 'pick-card-abbr';
-    code.textContent = info.abbrev;
-    club.appendChild(code);
-  }
-  haut.appendChild(club);
   carte.appendChild(haut);
 
-  /* ---- Milieu : la photo ---- */
-  const zonePhoto = document.createElement('div');
-  zonePhoto.className = 'pick-card-photo';
-  if (info.estEquipe) zonePhoto.classList.add('is-team');
-
-  if (info.photo) {
-    const img = document.createElement('img');
-    img.className = 'pick-card-photo-img';
-    img.src = info.photo;
-    img.alt = info.nom;
-    img.loading = 'lazy';
-    img.draggable = false;
-    // Une photo manquante laisserait un rond vide : on bascule sur les
-    // initiales, comme si aucune photo n'avait été trouvée.
-    img.addEventListener('error', () => {
-      img.remove();
-      zonePhoto.appendChild(buildPickInitials(info.nom));
-    });
-    zonePhoto.appendChild(img);
-  } else {
-    zonePhoto.appendChild(buildPickInitials(info.nom));
-  }
-  carte.appendChild(zonePhoto);
-
-  /* ---- Bas : pool à gauche, repère du choix à droite ---- */
+  /* ---- Bas : l'équipe du pool, puis le repère du tour ---- */
   const bas = document.createElement('div');
   bas.className = 'pick-card-foot';
 
   const pool = document.createElement('span');
   pool.className = 'pick-card-owner';
-  pool.textContent = info.proprietaire;
-  pool.title = info.proprietaire;
+  pool.textContent = equipePool || '';
+  pool.title = equipePool || '';
   bas.appendChild(pool);
 
   const repere = document.createElement('span');
@@ -193,8 +229,11 @@ function buildPickCard(pick, numero, ronde) {
 
   carte.appendChild(bas);
 
-  const etiquette = [info.nom, info.abbrev, info.proprietaire].filter(Boolean).join(' — ');
+  const etiquette = info
+    ? `${info.nom} — ${info.abbrev || '?'} — repêché par ${equipePool}`
+    : (etat === 'current' ? `au tour de ${equipePool}` : `à venir — ${equipePool}`);
   carte.setAttribute('aria-label', `Choix ${numero} : ${etiquette}`);
+  if (etat === 'current') carte.setAttribute('aria-current', 'true');
 
   return carte;
 }
@@ -202,66 +241,164 @@ function buildPickCard(pick, numero, ronde) {
 function buildPickInitials(nom) {
   const span = document.createElement('span');
   span.className = 'pick-card-initials';
-  span.textContent = pickInitials(nom);
+  span.textContent = String(nom)
+    .split(/\s+/).filter(Boolean).slice(0, 2)
+    .map(m => m[0]).join('').toUpperCase();
   return span;
 }
 
 /* ============================================================
-   3. RENDU DU CARROUSEL
+   3. LES TOURS DU REPÊCHAGE
    ============================================================ */
 
-let pickCarouselCount = -1;
+/**
+ * Associe chaque position de `draftOrder` au choix qui l'a remplie.
+ *
+ * Les deux listes ne sont PAS forcément alignées : le serveur avance
+ * `currentPickIndex` sans rien écrire dans `picksHistory` quand une équipe
+ * complète voit son tour sauté. On avance donc un curseur dans l'historique
+ * et on ne consomme une entrée que si elle porte bien le nom de l'équipe
+ * attendue — sinon le tour est marqué sauté et l'alignement se rattrape tout
+ * seul au tour suivant.
+ */
+function buildPickSlots(ordre, historique, indexCourant) {
+  const tours = [];
+  let curseur = 0;
+
+  for (let i = 0; i < ordre.length; i++) {
+    const equipePool = ordre[i];
+    let pick = null;
+    let etat = 'upcoming';
+
+    const candidat = historique[curseur];
+    const rempli = candidat && candidat.team === equipePool;
+
+    if (i < indexCourant) {
+      if (rempli) { pick = candidat; curseur++; etat = 'done'; }
+      else etat = 'skipped';
+    } else if (i === indexCourant) {
+      // Le serveur n'avance plus l'index après le dernier tour : sans ce
+      // rattrapage, le choix final resterait affiché « en cours » et la
+      // carte clignoterait indéfiniment sur un repêchage terminé. Aucun
+      // faux positif possible en cours de route — à ce point, toutes les
+      // entrées de l'historique ont déjà été consommées.
+      if (rempli) { pick = candidat; curseur++; etat = 'done'; }
+      else etat = 'current';
+    }
+
+    tours.push({ equipePool, pick, etat });
+  }
+  return tours;
+}
+
+/**
+ * Repli quand l'ordre du repêchage n'est pas encore généré : on affiche au
+ * moins les choix déjà faits, pour ne pas laisser la bande vide.
+ */
+function buildPickSlotsFromHistory(historique) {
+  return historique.map(pick => ({ equipePool: pick.team, pick, etat: 'done' }));
+}
+
+/* ============================================================
+   4. RENDU DU CARROUSEL
+   ============================================================ */
+
+let pickCarouselSignature = null;
 
 /**
  * Reconstruit la bande. `picks` est l'historique dans l'ordre du repêchage ;
- * l'affichage l'inverse pour montrer le choix le plus récent en premier.
+ * l'ordre complet et le tour courant sont lus dans `draftData`.
+ *
+ * L'affichage est chronologique : le tour 1 à gauche, le dernier à droite.
+ * Le choix le plus récent est donc toujours du côté droit de ce qui a déjà
+ * été joué, juste avant le tour en cours.
  */
 function renderPickCarousel(picks) {
   const bande = document.getElementById('picks-carousel');
   if (!bande) return;
 
-  const liste = Array.isArray(picks) ? picks : [];
-  const nouveauChoix = liste.length !== pickCarouselCount;
-  const positionAvant = bande.scrollLeft;
+  const historique = Array.isArray(picks) ? picks : [];
+  const donnees = typeof draftData !== 'undefined' && draftData ? draftData : {};
+  const ordre = Array.isArray(donnees.draftOrder) ? donnees.draftOrder : [];
+  const indexCourant = Number.isInteger(donnees.currentPickIndex) ? donnees.currentPickIndex : 0;
 
-  bande.replaceChildren();
+  const tours = ordre.length
+    ? buildPickSlots(ordre, historique, indexCourant)
+    : buildPickSlotsFromHistory(historique);
 
-  if (!liste.length) {
+  if (!tours.length) {
+    bande.replaceChildren();
     const vide = document.createElement('p');
     vide.className = 'picks-carousel-empty';
-    vide.textContent = 'Aucun choix pour le moment.';
+    vide.textContent = "L'ordre du repêchage n'est pas encore généré.";
     bande.appendChild(vide);
-    pickCarouselCount = 0;
+    pickCarouselSignature = null;
     updatePickCarouselButtons();
     return;
   }
 
-  // Nombre d'équipes du pool : sert à retrouver la ronde, que
-  // l'historique ne stocke pas.
-  const nbEquipes = (typeof draftData !== 'undefined' && draftData && draftData.teams)
-    ? Object.keys(draftData.teams).length
-    : 0;
+  // Un rendu identique ne doit pas ramener la bande là où l'utilisateur ne
+  // l'a pas laissée : les rafraîchissements socket sont fréquents.
+  const signature = `${tours.length}|${indexCourant}|${historique.length}`;
+  const premierRendu = pickCarouselSignature === null;
+  const inchange = signature === pickCarouselSignature;
+  const positionAvant = bande.scrollLeft;
+
+  bande.replaceChildren();
+
+  // Nombre d'équipes du pool : sert à retrouver la ronde, que ni
+  // l'historique ni l'ordre ne stockent.
+  const nbEquipes = donnees.teams ? Object.keys(donnees.teams).length : 0;
 
   const fragment = document.createDocumentFragment();
-  for (let i = liste.length - 1; i >= 0; i--) {
-    const ronde = nbEquipes > 0 ? Math.floor(i / nbEquipes) + 1 : 0;
-    fragment.appendChild(buildPickCard(liste[i], i + 1, ronde));
-  }
+  tours.forEach((tour, i) => {
+    fragment.appendChild(buildPickCard({
+      pick: tour.pick,
+      numero: i + 1,
+      ronde: nbEquipes > 0 ? Math.floor(i / nbEquipes) + 1 : 0,
+      equipePool: tour.equipePool,
+      etat: tour.etat
+    }));
+  });
   bande.appendChild(fragment);
 
-  pickCarouselCount = liste.length;
+  pickCarouselSignature = signature;
   initPickCarouselScroll();
 
-  // Un nouveau choix ramène au début, là où il vient d'apparaître ; un simple
-  // rafraîchissement (même nombre de choix) laisse la position tranquille.
-  if (nouveauChoix) bande.scrollLeft = 0;
-  else bande.scrollLeft = positionAvant;
+  // Au premier rendu on se place sans animation ; ensuite, un choix vient
+  // d'être fait et le glissement montre où le repêchage en est rendu.
+  if (inchange) bande.scrollLeft = positionAvant;
+  else centerPickCarouselOnCurrent(!premierRendu);
 
   updatePickCarouselButtons();
 }
 
+/**
+ * Recale la bande sur le tour en cours — c'est ce qui la fait suivre le
+ * repêchage sans intervention. Le tour visé est décalé d'une carte vers la
+ * droite pour laisser voir le choix qui vient d'être fait.
+ */
+function centerPickCarouselOnCurrent(anime) {
+  const bande = document.getElementById('picks-carousel');
+  if (!bande) return;
+
+  const cible = bande.querySelector('.pick-card.is-current')
+    || bande.querySelector('.pick-card:last-child');
+  if (!cible) return;
+
+  const ecart = cible.getBoundingClientRect().left - bande.getBoundingClientRect().left;
+  // Recul proportionnel à la largeur visible : sur ordinateur on garde les
+  // deux derniers choix à gauche du tour en cours, sur téléphone où deux
+  // cartes tiennent à peine, on se contente d'un léger décalage.
+  const pas = cible.getBoundingClientRect().width + 10;
+  const recul = Math.min(bande.clientWidth * 0.45, pas * 2);
+  const gauche = Math.max(0, bande.scrollLeft + ecart - recul);
+
+  bande.scrollTo({ left: gauche, behavior: anime ? 'smooth' : 'auto' });
+}
+
 /* ============================================================
-   4. DÉFILEMENT
+   5. DÉFILEMENT
    ============================================================ */
 
 /** Pas de défilement : une carte plus l'espacement. */
@@ -297,11 +434,8 @@ function updatePickCarouselButtons() {
   // Marge d'un pixel : les navigateurs renvoient parfois 0.5px de reste en
   // fin de course, ce qui laisserait la flèche active pour rien.
   const max = bande.scrollWidth - bande.clientWidth;
-  const debut = bande.scrollLeft <= 1;
-  const fin = bande.scrollLeft >= max - 1;
-
-  prev.disabled = debut;
-  next.disabled = fin || max <= 0;
+  prev.disabled = bande.scrollLeft <= 1;
+  next.disabled = max <= 0 || bande.scrollLeft >= max - 1;
 }
 
 /**

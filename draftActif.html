@@ -59,14 +59,15 @@
       </div>
     </div>
 
-    <!-- Derniers choix : remonté ici pour former le bandeau collant du
-         gabarit, visible pendant qu'on parcourt la liste de joueurs.
-         Le bloc est déplacé tel quel — draftActif.js cible #picks-carousel,
-         #carousel-prev et #carousel-next par identifiant, la position dans
-         le document ne change donc rien pour lui. -->
+    <!-- Tableau du repêchage : le déroulé complet, du premier au dernier
+         tour. Placé dans le bandeau collant, il reste visible pendant qu'on
+         parcourt la liste de joueurs, et se recale tout seul sur le tour en
+         cours après chaque choix (draftPickCards.js).
+         draftActif.js cible #picks-carousel, #carousel-prev et #carousel-next
+         par identifiant : la position dans le document lui est indifférente. -->
     <div class="recent-picks-card">
       <div class="card-header">
-        <h3>Derniers choix</h3>
+        <h3>Tableau du repêchage</h3>
         <div class="carousel-controls">
           <button class="carousel-btn" id="carousel-prev" type="button" aria-label="Choix précédents">‹</button>
           <button class="carousel-btn" id="carousel-next" type="button" aria-label="Choix suivants">›</button>
