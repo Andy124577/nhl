@@ -68,11 +68,15 @@
       <div class="card-header">
         <h3>Derniers choix</h3>
         <div class="carousel-controls">
-          <button class="carousel-btn" id="carousel-prev">‹</button>
-          <button class="carousel-btn" id="carousel-next">›</button>
+          <button class="carousel-btn" id="carousel-prev" type="button" aria-label="Choix précédents">‹</button>
+          <button class="carousel-btn" id="carousel-next" type="button" aria-label="Choix suivants">›</button>
         </div>
       </div>
-      <div class="picks-carousel" id="picks-carousel">
+      <!-- Bande défilante : tabindex pour que les flèches du clavier la
+           parcourent aussi, le glissement souris/doigt étant géré par
+           draftPickCards.js. -->
+      <div class="picks-carousel" id="picks-carousel" tabindex="0" role="group"
+           aria-label="Derniers choix du repêchage">
         <!-- Recent picks will be displayed here -->
       </div>
     </div>
@@ -381,6 +385,10 @@
   <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script defer src="avatars.js"></script>
   <script src="headshots.js"></script>
+  <!-- Couleurs d'équipe et cartes du carrousel : chargés AVANT draftActif.js,
+       qui délègue le rendu des derniers choix à renderPickCarousel(). -->
+  <script defer src="teamColors.js"></script>
+  <script defer src="draftPickCards.js"></script>
   <script defer src="draftActif.js"></script>
   <!-- Couche d'interface : ne fait que piloter les contrôles déjà en place
        (#playerFilter, showProgressDetails). Aucune logique de repêchage ici. -->

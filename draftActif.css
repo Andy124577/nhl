@@ -439,88 +439,230 @@ html[data-theme="light"] .player-selection-card {
 .carousel-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .carousel-btn:disabled { opacity: .35; cursor: not-allowed; }
 
+/* ---- La bande ----
+   Un rail qui défile latéralement, au doigt comme à la souris. Les trois
+   variables plus bas sont les seules mesures à ajuster par taille d'écran :
+   tout le reste de la carte s'y accroche. */
 .picks-carousel {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  --pick-w: 196px;
+  --pick-h: 126px;
+  --pick-photo: 46px;
+
+  display: flex;
   gap: 10px;
+  /* Marge haute et basse : `overflow-y` vaut forcément `auto` dès que
+     `overflow-x` défile, donc le soulèvement au survol et son ombre seraient
+     rognés sans cet espace. */
+  padding: 5px 0 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+  /* Barre de défilement masquée : la bande se manipule au doigt ou par les
+     flèches, et une barre système couperait le bas des cartes. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* Fondu aux deux bords : indique qu'il reste des cartes hors champ, sans
+     superposer d'élément qui bloquerait le glissement. */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+}
+.picks-carousel::-webkit-scrollbar { display: none; }
+.picks-carousel:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+/* Pendant un glissement souris : l'accrochage et le lissage se battraient
+   avec la position imposée image par image. */
+.picks-carousel.is-dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
+  scroll-behavior: auto;
+}
+.picks-carousel-empty {
+  margin: 0;
+  padding: 12px 2px;
+  font-size: .78rem;
+  font-style: italic;
+  color: var(--text-secondary);
 }
 
+/* ---- La carte ----
+   Fond aux couleurs de l'équipe du joueur (teamColors.js pose --team-a,
+   --team-b et --team-deep en style en ligne). Une voile sombre est posée
+   par-dessus le dégradé : elle garantit que le texte blanc reste lisible
+   aussi bien sur le marine de Toronto que sur l'or de Nashville. */
 .pick-card {
-  padding: 12px 10px;
-  text-align: center;
-  background: var(--bg-odd-row);
-  border: 1px solid var(--border-light);
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--pick-w);
+  height: var(--pick-h);
+  display: grid;
+  /* `minmax(0, 1fr)` et non `auto` : un élément de grille refuse par défaut
+     de passer sous sa largeur de contenu, et un nom de joueur en une seule
+     ligne débordait alors de la carte, poussant le logo hors du cadre. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  scroll-snap-align: start;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid rgba(255, 255, 255, .12);
   border-radius: 14px;
-  transition: border-color .2s ease, transform .2s ease;
+  color: #fff;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, .34) 0%, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, .58) 100%),
+    linear-gradient(145deg, var(--team-a, #3A414D) 0%, var(--team-b, #171A20) 62%, var(--team-deep, #101318) 100%);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .28);
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform .2s ease, box-shadow .2s ease;
 }
 .pick-card:hover {
-  border-color: var(--primary);
   transform: translateY(-3px);
+  box-shadow: 0 11px 24px rgba(0, 0, 0, .38);
 }
-.pick-card-number {
-  margin-bottom: 8px;
-  font-size: .72rem;
-  font-weight: 800;
-  color: var(--primary);
-}
-.pick-card-image,
-.carousel-player-image {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.pick-card-image {
-  width: 62px;
-  height: 62px;
-  margin: 0 auto 9px;
-  border-radius: 50%;
-  background: var(--bg-gray-light);
-  overflow: visible;
-}
-.pick-card-image img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-.carousel-player-image { width: 100%; height: 100%; }
-.carousel-player-image img:first-child {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-}
-.carousel-team-logo {
+/* Liseré bas dans la seconde couleur, restée vive : deux équipes au marine
+   proche (Buffalo, Columbus) se distinguent d'un coup d'œil. */
+.pick-card::after {
+  content: '';
   position: absolute;
-  right: -4px;
-  bottom: -4px;
-  width: 22px !important;
-  height: 22px !important;
-  padding: 2px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, .3);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--team-accent, var(--primary));
 }
-.carousel-no-image {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: var(--text-light-gray);
+.pick-card-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent 44%, rgba(255, 255, 255, .07) 50%, transparent 56%);
+  pointer-events: none;
 }
+
+/* ---- Haut : joueur à gauche, son équipe de la LNH à droite ---- */
+.pick-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 10px 0;
+  min-width: 0;
+  z-index: 1;
+}
+.pick-card-id { flex: 1 1 auto; min-width: 0; }
 .pick-card-name {
-  margin-bottom: 3px;
-  font-size: .82rem;
-  font-weight: 700;
-  color: var(--text-main);
+  margin: 0;
+  font-size: .78rem;
+  font-weight: 800;
+  line-height: 1.15;
+  text-transform: uppercase;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .55);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.pick-card-team { font-size: .72rem; color: var(--text-secondary); }
-.pick-card-position {
+.pick-card-pos {
   display: inline-block;
-  margin-top: 6px;
-  padding: 2px 9px;
-  border-radius: 999px;
-  background: rgba(0, 212, 255, .16);
-  color: var(--primary);
-  font-size: .66rem;
+  margin-top: 3px;
+  font-size: .56rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .72);
+}
+.pick-card-club {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.pick-card-logo {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .5));
+}
+.pick-card-abbr {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: .54rem;
+  font-weight: 700;
+  letter-spacing: .09em;
+  color: rgba(255, 255, 255, .85);
+}
+
+/* ---- Milieu : la photo ---- */
+.pick-card-photo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  z-index: 1;
+}
+.pick-card-photo-img {
+  width: var(--pick-photo);
+  height: var(--pick-photo);
+  border-radius: 50%;
+  /* Cadrage haut : les portraits de la LNH sont serrés sur le visage et un
+     centrage par défaut coupe le menton. */
+  object-fit: cover;
+  object-position: top center;
+  background: rgba(0, 0, 0, .28);
+  border: 2px solid rgba(255, 255, 255, .3);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, .42);
+}
+/* Un choix d'équipe montre le logo, pas un portrait : ni rond ni cadre. */
+.pick-card-photo.is-team .pick-card-photo-img {
+  /* Un logo n'a pas besoin du cadre rond d'un portrait, et il gagne à
+     occuper un peu plus de place puisqu'il n'est pas rogné. */
+  width: calc(var(--pick-photo) * 1.25);
+  height: calc(var(--pick-photo) * 1.25);
+  border: 0;
+  border-radius: 0;
+  background: none;
+  object-fit: contain;
+  box-shadow: none;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .5));
+}
+.pick-card-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--pick-photo);
+  height: var(--pick-photo);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .3);
+  border: 2px solid rgba(255, 255, 255, .24);
+  font-size: calc(var(--pick-photo) * .36);
   font-weight: 800;
+}
+
+/* ---- Bas : le pool qui l'a repêché, puis le repère du choix ---- */
+.pick-card-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 10px 9px;
+  min-width: 0;
+  z-index: 1;
+}
+.pick-card-owner {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: .68rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+}
+.pick-card-meta {
+  flex: 0 0 auto;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: .56rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  color: rgba(255, 255, 255, .72);
 }
 
 /* ============================================================
@@ -941,7 +1083,7 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
 @media (min-width: 600px) {
   .draft-header { padding: 20px; }
   .draft-main-container { padding: 20px 18px 48px; }
-  .picks-carousel { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .picks-carousel { --pick-w: 232px; --pick-h: 150px; --pick-photo: 60px; }
   .search-field { flex: 1 1 220px; }
   .filter-select { flex: 0 1 158px; }
   /* Au-delà du téléphone : vignette plus grande et mesures rapides
@@ -972,7 +1114,7 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   .recent-picks-card,
   .player-selection-card { padding: 18px; }
 
-  .picks-carousel { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .picks-carousel { --pick-w: 262px; --pick-h: 168px; --pick-photo: 68px; gap: 12px; }
   .draft-timeline { max-height: 360px; }
 
   #playerTable { min-width: 0; }
@@ -983,7 +1125,7 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
 }
 
 @media (min-width: 1300px) {
-  .picks-carousel { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .picks-carousel { --pick-w: 284px; --pick-h: 178px; --pick-photo: 74px; }
 }
 
 /* ============================================================
@@ -1046,7 +1188,7 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   .refresh-btn   { order: 1; flex: 0 0 44px; }
   .filter-select { order: 2; flex: 1 1 calc(50% - 4px); min-width: 0; }
 
-  .picks-carousel { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .picks-carousel { --pick-w: 178px; --pick-h: 118px; --pick-photo: 42px; gap: 8px; }
 }
 
 /* ============================================================
@@ -1074,8 +1216,9 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
 }
 
 /* ---- Derniers choix : ticker horizontal ----
-   Dans le bandeau, la carte perd son cadre et défile latéralement
-   au lieu de s'étaler en grille. */
+   Dans le bandeau, le bloc perd son cadre : les cartes de choix
+   portent déjà le leur (section 5) et deux encadrements imbriqués
+   alourdissaient l'en-tête. */
 .draft-header .recent-picks-card {
   margin-top: 9px;
   padding: 0;
@@ -1095,29 +1238,6 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   text-transform: uppercase;
   color: var(--text-secondary);
 }
-.draft-header .picks-carousel {
-  display: flex;
-  gap: 7px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  padding-bottom: 2px;
-  /* Barre de défilement masquée : le ticker se manipule au doigt. */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.draft-header .picks-carousel::-webkit-scrollbar { display: none; }
-.draft-header .pick-card {
-  flex: 0 0 auto;
-  width: 104px;
-  padding: 8px 7px;
-  border-radius: 11px;
-}
-.draft-header .pick-card-image { width: 40px; height: 40px; margin-bottom: 6px; }
-.draft-header .carousel-team-logo { width: 16px !important; height: 16px !important; }
-.draft-header .pick-card-number { margin-bottom: 5px; font-size: .58rem; letter-spacing: .08em; }
-.draft-header .pick-card-name { font-size: .72rem; }
-.draft-header .pick-card-team { font-size: .64rem; }
-.draft-header .pick-card-position { margin-top: 4px; font-size: .58rem; }
 .draft-header .carousel-btn { width: 30px; height: 30px; min-height: 30px; font-size: 1.1rem; }
 
 /* ---- Champ de recherche avec loupe ---- */
@@ -1200,7 +1320,6 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
 
 @media (min-width: 600px) {
   .draft-header { padding: 12px 20px; }
-  .draft-header .pick-card { width: 116px; }
 }
 
 @media (min-width: 1024px) {
@@ -1329,26 +1448,12 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
 }
 
 /* ---- Ticker compact sur téléphone ----
-   Le bandeau collant occupait 308px sur un écran de 844px : moins de la
-   moitié de la hauteur restait pour la liste de joueurs. Le gabarit n'y
-   met que le numéro de choix et le nom ; on s'y aligne sous 600px, ce qui
-   ramène le ticker de 173px à environ 60px. Les cartes complètes
-   réapparaissent dès qu'il y a la place. */
+   Le bandeau est collant : chaque pixel qu'il prend est retiré à la liste
+   de joueurs, qui est l'action réelle de la page. La carte garde sa mise en
+   page complète — photo, équipe, pool — mais resserrée, ce qui laisse le
+   ticker autour de 150px au lieu de 200px. Les mesures sont dans les trois
+   variables de .picks-carousel (section 5) ; rien d'autre à reprendre. */
 @media (max-width: 599px) {
-  .draft-header .pick-card {
-    width: auto;
-    min-width: 96px;
-    padding: 6px 10px;
-  }
-  .draft-header .pick-card-image,
-  .draft-header .pick-card-team,
-  .draft-header .pick-card-position { display: none; }
-  .draft-header .pick-card-number { margin-bottom: 2px; }
-  .draft-header .pick-card-name {
-    font-size: .74rem;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-weight: 700;
-  }
   .draft-header .card-header { margin-bottom: 5px; }
 }
 
