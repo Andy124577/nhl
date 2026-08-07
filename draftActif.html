@@ -412,6 +412,9 @@
        qui délègue le rendu des derniers choix à renderPickCarousel(). -->
   <script defer src="teamColors.js"></script>
   <script defer src="draftPickCards.js"></script>
+  <!-- Cadence de rafraîchissement : draftActif.js appelle
+       shouldRefreshDraftView() avant de redessiner. -->
+  <script defer src="draftRefresh.js"></script>
   <script defer src="draftActif.js"></script>
   <!-- Confirmation avant envoi d'un choix. Après draftActif.js : il y
        redéfinit selectPlayer() et appelle commitPlayerPick(). -->

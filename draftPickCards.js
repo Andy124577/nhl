@@ -19,6 +19,10 @@
  * le tour en cours. Elle se manipule aussi au doigt, en glissant à la souris
  * et par les flèches ‹ ›.
  *
+ * La mise à jour se fait carte par carte (reconcilePickCards) et non par
+ * reconstruction : la page se rafraîchit plusieurs fois par choix, et tout
+ * refaire interrompait l'animation de révélation en cours de route.
+ *
  * Dépendances (globales de draftActif.js, toutes optionnelles ici) :
  * fullPlayerData, goalieData, teamData, draftData, getCurrentPlayerStats,
  * getMatchingImage, getTeamAbbreviation.
@@ -303,10 +307,80 @@ function buildPickSlotsFromHistory(historique) {
    4. RENDU DU CARROUSEL
    ============================================================ */
 
-let pickCarouselSignature = null;
+/** Dernier tour sur lequel la bande a été recalée. */
+let pickCarouselIndexVu = null;
+
+/** Tout ce qui, pour un tour donné, se voit sur la carte. */
+function pickCardKey(tour, numero, ronde) {
+  return [
+    tour.etat,
+    numero,
+    ronde,
+    tour.equipePool,
+    tour.pick ? tour.pick.player : '',
+    tour.pick ? tour.pick.position : ''
+  ].join('|');
+}
 
 /**
- * Reconstruit la bande. `picks` est l'historique dans l'ordre du repêchage ;
+ * Met la bande à jour carte par carte, au lieu de la reconstruire.
+ *
+ * C'est ce qui rend la révélation visible : la page se rafraîchit trois fois
+ * de suite après un choix (envoi, socket, sondage), et tout reconstruire
+ * arrachait du document la carte en train de s'animer, 200 ms après son
+ * départ. Ici, une carte dont rien n'a changé n'est pas touchée — son
+ * animation continue, son portrait n'est pas retéléchargé, et la bande ne
+ * clignote plus toutes les sept secondes.
+ *
+ * Un choix ne change en pratique que deux cartes : celle qui vient d'être
+ * remplie et la suivante, qui devient le tour en cours.
+ */
+function reconcilePickCards(bande, tours, nbEquipes) {
+  const vide = bande.querySelector('.picks-carousel-empty');
+  if (vide) vide.remove();
+
+  const existantes = Array.from(bande.querySelectorAll(':scope > .pick-card'));
+  const cartes = [];
+  let modifie = false;
+
+  tours.forEach((tour, i) => {
+    const numero = i + 1;
+    const ronde = nbEquipes > 0 ? Math.floor(i / nbEquipes) + 1 : 0;
+    const cle = pickCardKey(tour, numero, ronde);
+    const actuelle = existantes[i];
+
+    if (actuelle && actuelle.dataset.pickKey === cle) {
+      cartes.push(actuelle);
+      return;
+    }
+
+    const neuve = buildPickCard({
+      pick: tour.pick,
+      numero,
+      ronde,
+      equipePool: tour.equipePool,
+      etat: tour.etat
+    });
+    neuve.dataset.pickKey = cle;
+
+    if (actuelle) bande.replaceChild(neuve, actuelle);
+    else bande.appendChild(neuve);
+
+    cartes.push(neuve);
+    modifie = true;
+  });
+
+  // Ordre raccourci (repêchage régénéré) : on retire le surplus.
+  for (let i = tours.length; i < existantes.length; i++) {
+    existantes[i].remove();
+    modifie = true;
+  }
+
+  return { cartes, modifie };
+}
+
+/**
+ * Met la bande à jour. `picks` est l'historique dans l'ordre du repêchage ;
  * l'ordre complet et le tour courant sont lus dans `draftData`.
  *
  * L'affichage est chronologique : le tour 1 à gauche, le dernier à droite.
@@ -327,51 +401,35 @@ function renderPickCarousel(picks) {
     : buildPickSlotsFromHistory(historique);
 
   if (!tours.length) {
-    bande.replaceChildren();
-    const vide = document.createElement('p');
-    vide.className = 'picks-carousel-empty';
-    vide.textContent = "L'ordre du repêchage n'est pas encore généré.";
-    bande.appendChild(vide);
-    pickCarouselSignature = null;
+    if (!bande.querySelector('.picks-carousel-empty')) {
+      bande.replaceChildren();
+      const vide = document.createElement('p');
+      vide.className = 'picks-carousel-empty';
+      vide.textContent = "L'ordre du repêchage n'est pas encore généré.";
+      bande.appendChild(vide);
+    }
+    pickCarouselIndexVu = null;
+    pickRevealVu = null;
     updatePickCarouselButtons();
     return;
   }
 
-  // Un rendu identique ne doit pas ramener la bande là où l'utilisateur ne
-  // l'a pas laissée : les rafraîchissements socket sont fréquents.
-  const signature = `${tours.length}|${indexCourant}|${historique.length}`;
-  const premierRendu = pickCarouselSignature === null;
-  const inchange = signature === pickCarouselSignature;
-  const positionAvant = bande.scrollLeft;
-
-  bande.replaceChildren();
-
   // Nombre d'équipes du pool : sert à retrouver la ronde, que ni
   // l'historique ni l'ordre ne stockent.
   const nbEquipes = donnees.teams ? Object.keys(donnees.teams).length : 0;
+  const { cartes, modifie } = reconcilePickCards(bande, tours, nbEquipes);
 
-  const fragment = document.createDocumentFragment();
-  const cartes = tours.map((tour, i) => {
-    const carte = buildPickCard({
-      pick: tour.pick,
-      numero: i + 1,
-      ronde: nbEquipes > 0 ? Math.floor(i / nbEquipes) + 1 : 0,
-      equipePool: tour.equipePool,
-      etat: tour.etat
-    });
-    fragment.appendChild(carte);
-    return carte;
-  });
-  bande.appendChild(fragment);
-
-  pickCarouselSignature = signature;
   initPickCarouselScroll();
-  revealLastPick(tours, cartes);
 
-  // Au premier rendu on se place sans animation ; ensuite, un choix vient
-  // d'être fait et le glissement montre où le repêchage en est rendu.
-  if (inchange) bande.scrollLeft = positionAvant;
-  else centerPickCarouselOnCurrent(!premierRendu);
+  const premierRendu = pickCarouselIndexVu === null;
+  const tourAChange = indexCourant !== pickCarouselIndexVu;
+  pickCarouselIndexVu = indexCourant;
+
+  if (modifie) revealLastPick(tours, cartes);
+
+  // Ne recaler que lorsque le tour avance : sinon un rafraîchissement de
+  // fond ramènerait la bande au centre alors qu'on parcourt l'historique.
+  if (premierRendu || tourAChange) centerPickCarouselOnCurrent(!premierRendu);
 
   updatePickCarouselButtons();
 }
