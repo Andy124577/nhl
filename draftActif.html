@@ -240,6 +240,28 @@
     </div>
   </div>
 
+  <!-- Confirmation d'un choix : un repêchage ne se défait pas, un clic mal
+       placé dans une liste dense coûtait un tour entier. Rempli et piloté
+       par draftPickFlow.js. -->
+  <div id="pickConfirmOverlay" class="pick-confirm-overlay" role="dialog"
+       aria-modal="true" aria-labelledby="pickConfirmTitle">
+    <div class="pick-confirm-box">
+      <h3 class="pick-confirm-title" id="pickConfirmTitle">Confirmer le choix</h3>
+      <div class="pick-confirm-player">
+        <div class="pick-confirm-photo" id="pickConfirmPhoto"></div>
+        <div class="pick-confirm-ident">
+          <span class="pick-confirm-name" id="pickConfirmName"></span>
+          <span class="pick-confirm-meta" id="pickConfirmMeta"></span>
+        </div>
+      </div>
+      <p class="pick-confirm-note" id="pickConfirmNote"></p>
+      <div class="pick-confirm-actions">
+        <button type="button" class="pick-confirm-btn is-ghost" id="pickConfirmCancel">Annuler</button>
+        <button type="button" class="pick-confirm-btn is-primary" id="pickConfirmOk">Confirmer</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Custom Alert Modal -->
   <div id="customAlertOverlay" class="custom-alert-overlay">
     <div class="custom-alert-box">
@@ -391,6 +413,9 @@
   <script defer src="teamColors.js"></script>
   <script defer src="draftPickCards.js"></script>
   <script defer src="draftActif.js"></script>
+  <!-- Confirmation avant envoi d'un choix. Après draftActif.js : il y
+       redéfinit selectPlayer() et appelle commitPlayerPick(). -->
+  <script defer src="draftPickFlow.js"></script>
   <!-- Couche d'interface : ne fait que piloter les contrôles déjà en place
        (#playerFilter, showProgressDetails). Aucune logique de repêchage ici. -->
   <script defer src="draftActifUI.js"></script>

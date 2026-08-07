@@ -38,6 +38,33 @@
   50%      { border-bottom-color: rgba(0, 212, 255, .35) }
 }
 
+/* ---- Révélation d'un choix qui vient d'entrer ----
+   Séquence d'environ 1,2 s : la vignette arrive en gris avec la position et
+   le logo d'équipe, la couleur monte, puis le nom paraît. Seules `opacity`,
+   `transform` et `filter` sont animées — aucune propriété de mise en page,
+   donc aucun recalcul de la bande pendant que ça joue. Les translations
+   passent par translate3d pour rester sur le compositeur. */
+@keyframes pickRevealFrame {
+  0%   { border-color: rgba(255, 255, 255, .07) }
+  20%  { border-color: var(--team-accent) }
+  100% { border-color: rgba(255, 255, 255, .07) }
+}
+@keyframes pickRevealPhoto {
+  0%   { opacity: 0; transform: translate3d(0, 8px, 0) scale(1.05); filter: grayscale(1) brightness(.5) contrast(.92) }
+  16%  { opacity: 1; transform: translate3d(0, 0, 0) scale(1.02);   filter: grayscale(1) brightness(.5) contrast(.92) }
+  40%  {             transform: translate3d(0, 0, 0) scale(1.02);   filter: grayscale(1) brightness(.54) contrast(.92) }
+  72%  {             transform: translate3d(0, 0, 0) scale(1);      filter: grayscale(0) brightness(1) contrast(1) }
+  100% {             transform: translate3d(0, 0, 0) scale(1);      filter: none }
+}
+@keyframes pickRevealMeta {
+  from { opacity: 0; transform: translate3d(0, -5px, 0) }
+  to   { opacity: 1; transform: none }
+}
+@keyframes pickRevealName {
+  from { opacity: 0; transform: translate3d(0, 7px, 0) }
+  to   { opacity: 1; transform: none }
+}
+
 /* ============================================================
    1. COQUILLE DE PAGE
    ============================================================ */
@@ -470,6 +497,15 @@ html[data-theme="light"] .player-selection-card {
   mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
 }
 .picks-carousel::-webkit-scrollbar { display: none; }
+/* Amorces d'une demi-largeur aux deux bouts : sans elles, le premier et le
+   dernier tour ne peuvent pas atteindre le centre de la bande, faute de
+   course à parcourir — et le tour en cours doit pouvoir s'y placer du choix
+   n° 1 jusqu'au dernier. */
+.picks-carousel::before,
+.picks-carousel::after {
+  content: '';
+  flex: 0 0 max(0px, calc(50% - var(--pick-w) / 2 - 8px));
+}
 .picks-carousel:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 /* Pendant un glissement souris : l'accrochage et le lissage se battraient
    avec la position imposée image par image. */
@@ -503,7 +539,9 @@ html[data-theme="light"] .player-selection-card {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  scroll-snap-align: start;
+  /* Accrochage au centre, comme le recalage automatique sur le tour en
+     cours : une reprise en main au doigt se règle sur le même repère. */
+  scroll-snap-align: center;
   overflow: hidden;
   isolation: isolate;
   border: 1px solid rgba(255, 255, 255, .07);
@@ -558,6 +596,34 @@ html[data-theme="light"] .player-selection-card {
   animation: turnPulse 2.4s ease-in-out infinite;
 }
 .pick-card.is-current .pick-card-name { color: var(--primary); }
+
+/* ---- Le choix qui vient d'entrer ----
+   `will-change` n'est posé que le temps de la séquence : le laisser en
+   permanence promouvrait chacune des cent et quelques vignettes de la bande
+   en couche composée, pour un gain nul le reste du temps. Une seule carte
+   s'anime à la fois (draftPickCards.js). */
+.pick-card.is-revealing { animation: pickRevealFrame 1150ms ease-out both; }
+.pick-card.is-revealing .pick-card-photo-img,
+.pick-card.is-revealing .pick-card-initials {
+  will-change: filter, opacity, transform;
+  animation: pickRevealPhoto 1150ms cubic-bezier(.22, .61, .36, 1) both;
+}
+/* Position et logo d'équipe arrivent d'emblée : ils annoncent le choix
+   pendant que le portrait est encore en gris. */
+.pick-card.is-revealing .pick-card-club,
+.pick-card.is-revealing .pick-card-pos {
+  will-change: opacity, transform;
+  animation: pickRevealMeta 300ms ease-out 80ms both;
+}
+.pick-card.is-revealing .pick-card-foot {
+  will-change: opacity, transform;
+  animation: pickRevealMeta 320ms ease-out 120ms both;
+}
+/* Le nom ferme la séquence, juste après que la couleur est montée. */
+.pick-card.is-revealing .pick-card-name {
+  will-change: opacity, transform;
+  animation: pickRevealName 360ms cubic-bezier(.2, .8, .3, 1) 880ms both;
+}
 
 /* ---- Haut : joueur à gauche, son équipe de la LNH à droite ---- */
 .pick-card-head {
@@ -1035,6 +1101,120 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
 .custom-alert-button:active { transform: translateY(0); }
 .custom-alert-button:focus-visible { outline: 2px solid var(--text-main); outline-offset: 2px; }
 
+/* ---- Confirmation d'un choix ----
+   Reprend la forme de l'alerte, mais montre le joueur : c'est la dernière
+   occasion de voir qui part avec le tour, alors que le clic vient d'une
+   rangée de tableau où tout se ressemble. */
+.pick-confirm-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  padding: 20px;
+  background: var(--overlay-dark);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn .18s ease;
+}
+.pick-confirm-overlay.show { display: flex; }
+.pick-confirm-box {
+  width: 100%;
+  max-width: 380px;
+  padding: 22px;
+  background: var(--card);
+  border: 1px solid var(--border-light);
+  border-radius: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .55);
+  animation: slideDown .24s ease;
+}
+.pick-confirm-title {
+  margin: 0 0 16px;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.pick-confirm-player {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-light);
+}
+.pick-confirm-photo {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-end;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--bg-gray-light);
+}
+.pick-confirm-photo img { width: 100%; height: 100%; object-fit: contain; object-position: bottom center; }
+.pick-confirm-photo.is-team img { padding: 7px; object-position: center; }
+.pick-confirm-ident { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.pick-confirm-name {
+  font-size: 1.02rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text-main);
+}
+.pick-confirm-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .74rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.pick-confirm-logo {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  padding: 2px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, .18);
+}
+.pick-confirm-logo img { width: 100%; height: 100%; object-fit: contain; }
+.pick-confirm-note {
+  margin: 14px 0 18px;
+  font-size: .8rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.pick-confirm-actions { display: flex; gap: 10px; }
+.pick-confirm-btn {
+  flex: 1 1 0;
+  padding: 12px 16px;
+  min-height: 46px;
+  border-radius: 11px;
+  font-size: .9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+.pick-confirm-btn:hover:not(:disabled)  { transform: translateY(-1px); }
+.pick-confirm-btn:active:not(:disabled) { transform: translateY(0); }
+.pick-confirm-btn:focus-visible { outline: 2px solid var(--text-main); outline-offset: 2px; }
+.pick-confirm-btn:disabled { opacity: .6; cursor: progress; }
+.pick-confirm-btn.is-ghost {
+  border: 1px solid var(--border-gray);
+  background: transparent;
+  color: var(--text-secondary);
+}
+.pick-confirm-btn.is-ghost:hover:not(:disabled) { border-color: var(--text-main); color: var(--text-main); }
+.pick-confirm-btn.is-primary {
+  border: 0;
+  background: linear-gradient(135deg, var(--primary) 0%, #00A8CC 100%);
+  color: var(--bg);
+}
+
 /* La modale de carrière vit désormais dans career-modal.css,
    partagée avec stats.html. */
 
@@ -1169,6 +1349,13 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   .turn-banner.your-turn,
   .draft-header.is-my-turn,
   .pick-card.is-current,
+  .pick-card.is-revealing,
+  .pick-card.is-revealing .pick-card-photo-img,
+  .pick-card.is-revealing .pick-card-initials,
+  .pick-card.is-revealing .pick-card-club,
+  .pick-card.is-revealing .pick-card-pos,
+  .pick-card.is-revealing .pick-card-foot,
+  .pick-card.is-revealing .pick-card-name,
   .custom-alert-box,
   .custom-alert-icon,
   .modal-content { animation: none; }

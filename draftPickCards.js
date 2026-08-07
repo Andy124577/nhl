@@ -351,19 +351,22 @@ function renderPickCarousel(picks) {
   const nbEquipes = donnees.teams ? Object.keys(donnees.teams).length : 0;
 
   const fragment = document.createDocumentFragment();
-  tours.forEach((tour, i) => {
-    fragment.appendChild(buildPickCard({
+  const cartes = tours.map((tour, i) => {
+    const carte = buildPickCard({
       pick: tour.pick,
       numero: i + 1,
       ronde: nbEquipes > 0 ? Math.floor(i / nbEquipes) + 1 : 0,
       equipePool: tour.equipePool,
       etat: tour.etat
-    }));
+    });
+    fragment.appendChild(carte);
+    return carte;
   });
   bande.appendChild(fragment);
 
   pickCarouselSignature = signature;
   initPickCarouselScroll();
+  revealLastPick(tours, cartes);
 
   // Au premier rendu on se place sans animation ; ensuite, un choix vient
   // d'être fait et le glissement montre où le repêchage en est rendu.
@@ -375,30 +378,88 @@ function renderPickCarousel(picks) {
 
 /**
  * Recale la bande sur le tour en cours — c'est ce qui la fait suivre le
- * repêchage sans intervention. Le tour visé est décalé d'une carte vers la
- * droite pour laisser voir le choix qui vient d'être fait.
+ * repêchage sans intervention. La carte est amenée au centre exact de la
+ * bande : les choix déjà faits défilent à sa gauche, ceux à venir à sa
+ * droite, et le regard n'a jamais à chercher où on en est.
+ *
+ * Les marges d'amorce en CSS (:before / :after de .picks-carousel) valent
+ * une demi-largeur : sans elles, le premier et le dernier tour ne pourraient
+ * pas atteindre le centre, faute de course à parcourir.
  */
 function centerPickCarouselOnCurrent(anime) {
   const bande = document.getElementById('picks-carousel');
   if (!bande) return;
 
   const cible = bande.querySelector('.pick-card.is-current')
-    || bande.querySelector('.pick-card:last-child');
+    || bande.querySelector('.pick-card:last-of-type');
   if (!cible) return;
 
-  const ecart = cible.getBoundingClientRect().left - bande.getBoundingClientRect().left;
-  // Recul proportionnel à la largeur visible : sur ordinateur on garde les
-  // deux derniers choix à gauche du tour en cours, sur téléphone où deux
-  // cartes tiennent à peine, on se contente d'un léger décalage.
-  const pas = cible.getBoundingClientRect().width + 10;
-  const recul = Math.min(bande.clientWidth * 0.45, pas * 2);
-  const gauche = Math.max(0, bande.scrollLeft + ecart - recul);
+  const zone = bande.getBoundingClientRect();
+  const carte = cible.getBoundingClientRect();
+  const ecart = carte.left - zone.left;
+  const centre = bande.clientWidth / 2 - carte.width / 2;
+  const max = Math.max(0, bande.scrollWidth - bande.clientWidth);
+  const gauche = Math.min(max, Math.max(0, bande.scrollLeft + ecart - centre));
 
   bande.scrollTo({ left: gauche, behavior: anime ? 'smooth' : 'auto' });
 }
 
 /* ============================================================
-   5. DÉFILEMENT
+   5. RÉVÉLATION DU DERNIER CHOIX
+   ============================================================ */
+
+/** Dernier choix déjà animé, pour ne pas le rejouer à chaque rafraîchissement. */
+let pickRevealVu = null;
+
+/**
+ * Anime la carte du choix qui vient d'entrer : photo en gris d'abord, avec
+ * la position et le logo d'équipe, puis la couleur, puis le nom. Elle se
+ * déclenche chez tout le monde, pas seulement chez la personne qui a choisi
+ * — c'est ce qui rend la salle vivante.
+ *
+ * Une seule carte s'anime à la fois, et `will-change` n'est posé que pendant
+ * l'animation : sur une bande de plus de cent vignettes, le laisser en
+ * permanence ferait exploser le nombre de couches composées.
+ */
+function revealLastPick(tours, cartes) {
+  let dernier = -1;
+  for (let i = tours.length - 1; i >= 0; i--) {
+    if (tours[i].etat === 'done') { dernier = i; break; }
+  }
+  if (dernier < 0) { pickRevealVu = null; return; }
+
+  const cle = `${dernier}|${tours[dernier].pick.player}`;
+  const premierRendu = pickRevealVu === null;
+  const dejaVu = cle === pickRevealVu;
+  pickRevealVu = cle;
+
+  // Au chargement de la page, tous les choix sont « nouveaux » : les animer
+  // rejouerait le repêchage entier pour rien.
+  if (premierRendu || dejaVu) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const carte = cartes[dernier];
+  if (!carte) return;
+
+  carte.classList.add('is-revealing');
+
+  // Le nom est la dernière étape : sa fin marque la fin de la séquence.
+  const fin = e => {
+    if (e.animationName !== 'pickRevealName') return;
+    carte.classList.remove('is-revealing');
+    carte.removeEventListener('animationend', fin);
+  };
+  carte.addEventListener('animationend', fin);
+  // Filet : si l'animation ne démarre pas (onglet en arrière-plan, élément
+  // retiré entre-temps), la classe ne doit pas rester posée.
+  setTimeout(() => {
+    carte.removeEventListener('animationend', fin);
+    carte.classList.remove('is-revealing');
+  }, 2000);
+}
+
+/* ============================================================
+   6. DÉFILEMENT
    ============================================================ */
 
 /** Pas de défilement : une carte plus l'espacement. */
