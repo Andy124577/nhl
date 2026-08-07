@@ -425,32 +425,34 @@ function renderPickCarousel(picks) {
   const tourAChange = indexCourant !== pickCarouselIndexVu;
   pickCarouselIndexVu = indexCourant;
 
-  if (modifie) revealLastPick(tours, cartes);
+  const revelation = modifie ? revealLastPick(tours, cartes) : null;
 
-  // Ne recaler que lorsque le tour avance : sinon un rafraîchissement de
-  // fond ramènerait la bande au centre alors qu'on parcourt l'historique.
-  if (premierRendu || tourAChange) centerPickCarouselOnCurrent(!premierRendu);
+  if (revelation) {
+    // La carte qui vient d'être remplie passe au centre le temps de la
+    // séquence. Sans cela, elle reste collée au tour en cours et se retrouve
+    // à moitié hors champ sur téléphone, où deux cartes tiennent à peine :
+    // l'animation jouait là où personne ne la voyait.
+    centerPickCarouselOnCard(revelation.carte, !premierRendu);
+    revelation.fini.then(() => centerPickCarouselOnCurrent(true));
+  } else if (premierRendu || tourAChange) {
+    // Ne recaler que lorsque le tour avance : sinon un rafraîchissement de
+    // fond ramènerait la bande au centre alors qu'on parcourt l'historique.
+    centerPickCarouselOnCurrent(!premierRendu);
+  }
 
   updatePickCarouselButtons();
 }
 
 /**
- * Recale la bande sur le tour en cours — c'est ce qui la fait suivre le
- * repêchage sans intervention. La carte est amenée au centre exact de la
- * bande : les choix déjà faits défilent à sa gauche, ceux à venir à sa
- * droite, et le regard n'a jamais à chercher où on en est.
+ * Amène une carte au centre exact de la bande.
  *
  * Les marges d'amorce en CSS (:before / :after de .picks-carousel) valent
  * une demi-largeur : sans elles, le premier et le dernier tour ne pourraient
  * pas atteindre le centre, faute de course à parcourir.
  */
-function centerPickCarouselOnCurrent(anime) {
+function centerPickCarouselOnCard(cible, anime) {
   const bande = document.getElementById('picks-carousel');
-  if (!bande) return;
-
-  const cible = bande.querySelector('.pick-card.is-current')
-    || bande.querySelector('.pick-card:last-of-type');
-  if (!cible) return;
+  if (!bande || !cible) return;
 
   const zone = bande.getBoundingClientRect();
   const carte = cible.getBoundingClientRect();
@@ -460,6 +462,20 @@ function centerPickCarouselOnCurrent(anime) {
   const gauche = Math.min(max, Math.max(0, bande.scrollLeft + ecart - centre));
 
   bande.scrollTo({ left: gauche, behavior: anime ? 'smooth' : 'auto' });
+}
+
+/**
+ * Recale la bande sur le tour en cours — c'est ce qui la fait suivre le
+ * repêchage sans intervention. Les choix déjà faits défilent à sa gauche,
+ * ceux à venir à sa droite, et le regard n'a jamais à chercher où on en est.
+ */
+function centerPickCarouselOnCurrent(anime) {
+  const bande = document.getElementById('picks-carousel');
+  if (!bande) return;
+
+  const cible = bande.querySelector('.pick-card.is-current')
+    || bande.querySelector('.pick-card:last-of-type');
+  centerPickCarouselOnCard(cible, anime);
 }
 
 /* ============================================================
@@ -475,6 +491,9 @@ let pickRevealVu = null;
  * déclenche chez tout le monde, pas seulement chez la personne qui a choisi
  * — c'est ce qui rend la salle vivante.
  *
+ * Retourne { carte, fini } — `fini` se résout à la fin de la séquence — ou
+ * null si rien n'est à révéler.
+ *
  * Une seule carte s'anime à la fois, et `will-change` n'est posé que pendant
  * l'animation : sur une bande de plus de cent vignettes, le laisser en
  * permanence ferait exploser le nombre de couches composées.
@@ -484,7 +503,7 @@ function revealLastPick(tours, cartes) {
   for (let i = tours.length - 1; i >= 0; i--) {
     if (tours[i].etat === 'done') { dernier = i; break; }
   }
-  if (dernier < 0) { pickRevealVu = null; return; }
+  if (dernier < 0) { pickRevealVu = null; return null; }
 
   const cle = `${dernier}|${tours[dernier].pick.player}`;
   const premierRendu = pickRevealVu === null;
@@ -493,27 +512,65 @@ function revealLastPick(tours, cartes) {
 
   // Au chargement de la page, tous les choix sont « nouveaux » : les animer
   // rejouerait le repêchage entier pour rien.
-  if (premierRendu || dejaVu) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (premierRendu || dejaVu) return null;
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    console.info('[repêchage] Révélation désactivée : le système demande des animations réduites.');
+    return null;
+  }
 
   const carte = cartes[dernier];
-  if (!carte) return;
+  if (!carte) return null;
 
-  carte.classList.add('is-revealing');
+  return { carte, fini: playPickReveal(carte) };
+}
 
-  // Le nom est la dernière étape : sa fin marque la fin de la séquence.
-  const fin = e => {
-    if (e.animationName !== 'pickRevealName') return;
-    carte.classList.remove('is-revealing');
-    carte.removeEventListener('animationend', fin);
-  };
-  carte.addEventListener('animationend', fin);
-  // Filet : si l'animation ne démarre pas (onglet en arrière-plan, élément
-  // retiré entre-temps), la classe ne doit pas rester posée.
-  setTimeout(() => {
-    carte.removeEventListener('animationend', fin);
-    carte.classList.remove('is-revealing');
-  }, 2000);
+/**
+ * Joue la séquence sur une carte, une fois son portrait réellement affichable.
+ *
+ * L'attente est le point clé. La carte vient d'être créée et son portrait
+ * est cherché sur le CDN de la LNH : partir tout de suite ferait jouer la
+ * phase grise sur un cadre vide, puis le portrait surgirait en pleine
+ * couleur au milieu de la séquence — c'est-à-dire aucune révélation. La
+ * vignette est aussi passée en chargement immédiat, sinon `loading="lazy"`
+ * peut attendre qu'elle entre dans le champ, ce qui arrive après le
+ * recentrage.
+ */
+function playPickReveal(carte) {
+  return new Promise(resolve => {
+    const lancer = () => {
+      carte.classList.add('is-revealing');
+
+      let minuteur = 0;
+      const terminer = () => {
+        clearTimeout(minuteur);
+        carte.removeEventListener('animationend', fin);
+        carte.classList.remove('is-revealing');
+        resolve();
+      };
+      // Le nom est la dernière étape : sa fin marque la fin de la séquence.
+      const fin = e => { if (e.animationName === 'pickRevealName') terminer(); };
+
+      carte.addEventListener('animationend', fin);
+      // Filet : onglet en arrière-plan, carte retirée entre-temps — la classe
+      // ne doit pas rester posée et la promesse pas rester en suspens.
+      minuteur = setTimeout(terminer, 2000);
+    };
+
+    const img = carte.querySelector('.pick-card-photo-img');
+    if (!img) { lancer(); return; }
+    if (img.complete && img.naturalWidth > 0) { lancer(); return; }
+
+    img.loading = 'eager';
+    img.fetchPriority = 'high';
+
+    let parti = false;
+    const partir = () => { if (parti) return; parti = true; lancer(); };
+    img.addEventListener('load', partir, { once: true });
+    img.addEventListener('error', partir, { once: true });
+    // Plafond : un portrait lent ou absent ne doit pas retenir la séquence.
+    setTimeout(partir, 1200);
+  });
 }
 
 /* ============================================================
