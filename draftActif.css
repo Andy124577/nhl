@@ -1921,3 +1921,259 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   color: var(--primary);
 }
 .category-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+/* ============================================================
+   18. RANGÉE EN TROIS SECTIONS
+   ------------------------------------------------------------
+   La rangée se lisait comme une suite de colonnes de largeur égale,
+   et la colonne d'action n'avait pas de quoi porter un bouton
+   confortable : le geste principal de la page était le plus petit.
+
+   Elle est redécoupée en trois zones :
+     gauche  — rang, logo, nom (occupe la place restante) ;
+     centre  — statistiques, resserrées mais espacées ;
+     droite  — bouton de sélection, sur une largeur réservée.
+
+   La structure <table> est conservée : les fonctions de rendu de
+   draftActif.js ne changent pas. Les rangées passent simplement en
+   `flex`, ce qui rend `table-layout` sans effet et supprime le
+   défilement horizontal — chaque rangée tient dans son cadre à
+   toutes les tailles d'écran.
+   ============================================================ */
+
+#playerTable {
+  --col-rank: 58px;
+  --col-stat: 46px;
+  --col-action: 92px;
+
+  display: block;
+  min-width: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+#playerTable thead,
+#playerTable tbody { display: block; }
+
+/* `!important` à contrecœur : index.css impose
+   `tbody tr { display: table-row !important }` sous 480px, pour empêcher
+   d'autres tableaux du site de basculer en cartes empilées. Sans le
+   contrer, les rangées se dépliaient en colonne sur téléphone — une
+   cellule par ligne. La portée reste limitée à #playerTable. */
+#playerTable thead tr,
+#playerTable tbody tr {
+  display: flex !important;
+  align-items: center;
+}
+
+/* Plus rien ne dépasse : le cadre n'a plus besoin de défiler. */
+.table-wrapper { overflow: visible; }
+
+/* ---- Cadre de rangée porté par le <tr> ----
+   Les bordures étaient posées cellule par cellule pour simuler une carte ;
+   une fois la rangée en flex, elle porte son propre cadre. */
+#playerTable tbody tr {
+  margin-bottom: 7px;
+  background: var(--bg-odd-row);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  transition: border-color .16s ease, background .16s ease;
+}
+#playerTable tbody tr:hover {
+  background: rgba(0, 212, 255, .07);
+  border-color: rgba(0, 212, 255, .35);
+}
+#playerTable tbody td {
+  display: block;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 9px 4px;
+}
+#playerTable tbody tr:hover td { background: none; }
+
+/* En-tête posé dans le flux plutôt que collant : le bandeau du repêchage
+   occupe déjà la zone collante en haut de page, et deux barres superposées
+   y laissaient trop peu de place à la liste. */
+#playerTable thead tr {
+  margin-bottom: 7px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+#playerTable thead th {
+  display: block;
+  position: static;
+  padding: 9px 4px;
+  border-radius: 0;
+  /* Les en-têtes avaient été rétrécis pour faire tenir dix colonnes dans
+     un tableau qui débordait ; la rangée en flex n'a plus ce problème et
+     l'étiquette redevient lisible. */
+  font-size: .63rem;
+  letter-spacing: .04em;
+}
+
+/* ---- Section gauche : rang + logo, puis nom ---- */
+#playerTable thead th:first-child,
+#playerTable tbody td:first-child {
+  flex: 0 0 var(--col-rank);
+  width: auto;
+  padding-left: 10px;
+  padding-right: 0;
+  text-align: left;
+}
+#playerTable thead th:nth-child(2),
+#playerTable tbody td:nth-child(2) {
+  /* Absorbe toute la place libre, et elle seule : les colonnes de chiffres
+     tombent ainsi au même endroit sur chaque rangée. Une largeur au contenu
+     les décalerait d'une rangée à l'autre, et un tableau de statistiques
+     dont les colonnes ne s'alignent pas ne se compare plus. */
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-left: 8px;
+  padding-right: 8px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Section centre : les statistiques ----
+   Largeur fixe et identique pour chacune : les chiffres s'alignent d'une
+   rangée à l'autre, ce qu'une largeur au contenu ne donne jamais. */
+#playerTable thead th:not(:first-child):not(:nth-child(2)):not(.action-column),
+#playerTable tbody td:not(:first-child):not(:nth-child(2)):not(.action-column) {
+  flex: 0 0 var(--col-stat);
+  /* index.css plafonne les colonnes 3 à 7 à 55px sous 768px, ce qui
+     rognait la colonne d'action des patineurs (7e) sur tablette. */
+  max-width: none;
+  text-align: center;
+}
+/* Un filet sépare le bloc de chiffres du nom, à gauche, et du bouton, à
+   droite : les trois sections se lisent sans avoir à les encadrer. */
+#playerTable thead th:nth-child(3),
+#playerTable tbody td:nth-child(3) { border-left: 1px solid var(--border-light); }
+#playerTable thead th.action-column,
+#playerTable tbody td.action-column { border-left: 1px solid var(--border-light); }
+#playerTable thead th:nth-child(3),
+#playerTable thead th.action-column { border-left-color: rgba(255, 255, 255, .18); }
+
+/* ---- Section droite : l'action ---- */
+#playerTable thead th.action-column,
+#playerTable tbody td.action-column {
+  flex: 0 0 var(--col-action);
+  max-width: none;
+  padding-left: 6px;
+  padding-right: 10px;
+  text-align: center;
+}
+/* Bouton sur toute la largeur réservée : cible environ 50 % plus large
+   qu'avant, et identique d'une rangée à l'autre. */
+#playerTable td.action-column button.select-button {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 6px;
+  min-height: 40px;
+}
+
+/* ---- Colonne PTS toujours mise en avant ----
+   Déclarée ici, après les règles de survol et la police monospace, pour que
+   ni l'une ni l'autre ne l'écrase. Elle ne dépend ni du tri ni du filtre. */
+#playerTable tbody tr td.points-column {
+  background: rgba(0, 212, 255, .12);
+  color: var(--primary);
+  font-weight: 800;
+}
+#playerTable tbody tr:hover td.points-column { background: rgba(0, 212, 255, .18); }
+/* Jetons plutôt qu'un cyan en dur : --primary et --bg basculent ensemble
+   d'un thème à l'autre, le contraste tient donc dans les deux. Un
+   rgba(0,212,255,.6) fixe donnait un lavis pâle sous texte clair en thème
+   clair — illisible. */
+#playerTable thead th.points-column {
+  background: var(--primary);
+  color: var(--bg);
+}
+
+/* Ligne « aucun joueur » : une seule cellule, qui prend toute la rangée. */
+#playerTable tbody tr.draft-empty-row { display: block; }
+#playerTable tbody tr.draft-empty-row td { flex: 1 1 100%; padding: 0; }
+
+/* ---- Tablette ---- */
+@media (max-width: 900px) {
+  #playerTable { --col-stat: 40px; --col-action: 84px; }
+}
+
+/* ---- Téléphone ----
+   Les vues Gardiens (7 statistiques) et Équipes (5) ne tiennent pas en
+   entier sur un écran étroit sans réduire le nom à rien. Les mesures les
+   moins déterminantes pour un choix sont retirées, vue par vue, grâce à la
+   classe `cat-*` que draftActifUI.js pose sur le tableau. */
+@media (max-width: 700px) {
+  #playerTable { --col-rank: 50px; --col-stat: 36px; --col-action: 74px; }
+
+  /* Gardiens : Photo Nom GP W L OTL SV% SO PTS Action — sans OTL ni SO. */
+  #playerTable.cat-goalies thead th:nth-child(6),
+  #playerTable.cat-goalies tbody td:nth-child(6),
+  #playerTable.cat-goalies thead th:nth-child(8),
+  #playerTable.cat-goalies tbody td:nth-child(8) { display: none; }
+
+  /* Équipes : Logo Nom GP W L OTL PTS Action — sans OTL. */
+  #playerTable.cat-teams thead th:nth-child(6),
+  #playerTable.cat-teams tbody td:nth-child(6) { display: none; }
+}
+
+@media (max-width: 480px) {
+  #playerTable { --col-rank: 44px; --col-stat: 32px; --col-action: 66px; }
+  #playerTable tbody td,
+  #playerTable thead th { padding-left: 3px; padding-right: 3px; }
+  #playerTable thead th:first-child,
+  #playerTable tbody td:first-child { padding-left: 7px; }
+  #playerTable thead th.action-column,
+  #playerTable tbody td.action-column { padding-right: 7px; }
+  #playerTable td.action-column button.select-button { min-height: 38px; padding: 7px 4px; }
+
+  /* Une mesure de plus en moins sur les deux vues les plus chargées. */
+  #playerTable.cat-goalies thead th:nth-child(5),
+  #playerTable.cat-goalies tbody td:nth-child(5),
+  #playerTable.cat-teams thead th:nth-child(5),
+  #playerTable.cat-teams tbody td:nth-child(5) { display: none; }
+}
+
+/* ============================================================
+   20. ONGLETS DE CATÉGORIE : TROIS ÉTATS NETS
+   ------------------------------------------------------------
+   Disponible, choisi, épuisé. L'écart entre choisi et disponible
+   était un fond translucide contre un fond gris — trop ténu pour
+   se lire d'un coup d'œil sur un téléphone.
+   ============================================================ */
+
+/* Disponible : le traitement que portait l'état choisi jusqu'ici. */
+.category-tab {
+  background: rgba(0, 212, 255, .16);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.category-tab:hover:not(:disabled) {
+  background: rgba(0, 212, 255, .26);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Choisi : bleu plein, texte dans le fond sombre de l'application. */
+.category-tab.is-active,
+.category-tab.is-active:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--bg);
+  font-weight: 800;
+}
+
+/* Épuisé : plus de place à cette position, donc plus rien à y choisir.
+   Gris, sans relief, et sans réaction au survol. */
+.category-tab.is-unavailable,
+.category-tab:disabled,
+.category-tab.is-unavailable:hover {
+  background: var(--bg-gray-light);
+  border-color: var(--border-light);
+  color: var(--text-gray);
+  cursor: not-allowed;
+  opacity: .55;
+}

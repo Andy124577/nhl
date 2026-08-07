@@ -77,3 +77,49 @@ function shouldRefreshDraftView(clan) {
   draftViewSignature = signature;
   return true;
 }
+
+/* ============================================================
+   RENDUS COMMUNS À TOUTES LES VUES
+   ============================================================ */
+
+/**
+ * updateTable() choisit une branche selon le filtre actif, et trois d'entre
+ * elles — Gardiens, Équipes, Mes choix — sortaient par un `return` anticipé.
+ * Les rendus placés en fin de fonction (aperçu d'équipe, progression,
+ * en-tête, ordre, bande de choix) n'étaient donc joués que pour la vue
+ * Joueurs. Résultat : repêcher une équipe ou un gardien ne changeait rien à
+ * la carte du tour tant qu'on ne rechargeait pas la page.
+ *
+ * Ils sont retirés de la queue de updateTable() (draftActif.js) et rejoués
+ * ici, après coup, quelle que soit la branche empruntée.
+ */
+function refreshDraftViews() {
+  const rendus = [
+    'renderTeamsOverview',
+    'updateProgressCounter',
+    'updateDraftHeader',
+    'renderDraftTimeline',
+    'renderRecentPicks',
+    // Disponibilité des onglets de catégorie (draftActifUI.js) : elle
+    // change dès qu'une position se remplit.
+    'refreshCategoryTabs'
+  ];
+  rendus.forEach(nom => {
+    const fn = window[nom];
+    if (typeof fn !== 'function') return;
+    try { fn(); } catch (e) { console.error('[repêchage] ' + nom + ' :', e); }
+  });
+}
+
+// Posé au DOMContentLoaded : les scripts `defer` s'exécutent avant, donc
+// updateTable() existe déjà, y compris l'habillage que draftActif.js lui
+// applique lui-même pour l'état vide du tableau.
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof updateTable !== 'function') return;
+  const original = updateTable;
+  updateTable = function () {
+    const resultat = original.apply(this, arguments);
+    refreshDraftViews();
+    return resultat;
+  };
+});

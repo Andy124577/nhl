@@ -197,7 +197,11 @@
             <input type="text" id="searchInput" placeholder="Rechercher un joueur..." class="search-input"/>
           </div>
           <select id="playerFilter" class="filter-select">
-            <option value="all">Tous</option>
+            <!-- « Joueurs » et non « Tous » : une position dont le quota est
+                 rempli disparaît de la liste, ce filtre ne montre donc pas
+                 tout. La valeur `all` est inchangée — la logique de filtrage
+                 de draftActif.js s'y accroche. -->
+            <option value="all">Joueurs</option>
             <option value="offensive">Attaquants</option>
             <option value="defensive">Défenseurs</option>
             <option value="goalies">Gardiens</option>

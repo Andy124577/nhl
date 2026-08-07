@@ -107,6 +107,7 @@ function initCategoryTabs() {
             t.classList.toggle('is-active', actif);
             t.setAttribute('aria-selected', String(actif));
         });
+        appliquerDisponibilite(strip, select);
         // Marque la vue courante sur le tableau. Le nombre et l'ordre des
         // colonnes changent d'une catégorie à l'autre : sans ce repère, une
         // règle CSS ciblant « la 7e colonne » viserait SV% chez les gardiens
@@ -121,9 +122,64 @@ function initCategoryTabs() {
     select.addEventListener('change', refleter);
     refleter();
 
+    // Rejoué après chaque rendu du tableau : une position se remplit en cours
+    // de repêchage, et son onglet doit alors s'éteindre. Appelée par
+    // refreshDraftViews() dans draftRefresh.js.
+    refreshCategoryTabs = refleter;
+
     // Le <select> devient redondant une fois les onglets en place.
     select.classList.add('is-replaced');
 }
+
+/* ---- Disponibilité des catégories ----
+   Une position dont le quota de l'équipe est atteint disparaît de la liste
+   (draftActif.js la vide via _isCategoryFull). Son onglet mène donc à un
+   tableau vide : on l'éteint plutôt que de laisser cliquer dans le vide. */
+
+/** Code de position que draftActif.js utilise pour chaque onglet. */
+const CODES_CATEGORIE = {
+    offensive: ['C'],
+    defensive: ['D'],
+    goalies: ['G'],
+    rookies: ['*'],
+    teams: ['T'],
+    // « Joueurs » réunit les patineurs : il ne s'éteint que lorsque plus
+    // aucune de ces positions n'a de place libre.
+    all: ['C', 'D', '*']
+};
+
+function categorieEpuisee(valeur) {
+    const codes = CODES_CATEGORIE[valeur];
+    if (!codes || typeof _isCategoryFull !== 'function') return false;
+    return codes.every(code => _isCategoryFull(code));
+}
+
+function appliquerDisponibilite(strip, select) {
+    let premierLibre = null;
+    let actifEpuise = false;
+
+    strip.querySelectorAll('.category-tab').forEach(tab => {
+        const epuise = categorieEpuisee(tab.dataset.value);
+        tab.classList.toggle('is-unavailable', epuise);
+        tab.disabled = epuise;
+        tab.setAttribute('aria-disabled', String(epuise));
+        tab.title = epuise ? 'Plus de place à cette position' : '';
+
+        if (!epuise && !premierLibre) premierLibre = tab;
+        if (epuise && tab.dataset.value === select.value) actifEpuise = true;
+    });
+
+    // La catégorie ouverte vient de se remplir : rester dessus afficherait un
+    // tableau vide sans expliquer pourquoi. On bascule sur la première encore
+    // ouverte, ce qui remet des joueurs sous les yeux.
+    if (actifEpuise && premierLibre) {
+        select.value = premierLibre.dataset.value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+
+/** Remplacée par initCategoryTabs() une fois le bandeau construit. */
+function refreshCategoryTabs() {}
 
 /* ============================================================
    3. ONGLETS DE PANNEAU (téléphone)
