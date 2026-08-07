@@ -748,6 +748,7 @@ app.post("/pick-player", async (req, res) => {
         // Skip this team and move to the next pick
         if (clan.currentPickIndex < clan.draftOrder.length - 1) {
             clan.currentPickIndex += 1;
+            clan.turnStartedAt = Date.now();
             await saveDraftData(draftData);
             return res.status(200).json({ message: "Tour sauté : équipe complète." });
             } else {
@@ -764,6 +765,7 @@ app.post("/pick-player", async (req, res) => {
     // ✅ N'avance que si on n'est pas à la fin du draftOrder
     if (clan.currentPickIndex < clan.draftOrder.length - 1) {
         clan.currentPickIndex += 1;
+        clan.turnStartedAt = Date.now();   // la pendule repart pour le tour suivant
     } else {
         console.log("✅ Dernier tour atteint. Le draft est terminé.");
     }
@@ -834,6 +836,73 @@ app.post("/pick-player", async (req, res) => {
     }
 
     res.json({ message: `✅ ${playerName} a été sélectionné par ${userTeamName}.` });
+});
+
+
+/* 🔥 Sauter un tour qui traîne — pendule douce.
+ *
+ * Il n'y a pas de limite de temps dans Fantazy : personne n'est jamais
+ * dépossédé de son choix par un chronomètre, et le serveur ne saute jamais
+ * un tour de lui-même. Mais une salle figée sur quelqu'un qui a perdu son
+ * réseau bloque tout le monde sans recours. Cette route est ce recours :
+ * elle appartient à la personne qui a créé le pool, ne s'ouvre qu'après un
+ * délai, et ne peut pas servir à se sauter soi-même pour repousser son choix.
+ */
+const SKIP_TURN_AFTER_MS = 180000;   // 3 minutes, même seuil que côté client
+
+app.post("/skip-turn", async (req, res) => {
+    const { clanName, username } = req.body;
+    if (!clanName || !username) {
+        return res.status(400).json({ message: "Données incomplètes." });
+    }
+
+    const draftData = await loadDraftData();
+    const clan = draftData[clanName];
+    if (!clan) return res.status(404).json({ message: "Pool introuvable." });
+
+    // Le créateur : champ explicite sur les pools récents, premier membre
+    // d'Équipe 1 pour ceux créés avant que le champ existe.
+    const equipe1 = clan.teams && clan.teams["Équipe 1"];
+    const createur = clan.creator || (equipe1 && equipe1.members && equipe1.members[0]) || null;
+    if (!createur || createur !== username) {
+        return res.status(403).json({ message: "Seule la personne qui a créé le pool peut sauter un tour." });
+    }
+
+    if (!Array.isArray(clan.draftOrder) || clan.draftOrder.length === 0) {
+        return res.status(400).json({ message: "Le repêchage n'a pas encore commencé." });
+    }
+    if (clan.currentPickIndex >= clan.draftOrder.length - 1) {
+        return res.status(400).json({ message: "Dernier tour : il n'y a plus de tour à sauter." });
+    }
+
+    // Se sauter soi-même reviendrait à repousser son propre choix sans
+    // conséquence : refusé.
+    const equipeDuTour = clan.draftOrder[clan.currentPickIndex];
+    const monEquipe = Object.entries(clan.teams || {})
+        .find(([, t]) => (t.members || []).includes(username));
+    if (monEquipe && monEquipe[0] === equipeDuTour) {
+        return res.status(403).json({ message: "Vous ne pouvez pas sauter votre propre tour." });
+    }
+
+    const depuis = Date.now() - (Number(clan.turnStartedAt) || 0);
+    if (!clan.turnStartedAt || depuis < SKIP_TURN_AFTER_MS) {
+        const reste = Math.ceil((SKIP_TURN_AFTER_MS - depuis) / 60000);
+        return res.status(400).json({
+            message: `Ce tour est trop récent. Réessayez dans ${Math.max(1, reste)} min.`
+        });
+    }
+
+    // Aucune entrée dans picksHistory : c'est exactement ainsi que le client
+    // reconnaît un tour sauté (buildPickSlots avance son curseur sans consommer
+    // d'entrée). Le saut se dessine tout seul dans la bande de choix.
+    clan.currentPickIndex += 1;
+    clan.turnStartedAt = Date.now();
+    await saveDraftData(draftData);
+
+    io.emit("draftUpdated", poolsPublics(draftData));
+    io.emit("forceRefresh");
+
+    return res.json({ message: `Tour de ${equipeDuTour} sauté.`, skipped: equipeDuTour });
 });
 
 
@@ -965,6 +1034,10 @@ app.post("/create-clan", async (req, res) => {
         // Initialize pool data
         draftData[name] = {
             maxPlayers: parseInt(maxPlayers),
+            // Qui a créé le pool. Sert au repêchage : cette personne seule peut
+            // sauter un tour qui traîne. Les pools créés avant ce champ sont
+            // rattrapés côté client par le premier membre d'Équipe 1.
+            creator: username || null,
             draftOrder: [],
             currentPickIndex: 0,
             lastPickIndex: -1,
@@ -1697,7 +1770,13 @@ app.post("/start-draft", async (req, res) => {
         const totalPicks = config.numOffensive + config.numDefensive + config.numGoalies + config.numRookies + config.numTeams;
 
         clan.draftOrder = generateSnakeOrder(eligibleTeams, totalPicks);
+        // Départ de la pendule du premier tour. L'heure vient du serveur pour
+        // que les dix écrans comptent la même durée : une horloge locale ferait
+        // dire à chacun autre chose, et « ça dure depuis 4 min » ne voudrait
+        // plus rien dire.
+        clan.turnStartedAt = Date.now();
         await saveDraftData(draftData);
+        io.emit("draftUpdated", poolsPublics(draftData));
         return res.json({ message: "✅ Draft démarré avec succès avec ordre serpentin !" });
     } else {
         return res.json({ message: "Le draft est déjà en cours." });

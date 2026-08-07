@@ -53,9 +53,28 @@
         <!-- État du tour placé au centre de la barre de progression. Sa
              visibilité suit désormais celle du bloc : les deux dépendent de
              la présence d'un ordre de repêchage, donc ils apparaissent et
-             disparaissent ensemble. -->
-        <div id="turn-banner" class="turn-banner"></div>
+             disparaissent ensemble.
+
+             `role="status"` + `aria-live` : c'est le seul endroit qui annonce
+             « c'est votre tour ». Sans région live, un lecteur d'écran ne dit
+             rien du tout — la couleur, l'animation et le son ne lui parlent
+             pas. `assertive` parce que rater son tour bloque tout le monde. -->
+        <div id="turn-banner" class="turn-banner" role="status" aria-live="assertive">
+          <span class="turn-banner-text" id="turn-banner-text"></span>
+          <span class="turn-clock" id="turn-clock" hidden></span>
+        </div>
         <span id="dop-round">Ronde 1</span>
+      </div>
+
+      <!-- Bandeau d'incidents : masqué tant que tout va bien, donc il ne coûte
+           aucune hauteur dans le cas normal. Il ne paraît que pour dire ce que
+           l'interface ne pouvait pas dire avant : la connexion est tombée, ou
+           le tour en cours dure depuis assez longtemps pour être sauté. -->
+      <div class="draft-live-row" id="draft-live-row" hidden>
+        <span class="conn-chip" id="conn-chip" role="status" aria-live="polite" hidden></span>
+        <button type="button" class="turn-skip-btn" id="turn-skip-btn" hidden>
+          Sauter ce tour
+        </button>
       </div>
     </div>
 
