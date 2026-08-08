@@ -2465,6 +2465,171 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 }
 
 /* ============================================================
+   19b. SÉLECTION DE JOUEUR — HABILLAGE « PRO DRAFT »
+   ------------------------------------------------------------
+   Île volontairement claire posée dans une page sombre : palette et
+   polices propres à cette carte (préfixe --psc-), distinctes des jetons
+   du site et non réactives au thème — la carte a son propre monde, fixe.
+   Placée en toute fin de fichier pour l'emporter sur les règles plus
+   anciennes qui touchent les mêmes sélecteurs plus haut ; la mécanique
+   responsive (colonnes en flex, variables --col-*) n'est pas touchée,
+   seul l'habillage change. Portée : la carte de sélection et son
+   sélecteur d'onglets téléphone (Disponible/Ma liste/Ordre), pas les
+   cartes de suivi voisines ni les états repêchage terminé/pas commencé.
+   ============================================================ */
+:root {
+  --psc-bg: #f8f9ff;
+  --psc-surface: #ffffff;
+  --psc-surface-low: #eff4ff;
+  --psc-tint: #d3e4fe;
+  --psc-text: #0b1c30;
+  --psc-text-secondary: #44474d;
+  --psc-border: #c5c6cd;
+  --psc-accent: #006a66;
+}
+.player-selection-card,
+html[data-theme="light"] .player-selection-card {
+  background: var(--psc-bg);
+  border-color: var(--psc-border);
+}
+
+/* ---- En-tête « Sélection de joueur » ---- */
+.player-selection-card .filters-header {
+  border-bottom-color: var(--psc-border);
+}
+.player-selection-card .filters-header h3 {
+  font-family: 'Archivo Narrow', 'Segoe UI', sans-serif;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  color: var(--psc-text);
+}
+
+/* ---- Pastilles de catégorie (ordinateur) ---- */
+.player-selection-card .category-tab {
+  background: var(--psc-surface);
+  border-color: var(--psc-border);
+  color: var(--psc-text-secondary);
+}
+.player-selection-card .category-tab:hover { color: var(--psc-text); }
+.player-selection-card .category-tab.is-active {
+  background: rgba(0, 106, 102, .12);
+  border-color: var(--psc-accent);
+  color: var(--psc-accent);
+}
+
+/* ---- Sélecteurs, champ de recherche ---- */
+.player-selection-card .search-input,
+.player-selection-card .filter-select {
+  background: var(--psc-surface);
+  border-color: var(--psc-border);
+  border-radius: 8px;
+  color: var(--psc-text);
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-weight: 500;
+}
+.player-selection-card .search-input::placeholder { color: var(--psc-text-secondary); }
+.player-selection-card .filter-select option { background: var(--psc-surface); color: var(--psc-text); }
+.player-selection-card .search-input:focus-visible,
+.player-selection-card .filter-select:focus-visible {
+  border-color: var(--psc-accent);
+  outline-color: var(--psc-accent);
+}
+.player-selection-card .search-field-icon { color: var(--psc-text-secondary); }
+.player-selection-card .search-field:focus-within .search-field-icon { color: var(--psc-accent); }
+
+/* ---- Contrôle segmenté (téléphone) : partage la même île visuelle
+   bien qu'il vive hors de la carte dans le DOM (draftActifUI.js l'insère
+   juste avant elle) — les jetons --psc-* sont posés sur :root, donc
+   accessibles ici aussi. ---- */
+.panel-tabs {
+  background: var(--psc-surface-low);
+  border-color: var(--psc-border);
+}
+.panel-tab { color: var(--psc-text-secondary); }
+.panel-tab.is-active {
+  background: var(--psc-surface);
+  color: var(--psc-accent);
+  box-shadow: 0 1px 4px rgba(11, 28, 48, .12);
+}
+
+/* ---- Tableau : cadre et en-tête ---- */
+.player-selection-card .table-wrapper {
+  border-color: var(--psc-border);
+  background: var(--psc-surface);
+}
+#playerTable thead tr { background: var(--psc-surface); }
+#playerTable thead th {
+  color: var(--psc-text-secondary);
+  font-family: 'Archivo Narrow', 'Segoe UI', sans-serif;
+  font-weight: 700;
+  border-bottom: 1px solid var(--psc-border);
+}
+#playerTable thead th.points-column {
+  background: var(--psc-accent);
+  color: #fff;
+}
+
+/* ---- Tableau : rangées plates, sans carte ni marge ----
+   Le gabarit visé n'empile pas des cartes détachées : chaque rangée n'a
+   plus qu'un filet inférieur, comme une vraie liste dense. */
+#playerTable tbody tr {
+  margin-bottom: 0;
+  background: var(--psc-surface);
+  border: 0;
+  border-bottom: 1px solid var(--psc-border);
+  border-radius: 0;
+}
+@media (hover: hover) {
+  #playerTable tbody tr:hover {
+    background: var(--psc-surface-low);
+    border-color: var(--psc-border);
+  }
+  #playerTable tbody tr:has(button.select-button:hover) { background: var(--psc-surface); }
+}
+#playerTable tbody td { color: var(--psc-text); }
+
+/* Rang : la police de titre plutôt que le monospace, comme le gabarit. */
+#playerTable tbody td:first-child::before {
+  font-family: 'Archivo Narrow', 'Segoe UI', sans-serif;
+  font-size: .875rem;
+  font-weight: 700;
+  color: var(--psc-text);
+}
+#playerTable tbody td:first-child > img.logo {
+  background: var(--psc-surface);
+  border: 1px solid var(--psc-border);
+}
+
+/* Nom et position (Two-Line Player Rule locale à la carte). */
+#playerTable td.player-col {
+  font-family: 'Archivo Narrow', 'Segoe UI', sans-serif;
+  color: var(--psc-text);
+}
+#playerTable .player-pos { color: var(--psc-accent); }
+
+/* Colonnes chiffrées : JetBrains Mono conservé (déjà la police du
+   gabarit pour les données tabulaires), seule la couleur change. */
+#playerTable tbody td:not(:first-child):not(.player-col):not(.action-column) {
+  color: var(--psc-text);
+}
+#playerTable tbody tr td.points-column {
+  background: rgba(211, 228, 254, .45);
+  color: var(--psc-accent);
+}
+@media (hover: hover) {
+  #playerTable tbody tr:hover td.points-column { background: rgba(211, 228, 254, .45); }
+}
+
+/* ---- Bouton de sélection : plein accent, icône blanche (le fond n'est
+   plus jamais le cyan sombre du reste du site — inutile de dépendre du
+   thème ici). ---- */
+#playerTable td.action-column button.select-button {
+  background: var(--psc-accent);
+}
+#playerTable td.action-column button.select-button .select-icon { filter: invert(1); }
+
+/* ============================================================
    20. ONGLETS DE CATÉGORIE : TROIS ÉTATS NETS
    ------------------------------------------------------------
    Disponible, choisi, épuisé. L'écart entre choisi et disponible
