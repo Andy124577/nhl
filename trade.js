@@ -238,7 +238,7 @@ function applyActivePool() {
         return;
     }
 
-    if (!FZPool.hasRoster(pool.teamData)) {
+    if (FZPool.draftState(pool.data).etat !== 'termine') {
         if (info) info.textContent = pool.name;
         if (grille) grille.innerHTML =
             `<p class="empty-msg">Le repêchage de « ${pool.name} » n'est pas terminé.<br>` +

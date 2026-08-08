@@ -4366,6 +4366,17 @@ app.post('/trade/propose', async (req, res) => {
             return res.status(403).json({ message: "Les échanges ne sont pas autorisés dans ce pool" });
         }
 
+        // Le repêchage doit être terminé pour TOUTES les équipes avant qu'un
+        // échange ait un sens : sinon on négocierait des joueurs qu'un pick
+        // à venir pourrait encore rendre indisponibles, ou qu'une équipe
+        // n'a même pas fini de sélectionner. Le client bloque déjà l'assistant
+        // (voir trade.js), ce contrôle est la version qui ne se contourne pas.
+        if (!checkIfDraftComplete(pool)) {
+            return res.status(403).json({
+                message: "Le repêchage de ce pool n'est pas encore terminé. Les échanges ouvrent une fois tous les choix faits."
+            });
+        }
+
         // VALIDATION: Check if fromTeam exists and has offered player
         const fromTeamData = pool.teams[fromTeam];
         if (!fromTeamData) {
