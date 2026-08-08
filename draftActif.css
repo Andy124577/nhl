@@ -1189,13 +1189,23 @@ button.select-button {
   font-size: .82rem;
   font-weight: 800;
   cursor: pointer;
-  transition: transform .15s ease, box-shadow .2s ease;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .15s ease, box-shadow .2s ease, filter .15s ease;
 }
 @media (hover: hover) {
   button.select-button:hover { transform: translateY(-1px); box-shadow: var(--glow-primary); }
 }
+/* Le clic doit se voir sur le bouton seul : une taille et une couleur qui
+   changent, pas la rangée qui le porte (elle a son propre survol pour la
+   fiche du joueur — un geste différent). */
+button.select-button:active { transform: scale(.93); filter: brightness(1.15); box-shadow: none; }
 button.select-button:focus-visible { outline: 2px solid var(--text-main); outline-offset: 2px; }
 button.select-button .select-icon { width: 16px; height: 16px; object-fit: contain; }
+/* rink-ice-cyan garde son texte arena-black (règle non négociable) : le
+   pictogramme reste noir en thème sombre. En thème clair le remplissage
+   fonce vers le teal — un pictogramme blanc y porte mieux (~5.8:1 contre
+   ~3.6:1 en noir). */
+html[data-theme="light"] button.select-button .select-icon { filter: invert(1); }
 
 /* ---------- États vides ---------- */
 .draft-empty-row td { padding: 0; }
@@ -2280,6 +2290,12 @@ button.select-button .select-icon { width: 14px; height: 14px; }
     background: rgba(0, 212, 255, .07);
     border-color: rgba(0, 212, 255, .35);
   }
+  /* :hover remonte aux ancêtres : sans ce garde-fou, survoler le bouton
+     « Sélectionner » allumait aussi toute la rangée derrière lui. */
+  #playerTable tbody tr:has(button.select-button:hover) {
+    background: var(--bg-odd-row);
+    border-color: var(--border-light);
+  }
 }
 #playerTable tbody td {
   display: block;
@@ -2408,7 +2424,15 @@ button.select-button .select-icon { width: 14px; height: 14px; }
    moins déterminantes pour un choix sont retirées, vue par vue, grâce à la
    classe `cat-*` que draftActifUI.js pose sur le tableau. */
 @media (max-width: 700px) {
-  #playerTable { --col-rank: 50px; --col-stat: 36px; --col-action: 74px; }
+  #playerTable { --col-rank: 50px; --col-stat: 36px; --col-action: 58px; }
+
+  /* La colonne n'a qu'une icône à porter : le fond de 10px à droite du
+     bouton (pensé pour respirer sur un écran large) ne faisait plus que
+     coller un vide contre le bord de la rangée. Symétrique avec la gauche,
+     et les pixels repris reviennent au nom via le flex-grow de la 2e
+     colonne. */
+  #playerTable thead th.action-column,
+  #playerTable tbody td.action-column { padding-right: 6px; }
 
   /* Gardiens : Photo Nom GP W L OTL SV% SO PTS Action — sans OTL ni SO. */
   #playerTable.cat-goalies thead th:nth-child(6),
@@ -2422,13 +2446,14 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 }
 
 @media (max-width: 480px) {
-  #playerTable { --col-rank: 44px; --col-stat: 32px; --col-action: 66px; }
+  #playerTable { --col-rank: 44px; --col-stat: 32px; --col-action: 50px; }
   #playerTable tbody td,
   #playerTable thead th { padding-left: 3px; padding-right: 3px; }
   #playerTable thead th:first-child,
   #playerTable tbody td:first-child { padding-left: 7px; }
-  #playerTable thead th.action-column,
-  #playerTable tbody td.action-column { padding-right: 7px; }
+  /* Plus d'override à droite : la colonne d'action reprend le 3px générique
+     ci-dessus, à égalité avec sa propre gauche — le bouton (width: 100%)
+     vient alors buter sur le bord réel de la rangée. */
   #playerTable td.action-column button.select-button { min-height: 44px; padding: 7px 4px; }
 
   /* Une mesure de plus en moins sur les deux vues les plus chargées. */
