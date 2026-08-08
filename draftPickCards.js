@@ -219,21 +219,24 @@ function buildPickCard(options) {
   const identite = document.createElement('div');
   identite.className = 'pick-card-id';
 
-  const nom = document.createElement('h4');
-  nom.className = 'pick-card-name';
-  if (info) {
-    nom.textContent = info.nom;
-  } else if (etat === 'current') {
-    // Même texte pour tout le monde : le badge « À vous » et le relief de
-    // .is-my-turn suffisent à distinguer la personne concernée, pas besoin
-    // de le redire dans le titre.
-    nom.textContent = 'Tour en cours';
-  } else if (etat === 'skipped') {
-    nom.textContent = 'Tour sauté';
-  } else {
-    nom.textContent = 'À venir';
+  // Sur la carte de la personne qui doit choisir, le titre « Tour en cours »
+  // ne dirait rien que le badge « À vous » et le relief de .is-my-turn ne
+  // disent déjà — omis plutôt que redondant. Tout le monde d'autre le voit
+  // encore : c'est leur seul repère pour savoir qu'un choix est en cours.
+  if (!estMonTour) {
+    const nom = document.createElement('h4');
+    nom.className = 'pick-card-name';
+    if (info) {
+      nom.textContent = info.nom;
+    } else if (etat === 'current') {
+      nom.textContent = 'Tour en cours';
+    } else if (etat === 'skipped') {
+      nom.textContent = 'Tour sauté';
+    } else {
+      nom.textContent = 'À venir';
+    }
+    identite.appendChild(nom);
   }
-  identite.appendChild(nom);
 
   const sousTitre = info ? info.position : (etat === 'skipped' ? 'Équipe complète' : `Choix ${numero}`);
   if (sousTitre) {

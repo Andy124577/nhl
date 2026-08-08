@@ -82,10 +82,8 @@ body {
   background:
     linear-gradient(135deg, rgba(0, 212, 255, .09), rgba(0, 212, 255, 0) 62%),
     var(--bg);
-  border-bottom: 1px solid var(--navbar-border);
 }
 .draft-header.is-my-turn {
-  border-bottom: 2px solid var(--primary);
   animation: headerTurnGlow 2.4s ease-in-out infinite;
 }
 
@@ -105,9 +103,8 @@ body {
   gap: 8px;
   flex: 1 1 100%;
   min-width: 0;
-  min-height: 44px;
-  margin: 2px 0 0;
-  padding: 8px 14px;
+  min-height: 33px;
+  padding: 4px 7px;
   border: 1px solid transparent;
   border-radius: 12px;
   /* Le body du système (1rem) plutôt qu'une valeur inventée : c'est le
@@ -970,7 +967,7 @@ html[data-theme="light"] .player-selection-card {
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  padding: 6px 10px 8px;
+  padding: 3px 5px 4px;
   min-width: 0;
   z-index: 2;
   background: rgba(10, 12, 16, .78);
@@ -1636,6 +1633,27 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   .draft-order-card,
   .recent-picks-card,
   .player-selection-card { padding: 13px; }
+
+  /* ---- Bande de choix pleine largeur --------------------------------
+     .recent-picks-card ne contient plus que la bande (l'en-tête et ses
+     flèches ont disparu) : sa propre carte — fond, bordure, coins arrondis,
+     16 px de marge de chaque côté — n'avait donc plus rien à cadrer. Marge
+     négative égale au padding de .draft-header : la bande atteint le bord
+     réel de l'écran plutôt que de s'arrêter à celui d'une carte vide. */
+  .recent-picks-card {
+    margin: 0 -13px;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+  }
+  /* Le fondu aux bords (mask-image) suppose un peu de champ avant la
+     première carte, sans quoi il mordrait sur son contenu au lieu de
+     s'y fondre. Le calcul de centrage des amorces ::before/::after n'a
+     pas besoin d'ajustement : il se résout déjà contre la boîte de
+     contenu de .picks-carousel, quel que soit son padding. */
+  .picks-carousel { padding-left: 13px; padding-right: 13px; }
+
   .card-header,
   .progress-header,
   .filters-header { margin-bottom: 8px; padding-bottom: 7px; }
@@ -1653,7 +1671,7 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
 }
 
 @media (max-width: 480px) {
-  .picks-carousel { --pick-w: 178px; --pick-h: 118px; --pick-photo: 42px; gap: 8px; }
+  .picks-carousel { --pick-photo: 42px; gap: 8px; }
 }
 
 /* ============================================================
