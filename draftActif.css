@@ -2553,21 +2553,46 @@ html[data-theme="light"] .player-selection-card {
   box-shadow: 0 1px 4px rgba(11, 28, 48, .12);
 }
 
-/* ---- Tableau : cadre et en-tête ---- */
+/* ---- Tableau : cadre et en-tête ----
+   L'en-tête du gabarit : Inter (pas Archivo Narrow, réservé aux noms et
+   au rang), 9px, majuscules, gris — sans filet vertical entre les
+   colonnes, un seul filet horizontal sous toute la rangée, coins arrondis
+   en haut seulement puisqu'elle touche la liste plate juste en dessous. */
 .player-selection-card .table-wrapper {
   border-color: var(--psc-border);
   background: var(--psc-surface);
 }
-#playerTable thead tr { background: var(--psc-surface); }
+#playerTable thead tr {
+  margin-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  background: var(--psc-surface);
+}
 #playerTable thead th {
   color: var(--psc-text-secondary);
-  font-family: 'Archivo Narrow', 'Segoe UI', sans-serif;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: .5625rem;
   font-weight: 700;
+  letter-spacing: .02em;
+  text-transform: uppercase;
   border-bottom: 1px solid var(--psc-border);
+  border-left: 0;
 }
+#playerTable thead th:first-child { text-align: center; }
+/* Neutralise les filets verticaux entre colonnes posés plus haut dans le
+   fichier (plus spécifiques que la règle générale ci-dessus : il faut les
+   viser directement, pas juste redéclarer thead th). */
+#playerTable thead th:nth-child(3),
+#playerTable thead th.action-column { border-left: 0; }
+/* Colonne action : espace muet, comme dans le gabarit — pas de mot
+   « Action » à faire disparaître, juste la place du bouton en dessous. */
+#playerTable thead th.action-column { font-size: 0; }
+/* PTS reste une puce posée dans l'en-tête plutôt qu'un bandeau plein :
+   un padding et un rayon propres, pas ceux, plus larges, de la cellule. */
 #playerTable thead th.points-column {
+  padding: 3px 4px;
   background: var(--psc-accent);
   color: #fff;
+  border-radius: 4px;
 }
 
 /* ---- Tableau : rangées plates, sans carte ni marge ----
