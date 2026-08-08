@@ -269,7 +269,7 @@
 /* ============================================================ */
 .pool-action-btn {
     padding: 11px 24px;
-    background: linear-gradient(135deg, var(--primary) 0%, #00A8CC 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
     color: var(--bg);
     border: none;
     border-radius: 10px;
@@ -537,7 +537,7 @@
 .create-btn {
     width: 100%;
     padding: 17px;
-    background: linear-gradient(135deg, var(--primary) 0%, #00A8CC 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
     color: var(--bg);
     border: none;
     border-radius: 14px;
@@ -710,7 +710,7 @@
 }
 
 .modal-header {
-    background: linear-gradient(135deg, var(--primary) 0%, #00A8CC 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
     padding: 24px 28px;
     border-radius: 20px 20px 0 0;
     position: relative;
@@ -760,7 +760,7 @@
 
 .modal-content button {
     padding: 11px 22px;
-    background: linear-gradient(135deg, var(--primary) 0%, #00A8CC 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
     color: var(--bg);
     border: none;
     border-radius: 10px;

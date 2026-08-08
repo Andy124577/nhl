@@ -82,13 +82,20 @@ function initCategoryTabs() {
     const select = document.getElementById('playerFilter');
     if (!strip || !select) return;
 
+    // « Onglets » n'est vrai qu'en apparence : les six pastilles ne pilotent
+    // pas six panneaux distincts, elles filtrent toutes le même tableau. Le
+    // patron ARIA tablist suppose un panneau par onglet ; en poser un ici
+    // promettait un modèle clavier (flèches, un seul arrêt de tabulation)
+    // que rien ne tenait — d'où role=tablist sans aria-controls ni tabpanel.
+    // Un groupe de bascules dit la même chose sans rien devoir de plus.
+    strip.setAttribute('role', 'group');
     strip.innerHTML = '';
     [...select.options].forEach(option => {
         const tab = document.createElement('button');
         tab.type = 'button';
         tab.className = 'category-tab';
         tab.dataset.value = option.value;
-        tab.setAttribute('role', 'tab');
+        tab.setAttribute('aria-pressed', 'false');
         tab.textContent = option.textContent.trim();
         tab.addEventListener('click', () => {
             select.value = option.value;
@@ -105,7 +112,7 @@ function initCategoryTabs() {
         strip.querySelectorAll('.category-tab').forEach(t => {
             const actif = t.dataset.value === select.value;
             t.classList.toggle('is-active', actif);
-            t.setAttribute('aria-selected', String(actif));
+            t.setAttribute('aria-pressed', String(actif));
         });
         appliquerDisponibilite(strip, select);
         // Marque la vue courante sur le tableau. Le nombre et l'ordre des
@@ -206,7 +213,15 @@ function initPanelTabs() {
     strip.className = 'panel-tabs';
     strip.id = 'panelTabs';
     strip.setAttribute('role', 'tablist');
+    strip.setAttribute('aria-label', 'Sections du repêchage');
     conteneur.parentNode.insertBefore(strip, conteneur);
+
+    // Ici, contrairement aux pastilles de catégorie, chaque onglet ouvre
+    // vraiment un panneau qui lui est propre — le patron ARIA tablist
+    // s'applique tel quel : un tabpanel par panneau, aria-controls entre les
+    // deux, et un seul arrêt de tabulation dans le bandeau (tabindex baladeur,
+    // les flèches déplacent le focus et activent l'onglet visé).
+    panneaux.forEach(p => { p.el.setAttribute('role', 'tabpanel'); p.el.id = 'panel-' + p.cle; });
 
     const mq = window.matchMedia('(max-width: 1023px)');
     let actif = panneaux[0].cle;
@@ -217,23 +232,43 @@ function initPanelTabs() {
         panneaux.forEach(p => {
             // Hors mode onglets, on rend la main au CSS de mise en page.
             p.el.style.display = enOnglets ? (p.cle === actif ? '' : 'none') : '';
+            p.el.setAttribute('aria-hidden', String(enOnglets && p.cle !== actif));
         });
         strip.querySelectorAll('.panel-tab').forEach(t => {
             const on = t.dataset.cle === actif;
             t.classList.toggle('is-active', on);
             t.setAttribute('aria-selected', String(on));
+            t.tabIndex = on ? 0 : -1;
         });
     };
 
-    panneaux.forEach(p => {
+    const activer = (cle, focus) => {
+        actif = cle;
+        appliquer();
+        if (focus) strip.querySelector('[data-cle="' + cle + '"]').focus();
+    };
+
+    panneaux.forEach((p, i) => {
         const tab = document.createElement('button');
         tab.type = 'button';
         tab.className = 'panel-tab';
         tab.dataset.cle = p.cle;
+        tab.id = 'tab-' + p.cle;
         tab.setAttribute('role', 'tab');
+        tab.setAttribute('aria-controls', p.el.id);
         tab.textContent = p.libelle;
-        tab.addEventListener('click', () => { actif = p.cle; appliquer(); });
+        tab.addEventListener('click', () => activer(p.cle, false));
+        tab.addEventListener('keydown', e => {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+            e.preventDefault();
+            const n = panneaux.length;
+            const suivant = e.key === 'ArrowLeft' ? (i - 1 + n) % n
+                : e.key === 'ArrowRight' ? (i + 1) % n
+                : e.key === 'Home' ? 0 : n - 1;
+            activer(panneaux[suivant].cle, true);
+        });
         strip.appendChild(tab);
+        p.el.setAttribute('aria-labelledby', tab.id);
     });
 
     mq.addEventListener('change', appliquer);

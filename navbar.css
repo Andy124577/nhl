@@ -327,7 +327,7 @@ html[data-theme="light"] .navbar-logo {
 }
 
 .fz-modal-header {
-    background: linear-gradient(135deg, var(--primary, #00D4FF) 0%, #00A8CC 100%);
+    background: linear-gradient(135deg, var(--primary, #00D4FF) 0%, var(--primary-deep) 100%);
     padding: 20px 24px;
 }
 .fz-modal-header.danger {
@@ -395,7 +395,7 @@ html[data-theme="light"] .navbar-logo {
     cursor: pointer;
     transition: transform .15s ease, background .2s ease;
     min-height: 44px;
-    background: linear-gradient(135deg, var(--primary, #00D4FF) 0%, #00A8CC 100%);
+    background: linear-gradient(135deg, var(--primary, #00D4FF) 0%, var(--primary-deep) 100%);
     color: var(--bg, #0A0A1A);
 }
 .fz-modal-btn:hover { transform: translateY(-1px); }

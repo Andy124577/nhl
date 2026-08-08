@@ -1977,7 +1977,7 @@ html[data-theme="light"] .btn-propose-trade:disabled {
     transition: background .2s ease, color .2s ease, transform .1s ease;
   }
   .tm-cta.is-ready {
-    background: linear-gradient(135deg, var(--primary) 0%, #00A8CC 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
     color: var(--bg);
     cursor: pointer;
     box-shadow: var(--glow-primary);

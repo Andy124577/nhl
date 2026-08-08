@@ -45,8 +45,22 @@ function selectPlayer(nom, code) {
 
   pickConfirmFocusAvant = document.activeElement;
   overlay.classList.add('show');
+  // Le reste de la page passe hors de portée tant que la fenêtre est ouverte :
+  // sans ceci, Tab pouvait sortir de la boîte et retomber dans le tableau
+  // encore actif derrière elle.
+  document.querySelectorAll('.draft-header, .draft-main-container').forEach(el => {
+    el.setAttribute('aria-hidden', 'true');
+  });
   const valider = document.getElementById('pickConfirmOk');
   if (valider) valider.focus();
+}
+
+/** Les deux seuls arrêts du piège de focus : Annuler et Confirmer. */
+function pickConfirmFocusables() {
+  return [
+    document.getElementById('pickConfirmCancel'),
+    document.getElementById('pickConfirmOk')
+  ].filter(Boolean);
 }
 
 /** Renseigne la fenêtre à partir des données déjà chargées par la page. */
@@ -105,6 +119,10 @@ function fermerPickConfirm() {
   const overlay = document.getElementById('pickConfirmOverlay');
   if (overlay) overlay.classList.remove('show');
   pickConfirmEnAttente = null;
+
+  document.querySelectorAll('.draft-header, .draft-main-container').forEach(el => {
+    el.removeAttribute('aria-hidden');
+  });
 
   const valider = document.getElementById('pickConfirmOk');
   if (valider) {
@@ -168,7 +186,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.addEventListener('keydown', e => {
     if (!overlay.classList.contains('show')) return;
-    if (e.key === 'Escape' && !pickConfirmEnvoi) { e.preventDefault(); fermerPickConfirm(); }
-    if (e.key === 'Enter') { e.preventDefault(); confirmerPickConfirm(); }
+
+    if (e.key === 'Escape' && !pickConfirmEnvoi) { e.preventDefault(); fermerPickConfirm(); return; }
+
+    // Entrée active le bouton qui a le focus, comme n'importe quel bouton
+    // natif — pas systématiquement Confirmer. Sans cette distinction, Entrée
+    // sur Annuler validait le choix qu'on venait de refuser : le geste
+    // d'annulation exécutait l'action irréversible qu'il était censé éviter.
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (document.activeElement === annuler) fermerPickConfirm();
+      else confirmerPickConfirm();
+      return;
+    }
+
+    // Piège de focus : Tab et Maj+Tab tournent entre Annuler et Confirmer
+    // sans jamais atteindre le tableau resté sous la fenêtre.
+    if (e.key === 'Tab') {
+      const items = pickConfirmFocusables();
+      if (items.length < 2) return;
+      const [first, last] = [items[0], items[items.length - 1]];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault(); first.focus();
+      }
+    }
   });
 });

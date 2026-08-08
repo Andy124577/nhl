@@ -7,6 +7,9 @@
   --navbar-bg: #080816;
   --navbar-border: #1E1E3C;
   --primary: #00D4FF;
+  /* Les pages légales ne chargent pas index.css : sans cette reprise, le
+     dégradé de navbar.css tomberait dans le vide ici. */
+  --primary-deep: #00A8CC;
   --danger: #FF4757;
   --text-main: #FFFFFF;
   --text-secondary: #7B8CC4;
@@ -18,7 +21,8 @@ html[data-theme="light"] {
   --card: #FFFFFF;
   --navbar-bg: #FFFFFF;
   --navbar-border: #D8DFF0;
-  --primary: #0088AA;
+  --primary: #00707F;
+  --primary-deep: #005A6B;
   --danger: #E03040;
   --text-main: #1A1F3C;
   --text-secondary: #5060A0;
@@ -83,9 +87,11 @@ body {
 /* Encadré d'avertissement (non-affiliation, contact à compléter, etc.) */
 .legal-callout {
   background: var(--card);
-  border: 1px solid var(--navbar-border);
-  border-left: 3px solid var(--primary);
-  border-radius: 10px;
+  /* Le liseré gauche décoratif est retiré (DESIGN.md : aucune bordure
+     d'accent sur un côté d'une carte). Le fond distinct de la page plus un
+     contour complet suffisent à distinguer l'encadré. */
+  border: 1px solid var(--primary);
+  border-radius: 12px;
   padding: 16px 18px;
   margin: 20px 0;
 }
