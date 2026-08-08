@@ -219,6 +219,40 @@
         gauche.insertBefore(bouton, gauche.firstChild);
     }
 
+    /**
+     * Puce « pool actif » qui remplace le logo dans la barre du haut sous
+     * 769px (le CSS s'en charge, voir poolNav.css) : sans pool, un bouton
+     * « Rejoindre un pool » à la place.
+     */
+    function montrerPucePool() {
+        const marque = document.querySelector('.navbar-desktop .navbar-brand');
+        if (!marque) return;
+
+        let puce = document.getElementById('fzNavbarPool');
+        if (!puce) {
+            puce = document.createElement('a');
+            puce.id = 'fzNavbarPool';
+            marque.insertAdjacentElement('afterend', puce);
+        }
+
+        const actif = FZPool.get();
+        const courant = FZPool.mine().find(p => p.name === actif);
+
+        if (!courant) {
+            puce.href = 'rejoindre-pool.html';
+            puce.className = 'fz-navbar-pool fz-navbar-pool-empty';
+            puce.onclick = null;
+            puce.innerHTML = `<span>Rejoindre un pool</span>`;
+            return;
+        }
+
+        puce.href = '#';
+        puce.className = 'fz-navbar-pool';
+        puce.innerHTML = vignette(courant, 'fz-navbar-pool-img') +
+            `<span class="fz-navbar-pool-name">${echapper(courant.name)}</span>`;
+        puce.onclick = e => { e.preventDefault(); ouvrirTiroir(); };
+    }
+
     // ==================== INTERACTIONS ====================
 
     function brancherBlocPool(racine, suffixe) {
@@ -333,6 +367,7 @@
         monterTiroir();
         monterHamburger();
         monterBandeaux();
+        montrerPucePool();
     }
 
     async function demarrer() {

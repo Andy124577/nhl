@@ -253,6 +253,57 @@
 .fz-rail-title { font-weight: 700; font-size: .92rem; }
 .fz-rail-detail { font-size: .74rem; color: var(--text-gray); }
 
+/* ==================== PUCE POOL (BARRE DU HAUT, TÉLÉPHONE) ====================
+   Sous 769px, la marque cède sa place au pool actif : sur l'écran où le
+   rail n'existe plus, savoir tout de suite dans quel pool on se trouve
+   compte plus que le logo. Au-delà, la barre a la place pour les deux et
+   le rail affiche déjà « Pool actif » — la puce ne réapparaît pas. */
+@media (max-width: 768px) {
+    body.fz-has-sidebar .navbar-brand { display: none; }
+    .fz-navbar-pool { display: flex; }
+}
+
+.fz-navbar-pool {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 5px 12px 5px 5px;
+    border-radius: 999px;
+    background: var(--bg-hover);
+    text-decoration: none;
+    color: var(--text-main);
+    transition: background .18s ease;
+}
+
+.fz-navbar-pool-img {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.fz-navbar-pool-name {
+    max-width: 32vw;
+    font-weight: 700;
+    font-size: .9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Aucun pool : même emplacement, mais un appel à l'action plutôt qu'une
+   étiquette — reprend le traitement déjà utilisé pour « Créer un pool »
+   dans l'état vide du rail. */
+.fz-navbar-pool-empty {
+    padding: 7px 14px;
+    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    color: var(--bg);
+    font-weight: 800;
+    font-size: .88rem;
+}
+
 /* ==================== BOUTON ☰ ==================== */
 
 .fz-burger {
