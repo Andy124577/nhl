@@ -219,12 +219,16 @@
                  rempli disparaît de la liste, ce filtre ne montre donc pas
                  tout. La valeur `all` est inchangée — la logique de filtrage
                  de draftActif.js s'y accroche. -->
+            <!-- Pas d'option « Équipes » : l'unique équipe LNH de chaque
+                 équipe du pool vient désormais de l'identité choisie avant
+                 le repêchage (voir repechage.html), plus d'un pick à faire
+                 ici. Le serveur refuserait de toute façon — le quota
+                 (numTeams: 1) est déjà atteint dès l'identité choisie. -->
             <option value="all">Joueurs</option>
             <option value="offensive">Attaquants</option>
             <option value="defensive">Défenseurs</option>
             <option value="goalies">Gardiens</option>
             <option value="rookies">Recrues</option>
-            <option value="teams">Équipes</option>
           </select>
           <!-- Retiré de l'affichage, mais conservé dans le DOM : updateTable()
                lit sa valeur pour écarter les joueurs déjà repêchés. Sans lui,

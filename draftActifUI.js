@@ -149,7 +149,8 @@ const CODES_CATEGORIE = {
     defensive: ['D'],
     goalies: ['G'],
     rookies: ['*'],
-    teams: ['T'],
+    // Pas d'entrée « teams » : il n'y a plus d'onglet à éteindre pour cette
+    // catégorie, l'identité LNH (repechage.html) ayant remplacé le pick.
     // « Joueurs » réunit les patineurs : il ne s'éteint que lorsque plus
     // aucune de ces positions n'a de place libre.
     all: ['C', 'D', '*']

@@ -42,6 +42,30 @@ const NHL_CLUB_CODES = new Set([
     'WPG', 'WSH'
 ]);
 
+/**
+ * Nom complet d'un club, pour l'inverse de getTeamAbbreviationFromName plus
+ * bas dans ce fichier (nom → code). Une identité choisie (/choose-nhl-club)
+ * doit remplir la case « équipe LNH » du roster avec le même format de nom
+ * que celui utilisé partout ailleurs pour cette case — classement, échanges —
+ * jamais l'abréviation seule. Recopié plutôt que dérivé de specialCases (bien
+ * plus bas) : la sécurité d'une petite table statique en double l'emporte ici
+ * sur l'économie d'une seule source, cette route touchant au calcul du
+ * classement.
+ */
+const NHL_CLUB_FULLNAME = {
+    ANA: 'Anaheim Ducks', BOS: 'Boston Bruins', BUF: 'Buffalo Sabres',
+    CAR: 'Carolina Hurricanes', CBJ: 'Columbus Blue Jackets', CGY: 'Calgary Flames',
+    CHI: 'Chicago Blackhawks', COL: 'Colorado Avalanche', DAL: 'Dallas Stars',
+    DET: 'Detroit Red Wings', EDM: 'Edmonton Oilers', FLA: 'Florida Panthers',
+    LAK: 'Los Angeles Kings', MIN: 'Minnesota Wild', MTL: 'Montréal Canadiens',
+    NJD: 'New Jersey Devils', NSH: 'Nashville Predators', NYI: 'New York Islanders',
+    NYR: 'New York Rangers', OTT: 'Ottawa Senators', PHI: 'Philadelphia Flyers',
+    PIT: 'Pittsburgh Penguins', SEA: 'Seattle Kraken', SJS: 'San Jose Sharks',
+    STL: 'St. Louis Blues', TBL: 'Tampa Bay Lightning', TOR: 'Toronto Maple Leafs',
+    UTA: 'Utah Hockey Club', VAN: 'Vancouver Canucks', VGK: 'Vegas Golden Knights',
+    WPG: 'Winnipeg Jets', WSH: 'Washington Capitals'
+};
+
 console.log(`📁 Data directory: ${DATA_DIR}`);
 
 const server = http.createServer(app);
@@ -1033,6 +1057,12 @@ app.post("/create-clan", async (req, res) => {
             numRookies: 1,
             numTeams: 1
         };
+        // Toujours 1, quoi qu'envoie l'appelant : l'unique équipe LNH de
+        // chaque équipe du pool vient de son identité choisie avant le
+        // repêchage (/choose-nhl-club), plus d'une quantité configurable —
+        // imposé côté serveur, le formulaire n'étant pas la seule porte
+        // d'entrée de cette route.
+        poolConfig.numTeams = 1;
 
         // 🔥 Initialize 10 teams for the new clan
         let teams = {};
@@ -1801,6 +1831,13 @@ app.post("/choose-nhl-club", async (req, res) => {
     }
 
     team.nhlClub = code;
+    // L'identité EST la case « équipe LNH » du roster — numTeams vaut
+    // toujours 1 désormais (voir /create-clan), et cette route ne s'ouvre
+    // que tant que draftOrder n'existe pas, donc avant tout choix de joueur
+    // réel : personne ne perd un pick déjà fait en remplaçant le tableau.
+    // Remplacé plutôt qu'ajouté : changer d'idée avant le repêchage doit
+    // remplacer l'ancien choix, pas en accumuler un second.
+    team.teams = [NHL_CLUB_FULLNAME[code]];
     await saveDraftData(draftData);
     io.emit("draftUpdated", poolsPublics(draftData));
 

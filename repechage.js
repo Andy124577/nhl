@@ -96,12 +96,32 @@
         return fetch(`${FZPool.BASE_URL}/current-teams`)
             .then(r => r.json())
             .then(donnees => {
+                // Mêmes chiffres que le classement : la fiche club porte sa
+                // vraie fiche (V-D-DP · PTS), pas un habillage sans contenu —
+                // choisir une identité mérite de savoir de quelle équipe il
+                // s'agit sur la glace, pas seulement son nom et ses couleurs.
                 _clubsCache = (donnees.teams || [])
                     .filter(t => t.teamAbbrev)
-                    .map(t => ({ code: t.teamAbbrev, nom: t.teamFullName }))
+                    .map(t => ({
+                        code: t.teamAbbrev,
+                        nom: t.teamFullName,
+                        wins: t.wins ?? null,
+                        losses: t.losses ?? null,
+                        otLosses: t.otLosses ?? null,
+                        points: t.points ?? null
+                    }))
                     .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
                 return _clubsCache;
             });
+    }
+
+    /** Fiche V-D-DP · PTS, ou rien si les stats n'ont pas encore été chargées
+        pour cette équipe (saison pas encore commencée, par exemple). */
+    function ficheClub(club) {
+        if (club.wins == null || club.losses == null) return '';
+        const dp = club.otLosses != null ? `-${club.otLosses}` : '';
+        const pts = club.points != null ? ` · ${club.points} PTS` : '';
+        return `${club.wins}-${club.losses}${dp}${pts}`;
     }
 
     /** Équipes du pool avec au moins un membre — les seules qui comptent ici. */
@@ -133,6 +153,7 @@
                 <img src="teams/${club.code}.png" alt="" class="nhlclub-logo" loading="lazy"
                      onerror="this.style.visibility='hidden'">
                 <span class="nhlclub-name">${echapper(club.nom)}</span>
+                ${ficheClub(club) ? `<span class="nhlclub-record">${ficheClub(club)}</span>` : ''}
                 ${mienne ? '<span class="nhlclub-tile-tag">Votre choix</span>' : ''}
                 ${prise ? `<span class="nhlclub-tile-tag">Prise — ${echapper(prisePar)}</span>` : ''}
             </button>`;

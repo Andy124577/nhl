@@ -194,6 +194,15 @@
     line-height: 1.25;
     text-align: center;
 }
+/* Fiche V-D-DP · PTS : un chiffre qu'on compare d'une tuile à l'autre, donc
+   en monospace comme partout ailleurs dans l'app où des stats s'alignent. */
+.nhlclub-record {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+    color: var(--text-secondary);
+}
 
 /* La tuile choisie : seule autorisée à porter le cyan (Règle du Signal
    Unique) — c'est l'unique chose « active » dans cette grille. */

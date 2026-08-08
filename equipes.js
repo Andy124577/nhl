@@ -265,7 +265,10 @@ async function createClan() {
     const numDefensive = parseInt($("#numDefensive").val());
     const numGoalies = parseInt($("#numGoalies").val());
     const numRookies = parseInt($("#numRookies").val());
-    const numTeams = parseInt($("#numTeams").val());
+    // Toujours 1 : ce n'est plus un champ du formulaire, l'unique équipe LNH
+    // de chaque équipe du pool vient de son identité choisie avant le
+    // repêchage (voir repechage.html), pas d'une quantité configurée ici.
+    const numTeams = 1;
     const poolMode = $('input[name="poolMode"]:checked').val();
     const allowTrades = $("#allowTrades").is(':checked');
     const poolPassword = ($("#poolPassword").val() || "").trim();
@@ -277,7 +280,7 @@ async function createClan() {
     }
 
     // Validation des valeurs
-    if (numOffensive < 0 || numDefensive < 0 || numGoalies < 0 || numRookies < 0 || numTeams < 0) {
+    if (numOffensive < 0 || numDefensive < 0 || numGoalies < 0 || numRookies < 0) {
         alert("Les valeurs de configuration ne peuvent pas être négatives !");
         return;
     }
@@ -352,7 +355,6 @@ async function createClan() {
             $("#numDefensive").val("4");
             $("#numGoalies").val("1");
             $("#numRookies").val("1");
-            $("#numTeams").val("1");
             const poolImgPreview = document.getElementById('poolImgPreview');
             const poolImgHint = document.getElementById('poolImgUploadHint');
             if (poolImgPreview) { poolImgPreview.src = ''; poolImgPreview.style.display = 'none'; }
