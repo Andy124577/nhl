@@ -51,6 +51,17 @@ const NAV_ICON = {
     shield: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`
 };
 
+// Les 5 sections du site, dans l'ordre affiché partout (barre du haut,
+// barre du bas, tiroir des pools) : mêmes silhouettes, seule la couleur
+// suit currentColor pour s'accorder au thème et à l'état actif/survol.
+const PAGE_ICON = {
+    accueil: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>`,
+    repechage: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>`,
+    echanges: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>`,
+    classement: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>`,
+    stats: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>`
+};
+
 // ==================== THÈME ====================
 // theme.js pose l'attribut sur <html> ; localStorage peut être vide au
 // tout premier passage, d'où la lecture des deux.
@@ -144,25 +155,25 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
 
                 <nav class="nav-links">
                     <a href="index.html" class="nav-link ${'accueil' === currentPage ? 'active' : ''}">
-                        <img src="Icons/fantazy.png" alt="Accueil" class="nav-icon-img">
+                        <span class="nav-icon-img" aria-hidden="true">${PAGE_ICON.accueil}</span>
                         <span class="nav-text">Accueil</span>
                     </a>
                     <a href="repechage.html" class="nav-link ${'repechage' === currentPage ? 'active' : ''}" id="desktopPoolLink">
-                        <img src="Icons/pool.png" alt="Repêchage" class="nav-icon-img">
+                        <span class="nav-icon-img" aria-hidden="true">${PAGE_ICON.repechage}</span>
                         <span class="nav-text">Repêchage</span>
                         <span class="notif-badge" id="desktopDraftBadge" style="display: none;"></span>
                     </a>
                     <a href="trade.html" class="nav-link ${'trade' === currentPage ? 'active' : ''}" id="desktopTradeLink">
-                        <img src="Icons/echanges.png" alt="Échanges" class="nav-icon-img">
+                        <span class="nav-icon-img" aria-hidden="true">${PAGE_ICON.echanges}</span>
                         <span class="nav-text">Échanges</span>
                         <span class="notif-badge" id="desktopTradeBadge" style="display: none;">0</span>
                     </a>
                     <a href="classement.html" class="nav-link ${'classement' === currentPage ? 'active' : ''}">
-                        <img src="Icons/classement.png" alt="Classement" class="nav-icon-img">
+                        <span class="nav-icon-img" aria-hidden="true">${PAGE_ICON.classement}</span>
                         <span class="nav-text">Classement</span>
                     </a>
                     <a href="stats.html" class="nav-link ${'stats' === currentPage ? 'active' : ''}">
-                        <img src="Icons/stats.png" alt="Stats" class="nav-icon-img">
+                        <span class="nav-icon-img" aria-hidden="true">${PAGE_ICON.stats}</span>
                         <span class="nav-text">Stats</span>
                     </a>
                 </nav>
@@ -252,25 +263,25 @@ function buildBottomNav(currentPage) {
     const html = `
         <nav class="bottom-nav">
             <a href="index.html" class="bottom-nav-item ${'accueil' === currentPage ? 'active' : ''}">
-                <span class="bottom-nav-icon"><img src="Icons/fantazy.png" alt="Accueil" class="bottom-nav-img"></span>
+                <span class="bottom-nav-icon">${PAGE_ICON.accueil}</span>
                 <span class="bottom-nav-label">Accueil</span>
             </a>
             <a href="repechage.html" class="bottom-nav-item ${'repechage' === currentPage ? 'active' : ''}" id="bottomPoolLink">
-                <span class="bottom-nav-icon"><img src="Icons/pool.png" alt="Repêchage" class="bottom-nav-img"></span>
+                <span class="bottom-nav-icon">${PAGE_ICON.repechage}</span>
                 <span class="bottom-nav-label">Repêchage</span>
                 <span class="notif-badge" id="bottomDraftBadge" style="display: none;"></span>
             </a>
             <a href="trade.html" class="bottom-nav-item ${'trade' === currentPage ? 'active' : ''}" id="bottomTradeLink">
-                <span class="bottom-nav-icon"><img src="Icons/echanges.png" alt="Échanges" class="bottom-nav-img"></span>
+                <span class="bottom-nav-icon">${PAGE_ICON.echanges}</span>
                 <span class="bottom-nav-label">Échanges</span>
                 <span class="notif-badge" id="bottomTradeBadge" style="display: none;">0</span>
             </a>
             <a href="classement.html" class="bottom-nav-item ${'classement' === currentPage ? 'active' : ''}">
-                <span class="bottom-nav-icon"><img src="Icons/classement.png" alt="Classement" class="bottom-nav-img"></span>
+                <span class="bottom-nav-icon">${PAGE_ICON.classement}</span>
                 <span class="bottom-nav-label">Classement</span>
             </a>
             <a href="stats.html" class="bottom-nav-item ${'stats' === currentPage ? 'active' : ''}">
-                <span class="bottom-nav-icon"><img src="Icons/stats.png" alt="Stats" class="bottom-nav-img"></span>
+                <span class="bottom-nav-icon">${PAGE_ICON.stats}</span>
                 <span class="bottom-nav-label">Stats</span>
             </a>
         </nav>

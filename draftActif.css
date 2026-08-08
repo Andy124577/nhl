@@ -1558,16 +1558,17 @@ html[data-theme="light"] button.select-button .select-icon { filter: invert(1); 
 @media (min-width: 1024px) {
   .draft-main-container {
     display: grid;
-    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 300px;
     align-items: start;
     gap: 18px;
     padding: 22px 22px 56px;
   }
-  /* Sur grand écran, le suivi reprend sa place à gauche et suit
-     le défilement : l'ordre du draft reste consultable pendant
-     qu'on parcourt la liste des joueurs. */
-  .draft-sidebar { order: 0; position: sticky; top: 78px; }
-  .draft-center  { order: 0; }
+  /* Sur grand écran, le suivi passe à droite : la sélection de joueur
+     (draft-center) reste la colonne large et centrée, le suivi ne fait
+     plus pencher la mise en page d'un côté. L'ordre 1/2 posé plus haut
+     (base du fichier) suffit déjà à placer draft-center en premier —
+     inutile de le réécrire ici. */
+  .draft-sidebar { position: sticky; top: 78px; }
 
   .progress-card,
   .draft-order-card,
