@@ -726,9 +726,13 @@ html[data-theme="light"] .player-selection-card {
   height: 3px;
   background: var(--team-accent, var(--primary));
 }
-/* ---- Tours sans choix : à venir, en cours, sauté ----
-   Aucune équipe de la LNH n'est connue, donc aucune couleur d'équipe : ces
-   cartes restent neutres et laissent les choix faits ressortir. */
+/* ---- Repli neutre : identité d'équipe inconnue ----
+   Chaque équipe du pool choisit désormais son identité LNH avant le
+   repêchage (draftPickCards.js : resolveDrafterClub), et draftPickCards.js
+   pose alors --team-a/-b/-deep/-accent en ligne sur CHAQUE carte qui lui
+   appartient — à venir et en cours compris, plus seulement les choix faits.
+   Ces valeurs ne restent donc actives que pour un repêchage commencé avant
+   l'existence de ce choix, où l'identité est encore inconnue. */
 .pick-card.is-upcoming,
 .pick-card.is-skipped {
   --team-a: #232936;
@@ -742,11 +746,49 @@ html[data-theme="light"] .player-selection-card {
   --team-a: #1d2a39;
   --team-b: #16202b;
   --team-deep: #111820;
+  /* --team-accent n'est PAS repris en ligne pour l'état « en cours » (voir
+     draftPickCards.js) : le cyan du direct reste le seul accent possible ici,
+     quelle que soit l'équipe LNH de la personne qui pioche. */
   --team-accent: var(--primary);
   border-color: rgba(0, 212, 255, .5);
   animation: turnPulse 2.4s ease-in-out infinite;
 }
 .pick-card.is-current .pick-card-name { color: var(--primary); }
+
+/* ---- « C'est votre tour » ----
+   Le pouls cyan du tour en cours (.is-current) vaut pour tout le monde : il
+   dit « quelqu'un choisit ». Cet état supplémentaire, posé seulement dans le
+   navigateur de la personne concernée, répond à une question différente —
+   « est-ce moi ? » — et ne doit pas se confondre avec la première. */
+.pick-card.is-my-turn {
+  transform: scale(1.045);
+  z-index: 3;
+  box-shadow: 0 0 0 2px var(--primary), var(--glow-live, 0 0 20px rgba(0, 212, 255, .25));
+}
+.pick-card.is-my-turn:hover { transform: scale(1.045) translateY(-2px); }
+.pick-card-live-badge {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  z-index: 4;
+  transform: translateX(-50%);
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--bg);
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .32);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pick-card.is-my-turn,
+  .pick-card.is-my-turn:hover { transform: none; }
+}
 
 /* ---- Le choix qui vient d'entrer ----
    `will-change` n'est posé que le temps de la séquence : le laisser en
@@ -884,6 +926,17 @@ html[data-theme="light"] .player-selection-card {
   color: rgba(255, 255, 255, .10);
 }
 .pick-card.is-current .pick-card-slot { color: rgba(0, 212, 255, .22); }
+
+/* Tour pas encore joué mais déjà attribué : le blason de l'équipe LNH choisie
+   par le pool occupe le centre en filigrane, à la même faiblesse que le
+   chiffre qu'il remplace — l'identité se voit avant même le premier choix. */
+.pick-card-watermark {
+  width: calc(var(--pick-h) * .58);
+  height: calc(var(--pick-h) * .58);
+  object-fit: contain;
+  opacity: .16;
+}
+.pick-card.is-current .pick-card-watermark { opacity: .26; }
 
 /* ---- Bas : le pool qui l'a repêché, puis le repère du choix ----
    Barre pleine, à l'arête nette, plutôt qu'un dégradé fondu sur le portrait :

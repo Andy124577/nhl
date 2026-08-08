@@ -28,6 +28,20 @@ const CURRENT_TEAMS_FILE = `${DATA_DIR}/current_teams.json`;
 // Use PostgreSQL if DATABASE_URL is set, otherwise use JSON files
 const USE_POSTGRES = !!process.env.DATABASE_URL;
 
+/**
+ * Équipes de la LNH valides pour une identité de repêchage (voir
+ * /choose-nhl-club). Reprend teamColors.js sans son entrée historique ARI —
+ * l'Arizona n'existe plus, remplacée par l'Utah (UTA). Gardée statique
+ * plutôt que lue depuis current_teams.json : la validation doit fonctionner
+ * même avant le premier rafraîchissement des statistiques.
+ */
+const NHL_CLUB_CODES = new Set([
+    'ANA', 'BOS', 'BUF', 'CAR', 'CBJ', 'CGY', 'CHI', 'COL', 'DAL', 'DET',
+    'EDM', 'FLA', 'LAK', 'MIN', 'MTL', 'NJD', 'NSH', 'NYI', 'NYR', 'OTT',
+    'PHI', 'PIT', 'SEA', 'SJS', 'STL', 'TBL', 'TOR', 'UTA', 'VAN', 'VGK',
+    'WPG', 'WSH'
+]);
+
 console.log(`📁 Data directory: ${DATA_DIR}`);
 
 const server = http.createServer(app);
@@ -1023,7 +1037,9 @@ app.post("/create-clan", async (req, res) => {
         // 🔥 Initialize 10 teams for the new clan
         let teams = {};
         for (let i = 1; i <= 10; i++) {
-            teams[`Équipe ${i}`] = { members: [], offensive: [], defensive: [], goalie: [], rookie: [], teams: [] };
+            // nhlClub : l'identité LNH choisie avant le repêchage (voir
+            // /choose-nhl-club). null tant que personne n'a choisi.
+            teams[`Équipe ${i}`] = { members: [], offensive: [], defensive: [], goalie: [], rookie: [], teams: [], nhlClub: null };
         }
 
         // ✅ Automatically add the creator to Équipe 1
@@ -1739,6 +1755,58 @@ app.get("/admin-users", async (req, res) => {
 })();
 
 
+/* 🔥 Choisir l'identité LNH d'une équipe du pool — avant le repêchage.
+ *
+ * Chaque équipe du pool porte désormais les couleurs et l'écusson d'un vrai
+ * club de la LNH sur toutes ses cartes de choix, du premier tour au dernier.
+ * Ce choix doit donc être fait — et connu de tout le monde — avant que
+ * l'ordre du repêchage existe : /start-draft refuse de démarrer tant qu'une
+ * équipe éligible n'a pas choisi (voir plus bas).
+ *
+ * Changeable librement avant le début du repêchage ; verrouillé dès que
+ * `draftOrder` existe, pour la même raison que les couleurs d'équipe sont
+ * figées dans teamColors.js : deux personnes qui regardent la même bande
+ * doivent voir la même chose.
+ */
+app.post("/choose-nhl-club", async (req, res) => {
+    const { clanName, username, club } = req.body;
+    if (!clanName || !username || !club) {
+        return res.status(400).json({ message: "Données incomplètes." });
+    }
+
+    const code = String(club).trim().toUpperCase();
+    if (!NHL_CLUB_CODES.has(code)) {
+        return res.status(400).json({ message: "Équipe LNH invalide." });
+    }
+
+    const draftData = await loadDraftData();
+    const clan = draftData[clanName];
+    if (!clan) return res.status(404).json({ message: "Pool introuvable." });
+
+    if (Array.isArray(clan.draftOrder) && clan.draftOrder.length > 0) {
+        return res.status(403).json({ message: "Le repêchage est commencé : l'identité d'équipe ne peut plus changer." });
+    }
+
+    const entree = Object.entries(clan.teams || {})
+        .find(([, t]) => (t.members || []).includes(username));
+    if (!entree) return res.status(400).json({ message: "Vous n'êtes dans aucune équipe de ce pool." });
+    const [teamName, team] = entree;
+
+    // Deux équipes du même pool ne peuvent pas porter le même club : la bande
+    // perdrait la seule chose qui distingue leurs cartes à l'œil.
+    const dejaPrise = Object.entries(clan.teams || {})
+        .find(([nom, t]) => nom !== teamName && t.nhlClub === code);
+    if (dejaPrise) {
+        return res.status(409).json({ message: `${dejaPrise[0]} a déjà choisi cette équipe.` });
+    }
+
+    team.nhlClub = code;
+    await saveDraftData(draftData);
+    io.emit("draftUpdated", poolsPublics(draftData));
+
+    return res.json({ message: `${teamName} portera les couleurs de ${code}.`, team: teamName, club: code });
+});
+
 app.post("/start-draft", async (req, res) => {
     const { clanName } = req.body;
     if (!clanName) return res.status(400).json({ message: "Nom du clan requis." });
@@ -1759,6 +1827,17 @@ app.post("/start-draft", async (req, res) => {
     }
 
     if (clan.draftOrder.length === 0) {
+        // Chaque équipe éligible doit avoir choisi son identité LNH avant que
+        // l'ordre soit tiré — sans quoi la bande démarrerait avec des cartes
+        // neutres que plus personne ne pourrait rattacher à une équipe.
+        const sansClub = eligibleTeams.filter(nom => !clan.teams[nom].nhlClub);
+        if (sansClub.length > 0) {
+            return res.status(400).json({
+                message: `En attente du choix d'équipe LNH : ${sansClub.join(', ')}.`,
+                teamsWithoutClub: sansClub
+            });
+        }
+
         // Calculate total picks based on pool configuration
         const config = clan.config || {
             numOffensive: 6,

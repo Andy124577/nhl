@@ -79,6 +79,23 @@ function resolvePickInfo(pick) {
   return { nom, estEquipe, abbrev, logo, photo, position };
 }
 
+/**
+ * Identité LNH choisie par l'équipe du pool qui détient ce tour — voir
+ * /choose-nhl-club. C'est elle qui marque désormais la carte (fond et
+ * écusson), et non plus le club du joueur qu'on y a repêché : la carte dit
+ * « à qui ce choix appartient », pas « d'où vient le joueur ».
+ *
+ * `null` pour un repêchage commencé avant l'existence de ce choix ; les
+ * appelants retombent alors sur l'ancien repère (le club du joueur).
+ */
+function resolveDrafterClub(equipePool) {
+  const donnees = typeof draftData !== 'undefined' && draftData ? draftData : {};
+  const equipe = equipePool && donnees.teams ? donnees.teams[equipePool] : null;
+  const abbrev = equipe && equipe.nhlClub ? String(equipe.nhlClub).toUpperCase() : null;
+  if (!abbrev) return null;
+  return { abbrev, logo: `teams/${abbrev}.png` };
+}
+
 /* ============================================================
    2. CONSTRUCTION D'UNE CARTE
    ============================================================ */
@@ -108,24 +125,32 @@ function pickCardMuteRatio(couleur) {
 function buildPickCard(options) {
   const { pick, numero, ronde, equipePool, etat } = options;
   const info = pick ? resolvePickInfo(pick) : null;
+  const club = resolveDrafterClub(equipePool);
+  // Repli pour un repêchage commencé avant l'existence du choix d'identité :
+  // on retombe sur le club du joueur repêché plutôt que de laisser la carte
+  // neutre, mais uniquement là où club est inconnu.
+  const marque = club || (info ? { abbrev: info.abbrev, logo: info.logo } : null);
 
   const carte = document.createElement('article');
   carte.className = 'pick-card is-' + etat;
 
-  // Seules les cartes d'un choix fait portent des couleurs d'équipe ; les
-  // autres gardent le neutre défini en CSS, faute d'équipe connue.
-  if (info) {
-    const [couleurA, couleurB] = getTeamColors(info.abbrev);
+  // C'est l'identité de l'ÉQUIPE DU POOL qui marque la carte — la sienne dès
+  // que son ordre de tour est connu, pas seulement une fois son choix fait.
+  // Toute la bande d'une même équipe se reconnaît ainsi au premier coup
+  // d'œil, du premier tour au dernier.
+  if (marque) {
+    const [couleurA, couleurB] = getTeamColors(marque.abbrev);
     carte.style.setProperty('--team-a', mixHex(couleurA, PICK_CARD_BASE, pickCardMuteRatio(couleurA)));
     carte.style.setProperty('--team-b', mixHex(couleurB, PICK_CARD_BASE, pickCardMuteRatio(couleurB) + 0.10));
     carte.style.setProperty('--team-deep', mixHex(couleurA, PICK_CARD_BASE_DEEP, 0.86));
-    // Le liseré du bas garde la teinte vive : c'est le seul repère de couleur
-    // franche, et il suffit à séparer deux marines voisins.
-    carte.style.setProperty('--team-accent', couleurB);
-    if (info.abbrev) carte.dataset.team = info.abbrev;
+    // Le liseré du bas garde la teinte vive — sauf au tour en cours : là, le
+    // seul accent qui compte est le cyan du direct (Règle du Signal Unique),
+    // et le CSS de .is-current se charge de l'imposer sans concurrence.
+    if (etat !== 'current') carte.style.setProperty('--team-accent', couleurB);
+    if (marque.abbrev) carte.dataset.team = marque.abbrev;
   }
 
-  /* ---- Milieu : la photo, ou le numéro de tour s'il n'y a pas de choix ----
+  /* ---- Milieu : la photo, le blason de l'équipe, ou le numéro du tour ----
      Posée en couche de fond plutôt qu'en rangée : le portrait peut ainsi
      déborder derrière le nom et le pied, comme sur une carte de collection. */
   const zonePhoto = document.createElement('div');
@@ -150,8 +175,30 @@ function buildPickCard(options) {
   } else if (info) {
     zonePhoto.classList.add('is-empty');
     zonePhoto.appendChild(buildPickInitials(info.nom));
+  } else if (club) {
+    // Personne n'a encore été repêché à ce tour, mais on sait déjà qui le
+    // détient : son blason occupe la carte en filigrane plutôt que de
+    // laisser un numéro nu — la carte porte l'identité de l'équipe avant
+    // même son premier choix.
+    zonePhoto.classList.add('is-empty', 'is-club-watermark');
+    const blason = document.createElement('img');
+    blason.className = 'pick-card-watermark';
+    blason.src = club.logo;
+    blason.alt = '';
+    blason.loading = 'lazy';
+    blason.draggable = false;
+    blason.addEventListener('error', () => {
+      blason.remove();
+      zonePhoto.classList.remove('is-club-watermark');
+      const chiffre = document.createElement('span');
+      chiffre.className = 'pick-card-slot';
+      chiffre.textContent = String(numero);
+      zonePhoto.appendChild(chiffre);
+    });
+    zonePhoto.appendChild(blason);
   } else {
-    // Tour à venir : le numéro tient lieu d'illustration.
+    // Tour à venir sans identité connue (repêchage antérieur à ce choix) :
+    // le numéro tient lieu d'illustration, comme avant.
     zonePhoto.classList.add('is-empty');
     const chiffre = document.createElement('span');
     chiffre.className = 'pick-card-slot';
@@ -189,30 +236,33 @@ function buildPickCard(options) {
   }
   haut.appendChild(identite);
 
-  if (info && (info.logo || info.abbrev)) {
-    const club = document.createElement('div');
-    club.className = 'pick-card-club';
-    if (info.logo) {
+  // L'écusson en haut à droite porte désormais l'identité de l'équipe du
+  // pool, pas celle du joueur repêché — et paraît sur CHAQUE carte qui lui
+  // appartient, choix fait ou non, pas seulement les tours déjà joués.
+  if (marque && (marque.logo || marque.abbrev)) {
+    const badge = document.createElement('div');
+    badge.className = 'pick-card-club';
+    if (marque.logo) {
       // Pastille blanche : beaucoup de logos de la LNH sont à dominante
       // sombre et disparaissaient sur un fond d'équipe lui aussi sombre.
       const pastille = document.createElement('span');
       pastille.className = 'pick-card-logo-chip';
       const logo = document.createElement('img');
       logo.className = 'pick-card-logo';
-      logo.src = info.logo;
-      logo.alt = info.abbrev || '';
+      logo.src = marque.logo;
+      logo.alt = marque.abbrev || '';
       logo.loading = 'lazy';
       logo.addEventListener('error', () => pastille.remove());
       pastille.appendChild(logo);
-      club.appendChild(pastille);
+      badge.appendChild(pastille);
     }
-    if (info.abbrev) {
+    if (marque.abbrev) {
       const code = document.createElement('span');
       code.className = 'pick-card-abbr';
-      code.textContent = info.abbrev;
-      club.appendChild(code);
+      code.textContent = marque.abbrev;
+      badge.appendChild(code);
     }
-    haut.appendChild(club);
+    haut.appendChild(badge);
   }
   carte.appendChild(haut);
 
@@ -233,10 +283,24 @@ function buildPickCard(options) {
 
   carte.appendChild(bas);
 
+  // « C'est votre tour » : le pouls cyan du tour en cours vaut pour tout le
+  // monde, mais seule LA personne concernée doit voir ce badge — c'est la
+  // différence entre « quelqu'un choisit » et « c'est à moi ».
+  const monEquipe = typeof getUserTeam === 'function' ? getUserTeam() : null;
+  const estMonTour = etat === 'current' && !!equipePool && !!monEquipe && equipePool === monEquipe;
+  if (estMonTour) {
+    carte.classList.add('is-my-turn');
+    const badgeTour = document.createElement('span');
+    badgeTour.className = 'pick-card-live-badge';
+    badgeTour.textContent = 'À vous';
+    carte.appendChild(badgeTour);
+  }
+
   const etiquette = info
-    ? `${info.nom} — ${info.abbrev || '?'} — repêché par ${equipePool}`
+    ? `${info.nom}${marque && marque.abbrev ? ' — ' + marque.abbrev : ''} — repêché par ${equipePool}`
     : (etat === 'current' ? `au tour de ${equipePool}` : `à venir — ${equipePool}`);
-  carte.setAttribute('aria-label', `Choix ${numero} : ${etiquette}`);
+  carte.setAttribute('aria-label',
+    (estMonTour ? 'C\'est votre tour. ' : '') + `Choix ${numero} : ${etiquette}`);
   if (etat === 'current') carte.setAttribute('aria-current', 'true');
 
   return carte;

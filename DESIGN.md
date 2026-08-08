@@ -177,7 +177,7 @@ A narrow band of blue-blacks and blue-whites, cut by a single emitted cyan, with
 
 ### Tertiary
 - **Rookie Orchid** (`{colors.rookie-orchid}`): the **rookies** category badge. A single, narrow job.
-- **NHL club colors**: sourced from the static table in [teamColors.js](teamColors.js), two per club (primary + secondary). They enter only through team identity — logos, and the pick card's `--team-accent` bottom rule. The second color exists to separate clubs that share a navy (Buffalo, Columbus, Florida). These are real brand colors of real organizations: never invent one, never assign one to a non-team.
+- **NHL club colors**: sourced from the static table in [teamColors.js](teamColors.js), two per club (primary + secondary). They enter only through team identity — logos, and the pick card's `--team-accent` bottom rule — and that identity is the **pool team's own chosen club** ([repechage.js](repechage.js)'s pre-draft picker, `POST /choose-nhl-club`), not the club of whichever player got drafted. The second color exists to separate clubs that share a navy (Buffalo, Columbus, Florida). These are real brand colors of real organizations: never invent one, never assign one to a non-team.
 
 ### Neutral
 - **Arena Black** (`{colors.arena-black}`): the deepest ground; app background and the text color that sits *on* cyan buttons.
@@ -323,9 +323,11 @@ The workhorse. Rows read as separated objects, not grid lines.
 ### Pick Card (signature)
 The draft room's identity object, and the only place club chroma enters the layout.
 
-- A neutral dark card carrying a 3px bottom rule in `--team-accent`, the club's *secondary* color — chosen so two clubs sharing a navy still separate at a glance.
-- **Upcoming / skipped:** no club is known yet, so no club color — the card goes neutral gray at `opacity: .8` (skipped: `.5`), letting completed picks dominate the strip.
-- **Current:** `--team-accent` becomes cyan, the border lifts to `rgba(0,212,255,.5)`, and `turnPulse` runs a 2.4s expanding ring. This is the single most important state in the product.
+Every pool team chooses one real NHL club as its identity before the draft opens ([repechage.js](repechage.js)'s pre-draft picker; `POST /choose-nhl-club`; locked once `draftOrder` exists, for the same reason `teamColors.js` itself is static — everyone watching the same strip must see the same thing). That identity, not the club of whichever player gets drafted, is what marks the card — background wash, top-right badge, and (before a pick is made) a large watermark logo in place of the empty slot number. A team's entire run through the strip reads as one identity, pick after pick, not a scatter of the players' own clubs.
+
+- A card carrying a 3px bottom rule in `--team-accent`, the club's *secondary* color — chosen so two clubs sharing a navy still separate at a glance.
+- **Upcoming / skipped:** the owning team's identity already colors the card and watermarks its center — known before any player is picked. `opacity: .8` (skipped: `.5`) keeps completed picks dominant in the strip; a repêchage begun before this feature existed falls back to neutral gray, then to the drafted player's own club once a pick lands.
+- **Current:** `--team-accent` becomes cyan and stays cyan regardless of the team's own identity color — the live signal is never negotiable (One Live Signal Rule). The border lifts to `rgba(0,212,255,.5)` and `turnPulse` runs a 2.4s expanding ring for everyone watching. The team whose turn it actually is sees more: `.is-my-turn` scales the card, adds a two-layer glow, and drops an "À vous" badge — the difference between "someone is picking" and "it's me."
 - **Revealing:** a ~1150ms sequence where the card arrives desaturated, color rises, then the name lands — animating only `opacity`, `transform`, and `filter`, with `will-change` set only for the duration and only one card at a time.
 
 ## Do's and Don'ts
