@@ -1006,8 +1006,7 @@ html[data-theme="light"] .player-selection-card {
   margin-bottom: 14px;
 }
 .search-input,
-.filter-select,
-.refresh-btn {
+.filter-select {
   padding: 10px 13px;
   min-height: 44px;                 /* cible tactile confortable */
   border: 1px solid var(--border-gray);
@@ -1025,24 +1024,11 @@ html[data-theme="light"] .player-selection-card {
 .filter-select { flex: 1 1 calc(50% - 5px); min-width: 0; cursor: pointer; }
 .filter-select option { background: var(--navbar-bg); color: var(--text-main); }
 .search-input:focus-visible,
-.filter-select:focus-visible,
-.refresh-btn:focus-visible {
+.filter-select:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 1px;
   border-color: var(--primary);
 }
-
-.refresh-btn {
-  flex: 0 0 auto;
-  width: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-.refresh-btn:hover { background: rgba(0, 212, 255, .14); border-color: var(--primary); }
 
 /* ============================================================
    7. TABLEAU DES JOUEURS
@@ -1655,18 +1641,15 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
   .filters-header { margin-bottom: 8px; padding-bottom: 7px; }
 
   /* ---- Filtres sur une seule rangée --------------------------------
-     Recherche, tri et actualisation vivaient sur deux rangées : la
-     recherche imposait toujours sa largeur pleine (flex: 1 1 100% en base,
-     pensé pour deux listes de catégorie côte à côte), et depuis que la
-     catégorie a rejoint l'en-tête (#playerFilter dans .filters-header), le
-     tri restait seul, à moitié largeur, sur une rangée pour lui tout seul.
-     Recherche élastique + tri à largeur fixe + actualiser tiennent sur une
-     rangée dès 340px, et rendent à la liste de joueurs — l'action réelle —
-     la hauteur qu'elles gaspillaient. */
+     La recherche imposait toujours sa largeur pleine (flex: 1 1 100% en
+     base, pensé pour deux listes de catégorie côte à côte) ; depuis que la
+     catégorie a rejoint l'en-tête (#playerFilter dans .filters-header) et
+     que le bouton d'actualisation manuelle a disparu, il ne reste que
+     recherche + tri. Élastique + largeur fixe : une seule rangée, et la
+     hauteur gagnée revient à la liste de joueurs — l'action réelle. */
   .filters-row { flex-wrap: nowrap; gap: 7px; margin-bottom: 10px; }
   .search-field  { flex: 1 1 auto; min-width: 0; }
   .filter-select { flex: 0 0 100px; min-width: 0; }
-  .refresh-btn   { flex: 0 0 44px; }
 }
 
 @media (max-width: 480px) {
@@ -1831,8 +1814,7 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
 .panel-tabs {
   display: flex;
   gap: 4px;
-  margin: 0 12px 12px;
-  padding: 4px;
+  margin: 0 12px 0px;
   background: var(--bg-gray-light);
   border: 1px solid var(--border-light);
   border-radius: 14px;

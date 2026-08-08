@@ -136,7 +136,10 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
                 texte.textContent = "✓ Vous avez complété tous vos choix";
             } else if (myTurn) {
                 banner.className = "turn-banner your-turn";
-                texte.textContent = "🎯 C'est votre tour — sélectionnez un joueur !";
+                // Court exprès : la bande occupe toute la largeur du bandeau
+                // collant, et « sélectionnez un joueur » n'apprenait rien —
+                // on est déjà sur l'écran qui ne fait que ça.
+                texte.textContent = "🎯 Votre tour !";
             } else if (away === 1) {
                 banner.className = "turn-banner waiting next";
                 texte.textContent = "⏳ Vous êtes le prochain !";

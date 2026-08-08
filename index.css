@@ -1128,8 +1128,7 @@ tbody tr:hover .player-photo img.face {
   table th,
   table td {
     padding: 14px 10px;
-    font-size: .88rem;
-    min-height: 48px; /* Better touch targets */
+    font-size: .95rem;
   }
 
   th.rank-col, td.rank-col {

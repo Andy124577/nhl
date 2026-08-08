@@ -98,19 +98,12 @@
          tour. Placé dans le bandeau collant, il reste visible pendant qu'on
          parcourt la liste de joueurs, et se recale tout seul sur le tour en
          cours après chaque choix (draftPickCards.js).
-         draftActif.js cible #picks-carousel, #carousel-prev et #carousel-next
-         par identifiant : la position dans le document lui est indifférente. -->
+
+         Pas d'en-tête ni de flèches ‹ › : la bande se comprend d'elle-même
+         (elle est pleine de cartes), et #picks-carousel reste navigable au
+         clavier (flèches ← →, gérées dans draftPickCards.js indépendamment
+         des anciens boutons) comme au doigt ou à la souris. -->
     <div class="recent-picks-card">
-      <div class="card-header">
-        <h3>Tableau du repêchage</h3>
-        <div class="carousel-controls">
-          <button class="carousel-btn" id="carousel-prev" type="button" aria-label="Choix précédents">‹</button>
-          <button class="carousel-btn" id="carousel-next" type="button" aria-label="Choix suivants">›</button>
-        </div>
-      </div>
-      <!-- Bande défilante : tabindex pour que les flèches du clavier la
-           parcourent aussi, le glissement souris/doigt étant géré par
-           draftPickCards.js. -->
       <div class="picks-carousel" id="picks-carousel" tabindex="0" role="group"
            aria-label="Derniers choix du repêchage">
         <!-- Recent picks will be displayed here -->
@@ -261,13 +254,14 @@
             <span class="search-field-icon" data-icon="search" data-icon-size="17"></span>
             <input type="text" id="searchInput" placeholder="Rechercher un joueur..." class="search-input"/>
           </div>
+          <!-- Pas de bouton d'actualisation manuelle : le sondage de 7s et le
+               socket tiennent déjà la liste à jour, il n'ajoutait rien. -->
           <label for="sortBy" class="sr-only">Trier par</label>
           <select id="sortBy" class="filter-select">
             <option value="points">Points</option>
             <option value="goals">Buts</option>
             <option value="assists">Passes</option>
           </select>
-          <button onclick="loadDraftData()" class="refresh-btn" title="Actualiser"><span data-icon="refresh" data-icon-size="16"></span></button>
         </div>
 
         <div class="table-wrapper">

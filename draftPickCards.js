@@ -224,10 +224,10 @@ function buildPickCard(options) {
   if (info) {
     nom.textContent = info.nom;
   } else if (etat === 'current') {
-    // « Au tour de » laissait deviner l'équipe dans le pied de carte, loin
-    // du titre. Pour tout le monde, un état plutôt qu'une phrase coupée ;
-    // pour la personne concernée, direct — le badge plus bas le confirme.
-    nom.textContent = estMonTour ? 'Votre tour' : 'Tour en cours';
+    // Même texte pour tout le monde : le badge « À vous » et le relief de
+    // .is-my-turn suffisent à distinguer la personne concernée, pas besoin
+    // de le redire dans le titre.
+    nom.textContent = 'Tour en cours';
   } else if (etat === 'skipped') {
     nom.textContent = 'Tour sauté';
   } else {
