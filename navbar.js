@@ -463,7 +463,10 @@ async function checkActiveDrafts() {
 
         const etat = FZPool.draftState(pool.data);
         const aSignaler = etat.etat === 'encours' || etat.etat === 'pret';
-        setNavBadge(['desktopDraftBadge', 'bottomDraftBadge'], aSignaler ? '!' : null);
+        // Chaîne vide et non « ! » : la pastille devient un simple point
+        // (.notif-badge:empty en CSS) — un repêchage actif n'a rien à
+        // compter, contrairement aux échanges en attente.
+        setNavBadge(['desktopDraftBadge', 'bottomDraftBadge'], aSignaler ? '' : null);
     } catch (error) {
         console.error('Error checking active drafts:', error);
     }
