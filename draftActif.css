@@ -2482,9 +2482,12 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   --psc-surface: #ffffff;
   --psc-surface-low: #eff4ff;
   --psc-tint: #d3e4fe;
+  --psc-badge-bg: #e5eeff;
   --psc-text: #0b1c30;
   --psc-text-secondary: #44474d;
-  --psc-border: #c5c6cd;
+  --psc-border: rgba(197, 198, 205, .5);
+  --psc-border-soft: rgba(197, 198, 205, .2);
+  --psc-badge-border: rgba(197, 198, 205, .3);
   --psc-accent: #006a66;
 }
 .player-selection-card,
@@ -2518,16 +2521,22 @@ html[data-theme="light"] .player-selection-card {
   color: var(--psc-accent);
 }
 
-/* ---- Sélecteurs, champ de recherche ---- */
+/* ---- Sélecteurs, champ de recherche ----
+   Fond « surface-bright » du gabarit (même valeur que --psc-bg, distincte
+   du blanc des cartes) : les champs restent un cran plus sombres que le
+   tableau qu'ils filtrent. Le tri seul est en gras dans le gabarit — la
+   catégorie et la recherche restent en poids normal. */
 .player-selection-card .search-input,
 .player-selection-card .filter-select {
-  background: var(--psc-surface);
+  background: var(--psc-bg);
   border-color: var(--psc-border);
   border-radius: 8px;
   color: var(--psc-text);
   font-family: 'Inter', 'Segoe UI', sans-serif;
-  font-weight: 500;
+  font-size: .75rem;
+  font-weight: 400;
 }
+.player-selection-card #sortBy { font-weight: 700; }
 .player-selection-card .search-input::placeholder { color: var(--psc-text-secondary); }
 .player-selection-card .filter-select option { background: var(--psc-surface); color: var(--psc-text); }
 .player-selection-card .search-input:focus-visible,
@@ -2544,7 +2553,7 @@ html[data-theme="light"] .player-selection-card {
    accessibles ici aussi. ---- */
 .panel-tabs {
   background: var(--psc-surface-low);
-  border-color: var(--psc-border);
+  border-color: var(--psc-badge-border);
 }
 .panel-tab { color: var(--psc-text-secondary); }
 .panel-tab.is-active {
@@ -2597,24 +2606,29 @@ html[data-theme="light"] .player-selection-card {
 
 /* ---- Tableau : rangées plates, sans carte ni marge ----
    Le gabarit visé n'empile pas des cartes détachées : chaque rangée n'a
-   plus qu'un filet inférieur, comme une vraie liste dense. */
+   plus qu'un filet inférieur, plus pâle que celui de l'en-tête (/20 contre
+   /50 dans le gabarit), comme une vraie liste dense. */
 #playerTable tbody tr {
   margin-bottom: 0;
   background: var(--psc-surface);
   border: 0;
-  border-bottom: 1px solid var(--psc-border);
+  border-bottom: 1px solid var(--psc-border-soft);
   border-radius: 0;
 }
 @media (hover: hover) {
   #playerTable tbody tr:hover {
-    background: var(--psc-surface-low);
-    border-color: var(--psc-border);
+    /* rgba(211,228,254,.1) = surface-variant/10 du gabarit : un lavis à
+       peine perceptible, pas un fond plein. */
+    background: rgba(211, 228, 254, .1);
+    border-color: var(--psc-border-soft);
   }
   #playerTable tbody tr:has(button.select-button:hover) { background: var(--psc-surface); }
 }
 #playerTable tbody td { color: var(--psc-text); }
 
-/* Rang : la police de titre plutôt que le monospace, comme le gabarit. */
+/* Rang centré dans sa colonne, police de titre plutôt que le monospace,
+   comme le gabarit. */
+#playerTable tbody td:first-child { text-align: center; }
 #playerTable tbody td:first-child::before {
   font-family: 'Archivo Narrow', 'Segoe UI', sans-serif;
   font-size: .875rem;
@@ -2622,28 +2636,53 @@ html[data-theme="light"] .player-selection-card {
   color: var(--psc-text);
 }
 #playerTable tbody td:first-child > img.logo {
-  background: var(--psc-surface);
-  border: 1px solid var(--psc-border);
+  background: var(--psc-badge-bg);
+  border: 1px solid var(--psc-badge-border);
 }
 
-/* Nom et position (Two-Line Player Rule locale à la carte). */
+/* Nom et position (Two-Line Player Rule locale à la carte) : 13px/600 pour
+   le nom (le gabarit dit font-semibold, pas font-bold), 8px/500 majuscule
+   et espacé pour la position — deux poids, pas deux fois le même. */
 #playerTable td.player-col {
   font-family: 'Archivo Narrow', 'Segoe UI', sans-serif;
+  font-size: .8125rem;
+  font-weight: 600;
   color: var(--psc-text);
 }
-#playerTable .player-pos { color: var(--psc-accent); }
+#playerTable .player-pos {
+  font-size: .5rem;
+  font-weight: 500;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--psc-accent);
+}
 
-/* Colonnes chiffrées : JetBrains Mono conservé (déjà la police du
-   gabarit pour les données tabulaires), seule la couleur change. */
-#playerTable tbody td:not(:first-child):not(.player-col):not(.action-column) {
+/* Colonnes chiffrées : le gabarit les met dans la police de titre
+   (Archivo Narrow), pas le monospace des données comparées ailleurs sur
+   le site — fidélité au gabarit plutôt qu'à la convention générale du
+   site, pour cette carte précisément. */
+#playerTable tbody td:not(:first-child):not(.player-col):not(.action-column):not(.points-column) {
+  font-family: 'Archivo Narrow', 'Segoe UI', sans-serif;
+  font-size: .75rem;
+  font-weight: 400;
   color: var(--psc-text);
+}
+/* .points-column doit rester hors de la règle ci-dessus : trois :not()
+   lui donnent une spécificité plus haute qu'un sélecteur qui semble
+   pourtant plus précis (#playerTable tbody tr td.points-column) — sans
+   cette exclusion, elle écraserait le gras/13px voulus pour PTS. */
+#playerTable tbody td.points-column {
+  font-family: 'Archivo Narrow', 'Segoe UI', sans-serif;
 }
 #playerTable tbody tr td.points-column {
-  background: rgba(211, 228, 254, .45);
+  background: rgba(211, 228, 254, .3);
+  border-radius: 2px;
+  font-size: .8125rem;
+  font-weight: 700;
   color: var(--psc-accent);
 }
 @media (hover: hover) {
-  #playerTable tbody tr:hover td.points-column { background: rgba(211, 228, 254, .45); }
+  #playerTable tbody tr:hover td.points-column { background: rgba(211, 228, 254, .3); }
 }
 
 /* ---- Bouton de sélection : plein accent, icône blanche (le fond n'est
