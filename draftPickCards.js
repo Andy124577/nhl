@@ -150,13 +150,35 @@ function buildPickCard(options) {
     if (marque.abbrev) carte.dataset.team = marque.abbrev;
   }
 
-  /* ---- Milieu : la photo, le blason de l'équipe, ou le numéro du tour ----
+  // « C'est votre tour » : calculé ici, avant le texte du titre et le
+  // badge plus bas, qui en ont tous les deux besoin.
+  const monEquipe = typeof getUserTeam === 'function' ? getUserTeam() : null;
+  const estMonTour = etat === 'current' && !!equipePool && !!monEquipe && equipePool === monEquipe;
+
+  /* ---- Milieu : le blason en fond, la photo ou les initiales par-dessus ----
      Posée en couche de fond plutôt qu'en rangée : le portrait peut ainsi
-     déborder derrière le nom et le pied, comme sur une carte de collection. */
+     déborder derrière le nom et le pied, comme sur une carte de collection.
+
+     Le blason de l'équipe du pool (`club`) et le contenu du choix (photo,
+     initiales, ou rien) sont deux couches indépendantes, pas des états qui
+     s'excluent : une fois le choix fait, l'identité de l'équipe reste
+     visible en filigrane derrière le joueur plutôt que de disparaître —
+     elle marque toute la carrière du tour, pas seulement son attente. */
   const zonePhoto = document.createElement('div');
   zonePhoto.className = 'pick-card-photo';
 
   if (info && info.estEquipe) zonePhoto.classList.add('is-team');
+
+  if (club) {
+    const blason = document.createElement('img');
+    blason.className = 'pick-card-watermark';
+    blason.src = club.logo;
+    blason.alt = '';
+    blason.loading = 'lazy';
+    blason.draggable = false;
+    blason.addEventListener('error', () => blason.remove());
+    zonePhoto.appendChild(blason);
+  }
 
   if (info && info.photo) {
     const img = document.createElement('img');
@@ -175,35 +197,18 @@ function buildPickCard(options) {
   } else if (info) {
     zonePhoto.classList.add('is-empty');
     zonePhoto.appendChild(buildPickInitials(info.nom));
-  } else if (club) {
-    // Personne n'a encore été repêché à ce tour, mais on sait déjà qui le
-    // détient : son blason occupe la carte en filigrane plutôt que de
-    // laisser un numéro nu — la carte porte l'identité de l'équipe avant
-    // même son premier choix.
-    zonePhoto.classList.add('is-empty', 'is-club-watermark');
-    const blason = document.createElement('img');
-    blason.className = 'pick-card-watermark';
-    blason.src = club.logo;
-    blason.alt = '';
-    blason.loading = 'lazy';
-    blason.draggable = false;
-    blason.addEventListener('error', () => {
-      blason.remove();
-      zonePhoto.classList.remove('is-club-watermark');
-      const chiffre = document.createElement('span');
-      chiffre.className = 'pick-card-slot';
-      chiffre.textContent = String(numero);
-      zonePhoto.appendChild(chiffre);
-    });
-    zonePhoto.appendChild(blason);
-  } else {
-    // Tour à venir sans identité connue (repêchage antérieur à ce choix) :
+  } else if (!club) {
+    // Ni choix fait, ni identité connue (repêchage antérieur à ce choix) :
     // le numéro tient lieu d'illustration, comme avant.
     zonePhoto.classList.add('is-empty');
     const chiffre = document.createElement('span');
     chiffre.className = 'pick-card-slot';
     chiffre.textContent = String(numero);
     zonePhoto.appendChild(chiffre);
+  } else {
+    // Identité connue, choix pas encore fait : le blason ci-dessus suffit,
+    // mais la couche doit tout de même se centrer comme un état « vide ».
+    zonePhoto.classList.add('is-empty');
   }
   carte.appendChild(zonePhoto);
 
@@ -219,7 +224,10 @@ function buildPickCard(options) {
   if (info) {
     nom.textContent = info.nom;
   } else if (etat === 'current') {
-    nom.textContent = 'Au tour de';
+    // « Au tour de » laissait deviner l'équipe dans le pied de carte, loin
+    // du titre. Pour tout le monde, un état plutôt qu'une phrase coupée ;
+    // pour la personne concernée, direct — le badge plus bas le confirme.
+    nom.textContent = estMonTour ? 'Votre tour' : 'Tour en cours';
   } else if (etat === 'skipped') {
     nom.textContent = 'Tour sauté';
   } else {
@@ -283,11 +291,10 @@ function buildPickCard(options) {
 
   carte.appendChild(bas);
 
-  // « C'est votre tour » : le pouls cyan du tour en cours vaut pour tout le
-  // monde, mais seule LA personne concernée doit voir ce badge — c'est la
-  // différence entre « quelqu'un choisit » et « c'est à moi ».
-  const monEquipe = typeof getUserTeam === 'function' ? getUserTeam() : null;
-  const estMonTour = etat === 'current' && !!equipePool && !!monEquipe && equipePool === monEquipe;
+  // Le pouls cyan du tour en cours vaut pour tout le monde, mais seule LA
+  // personne concernée doit voir ce badge — c'est la différence entre
+  // « quelqu'un choisit » et « c'est à moi » (monEquipe/estMonTour calculés
+  // plus haut, avant le titre de la carte qui s'en sert aussi).
   if (estMonTour) {
     carte.classList.add('is-my-turn');
     const badgeTour = document.createElement('span');

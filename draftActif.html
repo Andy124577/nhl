@@ -208,6 +208,24 @@
       <div class="player-selection-card">
         <div class="filters-header">
           <h3>Sélection de joueur</h3>
+          <!-- Sur téléphone, ce <select> remplace les pastilles de catégorie
+               plutôt que de s'y ajouter : à cette largeur, une bande de six
+               boutons coûtait une ligne entière avant même d'atteindre le
+               tableau. Au-delà, il reste caché (voir .is-replaced) et
+               initCategoryTabs() garde la main sur les pastilles. -->
+          <label for="playerFilter" class="sr-only">Catégorie de joueurs</label>
+          <select id="playerFilter" class="filter-select filters-header-select">
+            <!-- « Joueurs » et non « Tous » : une position dont le quota est
+                 rempli disparaît de la liste, ce filtre ne montre donc pas
+                 tout. La valeur `all` est inchangée — la logique de filtrage
+                 de draftActif.js s'y accroche. -->
+            <option value="all">Joueurs</option>
+            <option value="offensive">Attaquants</option>
+            <option value="defensive">Défenseurs</option>
+            <option value="goalies">Gardiens</option>
+            <option value="rookies">Recrues</option>
+            <option value="teams">Équipes</option>
+          </select>
           <!-- Retiré de l'affichage, mais conservé dans le DOM : updateTable()
                lit sa valeur pour écarter les joueurs déjà repêchés. Sans lui,
                $("#availabilityFilter").val() vaut undefined et la liste
@@ -220,11 +238,13 @@
           </select>
         </div>
 
-        <!-- Onglets de catégorie : pilotent le <select> #playerFilter existant,
-             donc toute la logique de filtrage reste celle de draftActif.js.
-             Un groupe de bascules, pas des onglets : les six pastilles
-             filtrent toutes le même tableau plutôt que de révéler des
-             panneaux distincts — voir draftActifUI.js. -->
+        <!-- Onglets de catégorie : pilotent le <select> #playerFilter, resté
+             dans l'en-tête ci-dessus — sa position dans le document ne
+             change rien à la logique de filtrage, toujours celle de
+             draftActif.js. Un groupe de bascules, pas des onglets : les six
+             pastilles filtrent toutes le même tableau plutôt que de révéler
+             des panneaux distincts — voir draftActifUI.js. Masqué sur
+             téléphone (voir plus bas), où #playerFilter suffit. -->
         <div class="category-tabs" id="categoryTabs" role="group" aria-label="Catégorie de joueurs"></div>
 
         <div class="filters-row">
@@ -237,19 +257,6 @@
             <span class="search-field-icon" data-icon="search" data-icon-size="17"></span>
             <input type="text" id="searchInput" placeholder="Rechercher un joueur..." class="search-input"/>
           </div>
-          <label for="playerFilter" class="sr-only">Catégorie de joueurs</label>
-          <select id="playerFilter" class="filter-select">
-            <!-- « Joueurs » et non « Tous » : une position dont le quota est
-                 rempli disparaît de la liste, ce filtre ne montre donc pas
-                 tout. La valeur `all` est inchangée — la logique de filtrage
-                 de draftActif.js s'y accroche. -->
-            <option value="all">Joueurs</option>
-            <option value="offensive">Attaquants</option>
-            <option value="defensive">Défenseurs</option>
-            <option value="goalies">Gardiens</option>
-            <option value="rookies">Recrues</option>
-            <option value="teams">Équipes</option>
-          </select>
           <label for="sortBy" class="sr-only">Trier par</label>
           <select id="sortBy" class="filter-select">
             <option value="points">Points</option>

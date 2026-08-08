@@ -766,9 +766,13 @@ html[data-theme="light"] .player-selection-card {
   box-shadow: 0 0 0 2px var(--primary), var(--glow-live, 0 0 20px rgba(0, 212, 255, .25));
 }
 .pick-card.is-my-turn:hover { transform: scale(1.045) translateY(-2px); }
+/* Le badge vivait à top:-9px, hors du cadre — et .pick-card coupe tout ce
+   qui déborde (overflow: hidden) : il ne s'est jamais vu. Rentré dans la
+   carte, avec la place que le titre du haut lui cède explicitement plutôt
+   que de se faire recouvrir. */
 .pick-card-live-badge {
   position: absolute;
-  top: -9px;
+  top: 4px;
   left: 50%;
   z-index: 4;
   transform: translateX(-50%);
@@ -784,6 +788,7 @@ html[data-theme="light"] .player-selection-card {
   pointer-events: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, .32);
 }
+.pick-card.is-my-turn .pick-card-head { padding-top: 26px; }
 
 @media (prefers-reduced-motion: reduce) {
   .pick-card.is-my-turn,
@@ -903,6 +908,11 @@ html[data-theme="light"] .player-selection-card {
   justify-content: center;
 }
 .pick-card-photo-img {
+  /* Positionnée pour rester certainement au-dessus du blason d'équipe
+     (couche indépendante, voir .pick-card-watermark) sans dépendre de
+     l'ordre d'empilement implicite. */
+  position: relative;
+  z-index: 1;
   height: 96%;
   width: auto;
   max-width: 92%;
@@ -919,6 +929,8 @@ html[data-theme="light"] .player-selection-card {
 .pick-card-photo.is-empty { align-items: center; }
 .pick-card-slot,
 .pick-card-initials {
+  position: relative;
+  z-index: 1;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: calc(var(--pick-h) * .38);
   font-weight: 700;
@@ -927,14 +939,25 @@ html[data-theme="light"] .player-selection-card {
 }
 .pick-card.is-current .pick-card-slot { color: rgba(0, 212, 255, .22); }
 
-/* Tour pas encore joué mais déjà attribué : le blason de l'équipe LNH choisie
-   par le pool occupe le centre en filigrane, à la même faiblesse que le
-   chiffre qu'il remplace — l'identité se voit avant même le premier choix. */
+/* ---- Blason de l'équipe du pool, en fond ----
+   Couche indépendante du contenu du choix (photo, initiales, numéro) : elle
+   reste posée derrière le joueur repêché plutôt que de disparaître une fois
+   le choix fait — l'identité de l'équipe marque toute sa carrière de choix,
+   pas seulement l'attente. Centrée pour son propre compte (position/
+   transform) : elle ne dépend pas de l'alignement flex du reste de la carte,
+   qui bascule entre bas (photo) et centre (vide). `overflow: hidden` sur
+   .pick-card la rogne proprement aux bords quand elle déborde. */
 .pick-card-watermark {
-  width: calc(var(--pick-h) * .58);
-  height: calc(var(--pick-h) * .58);
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(var(--pick-h) * 1.16);
+  height: calc(var(--pick-h) * 1.16);
   object-fit: contain;
   opacity: .16;
+  pointer-events: none;
 }
 .pick-card.is-current .pick-card-watermark { opacity: .26; }
 
@@ -1092,7 +1115,9 @@ html[data-theme="light"] .player-selection-card {
   color: var(--text-main);
 }
 #playerTable tbody tr:nth-child(even) { background: var(--bg-odd-row); }
-#playerTable tbody tr:hover { background: rgba(0, 212, 255, .07); }
+@media (hover: hover) {
+  #playerTable tbody tr:hover { background: rgba(0, 212, 255, .07); }
+}
 #playerTable tbody tr.clickable-player-row { cursor: pointer; }
 #playerTable tbody tr.clickable-player-row:focus-visible {
   outline: 2px solid var(--primary);
@@ -1177,7 +1202,9 @@ button.select-button {
   cursor: pointer;
   transition: transform .15s ease, box-shadow .2s ease;
 }
-button.select-button:hover { transform: translateY(-1px); box-shadow: var(--glow-primary); }
+@media (hover: hover) {
+  button.select-button:hover { transform: translateY(-1px); box-shadow: var(--glow-primary); }
+}
 button.select-button:focus-visible { outline: 2px solid var(--text-main); outline-offset: 2px; }
 button.select-button .select-icon { width: 16px; height: 16px; object-fit: contain; }
 
@@ -1749,9 +1776,11 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
 }
 /* Le zébrage n'a plus de sens une fois les rangées séparées. */
 #playerTable tbody tr:nth-child(even) { background: none; }
-#playerTable tbody tr:hover td {
-  background: rgba(0, 212, 255, .07);
-  border-color: rgba(0, 212, 255, .35);
+@media (hover: hover) {
+  #playerTable tbody tr:hover td {
+    background: rgba(0, 212, 255, .07);
+    border-color: rgba(0, 212, 255, .35);
+  }
 }
 
 /* ---- Chiffres en monospace ----
@@ -1865,6 +1894,23 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
    dans le DOM : draftActif.js s'y est lié au chargement. */
 .filter-select.is-replaced,
 .progress-filter-select[hidden] { display: none; }
+
+/* ---- Téléphone : le sélecteur remplace les pastilles ----
+   Six pastilles de catégorie coûtaient une ligne entière avant même
+   d'atteindre le tableau — le vrai geste de la page. En dessous de 768px,
+   #playerFilter reprend sa forme native dans l'en-tête (l'endroit que la
+   bascule occupait) et la bande de pastilles disparaît ; la logique de
+   filtrage ne change pas, c'est le même <select> des deux côtés du seuil. */
+@media (max-width: 768px) {
+  .category-tabs { display: none; }
+  .filters-header-select.is-replaced {
+    display: block;
+    flex: 0 0 auto;
+    width: auto;
+    max-width: 148px;
+    padding: 10px 30px 10px 12px;
+  }
+}
 
 /* ---- Ma liste : lignes de position dépliables ---- */
 .progress-line[data-position] {
@@ -2215,9 +2261,15 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   border-radius: 12px;
   transition: border-color .16s ease, background .16s ease;
 }
-#playerTable tbody tr:hover {
-  background: rgba(0, 212, 255, .07);
-  border-color: rgba(0, 212, 255, .35);
+/* hover: hover — sans quoi une tape sur le bouton « Sélectionner » (enfant
+   de la rangée) laissait toute la rangée « survolée » à l'écran tactile :
+   au doigt, rien ne quitte jamais l'état hover, faute de pointeur qui s'en
+   va. :active reste disponible pour le retour au toucher. */
+@media (hover: hover) {
+  #playerTable tbody tr:hover {
+    background: rgba(0, 212, 255, .07);
+    border-color: rgba(0, 212, 255, .35);
+  }
 }
 #playerTable tbody td {
   display: block;
@@ -2226,7 +2278,9 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   border-radius: 0;
   padding: 9px 4px;
 }
-#playerTable tbody tr:hover td { background: none; }
+@media (hover: hover) {
+  #playerTable tbody tr:hover td { background: none; }
+}
 
 /* En-tête posé dans le flux plutôt que collant : le bandeau du repêchage
    occupe déjà la zone collante en haut de page, et deux barres superposées

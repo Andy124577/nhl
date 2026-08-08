@@ -172,6 +172,13 @@ function appliquerDisponibilite(strip, select) {
         tab.setAttribute('aria-disabled', String(epuise));
         tab.title = epuise ? 'Plus de place à cette position' : '';
 
+        // Sur téléphone, les pastilles disparaissent et #playerFilter — le
+        // même <select> — reprend directement la main : ses options doivent
+        // donc porter la même désactivation, sinon on peut y choisir une
+        // catégorie déjà pleine sans que rien ne l'explique.
+        const option = select.querySelector(`option[value="${tab.dataset.value}"]`);
+        if (option) option.disabled = epuise;
+
         if (!epuise && !premierLibre) premierLibre = tab;
         if (epuise && tab.dataset.value === select.value) actifEpuise = true;
     });
