@@ -192,7 +192,7 @@ body {
 .hero-preview-wrap { position: relative; display: flex; justify-content: center; }
 
 .hero-floating-card {
-    background: rgba(20,20,48,.92);
+    background: rgba(26,26,30,.92);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border: 1px solid rgba(0,212,255,.22);
@@ -268,7 +268,7 @@ body {
 /* Decorative chips */
 .hero-stat-chip {
     position: absolute;
-    background: rgba(20,20,48,.9);
+    background: rgba(26,26,30,.9);
     border: 1px solid rgba(0,212,255,.28);
     border-radius: 100px;
     padding: 8px 16px;

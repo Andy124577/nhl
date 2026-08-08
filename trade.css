@@ -3,18 +3,22 @@
 /* ============================================================ */
 
 :root {
-    --bg: #0A0A1A;
-    --bg-page: #050510;
-    --bg-hover: rgba(20,20,48,0.6);
-    --card-white: rgba(20,20,48,0.85);
+    /* Rampe alignée sur index.css (gris neutre, faible saturation) — voir
+       son commentaire. Reste sans propre thème clair (voir DESIGN.md,
+       pré-existant : ces tokens dérivent tous du sombre, à corriger dans
+       une passe dédiée plutôt qu'en marge d'un changement de palette). */
+    --bg: #121214;
+    --bg-page: #08080A;
+    --bg-hover: rgba(30,30,34,0.6);
+    --card-white: rgba(30,30,34,0.85);
     --border-light: rgba(255,255,255,0.08);
     --primary: #00D4FF;
     --success: #00E676;
     --danger: #FF5252;
     --warning: #FFC107;
-    --text-main: rgba(255,255,255,0.95);
-    --text-secondary: rgba(255,255,255,0.65);
-    --text-dark: rgba(255,255,255,0.88);
+    --text-main: rgba(245,245,247,0.95);
+    --text-secondary: rgba(245,245,247,0.65);
+    --text-dark: rgba(245,245,247,0.88);
     --glow-primary: 0 4px 24px rgba(0,212,255,0.25);
     --glow-success: 0 4px 24px rgba(0,230,118,0.25);
 }
@@ -665,7 +669,7 @@ body {
 
 /* Player Card in Roster */
 .player-card-roster {
-    background: rgba(20,20,48,0.7);
+    background: rgba(26,26,30,0.7);
     border: 1px solid var(--border-light);
     border-radius: 10px;
     padding: 12px;
@@ -1149,7 +1153,7 @@ body {
 }
 
 .trade-player {
-    background: rgba(20,20,48,0.5);
+    background: rgba(26,26,30,0.5);
     border-radius: 10px;
     padding: 16px;
 }

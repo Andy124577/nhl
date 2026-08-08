@@ -131,7 +131,10 @@
   color: var(--text-main);
 }
 .cmh-chip:empty { display: none; }
-.cmh-chip-team { background: rgba(123, 140, 196, .16); }
+/* rgb(168,168,176) = --text-secondary (#A8A8B0) actuel ; littéral pour la
+   même raison qu'ailleurs (color-mix() indisponible sur d'assez vieux
+   mobiles), donc pas mis à jour automatiquement par la palette. */
+.cmh-chip-team { background: rgba(168, 168, 176, .16); }
 /* Le JS injecte le logo de l'équipe dans #careerPlayerTeam. index.css le
    dimensionnait via `.player-position-team img`, sélecteur qui ne
    s'applique plus ici : sans cette règle, l'image s'affiche à sa taille

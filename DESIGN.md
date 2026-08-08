@@ -7,21 +7,21 @@ colors:
   penalty-red: "#FF4757"
   bench-amber: "#FFB300"
   rookie-orchid: "#CE93D8"
-  arena-black: "#0A0A1A"
-  deep-ice-navy: "#0D0D1F"
-  board-navy: "#161630"
-  board-navy-raised: "#1A1A38"
-  press-box-black: "#080816"
-  rink-line: "#1E1E3C"
-  scoreboard-white: "#FFFFFF"
-  ice-white: "#E8EAFF"
-  broadcast-lavender: "#7B8CC4"
-  muted-slate: "#5A6B9A"
-  far-slate: "#3D4F70"
-  seam-navy: "#1E2048"
-  edge-navy: "#2A2D5A"
-  shadow-navy: "#141430"
-  row-navy: "#131328"
+  arena-black: "#121214"
+  deep-charcoal: "#16161A"
+  board-gray: "#1E1E22"
+  board-gray-raised: "#26262B"
+  press-box-black: "#0E0E10"
+  rink-line: "#2A2A30"
+  scoreboard-white: "#F5F5F7"
+  ash-white: "#E4E4E8"
+  broadcast-gray: "#A8A8B0"
+  muted-gray: "#8C8C95"
+  far-gray: "#6A6A72"
+  seam-gray: "#2C2C32"
+  edge-gray: "#38383F"
+  shadow-gray: "#1A1A1E"
+  row-gray: "#19191D"
 typography:
   display:
     fontFamily: "'Bebas Neue', 'Segoe UI', sans-serif"
@@ -94,28 +94,28 @@ components:
     height: "48px"
   button-tertiary:
     backgroundColor: "transparent"
-    textColor: "{colors.broadcast-lavender}"
+    textColor: "{colors.broadcast-gray}"
     rounded: "{rounded.lg}"
     padding: "15px 32px"
   input-field:
-    backgroundColor: "{colors.shadow-navy}"
+    backgroundColor: "{colors.shadow-gray}"
     textColor: "{colors.scoreboard-white}"
     rounded: "{rounded.lg}"
     padding: "13px 16px"
     height: "48px"
   card-surface:
-    backgroundColor: "{colors.board-navy}"
-    textColor: "{colors.ice-white}"
+    backgroundColor: "{colors.board-gray}"
+    textColor: "{colors.ash-white}"
     rounded: "{rounded.xxl}"
     padding: "28px 28px 24px"
   nav-link:
     backgroundColor: "transparent"
-    textColor: "{colors.broadcast-lavender}"
+    textColor: "{colors.broadcast-gray}"
     rounded: "{rounded.md}"
     padding: "10px 16px"
     height: "44px"
   nav-link-active:
-    backgroundColor: "{colors.seam-navy}"
+    backgroundColor: "{colors.seam-gray}"
     textColor: "{colors.scoreboard-white}"
     rounded: "{rounded.md}"
     padding: "10px 16px"
@@ -151,7 +151,7 @@ components:
 
 Fantazy looks like the studio a hockey broadcast is called from: a dark set, a wall of numbers that has already been organized for you, and light used sparingly — only where something is live. The desk has authority because it is calm. It does not shout the score; it shows you the score, correctly, faster than you could have assembled it yourself. Every screen is a surface someone reads under time pressure, usually on a phone, sometimes with four friends waiting on their turn.
 
-The system runs dark by default and near-monochrome by construction. Backgrounds sit in a narrow band of blue-blacks (`arena-black` through `board-navy`); text sits in a matching band of blue-whites. Against that, exactly one accent — **Rink Ice Cyan** — carries interactivity and liveness, and a small semantic set (green / amber / orchid / red) carries meaning that is not decoration: a player's position, a warning, a failure. The only chroma allowed to move freely is the NHL club palette, which enters the interface through team logos and the draft pick cards. That restraint is what lets a Colorado burgundy or a Nashville gold read instantly when it appears — it is the only unexpected color on screen.
+The system runs dark by default and near-monochrome by construction. Backgrounds sit in a narrow band of near-neutral grays (`arena-black` through `board-gray`); text sits in a matching band of near-neutral off-whites. Against that, exactly one accent — **Rink Ice Cyan** — carries interactivity and liveness, and a small semantic set (green / amber / orchid / red) carries meaning that is not decoration: a player's position, a warning, a failure. The only chroma allowed to move freely is the NHL club palette, which enters the interface through team logos and the draft pick cards. That restraint is what lets a Colorado burgundy or a Nashville gold read instantly when it appears — it is the only unexpected color on screen.
 
 Density is deliberate and high. This is a statistics product; tables are the primary component, not a fallback. Numbers set in monospace, positions demoted to a secondary line, whole rows made clickable rather than a small link — these are the system's real decisions. Ornament is spent almost nowhere so that the data can be dense without becoming loud.
 
@@ -165,7 +165,7 @@ Density is deliberate and high. This is a statistics product; tables are the pri
 
 ## Colors
 
-A narrow band of blue-blacks and blue-whites, cut by a single emitted cyan, with a small semantic set that only ever means something.
+A narrow band of near-neutral grays and off-whites, cut by a single emitted cyan, with a small semantic set that only ever means something.
 
 ### Primary
 - **Rink Ice Cyan** (`{colors.rink-ice-cyan}`): the one accent. It marks what is interactive, focused, live, or currently yours: primary buttons, the active nav item, focus rings, sortable-header state, the current pick in the draft order. In the light theme it deepens to `#0088AA` to hold contrast on pale surfaces.
@@ -181,19 +181,19 @@ A narrow band of blue-blacks and blue-whites, cut by a single emitted cyan, with
 
 ### Neutral
 - **Arena Black** (`{colors.arena-black}`): the deepest ground; app background and the text color that sits *on* cyan buttons.
-- **Deep Ice Navy** (`{colors.deep-ice-navy}`): the page canvas — one step up from arena black.
-- **Board Navy** (`{colors.board-navy}`) / **Board Navy Raised** (`{colors.board-navy-raised}`): card and panel surfaces, the two rungs of tonal layering.
+- **Deep Charcoal** (`{colors.deep-charcoal}`): the page canvas — one step up from arena black.
+- **Board Gray** (`{colors.board-gray}`) / **Board Gray Raised** (`{colors.board-gray-raised}`): card and panel surfaces, the two rungs of tonal layering.
 - **Press Box Black** (`{colors.press-box-black}`): navigation chrome, darker than the page so the bar reads as a fixed frame.
-- **Rink Line** (`{colors.rink-line}`) / **Seam Navy** (`{colors.seam-navy}`) / **Edge Navy** (`{colors.edge-navy}`): the border ladder, from barely-there chrome division to an input's visible stroke.
+- **Rink Line** (`{colors.rink-line}`) / **Seam Gray** (`{colors.seam-gray}`) / **Edge Gray** (`{colors.edge-gray}`): the border ladder, from barely-there chrome division to an input's visible stroke.
 - **Scoreboard White** (`{colors.scoreboard-white}`): primary text, reserved for the sharpest line on screen.
-- **Ice White** (`{colors.ice-white}`): default body text — slightly cooled and softened so long tables don't glare.
-- **Broadcast Lavender** (`{colors.broadcast-lavender}`): secondary text, labels, and inactive navigation.
-- **Muted Slate** (`{colors.muted-slate}`) / **Far Slate** (`{colors.far-slate}`): placeholders and disabled text; the last two rungs before invisible.
-- **Shadow Navy** (`{colors.shadow-navy}`) / **Row Navy** (`{colors.row-navy}`): input wells and table row fills.
+- **Ash White** (`{colors.ash-white}`): default body text — slightly cooled and softened so long tables don't glare.
+- **Broadcast Gray** (`{colors.broadcast-gray}`): secondary text, labels, and inactive navigation.
+- **Muted Gray** (`{colors.muted-gray}`) / **Far Gray** (`{colors.far-gray}`): placeholders and disabled text; the last two rungs before invisible.
+- **Shadow Gray** (`{colors.shadow-gray}`) / **Row Gray** (`{colors.row-gray}`): input wells and table row fills.
 
 ### Light theme
 
-Light is a full peer theme, applied via `html[data-theme="light"]` and set before first paint by [theme.js](theme.js). It is not an inversion: hues are re-picked for contrast on pale ground. The overrides live in `.impeccable/design.json` under `extensions.themes.light`; the load-bearing ones are page `#E8EBF5`, card `#FFFFFF`, primary `#0088AA`, body text `#1E2440`.
+Light is a full peer theme, applied via `html[data-theme="light"]` and set before first paint by [theme.js](theme.js). It is not an inversion: hues are re-picked for contrast on pale ground. The overrides live in `.impeccable/design.json` under `extensions.themes.light` (sidecar refresh pending — see below); the load-bearing ones are page `#EBEBE8`, card `#FFFFFF`, primary `#00707F`, body text `#242428`.
 
 ### Named Rules
 
@@ -249,7 +249,7 @@ Light is a full peer theme, applied via `html[data-theme="light"]` and set befor
 
 ## Elevation & Depth
 
-Depth comes from **tonal layering first, neutral shadow second, and colored glow almost never.** The ground is `arena-black`; the page sits on `deep-ice-navy`; panels rise to `board-navy` and `board-navy-raised`; borders in the navy ladder mark the seams. That stack does most of the work, and on flat surfaces it should do all of it.
+Depth comes from **tonal layering first, neutral shadow second, and colored glow almost never.** The ground is `arena-black`; the page sits on `deep-charcoal`; panels rise to `board-gray` and `board-gray-raised`; borders in the gray ladder mark the seams. That stack does most of the work, and on flat surfaces it should do all of it.
 
 Neutral shadow is reserved for genuine z-separation — things that float above the page and could be dismissed: modals, dropdowns, drawers, toasts. Colored cyan glow is **state, not elevation**: it appears on focus and on live/current elements, and it disappears when that state does.
 
@@ -267,13 +267,13 @@ Neutral shadow is reserved for genuine z-separation — things that float above 
 
 **The Glow Means Live Rule.** Colored glow is never elevation. If the element would look the same when nothing is happening, it must not glow.
 
-**The Border Before Shadow Rule.** Reach for a `seam-navy` border before reaching for a shadow. On a dark ground a 1px seam separates surfaces more cleanly than a shadow can, and it costs nothing to paint.
+**The Border Before Shadow Rule.** Reach for a `seam-gray` border before reaching for a shadow. On a dark ground a 1px seam separates surfaces more cleanly than a shadow can, and it costs nothing to paint.
 
 ## Shapes
 
 Rounded, tactile, and consistently soft — this is a touch product and the geometry says so. The radius ladder runs **6px** (micro badges) → **8px** (small chips, table headers) → **10px** (navigation items, selects) → **12px** (the workhorse: buttons, inputs, cards, table rows) → **14px** (full-width primary actions) → **18px** (large form and panel cards), with **999px** for pills and **50%** for avatars and status dots. Twelve is the default; when in doubt, use 12px.
 
-Borders are the primary edge language: 1px `seam-navy` for surface seams, 2px `edge-navy` for form controls that must look grabbable. Inputs are wells — a darker fill than their card — rather than outlined boxes on the same plane.
+Borders are the primary edge language: 1px `seam-gray` for surface seams, 2px `edge-gray` for form controls that must look grabbable. Inputs are wells — a darker fill than their card — rather than outlined boxes on the same plane.
 
 Two silhouettes recur and are worth protecting: the **row-as-pill** (a table row whose first and last cells carry the 12px radius, so a dense table reads as a stack of separated objects) and the **team-accent card** (a neutral dark card with a 3px bottom rule in the club's secondary color).
 
@@ -295,17 +295,17 @@ Tactile and confident: real weight, a clear press, and hit areas built for a thu
 
 ### Cards / Containers
 - **Corner Style:** 18px for form and panel cards, 12px for content and player cards.
-- **Background:** `board-navy`, or a translucent navy with an 18px backdrop blur where content sits behind it ([pool.css:346](pool.css#L346)).
-- **Shadow Strategy:** flat at rest with a 1px `seam-navy` border; elevation-2 appears on hover for interactive cards only.
-- **Border:** 1px `seam-navy`, shifting to `rgba(0,212,255,.28)` on hover when the card is actionable.
+- **Background:** `board-gray`, or a translucent navy with an 18px backdrop blur where content sits behind it ([pool.css:346](pool.css#L346)).
+- **Shadow Strategy:** flat at rest with a 1px `seam-gray` border; elevation-2 appears on hover for interactive cards only.
+- **Border:** 1px `seam-gray`, shifting to `rgba(0,212,255,.28)` on hover when the card is actionable.
 - **Internal Padding:** 28px desktop / 22px 20px phone; header block separated by 24px.
 
 ### Inputs / Fields
-- **Style:** a well — `shadow-navy` fill, 2px `edge-navy` border, 12px radius, `13px 16px` padding, 600 weight at 1rem (16px, which is also what stops iOS from zooming on focus).
+- **Style:** a well — `shadow-gray` fill, 2px `edge-gray` border, 12px radius, `13px 16px` padding, 600 weight at 1rem (16px, which is also what stops iOS from zooming on focus).
 - **Focus:** border to cyan plus the `focus-ring` shadow. Never remove the outline without replacing it.
-- **Selects:** native `appearance: none` with an inline SVG chevron in `broadcast-lavender`, 40px right padding.
+- **Selects:** native `appearance: none` with an inline SVG chevron in `broadcast-gray`, 40px right padding.
 - **Numeric inputs:** center-aligned at 1.15rem — they are values, not sentences.
-- **Placeholder:** `muted-slate` at weight 400, so it never reads as a filled value.
+- **Placeholder:** `muted-gray` at weight 400, so it never reads as a filled value.
 
 ### Navigation
 - **Desktop (≥769px):** 70px sticky bar on `press-box-black` with a bottom `rink-line` border. Links are 600-weight lavender pills at `10px 16px`, 44px minimum; hover tints cyan at 10% and lifts 2px; the active item takes a cyan-tinted fill plus a 3px cyan rule along its bottom edge.
@@ -316,7 +316,7 @@ Tactile and confident: real weight, a clear press, and hit areas built for a thu
 The workhorse. Rows read as separated objects, not grid lines.
 
 - Header cells are uppercase labels; sortable headers carry `cursor: pointer`, a hover fill, and a caret that shows direction in the data itself.
-- `tbody` rows are pills: 12px radius on the first and last cells, `row-navy` fill, 1px `seam-navy` top and bottom. Zebra striping is switched off because separation already exists.
+- `tbody` rows are pills: 12px radius on the first and last cells, `row-gray` fill, 1px `seam-gray` top and bottom. Zebra striping is switched off because separation already exists.
 - Actionable rows use a 3px cyan stripe on `::after` that fades in on hover **and** `:focus-visible` — the whole row is the target (Fitts), and keyboard users get the same signal a cursor gives.
 - Numeric columns are selected structurally and set in JetBrains Mono; the photo and name columns are excluded by position.
 
@@ -344,7 +344,7 @@ Every pool team chooses one real NHL club as its identity before the draft opens
 - **Do** use real NHL club colors from [teamColors.js](teamColors.js), attached only to the club they belong to.
 
 ### Don't:
-- **Don't** hardcode a hex outside the token layer, and **don't redeclare `:root` in a page stylesheet.** [trade.css:5](trade.css#L5) and [legal.css:3](legal.css#L3) do this today with *drifting* values (`--danger: #FF5252` vs `#FF4757`; `--bg-page: #050510` vs `#0D0D1F`) and ship no matching light-theme block, so those pages break in light mode. Page stylesheets specialize; they never redefine the palette.
+- **Don't** hardcode a hex outside the token layer, and **don't redeclare `:root` in a page stylesheet.** [trade.css:5](trade.css#L5) and [legal.css:3](legal.css#L3) do this today with *drifting* values (`--danger: #FF5252` vs `#FF4757`; `--bg-page: #050510` vs `#16161A`) and ship no matching light-theme block, so those pages break in light mode. Page stylesheets specialize; they never redefine the palette.
 - **Don't** use gradient text. The animated `.gradient-text` treatment ([index.css:134](index.css#L134), [accueil.css:90](accueil.css#L90)) is retired: headlines are solid `scoreboard-white`, with cyan available for a single emphasized span.
 - **Don't** animate layout properties — `width`, `height`, `max-height`, `padding`, `margin`. Use `transform`/`opacity`, or `grid-template-rows: 0fr → 1fr` for height. Four instances remain in [pool.css:651](pool.css#L651), [accueil.css:510](accueil.css#L510), and [draftActif.css:165](draftActif.css#L165).
 - **Don't** use overshoot or bounce easing (`cubic-bezier(0.68,-0.55,0.265,1.55)` and relatives) on ordinary state transitions. **Exception:** genuine celebration moments — the draft pick reveal — may use `cubic-bezier(.34,1.56,.64,1)`. A dropdown is not a celebration.
@@ -352,5 +352,5 @@ Every pool team chooses one real NHL club as its identity before the draft opens
 - **Don't** add a decorative colored border on one side of a card ([accueil.css:293](accueil.css#L293), [pool.css:842](pool.css#L842)). The table row's 3px stripe is exempt: it appears only on hover/focus and signals that the row is actionable — that is an affordance, not ornament.
 - **Don't** introduce a second accent hue. If something needs to stand out and cyan is taken, the answer is hierarchy, weight, or space.
 - **Don't** put white text on `rink-ice-cyan`. Cyan fills take `arena-black` text.
-- **Don't** name a token for what it looks like in one theme. `--card-white` currently resolves to `#1A1A38`, a dark navy; new tokens are named by role.
+- **Don't** name a token for what it looks like in one theme. `--card-white` currently resolves to `#26262B`, a dark gray; new tokens are named by role.
 - **Don't** ship a phone layout that ignores the fixed bottom navigation's 80px reservation.

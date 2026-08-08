@@ -1,31 +1,32 @@
 /* Feuille de style commune aux pages légales (confidentialité, conditions). */
 
 :root {
-  --bg: #0A0A1A;
-  --bg-page: #0D0D1F;
-  --card: #161630;
-  --navbar-bg: #080816;
-  --navbar-border: #1E1E3C;
-  --primary: #00D4FF;
-  /* Les pages légales ne chargent pas index.css : sans cette reprise, le
+  /* Reprise de la rampe neutre d'index.css — voir son commentaire. Les
+     pages légales ne chargent pas index.css : sans cette copie, le
      dégradé de navbar.css tomberait dans le vide ici. */
+  --bg: #121214;
+  --bg-page: #16161A;
+  --card: #1E1E22;
+  --navbar-bg: #0E0E10;
+  --navbar-border: #2A2A30;
+  --primary: #00D4FF;
   --primary-deep: #00A8CC;
   --danger: #FF4757;
-  --text-main: #FFFFFF;
-  --text-secondary: #7B8CC4;
+  --text-main: #F5F5F7;
+  --text-secondary: #A8A8B0;
 }
 
 html[data-theme="light"] {
-  --bg: #F0F2FA;
-  --bg-page: #E8EBF5;
+  --bg: #F2F2F0;
+  --bg-page: #EBEBE8;
   --card: #FFFFFF;
   --navbar-bg: #FFFFFF;
-  --navbar-border: #D8DFF0;
+  --navbar-border: #E0E0DC;
   --primary: #00707F;
   --primary-deep: #005A6B;
   --danger: #E03040;
-  --text-main: #1A1F3C;
-  --text-secondary: #5060A0;
+  --text-main: #1C1C1E;
+  --text-secondary: #54545C;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }

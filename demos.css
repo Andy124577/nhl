@@ -275,7 +275,7 @@ html.fz-auth #heroCardDraft     { display: none; }
     inset: 0;
     padding: 12px;
     border-radius: 14px;
-    background: rgba(10,10,26,.55);
+    background: rgba(18,18,20,.55);
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.07);
     display: flex;
     flex-direction: column;

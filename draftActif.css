@@ -118,7 +118,11 @@ body {
    pouvait donc plus le masquer. C'est l'absence d'état qui le masque. */
 .turn-banner:not(.waiting):not(.your-turn):not(.done) { display: none; }
 .turn-banner.waiting {
-  background: rgba(123, 140, 196, .14);
+  /* Teinte de --text-secondary : littérale plutôt que color-mix() (support
+     mobile, voir teamColors.js), donc pas mise à jour par le nouveau gris
+     neutre — orpheline depuis le changement de palette. rgb(168,168,176)
+     est la valeur actuelle de --text-secondary (#A8A8B0). */
+  background: rgba(168, 168, 176, .14);
   border-color: var(--border-light);
   color: var(--text-secondary);
 }
@@ -331,7 +335,9 @@ button.select-button.is-connection-blocked {
 .recent-picks-card,
 .player-selection-card {
   padding: 16px;
-  background: rgba(20, 20, 48, .85);
+  /* rgb(26,26,30) = --bg-gray-light (#1A1A1E) actuel ; littéral, orphelin
+     depuis le changement de palette (même raison qu'ailleurs). */
+  background: rgba(26, 26, 30, .85);
   border: 1px solid var(--border-light);
   border-radius: 18px;
 }

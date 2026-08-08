@@ -344,7 +344,7 @@
 }
 
 .form-card {
-    background: rgba(20,20,48,.88);
+    background: rgba(26,26,30,.88);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     border: 1px solid var(--border-light);

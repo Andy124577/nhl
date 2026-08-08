@@ -10,15 +10,23 @@
 .trade-empty-state .empty-icon[data-icon], .custom-alert-icon[data-icon] { display: flex; }
 
 :root {
-  /* Main backgrounds */
-  --bg: #0A0A1A;
-  --bg-page: #0D0D1F;
-  --card: #161630;
-  --card-white: #1A1A38;
+  /* ---- Neutres --------------------------------------------------------
+     Le bleu marine appuyé (#0A0A1A, texte blanc pur) lisait « noir et
+     blanc » malgré sa teinte : un contraste aussi tranché reste stark quelle
+     que soit la couleur en dessous. La rampe passe à un gris chaud, très
+     faiblement saturé (~2-3%), qui reste une base neutre plutôt qu'un
+     deuxième accent — c'est justement ce qui laisse le cyan être le seul
+     signal vif de l'interface (Règle du Signal Unique). Primary, les
+     couleurs sémantiques et les halos/ombres liés au cyan ou au noir ne
+     changent pas : le pop reste entièrement sur les boutons et les stats. */
+  --bg: #121214;
+  --bg-page: #16161A;
+  --card: #1E1E22;
+  --card-white: #26262B;
 
   /* Navbar specific */
-  --navbar-bg: #080816;
-  --navbar-border: #1E1E3C;
+  --navbar-bg: #0E0E10;
+  --navbar-border: #2A2A30;
 
   /* Colors */
   --primary: #00D4FF;
@@ -31,28 +39,26 @@
   --warning: #FFB300;
 
   /* Text colors */
-  --text-main: #FFFFFF;
-  --text-secondary: #7B8CC4;
-  --text-dark: #E8EAFF;
-  /* Ces deux échelons servaient d'espaces réservés et de texte désactivé, à
-     3,36:1 et 2,14:1 sur une carte — le second échouait même au seuil de 3:1
-     réservé au non-texte. Remontés au-dessus des seuils AA (4,71:1 et 3,59:1)
-     en gardant l'écart entre eux : la hiérarchie tient, la lisibilité aussi. */
-  --text-gray: #7382B8;
-  --text-light-gray: #616F9E;
+  --text-main: #F5F5F7;
+  --text-secondary: #A8A8B0;
+  --text-dark: #E4E4E8;
+  /* 4,98:1 sur carte et 3,10:1 — au-dessus des seuils AA (texte normal et
+     non-texte) avec la même marge que la rampe bleutée précédente. */
+  --text-gray: #8C8C95;
+  --text-light-gray: #6A6A72;
 
   /* Border colors */
-  --border-light: #1E2048;
-  --border-gray: #2A2D5A;
-  --border-table: #1E2048;
+  --border-light: #2C2C32;
+  --border-gray: #38383F;
+  --border-table: #2C2C32;
 
   /* Background variations */
-  --bg-hover: #1E2048;
-  --bg-gray-light: #141430;
-  --bg-odd-row: #131328;
+  --bg-hover: #2C2C32;
+  --bg-gray-light: #1A1A1E;
+  --bg-odd-row: #19191D;
 
   /* Shadows and overlays */
-  --overlay-dark: rgba(5, 5, 20, 0.85);
+  --overlay-dark: rgba(8, 8, 9, 0.85);
   --shadow-sm: rgba(0, 212, 255, 0.06);
   --shadow-md: rgba(0, 0, 0, 0.3);
   --shadow-lg: rgba(0, 0, 0, 0.6);
@@ -98,12 +104,15 @@
 /* LIGHT MODE — variable overrides                               */
 /* ============================================================ */
 html[data-theme="light"] {
-  --bg: #F0F2FA;
-  --bg-page: #E8EBF5;
+  /* Même rampe neutre que le thème sombre, côté clair : gris chaud à faible
+     saturation plutôt que le bleu-blanc précédent — la même bascule de
+     fond. Primary et les couleurs sémantiques ne bougent pas. */
+  --bg: #F2F2F0;
+  --bg-page: #EBEBE8;
   --card: #FFFFFF;
-  --card-white: #F7F9FF;
+  --card-white: #FAFAF8;
   --navbar-bg: #FFFFFF;
-  --navbar-border: #D8DFF0;
+  --navbar-border: #E0E0DC;
   /* Assombri : à #0088AA, l'accent tombait à 4,12:1 en texte sur blanc et le
      libellé d'un bouton plein à 3,68:1 — sous le seuil AA dans les deux cas.
      À #00707F, 5,79:1 en texte et 5,18:1 en libellé. Même teinte, même rôle. */
@@ -112,18 +121,18 @@ html[data-theme="light"] {
   --success: #00A855;
   --danger: #E03040;
   --warning: #CC8800;
-  --text-main: #1A1F3C;
-  --text-secondary: #5060A0;
-  --text-dark: #1E2440;
-  --text-gray: #5C6A9E;
-  --text-light-gray: #6E76A6;
-  --border-light: #D8DFF0;
-  --border-gray: #C0CAE0;
-  --border-table: #D8DFF0;
-  --bg-hover: #E0E5F5;
-  --bg-gray-light: #EEF1FA;
-  --bg-odd-row: #F7F9FF;
-  --overlay-dark: rgba(10, 15, 50, 0.55);
+  --text-main: #1C1C1E;
+  --text-secondary: #54545C;
+  --text-dark: #242428;
+  --text-gray: #68686F;
+  --text-light-gray: #8E8E96;
+  --border-light: #E0E0DC;
+  --border-gray: #CCCCC8;
+  --border-table: #E0E0DC;
+  --bg-hover: #E6E6E2;
+  --bg-gray-light: #F5F5F3;
+  --bg-odd-row: #FAFAF8;
+  --overlay-dark: rgba(20, 20, 20, 0.55);
   --shadow-sm: rgba(0, 136, 170, 0.06);
   --shadow-md: rgba(0, 0, 0, 0.08);
   --shadow-lg: rgba(0, 0, 0, 0.20);
@@ -234,7 +243,7 @@ body {
 /* FILTERS SECTION (Glassmorphism Card)                          */
 /* ============================================================ */
 .filters-section {
-  background: rgba(20,20,48,.85);
+  background: rgba(26,26,30,.85);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   padding: var(--d-filters-pad);
@@ -307,7 +316,7 @@ body {
 /* TABLE CONTAINER                                               */
 /* ============================================================ */
 .table-container {
-  background: rgba(20,20,48,.75);
+  background: rgba(26,26,30,.75);
   border-radius: 18px;
   /* `clip` et non `hidden` : `hidden` fait de ce conteneur un conteneur de
      défilement, ce qui neutralise le position:sticky de l'en-tête. `clip`
@@ -430,7 +439,7 @@ tbody tr:nth-child(odd) {
 }
 
 tbody tr:nth-child(even) {
-  background: rgba(30, 32, 72, 0.35);
+  background: rgba(44,44,50, 0.35);
 }
 
 tbody tr:hover {
@@ -859,7 +868,7 @@ tbody tr:hover .player-photo img.face {
   display: flex;
   gap: 10px;
   padding: 10px 14px;
-  background: rgba(10,10,26,.6);
+  background: rgba(18,18,20,.6);
   border-bottom: 1px solid var(--border-light);
   flex-wrap: wrap;
   align-items: flex-end;
@@ -974,7 +983,7 @@ tbody tr:hover .player-photo img.face {
 }
 
 #careerStatsTable tbody tr:nth-child(even) {
-  background: rgba(30,32,72,.25);
+  background: rgba(44,44,50,.25);
 }
 
 #careerStatsTable tbody tr:hover {
