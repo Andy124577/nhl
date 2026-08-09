@@ -401,9 +401,12 @@
            au-dessus de #careerModalHeader plutôt qu'à l'intérieur : c'est
            elle qui porte désormais les coins arrondis du haut de la carte.
            #careerPlayerName reste un id stable ; seul son parent a changé,
-           donc draftActif.js n'a rien à savoir de ce déplacement. -->
+           donc draftActif.js n'a rien à savoir de ce déplacement. Le
+           bouton de fermeture vit ici aussi désormais, poussé tout à
+           droite par la rangée flex (voir .cmh-name-banner en CSS). -->
       <div class="cmh-name-banner" id="careerNameBanner" style="display: none;">
         <h2 id="careerPlayerName"></h2>
+        <span class="close-modal" onclick="closeCareerModal()">&times;</span>
       </div>
 
       <!-- Career Modal Header with Player Photo -->
@@ -412,7 +415,6 @@
              dans index.css et partagées avec stats.html ; des noms propres à
              cette page évitent de modifier l'autre au passage.
              Tous les id sont conservés : draftActif.js les remplit. -->
-        <span class="close-modal" onclick="closeCareerModal()">&times;</span>
 
         <!-- Grande vignette + colonne d'identité. -->
         <div class="cmh-identity">

@@ -41,11 +41,10 @@
 }
 .career-modal { max-width: 1100px; }
 
+/* Vit désormais dans .cmh-name-banner (rangée flex), tout à droite —
+   plus une superposition en position absolute sur .modal-content. */
 .close-modal {
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  z-index: 3;
+  flex: 0 0 auto;
   width: 34px;
   height: 34px;
   display: flex;
@@ -81,8 +80,16 @@
    Le blanc du nom est littéral (demande explicite), avec une ombre portée
    sombre pour rester lisible même sur les couleurs primaires claires
    (BOS/NSH/PIT jaune, VGK doré, UTA bleu pâle) où un blanc nu manquerait
-   de contraste. */
+   de contraste.
+   Rangée flex : le bouton de fermeture (.close-modal) vit maintenant ici,
+   après le nom dans le HTML, poussé tout à droite par `justify-content:
+   space-between` plutôt que superposé en position absolute sur toute la
+   carte. */
 .cmh-name-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   margin: -20px -20px 0;
   padding: 12px 20px 10px;
   border-radius: 18px 18px 0 0;
@@ -91,6 +98,7 @@
 }
 .cmh-name-banner h2 {
   margin: 0;
+  min-width: 0;
   font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
   font-size: 1.5rem;
   font-weight: 400; /* Bebas Neue est nativement grasse */

@@ -189,16 +189,17 @@
     <div id="careerStatsModal" class="modal">
         <div class="modal-content career-modal">
             <!-- Bandeau du nom aux couleurs de l'équipe : voir le commentaire
-                 jumeau dans draftActif.html pour le détail. -->
+                 jumeau dans draftActif.html pour le détail. Le bouton de
+                 fermeture vit ici aussi désormais. -->
             <div class="cmh-name-banner" id="careerNameBanner" style="display: none;">
                 <h2 id="careerPlayerName"></h2>
+                <span class="close-modal" onclick="closeCareerModal()">&times;</span>
             </div>
 
             <div class="career-modal-header" id="careerModalHeader" style="display: none;">
                 <!-- Structure identique à draftActif.html, stylée par la feuille
                      partagée career-modal.css. Tous les id sont conservés :
                      index.js les remplit. -->
-                <span class="close-modal" onclick="closeCareerModal()">&times;</span>
 
                 <div class="cmh-identity">
                     <div class="player-headshot-container" id="playerHeadshotContainer">
