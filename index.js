@@ -390,7 +390,8 @@ async function showCareerStats(t, e, a = !1) {
         r = document.getElementById("careerPlayerTeam"),
         d = document.getElementById("playerHeadshotContainer"),
         i = document.getElementById("careerFilters"),
-        c = document.getElementById("careerStatsTable");
+        c = document.getElementById("careerStatsTable"),
+            p = document.getElementById("careerSeasonHighlight");
     currentPlayerId = t, n.style.display = "block", document.body.style.overflow = "hidden", showModalSkeleton(), document.getElementById("viewFilter").value = "career", document.getElementById("leagueFilter").value = "nhl", document.getElementById("gameTypeFilter").value = "regular";
     try {
         const e = await fetch(`${BASE_URL}/player-career/${t}`);
@@ -410,9 +411,39 @@ async function showCareerStats(t, e, a = !1) {
         let n = "";
         if (a.birthCity && (n += a.birthCity), a.birthStateProvince && (n += (n ? ", " : "") + a.birthStateProvince), document.getElementById("playerBirthPlace").textContent = n || "-", a.draftInfo) {
             const t = a.draftInfo,
-                e = `${t.year} · ${1 === t.round ? "1er" : t.round + "e"} tour, ${1 === t.pickInRound ? "1er" : t.pickInRound + "e"} choix (${t.teamAbbrev})`;
+                e = `${t.year}: Rd ${t.round}, Ch. ${t.pickInRound} (${t.teamAbbrev})`;
             document.getElementById("playerDraft").textContent = e
         } else document.getElementById("playerDraft").textContent = "Non repêché";
+        if (p) {
+            const cs = currentStats && currentStats.players ? currentStats.players.find(x => x.playerId === t) : null,
+                pool = currentStats && currentStats.players ? currentStats.players.filter(x => (x.position === "G") === a.isGoalie) : [];
+            if (cs && pool.length) {
+                const rankOf = k => {
+                    const sorted = [...pool].sort((x, y) => (y[k] || 0) - (x[k] || 0)),
+                        v = cs[k] || 0;
+                    let rank = 1;
+                    for (let i = 0; i < sorted.length; i++) {
+                        if (i > 0 && (sorted[i][k] || 0) !== (sorted[i - 1][k] || 0)) rank = i + 1;
+                        if (sorted[i].playerId === cs.playerId) break
+                    }
+                    const tied = sorted.filter(x => (x[k] || 0) === v).length > 1,
+                        ord = n => {
+                            const s2 = ["th", "st", "nd", "rd"], v2 = n % 100;
+                            return n + (s2[(v2 - 20) % 10] || s2[v2] || s2[0])
+                        };
+                    return (tied ? "Tied-" : "") + ord(rank)
+                }, tiles = a.isGoalie ? [
+                    ["W", "wins"],
+                    ["SO", "shutouts"],
+                    ["GP", "gamesPlayed"]
+                ] : [
+                    ["G", "goals"],
+                    ["A", "assists"],
+                    ["PTS", "points"]
+                ], ss = String(currentStats.season || ""), sd = 8 === ss.length ? `${ss.slice(0, 4)}-${ss.slice(6, 8)}` : ss;
+                p.innerHTML = `<div class="cmh-season-label">Saison ${sd}</div><div class="cmh-season-tiles">` + tiles.map(([lb, k]) => `<div class="cmh-season-tile"><span class="cmh-mini-lbl">${lb}</span><span class="cmh-season-val">${cs[k] || 0}</span><span class="cmh-season-rank">${rankOf(k)}</span></div>`).join("") + "</div>", p.style.display = "block"
+            } else p.style.display = "none"
+        }
         filterCareerStats();
         const c = document.querySelector(".filter-group-career:has(#leagueFilter)"),
             u = document.querySelector(".filter-group-career:has(#gameTypeFilter)");

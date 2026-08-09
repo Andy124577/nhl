@@ -443,6 +443,15 @@
             </div>
           </div>
         </div>
+        <!-- Faits saillants de la saison en cours : buts/passes/points et le
+             rang de chacun (ex æquo géré) parmi les patineurs, ou
+             victoires/blanchissages/matchs joués parmi les gardiens.
+             Peuplé par draftActif.js depuis `currentStats` (déjà chargé au
+             démarrage de la page) ; masqué si le joueur n'a pas de ligne
+             dans les statistiques courantes (aucune saison jouée cette
+             année). Jamais de donnée inventée : rien ne s'affiche sans
+             valeur réelle. -->
+        <div class="cmh-season-highlight" id="careerSeasonHighlight" style="display: none;"></div>
       </div>
 
       <!-- Squelette de chargement, identique à celui de stats.html.
@@ -468,6 +477,23 @@
                 <div class="cs-stats-col">
                   <div class="skeleton cs-stat-row"></div>
                 </div>
+              </div>
+            </div>
+          </div>
+          <div class="cs-season">
+            <div class="skeleton cs-season-label"></div>
+            <div class="cs-season-tiles">
+              <div class="cs-season-tile">
+                <div class="skeleton cs-season-num"></div>
+                <div class="skeleton cs-season-rk"></div>
+              </div>
+              <div class="cs-season-tile">
+                <div class="skeleton cs-season-num"></div>
+                <div class="skeleton cs-season-rk"></div>
+              </div>
+              <div class="cs-season-tile">
+                <div class="skeleton cs-season-num"></div>
+                <div class="skeleton cs-season-rk"></div>
               </div>
             </div>
           </div>

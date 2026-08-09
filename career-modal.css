@@ -203,6 +203,54 @@
    choix, équipe) — un cran plus petit pour rester sur une seule ligne. */
 #playerDraft { font-size: .64rem; }
 
+/* ---------- Faits saillants de la saison en cours ----------
+   Pleine largeur, sous .cmh-identity (photo + colonne d'identité) plutôt
+   qu'à côté — trois chiffres ont besoin de respirer, pas d'être coincés
+   contre la vignette. Peuplé par JS depuis `currentStats` ; masqué au
+   repos et si le joueur n'a pas de ligne dans les statistiques courantes
+   (voir le commentaire au-dessus de #careerSeasonHighlight dans le HTML). */
+.cmh-season-highlight {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+}
+.cmh-season-label {
+  font-size: .56rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-gray);
+  margin-bottom: 4px;
+}
+.cmh-season-tiles {
+  display: flex;
+}
+.cmh-season-tile {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 0 6px;
+  text-align: center;
+}
+.cmh-season-tile + .cmh-season-tile { border-left: 1px solid var(--border-light); }
+.cmh-season-tile .cmh-mini-lbl { text-align: center; }
+.cmh-season-val {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-main);
+}
+.cmh-season-rank {
+  font-size: .62rem;
+  font-weight: 600;
+  color: var(--text-gray);
+  white-space: nowrap;
+}
+
 .loading-spinner {
   padding: 34px 16px;
   text-align: center;
@@ -385,6 +433,10 @@
   .cmh-stat-row .cmh-mini-lbl { font-size: .62rem; }
   .cmh-stat-val { font-size: .82rem; }
   #playerDraft { font-size: .72rem; }
+  .cmh-season-highlight { margin-top: 12px; padding-top: 10px; }
+  .cmh-season-label { font-size: .6rem; margin-bottom: 6px; }
+  .cmh-season-val { font-size: 1.6rem; }
+  .cmh-season-rank { font-size: .68rem; }
 }
 
 @media (min-width: 1024px) {
@@ -397,6 +449,7 @@
   .player-headshot-container .no-photo { font-size: 3.2rem; }
   .cmh-ident-text h2 { font-size: 2.3rem; letter-spacing: .8px; }
   .cmh-identity { gap: 22px; }
+  .cmh-season-val { font-size: 1.9rem; }
 }
 
 /* ---- Logo d'équipe dans le tableau de carrière ----
@@ -499,6 +552,26 @@
 .cs-stats-col:nth-child(1) .cs-stat-row:nth-child(3) { width: 85%; }
 .cs-stats-col:nth-child(2) .cs-stat-row:nth-child(1) { width: 65%; }
 
+/* ---- Faits saillants de saison : calque .cmh-season-highlight ---- */
+.cs-season {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+}
+.cs-season-label { width: 90px; height: 9px; border-radius: 4px; margin-bottom: 8px; }
+.cs-season-tiles { display: flex; }
+.cs-season-tile {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 0 6px;
+}
+.cs-season-tile + .cs-season-tile { border-left: 1px solid var(--border-light); }
+.cs-season-num { width: 28px; height: 18px; border-radius: 4px; }
+.cs-season-rk { width: 40px; height: 9px; border-radius: 4px; }
+
 /* ---- Filtres : calque .career-filters / .filter-group-career ---- */
 /* 51px : hauteur mesuree d'un .filter-group-career (etiquette 14 + ecart 3
    + menu 34). */
@@ -553,12 +626,15 @@
   .cs-filters { padding: 10px 0; }
   .cs-filter { flex: 0 1 200px; }
   .cs-row { height: 32px; }
+  .cs-season { margin-top: 12px; padding-top: 10px; }
+  .cs-season-num { width: 34px; height: 22px; }
 }
 @media (min-width: 1024px) {
   .cs-header { margin: -24px -24px 16px; padding: 24px; }
   .cs-identity { gap: 22px; }
   .cs-photo { width: 184px; height: 184px; border-radius: 18px; }
   .cs-name { height: 42px; }
+  .cs-season-num { width: 38px; height: 26px; }
 }
 
 /* Mouvement réduit : la lueur défilante devient un simple aplat. */
