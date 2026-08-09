@@ -308,11 +308,44 @@ function fzRenderFavoritesCard() {
 }
 
 /* ============================================================
-   6. POINT D'ENTRÉE
+   6. SURVEILLANCE DU TABLEAU
+   ------------------------------------------------------------
+   `#playerFilter`, `#searchInput`, `#sortBy` et `#availabilityFilter`
+   sont liés à updateTable() via $(...).on(...) tout en haut de
+   draftActif.js (ligne 1, avant les IIFE qui l'enrichissent plus bas
+   dans le même fichier, dont l'ajout de draftRefresh.js). jQuery capture
+   la RÉFÉRENCE de updateTable au moment de la liaison — donc la version
+   encore nue, sans aucun des enrichissements ajoutés après coup. Changer
+   de catégorie, trier ou chercher rafraîchit bien le tableau, mais sans
+   jamais passer par refreshDraftViews() ni par ce fichier : les étoiles
+   n'apparaissaient donc que dans la vue par défaut (« Joueurs »), la
+   seule à avoir déjà traversé une fois le vrai chemin complet (au
+   premier chargement, via loadDraftData()).
+
+   Plutôt que d'ajouter encore une couche à cette chaîne d'appels fragile,
+   on observe directement l'effet qui nous intéresse : `#playerTable
+   tbody` reçoit de nouvelles rangées (populateTable()/populateGoalieTable()/
+   populateTeamTable() vident puis remplissent le même nœud, jamais
+   remplacé). `childList` sans `subtree` : remplacer le contenu d'une
+   cellule .action-column (ce que fzRefreshActionColumns fait) ne mute
+   pas `tbody` lui-même, donc aucune boucle. */
+function fzWatchPlayerTable() {
+    const tbody = document.querySelector('#playerTable tbody');
+    if (!tbody) return;
+    const observer = new MutationObserver(() => {
+        try { fzRefreshActionColumns(); } catch (e) { console.error('[favoris] colonne action :', e); }
+    });
+    observer.observe(tbody, { childList: true });
+}
+
+/* ============================================================
+   7. POINT D'ENTRÉE
    ------------------------------------------------------------
    Ajoutée à la liste `rendus` de refreshDraftViews() (draftRefresh.js) :
-   rejouée après chaque updateTable(), quelle que soit la branche
-   empruntée (patineurs, gardiens, équipes, « Mes choix »).
+   rejouée après chaque updateTable() qui passe par le chemin complet
+   (sondage, socket, premier chargement) — la carte « Mes favoris »
+   dépend de draftData (déjà repêché ou non), pas de la catégorie
+   affichée dans le tableau, donc pas besoin de l'observer ci-dessus.
    ============================================================ */
 window.fzRefreshFavoritesUI = function () {
     try { fzRefreshActionColumns(); } catch (e) { console.error('[favoris] colonne action :', e); }
@@ -321,4 +354,5 @@ window.fzRefreshFavoritesUI = function () {
 
 document.addEventListener('DOMContentLoaded', () => {
     try { fzRenderFavoritesCard(); } catch (e) {}
+    try { fzWatchPlayerTable(); } catch (e) {}
 });
