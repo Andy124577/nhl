@@ -2414,13 +2414,18 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 #playerTable thead th:nth-child(3),
 #playerTable thead th.action-column { border-left-color: rgba(255, 255, 255, .18); }
 
-/* ---- Section droite : l'action ---- */
+/* ---- Section droite : l'action ----
+   Rembourrage symétrique (6px/6px) à toutes les tailles : un padding-right
+   plus large « pour respirer » sur grand écran ne faisait que coller un
+   vide contre le bord de la rangée, sans rien porter — la colonne n'a
+   qu'un bouton à centrer. Les pixels repris reviennent au nom via le
+   flex-grow de la 2e colonne (voir plus haut). */
 #playerTable thead th.action-column,
 #playerTable tbody td.action-column {
   flex: 0 0 var(--col-action);
   max-width: none;
   padding-left: 6px;
-  padding-right: 10px;
+  padding-right: 6px;
   text-align: center;
 }
 /* Bouton sur toute la largeur réservée : cible environ 50 % plus large
@@ -2467,14 +2472,6 @@ button.select-button .select-icon { width: 14px; height: 14px; }
    classe `cat-*` que draftActifUI.js pose sur le tableau. */
 @media (max-width: 700px) {
   #playerTable { --col-rank: 50px; --col-stat: 36px; --col-action: 58px; }
-
-  /* La colonne n'a qu'une icône à porter : le fond de 10px à droite du
-     bouton (pensé pour respirer sur un écran large) ne faisait plus que
-     coller un vide contre le bord de la rangée. Symétrique avec la gauche,
-     et les pixels repris reviennent au nom via le flex-grow de la 2e
-     colonne. */
-  #playerTable thead th.action-column,
-  #playerTable tbody td.action-column { padding-right: 6px; }
 
   /* Gardiens : Photo Nom GP W L OTL SV% SO PTS Action — sans OTL ni SO. */
   #playerTable.cat-goalies thead th:nth-child(6),
