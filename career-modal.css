@@ -70,7 +70,7 @@
 }
 
 .career-modal-header {
-  margin: -20px -20px 16px;
+  margin: -20px -20px 14px;
   padding: 20px;
   background:
     linear-gradient(135deg, rgba(0, 212, 255, .14), rgba(0, 212, 255, 0) 65%),
@@ -78,35 +78,37 @@
   border-bottom: 1px solid var(--border-light);
   border-radius: 18px 18px 0 0;
 }
-/* ---------- Identité : une seule rangée ---------- */
+/* ---------- Identité : photo agrandie + nom, une seule rangée ---------- */
 .cmh-identity {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
 }
 .player-headshot-container {
   flex: 0 0 auto;
-  width: 48px;
-  height: 48px;
+  width: 80px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
   background: var(--bg-gray-light);
   border: 2px solid var(--primary);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .4);
 }
 .player-headshot-container img { width: 100%; height: 100%; object-fit: cover; }
-.player-headshot-container .no-photo { color: var(--text-light-gray); }
+.player-headshot-container .no-photo { color: var(--text-light-gray); font-size: 1.6rem; }
 
 .cmh-ident-text { flex: 1; min-width: 0; }
 .cmh-ident-text h2 {
   margin: 0;
-  font-size: 1.05rem;
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -.015em;
+  font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 400; /* Bebas Neue est nativement grasse */
+  line-height: .95;
+  letter-spacing: .4px;
   text-transform: uppercase;
   color: var(--primary);
   overflow-wrap: break-word;
@@ -115,16 +117,16 @@
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 .cmh-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 7px;
-  border-radius: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
   background: rgba(0, 212, 255, .13);
-  font-size: .64rem;
+  font-size: .66rem;
   font-weight: 800;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -135,6 +137,12 @@
    même raison qu'ailleurs (color-mix() indisponible sur d'assez vieux
    mobiles), donc pas mis à jour automatiquement par la palette. */
 .cmh-chip-team { background: rgba(168, 168, 176, .16); }
+/* Taille/poids : jeton toujours visible, y compris sur téléphone. Avant,
+   ces valeurs vivaient dans .cmh-quick, masqué sous 600px — invisibles
+   sur l'appareil de référence du produit (voir PRODUCT.md, « le téléphone
+   est le vrai appareil »). */
+.cmh-chip-bio { background: var(--bg-odd-row); font-weight: 700; letter-spacing: .02em; }
+.cmh-chip-bio .cmh-chip-sep { color: var(--text-gray); font-weight: 500; margin: 0 1px; }
 /* Le JS injecte le logo de l'équipe dans #careerPlayerTeam. index.css le
    dimensionnait via `.player-position-team img`, sélecteur qui ne
    s'applique plus ici : sans cette règle, l'image s'affiche à sa taille
@@ -153,22 +161,6 @@
   vertical-align: middle;
 }
 .cmh-chip > span { display: inline-flex; align-items: center; gap: 4px; }
-
-/* Mesures rapides : masquées sur téléphone pour libérer de la hauteur au
-   profit du tableau, réaffichées dès que la largeur le permet. */
-.cmh-quick { display: none; }
-.cmh-quick-item {
-  padding: 3px 10px;
-  border-radius: 8px;
-  background: var(--bg-odd-row);
-  text-align: center;
-}
-.cmh-quick-val {
-  display: block;
-  font-size: .9rem;
-  font-weight: 700;
-  color: var(--primary);
-}
 
 /* ---------- Libellé minuscule commun ---------- */
 .cmh-mini-lbl {
@@ -376,10 +368,11 @@
 }
 
 @media (min-width: 600px) {
-  .player-headshot-container { width: 60px; height: 60px; border-radius: 12px; }
-  .cmh-ident-text h2 { font-size: 1.2rem; }
-  .cmh-identity { gap: 14px; }
-  .cmh-quick { display: flex; gap: 8px; flex: 0 0 auto; }
+  .player-headshot-container { width: 104px; height: 104px; border-radius: 14px; }
+  .player-headshot-container .no-photo { font-size: 2rem; }
+  .cmh-ident-text h2 { font-size: 1.9rem; letter-spacing: .6px; }
+  .cmh-identity { gap: 16px; }
+  .cmh-chip { font-size: .7rem; padding: 3px 9px; }
   .cmh-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .cmh-cell-val { font-size: .8rem; }
 }
@@ -387,9 +380,13 @@
 @media (min-width: 1024px) {
   .modal { padding: 26px; }
   .modal-content { margin: 24px auto; padding: 24px; }
-  .career-modal-header { margin: -24px -24px 18px; padding: 24px; }
+  .career-modal-header { margin: -24px -24px 16px; padding: 24px; }
   /* Rembourrage et marge changent ici : la hauteur maximale suit. */
   .career-modal { max-height: calc(100dvh - 100px); }
+  .player-headshot-container { width: 136px; height: 136px; border-radius: 18px; border-width: 3px; }
+  .player-headshot-container .no-photo { font-size: 2.6rem; }
+  .cmh-ident-text h2 { font-size: 2.3rem; letter-spacing: .8px; }
+  .cmh-identity { gap: 20px; }
 }
 
 /* ---- Logo d'équipe dans le tableau de carrière ----
@@ -449,7 +446,7 @@
 
 /* ---- En-tête : calque .career-modal-header ---- */
 .cs-header {
-  margin: -20px -20px 16px;
+  margin: -20px -20px 14px;
   padding: 20px;
   background:
     linear-gradient(135deg, rgba(0, 212, 255, .14), rgba(0, 212, 255, 0) 65%),
@@ -464,22 +461,22 @@
   background-image: linear-gradient(90deg,
     var(--bg-odd-row) 0, var(--card-white) 20%, var(--bg-odd-row) 40%, var(--bg-odd-row) 100%);
 }
-.cs-identity { display: flex; align-items: center; gap: 10px; }
-.cs-photo { flex: 0 0 auto; width: 48px; height: 48px; border-radius: 10px; }
+.cs-identity { display: flex; align-items: center; gap: 12px; }
+.cs-photo { flex: 0 0 auto; width: 80px; height: 80px; border-radius: 12px; }
 .cs-ident-text { flex: 1; min-width: 0; }
-.cs-name { display: block; width: min(70%, 240px); height: 18px; border-radius: 6px; }
-.cs-chips { display: flex; gap: 5px; margin-top: 6px; }
+.cs-name { display: block; width: min(70%, 240px); height: 26px; border-radius: 6px; }
+/* Trois jetons désormais : position, équipe, et taille/poids (voir
+   .cmh-chip-bio plus haut — visible sur tous les formats, plus seulement
+   ≥600px). */
+.cs-chips { display: flex; gap: 5px; margin-top: 8px; }
 .cs-chip { width: 46px; height: 20px; border-radius: 5px; }
-/* Comme .cmh-quick, masqué sur téléphone. */
-.cs-quick { display: none; gap: 8px; flex: 0 0 auto; }
-.cs-quick-item { width: 52px; height: 38px; border-radius: 8px; }
 
 /* ---- Grille d'informations : calque .cmh-grid / .cmh-cell ---- */
 .cs-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 /* 60px : hauteur mesuree d'une .cmh-cell reelle, identique aux deux
    points de rupture. */
@@ -530,17 +527,19 @@
 }
 
 @media (min-width: 600px) {
-  .cs-identity { gap: 14px; }
-  .cs-photo { width: 60px; height: 60px; border-radius: 12px; }
-  .cs-name { height: 21px; }
-  .cs-quick { display: flex; }
+  .cs-identity { gap: 16px; }
+  .cs-photo { width: 104px; height: 104px; border-radius: 14px; }
+  .cs-name { height: 34px; }
   .cs-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .cs-filters { padding: 10px 0; }
   .cs-filter { flex: 0 1 200px; }
   .cs-row { height: 32px; }
 }
 @media (min-width: 1024px) {
-  .cs-header { margin: -24px -24px 18px; padding: 24px; }
+  .cs-header { margin: -24px -24px 16px; padding: 24px; }
+  .cs-identity { gap: 20px; }
+  .cs-photo { width: 136px; height: 136px; border-radius: 18px; }
+  .cs-name { height: 42px; }
 }
 
 /* Mouvement réduit : la lueur défilante devient un simple aplat. */
