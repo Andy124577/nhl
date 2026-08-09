@@ -793,9 +793,55 @@ html[data-theme="light"] .player-selection-card {
 }
 .pick-card.is-my-turn .pick-card-head { padding-top: 26px; }
 
+/* Bouton central « Faire ma sélection » (draftPickCards.js) : posé sur la
+   couche du portrait, au milieu de la carte — la seule de la bande où ce
+   geste est possible doit porter l'action, pas seulement le badge du haut.
+   Ouvre l'onglet « Liste des joueurs » (draftActifUI.js) au lieu de forcer
+   à faire défiler jusqu'au tableau, qui n'est plus affiché en permanence. */
+.pick-card-select-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 5;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  min-height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
+  color: var(--bg);
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .38);
+  transition: transform .15s ease, box-shadow .2s ease;
+}
+@media (hover: hover) {
+  .pick-card-select-btn:hover {
+    transform: translate(-50%, -50%) scale(1.06);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .42);
+  }
+}
+.pick-card-select-btn:active { transform: translate(-50%, -50%) scale(.94); }
+.pick-card-select-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+@media (max-width: 480px) {
+  .pick-card-select-btn { padding: 6px 10px; font-size: .6rem; white-space: normal; max-width: 88%; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pick-card.is-my-turn,
-  .pick-card.is-my-turn:hover { transform: none; }
+  .pick-card.is-my-turn:hover,
+  .pick-card-select-btn:hover,
+  .pick-card-select-btn:active { transform: none; }
 }
 
 /* ---- Le choix qui vient d'entrer ----
@@ -1207,6 +1253,44 @@ button.select-button .select-icon { width: 16px; height: 16px; object-fit: conta
    ~3.6:1 en noir). */
 html[data-theme="light"] button.select-button .select-icon { filter: invert(1); }
 
+/* ---------- Étoile de favori ----------
+   Occupe la colonne Action à la place du bouton de sélection quand il n'y
+   est pas (pas votre tour, ou votre équipe est complète) — les deux ne
+   coexistent jamais dans la même cellule (draftFavorites.js). Contour fin
+   plutôt qu'un fond plein : elle ne doit jamais se confondre avec le
+   bouton de sélection qu'elle remplace, un geste réversible n'a pas le
+   même poids qu'un choix définitif. */
+button.favorite-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .15s ease, border-color .15s ease, color .15s ease;
+}
+button.favorite-btn svg { display: block; }
+@media (hover: hover) {
+  button.favorite-btn:hover { border-color: var(--warning); color: var(--warning); }
+}
+button.favorite-btn:active { transform: scale(.9); }
+button.favorite-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+/* Favori actif : même étoile, remplie et ambrée plutôt qu'un second
+   pictogramme — l'état se lit dans le remplissage, pas dans la forme. */
+button.favorite-btn.is-active { border-color: var(--warning); color: var(--warning); }
+button.favorite-btn.is-active svg { fill: currentColor; }
+
+@media (prefers-reduced-motion: reduce) {
+  button.favorite-btn:active { transform: none; }
+}
+
 /* ---------- États vides ---------- */
 .draft-empty-row td { padding: 0; }
 .draft-empty {
@@ -1556,19 +1640,11 @@ html[data-theme="light"] button.select-button .select-icon { filter: invert(1); 
    13. ORDINATEUR — à partir de 1024px
    ============================================================ */
 @media (min-width: 1024px) {
-  .draft-main-container {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px;
-    align-items: start;
-    gap: 18px;
-    padding: 22px 22px 56px;
-  }
-  /* Sur grand écran, le suivi passe à droite : la sélection de joueur
-     (draft-center) reste la colonne large et centrée, le suivi ne fait
-     plus pencher la mise en page d'un côté. L'ordre 1/2 posé plus haut
-     (base du fichier) suffit déjà à placer draft-center en premier —
-     inutile de le réécrire ici. */
-  .draft-sidebar { position: sticky; top: 78px; }
+  .draft-main-container { padding: 22px 22px 56px; }
+  /* Plus de colonnes côte à côte : Aperçu et Liste des joueurs partagent
+     désormais le même espace, un seul visible à la fois, choisi par les
+     onglets de section (draftActifUI.js) — à toutes les tailles d'écran,
+     pas seulement en dessous de 1024px comme avant. */
 
   .progress-card,
   .draft-order-card,
@@ -1832,9 +1908,7 @@ html[data-theme="light"] button.select-button .select-icon { filter: invert(1); 
 }
 
 @media (min-width: 1024px) {
-  /* Le bandeau reste collant, la colonne latérale se cale dessous. */
   .draft-header { padding: 14px 22px; }
-  .draft-sidebar { top: 92px; }
 }
 
 /* ============================================================
@@ -1964,12 +2038,6 @@ html[data-theme="light"] button.select-button .select-icon { filter: invert(1); 
 .progress-details-list.is-inline {
   margin: 6px 0 8px;
   border-color: rgba(0, 212, 255, .25);
-}
-
-@media (min-width: 1024px) {
-  /* Deux colonnes : tout est visible en même temps, les onglets de
-     panneau n'ont plus lieu d'être (draftActifUI.js les masque aussi). */
-  .panel-tabs { display: none; }
 }
 
 /* ---- Ticker compact sur téléphone ----
@@ -2385,7 +2453,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 }
 /* Bouton sur toute la largeur réservée : cible environ 50 % plus large
    qu'avant, et identique d'une rangée à l'autre. */
-#playerTable td.action-column button.select-button {
+#playerTable td.action-column button.select-button,
+#playerTable td.action-column button.favorite-btn {
   width: 100%;
   min-width: 0;
   padding: 8px 6px;
@@ -2455,7 +2524,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   /* Plus d'override à droite : la colonne d'action reprend le 3px générique
      ci-dessus, à égalité avec sa propre gauche — le bouton (width: 100%)
      vient alors buter sur le bord réel de la rangée. */
-  #playerTable td.action-column button.select-button { min-height: 44px; padding: 7px 4px; }
+  #playerTable td.action-column button.select-button,
+  #playerTable td.action-column button.favorite-btn { min-height: 44px; padding: 7px 4px; }
 
   /* Une mesure de plus en moins sur les deux vues les plus chargées. */
   #playerTable.cat-goalies thead th:nth-child(5),
@@ -2693,6 +2763,17 @@ html[data-theme="light"] .player-selection-card {
 }
 #playerTable td.action-column button.select-button .select-icon { filter: invert(1); }
 
+/* ---- Étoile de favori : le contour sombre par défaut (button.favorite-btn,
+   section 8) disparaîtrait sur le fond clair de cette carte. ---- */
+.player-selection-card button.favorite-btn {
+  border-color: var(--psc-border);
+  color: var(--psc-text-secondary);
+}
+@media (hover: hover) {
+  .player-selection-card button.favorite-btn:hover { border-color: var(--warning); color: var(--warning); }
+}
+.player-selection-card button.favorite-btn.is-active { border-color: var(--warning); color: var(--warning); }
+
 /* ============================================================
    20. ONGLETS DE CATÉGORIE : TROIS ÉTATS NETS
    ------------------------------------------------------------
@@ -2924,3 +3005,75 @@ html[data-theme="light"] .player-selection-card {
   white-space: nowrap;
   border: 0;
 }
+
+/* ============================================================
+   23. MES FAVORIS
+   ------------------------------------------------------------
+   Carte de l'onglet Aperçu (draftActifUI.js), peuplée par
+   draftFavorites.js. Habillage du site normal (var(--card), --border-light,
+   ...) : contrairement à .player-selection-card, cette carte n'a pas de
+   palette propre — elle suit le thème comme .progress-card, dont elle
+   partage déjà le fond et la bordure (classe combinée dans le HTML).
+   ============================================================ */
+.favorites-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--bg);
+  font-size: .7rem;
+  font-weight: 800;
+}
+.favorites-list { display: flex; flex-direction: column; gap: 8px; }
+.favorite-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: var(--bg-odd-row);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  transition: border-color .2s ease;
+}
+@media (hover: hover) {
+  .favorite-row:hover { border-color: var(--primary); }
+}
+/* Déjà repêché (par n'importe quelle équipe) : gardé dans la liste comme
+   trace, mais visiblement hors-jeu — plus de bouton de sélection possible. */
+.favorite-row.is-picked { opacity: .55; }
+.favorite-row-photo { flex: 0 0 auto; width: 38px; height: 38px; }
+.favorite-row-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.favorite-row-name {
+  font-size: .84rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.favorite-row-pos {
+  font-size: .72rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.favorite-row-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+/* Compact : la carte n'a pas la largeur du tableau, le bouton plein n'a
+   pas besoin de sa taille de cible tactile habituelle. */
+.favorite-row-actions button.select-button { min-height: 36px; padding: 6px 10px; }

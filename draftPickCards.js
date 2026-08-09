@@ -304,6 +304,19 @@ function buildPickCard(options) {
     badgeTour.className = 'pick-card-live-badge';
     badgeTour.textContent = 'À vous';
     carte.appendChild(badgeTour);
+
+    // Bouton central : bascule sur l'onglet « Liste des joueurs »
+    // (draftActifUI.js) plutôt que de forcer à faire défiler jusqu'au
+    // tableau, qui n'est plus affiché en permanence à côté du suivi.
+    const boutonChoisir = document.createElement('button');
+    boutonChoisir.type = 'button';
+    boutonChoisir.className = 'pick-card-select-btn';
+    boutonChoisir.textContent = 'Faire ma sélection';
+    boutonChoisir.addEventListener('click', e => {
+      e.stopPropagation();
+      if (typeof window.fzOuvrirListeJoueurs === 'function') window.fzOuvrirListeJoueurs();
+    });
+    carte.appendChild(boutonChoisir);
   }
 
   const etiquette = info

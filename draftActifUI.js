@@ -197,25 +197,41 @@ function appliquerDisponibilite(strip, select) {
 function refreshCategoryTabs() {}
 
 /* ============================================================
-   3. ONGLETS DE PANNEAU (téléphone)
-   ============================================================ */
+   3. ONGLETS DE SECTION — Aperçu / Liste des joueurs
+   ------------------------------------------------------------
+   La carte de sélection de joueur n'est plus affichée en permanence à
+   côté du suivi : les deux partagent le même espace, un seul visible à
+   la fois, choisi par ces onglets — à toutes les tailles d'écran, pas
+   seulement sur téléphone comme avant la bascule. « Aperçu » réunit les
+   favoris, la progression et l'ordre du repêchage (tout ce que la page
+   montrait déjà, moins le tableau) ; « Liste des joueurs » est le
+   tableau lui-même, avec ses filtres.
 
-/**
- * Sur téléphone, les trois cartes s'empilent et imposent un long
- * défilement. On les présente en onglets. Au-delà de 1024px la mise en
- * page à deux colonnes reprend et tout est visible en même temps : les
- * onglets se retirent alors d'eux-mêmes.
- */
+   Le bouton « Faire ma sélection » du carrousel (draftPickCards.js)
+   bascule directement sur ce second onglet via window.fzOuvrirListeJoueurs,
+   exposée en bas de cette fonction.
+   ============================================================ */
 function initPanelTabs() {
     const conteneur = document.querySelector('.draft-main-container');
     if (!conteneur || document.getElementById('panelTabs')) return;
 
-    const panneaux = [
-        { cle: 'joueurs',   libelle: 'Disponible', el: document.querySelector('.player-selection-card') },
-        { cle: 'maliste',   libelle: 'Ma liste',   el: document.querySelector('.progress-card') },
-        { cle: 'ordre',     libelle: 'Ordre',      el: document.querySelector('.draft-order-card') }
-    ].filter(p => p.el);
-    if (panneaux.length < 2) return;
+    const groupes = [
+        {
+            cle: 'apercu',
+            libelle: 'Aperçu',
+            els: [
+                document.getElementById('favoritesCard'),
+                document.querySelector('.progress-card'),
+                document.querySelector('.draft-order-card')
+            ].filter(Boolean)
+        },
+        {
+            cle: 'joueurs',
+            libelle: 'Liste des joueurs',
+            els: [document.querySelector('.player-selection-card')].filter(Boolean)
+        }
+    ].filter(g => g.els.length);
+    if (groupes.length < 2) return;
 
     const strip = document.createElement('div');
     strip.className = 'panel-tabs';
@@ -224,23 +240,27 @@ function initPanelTabs() {
     strip.setAttribute('aria-label', 'Sections du repêchage');
     conteneur.parentNode.insertBefore(strip, conteneur);
 
-    // Ici, contrairement aux pastilles de catégorie, chaque onglet ouvre
-    // vraiment un panneau qui lui est propre — le patron ARIA tablist
-    // s'applique tel quel : un tabpanel par panneau, aria-controls entre les
-    // deux, et un seul arrêt de tabulation dans le bandeau (tabindex baladeur,
-    // les flèches déplacent le focus et activent l'onglet visé).
-    panneaux.forEach(p => { p.el.setAttribute('role', 'tabpanel'); p.el.id = 'panel-' + p.cle; });
+    // Patron ARIA tablist complet, comme avant : chaque onglet ouvre un
+    // groupe de panneaux qui lui est propre (aria-controls liste tous les
+    // ids du groupe), et un seul arrêt de tabulation dans le bandeau —
+    // tabindex baladeur, les flèches déplacent le focus et activent
+    // l'onglet visé.
+    groupes.forEach(g => {
+        g.els.forEach((el, i) => {
+            el.setAttribute('role', 'tabpanel');
+            if (!el.id) el.id = 'panel-' + g.cle + '-' + i;
+        });
+    });
 
-    const mq = window.matchMedia('(max-width: 1023px)');
-    let actif = panneaux[0].cle;
+    let actif = groupes[0].cle;
 
     const appliquer = () => {
-        const enOnglets = mq.matches;
-        strip.style.display = enOnglets ? '' : 'none';
-        panneaux.forEach(p => {
-            // Hors mode onglets, on rend la main au CSS de mise en page.
-            p.el.style.display = enOnglets ? (p.cle === actif ? '' : 'none') : '';
-            p.el.setAttribute('aria-hidden', String(enOnglets && p.cle !== actif));
+        groupes.forEach(g => {
+            const on = g.cle === actif;
+            g.els.forEach(el => {
+                el.style.display = on ? '' : 'none';
+                el.setAttribute('aria-hidden', String(!on));
+            });
         });
         strip.querySelectorAll('.panel-tab').forEach(t => {
             const on = t.dataset.cle === actif;
@@ -253,34 +273,42 @@ function initPanelTabs() {
     const activer = (cle, focus) => {
         actif = cle;
         appliquer();
-        if (focus) strip.querySelector('[data-cle="' + cle + '"]').focus();
+        const tab = strip.querySelector('[data-cle="' + cle + '"]');
+        if (focus && tab) tab.focus();
     };
 
-    panneaux.forEach((p, i) => {
+    groupes.forEach((g, i) => {
         const tab = document.createElement('button');
         tab.type = 'button';
         tab.className = 'panel-tab';
-        tab.dataset.cle = p.cle;
-        tab.id = 'tab-' + p.cle;
+        tab.dataset.cle = g.cle;
+        tab.id = 'tab-' + g.cle;
         tab.setAttribute('role', 'tab');
-        tab.setAttribute('aria-controls', p.el.id);
-        tab.textContent = p.libelle;
-        tab.addEventListener('click', () => activer(p.cle, false));
+        tab.setAttribute('aria-controls', g.els.map(el => el.id).join(' '));
+        tab.textContent = g.libelle;
+        tab.addEventListener('click', () => activer(g.cle, false));
         tab.addEventListener('keydown', e => {
             if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
             e.preventDefault();
-            const n = panneaux.length;
+            const n = groupes.length;
             const suivant = e.key === 'ArrowLeft' ? (i - 1 + n) % n
                 : e.key === 'ArrowRight' ? (i + 1) % n
                 : e.key === 'Home' ? 0 : n - 1;
-            activer(panneaux[suivant].cle, true);
+            activer(groupes[suivant].cle, true);
         });
         strip.appendChild(tab);
-        p.el.setAttribute('aria-labelledby', tab.id);
+        g.els.forEach(el => el.setAttribute('aria-labelledby', tab.id));
     });
 
-    mq.addEventListener('change', appliquer);
     appliquer();
+
+    // Point d'entrée du bouton « Faire ma sélection » (draftPickCards.js) :
+    // bascule sur le tableau et y ramène le regard — le bandeau d'onglets
+    // peut être scrollé hors champ sur un repêchage à l'ordre long.
+    window.fzOuvrirListeJoueurs = () => {
+        activer('joueurs', false);
+        strip.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
 }
 
 /* ============================================================

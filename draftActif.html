@@ -120,6 +120,21 @@
     <!-- Left Column: Draft Order & Progress -->
     <div class="draft-sidebar">
 
+      <!-- Mes favoris : joueurs mis de côté depuis la liste (étoile dans la
+           colonne Action). Consultable même hors de son tour ; peuplé par
+           draftFavorites.js. Rien n'est envoyé au serveur — uniquement
+           localStorage, personnel et propre à ce pool. Classe partagée avec
+           .progress-card pour l'habillage (fond, bordure, coins, h3) :
+           .favorites-card ne porte que ce qui lui est propre. -->
+      <div class="favorites-card progress-card" id="favoritesCard">
+        <div class="card-header">
+          <h3>Mes favoris</h3>
+          <span class="favorites-count" id="favoritesCount" hidden>0</span>
+        </div>
+        <p class="no-picks" id="favoritesEmpty">Aucun favori pour l'instant — l'étoile de la liste des joueurs les ajoute ici.</p>
+        <div class="favorites-list" id="favoritesList"></div>
+      </div>
+
       <!-- Your Progress -->
       <div class="progress-card">
         <div class="progress-header">
@@ -515,6 +530,10 @@
   <!-- Confirmation avant envoi d'un choix. Après draftActif.js : il y
        redéfinit selectPlayer() et appelle commitPlayerPick(). -->
   <script defer src="draftPickFlow.js"></script>
+  <!-- Favoris : étoile de la colonne Action + carte « Mes favoris ».
+       Après draftPickFlow.js (réutilise selectPlayer), avant draftActifUI.js
+       (qui range #favoritesCard dans l'onglet Aperçu). -->
+  <script defer src="draftFavorites.js"></script>
   <!-- Couche d'interface : ne fait que piloter les contrôles déjà en place
        (#playerFilter, showProgressDetails). Aucune logique de repêchage ici. -->
   <script defer src="draftActifUI.js"></script>

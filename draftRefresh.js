@@ -102,7 +102,10 @@ function refreshDraftViews() {
     'renderRecentPicks',
     // Disponibilité des onglets de catégorie (draftActifUI.js) : elle
     // change dès qu'une position se remplit.
-    'refreshCategoryTabs'
+    'refreshCategoryTabs',
+    // Étoile de la colonne Action + carte « Mes favoris » (draftFavorites.js) :
+    // dépendent du tour courant et des choix faits, comme le reste ici.
+    'fzRefreshFavoritesUI'
   ];
   rendus.forEach(nom => {
     const fn = window[nom];
