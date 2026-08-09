@@ -410,7 +410,7 @@ async function showCareerStats(t, e, a = !1) {
         let n = "";
         if (a.birthCity && (n += a.birthCity), a.birthStateProvince && (n += (n ? ", " : "") + a.birthStateProvince), a.birthCountry && (n += (n ? ", " : "") + a.birthCountry), document.getElementById("playerBirthPlace").textContent = n || "-", document.getElementById("playerShoots").textContent = a.shootsCatches || "-", a.draftInfo) {
             const t = a.draftInfo,
-                e = `${t.year}, ${t.teamAbbrev} (${t.overallPick}e au total), ${t.round}e ronde, ${t.pickInRound}e choix`;
+                e = `${t.year} · ${1 === t.round ? "1er" : t.round + "e"} tour, ${1 === t.pickInRound ? "1er" : t.pickInRound + "e"} choix (${t.teamAbbrev})`;
             document.getElementById("playerDraft").textContent = e
         } else document.getElementById("playerDraft").textContent = "Non repêché";
         filterCareerStats();

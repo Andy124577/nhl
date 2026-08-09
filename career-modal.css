@@ -198,6 +198,9 @@
   overflow-wrap: break-word;
 }
 .cmh-stat-sep { color: var(--text-gray); font-weight: 500; margin: 0 2px; }
+/* Repêchage : chaîne plus longue que les autres rangées (année, tour,
+   choix, équipe) — un cran plus petit pour rester sur une seule ligne. */
+#playerDraft { font-size: .64rem; }
 
 .loading-spinner {
   padding: 34px 16px;
@@ -379,6 +382,7 @@
   .cmh-stats { gap: 4px; margin-top: 10px; padding-top: 9px; }
   .cmh-stat-row .cmh-mini-lbl { font-size: .62rem; }
   .cmh-stat-val { font-size: .82rem; }
+  #playerDraft { font-size: .72rem; }
 }
 
 @media (min-width: 1024px) {
