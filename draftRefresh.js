@@ -98,7 +98,6 @@ function refreshDraftViews() {
     'renderTeamsOverview',
     'updateProgressCounter',
     'updateDraftHeader',
-    'renderDraftTimeline',
     'renderRecentPicks',
     // Disponibilité des onglets de catégorie (draftActifUI.js) : elle
     // change dès qu'une position se remplit.

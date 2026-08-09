@@ -146,7 +146,12 @@
       </div>
 
       <!-- Your Progress -->
-      <div class="progress-card">
+      <!-- id nécessaire pour initPanelTabs() (draftActifUI.js) : la classe
+           .progress-card est partagée avec #favoritesCard juste au-dessus,
+           donc document.querySelector('.progress-card') retombait sur ce
+           dernier et cette carte-ci n'était jamais masquée par l'onglet
+           « Liste des joueurs » — elle restait visible partout. -->
+      <div class="progress-card" id="progressCard">
         <div class="progress-header">
           <h3>Ma progression</h3>
           <!-- Conservé pour la liaison de draftActif.js, mais masqué : le choix
@@ -209,14 +214,6 @@
             </div>
             <span class="progress-value" id="count-team">0/1</span>
           </div>
-        </div>
-      </div>
-
-      <!-- Draft Order Timeline -->
-      <div class="draft-order-card">
-        <h3>Ordre du draft</h3>
-        <div id="draft-order-timeline" class="draft-timeline">
-          <!-- Timeline items will be injected here -->
         </div>
       </div>
 

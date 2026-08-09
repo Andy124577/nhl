@@ -203,9 +203,8 @@ function refreshCategoryTabs() {}
    côté du suivi : les deux partagent le même espace, un seul visible à
    la fois, choisi par ces onglets — à toutes les tailles d'écran, pas
    seulement sur téléphone comme avant la bascule. « Aperçu » réunit les
-   favoris, la progression et l'ordre du repêchage (tout ce que la page
-   montrait déjà, moins le tableau) ; « Liste des joueurs » est le
-   tableau lui-même, avec ses filtres.
+   favoris et la progression ; « Liste des joueurs » est le tableau
+   lui-même, avec ses filtres.
 
    Le bouton « Faire ma sélection » du carrousel (draftPickCards.js)
    bascule directement sur ce second onglet via window.fzOuvrirListeJoueurs,
@@ -220,10 +219,12 @@ function initPanelTabs() {
         {
             cle: 'apercu',
             libelle: 'Aperçu',
+            // getElementById, pas querySelector('.progress-card') : cette
+            // classe est aussi portée par #favoritesCard (habillage partagé),
+            // et querySelector se serait arrêté au premier match.
             els: [
                 document.getElementById('favoritesCard'),
-                document.querySelector('.progress-card'),
-                document.querySelector('.draft-order-card')
+                document.getElementById('progressCard')
             ].filter(Boolean)
         },
         {
