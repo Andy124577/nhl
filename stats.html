@@ -188,6 +188,12 @@
     <!-- ============================================================ -->
     <div id="careerStatsModal" class="modal">
         <div class="modal-content career-modal">
+            <!-- Bandeau du nom aux couleurs de l'équipe : voir le commentaire
+                 jumeau dans draftActif.html pour le détail. -->
+            <div class="cmh-name-banner" id="careerNameBanner" style="display: none;">
+                <h2 id="careerPlayerName"></h2>
+            </div>
+
             <div class="career-modal-header" id="careerModalHeader" style="display: none;">
                 <!-- Structure identique à draftActif.html, stylée par la feuille
                      partagée career-modal.css. Tous les id sont conservés :
@@ -195,11 +201,8 @@
                 <span class="close-modal" onclick="closeCareerModal()">&times;</span>
 
                 <div class="cmh-identity">
-                    <div class="cmh-photo-frame">
-                        <div class="player-headshot-container" id="playerHeadshotContainer">
-                            <div class="no-photo" data-icon="person" data-icon-size="44"></div>
-                        </div>
-                        <h2 class="cmh-photo-name" id="careerPlayerName"></h2>
+                    <div class="player-headshot-container" id="playerHeadshotContainer">
+                        <div class="no-photo" data-icon="person" data-icon-size="44"></div>
                     </div>
                     <div class="cmh-ident-text">
                         <div class="cmh-chips">
@@ -237,12 +240,12 @@
             </div>
             <!-- Modal Skeleton Loader -->
             <div class="skeleton-loader career-skeleton" id="modalSkeleton">
+                <div class="cs-name-banner">
+                  <div class="skeleton cs-name-bar"></div>
+                </div>
                 <div class="cs-header">
                   <div class="cs-identity">
-                    <div class="cs-photo-frame">
-                      <div class="skeleton cs-photo"></div>
-                      <div class="skeleton cs-name"></div>
-                    </div>
+                    <div class="skeleton cs-photo"></div>
                     <div class="cs-ident-text">
                       <div class="cs-chips">
                         <div class="skeleton cs-chip"></div>
@@ -328,6 +331,9 @@
     <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script defer src="lazy-load.js"></script>
     <script src="headshots.js"></script>
+    <!-- Couleurs d'équipe pour le bandeau du nom de la modale de carrière,
+         partagé avec draftActif.html. -->
+    <script defer src="teamColors.js"></script>
     <script defer src="index.js?v=20250101-debug2"></script>
     <!-- Logo d'équipe du tableau de carrière, partagé avec draftActif.html. -->
     <script defer src="careerTeamLogo.js"></script>

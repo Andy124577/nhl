@@ -395,6 +395,17 @@
   <!-- Career Stats Modal - NHL.com Style -->
   <div id="careerStatsModal" class="modal">
     <div class="modal-content career-modal">
+      <!-- Bandeau du nom, aux couleurs de l'équipe courante du joueur (via
+           getTeamColors() de teamColors.js — même source que les cartes de
+           repêchage, jamais de couleur inventée). Rangée distincte
+           au-dessus de #careerModalHeader plutôt qu'à l'intérieur : c'est
+           elle qui porte désormais les coins arrondis du haut de la carte.
+           #careerPlayerName reste un id stable ; seul son parent a changé,
+           donc draftActif.js n'a rien à savoir de ce déplacement. -->
+      <div class="cmh-name-banner" id="careerNameBanner" style="display: none;">
+        <h2 id="careerPlayerName"></h2>
+      </div>
+
       <!-- Career Modal Header with Player Photo -->
       <div class="career-modal-header" id="careerModalHeader" style="display: none;">
         <!-- Classes préfixées « cmh- » : .bio-pill et consorts sont définies
@@ -403,17 +414,10 @@
              Tous les id sont conservés : draftActif.js les remplit. -->
         <span class="close-modal" onclick="closeCareerModal()">&times;</span>
 
-        <!-- Grande vignette + colonne d'identité. Le nom se superpose au bas
-             de la photo (calque dégradé, cf. .cmh-photo-name) plutôt que de
-             vivre dans la colonne de texte : #careerPlayerName reste un id
-             stable, seul son parent change, donc draftActif.js n'a rien à
-             savoir de ce déplacement. -->
+        <!-- Grande vignette + colonne d'identité. -->
         <div class="cmh-identity">
-          <div class="cmh-photo-frame">
-            <div class="player-headshot-container" id="playerHeadshotContainer">
-              <div class="no-photo" data-icon="person" data-icon-size="44"></div>
-            </div>
-            <h2 class="cmh-photo-name" id="careerPlayerName"></h2>
+          <div class="player-headshot-container" id="playerHeadshotContainer">
+            <div class="no-photo" data-icon="person" data-icon-size="44"></div>
           </div>
           <div class="cmh-ident-text">
             <div class="cmh-chips">
@@ -462,12 +466,12 @@
            l'affichage par cet identifiant : le renommer ferait planter
            l'ouverture de la modale. -->
       <div class="skeleton-loader career-skeleton" id="loadingSpinner">
+        <div class="cs-name-banner">
+          <div class="skeleton cs-name-bar"></div>
+        </div>
         <div class="cs-header">
           <div class="cs-identity">
-            <div class="cs-photo-frame">
-              <div class="skeleton cs-photo"></div>
-              <div class="skeleton cs-name"></div>
-            </div>
+            <div class="skeleton cs-photo"></div>
             <div class="cs-ident-text">
               <div class="cs-chips">
                 <div class="skeleton cs-chip"></div>

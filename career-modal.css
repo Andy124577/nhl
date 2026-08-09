@@ -69,14 +69,46 @@
   color: var(--text-secondary);
 }
 
+/* ---------- Bandeau du nom, aux couleurs de l'équipe ----------
+   Nouvelle première rangée de la carte, au-dessus de .career-modal-header
+   — c'est donc elle qui porte les coins arrondis du haut désormais.
+   --team-primary / --team-secondary sont posées en ligne par JS via
+   getTeamColors() (teamColors.js) : même source que les cartes de
+   repêchage (voir DESIGN.md, « Real Teams Only Rule ») — jamais de
+   couleur inventée, et le repli neutre de getTeamColors() couvre déjà le
+   joueur sans équipe courante. Fond uni + liseré bas dans la secondaire :
+   même convention que --team-accent sur la carte de choix.
+   Le blanc du nom est littéral (demande explicite), avec une ombre portée
+   sombre pour rester lisible même sur les couleurs primaires claires
+   (BOS/NSH/PIT jaune, VGK doré, UTA bleu pâle) où un blanc nu manquerait
+   de contraste. */
+.cmh-name-banner {
+  margin: -20px -20px 0;
+  padding: 12px 20px 10px;
+  border-radius: 18px 18px 0 0;
+  background: var(--team-primary, var(--bg-gray-light));
+  border-bottom: 3px solid var(--team-secondary, var(--border-light));
+}
+.cmh-name-banner h2 {
+  margin: 0;
+  font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 400; /* Bebas Neue est nativement grasse */
+  line-height: 1;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .55), 0 0 10px rgba(0, 0, 0, .3);
+  overflow-wrap: break-word;
+}
+
 .career-modal-header {
-  margin: -20px -20px 14px;
+  margin: 0 -20px 14px;
   padding: 20px;
   background:
     linear-gradient(135deg, rgba(0, 212, 255, .14), rgba(0, 212, 255, 0) 65%),
     var(--bg);
   border-bottom: 1px solid var(--border-light);
-  border-radius: 18px 18px 0 0;
 }
 /* ---------- Identité : photo agrandie + nom, une seule rangée ---------- */
 .cmh-identity {
@@ -85,15 +117,8 @@
   gap: 12px;
   min-width: 0;
 }
-/* Cadre positionné : ancre le nom en superposition au bas de la photo
-   (.cmh-photo-name). La vignette elle-même reste la cible innerHTML de
-   draftActif.js/index.js — le nom vit à côté, jamais dedans, pour ne pas se
-   faire écraser à chaque joueur affiché. */
-.cmh-photo-frame {
-  position: relative;
-  flex: 0 0 auto;
-}
 .player-headshot-container {
+  flex: 0 0 auto;
   width: 116px;
   height: 116px;
   display: flex;
@@ -107,36 +132,6 @@
 }
 .player-headshot-container img { width: 100%; height: 100%; object-fit: cover; }
 .player-headshot-container .no-photo { color: var(--text-light-gray); font-size: 2rem; }
-
-/* Nom en superposition : calque dégradé pour rester lisible quelle que soit
-   la photo derrière. Blanc littéral plutôt que --text-main/--primary — la
-   lisibilité ici dépend du calque sombre, pas du thème de l'app (même
-   raison que le fond blanc littéral de .cmh-chip img).
-   Sélecteur composé (`.cmh-photo-frame .cmh-photo-name`), pas la seule
-   classe : `.modal-content h2` (ligne 64) cible aussi ce h2 avec une
-   spécificité plus élevée (une classe + un type) et lui imposait sa taille,
-   sa marge et sa couleur — le nom débordait du cadre de la photo au lieu de
-   s'y superposer proprement. */
-.cmh-photo-frame .cmh-photo-name {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  margin: 0;
-  padding: 8px 8px 6px;
-  border-radius: 0 0 14px 14px;
-  background: linear-gradient(to top, rgba(0, 0, 0, .8), rgba(0, 0, 0, 0) 75%);
-  font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
-  font-size: .82rem;
-  font-weight: 400; /* Bebas Neue est nativement grasse */
-  line-height: 1.05;
-  letter-spacing: .2px;
-  text-transform: uppercase;
-  color: #fff;
-  text-align: center;
-  overflow-wrap: break-word;
-  pointer-events: none;
-}
 
 .cmh-ident-text { flex: 1; min-width: 0; }
 .cmh-chips {
@@ -434,7 +429,7 @@
   max-height: calc(100dvh - 56px);
   overflow: hidden;
 }
-.career-modal-header { flex: 0 0 auto; }
+.cmh-name-banner, .career-modal-header { flex: 0 0 auto; }
 /* `flex: 0 1 auto` : le tableau se rétracte quand la place manque, mais ne
    s'étire jamais — une seule saison ne doit pas occuper la hauteur de dix.
    `min-height: 0` autorise cette rétraction en contexte flex, sans quoi la
@@ -461,7 +456,8 @@
 @media (min-width: 600px) {
   .player-headshot-container { width: 152px; height: 152px; border-radius: 18px; }
   .player-headshot-container .no-photo { font-size: 2.6rem; }
-  .cmh-photo-frame .cmh-photo-name { font-size: 1.05rem; padding: 10px 10px 8px; border-radius: 0 0 18px 18px; }
+  .cmh-name-banner { padding: 14px 20px 12px; }
+  .cmh-name-banner h2 { font-size: 1.9rem; letter-spacing: .6px; }
   .cmh-identity { gap: 18px; }
   .cmh-chip { font-size: .7rem; padding: 3px 9px; }
   .cmh-stats { gap: 22px; margin-top: 10px; padding-top: 9px; }
@@ -478,12 +474,13 @@
 @media (min-width: 1024px) {
   .modal { padding: 26px; }
   .modal-content { margin: 24px auto; padding: 24px; }
-  .career-modal-header { margin: -24px -24px 16px; padding: 24px; }
+  .career-modal-header { margin: 0 -24px 16px; padding: 24px; }
   /* Rembourrage et marge changent ici : la hauteur maximale suit. */
   .career-modal { max-height: calc(100dvh - 100px); }
   .player-headshot-container { width: 184px; height: 184px; border-radius: 18px; border-width: 3px; }
   .player-headshot-container .no-photo { font-size: 3.2rem; }
-  .cmh-photo-frame .cmh-photo-name { font-size: 1.3rem; padding: 12px 12px 10px; border-radius: 0 0 18px 18px; }
+  .cmh-name-banner { margin: -24px -24px 0; padding: 16px 24px 14px; }
+  .cmh-name-banner h2 { font-size: 2.3rem; letter-spacing: .8px; }
   .cmh-identity { gap: 22px; }
   .cmh-season-val { font-size: 1.9rem; }
 }
@@ -543,28 +540,35 @@
   overflow: hidden;
 }
 
+/* ---- Bandeau du nom : calque .cmh-name-banner ----
+   Neutre au chargement (pas encore de couleur d'équipe à afficher) — le
+   fond vient de .cs-header .skeleton comme le reste du squelette. */
+.cs-name-banner {
+  margin: -20px -20px 0;
+  padding: 12px 20px 10px;
+  border-radius: 18px 18px 0 0;
+  border-bottom: 3px solid var(--border-light);
+}
+.cs-name-bar { height: 20px; width: min(60%, 220px); border-radius: 5px; }
+
 /* ---- En-tête : calque .career-modal-header ---- */
 .cs-header {
-  margin: -20px -20px 14px;
+  margin: 0 -20px 14px;
   padding: 20px;
   background:
     linear-gradient(135deg, rgba(0, 212, 255, .14), rgba(0, 212, 255, 0) 65%),
     var(--bg);
   border-bottom: 1px solid var(--border-light);
-  border-radius: 18px 18px 0 0;
 }
 /* Le degrade de .skeleton part de --bg, qui est aussi le fond de
    .cs-header : au repos les blocs y disparaissent et seule la lueur qui
    passe les revele. On repart donc du fond des cellules reelles. */
-.cs-header .skeleton {
+.cs-header .skeleton, .cs-name-banner .skeleton {
   background-image: linear-gradient(90deg,
     var(--bg-odd-row) 0, var(--card-white) 20%, var(--bg-odd-row) 40%, var(--bg-odd-row) 100%);
 }
 .cs-identity { display: flex; align-items: center; gap: 12px; }
-.cs-photo-frame { position: relative; flex: 0 0 auto; }
-.cs-photo { width: 116px; height: 116px; border-radius: 14px; }
-/* Calque .cmh-photo-name : le nom se superpose au bas de la photo. */
-.cs-name { position: absolute; left: 8px; right: 8px; bottom: 6px; height: 10px; border-radius: 4px; }
+.cs-photo { flex: 0 0 auto; width: 116px; height: 116px; border-radius: 14px; }
 .cs-ident-text { flex: 1; min-width: 0; }
 .cs-chips { display: flex; gap: 5px; margin-top: 6px; }
 .cs-chip { width: 46px; height: 20px; border-radius: 5px; }
@@ -655,9 +659,10 @@
 }
 
 @media (min-width: 600px) {
+  .cs-name-banner { padding: 14px 20px 12px; }
+  .cs-name-bar { height: 24px; }
   .cs-identity { gap: 18px; }
   .cs-photo { width: 152px; height: 152px; border-radius: 18px; }
-  .cs-name { left: 10px; right: 10px; bottom: 8px; height: 12px; }
   .cs-stats { gap: 22px; margin-top: 10px; padding-top: 9px; }
   .cs-stats-col { gap: 10px; }
   .cs-stat-row { height: 14px; }
@@ -668,10 +673,11 @@
   .cs-season-num { width: 34px; height: 22px; }
 }
 @media (min-width: 1024px) {
-  .cs-header { margin: -24px -24px 16px; padding: 24px; }
+  .cs-name-banner { margin: -24px -24px 0; padding: 16px 24px 14px; }
+  .cs-name-bar { height: 28px; }
+  .cs-header { margin: 0 -24px 16px; padding: 24px; }
   .cs-identity { gap: 22px; }
   .cs-photo { width: 184px; height: 184px; border-radius: 18px; }
-  .cs-name { left: 12px; right: 12px; bottom: 10px; height: 14px; }
   .cs-season-num { width: 38px; height: 26px; }
 }
 

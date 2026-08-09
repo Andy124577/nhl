@@ -392,7 +392,8 @@ async function showCareerStats(t, e, a = !1) {
         d = document.getElementById("playerHeadshotContainer"),
         i = document.getElementById("careerFilters"),
         c = document.getElementById("careerStatsTable"),
-            p = document.getElementById("careerSeasonHighlight");
+            p = document.getElementById("careerSeasonHighlight"),
+            g = document.getElementById("careerNameBanner");
     currentPlayerId = t, n.style.display = "block", document.body.style.overflow = "hidden", showModalSkeleton(), document.getElementById("viewFilter").value = "career", document.getElementById("leagueFilter").value = "nhl", document.getElementById("gameTypeFilter").value = "regular";
     try {
         const e = await fetch(`${BASE_URL}/player-career/${t}`);
@@ -402,6 +403,9 @@ async function showCareerStats(t, e, a = !1) {
             const t = getTeamLogoPath(a.currentTeam);
             r.innerHTML = t ? `<img src="${t}" alt="${a.currentTeam}"> ${a.currentTeam}` : a.currentTeam
         } else r.textContent = "";
+        g.style.display = "block";
+        const tc = getTeamColors(a.currentTeam);
+        g.style.setProperty("--team-primary", tc[0]), g.style.setProperty("--team-secondary", tc[1]);
         if (a.headshot ? d.innerHTML = `<img src="${a.headshot}" alt="${a.playerName}">` : d.innerHTML = '<div class="no-photo">🏒</div>', document.getElementById("playerHeight").textContent = a.height || "-", document.getElementById("playerWeight").textContent = a.weight ? `${a.weight} lb` : "-", a.birthDate) {
             const t = new Date(a.birthDate),
                 e = new Date;
@@ -561,9 +565,10 @@ function hideSkeletonLoader() {
 function showModalSkeleton() {
     const t = document.getElementById("modalSkeleton"),
         e = document.getElementById("careerModalHeader"),
+        g = document.getElementById("careerNameBanner"),
         a = document.getElementById("careerFilters"),
         n = document.getElementById("careerStatsTable");
-    t && (t.style.display = "block"), e && (e.style.display = "none"), a && (a.style.display = "none"), n && (n.innerHTML = "")
+    t && (t.style.display = "block"), e && (e.style.display = "none"), g && (g.style.display = "none"), a && (a.style.display = "none"), n && (n.innerHTML = "")
 }
 
 function hideModalSkeleton() {
