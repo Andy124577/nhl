@@ -2288,7 +2288,13 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 #playerTable {
   --col-rank: 58px;
   --col-stat: 46px;
-  --col-action: 92px;
+  /* Un seul bouton icône (select ou étoile, jamais les deux) remplit toute
+     la colonne (width: 100%, plus bas) : 92px lui laissait une vingtaine de
+     pixels de vide de chaque côté de l'icône. 64px reste bien au-dessus du
+     minimum tactile de 44px tout en rendant le reste au nom, colonne
+     flex-grow juste avant. Phone/petit phone (≤700px, ≤480px) restent
+     intacts : leurs colonnes sont déjà proches du plancher tactile. */
+  --col-action: 64px;
 
   display: block;
   min-width: 0;
@@ -2462,7 +2468,7 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 
 /* ---- Tablette ---- */
 @media (max-width: 900px) {
-  #playerTable { --col-stat: 40px; --col-action: 84px; }
+  #playerTable { --col-stat: 40px; --col-action: 60px; }
 }
 
 /* ---- Téléphone ----
