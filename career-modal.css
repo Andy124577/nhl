@@ -111,8 +111,13 @@
 /* Nom en superposition : calque dégradé pour rester lisible quelle que soit
    la photo derrière. Blanc littéral plutôt que --text-main/--primary — la
    lisibilité ici dépend du calque sombre, pas du thème de l'app (même
-   raison que le fond blanc littéral de .cmh-chip img). */
-.cmh-photo-name {
+   raison que le fond blanc littéral de .cmh-chip img).
+   Sélecteur composé (`.cmh-photo-frame .cmh-photo-name`), pas la seule
+   classe : `.modal-content h2` (ligne 64) cible aussi ce h2 avec une
+   spécificité plus élevée (une classe + un type) et lui imposait sa taille,
+   sa marge et sa couleur — le nom débordait du cadre de la photo au lieu de
+   s'y superposer proprement. */
+.cmh-photo-frame .cmh-photo-name {
   position: absolute;
   left: 0;
   right: 0;
@@ -223,6 +228,16 @@
 /* Repêchage : chaîne plus longue que les autres rangées (année, tour,
    choix, équipe) — un cran plus petit pour rester sur une seule ligne. */
 #playerDraft { font-size: .64rem; }
+/* Lieu : une seule ligne, jamais de retour. L'état/province est déjà
+   abrégé côté JS (PROV_ABBR dans draftActif.js/index.js — Ontario → ON) ;
+   ceci tronque la ville avec des points de suspension si le résultat ne
+   tient toujours pas (grandes villes, pays sans abréviation connue). */
+#playerBirthPlace {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ---------- Faits saillants de la saison en cours ----------
    Pleine largeur, sous .cmh-identity (photo + colonne d'identité) plutôt
@@ -446,7 +461,7 @@
 @media (min-width: 600px) {
   .player-headshot-container { width: 152px; height: 152px; border-radius: 18px; }
   .player-headshot-container .no-photo { font-size: 2.6rem; }
-  .cmh-photo-name { font-size: 1.05rem; padding: 10px 10px 8px; border-radius: 0 0 18px 18px; }
+  .cmh-photo-frame .cmh-photo-name { font-size: 1.05rem; padding: 10px 10px 8px; border-radius: 0 0 18px 18px; }
   .cmh-identity { gap: 18px; }
   .cmh-chip { font-size: .7rem; padding: 3px 9px; }
   .cmh-stats { gap: 22px; margin-top: 10px; padding-top: 9px; }
@@ -468,7 +483,7 @@
   .career-modal { max-height: calc(100dvh - 100px); }
   .player-headshot-container { width: 184px; height: 184px; border-radius: 18px; border-width: 3px; }
   .player-headshot-container .no-photo { font-size: 3.2rem; }
-  .cmh-photo-name { font-size: 1.3rem; padding: 12px 12px 10px; border-radius: 0 0 18px 18px; }
+  .cmh-photo-frame .cmh-photo-name { font-size: 1.3rem; padding: 12px 12px 10px; border-radius: 0 0 18px 18px; }
   .cmh-identity { gap: 22px; }
   .cmh-season-val { font-size: 1.9rem; }
 }

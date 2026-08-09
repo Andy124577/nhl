@@ -11,6 +11,7 @@ const STATS_PAGE_SIZE = 25;
 let statsVisibleCount = STATS_PAGE_SIZE;
 let statsFullList = [];
 const BASE_URL = window.location.hostname.includes("localhost") ? "http://localhost:3000" : window.location.origin;
+const PROV_ABBR = {"Alberta":"AB","British Columbia":"BC","Manitoba":"MB","New Brunswick":"NB","Newfoundland and Labrador":"NL","Northwest Territories":"NT","Nova Scotia":"NS","Nunavut":"NU","Ontario":"ON","Prince Edward Island":"PE","Quebec":"QC","Québec":"QC","Saskatchewan":"SK","Yukon":"YT","Alabama":"AL","Alaska":"AK","Arizona":"AZ","Arkansas":"AR","California":"CA","Colorado":"CO","Connecticut":"CT","Delaware":"DE","Florida":"FL","Georgia":"GA","Hawaii":"HI","Idaho":"ID","Illinois":"IL","Indiana":"IN","Iowa":"IA","Kansas":"KS","Kentucky":"KY","Louisiana":"LA","Maine":"ME","Maryland":"MD","Massachusetts":"MA","Michigan":"MI","Minnesota":"MN","Mississippi":"MS","Missouri":"MO","Montana":"MT","Nebraska":"NE","Nevada":"NV","New Hampshire":"NH","New Jersey":"NJ","New Mexico":"NM","New York":"NY","North Carolina":"NC","North Dakota":"ND","Ohio":"OH","Oklahoma":"OK","Oregon":"OR","Pennsylvania":"PA","Rhode Island":"RI","South Carolina":"SC","South Dakota":"SD","Tennessee":"TN","Texas":"TX","Utah":"UT","Vermont":"VT","Virginia":"VA","Washington":"WA","West Virginia":"WV","Wisconsin":"WI","Wyoming":"WY","District of Columbia":"DC"};
 
 function getCurrentPlayerStats(t, e) {
     if (!currentStats || !currentStats.players) return null;
@@ -409,7 +410,7 @@ async function showCareerStats(t, e, a = !1) {
             (s < 0 || 0 === s && e.getDate() < t.getDate()) && n--, document.getElementById("playerBirthDate").textContent = `${a.birthDate} (${n})`
         } else document.getElementById("playerBirthDate").textContent = "-";
         let n = "";
-        if (a.birthCity && (n += a.birthCity), a.birthStateProvince && (n += (n ? ", " : "") + a.birthStateProvince), document.getElementById("playerBirthPlace").textContent = n || "-", a.draftInfo) {
+        if (a.birthCity && (n += a.birthCity), a.birthStateProvince && (n += (n ? ", " : "") + (PROV_ABBR[a.birthStateProvince] || a.birthStateProvince)), document.getElementById("playerBirthPlace").textContent = n || "-", a.draftInfo) {
             const t = a.draftInfo,
                 e = `${t.year}: Rd ${t.round}, Ch. ${t.pickInRound} (${t.teamAbbrev})`;
             document.getElementById("playerDraft").textContent = e
