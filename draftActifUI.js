@@ -213,6 +213,7 @@ function refreshCategoryTabs() {}
    ============================================================ */
 function initPanelTabs() {
     const conteneur = document.querySelector('.draft-main-container');
+    const entete = document.querySelector('.draft-header');
     if (!conteneur || document.getElementById('panelTabs')) return;
 
     const groupes = [
@@ -268,6 +269,12 @@ function initPanelTabs() {
             t.setAttribute('aria-selected', String(on));
             t.tabIndex = on ? 0 : -1;
         });
+        // Le bandeau collant (progression, tour, carrousel) n'a plus lieu
+        // d'être une fois qu'on est dans la liste : c'est déjà ce qui y a
+        // amené (le bouton « Faire ma sélection »), et il ne fait plus que
+        // voler de la hauteur au tableau. Il revient dès qu'on quitte
+        // l'onglet — jamais retiré du DOM, seulement masqué.
+        if (entete) entete.style.display = actif === 'joueurs' ? 'none' : '';
     };
 
     const activer = (cle, focus) => {
