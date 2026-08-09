@@ -198,7 +198,7 @@
   color: var(--text-main);
   overflow-wrap: break-word;
 }
-.cmh-stat-sep { color: var(--text-gray); font-weight: 500; margin: 0 2px; }
+.cmh-stat-sep { color: var(--text-main); font-weight: 700; margin: 0 4px 0 0; }
 /* Repêchage : chaîne plus longue que les autres rangées (année, tour,
    choix, équipe) — un cran plus petit pour rester sur une seule ligne. */
 #playerDraft { font-size: .64rem; }
@@ -498,7 +498,6 @@
 .cs-stats-col:nth-child(1) .cs-stat-row:nth-child(2) { width: 55%; }
 .cs-stats-col:nth-child(1) .cs-stat-row:nth-child(3) { width: 85%; }
 .cs-stats-col:nth-child(2) .cs-stat-row:nth-child(1) { width: 65%; }
-.cs-stats-col:nth-child(2) .cs-stat-row:nth-child(2) { width: 45%; }
 
 /* ---- Filtres : calque .career-filters / .filter-group-career ---- */
 /* 51px : hauteur mesuree d'un .filter-group-career (etiquette 14 + ecart 3

@@ -405,10 +405,10 @@ async function showCareerStats(t, e, a = !1) {
                 e = new Date;
             let n = e.getFullYear() - t.getFullYear();
             const s = e.getMonth() - t.getMonth();
-            (s < 0 || 0 === s && e.getDate() < t.getDate()) && n--, document.getElementById("playerBirthDate").textContent = `${a.birthDate} (Âge: ${n})`
+            (s < 0 || 0 === s && e.getDate() < t.getDate()) && n--, document.getElementById("playerBirthDate").textContent = `${a.birthDate} (${n})`
         } else document.getElementById("playerBirthDate").textContent = "-";
         let n = "";
-        if (a.birthCity && (n += a.birthCity), a.birthStateProvince && (n += (n ? ", " : "") + a.birthStateProvince), a.birthCountry && (n += (n ? ", " : "") + a.birthCountry), document.getElementById("playerBirthPlace").textContent = n || "-", document.getElementById("playerShoots").textContent = a.shootsCatches || "-", a.draftInfo) {
+        if (a.birthCity && (n += a.birthCity), a.birthStateProvince && (n += (n ? ", " : "") + a.birthStateProvince), document.getElementById("playerBirthPlace").textContent = n || "-", a.draftInfo) {
             const t = a.draftInfo,
                 e = `${t.year} · ${1 === t.round ? "1er" : t.round + "e"} tour, ${1 === t.pickInRound ? "1er" : t.pickInRound + "e"} choix (${t.teamAbbrev})`;
             document.getElementById("playerDraft").textContent = e
