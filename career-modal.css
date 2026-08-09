@@ -167,30 +167,31 @@
 }
 
 /* ---------- Liste compacte des informations secondaires ----------
-   Remplace l'ancienne grille de cellules (.cmh-grid/.cmh-cell) : chaque
-   fait tient sur une seule rangée fine (libellé à gauche, valeur alignée
-   à droite), sans fond ni bordure de carte — la densité vient de la
-   typographie, pas d'un conteneur. Vit sous .cmh-chips, dans la même
-   colonne que le nom, à côté de la photo agrandie. */
+   Remplace l'ancienne grille de cellules (.cmh-grid/.cmh-cell) : deux
+   colonnes (.cmh-stats-col) côte à côte plutôt qu'une pile pleine
+   largeur — même nombre de faits, environ moitié moins de hauteur.
+   Libellé au-dessus de la valeur dans chaque rangée (pas côte à côte) :
+   une fois la largeur coupée en deux, une rangée libellé/valeur sur une
+   ligne n'a plus la place de respirer. Vit sous .cmh-chips, dans la
+   même colonne que le nom, à côté de la photo agrandie. */
 .cmh-stats {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  gap: 16px;
   margin-top: 8px;
   padding-top: 7px;
   border-top: 1px solid var(--border-light);
 }
-.cmh-stat-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-}
-.cmh-stat-row .cmh-mini-lbl { flex: 0 0 auto; white-space: nowrap; }
-.cmh-stat-val {
-  flex: 1 1 auto;
+.cmh-stats-col {
+  flex: 1 1 0;
   min-width: 0;
-  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.cmh-stat-row { min-width: 0; }
+.cmh-stat-row .cmh-mini-lbl { margin-bottom: 1px; }
+.cmh-stat-val {
+  display: block;
   font-size: .72rem;
   font-weight: 700;
   line-height: 1.25;
@@ -379,7 +380,8 @@
   .cmh-ident-text h2 { font-size: 1.9rem; letter-spacing: .6px; }
   .cmh-identity { gap: 18px; }
   .cmh-chip { font-size: .7rem; padding: 3px 9px; }
-  .cmh-stats { gap: 4px; margin-top: 10px; padding-top: 9px; }
+  .cmh-stats { gap: 22px; margin-top: 10px; padding-top: 9px; }
+  .cmh-stats-col { gap: 6px; }
   .cmh-stat-row .cmh-mini-lbl { font-size: .62rem; }
   .cmh-stat-val { font-size: .82rem; }
   #playerDraft { font-size: .72rem; }
@@ -476,21 +478,27 @@
 .cs-chips { display: flex; gap: 5px; margin-top: 6px; }
 .cs-chip { width: 46px; height: 20px; border-radius: 5px; }
 
-/* ---- Liste d'informations : calque .cmh-stats / .cmh-stat-row ---- */
+/* ---- Liste d'informations : calque .cmh-stats / .cmh-stats-col ---- */
 .cs-stats {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  gap: 16px;
   margin-top: 8px;
   padding-top: 7px;
   border-top: 1px solid var(--border-light);
 }
+.cs-stats-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 .cs-stat-row { height: 12px; border-radius: 6px; }
-.cs-stat-row:nth-child(1) { width: 62%; }
-.cs-stat-row:nth-child(2) { width: 48%; }
-.cs-stat-row:nth-child(3) { width: 70%; }
-.cs-stat-row:nth-child(4) { width: 80%; }
-.cs-stat-row:nth-child(5) { width: 55%; }
+.cs-stats-col:nth-child(1) .cs-stat-row:nth-child(1) { width: 75%; }
+.cs-stats-col:nth-child(1) .cs-stat-row:nth-child(2) { width: 55%; }
+.cs-stats-col:nth-child(1) .cs-stat-row:nth-child(3) { width: 85%; }
+.cs-stats-col:nth-child(2) .cs-stat-row:nth-child(1) { width: 65%; }
+.cs-stats-col:nth-child(2) .cs-stat-row:nth-child(2) { width: 45%; }
 
 /* ---- Filtres : calque .career-filters / .filter-group-career ---- */
 /* 51px : hauteur mesuree d'un .filter-group-career (etiquette 14 + ecart 3
@@ -540,7 +548,8 @@
   .cs-identity { gap: 18px; }
   .cs-photo { width: 152px; height: 152px; border-radius: 18px; }
   .cs-name { height: 34px; }
-  .cs-stats { gap: 8px; margin-top: 10px; padding-top: 9px; }
+  .cs-stats { gap: 22px; margin-top: 10px; padding-top: 9px; }
+  .cs-stats-col { gap: 10px; }
   .cs-stat-row { height: 14px; }
   .cs-filters { padding: 10px 0; }
   .cs-filter { flex: 0 1 200px; }

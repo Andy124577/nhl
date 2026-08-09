@@ -404,9 +404,9 @@
         <span class="close-modal" onclick="closeCareerModal()">&times;</span>
 
         <!-- Grande vignette + colonne d'identité : nom, jetons (position,
-             équipe), puis toutes les infos restantes sous forme de liste
-             compacte (une rangée par fait, libellé/valeur), plus de grille
-             pleine largeur séparée. -->
+             équipe), puis toutes les infos restantes en deux colonnes
+             (gabarit / carrière) plutôt qu'une pile pleine largeur — moitié
+             moins de hauteur pour les cinq mêmes faits. -->
         <div class="cmh-identity">
           <div class="player-headshot-container" id="playerHeadshotContainer">
             <div class="no-photo" data-icon="person" data-icon-size="44"></div>
@@ -420,25 +420,29 @@
               <span class="cmh-chip cmh-chip-team"><span id="careerPlayerTeam"></span></span>
             </div>
             <div class="cmh-stats">
-              <div class="cmh-stat-row">
-                <span class="cmh-mini-lbl">Taille / Poids</span>
-                <span class="cmh-stat-val"><span id="playerHeight">-</span><span class="cmh-stat-sep">/</span><span id="playerWeight">-</span></span>
+              <div class="cmh-stats-col">
+                <div class="cmh-stat-row">
+                  <span class="cmh-mini-lbl">Taille / Poids</span>
+                  <span class="cmh-stat-val"><span id="playerHeight">-</span><span class="cmh-stat-sep">/</span><span id="playerWeight">-</span></span>
+                </div>
+                <div class="cmh-stat-row">
+                  <span class="cmh-mini-lbl">Né le</span>
+                  <span class="cmh-stat-val" id="playerBirthDate">-</span>
+                </div>
+                <div class="cmh-stat-row">
+                  <span class="cmh-mini-lbl">Lieu</span>
+                  <span class="cmh-stat-val" id="playerBirthPlace">-</span>
+                </div>
               </div>
-              <div class="cmh-stat-row">
-                <span class="cmh-mini-lbl">Né le</span>
-                <span class="cmh-stat-val" id="playerBirthDate">-</span>
-              </div>
-              <div class="cmh-stat-row">
-                <span class="cmh-mini-lbl">Lieu</span>
-                <span class="cmh-stat-val" id="playerBirthPlace">-</span>
-              </div>
-              <div class="cmh-stat-row">
-                <span class="cmh-mini-lbl">Repêchage</span>
-                <span class="cmh-stat-val" id="playerDraft">-</span>
-              </div>
-              <div class="cmh-stat-row">
-                <span class="cmh-mini-lbl">Lance</span>
-                <span class="cmh-stat-val" id="playerShoots">-</span>
+              <div class="cmh-stats-col">
+                <div class="cmh-stat-row">
+                  <span class="cmh-mini-lbl">Repêchage</span>
+                  <span class="cmh-stat-val" id="playerDraft">-</span>
+                </div>
+                <div class="cmh-stat-row">
+                  <span class="cmh-mini-lbl">Lance</span>
+                  <span class="cmh-stat-val" id="playerShoots">-</span>
+                </div>
               </div>
             </div>
           </div>
@@ -460,11 +464,15 @@
                 <div class="skeleton cs-chip"></div>
               </div>
               <div class="cs-stats">
-                <div class="skeleton cs-stat-row"></div>
-                <div class="skeleton cs-stat-row"></div>
-                <div class="skeleton cs-stat-row"></div>
-                <div class="skeleton cs-stat-row"></div>
-                <div class="skeleton cs-stat-row"></div>
+                <div class="cs-stats-col">
+                  <div class="skeleton cs-stat-row"></div>
+                  <div class="skeleton cs-stat-row"></div>
+                  <div class="skeleton cs-stat-row"></div>
+                </div>
+                <div class="cs-stats-col">
+                  <div class="skeleton cs-stat-row"></div>
+                  <div class="skeleton cs-stat-row"></div>
+                </div>
               </div>
             </div>
           </div>
