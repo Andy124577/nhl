@@ -95,6 +95,24 @@ function fzPositionLabel(code) {
     return typeof pickPositionLabel === 'function' ? pickPositionLabel(code) : code;
 }
 
+/** Même regroupement que « Ma progression » (progress-card) : un groupe par
+ *  position, dans l'ordre où elles s'y comptent. */
+const FZ_GROUPES = [
+    { cle: 'offensive', libelle: 'Attaquants', icone: 'bolt' },
+    { cle: 'defensive', libelle: 'Défenseurs', icone: 'shield' },
+    { cle: 'rookie', libelle: 'Recrues', icone: 'star' },
+    { cle: 'goalie', libelle: 'Gardien', icone: 'goal' },
+    { cle: 'team', libelle: 'Équipe', icone: 'hockey' }
+];
+
+function fzGroupKeyFor(code, kind) {
+    if (code === '*') return 'rookie';
+    if (kind === 'goalie') return 'goalie';
+    if (kind === 'team') return 'team';
+    if (code === 'D') return 'defensive';
+    return 'offensive';
+}
+
 function fzPhotoAndLogo(nom, rec, kind) {
     if (kind === 'team') {
         const abbrev = typeof getTeamAbbreviation === 'function' ? getTeamAbbreviation(nom) : null;
@@ -290,6 +308,59 @@ function fzBuildFavoriteRow(nom) {
     return row;
 }
 
+/** Groupes actuellement dépliés — en mémoire seulement, comme le reste de
+ *  l'état d'interface de cette page (ex. panel-tabs) : pas besoin de
+ *  survivre à un rechargement. Repliés par défaut : la carte reste courte
+ *  tant qu'on n'a pas demandé à voir une position en particulier. */
+const fzGroupesOuverts = new Set();
+
+/** Une position, sa poignée et — si dépliée — ses rangées. */
+function fzBuildFavoriteGroup(groupe, noms) {
+    const bloc = document.createElement('div');
+    bloc.className = 'favorite-group';
+    bloc.dataset.position = groupe.cle;
+
+    const ouvert = fzGroupesOuverts.has(groupe.cle);
+    bloc.classList.toggle('is-open', ouvert);
+
+    const entete = document.createElement('button');
+    entete.type = 'button';
+    entete.className = 'favorite-group-header';
+    entete.setAttribute('aria-expanded', String(ouvert));
+
+    const icone = document.createElement('span');
+    icone.className = 'favorite-group-icon';
+    icone.innerHTML = typeof getIcon === 'function' ? getIcon(groupe.icone, 15) : '';
+    entete.appendChild(icone);
+
+    const libelle = document.createElement('span');
+    libelle.className = 'favorite-group-label';
+    libelle.textContent = groupe.libelle;
+    entete.appendChild(libelle);
+
+    const compte = document.createElement('span');
+    compte.className = 'favorite-group-count';
+    compte.textContent = String(noms.length);
+    entete.appendChild(compte);
+
+    const corps = document.createElement('div');
+    corps.className = 'favorite-group-body';
+    corps.hidden = !ouvert;
+    noms.forEach(nom => corps.appendChild(fzBuildFavoriteRow(nom)));
+
+    entete.addEventListener('click', () => {
+        const deplie = !bloc.classList.contains('is-open');
+        bloc.classList.toggle('is-open', deplie);
+        entete.setAttribute('aria-expanded', String(deplie));
+        corps.hidden = !deplie;
+        if (deplie) fzGroupesOuverts.add(groupe.cle); else fzGroupesOuverts.delete(groupe.cle);
+    });
+
+    bloc.appendChild(entete);
+    bloc.appendChild(corps);
+    return bloc;
+}
+
 function fzRenderFavoritesCard() {
     const liste = document.getElementById('favoritesList');
     if (!liste) return;
@@ -303,8 +374,18 @@ function fzRenderFavoritesCard() {
     }
     if (vide) vide.hidden = noms.length > 0;
 
+    const parGroupe = {};
+    noms.forEach(nom => {
+        const trouve = fzFindRecord(nom);
+        const cle = trouve ? fzGroupKeyFor(fzPositionCode(trouve.rec, trouve.kind), trouve.kind) : 'offensive';
+        (parGroupe[cle] = parGroupe[cle] || []).push(nom);
+    });
+
     liste.replaceChildren();
-    noms.forEach(nom => liste.appendChild(fzBuildFavoriteRow(nom)));
+    FZ_GROUPES.forEach(groupe => {
+        const membres = parGroupe[groupe.cle];
+        if (membres && membres.length) liste.appendChild(fzBuildFavoriteGroup(groupe, membres));
+    });
 }
 
 /* ============================================================

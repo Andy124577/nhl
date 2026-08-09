@@ -91,50 +91,94 @@ body {
 /* Placé au centre de .dop-info : plus de marge haute, il doit rester sur la
    même ligne de base que le libellé et la ronde. Il se replie sur sa propre
    ligne si les trois ne tiennent pas. */
-/* Le bandeau occupe sa propre ligne, sur toute la largeur, à 44 px de haut.
-   Il était une pastille de 22 px coincée entre le compteur de choix et le
-   numéro de ronde : le seul état que cette page existe pour transmettre était
-   le plus petit objet du bandeau. Il est maintenant le plus grand. */
+/* Le bandeau occupe sa propre ligne, sur toute la largeur. Il était une
+   pastille de 22 px coincée entre le compteur de choix et le numéro de
+   ronde : le seul état que cette page existe pour transmettre était le plus
+   petit objet du bandeau. Il porte maintenant une identité — écusson et
+   couleurs de l'équipe concernée (la vôtre à votre tour, celle qui vient de
+   choisir sinon), posés en ligne par draftActif.js (refreshTurnAlert) comme
+   sur une carte du carrousel (draftPickCards.js : mêmes --team-a/-b/-accent,
+   même assourdissement vers PICK_CARD_BASE — le texte reste blanc quelle que
+   soit l'équipe). Repli neutre (gris translucide) tant qu'aucune identité
+   n'est connue : avant le premier choix, ou repêchage sans club LNH choisi. */
 .turn-banner {
   order: 3;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   flex: 1 1 100%;
   min-width: 0;
   min-height: 33px;
-  padding: 4px 7px;
+  padding: 5px 12px;
   border: 1px solid transparent;
   border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, .16) 0%, rgba(0, 0, 0, 0) 60%),
+    linear-gradient(135deg, var(--team-a, rgba(168, 168, 176, .14)) 0%, var(--team-b, rgba(168, 168, 176, .14)) 100%);
+  color: #fff;
+}
+/* Le bandeau porte plusieurs enfants (écusson + texte + horloge) : `:empty`
+   ne pouvait donc plus le masquer. C'est l'absence d'état qui le masque. */
+.turn-banner:not(.waiting):not(.your-turn):not(.done) { display: none; }
+
+.turn-banner-logo {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  /* Pastille blanche : beaucoup de logos de la LNH sont à dominante sombre
+     et se fondraient dans un fond d'équipe lui aussi sombre (même raison que
+     .pick-card-logo-chip). */
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, .18);
+  overflow: hidden;
+}
+.turn-banner-logo[hidden] { display: none; }
+.turn-banner-logo img { width: 100%; height: 100%; object-fit: contain; padding: 3px; }
+
+.turn-banner-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1px;
+  min-width: 0;
+}
+.turn-banner-text {
+  max-width: 100%;
   /* Le body du système (1rem) plutôt qu'une valeur inventée : c'est le
      message le plus important de la page, il n'a pas à s'excuser en taille. */
   font-size: 1rem;
   font-weight: 800;
   letter-spacing: .02em;
-  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-/* Le bandeau porte maintenant deux enfants (texte + horloge) : `:empty` ne
-   pouvait donc plus le masquer. C'est l'absence d'état qui le masque. */
-.turn-banner:not(.waiting):not(.your-turn):not(.done) { display: none; }
-.turn-banner.waiting {
-  /* Teinte de --text-secondary : littérale plutôt que color-mix() (support
-     mobile, voir teamColors.js), donc pas mise à jour par le nouveau gris
-     neutre — orpheline depuis le changement de palette. rgb(168,168,176)
-     est la valeur actuelle de --text-secondary (#A8A8B0). */
-  background: rgba(168, 168, 176, .14);
-  border-color: var(--border-light);
-  color: var(--text-secondary);
+/* Numéro du choix : précision, pas message — plus petit, moins appuyé, sous
+   la ligne principale plutôt qu'à côté (le texte principal seul peut déjà
+   courir jusqu'à l'ellipse sur téléphone). */
+.turn-banner-sub {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  opacity: .82;
 }
+.turn-banner-sub:empty { display: none; }
+
+.turn-banner.waiting { border-color: rgba(255, 255, 255, .16); }
 .turn-banner.waiting.next {
-  background: rgba(255, 179, 0, .14);
-  border-color: rgba(255, 179, 0, .32);
-  color: var(--warning);
+  border-color: rgba(255, 179, 0, .55);
+  box-shadow: 0 0 0 1px rgba(255, 179, 0, .25) inset;
 }
 .turn-banner.your-turn {
-  background: rgba(0, 212, 255, .15);
-  border-color: rgba(0, 212, 255, .38);
-  color: var(--primary);
+  border-color: rgba(0, 212, 255, .55);
+  box-shadow: 0 0 0 1px rgba(0, 212, 255, .28) inset;
   animation: turnPulse 2s ease-in-out infinite;
 }
 .turn-banner.done {
@@ -3029,6 +3073,76 @@ html[data-theme="light"] .player-selection-card {
   font-weight: 800;
 }
 .favorites-list { display: flex; flex-direction: column; gap: 8px; }
+
+/* ---- Groupe par position ----
+   Même regroupement que « Ma progression » (.progress-line[data-position]) :
+   repliée par défaut, la poignée déplie ses rangées. Contrairement à ce
+   panneau-là, chaque groupe garde son propre corps (pas de panneau unique
+   déplacé dans le DOM) : plusieurs positions peuvent rester ouvertes à la
+   fois, ce qui a plus de sens pour une courte liste de favoris que pour la
+   liste complète des choix déjà faits. */
+.favorite-group {
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.favorite-group-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 0;
+  background: var(--bg-odd-row);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: .82rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .18s ease;
+}
+@media (hover: hover) {
+  .favorite-group-header:hover { background: rgba(0, 212, 255, .08); }
+}
+.favorite-group-header:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.favorite-group-icon { display: inline-flex; flex: 0 0 auto; color: var(--primary); }
+.favorite-group-label { flex: 1 1 auto; min-width: 0; }
+.favorite-group-count {
+  flex: 0 0 auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--bg-gray-light);
+  color: var(--text-secondary);
+  font-size: .7rem;
+  font-weight: 800;
+}
+/* Chevron : même repère que .progress-line[data-position]::after, pivoté
+   quand le groupe est ouvert. */
+.favorite-group-header::after {
+  content: '⌄';
+  flex: 0 0 auto;
+  font-size: .82rem;
+  line-height: 1;
+  color: var(--text-gray);
+  transition: transform .2s ease, color .2s ease;
+}
+.favorite-group.is-open .favorite-group-header::after { transform: rotate(180deg); color: var(--primary); }
+.favorite-group-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-top: 1px solid var(--border-light);
+}
+.favorite-group-body[hidden] { display: none; }
+
 .favorite-row {
   display: flex;
   align-items: center;

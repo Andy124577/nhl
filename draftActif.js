@@ -115,6 +115,65 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
         return -1;
     }
 
+    /**
+     * Écusson + couleurs d'équipe sur le bandeau, ou repli neutre si
+     * `equipePool` est vide ou que son club LNH n'est pas connu (repêchage
+     * commencé avant l'existence de ce choix — voir repechage.html). Même
+     * source et même assourdissement que les cartes du carrousel
+     * (draftPickCards.js : resolveDrafterClub, PICK_CARD_BASE,
+     * pickCardMuteRatio, mixHex, getTeamColors — toutes globales, chargées
+     * avant ce fichier), pour que le bandeau et la carte du tour en cours
+     * portent visiblement la même identité.
+     */
+    function appliquerIdentiteBanniere(equipePool) {
+        const banner = document.getElementById("turn-banner");
+        const zoneLogo = document.getElementById("turn-banner-logo");
+        const imgLogo = document.getElementById("turn-banner-logo-img");
+        if (!banner) return;
+
+        const club = (equipePool && typeof resolveDrafterClub === "function")
+            ? resolveDrafterClub(equipePool) : null;
+
+        if (club && typeof getTeamColors === "function") {
+            const [couleurA, couleurB] = getTeamColors(club.abbrev);
+            banner.style.setProperty("--team-a", mixHex(couleurA, PICK_CARD_BASE, pickCardMuteRatio(couleurA)));
+            banner.style.setProperty("--team-b", mixHex(couleurB, PICK_CARD_BASE, pickCardMuteRatio(couleurB) + 0.10));
+        } else {
+            banner.style.removeProperty("--team-a");
+            banner.style.removeProperty("--team-b");
+        }
+
+        if (zoneLogo && imgLogo) {
+            if (club && club.logo) {
+                imgLogo.src = club.logo;
+                imgLogo.alt = club.abbrev || "";
+                zoneLogo.hidden = false;
+            } else {
+                zoneLogo.hidden = true;
+                imgLogo.removeAttribute("src");
+            }
+        }
+    }
+
+    /** Bandeau « pas mon tour » : identité et texte du DERNIER choix fait. */
+    function appliquerDernierChoix() {
+        const texte = document.getElementById("turn-banner-text");
+        const sousTexte = document.getElementById("turn-banner-sub");
+        const historique = (draftData && draftData.picksHistory) || [];
+        const dernier = historique[historique.length - 1];
+
+        if (!dernier) {
+            appliquerIdentiteBanniere(null);
+            if (texte) texte.textContent = "⏳ En attente du premier choix";
+            if (sousTexte) sousTexte.textContent = "";
+            return;
+        }
+
+        appliquerIdentiteBanniere(dernier.team);
+        if (texte) texte.textContent = `${dernier.team} a sélectionné ${dernier.player}`;
+        if (sousTexte) sousTexte.textContent = `Choix #${historique.length}`;
+    }
+
     function refreshTurnAlert() {
         const banner = document.getElementById("turn-banner");
         const header = document.querySelector(".draft-header");
@@ -126,26 +185,33 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
         // Le texte vit dans un enfant : l'horloge du tour occupe l'autre, et
         // réécrire `textContent` du bandeau les effacerait tous les deux.
         const texte = document.getElementById("turn-banner-text") || banner;
+        const sousTexte = document.getElementById("turn-banner-sub");
 
         if (banner) {
             if (!hasData) {
                 banner.className = "turn-banner";
                 texte.textContent = "";
+                if (sousTexte) sousTexte.textContent = "";
+                appliquerIdentiteBanniere(null);
             } else if (done || away === -1) {
                 banner.className = "turn-banner done";
                 texte.textContent = "✓ Vous avez complété tous vos choix";
+                if (sousTexte) sousTexte.textContent = "";
+                appliquerIdentiteBanniere(null);
             } else if (myTurn) {
                 banner.className = "turn-banner your-turn";
                 // Court exprès : la bande occupe toute la largeur du bandeau
                 // collant, et « sélectionnez un joueur » n'apprenait rien —
                 // on est déjà sur l'écran qui ne fait que ça.
                 texte.textContent = "🎯 Votre tour !";
-            } else if (away === 1) {
-                banner.className = "turn-banner waiting next";
-                texte.textContent = "⏳ Vous êtes le prochain !";
+                if (sousTexte) {
+                    const numero = ((draftData.picksHistory || []).length) + 1;
+                    sousTexte.textContent = `Choix #${numero}`;
+                }
+                appliquerIdentiteBanniere(typeof getUserTeam === "function" ? getUserTeam() : null);
             } else {
-                banner.className = "turn-banner waiting";
-                texte.textContent = "⏳ " + away + " choix avant votre tour";
+                banner.className = "turn-banner waiting" + (away === 1 ? " next" : "");
+                appliquerDernierChoix();
             }
         }
         if (header) header.classList.toggle("is-my-turn", !!(myTurn && !done));

@@ -79,7 +79,17 @@
              rien du tout — la couleur, l'animation et le son ne lui parlent
              pas. `assertive` parce que rater son tour bloque tout le monde. -->
         <div id="turn-banner" class="turn-banner" role="status" aria-live="assertive">
-          <span class="turn-banner-text" id="turn-banner-text"></span>
+          <!-- Écusson de l'équipe concernée : la vôtre quand c'est votre tour,
+               celle qui vient de choisir sinon. Posé par draftActif.js
+               (refreshTurnAlert), même source que le blason des cartes du
+               carrousel (draftPickCards.js : resolveDrafterClub). -->
+          <span class="turn-banner-logo" id="turn-banner-logo" hidden>
+            <img id="turn-banner-logo-img" src="" alt="" />
+          </span>
+          <span class="turn-banner-body">
+            <span class="turn-banner-text" id="turn-banner-text"></span>
+            <span class="turn-banner-sub" id="turn-banner-sub"></span>
+          </span>
           <span class="turn-clock" id="turn-clock" hidden></span>
         </div>
         <span id="dop-round">Ronde 1</span>
