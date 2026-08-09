@@ -257,12 +257,14 @@
    Sous 769px, la marque cède sa place au pool actif : sur l'écran où le
    rail n'existe plus, savoir tout de suite dans quel pool on se trouve
    compte plus que le logo. Au-delà, la barre a la place pour les deux et
-   le rail affiche déjà « Pool actif » — la puce ne réapparaît pas. */
-@media (max-width: 768px) {
-    body.fz-has-sidebar .navbar-brand { display: none; }
-    .fz-navbar-pool { display: flex; }
-}
+   le rail affiche déjà « Pool actif » — la puce ne réapparaît pas.
 
+   Les styles de base DOIVENT précéder la media query ci-dessous : même
+   spécificité des deux côtés (un seul sélecteur de classe), donc c'est
+   l'ordre dans la feuille qui tranche. La media query passée avant se
+   faisait écraser par le `display: none` de base à toutes les largeurs —
+   la puce existait dans le DOM (voir poolNav.js) mais ne s'affichait
+   jamais, sur aucun écran. */
 .fz-navbar-pool {
     display: none;
     align-items: center;
@@ -302,6 +304,11 @@
     color: var(--bg);
     font-weight: 800;
     font-size: .88rem;
+}
+
+@media (max-width: 768px) {
+    body.fz-has-sidebar .navbar-brand { display: none; }
+    .fz-navbar-pool { display: flex; }
 }
 
 /* ==================== BOUTON ☰ ==================== */
