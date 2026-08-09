@@ -85,8 +85,15 @@
   gap: 12px;
   min-width: 0;
 }
-.player-headshot-container {
+/* Cadre positionné : ancre le nom en superposition au bas de la photo
+   (.cmh-photo-name). La vignette elle-même reste la cible innerHTML de
+   draftActif.js/index.js — le nom vit à côté, jamais dedans, pour ne pas se
+   faire écraser à chaque joueur affiché. */
+.cmh-photo-frame {
+  position: relative;
   flex: 0 0 auto;
+}
+.player-headshot-container {
   width: 116px;
   height: 116px;
   display: flex;
@@ -101,18 +108,32 @@
 .player-headshot-container img { width: 100%; height: 100%; object-fit: cover; }
 .player-headshot-container .no-photo { color: var(--text-light-gray); font-size: 2rem; }
 
-.cmh-ident-text { flex: 1; min-width: 0; }
-.cmh-ident-text h2 {
+/* Nom en superposition : calque dégradé pour rester lisible quelle que soit
+   la photo derrière. Blanc littéral plutôt que --text-main/--primary — la
+   lisibilité ici dépend du calque sombre, pas du thème de l'app (même
+   raison que le fond blanc littéral de .cmh-chip img). */
+.cmh-photo-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   margin: 0;
+  padding: 8px 8px 6px;
+  border-radius: 0 0 14px 14px;
+  background: linear-gradient(to top, rgba(0, 0, 0, .8), rgba(0, 0, 0, 0) 75%);
   font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
-  font-size: 1.5rem;
+  font-size: .82rem;
   font-weight: 400; /* Bebas Neue est nativement grasse */
-  line-height: .95;
-  letter-spacing: .4px;
+  line-height: 1.05;
+  letter-spacing: .2px;
   text-transform: uppercase;
-  color: var(--primary);
+  color: #fff;
+  text-align: center;
   overflow-wrap: break-word;
+  pointer-events: none;
 }
+
+.cmh-ident-text { flex: 1; min-width: 0; }
 .cmh-chips {
   display: flex;
   flex-wrap: wrap;
@@ -425,7 +446,7 @@
 @media (min-width: 600px) {
   .player-headshot-container { width: 152px; height: 152px; border-radius: 18px; }
   .player-headshot-container .no-photo { font-size: 2.6rem; }
-  .cmh-ident-text h2 { font-size: 1.9rem; letter-spacing: .6px; }
+  .cmh-photo-name { font-size: 1.05rem; padding: 10px 10px 8px; border-radius: 0 0 18px 18px; }
   .cmh-identity { gap: 18px; }
   .cmh-chip { font-size: .7rem; padding: 3px 9px; }
   .cmh-stats { gap: 22px; margin-top: 10px; padding-top: 9px; }
@@ -447,7 +468,7 @@
   .career-modal { max-height: calc(100dvh - 100px); }
   .player-headshot-container { width: 184px; height: 184px; border-radius: 18px; border-width: 3px; }
   .player-headshot-container .no-photo { font-size: 3.2rem; }
-  .cmh-ident-text h2 { font-size: 2.3rem; letter-spacing: .8px; }
+  .cmh-photo-name { font-size: 1.3rem; padding: 12px 12px 10px; border-radius: 0 0 18px 18px; }
   .cmh-identity { gap: 22px; }
   .cmh-season-val { font-size: 1.9rem; }
 }
@@ -525,9 +546,11 @@
     var(--bg-odd-row) 0, var(--card-white) 20%, var(--bg-odd-row) 40%, var(--bg-odd-row) 100%);
 }
 .cs-identity { display: flex; align-items: center; gap: 12px; }
-.cs-photo { flex: 0 0 auto; width: 116px; height: 116px; border-radius: 14px; }
+.cs-photo-frame { position: relative; flex: 0 0 auto; }
+.cs-photo { width: 116px; height: 116px; border-radius: 14px; }
+/* Calque .cmh-photo-name : le nom se superpose au bas de la photo. */
+.cs-name { position: absolute; left: 8px; right: 8px; bottom: 6px; height: 10px; border-radius: 4px; }
 .cs-ident-text { flex: 1; min-width: 0; }
-.cs-name { display: block; width: min(70%, 240px); height: 26px; border-radius: 6px; }
 .cs-chips { display: flex; gap: 5px; margin-top: 6px; }
 .cs-chip { width: 46px; height: 20px; border-radius: 5px; }
 
@@ -549,8 +572,8 @@
 .cs-stat-row { height: 12px; border-radius: 6px; }
 .cs-stats-col:nth-child(1) .cs-stat-row:nth-child(1) { width: 75%; }
 .cs-stats-col:nth-child(1) .cs-stat-row:nth-child(2) { width: 55%; }
-.cs-stats-col:nth-child(1) .cs-stat-row:nth-child(3) { width: 85%; }
-.cs-stats-col:nth-child(2) .cs-stat-row:nth-child(1) { width: 65%; }
+.cs-stats-col:nth-child(2) .cs-stat-row:nth-child(1) { width: 85%; }
+.cs-stats-col:nth-child(2) .cs-stat-row:nth-child(2) { width: 65%; }
 
 /* ---- Faits saillants de saison : calque .cmh-season-highlight ---- */
 .cs-season {
@@ -619,7 +642,7 @@
 @media (min-width: 600px) {
   .cs-identity { gap: 18px; }
   .cs-photo { width: 152px; height: 152px; border-radius: 18px; }
-  .cs-name { height: 34px; }
+  .cs-name { left: 10px; right: 10px; bottom: 8px; height: 12px; }
   .cs-stats { gap: 22px; margin-top: 10px; padding-top: 9px; }
   .cs-stats-col { gap: 10px; }
   .cs-stat-row { height: 14px; }
@@ -633,7 +656,7 @@
   .cs-header { margin: -24px -24px 16px; padding: 24px; }
   .cs-identity { gap: 22px; }
   .cs-photo { width: 184px; height: 184px; border-radius: 18px; }
-  .cs-name { height: 42px; }
+  .cs-name { left: 12px; right: 12px; bottom: 10px; height: 14px; }
   .cs-season-num { width: 38px; height: 26px; }
 }
 

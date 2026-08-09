@@ -403,16 +403,19 @@
              Tous les id sont conservés : draftActif.js les remplit. -->
         <span class="close-modal" onclick="closeCareerModal()">&times;</span>
 
-        <!-- Grande vignette + colonne d'identité : nom, jetons (position,
-             équipe), puis toutes les infos restantes en deux colonnes
-             (gabarit / carrière) plutôt qu'une pile pleine largeur — moitié
-             moins de hauteur pour les cinq mêmes faits. -->
+        <!-- Grande vignette + colonne d'identité. Le nom se superpose au bas
+             de la photo (calque dégradé, cf. .cmh-photo-name) plutôt que de
+             vivre dans la colonne de texte : #careerPlayerName reste un id
+             stable, seul son parent change, donc draftActif.js n'a rien à
+             savoir de ce déplacement. -->
         <div class="cmh-identity">
-          <div class="player-headshot-container" id="playerHeadshotContainer">
-            <div class="no-photo" data-icon="person" data-icon-size="44"></div>
+          <div class="cmh-photo-frame">
+            <div class="player-headshot-container" id="playerHeadshotContainer">
+              <div class="no-photo" data-icon="person" data-icon-size="44"></div>
+            </div>
+            <h2 class="cmh-photo-name" id="careerPlayerName"></h2>
           </div>
           <div class="cmh-ident-text">
-            <h2 id="careerPlayerName"></h2>
             <div class="cmh-chips">
               <!-- Pas d'icône ajoutée ici : draftActif.js préfixe déjà la
                    position d'un emoji (« 🏒 D », « 🥅 Gardien de but »). -->
@@ -429,12 +432,12 @@
                   <span class="cmh-mini-lbl">Né le</span>
                   <span class="cmh-stat-val" id="playerBirthDate">-</span>
                 </div>
+              </div>
+              <div class="cmh-stats-col">
                 <div class="cmh-stat-row">
                   <span class="cmh-mini-lbl">Lieu</span>
                   <span class="cmh-stat-val" id="playerBirthPlace">-</span>
                 </div>
-              </div>
-              <div class="cmh-stats-col">
                 <div class="cmh-stat-row">
                   <span class="cmh-mini-lbl">Repêchage</span>
                   <span class="cmh-stat-val" id="playerDraft">-</span>
@@ -461,9 +464,11 @@
       <div class="skeleton-loader career-skeleton" id="loadingSpinner">
         <div class="cs-header">
           <div class="cs-identity">
-            <div class="skeleton cs-photo"></div>
-            <div class="cs-ident-text">
+            <div class="cs-photo-frame">
+              <div class="skeleton cs-photo"></div>
               <div class="skeleton cs-name"></div>
+            </div>
+            <div class="cs-ident-text">
               <div class="cs-chips">
                 <div class="skeleton cs-chip"></div>
                 <div class="skeleton cs-chip"></div>

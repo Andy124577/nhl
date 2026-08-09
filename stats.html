@@ -195,11 +195,13 @@
                 <span class="close-modal" onclick="closeCareerModal()">&times;</span>
 
                 <div class="cmh-identity">
-                    <div class="player-headshot-container" id="playerHeadshotContainer">
-                        <div class="no-photo" data-icon="person" data-icon-size="44"></div>
+                    <div class="cmh-photo-frame">
+                        <div class="player-headshot-container" id="playerHeadshotContainer">
+                            <div class="no-photo" data-icon="person" data-icon-size="44"></div>
+                        </div>
+                        <h2 class="cmh-photo-name" id="careerPlayerName"></h2>
                     </div>
                     <div class="cmh-ident-text">
-                        <h2 id="careerPlayerName"></h2>
                         <div class="cmh-chips">
                             <span class="cmh-chip"><span id="careerPlayerPosition"></span></span>
                             <span class="cmh-chip cmh-chip-team"><span id="careerPlayerTeam"></span></span>
@@ -214,12 +216,12 @@
                                     <span class="cmh-mini-lbl">Né le</span>
                                     <span class="cmh-stat-val" id="playerBirthDate">-</span>
                                 </div>
+                            </div>
+                            <div class="cmh-stats-col">
                                 <div class="cmh-stat-row">
                                     <span class="cmh-mini-lbl">Lieu</span>
                                     <span class="cmh-stat-val" id="playerBirthPlace">-</span>
                                 </div>
-                            </div>
-                            <div class="cmh-stats-col">
                                 <div class="cmh-stat-row">
                                     <span class="cmh-mini-lbl">Repêchage</span>
                                     <span class="cmh-stat-val" id="playerDraft">-</span>
@@ -237,9 +239,11 @@
             <div class="skeleton-loader career-skeleton" id="modalSkeleton">
                 <div class="cs-header">
                   <div class="cs-identity">
-                    <div class="skeleton cs-photo"></div>
-                    <div class="cs-ident-text">
+                    <div class="cs-photo-frame">
+                      <div class="skeleton cs-photo"></div>
                       <div class="skeleton cs-name"></div>
+                    </div>
+                    <div class="cs-ident-text">
                       <div class="cs-chips">
                         <div class="skeleton cs-chip"></div>
                         <div class="skeleton cs-chip"></div>
