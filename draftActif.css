@@ -373,21 +373,6 @@ button.select-button.is-connection-blocked {
 .draft-center  { order: 1; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .draft-sidebar { order: 2; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
-/* Grand écran : la carte de sélection n'avait pas de plafond propre. Avec
-   l'onglet « Aperçu » masqué (initPanelTabs(), draftActifUI.js), elle
-   hérite de toute la largeur de .draft-main-container — jusqu'à 1400px.
-   Dans la rangée du tableau, seule la colonne du nom porte flex-grow ; sur
-   un écran large, elle absorbait donc à elle seule tout cet espace,
-   éloignant GP/G/A/PTS vers la droite au lieu de rester des colonnes bien
-   proportionnées. Un plafond raisonnable, comme les autres contenus en
-   liste dense du site, règle ça sans toucher aux colonnes elles-mêmes. */
-@media (min-width: 900px) {
-  .player-selection-card {
-    max-width: 760px;
-    margin: 0 auto;
-  }
-}
-
 /* ---------- Carte générique ---------- */
 .progress-card,
 .recent-picks-card,
