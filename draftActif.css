@@ -2513,17 +2513,59 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 /* ============================================================
    19b. SÉLECTION DE JOUEUR — HABILLAGE « PRO DRAFT »
    ------------------------------------------------------------
-   Île volontairement claire posée dans une page sombre : palette et
-   polices propres à cette carte (préfixe --psc-), distinctes des jetons
-   du site et non réactives au thème — la carte a son propre monde, fixe.
+   Polices et gabarit propres à cette carte (préfixe --psc-), distincts
+   des jetons du site — mais la palette EST réactive au thème depuis la
+   correction ci-dessous : la carte était une île blanche fixe posée dans
+   une page sombre par défaut, ce qui la rendait illisible avec le reste
+   de l'appli en thème noir. Les jetons --psc-* renvoient maintenant vers
+   les jetons du site (--bg-gray-light, --text-main, --primary…), qui
+   basculent déjà correctement d'un thème à l'autre ; l'apparence claire
+   d'origine est conservée telle quelle, mais seulement sous
+   html[data-theme="light"] (bloc juste en dessous).
    Placée en toute fin de fichier pour l'emporter sur les règles plus
    anciennes qui touchent les mêmes sélecteurs plus haut ; la mécanique
    responsive (colonnes en flex, variables --col-*) n'est pas touchée,
    seul l'habillage change. Portée : la carte de sélection et son
    sélecteur d'onglets téléphone (Disponible/Ma liste/Ordre), pas les
-   cartes de suivi voisines ni les états repêchage terminé/pas commencé.
-   ============================================================ */
+   cartes de suivi voisines ni les états repêchage terminé/pas commencé. */
 :root {
+  --psc-bg: var(--bg-gray-light);
+  --psc-surface: var(--card);
+  --psc-surface-low: var(--bg);
+  --psc-tint: rgba(0, 212, 255, .14);
+  /* Littéral et non réactif, comme le fond blanc de .player-photo
+     img.logo (section 1) : l'écusson d'équipe est dessiné pour un cercle
+     clair quel que soit le thème, sinon les logos sombres (Oilers,
+     Bruins…) deviennent illisibles sur un badge assombri. */
+  --psc-badge-bg: #fff;
+  --psc-text: var(--text-main);
+  --psc-text-secondary: var(--text-secondary);
+  --psc-border: var(--border-gray);
+  --psc-border-soft: var(--border-light);
+  --psc-badge-border: var(--border-gray);
+  --psc-accent: var(--primary);
+  /* Lavis translucide de l'accent — pastille de catégorie active, etc.
+     Jeton dédié plutôt que --psc-tint : ce dernier existait déjà avec sa
+     propre valeur claire (#d3e4fe, un bleu plein, pas un lavis), la
+     réutiliser ici aurait changé l'apparence du thème clair. */
+  --psc-accent-wash: rgba(0, 212, 255, .16);
+  /* Ombre de l'onglet actif (contrôle segmenté téléphone) : neutre plutôt
+     que la teinte marine du gabarit, pensée pour une pastille blanche —
+     invisible sur une pastille déjà sombre. */
+  --psc-shadow: 0 1px 4px rgba(0, 0, 0, .4);
+  /* Survol de rangée et fond de la puce PTS : même lavis cyan que le
+     tableau non habillé « psc » ailleurs dans ce fichier (cohérence), pas
+     le bleu littéral du gabarit clair. */
+  --psc-row-hover: rgba(0, 212, 255, .07);
+  --psc-points-bg: rgba(0, 212, 255, .14);
+  /* Texte sur remplissage --psc-accent (puce PTS de l'en-tête) : arena-black
+     sur cyan, même raison que l'icône du bouton de sélection juste plus
+     bas — jamais de blanc sur le seul accent du site. */
+  --psc-accent-text: var(--bg);
+}
+/* Apparence claire d'origine du gabarit, conservée intacte pour qui
+   choisit explicitement le thème clair. */
+html[data-theme="light"] {
   --psc-bg: #f8f9ff;
   --psc-surface: #ffffff;
   --psc-surface-low: #eff4ff;
@@ -2535,9 +2577,13 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   --psc-border-soft: rgba(197, 198, 205, .2);
   --psc-badge-border: rgba(197, 198, 205, .3);
   --psc-accent: #006a66;
+  --psc-accent-wash: rgba(0, 106, 102, .12);
+  --psc-shadow: 0 1px 4px rgba(11, 28, 48, .12);
+  --psc-row-hover: rgba(211, 228, 254, .1);
+  --psc-points-bg: rgba(211, 228, 254, .3);
+  --psc-accent-text: #fff;
 }
-.player-selection-card,
-html[data-theme="light"] .player-selection-card {
+.player-selection-card {
   background: var(--psc-bg);
   border-color: var(--psc-border);
 }
@@ -2562,7 +2608,7 @@ html[data-theme="light"] .player-selection-card {
 }
 .player-selection-card .category-tab:hover { color: var(--psc-text); }
 .player-selection-card .category-tab.is-active {
-  background: rgba(0, 106, 102, .12);
+  background: var(--psc-accent-wash);
   border-color: var(--psc-accent);
   color: var(--psc-accent);
 }
@@ -2605,7 +2651,7 @@ html[data-theme="light"] .player-selection-card {
 .panel-tab.is-active {
   background: var(--psc-surface);
   color: var(--psc-accent);
-  box-shadow: 0 1px 4px rgba(11, 28, 48, .12);
+  box-shadow: var(--psc-shadow);
 }
 
 /* ---- Tableau : cadre et en-tête ----
@@ -2646,7 +2692,7 @@ html[data-theme="light"] .player-selection-card {
 #playerTable thead th.points-column {
   padding: 3px 4px;
   background: var(--psc-accent);
-  color: #fff;
+  color: var(--psc-accent-text);
   border-radius: 4px;
 }
 
@@ -2663,9 +2709,8 @@ html[data-theme="light"] .player-selection-card {
 }
 @media (hover: hover) {
   #playerTable tbody tr:hover {
-    /* rgba(211,228,254,.1) = surface-variant/10 du gabarit : un lavis à
-       peine perceptible, pas un fond plein. */
-    background: rgba(211, 228, 254, .1);
+    /* Lavis à peine perceptible, pas un fond plein. */
+    background: var(--psc-row-hover);
     border-color: var(--psc-border-soft);
   }
   #playerTable tbody tr:has(button.select-button:hover) { background: var(--psc-surface); }
@@ -2721,23 +2766,29 @@ html[data-theme="light"] .player-selection-card {
   font-family: 'Archivo Narrow', 'Segoe UI', sans-serif;
 }
 #playerTable tbody tr td.points-column {
-  background: rgba(211, 228, 254, .3);
+  background: var(--psc-points-bg);
   border-radius: 2px;
   font-size: .8125rem;
   font-weight: 700;
   color: var(--psc-accent);
 }
 @media (hover: hover) {
-  #playerTable tbody tr:hover td.points-column { background: rgba(211, 228, 254, .3); }
+  #playerTable tbody tr:hover td.points-column { background: var(--psc-points-bg); }
 }
 
-/* ---- Bouton de sélection : plein accent, icône blanche (le fond n'est
-   plus jamais le cyan sombre du reste du site — inutile de dépendre du
-   thème ici). ---- */
+/* ---- Bouton de sélection : plein accent ----
+   --psc-accent vaut désormais --primary (cyan) en thème sombre : le
+   pictogramme y reste noir, comme partout ailleurs sur le site où un fond
+   cyan exige un texte arena-black (règle non négociable — cyan clair,
+   icône sombre lisible sans inversion). En thème clair --psc-accent reste
+   le teal sombre du gabarit d'origine, qui a besoin d'une icône blanche —
+   inversion réservée à ce cas juste en dessous. */
 #playerTable td.action-column button.select-button {
   background: var(--psc-accent);
 }
-#playerTable td.action-column button.select-button .select-icon { filter: invert(1); }
+html[data-theme="light"] #playerTable td.action-column button.select-button .select-icon {
+  filter: invert(1);
+}
 
 /* ---- Étoile de favori : le contour sombre par défaut (button.favorite-btn,
    section 8) disparaîtrait sur le fond clair de cette carte. ---- */
