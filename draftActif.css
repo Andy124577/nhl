@@ -2290,11 +2290,14 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   --col-stat: 46px;
   /* Un seul bouton icône (select ou étoile, jamais les deux) remplit toute
      la colonne (width: 100%, plus bas) : 92px lui laissait une vingtaine de
-     pixels de vide de chaque côté de l'icône. 64px reste bien au-dessus du
-     minimum tactile de 44px tout en rendant le reste au nom, colonne
-     flex-grow juste avant. Phone/petit phone (≤700px, ≤480px) restent
-     intacts : leurs colonnes sont déjà proches du plancher tactile. */
-  --col-action: 64px;
+     pixels de vide de chaque côté de l'icône. La colonne est calée sur le
+     plancher tactile de DESIGN.md (44px) plus le rembourrage horizontal
+     (6px + 6px) : 56px, pas un chiffre plus confortable au hasard — c'est
+     déjà le minimum, le reste revient au nom via le flex-grow de la 2e
+     colonne juste avant. ≤700px reprend la même valeur (son rembourrage
+     est identique) ; ≤480px reste à 50px, déjà calé sur le même plancher
+     avec son propre rembourrage de 3px + 3px. */
+  --col-action: 56px;
 
   display: block;
   min-width: 0;
@@ -2468,7 +2471,9 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 
 /* ---- Tablette ---- */
 @media (max-width: 900px) {
-  #playerTable { --col-stat: 40px; --col-action: 60px; }
+  /* --col-action n'est pas redéclarée : 56px (règle de base) est déjà le
+     plancher tactile ici aussi, rien à reprendre de plus. */
+  #playerTable { --col-stat: 40px; }
 }
 
 /* ---- Téléphone ----
@@ -2477,7 +2482,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
    moins déterminantes pour un choix sont retirées, vue par vue, grâce à la
    classe `cat-*` que draftActifUI.js pose sur le tableau. */
 @media (max-width: 700px) {
-  #playerTable { --col-rank: 50px; --col-stat: 36px; --col-action: 58px; }
+  /* --col-action non plus : même plancher, même rembourrage jusqu'ici. */
+  #playerTable { --col-rank: 50px; --col-stat: 36px; }
 
   /* Gardiens : Photo Nom GP W L OTL SV% SO PTS Action — sans OTL ni SO. */
   #playerTable.cat-goalies thead th:nth-child(6),
