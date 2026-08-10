@@ -102,13 +102,16 @@ body {
 /* Le bandeau occupe sa propre ligne, sur toute la largeur. Il était une
    pastille de 22 px coincée entre le compteur de choix et le numéro de
    ronde : le seul état que cette page existe pour transmettre était le plus
-   petit objet du bandeau. Il porte maintenant une identité — écusson et
-   couleurs de l'équipe concernée (la vôtre à votre tour, celle qui vient de
-   choisir sinon), posés en ligne par draftActif.js (refreshTurnAlert) comme
-   sur une carte du carrousel (draftPickCards.js : mêmes --team-a/-b/-accent,
-   même assourdissement vers PICK_CARD_BASE — le texte reste blanc quelle que
-   soit l'équipe). Repli neutre (gris translucide) tant qu'aucune identité
-   n'est connue : avant le premier choix, ou repêchage sans club LNH choisi. */
+   petit objet du bandeau.
+   Fond neutre plutôt que le dégradé aux couleurs de l'équipe (--team-a/-b,
+   posés en ligne par draftActif.js) que ce bandeau portait auparavant,
+   comme une carte du carrousel : un texte fixé au blanc ne tient pas sur
+   les couleurs claires de certains clubs (Bruins, Predators, Golden
+   Knights…), et le fond fixe ne suivait pas le thème clair. Le bandeau
+   reste identifiable — écusson de l'équipe (.turn-banner-logo) — sans que
+   toute sa surface porte l'identité du club ; l'état (attente, tour
+   suivant, mon tour, terminé) reste seul responsable de la couleur, comme
+   partout ailleurs sur le site. */
 .turn-banner {
   order: 3;
   display: flex;
@@ -121,10 +124,8 @@ body {
   padding: 5px 12px;
   border: 1px solid transparent;
   border-radius: 12px;
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, .16) 0%, rgba(0, 0, 0, 0) 60%),
-    linear-gradient(135deg, var(--team-a, rgba(168, 168, 176, .14)) 0%, var(--team-b, rgba(168, 168, 176, .14)) 100%);
-  color: #fff;
+  background: var(--card);
+  color: var(--text-main);
 }
 /* Le bandeau porte plusieurs enfants (écusson + texte + horloge) : `:empty`
    ne pouvait donc plus le masquer. C'est l'absence d'état qui le masque. */
@@ -179,7 +180,7 @@ body {
 }
 .turn-banner-sub:empty { display: none; }
 
-.turn-banner.waiting { border-color: rgba(255, 255, 255, .16); }
+.turn-banner.waiting { border-color: var(--border-gray); }
 .turn-banner.waiting.next {
   border-color: rgba(255, 179, 0, .55);
   box-shadow: 0 0 0 1px rgba(255, 179, 0, .25) inset;
@@ -697,7 +698,7 @@ html[data-theme="light"] .player-selection-card {
      Le contraste vient des surfaces, pas d'un vernis. */
   background:
     linear-gradient(180deg, rgba(0, 0, 0, .26) 0%, rgba(0, 0, 0, 0) 32%),
-    linear-gradient(158deg, var(--team-a, #232936) 0%, var(--team-b, #1a1f29) 62%, var(--team-deep, #14181f) 100%);
+    linear-gradient(158deg, var(--team-a, var(--card)) 0%, var(--team-b, var(--bg-gray-light)) 62%, var(--team-deep, var(--bg)) 100%);
   user-select: none;
   -webkit-user-select: none;
   transition: transform .18s ease, border-color .18s ease;
@@ -724,20 +725,23 @@ html[data-theme="light"] .player-selection-card {
    pose alors --team-a/-b/-deep/-accent en ligne sur CHAQUE carte qui lui
    appartient — à venir et en cours compris, plus seulement les choix faits.
    Ces valeurs ne restent donc actives que pour un repêchage commencé avant
-   l'existence de ce choix, où l'identité est encore inconnue. */
+   l'existence de ce choix, où l'identité est encore inconnue.
+   Jetons du site plutôt que des teintes marine posées en dur : ces
+   dernières restaient sombres même en thème clair, une carte figée dans
+   le mauvais thème au milieu d'une bande qui suit, elle, le bon. */
 .pick-card.is-upcoming,
 .pick-card.is-skipped {
-  --team-a: #232936;
-  --team-b: #1a1f29;
-  --team-deep: #14181f;
-  --team-accent: rgba(255, 255, 255, .12);
+  --team-a: var(--card);
+  --team-b: var(--bg-gray-light);
+  --team-deep: var(--bg);
+  --team-accent: var(--border-gray);
   opacity: .8;
 }
 .pick-card.is-skipped { opacity: .5; }
 .pick-card.is-current {
-  --team-a: #1d2a39;
-  --team-b: #16202b;
-  --team-deep: #111820;
+  --team-a: var(--card);
+  --team-b: var(--bg-gray-light);
+  --team-deep: var(--bg);
   /* --team-accent n'est PAS repris en ligne pour l'état « en cours » (voir
      draftPickCards.js) : le cyan du direct reste le seul accent possible ici,
      quelle que soit l'équipe LNH de la personne qui pioche. */
@@ -963,7 +967,12 @@ html[data-theme="light"] .player-selection-card {
 .pick-card-photo.is-team .pick-card-photo-img { height: 62%; max-width: 62%; }
 
 /* Sans portrait — tour à venir, ou photo introuvable — un grand chiffre ou
-   les initiales en filigrane occupent le centre. */
+   les initiales en filigrane occupent le centre.
+   `opacity` plutôt qu'un blanc alpha littéral : le fond derrière (repli
+   neutre ci-dessus) suit désormais le thème, un blanc à 10 % s'y serait
+   effacé en thème clair. L'opacité se fond dans ce qu'il y a vraiment
+   derrière, quel que soit le thème, plutôt que de viser une seule teinte
+   de fond supposée. */
 .pick-card-photo.is-empty { align-items: center; }
 .pick-card-slot,
 .pick-card-initials {
@@ -973,9 +982,10 @@ html[data-theme="light"] .player-selection-card {
   font-size: calc(var(--pick-h) * .38);
   font-weight: 700;
   line-height: 1;
-  color: rgba(255, 255, 255, .10);
+  color: var(--text-secondary);
+  opacity: .18;
 }
-.pick-card.is-current .pick-card-slot { color: rgba(0, 212, 255, .22); }
+.pick-card.is-current .pick-card-slot { color: var(--primary); opacity: .35; }
 
 /* ---- Blason de l'équipe du pool, en fond ----
    Couche indépendante du contenu du choix (photo, initiales, numéro) : elle
