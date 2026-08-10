@@ -79,6 +79,14 @@ body {
 .draft-header {
   position: relative;
   padding: 18px 16px;
+  /* Largeur posée ici, transparente au repos : headerTurnGlow n'anime que
+     la couleur (voir plus bas), et un border-bottom sans largeur/style ne
+     rend jamais rien quelle que soit la couleur animée — le filet n'a donc
+     jamais existé jusqu'ici. Toujours présente plutôt que posée seulement
+     pendant l'état vivant : .draft-header est sticky, une largeur qui
+     apparaît/disparaît ferait sauter tout ce qui suit de 3px à chaque
+     bascule de tour. */
+  border-bottom: 3px solid transparent;
   background:
     linear-gradient(135deg, rgba(0, 212, 255, .09), rgba(0, 212, 255, 0) 62%),
     var(--bg);
@@ -176,9 +184,14 @@ body {
   border-color: rgba(255, 179, 0, .55);
   box-shadow: 0 0 0 1px rgba(255, 179, 0, .25) inset;
 }
+/* --glow-live rejoint l'anneau existant : c'est le même état « en direct »
+   que .pick-card.is-my-turn (juste plus bas dans ce fichier), qui porte
+   déjà ce halo — le bandeau, lui, ne l'avait jamais reçu alors qu'il est
+   le signal « c'est mon tour » le plus visible de la page (collé en haut,
+   pas seulement sur une carte du carrousel qu'il faut faire défiler). */
 .turn-banner.your-turn {
   border-color: rgba(0, 212, 255, .55);
-  box-shadow: 0 0 0 1px rgba(0, 212, 255, .28) inset;
+  box-shadow: 0 0 0 1px rgba(0, 212, 255, .28) inset, var(--glow-live, 0 0 20px rgba(0, 212, 255, .25));
   animation: turnPulse 2s ease-in-out infinite;
 }
 .turn-banner.done {
