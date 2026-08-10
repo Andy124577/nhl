@@ -2200,11 +2200,15 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   #playerTable.cat-teams thead th::before { font-size: .5rem; }
 }
 
-/* Bloc final : plusieurs règles plus haut se disputent la largeur des deux
-   premières colonnes. Placé en dernier, celui-ci tranche.
-   - colonne 1 bornée à son contenu réel (rang + logo)
-   - colonne du nom autorisée à se replier, sinon un nom d'équipe comme
-     « Washington Capitals » impose 127px à lui seul */
+/* Bloc final : ne tranche plus que pour la colonne 1 (rang + logo).
+   La colonne du nom avait sa propre part ici (max-width: 92px) datant de
+   l'ancien tableau en table-layout: auto, d'avant la section « Rangée en
+   trois sections » plus bas — flex: 1 1 auto sur la 2e colonne y absorbe
+   déjà tout l'espace libre, et un max-width posé APRÈS dans le fichier
+   plafonnait cette croissance sans que rien ne réclame l'espace ainsi
+   perdu : c'est ce vide qui apparaissait entre les statistiques et le
+   bouton d'action sous 420px. L'ellipsis/nowrap est déjà porté par la
+   règle flex de la 2e colonne, donc pas de perte de troncature ici. */
 @media (max-width: 420px) {
   #playerTable thead th:first-child,
   #playerTable tbody td:first-child {
@@ -2212,15 +2216,6 @@ button.select-button .select-icon { width: 14px; height: 14px; }
     min-width: 42px;
     max-width: 42px;
     overflow: hidden;
-  }
-  #playerTable tbody td:nth-child(2),
-  #playerTable thead th:nth-child(2) {
-    min-width: 0;
-    max-width: 92px;
-    /* Le nowrap posé plus haut résiste ; on tronque donc proprement plutôt
-       que de laisser le nom déborder sur la colonne voisine. */
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 }
 
