@@ -450,9 +450,9 @@ body.fz-drawer-open { overflow: hidden; }
     align-items: center;
     justify-content: center;
     border-radius: 9px;
-    background: var(--danger);
+    background: var(--danger-deep);
     color: #fff;
-    font-size: .68rem;
+    font-size: .7rem;
     font-weight: 800;
     border: 2px solid var(--navbar-bg);
 }
@@ -550,7 +550,7 @@ body.fz-drawer-open { overflow: hidden; }
 
 .fz-context-img { width: 30px; height: 30px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
 .fz-context-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.fz-context-label { font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--text-gray); }
+.fz-context-label { font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--text-gray); }
 .fz-context-name { font-weight: 800; font-size: .95rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .fz-context-switch {

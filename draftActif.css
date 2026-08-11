@@ -172,7 +172,7 @@ body {
    la ligne principale plutôt qu'à côté (le texte principal seul peut déjà
    courir jusqu'à l'ellipse sur téléphone). */
 .turn-banner-sub {
-  font-size: .68rem;
+  font-size: .7rem;
   font-weight: 700;
   letter-spacing: .05em;
   text-transform: uppercase;
@@ -404,9 +404,9 @@ html[data-theme="light"] .player-selection-card {
   background: var(--card);
 }
 
-.progress-card h3,
-.card-header h3,
-.filters-header h3 {
+.progress-card h2,
+.card-header h2,
+.filters-header h2 {
   margin: 0;
   font-size: .95rem;
   font-weight: 800;
@@ -776,7 +776,7 @@ html[data-theme="light"] .player-selection-card {
   border-radius: 999px;
   background: var(--primary);
   color: var(--bg);
-  font-size: .68rem;
+  font-size: .7rem;
   font-weight: 800;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -806,7 +806,7 @@ html[data-theme="light"] .player-selection-card {
   border-radius: 10px;
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
   color: var(--bg);
-  font-size: .68rem;
+  font-size: .7rem;
   font-weight: 800;
   letter-spacing: .02em;
   text-transform: uppercase;
@@ -889,14 +889,15 @@ html[data-theme="light"] .player-selection-card {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* .pick-card-pos / -abbr / -meta relevés à .68rem : trois sous-libellés de
-   la carte tombaient sous le plancher documenté pour les labels. Chacun vit
-   dans une zone qui absorbe un texte plus large sans casser (ellipsis sur
-   -owner, largeur fixe et texte court pour -abbr/-meta). */
+/* .pick-card-pos / -abbr / -meta relevés à .7rem : trois sous-libellés de
+   la carte tombaient sous le plancher de lisibilité (11px) mesuré en direct
+   sur la bande de choix. Chacun vit dans une zone qui absorbe un texte plus
+   large sans casser (ellipsis sur -owner, largeur fixe et texte court pour
+   -abbr/-meta). */
 .pick-card-pos {
   display: inline-block;
   margin-top: 3px;
-  font-size: .68rem;
+  font-size: .7rem;
   font-weight: 700;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -929,7 +930,7 @@ html[data-theme="light"] .player-selection-card {
 }
 .pick-card-abbr {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: .68rem;
+  font-size: .7rem;
   font-weight: 700;
   letter-spacing: .09em;
   color: rgba(255, 255, 255, .85);
@@ -1029,7 +1030,7 @@ html[data-theme="light"] .player-selection-card {
 .pick-card-owner {
   flex: 0 1 auto;
   min-width: 0;
-  font-size: .68rem;
+  font-size: .7rem;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -1038,7 +1039,7 @@ html[data-theme="light"] .player-selection-card {
 .pick-card-meta {
   flex: 0 0 auto;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: .68rem;
+  font-size: .7rem;
   font-weight: 700;
   letter-spacing: .06em;
   color: rgba(255, 255, 255, .72);
@@ -1582,7 +1583,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
 }
 .admin-dropdown-header {
   padding: 7px 10px;
-  font-size: .68rem;
+  font-size: .7rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: .6px;
@@ -1715,7 +1716,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   .draft-header { padding: 11px 13px; }
 
   .draft-overall-progress { margin-top: 9px; }
-  .dop-info { margin-bottom: 4px; font-size: .68rem; }
+  .dop-info { margin-bottom: 4px; font-size: .7rem; }
 
   /* Rapproche la sélection de joueur du haut de l'écran. */
   .draft-main-container { padding: 11px 12px 36px; gap: 12px; }
@@ -1888,10 +1889,10 @@ button.favorite-btn.is-active svg { fill: currentColor; }
 }
 
 /* ---- Étiquettes en majuscules espacées, comme le gabarit ---- */
-.filters-header h3,
-.card-header h3,
-.progress-card h3 {
-  font-size: .68rem;
+.filters-header h2,
+.card-header h2,
+.progress-card h2 {
+  font-size: .7rem;
   font-weight: 800;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -1933,7 +1934,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   background: transparent;
   color: var(--text-secondary);
   font-family: inherit;
-  font-size: .68rem;
+  font-size: .7rem;
   font-weight: 800;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -2072,7 +2073,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   margin-right: 6px;
   vertical-align: middle;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: .68rem;
+  font-size: .7rem;
   font-weight: 700;
   color: var(--text-gray);
 }
@@ -2148,7 +2149,7 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 @media (max-width: 420px) {
   #playerTable thead th,
   #playerTable tbody td { padding-left: 2px; padding-right: 2px; }
-  #playerTable tbody td:not(:nth-child(2)) { font-size: .68rem; }
+  #playerTable tbody td:not(:nth-child(2)) { font-size: .7rem; }
   #playerTable thead th { font-size: .54rem; }
   /* `width` et non `max-width` : en disposition automatique, une cellule
      de tableau ignore largement max-width. Le nom se replie sur deux
@@ -2615,9 +2616,9 @@ html[data-theme="light"] {
 .player-selection-card .filters-header {
   border-bottom-color: var(--psc-border);
 }
-.player-selection-card .filters-header h3 {
+.player-selection-card .filters-header h2 {
   font-family: 'Archivo Narrow', 'Segoe UI', sans-serif;
-  font-size: .68rem;
+  font-size: .7rem;
   font-weight: 700;
   letter-spacing: .05em;
   color: var(--psc-text);

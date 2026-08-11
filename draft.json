@@ -3643,12 +3643,17 @@
         "teams": []
       },
       "Équipe 2": {
-        "members": [],
+        "members": [
+          "fzb"
+        ],
         "offensive": [],
         "defensive": [],
         "goalie": [],
         "rookie": [],
-        "teams": []
+        "teams": [
+          "Utah Hockey Club"
+        ],
+        "nhlClub": "UTA"
       },
       "Équipe 3": {
         "members": [],
@@ -4014,9 +4019,9 @@
       }
     },
     "h2hData": {
-      "currentWeek": 11,
+      "currentWeek": 14,
       "seasonStart": "2026-05-11T04:00:00.000Z",
-      "weekStart": "2026-07-20T04:00:00.000Z",
+      "weekStart": "2026-08-10T04:00:00.000Z",
       "matchups": [
         [
           {
@@ -4202,49 +4207,103 @@
           {
             "team1": "Équipe 4",
             "team2": "Équipe 3",
-            "team1Points": 0,
-            "team2Points": 0,
-            "winner": null,
+            "team1Points": 80,
+            "team2Points": 138,
+            "winner": "Équipe 3",
             "weekNumber": 11
           },
           {
             "team1": "Équipe 2",
             "team2": "Équipe 1",
+            "team1Points": 100,
+            "team2Points": 97,
+            "winner": "Équipe 2",
+            "weekNumber": 11
+          }
+        ],
+        [
+          {
+            "team1": "Équipe 4",
+            "team2": "Équipe 1",
+            "team1Points": 80,
+            "team2Points": 97,
+            "winner": "Équipe 1",
+            "weekNumber": 12
+          },
+          {
+            "team1": "Équipe 3",
+            "team2": "Équipe 2",
+            "team1Points": 138,
+            "team2Points": 100,
+            "winner": "Équipe 3",
+            "weekNumber": 12
+          }
+        ],
+        [
+          {
+            "team1": "Équipe 1",
+            "team2": "Équipe 4",
+            "team1Points": 97,
+            "team2Points": 80,
+            "winner": "Équipe 1",
+            "weekNumber": 13
+          },
+          {
+            "team1": "Équipe 2",
+            "team2": "Équipe 3",
+            "team1Points": 100,
+            "team2Points": 138,
+            "winner": "Équipe 3",
+            "weekNumber": 13
+          }
+        ],
+        [
+          {
+            "team1": "Équipe 2",
+            "team2": "Équipe 3",
             "team1Points": 0,
             "team2Points": 0,
             "winner": null,
-            "weekNumber": 11
+            "weekNumber": 14
+          },
+          {
+            "team1": "Équipe 4",
+            "team2": "Équipe 1",
+            "team1Points": 0,
+            "team2Points": 0,
+            "winner": null,
+            "weekNumber": 14
           }
         ]
       ],
       "standings": {
         "Équipe 1": {
-          "wins": 3,
-          "losses": 7,
+          "wins": 5,
+          "losses": 8,
           "ties": 0,
-          "pointsFor": 970,
-          "pointsAgainst": 1054
+          "pointsFor": 1261,
+          "pointsAgainst": 1314
         },
         "Équipe 2": {
-          "wins": 7,
-          "losses": 3,
+          "wins": 8,
+          "losses": 5,
           "ties": 0,
-          "pointsFor": 1000,
-          "pointsAgainst": 1042
+          "pointsFor": 1300,
+          "pointsAgainst": 1415
         },
         "Équipe 3": {
-          "wins": 10,
+          "wins": 13,
           "losses": 0,
           "ties": 0,
-          "pointsFor": 1380,
-          "pointsAgainst": 911
+          "pointsFor": 1794,
+          "pointsAgainst": 1191
         },
         "Équipe 4": {
           "wins": 0,
-          "losses": 10,
+          "losses": 13,
           "ties": 0,
-          "pointsFor": 800,
-          "pointsAgainst": 1143
+          "pointsFor": 1040,
+          "pointsAgainst": 1475
         }
       },
       "matchupHistory": [
@@ -4487,6 +4546,78 @@
             }
           ],
           "completedDate": "2026-07-25T20:11:04.507Z"
+        },
+        {
+          "weekNumber": 11,
+          "weekStart": "2026-07-20T04:00:00.000Z",
+          "weekEnd": "2026-07-27T04:00:00.000Z",
+          "matchups": [
+            {
+              "team1": "Équipe 4",
+              "team2": "Équipe 3",
+              "team1Points": 80,
+              "team2Points": 138,
+              "winner": "Équipe 3",
+              "weekNumber": 11
+            },
+            {
+              "team1": "Équipe 2",
+              "team2": "Équipe 1",
+              "team1Points": 100,
+              "team2Points": 97,
+              "winner": "Équipe 2",
+              "weekNumber": 11
+            }
+          ],
+          "completedDate": "2026-08-11T00:29:11.153Z"
+        },
+        {
+          "weekNumber": 12,
+          "weekStart": "2026-07-27T04:00:00.000Z",
+          "weekEnd": "2026-08-03T04:00:00.000Z",
+          "matchups": [
+            {
+              "team1": "Équipe 4",
+              "team2": "Équipe 1",
+              "team1Points": 80,
+              "team2Points": 97,
+              "winner": "Équipe 1",
+              "weekNumber": 12
+            },
+            {
+              "team1": "Équipe 3",
+              "team2": "Équipe 2",
+              "team1Points": 138,
+              "team2Points": 100,
+              "winner": "Équipe 3",
+              "weekNumber": 12
+            }
+          ],
+          "completedDate": "2026-08-11T00:29:11.153Z"
+        },
+        {
+          "weekNumber": 13,
+          "weekStart": "2026-08-03T04:00:00.000Z",
+          "weekEnd": "2026-08-10T04:00:00.000Z",
+          "matchups": [
+            {
+              "team1": "Équipe 1",
+              "team2": "Équipe 4",
+              "team1Points": 97,
+              "team2Points": 80,
+              "winner": "Équipe 1",
+              "weekNumber": 13
+            },
+            {
+              "team1": "Équipe 2",
+              "team2": "Équipe 3",
+              "team1Points": 100,
+              "team2Points": 138,
+              "winner": "Équipe 3",
+              "weekNumber": 13
+            }
+          ],
+          "completedDate": "2026-08-11T00:29:11.153Z"
         }
       ]
     },
@@ -4512,5 +4643,513 @@
         "position": "offensive"
       }
     ]
+  },
+  "sdfdsfds": {
+    "maxPlayers": 2,
+    "creator": "admin",
+    "draftOrder": [],
+    "currentPickIndex": 0,
+    "lastPickIndex": -1,
+    "config": {
+      "numOffensive": 6,
+      "numDefensive": 4,
+      "numGoalies": 1,
+      "numRookies": 1,
+      "numTeams": 1
+    },
+    "poolMode": "cumulative",
+    "allowTrades": true,
+    "teams": {
+      "Équipe 1": {
+        "members": [
+          "admin"
+        ],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 2": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 3": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 4": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 5": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 6": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 7": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 8": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 9": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 10": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      }
+    }
+  },
+  "aaaaaaaa": {
+    "maxPlayers": 2,
+    "creator": "fza",
+    "draftOrder": [
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2",
+      "Équipe 1",
+      "Équipe 2"
+    ],
+    "currentPickIndex": 4,
+    "lastPickIndex": 3,
+    "config": {
+      "numOffensive": 6,
+      "numDefensive": 4,
+      "numGoalies": 1,
+      "numRookies": 1,
+      "numTeams": 1
+    },
+    "poolMode": "cumulative",
+    "allowTrades": true,
+    "teams": {
+      "Équipe 1": {
+        "members": [
+          "fza"
+        ],
+        "offensive": [
+          "Nathan MacKinnon"
+        ],
+        "defensive": [
+          "Lane Hutson"
+        ],
+        "goalie": [],
+        "rookie": [],
+        "teams": [
+          "Florida Panthers"
+        ],
+        "nhlClub": "FLA"
+      },
+      "Équipe 2": {
+        "members": [
+          "fzb"
+        ],
+        "offensive": [
+          "Mark Scheifele"
+        ],
+        "defensive": [
+          "Rasmus Dahlin"
+        ],
+        "goalie": [],
+        "rookie": [],
+        "teams": [
+          "Boston Bruins"
+        ],
+        "nhlClub": "BOS"
+      },
+      "Équipe 3": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 4": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 5": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 6": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 7": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 8": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 9": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 10": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      }
+    },
+    "turnStartedAt": 1786409618132,
+    "picksHistory": [
+      {
+        "team": "Équipe 1",
+        "player": "Nathan MacKinnon",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Mark Scheifele",
+        "position": "offensive"
+      },
+      {
+        "team": "Équipe 1",
+        "player": "Lane Hutson",
+        "position": "defensive"
+      },
+      {
+        "team": "Équipe 2",
+        "player": "Rasmus Dahlin",
+        "position": "defensive"
+      }
+    ]
+  },
+  "Revue Impeccable": {
+    "maxPlayers": 10,
+    "creator": "implreview1",
+    "draftOrder": [],
+    "currentPickIndex": 0,
+    "lastPickIndex": -1,
+    "config": {
+      "numOffensive": 2,
+      "numDefensive": 1,
+      "numGoalies": 1,
+      "numRookies": 0,
+      "numTeams": 1
+    },
+    "poolMode": "cumulative",
+    "allowTrades": true,
+    "teams": {
+      "Équipe 1": {
+        "members": [
+          "implreview1"
+        ],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [
+          "Montréal Canadiens"
+        ],
+        "nhlClub": "MTL"
+      },
+      "Équipe 2": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 3": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 4": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 5": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 6": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 7": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 8": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 9": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 10": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      }
+    }
+  },
+  "Revue Impeccable 2": {
+    "maxPlayers": 10,
+    "creator": "implreview2",
+    "draftOrder": [],
+    "currentPickIndex": 0,
+    "lastPickIndex": -1,
+    "config": {
+      "numOffensive": 2,
+      "numDefensive": 1,
+      "numGoalies": 1,
+      "numRookies": 0,
+      "numTeams": 1
+    },
+    "poolMode": "cumulative",
+    "allowTrades": true,
+    "teams": {
+      "Équipe 1": {
+        "members": [
+          "implreview2"
+        ],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [
+          "Montréal Canadiens"
+        ],
+        "nhlClub": "MTL"
+      },
+      "Équipe 2": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 3": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 4": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 5": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 6": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 7": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 8": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 9": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      },
+      "Équipe 10": {
+        "members": [],
+        "offensive": [],
+        "defensive": [],
+        "goalie": [],
+        "rookie": [],
+        "teams": [],
+        "nhlClub": null
+      }
+    }
   }
 }

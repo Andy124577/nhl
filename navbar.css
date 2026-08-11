@@ -530,7 +530,7 @@ html[data-theme="light"] .user-dropdown-header::after {
        vieux mobiles), donc pas mis à jour automatiquement par la palette. */
     background: rgba(168, 168, 176, .16);
     color: var(--text-secondary);
-    font-size: .68rem; font-weight: 800;
+    font-size: .7rem; font-weight: 800;
     text-transform: uppercase; letter-spacing: .6px;
 }
 .udh-role.is-admin { background: rgba(0, 212, 255, .16); color: var(--primary); }
@@ -545,7 +545,7 @@ html[data-theme="light"] .user-dropdown-header::after {
     margin: 0;
     padding: 4px 18px 8px;
     color: var(--text-secondary, #7B8CC4);
-    font-size: .68rem; font-weight: 800;
+    font-size: .7rem; font-weight: 800;
     text-transform: uppercase; letter-spacing: .9px;
 }
 

@@ -5,7 +5,6 @@
 @keyframes glow-pulse   { 0%,100%{opacity:.25} 50%{opacity:.55} }
 @keyframes float-a      { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
 @keyframes float-b      { 0%,100%{transform:translateY(0) rotate(-4deg)} 50%{transform:translateY(-10px) rotate(-4deg)} }
-@keyframes gradient-pan { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 @keyframes live-ring    { 0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,230,118,.5)} 60%{transform:scale(1.15);box-shadow:0 0 0 7px rgba(0,230,118,0)} }
 @keyframes pulse        { 0%,100%{opacity:1} 50%{opacity:.6} }
 @keyframes card-in      { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
@@ -82,15 +81,6 @@ body {
     line-height: 1.08;
     color: var(--text-main);
     margin-bottom: 22px;
-}
-
-.gradient-text {
-    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 40%, #7B6FF0 100%);
-    background-size: 200% 200%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradient-pan 5s ease infinite;
 }
 
 .hero-sub {
@@ -428,7 +418,7 @@ body {
     padding: 12px 18px;
     background: var(--bg-gray-light);
     border-bottom: 1px solid var(--border-light);
-    font-size: .68rem;
+    font-size: .7rem;
     font-weight: 800;
     letter-spacing: 1.2px;
     text-transform: uppercase;
@@ -478,7 +468,7 @@ body {
 }
 .rk-pool-mode {
     display: block; margin-top: 3px;
-    font-size: .68rem; font-weight: 800; letter-spacing: 1px;
+    font-size: .7rem; font-weight: 800; letter-spacing: 1px;
     text-transform: uppercase; color: var(--text-gray);
 }
 .rk-pool-mode.pending { color: var(--warning); }
@@ -514,7 +504,7 @@ body {
 .rk-detail-inner { padding: 4px 18px 18px; }
 
 .rk-group-title {
-    font-size: .68rem; font-weight: 800; letter-spacing: 1.2px;
+    font-size: .7rem; font-weight: 800; letter-spacing: 1.2px;
     text-transform: uppercase; color: var(--text-gray);
     margin: 14px 0 8px;
 }
@@ -608,7 +598,7 @@ body {
     position: absolute; top: 12px; left: 12px;
     width: 24px; height: 24px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: .68rem; font-weight: 800;
+    font-size: .7rem; font-weight: 800;
 }
 .player-rank-badge.gold   { background: rgba(255,179,0,.2); color: var(--warning); }
 .player-rank-badge.silver { background: rgba(185,185,205,.2); color: #B8B8CC; }

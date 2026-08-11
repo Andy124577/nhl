@@ -492,7 +492,7 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
     padding: 6px 8px;
     border-radius: 8px;
     background: rgba(255,255,255,.035);
-    font-size: .68rem;
+    font-size: .7rem;
     transition: transform .7s cubic-bezier(.4,0,.2,1), background .4s ease, box-shadow .4s ease;
 }
 
@@ -526,7 +526,7 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
     text-overflow: ellipsis;
 }
 
-.hiw-rrow-pts { font-weight: 900; color: var(--primary); font-size: .68rem; }
+.hiw-rrow-pts { font-weight: 900; color: var(--primary); font-size: .7rem; }
 
 /* Gain de points qui s'envole, comme une soirée de hockey qui rapporte.
    Ancré en bas à droite : c'est de là que part la rangée « Mon équipe ». */

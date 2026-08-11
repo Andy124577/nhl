@@ -42,6 +42,12 @@
      sombre il restait fixe plutôt que de suivre le thème. */
   --success-deep: #00A855;
   --danger: #FF4757;
+  /* --danger lit à 3,34:1 pour du blanc — sous les 4,5:1 requis même en gros
+     texte. Réservé aux petites surfaces (badge de notification) où le blanc
+     est la seule option de contraste ; --danger reste inchangé partout où le
+     texte est déjà de la bonne couleur (icônes, bordures, libellés en
+     --danger sur fond neutre). */
+  --danger-deep: #D42E3F;
   --warning: #FFB300;
 
   /* Text colors */
@@ -127,6 +133,7 @@ html[data-theme="light"] {
   --success: #00A855;
   --success-deep: #00863F;
   --danger: #E03040;
+  --danger-deep: #C4293A;
   --warning: #CC8800;
   --text-main: #1C1C1E;
   --text-secondary: #54545C;
@@ -590,7 +597,7 @@ tbody tr:hover .player-photo img.face {
   opacity: 0.6;
 }
 
-.stats-empty-state h3 {
+.stats-empty-state h2 {
   color: var(--text-main);
   font-size: 1.3rem;
   margin-bottom: 10px;

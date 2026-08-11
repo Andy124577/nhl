@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-07T00:00:00Z",
+  "generatedAt": "2026-08-10T00:00:00Z",
   "title": "Design System: Fantazy",
   "extensions": {
     "colorMeta": {
@@ -37,92 +37,92 @@
       "arena-black": {
         "role": "neutral",
         "displayName": "Arena Black",
-        "canonical": "oklch(0.13 0.02 280)",
-        "tonalRamp": ["oklch(0.13 0.02 280)", "oklch(0.24 0.02 280)", "oklch(0.35 0.02 280)", "oklch(0.46 0.02 280)", "oklch(0.57 0.02 280)", "oklch(0.68 0.02 280)", "oklch(0.81 0.02 280)", "oklch(0.93 0.01 280)"]
+        "canonical": "oklch(0.18 0.00 286)",
+        "tonalRamp": ["oklch(0.15 0.00 286)", "oklch(0.26 0.00 286)", "oklch(0.37 0.00 286)", "oklch(0.48 0.00 286)", "oklch(0.59 0.00 286)", "oklch(0.70 0.00 286)", "oklch(0.82 0.00 286)", "oklch(0.93 0.00 286)"]
       },
-      "deep-ice-navy": {
+      "deep-charcoal": {
         "role": "neutral",
-        "displayName": "Deep Ice Navy",
-        "canonical": "oklch(0.15 0.03 280)",
-        "tonalRamp": ["oklch(0.15 0.03 280)", "oklch(0.26 0.03 280)", "oklch(0.37 0.03 280)", "oklch(0.48 0.03 280)", "oklch(0.59 0.03 280)", "oklch(0.70 0.02 280)", "oklch(0.82 0.02 280)", "oklch(0.93 0.01 280)"]
+        "displayName": "Deep Charcoal",
+        "canonical": "oklch(0.20 0.01 286)",
+        "tonalRamp": ["oklch(0.15 0.01 286)", "oklch(0.26 0.01 286)", "oklch(0.37 0.01 286)", "oklch(0.48 0.01 286)", "oklch(0.59 0.01 286)", "oklch(0.70 0.01 286)", "oklch(0.82 0.01 286)", "oklch(0.93 0.01 286)"]
       },
-      "board-navy": {
+      "board-gray": {
         "role": "neutral",
-        "displayName": "Board Navy",
-        "canonical": "oklch(0.22 0.04 285)",
-        "tonalRamp": ["oklch(0.15 0.04 285)", "oklch(0.22 0.04 285)", "oklch(0.33 0.04 285)", "oklch(0.44 0.04 285)", "oklch(0.55 0.03 285)", "oklch(0.67 0.03 285)", "oklch(0.80 0.02 285)", "oklch(0.93 0.01 285)"]
+        "displayName": "Board Gray",
+        "canonical": "oklch(0.24 0.01 286)",
+        "tonalRamp": ["oklch(0.15 0.01 286)", "oklch(0.26 0.01 286)", "oklch(0.37 0.01 286)", "oklch(0.48 0.01 286)", "oklch(0.59 0.01 286)", "oklch(0.70 0.01 286)", "oklch(0.82 0.01 286)", "oklch(0.93 0.01 286)"]
       },
-      "board-navy-raised": {
+      "board-gray-raised": {
         "role": "neutral",
-        "displayName": "Board Navy Raised",
-        "canonical": "oklch(0.24 0.04 285)",
-        "tonalRamp": ["oklch(0.16 0.04 285)", "oklch(0.24 0.04 285)", "oklch(0.35 0.04 285)", "oklch(0.46 0.04 285)", "oklch(0.57 0.03 285)", "oklch(0.68 0.03 285)", "oklch(0.81 0.02 285)", "oklch(0.93 0.01 285)"]
+        "displayName": "Board Gray Raised",
+        "canonical": "oklch(0.27 0.01 286)",
+        "tonalRamp": ["oklch(0.15 0.01 286)", "oklch(0.26 0.01 286)", "oklch(0.37 0.01 286)", "oklch(0.48 0.01 286)", "oklch(0.59 0.01 286)", "oklch(0.70 0.01 286)", "oklch(0.82 0.01 286)", "oklch(0.93 0.01 286)"]
       },
       "press-box-black": {
         "role": "neutral",
         "displayName": "Press Box Black",
-        "canonical": "oklch(0.11 0.02 285)",
-        "tonalRamp": ["oklch(0.11 0.02 285)", "oklch(0.22 0.02 285)", "oklch(0.33 0.02 285)", "oklch(0.44 0.02 285)", "oklch(0.55 0.02 285)", "oklch(0.67 0.02 285)", "oklch(0.80 0.01 285)", "oklch(0.93 0.01 285)"]
+        "canonical": "oklch(0.16 0.00 286)",
+        "tonalRamp": ["oklch(0.15 0.00 286)", "oklch(0.26 0.00 286)", "oklch(0.37 0.00 286)", "oklch(0.48 0.00 286)", "oklch(0.59 0.00 286)", "oklch(0.70 0.00 286)", "oklch(0.82 0.00 286)", "oklch(0.93 0.00 286)"]
       },
       "rink-line": {
         "role": "neutral",
         "displayName": "Rink Line",
-        "canonical": "oklch(0.25 0.05 285)",
-        "tonalRamp": ["oklch(0.15 0.05 285)", "oklch(0.25 0.05 285)", "oklch(0.36 0.05 285)", "oklch(0.47 0.05 285)", "oklch(0.58 0.04 285)", "oklch(0.69 0.03 285)", "oklch(0.81 0.02 285)", "oklch(0.93 0.01 285)"]
+        "canonical": "oklch(0.29 0.01 286)",
+        "tonalRamp": ["oklch(0.15 0.01 286)", "oklch(0.26 0.01 286)", "oklch(0.37 0.01 286)", "oklch(0.48 0.01 286)", "oklch(0.59 0.01 286)", "oklch(0.70 0.01 286)", "oklch(0.82 0.01 286)", "oklch(0.93 0.01 286)"]
       },
-      "seam-navy": {
+      "seam-gray": {
         "role": "neutral",
-        "displayName": "Seam Navy",
-        "canonical": "oklch(0.25 0.06 280)",
-        "tonalRamp": ["oklch(0.15 0.06 280)", "oklch(0.25 0.06 280)", "oklch(0.36 0.06 280)", "oklch(0.47 0.06 280)", "oklch(0.58 0.05 280)", "oklch(0.69 0.04 280)", "oklch(0.81 0.03 280)", "oklch(0.93 0.01 280)"]
+        "displayName": "Seam Gray",
+        "canonical": "oklch(0.30 0.01 286)",
+        "tonalRamp": ["oklch(0.15 0.01 286)", "oklch(0.26 0.01 286)", "oklch(0.37 0.01 286)", "oklch(0.48 0.01 286)", "oklch(0.59 0.01 286)", "oklch(0.70 0.01 286)", "oklch(0.82 0.01 286)", "oklch(0.93 0.01 286)"]
       },
-      "edge-navy": {
+      "edge-gray": {
         "role": "neutral",
-        "displayName": "Edge Navy",
-        "canonical": "oklch(0.31 0.06 280)",
-        "tonalRamp": ["oklch(0.16 0.06 280)", "oklch(0.27 0.06 280)", "oklch(0.38 0.06 280)", "oklch(0.49 0.06 280)", "oklch(0.60 0.05 280)", "oklch(0.71 0.04 280)", "oklch(0.82 0.03 280)", "oklch(0.93 0.01 280)"]
+        "displayName": "Edge Gray",
+        "canonical": "oklch(0.34 0.01 286)",
+        "tonalRamp": ["oklch(0.15 0.01 286)", "oklch(0.26 0.01 286)", "oklch(0.37 0.01 286)", "oklch(0.48 0.01 286)", "oklch(0.59 0.01 286)", "oklch(0.70 0.01 286)", "oklch(0.82 0.01 286)", "oklch(0.93 0.01 286)"]
       },
-      "shadow-navy": {
+      "shadow-gray": {
         "role": "neutral",
-        "displayName": "Shadow Navy",
-        "canonical": "oklch(0.19 0.03 285)",
-        "tonalRamp": ["oklch(0.14 0.03 285)", "oklch(0.25 0.03 285)", "oklch(0.36 0.03 285)", "oklch(0.47 0.03 285)", "oklch(0.58 0.03 285)", "oklch(0.69 0.02 285)", "oklch(0.81 0.02 285)", "oklch(0.93 0.01 285)"]
+        "displayName": "Shadow Gray",
+        "canonical": "oklch(0.22 0.01 286)",
+        "tonalRamp": ["oklch(0.15 0.01 286)", "oklch(0.26 0.01 286)", "oklch(0.37 0.01 286)", "oklch(0.48 0.01 286)", "oklch(0.59 0.01 286)", "oklch(0.70 0.01 286)", "oklch(0.82 0.01 286)", "oklch(0.93 0.01 286)"]
       },
-      "row-navy": {
+      "row-gray": {
         "role": "neutral",
-        "displayName": "Row Navy",
-        "canonical": "oklch(0.18 0.03 285)",
-        "tonalRamp": ["oklch(0.14 0.03 285)", "oklch(0.25 0.03 285)", "oklch(0.36 0.03 285)", "oklch(0.47 0.03 285)", "oklch(0.58 0.03 285)", "oklch(0.69 0.02 285)", "oklch(0.81 0.02 285)", "oklch(0.93 0.01 285)"]
+        "displayName": "Row Gray",
+        "canonical": "oklch(0.22 0.01 286)",
+        "tonalRamp": ["oklch(0.15 0.01 286)", "oklch(0.26 0.01 286)", "oklch(0.37 0.01 286)", "oklch(0.48 0.01 286)", "oklch(0.59 0.01 286)", "oklch(0.70 0.01 286)", "oklch(0.82 0.01 286)", "oklch(0.93 0.01 286)"]
       },
       "scoreboard-white": {
         "role": "neutral",
         "displayName": "Scoreboard White",
-        "canonical": "oklch(1 0 0)",
-        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.26 0 0)", "oklch(0.37 0 0)", "oklch(0.48 0 0)", "oklch(0.60 0 0)", "oklch(0.72 0 0)", "oklch(0.86 0 0)", "oklch(1 0 0)"]
+        "canonical": "oklch(0.97 0.00 286)",
+        "tonalRamp": ["oklch(0.15 0.00 286)", "oklch(0.26 0.00 286)", "oklch(0.37 0.00 286)", "oklch(0.48 0.00 286)", "oklch(0.60 0.00 286)", "oklch(0.72 0.00 286)", "oklch(0.86 0.00 286)", "oklch(0.97 0.00 286)"]
       },
-      "ice-white": {
+      "ash-white": {
         "role": "neutral",
-        "displayName": "Ice White",
-        "canonical": "oklch(0.93 0.02 280)",
-        "tonalRamp": ["oklch(0.15 0.02 280)", "oklch(0.26 0.02 280)", "oklch(0.37 0.02 280)", "oklch(0.48 0.02 280)", "oklch(0.60 0.02 280)", "oklch(0.72 0.02 280)", "oklch(0.85 0.02 280)", "oklch(0.95 0.01 280)"]
+        "displayName": "Ash White",
+        "canonical": "oklch(0.92 0.01 286)",
+        "tonalRamp": ["oklch(0.15 0.01 286)", "oklch(0.26 0.01 286)", "oklch(0.37 0.01 286)", "oklch(0.48 0.01 286)", "oklch(0.60 0.01 286)", "oklch(0.72 0.01 286)", "oklch(0.85 0.01 286)", "oklch(0.95 0.01 286)"]
       },
-      "broadcast-lavender": {
+      "broadcast-gray": {
         "role": "neutral",
-        "displayName": "Broadcast Lavender",
-        "canonical": "oklch(0.62 0.08 275)",
-        "tonalRamp": ["oklch(0.15 0.05 275)", "oklch(0.26 0.06 275)", "oklch(0.37 0.07 275)", "oklch(0.48 0.08 275)", "oklch(0.62 0.08 275)", "oklch(0.73 0.06 275)", "oklch(0.84 0.04 275)", "oklch(0.94 0.02 275)"]
+        "displayName": "Broadcast Gray",
+        "canonical": "oklch(0.73 0.01 286)",
+        "tonalRamp": ["oklch(0.15 0.01 286)", "oklch(0.26 0.01 286)", "oklch(0.37 0.01 286)", "oklch(0.48 0.01 286)", "oklch(0.61 0.01 286)", "oklch(0.73 0.01 286)", "oklch(0.84 0.01 286)", "oklch(0.94 0.01 286)"]
       },
-      "muted-slate": {
+      "muted-gray": {
         "role": "neutral",
-        "displayName": "Muted Slate",
-        "canonical": "oklch(0.50 0.07 273)",
-        "tonalRamp": ["oklch(0.15 0.04 273)", "oklch(0.26 0.05 273)", "oklch(0.38 0.06 273)", "oklch(0.50 0.07 273)", "oklch(0.61 0.06 273)", "oklch(0.72 0.05 273)", "oklch(0.84 0.03 273)", "oklch(0.94 0.01 273)"]
+        "displayName": "Muted Gray",
+        "canonical": "oklch(0.64 0.01 286)",
+        "tonalRamp": ["oklch(0.15 0.01 286)", "oklch(0.26 0.01 286)", "oklch(0.38 0.01 286)", "oklch(0.50 0.01 286)", "oklch(0.64 0.01 286)", "oklch(0.72 0.01 286)", "oklch(0.84 0.01 286)", "oklch(0.94 0.01 286)"]
       },
-      "far-slate": {
+      "far-gray": {
         "role": "neutral",
-        "displayName": "Far Slate",
-        "canonical": "oklch(0.38 0.06 268)",
-        "tonalRamp": ["oklch(0.15 0.04 268)", "oklch(0.26 0.05 268)", "oklch(0.38 0.06 268)", "oklch(0.49 0.06 268)", "oklch(0.60 0.05 268)", "oklch(0.71 0.04 268)", "oklch(0.83 0.03 268)", "oklch(0.94 0.01 268)"]
+        "displayName": "Far Gray",
+        "canonical": "oklch(0.53 0.01 286)",
+        "tonalRamp": ["oklch(0.15 0.01 286)", "oklch(0.26 0.01 286)", "oklch(0.38 0.01 286)", "oklch(0.49 0.01 286)", "oklch(0.53 0.01 286)", "oklch(0.71 0.01 286)", "oklch(0.83 0.01 286)", "oklch(0.94 0.01 286)"]
       }
     },
     "typographyMeta": {
@@ -159,27 +159,29 @@
       "light": {
         "note": "Applied via html[data-theme=\"light\"], set before first paint by theme.js. Not an inversion — hues are re-picked for contrast on pale ground. Keys map to the CSS custom properties in index.css.",
         "values": {
-          "--bg": "#F0F2FA",
-          "--bg-page": "#E8EBF5",
+          "--bg": "#F2F2F0",
+          "--bg-page": "#EBEBE8",
           "--card": "#FFFFFF",
-          "--card-white": "#F7F9FF",
+          "--card-white": "#FAFAF8",
           "--navbar-bg": "#FFFFFF",
-          "--navbar-border": "#D8DFF0",
-          "--primary": "#0088AA",
+          "--navbar-border": "#E0E0DC",
+          "--primary": "#00707F",
+          "--primary-deep": "#005A6B",
           "--success": "#00A855",
+          "--success-deep": "#00863F",
           "--danger": "#E03040",
           "--warning": "#CC8800",
-          "--text-main": "#1A1F3C",
-          "--text-secondary": "#5060A0",
-          "--text-dark": "#1E2440",
-          "--text-gray": "#6575AA",
-          "--text-light-gray": "#9AA0C5",
-          "--border-light": "#D8DFF0",
-          "--border-gray": "#C0CAE0",
-          "--border-table": "#D8DFF0",
-          "--bg-hover": "#E0E5F5",
-          "--bg-gray-light": "#EEF1FA",
-          "--bg-odd-row": "#F7F9FF"
+          "--text-main": "#1C1C1E",
+          "--text-secondary": "#54545C",
+          "--text-dark": "#242428",
+          "--text-gray": "#68686F",
+          "--text-light-gray": "#8E8E96",
+          "--border-light": "#E0E0DC",
+          "--border-gray": "#CCCCC8",
+          "--border-table": "#E0E0DC",
+          "--bg-hover": "#E6E6E2",
+          "--bg-gray-light": "#F5F5F3",
+          "--bg-odd-row": "#FAFAF8"
         }
       }
     }
@@ -191,7 +193,7 @@
       "refersTo": "button-primary",
       "description": "The one committing action on a screen. Cyan fill, dark label, real press.",
       "html": "<button class=\"ds-btn-primary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z\"/><path d=\"M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z\"/></svg>Créer un pool</button>",
-      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 15px 32px; min-height: 48px; background: var(--primary, #00D4FF); color: var(--bg, #0A0A1A); border: none; border-radius: 12px; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 1.05rem; font-weight: 800; cursor: pointer; transition: transform .2s cubic-bezier(.4,0,.2,1), box-shadow .2s cubic-bezier(.4,0,.2,1); } .ds-btn-primary:hover { transform: translateY(-3px); box-shadow: 0 2px 8px rgba(0,0,0,.32); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,212,255,.15); } .ds-btn-primary:active { transform: translateY(0); } .ds-btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }"
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 15px 32px; min-height: 48px; background: var(--primary, #00D4FF); color: var(--bg, #121214); border: none; border-radius: 12px; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 1.05rem; font-weight: 800; cursor: pointer; transition: transform .2s cubic-bezier(.4,0,.2,1), box-shadow .2s cubic-bezier(.4,0,.2,1); } .ds-btn-primary:hover { transform: translateY(-3px); box-shadow: 0 2px 8px rgba(0,0,0,.32); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,212,255,.15); } .ds-btn-primary:active { transform: translateY(0); } .ds-btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }"
     },
     {
       "name": "Secondary Button",
@@ -199,7 +201,7 @@
       "refersTo": "button-secondary",
       "description": "The alternative path. Transparent with a 2px stroke that turns cyan on hover.",
       "html": "<button class=\"ds-btn-secondary\">Rejoindre un pool →</button>",
-      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; gap: 8px; padding: 15px 32px; min-height: 48px; background: transparent; color: var(--text-main, #FFFFFF); border: 2px solid rgba(255,255,255,.18); border-radius: 12px; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: transform .2s cubic-bezier(.4,0,.2,1), background .2s, border-color .2s, color .2s; } .ds-btn-secondary:hover { background: rgba(255,255,255,.07); border-color: var(--primary, #00D4FF); color: var(--primary, #00D4FF); transform: translateY(-3px); } .ds-btn-secondary:focus-visible { outline: none; border-color: var(--primary, #00D4FF); box-shadow: 0 0 0 3px rgba(0,212,255,.15); }"
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; gap: 8px; padding: 15px 32px; min-height: 48px; background: transparent; color: var(--text-main, #F5F5F7); border: 2px solid rgba(255,255,255,.18); border-radius: 12px; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: transform .2s cubic-bezier(.4,0,.2,1), background .2s, border-color .2s, color .2s; } .ds-btn-secondary:hover { background: rgba(255,255,255,.07); border-color: var(--primary, #00D4FF); color: var(--primary, #00D4FF); transform: translateY(-3px); } .ds-btn-secondary:focus-visible { outline: none; border-color: var(--primary, #00D4FF); box-shadow: 0 0 0 3px rgba(0,212,255,.15); }"
     },
     {
       "name": "Input Field",
@@ -207,7 +209,7 @@
       "refersTo": "input-field",
       "description": "A well rather than an outlined box: darker than its card, 2px stroke, 16px text so iOS does not zoom.",
       "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Nom du pool\" aria-label=\"Nom du pool\">",
-      "css": ".ds-input { width: 100%; padding: 13px 16px; min-height: 48px; background: var(--bg-gray-light, #141430); border: 2px solid var(--border-gray, #2A2D5A); border-radius: 12px; color: var(--text-main, #FFFFFF); font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 1rem; font-weight: 600; transition: border-color .2s cubic-bezier(.4,0,.2,1), box-shadow .2s cubic-bezier(.4,0,.2,1); } .ds-input::placeholder { color: var(--text-gray, #5A6B9A); font-weight: 400; } .ds-input:hover { border-color: var(--border-light, #1E2048); } .ds-input:focus { outline: none; border-color: var(--primary, #00D4FF); box-shadow: 0 0 0 3px rgba(0,212,255,.15); }"
+      "css": ".ds-input { width: 100%; padding: 13px 16px; min-height: 48px; background: var(--bg-gray-light, #1A1A1E); border: 2px solid var(--border-gray, #38383F); border-radius: 12px; color: var(--text-main, #F5F5F7); font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 1rem; font-weight: 600; transition: border-color .2s cubic-bezier(.4,0,.2,1), box-shadow .2s cubic-bezier(.4,0,.2,1); } .ds-input::placeholder { color: var(--text-gray, #8C8C95); font-weight: 400; } .ds-input:hover { border-color: var(--border-light, #2C2C32); } .ds-input:focus { outline: none; border-color: var(--primary, #00D4FF); box-shadow: 0 0 0 3px rgba(0,212,255,.15); }"
     },
     {
       "name": "Card Surface",
@@ -215,7 +217,7 @@
       "refersTo": "card-surface",
       "description": "The standard panel: flat at rest with a 1px seam, lifting only when it is actionable.",
       "html": "<div class=\"ds-card\"><h2 class=\"ds-card-title\">Infos du pool</h2><p class=\"ds-card-desc\">Donnez un nom à votre pool et invitez vos amis.</p></div>",
-      "css": ".ds-card { background: var(--card, #161630); border: 1px solid var(--border-light, #1E2048); border-radius: 18px; padding: 28px 28px 24px; transition: border-color .3s cubic-bezier(.4,0,.2,1), box-shadow .3s cubic-bezier(.4,0,.2,1); } .ds-card:hover { border-color: rgba(0,212,255,.28); box-shadow: 0 2px 8px rgba(0,0,0,.32); } .ds-card-title { margin: 0 0 6px; font-family: 'Bebas Neue', 'Segoe UI', sans-serif; font-size: 1.55rem; font-weight: 400; letter-spacing: 1.5px; color: var(--text-main, #FFFFFF); } .ds-card-desc { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: .88rem; line-height: 1.65; color: var(--text-secondary, #7B8CC4); }"
+      "css": ".ds-card { background: var(--card, #1E1E22); border: 1px solid var(--border-light, #2C2C32); border-radius: 18px; padding: 28px 28px 24px; transition: border-color .3s cubic-bezier(.4,0,.2,1), box-shadow .3s cubic-bezier(.4,0,.2,1); } .ds-card:hover { border-color: rgba(0,212,255,.28); box-shadow: 0 2px 8px rgba(0,0,0,.32); } .ds-card-title { margin: 0 0 6px; font-family: 'Bebas Neue', 'Segoe UI', sans-serif; font-size: 1.55rem; font-weight: 400; letter-spacing: 1.5px; color: var(--text-main, #F5F5F7); } .ds-card-desc { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: .88rem; line-height: 1.65; color: var(--text-secondary, #A8A8B0); }"
     },
     {
       "name": "Navigation Link",
@@ -223,7 +225,7 @@
       "refersTo": "nav-link",
       "description": "Desktop nav item. Inactive is a lavender pill; active takes a cyan tint plus a 3px rule on its bottom edge.",
       "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-link\" href=\"#\">Stats</a><a class=\"ds-nav-link is-active\" href=\"#\">Classement</a><a class=\"ds-nav-link\" href=\"#\">Échanges</a></nav>",
-      "css": ".ds-nav { display: flex; align-items: center; gap: 8px; background: var(--navbar-bg, #080816); padding: 12px 16px; border-bottom: 1px solid var(--navbar-border, #1E1E3C); } .ds-nav-link { position: relative; display: flex; align-items: center; gap: 8px; padding: 10px 16px; min-height: 44px; border-radius: 10px; text-decoration: none; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: .95rem; font-weight: 600; color: var(--text-secondary, #7B8CC4); transition: background .2s cubic-bezier(.4,0,.2,1), color .2s, transform .2s; } .ds-nav-link:hover { background: rgba(0,212,255,.1); color: var(--text-main, #FFFFFF); transform: translateY(-2px); } .ds-nav-link:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,212,255,.15); } .ds-nav-link.is-active { background: rgba(0,212,255,.14); color: var(--text-main, #FFFFFF); } .ds-nav-link.is-active::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--primary, #00D4FF); }"
+      "css": ".ds-nav { display: flex; align-items: center; gap: 8px; background: var(--navbar-bg, #0E0E10); padding: 12px 16px; border-bottom: 1px solid var(--navbar-border, #2A2A30); } .ds-nav-link { position: relative; display: flex; align-items: center; gap: 8px; padding: 10px 16px; min-height: 44px; border-radius: 10px; text-decoration: none; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: .95rem; font-weight: 600; color: var(--text-secondary, #A8A8B0); transition: background .2s cubic-bezier(.4,0,.2,1), color .2s, transform .2s; } .ds-nav-link:hover { background: rgba(0,212,255,.1); color: var(--text-main, #F5F5F7); transform: translateY(-2px); } .ds-nav-link:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,212,255,.15); } .ds-nav-link.is-active { background: rgba(0,212,255,.14); color: var(--text-main, #F5F5F7); } .ds-nav-link.is-active::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--primary, #00D4FF); }"
     },
     {
       "name": "Position Badge",
@@ -247,20 +249,20 @@
       "refersTo": null,
       "description": "The workhorse. Rows are pills, not grid cells; numeric columns are monospace; the whole row is the hover and focus target.",
       "html": "<table class=\"ds-table\"><thead><tr><th class=\"ds-th-rank\">#</th><th class=\"ds-th-player\">Joueur</th><th>PJ</th><th>B</th><th>PTS</th></tr></thead><tbody><tr tabindex=\"0\"><td>1</td><td class=\"ds-td-player\">Nathan MacKinnon<span class=\"ds-td-pos\">ATT · COL</span></td><td>68</td><td>34</td><td>92</td></tr><tr tabindex=\"0\"><td>2</td><td class=\"ds-td-player\">Cale Makar<span class=\"ds-td-pos\">DÉF · COL</span></td><td>66</td><td>19</td><td>71</td></tr></tbody></table>",
-      "css": ".ds-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; font-family: 'Segoe UI', Tahoma, sans-serif; } .ds-table th { padding: 12px 14px; font-size: .68rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--text-secondary, #7B8CC4); text-align: right; cursor: pointer; user-select: none; transition: background .15s ease, color .15s ease; } .ds-table th:hover { background: rgba(0,212,255,.5); color: var(--text-main, #FFFFFF); } .ds-th-rank { width: 44px; text-align: center; } .ds-th-player { text-align: left; } .ds-table tbody tr { position: relative; } .ds-table tbody td { padding: 12px 14px; background: var(--bg-odd-row, #131328); border-top: 1px solid var(--border-light, #1E2048); border-bottom: 1px solid var(--border-light, #1E2048); text-align: right; font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; font-weight: 500; letter-spacing: .02em; color: var(--text-dark, #E8EAFF); } .ds-table tbody td:first-child { border-left: 1px solid var(--border-light, #1E2048); border-radius: 12px 0 0 12px; text-align: center; } .ds-table tbody td:last-child { border-right: 1px solid var(--border-light, #1E2048); border-radius: 0 12px 12px 0; } .ds-td-player { text-align: left; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: .95rem; font-weight: 700; line-height: 1.35; color: var(--text-main, #FFFFFF); } .ds-td-pos { display: block; font-size: .74em; font-weight: 600; letter-spacing: .4px; color: var(--text-secondary, #7B8CC4); } .ds-table tbody tr:hover td, .ds-table tbody tr:focus-visible td { background: rgba(0,212,255,.07); border-color: rgba(0,212,255,.35); } .ds-table tbody tr:focus-visible { outline: none; } .ds-table tbody tr::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--primary, #00D4FF); opacity: 0; transition: opacity .18s ease; } .ds-table tbody tr:hover::after, .ds-table tbody tr:focus-visible::after { opacity: 1; }"
+      "css": ".ds-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; font-family: 'Segoe UI', Tahoma, sans-serif; } .ds-table th { padding: 12px 14px; font-size: .68rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--text-secondary, #A8A8B0); text-align: right; cursor: pointer; user-select: none; transition: background .15s ease, color .15s ease; } .ds-table th:hover { background: rgba(0,212,255,.5); color: var(--text-main, #F5F5F7); } .ds-th-rank { width: 44px; text-align: center; } .ds-th-player { text-align: left; } .ds-table tbody tr { position: relative; } .ds-table tbody td { padding: 12px 14px; background: var(--bg-odd-row, #19191D); border-top: 1px solid var(--border-light, #2C2C32); border-bottom: 1px solid var(--border-light, #2C2C32); text-align: right; font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; font-weight: 500; letter-spacing: .02em; color: var(--text-dark, #E4E4E8); } .ds-table tbody td:first-child { border-left: 1px solid var(--border-light, #2C2C32); border-radius: 12px 0 0 12px; text-align: center; } .ds-table tbody td:last-child { border-right: 1px solid var(--border-light, #2C2C32); border-radius: 0 12px 12px 0; } .ds-td-player { text-align: left; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: .95rem; font-weight: 700; line-height: 1.35; color: var(--text-main, #F5F5F7); } .ds-td-pos { display: block; font-size: .74em; font-weight: 600; letter-spacing: .4px; color: var(--text-secondary, #A8A8B0); } .ds-table tbody tr:hover td, .ds-table tbody tr:focus-visible td { background: rgba(0,212,255,.07); border-color: rgba(0,212,255,.35); } .ds-table tbody tr:focus-visible { outline: none; } .ds-table tbody tr::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--primary, #00D4FF); opacity: 0; transition: opacity .18s ease; } .ds-table tbody tr:hover::after, .ds-table tbody tr:focus-visible::after { opacity: 1; }"
     },
     {
       "name": "Pick Card",
       "kind": "custom",
       "refersTo": null,
-      "description": "The draft room's signature object and the only place NHL club chroma enters the layout. Three states: upcoming (neutral), current (cyan, pulsing), completed (club accent rule).",
+      "description": "The draft room's identity object. Each pool team's own chosen NHL club (picked pre-draft, not the drafted player's club) colors the card and watermarks it before any pick lands; current always overrides to cyan regardless of team identity.",
       "html": "<div class=\"ds-pick-strip\"><article class=\"ds-pick-card\" style=\"--team-accent:#236192\"><span class=\"ds-pick-no\">#12</span><span class=\"ds-pick-name\">Cale Makar</span><span class=\"ds-pick-meta\">DÉF · COL</span></article><article class=\"ds-pick-card is-current\"><span class=\"ds-pick-no\">#13</span><span class=\"ds-pick-name\">À vous de jouer</span><span class=\"ds-pick-meta\">Votre tour</span></article><article class=\"ds-pick-card is-upcoming\"><span class=\"ds-pick-no\">#14</span><span class=\"ds-pick-name\">—</span><span class=\"ds-pick-meta\">À venir</span></article></div>",
-      "css": ".ds-pick-strip { display: flex; gap: 10px; overflow-x: auto; padding: 4px; } .ds-pick-card { position: relative; flex: 0 0 132px; display: flex; flex-direction: column; gap: 2px; padding: 12px 12px 14px; background: var(--card, #161630); border: 1px solid rgba(255,255,255,.07); border-radius: 12px; overflow: hidden; } .ds-pick-card::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--team-accent, var(--primary, #00D4FF)); } .ds-pick-no { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .68rem; font-weight: 700; letter-spacing: .06em; color: var(--text-secondary, #7B8CC4); } .ds-pick-name { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: .9rem; font-weight: 700; line-height: 1.25; color: var(--text-main, #FFFFFF); } .ds-pick-meta { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: .7rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary, #7B8CC4); } .ds-pick-card.is-upcoming { --team-accent: rgba(255,255,255,.12); background: #232936; opacity: .8; } .ds-pick-card.is-current { --team-accent: var(--primary, #00D4FF); background: #1d2a39; border-color: rgba(0,212,255,.5); animation: dsTurnPulse 2.4s ease-in-out infinite; } .ds-pick-card.is-current .ds-pick-name { color: var(--primary, #00D4FF); } @keyframes dsTurnPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,255,.30) } 50% { box-shadow: 0 0 0 10px rgba(0,212,255,0) } } @media (prefers-reduced-motion: reduce) { .ds-pick-card.is-current { animation: none; box-shadow: 0 0 0 3px rgba(0,212,255,.30) } }"
+      "css": ".ds-pick-strip { display: flex; gap: 10px; overflow-x: auto; padding: 4px; } .ds-pick-card { position: relative; flex: 0 0 132px; display: flex; flex-direction: column; gap: 2px; padding: 12px 12px 14px; background: var(--card, #1E1E22); border: 1px solid rgba(255,255,255,.07); border-radius: 12px; overflow: hidden; } .ds-pick-card::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--team-accent, var(--primary, #00D4FF)); } .ds-pick-no { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .68rem; font-weight: 700; letter-spacing: .06em; color: var(--text-secondary, #A8A8B0); } .ds-pick-name { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: .9rem; font-weight: 700; line-height: 1.25; color: var(--text-main, #F5F5F7); } .ds-pick-meta { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: .7rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary, #A8A8B0); } .ds-pick-card.is-upcoming { --team-accent: var(--border-gray, #38383F); background: var(--card, #1E1E22); opacity: .8; } .ds-pick-card.is-current { --team-accent: var(--primary, #00D4FF); background: var(--card, #1E1E22); border-color: rgba(0,212,255,.5); animation: dsTurnPulse 2.4s ease-in-out infinite; } .ds-pick-card.is-current .ds-pick-name { color: var(--primary, #00D4FF); } @keyframes dsTurnPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,255,.30) } 50% { box-shadow: 0 0 0 10px rgba(0,212,255,0) } } @media (prefers-reduced-motion: reduce) { .ds-pick-card.is-current { animation: none; box-shadow: 0 0 0 3px rgba(0,212,255,.30) } }"
     }
   ],
   "narrative": {
     "northStar": "The Broadcast Desk",
-    "overview": "Fantazy looks like the studio a hockey broadcast is called from: a dark set, a wall of numbers that has already been organized for you, and light used sparingly — only where something is live. The desk has authority because it is calm. It does not shout the score; it shows you the score, correctly, faster than you could have assembled it yourself. Every screen is a surface someone reads under time pressure, usually on a phone, sometimes with four friends waiting on their turn.\n\nThe system runs dark by default and near-monochrome by construction. Backgrounds sit in a narrow band of blue-blacks (arena-black through board-navy); text sits in a matching band of blue-whites. Against that, exactly one accent — Rink Ice Cyan — carries interactivity and liveness, and a small semantic set (green / amber / orchid / red) carries meaning that is not decoration: a player's position, a warning, a failure. The only chroma allowed to move freely is the NHL club palette, which enters the interface through team logos and the draft pick cards. That restraint is what lets a Colorado burgundy or a Nashville gold read instantly when it appears — it is the only unexpected color on screen.\n\nDensity is deliberate and high. This is a statistics product; tables are the primary component, not a fallback. Numbers set in monospace, positions demoted to a secondary line, whole rows made clickable rather than a small link — these are the system's real decisions. Ornament is spent almost nowhere so that the data can be dense without becoming loud.",
+    "overview": "Fantazy looks like the studio a hockey broadcast is called from: a dark set, a wall of numbers that has already been organized for you, and light used sparingly — only where something is live. The desk has authority because it is calm. It does not shout the score; it shows you the score, correctly, faster than you could have assembled it yourself. Every screen is a surface someone reads under time pressure, usually on a phone, sometimes with four friends waiting on their turn.\n\nThe system runs dark by default and near-monochrome by construction. Backgrounds sit in a narrow band of near-neutral grays (arena-black through board-gray); text sits in a matching band of near-neutral off-whites. Against that, exactly one accent — Rink Ice Cyan — carries interactivity and liveness, and a small semantic set (green / amber / orchid / red) carries meaning that is not decoration: a player's position, a warning, a failure. The only chroma allowed to move freely is the NHL club palette, which enters the interface through team logos and the draft pick cards. That restraint is what lets a Colorado burgundy or a Nashville gold read instantly when it appears — it is the only unexpected color on screen.\n\nDensity is deliberate and high. This is a statistics product; tables are the primary component, not a fallback. Numbers set in monospace, positions demoted to a secondary line, whole rows made clickable rather than a small link — these are the system's real decisions. Ornament is spent almost nowhere so that the data can be dense without becoming loud.",
     "keyCharacteristics": [
       "Dark-first, with a full light theme as a peer, not an afterthought",
       "One accent hue; semantic color reserved for meaning, never for decoration",
@@ -279,7 +281,7 @@
       { "name": "The Bottom Bar Reservation Rule", "body": "On phones the bottom 80px belongs to navigation. Nothing sticky, floating, or action-critical may live there.", "section": "layout" },
       { "name": "The Page Never Scrolls Sideways Rule", "body": "Wide content (tables, pick strips, career logs) scrolls inside its own overflow-x: auto container. Decorative glow blobs are clipped by their parent precisely because they used to break this.", "section": "layout" },
       { "name": "The Glow Means Live Rule", "body": "Colored glow is never elevation. If the element would look the same when nothing is happening, it must not glow.", "section": "elevation" },
-      { "name": "The Border Before Shadow Rule", "body": "Reach for a seam-navy border before reaching for a shadow. On a dark ground a 1px seam separates surfaces more cleanly than a shadow can, and it costs nothing to paint.", "section": "elevation" },
+      { "name": "The Border Before Shadow Rule", "body": "Reach for a seam-gray border before reaching for a shadow. On a dark ground a 1px seam separates surfaces more cleanly than a shadow can, and it costs nothing to paint.", "section": "elevation" },
       { "name": "The Twelve Rule", "body": "12px is the default radius. Deviating requires a reason that is about size — micro elements go down, full-bleed actions and large panels go up. Never mix three radii inside one card.", "section": "shapes" }
     ],
     "dos": [
@@ -294,7 +296,7 @@
       "Do use real NHL club colors from teamColors.js, attached only to the club they belong to."
     ],
     "donts": [
-      "Don't hardcode a hex outside the token layer, and don't redeclare :root in a page stylesheet. trade.css and legal.css do this today with drifting values (--danger: #FF5252 vs #FF4757; --bg-page: #050510 vs #0D0D1F) and ship no matching light-theme block, so those pages break in light mode. Page stylesheets specialize; they never redefine the palette.",
+      "Don't hardcode a hex outside the token layer, and don't redeclare :root in a page stylesheet. trade.css and legal.css do this today with drifting values (--danger: #FF5252 vs #FF4757; --bg-page: #050510 vs #16161A) and ship no matching light-theme block, so those pages break in light mode. Page stylesheets specialize; they never redefine the palette.",
       "Don't use gradient text. The animated .gradient-text treatment (index.css:134, accueil.css:90) is retired: headlines are solid scoreboard-white, with cyan available for a single emphasized span.",
       "Don't animate layout properties — width, height, max-height, padding, margin. Use transform/opacity, or grid-template-rows: 0fr → 1fr for height. Four instances remain in pool.css:651, accueil.css:510, and draftActif.css:165.",
       "Don't use overshoot or bounce easing (cubic-bezier(0.68,-0.55,0.265,1.55) and relatives) on ordinary state transitions. Exception: genuine celebration moments — the draft pick reveal — may use cubic-bezier(.34,1.56,.64,1). A dropdown is not a celebration.",
@@ -302,7 +304,7 @@
       "Don't add a decorative colored border on one side of a card (accueil.css:293, pool.css:842). The table row's 3px stripe is exempt: it appears only on hover/focus and signals that the row is actionable — that is an affordance, not ornament.",
       "Don't introduce a second accent hue. If something needs to stand out and cyan is taken, the answer is hierarchy, weight, or space.",
       "Don't put white text on rink-ice-cyan. Cyan fills take arena-black text.",
-      "Don't name a token for what it looks like in one theme. --card-white currently resolves to #1A1A38, a dark navy; new tokens are named by role.",
+      "Don't name a token for what it looks like in one theme. --card-white currently resolves to #26262B, a dark gray; new tokens are named by role.",
       "Don't ship a phone layout that ignores the fixed bottom navigation's 80px reservation."
     ]
   }

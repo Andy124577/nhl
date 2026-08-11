@@ -229,11 +229,10 @@ Light is a full peer theme, applied via `html[data-theme="light"]` and set befor
 
 ### Dense UI (draft room, career modal)
 
-The hierarchy above sizes page composition — headings, prose, one card title. [draftActif.css](draftActif.css) and [career-modal.css](career-modal.css) additionally carry a finer micro-scale for the draft room's tables and stat grids, where a dozen small facts (rank, position, team, points) sit shoulder to shoulder and Label's 0.78rem floor is too coarse. Like the breakpoint list below, this is accepted drift, not a second designed system — new dense-UI work should land on one of these five steps rather than inventing a sixth:
+The hierarchy above sizes page composition — headings, prose, one card title. [draftActif.css](draftActif.css) and [career-modal.css](career-modal.css) additionally carry a finer micro-scale for the draft room's tables and stat grids, where a dozen small facts (rank, position, team, points) sit shoulder to shoulder and Label's 0.78rem floor is too coarse. Like the breakpoint list below, this is accepted drift, not a second designed system — new dense-UI work should land on one of these four steps rather than inventing a fifth:
 
-- **Micro** (~0.5–0.58rem): table micro-headers, position abbreviations — the smallest legible tier.
-- **Meta** (0.68rem): the single most-used step in both files (14+ call sites) — secondary line under a name, card sub-labels. Same value as Label's documented floor above; treat 0.68rem as that floor's dense-UI anchor.
-- **Small body** (~0.7–0.75rem): table cell values, filter chips.
+- **Micro** (~0.5–0.58rem): table micro-headers, position abbreviations — the smallest legible tier. Flagged by a live contrast/legibility pass as worth a dedicated look; not yet resolved (see the Don't below).
+- **Small body** (0.7–0.75rem): secondary line under a name, card sub-labels, table cell values, filter chips. Was two nominally-different steps (a 0.68rem "Meta" and 0.7–0.75rem "Small body") until a live-rendered scan caught 0.68rem measuring 10.88px — under an 11px legibility floor at every one of its 14+ call sites. Raised to 0.7rem and merged into this one step rather than kept as a separate near-duplicate.
 - **Compact body** (~0.8–0.88rem): player names in table rows, dropdown items.
 - **Emphasis** (~0.9–0.95rem): empty-state and alert copy that needs to read as a full sentence, not a label.
 
@@ -359,12 +358,13 @@ Every pool team chooses one real NHL club as its identity before the draft opens
 
 ### Don't:
 - **Don't** hardcode a hex outside the token layer, and **don't redeclare `:root` in a page stylesheet.** [trade.css:5](trade.css#L5) and [legal.css:3](legal.css#L3) do this today with *drifting* values (`--danger: #FF5252` vs `#FF4757`; `--bg-page: #050510` vs `#16161A`) and ship no matching light-theme block, so those pages break in light mode. Page stylesheets specialize; they never redefine the palette.
-- **Don't** use gradient text. The animated `.gradient-text` treatment ([index.css:134](index.css#L134), [accueil.css:90](accueil.css#L90)) is retired: headlines are solid `scoreboard-white`, with cyan available for a single emphasized span.
+- **Don't** use gradient text. `.gradient-text` ([index.css:180](index.css#L180)) is solid `--primary`, not a `background-clip` gradient: a real DESIGN.md-documented rule, but it went unenforced for a while — `accueil.css` shadowed it with an animated three-stop gradient (same class, loaded after index.css, so it silently won), and `trade.css`'s page-header `h1` ran its own separate gradient-clip with an undocumented `#00B8D9` stop. A live-rendered scan caught both still shipping; both are now solid color.
 - **Don't** animate layout properties — `width`, `height`, `max-height`, `padding`, `margin`. Use `transform`/`opacity`, or `grid-template-rows: 0fr → 1fr` for height. Four instances remain in [pool.css:651](pool.css#L651), [accueil.css:510](accueil.css#L510), and [draftActif.css:165](draftActif.css#L165).
-- **Don't** use overshoot or bounce easing (`cubic-bezier(0.68,-0.55,0.265,1.55)` and relatives) on ordinary state transitions. **Exception:** genuine celebration moments — the draft pick reveal — may use `cubic-bezier(.34,1.56,.64,1)`. A dropdown is not a celebration.
+- **Don't** use overshoot or bounce easing (`cubic-bezier(0.68,-0.55,0.265,1.55)` and relatives) on ordinary state transitions. **Exception:** genuine celebration/success moments — the draft pick reveal, the trade-sent success check ([trade.css:272](trade.css#L272)) — may use `cubic-bezier(.34,1.56,.64,1)`. A dropdown is not a celebration, and neither is a confirmation dialog: [trade.css:1594](trade.css#L1594)'s `.trade-confirm-box` used the same bounce on its entrance and was moved to the standard ease.
 - **Don't** apply colored glow to elements at rest. Glow is live/focus state; elevation is neutral shadow.
 - **Don't** add a decorative colored border on one side of a card ([accueil.css:293](accueil.css#L293), [pool.css:842](pool.css#L842)). The table row's 3px stripe is exempt: it appears only on hover/focus and signals that the row is actionable — that is an affordance, not ornament.
 - **Don't** introduce a second accent hue. If something needs to stand out and cyan is taken, the answer is hierarchy, weight, or space.
 - **Don't** put white text on `rink-ice-cyan`. Cyan fills take `arena-black` text.
 - **Don't** name a token for what it looks like in one theme. `--card-white` currently resolves to `#26262B`, a dark gray; new tokens are named by role.
 - **Don't** ship a phone layout that ignores the fixed bottom navigation's 80px reservation.
+- **Don't** treat the Dense UI Micro tier (~0.5–0.58rem) as settled. A live-rendered pass measured position-abbreviation and initials text there at 8.96–10.56px, under the 11px legibility floor that caught and fixed the old Meta step. Unlike Meta, Micro's uses (three-letter position badges, player initials) sit in tight fixed-size containers — raising them needs a per-component check, not a blanket find-replace.

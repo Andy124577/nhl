@@ -476,7 +476,7 @@
   .cmh-season-highlight { margin-top: 12px; padding-top: 10px; }
   .cmh-season-label { font-size: .6rem; margin-bottom: 6px; }
   .cmh-season-val { font-size: 1.6rem; }
-  .cmh-season-rank { font-size: .68rem; }
+  .cmh-season-rank { font-size: .7rem; }
 }
 
 @media (min-width: 1024px) {

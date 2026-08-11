@@ -32,7 +32,7 @@
   <!-- v= : ce fichier n'avait pas de témoin de version, contrairement à
        index.js sur stats.html — un navigateur pouvait donc servir une
        copie mise en cache indéfiniment après une modification. -->
-  <link rel="stylesheet" href="draftActif.css?v=20260810c" />
+  <link rel="stylesheet" href="draftActif.css?v=20260810d" />
   <!-- Modale de carrière : feuille partagée avec stats.html, chargée en
        dernier pour spécialiser sans !important. -->
   <link rel="stylesheet" href="career-modal.css" />
@@ -137,11 +137,11 @@
            colonne Action). Consultable même hors de son tour ; peuplé par
            draftFavorites.js. Rien n'est envoyé au serveur — uniquement
            localStorage, personnel et propre à ce pool. Classe partagée avec
-           .progress-card pour l'habillage (fond, bordure, coins, h3) :
+           .progress-card pour l'habillage (fond, bordure, coins, h2) :
            .favorites-card ne porte que ce qui lui est propre. -->
       <div class="favorites-card progress-card" id="favoritesCard">
         <div class="card-header">
-          <h3>Mes favoris</h3>
+          <h2>Mes favoris</h2>
           <span class="favorites-count" id="favoritesCount" hidden>0</span>
         </div>
         <p class="no-picks" id="favoritesEmpty">Aucun favori pour l'instant — l'étoile de la liste des joueurs les ajoute ici.</p>
@@ -156,7 +156,7 @@
            « Liste des joueurs » — elle restait visible partout. -->
       <div class="progress-card" id="progressCard">
         <div class="progress-header">
-          <h3>Ma progression</h3>
+          <h2>Ma progression</h2>
           <!-- Conservé pour la liaison de draftActif.js, mais masqué : le choix
                se fait désormais en cliquant une position. -->
           <select id="progressFilter" class="progress-filter-select" hidden>
@@ -228,7 +228,7 @@
       <!-- Player Selection Area -->
       <div class="player-selection-card">
         <div class="filters-header">
-          <h3>Sélection de joueur</h3>
+          <h2>Sélection de joueur</h2>
           <!-- Sur téléphone, ce <select> remplace les pastilles de catégorie
                plutôt que de s'y ajouter : à cette largeur, une bande de six
                boutons coûtait une ligne entière avant même d'atteindre le

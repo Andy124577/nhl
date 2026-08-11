@@ -1006,10 +1006,10 @@ function showError(title, message) {
     const poolList = document.getElementById('poolList');
     poolList.style.display = 'block';
     poolList.innerHTML = `
-        <div style="text-align: center; padding: 60px 20px; color: #999;">
+        <div style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
             <div style="font-size: 4rem; margin-bottom: 20px;">📊</div>
-            <h2 style="font-size: 1.8rem; color: #333; margin-bottom: 12px;">${title}</h2>
-            <p style="font-size: 1.1rem; color: #666;">${message}</p>
+            <h2 style="font-size: 1.8rem; color: var(--text-main); margin-bottom: 12px;">${title}</h2>
+            <p style="font-size: 1.1rem; color: var(--text-secondary);">${message}</p>
         </div>
     `;
     document.getElementById('poolListSkeleton').style.display = 'none';

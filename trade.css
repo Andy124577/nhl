@@ -54,10 +54,7 @@ body {
     font-size: 2.5rem;
     font-weight: 900;
     margin-bottom: 8px;
-    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--text-main);
 }
 
 .page-subtitle {
@@ -377,7 +374,7 @@ body {
     flex-shrink: 0;
 }
 
-.step-info h3 {
+.step-info h2 {
     font-size: 1.3rem;
     font-weight: 800;
     margin-bottom: 4px;
@@ -611,7 +608,7 @@ body {
     justify-content: space-between;
 }
 
-.roster-header h4 {
+.roster-header h3 {
     font-size: 1.1rem;
     font-weight: 800;
     color: var(--text-main);
@@ -815,7 +812,7 @@ body {
     opacity: 0.3;
 }
 
-.trade-empty-state h4 {
+.trade-empty-state h3 {
     font-size: 1.2rem;
     font-weight: 800;
     color: var(--text-main);
@@ -1603,7 +1600,12 @@ html[data-theme="light"] .btn-propose-trade:disabled {
     max-width: 460px;
     text-align: center;
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    animation: tcSlideUp 0.28s cubic-bezier(0.34,1.56,0.64,1);
+    /* Boîte de dialogue ordinaire, pas un moment de célébration : le rebond
+       (0.34,1.56,0.64,1) reste réservé à la révélation d'un choix de
+       repêchage et à la confirmation de succès d'un échange (voir
+       .trade-success-check plus haut) — un dialogue de confirmation utilise
+       l'accélération standard du site comme tout le reste. */
+    animation: tcSlideUp 0.28s cubic-bezier(.4, 0, .2, 1);
 }
 
 .trade-confirm-icon {
@@ -1888,7 +1890,7 @@ html[data-theme="light"] .btn-propose-trade:disabled {
   /* L'intitulé fait doublon avec l'onglet actif ; seul le nom d'équipe
      apporte quelque chose. */
   .roster-header { padding: 0 0 10px; background: none; border-bottom: 0; }
-  .roster-header h4 { display: none; }
+  .roster-header h3 { display: none; }
   .roster-list { padding: 0; }
 
   /* Filtres de position en pastilles défilantes : six catégories
@@ -2032,7 +2034,7 @@ html[data-theme="light"] .btn-propose-trade:disabled {
   /* `flex-basis: 140px` plutôt que `auto` : sur 360px le titre gardait sa
      largeur intrinsèque et repoussait la pastille sur sa propre rangée. */
   .step-header .step-info { order: 4; flex: 1 1 140px; min-width: 0; }
-  .step-info h3 { font-size: 1.05rem; line-height: 1.25; }
+  .step-info h2 { font-size: 1.05rem; line-height: 1.25; }
   .step-info p { font-size: .82rem; }
   .step-header .btn-back,
   .step-header .btn-reset {
