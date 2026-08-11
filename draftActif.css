@@ -1354,7 +1354,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   min-height: 48px;
   border: 0;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--success) 0%, #00A855 100%);
+  background: linear-gradient(135deg, var(--success) 0%, var(--success-deep) 100%);
   color: var(--bg);
   font-size: .92rem;
   font-weight: 800;

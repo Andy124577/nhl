@@ -227,6 +227,20 @@ Light is a full peer theme, applied via `html[data-theme="light"]` and set befor
 
 **The Two-Line Player Rule.** A player's name and their position are two facts of different weight and never read as one string. Name at 700; position demoted to a `0.74em` secondary line in lavender ([index.css:1683](index.css#L1683)). Never `Nom, ATT`.
 
+### Dense UI (draft room, career modal)
+
+The hierarchy above sizes page composition — headings, prose, one card title. [draftActif.css](draftActif.css) and [career-modal.css](career-modal.css) additionally carry a finer micro-scale for the draft room's tables and stat grids, where a dozen small facts (rank, position, team, points) sit shoulder to shoulder and Label's 0.78rem floor is too coarse. Like the breakpoint list below, this is accepted drift, not a second designed system — new dense-UI work should land on one of these five steps rather than inventing a sixth:
+
+- **Micro** (~0.5–0.58rem): table micro-headers, position abbreviations — the smallest legible tier.
+- **Meta** (0.68rem): the single most-used step in both files (14+ call sites) — secondary line under a name, card sub-labels. Same value as Label's documented floor above; treat 0.68rem as that floor's dense-UI anchor.
+- **Small body** (~0.7–0.75rem): table cell values, filter chips.
+- **Compact body** (~0.8–0.88rem): player names in table rows, dropdown items.
+- **Emphasis** (~0.9–0.95rem): empty-state and alert copy that needs to read as a full sentence, not a label.
+
+Stat-grid numerals above ~1.1rem (career modal's big season totals, alert icons) are Numeric or Display use, not a new tier — size them by column/context as those rules already say.
+
+`.player-selection-card` and its table (`draftActif.css` section 19b) are a deliberate exception to the whole page above: built to match an external mockup, they use **Archivo Narrow** (headers, names, row numerals) and **Inter** (body/filter text) instead of Bebas Neue/Segoe UI, loaded via [draftActif.html:24](draftActif.html#L24). Scoped entirely to that card and its table — do not let these fonts leak outside `.player-selection-card`.
+
 ## Layout
 
 **Phone-first, always.** Base rules describe the phone; `min-width` queries enrich upward. [draftActif.css](draftActif.css) is the reference implementation of this and the file to copy when starting a new surface.

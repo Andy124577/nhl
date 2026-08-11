@@ -35,6 +35,12 @@
      d'où un libellé de bouton à 2,51:1 sur fond pâle. */
   --primary-deep: #00A8CC;
   --success: #00E676;
+  /* Deuxième arrêt des dégradés « succès », même rôle que --primary-deep :
+     .finish-btn (draftActif.css) codait ce second arrêt en dur (#00A855),
+     qui se trouve être la valeur CLAIRE de --success — en thème clair, le
+     dégradé s'effondrait donc en aplat (mêmes deux arrêts), et en thème
+     sombre il restait fixe plutôt que de suivre le thème. */
+  --success-deep: #00A855;
   --danger: #FF4757;
   --warning: #FFB300;
 
@@ -119,6 +125,7 @@ html[data-theme="light"] {
   --primary: #00707F;
   --primary-deep: #005A6B;
   --success: #00A855;
+  --success-deep: #00863F;
   --danger: #E03040;
   --warning: #CC8800;
   --text-main: #1C1C1E;

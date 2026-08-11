@@ -1,0 +1,53 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "archivo narrow",
+        "createdAt": "2026-08-11T00:00:10.564Z",
+        "reason": "User confirmed: player-selection-card gabarit intentionally matches an external mockup, documented in DESIGN.md Dense UI section"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "inter",
+        "createdAt": "2026-08-11T00:00:12.515Z",
+        "reason": "User confirmed: player-selection-card gabarit intentionally matches an external mockup, documented in DESIGN.md Dense UI section"
+      },
+      {
+        "rule": "border-accent-on-rounded",
+        "value": "*",
+        "files": [
+          "career-modal.css"
+        ],
+        "createdAt": "2026-08-11T00:00:23.519Z",
+        "reason": "Verified false positive: border-bottom sits on .cmh-name-banner's flat bottom edge (border-radius: 18px 18px 0 0 rounds only the top corners), no geometric clash"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "draftActif.css"
+        ],
+        "createdAt": "2026-08-11T00:00:26.085Z",
+        "reason": "Verified false positive: .pick-card::after bottom accent stripe is clipped to .pick-card's own border-radius by overflow:hidden on the parent, corners are actually rounded not square"
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "draftActif.html"
+        ],
+        "createdAt": "2026-08-11T00:00:28.482Z",
+        "reason": "Verified false positive: turn-banner-logo-img is a JS-populated template placeholder inside a hidden span, filled by draftActif.js refreshTurnAlert, same pattern as carousel logos"
+      },
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-08-11T00:01:06.142Z",
+        "reason": "User confirmed: Inter is scoped to the player-selection-card gabarit only (draftActif.css section 19b), documented in DESIGN.md Dense UI section, not sitewide overuse"
+      }
+    ]
+  }
+}
