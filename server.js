@@ -2353,21 +2353,41 @@ async function loadCurrentStats() {
     return { lastUpdated: null, season: null, players: [] };
 }
 
+// Checks whether the cached stats are missing, stale (>24h), for the wrong
+// season, or suspiciously incomplete. Shared by the /current-stats route and
+// the startup warm-up so both use the same staleness rule.
+function getStatsRefreshStatus(stats) {
+    const ageHours = stats.lastUpdated
+        ? (Date.now() - new Date(stats.lastUpdated).getTime()) / 3600000
+        : Infinity;
+    const expectedPlayerCount = loadAllPlayers().length;
+    const cacheIsIncomplete = stats.players.length < Math.min(expectedPlayerCount * 0.5, 200);
+    const needsRefresh = !stats.lastUpdated || stats.season !== 20252026 || ageHours > 24 || cacheIsIncomplete;
+    const reason = !stats.lastUpdated
+        ? 'no local cache yet'
+        : cacheIsIncomplete
+            ? `incomplete cache (${stats.players.length}/${expectedPlayerCount} players)`
+            : stats.season !== 20252026 ? `wrong season (${stats.season})` : `cache is ${ageHours.toFixed(1)}h old`;
+    return { needsRefresh, cacheIsIncomplete, expectedPlayerCount, ageHours, reason };
+}
+
+// Kicks off updateCurrentStats() in the background if a refresh isn't already
+// running. Safe to call from the route or at startup — it never blocks.
+function triggerBackgroundStatsRefresh(reason) {
+    if (statsRefreshInProgress) return;
+    console.log(`📊 Background stats refresh triggered: ${reason}`);
+    statsRefreshInProgress = true;
+    updateCurrentStats()
+        .then(() => console.log("✅ Background stats refresh done"))
+        .catch(e => console.error("❌ Background stats refresh failed:", e))
+        .finally(() => { statsRefreshInProgress = false; });
+}
+
 // Route to get current stats
 app.get("/current-stats", async (req, res) => {
     try {
         const stats = await loadCurrentStats();
-
-        const ageHours = stats.lastUpdated
-            ? (Date.now() - new Date(stats.lastUpdated).getTime()) / 3600000
-            : Infinity;
-        const expectedPlayerCount = loadAllPlayers().length;
-        const cacheIsIncomplete = stats.players.length < Math.min(expectedPlayerCount * 0.5, 200);
-        const needsRefresh = !stats.lastUpdated || stats.season !== 20252026 || ageHours > 24 || cacheIsIncomplete;
-
-        if (cacheIsIncomplete && stats.players.length > 0) {
-            console.log(`⚠️ Stats cache is incomplete: ${stats.players.length}/${expectedPlayerCount} players — refresh triggered`);
-        }
+        const { needsRefresh, reason } = getStatsRefreshStatus(stats);
 
         if (!stats.lastUpdated) {
             // Nothing in memory or persistence — block and fetch now (first ever start)
@@ -2376,16 +2396,8 @@ app.get("/current-stats", async (req, res) => {
             return res.json(fresh);
         }
 
-        if (needsRefresh && !statsRefreshInProgress) {
-            const reason = cacheIsIncomplete
-                ? `incomplete cache (${stats.players.length}/${expectedPlayerCount} players)`
-                : stats.season !== 20252026 ? `wrong season (${stats.season})` : 'cache >24h';
-            console.log(`📊 Background refresh triggered: ${reason}`);
-            statsRefreshInProgress = true;
-            updateCurrentStats()
-                .then(() => console.log("✅ Background refresh done"))
-                .catch(e => console.error("❌ Background refresh failed:", e))
-                .finally(() => { statsRefreshInProgress = false; });
+        if (needsRefresh) {
+            triggerBackgroundStatsRefresh(reason);
         }
 
         res.set('Cache-Control', 'no-store');
@@ -4180,17 +4192,25 @@ app.get('/trades/:draftName', async (req, res) => {
 // Get all trades (for completed trades history)
 app.get('/trades/all', async (req, res) => {
     try {
-        const tradesResult = await db.query(
-            'SELECT id, pool_name, trade_data, status, created_at FROM trades ORDER BY created_at DESC'
-        );
+        if (USE_POSTGRES) {
+            const tradesResult = await db.query(
+                'SELECT id, pool_name, trade_data, status, created_at FROM trades ORDER BY created_at DESC'
+            );
 
-        const allTrades = tradesResult.rows.map(row => ({
-            id: row.id,
-            draftName: row.pool_name,
-            ...row.trade_data,
-            status: row.status
-        }));
+            const allTrades = tradesResult.rows.map(row => ({
+                id: row.id,
+                draftName: row.pool_name,
+                ...row.trade_data,
+                status: row.status
+            }));
 
+            return res.json(allTrades);
+        }
+
+        // JSON-file fallback (dev without a database)
+        const trades = await loadTrades();
+        const allTrades = [...(trades.completed || []), ...(trades.pending || [])]
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
         res.json(allTrades);
     } catch (error) {
         console.error("Error loading all trades:", error);
@@ -4205,55 +4225,72 @@ app.get('/trades/completed/:username', async (req, res) => {
 
         console.log(`Fetching completed trades for user: ${username}`);
 
-        // Get all completed trades from PostgreSQL
-        const tradesResult = await db.query(
-            'SELECT id, pool_name, trade_data, created_at FROM trades WHERE status = $1 ORDER BY created_at DESC',
-            ['completed']
-        );
+        if (USE_POSTGRES) {
+            // Get all completed trades from PostgreSQL
+            const tradesResult = await db.query(
+                'SELECT id, pool_name, trade_data, created_at FROM trades WHERE status = $1 ORDER BY created_at DESC',
+                ['completed']
+            );
 
-        console.log(`Total completed trades in DB: ${tradesResult.rows.length}`);
+            console.log(`Total completed trades in DB: ${tradesResult.rows.length}`);
 
-        const userCompletedTrades = [];
+            const userCompletedTrades = [];
 
-        // Filter trades where user is involved (member of fromTeam or toTeam)
-        for (const row of tradesResult.rows) {
-            const tradeData = row.trade_data;
-            const poolName = row.pool_name;
+            // Filter trades where user is involved (member of fromTeam or toTeam)
+            for (const row of tradesResult.rows) {
+                const tradeData = row.trade_data;
+                const poolName = row.pool_name;
 
-            // Get pool data
-            const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
-            if (poolResult.rows.length === 0) {
-                console.log(`Pool ${poolName} not found`);
-                continue;
+                // Get pool data
+                const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
+                if (poolResult.rows.length === 0) {
+                    console.log(`Pool ${poolName} not found`);
+                    continue;
+                }
+
+                const pool = poolResult.rows[0].pool_data;
+                const fromTeam = pool.teams[tradeData.fromTeam];
+                const toTeam = pool.teams[tradeData.toTeam];
+
+                if (!fromTeam || !toTeam) {
+                    console.log(`Teams not found in pool ${poolName}`);
+                    continue;
+                }
+
+                // Check if user is member of either team
+                const isInFromTeam = fromTeam.members && fromTeam.members.includes(username);
+                const isInToTeam = toTeam.members && toTeam.members.includes(username);
+
+                if (isInFromTeam || isInToTeam) {
+                    userCompletedTrades.push({
+                        id: row.id,
+                        draftName: poolName,
+                        fromTeam: tradeData.fromTeam,
+                        toTeam: tradeData.toTeam,
+                        offering: tradeData.offering,
+                        receiving: tradeData.receiving,
+                        status: 'completed',
+                        date: tradeData.date,
+                        completedDate: tradeData.completedDate
+                    });
+                }
             }
 
-            const pool = poolResult.rows[0].pool_data;
-            const fromTeam = pool.teams[tradeData.fromTeam];
-            const toTeam = pool.teams[tradeData.toTeam];
-
-            if (!fromTeam || !toTeam) {
-                console.log(`Teams not found in pool ${poolName}`);
-                continue;
-            }
-
-            // Check if user is member of either team
-            const isInFromTeam = fromTeam.members && fromTeam.members.includes(username);
-            const isInToTeam = toTeam.members && toTeam.members.includes(username);
-
-            if (isInFromTeam || isInToTeam) {
-                userCompletedTrades.push({
-                    id: row.id,
-                    draftName: poolName,
-                    fromTeam: tradeData.fromTeam,
-                    toTeam: tradeData.toTeam,
-                    offering: tradeData.offering,
-                    receiving: tradeData.receiving,
-                    status: 'completed',
-                    date: tradeData.date,
-                    completedDate: tradeData.completedDate
-                });
-            }
+            console.log(`Found ${userCompletedTrades.length} completed trades for ${username}`);
+            return res.json(userCompletedTrades);
         }
+
+        // JSON-file fallback (dev without a database)
+        const trades = await loadTrades();
+        const draftData = await loadDraftData();
+
+        const userCompletedTrades = (trades.completed || []).filter(trade => {
+            const pool = draftData[trade.draftName];
+            const fromTeam = pool?.teams?.[trade.fromTeam];
+            const toTeam = pool?.teams?.[trade.toTeam];
+            if (!fromTeam || !toTeam) return false;
+            return fromTeam.members?.includes(username) || toTeam.members?.includes(username);
+        });
 
         console.log(`Found ${userCompletedTrades.length} completed trades for ${username}`);
         res.json(userCompletedTrades);
@@ -4270,52 +4307,67 @@ app.get('/trades/pending/:username', async (req, res) => {
 
         console.log(`Checking pending trades for user: ${username}`);
 
-        // Get all pending trades from PostgreSQL
-        const tradesResult = await db.query(
-            'SELECT id, pool_name, trade_data, created_at FROM trades WHERE status = $1',
-            ['pending']
-        );
+        if (USE_POSTGRES) {
+            // Get all pending trades from PostgreSQL
+            const tradesResult = await db.query(
+                'SELECT id, pool_name, trade_data, created_at FROM trades WHERE status = $1',
+                ['pending']
+            );
 
-        console.log(`Total pending trades in DB: ${tradesResult.rows.length}`);
+            console.log(`Total pending trades in DB: ${tradesResult.rows.length}`);
 
-        // Filter trades where user is the recipient
-        const userPendingTrades = [];
+            // Filter trades where user is the recipient
+            const userPendingTrades = [];
 
-        for (const row of tradesResult.rows) {
-            const tradeData = row.trade_data;
-            const poolName = row.pool_name;
+            for (const row of tradesResult.rows) {
+                const tradeData = row.trade_data;
+                const poolName = row.pool_name;
 
-            // Get pool data
-            const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
-            if (poolResult.rows.length === 0) {
-                console.log(`Pool ${poolName} not found`);
-                continue;
+                // Get pool data
+                const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
+                if (poolResult.rows.length === 0) {
+                    console.log(`Pool ${poolName} not found`);
+                    continue;
+                }
+
+                const pool = poolResult.rows[0].pool_data;
+                const targetTeam = pool.teams[tradeData.toTeam];
+
+                if (!targetTeam) {
+                    console.log(`Team ${tradeData.toTeam} not found in pool ${poolName}`);
+                    continue;
+                }
+
+                const isRecipient = targetTeam.members && targetTeam.members.includes(username);
+                console.log(`Trade ${row.id}: ${tradeData.fromTeam} → ${tradeData.toTeam}, User is recipient: ${isRecipient}`);
+
+                if (isRecipient) {
+                    userPendingTrades.push({
+                        id: row.id,
+                        draftName: poolName,
+                        fromTeam: tradeData.fromTeam,
+                        toTeam: tradeData.toTeam,
+                        offering: tradeData.offering,
+                        receiving: tradeData.receiving,
+                        status: 'pending',
+                        date: tradeData.date
+                    });
+                }
             }
 
-            const pool = poolResult.rows[0].pool_data;
-            const targetTeam = pool.teams[tradeData.toTeam];
-
-            if (!targetTeam) {
-                console.log(`Team ${tradeData.toTeam} not found in pool ${poolName}`);
-                continue;
-            }
-
-            const isRecipient = targetTeam.members && targetTeam.members.includes(username);
-            console.log(`Trade ${row.id}: ${tradeData.fromTeam} → ${tradeData.toTeam}, User is recipient: ${isRecipient}`);
-
-            if (isRecipient) {
-                userPendingTrades.push({
-                    id: row.id,
-                    draftName: poolName,
-                    fromTeam: tradeData.fromTeam,
-                    toTeam: tradeData.toTeam,
-                    offering: tradeData.offering,
-                    receiving: tradeData.receiving,
-                    status: 'pending',
-                    date: tradeData.date
-                });
-            }
+            console.log(`Found ${userPendingTrades.length} pending trades for ${username}`);
+            return res.json(userPendingTrades);
         }
+
+        // JSON-file fallback (dev without a database)
+        const trades = await loadTrades();
+        const draftData = await loadDraftData();
+
+        const userPendingTrades = (trades.pending || []).filter(trade => {
+            const pool = draftData[trade.draftName];
+            const targetTeam = pool?.teams?.[trade.toTeam];
+            return targetTeam?.members?.includes(username);
+        });
 
         console.log(`Found ${userPendingTrades.length} pending trades for ${username}`);
         res.json(userPendingTrades);
@@ -5230,6 +5282,55 @@ if (process.env.NODE_ENV !== 'production') {
 // SERVER INITIALIZATION
 // ===============================================
 
+// Loads the local stats/team cache into memory right away (so the app never
+// starts with no data), then checks in the background whether that cache is
+// stale and refreshes it from the NHL API if needed. Runs once at boot,
+// independent of any client hitting /current-stats or /current-teams first.
+async function warmStatsOnStartup() {
+    try {
+        const stats = await loadCurrentStats();
+        if (stats.lastUpdated) {
+            console.log(`📊 Local player stats loaded: ${stats.players.length} players (last updated ${stats.lastUpdated})`);
+        } else {
+            console.log('📊 No local player stats cache found on disk.');
+        }
+
+        const { needsRefresh, reason } = getStatsRefreshStatus(stats);
+        if (needsRefresh) {
+            triggerBackgroundStatsRefresh(`startup check — ${reason}`);
+        } else {
+            console.log(`📊 Local player stats are fresh (${reason}) — no refresh needed.`);
+        }
+    } catch (error) {
+        console.error('❌ Error warming player stats on startup:', error);
+    }
+
+    try {
+        const teams = await loadCurrentTeams();
+        const teamsAgeHours = teams.lastUpdated
+            ? (Date.now() - new Date(teams.lastUpdated).getTime()) / 3600000
+            : Infinity;
+
+        if (teams.lastUpdated) {
+            console.log(`📊 Local team standings loaded: ${teams.teams.length} teams (last updated ${teams.lastUpdated})`);
+        } else {
+            console.log('📊 No local team standings cache found on disk.');
+        }
+
+        if (!teams.lastUpdated || teamsAgeHours > 24) {
+            const reason = teams.lastUpdated ? `cache is ${teamsAgeHours.toFixed(1)}h old` : 'no local cache yet';
+            console.log(`📊 Background team standings refresh triggered: startup check — ${reason}`);
+            updateTeamStandings()
+                .then(() => console.log('✅ Background team standings refresh done'))
+                .catch(e => console.error('❌ Background team standings refresh failed:', e));
+        } else {
+            console.log(`📊 Local team standings are fresh (${teamsAgeHours.toFixed(1)}h old) — no refresh needed.`);
+        }
+    } catch (error) {
+        console.error('❌ Error warming team standings on startup:', error);
+    }
+}
+
 async function startServer() {
     try {
         // Initialize PostgreSQL database if using PostgreSQL
@@ -5251,6 +5352,10 @@ async function startServer() {
             console.log(`🚀 Serveur en cours d'exécution sur http://localhost:${PORT}`);
             console.log(`📁 Data directory: ${DATA_DIR}`);
             console.log(`💾 Using ${USE_POSTGRES ? 'PostgreSQL' : 'JSON files'} for data storage`);
+
+            // Fire-and-forget: serve local cached data immediately, refresh in
+            // the background if stale. Never blocks server startup.
+            warmStatsOnStartup();
         });
     } catch (error) {
         console.error('❌ Failed to start server:', error);

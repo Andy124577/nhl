@@ -322,9 +322,13 @@ function renderMyRankings() {
         return;
     }
 
+    // Pools are created with 10 empty "Équipe N" slots — rank against the
+    // teams that actually have members, not the unclaimed placeholders.
+    // Order is left as-is (not re-sorted by rank): the server already hands
+    // back userData.userPools most-recently-created first (see db.js'
+    // `getAllPools`, ORDER BY created_at DESC), so the newest pool lands
+    // at the top of the list.
     const entries = userData.userPools.map(pool => {
-        // Pools are created with 10 empty "Équipe N" slots — rank against the
-        // teams that actually have members, not the unclaimed placeholders.
         const allScores = buildTeamScores(pool);
         const claimed   = allScores.filter(t => t.memberCount > 0);
         const scores    = claimed.length ? claimed : allScores;
@@ -335,20 +339,25 @@ function renderMyRankings() {
             total: scores.length,
             score: idx >= 0 ? scores[idx].score : 0
         };
-    }).sort((a, b) => (a.rank || Infinity) - (b.rank || Infinity));
+    });
 
     const count = document.getElementById('myRankingsCount');
     if (count) count.textContent = `${entries.length} pool${entries.length > 1 ? 's' : ''}`;
 
     const rankCls = r => r === 1 ? 'gold' : r === 2 ? 'silver' : r === 3 ? 'bronze' : '';
 
-    list.innerHTML = entries.map(({ pool, rank, total, score }) => {
+    // Keep the list compact by default; pools past this count are hidden
+    // behind a "Voir plus" button instead of forcing an inner scrollbar.
+    const VISIBLE_LIMIT = 5;
+
+    const rows = entries.map(({ pool, rank, total, score }, i) => {
         const mode = !pool.isDraftComplete
             ? '<span class="rk-pool-mode pending">Repêchage en cours</span>'
             : `<span class="rk-pool-mode">${pool.mode === 'head-to-head' ? 'Tête-à-tête' : 'Cumulatif'} · ${escapeHTML(pool.userTeam)}</span>`;
+        const hidden = i >= VISIBLE_LIMIT;
 
         return `
-        <div class="ranking-item" data-pool="${escapeHTML(pool.name)}">
+        <div class="ranking-item${hidden ? ' rk-extra' : ''}" data-pool="${escapeHTML(pool.name)}"${hidden ? ' style="display:none;"' : ''}>
             <button class="ranking-row" type="button" aria-expanded="false"
                     onclick="togglePoolRanking(this)">
                 <span class="rk-pool">
@@ -367,7 +376,24 @@ function renderMyRankings() {
         </div>`;
     }).join('');
 
+    const moreCount = entries.length - VISIBLE_LIMIT;
+    const moreBtn = moreCount > 0
+        ? `<button type="button" class="rk-more-btn" onclick="revealAllRankings(this)">Voir plus (${moreCount})</button>`
+        : '';
+
+    list.innerHTML = rows + moreBtn;
+
     section.style.display = '';
+}
+
+// Reveals pools past VISIBLE_LIMIT in the "Mes classements" list, in place
+// of an inner scrollbar.
+function revealAllRankings(btn) {
+    const list = document.getElementById('myRankingsList');
+    list.querySelectorAll('.ranking-item.rk-extra').forEach(item => {
+        item.style.display = '';
+    });
+    btn.remove();
 }
 
 // Expand/collapse a pool row to reveal the roster the user drafted in it.

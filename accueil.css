@@ -427,21 +427,25 @@ body {
 .rankings-head .rk-col-rank { text-align: center; }
 .rankings-head .rk-col-pts  { text-align: right; }
 
-/* Scroll area — keeps the section compact no matter how many pools */
-.rankings-scroll {
-    max-height: 420px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-gray) transparent;
-}
-.rankings-scroll::-webkit-scrollbar { width: 8px; }
-.rankings-scroll::-webkit-scrollbar-thumb {
-    background: var(--border-gray); border-radius: 100px;
-}
-
 .ranking-item { border-bottom: 1px solid var(--border-light); }
 .ranking-item:last-child { border-bottom: none; }
 .ranking-item.open { background: rgba(0,212,255,.04); }
+
+/* Shown instead of a scrollbar once the pool count passes VISIBLE_LIMIT */
+.rk-more-btn {
+    display: block;
+    width: 100%;
+    padding: 13px 18px;
+    background: var(--bg-gray-light);
+    border: none;
+    color: var(--primary);
+    font-weight: 700;
+    font-size: .95rem;
+    text-align: center;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease;
+}
+.rk-more-btn:hover { background: rgba(0,212,255,.08); color: var(--text-main); }
 
 .ranking-row {
     display: grid;
