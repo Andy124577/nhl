@@ -155,29 +155,6 @@ body {
     transform: translateY(-2px);
 }
 
-/* Quick-nav pills (logged-in users) */
-.hero-quick-nav {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-.hero-pill {
-    padding: 8px 16px;
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 100px;
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-size: .85rem;
-    font-weight: 600;
-    transition: all .25s;
-}
-.hero-pill:hover {
-    background: rgba(0,212,255,.12);
-    border-color: rgba(0,212,255,.35);
-    color: var(--primary);
-}
-
 /* ---------- Hero floating card ---------- */
 .hero-preview-wrap { position: relative; display: flex; justify-content: center; }
 
@@ -204,17 +181,6 @@ body {
     font-size: .95rem;
     margin-bottom: 18px;
 }
-.hfc-view-all {
-    margin-left: auto;
-    color: var(--primary);
-    text-decoration: none;
-    font-size: .78rem;
-    font-weight: 600;
-    opacity: .8;
-    transition: opacity .2s;
-}
-.hfc-view-all:hover { opacity: 1; }
-
 .live-dot {
     width: 9px;
     height: 9px;
@@ -223,37 +189,6 @@ body {
     flex-shrink: 0;
     animation: live-ring 2.2s ease-in-out infinite;
 }
-
-.hfc-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 10px;
-    border-radius: 10px;
-    margin-bottom: 6px;
-    transition: background .2s;
-}
-.hfc-row:hover { background: rgba(0,212,255,.06); }
-.hfc-row.current-user {
-    background: rgba(0,212,255,.1);
-    border: 1px solid rgba(0,212,255,.22);
-}
-
-.hfc-rank {
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: .75rem;
-    background: var(--bg-hover); color: var(--text-secondary);
-    flex-shrink: 0;
-}
-.hfc-rank.gold   { background: rgba(255,179,0,.18); color: var(--warning); }
-.hfc-rank.silver { background: rgba(185,185,205,.15); color: #B8B8CC; }
-.hfc-rank.bronze { background: rgba(180,100,0,.18); color: #CD7F32; }
-
-.hfc-team { flex: 1; font-weight: 600; font-size: .88rem; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hfc-pts  { font-weight: 800; color: var(--primary); font-size: .92rem; white-space: nowrap; }
-.hfc-skeleton { padding: 4px 0; }
 
 /* Decorative chips */
 .hero-stat-chip {
@@ -270,6 +205,113 @@ body {
 .chip-1 { top: -18px; right: -24px; animation: float-b 4.5s ease-in-out infinite; }
 .chip-2 { bottom: -12px; left: -28px; animation: float-a 6s ease-in-out infinite 1.2s; }
 .chip-icon { font-size: 1rem; }
+
+/* ============================================================ */
+/* DASHBOARD HEADER — draft actions + trade actions              */
+/* (logged-in members only)                                      */
+/* The marketing headline/CTA/demo cards and this header are     */
+/* mutually exclusive; html.fz-auth / html.fz-anon (set before   */
+/* first paint, see index.html <head>) pick one. Absorbs what    */
+/* used to be the separate #homeResumeBanner.                    */
+/* ============================================================ */
+html.fz-auth .hero-inner { display: none; }
+.dash-header { display: none; width: 100%; position: relative; z-index: 1; }
+html.fz-auth .dash-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 1380px;
+    margin: 0 auto;
+}
+html.fz-auth .hero-section { min-height: auto; padding: 48px 24px 56px; }
+
+/* Signed-up, no pools yet — the one state on this page that still needs
+   the "create or join" conversion CTAs, so they're allowed back in here. */
+html.fz-auth .dash-header.dash-header-empty { grid-template-columns: 1fr; max-width: 640px; }
+.dash-onboard {
+    background: var(--card);
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    padding: 32px 24px;
+    text-align: center;
+}
+.dash-onboard-text { font-size: 1rem; font-weight: 600; color: var(--text-main); margin-bottom: 18px; }
+.dash-onboard-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+
+/* Returning users who already have a pool don't need the marketing
+   walkthrough — hidden here, pre-paint, same mechanism as the rest of
+   this block, instead of the JS toggle this used to depend on. */
+html.fz-auth #comment-ca-marche { display: none; }
+
+
+.dash-box {
+    background: var(--card);
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    padding: 20px;
+}
+
+.dash-box-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.dash-box-icon {
+    width: 26px; height: 26px; flex-shrink: 0;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,212,255,.12); color: var(--primary);
+}
+.dash-box-title { font-size: .95rem; font-weight: 700; color: var(--text-main); }
+
+.dash-box-list { display: flex; flex-direction: column; gap: 8px; }
+.dash-box-empty { padding: 16px 4px; text-align: center; color: var(--text-secondary); font-size: .88rem; }
+
+/* ---- Draft box rows ---- */
+.dash-draft-row {
+    display: flex; flex-direction: column; gap: 3px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--bg-hover);
+    border: 1px solid transparent;
+    text-decoration: none;
+    transition: border-color .2s ease, transform .2s ease;
+}
+.dash-draft-row:hover,
+.dash-draft-row:focus-visible { transform: translateY(-1px); }
+.dash-draft-pool { font-weight: 700; font-size: .92rem; color: var(--text-dark); }
+.dash-draft-label { font-size: .82rem; color: var(--text-secondary); }
+
+/* Your turn is the one state genuinely live/actionable right now —
+   the only place this box uses the live-signal cyan glow. */
+.dash-draft-your-turn {
+    background: rgba(0,212,255,.1);
+    border-color: rgba(0,212,255,.4);
+    box-shadow: var(--glow-primary);
+}
+.dash-draft-your-turn .dash-draft-label { color: var(--primary); font-weight: 700; }
+
+.dash-draft-choose-club .dash-draft-label { color: var(--warning); }
+
+/* ---- Trade box rows ---- */
+.dash-trade-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--bg-hover);
+    text-decoration: none;
+    transition: transform .2s ease;
+}
+.dash-trade-row:hover,
+.dash-trade-row:focus-visible { transform: translateY(-1px); }
+.dash-trade-teams { font-weight: 700; font-size: .88rem; color: var(--text-dark); flex-shrink: 0; }
+.dash-trade-players {
+    flex: 1; min-width: 0;
+    font-size: .82rem; color: var(--text-secondary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dash-trade-cta { font-size: .82rem; font-weight: 600; color: var(--primary); flex-shrink: 0; }
+
+@media (max-width: 768px) {
+    html.fz-auth .dash-header { grid-template-columns: 1fr; gap: 14px; }
+    .dash-box-title { font-size: 1.05rem; }
+}
 
 /* ============================================================ */
 /* ALERTS STRIP                                                  */
@@ -337,66 +379,6 @@ body {
 }
 .section-link:hover { color: var(--text-main); }
 
-/* ============================================================ */
-/* LEADERBOARD                                                   */
-/* ============================================================ */
-.leaderboard-row {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 16px 20px;
-    background: var(--card-white);
-    border: 1px solid var(--border-light);
-    border-radius: 14px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: all .25s ease;
-    animation: card-in .4s ease both;
-}
-.leaderboard-row:hover {
-    border-color: var(--primary);
-    box-shadow: var(--glow-primary);
-    transform: translateX(5px);
-}
-.leaderboard-row.user-row {
-    border-color: rgba(0,212,255,.4);
-    background: rgba(0,212,255,.06);
-}
-
-.lb-rank {
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 1rem;
-    flex-shrink: 0;
-    background: var(--bg-hover); color: var(--text-secondary);
-}
-.lb-rank.gold   { background: rgba(255,179,0,.15); color: var(--warning); box-shadow: 0 0 14px rgba(255,179,0,.3); }
-.lb-rank.silver { background: rgba(185,185,205,.15); color: #B8B8CC; }
-.lb-rank.bronze { background: rgba(180,100,0,.15); color: #CD7F32; }
-
-.lb-team        { flex: 1; min-width: 0; }
-.lb-team-name   { font-weight: 700; color: var(--text-dark); font-size: 1rem; margin-bottom: 3px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.lb-team-members { font-size: .78rem; color: var(--text-gray); }
-
-.lb-trend { font-size: 1.1rem; flex-shrink: 0; width: 20px; text-align: center; }
-
-.lb-pts        { text-align: right; flex-shrink: 0; }
-.lb-pts-value  { font-size: 1.35rem; font-weight: 800; color: var(--primary); display: block; line-height: 1; }
-.lb-pts-label  { font-size: .7rem; color: var(--text-gray); text-transform: uppercase; letter-spacing: .5px; }
-
-.lb-you-badge {
-    padding: 2px 9px;
-    background: rgba(0,212,255,.15); color: var(--primary);
-    border-radius: 100px; font-size: .65rem; font-weight: 800; letter-spacing: 1px;
-}
-
-.lb-empty {
-    text-align: center; padding: 48px 24px;
-    background: var(--card-white); border: 1px solid var(--border-light);
-    border-radius: 14px; color: var(--text-secondary);
-}
-.lb-empty a { color: var(--primary); font-weight: 600; text-decoration: none; }
 
 /* ============================================================ */
 /* MY RANKINGS (one row per pool, expands to show your roster)   */
@@ -809,8 +791,6 @@ body {
     .hero-headline { font-size: 2rem; }
     .hero-actions { flex-direction: column; width: 100%; }
     .btn-hero-primary, .btn-hero-secondary { justify-content: center; }
-    .leaderboard-row { padding: 12px 14px; gap: 10px; }
-    .lb-pts-value { font-size: 1.1rem; }
 }
 
 /* ============================================================ */
@@ -874,23 +854,12 @@ html[data-theme="light"] .hero-floating-card {
 html[data-theme="light"] .hero-stat-chip {
     background: rgba(255, 255, 255, 0.95);
 }
-html[data-theme="light"] .hero-pill {
-    background: rgba(0, 0, 0, 0.04);
-    border-color: rgba(0, 0, 0, 0.10);
-}
-html[data-theme="light"] .hero-pill:hover {
-    background: rgba(0, 136, 170, 0.10);
-    border-color: rgba(0, 136, 170, 0.30);
-}
 html[data-theme="light"] .btn-hero-secondary {
     border-color: rgba(0, 0, 0, 0.20);
     color: var(--text-main);
 }
 html[data-theme="light"] .btn-hero-secondary:hover {
     background: rgba(0, 0, 0, 0.04);
-}
-html[data-theme="light"] .hfc-row:hover {
-    background: rgba(0, 136, 170, 0.05);
 }
 
 /* ============================================================ */
@@ -902,60 +871,7 @@ html[data-theme="light"] .hfc-row:hover {
     .hero-floating-card { animation: none; }
     .chip-1, .chip-2 { animation: none; }
     .live-dot { animation: none; }
-    .hero-pill, .btn-hero-primary, .btn-hero-secondary, .btn-hero-tertiary { transition: none; }
-}
-
-/* ============================================================
-   HOME RESUME BANNER (Zeigarnik Effect)
-   ============================================================ */
-.home-resume-banner {
-    max-width: 1200px;
-    margin: 16px auto 0;
-    padding: 0 24px;
-    display: none;
-    flex-direction: column;
-    gap: 10px;
-}
-.home-resume-banner.has-items { display: flex; }
-
-.resume-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 18px;
-    border-radius: 12px;
-    text-decoration: none;
-    font-weight: 600;
-    border: 1px solid var(--border-light, rgba(255,255,255,0.08));
-    transition: transform .2s ease, box-shadow .2s ease;
-}
-.resume-item:hover { transform: translateY(-2px); }
-
-.resume-item.draft {
-    background: linear-gradient(135deg, rgba(0,212,255,0.14) 0%, rgba(0,180,220,0.10) 100%);
-    color: var(--text-main, #fff);
-    box-shadow: 0 4px 16px rgba(0,212,255,0.18);
-}
-.resume-item.trade {
-    background: linear-gradient(135deg, rgba(255,71,87,0.14) 0%, rgba(255,71,87,0.08) 100%);
-    color: var(--text-main, #fff);
-    box-shadow: 0 4px 16px rgba(255,71,87,0.15);
-}
-
-.resume-icon { font-size: 1.3rem; flex-shrink: 0; }
-.resume-text { flex: 1; }
-.resume-text strong { font-weight: 800; }
-.resume-cta {
-    font-weight: 800;
-    white-space: nowrap;
-    opacity: 0.9;
-}
-.resume-item.draft .resume-cta { color: var(--primary, #00D4FF); }
-.resume-item.trade .resume-cta { color: #ff6b7a; }
-
-@media (max-width: 600px) {
-    .resume-item { flex-wrap: wrap; font-size: 0.92rem; }
-    .resume-cta { width: 100%; }
+    .btn-hero-primary, .btn-hero-secondary, .btn-hero-tertiary { transition: none; }
 }
 
 /* ==================== DENSITÉ SUR GRAND ÉCRAN ====================

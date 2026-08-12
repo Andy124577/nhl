@@ -14,8 +14,7 @@
 /* Posé par un script en ligne dans <head> : le visiteur non connecté
    voit le repêchage, le membre son classement, sans clignotement. */
 
-html.fz-anon #heroCardStandings { display: none; }
-html.fz-auth #heroCardDraft     { display: none; }
+html.fz-auth #heroCardDraft { display: none; }
 
 /* ==================== CARTE « REPÊCHAGE EN DIRECT » ==================== */
 

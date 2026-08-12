@@ -15,6 +15,7 @@
     <!-- Modale de carrière : même feuille que draftActif.html, chargée en
          dernier pour que ses règles spécialisent celles d'index.css. -->
     <link rel="stylesheet" href="career-modal.css">
+    <link rel="stylesheet" href="statsLeaders.css">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
@@ -37,6 +38,23 @@
             </h1>
         </div>
     </header>
+
+    <!-- ============================================================ -->
+    <!-- LEAGUE LEADERS — six top-5 boards                             -->
+    <!-- ============================================================ -->
+    <div class="stats-leaders-section">
+        <div class="stats-leaders-head">
+            <h2 class="stats-leaders-title"><span data-icon="trophy" data-icon-size="22"></span> Meneurs de la ligue</h2>
+        </div>
+        <div class="leaders-grid" id="statsLeadersGrid">
+            <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
+            <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
+            <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
+            <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
+            <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
+            <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
+        </div>
+    </div>
 
     <!-- ============================================================ -->
     <!-- MAIN CONTAINER                                                -->
@@ -336,6 +354,8 @@
          partagé avec draftActif.html. -->
     <script defer src="teamColors.js"></script>
     <script defer src="index.js?v=20250101-debug2"></script>
+    <!-- Meneurs de la ligue : lit BASE_URL déjà déclaré par index.js ci-dessus. -->
+    <script defer src="statsLeaders.js"></script>
     <!-- Logo d'équipe du tableau de carrière, partagé avec draftActif.html. -->
     <script defer src="careerTeamLogo.js"></script>
     <!-- Alignement de la rangée « Carrière », partagé avec draftActif.html. -->

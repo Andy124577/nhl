@@ -16,6 +16,7 @@
         })();
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css">
     <link rel="stylesheet" href="poolNav.css">
     <link rel="stylesheet" href="index.css">
@@ -30,9 +31,6 @@
 <body>
     <!-- Navigation -->
     <nav class="navbar"></nav>
-
-    <!-- Resume / open-tasks banner (Zeigarnik Effect) -->
-    <div id="homeResumeBanner" class="home-resume-banner"></div>
 
     <!-- ============================================================ -->
     <!-- HERO SECTION                                                  -->
@@ -58,13 +56,6 @@
                     <a href="creer-pool.html" class="btn-hero-primary"><span data-icon="rocket" data-icon-size="16"></span> Créer un pool</a>
                     <a href="rejoindre-pool.html" class="btn-hero-secondary">Rejoindre un pool →</a>
                     <button onclick="scrollToHowItWorks()" class="btn-hero-tertiary">Comment ça marche ?</button>
-                </div>
-                <!-- Quick nav pills for logged-in users -->
-                <div class="hero-quick-nav" id="heroQuickNav" style="display:none;">
-                    <a href="classement.html" class="hero-pill"><span data-icon="trophy" data-icon-size="15"></span> Classement</a>
-                    <a href="trade.html" class="hero-pill"><span data-icon="refresh" data-icon-size="15"></span> Échanges</a>
-                    <a href="mes-pools.html" class="hero-pill"><span data-icon="settings" data-icon-size="15"></span> Mes pools</a>
-                    <a href="stats.html" class="hero-pill"><span data-icon="chart" data-icon-size="15"></span> Stats</a>
                 </div>
             </div>
 
@@ -134,22 +125,6 @@
                     <a href="signup.html" class="dm-cta">Repêcher votre équipe →</a>
                 </div>
 
-                <!-- Membre : son classement en direct -->
-                <div class="hero-floating-card" id="heroCardStandings">
-                    <div class="hfc-header">
-                        <span class="live-dot"></span>
-                        <span>Classement en direct</span>
-                        <a href="classement.html" class="hfc-view-all">Voir tout →</a>
-                    </div>
-                    <div id="heroLeaderboardPreview">
-                        <div class="hfc-skeleton">
-                            <div class="skeleton" style="height:14px;width:85%;margin-bottom:12px;border-radius:6px;"></div>
-                            <div class="skeleton" style="height:14px;width:70%;margin-bottom:12px;border-radius:6px;"></div>
-                            <div class="skeleton" style="height:14px;width:60%;margin-bottom:12px;border-radius:6px;"></div>
-                            <div class="skeleton" style="height:14px;width:75%;border-radius:6px;"></div>
-                        </div>
-                    </div>
-                </div>
                 <!-- Decorative floating chips -->
                 <div class="hero-stat-chip chip-1">
                     <span class="chip-icon" data-icon="bolt" data-icon-size="14"></span>
@@ -158,6 +133,35 @@
                 <div class="hero-stat-chip chip-2">
                     <span class="chip-icon" data-icon="flame" data-icon-size="14"></span>
                     <span>En feu</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Membre : ce qui demande votre attention — repêchage et échanges
+             en attente. Remplace tout le contenu marketing ci-dessus et
+             absorbe l'ancien bandeau de reprise (Zeigarnik Effect) : chaque
+             pool concerné apparaît ici, pas seulement le premier trouvé.
+             Basculé par la classe posée avant le premier rendu (voir le
+             script en tête de <head>). -->
+        <div class="dash-header" id="dashHeader">
+            <div class="dash-box dash-box-draft">
+                <div class="dash-box-head">
+                    <span class="dash-box-icon" data-icon="hockey" data-icon-size="18"></span>
+                    <span class="dash-box-title">Repêchage</span>
+                </div>
+                <div class="dash-box-list" id="draftBoxList">
+                    <div class="skeleton" style="height:52px;border-radius:12px;margin-bottom:8px;"></div>
+                    <div class="skeleton" style="height:52px;border-radius:12px;"></div>
+                </div>
+            </div>
+            <div class="dash-box dash-box-trade">
+                <div class="dash-box-head">
+                    <span class="dash-box-icon" data-icon="refresh" data-icon-size="18"></span>
+                    <span class="dash-box-title">Échanges</span>
+                </div>
+                <div class="dash-box-list" id="tradeBoxList">
+                    <div class="skeleton" style="height:52px;border-radius:12px;margin-bottom:8px;"></div>
+                    <div class="skeleton" style="height:52px;border-radius:12px;"></div>
                 </div>
             </div>
         </div>

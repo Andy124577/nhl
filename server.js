@@ -3571,6 +3571,64 @@ app.get('/hot-players', async (req, res) => {
     }
 });
 
+// Route to get top-5 stat leaders (points/goals/assists/wins) for the homepage hero.
+// Reads the same cached file as /hot-players, which updateCurrentStats() keeps
+// patched with live current-season points/goals/assists/wins.
+app.get('/stats-leaders', async (req, res) => {
+    try {
+        const filteredStatsPath = path.join(__dirname, 'nhl_filtered_stats.json');
+
+        if (!fs.existsSync(filteredStatsPath)) {
+            console.error('❌ nhl_filtered_stats.json not found');
+            return res.json({ forwardsPoints: [], defensePoints: [], goalsLeaders: [], assistsLeaders: [], rookiePoints: [], goalieWins: [] });
+        }
+
+        const filteredStats = JSON.parse(fs.readFileSync(filteredStatsPath, 'utf-8'));
+
+        const toSkater = p => ({
+            playerId: p.playerId,
+            playerName: p.skaterFullName,
+            teamAbbrev: p.teamAbbrevs,
+            position: p.positionCode,
+            headshot: `https://assets.nhle.com/mugs/nhl/20252026/${p.teamAbbrevs}/${p.playerId}.png`,
+            gamesPlayed: p.gamesPlayed,
+            goals: p.goals,
+            assists: p.assists,
+            points: p.points
+        });
+        const toGoalie = p => ({
+            playerId: p.playerId,
+            playerName: p.goalieFullName,
+            teamAbbrev: p.teamAbbrevs,
+            position: 'G',
+            headshot: `https://assets.nhle.com/mugs/nhl/20252026/${p.teamAbbrevs}/${p.playerId}.png`,
+            gamesPlayed: p.gamesPlayed,
+            wins: p.wins,
+            points: p.points
+        });
+
+        const forwards   = (filteredStats.Top_100_Offensive_Players || []).filter(p => p.gamesPlayed > 0);
+        const defenders  = (filteredStats.Top_50_Defenders || []).filter(p => p.gamesPlayed > 0);
+        const rookies    = (filteredStats.Top_Rookies || []).filter(p => p.gamesPlayed > 0 && p.positionCode !== 'G');
+        const goalies    = (filteredStats.Top_50_Goalies || []).filter(p => p.gamesPlayed > 0);
+        const allSkaters = [...forwards, ...defenders];
+
+        const top5 = (arr, key) => [...arr].sort((a, b) => (b[key] || 0) - (a[key] || 0)).slice(0, 5);
+
+        res.json({
+            forwardsPoints: top5(forwards, 'points').map(toSkater),
+            defensePoints:  top5(defenders, 'points').map(toSkater),
+            goalsLeaders:   top5(allSkaters, 'goals').map(toSkater),
+            assistsLeaders: top5(allSkaters, 'assists').map(toSkater),
+            rookiePoints:   top5(rookies, 'points').map(toSkater),
+            goalieWins:     top5(goalies, 'wins').map(toGoalie)
+        });
+    } catch (error) {
+        console.error('❌ Error fetching stats leaders:', error);
+        res.status(500).json({ message: 'Error fetching stats leaders' });
+    }
+});
+
 // ==================== HOT PLAYERS - TIME RANGE (FANTASY POINTS) ====================
 
 // Caches for different time ranges

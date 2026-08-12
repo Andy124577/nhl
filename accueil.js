@@ -9,9 +9,10 @@ const BASE_URL = window.location.hostname.includes('localhost')
 let userData = {
     username: null,
     userPools: [],
-    primaryPool: null,
+    pendingTrades: [],
     statsData: null,
-    hotPlayers: null
+    hotPlayers: null,
+    statsLeaders: null
 };
 
 // ============================================================
@@ -32,20 +33,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Show quick-nav pills if logged in
-    if (userData.username) {
-        const nav = document.getElementById('heroQuickNav');
-        if (nav) nav.style.display = 'flex';
-    }
-
-    // Fetch pools and stats in parallel
-    await Promise.all([loadPools(), loadCurrentStats(), loadStats()]);
+    // Fetch pools, stats and pending trades in parallel
+    await Promise.all([
+        FZPool.ready(), loadPools(), loadCurrentStats(), loadStats(), loadStatsLeaders(), loadPendingTrades()
+    ]);
 
     // Render all sections
-    renderMyRankings();      // all pools you're in, with your position in each
-    renderHeroLeaderboard();
-    adaptHeroForUser();      // auth-aware primary CTA (Jakob's Law)
-    renderResumeBanner();    // open-task pull (Zeigarnik Effect)
+    renderMyRankings();   // all pools you're in, with your position in each
+    renderDashHeader();   // draft actions + trades awaiting your response (or an onboarding card if you have no pools)
+
+    // Live draft state (e.g. "it's your turn") already flows through FZPool
+    // via the socket connection activePool.js sets up — just listen for it.
+    if (userData.username) FZPool.onData(renderDashHeader);
 });
 
 // ============================================================
@@ -87,14 +86,6 @@ async function loadPools() {
             });
         });
 
-        // Primary pool: prefer H2H with completed draft
-        const completed = userData.userPools.filter(p => p.isDraftComplete);
-        userData.primaryPool =
-            completed.find(p => p.mode === 'head-to-head') ||
-            completed[0] ||
-            userData.userPools[0] ||
-            null;
-
     } catch (err) {
         console.error('Error loading pools:', err);
     }
@@ -109,6 +100,19 @@ async function loadCurrentStats() {
         userData.statsData = await res.json();
     } catch (err) {
         console.warn('Could not load current stats:', err);
+    }
+}
+
+// ============================================================
+// STATS LEADERS LOADING (hero, logged-in members only)
+// ============================================================
+async function loadStatsLeaders() {
+    if (!userData.username) return;
+    try {
+        const res = await fetch(`${BASE_URL}/stats-leaders`, { cache: 'no-store' });
+        userData.statsLeaders = await res.json();
+    } catch (err) {
+        console.warn('Could not load stats leaders:', err);
     }
 }
 
@@ -167,97 +171,121 @@ async function loadStats(days = 7) {
 }
 
 // ============================================================
-// RESUME BANNER (Zeigarnik Effect — pull users back to open loops)
+// DRAFT ACTIONS BOX — every pool that needs a draft-related action
+// from the user: it's their turn, the pre-draft club choice hasn't
+// been made, or the pool is full and ready to start. Built on
+// window.FZPool (activePool.js), already loaded app-wide.
 // ============================================================
-function findResumableDraft() {
-    // A draft is resumable when its order has started but it isn't finished.
-    return userData.userPools.find(p =>
-        Array.isArray(p.data.draftOrder) && p.data.draftOrder.length > 0 && !p.isDraftComplete
-    ) || null;
+const DRAFT_ACTION_PRIORITY = { 'your-turn': 0, 'live': 1, 'choose-club': 2, 'ready': 3 };
+
+function draftActionFor(pool) {
+    const state = FZPool.draftState(pool.data);
+    const href = kind => (kind === 'encours' ? 'draftActif.html' : 'repechage.html') + `?pool=${encodeURIComponent(pool.name)}`;
+
+    if (state.etat === 'encours') {
+        return state.equipeAuTour === pool.teamName
+            ? { kind: 'your-turn', label: "C'est votre tour", href: href('encours') }
+            : { kind: 'live', label: `Repêchage en direct — choix ${state.choixFait}/${state.choixTotal}`, href: href('encours') };
+    }
+    if (state.etat === 'pret') {
+        return pool.teamData.nhlClub
+            ? { kind: 'ready', label: 'Prêt à démarrer le repêchage', href: href('pret') }
+            : { kind: 'choose-club', label: 'Choisissez votre équipe LNH', href: href('pret') };
+    }
+    // attente / termine: nothing actionable here — attente has no action
+    // for a regular member, and termine's rank/points live in "Mes classements".
+    return null;
 }
 
-async function fetchPendingTradeCount() {
-    if (!userData.username) return 0;
+function renderDraftBox() {
+    const box = document.getElementById('draftBoxList');
+    if (!box || !userData.username) return;
+
+    const actions = FZPool.mine()
+        .map(pool => ({ pool, action: draftActionFor(pool) }))
+        .filter(x => x.action)
+        .sort((a, b) => DRAFT_ACTION_PRIORITY[a.action.kind] - DRAFT_ACTION_PRIORITY[b.action.kind]);
+
+    if (!actions.length) {
+        box.innerHTML = `<p class="dash-box-empty">Aucune action de repêchage en attente</p>`;
+        return;
+    }
+
+    box.innerHTML = actions.map(({ pool, action }) => `
+        <a class="dash-draft-row dash-draft-${action.kind}" href="${action.href}">
+            <span class="dash-draft-pool">${escapeHTML(pool.name)}</span>
+            <span class="dash-draft-label">${escapeHTML(action.label)}</span>
+        </a>
+    `).join('');
+}
+
+// ============================================================
+// TRADE BOX — trades proposed to the user, awaiting a response.
+// ============================================================
+async function loadPendingTrades() {
+    if (!userData.username) { userData.pendingTrades = []; return; }
     try {
         const res = await fetch(`${BASE_URL}/trades/pending/${encodeURIComponent(userData.username)}`, { cache: 'no-store' });
-        if (!res.ok) return 0;
-        const trades = await res.json();
-        return Array.isArray(trades) ? trades.length : 0;
-    } catch { return 0; }
+        userData.pendingTrades = res.ok ? await res.json() : [];
+    } catch (err) {
+        console.warn('Could not load pending trades:', err);
+        userData.pendingTrades = [];
+    }
 }
 
-async function renderResumeBanner() {
-    const banner = document.getElementById('homeResumeBanner');
-    if (!banner || !userData.username) return;
+function renderTradeBox() {
+    const box = document.getElementById('tradeBoxList');
+    if (!box || !userData.username) return;
 
-    const items = [];
+    const trades = userData.pendingTrades || [];
 
-    const resumable = findResumableDraft();
-    if (resumable) {
-        items.push(`
-            <a class="resume-item draft" href="draftActif.html?pool=${encodeURIComponent(resumable.name)}">
-                <span class="resume-icon">🏒</span>
-                <span class="resume-text">Repêchage en cours — <strong>${resumable.name}</strong></span>
-                <span class="resume-cta">Reprendre →</span>
-            </a>
-        `);
+    if (!trades.length) {
+        box.innerHTML = `<p class="dash-box-empty">Aucun échange en attente</p>`;
+        return;
     }
 
-    const pendingTrades = await fetchPendingTradeCount();
-    if (pendingTrades > 0) {
-        items.push(`
-            <a class="resume-item trade" href="trade.html">
-                <span class="resume-icon">🔄</span>
-                <span class="resume-text">${pendingTrades} échange${pendingTrades > 1 ? 's' : ''} en attente de votre réponse</span>
-                <span class="resume-cta">Voir →</span>
-            </a>
-        `);
-    }
-
-    banner.innerHTML = items.join('');
-    banner.classList.toggle('has-items', items.length > 0);
+    box.innerHTML = trades.map(trade => {
+        const offering  = trade.offering && trade.offering[0];
+        const receiving = trade.receiving && trade.receiving[0];
+        return `
+            <a class="dash-trade-row" href="trade.html?trade=${encodeURIComponent(trade.id)}">
+                <span class="dash-trade-teams">${escapeHTML(trade.fromTeam)} → Vous</span>
+                ${offering && receiving
+                    ? `<span class="dash-trade-players">${escapeHTML(offering.name)} ⇄ ${escapeHTML(receiving.name)}</span>`
+                    : ''}
+                <span class="dash-trade-cta">Voir →</span>
+            </a>`;
+    }).join('');
 }
 
-// ============================================================
-// HERO CTA — auth-aware (Jakob's Law: returning users want to resume)
-// ============================================================
-function adaptHeroForUser() {
-    if (!userData.username) return;
-    const actions = document.querySelector('.hero-actions');
-    if (!actions) return;
+// A signed-up user with no pools yet has nothing to draft and nothing to
+// trade — both boxes would just show two quiet "nothing here" messages.
+// Replace them with one onboarding card instead: this is the one signed-in
+// state that still needs the "create or join" conversion messaging.
+function renderDashHeader() {
+    const header = document.getElementById('dashHeader');
+    if (!header || !userData.username) return;
 
-    const resumable = findResumableDraft();
-    let primary;
-    if (resumable) {
-        primary = `<a href="draftActif.html?pool=${encodeURIComponent(resumable.name)}" class="btn-hero-primary"><span data-icon="hockey" data-icon-size="16"></span> Reprendre le repêchage</a>`;
-    } else if (userData.primaryPool) {
-        primary = `<a href="classement.html" class="btn-hero-primary"><span data-icon="trophy" data-icon-size="16"></span> Voir mon classement</a>`;
-    } else {
-        primary = `<a href="creer-pool.html" class="btn-hero-primary"><span data-icon="rocket" data-icon-size="16"></span> Créer un pool</a>`;
+    if (FZPool.mine().length) {
+        header.classList.remove('dash-header-empty');
+        renderDraftBox();
+        renderTradeBox();
+        return;
     }
 
-    // Occam's Razor: returning users who already have a pool don't need the
-    // marketing "Comment ça marche" walkthrough — hide it and drop its CTA.
-    const isReturning = userData.userPools.length > 0;
-    const tertiary = isReturning
-        ? ''
-        : `<button onclick="scrollToHowItWorks()" class="btn-hero-tertiary">Comment ça marche ?</button>`;
-
-    actions.innerHTML = `
-        ${primary}
-        <a href="mes-pools.html" class="btn-hero-secondary">Mes pools →</a>
-        ${tertiary}
-    `;
-    // The global icon scan only runs once on load; process the freshly-inserted icons.
+    header.classList.add('dash-header-empty');
+    header.innerHTML = `
+        <div class="dash-onboard">
+            <p class="dash-onboard-text">Vous ne faites partie d'aucun pool.</p>
+            <div class="dash-onboard-actions">
+                <a href="creer-pool.html" class="btn-hero-primary"><span data-icon="rocket" data-icon-size="16"></span> Créer un pool</a>
+                <a href="rejoindre-pool.html" class="btn-hero-secondary">Rejoindre un pool →</a>
+            </div>
+        </div>`;
     if (typeof getIcon === 'function') {
-        actions.querySelectorAll('[data-icon]').forEach(el => {
+        header.querySelectorAll('[data-icon]').forEach(el => {
             el.innerHTML = getIcon(el.getAttribute('data-icon'), parseInt(el.getAttribute('data-icon-size') || '20'));
         });
-    }
-
-    if (isReturning) {
-        const howItWorks = document.getElementById('comment-ca-marche');
-        if (howItWorks) howItWorks.style.display = 'none';
     }
 }
 
@@ -498,96 +526,6 @@ function renderRosterPlayer(name) {
 function escapeHTML(str) {
     return String(str ?? '').replace(/[&<>"']/g, c =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
-// ============================================================
-// LEADERBOARD SECTION
-// ============================================================
-function renderLeaderboard() {
-    const skeleton = document.getElementById('leaderboardSkeleton');
-    const content  = document.getElementById('leaderboardList');
-
-    if (skeleton) skeleton.style.display = 'none';
-    if (content)  content.style.display  = 'block';
-
-    if (!userData.primaryPool) {
-        content.innerHTML = `
-            <div class="lb-empty">
-                <p>Rejoignez un pool pour voir le classement</p>
-                <a href="mes-pools.html" style="margin-top:12px;display:inline-block;">→ Gérer les pools</a>
-            </div>`;
-        return;
-    }
-
-    // Set pool name badge
-    const poolNameEl = document.getElementById('leaderboardPoolName');
-    if (poolNameEl) poolNameEl.textContent = userData.primaryPool.name;
-
-    const scores = buildTeamScores(userData.primaryPool);
-    const rankCls = i => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-    const trendHTML = t =>
-        t === 'up'   ? '<span class="lb-trend" style="color:var(--success)">▲</span>' :
-        t === 'down' ? '<span class="lb-trend" style="color:var(--danger)">▼</span>' :
-                       '<span class="lb-trend" style="color:var(--text-gray)">—</span>';
-
-    content.innerHTML = scores.map((team, i) => `
-        <div class="leaderboard-row ${team.isCurrentUser ? 'user-row' : ''}"
-             onclick="window.location.href='classement.html'"
-             style="animation-delay:${i * 0.06}s">
-            <div class="lb-rank ${rankCls(i)}">${i + 1}</div>
-            <div class="lb-team">
-                <div class="lb-team-name">
-                    ${team.teamName}
-                    ${team.isCurrentUser ? '<span class="lb-you-badge">VOUS</span>' : ''}
-                </div>
-                <div class="lb-team-members">${team.memberCount} membre${team.memberCount !== 1 ? 's' : ''}</div>
-            </div>
-            ${trendHTML(team.trend)}
-            <div class="lb-pts">
-                <span class="lb-pts-value">${team.score}</span>
-                <span class="lb-pts-label">PTS</span>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Le classement de démonstration servi aux visiteurs a disparu avec la
-// carte qu'il remplissait : le héros leur montre désormais un repêchage
-// en cours, qui dit mieux ce que le site permet de faire.
-
-// ============================================================
-// HERO LEADERBOARD PREVIEW (floating card)
-// ============================================================
-function renderHeroLeaderboard() {
-    const el = document.getElementById('heroLeaderboardPreview');
-    if (!el) return;
-
-    // Visiteur : cette carte est masquée, c'est le repêchage animé qui
-    // occupe le héros (demos.js). Rien à peupler ici.
-    if (!userData.username) return;
-
-    // Update header to show pool name
-    const headerSpan = document.querySelector('#heroCardStandings .hfc-header > span:nth-child(2)');
-    if (headerSpan && userData.primaryPool) {
-        headerSpan.textContent = `Classement en direct · ${userData.primaryPool.name}`;
-    }
-
-    if (!userData.primaryPool) {
-        el.innerHTML = `<p style="color:var(--text-secondary);font-size:.85rem;text-align:center;padding:12px 0;">
-            Rejoignez un pool pour voir le classement</p>`;
-        return;
-    }
-
-    const scores  = buildTeamScores(userData.primaryPool).slice(0, 5);
-    const rankCls = i => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-
-    el.innerHTML = scores.map((team, i) => `
-        <div class="hfc-row ${team.isCurrentUser ? 'current-user' : ''}">
-            <div class="hfc-rank ${rankCls(i)}">${i + 1}</div>
-            <div class="hfc-team">${team.teamName}${team.isCurrentUser ? ' <span style="color:var(--primary);font-size:.82rem;">(moi)</span>' : ''}</div>
-            <div class="hfc-pts">${team.score} <span style="font-size:.72rem;opacity:.7">PTS</span></div>
-        </div>
-    `).join('');
 }
 
 // ============================================================
