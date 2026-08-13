@@ -162,12 +162,12 @@
                     </div>
                     <div class="pg-status-grid">
                         <a href="repechage.html" class="pg-status-tile" id="pgDraftTile">
-                            <span class="pg-status-icon" data-icon="hockey" data-icon-size="16"></span>
+                            <span class="pg-status-icon" data-icon="clock" data-icon-size="16"></span>
                             <span class="pg-status-label">Repêchage</span>
                             <span class="pg-status-value" id="pgDraftValue">—</span>
                         </a>
                         <a href="trade.html" class="pg-status-tile" id="pgTradeTile">
-                            <span class="pg-status-icon" data-icon="refresh" data-icon-size="16"></span>
+                            <span class="pg-status-icon" data-icon="swap" data-icon-size="16"></span>
                             <span class="pg-status-label">Échanges</span>
                             <span class="pg-status-value" id="pgTradeValue">—</span>
                         </a>
@@ -212,9 +212,28 @@
     </section>
 
     <!-- ============================================================ -->
+    <!-- HOME TABS — Tableau de bord / Activité de la ligue            -->
+    <!-- Member-only, scoped to the active pool (see accueil.js).      -->
+    <!-- Anonymous visitors and members with no active pool never see -->
+    <!-- this switcher — same gate #poolGlance itself uses.            -->
+    <!-- ============================================================ -->
+    <section class="home-section home-tabs-section" id="homeTabsSection" style="display:none;">
+        <div class="section-container">
+            <div class="home-tabs" role="tablist">
+                <button class="home-tab active" data-tab="dashboard" role="tab" aria-selected="true" onclick="switchHomeTab('dashboard')">
+                    <span data-icon="home" data-icon-size="16"></span> Tableau de bord
+                </button>
+                <button class="home-tab" data-tab="activity" role="tab" aria-selected="false" onclick="switchHomeTab('activity')">
+                    <span data-icon="swap" data-icon-size="16"></span> Activité de la ligue
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
     <!-- MY RANKINGS SECTION (all pools the user belongs to)          -->
     <!-- ============================================================ -->
-    <section class="home-section my-rankings-section" id="myRankingsSection" style="display:none;">
+    <section class="home-section my-rankings-section home-tab-panel" data-tab-panel="dashboard" id="myRankingsSection" style="display:none;">
         <div class="section-container">
             <div class="section-title-row">
                 <div class="section-title-group">
@@ -234,6 +253,55 @@
                 <div class="rankings-scroll" id="myRankingsList">
                     <!-- Filled by JS -->
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- LEAGUE ACTIVITY — for-sale listings, a multi-window best-team -->
+    <!-- leaderboard, and the active pool's completed trades. Hidden   -->
+    <!-- until the "Activité" tab is opened; accueil.js lazy-loads its -->
+    <!-- data on first open so it costs nothing otherwise.             -->
+    <!-- ============================================================ -->
+    <section class="home-section activity-section home-tab-panel" data-tab-panel="activity" id="activitySection" style="display:none;">
+        <div class="section-container">
+            <div class="section-title-row">
+                <div class="section-title-group">
+                    <span class="section-icon" data-icon="tag" data-icon-size="28"></span>
+                    <h2 class="section-title">Joueurs à vendre</h2>
+                </div>
+            </div>
+            <div class="for-sale-scroll" id="forSaleList">
+                <!-- Filled by JS -->
+            </div>
+
+            <div class="section-title-row">
+                <div class="section-title-group">
+                    <span class="section-icon" data-icon="trophy" data-icon-size="28"></span>
+                    <h2 class="section-title">Meilleures équipes</h2>
+                    <span class="section-subtitle" id="leaderboardWindowLabel">7 derniers jours</span>
+                </div>
+                <div class="time-filters">
+                    <button class="time-filter active" data-days="7" onclick="changeActivityWindow(7)">7J</button>
+                    <button class="time-filter" data-days="14" onclick="changeActivityWindow(14)">14J</button>
+                    <button class="time-filter" data-days="30" onclick="changeActivityWindow(30)">30J</button>
+                    <button class="time-filter" data-days="90" onclick="changeActivityWindow(90)">90J</button>
+                    <button class="time-filter" data-days="180" onclick="changeActivityWindow(180)">6M</button>
+                    <button class="time-filter" data-days="365" onclick="changeActivityWindow(365)">1AN</button>
+                </div>
+            </div>
+            <div class="leaderboard-list" id="activityLeaderboard">
+                <!-- Filled by JS -->
+            </div>
+
+            <div class="section-title-row">
+                <div class="section-title-group">
+                    <span class="section-icon" data-icon="swap" data-icon-size="28"></span>
+                    <h2 class="section-title">Échanges récents</h2>
+                </div>
+            </div>
+            <div class="trade-feed-list" id="tradeFeedList">
+                <!-- Filled by JS -->
             </div>
         </div>
     </section>

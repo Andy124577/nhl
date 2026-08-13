@@ -436,6 +436,30 @@ body {
     text-align: left;
 }
 
+.for-sale-toggle {
+    display: inline-flex;
+    align-self: flex-start;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 5px 10px;
+    background: transparent;
+    border: 1px solid var(--border-light);
+    border-radius: 100px;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.for-sale-toggle:hover { border-color: var(--warning); color: var(--warning); }
+.for-sale-toggle.is-listed {
+    background: var(--warning);
+    border-color: var(--warning);
+    color: var(--bg);
+}
+.for-sale-toggle:disabled { opacity: 0.6; cursor: not-allowed; }
+
 .roster-points-section {
     text-align: center;
     min-width: 50px;

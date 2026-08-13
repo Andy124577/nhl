@@ -255,6 +255,42 @@ function applyActivePool() {
 
     if (info) info.textContent = `Pool : ${pool.name} · votre équipe : ${myTeamName}`;
     renderTeamGrid();
+    applyPrefillIfPresent();
+}
+
+/**
+ * Arriving from a "for sale" listing (see accueil.js's Activité de la
+ * ligue tab): trade.html?withTeam=<team>&wantPlayer=<player>&category=<F|D|G|R|T>
+ * jumps straight to step 2 with that player pre-selected as the target,
+ * using the exact same selection functions a real click would call — the
+ * user still explicitly picks their own offered player, this only saves
+ * the two clicks to get there. A stale link (player already moved on)
+ * falls through to the normal team-grid view rather than faking a pick.
+ */
+function applyPrefillIfPresent() {
+    const params = new URLSearchParams(window.location.search);
+    const withTeam = params.get('withTeam');
+    const wantPlayer = params.get('wantPlayer');
+    const category = params.get('category');
+    if (!withTeam || !wantPlayer || !category || !selectedPoolData) return;
+
+    const targetTeamData = selectedPoolData.teams[withTeam];
+    if (!targetTeamData) return;
+
+    const partnerPlayers = [
+        ...(targetTeamData.offensive || []),
+        ...(targetTeamData.defensive || []),
+        ...(targetTeamData.goalie || []),
+        ...(targetTeamData.rookie || []),
+        ...(targetTeamData.teams || [])
+    ];
+    if (!partnerPlayers.includes(wantPlayer)) return;
+
+    selectPartnerTeam(withTeam);
+    selectPartnerPlayer(wantPlayer, category, null);
+
+    // Don't replay a since-stale prefill on refresh/back.
+    history.replaceState(null, '', 'trade.html');
 }
 
 // ============================================================

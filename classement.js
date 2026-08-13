@@ -369,15 +369,87 @@ function showTeamRoster(poolName, teamName) {
     document.getElementById('rosterSkeleton').style.display = 'flex';
     document.getElementById('rosterList').style.display = 'none';
 
-    // Render roster after short delay
-    setTimeout(() => {
-        renderTeamRoster(teamData);
+    // Render roster after short delay — fetch this team's active for-sale
+    // listings first so the toggle starts in the right state on first paint.
+    setTimeout(async () => {
+        let activeListings = [];
+        try {
+            const res = await fetch(`${BASE_URL}/trade-listings/${encodeURIComponent(poolName)}`, { cache: 'no-store' });
+            if (res.ok) {
+                const listings = await res.json();
+                activeListings = listings.filter(l => l.teamName === teamName);
+            }
+        } catch (err) {
+            console.warn('Could not load trade listings:', err);
+        }
+        renderTeamRoster(teamData, activeListings);
     }, 100);
 }
 
-function renderTeamRoster(roster) {
+// Lists or unlists a player as "open to offers" — a visibility signal
+// only; the 1-for-1 same-category trade rule itself is unchanged.
+async function toggleForSale(btn) {
+    const playerName = btn.dataset.player;
+    const category = btn.dataset.category;
+    const isListed = btn.classList.contains('is-listed');
+    const username = localStorage.getItem('username');
+    if (!username) return;
+
+    btn.disabled = true;
+    try {
+        if (isListed) {
+            const res = await fetch(`${BASE_URL}/trade-listings/${btn.dataset.listingId}/remove`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                alert(data.message || 'Impossible de retirer ce joueur de la vente.');
+                return;
+            }
+            btn.classList.remove('is-listed');
+            btn.dataset.listingId = '';
+        } else {
+            const res = await fetch(`${BASE_URL}/trade-listings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    poolName: currentPoolName,
+                    teamName: currentTeamName,
+                    playerName,
+                    category,
+                    username
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.message || 'Impossible de mettre ce joueur en vente.');
+                return;
+            }
+            btn.classList.add('is-listed');
+            btn.dataset.listingId = data.id;
+        }
+        const label = btn.querySelector('.fst-label');
+        if (label) label.textContent = btn.classList.contains('is-listed') ? 'Retirer de la vente' : 'Mettre en vente';
+    } catch (err) {
+        console.error('Error toggling trade listing:', err);
+        alert('Erreur de connexion au serveur.');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function renderTeamRoster(roster, activeListings = []) {
     const rosterList = document.getElementById('rosterList');
     rosterList.innerHTML = '';
+
+    // Only the roster's own team can list/unlist its players. category
+    // matches the vocabulary /trade/propose already validates against.
+    const currentUsername = localStorage.getItem('username');
+    const isOwner = (roster.members || []).includes(currentUsername);
+    const listingByPlayer = {};
+    activeListings.forEach(l => { listingByPlayer[l.playerName] = l; });
 
     const players = [];
 
@@ -390,6 +462,7 @@ function renderTeamRoster(roster) {
                 name: playerName,
                 position: playerData.positionCode || 'F',
                 type: 'player',
+                category: 'offensive',
                 playerId: playerData.playerId,
                 stats: stats,
                 cached: playerData,
@@ -407,6 +480,7 @@ function renderTeamRoster(roster) {
                 name: playerName,
                 position: playerData.positionCode || 'D',
                 type: 'player',
+                category: 'defensive',
                 playerId: playerData.playerId,
                 stats: stats,
                 cached: playerData,
@@ -424,6 +498,7 @@ function renderTeamRoster(roster) {
                 name: playerName,
                 position: 'G',
                 type: 'goalie',
+                category: 'goalie',
                 playerId: playerData.playerId,
                 stats: stats,
                 cached: playerData,
@@ -441,6 +516,7 @@ function renderTeamRoster(roster) {
                 name: playerName,
                 position: playerData.positionCode || 'R',
                 type: 'player',
+                category: 'rookie',
                 playerId: playerData.playerId,
                 stats: stats,
                 cached: playerData,
@@ -458,6 +534,7 @@ function renderTeamRoster(roster) {
                 name: teamName,
                 position: 'TEAM',
                 type: 'team',
+                category: 'team',
                 stats: stats,
                 cached: teamInfo,
                 teamAbbrev: stats?.teamAbbrev || teamInfo.teamAbbrevs
@@ -546,6 +623,19 @@ function renderTeamRoster(roster) {
         // Get team abbreviation for display
         const teamAbbrev = player.teamAbbrev || '';
 
+        // Only the roster's own team sees the list/unlist toggle.
+        const existingListing = listingByPlayer[player.name];
+        const isListed = !!existingListing;
+        const sellToggleHTML = isOwner ? `
+                <button type="button" class="for-sale-toggle${isListed ? ' is-listed' : ''}"
+                        data-player="${player.name.replace(/"/g, '&quot;')}"
+                        data-category="${player.category || ''}"
+                        data-listing-id="${isListed ? existingListing.id : ''}"
+                        onclick="event.stopPropagation(); toggleForSale(this)">
+                    ${typeof getIcon === 'function' ? getIcon('tag', 14) : ''}
+                    <span class="fst-label">${isListed ? 'Retirer de la vente' : 'Mettre en vente'}</span>
+                </button>` : '';
+
         card.innerHTML = `
             <div class="pick-number">${pickNumber}</div>
             <div class="player-avatar">
@@ -571,6 +661,7 @@ function renderTeamRoster(roster) {
                         <span>Pts</span>
                     </div>
                 </div>
+                ${sellToggleHTML}
             </div>
             <div class="roster-points-section">
                 <div class="pptsa-value">0</div>

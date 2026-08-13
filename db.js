@@ -74,6 +74,36 @@ async function initializeDatabase() {
             CREATE INDEX IF NOT EXISTS idx_trades_status ON trades(status);
         `);
 
+        // Create trade_listings table — players a pool member has flagged as
+        // open to offers. A pure visibility signal: it does not change the
+        // 1-for-1 same-category rule trades themselves enforce.
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS trade_listings (
+                id SERIAL PRIMARY KEY,
+                pool_name VARCHAR(255) NOT NULL,
+                team_name VARCHAR(255) NOT NULL,
+                player_name VARCHAR(255) NOT NULL,
+                category VARCHAR(20) NOT NULL,
+                listed_by VARCHAR(255) NOT NULL,
+                status VARCHAR(20) DEFAULT 'active',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                removed_at TIMESTAMP
+            );
+        `);
+        console.log('✅ Trade listings table ready');
+
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_trade_listings_pool_name ON trade_listings(pool_name);
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_trade_listings_status ON trade_listings(status);
+        `);
+        // A player can only be listed once at a time.
+        await client.query(`
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_trade_listings_active_unique
+                ON trade_listings(pool_name, team_name, player_name) WHERE status = 'active';
+        `);
+
         // Create cached_stats table for storing NHL API stats
         await client.query(`
             CREATE TABLE IF NOT EXISTS cached_stats (
@@ -277,6 +307,83 @@ async function deleteTradesByPoolName(poolName) {
 }
 
 // =============================================
+// TRADE LISTING OPERATIONS
+// =============================================
+
+async function getActiveListingsForPool(poolName) {
+    const result = await pool.query(
+        `SELECT id, team_name, player_name, category, listed_by, created_at
+         FROM trade_listings WHERE pool_name = $1 AND status = 'active'
+         ORDER BY created_at DESC`,
+        [poolName]
+    );
+    return result.rows.map(row => ({
+        id: row.id,
+        teamName: row.team_name,
+        playerName: row.player_name,
+        category: row.category,
+        listedBy: row.listed_by,
+        createdAt: row.created_at
+    }));
+}
+
+async function getTradeListingById(id) {
+    const result = await pool.query(
+        `SELECT id, pool_name, team_name, player_name, category, listed_by, status
+         FROM trade_listings WHERE id = $1`,
+        [id]
+    );
+    if (result.rows.length === 0) return null;
+    const row = result.rows[0];
+    return {
+        id: row.id,
+        poolName: row.pool_name,
+        teamName: row.team_name,
+        playerName: row.player_name,
+        category: row.category,
+        listedBy: row.listed_by,
+        status: row.status
+    };
+}
+
+// Returns the new row's id, or null if this player is already listed
+// (the partial unique index rejects the insert).
+async function createTradeListing(poolName, teamName, playerName, category, listedBy) {
+    try {
+        const result = await pool.query(
+            `INSERT INTO trade_listings (pool_name, team_name, player_name, category, listed_by)
+             VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+            [poolName, teamName, playerName, category, listedBy]
+        );
+        return result.rows[0].id;
+    } catch (error) {
+        if (error.code === '23505') return null; // unique_violation — already listed
+        throw error;
+    }
+}
+
+async function removeTradeListing(id, poolName, teamName) {
+    const result = await pool.query(
+        `UPDATE trade_listings SET status = 'removed', removed_at = NOW()
+         WHERE id = $1 AND pool_name = $2 AND team_name = $3 AND status = 'active'
+         RETURNING id`,
+        [id, poolName, teamName]
+    );
+    return result.rowCount > 0;
+}
+
+// Auto-expires a listing when its player changes teams via a completed trade.
+async function removeTradeListingByPlayer(poolName, playerName) {
+    const result = await pool.query(
+        `UPDATE trade_listings SET status = 'removed', removed_at = NOW()
+         WHERE pool_name = $1 AND player_name = $2 AND status = 'active'
+         RETURNING id`,
+        [poolName, playerName]
+    );
+    return result.rowCount;
+}
+
+// =============================================
 // EXPORTS
 // =============================================
 
@@ -351,6 +458,12 @@ module.exports = {
     updateTradeStatus,
     deleteTrade,
     deleteTradesByPoolName,
+    // Trade listings
+    getActiveListingsForPool,
+    getTradeListingById,
+    createTradeListing,
+    removeTradeListing,
+    removeTradeListingByPlayer,
     // Cached Stats
     saveCachedStats,
     loadCachedStats

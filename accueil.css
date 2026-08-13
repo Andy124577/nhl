@@ -931,6 +931,116 @@ html.fz-auth #comment-ca-marche { display: none; }
 }
 
 /* ============================================================ */
+/* HOME TABS — Tableau de bord / Activité de la ligue             */
+/* ============================================================ */
+.home-tabs-section { padding: 24px 24px 0; }
+.home-tabs { display: flex; gap: 10px; max-width: 1200px; margin: 0 auto; }
+
+.home-tab {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    font-size: .9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s ease;
+}
+.home-tab:hover { border-color: var(--primary); color: var(--primary); }
+.home-tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--bg);
+    box-shadow: var(--glow-primary);
+}
+.home-tab:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+@media (max-width: 480px) {
+    .home-tab { flex: 1; justify-content: center; padding: 10px 12px; font-size: .82rem; }
+}
+
+/* ============================================================ */
+/* LEAGUE ACTIVITY — for-sale strip, leaderboard, trade feed      */
+/* ============================================================ */
+.activity-section { background: var(--bg-page); }
+.activity-empty { padding: 20px 4px; color: var(--text-secondary); font-size: .9rem; }
+
+/* ---- For-sale strip: same horizontal snap-scroll idiom as .players-grid on phone ---- */
+.for-sale-scroll {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    gap: 12px;
+    padding: 4px 4px 12px;
+    margin-bottom: 24px;
+    scrollbar-width: none;
+}
+.for-sale-scroll::-webkit-scrollbar { display: none; }
+
+.for-sale-chip {
+    flex: 0 0 clamp(160px, 60%, 220px);
+    scroll-snap-align: start;
+    display: flex; flex-direction: column; gap: 8px;
+    background: var(--card);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 14px;
+    text-decoration: none;
+    transition: transform .2s cubic-bezier(.4,0,.2,1), border-color .2s ease, box-shadow .2s ease;
+}
+.for-sale-chip:hover,
+.for-sale-chip:focus-visible { transform: translateY(-3px); border-color: rgba(0,212,255,.28); }
+.for-sale-chip:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.fsc-badge { align-self: flex-start; font-size: .7rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--warning); }
+.fsc-name { font-size: .92rem; font-weight: 700; color: var(--text-dark); }
+.fsc-team { font-size: .78rem; color: var(--text-secondary); }
+
+@media (min-width: 1024px) {
+    .for-sale-scroll { flex-wrap: wrap; overflow-x: visible; }
+    .for-sale-chip { flex: 0 0 220px; }
+}
+
+/* ---- Leaderboard ---- */
+.leaderboard-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+.leaderboard-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 16px;
+    background: var(--card);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+}
+/* The one place cyan appears here: this is genuinely "you," the same
+   role it plays as "current pick" in the draft room (One Live Signal Rule). */
+.leaderboard-row.is-mine { border-color: rgba(0,212,255,.4); box-shadow: var(--glow-primary); }
+.lb-rank { flex-shrink: 0; width: 26px; text-align: center; font-size: 1rem; font-weight: 800; color: var(--text-gray); }
+.leaderboard-row.is-mine .lb-rank { color: var(--primary); }
+.lb-rank.gold   { color: var(--warning); }
+.lb-rank.silver { color: #B8B8CC; }
+.lb-rank.bronze { color: #CD7F32; }
+.lb-team { flex: 1; min-width: 0; font-size: .92rem; font-weight: 700; color: var(--text-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-pts { flex-shrink: 0; font-size: 1rem; font-weight: 800; color: var(--primary); }
+.lb-source { flex-shrink: 0; font-size: .7rem; color: var(--text-gray); }
+
+/* ---- Trade feed ---- */
+.trade-feed-list { display: flex; flex-direction: column; gap: 8px; }
+.trade-feed-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    background: var(--card);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    font-size: .85rem;
+}
+.tfi-teams { font-weight: 700; color: var(--text-dark); flex-shrink: 0; }
+.tfi-players { flex: 1; min-width: 0; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tfi-date { flex-shrink: 0; font-size: .72rem; color: var(--text-gray); }
+
+/* ============================================================ */
 /* LIGHT MODE — hardcoded rgba overrides                         */
 /* ============================================================ */
 html[data-theme="light"] .hero-floating-card {

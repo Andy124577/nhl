@@ -4677,6 +4677,12 @@ app.post('/trade/accept', async (req, res) => {
             }
         }
 
+        // A "for sale" listing on a player who just changed teams would be
+        // actively misleading, so it auto-clears here — the one case a
+        // listing disappears without the owner manually unlisting it.
+        await db.removeTradeListingByPlayer(poolName, trade.offering[0].name);
+        await db.removeTradeListingByPlayer(poolName, trade.receiving[0].name);
+
         console.log(`✅ Trade accepted: ${trade.fromTeam} ↔ ${trade.toTeam} (${cancelledCount} conflicting trades cancelled)`);
 
         res.json({
@@ -4709,6 +4715,164 @@ app.post('/trade/decline', async (req, res) => {
     } catch (error) {
         console.error("Error declining trade:", error);
         res.status(500).json({ message: "Error declining trade" });
+    }
+});
+
+// ============================================================
+// TRADE LISTINGS — a member flags one of their own players as open
+// to offers. A visibility signal only: it does not change the 1-for-1,
+// same-category rule /trade/propose already enforces.
+// ============================================================
+
+// Get all active listings for a pool
+app.get('/trade-listings/:poolName', async (req, res) => {
+    try {
+        const { poolName } = req.params;
+        const listings = await db.getActiveListingsForPool(poolName);
+        res.json(listings);
+    } catch (error) {
+        console.error("Error loading trade listings:", error);
+        res.status(500).json({ message: "Error loading trade listings" });
+    }
+});
+
+// List a player as open to offers
+app.post('/trade-listings', async (req, res) => {
+    try {
+        const { poolName, teamName, playerName, category, username } = req.body;
+
+        if (!poolName || !teamName || !playerName || !category || !username) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
+        if (poolResult.rows.length === 0) {
+            return res.status(404).json({ message: "Pool not found" });
+        }
+
+        const pool = poolResult.rows[0].pool_data;
+        const teamData = pool.teams[teamName];
+        if (!teamData) {
+            return res.status(404).json({ message: "Équipe introuvable" });
+        }
+
+        if (!teamData.members || !teamData.members.includes(username)) {
+            return res.status(403).json({ message: "Vous ne faites pas partie de cette équipe" });
+        }
+
+        if (!teamHasPlayer(teamData, { type: category, name: playerName })) {
+            return res.status(400).json({ message: "Vous ne possédez pas ce joueur" });
+        }
+
+        if (!checkIfDraftComplete(pool)) {
+            return res.status(403).json({ message: "Le repêchage de ce pool n'est pas encore terminé." });
+        }
+
+        const id = await db.createTradeListing(poolName, teamName, playerName, category, username);
+        if (id === null) {
+            return res.status(409).json({ message: "Ce joueur est déjà en vente" });
+        }
+
+        io.emit('tradeListingsUpdated', { poolName });
+        console.log(`🏷️ ${playerName} listed for trade by ${teamName} (${poolName})`);
+        res.json({ id, message: "Joueur mis en vente" });
+    } catch (error) {
+        console.error("Error creating trade listing:", error);
+        res.status(500).json({ message: "Error creating trade listing" });
+    }
+});
+
+// Remove a listing (manual unlist)
+app.post('/trade-listings/:id/remove', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { username } = req.body;
+
+        if (!username) {
+            return res.status(400).json({ message: "Missing username" });
+        }
+
+        const listing = await db.getTradeListingById(id);
+        if (!listing || listing.status !== 'active') {
+            return res.status(404).json({ message: "Annonce introuvable" });
+        }
+
+        const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [listing.poolName]);
+        if (poolResult.rows.length === 0) {
+            return res.status(404).json({ message: "Pool not found" });
+        }
+        const teamData = poolResult.rows[0].pool_data.teams[listing.teamName];
+        if (!teamData || !teamData.members || !teamData.members.includes(username)) {
+            return res.status(403).json({ message: "Vous ne faites pas partie de cette équipe" });
+        }
+
+        const removed = await db.removeTradeListing(Number(id), listing.poolName, listing.teamName);
+        if (!removed) {
+            return res.status(404).json({ message: "Annonce déjà retirée" });
+        }
+
+        io.emit('tradeListingsUpdated', { poolName: listing.poolName });
+        res.json({ message: "Joueur retiré de la vente" });
+    } catch (error) {
+        console.error("Error removing trade listing:", error);
+        res.status(500).json({ message: "Error removing trade listing" });
+    }
+});
+
+// ============================================================
+// POOL LEADERBOARD — best team over a trailing window (7/14/30/90/
+// 180/365 days). Reuses getTeamPointsForDateRange's real per-game data,
+// with the same season-totals fallback /h2h/finalize-week already uses
+// when game logs don't cover the range. Never fabricates a number: a
+// team with no data anywhere gets points:null, not a made-up 0.
+// ============================================================
+const LEADERBOARD_WINDOWS = [7, 14, 30, 90, 180, 365];
+
+app.get('/pool-leaderboard/:poolName', async (req, res) => {
+    try {
+        const { poolName } = req.params;
+        let days = parseInt(req.query.days, 10);
+        if (!LEADERBOARD_WINDOWS.includes(days)) days = 7;
+
+        const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
+        if (poolResult.rows.length === 0) {
+            return res.status(404).json({ message: "Pool not found" });
+        }
+        const pool = poolResult.rows[0].pool_data;
+
+        const endDate = new Date();
+        const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
+
+        const activeTeams = Object.entries(pool.teams || {})
+            .filter(([, teamData]) => (teamData.members || []).length > 0);
+
+        let currentStats = null; // loaded lazily, once, only if a fallback is actually needed
+
+        const teams = await Promise.all(activeTeams.map(async ([teamName, teamData]) => {
+            let points = await getTeamPointsForDateRange(teamData, startDate, endDate);
+            let source = 'gameLogs';
+
+            if (points === null) {
+                if (!currentStats) currentStats = await loadCurrentStats();
+                if (currentStats && currentStats.players && currentStats.players.length > 0) {
+                    points = getTeamWeeklyPoints(teamData, currentStats);
+                    source = 'seasonFallback';
+                } else {
+                    points = null;
+                    source = 'none';
+                }
+            }
+
+            return { teamName, members: teamData.members || [], points, source };
+        }));
+
+        teams.sort((a, b) => (b.points ?? -Infinity) - (a.points ?? -Infinity));
+        teams.forEach((t, i) => { t.rank = i + 1; });
+
+        res.json({ poolName, days, generatedAt: new Date().toISOString(), teams });
+    } catch (error) {
+        console.error("Error building pool leaderboard:", error);
+        res.status(500).json({ message: "Error building pool leaderboard" });
     }
 });
 

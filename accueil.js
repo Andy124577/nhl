@@ -154,8 +154,10 @@ async function loadStats(days = 7) {
         currentTimeRange = days;
         userData.hotPlayers = data;
 
-        // Update active button and label to reflect actual range shown
-        document.querySelectorAll('.time-filter').forEach(btn => {
+        // Update active button and label to reflect actual range shown.
+        // Scoped to this section: the Activité tab's leaderboard reuses the
+        // same .time-filter class for its own, independent window picker.
+        document.querySelectorAll('.top-players-section .time-filter').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.days == currentTimeRange);
         });
         const label = document.getElementById('timeRangeLabel');
@@ -210,17 +212,26 @@ async function loadPendingTrades() {
 function renderDashHeader() {
     const card = document.getElementById('poolGlance');
     const onboard = document.getElementById('dashOnboard');
+    const tabs = document.getElementById('homeTabsSection');
     if (!card || !onboard || !userData.username) return;
 
     if (FZPool.get()) {
         card.style.display = '';
         onboard.style.display = 'none';
+        if (tabs) tabs.style.display = '';
         renderPoolGlance();
+        // Live socket-driven refresh (renderDashHeader is already wired to
+        // FZPool.onData) — keep the activity tab current if it's open,
+        // without a full reload. Switching pools itself DOES reload this
+        // page (index.html never sets window.FZ_POOL_EN_PLACE), so that
+        // case resets activityLoaded to false for free.
+        if (activityLoaded) loadActivityTab();
         return;
     }
 
     card.style.display = 'none';
     onboard.style.display = '';
+    if (tabs) tabs.style.display = 'none';
 }
 
 // ============================================================
@@ -339,6 +350,144 @@ function renderPoolGlanceRoster(teamData) {
                 </span>
             </div>`;
     }).join('');
+}
+
+// ============================================================
+// LEAGUE ACTIVITY TAB — for-sale listings, a multi-window best-team
+// leaderboard, and the active pool's completed trades. Lazy-loaded on
+// first open so switching to it costs nothing until it's actually used.
+// ============================================================
+let activityLoaded = false;
+let activityWindow = 7;
+
+function switchHomeTab(tab) {
+    document.querySelectorAll('.home-tab').forEach(btn => {
+        const isActive = btn.dataset.tab === tab;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-selected', String(isActive));
+    });
+    document.querySelectorAll('.home-tab-panel').forEach(panel => {
+        panel.style.display = panel.dataset.tabPanel === tab ? '' : 'none';
+    });
+    if (tab === 'activity' && !activityLoaded) {
+        activityLoaded = true;
+        loadActivityTab();
+    }
+}
+
+function loadActivityTab() {
+    return Promise.all([loadTradeFeed(), loadForSaleList(), loadLeaderboard(activityWindow)]);
+}
+
+async function loadTradeFeed() {
+    const list = document.getElementById('tradeFeedList');
+    if (!list || !FZPool.get()) return;
+    try {
+        const res = await fetch(`${BASE_URL}/trades/${encodeURIComponent(FZPool.get())}`, { cache: 'no-store' });
+        const trades = res.ok ? await res.json() : [];
+
+        if (!trades.length) {
+            list.innerHTML = `<p class="activity-empty">Aucun échange complété dans ce pool.</p>`;
+            return;
+        }
+
+        list.innerHTML = trades.map(trade => {
+            const offering = trade.offering && trade.offering[0];
+            const receiving = trade.receiving && trade.receiving[0];
+            const dateRaw = trade.completedDate || trade.date;
+            const dateLabel = dateRaw ? new Date(dateRaw).toLocaleDateString('fr-CA') : '';
+            return `
+                <div class="trade-feed-item">
+                    <span class="tfi-teams">${escapeHTML(trade.fromTeam)} ⇄ ${escapeHTML(trade.toTeam)}</span>
+                    ${offering && receiving
+                        ? `<span class="tfi-players">${escapeHTML(offering.name)} pour ${escapeHTML(receiving.name)}</span>`
+                        : ''}
+                    <span class="tfi-date">${dateLabel}</span>
+                </div>`;
+        }).join('');
+    } catch (err) {
+        console.warn('Could not load trade feed:', err);
+        list.innerHTML = `<p class="activity-empty">Impossible de charger les échanges.</p>`;
+    }
+}
+
+// Same single-letter codes trade.js's own getCategory() already uses internally.
+const LISTING_CATEGORY_CODE = { offensive: 'F', defensive: 'D', goalie: 'G', rookie: 'R', team: 'T' };
+
+async function loadForSaleList() {
+    const strip = document.getElementById('forSaleList');
+    if (!strip || !FZPool.get()) return;
+    try {
+        const res = await fetch(`${BASE_URL}/trade-listings/${encodeURIComponent(FZPool.get())}`, { cache: 'no-store' });
+        const listings = res.ok ? await res.json() : [];
+
+        if (!listings.length) {
+            strip.innerHTML = `<p class="activity-empty">Aucun joueur en vente actuellement.</p>`;
+            return;
+        }
+
+        strip.innerHTML = listings.map(listing => {
+            const code = LISTING_CATEGORY_CODE[listing.category] || 'F';
+            const url = `trade.html?pool=${encodeURIComponent(FZPool.get())}&withTeam=${encodeURIComponent(listing.teamName)}&wantPlayer=${encodeURIComponent(listing.playerName)}&category=${code}`;
+            return `
+                <a class="for-sale-chip" href="${url}">
+                    <span class="fsc-badge">À vendre</span>
+                    <span class="fsc-name">${escapeHTML(listing.playerName)}</span>
+                    <span class="fsc-team">${escapeHTML(listing.teamName)}</span>
+                </a>`;
+        }).join('');
+    } catch (err) {
+        console.warn('Could not load for-sale listings:', err);
+        strip.innerHTML = `<p class="activity-empty">Impossible de charger les joueurs en vente.</p>`;
+    }
+}
+
+function activityWindowLabel(days) {
+    const labels = { 7: '7 derniers jours', 14: '14 derniers jours', 30: '30 derniers jours', 90: '3 derniers mois', 180: '6 derniers mois', 365: '12 derniers mois' };
+    return labels[days] || `${days} derniers jours`;
+}
+
+function changeActivityWindow(days) {
+    activityWindow = days;
+    document.querySelectorAll('#activitySection .time-filter').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.days) === days);
+    });
+    const label = document.getElementById('leaderboardWindowLabel');
+    if (label) label.textContent = activityWindowLabel(days);
+    loadLeaderboard(days);
+}
+
+async function loadLeaderboard(days) {
+    const list = document.getElementById('activityLeaderboard');
+    if (!list || !FZPool.get()) return;
+    try {
+        const res = await fetch(`${BASE_URL}/pool-leaderboard/${encodeURIComponent(FZPool.get())}?days=${days}`, { cache: 'no-store' });
+        const data = res.ok ? await res.json() : null;
+        const teams = (data && data.teams) || [];
+
+        if (!teams.length) {
+            list.innerHTML = `<p class="activity-empty">Pas assez de données pour classer les équipes.</p>`;
+            return;
+        }
+
+        const myTeam = FZPool.team();
+        const rankCls = r => r === 1 ? 'gold' : r === 2 ? 'silver' : r === 3 ? 'bronze' : '';
+        // "Real data, just not from the exact window" vs. "nothing at all" —
+        // the caption keeps the fallback honest instead of implying precision.
+        const sourceLabel = { seasonFallback: '(saison)', none: '' };
+
+        list.innerHTML = teams.map(t => `
+            <div class="leaderboard-row${myTeam && t.teamName === myTeam.name ? ' is-mine' : ''}">
+                <span class="lb-rank ${rankCls(t.rank)}">${t.rank}</span>
+                <span class="lb-team">${escapeHTML(t.teamName)}</span>
+                ${t.points === null
+                    ? '<span class="lb-pts">—</span>'
+                    : `<span class="lb-pts">${t.points} pts</span><span class="lb-source">${sourceLabel[t.source] || ''}</span>`}
+            </div>`).join('');
+    } catch (err) {
+        console.warn('Could not load leaderboard:', err);
+        list.innerHTML = `<p class="activity-empty">Impossible de charger le classement.</p>`;
+    }
 }
 
 // ============================================================
@@ -707,8 +856,8 @@ function viewPlayer(playerId) {
 // TIME RANGE FILTER
 // ============================================================
 function changeTimeRange(days) {
-    // Update active button
-    document.querySelectorAll('.time-filter').forEach(btn => {
+    // Update active button (scoped — see the note in loadStats above)
+    document.querySelectorAll('.top-players-section .time-filter').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.days == days);
     });
 
