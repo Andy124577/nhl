@@ -40,8 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Render all sections
     renderMyRankings();   // all pools you're in, with your position in each
-    renderDashHeader();   // draft actions + trades awaiting your response (or an onboarding card if you have no pools)
-    renderPoolActions();  // create/join/consult shortcuts — only once you have a pool (see below)
+    renderDashHeader();   // draft/trade/consult/join/create grid, or an onboarding card if you have no pools
 
     // Live draft state (e.g. "it's your turn") already flows through FZPool
     // via the socket connection activePool.js sets up — just listen for it.
@@ -259,47 +258,25 @@ function renderTradeBox() {
     }).join('');
 }
 
-// A signed-up user with no pools yet has nothing to draft and nothing to
-// trade — both boxes would just show two quiet "nothing here" messages.
-// Replace them with one onboarding card instead: this is the one signed-in
-// state that still needs the "create or join" conversion messaging.
+// A signed-up user with no pools yet has nothing to draft, trade, or
+// consult, and create/join are already the point of the onboarding card —
+// swap the whole five-tile grid for that single card instead of leaving
+// three quiet "nothing here" tiles and two duplicate CTAs on screen.
 function renderDashHeader() {
-    const header = document.getElementById('dashHeader');
-    if (!header || !userData.username) return;
+    const grid = document.getElementById('dashGrid');
+    const onboard = document.getElementById('dashOnboard');
+    if (!grid || !onboard || !userData.username) return;
 
     if (FZPool.mine().length) {
-        header.classList.remove('dash-header-empty');
+        grid.style.display = '';
+        onboard.style.display = 'none';
         renderDraftBox();
         renderTradeBox();
         return;
     }
 
-    header.classList.add('dash-header-empty');
-    header.innerHTML = `
-        <div class="dash-onboard">
-            <p class="dash-onboard-text">Vous ne faites partie d'aucun pool.</p>
-            <div class="dash-onboard-actions">
-                <a href="creer-pool.html" class="btn-hero-primary"><span data-icon="rocket" data-icon-size="16"></span> Créer un pool</a>
-                <a href="rejoindre-pool.html" class="btn-hero-secondary">Rejoindre un pool →</a>
-            </div>
-        </div>`;
-    if (typeof getIcon === 'function') {
-        header.querySelectorAll('[data-icon]').forEach(el => {
-            el.innerHTML = getIcon(el.getAttribute('data-icon'), parseInt(el.getAttribute('data-icon-size') || '20'));
-        });
-    }
-}
-
-// ============================================================
-// POOL ACTIONS — create / join / consult shortcuts.
-// Only shown once the user has a pool: with none yet, dash-header's own
-// onboarding card already carries the create/join CTAs, and repeating
-// them here would just be the same two buttons twice on one page.
-// ============================================================
-function renderPoolActions() {
-    const section = document.getElementById('poolActionsSection');
-    if (!section || !userData.username) return;
-    section.style.display = FZPool.mine().length ? '' : 'none';
+    grid.style.display = 'none';
+    onboard.style.display = '';
 }
 
 // ============================================================

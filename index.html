@@ -137,69 +137,64 @@
             </div>
         </div>
 
-        <!-- Membre : ce qui demande votre attention — repêchage et échanges
-             en attente. Remplace tout le contenu marketing ci-dessus et
-             absorbe l'ancien bandeau de reprise (Zeigarnik Effect) : chaque
-             pool concerné apparaît ici, pas seulement le premier trouvé.
-             Basculé par la classe posée avant le premier rendu (voir le
+        <!-- Membre : ce qui demande votre attention, plus les raccourcis de
+             gestion — un seul tableau de bord de cinq tuiles, dimensionné
+             pour tenir sur un écran de téléphone sans défiler (voir
+             accueil.js). Remplace tout le contenu marketing ci-dessus,
+             basculé par la classe posée avant le premier rendu (voir le
              script en tête de <head>). -->
         <div class="dash-header" id="dashHeader">
-            <div class="dash-box dash-box-draft">
-                <div class="dash-box-head">
-                    <span class="dash-box-icon" data-icon="hockey" data-icon-size="18"></span>
-                    <span class="dash-box-title">Repêchage</span>
+            <div class="dg-grid" id="dashGrid">
+                <div class="dg-tile dg-draft">
+                    <div class="dg-tile-head">
+                        <span class="dg-tile-icon" data-icon="hockey" data-icon-size="16"></span>
+                        <span class="dg-tile-title">Repêchage</span>
+                    </div>
+                    <div class="dg-tile-list" id="draftBoxList">
+                        <div class="skeleton" style="height:34px;border-radius:10px;"></div>
+                    </div>
                 </div>
-                <div class="dash-box-list" id="draftBoxList">
-                    <div class="skeleton" style="height:52px;border-radius:12px;margin-bottom:8px;"></div>
-                    <div class="skeleton" style="height:52px;border-radius:12px;"></div>
-                </div>
-            </div>
-            <div class="dash-box dash-box-trade">
-                <div class="dash-box-head">
-                    <span class="dash-box-icon" data-icon="refresh" data-icon-size="18"></span>
-                    <span class="dash-box-title">Échanges</span>
-                </div>
-                <div class="dash-box-list" id="tradeBoxList">
-                    <div class="skeleton" style="height:52px;border-radius:12px;margin-bottom:8px;"></div>
-                    <div class="skeleton" style="height:52px;border-radius:12px;"></div>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- ============================================================ -->
-    <!-- POOL ACTIONS — create / join / consult                       -->
-    <!-- Members only, and only once they have a pool: with no pool   -->
-    <!-- yet, the dash-header's onboarding card above already covers  -->
-    <!-- create/join, so this would just repeat it (see accueil.js).  -->
-    <!-- Priority ranks by what a returning member actually reaches   -->
-    <!-- for most: checking their own pool beats finding a new one,   -->
-    <!-- which beats starting another one — expressed here through    -->
-    <!-- size and position, not just color.                           -->
-    <!-- ============================================================ -->
-    <section class="pool-actions-section" id="poolActionsSection" style="display:none;">
-        <div class="section-container">
-            <div class="pool-actions-grid">
-                <a href="mes-pools.html" class="pa-card pa-card-primary">
-                    <span class="pa-icon" data-icon="eye" data-icon-size="24"></span>
-                    <span class="pa-body">
-                        <span class="pa-title">Consulter notre pool</span>
-                        <span class="pa-desc">Votre équipe, votre classement, vos réglages.</span>
+                <div class="dg-tile dg-trade">
+                    <div class="dg-tile-head">
+                        <span class="dg-tile-icon" data-icon="refresh" data-icon-size="16"></span>
+                        <span class="dg-tile-title">Échanges</span>
+                    </div>
+                    <div class="dg-tile-list" id="tradeBoxList">
+                        <div class="skeleton" style="height:34px;border-radius:10px;"></div>
+                    </div>
+                </div>
+
+                <a href="mes-pools.html" class="dg-tile dg-tile-link dg-consult">
+                    <span class="dg-tile-icon" data-icon="eye" data-icon-size="16"></span>
+                    <span class="dg-tile-body">
+                        <span class="dg-tile-title">Consulter notre pool</span>
+                        <span class="dg-tile-desc">Équipe, classement, réglages</span>
                     </span>
-                    <span class="pa-arrow">→</span>
+                    <span class="dg-tile-arrow">→</span>
                 </a>
-                <div class="pool-actions-secondary">
-                    <a href="rejoindre-pool.html" class="pa-card pa-card-secondary">
-                        <span class="pa-icon" data-icon="globe" data-icon-size="18"></span>
-                        <span class="pa-body">
-                            <span class="pa-title">Rejoindre un pool</span>
-                            <span class="pa-desc">Trouvez une ligue ouverte.</span>
-                        </span>
-                    </a>
-                    <a href="creer-pool.html" class="pa-card pa-card-tertiary">
-                        <span class="pa-icon" data-icon="rocket" data-icon-size="16"></span>
-                        <span class="pa-title">Créer un pool</span>
-                    </a>
+
+                <a href="rejoindre-pool.html" class="dg-tile dg-tile-link dg-join">
+                    <span class="dg-tile-icon" data-icon="globe" data-icon-size="16"></span>
+                    <span class="dg-tile-body">
+                        <span class="dg-tile-title">Rejoindre un pool</span>
+                        <span class="dg-tile-desc">Ligues ouvertes</span>
+                    </span>
+                </a>
+
+                <a href="creer-pool.html" class="dg-tile dg-tile-link dg-create">
+                    <span class="dg-tile-icon" data-icon="rocket" data-icon-size="14"></span>
+                    <span class="dg-tile-title">Créer un pool</span>
+                </a>
+            </div>
+
+            <!-- Signed-up, no pools yet — the one state that still needs the
+                 "create or join" conversion CTAs instead of the grid above. -->
+            <div class="dash-onboard" id="dashOnboard" style="display:none;">
+                <p class="dash-onboard-text">Vous ne faites partie d'aucun pool.</p>
+                <div class="dash-onboard-actions">
+                    <a href="creer-pool.html" class="btn-hero-primary"><span data-icon="rocket" data-icon-size="16"></span> Créer un pool</a>
+                    <a href="rejoindre-pool.html" class="btn-hero-secondary">Rejoindre un pool →</a>
                 </div>
             </div>
         </div>
