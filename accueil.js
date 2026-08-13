@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Render all sections
     renderMyRankings();   // all pools you're in, with your position in each
     renderDashHeader();   // draft actions + trades awaiting your response (or an onboarding card if you have no pools)
+    renderPoolActions();  // create/join/consult shortcuts — only once you have a pool (see below)
 
     // Live draft state (e.g. "it's your turn") already flows through FZPool
     // via the socket connection activePool.js sets up — just listen for it.
@@ -287,6 +288,18 @@ function renderDashHeader() {
             el.innerHTML = getIcon(el.getAttribute('data-icon'), parseInt(el.getAttribute('data-icon-size') || '20'));
         });
     }
+}
+
+// ============================================================
+// POOL ACTIONS — create / join / consult shortcuts.
+// Only shown once the user has a pool: with none yet, dash-header's own
+// onboarding card already carries the create/join CTAs, and repeating
+// them here would just be the same two buttons twice on one page.
+// ============================================================
+function renderPoolActions() {
+    const section = document.getElementById('poolActionsSection');
+    if (!section || !userData.username) return;
+    section.style.display = FZPool.mine().length ? '' : 'none';
 }
 
 // ============================================================
