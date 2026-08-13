@@ -171,13 +171,9 @@ async function loadStats(days = 7) {
 }
 
 // ============================================================
-// DRAFT ACTIONS BOX — every pool that needs a draft-related action
-// from the user: it's their turn, the pre-draft club choice hasn't
-// been made, or the pool is full and ready to start. Built on
-// window.FZPool (activePool.js), already loaded app-wide.
+// DRAFT ACTION — is there something to do in the given pool right now?
+// Shared by the pool-glance card below (active pool only).
 // ============================================================
-const DRAFT_ACTION_PRIORITY = { 'your-turn': 0, 'live': 1, 'choose-club': 2, 'ready': 3 };
-
 function draftActionFor(pool) {
     const state = FZPool.draftState(pool.data);
     const href = kind => (kind === 'encours' ? 'draftActif.html' : 'repechage.html') + `?pool=${encodeURIComponent(pool.name)}`;
@@ -185,43 +181,18 @@ function draftActionFor(pool) {
     if (state.etat === 'encours') {
         return state.equipeAuTour === pool.teamName
             ? { kind: 'your-turn', label: "C'est votre tour", href: href('encours') }
-            : { kind: 'live', label: `Repêchage en direct — choix ${state.choixFait}/${state.choixTotal}`, href: href('encours') };
+            : { kind: 'live', label: `En direct — choix ${state.choixFait}/${state.choixTotal}`, href: href('encours') };
     }
     if (state.etat === 'pret') {
         return pool.teamData.nhlClub
-            ? { kind: 'ready', label: 'Prêt à démarrer le repêchage', href: href('pret') }
-            : { kind: 'choose-club', label: 'Choisissez votre équipe LNH', href: href('pret') };
+            ? { kind: 'ready', label: 'Prêt à démarrer', href: href('pret') }
+            : { kind: 'choose-club', label: 'Choisir votre club', href: href('pret') };
     }
     // attente / termine: nothing actionable here — attente has no action
-    // for a regular member, and termine's rank/points live in "Mes classements".
+    // for a regular member, and termine's rank/points live in the card itself.
     return null;
 }
 
-function renderDraftBox() {
-    const box = document.getElementById('draftBoxList');
-    if (!box || !userData.username) return;
-
-    const actions = FZPool.mine()
-        .map(pool => ({ pool, action: draftActionFor(pool) }))
-        .filter(x => x.action)
-        .sort((a, b) => DRAFT_ACTION_PRIORITY[a.action.kind] - DRAFT_ACTION_PRIORITY[b.action.kind]);
-
-    if (!actions.length) {
-        box.innerHTML = `<p class="dash-box-empty">Aucune action de repêchage en attente</p>`;
-        return;
-    }
-
-    box.innerHTML = actions.map(({ pool, action }) => `
-        <a class="dash-draft-row dash-draft-${action.kind}" href="${action.href}">
-            <span class="dash-draft-pool">${escapeHTML(pool.name)}</span>
-            <span class="dash-draft-label">${escapeHTML(action.label)}</span>
-        </a>
-    `).join('');
-}
-
-// ============================================================
-// TRADE BOX — trades proposed to the user, awaiting a response.
-// ============================================================
 async function loadPendingTrades() {
     if (!userData.username) { userData.pendingTrades = []; return; }
     try {
@@ -233,50 +204,141 @@ async function loadPendingTrades() {
     }
 }
 
-function renderTradeBox() {
-    const box = document.getElementById('tradeBoxList');
-    if (!box || !userData.username) return;
+// A signed-up user with no active pool has nothing to show here — the
+// onboarding card (create/join) replaces the glance card entirely instead
+// of leaving an empty rank/roster shell on screen.
+function renderDashHeader() {
+    const card = document.getElementById('poolGlance');
+    const onboard = document.getElementById('dashOnboard');
+    if (!card || !onboard || !userData.username) return;
 
-    const trades = userData.pendingTrades || [];
-
-    if (!trades.length) {
-        box.innerHTML = `<p class="dash-box-empty">Aucun échange en attente</p>`;
+    if (FZPool.get()) {
+        card.style.display = '';
+        onboard.style.display = 'none';
+        renderPoolGlance();
         return;
     }
 
-    box.innerHTML = trades.map(trade => {
-        const offering  = trade.offering && trade.offering[0];
-        const receiving = trade.receiving && trade.receiving[0];
-        return `
-            <a class="dash-trade-row" href="trade.html?trade=${encodeURIComponent(trade.id)}">
-                <span class="dash-trade-teams">${escapeHTML(trade.fromTeam)} → Vous</span>
-                ${offering && receiving
-                    ? `<span class="dash-trade-players">${escapeHTML(offering.name)} ⇄ ${escapeHTML(receiving.name)}</span>`
-                    : ''}
-                <span class="dash-trade-cta">Voir →</span>
-            </a>`;
-    }).join('');
+    card.style.display = 'none';
+    onboard.style.display = '';
 }
 
-// A signed-up user with no pools yet has nothing to draft, trade, or
-// consult, and create/join are already the point of the onboarding card —
-// swap the whole five-tile grid for that single card instead of leaving
-// three quiet "nothing here" tiles and two duplicate CTAs on screen.
-function renderDashHeader() {
-    const grid = document.getElementById('dashGrid');
-    const onboard = document.getElementById('dashOnboard');
-    if (!grid || !onboard || !userData.username) return;
+// ============================================================
+// POOL GLANCE — rank, draft/trade status, and top roster names for the
+// ACTIVE pool only (see poolNav.js / activePool.js for what "active"
+// means). Deliberately not a full stats view: "Mes classements" below
+// already covers every pool in depth, and repeating that here would just
+// be the same numbers twice. A team's full-season rank/points, the
+// pool's real draft state, and a real "hot" flag (from the same
+// hot-players data the "Meilleurs joueurs" section already loads) are
+// the only figures shown — no invented trend line or percentile, since
+// nothing in this codebase tracks either yet.
+// ============================================================
+function renderPoolGlance() {
+    if (!userData.username) return;
 
-    if (FZPool.mine().length) {
-        grid.style.display = '';
-        onboard.style.display = 'none';
-        renderDraftBox();
-        renderTradeBox();
+    const activeName = FZPool.get();
+    const poolData = FZPool.data();
+    const team = FZPool.team();
+    if (!activeName || !poolData || !team) return;
+
+    // ---- Rank + points, this pool only ----
+    const allScores = buildTeamScores({ allTeams: poolData.teams || {} });
+    const claimed = allScores.filter(t => t.memberCount > 0);
+    const scores = claimed.length ? claimed : allScores;
+    const idx = scores.findIndex(t => t.isCurrentUser);
+
+    document.getElementById('pgRankNum').textContent = idx >= 0 ? String(idx + 1) : '—';
+    document.getElementById('pgRankTotal').textContent = scores.length ? `/${scores.length}` : '';
+    document.getElementById('pgRankPool').textContent = activeName;
+    document.getElementById('pgRankPts').textContent = idx >= 0 ? `${scores[idx].score} PTS` : '—';
+
+    // ---- Draft status ----
+    const state = FZPool.draftState(poolData);
+    const action = draftActionFor({ data: poolData, name: activeName, teamName: team.name, teamData: team.data });
+    const draftFallback = { attente: 'En attente de joueurs', termine: 'Terminé' };
+    const draftTile = document.getElementById('pgDraftTile');
+    document.getElementById('pgDraftValue').textContent = action ? action.label : (draftFallback[state.etat] || '—');
+    draftTile.href = action ? action.href : `repechage.html?pool=${encodeURIComponent(activeName)}`;
+    draftTile.classList.toggle('pg-status-live', action?.kind === 'your-turn');
+
+    // ---- Pending trades, this pool only (same filter navbar.js's badge uses) ----
+    const activeTrades = (userData.pendingTrades || []).filter(t => t.draftName === activeName);
+    const tradeTile = document.getElementById('pgTradeTile');
+    document.getElementById('pgTradeValue').textContent = activeTrades.length
+        ? `${activeTrades.length} en attente` : 'Aucun';
+    tradeTile.href = activeTrades.length
+        ? `trade.html?trade=${encodeURIComponent(activeTrades[0].id)}` : 'trade.html';
+    tradeTile.classList.toggle('pg-status-live', activeTrades.length > 0);
+
+    renderPoolGlanceRoster(team.data);
+}
+
+/** A skater's or goalie's season fantasy points, same formula as elsewhere on this page. */
+function fantasyPoints(stats) {
+    if (!stats) return 0;
+    return stats.position === 'G'
+        ? (stats.shutouts || 0) * 5 + (stats.wins || 0) * 2 + (stats.otLosses || 0) * 1
+        : (stats.points || 0);
+}
+
+/** Real "hot streak" flag, cross-referenced against the same data "Meilleurs joueurs" uses — never invented. */
+function isPlayerHot(name) {
+    const hot = userData.hotPlayers && userData.hotPlayers.topPlayers;
+    return !!(hot && hot.some(p => p.playerName === name && p.isHot));
+}
+
+function renderPoolGlanceRoster(teamData) {
+    const list = document.getElementById('pgRosterList');
+    if (!list) return;
+
+    const names = [
+        ...(teamData.offensive || []),
+        ...(teamData.defensive || []),
+        ...(teamData.goalie || []),
+        ...(teamData.rookie || [])
+    ];
+
+    if (!names.length) {
+        list.innerHTML = `
+            <div class="pg-roster-empty">
+                <p>Aucun joueur sélectionné pour l'instant.</p>
+                <a href="repechage.html">Aller au repêchage →</a>
+            </div>`;
         return;
     }
 
-    grid.style.display = 'none';
-    onboard.style.display = '';
+    const topThree = names
+        .map(name => ({ name, stats: getPlayerStats(name) }))
+        .sort((a, b) => fantasyPoints(b.stats) - fantasyPoints(a.stats))
+        .slice(0, 3);
+
+    list.innerHTML = topThree.map(({ name, stats }) => {
+        const pos = stats?.position || '—';
+        const team = stats?.teamAbbrev || 'N/A';
+        const pts = fantasyPoints(stats);
+        const headshot = stats?.headshot ||
+            (stats?.playerId && stats?.teamAbbrev
+                ? `https://assets.nhle.com/mugs/nhl/20252026/${stats.teamAbbrev}/${stats.playerId}.png`
+                : '');
+        const fallbackLabel = escapeHTML((pos !== '—' ? pos : name.charAt(0) || '?').slice(0, 2).toUpperCase());
+
+        return `
+            <div class="pg-roster-row">
+                <span class="pg-roster-photo">
+                    ${headshot ? `<img src="${headshot}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">` : ''}
+                    <span class="pg-roster-fallback"${headshot ? ' style="display:none"' : ''}>${fallbackLabel}</span>
+                </span>
+                <span class="pg-roster-id">
+                    <span class="pg-roster-name">${escapeHTML(name)}</span>
+                    <span class="pg-roster-meta">${escapeHTML(team)} · ${escapeHTML(pos)}</span>
+                </span>
+                <span class="pg-roster-stats">
+                    <span class="pg-roster-pts">${pts} pts</span>
+                    ${isPlayerHot(name) ? '<span class="pg-hot" title="En feu!">🔥</span>' : ''}
+                </span>
+            </div>`;
+    }).join('');
 }
 
 // ============================================================

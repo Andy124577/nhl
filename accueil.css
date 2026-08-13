@@ -207,29 +207,22 @@ body {
 .chip-icon { font-size: 1rem; }
 
 /* ============================================================ */
-/* DASHBOARD HEADER — one five-tile grid: draft, trade, then the */
-/* three pool-management shortcuts (logged-in members only).     */
-/* The marketing headline/CTA/demo cards and this header are     */
-/* mutually exclusive; html.fz-auth / html.fz-anon (set before   */
-/* first paint, see index.html <head>) pick one. Absorbs what    */
-/* used to be the separate #homeResumeBanner.                    */
-/*                                                                */
-/* Sized, mobile-first, to clear the fold on a phone: a member    */
-/* should see repêchage, échanges, consulter, rejoindre and créer */
-/* at a glance, the way a phone dashboard's launcher tiles work,  */
-/* rather than scrolling past a stack of full-height list boxes.  */
-/* Grid position (not DOM order) carries the priority — draft/    */
-/* trade lead because the draft is the product; créer trails as   */
-/* a slim full-width row because it's the rarest action once a    */
-/* pool already exists.                                           */
+/* DASHBOARD HEADER — a single "pool glance" card scoped to the   */
+/* ACTIVE pool only (logged-in members only): rank, draft/trade   */
+/* status, and your top three scorers. Not a full stats view —    */
+/* "Mes classements" below already covers every pool in depth.    */
+/* The marketing headline/CTA/demo cards and this header are      */
+/* mutually exclusive; html.fz-auth / html.fz-anon (set before    */
+/* first paint, see index.html <head>) pick one. Absorbs what     */
+/* used to be the separate #homeResumeBanner.                     */
 /* ============================================================ */
 html.fz-auth .hero-inner { display: none; }
 .dash-header { display: none; width: 100%; position: relative; z-index: 1; }
 html.fz-auth .dash-header { display: block; }
-html.fz-auth .hero-section { min-height: auto; padding: 20px 24px 28px; }
+html.fz-auth .hero-section { min-height: auto; padding: 16px 24px 20px; }
 
-/* Signed-up, no pools yet — the one state on this page that still needs
-   the "create or join" conversion CTAs, in place of the grid above. */
+/* Signed-up, no active pool yet — the one state on this page that still
+   needs the "create or join" conversion CTAs, in place of the card above. */
 .dash-onboard {
     background: var(--card);
     border: 1px solid var(--border-light);
@@ -247,152 +240,159 @@ html.fz-auth .hero-section { min-height: auto; padding: 20px 24px 28px; }
    this block, instead of the JS toggle this used to depend on. */
 html.fz-auth #comment-ca-marche { display: none; }
 
-.dg-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-        "draft   trade"
-        "consult join"
-        "create  create";
-    gap: 10px;
-    max-width: 1380px;
-    margin: 0 auto;
-}
-.dg-draft   { grid-area: draft; }
-.dg-trade   { grid-area: trade; }
-.dg-consult { grid-area: consult; }
-.dg-join    { grid-area: join; }
-.dg-create  { grid-area: create; }
-
-.dg-tile {
+/* ---- The glance card: outer surface, inner blocks one rung "raised" —
+   the same board-gray / board-gray-raised pairing DESIGN.md documents
+   for tonal layering, not a new color. ---- */
+.pg-card {
     display: flex;
     flex-direction: column;
-    min-width: 0;
+    gap: 8px;
+    max-width: 1380px;
+    margin: 0 auto;
     background: var(--card);
     border: 1px solid var(--border-light);
+    border-radius: 18px;
+    padding: 10px;
+}
+.pg-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+.pg-block-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pg-block-icon { color: var(--primary); opacity: .8; }
+.pg-block-label { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-secondary); }
+
+/* ---- Rank block ---- */
+.pg-rank-block {
+    background: var(--card-white);
+    border: 1px solid var(--border-light);
     border-radius: 14px;
-    padding: 12px 14px;
+    padding: 13px 16px;
 }
-a.dg-tile { text-decoration: none; transition: transform .2s cubic-bezier(.4,0,.2,1), border-color .2s ease, box-shadow .2s ease; }
-a.dg-tile:hover,
-a.dg-tile:focus-visible {
-    transform: translateY(-3px);
-    border-color: rgba(0,212,255,.28);
-    box-shadow: 0 2px 8px rgba(0,0,0,.32);
+.pg-rank-value { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; }
+.pg-rank-num { font-size: 2.2rem; font-weight: 800; color: var(--primary); line-height: 1; }
+.pg-rank-total { font-size: 1rem; font-weight: 700; color: var(--text-gray); }
+.pg-rank-foot {
+    display: flex; justify-content: space-between; gap: 10px;
+    margin-top: 10px; padding-top: 8px;
+    border-top: 1px solid var(--border-light);
+    font-size: .78rem; color: var(--text-secondary);
 }
-a.dg-tile:focus-visible {
-    outline: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,.32), var(--focus-ring);
-}
+.pg-rank-pool { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-rank-pts { flex-shrink: 0; font-weight: 700; color: var(--text-dark); }
 
-.dg-tile-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.dg-tile-icon {
-    flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    width: 24px; height: 24px;
-    border-radius: 8px;
-    background: rgba(0,212,255,.12); color: var(--primary);
-}
-.dg-tile-title { font-size: .78rem; font-weight: 800; color: var(--text-main); }
-
-/* ---- Repêchage / Échanges: dynamic status rows, filled by accueil.js ---- */
-.dg-tile-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
-.dash-box-empty { padding: 2px 0; color: var(--text-secondary); font-size: .7rem; }
-
-.dash-draft-row {
-    display: flex; flex-direction: column; gap: 2px;
-    padding: 7px 9px;
-    border-radius: 9px;
-    background: var(--bg-hover);
-    border: 1px solid transparent;
+/* ---- Draft / trade status mini-tiles ---- */
+.pg-status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pg-status-tile {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    text-align: center;
+    padding: 10px 8px;
+    background: var(--card-white);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
     text-decoration: none;
-    transition: border-color .2s ease, transform .2s ease;
+    transition: transform .2s cubic-bezier(.4,0,.2,1), border-color .2s ease, box-shadow .2s ease;
 }
-.dash-draft-row:hover,
-.dash-draft-row:focus-visible { transform: translateY(-1px); }
-.dash-draft-pool { font-weight: 700; font-size: .72rem; color: var(--text-dark); }
-.dash-draft-label { font-size: .7rem; color: var(--text-secondary); }
+.pg-status-tile:hover,
+.pg-status-tile:focus-visible { transform: translateY(-2px); border-color: rgba(0,212,255,.28); }
+.pg-status-tile:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.pg-status-icon { color: var(--primary); }
+.pg-status-label { font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-secondary); }
+.pg-status-value { font-size: .78rem; font-weight: 700; color: var(--text-main); }
 
-/* Your turn is the one state genuinely live/actionable right now —
-   the only place this box uses the live-signal cyan glow. */
-.dash-draft-your-turn {
+/* The state genuinely live/actionable right now — the only place this
+   card uses the live-signal cyan glow (One Live Signal Rule). */
+.pg-status-tile.pg-status-live {
     background: rgba(0,212,255,.1);
     border-color: rgba(0,212,255,.4);
     box-shadow: var(--glow-primary);
 }
-.dash-draft-your-turn .dash-draft-label { color: var(--primary); font-weight: 700; }
+.pg-status-tile.pg-status-live .pg-status-value { color: var(--primary); }
 
-.dash-draft-choose-club .dash-draft-label { color: var(--warning); }
+/* ---- Roster column ---- */
+.pg-roster-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pg-roster-title { font-size: .95rem; font-weight: 800; color: var(--text-main); }
+.pg-roster-link { font-size: .78rem; font-weight: 600; color: var(--primary); text-decoration: none; white-space: nowrap; }
+.pg-roster-link:hover { color: var(--text-main); }
 
-.dash-trade-row {
-    display: flex; flex-direction: column; gap: 2px;
-    padding: 7px 9px;
-    border-radius: 9px;
+.pg-roster-list {
+    flex: 1;
+    display: flex; flex-direction: column; gap: 4px;
+    background: var(--card-white);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    padding: 8px;
+}
+.pg-roster-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 5px 6px;
+    border-radius: 10px;
+    transition: background .2s ease;
+}
+.pg-roster-row:hover { background: var(--bg-hover); }
+
+.pg-roster-photo {
+    flex-shrink: 0; position: relative;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    overflow: hidden;
     background: var(--bg-hover);
-    text-decoration: none;
-    transition: transform .2s ease;
 }
-.dash-trade-row:hover,
-.dash-trade-row:focus-visible { transform: translateY(-1px); }
-.dash-trade-teams { font-weight: 700; font-size: .72rem; color: var(--text-dark); }
-.dash-trade-players {
-    font-size: .7rem; color: var(--text-secondary);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+.pg-roster-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pg-roster-fallback {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .7rem; font-weight: 700; color: var(--text-secondary);
+    background: var(--bg-hover);
 }
-.dash-trade-cta { font-size: .7rem; font-weight: 600; color: var(--primary); }
 
-/* ---- Consulter / Rejoindre / Créer: static links, same tile shell ---- */
-/* flex-start, not center: on a narrow phone "Consulter notre pool" can
-   wrap to 2-3 lines, and a vertically-centered icon/arrow would then sit
-   beside whichever line lands in the middle instead of the title itself. */
-.dg-tile-link { flex-direction: row; align-items: flex-start; gap: 10px; }
-.dg-tile-link .dg-tile-icon { width: 30px; height: 30px; }
-.dg-tile-link .dg-tile-title { font-size: .74rem; }
-.dg-tile-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.dg-tile-desc { display: none; } /* room-limited on phone; reappears at 769px */
+.pg-roster-id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.pg-roster-name { font-size: .82rem; font-weight: 700; color: var(--text-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-roster-meta { font-size: .7rem; color: var(--text-gray); }
 
-.dg-consult .dg-tile-arrow {
-    margin-left: auto;
-    margin-top: 4px;
-    flex-shrink: 0;
+.pg-roster-stats { flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
+.pg-roster-pts { font-size: .8rem; font-weight: 700; color: var(--primary); white-space: nowrap; }
+.pg-hot { font-size: .8rem; line-height: 1; }
+
+.pg-roster-empty { padding: 16px 8px; text-align: center; }
+.pg-roster-empty p { font-size: .8rem; color: var(--text-secondary); margin-bottom: 6px; }
+.pg-roster-empty a { font-size: .8rem; font-weight: 600; color: var(--primary); text-decoration: none; }
+
+/* ---- Créer / rejoindre: quick actions, no separate row for settings ---- */
+.pg-col-actions { flex-direction: row; }
+.pg-action-btn {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 46px;
     color: var(--primary);
-    font-size: 1rem;
-    transition: transform .2s cubic-bezier(.4,0,.2,1);
+    background: var(--card-white);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    text-decoration: none;
+    transition: transform .2s cubic-bezier(.4,0,.2,1), background .2s ease, color .2s ease, border-color .2s ease;
 }
-.dg-consult:hover .dg-tile-arrow { transform: translateX(3px); }
-
-.dg-create { padding: 9px 14px; }
-.dg-create .dg-tile-icon { width: 24px; height: 24px; background: rgba(0,212,255,.08); }
-.dg-create .dg-tile-title { color: var(--text-secondary); }
-.dg-create:hover .dg-tile-title { color: var(--text-main); }
+.pg-action-btn:hover,
+.pg-action-btn:focus-visible { transform: translateY(-2px); }
+.pg-action-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+/* "Créer" (add) takes the fuller cyan treatment; "rejoindre" (search) stays quiet — matching the source mockup's own asymmetry. */
+.pg-action-btn:first-child:hover { background: var(--primary); border-color: var(--primary); color: var(--bg); }
+.pg-action-btn:last-child:hover { background: var(--bg-hover); border-color: rgba(0,212,255,.28); }
 
 @media (min-width: 769px) {
     html.fz-auth .hero-section { padding: 48px 24px 56px; }
-    .dg-grid { gap: 16px; }
-    .dg-tile { padding: 18px; border-radius: 16px; }
-    .dg-tile-icon { width: 30px; height: 30px; }
-    .dg-tile-title { font-size: .92rem; }
-
-    .dash-draft-row, .dash-trade-row { padding: 11px 13px; border-radius: 11px; }
-    .dash-draft-pool, .dash-trade-teams { font-size: .88rem; }
-    .dash-draft-label, .dash-trade-players, .dash-trade-cta { font-size: .78rem; }
-    .dash-box-empty { font-size: .85rem; padding: 8px 0; }
-
-    .dg-tile-link .dg-tile-icon { width: 44px; height: 44px; }
-    .dg-tile-link .dg-tile-title { font-size: .95rem; }
-    .dg-tile-desc { display: block; font-size: .78rem; color: var(--text-secondary); }
-    .dg-consult .dg-tile-arrow { font-size: 1.2rem; }
-    .dg-create { padding: 14px 18px; }
+    .pg-card { gap: 16px; padding: 16px; }
+    .pg-rank-num { font-size: 2.8rem; }
+    .pg-roster-title { font-size: 1.05rem; }
+    .pg-roster-name { font-size: .88rem; }
+    .pg-roster-photo { width: 40px; height: 40px; }
 }
 
-/* The pool rail (poolNav.js/poolNav.css) takes over at 1100px+ with its
-   own "Gestion" block — same three destinations. Below that width the
-   rail is a hamburger drawer away, which is exactly where these three
-   tiles earn their keep; above it, showing both would just say the
-   same thing twice, so only draft/trade remain. */
-@media (min-width: 1100px) {
-    .dg-grid { grid-template-areas: "draft trade"; }
-    .dg-consult, .dg-join, .dg-create { display: none; }
+/* Full bento layout once there's room to lay the three columns side by
+   side (matches the 4/5/3-of-12 proportions of the source design). */
+@media (min-width: 1024px) {
+    .pg-card { flex-direction: row; align-items: stretch; }
+    .pg-col-rank    { flex: 4; }
+    .pg-col-roster  { flex: 5; }
+    .pg-col-actions { flex: 3; flex-direction: column; }
+    .pg-action-btn { min-height: 0; }
 }
 
 /* ============================================================ */

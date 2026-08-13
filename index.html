@@ -137,59 +137,68 @@
             </div>
         </div>
 
-        <!-- Membre : ce qui demande votre attention, plus les raccourcis de
-             gestion — un seul tableau de bord de cinq tuiles, dimensionné
-             pour tenir sur un écran de téléphone sans défiler (voir
-             accueil.js). Remplace tout le contenu marketing ci-dessus,
-             basculé par la classe posée avant le premier rendu (voir le
-             script en tête de <head>). -->
+        <!-- Membre : un coup d'œil sur le pool actif (pas l'ensemble de vos
+             pools — voir "Mes classements" plus bas pour ça), plus les
+             raccourcis de gestion. Remplace tout le contenu marketing
+             ci-dessus, basculé par la classe posée avant le premier rendu
+             (voir le script en tête de <head>). -->
         <div class="dash-header" id="dashHeader">
-            <div class="dg-grid" id="dashGrid">
-                <div class="dg-tile dg-draft">
-                    <div class="dg-tile-head">
-                        <span class="dg-tile-icon" data-icon="hockey" data-icon-size="16"></span>
-                        <span class="dg-tile-title">Repêchage</span>
+            <div class="pg-card" id="poolGlance">
+                <!-- Classement + statuts repêchage/échanges du pool actif -->
+                <div class="pg-col pg-col-rank">
+                    <div class="pg-rank-block">
+                        <div class="pg-block-head">
+                            <span class="pg-block-icon" data-icon="trophy" data-icon-size="14"></span>
+                            <span class="pg-block-label">Classement</span>
+                        </div>
+                        <div class="pg-rank-value">
+                            <span class="pg-rank-num" id="pgRankNum">—</span>
+                            <span class="pg-rank-total" id="pgRankTotal"></span>
+                        </div>
+                        <div class="pg-rank-foot">
+                            <span class="pg-rank-pool" id="pgRankPool">—</span>
+                            <span class="pg-rank-pts" id="pgRankPts">—</span>
+                        </div>
                     </div>
-                    <div class="dg-tile-list" id="draftBoxList">
-                        <div class="skeleton" style="height:34px;border-radius:10px;"></div>
+                    <div class="pg-status-grid">
+                        <a href="repechage.html" class="pg-status-tile" id="pgDraftTile">
+                            <span class="pg-status-icon" data-icon="hockey" data-icon-size="16"></span>
+                            <span class="pg-status-label">Repêchage</span>
+                            <span class="pg-status-value" id="pgDraftValue">—</span>
+                        </a>
+                        <a href="trade.html" class="pg-status-tile" id="pgTradeTile">
+                            <span class="pg-status-icon" data-icon="refresh" data-icon-size="16"></span>
+                            <span class="pg-status-label">Échanges</span>
+                            <span class="pg-status-value" id="pgTradeValue">—</span>
+                        </a>
                     </div>
                 </div>
 
-                <div class="dg-tile dg-trade">
-                    <div class="dg-tile-head">
-                        <span class="dg-tile-icon" data-icon="refresh" data-icon-size="16"></span>
-                        <span class="dg-tile-title">Échanges</span>
+                <!-- Effectif du pool actif (meilleurs pointeurs) -->
+                <div class="pg-col pg-col-roster">
+                    <div class="pg-roster-head">
+                        <h2 class="pg-roster-title">Votre effectif</h2>
+                        <a href="mes-pools.html" class="pg-roster-link">Voir tout →</a>
                     </div>
-                    <div class="dg-tile-list" id="tradeBoxList">
-                        <div class="skeleton" style="height:34px;border-radius:10px;"></div>
+                    <div class="pg-roster-list" id="pgRosterList">
+                        <div class="skeleton" style="height:44px;border-radius:10px;margin-bottom:8px;"></div>
+                        <div class="skeleton" style="height:44px;border-radius:10px;"></div>
                     </div>
                 </div>
 
-                <a href="mes-pools.html" class="dg-tile dg-tile-link dg-consult">
-                    <span class="dg-tile-icon" data-icon="eye" data-icon-size="16"></span>
-                    <span class="dg-tile-body">
-                        <span class="dg-tile-title">Consulter notre pool</span>
-                        <span class="dg-tile-desc">Équipe, classement, réglages</span>
-                    </span>
-                    <span class="dg-tile-arrow">→</span>
-                </a>
-
-                <a href="rejoindre-pool.html" class="dg-tile dg-tile-link dg-join">
-                    <span class="dg-tile-icon" data-icon="globe" data-icon-size="16"></span>
-                    <span class="dg-tile-body">
-                        <span class="dg-tile-title">Rejoindre un pool</span>
-                        <span class="dg-tile-desc">Ligues ouvertes</span>
-                    </span>
-                </a>
-
-                <a href="creer-pool.html" class="dg-tile dg-tile-link dg-create">
-                    <span class="dg-tile-icon" data-icon="rocket" data-icon-size="14"></span>
-                    <span class="dg-tile-title">Créer un pool</span>
-                </a>
+                <!-- Créer / rejoindre un autre pool -->
+                <div class="pg-col pg-col-actions">
+                    <a href="creer-pool.html" class="pg-action-btn" title="Créer un pool" aria-label="Créer un pool">
+                        <span data-icon="plus" data-icon-size="20"></span>
+                    </a>
+                    <a href="rejoindre-pool.html" class="pg-action-btn" title="Rejoindre un pool" aria-label="Rejoindre un pool">
+                        <span data-icon="search" data-icon-size="20"></span>
+                    </a>
+                </div>
             </div>
 
-            <!-- Signed-up, no pools yet — the one state that still needs the
-                 "create or join" conversion CTAs instead of the grid above. -->
+            <!-- Signed-up, no active pool yet — the one state that still needs
+                 the "create or join" conversion CTAs instead of the card above. -->
             <div class="dash-onboard" id="dashOnboard" style="display:none;">
                 <p class="dash-onboard-text">Vous ne faites partie d'aucun pool.</p>
                 <div class="dash-onboard-actions">
