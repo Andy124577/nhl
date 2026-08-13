@@ -231,6 +231,22 @@
     </section>
 
     <!-- ============================================================ -->
+    <!-- STORIES — real NHL live-game scores/events and real news      -->
+    <!-- (signings, trades), auto-advancing. Hidden whenever there is  -->
+    <!-- nothing real to show — see accueil.js; never a placeholder.   -->
+    <!-- ============================================================ -->
+    <section class="home-section stories-section home-tab-panel" data-tab-panel="dashboard" id="storiesSection" style="display:none;">
+        <div class="section-container">
+            <div class="stories-card" id="storiesCard">
+                <!-- Filled by JS: a .stories-news or .stories-live slide -->
+            </div>
+            <div class="stories-progress-track">
+                <div class="stories-progress-fill" id="storiesProgressFill"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
     <!-- MY RANKINGS SECTION (all pools the user belongs to)          -->
     <!-- ============================================================ -->
     <section class="home-section my-rankings-section home-tab-panel" data-tab-panel="dashboard" id="myRankingsSection" style="display:none;">

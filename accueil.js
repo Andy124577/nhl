@@ -226,6 +226,9 @@ function renderDashHeader() {
         // page (index.html never sets window.FZ_POOL_EN_PLACE), so that
         // case resets activityLoaded to false for free.
         if (activityLoaded) loadActivityTab();
+        // Start once — not on every socket refresh, or the carousel would
+        // restart mid-story every time an unrelated pool update comes in.
+        if (!storiesLoaded) { storiesLoaded = true; loadStories(); }
         return;
     }
 
@@ -350,6 +353,161 @@ function renderPoolGlanceRoster(teamData) {
                 </span>
             </div>`;
     }).join('');
+}
+
+// ============================================================
+// STORIES — auto-advancing real NHL live-game / news slides, above
+// "Mes classements". One image area, one progress bar underneath;
+// when it fills, the slide advances. Never a placeholder: a slide
+// type with nothing real to show is simply left out, and the whole
+// section stays hidden when there's nothing at all (see /live-games
+// and /nhl-news in server.js — both return an honest empty list
+// rather than inventing content).
+// ============================================================
+let storiesLoaded = false;
+const STORY_SLIDE_MS = 7000;
+let storySlides = [];
+let storyIndex = 0;
+let storyTimer = null;
+let storyElapsed = 0;
+let storyPaused = false;
+
+async function loadStories() {
+    const section = document.getElementById('storiesSection');
+    if (!section) return;
+
+    const [liveGames, news] = await Promise.all([fetchLiveGames(), fetchNhlNews()]);
+
+    storySlides = [
+        ...liveGames.map(game => ({ type: 'live', game })),
+        ...news.map(article => ({ type: 'news', article }))
+    ];
+
+    if (!storySlides.length) {
+        section.style.display = 'none';
+        stopStoryTimer();
+        return;
+    }
+
+    section.style.display = '';
+    storyIndex = 0;
+    renderStorySlide();
+    startStoryTimer();
+}
+
+async function fetchLiveGames() {
+    try {
+        const res = await fetch(`${BASE_URL}/live-games`, { cache: 'no-store' });
+        const data = res.ok ? await res.json() : null;
+        return (data && data.games) || [];
+    } catch (err) {
+        console.warn('Could not load live games:', err);
+        return [];
+    }
+}
+
+async function fetchNhlNews() {
+    try {
+        const res = await fetch(`${BASE_URL}/nhl-news`, { cache: 'no-store' });
+        const data = res.ok ? await res.json() : null;
+        return (data && data.articles) || [];
+    } catch (err) {
+        console.warn('Could not load NHL news:', err);
+        return [];
+    }
+}
+
+const STORY_STRENGTH_LABEL = { pp: 'AN', sh: 'DN' };
+const STORY_PERIOD_LABEL = { OT: 'Prolongation', SO: 'Tirs de barrage' };
+
+function renderStorySlide() {
+    const card = document.getElementById('storiesCard');
+    if (!card || !storySlides.length) return;
+
+    const slide = storySlides[storyIndex];
+
+    if (slide.type === 'news') {
+        const a = slide.article;
+        card.innerHTML = `
+            <a class="stories-news" href="${a.url}" target="_blank" rel="noopener noreferrer" style="background-image:url('${a.image}')">
+                <span class="stories-scrim"></span>
+                <span class="stories-badge">Actualité</span>
+                <span class="stories-caption">
+                    <span class="stories-source">${escapeHTML(a.source)}</span>
+                    <span class="stories-title">${escapeHTML(a.title)}</span>
+                </span>
+            </a>`;
+        return;
+    }
+
+    const g = slide.game;
+    const periodLabel = STORY_PERIOD_LABEL[g.periodType] || `${g.period}e période`;
+    const clockLabel = (g.clock && g.clock.inIntermission) ? 'Entracte' : ((g.clock && g.clock.timeRemaining) || '');
+    const events = (g.events || []).map(e => `
+        <div class="stories-live-event">
+            <span class="sle-team">${escapeHTML(e.team)}</span>
+            <span class="sle-scorer">${escapeHTML(e.scorer)}${STORY_STRENGTH_LABEL[e.strength] ? ' · ' + STORY_STRENGTH_LABEL[e.strength] : ''}</span>
+            <span class="sle-time">P${e.period} ${escapeHTML(e.timeInPeriod)}</span>
+        </div>`).join('');
+
+    card.innerHTML = `
+        <div class="stories-live">
+            <span class="stories-badge stories-badge-live"><span class="stories-live-dot"></span> En direct</span>
+            <div class="stories-live-teams">
+                <span class="stories-live-team">
+                    <img src="teams/${escapeHTML(g.away.abbrev)}.png" alt="" onerror="this.style.display='none'">
+                    <span class="stories-live-abbrev">${escapeHTML(g.away.abbrev)}</span>
+                    <span class="stories-live-score">${g.away.score}</span>
+                </span>
+                <span class="stories-live-mid">
+                    <span class="stories-live-period">${periodLabel}</span>
+                    <span class="stories-live-clock">${escapeHTML(clockLabel)}</span>
+                </span>
+                <span class="stories-live-team">
+                    <img src="teams/${escapeHTML(g.home.abbrev)}.png" alt="" onerror="this.style.display='none'">
+                    <span class="stories-live-abbrev">${escapeHTML(g.home.abbrev)}</span>
+                    <span class="stories-live-score">${g.home.score}</span>
+                </span>
+            </div>
+            <div class="stories-live-events">${events || '<p class="activity-empty">Aucun but pour l’instant.</p>'}</div>
+        </div>`;
+}
+
+function startStoryTimer() {
+    stopStoryTimer();
+    storyElapsed = 0;
+    storyPaused = false;
+    const fill = document.getElementById('storiesProgressFill');
+    if (fill) fill.style.width = '0%';
+
+    storyTimer = setInterval(() => {
+        if (storyPaused) return;
+        storyElapsed += 100;
+        const pct = Math.min(100, (storyElapsed / STORY_SLIDE_MS) * 100);
+        if (fill) fill.style.width = `${pct}%`;
+
+        if (storyElapsed >= STORY_SLIDE_MS) {
+            storyElapsed = 0;
+            if (fill) fill.style.width = '0%';
+            storyIndex++;
+            if (storyIndex >= storySlides.length) {
+                loadStories(); // completed a full loop — refresh with live data
+            } else {
+                renderStorySlide();
+            }
+        }
+    }, 100);
+
+    const card = document.getElementById('storiesCard');
+    if (card && !card.dataset.hoverBound) {
+        card.dataset.hoverBound = '1';
+        card.addEventListener('mouseenter', () => { storyPaused = true; });
+        card.addEventListener('mouseleave', () => { storyPaused = false; });
+    }
+}
+
+function stopStoryTimer() {
+    if (storyTimer) { clearInterval(storyTimer); storyTimer = null; }
 }
 
 // ============================================================

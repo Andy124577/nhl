@@ -2924,6 +2924,124 @@ app.get('/current-teams', async (req, res) => {
     }
 });
 
+// ============================================================
+// LIVE GAMES — real-time scores/periods/events for the home page's
+// stories carousel. Same /v1/score/now endpoint the smart-update
+// poller already calls internally, just reshaped for the client.
+// Short cache only (live data moves fast); any failure returns an
+// honest empty list rather than a 500 — the carousel just skips this
+// slide type instead of breaking, exactly like "no games today."
+// ============================================================
+let liveGamesCache = { data: null, fetchedAt: 0 };
+const LIVE_GAMES_TTL_MS = 25 * 1000;
+
+app.get('/live-games', async (req, res) => {
+    try {
+        const now = Date.now();
+        if (liveGamesCache.data && (now - liveGamesCache.fetchedAt) < LIVE_GAMES_TTL_MS) {
+            return res.json(liveGamesCache.data);
+        }
+
+        const response = await fetch('https://api-web.nhle.com/v1/score/now');
+        if (!response.ok) {
+            return res.json({ games: [], generatedAt: new Date().toISOString() });
+        }
+        const data = await response.json();
+        const allGames = data.games || [];
+
+        const liveGames = allGames
+            .filter(g => g.gameState === 'LIVE' || g.gameState === 'CRIT')
+            .map(g => {
+                // Most recent goals first — a story slide only has room for a
+                // few, and "what just happened" matters more than the opener.
+                const recentGoals = (g.goals || []).slice(-4).reverse().map(goal => ({
+                    team: goal.teamAbbrev,
+                    scorer: goal.name?.default || '',
+                    assists: (goal.assists || []).map(a => a.name?.default).filter(Boolean),
+                    period: goal.periodDescriptor?.number ?? goal.period ?? null,
+                    timeInPeriod: goal.timeInPeriod || '',
+                    strength: goal.strength || 'ev',
+                    awayScore: goal.awayScore,
+                    homeScore: goal.homeScore
+                }));
+
+                return {
+                    id: g.id,
+                    state: g.gameState,
+                    period: g.periodDescriptor?.number ?? g.period ?? null,
+                    periodType: g.periodDescriptor?.periodType || null,
+                    clock: g.clock ? {
+                        timeRemaining: g.clock.timeRemaining || '',
+                        inIntermission: !!g.clock.inIntermission
+                    } : null,
+                    away: { abbrev: g.awayTeam?.abbrev || '', name: g.awayTeam?.name?.default || '', score: g.awayTeam?.score ?? 0 },
+                    home: { abbrev: g.homeTeam?.abbrev || '', name: g.homeTeam?.name?.default || '', score: g.homeTeam?.score ?? 0 },
+                    events: recentGoals
+                };
+            });
+
+        const payload = { games: liveGames, generatedAt: new Date().toISOString() };
+        liveGamesCache = { data: payload, fetchedAt: now };
+        res.json(payload);
+    } catch (error) {
+        console.error('❌ Error fetching live games:', error.message);
+        res.json({ games: [], generatedAt: new Date().toISOString() });
+    }
+});
+
+// ============================================================
+// NHL NEWS — real headlines (signings, trades, roster moves) for the
+// stories carousel, via NewsAPI.org. Needs NEWSAPI_KEY in .env; with
+// no key configured this returns an honest empty list, never an
+// invented headline — the same "never fabricate" rule that already
+// governs stats extends to news here. Cached for an hour: NewsAPI's
+// free tier caps at 100 req/day, so real traffic can't map 1:1 onto
+// upstream calls.
+// ============================================================
+let nhlNewsCache = { data: null, fetchedAt: 0 };
+const NHL_NEWS_TTL_MS = 60 * 60 * 1000;
+
+app.get('/nhl-news', async (req, res) => {
+    try {
+        if (!process.env.NEWSAPI_KEY) {
+            return res.json({ articles: [], configured: false });
+        }
+
+        const now = Date.now();
+        if (nhlNewsCache.data && (now - nhlNewsCache.fetchedAt) < NHL_NEWS_TTL_MS) {
+            return res.json(nhlNewsCache.data);
+        }
+
+        const query = encodeURIComponent('NHL AND (trade OR signs OR signing OR "free agent" OR waived OR contract)');
+        const url = `https://newsapi.org/v2/everything?q=${query}&language=en&sortBy=publishedAt&pageSize=20&apiKey=${process.env.NEWSAPI_KEY}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+            console.error('❌ NewsAPI request failed:', response.status);
+            return res.json({ articles: [], configured: true });
+        }
+
+        const data = await response.json();
+        const articles = (data.articles || [])
+            .filter(a => a.urlToImage && a.title && a.url)
+            .slice(0, 10)
+            .map(a => ({
+                title: a.title,
+                description: a.description || '',
+                image: a.urlToImage,
+                url: a.url,
+                source: a.source?.name || 'NHL',
+                publishedAt: a.publishedAt
+            }));
+
+        const payload = { articles, configured: true };
+        nhlNewsCache = { data: payload, fetchedAt: now };
+        res.json(payload);
+    } catch (error) {
+        console.error('❌ Error fetching NHL news:', error.message);
+        res.json({ articles: [], configured: !!process.env.NEWSAPI_KEY });
+    }
+});
+
 // Route to get player career stats (all seasons including playoffs)
 app.get('/player-career/:playerId', async (req, res) => {
     try {
