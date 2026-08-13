@@ -240,21 +240,18 @@ html.fz-auth .hero-section { min-height: auto; padding: 16px 24px 20px; }
    this block, instead of the JS toggle this used to depend on. */
 html.fz-auth #comment-ca-marche { display: none; }
 
-/* ---- The glance card: outer surface, inner blocks one rung "raised" —
-   the same board-gray / board-gray-raised pairing DESIGN.md documents
-   for tonal layering, not a new color. ---- */
+/* ---- The glance card: no outer frame — the individual blocks (rank,
+   status, roster, actions) sit directly on the page and carry their own
+   surface, wider and bigger than the earlier boxed-in version so they
+   read as the page's main content rather than a widget inset into it. ---- */
 .pg-card {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    max-width: 1380px;
+    gap: 14px;
+    max-width: 1600px;
     margin: 0 auto;
-    background: var(--card);
-    border: 1px solid var(--border-light);
-    border-radius: 18px;
-    padding: 10px;
 }
-.pg-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.pg-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 
 .pg-block-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .pg-block-icon { color: var(--primary); opacity: .8; }
@@ -262,30 +259,30 @@ html.fz-auth #comment-ca-marche { display: none; }
 
 /* ---- Rank block ---- */
 .pg-rank-block {
-    background: var(--card-white);
+    background: var(--card);
     border: 1px solid var(--border-light);
     border-radius: 14px;
-    padding: 13px 16px;
+    padding: 20px 24px;
 }
-.pg-rank-value { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; }
-.pg-rank-num { font-size: 2.2rem; font-weight: 800; color: var(--primary); line-height: 1; }
-.pg-rank-total { font-size: 1rem; font-weight: 700; color: var(--text-gray); }
+.pg-rank-value { display: flex; align-items: baseline; gap: 10px; margin-top: 10px; }
+.pg-rank-num { font-size: 2.8rem; font-weight: 800; color: var(--primary); line-height: 1; }
+.pg-rank-total { font-size: 1.15rem; font-weight: 700; color: var(--text-gray); }
 .pg-rank-foot {
     display: flex; justify-content: space-between; gap: 10px;
-    margin-top: 10px; padding-top: 8px;
+    margin-top: 14px; padding-top: 12px;
     border-top: 1px solid var(--border-light);
-    font-size: .78rem; color: var(--text-secondary);
+    font-size: .85rem; color: var(--text-secondary);
 }
 .pg-rank-pool { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pg-rank-pts { flex-shrink: 0; font-weight: 700; color: var(--text-dark); }
 
 /* ---- Draft / trade status mini-tiles ---- */
-.pg-status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pg-status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .pg-status-tile {
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
     text-align: center;
-    padding: 10px 8px;
-    background: var(--card-white);
+    padding: 16px 12px;
+    background: var(--card);
     border: 1px solid var(--border-light);
     border-radius: 12px;
     text-decoration: none;
@@ -295,8 +292,8 @@ html.fz-auth #comment-ca-marche { display: none; }
 .pg-status-tile:focus-visible { transform: translateY(-2px); border-color: rgba(0,212,255,.28); }
 .pg-status-tile:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .pg-status-icon { color: var(--primary); }
-.pg-status-label { font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-secondary); }
-.pg-status-value { font-size: .78rem; font-weight: 700; color: var(--text-main); }
+.pg-status-label { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-secondary); }
+.pg-status-value { font-size: .9rem; font-weight: 700; color: var(--text-main); }
 
 /* The state genuinely live/actionable right now — the only place this
    card uses the live-signal cyan glow (One Live Signal Rule). */
@@ -315,15 +312,15 @@ html.fz-auth #comment-ca-marche { display: none; }
 
 .pg-roster-list {
     flex: 1;
-    display: flex; flex-direction: column; gap: 4px;
-    background: var(--card-white);
+    display: flex; flex-direction: column; gap: 6px;
+    background: var(--card);
     border: 1px solid var(--border-light);
     border-radius: 14px;
-    padding: 8px;
+    padding: 12px;
 }
 .pg-roster-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 5px 6px;
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px;
     border-radius: 10px;
     transition: background .2s ease;
 }
@@ -331,8 +328,8 @@ html.fz-auth #comment-ca-marche { display: none; }
 
 .pg-roster-photo {
     flex-shrink: 0; position: relative;
-    width: 32px; height: 32px;
-    border-radius: 8px;
+    width: 40px; height: 40px;
+    border-radius: 10px;
     overflow: hidden;
     background: var(--bg-hover);
 }
@@ -340,49 +337,55 @@ html.fz-auth #comment-ca-marche { display: none; }
 .pg-roster-fallback {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: .7rem; font-weight: 700; color: var(--text-secondary);
+    font-size: .75rem; font-weight: 700; color: var(--text-secondary);
     background: var(--bg-hover);
 }
 
-.pg-roster-id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.pg-roster-name { font-size: .82rem; font-weight: 700; color: var(--text-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pg-roster-meta { font-size: .7rem; color: var(--text-gray); }
+.pg-roster-id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pg-roster-name { font-size: .92rem; font-weight: 700; color: var(--text-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-roster-meta { font-size: .75rem; color: var(--text-gray); }
 
-.pg-roster-stats { flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
-.pg-roster-pts { font-size: .8rem; font-weight: 700; color: var(--primary); white-space: nowrap; }
-.pg-hot { font-size: .8rem; line-height: 1; }
+.pg-roster-stats { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+.pg-roster-pts { font-size: .92rem; font-weight: 700; color: var(--primary); white-space: nowrap; }
+.pg-hot { font-size: .9rem; line-height: 1; }
 
-.pg-roster-empty { padding: 16px 8px; text-align: center; }
-.pg-roster-empty p { font-size: .8rem; color: var(--text-secondary); margin-bottom: 6px; }
-.pg-roster-empty a { font-size: .8rem; font-weight: 600; color: var(--primary); text-decoration: none; }
+.pg-roster-empty { padding: 20px 8px; text-align: center; }
+.pg-roster-empty p { font-size: .85rem; color: var(--text-secondary); margin-bottom: 8px; }
+.pg-roster-empty a { font-size: .85rem; font-weight: 600; color: var(--primary); text-decoration: none; }
 
 /* ---- Créer / rejoindre: quick actions, no separate row for settings ---- */
 .pg-col-actions { flex-direction: row; }
 .pg-action-btn {
     flex: 1;
-    display: flex; align-items: center; justify-content: center;
-    min-height: 46px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 56px;
+    padding: 0 16px;
     color: var(--primary);
-    background: var(--card-white);
+    background: var(--card);
     border: 1px solid var(--border-light);
     border-radius: 12px;
     text-decoration: none;
     transition: transform .2s cubic-bezier(.4,0,.2,1), background .2s ease, color .2s ease, border-color .2s ease;
 }
+.pg-action-icon { flex-shrink: 0; display: flex; }
+.pg-action-label { font-size: .85rem; font-weight: 700; color: var(--text-main); white-space: nowrap; }
 .pg-action-btn:hover,
 .pg-action-btn:focus-visible { transform: translateY(-2px); }
 .pg-action-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 /* "Créer" (add) takes the fuller cyan treatment; "rejoindre" (search) stays quiet — matching the source mockup's own asymmetry. */
 .pg-action-btn:first-child:hover { background: var(--primary); border-color: var(--primary); color: var(--bg); }
+.pg-action-btn:first-child:hover .pg-action-label { color: var(--bg); }
 .pg-action-btn:last-child:hover { background: var(--bg-hover); border-color: rgba(0,212,255,.28); }
 
 @media (min-width: 769px) {
     html.fz-auth .hero-section { padding: 48px 24px 56px; }
-    .pg-card { gap: 16px; padding: 16px; }
-    .pg-rank-num { font-size: 2.8rem; }
-    .pg-roster-title { font-size: 1.05rem; }
-    .pg-roster-name { font-size: .88rem; }
-    .pg-roster-photo { width: 40px; height: 40px; }
+    .pg-card { gap: 20px; }
+    .pg-rank-num { font-size: 3.2rem; }
+    .pg-roster-title { font-size: 1.15rem; }
+    .pg-roster-name { font-size: 1rem; }
+    .pg-roster-photo { width: 48px; height: 48px; }
+    .pg-action-btn { min-height: 64px; }
+    .pg-action-label { font-size: .95rem; }
 }
 
 /* Full bento layout once there's room to lay the three columns side by
@@ -392,7 +395,7 @@ html.fz-auth #comment-ca-marche { display: none; }
     .pg-col-rank    { flex: 4; }
     .pg-col-roster  { flex: 5; }
     .pg-col-actions { flex: 3; flex-direction: column; }
-    .pg-action-btn { min-height: 0; }
+    .pg-action-btn { min-height: 0; flex: 1; }
 }
 
 /* ============================================================ */
