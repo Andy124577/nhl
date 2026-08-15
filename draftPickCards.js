@@ -132,7 +132,12 @@ function buildPickCard(options) {
   const marque = club || (info ? { abbrev: info.abbrev, logo: info.logo } : null);
 
   const carte = document.createElement('article');
-  carte.className = 'pick-card is-' + etat;
+  // is-unbranded : le CSS (.pick-card.is-unbranded) y fait suivre le texte
+  // sur le même repli de thème que le fond, qui retombe déjà sur les jetons
+  // du site (variable --team-a/-b/-deep ci-dessous non posée) plutôt que sur
+  // le blanc fixe de la carte de marque — invisible une fois ce fond presque
+  // blanc en thème clair.
+  carte.className = 'pick-card is-' + etat + (marque ? '' : ' is-unbranded');
 
   // C'est l'identité de l'ÉQUIPE DU POOL qui marque la carte — la sienne dès
   // que son ordre de tour est connu, pas seulement une fois son choix fait.

@@ -146,6 +146,10 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
             banner.style.removeProperty("--team-b");
             banner.style.removeProperty("--team-deep");
         }
+        // Le CSS (.turn-banner.your-turn.is-unbranded) suit alors le texte sur
+        // le même repli que le fond ci-dessus, plutôt que le blanc fixe de la
+        // carte de marque.
+        banner.classList.toggle("is-unbranded", !club);
 
         if (zoneLogo && imgLogo) {
             if (club && club.logo) {

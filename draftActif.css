@@ -280,6 +280,12 @@ body {
     linear-gradient(180deg, rgba(0, 0, 0, .32) 0%, rgba(0, 0, 0, 0) 45%),
     linear-gradient(158deg, var(--team-a, var(--card)) 0%, var(--team-b, var(--bg-gray-light)) 62%, var(--team-deep, var(--bg)) 100%);
 }
+/* Même repli que .pick-card.is-unbranded ci-dessous : sans identité connue
+   (appliquerIdentiteBanniere, draftActif.js), le dégradé retombe déjà sur
+   les jetons du site — donc presque blanc en thème clair — mais le texte
+   blanc fixe ci-dessus s'y effaçait complètement. .turn-banner-text/-sub et
+   .turn-clock héritent tous de cette couleur, un seul point suffit. */
+.turn-banner.your-turn.is-unbranded { color: var(--text-main); }
 .turn-banner.done {
   background: rgba(0, 230, 118, .14);
   border-color: rgba(0, 230, 118, .32);
@@ -823,6 +829,20 @@ html[data-theme="light"] .player-selection-card {
   opacity: .8;
 }
 .pick-card.is-skipped { opacity: .5; }
+/* Le repli ci-dessus corrigeait le FOND (jetons du site plutôt que la
+   navy en dur) sans toucher au TEXTE : .pick-card et ses enfants restaient
+   au blanc fixe de la carte de marque, invisible une fois le fond devenu
+   presque blanc en thème clair. buildPickCard (draftPickCards.js) pose
+   cette classe sur toute carte sans marque — venant du repli ci-dessus ou
+   du fond par défaut de .pick-card (mêmes jetons) — pour que le texte suive
+   le même repli que le fond. Le pied (.pick-card-owner/-meta) n'en fait pas
+   partie : sa barre reste sombre quel que soit le thème (voir plus haut). */
+.pick-card.is-unbranded {
+  color: var(--text-main);
+  border-color: var(--border-light);
+}
+.pick-card.is-unbranded .pick-card-name { text-shadow: none; }
+.pick-card.is-unbranded .pick-card-pos { color: var(--text-secondary); }
 .pick-card.is-current {
   --team-a: var(--card);
   --team-b: var(--bg-gray-light);
@@ -1120,6 +1140,11 @@ html[data-theme="light"] .player-selection-card {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* Fixe plutôt qu'hérité de .pick-card : le pied garde sa barre sombre
+     (rgba(10,12,16,.78) ci-dessus) quelle que soit la carte au-dessus, y
+     compris une carte .is-unbranded qui passe son propre texte en jeton
+     de thème. */
+  color: #fff;
 }
 .pick-card-meta {
   flex: 0 0 auto;
