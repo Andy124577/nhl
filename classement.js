@@ -58,6 +58,10 @@ let currentH2HTab = 'matchups'; // 'matchups' | 'standings' | 'history'
 let h2hWeekCache = null; // cached full-week matchup data
 let h2hPeriod = 'today'; // 'today' | 'week'
 
+// null sortKey = canonical rank order (points, or wins for H2H)
+let standingsSortKey = null;
+let standingsSortDir = 'desc';
+
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', async () => {
     await fetchImageData();
@@ -145,6 +149,8 @@ function showPoolStandings(poolName) {
     currentPoolName = poolName;
     currentTeamName = null;
     h2hWeekCache = null; // clear cache when switching pools
+    standingsSortKey = null; // reset to canonical rank order for the new pool
+    standingsSortDir = 'desc';
 
     const poolData = allPoolsData[poolName];
     if (!poolData) return;
@@ -193,20 +199,82 @@ function showPoolStandings(poolName) {
     }
 }
 
+// Colonnes du tableau de classement, par mode de pool. `sort` doit
+// correspondre à une clé numérique présente sur chaque objet `standing`
+// construit dans renderPoolStandings (ex.: gamesPlayed, ppg, diff...).
+// Les largeurs viennent de min-width en CSS (table-layout: auto) : sous une
+// largeur de phone, la table déborde et le conteneur défile plutôt que de
+// couper les nombres en plusieurs lignes.
+function getStandingsColumns(poolMode) {
+    if (poolMode === 'head-to-head') {
+        return [
+            { label: 'Pos', cls: 'rank-col' },
+            { label: 'Participant', cls: 'player-col' },
+            { label: 'PJ', sort: 'gamesPlayed', title: 'Parties jouées' },
+            { label: 'V', sort: 'wins', title: 'Victoires' },
+            { label: 'D', sort: 'losses', title: 'Défaites' },
+            { label: 'N', sort: 'ties', title: 'Nuls' },
+            { label: 'PTS', sort: 'points', cls: 'points-column', title: 'Points pour' },
+            { label: 'Écart', sort: 'diff', title: 'Différentiel (pour - contre)' }
+        ];
+    }
+    return [
+        { label: 'Pos', cls: 'rank-col' },
+        { label: 'Participant', cls: 'player-col' },
+        { label: 'PJ', sort: 'gamesPlayed', title: 'Parties jouées' },
+        { label: 'B', sort: 'goals', title: 'Buts' },
+        { label: 'A', sort: 'assists', title: 'Passes décisives' },
+        { label: 'PTS', sort: 'points', cls: 'points-column', title: 'Points de pool' },
+        { label: 'Pts/PJ', sort: 'ppg', title: 'Points par partie jouée' },
+        { label: 'Écart', title: 'Écart avec le premier' }
+    ];
+}
+
+function buildStandingsHead(columns, activeSortKey) {
+    const cells = columns.map(c => {
+        const classes = [c.cls, c.sort ? 'sortable' : ''].filter(Boolean).join(' ');
+        const active = c.sort && c.sort === activeSortKey;
+        const caret = active ? `<span class="sort-caret" aria-hidden="true">${standingsSortDir === 'asc' ? '▲' : '▼'}</span>` : '';
+        return `<th${classes ? ` class="${classes}${active ? ' is-sorted' : ''}"` : ''}`
+            + (c.title ? ` title="${c.title}"` : '')
+            + (c.sort ? ` data-sort="${c.sort}" role="button" tabindex="0"` : '')
+            + (active ? ` aria-sort="${standingsSortDir === 'asc' ? 'ascending' : 'descending'}"` : '')
+            + `>${c.label}${caret}</th>`;
+    }).join('');
+    return `<thead><tr>${cells}</tr></thead>`;
+}
+
+// Le rang réel (1/2/3/…) vient toujours du classement canonique par
+// points/victoires, indépendamment de la colonne actuellement triée.
+function rankBadgeHTML(rank) {
+    let cls = 'normal';
+    if (rank === 1) cls = 'gold';
+    else if (rank === 2) cls = 'silver';
+    else if (rank === 3) cls = 'bronze';
+    return `<span class="st-rank-badge ${cls}">${rank}</span>`;
+}
+
+// Reclique un en-tête triable : inverse le sens si c'est déjà la colonne
+// active, sinon repart en ordre décroissant sur la nouvelle colonne.
+function handleStandingsSort(key) {
+    if (standingsSortKey === key) {
+        standingsSortDir = standingsSortDir === 'desc' ? 'asc' : 'desc';
+    } else {
+        standingsSortKey = key;
+        standingsSortDir = 'desc';
+    }
+    const poolData = allPoolsData[currentPoolName];
+    if (poolData) renderPoolStandings(poolData, currentPoolName).catch(console.error);
+}
+
 async function renderPoolStandings(poolData, poolName) {
     const poolMode = poolData.poolMode || 'cumulative';
     const standingsList = document.getElementById('standingsList');
-    standingsList.innerHTML = '';
 
-    // Pre-fetch all member avatars so avatarHtml() works synchronously
-    const allMembers = Object.values(poolData.teams || {}).flatMap(t => t.members || []);
-    if (typeof prefetchAvatars === 'function') await prefetchAvatars(allMembers);
-
-    // Calculate standings
+    // Calcule le classement (ordre canonique = rang réel de chaque équipe).
     let standings = [];
 
     if (poolMode === 'head-to-head') {
-        // H2H mode: use wins/losses
         const h2hData = poolData.h2hData || {};
         const h2hStandings = h2hData.standings || {};
 
@@ -214,24 +282,21 @@ async function renderPoolStandings(poolData, poolName) {
             .filter(([teamName, teamData]) => teamData.members && teamData.members.length > 0)
             .map(([teamName, teamData]) => {
                 const h2hStats = h2hStandings[teamName] || { wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0 };
+                const wins = h2hStats.wins || 0, losses = h2hStats.losses || 0, ties = h2hStats.ties || 0;
+                const pointsFor = h2hStats.pointsFor || 0, pointsAgainst = h2hStats.pointsAgainst || 0;
                 return {
                     teamName,
                     members: teamData.members,
                     nhlTeams: teamData.teams || [],
-                    wins: h2hStats.wins,
-                    losses: h2hStats.losses,
-                    ties: h2hStats.ties,
-                    pointsFor: h2hStats.pointsFor,
-                    pointsAgainst: h2hStats.pointsAgainst,
-                    points: h2hStats.pointsFor
+                    wins, losses, ties,
+                    gamesPlayed: wins + losses + ties,
+                    pointsFor, pointsAgainst,
+                    points: pointsFor,
+                    diff: pointsFor - pointsAgainst
                 };
             })
-            .sort((a, b) => {
-                if (b.wins !== a.wins) return b.wins - a.wins;
-                return (b.pointsFor - b.pointsAgainst) - (a.pointsFor - a.pointsAgainst);
-            });
+            .sort((a, b) => (b.wins - a.wins) || (b.diff - a.diff));
     } else {
-        // Cumulative mode: use total points
         standings = Object.entries(poolData.teams)
             .filter(([teamName, teamData]) => teamData.members && teamData.members.length > 0)
             .map(([teamName, teamData]) => {
@@ -240,102 +305,133 @@ async function renderPoolStandings(poolData, poolName) {
                     teamName,
                     members: teamData.members,
                     nhlTeams: teamData.teams || [],
-                    ...teamPoints
+                    ...teamPoints,
+                    ppg: teamPoints.gamesPlayed > 0 ? teamPoints.points / teamPoints.gamesPlayed : 0
                 };
             })
             .sort((a, b) => b.points - a.points);
+
+        const leaderPoints = standings[0]?.points || 0;
+        standings.forEach(s => { s.diff = leaderPoints - s.points; });
+    }
+    standings.forEach((s, i) => { s.rank = i + 1; });
+
+    const columns = getStandingsColumns(poolMode);
+
+    if (standings.length === 0) {
+        standingsList.innerHTML = `
+            <div class="standings-table-container">
+                <div class="st-empty">
+                    <p class="st-empty-title">Aucune équipe complète pour le moment</p>
+                    <p class="st-empty-hint">Le classement apparaît une fois les équipes formées.</p>
+                </div>
+            </div>`;
+        document.getElementById('standingsSkeleton').style.display = 'none';
+        standingsList.style.display = 'block';
+        return;
     }
 
-    // Render standing cards
-    standings.forEach((standing, index) => {
-        const rank = index + 1;
-        const card = document.createElement('div');
-        card.className = 'standing-card';
-        card.onclick = () => showTeamRoster(poolName, standing.teamName);
+    // Le tri d'affichage réordonne les rangées ; la colonne Pos garde
+    // toujours le rang réel calculé plus haut. Sans tri explicite, l'ordre
+    // canonique (déjà départagé par égalité) sert aussi d'indicateur —
+    // l'en-tête PTS/Victoires s'affiche donc actif dès le premier rendu.
+    const defaultSortKey = poolMode === 'head-to-head' ? 'wins' : 'points';
+    const activeSortKey = standingsSortKey || defaultSortKey;
+    let displayList = standings;
+    if (standingsSortKey) {
+        displayList = [...standings].sort((a, b) => {
+            const delta = (b[standingsSortKey] || 0) - (a[standingsSortKey] || 0);
+            return standingsSortDir === 'asc' ? -delta : delta;
+        });
+    }
 
-        let rankClass = 'rank-other';
-        let rankLabel = `${rank}e`;
-        if (rank === 1) {
-            rankClass = 'rank-1';
-            rankLabel = '1er';
-        } else if (rank === 2) {
-            rankClass = 'rank-2';
-            rankLabel = '2e';
-        } else if (rank === 3) {
-            rankClass = 'rank-3';
-            rankLabel = '3e';
-        }
+    standingsList.innerHTML = `<div class="standings-table-container"><table id="standingsTable">${buildStandingsHead(columns, activeSortKey)}</table></div>`;
+    const table = document.getElementById('standingsTable');
 
-        let statsHTML = '';
-        if (poolMode === 'head-to-head') {
-            statsHTML = `
-                <div class="stats-row-top">
-                    <span>${standing.wins || 0}</span>
-                    <span>${standing.losses || 0}</span>
-                    <span>${standing.ties || 0}</span>
-                    <span>${standing.pointsFor || 0}</span>
-                </div>
-                <div class="stats-row-bottom">
-                    <span>V</span>
-                    <span>D</span>
-                    <span>N</span>
-                    <span>PTS</span>
-                </div>
-            `;
-        } else {
-            // For cumulative: show GP, last 30 games, last 7 days, today
-            // TODO: Time-based stats require API enhancement to provide historical data
-            const totalGP = standing.gamesPlayed || 0;
-            const totalPoints = standing.points || 0;
-            const last30Points = totalPoints; // Showing total for now until API provides time-based data
-            const last7Points = 0; // Would need time-based API data
-            const todayPoints = 0; // Would need real-time daily stats from API
-
-            statsHTML = `
-                <div class="stats-row-top">
-                    <span>${totalGP}</span>
-                    <span>${last30Points}</span>
-                    <span>${last7Points}</span>
-                    <span>${todayPoints}</span>
-                </div>
-                <div class="stats-row-bottom">
-                    <span>PJ</span>
-                    <span>30</span>
-                    <span>7</span>
-                    <span>1</span>
-                </div>
-            `;
-        }
-
+    const tbody = document.createElement('tbody');
+    displayList.forEach(standing => {
         const displayName = getDisplayName(standing.teamName, standing.members);
-        const logoHTML = getTeamLogoHTML(standing.nhlTeams, 32);
+        const logoHTML = getTeamLogoHTML(standing.nhlTeams, 22);
 
-        const membersAvatarHtml = (standing.members || []).map(m =>
-            typeof avatarHtml === 'function' ? avatarHtml(m, 24) : `<img src="Icons/grayUser.png" style="width:24px;height:24px;border-radius:50%;object-fit:cover;">`
-        ).join('');
-        card.innerHTML = `
-            <div class="rank-badge ${rankClass}">${rankLabel}</div>
-            ${logoHTML ? `<div class="standing-logo">${logoHTML}</div>` : ''}
-            <div class="standing-info">
-                <div class="standing-name">${displayName}</div>
-                ${membersAvatarHtml ? `<div class="standing-members-avatars" style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;">${membersAvatarHtml}</div>` : ''}
-                <div class="standing-stats">
-                    ${statsHTML}
+        const tr = document.createElement('tr');
+        tr.className = 'is-clickable';
+        tr.tabIndex = 0;
+        tr.setAttribute('role', 'button');
+        tr.setAttribute('aria-label', `Voir l'équipe de ${displayName}`);
+        tr.onclick = () => showTeamRoster(poolName, standing.teamName);
+        tr.onkeydown = (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showTeamRoster(poolName, standing.teamName); }
+        };
+
+        const statCells = poolMode === 'head-to-head'
+            ? `<td>${standing.gamesPlayed}</td>
+               <td>${standing.wins}</td>
+               <td>${standing.losses}</td>
+               <td>${standing.ties}</td>
+               <td class="points-column">${standing.points}</td>
+               <td class="st-diff-col">${standing.diff > 0 ? '+' + standing.diff : standing.diff}</td>`
+            : `<td>${standing.gamesPlayed}</td>
+               <td>${standing.goals}</td>
+               <td>${standing.assists}</td>
+               <td class="points-column">${standing.points}</td>
+               <td>${standing.ppg.toFixed(2)}</td>
+               <td class="st-diff-col">${standing.rank === 1 ? '—' : standing.diff}</td>`;
+
+        tr.innerHTML = `
+            <td class="rank-col">${rankBadgeHTML(standing.rank)}</td>
+            <td class="player-col">
+                <div class="st-participant">
+                    ${logoHTML}
+                    <span class="st-name" title="${displayName}">${displayName}</span>
                 </div>
-            </div>
-            <div class="standing-points">
-                <div class="points-value">${standing.points || 0}</div>
-                <div class="points-label">pts</div>
-            </div>
-            <div class="standing-arrow">›</div>
+            </td>
+            ${statCells}
         `;
-
-        standingsList.appendChild(card);
+        tbody.appendChild(tr);
     });
+    table.appendChild(tbody);
 
-    // Hide skeleton, show content
+    const n = standings.length;
+    const avg = (key) => standings.reduce((sum, s) => sum + (s[key] || 0), 0) / n;
+    const tfoot = document.createElement('tfoot');
+    const avgStatCells = poolMode === 'head-to-head'
+        ? `<td>${avg('gamesPlayed').toFixed(1)}</td>
+           <td>${avg('wins').toFixed(1)}</td>
+           <td>${avg('losses').toFixed(1)}</td>
+           <td>${avg('ties').toFixed(1)}</td>
+           <td class="points-column">${avg('points').toFixed(1)}</td>
+           <td class="st-diff-col">—</td>`
+        : `<td>${avg('gamesPlayed').toFixed(1)}</td>
+           <td>${avg('goals').toFixed(1)}</td>
+           <td>${avg('assists').toFixed(1)}</td>
+           <td class="points-column">${avg('points').toFixed(1)}</td>
+           <td>${avg('ppg').toFixed(2)}</td>
+           <td class="st-diff-col">—</td>`;
+    tfoot.innerHTML = `
+        <tr class="standings-avg-row">
+            <td class="rank-col">—</td>
+            <td class="player-col standings-avg-label">Moyenne</td>
+            ${avgStatCells}
+        </tr>
+    `;
+    table.appendChild(tfoot);
+
+    // Délégation sur le conteneur : reconstruit à chaque tri, un écouteur
+    // par <th> fuirait à chaque passe (comme initStatsHeaderSorting).
+    standingsList.onclick = (e) => {
+        const th = e.target.closest('th[data-sort]');
+        if (th) handleStandingsSort(th.dataset.sort);
+    };
+    standingsList.onkeydown = (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const th = e.target.closest('th[data-sort]');
+        if (!th) return;
+        e.preventDefault();
+        handleStandingsSort(th.dataset.sort);
+    };
+
     document.getElementById('standingsSkeleton').style.display = 'none';
-    standingsList.style.display = 'flex';
+    standingsList.style.display = 'block';
 }
 
 // Level 3: Team Roster View
@@ -912,7 +1008,7 @@ function switchH2HTab(tab) {
     // Show/hide sections
     document.getElementById('h2hMatchupsView').style.display = (tab === 'matchups') ? 'block' : 'none';
     document.getElementById('standingsSkeleton').style.display = 'none';
-    document.getElementById('standingsList').style.display = (tab === 'standings') ? 'flex' : 'none';
+    document.getElementById('standingsList').style.display = (tab === 'standings') ? 'block' : 'none';
     document.getElementById('h2hHistoryView').style.display = (tab === 'history') ? 'block' : 'none';
 
     if (tab === 'standings' && currentPoolName) {

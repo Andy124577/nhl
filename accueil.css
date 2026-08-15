@@ -1055,6 +1055,20 @@ html.fz-auth #comment-ca-marche { display: none; }
 .sle-scorer { flex: 1; min-width: 0; color: var(--text-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sle-time { flex-shrink: 0; color: var(--text-gray); font-size: .7rem; }
 
+/* ---- Nothing real to show right now — quiet, not hidden. Vanishing
+   outright reads as broken; a member has no way to tell "no games
+   today" from "this is broken." ---- */
+.stories-empty {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px;
+    text-align: center;
+    padding: 20px;
+}
+.stories-empty-icon { color: var(--text-gray); opacity: .5; margin-bottom: 4px; }
+.stories-empty-text { color: var(--text-secondary); font-size: .9rem; font-weight: 600; }
+.stories-empty-sub { color: var(--text-gray); font-size: .8rem; }
+
 /* ---- Progress bar ---- */
 .stories-progress-track {
     max-width: 1200px;

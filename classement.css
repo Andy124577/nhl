@@ -163,145 +163,228 @@ body {
 }
 
 /* ==================== STANDINGS VIEW (Level 2) ==================== */
+/* Dense sortable leaderboard table (replaces the old stacked-card list).
+   Self-contained: doesn't lean on index.css's bare table/th/td rules,
+   which carry assumptions (sticky offset, nth-child column widths) tuned
+   for the stats page's own table and would leak here unpredictably. */
 .standings-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    display: block;
 }
 
-.standing-card {
+/* Wide content scrolls inside its own wrapper, never the page body — the
+   table needs a realistic min-width per column (8 columns of 2-3 digit
+   numbers don't fit a 360px phone without wrapping mid-number). */
+.standings-table-container {
     background: var(--card-white);
-    border-radius: 16px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
+    border-radius: 18px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+#standingsTable {
+    width: 100%;
+    min-width: 480px;
+    border-collapse: collapse;
+    table-layout: auto;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+}
+
+#standingsTable thead th {
+    font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
+    background: rgba(0, 212, 255, .18);
+    color: var(--text-main);
+    padding: var(--d-th-pad, 12px);
+    text-align: center;
+    font-weight: 400;
+    font-size: .88rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--primary);
+    white-space: nowrap;
+}
+
+#standingsTable th.rank-col,
+#standingsTable td.rank-col {
+    width: 44px;
+    min-width: 44px;
+    text-align: center;
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+#standingsTable th.player-col,
+#standingsTable td.player-col {
+    min-width: 110px;
+    text-align: left;
+    padding-left: 14px;
+    white-space: nowrap;
+}
+
+#standingsTable td:not(.player-col),
+#standingsTable th:not(.player-col):not(.rank-col) {
+    min-width: 52px;
+    white-space: nowrap;
+}
+
+#standingsTable th.sortable {
     cursor: pointer;
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    user-select: none;
+    transition: background 0.18s ease, color 0.18s ease;
 }
 
-.standing-card:hover {
-    border-color: var(--danger);
-    box-shadow: 0 4px 16px rgba(255, 46, 46, 0.15);
-    transform: translateY(-2px);
+#standingsTable th.sortable:hover,
+#standingsTable th.sortable:focus-visible {
+    background: rgba(0, 212, 255, .32);
 }
 
-.standing-logo {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
+#standingsTable th.sortable:focus-visible {
+    outline: 2px solid var(--text-main);
+    outline-offset: -3px;
 }
 
-.rank-badge {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--card-white);
-    flex-shrink: 0;
+#standingsTable th.is-sorted {
+    background: rgba(0, 212, 255, .32);
+    color: var(--primary);
 }
 
-.rank-badge.rank-1 {
-    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+#standingsTable .sort-caret {
+    display: inline-block;
+    margin-left: 5px;
+    font-size: .62em;
+    vertical-align: middle;
+    opacity: .9;
 }
 
-.rank-badge.rank-2 {
-    background: linear-gradient(135deg, #C0C0C0 0%, var(--text-light-gray)999 100%);
-    box-shadow: 0 4px 12px rgba(192, 192, 192, 0.4);
+#standingsTable tbody tr {
+    border-bottom: 1px solid var(--border-light);
+    transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.rank-badge.rank-3 {
-    background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%);
-    box-shadow: 0 4px 12px rgba(205, 127, 50, 0.4);
+#standingsTable tbody tr:nth-child(odd) { background: var(--bg-odd-row); }
+#standingsTable tbody tr:nth-child(even) { background: rgba(44, 44, 50, .35); }
+
+#standingsTable tbody tr.is-clickable {
+    position: relative;
+    cursor: pointer;
 }
 
-.rank-badge.rank-other {
-    background: var(--text-main);
+#standingsTable tbody tr.is-clickable:hover,
+#standingsTable tbody tr.is-clickable:focus-visible {
+    background: var(--bg-hover);
+    transform: translateY(-1px);
+}
+
+#standingsTable tbody tr.is-clickable::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--primary);
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}
+
+#standingsTable tbody tr.is-clickable:hover::after,
+#standingsTable tbody tr.is-clickable:focus-visible::after { opacity: 1; }
+
+#standingsTable tbody tr.is-clickable:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+}
+
+#standingsTable td {
+    padding: var(--d-td-pad, 10px);
+    text-align: center;
+    font-size: var(--d-td-size, .88rem);
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+#standingsTable td.points-column,
+#standingsTable th.points-column {
+    background: rgba(0, 212, 255, .08);
+    font-weight: 800;
+}
+
+#standingsTable td.points-column {
+    font-size: 1.05rem;
+    color: var(--primary);
+}
+
+#standingsTable .st-diff-col {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .82rem;
     color: var(--text-secondary);
 }
 
-.standing-info {
-    flex: 1;
+.st-rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-weight: 800;
+    font-size: .82rem;
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.st-rank-badge.gold   { background: rgba(255, 179, 0, .2); color: var(--warning); }
+.st-rank-badge.silver { background: rgba(185, 185, 205, .2); color: #B8B8CC; }
+.st-rank-badge.bronze { background: rgba(180, 100, 0, .2); color: #CD7F32; }
+.st-rank-badge.normal { background: var(--bg-hover); color: var(--text-gray); }
+
+.st-participant {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     min-width: 0;
 }
 
-.standing-name {
-    font-size: 1.2rem;
+.st-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    max-width: 150px;
     font-weight: 700;
-    color: var(--text-dark);
-    margin-bottom: 8px;
+    color: var(--text-main);
 }
 
-.standing-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 0.9rem;
-}
-
-.stats-row-top {
-    display: flex;
-    gap: 12px;
+#standingsTable tfoot .standings-avg-row td {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
     font-weight: 700;
-    color: var(--text-dark);
-    font-size: 1.1rem;
+    border-top: 2px solid var(--border-light);
 }
 
-.stats-row-top span {
-    min-width: 35px;
-    text-align: center;
-}
-
-.stats-row-bottom {
-    display: flex;
-    gap: 12px;
-    font-size: 0.75rem;
-    color: var(--text-light-gray);
+.standings-avg-label {
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    font-size: .74rem;
+    letter-spacing: .06em;
+    color: var(--text-secondary);
 }
 
-.stats-row-bottom span {
-    min-width: 35px;
+.st-empty {
     text-align: center;
+    padding: 52px 24px;
 }
 
-.standing-points {
-    text-align: center;
-    min-width: 80px;
+.st-empty-title {
+    margin: 0 0 6px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
 }
 
-.points-value {
-    font-size: 2rem;
-    font-weight: 800;
-    color: var(--danger);
-    line-height: 1;
-}
-
-.points-label {
-    font-size: 0.75rem;
-    color: var(--text-light-gray);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 4px;
-}
-
-.standing-arrow {
-    font-size: 1.5rem;
-    color: var(--border-gray);
-    transition: transform 0.3s ease;
-}
-
-.standing-card:hover .standing-arrow {
-    transform: translateX(5px);
-    color: var(--danger);
+.st-empty-hint {
+    margin: 0;
+    font-size: .87rem;
+    color: var(--text-secondary);
 }
 
 /* ==================== ROSTER VIEW (Level 3) ==================== */
@@ -547,39 +630,32 @@ body {
     height: 16px;
 }
 
-/* Standing Card Skeleton */
-.standing-card-skeleton {
+/* Standings Table Skeleton — mirrors the real table's column rhythm so
+   the loading state doesn't jump in shape once data arrives. */
+.standings-table-skeleton {
     background: var(--card-white);
-    border-radius: 16px;
-    padding: 20px;
+    border-radius: 18px;
+    padding: 10px;
     display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.standings-skeleton-row {
+    display: grid;
+    grid-template-columns: 44px 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    gap: 10px;
     align-items: center;
-    gap: 20px;
+    padding: 10px 8px;
 }
 
-.skeleton-rank {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(90deg, #f0f0f0 25%, var(--text-main) 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    flex-shrink: 0;
-}
-
-.skeleton-name {
-    width: 50%;
-    height: 20px;
-}
-
-.skeleton-stats {
-    width: 70%;
+.standings-skeleton-row .skeleton {
     height: 16px;
 }
 
-.skeleton-points {
-    width: 80px;
-    height: 40px;
+.standings-skeleton-row .skeleton:first-child {
+    height: 26px;
+    border-radius: 50%;
 }
 
 /* Roster Card Skeleton */
@@ -1753,6 +1829,23 @@ body {
 /* ============================================================ */
 /* LIGHT MODE — hardcoded rgba overrides                         */
 /* ============================================================ */
+
+/* --- Standings table --- */
+html[data-theme="light"] #standingsTable thead th {
+    background: rgba(0, 136, 170, 0.14);
+}
+html[data-theme="light"] #standingsTable th.sortable:hover,
+html[data-theme="light"] #standingsTable th.sortable:focus-visible,
+html[data-theme="light"] #standingsTable th.is-sorted {
+    background: rgba(0, 136, 170, 0.22);
+}
+html[data-theme="light"] #standingsTable tbody tr:nth-child(even) {
+    background: rgba(30, 40, 80, 0.06);
+}
+html[data-theme="light"] #standingsTable td.points-column,
+html[data-theme="light"] #standingsTable th.points-column {
+    background: rgba(0, 136, 170, 0.1);
+}
 
 /* --- H2H Tabs --- */
 html[data-theme="light"] .h2h-tabs {

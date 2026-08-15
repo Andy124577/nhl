@@ -1,3 +1,7 @@
+// Must run before anything else — db.js reads process.env.DATABASE_URL as
+// soon as it's required (line ~12 below), so .env has to be loaded first.
+require("dotenv").config();
+
 const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
@@ -3012,17 +3016,31 @@ app.get('/nhl-news', async (req, res) => {
             return res.json(nhlNewsCache.data);
         }
 
-        const query = encodeURIComponent('NHL AND (trade OR signs OR signing OR "free agent" OR waived OR contract)');
-        const url = `https://newsapi.org/v2/everything?q=${query}&language=en&sortBy=publishedAt&pageSize=20&apiKey=${process.env.NEWSAPI_KEY}`;
+        // qInTitle (headline-only match), not q (full body text) — tested
+        // both against live results: q surfaces general hockey content that
+        // merely mentions a transaction in passing, while qInTitle returns
+        // headlines that are actually about one.
+        const query = encodeURIComponent('NHL AND (trade OR signs OR signing OR waived OR contract)');
+        // timesofindia.indiatimes.com syndicates so heavily on this query
+        // that it was crowding out every other outlet in testing.
+        const excludeDomains = encodeURIComponent('timesofindia.indiatimes.com');
+        const url = `https://newsapi.org/v2/everything?qInTitle=${query}&excludeDomains=${excludeDomains}&language=en&sortBy=publishedAt&pageSize=20&apiKey=${process.env.NEWSAPI_KEY}`;
         const response = await fetch(url);
         if (!response.ok) {
             console.error('❌ NewsAPI request failed:', response.status);
             return res.json({ articles: [], configured: true });
         }
 
+        // Filtered again here, not just via the request param above: tested
+        // live and excludeDomains came back unchanged (same totalResults,
+        // same articles) — looks like a paid-tier-only filter that's
+        // silently ignored on the free plan. This is the guaranteed path.
+        const EXCLUDED_NEWS_DOMAINS = ['timesofindia.indiatimes.com'];
+
         const data = await response.json();
         const articles = (data.articles || [])
             .filter(a => a.urlToImage && a.title && a.url)
+            .filter(a => !EXCLUDED_NEWS_DOMAINS.some(domain => a.url.includes(domain)))
             .slice(0, 10)
             .map(a => ({
                 title: a.title,

@@ -375,6 +375,7 @@ let storyPaused = false;
 async function loadStories() {
     const section = document.getElementById('storiesSection');
     if (!section) return;
+    stopStoryTimer();
 
     const [liveGames, news] = await Promise.all([fetchLiveGames(), fetchNhlNews()]);
 
@@ -383,16 +384,40 @@ async function loadStories() {
         ...news.map(article => ({ type: 'news', article }))
     ];
 
+    // Always show the section once a member has a pool — a quiet "nothing
+    // right now" beats vanishing outright, which reads as broken rather
+    // than as "no games today." Re-check in a minute so a game that goes
+    // live while this tab is open appears without a refresh.
+    section.style.display = '';
+
     if (!storySlides.length) {
-        section.style.display = 'none';
-        stopStoryTimer();
+        renderStoriesEmpty();
+        storyTimer = setTimeout(loadStories, 60000);
         return;
     }
 
-    section.style.display = '';
     storyIndex = 0;
     renderStorySlide();
     startStoryTimer();
+}
+
+function renderStoriesEmpty() {
+    const card = document.getElementById('storiesCard');
+    const track = document.querySelector('.stories-progress-track');
+    if (track) track.style.display = 'none';
+    if (!card) return;
+
+    card.innerHTML = `
+        <div class="stories-empty">
+            <span class="stories-empty-icon" data-icon="hockey" data-icon-size="22"></span>
+            <span class="stories-empty-text">Aucun match en direct pour l’instant.</span>
+            <span class="stories-empty-sub">Revenez pendant un soir de match pour voir les pointages en direct.</span>
+        </div>`;
+    if (typeof getIcon === 'function') {
+        card.querySelectorAll('[data-icon]').forEach(el => {
+            el.innerHTML = getIcon(el.getAttribute('data-icon'), parseInt(el.getAttribute('data-icon-size') || '20'));
+        });
+    }
 }
 
 async function fetchLiveGames() {
@@ -477,6 +502,8 @@ function startStoryTimer() {
     stopStoryTimer();
     storyElapsed = 0;
     storyPaused = false;
+    const track = document.querySelector('.stories-progress-track');
+    if (track) track.style.display = '';
     const fill = document.getElementById('storiesProgressFill');
     if (fill) fill.style.width = '0%';
 
