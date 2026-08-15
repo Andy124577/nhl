@@ -33,6 +33,25 @@
     <nav class="navbar"></nav>
 
     <!-- ============================================================ -->
+    <!-- STORIES — real NHL live-game scores/events and real news      -->
+    <!-- (signings, trades), auto-advancing. Pinned to the top of the  -->
+    <!-- page (member-only, active pool required — see renderDashHeader -->
+    <!-- in accueil.js) so it stays visible regardless of which home    -->
+    <!-- tab is selected below. Hidden whenever there is nothing real   -->
+    <!-- to show — see accueil.js; never a placeholder.                -->
+    <!-- ============================================================ -->
+    <section class="home-section stories-section" id="storiesSection" style="display:none;">
+        <div class="section-container">
+            <div class="stories-card" id="storiesCard">
+                <!-- Filled by JS: a .stories-news or .stories-live slide -->
+            </div>
+            <div class="stories-progress-track">
+                <div class="stories-progress-fill" id="storiesProgressFill"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
     <!-- HERO SECTION                                                  -->
     <!-- ============================================================ -->
     <section class="hero-section">
@@ -226,22 +245,6 @@
                 <button class="home-tab" data-tab="activity" role="tab" aria-selected="false" onclick="switchHomeTab('activity')">
                     <span data-icon="swap" data-icon-size="16"></span> Activité de la ligue
                 </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================================ -->
-    <!-- STORIES — real NHL live-game scores/events and real news      -->
-    <!-- (signings, trades), auto-advancing. Hidden whenever there is  -->
-    <!-- nothing real to show — see accueil.js; never a placeholder.   -->
-    <!-- ============================================================ -->
-    <section class="home-section stories-section home-tab-panel" data-tab-panel="dashboard" id="storiesSection" style="display:none;">
-        <div class="section-container">
-            <div class="stories-card" id="storiesCard">
-                <!-- Filled by JS: a .stories-news or .stories-live slide -->
-            </div>
-            <div class="stories-progress-track">
-                <div class="stories-progress-fill" id="storiesProgressFill"></div>
             </div>
         </div>
     </section>
