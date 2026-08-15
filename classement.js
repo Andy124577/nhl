@@ -392,20 +392,20 @@ async function renderPoolStandings(poolData, poolName) {
     table.appendChild(tbody);
 
     const n = standings.length;
-    const avg = (key) => standings.reduce((sum, s) => sum + (s[key] || 0), 0) / n;
+    const avg = (key) => Math.round(standings.reduce((sum, s) => sum + (s[key] || 0), 0) / n);
     const tfoot = document.createElement('tfoot');
     const avgStatCells = poolMode === 'head-to-head'
-        ? `<td>${avg('gamesPlayed').toFixed(1)}</td>
-           <td>${avg('wins').toFixed(1)}</td>
-           <td>${avg('losses').toFixed(1)}</td>
-           <td>${avg('ties').toFixed(1)}</td>
-           <td class="points-column">${avg('points').toFixed(1)}</td>
+        ? `<td>${avg('gamesPlayed')}</td>
+           <td>${avg('wins')}</td>
+           <td>${avg('losses')}</td>
+           <td>${avg('ties')}</td>
+           <td class="points-column">${avg('points')}</td>
            <td class="st-diff-col">—</td>`
-        : `<td>${avg('gamesPlayed').toFixed(1)}</td>
-           <td>${avg('goals').toFixed(1)}</td>
-           <td>${avg('assists').toFixed(1)}</td>
-           <td class="points-column">${avg('points').toFixed(1)}</td>
-           <td>${avg('ppg').toFixed(2)}</td>
+        : `<td>${avg('gamesPlayed')}</td>
+           <td>${avg('goals')}</td>
+           <td>${avg('assists')}</td>
+           <td class="points-column">${avg('points')}</td>
+           <td>${avg('ppg')}</td>
            <td class="st-diff-col">—</td>`;
     tfoot.innerHTML = `
         <tr class="standings-avg-row">
