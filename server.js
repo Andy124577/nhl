@@ -5012,6 +5012,146 @@ app.get('/pool-leaderboard/:poolName', async (req, res) => {
     }
 });
 
+// Monday (UTC) of the ISO week containing a 'YYYY-MM-DD' date string.
+function mondayOfWeek(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00Z');
+    const day = d.getUTCDay(); // 0 = Sunday
+    d.setUTCDate(d.getUTCDate() + (day === 0 ? -6 : 1 - day));
+    return d.toISOString().slice(0, 10);
+}
+
+// ✅ Hall of Fame: best/worst single day, week, and month of fantasy points
+// scored by any team in the pool this season, from player_game_logs.
+// Same FANTASY_SCORING formula as getTeamPointsForDateRange (used by the
+// weekly leaderboard) — NOT the same scale as the cumulative "PPts" column
+// on the standings table. NHL-team roster picks aren't included: there's no
+// historical game-by-game team-win log, same gap as the leaderboard route.
+app.get('/pool-hall-of-fame/:poolName', async (req, res) => {
+    try {
+        const { poolName } = req.params;
+        const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
+        if (poolResult.rows.length === 0) {
+            return res.status(404).json({ message: "Pool not found" });
+        }
+        const pool = poolResult.rows[0].pool_data;
+
+        const activeTeams = Object.entries(pool.teams || {})
+            .filter(([, teamData]) => (teamData.members || []).length > 0);
+
+        const teamByPlayer = new Map();
+        const teamMeta = new Map();
+        activeTeams.forEach(([teamName, teamData]) => {
+            teamMeta.set(teamName, { members: teamData.members || [] });
+            ['offensive', 'defensive', 'rookie'].forEach(pos => {
+                (teamData[pos] || []).forEach(p => {
+                    const name = (typeof p === 'string') ? p : (p.skaterFullName || p.goalieFullName || p);
+                    if (name) teamByPlayer.set(name, teamName);
+                });
+            });
+            (teamData.goalie || []).forEach(p => {
+                const name = (typeof p === 'string') ? p : (p.goalieFullName || p.skaterFullName || p);
+                if (name) teamByPlayer.set(name, teamName);
+            });
+        });
+
+        const empty = { poolName, generatedAt: new Date().toISOString(), bestDay: null, worstDay: null, bestWeek: null, worstWeek: null, bestMonth: null, worstMonth: null };
+        const allNames = [...teamByPlayer.keys()];
+        if (allNames.length === 0) return res.json(empty);
+
+        const result = await db.query(`
+            SELECT player_name, game_date, position,
+                   goals, assists, shots, plus_minus,
+                   power_play_goals, power_play_points,
+                   shorthanded_goals, shorthanded_points,
+                   game_winning_goals,
+                   decision, saves, goals_against, shutouts
+            FROM player_game_logs
+            WHERE season = '20252026'
+              AND player_name = ANY($1)
+        `, [allNames]);
+
+        if (result.rows.length === 0) return res.json(empty);
+
+        // teamName -> 'YYYY-MM-DD' -> fantasy points
+        const dailyByTeam = new Map();
+        result.rows.forEach(game => {
+            const teamName = teamByPlayer.get(game.player_name);
+            if (!teamName) return;
+
+            let fp = 0;
+            if (game.position === 'G') {
+                fp += (game.decision === 'W') ? FANTASY_SCORING.win : 0;
+                fp += (game.shutouts || 0) * FANTASY_SCORING.shutout;
+                fp += (game.saves || 0) * FANTASY_SCORING.save;
+                fp += (game.goals_against || 0) * FANTASY_SCORING.goalsAgainst;
+            } else {
+                fp += (game.goals || 0) * FANTASY_SCORING.goal;
+                fp += (game.assists || 0) * FANTASY_SCORING.assist;
+                fp += (game.shots || 0) * FANTASY_SCORING.shot;
+                fp += (game.plus_minus || 0) * FANTASY_SCORING.plusMinus;
+                fp += (game.power_play_goals || 0) * FANTASY_SCORING.powerPlayGoal;
+                fp += (game.power_play_points || 0) * FANTASY_SCORING.powerPlayPoint;
+                fp += (game.shorthanded_goals || 0) * FANTASY_SCORING.shorthandedGoal;
+                fp += (game.shorthanded_points || 0) * FANTASY_SCORING.shorthandedPoint;
+                fp += (game.game_winning_goals || 0) * FANTASY_SCORING.gameWinningGoal;
+            }
+
+            const dateStr = game.game_date.toISOString().slice(0, 10);
+            if (!dailyByTeam.has(teamName)) dailyByTeam.set(teamName, new Map());
+            const teamDaily = dailyByTeam.get(teamName);
+            teamDaily.set(dateStr, (teamDaily.get(dateStr) || 0) + fp);
+        });
+
+        // Roll daily totals up into per-team weeks (Mon-start) and months,
+        // only for periods where the team actually had a logged game.
+        const dayEntries = [];
+        const weekTotals = new Map();  // "team|weekStart" -> points
+        const monthTotals = new Map(); // "team|YYYY-MM" -> points
+
+        dailyByTeam.forEach((dates, teamName) => {
+            dates.forEach((points, dateStr) => {
+                dayEntries.push({ teamName, dateStr, points: Math.round(points * 10) / 10 });
+
+                const weekKey = `${teamName}|${mondayOfWeek(dateStr)}`;
+                weekTotals.set(weekKey, (weekTotals.get(weekKey) || 0) + points);
+
+                const monthKey = `${teamName}|${dateStr.slice(0, 7)}`;
+                monthTotals.set(monthKey, (monthTotals.get(monthKey) || 0) + points);
+            });
+        });
+
+        const splitEntries = (totals) => [...totals.entries()].map(([key, points]) => {
+            const sep = key.lastIndexOf('|');
+            return { teamName: key.slice(0, sep), dateStr: key.slice(sep + 1), points: Math.round(points * 10) / 10 };
+        });
+        const weekEntries = splitEntries(weekTotals);
+        const monthEntries = splitEntries(monthTotals).map(e => ({ ...e, dateStr: `${e.dateStr}-01` }));
+
+        const pickBest = (entries) => entries.length ? entries.reduce((a, b) => b.points > a.points ? b : a) : null;
+        const pickWorst = (entries) => entries.length ? entries.reduce((a, b) => b.points < a.points ? b : a) : null;
+        const toResult = (entry) => !entry ? null : {
+            teamName: entry.teamName,
+            members: (teamMeta.get(entry.teamName) || {}).members || [],
+            points: entry.points,
+            date: entry.dateStr
+        };
+
+        res.json({
+            poolName,
+            generatedAt: new Date().toISOString(),
+            bestDay: toResult(pickBest(dayEntries)),
+            worstDay: toResult(pickWorst(dayEntries)),
+            bestWeek: toResult(pickBest(weekEntries)),
+            worstWeek: toResult(pickWorst(weekEntries)),
+            bestMonth: toResult(pickBest(monthEntries)),
+            worstMonth: toResult(pickWorst(monthEntries))
+        });
+    } catch (error) {
+        console.error("Error building pool hall of fame:", error);
+        res.status(500).json({ message: "Error building pool hall of fame" });
+    }
+});
+
 // ✅ H2H: Finalize current week and advance to next week
 app.post('/h2h/finalize-week', async (req, res) => {
     try {

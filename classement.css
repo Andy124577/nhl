@@ -163,10 +163,12 @@ body {
 }
 
 /* ==================== STANDINGS VIEW (Level 2) ==================== */
-/* Dense sortable leaderboard table (replaces the old stacked-card list).
-   Self-contained: doesn't lean on index.css's bare table/th/td rules,
-   which carry assumptions (sticky offset, nth-child column widths) tuned
-   for the stats page's own table and would leak here unpredictably.
+/* Flat, edge-to-edge leaderboard table — no card chrome, no zebra
+   striping: rows read as separated objects through a single hairline
+   under each one, not through a boxed container. Self-contained: doesn't
+   lean on index.css's bare table/th/td rules, which carry assumptions
+   (sticky offset, nth-child column widths) tuned for the stats page's
+   own table and would leak here unpredictably.
 
    All theming below runs through color-mix() against --primary/--warning
    instead of hardcoded rgba(0,212,255,…) washes, so dark and light mode
@@ -181,11 +183,10 @@ body {
    table needs a realistic min-width per column (8 columns of 2-3 digit
    numbers don't fit a 360px phone without wrapping mid-number). Pos and
    Participant stay pinned via position:sticky so identity survives the
-   scroll while the stat columns pass underneath. */
+   scroll while the stat columns pass underneath. No border/radius/shadow
+   here: the table sits flush against the page, full width. */
 .standings-table-container {
-    background: var(--card-white);
-    border: 1px solid var(--border-light);
-    border-radius: 18px;
+    width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
@@ -201,7 +202,7 @@ body {
 }
 
 #standingsTable thead th {
-    background: var(--card);
+    background: var(--bg-page);
     color: var(--text-secondary);
     padding: 10px 10px;
     text-align: center;
@@ -218,31 +219,31 @@ body {
     position: sticky;
     left: 0;
     z-index: 2;
-    width: 44px;
-    min-width: 44px;
+    width: 40px;
+    min-width: 40px;
     text-align: center;
-    padding-left: 6px;
-    padding-right: 6px;
+    padding-left: 4px;
+    padding-right: 4px;
 }
 
 #standingsTable th.player-col,
 #standingsTable td.player-col {
     position: sticky;
-    left: 44px;
+    left: 40px;
     z-index: 2;
     min-width: 110px;
     text-align: left;
-    padding-left: 14px;
+    padding-left: 12px;
     white-space: nowrap;
-    box-shadow: 1px 0 0 0 var(--border-light);
 }
 
 /* Sticky cells need an opaque background per row state — as the table
    scrolls horizontally, the stat columns pass underneath them, so a
-   transparent sticky cell would let that content bleed through. */
+   transparent sticky cell would let that content bleed through. Flush
+   with the page background now that there's no card behind the table. */
 #standingsTable tbody td.rank-col,
 #standingsTable tbody td.player-col {
-    background: var(--card-white);
+    background: var(--bg-page);
 }
 
 #standingsTable td:not(.player-col),
@@ -283,25 +284,21 @@ body {
 }
 
 #standingsTable tbody tr {
+    background: var(--bg-page);
     border-bottom: 1px solid var(--border-light);
-    transition: background 0.2s ease, transform 0.2s ease;
+    transition: background 0.2s ease;
 }
 
-#standingsTable tbody tr:nth-child(odd) { background: var(--bg-odd-row); }
-#standingsTable tbody tr:nth-child(even) { background: var(--card-white); }
-#standingsTable tbody tr:nth-child(odd) td.rank-col,
-#standingsTable tbody tr:nth-child(odd) td.player-col { background: var(--bg-odd-row); }
-
-/* Pool leader: called out with a tinted row and an accent rail on hover,
-   echoing the gold rank badge without repeating it — this stays tied to
-   the team's actual rank, so it's still visible when the table is sorted
-   by another column. */
+/* Pool leader: called out with a tinted row, echoing the gold rank number
+   without adding a second accent hue — this stays tied to the team's
+   actual rank, so it's still visible when the table is sorted by another
+   column. */
 #standingsTable tbody tr.is-leader {
-    background: color-mix(in srgb, var(--warning) 10%, var(--card-white));
+    background: color-mix(in srgb, var(--warning) 8%, var(--bg-page));
 }
 #standingsTable tbody tr.is-leader td.rank-col,
 #standingsTable tbody tr.is-leader td.player-col {
-    background: color-mix(in srgb, var(--warning) 10%, var(--card-white));
+    background: color-mix(in srgb, var(--warning) 8%, var(--bg-page));
 }
 
 #standingsTable tbody tr.is-clickable {
@@ -312,7 +309,6 @@ body {
 #standingsTable tbody tr.is-clickable:hover,
 #standingsTable tbody tr.is-clickable:focus-visible {
     background: var(--bg-hover);
-    transform: translateY(-1px);
 }
 #standingsTable tbody tr.is-clickable:hover td.rank-col,
 #standingsTable tbody tr.is-clickable:hover td.player-col,
@@ -321,6 +317,8 @@ body {
     background: var(--bg-hover);
 }
 
+/* Actionable-row affordance: a stripe on the live edge, not a decorative
+   rest-state border — it only appears on hover/focus. */
 #standingsTable tbody tr.is-clickable::after {
     content: '';
     position: absolute;
@@ -348,7 +346,7 @@ body {
 /* Every stat column is a figure meant to be compared against the one
    below it, so it takes the app's Numeric type (JetBrains Mono) rather
    than the body face — the rank-col and player-col overrides below win
-   out for the badge and name, which read as identity, not a column. */
+   out for the rank number and name, which read as identity, not a column. */
 #standingsTable td {
     padding: 9px 10px;
     text-align: center;
@@ -361,7 +359,6 @@ body {
 
 #standingsTable td.points-column,
 #standingsTable th.points-column {
-    background: color-mix(in srgb, var(--primary) 8%, transparent);
     font-weight: 800;
 }
 
@@ -376,22 +373,19 @@ body {
     color: var(--text-secondary);
 }
 
+/* Rank reads as a plain tabular number — only the leader (gold) and the
+   podium (silver/bronze) get color, no filled badge chip. */
 .st-rank-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
+    display: inline-block;
     font-weight: 800;
     font-size: .78rem;
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--text-gray);
 }
 
-.st-rank-badge.gold   { background: color-mix(in srgb, var(--warning) 22%, transparent); color: var(--warning); }
-.st-rank-badge.silver { background: color-mix(in srgb, #B8B8CC 22%, transparent); color: #B8B8CC; }
-.st-rank-badge.bronze { background: color-mix(in srgb, #CD7F32 22%, transparent); color: #CD7F32; }
-.st-rank-badge.normal { background: var(--bg-hover); color: var(--text-gray); }
+.st-rank-badge.gold   { color: var(--warning); }
+.st-rank-badge.silver { color: #B8B8CC; }
+.st-rank-badge.bronze { color: #CD7F32; }
 
 .st-participant {
     display: flex;
@@ -440,6 +434,99 @@ body {
     margin: 0;
     font-size: .87rem;
     color: var(--text-secondary);
+}
+
+/* ==================== HALL OF FAME ==================== */
+/* Season records: best/worst single day, week, and month of pool points.
+   No cards — a title, then rows of label/name/number separated by
+   hairlines, same flat register as the standings table above it. "Best"
+   takes --warning (gold), matching how the standings table already marks
+   the leader; --primary stays reserved for live/interactive elements. */
+.hall-of-fame {
+    margin-top: 36px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-light);
+}
+
+.hof-title {
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-main);
+    margin: 0 0 20px;
+}
+
+.hof-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.hof-divider {
+    height: 1px;
+    background: var(--border-light);
+}
+
+.hof-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.hof-row.single {
+    grid-template-columns: 1fr;
+}
+
+.hof-cell {
+    min-width: 0;
+}
+
+.hof-cell-label {
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-light-gray);
+    margin: 0 0 8px;
+}
+
+.hof-cell-name {
+    font-size: .88rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0 0 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hof-cell-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.hof-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.hof-value.is-best { color: var(--warning); }
+.hof-value.is-worst { color: var(--text-light-gray); }
+
+.hof-date {
+    font-size: .78rem;
+    color: var(--text-secondary);
+}
+
+.hof-empty {
+    color: var(--text-secondary);
+    font-size: .85rem;
+    margin: 0;
 }
 
 /* ==================== ROSTER VIEW (Level 3) ==================== */

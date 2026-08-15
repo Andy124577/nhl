@@ -172,6 +172,10 @@ function showPoolStandings(poolName) {
     document.getElementById('poolStandingsView').style.display = 'block';
     document.getElementById('teamRosterView').style.display = 'none';
 
+    // Reset on every pool switch — only the cumulative branch below re-shows
+    // it, and a stale record from the previous pool must not linger.
+    document.getElementById('hallOfFame').style.display = 'none';
+
     const poolMode = poolData.poolMode || 'cumulative';
     const h2hTabs = document.getElementById('h2hTabs');
     const h2hMatchupsView = document.getElementById('h2hMatchupsView');
@@ -433,6 +437,84 @@ async function renderPoolStandings(poolData, poolName) {
 
     document.getElementById('standingsSkeleton').style.display = 'none';
     standingsList.style.display = 'block';
+
+    renderHallOfFame(poolName);
+}
+
+// ==================== HALL OF FAME ====================
+// Season records (best/worst single day, week, month of pool points),
+// computed server-side from real game logs — see GET /pool-hall-of-fame.
+
+function formatHofDate(dateStr) {
+    if (!dateStr) return '';
+    return new Date(dateStr + 'T00:00:00Z').toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+}
+
+function formatHofMonth(dateStr) {
+    if (!dateStr) return '';
+    const month = new Date(dateStr + 'T00:00:00Z').toLocaleDateString('fr-CA', { month: 'long', timeZone: 'UTC' });
+    return month.charAt(0).toUpperCase() + month.slice(1);
+}
+
+function hofCellHTML(entry, kind, label, dateFormatter) {
+    if (!entry) {
+        return `
+            <div class="hof-cell">
+                <p class="hof-cell-label">${label}</p>
+                <p class="hof-empty">Aucune donnée</p>
+            </div>`;
+    }
+    const displayName = getDisplayName(entry.teamName, entry.members);
+    return `
+        <div class="hof-cell">
+            <p class="hof-cell-label">${label}</p>
+            <p class="hof-cell-name" title="${displayName}">${displayName}</p>
+            <div class="hof-cell-value-row">
+                <span class="hof-value is-${kind}">${entry.points}</span>
+                <span class="hof-date">${dateFormatter(entry.date)}</span>
+            </div>
+        </div>`;
+}
+
+function buildHallOfFameHTML(data) {
+    if (!data || (!data.bestDay && !data.bestWeek && !data.bestMonth)) {
+        return `
+            <p class="hof-title">Temple de la renommée</p>
+            <p class="hof-empty">Pas encore assez de matchs joués cette saison pour établir des records.</p>`;
+    }
+    return `
+        <p class="hof-title">Temple de la renommée</p>
+        <div class="hof-rows">
+            <div class="hof-row">
+                ${hofCellHTML(data.bestMonth, 'best', 'Meilleur mois', formatHofMonth)}
+                ${hofCellHTML(data.worstMonth, 'worst', 'Pire mois', formatHofMonth)}
+            </div>
+            <div class="hof-divider"></div>
+            <div class="hof-row">
+                ${hofCellHTML(data.bestWeek, 'best', 'Meilleure semaine', formatHofDate)}
+                ${hofCellHTML(data.worstWeek, 'worst', 'Pire semaine', formatHofDate)}
+            </div>
+            <div class="hof-divider"></div>
+            <div class="hof-row">
+                ${hofCellHTML(data.bestDay, 'best', 'Meilleure journée', formatHofDate)}
+                ${hofCellHTML(data.worstDay, 'worst', 'Pire journée', formatHofDate)}
+            </div>
+        </div>`;
+}
+
+async function renderHallOfFame(poolName) {
+    const container = document.getElementById('hallOfFame');
+    if (!container) return;
+    try {
+        const response = await fetch(`${BASE_URL}/pool-hall-of-fame/${encodeURIComponent(poolName)}`, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        container.innerHTML = buildHallOfFameHTML(data);
+        container.style.display = 'block';
+    } catch (error) {
+        console.warn('⚠️ Could not load hall of fame:', error);
+        container.style.display = 'none';
+    }
 }
 
 // Level 3: Team Roster View
