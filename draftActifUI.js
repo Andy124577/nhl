@@ -270,12 +270,14 @@ function initPanelTabs() {
             t.setAttribute('aria-selected', String(on));
             t.tabIndex = on ? 0 : -1;
         });
-        // Le bandeau collant (progression, tour, carrousel) n'a plus lieu
-        // d'être une fois qu'on est dans la liste : c'est déjà ce qui y a
-        // amené (le bouton « Faire ma sélection »), et il ne fait plus que
-        // voler de la hauteur au tableau. Il revient dès qu'on quitte
-        // l'onglet — jamais retiré du DOM, seulement masqué.
-        if (entete) entete.style.display = actif === 'joueurs' ? 'none' : '';
+        // Compteur de choix, ronde et carrousel n'ont plus lieu d'être une
+        // fois dans la liste : c'est déjà ce qui y a amené (le bouton
+        // « Faire ma sélection »), et ils ne feraient que voler de la
+        // hauteur au tableau — voir .draft-header.is-liste-joueurs dans
+        // draftActif.css. Le bandeau de tour, lui, reste affiché et collant :
+        // c'est en parcourant la liste qu'on a le plus besoin de savoir si
+        // c'est encore son tour.
+        if (entete) entete.classList.toggle('is-liste-joueurs', actif === 'joueurs');
     };
 
     const activer = (cle, focus) => {

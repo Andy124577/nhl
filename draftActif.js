@@ -190,8 +190,14 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
        un de quarante n'ont pas à défiler à la même vitesse relative — et le
        contenu déjà en place n'est pas retouché : recalculer la même valeur à
        chaque relevé (toutes les ~7 s tant que rien de neuf ne s'est passé,
-       voir loadDraftData) aurait fait sauter l'animation en cours. */
-    const MARQUEE_PX_PAR_SEC = 55;
+       voir loadDraftData) aurait fait sauter l'animation en cours.
+
+       55px/s donnait un texte lisible tant qu'il tenait sous le plancher de
+       6 s (donc pour les messages courts, ralentis par ce plancher plutôt
+       que par la vitesse elle-même) — mais tout message assez long pour
+       dépasser ce plancher défilait à ce rythme brut, senti trop rapide sur
+       un historique à rallonge. */
+    const MARQUEE_PX_PAR_SEC = 34;
     let dernierContenuDefilement = null;
 
     function demarrerDefilement(contenu) {
@@ -203,7 +209,6 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
         if (corps) corps.hidden = true;
         zone.hidden = false;
         if (contenu === dernierContenuDefilement) return;
-        dernierContenuDefilement = contenu;
 
         zone.querySelectorAll(".turn-banner-marquee-item").forEach(function (it) {
             it.textContent = contenu;
@@ -213,12 +218,24 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
             && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         if (reduit) {
             piste.style.animation = "none";
-        } else {
-            piste.style.animation = "";
-            const item = zone.querySelector(".turn-banner-marquee-item");
-            const largeur = item ? item.getBoundingClientRect().width : 0;
-            piste.style.setProperty("--marquee-duration", Math.max(6, largeur / MARQUEE_PX_PAR_SEC) + "s");
+            dernierContenuDefilement = contenu;
+            return;
         }
+
+        piste.style.animation = "";
+        const item = zone.querySelector(".turn-banner-marquee-item");
+        const largeur = item ? item.getBoundingClientRect().width : 0;
+        // Tout premier rendu : #draft-overall-progress peut encore valoir
+        // `display:none` à cet instant précis (il ne passe à 'block' qu'un peu
+        // plus tard, voir refreshOverallProgress) — la piste mesurerait alors
+        // 0 px et figerait la vitesse au plancher pour de bon, puisqu'un
+        // contenu identique ne redéclenche pas la mesure ci-dessus. On ne
+        // mémorise donc PAS ce contenu tant que la mesure est nulle : le
+        // prochain relevé (7 s de sondage, ou tout événement socket) retentera
+        // avec un bandeau désormais visible.
+        if (largeur === 0) return;
+        dernierContenuDefilement = contenu;
+        piste.style.setProperty("--marquee-duration", Math.max(6, largeur / MARQUEE_PX_PAR_SEC) + "s");
     }
 
     /** Repli vers le texte statique (`turn-banner-body`). */

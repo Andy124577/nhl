@@ -103,6 +103,20 @@ body {
   animation: headerTurnGlow 2.4s ease-in-out infinite;
 }
 
+/* ---- Onglet Liste des joueurs ----
+   draftActifUI.js (initPanelTabs) posait `display:none` sur tout le bandeau
+   en quittant Aperçu : le tour en cours disparaissait avec le reste, alors
+   que c'est justement en parcourant le tableau qu'on a le plus besoin de
+   savoir si c'est encore le sien. Le compteur de choix, la ronde et le
+   carrousel restent redondants une fois dans la liste — c'est déjà ce qui y
+   a amené — mais le bandeau de tour, lui, reste affiché et collant. */
+.draft-header.is-liste-joueurs #dop-label,
+.draft-header.is-liste-joueurs #dop-round,
+.draft-header.is-liste-joueurs .draft-live-row,
+.draft-header.is-liste-joueurs .recent-picks-card {
+  display: none;
+}
+
 /* ---------- Bandeau de tour ---------- */
 /* Placé au centre de .dop-info : plus de marge haute, il doit rester sur la
    même ligne de base que le libellé et la ronde. Il se replie sur sa propre
@@ -121,7 +135,10 @@ body {
    suivant, mon tour, terminé) reste seul responsable de la couleur, comme
    partout ailleurs sur le site. */
 .turn-banner {
-  order: 3;
+  /* Négatif plutôt que 3 : le bandeau passe avant #dop-label/#dop-round dans
+     l'ordre d'affichage — la seule information qui compte à l'œil nu (à qui
+     le tour) précède le détail (numéro de choix, ronde). */
+  order: -1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -131,9 +148,22 @@ body {
   min-height: 33px;
   padding: 5px 12px;
   border: 1px solid transparent;
-  border-radius: 12px;
   background: var(--card);
   color: var(--text-main);
+  /* Reste au-dessus du tableau même dans l'onglet Liste des joueurs — voir
+     .draft-header.is-liste-joueurs plus bas, qui masque le reste du bandeau
+     collant mais garde celui-ci. `.draft-header` est déjà sticky (plus bas
+     dans ce fichier) ; ce second ancrage garde le tour visible même si un
+     jour le bandeau parent cesse de l'être. */
+  position: sticky;
+  top: 60px;
+  z-index: 21;
+}
+@media (max-width: 480px) {
+  .turn-banner { top: 56px; }
+}
+@media (min-width: 769px) {
+  .turn-banner { top: 70px; }
 }
 /* Le bandeau porte plusieurs enfants (écusson + texte + horloge) : `:empty`
    ne pouvait donc plus le masquer. C'est l'absence d'état qui le masque. */
