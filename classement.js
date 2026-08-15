@@ -354,7 +354,7 @@ async function renderPoolStandings(poolData, poolName) {
         const logoHTML = getTeamLogoHTML(standing.nhlTeams, 22);
 
         const tr = document.createElement('tr');
-        tr.className = 'is-clickable';
+        tr.className = standing.rank === 1 ? 'is-clickable is-leader' : 'is-clickable';
         tr.tabIndex = 0;
         tr.setAttribute('role', 'button');
         tr.setAttribute('aria-label', `Voir l'équipe de ${displayName}`);
@@ -392,7 +392,8 @@ async function renderPoolStandings(poolData, poolName) {
     table.appendChild(tbody);
 
     const n = standings.length;
-    const avg = (key) => Math.round(standings.reduce((sum, s) => sum + (s[key] || 0), 0) / n);
+    const rawAvg = (key) => standings.reduce((sum, s) => sum + (s[key] || 0), 0) / n;
+    const avg = (key) => Math.round(rawAvg(key));
     const tfoot = document.createElement('tfoot');
     const avgStatCells = poolMode === 'head-to-head'
         ? `<td>${avg('gamesPlayed')}</td>
@@ -405,7 +406,7 @@ async function renderPoolStandings(poolData, poolName) {
            <td>${avg('goals')}</td>
            <td>${avg('assists')}</td>
            <td class="points-column">${avg('points')}</td>
-           <td>${avg('ppg')}</td>
+           <td>${rawAvg('ppg').toFixed(2)}</td>
            <td class="st-diff-col">—</td>`;
     tfoot.innerHTML = `
         <tr class="standings-avg-row">

@@ -166,16 +166,25 @@ body {
 /* Dense sortable leaderboard table (replaces the old stacked-card list).
    Self-contained: doesn't lean on index.css's bare table/th/td rules,
    which carry assumptions (sticky offset, nth-child column widths) tuned
-   for the stats page's own table and would leak here unpredictably. */
+   for the stats page's own table and would leak here unpredictably.
+
+   All theming below runs through color-mix() against --primary/--warning
+   instead of hardcoded rgba(0,212,255,…) washes, so dark and light mode
+   share one set of rules — no parallel html[data-theme="light"] block to
+   keep in sync (the old one drifted: it still mixed in the pre-contrast-fix
+   light --primary). */
 .standings-list {
     display: block;
 }
 
 /* Wide content scrolls inside its own wrapper, never the page body — the
    table needs a realistic min-width per column (8 columns of 2-3 digit
-   numbers don't fit a 360px phone without wrapping mid-number). */
+   numbers don't fit a 360px phone without wrapping mid-number). Pos and
+   Participant stay pinned via position:sticky so identity survives the
+   scroll while the stat columns pass underneath. */
 .standings-table-container {
     background: var(--card-white);
+    border: 1px solid var(--border-light);
     border-radius: 18px;
     overflow-x: auto;
     overflow-y: hidden;
@@ -192,21 +201,23 @@ body {
 }
 
 #standingsTable thead th {
-    font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
-    background: rgba(0, 212, 255, .18);
-    color: var(--text-main);
-    padding: var(--d-th-pad, 12px);
+    background: var(--card);
+    color: var(--text-secondary);
+    padding: 10px 10px;
     text-align: center;
-    font-weight: 400;
-    font-size: .88rem;
-    letter-spacing: 1px;
+    font-weight: 700;
+    font-size: .7rem;
+    letter-spacing: .1em;
     text-transform: uppercase;
-    border-bottom: 2px solid var(--primary);
+    border-bottom: 1px solid var(--border-light);
     white-space: nowrap;
 }
 
 #standingsTable th.rank-col,
 #standingsTable td.rank-col {
+    position: sticky;
+    left: 0;
+    z-index: 2;
     width: 44px;
     min-width: 44px;
     text-align: center;
@@ -216,10 +227,22 @@ body {
 
 #standingsTable th.player-col,
 #standingsTable td.player-col {
+    position: sticky;
+    left: 44px;
+    z-index: 2;
     min-width: 110px;
     text-align: left;
     padding-left: 14px;
     white-space: nowrap;
+    box-shadow: 1px 0 0 0 var(--border-light);
+}
+
+/* Sticky cells need an opaque background per row state — as the table
+   scrolls horizontally, the stat columns pass underneath them, so a
+   transparent sticky cell would let that content bleed through. */
+#standingsTable tbody td.rank-col,
+#standingsTable tbody td.player-col {
+    background: var(--card-white);
 }
 
 #standingsTable td:not(.player-col),
@@ -236,7 +259,8 @@ body {
 
 #standingsTable th.sortable:hover,
 #standingsTable th.sortable:focus-visible {
-    background: rgba(0, 212, 255, .32);
+    color: var(--text-main);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
 #standingsTable th.sortable:focus-visible {
@@ -245,8 +269,9 @@ body {
 }
 
 #standingsTable th.is-sorted {
-    background: rgba(0, 212, 255, .32);
+    background: color-mix(in srgb, var(--primary) 16%, transparent);
     color: var(--primary);
+    font-weight: 800;
 }
 
 #standingsTable .sort-caret {
@@ -263,7 +288,21 @@ body {
 }
 
 #standingsTable tbody tr:nth-child(odd) { background: var(--bg-odd-row); }
-#standingsTable tbody tr:nth-child(even) { background: rgba(44, 44, 50, .35); }
+#standingsTable tbody tr:nth-child(even) { background: var(--card-white); }
+#standingsTable tbody tr:nth-child(odd) td.rank-col,
+#standingsTable tbody tr:nth-child(odd) td.player-col { background: var(--bg-odd-row); }
+
+/* Pool leader: called out with a tinted row and an accent rail on hover,
+   echoing the gold rank badge without repeating it — this stays tied to
+   the team's actual rank, so it's still visible when the table is sorted
+   by another column. */
+#standingsTable tbody tr.is-leader {
+    background: color-mix(in srgb, var(--warning) 10%, var(--card-white));
+}
+#standingsTable tbody tr.is-leader td.rank-col,
+#standingsTable tbody tr.is-leader td.player-col {
+    background: color-mix(in srgb, var(--warning) 10%, var(--card-white));
+}
 
 #standingsTable tbody tr.is-clickable {
     position: relative;
@@ -274,6 +313,12 @@ body {
 #standingsTable tbody tr.is-clickable:focus-visible {
     background: var(--bg-hover);
     transform: translateY(-1px);
+}
+#standingsTable tbody tr.is-clickable:hover td.rank-col,
+#standingsTable tbody tr.is-clickable:hover td.player-col,
+#standingsTable tbody tr.is-clickable:focus-visible td.rank-col,
+#standingsTable tbody tr.is-clickable:focus-visible td.player-col {
+    background: var(--bg-hover);
 }
 
 #standingsTable tbody tr.is-clickable::after {
@@ -286,38 +331,48 @@ body {
     background: var(--primary);
     opacity: 0;
     transition: opacity 0.18s ease;
+    z-index: 3;
 }
 
 #standingsTable tbody tr.is-clickable:hover::after,
 #standingsTable tbody tr.is-clickable:focus-visible::after { opacity: 1; }
+#standingsTable tbody tr.is-leader.is-clickable::after { background: var(--warning); opacity: .5; }
+#standingsTable tbody tr.is-leader.is-clickable:hover::after,
+#standingsTable tbody tr.is-leader.is-clickable:focus-visible::after { opacity: 1; }
 
 #standingsTable tbody tr.is-clickable:focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: -2px;
 }
 
+/* Every stat column is a figure meant to be compared against the one
+   below it, so it takes the app's Numeric type (JetBrains Mono) rather
+   than the body face — the rank-col and player-col overrides below win
+   out for the badge and name, which read as identity, not a column. */
 #standingsTable td {
-    padding: var(--d-td-pad, 10px);
+    padding: 9px 10px;
     text-align: center;
-    font-size: var(--d-td-size, .88rem);
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .78rem;
+    letter-spacing: .02em;
     color: var(--text-dark);
-    font-weight: 600;
+    font-weight: 500;
 }
 
 #standingsTable td.points-column,
 #standingsTable th.points-column {
-    background: rgba(0, 212, 255, .08);
+    background: color-mix(in srgb, var(--primary) 8%, transparent);
     font-weight: 800;
 }
 
 #standingsTable td.points-column {
-    font-size: 1.05rem;
+    font-size: 1rem;
     color: var(--primary);
 }
 
 #standingsTable .st-diff-col {
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: .82rem;
+    font-size: .78rem;
     color: var(--text-secondary);
 }
 
@@ -325,17 +380,17 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     font-weight: 800;
-    font-size: .82rem;
+    font-size: .78rem;
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-.st-rank-badge.gold   { background: rgba(255, 179, 0, .2); color: var(--warning); }
-.st-rank-badge.silver { background: rgba(185, 185, 205, .2); color: #B8B8CC; }
-.st-rank-badge.bronze { background: rgba(180, 100, 0, .2); color: #CD7F32; }
+.st-rank-badge.gold   { background: color-mix(in srgb, var(--warning) 22%, transparent); color: var(--warning); }
+.st-rank-badge.silver { background: color-mix(in srgb, #B8B8CC 22%, transparent); color: #B8B8CC; }
+.st-rank-badge.bronze { background: color-mix(in srgb, #CD7F32 22%, transparent); color: #CD7F32; }
 .st-rank-badge.normal { background: var(--bg-hover); color: var(--text-gray); }
 
 .st-participant {
@@ -1829,23 +1884,6 @@ body {
 /* ============================================================ */
 /* LIGHT MODE — hardcoded rgba overrides                         */
 /* ============================================================ */
-
-/* --- Standings table --- */
-html[data-theme="light"] #standingsTable thead th {
-    background: rgba(0, 136, 170, 0.14);
-}
-html[data-theme="light"] #standingsTable th.sortable:hover,
-html[data-theme="light"] #standingsTable th.sortable:focus-visible,
-html[data-theme="light"] #standingsTable th.is-sorted {
-    background: rgba(0, 136, 170, 0.22);
-}
-html[data-theme="light"] #standingsTable tbody tr:nth-child(even) {
-    background: rgba(30, 40, 80, 0.06);
-}
-html[data-theme="light"] #standingsTable td.points-column,
-html[data-theme="light"] #standingsTable th.points-column {
-    background: rgba(0, 136, 170, 0.1);
-}
 
 /* --- H2H Tabs --- */
 html[data-theme="light"] .h2h-tabs {
