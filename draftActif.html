@@ -89,9 +89,21 @@
           <span class="turn-banner-logo" id="turn-banner-logo" hidden>
             <img id="turn-banner-logo-img" src="" alt="" />
           </span>
-          <span class="turn-banner-body">
+          <span class="turn-banner-body" id="turn-banner-body">
             <span class="turn-banner-text" id="turn-banner-text"></span>
             <span class="turn-banner-sub" id="turn-banner-sub"></span>
+          </span>
+          <!-- Bande défilante : rappel du tour en cours (répété) quand c'est
+               le mien, ou l'historique complet des choix sinon — posée par
+               draftActif.js (refreshTurnAlert / demarrerDefilement). Dupliquée
+               deux fois pour boucler sans coupure : la piste se déplace de
+               translateX(-50%), la moitié de SA PROPRE largeur, qui vaut
+               toujours une copie quel que soit le texte. -->
+          <span class="turn-banner-marquee" id="turn-banner-marquee" hidden>
+            <span class="turn-banner-marquee-track" id="turn-banner-marquee-track">
+              <span class="turn-banner-marquee-item"></span>
+              <span class="turn-banner-marquee-item" aria-hidden="true"></span>
+            </span>
           </span>
           <span class="turn-clock" id="turn-clock" hidden></span>
         </div>

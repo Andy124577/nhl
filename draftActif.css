@@ -37,6 +37,14 @@
   0%, 100% { border-bottom-color: var(--primary) }
   50%      { border-bottom-color: rgba(0, 212, 255, .35) }
 }
+/* Bande défilante du bandeau de tour : la piste avance de translateX(-50%),
+   la moitié de SA PROPRE largeur — qui vaut toujours une copie du contenu,
+   puisque draftActif.html en pose deux — donc la boucle ne montre jamais de
+   coupure, quel que soit le texte. */
+@keyframes turnBannerMarquee {
+  from { transform: translateX(0) }
+  to   { transform: translateX(-50%) }
+}
 
 /* ---- Révélation d'un choix qui vient d'entrer ----
    Séquence d'environ 1,2 s : la vignette arrive en gris avec la position et
@@ -157,6 +165,12 @@ body {
   gap: 1px;
   min-width: 0;
 }
+/* `display: flex` ci-dessus a la même spécificité que la règle `[hidden]`
+   du navigateur, et une règle d'auteur l'emporte toujours sur l'agent
+   utilisateur à spécificité égale : sans cette ligne, poser `hidden` en JS
+   (demarrerDefilement / arreterDefilement) ne masquait rien, et le texte
+   statique restait superposé à la bande défilante. */
+.turn-banner-body[hidden] { display: none; }
 .turn-banner-text {
   max-width: 100%;
   /* Le body du système (1rem) plutôt qu'une valeur inventée : c'est le
@@ -180,6 +194,35 @@ body {
 }
 .turn-banner-sub:empty { display: none; }
 
+/* ---- Bande défilante ----
+   Remplace le texte fixe pour deux états : mon tour (le rappel se répète à
+   l'infini) et l'attente une fois les cinq secondes du dernier choix
+   écoulées (l'historique complet défile) — voir demarrerDefilement() dans
+   draftActif.js. `mask-image` estompe les deux bords plutôt qu'une coupure
+   nette : le texte semble entrer et sortir du bandeau, pas apparaître du
+   néant. */
+.turn-banner-marquee {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+}
+.turn-banner-marquee[hidden] { display: none; }
+.turn-banner-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: turnBannerMarquee var(--marquee-duration, 16s) linear infinite;
+}
+.turn-banner-marquee-item {
+  flex: 0 0 auto;
+  padding-right: 56px;
+  white-space: nowrap;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+
 .turn-banner.waiting { border-color: var(--border-gray); }
 .turn-banner.waiting.next {
   border-color: rgba(255, 179, 0, .55);
@@ -190,10 +233,22 @@ body {
    déjà ce halo — le bandeau, lui, ne l'avait jamais reçu alors qu'il est
    le signal « c'est mon tour » le plus visible de la page (collé en haut,
    pas seulement sur une carte du carrousel qu'il faut faire défiler). */
+/* Fond aux couleurs de l'équipe du pool, cette fois — demandé explicitement
+   pour cet état précis (voir --team-a/-b/-deep, posés par
+   appliquerIdentiteBanniere() dans draftActif.js à partir de
+   resolveDrafterClub()). Même traitement que .pick-card : une rampe sombre
+   en haut et un texte blanc fixe, pas de couleur assortie au fond — c'est ce
+   qui garde le texte lisible sur les teintes claires de certains clubs
+   (Bruins, Predators, Golden Knights…), y compris en thème clair. Repli sur
+   les jetons neutres si l'équipe n'a pas encore choisi son identité LNH. */
 .turn-banner.your-turn {
   border-color: rgba(0, 212, 255, .55);
   box-shadow: 0 0 0 1px rgba(0, 212, 255, .28) inset, var(--glow-live, 0 0 20px rgba(0, 212, 255, .25));
   animation: turnPulse 2s ease-in-out infinite;
+  color: #fff;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, .32) 0%, rgba(0, 0, 0, 0) 45%),
+    linear-gradient(158deg, var(--team-a, var(--card)) 0%, var(--team-b, var(--bg-gray-light)) 62%, var(--team-deep, var(--bg)) 100%);
 }
 .turn-banner.done {
   background: rgba(0, 230, 118, .14);
@@ -1668,6 +1723,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
   .turn-banner.your-turn,
+  .turn-banner-marquee-track,
   .draft-header.is-my-turn,
   .pick-card.is-current,
   .pick-card.is-revealing,

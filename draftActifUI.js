@@ -317,6 +317,14 @@ function initPanelTabs() {
         activer('joueurs', false);
         strip.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
+
+    // Symétrique : appelé par draftPickFlow.js une fois un choix confirmé et
+    // envoyé, pour ramener sur Aperçu (favoris + progression) plutôt que de
+    // laisser la personne sur le tableau qu'elle vient de quitter.
+    window.fzOuvrirApercu = () => {
+        activer('apercu', false);
+        strip.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
 }
 
 /* ============================================================

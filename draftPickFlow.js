@@ -149,7 +149,10 @@ async function confirmerPickConfirm() {
   if (valider) { valider.disabled = true; valider.textContent = 'Envoi…'; }
 
   try {
-    await commitPlayerPick(nom, code);
+    const succes = await commitPlayerPick(nom, code);
+    // Choix envoyé : on ramène sur Aperçu plutôt que de laisser la personne
+    // sur le tableau qu'elle vient de quitter pour ce choix.
+    if (succes && typeof window.fzOuvrirApercu === 'function') window.fzOuvrirApercu();
   } finally {
     pickConfirmEnvoi = false;
     fermerPickConfirm();
