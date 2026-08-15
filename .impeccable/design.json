@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-10T00:00:00Z",
+  "generatedAt": "2026-08-15T00:00:00Z",
   "title": "Design System: Fantazy",
   "extensions": {
     "colorMeta": {
@@ -258,6 +258,22 @@
       "description": "The draft room's identity object. Each pool team's own chosen NHL club (picked pre-draft, not the drafted player's club) colors the card and watermarks it before any pick lands; current always overrides to cyan regardless of team identity.",
       "html": "<div class=\"ds-pick-strip\"><article class=\"ds-pick-card\" style=\"--team-accent:#236192\"><span class=\"ds-pick-no\">#12</span><span class=\"ds-pick-name\">Cale Makar</span><span class=\"ds-pick-meta\">DÉF · COL</span></article><article class=\"ds-pick-card is-current\"><span class=\"ds-pick-no\">#13</span><span class=\"ds-pick-name\">À vous de jouer</span><span class=\"ds-pick-meta\">Votre tour</span></article><article class=\"ds-pick-card is-upcoming\"><span class=\"ds-pick-no\">#14</span><span class=\"ds-pick-name\">—</span><span class=\"ds-pick-meta\">À venir</span></article></div>",
       "css": ".ds-pick-strip { display: flex; gap: 10px; overflow-x: auto; padding: 4px; } .ds-pick-card { position: relative; flex: 0 0 132px; display: flex; flex-direction: column; gap: 2px; padding: 12px 12px 14px; background: var(--card, #1E1E22); border: 1px solid rgba(255,255,255,.07); border-radius: 12px; overflow: hidden; } .ds-pick-card::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--team-accent, var(--primary, #00D4FF)); } .ds-pick-no { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .68rem; font-weight: 700; letter-spacing: .06em; color: var(--text-secondary, #A8A8B0); } .ds-pick-name { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: .9rem; font-weight: 700; line-height: 1.25; color: var(--text-main, #F5F5F7); } .ds-pick-meta { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: .7rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary, #A8A8B0); } .ds-pick-card.is-upcoming { --team-accent: var(--border-gray, #38383F); background: var(--card, #1E1E22); opacity: .8; } .ds-pick-card.is-current { --team-accent: var(--primary, #00D4FF); background: var(--card, #1E1E22); border-color: rgba(0,212,255,.5); animation: dsTurnPulse 2.4s ease-in-out infinite; } .ds-pick-card.is-current .ds-pick-name { color: var(--primary, #00D4FF); } @keyframes dsTurnPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,255,.30) } 50% { box-shadow: 0 0 0 10px rgba(0,212,255,0) } } @media (prefers-reduced-motion: reduce) { .ds-pick-card.is-current { animation: none; box-shadow: 0 0 0 3px rgba(0,212,255,.30) } }"
+    },
+    {
+      "name": "Turn Banner",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "The draft room's sticky status line, aria-live=\"assertive\". Your-turn state rises to the same muted team-color wash as Pick Card with fixed white text; the .is-unbranded fallback (no club resolved yet) pins text/border to theme tokens instead, so a legacy draft with no identity still reads correctly in light theme.",
+      "html": "<div class=\"ds-turn-strip\"><div class=\"ds-turn-banner is-your-turn\" style=\"--team-a:#0c1c33;--team-b:#5c2918;--team-deep:#0c121c;\"><span class=\"ds-turn-text\">C'est votre tour !</span><span class=\"ds-turn-sub\">Choix #14</span><span class=\"ds-turn-clock\">00:42</span></div><div class=\"ds-turn-banner is-your-turn is-unbranded\"><span class=\"ds-turn-text\">C'est votre tour !</span><span class=\"ds-turn-sub\">Choix #6</span><span class=\"ds-turn-clock\">01:03</span></div></div>",
+      "css": ".ds-turn-strip { display: flex; flex-direction: column; gap: 10px; } .ds-turn-banner { display: flex; align-items: center; gap: 10px; padding: 5px 12px; min-height: 33px; border: 1px solid rgba(0,212,255,.55); border-radius: 12px; color: #fff; background: linear-gradient(180deg, rgba(0,0,0,.32) 0%, rgba(0,0,0,0) 45%), linear-gradient(158deg, var(--team-a, var(--card, #1E1E22)) 0%, var(--team-b, var(--bg-gray-light, #1A1A1E)) 62%, var(--team-deep, var(--bg, #121214)) 100%); box-shadow: 0 0 0 1px rgba(0,212,255,.28) inset, 0 0 20px rgba(0,212,255,.25); animation: dsTurnPulseBanner 2s ease-in-out infinite; } .ds-turn-banner.is-unbranded { color: var(--text-main, #F5F5F7); border-color: var(--border-light, #2C2C32); } .ds-turn-text { font-size: 1rem; font-weight: 800; letter-spacing: .02em; } .ds-turn-sub { font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; opacity: .82; margin-left: 8px; } .ds-turn-clock { font-weight: 700; font-variant-numeric: tabular-nums; opacity: .75; margin-left: auto; } @keyframes dsTurnPulseBanner { 0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,255,.30) } 50% { box-shadow: 0 0 0 10px rgba(0,212,255,0) } } @media (prefers-reduced-motion: reduce) { .ds-turn-banner { animation: none; } }"
+    },
+    {
+      "name": "Hall of Fame",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Season records below the standings table, in the same flat register as the table itself: no cards, just label/name/number rows separated by hairlines. Best takes --warning gold; worst stays on the neutral ladder rather than --danger, since a record low is a fact, not an error.",
+      "html": "<div class=\"ds-hof\"><h3 class=\"ds-hof-title\">Temple de la renommée</h3><div class=\"ds-hof-row\"><div class=\"ds-hof-cell\"><p class=\"ds-hof-label\">Meilleure semaine</p><p class=\"ds-hof-name\">Équipe Andy</p><div class=\"ds-hof-value-row\"><span class=\"ds-hof-value is-best\">142</span><span class=\"ds-hof-date\">3-9 mars</span></div></div><div class=\"ds-hof-cell\"><p class=\"ds-hof-label\">Pire semaine</p><p class=\"ds-hof-name\">Équipe Robert</p><div class=\"ds-hof-value-row\"><span class=\"ds-hof-value is-worst\">58</span><span class=\"ds-hof-date\">17-23 fév.</span></div></div></div></div>",
+      "css": ".ds-hof { padding-top: 24px; border-top: 1px solid var(--border-light, #2C2C32); } .ds-hof-title { font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-main, #F5F5F7); margin: 0 0 20px; } .ds-hof-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; } .ds-hof-label { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-light-gray, #6A6A72); margin: 0 0 8px; } .ds-hof-name { font-size: .88rem; font-weight: 600; color: var(--text-main, #F5F5F7); margin: 0 0 2px; } .ds-hof-value-row { display: flex; align-items: baseline; gap: 8px; } .ds-hof-value { font-size: 1.3rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; } .ds-hof-value.is-best { color: var(--warning, #FFB300); } .ds-hof-value.is-worst { color: var(--text-light-gray, #6A6A72); } .ds-hof-date { font-size: .78rem; color: var(--text-secondary, #A8A8B0); }"
     }
   ],
   "narrative": {
@@ -293,19 +309,21 @@
       "Do pair every hover affordance with a :focus-visible equivalent. The row stripe already does this; everything new must too.",
       "Do animate with transform, opacity, and filter, on cubic-bezier(.4,0,.2,1) at 0.2s (0.3s for larger movements), and honor prefers-reduced-motion — six stylesheets already do.",
       "Do give touch targets at least 44px, and 64px in the bottom nav.",
-      "Do use real NHL club colors from teamColors.js, attached only to the club they belong to."
+      "Do use real NHL club colors from teamColors.js, attached only to the club they belong to.",
+      "Do tint a state background with color-mix(in srgb, var(--token) N%, var(--surface)) rather than a hardcoded rgba() wash (classement.css's leader-row highlight). One rule then covers both themes instead of two, and it can never drift the way a hand-picked dark-theme rgba value does once light theme reuses it verbatim."
     ],
     "donts": [
-      "Don't hardcode a hex outside the token layer, and don't redeclare :root in a page stylesheet. trade.css and legal.css do this today with drifting values (--danger: #FF5252 vs #FF4757; --bg-page: #050510 vs #16161A) and ship no matching light-theme block, so those pages break in light mode. Page stylesheets specialize; they never redefine the palette.",
-      "Don't use gradient text. The animated .gradient-text treatment (index.css:134, accueil.css:90) is retired: headlines are solid scoreboard-white, with cyan available for a single emphasized span.",
+      "Don't hardcode a hex outside the token layer, and don't redeclare :root in a page stylesheet that already loads index.css. trade.css used to do exactly this, with no matching light-theme block; fixed by deleting the local :root so the page consumes index.css's themed tokens directly. legal.css is a different case: conditions.html/confidentialite.html deliberately skip index.css, so its local :root is necessary, and it already ships a complete light-theme override.",
+      "Don't use gradient text. .gradient-text (index.css) is solid --primary, not a background-clip gradient. accueil.css shadowed it with an animated three-stop gradient and trade.css's page-header ran its own separate gradient-clip with an undocumented stop; a live-rendered scan caught both still shipping, and both are now solid color.",
       "Don't animate layout properties — width, height, max-height, padding, margin. Use transform/opacity, or grid-template-rows: 0fr → 1fr for height. Four instances remain in pool.css:651, accueil.css:510, and draftActif.css:165.",
-      "Don't use overshoot or bounce easing (cubic-bezier(0.68,-0.55,0.265,1.55) and relatives) on ordinary state transitions. Exception: genuine celebration moments — the draft pick reveal — may use cubic-bezier(.34,1.56,.64,1). A dropdown is not a celebration.",
+      "Don't use overshoot or bounce easing (cubic-bezier(0.68,-0.55,0.265,1.55) and relatives) on ordinary state transitions. Exception: genuine celebration moments — the draft pick reveal, the trade-sent success check — may use cubic-bezier(.34,1.56,.64,1). A dropdown is not a celebration, and neither is a confirmation dialog.",
       "Don't apply colored glow to elements at rest. Glow is live/focus state; elevation is neutral shadow.",
       "Don't add a decorative colored border on one side of a card (accueil.css:293, pool.css:842). The table row's 3px stripe is exempt: it appears only on hover/focus and signals that the row is actionable — that is an affordance, not ornament.",
       "Don't introduce a second accent hue. If something needs to stand out and cyan is taken, the answer is hierarchy, weight, or space.",
       "Don't put white text on rink-ice-cyan. Cyan fills take arena-black text.",
       "Don't name a token for what it looks like in one theme. --card-white currently resolves to #26262B, a dark gray; new tokens are named by role.",
-      "Don't ship a phone layout that ignores the fixed bottom navigation's 80px reservation."
+      "Don't ship a phone layout that ignores the fixed bottom navigation's 80px reservation.",
+      "Don't treat the Dense UI Micro tier (~0.5-0.58rem) as settled. A live-rendered pass measured position-abbreviation and initials text there at 8.96-10.56px, under the 11px legibility floor that caught and fixed the old Meta step. Unlike Meta, Micro's uses sit in tight fixed-size containers — raising them needs a per-component check, not a blanket find-replace."
     ]
   }
 }

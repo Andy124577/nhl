@@ -204,8 +204,13 @@
             width: 100%;
             padding: 13px;
             margin-top: 8px;
-            background: linear-gradient(135deg, #cc1e1e 0%, #a01616 100%);
-            color: #fff;
+            /* Primary action = --primary (cyan), matching every other primary
+               button on the site — this used --danger's red, which reads as
+               a warning on the page's single most inviting action. Dark text
+               on cyan is required for contrast, so it borrows --bg the same
+               way the main token set's arena-black doubles as on-cyan text. */
+            background: linear-gradient(135deg, var(--primary) 0%, #00a8cc 100%);
+            color: var(--bg);
             border: none;
             border-radius: 10px;
             font-size: 1rem;
@@ -213,13 +218,15 @@
             font-family: inherit;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 4px 16px rgba(204,30,30,0.35);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
             letter-spacing: 0.3px;
         }
         .btn-submit:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(204,30,30,0.5);
-            background: linear-gradient(135deg, #e02222 0%, #b81818 100%);
+            /* Glow is the hover/live signal, not a rest-state halo — matches
+               how every other primary button on the site treats it. */
+            box-shadow: 0 8px 24px rgba(0,212,255,0.5);
+            background: linear-gradient(135deg, #22ddff 0%, #00b8de 100%);
         }
         .btn-submit:active:not(:disabled) { transform: translateY(0); }
         .btn-submit:disabled {
@@ -393,8 +400,8 @@
             <h1 class="card-title">Connexion</h1>
             <p class="card-subtitle">Connectez-vous pour accéder à votre ligue fantasy.</p>
 
-            <div id="errorMsg" class="msg msg-error"></div>
-            <div id="successMsg" class="msg msg-success"></div>
+            <div id="errorMsg" class="msg msg-error" role="alert"></div>
+            <div id="successMsg" class="msg msg-success" role="status"></div>
 
             <div class="form-group">
                 <label class="form-label" for="username">Nom d'utilisateur</label>

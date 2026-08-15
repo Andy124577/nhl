@@ -39,7 +39,11 @@ body {
     border-radius: 50%;
     filter: blur(90px);
     animation: glow-pulse 5s ease-in-out infinite;
-    will-change: opacity;
+    /* No will-change: a slow opacity fade isn't the "known expensive
+       operation" the hint exists for, and this held three layers
+       permanently composited (never off, animation runs forever) for a
+       purely decorative effect — real cost on the phones this product
+       targets, no visual difference removing it. */
 }
 .sp-1 { width: 560px; height: 560px; background: rgba(0,212,255,.14); top: -120px; left: 18%; animation-delay: 0s; }
 .sp-2 { width: 440px; height: 440px; background: rgba(110,50,220,.13); bottom: -60px; right: 8%; animation-delay: 2s; }
@@ -422,7 +426,7 @@ html.fz-auth #comment-ca-marche { display: none; }
     display: flex; align-items: center; gap: 12px;
     padding: 14px 20px;
     background: linear-gradient(135deg, rgba(245,158,11,.15), rgba(245,158,11,.08));
-    border-left: 4px solid var(--warning);
+    border: 1px solid rgba(245,158,11,.3);
     border-radius: 10px;
     cursor: pointer;
     transition: all .2s ease;
@@ -578,16 +582,19 @@ html.fz-auth #comment-ca-marche { display: none; }
 }
 .ranking-item.open .rk-chevron { transform: rotate(180deg); color: var(--primary); }
 
-/* Expandable roster panel */
+/* Expandable roster panel — grid-template-rows 0fr/1fr rather than an
+   animated max-height: no JS-measured scrollHeight needed (togglePoolRanking
+   in accueil.js used to read it), and content that changes size after open
+   (an image loading in) isn't stuck against a stale measured cap. */
 .ranking-detail {
-    max-height: 0;
-    overflow: hidden;
+    display: grid;
+    grid-template-rows: 0fr;
     opacity: 0;
-    transition: max-height .4s ease, opacity .3s ease;
+    transition: grid-template-rows .4s ease, opacity .3s ease;
 }
-.ranking-item.open .ranking-detail { opacity: 1; }
+.ranking-item.open .ranking-detail { grid-template-rows: 1fr; opacity: 1; }
 
-.rk-detail-inner { padding: 4px 18px 18px; }
+.rk-detail-inner { overflow: hidden; min-height: 0; padding: 4px 18px 18px; }
 
 .rk-group-title {
     font-size: .7rem; font-weight: 800; letter-spacing: 1.2px;

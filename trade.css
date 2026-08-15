@@ -2,26 +2,14 @@
 /* TRADE PAGE — 1-for-1 Position-Locked System                 */
 /* ============================================================ */
 
-:root {
-    /* Rampe alignée sur index.css (gris neutre, faible saturation) — voir
-       son commentaire. Reste sans propre thème clair (voir DESIGN.md,
-       pré-existant : ces tokens dérivent tous du sombre, à corriger dans
-       une passe dédiée plutôt qu'en marge d'un changement de palette). */
-    --bg: #121214;
-    --bg-page: #08080A;
-    --bg-hover: rgba(30,30,34,0.6);
-    --card-white: rgba(30,30,34,0.85);
-    --border-light: rgba(255,255,255,0.08);
-    --primary: #00D4FF;
-    --success: #00E676;
-    --danger: #FF5252;
-    --warning: #FFC107;
-    --text-main: rgba(245,245,247,0.95);
-    --text-secondary: rgba(245,245,247,0.65);
-    --text-dark: rgba(245,245,247,0.88);
-    --glow-primary: 0 4px 24px rgba(0,212,255,0.25);
-    --glow-success: 0 4px 24px rgba(0,230,118,0.25);
-}
+/* Ce fichier redéclarait :root avec une copie assombrie des jetons
+   d'index.css — sans bloc html[data-theme="light"] pour la faire suivre,
+   donc figée en thème sombre quel que soit le thème choisi (voir
+   DESIGN.md, qui documentait ce point comme dette connue). trade.html
+   charge déjà index.css avant cette feuille : la copie était redondante
+   en plus d'être incomplète. Supprimée — cette feuille consomme
+   maintenant directement les jetons thémés d'index.css, comme le reste
+   du site. */
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -96,7 +84,7 @@ body {
 }
 
 .trade-tab.active {
-    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
     border-color: var(--primary);
     color: #fff;
     box-shadow: var(--glow-primary);
@@ -191,7 +179,7 @@ body {
 }
 
 .tp-step.active .tp-dot {
-    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
     border-color: var(--primary);
     color: var(--bg);
     box-shadow: var(--glow-primary);
@@ -263,7 +251,7 @@ body {
     height: 96px;
     margin: 0 auto 24px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--success) 0%, #00C969 100%);
+    background: linear-gradient(135deg, var(--success) 0%, var(--success-deep) 100%);
     color: #fff;
     display: flex;
     align-items: center;
@@ -312,7 +300,7 @@ body {
 }
 
 .btn-success-primary {
-    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
     border: none;
     color: #fff;
     box-shadow: var(--glow-primary);
@@ -363,7 +351,7 @@ body {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
     color: var(--bg);
     display: flex;
     align-items: center;
@@ -478,7 +466,7 @@ body {
 }
 
 .pool-card-icon-letter {
-    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
     color: #0A0A1A;
     display: flex;
     align-items: center;
@@ -1002,7 +990,7 @@ body {
 .btn-propose-trade {
     width: 100%;
     padding: 16px;
-    background: linear-gradient(135deg, var(--success) 0%, #00C969 100%);
+    background: linear-gradient(135deg, var(--success) 0%, var(--success-deep) 100%);
     border: none;
     border-radius: 12px;
     color: #fff;
@@ -1077,7 +1065,6 @@ body {
 .received-trade-card {
     background: var(--bg-hover);
     border: 2px solid var(--border-light);
-    border-left: 4px solid var(--primary);
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 16px;
@@ -1232,7 +1219,7 @@ body {
 }
 
 .btn-accept-trade {
-    background: linear-gradient(135deg, var(--success) 0%, #00C969 100%);
+    background: linear-gradient(135deg, var(--success) 0%, var(--success-deep) 100%);
     color: #fff;
     box-shadow: 0 4px 16px rgba(0,230,118,0.25);
 }
@@ -1315,7 +1302,6 @@ body {
 .history-item {
     background: var(--bg-hover);
     border: 1px solid var(--border-light);
-    border-left: 4px solid var(--primary);
     border-radius: 10px;
     padding: 16px;
     margin-bottom: 12px;
@@ -1492,7 +1478,11 @@ body {
     padding: 16px 20px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     z-index: 9999;
-    transition: right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    /* Standard ease, not the celebration bounce: this fires for error and
+       info too (see showNotification() in trade.js), and DESIGN.md reserves
+       overshoot easing for genuine success/celebration moments — a
+       "you must be logged in" toast overshooting in isn't one. */
+    transition: right 0.3s cubic-bezier(.4,0,.2,1);
 }
 
 .trade-notification.show {
@@ -1516,17 +1506,9 @@ body {
     font-size: 0.95rem;
 }
 
-.trade-notification-success {
-    border-left: 4px solid var(--success);
-}
-
-.trade-notification-error {
-    border-left: 4px solid var(--danger);
-}
-
-.trade-notification-info {
-    border-left: 4px solid var(--primary);
-}
+/* Category read from the icon (getIcon('check'/'x'/'warning') in
+   showNotification()) plus the message text — a colored rail was pure
+   decoration on top of signal that already existed. */
 
 /* ============================================================ */
 /* LOADING SPINNER                                              */
@@ -1613,7 +1595,7 @@ html[data-theme="light"] .btn-propose-trade:disabled {
     height: 64px;
     margin: 0 auto 16px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
     color: var(--bg);
     display: flex;
     align-items: center;
@@ -1689,7 +1671,7 @@ html[data-theme="light"] .btn-propose-trade:disabled {
     color: var(--text-main);
 }
 .tc-ok {
-    background: linear-gradient(135deg, var(--success) 0%, #00C969 100%);
+    background: linear-gradient(135deg, var(--success) 0%, var(--success-deep) 100%);
     border: none;
     color: #fff;
     box-shadow: var(--glow-success);

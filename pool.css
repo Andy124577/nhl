@@ -839,7 +839,6 @@
     padding: 11px 14px;
     background: color-mix(in srgb, var(--warning) 12%, transparent);
     border: 1px solid color-mix(in srgb, var(--warning) 45%, transparent);
-    border-left-width: 4px;
     border-radius: 10px;
     color: var(--text-dark);
     font-size: .87rem;

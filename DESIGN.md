@@ -254,6 +254,8 @@ Stat-grid numerals above ~1.1rem (career modal's big season totals, alert icons)
 
 **Tables are the primary layout.** Rows are separated (a 12px-radius pill per row via first/last-cell radii) rather than zebra-striped, the rank column locks to 44px under 700px, and horizontal scroll is contained inside the table's own wrapper — never the page body.
 
+**Horizontal snap-scroll rows.** For a list too narrow to ever justify a grid — the draft pick strip, the phone players-grid, the dashboard's roster list (`accueil.css`) — the recurring answer is a single scroll-snapping row (`scroll-snap-type: x mandatory`, `scroll-snap-align: start`, hidden scrollbar) over a wrapped grid. Cards size to `clamp()` rather than a fixed width so the row still shows a peek of the next card at any viewport.
+
 ### Named Rules
 
 **The Bottom Bar Reservation Rule.** On phones the bottom 80px belongs to navigation. Nothing sticky, floating, or action-critical may live there.
@@ -333,6 +335,19 @@ The workhorse. Rows read as separated objects, not grid lines.
 - Actionable rows use a 3px cyan stripe on `::after` that fades in on hover **and** `:focus-visible` — the whole row is the target (Fitts), and keyboard users get the same signal a cursor gives.
 - Numeric columns are selected structurally and set in JetBrains Mono; the photo and name columns are excluded by position.
 
+**Flat variant (standings).** The pool standings table (`classement.css`) drops the card entirely: no container background, no border, no radius, no zebra striping, no rank badge circle — a plain uppercase-label header, hairline rows flush against the page, and the rank number itself carrying color (gold/silver/bronze on the podium, `text-gray` otherwise). It reads as a leaderboard, not a boxed widget. The leader row is tinted with `color-mix(in srgb, var(--warning) 8%, var(--bg-page))` rather than a card fill, so it stays a wash over the same flat surface instead of becoming its own panel. This is a deliberate second table register, not drift from the workhorse pill-row pattern above — use it only where a table *is* the page, the way the workhorse pattern is for a table *inside* one.
+
+### Hall of Fame
+Season records (best/worst single day, week, month of pool points) below the standings table, in the same flat register: no cards, just a label, a name, and a number, separated by hairlines rather than boxes. `best` takes `--warning` (gold), echoing how the standings table already marks its leader; `worst` takes `--text-light-gray`, a neutral rung, not `--danger` — a record low is a fact to note, not an error to flag, so it stays out of the semantic-red lane entirely.
+
+### Turn Banner (signature)
+The draft room's status line — sticky, `aria-live="assertive"`, and the single answer to "whose turn is it." Sits above the Pick Card strip and shares its team-identity source, but answers a different question: the strip is history, the banner is *now*.
+
+- **Waiting:** neutral card surface, showing who just picked. `.next` (the team on deck) adds an amber ring — a preview, not yet a turn.
+- **Your turn:** the state that matters. Background rises to the same muted team-color wash as the Pick Card (`--team-a/-b/-deep`, both driven by `appliquerIdentiteBanniere()` in `draftActif.js` from the same `resolveDrafterClub`/`teamColors.js` source as `draftPickCards.js`), with a dark top vignette and fixed white text, cyan border, and `turnPulse`. Text stays white on purpose: team hues here are pre-muted toward a dark base specifically so a fixed light label always holds contrast, the same reasoning as the Pick Card below.
+- **Done:** solid `goal-green` wash, no team color — the repêchage is over, identity no longer matters.
+- **Unbranded fallback (`.is-unbranded`):** a repêchage begun before the "choose your club" feature existed can reach *your turn* with no identity resolved. The background already fell through to plain site tokens (`--card`/`--bg-gray-light`/`--bg`) rather than a hardcoded color — but until this pass, the text stayed the fixed white built for the team-color state, which went invisible once those tokens turned pale in light theme. `.is-unbranded` now pins text to `--text-main` and the border to `--border-light` instead, so the fallback genuinely follows the theme rather than half-following it. Applied by both `appliquerIdentiteBanniere()` and `buildPickCard()` whenever no club resolves — see the identical fallback on Pick Card below.
+
 ### Pick Card (signature)
 The draft room's identity object, and the only place club chroma enters the layout.
 
@@ -342,6 +357,7 @@ Every pool team chooses one real NHL club as its identity before the draft opens
 - **Upcoming / skipped:** the owning team's identity already colors the card and watermarks its center — known before any player is picked. `opacity: .8` (skipped: `.5`) keeps completed picks dominant in the strip; a repêchage begun before this feature existed falls back to neutral gray, then to the drafted player's own club once a pick lands.
 - **Current:** `--team-accent` becomes cyan and stays cyan regardless of the team's own identity color — the live signal is never negotiable (One Live Signal Rule). The border lifts to `rgba(0,212,255,.5)` and `turnPulse` runs a 2.4s expanding ring for everyone watching. The team whose turn it actually is sees more: `.is-my-turn` scales the card, adds a two-layer glow, and drops an "À vous" badge — the difference between "someone is picking" and "it's me."
 - **Revealing:** a ~1150ms sequence where the card arrives desaturated, color rises, then the name lands — animating only `opacity`, `transform`, and `filter`, with `will-change` set only for the duration and only one card at a time.
+- **No identity resolved (`.is-unbranded`):** the same legacy-draft fallback as the Turn Banner above. Text pins to `--text-main` and the border to `--border-light` so a card with no team color still reads correctly against whichever theme is active; the always-dark footer bar (`.pick-card-owner`/`.pick-card-meta`) is unaffected either way, since it never depended on the card's own background.
 
 ## Do's and Don'ts
 
@@ -355,9 +371,10 @@ Every pool team chooses one real NHL club as its identity before the draft opens
 - **Do** animate with `transform`, `opacity`, and `filter`, on `cubic-bezier(.4,0,.2,1)` at 0.2s (0.3s for larger movements), and honor `prefers-reduced-motion` — six stylesheets already do.
 - **Do** give touch targets at least 44px, and 64px in the bottom nav.
 - **Do** use real NHL club colors from [teamColors.js](teamColors.js), attached only to the club they belong to.
+- **Do** tint a state background with `color-mix(in srgb, var(--token) N%, var(--surface))` rather than a hardcoded `rgba()` wash ([classement.css](classement.css)'s leader-row highlight). One rule then covers both themes instead of two, and it can never drift the way a hand-picked dark-theme rgba value does once light theme reuses it verbatim.
 
 ### Don't:
-- **Don't** hardcode a hex outside the token layer, and **don't redeclare `:root` in a page stylesheet.** [trade.css:5](trade.css#L5) and [legal.css:3](legal.css#L3) do this today with *drifting* values (`--danger: #FF5252` vs `#FF4757`; `--bg-page: #050510` vs `#16161A`) and ship no matching light-theme block, so those pages break in light mode. Page stylesheets specialize; they never redefine the palette.
+- **Don't** hardcode a hex outside the token layer, and **don't redeclare `:root` in a page stylesheet that already loads `index.css`.** `trade.css` used to do exactly this — a stale, incomplete copy of the token set (`--danger: #FF5252` vs `#FF4757`, `--bg-page: #08080A` vs `#16161A`) with no matching light-theme block, even though `trade.html` loads `index.css` first. Fixed by deleting the local `:root`; the page now consumes `index.css`'s themed tokens directly, same as everywhere else. [legal.css:3](legal.css#L3) is a different case, not drift: `conditions.html`/`confidentialite.html` deliberately skip `index.css` to stay minimal, so a local `:root` is necessary there — and it already ships a complete `html[data-theme="light"]` override alongside it, so it isn't broken.
 - **Don't** use gradient text. `.gradient-text` ([index.css:180](index.css#L180)) is solid `--primary`, not a `background-clip` gradient: a real DESIGN.md-documented rule, but it went unenforced for a while — `accueil.css` shadowed it with an animated three-stop gradient (same class, loaded after index.css, so it silently won), and `trade.css`'s page-header `h1` ran its own separate gradient-clip with an undocumented `#00B8D9` stop. A live-rendered scan caught both still shipping; both are now solid color.
 - **Don't** animate layout properties — `width`, `height`, `max-height`, `padding`, `margin`. Use `transform`/`opacity`, or `grid-template-rows: 0fr → 1fr` for height. Four instances remain in [pool.css:651](pool.css#L651), [accueil.css:510](accueil.css#L510), and [draftActif.css:165](draftActif.css#L165).
 - **Don't** use overshoot or bounce easing (`cubic-bezier(0.68,-0.55,0.265,1.55)` and relatives) on ordinary state transitions. **Exception:** genuine celebration/success moments — the draft pick reveal, the trade-sent success check ([trade.css:272](trade.css#L272)) — may use `cubic-bezier(.34,1.56,.64,1)`. A dropdown is not a celebration, and neither is a confirmation dialog: [trade.css:1594](trade.css#L1594)'s `.trade-confirm-box` used the same bounce on its entrance and was moved to the standard ease.

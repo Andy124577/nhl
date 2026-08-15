@@ -818,7 +818,6 @@ function togglePoolRanking(rowBtn) {
     const isOpen = item.classList.contains('open');
 
     if (isOpen) {
-        detail.style.maxHeight = '0px';
         item.classList.remove('open');
         rowBtn.setAttribute('aria-expanded', 'false');
         return;
@@ -829,7 +828,6 @@ function togglePoolRanking(rowBtn) {
     }
     item.classList.add('open');
     rowBtn.setAttribute('aria-expanded', 'true');
-    detail.style.maxHeight = `${detail.scrollHeight}px`;
 }
 
 // Player name → current-season stats, built once from /current-stats

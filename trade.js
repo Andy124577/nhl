@@ -120,6 +120,11 @@ function showNotification(message, type = 'info') {
 
     const notification = document.createElement('div');
     notification.className = `trade-notification trade-notification-${type}`;
+    // Silent to screen readers otherwise: this is the only feedback a trade
+    // proposal, acceptance, decline, or validation error gets, and it
+    // auto-dismisses in 4s. 'error' gets the assertive role since it can
+    // block the task; success/info are ambient confirmations.
+    notification.setAttribute('role', type === 'error' ? 'alert' : 'status');
     notification.innerHTML = `
         <div class="notification-content">
             <span class="notification-icon">${typeof getIcon === 'function' ? (type === 'success' ? getIcon('check',18) : type === 'error' ? getIcon('x',18) : getIcon('warning',18)) : ''}</span>
