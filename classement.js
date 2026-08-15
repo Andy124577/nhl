@@ -743,6 +743,7 @@ function renderTeamRoster(roster, activeListings = []) {
                     <span class="player-name">${player.name}</span>
                     <span class="player-team-abbrev">${teamAbbrev}</span>
                     <span class="player-position">${player.position}</span>
+                    ${sellToggleHTML}
                 </div>
                 <div class="player-stats-grid">
                     <div class="stats-row-top">
@@ -758,7 +759,6 @@ function renderTeamRoster(roster, activeListings = []) {
                         <span>Pts</span>
                     </div>
                 </div>
-                ${sellToggleHTML}
             </div>
             <div class="roster-points-section">
                 <div class="pptsa-value">0</div>
