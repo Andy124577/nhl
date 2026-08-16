@@ -33,9 +33,32 @@
   0%, 100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, .30) }
   50%      { box-shadow: 0 0 0 10px rgba(0, 212, 255, 0) }
 }
+/* Respire à la même cadence que turnPulse (2s, juste au-dessus) : les deux
+   classes sont posées dans le même appel JS (refreshTurnAlert), donc caler
+   la même période garde l'en-tête et le bandeau en phase au lieu de battre
+   l'un contre l'autre (l'ancienne valeur, 2.4s, dérivait lentement de celle
+   du bandeau). */
 @keyframes headerTurnGlow {
-  0%, 100% { border-bottom-color: var(--primary) }
-  50%      { border-bottom-color: rgba(0, 212, 255, .35) }
+  0%, 100% {
+    border-bottom-color: var(--primary);
+    box-shadow: 0 10px 28px -8px rgba(0, 212, 255, .32);
+  }
+  50% {
+    border-bottom-color: rgba(0, 212, 255, .35);
+    box-shadow: 0 10px 40px -6px rgba(0, 212, 255, .18);
+  }
+}
+/* Flash d'arrivée, une seule fois, quand .is-my-turn vient d'être posée :
+   la respiration ci-dessus dit « c'est toujours mon tour », celle-ci dit
+   « ça vient de le devenir ». Les deux visent box-shadow mais ne se
+   chevauchent jamais : voir le animation-delay sur .draft-header.is-my-turn
+   plus bas, qui fait démarrer headerTurnGlow exactement quand celle-ci se
+   termine. Ses deux extrémités reprennent la valeur de repos de
+   headerTurnGlow pour que le relais soit invisible. */
+@keyframes headerPowerOn {
+  0%   { filter: brightness(1);     box-shadow: 0 10px 28px -8px rgba(0, 212, 255, .32) }
+  30%  { filter: brightness(1.08);  box-shadow: 0 0 60px 4px rgba(0, 212, 255, .40), 0 10px 28px -8px rgba(0, 212, 255, .32) }
+  100% { filter: brightness(1);     box-shadow: 0 10px 28px -8px rgba(0, 212, 255, .32) }
 }
 /* Bande défilante du bandeau de tour : la piste avance de translateX(-50%),
    la moitié de SA PROPRE largeur — qui vaut toujours une copie du contenu,
@@ -99,8 +122,30 @@ body {
     linear-gradient(135deg, rgba(0, 212, 255, .09), rgba(0, 212, 255, 0) 62%),
     var(--bg);
 }
+/* En-tête « à l'antenne » : la carte-tour (.pick-card.is-my-turn, plus bas)
+   et le bandeau (.turn-banner.your-turn) portaient déjà tout le poids du
+   signal « c'est votre tour » ; l'en-tête collant qui les entoure — visible
+   en permanence pendant qu'on parcourt la liste, puisque .draft-header
+   reste sticky (§15 plus bas) — ne portait qu'un filet de 3px animé,
+   perceptible seulement si on regardait précisément le bas de la bordure.
+   Il porte maintenant sa propre lueur : un fond et une ombre déclarés en
+   dur (pas seulement dans les images-clés ci-dessus) pour que le cadre
+   reste visiblement « vivant » même quand headerPowerOn/headerTurnGlow sont
+   coupées par prefers-reduced-motion plus bas dans ce fichier — avant cette
+   passe, is-my-turn sans animation ne se distinguait plus du repos du tout. */
 .draft-header.is-my-turn {
-  animation: headerTurnGlow 2.4s ease-in-out infinite;
+  border-bottom-color: var(--primary);
+  box-shadow: 0 10px 28px -8px rgba(0, 212, 255, .32);
+  background:
+    linear-gradient(180deg, rgba(0, 212, 255, .14) 0%, rgba(0, 212, 255, 0) 60%),
+    linear-gradient(135deg, rgba(0, 212, 255, .09), rgba(0, 212, 255, 0) 62%),
+    var(--bg);
+  /* headerPowerOn (une fois) puis headerTurnGlow (en boucle, retardée d'.8s
+     pour ne prendre la main sur box-shadow qu'une fois le flash terminé —
+     voir le commentaire au-dessus des deux images-clés). */
+  animation:
+    headerPowerOn .8s cubic-bezier(.16, 1, .3, 1),
+    headerTurnGlow 2s ease-in-out infinite .8s;
 }
 
 /* ---- Onglet Liste des joueurs ----
