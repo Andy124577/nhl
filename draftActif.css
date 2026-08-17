@@ -37,28 +37,36 @@
    classes sont posées dans le même appel JS (refreshTurnAlert), donc caler
    la même période garde l'en-tête et le bandeau en phase au lieu de battre
    l'un contre l'autre (l'ancienne valeur, 2.4s, dérivait lentement de celle
-   du bandeau). */
+   du bandeau). L'anneau (outline) respire avec l'ombre plutôt que de rester
+   fixe : les deux montent et redescendent ensemble, comme un même halo qui
+   se resserre puis se relâche. */
 @keyframes headerTurnGlow {
   0%, 100% {
     border-bottom-color: var(--primary);
-    box-shadow: 0 10px 28px -8px rgba(0, 212, 255, .32);
+    outline-color: rgba(0, 212, 255, .6);
+    box-shadow: 0 0 0 1px rgba(0, 212, 255, .22) inset, 0 14px 44px -8px rgba(0, 212, 255, .48);
   }
   50% {
     border-bottom-color: rgba(0, 212, 255, .35);
-    box-shadow: 0 10px 40px -6px rgba(0, 212, 255, .18);
+    outline-color: rgba(0, 212, 255, .22);
+    box-shadow: 0 0 0 1px rgba(0, 212, 255, .08) inset, 0 14px 60px -6px rgba(0, 212, 255, .22);
   }
 }
 /* Flash d'arrivée, une seule fois, quand .is-my-turn vient d'être posée :
    la respiration ci-dessus dit « c'est toujours mon tour », celle-ci dit
-   « ça vient de le devenir ». Les deux visent box-shadow mais ne se
-   chevauchent jamais : voir le animation-delay sur .draft-header.is-my-turn
-   plus bas, qui fait démarrer headerTurnGlow exactement quand celle-ci se
-   termine. Ses deux extrémités reprennent la valeur de repos de
-   headerTurnGlow pour que le relais soit invisible. */
+   « ça vient de le devenir » — un vrai à-coup (léger `scale`, sans incidence
+   sur la mise en page puisque `transform` reste hors flux) plutôt qu'une
+   simple variation de teinte, pour qu'il ne passe pas inaperçu au moment où
+   l'œil n'est pas encore sur l'en-tête. box-shadow et outline-color sont
+   aussi visés par headerTurnGlow, mais les deux ne se chevauchent jamais :
+   voir le animation-delay sur .draft-header.is-my-turn plus bas, qui fait
+   démarrer headerTurnGlow exactement quand celle-ci se termine. Ses deux
+   extrémités reprennent la valeur de repos de headerTurnGlow pour que le
+   relais soit invisible. */
 @keyframes headerPowerOn {
-  0%   { filter: brightness(1);     box-shadow: 0 10px 28px -8px rgba(0, 212, 255, .32) }
-  30%  { filter: brightness(1.08);  box-shadow: 0 0 60px 4px rgba(0, 212, 255, .40), 0 10px 28px -8px rgba(0, 212, 255, .32) }
-  100% { filter: brightness(1);     box-shadow: 0 10px 28px -8px rgba(0, 212, 255, .32) }
+  0%   { filter: brightness(1);    transform: scale(1);     outline-color: rgba(0, 212, 255, .6);  box-shadow: 0 0 0 1px rgba(0, 212, 255, .22) inset, 0 14px 44px -8px rgba(0, 212, 255, .48) }
+  28%  { filter: brightness(1.18); transform: scale(1.012);  outline-color: rgba(0, 212, 255, 1);   box-shadow: 0 0 0 3px rgba(0, 212, 255, .65) inset, 0 0 90px 10px rgba(0, 212, 255, .55), 0 14px 44px -8px rgba(0, 212, 255, .48) }
+  100% { filter: brightness(1);    transform: scale(1);     outline-color: rgba(0, 212, 255, .6);  box-shadow: 0 0 0 1px rgba(0, 212, 255, .22) inset, 0 14px 44px -8px rgba(0, 212, 255, .48) }
 }
 /* Bande défilante du bandeau de tour : la piste avance de translateX(-50%),
    la moitié de SA PROPRE largeur — qui vaut toujours une copie du contenu,
@@ -135,14 +143,23 @@ body {
    passe, is-my-turn sans animation ne se distinguait plus du repos du tout. */
 .draft-header.is-my-turn {
   border-bottom-color: var(--primary);
-  box-shadow: 0 10px 28px -8px rgba(0, 212, 255, .32);
+  /* `outline` plutôt qu'un `border` sur les quatre côtés : il se peint sans
+     réserver d'espace (contrairement à border, qui aurait fallu poser en
+     dur au repos pour éviter un saut de mise en page à chaque bascule de
+     tour — voir le commentaire sur border-bottom au-dessus). Négatif pour
+     rester dans la boîte plutôt que déborder sur le contenu voisin. Un
+     anneau complet plutôt qu'un simple filet du bas : le cadre entier se
+     signale comme actif, pas seulement sa lisière inférieure. */
+  outline: 2px solid rgba(0, 212, 255, .6);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 1px rgba(0, 212, 255, .22) inset, 0 14px 44px -8px rgba(0, 212, 255, .48);
   background:
-    linear-gradient(180deg, rgba(0, 212, 255, .14) 0%, rgba(0, 212, 255, 0) 60%),
+    linear-gradient(180deg, rgba(0, 212, 255, .18) 0%, rgba(0, 212, 255, 0) 62%),
     linear-gradient(135deg, rgba(0, 212, 255, .09), rgba(0, 212, 255, 0) 62%),
     var(--bg);
   /* headerPowerOn (une fois) puis headerTurnGlow (en boucle, retardée d'.8s
-     pour ne prendre la main sur box-shadow qu'une fois le flash terminé —
-     voir le commentaire au-dessus des deux images-clés). */
+     pour ne prendre la main sur box-shadow/outline-color qu'une fois le
+     flash terminé — voir le commentaire au-dessus des deux images-clés). */
   animation:
     headerPowerOn .8s cubic-bezier(.16, 1, .3, 1),
     headerTurnGlow 2s ease-in-out infinite .8s;
