@@ -39,6 +39,9 @@
                 <span data-icon="inbox" data-icon-size="16"></span> Échanges reçus
                 <span class="trade-tab-badge" id="receivedTradeBadge" style="display:none;">0</span>
             </button>
+            <button class="trade-tab" data-tab="forsale" onclick="switchTradeTab('forsale')">
+                <span data-icon="tag" data-icon-size="16"></span> Joueurs à vendre
+            </button>
         </div>
 
         <!-- SECTION: Propose Trade -->
@@ -286,6 +289,18 @@
             </div>
         </div>
         <!-- END SECTION: Received Trades -->
+
+        <!-- SECTION: For-Sale Listings -->
+        <div id="forSaleTradeSection" class="trade-section">
+            <div class="section-header">
+                <h2><span data-icon="tag" data-icon-size="20"></span> Joueurs à vendre</h2>
+                <p class="section-subtitle">Joueurs que les membres de ce pool ont mis en vente</p>
+            </div>
+            <div class="for-sale-grid" id="forSaleList">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+        <!-- END SECTION: For-Sale Listings -->
     </div>
 
     <!-- Styled trade confirmation (replaces native confirm) -->

@@ -175,6 +175,7 @@ function showPoolStandings(poolName) {
     // Reset on every pool switch — only the cumulative branch below re-shows
     // it, and a stale record from the previous pool must not linger.
     document.getElementById('hallOfFame').style.display = 'none';
+    document.getElementById('recentFormLeaderboard').style.display = 'none';
 
     const poolMode = poolData.poolMode || 'cumulative';
     const h2hTabs = document.getElementById('h2hTabs');
@@ -439,6 +440,7 @@ async function renderPoolStandings(poolData, poolName) {
     standingsList.style.display = 'block';
 
     renderHallOfFame(poolName);
+    renderRecentFormLeaderboard(poolName);
 }
 
 // ==================== HALL OF FAME ====================
@@ -515,6 +517,80 @@ async function renderHallOfFame(poolName) {
         console.warn('⚠️ Could not load hall of fame:', error);
         container.style.display = 'none';
     }
+}
+
+// ==================== RECENT FORM (windowed best-team leaderboard) ====================
+// Relocated from the old homepage Activity tab (see accueil-dash.js) — that
+// was the only place GET /pool-leaderboard was ever surfaced. Same windows,
+// same rank/points shape, just re-homed next to the season standings it
+// complements.
+
+const RECENT_FORM_WINDOWS = [7, 14, 30, 90, 180, 365];
+let recentFormWindow = 7;
+
+function recentFormRankClass(rank) {
+    return rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+}
+
+function changeRecentFormWindow(poolName, days) {
+    recentFormWindow = days;
+    document.querySelectorAll('#recentFormLeaderboard .time-filter').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.days) === days);
+    });
+    loadRecentFormRows(poolName, days);
+}
+
+async function loadRecentFormRows(poolName, days) {
+    const list = document.getElementById('recentFormLeaderboardRows');
+    if (!list) return;
+    try {
+        const res = await fetch(`${BASE_URL}/pool-leaderboard/${encodeURIComponent(poolName)}?days=${days}`, { cache: 'no-store' });
+        const data = res.ok ? await res.json() : null;
+        const teams = (data && data.teams) || [];
+
+        if (!teams.length) {
+            list.innerHTML = `<p class="hof-empty">Pas assez de données pour classer les équipes sur cette période.</p>`;
+            return;
+        }
+
+        // "Real data, just not from the exact window" vs. "nothing at all" —
+        // the caption keeps the fallback honest instead of implying precision.
+        const sourceLabel = { seasonFallback: '(saison)', none: '' };
+
+        list.innerHTML = teams.map(t => `
+            <div class="leaderboard-row">
+                <span class="lb-rank ${recentFormRankClass(t.rank)}">${t.rank}</span>
+                <span class="lb-team">${t.teamName}</span>
+                ${t.points === null
+                    ? '<span class="lb-pts">—</span>'
+                    : `<span class="lb-pts">${t.points} pts</span><span class="lb-source">${sourceLabel[t.source] || ''}</span>`}
+            </div>`).join('');
+    } catch (error) {
+        console.warn('⚠️ Could not load recent-form leaderboard:', error);
+        list.innerHTML = `<p class="hof-empty">Impossible de charger ce classement.</p>`;
+    }
+}
+
+function renderRecentFormLeaderboard(poolName) {
+    const container = document.getElementById('recentFormLeaderboard');
+    if (!container) return;
+
+    recentFormWindow = 7;
+    container.innerHTML = `
+        <div class="recent-form-head">
+            <p class="hof-title">Meilleures équipes récentes</p>
+            <div class="time-filters">
+                ${RECENT_FORM_WINDOWS.map(d => `<button type="button" class="time-filter${d === 7 ? ' active' : ''}" data-days="${d}">${d}J</button>`).join('')}
+            </div>
+        </div>
+        <div class="leaderboard-list" id="recentFormLeaderboardRows"></div>`;
+
+    container.querySelectorAll('.time-filter').forEach(btn => {
+        btn.addEventListener('click', () => changeRecentFormWindow(poolName, Number(btn.dataset.days)));
+    });
+
+    container.style.display = 'block';
+    loadRecentFormRows(poolName, recentFormWindow);
 }
 
 // Level 3: Team Roster View

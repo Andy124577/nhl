@@ -525,6 +525,40 @@ async function getTeamPlayerBreakdownForDateRange(teamData, startDateISO, endDat
     }
 }
 
+// Server-side twin of buildTeamScores in accueil.js (client, ~line 681) —
+// same season-cumulative formula (skater: NHL "points" stat; goalie:
+// shutouts*5 + wins*2 + otLosses*1), so a rank computed here matches what
+// the homepage's own "current rank" already shows. Kept in lockstep with
+// accueil.js on purpose: this is what both the daily snapshot and the live
+// side of /pool-rank-movement are computed with.
+function computeTeamSeasonScores(poolData, statsPlayers) {
+    const playerPts = {};
+    (statsPlayers || []).forEach(p => {
+        const name = p.playerName;
+        if (!name) return;
+        playerPts[name] = p.position === 'G'
+            ? (p.shutouts || 0) * 5 + (p.wins || 0) * 2 + (p.otLosses || 0) * 1
+            : (p.points || 0);
+    });
+
+    const rows = Object.entries(poolData.teams || {})
+        .filter(([, td]) => (td.members || []).length > 0)
+        .map(([teamName, td]) => {
+            const names = [
+                ...(td.offensive || []),
+                ...(td.defensive || []),
+                ...(td.goalie || []),
+                ...(td.rookie || [])
+            ].map(p => (typeof p === 'string') ? p : (p.skaterFullName || p.goalieFullName || p));
+            const score = names.reduce((s, n) => s + (playerPts[n] || 0), 0);
+            return { teamName, score };
+        });
+
+    rows.sort((a, b) => b.score - a.score);
+    rows.forEach((r, i) => { r.rank = i + 1; });
+    return rows;
+}
+
 // Helper to ensure standings entry exists for a team
 function ensureStandingsEntry(standings, teamName) {
     if (!standings[teamName]) {
@@ -2412,11 +2446,41 @@ app.get("/current-stats", async (req, res) => {
     }
 });
 
+// Snapshot every pool's rank/points "as of this morning", once a day, right
+// after stats refresh — this is the baseline /pool-rank-movement diffs the
+// live rank against. Must run AFTER updateCurrentStats() (needs fresh season
+// totals) and BEFORE that evening's games (so it's a true start-of-day mark).
+async function snapshotAllPoolRanks() {
+    try {
+        const pools = await db.getAllPools();
+        const statsData = await loadCurrentStats();
+        const todayISO = new Date().toISOString().slice(0, 10);
+        let rowCount = 0;
+
+        for (const [poolName, poolData] of Object.entries(pools)) {
+            const scores = computeTeamSeasonScores(poolData, statsData.players || []);
+            for (const t of scores) {
+                await db.query(`
+                    INSERT INTO pool_rank_snapshots (pool_name, team_name, rank, points, snapshot_date)
+                    VALUES ($1, $2, $3, $4, $5)
+                    ON CONFLICT (pool_name, team_name, snapshot_date)
+                    DO UPDATE SET rank = EXCLUDED.rank, points = EXCLUDED.points
+                `, [poolName, t.teamName, t.rank, t.score, todayISO]);
+                rowCount++;
+            }
+        }
+        console.log(`✅ Pool rank snapshot done: ${rowCount} team rows across ${Object.keys(pools).length} pools`);
+    } catch (error) {
+        console.error('❌ Error snapshotting pool ranks:', error.message);
+    }
+}
+
 // Schedule daily stats update at midnight (00:00)
 cron.schedule('0 0 * * *', async () => {
     console.log("⏰ Daily stats update triggered at midnight");
     await updateCurrentStats();
     await updateTeamStandings();
+    await snapshotAllPoolRanks();
 }, {
     timezone: "America/New_York" // Adjust to your timezone
 });
@@ -2990,6 +3054,229 @@ app.get('/live-games', async (req, res) => {
     } catch (error) {
         console.error('❌ Error fetching live games:', error.message);
         res.json({ games: [], generatedAt: new Date().toISOString() });
+    }
+});
+
+// ============================================================
+// SEASON SCHEDULE — powers the homepage's full-season calendar. Proxies
+// NHL's own /v1/schedule/{date}, which returns a 7-day "gameWeek" window
+// containing that date plus nextStartDate/previousStartDate. The frontend
+// just keeps paging with those two dates to browse the whole season instead
+// of being stuck on one hardcoded week.
+// Cached per requested date: short TTL near "today" (scores move), long TTL
+// further out (finished scores and the future schedule barely change).
+// ============================================================
+const scheduleCache = new Map(); // date -> { data, fetchedAt }
+const SCHEDULE_NEAR_TTL_MS = 60 * 1000;
+const SCHEDULE_FAR_TTL_MS = 12 * 60 * 60 * 1000;
+
+app.get('/schedule/:date', async (req, res) => {
+    const { date } = req.params;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ message: 'Invalid date, expected YYYY-MM-DD' });
+    }
+
+    try {
+        const todayISO = new Date().toISOString().slice(0, 10);
+        const daysFromToday = Math.abs((new Date(date) - new Date(todayISO)) / 86400000);
+        const ttl = daysFromToday <= 1 ? SCHEDULE_NEAR_TTL_MS : SCHEDULE_FAR_TTL_MS;
+
+        const cached = scheduleCache.get(date);
+        if (cached && (Date.now() - cached.fetchedAt) < ttl) {
+            return res.json(cached.data);
+        }
+
+        const response = await fetch(`https://api-web.nhle.com/v1/schedule/${date}`);
+        if (!response.ok) {
+            return res.json({ days: [], nextStartDate: null, previousStartDate: null });
+        }
+        const raw = await response.json();
+
+        const days = (raw.gameWeek || []).map(day => ({
+            date: day.date,
+            dayAbbrev: day.dayAbbrev,
+            games: (day.games || []).map(g => ({
+                id: g.id,
+                state: g.gameState,
+                startTimeUTC: g.startTimeUTC,
+                period: g.periodDescriptor?.number ?? null,
+                periodType: g.periodDescriptor?.periodType || null,
+                clock: g.clock ? { timeRemaining: g.clock.timeRemaining || '', inIntermission: !!g.clock.inIntermission } : null,
+                away: { abbrev: g.awayTeam?.abbrev || '', score: g.awayTeam?.score ?? null },
+                home: { abbrev: g.homeTeam?.abbrev || '', score: g.homeTeam?.score ?? null }
+            }))
+        }));
+
+        const payload = { days, nextStartDate: raw.nextStartDate || null, previousStartDate: raw.previousStartDate || null };
+        scheduleCache.set(date, { data: payload, fetchedAt: Date.now() });
+        res.json(payload);
+    } catch (error) {
+        console.error('❌ Error fetching schedule:', error.message);
+        res.json({ days: [], nextStartDate: null, previousStartDate: null });
+    }
+});
+
+// ============================================================
+// TONIGHT BOXSCORES — real per-player stat lines for every game that has
+// started today, live or final. Deliberately reads NHL's boxscore endpoint
+// directly rather than player_game_logs: that table is only written once a
+// game goes FINAL (see checkAndUpdateFinishedGames's 15-min poll below), so
+// it can't reflect a game still in progress. Boxscore has the current line
+// either way. fantasyPointsTonight uses the same FANTASY_SCORING weights as
+// getTeamPointsForDateRange, computed here so the client never re-derives
+// scoring math itself.
+// ============================================================
+let tonightBoxscoresCache = { data: null, fetchedAt: 0 };
+const TONIGHT_BOXSCORES_TTL_MS = 25 * 1000;
+
+function skaterFantasyPointsTonight(s) {
+    let fp = (s.goals || 0) * FANTASY_SCORING.goal + (s.assists || 0) * FANTASY_SCORING.assist +
+        (s.shots || 0) * FANTASY_SCORING.shot + (s.plusMinus || 0) * FANTASY_SCORING.plusMinus;
+    return Math.round(fp * 10) / 10;
+}
+
+function goalieFantasyPointsTonight(s) {
+    let fp = (s.decision === 'W' ? FANTASY_SCORING.win : 0) +
+        (s.shutout ? FANTASY_SCORING.shutout : 0) +
+        (s.saves || 0) * FANTASY_SCORING.save +
+        (s.goalsAgainst || 0) * FANTASY_SCORING.goalsAgainst;
+    return Math.round(fp * 10) / 10;
+}
+
+app.get('/tonight-boxscores', async (req, res) => {
+    try {
+        const now = Date.now();
+        if (tonightBoxscoresCache.data && (now - tonightBoxscoresCache.fetchedAt) < TONIGHT_BOXSCORES_TTL_MS) {
+            return res.json(tonightBoxscoresCache.data);
+        }
+
+        const scoreResponse = await fetch('https://api-web.nhle.com/v1/score/now');
+        if (!scoreResponse.ok) return res.json({ players: [], games: [], generatedAt: new Date().toISOString() });
+        const scoreData = await scoreResponse.json();
+        const startedGames = (scoreData.games || []).filter(g =>
+            ['LIVE', 'CRIT', 'FINAL', 'OFF'].includes(g.gameState));
+
+        const boxscores = await Promise.all(startedGames.map(async g => {
+            try {
+                const res2 = await fetch(`https://api-web.nhle.com/v1/gamecenter/${g.id}/boxscore`);
+                if (!res2.ok) return null;
+                return await res2.json();
+            } catch { return null; }
+        }));
+
+        const players = [];
+        boxscores.forEach((box, i) => {
+            if (!box) return;
+            const game = startedGames[i];
+            const stats = box.playerByGameStats || {};
+            ['awayTeam', 'homeTeam'].forEach(side => {
+                const teamAbbrev = box[side]?.abbrev || (side === 'awayTeam' ? game.awayTeam?.abbrev : game.homeTeam?.abbrev) || '';
+                const roster = stats[side] || {};
+                ['forwards', 'defense'].forEach(group => {
+                    (roster[group] || []).forEach(p => {
+                        players.push({
+                            playerName: p.name?.default || '',
+                            teamAbbrev,
+                            position: 'F',
+                            goals: p.goals || 0,
+                            assists: p.assists || 0,
+                            shots: p.sog || 0,
+                            plusMinus: p.plusMinus || 0,
+                            gameId: game.id,
+                            gameState: game.gameState,
+                            fantasyPointsTonight: skaterFantasyPointsTonight({
+                                goals: p.goals, assists: p.assists, shots: p.sog, plusMinus: p.plusMinus
+                            })
+                        });
+                    });
+                });
+                (roster.goalies || []).forEach(p => {
+                    const decision = p.decision || null;
+                    const shutout = (p.goalsAgainst === 0) && decision === 'W';
+                    players.push({
+                        playerName: p.name?.default || '',
+                        teamAbbrev,
+                        position: 'G',
+                        saves: p.saveShotsAgainst ? parseInt((p.saveShotsAgainst.split('/')[0] || '0'), 10) : 0,
+                        goalsAgainst: p.goalsAgainst || 0,
+                        decision,
+                        shutout,
+                        gameId: game.id,
+                        gameState: game.gameState,
+                        fantasyPointsTonight: goalieFantasyPointsTonight({
+                            decision, shutout, saves: p.saveShotsAgainst ? parseInt((p.saveShotsAgainst.split('/')[0] || '0'), 10) : 0,
+                            goalsAgainst: p.goalsAgainst
+                        })
+                    });
+                });
+            });
+        });
+
+        const games = startedGames.map(g => ({
+            id: g.id,
+            state: g.gameState,
+            period: g.periodDescriptor?.number ?? null,
+            periodType: g.periodDescriptor?.periodType || null,
+            clock: g.clock ? { timeRemaining: g.clock.timeRemaining || '', inIntermission: !!g.clock.inIntermission } : null,
+            away: { abbrev: g.awayTeam?.abbrev || '', score: g.awayTeam?.score ?? 0 },
+            home: { abbrev: g.homeTeam?.abbrev || '', score: g.homeTeam?.score ?? 0 }
+        }));
+
+        const payload = { players, games, generatedAt: new Date().toISOString() };
+        tonightBoxscoresCache = { data: payload, fetchedAt: now };
+        res.json(payload);
+    } catch (error) {
+        console.error('❌ Error fetching tonight boxscores:', error.message);
+        res.json({ players: [], games: [], generatedAt: new Date().toISOString() });
+    }
+});
+
+// ============================================================
+// POOL RANK MOVEMENT — real "moved up N places since this morning", backed
+// by the daily snapshot snapshotAllPoolRanks() writes at midnight (see the
+// cron section below). Never fabricated: if no snapshot exists yet for
+// today, hasSnapshot is false and the frontend shows the plain current rank
+// with no movement badge.
+// ============================================================
+app.get('/pool-rank-movement/:poolName', async (req, res) => {
+    try {
+        const { poolName } = req.params;
+        const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
+        if (poolResult.rows.length === 0) return res.status(404).json({ message: 'Pool not found' });
+        const poolData = poolResult.rows[0].pool_data;
+
+        const statsData = await loadCurrentStats();
+        const liveScores = computeTeamSeasonScores(poolData, statsData.players || []);
+
+        const todayISO = new Date().toISOString().slice(0, 10);
+        const snapResult = await db.query(
+            `SELECT team_name, rank, points FROM pool_rank_snapshots WHERE pool_name = $1 AND snapshot_date = $2`,
+            [poolName, todayISO]
+        );
+
+        if (snapResult.rows.length === 0) {
+            return res.json({
+                hasSnapshot: false,
+                teams: liveScores.map(t => ({ teamName: t.teamName, rankNow: t.rank, pointsNow: t.score }))
+            });
+        }
+
+        const snapByTeam = new Map(snapResult.rows.map(r => [r.team_name, r]));
+        const teams = liveScores.map(t => {
+            const snap = snapByTeam.get(t.teamName);
+            return {
+                teamName: t.teamName,
+                rankNow: t.rank,
+                pointsNow: t.score,
+                rankToday: snap ? snap.rank : null,
+                pointsToday: snap ? Number(snap.points) : null
+            };
+        });
+
+        res.json({ hasSnapshot: true, teams });
+    } catch (error) {
+        console.error('❌ Error computing pool rank movement:', error.message);
+        res.json({ hasSnapshot: false, teams: [] });
     }
 });
 

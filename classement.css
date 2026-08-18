@@ -529,6 +529,69 @@ body {
     margin: 0;
 }
 
+/* Recent form: windowed best-team leaderboard, relocated from the old
+   homepage Activity tab (see accueil-dash.js). Same flat register as the
+   Hall of Fame block above it, just with a window switcher up top. */
+.recent-form-leaderboard {
+    margin-top: 36px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-light);
+}
+
+.recent-form-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.recent-form-head .hof-title { margin: 0; }
+
+.time-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.time-filter {
+    padding: 6px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--text-secondary);
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    cursor: pointer;
+    transition: border-color .15s ease, color .15s ease;
+}
+
+.time-filter:hover { border-color: var(--primary); color: var(--primary); }
+
+.time-filter.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--bg);
+}
+
+.leaderboard-list { display: flex; flex-direction: column; gap: 8px; }
+
+.leaderboard-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    background: var(--card);
+}
+
+.lb-rank { flex-shrink: 0; width: 26px; text-align: center; font-size: 1rem; font-weight: 800; color: var(--text-light-gray); }
+.lb-rank.gold   { color: var(--warning); }
+.lb-rank.silver { color: #B8B8CC; }
+.lb-rank.bronze { color: #CD7F32; }
+.lb-team { flex: 1; min-width: 0; font-size: .92rem; font-weight: 700; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-pts { flex-shrink: 0; font-size: 1rem; font-weight: 800; color: var(--primary); }
+.lb-source { flex-shrink: 0; font-size: .7rem; color: var(--text-light-gray); }
+
 /* ==================== ROSTER VIEW (Level 3) ==================== */
 .roster-list {
     display: flex;

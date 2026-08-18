@@ -1,0 +1,460 @@
+/* ============================================================
+   ACCUEIL DASHBOARD — "Éditorial calme" (2A bureau / 1A téléphone)
+   ------------------------------------------------------------
+   Replace le tableau de bord du membre connecté (ancien
+   .dash-header + onglets Tableau de bord/Activité). Palette et
+   typographie volontairement distinctes du reste du site (voir
+   DESIGN.md) : un module éditorial autonome, non branché sur le
+   bouton clair/sombre (theme.js) — toujours la même apparence.
+   Portée strictement limitée à .fz-dash : aucun jeton partagé
+   (--primary, --bg, etc. définis dans index.css) n'est touché.
+   ============================================================ */
+
+.fz-dash-section {
+    display: none; /* accueil-dash.js le révèle une fois un pool actif chargé */
+    padding: 56px 24px 72px;
+    background: #dedbd5;
+}
+
+.fz-dash {
+    max-width: 1200px;
+    margin: 0 auto;
+
+    --fzd-bg: #f7f6f3;
+    --fzd-bg-alt: #f2f0eb;
+    --fzd-surface: #ffffff;
+    --fzd-ink: #16181a;
+    --fzd-ink-soft: #3d3a35;
+    --fzd-text: #4b4843;
+    --fzd-text-muted: #6d6a64;
+    --fzd-text-faint: #8a877f;
+    --fzd-text-fainter: #a8a49c;
+    --fzd-border: #e2dfd8;
+    --fzd-border-strong: #cdcac3;
+    --fzd-border-soft: #eae7e0;
+    --fzd-accent: #c4442e;
+    --fzd-accent-dark: #a8371f;
+    --fzd-tile-bg: #eceae4;
+
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--fzd-text);
+}
+
+.fz-dash * { box-sizing: border-box; }
+.fz-dash a { color: var(--fzd-accent); text-decoration: none; }
+.fz-dash a:hover { color: var(--fzd-accent-dark); }
+
+.fz-dash .fzd-display {
+    font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+
+.fzd-eyebrow {
+    font: 600 12px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--fzd-ink);
+}
+
+.fzd-link {
+    font: 600 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+/* ------------------------------------------------------------ */
+/* Pool actif — habille le bandeau partagé de poolNav.js         */
+/* (data-fz-context / .fz-context-bar) plutôt que d'en refaire   */
+/* un : même tiroir, même bouton « Changer ».                    */
+/* ------------------------------------------------------------ */
+.fz-dash-context { margin-bottom: 18px; }
+.fz-dash-context .fz-context-bar {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 12px 16px;
+    background: var(--fzd-surface);
+    border: 1px solid var(--fzd-border-strong);
+    border-radius: 14px;
+}
+.fz-dash-context .fz-context-img { width: 34px; height: 34px; border-radius: 999px; object-fit: cover; }
+.fz-dash-context .fz-context-txt { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.fz-dash-context .fz-context-label { font: 500 10px/1 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: .13em; text-transform: uppercase; color: var(--fzd-text-faint); }
+.fz-dash-context .fz-context-name { font: 600 16px/1 'Oswald', sans-serif; color: var(--fzd-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fz-dash-context .fz-context-switch {
+    flex-shrink: 0;
+    padding: 8px 13px;
+    border: 1px solid var(--fzd-border-strong);
+    border-radius: 9px;
+    background: transparent;
+    font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--fzd-ink);
+    cursor: pointer;
+}
+.fz-dash-context .fz-context-switch:hover { background: var(--fzd-bg-alt); }
+
+/* ------------------------------------------------------------ */
+/* Onboarding — membre inscrit mais sans pool actif : remplace   */
+/* le calendrier et le corps du tableau de bord.                 */
+/* ------------------------------------------------------------ */
+.fz-dash-onboard {
+    display: none;
+    text-align: center;
+    padding: 40px 24px;
+    background: var(--fzd-surface);
+    border: 1px solid var(--fzd-border-strong);
+    border-radius: 14px;
+}
+.fzd-onboard-text { font: 500 15px/1.4 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink-soft); margin: 0 0 18px; }
+.fzd-onboard-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.fzd-onboard-actions .fzd-cta-btn { padding: 12px 22px; }
+
+/* ------------------------------------------------------------ */
+/* Calendrier — pleine largeur, au-dessus de tout le reste       */
+/* ------------------------------------------------------------ */
+.fz-dash-calendar {
+    background: var(--fzd-surface);
+    border: 1px solid var(--fzd-border-strong);
+    border-radius: 14px;
+    padding: 20px 22px 22px;
+    margin-bottom: 18px;
+}
+
+.fzd-cal-head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.fzd-cal-nav { display: flex; align-items: center; gap: 4px; }
+.fzd-cal-nav-btn {
+    width: 26px; height: 26px;
+    border: 1px solid var(--fzd-border);
+    border-radius: 7px;
+    background: transparent;
+    color: var(--fzd-text-muted);
+    font: 600 13px/1 'Helvetica Neue', Helvetica, sans-serif;
+    cursor: pointer;
+    display: grid; place-items: center;
+}
+.fzd-cal-nav-btn:hover { border-color: var(--fzd-ink); color: var(--fzd-ink); }
+
+.fzd-cal-spacer { flex: 1; }
+
+.fzd-cal-strip {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    scrollbar-width: none;
+}
+.fzd-cal-strip::-webkit-scrollbar { display: none; }
+
+.fzd-day-chip {
+    flex: 0 0 auto;
+    width: 46px;
+    padding: 8px 0;
+    text-align: center;
+    border-radius: 9px;
+    border: 1px solid var(--fzd-border);
+    background: var(--fzd-bg);
+    cursor: pointer;
+}
+.fzd-day-chip:hover { border-color: var(--fzd-ink); }
+.fzd-day-chip-dow { font: 500 9px/1 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--fzd-text-fainter); }
+.fzd-day-chip-num { margin-top: 5px; font: 600 16px/1 'Oswald', sans-serif; color: var(--fzd-text-muted); }
+
+.fzd-day-chip.is-today { background: var(--fzd-ink); border-color: var(--fzd-ink); }
+.fzd-day-chip.is-today .fzd-day-chip-dow { color: var(--fzd-text-faint); }
+.fzd-day-chip.is-today .fzd-day-chip-num { color: #fff; }
+
+.fzd-day-chip.is-selected:not(.is-today) { border-color: var(--fzd-ink); }
+.fzd-day-chip.is-selected:not(.is-today) .fzd-day-chip-num { color: var(--fzd-ink); }
+
+.fzd-cal-games {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.fzd-cal-games::-webkit-scrollbar { display: none; }
+
+.fzd-game-card {
+    flex: 0 0 auto;
+    width: 132px;
+    border: 1px solid var(--fzd-border);
+    border-radius: 11px;
+    background: var(--fzd-surface);
+    padding: 10px 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+.fzd-game-card.is-scheduled { background: var(--fzd-bg); }
+
+.fzd-game-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font: 700 8.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--fzd-accent);
+}
+.fzd-game-card.is-scheduled .fzd-game-status,
+.fzd-game-card.is-final .fzd-game-status { color: var(--fzd-text-fainter); }
+.fzd-live-dot { width: 5px; height: 5px; border-radius: 999px; background: var(--fzd-accent); flex-shrink: 0; }
+
+.fzd-game-row { display: flex; align-items: center; justify-content: space-between; }
+.fzd-game-team { display: flex; align-items: center; gap: 6px; }
+.fzd-team-logo { width: 19px; height: 19px; border-radius: 4px; background: var(--fzd-tile-bg); object-fit: contain; }
+.fzd-team-abbr { font: 600 12px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink); }
+.fzd-team-abbr.is-trailing { color: var(--fzd-text-faint); }
+.fzd-team-score { font: 600 16px/1 'Oswald', sans-serif; color: var(--fzd-ink); }
+.fzd-team-score.is-trailing { color: var(--fzd-text-faint); }
+.fzd-team-score.is-dash { font: 400 11px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-fainter); }
+
+.fzd-game-foot {
+    font: 400 10px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-fainter);
+    border-top: 1px solid var(--fzd-border-soft);
+    padding-top: 7px;
+}
+
+.fzd-cal-empty {
+    padding: 20px 4px;
+    font: 400 13px/1.4 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-faint);
+}
+
+/* Sélecteur de mois, dépliable — remplace un lien mort vers une page
+   de calendrier qui n'existe pas. */
+.fzd-cal-month {
+    display: none;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--fzd-border);
+}
+.fzd-cal-month.is-open { display: block; }
+
+.fzd-month-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.fzd-month-label { font: 600 13px/1 'Oswald', sans-serif; letter-spacing: .02em; color: var(--fzd-ink); }
+
+.fzd-month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.fzd-month-dow { text-align: center; font: 600 9px/1 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--fzd-text-fainter); padding-bottom: 6px; }
+.fzd-month-cell {
+    aspect-ratio: 1;
+    display: grid; place-items: center;
+    border-radius: 8px;
+    font: 500 12px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-muted);
+    cursor: pointer;
+}
+.fzd-month-cell:hover { background: var(--fzd-bg-alt); }
+.fzd-month-cell.is-empty { cursor: default; }
+.fzd-month-cell.is-empty:hover { background: transparent; }
+.fzd-month-cell.is-today { background: var(--fzd-ink); color: #fff; font-weight: 700; }
+.fzd-month-cell.is-selected:not(.is-today) { border: 1px solid var(--fzd-ink); color: var(--fzd-ink); }
+
+/* ------------------------------------------------------------ */
+/* Corps — deux colonnes en bureau (2A), empilé en téléphone (1A) */
+/* Même DOM des deux côtés : seule la grille change d'agencement */
+/* via grid-template-areas, donc l'ordre 1A (live, joueurs, mes   */
+/* pools, actions rapides, activité, cta) reste l'ordre du DOM,   */
+/* et 2A réagence sans dupliquer aucun bloc.                     */
+/* ------------------------------------------------------------ */
+.fz-dash-body {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+        "live"
+        "players"
+        "mypools"
+        "quickactions"
+        "activity"
+        "cta";
+    gap: 0;
+    background: var(--fzd-surface);
+    border: 1px solid var(--fzd-border-strong);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.fz-dash-live       { grid-area: live; }
+.fz-dash-players    { grid-area: players; }
+.fz-dash-mypools     { grid-area: mypools; background: var(--fzd-bg-alt); }
+.fz-dash-quickactions { grid-area: quickactions; }
+.fz-dash-activity    { grid-area: activity; background: var(--fzd-bg-alt); }
+.fz-dash-cta         { grid-area: cta; background: var(--fzd-bg-alt); }
+
+.fz-dash-live, .fz-dash-players, .fz-dash-quickactions { padding: 22px 20px; border-bottom: 1px solid var(--fzd-border); }
+.fz-dash-mypools, .fz-dash-activity { padding: 20px; }
+.fz-dash-cta { padding: 0 20px 22px; }
+
+.fzd-section-title {
+    font: 600 13px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--fzd-ink);
+}
+
+/* ---- Live / pre-game panel ---- */
+.fzd-live-head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.fzd-live-badge { display: flex; align-items: center; gap: 8px; font: 700 10.5px/1 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--fzd-accent); }
+.fzd-live-rule { flex: 1; height: 1px; background: var(--fzd-border); }
+.fzd-live-updated { font: 400 11.5px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
+
+.fzd-live-hero { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.fzd-live-score { font: 600 64px/.85 'Oswald', sans-serif; letter-spacing: -.02em; color: var(--fzd-ink); }
+.fzd-live-score-lbl { font: 500 14px/1.15 'Oswald', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--fzd-text-muted); padding-bottom: 8px; }
+
+.fzd-live-rank { margin-top: 10px; font: 400 13px/1.3 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink-soft); }
+.fzd-live-rank-move { color: var(--fzd-accent); font-weight: 600; }
+
+.fzd-live-stats { margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--fzd-border); border-top: 1px solid var(--fzd-border); border-bottom: 1px solid var(--fzd-border); }
+.fzd-live-stat { background: var(--fzd-bg); padding: 12px 14px; }
+.fzd-live-stat-num { font: 600 26px/1 'Oswald', sans-serif; color: var(--fzd-ink); }
+.fzd-live-stat-lbl { margin-top: 5px; font: 500 10px/1 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: .11em; text-transform: uppercase; color: var(--fzd-text-faint); }
+
+.fzd-pregame-lbl { font: 700 10px/1 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--fzd-text-faint); margin-bottom: 14px; }
+.fzd-pregame-clock { font: 600 46px/.9 'Oswald', sans-serif; color: var(--fzd-ink); }
+.fzd-pregame-sub { margin-top: 8px; font: 400 13px/1.4 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink-soft); }
+.fzd-pregame-list { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.fzd-pregame-row { display: flex; align-items: center; gap: 10px; font: 400 13px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink-soft); }
+.fzd-pregame-time { font: 600 11px/1 'Oswald', sans-serif; color: var(--fzd-text-muted); width: 52px; flex-shrink: 0; }
+.fzd-pregame-sep { color: #c9c5bd; }
+.fzd-pregame-count { color: var(--fzd-text-faint); }
+
+.fzd-live-empty { font: 400 13px/1.5 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
+
+/* ---- Vos joueurs ce soir ---- */
+.fzd-players-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+.fzd-players-list { display: flex; flex-direction: column; }
+.fzd-player-row { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--fzd-border-soft); }
+.fzd-player-row:last-child { border-bottom: none; }
+.fzd-player-badge { width: 32px; height: 32px; border-radius: 6px; background: var(--fzd-tile-bg); display: grid; place-items: center; font: 600 10px/1 'Oswald', sans-serif; letter-spacing: .04em; color: var(--fzd-text); overflow: hidden; }
+.fzd-player-badge img { width: 100%; height: 100%; object-fit: contain; }
+.fzd-player-id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.fzd-player-name { font: 600 15px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fzd-player-meta { font: 400 11.5px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fzd-player-pts { font: 600 22px/1 'Oswald', sans-serif; color: var(--fzd-accent); flex-shrink: 0; }
+.fzd-player-pts.is-zero { color: var(--fzd-text-fainter); }
+.fzd-players-empty { padding: 14px 0; font: 400 13px/1.4 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
+
+/* ---- Repêchage / Échanges ---- */
+.fzd-actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fzd-action-tile {
+    padding: 14px;
+    border: 1px solid var(--fzd-border-strong);
+    border-radius: 12px;
+    background: var(--fzd-surface);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    text-decoration: none;
+}
+.fzd-action-tile:hover { border-color: var(--fzd-ink); }
+.fzd-action-tile.is-attention { border-color: var(--fzd-accent); }
+.fzd-action-eyebrow { font: 500 10px/1 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--fzd-text-faint); }
+.fzd-action-tile.is-attention .fzd-action-eyebrow { color: var(--fzd-accent); }
+.fzd-action-value { font: 600 17px/1 'Oswald', sans-serif; color: var(--fzd-ink); }
+.fzd-action-detail { font: 400 11.5px/1.3 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-muted); }
+
+/* ---- Mes pools ---- */
+.fzd-mypools-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+.fzd-mypools-count { font: 400 12px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
+.fzd-pool-row { display: flex; align-items: center; gap: 13px; padding: 14px 0; border-bottom: 1px solid var(--fzd-border); }
+.fzd-pool-row:last-child { border-bottom: none; }
+.fzd-pool-icon { width: 34px; height: 34px; border-radius: 6px; background: repeating-linear-gradient(135deg, #e6e3db 0 5px, #dcd8d0 5px 10px); flex-shrink: 0; }
+.fzd-pool-id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.fzd-pool-name { font: 600 15px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fzd-pool-meta { font: 400 11.5px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
+.fzd-pool-sep { color: #c9c5bd; }
+.fzd-pool-trend-up { color: var(--fzd-accent); font-weight: 600; }
+.fzd-pool-trend-down { color: var(--fzd-text-muted); font-weight: 600; }
+.fzd-pool-trend-flat { color: var(--fzd-text-fainter); font-weight: 600; }
+.fzd-pool-rank { display: flex; align-items: baseline; gap: 2px; flex-shrink: 0; }
+.fzd-pool-rank-num { font: 600 27px/1 'Oswald', sans-serif; color: var(--fzd-ink); }
+.fzd-pool-rank-total { font: 400 13px/1 'Oswald', sans-serif; color: var(--fzd-text-fainter); }
+.fzd-mypools-more { display: block; padding-top: 14px; }
+
+/* ---- Activité de la ligue ---- */
+.fzd-activity-title { margin-bottom: 4px; }
+.fzd-activity-list { display: flex; flex-direction: column; margin-top: 10px; }
+.fzd-activity-row { padding: 12px 0; border-bottom: 1px solid var(--fzd-border-soft); display: flex; gap: 12px; }
+.fzd-activity-row:last-child { border-bottom: none; }
+.fzd-activity-time { flex-shrink: 0; width: 40px; font: 600 11px/1.4 'Oswald', sans-serif; color: var(--fzd-text-fainter); }
+.fzd-activity-text { flex: 1; font: 400 13px/1.45 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink-soft); }
+.fzd-activity-text strong { font-weight: 600; }
+.fzd-activity-empty { padding: 12px 0; font: 400 13px/1.4 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
+
+/* ---- Créer / Rejoindre ---- */
+.fzd-cta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fzd-cta-btn {
+    padding: 13px;
+    text-align: center;
+    border-radius: 10px;
+    font: 600 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-decoration: none;
+}
+.fzd-cta-btn.is-primary { background: var(--fzd-ink); color: #fff; }
+.fzd-cta-btn.is-primary:hover { background: #000; color: #fff; }
+.fzd-cta-btn.is-secondary { border: 1px solid var(--fzd-ink); color: var(--fzd-ink); }
+.fzd-cta-btn.is-secondary:hover { background: #e6e3db; }
+
+/* ============================================================
+   BUREAU — 2A (≥769px) : calendrier plus dense, corps en deux
+   colonnes (1fr / 400px), même DOM.
+   ============================================================ */
+@media (min-width: 769px) {
+    .fz-dash-section { padding: 64px 32px 88px; }
+
+    .fzd-cal-games {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        overflow: visible;
+    }
+    .fzd-cal-games .fzd-game-card { width: auto; }
+
+    .fz-dash-body {
+        grid-template-columns: 1fr 400px;
+        grid-template-areas:
+            "live      mypools"
+            "players   activity"
+            "quickactions cta";
+    }
+    .fz-dash-live, .fz-dash-players, .fz-dash-quickactions { padding: 28px 34px; }
+    .fz-dash-mypools, .fz-dash-activity { padding: 28px 30px; border-left: 1px solid var(--fzd-border); }
+    .fz-dash-cta { padding: 0 30px 30px; border-left: 1px solid var(--fzd-border); }
+
+    .fz-dash-live { border-right: 1px solid var(--fzd-border); }
+    .fz-dash-players { border-right: 1px solid var(--fzd-border); }
+    .fz-dash-quickactions { border-right: 1px solid var(--fzd-border); border-bottom: none; }
+
+    .fzd-live-score { font-size: 108px; }
+    .fzd-live-score-lbl { font-size: 17px; }
+    .fzd-live-stat-num { font-size: 28px; }
+    .fzd-pregame-clock { font-size: 84px; }
+
+    .fzd-players-head { margin-bottom: 0; }
+    .fzd-player-name { font-size: 16px; }
+}
+
+/* ============================================================
+   TÉLÉPHONE — 1A (≤768px)
+   ============================================================ */
+@media (max-width: 768px) {
+    .fz-dash-section { padding: 40px 16px 56px; }
+    .fzd-cal-strip { padding-bottom: 10px; }
+    .fzd-actions-grid { gap: 10px; }
+    .fzd-cta-grid { gap: 10px; }
+}

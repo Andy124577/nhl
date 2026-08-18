@@ -115,6 +115,25 @@ async function initializeDatabase() {
         `);
         console.log('✅ Cached stats table ready');
 
+        // Create pool_rank_snapshots table — one row per team per day, taken
+        // just after the midnight stats refresh (see snapshotAllPoolRanks in
+        // server.js). Lets the homepage show real "▲2 places since this
+        // morning" movement instead of inventing a trend with nothing to
+        // diff against.
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS pool_rank_snapshots (
+                id SERIAL PRIMARY KEY,
+                pool_name VARCHAR(255) NOT NULL,
+                team_name VARCHAR(255) NOT NULL,
+                rank INT NOT NULL,
+                points NUMERIC NOT NULL,
+                snapshot_date DATE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(pool_name, team_name, snapshot_date)
+            );
+        `);
+        console.log('✅ Pool rank snapshots table ready');
+
         console.log('✅ Database initialization complete');
     } catch (error) {
         console.error('❌ Error initializing database:', error);

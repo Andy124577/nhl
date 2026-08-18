@@ -95,6 +95,7 @@ function switchTradeTab(tab) {
     // Update sections
     document.getElementById('proposeTradeSection').classList.toggle('active', tab === 'propose');
     document.getElementById('receivedTradeSection').classList.toggle('active', tab === 'received');
+    document.getElementById('forSaleTradeSection').classList.toggle('active', tab === 'forsale');
 
     // Returning to the propose tab from a completed trade should restart the wizard
     if (tab === 'propose') {
@@ -107,6 +108,45 @@ function switchTradeTab(tab) {
     if (tab === 'received') {
         loadReceivedTrades();
         loadCompletedTrades();
+    }
+
+    if (tab === 'forsale') {
+        loadForSaleList();
+    }
+}
+
+// ============================================================
+// FOR-SALE LISTINGS — players a pool member has flagged as open to offers.
+// Same single-letter codes trade.js's own getCategory() uses internally.
+// ============================================================
+const LISTING_CATEGORY_CODE = { offensive: 'F', defensive: 'D', goalie: 'G', rookie: 'R', team: 'T' };
+
+async function loadForSaleList() {
+    const grid = document.getElementById('forSaleList');
+    const activePool = FZPool.get();
+    if (!grid || !activePool) return;
+    try {
+        const res = await fetch(`${BASE_URL}/trade-listings/${encodeURIComponent(activePool)}`, { cache: 'no-store' });
+        const listings = res.ok ? await res.json() : [];
+
+        if (!listings.length) {
+            grid.innerHTML = `<p class="for-sale-empty">Aucun joueur en vente actuellement dans ce pool.</p>`;
+            return;
+        }
+
+        grid.innerHTML = listings.map(listing => {
+            const code = LISTING_CATEGORY_CODE[listing.category] || 'F';
+            const url = `trade.html?pool=${encodeURIComponent(activePool)}&withTeam=${encodeURIComponent(listing.teamName)}&wantPlayer=${encodeURIComponent(listing.playerName)}&category=${code}`;
+            return `
+                <a class="for-sale-chip" href="${url}">
+                    <span class="fsc-badge">À vendre</span>
+                    <span class="fsc-name">${listing.playerName.replace(/"/g, '&quot;')}</span>
+                    <span class="fsc-team">${listing.teamName.replace(/"/g, '&quot;')}</span>
+                </a>`;
+        }).join('');
+    } catch (err) {
+        console.warn('Could not load for-sale listings:', err);
+        grid.innerHTML = `<p class="for-sale-empty">Impossible de charger les joueurs en vente.</p>`;
     }
 }
 

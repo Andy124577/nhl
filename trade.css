@@ -1062,6 +1062,48 @@ body {
     min-height: 200px;
 }
 
+/* ------------------------------------------------------------ */
+/* Joueurs à vendre — relocalisé depuis l'ancien onglet Activité  */
+/* de l'accueil (voir accueil-dash.js) : seul endroit du site où */
+/* cette fonctionnalité existait, elle vit maintenant ici.       */
+/* ------------------------------------------------------------ */
+.for-sale-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.for-sale-empty {
+    grid-column: 1 / -1;
+    padding: 20px 4px;
+    color: var(--text-secondary);
+    font-size: .9rem;
+}
+
+.for-sale-chip {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    background: var(--card);
+    text-decoration: none;
+    transition: transform .15s ease, border-color .15s ease;
+}
+
+.for-sale-chip:hover,
+.for-sale-chip:focus-visible {
+    transform: translateY(-3px);
+    border-color: rgba(0,212,255,.28);
+}
+
+.for-sale-chip:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.fsc-badge { align-self: flex-start; font-size: .7rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--warning); }
+.fsc-name { font-size: .92rem; font-weight: 700; color: var(--text-dark); }
+.fsc-team { font-size: .78rem; color: var(--text-secondary); }
+
 .received-trade-card {
     background: var(--bg-hover);
     border: 2px solid var(--border-light);

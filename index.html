@@ -17,10 +17,13 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Accueil dashboard ("éditorial calme") uniquement : voir accueil-dash.css -->
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css">
     <link rel="stylesheet" href="poolNav.css">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="accueil.css">
+    <link rel="stylesheet" href="accueil-dash.css">
     <link rel="stylesheet" href="demos.css">
     <link rel="stylesheet" href="skeleton-loader.css">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -35,10 +38,10 @@
     <!-- ============================================================ -->
     <!-- STORIES — real NHL live-game scores/events and real news      -->
     <!-- (signings, trades), auto-advancing. Pinned to the top of the  -->
-    <!-- page (member-only, active pool required — see renderDashHeader -->
-    <!-- in accueil.js) so it stays visible regardless of which home    -->
-    <!-- tab is selected below. Hidden whenever there is nothing real   -->
-    <!-- to show — see accueil.js; never a placeholder.                -->
+    <!-- page (member-only, active pool required — see maybeLoadStories -->
+    <!-- in accueil.js) so it stays visible above the dashboard below.  -->
+    <!-- Hidden whenever there is nothing real to show — never a       -->
+    <!-- placeholder.                                                   -->
     <!-- ============================================================ -->
     <section class="home-section stories-section" id="storiesSection" style="display:none;">
         <div class="section-container">
@@ -156,171 +159,93 @@
             </div>
         </div>
 
-        <!-- Membre : un coup d'œil sur le pool actif (pas l'ensemble de vos
-             pools — voir "Mes classements" plus bas pour ça), plus les
-             raccourcis de gestion. Remplace tout le contenu marketing
-             ci-dessus, basculé par la classe posée avant le premier rendu
-             (voir le script en tête de <head>). -->
-        <div class="dash-header" id="dashHeader">
-            <div class="pg-card" id="poolGlance">
-                <!-- Classement + statuts repêchage/échanges du pool actif -->
-                <div class="pg-col pg-col-rank">
-                    <div class="pg-rank-block">
-                        <div class="pg-block-head">
-                            <span class="pg-block-icon" data-icon="trophy" data-icon-size="14"></span>
-                            <span class="pg-block-label">Classement</span>
-                        </div>
-                        <div class="pg-rank-value">
-                            <span class="pg-rank-num" id="pgRankNum">—</span>
-                            <span class="pg-rank-total" id="pgRankTotal"></span>
-                        </div>
-                        <div class="pg-rank-foot">
-                            <span class="pg-rank-pool" id="pgRankPool">—</span>
-                            <span class="pg-rank-pts" id="pgRankPts">—</span>
-                        </div>
-                    </div>
-                    <div class="pg-status-grid">
-                        <a href="repechage.html" class="pg-status-tile" id="pgDraftTile">
-                            <span class="pg-status-icon" data-icon="clock" data-icon-size="16"></span>
-                            <span class="pg-status-label">Repêchage</span>
-                            <span class="pg-status-value" id="pgDraftValue">—</span>
-                        </a>
-                        <a href="trade.html" class="pg-status-tile" id="pgTradeTile">
-                            <span class="pg-status-icon" data-icon="swap" data-icon-size="16"></span>
-                            <span class="pg-status-label">Échanges</span>
-                            <span class="pg-status-value" id="pgTradeValue">—</span>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Effectif du pool actif (meilleurs pointeurs) -->
-                <div class="pg-col pg-col-roster">
-                    <div class="pg-roster-head">
-                        <h2 class="pg-roster-title">Votre effectif</h2>
-                        <a href="mes-pools.html" class="pg-roster-link">Voir tout →</a>
-                    </div>
-                    <div class="pg-roster-list" id="pgRosterList">
-                        <div class="skeleton" style="height:44px;border-radius:10px;margin-bottom:8px;"></div>
-                        <div class="skeleton" style="height:44px;border-radius:10px;"></div>
-                    </div>
-                </div>
-
-                <!-- Créer / rejoindre un autre pool -->
-                <div class="pg-col pg-col-actions">
-                    <a href="creer-pool.html" class="pg-action-btn">
-                        <span class="pg-action-icon" data-icon="plus" data-icon-size="20"></span>
-                        <span class="pg-action-label">Créer un pool</span>
-                    </a>
-                    <a href="rejoindre-pool.html" class="pg-action-btn">
-                        <span class="pg-action-icon" data-icon="search" data-icon-size="20"></span>
-                        <span class="pg-action-label">Rejoindre un pool</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Signed-up, no active pool yet — the one state that still needs
-                 the "create or join" conversion CTAs instead of the card above. -->
-            <div class="dash-onboard" id="dashOnboard" style="display:none;">
-                <p class="dash-onboard-text">Vous ne faites partie d'aucun pool.</p>
-                <div class="dash-onboard-actions">
-                    <a href="creer-pool.html" class="btn-hero-primary"><span data-icon="rocket" data-icon-size="16"></span> Créer un pool</a>
-                    <a href="rejoindre-pool.html" class="btn-hero-secondary">Rejoindre un pool →</a>
-                </div>
-            </div>
-        </div>
+        <!-- Membre : le tableau de bord "éditorial calme" (accueil-dash.js /
+             accueil-dash.css) remplace tout le contenu marketing ci-dessus,
+             basculé par la classe posée avant le premier rendu (voir le
+             script en tête de <head>). -->
     </section>
 
     <!-- ============================================================ -->
-    <!-- HOME TABS — Tableau de bord / Activité de la ligue            -->
-    <!-- Member-only, scoped to the active pool (see accueil.js).      -->
-    <!-- Anonymous visitors and members with no active pool never see -->
-    <!-- this switcher — same gate #poolGlance itself uses.            -->
+    <!-- TABLEAU DE BORD — calendrier saison complète, suivi en direct, -->
+    <!-- repêchage/échanges, mes pools, activité de la ligue. Design    -->
+    <!-- distinct du reste du site par choix (voir accueil-dash.css) :  -->
+    <!-- module éditorial autonome, pas branché sur le thème clair/     -->
+    <!-- sombre. Masqué par défaut ; accueil-dash.js le révèle une fois -->
+    <!-- FZPool prêt (membre connecté avec un pool actif ou non).       -->
     <!-- ============================================================ -->
-    <section class="home-section home-tabs-section" id="homeTabsSection" style="display:none;">
-        <div class="section-container">
-            <div class="home-tabs" role="tablist">
-                <button class="home-tab active" data-tab="dashboard" role="tab" aria-selected="true" onclick="switchHomeTab('dashboard')">
-                    <span data-icon="home" data-icon-size="16"></span> Tableau de bord
-                </button>
-                <button class="home-tab" data-tab="activity" role="tab" aria-selected="false" onclick="switchHomeTab('activity')">
-                    <span data-icon="swap" data-icon-size="16"></span> Activité de la ligue
-                </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================================ -->
-    <!-- MY RANKINGS SECTION (all pools the user belongs to)          -->
-    <!-- ============================================================ -->
-    <section class="home-section my-rankings-section home-tab-panel" data-tab-panel="dashboard" id="myRankingsSection" style="display:none;">
-        <div class="section-container">
-            <div class="section-title-row">
-                <div class="section-title-group">
-                    <span class="section-icon" data-icon="trophy" data-icon-size="28"></span>
-                    <h2 class="section-title">Mes classements</h2>
-                    <span class="section-subtitle" id="myRankingsCount"></span>
-                </div>
-                <a href="classement.html" class="section-link">Voir tout →</a>
+    <section class="fz-dash-section" id="fzDashSection">
+        <div class="fz-dash">
+            <div class="fz-dash-context" id="fzDashContext">
+                <div data-fz-context></div>
             </div>
 
-            <div class="rankings-table">
-                <div class="rankings-head">
-                    <span>Pool</span>
-                    <span class="rk-col-rank">Rang</span>
-                    <span class="rk-col-pts">Points</span>
+            <!-- Inscrit mais sans pool actif -->
+            <div class="fz-dash-onboard" id="fzDashOnboard">
+                <p class="fzd-onboard-text">Vous ne faites partie d'aucun pool.</p>
+                <div class="fzd-onboard-actions">
+                    <a href="creer-pool.html" class="fzd-cta-btn is-primary">Créer un pool</a>
+                    <a href="rejoindre-pool.html" class="fzd-cta-btn is-secondary">Rejoindre un pool →</a>
                 </div>
-                <div class="rankings-scroll" id="myRankingsList">
-                    <!-- Filled by JS -->
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================================ -->
-    <!-- LEAGUE ACTIVITY — for-sale listings, a multi-window best-team -->
-    <!-- leaderboard, and the active pool's completed trades. Hidden   -->
-    <!-- until the "Activité" tab is opened; accueil.js lazy-loads its -->
-    <!-- data on first open so it costs nothing otherwise.             -->
-    <!-- ============================================================ -->
-    <section class="home-section activity-section home-tab-panel" data-tab-panel="activity" id="activitySection" style="display:none;">
-        <div class="section-container">
-            <div class="section-title-row">
-                <div class="section-title-group">
-                    <span class="section-icon" data-icon="tag" data-icon-size="28"></span>
-                    <h2 class="section-title">Joueurs à vendre</h2>
-                </div>
-            </div>
-            <div class="for-sale-scroll" id="forSaleList">
-                <!-- Filled by JS -->
             </div>
 
-            <div class="section-title-row">
-                <div class="section-title-group">
-                    <span class="section-icon" data-icon="trophy" data-icon-size="28"></span>
-                    <h2 class="section-title">Meilleures équipes</h2>
-                    <span class="section-subtitle" id="leaderboardWindowLabel">7 derniers jours</span>
+            <!-- Calendrier — saison complète, GET /schedule/:date -->
+            <div class="fz-dash-calendar" id="fzDashCalendarWrap">
+                <div class="fzd-cal-head">
+                    <span class="fzd-eyebrow">Calendrier</span>
+                    <div class="fzd-cal-nav">
+                        <button type="button" class="fzd-cal-nav-btn" id="fzdCalPrev" aria-label="Semaine précédente">‹</button>
+                        <button type="button" class="fzd-cal-nav-btn" id="fzdCalNext" aria-label="Semaine suivante">›</button>
+                    </div>
+                    <div class="fzd-cal-spacer"></div>
+                    <button type="button" class="fzd-link" id="fzdCalMonthToggle" style="background:none;border:none;cursor:pointer;padding:0;">Calendrier complet de la saison →</button>
                 </div>
-                <div class="time-filters">
-                    <button class="time-filter active" data-days="7" onclick="changeActivityWindow(7)">7J</button>
-                    <button class="time-filter" data-days="14" onclick="changeActivityWindow(14)">14J</button>
-                    <button class="time-filter" data-days="30" onclick="changeActivityWindow(30)">30J</button>
-                    <button class="time-filter" data-days="90" onclick="changeActivityWindow(90)">90J</button>
-                    <button class="time-filter" data-days="180" onclick="changeActivityWindow(180)">6M</button>
-                    <button class="time-filter" data-days="365" onclick="changeActivityWindow(365)">1AN</button>
+                <div class="fzd-cal-strip" id="fzdCalStrip"><!-- Filled by accueil-dash.js --></div>
+                <div class="fzd-cal-games" id="fzdCalGames"><!-- Filled by accueil-dash.js --></div>
+
+                <div class="fzd-cal-month" id="fzdCalMonth">
+                    <div class="fzd-month-head">
+                        <button type="button" class="fzd-cal-nav-btn" id="fzdMonthPrevBtn" aria-label="Mois précédent">‹</button>
+                        <span class="fzd-month-label" id="fzdMonthLabel"></span>
+                        <button type="button" class="fzd-cal-nav-btn" id="fzdMonthNextBtn" aria-label="Mois suivant">›</button>
+                    </div>
+                    <div class="fzd-month-grid" id="fzdMonthGrid"><!-- Filled by accueil-dash.js --></div>
                 </div>
-            </div>
-            <div class="leaderboard-list" id="activityLeaderboard">
-                <!-- Filled by JS -->
             </div>
 
-            <div class="section-title-row">
-                <div class="section-title-group">
-                    <span class="section-icon" data-icon="swap" data-icon-size="28"></span>
-                    <h2 class="section-title">Échanges récents</h2>
+            <div class="fz-dash-body" id="fzDashBody">
+                <div class="fz-dash-live">
+                    <div id="fzdLivePanel"><!-- Filled by accueil-dash.js --></div>
                 </div>
-            </div>
-            <div class="trade-feed-list" id="tradeFeedList">
-                <!-- Filled by JS -->
+
+                <div class="fz-dash-players">
+                    <div class="fzd-players-head">
+                        <span class="fzd-section-title">Vos joueurs ce soir</span>
+                    </div>
+                    <div class="fzd-players-list" id="fzdPlayersList"><!-- Filled by accueil-dash.js --></div>
+                </div>
+
+                <div class="fz-dash-mypools">
+                    <div class="fzd-mypools-head">
+                        <span class="fzd-section-title">Mes pools</span>
+                        <span class="fzd-mypools-count" id="fzdMyPoolsCount"></span>
+                    </div>
+                    <div id="fzdMyPoolsList"><!-- Filled by accueil-dash.js --></div>
+                    <a class="fzd-link fzd-mypools-more" id="fzdMyPoolsSeeAll" href="classement.html"></a>
+                </div>
+
+                <div class="fz-dash-quickactions" id="fzdQuickActions"><!-- Filled by accueil-dash.js --></div>
+
+                <div class="fz-dash-activity">
+                    <span class="fzd-section-title fzd-activity-title">Activité de la ligue</span>
+                    <div class="fzd-activity-list" id="fzdActivityList"><!-- Filled by accueil-dash.js --></div>
+                </div>
+
+                <div class="fz-dash-cta">
+                    <div class="fzd-cta-grid">
+                        <a href="creer-pool.html" class="fzd-cta-btn is-primary">Créer un pool</a>
+                        <a href="rejoindre-pool.html" class="fzd-cta-btn is-secondary">Rejoindre</a>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -491,6 +416,7 @@
     <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script defer src="lazy-load.js"></script>
     <script defer src="accueil.js"></script>
+    <script defer src="accueil-dash.js"></script>
     <script defer src="demos.js"></script>
     <script defer src="navbar.js"></script>
     <script defer src="poolNav.js"></script>
