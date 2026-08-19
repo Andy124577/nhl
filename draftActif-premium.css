@@ -381,6 +381,21 @@ body.fz-draft .draft-main-container {
 body.fz-draft .draft-center { order: 1; gap: 16px; }
 body.fz-draft .draft-sidebar { order: 2; gap: 16px; }
 
+/* Bureau (§11) : chaque onglet range ses cartes dans sa propre grille
+   interne (apercu-col-main/-side pour l'Aperçu ; sidebar de position +
+   tableau + carte pour la Liste des joueurs). Ces enveloppes restent
+   transparentes ici : sur téléphone, tout s'empile dans l'ordre naturel
+   du flex column posé sur .draft-sidebar/.draft-center. */
+body.fz-draft .apercu-col-main,
+body.fz-draft .apercu-col-side { display: contents; }
+
+/* Mon alignement, sidebar de position et carte « Joueur sélectionné » :
+   propres à la vue bureau (§11) — le suivi et les pastilles/le <select>
+   déjà en place suffisent sur téléphone. */
+body.fz-draft .lineup-card,
+body.fz-draft .list-filters-sidebar,
+body.fz-draft .selected-player-card { display: none; }
+
 /* ---------- Carte générique ---------- */
 body.fz-draft .progress-card,
 body.fz-draft .recent-picks-card,
@@ -474,6 +489,178 @@ body.fz-draft .favorite-row-name { color: var(--fzd-ink); font-weight: 600; font
 body.fz-draft .favorite-row-pos { color: var(--fzd-text-faint); font-size: .72rem; }
 body.fz-draft .favorite-btn { color: var(--fzd-accent); }
 body.fz-draft .favorite-btn:hover { color: var(--fzd-accent-dark); }
+
+/* ============================================================
+   5bis. SUGGESTION
+   ============================================================ */
+body.fz-draft .suggestion-card { border-color: var(--fzd-accent); }
+body.fz-draft .suggestion-body {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  flex-wrap: wrap;
+}
+body.fz-draft .suggestion-body[hidden] { display: none; }
+body.fz-draft .suggestion-photo {
+  width: 44px; height: 44px;
+  border-radius: 8px;
+  background: repeating-linear-gradient(135deg, var(--fzd-tile-bg) 0 5px, var(--fzd-border-input) 5px 10px);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+body.fz-draft .suggestion-photo img { width: 100%; height: 100%; object-fit: cover; }
+body.fz-draft .suggestion-info { flex: 1 1 140px; min-width: 140px; display: flex; flex-direction: column; gap: 4px; }
+body.fz-draft .suggestion-tag {
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--fzd-accent);
+}
+body.fz-draft .suggestion-name { font-size: 1.02rem; font-weight: 600; color: var(--fzd-ink); }
+body.fz-draft .suggestion-meta { font-size: .78rem; color: var(--fzd-text-faint); }
+body.fz-draft .suggestion-actions { display: flex; gap: 8px; align-items: center; }
+
+/* ============================================================
+   5ter. MON ALIGNEMENT
+   ============================================================ */
+body.fz-draft .lineup-list { display: flex; flex-direction: column; }
+body.fz-draft .lineup-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--fzd-border);
+}
+body.fz-draft .lineup-row:last-child { border-bottom: 0; }
+body.fz-draft .lineup-tile {
+  width: 26px; height: 26px;
+  border-radius: 5px;
+  background: var(--fzd-tile-bg);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+body.fz-draft .lineup-tile img { width: 100%; height: 100%; object-fit: contain; }
+body.fz-draft .lineup-name { flex: 1; font-size: .88rem; font-weight: 600; color: var(--fzd-ink); }
+body.fz-draft .lineup-round { font-size: .74rem; color: var(--fzd-text-faint); }
+
+/* ============================================================
+   5quater. DERNIERS CHOIX (texte)
+   ============================================================ */
+body.fz-draft .recent-feed-list { display: flex; flex-direction: column; }
+body.fz-draft .recent-feed-row {
+  display: flex;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--fzd-border-soft);
+  font-size: .82rem;
+  color: var(--fzd-ink-soft);
+  line-height: 1.4;
+}
+body.fz-draft .recent-feed-row:last-child { border-bottom: 0; }
+body.fz-draft .recent-feed-slot {
+  flex: 0 0 auto;
+  width: 30px;
+  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+  font-weight: 600;
+  font-size: .74rem;
+  color: var(--fzd-text-fainter);
+}
+body.fz-draft .recent-feed-text strong { font-weight: 600; color: var(--fzd-ink); }
+
+/* ============================================================
+   5quinquies. SIDEBAR DE POSITION (bureau, Liste des joueurs)
+   ============================================================ */
+body.fz-draft .list-filters-title {
+  margin: 0 0 11px;
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--fzd-text-faint);
+}
+body.fz-draft .list-filters-block { margin-bottom: 22px; }
+body.fz-draft .list-filters-positions { display: flex; flex-direction: column; gap: 2px; }
+body.fz-draft .list-filter-position {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font-size: .84rem;
+  font-weight: 500;
+  color: var(--fzd-ink-soft);
+  cursor: pointer;
+}
+body.fz-draft .list-filter-position:hover:not(:disabled) { background: var(--fzd-bg-alt); }
+body.fz-draft .list-filter-position .list-filter-count { color: var(--fzd-text-fainter); font-weight: 400; font-size: .78rem; }
+body.fz-draft .list-filter-position.is-active {
+  background: var(--fzd-ink);
+  color: #fff;
+  font-weight: 600;
+}
+body.fz-draft .list-filter-position.is-active .list-filter-count { color: rgba(255, 255, 255, .65); font-weight: 600; }
+body.fz-draft .list-filter-position:disabled { opacity: .5; cursor: not-allowed; }
+
+body.fz-draft .list-filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  font-size: .84rem;
+  color: var(--fzd-ink-soft);
+  cursor: pointer;
+}
+body.fz-draft .list-filter-checkbox:hover { background: var(--fzd-bg-alt); }
+body.fz-draft .list-filter-checkbox input { width: 15px; height: 15px; accent-color: var(--fzd-ink); }
+
+/* ============================================================
+   5sexies. JOUEUR SÉLECTIONNÉ (bureau, Liste des joueurs)
+   ============================================================ */
+body.fz-draft .selected-player-card { border-color: var(--fzd-accent); }
+body.fz-draft .selected-player-body[hidden] { display: none; }
+body.fz-draft .selected-player-head { display: flex; align-items: center; gap: 13px; }
+body.fz-draft .selected-player-photo {
+  width: 46px; height: 46px;
+  border-radius: 8px;
+  background: repeating-linear-gradient(135deg, var(--fzd-tile-bg) 0 5px, var(--fzd-border-input) 5px 10px);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+body.fz-draft .selected-player-photo img { width: 100%; height: 100%; object-fit: cover; }
+body.fz-draft .selected-player-ident { flex: 1; min-width: 0; }
+body.fz-draft .selected-player-name { font-size: 1.05rem; font-weight: 600; color: var(--fzd-ink); }
+body.fz-draft .selected-player-meta { margin-top: 5px; font-size: .78rem; color: var(--fzd-text-faint); }
+body.fz-draft .selected-player-actions { display: flex; gap: 8px; margin-top: 14px; }
+body.fz-draft .selected-player-needs-title {
+  margin-top: 20px;
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--fzd-ink);
+}
+body.fz-draft .selected-player-need-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--fzd-border);
+  font-size: .82rem;
+  color: var(--fzd-accent);
+  font-weight: 500;
+}
+body.fz-draft .selected-player-need-row:last-child { border-bottom: 0; }
+
+/* Ligne survolée/choisie du tableau — pilotée par draftApercuExtra.js. */
+body.fz-draft #playerTable tbody tr.fzd-selected-row {
+  background: var(--fzd-surface);
+  box-shadow: inset 3px 0 0 var(--fzd-accent);
+}
+body.fz-draft #playerTable tbody tr.fzd-filtered-out { display: none; }
 
 /* ============================================================
    6. FILTRES, RECHERCHE, ONGLETS DE CATÉGORIE
@@ -640,8 +827,25 @@ body.fz-draft #fzPickedList tbody tr:nth-child(even) {
   border: 1px solid var(--fzd-border);
   transition: background .15s ease, border-color .15s ease;
 }
+/* !important + transform/box-shadow réinitialisés : index.css pose un
+   `tbody tr:hover { background: var(--bg-hover) !important; transform:
+   translateY(-1px); box-shadow: 0 2px 12px rgba(0,212,255,.15) }` global
+   (l'ancien zébrage cyan) que la seule spécificité ne suffit pas à battre
+   sur la propriété background — le survol retombait sur un fond presque
+   noir avec un halo cyan. Même geste que le reste de ce fichier (ex. §1,
+   .draft-header.is-my-turn) : neutraliser CHAQUE propriété posée, pas
+   seulement la couleur. */
 body.fz-draft #playerTable tbody tr:hover,
-body.fz-draft #fzPickedList tbody tr:hover { background: var(--fzd-bg-alt); border-color: var(--fzd-border-strong); }
+body.fz-draft #fzPickedList tbody tr:hover {
+  background: var(--fzd-bg-alt) !important;
+  border-color: var(--fzd-border-strong);
+  transform: none;
+  box-shadow: none;
+}
+/* La rangée sélectionnée (draftApercuExtra.js) garde son filet rouge même
+   survolée — box-shadow n'est pas concerné par le !important ci-dessus,
+   qui ne porte que sur background/transform. */
+body.fz-draft #playerTable tbody tr.fzd-selected-row:hover { box-shadow: inset 3px 0 0 var(--fzd-accent); }
 /* État vide (§8, draftActif.css) : texte centré, pas une carte de joueur. */
 body.fz-draft #playerTable tbody tr.draft-empty-row,
 body.fz-draft #playerTable tbody tr.draft-empty-row:hover {
@@ -831,14 +1035,47 @@ body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-dark); color:
   body.fz-draft .recent-picks-card,
   body.fz-draft .panel-tabs { padding-left: 0; padding-right: 0; }
 
+  /* Une seule colonne à ce niveau : l'onglet actif (initPanelTabs(),
+     draftActifUI.js) pose mode-apercu/mode-joueurs sur ce conteneur et
+     cache l'autre panneau par JS (style.display). Chaque mode construit
+     sa propre grille plus bas — sans ça, la colonne du panneau masqué
+     restait réservée, vide, à côté de l'autre. */
   body.fz-draft .draft-main-container {
     display: grid;
-    grid-template-columns: 1fr 340px;
+    grid-template-columns: 1fr;
     align-items: start;
     padding: 28px 34px 72px;
   }
   body.fz-draft .draft-center { order: initial; }
   body.fz-draft .draft-sidebar { order: initial; }
+
+  /* ---- Aperçu (3B) : suggestion + favoris à gauche, suivi à droite ---- */
+  body.fz-draft .draft-main-container.mode-apercu .draft-sidebar {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    align-items: start;
+  }
+  body.fz-draft .draft-main-container.mode-apercu .apercu-col-main,
+  body.fz-draft .draft-main-container.mode-apercu .apercu-col-side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+  body.fz-draft .lineup-card { display: block; }
+
+  /* ---- Liste des joueurs (4B) : position, tableau, joueur sélectionné ---- */
+  body.fz-draft .draft-main-container.mode-joueurs .draft-center {
+    display: grid;
+    grid-template-columns: 250px 1fr 340px;
+    gap: 20px;
+    align-items: start;
+  }
+  body.fz-draft .list-filters-sidebar,
+  body.fz-draft .selected-player-card { display: block; }
+  body.fz-draft .player-selection-card { min-width: 0; }
+  body.fz-draft #playerTable tbody tr { cursor: pointer; }
 
   body.fz-draft .filters-header-select.is-replaced { display: none; }
   body.fz-draft .category-tabs { display: flex; overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; }

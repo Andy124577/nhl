@@ -32,7 +32,6 @@
        couleurs. -->
   <link rel="stylesheet" href="index.css" />
   <link rel="stylesheet" href="navbar.css">
-    <link rel="stylesheet" href="poolNav.css">
   <link rel="stylesheet" href="skeleton-loader.css" />
   <link rel="stylesheet" href="draftActif.css?v=20260810d" />
   <link rel="stylesheet" href="draftActif-premium.css?v=20260818a" />
@@ -149,6 +148,25 @@
     <!-- Left Column: Draft Order & Progress -->
     <div class="draft-sidebar">
 
+      <!-- Bureau (voir draftActif-premium.css §11) : deux colonnes internes
+           à l'onglet Aperçu — suggestion + favoris à gauche, suivi à
+           droite. Sur téléphone, .apercu-col-main/.apercu-col-side
+           s'effacent (display:contents) et les cinq cartes s'empilent dans
+           leur ordre naturel. -->
+      <div class="apercu-col-main">
+
+      <!-- Suggestion : meilleur favori encore libre, priorité à un poste
+           manquant ("comble un trou") — draftApercuExtra.js. Rien n'est
+           inventé : la fiche vient des mêmes tableaux que le reste de la
+           page (fullPlayerData / goalieData). -->
+      <div class="suggestion-card progress-card" id="suggestionCard">
+        <div class="card-header">
+          <h2>Suggestion</h2>
+        </div>
+        <p class="no-picks suggestion-empty" id="suggestionEmpty">Aucune suggestion pour l'instant.</p>
+        <div class="suggestion-body" hidden></div>
+      </div>
+
       <!-- Mes favoris : joueurs mis de côté depuis la liste (étoile dans la
            colonne Action). Consultable même hors de son tour ; peuplé par
            draftFavorites.js. Rien n'est envoyé au serveur — uniquement
@@ -163,6 +181,10 @@
         <p class="no-picks" id="favoritesEmpty">Aucun favori pour l'instant — l'étoile de la liste des joueurs les ajoute ici.</p>
         <div class="favorites-list" id="favoritesList"></div>
       </div>
+
+      </div>
+
+      <div class="apercu-col-side">
 
       <!-- Your Progress -->
       <!-- id nécessaire pour initPanelTabs() (draftActifUI.js) : la classe
@@ -236,10 +258,50 @@
         </div>
       </div>
 
+      <!-- Mon alignement : vos choix confirmés, dans l'ordre où ils ont été
+           faits. Bureau seulement (voir draftActif-premium.css, §11) : sur
+           téléphone, "Ma progression" ci-dessus suffit déjà à savoir où on
+           en est. draftApercuExtra.js. -->
+      <div class="lineup-card progress-card" id="lineupCard">
+        <div class="card-header">
+          <h2>Mon alignement</h2>
+        </div>
+        <div class="lineup-list"></div>
+      </div>
+
+      <!-- Derniers choix, en texte — même historique que la vue "Tous"
+           (draftListePremium.js), résumé aux 3 derniers. draftApercuExtra.js. -->
+      <div class="recent-feed-card progress-card" id="recentPicksFeed">
+        <div class="card-header">
+          <h2>Derniers choix</h2>
+        </div>
+        <div class="recent-feed-list"></div>
+      </div>
+
+      </div>
+
     </div>
 
     <!-- Center Column: Recent Picks Carousel -->
     <div class="draft-center">
+
+      <!-- Sidebar de position (bureau seulement, voir draftActif-premium.css
+           §11) : reprend les catégories réelles de #playerFilter avec un
+           compteur de joueurs disponibles, en plus des pastilles/du <select>
+           déjà dans la carte principale — draftApercuExtra.js. -->
+      <aside class="list-filters-sidebar" id="listFiltersSidebar">
+        <div class="list-filters-block">
+          <h3 class="list-filters-title">Position</h3>
+          <div class="list-filters-positions"></div>
+        </div>
+        <div class="list-filters-block">
+          <h3 class="list-filters-title">Affichage</h3>
+          <label class="list-filter-checkbox">
+            <input type="checkbox" id="listFilterFavoritesOnly">
+            <span>Mes favoris seulement</span>
+          </label>
+        </div>
+      </aside>
 
       <!-- Player Selection Area -->
       <div class="player-selection-card">
@@ -398,6 +460,17 @@
           </p>
         </div>
       </div>
+
+      <!-- Joueur sélectionné (bureau seulement, voir draftActif-premium.css
+           §11) : ouvert par un clic sur une rangée du tableau ; par défaut,
+           la suggestion ci-dessus en tient lieu. draftApercuExtra.js. -->
+      <aside class="selected-player-card progress-card" id="selectedPlayerCard">
+        <div class="card-header">
+          <h2>Joueur sélectionné</h2>
+        </div>
+        <p class="no-picks selected-player-empty" id="selectedPlayerEmpty">Cliquez un joueur dans la liste pour voir sa fiche.</p>
+        <div class="selected-player-body" hidden></div>
+      </aside>
 
     </div>
 
@@ -622,6 +695,12 @@
        Après draftPickFlow.js (réutilise selectPlayer), avant draftActifUI.js
        (qui range #favoritesCard dans l'onglet Aperçu). -->
   <script defer src="draftFavorites.js"></script>
+  <!-- Suggestion, derniers choix, alignement, sidebar de position et carte
+       « Joueur sélectionné » — vue bureau de l'Aperçu et de la Liste des
+       joueurs. Après draftFavorites.js (réutilise ses aides), avant
+       draftActifUI.js (qui range les nouvelles cartes de l'Aperçu dans
+       l'onglet). -->
+  <script defer src="draftApercuExtra.js"></script>
   <!-- Bascule Libres/Tous + liste des joueurs déjà pris (lecture seule) pour
        l'habillage "éditorial calme" (draftActif-premium.css). Même règle que
        draftActifUI.js : aucune logique de repêchage, uniquement de la lecture
@@ -635,7 +714,6 @@
   <!-- Alignement de la rangée « Carrière », partagé avec stats.html. -->
   <script defer src="careerTotals.js"></script>
   <script defer src="navbar.js"></script>
-  <script defer src="poolNav.js"></script>
   <script defer src="notifications.js"></script>
 </body>
 </html>

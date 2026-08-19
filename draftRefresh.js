@@ -107,7 +107,11 @@ function refreshDraftViews() {
     'fzRefreshFavoritesUI',
     // Vue "Tous" (draftListePremium.js) : la liste des joueurs déjà pris
     // change à chaque choix, comme le reste de cette liste.
-    'fzRefreshPickedList'
+    'fzRefreshPickedList',
+    // Suggestion, derniers choix, alignement, sidebar de position et carte
+    // « Joueur sélectionné » (draftApercuExtra.js) : tous dépendent du
+    // tour courant et des choix faits, comme le reste de cette liste.
+    'fzRefreshApercuExtras'
   ];
   rendus.forEach(nom => {
     const fn = window[nom];

@@ -223,14 +223,25 @@ function initPanelTabs() {
             // classe est aussi portée par #favoritesCard (habillage partagé),
             // et querySelector se serait arrêté au premier match.
             els: [
+                document.getElementById('suggestionCard'),
                 document.getElementById('favoritesCard'),
-                document.getElementById('progressCard')
+                document.getElementById('progressCard'),
+                document.getElementById('lineupCard'),
+                document.getElementById('recentPicksFeed')
             ].filter(Boolean)
         },
         {
             cle: 'joueurs',
             libelle: 'Liste des joueurs',
-            els: [document.querySelector('.player-selection-card')].filter(Boolean)
+            // Sidebar de position et carte « Joueur sélectionné » (bureau
+            // seulement, voir draftActif-premium.css, §11) : rangées avec le
+            // tableau plutôt que dans un groupe séparé, un seul onglet en
+            // pilote l'affichage.
+            els: [
+                document.getElementById('listFiltersSidebar'),
+                document.querySelector('.player-selection-card'),
+                document.getElementById('selectedPlayerCard')
+            ].filter(Boolean)
         }
     ].filter(g => g.els.length);
     if (groupes.length < 2) return;
@@ -278,6 +289,12 @@ function initPanelTabs() {
         // c'est en parcourant la liste qu'on a le plus besoin de savoir si
         // c'est encore son tour.
         if (entete) entete.classList.toggle('is-liste-joueurs', actif === 'joueurs');
+        // Bureau (draftActif-premium.css, §11) : chaque onglet a sa propre
+        // grille (3 colonnes pour la liste, 2 pour l'aperçu) — sans ce repère,
+        // la colonne du panneau masqué restait réservée, vide, à côté de
+        // l'autre.
+        conteneur.classList.toggle('mode-apercu', actif === 'apercu');
+        conteneur.classList.toggle('mode-joueurs', actif === 'joueurs');
     };
 
     const activer = (cle, focus) => {
