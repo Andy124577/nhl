@@ -485,7 +485,7 @@ function renderMyPoolsList() {
         return;
     }
 
-    container.innerHTML = pools.map(pool => {
+    container.innerHTML = pools.slice(0, 3).map(pool => {
         const scores = buildTeamScores(pool);
         const claimed = scores.filter(t => t.memberCount > 0);
         const list = claimed.length ? claimed : scores;

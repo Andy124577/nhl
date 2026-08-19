@@ -1,0 +1,850 @@
+/* ============================================================
+   REPÊCHAGE EN DIRECT — "Éditorial calme" (bureau ≥769px / téléphone)
+   ------------------------------------------------------------
+   Remplace entièrement draftActif.css. Palette et typographie
+   volontairement distinctes du reste du site (voir accueil-dash.css,
+   même système, DESIGN.md) : un module éditorial autonome, non
+   branché sur le bouton clair/sombre (theme.js) — toujours la même
+   apparence. Portée strictement limitée à body.fz-draft : aucun
+   jeton partagé (--primary, --bg, etc. définis dans index.css)
+   n'est touché.
+
+   Toute la logique de repêchage (draftActif.js, minifié à dessein —
+   voir son en-tête et celui de draftActifUI.js) reste intacte : ce
+   fichier ne fait que redonner un autre visage aux mêmes ids et
+   classes déjà posés/pilotés par draftActif.js, draftPickCards.js,
+   draftPickFlow.js, draftFavorites.js et draftActifUI.js. Les seuls
+   ajouts DOM (bascule Libres/Tous, liste des joueurs déjà pris) sont
+   dans draftListePremium.js, chargé après ces fichiers.
+   ============================================================ */
+
+body.fz-draft {
+  --fzd-bg: #f7f6f3;
+  --fzd-bg-alt: #f2f0eb;
+  --fzd-bg-page: #dedbd5;
+  --fzd-surface: #ffffff;
+  --fzd-ink: #16181a;
+  --fzd-ink-soft: #3d3a35;
+  --fzd-text: #4b4843;
+  --fzd-text-muted: #6d6a64;
+  --fzd-text-faint: #8a877f;
+  --fzd-text-fainter: #a8a49c;
+  --fzd-border: #e2dfd8;
+  --fzd-border-strong: #cdcac3;
+  --fzd-border-soft: #eae7e0;
+  --fzd-border-input: #d6d3cc;
+  --fzd-accent: #c4442e;
+  --fzd-accent-dark: #a8371f;
+  --fzd-accent-wash: #f7e6e2;
+  --fzd-tile-bg: #e6e3db;
+  --fzd-warning: #b8860b;
+  --fzd-danger: #c4442e;
+
+  margin: 0;
+  min-height: 100vh;
+  background: var(--fzd-bg-page);
+  color: var(--fzd-text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+body.fz-draft * { box-sizing: border-box; }
+body.fz-draft a { color: var(--fzd-accent); text-decoration: none; }
+body.fz-draft a:hover { color: var(--fzd-accent-dark); }
+body.fz-draft button { font-family: inherit; }
+
+/* Chiffres comparés en colonne : Oswald + tabular-nums, comme le
+   reste du système "éditorial calme" (accueil-dash.css). */
+body.fz-draft .fzd-num,
+body.fz-draft .turn-clock,
+body.fz-draft .pick-card-live-badge,
+body.fz-draft .dop-round-num,
+body.fz-draft td.points-column,
+body.fz-draft th.points-column {
+  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+body.fz-draft .sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================================
+   1. EN-TÊTE COLLANT — bandeau de tour + bande de choix
+   ============================================================ */
+/* .draft-header lui-même reste position:relative (règle d'origine,
+   draftActif.css) : c'est .turn-banner, plus bas, qui est sticky à
+   top:60px/56px/70px — SOUS la hauteur du .navbar (position:sticky lui
+   aussi, top:0, z-index:1000). Rendre .draft-header sticky à top:0 le
+   ferait chevaucher le navbar (même ancrage) et disparaître dessous,
+   puisque le navbar porte un z-index bien plus élevé. */
+body.fz-draft .draft-header {
+  padding: 0;
+  background: var(--fzd-bg);
+  border-bottom: 1px solid var(--fzd-border-strong);
+  box-shadow: 0 1px 0 var(--fzd-border);
+}
+/* Le halo cyan animé de l'ancien thème (headerPowerOn/headerTurnGlow)
+   disparaît : la bande sombre du bandeau de tour porte déjà tout le poids
+   du signal "à vous" ; il faut neutraliser CHAQUE propriété que l'ancienne
+   règle posait, pas seulement la couleur du filet, sinon l'animation cyan
+   continue de tourner en dessous. */
+body.fz-draft .draft-header.is-my-turn {
+  border-bottom-color: var(--fzd-accent);
+  outline: none;
+  box-shadow: none;
+  background: var(--fzd-bg);
+  animation: none;
+}
+
+/* Le conteneur reste piloté par draftActif.js (style.display inline, une
+   fois l'ordre du repêchage chargé — voir refreshOverallProgress) : on ne
+   touche pas à cette bascule. #dop-label/#dop-round font double emploi avec
+   le bandeau de tour ci-dessous (même information, déjà dans
+   .turn-banner-sub) et disparaissent ; .turn-banner, lui, reste le seul
+   contenu visible de ce conteneur. */
+body.fz-draft .dop-info { display: block; margin: 0; }
+body.fz-draft #dop-label,
+body.fz-draft #dop-round,
+body.fz-draft .dop-bar { display: none; }
+
+/* ---------- Bandeau de tour ----------
+   position/top/z-index NON touchés : la règle d'origine (draftActif.css)
+   le garde sticky à top:60px (56px ≤480px, 70px ≥769px) et z-index:21,
+   sous le navbar (sticky top:0, z-index:1000) plutôt que par-dessus. */
+body.fz-draft .turn-banner {
+  order: initial;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 0;
+  padding: 12px 16px;
+  border: 0;
+  background: var(--fzd-bg-alt);
+  color: var(--fzd-ink);
+}
+body.fz-draft .turn-banner:not(.waiting):not(.your-turn):not(.done) { display: none; }
+
+body.fz-draft .turn-banner-logo {
+  width: 30px; height: 30px;
+  background: #fff;
+  border: 1px solid var(--fzd-border-strong);
+}
+body.fz-draft .turn-banner-logo[hidden] { display: none; }
+
+body.fz-draft .turn-banner-body { gap: 2px; }
+body.fz-draft .turn-banner-body[hidden] { display: none; }
+body.fz-draft .turn-banner-text {
+  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-size: .92rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+body.fz-draft .turn-banner-sub {
+  font-size: .72rem;
+  font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: none;
+  opacity: .75;
+}
+body.fz-draft .turn-banner-sub:empty { display: none; }
+
+body.fz-draft .turn-banner-marquee { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%); }
+body.fz-draft .turn-banner-marquee[hidden] { display: none; }
+body.fz-draft .turn-banner-marquee-item {
+  padding-right: 48px;
+  font-size: .92rem;
+  font-weight: 600;
+}
+
+/* En attente : neutre. */
+body.fz-draft .turn-banner.waiting { background: var(--fzd-bg-alt); color: var(--fzd-ink-soft); }
+body.fz-draft .turn-banner.waiting.next { background: #f4e9d8; color: #7a5a17; }
+
+/* À vous : bandeau sombre + accent rouge, couleurs de l'équipe du
+   pool en repli sur les jetons neutres — même logique que
+   draftPickCards.js (--team-a/-b/-deep déjà assourdis). */
+body.fz-draft .turn-banner.your-turn {
+  color: #fff;
+  border-color: transparent;
+  box-shadow: none;
+  animation: none;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, .28) 0%, rgba(0, 0, 0, 0) 55%),
+    linear-gradient(158deg, var(--team-a, var(--fzd-ink)) 0%, var(--team-b, #23252a) 62%, var(--team-deep, #0d0e10) 100%);
+}
+body.fz-draft .turn-banner.your-turn::before {
+  content: 'À vous';
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  background: var(--fzd-accent);
+  color: #fff;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  border-radius: 3px;
+  order: -1;
+}
+body.fz-draft .turn-banner.your-turn.is-unbranded { color: var(--fzd-ink); background: var(--fzd-ink); }
+body.fz-draft .turn-banner.done { background: var(--fzd-accent-wash); color: var(--fzd-accent-dark); }
+body.fz-draft .turn-banner.done::before { content: none; }
+
+body.fz-draft .turn-clock { opacity: .85; font-weight: 600; }
+body.fz-draft .turn-clock.is-long { color: var(--fzd-warning); opacity: 1; }
+
+body.fz-draft .draft-live-row { padding: 8px 16px; background: var(--fzd-bg); border-top: 1px solid var(--fzd-border); margin: 0; max-width: none; justify-content: flex-start; }
+body.fz-draft .draft-live-row[hidden] { display: none; }
+
+body.fz-draft .conn-chip {
+  border-radius: 999px;
+  font-size: .7rem;
+  letter-spacing: .05em;
+  padding: 4px 10px;
+}
+body.fz-draft .conn-chip.is-reconnecting { background: #f4e9d8; border-color: #e3c98b; color: #8a6a17; }
+body.fz-draft .conn-chip.is-offline { background: var(--fzd-accent-wash); border-color: #eabdb2; color: var(--fzd-accent-dark); }
+
+body.fz-draft .turn-skip-btn {
+  min-height: 36px;
+  padding: 7px 14px;
+  background: #fff;
+  border: 1px solid var(--fzd-border-input);
+  border-radius: 8px;
+  color: var(--fzd-ink);
+  font-size: .74rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+body.fz-draft .turn-skip-btn:hover { border-color: var(--fzd-ink); background: var(--fzd-bg-alt); }
+body.fz-draft .turn-skip-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(196, 68, 46, .18); }
+body.fz-draft .turn-skip-btn:disabled { opacity: .45; }
+
+/* ---------- Bande de choix (ordre du repêchage) ---------- */
+body.fz-draft .recent-picks-card { padding: 0; background: var(--fzd-bg); border: 0; border-radius: 0; border-top: 1px solid var(--fzd-border); }
+body.fz-draft .picks-carousel {
+  --pick-w: 128px;
+  --pick-h: 96px;
+  padding: 12px 0;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+}
+body.fz-draft .picks-carousel::before,
+body.fz-draft .picks-carousel::after { content: none; }
+body.fz-draft .picks-carousel-empty { color: var(--fzd-text-faint); font-style: normal; }
+
+body.fz-draft .pick-card {
+  border: 1px solid var(--fzd-border);
+  border-radius: 11px;
+  color: var(--fzd-ink);
+  background: var(--fzd-bg-alt);
+  box-shadow: none;
+}
+body.fz-draft .pick-card.is-done {
+  background: var(--fzd-surface);
+  border-color: var(--fzd-border);
+}
+body.fz-draft .pick-card.is-upcoming { background: var(--fzd-surface); border-color: var(--fzd-border); }
+body.fz-draft .pick-card.is-skipped { opacity: .55; }
+body.fz-draft .pick-card.is-current {
+  background: var(--fzd-ink);
+  border-color: var(--fzd-ink);
+  color: #fff;
+  animation: none;
+}
+body.fz-draft .pick-card.is-current .pick-card-name { color: #fff; }
+body.fz-draft .pick-card.is-current .pick-card-slot { color: #fff; opacity: .35; }
+body.fz-draft .pick-card.is-current::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 3px;
+  background: var(--fzd-accent);
+}
+/* Carte de MON tour (sous-état de .is-current) : l'agrandissement reste,
+   le halo cyan devient rouge accent, plus discret. */
+body.fz-draft .pick-card.is-my-turn { box-shadow: 0 0 0 2px var(--fzd-accent); }
+body.fz-draft .pick-card-live-badge {
+  position: absolute;
+  top: 4px; left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--fzd-accent);
+  color: #fff;
+  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  box-shadow: none;
+}
+body.fz-draft .pick-card-photo { background: var(--fzd-tile-bg); }
+body.fz-draft .pick-card-watermark { opacity: .16; }
+body.fz-draft .pick-card-head { padding: 8px 9px 0; }
+body.fz-draft .pick-card-id { gap: 1px; }
+body.fz-draft .pick-card-name {
+  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-weight: 600;
+  font-size: .78rem;
+  color: inherit;
+}
+body.fz-draft .pick-card-pos {
+  font-size: .62rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--fzd-text-faint);
+}
+body.fz-draft .pick-card.is-current .pick-card-pos { color: #c9c5bd; }
+body.fz-draft .pick-card-foot { padding: 0 9px 8px; }
+body.fz-draft .pick-card-owner {
+  font-size: .64rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--fzd-text-faint);
+}
+body.fz-draft .pick-card.is-current .pick-card-owner { color: var(--fzd-accent); }
+body.fz-draft .pick-card-meta { font-size: .66rem; color: var(--fzd-text-faint); }
+body.fz-draft .pick-card.is-current .pick-card-meta { color: #c9c5bd; }
+body.fz-draft .pick-card-select-btn {
+  background: var(--fzd-accent);
+  color: #fff;
+  border-radius: 7px;
+  font-size: .64rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+body.fz-draft .pick-card-select-btn:hover { background: var(--fzd-accent-dark); }
+body.fz-draft .pick-card-initials { color: var(--fzd-text-muted); }
+body.fz-draft .pick-card-logo-chip { background: #fff; border: 1px solid var(--fzd-border); }
+body.fz-draft .pick-card-club .pick-card-abbr { color: var(--fzd-text-muted); }
+
+/* Liste des joueurs : le bandeau de tour reste seul visible et
+   collant (règle déjà posée par draftActif.css / draftActifUI.js
+   via .is-liste-joueurs), le reste de l'en-tête s'efface. */
+body.fz-draft .draft-header.is-liste-joueurs .recent-picks-card,
+body.fz-draft .draft-header.is-liste-joueurs #dop-label,
+body.fz-draft .draft-header.is-liste-joueurs #dop-round {
+  display: none;
+}
+
+/* ============================================================
+   2. ONGLETS DE SECTION — Aperçu / Liste des joueurs
+   ============================================================ */
+body.fz-draft .panel-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--fzd-border);
+  background: var(--fzd-bg);
+}
+body.fz-draft .panel-tab {
+  padding: 13px 0;
+  text-align: center;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--fzd-text-faint);
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+body.fz-draft .panel-tab:hover { color: var(--fzd-ink); }
+body.fz-draft .panel-tab.is-active {
+  color: var(--fzd-ink);
+  font-weight: 600;
+  border-bottom-color: var(--fzd-ink);
+}
+body.fz-draft .panel-tab:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(196, 68, 46, .18); }
+
+/* ============================================================
+   3. GRILLE PRINCIPALE
+   ============================================================ */
+body.fz-draft .draft-main-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px 16px 64px;
+  gap: 20px;
+}
+body.fz-draft .draft-center { order: 1; gap: 16px; }
+body.fz-draft .draft-sidebar { order: 2; gap: 16px; }
+
+/* ---------- Carte générique ---------- */
+body.fz-draft .progress-card,
+body.fz-draft .recent-picks-card,
+body.fz-draft .player-selection-card {
+  padding: 18px;
+  background: var(--fzd-surface);
+  border: 1px solid var(--fzd-border-strong);
+  border-radius: 14px;
+}
+body.fz-draft .recent-picks-card { padding: 0; border-radius: 0; }
+
+body.fz-draft .progress-card h2,
+body.fz-draft .card-header h2,
+body.fz-draft .filters-header h2 {
+  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--fzd-ink);
+}
+body.fz-draft .card-header,
+body.fz-draft .progress-header,
+body.fz-draft .filters-header {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--fzd-border);
+}
+
+/* ============================================================
+   4. MA PROGRESSION
+   ============================================================ */
+body.fz-draft .progress-line { font-size: .82rem; }
+body.fz-draft .progress-emoji { color: var(--fzd-accent); }
+body.fz-draft .progress-text { color: var(--fzd-ink-soft); font-weight: 500; }
+body.fz-draft .progress-mini-bar { background: var(--fzd-border-soft); }
+body.fz-draft .progress-mini-fill { background: var(--fzd-ink); }
+body.fz-draft .progress-mini-fill.complete { background: var(--fzd-accent); }
+body.fz-draft .progress-value { color: var(--fzd-text-muted); font-weight: 600; }
+body.fz-draft .progress-value.complete { color: var(--fzd-accent); }
+body.fz-draft .progress-value.in-progress { color: var(--fzd-warning); }
+body.fz-draft .progress-line[data-position] { cursor: pointer; border-radius: 8px; padding: 4px 6px; margin: 0 -6px; }
+body.fz-draft .progress-line[data-position]:hover,
+body.fz-draft .progress-line.is-open { background: var(--fzd-bg-alt); }
+
+body.fz-draft .progress-details-list {
+  background: var(--fzd-bg-alt);
+  border: 1px solid var(--fzd-border);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 8px 0 14px;
+}
+body.fz-draft .progress-details-header {
+  color: var(--fzd-accent);
+  font-size: .68rem;
+  letter-spacing: .08em;
+}
+body.fz-draft .progress-player-item { background: var(--fzd-surface); border-color: var(--fzd-border); border-radius: 9px; }
+body.fz-draft .progress-player-item:hover { border-color: var(--fzd-ink); transform: none; }
+body.fz-draft .progress-player-photo { background: var(--fzd-tile-bg); }
+body.fz-draft .progress-player-name { color: var(--fzd-ink-soft); }
+body.fz-draft .no-picks { color: var(--fzd-text-faint); font-style: normal; font-size: .8rem; }
+
+/* ============================================================
+   5. MES FAVORIS
+   ============================================================ */
+body.fz-draft .favorites-count {
+  display: inline-flex;
+  min-width: 20px; height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--fzd-ink);
+  color: #fff;
+  font-size: .68rem;
+  font-weight: 700;
+  align-items: center;
+  justify-content: center;
+}
+body.fz-draft .favorite-group-header { padding: 10px 0 6px; border-top: 1px solid var(--fzd-border-soft); }
+body.fz-draft .favorite-group:first-child .favorite-group-header { border-top: 0; }
+body.fz-draft .favorite-group-label { color: var(--fzd-text-muted); font-size: .72rem; letter-spacing: .07em; text-transform: uppercase; font-weight: 600; }
+body.fz-draft .favorite-group-count { color: var(--fzd-text-fainter); font-size: .72rem; }
+body.fz-draft .favorite-group-icon { color: var(--fzd-accent); }
+body.fz-draft .favorite-row { padding: 10px 0; border-bottom: 1px solid var(--fzd-border-soft); gap: 10px; }
+body.fz-draft .favorite-row:hover { border-color: var(--fzd-border-soft); }
+body.fz-draft .favorite-group-header:hover { background: var(--fzd-bg-alt); }
+body.fz-draft .favorite-group-icon { color: var(--fzd-accent); }
+body.fz-draft .favorite-group.is-open .favorite-group-header::after { color: var(--fzd-ink); }
+body.fz-draft .favorite-row-photo { background: var(--fzd-tile-bg); width: 30px; height: 30px; }
+body.fz-draft .favorite-row-name { color: var(--fzd-ink); font-weight: 600; font-size: .88rem; }
+body.fz-draft .favorite-row-pos { color: var(--fzd-text-faint); font-size: .72rem; }
+body.fz-draft .favorite-btn { color: var(--fzd-accent); }
+body.fz-draft .favorite-btn:hover { color: var(--fzd-accent-dark); }
+
+/* ============================================================
+   6. FILTRES, RECHERCHE, ONGLETS DE CATÉGORIE
+   ------------------------------------------------------------
+   Téléphone : le <select> #playerFilter est le contrôle principal, les
+   pastilles de catégorie sont masquées (initCategoryTabs() les construit
+   quand même — voir draftActifUI.js — mais elles ne s'affichent qu'à
+   partir de 769px). Sans cette règle les deux contrôles apparaissent en
+   même temps sur téléphone. */
+body.fz-draft .category-tabs { display: none; }
+
+body.fz-draft .filters-header-select,
+body.fz-draft .filter-select {
+  min-height: 40px;
+  padding: 8px 12px;
+  background: var(--fzd-surface);
+  border: 1px solid var(--fzd-border-input);
+  border-radius: 9px;
+  color: var(--fzd-ink);
+  font-size: .84rem;
+  font-weight: 500;
+}
+body.fz-draft .filter-select:hover { border-color: var(--fzd-ink); }
+body.fz-draft .filter-select:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(196, 68, 46, .18); }
+
+body.fz-draft .category-tabs { gap: 6px; margin-bottom: 12px; }
+body.fz-draft .category-tab {
+  padding: 8px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--fzd-border-input);
+  background: var(--fzd-surface);
+  color: var(--fzd-text-muted);
+  font-size: .72rem;
+  font-weight: 500;
+  letter-spacing: .04em;
+}
+/* :hover doit rejouer TOUTES les propriétés que l'ancienne règle y posait
+   (fond, couleur, bordure) — un survol laissé partiel ici retombe sur le
+   cyan de draftActif.css, comme il l'a fait une première fois. */
+body.fz-draft .category-tab:hover:not(:disabled) {
+  background: var(--fzd-surface);
+  border-color: var(--fzd-ink);
+  color: var(--fzd-ink);
+}
+body.fz-draft .category-tab.is-active,
+body.fz-draft .category-tab.is-active:hover {
+  background: var(--fzd-ink);
+  border-color: var(--fzd-ink);
+  color: #fff;
+  font-weight: 600;
+}
+body.fz-draft .category-tab.is-unavailable,
+body.fz-draft .category-tab:disabled,
+body.fz-draft .category-tab.is-unavailable:hover {
+  background: var(--fzd-bg-alt);
+  border-color: var(--fzd-border);
+  color: var(--fzd-text-fainter);
+  opacity: .7;
+}
+
+/* ---- Nouveau : bascule Libres / Tous (draftListePremium.js) ---- */
+body.fz-draft .availability-tabs {
+  display: inline-flex;
+  border: 1px solid var(--fzd-border-input);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+body.fz-draft .availability-tab {
+  padding: 7px 13px;
+  background: var(--fzd-surface);
+  border: 0;
+  color: var(--fzd-text-muted);
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+body.fz-draft .availability-tab + .availability-tab { border-left: 1px solid var(--fzd-border-input); }
+body.fz-draft .availability-tab:hover { background: var(--fzd-bg-alt); }
+body.fz-draft .availability-tab.is-active { background: var(--fzd-ink); color: #fff; }
+
+body.fz-draft .search-field {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 13px;
+  background: var(--fzd-surface);
+  border: 1px solid var(--fzd-border-input);
+  border-radius: 9px;
+}
+body.fz-draft .search-field:focus-within { border-color: var(--fzd-ink); box-shadow: 0 0 0 3px rgba(196, 68, 46, .12); }
+body.fz-draft .search-field-icon,
+body.fz-draft .search-field:focus-within .search-field-icon { color: var(--fzd-text-fainter); }
+body.fz-draft .search-input {
+  flex: 1;
+  border: 0;
+  background: none;
+  color: var(--fzd-ink);
+  font-size: .88rem;
+}
+body.fz-draft .search-input::placeholder { color: var(--fzd-text-fainter); }
+body.fz-draft .search-input:focus { outline: none; }
+
+body.fz-draft .filters-row { gap: 10px; margin-bottom: 14px; }
+
+/* ============================================================
+   7. TABLEAU DES JOUEURS
+   ============================================================ */
+body.fz-draft .table-wrapper { overflow-x: auto; }
+body.fz-draft #playerTable { width: 100%; border-collapse: separate; border-spacing: 0; }
+/* #fzPickedList (draftListePremium.js, vue "Tous") est un <table> ordinaire
+   — il ne porte aucune des règles structurelles de draftActif.css (§18 n'y
+   applique pas, seul #playerTable y est ciblé) — donc tout, y compris la
+   mise en page de base, se pose ici plutôt que de compter sur un héritage
+   qui n'existe pas. */
+body.fz-draft #fzPickedList {
+  width: 100%;
+  min-width: 480px;
+  table-layout: auto;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+body.fz-draft #playerTable thead th,
+body.fz-draft #fzPickedList thead th {
+  padding: 8px 10px;
+  background: var(--fzd-bg-alt);
+  border-bottom: 1px solid var(--fzd-border-strong);
+  border-radius: 0;
+  color: var(--fzd-text-fainter);
+  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-size: .64rem;
+  font-weight: 600;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  text-align: right;
+  white-space: nowrap;
+}
+body.fz-draft #playerTable thead th:nth-child(2),
+body.fz-draft #fzPickedList thead th:nth-child(2) { text-align: left; }
+/* Colonne Pts : texte gras et sombre, comme dans le mockup — pas de pastille
+   de couleur, ni sur l'en-tête ni sur chaque rangée (l'ancien fond cyan). */
+body.fz-draft #playerTable thead th.points-column,
+body.fz-draft #playerTable tbody tr td.points-column,
+body.fz-draft #playerTable tbody tr:hover td.points-column {
+  background: none;
+  color: var(--fzd-ink);
+}
+
+/* Chaque <tr> de #playerTable est structurellement une rangée flex (§18 de
+   draftActif.css, --col-rank/--col-stat/--col-action), pas une ligne de
+   tableau classique — la structure reste celle du fichier de base, seule
+   l'habille change ici : une carte claire plutôt que la carte sombre
+   d'origine (--bg-odd-row). #fzPickedList, lui, reste un <tr> ordinaire :
+   même carte claire, mais posée en ligne pleine largeur avec un simple
+   filet — index.css lui appliquerait sinon son zébrage cyan par défaut
+   (tbody tr:nth-child(odd/even), global à toute la page). */
+body.fz-draft #playerTable tbody tr,
+body.fz-draft #fzPickedList tbody tr,
+body.fz-draft #fzPickedList tbody tr:nth-child(odd),
+body.fz-draft #fzPickedList tbody tr:nth-child(even) {
+  background: var(--fzd-surface);
+  border: 1px solid var(--fzd-border);
+  transition: background .15s ease, border-color .15s ease;
+}
+body.fz-draft #playerTable tbody tr:hover,
+body.fz-draft #fzPickedList tbody tr:hover { background: var(--fzd-bg-alt); border-color: var(--fzd-border-strong); }
+/* État vide (§8, draftActif.css) : texte centré, pas une carte de joueur. */
+body.fz-draft #playerTable tbody tr.draft-empty-row,
+body.fz-draft #playerTable tbody tr.draft-empty-row:hover {
+  background: none;
+  border: 0;
+}
+body.fz-draft .draft-empty { color: var(--fzd-text-faint); white-space: normal; }
+body.fz-draft .draft-empty-icon { color: var(--fzd-text-fainter); }
+body.fz-draft #playerTable tbody td,
+body.fz-draft #fzPickedList tbody td {
+  padding: 10px;
+  background: none;
+  border-top: 0;
+  border-bottom: 0;
+  color: var(--fzd-text-muted);
+  font-size: .82rem;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+body.fz-draft #playerTable tbody td:nth-child(2),
+body.fz-draft #fzPickedList tbody td:nth-child(2) {
+  white-space: normal;
+  font-weight: 600;
+  color: var(--fzd-ink);
+  font-size: .9rem;
+}
+body.fz-draft #playerTable td.points-column,
+body.fz-draft #fzPickedList td.points-column {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--fzd-ink);
+  text-align: right;
+}
+body.fz-draft .fzd-status-cell { white-space: normal; }
+body.fz-draft #fzPickedListWrapper .player-photo { width: 32px; height: 32px; border-radius: 6px; background: var(--fzd-tile-bg); }
+body.fz-draft #fzPickedListWrapper .player-photo .logo { border: 1px solid var(--fzd-border); background: #fff; }
+body.fz-draft .player-photo { width: 32px; height: 32px; border-radius: 6px; background: var(--fzd-tile-bg); }
+body.fz-draft .player-photo .logo { border: 1px solid var(--fzd-border); background: #fff; }
+
+body.fz-draft button.select-button {
+  min-height: 34px;
+  padding: 7px 13px;
+  background: var(--fzd-surface);
+  border: 1px solid var(--fzd-ink);
+  border-radius: 8px;
+  color: var(--fzd-ink);
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+body.fz-draft button.select-button:hover { background: var(--fzd-ink); color: #fff; }
+body.fz-draft button.select-button .select-icon { display: none; }
+body.fz-draft button.select-button::after { content: 'Choisir'; }
+body.fz-draft button.select-button.is-connection-blocked { opacity: .4; filter: none; }
+
+body.fz-draft .favorite-btn.star-toggle {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--fzd-border-input);
+  color: var(--fzd-accent);
+  background: var(--fzd-surface);
+}
+body.fz-draft .favorite-btn.star-toggle:hover { border-color: var(--fzd-accent); }
+body.fz-draft .favorite-btn.star-toggle.is-active { background: var(--fzd-accent-wash); border-color: var(--fzd-accent); }
+
+/* Colonne Statut + rangées déjà repêchées, propres à la vue "Tous"
+   construite par draftListePremium.js. */
+body.fz-draft .fzd-status-cell { color: var(--fzd-text-faint); font-size: .78rem; text-align: right; }
+body.fz-draft tr.fzd-picked-row { opacity: .55; background: var(--fzd-bg-alt); }
+body.fz-draft tr.fzd-picked-row td:nth-child(2) { text-decoration: line-through; }
+body.fz-draft tr.fzd-picked-row td.points-column { color: var(--fzd-text-fainter); }
+
+/* ============================================================
+   8. CHARGEMENT, ALERTES, MODALES
+   ============================================================ */
+/* #loading-container est TOUJOURS display:flex (coquille transparente,
+   pointer-events:none) — seul #loading, à l'intérieur, bascule entre
+   display:none et display:block pendant un chargement réel (draftActif.js).
+   Le fond translucide va donc sur #loading, jamais sur le conteneur : posé
+   sur ce dernier, il aurait recouvert toute la page en permanence. */
+body.fz-draft #loading {
+  background: rgba(222, 219, 213, .85);
+  border-radius: 16px;
+  padding: 18px;
+}
+body.fz-draft .spinner {
+  border-color: var(--fzd-border-strong);
+  border-top-color: var(--fzd-accent);
+}
+
+body.fz-draft .custom-alert-overlay,
+body.fz-draft .pick-confirm-overlay {
+  background: rgba(22, 24, 26, .55);
+  backdrop-filter: blur(4px);
+}
+body.fz-draft .custom-alert-box,
+body.fz-draft .pick-confirm-box {
+  background: var(--fzd-surface);
+  border-radius: 16px;
+  border: 1px solid var(--fzd-border-strong);
+  color: var(--fzd-ink);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .28);
+}
+body.fz-draft .custom-alert-message { color: var(--fzd-ink-soft); }
+body.fz-draft .custom-alert-button,
+body.fz-draft .pick-confirm-btn.is-primary {
+  background: var(--fzd-accent);
+  color: #fff;
+  border-radius: 9px;
+  font-weight: 600;
+}
+body.fz-draft .custom-alert-button:hover,
+body.fz-draft .pick-confirm-btn.is-primary:hover { background: var(--fzd-accent-dark); }
+body.fz-draft .pick-confirm-btn.is-ghost {
+  background: var(--fzd-surface);
+  border: 1px solid var(--fzd-border-input);
+  color: var(--fzd-ink);
+  border-radius: 9px;
+}
+body.fz-draft .pick-confirm-btn.is-ghost:hover { border-color: var(--fzd-ink); background: var(--fzd-bg-alt); }
+body.fz-draft .pick-confirm-title { color: var(--fzd-ink); font-weight: 700; }
+body.fz-draft .pick-confirm-name { color: var(--fzd-ink); font-weight: 700; }
+body.fz-draft .pick-confirm-meta { color: var(--fzd-text-faint); }
+body.fz-draft .pick-confirm-note { color: var(--fzd-text-muted); }
+body.fz-draft .pick-confirm-photo { background: var(--fzd-tile-bg); }
+body.fz-draft .pick-confirm-logo { background: #fff; border: 1px solid var(--fzd-border); }
+
+body.fz-draft .admin-dropdown-menu {
+  background: var(--fzd-surface);
+  border: 1px solid var(--fzd-border-strong);
+  color: var(--fzd-ink);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .2);
+}
+body.fz-draft .admin-dropdown-item:hover { background: var(--fzd-bg-alt); }
+body.fz-draft .admin-dropdown-toggle:hover { border-color: var(--fzd-ink); color: var(--fzd-ink); }
+body.fz-draft .custom-alert-icon.info { color: var(--fzd-ink); }
+
+body.fz-draft .finish-btn {
+  background: var(--fzd-ink);
+  color: #fff;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .22);
+}
+body.fz-draft .finish-btn:hover { background: #000; }
+
+/* ============================================================
+   9. ÉTATS DE FIN ET DE DÉBUT
+   ============================================================ */
+body.fz-draft .draft-done,
+body.fz-draft .draft-notstarted { color: var(--fzd-ink); }
+body.fz-draft .draft-done-title { color: var(--fzd-ink); font-family: 'Oswald', sans-serif; }
+body.fz-draft .draft-done-sub { color: var(--fzd-text-muted); }
+body.fz-draft .draft-done-last { color: var(--fzd-text-muted); }
+body.fz-draft .ddl-player { color: var(--fzd-ink); font-weight: 700; }
+body.fz-draft .draft-done-roster > * {
+  background: var(--fzd-surface);
+  border: 1px solid var(--fzd-border-strong);
+}
+body.fz-draft .draft-done-cta {
+  display: inline-block;
+  margin-top: 18px;
+  padding: 13px 24px;
+  background: var(--fzd-accent);
+  color: #fff;
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  font-size: .78rem;
+}
+body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-dark); color: #fff; }
+
+/* ============================================================
+   10. RÉDUCTION DE MOUVEMENT
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  body.fz-draft * { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+}
+
+/* ============================================================
+   11. BUREAU (≥769px)
+   ============================================================ */
+@media (min-width: 769px) {
+  body.fz-draft .turn-banner { padding: 16px 34px; }
+  body.fz-draft .turn-banner-text { font-size: 1.05rem; }
+  body.fz-draft .picks-carousel { --pick-w: 150px; --pick-h: 108px; padding: 14px 34px; }
+  body.fz-draft .recent-picks-card,
+  body.fz-draft .panel-tabs { padding-left: 0; padding-right: 0; }
+
+  body.fz-draft .draft-main-container {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    align-items: start;
+    padding: 28px 34px 72px;
+  }
+  body.fz-draft .draft-center { order: initial; }
+  body.fz-draft .draft-sidebar { order: initial; }
+
+  body.fz-draft .filters-header-select.is-replaced { display: none; }
+  body.fz-draft .category-tabs { display: flex; overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; }
+  body.fz-draft .category-tabs::-webkit-scrollbar { display: none; }
+
+  body.fz-draft #playerTable thead th,
+  body.fz-draft #playerTable tbody td { padding: 12px 14px; }
+}
+

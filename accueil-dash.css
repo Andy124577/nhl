@@ -12,7 +12,7 @@
 
 .fz-dash-section {
     display: none; /* accueil-dash.js le révèle une fois un pool actif chargé */
-    padding: 56px 24px 72px;
+    padding: 0 24px 72px;
     background: #dedbd5;
 }
 
@@ -416,7 +416,7 @@
    colonnes (1fr / 400px), même DOM.
    ============================================================ */
 @media (min-width: 769px) {
-    .fz-dash-section { padding: 64px 32px 88px; }
+    .fz-dash-section { padding: 0 32px 88px; }
 
     .fzd-cal-games {
         display: grid;
@@ -453,7 +453,7 @@
    TÉLÉPHONE — 1A (≤768px)
    ============================================================ */
 @media (max-width: 768px) {
-    .fz-dash-section { padding: 40px 16px 56px; }
+    .fz-dash-section { padding: 0 16px 56px; }
     .fzd-cal-strip { padding-bottom: 10px; }
     .fzd-actions-grid { gap: 10px; }
     .fzd-cta-grid { gap: 10px; }

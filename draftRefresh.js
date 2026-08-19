@@ -104,7 +104,10 @@ function refreshDraftViews() {
     'refreshCategoryTabs',
     // Étoile de la colonne Action + carte « Mes favoris » (draftFavorites.js) :
     // dépendent du tour courant et des choix faits, comme le reste ici.
-    'fzRefreshFavoritesUI'
+    'fzRefreshFavoritesUI',
+    // Vue "Tous" (draftListePremium.js) : la liste des joueurs déjà pris
+    // change à chaque choix, comme le reste de cette liste.
+    'fzRefreshPickedList'
   ];
   rendus.forEach(nom => {
     const fn = window[nom];
