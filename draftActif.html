@@ -32,6 +32,15 @@
        couleurs. -->
   <link rel="stylesheet" href="index.css" />
   <link rel="stylesheet" href="navbar.css">
+  <!-- poolNav.css reste chargé sans poolNav.js (voir les scripts, en bas) :
+       ce fichier porte aussi le seul habillage de la cloche de
+       notifications (.fz-notif-*, construite par notifications.js,
+       fonctionnalité distincte du rail de pools). Sans lui, .fz-notif-*
+       reste sans style — un <svg> de 24x24 sans width/height CSS s'affiche
+       à sa taille intrinsèque, la cible de la notification de tour occupait
+       tout l'écran. Sans poolNav.js, aucun élément .fz-sidebar/.fz-drawer/
+       .fz-burger n'existe : le reste de cette feuille reste inerte. -->
+  <link rel="stylesheet" href="poolNav.css">
   <link rel="stylesheet" href="skeleton-loader.css" />
   <link rel="stylesheet" href="draftActif.css?v=20260810d" />
   <link rel="stylesheet" href="draftActif-premium.css?v=20260818a" />
@@ -154,6 +163,14 @@
            s'effacent (display:contents) et les cinq cartes s'empilent dans
            leur ordre naturel. -->
       <div class="apercu-col-main">
+
+      <!-- Bureau seulement (voir §11) : "Liste des joueurs" mène au même
+           endroit que l'onglet du même nom tout en haut — un raccourci,
+           pas un second mécanisme. draftApercuExtra.js. -->
+      <div class="apercu-subtabs">
+        <span class="apercu-subtab is-active">Mes favoris <span class="apercu-subtab-count" id="apercuFavCount">0</span></span>
+        <button type="button" class="apercu-subtab" id="apercuGoListe">Liste des joueurs</button>
+      </div>
 
       <!-- Suggestion : meilleur favori encore libre, priorité à un poste
            manquant ("comble un trou") — draftApercuExtra.js. Rien n'est
@@ -290,23 +307,52 @@
            compteur de joueurs disponibles, en plus des pastilles/du <select>
            déjà dans la carte principale — draftApercuExtra.js. -->
       <aside class="list-filters-sidebar" id="listFiltersSidebar">
+        <!-- Miroir de #searchInput (dans la carte principale, ci-dessous) :
+             mêmes valeur et évènement, jamais de second champ indépendant —
+             draftApercuExtra.js les garde synchronisés dans les deux sens. -->
+        <div class="search-field list-filters-search">
+          <span class="search-field-icon" data-icon="search" data-icon-size="17"></span>
+          <label for="listFilterSearch" class="sr-only">Rechercher un joueur</label>
+          <input type="text" id="listFilterSearch" placeholder="Rechercher" class="search-input"/>
+        </div>
         <div class="list-filters-block">
           <h3 class="list-filters-title">Position</h3>
           <div class="list-filters-positions"></div>
         </div>
         <div class="list-filters-block">
           <h3 class="list-filters-title">Affichage</h3>
+          <!-- Miroir de #availabilityTabs (Libres/Tous, déjà dans la carte
+               principale) : même bascule, présentée en case à cocher ici. -->
+          <label class="list-filter-checkbox">
+            <input type="checkbox" id="listFilterAvailableOnly" checked>
+            <span>Joueurs libres seulement</span>
+          </label>
           <label class="list-filter-checkbox">
             <input type="checkbox" id="listFilterFavoritesOnly">
             <span>Mes favoris seulement</span>
           </label>
+          <label class="list-filter-checkbox">
+            <input type="checkbox" id="listFilterNeedsOnly">
+            <span>Comble un trou</span>
+          </label>
+        </div>
+        <div class="list-filters-block">
+          <h3 class="list-filters-title">Équipe</h3>
+          <label for="listFilterTeam" class="sr-only">Équipe LNH</label>
+          <select id="listFilterTeam" class="filter-select list-filters-team">
+            <option value="">Toutes les équipes</option>
+          </select>
         </div>
       </aside>
 
       <!-- Player Selection Area -->
       <div class="player-selection-card">
         <div class="filters-header">
-          <h2>Sélection de joueur</h2>
+          <h2>Joueurs disponibles</h2>
+          <!-- "N libres · M pris" — draftApercuExtra.js, mêmes décomptes que
+               la sidebar de position. Masqué sur téléphone (voir CSS) : la
+               carte y est déjà assez dense. -->
+          <span class="filters-header-summary" id="filtersHeaderSummary"></span>
           <!-- Sur téléphone, ce <select> remplace les pastilles de catégorie
                plutôt que de s'y ajouter : à cette largeur, une bande de six
                boutons coûtait une ligne entière avant même d'atteindre le
@@ -373,11 +419,15 @@
           <!-- Pas de bouton d'actualisation manuelle : le sondage de 7s et le
                socket tiennent déjà la liste à jour, il n'ajoutait rien. -->
           <label for="sortBy" class="sr-only">Trier par</label>
-          <select id="sortBy" class="filter-select">
+          <select id="sortBy" class="filter-select sort-select">
             <option value="points">Points</option>
             <option value="goals">Buts</option>
             <option value="assists">Passes</option>
           </select>
+          <!-- Bureau (voir draftActif-premium.css §11) : mêmes options que
+               #sortBy ci-dessus, en pastilles — même patron que
+               #categoryTabs (draftActifUI.js). draftApercuExtra.js. -->
+          <div class="sort-tabs" id="sortTabs" role="group" aria-label="Trier par"></div>
         </div>
 
         <div class="table-wrapper" id="playerTableWrapper">

@@ -1,7 +1,7 @@
 /**
  * Compléments de l'onglet Aperçu et de la vue bureau de la Liste des
  * joueurs : suggestion, alignement, derniers choix (texte), sidebar de
- * position avec compteurs, et carte « Joueur sélectionné ».
+ * position/affichage/équipe avec compteurs, et carte « Joueur sélectionné ».
  *
  * Même règle que draftFavorites.js / draftActifUI.js : aucune logique de
  * repêchage ici, uniquement de la lecture des variables déjà globales de
@@ -13,6 +13,37 @@
  * fzBuildStarButton). Rejoué après chaque rendu réel via la liste `rendus`
  * de refreshDraftViews() (draftRefresh.js).
  */
+
+/* ============================================================
+   0. RÉFÉRENCE — villes des équipes LNH
+   ------------------------------------------------------------
+   Donnée publique fixe (32 clubs), pas une fiche du pool : sert à afficher
+   « D · Montréal » plutôt que l'abréviation brute dans les cartes Suggestion
+   et Joueur sélectionné, et à peupler le filtre Équipe de la sidebar.
+   ============================================================ */
+const FZ_VILLES = {
+    ANA: 'Anaheim', ARI: 'Arizona', UTA: 'Utah', BOS: 'Boston', BUF: 'Buffalo',
+    CGY: 'Calgary', CAR: 'Caroline', CHI: 'Chicago', COL: 'Colorado', CBJ: 'Columbus',
+    DAL: 'Dallas', DET: 'Detroit', EDM: 'Edmonton', FLA: 'Floride', LAK: 'Los Angeles',
+    MIN: 'Minnesota', MTL: 'Montréal', NSH: 'Nashville', NJD: 'New Jersey',
+    NYI: 'NY Islanders', NYR: 'NY Rangers', OTT: 'Ottawa', PHI: 'Philadelphie',
+    PIT: 'Pittsburgh', SJS: 'San Jose', SEA: 'Seattle', STL: 'St. Louis',
+    TBL: 'Tampa Bay', TOR: 'Toronto', VAN: 'Vancouver', VGK: 'Vegas',
+    WSH: 'Washington', WPG: 'Winnipeg'
+};
+
+/** Premier code d'équipe d'une fiche — teamAbbrevs porte parfois plusieurs
+ *  clubs séparés par virgule (joueur échangé en cours de saison). */
+function fzPremierAbbrev(rec) {
+    const brut = rec && rec.teamAbbrevs;
+    if (!brut) return null;
+    return String(brut).split(',')[0].trim() || null;
+}
+
+function fzVilleEquipe(rec) {
+    const code = fzPremierAbbrev(rec);
+    return code ? (FZ_VILLES[code] || code) : null;
+}
 
 /* ============================================================
    1. CANDIDATS DISPONIBLES
@@ -41,6 +72,51 @@ function fzGroupesManquants() {
         rookie: (equipe.rookie || []).length < (cfg.numRookies ?? 1),
         goalie: (equipe.goalie || []).length < (cfg.numGoalies ?? 1)
     };
+}
+
+/** Le seul groupe signalé "manquant" dans l'interface (sidebar de position,
+ *  Ma progression) : celui où il manque le plus de joueurs, pas chaque
+ *  groupe incomplet — sinon la page serait presque entièrement rouge dès le
+ *  premier choix. Retourne null si tous les quotas sont atteints. */
+function fzPireGroupe() {
+    const me = typeof getUserTeam === 'function' ? getUserTeam() : null;
+    const cfg = (typeof draftData !== 'undefined' && draftData && draftData.config)
+        || { numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1 };
+    const equipe = (me && typeof draftData !== 'undefined' && draftData && draftData.teams && draftData.teams[me]) || {};
+    const groupes = [
+        { cle: 'offensive', ecart: (cfg.numOffensive ?? 6) - (equipe.offensive || []).length },
+        { cle: 'defensive', ecart: (cfg.numDefensive ?? 4) - (equipe.defensive || []).length },
+        { cle: 'rookie', ecart: (cfg.numRookies ?? 1) - (equipe.rookie || []).length },
+        { cle: 'goalie', ecart: (cfg.numGoalies ?? 1) - (equipe.goalie || []).length }
+    ];
+    let pire = null;
+    groupes.forEach(g => { if (g.ecart > 0 && (!pire || g.ecart > pire.ecart)) pire = g; });
+    return pire ? pire.cle : null;
+}
+
+/** Rang réel d'un joueur parmi les disponibles de son groupe, trié par
+ *  points (victoires×2 pour un gardien, comme fzComputeSuggestion) — pas
+ *  une projection inventée, un classement sur les points déjà affichés. */
+function fzRangDansGroupe(nom, rec, kind, code) {
+    const groupe = typeof fzGroupKeyFor === 'function' ? fzGroupKeyFor(code, kind) : null;
+    if (!groupe) return null;
+    const bassin = fzAllAvailableCandidates().filter(c => {
+        const cCode = typeof fzPositionCode === 'function' ? fzPositionCode(c.rec, c.kind) : '';
+        return (typeof fzGroupKeyFor === 'function' ? fzGroupKeyFor(cCode, c.kind) : null) === groupe;
+    });
+    const pointsDe = c => c.kind === 'goalie' ? (c.rec.wins || 0) * 2 : (c.rec.points || 0);
+    bassin.sort((a, b) => pointsDe(b) - pointsDe(a));
+    const index = bassin.findIndex(c => c.nom === nom);
+    return index === -1 ? null : index + 1;
+}
+
+function fzOrdinal(n) {
+    return n === 1 ? '1er' : n + 'e';
+}
+
+/** Élision de "de" devant une voyelle — "d'attaquant" et non "de attaquant". */
+function fzDe(mot) {
+    return /^[aeiouhàâéèêëîïôöùûü]/i.test(mot) ? `d’${mot}` : `de ${mot}`;
 }
 
 /* ============================================================
@@ -74,6 +150,16 @@ function fzPeutChoisir(code) {
     return typeof isUserTurn === 'function' && isUserTurn()
         && typeof checkIfUserTeamIsDone === 'function' && !checkIfUserTeamIsDone()
         && !(typeof _isCategoryFull === 'function' && _isCategoryFull(code));
+}
+
+/** Ligne "D · Montréal · 62 pts · 3e meilleur défenseur libre" partagée par
+ *  Suggestion et Joueur sélectionné — mêmes trois faits, jamais de
+ *  projection ou de comparaison inventées. */
+function fzLigneMeta(rec, kind, code) {
+    const libellePos = typeof fzPositionLabel === 'function' ? fzPositionLabel(code) : code;
+    const ville = fzVilleEquipe(rec);
+    const blurb = typeof fzStatBlurb === 'function' ? fzStatBlurb(rec, kind) : '';
+    return [libellePos, ville, blurb].filter(Boolean).join(' · ');
 }
 
 function fzRenderSuggestionCard() {
@@ -117,9 +203,11 @@ function fzRenderSuggestionCard() {
     info.appendChild(nom);
     const meta = document.createElement('div');
     meta.className = 'suggestion-meta';
+    const rang = fzRangDansGroupe(s.nom, s.rec, s.kind, s.code);
     const libellePos = typeof fzPositionLabel === 'function' ? fzPositionLabel(s.code) : s.code;
-    const blurb = typeof fzStatBlurb === 'function' ? fzStatBlurb(s.rec, s.kind) : '';
-    meta.textContent = [libellePos, blurb].filter(Boolean).join(' · ');
+    const ville = fzVilleEquipe(s.rec);
+    const rangTexte = rang ? `${fzOrdinal(rang)} ${libellePos.toLowerCase()} libre` : '';
+    meta.textContent = [libellePos, ville, rangTexte].filter(Boolean).join(' · ');
     info.appendChild(meta);
     corps.appendChild(info);
 
@@ -143,6 +231,7 @@ function fzRenderRecentPicksFeed() {
     if (!liste) return;
 
     const historique = (typeof draftData !== 'undefined' && draftData && draftData.picksHistory) || [];
+    const favoris = new Set(typeof fzGetFavorites === 'function' ? fzGetFavorites() : []);
     liste.replaceChildren();
 
     if (!historique.length) {
@@ -168,6 +257,12 @@ function fzRenderRecentPicksFeed() {
         fort.textContent = pick.team;
         texte.appendChild(fort);
         texte.appendChild(document.createTextNode(' a repêché ' + pick.player + '.'));
+        if (favoris.has(pick.player)) {
+            const retire = document.createElement('span');
+            retire.className = 'recent-feed-removed';
+            retire.textContent = ' Retiré de vos favoris.';
+            texte.appendChild(retire);
+        }
         rangee.appendChild(texte);
         liste.appendChild(rangee);
     });
@@ -236,13 +331,63 @@ function fzRenderLineupCard() {
 }
 
 /* ============================================================
-   5. SIDEBAR DE POSITION (bureau, Liste des joueurs) — 250px
+   5. MA PROGRESSION — barres en segments discrets
+   ------------------------------------------------------------
+   draftActif.js pose déjà une largeur en pourcentage sur
+   .progress-mini-fill (continu) ; superposé ici par des blocs discrets
+   construits à partir du même "fait/total" déjà affiché en texte
+   (#count-*) — jamais de nouveau calcul de quota.
+   ============================================================ */
+
+function fzRenderSegmentedProgress() {
+    const lignes = [...document.querySelectorAll('.progress-line[data-position]')];
+    // Une seule catégorie signalée en rouge — celle où il manque le plus de
+    // joueurs (fzPireGroupe, même règle que la sidebar de position) —
+    // plutôt que chaque ligne incomplète : sinon la carte serait presque
+    // entièrement rouge dès le premier choix.
+    const pirePosition = fzPireGroupe();
+
+    lignes.forEach(ligne => {
+        const position = ligne.dataset.position;
+        const span = document.getElementById('count-' + position);
+        const barre = ligne.querySelector('.progress-mini-bar');
+        if (!span || !barre) return;
+        const [fait, total] = span.textContent.split('/').map(n => parseInt(n, 10));
+        if (!Number.isFinite(fait) || !Number.isFinite(total) || total <= 0) return;
+
+        let segs = barre.querySelector('.fzd-segments');
+        if (!segs) {
+            segs = document.createElement('div');
+            segs.className = 'fzd-segments';
+            barre.appendChild(segs);
+        }
+        // Reconstruit seulement si le compte de blocs a changé — évite de
+        // recréer N nœuds à chaque rafraîchissement (toutes les 7s).
+        if (segs.children.length !== total) {
+            segs.replaceChildren();
+            for (let i = 0; i < total; i++) {
+                const bloc = document.createElement('span');
+                bloc.className = 'fzd-segment';
+                segs.appendChild(bloc);
+            }
+        }
+        [...segs.children].forEach((bloc, i) => bloc.classList.toggle('is-filled', i < fait));
+        const urgent = position === pirePosition;
+        segs.classList.toggle('is-needed', urgent);
+        ligne.classList.toggle('is-needed-line', urgent);
+    });
+}
+
+/* ============================================================
+   6. SIDEBAR DE POSITION / AFFICHAGE / ÉQUIPE (bureau, Liste des joueurs)
    ------------------------------------------------------------
    Reprend les options réelles de #playerFilter, comme initCategoryTabs()
    (draftActifUI.js) : un clic écrit dans le <select> caché et déclenche
-   son événement `change`. Ajoute seulement un compteur de joueurs
-   disponibles par catégorie, absent des pastilles mobiles.
+   son événement `change`. Ajoute un compteur de joueurs disponibles par
+   catégorie et un repère "manquants", absents des pastilles mobiles.
    ============================================================ */
+
+const FZ_GROUPE_PAR_VALEUR = { offensive: 'offensive', defensive: 'defensive', goalies: 'goalie', rookies: 'rookie' };
 
 function fzCountAvailable(valeur) {
     const bassin = fzAllAvailableCandidates();
@@ -264,6 +409,7 @@ function fzRenderPositionSidebar() {
     const liste = hote && hote.querySelector('.list-filters-positions');
     if (!hote || !select || !liste) return;
 
+    const pireGroupe = fzPireGroupe();
     liste.replaceChildren();
     [...select.options].forEach(option => {
         const item = document.createElement('button');
@@ -273,8 +419,19 @@ function fzRenderPositionSidebar() {
         item.disabled = option.disabled;
         item.classList.toggle('is-active', option.value === select.value);
 
+        const groupe = FZ_GROUPE_PAR_VALEUR[option.value];
+        const manque = groupe && groupe === pireGroupe;
+        item.classList.toggle('is-needed', !!manque);
+
         const libelle = document.createElement('span');
+        libelle.className = 'list-filter-label';
         libelle.textContent = option.textContent.trim();
+        if (manque) {
+            const suffixe = document.createElement('span');
+            suffixe.className = 'list-filter-needed-tag';
+            suffixe.textContent = ' · manquants';
+            libelle.appendChild(suffixe);
+        }
         item.appendChild(libelle);
 
         const compte = document.createElement('span');
@@ -291,42 +448,190 @@ function fzRenderPositionSidebar() {
     });
 }
 
-/* ---- Bascule « Mes favoris seulement » ----
-   Filtre posé après coup sur les rangées déjà rendues par updateTable()
-   (draftActif.js) — jamais de réécriture de son résultat, même patron que
-   fzRefreshActionColumns (draftFavorites.js). */
-let fzFavorisSeulement = false;
+/* ---- Résumé "N libres · M pris" (en-tête de la carte principale) ---- */
+function fzRenderFiltersSummary() {
+    const cible = document.getElementById('filtersHeaderSummary');
+    if (!cible) return;
+    const libres = fzCountAvailable('all');
+    const pris = (typeof draftData !== 'undefined' && draftData && draftData.picksHistory)
+        ? draftData.picksHistory.length : 0;
+    cible.textContent = `${libres} libres · ${pris} pris`;
+}
 
-function fzApplyFavoritesOnlyFilter() {
+/* ---- "Trier" en pastilles (bureau), même patron que #categoryTabs ---- */
+function fzRenderSortTabs() {
+    const strip = document.getElementById('sortTabs');
+    const select = document.getElementById('sortBy');
+    if (!strip || !select || strip.dataset.built === '1') return;
+    strip.dataset.built = '1';
+    [...select.options].forEach(option => {
+        const tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = 'sort-tab';
+        tab.dataset.value = option.value;
+        tab.textContent = option.textContent.trim();
+        tab.classList.toggle('is-active', option.value === select.value);
+        tab.addEventListener('click', () => {
+            select.value = option.value;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            strip.querySelectorAll('.sort-tab').forEach(t => t.classList.toggle('is-active', t === tab));
+        });
+        strip.appendChild(tab);
+    });
+    select.addEventListener('change', () => {
+        strip.querySelectorAll('.sort-tab').forEach(t => t.classList.toggle('is-active', t.dataset.value === select.value));
+    });
+}
+
+/* ---- Miroir de recherche (sidebar bureau ↔ champ réel de la carte) ---- */
+function fzInitSearchMirror() {
+    const miroir = document.getElementById('listFilterSearch');
+    const reel = document.getElementById('searchInput');
+    if (!miroir || !reel || miroir.dataset.bound === '1') return;
+    miroir.dataset.bound = '1';
+    miroir.addEventListener('input', () => {
+        if (reel.value === miroir.value) return;
+        reel.value = miroir.value;
+        reel.dispatchEvent(new Event('input', { bubbles: true }));
+        reel.dispatchEvent(new Event('keyup', { bubbles: true }));
+    });
+    reel.addEventListener('input', () => { if (miroir.value !== reel.value) miroir.value = reel.value; });
+}
+
+/* ---- Filtre Équipe : peuplé depuis les fiches réelles, jamais une liste
+   inventée — seules les équipes ayant au moins un joueur disponible
+   apparaissent. ---- */
+function fzPopulateTeamFilter() {
+    const select = document.getElementById('listFilterTeam');
+    if (!select || select.dataset.built === '1') return;
+    const codes = new Set();
+    fzAllAvailableCandidates().forEach(c => {
+        const code = fzPremierAbbrev(c.rec);
+        if (code) codes.add(code);
+    });
+    if (!codes.size) return; // données pas encore chargées — réessayer au prochain rafraîchissement
+    select.dataset.built = '1';
+    [...codes].sort((a, b) => (FZ_VILLES[a] || a).localeCompare(FZ_VILLES[b] || b)).forEach(code => {
+        const option = document.createElement('option');
+        option.value = code;
+        option.textContent = FZ_VILLES[code] || code;
+        select.appendChild(option);
+    });
+}
+
+/* ---- Filtres combinés posés sur le tableau déjà rendu : favoris seulement,
+   comble un trou, équipe. "Joueurs libres seulement" ne filtre pas ici —
+   il pilote #availabilityTabs (Libres/Tous), qui remplace le tableau
+   entier (draftListePremium.js). ---- */
+let fzFavorisSeulement = false;
+let fzBesoinSeulement = false;
+let fzEquipeChoisie = '';
+
+function fzApplyListFilters() {
     const corps = document.querySelector('#playerTable tbody');
     if (!corps) return;
     const favoris = new Set(typeof fzGetFavorites === 'function' ? fzGetFavorites() : []);
+    const manquants = fzGroupesManquants();
     corps.querySelectorAll('tr').forEach(tr => {
         if (tr.classList.contains('draft-empty-row')) return;
         const nom = typeof fzRowPlayerName === 'function' ? fzRowPlayerName(tr) : null;
-        const cache = fzFavorisSeulement && nom && !favoris.has(nom);
-        tr.classList.toggle('fzd-filtered-out', !!cache);
+        if (!nom) return;
+
+        let cache = false;
+        if (fzFavorisSeulement && !favoris.has(nom)) cache = true;
+
+        if (!cache && (fzBesoinSeulement || fzEquipeChoisie)) {
+            const trouve = typeof fzFindRecord === 'function' ? fzFindRecord(nom) : null;
+            if (trouve) {
+                if (!cache && fzBesoinSeulement) {
+                    const code = typeof fzPositionCode === 'function' ? fzPositionCode(trouve.rec, trouve.kind) : '';
+                    const groupe = typeof fzGroupKeyFor === 'function' ? fzGroupKeyFor(code, trouve.kind) : '';
+                    if (!manquants[groupe]) cache = true;
+                }
+                if (!cache && fzEquipeChoisie && fzPremierAbbrev(trouve.rec) !== fzEquipeChoisie) cache = true;
+            }
+        }
+        tr.classList.toggle('fzd-filtered-out', cache);
     });
 }
 
-function fzInitFavoritesOnlyToggle() {
-    const checkbox = document.getElementById('listFilterFavoritesOnly');
-    if (!checkbox) return;
-    checkbox.addEventListener('change', () => {
-        fzFavorisSeulement = checkbox.checked;
-        fzApplyFavoritesOnlyFilter();
-    });
+function fzInitListFilterControls() {
+    const favCb = document.getElementById('listFilterFavoritesOnly');
+    if (favCb && favCb.dataset.bound !== '1') {
+        favCb.dataset.bound = '1';
+        favCb.addEventListener('change', () => { fzFavorisSeulement = favCb.checked; fzApplyListFilters(); });
+    }
+    const needCb = document.getElementById('listFilterNeedsOnly');
+    if (needCb && needCb.dataset.bound !== '1') {
+        needCb.dataset.bound = '1';
+        needCb.addEventListener('change', () => { fzBesoinSeulement = needCb.checked; fzApplyListFilters(); });
+    }
+    const teamSelect = document.getElementById('listFilterTeam');
+    if (teamSelect && teamSelect.dataset.bound !== '1') {
+        teamSelect.dataset.bound = '1';
+        teamSelect.addEventListener('change', () => { fzEquipeChoisie = teamSelect.value; fzApplyListFilters(); });
+    }
+    // "Joueurs libres seulement" reflète et pilote #availabilityTabs — pas
+    // un filtre distinct : décocher revient à cliquer "Tous" (draftListePremium.js).
+    const availCb = document.getElementById('listFilterAvailableOnly');
+    const availSelect = document.getElementById('availabilityFilter');
+    if (availCb && availSelect && availCb.dataset.bound !== '1') {
+        availCb.dataset.bound = '1';
+        availCb.addEventListener('change', () => {
+            const cible = availCb.checked ? 'available' : 'picked';
+            const bouton = document.querySelector(`#availabilityTabs .availability-tab[data-valeur="${cible}"]`);
+            if (bouton) bouton.click();
+        });
+        availSelect.addEventListener('change', () => { availCb.checked = availSelect.value === 'available'; });
+    }
 }
 
 /* ============================================================
-   6. JOUEUR SÉLECTIONNÉ (bureau, Liste des joueurs) — 340px
+   7. SOUS-ONGLETS DE L'APERÇU (bureau) — "Mes favoris" / "Liste des joueurs"
    ------------------------------------------------------------
-   Un clic sur une rangée du tableau l'affiche ici. Sans sélection (ou une
-   fois le joueur choisi par quelqu'un d'autre), la suggestion en tient
-   lieu — jamais de carte vide alors qu'un choix reste à faire.
+   "Liste des joueurs" ici mène au même endroit que l'onglet du même nom
+   tout en haut (window.fzOuvrirListeJoueurs, draftActifUI.js) — un
+   raccourci, pas un second mécanisme d'onglets.
+   ============================================================ */
+function fzInitApercuSubtabs() {
+    const bouton = document.getElementById('apercuGoListe');
+    if (bouton && bouton.dataset.bound !== '1') {
+        bouton.dataset.bound = '1';
+        bouton.addEventListener('click', () => {
+            if (typeof window.fzOuvrirListeJoueurs === 'function') window.fzOuvrirListeJoueurs();
+        });
+    }
+    const compteur = document.getElementById('apercuFavCount');
+    const reel = document.getElementById('favoritesCount');
+    if (compteur && reel) compteur.textContent = reel.textContent || '0';
+}
+
+/* ============================================================
+   8. JOUEUR SÉLECTIONNÉ (bureau, Liste des joueurs) — 340px
+   ------------------------------------------------------------
+   Un survol sur une rangée du tableau l'affiche ici (jamais un clic : la
+   rangée porte déjà un clic délégué vers la modale de carrière, voir plus
+   bas). Sans sélection (ou une fois le joueur pris), la suggestion en
+   tient lieu — jamais de carte vide alors qu'un choix reste à faire.
    ============================================================ */
 
 let fzJoueurAffiche = null;
+
+/** Une tuile "95 / PTS" — mêmes trois faits que la Suggestion : points (ou
+ *  victoires pour un gardien), buts ou passes, rang réel dans le groupe. */
+function fzBuildStatTile(valeur, libelle) {
+    const tuile = document.createElement('div');
+    tuile.className = 'selected-player-tile';
+    const num = document.createElement('div');
+    num.className = 'selected-player-tile-num';
+    num.textContent = valeur;
+    tuile.appendChild(num);
+    const lbl = document.createElement('div');
+    lbl.className = 'selected-player-tile-label';
+    lbl.textContent = libelle;
+    tuile.appendChild(lbl);
+    return tuile;
+}
 
 function fzRenderSelectedPlayerCard() {
     const hote = document.getElementById('selectedPlayerCard');
@@ -378,10 +683,38 @@ function fzRenderSelectedPlayerCard() {
     const sous = document.createElement('div');
     sous.className = 'selected-player-meta';
     const libellePos = typeof fzPositionLabel === 'function' ? fzPositionLabel(code) : code;
-    sous.textContent = [libellePos, typeof fzStatBlurb === 'function' ? fzStatBlurb(rec, kind) : ''].filter(Boolean).join(' · ');
+    const ville = fzVilleEquipe(rec);
+    sous.textContent = [libellePos, ville].filter(Boolean).join(' · ');
     identite.appendChild(sous);
     entete.appendChild(identite);
     corps.appendChild(entete);
+
+    // Trois tuiles : points (ou victoires), second repère réel, rang dans
+    // le groupe — jamais de projection, seulement ce qui est déjà affiché
+    // ailleurs sur la page sous une autre forme.
+    const tuiles = document.createElement('div');
+    tuiles.className = 'selected-player-tiles';
+    if (kind === 'goalie') {
+        tuiles.appendChild(fzBuildStatTile(rec.wins ?? '–', 'V'));
+        tuiles.appendChild(fzBuildStatTile(rec.savePct != null ? rec.savePct.toFixed(3) : '–', 'SV%'));
+    } else {
+        tuiles.appendChild(fzBuildStatTile(rec.points ?? '–', 'PTS'));
+        tuiles.appendChild(fzBuildStatTile(rec.assists ?? '–', 'A'));
+    }
+    const rang = fzRangDansGroupe(nom, rec, kind, code);
+    tuiles.appendChild(fzBuildStatTile(rang ? fzOrdinal(rang) : '–', `${libellePos.toLowerCase()} libre`));
+    corps.appendChild(tuiles);
+
+    const blurb = document.createElement('p');
+    blurb.className = 'selected-player-blurb';
+    const manquants = fzGroupesManquants();
+    const groupe = typeof fzGroupKeyFor === 'function' ? fzGroupKeyFor(code, kind) : '';
+    const phrases = [];
+    if (manquants[groupe]) phrases.push(`Comble votre poste ${fzDe(libellePos.toLowerCase())}.`);
+    const fait = typeof fzStatBlurb === 'function' ? fzStatBlurb(rec, kind) : '';
+    if (fait) phrases.push(fait.charAt(0).toUpperCase() + fait.slice(1) + ' cette saison.');
+    blurb.textContent = phrases.join(' ');
+    if (phrases.length) corps.appendChild(blurb);
 
     const actions = document.createElement('div');
     actions.className = 'selected-player-actions';
@@ -406,8 +739,8 @@ function fzRenderSelectedPlayerCard() {
     CATEGORIES.forEach(cat => {
         const span = document.getElementById('count-' + cat.cle);
         if (!span) return;
-        const [fait, total] = span.textContent.split('/').map(n => parseInt(n, 10));
-        if (!Number.isFinite(fait) || !Number.isFinite(total) || fait >= total) return;
+        const [fait2, total] = span.textContent.split('/').map(n => parseInt(n, 10));
+        if (!Number.isFinite(fait2) || !Number.isFinite(total) || fait2 >= total) return;
         auMoinsUn = true;
         const ligne = document.createElement('div');
         ligne.className = 'selected-player-need-row';
@@ -415,7 +748,7 @@ function fzRenderSelectedPlayerCard() {
         libelle.textContent = cat.libelle;
         ligne.appendChild(libelle);
         const valeur = document.createElement('span');
-        valeur.textContent = fait + '/' + total;
+        valeur.textContent = fait2 + '/' + total;
         ligne.appendChild(valeur);
         manqueListe.appendChild(ligne);
     });
@@ -459,15 +792,19 @@ function fzHighlightSelectedRow() {
 }
 
 /* ============================================================
-   7. POINT D'ENTRÉE
+   9. POINT D'ENTRÉE
    ============================================================ */
 
 window.fzRefreshApercuExtras = function () {
     try { fzRenderSuggestionCard(); } catch (e) { console.error('[apercu] suggestion :', e); }
     try { fzRenderRecentPicksFeed(); } catch (e) { console.error('[apercu] derniers choix :', e); }
     try { fzRenderLineupCard(); } catch (e) { console.error('[apercu] alignement :', e); }
+    try { fzRenderSegmentedProgress(); } catch (e) { console.error('[apercu] progression segmentée :', e); }
+    try { fzInitApercuSubtabs(); } catch (e) {}
     try { fzRenderPositionSidebar(); } catch (e) { console.error('[apercu] sidebar position :', e); }
-    try { fzApplyFavoritesOnlyFilter(); } catch (e) { console.error('[apercu] filtre favoris :', e); }
+    try { fzRenderFiltersSummary(); } catch (e) {}
+    try { fzPopulateTeamFilter(); } catch (e) {}
+    try { fzApplyListFilters(); } catch (e) { console.error('[apercu] filtres liste :', e); }
     // Rendre d'abord : sans sélection explicite, fzRenderSelectedPlayerCard()
     // retombe sur la suggestion et met fzJoueurAffiche à jour — la rangée à
     // surligner n'est donc connue qu'après cet appel, jamais avant.
@@ -475,10 +812,41 @@ window.fzRefreshApercuExtras = function () {
     try { fzHighlightSelectedRow(); } catch (e) {}
 };
 
+/**
+ * #playerFilter/#searchInput/#sortBy/#availabilityFilter sont liés à
+ * updateTable() via $(...).on(...) tout en haut de draftActif.js — AVANT
+ * que draftRefresh.js ne remplace updateTable par une version enrichie qui
+ * appelle refreshDraftViews(). jQuery capture la référence nue au moment de
+ * la liaison, donc changer de catégorie / chercher / trier reconstruit bien
+ * le tableau, mais sans jamais déclencher fzRefreshApercuExtras : les
+ * compteurs, filtres et cartes retombées sur la suggestion restaient figés
+ * sur leur tout premier rendu. Même remède que fzWatchPlayerTable
+ * (draftFavorites.js) : observer directement l'effet qui compte plutôt que
+ * d'ajouter une couche de plus à cette chaîne d'appels fragile.
+ */
+function fzWatchPlayerTableForExtras() {
+    const tbody = document.querySelector('#playerTable tbody');
+    if (!tbody) return;
+    let planifie = false;
+    const observer = new MutationObserver(() => {
+        // Les tr.fzd-selected-row/.fzd-filtered-out posées par ce fichier
+        // sont des mutations d'attribut (classList), jamais childList — cet
+        // observateur ne se redéclenche donc pas lui-même.
+        if (planifie) return;
+        planifie = true;
+        requestAnimationFrame(() => {
+            planifie = false;
+            try { window.fzRefreshApercuExtras(); } catch (e) { console.error('[apercu] rafraîchissement tableau :', e); }
+        });
+    });
+    observer.observe(tbody, { childList: true });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     try { window.fzRefreshApercuExtras(); } catch (e) {}
-    try { fzInitFavoritesOnlyToggle(); } catch (e) {}
+    try { fzRenderSortTabs(); } catch (e) {}
+    try { fzInitSearchMirror(); } catch (e) {}
+    try { fzInitListFilterControls(); } catch (e) {}
     try { fzInitSelectedPlayerClicks(); } catch (e) {}
-    const select = document.getElementById('playerFilter');
-    if (select) select.addEventListener('change', () => { try { fzRenderPositionSidebar(); } catch (e) {} });
+    try { fzWatchPlayerTableForExtras(); } catch (e) {}
 });

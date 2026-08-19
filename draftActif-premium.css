@@ -239,7 +239,24 @@ body.fz-draft .picks-carousel::before,
 body.fz-draft .picks-carousel::after { content: none; }
 body.fz-draft .picks-carousel-empty { color: var(--fzd-text-faint); font-style: normal; }
 
+/* Restructurée en grille : la base (draftActif.css) pose .pick-card-photo
+   en couche plein cadre, position absolue façon carte de collection. Ici la
+   même carte redevient un empilement en flux normal — "Choix N · Rn" en
+   tête, une petite vignette à côté du nom, l'équipe du pool sous un filet —
+   même lecture que 3A/3B. Aucun nom de classe ne change : la révélation
+   (pickRevealPhoto/-Meta/-Name, draftActif.css) cible toujours les mêmes
+   éléments, seulement plus petits. */
 body.fz-draft .pick-card {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  grid-template-areas:
+    "turn turn"
+    "photo name"
+    "foot foot";
+  align-items: start;
+  gap: 7px 9px;
+  height: auto;
+  padding: 10px 11px 9px;
   border: 1px solid var(--fzd-border);
   border-radius: 11px;
   color: var(--fzd-ink);
@@ -259,7 +276,7 @@ body.fz-draft .pick-card.is-current {
   animation: none;
 }
 body.fz-draft .pick-card.is-current .pick-card-name { color: #fff; }
-body.fz-draft .pick-card.is-current .pick-card-slot { color: #fff; opacity: .35; }
+body.fz-draft .pick-card.is-current .pick-card-slot { color: #fff; opacity: .6; }
 body.fz-draft .pick-card.is-current::after {
   content: '';
   position: absolute;
@@ -270,49 +287,130 @@ body.fz-draft .pick-card.is-current::after {
 /* Carte de MON tour (sous-état de .is-current) : l'agrandissement reste,
    le halo cyan devient rouge accent, plus discret. */
 body.fz-draft .pick-card.is-my-turn { box-shadow: 0 0 0 2px var(--fzd-accent); }
-body.fz-draft .pick-card-live-badge {
-  position: absolute;
-  top: 4px; left: 50%;
-  transform: translateX(-50%);
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: var(--fzd-accent);
-  color: #fff;
+
+/* ---- "Choix N · Rn" (draftPickCards.js) — tout en haut de la carte ---- */
+body.fz-draft .pick-card-turn {
+  grid-area: turn;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+body.fz-draft .pick-card-turn-num {
   font-family: 'Helvetica Neue', Helvetica, sans-serif;
-  font-size: .62rem;
-  font-weight: 700;
+  font-size: .64rem;
+  font-weight: 600;
   letter-spacing: .1em;
   text-transform: uppercase;
-  box-shadow: none;
+  color: var(--fzd-text-fainter);
 }
-body.fz-draft .pick-card-photo { background: var(--fzd-tile-bg); }
-body.fz-draft .pick-card-watermark { opacity: .16; }
-body.fz-draft .pick-card-head { padding: 8px 9px 0; }
-body.fz-draft .pick-card-id { gap: 1px; }
+body.fz-draft .pick-card-turn-round { font-size: .6rem; color: var(--fzd-text-fainter); }
+body.fz-draft .pick-card.is-current .pick-card-turn-num,
+body.fz-draft .pick-card.is-current .pick-card-turn-round { color: #8a877f; }
+body.fz-draft .pick-card.is-my-turn .pick-card-turn-num {
+  color: var(--fzd-accent);
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+/* "à vous" tenait déjà dans .pick-card-turn-num (draftPickCards.js) : le
+   badge séparé ferait doublon au même endroit de la carte. */
+body.fz-draft .pick-card-live-badge { display: none; }
+
+/* ---- Vignette : petite tuile à côté du nom, pas une couche plein cadre ---- */
+body.fz-draft .pick-card-photo {
+  grid-area: photo;
+  position: static;
+  inset: auto;
+  z-index: auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--fzd-tile-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+body.fz-draft .pick-card-photo-img {
+  position: static;
+  z-index: auto;
+  height: 100%;
+  width: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: center top;
+}
+body.fz-draft .pick-card-photo.is-team .pick-card-photo-img {
+  height: 72%; width: auto; max-width: 72%; object-fit: contain;
+}
+/* Le blason en filigrane n'a de sens que derrière un grand portrait — la
+   vignette est trop petite pour le porter sans juste paraître sale. */
+body.fz-draft .pick-card-watermark { display: none; }
+body.fz-draft .pick-card-slot,
+body.fz-draft .pick-card-initials {
+  position: static;
+  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+  font-size: .68rem;
+  font-weight: 600;
+  color: var(--fzd-text-muted);
+  opacity: 1;
+}
+
+/* ---- Nom (+ position, masquée — voir plus bas) à côté de la vignette ---- */
+body.fz-draft .pick-card-head {
+  grid-area: name;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  min-width: 0;
+}
+body.fz-draft .pick-card-id { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 auto; }
 body.fz-draft .pick-card-name {
   font-family: 'Helvetica Neue', Helvetica, sans-serif;
   font-weight: 600;
   font-size: .78rem;
+  line-height: 1.2;
+  text-transform: none;
+  text-shadow: none;
+  white-space: normal;
   color: inherit;
 }
-body.fz-draft .pick-card-pos {
-  font-size: .62rem;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--fzd-text-faint);
+/* 3A/3B ne montrent ni position ni écusson LNH sur la carte compacte du
+   carrousel — seulement le nom et l'équipe du pool (pick-card-foot). La
+   fiche complète (position, club) reste consultable dans la liste et la
+   carte "Joueur sélectionné". */
+body.fz-draft .pick-card-pos,
+body.fz-draft .pick-card-club { display: none; }
+
+/* ---- Pied : équipe du pool, sous un filet ---- */
+body.fz-draft .pick-card-foot {
+  grid-area: foot;
+  display: block;
+  padding: 7px 0 0;
+  margin: 0;
+  min-width: 0;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-top: 1px solid var(--fzd-border);
 }
-body.fz-draft .pick-card.is-current .pick-card-pos { color: #c9c5bd; }
-body.fz-draft .pick-card-foot { padding: 0 9px 8px; }
+body.fz-draft .pick-card.is-current .pick-card-foot { border-top-color: rgba(255, 255, 255, .14); }
 body.fz-draft .pick-card-owner {
-  font-size: .64rem;
-  font-weight: 600;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  color: var(--fzd-text-faint);
+  display: block;
+  font-size: .68rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fzd-text-fainter);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 body.fz-draft .pick-card.is-current .pick-card-owner { color: var(--fzd-accent); }
-body.fz-draft .pick-card-meta { font-size: .66rem; color: var(--fzd-text-faint); }
-body.fz-draft .pick-card.is-current .pick-card-meta { color: #c9c5bd; }
+/* Round et numéro vivent maintenant dans .pick-card-turn (ci-dessus). */
+body.fz-draft .pick-card-meta { display: none; }
+
 body.fz-draft .pick-card-select-btn {
   background: var(--fzd-accent);
   color: #fff;
@@ -339,22 +437,36 @@ body.fz-draft .draft-header.is-liste-joueurs #dop-round {
 /* ============================================================
    2. ONGLETS DE SECTION — Aperçu / Liste des joueurs
    ============================================================ */
+/* border-radius et les 4 côtés de border (pas seulement -bottom) doivent
+   être réinitialisés : draftActif.css (§15, non prémium) pose un contrôle
+   segmenté — border:1px + border-radius:14px sur .panel-tabs, 10px sur
+   .panel-tab — pour un tout autre gabarit. Une spécificité plus haute ne
+   suffit pas si la propriété n'est jamais réécrite : border-radius restait
+   à 14px/10px, la bande gardait sa pilule arrondie sous le nouvel habillage. */
 body.fz-draft .panel-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 0;
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 16px;
+  border: 0;
   border-bottom: 1px solid var(--fzd-border);
+  border-radius: 0;
   background: var(--fzd-bg);
 }
 body.fz-draft .panel-tab {
+  flex: none;
+  min-height: 0;
   padding: 13px 0;
   text-align: center;
   background: none;
   border: 0;
   border-bottom: 2px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
   color: var(--fzd-text-faint);
+  font-family: 'Helvetica Neue', Helvetica, sans-serif;
   font-size: .78rem;
   font-weight: 500;
   letter-spacing: .06em;
@@ -363,9 +475,11 @@ body.fz-draft .panel-tab {
 }
 body.fz-draft .panel-tab:hover { color: var(--fzd-ink); }
 body.fz-draft .panel-tab.is-active {
+  background: none;
   color: var(--fzd-ink);
   font-weight: 600;
   border-bottom-color: var(--fzd-ink);
+  box-shadow: none;
 }
 body.fz-draft .panel-tab:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(196, 68, 46, .18); }
 
@@ -424,6 +538,10 @@ body.fz-draft .filters-header {
   padding-bottom: 12px;
   border-bottom: 1px solid var(--fzd-border);
 }
+body.fz-draft .filters-header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; }
+/* "N libres · M pris" (draftApercuExtra.js) : masqué sur téléphone, où la
+   carte n'a pas la largeur pour l'ajouter sans casser la ligne du titre. */
+body.fz-draft .filters-header-summary { display: none; font-size: .78rem; color: var(--fzd-text-faint); }
 
 /* ============================================================
    4. MA PROGRESSION
@@ -431,9 +549,24 @@ body.fz-draft .filters-header {
 body.fz-draft .progress-line { font-size: .82rem; }
 body.fz-draft .progress-emoji { color: var(--fzd-accent); }
 body.fz-draft .progress-text { color: var(--fzd-ink-soft); font-weight: 500; }
-body.fz-draft .progress-mini-bar { background: var(--fzd-border-soft); }
-body.fz-draft .progress-mini-fill { background: var(--fzd-ink); }
-body.fz-draft .progress-mini-fill.complete { background: var(--fzd-accent); }
+/* Barres en segments discrets (draftApercuExtra.js) posées par-dessus le
+   fzd-fill continu que draftActif.js met déjà à jour — visibility:hidden
+   plutôt que display:none : la largeur en % reste calculée en arrière-plan
+   sans qu'aucune des deux versions ne se voie double. */
+body.fz-draft .progress-mini-bar { background: none; position: relative; overflow: visible; }
+body.fz-draft .progress-mini-fill { visibility: hidden; }
+body.fz-draft .fzd-segments { position: absolute; inset: 0; display: flex; gap: 3px; }
+body.fz-draft .fzd-segment { flex: 1; border-radius: 2px; background: var(--fzd-border-soft); }
+body.fz-draft .fzd-segment.is-filled { background: var(--fzd-ink); }
+/* Seule la catégorie où il manque le plus de joueurs (fzRenderSegmentedProgress)
+   passe en rouge — les cases vides y prennent le même lavis que le reste de
+   la page pour "il vous manque" (ex. .fzd-status-cell, l'accent-wash). */
+body.fz-draft .progress-line.is-needed-line .progress-text { color: var(--fzd-accent); }
+body.fz-draft .fzd-segments.is-needed .fzd-segment:not(.is-filled) {
+  background: var(--fzd-accent-wash);
+  border: 1px solid #e3b3a9;
+}
+body.fz-draft .fzd-segments.is-needed .fzd-segment.is-filled { background: var(--fzd-accent); }
 body.fz-draft .progress-value { color: var(--fzd-text-muted); font-weight: 600; }
 body.fz-draft .progress-value.complete { color: var(--fzd-accent); }
 body.fz-draft .progress-value.in-progress { color: var(--fzd-warning); }
@@ -567,10 +700,43 @@ body.fz-draft .recent-feed-slot {
   color: var(--fzd-text-fainter);
 }
 body.fz-draft .recent-feed-text strong { font-weight: 600; color: var(--fzd-ink); }
+/* "Retiré de vos favoris" : posé quand le joueur repêché est dans
+   fzGetFavorites() (draftFavorites.js), quelle que soit l'équipe qui l'a
+   pris — draftApercuExtra.js. */
+body.fz-draft .recent-feed-removed { color: var(--fzd-accent); font-weight: 500; }
 
 /* ============================================================
-   5quinquies. SIDEBAR DE POSITION (bureau, Liste des joueurs)
+   5quater-bis. SOUS-ONGLETS DE L'APERÇU (bureau) — voir §11
    ============================================================ */
+body.fz-draft .apercu-subtabs { display: none; align-items: center; gap: 0; border-bottom: 1px solid var(--fzd-border); margin-bottom: 20px; }
+body.fz-draft .apercu-subtab {
+  border: 0;
+  background: none;
+  padding: 0 20px 12px;
+  margin-bottom: -1px;
+  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--fzd-text-faint);
+  cursor: pointer;
+}
+body.fz-draft .apercu-subtab:first-child { padding-left: 0; }
+body.fz-draft .apercu-subtab:hover { color: var(--fzd-ink); }
+body.fz-draft .apercu-subtab.is-active {
+  color: var(--fzd-ink);
+  font-weight: 600;
+  border-bottom: 2px solid var(--fzd-ink);
+  cursor: default;
+}
+body.fz-draft .apercu-subtab-count { color: var(--fzd-text-fainter); font-weight: 400; }
+body.fz-draft .apercu-subtab.is-active .apercu-subtab-count { color: var(--fzd-text-faint); }
+
+/* ============================================================
+   5quinquies. SIDEBAR DE POSITION / AFFICHAGE / ÉQUIPE (bureau)
+   ============================================================ */
+body.fz-draft .list-filters-search { margin-bottom: 20px; }
 body.fz-draft .list-filters-title {
   margin: 0 0 11px;
   font-size: .68rem;
@@ -603,6 +769,11 @@ body.fz-draft .list-filter-position.is-active {
 }
 body.fz-draft .list-filter-position.is-active .list-filter-count { color: rgba(255, 255, 255, .65); font-weight: 600; }
 body.fz-draft .list-filter-position:disabled { opacity: .5; cursor: not-allowed; }
+/* Poste dont le quota n'est pas atteint : même rouge que le reste de la
+   page pour "il vous manque" (progress-value.in-progress, etc.). */
+body.fz-draft .list-filter-position.is-needed:not(.is-active) { color: var(--fzd-accent); }
+body.fz-draft .list-filter-position.is-needed:not(.is-active) .list-filter-count { color: var(--fzd-accent); }
+body.fz-draft .list-filter-needed-tag { text-transform: uppercase; font-size: .68rem; letter-spacing: .04em; }
 
 body.fz-draft .list-filter-checkbox {
   display: flex;
@@ -616,6 +787,7 @@ body.fz-draft .list-filter-checkbox {
 }
 body.fz-draft .list-filter-checkbox:hover { background: var(--fzd-bg-alt); }
 body.fz-draft .list-filter-checkbox input { width: 15px; height: 15px; accent-color: var(--fzd-ink); }
+body.fz-draft .list-filters-team { width: 100%; }
 
 /* ============================================================
    5sexies. JOUEUR SÉLECTIONNÉ (bureau, Liste des joueurs)
@@ -634,6 +806,33 @@ body.fz-draft .selected-player-photo img { width: 100%; height: 100%; object-fit
 body.fz-draft .selected-player-ident { flex: 1; min-width: 0; }
 body.fz-draft .selected-player-name { font-size: 1.05rem; font-weight: 600; color: var(--fzd-ink); }
 body.fz-draft .selected-player-meta { margin-top: 5px; font-size: .78rem; color: var(--fzd-text-faint); }
+body.fz-draft .selected-player-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  margin-top: 14px;
+  background: var(--fzd-border);
+  border: 1px solid var(--fzd-border);
+  border-radius: 9px;
+  overflow: hidden;
+}
+body.fz-draft .selected-player-tile { background: var(--fzd-surface); padding: 10px 0; text-align: center; }
+body.fz-draft .selected-player-tile-num {
+  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+  font-size: 1.18rem;
+  font-weight: 600;
+  color: var(--fzd-ink);
+  font-variant-numeric: tabular-nums;
+}
+body.fz-draft .selected-player-tile-label {
+  margin-top: 4px;
+  font-size: .58rem;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--fzd-text-faint);
+}
+body.fz-draft .selected-player-blurb { margin: 12px 0 0; font-size: .82rem; line-height: 1.45; color: var(--fzd-ink-soft); }
 body.fz-draft .selected-player-actions { display: flex; gap: 8px; margin-top: 14px; }
 body.fz-draft .selected-player-needs-title {
   margin-top: 20px;
@@ -719,6 +918,29 @@ body.fz-draft .category-tab.is-unavailable:hover {
   border-color: var(--fzd-border);
   color: var(--fzd-text-fainter);
   opacity: .7;
+}
+
+/* ---- "Trier" en pastilles (bureau, voir §11) — même patron que
+   .category-tab, mêmes options que #sortBy. draftApercuExtra.js. ---- */
+body.fz-draft .sort-tabs { display: none; align-items: center; gap: 5px; }
+body.fz-draft .sort-tab {
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--fzd-border);
+  background: var(--fzd-surface);
+  color: var(--fzd-text-muted);
+  font-size: .68rem;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+body.fz-draft .sort-tab:hover { border-color: var(--fzd-ink); }
+body.fz-draft .sort-tab.is-active {
+  background: var(--fzd-ink);
+  border-color: var(--fzd-ink);
+  color: #fff;
+  font-weight: 600;
 }
 
 /* ---- Nouveau : bascule Libres / Tous (draftListePremium.js) ---- */
@@ -1083,5 +1305,17 @@ body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-dark); color:
 
   body.fz-draft #playerTable thead th,
   body.fz-draft #playerTable tbody td { padding: 12px 14px; }
+
+  /* ---- Résumé du titre, tri en pastilles : le <select> #sortBy et le champ
+     de recherche de la carte principale s'effacent devant leurs équivalents
+     déjà posés ailleurs (sidebar de position, pastilles) — jamais les deux
+     à la fois. ---- */
+  body.fz-draft .filters-header-summary { display: inline; }
+  body.fz-draft .sort-select { display: none; }
+  body.fz-draft .sort-tabs { display: flex; }
+  body.fz-draft .filters-row .search-field { display: none; }
+
+  /* ---- Sous-onglets "Mes favoris / Liste des joueurs" (apercu, §5quater-bis) ---- */
+  body.fz-draft .apercu-subtabs { display: flex; }
 }
 

@@ -160,6 +160,30 @@ function buildPickCard(options) {
   const monEquipe = typeof getUserTeam === 'function' ? getUserTeam() : null;
   const estMonTour = etat === 'current' && !!equipePool && !!monEquipe && equipePool === monEquipe;
 
+  /* ---- Tout en haut : "Choix N" et la ronde ----
+     Absent de la carte avant cet ajout : round/numéro ne vivaient qu'en bas,
+     dans .pick-card-foot (voir plus bas), à côté de l'équipe du pool. Séparé
+     ici pour l'habillage "éditorial calme" (draftActif-premium.css), qui
+     place ce repère en tête de carte plutôt qu'au pied. */
+  {
+    const entete = document.createElement('div');
+    entete.className = 'pick-card-turn';
+    const choix = document.createElement('span');
+    choix.className = 'pick-card-turn-num';
+    // "à vous" rejoint le numéro plutôt que le badge séparé plus bas
+    // (pick-card-live-badge, conservé pour le relief visuel de .is-my-turn) :
+    // même repère que 3A/3B, "CHOIX 10 · À VOUS" en tête de carte.
+    choix.textContent = 'Choix ' + numero + (estMonTour ? ' · à vous' : '');
+    entete.appendChild(choix);
+    if (ronde && !estMonTour) {
+      const rondeSpan = document.createElement('span');
+      rondeSpan.className = 'pick-card-turn-round';
+      rondeSpan.textContent = 'R' + ronde;
+      entete.appendChild(rondeSpan);
+    }
+    carte.appendChild(entete);
+  }
+
   /* ---- Milieu : le blason en fond, la photo ou les initiales par-dessus ----
      Posée en couche de fond plutôt qu'en rangée : le portrait peut ainsi
      déborder derrière le nom et le pied, comme sur une carte de collection.
