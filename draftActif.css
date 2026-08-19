@@ -2080,6 +2080,14 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   .draft-header { padding: 14px 22px; }
 }
 
+/* Le bandeau de tour doit toucher la barre de navigation collante : pas de
+   filet de fond de .draft-header ni de marge de .draft-overall-progress
+   au-dessus de lui. Longhand après les raccourcis `padding`/`margin`
+   ci-dessus (et ceux du §12/15 plus haut) pour n'annuler que le haut, à
+   toutes les largeurs, sans toucher au reste de leurs marges/padding. */
+.draft-header { padding-top: 0; }
+.draft-overall-progress { margin-top: 0; }
+
 /* ============================================================
    16. ONGLETS ET PROGRESSION DÉPLIABLE
    ------------------------------------------------------------
