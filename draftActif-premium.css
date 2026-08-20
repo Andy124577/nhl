@@ -396,6 +396,12 @@ body.fz-draft .turn-skip-btn:disabled { opacity: .45; }
 
 /* ---------- Bande de choix (ordre du repêchage) ---------- */
 body.fz-draft .recent-picks-card { padding: 0; background: var(--fzd-bg); border: 0; border-radius: 0; border-top: 1px solid var(--fzd-border); }
+/* Titre "Ordre des choix" (3A/3B) : .card-header hérite déjà de
+   margin-bottom/padding-bottom/border-bottom depuis la règle
+   `.draft-header .card-header` (draftActif.css) — il ne manquait qu'un
+   peu de padding latéral, .recent-picks-card elle-même n'en portant
+   aucun (la bande en dessous s'étire pleine largeur jusqu'au fondu). */
+body.fz-draft .recent-picks-header { padding: 13px 20px 0; }
 body.fz-draft .picks-carousel {
   --pick-w: 128px;
   --pick-h: 96px;
@@ -1546,6 +1552,7 @@ body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-dark); color:
   body.fz-draft .turn-banner-text { font-size: 1.05rem; }
   body.fz-draft .picks-carousel { --pick-w: 150px; --pick-h: 108px; padding: 14px 34px; }
   body.fz-draft .recent-picks-card { padding-left: 0; padding-right: 0; }
+  body.fz-draft .recent-picks-header { padding: 20px 34px 0; }
 
   /* Pilule Aperçu/Liste des joueurs (3B/4B) : bande extérieure plus large
      (34px, comme le reste de l'en-tête bureau) et piste qui ne s'étire
@@ -1573,7 +1580,7 @@ body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-dark); color:
   /* ---- Aperçu (3B) : suggestion + favoris à gauche, suivi à droite ---- */
   body.fz-draft .draft-main-container.mode-apercu .draft-sidebar {
     display: grid;
-    grid-template-columns: 1fr 340px;
+    grid-template-columns: 1fr 400px;
     gap: 20px;
     align-items: start;
   }
@@ -1609,6 +1616,12 @@ body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-dark); color:
   body.fz-draft .sort-select { display: none; }
   body.fz-draft .sort-tabs { display: flex; }
   body.fz-draft .filters-row .search-field { display: none; }
+  /* La liste "POSITION" de .list-filters-sidebar (juste au-dessus) pilote
+     déjà #playerFilter sur ce bureau — les mêmes pastilles répétées dans
+     la carte centrale (utiles seulement en dessous de 769px, où la
+     sidebar disparaît) n'y feraient plus que doublon, non stylées à cette
+     largeur puisque 4B ne les montre pas ici. */
+  body.fz-draft .category-tabs { display: none; }
 
   /* ---- Sous-onglets "Mes favoris / Liste des joueurs" (apercu, §5quater-bis) ---- */
   body.fz-draft .apercu-subtabs { display: flex; }
