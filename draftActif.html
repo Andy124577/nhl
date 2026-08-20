@@ -117,6 +117,29 @@
               <span class="turn-banner-marquee-item" aria-hidden="true"></span>
             </span>
           </span>
+
+          <!-- Panneau "à vous"/"en attente" (designs Claude Design 3A/3B) :
+               grand chiffre (temps écoulé si c'est votre tour, choix restants
+               sinon), manques de poste, appel à l'action. N'apparaît que pour
+               .waiting/.your-turn — refreshTurnAlert()/refreshTurnClock()
+               (draftActif.js) posent le contenu, .done et le repli gardent
+               #turn-banner-body/-marquee ci-dessus tels quels. -->
+          <div class="turn-banner-hero" id="turn-banner-hero" hidden>
+            <div class="turn-banner-row">
+              <div class="turn-banner-metric" id="turn-banner-metric" hidden>
+                <span class="turn-banner-metric-num" id="turn-banner-metric-num"></span>
+                <span class="turn-banner-metric-label" id="turn-banner-metric-label"></span>
+              </div>
+              <div class="turn-banner-needs" id="turn-banner-needs" hidden>
+                <span class="turn-banner-needs-label">Il vous manque</span>
+                <span class="turn-banner-needs-value" id="turn-banner-needs-value"></span>
+              </div>
+            </div>
+            <div class="turn-banner-actions is-single" id="turn-banner-actions" hidden>
+              <button type="button" class="turn-banner-cta" id="turn-banner-cta"></button>
+            </div>
+          </div>
+
           <span class="turn-clock" id="turn-clock" hidden></span>
         </div>
         <span id="dop-round">Ronde 1</span>

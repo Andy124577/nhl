@@ -163,41 +163,209 @@ body.fz-draft .turn-banner-marquee-item {
   font-weight: 600;
 }
 
-/* En attente : neutre. */
-body.fz-draft .turn-banner.waiting { background: var(--fzd-bg-alt); color: var(--fzd-ink-soft); }
-body.fz-draft .turn-banner.waiting.next { background: #f4e9d8; color: #7a5a17; }
-
-/* À vous : bandeau sombre + accent rouge, couleurs de l'équipe du
-   pool en repli sur les jetons neutres — même logique que
-   draftPickCards.js (--team-a/-b/-deep déjà assourdis). */
-body.fz-draft .turn-banner.your-turn {
-  color: #fff;
-  border-color: transparent;
-  box-shadow: none;
-  animation: none;
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, .28) 0%, rgba(0, 0, 0, 0) 55%),
-    linear-gradient(158deg, var(--team-a, var(--fzd-ink)) 0%, var(--team-b, #23252a) 62%, var(--team-deep, #0d0e10) 100%);
-}
-body.fz-draft .turn-banner.your-turn::before {
-  content: 'À vous';
-  flex: 0 0 auto;
-  padding: 5px 8px;
-  background: var(--fzd-accent);
-  color: #fff;
-  font-size: .68rem;
-  font-weight: 700;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  border-radius: 3px;
-  order: -1;
-}
-body.fz-draft .turn-banner.your-turn.is-unbranded { color: var(--fzd-ink); background: var(--fzd-ink); }
 body.fz-draft .turn-banner.done { background: var(--fzd-accent-wash); color: var(--fzd-accent-dark); }
 body.fz-draft .turn-banner.done::before { content: none; }
 
 body.fz-draft .turn-clock { opacity: .85; font-weight: 600; }
 body.fz-draft .turn-clock.is-long { color: var(--fzd-warning); opacity: 1; }
+
+/* ---------- Panneau "à vous" / "en attente" (designs 3A/3B) ----------
+   .waiting/.your-turn quittent la pastille ci-dessus pour le panneau noir
+   plein cadre du design : refreshTurnAlert()/refreshTurnClock()
+   (draftActif.js) peuplent #turn-banner-text (ligne de contexte, à côté de
+   la pastille d'état ci-dessous), #turn-banner-hero (grand chiffre +
+   manques + action). .done garde l'habillage pastille au-dessus, seul
+   état que le design ne couvre pas. */
+body.fz-draft .turn-banner.waiting,
+body.fz-draft .turn-banner.your-turn {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 18px 20px 20px;
+  background: var(--fzd-ink);
+  color: #fff;
+}
+/* Prochain tour dans un choix : même panneau noir, filet ambre plutôt qu'un
+   fond distinct — la palette du design 3A/3B ne réserve pas de second ton
+   d'état, seul le contour signale "bientôt vous" sans rivaliser avec le "à
+   vous" plein rouge. */
+body.fz-draft .turn-banner.waiting.next {
+  box-shadow: inset 0 0 0 2px var(--fzd-warning);
+}
+body.fz-draft .turn-banner.waiting .turn-banner-logo,
+body.fz-draft .turn-banner.your-turn .turn-banner-logo,
+body.fz-draft .turn-banner.waiting .turn-banner-marquee,
+body.fz-draft .turn-banner.your-turn .turn-banner-marquee {
+  display: none;
+}
+
+/* Ligne de contexte : pastille d'état + "Choix N sur T · Ronde R de W". */
+body.fz-draft .turn-banner.waiting .turn-banner-body,
+body.fz-draft .turn-banner.your-turn .turn-banner-body {
+  flex-direction: row;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+body.fz-draft .turn-banner.waiting .turn-banner-body::before,
+body.fz-draft .turn-banner.your-turn .turn-banner-body::before {
+  flex: 0 0 auto;
+  padding: 5px 7px;
+  font-size: .64rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  border-radius: 3px;
+}
+body.fz-draft .turn-banner.your-turn .turn-banner-body::before {
+  content: 'À vous';
+  background: var(--fzd-accent);
+  color: #fff;
+}
+body.fz-draft .turn-banner.waiting .turn-banner-body::before {
+  content: 'En attente';
+  border: 1px solid #4b4f53;
+  color: #c9c5bd;
+  padding: 4px 7px;
+}
+body.fz-draft .turn-banner.waiting .turn-banner-text,
+body.fz-draft .turn-banner.your-turn .turn-banner-text {
+  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-size: .78rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--fzd-text-faint);
+  white-space: normal;
+}
+body.fz-draft .turn-banner.waiting .turn-banner-sub,
+body.fz-draft .turn-banner.your-turn .turn-banner-sub {
+  display: none;
+}
+
+/* Grand chiffre + manques + action. */
+body.fz-draft .turn-banner-hero { display: none; }
+body.fz-draft .turn-banner.waiting .turn-banner-hero:not([hidden]),
+body.fz-draft .turn-banner.your-turn .turn-banner-hero:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+body.fz-draft .turn-banner-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+body.fz-draft .turn-banner-metric {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+body.fz-draft .turn-banner-metric[hidden] { display: none; }
+body.fz-draft .turn-banner-metric-num {
+  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+  font-size: 4rem;
+  line-height: .8;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+body.fz-draft .turn-banner-metric-label {
+  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+  font-size: .69rem;
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--fzd-text-faint);
+  padding-bottom: 6px;
+}
+
+body.fz-draft .turn-banner-needs { text-align: right; padding-bottom: 6px; }
+body.fz-draft .turn-banner-needs[hidden] { display: none; }
+body.fz-draft .turn-banner-needs-label {
+  display: block;
+  font-size: .59rem;
+  font-weight: 500;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  color: var(--fzd-text-faint);
+}
+body.fz-draft .turn-banner-needs-value {
+  display: block;
+  margin-top: 6px;
+  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+  font-size: .94rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+body.fz-draft .turn-banner-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 16px;
+}
+body.fz-draft .turn-banner-actions[hidden] { display: none; }
+body.fz-draft .turn-banner-actions.is-single { grid-template-columns: 1fr; }
+body.fz-draft .turn-banner-cta {
+  padding: 14px;
+  text-align: center;
+  border-radius: 10px;
+  background: var(--fzd-accent);
+  color: #fff;
+  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  border: 0;
+  cursor: pointer;
+  transition: background .18s ease;
+}
+body.fz-draft .turn-banner-cta:hover { background: var(--fzd-accent-dark); }
+body.fz-draft .turn-banner-cta.is-secondary {
+  background: transparent;
+  border: 1px solid #4b4f53;
+  color: #c9c5bd;
+}
+body.fz-draft .turn-banner-cta.is-secondary:hover { border-color: #fff; color: #fff; }
+
+/* Chip d'horloge existante : redondante avec le grand chiffre une fois que
+   c'est votre tour (même valeur, juste agrandie) ; encore utile en attente,
+   où elle indique la durée du choix en cours — une donnée différente du
+   "N choix avant vous" du grand chiffre. */
+body.fz-draft .turn-banner.your-turn .turn-clock { display: none; }
+
+@media (min-width: 769px) {
+  body.fz-draft .turn-banner.waiting,
+  body.fz-draft .turn-banner.your-turn { padding: 20px 34px 22px; }
+
+  body.fz-draft .turn-banner.waiting .turn-banner-hero:not([hidden]),
+  body.fz-draft .turn-banner.your-turn .turn-banner-hero:not([hidden]) {
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 24px;
+  }
+  body.fz-draft .turn-banner-row { flex: 1 1 auto; }
+  body.fz-draft .turn-banner-metric-num { font-size: 4.9rem; }
+  body.fz-draft .turn-banner-metric-label { font-size: .81rem; padding-bottom: 9px; }
+  body.fz-draft .turn-banner-needs-label { font-size: .625rem; }
+  body.fz-draft .turn-banner-needs-value { font-size: 1.375rem; margin-top: 8px; }
+  body.fz-draft .turn-banner-needs { padding-bottom: 10px; }
+  body.fz-draft .turn-banner-actions {
+    grid-template-columns: none;
+    display: flex;
+    gap: 10px;
+    margin-top: 0;
+    padding-bottom: 10px;
+  }
+  body.fz-draft .turn-banner-cta { padding: 15px 26px; }
+  body.fz-draft .turn-banner-cta.is-secondary { padding: 15px 20px; }
+}
 
 body.fz-draft .draft-live-row { padding: 8px 16px; background: var(--fzd-bg); border-top: 1px solid var(--fzd-border); margin: 0; max-width: none; justify-content: flex-start; }
 body.fz-draft .draft-live-row[hidden] { display: none; }
@@ -252,7 +420,8 @@ body.fz-draft .pick-card {
   grid-template-areas:
     "turn turn"
     "photo name"
-    "foot foot";
+    "foot foot"
+    "btn btn";
   align-items: start;
   gap: 7px 9px;
   height: auto;
@@ -411,16 +580,30 @@ body.fz-draft .pick-card.is-current .pick-card-owner { color: var(--fzd-accent);
 /* Round et numéro vivent maintenant dans .pick-card-turn (ci-dessus). */
 body.fz-draft .pick-card-meta { display: none; }
 
+/* La règle d'origine (draftActif.css) centre ce bouton en survol absolu,
+   pensé pour l'ancienne carte plein cadre (grande photo en fond) : sur la
+   carte compacte ci-dessus, il flottait par-dessus le nom/la vignette au
+   lieu de suivre le flux — voir 3A/3B, où "Sélectionner" est la dernière
+   ligne de la carte, pleine largeur, jamais en survol. */
 body.fz-draft .pick-card-select-btn {
+  grid-area: btn;
+  position: static;
+  top: auto; left: auto; z-index: auto;
+  transform: none;
+  width: 100%;
+  min-height: 0;
+  margin-top: 2px;
+  padding: 9px;
   background: var(--fzd-accent);
   color: #fff;
-  border-radius: 7px;
+  border-radius: 8px;
   font-size: .64rem;
   font-weight: 700;
   letter-spacing: .05em;
   text-transform: uppercase;
+  box-shadow: none;
 }
-body.fz-draft .pick-card-select-btn:hover { background: var(--fzd-accent-dark); }
+body.fz-draft .pick-card-select-btn:hover { background: var(--fzd-accent-dark); transform: none; }
 body.fz-draft .pick-card-initials { color: var(--fzd-text-muted); }
 body.fz-draft .pick-card-logo-chip { background: #fff; border: 1px solid var(--fzd-border); }
 body.fz-draft .pick-card-club .pick-card-abbr { color: var(--fzd-text-muted); }

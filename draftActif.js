@@ -163,84 +163,14 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
         }
     }
 
-    /** Bandeau « pas mon tour » : identité et texte du DERNIER choix fait. */
-    function appliquerDernierChoix() {
-        const texte = document.getElementById("turn-banner-text");
-        const sousTexte = document.getElementById("turn-banner-sub");
-        const historique = (draftData && draftData.picksHistory) || [];
-        const dernier = historique[historique.length - 1];
-
-        if (!dernier) {
-            appliquerIdentiteBanniere(null);
-            if (texte) texte.textContent = "⏳ En attente du premier choix";
-            if (sousTexte) sousTexte.textContent = "";
-            return;
-        }
-
-        appliquerIdentiteBanniere(dernier.team);
-        if (texte) texte.textContent = `${dernier.team} a sélectionné ${dernier.player}`;
-        if (sousTexte) sousTexte.textContent = `Choix #${historique.length}`;
-    }
-
     /* ---- Bande défilante --------------------------------------------------
-       Remplace le texte fixe pour deux états : mon tour (le rappel se répète
-       à l'infini) et l'attente une fois les cinq secondes du dernier choix
-       écoulées (tout l'historique défile). Le contenu vit deux fois dans le
-       balisage (draftActif.html) et la piste avance de translateX(-50%) : la
-       moitié de SA PROPRE largeur, qui vaut toujours une copie quel que soit
-       le texte, donc la boucle ne montre jamais de coupure.
-
-       La durée est mesurée plutôt que fixe — un historique de deux choix et
-       un de quarante n'ont pas à défiler à la même vitesse relative — et le
-       contenu déjà en place n'est pas retouché : recalculer la même valeur à
-       chaque relevé (toutes les ~7 s tant que rien de neuf ne s'est passé,
-       voir loadDraftData) aurait fait sauter l'animation en cours.
-
-       55px/s donnait un texte lisible tant qu'il tenait sous le plancher de
-       6 s (donc pour les messages courts, ralentis par ce plancher plutôt
-       que par la vitesse elle-même) — mais tout message assez long pour
-       dépasser ce plancher défilait à ce rythme brut, senti trop rapide sur
-       un historique à rallonge. */
-    const MARQUEE_PX_PAR_SEC = 34;
-    let dernierContenuDefilement = null;
-
-    function demarrerDefilement(contenu) {
-        const zone = document.getElementById("turn-banner-marquee");
-        const corps = document.getElementById("turn-banner-body");
-        const piste = document.getElementById("turn-banner-marquee-track");
-        if (!zone || !piste) return; // repli : le texte statique reste affiché
-
-        if (corps) corps.hidden = true;
-        zone.hidden = false;
-        if (contenu === dernierContenuDefilement) return;
-
-        zone.querySelectorAll(".turn-banner-marquee-item").forEach(function (it) {
-            it.textContent = contenu;
-        });
-
-        const reduit = window.matchMedia
-            && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        if (reduit) {
-            piste.style.animation = "none";
-            dernierContenuDefilement = contenu;
-            return;
-        }
-
-        piste.style.animation = "";
-        const item = zone.querySelector(".turn-banner-marquee-item");
-        const largeur = item ? item.getBoundingClientRect().width : 0;
-        // Tout premier rendu : #draft-overall-progress peut encore valoir
-        // `display:none` à cet instant précis (il ne passe à 'block' qu'un peu
-        // plus tard, voir refreshOverallProgress) — la piste mesurerait alors
-        // 0 px et figerait la vitesse au plancher pour de bon, puisqu'un
-        // contenu identique ne redéclenche pas la mesure ci-dessus. On ne
-        // mémorise donc PAS ce contenu tant que la mesure est nulle : le
-        // prochain relevé (7 s de sondage, ou tout événement socket) retentera
-        // avec un bandeau désormais visible.
-        if (largeur === 0) return;
-        dernierContenuDefilement = contenu;
-        piste.style.setProperty("--marquee-duration", Math.max(6, largeur / MARQUEE_PX_PAR_SEC) + "s");
-    }
+       Portait le rappel « c'est votre tour » et le défilé de l'historique
+       avant le panneau 3A/3B ci-dessus : la pastille d'état + le grand
+       chiffre portent maintenant ce même rôle, en fixe. arreterDefilement()
+       ci-dessous reste appelée à chaque relevé — elle garde la bande
+       masquée et le texte statique affiché, plutôt que de dépendre d'un état
+       initial jamais réécrit. Le balisage (#turn-banner-marquee,
+       draftActif.html) et son CSS restent en place, inertes. */
 
     /** Repli vers le texte statique (`turn-banner-body`). */
     function arreterDefilement() {
@@ -275,9 +205,100 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
         dernierLongueurHistorique = historique.length;
     }
 
+    /* Contexte "Choix N sur T · Ronde R de W", pour la ligne à côté de la
+       pastille d'état du panneau 3A/3B — même formule que
+       refreshOverallProgress() (plus bas dans ce fichier, IIFE séparée : pas
+       d'accès direct à ses variables, d'où le recalcul, à partir des mêmes
+       champs de draftData). */
+    function contextePanneau() {
+        if (!draftData || !Array.isArray(draftData.draftOrder)) return "";
+        const total = draftData.draftOrder.length;
+        const idx = Math.min(draftData.currentPickIndex || 0, total);
+        const teams = new Set(draftData.draftOrder).size || 1;
+        const totalRondes = Math.ceil(total / teams);
+        const ronde = Math.min(Math.floor(idx / teams) + 1, totalRondes);
+        return `Choix ${Math.min(idx + 1, total)} sur ${total} · Ronde ${ronde} de ${totalRondes}`;
+    }
+
+    /* "4 défenseurs et 1 gardien" — postes dont le quota de MON équipe n'est
+       pas atteint, mêmes champs que fzGroupesManquants()/fzPireGroupe()
+       (draftApercuExtra.js) mais recalculés ici : draftActif.js n'a pas de
+       dépendance vers ce fichier ailleurs, et la donnée (draftData.config +
+       draftData.teams) est déjà celle que ce fichier-ci tient à jour. */
+    const FZ_LABELS_MANQUE = {
+        offensive: ["attaquant", "attaquants"],
+        defensive: ["défenseur", "défenseurs"],
+        rookie: ["recrue", "recrues"],
+        goalie: ["gardien", "gardiens"]
+    };
+    function texteManques() {
+        const me = typeof getUserTeam === "function" ? getUserTeam() : null;
+        if (!me || !draftData || !draftData.teams || !draftData.teams[me]) return "";
+        const cfg = draftData.config || { numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1 };
+        const equipe = draftData.teams[me];
+        const groupes = [
+            ["defensive", (cfg.numDefensive ?? 4) - (equipe.defensive || []).length],
+            ["goalie", (cfg.numGoalies ?? 1) - (equipe.goalie || []).length],
+            ["offensive", (cfg.numOffensive ?? 6) - (equipe.offensive || []).length],
+            ["rookie", (cfg.numRookies ?? 1) - (equipe.rookie || []).length]
+        ].filter(function (g) { return g[1] > 0; });
+        if (!groupes.length) return "";
+        const morceaux = groupes.map(function (g) {
+            const n = g[1];
+            const labels = FZ_LABELS_MANQUE[g[0]];
+            return `${n} ${labels[n === 1 ? 0 : 1]}`;
+        });
+        if (morceaux.length === 1) return morceaux[0];
+        return morceaux.slice(0, -1).join(", ") + " et " + morceaux[morceaux.length - 1];
+    }
+
+    /** Peuple le panneau 3A/3B (grand chiffre + manques + action) pour les
+     *  états "à vous"/"en attente" ; masqué pour tout le reste (`done`,
+     *  aucune donnée), qui garde #turn-banner-body/-marquee ci-dessus. */
+    function appliquerPanneauTour(myTurn) {
+        const hero = document.getElementById("turn-banner-hero");
+        const metric = document.getElementById("turn-banner-metric");
+        const num = document.getElementById("turn-banner-metric-num");
+        const label = document.getElementById("turn-banner-metric-label");
+        const needs = document.getElementById("turn-banner-needs");
+        const needsVal = document.getElementById("turn-banner-needs-value");
+        const actions = document.getElementById("turn-banner-actions");
+        const cta = document.getElementById("turn-banner-cta");
+        if (!hero) return;
+        hero.hidden = false;
+
+        if (metric) metric.hidden = !myTurn; // en attente : refreshTurnClock() le peuple ci-dessous, avec "away".
+        if (needs) {
+            const manques = myTurn ? texteManques() : "";
+            needs.hidden = !manques;
+            if (needsVal) needsVal.textContent = manques;
+        }
+        if (actions && cta) {
+            if (myTurn) {
+                actions.hidden = false;
+                cta.textContent = "Faire ma sélection";
+                cta.className = "turn-banner-cta";
+            } else {
+                // "Préparer ma file" (file d'attente) arrive avec cette
+                // fonctionnalité — pas encore posée, pas de bouton creux
+                // en attendant.
+                actions.hidden = true;
+            }
+        }
+        if (!myTurn) {
+            const away = picksUntilMyTurn();
+            if (num) num.textContent = away >= 0 ? String(away) : "";
+            if (label) label.innerHTML = "choix<br> avant vous";
+            if (metric) metric.hidden = away < 0;
+        } else if (label) {
+            label.innerHTML = "depuis<br> votre tour";
+        }
+    }
+
     function refreshTurnAlert() {
         const banner = document.getElementById("turn-banner");
         const header = document.querySelector(".draft-header");
+        const hero = document.getElementById("turn-banner-hero");
         const hasData = draftData && Array.isArray(draftData.draftOrder) && draftData.draftOrder.length > 0;
         const myTurn = hasData && typeof isUserTurn === "function" && isUserTurn();
         const done = typeof checkIfUserTeamIsDone === "function" && checkIfUserTeamIsDone();
@@ -285,7 +306,6 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
         const historique = (draftData && draftData.picksHistory) || [];
 
         noterChoixRecent(historique);
-        const choixRecent = Date.now() < finPickRecent;
 
         // Le texte vit dans un enfant : l'horloge du tour occupe l'autre, et
         // réécrire `textContent` du bandeau les effacerait tous les deux.
@@ -296,36 +316,37 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
             if (!hasData) {
                 banner.className = "turn-banner";
                 arreterDefilement();
+                if (hero) hero.hidden = true;
                 texte.textContent = "";
                 if (sousTexte) sousTexte.textContent = "";
                 appliquerIdentiteBanniere(null);
+                banner.removeAttribute("aria-label");
             } else if (done || away === -1) {
                 banner.className = "turn-banner done";
                 arreterDefilement();
+                if (hero) hero.hidden = true;
                 texte.textContent = "✓ Vous avez complété tous vos choix";
                 if (sousTexte) sousTexte.textContent = "";
                 appliquerIdentiteBanniere(null);
+                banner.removeAttribute("aria-label");
             } else if (myTurn) {
                 banner.className = "turn-banner your-turn";
-                appliquerIdentiteBanniere(typeof getUserTeam === "function" ? getUserTeam() : null);
-                const numero = historique.length + 1;
-                demarrerDefilement(`🎯 C'est votre tour ! Sélectionnez un joueur — Choix #${numero}`);
-            } else if (choixRecent && historique.length) {
-                // Le choix qui vient d'entrer, seul, cinq secondes.
-                banner.className = "turn-banner waiting" + (away === 1 ? " next" : "");
                 arreterDefilement();
-                appliquerDernierChoix();
-            } else if (historique.length) {
-                // Sinon, toute la liste défile.
-                banner.className = "turn-banner waiting" + (away === 1 ? " next" : "");
                 appliquerIdentiteBanniere(null);
-                demarrerDefilement(historique.map(function (h) {
-                    return `${h.team} a sélectionné ${h.player}`;
-                }).join("     •     "));
+                texte.textContent = contextePanneau();
+                if (sousTexte) sousTexte.textContent = "";
+                appliquerPanneauTour(true);
+                banner.setAttribute("aria-label", `C'est votre tour ! ${contextePanneau()}`);
             } else {
                 banner.className = "turn-banner waiting" + (away === 1 ? " next" : "");
                 arreterDefilement();
-                appliquerDernierChoix();
+                appliquerIdentiteBanniere(null);
+                const equipeActuelle = typeof currentTurnTeam === "function" ? currentTurnTeam() : null;
+                texte.textContent = [contextePanneau(), equipeActuelle ? `${equipeActuelle} choisit` : ""]
+                    .filter(Boolean).join(" · ");
+                if (sousTexte) sousTexte.textContent = "";
+                appliquerPanneauTour(false);
+                banner.setAttribute("aria-label", `En attente. ${texte.textContent}`);
             }
         }
         if (header) header.classList.toggle("is-my-turn", !!(myTurn && !done));
@@ -373,6 +394,17 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
         return m + " min";
     }
 
+    /* Format M:SS (secondes sur deux chiffres) pour le grand chiffre du
+       panneau 3A/3B — précision d'horloge plutôt que l'arrondi grossier de
+       formatElapsed() ci-dessus, gardé tel quel pour la puce discrète
+       #turn-clock. */
+    function formatElapsedClock(ms) {
+        const s = Math.max(0, Math.floor(ms / 1000));
+        const m = Math.floor(s / 60);
+        const reste = s % 60;
+        return m + ":" + (reste < 10 ? "0" : "") + reste;
+    }
+
     function currentTurnTeam() {
         if (!draftData || !Array.isArray(draftData.draftOrder)) return null;
         return draftData.draftOrder[draftData.currentPickIndex || 0] || null;
@@ -392,6 +424,7 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
     function refreshTurnClock() {
         const clock = document.getElementById("turn-clock");
         const skip = document.getElementById("turn-skip-btn");
+        const metricNum = document.getElementById("turn-banner-metric-num");
         if (!clock && !skip) return;
 
         const hasData = draftData && Array.isArray(draftData.draftOrder) && draftData.draftOrder.length > 0;
@@ -401,12 +434,29 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
         if (!hasData || complete || !started) {
             if (clock) clock.hidden = true;
             if (skip) skip.hidden = true;
+            // Pas de `turnStartedAt` (pool ancien, d'avant ce champ) : le
+            // grand chiffre du panneau 3A/3B n'a rien de fiable à montrer
+            // quand c'est mon tour — mieux vaut le masquer que laisser le
+            // libellé ("depuis votre tour") flotter sans nombre à côté.
+            const metricEnAttenteDeDonnees = hasData && !complete && !started
+                && typeof isUserTurn === "function" && isUserTurn();
+            if (metricEnAttenteDeDonnees) {
+                const metric = document.getElementById("turn-banner-metric");
+                if (metric) metric.hidden = true;
+            }
             stopClockTimer();
             syncLiveRow();
             return;
         }
 
         const elapsed = Date.now() - started;
+        const monTour = typeof isUserTurn === "function" && isUserTurn();
+
+        // Panneau 3A/3B : quand c'est mon tour, le grand chiffre EST ce même
+        // temps écoulé (le tour en cours, c'est le mien) — juste agrandi et
+        // précis à la seconde plutôt qu'arrondi. appliquerPanneauTour() pose
+        // déjà "N choix avant vous" pour l'attente ; ne pas l'écraser ici.
+        if (metricNum && monTour) metricNum.textContent = formatElapsedClock(elapsed);
 
         if (clock) {
             clock.hidden = false;
@@ -504,6 +554,13 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
     }
     document.addEventListener("DOMContentLoaded", function () {
         setTimeout(function () { try { refreshTurnAlert(); } catch (e) {} }, 600);
+        // Même geste que le bouton flottant de la carte du tour en cours
+        // (draftPickCards.js) : bascule sur l'onglet Liste des joueurs,
+        // n'envoie aucun choix.
+        const cta = document.getElementById("turn-banner-cta");
+        if (cta) cta.addEventListener("click", function () {
+            if (typeof window.fzOuvrirListeJoueurs === "function") window.fzOuvrirListeJoueurs();
+        });
     });
 })();
 
