@@ -1,21 +1,7 @@
-/* ============================================================
-   DRAFT ACTIF — aligné sur le système visuel du site
-   ------------------------------------------------------------
-   Écrit en mobile-first : les règles de base valent pour le
-   téléphone, les media queries `min-width` enrichissent ensuite.
 
-   Les jetons (--primary, --card, --border-light…) viennent de
-   index.css. Cette feuille est chargée APRÈS index.css afin de
-   pouvoir spécialiser sans recourir à !important.
 
-   Deux corrections de fond par rapport à la version précédente :
-   - l'accent passe du rouge (--danger) au cyan (--primary), comme
-     le reste du site ; le rouge redevient réservé aux alertes ;
-   - les couleurs codées en dur (#555, #eee, #fff8f0…) sont
-     remplacées par des jetons, la page suivait mal le thème clair.
-   ============================================================ */
 
-/* ---------- Animations ---------- */
+
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
 @keyframes slideDown {
@@ -33,13 +19,8 @@
   0%, 100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, .30) }
   50%      { box-shadow: 0 0 0 10px rgba(0, 212, 255, 0) }
 }
-/* Respire à la même cadence que turnPulse (2s, juste au-dessus) : les deux
-   classes sont posées dans le même appel JS (refreshTurnAlert), donc caler
-   la même période garde l'en-tête et le bandeau en phase au lieu de battre
-   l'un contre l'autre (l'ancienne valeur, 2.4s, dérivait lentement de celle
-   du bandeau). L'anneau (outline) respire avec l'ombre plutôt que de rester
-   fixe : les deux montent et redescendent ensemble, comme un même halo qui
-   se resserre puis se relâche. */
+
+
 @keyframes headerTurnGlow {
   0%, 100% {
     border-bottom-color: var(--primary);
@@ -52,37 +33,22 @@
     box-shadow: 0 0 0 1px rgba(0, 212, 255, .08) inset, 0 14px 60px -6px rgba(0, 212, 255, .22);
   }
 }
-/* Flash d'arrivée, une seule fois, quand .is-my-turn vient d'être posée :
-   la respiration ci-dessus dit « c'est toujours mon tour », celle-ci dit
-   « ça vient de le devenir » — un vrai à-coup (léger `scale`, sans incidence
-   sur la mise en page puisque `transform` reste hors flux) plutôt qu'une
-   simple variation de teinte, pour qu'il ne passe pas inaperçu au moment où
-   l'œil n'est pas encore sur l'en-tête. box-shadow et outline-color sont
-   aussi visés par headerTurnGlow, mais les deux ne se chevauchent jamais :
-   voir le animation-delay sur .draft-header.is-my-turn plus bas, qui fait
-   démarrer headerTurnGlow exactement quand celle-ci se termine. Ses deux
-   extrémités reprennent la valeur de repos de headerTurnGlow pour que le
-   relais soit invisible. */
+
+
 @keyframes headerPowerOn {
   0%   { filter: brightness(1);    transform: scale(1);     outline-color: rgba(0, 212, 255, .6);  box-shadow: 0 0 0 1px rgba(0, 212, 255, .22) inset, 0 14px 44px -8px rgba(0, 212, 255, .48) }
   28%  { filter: brightness(1.18); transform: scale(1.012);  outline-color: rgba(0, 212, 255, 1);   box-shadow: 0 0 0 3px rgba(0, 212, 255, .65) inset, 0 0 90px 10px rgba(0, 212, 255, .55), 0 14px 44px -8px rgba(0, 212, 255, .48) }
   100% { filter: brightness(1);    transform: scale(1);     outline-color: rgba(0, 212, 255, .6);  box-shadow: 0 0 0 1px rgba(0, 212, 255, .22) inset, 0 14px 44px -8px rgba(0, 212, 255, .48) }
 }
-/* Bande défilante du bandeau de tour : la piste avance de translateX(-50%),
-   la moitié de SA PROPRE largeur — qui vaut toujours une copie du contenu,
-   puisque draftActif.html en pose deux — donc la boucle ne montre jamais de
-   coupure, quel que soit le texte. */
+
+
 @keyframes turnBannerMarquee {
   from { transform: translateX(0) }
   to   { transform: translateX(-50%) }
 }
 
-/* ---- Révélation d'un choix qui vient d'entrer ----
-   Séquence d'environ 1,2 s : la vignette arrive en gris avec la position et
-   le logo d'équipe, la couleur monte, puis le nom paraît. Seules `opacity`,
-   `transform` et `filter` sont animées — aucune propriété de mise en page,
-   donc aucun recalcul de la bande pendant que ça joue. Les translations
-   passent par translate3d pour rester sur le compositeur. */
+
+
 @keyframes pickRevealFrame {
   0%   { border-color: rgba(255, 255, 255, .07) }
   20%  { border-color: var(--team-accent) }
@@ -104,9 +70,8 @@
   to   { opacity: 1; transform: none }
 }
 
-/* ============================================================
-   1. COQUILLE DE PAGE
-   ============================================================ */
+
+
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: var(--bg-page);
@@ -118,38 +83,19 @@ body {
 .draft-header {
   position: relative;
   padding: 18px 16px;
-  /* Largeur posée ici, transparente au repos : headerTurnGlow n'anime que
-     la couleur (voir plus bas), et un border-bottom sans largeur/style ne
-     rend jamais rien quelle que soit la couleur animée — le filet n'a donc
-     jamais existé jusqu'ici. Toujours présente plutôt que posée seulement
-     pendant l'état vivant : .draft-header est sticky, une largeur qui
-     apparaît/disparaît ferait sauter tout ce qui suit de 3px à chaque
-     bascule de tour. */
+  
+
   border-bottom: 3px solid transparent;
   background:
     linear-gradient(135deg, rgba(0, 212, 255, .09), rgba(0, 212, 255, 0) 62%),
     var(--bg);
 }
-/* En-tête « à l'antenne » : la carte-tour (.pick-card.is-my-turn, plus bas)
-   et le bandeau (.turn-banner.your-turn) portaient déjà tout le poids du
-   signal « c'est votre tour » ; l'en-tête collant qui les entoure — visible
-   en permanence pendant qu'on parcourt la liste, puisque .draft-header
-   reste sticky (§15 plus bas) — ne portait qu'un filet de 3px animé,
-   perceptible seulement si on regardait précisément le bas de la bordure.
-   Il porte maintenant sa propre lueur : un fond et une ombre déclarés en
-   dur (pas seulement dans les images-clés ci-dessus) pour que le cadre
-   reste visiblement « vivant » même quand headerPowerOn/headerTurnGlow sont
-   coupées par prefers-reduced-motion plus bas dans ce fichier — avant cette
-   passe, is-my-turn sans animation ne se distinguait plus du repos du tout. */
+
+
 .draft-header.is-my-turn {
   border-bottom-color: var(--primary);
-  /* `outline` plutôt qu'un `border` sur les quatre côtés : il se peint sans
-     réserver d'espace (contrairement à border, qui aurait fallu poser en
-     dur au repos pour éviter un saut de mise en page à chaque bascule de
-     tour — voir le commentaire sur border-bottom au-dessus). Négatif pour
-     rester dans la boîte plutôt que déborder sur le contenu voisin. Un
-     anneau complet plutôt qu'un simple filet du bas : le cadre entier se
-     signale comme actif, pas seulement sa lisière inférieure. */
+  
+
   outline: 2px solid rgba(0, 212, 255, .6);
   outline-offset: -2px;
   box-shadow: 0 0 0 1px rgba(0, 212, 255, .22) inset, 0 14px 44px -8px rgba(0, 212, 255, .48);
@@ -157,21 +103,15 @@ body {
     linear-gradient(180deg, rgba(0, 212, 255, .18) 0%, rgba(0, 212, 255, 0) 62%),
     linear-gradient(135deg, rgba(0, 212, 255, .09), rgba(0, 212, 255, 0) 62%),
     var(--bg);
-  /* headerPowerOn (une fois) puis headerTurnGlow (en boucle, retardée d'.8s
-     pour ne prendre la main sur box-shadow/outline-color qu'une fois le
-     flash terminé — voir le commentaire au-dessus des deux images-clés). */
+  
+
   animation:
     headerPowerOn .8s cubic-bezier(.16, 1, .3, 1),
     headerTurnGlow 2s ease-in-out infinite .8s;
 }
 
-/* ---- Onglet Liste des joueurs ----
-   draftActifUI.js (initPanelTabs) posait `display:none` sur tout le bandeau
-   en quittant Aperçu : le tour en cours disparaissait avec le reste, alors
-   que c'est justement en parcourant le tableau qu'on a le plus besoin de
-   savoir si c'est encore le sien. Le compteur de choix, la ronde et le
-   carrousel restent redondants une fois dans la liste — c'est déjà ce qui y
-   a amené — mais le bandeau de tour, lui, reste affiché et collant. */
+
+
 .draft-header.is-liste-joueurs #dop-label,
 .draft-header.is-liste-joueurs #dop-round,
 .draft-header.is-liste-joueurs .draft-live-row,
@@ -179,27 +119,14 @@ body {
   display: none;
 }
 
-/* ---------- Bandeau de tour ---------- */
-/* Placé au centre de .dop-info : plus de marge haute, il doit rester sur la
-   même ligne de base que le libellé et la ronde. Il se replie sur sa propre
-   ligne si les trois ne tiennent pas. */
-/* Le bandeau occupe sa propre ligne, sur toute la largeur. Il était une
-   pastille de 22 px coincée entre le compteur de choix et le numéro de
-   ronde : le seul état que cette page existe pour transmettre était le plus
-   petit objet du bandeau.
-   Fond neutre plutôt que le dégradé aux couleurs de l'équipe (--team-a/-b,
-   posés en ligne par draftActif.js) que ce bandeau portait auparavant,
-   comme une carte du carrousel : un texte fixé au blanc ne tient pas sur
-   les couleurs claires de certains clubs (Bruins, Predators, Golden
-   Knights…), et le fond fixe ne suivait pas le thème clair. Le bandeau
-   reste identifiable — écusson de l'équipe (.turn-banner-logo) — sans que
-   toute sa surface porte l'identité du club ; l'état (attente, tour
-   suivant, mon tour, terminé) reste seul responsable de la couleur, comme
-   partout ailleurs sur le site. */
+
+
+
+
+
 .turn-banner {
-  /* Négatif plutôt que 3 : le bandeau passe avant #dop-label/#dop-round dans
-     l'ordre d'affichage — la seule information qui compte à l'œil nu (à qui
-     le tour) précède le détail (numéro de choix, ronde). */
+  
+
   order: -1;
   display: flex;
   align-items: center;
@@ -212,11 +139,8 @@ body {
   border: 1px solid transparent;
   background: var(--card);
   color: var(--text-main);
-  /* Reste au-dessus du tableau même dans l'onglet Liste des joueurs — voir
-     .draft-header.is-liste-joueurs plus bas, qui masque le reste du bandeau
-     collant mais garde celui-ci. `.draft-header` est déjà sticky (plus bas
-     dans ce fichier) ; ce second ancrage garde le tour visible même si un
-     jour le bandeau parent cesse de l'être. */
+  
+
   position: sticky;
   top: 60px;
   z-index: 21;
@@ -227,8 +151,8 @@ body {
 @media (min-width: 769px) {
   .turn-banner { top: 70px; }
 }
-/* Le bandeau porte plusieurs enfants (écusson + texte + horloge) : `:empty`
-   ne pouvait donc plus le masquer. C'est l'absence d'état qui le masque. */
+
+
 .turn-banner:not(.waiting):not(.your-turn):not(.done) { display: none; }
 
 .turn-banner-logo {
@@ -239,9 +163,8 @@ body {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  /* Pastille blanche : beaucoup de logos de la LNH sont à dominante sombre
-     et se fondraient dans un fond d'équipe lui aussi sombre (même raison que
-     .pick-card-logo-chip). */
+  
+
   background: #fff;
   border: 1px solid rgba(0, 0, 0, .18);
   overflow: hidden;
@@ -257,16 +180,13 @@ body {
   gap: 1px;
   min-width: 0;
 }
-/* `display: flex` ci-dessus a la même spécificité que la règle `[hidden]`
-   du navigateur, et une règle d'auteur l'emporte toujours sur l'agent
-   utilisateur à spécificité égale : sans cette ligne, poser `hidden` en JS
-   (demarrerDefilement / arreterDefilement) ne masquait rien, et le texte
-   statique restait superposé à la bande défilante. */
+
+
 .turn-banner-body[hidden] { display: none; }
 .turn-banner-text {
   max-width: 100%;
-  /* Le body du système (1rem) plutôt qu'une valeur inventée : c'est le
-     message le plus important de la page, il n'a pas à s'excuser en taille. */
+  
+
   font-size: 1rem;
   font-weight: 800;
   letter-spacing: .02em;
@@ -274,9 +194,8 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* Numéro du choix : précision, pas message — plus petit, moins appuyé, sous
-   la ligne principale plutôt qu'à côté (le texte principal seul peut déjà
-   courir jusqu'à l'ellipse sur téléphone). */
+
+
 .turn-banner-sub {
   font-size: .7rem;
   font-weight: 700;
@@ -286,13 +205,8 @@ body {
 }
 .turn-banner-sub:empty { display: none; }
 
-/* ---- Bande défilante ----
-   Remplace le texte fixe pour deux états : mon tour (le rappel se répète à
-   l'infini) et l'attente une fois les cinq secondes du dernier choix
-   écoulées (l'historique complet défile) — voir demarrerDefilement() dans
-   draftActif.js. `mask-image` estompe les deux bords plutôt qu'une coupure
-   nette : le texte semble entrer et sortir du bandeau, pas apparaître du
-   néant. */
+
+
 .turn-banner-marquee {
   flex: 1 1 auto;
   min-width: 0;
@@ -320,19 +234,10 @@ body {
   border-color: rgba(255, 179, 0, .55);
   box-shadow: 0 0 0 1px rgba(255, 179, 0, .25) inset;
 }
-/* --glow-live rejoint l'anneau existant : c'est le même état « en direct »
-   que .pick-card.is-my-turn (juste plus bas dans ce fichier), qui porte
-   déjà ce halo — le bandeau, lui, ne l'avait jamais reçu alors qu'il est
-   le signal « c'est mon tour » le plus visible de la page (collé en haut,
-   pas seulement sur une carte du carrousel qu'il faut faire défiler). */
-/* Fond aux couleurs de l'équipe du pool, cette fois — demandé explicitement
-   pour cet état précis (voir --team-a/-b/-deep, posés par
-   appliquerIdentiteBanniere() dans draftActif.js à partir de
-   resolveDrafterClub()). Même traitement que .pick-card : une rampe sombre
-   en haut et un texte blanc fixe, pas de couleur assortie au fond — c'est ce
-   qui garde le texte lisible sur les teintes claires de certains clubs
-   (Bruins, Predators, Golden Knights…), y compris en thème clair. Repli sur
-   les jetons neutres si l'équipe n'a pas encore choisi son identité LNH. */
+
+
+
+
 .turn-banner.your-turn {
   border-color: rgba(0, 212, 255, .55);
   box-shadow: 0 0 0 1px rgba(0, 212, 255, .28) inset, var(--glow-live, 0 0 20px rgba(0, 212, 255, .25));
@@ -342,11 +247,8 @@ body {
     linear-gradient(180deg, rgba(0, 0, 0, .32) 0%, rgba(0, 0, 0, 0) 45%),
     linear-gradient(158deg, var(--team-a, var(--card)) 0%, var(--team-b, var(--bg-gray-light)) 62%, var(--team-deep, var(--bg)) 100%);
 }
-/* Même repli que .pick-card.is-unbranded ci-dessous : sans identité connue
-   (appliquerIdentiteBanniere, draftActif.js), le dégradé retombe déjà sur
-   les jetons du site — donc presque blanc en thème clair — mais le texte
-   blanc fixe ci-dessus s'y effaçait complètement. .turn-banner-text/-sub et
-   .turn-clock héritent tous de cette couleur, un seul point suffit. */
+
+
 .turn-banner.your-turn.is-unbranded { color: var(--text-main); }
 .turn-banner.done {
   background: rgba(0, 230, 118, .14);
@@ -354,13 +256,8 @@ body {
   color: var(--success);
 }
 
-/* ---- Horloge du tour ----
-   Elle hérite la couleur de l'état du bandeau et se contente d'en occuper le
-   bord : le tour reste le message, la durée n'en est qu'une précision. Passé
-   le seuil, elle vire à l'ambre — la couleur de l'avertissement dans le
-   système ; le rouge reste celle de l'erreur, et un tour long n'est pas une
-   erreur. `tabular-nums` pour que le chiffre ne fasse pas sautiller le
-   bandeau à chaque seconde. */
+
+
 .turn-clock {
   flex: 0 0 auto;
   opacity: .75;
@@ -373,9 +270,8 @@ body {
   opacity: 1;
 }
 
-/* ---- Rangée d'incidents ----
-   Masquée tant que rien ne va mal : `hidden` la retire du flux, elle ne coûte
-   donc aucune hauteur dans un bandeau collant déjà chargé. */
+
+
 .draft-live-row {
   display: flex;
   flex-wrap: wrap;
@@ -387,10 +283,8 @@ body {
 }
 .draft-live-row[hidden] { display: none; }
 
-/* ---- Puce de connexion ----
-   Ambre pendant la reconnexion (ça se répare tout seul), rouge quand la
-   liaison est vraiment coupée (rien ne partira). Deux messages différents,
-   parce que « patiente » et « n'essaie pas » ne demandent pas la même chose. */
+
+
 .conn-chip {
   display: inline-flex;
   align-items: center;
@@ -398,8 +292,8 @@ body {
   padding: 5px 12px;
   border: 1px solid transparent;
   border-radius: 999px;
-  /* Même rôle que .ddl-label / .ddr-title : un libellé majuscule et tracé
-     prend le jeton Label (0.78rem), pas une valeur en dessous du plancher. */
+  
+
   font-size: .78rem;
   font-weight: 700;
   letter-spacing: .06em;
@@ -430,10 +324,8 @@ body {
   50%      { opacity: .3 }
 }
 
-/* ---- Sauter le tour ----
-   Volontairement pas cyan : le cyan appartient au tour en cours, et une
-   action qui prive quelqu'un de son choix ne doit pas ressembler au signal
-   qui dit « c'est à vous ». Bordure ambre, fond discret, 44 px de haut. */
+
+
 .turn-skip-btn {
   display: inline-flex;
   align-items: center;
@@ -471,17 +363,15 @@ body {
   transform: none;
 }
 
-/* ---- Choix neutralisé par la connexion ----
-   Le bouton reste atteignable au clavier et annonçable (aria-disabled plutôt
-   que disabled) : il doit pouvoir expliquer pourquoi il ne marche pas, ce
-   qu'un bouton réellement désactivé ne peut plus faire. */
+
+
 button.select-button.is-connection-blocked {
   opacity: .4;
   cursor: not-allowed;
   filter: grayscale(1);
 }
 
-/* ---------- Progression globale ---------- */
+
 .draft-overall-progress {
   max-width: 1400px;
   margin: 14px auto 0;
@@ -496,25 +386,24 @@ button.select-button.is-connection-blocked {
   font-size: .78rem;
   font-weight: 700;
 }
-/* Le bandeau prend la ligne entière quand les trois éléments ne tiennent
-   pas côte à côte, plutôt que de comprimer les libellés. */
+
+
 #dop-label { color: var(--text-secondary); }
 #dop-round {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: .6px;
 }
-/* La piste porte l'arrondi et découpe le remplissage : c'est ce qui permet à
-   celui-ci d'être mis à l'échelle sans que ses extrémités s'écrasent. */
+
+
 .dop-bar {
   height: 6px;
   border-radius: 999px;
   background: var(--bg-gray-light);
   overflow: hidden;
 }
-/* Progression par `transform` et non par `width` : une largeur animée fait
-   recalculer la mise en page à chaque image, et cette barre vit dans le
-   bandeau collant, au-dessus d'un tableau de 150 rangées. */
+
+
 .dop-fill {
   height: 100%;
   width: 100%;
@@ -524,9 +413,8 @@ button.select-button.is-connection-blocked {
   transition: transform .45s cubic-bezier(.4, 0, .2, 1);
 }
 
-/* ============================================================
-   2. GRILLE PRINCIPALE
-   ============================================================ */
+
+
 .draft-main-container {
   max-width: 1400px;
   margin: 0 auto;
@@ -535,18 +423,18 @@ button.select-button.is-connection-blocked {
   flex-direction: column;
   gap: 16px;
 }
-/* Sur téléphone, la sélection de joueur est l'action principale :
-   elle passe devant les panneaux de suivi. */
+
+
 .draft-center  { order: 1; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .draft-sidebar { order: 2; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
-/* ---------- Carte générique ---------- */
+
 .progress-card,
 .recent-picks-card,
 .player-selection-card {
   padding: 16px;
-  /* rgb(26,26,30) = --bg-gray-light (#1A1A1E) actuel ; littéral, orphelin
-     depuis le changement de palette (même raison qu'ailleurs). */
+  
+
   background: rgba(26, 26, 30, .85);
   border: 1px solid var(--border-light);
   border-radius: 18px;
@@ -580,9 +468,8 @@ html[data-theme="light"] .player-selection-card {
   border-bottom: 1px solid var(--border-light);
 }
 
-/* ============================================================
-   3. MA PROGRESSION
-   ============================================================ */
+
+
 .progress-list { display: flex; flex-direction: column; gap: 11px; }
 
 .progress-line {
@@ -611,9 +498,8 @@ html[data-theme="light"] .player-selection-card {
   background: var(--bg-gray-light);
   overflow: hidden;
 }
-/* Même raison que .dop-fill : la piste découpe déjà (overflow: hidden), donc
-   l'arrondi propre au remplissage était redondant — et c'est lui qui se
-   serait déformé sous la mise à l'échelle. */
+
+
 .progress-mini-fill {
   height: 100%;
   width: 100%;
@@ -734,9 +620,8 @@ html[data-theme="light"] .player-selection-card {
   color: var(--text-gray);
 }
 
-/* ============================================================
-   5. TABLEAU DU REPÊCHAGE (bande de choix)
-   ============================================================ */
+
+
 .carousel-controls { display: flex; gap: 8px; }
 .carousel-btn {
   width: 44px;
@@ -763,10 +648,8 @@ html[data-theme="light"] .player-selection-card {
 .carousel-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .carousel-btn:disabled { opacity: .35; cursor: not-allowed; }
 
-/* ---- La bande ----
-   Un rail qui défile latéralement, au doigt comme à la souris. Les trois
-   variables plus bas sont les seules mesures à ajuster par taille d'écran :
-   tout le reste de la carte s'y accroche. */
+
+
 .picks-carousel {
   --pick-w: 196px;
   --pick-h: 126px;
@@ -774,9 +657,8 @@ html[data-theme="light"] .player-selection-card {
 
   display: flex;
   gap: 10px;
-  /* Marge haute et basse : `overflow-y` vaut forcément `auto` dès que
-     `overflow-x` défile, donc le soulèvement au survol et son ombre seraient
-     rognés sans cet espace. */
+  
+
   padding: 5px 0 8px;
   overflow-x: auto;
   overflow-y: hidden;
@@ -784,28 +666,26 @@ html[data-theme="light"] .player-selection-card {
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
   cursor: grab;
-  /* Barre de défilement masquée : la bande se manipule au doigt ou par les
-     flèches, et une barre système couperait le bas des cartes. */
+  
+
   scrollbar-width: none;
   -ms-overflow-style: none;
-  /* Fondu aux deux bords : indique qu'il reste des cartes hors champ, sans
-     superposer d'élément qui bloquerait le glissement. */
+  
+
   -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
   mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
 }
 .picks-carousel::-webkit-scrollbar { display: none; }
-/* Amorces d'une demi-largeur aux deux bouts : sans elles, le premier et le
-   dernier tour ne peuvent pas atteindre le centre de la bande, faute de
-   course à parcourir — et le tour en cours doit pouvoir s'y placer du choix
-   n° 1 jusqu'au dernier. */
+
+
 .picks-carousel::before,
 .picks-carousel::after {
   content: '';
   flex: 0 0 max(0px, calc(50% - var(--pick-w) / 2 - 8px));
 }
 .picks-carousel:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
-/* Pendant un glissement souris : l'accrochage et le lissage se battraient
-   avec la position imposée image par image. */
+
+
 .picks-carousel.is-dragging {
   cursor: grabbing;
   scroll-snap-type: none;
@@ -819,15 +699,8 @@ html[data-theme="light"] .player-selection-card {
   color: var(--text-secondary);
 }
 
-/* ---- La carte ----
-   Fond aux couleurs de l'équipe du joueur. teamColors.js pose --team-a,
-   --team-b et --team-deep en style en ligne, DÉJÀ assourdies : les teintes
-   officielles de la LNH posées telles quelles donnaient une bande criarde
-   qui prenait le dessus sur la liste de joueurs, la vraie action de la page.
-   Seul le liseré du bas garde une couleur franche.
 
-   Colonne en drapeau plutôt que grille : la photo est une couche de fond
-   posée en absolu, elle ne participe donc pas au flux. */
+
 .pick-card {
   position: relative;
   flex: 0 0 auto;
@@ -836,19 +709,16 @@ html[data-theme="light"] .player-selection-card {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  /* Accrochage au centre, comme le recalage automatique sur le tour en
-     cours : une reprise en main au doigt se règle sur le même repère. */
+  
+
   scroll-snap-align: center;
   overflow: hidden;
   isolation: isolate;
   border: 1px solid rgba(255, 255, 255, .07);
   border-radius: 14px;
   color: #fff;
-  /* Surface franche : un dégradé d'équipe, et une rampe sombre en haut
-     uniquement là où le nom se pose. Ni reflet blanc en diagonale ni ombre
-     portée autour de la carte — sur une bande de vingt vignettes serrées,
-     ces effets se cumulaient en un halo laiteux et brouillaient la lecture.
-     Le contraste vient des surfaces, pas d'un vernis. */
+  
+
   background:
     linear-gradient(180deg, rgba(0, 0, 0, .26) 0%, rgba(0, 0, 0, 0) 32%),
     linear-gradient(158deg, var(--team-a, var(--card)) 0%, var(--team-b, var(--bg-gray-light)) 62%, var(--team-deep, var(--bg)) 100%);
@@ -860,8 +730,8 @@ html[data-theme="light"] .player-selection-card {
   transform: translateY(-2px);
   border-color: rgba(255, 255, 255, .22);
 }
-/* Liseré bas dans la seconde couleur, restée vive : deux équipes au marine
-   proche (Buffalo, Columbus) se distinguent d'un coup d'œil. */
+
+
 .pick-card::after {
   content: '';
   position: absolute;
@@ -872,16 +742,8 @@ html[data-theme="light"] .player-selection-card {
   height: 3px;
   background: var(--team-accent, var(--primary));
 }
-/* ---- Repli neutre : identité d'équipe inconnue ----
-   Chaque équipe du pool choisit désormais son identité LNH avant le
-   repêchage (draftPickCards.js : resolveDrafterClub), et draftPickCards.js
-   pose alors --team-a/-b/-deep/-accent en ligne sur CHAQUE carte qui lui
-   appartient — à venir et en cours compris, plus seulement les choix faits.
-   Ces valeurs ne restent donc actives que pour un repêchage commencé avant
-   l'existence de ce choix, où l'identité est encore inconnue.
-   Jetons du site plutôt que des teintes marine posées en dur : ces
-   dernières restaient sombres même en thème clair, une carte figée dans
-   le mauvais thème au milieu d'une bande qui suit, elle, le bon. */
+
+
 .pick-card.is-upcoming,
 .pick-card.is-skipped {
   --team-a: var(--card);
@@ -891,14 +753,8 @@ html[data-theme="light"] .player-selection-card {
   opacity: .8;
 }
 .pick-card.is-skipped { opacity: .5; }
-/* Le repli ci-dessus corrigeait le FOND (jetons du site plutôt que la
-   navy en dur) sans toucher au TEXTE : .pick-card et ses enfants restaient
-   au blanc fixe de la carte de marque, invisible une fois le fond devenu
-   presque blanc en thème clair. buildPickCard (draftPickCards.js) pose
-   cette classe sur toute carte sans marque — venant du repli ci-dessus ou
-   du fond par défaut de .pick-card (mêmes jetons) — pour que le texte suive
-   le même repli que le fond. Le pied (.pick-card-owner/-meta) n'en fait pas
-   partie : sa barre reste sombre quel que soit le thème (voir plus haut). */
+
+
 .pick-card.is-unbranded {
   color: var(--text-main);
   border-color: var(--border-light);
@@ -909,30 +765,24 @@ html[data-theme="light"] .player-selection-card {
   --team-a: var(--card);
   --team-b: var(--bg-gray-light);
   --team-deep: var(--bg);
-  /* --team-accent n'est PAS repris en ligne pour l'état « en cours » (voir
-     draftPickCards.js) : le cyan du direct reste le seul accent possible ici,
-     quelle que soit l'équipe LNH de la personne qui pioche. */
+  
+
   --team-accent: var(--primary);
   border-color: rgba(0, 212, 255, .5);
   animation: turnPulse 2.4s ease-in-out infinite;
 }
 .pick-card.is-current .pick-card-name { color: var(--primary); }
 
-/* ---- « C'est votre tour » ----
-   Le pouls cyan du tour en cours (.is-current) vaut pour tout le monde : il
-   dit « quelqu'un choisit ». Cet état supplémentaire, posé seulement dans le
-   navigateur de la personne concernée, répond à une question différente —
-   « est-ce moi ? » — et ne doit pas se confondre avec la première. */
+
+
 .pick-card.is-my-turn {
   transform: scale(1.045);
   z-index: 3;
   box-shadow: 0 0 0 2px var(--primary), var(--glow-live, 0 0 20px rgba(0, 212, 255, .25));
 }
 .pick-card.is-my-turn:hover { transform: scale(1.045) translateY(-2px); }
-/* Le badge vivait à top:-9px, hors du cadre — et .pick-card coupe tout ce
-   qui déborde (overflow: hidden) : il ne s'est jamais vu. Rentré dans la
-   carte, avec la place que le titre du haut lui cède explicitement plutôt
-   que de se faire recouvrir. */
+
+
 .pick-card-live-badge {
   position: absolute;
   top: 4px;
@@ -953,11 +803,8 @@ html[data-theme="light"] .player-selection-card {
 }
 .pick-card.is-my-turn .pick-card-head { padding-top: 26px; }
 
-/* Bouton central « Faire ma sélection » (draftPickCards.js) : posé sur la
-   couche du portrait, au milieu de la carte — la seule de la bande où ce
-   geste est possible doit porter l'action, pas seulement le badge du haut.
-   Ouvre l'onglet « Liste des joueurs » (draftActifUI.js) au lieu de forcer
-   à faire défiler jusqu'au tableau, qui n'est plus affiché en permanence. */
+
+
 .pick-card-select-btn {
   position: absolute;
   top: 50%;
@@ -1004,19 +851,16 @@ html[data-theme="light"] .player-selection-card {
   .pick-card-select-btn:active { transform: none; }
 }
 
-/* ---- Le choix qui vient d'entrer ----
-   `will-change` n'est posé que le temps de la séquence : le laisser en
-   permanence promouvrait chacune des cent et quelques vignettes de la bande
-   en couche composée, pour un gain nul le reste du temps. Une seule carte
-   s'anime à la fois (draftPickCards.js). */
+
+
 .pick-card.is-revealing { animation: pickRevealFrame 1150ms ease-out both; }
 .pick-card.is-revealing .pick-card-photo-img,
 .pick-card.is-revealing .pick-card-initials {
   will-change: filter, opacity, transform;
   animation: pickRevealPhoto 1150ms cubic-bezier(.22, .61, .36, 1) both;
 }
-/* Position et logo d'équipe arrivent d'emblée : ils annoncent le choix
-   pendant que le portrait est encore en gris. */
+
+
 .pick-card.is-revealing .pick-card-club,
 .pick-card.is-revealing .pick-card-pos {
   will-change: opacity, transform;
@@ -1026,13 +870,13 @@ html[data-theme="light"] .player-selection-card {
   will-change: opacity, transform;
   animation: pickRevealMeta 320ms ease-out 120ms both;
 }
-/* Le nom ferme la séquence, juste après que la couleur est montée. */
+
 .pick-card.is-revealing .pick-card-name {
   will-change: opacity, transform;
   animation: pickRevealName 360ms cubic-bezier(.2, .8, .3, 1) 880ms both;
 }
 
-/* ---- Haut : joueur à gauche, son équipe de la LNH à droite ---- */
+
 .pick-card-head {
   display: flex;
   align-items: flex-start;
@@ -1049,18 +893,15 @@ html[data-theme="light"] .player-selection-card {
   font-weight: 800;
   line-height: 1.15;
   text-transform: uppercase;
-  /* Ombre de texte serrée : elle détache le nom du portrait sans poser de
-     voile sur la carte. */
+  
+
   text-shadow: 0 1px 2px rgba(0, 0, 0, .7);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* .pick-card-pos / -abbr / -meta relevés à .7rem : trois sous-libellés de
-   la carte tombaient sous le plancher de lisibilité (11px) mesuré en direct
-   sur la bande de choix. Chacun vit dans une zone qui absorbe un texte plus
-   large sans casser (ellipsis sur -owner, largeur fixe et texte court pour
-   -abbr/-meta). */
+
+
 .pick-card-pos {
   display: inline-block;
   margin-top: 3px;
@@ -1077,8 +918,8 @@ html[data-theme="light"] .player-selection-card {
   align-items: center;
   gap: 2px;
 }
-/* Pastille blanche derrière le logo : les logos de la LNH à dominante sombre
-   (Boston, Los Angeles, Pittsburgh) se fondaient dans le fond d'équipe. */
+
+
 .pick-card-logo-chip {
   display: inline-flex;
   align-items: center;
@@ -1103,12 +944,8 @@ html[data-theme="light"] .player-selection-card {
   color: rgba(255, 255, 255, .85);
 }
 
-/* ---- Le portrait ----
-   Couche de fond occupant toute la carte, et non une rangée : le PNG de la
-   LNH est détouré sur fond transparent, il se pose donc directement sur le
-   dégradé d'équipe. Aligné en bas et à ras du cadre, les épaules passent
-   derrière le pied de carte — la carte se lit comme une vignette de
-   collection plutôt que comme une fiche à vignette ronde. */
+
+
 .pick-card-photo {
   position: absolute;
   inset: 0;
@@ -1118,9 +955,8 @@ html[data-theme="light"] .player-selection-card {
   justify-content: center;
 }
 .pick-card-photo-img {
-  /* Positionnée pour rester certainement au-dessus du blason d'équipe
-     (couche indépendante, voir .pick-card-watermark) sans dépendre de
-     l'ordre d'empilement implicite. */
+  
+
   position: relative;
   z-index: 1;
   height: 96%;
@@ -1129,18 +965,13 @@ html[data-theme="light"] .player-selection-card {
   object-fit: contain;
   object-position: bottom center;
 }
-/* Un choix d'équipe montre un logo : centré, et sans le débord du bas qui
-   n'a de sens que pour une paire d'épaules. */
+
+
 .pick-card-photo.is-team { align-items: center; }
 .pick-card-photo.is-team .pick-card-photo-img { height: 62%; max-width: 62%; }
 
-/* Sans portrait — tour à venir, ou photo introuvable — un grand chiffre ou
-   les initiales en filigrane occupent le centre.
-   `opacity` plutôt qu'un blanc alpha littéral : le fond derrière (repli
-   neutre ci-dessus) suit désormais le thème, un blanc à 10 % s'y serait
-   effacé en thème clair. L'opacité se fond dans ce qu'il y a vraiment
-   derrière, quel que soit le thème, plutôt que de viser une seule teinte
-   de fond supposée. */
+
+
 .pick-card-photo.is-empty { align-items: center; }
 .pick-card-slot,
 .pick-card-initials {
@@ -1155,14 +986,8 @@ html[data-theme="light"] .player-selection-card {
 }
 .pick-card.is-current .pick-card-slot { color: var(--primary); opacity: .35; }
 
-/* ---- Blason de l'équipe du pool, en fond ----
-   Couche indépendante du contenu du choix (photo, initiales, numéro) : elle
-   reste posée derrière le joueur repêché plutôt que de disparaître une fois
-   le choix fait — l'identité de l'équipe marque toute sa carrière de choix,
-   pas seulement l'attente. Centrée pour son propre compte (position/
-   transform) : elle ne dépend pas de l'alignement flex du reste de la carte,
-   qui bascule entre bas (photo) et centre (vide). `overflow: hidden` sur
-   .pick-card la rogne proprement aux bords quand elle déborde. */
+
+
 .pick-card-watermark {
   position: absolute;
   z-index: 0;
@@ -1177,10 +1002,8 @@ html[data-theme="light"] .player-selection-card {
 }
 .pick-card.is-current .pick-card-watermark { opacity: .26; }
 
-/* ---- Bas : le pool qui l'a repêché, puis le repère du choix ----
-   Barre pleine, à l'arête nette, plutôt qu'un dégradé fondu sur le portrait :
-   le texte repose sur une surface franche et se lit du premier coup, quelle
-   que soit l'image derrière. Le liseré d'équipe court juste en dessous. */
+
+
 .pick-card-foot {
   display: flex;
   align-items: baseline;
@@ -1202,10 +1025,8 @@ html[data-theme="light"] .player-selection-card {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* Fixe plutôt qu'hérité de .pick-card : le pied garde sa barre sombre
-     (rgba(10,12,16,.78) ci-dessus) quelle que soit la carte au-dessus, y
-     compris une carte .is-unbranded qui passe son propre texte en jeton
-     de thème. */
+  
+
   color: #fff;
 }
 .pick-card-meta {
@@ -1217,9 +1038,8 @@ html[data-theme="light"] .player-selection-card {
   color: rgba(255, 255, 255, .72);
 }
 
-/* ============================================================
-   6. FILTRES ET CHAMPS
-   ============================================================ */
+
+
 .filters-row {
   display: flex;
   flex-wrap: wrap;
@@ -1229,7 +1049,7 @@ html[data-theme="light"] .player-selection-card {
 .search-input,
 .filter-select {
   padding: 10px 13px;
-  min-height: 44px;                 /* cible tactile confortable */
+  min-height: 44px;                 
   border: 1px solid var(--border-gray);
   border-radius: 10px;
   background: var(--bg-gray-light);
@@ -1238,8 +1058,8 @@ html[data-theme="light"] .player-selection-card {
   font-weight: 600;
   transition: border-color .2s ease, background .2s ease;
 }
-/* C'est .search-field (l'enveloppe portant la loupe) qui est l'enfant de
-   .filters-row, plus l'input lui-même. */
+
+
 .search-field { flex: 1 1 100%; min-width: 0; }
 .search-input::placeholder { color: var(--text-gray); font-weight: 400; }
 .filter-select { flex: 1 1 calc(50% - 5px); min-width: 0; cursor: pointer; }
@@ -1251,20 +1071,8 @@ html[data-theme="light"] .player-selection-card {
   border-color: var(--primary);
 }
 
-/* ============================================================
-   7. TABLEAU DES JOUEURS
-   ------------------------------------------------------------
-   Le nombre de colonnes varie selon le filtre : 7 pour les
-   patineurs, 10 pour les gardiens, 8 pour les équipes, 6 pour
-   « mes choix ». Toute mise en carte fondée sur :nth-child
-   étiquette donc de travers dès qu'on change de filtre — c'était
-   le défaut de la version précédente, qui affichait « GP » ou
-   « G » au-dessus des mauvaises valeurs chez les gardiens.
 
-   On conserve donc un vrai tableau, rendu défilant dans son
-   cadre : la PAGE ne défile jamais latéralement, seule cette
-   zone le fait, et l'en-tête reste collé pendant le défilement.
-   ============================================================ */
+
 .table-wrapper {
   overflow-x: auto;
   overflow-y: hidden;
@@ -1280,7 +1088,7 @@ html[data-theme="light"] .player-selection-card {
 
 #playerTable {
   width: 100%;
-  min-width: 560px;                 /* en deçà, les colonnes deviennent illisibles */
+  min-width: 560px;                 
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
 }
@@ -1289,10 +1097,8 @@ html[data-theme="light"] .player-selection-card {
   top: 0;
   z-index: 2;
   padding: 11px 10px;
-  /* L'en-tête était un aplat cyan sur toute la largeur. Le cyan appartient à
-     ce qui est en cours — ici, il concurrençait le seul signal qui compte, le
-     tour. Un en-tête se distingue par le fond, la casse et l'espacement ; il
-     n'a pas besoin de la couleur d'accent. */
+  
+
   background: var(--bg-gray-light);
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border-gray);
@@ -1330,14 +1136,12 @@ html[data-theme="light"] .player-selection-card {
   outline: 2px solid var(--primary);
   outline-offset: -2px;
 }
-/* La colonne des points portait du cyan sur chacune des rangées visibles :
-   quinze signaux « en cours » par écran. Le poids suffit à la désigner comme
-   la colonne de référence — c'est d'ailleurs ce qui la rend lisible en
-   diagonale, pas la teinte. */
+
+
 #playerTable td.points-column { color: var(--text-main); font-weight: 800; }
 
-/* Vignette : mêmes jetons de densité que la page des statistiques, pour
-   que les deux tableaux aient exactement la même échelle. */
+
+
 .player-photo {
   position: relative;
   width: var(--d-photo);
@@ -1362,26 +1166,15 @@ html[data-theme="light"] .player-selection-card {
   background: #fff;
 }
 
-/* Largeur des colonnes.
-   index.css impose `table-layout: fixed` à tous les tableaux. Sans largeur
-   déclarée, les colonnes se partagent alors l'espace À PARTS ÉGALES : la
-   colonne photo devenait aussi large qu'une colonne de statistiques, d'où
-   une cellule bien plus grande que l'image qu'elle contient.
-   La photo est toujours la première colonne (Photo ou Logo selon le filtre)
-   et le nom la deuxième, quel que soit le nombre total de colonnes. */
+
+
 #playerTable {
-  /* `auto` et non `fixed`. index.css impose table-layout:fixed à tous les
-     tableaux ; avec un nombre de colonnes variable et aucune largeur
-     déclarée, la cellule photo recevait la même part que les colonnes de
-     chiffres — d'où une cellule bien plus large que son image. Déclarer
-     des largeurs ne suffisait pas : en fixed, l'espace restant est
-     redistribué sur toutes les colonnes, y compris celles déjà
-     dimensionnées. En auto, chaque colonne se règle sur son contenu, ce
-     qui reste juste que le tableau ait 6, 7, 8 ou 10 colonnes. */
+  
+
   table-layout: auto;
 }
-/* `width:1%` + nowrap : la formule usuelle pour qu'une colonne se réduise
-   à son contenu en disposition automatique. */
+
+
 #playerTable th:nth-child(1),
 #playerTable td:nth-child(1) {
   width: 1%;
@@ -1392,7 +1185,7 @@ html[data-theme="light"] .player-selection-card {
 #playerTable th:nth-child(2),
 #playerTable td:nth-child(2) { min-width: 132px; }
 
-/* ---------- Bouton de sélection ---------- */
+
 button.select-button {
   display: inline-flex;
   align-items: center;
@@ -1413,25 +1206,17 @@ button.select-button {
 @media (hover: hover) {
   button.select-button:hover { transform: translateY(-1px); box-shadow: var(--glow-primary); }
 }
-/* Le clic doit se voir sur le bouton seul : une taille et une couleur qui
-   changent, pas la rangée qui le porte (elle a son propre survol pour la
-   fiche du joueur — un geste différent). */
+
+
 button.select-button:active { transform: scale(.93); filter: brightness(1.15); box-shadow: none; }
 button.select-button:focus-visible { outline: 2px solid var(--text-main); outline-offset: 2px; }
 button.select-button .select-icon { width: 16px; height: 16px; object-fit: contain; }
-/* rink-ice-cyan garde son texte arena-black (règle non négociable) : le
-   pictogramme reste noir en thème sombre. En thème clair le remplissage
-   fonce vers le teal — un pictogramme blanc y porte mieux (~5.8:1 contre
-   ~3.6:1 en noir). */
+
+
 html[data-theme="light"] button.select-button .select-icon { filter: invert(1); }
 
-/* ---------- Étoile de favori ----------
-   Occupe la colonne Action à la place du bouton de sélection quand il n'y
-   est pas (pas votre tour, ou votre équipe est complète) — les deux ne
-   coexistent jamais dans la même cellule (draftFavorites.js). Contour fin
-   plutôt qu'un fond plein : elle ne doit jamais se confondre avec le
-   bouton de sélection qu'elle remplace, un geste réversible n'a pas le
-   même poids qu'un choix définitif. */
+
+
 button.favorite-btn {
   display: inline-flex;
   align-items: center;
@@ -1454,8 +1239,8 @@ button.favorite-btn svg { display: block; }
 }
 button.favorite-btn:active { transform: scale(.9); }
 button.favorite-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-/* Favori actif : même étoile, remplie et ambrée plutôt qu'un second
-   pictogramme — l'état se lit dans le remplissage, pas dans la forme. */
+
+
 button.favorite-btn.is-active { border-color: var(--warning); color: var(--warning); }
 button.favorite-btn.is-active svg { fill: currentColor; }
 
@@ -1463,7 +1248,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   button.favorite-btn:active { transform: none; }
 }
 
-/* ---------- États vides ---------- */
+
 .draft-empty-row td { padding: 0; }
 .draft-empty {
   padding: 44px 20px;
@@ -1483,9 +1268,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   color: var(--text-secondary);
 }
 
-/* ============================================================
-   8. CHARGEMENT, STATUT, BOUTON FINAL
-   ============================================================ */
+
+
 #loading-container {
   position: fixed;
   inset: 0;
@@ -1521,7 +1305,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
 .finish-btn {
   position: fixed;
   right: 14px;
-  bottom: 88px;                     /* au-dessus de la barre de navigation mobile */
+  bottom: 88px;                     
   z-index: 900;
   padding: 13px 22px;
   min-height: 48px;
@@ -1538,9 +1322,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
 .finish-btn:hover { transform: translateY(-2px); }
 .finish-btn:focus-visible { outline: 2px solid var(--text-main); outline-offset: 2px; }
 
-/* ============================================================
-   9. ALERTE PERSONNALISÉE
-   ============================================================ */
+
+
 .custom-alert-overlay {
   display: none;
   position: fixed;
@@ -1600,10 +1383,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
 .custom-alert-button:active { transform: translateY(0); }
 .custom-alert-button:focus-visible { outline: 2px solid var(--text-main); outline-offset: 2px; }
 
-/* ---- Confirmation d'un choix ----
-   Reprend la forme de l'alerte, mais montre le joueur : c'est la dernière
-   occasion de voir qui part avec le tour, alors que le clic vient d'une
-   rangée de tableau où tout se ressemble. */
+
+
 .pick-confirm-overlay {
   display: none;
   position: fixed;
@@ -1692,9 +1473,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   flex: 1 1 0;
   padding: 12px 16px;
   min-height: 46px;
-  /* Alignée sur le rayon de la boîte et de la photo (18px / 12px) : le
-     dialogue mélangeait trois rayons différents pour trois objets adjacents,
-     contre la Règle du Douze — 12px est le rayon de travail par défaut. */
+  
+
   border-radius: 12px;
   font-size: .9rem;
   font-weight: 800;
@@ -1717,12 +1497,11 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   color: var(--bg);
 }
 
-/* La modale de carrière vit désormais dans career-modal.css,
-   partagée avec stats.html. */
 
-/* ============================================================
-   11. SÉLECTEUR D'UTILISATEUR (admin)
-   ============================================================ */
+
+
+
+
 .admin-dropdown-container { position: relative; }
 .admin-dropdown-toggle {
   display: inline-flex;
@@ -1793,30 +1572,26 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   border-radius: 10px;
 }
 
-/* ============================================================
-   12. TABLETTE — à partir de 600px
-   ============================================================ */
+
+
 @media (min-width: 600px) {
   .draft-header { padding: 20px; }
   .draft-main-container { padding: 20px 18px 48px; }
   .picks-carousel { --pick-w: 232px; --pick-h: 150px; --pick-photo: 60px; }
   .search-field { flex: 1 1 220px; }
   .filter-select { flex: 0 1 158px; }
-  /* Au-delà du téléphone : vignette plus grande et mesures rapides
-     réaffichées à droite du nom, comme dans le gabarit. */
+  
+
   .custom-alert-button { width: auto; min-width: 160px; }
   .finish-btn { bottom: 22px; }
 }
 
-/* ============================================================
-   13. ORDINATEUR — à partir de 1024px
-   ============================================================ */
+
+
 @media (min-width: 1024px) {
   .draft-main-container { padding: 22px 22px 56px; }
-  /* Plus de colonnes côte à côte : Aperçu et Liste des joueurs partagent
-     désormais le même espace, un seul visible à la fois, choisi par les
-     onglets de section (draftActifUI.js) — à toutes les tailles d'écran,
-     pas seulement en dessous de 1024px comme avant. */
+  
+
 
   .progress-card,
   .recent-picks-card,
@@ -1825,8 +1600,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   .picks-carousel { --pick-w: 262px; --pick-h: 168px; --pick-photo: 68px; gap: 12px; }
 
   #playerTable { min-width: 0; }
-  /* `overflow` complet et non seulement overflow-x : dès qu'un axe vaut
-     autre chose que visible, l'autre est forcé à auto par le moteur. */
+  
+
   .table-wrapper { overflow: visible; }
 
 }
@@ -1835,9 +1610,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   .picks-carousel { --pick-w: 284px; --pick-h: 178px; --pick-photo: 74px; }
 }
 
-/* ============================================================
-   14. MOUVEMENT RÉDUIT
-   ============================================================ */
+
+
 @media (prefers-reduced-motion: reduce) {
   .turn-banner.your-turn,
   .turn-banner-marquee-track,
@@ -1853,11 +1627,11 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   .custom-alert-box,
   .custom-alert-icon,
   .modal-content { animation: none; }
-  /* La puce de reconnexion garde sa couleur et son libellé : seul le
-     clignotement disparaît. L'information ne dépendait pas de l'animation. */
+  
+
   .conn-chip.is-reconnecting::before { animation: none; }
-  /* Les jauges se placent d'un coup : leur valeur est l'information, le
-     glissement n'était qu'un agrément. */
+  
+
   .dop-fill,
   .progress-mini-fill { transition: none; }
   .pick-card:hover,
@@ -1868,41 +1642,31 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   button.select-button:hover { transform: none; }
 }
 
-/* ============================================================
-   15. ALIGNEMENTS SUR stats.html ET COMPACITÉ TÉLÉPHONE
-   ============================================================ */
 
-/* ---- Échelle de vignette identique à la page des statistiques ----
-   index.css donne 70px sur mobile et 56px au-delà de 768px ; la page des
-   statistiques resserre à 44px via body[data-page="stats"]. On reprend
-   exactement ces valeurs ici. */
+
+
+
+
 @media (min-width: 769px) {
   body { --d-photo: 44px; --d-photo-logo: 18px; }
 }
 
-/* ---- En-tête compact sur téléphone --------------------------------
-   L'en-tête empilait titre, nom du pool, bandeau de tour, carte « choix
-   actuel » pleine largeur puis barre de progression : cinq blocs et
-   beaucoup de vide avant d'atteindre la sélection de joueur, qui est
-   l'action réelle. On passe titre et choix actuel côte à côte. */
+
+
 @media (max-width: 599px) {
   .draft-header { padding: 11px 13px; }
 
   .draft-overall-progress { margin-top: 9px; }
   .dop-info { margin-bottom: 4px; font-size: .7rem; }
 
-  /* Rapproche la sélection de joueur du haut de l'écran. */
+  
   .draft-main-container { padding: 11px 12px 36px; gap: 12px; }
   .progress-card,
   .recent-picks-card,
   .player-selection-card { padding: 13px; }
 
-  /* ---- Bande de choix pleine largeur --------------------------------
-     .recent-picks-card ne contient plus que la bande (l'en-tête et ses
-     flèches ont disparu) : sa propre carte — fond, bordure, coins arrondis,
-     16 px de marge de chaque côté — n'avait donc plus rien à cadrer. Marge
-     négative égale au padding de .draft-header : la bande atteint le bord
-     réel de l'écran plutôt que de s'arrêter à celui d'une carte vide. */
+  
+
   .recent-picks-card {
     margin: 0 -13px;
     padding: 0;
@@ -1910,24 +1674,16 @@ button.favorite-btn.is-active svg { fill: currentColor; }
     border: 0;
     border-radius: 0;
   }
-  /* Le fondu aux bords (mask-image) suppose un peu de champ avant la
-     première carte, sans quoi il mordrait sur son contenu au lieu de
-     s'y fondre. Le calcul de centrage des amorces ::before/::after n'a
-     pas besoin d'ajustement : il se résout déjà contre la boîte de
-     contenu de .picks-carousel, quel que soit son padding. */
+  
+
   .picks-carousel { padding-left: 13px; padding-right: 13px; }
 
   .card-header,
   .progress-header,
   .filters-header { margin-bottom: 8px; padding-bottom: 7px; }
 
-  /* ---- Filtres sur une seule rangée --------------------------------
-     La recherche imposait toujours sa largeur pleine (flex: 1 1 100% en
-     base, pensé pour deux listes de catégorie côte à côte) ; depuis que la
-     catégorie a rejoint l'en-tête (#playerFilter dans .filters-header) et
-     que le bouton d'actualisation manuelle a disparu, il ne reste que
-     recherche + tri. Élastique + largeur fixe : une seule rangée, et la
-     hauteur gagnée revient à la liste de joueurs — l'action réelle. */
+  
+
   .filters-row { flex-wrap: nowrap; gap: 7px; margin-bottom: 10px; }
   .search-field  { flex: 1 1 auto; min-width: 0; }
   .filter-select { flex: 0 0 100px; min-width: 0; }
@@ -1937,26 +1693,15 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   .picks-carousel { --pick-photo: 42px; gap: 8px; }
 }
 
-/* ============================================================
-   15. HABILLAGE « LIVE DRAFT » (gabarit fourni)
-   ------------------------------------------------------------
-   Formes et traitement typographique du gabarit — bandeau
-   collant, ticker des derniers choix, rangées en cartes,
-   chiffres en monospace — rendus avec les jetons de couleur du
-   site : la palette du gabarit est mono-thème et casserait le
-   mode sombre.
 
-   Aucune ligne de JS n'est modifiée : le rendu reste un tableau
-   et le choix se fait toujours par le bouton de chaque rangée.
-   ============================================================ */
 
-/* ---- Bandeau collant : le statut du repêchage reste visible ----
-   Décalé de la hauteur de la barre de navigation, elle-même collante. */
+
+
+
 .draft-header {
   position: sticky;
-  /* La barre de navigation mesure 70 px en grand écran, 60 px sous 768 px et
-     56 px sous 480 px. Un décalage fixe de 60 px la chevauchait de 10 px en
-     grand écran et laissait passer une fente de 4 px sur petit téléphone. */
+  
+
   top: 60px;
   z-index: 20;
   padding: 10px 13px;
@@ -1968,10 +1713,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   .draft-header { top: 70px; }
 }
 
-/* ---- Tableau du repêchage : bande horizontale ----
-   Dans le bandeau, le bloc perd son cadre : les cartes de choix
-   portent déjà le leur (section 5) et deux encadrements imbriqués
-   alourdissaient l'en-tête. */
+
+
 .draft-header .recent-picks-card {
   margin-top: 9px;
   padding: 0;
@@ -1993,10 +1736,9 @@ button.favorite-btn.is-active svg { fill: currentColor; }
 }
 .draft-header .carousel-btn { width: 44px; height: 44px; min-height: 44px; font-size: 1.1rem; }
 
-/* ---- Champ de recherche avec loupe ---- */
-/* Pas de `flex` ici : il est défini plus haut et ajusté par les media
-   queries. Le redéclarer en fin de fichier écraserait ces règles et
-   forcerait le champ à occuper une rangée entière à toutes les tailles. */
+
+
+
 .search-field {
   position: relative;
   display: flex;
@@ -2013,10 +1755,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
 .search-field:focus-within .search-field-icon { color: var(--primary); }
 .search-field .search-input { flex: 1 1 auto; padding-left: 38px; }
 
-/* ---- Rangées du tableau à l'allure de cartes ----
-   `border-collapse: separate` + un espacement vertical transforme les
-   rangées en cartes détachées, sans quitter la structure <table> — donc
-   sans toucher aux fonctions de rendu du JS. */
+
+
 #playerTable {
   border-collapse: separate;
   border-spacing: 0 7px;
@@ -2042,7 +1782,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   border-right: 1px solid var(--border-light);
   border-radius: 0 12px 12px 0;
 }
-/* Le zébrage n'a plus de sens une fois les rangées séparées. */
+
 #playerTable tbody tr:nth-child(even) { background: none; }
 @media (hover: hover) {
   #playerTable tbody tr:hover td {
@@ -2051,8 +1791,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   }
 }
 
-/* ---- Chiffres en monospace ----
-   Colonnes numériques uniquement : la 1re est la photo et la 2e le nom. */
+
+
 #playerTable tbody td:not(:first-child):not(:nth-child(2)),
 #careerStatsTable tbody td:not(.season-col):not(.league-col):not(.team-col) {
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -2061,7 +1801,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   letter-spacing: .02em;
 }
 
-/* ---- Étiquettes en majuscules espacées, comme le gabarit ---- */
+
 .filters-header h2,
 .card-header h2,
 .progress-card h2 {
@@ -2080,23 +1820,15 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   .draft-header { padding: 14px 22px; }
 }
 
-/* Le bandeau de tour doit toucher la barre de navigation collante : pas de
-   filet de fond de .draft-header ni de marge de .draft-overall-progress
-   au-dessus de lui. Longhand après les raccourcis `padding`/`margin`
-   ci-dessus (et ceux du §12/15 plus haut) pour n'annuler que le haut, à
-   toutes les largeurs, sans toucher au reste de leurs marges/padding. */
+
+
 .draft-header { padding-top: 0; }
 .draft-overall-progress { margin-top: 0; }
 
-/* ============================================================
-   16. ONGLETS ET PROGRESSION DÉPLIABLE
-   ------------------------------------------------------------
-   Composants du gabarit rendus avec les jetons du site. Ils sont
-   pilotés par draftActifUI.js, qui ne fait qu'actionner les
-   contrôles déjà en place : aucune logique de repêchage ici.
-   ============================================================ */
 
-/* ---- Contrôle segmenté (téléphone) : Disponible / Ma liste / Ordre ---- */
+
+
+
 .panel-tabs {
   display: flex;
   gap: 4px;
@@ -2129,7 +1861,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
 }
 .panel-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 
-/* ---- Onglets de catégorie : bande soulignée, défilante ---- */
+
 .category-tabs {
   display: flex;
   gap: 2px;
@@ -2162,17 +1894,13 @@ button.favorite-btn.is-active svg { fill: currentColor; }
 .category-tab.is-active { color: var(--primary); border-bottom-color: var(--primary); }
 .category-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
 
-/* Les <select> remplacés par des onglets sortent du flux, mais restent
-   dans le DOM : draftActif.js s'y est lié au chargement. */
+
+
 .filter-select.is-replaced,
 .progress-filter-select[hidden] { display: none; }
 
-/* ---- Téléphone : le sélecteur remplace les pastilles ----
-   Six pastilles de catégorie coûtaient une ligne entière avant même
-   d'atteindre le tableau — le vrai geste de la page. En dessous de 768px,
-   #playerFilter reprend sa forme native dans l'en-tête (l'endroit que la
-   bascule occupait) et la bande de pastilles disparaît ; la logique de
-   filtrage ne change pas, c'est le même <select> des deux côtés du seuil. */
+
+
 @media (max-width: 768px) {
   .category-tabs { display: none; }
   .filters-header-select.is-replaced {
@@ -2184,9 +1912,9 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   }
 }
 
-/* ---- Ma liste : lignes de position dépliables ---- */
+
 .progress-line[data-position] {
-  /* Une colonne de plus pour le chevron. */
+  
   grid-template-columns: 20px minmax(0, 1fr) 46px 40px 12px;
   margin: 0 -7px;
   padding: 5px 7px;
@@ -2211,31 +1939,23 @@ button.favorite-btn.is-active svg { fill: currentColor; }
 .progress-line.is-open::after { transform: rotate(180deg); color: var(--primary); }
 .progress-line.is-open .progress-text { color: var(--text-main); }
 
-/* Panneau déplié : rattaché visuellement à la ligne au-dessus. */
+
 .progress-details-list.is-inline {
   margin: 6px 0 8px;
   border-color: rgba(0, 212, 255, .25);
 }
 
-/* ---- Ticker compact sur téléphone ----
-   Le bandeau est collant : chaque pixel qu'il prend est retiré à la liste
-   de joueurs, qui est l'action réelle de la page. La carte garde sa mise en
-   page complète — photo, équipe, pool — mais resserrée, ce qui laisse le
-   ticker autour de 150px au lieu de 200px. Les mesures sont dans les trois
-   variables de .picks-carousel (section 5) ; rien d'autre à reprendre. */
+
+
 @media (max-width: 599px) {
   .draft-header .card-header { margin-bottom: 5px; }
 }
 
-/* ============================================================
-   17. TABLEAU SANS PHOTO, TOUT VISIBLE SANS DÉFILEMENT
-   ============================================================ */
 
-/* Première colonne : rang + logo d'équipe, comme sur stats.html.
-   Le portrait du joueur est retiré, mais le logo d'équipe se trouve déjà
-   dans cette cellule (.player-photo contient le portrait ET le logo) : il
-   suffit de masquer le portrait et de remettre le logo dans le flux.
-   Le rang est produit par un compteur CSS, donc sans toucher au JS. */
+
+
+
+
 #playerTable tbody { counter-reset: draftrank; }
 #playerTable tbody tr { counter-increment: draftrank; }
 
@@ -2258,8 +1978,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   font-weight: 700;
   color: var(--text-gray);
 }
-/* L'en-tête dit « Photo » ou « Logo » selon la vue ; on lui substitue
-   « # » sans toucher au JS qui l'écrit. */
+
+
 #playerTable thead th:first-child { font-size: 0; }
 #playerTable thead th:first-child::before {
   content: '#';
@@ -2267,7 +1987,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   letter-spacing: .05em;
 }
 
-/* Portrait retiré ; le cadre se réduit au logo, remis dans le flux. */
+
 #playerTable .player-photo { width: auto; height: auto; vertical-align: middle; }
 #playerTable .player-photo img.face { display: none; }
 #playerTable .player-photo img.logo {
@@ -2277,9 +1997,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   padding: 1px;
   vertical-align: middle;
 }
-/* Vue Équipes : le logo est posé directement dans la cellule avec une
-   largeur en style en ligne (style="width:40px"), que seul !important peut
-   contrer. */
+
+
 #playerTable tbody td:first-child > img.logo {
   width: 21px !important;
   height: 21px;
@@ -2289,11 +2008,11 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   vertical-align: middle;
 }
 
-/* Plus de largeur plancher : le tableau s'adapte à son cadre. */
+
 #playerTable { min-width: 0; }
 
-/* Colonnes resserrées pour que même la vue Gardiens (9 colonnes visibles)
-   tienne sur un écran de 360px. */
+
+
 #playerTable thead th,
 #playerTable tbody td {
   padding-left: 3px;
@@ -2309,8 +2028,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
 }
 #playerTable tbody td:not(:nth-child(2)) { font-size: .72rem; }
 
-/* Bouton de sélection compact, et colonne d'action collée à droite : même
-   si un tableau très large devait déborder, le bouton resterait visible. */
+
+
 #playerTable thead th:last-child,
 #playerTable tbody td:last-child {
   position: sticky;
@@ -2325,43 +2044,38 @@ button.select-button {
   min-height: 44px;
 }
 button.select-button .select-icon { width: 14px; height: 14px; }
-/* La vue Gardiens compte neuf colonnes visibles : sous 420px il faut
-   resserrer davantage pour éviter le défilement horizontal. */
+
+
 @media (max-width: 420px) {
   #playerTable thead th,
   #playerTable tbody td { padding-left: 2px; padding-right: 2px; }
   #playerTable tbody td:not(:nth-child(2)) { font-size: .7rem; }
   #playerTable thead th { font-size: .54rem; }
-  /* `width` et non `max-width` : en disposition automatique, une cellule
-     de tableau ignore largement max-width. Le nom se replie sur deux
-     lignes plutôt que d'élargir la colonne. */
-  /* Le plancher `min-width: 132px` posé plus haut vise th ET td : c'est
-     l'en-tête qui imposait alors la largeur de colonne. On le lève des
-     deux côtés, sinon la colonne ne peut pas descendre sous 132px. */
+  
+
+  
+
   #playerTable tbody td:nth-child(2),
   #playerTable thead th:nth-child(2) {
     width: 104px;
     min-width: 0;
     padding-left: 7px;
   }
-  /* Sans cela la cellule hérite du nowrap des colonnes chiffrées et ne
-     peut pas se replier : « Jake Oettinger » imposait 133px. */
+  
+
   #playerTable tbody td:nth-child(2),
   #playerTable thead th:nth-child(2) { white-space: normal; }
   #playerTable tbody td:nth-child(2) { font-size: .72rem; }
   button.select-button { padding: 6px 7px; }
 }
 
-/* Vue Gardiens : la colonne SV% est retirée à la demande. Elle est en 7e
-   position dans cette vue seulement — chez les patineurs la 7e colonne est
-   Action —, d'où la classe de catégorie posée par draftActifUI.js.
-   Elle libère au passage la largeur qui manquait pour tenir sur 360px. */
+
+
 #playerTable.cat-goalies thead th:nth-child(7),
 #playerTable.cat-goalies tbody td:nth-child(7) { display: none; }
 
-/* La colonne rang + logo réoccupe environ 45px : il faut les reprendre
-   ailleurs pour que les vues les plus larges (Équipes, Gardiens) tiennent
-   toujours sans défilement sur un petit écran. */
+
+
 @media (max-width: 420px) {
   #playerTable thead th:first-child,
   #playerTable tbody td:first-child { padding-left: 5px; padding-right: 0; }
@@ -2380,10 +2094,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   button.select-button .select-icon { width: 12px; height: 12px; }
 }
 
-/* Vue Équipes : « Wins », « Losses », « Points » sont des mots insécables
-   qui imposaient la largeur de leurs colonnes. On leur substitue les
-   abréviations françaises employées ailleurs sur le site, sans toucher au
-   JS qui écrit ces en-têtes. */
+
+
 #playerTable.cat-teams thead th:nth-child(4),
 #playerTable.cat-teams thead th:nth-child(5),
 #playerTable.cat-teams thead th:nth-child(6),
@@ -2397,23 +2109,16 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   letter-spacing: .04em;
 }
 
-/* Sous 380px, la colonne du nom cède encore quelques pixels pour que la
-   vue Gardiens tienne elle aussi. */
+
+
 @media (max-width: 380px) {
   #playerTable tbody td:nth-child(2),
   #playerTable thead th:nth-child(2) { width: 82px; }
   #playerTable.cat-teams thead th::before { font-size: .5rem; }
 }
 
-/* Bloc final : ne tranche plus que pour la colonne 1 (rang + logo).
-   La colonne du nom avait sa propre part ici (max-width: 92px) datant de
-   l'ancien tableau en table-layout: auto, d'avant la section « Rangée en
-   trois sections » plus bas — flex: 1 1 auto sur la 2e colonne y absorbe
-   déjà tout l'espace libre, et un max-width posé APRÈS dans le fichier
-   plafonnait cette croissance sans que rien ne réclame l'espace ainsi
-   perdu : c'est ce vide qui apparaissait entre les statistiques et le
-   bouton d'action sous 420px. L'ellipsis/nowrap est déjà porté par la
-   règle flex de la 2e colonne, donc pas de perte de troncature ici. */
+
+
 @media (max-width: 420px) {
   #playerTable thead th:first-child,
   #playerTable tbody td:first-child {
@@ -2424,18 +2129,16 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   }
 }
 
-/* ============================================================
-   19. FILTRES EN PASTILLES, CARRIÈRE NON DÉFILANTE
-   ============================================================ */
 
-/* ---- Vue Gardiens : colonne DP (OTL) retirée ----
-   6e position dans cette vue uniquement, d'où la classe de catégorie. */
+
+
+
+
 #playerTable.cat-goalies thead th:nth-child(6),
 #playerTable.cat-goalies tbody td:nth-child(6) { display: none; }
 
-/* ---- Catégories de joueurs en pastilles ----
-   Elles se replient sur plusieurs lignes plutôt que de défiler : les six
-   catégories restent visibles d'un coup d'œil. */
+
+
 .category-tabs {
   flex-wrap: wrap;
   overflow: visible;
@@ -2466,37 +2169,14 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 }
 .category-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 
-/* ============================================================
-   18. RANGÉE EN TROIS SECTIONS
-   ------------------------------------------------------------
-   La rangée se lisait comme une suite de colonnes de largeur égale,
-   et la colonne d'action n'avait pas de quoi porter un bouton
-   confortable : le geste principal de la page était le plus petit.
 
-   Elle est redécoupée en trois zones :
-     gauche  — rang, logo, nom (occupe la place restante) ;
-     centre  — statistiques, resserrées mais espacées ;
-     droite  — bouton de sélection, sur une largeur réservée.
 
-   La structure <table> est conservée : les fonctions de rendu de
-   draftActif.js ne changent pas. Les rangées passent simplement en
-   `flex`, ce qui rend `table-layout` sans effet et supprime le
-   défilement horizontal — chaque rangée tient dans son cadre à
-   toutes les tailles d'écran.
-   ============================================================ */
 
 #playerTable {
   --col-rank: 58px;
   --col-stat: 46px;
-  /* Un seul bouton icône (select ou étoile, jamais les deux) remplit toute
-     la colonne (width: 100%, plus bas) : 92px lui laissait une vingtaine de
-     pixels de vide de chaque côté de l'icône. La colonne est calée sur le
-     plancher tactile de DESIGN.md (44px) plus le rembourrage horizontal
-     (6px + 6px) : 56px, pas un chiffre plus confortable au hasard — c'est
-     déjà le minimum, le reste revient au nom via le flex-grow de la 2e
-     colonne juste avant. ≤700px reprend la même valeur (son rembourrage
-     est identique) ; ≤480px reste à 50px, déjà calé sur le même plancher
-     avec son propre rembourrage de 3px + 3px. */
+  
+
   --col-action: 56px;
 
   display: block;
@@ -2507,23 +2187,19 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 #playerTable thead,
 #playerTable tbody { display: block; }
 
-/* `!important` à contrecœur : index.css impose
-   `tbody tr { display: table-row !important }` sous 480px, pour empêcher
-   d'autres tableaux du site de basculer en cartes empilées. Sans le
-   contrer, les rangées se dépliaient en colonne sur téléphone — une
-   cellule par ligne. La portée reste limitée à #playerTable. */
+
+
 #playerTable thead tr,
 #playerTable tbody tr {
   display: flex !important;
   align-items: center;
 }
 
-/* Plus rien ne dépasse : le cadre n'a plus besoin de défiler. */
+
 .table-wrapper { overflow: visible; }
 
-/* ---- Cadre de rangée porté par le <tr> ----
-   Les bordures étaient posées cellule par cellule pour simuler une carte ;
-   une fois la rangée en flex, elle porte son propre cadre. */
+
+
 #playerTable tbody tr {
   margin-bottom: 7px;
   background: var(--bg-odd-row);
@@ -2531,17 +2207,15 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   border-radius: 12px;
   transition: border-color .16s ease, background .16s ease;
 }
-/* hover: hover — sans quoi une tape sur le bouton « Sélectionner » (enfant
-   de la rangée) laissait toute la rangée « survolée » à l'écran tactile :
-   au doigt, rien ne quitte jamais l'état hover, faute de pointeur qui s'en
-   va. :active reste disponible pour le retour au toucher. */
+
+
 @media (hover: hover) {
   #playerTable tbody tr:hover {
     background: rgba(0, 212, 255, .07);
     border-color: rgba(0, 212, 255, .35);
   }
-  /* :hover remonte aux ancêtres : sans ce garde-fou, survoler le bouton
-     « Sélectionner » allumait aussi toute la rangée derrière lui. */
+  
+
   #playerTable tbody tr:has(button.select-button:hover) {
     background: var(--bg-odd-row);
     border-color: var(--border-light);
@@ -2558,9 +2232,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   #playerTable tbody tr:hover td { background: none; }
 }
 
-/* En-tête posé dans le flux plutôt que collant : le bandeau du repêchage
-   occupe déjà la zone collante en haut de page, et deux barres superposées
-   y laissaient trop peu de place à la liste. */
+
+
 #playerTable thead tr {
   margin-bottom: 7px;
   border-radius: 10px;
@@ -2571,14 +2244,13 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   position: static;
   padding: 9px 4px;
   border-radius: 0;
-  /* Les en-têtes avaient été rétrécis pour faire tenir dix colonnes dans
-     un tableau qui débordait ; la rangée en flex n'a plus ce problème et
-     l'étiquette redevient lisible. */
+  
+
   font-size: .63rem;
   letter-spacing: .04em;
 }
 
-/* ---- Section gauche : rang + logo, puis nom ---- */
+
 #playerTable thead th:first-child,
 #playerTable tbody td:first-child {
   flex: 0 0 var(--col-rank);
@@ -2589,10 +2261,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 }
 #playerTable thead th:nth-child(2),
 #playerTable tbody td:nth-child(2) {
-  /* Absorbe toute la place libre, et elle seule : les colonnes de chiffres
-     tombent ainsi au même endroit sur chaque rangée. Une largeur au contenu
-     les décalerait d'une rangée à l'autre, et un tableau de statistiques
-     dont les colonnes ne s'alignent pas ne se compare plus. */
+  
+
   flex: 1 1 auto;
   min-width: 0;
   padding-left: 8px;
@@ -2603,19 +2273,18 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   text-overflow: ellipsis;
 }
 
-/* ---- Section centre : les statistiques ----
-   Largeur fixe et identique pour chacune : les chiffres s'alignent d'une
-   rangée à l'autre, ce qu'une largeur au contenu ne donne jamais. */
+
+
 #playerTable thead th:not(:first-child):not(:nth-child(2)):not(.action-column),
 #playerTable tbody td:not(:first-child):not(:nth-child(2)):not(.action-column) {
   flex: 0 0 var(--col-stat);
-  /* index.css plafonne les colonnes 3 à 7 à 55px sous 768px, ce qui
-     rognait la colonne d'action des patineurs (7e) sur tablette. */
+  
+
   max-width: none;
   text-align: center;
 }
-/* Un filet sépare le bloc de chiffres du nom, à gauche, et du bouton, à
-   droite : les trois sections se lisent sans avoir à les encadrer. */
+
+
 #playerTable thead th:nth-child(3),
 #playerTable tbody td:nth-child(3) { border-left: 1px solid var(--border-light); }
 #playerTable thead th.action-column,
@@ -2623,12 +2292,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 #playerTable thead th:nth-child(3),
 #playerTable thead th.action-column { border-left-color: rgba(255, 255, 255, .18); }
 
-/* ---- Section droite : l'action ----
-   Rembourrage symétrique (6px/6px) à toutes les tailles : un padding-right
-   plus large « pour respirer » sur grand écran ne faisait que coller un
-   vide contre le bord de la rangée, sans rien porter — la colonne n'a
-   qu'un bouton à centrer. Les pixels repris reviennent au nom via le
-   flex-grow de la 2e colonne (voir plus haut). */
+
+
 #playerTable thead th.action-column,
 #playerTable tbody td.action-column {
   flex: 0 0 var(--col-action);
@@ -2637,8 +2302,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   padding-right: 6px;
   text-align: center;
 }
-/* Bouton sur toute la largeur réservée : cible environ 50 % plus large
-   qu'avant, et identique d'une rangée à l'autre. */
+
+
 #playerTable td.action-column button.select-button,
 #playerTable td.action-column button.favorite-btn {
   width: 100%;
@@ -2647,51 +2312,45 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   min-height: 44px;
 }
 
-/* ---- Colonne PTS toujours mise en avant ----
-   Déclarée ici, après les règles de survol et la police monospace, pour que
-   ni l'une ni l'autre ne l'écrase. Elle ne dépend ni du tri ni du filtre. */
+
+
 #playerTable tbody tr td.points-column {
   background: rgba(0, 212, 255, .12);
   color: var(--primary);
   font-weight: 800;
 }
 #playerTable tbody tr:hover td.points-column { background: transparent; }
-/* Jetons plutôt qu'un cyan en dur : --primary et --bg basculent ensemble
-   d'un thème à l'autre, le contraste tient donc dans les deux. Un
-   rgba(0,212,255,.6) fixe donnait un lavis pâle sous texte clair en thème
-   clair — illisible. */
+
+
 #playerTable thead th.points-column {
   background: var(--primary);
   color: var(--bg);
 }
 
-/* Ligne « aucun joueur » : une seule cellule, qui prend toute la rangée. */
+
 #playerTable tbody tr.draft-empty-row { display: block; }
 #playerTable tbody tr.draft-empty-row td { flex: 1 1 100%; padding: 0; }
 
-/* ---- Tablette ---- */
+
 @media (max-width: 900px) {
-  /* --col-action n'est pas redéclarée : 56px (règle de base) est déjà le
-     plancher tactile ici aussi, rien à reprendre de plus. */
+  
+
   #playerTable { --col-stat: 40px; }
 }
 
-/* ---- Téléphone ----
-   Les vues Gardiens (7 statistiques) et Équipes (5) ne tiennent pas en
-   entier sur un écran étroit sans réduire le nom à rien. Les mesures les
-   moins déterminantes pour un choix sont retirées, vue par vue, grâce à la
-   classe `cat-*` que draftActifUI.js pose sur le tableau. */
+
+
 @media (max-width: 700px) {
-  /* --col-action non plus : même plancher, même rembourrage jusqu'ici. */
+  
   #playerTable { --col-rank: 50px; --col-stat: 36px; }
 
-  /* Gardiens : Photo Nom GP W L OTL SV% SO PTS Action — sans OTL ni SO. */
+  
   #playerTable.cat-goalies thead th:nth-child(6),
   #playerTable.cat-goalies tbody td:nth-child(6),
   #playerTable.cat-goalies thead th:nth-child(8),
   #playerTable.cat-goalies tbody td:nth-child(8) { display: none; }
 
-  /* Équipes : Logo Nom GP W L OTL PTS Action — sans OTL. */
+  
   #playerTable.cat-teams thead th:nth-child(6),
   #playerTable.cat-teams tbody td:nth-child(6) { display: none; }
 }
@@ -2702,28 +2361,22 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   #playerTable thead th { padding-left: 3px; padding-right: 3px; }
   #playerTable thead th:first-child,
   #playerTable tbody td:first-child { padding-left: 7px; }
-  /* Plus d'override à droite : la colonne d'action reprend le 3px générique
-     ci-dessus, à égalité avec sa propre gauche — le bouton (width: 100%)
-     vient alors buter sur le bord réel de la rangée. */
+  
+
   #playerTable td.action-column button.select-button,
   #playerTable td.action-column button.favorite-btn { min-height: 44px; padding: 7px 4px; }
 
-  /* Une mesure de plus en moins sur les deux vues les plus chargées. */
+  
   #playerTable.cat-goalies thead th:nth-child(5),
   #playerTable.cat-goalies tbody td:nth-child(5),
   #playerTable.cat-teams thead th:nth-child(5),
   #playerTable.cat-teams tbody td:nth-child(5) { display: none; }
 }
 
-/* ============================================================
-   20. ONGLETS DE CATÉGORIE : TROIS ÉTATS NETS
-   ------------------------------------------------------------
-   Disponible, choisi, épuisé. L'écart entre choisi et disponible
-   était un fond translucide contre un fond gris — trop ténu pour
-   se lire d'un coup d'œil sur un téléphone.
-   ============================================================ */
 
-/* Disponible : le traitement que portait l'état choisi jusqu'ici. */
+
+
+
 .category-tab {
   background: rgba(0, 212, 255, .16);
   border-color: var(--primary);
@@ -2735,7 +2388,7 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   color: var(--primary);
 }
 
-/* Choisi : bleu plein, texte dans le fond sombre de l'application. */
+
 .category-tab.is-active,
 .category-tab.is-active:hover {
   background: var(--primary);
@@ -2744,8 +2397,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   font-weight: 800;
 }
 
-/* Épuisé : plus de place à cette position, donc plus rien à y choisir.
-   Gris, sans relief, et sans réaction au survol. */
+
+
 .category-tab.is-unavailable,
 .category-tab:disabled,
 .category-tab.is-unavailable:hover {
@@ -2756,17 +2409,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   opacity: .55;
 }
 
-/* ============================================================
-   21. ÉTATS DE FIN ET DE DÉBUT
-   ------------------------------------------------------------
-   Deux panneaux qui occupent la place que le tableau libère. Le
-   repêchage se terminait sur un rectangle vide : c'est le moment
-   dont dix personnes se souviennent, il ne peut pas être un blanc.
 
-   Le cyan ne sert ici qu'à une chose, l'appel à l'action — sur cet
-   écran, plus rien n'est « en cours », donc plus rien d'autre n'y
-   a droit.
-   ============================================================ */
+
 .player-selection-card.is-draft-done .filters-header,
 .player-selection-card.is-draft-done .category-tabs,
 .player-selection-card.is-draft-done .filters-row,
@@ -2803,7 +2447,7 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   color: var(--text-secondary);
 }
 
-/* Dernier choix : une rangée d'information, lue d'un trait. */
+
 .draft-done-last {
   display: flex;
   flex-wrap: wrap;
@@ -2816,8 +2460,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   border: 1px solid var(--border-light);
   border-radius: 12px;
 }
-/* `display: flex` écrase la règle `[hidden]` du navigateur : sans ceci, la
-   rangée resterait visible quand le JS la masque (repêchage sans historique). */
+
+
 .draft-done-last[hidden] { display: none; }
 .ddl-label {
   font-size: .78rem;
@@ -2837,8 +2481,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   color: var(--text-secondary);
 }
 
-/* L'alignement final. Les positions se placent côte à côte dès qu'il y a la
-   largeur, et retombent en colonne sur téléphone sans rien tronquer. */
+
+
 .draft-done-roster {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -2892,7 +2536,7 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   color: var(--text-gray);
 }
 
-/* Le seul cyan de cet écran. */
+
 .draft-done-cta {
   display: inline-flex;
   align-items: center;
@@ -2930,11 +2574,10 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   .draft-done-roster { grid-template-columns: 1fr; }
 }
 
-/* ============================================================
-   22. UTILITAIRE ACCESSIBILITÉ
-   ============================================================ */
-/* Retire visuellement sans retirer du DOM ni de l'arbre d'accessibilité —
-   contrairement à `display: none`, que les lecteurs d'écran ignorent aussi. */
+
+
+
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -2947,15 +2590,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   border: 0;
 }
 
-/* ============================================================
-   23. MES FAVORIS
-   ------------------------------------------------------------
-   Carte de l'onglet Aperçu (draftActifUI.js), peuplée par
-   draftFavorites.js. Habillage du site normal (var(--card), --border-light,
-   ...) : contrairement à .player-selection-card, cette carte n'a pas de
-   palette propre — elle suit le thème comme .progress-card, dont elle
-   partage déjà le fond et la bordure (classe combinée dans le HTML).
-   ============================================================ */
+
+
 .favorites-count {
   display: inline-flex;
   align-items: center;
@@ -2971,13 +2607,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 }
 .favorites-list { display: flex; flex-direction: column; gap: 8px; }
 
-/* ---- Groupe par position ----
-   Même regroupement que « Ma progression » (.progress-line[data-position]) :
-   repliée par défaut, la poignée déplie ses rangées. Contrairement à ce
-   panneau-là, chaque groupe garde son propre corps (pas de panneau unique
-   déplacé dans le DOM) : plusieurs positions peuvent rester ouvertes à la
-   fois, ce qui a plus de sens pour une courte liste de favoris que pour la
-   liste complète des choix déjà faits. */
+
+
 .favorite-group {
   border: 1px solid var(--border-light);
   border-radius: 12px;
@@ -3020,8 +2651,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   font-size: .7rem;
   font-weight: 800;
 }
-/* Chevron : même repère que .progress-line[data-position]::after, pivoté
-   quand le groupe est ouvert. */
+
+
 .favorite-group-header::after {
   content: '⌄';
   flex: 0 0 auto;
@@ -3053,8 +2684,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 @media (hover: hover) {
   .favorite-row:hover { border-color: var(--primary); }
 }
-/* Déjà repêché (par n'importe quelle équipe) : gardé dans la liste comme
-   trace, mais visiblement hors-jeu — plus de bouton de sélection possible. */
+
+
 .favorite-row.is-picked { opacity: .55; }
 .favorite-row-photo { flex: 0 0 auto; width: 38px; height: 38px; }
 .favorite-row-info {
@@ -3085,6 +2716,6 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   align-items: center;
   gap: 6px;
 }
-/* Compact : la carte n'a pas la largeur du tableau, le bouton plein n'a
-   pas besoin de sa taille de cible tactile habituelle. */
+
+
 .favorite-row-actions button.select-button { min-height: 36px; padding: 6px 10px; }
