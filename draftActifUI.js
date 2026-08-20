@@ -251,7 +251,24 @@ function initPanelTabs() {
     strip.id = 'panelTabs';
     strip.setAttribute('role', 'tablist');
     strip.setAttribute('aria-label', 'Sections du repêchage');
-    conteneur.parentNode.insertBefore(strip, conteneur);
+
+    // Mockups Claude Design 3A/3B/4A/4B : le contrôle segmenté vit DANS
+    // l'en-tête, juste sous le bandeau de tour — jamais en bande pleine
+    // largeur au-dessus de .draft-main-container. band est la piste grise
+    // avec son padding extérieur (voir draftActif-premium.css, §2) ; strip
+    // (toujours #panelTabs, inchangé pour le reste de cette fonction) est
+    // la pilule elle-même.
+    const band = document.createElement('div');
+    band.className = 'panel-tabs-band';
+    band.appendChild(strip);
+    const overallProgress = document.getElementById('draft-overall-progress');
+    if (overallProgress) {
+        overallProgress.insertAdjacentElement('afterend', band);
+    } else if (entete) {
+        entete.appendChild(band);
+    } else {
+        conteneur.parentNode.insertBefore(band, conteneur);
+    }
 
     // Patron ARIA tablist complet, comme avant : chaque onglet ouvre un
     // groupe de panneaux qui lui est propre (aria-controls liste tous les
@@ -295,6 +312,12 @@ function initPanelTabs() {
         // l'autre.
         conteneur.classList.toggle('mode-apercu', actif === 'apercu');
         conteneur.classList.toggle('mode-joueurs', actif === 'joueurs');
+        // Mockups Claude Design 4A (mobile) / 4B (bureau) : navbar, bandeau
+        // de tour, onglets et filtres restent visibles à l'écran — seule la
+        // liste défile. Posée sur <body> (voir draftActif-premium.css, §12)
+        // plutôt que sur .draft-main-container : elle doit aussi verrouiller
+        // le défilement de la page elle-même, qui appartient à <body>.
+        document.body.classList.toggle('fz-list-lock', actif === 'joueurs');
     };
 
     const activer = (cle, focus) => {

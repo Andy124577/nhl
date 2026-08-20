@@ -619,52 +619,69 @@ body.fz-draft .draft-header.is-liste-joueurs #dop-round {
 
 /* ============================================================
    2. ONGLETS DE SECTION — Aperçu / Liste des joueurs
-   ============================================================ */
-/* border-radius et les 4 côtés de border (pas seulement -bottom) doivent
+   ------------------------------------------------------------
+   Contrôle segmenté (pilule à deux cases), pas une bande d'onglets pleine
+   largeur soulignée : mockups Claude Design 3A/3B/4A/4B, mêmes valeurs à
+   toutes les tailles d'écran hormis le padding de .panel-tabs-band (§11
+   pour la variante bureau). .panel-tabs-band (draftActifUI.js) est la
+   bande extérieure (fond clair, filet du bas) ; .panel-tabs, toujours
+   #panelTabs, est la piste grise elle-même.
+
+   border-radius et les 4 côtés de border (pas seulement -bottom) doivent
    être réinitialisés : draftActif.css (§15, non prémium) pose un contrôle
-   segmenté — border:1px + border-radius:14px sur .panel-tabs, 10px sur
-   .panel-tab — pour un tout autre gabarit. Une spécificité plus haute ne
-   suffit pas si la propriété n'est jamais réécrite : border-radius restait
-   à 14px/10px, la bande gardait sa pilule arrondie sous le nouvel habillage. */
+   segmenté à lui — DES valeurs déjà proches de celles-ci dans l'esprit,
+   mais sur la palette sombre du reste du site plutôt que celle du design.
+   Une spécificité plus haute ne suffit pas si la propriété n'est jamais
+   réécrite : border-radius restait à 14px/10px, la bande gardait sa
+   pilule arrondie sous le nouvel habillage. */
+body.fz-draft .panel-tabs-band {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--fzd-border);
+  background: var(--fzd-bg);
+}
 body.fz-draft .panel-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 16px;
+  gap: 4px;
+  padding: 4px;
+  margin: 0;
+  max-width: none;
   border: 0;
-  border-bottom: 1px solid var(--fzd-border);
-  border-radius: 0;
-  background: var(--fzd-bg);
+  border-radius: 12px;
+  /* Gris de piste propre à cette pilule (mockups) : ni --fzd-bg-alt
+     (#f2f0eb, trop proche du fond de la bande) ni --fzd-border-input
+     (une bordure, pas un aplat) ne rendent le même contraste. */
+  background: #e7e4dd;
 }
 body.fz-draft .panel-tab {
-  flex: none;
-  min-height: 0;
-  padding: 13px 0;
+  height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
   text-align: center;
   background: none;
   border: 0;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
+  border-radius: 9px;
   box-shadow: none;
-  color: var(--fzd-text-faint);
+  /* Gris de texte inactif propre à cette pilule, voir plus haut. */
+  color: #5e5b55;
   font-family: 'Helvetica Neue', Helvetica, sans-serif;
-  font-size: .78rem;
-  font-weight: 500;
-  letter-spacing: .06em;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .08em;
   text-transform: uppercase;
   cursor: pointer;
+  transition: background .15s ease, color .15s ease;
 }
-body.fz-draft .panel-tab:hover { color: var(--fzd-ink); }
+body.fz-draft .panel-tab:hover { background: #dedbd3; color: var(--fzd-ink); }
 body.fz-draft .panel-tab.is-active {
-  background: none;
-  color: var(--fzd-ink);
+  background: var(--fzd-ink);
+  color: #fff;
   font-weight: 600;
-  border-bottom-color: var(--fzd-ink);
-  box-shadow: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
 }
-body.fz-draft .panel-tab:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(196, 68, 46, .18); }
+body.fz-draft .panel-tab.is-active:hover { background: var(--fzd-ink); }
+body.fz-draft .panel-tab:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(196, 68, 46, .35); }
 
 /* ============================================================
    3. GRILLE PRINCIPALE
@@ -1437,8 +1454,16 @@ body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-dark); color:
   body.fz-draft .turn-banner { padding: 16px 34px; }
   body.fz-draft .turn-banner-text { font-size: 1.05rem; }
   body.fz-draft .picks-carousel { --pick-w: 150px; --pick-h: 108px; padding: 14px 34px; }
-  body.fz-draft .recent-picks-card,
-  body.fz-draft .panel-tabs { padding-left: 0; padding-right: 0; }
+  body.fz-draft .recent-picks-card { padding-left: 0; padding-right: 0; }
+
+  /* Pilule Aperçu/Liste des joueurs (3B/4B) : bande extérieure plus large
+     (34px, comme le reste de l'en-tête bureau) et piste qui ne s'étire
+     plus sur toute la largeur — inline-grid + min-width, chaque case
+     gardant sa propre largeur de contenu plutôt que de se répartir
+     1fr/1fr sur 1440px. */
+  body.fz-draft .panel-tabs-band { padding: 16px 34px; }
+  body.fz-draft .panel-tabs { display: inline-grid; min-width: 420px; }
+  body.fz-draft .panel-tab { padding: 0 24px; }
 
   /* Une seule colonne à ce niveau : l'onglet actif (initPanelTabs(),
      draftActifUI.js) pose mode-apercu/mode-joueurs sur ce conteneur et
@@ -1500,5 +1525,159 @@ body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-dark); color:
 
   /* ---- Sous-onglets "Mes favoris / Liste des joueurs" (apercu, §5quater-bis) ---- */
   body.fz-draft .apercu-subtabs { display: flex; }
+}
+
+/* ============================================================
+   12. VERROUILLAGE DE PAGE — LISTE DES JOUEURS (mockups 4A/4B)
+   ------------------------------------------------------------
+   Dans les mockups Claude Design 4A (mobile) et 4B (bureau), la navbar, le
+   bandeau de tour, les onglets et les filtres restent tous visibles à
+   l'écran ; seule la liste de joueurs défile. Jusqu'ici, c'était la PAGE
+   entière qui défilait — navbar et bandeau de tour restaient collants
+   (§1 plus haut), mais les filtres et l'en-tête du tableau partaient avec
+   le reste dès que la liste dépassait l'écran.
+
+   initPanelTabs() (draftActifUI.js) pose .fz-list-lock sur <body> dans les
+   mêmes conditions que .mode-joueurs sur .draft-main-container (onglet
+   « Liste des joueurs » actif) : la page se fige, .table-wrapper — ou le
+   panneau de fin/début qui le remplace, voir §9 — devient l'unique zone
+   qui défile, sur toute la hauteur qu'il lui reste. Absente tant que le JS
+   n'a pas tourné (ou si l'onglet Aperçu est actif) : la page défile alors
+   normalement, comme avant cette section.
+
+   Le thead statique de #playerTable (§18, draftActif.css) datait d'une
+   page qui défilait en entier : le rendre collant y aurait empilé un
+   second bandeau collant sous celui du tour. Cette contrainte ne s'applique
+   plus ici — la page ne défile plus du tout dans ce mode, .table-wrapper
+   défile à sa place — donc l'en-tête du tableau redevient collant, mais à
+   l'intérieur de cette seule zone. */
+body.fz-draft.fz-list-lock {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+body.fz-draft.fz-list-lock > .navbar,
+body.fz-draft.fz-list-lock > .draft-header {
+  flex: none;
+}
+/* padding vertical réduit et fixe (au lieu de 16-72px selon la largeur) :
+   posé pour une page qui défile, il ne fait ici que rogner le budget de
+   hauteur disponible sans plus rien apporter, puisque rien ne défile
+   jusqu'à ce padding pour le révéler. padding-left/-right ne sont pas
+   touchés : ils restent ceux, responsifs, déjà posés plus haut. */
+body.fz-draft.fz-list-lock > .draft-main-container {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+/* Vide dans ce mode (ses enfants sont tous du groupe "apercu", masqués par
+   initPanelTabs()) : display:none plutôt que de le laisser prendre le gap
+   d'une carte fantôme. */
+body.fz-draft.fz-list-lock .draft-sidebar { display: none; }
+body.fz-draft.fz-list-lock .draft-center {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+/* Bureau (§11) : la grille 250px/1fr/340px de .draft-center (mode-joueurs)
+   pose align-items:start — chaque colonne gardait sa propre hauteur de
+   contenu plutôt que de remplir la rangée, donc .player-selection-card
+   n'avait aucune hauteur définie à distribuer à .table-wrapper plus bas.
+   Sélecteur calqué sur le sien (4 classes) pour l'emporter par spécificité
+   plutôt que par l'ordre des règles. */
+body.fz-draft.fz-list-lock .draft-main-container.mode-joueurs .draft-center {
+  align-items: stretch;
+}
+/* Étirées à la hauteur de la rangée (règle ci-dessus) mais pas garanties
+   d'être plus courtes qu'elle : leur propre défilement, au besoin, plutôt
+   que de repousser toute la rangée — et donc .table-wrapper — plus bas. */
+body.fz-draft.fz-list-lock .list-filters-sidebar,
+body.fz-draft.fz-list-lock .selected-player-card {
+  min-height: 0;
+  overflow-y: auto;
+}
+body.fz-draft.fz-list-lock .player-selection-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+/* Seule zone qui défile : le tableau des joueurs, ou le panneau qui le
+   remplace une fois le repêchage fini/pas commencé (§9) — jamais les deux
+   à la fois (l'un des trois est toujours hidden). filters-header,
+   category-tabs, availability-tabs et filters-row, juste au-dessus, ne
+   sont pas touchés : flex-grow:0 (valeur initiale) leur suffit déjà à
+   garder leur hauteur de contenu pendant que celui-ci prend le reste. */
+body.fz-draft.fz-list-lock .player-selection-card > .table-wrapper,
+body.fz-draft.fz-list-lock .player-selection-card > .draft-done,
+body.fz-draft.fz-list-lock .player-selection-card > .draft-notstarted {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+body.fz-draft.fz-list-lock #playerTable thead tr {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+/* #fzPickedList (vue "Tous") est un <table> ordinaire (voir §7) : la ligne
+   ne peut pas y être collante elle-même de façon fiable, chaque cellule
+   l'est individuellement — patron habituel pour un thead collant sur un
+   tableau natif. */
+body.fz-draft.fz-list-lock #fzPickedList thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/* ============================================================
+   13. BANDEAU DE TOUR COMPACT — bureau, onglet Liste des joueurs (4B)
+   ------------------------------------------------------------
+   Le panneau "à vous"/"en attente" plein cadre (§1, designs 3A/3B —
+   78px/4.9rem de chiffre) est déjà correct pour l'onglet Aperçu, où il a
+   toute la largeur pour lui. Sur l'onglet Liste des joueurs, 4B montre le
+   même bandeau réduit à une seule ligne compacte (chiffre à 30px, une
+   seule action) plutôt que le grand panneau — sans quoi il vole la moitié
+   de la hauteur disponible au tableau juste en dessous (voir §12).
+   Sélecteurs calqués sur ceux du bandeau plein cadre (§1) + .is-liste-
+   joueurs, pour l'emporter par spécificité plutôt que par l'ordre. */
+@media (min-width: 769px) {
+  body.fz-draft .draft-header.is-liste-joueurs .turn-banner:is(.waiting, .your-turn) {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 34px;
+  }
+  body.fz-draft .draft-header.is-liste-joueurs .turn-banner:is(.waiting, .your-turn) .turn-banner-body {
+    margin-bottom: 0;
+  }
+  body.fz-draft .draft-header.is-liste-joueurs .turn-banner:is(.waiting, .your-turn) .turn-banner-hero:not([hidden]) {
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 16px;
+  }
+  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-row { flex: 0 0 auto; }
+  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-metric-num { font-size: 1.9rem; }
+  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-metric-label { font-size: .625rem; padding-bottom: 0; }
+  /* "Il vous manque" ne tient pas sur une ligne compacte à côté du reste :
+     déjà répété dans "Ma progression" (onglet Aperçu) et dans la sidebar
+     de position, ce n'est pas la seule vue qui le porte. */
+  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-needs { display: none; }
+  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-actions {
+    margin-left: auto;
+    padding-bottom: 0;
+  }
+  /* "Ma file" reste consultable depuis l'onglet Aperçu ; une seule action
+     ("Faire ma sélection") tient sur la ligne compacte, comme 4B. */
+  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-cta.is-secondary { display: none; }
+  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-cta { padding: 12px 20px; }
 }
 
