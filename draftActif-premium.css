@@ -1657,6 +1657,20 @@ body.fz-draft.fz-list-lock > .draft-pool-header,
 body.fz-draft.fz-list-lock > .draft-header {
   flex: none;
 }
+/* .site-legal-footer (navbar.js) est un enfant direct de <body> lui aussi,
+   ajouté APRÈS .draft-main-container dans le DOM — et donc, une fois <body>
+   mis en colonne flex ci-dessus, un item de cette même colonne comme les
+   autres. ajusterPiedDePage() (navbar.js) lui pose un margin-top calculé
+   pour toucher le bas de la fenêtre sur les pages courtes qui DÉFILENT
+   normalement ; ici <body> ne défile plus du tout (overflow:hidden), donc
+   cette marge ne sert plus à rien mais continue d'être calculée et posée —
+   et, contrairement au contenu, une marge ne rétrécit jamais avec
+   flex-shrink : elle mangeait donc l'essentiel du budget de hauteur de la
+   colonne, ne laissant presque rien à .draft-main-container (flex:1 1 auto
+   ci-dessous). Le pied de page n'apparaît de toute façon dans aucun des
+   mockups 4A/4B — masqué plutôt que retouché au calcul, le plus sûr des
+   deux vu qu'il sert sur chaque autre page du site. */
+body.fz-draft.fz-list-lock > .site-legal-footer { display: none; }
 /* padding vertical réduit et fixe (au lieu de 16-72px selon la largeur) :
    posé pour une page qui défile, il ne fait ici que rogner le budget de
    hauteur disponible sans plus rien apporter, puisque rien ne défile
@@ -1667,6 +1681,17 @@ body.fz-draft.fz-list-lock > .draft-main-container {
   flex-direction: column;
   align-items: stretch;
   flex: 1 1 auto;
+  /* margin:0 auto (draftActif.css, règle d'origine) centre le conteneur
+     sous max-width:1400px sur un écran large — pensé pour la page qui
+     défile normalement. Une marge auto dans l'axe transversal d'un item
+     flex prend le pas sur align-items:stretch ci-dessus (spec Flexbox
+     §8.3) : <body> n'étirait donc plus ce conteneur à sa largeur, il se
+     dimensionnait à son contenu — et #categoryTabs, bande à défilement
+     horizontal propre (overflow-x:auto), y réclame plus de 500px sur un
+     téléphone de 390. Résultat : tout .draft-main-container débordait de
+     l'écran plutôt que .category-tabs seul défilant dans sa largeur
+     réservée. */
+  margin: 0;
   min-height: 0;
   min-width: 0;
   overflow: hidden;
@@ -1691,22 +1716,30 @@ body.fz-draft.fz-list-lock .draft-center {
   overflow: hidden;
 }
 /* Bureau (§11) : la grille 250px/1fr/340px de .draft-center (mode-joueurs)
-   pose align-items:start — chaque colonne gardait sa propre hauteur de
-   contenu plutôt que de remplir la rangée, donc .player-selection-card
-   n'avait aucune hauteur définie à distribuer à .table-wrapper plus bas.
-   Sélecteur calqué sur le sien (4 classes) pour l'emporter par spécificité
-   plutôt que par l'ordre des règles. */
-body.fz-draft.fz-list-lock .draft-main-container.mode-joueurs .draft-center {
-  align-items: stretch;
+   pose align-items:start — chaque colonne garde sa propre hauteur de
+   contenu, ce qui laissait .player-selection-card (colonne centrale) sans
+   hauteur définie à distribuer à .table-wrapper plus bas. Un stretch
+   posé sur TOUTE la rangée avait d'abord semblé la solution, mais il
+   étirait aussi la sidebar de position et « Joueur sélectionné » à cette
+   même hauteur — bien plus courtes de contenu — qui héritaient alors
+   chacune leur propre défilement (overflow-y:auto juste en dessous) pour
+   ne pas déborder de la case où elles venaient d'être forcées. Deux
+   colonnes scrollables en plus de la liste, coupées en plein milieu d'une
+   ligne, alors que 4A/4B n'en montre qu'une seule (le tableau) : ce n'est
+   que la colonne centrale qui a besoin d'être étirée — align-self plutôt
+   qu'align-items, pour ne pas embarquer ses voisines. */
+body.fz-draft.fz-list-lock .draft-main-container.mode-joueurs .player-selection-card {
+  align-self: stretch;
 }
-/* Étirées à la hauteur de la rangée (règle ci-dessus) mais pas garanties
-   d'être plus courtes qu'elle : leur propre défilement, au besoin, plutôt
-   que de repousser toute la rangée — et donc .table-wrapper — plus bas. */
+/* Sidebar de position et « Joueur sélectionné » : hauteur de contenu
+   naturelle, jamais de défilement propre — voir le commentaire ci-dessus.
+   Si leur contenu dépasse un jour la hauteur de la rangée (cas rare, ces
+   deux cartes restent courtes), l'excédent est simplement rogné par
+   overflow:hidden sur .draft-center plus haut, sans barre de défilement
+   ni contenu tronqué à mi-ligne. */
 body.fz-draft.fz-list-lock .list-filters-sidebar,
 body.fz-draft.fz-list-lock .selected-player-card {
-  min-height: 0;
   min-width: 0;
-  overflow-y: auto;
 }
 body.fz-draft.fz-list-lock .player-selection-card {
   display: flex;
