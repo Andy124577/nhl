@@ -587,6 +587,58 @@ function fzInitListFilterControls() {
 }
 
 /* ============================================================
+   6bis. PAGINATION VISUELLE — "Charger N joueurs de plus" (4A/4B)
+   ------------------------------------------------------------
+   populateTable()/populateGoalieTable() (draftActif.js) rendent déjà
+   TOUTES les rangées disponibles d'un coup — rien n'est demandé au
+   serveur par lots. Cette couche masque les rangées au-delà du lot
+   courant sous .fzd-paged-out, même patron que .fzd-filtered-out
+   ci-dessus : un filtre visuel de plus, jamais une vraie requête
+   supplémentaire. fzLotsAffiches repart à 1 chaque fois que #playerTable
+   tbody est reconstruit (fzWatchPlayerTableForExtras, plus bas) : un
+   nouveau rendu — changement de catégorie, recherche, tri — recommence
+   en haut de la liste plutôt que de garder un lot qui ne correspond
+   plus au contenu affiché.
+   ============================================================ */
+const FZ_TAILLE_LOT = 20;
+let fzLotsAffiches = 1;
+
+function fzApplyPagination() {
+    const pied = document.getElementById('playerListFooter');
+    const corps = document.querySelector('#playerTable tbody');
+    if (!pied || !corps) return;
+
+    const lignes = [...corps.querySelectorAll('tr')].filter(tr => !tr.classList.contains('draft-empty-row'));
+    if (!lignes.length) { pied.hidden = true; return; }
+
+    const visibles = lignes.filter(tr => !tr.classList.contains('fzd-filtered-out'));
+    const limite = FZ_TAILLE_LOT * fzLotsAffiches;
+    visibles.forEach((tr, i) => tr.classList.toggle('fzd-paged-out', i >= limite));
+
+    const total = visibles.length;
+    const affiches = Math.min(limite, total);
+    const bouton = pied.querySelector('.player-list-more');
+    const compte = document.getElementById('playerListCount');
+    if (bouton) bouton.hidden = affiches >= total;
+    if (compte) {
+        compte.textContent = affiches < total
+            ? `${affiches} de ${total}`
+            : `${total} joueur${total > 1 ? 's' : ''} libre${total > 1 ? 's' : ''}`;
+    }
+    pied.hidden = false;
+}
+
+function fzInitPagination() {
+    const bouton = document.querySelector('#playerListFooter .player-list-more');
+    if (!bouton || bouton.dataset.bound === '1') return;
+    bouton.dataset.bound = '1';
+    bouton.addEventListener('click', () => {
+        fzLotsAffiches += 1;
+        fzApplyPagination();
+    });
+}
+
+/* ============================================================
    7. SOUS-ONGLETS DE L'APERÇU (bureau) — "Mes favoris" / "Liste des joueurs"
    ------------------------------------------------------------
    "Liste des joueurs" ici mène au même endroit que l'onglet du même nom
@@ -805,6 +857,9 @@ window.fzRefreshApercuExtras = function () {
     try { fzRenderFiltersSummary(); } catch (e) {}
     try { fzPopulateTeamFilter(); } catch (e) {}
     try { fzApplyListFilters(); } catch (e) { console.error('[apercu] filtres liste :', e); }
+    // Après les filtres (juste au-dessus) : la pagination compte et limite
+    // les rangées encore visibles APRÈS filtrage, jamais le total brut.
+    try { fzApplyPagination(); } catch (e) { console.error('[apercu] pagination :', e); }
     // Rendre d'abord : sans sélection explicite, fzRenderSelectedPlayerCard()
     // retombe sur la suggestion et met fzJoueurAffiche à jour — la rangée à
     // surligner n'est donc connue qu'après cet appel, jamais avant.
@@ -834,6 +889,10 @@ function fzWatchPlayerTableForExtras() {
         // observateur ne se redéclenche donc pas lui-même.
         if (planifie) return;
         planifie = true;
+        // Nouvelles rangées (childList a muté) : un lot qui ne partait pas
+        // de 1 laisserait affichées des rangées au-delà de la limite pour
+        // le nouveau contenu, ou en cacherait qui devraient l'être.
+        fzLotsAffiches = 1;
         requestAnimationFrame(() => {
             planifie = false;
             try { window.fzRefreshApercuExtras(); } catch (e) { console.error('[apercu] rafraîchissement tableau :', e); }
@@ -847,6 +906,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try { fzRenderSortTabs(); } catch (e) {}
     try { fzInitSearchMirror(); } catch (e) {}
     try { fzInitListFilterControls(); } catch (e) {}
+    try { fzInitPagination(); } catch (e) {}
     try { fzInitSelectedPlayerClicks(); } catch (e) {}
     try { fzWatchPlayerTableForExtras(); } catch (e) {}
 });

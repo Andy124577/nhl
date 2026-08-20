@@ -78,6 +78,20 @@
        les lecteurs d'écran, qui s'en servent pour sauter au contenu. -->
   <h1 class="sr-only">Repêchage en direct</h1>
 
+  <!-- Identité du pool (mobile seulement, voir draftActif-premium.css) :
+       mockup Claude Design 4A. Le sélecteur de pool de la navbar est masqué
+       sous 769px (voir navbar.css, .pool-selector-container) — sans lui,
+       rien n'indiquait sur téléphone dans quel pool on se trouve. Peuplée
+       par initPoolHeader() (draftActifUI.js) depuis window.FZPool
+       (activePool.js), déjà chargé avant ce script. -->
+  <div class="draft-pool-header" id="draftPoolHeader" hidden>
+    <div class="draft-pool-avatar" id="draftPoolAvatar"></div>
+    <div class="draft-pool-identity">
+      <span class="draft-pool-name" id="draftPoolName"></span>
+      <span class="draft-pool-title">Repêchage en direct</span>
+    </div>
+  </div>
+
   <!-- Draft Header with Pick Number -->
   <div class="draft-header">
     <!-- Overall draft progress (Goal-Gradient + Mental Model) -->
@@ -468,6 +482,18 @@
             </thead>
             <tbody></tbody>
           </table>
+          <!-- "Charger N joueurs de plus" (mockups 4A/4B) : populateTable()
+               (draftActif.js) rend déjà TOUTES les lignes disponibles d'un
+               coup — cette bande n'ajoute aucune pagination réelle, elle
+               masque les rangées au-delà du lot courant (fzApplyPagination,
+               draftApercuExtra.js), même patron que .fzd-filtered-out plus
+               haut. À l'intérieur de #playerTableWrapper (pas après) : elle
+               doit défiler avec les rangées plutôt que rester fixée sous le
+               cadre qui, lui, ne défile plus (voir §12). -->
+          <div class="player-list-footer" id="playerListFooter" hidden>
+            <button type="button" class="player-list-more">Charger 20 joueurs de plus</button>
+            <span class="player-list-count" id="playerListCount"></span>
+          </div>
         </div>
 
         <!-- Vue "Tous" : joueurs déjà repêchés, lecture seule. Remplace
