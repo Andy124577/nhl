@@ -384,49 +384,10 @@ function initPanelTabs() {
 }
 
 /* ============================================================
-   4. IDENTITÉ DU POOL — bandeau mobile (design 4A)
-   ------------------------------------------------------------
-   Remplit #draftPoolAvatar/#draftPoolName depuis window.FZPool
-   (activePool.js) : nom du pool et vignette, mêmes données que le
-   sélecteur de la navbar (masqué sous 769px, voir draftActif-premium.css).
-   Restée cachée (l'attribut `hidden` posé dans le HTML) tant qu'aucun nom
-   n'est connu, plutôt que d'afficher un avatar et un intitulé vides le
-   temps que /draft réponde.
-   ============================================================ */
-function initPoolHeader() {
-    const bandeau = document.getElementById('draftPoolHeader');
-    const avatar = document.getElementById('draftPoolAvatar');
-    const nomEl = document.getElementById('draftPoolName');
-    if (!bandeau || !avatar || !nomEl || typeof window.FZPool === 'undefined') return;
-
-    const peindre = () => {
-        const nom = window.FZPool.get();
-        if (!nom) { bandeau.hidden = true; return; }
-        nomEl.textContent = nom;
-        const donnees = window.FZPool.data();
-        const src = window.FZPool.image(donnees);
-        avatar.replaceChildren();
-        if (src) {
-            const img = document.createElement('img');
-            img.src = src;
-            img.alt = '';
-            img.loading = 'lazy';
-            img.addEventListener('error', () => img.remove());
-            avatar.appendChild(img);
-        }
-        bandeau.hidden = false;
-    };
-
-    window.FZPool.ready().then(peindre);
-    window.FZPool.on(peindre);
-}
-
-/* ============================================================
    Initialisation
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
     initPositionProgress();
     initCategoryTabs();
     initPanelTabs();
-    initPoolHeader();
 });

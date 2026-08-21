@@ -150,10 +150,10 @@ body.fz-draft .turn-clock.is-long { color: var(--fzd-warning); opacity: 1; }
 
 body.fz-draft .turn-banner.waiting,
 body.fz-draft .turn-banner.your-turn {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0;
-  padding: 18px 20px 20px;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
   background: var(--fzd-ink);
   color: #fff;
 }
@@ -172,10 +172,12 @@ body.fz-draft .turn-banner.your-turn .turn-banner-marquee {
 
 body.fz-draft .turn-banner.waiting .turn-banner-body,
 body.fz-draft .turn-banner.your-turn .turn-banner-body {
+  flex: 1 1 auto;
+  min-width: 0;
   flex-direction: row;
   align-items: center;
   gap: 7px;
-  margin-bottom: 14px;
+  margin-bottom: 0;
 }
 body.fz-draft .turn-banner.waiting .turn-banner-body::before,
 body.fz-draft .turn-banner.your-turn .turn-banner-body::before {
@@ -205,134 +207,134 @@ body.fz-draft .turn-banner.your-turn .turn-banner-text {
   font-weight: 400;
   letter-spacing: 0;
   color: var(--fzd-text-faint);
-  white-space: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 body.fz-draft .turn-banner.waiting .turn-banner-sub,
 body.fz-draft .turn-banner.your-turn .turn-banner-sub {
   display: none;
 }
 
-
+/* Bandeau tenu sous 100px de haut à toutes les tailles : une seule ligne
+   (pastille, contexte, manques, chiffre, action) plutôt que le panneau
+   empilé du mockup 3B — .turn-banner-hero/-row perdent leur boîte
+   (display:contents) pour que leurs enfants deviennent des items directs
+   de .turn-banner, réordonnés par `order`. Sous 769px, la ligne est trop
+   étroite pour tout garder : manques, légende du chiffre et action
+   cèdent la place au contexte + au chiffre nu (media plus bas). */
 body.fz-draft .turn-banner-hero { display: none; }
 body.fz-draft .turn-banner.waiting .turn-banner-hero:not([hidden]),
-body.fz-draft .turn-banner.your-turn .turn-banner-hero:not([hidden]) {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+body.fz-draft .turn-banner.your-turn .turn-banner-hero:not([hidden]),
+body.fz-draft .turn-banner-row {
+  display: contents;
 }
 
-body.fz-draft .turn-banner-row {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 14px;
+body.fz-draft .turn-banner-needs {
+  order: 1;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: left;
+  padding-bottom: 0;
+  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-size: .78rem;
+  color: var(--fzd-text-faint);
+  display: none;
+}
+body.fz-draft .turn-banner-needs[hidden] { display: none; }
+body.fz-draft .turn-banner-needs::before { content: '· '; }
+body.fz-draft .turn-banner-needs-label {
+  display: inline;
+  text-transform: lowercase;
+  font: inherit;
+  letter-spacing: normal;
+  color: inherit;
+}
+body.fz-draft .turn-banner-needs-value {
+  display: inline;
+  margin-top: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 400;
+  color: inherit;
 }
 
 body.fz-draft .turn-banner-metric {
+  order: 2;
+  margin-left: auto;
+  flex: 0 0 auto;
   display: flex;
-  align-items: flex-end;
-  gap: 8px;
+  align-items: baseline;
+  gap: 4px;
 }
 body.fz-draft .turn-banner-metric[hidden] { display: none; }
 body.fz-draft .turn-banner-metric-num {
   font-family: 'Oswald', 'Helvetica Neue', sans-serif;
-  font-size: 4rem;
-  line-height: .8;
+  font-size: 1.375rem;
+  line-height: 1;
   font-weight: 600;
   letter-spacing: -.02em;
   color: #fff;
   font-variant-numeric: tabular-nums;
 }
-body.fz-draft .turn-banner-metric-label {
-  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
-  font-size: .69rem;
-  line-height: 1.2;
-  font-weight: 500;
-  letter-spacing: .13em;
-  text-transform: uppercase;
-  color: var(--fzd-text-faint);
-  padding-bottom: 6px;
-}
-
-body.fz-draft .turn-banner-needs { text-align: right; padding-bottom: 6px; }
-body.fz-draft .turn-banner-needs[hidden] { display: none; }
-body.fz-draft .turn-banner-needs-label {
-  display: block;
-  font-size: .59rem;
-  font-weight: 500;
-  letter-spacing: .11em;
-  text-transform: uppercase;
-  color: var(--fzd-text-faint);
-}
-body.fz-draft .turn-banner-needs-value {
-  display: block;
-  margin-top: 6px;
-  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
-  font-size: .94rem;
-  font-weight: 600;
-  color: #fff;
-}
+body.fz-draft .turn-banner-metric-label { display: none; }
 
 body.fz-draft .turn-banner-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 16px;
+  order: 3;
+  margin-left: 0;
+  padding-bottom: 0;
+  display: none;
 }
 body.fz-draft .turn-banner-actions[hidden] { display: none; }
-body.fz-draft .turn-banner-actions.is-single { grid-template-columns: 1fr; }
 body.fz-draft .turn-banner-cta {
-  padding: 14px;
+  padding: 8px 14px;
   text-align: center;
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--fzd-accent);
   color: #fff;
   font-family: 'Helvetica Neue', Helvetica, sans-serif;
-  font-size: .78rem;
+  font-size: .72rem;
   font-weight: 600;
   letter-spacing: .07em;
   text-transform: uppercase;
   border: 0;
   cursor: pointer;
   transition: background .18s ease;
+  white-space: nowrap;
 }
 body.fz-draft .turn-banner-cta:hover { background: var(--fzd-accent-dark); }
-body.fz-draft .turn-banner-cta.is-secondary {
-  background: transparent;
-  border: 1px solid #4b4f53;
-  color: #c9c5bd;
-}
-body.fz-draft .turn-banner-cta.is-secondary:hover { border-color: #fff; color: #fff; }
 
 
 
+body.fz-draft .turn-banner.waiting .turn-clock,
 body.fz-draft .turn-banner.your-turn .turn-clock { display: none; }
 
 @media (min-width: 769px) {
   body.fz-draft .turn-banner.waiting,
-  body.fz-draft .turn-banner.your-turn { padding: 14px 34px 16px; }
+  body.fz-draft .turn-banner.your-turn { gap: 10px; padding: 14px 34px; }
 
-  body.fz-draft .turn-banner.waiting .turn-banner-hero:not([hidden]),
-  body.fz-draft .turn-banner.your-turn .turn-banner-hero:not([hidden]) {
-    flex-direction: row;
-    align-items: flex-end;
-    gap: 24px;
+  body.fz-draft .turn-banner-needs { display: block; }
+  body.fz-draft .turn-banner-metric-num { font-size: 1.875rem; }
+  body.fz-draft .turn-banner-metric-label {
+    display: block;
+    font-size: 0;
+    line-height: 0;
   }
-  body.fz-draft .turn-banner-row { flex: 1 1 auto; }
-  body.fz-draft .turn-banner-metric-num { font-size: 4.9rem; }
-  body.fz-draft .turn-banner-metric-label { font-size: .81rem; padding-bottom: 9px; }
-  body.fz-draft .turn-banner-needs-label { font-size: .625rem; }
-  body.fz-draft .turn-banner-needs-value { font-size: 1.375rem; margin-top: 8px; }
-  body.fz-draft .turn-banner-needs { padding-bottom: 10px; }
-  body.fz-draft .turn-banner-actions {
-    grid-template-columns: none;
-    display: flex;
-    gap: 10px;
-    margin-top: 0;
-    padding-bottom: 10px;
+  body.fz-draft .turn-banner.your-turn .turn-banner-metric-label::before { content: 'écoulé'; }
+  body.fz-draft .turn-banner.waiting .turn-banner-metric-label::before { content: 'avant vous'; }
+  body.fz-draft .turn-banner-metric-label::before {
+    font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+    font-size: .625rem;
+    font-weight: 500;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--fzd-text-faint);
   }
-  body.fz-draft .turn-banner-cta { padding: 15px 26px; }
-  body.fz-draft .turn-banner-cta.is-secondary { padding: 15px 20px; }
+  body.fz-draft .turn-banner-actions { display: flex; }
+  body.fz-draft .turn-banner-cta { padding: 10px 20px; }
 }
 
 body.fz-draft .draft-live-row { padding: 8px 16px; background: var(--fzd-bg); border-top: 1px solid var(--fzd-border); margin: 0; max-width: none; justify-content: flex-start; }
@@ -575,45 +577,6 @@ body.fz-draft .draft-header.is-liste-joueurs .recent-picks-card,
 body.fz-draft .draft-header.is-liste-joueurs #dop-label,
 body.fz-draft .draft-header.is-liste-joueurs #dop-round {
   display: none;
-}
-
-
-
-body.fz-draft .draft-pool-header {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 16px 20px 14px;
-  border-bottom: 1px solid var(--fzd-border);
-  background: var(--fzd-bg);
-}
-body.fz-draft .draft-pool-header[hidden] { display: none; }
-body.fz-draft .draft-pool-avatar {
-  flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: var(--fzd-tile-bg);
-}
-body.fz-draft .draft-pool-avatar img { width: 100%; height: 100%; object-fit: cover; }
-body.fz-draft .draft-pool-identity { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-body.fz-draft .draft-pool-name {
-  font-family: 'Helvetica Neue', Helvetica, sans-serif;
-  font-size: .625rem;
-  font-weight: 500;
-  letter-spacing: .13em;
-  text-transform: uppercase;
-  color: var(--fzd-text-faint);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-body.fz-draft .draft-pool-title {
-  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
-  font-size: 1.06rem;
-  font-weight: 600;
-  color: var(--fzd-ink);
 }
 
 
@@ -1027,7 +990,6 @@ body.fz-draft .filters-header-select.is-replaced { display: none; }
 
 body.fz-draft .filters-header-select,
 body.fz-draft .filter-select {
-  min-height: 40px;
   padding: 8px 12px;
   background: var(--fzd-surface);
   border: 1px solid var(--fzd-border-input);
@@ -1132,7 +1094,6 @@ body.fz-draft .search-field {
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 10px 13px;
   background: var(--fzd-surface);
   border: 1px solid var(--fzd-border-input);
   border-radius: 9px;
@@ -1150,7 +1111,7 @@ body.fz-draft .search-input {
 body.fz-draft .search-input::placeholder { color: var(--fzd-text-fainter); }
 body.fz-draft .search-input:focus { outline: none; }
 
-body.fz-draft .filters-row { gap: 10px; margin-bottom: 14px; }
+body.fz-draft .filters-row { gap: 10px; }
 
 
 
@@ -1425,7 +1386,6 @@ body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-dark); color:
 @media (min-width: 769px) {
   
 
-  body.fz-draft .draft-pool-header { display: none; }
   body.fz-draft .turn-banner { padding: 16px 34px; }
   body.fz-draft .turn-banner-text { font-size: 1.05rem; }
   body.fz-draft .picks-carousel { --pick-w: 150px; --pick-h: 108px; padding: 14px 34px; }
@@ -1484,11 +1444,7 @@ body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-dark); color:
   body.fz-draft .sort-select { display: none; }
   body.fz-draft .sort-tabs { display: flex; }
   body.fz-draft .filters-row .search-field { display: none; }
-  
 
-  body.fz-draft .category-tabs { display: none; }
-
-  
   body.fz-draft .apercu-subtabs { display: flex; }
 }
 
@@ -1505,7 +1461,6 @@ body.fz-draft.fz-list-lock {
   flex-direction: column;
 }
 body.fz-draft.fz-list-lock > .navbar,
-body.fz-draft.fz-list-lock > .draft-pool-header,
 body.fz-draft.fz-list-lock > .draft-header {
   flex: none;
 }
@@ -1585,141 +1540,8 @@ body.fz-draft.fz-list-lock #fzPickedList thead th {
 
 
 
-@media (min-width: 769px) {
-  /* 4B : une seule ligne (le grand panneau n'a de sens qu'à l'écran Aperçu,
-     3B) — pastille, contexte, manques, chiffre, action, tous à plat dans
-     .turn-banner. .turn-banner-hero/-row perdent leur boîte (display:
-     contents) pour que leurs enfants deviennent des items directs de
-     .turn-banner, réordonnés par `order` dans la lecture voulue plutôt que
-     dans l'ordre du DOM (métrique puis manques) hérité du panneau 3B. */
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner:is(.waiting, .your-turn) {
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 34px;
-  }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-body {
-    margin-bottom: 0;
-    flex: 0 1 auto;
-    min-width: 0;
-  }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-text {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-hero:not([hidden]),
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-row {
-    display: contents;
-  }
-
-  /* "il vous manque 4 défenseurs…" à la suite du contexte plutôt que le
-     bloc dédié du panneau 3B (étiquette au-dessus, valeur en dessous) :
-     .turn-banner-needs[hidden] continue de le masquer normalement quand ce
-     n'est pas mon tour (appliquerPanneauTour(), draftActif.js) — rien ici
-     ne force son affichage. */
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-needs {
-    order: 1;
-    flex: 0 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    text-align: left;
-    padding-bottom: 0;
-    font-family: 'Helvetica Neue', Helvetica, sans-serif;
-    font-size: .78rem;
-    color: var(--fzd-text-faint);
-  }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-needs::before { content: '· '; }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-needs-label {
-    display: inline;
-    text-transform: lowercase;
-    font: inherit;
-    letter-spacing: normal;
-    color: inherit;
-  }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-needs-value {
-    display: inline;
-    margin-top: 0;
-    font-family: inherit;
-    font-size: inherit;
-    font-weight: 400;
-    color: inherit;
-  }
-
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-metric {
-    order: 2;
-    margin-left: auto;
-    flex: 0 0 auto;
-  }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-metric-num { font-size: 1.875rem; }
-  /* Le texte posé par appliquerPanneauTour() ("depuis / votre tour", deux
-     lignes façon 3B) reste dans le DOM pour l'accessibilité — #turn-banner
-     porte déjà l'annonce complète via aria-label — mais cède sa place
-     visuelle au seul mot que montre 4B ici. */
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-metric-label {
-    font-size: 0;
-    line-height: 0;
-    padding-bottom: 0;
-  }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner.your-turn .turn-banner-metric-label::before {
-    content: 'écoulé';
-  }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner.waiting .turn-banner-metric-label::before {
-    content: 'avant vous';
-  }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-metric-label::before {
-    visibility: visible;
-    font-family: 'Oswald', 'Helvetica Neue', sans-serif;
-    font-size: .625rem;
-    font-weight: 500;
-    letter-spacing: .13em;
-    text-transform: uppercase;
-    color: var(--fzd-text-faint);
-  }
-
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-actions {
-    order: 3;
-    margin-left: 0;
-    padding-bottom: 0;
-  }
-
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-cta.is-secondary { display: none; }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-cta { padding: 12px 20px; }
-}
-
-
-
-@media (max-width: 768px) {
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner:is(.waiting, .your-turn) {
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 20px 13px;
-  }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-body {
-    flex: 1 1 auto;
-    min-width: 0;
-    margin-bottom: 0;
-  }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-text {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-hero:not([hidden]) {
-    flex: 0 0 auto;
-    flex-direction: row;
-    align-items: baseline;
-    gap: 0;
-  }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-row { gap: 0; }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-metric-num { font-size: 1.375rem; }
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-metric-label,
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-needs,
-  body.fz-draft .draft-header.is-liste-joueurs .turn-banner-actions {
-    display: none;
-  }
-}
+/* Le bandeau de tour est désormais compact à toutes les tailles (voir plus
+   haut, règles non préfixées par .is-liste-joueurs) — Aperçu et Liste des
+   joueurs partagent la même version depuis que les deux tiennent sous
+   100px de haut ; plus besoin d'un jeu de règles séparé ici. */
 
