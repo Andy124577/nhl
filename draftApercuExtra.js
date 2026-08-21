@@ -653,36 +653,6 @@ function fzInitApercuSubtabs() {
             if (typeof window.fzOuvrirListeJoueurs === 'function') window.fzOuvrirListeJoueurs();
         });
     }
-
-    // « Mes favoris » / « Ma file » : deux cartes qui partagent le même
-    // emplacement, un seul onglet réel parmi les trois (« Liste des
-    // joueurs » reste un raccourci vers l'autre mécanisme d'onglets,
-    // voir plus haut). window.fzOuvrirMaFile est le point d'entrée du
-    // bouton « Ma file (N) »/« Préparer ma file » du bandeau de tour
-    // (draftActif.js).
-    const ongletFavoris = document.getElementById('apercuTabFavoris');
-    const ongletFile = document.getElementById('apercuTabQueue');
-    const carteFavoris = document.getElementById('favoritesCard');
-    const carteFile = document.getElementById('queueCard');
-    const activerSousOnglet = cle => {
-        if (ongletFavoris) ongletFavoris.classList.toggle('is-active', cle === 'favoris');
-        if (ongletFile) ongletFile.classList.toggle('is-active', cle === 'file');
-        if (carteFavoris) carteFavoris.hidden = cle !== 'favoris';
-        if (carteFile) carteFile.hidden = cle !== 'file';
-    };
-    if (ongletFavoris && ongletFavoris.dataset.bound !== '1') {
-        ongletFavoris.dataset.bound = '1';
-        ongletFavoris.addEventListener('click', () => activerSousOnglet('favoris'));
-    }
-    if (ongletFile && ongletFile.dataset.bound !== '1') {
-        ongletFile.dataset.bound = '1';
-        ongletFile.addEventListener('click', () => activerSousOnglet('file'));
-        window.fzOuvrirMaFile = () => {
-            if (typeof window.fzOuvrirApercu === 'function') window.fzOuvrirApercu();
-            activerSousOnglet('file');
-        };
-    }
-
     const compteur = document.getElementById('apercuFavCount');
     const reel = document.getElementById('favoritesCount');
     if (compteur && reel) compteur.textContent = reel.textContent || '0';
@@ -803,7 +773,7 @@ function fzRenderSelectedPlayerCard() {
     if (fzPeutChoisir(code) && typeof fzBuildSelectButton === 'function') {
         actions.appendChild(fzBuildSelectButton(nom, code));
     }
-    if (typeof fzBuildQueueToggleButton === 'function') actions.appendChild(fzBuildQueueToggleButton(nom));
+    if (typeof fzBuildStarButton === 'function') actions.appendChild(fzBuildStarButton(nom));
     corps.appendChild(actions);
 
     // « Il vous manque » : catégories dont le quota n'est pas atteint,

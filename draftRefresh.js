@@ -105,8 +105,6 @@ function refreshDraftViews() {
     // Étoile de la colonne Action + carte « Mes favoris » (draftFavorites.js) :
     // dépendent du tour courant et des choix faits, comme le reste ici.
     'fzRefreshFavoritesUI',
-    // Carte « Ma file » (draftQueue.js) : même dépendance, liste distincte.
-    'fzRefreshQueueUI',
     // Vue "Tous" (draftListePremium.js) : la liste des joueurs déjà pris
     // change à chaque choix, comme le reste de cette liste.
     'fzRefreshPickedList',

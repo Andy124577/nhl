@@ -224,7 +224,6 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
         const needsVal = document.getElementById("turn-banner-needs-value");
         const actions = document.getElementById("turn-banner-actions");
         const cta = document.getElementById("turn-banner-cta");
-        const queueBtn = document.getElementById("turn-banner-queue-btn");
         if (!hero) return;
         hero.hidden = false;
 
@@ -235,24 +234,12 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
             if (needsVal) needsVal.textContent = manques;
         }
         if (actions && cta) {
-            actions.hidden = false;
-            actions.classList.toggle("is-single", !myTurn);
             if (myTurn) {
-                cta.hidden = false;
+                actions.hidden = false;
                 cta.textContent = "Faire ma sélection";
                 cta.className = "turn-banner-cta";
             } else {
-                cta.hidden = true;
-            }
-            if (queueBtn) {
-                queueBtn.hidden = false;
-                queueBtn.className = "turn-banner-cta is-secondary";
-                if (myTurn) {
-                    const enFile = typeof fzGetQueue === "function" ? fzGetQueue().length : 0;
-                    queueBtn.textContent = "Ma file" + (enFile ? ` (${enFile})` : "");
-                } else {
-                    queueBtn.textContent = "Préparer ma file";
-                }
+                actions.hidden = true;
             }
         }
         if (!myTurn) {
@@ -516,10 +503,6 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
         const cta = document.getElementById("turn-banner-cta");
         if (cta) cta.addEventListener("click", function () {
             if (typeof window.fzOuvrirListeJoueurs === "function") window.fzOuvrirListeJoueurs();
-        });
-        const queueBtn = document.getElementById("turn-banner-queue-btn");
-        if (queueBtn) queueBtn.addEventListener("click", function () {
-            if (typeof window.fzOuvrirMaFile === "function") window.fzOuvrirMaFile();
         });
     });
 })();

@@ -78,6 +78,14 @@ body.fz-draft .draft-header.is-my-turn {
   animation: none;
 }
 
+/* Bandeau de tour plein largeur, collé au bas de la navbar : la règle de
+   base (draftActif.css) donne à #draft-overall-progress un
+   max-width:1400px + margin:auto pensés pour la barre de progression
+   texte qu'il portait à l'origine — au-delà de 1400px de viewport, ça
+   laissait le panneau noir flotter avec un vide de chaque côté et un
+   entrefilet sous la navbar au lieu d'y être collé. */
+body.fz-draft .draft-overall-progress { max-width: none; margin: 0; }
+
 
 
 body.fz-draft .dop-info { display: block; margin: 0; }
@@ -302,7 +310,7 @@ body.fz-draft .turn-banner.your-turn .turn-clock { display: none; }
 
 @media (min-width: 769px) {
   body.fz-draft .turn-banner.waiting,
-  body.fz-draft .turn-banner.your-turn { padding: 20px 34px 22px; }
+  body.fz-draft .turn-banner.your-turn { padding: 14px 34px 16px; }
 
   body.fz-draft .turn-banner.waiting .turn-banner-hero:not([hidden]),
   body.fz-draft .turn-banner.your-turn .turn-banner-hero:not([hidden]) {
@@ -611,7 +619,7 @@ body.fz-draft .draft-pool-title {
 
 
 body.fz-draft .panel-tabs-band {
-  padding: 14px 20px;
+  padding: 5px 5px;
   border-bottom: 1px solid var(--fzd-border);
   background: var(--fzd-bg);
 }
@@ -701,13 +709,7 @@ body.fz-draft .filters-header h2 {
   text-transform: uppercase;
   color: var(--fzd-ink);
 }
-body.fz-draft .card-header,
-body.fz-draft .progress-header,
-body.fz-draft .filters-header {
-  margin-bottom: 14px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--fzd-border);
-}
+
 body.fz-draft .filters-header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; }
 
 
@@ -1277,37 +1279,6 @@ body.fz-draft .favorite-btn.star-toggle {
 body.fz-draft .favorite-btn.star-toggle:hover { border-color: var(--fzd-accent); }
 body.fz-draft .favorite-btn.star-toggle.is-active { background: var(--fzd-accent-wash); border-color: var(--fzd-accent); }
 
-body.fz-draft .queue-toggle-btn {
-  min-height: 34px;
-  padding: 7px 13px;
-  border-radius: 8px;
-  border: 1px solid var(--fzd-border-input);
-  background: var(--fzd-surface);
-  color: var(--fzd-ink);
-  font-family: 'Helvetica Neue', Helvetica, sans-serif;
-  font-size: .68rem;
-  font-weight: 700;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background .15s ease, border-color .15s ease, color .15s ease;
-}
-body.fz-draft .queue-toggle-btn:hover { border-color: var(--fzd-ink); }
-body.fz-draft .queue-toggle-btn.is-active {
-  background: var(--fzd-accent-wash);
-  border-color: var(--fzd-accent);
-  color: var(--fzd-accent-dark);
-}
-body.fz-draft .queue-row-rank {
-  flex: 0 0 auto;
-  width: 16px;
-  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
-  font-size: .78rem;
-  font-weight: 600;
-  color: var(--fzd-text-fainter);
-  text-align: right;
-}
-
 
 
 body.fz-draft .fzd-status-cell { color: var(--fzd-text-faint); font-size: .78rem; text-align: right; }
@@ -1459,11 +1430,9 @@ body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-dark); color:
   body.fz-draft .turn-banner-text { font-size: 1.05rem; }
   body.fz-draft .picks-carousel { --pick-w: 150px; --pick-h: 108px; padding: 14px 34px; }
   body.fz-draft .recent-picks-card { padding-left: 0; padding-right: 0; }
-  body.fz-draft .recent-picks-header { padding: 20px 34px 0; }
 
   
 
-  body.fz-draft .panel-tabs-band { padding: 16px 34px; }
   body.fz-draft .panel-tabs { display: inline-grid; min-width: 420px; }
   body.fz-draft .panel-tab { padding: 0 24px; }
 
