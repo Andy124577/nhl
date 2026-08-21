@@ -443,8 +443,7 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
         const row = document.getElementById("draft-live-row");
         if (!row) return;
         const chip = document.getElementById("conn-chip");
-        const skip = document.getElementById("turn-skip-btn");
-        row.hidden = !((chip && !chip.hidden) || (skip && !skip.hidden));
+        row.hidden = !(chip && !chip.hidden);
     }
     window.fzSyncDraftLiveRow = syncLiveRow;
 

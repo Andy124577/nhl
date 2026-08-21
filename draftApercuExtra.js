@@ -639,26 +639,6 @@ function fzInitPagination() {
 }
 
 /* ============================================================
-   7. SOUS-ONGLETS DE L'APERÇU (bureau) — "Mes favoris" / "Liste des joueurs"
-   ------------------------------------------------------------
-   "Liste des joueurs" ici mène au même endroit que l'onglet du même nom
-   tout en haut (window.fzOuvrirListeJoueurs, draftActifUI.js) — un
-   raccourci, pas un second mécanisme d'onglets.
-   ============================================================ */
-function fzInitApercuSubtabs() {
-    const bouton = document.getElementById('apercuGoListe');
-    if (bouton && bouton.dataset.bound !== '1') {
-        bouton.dataset.bound = '1';
-        bouton.addEventListener('click', () => {
-            if (typeof window.fzOuvrirListeJoueurs === 'function') window.fzOuvrirListeJoueurs();
-        });
-    }
-    const compteur = document.getElementById('apercuFavCount');
-    const reel = document.getElementById('favoritesCount');
-    if (compteur && reel) compteur.textContent = reel.textContent || '0';
-}
-
-/* ============================================================
    8. JOUEUR SÉLECTIONNÉ (bureau, Liste des joueurs) — 340px
    ------------------------------------------------------------
    Un survol sur une rangée du tableau l'affiche ici (jamais un clic : la
@@ -852,7 +832,6 @@ window.fzRefreshApercuExtras = function () {
     try { fzRenderRecentPicksFeed(); } catch (e) { console.error('[apercu] derniers choix :', e); }
     try { fzRenderLineupCard(); } catch (e) { console.error('[apercu] alignement :', e); }
     try { fzRenderSegmentedProgress(); } catch (e) { console.error('[apercu] progression segmentée :', e); }
-    try { fzInitApercuSubtabs(); } catch (e) {}
     try { fzRenderPositionSidebar(); } catch (e) { console.error('[apercu] sidebar position :', e); }
     try { fzRenderFiltersSummary(); } catch (e) {}
     try { fzPopulateTeamFilter(); } catch (e) {}

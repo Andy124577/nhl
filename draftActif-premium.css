@@ -36,6 +36,45 @@ body.fz-draft a { color: var(--fzd-accent); text-decoration: none; }
 body.fz-draft a:hover { color: var(--fzd-accent-dark); }
 body.fz-draft button { font-family: inherit; }
 
+/* La barre du haut et le rail des pools (navbar.css / poolNav.css) sont
+   des composants PARTAGÉS avec le reste du site, pas des éléments de
+   cette maquette éditoriale — sans ce correctif, ils héritaient de la
+   police et de la couleur de body.fz-draft ci-dessus et ne ressemblaient
+   plus à la même barre que sur les autres pages. Le menu du compte et le
+   panneau de notifications vivent tous les deux dans .navbar (voir
+   navbar.js/notifications.js) : ils suivent par simple héritage.
+   .navbar sur classe, #fzSidebar/#fzDrawer sur id (posés directement sur
+   <body> par poolNav.js) : peu importe ici, aucun des deux ne rivalise en
+   spécificité avec autre chose. */
+body.fz-draft .navbar,
+body.fz-draft #fzSidebar,
+body.fz-draft #fzDrawer {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text-dark);
+}
+/* body.fz-draft a / a:hover (ci-dessus) ont une spécificité plus grande
+   qu'un simple .nav-link/.fz-rail-link/.fz-drawer-page : sans ce
+   correctif, les liens de ces trois menus viraient à l'orange éditorial
+   au lieu de suivre le thème du site. Ciblé via l'élément <nav> qui les
+   enveloppe (spécificité : 1 classe + 3 éléments) pour rester SOUS la
+   règle .active (2 classes), qui elle reste correcte et garde la main. */
+body.fz-draft nav a {
+  color: var(--text-secondary);
+}
+/* Même spécificité que body.fz-draft a:hover (1 classe + 2 éléments +
+   :hover) : gagne uniquement parce qu'elle est déclarée après, dans ce
+   même fichier — à garder en dernier si ce bloc est un jour déplacé. */
+body.fz-draft nav a:hover {
+  color: var(--text-main);
+}
+/* La page active (repêchage) survolée : la règle ci-dessus (2 éléments)
+   l'emporterait sur .nav-link.active/.is-active (0 élément) et ferait
+   perdre sa couleur d'accent à l'onglet déjà actif au survol. */
+body.fz-draft nav a.active:hover,
+body.fz-draft nav a.is-active:hover {
+  color: var(--primary);
+}
+
 
 
 body.fz-draft .fzd-num,
@@ -585,7 +624,12 @@ body.fz-draft .panel-tabs-band {
   padding: 5px 5px;
   border-bottom: 1px solid var(--fzd-border);
   background: var(--fzd-bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
+body.fz-draft .panel-tabs-band .turn-skip-btn { flex: 0 0 auto; margin-left: auto; }
 body.fz-draft .panel-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -833,31 +877,6 @@ body.fz-draft .recent-feed-removed { color: var(--fzd-accent); font-weight: 500;
 
 
 
-body.fz-draft .apercu-subtabs { display: none; align-items: center; gap: 0; border-bottom: 1px solid var(--fzd-border); margin-bottom: 20px; }
-body.fz-draft .apercu-subtab {
-  border: 0;
-  background: none;
-  padding: 0 20px 12px;
-  margin-bottom: -1px;
-  font-family: 'Helvetica Neue', Helvetica, sans-serif;
-  font-size: .78rem;
-  font-weight: 500;
-  letter-spacing: .09em;
-  text-transform: uppercase;
-  color: var(--fzd-text-faint);
-  cursor: pointer;
-}
-body.fz-draft .apercu-subtab:first-child { padding-left: 0; }
-body.fz-draft .apercu-subtab:hover { color: var(--fzd-ink); }
-body.fz-draft .apercu-subtab.is-active {
-  color: var(--fzd-ink);
-  font-weight: 600;
-  border-bottom: 2px solid var(--fzd-ink);
-  cursor: default;
-}
-body.fz-draft .apercu-subtab-count { color: var(--fzd-text-fainter); font-weight: 400; }
-body.fz-draft .apercu-subtab.is-active .apercu-subtab-count { color: var(--fzd-text-faint); }
-
 
 
 body.fz-draft .list-filters-search { margin-bottom: 20px; }
@@ -1003,8 +1022,11 @@ body.fz-draft .filter-select:focus-visible { outline: none; box-shadow: 0 0 0 3p
 
 body.fz-draft .category-tabs {
   display: flex;
+  align-items: center;
+  min-height: 50px;
   overflow-x: auto;
   flex-wrap: nowrap;
+  flex-shrink: 0;
   scrollbar-width: none;
   gap: 6px;
   margin-bottom: 12px;
@@ -1444,11 +1466,16 @@ body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-dark); color:
   body.fz-draft .sort-select { display: none; }
   body.fz-draft .sort-tabs { display: flex; }
   body.fz-draft .filters-row .search-field { display: none; }
-
-  body.fz-draft .apercu-subtabs { display: flex; }
 }
 
 
+
+@media (max-width: 1439px) {
+  body.fz-draft .selected-player-card { display: none; }
+  body.fz-draft .draft-main-container.mode-joueurs .draft-center {
+    grid-template-columns: 250px 1fr;
+  }
+}
 
 
 

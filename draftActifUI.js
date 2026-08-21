@@ -261,6 +261,11 @@ function initPanelTabs() {
     const band = document.createElement('div');
     band.className = 'panel-tabs-band';
     band.appendChild(strip);
+    // Bouton « Sauter ce tour » : vivait dans .draft-live-row (avec le chip
+    // de connexion), déplacé ici pour occuper le côté droit du bandeau
+    // d'onglets plutôt qu'une ligne à lui tout seul.
+    const skipBtn = document.getElementById('turn-skip-btn');
+    if (skipBtn) band.appendChild(skipBtn);
     const overallProgress = document.getElementById('draft-overall-progress');
     if (overallProgress) {
         overallProgress.insertAdjacentElement('afterend', band);
