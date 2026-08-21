@@ -1277,6 +1277,37 @@ body.fz-draft .favorite-btn.star-toggle {
 body.fz-draft .favorite-btn.star-toggle:hover { border-color: var(--fzd-accent); }
 body.fz-draft .favorite-btn.star-toggle.is-active { background: var(--fzd-accent-wash); border-color: var(--fzd-accent); }
 
+body.fz-draft .queue-toggle-btn {
+  min-height: 34px;
+  padding: 7px 13px;
+  border-radius: 8px;
+  border: 1px solid var(--fzd-border-input);
+  background: var(--fzd-surface);
+  color: var(--fzd-ink);
+  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+body.fz-draft .queue-toggle-btn:hover { border-color: var(--fzd-ink); }
+body.fz-draft .queue-toggle-btn.is-active {
+  background: var(--fzd-accent-wash);
+  border-color: var(--fzd-accent);
+  color: var(--fzd-accent-dark);
+}
+body.fz-draft .queue-row-rank {
+  flex: 0 0 auto;
+  width: 16px;
+  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--fzd-text-fainter);
+  text-align: right;
+}
+
 
 
 body.fz-draft .fzd-status-cell { color: var(--fzd-text-faint); font-size: .78rem; text-align: right; }
