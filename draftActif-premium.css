@@ -1206,7 +1206,6 @@ body.fz-draft .draft-empty { color: var(--fzd-text-faint); white-space: normal; 
 body.fz-draft .draft-empty-icon { color: var(--fzd-text-fainter); }
 body.fz-draft #playerTable tbody td,
 body.fz-draft #fzPickedList tbody td {
-  padding: 10px;
   background: none;
   border-top: 0;
   border-bottom: 0;
@@ -1456,9 +1455,6 @@ body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-dark); color:
   body.fz-draft .selected-player-card { display: block; }
   body.fz-draft .player-selection-card { min-width: 0; }
   body.fz-draft #playerTable tbody tr { cursor: pointer; }
-
-  body.fz-draft #playerTable thead th,
-  body.fz-draft #playerTable tbody td { padding: 12px 14px; }
 
   
 

@@ -1624,7 +1624,7 @@ html[data-theme="light"] #careerStatsTable tbody tr:nth-child(even) {
         --d-field-pad: 10px 14px;
         --d-field-size: .88rem;
         --d-th-pad: 3px px;
-        --d-td-pad: 11px 14px;
+        --d-td-pad: 3px px;
         --d-td-size: .86rem;
         --d-photo: 56px;
         --d-photo-logo: 22px;

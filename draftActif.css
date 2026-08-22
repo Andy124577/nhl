@@ -1112,7 +1112,6 @@ html[data-theme="light"] .player-selection-card {
 #playerTable thead th:nth-child(2) { text-align: left; }
 
 #playerTable tbody td {
-  padding: 9px 10px;
   border-bottom: 1px solid var(--border-light);
   font-size: .85rem;
   font-weight: 600;
@@ -1770,8 +1769,6 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   border-top: 1px solid var(--border-light);
   border-bottom: 1px solid var(--border-light);
   background: var(--bg-odd-row);
-  padding-top: 8px;
-  padding-bottom: 8px;
 }
 #playerTable tbody td:first-child {
   border-left: 1px solid var(--border-light);
@@ -2225,7 +2222,6 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   background: none;
   border: 0;
   border-radius: 0;
-  padding: 9px 4px;
 }
 @media (hover: hover) {
   #playerTable tbody tr:hover td { background: none; }
