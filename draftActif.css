@@ -418,7 +418,7 @@ button.select-button.is-connection-blocked {
 .draft-main-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 16px 14px 40px;
+  padding: 4px 4px 2px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -1659,7 +1659,6 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   .dop-info { margin-bottom: 4px; font-size: .7rem; }
 
   
-  .draft-main-container { padding: 11px 12px 36px; gap: 12px; }
   .progress-card,
   .recent-picks-card,
   .player-selection-card { padding: 13px; }

@@ -678,7 +678,6 @@ body.fz-draft .panel-tab:focus-visible { outline: none; box-shadow: 0 0 0 3px rg
 body.fz-draft .draft-main-container {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 20px 16px 64px;
   gap: 20px;
 }
 body.fz-draft .draft-center { order: 1; gap: 16px; }
@@ -699,7 +698,6 @@ body.fz-draft .selected-player-card { display: none; }
 body.fz-draft .progress-card,
 body.fz-draft .recent-picks-card,
 body.fz-draft .player-selection-card {
-  padding: 18px;
   background: var(--fzd-surface);
   border: 1px solid var(--fzd-border-strong);
   border-radius: 14px;
