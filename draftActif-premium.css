@@ -1251,6 +1251,10 @@ body.fz-draft button.select-button .select-icon { display: none; }
 body.fz-draft button.select-button::after { content: 'Choisir'; }
 body.fz-draft button.select-button.is-connection-blocked { opacity: .4; filter: none; }
 
+@media (max-width: 480px) {
+  body.fz-draft button.select-button::after { content: '+'; font-size: 1rem; }
+}
+
 body.fz-draft .favorite-btn.star-toggle {
   width: 30px; height: 30px;
   border-radius: 8px;
