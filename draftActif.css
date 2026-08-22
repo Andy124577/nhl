@@ -801,7 +801,6 @@ html[data-theme="light"] .player-selection-card {
   pointer-events: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, .32);
 }
-.pick-card.is-my-turn .pick-card-head { padding-top: 26px; }
 
 
 
