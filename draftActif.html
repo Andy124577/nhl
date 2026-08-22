@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="poolNav.css">
   <link rel="stylesheet" href="skeleton-loader.css" />
   <link rel="stylesheet" href="draftActif.css?v=20260820a" />
-  <link rel="stylesheet" href="draftActif-premium.css?v=20260820d" />
+  <link rel="stylesheet" href="draftActif-premium.css?v=20260820e" />
   
 
   <link rel="stylesheet" href="career-modal.css" />
@@ -165,7 +165,11 @@
       <div class="progress-card" id="progressCard">
         <div class="progress-header">
           <h2>Ma progression</h2>
-          
+          <span class="progress-count" id="progressCount"></span>
+          <div class="progress-view-toggle" id="progressViewToggle" role="group" aria-label="Vue de la progression">
+            <button type="button" class="progress-view-chip" data-view="ice">Glace</button>
+            <button type="button" class="progress-view-chip" data-view="list">Liste</button>
+          </div>
 
           <select id="progressFilter" class="progress-filter-select" hidden>
             <option value="">Voir détails...</option>
@@ -176,54 +180,73 @@
             <option value="team">Équipe</option>
           </select>
         </div>
-        <div id="progressDetailsList" class="progress-details-list" style="display: none;">
-          
+
+        <div class="progress-view-ice" id="progressIceView">
+          <div class="progress-rink" id="progressRink">
+            <div class="rink-line rink-line--center"></div>
+            <div class="rink-circle"></div>
+            <div class="rink-dot"></div>
+            <div class="rink-line rink-line--blue"></div>
+            <div class="rink-line rink-line--goal"></div>
+            <div class="rink-crease"></div>
+            <div class="rink-slots" id="rinkSlots"></div>
+          </div>
+          <div class="progress-reserve">
+            <div class="progress-reserve-title">Réserve</div>
+            <div class="progress-reserve-list" id="progressReserveList"></div>
+          </div>
         </div>
-        <div class="progress-list">
-          <div class="progress-line" data-position="offensive" role="button" tabindex="0"
-               aria-expanded="false" title="Voir les joueurs choisis">
-            <span class="progress-emoji" data-icon="bolt" data-icon-size="16"></span>
-            <span class="progress-text">Attaquants</span>
-            <div class="progress-mini-bar">
-              <div class="progress-mini-fill" id="mini-progress-offensive"></div>
-            </div>
-            <span class="progress-value" id="count-offensive">0/6</span>
+
+        <div class="progress-view-list" id="progressListView" hidden>
+          <div id="progressDetailsList" class="progress-details-list" style="display: none;">
+
           </div>
-          <div class="progress-line" data-position="defensive" role="button" tabindex="0"
-               aria-expanded="false" title="Voir les joueurs choisis">
-            <span class="progress-emoji" data-icon="shield" data-icon-size="16"></span>
-            <span class="progress-text">Défenseurs</span>
-            <div class="progress-mini-bar">
-              <div class="progress-mini-fill" id="mini-progress-defensive"></div>
+          <div class="progress-list">
+            <div class="progress-line" data-position="offensive" role="button" tabindex="0"
+                 aria-expanded="false" title="Voir les joueurs choisis">
+              <span class="progress-emoji" data-icon="bolt" data-icon-size="16"></span>
+              <span class="progress-text">Attaquants</span>
+              <div class="progress-mini-bar">
+                <div class="progress-mini-fill" id="mini-progress-offensive"></div>
+              </div>
+              <span class="progress-value" id="count-offensive">0/6</span>
             </div>
-            <span class="progress-value" id="count-defensive">0/4</span>
-          </div>
-          <div class="progress-line" data-position="rookie" role="button" tabindex="0"
-               aria-expanded="false" title="Voir les joueurs choisis">
-            <span class="progress-emoji" data-icon="star" data-icon-size="16"></span>
-            <span class="progress-text">Recrues</span>
-            <div class="progress-mini-bar">
-              <div class="progress-mini-fill" id="mini-progress-rookie"></div>
+            <div class="progress-line" data-position="defensive" role="button" tabindex="0"
+                 aria-expanded="false" title="Voir les joueurs choisis">
+              <span class="progress-emoji" data-icon="shield" data-icon-size="16"></span>
+              <span class="progress-text">Défenseurs</span>
+              <div class="progress-mini-bar">
+                <div class="progress-mini-fill" id="mini-progress-defensive"></div>
+              </div>
+              <span class="progress-value" id="count-defensive">0/4</span>
             </div>
-            <span class="progress-value" id="count-rookie">0/1</span>
-          </div>
-          <div class="progress-line" data-position="goalie" role="button" tabindex="0"
-               aria-expanded="false" title="Voir les joueurs choisis">
-            <span class="progress-emoji" data-icon="goal" data-icon-size="16"></span>
-            <span class="progress-text">Gardien</span>
-            <div class="progress-mini-bar">
-              <div class="progress-mini-fill" id="mini-progress-goalie"></div>
+            <div class="progress-line" data-position="rookie" role="button" tabindex="0"
+                 aria-expanded="false" title="Voir les joueurs choisis">
+              <span class="progress-emoji" data-icon="star" data-icon-size="16"></span>
+              <span class="progress-text">Recrues</span>
+              <div class="progress-mini-bar">
+                <div class="progress-mini-fill" id="mini-progress-rookie"></div>
+              </div>
+              <span class="progress-value" id="count-rookie">0/1</span>
             </div>
-            <span class="progress-value" id="count-goalie">0/1</span>
-          </div>
-          <div class="progress-line" data-position="team" role="button" tabindex="0"
-               aria-expanded="false" title="Voir les joueurs choisis">
-            <span class="progress-emoji" data-icon="hockey" data-icon-size="16"></span>
-            <span class="progress-text">Équipe</span>
-            <div class="progress-mini-bar">
-              <div class="progress-mini-fill" id="mini-progress-team"></div>
+            <div class="progress-line" data-position="goalie" role="button" tabindex="0"
+                 aria-expanded="false" title="Voir les joueurs choisis">
+              <span class="progress-emoji" data-icon="goal" data-icon-size="16"></span>
+              <span class="progress-text">Gardien</span>
+              <div class="progress-mini-bar">
+                <div class="progress-mini-fill" id="mini-progress-goalie"></div>
+              </div>
+              <span class="progress-value" id="count-goalie">0/1</span>
             </div>
-            <span class="progress-value" id="count-team">0/1</span>
+            <div class="progress-line" data-position="team" role="button" tabindex="0"
+                 aria-expanded="false" title="Voir les joueurs choisis">
+              <span class="progress-emoji" data-icon="hockey" data-icon-size="16"></span>
+              <span class="progress-text">Équipe</span>
+              <div class="progress-mini-bar">
+                <div class="progress-mini-fill" id="mini-progress-team"></div>
+              </div>
+              <span class="progress-value" id="count-team">0/1</span>
+            </div>
           </div>
         </div>
       </div>
@@ -641,13 +664,13 @@
   <script defer src="draftFavorites.js"></script>
 
 
-  <script defer src="draftApercuExtra.js?v=20260820c"></script>
+  <script defer src="draftApercuExtra.js?v=20260820d"></script>
   
 
   <script defer src="draftListePremium.js"></script>
   
 
-  <script defer src="draftActifUI.js?v=20260820c"></script>
+  <script defer src="draftActifUI.js?v=20260820d"></script>
   
   <script defer src="careerTeamLogo.js"></script>
   

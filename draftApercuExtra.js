@@ -379,6 +379,229 @@ function fzRenderSegmentedProgress() {
 }
 
 /* ============================================================
+   5bis. MA PROGRESSION — VUE GLACE
+   ------------------------------------------------------------
+   Mockup Claude Design 3A/3B : la progression posée sur une patinoire —
+   une ligne (AG/C/AD) + 2 défenseurs + 1 gardien sur la glace, le reste
+   (surplus d'attaquants/défenseurs, recrue, équipe LNH) sur le banc
+   « Réserve ». Toujours au plus 3 attaquants/2 défenseurs/1 gardien sur la
+   glace, jamais plus même si la config du pool en demande davantage —
+   le surplus part au banc, quelle que soit sa taille.
+   ============================================================ */
+
+/** Code à afficher pour une position réelle — L/R traduits en ailier
+ *  gauche/droit (vocabulaire de la maquette), '*' en "Recrue" : ce sont des
+ *  repères de mise en page sur la glace, pas un second quota. */
+function fzCodeAffiche(code) {
+    if (code === 'L') return 'AG';
+    if (code === 'R') return 'AD';
+    if (code === '*') return 'Recrue';
+    return code;
+}
+
+/** Dernier mot d'un nom complet — assez compact pour une tuile de 54-66px,
+ *  même choix que les tuiles de la maquette ("MacKinnon", pas "Nathan
+ *  MacKinnon"). */
+function fzNomCourt(nom) {
+    const morceaux = String(nom).trim().split(/\s+/);
+    return morceaux[morceaux.length - 1];
+}
+
+/** Réattribue les attaquants déjà repêchés à leur position naturelle
+ *  (ailier gauche/centre/ailier droit) quand une place correspondante est
+ *  encore libre sur la glace ; le reste part au banc avec son code réel.
+ *  Ce n'est jamais un second quota — juste où le joueur atterrit sur le
+ *  schéma, à code de position égal. */
+function fzRepartirAvants(offensive, iceOffN) {
+    const gabarits = iceOffN <= 0 ? []
+        : iceOffN === 1 ? ['C']
+        : iceOffN === 2 ? ['AG', 'AD']
+        : ['AG', 'C', 'AD'];
+
+    const restants = offensive.map(nom => {
+        const trouve = typeof fzFindRecord === 'function' ? fzFindRecord(nom) : null;
+        const code = trouve && typeof fzPositionCode === 'function' ? fzPositionCode(trouve.rec, trouve.kind) : null;
+        return { nom, code };
+    });
+    const prendre = (code) => {
+        const i = restants.findIndex(o => o.code === code);
+        if (i === -1) return null;
+        return restants.splice(i, 1)[0].nom;
+    };
+
+    const glace = gabarits.map(slotCode => ({
+        zone: 'forward',
+        label: slotCode,
+        nom: slotCode === 'AG' ? prendre('L') : slotCode === 'AD' ? prendre('R') : prendre('C')
+    }));
+    const reserve = restants.map(o => ({ label: 'AT', nom: o.nom }));
+    return { glace, reserve };
+}
+
+/** Construit les places de la glace (formation fixe) et du banc (le reste
+ *  des quotas du pool), à partir des mêmes tableaux/quotas que
+ *  updateProgressCounter() (draftActif.js) — jamais un second calcul de
+ *  quota, uniquement leur répartition visuelle. */
+function fzBuildIceSlots() {
+    const me = typeof getUserTeam === 'function' ? getUserTeam() : null;
+    const equipe = (me && typeof draftData !== 'undefined' && draftData && draftData.teams && draftData.teams[me]) || {};
+    const cfg = (typeof draftData !== 'undefined' && draftData && draftData.config)
+        || { numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1, numTeams: 1 };
+
+    const offensive = equipe.offensive || [];
+    const defensive = equipe.defensive || [];
+    const goalie = equipe.goalie || [];
+    const rookie = equipe.rookie || [];
+    const teams = equipe.teams || [];
+
+    const maxOff = cfg.numOffensive ?? 6;
+    const maxDef = cfg.numDefensive ?? 4;
+    const maxGoal = cfg.numGoalies ?? 1;
+    const maxRookie = cfg.numRookies ?? 1;
+    const maxTeam = cfg.numTeams ?? 1;
+
+    const iceOffN = Math.min(3, maxOff);
+    const { glace: avantsGlace, reserve: avantsReserve } = fzRepartirAvants(offensive, iceOffN);
+
+    const iceDefN = Math.min(2, maxDef);
+    const defenseGlace = [];
+    for (let i = 0; i < iceDefN; i++) defenseGlace.push({ zone: 'defense', label: 'D', nom: defensive[i] || null });
+    const defenseReserve = [];
+    for (let i = iceDefN; i < maxDef; i++) defenseReserve.push({ label: 'D', nom: defensive[i] || null });
+
+    const iceGoalN = Math.min(1, maxGoal);
+    const goalieGlace = [];
+    for (let i = 0; i < iceGoalN; i++) goalieGlace.push({ zone: 'goalie', label: 'G', nom: goalie[i] || null });
+    const goalieReserve = [];
+    for (let i = iceGoalN; i < maxGoal; i++) goalieReserve.push({ label: 'G', nom: goalie[i] || null });
+
+    const rookieReserve = [];
+    for (let i = 0; i < maxRookie; i++) rookieReserve.push({ label: 'Recrue', nom: rookie[i] || null });
+
+    const teamReserve = [];
+    for (let i = 0; i < maxTeam; i++) teamReserve.push({ label: 'Équipe', nom: teams[i] || null, kindHint: 'team' });
+
+    return {
+        rink: [...avantsGlace, ...defenseGlace, ...goalieGlace],
+        reserve: [...avantsReserve, ...defenseReserve, ...goalieReserve, ...rookieReserve, ...teamReserve]
+    };
+}
+
+/** Position horizontale (%) d'une place d'attaquant selon son rang parmi
+ *  les n places de la ligne — centrée, espacement fixe. */
+function fzAvantGauche(i, n) {
+    if (n <= 1) return 50;
+    if (n === 2) return i === 0 ? 30 : 70;
+    return [28, 50, 72][i] ?? 50;
+}
+function fzDefenseGauche(i, n) {
+    if (n <= 1) return 50;
+    return i === 0 ? 25 : 75;
+}
+
+/** Une tuile de joueur (ou de place libre), glace ou réserve — même patron
+ *  que fzRenderLineupCard() : logo d'équipe, jamais une photo (trop petite
+ *  ici pour se distinguer). Une place « équipe » (pick LNH, pas un joueur)
+ *  affiche l'écusson déjà posé dans `photo` par fzPhotoAndLogo pour ce cas,
+ *  jamais de code de position. */
+function fzBuildRosterTile(slot, variante) {
+    const el = document.createElement('div');
+    el.className = 'fzd-tile fzd-tile--' + variante + ' fzd-tile--' + (slot.zone || 'bench');
+    const trouve = slot.nom && typeof fzFindRecord === 'function' ? fzFindRecord(slot.nom) : null;
+    el.classList.toggle('is-empty', !trouve);
+
+    const box = document.createElement('div');
+    box.className = 'fzd-tile-box';
+    el.appendChild(box);
+
+    if (trouve) {
+        const { rec, kind } = trouve;
+        const { photo, logo } = typeof fzPhotoAndLogo === 'function' ? fzPhotoAndLogo(slot.nom, rec, kind) : {};
+        const src = kind === 'team' ? photo : logo;
+        if (src) {
+            const img = document.createElement('img');
+            img.src = src; img.alt = '';
+            img.addEventListener('error', () => img.remove());
+            box.appendChild(img);
+        }
+        const nomEl = document.createElement('div');
+        nomEl.className = 'fzd-tile-name';
+        nomEl.textContent = fzNomCourt(slot.nom);
+        el.appendChild(nomEl);
+
+        if (kind !== 'team') {
+            const code = typeof fzPositionCode === 'function' ? fzPositionCode(rec, kind) : slot.label;
+            const codeEl = document.createElement('div');
+            codeEl.className = 'fzd-tile-code';
+            codeEl.textContent = fzCodeAffiche(code);
+            el.appendChild(codeEl);
+        }
+    } else {
+        const lbl = document.createElement('div');
+        lbl.className = 'fzd-tile-label';
+        lbl.textContent = variante === 'rink' ? 'À combler' : 'Libre';
+        el.appendChild(lbl);
+        const codeEl = document.createElement('div');
+        codeEl.className = 'fzd-tile-code';
+        codeEl.textContent = fzCodeAffiche(slot.label);
+        el.appendChild(codeEl);
+    }
+    return el;
+}
+
+function fzRenderIceProgression() {
+    const rinkHost = document.getElementById('rinkSlots');
+    const reserveHost = document.getElementById('progressReserveList');
+    if (!rinkHost || !reserveHost) return;
+    const { rink, reserve } = fzBuildIceSlots();
+
+    rinkHost.replaceChildren();
+    const avants = rink.filter(s => s.zone === 'forward');
+    const defense = rink.filter(s => s.zone === 'defense');
+    const gardiens = rink.filter(s => s.zone === 'goalie');
+
+    avants.forEach((slot, i) => {
+        const el = fzBuildRosterTile(slot, 'rink');
+        el.style.left = fzAvantGauche(i, avants.length) + '%';
+        el.style.top = '25%';
+        rinkHost.appendChild(el);
+    });
+    defense.forEach((slot, i) => {
+        const el = fzBuildRosterTile(slot, 'rink');
+        el.style.left = fzDefenseGauche(i, defense.length) + '%';
+        el.style.top = '63%';
+        rinkHost.appendChild(el);
+    });
+    gardiens.forEach(slot => {
+        const el = fzBuildRosterTile(slot, 'rink');
+        el.style.left = '50%';
+        el.style.top = '87%';
+        rinkHost.appendChild(el);
+    });
+
+    reserveHost.replaceChildren();
+    reserve.forEach(slot => reserveHost.appendChild(fzBuildRosterTile(slot, 'reserve')));
+}
+
+/** « 4 choix sur 13 » dans l'en-tête de la carte — même total que
+ *  texteManques()/updateProgressCounter() (draftActif.js), jamais un
+ *  second calcul de quota. */
+function fzRenderProgressCount() {
+    const span = document.getElementById('progressCount');
+    if (!span) return;
+    const me = typeof getUserTeam === 'function' ? getUserTeam() : null;
+    const equipe = (me && typeof draftData !== 'undefined' && draftData && draftData.teams && draftData.teams[me]) || {};
+    const cfg = (typeof draftData !== 'undefined' && draftData && draftData.config)
+        || { numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1, numTeams: 1 };
+
+    const fait = ['offensive', 'defensive', 'rookie', 'goalie', 'teams']
+        .reduce((somme, cle) => somme + (equipe[cle] || []).length, 0);
+    const total = (cfg.numOffensive ?? 6) + (cfg.numDefensive ?? 4) + (cfg.numRookies ?? 1)
+        + (cfg.numGoalies ?? 1) + (cfg.numTeams ?? 1);
+    span.textContent = total > 0 ? `${fait} choix sur ${total}` : '';
+}
+
+/* ============================================================
    6. SIDEBAR DE POSITION / AFFICHAGE / ÉQUIPE (bureau, Liste des joueurs)
    ------------------------------------------------------------
    Reprend les options réelles de #playerFilter, comme initCategoryTabs()
@@ -832,6 +1055,8 @@ window.fzRefreshApercuExtras = function () {
     try { fzRenderRecentPicksFeed(); } catch (e) { console.error('[apercu] derniers choix :', e); }
     try { fzRenderLineupCard(); } catch (e) { console.error('[apercu] alignement :', e); }
     try { fzRenderSegmentedProgress(); } catch (e) { console.error('[apercu] progression segmentée :', e); }
+    try { fzRenderIceProgression(); } catch (e) { console.error('[apercu] progression glace :', e); }
+    try { fzRenderProgressCount(); } catch (e) {}
     try { fzRenderPositionSidebar(); } catch (e) { console.error('[apercu] sidebar position :', e); }
     try { fzRenderFiltersSummary(); } catch (e) {}
     try { fzPopulateTeamFilter(); } catch (e) {}

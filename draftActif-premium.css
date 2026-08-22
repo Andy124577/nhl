@@ -769,6 +769,138 @@ body.fz-draft .progress-player-name { color: var(--fzd-ink-soft); }
 body.fz-draft .no-picks { color: var(--fzd-text-faint); font-style: normal; font-size: .8rem; }
 
 
+/* ---- Ma progression : bascule Glace / Liste (mockups 3A/3B) ---- */
+body.fz-draft .progress-count { font-size: .72rem; color: var(--fzd-text-faint); font-weight: 400; text-transform: none; letter-spacing: normal; }
+body.fz-draft .progress-header { flex-wrap: wrap; }
+body.fz-draft .progress-view-toggle { display: flex; gap: 5px; margin-left: auto; }
+body.fz-draft .progress-view-chip {
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  font: 600 .66rem/1 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--fzd-text-muted);
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+body.fz-draft .progress-view-chip:hover { background: var(--fzd-bg-alt); color: var(--fzd-ink); }
+body.fz-draft .progress-view-chip.is-active { background: var(--fzd-ink); color: #fff; }
+
+/* ---- Vue Glace : patinoire + réserve ---- */
+body.fz-draft .progress-rink {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 350 / 318;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #e6f0f6, #c9dbe7);
+  margin-bottom: 16px;
+}
+body.fz-draft .rink-line { position: absolute; left: 0; right: 0; }
+body.fz-draft .rink-line--center { top: 25%; height: 2px; background: var(--fzd-accent); opacity: .45; }
+body.fz-draft .rink-line--blue { top: 63%; height: 3px; background: #4a90c4; opacity: .55; }
+body.fz-draft .rink-line--goal { top: 89%; height: 2px; background: var(--fzd-accent); opacity: .5; }
+body.fz-draft .rink-circle {
+  position: absolute; left: 50%; top: 25%;
+  width: 42%; aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  border: 1.5px solid var(--fzd-accent);
+  opacity: .3;
+}
+body.fz-draft .rink-dot {
+  position: absolute; left: 50%; top: 25%;
+  width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px;
+  border-radius: 999px;
+  background: var(--fzd-accent);
+  opacity: .6;
+}
+body.fz-draft .rink-crease {
+  position: absolute; left: 50%; top: 78%;
+  width: 30%; height: 13%;
+  transform: translateX(-50%);
+  border: 1.5px solid var(--fzd-accent);
+  border-bottom: none;
+  border-radius: 999px 999px 0 0;
+  background: rgba(120, 180, 220, .3);
+  opacity: .7;
+}
+body.fz-draft .rink-slots { position: absolute; inset: 0; }
+
+body.fz-draft .fzd-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border-radius: 8px;
+  background: var(--fzd-ink);
+  text-align: center;
+}
+body.fz-draft .fzd-tile.is-empty {
+  background: rgba(255, 255, 255, .6);
+  border: 1px dashed #7d9fb4;
+}
+body.fz-draft .fzd-tile-box {
+  width: 20px; height: 20px;
+  border-radius: 4px;
+  background: var(--fzd-ink-soft);
+  overflow: hidden;
+}
+body.fz-draft .fzd-tile.is-empty .fzd-tile-box { background: none; border: 1px dashed #7d9fb4; }
+body.fz-draft .fzd-tile-box img { width: 100%; height: 100%; object-fit: contain; }
+body.fz-draft .fzd-tile-name {
+  font: 600 .62rem/1.2 'Helvetica Neue', Helvetica, sans-serif;
+  color: #fff;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.fz-draft .fzd-tile-label {
+  font: 500 .6rem/1.2 'Helvetica Neue', Helvetica, sans-serif;
+  color: #4b6478;
+}
+body.fz-draft .fzd-tile-code {
+  font: 500 .56rem/1 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .07em;
+  color: #c9c5bd;
+}
+body.fz-draft .fzd-tile.is-empty .fzd-tile-code { color: #4b6478; }
+
+body.fz-draft .fzd-tile--rink {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 17%;
+  min-width: 52px;
+  padding: 6px 4px;
+}
+
+body.fz-draft .progress-reserve-title {
+  font: 600 .58rem/1 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--fzd-text-faint);
+  text-align: center;
+  margin-bottom: 9px;
+}
+body.fz-draft .progress-reserve-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+}
+body.fz-draft .fzd-tile--reserve { width: 56px; padding: 6px 4px; }
+body.fz-draft .fzd-tile--reserve.is-empty { background: var(--fzd-bg-alt); border-color: var(--fzd-border-input); }
+body.fz-draft .fzd-tile--reserve.is-empty .fzd-tile-box { border-color: var(--fzd-border-input); }
+body.fz-draft .fzd-tile--reserve.is-empty .fzd-tile-label { color: var(--fzd-text-faint); }
+body.fz-draft .fzd-tile--reserve.is-empty .fzd-tile-code { color: var(--fzd-text-muted); }
+
+@media (min-width: 769px) {
+  body.fz-draft .progress-rink { aspect-ratio: 340 / 398; }
+}
+
 
 body.fz-draft .favorites-count {
   display: inline-flex;

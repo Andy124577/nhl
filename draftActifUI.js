@@ -68,6 +68,36 @@ function initPositionProgress() {
 }
 
 /* ============================================================
+   1bis. GLACE / LISTE — bascule d'affichage de « Ma progression »
+   ------------------------------------------------------------
+   Mockup Claude Design 3A/3B : deux façons de voir la même progression,
+   jamais recalculées ici — seul l'affichage change. « Glace » (par défaut,
+   comme dans le mockup) est construite par fzRenderIceProgression()
+   (draftApercuExtra.js) ; « Liste » est le bloc de barres déjà en place
+   au-dessus, inchangé.
+   ============================================================ */
+function initProgressViewToggle() {
+    const toggle = document.getElementById('progressViewToggle');
+    const vueGlace = document.getElementById('progressIceView');
+    const vueListe = document.getElementById('progressListView');
+    if (!toggle || !vueGlace || !vueListe) return;
+
+    const activer = (vue) => {
+        toggle.querySelectorAll('.progress-view-chip').forEach(chip => {
+            chip.classList.toggle('is-active', chip.dataset.view === vue);
+        });
+        vueGlace.hidden = vue !== 'ice';
+        vueListe.hidden = vue !== 'list';
+    };
+
+    toggle.querySelectorAll('.progress-view-chip').forEach(chip => {
+        chip.addEventListener('click', () => activer(chip.dataset.view));
+    });
+
+    activer('ice');
+}
+
+/* ============================================================
    2. ONGLETS DE CATÉGORIE
    ============================================================ */
 
@@ -393,6 +423,7 @@ function initPanelTabs() {
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
     initPositionProgress();
+    initProgressViewToggle();
     initCategoryTabs();
     initPanelTabs();
 });
