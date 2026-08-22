@@ -728,6 +728,16 @@ function ajusterPiedDePage() {
     const pied = document.querySelector('.site-legal-footer');
     if (!pied) return;
 
+    // Le repêchage actif et les échanges ont un onglet « Aperçu » assez
+    // court pour déclencher cette poussée — mais là, on VEUT voir le pied
+    // de page tout de suite : le repousser sous la ligne de flottaison le
+    // rendait invisible sans faire défiler, ce qui a été signalé comme un
+    // problème sur ces deux pages précisément.
+    if (document.body.classList.contains('fz-draft') || /\/trade\.html$/i.test(location.pathname)) {
+        pied.style.marginTop = '';
+        return;
+    }
+
     _ajustePied = true;
 
     // On rend d'abord la main à la feuille de style : sans ça la marge
