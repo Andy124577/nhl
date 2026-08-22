@@ -6,6 +6,7 @@
     <title>Échanges – Fantazy</title>
     <script src="theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css">
     <link rel="stylesheet" href="poolNav.css">
     <link rel="stylesheet" href="index.css">
@@ -16,7 +17,7 @@
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
     <script defer src="activePool.js"></script>
 </head>
-<body>
+<body class="fz-trade">
     <!-- Navigation -->
     <nav class="navbar"></nav>
 
@@ -26,293 +27,247 @@
     <div class="trade-container">
         <!-- Page Header -->
         <div class="page-header">
-            <h1><span data-icon="bolt" data-icon-size="24"></span> Échanges</h1>
-            <p class="page-subtitle">Gérez vos propositions et échanges reçus</p>
+            <h1>Échanges</h1>
         </div>
 
         <!-- Sub Navigation -->
         <div class="trade-sub-nav">
             <button class="trade-tab active" data-tab="propose" onclick="switchTradeTab('propose')">
-                <span data-icon="send" data-icon-size="16"></span> Proposer un échange
+                Proposer un échange
             </button>
             <button class="trade-tab" data-tab="received" onclick="switchTradeTab('received')">
-                <span data-icon="inbox" data-icon-size="16"></span> Échanges reçus
+                Échanges reçus
                 <span class="trade-tab-badge" id="receivedTradeBadge" style="display:none;">0</span>
             </button>
-            <button class="trade-tab" data-tab="forsale" onclick="switchTradeTab('forsale')">
-                <span data-icon="tag" data-icon-size="16"></span> Joueurs à vendre
+            <button class="trade-tab" data-tab="history" onclick="switchTradeTab('history')">
+                Historique
             </button>
         </div>
 
         <!-- SECTION: Propose Trade -->
         <div id="proposeTradeSection" class="trade-section active">
-        <!-- L'étape « Pool » a disparu : l'échange porte sur le pool actif,
-             choisi une fois pour toutes dans le rail ou le tiroir. -->
-        <div class="trade-progress" id="tradeProgress">
-            <div class="tp-step active" data-step="1" onclick="goToStep(1)">
-                <span class="tp-dot">1</span>
-                <span class="tp-label">Équipe</span>
-            </div>
-            <div class="tp-line" data-line="1"></div>
-            <div class="tp-step" data-step="2" onclick="goToStep(2)">
-                <span class="tp-dot">2</span>
-                <span class="tp-label">Échange</span>
-            </div>
-        </div>
 
-        <!-- Étape 1 : équipe partenaire -->
-        <div class="trade-step" id="stepTeam">
-            <div class="step-header">
-                <div class="step-number">1</div>
-                <div class="step-info">
-                    <h2>Choisir un partenaire d'échange</h2>
-                    <p id="tradePoolInfo">Sélectionnez l'équipe avec laquelle échanger</p>
+            <p class="empty-msg" id="proposeEmptyMsg" style="display:none;"></p>
+
+            <div id="tmBuilder" class="tm-builder">
+
+                <!-- Bandeau partenaire : règle du jeu + sélecteur d'équipe.
+                     Visible en bureau comme en mobile — les deux maquettes
+                     placent un sélecteur d'équipe différemment, celui-ci les
+                     unifie en un seul composant. -->
+                <div class="tm-partner-bar">
+                    <div class="tm-partner-rule">
+                        <span class="tm-partner-rule-icon">ⓘ</span>
+                        Un échange se fait 1 pour 1, à la même position. Plusieurs paires sont permises dans la même proposition.
+                    </div>
+                    <div class="tm-partner-switch">
+                        <span class="tm-partner-switch-lbl">Échanger avec</span>
+                        <button type="button" class="tm-team-trigger" id="partnerTeamTrigger" onclick="toggleTeamSwitcher()">
+                            <span id="partnerTeamTriggerName">—</span>
+                            <span class="tm-team-caret" id="teamSwitchCaret">▾</span>
+                        </button>
+                        <div class="tm-team-dropdown hidden" id="teamSwitchDropdown">
+                            <div class="tm-dropdown-scrim" onclick="closeTeamSwitcher()"></div>
+                            <div class="tm-dropdown-panel">
+                                <div class="tm-dropdown-title">Échanger avec</div>
+                                <div class="tm-dropdown-list" id="teamSwitchList"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="team-grid" id="teamGrid">
-                <!-- Filled by JS -->
-            </div>
-        </div>
-
-        <!-- Étape 2 : construction de l'échange -->
-        <div class="trade-step hidden" id="stepTrade">
-            <div class="step-header">
-                <button class="btn-back" onclick="backToTeams()">
-                    <span data-icon="chevron-left" data-icon-size="15"></span> Retour
-                </button>
-                <div class="step-number">2</div>
-                <div class="step-info">
-                    <h2>Construire l'échange 1-pour-1</h2>
-                    <p id="selectedPoolTeamInfo"><!-- Filled by JS --></p>
-                </div>
-                <button class="btn-reset" onclick="resetTrade()"><span data-icon="refresh" data-icon-size="15"></span> Recommencer</button>
-            </div>
-
-            <!-- Vue téléphone : paniers, séparateur et onglets d'effectif.
-                 Masquée dès 901px, où la disposition à trois colonnes
-                 reprend la main. Aucune logique d'échange ici : les
-                 boutons appellent les fonctions déjà en place. -->
-            <div class="tm-baskets">
-                <div class="tm-basket">
-                    <span class="tm-basket-lbl">Vous donnez</span>
-                    <button type="button" class="tm-slot is-empty" id="tmSlotGive"
-                            onclick="tmFocusRoster('my')">
-                        <span class="tm-slot-empty">
-                            <span data-icon="plus" data-icon-size="22"></span>
-                            Ajouter un joueur
-                        </span>
+                <!-- Onglets d'effectif (mobile uniquement — voir trade.css) -->
+                <div class="tm-tabs" role="tablist">
+                    <button type="button" class="tm-tab is-active" role="tab" aria-selected="true"
+                            data-cote="my" onclick="tmSwitchRoster('my')">
+                        Mes joueurs <span class="tm-tab-count" id="tmTabMyCount">0</span>
+                    </button>
+                    <button type="button" class="tm-tab" role="tab" aria-selected="false"
+                            data-cote="partner" onclick="tmSwitchRoster('partner')">
+                        Leurs joueurs <span class="tm-tab-count" id="tmTabPartnerCount">0</span>
                     </button>
                 </div>
-                <div class="tm-basket">
-                    <span class="tm-basket-lbl">Vous recevez</span>
-                    <button type="button" class="tm-slot is-empty" id="tmSlotGet"
-                            onclick="tmFocusRoster('partner')">
-                        <span class="tm-slot-empty">
-                            <span data-icon="plus" data-icon-size="22"></span>
-                            Ajouter un joueur
-                        </span>
+
+                <!-- Three-Column Trade Layout -->
+                <div class="trade-grid-3col" id="tradeGrid3col" data-cote="my">
+
+                    <!-- Left: My Team -->
+                    <div class="roster-column">
+                        <div class="roster-col-header">
+                            <div class="rc-avatar" id="myAvatar">--</div>
+                            <div class="rc-headtext">
+                                <span class="rc-label">Vous donnez</span>
+                                <h3 class="rc-teamname" id="myTeamName"></h3>
+                            </div>
+                        </div>
+
+                        <div class="rc-search-row">
+                            <div class="rc-search">
+                                <span data-icon="search" data-icon-size="14"></span>
+                                <input type="text" id="mySearchInput" placeholder="Filtrer mes joueurs" oninput="filterSearch('my', this.value)">
+                            </div>
+                        </div>
+
+                        <div class="position-tabs" id="myPosTabs">
+                            <button class="pos-tab active" data-pos="all" onclick="filterPosition('my', 'all')">Tous</button>
+                            <button class="pos-tab" data-pos="F" onclick="filterPosition('my', 'F')">Att</button>
+                            <button class="pos-tab" data-pos="D" onclick="filterPosition('my', 'D')">Déf</button>
+                            <button class="pos-tab" data-pos="G" onclick="filterPosition('my', 'G')">G</button>
+                            <button class="pos-tab" data-pos="R" onclick="filterPosition('my', 'R')">Roo</button>
+                            <button class="pos-tab" data-pos="T" onclick="filterPosition('my', 'T')">Équ</button>
+                        </div>
+
+                        <div class="roster-list-head">
+                            <span class="rlh-check"></span>
+                            <span class="rlh-name">Joueur</span>
+                            <span class="rlh-stats"><span>PJ</span><span>B</span><span>A</span><span class="rlh-pts">Pts</span></span>
+                        </div>
+
+                        <div class="roster-list" id="myRoster"><!-- Filled by JS --></div>
+                    </div>
+
+                    <!-- Center: Trade Summary / Basket -->
+                    <div class="trade-summary-column" id="tradeSummaryColumn">
+                        <div class="tsc-inner">
+                            <!-- Empty State -->
+                            <div class="trade-empty-state" id="tradeEmptyState">
+                                <h3>Sélectionnez 1 joueur de chaque côté</h3>
+                                <p>L'échange doit être 1-pour-1 avec des positions identiques. Ajoutez autant de paires que vous le souhaitez.</p>
+                            </div>
+
+                            <!-- Active Basket -->
+                            <div class="trade-basket hidden" id="tradeBasket">
+                                <div class="tb-cols-lbl">
+                                    <span class="tb-give-lbl">Vous donnez · <span id="tbGiveCount">0</span></span>
+                                    <span></span>
+                                    <span class="tb-get-lbl">Vous recevez · <span id="tbGetCount">0</span></span>
+                                </div>
+                                <div class="tb-pairs" id="tbPairs"><!-- Filled by JS --></div>
+
+                                <div class="tb-equity">
+                                    <div class="tb-eq-row" id="tbValidRow">
+                                        <span class="tb-eq-check">✓</span>
+                                        <span id="tbValidText">0 pour 0 · positions valides</span>
+                                    </div>
+                                    <div class="tb-eq-line"><span>Points donnés</span><strong id="tbPointsGive">—</strong></div>
+                                    <div class="tb-eq-line"><span>Points reçus</span><strong id="tbPointsGet">—</strong></div>
+                                    <div class="tb-eq-line tb-eq-gap"><span>Écart</span><strong id="tbGap">—</strong></div>
+                                </div>
+
+                                <button type="button" class="btn-propose-trade" id="btnProposeTrade" onclick="proposeTrade()" disabled>
+                                    Envoyer la proposition
+                                </button>
+                                <button type="button" class="btn-reset-trade" id="btnResetTrade" onclick="resetTrade()">
+                                    Réinitialiser
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Partner Team -->
+                    <div class="roster-column">
+                        <div class="roster-col-header">
+                            <div class="rc-avatar" id="partnerAvatar">--</div>
+                            <div class="rc-headtext">
+                                <span class="rc-label">Vous recevez</span>
+                                <h3 class="rc-teamname" id="partnerTeamName"></h3>
+                            </div>
+                        </div>
+
+                        <div class="rc-search-row">
+                            <div class="rc-search">
+                                <span data-icon="search" data-icon-size="14"></span>
+                                <input type="text" id="partnerSearchInput" placeholder="Filtrer leurs joueurs" oninput="filterSearch('partner', this.value)">
+                            </div>
+                            <button type="button" class="rc-forsale-toggle hidden" id="forSaleToggle" onclick="toggleForSaleFilter()">
+                                À vendre <span id="forSaleCount">0</span>
+                            </button>
+                        </div>
+
+                        <div class="position-tabs" id="partnerPosTabs">
+                            <button class="pos-tab active" data-pos="all" onclick="filterPosition('partner', 'all')">Tous</button>
+                            <button class="pos-tab" data-pos="F" onclick="filterPosition('partner', 'F')">Att</button>
+                            <button class="pos-tab" data-pos="D" onclick="filterPosition('partner', 'D')">Déf</button>
+                            <button class="pos-tab" data-pos="G" onclick="filterPosition('partner', 'G')">G</button>
+                            <button class="pos-tab" data-pos="R" onclick="filterPosition('partner', 'R')">Roo</button>
+                            <button class="pos-tab" data-pos="T" onclick="filterPosition('partner', 'T')">Équ</button>
+                        </div>
+
+                        <div class="roster-list-head">
+                            <span class="rlh-check"></span>
+                            <span class="rlh-name">Joueur</span>
+                            <span class="rlh-stats"><span>PJ</span><span>B</span><span>A</span><span class="rlh-pts">Pts</span></span>
+                        </div>
+
+                        <div class="roster-list" id="partnerRoster"><!-- Filled by JS --></div>
+                    </div>
+                </div>
+
+                <!-- Barre fixe mobile : bilan + envoi -->
+                <div class="tm-bottombar" id="tmBottomBar">
+                    <div class="tm-balance">
+                        <div class="tm-balance-cell">
+                            <span class="tm-balance-lbl">Vous donnez</span>
+                            <span class="tm-balance-val is-give" id="tmValGive">—</span>
+                        </div>
+                        <div class="tm-balance-cell">
+                            <span class="tm-balance-lbl">Vous recevez</span>
+                            <span class="tm-balance-val is-get" id="tmValGet">—</span>
+                        </div>
+                    </div>
+                    <button type="button" class="tm-cta" id="tmCta" onclick="tmProposeTrade()" disabled>
+                        Envoyer la proposition
                     </button>
                 </div>
             </div>
 
-            <div class="tm-divider">
-                <span class="tm-divider-chip">
-                    <span data-icon="bolt" data-icon-size="13"></span> Échange 1 pour 1
-                </span>
-            </div>
-
-            <div class="tm-tabs" role="tablist">
-                <button type="button" class="tm-tab is-active" role="tab" aria-selected="true"
-                        data-cote="my" onclick="tmSwitchRoster('my')">Mon équipe</button>
-                <button type="button" class="tm-tab" role="tab" aria-selected="false"
-                        data-cote="partner" onclick="tmSwitchRoster('partner')">Équipe partenaire</button>
-            </div>
-
-            <!-- Three-Column Trade Layout -->
-            <!-- data-cote pilote l'effectif visible sous 900px ; sans effet
-                 au-delà, où les deux colonnes s'affichent ensemble. -->
-            <div class="trade-grid-3col" data-cote="my">
-                <!-- Left: My Team -->
-                <div class="roster-column">
-                    <div class="roster-header">
-                        <h3>Mon équipe</h3>
-                        <span class="team-badge" id="myTeamName"></span>
+            <!-- Trade Success Screen (Peak-End Rule) -->
+            <div class="trade-step hidden" id="tradeSuccessScreen">
+                <div class="trade-success-inner">
+                    <div class="trade-success-check">
+                        <span data-icon="check" data-icon-size="48"></span>
                     </div>
-
-                    <!-- Position Filters -->
-                    <div class="position-tabs">
-                        <button class="pos-tab active" data-pos="all" onclick="filterPosition('my', 'all')">Tous</button>
-                        <button class="pos-tab" data-pos="F" onclick="filterPosition('my', 'F')">ATT</button>
-                        <button class="pos-tab" data-pos="D" onclick="filterPosition('my', 'D')">DÉF</button>
-                        <button class="pos-tab" data-pos="G" onclick="filterPosition('my', 'G')">GAR</button>
-                        <button class="pos-tab" data-pos="R" onclick="filterPosition('my', 'R')">ROO</button>
-                        <button class="pos-tab" data-pos="T" onclick="filterPosition('my', 'T')">ÉQU</button>
-                    </div>
-
-                    <div class="roster-list" id="myRoster">
-                        <!-- Filled by JS -->
-                    </div>
-                </div>
-
-                <!-- Center: Trade Summary -->
-                <div class="trade-summary-column">
-                    <!-- Empty State -->
-                    <div class="trade-empty-state" id="tradeEmptyState">
-                        <div class="empty-icon" data-icon="bolt" data-icon-size="64"></div>
-                        <h3>Sélectionnez 1 joueur de chaque côté</h3>
-                        <p>L'échange doit être 1-pour-1 avec des positions identiques</p>
-                        <div class="position-legend">
-                            <div class="legend-item"><span class="pos-badge att">ATT</span> Attaquant</div>
-                            <div class="legend-item"><span class="pos-badge def">DÉF</span> Défenseur</div>
-                            <div class="legend-item"><span class="pos-badge gar">GAR</span> Gardien</div>
-                            <div class="legend-item"><span class="pos-badge roo">ROO</span> Rookie</div>
-                            <div class="legend-item"><span class="pos-badge equ">ÉQU</span> Équipe NHL</div>
-                        </div>
-                    </div>
-
-                    <!-- Active Trade Summary -->
-                    <div class="trade-active-summary hidden" id="tradeActiveSummary">
-                        <div class="summary-card">
-                            <div class="summary-player" id="summaryMyPlayer">
-                                <!-- Filled by JS -->
-                            </div>
-
-                            <div class="trade-arrow">
-                                <div class="arrow-icon" data-icon="arrows" data-icon-size="28"></div>
-                                <div class="position-match" id="positionMatchBadge"></div>
-                            </div>
-
-                            <div class="summary-player" id="summaryPartnerPlayer">
-                                <!-- Filled by JS -->
-                            </div>
-                        </div>
-
-                        <div class="stat-comparison" id="statComparison">
-                            <!-- Filled by JS -->
-                        </div>
-
-                        <button class="btn-propose-trade" id="btnProposeTrade" onclick="proposeTrade()" disabled>
-                            <span data-icon="check" data-icon-size="16"></span> Proposer l'échange
+                    <h2>Proposition envoyée !</h2>
+                    <p id="tradeSuccessDetail"></p>
+                    <div class="trade-success-actions">
+                        <button class="btn-success-primary" onclick="resetTrade()">
+                            Proposer un autre échange
+                        </button>
+                        <button class="btn-success-secondary" onclick="switchTradeTab('received')">
+                            Voir mes échanges
                         </button>
                     </div>
                 </div>
-
-                <!-- Right: Partner Team -->
-                <div class="roster-column">
-                    <div class="roster-header">
-                        <h3>Équipe partenaire</h3>
-                        <span class="team-badge" id="partnerTeamName"></span>
-                    </div>
-
-                    <!-- Position Filters -->
-                    <div class="position-tabs">
-                        <button class="pos-tab active" data-pos="all" onclick="filterPosition('partner', 'all')">Tous</button>
-                        <button class="pos-tab" data-pos="F" onclick="filterPosition('partner', 'F')">ATT</button>
-                        <button class="pos-tab" data-pos="D" onclick="filterPosition('partner', 'D')">DÉF</button>
-                        <button class="pos-tab" data-pos="G" onclick="filterPosition('partner', 'G')">GAR</button>
-                        <button class="pos-tab" data-pos="R" onclick="filterPosition('partner', 'R')">ROO</button>
-                        <button class="pos-tab" data-pos="T" onclick="filterPosition('partner', 'T')">ÉQU</button>
-                    </div>
-
-                    <div class="roster-list" id="partnerRoster">
-                        <!-- Filled by JS -->
-                    </div>
-                </div>
             </div>
-
-            <!-- Barre fixe : bilan de l'échange et action principale.
-                 Les points remplacent la note globale du gabarit — c'est
-                 la seule valeur que les données du pool fournissent. -->
-            <div class="tm-bottombar" id="tmBottomBar">
-                <div class="tm-balance">
-                    <div class="tm-balance-cell">
-                        <span class="tm-balance-lbl">Vous donnez</span>
-                        <span class="tm-balance-val is-give" id="tmValGive">—</span>
-                    </div>
-                    <div class="tm-balance-cell">
-                        <span class="tm-balance-lbl">Vous recevez</span>
-                        <span class="tm-balance-val is-get" id="tmValGet">—</span>
-                    </div>
-                    <div class="tm-balance-cell">
-                        <span class="tm-balance-lbl">Équité</span>
-                        <span class="tm-balance-val is-equity" id="tmValEquity">—</span>
-                    </div>
-                </div>
-                <button type="button" class="tm-cta" id="tmCta" onclick="tmProposeTrade()" disabled>
-                    Proposer l'échange
-                    <span data-icon="check" data-icon-size="16"></span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Trade Success Screen (Peak-End Rule) -->
-        <div class="trade-step hidden" id="tradeSuccessScreen">
-            <div class="trade-success-inner">
-                <div class="trade-success-check">
-                    <span data-icon="check" data-icon-size="48"></span>
-                </div>
-                <h2>Proposition envoyée !</h2>
-                <p id="tradeSuccessDetail"></p>
-                <div class="trade-success-actions">
-                    <button class="btn-success-primary" onclick="resetTrade()">
-                        <span data-icon="bolt" data-icon-size="16"></span> Proposer un autre échange
-                    </button>
-                    <button class="btn-success-secondary" onclick="switchTradeTab('received')">
-                        Voir mes échanges
-                    </button>
-                </div>
-            </div>
-        </div>
         </div>
         <!-- END SECTION: Propose Trade -->
 
         <!-- SECTION: Received Trades -->
         <div id="receivedTradeSection" class="trade-section">
-            <div class="received-trades-container">
-                <div class="section-header">
-                    <h2><span data-icon="inbox" data-icon-size="20"></span> Échanges reçus</h2>
-                    <p class="section-subtitle">Acceptez ou refusez les propositions d'échange</p>
-                </div>
-
-                <div id="receivedTradesContent" class="received-trades-list">
-                    <!-- Filled by JS -->
-                </div>
-            </div>
-
-            <!-- Completed Trades History -->
-            <div class="trade-history-section" style="margin-top: 32px;">
-                <h2><span data-icon="scroll" data-icon-size="20"></span> Historique des échanges complétés</h2>
-                <div id="completedTradesContent" class="history-content">
-                    <!-- Filled by JS -->
-                </div>
+            <div id="receivedTradesContent" class="received-trades-list">
+                <!-- Filled by JS -->
             </div>
         </div>
         <!-- END SECTION: Received Trades -->
 
-        <!-- SECTION: For-Sale Listings -->
-        <div id="forSaleTradeSection" class="trade-section">
-            <div class="section-header">
-                <h2><span data-icon="tag" data-icon-size="20"></span> Joueurs à vendre</h2>
-                <p class="section-subtitle">Joueurs que les membres de ce pool ont mis en vente</p>
-            </div>
-            <div class="for-sale-grid" id="forSaleList">
+        <!-- SECTION: History -->
+        <div id="historyTradeSection" class="trade-section">
+            <div id="historyTradesContent" class="history-cards">
                 <!-- Filled by JS -->
             </div>
         </div>
-        <!-- END SECTION: For-Sale Listings -->
+        <!-- END SECTION: History -->
     </div>
 
     <!-- Styled trade confirmation (replaces native confirm) -->
     <div id="tradeConfirmOverlay" class="trade-confirm-overlay">
         <div class="trade-confirm-box">
-            <div class="trade-confirm-icon"><span data-icon="bolt" data-icon-size="32"></span></div>
             <h3 class="trade-confirm-title">Confirmer l'échange</h3>
             <div class="trade-confirm-body" id="tradeConfirmBody"></div>
             <div class="trade-confirm-actions">
                 <button class="tc-btn tc-cancel" id="tradeConfirmCancel">Annuler</button>
                 <button class="tc-btn tc-ok" id="tradeConfirmOk">
-                    <span data-icon="check" data-icon-size="16"></span> Proposer l'échange
+                    Proposer l'échange
                 </button>
             </div>
         </div>

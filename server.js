@@ -4707,13 +4707,13 @@ app.get('/trades/completed/:username', async (req, res) => {
         console.log(`Fetching completed trades for user: ${username}`);
 
         if (USE_POSTGRES) {
-            // Get all completed trades from PostgreSQL
+            // Get completed AND declined trades from PostgreSQL — the
+            // Historique tab shows both, muted for declined (see trade.js).
             const tradesResult = await db.query(
-                'SELECT id, pool_name, trade_data, created_at FROM trades WHERE status = $1 ORDER BY created_at DESC',
-                ['completed']
+                "SELECT id, pool_name, trade_data, status, created_at, updated_at FROM trades WHERE status IN ('completed', 'declined') ORDER BY COALESCE(updated_at, created_at) DESC"
             );
 
-            console.log(`Total completed trades in DB: ${tradesResult.rows.length}`);
+            console.log(`Total completed/declined trades in DB: ${tradesResult.rows.length}`);
 
             const userCompletedTrades = [];
 
@@ -4750,14 +4750,14 @@ app.get('/trades/completed/:username', async (req, res) => {
                         toTeam: tradeData.toTeam,
                         offering: tradeData.offering,
                         receiving: tradeData.receiving,
-                        status: 'completed',
+                        status: row.status,
                         date: tradeData.date,
-                        completedDate: tradeData.completedDate
+                        completedDate: tradeData.completedDate || row.updated_at || row.created_at
                     });
                 }
             }
 
-            console.log(`Found ${userCompletedTrades.length} completed trades for ${username}`);
+            console.log(`Found ${userCompletedTrades.length} completed/declined trades for ${username}`);
             return res.json(userCompletedTrades);
         }
 

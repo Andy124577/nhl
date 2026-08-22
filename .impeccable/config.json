@@ -3,7 +3,8 @@
     "ignoreRules": [],
     "ignoreFiles": [
       "accueil-dash.css",
-      "draftActif-premium.css"
+      "draftActif-premium.css",
+      "trade.css"
     ],
     "ignoreValues": [
       {

@@ -1,5 +1,5 @@
 /* ============================================================ */
-/* TRADE PAGE — 1-for-1 Position-Locked Trade System           */
+/* TRADE PAGE — single-screen builder, multi-pair, 1-for-1 each */
 /* ============================================================ */
 
 const BASE_URL = window.location.hostname.includes('localhost')
@@ -16,16 +16,26 @@ let myTeamData = null;
 let partnerTeamData = null;
 let draftData = null;
 
-// Trade Selection State
-let selectedMyPlayer = null;
-let selectedPartnerPlayer = null;
+// Trade builder state — a "pair" is a fully-matched {give, get} 1-for-1
+// swap. Selecting one side while the other already has an unmatched pick
+// auto-commits into a pair the instant categories match (see handlePick).
+let pairs = [];
+let draftGive = null;
+let draftGet = null;
 
-// Position Filters
+// Position + text filters, one set per side
 let myPositionFilter = 'all';
 let partnerPositionFilter = 'all';
+let mySearchTerm = '';
+let partnerSearchTerm = '';
+
+// "À vendre" — pool-wide listings, filter chip lives on the partner side
+let forSaleListings = [];
+let forSaleFilterActive = false;
+
+let teamSwitcherOpen = false;
 
 // Player images & stats
-let imageList = [];
 let currentStats = null;
 
 // ============================================================
@@ -40,43 +50,36 @@ function getPlayerCurrentStats(name) {
     return currentStats.players.find(p => p.playerName === name) || null;
 }
 
-function renderPlayerCardHTML(player, idx, isSelected, isLocked) {
-    const name = player.name;
-    const isTeam = player.category === 'T';
-    const face = !isTeam ? getMatchingImage(name) : null;
-    const stats = !isTeam ? getPlayerCurrentStats(name) : null;
-
-    let statsHTML = '';
-    if (!isTeam) {
-        if (player.category === 'G') {
-            const w = stats?.wins ?? 0;
-            const svPct = stats?.savePct != null ? stats.savePct.toFixed(3) : '0.000';
-            statsHTML = `<span class="pcr-stat">${w}V</span><span class="pcr-stat">${svPct}SV%</span>`;
-        } else {
-            const g = stats?.goals ?? 0;
-            const a = stats?.assists ?? 0;
-            const pts = stats?.points ?? 0;
-            statsHTML = `<span class="pcr-stat">${g}B</span><span class="pcr-stat">${a}A</span><span class="pcr-stat">${pts}PTS</span>`;
-        }
+/**
+ * Uniform PJ / B / A / Pts columns across every category.
+ * Goalies: current-stats already aliases wins→goals and shutouts→assists,
+ * but reads clearer pulled from the explicit wins/shutouts fields directly.
+ * Team entries carry no individual stats — shown as dashes.
+ */
+function statColsFor(player) {
+    if (player.category === 'T') return { pj: '—', b: '—', a: '—', pts: '—' };
+    const stats = getPlayerCurrentStats(player.name);
+    if (player.category === 'G') {
+        return {
+            pj: stats?.gamesPlayed ?? 0,
+            b: stats?.wins ?? 0,
+            a: stats?.shutouts ?? 0,
+            pts: stats?.points ?? 0
+        };
     }
+    return {
+        pj: stats?.gamesPlayed ?? 0,
+        b: stats?.goals ?? 0,
+        a: stats?.assists ?? 0,
+        pts: stats?.points ?? 0
+    };
+}
 
-    const faceHTML = face
-        ? `<img src="${face}" class="pcr-face" alt="${name}" onerror="this.style.display='none'">`
-        : '';
-
-    return `
-        <div class="player-card-roster ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}"
-             data-player-idx="${idx}"
-             data-player-name="${name.replace(/"/g, '&quot;')}"
-             data-player-category="${player.category}">
-            ${faceHTML}
-            <div class="pcr-position ${player.category.toLowerCase()}">${getCategoryLabel(player.category)}</div>
-            <div class="pcr-info">
-                <div class="pcr-name">${name}</div>
-                ${statsHTML ? `<div class="pcr-stats">${statsHTML}</div>` : ''}
-            </div>
-        </div>
-    `;
+function metaFor(player) {
+    if (player.category === 'T') return 'Équipe NHL';
+    const stats = getPlayerCurrentStats(player.name);
+    const abbrev = stats?.teamAbbrev && stats.teamAbbrev !== 'N/A' ? stats.teamAbbrev : '';
+    return [getCategoryLabel(player.category), abbrev].filter(Boolean).join(' · ');
 }
 
 // ============================================================
@@ -87,17 +90,15 @@ let currentTradeTab = 'propose';
 function switchTradeTab(tab) {
     currentTradeTab = tab;
 
-    // Update tab buttons
     document.querySelectorAll('.trade-tab').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === tab);
     });
 
-    // Update sections
     document.getElementById('proposeTradeSection').classList.toggle('active', tab === 'propose');
     document.getElementById('receivedTradeSection').classList.toggle('active', tab === 'received');
-    document.getElementById('forSaleTradeSection').classList.toggle('active', tab === 'forsale');
+    document.getElementById('historyTradeSection').classList.toggle('active', tab === 'history');
 
-    // Returning to the propose tab from a completed trade should restart the wizard
+    // Returning to the propose tab from a completed trade should restart the builder
     if (tab === 'propose') {
         const success = document.getElementById('tradeSuccessScreen');
         if (success && !success.classList.contains('hidden')) {
@@ -107,63 +108,67 @@ function switchTradeTab(tab) {
 
     if (tab === 'received') {
         loadReceivedTrades();
-        loadCompletedTrades();
     }
 
-    if (tab === 'forsale') {
-        loadForSaleList();
+    if (tab === 'history') {
+        loadHistory();
     }
 }
 
 // ============================================================
-// FOR-SALE LISTINGS — players a pool member has flagged as open to offers.
-// Same single-letter codes trade.js's own getCategory() uses internally.
+// FOR-SALE LISTINGS — players a pool member has flagged as open to
+// offers. Folded into the propose builder as a filter + inline badge
+// rather than a standalone tab. Same single-letter codes trade.js's own
+// getCategory() uses internally.
 // ============================================================
-const LISTING_CATEGORY_CODE = { offensive: 'F', defensive: 'D', goalie: 'G', rookie: 'R', team: 'T' };
-
-async function loadForSaleList() {
-    const grid = document.getElementById('forSaleList');
+async function loadForSaleListings() {
+    forSaleListings = [];
     const activePool = FZPool.get();
-    if (!grid || !activePool) return;
+    if (!activePool) return;
     try {
         const res = await fetch(`${BASE_URL}/trade-listings/${encodeURIComponent(activePool)}`, { cache: 'no-store' });
-        const listings = res.ok ? await res.json() : [];
-
-        if (!listings.length) {
-            grid.innerHTML = `<p class="for-sale-empty">Aucun joueur en vente actuellement dans ce pool.</p>`;
-            return;
-        }
-
-        grid.innerHTML = listings.map(listing => {
-            const code = LISTING_CATEGORY_CODE[listing.category] || 'F';
-            const url = `trade.html?pool=${encodeURIComponent(activePool)}&withTeam=${encodeURIComponent(listing.teamName)}&wantPlayer=${encodeURIComponent(listing.playerName)}&category=${code}`;
-            return `
-                <a class="for-sale-chip" href="${url}">
-                    <span class="fsc-badge">À vendre</span>
-                    <span class="fsc-name">${listing.playerName.replace(/"/g, '&quot;')}</span>
-                    <span class="fsc-team">${listing.teamName.replace(/"/g, '&quot;')}</span>
-                </a>`;
-        }).join('');
+        forSaleListings = res.ok ? await res.json() : [];
     } catch (err) {
         console.warn('Could not load for-sale listings:', err);
-        grid.innerHTML = `<p class="for-sale-empty">Impossible de charger les joueurs en vente.</p>`;
+        forSaleListings = [];
     }
+    renderForSaleToggle();
+    renderPartnerRoster();
+}
+
+function partnerForSaleNames() {
+    if (!selectedPartnerTeam) return new Set();
+    return new Set(
+        forSaleListings.filter(l => l.teamName === selectedPartnerTeam).map(l => l.playerName)
+    );
+}
+
+function renderForSaleToggle() {
+    const toggle = document.getElementById('forSaleToggle');
+    const countEl = document.getElementById('forSaleCount');
+    if (!toggle || !countEl) return;
+    const names = partnerForSaleNames();
+    countEl.textContent = names.size;
+    toggle.classList.toggle('hidden', names.size === 0);
+    toggle.classList.toggle('is-active', forSaleFilterActive);
+    if (names.size === 0) forSaleFilterActive = false;
+}
+
+function toggleForSaleFilter() {
+    forSaleFilterActive = !forSaleFilterActive;
+    renderForSaleToggle();
+    renderPartnerRoster();
 }
 
 // ============================================================
 // NOTIFICATION SYSTEM
 // ============================================================
 function showNotification(message, type = 'info') {
-    // Remove existing notification
     const existing = document.querySelector('.trade-notification');
     if (existing) existing.remove();
 
     const notification = document.createElement('div');
     notification.className = `trade-notification trade-notification-${type}`;
-    // Silent to screen readers otherwise: this is the only feedback a trade
-    // proposal, acceptance, decline, or validation error gets, and it
-    // auto-dismisses in 4s. 'error' gets the assertive role since it can
-    // block the task; success/info are ambient confirmations.
     notification.setAttribute('role', type === 'error' ? 'alert' : 'status');
     notification.innerHTML = `
         <div class="notification-content">
@@ -173,11 +178,7 @@ function showNotification(message, type = 'info') {
     `;
 
     document.body.appendChild(notification);
-
-    // Animate in
     setTimeout(() => notification.classList.add('show'), 10);
-
-    // Auto remove after 4 seconds
     setTimeout(() => {
         notification.classList.remove('show');
         setTimeout(() => notification.remove(), 300);
@@ -209,7 +210,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Load images and current stats in parallel
     const [statsRes] = await Promise.allSettled([
         fetch(`${BASE_URL}/current-stats`, { cache: 'no-store' }).then(r => r.json())
     ]);
@@ -222,8 +222,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Une notification d'échange arrive avec ?trade=<id> : l'onglet des
     // échanges reçus s'ouvre alors directement sur la proposition visée.
-    // L'onglet d'abord — switchTradeTab recharge la liste, et le ferait
-    // sans la cible s'il passait après.
     const cible = new URLSearchParams(window.location.search).get('trade');
     if (cible) switchTradeTab('received');
     await loadReceivedTrades(cible);
@@ -232,7 +230,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     FZPool.on(() => {
         applyActivePool();
         loadReceivedTrades();
-        loadCompletedTrades();
+        if (currentTradeTab === 'history') loadHistory();
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && teamSwitcherOpen) closeTeamSwitcher();
     });
 });
 
@@ -240,77 +242,96 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.FZ_POOL_EN_PLACE = true;
 
 /**
- * Amène l'assistant sur le pool actif.
- *
- * L'ancienne étape 1 faisait choisir un pool à chaque échange, alors que
- * le contexte est déjà fixé ailleurs. Il ne reste qu'à vérifier que le
- * pool actif permet réellement un échange.
+ * Amène le générateur d'échange sur le pool actif, avec un partenaire déjà
+ * choisi par défaut — il n'y a plus d'étape « choisir un pool » ni
+ * « choisir une équipe » séparée : les deux effectifs sont visibles tout
+ * de suite et l'équipe partenaire se change depuis le sélecteur du bandeau.
  */
 function applyActivePool() {
     const nom = FZPool.get();
     const pool = FZPool.mine().find(p => p.name === nom);
-    const grille = document.getElementById('teamGrid');
-    const info = document.getElementById('tradePoolInfo');
+    const builder = document.getElementById('tmBuilder');
+    const emptyMsg = document.getElementById('proposeEmptyMsg');
 
-    // Repartir de l'étape 1 : un échange à moitié construit appartenait au
-    // pool précédent et n'a plus de sens ici.
     selectedPool = null;
     selectedPoolData = null;
     myTeamName = null;
     myTeamData = null;
     selectedPartnerTeam = null;
     partnerTeamData = null;
-    selectedMyPlayer = null;
-    selectedPartnerPlayer = null;
+    pairs = [];
+    draftGive = null;
+    draftGet = null;
+    forSaleListings = [];
+    forSaleFilterActive = false;
+    mySearchTerm = '';
+    partnerSearchTerm = '';
+    myPositionFilter = 'all';
+    partnerPositionFilter = 'all';
 
     document.getElementById('tradeSuccessScreen').classList.add('hidden');
-    document.getElementById('tradeProgress').style.display = '';
-    document.getElementById('stepTeam').classList.remove('hidden');
-    document.getElementById('stepTrade').classList.add('hidden');
-    setTradeProgress(1);
+
+    const showEmpty = (msg) => {
+        builder.classList.add('hidden');
+        emptyMsg.style.display = '';
+        emptyMsg.textContent = msg;
+    };
 
     if (!pool) {
-        if (info) info.textContent = '';
-        if (grille) grille.innerHTML =
-            '<p class="empty-msg">Aucun pool actif. Créez un pool ou rejoignez-en un pour échanger.</p>';
+        showEmpty('Aucun pool actif. Créez un pool ou rejoignez-en un pour échanger.');
         return;
     }
 
     if (pool.data.allowTrades === false) {
-        if (info) info.textContent = pool.name;
-        if (grille) grille.innerHTML =
-            `<p class="empty-msg">Les échanges sont désactivés dans « ${pool.name} ».</p>`;
+        showEmpty(`Les échanges sont désactivés dans « ${pool.name} ».`);
         return;
     }
 
     if (FZPool.draftState(pool.data).etat !== 'termine') {
-        if (info) info.textContent = pool.name;
-        if (grille) grille.innerHTML =
-            `<p class="empty-msg">Le repêchage de « ${pool.name} » n'est pas terminé.<br>` +
-            'Les échanges ouvriront ensuite.</p>';
+        showEmpty(`Le repêchage de « ${pool.name} » n'est pas terminé. Les échanges ouvriront ensuite.`);
         return;
     }
 
-    // FZPool se rafraîchit sur les évènements socket : ses données sont au
-    // moins aussi fraîches que le draftData chargé au démarrage.
     selectedPool = pool.name;
     selectedPoolData = pool.data || draftData[pool.name];
     myTeamName = pool.teamName;
-    myTeamData = selectedPoolData.teams[pool.teamName];
+    myTeamData = selectedPoolData.teams[myTeamName];
 
-    if (info) info.textContent = `Pool : ${pool.name} · votre équipe : ${myTeamName}`;
-    renderTeamGrid();
+    const partners = availablePartnerTeams();
+    if (partners.length === 0) {
+        showEmpty('Aucune autre équipe dans ce pool.');
+        return;
+    }
+
+    builder.classList.remove('hidden');
+    emptyMsg.style.display = 'none';
+
+    document.getElementById('myAvatar').textContent = initialsFor(myTeamData, myTeamName);
+    document.getElementById('myTeamName').textContent = myTeamName;
+
+    selectPartnerTeam(partners[0].name);
+    loadForSaleListings();
     applyPrefillIfPresent();
 }
 
+function availablePartnerTeams() {
+    if (!selectedPoolData) return [];
+    return Object.entries(selectedPoolData.teams || {})
+        .filter(([name, data]) => name !== myTeamName && buildRosterPlayers(data).length > 0)
+        .map(([name, data]) => ({ name, data }));
+}
+
+function initialsFor(teamData, teamName) {
+    const source = teamData?.members?.[0] || teamName || '';
+    const parts = String(source).trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return String(source).slice(0, 2).toUpperCase() || '--';
+}
+
 /**
- * Arriving from a "for sale" listing (see accueil.js's Activité de la
- * ligue tab): trade.html?withTeam=<team>&wantPlayer=<player>&category=<F|D|G|R|T>
- * jumps straight to step 2 with that player pre-selected as the target,
- * using the exact same selection functions a real click would call — the
- * user still explicitly picks their own offered player, this only saves
- * the two clicks to get there. A stale link (player already moved on)
- * falls through to the normal team-grid view rather than faking a pick.
+ * Arriving from a for-sale link or old bookmark:
+ * trade.html?withTeam=<team>&wantPlayer=<player>&category=<F|D|G|R|T>
+ * switches to that partner and pre-selects their player as the target.
  */
 function applyPrefillIfPresent() {
     const params = new URLSearchParams(window.location.search);
@@ -332,512 +353,413 @@ function applyPrefillIfPresent() {
     if (!partnerPlayers.includes(wantPlayer)) return;
 
     selectPartnerTeam(withTeam);
-    selectPartnerPlayer(wantPlayer, category, null);
+    handlePartnerPick(wantPlayer, category, null);
 
-    // Don't replay a since-stale prefill on refresh/back.
     history.replaceState(null, '', 'trade.html');
 }
 
 // ============================================================
 // DATA LOADING
 // ============================================================
-// Après un échange accepté, les effectifs ont bougé : on repasse par le
-// contexte, qui rafraîchit /draft une seule fois pour toute la page.
 async function loadDraftData() {
     await FZPool.refresh();
     draftData = FZPool.all();
+    if (selectedPoolData) {
+        myTeamData = selectedPoolData.teams[myTeamName];
+        partnerTeamData = selectedPoolData.teams[selectedPartnerTeam];
+    }
 }
 
 // ============================================================
-// ASSISTANT — deux étapes depuis que le pool est un contexte
+// TEAM SWITCHER (dropdown)
 // ============================================================
-let currentTradeStep = 1;
-
-function setTradeProgress(step) {
-    currentTradeStep = step;
-    document.querySelectorAll('.tp-step').forEach(el => {
-        const s = parseInt(el.dataset.step);
-        el.classList.toggle('active', s === step);
-        el.classList.toggle('done', s < step);
-        // Only completed (earlier) steps are clickable — you can go back but
-        // not jump ahead of where you are.
-        el.classList.toggle('reachable', s < step);
-        const dot = el.querySelector('.tp-dot');
-        if (dot) dot.innerHTML = s < step ? '✓' : s;
-    });
-    document.querySelectorAll('.tp-line').forEach(el => {
-        el.classList.toggle('filled', parseInt(el.dataset.line) < step);
-    });
+function toggleTeamSwitcher() {
+    teamSwitcherOpen ? closeTeamSwitcher() : openTeamSwitcher();
 }
 
-// Le fil d'Ariane ne sert qu'à revenir en arrière : on ne saute pas
-// par-dessus une étape qu'on n'a pas encore franchie.
-function goToStep(step) {
-    if (step >= currentTradeStep) return;
-
-    document.getElementById('stepTeam').classList.toggle('hidden', step !== 1);
-    document.getElementById('stepTrade').classList.toggle('hidden', step !== 2);
-    setTradeProgress(step);
-
-    if (step === 1) renderTeamGrid();
-    else if (step === 2) { renderMyRoster(); renderPartnerRoster(); updateTradeSummary(); }
+function openTeamSwitcher() {
+    if (!selectedPoolData) return;
+    teamSwitcherOpen = true;
+    renderTeamSwitcherList();
+    document.getElementById('teamSwitchDropdown').classList.remove('hidden');
+    document.getElementById('teamSwitchCaret').textContent = '▲';
 }
 
-// Back navigation preserves prior selections (Jakob's Law) — going back
-// to review a step should not wipe out choices already made.
-function backToTeams() { goToStep(1); }
+function closeTeamSwitcher() {
+    teamSwitcherOpen = false;
+    const dd = document.getElementById('teamSwitchDropdown');
+    if (dd) dd.classList.add('hidden');
+    const caret = document.getElementById('teamSwitchCaret');
+    if (caret) caret.textContent = '▾';
+}
 
-// ============================================================
-// STEP 2: TEAM SELECTION
-// ============================================================
-function renderTeamGrid() {
-    const container = document.getElementById('teamGrid');
-    if (!container || !selectedPoolData) return;
+function renderTeamSwitcherList() {
+    const list = document.getElementById('teamSwitchList');
+    if (!list) return;
 
-    const teams = [];
+    const rows = [
+        { name: myTeamName, data: myTeamData, self: true },
+        ...availablePartnerTeams()
+    ];
 
-    Object.entries(selectedPoolData.teams || {}).forEach(([teamName, teamData]) => {
-        if (teamName === myTeamName) return; // Exclude user's own team
+    list.innerHTML = rows.map(t => {
+        const isCurrent = t.name === selectedPartnerTeam;
+        const meta = t.self ? 'Votre équipe' : (t.data?.members?.[0] || 'Sans manager');
+        const classes = ['tm-dropdown-row'];
+        if (t.self) classes.push('is-self');
+        if (isCurrent) classes.push('is-current');
+        return `
+            <div class="${classes.join(' ')}" data-team="${t.name.replace(/"/g, '&quot;')}">
+                <div class="tm-dropdown-row-text">
+                    <div class="tm-dropdown-name">${t.name}</div>
+                    <div class="tm-dropdown-meta">${meta}</div>
+                </div>
+                <div class="tm-dropdown-mark">${isCurrent ? '✓' : ''}</div>
+            </div>
+        `;
+    }).join('');
 
-        const roster = [
-            ...(teamData.offensive || []),
-            ...(teamData.defensive || []),
-            ...(teamData.goalie || []),
-            ...(teamData.rookie || []),
-            ...(teamData.teams || [])
-        ];
-
-        if (roster.length === 0) return; // Skip teams with no players
-
-        teams.push({
-            name: teamName,
-            manager: teamData.members?.[0] || 'Unknown',
-            players: roster.length,
-            data: teamData
+    list.querySelectorAll('.tm-dropdown-row:not(.is-self)').forEach(row => {
+        row.addEventListener('click', () => {
+            selectPartnerTeam(row.dataset.team);
+            closeTeamSwitcher();
         });
     });
-
-    if (teams.length === 0) {
-        container.innerHTML = '<p class="empty-msg">Aucune autre équipe dans ce pool</p>';
-        return;
-    }
-
-    container.innerHTML = teams.map(team => `
-        <div class="team-card" onclick="selectPartnerTeam('${team.name}')">
-            <div class="team-card-name">${team.name}</div>
-            <div class="team-card-manager">Manager: ${team.manager}</div>
-            <div class="team-card-stats">
-                <div class="team-stat">
-                    <span class="team-stat-value">${team.players}</span>
-                    <span class="team-stat-label">Joueurs</span>
-                </div>
-            </div>
-        </div>
-    `).join('');
 }
 
+/** Switches the trade partner. Clears any in-progress pairs — they were
+ *  built against the previous partner's roster. */
 function selectPartnerTeam(teamName) {
-    // If switching to a different partner, clear player picks
-    if (selectedPartnerTeam && selectedPartnerTeam !== teamName) {
-        selectedMyPlayer = null;
-        selectedPartnerPlayer = null;
-    }
+    if (!selectedPoolData || !selectedPoolData.teams[teamName]) return;
 
     selectedPartnerTeam = teamName;
     partnerTeamData = selectedPoolData.teams[teamName];
+    pairs = [];
+    draftGive = null;
+    draftGet = null;
+    partnerSearchTerm = '';
+    partnerPositionFilter = 'all';
+    forSaleFilterActive = false;
 
-    // Passe à la construction de l'échange
-    document.getElementById('stepTeam').classList.add('hidden');
-    document.getElementById('stepTrade').classList.remove('hidden');
-    setTradeProgress(2);
+    document.getElementById('partnerAvatar').textContent = initialsFor(partnerTeamData, teamName);
+    document.getElementById('partnerTeamName').textContent = teamName;
+    document.getElementById('partnerTeamTriggerName').textContent = teamName;
 
-    document.getElementById('selectedPoolTeamInfo').textContent =
-        `Pool: ${selectedPool} · ${myTeamName} ⇄ ${selectedPartnerTeam}`;
+    const partnerInput = document.getElementById('partnerSearchInput');
+    if (partnerInput) partnerInput.value = '';
+    document.querySelectorAll('#partnerPosTabs .pos-tab').forEach(t => t.classList.toggle('active', t.dataset.pos === 'all'));
 
-    // Load rosters
-    document.getElementById('myTeamName').textContent = myTeamName;
-    document.getElementById('partnerTeamName').textContent = selectedPartnerTeam;
-
+    renderForSaleToggle();
     renderMyRoster();
     renderPartnerRoster();
+    renderBasket();
 }
 
 // ============================================================
-// STEP 3: ROSTER RENDERING
+// ROSTER BUILDING
 // ============================================================
+function buildRosterPlayers(teamData) {
+    if (!teamData) return [];
+    const norm = (list, category, type) => (list || []).map(p => {
+        if (typeof p === 'string') return { name: p, category, type };
+        const name = p.skaterFullName || p.goalieFullName || p.teamFullName || p;
+        return { ...p, name, category, type };
+    });
+    return [
+        ...norm(teamData.offensive, 'F', 'offensive'),
+        ...norm(teamData.defensive, 'D', 'defensive'),
+        ...norm(teamData.goalie, 'G', 'goalie'),
+        ...norm(teamData.rookie, 'R', 'rookie'),
+        ...norm(teamData.teams, 'T', 'team')
+    ];
+}
+
+function isGiveSelected(name) {
+    return (draftGive && draftGive.name === name) || pairs.some(p => p.give.name === name);
+}
+function isGetSelected(name) {
+    return (draftGet && draftGet.name === name) || pairs.some(p => p.get.name === name);
+}
+function pairIndexByGive(name) { return pairs.findIndex(p => p.give.name === name); }
+function pairIndexByGet(name) { return pairs.findIndex(p => p.get.name === name); }
+
+function renderPlayerRowHTML(player, selected, locked, forSale) {
+    const cols = statColsFor(player);
+    return `
+        <div class="player-card-roster ${selected ? 'selected' : ''} ${locked ? 'locked' : ''}"
+             data-player-name="${player.name.replace(/"/g, '&quot;')}"
+             data-player-category="${player.category}">
+            <div class="pcr-check">${selected ? '✓' : ''}</div>
+            <div class="pcr-info">
+                <div class="pcr-name">${player.name}${forSale ? '<span class="pcr-forsale-badge">À vendre</span>' : ''}</div>
+                <div class="pcr-team">${metaFor(player)}${locked ? ' · position non appariée' : ''}</div>
+            </div>
+            <div class="pcr-stats">
+                <span class="pcr-stat">${cols.pj}</span>
+                <span class="pcr-stat">${cols.b}</span>
+                <span class="pcr-stat">${cols.a}</span>
+                <span class="pcr-stat pcr-pts">${cols.pts}</span>
+            </div>
+        </div>
+    `;
+}
+
 function renderMyRoster() {
     const container = document.getElementById('myRoster');
     if (!container || !myTeamData) return;
 
-    const players = [
-        ...(myTeamData.offensive || []).map(p => {
-            // Handle both string and object formats
-            if (typeof p === 'string') {
-                return { name: p, category: 'F', type: 'offensive' };
-            }
-            return { ...p, name: p.skaterFullName || p.goalieFullName || p, category: 'F', type: 'offensive' };
-        }),
-        ...(myTeamData.defensive || []).map(p => {
-            if (typeof p === 'string') {
-                return { name: p, category: 'D', type: 'defensive' };
-            }
-            return { ...p, name: p.skaterFullName || p.goalieFullName || p, category: 'D', type: 'defensive' };
-        }),
-        ...(myTeamData.goalie || []).map(p => {
-            if (typeof p === 'string') {
-                return { name: p, category: 'G', type: 'goalie' };
-            }
-            return { ...p, name: p.skaterFullName || p.goalieFullName || p, category: 'G', type: 'goalie' };
-        }),
-        ...(myTeamData.rookie || []).map(p => {
-            if (typeof p === 'string') {
-                return { name: p, category: 'R', type: 'rookie' };
-            }
-            return { ...p, name: p.skaterFullName || p.goalieFullName || p, category: 'R', type: 'rookie' };
-        }),
-        ...(myTeamData.teams || []).map(p => {
-            if (typeof p === 'string') {
-                return { name: p, category: 'T', type: 'team' };
-            }
-            return { ...p, name: p.teamFullName || p, category: 'T', type: 'team' };
-        })
-    ];
-
-    // Apply filter
-    let filteredPlayers = players;
-    if (myPositionFilter !== 'all') {
-        filteredPlayers = players.filter(p => p.category === myPositionFilter);
+    let players = buildRosterPlayers(myTeamData);
+    if (myPositionFilter !== 'all') players = players.filter(p => p.category === myPositionFilter);
+    if (mySearchTerm) {
+        const q = mySearchTerm.toLowerCase();
+        players = players.filter(p => p.name.toLowerCase().includes(q));
     }
 
-    if (filteredPlayers.length === 0) {
+    if (players.length === 0) {
         container.innerHTML = '<p class="empty-msg">Aucun joueur dans cette catégorie</p>';
         return;
     }
 
-    container.innerHTML = filteredPlayers.map((player, idx) => {
-        const isSelected = selectedMyPlayer && selectedMyPlayer.name === player.name;
-        const isLocked = selectedPartnerPlayer && selectedPartnerPlayer.category !== player.category;
-        return renderPlayerCardHTML(player, idx, isSelected, isLocked);
+    container.innerHTML = players.map(p => {
+        const selected = isGiveSelected(p.name);
+        const locked = !selected && draftGet != null && draftGet.category !== p.category;
+        return renderPlayerRowHTML(p, selected, locked, false);
     }).join('');
 
-    // Add click event listeners
-    const myPlayerCards = container.querySelectorAll('.player-card-roster:not(.locked)');
-    myPlayerCards.forEach((card, idx) => {
+    container.querySelectorAll('.player-card-roster:not(.locked)').forEach(card => {
         card.addEventListener('click', () => {
-            const playerIdx = parseInt(card.dataset.playerIdx);
-            const player = filteredPlayers[playerIdx];
-            selectMyPlayer(player.name, player.category, player);
+            handleMyPick(card.dataset.playerName, card.dataset.playerCategory);
         });
     });
+
+    updateTabCounts();
 }
 
 function renderPartnerRoster() {
     const container = document.getElementById('partnerRoster');
     if (!container || !partnerTeamData) return;
 
-    const players = [
-        ...(partnerTeamData.offensive || []).map(p => {
-            if (typeof p === 'string') {
-                return { name: p, category: 'F', type: 'offensive' };
-            }
-            return { ...p, name: p.skaterFullName || p.goalieFullName || p, category: 'F', type: 'offensive' };
-        }),
-        ...(partnerTeamData.defensive || []).map(p => {
-            if (typeof p === 'string') {
-                return { name: p, category: 'D', type: 'defensive' };
-            }
-            return { ...p, name: p.skaterFullName || p.goalieFullName || p, category: 'D', type: 'defensive' };
-        }),
-        ...(partnerTeamData.goalie || []).map(p => {
-            if (typeof p === 'string') {
-                return { name: p, category: 'G', type: 'goalie' };
-            }
-            return { ...p, name: p.skaterFullName || p.goalieFullName || p, category: 'G', type: 'goalie' };
-        }),
-        ...(partnerTeamData.rookie || []).map(p => {
-            if (typeof p === 'string') {
-                return { name: p, category: 'R', type: 'rookie' };
-            }
-            return { ...p, name: p.skaterFullName || p.goalieFullName || p, category: 'R', type: 'rookie' };
-        }),
-        ...(partnerTeamData.teams || []).map(p => {
-            if (typeof p === 'string') {
-                return { name: p, category: 'T', type: 'team' };
-            }
-            return { ...p, name: p.teamFullName || p, category: 'T', type: 'team' };
-        })
-    ];
-
-    // Apply filter
-    let filteredPlayers = players;
-    if (partnerPositionFilter !== 'all') {
-        filteredPlayers = players.filter(p => p.category === partnerPositionFilter);
+    let players = buildRosterPlayers(partnerTeamData);
+    if (partnerPositionFilter !== 'all') players = players.filter(p => p.category === partnerPositionFilter);
+    if (partnerSearchTerm) {
+        const q = partnerSearchTerm.toLowerCase();
+        players = players.filter(p => p.name.toLowerCase().includes(q));
     }
+    const forSaleNames = partnerForSaleNames();
+    if (forSaleFilterActive) players = players.filter(p => forSaleNames.has(p.name));
 
-    if (filteredPlayers.length === 0) {
+    if (players.length === 0) {
         container.innerHTML = '<p class="empty-msg">Aucun joueur dans cette catégorie</p>';
         return;
     }
 
-    container.innerHTML = filteredPlayers.map((player, idx) => {
-        const isSelected = selectedPartnerPlayer && selectedPartnerPlayer.name === player.name;
-        const isLocked = selectedMyPlayer && selectedMyPlayer.category !== player.category;
-        return renderPlayerCardHTML(player, idx, isSelected, isLocked);
+    container.innerHTML = players.map(p => {
+        const selected = isGetSelected(p.name);
+        const locked = !selected && draftGive != null && draftGive.category !== p.category;
+        return renderPlayerRowHTML(p, selected, locked, forSaleNames.has(p.name));
     }).join('');
 
-    // Add click event listeners
-    const partnerPlayerCards = container.querySelectorAll('.player-card-roster:not(.locked)');
-    partnerPlayerCards.forEach((card, idx) => {
+    container.querySelectorAll('.player-card-roster:not(.locked)').forEach(card => {
         card.addEventListener('click', () => {
-            const playerIdx = parseInt(card.dataset.playerIdx);
-            const player = filteredPlayers[playerIdx];
-            selectPartnerPlayer(player.name, player.category, player);
+            handlePartnerPick(card.dataset.playerName, card.dataset.playerCategory);
         });
     });
+
+    updateTabCounts();
+}
+
+function filterSearch(side, value) {
+    if (side === 'my') { mySearchTerm = value; renderMyRoster(); }
+    else { partnerSearchTerm = value; renderPartnerRoster(); }
+}
+
+function filterPosition(side, position) {
+    if (side === 'my') {
+        myPositionFilter = position;
+        document.querySelectorAll('#myPosTabs .pos-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.pos === position));
+        renderMyRoster();
+    } else {
+        partnerPositionFilter = position;
+        document.querySelectorAll('#partnerPosTabs .pos-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.pos === position));
+        renderPartnerRoster();
+    }
 }
 
 // ============================================================
-// PLAYER SELECTION (1-for-1 Position-Locked)
+// PICKING — builds 1-for-1 pairs; a fully-matched pick on both sides
+// auto-commits into the basket.
 // ============================================================
-function selectMyPlayer(name, category, playerData) {
-    // If already selected, deselect
-    if (selectedMyPlayer && selectedMyPlayer.name === name) {
-        selectedMyPlayer = null;
+function handleMyPick(name, category, playerData) {
+    const existingPair = pairIndexByGive(name);
+    if (existingPair !== -1) {
+        pairs.splice(existingPair, 1);
+    } else if (draftGive && draftGive.name === name) {
+        draftGive = null;
     } else {
-        selectedMyPlayer = {
-            name,
-            category,
-            data: playerData,
-            type: getCategoryType(category)
-        };
+        if (draftGet && draftGet.category !== category) {
+            showNotification(`⚠️ Position invalide ! Vous devez échanger ${getCategoryLabel(draftGet.category)} ↔ ${getCategoryLabel(draftGet.category)}`, 'error');
+            return;
+        }
+        draftGive = { name, category, data: playerData, type: getCategoryType(category) };
+        if (draftGet) {
+            pairs.push({ give: draftGive, get: draftGet });
+            draftGive = null;
+            draftGet = null;
+        }
     }
-
-    // Re-render rosters to show locked/unlocked states
     renderMyRoster();
     renderPartnerRoster();
-    updateTradeSummary();
+    renderBasket();
 }
 
-function selectPartnerPlayer(name, category, playerData) {
-    // Validate position match
-    if (selectedMyPlayer && selectedMyPlayer.category !== category) {
-        // Show error message
-        showNotification(`⚠️ Position invalide! Vous devez échanger ${getCategoryLabel(selectedMyPlayer.category)} ↔ ${getCategoryLabel(selectedMyPlayer.category)}`, 'error');
-        return;
-    }
-
-    // If already selected, deselect
-    if (selectedPartnerPlayer && selectedPartnerPlayer.name === name) {
-        selectedPartnerPlayer = null;
+function handlePartnerPick(name, category, playerData) {
+    const existingPair = pairIndexByGet(name);
+    if (existingPair !== -1) {
+        pairs.splice(existingPair, 1);
+    } else if (draftGet && draftGet.name === name) {
+        draftGet = null;
     } else {
-        selectedPartnerPlayer = {
-            name,
-            category,
-            data: playerData,
-            type: getCategoryType(category)
-        };
+        if (draftGive && draftGive.category !== category) {
+            showNotification(`⚠️ Position invalide ! Vous devez échanger ${getCategoryLabel(draftGive.category)} ↔ ${getCategoryLabel(draftGive.category)}`, 'error');
+            return;
+        }
+        draftGet = { name, category, data: playerData, type: getCategoryType(category) };
+        if (draftGive) {
+            pairs.push({ give: draftGive, get: draftGet });
+            draftGive = null;
+            draftGet = null;
+        }
     }
-
-    // Re-render rosters to show locked/unlocked states
     renderMyRoster();
     renderPartnerRoster();
-    updateTradeSummary();
+    renderBasket();
+}
+
+function removePair(index) {
+    pairs.splice(index, 1);
+    renderMyRoster();
+    renderPartnerRoster();
+    renderBasket();
 }
 
 // ============================================================
-// TRADE SUMMARY UPDATE
+// BASKET / SUMMARY
 // ============================================================
-function updateTradeSummary() {
+function pairValue(player) {
+    if (!player || player.category === 'T') return null;
+    const stats = getPlayerCurrentStats(player.name);
+    if (player.category === 'G') return stats?.wins ?? 0;
+    return stats?.points ?? 0;
+}
+
+function renderBasket() {
     const emptyState = document.getElementById('tradeEmptyState');
-    const activeSummary = document.getElementById('tradeActiveSummary');
+    const basket = document.getElementById('tradeBasket');
     const proposeBtn = document.getElementById('btnProposeTrade');
 
-    if (!selectedMyPlayer || !selectedPartnerPlayer) {
+    if (pairs.length === 0 && !draftGive && !draftGet) {
         emptyState.classList.remove('hidden');
-        activeSummary.classList.add('hidden');
+        basket.classList.add('hidden');
         proposeBtn.disabled = true;
-        proposeBtn.classList.remove('ready');
         tmSyncMobile();
         return;
     }
 
     emptyState.classList.add('hidden');
-    activeSummary.classList.remove('hidden');
+    basket.classList.remove('hidden');
 
-    // Validate position match
-    const isValid = selectedMyPlayer.category === selectedPartnerPlayer.category;
-    proposeBtn.disabled = !isValid;
-    // Von Restorff: make the unlock moment pop
-    proposeBtn.classList.toggle('ready', isValid);
+    document.getElementById('tbGiveCount').textContent = pairs.length + (draftGive ? 1 : 0);
+    document.getElementById('tbGetCount').textContent = pairs.length + (draftGet ? 1 : 0);
 
-    // Get real stats from current-stats endpoint
-    const myLiveStats = getPlayerCurrentStats(selectedMyPlayer.name);
-    const partnerLiveStats = getPlayerCurrentStats(selectedPartnerPlayer.name);
+    const rows = pairs.map((pair, idx) => pairRowHTML(pair.give, pair.get, idx)).join('');
+    const draftRow = (draftGive || draftGet) ? draftRowHTML() : '';
+    document.getElementById('tbPairs').innerHTML = rows + draftRow;
 
-    const buildStats = (category, liveStats) => {
-        if (category === 'G') {
-            const w = liveStats?.wins ?? 0;
-            const sv = liveStats?.savePct != null ? liveStats.savePct.toFixed(3) : '0.000';
-            return `${w}V · ${sv}SV%`;
-        }
-        if (category === 'T') return 'Équipe NHL';
-        const g = liveStats?.goals ?? 0;
-        const a = liveStats?.assists ?? 0;
-        const pts = liveStats?.points ?? 0;
-        return `${g}B · ${a}A · ${pts}PTS`;
-    };
+    document.querySelectorAll('.tb-card-remove').forEach(btn => {
+        btn.addEventListener('click', () => removePair(parseInt(btn.dataset.pairIdx)));
+    });
 
-    const buildSummaryPlayerHTML = (player, liveStats) => {
-        const face = getMatchingImage(player.name);
-        const teamAbbrev = liveStats?.teamAbbrev || '';
-        return `
-            <div class="summary-player-photo">
-                ${face
-                    ? `<img src="${face}" alt="${player.name}" onerror="this.style.display='none'">`
-                    : '<div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:32px;">🏒</div>'
-                }
-            </div>
-            <div class="summary-player-name">${player.name}</div>
-            <div class="summary-player-info">
-                ${getCategoryLabel(player.category)}${teamAbbrev ? ' · ' + teamAbbrev : ''}<br>
-                ${buildStats(player.category, liveStats)}
-            </div>
-        `;
-    };
+    const validCount = pairs.length;
+    const validRow = document.getElementById('tbValidRow');
+    const validText = document.getElementById('tbValidText');
+    const hasIncomplete = !!(draftGive || draftGet);
+    validRow.classList.toggle('is-invalid', hasIncomplete && validCount === 0);
+    validText.textContent = hasIncomplete
+        ? 'Sélectionnez le joueur en retour pour compléter la paire'
+        : `${validCount} pour ${validCount} · position${validCount > 1 ? 's' : ''} valide${validCount > 1 ? 's' : ''}`;
 
-    const myPlayerHTML = buildSummaryPlayerHTML(selectedMyPlayer, myLiveStats);
-    const partnerPlayerHTML = buildSummaryPlayerHTML(selectedPartnerPlayer, partnerLiveStats);
-
-    document.getElementById('summaryMyPlayer').innerHTML = myPlayerHTML;
-    document.getElementById('summaryPartnerPlayer').innerHTML = partnerPlayerHTML;
-
-    // Position match badge
-    const matchBadge = document.getElementById('positionMatchBadge');
-    if (isValid) {
-        matchBadge.className = 'position-match valid';
-        matchBadge.textContent = `✓ ${getCategoryLabel(selectedMyPlayer.category)} Match`;
+    let totalGive = 0, totalGet = 0, anyNumeric = false;
+    pairs.forEach(p => {
+        const gv = pairValue(p.give), gt = pairValue(p.get);
+        if (gv != null) { totalGive += gv; anyNumeric = true; }
+        if (gt != null) { totalGet += gt; anyNumeric = true; }
+    });
+    document.getElementById('tbPointsGive').textContent = anyNumeric ? totalGive : '—';
+    document.getElementById('tbPointsGet').textContent = anyNumeric ? totalGet : '—';
+    const gapEl = document.getElementById('tbGap');
+    const gapLine = gapEl.closest('.tb-eq-line');
+    if (anyNumeric) {
+        const gap = totalGet - totalGive;
+        gapEl.textContent = (gap >= 0 ? '+' : '') + gap;
+        gapLine.classList.toggle('is-positive', gap >= 0);
     } else {
-        matchBadge.className = 'position-match invalid';
-        matchBadge.textContent = '✗ Position Mismatch';
+        gapEl.textContent = '—';
+        gapLine.classList.remove('is-positive');
     }
 
-    // Stat comparison
-    renderStatComparison();
+    proposeBtn.disabled = validCount === 0;
 
-    // Paniers et barre fixe de la vue telephone.
     tmSyncMobile();
 }
 
-function renderStatComparison() {
-    const container = document.getElementById('statComparison');
-    if (!selectedMyPlayer || !selectedPartnerPlayer) return;
-
-    const my = getPlayerCurrentStats(selectedMyPlayer.name) || {};
-    const partner = getPlayerCurrentStats(selectedPartnerPlayer.name) || {};
-
-    // Different stats for goalies vs skaters
-    if (selectedMyPlayer.category === 'G') {
-        container.innerHTML = `
-            <div class="stat-comp-row">
-                <span class="stat-comp-label">Victoires</span>
-                <div class="stat-comp-values">
-                    <span class="my-val">${my.wins || 0}</span>
-                    <span class="partner-val">${partner.wins || 0}</span>
+function pairRowHTML(give, get, idx) {
+    return `
+        <div class="tb-pair-row">
+            <div class="tb-card">
+                <div class="tb-card-text">
+                    <div class="tb-card-name" title="${give.name.replace(/"/g, '&quot;')}">${lastName(give.name)}</div>
+                    <div class="tb-card-meta">${metaFor(give)}${pairValue(give) != null ? ' · ' + pairValue(give) + ' pts' : ''}</div>
                 </div>
             </div>
-            <div class="stat-comp-row">
-                <span class="stat-comp-label">% Arrêts</span>
-                <div class="stat-comp-values">
-                    <span class="my-val">${(my.savePct || 0).toFixed(3)}</span>
-                    <span class="partner-val">${(partner.savePct || 0).toFixed(3)}</span>
-                </div>
+            <div class="tb-pair-mid">
+                <div class="tb-pair-swap">⇄</div>
+                <div class="tb-pair-cat">${getCategoryLabel(give.category)}</div>
             </div>
-            <div class="stat-comp-row">
-                <span class="stat-comp-label">Blanchissages</span>
-                <div class="stat-comp-values">
-                    <span class="my-val">${my.shutouts || 0}</span>
-                    <span class="partner-val">${partner.shutouts || 0}</span>
+            <div class="tb-card">
+                <div class="tb-card-text">
+                    <div class="tb-card-name" title="${get.name.replace(/"/g, '&quot;')}">${lastName(get.name)}</div>
+                    <div class="tb-card-meta">${metaFor(get)}${pairValue(get) != null ? ' · ' + pairValue(get) + ' pts' : ''}</div>
                 </div>
+                <button type="button" class="tb-card-remove" data-pair-idx="${idx}" title="Retirer">×</button>
             </div>
-            <div class="stat-comp-row">
-                <span class="stat-comp-label">Buts Contre</span>
-                <div class="stat-comp-values">
-                    <span class="my-val">${my.goalsAgainst || 0}</span>
-                    <span class="partner-val">${partner.goalsAgainst || 0}</span>
-                </div>
-            </div>
-        `;
-    } else if (selectedMyPlayer.category === 'T') {
-        container.innerHTML = `
-            <div class="stat-comp-row">
-                <span class="stat-comp-label">Équipes NHL</span>
-                <div class="stat-comp-values">
-                    <span class="my-val">—</span>
-                    <span class="partner-val">—</span>
-                </div>
-            </div>
-        `;
-    } else {
-        container.innerHTML = `
-            <div class="stat-comp-row">
-                <span class="stat-comp-label">Buts</span>
-                <div class="stat-comp-values">
-                    <span class="my-val">${my.goals || 0}</span>
-                    <span class="partner-val">${partner.goals || 0}</span>
-                </div>
-            </div>
-            <div class="stat-comp-row">
-                <span class="stat-comp-label">Passes</span>
-                <div class="stat-comp-values">
-                    <span class="my-val">${my.assists || 0}</span>
-                    <span class="partner-val">${partner.assists || 0}</span>
-                </div>
-            </div>
-            <div class="stat-comp-row">
-                <span class="stat-comp-label">Points</span>
-                <div class="stat-comp-values">
-                    <span class="my-val">${my.points || 0}</span>
-                    <span class="partner-val">${partner.points || 0}</span>
-                </div>
-            </div>
-            <div class="stat-comp-row">
-                <span class="stat-comp-label">+/-</span>
-                <div class="stat-comp-values">
-                    <span class="my-val">${my.plusMinus || 0}</span>
-                    <span class="partner-val">${partner.plusMinus || 0}</span>
-                </div>
-            </div>
-        `;
-    }
+        </div>
+    `;
 }
 
-// ============================================================
-// POSITION FILTERING
-// ============================================================
-function filterPosition(side, position) {
-    if (side === 'my') {
-        myPositionFilter = position;
+function draftRowHTML() {
+    const giveCell = draftGive
+        ? `<div class="tb-card"><div class="tb-card-text"><div class="tb-card-name" title="${draftGive.name.replace(/"/g, '&quot;')}">${lastName(draftGive.name)}</div><div class="tb-card-meta">${metaFor(draftGive)}</div></div></div>`
+        : `<div class="tb-card is-ghost"><div class="tb-card-text"><div class="tb-card-name">Ajouter un joueur</div><div class="tb-card-meta">Depuis la liste</div></div></div>`;
+    const getCell = draftGet
+        ? `<div class="tb-card"><div class="tb-card-text"><div class="tb-card-name" title="${draftGet.name.replace(/"/g, '&quot;')}">${lastName(draftGet.name)}</div><div class="tb-card-meta">${metaFor(draftGet)}</div></div></div>`
+        : `<div class="tb-card is-ghost"><div class="tb-card-text"><div class="tb-card-name">En attente…</div><div class="tb-card-meta">Même position</div></div></div>`;
+    return `
+        <div class="tb-pair-row">
+            ${giveCell}
+            <div class="tb-pair-mid">
+                <div class="tb-pair-swap is-ghost">⇄</div>
+                <div class="tb-pair-cat">${getCategoryLabel((draftGive || draftGet).category)}</div>
+            </div>
+            ${getCell}
+        </div>
+    `;
+}
 
-        // Update active tab
-        document.querySelectorAll('#myRoster').forEach(() => {
-            const tabs = document.querySelectorAll('.roster-column:first-child .pos-tab');
-            tabs.forEach(tab => {
-                tab.classList.toggle('active', tab.dataset.pos === position);
-            });
-        });
-
-        renderMyRoster();
-    } else {
-        partnerPositionFilter = position;
-
-        // Update active tab
-        const tabs = document.querySelectorAll('.roster-column:last-child .pos-tab');
-        tabs.forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.pos === position);
-        });
-
-        renderPartnerRoster();
-    }
+function updateTabCounts() {
+    const myCount = document.getElementById('tmTabMyCount');
+    const partnerCount = document.getElementById('tmTabPartnerCount');
+    if (myCount) myCount.textContent = pairs.length + (draftGive ? 1 : 0);
+    if (partnerCount) partnerCount.textContent = pairs.length + (draftGet ? 1 : 0);
 }
 
 // ============================================================
@@ -850,7 +772,6 @@ function showTradeConfirm(detailHtml) {
         const okBtn = document.getElementById('tradeConfirmOk');
         const cancelBtn = document.getElementById('tradeConfirmCancel');
 
-        // Fallback to native confirm if markup is missing
         if (!overlay || !body || !okBtn || !cancelBtn) {
             resolve(window.confirm('Proposer cet échange ?'));
             return;
@@ -883,124 +804,115 @@ function showTradeConfirm(detailHtml) {
 }
 
 // ============================================================
-// PROPOSE TRADE
+// PROPOSE TRADE — one /trade/propose call per pair (the backend only
+// accepts exactly one offering + one receiving player per proposal), sent
+// in sequence so a partial failure doesn't leave the rest unsent.
 // ============================================================
 async function proposeTrade() {
-    if (!selectedMyPlayer || !selectedPartnerPlayer) {
-        showNotification('Veuillez sélectionner 1 joueur de chaque côté', 'error');
+    if (pairs.length === 0) {
+        showNotification('Veuillez compléter au moins une paire 1 pour 1', 'error');
         return;
     }
 
-    if (selectedMyPlayer.category !== selectedPartnerPlayer.category) {
-        showNotification('⚠️ Les joueurs doivent être de la même position!', 'error');
-        return;
-    }
-
-    const confirmed = await showTradeConfirm(`
+    const rowsHtml = pairs.map(p => `
         <div class="tc-trade-row">
             <div class="tc-side">
                 <span class="tc-side-label">${myTeamName} offre</span>
-                <strong>${selectedMyPlayer.name}</strong>
+                <strong>${p.give.name}</strong>
             </div>
             <div class="tc-arrow">⇄</div>
             <div class="tc-side">
                 <span class="tc-side-label">${selectedPartnerTeam} offre</span>
-                <strong>${selectedPartnerPlayer.name}</strong>
+                <strong>${p.get.name}</strong>
             </div>
         </div>
-    `);
+    `).join('');
+    const confirmed = await showTradeConfirm(rowsHtml);
     if (!confirmed) return;
-
-    const proposal = {
-        draftName: selectedPool,
-        fromTeam: myTeamName,
-        toTeam: selectedPartnerTeam,
-        offering: [{
-            name: selectedMyPlayer.name,
-            type: selectedMyPlayer.type || getCategoryType(selectedMyPlayer.category)
-        }],
-        receiving: [{
-            name: selectedPartnerPlayer.name,
-            type: selectedPartnerPlayer.type || getCategoryType(selectedPartnerPlayer.category)
-        }],
-        status: 'pending',
-        date: new Date().toISOString()
-    };
 
     const proposeBtn = document.getElementById('btnProposeTrade');
     showLoading(proposeBtn, 'Envoi...');
 
-    try {
-        const res = await fetch(`${BASE_URL}/trade/propose`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(proposal)
-        });
+    let succeeded = 0;
+    const failures = [];
 
-        const data = await res.json();
+    for (const pair of pairs) {
+        const proposal = {
+            draftName: selectedPool,
+            fromTeam: myTeamName,
+            toTeam: selectedPartnerTeam,
+            offering: [{ name: pair.give.name, type: pair.give.type || getCategoryType(pair.give.category) }],
+            receiving: [{ name: pair.get.name, type: pair.get.type || getCategoryType(pair.get.category) }],
+            status: 'pending',
+            date: new Date().toISOString()
+        };
 
-        if (res.ok) {
-            loadReceivedTrades(); // Refresh received trades
-            updateReceivedBadge(); // Update badge count
-            showTradeSuccess(); // Peak-End Rule: satisfying final state
-        } else {
-            showNotification(`❌ ${data.message}`, 'error');
+        try {
+            const res = await fetch(`${BASE_URL}/trade/propose`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(proposal)
+            });
+            const data = await res.json();
+            if (res.ok) succeeded++;
+            else failures.push(`${pair.give.name} ⇄ ${pair.get.name} : ${data.message || 'échec'}`);
+        } catch (err) {
+            console.error('Error proposing trade:', err);
+            failures.push(`${pair.give.name} ⇄ ${pair.get.name} : erreur réseau`);
         }
-    } catch (err) {
-        console.error('Error proposing trade:', err);
-        showNotification('❌ Erreur lors de l\'envoi de la proposition', 'error');
-    } finally {
-        hideLoading(proposeBtn);
+    }
+
+    hideLoading(proposeBtn);
+
+    if (succeeded > 0) {
+        loadReceivedTrades();
+        updateReceivedBadge();
+        showTradeSuccess(succeeded, failures);
+    } else {
+        showNotification(`❌ ${failures[0] || 'Erreur lors de l\'envoi de la proposition'}`, 'error');
     }
 }
 
 // ============================================================
 // TRADE SUCCESS SCREEN (Peak-End Rule)
 // ============================================================
-function showTradeSuccess() {
+function showTradeSuccess(succeeded, failures) {
     const detail = document.getElementById('tradeSuccessDetail');
     if (detail) {
-        detail.innerHTML = `<strong>${myTeamName}</strong> offre <strong>${selectedMyPlayer.name}</strong> à <strong>${selectedPartnerTeam}</strong> pour <strong>${selectedPartnerPlayer.name}</strong>.<br>En attente de la réponse de l'autre équipe.`;
+        const plural = succeeded > 1 ? 's' : '';
+        let html = `<strong>${succeeded}</strong> proposition${plural} envoyée${plural} à <strong>${selectedPartnerTeam}</strong>.<br>En attente de la réponse de l'autre équipe.`;
+        if (failures.length) {
+            html += `<br><br><span style="color:var(--fzt-accent)">${failures.length} paire${failures.length > 1 ? 's' : ''} n'${failures.length > 1 ? 'ont' : 'a'} pas pu être envoyée${failures.length > 1 ? 's' : ''} : ${failures.join('; ')}</span>`;
+        }
+        detail.innerHTML = html;
     }
-    document.getElementById('stepTeam').classList.add('hidden');
-    document.getElementById('stepTrade').classList.add('hidden');
-    document.getElementById('tradeProgress').style.display = 'none';
+    document.getElementById('tmBuilder').classList.add('hidden');
     document.getElementById('tradeSuccessScreen').classList.remove('hidden');
+
+    pairs = [];
+    draftGive = null;
+    draftGet = null;
 }
 
 // ============================================================
 // RESET TRADE
 // ============================================================
 function resetTrade() {
-    // Le pool, lui, ne se réinitialise pas : il vient du contexte et
-    // c'est applyActivePool() qui le remet en place.
-    selectedPartnerTeam = null;
-    partnerTeamData = null;
-    selectedMyPlayer = null;
-    selectedPartnerPlayer = null;
-    myPositionFilter = 'all';
-    partnerPositionFilter = 'all';
+    pairs = [];
+    draftGive = null;
+    draftGet = null;
 
-    // Reset UI
     document.getElementById('tradeSuccessScreen').classList.add('hidden');
-    document.getElementById('tradeProgress').style.display = '';
-    document.getElementById('stepTeam').classList.remove('hidden');
-    document.getElementById('stepTrade').classList.add('hidden');
-    setTradeProgress(1);
+    document.getElementById('tmBuilder').classList.remove('hidden');
 
-    renderTeamGrid();
+    renderMyRoster();
+    renderPartnerRoster();
+    renderBasket();
 }
 
 // ============================================================
 // RECEIVED TRADES
 // ============================================================
-/**
- * Échanges reçus dans le pool actif.
- *
- * `idCible` vient du lien d'une notification : la carte correspondante
- * est mise en évidence et amenée à l'écran, pour ne pas avoir à la
- * chercher dans la liste.
- */
 async function loadReceivedTrades(idCible) {
     const container = document.getElementById('receivedTradesContent');
     if (!container) return;
@@ -1020,28 +932,16 @@ async function loadReceivedTrades(idCible) {
             ? (poolActif ? tous.filter(t => t.draftName === poolActif) : tous)
             : [];
 
-        // Update badge
         updateReceivedBadge(trades.length);
 
         if (trades.length === 0) {
-            container.innerHTML = `
-                <div class="empty-msg">
-                    <div style="font-size: 3rem; margin-bottom: 16px;">📭</div>
-                    <p>Aucune proposition d'échange reçue${poolActif ? ` dans « ${poolActif} »` : ''}</p>
-                </div>
-            `;
+            container.innerHTML = `<p class="received-empty">Aucune proposition d'échange reçue${poolActif ? ` dans « ${poolActif} »` : ''}</p>`;
             return;
         }
 
         container.innerHTML = trades.map(trade => {
             const date = new Date(trade.date);
-            const formattedDate = date.toLocaleDateString('fr-CA', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            const relatif = relativeDate(date);
 
             const offering = trade.offering[0];
             const receiving = trade.receiving[0];
@@ -1049,41 +949,43 @@ async function loadReceivedTrades(idCible) {
             const receivingCategory = getCategory(receiving.type);
 
             const estCible = idCible && String(trade.id) === String(idCible);
+            const initials = initialsFor(null, trade.fromTeam);
 
             return `
-                <div class="received-trade-card${estCible ? ' is-target' : ''}"
-                     data-trade-id="${trade.id}">
+                <div class="received-trade-card${estCible ? ' is-target' : ''}" data-trade-id="${trade.id}">
                     <div class="trade-card-header">
+                        <div class="trade-card-avatar">${initials}</div>
                         <div class="trade-card-info">
-                            <div class="trade-card-teams">${trade.fromTeam} → Vous (${trade.toTeam})</div>
-                            <div class="trade-card-date">${formattedDate}</div>
+                            <div class="trade-card-teams">${trade.fromTeam}</div>
+                            <div class="trade-card-date">reçue ${relatif}</div>
                         </div>
                         <div class="trade-card-status">En attente</div>
                     </div>
 
                     <div class="trade-card-players">
                         <div class="trade-player">
-                            <div class="trade-player-label">Vous recevez</div>
-                            <div class="trade-player-name">${offering.name}</div>
-                            <span class="trade-player-position ${offeringCategory.toLowerCase()}">${getCategoryLabel(offeringCategory)}</span>
+                            <div class="trade-player-label">Vous recevriez</div>
+                            <div class="trade-player-box">
+                                <div class="trade-player-name">${offering.name}</div>
+                                <span class="trade-player-position">${getCategoryLabel(offeringCategory)}</span>
+                            </div>
                         </div>
 
                         <div class="trade-arrow-icon">⇄</div>
 
                         <div class="trade-player">
-                            <div class="trade-player-label">Vous donnez</div>
-                            <div class="trade-player-name">${receiving.name}</div>
-                            <span class="trade-player-position ${receivingCategory.toLowerCase()}">${getCategoryLabel(receivingCategory)}</span>
+                            <div class="trade-player-label">Vous donneriez</div>
+                            <div class="trade-player-box">
+                                <div class="trade-player-name">${receiving.name}</div>
+                                <span class="trade-player-position">${getCategoryLabel(receivingCategory)}</span>
+                            </div>
                         </div>
                     </div>
 
                     <div class="trade-card-actions">
-                        <button class="btn-decline-trade" onclick="declineTradeProposal('${trade.id}')">
-                            ❌ Refuser
-                        </button>
-                        <button class="btn-accept-trade" onclick="acceptTradeProposal('${trade.id}')">
-                            ✅ Accepter
-                        </button>
+                        <button class="btn-accept-trade" onclick="acceptTradeProposal('${trade.id}')">Accepter</button>
+                        <button class="btn-decline-trade" onclick="declineTradeProposal('${trade.id}')">Refuser</button>
+                        <button class="btn-counter-trade" onclick="startCounterOffer('${trade.fromTeam.replace(/'/g, "\\'")}')">Contre-offre</button>
                     </div>
                 </div>
             `;
@@ -1100,73 +1002,110 @@ async function loadReceivedTrades(idCible) {
     }
 }
 
-async function loadCompletedTrades() {
-    const container = document.getElementById('completedTradesContent');
+function relativeDate(date) {
+    const diffMs = Date.now() - date.getTime();
+    const hours = diffMs / 3600000;
+    if (hours < 1) return "à l'instant";
+    if (hours < 24) return `il y a ${Math.round(hours)} heure${Math.round(hours) > 1 ? 's' : ''}`;
+    const days = Math.round(hours / 24);
+    if (days < 30) return `il y a ${days} jour${days > 1 ? 's' : ''}`;
+    return date.toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+/** Jumps to the propose tab with that team pre-selected as partner —
+ *  a fresh proposal to the same team, not a pre-filled negotiation. */
+function startCounterOffer(teamName) {
+    switchTradeTab('propose');
+    if (selectedPoolData && selectedPoolData.teams[teamName]) {
+        selectPartnerTeam(teamName);
+    }
+}
+
+// ============================================================
+// HISTORY — completed AND declined trades for the active pool.
+// ============================================================
+async function loadHistory() {
+    const container = document.getElementById('historyTradesContent');
     if (!container) return;
 
     try {
-        // Load completed trades for the current user
         const res = await fetch(`${BASE_URL}/trades/completed/${currentUsername}`, { cache: 'no-store' });
 
         if (!res.ok) {
-            console.error('Failed to fetch completed trades:', res.status);
-            container.innerHTML = '<p class="empty-msg">Erreur lors du chargement</p>';
+            console.error('Failed to fetch history:', res.status);
+            container.innerHTML = '<p class="history-empty">Erreur lors du chargement</p>';
             return;
         }
 
-        // Même cadrage que les échanges reçus : l'historique porte sur le
-        // pool actif, pas sur toutes les ligues à la fois.
         const tous = await res.json();
         const poolActif = FZPool.get();
-        const completedTrades = Array.isArray(tous)
+        const trades = Array.isArray(tous)
             ? (poolActif ? tous.filter(t => t.draftName === poolActif) : tous)
             : [];
 
-        if (completedTrades.length === 0) {
-            container.innerHTML = '<p class="empty-msg">Aucun échange complété</p>';
+        if (trades.length === 0) {
+            container.innerHTML = '<p class="history-empty">Aucun échange complété ou refusé pour le moment.</p>';
             return;
         }
 
-        container.innerHTML = completedTrades.map(trade => {
+        container.innerHTML = trades.map(trade => {
+            const declined = trade.status === 'declined';
             const date = new Date(trade.completedDate || trade.date);
-            const day = date.getDate();
-            const month = date.toLocaleDateString('fr-CA', { month: 'short' });
+            const dateStr = date.toLocaleDateString('fr-CA', { year: 'numeric', month: 'short', day: 'numeric' });
+            const offering = trade.offering?.[0];
+            const receiving = trade.receiving?.[0];
+            const acquiresLbl = declined ? 'Aurait acquis :' : 'Acquiert :';
 
             return `
-                <div class="history-item">
-                    <div class="history-date">
-                        <div class="history-day">${day}</div>
-                        <div class="history-month">${month}</div>
+                <div class="history-card${declined ? ' is-declined' : ''}">
+                    <div class="history-card-head">
+                        <span class="history-card-date">${dateStr}</span>
+                        <span class="history-card-status">${declined ? 'Refusé' : 'Complété'}</span>
                     </div>
-                    <div class="history-trade">
+                    <div class="history-card-sides">
                         <div>
-                            <div class="history-team">${trade.fromTeam} ⇄ ${trade.toTeam}</div>
-                            <div class="history-players">
-                                ${trade.offering[0]?.name} ↔ ${trade.receiving[0]?.name}
+                            <div class="history-side-team">
+                                <span class="history-side-dot"></span>
+                                <span class="history-side-name">${trade.toTeam}</span>
+                                <span class="history-side-acquires-lbl">${acquiresLbl}</span>
+                            </div>
+                            <div class="history-side-player">
+                                <span class="history-player-dot"></span>
+                                <span class="history-player-name">${offering?.name || '—'} <span>${getCategoryLabel(getCategory(offering?.type))}</span></span>
+                            </div>
+                        </div>
+                        <div class="history-divider"><span class="history-divider-icon">⇄</span></div>
+                        <div>
+                            <div class="history-side-team">
+                                <span class="history-side-dot"></span>
+                                <span class="history-side-name">${trade.fromTeam}</span>
+                                <span class="history-side-acquires-lbl">${acquiresLbl}</span>
+                            </div>
+                            <div class="history-side-player">
+                                <span class="history-player-dot"></span>
+                                <span class="history-player-name">${receiving?.name || '—'} <span>${getCategoryLabel(getCategory(receiving?.type))}</span></span>
                             </div>
                         </div>
                     </div>
-                    <div class="history-status completed">✅ Complété</div>
                 </div>
             `;
         }).join('');
 
     } catch (err) {
-        console.error('Error loading completed trades:', err);
-        container.innerHTML = '<p class="empty-msg">Erreur lors du chargement</p>';
+        console.error('Error loading history:', err);
+        container.innerHTML = '<p class="history-empty">Erreur lors du chargement</p>';
     }
 }
 
 // La pastille de l'onglet compte les échanges du pool actif, comme la
-// liste qu'elle annonce. Sans compte fourni, on refait le même filtrage
-// plutôt que d'afficher un total tous pools confondus.
+// liste qu'elle annonce.
 function updateReceivedBadge(count) {
     const badge = document.getElementById('receivedTradeBadge');
     if (!badge) return;
 
     const afficher = n => {
         badge.textContent = n;
-        badge.style.display = n > 0 ? 'inline-block' : 'none';
+        badge.style.display = n > 0 ? 'inline-grid' : 'none';
     };
 
     if (count !== undefined) { afficher(count); return; }
@@ -1184,13 +1123,7 @@ function updateReceivedBadge(count) {
 }
 
 function getCategory(type) {
-    const categoryMap = {
-        'offensive': 'F',
-        'defensive': 'D',
-        'goalie': 'G',
-        'rookie': 'R',
-        'team': 'T'
-    };
+    const categoryMap = { 'offensive': 'F', 'defensive': 'D', 'goalie': 'G', 'rookie': 'R', 'team': 'T' };
     return categoryMap[type] || 'F';
 }
 
@@ -1213,8 +1146,7 @@ async function acceptTradeProposal(tradeId) {
             showNotification('✅ Échange accepté avec succès! Les joueurs ont été échangés.', 'success');
             setTimeout(() => {
                 loadReceivedTrades();
-                loadCompletedTrades();
-                loadDraftData(); // Refresh draft data to show updated rosters
+                loadDraftData();
                 updateReceivedBadge();
             }, 1000);
         } else {
@@ -1245,7 +1177,6 @@ async function declineTradeProposal(tradeId) {
             showNotification('Échange refusé', 'info');
             setTimeout(() => {
                 loadReceivedTrades();
-                loadCompletedTrades();
                 updateReceivedBadge();
             }, 500);
         } else {
@@ -1264,58 +1195,24 @@ async function declineTradeProposal(tradeId) {
 // UTILITIES
 // ============================================================
 function getCategoryLabel(category) {
-    const labels = {
-        'F': 'ATT',
-        'D': 'DÉF',
-        'G': 'GAR',
-        'R': 'ROO',
-        'T': 'ÉQU'
-    };
+    const labels = { 'F': 'ATT', 'D': 'DÉF', 'G': 'GAR', 'R': 'ROO', 'T': 'ÉQU' };
     return labels[category] || category;
 }
 
 function getCategoryType(category) {
-    const types = {
-        'F': 'offensive',
-        'D': 'defensive',
-        'G': 'goalie',
-        'R': 'rookie',
-        'T': 'team'
-    };
+    const types = { 'F': 'offensive', 'D': 'defensive', 'G': 'goalie', 'R': 'rookie', 'T': 'team' };
     return types[category] || 'offensive';
 }
 
-function getStatusLabel(status) {
-    const labels = {
-        'pending': 'En attente',
-        'completed': 'Complété',
-        'rejected': 'Refusé'
-    };
-    return labels[status] || status;
-}
-
 // ============================================================
-// VUE TÉLÉPHONE DE L'ÉTAPE 3
+// MOBILE — segmented Mes joueurs / Leurs joueurs tabs + bottom bar
 // ------------------------------------------------------------
-// Sur petit écran, les trois colonnes s'empilaient sur près de
-// trois hauteurs d'écran : il fallait défiler jusqu'en bas pour
-// voir ce qu'on donnait, et le bouton de proposition était encore
-// plus loin. Cette couche présente les deux paniers en tête, un
-// seul effectif à la fois, et le bilan avec son bouton en barre
-// fixe.
-//
-// Elle ne contient aucune logique d'échange : la sélection, le
-// verrouillage par position et l'envoi restent ceux de
-// selectMyPlayer, selectPartnerPlayer et proposeTrade. Tout ce qui
-// suit lit l'état et le reflète.
+// Above 900px the CSS shows both roster columns and the basket at once;
+// this only drives which single column is visible below that, and keeps
+// the fixed summary bar in sync. No trade logic lives here.
 // ============================================================
-
-let tmRosterActif = 'my';
-
-/** Bascule l'effectif affiché. Au-delà de 900px le CSS rend les deux. */
 function tmSwitchRoster(cote) {
-    tmRosterActif = cote;
-    const grille = document.querySelector('.trade-grid-3col');
+    const grille = document.getElementById('tradeGrid3col');
     if (grille) grille.dataset.cote = cote;
     document.querySelectorAll('.tm-tab').forEach(t => {
         const actif = t.dataset.cote === cote;
@@ -1324,128 +1221,51 @@ function tmSwitchRoster(cote) {
     });
 }
 
-/** Clic sur un panier : amène l'effectif correspondant sous les yeux. */
-function tmFocusRoster(cote) {
-    tmSwitchRoster(cote);
-    const onglets = document.querySelector('.tm-tabs');
-    if (onglets) onglets.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-/** « Connor McDavid » → « C. McDavid ». Le panier est étroit. */
+/** « Connor McDavid » → « C. McDavid ». The mobile bar is narrow. */
 function tmAbrege(nom) {
     const mots = String(nom || '').trim().split(/\s+/);
     if (mots.length < 2) return nom || '';
     return mots[0].charAt(0) + '. ' + mots.slice(1).join(' ');
 }
 
-/**
- * Valeur d'un joueur pour le bilan.
- *
- * Le gabarit affichait une note globale ; le pool n'en produit pas. Les
- * points en tiennent lieu — c'est déjà la mesure sur laquelle le
- * classement repose. Les gardiens n'en marquent pas : leurs victoires
- * jouent le même rôle. Une équipe NHL n'a pas de statistique
- * individuelle : elle reste hors du calcul.
- */
-function tmValeur(joueur) {
-    if (!joueur) return { valeur: null, unite: '' };
-    if (joueur.category === 'T') return { valeur: null, unite: 'ÉQU' };
-    const stats = getPlayerCurrentStats(joueur.name);
-    if (joueur.category === 'G') return { valeur: stats?.wins ?? 0, unite: 'V' };
-    return { valeur: stats?.points ?? 0, unite: 'PTS' };
+/** Last name only — the basket's pair cards are narrow (three columns
+ *  inside a 400px center panel), same reasoning as tmAbrege above. */
+function lastName(nom) {
+    const mots = String(nom || '').trim().split(/\s+/);
+    return mots[mots.length - 1] || nom || '';
 }
 
-/**
- * Écart relatif entre les deux valeurs, rapporté à leur moyenne.
- *
- * La forme naïve (reçu − donné) / donné explose quand on cède un joueur à
- * zéro point. Rapporter à la moyenne des deux reste défini dès que l'un
- * des deux est non nul, et donne le même écart au signe près selon le
- * côté d'où on regarde.
- */
-function tmEquite(donne, recu) {
-    if (donne == null || recu == null) return null;
-    const moyenne = (donne + recu) / 2;
-    if (moyenne === 0) return null;
-    return ((recu - donne) / moyenne) * 100;
+function tmJoinNames(list) {
+    if (!list.length) return '—';
+    return list.map(tmAbrege).join(', ');
 }
 
-/** Contenu d'un panier : joueur choisi, ou invite à en choisir un. */
-function tmRemplirPanier(id, joueur, cote) {
-    const slot = document.getElementById(id);
-    if (!slot) return;
-
-    if (!joueur) {
-        slot.classList.add('is-empty');
-        slot.innerHTML = '<span class="tm-slot-empty">'
-            + (typeof getIcon === 'function' ? getIcon('plus', 22) : '+')
-            + 'Ajouter un joueur</span>';
-        return;
-    }
-
-    slot.classList.remove('is-empty');
-    const stats = getPlayerCurrentStats(joueur.name);
-    const face = joueur.category !== 'T' ? getMatchingImage(joueur.name) : null;
-    const equipe = stats?.teamAbbrev || '';
-    const meta = [equipe, getCategoryLabel(joueur.category)].filter(Boolean).join(' · ');
-
-    slot.innerHTML = `
-        <span class="tm-slot-remove" title="Retirer">
-            ${typeof getIcon === 'function' ? getIcon('x', 14) : '×'}
-        </span>
-        ${face
-            ? `<img class="tm-slot-face" src="${face}" alt="" onerror="this.remove()">`
-            : '<span class="tm-slot-face tm-slot-face-vide"></span>'}
-        <span class="tm-slot-name">${tmAbrege(joueur.name)}</span>
-        <span class="tm-slot-meta">${meta}</span>
-    `;
-
-    // Retirer = re-sélectionner le même joueur, ce que les fonctions
-    // existantes interprètent déjà comme une désélection.
-    const retirer = slot.querySelector('.tm-slot-remove');
-    if (retirer) {
-        retirer.addEventListener('click', e => {
-            e.stopPropagation();
-            if (cote === 'my') selectMyPlayer(joueur.name, joueur.category, joueur.data);
-            else selectPartnerPlayer(joueur.name, joueur.category, joueur.data);
-        });
-    }
-}
-
-/** Reflète l'état courant dans les paniers et la barre fixe. */
+/** Reflects pairs + in-progress draft in the mobile bottom bar. */
 function tmSyncMobile() {
-    tmRemplirPanier('tmSlotGive', selectedMyPlayer, 'my');
-    tmRemplirPanier('tmSlotGet', selectedPartnerPlayer, 'partner');
+    const giveNames = pairs.map(p => p.give.name).concat(draftGive ? [draftGive.name] : []);
+    const getNames = pairs.map(p => p.get.name).concat(draftGet ? [draftGet.name] : []);
 
-    const donne = tmValeur(selectedMyPlayer);
-    const recu = tmValeur(selectedPartnerPlayer);
-    const ecrire = (id, v) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = v.valeur == null ? '—' : `${v.valeur} ${v.unite}`;
-    };
-    ecrire('tmValGive', donne);
-    ecrire('tmValGet', recu);
+    let totalGive = 0, totalGet = 0, anyNumeric = false;
+    pairs.forEach(p => {
+        const gv = pairValue(p.give), gt = pairValue(p.get);
+        if (gv != null) { totalGive += gv; anyNumeric = true; }
+        if (gt != null) { totalGet += gt; anyNumeric = true; }
+    });
 
-    const cellEq = document.getElementById('tmValEquity');
-    if (cellEq) {
-        const eq = tmEquite(donne.valeur, recu.valeur);
-        cellEq.textContent = eq == null ? '—'
-            : (eq >= 0 ? '+' : '') + eq.toFixed(1) + '%';
-        cellEq.classList.toggle('is-positive', eq != null && eq > 0);
-        cellEq.classList.toggle('is-negative', eq != null && eq < 0);
-    }
+    const giveEl = document.getElementById('tmValGive');
+    const getEl = document.getElementById('tmValGet');
+    if (giveEl) giveEl.textContent = giveNames.length ? `${tmJoinNames(giveNames)}${anyNumeric ? ' · ' + totalGive + ' pts' : ''}` : '—';
+    if (getEl) getEl.textContent = getNames.length ? `${tmJoinNames(getNames)}${anyNumeric ? ' · ' + totalGet + ' pts' : ''}` : '—';
 
-    // Le bouton de la barre fixe suit exactement celui de la colonne
-    // centrale : une seule condition d'activation, définie ailleurs.
-    const source = document.getElementById('btnProposeTrade');
     const cta = document.getElementById('tmCta');
-    if (source && cta) {
+    const source = document.getElementById('btnProposeTrade');
+    if (cta && source) {
         cta.disabled = source.disabled;
-        cta.classList.toggle('is-ready', source.classList.contains('ready'));
+        cta.classList.toggle('is-ready', !source.disabled);
     }
 }
 
-/** Enveloppe de proposeTrade() : évite le double envoi depuis la barre. */
+/** Wraps proposeTrade(): avoids double-submit from the fixed bar. */
 async function tmProposeTrade() {
     const cta = document.getElementById('tmCta');
     if (cta) cta.disabled = true;
