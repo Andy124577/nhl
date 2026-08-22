@@ -345,7 +345,7 @@ function buildPickCard(options) {
       e.stopPropagation();
       if (typeof window.fzOuvrirListeJoueurs === 'function') window.fzOuvrirListeJoueurs();
     });
-    carte.appendChild(boutonChoisir);
+    haut.appendChild(boutonChoisir);
   }
 
   const etiquette = info
