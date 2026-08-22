@@ -340,7 +340,8 @@ function buildPickCard(options) {
     const boutonChoisir = document.createElement('button');
     boutonChoisir.type = 'button';
     boutonChoisir.className = 'pick-card-select-btn';
-    boutonChoisir.textContent = 'Choisir';
+    boutonChoisir.textContent = '+';
+    boutonChoisir.setAttribute('aria-label', 'Choisir un joueur');
     boutonChoisir.addEventListener('click', e => {
       e.stopPropagation();
       if (typeof window.fzOuvrirListeJoueurs === 'function') window.fzOuvrirListeJoueurs();
