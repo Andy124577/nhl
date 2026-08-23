@@ -85,8 +85,12 @@ body.fz-classement .breadcrumb-item.active { color: var(--fzc-accent); }
 body.fz-classement .breadcrumb-separator { color: #c9c5bd; }
 
 /* ==================== PÉRIODE (1J / 7J / 30J) ==================== */
+/* Comme dans le mockup : les puces de période n'existent que dans la vue
+   téléphone (le tableau desktop affiche déjà les 3 colonnes 1/7/30 côte à
+   côte, la puce ne sert qu'à choisir la période du badge de rang — utile
+   seulement une fois qu'on n'a plus la place pour les trois colonnes). */
 body.fz-classement .st-period-chips {
-  display: flex;
+  display: none;
   gap: 6px;
   margin: 0 0 14px;
 }
@@ -246,6 +250,7 @@ body.fz-classement .st-mobile-list { display: none; }
 
 @media (max-width: 680px) {
   body.fz-classement .standings-table-container { display: none; }
+  body.fz-classement .st-period-chips { display: flex; }
   body.fz-classement .st-mobile-list {
     display: flex;
     flex-direction: column;
