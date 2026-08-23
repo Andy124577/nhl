@@ -403,3 +403,31 @@ body.fz-classement .skeleton-circle {
   background: linear-gradient(90deg, var(--fzc-border-soft) 25%, var(--fzc-tile) 50%, var(--fzc-border-soft) 75%);
   background-size: 200% 100%;
 }
+
+/* ==================== FICHE D'ÉQUIPE : bouton "mettre en vente" ====================
+   Pas une reprise du mockup (voir la note en tête de fichier) — juste un
+   correctif de mise en page. .player-name-row (classement.css) mélange nom
+   + badges d'équipe/position + ce bouton dans une seule ligne flex-wrap :
+   sous ~680px, le bouton retombe seul sur sa ligne, mais reste coincé dans
+   la colonne étroite de .roster-info (~110-150px, le reste de la carte
+   étant pris par PPtsA/PPts/le chevron) — pas assez large pour "Mettre en
+   vente" sur une ligne, ce qui le coupait en deux au hasard.
+   On le sort du flux flex (position absolute, ancré à .roster-card) pour
+   lui donner toute la largeur de la carte plutôt que celle, trop étroite,
+   de sa colonne — un vrai bandeau d'action pleine largeur en bas de
+   carte, une place prévisible quelle que soit la longueur du nom. */
+@media (max-width: 680px) {
+  body.fz-classement .roster-card {
+    position: relative;
+    padding-bottom: 46px;
+  }
+  body.fz-classement .for-sale-toggle {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 10px;
+    width: auto;
+    justify-content: center;
+    margin: 0;
+  }
+}
