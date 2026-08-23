@@ -151,6 +151,8 @@ function showPoolStandings(poolName) {
     h2hWeekCache = null; // clear cache when switching pools
     standingsSortKey = null; // reset to canonical rank order for the new pool
     standingsSortDir = 'desc';
+    standingsPeriod = 7; // reset rank-evolution period for the new pool
+    periodPointsCache = null;
 
     const poolData = allPoolsData[poolName];
     if (!poolData) return;
@@ -228,11 +230,89 @@ function getStandingsColumns(poolMode) {
         { label: 'Participant', cls: 'player-col' },
         { label: 'PJ', sort: 'gamesPlayed', title: 'Parties jouées' },
         { label: 'B', sort: 'goals', title: 'Buts' },
-        { label: 'A', sort: 'assists', title: 'Passes décisives' },
-        { label: 'PTS', sort: 'points', cls: 'points-column', title: 'Points de pool' },
-        { label: 'Pts/PJ', sort: 'ppg', title: 'Points par partie jouée' },
-        { label: 'Écart', title: 'Écart avec le premier' }
+        { label: 'P', sort: 'assists', title: 'Passes décisives' },
+        { label: '1', cls: 'st-period-col', title: 'Points des dernières 24 heures' },
+        { label: '7', cls: 'st-period-col', title: 'Points des 7 derniers jours' },
+        { label: '30', cls: 'st-period-col', title: 'Points des 30 derniers jours' },
+        { label: 'PPts', sort: 'points', cls: 'points-column', title: 'Points de pool' },
+        { label: 'PPts/PJ', sort: 'ppg', title: 'Points par partie jouée' },
+        { label: 'Rang', cls: 'st-evo-col', title: 'Évolution du rang depuis le début de la période sélectionnée' }
     ];
+}
+
+// ==================== RANG : ÉVOLUTION PAR PÉRIODE ====================
+// Le rang (Pos) reste fixé par le total de la saison. Le badge en bout de
+// ligne compare ce rang à celui qu'aurait l'équipe si le classement portait
+// uniquement sur les points marqués pendant la période choisie (1/7/30
+// jours, même formule que le temple de la renommée et /pool-leaderboard) :
+// mieux classée sur la période que sur la saison → ▲, moins bien → ▼.
+const STANDINGS_PERIODS = [1, 7, 30];
+let standingsPeriod = 7;
+let periodPointsCache = null; // { poolName, byDays: { 1: Map, 7: Map, 30: Map } }
+
+const EVO_ARROW_UP = '<svg viewBox="0 0 24 24" width="8" height="8"><path d="M12 4l8 10H4z"></path></svg>';
+const EVO_ARROW_DOWN = '<svg viewBox="0 0 24 24" width="8" height="8"><path d="M12 20L4 10h16z"></path></svg>';
+
+async function fetchStandingsPeriodPoints(poolName) {
+    if (periodPointsCache && periodPointsCache.poolName === poolName) return periodPointsCache.byDays;
+
+    const byDays = {};
+    await Promise.all(STANDINGS_PERIODS.map(async (days) => {
+        const map = new Map();
+        try {
+            const res = await fetch(`${BASE_URL}/pool-leaderboard/${encodeURIComponent(poolName)}?days=${days}`, { cache: 'no-store' });
+            if (res.ok) {
+                const data = await res.json();
+                (data.teams || []).forEach(t => map.set(t.teamName, t.points));
+            }
+        } catch (error) {
+            console.warn(`⚠️ Could not load ${days}-day points for rank evolution:`, error);
+        }
+        byDays[days] = map;
+    }));
+
+    periodPointsCache = { poolName, byDays };
+    return byDays;
+}
+
+// Classe les équipes par points marqués pendant la période ; une équipe
+// sans donnée (aucun log de match trouvé) reste en fin de classement plutôt
+// que d'être exclue, pour que le badge ait toujours un rang à comparer.
+function rankByPeriodPoints(standings, pointsMap) {
+    const withPts = standings.map(s => ({ teamName: s.teamName, pts: pointsMap.get(s.teamName) }));
+    withPts.sort((a, b) => (b.pts ?? -Infinity) - (a.pts ?? -Infinity));
+    const rankByTeam = new Map();
+    withPts.forEach((t, i) => rankByTeam.set(t.teamName, i + 1));
+    return rankByTeam;
+}
+
+function fmtPeriodPts(value) {
+    if (value === null || value === undefined) return '—';
+    return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function initialsFromName(name) {
+    if (!name) return '';
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.replace(/[^\p{L}\p{N}]/gu, '').slice(0, 2).toUpperCase();
+}
+
+function evolutionBadgeHTML(move, hasData) {
+    if (hasData && move > 0) {
+        return `<span class="st-evo st-evo-up" title="A gagné ${move} rang${move > 1 ? 's' : ''} sur la période">${EVO_ARROW_UP}${move}</span>`;
+    }
+    if (hasData && move < 0) {
+        return `<span class="st-evo st-evo-down" title="A perdu ${-move} rang${-move > 1 ? 's' : ''} sur la période">${EVO_ARROW_DOWN}${-move}</span>`;
+    }
+    const title = hasData ? 'Rang inchangé sur la période' : 'Pas assez de données récentes';
+    return `<span class="st-evo st-evo-flat" title="${title}">—</span>`;
+}
+
+function standingsPeriodChipsHTML() {
+    return `<div class="st-period-chips" role="group" aria-label="Période pour l'évolution du rang">
+        ${STANDINGS_PERIODS.map(d => `<button type="button" class="st-period-chip${d === standingsPeriod ? ' active' : ''}" data-period="${d}">${d}J</button>`).join('')}
+    </div>`;
 }
 
 function buildStandingsHead(columns, activeSortKey) {
@@ -350,13 +430,22 @@ async function renderPoolStandings(poolData, poolName) {
         });
     }
 
-    standingsList.innerHTML = `<div class="standings-table-container"><table id="standingsTable">${buildStandingsHead(columns, activeSortKey)}</table></div>`;
+    // Points par période (1/7/30j) et rang « période » associé : pas de
+    // pendant H2H, qui n'a ni colonnes période ni badge d'évolution.
+    const byDays = poolMode === 'head-to-head' ? null : await fetchStandingsPeriodPoints(poolName);
+    const periodRankByTeam = byDays ? rankByPeriodPoints(standings, byDays[standingsPeriod]) : null;
+
+    const chipsHTML = poolMode === 'head-to-head' ? '' : standingsPeriodChipsHTML();
+    const mobileListHTML = poolMode === 'head-to-head' ? '' : '<div class="st-mobile-list"></div>';
+    standingsList.innerHTML = `${chipsHTML}<div class="standings-table-container"><table id="standingsTable">${buildStandingsHead(columns, activeSortKey)}</table></div>${mobileListHTML}`;
     const table = document.getElementById('standingsTable');
 
     const tbody = document.createElement('tbody');
+    const mobileRowsHTML = [];
     displayList.forEach(standing => {
         const displayName = getDisplayName(standing.teamName, standing.members);
-        const logoHTML = getTeamLogoHTML(standing.nhlTeams, 22);
+        const logoHTML = getTeamLogoHTML(standing.nhlTeams, 20);
+        const avatarHTML = logoHTML || `<span class="st-avatar-fallback">${initialsFromName(displayName)}</span>`;
 
         const tr = document.createElement('tr');
         tr.className = standing.rank === 1 ? 'is-clickable is-leader' : 'is-clickable';
@@ -368,6 +457,14 @@ async function renderPoolStandings(poolData, poolName) {
             if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showTeamRoster(poolName, standing.teamName); }
         };
 
+        let evoHTML = '';
+        if (periodRankByTeam) {
+            const periodRank = periodRankByTeam.get(standing.teamName);
+            const move = periodRank !== undefined ? standing.rank - periodRank : 0;
+            const hasData = byDays[standingsPeriod].get(standing.teamName) != null;
+            evoHTML = evolutionBadgeHTML(move, hasData);
+        }
+
         const statCells = poolMode === 'head-to-head'
             ? `<td>${standing.gamesPlayed}</td>
                <td>${standing.wins}</td>
@@ -378,27 +475,54 @@ async function renderPoolStandings(poolData, poolName) {
             : `<td>${standing.gamesPlayed}</td>
                <td>${standing.goals}</td>
                <td>${standing.assists}</td>
+               <td class="st-period-col">${fmtPeriodPts(byDays[1].get(standing.teamName))}</td>
+               <td class="st-period-col">${fmtPeriodPts(byDays[7].get(standing.teamName))}</td>
+               <td class="st-period-col">${fmtPeriodPts(byDays[30].get(standing.teamName))}</td>
                <td class="points-column">${standing.points}</td>
                <td>${standing.ppg.toFixed(2)}</td>
-               <td class="st-diff-col">${standing.rank === 1 ? '—' : standing.diff}</td>`;
+               <td class="st-evo-col">${evoHTML}</td>`;
 
         tr.innerHTML = `
             <td class="rank-col">${rankBadgeHTML(standing.rank)}</td>
             <td class="player-col">
                 <div class="st-participant">
-                    ${logoHTML}
+                    <span class="st-avatar">${avatarHTML}</span>
                     <span class="st-name" title="${displayName}">${displayName}</span>
                 </div>
             </td>
             ${statCells}
         `;
         tbody.appendChild(tr);
+
+        if (poolMode !== 'head-to-head') {
+            const periodPts = fmtPeriodPts(byDays[standingsPeriod].get(standing.teamName));
+            mobileRowsHTML.push(`
+                <div class="st-mobile-row is-clickable" tabindex="0" role="button" aria-label="Voir l'équipe de ${displayName}" data-team="${standing.teamName.replace(/"/g, '&quot;')}">
+                    <span class="st-mobile-rank">${rankBadgeHTML(standing.rank)}</span>
+                    <span class="st-avatar">${avatarHTML}</span>
+                    <div class="st-mobile-info">
+                        <span class="st-mobile-name" title="${displayName}">${displayName}</span>
+                        <span class="st-mobile-sub">${periodPts} pts période</span>
+                    </div>
+                    <span class="st-mobile-pts">${standing.points}</span>
+                    ${evoHTML}
+                </div>`);
+        }
     });
     table.appendChild(tbody);
+
+    if (poolMode !== 'head-to-head') {
+        const mobileList = standingsList.querySelector('.st-mobile-list');
+        if (mobileList) mobileList.innerHTML = mobileRowsHTML.join('');
+    }
 
     const n = standings.length;
     const rawAvg = (key) => standings.reduce((sum, s) => sum + (s[key] || 0), 0) / n;
     const avg = (key) => Math.round(rawAvg(key));
+    const avgPeriod = (days) => {
+        const vals = [...byDays[days].values()].filter(v => v !== null && v !== undefined);
+        return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+    };
     const tfoot = document.createElement('tfoot');
     const avgStatCells = poolMode === 'head-to-head'
         ? `<td>${avg('gamesPlayed')}</td>
@@ -410,9 +534,12 @@ async function renderPoolStandings(poolData, poolName) {
         : `<td>${avg('gamesPlayed')}</td>
            <td>${avg('goals')}</td>
            <td>${avg('assists')}</td>
+           <td class="st-period-col">${fmtPeriodPts(avgPeriod(1))}</td>
+           <td class="st-period-col">${fmtPeriodPts(avgPeriod(7))}</td>
+           <td class="st-period-col">${fmtPeriodPts(avgPeriod(30))}</td>
            <td class="points-column">${avg('points')}</td>
            <td>${rawAvg('ppg').toFixed(2)}</td>
-           <td class="st-diff-col">—</td>`;
+           <td class="st-evo-col">—</td>`;
     tfoot.innerHTML = `
         <tr class="standings-avg-row">
             <td class="rank-col">—</td>
@@ -422,18 +549,27 @@ async function renderPoolStandings(poolData, poolName) {
     `;
     table.appendChild(tfoot);
 
-    // Délégation sur le conteneur : reconstruit à chaque tri, un écouteur
-    // par <th> fuirait à chaque passe (comme initStatsHeaderSorting).
+    // Délégation sur le conteneur : reconstruit à chaque tri/période/rendu, un
+    // écouteur par <th>/.st-period-chip/.st-mobile-row fuirait à chaque passe
+    // (comme initStatsHeaderSorting).
     standingsList.onclick = (e) => {
+        const chip = e.target.closest('.st-period-chip');
+        if (chip) {
+            standingsPeriod = Number(chip.dataset.period);
+            renderPoolStandings(poolData, poolName).catch(console.error);
+            return;
+        }
         const th = e.target.closest('th[data-sort]');
-        if (th) handleStandingsSort(th.dataset.sort);
+        if (th) { handleStandingsSort(th.dataset.sort); return; }
+        const mobileRow = e.target.closest('.st-mobile-row');
+        if (mobileRow) showTeamRoster(poolName, mobileRow.dataset.team);
     };
     standingsList.onkeydown = (e) => {
         if (e.key !== 'Enter' && e.key !== ' ') return;
         const th = e.target.closest('th[data-sort]');
-        if (!th) return;
-        e.preventDefault();
-        handleStandingsSort(th.dataset.sort);
+        if (th) { e.preventDefault(); handleStandingsSort(th.dataset.sort); return; }
+        const mobileRow = e.target.closest('.st-mobile-row');
+        if (mobileRow) { e.preventDefault(); showTeamRoster(poolName, mobileRow.dataset.team); }
     };
 
     document.getElementById('standingsSkeleton').style.display = 'none';
@@ -458,49 +594,52 @@ function formatHofMonth(dateStr) {
     return month.charAt(0).toUpperCase() + month.slice(1);
 }
 
-function hofCellHTML(entry, kind, label, dateFormatter) {
+// Icône trophée du mockup ; la variante « pire » la reprend grisée et
+// retournée plutôt que d'introduire une deuxième icône.
+function trophyIconHTML(cls) {
+    return `<svg class="hof-icon ${cls}" viewBox="0 0 24 24" width="18" height="18"><path d="M5 4h14v2h2v3a5 5 0 0 1-5 5h-.26A6 6 0 0 1 13 17.65V20h3v2H8v-2h3v-2.35A6 6 0 0 1 8.26 14H8a5 5 0 0 1-5-5V6h2V4zm0 4H5v1a3 3 0 0 0 2.6 2.97A8.9 8.9 0 0 1 5 8zm14 0a8.9 8.9 0 0 1-2.6 3.97A3 3 0 0 0 19 9V8z"></path></svg>`;
+}
+
+function hofCardHTML(entry, kind, label, dateFormatter) {
+    const icon = trophyIconHTML(kind === 'worst' ? 'is-worst' : 'is-best');
     if (!entry) {
         return `
-            <div class="hof-cell">
-                <p class="hof-cell-label">${label}</p>
+            <div class="hof-card hof-card-${kind}">
+                ${icon}
+                <p class="hof-card-label">${label}</p>
                 <p class="hof-empty">Aucune donnée</p>
             </div>`;
     }
     const displayName = getDisplayName(entry.teamName, entry.members);
     return `
-        <div class="hof-cell">
-            <p class="hof-cell-label">${label}</p>
-            <p class="hof-cell-name" title="${displayName}">${displayName}</p>
-            <div class="hof-cell-value-row">
-                <span class="hof-value is-${kind}">${entry.points}</span>
-                <span class="hof-date">${dateFormatter(entry.date)}</span>
-            </div>
+        <div class="hof-card hof-card-${kind}">
+            ${icon}
+            <p class="hof-card-label">${label}</p>
+            <p class="hof-card-value">${entry.points}</p>
+            <p class="hof-card-name"><span title="${displayName}">${displayName}</span> <span class="hof-card-date">· ${dateFormatter(entry.date)}</span></p>
         </div>`;
 }
 
 function buildHallOfFameHTML(data) {
-    if (!data || (!data.bestDay && !data.bestWeek && !data.bestMonth)) {
-        return `
+    const head = `
+        <div class="hof-head">
             <p class="hof-title">Temple de la renommée</p>
-            <p class="hof-empty">Pas encore assez de matchs joués cette saison pour établir des records.</p>`;
+            <span class="hof-subtitle">saison en cours</span>
+        </div>`;
+    if (!data || (!data.bestDay && !data.bestWeek && !data.bestMonth)) {
+        return `${head}<p class="hof-empty">Pas encore assez de matchs joués cette saison pour établir des records.</p>`;
     }
-    return `
-        <p class="hof-title">Temple de la renommée</p>
-        <div class="hof-rows">
-            <div class="hof-row">
-                ${hofCellHTML(data.bestMonth, 'best', 'Meilleur mois', formatHofMonth)}
-                ${hofCellHTML(data.worstMonth, 'worst', 'Pire mois', formatHofMonth)}
-            </div>
-            <div class="hof-divider"></div>
-            <div class="hof-row">
-                ${hofCellHTML(data.bestWeek, 'best', 'Meilleure semaine', formatHofDate)}
-                ${hofCellHTML(data.worstWeek, 'worst', 'Pire semaine', formatHofDate)}
-            </div>
-            <div class="hof-divider"></div>
-            <div class="hof-row">
-                ${hofCellHTML(data.bestDay, 'best', 'Meilleure journée', formatHofDate)}
-                ${hofCellHTML(data.worstDay, 'worst', 'Pire journée', formatHofDate)}
-            </div>
+    // Ordre du mockup : la meilleure semaine sert de carte « héro » (fond
+    // sombre), puis meilleurs mois/jour, puis les trois pires en fin de
+    // grille — pas un simple appariement best/worst par ligne.
+    return `${head}
+        <div class="hof-grid">
+            ${hofCardHTML(data.bestWeek, 'hero', 'Meilleure semaine', formatHofDate)}
+            ${hofCardHTML(data.bestMonth, 'best', 'Meilleur mois', formatHofMonth)}
+            ${hofCardHTML(data.bestDay, 'best', 'Meilleure journée', formatHofDate)}
+            ${hofCardHTML(data.worstWeek, 'worst', 'Pire semaine', formatHofDate)}
+            ${hofCardHTML(data.worstMonth, 'worst', 'Pire mois', formatHofMonth)}
+            ${hofCardHTML(data.worstDay, 'worst', 'Pire journée', formatHofDate)}
         </div>`;
 }
 

@@ -4,7 +4,8 @@
     "ignoreFiles": [
       "accueil-dash.css",
       "draftActif-premium.css",
-      "trade.css"
+      "trade.css",
+      "classement-premium.css"
     ],
     "ignoreValues": [
       {

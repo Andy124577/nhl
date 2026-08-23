@@ -5249,7 +5249,7 @@ app.post('/trade-listings/:id/remove', async (req, res) => {
 // when game logs don't cover the range. Never fabricates a number: a
 // team with no data anywhere gets points:null, not a made-up 0.
 // ============================================================
-const LEADERBOARD_WINDOWS = [7, 14, 30, 90, 180, 365];
+const LEADERBOARD_WINDOWS = [1, 7, 14, 30, 90, 180, 365];
 
 app.get('/pool-leaderboard/:poolName', async (req, res) => {
     try {

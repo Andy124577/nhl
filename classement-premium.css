@@ -1,0 +1,400 @@
+/* ====================================================================
+   Classement — habillage éditorial (Claude Design "Classement Pool NHL
+   v3"). Posé en couche par-dessus classement.css, jamais l'inverse — voir
+   draftActif-premium.css / trade.css pour le même principe : ce fichier ne
+   redéclare pas :root, tout est scopé sous body.fz-classement pour ne pas
+   fuir vers les pages non reskinnées.
+
+   Le mockup ne couvre que le niveau 2 (classement + temple de la
+   renommée) : la liste de pools, la fiche d'équipe et les onglets H2H
+   gardent leur habillage existant (classement.css), volontairement pas
+   touchés ici.
+   ==================================================================== */
+
+body.fz-classement {
+  --fzc-bg: #f7f6f3;
+  --fzc-bg-alt: #f2f0eb;
+  --fzc-bg-page: #dedbd5;
+  --fzc-surface: #ffffff;
+  --fzc-ink: #16181a;
+  --fzc-text: #4b4843;
+  --fzc-text-muted: #6d6a64;
+  --fzc-text-faint: #8a877f;
+  --fzc-text-fainter: #a8a49c;
+  --fzc-border: #e2dfd8;
+  --fzc-border-strong: #cdcac3;
+  --fzc-border-soft: #eae7e0;
+  --fzc-border-input: #d6d3cc;
+  --fzc-accent: #c4442e;
+  --fzc-accent-dark: #a8371f;
+  --fzc-tile: #dcd8d0;
+  --fzc-gold: #c9982e;
+  --fzc-good-bg: #e9f3ec;
+  --fzc-good: #2f7a4d;
+  --fzc-bad-bg: #fbeae6;
+  --fzc-bad: #c4442e;
+  --fzc-flat-bg: #ece9e2;
+
+  margin: 0;
+  min-height: 100vh;
+  background: var(--fzc-bg-page);
+  color: var(--fzc-text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+body.fz-classement * { box-sizing: border-box; }
+body.fz-classement a { color: var(--fzc-accent); text-decoration: none; }
+body.fz-classement a:hover { color: var(--fzc-accent-dark); }
+body.fz-classement button { font-family: inherit; }
+
+/* La barre du haut et le rail des pools sont partagés avec le reste du
+   site — sans ce correctif ils hériteraient de la police/couleur
+   éditoriale ci-dessus. Copié tel quel depuis draftActif-premium.css. */
+body.fz-classement .navbar,
+body.fz-classement #fzSidebar,
+body.fz-classement #fzDrawer {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text-dark);
+}
+body.fz-classement nav a { color: var(--text-secondary); }
+body.fz-classement nav a:hover { color: var(--text-main); }
+body.fz-classement nav a.active:hover,
+body.fz-classement nav a.is-active:hover { color: var(--primary); }
+
+body.fz-classement .container {
+  max-width: 960px;
+  padding: 40px 32px 60px;
+}
+
+/* ==================== TITRE / FIL D'ARIANE ==================== */
+body.fz-classement .page-title {
+  text-align: left;
+  font: 700 28px/1.2 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--fzc-ink);
+  margin: 0 0 24px;
+}
+body.fz-classement .breadcrumb {
+  padding: 0;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--fzc-text-faint);
+}
+body.fz-classement .breadcrumb-item:hover,
+body.fz-classement .breadcrumb-item.active { color: var(--fzc-accent); }
+body.fz-classement .breadcrumb-separator { color: #c9c5bd; }
+
+/* ==================== PÉRIODE (1J / 7J / 30J) ==================== */
+body.fz-classement .st-period-chips {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 14px;
+}
+body.fz-classement .st-period-chip {
+  padding: 7px 15px;
+  border-radius: 8px;
+  border: 1px solid var(--fzc-border-input);
+  background: transparent;
+  color: var(--fzc-text-muted);
+  font: 600 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+body.fz-classement .st-period-chip:hover {
+  border-color: var(--fzc-ink);
+  color: var(--fzc-ink);
+}
+body.fz-classement .st-period-chip.active {
+  background: var(--fzc-ink);
+  border-color: var(--fzc-ink);
+  color: #fff;
+}
+
+/* ==================== TABLEAU (DESKTOP) ==================== */
+body.fz-classement .standings-table-container {
+  border: 1px solid var(--fzc-border);
+  border-radius: 12px;
+  background: var(--fzc-surface);
+  overflow: hidden;
+}
+body.fz-classement #standingsTable {
+  min-width: 620px;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+body.fz-classement #standingsTable thead th {
+  background: var(--fzc-bg-alt);
+  border-bottom: 1px solid var(--fzc-border-strong);
+  color: var(--fzc-text-muted);
+  font: 600 10px/1 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .09em;
+}
+body.fz-classement #standingsTable th.points-column { color: var(--fzc-accent); }
+body.fz-classement #standingsTable th.sortable:hover,
+body.fz-classement #standingsTable th.sortable:focus-visible {
+  background: var(--fzc-border-soft);
+  color: var(--fzc-ink);
+}
+body.fz-classement #standingsTable th.is-sorted {
+  background: var(--fzc-border-soft);
+  color: var(--fzc-accent);
+}
+body.fz-classement #standingsTable th.sortable:focus-visible { outline-color: var(--fzc-ink); }
+
+body.fz-classement #standingsTable th.rank-col,
+body.fz-classement #standingsTable td.rank-col,
+body.fz-classement #standingsTable th.player-col,
+body.fz-classement #standingsTable td.player-col {
+  background: var(--fzc-surface);
+}
+body.fz-classement #standingsTable tbody tr {
+  background: var(--fzc-surface);
+  border-bottom: 1px solid var(--fzc-border-soft);
+}
+body.fz-classement #standingsTable tbody tr.is-leader,
+body.fz-classement #standingsTable tbody tr.is-leader td.rank-col,
+body.fz-classement #standingsTable tbody tr.is-leader td.player-col {
+  background: #fbf7ee;
+}
+body.fz-classement #standingsTable tbody tr.is-clickable:hover,
+body.fz-classement #standingsTable tbody tr.is-clickable:focus-visible,
+body.fz-classement #standingsTable tbody tr.is-clickable:hover td.rank-col,
+body.fz-classement #standingsTable tbody tr.is-clickable:hover td.player-col,
+body.fz-classement #standingsTable tbody tr.is-clickable:focus-visible td.rank-col,
+body.fz-classement #standingsTable tbody tr.is-clickable:focus-visible td.player-col {
+  background: var(--fzc-bg);
+}
+body.fz-classement #standingsTable tbody tr.is-clickable::after { background: var(--fzc-accent); }
+body.fz-classement #standingsTable tbody tr.is-leader.is-clickable::after { background: var(--fzc-gold); }
+body.fz-classement #standingsTable tbody tr.is-clickable:focus-visible { outline-color: var(--fzc-accent); }
+
+body.fz-classement #standingsTable td {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--fzc-text-muted);
+}
+body.fz-classement #standingsTable td.points-column {
+  font: 700 15px/1 'Oswald', sans-serif;
+  color: var(--fzc-ink);
+}
+body.fz-classement #standingsTable td.st-period-col { color: var(--fzc-text-faint); }
+
+body.fz-classement .st-rank-badge {
+  font: 700 14px/1 'Oswald', sans-serif;
+}
+body.fz-classement .st-rank-badge.gold,
+body.fz-classement .st-rank-badge.silver,
+body.fz-classement .st-rank-badge.bronze { color: var(--fzc-accent); }
+body.fz-classement .st-rank-badge:not(.gold):not(.silver):not(.bronze) { color: var(--fzc-text-fainter); }
+
+body.fz-classement .st-participant { gap: 10px; }
+body.fz-classement .st-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--fzc-tile);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+body.fz-classement .st-avatar img { width: 18px; height: 18px; object-fit: contain; }
+body.fz-classement .st-avatar-fallback {
+  font: 600 9.5px/1 'Oswald', sans-serif;
+  color: #5e5b55;
+}
+body.fz-classement .st-name {
+  font: 600 13px/1 'Helvetica Neue', Helvetica, sans-serif;
+  color: var(--fzc-ink);
+  max-width: none;
+}
+
+/* ==================== BADGE D'ÉVOLUTION DE RANG ==================== */
+body.fz-classement .st-evo {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  font: 700 10.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+}
+body.fz-classement .st-evo svg { flex-shrink: 0; }
+body.fz-classement .st-evo-up { background: var(--fzc-good-bg); color: var(--fzc-good); }
+body.fz-classement .st-evo-up svg { fill: var(--fzc-good); }
+body.fz-classement .st-evo-down { background: var(--fzc-bad-bg); color: var(--fzc-bad); }
+body.fz-classement .st-evo-down svg { fill: var(--fzc-bad); }
+body.fz-classement .st-evo-flat { background: var(--fzc-flat-bg); color: var(--fzc-text-faint); }
+body.fz-classement td.st-evo-col { text-align: right; }
+
+body.fz-classement #standingsTable tfoot .standings-avg-row td {
+  background: var(--fzc-bg-alt);
+  color: var(--fzc-text-muted);
+  border-top: 2px solid var(--fzc-border-strong);
+}
+body.fz-classement .standings-avg-label { color: var(--fzc-text-muted); }
+
+body.fz-classement .st-empty-title { color: var(--fzc-ink); }
+body.fz-classement .st-empty-hint,
+body.fz-classement .hof-empty { color: var(--fzc-text-faint); }
+
+/* ==================== TABLEAU (MOBILE : cartes) ==================== */
+/* Le mockup montre une vue "phone" distincte, pas juste le même tableau
+   qui déborde : sous 680px on bascule sur des lignes en carte plutôt que
+   de scroller le tableau horizontalement. */
+body.fz-classement .st-mobile-list { display: none; }
+
+@media (max-width: 680px) {
+  body.fz-classement .standings-table-container { display: none; }
+  body.fz-classement .st-mobile-list {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--fzc-border);
+    border-radius: 12px;
+    background: var(--fzc-surface);
+    overflow: hidden;
+  }
+  body.fz-classement .st-mobile-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--fzc-border-soft);
+    cursor: pointer;
+    transition: background .15s ease;
+  }
+  body.fz-classement .st-mobile-row:last-child { border-bottom: none; }
+  body.fz-classement .st-mobile-row:hover,
+  body.fz-classement .st-mobile-row:focus-visible { background: var(--fzc-bg); }
+  body.fz-classement .st-mobile-rank { width: 20px; flex-shrink: 0; }
+  body.fz-classement .st-mobile-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  body.fz-classement .st-mobile-name {
+    font: 600 12.5px/1.2 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzc-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  body.fz-classement .st-mobile-sub {
+    margin-top: 2px;
+    font: 400 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzc-text-faint);
+  }
+  body.fz-classement .st-mobile-pts {
+    font: 700 14px/1 'Oswald', sans-serif;
+    color: var(--fzc-ink);
+    margin-right: 2px;
+  }
+}
+
+/* ==================== TEMPLE DE LA RENOMMÉE ==================== */
+body.fz-classement .hall-of-fame {
+  margin-top: 44px;
+  padding-top: 0;
+  border-top: none;
+}
+body.fz-classement .hof-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+body.fz-classement .hof-title {
+  margin: 0;
+  font: 600 13px/1 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--fzc-ink);
+}
+body.fz-classement .hof-subtitle {
+  font: 400 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+  color: var(--fzc-text-faint);
+}
+body.fz-classement .hof-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+body.fz-classement .hof-card {
+  border-radius: 12px;
+  padding: 18px 18px 20px;
+  border: 1px solid var(--fzc-border);
+  background: var(--fzc-surface);
+}
+body.fz-classement .hof-card-hero {
+  border: none;
+  background: var(--fzc-ink);
+  color: #fff;
+}
+body.fz-classement .hof-card-worst { background: var(--fzc-bg); }
+body.fz-classement .hof-icon { display: block; margin-bottom: 10px; }
+body.fz-classement .hof-icon.is-best { fill: var(--fzc-gold); }
+body.fz-classement .hof-icon.is-worst { fill: var(--fzc-text-fainter); transform: rotate(180deg); }
+body.fz-classement .hof-card-label {
+  margin: 0 0 8px;
+  font: 600 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--fzc-text-faint);
+}
+body.fz-classement .hof-card-hero .hof-card-label { color: #a8a49c; }
+body.fz-classement .hof-card-value {
+  margin: 0 0 6px;
+  font: 700 24px/1 'Oswald', sans-serif;
+  color: var(--fzc-accent);
+}
+body.fz-classement .hof-card-hero .hof-card-value { color: #fff; }
+body.fz-classement .hof-card-worst .hof-card-value { color: var(--fzc-text-faint); }
+body.fz-classement .hof-card-name {
+  margin: 0;
+  font: 600 12.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+  color: var(--fzc-ink);
+}
+body.fz-classement .hof-card-hero .hof-card-name { color: #fff; }
+body.fz-classement .hof-card-date { color: var(--fzc-text-faint); font-weight: 400; }
+
+@media (max-width: 680px) {
+  body.fz-classement .hof-grid { grid-template-columns: 1fr; }
+}
+
+/* ==================== ÉQUIPES RÉCENTES ==================== */
+body.fz-classement .recent-form-leaderboard { margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--fzc-border); }
+body.fz-classement .recent-form-head .hof-title { text-transform: uppercase; }
+body.fz-classement .time-filter {
+  border-color: var(--fzc-border-input);
+  background: transparent;
+  color: var(--fzc-text-muted);
+}
+body.fz-classement .time-filter:hover { border-color: var(--fzc-ink); color: var(--fzc-ink); }
+body.fz-classement .time-filter.active {
+  background: var(--fzc-ink);
+  border-color: var(--fzc-ink);
+  color: #fff;
+}
+body.fz-classement .leaderboard-row {
+  border-color: var(--fzc-border);
+  background: var(--fzc-surface);
+}
+body.fz-classement .lb-rank { color: var(--fzc-text-fainter); }
+body.fz-classement .lb-rank.gold,
+body.fz-classement .lb-rank.silver,
+body.fz-classement .lb-rank.bronze { color: var(--fzc-accent); }
+body.fz-classement .lb-team { color: var(--fzc-ink); }
+body.fz-classement .lb-pts { color: var(--fzc-accent); }
+body.fz-classement .lb-source { color: var(--fzc-text-fainter); }
+
+/* ==================== SKELETON (chargement) ==================== */
+body.fz-classement .standings-table-skeleton {
+  background: var(--fzc-surface);
+  border: 1px solid var(--fzc-border);
+}
+body.fz-classement .skeleton,
+body.fz-classement .skeleton-circle {
+  background: linear-gradient(90deg, var(--fzc-border-soft) 25%, var(--fzc-tile) 50%, var(--fzc-border-soft) 75%);
+  background-size: 200% 100%;
+}
