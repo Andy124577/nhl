@@ -27,9 +27,10 @@ function initModernNavbar() {
         initializeEventListeners(username, isAdmin);
         checkPendingTrades();
         checkActiveDrafts();
+        updateTradeLinkVisibility();
         // Les pastilles parlent du pool actif : elles le suivent quand il change.
         if (window.FZPool) {
-            const majPastilles = () => { checkPendingTrades(); checkActiveDrafts(); };
+            const majPastilles = () => { checkPendingTrades(); checkActiveDrafts(); updateTradeLinkVisibility(); };
             FZPool.on(majPastilles);
             FZPool.onData(majPastilles);
         }
@@ -469,6 +470,29 @@ async function checkActiveDrafts() {
         setNavBadge(['desktopDraftBadge', 'bottomDraftBadge'], aSignaler ? '' : null);
     } catch (error) {
         console.error('Error checking active drafts:', error);
+    }
+}
+
+/**
+ * Le lien « Échanges » n'a rien à faire dans les barres de navigation si le
+ * pool actif a désactivé les échanges — la page elle-même refuse déjà d'y
+ * bâtir quoi que ce soit (voir trade.js), le lien serait un cul-de-sac.
+ */
+async function updateTradeLinkVisibility() {
+    try {
+        if (!window.FZPool) return;
+        await FZPool.ready();
+
+        const actif = FZPool.get();
+        const pool = FZPool.mine().find(p => p.name === actif);
+        const visible = !pool || pool.data.allowTrades !== false;
+
+        ['desktopTradeLink', 'bottomTradeLink'].forEach(id => {
+            const lien = document.getElementById(id);
+            if (lien) lien.style.display = visible ? '' : 'none';
+        });
+    } catch (error) {
+        console.error('Error checking trade link visibility:', error);
     }
 }
 

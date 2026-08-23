@@ -149,10 +149,17 @@
 
     function blocPages() {
         const page = pageCourante();
+        const donneesActif = FZPool.data();
+        // Le lien « Échanges » n'a pas sa place ici si le pool actif a coupé
+        // les échanges : la page elle-même refuserait d'y afficher quoi que
+        // ce soit (voir trade.js).
+        const liens = (donneesActif && donneesActif.allowTrades === false)
+            ? LIENS_PAGE.filter(lien => lien.cle !== 'trade')
+            : LIENS_PAGE;
         return `
             <nav class="fz-drawer-pages" aria-label="Pages">
                 <p class="fz-rail-label">Naviguer</p>
-                ${LIENS_PAGE.map(lien => `
+                ${liens.map(lien => `
                     <a href="${lien.href}" class="fz-drawer-page${lien.cle === page ? ' is-active' : ''}">
                         <span class="fz-drawer-page-img">${ICONES[lien.icone]}</span>
                         <span>${lien.texte}</span>

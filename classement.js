@@ -126,11 +126,18 @@ async function loadAllUserPools() {
             return;
         }
 
-        // Un classement sans effectif n'affiche que des zéros : mieux vaut
-        // renvoyer vers le repêchage, qui est ce qui manque réellement.
-        if (!FZPool.hasRoster(pool.teamData)) {
+        // Un classement pendant un repêchage encore ouvert n'affiche que des
+        // effectifs partiels : mieux vaut renvoyer vers le repêchage, qui
+        // est ce qui manque réellement, tant qu'il n'est pas terminé.
+        const etatRepechage = FZPool.draftState(pool.data).etat;
+        if (etatRepechage !== 'termine') {
+            const messages = {
+                attente: `« ${pool.name} » attend encore des joueurs avant que le repêchage puisse commencer.`,
+                pret: `Le repêchage de « ${pool.name} » n'a pas encore commencé.`,
+                encours: `Le repêchage de « ${pool.name} » est en cours. Le classement s'affichera une fois terminé.`
+            };
             showError('Repêchage à venir',
-                `Le classement de « ${pool.name} » s'affichera une fois le repêchage terminé.`);
+                messages[etatRepechage] || `Le classement de « ${pool.name} » s'affichera une fois le repêchage terminé.`);
             return;
         }
 
