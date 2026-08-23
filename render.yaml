@@ -12,6 +12,10 @@ services:
         # Set this manually in Render Dashboard with your external PostgreSQL URL
         # Example: postgresql://user:pass@host.neon.tech/dbname?sslmode=require
         sync: false
+      - key: NEWSAPI_KEY
+        # Set this manually in Render Dashboard (same value as your local .env).
+        # Without it, /nhl-news returns an empty list and storiesCard shows no news.
+        sync: false
 
 # External database configuration (Neon.tech, Supabase, etc.)
 # No database section needed - using external PostgreSQL to save Render hours
