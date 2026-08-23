@@ -109,8 +109,16 @@ async function initCalendar() {
 }
 
 function renderCalendar() {
+    renderCalEyebrow();
     renderDayStrip();
     renderDayGames();
+}
+
+function renderCalEyebrow() {
+    const eyebrow = document.getElementById('fzdCalEyebrow');
+    if (!eyebrow) return;
+    const d = new Date((calSelectedDate || todayISO()) + 'T00:00:00Z');
+    eyebrow.textContent = `Calendrier — ${FR_MONTH[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
 function renderDayStrip() {

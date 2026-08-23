@@ -65,39 +65,6 @@
 }
 
 /* ------------------------------------------------------------ */
-/* Pool actif — habille le bandeau partagé de poolNav.js         */
-/* (data-fz-context / .fz-context-bar) plutôt que d'en refaire   */
-/* un : même tiroir, même bouton « Changer ».                    */
-/* ------------------------------------------------------------ */
-.fz-dash-context { margin-bottom: 18px; }
-.fz-dash-context .fz-context-bar {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 12px 16px;
-    background: var(--fzd-surface);
-    border: 1px solid var(--fzd-border-strong);
-    border-radius: 14px;
-}
-.fz-dash-context .fz-context-img { width: 34px; height: 34px; border-radius: 999px; object-fit: cover; }
-.fz-dash-context .fz-context-txt { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-.fz-dash-context .fz-context-label { font: 500 10px/1 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: .13em; text-transform: uppercase; color: var(--fzd-text-faint); }
-.fz-dash-context .fz-context-name { font: 600 16px/1 'Oswald', sans-serif; color: var(--fzd-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fz-dash-context .fz-context-switch {
-    flex-shrink: 0;
-    padding: 8px 13px;
-    border: 1px solid var(--fzd-border-strong);
-    border-radius: 9px;
-    background: transparent;
-    font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .05em;
-    text-transform: uppercase;
-    color: var(--fzd-ink);
-    cursor: pointer;
-}
-.fz-dash-context .fz-context-switch:hover { background: var(--fzd-bg-alt); }
-
-/* ------------------------------------------------------------ */
 /* Onboarding — membre inscrit mais sans pool actif : remplace   */
 /* le calendrier et le corps du tableau de bord.                 */
 /* ------------------------------------------------------------ */

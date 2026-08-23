@@ -175,10 +175,6 @@
     <!-- ============================================================ -->
     <section class="fz-dash-section" id="fzDashSection">
         <div class="fz-dash">
-            <div class="fz-dash-context" id="fzDashContext">
-                <div data-fz-context></div>
-            </div>
-
             <!-- Inscrit mais sans pool actif -->
             <div class="fz-dash-onboard" id="fzDashOnboard">
                 <p class="fzd-onboard-text">Vous ne faites partie d'aucun pool.</p>
@@ -191,7 +187,7 @@
             <!-- Calendrier — saison complète, GET /schedule/:date -->
             <div class="fz-dash-calendar" id="fzDashCalendarWrap">
                 <div class="fzd-cal-head">
-                    <span class="fzd-eyebrow">Calendrier</span>
+                    <span class="fzd-eyebrow" id="fzdCalEyebrow">Calendrier</span>
                     <div class="fzd-cal-nav">
                         <button type="button" class="fzd-cal-nav-btn" id="fzdCalPrev" aria-label="Semaine précédente">‹</button>
                         <button type="button" class="fzd-cal-nav-btn" id="fzdCalNext" aria-label="Semaine suivante">›</button>
