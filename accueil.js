@@ -11,7 +11,6 @@ let userData = {
     userPools: [],
     pendingTrades: [],
     statsData: null,
-    hotPlayers: null,
     statsLeaders: null
 };
 
@@ -35,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Fetch pools, stats and pending trades in parallel
     await Promise.all([
-        FZPool.ready(), loadPools(), loadCurrentStats(), loadStats(), loadStatsLeaders(), loadPendingTrades()
+        FZPool.ready(), loadPools(), loadCurrentStats(), loadStatsLeaders(), loadPendingTrades()
     ]);
 
     // The pool-glance/roster card, "Mes classements", and the Activité tab
@@ -114,62 +113,6 @@ async function loadStatsLeaders() {
         userData.statsLeaders = await res.json();
     } catch (err) {
         console.warn('Could not load stats leaders:', err);
-    }
-}
-
-// ============================================================
-// STATS LOADING (hot players)
-// ============================================================
-let currentTimeRange = 7; // Default to 7 days
-const SIX_MONTHS_DAYS = 180;
-
-function timeRangeText(days) {
-    return days === SIX_MONTHS_DAYS ? '6 derniers mois' : `${days} derniers jours`;
-}
-
-function hasHotPlayers(data) {
-    return !!(data && Array.isArray(data.topPlayers) && data.topPlayers.length);
-}
-
-async function fetchHotPlayers(days) {
-    const res = await fetch(`${BASE_URL}/hot-players-last${days}days`);
-    return await res.json();
-}
-
-async function loadStats(days = 7) {
-    try {
-        let data = await fetchHotPlayers(days);
-
-        // Off-season / empty DB: if nothing happened in the last 30 days, reveal the
-        // 6-month filter and open on it instead of showing an empty section.
-        if (days === 7 && !hasHotPlayers(data)) {
-            const last30 = await fetchHotPlayers(30);
-            if (!hasHotPlayers(last30)) {
-                const sixMonthBtn = document.getElementById('timeFilter6M');
-                if (sixMonthBtn) sixMonthBtn.style.display = '';
-                days = SIX_MONTHS_DAYS;
-                data = await fetchHotPlayers(SIX_MONTHS_DAYS);
-            }
-        }
-
-        currentTimeRange = days;
-        userData.hotPlayers = data;
-
-        // Update active button and label to reflect actual range shown.
-        // Scoped to this section: the Activité tab's leaderboard reuses the
-        // same .time-filter class for its own, independent window picker.
-        document.querySelectorAll('.top-players-section .time-filter').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.days == currentTimeRange);
-        });
-        const label = document.getElementById('timeRangeLabel');
-        if (label) label.textContent = timeRangeText(currentTimeRange);
-        const viewAllLink = document.getElementById('viewAllPlayersLink');
-        if (viewAllLink) viewAllLink.href = `stats.html?days=${currentTimeRange}`;
-
-        renderTopPlayers();
-    } catch (err) {
-        console.error('Error loading stats:', err);
-        renderTopPlayersError();
     }
 }
 
@@ -466,154 +409,6 @@ function getPlayerStats(name) {
 function escapeHTML(str) {
     return String(str ?? '').replace(/[&<>"']/g, c =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
-// ============================================================
-// TOP PLAYERS SECTION - LAST 7 DAYS
-// ============================================================
-function renderTopPlayers() {
-    const skeleton = document.getElementById('topPlayersSkeleton');
-    const content  = document.getElementById('topPlayersList');
-
-    if (skeleton) skeleton.style.display = 'none';
-    if (!content) return;
-
-    // Clear the inline display so .players-grid decides the layout — it's a grid
-    // on desktop and a horizontal snap-scroller on phones.
-    content.style.display = '';
-
-    const hotPlayers = userData.hotPlayers;
-    if (!hotPlayers || !hotPlayers.topPlayers) {
-        renderTopPlayersError();
-        return;
-    }
-
-    const performers = hotPlayers.topPlayers.slice(0, 10);
-
-    if (!performers.length) {
-        content.innerHTML = `<p style="grid-column:1/-1;width:100%;text-align:center;
-            padding:48px;color:var(--text-secondary);">Aucun joueur trouvé dans les ${timeRangeText(currentTimeRange)}</p>`;
-        return;
-    }
-
-    const rankCls = i => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'normal';
-
-    content.innerHTML = performers.map((p, i) => {
-        const name    = p.playerName || 'Unknown';
-        const team    = p.teamAbbrev || 'N/A';
-        const pos     = p.position || 'F';
-        const fantasyPts = Math.round(p.totalFantasyPoints || 0);
-        const gamesPlayed = p.gamesPlayed || 0;
-        const isHot   = p.isHot || false;
-
-        // Display goals/assists for skaters, wins/saves for goalies
-        const goals   = p.goals || 0;
-        const assists = p.assists || 0;
-        const pts     = p.points || 0;
-        const wins    = p.wins || 0;
-        const saves   = p.saves || 0;
-
-        const headshot = p.headshot || `https://assets.nhle.com/mugs/nhl/20252026/${team}/${p.playerId}.png`;
-
-        return `
-        <div class="player-card" onclick="viewPlayer(${p.playerId || ''})"
-             style="animation-delay:${i * 0.07}s">
-            <div class="player-rank-badge ${rankCls(i)}">${i + 1}</div>
-            ${isHot ? '<span class="hot-streak" title="En feu!">🔥</span>' : ''}
-            <div class="player-card-photo">
-                <img src="${headshot}" alt="${name}"
-                     onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';"
-                     loading="lazy">
-                <span class="no-photo" style="display:none">🏒</span>
-            </div>
-            <div class="player-card-name">${name}</div>
-            <div class="player-card-team">${team} · ${gamesPlayed} matchs</div>
-            <div class="player-card-stats">
-                ${pos === 'G' ? `
-                    <div class="pc-stat">
-                        <span class="pc-stat-val pts">${fantasyPts}</span>
-                        <span class="pc-stat-label">FPTS</span>
-                    </div>
-                    <div class="pc-stat">
-                        <span class="pc-stat-val">${wins}</span>
-                        <span class="pc-stat-label">VIC</span>
-                    </div>
-                    <div class="pc-stat">
-                        <span class="pc-stat-val">${saves}</span>
-                        <span class="pc-stat-label">ARR</span>
-                    </div>
-                ` : `
-                    <div class="pc-stat">
-                        <span class="pc-stat-val pts">${fantasyPts}</span>
-                        <span class="pc-stat-label">FPTS</span>
-                    </div>
-                    <div class="pc-stat">
-                        <span class="pc-stat-val">${goals}</span>
-                        <span class="pc-stat-label">BTS</span>
-                    </div>
-                    <div class="pc-stat">
-                        <span class="pc-stat-val">${assists}</span>
-                        <span class="pc-stat-label">ASS</span>
-                    </div>
-                `}
-            </div>
-        </div>`;
-    }).join('');
-}
-
-function renderTopPlayersError() {
-    const skeleton = document.getElementById('topPlayersSkeleton');
-    const content  = document.getElementById('topPlayersList');
-    if (skeleton) skeleton.style.display = 'none';
-    if (!content) return;
-    content.style.display = '';
-    content.innerHTML = `
-        <div style="grid-column:1/-1;text-align:center;padding:48px;width:100%;">
-            <p style="color:var(--text-secondary);margin-bottom:12px;font-size:1.1rem;">
-                📊 Aucune donnée disponible</p>
-            <p style="color:var(--text-gray);margin-bottom:18px;font-size:0.9rem;">
-                Les statistiques des joueurs seront disponibles une fois les logs de parties chargés dans la base de données.</p>
-            <button onclick="location.reload()"
-                style="padding:11px 24px;background:var(--primary);color:var(--bg);
-                       border:none;border-radius:10px;font-weight:800;cursor:pointer;
-                       font-size:.95rem;box-shadow:var(--glow-primary);">
-                🔄 Réessayer
-            </button>
-        </div>`;
-}
-
-// ============================================================
-// UTILITY
-// ============================================================
-function viewPlayer(playerId) {
-    if (playerId) {
-        window.location.href = `stats.html?viewPlayer=${playerId}`;
-    }
-}
-
-// ============================================================
-// TIME RANGE FILTER
-// ============================================================
-function changeTimeRange(days) {
-    // Update active button (scoped — see the note in loadStats above)
-    document.querySelectorAll('.top-players-section .time-filter').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.days == days);
-    });
-
-    // Update label
-    const label = document.getElementById('timeRangeLabel');
-    if (label) {
-        label.textContent = timeRangeText(days);
-    }
-
-    // Update "Voir tout" link to preserve time range
-    const viewAllLink = document.getElementById('viewAllPlayersLink');
-    if (viewAllLink) {
-        viewAllLink.href = `stats.html?days=${days}`;
-    }
-
-    // Reload stats with new range
-    loadStats(days);
 }
 
 // ============================================================

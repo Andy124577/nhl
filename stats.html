@@ -16,6 +16,7 @@
          dernier pour que ses règles spécialisent celles d'index.css. -->
     <link rel="stylesheet" href="career-modal.css">
     <link rel="stylesheet" href="statsLeaders.css">
+    <link rel="stylesheet" href="statsTopPlayers.css">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
@@ -40,163 +41,211 @@
     </header>
 
     <!-- ============================================================ -->
-    <!-- LEAGUE LEADERS — six top-5 boards                             -->
+    <!-- SUB-NAV — Tous les joueurs / Meneurs                          -->
     <!-- ============================================================ -->
-    <div class="stats-leaders-section">
-        <div class="stats-leaders-head">
-            <h2 class="stats-leaders-title"><span data-icon="trophy" data-icon-size="22"></span> Meneurs de la ligue</h2>
-        </div>
-        <div class="leaders-grid" id="statsLeadersGrid">
-            <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
-            <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
-            <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
-            <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
-            <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
-            <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
+    <div class="stats-subnav">
+        <div class="stats-subnav-inner">
+            <button class="stats-subnav-btn active" data-stats-tab="tous" onclick="switchStatsTab('tous')">Tous les joueurs</button>
+            <button class="stats-subnav-btn" data-stats-tab="meneurs" onclick="switchStatsTab('meneurs')">Meneurs</button>
         </div>
     </div>
 
     <!-- ============================================================ -->
-    <!-- MAIN CONTAINER                                                -->
+    <!-- MENEURS TAB — league leaders + top performing players         -->
     <!-- ============================================================ -->
-    <div class="stats-container">
-        <!-- Enhanced Filters Section -->
-        <div class="filters-section">
-            <div class="filter-group filter-search">
-                <label for="searchInput">
-                    <span class="filter-icon" data-icon="search" data-icon-size="17"></span> Rechercher
-                </label>
-                <input type="text" id="searchInput" placeholder="Nom du joueur">
+    <div class="stats-tab-panel" data-stats-panel="meneurs" style="display:none;">
+        <!-- League leaders — six top-5 boards -->
+        <div class="stats-leaders-section">
+            <div class="stats-leaders-head">
+                <h2 class="stats-leaders-title"><span data-icon="trophy" data-icon-size="22"></span> Meneurs de la ligue</h2>
             </div>
-
-            <div class="filter-group">
-                <label for="playerFilter">Filtre</label>
-                <select id="playerFilter">
-                    <option value="all">Tous les joueurs</option>
-                    <option value="offensive">Attaquants</option>
-                    <option value="defensive">Défenseurs</option>
-                    <option value="goalies">Gardiens</option>
-                    <option value="rookies">Recrues</option>
-                    <option value="teams">Équipes</option>
-                </select>
-            </div>
-
-            <div class="filter-group">
-                <label for="sortBy">Trier par</label>
-                <select id="sortBy">
-                    <option value="points">Points</option>
-                    <option value="goals">Buts</option>
-                    <option value="assists">Passes</option>
-                    <option value="gamesPlayed">Parties jouées</option>
-                </select>
+            <div class="leaders-grid" id="statsLeadersGrid">
+                <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
+                <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
+                <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
+                <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
+                <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
+                <div class="leader-card leader-skeleton"><div class="skeleton" style="height:230px;border-radius:14px;"></div></div>
             </div>
         </div>
 
-        <!-- Table Container -->
-        <div class="table-container" id="tableContainer">
-            <!-- Skeleton Loader -->
-            <div class="skeleton-loader" id="tableSkeleton">
-                <div class="skeleton-table">
-                    <div class="skeleton-table-header">
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                    </div>
-                    <div class="skeleton-table-row">
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                    </div>
-                    <div class="skeleton-table-row">
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                    </div>
-                    <div class="skeleton-table-row">
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                    </div>
-                    <div class="skeleton-table-row">
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                    </div>
-                    <div class="skeleton-table-row">
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                    </div>
-                    <div class="skeleton-table-row">
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                    </div>
-                    <div class="skeleton-table-row">
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                        <div class="skeleton"></div>
-                    </div>
+        <!-- Top performing players (relocated from index.html) -->
+        <div class="top-players-section">
+            <div class="section-title-row">
+                <div class="section-title-group">
+                    <span class="section-icon" data-icon="hockey" data-icon-size="22"></span>
+                    <h2 class="section-title">Meilleurs joueurs</h2>
+                    <span class="section-subtitle" id="timeRangeLabel">7 derniers jours</span>
+                </div>
+                <div class="time-filters">
+                    <button class="time-filter active" data-days="7" onclick="changeTimeRange(7)">7J</button>
+                    <button class="time-filter" data-days="14" onclick="changeTimeRange(14)">14J</button>
+                    <button class="time-filter" data-days="30" onclick="changeTimeRange(30)">30J</button>
+                    <!-- Revealed by statsTopPlayers.js only when the 30-day window is empty -->
+                    <button class="time-filter" data-days="180" onclick="changeTimeRange(180)" id="timeFilter6M" style="display:none;">6M</button>
                 </div>
             </div>
 
-            <!-- Actual Content -->
-            <div class="actual-content" id="actualTable" style="display: none;">
-                <table id="playerTable">
-                    <thead>
-                        <tr>
-                            <th class="rank-col" title="Rang">#</th>
-                            <th class="player-col">Joueur</th>
-                            <th title="Parties jouées">PJ</th>
-                            <th title="Buts">B</th>
-                            <th title="Passes décisives">A</th>
-                            <th class="points-column" title="Points">PTS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Dynamic content filled by JS -->
-                    </tbody>
-                </table>
-                <div id="statsPagination" class="stats-pagination"></div>
+            <!-- Skeleton -->
+            <div class="skeleton-loader" id="topPlayersSkeleton">
+                <div class="players-grid">
+                    <div class="skeleton" style="height:200px;border-radius:14px;"></div>
+                    <div class="skeleton" style="height:200px;border-radius:14px;"></div>
+                    <div class="skeleton" style="height:200px;border-radius:14px;"></div>
+                    <div class="skeleton" style="height:200px;border-radius:14px;"></div>
+                    <div class="skeleton" style="height:200px;border-radius:14px;"></div>
+                </div>
+            </div>
+            <!-- Content -->
+            <div class="actual-content players-grid" id="topPlayersList" style="display:none;">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TOUS TAB — full searchable/sortable player table              -->
+    <!-- ============================================================ -->
+    <div class="stats-tab-panel" data-stats-panel="tous">
+        <div class="stats-container">
+            <!-- Enhanced Filters Section -->
+            <div class="filters-section">
+                <div class="filter-group filter-search">
+                    <label for="searchInput">
+                        <span class="filter-icon" data-icon="search" data-icon-size="17"></span> Rechercher
+                    </label>
+                    <input type="text" id="searchInput" placeholder="Nom du joueur">
+                </div>
+
+                <div class="filter-group">
+                    <label for="playerFilter">Filtre</label>
+                    <select id="playerFilter">
+                        <option value="all">Tous les joueurs</option>
+                        <option value="offensive">Attaquants</option>
+                        <option value="defensive">Défenseurs</option>
+                        <option value="goalies">Gardiens</option>
+                        <option value="rookies">Recrues</option>
+                        <option value="teams">Équipes</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="sortBy">Trier par</label>
+                    <select id="sortBy">
+                        <option value="points">Points</option>
+                        <option value="goals">Buts</option>
+                        <option value="assists">Passes</option>
+                        <option value="gamesPlayed">Parties jouées</option>
+                    </select>
+                </div>
             </div>
 
-            <!-- Empty State -->
-            <div class="stats-empty-state" id="emptyState" style="display:none;">
-                <div class="empty-icon" data-icon="person" data-icon-size="56"></div>
-                <h2>Aucun joueur trouvé</h2>
-                <p>Essayez de modifier vos filtres ou critères de recherche</p>
+            <!-- Table Container -->
+            <div class="table-container" id="tableContainer">
+                <!-- Skeleton Loader -->
+                <div class="skeleton-loader" id="tableSkeleton">
+                    <div class="skeleton-table">
+                        <div class="skeleton-table-header">
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                        </div>
+                        <div class="skeleton-table-row">
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                        </div>
+                        <div class="skeleton-table-row">
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                        </div>
+                        <div class="skeleton-table-row">
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                        </div>
+                        <div class="skeleton-table-row">
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                        </div>
+                        <div class="skeleton-table-row">
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                        </div>
+                        <div class="skeleton-table-row">
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                        </div>
+                        <div class="skeleton-table-row">
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                            <div class="skeleton"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actual Content -->
+                <div class="actual-content" id="actualTable" style="display: none;">
+                    <table id="playerTable">
+                        <thead>
+                            <tr>
+                                <th class="rank-col" title="Rang">#</th>
+                                <th class="player-col">Joueur</th>
+                                <th title="Parties jouées">PJ</th>
+                                <th title="Buts">B</th>
+                                <th title="Passes décisives">A</th>
+                                <th class="points-column" title="Points">PTS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic content filled by JS -->
+                        </tbody>
+                    </table>
+                    <div id="statsPagination" class="stats-pagination"></div>
+                </div>
+
+                <!-- Empty State -->
+                <div class="stats-empty-state" id="emptyState" style="display:none;">
+                    <div class="empty-icon" data-icon="person" data-icon-size="56"></div>
+                    <h2>Aucun joueur trouvé</h2>
+                    <p>Essayez de modifier vos filtres ou critères de recherche</p>
+                </div>
             </div>
         </div>
     </div>
@@ -356,6 +405,8 @@
     <script defer src="index.js?v=20250101-debug2"></script>
     <!-- Meneurs de la ligue : lit BASE_URL déjà déclaré par index.js ci-dessus. -->
     <script defer src="statsLeaders.js"></script>
+    <!-- Meilleurs joueurs : lit BASE_URL (index.js) et escapeHTML (statsLeaders.js). -->
+    <script defer src="statsTopPlayers.js"></script>
     <!-- Logo d'équipe du tableau de carrière, partagé avec draftActif.html. -->
     <script defer src="careerTeamLogo.js"></script>
     <!-- Alignement de la rangée « Carrière », partagé avec draftActif.html. -->
@@ -364,6 +415,16 @@
     <script defer src="poolNav.js"></script>
     <script defer src="notifications.js"></script>
     <script>
+    // Sub-nav — "Tous les joueurs" / "Meneurs" tabs
+    function switchStatsTab(tab) {
+        document.querySelectorAll('.stats-subnav-btn').forEach(function(btn) {
+            btn.classList.toggle('active', btn.dataset.statsTab === tab);
+        });
+        document.querySelectorAll('.stats-tab-panel').forEach(function(panel) {
+            panel.style.display = panel.dataset.statsPanel === tab ? '' : 'none';
+        });
+    }
+
     // Auto-open player career modal when coming from accueil hot players
     window.addEventListener('load', function() {
         var params = new URLSearchParams(window.location.search);

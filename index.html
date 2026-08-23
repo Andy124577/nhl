@@ -251,44 +251,6 @@
     </section>
 
     <!-- ============================================================ -->
-    <!-- TOP PERFORMING PLAYERS SECTION                               -->
-    <!-- ============================================================ -->
-    <section class="home-section top-players-section">
-        <div class="section-container">
-            <div class="section-title-row">
-                <div class="section-title-group">
-                    <span class="section-icon" data-icon="hockey" data-icon-size="28"></span>
-                    <h2 class="section-title">Meilleurs joueurs</h2>
-                    <span class="section-subtitle" id="timeRangeLabel">7 derniers jours</span>
-                </div>
-                <div class="time-filters">
-                    <button class="time-filter active" data-days="7" onclick="changeTimeRange(7)">7J</button>
-                    <button class="time-filter" data-days="14" onclick="changeTimeRange(14)">14J</button>
-                    <button class="time-filter" data-days="30" onclick="changeTimeRange(30)">30J</button>
-                    <!-- Revealed by accueil.js only when the 30-day window is empty -->
-                    <button class="time-filter" data-days="180" onclick="changeTimeRange(180)" id="timeFilter6M" style="display:none;">6M</button>
-                </div>
-                <a href="stats.html?days=7" class="section-link" id="viewAllPlayersLink">Voir tout →</a>
-            </div>
-
-            <!-- Skeleton -->
-            <div class="skeleton-loader" id="topPlayersSkeleton">
-                <div class="players-grid">
-                    <div class="skeleton" style="height:200px;border-radius:14px;"></div>
-                    <div class="skeleton" style="height:200px;border-radius:14px;"></div>
-                    <div class="skeleton" style="height:200px;border-radius:14px;"></div>
-                    <div class="skeleton" style="height:200px;border-radius:14px;"></div>
-                    <div class="skeleton" style="height:200px;border-radius:14px;"></div>
-                </div>
-            </div>
-            <!-- Content -->
-            <div class="actual-content players-grid" id="topPlayersList" style="display:none;">
-                <!-- Filled by JS -->
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================================ -->
     <!-- HOW IT WORKS SECTION                                         -->
     <!-- ============================================================ -->
     <section class="how-it-works-section" id="comment-ca-marche">
