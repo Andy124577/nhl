@@ -149,6 +149,22 @@
 .pc-stat-val.pts { color: var(--primary); font-size: 1.15rem; }
 .pc-stat-label { font-size: .6rem; color: var(--text-gray); text-transform: uppercase; margin-top: 3px; letter-spacing: .5px; }
 
+/* Empty/error state */
+.tp-error { grid-column: 1 / -1; width: 100%; text-align: center; padding: 48px; }
+.tp-error-title { color: var(--text-gray); margin-bottom: 12px; font-size: 1.1rem; }
+.tp-error-hint { color: var(--text-gray); margin-bottom: 18px; font-size: .9rem; }
+.tp-error-retry {
+    padding: 11px 24px;
+    background: var(--primary);
+    color: var(--bg);
+    border: none;
+    border-radius: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    font-size: .95rem;
+    box-shadow: var(--glow-primary);
+}
+
 @media (max-width: 1100px) {
     .players-grid { grid-template-columns: repeat(3, 1fr); }
 }

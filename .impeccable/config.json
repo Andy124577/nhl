@@ -5,7 +5,8 @@
       "accueil-dash.css",
       "draftActif-premium.css",
       "trade.css",
-      "classement-premium.css"
+      "classement-premium.css",
+      "stats-premium.css"
     ],
     "ignoreValues": [
       {

@@ -164,16 +164,9 @@ function renderTopPlayersError() {
     if (!content) return;
     content.style.display = '';
     content.innerHTML = `
-        <div style="grid-column:1/-1;text-align:center;padding:48px;width:100%;">
-            <p style="color:var(--text-gray);margin-bottom:12px;font-size:1.1rem;">
-                📊 Aucune donnée disponible</p>
-            <p style="color:var(--text-gray);margin-bottom:18px;font-size:0.9rem;">
-                Les statistiques des joueurs seront disponibles une fois les logs de parties chargés dans la base de données.</p>
-            <button onclick="location.reload()"
-                style="padding:11px 24px;background:var(--primary);color:var(--bg);
-                       border:none;border-radius:10px;font-weight:800;cursor:pointer;
-                       font-size:.95rem;box-shadow:var(--glow-primary);">
-                🔄 Réessayer
-            </button>
+        <div class="tp-error">
+            <p class="tp-error-title">📊 Aucune donnée disponible</p>
+            <p class="tp-error-hint">Les statistiques des joueurs seront disponibles une fois les logs de parties chargés dans la base de données.</p>
+            <button class="tp-error-retry" onclick="location.reload()">🔄 Réessayer</button>
         </div>`;
 }

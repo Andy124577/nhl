@@ -1,0 +1,326 @@
+/* ====================================================================
+   Statistiques — habillage éditorial, même palette que draftActif-premium
+   .css / trade.css / classement-premium.css (voir la note dans ce dernier
+   pour le principe : ce fichier ne redéclare pas :root, tout est scopé
+   sous body.fz-stats pour ne pas fuir vers index.html, qui partage
+   index.css/statsLeaders.css/statsTopPlayers.css avec cette page et n'est
+   pas reskinné).
+
+   Contrairement à draftActif/trade/classement, aucune maquette Claude
+   Design dédiée n'existe pour cette page dans le projet — c'est une passe
+   de couleurs sur la structure existante (sous-nav, meneurs, meilleurs
+   joueurs, tableau complet), pas une reconstruction depuis un mockup.
+   ==================================================================== */
+
+body.fz-stats {
+  --fzs-bg: #f7f6f3;
+  --fzs-bg-alt: #f2f0eb;
+  --fzs-bg-page: #dedbd5;
+  --fzs-surface: #ffffff;
+  --fzs-ink: #16181a;
+  --fzs-text: #4b4843;
+  --fzs-text-muted: #6d6a64;
+  --fzs-text-faint: #8a877f;
+  --fzs-text-fainter: #a8a49c;
+  --fzs-border: #e2dfd8;
+  --fzs-border-strong: #cdcac3;
+  --fzs-border-soft: #eae7e0;
+  --fzs-border-input: #d6d3cc;
+  --fzs-accent: #c4442e;
+  --fzs-accent-dark: #a8371f;
+  --fzs-accent-wash: #f7e6e2;
+  --fzs-tile: #dcd8d0;
+
+  margin: 0;
+  min-height: 100vh;
+  background: var(--fzs-bg-page);
+  color: var(--fzs-text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+body.fz-stats * { box-sizing: border-box; }
+body.fz-stats a { color: var(--fzs-accent); text-decoration: none; }
+body.fz-stats a:hover { color: var(--fzs-accent-dark); }
+body.fz-stats button { font-family: inherit; }
+
+/* Barre du haut et rail des pools : partagés avec le reste du site, pas
+   des éléments de cette maquette — copié tel quel depuis les autres
+   fichiers -premium.css. */
+body.fz-stats .navbar,
+body.fz-stats #fzSidebar,
+body.fz-stats #fzDrawer {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text-dark);
+}
+body.fz-stats nav a { color: var(--text-secondary); }
+body.fz-stats nav a:hover { color: var(--text-main); }
+body.fz-stats nav a.active:hover,
+body.fz-stats nav a.is-active:hover { color: var(--primary); }
+
+/* ==================== HERO ==================== */
+/* Les halos néon cyan/violet appartiennent au thème sombre d'origine —
+   ils jurent avec la palette éditoriale, on les retire plutôt que de les
+   reteindre. */
+body.fz-stats .stats-hero-spots { display: none; }
+
+body.fz-stats .stats-hero-title {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  letter-spacing: .5px;
+  color: var(--fzs-ink);
+}
+body.fz-stats .stats-hero-sub { color: var(--fzs-text-muted); }
+
+/* ==================== SOUS-NAV ==================== */
+body.fz-stats .stats-subnav-inner {
+  background: var(--fzs-surface);
+  border: 1px solid var(--fzs-border);
+  box-shadow: none;
+}
+body.fz-stats .stats-subnav-btn {
+  color: var(--fzs-text-muted);
+  font: 600 13px/1 'Helvetica Neue', Helvetica, sans-serif;
+}
+body.fz-stats .stats-subnav-btn:hover { color: var(--fzs-ink); }
+body.fz-stats .stats-subnav-btn.active {
+  background: var(--fzs-ink);
+  color: #fff;
+  box-shadow: none;
+}
+
+/* ==================== MENEURS DE LA LIGUE ==================== */
+body.fz-stats .stats-leaders-title {
+  font: 700 22px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--fzs-ink);
+}
+body.fz-stats .stats-leaders-title [data-icon] { color: var(--fzs-accent); }
+
+body.fz-stats .leader-card {
+  background: var(--fzs-surface);
+  border: 1px solid var(--fzs-border);
+  box-shadow: none;
+}
+body.fz-stats .leader-card-icon {
+  background: var(--fzs-accent-wash);
+  color: var(--fzs-accent);
+}
+body.fz-stats .leader-card-title { color: var(--fzs-ink); }
+body.fz-stats .leader-card-empty { color: var(--fzs-text-faint); }
+
+body.fz-stats .leader-featured { background: var(--fzs-bg-alt); }
+body.fz-stats .leader-featured:hover,
+body.fz-stats .leader-featured:focus-visible { box-shadow: 0 0 0 1px var(--fzs-accent) inset; }
+body.fz-stats .leader-featured-photo { background: var(--fzs-tile); border-color: var(--fzs-accent); }
+body.fz-stats .leader-featured-name { color: var(--fzs-ink); }
+body.fz-stats .leader-featured-meta { color: var(--fzs-text-faint); }
+body.fz-stats .leader-featured-val {
+  font-family: 'Oswald', sans-serif;
+  color: var(--fzs-accent);
+}
+body.fz-stats .leader-featured-lbl { color: var(--fzs-text-faint); }
+
+body.fz-stats .leader-row:hover,
+body.fz-stats .leader-row:focus-visible { background: var(--fzs-bg-alt); }
+body.fz-stats .leader-row-rank { color: var(--fzs-text-fainter); }
+body.fz-stats .leader-row-name { color: var(--fzs-ink); }
+body.fz-stats .leader-row-team { color: var(--fzs-text-faint); }
+body.fz-stats .leader-row-val {
+  font-family: 'Oswald', sans-serif;
+  color: var(--fzs-ink);
+}
+
+/* ==================== MEILLEURS JOUEURS ==================== */
+body.fz-stats .top-players-section .section-title {
+  font: 700 22px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--fzs-ink);
+}
+body.fz-stats .top-players-section .section-title-group [data-icon] { color: var(--fzs-accent); }
+body.fz-stats .top-players-section .section-subtitle {
+  background: var(--fzs-bg-alt);
+  color: var(--fzs-text-muted);
+}
+
+body.fz-stats .time-filter {
+  background: transparent;
+  border-color: var(--fzs-border-input);
+  color: var(--fzs-text-muted);
+}
+body.fz-stats .time-filter:hover { border-color: var(--fzs-ink); color: var(--fzs-ink); }
+body.fz-stats .time-filter.active {
+  background: var(--fzs-ink);
+  border-color: var(--fzs-ink);
+  color: #fff;
+  box-shadow: none;
+}
+
+body.fz-stats .player-card {
+  background: var(--fzs-surface);
+  border: 1px solid var(--fzs-border);
+}
+/* Le liseré dégradé du survol (::before) reprenait le motif "bordure
+   colorée sur un côté de carte" — trop marqué comme habillage générique
+   d'IA. On garde juste l'ombre/bordure au survol, sans barre. */
+body.fz-stats .player-card::before { display: none; }
+body.fz-stats .player-card:hover {
+  border-color: var(--fzs-accent);
+  box-shadow: 0 4px 16px rgba(196,68,46,.12);
+}
+body.fz-stats .player-rank-badge.gold,
+body.fz-stats .player-rank-badge.silver,
+body.fz-stats .player-rank-badge.bronze {
+  background: var(--fzs-accent-wash);
+  color: var(--fzs-accent);
+}
+body.fz-stats .player-rank-badge.normal {
+  background: var(--fzs-bg-alt);
+  color: var(--fzs-text-fainter);
+}
+body.fz-stats .player-card-photo {
+  border-color: var(--fzs-border);
+  background: var(--fzs-bg-alt);
+}
+body.fz-stats .player-card:hover .player-card-photo {
+  border-color: var(--fzs-accent);
+  box-shadow: none;
+}
+body.fz-stats .player-card-photo .no-photo { color: var(--fzs-text-fainter); }
+body.fz-stats .player-card-name { color: var(--fzs-ink); }
+body.fz-stats .player-card-team { color: var(--fzs-accent); }
+body.fz-stats .pc-stat { background: var(--fzs-bg-alt); }
+body.fz-stats .pc-stat-val {
+  font-family: 'Oswald', sans-serif;
+  color: var(--fzs-ink);
+}
+body.fz-stats .pc-stat-val.pts { color: var(--fzs-accent); }
+body.fz-stats .pc-stat-label { color: var(--fzs-text-faint); }
+
+body.fz-stats .tp-error-title { color: var(--fzs-text-muted); }
+body.fz-stats .tp-error-hint { color: var(--fzs-text-faint); }
+body.fz-stats .tp-error-retry {
+  background: var(--fzs-accent);
+  color: #fff;
+  box-shadow: none;
+}
+body.fz-stats .tp-error-retry:hover { background: var(--fzs-accent-dark); }
+
+/* ==================== TOUS LES JOUEURS — filtres ==================== */
+body.fz-stats .filters-section {
+  background: var(--fzs-surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid var(--fzs-border);
+}
+body.fz-stats .filter-group label { color: var(--fzs-ink); }
+body.fz-stats .filter-icon { color: var(--fzs-text-faint); }
+body.fz-stats .filter-group input,
+body.fz-stats .filter-group select {
+  background-color: var(--fzs-bg-alt);
+  border-color: var(--fzs-border-input);
+  color: var(--fzs-ink);
+}
+body.fz-stats .filter-group input::placeholder { color: var(--fzs-text-faint); }
+body.fz-stats .filter-group input:focus,
+body.fz-stats .filter-group select:focus {
+  border-color: var(--fzs-accent);
+  box-shadow: 0 0 0 3px var(--fzs-accent-wash);
+  background-color: var(--fzs-surface);
+}
+body.fz-stats .filter-group select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236d6a64' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
+}
+
+/* ==================== TOUS LES JOUEURS — tableau ==================== */
+body.fz-stats .table-container {
+  background: var(--fzs-surface);
+  border: 1px solid var(--fzs-border);
+}
+body.fz-stats th {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background: var(--fzs-bg-alt);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: var(--fzs-text-muted);
+  font-weight: 600;
+  font-size: .74rem;
+  letter-spacing: .09em;
+  border-bottom: 1px solid var(--fzs-border-strong);
+  box-shadow: none;
+}
+body.fz-stats #playerTable th.sortable:hover,
+body.fz-stats #playerTable th.sortable:focus-visible {
+  background: var(--fzs-border-soft);
+  color: var(--fzs-ink);
+}
+body.fz-stats #playerTable th.sortable:focus-visible { outline-color: var(--fzs-ink); }
+body.fz-stats #playerTable th.is-sorted {
+  background: var(--fzs-border-soft);
+  color: var(--fzs-accent);
+}
+
+body.fz-stats tbody tr { border-bottom: 1px solid var(--fzs-border-soft); }
+body.fz-stats tbody tr:nth-child(odd) { background: var(--fzs-surface); }
+body.fz-stats tbody tr:nth-child(even) { background: var(--fzs-bg-alt); }
+body.fz-stats tbody tr:hover {
+  background: var(--fzs-accent-wash) !important;
+  transform: none;
+  box-shadow: none;
+}
+body.fz-stats #playerTable tbody tr.is-clickable::after { background: var(--fzs-accent); }
+body.fz-stats #playerTable tbody tr.is-clickable:focus-visible { outline-color: var(--fzs-accent); }
+
+body.fz-stats td { color: var(--fzs-text-muted); }
+body.fz-stats td.rank-col {
+  color: var(--fzs-text-fainter);
+  font-family: 'Oswald', sans-serif;
+}
+body.fz-stats tbody tr:nth-child(1) td.rank-col,
+body.fz-stats tbody tr:nth-child(2) td.rank-col,
+body.fz-stats tbody tr:nth-child(3) td.rank-col { color: var(--fzs-accent); }
+
+body.fz-stats td.points-column {
+  background: transparent;
+  font-family: 'Oswald', sans-serif;
+  color: var(--fzs-ink);
+}
+body.fz-stats td.player-col { color: var(--fzs-ink); }
+body.fz-stats .player-pos { color: var(--fzs-text-faint); }
+body.fz-stats .player-photo img.face { border-color: var(--fzs-border); }
+body.fz-stats tbody tr:hover .player-photo img.face {
+  border-color: var(--fzs-accent);
+  box-shadow: none;
+}
+body.fz-stats .player-photo img.logo { border-color: var(--fzs-border-input); }
+
+/* ==================== PAGINATION ==================== */
+body.fz-stats .stats-page-info { color: var(--fzs-text-muted); }
+body.fz-stats .stats-show-more {
+  background: var(--fzs-accent);
+  box-shadow: none;
+}
+body.fz-stats .stats-show-more:hover {
+  background: var(--fzs-accent-dark);
+  transform: none;
+  box-shadow: none;
+}
+
+/* ==================== ÉTAT VIDE / CHARGEMENT ==================== */
+body.fz-stats .stats-empty-state { color: var(--fzs-text-muted); }
+body.fz-stats .stats-empty-state .empty-icon { color: var(--fzs-text-fainter); }
+body.fz-stats .stats-empty-state h2 { color: var(--fzs-ink); }
+body.fz-stats .stats-empty-state p { color: var(--fzs-text-faint); }
+body.fz-stats .table-empty-title { color: var(--fzs-ink); }
+body.fz-stats .table-empty-hint { color: var(--fzs-text-muted); }
+
+body.fz-stats .skeleton-table-header { background: var(--fzs-bg-alt); }
+body.fz-stats .skeleton-table-header,
+body.fz-stats .skeleton-table-row { border-bottom: 1px solid var(--fzs-border-soft); }
+body.fz-stats .skeleton,
+body.fz-stats .leader-skeleton .skeleton,
+body.fz-stats .top-players-section .skeleton {
+  background: linear-gradient(90deg, var(--fzs-border-soft) 25%, var(--fzs-border) 50%, var(--fzs-border-soft) 75%);
+  background-size: 200% 100%;
+}
+
+@media (max-width: 640px) {
+  body.fz-stats .stats-subnav-inner { background: var(--fzs-surface); }
+}
