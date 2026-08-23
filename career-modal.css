@@ -482,15 +482,22 @@
 @media (min-width: 1024px) {
   .modal { padding: 26px; }
   .modal-content { margin: 24px auto; padding: 24px; }
-  .career-modal-header { margin: 0 -24px 16px; padding: 24px; }
+  /* En-tête resserré (padding vertical + marge basse réduits) : la photo et
+     l'identité du joueur cèdent de la hauteur à #careerStatsTable, contenu
+     principal de la modale sur desktop. */
+  .career-modal-header { margin: 0 -24px 10px; padding: 16px 24px; }
   /* Rembourrage et marge changent ici : la hauteur maximale suit. */
   .career-modal { max-height: calc(100dvh - 100px); }
-  .player-headshot-container { width: 184px; height: 184px; border-radius: 18px; border-width: 3px; }
-  .player-headshot-container .no-photo { font-size: 3.2rem; }
-  .cmh-name-banner { margin: -24px -24px 0; padding: 16px 24px 14px; }
-  .cmh-name-banner h2 { font-size: 2.3rem; letter-spacing: .8px; }
+  /* 184px → 144px : la rangée .cmh-identity était dictée par la hauteur de
+     la photo alors que le texte à côté (chips + stats) tient dans bien
+     moins ; ce cran redonne l'écart au tableau sans rogner le texte. */
+  .player-headshot-container { width: 144px; height: 144px; border-radius: 16px; border-width: 3px; }
+  .player-headshot-container .no-photo { font-size: 2.6rem; }
+  .cmh-name-banner { margin: -24px -24px 0; padding: 12px 24px 10px; }
+  .cmh-name-banner h2 { font-size: 2.1rem; letter-spacing: .8px; }
   .cmh-identity { gap: 22px; }
   .cmh-season-val { font-size: 1.9rem; }
+  .cmh-season-highlight { margin-top: 8px; padding-top: 8px; }
 }
 
 /* ---- Logo d'équipe dans le tableau de carrière ----
