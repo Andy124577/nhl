@@ -3088,7 +3088,7 @@ app.get('/schedule/:date', async (req, res) => {
 
         const response = await fetch(`https://api-web.nhle.com/v1/schedule/${date}`);
         if (!response.ok) {
-            return res.json({ days: [], nextStartDate: null, previousStartDate: null });
+            return res.json({ days: [], nextStartDate: null, previousStartDate: null, preSeasonStartDate: null, regularSeasonStartDate: null, regularSeasonEndDate: null });
         }
         const raw = await response.json();
 
@@ -3107,12 +3107,19 @@ app.get('/schedule/:date', async (req, res) => {
             }))
         }));
 
-        const payload = { days, nextStartDate: raw.nextStartDate || null, previousStartDate: raw.previousStartDate || null };
+        const payload = {
+            days,
+            nextStartDate: raw.nextStartDate || null,
+            previousStartDate: raw.previousStartDate || null,
+            preSeasonStartDate: raw.preSeasonStartDate || null,
+            regularSeasonStartDate: raw.regularSeasonStartDate || null,
+            regularSeasonEndDate: raw.regularSeasonEndDate || null
+        };
         scheduleCache.set(date, { data: payload, fetchedAt: Date.now() });
         res.json(payload);
     } catch (error) {
         console.error('❌ Error fetching schedule:', error.message);
-        res.json({ days: [], nextStartDate: null, previousStartDate: null });
+        res.json({ days: [], nextStartDate: null, previousStartDate: null, preSeasonStartDate: null, regularSeasonStartDate: null, regularSeasonEndDate: null });
     }
 });
 

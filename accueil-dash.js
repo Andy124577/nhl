@@ -106,6 +106,7 @@ async function initCalendar() {
     calData = await fetchSchedule(today);
     calSelectedDate = calData.days.find(d => d.date === today) ? today : (calData.days[0]?.date || today);
     renderCalendar();
+    renderOffseasonPanel();
 }
 
 function renderCalendar() {
@@ -550,6 +551,108 @@ async function renderActivityFeed() {
         console.warn('Could not load activity feed:', err);
         container.innerHTML = `<p class="fzd-activity-empty">Impossible de charger l'activité.</p>`;
     }
+}
+
+// ============================================================
+// HORS-SAISON — countdown to camp/season start plus real trade &
+// signing headlines. Shown under the calendar only while the coming
+// regular season hasn't started (see renderOffseasonPanel); computed
+// from the same /schedule/:date response that already backs the
+// calendar, which the NHL API keeps pointed at the *next* season's
+// dates throughout the off-season (verified: it flips over the day
+// after playoffEndDate, so this never fires mid-playoffs).
+// ============================================================
+
+// Manually curated, updated by hand each off-season — there is no
+// live API for an editorial "watch" pick, and this app never invents
+// content to fill a gap (see the real trades used above instead of a
+// fabricated waiver-wire feed). Leave empty to hide the section.
+const OFFSEASON_WATCHLIST = [
+    // { name: 'Nom Joueur', team: 'MTL', note: 'Recrue attendue au camp d\'entraînement.' },
+];
+
+let offseasonNewsLoaded = false;
+
+function renderOffseasonPanel() {
+    const panel = document.getElementById('fzDashOffseason');
+    if (!panel || !calData) return;
+
+    const today = todayISO();
+    const seasonStart = calData.regularSeasonStartDate;
+
+    if (!seasonStart || today >= seasonStart) {
+        panel.style.display = 'none';
+        return;
+    }
+    panel.style.display = '';
+
+    const campStart = calData.preSeasonStartDate;
+    const beforeCamp = !!campStart && today < campStart;
+    const target = beforeCamp ? campStart : seasonStart;
+    const days = Math.max(0, Math.ceil((new Date(target + 'T00:00:00Z') - new Date(today + 'T00:00:00Z')) / 86400000));
+
+    document.getElementById('fzdOffDays').textContent = `${days} j`;
+    document.getElementById('fzdOffSub').textContent = beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison';
+
+    renderOffseasonWatchlist();
+    if (!offseasonNewsLoaded) {
+        offseasonNewsLoaded = true;
+        loadOffseasonTransactions();
+    }
+}
+
+// Reuses fetchNhlNews (accueil.js) — same real, already-cached NewsAPI
+// feed that powers the homepage stories carousel, sorted newest first.
+async function loadOffseasonTransactions() {
+    const wrap = document.getElementById('fzdOffTransactions');
+    if (!wrap) return;
+
+    const articles = await fetchNhlNews();
+    if (!articles.length) {
+        wrap.innerHTML = `<p class="fzd-off-empty">Aucune transaction récente.</p>`;
+        return;
+    }
+
+    wrap.innerHTML = articles.slice(0, 6).map(transactionRowHTML).join('');
+    wrap.querySelectorAll('.fzd-tx-row').forEach(row => {
+        row.querySelector('.fzd-tx-head').addEventListener('click', () => row.classList.toggle('is-open'));
+    });
+}
+
+function transactionRowHTML(article) {
+    const published = new Date(article.publishedAt);
+    const dateLabel = isNaN(published) ? '' : published.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+    return `
+        <div class="fzd-tx-row">
+            <button type="button" class="fzd-tx-head">
+                <div class="fzd-tx-main">
+                    <div class="fzd-tx-title">${escapeHTML(article.title)}</div>
+                    <div class="fzd-tx-meta">${escapeHTML(article.source)}${dateLabel ? ' · ' + dateLabel : ''}</div>
+                </div>
+                <span class="fzd-tx-toggle">+</span>
+            </button>
+            <div class="fzd-tx-body">
+                ${article.description ? `<p class="fzd-tx-desc">${escapeHTML(article.description)}</p>` : ''}
+                <a class="fzd-link fzd-tx-link" href="${escapeHTML(article.url)}" target="_blank" rel="noopener">Lire l'article →</a>
+            </div>
+        </div>`;
+}
+
+function renderOffseasonWatchlist() {
+    const wrap = document.getElementById('fzdOffWatchlist');
+    if (!wrap) return;
+
+    if (!OFFSEASON_WATCHLIST.length) {
+        wrap.innerHTML = `<p class="fzd-off-empty">Liste à venir.</p>`;
+        return;
+    }
+
+    wrap.innerHTML = OFFSEASON_WATCHLIST.map(p => `
+        <div class="fzd-watch-row">
+            <span class="fzd-watch-name">${escapeHTML(p.name)}</span>
+            <span class="fzd-watch-team">(${escapeHTML(p.team)})</span>
+            ${p.note ? `<span class="fzd-watch-note">${escapeHTML(p.note)}</span>` : ''}
+        </div>`).join('');
 }
 
 // ============================================================
