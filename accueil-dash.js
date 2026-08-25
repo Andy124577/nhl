@@ -48,6 +48,33 @@ function relativeTimeFr(dateStr) {
     return `${Math.floor(h / 24)} j`;
 }
 
+/**
+ * Journée d'un mouvement ou d'un retour de blessure.
+ *
+ * Une chaîne « AAAA-MM-JJ » se parse en UTC, pas en heure locale : à
+ * Montréal, minuit UTC tombe la veille à 20 h, et le 25 août s'affichait
+ * donc « 24 août ». On reconstruit la date à la main pour ces chaînes-là.
+ * Les horodatages complets (ESPN, avec heure et fuseau) gardent le
+ * parsing normal, qui est correct pour eux.
+ */
+function dayLabelFr(iso) {
+    if (!iso) return '';
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(iso)
+        ? new Date(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10))
+        : new Date(iso);
+    if (isNaN(d)) return '';
+
+    const sameDay = (a, b) => a.getFullYear() === b.getFullYear()
+        && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    const today = new Date();
+    if (sameDay(d, today)) return 'Aujourd’hui';
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    if (sameDay(d, yesterday)) return 'Hier';
+
+    return d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+}
+
 function countdownLabel(startISO) {
     const diffMs = new Date(startISO) - new Date();
     if (diffMs <= 0) return '0 h 00';
@@ -609,39 +636,120 @@ function renderOffseasonPanel() {
     }
 }
 
-// Reuses fetchNhlNews (accueil.js) — same real, already-cached NewsAPI
-// feed that powers the homepage stories carousel, sorted newest first.
+// Mouvements réels déduits des alignements officiels côté serveur
+// (/nhl-transactions) plutôt que titres de presse : le journal nomme le
+// joueur, les deux clubs et la date en clair, là où un titre NewsAPI
+// laissait au lecteur le soin de décoder la phrase — et attrape les
+// mouvements discrets dont aucun média ne parle. Les blessés viennent
+// d'ESPN (/nhl-injuries), api-web n'en publiant aucun.
+let offseasonLeague = null;
+let offseasonTab = 'trade';
+const OFFSEASON_TABS = ['trade', 'signing', 'injury'];
+
 async function loadOffseasonTransactions() {
     const wrap = document.getElementById('fzdOffTransactions');
     if (!wrap) return;
 
-    const articles = await fetchNhlNews();
-    if (!articles.length) {
-        wrap.innerHTML = `<p class="fzd-off-empty">Aucune transaction récente.</p>`;
+    const [tx, inj] = await Promise.all([
+        fetch('/nhl-transactions?limit=40').then(r => r.json()).catch(() => null),
+        fetch('/nhl-injuries?limit=40').then(r => r.json()).catch(() => null)
+    ]);
+
+    const moves = tx?.transactions || [];
+    offseasonLeague = {
+        trade: moves.filter(t => t.type === 'trade'),
+        signing: moves.filter(t => t.type === 'signing'),
+        injury: inj?.injuries || [],
+        // Totaux du serveur, pas de ce qu'on a rapatrié : c'est ce qui
+        // permet d'annoncer honnêtement « et 90 autres ».
+        counts: {
+            trade: tx?.counts?.trade || 0,
+            signing: tx?.counts?.signing || 0,
+            injury: inj?.total || 0
+        },
+        tracking: !!tx?.tracking
+    };
+
+    // Ouvrir sur un onglet qui a de quoi montrer plutôt que sur « Échanges »
+    // vide un lendemain de journée calme.
+    const firstFilled = OFFSEASON_TABS.find(k => offseasonLeague[k].length);
+    if (firstFilled && !offseasonLeague[offseasonTab].length) offseasonTab = firstFilled;
+
+    // Appelé une seule fois (garde offseasonNewsLoaded), donc pas de
+    // risque d'empiler les écouteurs.
+    document.querySelectorAll('#fzdOffTabs .fzd-off-tab').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset.tab === offseasonTab);
+        btn.addEventListener('click', () => {
+            offseasonTab = btn.dataset.tab;
+            document.querySelectorAll('#fzdOffTabs .fzd-off-tab')
+                .forEach(b => b.classList.toggle('is-active', b === btn));
+            renderOffseasonLeague();
+        });
+    });
+
+    renderOffseasonLeague();
+}
+
+function renderOffseasonLeague() {
+    const wrap = document.getElementById('fzdOffTransactions');
+    if (!wrap || !offseasonLeague) return;
+
+    const rows = offseasonLeague[offseasonTab] || [];
+    if (!rows.length) {
+        wrap.innerHTML = `<p class="fzd-off-empty">${offseasonEmptyText()}</p>`;
         return;
     }
 
-    wrap.innerHTML = articles.slice(0, 6).map(transactionRowHTML).join('');
-    wrap.querySelectorAll('.fzd-tx-row').forEach(row => {
-        row.querySelector('.fzd-tx-head').addEventListener('click', () => row.classList.toggle('is-open'));
-    });
+    // Le panneau est une carte de tableau de bord, pas une page de
+    // rapport : 96 blessés à la file l'étiraient sur plusieurs écrans et
+    // noyaient « À surveiller » dessous. On en montre une poignée et on
+    // dit combien il en reste plutôt que de faire semblant qu'il n'y a
+    // que ça.
+    const CAP = 6;
+    const shown = rows.slice(0, CAP);
+    const total = offseasonLeague.counts?.[offseasonTab] || rows.length;
+    const hidden = Math.max(0, total - shown.length);
+
+    wrap.innerHTML = (offseasonTab === 'injury'
+        ? shown.map(injuryRowHTML).join('')
+        : shown.map(movementRowHTML).join(''))
+        + (hidden ? `<p class="fzd-move-more">et ${hidden} autre${hidden > 1 ? 's' : ''}</p>` : '');
 }
 
-function transactionRowHTML(article) {
-    const published = new Date(article.publishedAt);
-    const dateLabel = isNaN(published) ? '' : published.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+function offseasonEmptyText() {
+    if (offseasonTab === 'injury') return 'Aucun blessé signalé.';
+    // Tant que le serveur n'a pas deux photos d'alignements à comparer, il n'a
+    // rien à dire — ce qui n'est pas la même chose qu'une ligue tranquille.
+    if (!offseasonLeague?.tracking) return 'Le suivi des mouvements démarre à la prochaine mise à jour des alignements.';
+    return offseasonTab === 'trade' ? 'Aucun échange récent.' : 'Aucune signature récente.';
+}
+
+function movementRowHTML(t) {
+    const route = t.type === 'trade'
+        ? `${escapeHTML(t.fromTeamName || t.fromTeam || '?')} → ${escapeHTML(t.toTeamName || t.toTeam || '?')}`
+        : `→ ${escapeHTML(t.toTeamName || t.toTeam || '?')}`;
     return `
-        <div class="fzd-tx-row">
-            <button type="button" class="fzd-tx-head">
-                <div class="fzd-tx-main">
-                    <div class="fzd-tx-title">${escapeHTML(article.title)}</div>
-                    <div class="fzd-tx-meta">${escapeHTML(article.source)}${dateLabel ? ' · ' + dateLabel : ''}</div>
-                </div>
-                <span class="fzd-tx-toggle">+</span>
-            </button>
-            <div class="fzd-tx-body">
-                ${article.description ? `<p class="fzd-tx-desc">${escapeHTML(article.description)}</p>` : ''}
-                <a class="fzd-link fzd-tx-link" href="${escapeHTML(article.url)}" target="_blank" rel="noopener">Lire l'article →</a>
+        <div class="fzd-move-row">
+            <div class="fzd-move-main">
+                <div class="fzd-move-name">${escapeHTML(t.playerName)}${t.pos ? ` <span class="fzd-move-pos">${escapeHTML(t.pos)}</span>` : ''}</div>
+                <div class="fzd-move-route">${route}</div>
+            </div>
+            <div class="fzd-move-date">${dayLabelFr(t.date)}</div>
+        </div>`;
+}
+
+function injuryRowHTML(i) {
+    const detail = [i.injuryType, i.injuryDetail].filter(Boolean).join(' / ');
+    const back = i.returnDate ? `Retour prévu ${dayLabelFr(i.returnDate)}` : '';
+    return `
+        <div class="fzd-move-row">
+            <div class="fzd-move-main">
+                <div class="fzd-move-name">${escapeHTML(i.playerName)}${i.pos ? ` <span class="fzd-move-pos">${escapeHTML(i.pos)}</span>` : ''}</div>
+                <div class="fzd-move-route">${escapeHTML([i.teamName || i.team, detail].filter(Boolean).join(' · '))}</div>
+            </div>
+            <div class="fzd-move-date">
+                <span class="fzd-move-status" data-status="${escapeHTML(i.status || '')}">${escapeHTML(i.statusFr || '')}</span>
+                ${back ? `<span class="fzd-move-back">${escapeHTML(back)}</span>` : ''}
             </div>
         </div>`;
 }

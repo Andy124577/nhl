@@ -248,37 +248,42 @@
 .fzd-off-section .fzd-section-title { display: block; margin-bottom: 4px; }
 .fzd-off-empty { padding: 10px 0; font: 400 13px/1.4 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
 
-.fzd-tx-row { border-bottom: 1px solid var(--fzd-border-soft); }
-.fzd-tx-row:last-child { border-bottom: none; }
-.fzd-tx-head {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 12px 0;
+/* Mouvements récents — onglets échanges / signatures / blessés */
+.fzd-off-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.fzd-off-tabs { display: flex; gap: 4px; }
+.fzd-off-tab {
+    padding: 5px 10px;
     background: none;
-    border: none;
+    border: 1px solid var(--fzd-border);
+    border-radius: 999px;
+    font: 600 10.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--fzd-text-faint);
     cursor: pointer;
-    text-align: left;
-    font: inherit;
-    color: inherit;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
-.fzd-tx-main { flex: 1; min-width: 0; }
-.fzd-tx-title { font: 600 13.5px/1.4 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink); }
-.fzd-tx-meta { margin-top: 3px; font: 400 11px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
-.fzd-tx-toggle {
-    flex-shrink: 0;
-    width: 18px; height: 18px;
-    display: grid; place-items: center;
-    font: 400 17px/1 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzd-text-fainter);
-    transition: transform .15s ease;
+.fzd-off-tab:hover { color: var(--fzd-ink); border-color: var(--fzd-border-strong); }
+.fzd-off-tab.is-active { background: var(--fzd-ink); border-color: var(--fzd-ink); color: var(--fzd-surface); }
+
+.fzd-move-row { display: flex; align-items: baseline; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--fzd-border-soft); }
+.fzd-move-row:last-child { border-bottom: none; }
+.fzd-move-main { flex: 1; min-width: 0; }
+.fzd-move-name { font: 600 13.5px/1.35 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink); }
+.fzd-move-pos { font: 400 10.5px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-fainter); letter-spacing: .04em; }
+.fzd-move-route { margin-top: 3px; font: 400 11.5px/1.35 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-muted); }
+.fzd-move-date {
+    flex-shrink: 0; text-align: right;
+    font: 400 11px/1.4 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-faint);
 }
-.fzd-tx-row.is-open .fzd-tx-toggle { transform: rotate(45deg); color: var(--fzd-ink); }
-.fzd-tx-body { display: none; padding: 0 0 14px; }
-.fzd-tx-row.is-open .fzd-tx-body { display: block; }
-.fzd-tx-desc { font: 400 12.5px/1.55 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-muted); margin: 0 0 8px; }
-.fzd-tx-link { font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: .04em; }
+.fzd-move-status { display: block; font-weight: 600; }
+/* L'accent est réservé aux absences fermes : un joueur « au jour le jour »
+   joue peut-être ce soir, le colorer crierait au loup. */
+.fzd-move-status[data-status="Out"],
+.fzd-move-status[data-status="Injured Reserve"] { color: var(--fzd-accent); }
+.fzd-move-back { display: block; margin-top: 2px; color: var(--fzd-text-fainter); }
+.fzd-move-more { margin: 0; padding: 10px 0 0; font: 400 11.5px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-fainter); }
 
 .fzd-watch-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; padding: 9px 0; border-bottom: 1px solid var(--fzd-border-soft); }
 .fzd-watch-row:last-child { border-bottom: none; }

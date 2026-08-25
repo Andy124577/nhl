@@ -447,16 +447,160 @@ function fzmActivityRowHTML(trade) {
 }
 
 // ============================================================
+// DANS LA LNH — mouvements de joueurs (échanges, signatures) déduits
+// des alignements officiels côté serveur (GET /nhl-transactions) et
+// blessés du circuit (GET /nhl-injuries), en onglets.
+//
+// Les actualités NewsAPI restent affichées dessous plutôt que fondues
+// dans les onglets : un titre de presse raconte le contexte (le montant,
+// la raison) qu'une comparaison d'alignements ne donnera jamais, et
+// inversement le journal attrape les mouvements discrets dont personne
+// n'écrit. Les deux se complètent, aucun ne remplace l'autre.
+// ============================================================
+const FZM_LEAGUE_TABS = [
+    { key: 'trade', label: 'Échanges' },
+    { key: 'signing', label: 'Signatures' },
+    { key: 'injury', label: 'Blessés' }
+];
+let fzmLeagueTab = 'trade';
+let fzmLeagueData = null;
+
+function fzmLeagueSectionHTML() {
+    return `
+        <div class="fzm-section" id="fzmLeagueSection">
+            <div class="fzm-section-title">Dans la LNH</div>
+            <div class="fzm-tabs" id="fzmLeagueTabs">
+                ${FZM_LEAGUE_TABS.map(t => `
+                    <button type="button" class="fzm-tab${t.key === fzmLeagueTab ? ' is-active' : ''}" data-tab="${t.key}">
+                        ${t.label}<span class="fzm-tab-count" data-count="${t.key}"></span>
+                    </button>`).join('')}
+            </div>
+            <div class="fzm-league-list" id="fzmLeagueWrap"><p class="fzm-empty">Chargement…</p></div>
+            <div class="fzm-news-list" id="fzmNewsWrap"></div>
+        </div>`;
+}
+
+async function fzmLoadLeague() {
+    const wrap = document.getElementById('fzmLeagueWrap');
+    if (!wrap) return;
+
+    const [tx, inj] = await Promise.all([
+        fetch('/nhl-transactions?limit=60').then(r => r.json()).catch(() => null),
+        fetch('/nhl-injuries?limit=60').then(r => r.json()).catch(() => null)
+    ]);
+
+    const moves = tx?.transactions || [];
+    fzmLeagueData = {
+        trade: moves.filter(t => t.type === 'trade'),
+        signing: moves.filter(t => t.type === 'signing'),
+        injury: inj?.injuries || [],
+        // Les compteurs viennent du serveur : ils portent sur tout le
+        // journal, pas sur les 60 lignes rapatriées ici.
+        counts: {
+            trade: tx?.counts?.trade || 0,
+            signing: tx?.counts?.signing || 0,
+            injury: inj?.total || 0
+        },
+        tracking: !!tx?.tracking
+    };
+
+    // Ouvrir sur un onglet qui a quelque chose à montrer plutôt que sur
+    // « Échanges » vide un lendemain de journée calme.
+    const firstFilled = FZM_LEAGUE_TABS.find(t => fzmLeagueData[t.key].length);
+    if (firstFilled && !fzmLeagueData[fzmLeagueTab].length) fzmLeagueTab = firstFilled.key;
+
+    document.querySelectorAll('#fzmLeagueTabs .fzm-tab-count').forEach(el => {
+        const n = fzmLeagueData.counts[el.dataset.count];
+        el.textContent = n ? ` ${n}` : '';
+    });
+    document.querySelectorAll('#fzmLeagueTabs .fzm-tab').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset.tab === fzmLeagueTab);
+        btn.addEventListener('click', () => {
+            fzmLeagueTab = btn.dataset.tab;
+            document.querySelectorAll('#fzmLeagueTabs .fzm-tab').forEach(b => b.classList.toggle('is-active', b === btn));
+            fzmRenderLeagueTab();
+        });
+    });
+
+    fzmRenderLeagueTab();
+}
+
+function fzmRenderLeagueTab() {
+    const wrap = document.getElementById('fzmLeagueWrap');
+    if (!wrap || !fzmLeagueData) return;
+
+    const rows = fzmLeagueData[fzmLeagueTab] || [];
+    if (!rows.length) {
+        wrap.innerHTML = `<p class="fzm-empty">${fzmLeagueEmptyText()}</p>`;
+        return;
+    }
+
+    // Même raison qu'au bureau : sur un téléphone, 96 blessés à la file
+    // enterrent tout ce qui suit dans l'écran d'accueil.
+    const CAP = 8;
+    const shown = rows.slice(0, CAP);
+    const total = fzmLeagueData.counts?.[fzmLeagueTab] || rows.length;
+    const hidden = Math.max(0, total - shown.length);
+
+    wrap.innerHTML = (fzmLeagueTab === 'injury'
+        ? shown.map(fzmInjuryRowHTML).join('')
+        : shown.map(fzmTxRowHTML).join(''))
+        + (hidden ? `<p class="fzm-league-more">et ${hidden} autre${hidden > 1 ? 's' : ''}</p>` : '');
+}
+
+function fzmLeagueEmptyText() {
+    if (fzmLeagueTab === 'injury') return 'Aucun blessé signalé.';
+    // Tant que le serveur n'a pas deux photos d'alignements à comparer, il
+    // n'a rien à dire — ce qui n'est pas la même chose qu'une ligue calme.
+    if (!fzmLeagueData?.tracking) return 'Le suivi des mouvements démarre à la prochaine mise à jour des alignements.';
+    return fzmLeagueTab === 'trade' ? 'Aucun échange récent.' : 'Aucune signature récente.';
+}
+
+function fzmLeagueFaceHTML(src, name) {
+    return src
+        ? `<img class="fzm-league-face" src="${escapeHTML(src)}" alt="" loading="lazy">`
+        : `<span class="fzm-league-face fzm-league-face-empty">${escapeHTML((name || '?').charAt(0))}</span>`;
+}
+
+function fzmTxRowHTML(t) {
+    const route = t.type === 'trade'
+        ? `${escapeHTML(t.fromTeam || '?')} → ${escapeHTML(t.toTeam || '?')}`
+        : `→ ${escapeHTML(t.toTeam || '?')}`;
+    const meta = [t.pos, route].filter(Boolean).join(' · ');
+    return `
+        <div class="fzm-league-row">
+            ${fzmLeagueFaceHTML(t.headshot, t.playerName)}
+            <div class="fzm-league-main">
+                <div class="fzm-league-name">${escapeHTML(t.playerName)}</div>
+                <div class="fzm-league-meta">${meta}</div>
+            </div>
+            <div class="fzm-league-side">${dayLabelFr(t.date)}</div>
+        </div>`;
+}
+
+function fzmInjuryRowHTML(i) {
+    const detail = [i.injuryType, i.injuryDetail].filter(Boolean).join(' / ');
+    const meta = [i.team, detail].filter(Boolean).join(' · ');
+    return `
+        <div class="fzm-league-row">
+            ${fzmLeagueFaceHTML(i.headshot, i.playerName)}
+            <div class="fzm-league-main">
+                <div class="fzm-league-name">${escapeHTML(i.playerName)}</div>
+                <div class="fzm-league-meta">${escapeHTML(meta)}</div>
+            </div>
+            <div class="fzm-league-side fzm-league-status" data-status="${escapeHTML(i.status || '')}">${escapeHTML(i.statusFr || '')}</div>
+        </div>`;
+}
+
+// ============================================================
 // ACTUALITÉS LNH — même flux NewsAPI que le carrousel d'accueil et
 // le panneau hors-saison (fetchNhlNews, accueil.js).
 // ============================================================
 async function fzmLoadNews() {
-    const section = document.getElementById('fzmNewsSection');
     const wrap = document.getElementById('fzmNewsWrap');
-    if (!section || !wrap) return;
+    if (!wrap) return;
     const articles = await fetchNhlNews();
-    if (!articles.length) { section.style.display = 'none'; return; }
-    section.style.display = '';
+    if (!articles.length) { wrap.innerHTML = ''; return; }
     wrap.innerHTML = articles.slice(0, 2).map(a => `
         <a class="fzm-news-card" href="${escapeHTML(a.url)}" target="_blank" rel="noopener">
             <div class="fzm-news-kicker">${escapeHTML(a.source || 'Actualité')}</div>
@@ -529,7 +673,7 @@ function renderMobileHome(tonight, movement, activeName) {
         html += `<div class="fzm-section"><div class="fzm-section-title">Activité de la ligue</div><div id="fzmActivityWrap"></div></div>`;
     }
 
-    html += `<div class="fzm-section" id="fzmNewsSection"><div class="fzm-section-title">Dans la LNH</div><div class="fzm-news-list" id="fzmNewsWrap"></div></div>`;
+    html += fzmLeagueSectionHTML();
     html += fzmFooterLinks();
 
     root.innerHTML = html;
@@ -540,5 +684,6 @@ function renderMobileHome(tonight, movement, activeName) {
         document.getElementById('fzmPlayers')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     if (showActivity) fzmLoadActivity(activeName);
+    fzmLoadLeague();
     fzmLoadNews();
 }

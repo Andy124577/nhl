@@ -220,9 +220,11 @@
                 </div>
             </div>
 
-            <!-- Hors-saison — compte à rebours avant le camp/la saison, transactions
-                 réelles (GET /nhl-news) et joueurs à surveiller. Masqué dès que la
-                 saison régulière est commencée (voir renderOffseasonPanel). -->
+            <!-- Hors-saison — compte à rebours avant le camp/la saison, mouvements
+                 de joueurs réels (GET /nhl-transactions, déduits des alignements
+                 officiels), blessés (GET /nhl-injuries) et joueurs à surveiller.
+                 Masqué dès que la saison régulière est commencée (voir
+                 renderOffseasonPanel). -->
             <div class="fz-dash-offseason" id="fzDashOffseason" style="display:none;">
                 <span class="fzd-eyebrow">Hors-saison</span>
                 <div class="fzd-off-count">
@@ -231,7 +233,14 @@
                 </div>
 
                 <div class="fzd-off-section">
-                    <span class="fzd-section-title">Transactions récentes</span>
+                    <div class="fzd-off-head">
+                        <span class="fzd-section-title">Mouvements récents</span>
+                        <div class="fzd-off-tabs" id="fzdOffTabs">
+                            <button type="button" class="fzd-off-tab is-active" data-tab="trade">Échanges</button>
+                            <button type="button" class="fzd-off-tab" data-tab="signing">Signatures</button>
+                            <button type="button" class="fzd-off-tab" data-tab="injury">Blessés</button>
+                        </div>
+                    </div>
                     <div class="fzd-off-transactions" id="fzdOffTransactions"><!-- Filled by accueil-dash.js --></div>
                 </div>
 

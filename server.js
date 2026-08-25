@@ -28,6 +28,10 @@ const TRADES_FILE = `${DATA_DIR}/trades.json`;
 const NHL_STATS_FILE = "./nhl_filtered_stats.json"; // Stats file stays in app directory
 const CURRENT_STATS_FILE = `${DATA_DIR}/current_stats.json`;
 const CURRENT_TEAMS_FILE = `${DATA_DIR}/current_teams.json`;
+// Photo quotidienne des 32 alignements + journal des mouvements qu'on en
+// déduit (voir la section « TRANSACTIONS LNH » plus bas).
+const ROSTER_SNAPSHOT_FILE = `${DATA_DIR}/nhl_roster_snapshot.json`;
+const TRANSACTIONS_FILE = `${DATA_DIR}/nhl_transactions.json`;
 
 // Use PostgreSQL if DATABASE_URL is set, otherwise use JSON files
 const USE_POSTGRES = !!process.env.DATABASE_URL;
@@ -2481,6 +2485,10 @@ cron.schedule('0 0 * * *', async () => {
     await updateCurrentStats();
     await updateTeamStandings();
     await snapshotAllPoolRanks();
+    // En dernier : c'est la seule tâche qui tolère d'être sautée (voir la
+    // règle tout-ou-rien dans refreshNhlTransactions), les stats du pool
+    // passent avant.
+    await refreshNhlTransactions();
 }, {
     timezone: "America/New_York" // Adjust to your timezone
 });
@@ -3351,6 +3359,454 @@ app.get('/nhl-news', async (req, res) => {
     } catch (error) {
         console.error('❌ Error fetching NHL news:', error.message);
         res.json({ articles: [], configured: !!process.env.NEWSAPI_KEY });
+    }
+});
+
+// ============================================================
+// TRANSACTIONS LNH — échanges, signatures et départs déduits en
+// comparant les alignements officiels d'un jour à l'autre.
+//
+// Aucune API de la LNH n'expose les transactions : vérifié route par
+// route contre les deux références communautaires (dword4/nhlapi et
+// Zmalski/NHL-API-Reference), ni l'une ni l'autre ne documente quoi que
+// ce soit sur les échanges, le ballottage ou les signatures. En
+// revanche /v1/roster/{TEAM}/current répond à l'année — hors-saison
+// comprise — et chaque joueur y porte un id numérique stable.
+// Photographier les 32 alignements chaque nuit et comparer deux photos
+// donne donc du mouvement de joueurs réel et structuré, sans grattage
+// de page ni donnée inventée :
+//
+//   présent des deux côtés, équipe différente → échange
+//   absent hier, présent aujourd'hui          → signature
+//   présent hier, absent aujourd'hui          → départ
+//
+// Limites assumées, à ne pas maquiller à l'affichage : le montant et la
+// durée d'un contrat n'existent nulle part dans cette source, un échange
+// de choix au repêchage seuls reste invisible (un choix ne figure sur
+// aucun alignement), et rien n'est rétroactif — le journal ne commence
+// qu'à la première photo, d'où le drapeau `tracking` renvoyé au client.
+// ============================================================
+const TRANSACTIONS_KEEP = 250;
+
+// api-web étrangle les rafales : 32 requêtes en parallèle (même par lots
+// de 8) reviennent toutes en HTTP 429, et à 400 ms d'intervalle un club
+// se faisait encore refuser. Mesuré : en série à 1,2 s l'aller complet
+// prend ~40 s et passe. C'est une tâche de nuit, la lenteur ne coûte rien.
+const ROSTER_FETCH_DELAY_MS = 1200;
+const ROSTER_FETCH_BACKOFF_MS = [0, 5000, 15000, 30000, 60000];
+// En deçà, on soupçonne une panne générale plutôt que quelques clubs
+// capricieux, et on préfère ne rien enregistrer.
+const MIN_TEAMS_FOR_SNAPSHOT = 28;
+
+/**
+ * Un alignement, avec reprise sur étranglement. Renvoie la liste des
+ * joueurs, ou null si le club reste inaccessible — jamais une liste vide,
+ * qu'un appelant pourrait confondre avec un club sans joueurs.
+ */
+async function fetchOneRoster(code) {
+    for (let attempt = 0; attempt < ROSTER_FETCH_BACKOFF_MS.length; attempt++) {
+        if (ROSTER_FETCH_BACKOFF_MS[attempt]) {
+            await new Promise(resolve => setTimeout(resolve, ROSTER_FETCH_BACKOFF_MS[attempt]));
+        }
+        try {
+            const response = await fetch(`https://api-web.nhle.com/v1/roster/${code}/current`);
+            if (response.status === 429) continue; // étranglé : on repasse par le backoff
+            if (!response.ok) return null;
+            const data = await response.json();
+            const roster = [
+                ...(data.forwards || []),
+                ...(data.defensemen || []),
+                ...(data.goalies || [])
+            ];
+            // Un alignement vide est une réponse anormale, pas un club sans
+            // joueurs : le traiter comme un échec plutôt que comme 40 départs.
+            return roster.length ? roster : null;
+        } catch (error) {
+            // Coupure réseau : le backoff nous donne une tentative de plus.
+        }
+    }
+    return null;
+}
+
+/**
+ * Photographie les alignements, un club à la fois. Renvoie la carte plate
+ * id → { name, team, pos, num, headshot }, plus la liste des clubs
+ * réellement joints — l'appelant en a besoin pour ne pas confondre
+ * « ce joueur est parti » et « ce club n'a pas répondu ».
+ */
+async function fetchAllRosters() {
+    const players = {};
+    const fetchedTeams = new Set();
+    const failedTeams = [];
+
+    for (const code of NHL_CLUB_CODES) {
+        const roster = await fetchOneRoster(code);
+        if (!roster) { failedTeams.push(code); continue; }
+
+        fetchedTeams.add(code);
+        roster.forEach(p => {
+            players[p.id] = {
+                name: `${p.firstName?.default || ''} ${p.lastName?.default || ''}`.trim(),
+                team: code,
+                pos: p.positionCode || null,
+                num: p.sweaterNumber || null,
+                headshot: p.headshot || null
+            };
+        });
+
+        await new Promise(resolve => setTimeout(resolve, ROSTER_FETCH_DELAY_MS));
+    }
+
+    return { players, fetchedTeams, failedTeams };
+}
+
+/**
+ * Compare deux photos (cartes id → joueur) et en tire les mouvements.
+ *
+ * `allowDepartures` doit être faux dès qu'un seul club a manqué à
+ * l'appel. Un échange et une signature se prouvent par une *présence*
+ * (le joueur est là, sur tel club) et restent donc fiables ; un départ
+ * ne se déduit que d'une *absence*, et une absence est exactement ce
+ * qu'une requête ratée fabrique. Un joueur passé à un club injoignable
+ * paraîtrait autrement avoir quitté la ligue. Les départs manqués
+ * ressortent à la première photo complète suivante.
+ */
+function diffRosterSnapshots(previous, next, dateISO, allowDepartures = true) {
+    const moves = [];
+
+    Object.entries(next).forEach(([id, now]) => {
+        const before = previous[id];
+        if (!before) {
+            moves.push({ playerId: id, type: 'signing', player: now, fromTeam: null, toTeam: now.team });
+        } else if (before.team !== now.team) {
+            // La carte est globale, pas par club : un joueur qui change
+            // d'équipe apparaît donc ici en un seul mouvement, jamais en
+            // un départ plus une signature.
+            moves.push({ playerId: id, type: 'trade', player: now, fromTeam: before.team, toTeam: now.team });
+        }
+    });
+
+    if (allowDepartures) {
+        Object.entries(previous).forEach(([id, before]) => {
+            if (!next[id]) {
+                moves.push({ playerId: id, type: 'departure', player: before, fromTeam: before.team, toTeam: null });
+            }
+        });
+    }
+
+    return moves.map(m => ({
+        // Un joueur ne bouge qu'une fois par jour : date+id+type suffit à
+        // dédoublonner si une photo est reprise deux fois dans la journée.
+        id: `${dateISO}-${m.playerId}-${m.type}`,
+        date: dateISO,
+        type: m.type,
+        playerId: Number(m.playerId),
+        playerName: m.player.name,
+        pos: m.player.pos,
+        num: m.player.num,
+        headshot: m.player.headshot,
+        fromTeam: m.fromTeam,
+        fromTeamName: m.fromTeam ? (NHL_CLUB_FULLNAME[m.fromTeam] || m.fromTeam) : null,
+        toTeam: m.toTeam,
+        toTeamName: m.toTeam ? (NHL_CLUB_FULLNAME[m.toTeam] || m.toTeam) : null
+    }));
+}
+
+async function loadRosterSnapshot() {
+    try {
+        if (USE_POSTGRES) {
+            const snap = await db.loadCachedStats('nhl-roster-snapshot');
+            if (snap) return snap;
+        } else if (fs.existsSync(ROSTER_SNAPSHOT_FILE)) {
+            return JSON.parse(fs.readFileSync(ROSTER_SNAPSHOT_FILE, 'utf-8'));
+        }
+    } catch (error) {
+        console.error('❌ Error loading roster snapshot:', error.message);
+    }
+    return null;
+}
+
+async function saveRosterSnapshot(snapshot) {
+    if (USE_POSTGRES) {
+        await db.saveCachedStats('nhl-roster-snapshot', snapshot);
+    } else {
+        fs.writeFileSync(ROSTER_SNAPSHOT_FILE, JSON.stringify(snapshot));
+    }
+}
+
+async function loadNhlTransactions() {
+    try {
+        if (USE_POSTGRES) {
+            const log = await db.loadCachedStats('nhl-transactions');
+            if (log) return log;
+        } else if (fs.existsSync(TRANSACTIONS_FILE)) {
+            return JSON.parse(fs.readFileSync(TRANSACTIONS_FILE, 'utf-8'));
+        }
+    } catch (error) {
+        console.error('❌ Error loading NHL transactions:', error.message);
+    }
+    return { lastUpdated: null, transactions: [] };
+}
+
+async function saveNhlTransactions(log) {
+    if (USE_POSTGRES) {
+        await db.saveCachedStats('nhl-transactions', log);
+    } else {
+        fs.writeFileSync(TRANSACTIONS_FILE, JSON.stringify(log, null, 2));
+    }
+}
+
+/**
+ * Prend une photo, la compare à la précédente, ajoute ce qui est
+ * nouveau au journal. Idempotent : rejouable dans la même journée sans
+ * dupliquer une transaction.
+ */
+// La photo de démarrage peut encore tourner quand le cron de minuit se
+// déclenche (elle dure ~40 s, davantage si api-web étrangle). Deux
+// balayages simultanés, c'est 64 requêtes en même temps et le 429 garanti
+// pour les deux. Le second appel se raccroche donc au premier.
+let rosterRefreshInFlight = null;
+
+function refreshNhlTransactions() {
+    if (rosterRefreshInFlight) {
+        console.log('⏳ Photographie déjà en cours — appel rattaché à celle-ci');
+        return rosterRefreshInFlight;
+    }
+    rosterRefreshInFlight = doRefreshNhlTransactions()
+        .finally(() => { rosterRefreshInFlight = null; });
+    return rosterRefreshInFlight;
+}
+
+async function doRefreshNhlTransactions() {
+    console.log('🔄 Photographie des alignements LNH...');
+    const { players, fetchedTeams, failedTeams } = await fetchAllRosters();
+
+    // Sous ce seuil, ce n'est plus un club capricieux mais une panne
+    // (réseau coupé, api-web en carafe) : la photo ne vaut rien.
+    if (fetchedTeams.size < MIN_TEAMS_FOR_SNAPSHOT) {
+        console.log(`⚠️ ${fetchedTeams.size}/${NHL_CLUB_CODES.size} alignements seulement — photo ignorée`);
+        return;
+    }
+
+    const complete = failedTeams.length === 0;
+    if (!complete) {
+        console.log(`⚠️ Clubs injoignables (${failedTeams.join(', ')}) — départs non calculés cette fois`);
+    }
+
+    const capturedAt = new Date().toISOString();
+    const dateISO = capturedAt.slice(0, 10);
+    const previous = await loadRosterSnapshot();
+
+    // Les clubs injoignables gardent leurs joueurs de la photo précédente,
+    // sinon la prochaine comparaison les verrait tous « signer » d'un coup.
+    // Le `!players[id]` est essentiel : un joueur passé d'un club muet à un
+    // club joint est déjà dans la photo neuve, sous sa *nouvelle* équipe —
+    // le reporter le renverrait dans son ancienne.
+    const snapshotPlayers = { ...players };
+    if (!complete && previous?.players) {
+        Object.entries(previous.players).forEach(([id, p]) => {
+            if (!players[id] && !fetchedTeams.has(p.team)) snapshotPlayers[id] = p;
+        });
+    }
+
+    if (!previous?.players || !Object.keys(previous.players).length) {
+        await saveRosterSnapshot({ capturedAt, players: snapshotPlayers });
+        console.log(`✅ Photo de référence enregistrée (${Object.keys(snapshotPlayers).length} joueurs) — le journal démarre à la prochaine photo`);
+        return;
+    }
+
+    const moves = diffRosterSnapshots(previous.players, snapshotPlayers, dateISO, complete);
+    const log = await loadNhlTransactions();
+    const known = new Set((log.transactions || []).map(t => t.id));
+    const fresh = moves.filter(t => !known.has(t.id));
+
+    await saveNhlTransactions({
+        // Toujours retouché, même sans mouvement : `lastUpdated` dit « le
+        // journal est à jour », pas « quelque chose a bougé ».
+        lastUpdated: capturedAt,
+        transactions: [...fresh, ...(log.transactions || [])].slice(0, TRANSACTIONS_KEEP)
+    });
+    await saveRosterSnapshot({ capturedAt, players: snapshotPlayers });
+
+    console.log(fresh.length
+        ? `✅ ${fresh.length} transaction(s) détectée(s) : ${fresh.filter(t => t.type === 'trade').length} échange(s), ${fresh.filter(t => t.type === 'signing').length} signature(s), ${fresh.filter(t => t.type === 'departure').length} départ(s)`
+        : '✅ Aucun mouvement depuis la dernière photo');
+}
+
+/**
+ * Au démarrage : prendre la photo de référence si elle manque, plutôt
+ * que d'attendre minuit — le journal ne peut rien détecter tant qu'il
+ * n'a pas un premier point de comparaison. Sans effet si une photo
+ * existe déjà, le cron de minuit prend alors le relais.
+ */
+async function seedRosterSnapshotOnStartup() {
+    try {
+        const existing = await loadRosterSnapshot();
+        if (existing?.players && Object.keys(existing.players).length) return;
+        console.log('📸 Aucune photo de référence des alignements — capture initiale...');
+        await refreshNhlTransactions();
+    } catch (error) {
+        console.error('❌ Error seeding roster snapshot:', error.message);
+    }
+}
+
+/**
+ * Rejouer la photo à la demande : utile au lendemain d'une grosse
+ * journée d'échanges, et seul moyen de reprendre la main si le cron de
+ * minuit a sauté. Protégée par un jeton — l'appel déclenche ~40 s de
+ * requêtes vers api-web, ça ne se laisse pas ouvert. Sans ADMIN_TOKEN
+ * configuré la route reste fermée plutôt que grande ouverte.
+ */
+app.post('/nhl-transactions/refresh', async (req, res) => {
+    const token = process.env.ADMIN_TOKEN;
+    if (!token || req.get('x-admin-token') !== token) {
+        return res.status(403).json({ message: 'Interdit' });
+    }
+    try {
+        await refreshNhlTransactions();
+        const log = await loadNhlTransactions();
+        res.json({ ok: true, lastUpdated: log.lastUpdated, total: (log.transactions || []).length });
+    } catch (error) {
+        console.error('❌ Error refreshing NHL transactions:', error.message);
+        res.status(500).json({ ok: false, message: error.message });
+    }
+});
+
+app.get('/nhl-transactions', async (req, res) => {
+    try {
+        const log = await loadNhlTransactions();
+        const all = log.transactions || [];
+        let transactions = all;
+
+        const { type, team } = req.query;
+        if (type && type !== 'all') {
+            const wanted = new Set(String(type).split(',').map(s => s.trim()));
+            transactions = transactions.filter(t => wanted.has(t.type));
+        }
+        if (team) {
+            const code = String(team).toUpperCase();
+            transactions = transactions.filter(t => t.fromTeam === code || t.toTeam === code);
+        }
+
+        const limit = Math.min(parseInt(req.query.limit, 10) || 50, TRANSACTIONS_KEEP);
+
+        res.json({
+            lastUpdated: log.lastUpdated || null,
+            // Avant la première photo le journal est vide sans que la ligue
+            // soit calme : le client doit pouvoir distinguer « rien à
+            // signaler » de « on n'observe pas encore ».
+            tracking: !!log.lastUpdated,
+            counts: {
+                trade: all.filter(t => t.type === 'trade').length,
+                signing: all.filter(t => t.type === 'signing').length,
+                departure: all.filter(t => t.type === 'departure').length
+            },
+            transactions: transactions.slice(0, limit)
+        });
+    } catch (error) {
+        console.error('❌ Error serving NHL transactions:', error.message);
+        res.json({ lastUpdated: null, tracking: false, counts: { trade: 0, signing: 0, departure: 0 }, transactions: [] });
+    }
+});
+
+// ============================================================
+// BLESSÉS — api-web.nhle.com n'expose aucun rapport de blessures (un
+// alignement ne dit pas qui est blessé), mais ESPN en publie un,
+// structuré et sans clé : statut, nature, date de retour prévue. Chaque
+// entrée porte déjà l'abréviation officielle du club dans
+// athlete.team.abbreviation, donc aucune table nom → code n'est
+// nécessaire. Caché 30 min.
+// ============================================================
+const INJURY_STATUS_FR = {
+    'Out': 'Absent',
+    'Injured Reserve': 'Réserve des blessés',
+    'Day-To-Day': 'Au jour le jour',
+    'Suspension': 'Suspension'
+};
+
+let nhlInjuriesCache = { data: null, fetchedAt: 0 };
+const NHL_INJURIES_TTL_MS = 30 * 60 * 1000;
+
+app.get('/nhl-injuries', async (req, res) => {
+    try {
+        const now = Date.now();
+        if (!nhlInjuriesCache.data || (now - nhlInjuriesCache.fetchedAt) >= NHL_INJURIES_TTL_MS) {
+            const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/injuries');
+            if (!response.ok) {
+                console.error('❌ ESPN injuries request failed:', response.status);
+                return res.json({ lastUpdated: null, injuries: [], counts: {} });
+            }
+            const data = await response.json();
+
+            const injuries = [];
+            (data.injuries || []).forEach(teamEntry => {
+                (teamEntry.injuries || []).forEach(entry => {
+                    const athlete = entry.athlete || {};
+                    const code = athlete.team?.abbreviation || null;
+                    if (!code || !athlete.displayName) return;
+                    injuries.push({
+                        playerName: athlete.displayName,
+                        pos: athlete.position?.abbreviation || null,
+                        headshot: athlete.headshot?.href || null,
+                        team: code,
+                        teamName: NHL_CLUB_FULLNAME[code] || teamEntry.displayName || code,
+                        status: entry.status || null,
+                        statusFr: INJURY_STATUS_FR[entry.status] || entry.status || null,
+                        // `type` est la partie du corps (« Knee »), `detail`
+                        // la précision (« Surgery ») — les deux peuvent
+                        // manquer, d'où le null plutôt qu'une chaîne vide.
+                        injuryType: entry.details?.type || null,
+                        injuryDetail: entry.details?.detail || null,
+                        returnDate: entry.details?.returnDate || null,
+                        since: entry.date || null,
+                        comment: entry.longComment || entry.shortComment || null
+                    });
+                });
+            });
+
+            // Les plus récemment déclarés d'abord. Trier par statut puis par
+            // nom paraissait plus logique, mais le client n'affiche qu'une
+            // poignée de lignes : par ordre alphabétique, cette poignée
+            // n'aurait aucun sens (les Anderson, toujours), alors que par
+            // date elle répond à « quoi de neuf ». Statut en départage.
+            const ORDER = ['Injured Reserve', 'Out', 'Suspension', 'Day-To-Day'];
+            injuries.sort((a, b) => {
+                const dateDiff = new Date(b.since || 0) - new Date(a.since || 0);
+                if (dateDiff) return dateDiff;
+                const rank = ORDER.indexOf(a.status) - ORDER.indexOf(b.status);
+                return rank !== 0 ? rank : a.playerName.localeCompare(b.playerName);
+            });
+
+            nhlInjuriesCache = {
+                data: { lastUpdated: new Date().toISOString(), injuries },
+                fetchedAt: now
+            };
+        }
+
+        const payload = nhlInjuriesCache.data;
+        let injuries = payload.injuries;
+
+        if (req.query.team) {
+            const code = String(req.query.team).toUpperCase();
+            injuries = injuries.filter(i => i.team === code);
+        }
+        if (req.query.status) {
+            const wanted = new Set(String(req.query.status).split(',').map(s => s.trim()));
+            injuries = injuries.filter(i => wanted.has(i.status));
+        }
+
+        const counts = {};
+        payload.injuries.forEach(i => { counts[i.status] = (counts[i.status] || 0) + 1; });
+
+        res.json({
+            lastUpdated: payload.lastUpdated,
+            total: payload.injuries.length,
+            counts,
+            injuries: injuries.slice(0, Math.min(parseInt(req.query.limit, 10) || 100, 300))
+        });
+    } catch (error) {
+        console.error('❌ Error fetching NHL injuries:', error.message);
+        res.json({ lastUpdated: null, total: 0, counts: {}, injuries: [] });
     }
 });
 
@@ -5995,6 +6451,21 @@ function initializeDataFiles() {
                 source: './current_teams.json',
                 dest: CURRENT_TEAMS_FILE,
                 defaultContent: '{"teams":[],"lastUpdated":null}'
+            },
+            {
+                name: 'nhl_roster_snapshot.json',
+                source: './nhl_roster_snapshot.json',
+                dest: ROSTER_SNAPSHOT_FILE,
+                // Pas de joueurs = pas de photo de référence : la première
+                // exécution en prend une et ne déduit rien, plutôt que de
+                // traiter 1 300 joueurs comme autant de signatures.
+                defaultContent: '{"capturedAt":null,"players":{}}'
+            },
+            {
+                name: 'nhl_transactions.json',
+                source: './nhl_transactions.json',
+                dest: TRANSACTIONS_FILE,
+                defaultContent: '{"transactions":[],"lastUpdated":null}'
             }
         ];
 
@@ -6148,6 +6619,7 @@ async function startServer() {
             // Fire-and-forget: serve local cached data immediately, refresh in
             // the background if stale. Never blocks server startup.
             warmStatsOnStartup();
+            seedRosterSnapshotOnStartup();
         });
     } catch (error) {
         console.error('❌ Failed to start server:', error);
