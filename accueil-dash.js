@@ -300,14 +300,22 @@ async function fetchRankMovement(poolName) {
     }
 }
 
-async function loadLivePanel() {
-    const liveContainer = document.getElementById('fzdLivePanel');
-    const playersContainer = document.getElementById('fzdPlayersList');
+/** Fetches tonight's boxscores + rank movement once; shared by the desktop
+ *  live panel and the phone home (renderMobileHome, accueil-mobile.js) so a
+ *  page load never fires the same two requests twice. */
+async function loadDashData() {
     const team = FZPool.team();
     const activeName = FZPool.get();
-    if (!liveContainer || !playersContainer || !team || !activeName) return;
-
+    if (!team || !activeName) return null;
     const [tonight, movement] = await Promise.all([fetchTonightBoxscores(), fetchRankMovement(activeName)]);
+    return { tonight, movement, activeName };
+}
+
+function renderLivePanel(tonight, movement, activeName) {
+    const liveContainer = document.getElementById('fzdLivePanel');
+    const playersContainer = document.getElementById('fzdPlayersList');
+    if (!liveContainer || !playersContainer) return;
+
     const rosterNames = new Set(activeRosterNames());
     const myLines = (tonight.players || [])
         .filter(p => rosterNames.has(p.playerName))
@@ -671,12 +679,18 @@ async function renderDash() {
     const body = document.getElementById('fzDashBody');
     const calWrap = document.getElementById('fzDashCalendarWrap');
     const onboard = document.getElementById('fzDashOnboard');
+    const mobileHome = document.getElementById('fzMobileHome');
     if (!section || !userData.username) return;
 
     const hasPool = !!FZPool.get();
     section.style.display = 'block';
     if (body) body.style.display = hasPool ? '' : 'none';
     if (calWrap) calWrap.style.display = hasPool ? '' : 'none';
+    // .fz-mobile-home defaults to display:none in CSS (hidden until a pool
+    // is active, and force-hidden on desktop via @media min-width:769px) —
+    // an explicit 'block' is required here, an empty string would just fall
+    // back to that same CSS default instead of overriding it.
+    if (mobileHome) mobileHome.style.display = hasPool ? 'block' : 'none';
     if (onboard) onboard.style.display = hasPool ? 'none' : 'block';
 
     if (!hasPool) return;
@@ -685,7 +699,12 @@ async function renderDash() {
     renderQuickActions();
     renderMyPoolsList();
     renderActivityFeed();
-    loadLivePanel();
+
+    const dash = await loadDashData();
+    if (dash) {
+        renderLivePanel(dash.tonight, dash.movement, dash.activeName);
+        renderMobileHome(dash.tonight, dash.movement, dash.activeName);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

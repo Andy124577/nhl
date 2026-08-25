@@ -19,11 +19,14 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <!-- Accueil dashboard ("éditorial calme") uniquement : voir accueil-dash.css -->
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Accueil mobile (≤768px, 4 modes) uniquement : voir accueil-mobile.css -->
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css">
     <link rel="stylesheet" href="poolNav.css">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="accueil.css">
     <link rel="stylesheet" href="accueil-dash.css">
+    <link rel="stylesheet" href="accueil-mobile.css">
     <link rel="stylesheet" href="demos.css">
     <link rel="stylesheet" href="skeleton-loader.css">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -183,6 +186,15 @@
                     <a href="rejoindre-pool.html" class="fzd-cta-btn is-secondary">Rejoindre un pool →</a>
                 </div>
             </div>
+
+            <!-- ======================================================== -->
+            <!-- MOBILE HOME — téléphone uniquement (≤768px, accueil-mobile.css -->
+            <!-- le confirme). Remplace tout ce qui suit (calendrier, hors-  -->
+            <!-- saison, corps du dashboard bureau) par un écran à 4 modes   -->
+            <!-- réels : repêchage en cours, avant-saison, match en direct,  -->
+            <!-- saison régulière. Voir accueil-mobile.js / renderMobileHome. -->
+            <!-- ======================================================== -->
+            <div class="fz-mobile-home" id="fzMobileHome" style="display:none;"><!-- Filled by accueil-mobile.js --></div>
 
             <!-- Calendrier — saison complète, GET /schedule/:date -->
             <div class="fz-dash-calendar" id="fzDashCalendarWrap">
@@ -396,6 +408,7 @@
     <script defer src="lazy-load.js"></script>
     <script defer src="accueil.js"></script>
     <script defer src="accueil-dash.js"></script>
+    <script defer src="accueil-mobile.js"></script>
     <script defer src="demos.js"></script>
     <script defer src="navbar.js"></script>
     <script defer src="poolNav.js"></script>

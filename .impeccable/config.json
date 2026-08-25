@@ -6,7 +6,8 @@
       "draftActif-premium.css",
       "trade.css",
       "classement-premium.css",
-      "stats-premium.css"
+      "stats-premium.css",
+      "accueil-mobile.css"
     ],
     "ignoreValues": [
       {
@@ -59,6 +60,12 @@
         "value": "oswald",
         "createdAt": "2026-08-18T22:08:31.902Z",
         "reason": "User approved the mockup's exact typography (Oswald) for the new Accueil dashboard module"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "archivo",
+        "createdAt": "2026-08-25T00:00:00.000Z",
+        "reason": "User approved the mockup's exact typography (Archivo) for the new phone-size 4-mode home module (NHL Pool Home.dc.html), loaded in index.html's <head> for accueil-mobile.css"
       }
     ]
   }

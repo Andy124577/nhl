@@ -1,0 +1,200 @@
+/* ============================================================
+   ACCUEIL MOBILE HOME — téléphone uniquement (≤768px)
+   ------------------------------------------------------------
+   Remplace le calendrier/hors-saison/corps du dashboard bureau
+   (accueil-dash.css) par un écran à 4 modes réels, sourcé de la
+   maquette Claude Design "NHL Pool Home.dc.html" (projectId
+   3cff4323-8774-4865-93ed-faf57f54c9ac). Portée strictement
+   limitée à .fz-mobile-home : jetons préfixés --fzm-*, aucun jeton
+   partagé (--primary, --fzd-*, etc.) n'est touché — même principe
+   que accueil-dash.css et les reskins draftActif/classement/trade.
+   ============================================================ */
+
+.fz-mobile-home {
+    --fzm-bg: #EAE8E4;
+    --fzm-panel: #F4F3F1;
+    --fzm-surface: #ffffff;
+    --fzm-ink: #17171A;
+    --fzm-ink-soft: rgba(23, 23, 26, 0.5);
+    --fzm-ink-faint: rgba(23, 23, 26, 0.4);
+    --fzm-border: rgba(23, 23, 26, 0.1);
+    --fzm-red: #E42027;
+    --fzm-red-soft: #FCE4E4;
+    --fzm-green: #0F8A3E;
+
+    display: none; /* accueil-dash.js (renderDash) le révèle avec un pool actif */
+    background: var(--fzm-bg);
+    margin: 0 -16px;
+    padding: 18px 16px 8px;
+    font-family: 'Archivo', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--fzm-ink);
+}
+
+.fz-mobile-home * { box-sizing: border-box; }
+.fz-mobile-home a { color: inherit; text-decoration: none; }
+
+/* Carrousels horizontaux : pas de scrollbar visible, comme le reste du site. */
+.fzm-scroll-row {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+}
+.fzm-scroll-row::-webkit-scrollbar { display: none; }
+
+/* ---------------------------------------------------------- */
+/* HÉROS — un seul actif à la fois (direct / repêchage / avant- */
+/* saison), voir renderMobileHome (accueil-mobile.js).          */
+/* ---------------------------------------------------------- */
+.fzm-hero { border-radius: 16px; padding: 20px 18px; margin-bottom: 14px; color: #fff; }
+.fzm-hero-eyebrow {
+    display: flex; align-items: center; gap: 6px;
+    font: 700 11px/1 'Archivo', sans-serif;
+    letter-spacing: .08em; text-transform: uppercase;
+    opacity: .75; margin-bottom: 10px;
+}
+.fzm-hero-headline { font: 800 19px/1.25 'Archivo', sans-serif; margin-bottom: 12px; }
+.fzm-hero-btn {
+    display: inline-block;
+    background: #fff; color: var(--fzm-red);
+    border: none; border-radius: 10px;
+    padding: 10px 16px;
+    font: 700 13px/1 'Archivo', sans-serif;
+    cursor: pointer;
+}
+.fzm-hero-divider { height: 1px; background: rgba(255,255,255,.14); margin: 4px 0 14px; }
+
+.fzm-live-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: currentColor;
+    animation: fzm-pulse 1.6s ease-in-out infinite;
+}
+@keyframes fzm-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+.fzm-hero-live { background: var(--fzm-red); }
+.fzm-hero-live .fzm-hero-btn { color: var(--fzm-red); }
+
+/* Repêchage */
+.fzm-hero-draft { background: var(--fzm-ink); }
+.fzm-draft-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.fzm-draft-top .fzm-hero-eyebrow { margin-bottom: 0; }
+.fzm-draft-elapsed { font: 600 11px/1 'Archivo', sans-serif; opacity: .55; font-variant-numeric: tabular-nums; }
+.fzm-draft-onclock-lbl { font-size: 13px; opacity: .7; margin-bottom: 2px; }
+.fzm-hero-draft .fzm-hero-headline { margin-bottom: 0; }
+.fzm-draft-turn-lbl { font-size: 13px; opacity: .7; margin-bottom: 4px; }
+.fzm-draft-turn-val { font: 800 30px/1 'Archivo', sans-serif; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.fzm-hero-draft .fzm-hero-btn { margin-top: 2px; }
+
+/* Avant-saison */
+.fzm-hero-preseason { background: var(--fzm-ink); }
+.fzm-hero-preseason .fzm-hero-eyebrow { color: rgba(255,255,255,.5); opacity: 1; margin-bottom: 12px; }
+.fzm-countdown { display: flex; gap: 14px; }
+.fzm-cd-part { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.fzm-cd-val { font: 800 30px/1 'Archivo', sans-serif; font-variant-numeric: tabular-nums; }
+.fzm-cd-unit { font: 600 10px/1 'Archivo', sans-serif; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .05em; }
+
+/* ---------------------------------------------------------- */
+/* CLASSEMENT                                                  */
+/* ---------------------------------------------------------- */
+.fzm-rank-strip {
+    background: var(--fzm-panel); border-radius: 16px; padding: 16px 18px; margin-bottom: 14px;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.fzm-rank-eyebrow { font: 600 11px/1 'Archivo', sans-serif; color: var(--fzm-ink-soft); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.fzm-rank-pos-row { display: flex; align-items: baseline; gap: 10px; }
+.fzm-rank-pos { font: 800 26px/1 'Archivo', sans-serif; letter-spacing: -.02em; }
+.fzm-rank-pts { font: 600 14px/1 'Archivo', sans-serif; color: var(--fzm-ink-soft); }
+.fzm-rank-side { text-align: right; }
+.fzm-rank-trend { font: 700 12px/1 'Archivo', sans-serif; margin-bottom: 3px; color: var(--fzm-ink-soft); }
+.fzm-rank-trend.is-up { color: var(--fzm-green); }
+.fzm-rank-trend.is-down { color: var(--fzm-red); }
+.fzm-rank-gap { font: 500 11px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); }
+
+/* ---------------------------------------------------------- */
+/* SECTIONS GÉNÉRIQUES — titres + carrousels/listes             */
+/* ---------------------------------------------------------- */
+.fzm-section { margin-bottom: 18px; }
+.fzm-section-title { font: 700 15px/1 'Archivo', sans-serif; margin-bottom: 10px; }
+.fzm-empty { font: 500 12.5px/1.4 'Archivo', sans-serif; color: var(--fzm-ink-faint); margin: 0; }
+.fzm-note { font: 500 11.5px/1.4 'Archivo', sans-serif; color: var(--fzm-ink-faint); text-align: center; margin: 0 0 18px; }
+
+/* Matchs */
+.fzm-game-card { flex-shrink: 0; width: 150px; background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 12px; padding: 13px; }
+.fzm-game-live, .fzm-game-final, .fzm-game-time { display: flex; align-items: center; gap: 5px; font: 700 10px/1 'Archivo', sans-serif; letter-spacing: .03em; margin-bottom: 9px; }
+.fzm-game-live { color: var(--fzm-red); }
+.fzm-game-final, .fzm-game-time { color: var(--fzm-ink-soft); font-weight: 600; }
+.fzm-game-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
+.fzm-game-row:last-of-type { margin-bottom: 0; }
+.fzm-game-team, .fzm-game-score { font: 700 14px/1 'Archivo', sans-serif; }
+.fzm-game-score { font-variant-numeric: tabular-nums; }
+.fzm-game-foot { font: 500 10.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); margin-top: 8px; }
+
+/* Joueurs */
+.fzm-player-card { flex-shrink: 0; width: 128px; background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 12px; padding: 12px; }
+.fzm-player-avatar { width: 36px; height: 36px; border-radius: 50%; background: repeating-linear-gradient(135deg, #EDEBE7 0 4px, #F6F5F3 4px 8px); margin-bottom: 8px; }
+.fzm-player-name { font: 700 12.5px/1.2 'Archivo', sans-serif; margin-bottom: 2px; }
+.fzm-player-meta { font: 500 10.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); margin-bottom: 7px; }
+.fzm-player-tag { display: inline-block; font: 700 9.5px/1 'Archivo', sans-serif; letter-spacing: .03em; padding: 3px 7px; border-radius: 6px; background: var(--fzm-panel); color: var(--fzm-ink-soft); }
+.fzm-player-tag.is-live { background: var(--fzm-red-soft); color: var(--fzm-red); }
+.fzm-player-line { font: 600 11px/1 'Archivo', sans-serif; color: var(--fzm-ink); margin-top: 6px; opacity: .75; }
+
+/* Listes (repêchage, activité) */
+.fzm-list-card { background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 12px; overflow: hidden; }
+.fzm-list-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border-bottom: 1px solid rgba(23,23,26,.06); }
+.fzm-list-row:last-child { border-bottom: none; }
+.fzm-list-row.is-onclock { background: var(--fzm-red-soft); }
+.fzm-list-row.is-mine:not(.is-onclock) { background: var(--fzm-panel); }
+.fzm-list-left { font: 600 12.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-soft); }
+.fzm-list-right { font: 700 13px/1 'Archivo', sans-serif; }
+.fzm-list-row.is-onclock .fzm-list-right { color: var(--fzm-red); }
+
+.fzm-pick-row { align-items: flex-start; }
+.fzm-pick-player { font: 700 13px/1 'Archivo', sans-serif; }
+.fzm-pick-meta { font: 500 11px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); margin-top: 1px; }
+.fzm-pick-num { font: 600 11.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); white-space: nowrap; }
+
+/* Tuile "Repêchage ouvre" (avant-saison, avant le début du repêchage) */
+.fzm-tile-row {
+    background: var(--fzm-panel); border-radius: 14px; padding: 14px 16px; margin-bottom: 18px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.fzm-tile-title { font: 700 13px/1 'Archivo', sans-serif; margin-bottom: 2px; }
+.fzm-tile-sub { font: 500 11.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-soft); }
+.fzm-tile-btn { flex-shrink: 0; background: var(--fzm-ink); color: #fff; border-radius: 9px; padding: 9px 13px; font: 700 12px/1 'Archivo', sans-serif; }
+
+/* Joueurs à surveiller */
+.fzm-watch-card { flex-shrink: 0; width: 150px; background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 12px; padding: 13px; }
+.fzm-watch-name { font: 700 13px/1 'Archivo', sans-serif; margin-bottom: 2px; }
+.fzm-watch-team { font: 500 11px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); }
+.fzm-watch-note { font: 500 10.5px/1.35 'Archivo', sans-serif; color: var(--fzm-ink-faint); margin-top: 6px; }
+
+/* Activité */
+.fzm-activity-row { display: block; padding: 11px 14px; }
+.fzm-activity-time { font: 500 10.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); margin-bottom: 3px; }
+.fzm-activity-text { font: 500 12.5px/1.4 'Archivo', sans-serif; }
+.fzm-toggle-btn { display: block; margin: 8px auto 0; background: none; border: none; font: 600 12px/1 'Archivo', sans-serif; color: var(--fzm-red); cursor: pointer; padding: 4px; }
+
+/* Actualités LNH */
+.fzm-news-list { display: flex; flex-direction: column; gap: 8px; }
+.fzm-news-card { display: block; background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 10px; padding: 10px 12px; }
+.fzm-news-kicker { font: 700 9.5px/1 'Archivo', sans-serif; color: var(--fzm-red); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 3px; }
+.fzm-news-headline { font: 600 12.5px/1.35 'Archivo', sans-serif; color: var(--fzm-ink); }
+
+/* Pied de page */
+.fzm-footer-links { display: flex; justify-content: center; align-items: center; gap: 14px; padding: 6px 0 16px; flex-wrap: wrap; }
+.fzm-footer-links a { font: 600 11.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-soft); }
+.fzm-footer-links a:hover { color: var(--fzm-red); }
+.fzm-footer-links span { color: rgba(23,23,26,.2); }
+
+/* ============================================================
+   BASCULE BUREAU / TÉLÉPHONE — même principe que .bottom-nav
+   (navbar.css) : la largeur d'écran tranche, pas l'appartenance à
+   un pool (déjà géré par accueil-dash.js/renderDash).
+   ============================================================ */
+@media (max-width: 768px) {
+    #fzDashCalendarWrap, #fzDashOffseason, #fzDashBody { display: none !important; }
+}
+@media (min-width: 769px) {
+    .fz-mobile-home { display: none !important; }
+}
