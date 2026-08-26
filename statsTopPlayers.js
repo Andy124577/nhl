@@ -122,7 +122,7 @@ function renderTopPlayers() {
                      loading="lazy">
                 <span class="no-photo" style="display:none">🏒</span>
             </div>
-            <div class="player-card-name">${name}</div>
+            <div class="player-card-name">${name}${typeof injuryBadgeHTML === 'function' ? injuryBadgeHTML(p.playerName, p.teamAbbrev) : ''}</div>
             <div class="player-card-team">${team} · ${gamesPlayed} matchs</div>
             <div class="player-card-stats">
                 ${pos === 'G' ? `

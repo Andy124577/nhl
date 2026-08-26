@@ -73,7 +73,7 @@ function buildLeaderCard(cat, players) {
             <img class="leader-featured-photo" src="${first.headshot}" alt="${escapeHTML(first.playerName)}"
                  loading="lazy" onerror="this.style.visibility='hidden'">
             <span class="leader-featured-id">
-                <span class="leader-featured-name">${escapeHTML(first.playerName)}</span>
+                <span class="leader-featured-line"><span class="leader-featured-name">${escapeHTML(first.playerName)}</span>${typeof injuryBadgeHTML === 'function' ? injuryBadgeHTML(first.playerName, first.teamAbbrev) : ''}</span>
                 <span class="leader-featured-meta">${escapeHTML(first.teamAbbrev || '')}</span>
             </span>
             <span class="leader-featured-stat">
@@ -84,7 +84,7 @@ function buildLeaderCard(cat, players) {
         ${rest.map((p, i) => `
             <div class="leader-row" onclick="${openCareer(p)}">
                 <span class="leader-row-rank">${i + 2}</span>
-                <span class="leader-row-name">${escapeHTML(p.playerName)}</span>
+                <span class="leader-row-name">${escapeHTML(p.playerName)}</span>${typeof injuryBadgeHTML === 'function' ? injuryBadgeHTML(p.playerName, p.teamAbbrev) : ''}
                 <span class="leader-row-team">${escapeHTML(p.teamAbbrev || '')}</span>
                 <span class="leader-row-val">${p[cat.stat] ?? 0}</span>
             </div>`).join('')}

@@ -186,12 +186,21 @@ async function populatePlayerTable(t) {
         const g = d && i ? `\n            <div class="player-photo">\n                <img src="${d}" alt="" class="face">\n                <img src="${i}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n            </div>\n            ` : "",
             p = n?.position || t.positionCode || "N/A",
             y = document.createElement("tr");
-        y.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${g}<div class="player-ident"><span class="player-name">${a}</span><span class="player-pos">${p}</span></div></div></td>\n            <td>${c}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n            <td class="points-column">${h}</td>\n        `;
+        y.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${g}<div class="player-ident"><span class="player-name">${a}${injBadge(a, o)}</span><span class="player-pos">${p}</span></div></div></td>\n            <td>${c}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n            <td class="points-column">${h}</td>\n        `;
         makeRowInteractive(y, () => showCareerStats(t.playerId, t.skaterFullName, !1),
             `Voir la fiche de ${a}`);
         tbody.appendChild(y)
     });
     renderStatsPagination(t.length)
+}
+
+/**
+ * Pastille de blessure, ou rien. injuries.js est une couche d'agrément :
+ * si le script n'a pas chargé, le tableau doit s'afficher quand même
+ * plutôt que d'échouer sur une fonction absente.
+ */
+function injBadge(playerName, teamAbbrev) {
+    return typeof injuryBadgeHTML === 'function' ? injuryBadgeHTML(playerName, teamAbbrev) : '';
 }
 
 /**
@@ -300,7 +309,7 @@ function populateGoalieTable(t) {
         n && n.gamesPlayed > 0 ? (o = n.gamesPlayed || 0, r = n.wins || 0, d = n.losses || 0, i = n.otLosses || 0, c = n.savePct || 0, u = n.shutouts || 0, m = 5 * u + 2 * r + 1 * i) : (o = t.gamesPlayed || 0, r = t.wins || 0, d = t.losses || 0, i = t.otLosses || 0, c = t.savePct || 0, u = t.shutouts || 0, m = t.points || 0);
         const h = s && l ? `<div class="player-photo">\n                    <img src="${s}" alt="${a}" class="face">\n                    <img src="${l}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n               </div>` : "",
             g = document.createElement("tr");
-        g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${h}<div class="player-ident"><span class="player-name">${a}</span></div></div></td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c?.toFixed(3)}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
+        g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${h}<div class="player-ident"><span class="player-name">${a}${injBadge(a, n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}</span></div></div></td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c?.toFixed(3)}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
         makeRowInteractive(g, () => showCareerStats(t.playerId, t.goalieFullName, !0),
             `Voir la fiche de ${a}`);
         tbody.appendChild(g)
@@ -406,6 +415,9 @@ async function showCareerStats(t, e, a = !1) {
         g.style.display = "block";
         const tc = getTeamColors(a.currentTeam);
         g.style.setProperty("--team-primary", tc[0]), g.style.setProperty("--team-secondary", tc[1]);
+        // Indisponibilité : `currentTeam` est déjà l'abréviation officielle
+        // (currentTeamAbbrev côté serveur), ce qui départage les homonymes.
+        if (typeof renderInjuryBanner === "function") renderInjuryBanner(a.playerName, a.currentTeam);
         if (a.headshot ? d.innerHTML = `<img src="${a.headshot}" alt="${a.playerName}">` : d.innerHTML = '<div class="no-photo">🏒</div>', document.getElementById("playerHeight").textContent = a.height || "-", document.getElementById("playerWeight").textContent = a.weight ? `${a.weight} lb` : "-", a.birthDate) {
             const t = new Date(a.birthDate),
                 e = new Date;

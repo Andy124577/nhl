@@ -28,6 +28,7 @@
   
 
   <link rel="stylesheet" href="career-modal.css" />
+  <link rel="stylesheet" href="injuries.css" />
   <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="icons.js" defer></script>
 
@@ -551,6 +552,11 @@
         </div>
         
 
+        <!-- Indisponibilité en cours : nature et durée, remplies par
+             renderInjuryBanner() (injuries.js) à partir du rapport d'ESPN.
+             Reste masqué pour un joueur en santé. -->
+        <div class="cmh-injury" id="careerInjuryBanner" hidden></div>
+
         <div class="cmh-season-highlight" id="careerSeasonHighlight" style="display: none;"></div>
       </div>
 
@@ -651,6 +657,7 @@
   
 
   <script defer src="teamColors.js"></script>
+  <script defer src="injuries.js"></script>
   <script defer src="draftPickCards.js"></script>
   
 

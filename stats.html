@@ -15,6 +15,7 @@
     <!-- Modale de carrière : même feuille que draftActif.html, chargée en
          dernier pour que ses règles spécialisent celles d'index.css. -->
     <link rel="stylesheet" href="career-modal.css">
+    <link rel="stylesheet" href="injuries.css">
     <link rel="stylesheet" href="statsLeaders.css">
     <link rel="stylesheet" href="statsTopPlayers.css">
     <link rel="stylesheet" href="stats-premium.css">
@@ -302,6 +303,10 @@
                         </div>
                     </div>
                 </div>
+                <!-- Indisponibilité en cours : nature et durée, remplies par
+                     renderInjuryBanner() (injuries.js) à partir du rapport
+                     d'ESPN. Reste masqué pour un joueur en santé. -->
+                <div class="cmh-injury" id="careerInjuryBanner" hidden></div>
                 <!-- Faits saillants de la saison en cours : voir le commentaire
                      jumeau dans draftActif.html pour le détail (peuplé par
                      index.js ici, à partir de `currentStats`). -->
@@ -403,6 +408,7 @@
     <!-- Couleurs d'équipe pour le bandeau du nom de la modale de carrière,
          partagé avec draftActif.html. -->
     <script defer src="teamColors.js"></script>
+    <script defer src="injuries.js"></script>
     <script defer src="index.js?v=20250101-debug2"></script>
     <!-- Meneurs de la ligue : lit BASE_URL déjà déclaré par index.js ci-dessus. -->
     <script defer src="statsLeaders.js"></script>

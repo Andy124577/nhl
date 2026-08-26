@@ -1044,7 +1044,7 @@ function renderTeamRoster(roster, activeListings = []) {
             </div>
             <div class="roster-info">
                 <div class="player-name-row">
-                    <span class="player-name">${player.name}</span>
+                    <span class="player-name">${player.name}</span>${player.type === 'team' ? '' : injBadge(player.name, teamAbbrev)}
                     <span class="player-team-abbrev">${teamAbbrev}</span>
                     <span class="player-position">${player.position}</span>
                     ${sellToggleHTML}
@@ -1081,6 +1081,15 @@ function renderTeamRoster(roster, activeListings = []) {
     // Hide skeleton, show content
     document.getElementById('rosterSkeleton').style.display = 'none';
     rosterList.style.display = 'flex';
+}
+
+/**
+ * Pastille de blessure, ou rien. injuries.js est une couche d'agrément :
+ * si le script n'a pas chargé, la liste doit s'afficher quand même plutôt
+ * que d'échouer sur une fonction absente.
+ */
+function injBadge(playerName, teamAbbrev) {
+    return typeof injuryBadgeHTML === 'function' ? injuryBadgeHTML(playerName, teamAbbrev) : '';
 }
 
 // ==================== NAVIGATION HELPERS ====================
@@ -1583,6 +1592,10 @@ async function showCareerStats(playerId, playerName, isGoalie = false) {
         document.getElementById('playerBirthPlace').textContent = birthPlace || '-';
 
         document.getElementById('playerShoots').textContent = data.shootsCatches || '-';
+
+        // Indisponibilité : `currentTeam` est déjà l'abréviation officielle
+        // (currentTeamAbbrev côté serveur), ce qui départage les homonymes.
+        if (typeof renderInjuryBanner === 'function') renderInjuryBanner(data.playerName, data.currentTeam);
 
         if (data.draftInfo) {
             const draft = data.draftInfo;

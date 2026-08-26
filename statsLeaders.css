@@ -112,9 +112,14 @@
     border: 2px solid var(--primary);
 }
 .leader-featured-id { flex: 1; min-width: 0; }
+/* Le nom et la pastille de blessure sur une même ligne : la pastille est
+   posée à côté du nom plutôt qu'à l'intérieur, sinon l'ellipse du nom la
+   rognerait en premier — or c'est justement elle qu'il faut voir. */
+.leader-featured-line { display: flex; align-items: center; min-width: 0; }
 .leader-featured-name {
     font-weight: 700; font-size: .9rem; color: var(--text-dark);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    min-width: 0;
 }
 .leader-featured-meta { font-size: .72rem; color: var(--text-gray); margin-top: 2px; }
 .leader-featured-stat { text-align: right; flex-shrink: 0; }

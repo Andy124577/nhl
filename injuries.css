@@ -1,0 +1,211 @@
+/* ============================================================
+   BLESSURES — pastille de liste + bandeau de fiche.
+
+   Chargée par stats.html, draftActif.html et classement.html, qui ne
+   partagent PAS la même feuille de modale (career-modal.css n'est
+   chargée que par les deux premières) : tout ce qui touche à la
+   blessure vit donc ici, y compris le bandeau, plutôt que d'être écrit
+   deux fois. Les jetons (--danger, --warning, --text-*) viennent
+   d'index.css, chargée par les trois pages.
+
+   Aucune couleur nouvelle : la règle « l'ensemble sémantique est clos »
+   (DESIGN.md) veut qu'un nouvel état gagne l'une des quatre teintes
+   existantes ou retombe sur l'échelle neutre. La gravité prend donc le
+   rouge et l'ambre, et la suspension — qui n'est pas une blessure, mais
+   une indisponibilité — passe au neutre. L'orchidée reste au badge
+   « recrue », son unique fonction.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1. PASTILLE DANS LES LISTES
+   ------------------------------------------------------------ */
+
+/* L'ancre est posée par tous les gabarits, blessé ou non — c'est ce qui
+   permet aux tableaux de se rendre sans attendre /nhl-injuries. Vide,
+   elle ne doit donc rien coûter en gabarit : ni marge, ni espace. */
+.inj-slot { display: none; }
+.inj-slot:not(:empty) {
+  display: inline-flex;
+  align-items: center;
+  /* Posée dans une rangée flex (meneurs, cartes du classement), elle ne
+     doit jamais se laisser comprimer par le nom voisin. */
+  flex: 0 0 auto;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+.inj-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  /* Micro-badge : le barreau bas de l'échelle des rayons. */
+  border-radius: 6px;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 18%, transparent);
+  /* `title` n'ouvre ni au clavier ni au toucher ; le curseur d'aide est
+     le seul indice qu'il y a plus à lire — la fiche du joueur porte le
+     détail complet. */
+  cursor: help;
+}
+.inj-badge svg {
+  display: block;
+  width: 9px;
+  height: 9px;
+}
+
+/* Réserve des blessés : la seule absence dont on sait qu'elle dure. Elle
+   passe en aplat plein là où les autres restent en teinte, ce qui la
+   distingue au coup d'œil sans ajouter de texte dans une rangée déjà
+   dense. Le libellé est fixé à scoreboard-white dans les deux thèmes :
+   --danger reste assez sombre de part et d'autre pour le porter, alors
+   que --text-main vire au quasi-noir en thème clair. */
+.inj-badge[data-status="Injured Reserve"] {
+  color: #F5F5F7;
+  background: var(--danger);
+}
+
+.inj-badge[data-status="Day-To-Day"] {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 20%, transparent);
+}
+.inj-badge[data-status="Suspension"] {
+  color: var(--text-gray);
+  background: color-mix(in srgb, var(--text-gray) 20%, transparent);
+}
+
+/* Cartes du classement : le nom, l'abréviation d'équipe et la position
+   sont sur une ligne flex — la pastille ne doit pas s'y étirer. */
+.player-name-row .inj-slot:not(:empty) { margin-left: 2px; }
+/* Rangée de meneurs : la pastille y est un élément flex à part entière et
+   le gap de 8px de .leader-row l'écarte déjà du nom. */
+.leader-row > .inj-slot:not(:empty) { margin-left: 0; }
+
+/* ------------------------------------------------------------
+   2. BANDEAU DANS LA FICHE DU JOUEUR
+   ------------------------------------------------------------ */
+
+.cmh-injury {
+  /* L'en-tête de la modale est une colonne flex avec gap: 6px (index.css) :
+     la marge complète l'écart plutôt que de le doubler. */
+  margin-top: 4px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  /* Pas de filet épais sur un seul bord : le statut est déjà porté par le
+     fond teinté, le cadre teinté, la pastille pleine et le libellé en
+     capitales — un cinquième signal n'ajoute rien. */
+  border: 1px solid color-mix(in srgb, var(--danger) 28%, transparent);
+  background: color-mix(in srgb, var(--danger) 9%, transparent);
+}
+.cmh-injury[hidden] { display: none; }
+.cmh-injury[data-status="Day-To-Day"] {
+  border-color: color-mix(in srgb, var(--warning) 30%, transparent);
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+}
+.cmh-injury[data-status="Suspension"] {
+  border-color: var(--border-gray);
+  background: color-mix(in srgb, var(--text-gray) 10%, transparent);
+}
+
+.cmh-inj-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cmh-inj-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 6px;
+  flex: 0 0 auto;
+  color: #F5F5F7;
+  background: var(--danger);
+}
+.cmh-inj-icon svg { display: block; width: 10px; height: 10px; }
+/* Même raisonnement que pour le cyan : l'ambre est trop lumineuse pour
+   porter un libellé clair — elle prend arena-black. */
+.cmh-injury[data-status="Day-To-Day"] .cmh-inj-icon { background: var(--warning); color: #121214; }
+.cmh-injury[data-status="Suspension"] .cmh-inj-icon { background: var(--text-gray); }
+
+.cmh-inj-status {
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--danger);
+}
+.cmh-injury[data-status="Day-To-Day"] .cmh-inj-status { color: var(--warning); }
+.cmh-injury[data-status="Suspension"] .cmh-inj-status { color: var(--text-secondary); }
+
+.cmh-inj-nature {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+/* Le point médian sépare le statut de la nature sans ajouter d'élément. */
+.cmh-inj-nature::before {
+  content: "·";
+  margin-right: 6px;
+  color: var(--text-gray);
+  font-weight: 700;
+}
+
+.cmh-inj-facts {
+  display: flex;
+  margin-top: 8px;
+}
+.cmh-inj-fact {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-right: 10px;
+}
+.cmh-inj-fact + .cmh-inj-fact {
+  padding-left: 10px;
+  border-left: 1px solid var(--border-light);
+}
+.cmh-inj-lbl {
+  font-size: .58rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-gray);
+}
+.cmh-inj-val {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--text-main);
+}
+.cmh-inj-sub {
+  font-size: .62rem;
+  font-weight: 500;
+  color: var(--text-gray);
+}
+
+.cmh-inj-note {
+  margin: 7px 0 0;
+  font-size: .78rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+/* Sous 420 px, trois tuiles côte à côte tombent à ~90 px : « retour prévu »
+   passe alors sur trois lignes. Elles s'empilent. */
+@media (max-width: 420px) {
+  .cmh-inj-facts { flex-direction: column; gap: 6px; }
+  .cmh-inj-fact { padding-right: 0; }
+  .cmh-inj-fact + .cmh-inj-fact {
+    padding-left: 0;
+    padding-top: 6px;
+    border-left: 0;
+    border-top: 1px solid var(--border-light);
+  }
+}

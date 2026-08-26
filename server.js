@@ -3724,6 +3724,16 @@ const INJURY_STATUS_FR = {
     'Suspension': 'Suspension'
 };
 
+// ESPN n'emploie pas toujours l'abréviation officielle de la LNH (LA au
+// lieu de LAK, NJ pour NJD…). Sans cette table, `team` sortirait d'ici
+// avec un code que ni NHL_CLUB_FULLNAME, ni /teams/XXX.png, ni les stats
+// du jour (teamAbbrev) ne reconnaissent — la ligne perdait son nom de
+// club et le rapprochement joueur ↔ blessure côté client échouait.
+const ESPN_TO_NHL_ABBREV = {
+    LA: 'LAK', NJ: 'NJD', SJ: 'SJS', TB: 'TBL',
+    VGS: 'VGK', UTAH: 'UTA', MON: 'MTL', WAS: 'WSH', CLS: 'CBJ'
+};
+
 let nhlInjuriesCache = { data: null, fetchedAt: 0 };
 const NHL_INJURIES_TTL_MS = 30 * 60 * 1000;
 
@@ -3742,7 +3752,8 @@ app.get('/nhl-injuries', async (req, res) => {
             (data.injuries || []).forEach(teamEntry => {
                 (teamEntry.injuries || []).forEach(entry => {
                     const athlete = entry.athlete || {};
-                    const code = athlete.team?.abbreviation || null;
+                    const raw = athlete.team?.abbreviation || null;
+                    const code = raw ? (ESPN_TO_NHL_ABBREV[raw.toUpperCase()] || raw.toUpperCase()) : null;
                     if (!code || !athlete.displayName) return;
                     injuries.push({
                         playerName: athlete.displayName,
@@ -3757,6 +3768,11 @@ app.get('/nhl-injuries', async (req, res) => {
                         // manquer, d'où le null plutôt qu'une chaîne vide.
                         injuryType: entry.details?.type || null,
                         injuryDetail: entry.details?.detail || null,
+                        // « Not Specified » revient très souvent dans `side` :
+                        // le laisser passer ferait écrire « Genou (Not
+                        // Specified) » au client, d'où le null ici.
+                        injurySide: entry.details?.side && entry.details.side !== 'Not Specified'
+                            ? entry.details.side : null,
                         returnDate: entry.details?.returnDate || null,
                         since: entry.date || null,
                         comment: entry.longComment || entry.shortComment || null

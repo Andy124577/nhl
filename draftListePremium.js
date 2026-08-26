@@ -92,12 +92,15 @@ function fzBuildPickedRow(pick, numeroChoix) {
     const tr = document.createElement('tr');
     tr.className = 'fzd-picked-row';
 
-    // Photo (même source que populateGoalieTable/favorites : les stats du
-    // jour d'abord, la base statique en repli).
+    // Stats du jour : la photo, le logo ET le club servant à rapprocher le
+    // joueur du rapport de blessures en sortent, la base statique en repli.
+    const live = (categorie !== 'team' && typeof getCurrentPlayerStats === 'function')
+        ? getCurrentPlayerStats(nom, data.playerId || null)
+        : null;
+    const teamAbbrev = (live && live.teamAbbrev) || data.teamAbbrevs;
+
     const tdPhoto = document.createElement('td');
-    if (categorie !== 'team' && typeof getCurrentPlayerStats === 'function' && typeof getMatchingImage === 'function') {
-        const playerId = data.playerId || null;
-        const live = getCurrentPlayerStats(nom, playerId);
+    if (categorie !== 'team' && typeof getMatchingImage === 'function') {
         const photo = (live && live.headshot) || getMatchingImage(nom);
         const teamLogo = (live && live.teamAbbrev)
             ? `teams/${live.teamAbbrev}.png`
@@ -124,6 +127,11 @@ function fzBuildPickedRow(pick, numeroChoix) {
 
     const tdNom = document.createElement('td');
     tdNom.textContent = nom;
+    // Pastille « indisponible » : une ancre que injuries.js remplit dès que
+    // le rapport d'ESPN est arrivé. Sans le script, rien ne s'ajoute.
+    if (categorie !== 'team' && typeof injuryBadgeHTML === 'function') {
+        tdNom.insertAdjacentHTML('beforeend', injuryBadgeHTML(nom, teamAbbrev));
+    }
     tr.appendChild(tdNom);
 
     const tdGP = document.createElement('td');
