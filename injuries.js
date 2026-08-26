@@ -242,7 +242,13 @@ function injNatureFr(injury) {
     if (nature && side) nature += ` ${side}`;
     const rawDetail = injury.injuryDetail && injury.injuryDetail !== 'Not Specified'
         ? injury.injuryDetail : '';
-    const detail = INJ_DETAIL_FR[rawDetail] || (rawDetail ? rawDetail.toLowerCase() : '');
+    // ESPN répète parfois le type dans le détail (type "Concussion", detail
+    // "Concussion") : comparer les mots anglais d'origine attrape ce cas,
+    // que la comparaison sur les traductions ratait (« commotion cérébrale »
+    // et « commotion » ne sont pas la même chaîne).
+    const detail = rawDetail && rawDetail.toLowerCase() !== String(injury.injuryType || '').toLowerCase()
+        ? (INJ_DETAIL_FR[rawDetail] || rawDetail.toLowerCase())
+        : '';
     if (detail && detail !== nature.toLowerCase()) nature += nature ? ` (${detail})` : detail;
     return nature;
 }
@@ -351,6 +357,28 @@ function injuryTooltip(injury) {
         .filter(Boolean).join(' — ');
 }
 
+/**
+ * Ligne unique du bandeau : « Bas du corps · 3 mois ». Le délai est
+ * toujours recalculé par rapport à `new Date()` au moment du rendu — la
+ * même blessure affiche donc automatiquement moins de temps restant à
+ * chaque réouverture de la fiche, et une nouvelle date de retour publiée
+ * par ESPN (le cache serveur tourne à 30 min) s'y reflète dès le prochain
+ * chargement de /nhl-injuries, sans rien à recalculer à la main ici.
+ */
+function injuryOneLiner(injury) {
+    const nature = injNatureFr(injury) || injStatusFr(injury);
+    const t = injuryTiming(injury);
+    let delai = '';
+    if (t.untilDays !== null) {
+        delai = t.untilDays > 0 ? injDurationFr(t.untilDays) : 'retour imminent';
+    } else if (t.sinceDays !== null) {
+        // Aucune date de retour annoncée : à défaut, depuis combien de temps
+        // il est absent reste l'information la plus utile à afficher.
+        delai = `absent depuis ${injDurationFr(t.sinceDays)}`;
+    }
+    return [nature, delai].filter(Boolean).join(' · ');
+}
+
 /** Pastille rendue, à poser dans une ancre déjà présente. */
 function injuryBadgeMarkup(injury) {
     const glyph = injury.status === 'Suspension' ? INJ_GLYPHS.suspension : INJ_GLYPHS.medical;
@@ -415,53 +443,14 @@ function renderInjuryBanner(playerName, teamAbbrev, elementId) {
     const injury = getPlayerInjury(playerName, teamAbbrev);
     if (!injury) { banner.hidden = true; banner.innerHTML = ''; return; }
 
-    const t = injuryTiming(injury);
-    const nature = injNatureFr(injury);
-    const facts = [];
-
-    if (t.sinceDays !== null) {
-        facts.push({ label: 'Absent depuis', value: injDurationFr(t.sinceDays), sub: injFormatDate(t.since) });
-    }
-    if (t.ret) {
-        facts.push({
-            label: 'Retour prévu',
-            value: t.untilDays > 0 ? `dans ${injDurationFr(t.untilDays)}` : injFormatDate(t.ret),
-            sub: t.untilDays > 0 ? injFormatDate(t.ret) : 'échéance dépassée'
-        });
-    }
-    if (t.totalDays !== null) {
-        facts.push({ label: 'Durée annoncée', value: injDurationFr(t.totalDays), sub: `${t.totalDays} jours` });
-    }
-    if (!facts.length) {
-        facts.push({ label: 'Durée', value: 'Indéterminée', sub: 'aucune date annoncée' });
-    }
-
-    // ESPN sert parfois en guise de commentaire le seul mot que le bandeau
-    // affiche déjà (« out », « suspension »). Une ligne qui répète le titre
-    // vaut moins que pas de ligne du tout.
-    const noteRaw = String(injury.comment || '').trim();
-    const dejaDit = [injury.status, injury.injuryType, injury.injuryDetail, injStatusFr(injury), nature]
-        .filter(Boolean)
-        .some(v => String(v).toLowerCase() === noteRaw.toLowerCase());
-    const note = dejaDit ? '' : noteRaw;
-
     const glyph = injury.status === 'Suspension' ? INJ_GLYPHS.suspension : INJ_GLYPHS.medical;
+    // Le détail complet (statut, nature, dates) reste disponible au survol
+    // — seule la ligne visible se réduit à l'essentiel.
     banner.innerHTML = `
-        <div class="cmh-inj-head">
-            <span class="cmh-inj-icon">${glyph}</span>
-            <span class="cmh-inj-status">${injEscape(injStatusFr(injury))}</span>
-            ${nature ? `<span class="cmh-inj-nature">${injEscape(nature)}</span>` : ''}
-        </div>
-        <div class="cmh-inj-facts">
-            ${facts.map(f => `
-            <div class="cmh-inj-fact">
-                <span class="cmh-inj-lbl">${injEscape(f.label)}</span>
-                <span class="cmh-inj-val">${injEscape(f.value)}</span>
-                <span class="cmh-inj-sub">${injEscape(f.sub)}</span>
-            </div>`).join('')}
-        </div>
-        ${note ? `<p class="cmh-inj-note">${injEscape(note)}</p>` : ''}`;
+        <span class="cmh-inj-icon">${glyph}</span>
+        <span class="cmh-inj-line">${injEscape(injuryOneLiner(injury))}</span>`;
     banner.setAttribute('data-status', injury.status || '');
+    banner.setAttribute('title', injuryTooltip(injury));
     banner.hidden = false;
 }
 

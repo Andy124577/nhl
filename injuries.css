@@ -91,11 +91,11 @@
   /* L'en-tête de la modale est une colonne flex avec gap: 6px (index.css) :
      la marge complète l'écart plutôt que de le doubler. */
   margin-top: 4px;
-  padding: 9px 11px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
   border-radius: 12px;
-  /* Pas de filet épais sur un seul bord : le statut est déjà porté par le
-     fond teinté, le cadre teinté, la pastille pleine et le libellé en
-     capitales — un cinquième signal n'ajoute rien. */
   border: 1px solid color-mix(in srgb, var(--danger) 28%, transparent);
   background: color-mix(in srgb, var(--danger) 9%, transparent);
 }
@@ -109,12 +109,6 @@
   background: color-mix(in srgb, var(--text-gray) 10%, transparent);
 }
 
-.cmh-inj-head {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-}
 .cmh-inj-icon {
   display: inline-flex;
   align-items: center;
@@ -132,80 +126,14 @@
 .cmh-injury[data-status="Day-To-Day"] .cmh-inj-icon { background: var(--warning); color: #121214; }
 .cmh-injury[data-status="Suspension"] .cmh-inj-icon { background: var(--text-gray); }
 
-.cmh-inj-status {
-  font-size: .78rem;
-  font-weight: 800;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--danger);
-}
-.cmh-injury[data-status="Day-To-Day"] .cmh-inj-status { color: var(--warning); }
-.cmh-injury[data-status="Suspension"] .cmh-inj-status { color: var(--text-secondary); }
-
-.cmh-inj-nature {
+/* Le détail (statut complet, dates) reste accessible via l'attribut
+   `title` posé par renderInjuryBanner() — la ligne visible ne porte plus
+   que l'essentiel : nature de la blessure et délai de retour. */
+.cmh-inj-line {
   font-size: .78rem;
   font-weight: 600;
   color: var(--text-main);
-}
-/* Le point médian sépare le statut de la nature sans ajouter d'élément. */
-.cmh-inj-nature::before {
-  content: "·";
-  margin-right: 6px;
-  color: var(--text-gray);
-  font-weight: 700;
-}
-
-.cmh-inj-facts {
-  display: flex;
-  margin-top: 8px;
-}
-.cmh-inj-fact {
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  padding-right: 10px;
-}
-.cmh-inj-fact + .cmh-inj-fact {
-  padding-left: 10px;
-  border-left: 1px solid var(--border-light);
-}
-.cmh-inj-lbl {
-  font-size: .58rem;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--text-gray);
-}
-.cmh-inj-val {
-  font-size: 1rem;
-  font-weight: 700;
-  line-height: 1.15;
-  color: var(--text-main);
-}
-.cmh-inj-sub {
-  font-size: .62rem;
-  font-weight: 500;
-  color: var(--text-gray);
-}
-
-.cmh-inj-note {
-  margin: 7px 0 0;
-  font-size: .78rem;
-  line-height: 1.4;
-  color: var(--text-secondary);
-}
-
-/* Sous 420 px, trois tuiles côte à côte tombent à ~90 px : « retour prévu »
-   passe alors sur trois lignes. Elles s'empilent. */
-@media (max-width: 420px) {
-  .cmh-inj-facts { flex-direction: column; gap: 6px; }
-  .cmh-inj-fact { padding-right: 0; }
-  .cmh-inj-fact + .cmh-inj-fact {
-    padding-left: 0;
-    padding-top: 6px;
-    border-left: 0;
-    border-top: 1px solid var(--border-light);
-  }
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
