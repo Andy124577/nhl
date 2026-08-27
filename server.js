@@ -6481,13 +6481,50 @@ function initializeDataFiles() {
                 name: 'nhl_transactions.json',
                 source: './nhl_transactions.json',
                 dest: TRANSACTIONS_FILE,
-                defaultContent: '{"transactions":[],"lastUpdated":null}'
+                defaultContent: '{"transactions":[],"lastUpdated":null}',
+                // Ce fichier mélange deux sources : les mouvements détectés
+                // chaque nuit par comparaison d'alignements (écrits sur le
+                // disque persistant, à ne surtout pas perdre) ET des échanges
+                // saisis à la main, livrés AVEC le dépôt. Les seconds
+                // n'arrivent que par ce fichier — la copie ci-dessous est
+                // sautée dès que la destination existe, donc au moindre
+                // déploiement suivant le premier, les échanges manuels
+                // n'atteignent jamais la prod et l'onglet « Échanges » du
+                // panneau hors-saison reste vide. `mergeById` réinjecte les
+                // entrées du dépôt absentes du disque au lieu de tout sauter.
+                mergeById: true
             }
         ];
 
-        dataFiles.forEach(({ name, source, dest, defaultContent }) => {
+        dataFiles.forEach(({ name, source, dest, defaultContent, mergeById }) => {
             // Skip if destination file already exists
             if (fs.existsSync(dest)) {
+                // Exception : fusionner les entrées du dépôt qui manquent au
+                // disque (dédoublonnage par `id`, même clé que
+                // doRefreshNhlTransactions), puis retrier du plus récent au
+                // plus ancien pour que la fenêtre `?limit=N` de
+                // /nhl-transactions les inclue. Idempotent : rejouable à
+                // chaque déploiement sans dupliquer ni réordonner ce que le
+                // cron a écrit entre-temps.
+                if (mergeById && fs.existsSync(source) && source !== dest) {
+                    try {
+                        const repo = JSON.parse(fs.readFileSync(source, 'utf-8'));
+                        const disk = JSON.parse(fs.readFileSync(dest, 'utf-8'));
+                        const seen = new Set((disk.transactions || []).map(t => t.id));
+                        const added = (repo.transactions || []).filter(t => t.id && !seen.has(t.id));
+                        if (added.length) {
+                            disk.transactions = [...(disk.transactions || []), ...added]
+                                .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+                            fs.writeFileSync(dest, JSON.stringify(disk, null, 2));
+                            console.log(`✅ ${name}: ${added.length} entrée(s) du dépôt réinjectée(s)`);
+                        } else {
+                            console.log(`⊙ ${name} already up to date`);
+                        }
+                    } catch (mergeError) {
+                        console.warn(`⚠️  Could not merge ${name}:`, mergeError.message);
+                    }
+                    return;
+                }
                 console.log(`⊙ ${name} already exists in data directory`);
                 return;
             }
