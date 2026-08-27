@@ -285,6 +285,24 @@
 .fzd-move-back { display: block; margin-top: 2px; color: var(--fzd-text-fainter); }
 .fzd-move-more { margin: 0; padding: 10px 0 0; font: 400 11.5px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-fainter); }
 
+/* Échange regroupé : les deux côtés de l'opération sur une ligne compacte. */
+.fzd-deal-teams {
+    font: 600 12px/1.3 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .03em; color: var(--fzd-ink);
+}
+.fzd-deal-swap { margin: 0 4px; color: var(--fzd-text-faint); font-weight: 400; }
+.fzd-deal-side {
+    display: flex; gap: 8px; margin-top: 4px;
+    font: 400 12px/1.35 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-muted);
+}
+.fzd-deal-team {
+    flex-shrink: 0; min-width: 32px;
+    font-weight: 600; color: var(--fzd-text-faint);
+    letter-spacing: .03em;
+}
+.fzd-deal-assets { min-width: 0; }
+.fzd-deal-none { color: var(--fzd-text-fainter); }
+
 .fzd-watch-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; padding: 9px 0; border-bottom: 1px solid var(--fzd-border-soft); }
 .fzd-watch-row:last-child { border-bottom: none; }
 .fzd-watch-name { font: 600 13.5px/1.3 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink); }

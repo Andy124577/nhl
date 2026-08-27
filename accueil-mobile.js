@@ -484,20 +484,23 @@ async function fzmLoadLeague() {
     const wrap = document.getElementById('fzmLeagueWrap');
     if (!wrap) return;
 
+    // limit=80 : tout le journal tient dedans, donc groupTrades (défini dans
+    // accueil-dash.js, chargé avant) voit chaque échange en entier.
     const [tx, inj] = await Promise.all([
-        fetch('/nhl-transactions?limit=60').then(r => r.json()).catch(() => null),
+        fetch('/nhl-transactions?limit=80').then(r => r.json()).catch(() => null),
         fetch('/nhl-injuries?limit=60').then(r => r.json()).catch(() => null)
     ]);
 
     const moves = tx?.transactions || [];
+    const deals = groupTrades(moves.filter(t => t.type === 'trade'));
     fzmLeagueData = {
-        trade: moves.filter(t => t.type === 'trade'),
+        trade: deals,
         signing: moves.filter(t => t.type === 'signing'),
         injury: inj?.injuries || [],
-        // Les compteurs viennent du serveur : ils portent sur tout le
-        // journal, pas sur les 60 lignes rapatriées ici.
         counts: {
-            trade: tx?.counts?.trade || 0,
+            // Échanges : nombre d'opérations regroupées. Signatures/blessés :
+            // total serveur, pour le « et N autres ».
+            trade: deals.length,
             signing: tx?.counts?.signing || 0,
             injury: inj?.total || 0
         },
@@ -542,9 +545,10 @@ function fzmRenderLeagueTab() {
     const total = fzmLeagueData.counts?.[fzmLeagueTab] || rows.length;
     const hidden = Math.max(0, total - shown.length);
 
-    wrap.innerHTML = (fzmLeagueTab === 'injury'
-        ? shown.map(fzmInjuryRowHTML).join('')
-        : shown.map(fzmTxRowHTML).join(''))
+    const rowHTML = fzmLeagueTab === 'injury' ? fzmInjuryRowHTML
+        : fzmLeagueTab === 'trade' ? fzmDealRowHTML
+        : fzmTxRowHTML;
+    wrap.innerHTML = shown.map(rowHTML).join('')
         + (hidden ? `<p class="fzm-league-more">et ${hidden} autre${hidden > 1 ? 's' : ''}</p>` : '');
 }
 
@@ -575,6 +579,29 @@ function fzmTxRowHTML(t) {
                 <div class="fzm-league-meta">${meta}</div>
             </div>
             <div class="fzm-league-side">${dayLabelFr(t.date)}</div>
+        </div>`;
+}
+
+// Échange regroupé (voir groupTrades dans accueil-dash.js) : pas de
+// portrait, les deux côtés de l'opération empilés dans la zone principale.
+function fzmDealRowHTML(d) {
+    const sideHTML = team => {
+        const players = d.gets[team] || [];
+        const names = players.length
+            ? players.map(p => `${escapeHTML(p.name)}${p.pos ? ` <span class="fzm-deal-pos">${escapeHTML(p.pos)}</span>` : ''}`).join(', ')
+            : '<span class="fzm-deal-none">—</span>';
+        return `<div class="fzm-deal-side"><span class="fzm-deal-team">${escapeHTML(team)}</span><span>${names}</span></div>`;
+    };
+    const [first, second] = [d.teamA, d.teamB]
+        .sort((x, y) => (d.gets[y]?.length || 0) - (d.gets[x]?.length || 0));
+    return `
+        <div class="fzm-league-row fzm-deal-row">
+            <div class="fzm-league-main">
+                <div class="fzm-deal-teams">${escapeHTML(first)} <span class="fzm-deal-swap" aria-hidden="true">⇄</span> ${escapeHTML(second)}</div>
+                ${sideHTML(first)}
+                ${sideHTML(second)}
+            </div>
+            <div class="fzm-league-side">${dayLabelFr(d.date)}</div>
         </div>`;
 }
 

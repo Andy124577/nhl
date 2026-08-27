@@ -3557,6 +3557,46 @@ async function saveNhlTransactions(log) {
 }
 
 /**
+ * Le journal servi par /nhl-transactions a deux sources : les mouvements
+ * détectés chaque nuit par comparaison d'alignements (loadNhlTransactions
+ * ci-dessus) ET des échanges saisis à la main, versionnés dans
+ * ./nhl_transactions.json. En prod le store est PostgreSQL (cached_stats),
+ * jamais ce fichier — rien n'importe les entrées manuelles, donc l'onglet
+ * « Échanges » du panneau hors-saison reste vide quel que soit le nombre
+ * de redéploiements. Ici, au démarrage : lire le store actif, y réinjecter
+ * toute entrée du fichier absente par `id` (même clé de dédoublonnage que
+ * doRefreshNhlTransactions), retrier du plus récent au plus ancien pour
+ * que la fenêtre ?limit=N les inclue, puis réécrire — mais seulement s'il
+ * y a du nouveau, pour ne pas piocher dans la base à chaque boot.
+ * Idempotent, et ne touche jamais ce que le cron a écrit.
+ */
+async function seedCuratedNhlTransactions() {
+    let curated;
+    try {
+        curated = JSON.parse(fs.readFileSync('./nhl_transactions.json', 'utf-8'));
+    } catch (error) {
+        console.warn('⚠️  Pas de nhl_transactions.json versionné à réinjecter:', error.message);
+        return;
+    }
+    const fromRepo = curated.transactions || [];
+    if (!fromRepo.length) return;
+
+    const log = await loadNhlTransactions();
+    const existing = log.transactions || [];
+    const seen = new Set(existing.map(t => t.id));
+    const added = fromRepo.filter(t => t.id && !seen.has(t.id));
+    if (!added.length) {
+        console.log('⊙ Échanges manuels déjà tous présents dans le journal LNH');
+        return;
+    }
+
+    const merged = [...existing, ...added]
+        .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+    await saveNhlTransactions({ lastUpdated: log.lastUpdated || curated.lastUpdated || null, transactions: merged });
+    console.log(`✅ ${added.length} échange(s) manuel(s) réinjecté(s) dans le journal LNH (${merged.length} au total)`);
+}
+
+/**
  * Prend une photo, la compare à la précédente, ajoute ce qui est
  * nouveau au journal. Idempotent : rejouable dans la même journée sans
  * dupliquer une transaction.
@@ -6481,50 +6521,16 @@ function initializeDataFiles() {
                 name: 'nhl_transactions.json',
                 source: './nhl_transactions.json',
                 dest: TRANSACTIONS_FILE,
-                defaultContent: '{"transactions":[],"lastUpdated":null}',
-                // Ce fichier mélange deux sources : les mouvements détectés
-                // chaque nuit par comparaison d'alignements (écrits sur le
-                // disque persistant, à ne surtout pas perdre) ET des échanges
-                // saisis à la main, livrés AVEC le dépôt. Les seconds
-                // n'arrivent que par ce fichier — la copie ci-dessous est
-                // sautée dès que la destination existe, donc au moindre
-                // déploiement suivant le premier, les échanges manuels
-                // n'atteignent jamais la prod et l'onglet « Échanges » du
-                // panneau hors-saison reste vide. `mergeById` réinjecte les
-                // entrées du dépôt absentes du disque au lieu de tout sauter.
-                mergeById: true
+                defaultContent: '{"transactions":[],"lastUpdated":null}'
             }
         ];
 
-        dataFiles.forEach(({ name, source, dest, defaultContent, mergeById }) => {
-            // Skip if destination file already exists
+        dataFiles.forEach(({ name, source, dest, defaultContent }) => {
+            // Skip if destination file already exists. NB : pour
+            // nhl_transactions.json, les échanges manuels ajoutés au fichier
+            // versionné après ce premier passage sont réinjectés plus tard
+            // par seedCuratedNhlTransactions (qui couvre aussi PostgreSQL).
             if (fs.existsSync(dest)) {
-                // Exception : fusionner les entrées du dépôt qui manquent au
-                // disque (dédoublonnage par `id`, même clé que
-                // doRefreshNhlTransactions), puis retrier du plus récent au
-                // plus ancien pour que la fenêtre `?limit=N` de
-                // /nhl-transactions les inclue. Idempotent : rejouable à
-                // chaque déploiement sans dupliquer ni réordonner ce que le
-                // cron a écrit entre-temps.
-                if (mergeById && fs.existsSync(source) && source !== dest) {
-                    try {
-                        const repo = JSON.parse(fs.readFileSync(source, 'utf-8'));
-                        const disk = JSON.parse(fs.readFileSync(dest, 'utf-8'));
-                        const seen = new Set((disk.transactions || []).map(t => t.id));
-                        const added = (repo.transactions || []).filter(t => t.id && !seen.has(t.id));
-                        if (added.length) {
-                            disk.transactions = [...(disk.transactions || []), ...added]
-                                .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
-                            fs.writeFileSync(dest, JSON.stringify(disk, null, 2));
-                            console.log(`✅ ${name}: ${added.length} entrée(s) du dépôt réinjectée(s)`);
-                        } else {
-                            console.log(`⊙ ${name} already up to date`);
-                        }
-                    } catch (mergeError) {
-                        console.warn(`⚠️  Could not merge ${name}:`, mergeError.message);
-                    }
-                    return;
-                }
                 console.log(`⊙ ${name} already exists in data directory`);
                 return;
             }
@@ -6660,6 +6666,16 @@ async function startServer() {
                 console.log('🔧 Initializing data files for production...');
                 initializeDataFiles();
             }
+        }
+
+        // Réinjecter les échanges saisis à la main dans le journal LNH du
+        // store actif (fichier ou PostgreSQL) — voir seedCuratedNhlTransactions.
+        // Après l'init du store, avant d'écouter : rapide, et un échec est
+        // sans gravité (le cron nocturne reste la source des mouvements réels).
+        try {
+            await seedCuratedNhlTransactions();
+        } catch (error) {
+            console.error('❌ Error seeding curated NHL transactions:', error.message);
         }
 
         // ✅ Start Server with WebSockets (after all routes are defined)

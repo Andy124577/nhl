@@ -212,6 +212,18 @@
 
 .fzm-league-more { margin: 0; padding: 9px 12px; font: 500 10.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); }
 
+/* Échange regroupé : les deux côtés de l'opération, sans portrait. */
+.fzm-deal-row { align-items: flex-start; }
+.fzm-deal-teams { font: 700 11.5px/1.3 'Archivo', sans-serif; letter-spacing: .02em; }
+.fzm-deal-swap { margin: 0 3px; color: var(--fzm-ink-faint); font-weight: 500; }
+.fzm-deal-side {
+    display: flex; gap: 6px; margin-top: 3px;
+    font: 500 11px/1.3 'Archivo', sans-serif; color: var(--fzm-ink-soft);
+}
+.fzm-deal-team { flex-shrink: 0; min-width: 30px; font-weight: 700; color: var(--fzm-ink-faint); }
+.fzm-deal-pos { color: var(--fzm-ink-faint); }
+.fzm-deal-none { color: var(--fzm-ink-faint); }
+
 .fzm-news-list { display: flex; flex-direction: column; gap: 8px; }
 .fzm-news-card { display: block; background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 10px; padding: 10px 12px; }
 .fzm-news-kicker { font: 700 9.5px/1 'Archivo', sans-serif; color: var(--fzm-red); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 3px; }

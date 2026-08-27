@@ -650,20 +650,25 @@ async function loadOffseasonTransactions() {
     const wrap = document.getElementById('fzdOffTransactions');
     if (!wrap) return;
 
+    // limit=80 : le journal complet tient dedans (TRANSACTIONS_KEEP=250 mais
+    // on en a ~80), donc groupTrades voit tout l'échange, pas une moitié
+    // tronquée par la fenêtre — sans quoi « et N autres » deviendrait faux.
     const [tx, inj] = await Promise.all([
-        fetch('/nhl-transactions?limit=40').then(r => r.json()).catch(() => null),
+        fetch('/nhl-transactions?limit=80').then(r => r.json()).catch(() => null),
         fetch('/nhl-injuries?limit=40').then(r => r.json()).catch(() => null)
     ]);
 
     const moves = tx?.transactions || [];
+    const deals = groupTrades(moves.filter(t => t.type === 'trade'));
     offseasonLeague = {
-        trade: moves.filter(t => t.type === 'trade'),
+        trade: deals,
         signing: moves.filter(t => t.type === 'signing'),
         injury: inj?.injuries || [],
-        // Totaux du serveur, pas de ce qu'on a rapatrié : c'est ce qui
-        // permet d'annoncer honnêtement « et 90 autres ».
         counts: {
-            trade: tx?.counts?.trade || 0,
+            // Échanges : un décompte d'opérations (après regroupement), pas de
+            // lignes-joueur — c'est ce que le panneau affiche désormais. Pour
+            // signatures/blessés, le total serveur permet le « et N autres ».
+            trade: deals.length,
             signing: tx?.counts?.signing || 0,
             injury: inj?.total || 0
         },
@@ -710,10 +715,54 @@ function renderOffseasonLeague() {
     const total = offseasonLeague.counts?.[offseasonTab] || rows.length;
     const hidden = Math.max(0, total - shown.length);
 
-    wrap.innerHTML = (offseasonTab === 'injury'
-        ? shown.map(injuryRowHTML).join('')
-        : shown.map(movementRowHTML).join(''))
+    const rowHTML = offseasonTab === 'injury' ? injuryRowHTML
+        : offseasonTab === 'trade' ? dealRowHTML
+        : movementRowHTML;
+    wrap.innerHTML = shown.map(rowHTML).join('')
         + (hidden ? `<p class="fzd-move-more">et ${hidden} autre${hidden > 1 ? 's' : ''}</p>` : '');
+}
+
+// Regroupe les lignes-joueur d'un même échange (même date + même paire de
+// clubs) en une seule opération à deux côtés — « X ⇄ Y : X reçoit…, Y
+// reçoit… ». Une opération à trois clubs se scinde en paires, comme sur
+// NHL.com. L'ordre d'arrivée (déjà trié du plus récent au plus ancien par
+// le serveur) est préservé.
+function groupTrades(list) {
+    const deals = new Map();
+    (list || []).forEach(t => {
+        const to = t.toTeam || '?';
+        const from = t.fromTeam || '?';
+        const [a, b] = [from, to].sort();
+        const key = `${t.date}|${a}-${b}`;
+        let d = deals.get(key);
+        if (!d) { d = { date: t.date, teamA: a, teamB: b, gets: {} }; deals.set(key, d); }
+        (d.gets[to] = d.gets[to] || []).push({ name: t.playerName, pos: t.pos || '' });
+    });
+    return [...deals.values()];
+}
+
+function dealRowHTML(d) {
+    const sideHTML = team => {
+        const players = d.gets[team] || [];
+        const names = players.length
+            ? players.map(p => `${escapeHTML(p.name)}${p.pos ? ` <span class="fzd-move-pos">${escapeHTML(p.pos)}</span>` : ''}`).join(', ')
+            : '<span class="fzd-deal-none">—</span>';
+        return `<div class="fzd-deal-side"><span class="fzd-deal-team">${escapeHTML(team)}</span><span class="fzd-deal-assets">${names}</span></div>`;
+    };
+    // Le club qui reçoit quelque chose passe en premier — en-tête comme
+    // lignes : sur un échange à sens unique (fréquent ici), « — » finit
+    // dessous.
+    const [first, second] = [d.teamA, d.teamB]
+        .sort((x, y) => (d.gets[y]?.length || 0) - (d.gets[x]?.length || 0));
+    return `
+        <div class="fzd-move-row fzd-deal-row">
+            <div class="fzd-move-main">
+                <div class="fzd-deal-teams">${escapeHTML(first)} <span class="fzd-deal-swap" aria-hidden="true">⇄</span> ${escapeHTML(second)}</div>
+                ${sideHTML(first)}
+                ${sideHTML(second)}
+            </div>
+            <div class="fzd-move-date">${dayLabelFr(d.date)}</div>
+        </div>`;
 }
 
 function offseasonEmptyText() {
