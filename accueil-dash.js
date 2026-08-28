@@ -848,7 +848,15 @@ async function renderDash() {
     // an explicit 'block' is required here, an empty string would just fall
     // back to that same CSS default instead of overriding it.
     if (mobileHome) mobileHome.style.display = hasPool ? 'block' : 'none';
-    if (onboard) onboard.style.display = hasPool ? 'none' : 'block';
+
+    // Sans pool, l'animation "Affronte · Repêche · Domine" tient lieu
+    // d'accroche (elle finit sur ses propres boutons Créer/Rejoindre) :
+    // on la révèle et on masque le bloc d'accueil texte. Avec un pool,
+    // l'inverse — et on coupe la boucle rAF.
+    const cdd = document.getElementById('cddSection');
+    if (cdd) cdd.style.display = hasPool ? 'none' : 'block';
+    if (onboard) onboard.style.display = 'none';
+    if (window.FZCdd) { if (hasPool) window.FZCdd.stop(); else window.FZCdd.start(); }
 
     if (!hasPool) return;
 
