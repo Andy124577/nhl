@@ -27,9 +27,6 @@
     <link rel="stylesheet" href="accueil.css">
     <link rel="stylesheet" href="accueil-dash.css">
     <link rel="stylesheet" href="accueil-mobile.css">
-    <!-- Animation "Affronte · Repêche · Domine" — haut de l'accueil,
-         visiteurs sans pool uniquement (voir compete-draft-dominate.js). -->
-    <link rel="stylesheet" href="compete-draft-dominate.css">
     <link rel="stylesheet" href="demos.css">
     <link rel="stylesheet" href="skeleton-loader.css">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -40,19 +37,6 @@
 <body>
     <!-- Navigation -->
     <nav class="navbar"></nav>
-
-    <!-- ============================================================ -->
-    <!-- AFFRONTE · REPÊCHE · DOMINE — animation d'accroche jouée en    -->
-    <!-- haut de l'accueil pour les visiteurs sans pool (anonyme, ou   -->
-    <!-- membre connecté sans pool actif). Masquée par défaut ;        -->
-    <!-- révélée par html.fz-anon (posé avant le premier rendu) ou par -->
-    <!-- accueil-dash.js (renderDash). Portage de la maquette Claude   -->
-    <!-- Design "Compete Draft Dominate.dc.html" — voir                -->
-    <!-- compete-draft-dominate.js / .css.                             -->
-    <!-- ============================================================ -->
-    <section class="fz-cdd-section" id="cddSection" aria-label="Affronte, Repêche, Domine">
-        <div class="fz-cdd" id="cddMount"><!-- Bâti par compete-draft-dominate.js --></div>
-    </section>
 
     <!-- ============================================================ -->
     <!-- STORIES — real NHL live-game scores/events and real news      -->
@@ -434,7 +418,6 @@
     <script defer src="accueil.js"></script>
     <script defer src="accueil-dash.js"></script>
     <script defer src="accueil-mobile.js"></script>
-    <script defer src="compete-draft-dominate.js"></script>
     <script defer src="demos.js"></script>
     <script defer src="navbar.js"></script>
     <script defer src="poolNav.js"></script>
