@@ -219,8 +219,16 @@ body {
 html.fz-auth .hero-section { display: none; }
 
 /* Returning users who already have a pool don't need the marketing
-   walkthrough either. */
+   walkthrough either.
+
+   Un membre SANS pool peut la redemander : la carte « Comment ça marche »
+   de l'état vide (Canvas-9) déplie cette section-ci plutôt que d'en cloner
+   une copie — mêmes trois démos, même demos.js, donc rigoureusement le même
+   rendu à tous les formats. Il faut une classe pour rouvrir, parce que la
+   règle ci-dessus est plus spécifique qu'un style en ligne ne peut l'être
+   sans !important. */
 html.fz-auth #comment-ca-marche { display: none; }
+html.fz-auth #comment-ca-marche.fzo-revealed { display: block; }
 
 /* ============================================================ */
 /* ALERTS STRIP                                                  */

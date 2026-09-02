@@ -178,12 +178,75 @@
     <!-- ============================================================ -->
     <section class="fz-dash-section" id="fzDashSection">
         <div class="fz-dash">
-            <!-- Inscrit mais sans pool actif -->
+            <!-- Inscrit mais sans pool actif — maquette Claude Design
+                 « Canvas-9 : Tour 1, état vide ». La barre du haut, le rail
+                 des pools et la nav du bas de la maquette existent déjà
+                 (navbar.js / poolNav.js) : seule la colonne centrale est
+                 posée ici. -->
             <div class="fz-dash-onboard" id="fzDashOnboard">
-                <p class="fzd-onboard-text">Vous ne faites partie d'aucun pool.</p>
-                <div class="fzd-onboard-actions">
-                    <a href="creer-pool.html" class="fzd-cta-btn is-primary">Créer un pool</a>
-                    <a href="rejoindre-pool.html" class="fzd-cta-btn is-secondary">Rejoindre un pool →</a>
+                <div class="fzo-hero">
+                    <div class="fzo-hero-copy">
+                        <div class="fzo-brand">
+                            <span class="fzo-shield" aria-hidden="true">F</span>
+                            <span class="fzo-eyebrow">Sois le MVP</span>
+                        </div>
+                        <h2 class="fzo-headline">Bâtis ton<br>équipe de rêve</h2>
+                        <p class="fzo-sub">Crée ta ligue, invite ta gang et suis chaque match de la saison. Deux minutes pour partir.</p>
+                    </div>
+
+                    <div class="fzo-actions">
+                        <a class="fzo-action" href="creer-pool.html">
+                            <span class="fzo-action-bar" aria-hidden="true"></span>
+                            <span class="fzo-action-text">
+                                <span class="fzo-action-title">Créer un pool</span>
+                                <span class="fzo-action-desc">Lance ta ligue et invite tes amis</span>
+                            </span>
+                            <span class="fzo-action-chev" aria-hidden="true">›</span>
+                        </a>
+                        <a class="fzo-action" href="rejoindre-pool.html">
+                            <span class="fzo-action-bar" aria-hidden="true"></span>
+                            <span class="fzo-action-text">
+                                <span class="fzo-action-title">Rejoindre un pool</span>
+                                <span class="fzo-action-desc">Joue dans une ligue ouverte avec d'autres partisans</span>
+                            </span>
+                            <span class="fzo-action-chev" aria-hidden="true">›</span>
+                        </a>
+                        <p class="fzo-invite">Tu as un code d'invitation&nbsp;? <a href="rejoindre-pool.html">Entre-le ici</a></p>
+                    </div>
+                </div>
+
+                <div class="fzo-divider"><span>En attendant</span><i aria-hidden="true"></i></div>
+
+                <div class="fzo-cards">
+                    <!-- Déplie #comment-ca-marche, la MÊME section que voit un
+                         visiteur déconnecté : mêmes trois démos animées, même
+                         code, donc rigoureusement le même rendu à tous les
+                         formats. Voir bindOnboardCards() dans accueil-dash.js. -->
+                    <button type="button" class="fzo-card" id="fzoHowCard"
+                            aria-expanded="false" aria-controls="comment-ca-marche">
+                        <span class="fzo-card-body">
+                            <span class="fzo-card-title">Comment ça marche</span>
+                            <span class="fzo-card-desc">Repêchage, échanges, pointage. Le tour guidé en 90 secondes.</span>
+                        </span>
+                        <span class="fzo-card-chev" aria-hidden="true">›</span>
+                    </button>
+
+                    <a class="fzo-card" href="rejoindre-pool.html">
+                        <span class="fzo-card-body">
+                            <span class="fzo-card-title">Ligues ouvertes</span>
+                            <span class="fzo-card-desc" id="fzoOpenPools">Des pools cherchent des joueurs cette semaine.</span>
+                        </span>
+                        <span class="fzo-card-chev" aria-hidden="true">›</span>
+                    </a>
+
+                    <button type="button" class="fzo-card" id="fzoCalCard"
+                            aria-expanded="false" aria-controls="fzDashCalendarWrap">
+                        <span class="fzo-card-body">
+                            <span class="fzo-card-title">Calendrier LNH</span>
+                            <span class="fzo-card-desc">Regarde les matchs du soir sans être dans un pool.</span>
+                        </span>
+                        <span class="fzo-card-chev" aria-hidden="true">›</span>
+                    </button>
                 </div>
             </div>
 

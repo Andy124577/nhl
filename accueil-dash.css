@@ -115,20 +115,182 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 }
 
 /* ------------------------------------------------------------ */
-/* Onboarding — membre inscrit mais sans pool actif : remplace   */
-/* le calendrier et le corps du tableau de bord.                 */
+/* Onboarding — membre inscrit mais sans pool actif.             */
+/* Maquette Claude Design « Canvas-9 » (1A bureau / 1B mobile) :  */
+/* panneau brique pleine largeur, deux actions empilées, puis     */
+/* trois cartes « En attendant ». Remplace la carte blanche       */
+/* centrée d'avant, et tient la place du calendrier et du corps   */
+/* du tableau de bord tant qu'aucun pool n'est actif.             */
+/*                                                                */
+/* renderDash() pose display:flex en ligne quand il n'y a pas de  */
+/* pool ; la valeur par défaut ci-dessous reste none.             */
 /* ------------------------------------------------------------ */
 .fz-dash-onboard {
     display: none;
-    text-align: center;
-    padding: 40px 24px;
-    background: var(--fzd-surface);
-    border: 1px solid var(--fzd-border-strong);
-    border-radius: 14px;
+    flex-direction: column;
+    gap: 24px;
+
+    /* Le panneau brique est un aplat de marque, comme le héros mobile de
+       accueil-mobile.css : tout son détail intérieur est en blanc et en
+       rgba(255,255,255,…), donc il ne bascule PAS avec le thème. Seules
+       les trois cartes en dessous suivent --fzd-*. */
+    --fzo-hero-a: #8e2a1a;
+    --fzo-hero-b: #a8351f;
+    --fzo-hero-c: #b93d28;
+    --fzo-slab: #16181a;
+    --fzo-slab-hover: #1f2225;
+    --fzo-on-hero: #ffffff;
+    --fzo-on-slab-muted: #a8a49c;
+    --fzo-chev: #8a877f;
 }
-.fzd-onboard-text { font: 500 15px/1.4 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink-soft); margin: 0 0 18px; }
-.fzd-onboard-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
-.fzd-onboard-actions .fzd-cta-btn { padding: 12px 22px; }
+
+/* ---- Panneau brique ---- */
+.fzo-hero {
+    display: flex;
+    align-items: center;
+    gap: 46px;
+    padding: 46px;
+    border-radius: 14px;
+    background:
+        radial-gradient(120% 140% at 100% 0%, rgba(255,255,255,.14) 0%, rgba(255,255,255,0) 58%),
+        linear-gradient(118deg, var(--fzo-hero-a) 0%, var(--fzo-hero-b) 46%, var(--fzo-hero-c) 100%);
+    box-shadow: 0 18px 40px rgba(140, 42, 26, .28);
+}
+
+.fzo-hero-copy { flex: 1; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.fzo-brand { display: flex; align-items: center; gap: 12px; }
+.fzo-shield {
+    width: 34px; height: 38px; flex: 0 0 auto;
+    background: var(--fzo-on-hero);
+    /* Écusson : la même découpe que la maquette, sans image à charger. */
+    clip-path: polygon(50% 0, 100% 16%, 100% 62%, 50% 100%, 0 62%, 0 16%);
+    display: grid; place-items: center;
+    font: 700 13px/1 'Oswald', 'Helvetica Neue', sans-serif;
+    color: var(--fzo-hero-b);
+}
+.fzo-eyebrow {
+    font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .2em; text-transform: uppercase;
+    color: rgba(255,255,255,.72);
+}
+.fzo-headline {
+    margin: 0;
+    font: 700 62px/.94 'Oswald', 'Helvetica Neue', sans-serif;
+    letter-spacing: -.015em; text-transform: uppercase;
+    color: var(--fzo-on-hero);
+    text-wrap: balance;
+}
+.fzo-sub {
+    margin: 0; max-width: 400px;
+    font: 400 14.5px/1.55 'Helvetica Neue', Helvetica, sans-serif;
+    color: rgba(255,255,255,.8);
+    text-wrap: pretty;
+}
+
+/* ---- Les deux actions ---- */
+.fzo-actions { width: 452px; flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; }
+.fzo-action {
+    display: flex; align-items: center; gap: 16px;
+    padding: 20px 22px;
+    border-radius: 11px;
+    background: var(--fzo-slab);
+    box-shadow: 0 6px 18px rgba(20, 10, 6, .22);
+    text-decoration: none;
+    transition: background .18s ease, transform .18s ease;
+}
+.fzo-action:hover { background: var(--fzo-slab-hover); transform: translateY(-1px); }
+.fzo-action:focus-visible { outline: 2px solid var(--fzo-on-hero); outline-offset: 2px; }
+.fzo-action-bar { width: 3px; align-self: stretch; border-radius: 2px; background: var(--fzo-hero-c); }
+.fzo-action-text { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.fzo-action-title {
+    font: 600 15px/1 'Oswald', 'Helvetica Neue', sans-serif;
+    letter-spacing: .06em; text-transform: uppercase;
+    color: var(--fzo-on-hero);
+}
+.fzo-action-desc {
+    font: 400 12.5px/1.35 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzo-on-slab-muted);
+}
+.fzo-action-chev { font: 400 18px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzo-chev); }
+
+.fzo-invite {
+    margin: 0; padding: 4px 4px 0;
+    font: 400 12.5px/1.5 'Helvetica Neue', Helvetica, sans-serif;
+    color: rgba(255,255,255,.72);
+}
+.fzo-invite a {
+    font-weight: 600;
+    color: var(--fzo-on-hero);
+    border-bottom: 1px solid rgba(255,255,255,.5);
+}
+.fzo-invite a:hover { color: var(--fzo-on-hero); border-bottom-color: var(--fzo-on-hero); }
+
+/* ---- « En attendant » ---- */
+.fzo-divider { display: flex; align-items: center; gap: 16px; }
+.fzo-divider span {
+    font: 600 10px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .16em; text-transform: uppercase;
+    color: var(--fzd-text-faint);
+}
+.fzo-divider i { flex: 1; height: 1px; background: var(--fzd-border-strong); }
+
+.fzo-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.fzo-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 18px;
+    background: var(--fzd-surface);
+    border: 1px solid var(--fzd-border);
+    border-radius: 11px;
+    text-align: left;
+    text-decoration: none;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color .18s ease, transform .18s ease;
+}
+.fzo-card:hover { border-color: var(--fzd-border-strong); transform: translateY(-1px); }
+.fzo-card:focus-visible { outline: 2px solid var(--fzd-accent); outline-offset: 2px; }
+.fzo-card-body { flex: 1; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.fzo-card-title { font: 600 12.5px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink); }
+.fzo-card-desc { font: 400 12px/1.45 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-muted); }
+.fzo-card-chev {
+    font: 400 16px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-fainter);
+    transition: transform .18s ease, color .18s ease;
+}
+/* Les deux cartes dépliantes tournent leur chevron ; « Ligues ouvertes »
+   est un lien vers une autre page et garde le sien tel quel. */
+.fzo-card[aria-expanded="true"] .fzo-card-chev { transform: rotate(90deg); color: var(--fzd-accent); }
+
+/* Palier intermédiaire : la colonne d'actions garde 452px fixes jusqu'ici,
+   ce qui ne laissait plus que ~260px au titre de 62px sur un portable de
+   1024 ou une tablette en paysage. Le panneau reste en deux colonnes, il
+   se resserre juste. */
+@media (max-width: 1200px) {
+    .fzo-hero { gap: 30px; padding: 34px 30px; }
+    .fzo-headline { font-size: 46px; }
+    .fzo-actions { width: 380px; }
+    .fzo-action { padding: 17px 18px; }
+}
+
+/* ------------------------------------------------------------ */
+/* Onboarding — téléphone (1B). Le panneau passe en colonne et    */
+/* les trois cartes s'empilent en rangées, comme la maquette.     */
+/* ------------------------------------------------------------ */
+@media (max-width: 900px) {
+    .fzo-hero { flex-direction: column; align-items: stretch; gap: 18px; padding: 22px 18px 18px; border-radius: 16px; }
+    .fzo-hero-copy { gap: 12px; }
+    .fzo-headline { font-size: 30px; }
+    .fzo-shield { width: 36px; height: 41px; font-size: 14px; }
+    .fzo-sub { max-width: none; font-size: 13.5px; }
+    .fzo-actions { width: auto; gap: 9px; }
+    .fzo-action { padding: 15px 16px; gap: 13px; }
+    .fzo-action-title { font-size: 14px; }
+    .fzo-action-desc { font-size: 11.5px; }
+
+    .fzo-cards { grid-template-columns: 1fr; gap: 8px; }
+    .fzo-card { padding: 14px 15px; }
+    .fzo-card-desc { font-size: 11.5px; }
+}
 
 /* ------------------------------------------------------------ */
 /* Calendrier — pleine largeur, au-dessus de tout le reste       */

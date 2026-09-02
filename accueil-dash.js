@@ -869,6 +869,91 @@ function bindCalendarControls() {
     document.getElementById('fzdMonthNextBtn')?.addEventListener('click', monthNext);
 }
 
+// ============================================================
+// ÉTAT VIDE — les trois cartes « En attendant » (Canvas-9)
+// ============================================================
+
+// Le calendrier est masqué tant qu'aucun pool n'est actif ; la carte
+// « Calendrier LNH » le rouvre. renderDash() relit ce drapeau, sinon le
+// prochain FZPool.onData() refermerait le panneau sous le visiteur.
+let calRevealedNoPool = false;
+
+/**
+ * Déplie une section et amène le regard dessus.
+ *
+ * Les trois démos de #comment-ca-marche démarrent sur un IntersectionObserver
+ * à seuil .2 (voir boucler() dans demos.js) : il ne se déclenche pas tant que
+ * la section est en display:none, et se déclenche tout seul une fois qu'elle
+ * entre dans le champ. Rien à relancer à la main ici.
+ */
+function toggleReveal(bouton, cible, ouvrir, classeOuverture) {
+    if (!cible) return;
+    if (classeOuverture) cible.classList.toggle(classeOuverture, ouvrir);
+    else cible.style.display = ouvrir ? '' : 'none';
+    bouton.setAttribute('aria-expanded', String(ouvrir));
+    if (!ouvrir) return;
+    // scrollIntoView est ignoré sur un élément encore masqué : on laisse la
+    // mise en page se faire d'abord.
+    requestAnimationFrame(() => {
+        cible.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+}
+
+function bindOnboardCards() {
+    const how = document.getElementById('fzoHowCard');
+    const hiw = document.getElementById('comment-ca-marche');
+    how?.addEventListener('click', () => {
+        toggleReveal(how, hiw, how.getAttribute('aria-expanded') !== 'true', 'fzo-revealed');
+    });
+
+    const calBtn = document.getElementById('fzoCalCard');
+    const calWrap = document.getElementById('fzDashCalendarWrap');
+    calBtn?.addEventListener('click', async () => {
+        calRevealedNoPool = calBtn.getAttribute('aria-expanded') !== 'true';
+        toggleReveal(calBtn, calWrap, calRevealedNoPool);
+        // Le calendrier et le panneau hors-saison ne tirent que sur
+        // /schedule/:date, /nhl-transactions et /nhl-injuries : aucune donnée
+        // de pool, donc ils se remplissent aussi bien sans pool actif.
+        if (calRevealedNoPool && !calData) await initCalendar();
+    });
+
+    loadOpenPoolsCount();
+}
+
+/**
+ * « Ligues ouvertes » : le nombre de pools encore rejoignables.
+ *
+ * La maquette affiche « 14 pools » en dur ; on compte les vrais, à la même
+ * source que rejoindre-pool.html (GET /draft, filtré par loadClans/updateUI).
+ * En cas d'échec la carte garde sa phrase générique — pas de chiffre inventé.
+ */
+async function loadOpenPoolsCount() {
+    const cible = document.getElementById('fzoOpenPools');
+    if (!cible) return;
+    try {
+        const res = await fetch(`${BASE_URL}/draft?timestamp=${Date.now()}`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const clans = await res.json();
+        const moi = localStorage.getItem('username');
+        const ouverts = Object.values(clans || {}).filter(clan => {
+            const equipes = Object.values(clan?.teams || {});
+            if (!equipes.length) return false;
+            // Déjà membre, ou repêchage commencé : plus rejoignable.
+            if (equipes.some(e => (e.members || []).includes(moi))) return false;
+            return !clan.draftStarted;
+        }).length;
+        if (!ouverts) {
+            cible.textContent = 'Aucune ligue ouverte pour le moment.';
+            return;
+        }
+        cible.textContent = ouverts === 1
+            ? '1 pool cherche des joueurs cette semaine.'
+            : `${ouverts} pools cherchent des joueurs cette semaine.`;
+    } catch (err) {
+        console.warn('Could not count open pools:', err);
+    }
+}
+
 async function renderDash() {
     const section = document.getElementById('fzDashSection');
     const body = document.getElementById('fzDashBody');
@@ -880,13 +965,16 @@ async function renderDash() {
     const hasPool = !!FZPool.get();
     section.style.display = 'block';
     if (body) body.style.display = hasPool ? '' : 'none';
-    if (calWrap) calWrap.style.display = hasPool ? '' : 'none';
+    // calRevealedNoPool : le visiteur sans pool a ouvert le calendrier depuis
+    // la carte « Calendrier LNH » — ne pas le refermer sous lui au prochain
+    // rafraîchissement de FZPool.
+    if (calWrap) calWrap.style.display = (hasPool || calRevealedNoPool) ? '' : 'none';
     // .fz-mobile-home defaults to display:none in CSS (hidden until a pool
     // is active, and force-hidden on desktop via @media min-width:769px) —
     // an explicit 'block' is required here, an empty string would just fall
     // back to that same CSS default instead of overriding it.
     if (mobileHome) mobileHome.style.display = hasPool ? 'block' : 'none';
-    if (onboard) onboard.style.display = hasPool ? 'none' : 'block';
+    if (onboard) onboard.style.display = hasPool ? 'none' : 'flex';
 
     if (!hasPool) return;
 
@@ -907,6 +995,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!userData.username) return;
 
     bindCalendarControls();
+    bindOnboardCards();
     await Promise.all([FZPool.ready(), loadCurrentStats(), loadPendingTrades()]);
     renderDash();
     FZPool.onData(renderDash);
