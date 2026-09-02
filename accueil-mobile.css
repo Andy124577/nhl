@@ -259,6 +259,25 @@ html[data-theme="dark"] .fz-mobile-home {
 
 .fzm-league-more { margin: 0; padding: 9px 12px; font: 500 10.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); }
 
+.fzm-league-pager {
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    padding: 8px 12px 10px;
+    border-top: 1px solid var(--fzm-border);
+}
+.fzm-pager-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 40px; min-height: 40px;
+    background: none; border: 1px solid var(--fzm-border); border-radius: 999px;
+    font: 400 15px/1 'Archivo', sans-serif; color: var(--fzm-ink);
+    cursor: pointer;
+}
+.fzm-pager-btn:disabled { opacity: .35; }
+.fzm-pager-info {
+    font: 700 10.5px/1 'Archivo', sans-serif;
+    letter-spacing: .04em; text-transform: uppercase;
+    color: var(--fzm-ink-faint);
+}
+
 /* Échange regroupé — un club à gauche, un à droite, ce que chacun reçoit
    dessous. Même disposition qu'au bureau (.fzd-deal-*) : la ligne compacte
    « ABC ⇄ XYZ » suivie de deux lignes de noms obligeait à relire
@@ -275,13 +294,16 @@ html[data-theme="dark"] .fz-mobile-home {
 .fzm-deal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
 .fzm-deal-col { min-width: 0; }
 .fzm-deal-col + .fzm-deal-col { padding-left: 12px; border-left: 1px solid var(--fzm-border); }
+.fzm-deal-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding-bottom: 6px; margin-bottom: 7px;
+    border-bottom: 1px solid var(--fzm-border);
+}
 .fzm-deal-club { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .fzm-deal-logo { width: 18px; height: 18px; flex-shrink: 0; object-fit: contain; }
 .fzm-deal-club-abbr { font: 700 12px/1 'Archivo', sans-serif; letter-spacing: .03em; }
 .fzm-deal-acq {
-    margin: 7px 0;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--fzm-border);
+    flex-shrink: 0;
     font: 700 8.5px/1 'Archivo', sans-serif;
     letter-spacing: .13em; text-transform: uppercase;
     color: var(--fzm-ink-faint);

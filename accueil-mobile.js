@@ -528,6 +528,15 @@ async function fzmLoadLeague() {
     fzmRenderLeagueTab();
 }
 
+// Feuilletage — mêmes règles qu'au bureau (renderOffseasonLeague dans
+// accueil-dash.js) : la liste entière tient en main (fzmLoadLeague demande
+// tout, limit=80/60), donc chaque onglet se parcourt page par page plutôt
+// que de cacher le reste derrière un « et N autres » qui ne menait nulle
+// part. 5 par page : sur un écran de téléphone, une carte d'échange à deux
+// colonnes prend déjà plus de place qu'une ligne de signature ou de blessé.
+const FZM_PAGE_SIZE = 5;
+const fzmLeaguePages = { trade: 0, signing: 0, injury: 0 };
+
 function fzmRenderLeagueTab() {
     const wrap = document.getElementById('fzmLeagueWrap');
     if (!wrap || !fzmLeagueData) return;
@@ -538,18 +547,49 @@ function fzmRenderLeagueTab() {
         return;
     }
 
-    // Même raison qu'au bureau : sur un téléphone, 96 blessés à la file
-    // enterrent tout ce qui suit dans l'écran d'accueil.
-    const CAP = 8;
-    const shown = rows.slice(0, CAP);
+    const pageCount = Math.ceil(rows.length / FZM_PAGE_SIZE);
+    let page = fzmLeaguePages[fzmLeagueTab] || 0;
+    if (page > pageCount - 1) page = pageCount - 1;
+    if (page < 0) page = 0;
+    fzmLeaguePages[fzmLeagueTab] = page;
+
+    const start = page * FZM_PAGE_SIZE;
+    const shown = rows.slice(start, start + FZM_PAGE_SIZE);
+
+    // Ce qui reste au-delà de ce que le serveur a renvoyé (fenêtre limit) :
+    // impossible à feuilleter, signalé sur la dernière page seulement.
     const total = fzmLeagueData.counts?.[fzmLeagueTab] || rows.length;
-    const hidden = Math.max(0, total - shown.length);
+    const beyond = page === pageCount - 1 ? Math.max(0, total - rows.length) : 0;
 
     const rowHTML = fzmLeagueTab === 'injury' ? fzmInjuryRowHTML
         : fzmLeagueTab === 'trade' ? fzmDealRowHTML
         : fzmTxRowHTML;
     wrap.innerHTML = shown.map(rowHTML).join('')
-        + (hidden ? `<p class="fzm-league-more">et ${hidden} autre${hidden > 1 ? 's' : ''}</p>` : '');
+        + (beyond ? `<p class="fzm-league-more">et ${beyond} autre${beyond > 1 ? 's' : ''}</p>` : '')
+        + fzmLeaguePagerHTML(page, pageCount);
+
+    const pager = wrap.querySelector('.fzm-league-pager');
+    if (pager) {
+        pager.addEventListener('click', e => {
+            const btn = e.target.closest('button[data-page]');
+            if (!btn || btn.disabled) return;
+            fzmLeaguePages[fzmLeagueTab] = Number(btn.dataset.page);
+            fzmRenderLeagueTab();
+            wrap.scrollIntoView({ block: 'nearest' });
+        });
+    }
+}
+
+function fzmLeaguePagerHTML(page, pageCount) {
+    if (pageCount < 2) return '';
+    const first = page === 0;
+    const last = page === pageCount - 1;
+    return `
+        <div class="fzm-league-pager">
+            <button type="button" class="fzm-pager-btn" data-page="${page - 1}"${first ? ' disabled' : ''} aria-label="Page précédente">‹</button>
+            <span class="fzm-pager-info">Page ${page + 1} / ${pageCount}</span>
+            <button type="button" class="fzm-pager-btn" data-page="${page + 1}"${last ? ' disabled' : ''} aria-label="Page suivante">›</button>
+        </div>`;
 }
 
 function fzmLeagueEmptyText() {
@@ -600,11 +640,13 @@ function fzmDealRowHTML(d) {
             : '<li class="fzm-deal-asset is-empty">Rien en retour</li>';
         return `
             <section class="fzm-deal-col">
-                <div class="fzm-deal-club">
-                    <img class="fzm-deal-logo" src="teams/${escapeHTML(team)}.png" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
-                    <span class="fzm-deal-club-abbr" title="${escapeHTML(club)}">${escapeHTML(team)}</span>
+                <div class="fzm-deal-head">
+                    <span class="fzm-deal-club">
+                        <img class="fzm-deal-logo" src="teams/${escapeHTML(team)}.png" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+                        <span class="fzm-deal-club-abbr" title="${escapeHTML(club)}">${escapeHTML(team)}</span>
+                    </span>
+                    <span class="fzm-deal-acq">Acquiert</span>
                 </div>
-                <p class="fzm-deal-acq">Acquiert</p>
                 <ul class="fzm-deal-assets">${assets}</ul>
             </section>`;
     };
