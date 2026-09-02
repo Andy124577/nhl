@@ -17,7 +17,7 @@
 
 .mp-card.is-active {
     border-color: var(--primary);
-    box-shadow: 0 0 0 1px rgba(0, 212, 255, .25), var(--glow-primary);
+    box-shadow: 0 0 0 1px rgba(var(--primary-rgb), .25), var(--glow-primary);
 }
 
 /* ==================== EN-TÊTE ==================== */
@@ -53,11 +53,11 @@
     font-weight: 700;
 }
 
-.mp-chip.is-current { background: rgba(0, 212, 255, .16); color: var(--primary); }
+.mp-chip.is-current { background: rgba(var(--primary-rgb), .16); color: var(--primary); }
 .mp-state-encours { background: rgba(255, 71, 87, .16); color: var(--danger); }
 .mp-state-pret    { background: rgba(0, 230, 118, .15); color: var(--success); }
 .mp-state-attente { background: rgba(255, 179, 0, .15); color: var(--warning); }
-.mp-state-termine { background: rgba(0, 212, 255, .14); color: var(--primary); }
+.mp-state-termine { background: rgba(var(--primary-rgb), .14); color: var(--primary); }
 
 .mp-activate {
     flex-shrink: 0;

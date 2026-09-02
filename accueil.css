@@ -44,9 +44,9 @@ body {
        purely decorative effect — real cost on the phones this product
        targets, no visual difference removing it. */
 }
-.sp-1 { width: 560px; height: 560px; background: rgba(0,212,255,.14); top: -120px; left: 18%; animation-delay: 0s; }
-.sp-2 { width: 440px; height: 440px; background: rgba(110,50,220,.13); bottom: -60px; right: 8%; animation-delay: 2s; }
-.sp-3 { width: 320px; height: 320px; background: rgba(0,212,255,.08); top: 50%; left: -60px; animation-delay: 3.5s; }
+.sp-1 { width: 560px; height: 560px; background: rgba(var(--primary-rgb),.14); top: -120px; left: 18%; animation-delay: 0s; }
+.sp-2 { width: 440px; height: 440px; background: rgba(var(--primary-rgb),.07); bottom: -60px; right: 8%; animation-delay: 2s; }
+.sp-3 { width: 320px; height: 320px; background: rgba(var(--primary-rgb),.08); top: 50%; left: -60px; animation-delay: 3.5s; }
 
 /* Hero grid */
 .hero-inner {
@@ -67,8 +67,8 @@ body {
     align-items: center;
     gap: 8px;
     padding: 7px 18px;
-    background: rgba(0,212,255,.12);
-    border: 1px solid rgba(0,212,255,.3);
+    background: rgba(var(--primary-rgb),.12);
+    border: 1px solid rgba(var(--primary-rgb),.3);
     border-radius: 100px;
     color: var(--primary);
     font-size: .78rem;
@@ -103,7 +103,7 @@ body {
 
 .btn-hero-primary {
     padding: 15px 32px;
-    background: linear-gradient(135deg, var(--primary) 0%, rgba(0,180,220,1) 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
     color: var(--bg);
     border-radius: 12px;
     text-decoration: none;
@@ -165,7 +165,7 @@ body {
     background: rgba(26,26,30,.92);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(0,212,255,.22);
+    border: 1px solid rgba(var(--primary-rgb),.22);
     border-radius: 20px;
     padding: 22px 24px;
     min-width: 310px;
@@ -197,7 +197,7 @@ body {
 .hero-stat-chip {
     position: absolute;
     background: rgba(26,26,30,.9);
-    border: 1px solid rgba(0,212,255,.28);
+    border: 1px solid rgba(var(--primary-rgb),.28);
     border-radius: 100px;
     padding: 8px 16px;
     display: flex; align-items: center; gap: 8px;
@@ -269,8 +269,8 @@ html.fz-auth #comment-ca-marche { display: none; }
 .section-title   { font-size: 1.75rem; font-weight: 800; color: var(--text-main); }
 .section-pool-name {
     font-size: .82rem; color: var(--primary);
-    padding: 4px 12px; background: rgba(0,212,255,.1);
-    border: 1px solid rgba(0,212,255,.25); border-radius: 100px;
+    padding: 4px 12px; background: rgba(var(--primary-rgb),.1);
+    border: 1px solid rgba(var(--primary-rgb),.25); border-radius: 100px;
     font-weight: 700;
 }
 
@@ -305,7 +305,7 @@ html.fz-auth #comment-ca-marche { display: none; }
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at 50% 0%, rgba(0,212,255,.08), transparent 60%);
+    background: radial-gradient(circle at 50% 0%, rgba(var(--primary-rgb),.08), transparent 60%);
     opacity: 0;
     transition: opacity .3s;
     pointer-events: none;
@@ -333,8 +333,8 @@ html.fz-auth #comment-ca-marche { display: none; }
 .step-cta {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 9px 18px;
-    background: rgba(0,212,255,.1);
-    border: 1px solid rgba(0,212,255,.25);
+    background: rgba(var(--primary-rgb),.1);
+    border: 1px solid rgba(var(--primary-rgb),.25);
     border-radius: 100px;
     color: var(--primary); text-decoration: none;
     font-size: .85rem; font-weight: 700;
@@ -345,7 +345,7 @@ html.fz-auth #comment-ca-marche { display: none; }
     cursor: pointer;
 }
 .step-cta:hover {
-    background: rgba(0,212,255,.18);
+    background: rgba(var(--primary-rgb),.18);
     border-color: var(--primary);
     transform: translateX(3px);
 }
@@ -360,7 +360,7 @@ html.fz-auth #comment-ca-marche { display: none; }
 .connector-line {
     position: relative;
     height: 2px; width: 36px;
-    background: linear-gradient(90deg, var(--primary), rgba(0,212,255,.25));
+    background: linear-gradient(90deg, var(--primary), rgba(var(--primary-rgb),.25));
 }
 .connector-line::after {
     content: '▶';
@@ -446,7 +446,7 @@ html.fz-auth #comment-ca-marche { display: none; }
     padding: 4px 12px;
     border-radius: 100px;
     font-size: .7rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
-    background: rgba(0,212,255,.16);
+    background: rgba(var(--primary-rgb),.16);
     color: var(--primary);
 }
 /* "Live" reuses the hero card's own live-dot color/pulse (var(--success) +

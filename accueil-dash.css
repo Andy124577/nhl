@@ -4,8 +4,10 @@
    Replace le tableau de bord du membre connecté (ancien
    .dash-header + onglets Tableau de bord/Activité). Palette et
    typographie volontairement distinctes du reste du site (voir
-   DESIGN.md) : un module éditorial autonome, non branché sur le
-   bouton clair/sombre (theme.js) — toujours la même apparence.
+   DESIGN.md) : un module éditorial autonome. Sa palette est en
+   revanche branchée sur le bouton clair/sombre (theme.js) — elle
+   était figée en papier, ce qui faisait de ce bloc le seul
+   rectangle blanc de l'accueil en thème sombre.
    Portée strictement limitée à .fz-dash : aucun jeton partagé
    (--primary, --bg, etc. définis dans index.css) n'est touché.
    ============================================================ */
@@ -13,7 +15,10 @@
 .fz-dash-section {
     display: none; /* accueil-dash.js le révèle une fois un pool actif chargé */
     padding: 0 24px 72px;
-    background: #dedbd5;
+    /* Le fond de page vit ici et non dans .fz-dash : cette section est le
+       PARENT du bloc qui porte la palette, elle n'en hérite donc pas. */
+    --fzd-page: #dedbd5;
+    background: var(--fzd-page);
 }
 
 .fz-dash {
@@ -32,14 +37,59 @@
     --fzd-border: #e2dfd8;
     --fzd-border-strong: #cdcac3;
     --fzd-border-soft: #eae7e0;
-    --fzd-accent: #c4442e;
-    --fzd-accent-dark: #a8371f;
+    --fzd-accent: #b93d28;
+    --fzd-accent-dark: #8f2e1a;
+    /* Aplat de la brique : --fzd-accent s'éclaircit en thème sombre pour
+       rester lisible en TEXTE, le fond plein ne bouge pas. */
+    --fzd-accent-fill: #b93d28;
+    --fzd-on-accent: #ffffff;
     --fzd-tile-bg: #eceae4;
+    /* --fzd-ink servait à la fois de couleur de texte la plus appuyée et
+       d'aplat plein (jour courant, onglet actif, CTA) : les deux
+       s'inversent en thème sombre, mais pas dans le même sens. */
+    --fzd-solid: #16181a;
+    --fzd-solid-hover: #000000;
+    --fzd-on-solid: #ffffff;
+    --fzd-pool-icon-a: #e6e3db;
+    --fzd-pool-icon-b: #dcd8d0;
 
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     color: var(--fzd-text);
 }
+
+/* ------------------------------------------------------------ */
+/* Thème sombre — remappage des mêmes jetons. Seules les VALEURS */
+/* basculent : aucune règle en aval ne change. La brique reste   */
+/* la brique en APLAT (--fzd-accent-fill, blanc dessus à 5,58:1) */
+/* et s'éclaircit en TEXTE (--fzd-accent) pour tenir 5,8:1 sur   */
+/* la carte sombre — 2,8:1 sinon.                                */
+/* ------------------------------------------------------------ */
+html[data-theme="dark"] .fz-dash {
+    --fzd-bg: #1a1a1e;
+    --fzd-bg-alt: #202025;
+    --fzd-surface: #1e1e22;
+    --fzd-ink: #f5f5f2;
+    --fzd-ink-soft: #d5d2cb;
+    --fzd-text: #c9c6c0;
+    --fzd-text-muted: #a3a099;
+    --fzd-text-faint: #8a877f;
+    --fzd-text-fainter: #6e6b65;
+    --fzd-border: #2e2e33;
+    --fzd-border-strong: #3c3c43;
+    --fzd-border-soft: #27272c;
+    --fzd-accent: #e8795e;
+    --fzd-accent-dark: #f19b85;
+    --fzd-tile-bg: #26262b;
+    --fzd-solid: #f0eee9;
+    --fzd-solid-hover: #ffffff;
+    --fzd-on-solid: #16181a;
+    --fzd-pool-icon-a: #2a2a2f;
+    --fzd-pool-icon-b: #232328;
+}
+/* --fzd-page est lu par .fz-dash-section, qui est le PARENT de .fz-dash :
+   il ne peut pas hériter du bloc ci-dessus. Il le redéclare donc. */
+html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 
 .fz-dash * { box-sizing: border-box; }
 .fz-dash a { color: var(--fzd-accent); text-decoration: none; }
@@ -137,9 +187,9 @@
 .fzd-day-chip-dow { font: 500 9px/1 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--fzd-text-fainter); }
 .fzd-day-chip-num { margin-top: 5px; font: 600 16px/1 'Oswald', sans-serif; color: var(--fzd-text-muted); }
 
-.fzd-day-chip.is-today { background: var(--fzd-ink); border-color: var(--fzd-ink); }
+.fzd-day-chip.is-today { background: var(--fzd-solid); border-color: var(--fzd-solid); }
 .fzd-day-chip.is-today .fzd-day-chip-dow { color: var(--fzd-text-faint); }
-.fzd-day-chip.is-today .fzd-day-chip-num { color: #fff; }
+.fzd-day-chip.is-today .fzd-day-chip-num { color: var(--fzd-on-solid); }
 
 .fzd-day-chip.is-selected:not(.is-today) { border-color: var(--fzd-ink); }
 .fzd-day-chip.is-selected:not(.is-today) .fzd-day-chip-num { color: var(--fzd-ink); }
@@ -176,7 +226,7 @@
 }
 .fzd-game-card.is-scheduled .fzd-game-status,
 .fzd-game-card.is-final .fzd-game-status { color: var(--fzd-text-fainter); }
-.fzd-live-dot { width: 5px; height: 5px; border-radius: 999px; background: var(--fzd-accent); flex-shrink: 0; }
+.fzd-live-dot { width: 5px; height: 5px; border-radius: 999px; background: var(--fzd-accent-fill); flex-shrink: 0; }
 
 .fzd-game-row { display: flex; align-items: center; justify-content: space-between; }
 .fzd-game-team { display: flex; align-items: center; gap: 6px; }
@@ -226,7 +276,7 @@
 .fzd-month-cell:hover { background: var(--fzd-bg-alt); }
 .fzd-month-cell.is-empty { cursor: default; }
 .fzd-month-cell.is-empty:hover { background: transparent; }
-.fzd-month-cell.is-today { background: var(--fzd-ink); color: #fff; font-weight: 700; }
+.fzd-month-cell.is-today { background: var(--fzd-solid); color: var(--fzd-on-solid); font-weight: 700; }
 .fzd-month-cell.is-selected:not(.is-today) { border: 1px solid var(--fzd-ink); color: var(--fzd-ink); }
 
 /* ------------------------------------------------------------ */
@@ -264,7 +314,7 @@
     transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
 .fzd-off-tab:hover { color: var(--fzd-ink); border-color: var(--fzd-border-strong); }
-.fzd-off-tab.is-active { background: var(--fzd-ink); border-color: var(--fzd-ink); color: var(--fzd-surface); }
+.fzd-off-tab.is-active { background: var(--fzd-solid); border-color: var(--fzd-solid); color: var(--fzd-on-solid); }
 
 .fzd-move-row { display: flex; align-items: baseline; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--fzd-border-soft); }
 .fzd-move-row:last-child { border-bottom: none; }
@@ -284,6 +334,31 @@
 .fzd-move-status[data-status="Injured Reserve"] { color: var(--fzd-accent); }
 .fzd-move-back { display: block; margin-top: 2px; color: var(--fzd-text-fainter); }
 .fzd-move-more { margin: 0; padding: 10px 0 0; font: 400 11.5px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-fainter); }
+
+/* Feuilletage du panneau — précédent / page X / Y / suivant */
+.fzd-move-pager {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    padding-top: 12px; margin-top: 4px;
+    border-top: 1px solid var(--fzd-border-soft);
+}
+.fzd-pager-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px;
+    background: none;
+    border: 1px solid var(--fzd-border);
+    border-radius: 999px;
+    font: 400 14px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-ink);
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.fzd-pager-btn:hover:not(:disabled) { background: var(--fzd-solid); border-color: var(--fzd-solid); color: var(--fzd-on-solid); }
+.fzd-pager-btn:disabled { opacity: .35; cursor: default; }
+.fzd-pager-info {
+    font: 600 10.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .04em; text-transform: uppercase;
+    color: var(--fzd-text-faint);
+}
 
 /* Échange regroupé : les deux côtés de l'opération sur une ligne compacte. */
 .fzd-deal-teams {
@@ -418,7 +493,7 @@
 .fzd-mypools-count { font: 400 12px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
 .fzd-pool-row { display: flex; align-items: center; gap: 13px; padding: 14px 0; border-bottom: 1px solid var(--fzd-border); }
 .fzd-pool-row:last-child { border-bottom: none; }
-.fzd-pool-icon { width: 34px; height: 34px; border-radius: 6px; background: repeating-linear-gradient(135deg, #e6e3db 0 5px, #dcd8d0 5px 10px); flex-shrink: 0; }
+.fzd-pool-icon { width: 34px; height: 34px; border-radius: 6px; background: repeating-linear-gradient(135deg, var(--fzd-pool-icon-a) 0 5px, var(--fzd-pool-icon-b) 5px 10px); flex-shrink: 0; }
 .fzd-pool-id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .fzd-pool-name { font: 600 15px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fzd-pool-meta { font: 400 11.5px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
@@ -453,10 +528,10 @@
     cursor: pointer;
     text-decoration: none;
 }
-.fzd-cta-btn.is-primary { background: var(--fzd-ink); color: #fff; }
-.fzd-cta-btn.is-primary:hover { background: #000; color: #fff; }
+.fzd-cta-btn.is-primary { background: var(--fzd-solid); color: var(--fzd-on-solid); }
+.fzd-cta-btn.is-primary:hover { background: var(--fzd-solid-hover); color: var(--fzd-on-solid); }
 .fzd-cta-btn.is-secondary { border: 1px solid var(--fzd-ink); color: var(--fzd-ink); }
-.fzd-cta-btn.is-secondary:hover { background: #e6e3db; }
+.fzd-cta-btn.is-secondary:hover { background: var(--fzd-bg-alt); }
 
 /* ============================================================
    BUREAU — 2A (≥769px) : calendrier plus dense, corps en deux

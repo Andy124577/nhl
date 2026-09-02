@@ -149,7 +149,7 @@ function buildPickCard(options) {
     carte.style.setProperty('--team-b', mixHex(couleurB, PICK_CARD_BASE, pickCardMuteRatio(couleurB) + 0.10));
     carte.style.setProperty('--team-deep', mixHex(couleurA, PICK_CARD_BASE_DEEP, 0.86));
     // Le liseré du bas garde la teinte vive — sauf au tour en cours : là, le
-    // seul accent qui compte est le cyan du direct (Règle du Signal Unique),
+    // seul accent qui compte est celui du direct (Règle du Signal Unique),
     // et le CSS de .is-current se charge de l'imposer sans concurrence.
     if (etat !== 'current') carte.style.setProperty('--team-accent', couleurB);
     if (marque.abbrev) carte.dataset.team = marque.abbrev;
@@ -323,7 +323,7 @@ function buildPickCard(options) {
 
   carte.appendChild(bas);
 
-  // Le pouls cyan du tour en cours vaut pour tout le monde, mais seule LA
+  // Le pouls d'accent du tour en cours vaut pour tout le monde, mais seule LA
   // personne concernée doit voir ce badge — c'est la différence entre
   // « quelqu'un choisit » et « c'est à moi » (monEquipe/estMonTour calculés
   // plus haut, avant le titre de la carte qui s'en sert aussi).

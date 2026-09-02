@@ -82,7 +82,7 @@
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, var(--primary), rgba(0,180,220,1));
+    background: linear-gradient(90deg, var(--primary), var(--primary-deep));
     transform: scaleX(0);
     transform-origin: left;
     transition: transform .35s ease;
@@ -118,7 +118,7 @@
 }
 .player-card:hover .player-card-photo {
     border-color: var(--primary);
-    box-shadow: 0 0 18px rgba(0,212,255,.25);
+    box-shadow: 0 0 18px rgba(var(--primary-rgb),.25);
 }
 .player-card-photo img  { width: 100%; height: 100%; object-fit: cover; }
 .player-card-photo .no-photo { font-size: 2.2rem; color: var(--text-gray); }

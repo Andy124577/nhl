@@ -137,8 +137,12 @@ body {
 }
 
 .pool-badge.type-h2h {
-    background: rgba(33, 150, 243, 0.15);
-    color: #64B5F6;
+    /* Bleu Material auparavant : une seconde teinte vive, sans rapport avec
+       l'accent du site. Reprend la teinte de l'accent, comme .position-badge
+       — l'orchidée de .type-cumulative juste en dessous suffit à distinguer
+       les deux types. */
+    background: rgba(var(--primary-rgb), 0.15);
+    color: var(--primary);
 }
 
 .pool-badge.type-cumulative {
@@ -171,7 +175,7 @@ body {
    own table and would leak here unpredictably.
 
    All theming below runs through color-mix() against --primary/--warning
-   instead of hardcoded rgba(0,212,255,…) washes, so dark and light mode
+   instead of hardcoded rgba(var(--primary-rgb),…) washes, so dark and light mode
    share one set of rules — no parallel html[data-theme="light"] block to
    keep in sync (the old one drifted: it still mixed in the pre-contrast-fix
    light --primary). */
@@ -794,7 +798,7 @@ body {
 }
 
 .skeleton {
-    background: linear-gradient(90deg, #f0f0f0 25%, var(--text-main) 50%, #f0f0f0 75%);
+    background: linear-gradient(90deg, var(--bg) 25%, var(--card) 50%, var(--bg) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
     border-radius: 4px;
@@ -819,7 +823,7 @@ body {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: linear-gradient(90deg, #f0f0f0 25%, var(--text-main) 50%, #f0f0f0 75%);
+    background: linear-gradient(90deg, var(--bg) 25%, var(--card) 50%, var(--bg) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
     flex-shrink: 0;
@@ -884,7 +888,7 @@ body {
     width: 60px;
     height: 60px;
     border-radius: 8px;
-    background: linear-gradient(90deg, #f0f0f0 25%, var(--text-main) 50%, #f0f0f0 75%);
+    background: linear-gradient(90deg, var(--bg) 25%, var(--card) 50%, var(--bg) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
     flex-shrink: 0;
@@ -1599,9 +1603,9 @@ body {
 }
 
 .h2h-tab.active {
-    background: rgba(0, 212, 255, 0.15);
-    color: #00d4ff;
-    box-shadow: 0 0 10px rgba(0, 212, 255, 0.1);
+    background: rgba(var(--primary-rgb), 0.15);
+    color: var(--primary);
+    box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.1);
 }
 
 /* Period filter (Aujourd'hui / Semaine) */
@@ -1631,9 +1635,9 @@ body {
 }
 
 .h2h-period-btn.active {
-    background: rgba(0, 212, 255, 0.15);
-    border-color: rgba(0, 212, 255, 0.4);
-    color: #00d4ff;
+    background: rgba(var(--primary-rgb), 0.15);
+    border-color: rgba(var(--primary-rgb), 0.4);
+    color: var(--primary);
 }
 
 /* Week Header */
@@ -1671,9 +1675,9 @@ body {
 }
 
 .h2h-week-status.status-ongoing {
-    background: rgba(0, 212, 255, 0.2);
-    color: #00d4ff;
-    border: 1px solid rgba(0, 212, 255, 0.3);
+    background: rgba(var(--primary-rgb), 0.2);
+    color: var(--primary);
+    border: 1px solid rgba(var(--primary-rgb), 0.3);
     animation: pulse-ongoing 2s ease-in-out infinite;
 }
 
@@ -1717,7 +1721,7 @@ body {
 }
 
 .h2h-matchup-card:hover {
-    border-color: rgba(0, 212, 255, 0.3);
+    border-color: rgba(var(--primary-rgb), 0.3);
 }
 
 /* Scoreboard header */
@@ -2055,9 +2059,9 @@ html[data-theme="light"] .h2h-tab:hover {
     background: rgba(0,0,0,0.04);
 }
 html[data-theme="light"] .h2h-tab.active {
-    background: rgba(0,136,170,0.15);
+    background: rgba(var(--primary-rgb),0.15);
     color: var(--primary);
-    box-shadow: 0 0 10px rgba(0,136,170,0.1);
+    box-shadow: 0 0 10px rgba(var(--primary-rgb),0.1);
 }
 
 /* --- H2H Period filter --- */
@@ -2070,8 +2074,8 @@ html[data-theme="light"] .h2h-period-btn:hover {
     border-color: rgba(0,0,0,0.25);
 }
 html[data-theme="light"] .h2h-period-btn.active {
-    background: rgba(0,136,170,0.12);
-    border-color: rgba(0,136,170,0.35);
+    background: rgba(var(--primary-rgb),0.12);
+    border-color: rgba(var(--primary-rgb),0.35);
     color: var(--primary);
 }
 
@@ -2089,7 +2093,7 @@ html[data-theme="light"] .h2h-matchup-card {
     border-color: rgba(0,0,0,0.08);
 }
 html[data-theme="light"] .h2h-matchup-card:hover {
-    border-color: rgba(0,136,170,0.3);
+    border-color: rgba(var(--primary-rgb),0.3);
 }
 html[data-theme="light"] .h2h-matchup-header {
     background: rgba(0,0,0,0.04);
@@ -2186,13 +2190,11 @@ html[data-theme="light"] #careerStatsTable .league-col {
     color: var(--text-secondary);
 }
 
-/* --- Skeleton loaders (classement.css) use #f0f0f0 which already works on light bg --- */
-/* Fix for dark mode: override to dark-friendly shades */
-html[data-theme="dark"] .skeleton {
-    background: linear-gradient(90deg, rgba(255,255,255,.05) 25%, rgba(255,255,255,.10) 50%, rgba(255,255,255,.05) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-}
+/* Les trois squelettes (.skeleton, .skeleton-circle, .skeleton-avatar) tirent
+   désormais leurs deux arrêts de --bg et --card, donc ils suivent le thème
+   d'eux-mêmes. Le correctif html[data-theme="dark"] .skeleton qui vivait ici
+   ne rattrapait que le premier des trois — les deux autres restaient des
+   aplats blancs pleins pendant tout le chargement. */
 
 /* ==================== DENSITÉ SUR GRAND ÉCRAN ==================== */
 @media (min-width: 769px) {

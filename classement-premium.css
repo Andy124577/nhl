@@ -25,15 +25,28 @@ body.fz-classement {
   --fzc-border-strong: #cdcac3;
   --fzc-border-soft: #eae7e0;
   --fzc-border-input: #d6d3cc;
-  --fzc-accent: #c4442e;
-  --fzc-accent-dark: #a8371f;
+  --fzc-accent: #b93d28;
+  --fzc-accent-dark: #8f2e1a;
   --fzc-tile: #dcd8d0;
   --fzc-gold: #c9982e;
   --fzc-good-bg: #e9f3ec;
   --fzc-good: #2f7a4d;
   --fzc-bad-bg: #fbeae6;
-  --fzc-bad: #c4442e;
+  --fzc-bad: #b93d28;
   --fzc-flat-bg: #ece9e2;
+  --fzc-leader-bg: #fbf7ee;
+  /* Aplat de la brique. --fzc-accent s'éclaircit en thème sombre pour
+     rester lisible EN TEXTE ; le fond plein, lui, ne bouge pas — c'est sur
+     lui que le blanc garde ses 5,58:1. Deux rôles, deux jetons. */
+  --fzc-accent-fill: #b93d28;
+  --fzc-on-accent: #ffffff;
+  /* Même dédoublement pour --fzc-ink, qui servait à la fois de couleur de
+     texte la plus appuyée et d'aplat plein : les deux s'inversent en thème
+     sombre, mais pas dans le même sens. */
+  --fzc-solid: #16181a;
+  --fzc-on-solid: #ffffff;
+  --fzc-on-solid-muted: #a8a49c;
+
 
   margin: 0;
   min-height: 100vh;
@@ -43,6 +56,50 @@ body.fz-classement {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
+/* ============================================================ */
+/* THÈME SOMBRE — remappage des jetons éditoriaux                */
+/* ------------------------------------------------------------ */
+/* La palette ci-dessus est du papier, posée en dur et sans      */
+/* contrepartie : la page restait blanche même sous              */
+/* data-theme="dark", alors que theme.js démarre en sombre par   */
+/* défaut. Rien d'autre ne change ici — mêmes rôles, mêmes noms, */
+/* mêmes règles en aval ; seules les VALEURS basculent, ce qui   */
+/* est exactement la raison d'être des jetons.                   */
+/*                                                               */
+/* La brique reste la brique là où elle sert d'APLAT             */
+/* (--*-accent-fill, blanc dessus à 5,58:1) ; là où elle sert de */
+/* TEXTE (--*-accent) elle s'éclaircit à #e8795e pour tenir      */
+/* 5,8:1 sur la carte sombre — 2,8:1 sinon, illisible.           */
+/* ============================================================ */
+html[data-theme="dark"] body.fz-classement {
+  --fzc-bg: #1a1a1e;
+  --fzc-bg-alt: #202025;
+  --fzc-bg-page: #131316;
+  --fzc-surface: #1e1e22;
+  --fzc-ink: #f5f5f2;
+  --fzc-text: #c9c6c0;
+  --fzc-text-muted: #a3a099;
+  --fzc-text-faint: #8a877f;
+  --fzc-text-fainter: #6e6b65;
+  --fzc-border: #2e2e33;
+  --fzc-border-strong: #3c3c43;
+  --fzc-border-soft: #27272c;
+  --fzc-border-input: #3a3a41;
+  --fzc-accent: #e8795e;
+  --fzc-accent-dark: #f19b85;
+  --fzc-tile: #2a2a2f;
+  --fzc-gold: #e0b84d;
+  --fzc-good-bg: #17301f;
+  --fzc-good: #7fc08d;
+  --fzc-bad-bg: #351d17;
+  --fzc-bad: #e8795e;
+  --fzc-flat-bg: #26262b;
+  --fzc-leader-bg: #2a2418;
+  --fzc-solid: #f0eee9;
+  --fzc-on-solid: #16181a;
+  --fzc-on-solid-muted: #4b4843;
+}
+
 body.fz-classement * { box-sizing: border-box; }
 body.fz-classement a { color: var(--fzc-accent); text-decoration: none; }
 body.fz-classement a:hover { color: var(--fzc-accent-dark); }
@@ -82,7 +139,7 @@ body.fz-classement .breadcrumb {
 }
 body.fz-classement .breadcrumb-item:hover,
 body.fz-classement .breadcrumb-item.active { color: var(--fzc-accent); }
-body.fz-classement .breadcrumb-separator { color: #c9c5bd; }
+body.fz-classement .breadcrumb-separator { color: var(--fzc-text-fainter); }
 
 /* ==================== PÉRIODE (1J / 7J / 30J) ==================== */
 /* Comme dans le mockup : les puces de période n'existent que dans la vue
@@ -110,9 +167,9 @@ body.fz-classement .st-period-chip:hover {
   color: var(--fzc-ink);
 }
 body.fz-classement .st-period-chip.active {
-  background: var(--fzc-ink);
-  border-color: var(--fzc-ink);
-  color: #fff;
+  background: var(--fzc-solid);
+  border-color: var(--fzc-solid);
+  color: var(--fzc-on-solid);
 }
 
 /* ==================== TABLEAU (DESKTOP) ==================== */
@@ -158,7 +215,7 @@ body.fz-classement #standingsTable tbody tr {
 body.fz-classement #standingsTable tbody tr.is-leader,
 body.fz-classement #standingsTable tbody tr.is-leader td.rank-col,
 body.fz-classement #standingsTable tbody tr.is-leader td.player-col {
-  background: #fbf7ee;
+  background: var(--fzc-leader-bg);
 }
 body.fz-classement #standingsTable tbody tr.is-clickable:hover,
 body.fz-classement #standingsTable tbody tr.is-clickable:focus-visible,
@@ -168,7 +225,7 @@ body.fz-classement #standingsTable tbody tr.is-clickable:focus-visible td.rank-c
 body.fz-classement #standingsTable tbody tr.is-clickable:focus-visible td.player-col {
   background: var(--fzc-bg);
 }
-body.fz-classement #standingsTable tbody tr.is-clickable::after { background: var(--fzc-accent); }
+body.fz-classement #standingsTable tbody tr.is-clickable::after { background: var(--fzc-accent-fill); }
 body.fz-classement #standingsTable tbody tr.is-leader.is-clickable::after { background: var(--fzc-gold); }
 body.fz-classement #standingsTable tbody tr.is-clickable:focus-visible { outline-color: var(--fzc-accent); }
 
@@ -206,7 +263,7 @@ body.fz-classement .st-avatar {
 body.fz-classement .st-avatar img { width: 18px; height: 18px; object-fit: contain; }
 body.fz-classement .st-avatar-fallback {
   font: 600 9.5px/1 'Oswald', sans-serif;
-  color: #5e5b55;
+  color: var(--fzc-text-muted);
 }
 body.fz-classement .st-name {
   font: 600 13px/1 'Helvetica Neue', Helvetica, sans-serif;
@@ -333,8 +390,8 @@ body.fz-classement .hof-card {
 }
 body.fz-classement .hof-card-hero {
   border: none;
-  background: var(--fzc-ink);
-  color: #fff;
+  background: var(--fzc-solid);
+  color: var(--fzc-on-solid);
 }
 body.fz-classement .hof-card-worst { background: var(--fzc-bg); }
 body.fz-classement .hof-icon { display: block; margin-bottom: 10px; }
@@ -347,20 +404,20 @@ body.fz-classement .hof-card-label {
   text-transform: uppercase;
   color: var(--fzc-text-faint);
 }
-body.fz-classement .hof-card-hero .hof-card-label { color: #a8a49c; }
+body.fz-classement .hof-card-hero .hof-card-label { color: var(--fzc-on-solid-muted); }
 body.fz-classement .hof-card-value {
   margin: 0 0 6px;
   font: 700 24px/1 'Oswald', sans-serif;
   color: var(--fzc-accent);
 }
-body.fz-classement .hof-card-hero .hof-card-value { color: #fff; }
+body.fz-classement .hof-card-hero .hof-card-value { color: var(--fzc-on-solid); }
 body.fz-classement .hof-card-worst .hof-card-value { color: var(--fzc-text-faint); }
 body.fz-classement .hof-card-name {
   margin: 0;
   font: 600 12.5px/1 'Helvetica Neue', Helvetica, sans-serif;
   color: var(--fzc-ink);
 }
-body.fz-classement .hof-card-hero .hof-card-name { color: #fff; }
+body.fz-classement .hof-card-hero .hof-card-name { color: var(--fzc-on-solid); }
 body.fz-classement .hof-card-date { color: var(--fzc-text-faint); font-weight: 400; }
 
 @media (max-width: 680px) {
@@ -377,9 +434,9 @@ body.fz-classement .time-filter {
 }
 body.fz-classement .time-filter:hover { border-color: var(--fzc-ink); color: var(--fzc-ink); }
 body.fz-classement .time-filter.active {
-  background: var(--fzc-ink);
-  border-color: var(--fzc-ink);
-  color: #fff;
+  background: var(--fzc-solid);
+  border-color: var(--fzc-solid);
+  color: var(--fzc-on-solid);
 }
 body.fz-classement .leaderboard-row {
   border-color: var(--fzc-border);

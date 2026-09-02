@@ -121,7 +121,7 @@
   background: var(--danger);
 }
 .cmh-inj-icon svg { display: block; width: 10px; height: 10px; }
-/* Même raisonnement que pour le cyan : l'ambre est trop lumineuse pour
+/* Même raisonnement que pour l'accent : l'ambre est trop lumineuse pour
    porter un libellé clair — elle prend arena-black. */
 .cmh-injury[data-status="Day-To-Day"] .cmh-inj-icon { background: var(--warning); color: #121214; }
 .cmh-injury[data-status="Suspension"] .cmh-inj-icon { background: var(--text-gray); }

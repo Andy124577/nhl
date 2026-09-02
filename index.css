@@ -15,9 +15,9 @@
      blanc » malgré sa teinte : un contraste aussi tranché reste stark quelle
      que soit la couleur en dessous. La rampe passe à un gris chaud, très
      faiblement saturé (~2-3%), qui reste une base neutre plutôt qu'un
-     deuxième accent — c'est justement ce qui laisse le cyan être le seul
+     deuxième accent — c'est justement ce qui laisse la brique être le seul
      signal vif de l'interface (Règle du Signal Unique). Primary, les
-     couleurs sémantiques et les halos/ombres liés au cyan ou au noir ne
+     couleurs sémantiques et les halos/ombres liés à l'accent ou au noir ne
      changent pas : le pop reste entièrement sur les boutons et les stats. */
   --bg: #121214;
   --bg-page: #16161A;
@@ -29,11 +29,29 @@
   --navbar-border: #2A2A30;
 
   /* Colors */
-  --primary: #00D4FF;
+  /* ---- L'accent ------------------------------------------------------
+     La brique éditoriale, promue accent unique du site. Elle vivait
+     jusqu'ici dans quatre feuilles -premium.css (draftActif, échanges,
+     classement, statistiques) tandis que le reste du site — et, sur ces
+     mêmes pages, tout le mobilier partagé : fiche joueur, en-têtes
+     triables, liseré de survol, anneaux de focus — restait au cyan. Deux
+     accents sur un même écran, c'est zéro accent (Règle du Signal Unique) ;
+     c'est la brique qui gagne, elle porte les quatre pages reskinnées.
+
+     La valeur suit le thème dans le même sens que le cyan qu'elle
+     remplace : claire sur fond sombre, foncée sur fond clair, pour que
+     `color: var(--bg)` reste le libellé correct sur un aplat plein.
+     #E8795E : 5,80:1 en texte sur carte, 6,53:1 pour le libellé posé
+     dessus. */
+  --primary: #E8795E;
   /* Deuxième arrêt des dégradés d'action. Il traînait en dur dans treize
      règles réparties sur cinq feuilles, sans équivalent en thème clair —
      d'où un libellé de bouton à 2,51:1 sur fond pâle. */
-  --primary-deep: #00A8CC;
+  --primary-deep: #D4614A;
+  /* Composantes de --primary, pour les teintes en rgba(). Elles étaient
+     écrites en dur (rgba(var(--primary-rgb),…) à plus de 150 endroits) et ne
+     suivaient donc aucun des deux thèmes. */
+  --primary-rgb: 232, 121, 94;
   --success: #00E676;
   /* Deuxième arrêt des dégradés « succès », même rôle que --primary-deep :
      .finish-btn (draftActif.css) codait ce second arrêt en dur (#00A855),
@@ -71,20 +89,20 @@
 
   /* Shadows and overlays */
   --overlay-dark: rgba(8, 8, 9, 0.85);
-  --shadow-sm: rgba(0, 212, 255, 0.06);
+  --shadow-sm: rgba(var(--primary-rgb), 0.06);
   --shadow-md: rgba(0, 0, 0, 0.3);
   --shadow-lg: rgba(0, 0, 0, 0.6);
 
   /* Glow effects */
-  --glow-primary: 0 0 20px rgba(0, 212, 255, 0.25);
+  --glow-primary: 0 0 20px rgba(var(--primary-rgb), 0.25);
   --glow-danger: 0 0 20px rgba(255, 71, 87, 0.25);
   --glow-success: 0 0 20px rgba(0, 230, 118, 0.25);
-  --glow-primary-strong: 0 0 30px rgba(0, 212, 255, 0.4);
+  --glow-primary-strong: 0 0 30px rgba(var(--primary-rgb), 0.4);
 
   /* ---- Profondeur ----------------------------------------------------
      L'échelle décrite dans DESIGN.md n'existait qu'en prose : le code n'avait
      que des halos colorés, posés au repos à 27 endroits. Une ombre neutre dit
-     « cet objet flotte » ; un halo cyan dit « il se passe quelque chose ici ».
+     « cet objet flotte » ; un halo d'accent dit « il se passe quelque chose ici ».
      Confondre les deux, c'est perdre le second.
 
      --glow-live reste réservé à l'état : tour en cours, choix courant. */
@@ -92,8 +110,8 @@
   --elevation-2: 0 2px 8px rgba(0, 0, 0, .32);
   --elevation-3: 0 8px 32px rgba(0, 0, 0, .38);
   --elevation-4: 0 20px 50px rgba(0, 0, 0, .55);
-  --focus-ring: 0 0 0 3px rgba(0, 212, 255, .15);
-  --glow-live: 0 0 20px rgba(0, 212, 255, .25);
+  --focus-ring: 0 0 0 3px rgba(var(--primary-rgb), .22);
+  --glow-live: 0 0 20px rgba(var(--primary-rgb), .25);
 
   /* Densité de l'interface. Ces valeurs sont la référence (mobile) ; elles
      sont resserrées sur grand écran dans le bloc « DENSITÉ » en fin de
@@ -125,11 +143,14 @@ html[data-theme="light"] {
   --card-white: #FAFAF8;
   --navbar-bg: #FFFFFF;
   --navbar-border: #E0E0DC;
-  /* Assombri : à #0088AA, l'accent tombait à 4,12:1 en texte sur blanc et le
-     libellé d'un bouton plein à 3,68:1 — sous le seuil AA dans les deux cas.
-     À #00707F, 5,79:1 en texte et 5,18:1 en libellé. Même teinte, même rôle. */
-  --primary: #00707F;
-  --primary-deep: #005A6B;
+  /* Même brique, assombrie pour le fond pâle : 5,58:1 en texte sur carte
+     et 4,98:1 pour le libellé d'un bouton plein. La brique éditoriale
+     brute (#c4442e) n'y arrivait pas — 4,45:1 en libellé, sous le seuil —
+     d'où ce cran plus foncé, exactement le même arbitrage que le cyan
+     faisait avant elle en passant de var(--primary) à var(--primary). */
+  --primary: #B93D28;
+  --primary-deep: #8F2E1A;
+  --primary-rgb: 185, 61, 40;
   --success: #00A855;
   --success-deep: #00863F;
   --danger: #E03040;
@@ -147,13 +168,13 @@ html[data-theme="light"] {
   --bg-gray-light: #F5F5F3;
   --bg-odd-row: #FAFAF8;
   --overlay-dark: rgba(20, 20, 20, 0.55);
-  --shadow-sm: rgba(0, 136, 170, 0.06);
+  --shadow-sm: rgba(var(--primary-rgb), 0.06);
   --shadow-md: rgba(0, 0, 0, 0.08);
   --shadow-lg: rgba(0, 0, 0, 0.20);
-  --glow-primary: 0 0 20px rgba(0, 136, 170, 0.12);
+  --glow-primary: 0 0 20px rgba(var(--primary-rgb), 0.12);
   --glow-danger: 0 0 20px rgba(224, 48, 64, 0.12);
   --glow-success: 0 0 20px rgba(0, 168, 85, 0.12);
-  --glow-primary-strong: 0 0 30px rgba(0, 136, 170, 0.20);
+  --glow-primary-strong: 0 0 30px rgba(var(--primary-rgb), 0.20);
 }
 
 /* ============================================================ */
@@ -219,8 +240,8 @@ body {
   filter: blur(90px);
   animation: glow-pulse-stats 5s ease-in-out infinite;
 }
-.sh-sp1 { width: 460px; height: 460px; background: rgba(0,212,255,.12); top: -140px; left: 30%; }
-.sh-sp2 { width: 340px; height: 340px; background: rgba(110,50,220,.10); bottom: -90px; right: 20%; animation-delay: 2.2s; }
+.sh-sp1 { width: 460px; height: 460px; background: rgba(var(--primary-rgb),.12); top: -140px; left: 30%; }
+.sh-sp2 { width: 340px; height: 340px; background: rgba(var(--primary-rgb),.06); bottom: -90px; right: 20%; animation-delay: 2.2s; }
 
 .stats-hero-inner {
   position: relative;
@@ -315,7 +336,7 @@ body {
 .filter-group select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(0,212,255,.15);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb),.15);
   background: var(--card);
 }
 .filter-group select {
@@ -361,7 +382,7 @@ body {
 .stats-show-more {
   padding: 12px 28px;
   min-height: 44px;
-  background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
   border: none;
   border-radius: 10px;
   color: var(--bg);
@@ -369,12 +390,12 @@ body {
   font-weight: 800;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 16px rgba(0,212,255,0.25);
+  box-shadow: 0 4px 16px rgba(var(--primary-rgb),0.25);
 }
 
 .stats-show-more:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,212,255,0.4);
+  box-shadow: 0 8px 24px rgba(var(--primary-rgb),0.4);
 }
 
 /* ============================================================ */
@@ -412,7 +433,7 @@ thead {
 
 th {
   font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
-  background: rgba(0,212,255,.35);
+  background: rgba(var(--primary-rgb),.35);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: var(--text-main);
@@ -459,7 +480,7 @@ tbody tr:nth-child(even) {
 tbody tr:hover {
   background: var(--bg-hover) !important;
   transform: translateY(-1px);
-  box-shadow: 0 2px 12px rgba(0, 212, 255, 0.15);
+  box-shadow: 0 2px 12px rgba(var(--primary-rgb), 0.15);
 }
 
 td {
@@ -492,7 +513,7 @@ tbody tr:nth-child(2) td.rank-col { color: #B8B8CC; font-size: 1rem; }
 tbody tr:nth-child(3) td.rank-col { color: #CD7F32; font-size: 1rem; }
 
 td.points-column {
-  background: rgba(0,212,255,.08);
+  background: rgba(var(--primary-rgb),.08);
   font-weight: 800;
   font-size: 1.05rem;
   color: var(--primary);
@@ -521,7 +542,7 @@ td.points-column {
 
 tbody tr:hover .player-photo img.face {
   border-color: var(--primary);
-  box-shadow: 0 0 14px rgba(0, 212, 255, 0.3);
+  box-shadow: 0 0 14px rgba(var(--primary-rgb), 0.3);
 }
 
 .player-photo img.logo {
@@ -558,7 +579,7 @@ tbody tr:hover .player-photo img.face {
 }
 
 .skeleton-table-header {
-  background: rgba(0, 212, 255, 0.15);
+  background: rgba(var(--primary-rgb), 0.15);
 }
 
 .skeleton {
@@ -651,7 +672,7 @@ tbody tr:hover .player-photo img.face {
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   margin: 2.5% auto;
-  border: 1px solid rgba(0,212,255,.12);
+  border: 1px solid rgba(var(--primary-rgb),.12);
 }
 
 /* Modal header */
@@ -660,7 +681,7 @@ tbody tr:hover .player-photo img.face {
   flex-direction: column;
   gap: 6px;
   padding: 10px 14px;
-  background: linear-gradient(135deg, rgba(0,212,255,.08) 0%, rgba(0,100,200,.06) 100%);
+  background: linear-gradient(135deg, rgba(var(--primary-rgb),.08) 0%, rgba(var(--primary-rgb),.06) 100%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   color: var(--text-dark);
@@ -690,8 +711,8 @@ tbody tr:hover .player-photo img.face {
   flex-shrink: 0;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid rgba(0,212,255,0.35);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4), 0 0 16px rgba(0,212,255,0.15);
+  border: 3px solid rgba(var(--primary-rgb),0.35);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4), 0 0 16px rgba(var(--primary-rgb),0.15);
   background: var(--bg-gray-light);
   display: flex;
   align-items: center;
@@ -750,7 +771,7 @@ tbody tr:hover .player-photo img.face {
 }
 
 .player-position-team .position-badge {
-  background: rgba(0,212,255,.12);
+  background: rgba(var(--primary-rgb),.12);
   color: var(--primary);
   padding: 2px 8px;
   border-radius: 5px;
@@ -783,16 +804,16 @@ tbody tr:hover .player-photo img.face {
   display: inline-flex;
   flex-direction: column;
   gap: 2px;
-  background: rgba(0,212,255,.05);
-  border: 1px solid rgba(0,212,255,.14);
+  background: rgba(var(--primary-rgb),.05);
+  border: 1px solid rgba(var(--primary-rgb),.14);
   border-radius: 7px;
   padding: 5px 10px;
   transition: background .18s ease, border-color .18s ease;
 }
 
 .bio-pill:hover {
-  background: rgba(0,212,255,.11);
-  border-color: rgba(0,212,255,.26);
+  background: rgba(var(--primary-rgb),.11);
+  border-color: rgba(var(--primary-rgb),.26);
 }
 
 .bio-pill .bio-pill-lbl {
@@ -820,8 +841,8 @@ tbody tr:hover .player-photo img.face {
   align-items: baseline;
   gap: 8px;
   padding: 7px 12px;
-  background: rgba(0,212,255,.04);
-  border: 1px solid rgba(0,212,255,.12);
+  background: rgba(var(--primary-rgb),.04);
+  border: 1px solid rgba(var(--primary-rgb),.12);
   border-radius: 8px;
   flex-wrap: wrap;
 }
@@ -923,11 +944,11 @@ tbody tr:hover .player-photo img.face {
 .filter-group-career select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(0,212,255,.15);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb),.15);
 }
 
 .stats-count-badge {
-  background: rgba(0,212,255,.08);
+  background: rgba(var(--primary-rgb),.08);
   color: var(--primary);
   padding: 6px 12px;
   border-radius: 8px;
@@ -937,7 +958,7 @@ tbody tr:hover .player-photo img.face {
   align-items: center;
   gap: 6px;
   margin-left: auto;
-  border: 1px solid rgba(0,212,255,.12);
+  border: 1px solid rgba(var(--primary-rgb),.12);
 }
 
 /* Career stats table */
@@ -965,7 +986,7 @@ tbody tr:hover .player-photo img.face {
 }
 
 #careerStatsTable th {
-  background: rgba(10,10,40,0.97);
+  background: var(--card-white);
   padding: 10px 12px;
   text-align: center;
   font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
@@ -1001,7 +1022,7 @@ tbody tr:hover .player-photo img.face {
 
 #careerStatsTable tbody tr:hover {
   background: var(--bg-hover) !important;
-  box-shadow: 0 2px 8px rgba(0,212,255,.1);
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb),.1);
 }
 
 #careerStatsTable th.season-col,
@@ -1302,7 +1323,7 @@ tbody tr:hover .player-photo img.face {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(10,10,40,0.97);
+    background: var(--card-white);
     white-space: nowrap;
   }
 
@@ -1576,7 +1597,7 @@ html[data-theme="light"] .skeleton {
   background-size: 200% 100%;
 }
 html[data-theme="light"] .skeleton-table-header {
-  background: rgba(0, 136, 170, 0.12);
+  background: rgba(var(--primary-rgb), 0.12);
 }
 html[data-theme="light"] .career-filters {
   background: rgba(240, 244, 255, 0.90);
@@ -1699,13 +1720,13 @@ th.rank-col, td.rank-col {
 }
 #playerTable th.sortable:hover,
 #playerTable th.sortable:focus-visible {
-  background: rgba(0, 212, 255, .5);
+  background: rgba(var(--primary-rgb), .5);
 }
 #playerTable th.sortable:focus-visible {
   outline: 2px solid var(--text-main);
   outline-offset: -3px;
 }
-#playerTable th.is-sorted { background: rgba(0, 212, 255, .55); }
+#playerTable th.is-sorted { background: rgba(var(--primary-rgb), .55); }
 .sort-caret {
   display: inline-block;
   margin-left: 5px;

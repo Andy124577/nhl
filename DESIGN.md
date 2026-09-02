@@ -2,7 +2,7 @@
 name: Fantazy
 description: The broadcast desk for a hockey pool — dark set, luminous data, team colors as the only chroma that moves.
 colors:
-  rink-ice-cyan: "#00D4FF"
+  editorial-brick: "#E8795E"
   goal-green: "#00E676"
   penalty-red: "#FF4757"
   bench-amber: "#FFB300"
@@ -78,13 +78,13 @@ spacing:
   xxxl: "32px"
 components:
   button-primary:
-    backgroundColor: "{colors.rink-ice-cyan}"
+    backgroundColor: "{colors.editorial-brick}"
     textColor: "{colors.arena-black}"
     rounded: "{rounded.lg}"
     padding: "15px 32px"
     height: "48px"
   button-primary-hover:
-    backgroundColor: "{colors.rink-ice-cyan}"
+    backgroundColor: "{colors.editorial-brick}"
     textColor: "{colors.arena-black}"
   button-secondary:
     backgroundColor: "transparent"
@@ -122,7 +122,7 @@ components:
     height: "44px"
   badge-label:
     backgroundColor: "transparent"
-    textColor: "{colors.rink-ice-cyan}"
+    textColor: "{colors.editorial-brick}"
     typography: "{typography.label}"
     rounded: "{rounded.pill}"
     padding: "7px 18px"
@@ -133,7 +133,7 @@ components:
     padding: "3px 8px"
   position-badge-def:
     backgroundColor: "transparent"
-    textColor: "{colors.rink-ice-cyan}"
+    textColor: "{colors.editorial-brick}"
     rounded: "{rounded.xs}"
     padding: "3px 8px"
   position-badge-gar:
@@ -151,7 +151,7 @@ components:
 
 Fantazy looks like the studio a hockey broadcast is called from: a dark set, a wall of numbers that has already been organized for you, and light used sparingly — only where something is live. The desk has authority because it is calm. It does not shout the score; it shows you the score, correctly, faster than you could have assembled it yourself. Every screen is a surface someone reads under time pressure, usually on a phone, sometimes with four friends waiting on their turn.
 
-The system runs dark by default and near-monochrome by construction. Backgrounds sit in a narrow band of near-neutral grays (`arena-black` through `board-gray`); text sits in a matching band of near-neutral off-whites. Against that, exactly one accent — **Rink Ice Cyan** — carries interactivity and liveness, and a small semantic set (green / amber / orchid / red) carries meaning that is not decoration: a player's position, a warning, a failure. The only chroma allowed to move freely is the NHL club palette, which enters the interface through team logos and the draft pick cards. That restraint is what lets a Colorado burgundy or a Nashville gold read instantly when it appears — it is the only unexpected color on screen.
+The system runs dark by default and near-monochrome by construction. Backgrounds sit in a narrow band of near-neutral grays (`arena-black` through `board-gray`); text sits in a matching band of near-neutral off-whites. Against that, exactly one accent — **Editorial Brick** — carries interactivity and liveness, and a small semantic set (green / amber / orchid / red) carries meaning that is not decoration: a player's position, a warning, a failure. The only chroma allowed to move freely is the NHL club palette, which enters the interface through team logos and the draft pick cards. That restraint is what lets a Colorado burgundy or a Nashville gold read instantly when it appears — it is the only unexpected color on screen.
 
 Density is deliberate and high. This is a statistics product; tables are the primary component, not a fallback. Numbers set in monospace, positions demoted to a secondary line, whole rows made clickable rather than a small link — these are the system's real decisions. Ornament is spent almost nowhere so that the data can be dense without becoming loud.
 
@@ -165,10 +165,12 @@ Density is deliberate and high. This is a statistics product; tables are the pri
 
 ## Colors
 
-A narrow band of near-neutral grays and off-whites, cut by a single emitted cyan, with a small semantic set that only ever means something.
+A narrow band of near-neutral grays and off-whites, cut by a single warm brick, with a small semantic set that only ever means something.
 
 ### Primary
-- **Rink Ice Cyan** (`{colors.rink-ice-cyan}`): the one accent. It marks what is interactive, focused, live, or currently yours: primary buttons, the active nav item, focus rings, sortable-header state, the current pick in the draft order. In the light theme it deepens to `#0088AA` to hold contrast on pale surfaces.
+- **Editorial Brick** (`{colors.editorial-brick}`): the one accent. It marks what is interactive, focused, live, or currently yours: primary buttons, the active nav item, focus rings, sortable-header state, the current pick in the draft order. In the light theme it deepens to `#B93D28` to hold contrast on pale surfaces.
+
+  It replaced Rink Ice Cyan (`#00D4FF`). The editorial reskins of draftActif, échanges, classement and statistiques had already put brick on four of the busiest screens, while the shared furniture on those same screens — the player card, sortable headers, the row hover stripe, focus rings — stayed cyan. Two accents on one screen is zero accents; brick won because it already held four pages. `--primary-rgb` carries the same colour in component form, for the `rgba()` tints that used to be written out in full and so followed neither theme.
 
 ### Secondary
 - **Goal Green** (`{colors.goal-green}`): success, completed actions, and the **attaquants** position badge.
@@ -180,7 +182,7 @@ A narrow band of near-neutral grays and off-whites, cut by a single emitted cyan
 - **NHL club colors**: sourced from the static table in [teamColors.js](teamColors.js), two per club (primary + secondary). They enter only through team identity — logos, and the pick card's `--team-accent` bottom rule — and that identity is the **pool team's own chosen club** ([repechage.js](repechage.js)'s pre-draft picker, `POST /choose-nhl-club`), not the club of whichever player got drafted. The second color exists to separate clubs that share a navy (Buffalo, Columbus, Florida). These are real brand colors of real organizations: never invent one, never assign one to a non-team.
 
 ### Neutral
-- **Arena Black** (`{colors.arena-black}`): the deepest ground; app background and the text color that sits *on* cyan buttons.
+- **Arena Black** (`{colors.arena-black}`): the deepest ground; app background and the text color that sits *on* brick buttons.
 - **Deep Charcoal** (`{colors.deep-charcoal}`): the page canvas — one step up from arena black.
 - **Board Gray** (`{colors.board-gray}`) / **Board Gray Raised** (`{colors.board-gray-raised}`): card and panel surfaces, the two rungs of tonal layering.
 - **Press Box Black** (`{colors.press-box-black}`): navigation chrome, darker than the page so the bar reads as a fixed frame.
@@ -193,11 +195,11 @@ A narrow band of near-neutral grays and off-whites, cut by a single emitted cyan
 
 ### Light theme
 
-Light is a full peer theme, applied via `html[data-theme="light"]` and set before first paint by [theme.js](theme.js). It is not an inversion: hues are re-picked for contrast on pale ground. The overrides live in `.impeccable/design.json` under `extensions.themes.light` (sidecar refresh pending — see below); the load-bearing ones are page `#EBEBE8`, card `#FFFFFF`, primary `#00707F`, body text `#242428`.
+Light is a full peer theme, applied via `html[data-theme="light"]` and set before first paint by [theme.js](theme.js). It is not an inversion: hues are re-picked for contrast on pale ground. The overrides live in `.impeccable/design.json` under `extensions.themes.light` (sidecar refresh pending — see below); the load-bearing ones are page `#EBEBE8`, card `#FFFFFF`, primary `#B93D28`, body text `#242428`.
 
 ### Named Rules
 
-**The One Live Signal Rule.** Rink Ice Cyan means *live, focused, or actionable*. If an element is none of those three, it does not get cyan. A screen with cyan in six places has six things claiming to be the live one, which means it has none.
+**The One Live Signal Rule.** Editorial Brick means *live, focused, or actionable*. If an element is none of those three, it does not get brick. A screen with brick in six places has six things claiming to be the live one, which means it has none.
 
 **The Real Teams Only Rule.** Chroma outside the semantic set may only come from `NHL_TEAM_COLORS`, and only attached to the club it belongs to. No invented team colors, no club palette borrowed for a UI accent.
 
@@ -266,7 +268,7 @@ Stat-grid numerals above ~1.1rem (career modal's big season totals, alert icons)
 
 Depth comes from **tonal layering first, neutral shadow second, and colored glow almost never.** The ground is `arena-black`; the page sits on `deep-charcoal`; panels rise to `board-gray` and `board-gray-raised`; borders in the gray ladder mark the seams. That stack does most of the work, and on flat surfaces it should do all of it.
 
-Neutral shadow is reserved for genuine z-separation — things that float above the page and could be dismissed: modals, dropdowns, drawers, toasts. Colored cyan glow is **state, not elevation**: it appears on focus and on live/current elements, and it disappears when that state does.
+Neutral shadow is reserved for genuine z-separation — things that float above the page and could be dismissed: modals, dropdowns, drawers, toasts. Colored brick glow is **state, not elevation**: it appears on focus and on live/current elements, and it disappears when that state does.
 
 > **Migration note.** The incumbent code does not match this yet: `--glow-primary` is applied at rest in 27 places, including buttons and cards that are not live. That is the documented drift to close. Existing glow-at-rest is legacy; new work uses the ladder below.
 
@@ -302,10 +304,10 @@ Two silhouettes recur and are worth protecting: the **row-as-pill** (a table row
 Tactile and confident: real weight, a clear press, and hit areas built for a thumb.
 
 - **Shape:** softly rounded (12px; 14px for full-width primary actions), minimum 44px tall, 48px for primary.
-- **Primary:** cyan fill, `arena-black` text, 800 weight, `15px 32px`. The dark-text-on-cyan pairing is deliberate and non-negotiable — white on `#00D4FF` fails contrast.
+- **Primary:** brick fill, `arena-black` text, 800 weight, `15px 32px`. The dark-text-on-brick pairing is deliberate and non-negotiable — white on `#E8795E` reads 3.4:1 and fails, `arena-black` on it reads 6.5:1.
 - **Hover / Focus:** `translateY(-3px)` lift over 0.2s with `cubic-bezier(.4,0,.2,1)`, plus the elevation-2 shadow. Focus-visible additionally draws the focus ring. `:active` returns to `translateY(0)` — the press must be felt.
-- **Secondary:** transparent with a 2px light border; on hover the border and label both shift to cyan and the fill lifts to `rgba(255,255,255,.07)`.
-- **Tertiary:** text only, lavender, no border; hover shifts to cyan with a 2px lift.
+- **Secondary:** transparent with a 2px light border; on hover the border and label both shift to brick and the fill lifts to `rgba(255,255,255,.07)`.
+- **Tertiary:** text only, lavender, no border; hover shifts to brick with a 2px lift.
 - **Disabled:** `opacity: .5`, `cursor: not-allowed`, and the hover transform suppressed. Never remove the label.
 
 ### Cards / Containers
@@ -317,13 +319,13 @@ Tactile and confident: real weight, a clear press, and hit areas built for a thu
 
 ### Inputs / Fields
 - **Style:** a well — `shadow-gray` fill, 2px `edge-gray` border, 12px radius, `13px 16px` padding, 600 weight at 1rem (16px, which is also what stops iOS from zooming on focus).
-- **Focus:** border to cyan plus the `focus-ring` shadow. Never remove the outline without replacing it.
+- **Focus:** border to brick plus the `focus-ring` shadow. Never remove the outline without replacing it.
 - **Selects:** native `appearance: none` with an inline SVG chevron in `broadcast-gray`, 40px right padding.
 - **Numeric inputs:** center-aligned at 1.15rem — they are values, not sentences.
 - **Placeholder:** `muted-gray` at weight 400, so it never reads as a filled value.
 
 ### Navigation
-- **Desktop (≥769px):** 70px sticky bar on `press-box-black` with a bottom `rink-line` border. Links are 600-weight lavender pills at `10px 16px`, 44px minimum; hover tints cyan at 10% and lifts 2px; the active item takes a cyan-tinted fill plus a 3px cyan rule along its bottom edge.
+- **Desktop (≥769px):** 70px sticky bar on `press-box-black` with a bottom `rink-line` border. Links are 600-weight lavender pills at `10px 16px`, 44px minimum; hover tints brick at 10% and lifts 2px; the active item takes a brick-tinted fill plus a 3px brick rule along its bottom edge.
 - **Phone (≤768px):** the bar compresses and a fixed bottom nav appears — 5 icon+label items, 64px minimum height, label at 0.75rem/700. The active item is marked by a 3px rule along its *top* edge, mirroring the desktop treatment.
 - **Notification badge:** a `penalty-red` pill at the avatar's top-right with a 2px `press-box-black` ring so it separates from whatever is behind it.
 
@@ -332,7 +334,7 @@ The workhorse. Rows read as separated objects, not grid lines.
 
 - Header cells are uppercase labels; sortable headers carry `cursor: pointer`, a hover fill, and a caret that shows direction in the data itself.
 - `tbody` rows are pills: 12px radius on the first and last cells, `row-gray` fill, 1px `seam-gray` top and bottom. Zebra striping is switched off because separation already exists.
-- Actionable rows use a 3px cyan stripe on `::after` that fades in on hover **and** `:focus-visible` — the whole row is the target (Fitts), and keyboard users get the same signal a cursor gives.
+- Actionable rows use a 3px brick stripe on `::after` that fades in on hover **and** `:focus-visible` — the whole row is the target (Fitts), and keyboard users get the same signal a cursor gives.
 - Numeric columns are selected structurally and set in JetBrains Mono; the photo and name columns are excluded by position.
 
 **Flat variant (standings).** The pool standings table (`classement.css`) drops the card entirely: no container background, no border, no radius, no zebra striping, no rank badge circle — a plain uppercase-label header, hairline rows flush against the page, and the rank number itself carrying color (gold/silver/bronze on the podium, `text-gray` otherwise). It reads as a leaderboard, not a boxed widget. The leader row is tinted with `color-mix(in srgb, var(--warning) 8%, var(--bg-page))` rather than a card fill, so it stays a wash over the same flat surface instead of becoming its own panel. This is a deliberate second table register, not drift from the workhorse pill-row pattern above — use it only where a table *is* the page, the way the workhorse pattern is for a table *inside* one.
@@ -344,10 +346,10 @@ Season records (best/worst single day, week, month of pool points) below the sta
 The draft room's status line — sticky, `aria-live="assertive"`, and the single answer to "whose turn is it." Sits above the Pick Card strip and shares its team-identity source, but answers a different question: the strip is history, the banner is *now*.
 
 - **Waiting:** neutral card surface, showing who just picked. `.next` (the team on deck) adds an amber ring — a preview, not yet a turn.
-- **Your turn:** the state that matters. Background rises to the same muted team-color wash as the Pick Card (`--team-a/-b/-deep`, both driven by `appliquerIdentiteBanniere()` in `draftActif.js` from the same `resolveDrafterClub`/`teamColors.js` source as `draftPickCards.js`), with a dark top vignette and fixed white text, cyan border, and `turnPulse`. Text stays white on purpose: team hues here are pre-muted toward a dark base specifically so a fixed light label always holds contrast, the same reasoning as the Pick Card below.
+- **Your turn:** the state that matters. Background rises to the same muted team-color wash as the Pick Card (`--team-a/-b/-deep`, both driven by `appliquerIdentiteBanniere()` in `draftActif.js` from the same `resolveDrafterClub`/`teamColors.js` source as `draftPickCards.js`), with a dark top vignette and fixed white text, brick border, and `turnPulse`. Text stays white on purpose: team hues here are pre-muted toward a dark base specifically so a fixed light label always holds contrast, the same reasoning as the Pick Card below.
 - **Done:** solid `goal-green` wash, no team color — the repêchage is over, identity no longer matters.
 - **Unbranded fallback (`.is-unbranded`):** a repêchage begun before the "choose your club" feature existed can reach *your turn* with no identity resolved. The background already fell through to plain site tokens (`--card`/`--bg-gray-light`/`--bg`) rather than a hardcoded color — but until this pass, the text stayed the fixed white built for the team-color state, which went invisible once those tokens turned pale in light theme. `.is-unbranded` now pins text to `--text-main` and the border to `--border-light` instead, so the fallback genuinely follows the theme rather than half-following it. Applied by both `appliquerIdentiteBanniere()` and `buildPickCard()` whenever no club resolves — see the identical fallback on Pick Card below.
-- **The header frame (`.draft-header.is-my-turn`):** the sticky shell around the banner, progress bar, and pick strip — visible the entire time a visitor is scrolling the player list, since `.draft-header` stays pinned under the navbar. It now carries its own held glow (full `outline` ring rather than the old border-bottom-only filet, top-down cyan wash, a soft shadow cast onto the content scrolling beneath it) declared as static properties, not only inside keyframes, so the frame reads as "live" even under `prefers-reduced-motion`, which strips its animation. `outline` rather than a four-sided `border` deliberately: it paints without reserving box-model space, so it never needed the same "always-present-but-transparent" trick `border-bottom` uses above it. On top of that static hold, a one-shot `headerPowerOn` flash marks the instant the turn arrives — brightness, ring, and shadow all spike together with a felt `scale(1.012)` pop (transform only, no layout cost) — handing off at 0.8s to an ambient `headerTurnGlow` breathing loop timed to the same 2s period as the banner's own `turnPulse` — both classes are set in the same `refreshTurnAlert()` call, so the header and the banner breathe in phase instead of drifting against each other.
+- **The header frame (`.draft-header.is-my-turn`):** the sticky shell around the banner, progress bar, and pick strip — visible the entire time a visitor is scrolling the player list, since `.draft-header` stays pinned under the navbar. It now carries its own held glow (full `outline` ring rather than the old border-bottom-only filet, top-down brick wash, a soft shadow cast onto the content scrolling beneath it) declared as static properties, not only inside keyframes, so the frame reads as "live" even under `prefers-reduced-motion`, which strips its animation. `outline` rather than a four-sided `border` deliberately: it paints without reserving box-model space, so it never needed the same "always-present-but-transparent" trick `border-bottom` uses above it. On top of that static hold, a one-shot `headerPowerOn` flash marks the instant the turn arrives — brightness, ring, and shadow all spike together with a felt `scale(1.012)` pop (transform only, no layout cost) — handing off at 0.8s to an ambient `headerTurnGlow` breathing loop timed to the same 2s period as the banner's own `turnPulse` — both classes are set in the same `refreshTurnAlert()` call, so the header and the banner breathe in phase instead of drifting against each other.
 
 ### Pick Card (signature)
 The draft room's identity object, and the only place club chroma enters the layout.
@@ -356,7 +358,7 @@ Every pool team chooses one real NHL club as its identity before the draft opens
 
 - A card carrying a 3px bottom rule in `--team-accent`, the club's *secondary* color — chosen so two clubs sharing a navy still separate at a glance.
 - **Upcoming / skipped:** the owning team's identity already colors the card and watermarks its center — known before any player is picked. `opacity: .8` (skipped: `.5`) keeps completed picks dominant in the strip; a repêchage begun before this feature existed falls back to neutral gray, then to the drafted player's own club once a pick lands.
-- **Current:** `--team-accent` becomes cyan and stays cyan regardless of the team's own identity color — the live signal is never negotiable (One Live Signal Rule). The border lifts to `rgba(0,212,255,.5)` and `turnPulse` runs a 2.4s expanding ring for everyone watching. The team whose turn it actually is sees more: `.is-my-turn` scales the card, adds a two-layer glow, and drops an "À vous" badge — the difference between "someone is picking" and "it's me."
+- **Current:** `--team-accent` becomes brick and stays brick regardless of the team's own identity color — the live signal is never negotiable (One Live Signal Rule). The border lifts to `rgba(var(--primary-rgb),.5)` and `turnPulse` runs a 2.4s expanding ring for everyone watching. The team whose turn it actually is sees more: `.is-my-turn` scales the card, adds a two-layer glow, and drops an "À vous" badge — the difference between "someone is picking" and "it's me."
 - **Revealing:** a ~1150ms sequence where the card arrives desaturated, color rises, then the name lands — animating only `opacity`, `transform`, and `filter`, with `will-change` set only for the duration and only one card at a time.
 - **No identity resolved (`.is-unbranded`):** the same legacy-draft fallback as the Turn Banner above. Text pins to `--text-main` and the border to `--border-light` so a card with no team color still reads correctly against whichever theme is active; the always-dark footer bar (`.pick-card-owner`/`.pick-card-meta`) is unaffected either way, since it never depended on the card's own background.
 
@@ -381,8 +383,8 @@ Every pool team chooses one real NHL club as its identity before the draft opens
 - **Don't** use overshoot or bounce easing (`cubic-bezier(0.68,-0.55,0.265,1.55)` and relatives) on ordinary state transitions. **Exception:** genuine celebration/success moments — the draft pick reveal, the trade-sent success check ([trade.css:272](trade.css#L272)) — may use `cubic-bezier(.34,1.56,.64,1)`. A dropdown is not a celebration, and neither is a confirmation dialog: [trade.css:1594](trade.css#L1594)'s `.trade-confirm-box` used the same bounce on its entrance and was moved to the standard ease.
 - **Don't** apply colored glow to elements at rest. Glow is live/focus state; elevation is neutral shadow.
 - **Don't** add a decorative colored border on one side of a card ([accueil.css:293](accueil.css#L293), [pool.css:842](pool.css#L842)). The table row's 3px stripe is exempt: it appears only on hover/focus and signals that the row is actionable — that is an affordance, not ornament.
-- **Don't** introduce a second accent hue. If something needs to stand out and cyan is taken, the answer is hierarchy, weight, or space.
-- **Don't** put white text on `rink-ice-cyan`. Cyan fills take `arena-black` text.
+- **Don't** introduce a second accent hue. If something needs to stand out and brick is taken, the answer is hierarchy, weight, or space.
+- **Don't** put white text on `editorial-brick`. Brick fills take `arena-black` text — `color: var(--bg)`, which inverts with the theme.
 - **Don't** name a token for what it looks like in one theme. `--card-white` currently resolves to `#26262B`, a dark gray; new tokens are named by role.
 - **Don't** ship a phone layout that ignores the fixed bottom navigation's 80px reservation.
 - **Don't** treat the Dense UI Micro tier (~0.5–0.58rem) as settled. A live-rendered pass measured position-abbreviation and initials text there at 8.96–10.56px, under the 11px legibility floor that caught and fixed the old Meta step. Unlike Meta, Micro's uses (three-letter position badges, player initials) sit in tight fixed-size containers — raising them needs a per-component check, not a blanket find-replace.

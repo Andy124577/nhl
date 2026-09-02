@@ -16,12 +16,53 @@ body.fz-draft {
   --fzd-border-strong: #cdcac3;
   --fzd-border-soft: #eae7e0;
   --fzd-border-input: #d6d3cc;
-  --fzd-accent: #c4442e;
-  --fzd-accent-dark: #a8371f;
+  --fzd-accent: #b93d28;
+  --fzd-accent-dark: #8f2e1a;
   --fzd-accent-wash: #f7e6e2;
+  --fzd-accent-border: #eabdb2;
+  /* Aplat de la brique. --fzd-accent s'éclaircit en thème sombre pour rester
+     lisible EN TEXTE ; le fond plein, lui, ne bouge pas — c'est sur lui que
+     le blanc garde ses 5,58:1. Deux rôles, deux jetons. */
+  --fzd-accent-fill: #b93d28;
+  --fzd-on-accent: #ffffff;
   --fzd-tile-bg: #e6e3db;
+  /* Pastille de logo : les écussons de la LNH sont dessinés pour un fond
+     clair et se noieraient sur une surface sombre. Ce jeton ne bascule pas —
+     c'est le seul blanc volontairement fixe des deux thèmes. */
+  --fzd-logo-bg: #ffffff;
   --fzd-warning: #b8860b;
-  --fzd-danger: #c4442e;
+  --fzd-warning-bg: #f4e9d8;
+  --fzd-warning-border: #e3c98b;
+  --fzd-warning-text: #8a6a17;
+  --fzd-danger: #b93d28;
+
+  /* --fzd-ink portait deux rôles en thème clair : le texte le plus appuyé ET
+     l'aplat des boutons primaires / onglets actifs / bandeau de tour. Les
+     deux s'inversent en thème sombre (le texte s'éclaircit, l'aplat doit
+     rester contrasté avec son libellé) : ils sont séparés ici. */
+  --fzd-solid: #16181a;
+  --fzd-solid-soft: #3d3a35;
+  --fzd-solid-hover: #000000;
+  --fzd-on-solid: #ffffff;
+  --fzd-on-solid-muted: #c9c5bd;
+  --fzd-on-solid-faint: #8a877f;
+  --fzd-on-solid-border: #4b4f53;
+
+  /* Onglets de panneau : la piste, son survol et son libellé au repos. */
+  --fzd-tab-track: #e7e4dd;
+  --fzd-tab-hover: #dedbd3;
+  --fzd-tab-text: #5e5b55;
+
+  /* Vue Glace. La patinoire est une surface à part — de la glace, pas une
+     carte — mais elle s'assombrit avec le reste : sinon c'est le seul
+     rectangle blanc de la page en thème sombre. */
+  --fzd-ice-top: #e6f0f6;
+  --fzd-ice-bottom: #c9dbe7;
+  --fzd-ice-line: #4a90c4;
+  --fzd-ice-crease: rgba(120, 180, 220, .3);
+  --fzd-ice-dash: #7d9fb4;
+  --fzd-ice-label: #4b6478;
+  --fzd-ice-empty: rgba(255, 255, 255, .6);
 
   margin: 0;
   min-height: 100vh;
@@ -31,6 +72,73 @@ body.fz-draft {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
+/* ============================================================ */
+/* THÈME SOMBRE — remappage des jetons éditoriaux                */
+/* ------------------------------------------------------------ */
+/* La palette ci-dessus est du papier, posée en dur et sans      */
+/* contrepartie : la page restait blanche même sous              */
+/* data-theme="dark", alors que theme.js démarre en sombre par   */
+/* défaut. Rien d'autre ne change ici — mêmes rôles, mêmes noms, */
+/* mêmes règles en aval ; seules les VALEURS basculent, ce qui   */
+/* est exactement la raison d'être des jetons.                   */
+/*                                                               */
+/* La brique reste la brique là où elle sert d'APLAT             */
+/* (--*-accent-fill, blanc dessus à 5,58:1) ; là où elle sert de */
+/* TEXTE (--*-accent) elle s'éclaircit à #e8795e pour tenir      */
+/* 5,8:1 sur la carte sombre — 2,8:1 sinon, illisible.           */
+/* ============================================================ */
+html[data-theme="dark"] body.fz-draft {
+  --fzd-bg: #1a1a1e;
+  --fzd-bg-alt: #202025;
+  --fzd-bg-page: #131316;
+  --fzd-surface: #1e1e22;
+  --fzd-ink: #f5f5f2;
+  --fzd-ink-soft: #d5d2cb;
+  --fzd-text: #c9c6c0;
+  --fzd-text-muted: #a3a099;
+  --fzd-text-faint: #8a877f;
+  --fzd-text-fainter: #6e6b65;
+  --fzd-border: #2e2e33;
+  --fzd-border-strong: #3c3c43;
+  --fzd-border-soft: #27272c;
+  --fzd-border-input: #3a3a41;
+  --fzd-accent: #e8795e;
+  --fzd-accent-dark: #f19b85;
+  --fzd-accent-wash: #351d17;
+  --fzd-accent-border: #5a3227;
+  --fzd-tile-bg: #2a2a2f;
+  --fzd-warning: #dfb352;
+  --fzd-warning-bg: #33280f;
+  --fzd-warning-border: #5c4a1c;
+  --fzd-warning-text: #dfb352;
+  --fzd-danger: #e8795e;
+
+  /* L'aplat plein s'inverse avec le fond : clair sur sombre, comme il était
+     sombre sur clair. Son libellé suit dans la même bascule. */
+  --fzd-solid: #f0eee9;
+  --fzd-solid-soft: #d8d5ce;
+  --fzd-solid-hover: #ffffff;
+  --fzd-on-solid: #16181a;
+  --fzd-on-solid-muted: #4b4843;
+  --fzd-on-solid-faint: #6d6a64;
+  --fzd-on-solid-border: #b3b0a9;
+
+  --fzd-tab-track: #26262b;
+  --fzd-tab-hover: #303036;
+  --fzd-tab-text: #a3a099;
+
+  /* La glace s'assombrit mais garde sa teinte : c'est encore de la glace,
+     pas une carte de plus. Les tracés bleus gagnent en luminosité pour
+     rester visibles dessus. */
+  --fzd-ice-top: #1e2a33;
+  --fzd-ice-bottom: #16202a;
+  --fzd-ice-line: #4a7ea8;
+  --fzd-ice-crease: rgba(74, 126, 168, .28);
+  --fzd-ice-dash: #4d6b81;
+  --fzd-ice-label: #9db8cc;
+  --fzd-ice-empty: rgba(255, 255, 255, .07);
+}
+
 body.fz-draft * { box-sizing: border-box; }
 body.fz-draft a { color: var(--fzd-accent); text-decoration: none; }
 body.fz-draft a:hover { color: var(--fzd-accent-dark); }
@@ -149,7 +257,7 @@ body.fz-draft .turn-banner:not(.waiting):not(.your-turn):not(.done) { display: n
 
 body.fz-draft .turn-banner-logo {
   width: 30px; height: 30px;
-  background: #fff;
+  background: var(--fzd-logo-bg);
   border: 1px solid var(--fzd-border-strong);
 }
 body.fz-draft .turn-banner-logo[hidden] { display: none; }
@@ -193,8 +301,8 @@ body.fz-draft .turn-banner.your-turn {
   align-items: center;
   gap: 10px;
   padding: 12px 20px;
-  background: var(--fzd-ink);
-  color: #fff;
+  background: var(--fzd-solid);
+  color: var(--fzd-on-solid);
 }
 
 
@@ -230,13 +338,13 @@ body.fz-draft .turn-banner.your-turn .turn-banner-body::before {
 }
 body.fz-draft .turn-banner.your-turn .turn-banner-body::before {
   content: 'À vous';
-  background: var(--fzd-accent);
-  color: #fff;
+  background: var(--fzd-accent-fill);
+  color: var(--fzd-on-accent);
 }
 body.fz-draft .turn-banner.waiting .turn-banner-body::before {
   content: 'En attente';
-  border: 1px solid #4b4f53;
-  color: #c9c5bd;
+  border: 1px solid var(--fzd-on-solid-border);
+  color: var(--fzd-on-solid-muted);
   padding: 4px 7px;
 }
 body.fz-draft .turn-banner.waiting .turn-banner-text,
@@ -316,7 +424,7 @@ body.fz-draft .turn-banner-metric-num {
   line-height: 1;
   font-weight: 600;
   letter-spacing: -.02em;
-  color: #fff;
+  color: var(--fzd-on-solid);
   font-variant-numeric: tabular-nums;
 }
 body.fz-draft .turn-banner-metric-label { display: none; }
@@ -332,8 +440,8 @@ body.fz-draft .turn-banner-cta {
   padding: 8px 14px;
   text-align: center;
   border-radius: 8px;
-  background: var(--fzd-accent);
-  color: #fff;
+  background: var(--fzd-accent-fill);
+  color: var(--fzd-on-accent);
   font-family: 'Helvetica Neue', Helvetica, sans-serif;
   font-size: .72rem;
   font-weight: 600;
@@ -385,13 +493,13 @@ body.fz-draft .conn-chip {
   letter-spacing: .05em;
   padding: 4px 10px;
 }
-body.fz-draft .conn-chip.is-reconnecting { background: #f4e9d8; border-color: #e3c98b; color: #8a6a17; }
-body.fz-draft .conn-chip.is-offline { background: var(--fzd-accent-wash); border-color: #eabdb2; color: var(--fzd-accent-dark); }
+body.fz-draft .conn-chip.is-reconnecting { background: var(--fzd-warning-bg); border-color: var(--fzd-warning-border); color: var(--fzd-warning-text); }
+body.fz-draft .conn-chip.is-offline { background: var(--fzd-accent-wash); border-color: var(--fzd-accent-border); color: var(--fzd-accent-dark); }
 
 body.fz-draft .turn-skip-btn {
   min-height: 36px;
   padding: 7px 14px;
-  background: #fff;
+  background: var(--fzd-surface);
   border: 1px solid var(--fzd-border-input);
   border-radius: 8px;
   color: var(--fzd-ink);
@@ -445,19 +553,19 @@ body.fz-draft .pick-card.is-done {
 body.fz-draft .pick-card.is-upcoming { background: var(--fzd-surface); border-color: var(--fzd-border); }
 body.fz-draft .pick-card.is-skipped { opacity: .55; }
 body.fz-draft .pick-card.is-current {
-  background: var(--fzd-ink);
-  border-color: var(--fzd-ink);
-  color: #fff;
+  background: var(--fzd-solid);
+  border-color: var(--fzd-solid);
+  color: var(--fzd-on-solid);
   animation: none;
 }
-body.fz-draft .pick-card.is-current .pick-card-name { color: #fff; }
-body.fz-draft .pick-card.is-current .pick-card-slot { color: #fff; opacity: .6; }
+body.fz-draft .pick-card.is-current .pick-card-name { color: var(--fzd-on-solid); }
+body.fz-draft .pick-card.is-current .pick-card-slot { color: var(--fzd-on-solid); opacity: .6; }
 body.fz-draft .pick-card.is-current::after {
   content: '';
   position: absolute;
   left: 0; right: 0; bottom: 0;
   height: 3px;
-  background: var(--fzd-accent);
+  background: var(--fzd-accent-fill);
 }
 
 
@@ -481,7 +589,7 @@ body.fz-draft .pick-card-turn-num {
 }
 body.fz-draft .pick-card-turn-round { font-size: .6rem; color: var(--fzd-text-fainter); }
 body.fz-draft .pick-card.is-current .pick-card-turn-num,
-body.fz-draft .pick-card.is-current .pick-card-turn-round { color: #8a877f; }
+body.fz-draft .pick-card.is-current .pick-card-turn-round { color: var(--fzd-on-solid-faint); }
 body.fz-draft .pick-card.is-my-turn .pick-card-turn-num {
   color: var(--fzd-accent);
   font-weight: 700;
@@ -597,8 +705,8 @@ body.fz-draft .pick-card-select-btn {
   min-height: 0;
   margin: 0;
   padding: 0;
-  background: var(--fzd-accent);
-  color: #fff;
+  background: var(--fzd-accent-fill);
+  color: var(--fzd-on-accent);
   border-radius: 50%;
   font-size: 1rem;
   font-weight: 700;
@@ -610,7 +718,7 @@ body.fz-draft .pick-card-select-btn {
 }
 body.fz-draft .pick-card-select-btn:hover { background: var(--fzd-accent-dark); transform: none; }
 body.fz-draft .pick-card-initials { color: var(--fzd-text-muted); }
-body.fz-draft .pick-card-logo-chip { background: #fff; border: 1px solid var(--fzd-border); }
+body.fz-draft .pick-card-logo-chip { background: var(--fzd-logo-bg); border: 1px solid var(--fzd-border); }
 body.fz-draft .pick-card-club .pick-card-abbr { color: var(--fzd-text-muted); }
 
 
@@ -644,7 +752,7 @@ body.fz-draft .panel-tabs {
   border-radius: 12px;
   
 
-  background: #e7e4dd;
+  background: var(--fzd-tab-track);
 }
 body.fz-draft .panel-tab {
   height: 44px;
@@ -657,7 +765,7 @@ body.fz-draft .panel-tab {
   border-radius: 9px;
   box-shadow: none;
   
-  color: #5e5b55;
+  color: var(--fzd-tab-text);
   font-family: 'Helvetica Neue', Helvetica, sans-serif;
   font-size: .75rem;
   font-weight: 600;
@@ -666,14 +774,14 @@ body.fz-draft .panel-tab {
   cursor: pointer;
   transition: background .15s ease, color .15s ease;
 }
-body.fz-draft .panel-tab:hover { background: #dedbd3; color: var(--fzd-ink); }
+body.fz-draft .panel-tab:hover { background: var(--fzd-tab-hover); color: var(--fzd-ink); }
 body.fz-draft .panel-tab.is-active {
-  background: var(--fzd-ink);
-  color: #fff;
+  background: var(--fzd-solid);
+  color: var(--fzd-on-solid);
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
 }
-body.fz-draft .panel-tab.is-active:hover { background: var(--fzd-ink); }
+body.fz-draft .panel-tab.is-active:hover { background: var(--fzd-solid); }
 body.fz-draft .panel-tab:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(196, 68, 46, .35); }
 
 
@@ -734,15 +842,15 @@ body.fz-draft .progress-mini-bar { background: none; position: relative; overflo
 body.fz-draft .progress-mini-fill { visibility: hidden; }
 body.fz-draft .fzd-segments { position: absolute; inset: 0; display: flex; gap: 3px; }
 body.fz-draft .fzd-segment { flex: 1; border-radius: 2px; background: var(--fzd-border-soft); }
-body.fz-draft .fzd-segment.is-filled { background: var(--fzd-ink); }
+body.fz-draft .fzd-segment.is-filled { background: var(--fzd-solid); }
 
 
 body.fz-draft .progress-line.is-needed-line .progress-text { color: var(--fzd-accent); }
 body.fz-draft .fzd-segments.is-needed .fzd-segment:not(.is-filled) {
   background: var(--fzd-accent-wash);
-  border: 1px solid #e3b3a9;
+  border: 1px solid var(--fzd-accent-border);
 }
-body.fz-draft .fzd-segments.is-needed .fzd-segment.is-filled { background: var(--fzd-accent); }
+body.fz-draft .fzd-segments.is-needed .fzd-segment.is-filled { background: var(--fzd-accent-fill); }
 body.fz-draft .progress-value { color: var(--fzd-text-muted); font-weight: 600; }
 body.fz-draft .progress-value.complete { color: var(--fzd-accent); }
 body.fz-draft .progress-value.in-progress { color: var(--fzd-warning); }
@@ -786,7 +894,7 @@ body.fz-draft .progress-view-chip {
   transition: background .15s ease, color .15s ease;
 }
 body.fz-draft .progress-view-chip:hover { background: var(--fzd-bg-alt); color: var(--fzd-ink); }
-body.fz-draft .progress-view-chip.is-active { background: var(--fzd-ink); color: #fff; }
+body.fz-draft .progress-view-chip.is-active { background: var(--fzd-solid); color: var(--fzd-on-solid); }
 
 /* ---- Vue Glace : patinoire + réserve ---- */
 body.fz-draft .progress-rink {
@@ -795,13 +903,13 @@ body.fz-draft .progress-rink {
   aspect-ratio: 350 / 318;
   border-radius: 12px;
   overflow: hidden;
-  background: linear-gradient(180deg, #e6f0f6, #c9dbe7);
+  background: linear-gradient(180deg, var(--fzd-ice-top), var(--fzd-ice-bottom));
   margin-bottom: 16px;
 }
 body.fz-draft .rink-line { position: absolute; left: 0; right: 0; }
-body.fz-draft .rink-line--center { top: 25%; height: 2px; background: var(--fzd-accent); opacity: .45; }
-body.fz-draft .rink-line--blue { top: 63%; height: 3px; background: #4a90c4; opacity: .55; }
-body.fz-draft .rink-line--goal { top: 89%; height: 2px; background: var(--fzd-accent); opacity: .5; }
+body.fz-draft .rink-line--center { top: 25%; height: 2px; background: var(--fzd-accent-fill); opacity: .45; }
+body.fz-draft .rink-line--blue { top: 63%; height: 3px; background: var(--fzd-ice-line); opacity: .55; }
+body.fz-draft .rink-line--goal { top: 89%; height: 2px; background: var(--fzd-accent-fill); opacity: .5; }
 body.fz-draft .rink-circle {
   position: absolute; left: 50%; top: 25%;
   width: 42%; aspect-ratio: 1;
@@ -814,7 +922,7 @@ body.fz-draft .rink-dot {
   position: absolute; left: 50%; top: 25%;
   width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px;
   border-radius: 999px;
-  background: var(--fzd-accent);
+  background: var(--fzd-accent-fill);
   opacity: .6;
 }
 body.fz-draft .rink-crease {
@@ -824,7 +932,7 @@ body.fz-draft .rink-crease {
   border: 1.5px solid var(--fzd-accent);
   border-bottom: none;
   border-radius: 999px 999px 0 0;
-  background: rgba(120, 180, 220, .3);
+  background: var(--fzd-ice-crease);
   opacity: .7;
 }
 body.fz-draft .rink-slots { position: absolute; inset: 0; }
@@ -835,24 +943,24 @@ body.fz-draft .fzd-tile {
   align-items: center;
   gap: 4px;
   border-radius: 8px;
-  background: var(--fzd-ink);
+  background: var(--fzd-solid);
   text-align: center;
 }
 body.fz-draft .fzd-tile.is-empty {
-  background: rgba(255, 255, 255, .6);
-  border: 1px dashed #7d9fb4;
+  background: var(--fzd-ice-empty);
+  border: 1px dashed var(--fzd-ice-dash);
 }
 body.fz-draft .fzd-tile-box {
   width: 20px; height: 20px;
   border-radius: 4px;
-  background: var(--fzd-ink-soft);
+  background: var(--fzd-solid-soft);
   overflow: hidden;
 }
-body.fz-draft .fzd-tile.is-empty .fzd-tile-box { background: none; border: 1px dashed #7d9fb4; }
+body.fz-draft .fzd-tile.is-empty .fzd-tile-box { background: none; border: 1px dashed var(--fzd-ice-dash); }
 body.fz-draft .fzd-tile-box img { width: 100%; height: 100%; object-fit: contain; }
 body.fz-draft .fzd-tile-name {
   font: 600 .62rem/1.2 'Helvetica Neue', Helvetica, sans-serif;
-  color: #fff;
+  color: var(--fzd-on-solid);
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -860,14 +968,14 @@ body.fz-draft .fzd-tile-name {
 }
 body.fz-draft .fzd-tile-label {
   font: 500 .6rem/1.2 'Helvetica Neue', Helvetica, sans-serif;
-  color: #4b6478;
+  color: var(--fzd-ice-label);
 }
 body.fz-draft .fzd-tile-code {
   font: 500 .56rem/1 'Helvetica Neue', Helvetica, sans-serif;
   letter-spacing: .07em;
-  color: #c9c5bd;
+  color: var(--fzd-on-solid-muted);
 }
-body.fz-draft .fzd-tile.is-empty .fzd-tile-code { color: #4b6478; }
+body.fz-draft .fzd-tile.is-empty .fzd-tile-code { color: var(--fzd-ice-label); }
 
 body.fz-draft .fzd-tile--rink {
   position: absolute;
@@ -907,8 +1015,8 @@ body.fz-draft .favorites-count {
   min-width: 20px; height: 20px;
   padding: 0 6px;
   border-radius: 999px;
-  background: var(--fzd-ink);
-  color: #fff;
+  background: var(--fzd-solid);
+  color: var(--fzd-on-solid);
   font-size: .68rem;
   font-weight: 700;
   align-items: center;
@@ -1039,8 +1147,8 @@ body.fz-draft .list-filter-position {
 body.fz-draft .list-filter-position:hover:not(:disabled) { background: var(--fzd-bg-alt); }
 body.fz-draft .list-filter-position .list-filter-count { color: var(--fzd-text-fainter); font-weight: 400; font-size: .78rem; }
 body.fz-draft .list-filter-position.is-active {
-  background: var(--fzd-ink);
-  color: #fff;
+  background: var(--fzd-solid);
+  color: var(--fzd-on-solid);
   font-weight: 600;
 }
 body.fz-draft .list-filter-position.is-active .list-filter-count { color: rgba(255, 255, 255, .65); font-weight: 600; }
@@ -1185,9 +1293,9 @@ body.fz-draft .category-tab:hover:not(:disabled) {
 }
 body.fz-draft .category-tab.is-active,
 body.fz-draft .category-tab.is-active:hover {
-  background: var(--fzd-ink);
-  border-color: var(--fzd-ink);
-  color: #fff;
+  background: var(--fzd-solid);
+  border-color: var(--fzd-solid);
+  color: var(--fzd-on-solid);
   font-weight: 600;
 }
 body.fz-draft .category-tab.is-unavailable,
@@ -1216,9 +1324,9 @@ body.fz-draft .sort-tab {
 }
 body.fz-draft .sort-tab:hover { border-color: var(--fzd-ink); }
 body.fz-draft .sort-tab.is-active {
-  background: var(--fzd-ink);
-  border-color: var(--fzd-ink);
-  color: #fff;
+  background: var(--fzd-solid);
+  border-color: var(--fzd-solid);
+  color: var(--fzd-on-solid);
   font-weight: 600;
 }
 
@@ -1243,7 +1351,7 @@ body.fz-draft .availability-tab {
 }
 body.fz-draft .availability-tab + .availability-tab { border-left: 1px solid var(--fzd-border-input); }
 body.fz-draft .availability-tab:hover { background: var(--fzd-bg-alt); }
-body.fz-draft .availability-tab.is-active { background: var(--fzd-ink); color: #fff; }
+body.fz-draft .availability-tab.is-active { background: var(--fzd-solid); color: var(--fzd-on-solid); }
 
 body.fz-draft .search-field {
   display: flex;
@@ -1363,9 +1471,9 @@ body.fz-draft #fzPickedList td.points-column {
 }
 body.fz-draft .fzd-status-cell { white-space: normal; }
 body.fz-draft #fzPickedListWrapper .player-photo { width: 32px; height: 32px; border-radius: 6px; background: var(--fzd-tile-bg); }
-body.fz-draft #fzPickedListWrapper .player-photo .logo { border: 1px solid var(--fzd-border); background: #fff; }
+body.fz-draft #fzPickedListWrapper .player-photo .logo { border: 1px solid var(--fzd-border); background: var(--fzd-logo-bg); }
 body.fz-draft .player-photo { width: 32px; height: 32px; border-radius: 6px; background: var(--fzd-tile-bg); }
-body.fz-draft .player-photo .logo { border: 1px solid var(--fzd-border); background: #fff; }
+body.fz-draft .player-photo .logo { border: 1px solid var(--fzd-border); background: var(--fzd-logo-bg); }
 
 body.fz-draft button.select-button {
   min-height: 34px;
@@ -1379,7 +1487,7 @@ body.fz-draft button.select-button {
   letter-spacing: .05em;
   text-transform: uppercase;
 }
-body.fz-draft button.select-button:hover { background: var(--fzd-ink); color: #fff; }
+body.fz-draft button.select-button:hover { background: var(--fzd-solid); color: var(--fzd-on-solid); }
 body.fz-draft button.select-button .select-icon { display: none; }
 body.fz-draft button.select-button::after { content: 'Choisir'; }
 body.fz-draft button.select-button.is-connection-blocked { opacity: .4; filter: none; }
@@ -1469,8 +1577,8 @@ body.fz-draft .pick-confirm-box {
 body.fz-draft .custom-alert-message { color: var(--fzd-ink-soft); }
 body.fz-draft .custom-alert-button,
 body.fz-draft .pick-confirm-btn.is-primary {
-  background: var(--fzd-accent);
-  color: #fff;
+  background: var(--fzd-accent-fill);
+  color: var(--fzd-on-accent);
   border-radius: 9px;
   font-weight: 600;
 }
@@ -1488,7 +1596,7 @@ body.fz-draft .pick-confirm-name { color: var(--fzd-ink); font-weight: 700; }
 body.fz-draft .pick-confirm-meta { color: var(--fzd-text-faint); }
 body.fz-draft .pick-confirm-note { color: var(--fzd-text-muted); }
 body.fz-draft .pick-confirm-photo { background: var(--fzd-tile-bg); }
-body.fz-draft .pick-confirm-logo { background: #fff; border: 1px solid var(--fzd-border); }
+body.fz-draft .pick-confirm-logo { background: var(--fzd-logo-bg); border: 1px solid var(--fzd-border); }
 
 body.fz-draft .admin-dropdown-menu {
   background: var(--fzd-surface);
@@ -1501,11 +1609,11 @@ body.fz-draft .admin-dropdown-toggle:hover { border-color: var(--fzd-ink); color
 body.fz-draft .custom-alert-icon.info { color: var(--fzd-ink); }
 
 body.fz-draft .finish-btn {
-  background: var(--fzd-ink);
-  color: #fff;
+  background: var(--fzd-solid);
+  color: var(--fzd-on-solid);
   box-shadow: 0 8px 22px rgba(0, 0, 0, .22);
 }
-body.fz-draft .finish-btn:hover { background: #000; }
+body.fz-draft .finish-btn:hover { background: var(--fzd-solid-hover); }
 
 
 
@@ -1523,15 +1631,15 @@ body.fz-draft .draft-done-cta {
   display: inline-block;
   margin-top: 18px;
   padding: 13px 24px;
-  background: var(--fzd-accent);
-  color: #fff;
+  background: var(--fzd-accent-fill);
+  color: var(--fzd-on-accent);
   border-radius: 10px;
   font-weight: 700;
   letter-spacing: .04em;
   text-transform: uppercase;
   font-size: .78rem;
 }
-body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-dark); color: #fff; }
+body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-dark); color: var(--fzd-on-accent); }
 
 
 

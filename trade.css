@@ -25,13 +25,30 @@ body.fz-trade {
     --fzt-border-strong: #cdcac3;
     --fzt-border-soft: #eae7e0;
     --fzt-border-input: #d6d3cc;
-    --fzt-accent: #c4442e;
-    --fzt-accent-dark: #a8371f;
+    --fzt-accent: #b93d28;
+    --fzt-accent-dark: #8f2e1a;
+    /* Aplat de la brique. --fzt-accent s'éclaircit en thème sombre pour
+       rester lisible EN TEXTE ; le fond plein, lui, ne bouge pas — c'est
+       sur lui que le blanc garde ses 5,58:1. Deux rôles, deux jetons. */
+    --fzt-accent-fill: #b93d28;
+    --fzt-on-accent: #ffffff;
+    /* --fzt-ink porte deux rôles en thème clair : la couleur du texte le
+       plus appuyé ET l'aplat des boutons primaires / onglets actifs. Les
+       deux s'inversent en thème sombre (le texte s'éclaircit, l'aplat aussi,
+       et son libellé fonce avec lui) : ils sont séparés ici. */
+    --fzt-solid: #16181a;
+    --fzt-solid-hover: #000000;
+    --fzt-on-solid: #ffffff;
+    --fzt-surface-alt: #fbfaf8;
+    --fzt-row-hover: #f4f2ed;
+    --fzt-muted-fill: #ece9e2;
     --fzt-success-bg: #e8efe6;
     --fzt-success-text: #3f6b39;
     --fzt-success-border: #c9d9c4;
     --fzt-warning-bg: #f3e6c8;
     --fzt-warning-text: #8a6a1f;
+    --fzt-danger-bg: #f7e6e2;
+    --fzt-danger-border: #e3bdb2;
 
     margin: 0;
     min-height: 100vh;
@@ -41,6 +58,53 @@ body.fz-trade {
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
 }
+/* ============================================================ */
+/* THÈME SOMBRE — remappage des jetons éditoriaux                */
+/* ------------------------------------------------------------ */
+/* La palette ci-dessus est du papier : elle était posée en dur,  */
+/* sans contrepartie, donc la page restait blanche même avec      */
+/* data-theme="dark" — le seul écran du site à ne pas suivre le   */
+/* commutateur. Rien d'autre ne change ici : mêmes rôles, mêmes   */
+/* noms, mêmes règles en aval. Seules les VALEURS basculent, ce   */
+/* qui est exactement la raison d'être des jetons.                */
+/*                                                                */
+/* La brique reste la brique (--fzt-accent-fill) là où elle sert  */
+/* d'aplat ; --fzt-accent, qui sert de TEXTE, s'éclaircit à       */
+/* #e8795e pour tenir 5,8:1 sur la carte sombre (2,8:1 sinon).    */
+/* ============================================================ */
+html[data-theme="dark"] body.fz-trade {
+    --fzt-bg: #1a1a1e;
+    --fzt-bg-alt: #202025;
+    --fzt-bg-page: #131316;
+    --fzt-surface: #1e1e22;
+    --fzt-surface-alt: #232328;
+    --fzt-ink: #f5f5f2;
+    --fzt-text: #c9c6c0;
+    --fzt-text-muted: #a3a099;
+    --fzt-text-faint: #8a877f;
+    --fzt-text-fainter: #6e6b65;
+    --fzt-border: #2e2e33;
+    --fzt-border-strong: #3c3c43;
+    --fzt-border-soft: #27272c;
+    --fzt-border-input: #3a3a41;
+    --fzt-accent: #e8795e;
+    --fzt-accent-dark: #f19b85;
+    --fzt-row-hover: #26262b;
+    --fzt-muted-fill: #26262b;
+    /* L'aplat plein s'inverse avec le fond : clair sur sombre, comme il
+       était sombre sur clair. Son libellé suit (--fzt-on-solid). */
+    --fzt-solid: #f0eee9;
+    --fzt-solid-hover: #ffffff;
+    --fzt-on-solid: #16181a;
+    --fzt-success-bg: #17301f;
+    --fzt-success-text: #7fc08d;
+    --fzt-success-border: #2c4d35;
+    --fzt-warning-bg: #33280f;
+    --fzt-warning-text: #dfb352;
+    --fzt-danger-bg: #351d17;
+    --fzt-danger-border: #5a3227;
+}
+
 body.fz-trade * { box-sizing: border-box; }
 body.fz-trade a { color: var(--fzt-accent); text-decoration: none; }
 body.fz-trade a:hover { color: var(--fzt-accent-dark); }
@@ -139,13 +203,13 @@ body.fz-trade .trade-tab-badge {
     min-width: 16px;
     height: 16px;
     padding: 0 4px;
-    background: var(--fzt-accent);
-    color: #fff;
+    background: var(--fzt-accent-fill);
+    color: var(--fzt-on-accent);
     border-radius: 999px;
     font: 600 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
     line-height: 16px;
 }
-body.fz-trade .trade-tab.active .trade-tab-badge { background: var(--fzt-accent); color: #fff; }
+body.fz-trade .trade-tab.active .trade-tab-badge { background: var(--fzt-accent-fill); color: var(--fzt-on-accent); }
 
 body.fz-trade .trade-section { display: none; }
 body.fz-trade .trade-section.active { display: block; }
@@ -204,7 +268,7 @@ body.fz-trade .tm-team-trigger {
     padding: 8px 10px 8px 14px;
     border: 1px solid var(--fzt-border-input);
     border-radius: 9px;
-    background: #fff;
+    background: var(--fzt-surface);
     box-shadow: 0 1px 2px rgba(0,0,0,.06);
     transition: border-color .15s ease, box-shadow .15s ease;
 }
@@ -228,8 +292,8 @@ body.fz-trade .tm-team-caret {
     width: 22px;
     height: 22px;
     border-radius: 6px;
-    background: var(--fzt-ink);
-    color: #fff;
+    background: var(--fzt-solid);
+    color: var(--fzt-on-solid);
     font-size: 9px;
     flex-shrink: 0;
 }
@@ -244,7 +308,7 @@ body.fz-trade .tm-dropdown-panel {
     width: 320px;
     max-height: 360px;
     overflow-y: auto;
-    background: #fff;
+    background: var(--fzt-surface);
     border: 1px solid var(--fzt-border-strong);
     border-radius: 12px;
     box-shadow: 0 18px 40px rgba(0,0,0,.18);
@@ -265,11 +329,11 @@ body.fz-trade .tm-dropdown-row {
     padding: 11px 14px;
     border-bottom: 1px solid var(--fzt-border-soft);
     cursor: pointer;
-    background: #fff;
+    background: var(--fzt-surface);
 }
 body.fz-trade .tm-dropdown-row:last-child { border-bottom: none; }
-body.fz-trade .tm-dropdown-row:hover:not(.is-self) { background: #f4f2ed; }
-body.fz-trade .tm-dropdown-row.is-current { background: #f4f2ed; }
+body.fz-trade .tm-dropdown-row:hover:not(.is-self) { background: var(--fzt-row-hover); }
+body.fz-trade .tm-dropdown-row.is-current { background: var(--fzt-row-hover); }
 body.fz-trade .tm-dropdown-row.is-self { cursor: not-allowed; opacity: .45; }
 body.fz-trade .tm-dropdown-name { font: 600 13.5px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzt-ink); }
 body.fz-trade .tm-dropdown-meta { font: 400 10.5px/1 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: .05em; text-transform: uppercase; color: var(--fzt-text-faint); }
@@ -315,8 +379,8 @@ body.fz-trade .rc-avatar {
     height: 32px;
     flex-shrink: 0;
     border-radius: 999px;
-    background: var(--fzt-ink);
-    color: #fff;
+    background: var(--fzt-solid);
+    color: var(--fzt-on-solid);
     display: grid;
     place-items: center;
     font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
@@ -352,7 +416,7 @@ body.fz-trade .rc-search {
     padding: 10px 13px;
     border: 1px solid var(--fzt-border-input);
     border-radius: 9px;
-    background: #fff;
+    background: var(--fzt-surface);
     color: var(--fzt-text-fainter);
 }
 body.fz-trade .rc-search svg { flex-shrink: 0; }
@@ -374,7 +438,7 @@ body.fz-trade .rc-forsale-toggle {
     padding: 10px 13px;
     border: 1px solid var(--fzt-border-input);
     border-radius: 9px;
-    background: #fff;
+    background: var(--fzt-surface);
     font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
     letter-spacing: .05em;
     text-transform: uppercase;
@@ -386,11 +450,11 @@ body.fz-trade .rc-forsale-toggle {
 body.fz-trade .rc-forsale-toggle span { color: var(--fzt-accent); }
 body.fz-trade .rc-forsale-toggle:hover { border-color: var(--fzt-ink); }
 body.fz-trade .rc-forsale-toggle.is-active {
-    background: var(--fzt-ink);
-    border-color: var(--fzt-ink);
-    color: #fff;
+    background: var(--fzt-solid);
+    border-color: var(--fzt-solid);
+    color: var(--fzt-on-solid);
 }
-body.fz-trade .rc-forsale-toggle.is-active span { color: #fff; }
+body.fz-trade .rc-forsale-toggle.is-active span { color: var(--fzt-on-solid); }
 body.fz-trade .rc-forsale-toggle.hidden { display: none; }
 
 body.fz-trade .position-tabs {
@@ -421,11 +485,11 @@ body.fz-trade .pos-tab {
 body.fz-trade .pos-tab:last-child { border-right: none; }
 body.fz-trade .pos-tab:hover { background: var(--fzt-bg-alt); }
 body.fz-trade .pos-tab.active {
-    background: var(--fzt-ink);
-    color: #fff;
+    background: var(--fzt-solid);
+    color: var(--fzt-on-solid);
     font-weight: 600;
 }
-body.fz-trade .pos-tab.active:hover { background: var(--fzt-ink); }
+body.fz-trade .pos-tab.active:hover { background: var(--fzt-solid); }
 
 body.fz-trade .roster-list-head {
     display: flex;
@@ -470,15 +534,15 @@ body.fz-trade .player-card-roster {
     border-bottom: 1px solid var(--fzt-border-soft);
     border-left: 3px solid transparent;
     cursor: pointer;
-    background: #fff;
+    background: var(--fzt-surface);
     transition: background .12s ease;
 }
 body.fz-trade .player-card-roster:hover { background: var(--fzt-bg-alt); }
 body.fz-trade .player-card-roster.selected {
     border-left-color: var(--fzt-accent);
-    background: #fff;
+    background: var(--fzt-surface);
 }
-body.fz-trade .player-card-roster.selected:hover { background: #fff; }
+body.fz-trade .player-card-roster.selected:hover { background: var(--fzt-surface); }
 body.fz-trade .player-card-roster.locked {
     opacity: .45;
     cursor: not-allowed;
@@ -489,17 +553,17 @@ body.fz-trade .pcr-check {
     width: 19px;
     height: 19px;
     border-radius: 5px;
-    border: 1px solid #c1bdb5;
-    background: #fff;
+    border: 1px solid var(--fzt-border-strong);
+    background: var(--fzt-surface);
     flex-shrink: 0;
     display: grid;
     place-items: center;
-    color: #fff;
+    color: var(--fzt-on-accent);
     font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
 }
 body.fz-trade .player-card-roster.selected .pcr-check {
-    background: var(--fzt-accent);
-    border-color: var(--fzt-accent);
+    background: var(--fzt-accent-fill);
+    border-color: var(--fzt-accent-fill);
 }
 
 body.fz-trade .pcr-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -618,7 +682,7 @@ body.fz-trade .tb-pair-row {
 body.fz-trade .tb-card {
     border: 1px solid var(--fzt-border-input);
     border-radius: 10px;
-    background: #fff;
+    background: var(--fzt-surface);
     padding: 10px 12px;
     display: flex;
     align-items: flex-start;
@@ -666,15 +730,15 @@ body.fz-trade .tb-pair-swap {
     width: 26px;
     height: 26px;
     border-radius: 999px;
-    background: var(--fzt-ink);
-    color: #fff;
+    background: var(--fzt-solid);
+    color: var(--fzt-on-solid);
     display: grid;
     place-items: center;
     font: 400 11px/1 'Helvetica Neue', Helvetica, sans-serif;
 }
 body.fz-trade .tb-pair-swap.is-ghost {
     background: none;
-    border: 1px dashed #c1bdb5;
+    border: 1px dashed var(--fzt-border-strong);
     color: var(--fzt-text-fainter);
 }
 body.fz-trade .tb-pair-cat {
@@ -686,7 +750,7 @@ body.fz-trade .tb-pair-cat {
 
 body.fz-trade .tb-card.is-ghost {
     border-style: dashed;
-    border-color: #c1bdb5;
+    border-color: var(--fzt-border-strong);
     background: var(--fzt-bg);
     align-items: center;
 }
@@ -711,8 +775,8 @@ body.fz-trade .tb-eq-row {
     border: 1px solid var(--fzt-success-border);
 }
 body.fz-trade .tb-eq-row.is-invalid {
-    background: #f7e6e2;
-    border-color: #e3bdb2;
+    background: var(--fzt-danger-bg);
+    border-color: var(--fzt-danger-border);
 }
 body.fz-trade .tb-eq-check {
     font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
@@ -748,8 +812,8 @@ body.fz-trade .btn-propose-trade {
     padding: 14px;
     border: none;
     border-radius: 10px;
-    background: var(--fzt-ink);
-    color: #fff;
+    background: var(--fzt-solid);
+    color: var(--fzt-on-solid);
     font: 600 12px/1 'Helvetica Neue', Helvetica, sans-serif;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -757,10 +821,10 @@ body.fz-trade .btn-propose-trade {
     box-shadow: none;
     transition: background .15s ease;
 }
-body.fz-trade .btn-propose-trade:hover:not(:disabled) { background: #000; transform: none; box-shadow: none; }
+body.fz-trade .btn-propose-trade:hover:not(:disabled) { background: var(--fzt-solid-hover); transform: none; box-shadow: none; }
 body.fz-trade .btn-propose-trade:disabled {
     background: var(--fzt-border-input);
-    color: #fff;
+    color: var(--fzt-text-faint);
     cursor: not-allowed;
     opacity: 1;
 }
@@ -794,8 +858,8 @@ body.fz-trade .trade-success-check {
     height: 88px;
     margin: 0 auto 22px;
     border-radius: 50%;
-    background: var(--fzt-ink);
-    color: #fff;
+    background: var(--fzt-solid);
+    color: var(--fzt-on-solid);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -829,8 +893,8 @@ body.fz-trade .btn-success-secondary {
     gap: 8px;
     transition: background .15s ease, border-color .15s ease, color .15s ease;
 }
-body.fz-trade .btn-success-primary { background: var(--fzt-ink); border: none; color: #fff; }
-body.fz-trade .btn-success-primary:hover { background: #000; transform: none; box-shadow: none; }
+body.fz-trade .btn-success-primary { background: var(--fzt-solid); border: none; color: var(--fzt-on-solid); }
+body.fz-trade .btn-success-primary:hover { background: var(--fzt-solid-hover); transform: none; box-shadow: none; }
 body.fz-trade .btn-success-secondary { background: none; border: 1px solid var(--fzt-border-input); color: var(--fzt-text-muted); }
 body.fz-trade .btn-success-secondary:hover { border-color: var(--fzt-ink); color: var(--fzt-ink); }
 
@@ -847,7 +911,7 @@ body.fz-trade .received-trades-list {
 body.fz-trade .received-trade-card {
     border: 1px solid var(--fzt-border-input);
     border-radius: 13px;
-    background: #fff;
+    background: var(--fzt-surface);
     overflow: hidden;
     margin: 0;
     transition: none;
@@ -871,15 +935,15 @@ body.fz-trade .trade-card-header {
     gap: 12px;
     padding: 16px 22px;
     border-bottom: 1px solid var(--fzt-border);
-    background: #fbfaf8;
+    background: var(--fzt-surface-alt);
     margin: 0;
 }
 body.fz-trade .trade-card-avatar {
     width: 36px;
     height: 36px;
     border-radius: 999px;
-    background: var(--fzt-ink);
-    color: #fff;
+    background: var(--fzt-solid);
+    color: var(--fzt-on-solid);
     display: grid;
     place-items: center;
     flex-shrink: 0;
@@ -947,8 +1011,8 @@ body.fz-trade .trade-arrow-icon {
     width: 28px;
     height: 28px;
     border-radius: 999px;
-    background: var(--fzt-ink);
-    color: #fff;
+    background: var(--fzt-solid);
+    color: var(--fzt-on-solid);
     display: grid;
     place-items: center;
     font: 400 12px/1 'Helvetica Neue', Helvetica, sans-serif;
@@ -969,8 +1033,8 @@ body.fz-trade .btn-counter-trade {
     text-align: center;
     transition: background .15s ease, border-color .15s ease, color .15s ease;
 }
-body.fz-trade .btn-accept-trade { background: var(--fzt-ink); border: none; color: #fff; box-shadow: none; }
-body.fz-trade .btn-accept-trade:hover { background: #000; transform: none; box-shadow: none; }
+body.fz-trade .btn-accept-trade { background: var(--fzt-solid); border: none; color: var(--fzt-on-solid); box-shadow: none; }
+body.fz-trade .btn-accept-trade:hover { background: var(--fzt-solid-hover); transform: none; box-shadow: none; }
 body.fz-trade .btn-decline-trade,
 body.fz-trade .btn-counter-trade {
     flex: 1;
@@ -1002,7 +1066,7 @@ body.fz-trade .history-cards {
 body.fz-trade .history-card {
     border: 1px solid var(--fzt-border-input);
     border-radius: 10px;
-    background: #fff;
+    background: var(--fzt-surface);
     overflow: hidden;
 }
 body.fz-trade .history-card.is-declined {
@@ -1019,7 +1083,7 @@ body.fz-trade .history-card-head {
     background: var(--fzt-bg-alt);
     border-bottom: 1px solid var(--fzt-border-input);
 }
-body.fz-trade .history-card.is-declined .history-card-head { background: #ece9e2; }
+body.fz-trade .history-card.is-declined .history-card-head { background: var(--fzt-muted-fill); }
 body.fz-trade .history-card-date {
     font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
     letter-spacing: .06em;
@@ -1111,7 +1175,7 @@ body.fz-trade .history-divider-icon {
     width: 26px;
     height: 26px;
     border-radius: 999px;
-    background: #fff;
+    background: var(--fzt-surface);
     border: 1px solid var(--fzt-border-input);
     display: grid;
     place-items: center;
@@ -1146,7 +1210,7 @@ body.fz-trade .trade-confirm-overlay.show { display: flex; }
     to { transform: translateY(0); opacity: 1; }
 }
 body.fz-trade .trade-confirm-box {
-    background: #fff;
+    background: var(--fzt-surface);
     border: 1px solid var(--fzt-border-strong);
     border-radius: 16px;
     padding: 26px 24px;
@@ -1214,8 +1278,8 @@ body.fz-trade .tc-btn {
 }
 body.fz-trade .tc-cancel { background: none; border: 1px solid var(--fzt-border-input); color: var(--fzt-text-muted); }
 body.fz-trade .tc-cancel:hover { border-color: var(--fzt-ink); color: var(--fzt-ink); }
-body.fz-trade .tc-ok { background: var(--fzt-ink); border: none; color: #fff; }
-body.fz-trade .tc-ok:hover { background: #000; transform: none; box-shadow: none; }
+body.fz-trade .tc-ok { background: var(--fzt-solid); border: none; color: var(--fzt-on-solid); }
+body.fz-trade .tc-ok:hover { background: var(--fzt-solid-hover); transform: none; box-shadow: none; }
 
 /* ============================================================ */
 /* MOBILE BOTTOM BAR                                             */
@@ -1226,8 +1290,8 @@ body.fz-trade .loading-spinner {
     display: inline-block;
     width: 13px;
     height: 13px;
-    border: 2px solid rgba(255,255,255,.35);
-    border-top-color: #fff;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
     border-radius: 50%;
     animation: fztSpin .6s linear infinite;
 }
@@ -1244,7 +1308,7 @@ body.fz-trade .trade-notification {
     top: 88px;
     right: -400px;
     max-width: 380px;
-    background: #fff;
+    background: var(--fzt-surface);
     border: 1px solid var(--fzt-border-strong);
     border-radius: 12px;
     padding: 14px 18px;
@@ -1306,7 +1370,7 @@ body.fz-trade .notification-message { color: var(--fzt-ink); font: 500 13px/1.4 
         color: var(--fzt-text);
         font: 600 9px/1 'Helvetica Neue', Helvetica, sans-serif;
     }
-    body.fz-trade .tm-tab.is-active .tm-tab-count { background: var(--fzt-accent); color: #fff; }
+    body.fz-trade .tm-tab.is-active .tm-tab-count { background: var(--fzt-accent-fill); color: var(--fzt-on-accent); }
 
     body.fz-trade .trade-grid-3col { grid-template-columns: 1fr; gap: 0; }
     body.fz-trade .trade-grid-3col > .trade-summary-column { display: none; }
@@ -1333,7 +1397,7 @@ body.fz-trade .notification-message { color: var(--fzt-ink); font: 500 13px/1.4 
         bottom: 80px;
         z-index: 998;
         padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
-        background: #fff;
+        background: var(--fzt-surface);
         border-top: 1px solid var(--fzt-border-input);
         box-shadow: 0 -8px 28px rgba(0,0,0,.14);
     }
@@ -1379,14 +1443,14 @@ body.fz-trade .notification-message { color: var(--fzt-ink); font: 500 13px/1.4 
         border: 0;
         border-radius: 10px;
         background: var(--fzt-border-input);
-        color: #fff;
+        color: var(--fzt-text-faint);
         font: 600 1rem/1 'Helvetica Neue', Helvetica, sans-serif;
         letter-spacing: .06em;
         text-transform: uppercase;
         cursor: not-allowed;
         transition: background .2s ease;
     }
-    body.fz-trade .tm-cta.is-ready { background: var(--fzt-ink); cursor: pointer; }
+    body.fz-trade .tm-cta.is-ready { background: var(--fzt-solid); color: var(--fzt-on-solid); cursor: pointer; }
     body.fz-trade .tm-cta.is-ready:active { transform: scale(.98); }
 
     body.fz-trade .trade-card-players { grid-template-columns: 1fr 32px 1fr; gap: 10px; padding: 14px 16px; }

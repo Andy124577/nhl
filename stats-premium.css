@@ -26,10 +26,22 @@ body.fz-stats {
   --fzs-border-strong: #cdcac3;
   --fzs-border-soft: #eae7e0;
   --fzs-border-input: #d6d3cc;
-  --fzs-accent: #c4442e;
-  --fzs-accent-dark: #a8371f;
+  --fzs-accent: #b93d28;
+  --fzs-accent-dark: #8f2e1a;
   --fzs-accent-wash: #f7e6e2;
   --fzs-tile: #dcd8d0;
+  /* Aplat de la brique. --fzs-accent s'éclaircit en thème sombre pour
+     rester lisible EN TEXTE ; le fond plein, lui, ne bouge pas — c'est sur
+     lui que le blanc garde ses 5,58:1. Deux rôles, deux jetons. */
+  --fzs-accent-fill: #b93d28;
+  --fzs-on-accent: #ffffff;
+  /* Même dédoublement pour --fzs-ink, qui servait à la fois de couleur de
+     texte la plus appuyée et d'aplat plein : les deux s'inversent en thème
+     sombre, mais pas dans le même sens. */
+  --fzs-solid: #16181a;
+  --fzs-on-solid: #ffffff;
+  --fzs-on-solid-muted: #a8a49c;
+
 
   margin: 0;
   min-height: 100vh;
@@ -38,6 +50,44 @@ body.fz-stats {
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+/* ============================================================ */
+/* THÈME SOMBRE — remappage des jetons éditoriaux                */
+/* ------------------------------------------------------------ */
+/* La palette ci-dessus est du papier, posée en dur et sans      */
+/* contrepartie : la page restait blanche même sous              */
+/* data-theme="dark", alors que theme.js démarre en sombre par   */
+/* défaut. Rien d'autre ne change ici — mêmes rôles, mêmes noms, */
+/* mêmes règles en aval ; seules les VALEURS basculent, ce qui   */
+/* est exactement la raison d'être des jetons.                   */
+/*                                                               */
+/* La brique reste la brique là où elle sert d'APLAT             */
+/* (--*-accent-fill, blanc dessus à 5,58:1) ; là où elle sert de */
+/* TEXTE (--*-accent) elle s'éclaircit à #e8795e pour tenir      */
+/* 5,8:1 sur la carte sombre — 2,8:1 sinon, illisible.           */
+/* ============================================================ */
+html[data-theme="dark"] body.fz-stats {
+  --fzs-bg: #1a1a1e;
+  --fzs-bg-alt: #202025;
+  --fzs-bg-page: #131316;
+  --fzs-surface: #1e1e22;
+  --fzs-ink: #f5f5f2;
+  --fzs-text: #c9c6c0;
+  --fzs-text-muted: #a3a099;
+  --fzs-text-faint: #8a877f;
+  --fzs-text-fainter: #6e6b65;
+  --fzs-border: #2e2e33;
+  --fzs-border-strong: #3c3c43;
+  --fzs-border-soft: #27272c;
+  --fzs-border-input: #3a3a41;
+  --fzs-accent: #e8795e;
+  --fzs-accent-dark: #f19b85;
+  --fzs-accent-wash: #351d17;
+  --fzs-tile: #2a2a2f;
+  --fzs-solid: #f0eee9;
+  --fzs-on-solid: #16181a;
+  --fzs-on-solid-muted: #4b4843;
+}
+
 body.fz-stats * { box-sizing: border-box; }
 body.fz-stats a { color: var(--fzs-accent); text-decoration: none; }
 body.fz-stats a:hover { color: var(--fzs-accent-dark); }
@@ -58,7 +108,7 @@ body.fz-stats nav a.active:hover,
 body.fz-stats nav a.is-active:hover { color: var(--primary); }
 
 /* ==================== HERO ==================== */
-/* Les halos néon cyan/violet appartiennent au thème sombre d'origine —
+/* Les halos néon de l'ancien accent appartiennent au thème sombre d'origine —
    ils jurent avec la palette éditoriale, on les retire plutôt que de les
    reteindre. */
 body.fz-stats .stats-hero-spots { display: none; }
@@ -83,8 +133,8 @@ body.fz-stats .stats-subnav-btn {
 }
 body.fz-stats .stats-subnav-btn:hover { color: var(--fzs-ink); }
 body.fz-stats .stats-subnav-btn.active {
-  background: var(--fzs-ink);
-  color: #fff;
+  background: var(--fzs-solid);
+  color: var(--fzs-on-solid);
   box-shadow: none;
 }
 
@@ -147,9 +197,9 @@ body.fz-stats .time-filter {
 }
 body.fz-stats .time-filter:hover { border-color: var(--fzs-ink); color: var(--fzs-ink); }
 body.fz-stats .time-filter.active {
-  background: var(--fzs-ink);
-  border-color: var(--fzs-ink);
-  color: #fff;
+  background: var(--fzs-solid);
+  border-color: var(--fzs-solid);
+  color: var(--fzs-on-solid);
   box-shadow: none;
 }
 
@@ -197,8 +247,8 @@ body.fz-stats .pc-stat-label { color: var(--fzs-text-faint); }
 body.fz-stats .tp-error-title { color: var(--fzs-text-muted); }
 body.fz-stats .tp-error-hint { color: var(--fzs-text-faint); }
 body.fz-stats .tp-error-retry {
-  background: var(--fzs-accent);
-  color: #fff;
+  background: var(--fzs-accent-fill);
+  color: var(--fzs-on-accent);
   box-shadow: none;
 }
 body.fz-stats .tp-error-retry:hover { background: var(--fzs-accent-dark); }
@@ -265,7 +315,7 @@ body.fz-stats tbody tr:hover {
   transform: none;
   box-shadow: none;
 }
-body.fz-stats #playerTable tbody tr.is-clickable::after { background: var(--fzs-accent); }
+body.fz-stats #playerTable tbody tr.is-clickable::after { background: var(--fzs-accent-fill); }
 body.fz-stats #playerTable tbody tr.is-clickable:focus-visible { outline-color: var(--fzs-accent); }
 
 body.fz-stats td { color: var(--fzs-text-muted); }
@@ -294,7 +344,7 @@ body.fz-stats .player-photo img.logo { border-color: var(--fzs-border-input); }
 /* ==================== PAGINATION ==================== */
 body.fz-stats .stats-page-info { color: var(--fzs-text-muted); }
 body.fz-stats .stats-show-more {
-  background: var(--fzs-accent);
+  background: var(--fzs-accent-fill);
   box-shadow: none;
 }
 body.fz-stats .stats-show-more:hover {

@@ -646,16 +646,22 @@ let offseasonLeague = null;
 let offseasonTab = 'trade';
 const OFFSEASON_TABS = ['trade', 'signing', 'injury'];
 
+// Pages du panneau : 6 lignes par page, position mémorisée par onglet pour
+// qu'un aller-retour Échanges → Blessés → Échanges ne renvoie pas au début.
+const OFFSEASON_PAGE_SIZE = 6;
+const offseasonPages = { trade: 0, signing: 0, injury: 0 };
+
 async function loadOffseasonTransactions() {
     const wrap = document.getElementById('fzdOffTransactions');
     if (!wrap) return;
 
-    // limit=80 : le journal complet tient dedans (TRANSACTIONS_KEEP=250 mais
-    // on en a ~80), donc groupTrades voit tout l'échange, pas une moitié
-    // tronquée par la fenêtre — sans quoi « et N autres » deviendrait faux.
+    // On demande tout le journal (TRANSACTIONS_KEEP=250, cap blessés=300) :
+    // le panneau se feuillette page par page, donc chaque onglet doit avoir
+    // sa liste complète en main — et groupTrades voit ainsi tout l'échange,
+    // pas une moitié tronquée par la fenêtre.
     const [tx, inj] = await Promise.all([
-        fetch('/nhl-transactions?limit=80').then(r => r.json()).catch(() => null),
-        fetch('/nhl-injuries?limit=40').then(r => r.json()).catch(() => null)
+        fetch('/nhl-transactions?limit=250').then(r => r.json()).catch(() => null),
+        fetch('/nhl-injuries?limit=300').then(r => r.json()).catch(() => null)
     ]);
 
     const moves = tx?.transactions || [];
@@ -707,19 +713,51 @@ function renderOffseasonLeague() {
 
     // Le panneau est une carte de tableau de bord, pas une page de
     // rapport : 96 blessés à la file l'étiraient sur plusieurs écrans et
-    // noyaient « À surveiller » dessous. On en montre une poignée et on
-    // dit combien il en reste plutôt que de faire semblant qu'il n'y a
-    // que ça.
-    const CAP = 6;
-    const shown = rows.slice(0, CAP);
+    // noyaient « À surveiller » dessous. On les découpe en pages de six
+    // qu'on feuillette sur place, sans quitter l'index.
+    const pageCount = Math.ceil(rows.length / OFFSEASON_PAGE_SIZE);
+    let page = offseasonPages[offseasonTab] || 0;
+    if (page > pageCount - 1) page = pageCount - 1;
+    if (page < 0) page = 0;
+    offseasonPages[offseasonTab] = page;
+
+    const start = page * OFFSEASON_PAGE_SIZE;
+    const shown = rows.slice(start, start + OFFSEASON_PAGE_SIZE);
+
+    // Ce qui reste au-delà de ce que le serveur a renvoyé (fenêtre limit) :
+    // impossible à feuilleter, on le signale sur la dernière page.
     const total = offseasonLeague.counts?.[offseasonTab] || rows.length;
-    const hidden = Math.max(0, total - shown.length);
+    const beyond = page === pageCount - 1 ? Math.max(0, total - rows.length) : 0;
 
     const rowHTML = offseasonTab === 'injury' ? injuryRowHTML
         : offseasonTab === 'trade' ? dealRowHTML
         : movementRowHTML;
     wrap.innerHTML = shown.map(rowHTML).join('')
-        + (hidden ? `<p class="fzd-move-more">et ${hidden} autre${hidden > 1 ? 's' : ''}</p>` : '');
+        + (beyond ? `<p class="fzd-move-more">et ${beyond} autre${beyond > 1 ? 's' : ''}</p>` : '')
+        + offseasonPagerHTML(page, pageCount);
+
+    const pager = wrap.querySelector('.fzd-move-pager');
+    if (pager) {
+        pager.addEventListener('click', e => {
+            const btn = e.target.closest('button[data-page]');
+            if (!btn || btn.disabled) return;
+            offseasonPages[offseasonTab] = Number(btn.dataset.page);
+            renderOffseasonLeague();
+            wrap.scrollIntoView({ block: 'nearest' });
+        });
+    }
+}
+
+function offseasonPagerHTML(page, pageCount) {
+    if (pageCount < 2) return '';
+    const first = page === 0;
+    const last = page === pageCount - 1;
+    return `
+        <div class="fzd-move-pager">
+            <button type="button" class="fzd-pager-btn" data-page="${page - 1}"${first ? ' disabled' : ''} aria-label="Page précédente">‹</button>
+            <span class="fzd-pager-info">Page ${page + 1} / ${pageCount}</span>
+            <button type="button" class="fzd-pager-btn" data-page="${page + 1}"${last ? ' disabled' : ''} aria-label="Page suivante">›</button>
+        </div>`;
 }
 
 // Regroupe les lignes-joueur d'un même échange (même date + même paire de

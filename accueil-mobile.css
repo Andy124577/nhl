@@ -21,6 +21,18 @@
     --fzm-red: #E42027;
     --fzm-red-soft: #FCE4E4;
     --fzm-green: #0F8A3E;
+    /* Les héros sont des panneaux de couleur pleine — rouge de marque ou
+       aplat sombre — dont tout le détail intérieur est en blanc et en
+       rgba(255,255,255,…). Ils restent donc sombres dans les DEUX thèmes ;
+       seule leur valeur s'éclaircit un peu en sombre pour se détacher du
+       fond de page. */
+    --fzm-hero-ink: #17171A;
+    /* --fzm-ink servait aussi d'aplat plein (onglet actif, bouton de
+       tuile) : ce rôle-là s'inverse avec le fond, pas avec le texte. */
+    --fzm-solid: #17171A;
+    --fzm-on-solid: #ffffff;
+    --fzm-avatar-a: #EDEBE7;
+    --fzm-avatar-b: #F6F5F3;
 
     display: none; /* accueil-dash.js (renderDash) le révèle avec un pool actif */
     background: var(--fzm-bg);
@@ -29,6 +41,32 @@
     font-family: 'Archivo', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     color: var(--fzm-ink);
+}
+
+/* ------------------------------------------------------------ */
+/* Thème sombre — mêmes jetons, valeurs inversées. Ce bloc était  */
+/* figé en papier : c'était le seul rectangle blanc de l'accueil  */
+/* sur téléphone en thème sombre. Le rouge de marque ne bouge pas */
+/* (il porte du blanc à 4,5:1 dans les deux thèmes) ; seuls les   */
+/* neutres basculent.                                             */
+/* ------------------------------------------------------------ */
+html[data-theme="dark"] .fz-mobile-home {
+    --fzm-bg: #131316;
+    --fzm-panel: #1e1e22;
+    --fzm-surface: #1e1e22;
+    --fzm-ink: #F2F2F0;
+    --fzm-ink-soft: rgba(242, 242, 240, 0.62);
+    --fzm-ink-faint: rgba(242, 242, 240, 0.45);
+    --fzm-border: rgba(242, 242, 240, 0.14);
+    --fzm-red-soft: #3a1618;
+    --fzm-green: #4FBE7B;
+    /* Le héros s'éclaircit juste assez pour se détacher du fond de page,
+       qui est désormais plus sombre que lui. */
+    --fzm-hero-ink: #26262b;
+    --fzm-solid: #F0EEE9;
+    --fzm-on-solid: #17171A;
+    --fzm-avatar-a: #2a2a2f;
+    --fzm-avatar-b: #232328;
 }
 
 .fz-mobile-home * { box-sizing: border-box; }
@@ -76,7 +114,7 @@
 .fzm-hero-live .fzm-hero-btn { color: var(--fzm-red); }
 
 /* Repêchage */
-.fzm-hero-draft { background: var(--fzm-ink); }
+.fzm-hero-draft { background: var(--fzm-hero-ink); }
 .fzm-draft-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .fzm-draft-top .fzm-hero-eyebrow { margin-bottom: 0; }
 .fzm-draft-elapsed { font: 600 11px/1 'Archivo', sans-serif; opacity: .55; font-variant-numeric: tabular-nums; }
@@ -87,7 +125,7 @@
 .fzm-hero-draft .fzm-hero-btn { margin-top: 2px; }
 
 /* Avant-saison */
-.fzm-hero-preseason { background: var(--fzm-ink); }
+.fzm-hero-preseason { background: var(--fzm-hero-ink); }
 .fzm-hero-preseason .fzm-hero-eyebrow { color: rgba(255,255,255,.5); opacity: 1; margin-bottom: 12px; }
 .fzm-countdown { display: flex; gap: 14px; }
 .fzm-cd-part { display: flex; flex-direction: column; align-items: center; gap: 2px; }
@@ -132,7 +170,7 @@
 
 /* Joueurs */
 .fzm-player-card { flex-shrink: 0; width: 128px; background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 12px; padding: 12px; }
-.fzm-player-avatar { width: 36px; height: 36px; border-radius: 50%; background: repeating-linear-gradient(135deg, #EDEBE7 0 4px, #F6F5F3 4px 8px); margin-bottom: 8px; }
+.fzm-player-avatar { width: 36px; height: 36px; border-radius: 50%; background: repeating-linear-gradient(135deg, var(--fzm-avatar-a) 0 4px, var(--fzm-avatar-b) 4px 8px); margin-bottom: 8px; }
 .fzm-player-name { font: 700 12.5px/1.2 'Archivo', sans-serif; margin-bottom: 2px; }
 .fzm-player-meta { font: 500 10.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); margin-bottom: 7px; }
 .fzm-player-tag { display: inline-block; font: 700 9.5px/1 'Archivo', sans-serif; letter-spacing: .03em; padding: 3px 7px; border-radius: 6px; background: var(--fzm-panel); color: var(--fzm-ink-soft); }
@@ -161,7 +199,7 @@
 }
 .fzm-tile-title { font: 700 13px/1 'Archivo', sans-serif; margin-bottom: 2px; }
 .fzm-tile-sub { font: 500 11.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-soft); }
-.fzm-tile-btn { flex-shrink: 0; background: var(--fzm-ink); color: #fff; border-radius: 9px; padding: 9px 13px; font: 700 12px/1 'Archivo', sans-serif; }
+.fzm-tile-btn { flex-shrink: 0; background: var(--fzm-solid); color: var(--fzm-on-solid); border-radius: 9px; padding: 9px 13px; font: 700 12px/1 'Archivo', sans-serif; }
 
 /* Joueurs à surveiller */
 .fzm-watch-card { flex-shrink: 0; width: 150px; background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 12px; padding: 13px; }
@@ -183,7 +221,7 @@
     background: var(--fzm-surface); color: var(--fzm-ink-soft);
     font: 600 11.5px/1 'Archivo', sans-serif; cursor: pointer; white-space: nowrap;
 }
-.fzm-tab.is-active { background: var(--fzm-ink); border-color: var(--fzm-ink); color: #fff; }
+.fzm-tab.is-active { background: var(--fzm-solid); border-color: var(--fzm-solid); color: var(--fzm-on-solid); }
 .fzm-tab-count { font-weight: 700; opacity: .55; }
 
 .fzm-league-list { display: flex; flex-direction: column; }

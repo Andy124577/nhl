@@ -9,8 +9,9 @@
   --card: #1E1E22;
   --navbar-bg: #0E0E10;
   --navbar-border: #2A2A30;
-  --primary: #00D4FF;
-  --primary-deep: #00A8CC;
+  --primary: #E8795E;
+  --primary-deep: #D4614A;
+  --primary-rgb: 232, 121, 94;
   --danger: #FF4757;
   --text-main: #F5F5F7;
   --text-secondary: #A8A8B0;
@@ -22,8 +23,9 @@ html[data-theme="light"] {
   --card: #FFFFFF;
   --navbar-bg: #FFFFFF;
   --navbar-border: #E0E0DC;
-  --primary: #00707F;
-  --primary-deep: #005A6B;
+  --primary: #B93D28;
+  --primary-deep: #8F2E1A;
+  --primary-rgb: 185, 61, 40;
   --danger: #E03040;
   --text-main: #1C1C1E;
   --text-secondary: #54545C;

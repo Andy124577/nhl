@@ -114,7 +114,7 @@
   margin: 0 -20px 14px;
   padding: 20px;
   background:
-    linear-gradient(135deg, rgba(0, 212, 255, .14), rgba(0, 212, 255, 0) 65%),
+    linear-gradient(135deg, rgba(var(--primary-rgb), .14), rgba(var(--primary-rgb), 0) 65%),
     var(--bg);
   border-bottom: 1px solid var(--border-light);
 }
@@ -154,7 +154,7 @@
   gap: 4px;
   padding: 3px 8px;
   border-radius: 6px;
-  background: rgba(0, 212, 255, .13);
+  background: rgba(var(--primary-rgb), .13);
   font-size: .66rem;
   font-weight: 800;
   letter-spacing: .06em;
@@ -365,7 +365,7 @@
   /* Densité « nano » : le tableau est le contenu principal de la modale,
      on lui rend la hauteur économisée sur l'en-tête. */
   padding: 6px 6px;
-  background: rgba(0, 212, 255, .35);
+  background: rgba(var(--primary-rgb), .35);
   color: var(--text-main);
   font-size: .64rem;
   font-weight: 800;
@@ -382,9 +382,9 @@
   white-space: nowrap;
 }
 #careerStatsTable tbody tr { height: 32px; }
-#careerStatsTable tbody tr:hover { background: rgba(0, 212, 255, .07); }
-#careerStatsTable tr.nhl-season { background: rgba(0, 212, 255, .05); }
-#careerStatsTable tr.current-season { background: rgba(0, 212, 255, .12); font-weight: 800; }
+#careerStatsTable tbody tr:hover { background: rgba(var(--primary-rgb), .07); }
+#careerStatsTable tr.nhl-season { background: rgba(var(--primary-rgb), .05); }
+#careerStatsTable tr.current-season { background: rgba(var(--primary-rgb), .12); font-weight: 800; }
 #careerStatsTable .season-col { font-weight: 800; color: var(--text-main); }
 #careerStatsTable .league-col { font-size: .76rem; color: var(--text-secondary); }
 /* Le JS construit `teams/${e.team}.png` où e.team est le NOM COMPLET
@@ -418,7 +418,7 @@
   display: none;
 }
 
-.career-totals-row { background: rgba(0, 212, 255, .14); font-weight: 800; }
+.career-totals-row { background: rgba(var(--primary-rgb), .14); font-weight: 800; }
 .career-totals-row td { border-top: 2px solid var(--primary); color: var(--text-main); }
 .career-totals-label { text-align: left; text-transform: uppercase; letter-spacing: .5px; }
 
@@ -571,7 +571,7 @@
   margin: 0 -20px 14px;
   padding: 20px;
   background:
-    linear-gradient(135deg, rgba(0, 212, 255, .14), rgba(0, 212, 255, 0) 65%),
+    linear-gradient(135deg, rgba(var(--primary-rgb), .14), rgba(var(--primary-rgb), 0) 65%),
     var(--bg);
   border-bottom: 1px solid var(--border-light);
 }
@@ -651,7 +651,7 @@
   border-radius: 12px;
   overflow: hidden;
 }
-.cs-thead { height: 27px; background: rgba(0, 212, 255, .35); }
+.cs-thead { height: 27px; background: rgba(var(--primary-rgb), .35); }
 .cs-row {
   display: grid;
   grid-template-columns: 1.3fr .9fr repeat(7, minmax(0, 1fr));

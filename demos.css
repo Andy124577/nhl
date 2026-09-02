@@ -6,8 +6,12 @@
    mêmes champs que la page de création. Quelqu'un qui les regarde
    doit reconnaître ce qu'il verra ensuite.
 
-   Les couleurs de position reprennent celles de trade.css :
-   ATT vert, DÉF cyan, GAR ambre, REC violet, ÉQU orange.
+   Couleurs de position : ATT vert, DÉF neutre, GAR ambre, REC violet,
+   ÉQU orange. DÉF portait l'accent du site (cyan à l'époque, brique
+   aujourd'hui) — une position n'est ni vive, ni en cours, ni à vous, donc
+   elle n'a pas droit à l'accent (Règle du Signal Unique). L'ensemble
+   sémantique étant clos, elle retombe sur l'échelle neutre, exactement ce
+   que prévoit la Règle « L'ensemble sémantique est clos ».
    ============================================================ */
 
 /* ==================== CHOIX DE LA CARTE HÉROS ==================== */
@@ -85,8 +89,8 @@ html.fz-auth #heroCardDraft { display: none; }
 }
 
 .dm-player.is-target {
-    background: rgba(0,212,255,.1);
-    box-shadow: inset 0 0 0 1px rgba(0,212,255,.45);
+    background: rgba(var(--primary-rgb),.1);
+    box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb),.45);
 }
 
 .dm-player.is-picked {
@@ -112,7 +116,7 @@ html.fz-auth #heroCardDraft { display: none; }
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: .66rem; font-weight: 800;
-    background: linear-gradient(135deg, rgba(0,212,255,.28), rgba(0,212,255,.08));
+    background: linear-gradient(135deg, rgba(var(--primary-rgb),.28), rgba(var(--primary-rgb),.08));
     color: var(--text-main);
 }
 
@@ -137,7 +141,7 @@ html.fz-auth #heroCardDraft { display: none; }
 }
 
 .dm-tag.att { background: rgba(0,230,118,.2);  color: var(--success); }
-.dm-tag.def { background: rgba(0,212,255,.2);  color: var(--primary); }
+.dm-tag.def { background: var(--bg-hover);              color: var(--text-secondary); }
 .dm-tag.gar { background: rgba(255,193,7,.2);  color: var(--warning); }
 .dm-tag.rec { background: rgba(156,39,176,.2); color: #CE93D8; }
 .dm-tag.equ { background: rgba(255,152,0,.2);  color: #FFB74D; }
@@ -158,7 +162,7 @@ html.fz-auth #heroCardDraft { display: none; }
     display: flex; align-items: center; justify-content: center;
     border: 0;
     border-radius: 8px;
-    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
     cursor: default;
     opacity: .55;
     transition: opacity .25s ease, transform .25s ease;
@@ -221,7 +225,7 @@ html.fz-auth #heroCardDraft { display: none; }
     display: block;
     height: 100%;
     border-radius: 99px;
-    background: linear-gradient(90deg, var(--primary), #00B8D9);
+    background: linear-gradient(90deg, var(--primary), var(--primary-deep));
     transition: width .55s cubic-bezier(.4,0,.2,1);
 }
 
@@ -369,8 +373,8 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
 .hiw-chip {
     padding: 3px 7px;
     border-radius: 6px;
-    background: rgba(0,212,255,.1);
-    box-shadow: inset 0 0 0 1px rgba(0,212,255,.22);
+    background: rgba(var(--primary-rgb),.1);
+    box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb),.22);
     font-size: .6rem;
     font-weight: 700;
     color: var(--text-secondary);
@@ -387,7 +391,7 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
     padding: 7px 10px;
     border: 0;
     border-radius: 8px;
-    background: linear-gradient(135deg, var(--primary) 0%, #00B8D9 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
     color: var(--bg);
     font-size: .72rem;
     font-weight: 900;
@@ -431,7 +435,7 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
     transition: background .3s ease, box-shadow .3s ease, opacity .4s ease, transform .4s ease;
 }
 
-.hiw-row.is-target { background: rgba(0,212,255,.12); box-shadow: inset 0 0 0 1px rgba(0,212,255,.4); }
+.hiw-row.is-target { background: rgba(var(--primary-rgb),.12); box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb),.4); }
 .hiw-row.is-picked { background: rgba(0,230,118,.16); box-shadow: inset 0 0 0 1px rgba(0,230,118,.45); }
 .hiw-row.is-gone   { opacity: 0; transform: translateX(20px); }
 .hiw-row.is-picked .hiw-row-pts::after { content: ' ✓'; color: var(--success); }
@@ -454,7 +458,7 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
 }
 
 .hiw-tag.att { background: rgba(0,230,118,.2);  color: var(--success); }
-.hiw-tag.def { background: rgba(0,212,255,.2);  color: var(--primary); }
+.hiw-tag.def { background: var(--bg-hover);              color: var(--text-secondary); }
 .hiw-tag.gar { background: rgba(255,193,7,.2);  color: var(--warning); }
 
 .hiw-row-pts { font-weight: 900; color: var(--primary); font-size: .64rem; }
@@ -473,7 +477,7 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
 .hiw-bar i {
     display: block;
     height: 100%;
-    background: linear-gradient(90deg, var(--primary), #00B8D9);
+    background: linear-gradient(90deg, var(--primary), var(--primary-deep));
     transition: width .55s cubic-bezier(.4,0,.2,1);
 }
 
@@ -496,8 +500,8 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
 }
 
 .hiw-rrow.is-mine {
-    background: rgba(0,212,255,.1);
-    box-shadow: inset 0 0 0 1px rgba(0,212,255,.4);
+    background: rgba(var(--primary-rgb),.1);
+    box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb),.4);
 }
 
 .hiw-pos {

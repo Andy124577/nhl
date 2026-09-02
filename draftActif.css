@@ -16,29 +16,29 @@
   to   { transform: translateY(0) scale(1); opacity: 1 }
 }
 @keyframes turnPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, .30) }
-  50%      { box-shadow: 0 0 0 10px rgba(0, 212, 255, 0) }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), .30) }
+  50%      { box-shadow: 0 0 0 10px rgba(var(--primary-rgb), 0) }
 }
 
 
 @keyframes headerTurnGlow {
   0%, 100% {
     border-bottom-color: var(--primary);
-    outline-color: rgba(0, 212, 255, .6);
-    box-shadow: 0 0 0 1px rgba(0, 212, 255, .22) inset, 0 14px 44px -8px rgba(0, 212, 255, .48);
+    outline-color: rgba(var(--primary-rgb), .6);
+    box-shadow: 0 0 0 1px rgba(var(--primary-rgb), .22) inset, 0 14px 44px -8px rgba(var(--primary-rgb), .48);
   }
   50% {
-    border-bottom-color: rgba(0, 212, 255, .35);
-    outline-color: rgba(0, 212, 255, .22);
-    box-shadow: 0 0 0 1px rgba(0, 212, 255, .08) inset, 0 14px 60px -6px rgba(0, 212, 255, .22);
+    border-bottom-color: rgba(var(--primary-rgb), .35);
+    outline-color: rgba(var(--primary-rgb), .22);
+    box-shadow: 0 0 0 1px rgba(var(--primary-rgb), .08) inset, 0 14px 60px -6px rgba(var(--primary-rgb), .22);
   }
 }
 
 
 @keyframes headerPowerOn {
-  0%   { filter: brightness(1);    transform: scale(1);     outline-color: rgba(0, 212, 255, .6);  box-shadow: 0 0 0 1px rgba(0, 212, 255, .22) inset, 0 14px 44px -8px rgba(0, 212, 255, .48) }
-  28%  { filter: brightness(1.18); transform: scale(1.012);  outline-color: rgba(0, 212, 255, 1);   box-shadow: 0 0 0 3px rgba(0, 212, 255, .65) inset, 0 0 90px 10px rgba(0, 212, 255, .55), 0 14px 44px -8px rgba(0, 212, 255, .48) }
-  100% { filter: brightness(1);    transform: scale(1);     outline-color: rgba(0, 212, 255, .6);  box-shadow: 0 0 0 1px rgba(0, 212, 255, .22) inset, 0 14px 44px -8px rgba(0, 212, 255, .48) }
+  0%   { filter: brightness(1);    transform: scale(1);     outline-color: rgba(var(--primary-rgb), .6);  box-shadow: 0 0 0 1px rgba(var(--primary-rgb), .22) inset, 0 14px 44px -8px rgba(var(--primary-rgb), .48) }
+  28%  { filter: brightness(1.18); transform: scale(1.012);  outline-color: rgba(var(--primary-rgb), 1);   box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .65) inset, 0 0 90px 10px rgba(var(--primary-rgb), .55), 0 14px 44px -8px rgba(var(--primary-rgb), .48) }
+  100% { filter: brightness(1);    transform: scale(1);     outline-color: rgba(var(--primary-rgb), .6);  box-shadow: 0 0 0 1px rgba(var(--primary-rgb), .22) inset, 0 14px 44px -8px rgba(var(--primary-rgb), .48) }
 }
 
 
@@ -87,7 +87,7 @@ body {
 
   border-bottom: 3px solid transparent;
   background:
-    linear-gradient(135deg, rgba(0, 212, 255, .09), rgba(0, 212, 255, 0) 62%),
+    linear-gradient(135deg, rgba(var(--primary-rgb), .09), rgba(var(--primary-rgb), 0) 62%),
     var(--bg);
 }
 
@@ -96,12 +96,12 @@ body {
   border-bottom-color: var(--primary);
   
 
-  outline: 2px solid rgba(0, 212, 255, .6);
+  outline: 2px solid rgba(var(--primary-rgb), .6);
   outline-offset: -2px;
-  box-shadow: 0 0 0 1px rgba(0, 212, 255, .22) inset, 0 14px 44px -8px rgba(0, 212, 255, .48);
+  box-shadow: 0 0 0 1px rgba(var(--primary-rgb), .22) inset, 0 14px 44px -8px rgba(var(--primary-rgb), .48);
   background:
-    linear-gradient(180deg, rgba(0, 212, 255, .18) 0%, rgba(0, 212, 255, 0) 62%),
-    linear-gradient(135deg, rgba(0, 212, 255, .09), rgba(0, 212, 255, 0) 62%),
+    linear-gradient(180deg, rgba(var(--primary-rgb), .18) 0%, rgba(var(--primary-rgb), 0) 62%),
+    linear-gradient(135deg, rgba(var(--primary-rgb), .09), rgba(var(--primary-rgb), 0) 62%),
     var(--bg);
   
 
@@ -239,8 +239,8 @@ body {
 
 
 .turn-banner.your-turn {
-  border-color: rgba(0, 212, 255, .55);
-  box-shadow: 0 0 0 1px rgba(0, 212, 255, .28) inset, var(--glow-live, 0 0 20px rgba(0, 212, 255, .25));
+  border-color: rgba(var(--primary-rgb), .55);
+  box-shadow: 0 0 0 1px rgba(var(--primary-rgb), .28) inset, var(--glow-live, 0 0 20px rgba(var(--primary-rgb), .25));
   animation: turnPulse 2s ease-in-out infinite;
   color: #fff;
   background:
@@ -354,7 +354,7 @@ body {
 .turn-skip-btn:focus-visible {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(0, 212, 255, .15);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .15);
 }
 .turn-skip-btn:active { transform: translateY(0); }
 .turn-skip-btn:disabled {
@@ -641,7 +641,7 @@ html[data-theme="light"] .player-selection-card {
   transition: background .2s ease, border-color .2s ease, color .2s ease;
 }
 .carousel-btn:hover:not(:disabled) {
-  background: rgba(0, 212, 255, .14);
+  background: rgba(var(--primary-rgb), .14);
   border-color: var(--primary);
   color: var(--primary);
 }
@@ -768,7 +768,7 @@ html[data-theme="light"] .player-selection-card {
   
 
   --team-accent: var(--primary);
-  border-color: rgba(0, 212, 255, .5);
+  border-color: rgba(var(--primary-rgb), .5);
   animation: turnPulse 2.4s ease-in-out infinite;
 }
 .pick-card.is-current .pick-card-name { color: var(--primary); }
@@ -778,7 +778,7 @@ html[data-theme="light"] .player-selection-card {
 .pick-card.is-my-turn {
   transform: scale(1.045);
   z-index: 3;
-  box-shadow: 0 0 0 2px var(--primary), var(--glow-live, 0 0 20px rgba(0, 212, 255, .25));
+  box-shadow: 0 0 0 2px var(--primary), var(--glow-live, 0 0 20px rgba(var(--primary-rgb), .25));
 }
 .pick-card.is-my-turn:hover { transform: scale(1.045) translateY(-2px); }
 
@@ -1127,7 +1127,7 @@ html[data-theme="light"] .player-selection-card {
 }
 #playerTable tbody tr:nth-child(even) { background: var(--bg-odd-row); }
 @media (hover: hover) {
-  #playerTable tbody tr:hover { background: rgba(0, 212, 255, .07); }
+  #playerTable tbody tr:hover { background: rgba(var(--primary-rgb), .07); }
 }
 #playerTable tbody tr.clickable-player-row { cursor: pointer; }
 #playerTable tbody tr.clickable-player-row:focus-visible {
@@ -1282,7 +1282,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   display: inline-block;
   width: 38px;
   height: 38px;
-  border: 3px solid rgba(0, 212, 255, .2);
+  border: 3px solid rgba(var(--primary-rgb), .2);
   border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -1554,7 +1554,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   cursor: pointer;
   transition: background .18s ease, color .18s ease;
 }
-.admin-dropdown-item:hover { background: rgba(0, 212, 255, .1); color: var(--text-main); }
+.admin-dropdown-item:hover { background: rgba(var(--primary-rgb), .1); color: var(--text-main); }
 .admin-user-list { display: flex; flex-direction: column; gap: 2px; }
 .admin-no-users {
   padding: 12px 10px;
@@ -1780,8 +1780,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
 #playerTable tbody tr:nth-child(even) { background: none; }
 @media (hover: hover) {
   #playerTable tbody tr:hover td {
-    background: rgba(0, 212, 255, .07);
-    border-color: rgba(0, 212, 255, .35);
+    background: rgba(var(--primary-rgb), .07);
+    border-color: rgba(var(--primary-rgb), .35);
   }
 }
 
@@ -1924,19 +1924,19 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   color: var(--text-gray);
   transition: transform .2s ease, color .2s ease;
 }
-.progress-line[data-position]:hover { background: rgba(0, 212, 255, .07); }
+.progress-line[data-position]:hover { background: rgba(var(--primary-rgb), .07); }
 .progress-line[data-position]:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: -2px;
 }
-.progress-line.is-open { background: rgba(0, 212, 255, .11); }
+.progress-line.is-open { background: rgba(var(--primary-rgb), .11); }
 .progress-line.is-open::after { transform: rotate(180deg); color: var(--primary); }
 .progress-line.is-open .progress-text { color: var(--text-main); }
 
 
 .progress-details-list.is-inline {
   margin: 6px 0 8px;
-  border-color: rgba(0, 212, 255, .25);
+  border-color: rgba(var(--primary-rgb), .25);
 }
 
 
@@ -2205,8 +2205,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 
 @media (hover: hover) {
   #playerTable tbody tr:hover {
-    background: rgba(0, 212, 255, .07);
-    border-color: rgba(0, 212, 255, .35);
+    background: rgba(var(--primary-rgb), .07);
+    border-color: rgba(var(--primary-rgb), .35);
   }
   
 
@@ -2308,7 +2308,7 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 
 
 #playerTable tbody tr td.points-column {
-  background: rgba(0, 212, 255, .12);
+  background: rgba(var(--primary-rgb), .12);
   color: var(--primary);
   font-weight: 800;
 }
@@ -2371,12 +2371,12 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 
 
 .category-tab {
-  background: rgba(0, 212, 255, .16);
+  background: rgba(var(--primary-rgb), .16);
   border-color: var(--primary);
   color: var(--primary);
 }
 .category-tab:hover:not(:disabled) {
-  background: rgba(0, 212, 255, .26);
+  background: rgba(var(--primary-rgb), .26);
   border-color: var(--primary);
   color: var(--primary);
 }
@@ -2552,7 +2552,7 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 }
 .draft-done-cta:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 212, 255, .15);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .15);
 }
 .draft-done-cta:active { transform: translateY(0); }
 
@@ -2625,7 +2625,7 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   transition: background .18s ease;
 }
 @media (hover: hover) {
-  .favorite-group-header:hover { background: rgba(0, 212, 255, .08); }
+  .favorite-group-header:hover { background: rgba(var(--primary-rgb), .08); }
 }
 .favorite-group-header:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
 .favorite-group-icon { display: inline-flex; flex: 0 0 auto; color: var(--primary); }
