@@ -217,7 +217,12 @@ html[data-theme="dark"] .fz-mobile-home {
 /* Dans la LNH — onglets échanges / signatures / blessés */
 .fzm-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
 .fzm-tab {
-    flex: 1; padding: 7px 4px; border: 1px solid var(--fzm-border); border-radius: 8px;
+    /* 26px de haut auparavant : sous la cible tactile de 44px que DESIGN.md
+       impose au reste de la navigation, sur le seul écran qui soit
+       exclusivement tactile. */
+    flex: 1; min-height: 40px; padding: 7px 4px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--fzm-border); border-radius: 8px;
     background: var(--fzm-surface); color: var(--fzm-ink-soft);
     font: 600 11.5px/1 'Archivo', sans-serif; cursor: pointer; white-space: nowrap;
 }
@@ -242,6 +247,10 @@ html[data-theme="dark"] .fz-mobile-home {
 .fzm-league-name { font: 700 12.5px/1.2 'Archivo', sans-serif; }
 .fzm-league-meta { font: 500 10.5px/1.3 'Archivo', sans-serif; color: var(--fzm-ink-faint); margin-top: 2px; }
 .fzm-league-side { font: 600 10px/1.2 'Archivo', sans-serif; color: var(--fzm-ink-faint); text-align: right; flex-shrink: 0; }
+/* « Blessé au jour le jour » ne rétrécissait pas et écrasait la colonne du
+   nom sur un écran de 390px. On lui donne un plafond et le droit de passer
+   à la ligne. */
+.fzm-league-status { max-width: 92px; white-space: normal; }
 /* Le rouge est réservé aux absences fermes ; le « jour le jour » reste neutre
    pour ne pas crier au loup sur un joueur qui joue peut-être ce soir. */
 .fzm-league-status[data-status="Out"],
@@ -250,17 +259,37 @@ html[data-theme="dark"] .fz-mobile-home {
 
 .fzm-league-more { margin: 0; padding: 9px 12px; font: 500 10.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); }
 
-/* Échange regroupé : les deux côtés de l'opération, sans portrait. */
-.fzm-deal-row { align-items: flex-start; }
-.fzm-deal-teams { font: 700 11.5px/1.3 'Archivo', sans-serif; letter-spacing: .02em; }
-.fzm-deal-swap { margin: 0 3px; color: var(--fzm-ink-faint); font-weight: 500; }
-.fzm-deal-side {
-    display: flex; gap: 6px; margin-top: 3px;
-    font: 500 11px/1.3 'Archivo', sans-serif; color: var(--fzm-ink-soft);
+/* Échange regroupé — un club à gauche, un à droite, ce que chacun reçoit
+   dessous. Même disposition qu'au bureau (.fzd-deal-*) : la ligne compacte
+   « ABC ⇄ XYZ » suivie de deux lignes de noms obligeait à relire
+   l'abréviation en tête de chaque ligne pour savoir qui obtenait quoi, et
+   c'est sur 358px que ça coûtait le plus cher. Le club est ici son
+   abréviation d'office : le logo à côté porte l'identité. */
+.fzm-deal-row { display: block; padding: 11px 12px; }
+.fzm-deal-date {
+    margin-bottom: 8px;
+    font: 700 9px/1 'Archivo', sans-serif;
+    letter-spacing: .12em; text-transform: uppercase;
+    color: var(--fzm-ink-faint);
 }
-.fzm-deal-team { flex-shrink: 0; min-width: 30px; font-weight: 700; color: var(--fzm-ink-faint); }
-.fzm-deal-pos { color: var(--fzm-ink-faint); }
-.fzm-deal-none { color: var(--fzm-ink-faint); }
+.fzm-deal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+.fzm-deal-col { min-width: 0; }
+.fzm-deal-col + .fzm-deal-col { padding-left: 12px; border-left: 1px solid var(--fzm-border); }
+.fzm-deal-club { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.fzm-deal-logo { width: 18px; height: 18px; flex-shrink: 0; object-fit: contain; }
+.fzm-deal-club-abbr { font: 700 12px/1 'Archivo', sans-serif; letter-spacing: .03em; }
+.fzm-deal-acq {
+    margin: 7px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--fzm-border);
+    font: 700 8.5px/1 'Archivo', sans-serif;
+    letter-spacing: .13em; text-transform: uppercase;
+    color: var(--fzm-ink-faint);
+}
+.fzm-deal-assets { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.fzm-deal-asset { font: 600 11.5px/1.35 'Archivo', sans-serif; overflow-wrap: anywhere; }
+.fzm-deal-asset.is-empty { font-weight: 500; font-style: italic; color: var(--fzm-ink-faint); }
+.fzm-deal-pos { font-weight: 500; color: var(--fzm-ink-faint); }
 
 .fzm-news-list { display: flex; flex-direction: column; gap: 8px; }
 .fzm-news-card { display: block; background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 10px; padding: 10px 12px; }
@@ -279,7 +308,12 @@ html[data-theme="dark"] .fz-mobile-home {
    un pool (déjà géré par accueil-dash.js/renderDash).
    ============================================================ */
 @media (max-width: 768px) {
-    #fzDashCalendarWrap, #fzDashOffseason, #fzDashBody { display: none !important; }
+    /* La home mobile remplace ces trois blocs — mais elle ne s'affiche
+       qu'avec un pool actif (renderDash). Sans pool, elle est masquée et
+       c'est l'état vide qui occupe l'écran : le calendrier doit alors rester
+       ouvrable depuis sa carte « Calendrier LNH ». */
+    .fz-dash-section:not(.is-poolless) #fzDashCalendarWrap { display: none !important; }
+    #fzDashOffseason, #fzDashBody { display: none !important; }
 }
 @media (min-width: 769px) {
     .fz-mobile-home { display: none !important; }

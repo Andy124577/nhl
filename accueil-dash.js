@@ -773,34 +773,65 @@ function groupTrades(list) {
         const [a, b] = [from, to].sort();
         const key = `${t.date}|${a}-${b}`;
         let d = deals.get(key);
-        if (!d) { d = { date: t.date, teamA: a, teamB: b, gets: {} }; deals.set(key, d); }
+        if (!d) { d = { date: t.date, teamA: a, teamB: b, gets: {}, names: {} }; deals.set(key, d); }
+        // L'abréviation reste la clé (et la source du logo) ; le nom complet
+        // sert d'en-tête de colonne, la carte ayant désormais la place de
+        // l'écrire.
+        if (t.toTeamName) d.names[to] = t.toTeamName;
+        if (t.fromTeamName) d.names[from] = t.fromTeamName;
         (d.gets[to] = d.gets[to] || []).push({ name: t.playerName, pos: t.pos || '' });
     });
     return [...deals.values()];
 }
 
+/**
+ * Un échange : les deux clubs côte à côte, ce que chacun reçoit dessous.
+ *
+ * Remplace la ligne compacte « ABC ⇄ XYZ » suivie de deux lignes de noms,
+ * qui obligeait à relire l'abréviation en tête de chaque ligne pour savoir
+ * qui obtenait quoi. Deux colonnes le disent d'un coup d'œil, et c'est la
+ * seule disposition qui tienne encore sur un téléphone : la ligne compacte
+ * y repliait les noms sous une abréviation orpheline.
+ *
+ * Le nom complet du club et son abréviation sont rendus tous les deux ;
+ * c'est le CSS qui choisit selon la largeur, pas une mesure en JS.
+ */
 function dealRowHTML(d) {
-    const sideHTML = team => {
+    const colHTML = team => {
+        const club = d.names[team] || team;
         const players = d.gets[team] || [];
-        const names = players.length
-            ? players.map(p => `${escapeHTML(p.name)}${p.pos ? ` <span class="fzd-move-pos">${escapeHTML(p.pos)}</span>` : ''}`).join(', ')
-            : '<span class="fzd-deal-none">—</span>';
-        return `<div class="fzd-deal-side"><span class="fzd-deal-team">${escapeHTML(team)}</span><span class="fzd-deal-assets">${names}</span></div>`;
+        const assets = players.length
+            ? players.map(p => `
+                <li class="fzd-deal-asset">
+                    <span class="fzd-deal-asset-name">${escapeHTML(p.name)}</span>
+                    ${p.pos ? `<span class="fzd-move-pos">${escapeHTML(p.pos)}</span>` : ''}
+                </li>`).join('')
+            : '<li class="fzd-deal-asset is-empty">Rien en retour</li>';
+        return `
+            <section class="fzd-deal-col">
+                <div class="fzd-deal-club">
+                    ${teamLogoImg(team)}
+                    <span class="fzd-deal-club-name">${escapeHTML(club)}</span>
+                    <span class="fzd-deal-club-abbr" title="${escapeHTML(club)}">${escapeHTML(team)}</span>
+                </div>
+                <p class="fzd-deal-acq">Acquiert</p>
+                <ul class="fzd-deal-assets">${assets}</ul>
+            </section>`;
     };
-    // Le club qui reçoit quelque chose passe en premier — en-tête comme
-    // lignes : sur un échange à sens unique (fréquent ici), « — » finit
-    // dessous.
+    // Le club qui reçoit quelque chose passe à gauche : sur un échange à sens
+    // unique (le cas courant dans ce journal), « Rien en retour » finit à
+    // droite plutôt qu'en tête.
     const [first, second] = [d.teamA, d.teamB]
         .sort((x, y) => (d.gets[y]?.length || 0) - (d.gets[x]?.length || 0));
     return `
-        <div class="fzd-move-row fzd-deal-row">
-            <div class="fzd-move-main">
-                <div class="fzd-deal-teams">${escapeHTML(first)} <span class="fzd-deal-swap" aria-hidden="true">⇄</span> ${escapeHTML(second)}</div>
-                ${sideHTML(first)}
-                ${sideHTML(second)}
+        <article class="fzd-deal">
+            <div class="fzd-deal-date">${dayLabelFr(d.date)}</div>
+            <div class="fzd-deal-grid">
+                ${colHTML(first)}
+                <div class="fzd-deal-swap" aria-hidden="true">⇄</div>
+                ${colHTML(second)}
             </div>
-            <div class="fzd-move-date">${dayLabelFr(d.date)}</div>
-        </div>`;
+        </article>`;
 }
 
 function offseasonEmptyText() {
@@ -964,6 +995,10 @@ async function renderDash() {
 
     const hasPool = !!FZPool.get();
     section.style.display = 'block';
+    // Lu par accueil-mobile.css : sur téléphone, la home mobile remplace le
+    // calendrier — mais elle n'existe qu'avec un pool. Sans pool, la carte
+    // « Calendrier LNH » de l'état vide doit pouvoir l'ouvrir.
+    section.classList.toggle('is-poolless', !hasPool);
     if (body) body.style.display = hasPool ? '' : 'none';
     // calRevealedNoPool : le visiteur sans pool a ouvert le calendrier depuis
     // la carte « Calendrier LNH » — ne pas le refermer sous lui au prochain

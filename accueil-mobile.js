@@ -584,24 +584,41 @@ function fzmTxRowHTML(t) {
 
 // Échange regroupé (voir groupTrades dans accueil-dash.js) : pas de
 // portrait, les deux côtés de l'opération empilés dans la zone principale.
+/**
+ * Un échange sur téléphone : un club à gauche, un à droite, ce que chacun
+ * reçoit dessous. Même lecture qu'au bureau (dealRowHTML dans
+ * accueil-dash.js), au club près — ici c'est l'abréviation d'office, deux
+ * noms complets ne tenant pas dans 358px, et le logo à côté suffit à
+ * l'identifier.
+ */
 function fzmDealRowHTML(d) {
-    const sideHTML = team => {
+    const colHTML = team => {
+        const club = d.names[team] || team;
         const players = d.gets[team] || [];
-        const names = players.length
-            ? players.map(p => `${escapeHTML(p.name)}${p.pos ? ` <span class="fzm-deal-pos">${escapeHTML(p.pos)}</span>` : ''}`).join(', ')
-            : '<span class="fzm-deal-none">—</span>';
-        return `<div class="fzm-deal-side"><span class="fzm-deal-team">${escapeHTML(team)}</span><span>${names}</span></div>`;
+        const assets = players.length
+            ? players.map(p => `<li class="fzm-deal-asset">${escapeHTML(p.name)}${p.pos ? ` <span class="fzm-deal-pos">${escapeHTML(p.pos)}</span>` : ''}</li>`).join('')
+            : '<li class="fzm-deal-asset is-empty">Rien en retour</li>';
+        return `
+            <section class="fzm-deal-col">
+                <div class="fzm-deal-club">
+                    <img class="fzm-deal-logo" src="teams/${escapeHTML(team)}.png" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+                    <span class="fzm-deal-club-abbr" title="${escapeHTML(club)}">${escapeHTML(team)}</span>
+                </div>
+                <p class="fzm-deal-acq">Acquiert</p>
+                <ul class="fzm-deal-assets">${assets}</ul>
+            </section>`;
     };
+    // Le club qui reçoit quelque chose passe à gauche : sur un échange à sens
+    // unique, « Rien en retour » finit à droite plutôt qu'en tête.
     const [first, second] = [d.teamA, d.teamB]
         .sort((x, y) => (d.gets[y]?.length || 0) - (d.gets[x]?.length || 0));
     return `
         <div class="fzm-league-row fzm-deal-row">
-            <div class="fzm-league-main">
-                <div class="fzm-deal-teams">${escapeHTML(first)} <span class="fzm-deal-swap" aria-hidden="true">⇄</span> ${escapeHTML(second)}</div>
-                ${sideHTML(first)}
-                ${sideHTML(second)}
+            <div class="fzm-deal-date">${dayLabelFr(d.date)}</div>
+            <div class="fzm-deal-grid">
+                ${colHTML(first)}
+                ${colHTML(second)}
             </div>
-            <div class="fzm-league-side">${dayLabelFr(d.date)}</div>
         </div>`;
 }
 
