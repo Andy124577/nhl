@@ -511,6 +511,170 @@ function renderQuickActions() {
 }
 
 // ============================================================
+// HERO — bannière d'état pleine largeur (Canvas-9, Tour 2 : 2A
+// bureau). Repêchage en cours / avant-saison / en direct ; masquée
+// en saison régulière normale (fz-dash-live plus bas couvre déjà ce
+// cas). Bureau seulement — accueil-mobile.js détecte les 4 mêmes
+// états pour son propre écran, indépendamment de celui-ci.
+// ============================================================
+function fzdFormatElapsed(ms) {
+    const totalSec = Math.max(0, Math.floor(ms / 1000));
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return m > 0 ? `${m} min` : `${s} s`;
+}
+
+function fzdHeroState(tonight) {
+    const poolData = FZPool.data();
+    const team = FZPool.team();
+    const activeName = FZPool.get();
+    if (!poolData || !team || !activeName) return null;
+
+    const draftState = FZPool.draftState(poolData);
+    const isDraft = draftState.etat === 'encours';
+    const today = todayISO();
+    const seasonStart = calData?.regularSeasonStartDate;
+    const isPreseason = !isDraft && !!seasonStart && today < seasonStart;
+
+    if (isDraft) return { mode: 'draft', poolData, team, activeName };
+
+    if (isPreseason) {
+        const campStart = calData?.preSeasonStartDate;
+        const beforeCamp = !!campStart && today < campStart;
+        return { mode: 'preseason', target: beforeCamp ? campStart : seasonStart, beforeCamp };
+    }
+
+    const rosterNames = new Set(activeRosterNames());
+    const myLines = (tonight?.players || []).filter(p => rosterNames.has(p.playerName));
+    const liveCount = myLines.filter(p => {
+        const g = (tonight?.games || []).find(x => x.id === p.gameId);
+        return g && (g.state === 'LIVE' || g.state === 'CRIT');
+    }).length;
+    if (liveCount > 0) {
+        const totalPts = myLines.reduce((s, p) => s + (p.fantasyPointsTonight || 0), 0);
+        return { mode: 'live', liveCount, totalPts };
+    }
+
+    return { mode: 'regular' };
+}
+
+function fzdCountdownStatsHTML(targetISO) {
+    const diff = Math.max(0, new Date(targetISO + 'T00:00:00Z').getTime() - Date.now());
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    return `
+        <div class="fzd-hero-stat"><span class="fzd-hero-stat-lbl">Jours</span><span class="fzd-hero-stat-val">${d}</span></div>
+        <div class="fzd-hero-stat-sep" aria-hidden="true"></div>
+        <div class="fzd-hero-stat"><span class="fzd-hero-stat-lbl">Heures</span><span class="fzd-hero-stat-val">${String(h).padStart(2, '0')}</span></div>`;
+}
+
+function fzdHeroHTML(state) {
+    if (state.mode === 'draft') {
+        const { poolData, team, activeName } = state;
+        const draftOrder = Array.isArray(poolData.draftOrder) ? poolData.draftOrder : [];
+        const numTeams = new Set(draftOrder).size || 1;
+        const idx = poolData.currentPickIndex || 0;
+        const round = Math.floor(idx / numTeams) + 1;
+        const totalRounds = Math.max(round, Math.round(draftOrder.length / numTeams) || round);
+        const started = Number(poolData.turnStartedAt) || 0;
+        const elapsed = started ? fzdFormatElapsed(Date.now() - started) : '—';
+
+        let away = -1;
+        for (let i = idx; i < draftOrder.length; i++) {
+            if (draftOrder[i] === team.name) { away = i - idx; break; }
+        }
+        const eyebrow = away === 0 ? "C'est votre tour"
+            : away > 0 ? `Votre tour dans ${away} choix`
+            : 'Repêchage en cours';
+
+        return `
+            <span class="fzd-hero-shield" aria-hidden="true">F</span>
+            <div class="fzd-hero-copy">
+                <div class="fzd-hero-eyebrow">${escapeHTML(eyebrow)}</div>
+                <h2 class="fzd-hero-headline">Repêchage en cours</h2>
+            </div>
+            <div class="fzd-hero-stats">
+                <div class="fzd-hero-stat"><span class="fzd-hero-stat-lbl">Ronde</span><span class="fzd-hero-stat-val">${round} / ${totalRounds}</span></div>
+                <div class="fzd-hero-stat-sep" aria-hidden="true"></div>
+                <div class="fzd-hero-stat"><span class="fzd-hero-stat-lbl">Attente</span><span class="fzd-hero-stat-val">${elapsed}</span></div>
+            </div>
+            <a class="fzd-hero-cta" href="draftActif.html?pool=${encodeURIComponent(activeName)}">
+                <span class="fzd-hero-cta-bar" aria-hidden="true"></span>
+                <span class="fzd-hero-cta-label">Aller au repêchage</span>
+                <span class="fzd-hero-cta-chev" aria-hidden="true">›</span>
+            </a>`;
+    }
+
+    if (state.mode === 'preseason') {
+        return `
+            <span class="fzd-hero-shield" aria-hidden="true">F</span>
+            <div class="fzd-hero-copy">
+                <div class="fzd-hero-eyebrow">${state.beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison'}</div>
+                <h2 class="fzd-hero-headline">Saison en préparation</h2>
+            </div>
+            <div class="fzd-hero-stats">${fzdCountdownStatsHTML(state.target)}</div>
+            <a class="fzd-hero-cta" href="mes-pools.html">
+                <span class="fzd-hero-cta-bar" aria-hidden="true"></span>
+                <span class="fzd-hero-cta-label">Gérer mon équipe</span>
+                <span class="fzd-hero-cta-chev" aria-hidden="true">›</span>
+            </a>`;
+    }
+
+    // 'live'
+    return `
+        <span class="fzd-hero-shield" aria-hidden="true">F</span>
+        <div class="fzd-hero-copy">
+            <div class="fzd-hero-eyebrow"><span class="fzd-hero-live-dot" aria-hidden="true"></span>En direct</div>
+            <h2 class="fzd-hero-headline">${state.liveCount} de vos joueurs ${state.liveCount > 1 ? 'sont' : 'est'} sur la glace</h2>
+        </div>
+        <div class="fzd-hero-stats">
+            <div class="fzd-hero-stat"><span class="fzd-hero-stat-lbl">Points</span><span class="fzd-hero-stat-val">${state.totalPts > 0 ? '+' : ''}${state.totalPts}</span></div>
+            <div class="fzd-hero-stat-sep" aria-hidden="true"></div>
+            <div class="fzd-hero-stat"><span class="fzd-hero-stat-lbl">En action</span><span class="fzd-hero-stat-val">${state.liveCount}</span></div>
+        </div>
+        <a class="fzd-hero-cta" href="#fzdPlayersList">
+            <span class="fzd-hero-cta-bar" aria-hidden="true"></span>
+            <span class="fzd-hero-cta-label">Voir les pointages</span>
+            <span class="fzd-hero-cta-chev" aria-hidden="true">›</span>
+        </a>`;
+}
+
+let fzdHeroTimer = null;
+
+function fzdStopHeroTimer() {
+    if (fzdHeroTimer) { clearInterval(fzdHeroTimer); fzdHeroTimer = null; }
+}
+
+/** Called from renderDash() with the same tonight-boxscores it already loaded. */
+function renderHero(tonight) {
+    const container = document.getElementById('fzDashHero');
+    if (!container) return;
+    fzdStopHeroTimer();
+
+    const state = fzdHeroState(tonight);
+    if (!state || state.mode === 'regular') {
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+    }
+
+    container.style.display = '';
+    container.innerHTML = fzdHeroHTML(state);
+
+    // Repêchage : le temps d'attente avance à la seconde. Avant-saison : le
+    // compte à rebours suffit à l'heure. Les deux se recalculent depuis la
+    // même source de vérité (fzdHeroState) plutôt que de dériver localement,
+    // pour ne jamais désynchroniser d'un tour de repêchage ou d'un minuit.
+    if (state.mode === 'draft' || state.mode === 'preseason') {
+        fzdHeroTimer = setInterval(() => {
+            const fresh = fzdHeroState(tonight);
+            if (!fresh || fresh.mode !== state.mode) { renderHero(tonight); return; }
+            container.innerHTML = fzdHeroHTML(fresh);
+        }, 1000);
+    }
+}
+
+// ============================================================
 // MES POOLS — every pool the user is in, same ranking data
 // buildTeamScores already computes for classement.html parity.
 // ============================================================
@@ -988,6 +1152,7 @@ async function loadOpenPoolsCount() {
 async function renderDash() {
     const section = document.getElementById('fzDashSection');
     const body = document.getElementById('fzDashBody');
+    const hero = document.getElementById('fzDashHero');
     const calWrap = document.getElementById('fzDashCalendarWrap');
     const onboard = document.getElementById('fzDashOnboard');
     const mobileHome = document.getElementById('fzMobileHome');
@@ -1000,6 +1165,7 @@ async function renderDash() {
     // « Calendrier LNH » de l'état vide doit pouvoir l'ouvrir.
     section.classList.toggle('is-poolless', !hasPool);
     if (body) body.style.display = hasPool ? '' : 'none';
+    if (!hasPool && hero) { fzdStopHeroTimer(); hero.style.display = 'none'; hero.innerHTML = ''; }
     // calRevealedNoPool : le visiteur sans pool a ouvert le calendrier depuis
     // la carte « Calendrier LNH » — ne pas le refermer sous lui au prochain
     // rafraîchissement de FZPool.
@@ -1020,8 +1186,11 @@ async function renderDash() {
 
     const dash = await loadDashData();
     if (dash) {
+        renderHero(dash.tonight);
         renderLivePanel(dash.tonight, dash.movement, dash.activeName);
         renderMobileHome(dash.tonight, dash.movement, dash.activeName);
+    } else {
+        renderHero(null);
     }
 }
 
