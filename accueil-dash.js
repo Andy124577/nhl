@@ -773,8 +773,65 @@ function fzdFormatClock(ms) {
 // DOM — d'où `scroll` mémorisé ici.
 //   pick   — dernier index de choix rendu (a-t-il bougé = un choix est tombé)
 //   scroll — dernière position de défilement connue de l'utilisateur
+//   reveal — dernier choix déjà mis en avant (une seule fois par choix : le
+//            serveur émet plusieurs « draftUpdated » pour un même choix, et
+//            le filet de 20 s en rejoue d'autres par-dessus)
 const fzdDraftBoardPick = {};
 const fzdDraftBoardScroll = {};
+const fzdDraftBoardReveal = {};
+const fzdDraftBoardRevealTimers = {};
+
+// Temps pendant lequel le choix qui vient de tomber reste au centre avant
+// que la piste glisse au choix suivant. Doit rester aligné sur les keyframes
+// fzd-db-* d'accueil-dash.css : c'est la durée de l'animation plus le temps
+// de la lire.
+const FZD_DB_REVEAL_MS = 1600;
+
+/** Le système demande-t-il moins d'animation ? On saute alors la mise en
+ *  avant et on va droit au choix en cours, comme avant. */
+function fzdMoinsDAnimation() {
+    return typeof matchMedia === 'function'
+        && matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function fzdStopDraftBoardReveal(containerId) {
+    clearTimeout(fzdDraftBoardRevealTimers[containerId]);
+    delete fzdDraftBoardRevealTimers[containerId];
+}
+
+/**
+ * Un choix vient de tomber : on amène le joueur repêché au centre, sa photo
+ * et son nom entrent (classe .is-reveal, animée en CSS), puis la piste glisse
+ * au choix en cours. Deux temps plutôt qu'un seul saut : sinon la carte du
+ * joueur défile hors champ au moment même où elle apparaît, et on ne voit
+ * jamais qui vient d'être pris.
+ */
+function fzdRevelerChoix(containerId, track, carte) {
+    fzdStopDraftBoardReveal(containerId);
+
+    const cible = fzdCenterDraftCard(track, carte, true);
+    if (cible != null) fzdDraftBoardScroll[containerId] = cible;
+
+    // Retirée puis reposée : sans ce cycle, réappliquer la classe sur une
+    // carte qui la porte déjà ne relance pas l'animation.
+    carte.classList.remove('is-reveal');
+    void carte.offsetWidth;
+    carte.classList.add('is-reveal');
+
+    fzdDraftBoardRevealTimers[containerId] = setTimeout(() => {
+        delete fzdDraftBoardRevealTimers[containerId];
+        // La piste est relue dans le DOM plutôt que capturée : un
+        // rafraîchissement a pu la reconstruire pendant l'animation.
+        const box = document.getElementById(containerId);
+        const piste = box && box.querySelector('.fzd-db-track');
+        const montre = piste && piste.querySelector('.fzd-db-card.is-reveal');
+        if (montre) montre.classList.remove('is-reveal');
+        const encours = piste && piste.querySelector('.fzd-db-card.is-current');
+        if (!piste || !encours) return;
+        const suivant = fzdCenterDraftCard(piste, encours, true);
+        if (suivant != null) fzdDraftBoardScroll[containerId] = suivant;
+    }, FZD_DB_REVEAL_MS);
+}
 
 // Centre une carte dans sa piste et renvoie la position visée. scrollTo ne
 // touche que la piste, jamais le défilement de la page. clientWidth vaut 0
@@ -834,8 +891,10 @@ function fzdRenderDraftBoard(containerId, poolData, team, activeName) {
     if (draftState.etat !== 'encours' || !draftOrder.length) {
         box.style.display = 'none';
         box.innerHTML = '';
+        fzdStopDraftBoardReveal(containerId);
         delete fzdDraftBoardPick[containerId];
         delete fzdDraftBoardScroll[containerId];
+        delete fzdDraftBoardReveal[containerId];
         return;
     }
 
@@ -976,12 +1035,26 @@ function fzdRenderDraftBoard(containerId, poolData, team, activeName) {
     fzdBindDragScroll(track);
 
     // Premier rendu → on centre le choix en cours d'un placement sec.
-    // Un choix vient de tomber (l'index a bougé) → on y glisse en douceur
-    // pour ramener l'utilisateur dessus. Sinon → on rend la position qu'il
-    // avait avant le re-rendu.
+    // Un choix vient de tomber (l'index a bougé) → on montre d'abord le
+    // joueur repêché, puis on glisse au choix en cours (fzdRevelerChoix).
+    // Sinon → on rend la position que l'utilisateur avait avant le re-rendu.
     const current = track.querySelector('.is-current');
+    const dernier = track.querySelector('.fzd-db-card.is-last');
     const pickChanged = prevPick != null && prevPick !== idx;
-    if (current && (prevPick == null || pickChanged)) {
+    // Rejouée aussi quand un rafraîchissement tombe au milieu de la mise en
+    // avant (le serveur en émet plusieurs par choix) : les cartes sont
+    // neuves, la classe et le minutage d'avant sont partis avec les
+    // anciennes. Toute la séquence repart, plutôt que de recoller la classe
+    // sur le minuteur déjà lancé — sinon l'animation redémarrerait de zéro
+    // pour être coupée net une fraction de seconde plus tard.
+    const aReveler = dernier && !fzdMoinsDAnimation()
+        && (!!fzdDraftBoardRevealTimers[containerId]
+            || (pickChanged && fzdDraftBoardReveal[containerId] !== idx));
+
+    if (aReveler) {
+        fzdDraftBoardReveal[containerId] = idx;
+        fzdRevelerChoix(containerId, track, dernier);
+    } else if (current && (prevPick == null || pickChanged)) {
         // La cible est mémorisée tout de suite : si un second rafraîchissement
         // arrive pendant le glissement (le serveur en émet plusieurs par
         // choix), il restaure le choix en cours et non la position d'avant.

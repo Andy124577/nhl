@@ -625,6 +625,52 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 .fzd-db-name.is-faint { color: var(--fzd-text-muted); }
 .fzd-db-sub { font: 400 11px/1.3 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
 
+/* Le choix qui vient de tomber — .is-reveal, posée par fzdRevelerChoix()
+   (accueil-dash.js) sur la carte du joueur repêché. La piste s'y arrête, la
+   photo entre en rebond, le nom puis la ligne position/équipe glissent
+   derrière, un anneau accent passe sur la carte ; après quoi le même code
+   fait glisser la piste au choix en cours. Les durées ci-dessous tiennent
+   dans FZD_DB_REVEAL_MS — les changer des deux côtés. */
+/* La bordure accent est dans les keyframes, pas dans .is-reveal : elle
+   revient d'elle-même au gris de la carte à la dernière image. Le rouge
+   reste ainsi la marque du choix EN COURS une fois le moment passé, même si
+   la classe traîne jusqu'au prochain rendu. */
+@keyframes fzd-db-reveal-card {
+    0%   { border-color: var(--fzd-accent); transform: translateY(5px) scale(.965); box-shadow: 0 0 0 0 rgba(185, 61, 40, 0); }
+    30%  { border-color: var(--fzd-accent); transform: none; box-shadow: 0 0 0 7px rgba(185, 61, 40, .17); }
+    80%  { border-color: var(--fzd-accent); box-shadow: 0 0 0 0 rgba(185, 61, 40, 0); }
+    100% { border-color: var(--fzd-border); transform: none; box-shadow: 0 0 0 0 rgba(185, 61, 40, 0); }
+}
+@keyframes fzd-db-reveal-face {
+    0%   { opacity: 0; transform: scale(.35); }
+    55%  { opacity: 1; transform: scale(1.16); }
+    100% { opacity: 1; transform: scale(1); }
+}
+@keyframes fzd-db-reveal-text {
+    0%   { opacity: 0; transform: translateX(-9px); }
+    100% { opacity: 1; transform: none; }
+}
+.fzd-db-card.is-reveal {
+    animation: fzd-db-reveal-card 1.35s cubic-bezier(.22, .85, .3, 1) both;
+}
+.fzd-db-card.is-reveal .fzd-db-face {
+    animation: fzd-db-reveal-face .6s cubic-bezier(.2, 1.35, .35, 1) both;
+}
+.fzd-db-card.is-reveal .fzd-db-name {
+    animation: fzd-db-reveal-text .45s ease-out .18s both;
+}
+.fzd-db-card.is-reveal .fzd-db-sub {
+    animation: fzd-db-reveal-text .45s ease-out .3s both;
+}
+/* Le carrousel s'arrête déjà sur la carte : sans mouvement, il ne reste
+   qu'à ne rien animer — le nom et la photo sont là dès le rendu. */
+@media (prefers-reduced-motion: reduce) {
+    .fzd-db-card.is-reveal,
+    .fzd-db-card.is-reveal .fzd-db-face,
+    .fzd-db-card.is-reveal .fzd-db-name,
+    .fzd-db-card.is-reveal .fzd-db-sub { animation: none; }
+}
+
 .fzd-db-card-foot {
     margin-top: auto;
     border-top: 1px solid var(--fzd-border-soft); padding-top: 9px;
