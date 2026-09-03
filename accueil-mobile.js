@@ -608,7 +608,14 @@ function renderMobileHome(tonight, movement, activeName) {
     let html = '<div class="fz-dash-hero" id="fzmHeroSlot" style="display:none;"></div>';
 
     if (isRegular || isLive) html += fzmRankStrip(activeName, movement);
-    if (isRegular || isLive) html += '<div class="fzm-cal-slot" id="fzmCalSlot"></div>';
+
+    // Le calendrier est posé dans TOUS les modes : c'est le seul endroit d'où
+    // il est visible au téléphone (accueil-mobile.css masque celui resté à sa
+    // place bureau), et un repêchage ou l'avant-saison sont justement les
+    // moments où l'on veut voir arriver le calendrier de la LNH. En saison
+    // régulière il remplace en plus l'ancienne bande « En direct et à venir ».
+    html += '<div class="fzm-cal-slot" id="fzmCalSlot"></div>';
+
     if (isRegular || isLive) html += fzmPlayersRow(tonight, rosterNames);
 
     if (isDraft) html += '<div class="fz-dash-draftboard" id="fzmDraftBoard"></div>';

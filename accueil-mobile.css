@@ -307,16 +307,13 @@ html[data-theme="dark"] .fz-mobile-home {
    un pool (déjà géré par accueil-dash.js/renderDash).
    ============================================================ */
 @media (max-width: 768px) {
-    /* Le calendrier est le même nœud qu'au bureau : fzdPlaceCalendar()
-       (accueil-dash.js) le DÉPLACE dans #fzmCalSlot, entre le classement et
-       « Vos joueurs ce soir », où il remplace l'ancienne bande « En direct et
-       à venir » qui ne montrait que la journée du jour. Le sélecteur ci-
-       dessous ne vise donc QUE le calendrier resté à sa place bureau (enfant
-       direct de .fz-dash) : la home mobile ne pose son slot qu'en saison
-       régulière / match en direct, et pendant un repêchage ou l'avant-saison
-       le calendrier doit rester masqué comme avant. Sans pool, la home mobile
-       n'existe pas et il reste ouvrable depuis la carte « Calendrier LNH ». */
-    .fz-dash-section:not(.is-poolless) .fz-dash > #fzDashCalendarWrap { display: none !important; }
+    /* Le calendrier n'est PAS masqué ici. C'est le même nœud qu'au bureau, et
+       fzdPlaceCalendar() (accueil-dash.js) le DÉPLACE dans #fzmCalSlot, que la
+       home mobile pose dans les quatre modes — il ne peut donc pas apparaître
+       deux fois. Une règle de masquage servait autrefois de garde-fou ; elle
+       cachait surtout le calendrier pour de bon dès que la home mobile ne
+       rendait pas (avant-saison, effectif pas encore chargé). Le laisser à sa
+       place bureau est le bon repli : visible, simplement plus bas. */
     #fzDashOffseason, #fzDashBody, #fzDashHero, #fzDashDraftBoard { display: none !important; }
 
     /* Le slot ne fait que porter le calendrier ; la marge basse de

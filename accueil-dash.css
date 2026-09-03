@@ -889,17 +889,24 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 }
 
 /* --- Cartes de match ----------------------------------------- */
+/* Carrousel : deux cartes par vue au bureau, une au téléphone, accrochées au
+   défilement. Le nombre de cartes par vue est relu par calGamesPerView()
+   (accueil-dash.js) pour poser une puce par PAGE et régler le pas des
+   flèches — la CSS reste donc la seule source de la largeur des cartes. */
 .fzd-cal-games {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
     gap: 12px;
-    /* Sans ça, une carte sans « Vos joueurs » s'étire à la hauteur de sa
-       voisine et laisse un grand vide sous les deux équipes. */
-    align-items: start;
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    align-items: stretch;
 }
+.fzd-cal-games::-webkit-scrollbar { display: none; }
 
 .fzd-game-card {
+    flex: 0 0 calc((100% - 12px) / 2);
     min-width: 0;
+    scroll-snap-align: start;
     border: 1px solid var(--fzd-border);
     border-radius: 11px;
     overflow: hidden;
@@ -1045,6 +1052,20 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
     color: var(--fzd-text-faint);
 }
 
+.fzd-cal-carnav { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.fzd-cal-arrow {
+    background: none;
+    border: none;
+    padding: 0 2px;
+    cursor: pointer;
+    font: 400 15px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-muted);
+}
+.fzd-cal-arrow:hover { color: var(--fzd-ink); }
+/* Bout de course : la flèche s'efface au lieu de disparaître, la rangée ne
+   se décale pas sous le doigt. */
+.fzd-cal-arrow.is-off { color: var(--fzd-border-strong); cursor: default; }
+
 .fzd-gp-dots, .fzd-cal-dots { display: flex; align-items: center; justify-content: center; gap: 5px; }
 .fzd-gp-dot, .fzd-cal-dot {
     width: 8px; height: 3px;
@@ -1054,28 +1075,10 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 }
 .fzd-gp-dot.is-on, .fzd-cal-dot.is-on { width: 14px; background: var(--fzd-accent-fill); }
 
-/* Puces du carrousel des MATCHS : téléphone seulement, le bureau est une
-   grille où rien ne défile. */
-.fzd-cal-dots { display: none; }
-
-.fzd-cal-more {
-    align-self: flex-start;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    font: 600 10px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: var(--fzd-accent);
-}
-.fzd-cal-more:hover { color: var(--fzd-accent-dark); }
-
 .fzd-cal-empty {
     padding: 20px 4px;
     font: 400 13px/1.4 'Helvetica Neue', Helvetica, sans-serif;
     color: var(--fzd-text-faint);
-    grid-column: 1 / -1;
 }
 
 /* Sélecteur de mois, dépliable — remplace un lien mort vers une page
@@ -1520,30 +1523,19 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
     .fzd-cal-dayhead { gap: 9px; padding-top: 0; border-top: none; }
     .fzd-cal-dayname { font-size: 21px; }
 
-    /* Le carrousel : une carte par écran, accrochée, débordant des 16px de
-       marge de la section pour que la carte suivante se devine au bord. */
+    /* Une carte par écran, débordant des 16px de marge de la carte pour que
+       la suivante se devine au bord. */
     .fzd-cal-games {
-        display: flex;
-        grid-template-columns: none;
-        align-items: stretch;
-        gap: 12px;
-        overflow-x: auto;
-        scrollbar-width: none;
-        scroll-snap-type: x mandatory;
-        scroll-padding: 0;
         margin: 0 -16px;
         padding: 0 16px;
+        scroll-padding: 0 16px;
     }
-    .fzd-cal-games::-webkit-scrollbar { display: none; }
-    .fzd-game-card {
-        flex: 0 0 86%;
-        scroll-snap-align: center;
-    }
+    .fzd-game-card { flex-basis: 86%; }
     /* Une seule carte : elle occupe toute la largeur, rien ne défile. */
     .fzd-cal-games > .fzd-game-card:only-child { flex-basis: 100%; }
 
-    .fzd-cal-dots { display: flex; }
-    .fzd-cal-more { display: none; }
+    /* Au doigt on balaie : les flèches ne servent qu'à la souris. */
+    .fzd-cal-arrow { display: none; }
     .fzd-cal-empty { padding: 14px 4px; }
 
     .fzd-team-name { font-size: 14px; }

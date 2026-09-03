@@ -137,10 +137,6 @@ let calMonthCursor = null;
 // les cartes joueur du calendrier montrent la ligne EN DIRECT quand elle
 // existe, et retombent sur les totaux de la saison sinon.
 let calTonight = { players: [], games: [] };
-// Bureau : 4 cartes puis « Voir les N autres matchs ». Au téléphone les
-// matchs défilent, donc ce repli ne s'applique pas.
-let calGamesExpanded = false;
-const CAL_GAMES_COLLAPSED = 4;
 // abbrev → { name, record }, construit une fois depuis /current-teams.
 let nhlTeamIndex = null;
 
@@ -268,8 +264,7 @@ function renderDayHead() {
 
 function renderDayGames() {
     const wrap = document.getElementById('fzdCalGames');
-    const dots = document.getElementById('fzdCalDots');
-    const more = document.getElementById('fzdCalMore');
+    const nav = document.getElementById('fzdCalCarNav');
     if (!wrap || !calData) return;
 
     const day = calData.days.find(d => d.date === calSelectedDate);
@@ -277,40 +272,54 @@ function renderDayGames() {
 
     if (!games.length) {
         wrap.innerHTML = `<p class="fzd-cal-empty">Aucun match cette journée.</p>`;
-        if (dots) dots.innerHTML = '';
-        if (more) more.style.display = 'none';
+        if (nav) nav.style.display = 'none';
         return;
     }
 
-    // Téléphone : tous les matchs, ils défilent horizontalement (un par écran)
-    // au lieu de s'empiler. Bureau : grille de deux colonnes repliée à quatre
-    // cartes, le reste derrière « Voir les N autres matchs ».
-    const phone = calIsPhone();
-    const shown = (phone || calGamesExpanded) ? games : games.slice(0, CAL_GAMES_COLLAPSED);
-
+    // Tous les matchs de la journée, toujours : ils DÉFILENT (deux cartes par
+    // vue au bureau, une au téléphone) au lieu de s'empiler. Plus de repli
+    // « Voir les N autres » — le carrousel les atteint tous.
     const counts = rosterTeamCounts();
-    wrap.innerHTML = shown.map(g => gameCardHTML(g, counts)).join('');
+    wrap.innerHTML = games.map(g => gameCardHTML(g, counts)).join('');
     wrap.scrollLeft = 0;
+    if (nav) nav.style.display = '';
 
-    if (dots) {
-        dots.innerHTML = shown.length > 1
-            ? shown.map((_, i) => `<i class="fzd-cal-dot${i === 0 ? ' is-on' : ''}"></i>`).join('')
-            : '';
-    }
-
-    const rest = games.length - shown.length;
-    if (more) {
-        if (phone || (!rest && !calGamesExpanded)) {
-            more.style.display = 'none';
-        } else {
-            more.style.display = '';
-            more.textContent = calGamesExpanded
-                ? '← Voir moins'
-                : `Voir les ${rest} autre${rest > 1 ? 's' : ''} match${rest > 1 ? 's' : ''} →`;
-        }
-    }
-
+    renderCalGameDots();
     bindPlayerTracks(wrap);
+}
+
+/** Largeur d'un « saut » de carrousel : une carte + le gap de la piste. */
+function calGameStep(wrap) {
+    const card = wrap.querySelector('.fzd-game-card');
+    if (!card) return 0;
+    const gap = parseFloat(getComputedStyle(wrap).columnGap || '0') || 0;
+    return card.offsetWidth + gap;
+}
+
+/** Nombre de cartes visibles d'un coup : deux au bureau, une au téléphone. */
+function calGamesPerView(wrap) {
+    const step = calGameStep(wrap);
+    return step ? Math.max(1, Math.round(wrap.clientWidth / step)) : 1;
+}
+
+/**
+ * Une puce par PAGE, pas par carte : au bureau douze matchs font six pages de
+ * deux, une rangée de douze puces ne voudrait rien dire. Les flèches et les
+ * puces disparaissent quand tout tient dans une seule vue.
+ */
+function renderCalGameDots() {
+    const wrap = document.getElementById('fzdCalGames');
+    const dots = document.getElementById('fzdCalDots');
+    const nav = document.getElementById('fzdCalCarNav');
+    if (!wrap || !dots) return;
+
+    const count = wrap.querySelectorAll('.fzd-game-card').length;
+    const pages = Math.ceil(count / calGamesPerView(wrap));
+    if (nav) nav.style.display = pages > 1 ? '' : 'none';
+    dots.innerHTML = pages > 1
+        ? Array.from({ length: pages }, (_, i) => `<i class="fzd-cal-dot${i === 0 ? ' is-on' : ''}"></i>`).join('')
+        : '';
+    updateCalGameDots();
 }
 
 function gameCardHTML(game, rosterCounts) {
@@ -457,17 +466,30 @@ function bindPlayerTracks(root) {
     });
 }
 
-/** Puces du carrousel des matchs — téléphone seulement : au bureau c'est une
- *  grille et #fzdCalDots est masqué en CSS. */
+/** Reflète la position du carrousel des matchs : puce active, flèches
+ *  grisées aux deux bouts. */
 function updateCalGameDots() {
     const wrap = document.getElementById('fzdCalGames');
     const dots = document.getElementById('fzdCalDots');
-    if (!wrap || !dots || !dots.children.length) return;
-    const card = wrap.firstElementChild;
-    if (!card) return;
-    const step = card.offsetWidth + 12;
-    const i = Math.min(dots.children.length - 1, Math.round(wrap.scrollLeft / step));
-    Array.from(dots.children).forEach((d, k) => d.classList.toggle('is-on', k === i));
+    if (!wrap) return;
+
+    const page = calGameStep(wrap) * calGamesPerView(wrap);
+    if (dots && dots.children.length && page) {
+        const i = Math.min(dots.children.length - 1, Math.round(wrap.scrollLeft / page));
+        Array.from(dots.children).forEach((d, k) => d.classList.toggle('is-on', k === i));
+    }
+
+    const max = wrap.scrollWidth - wrap.clientWidth;
+    document.getElementById('fzdCalGamesPrev')?.classList.toggle('is-off', wrap.scrollLeft <= 1);
+    document.getElementById('fzdCalGamesNext')?.classList.toggle('is-off', wrap.scrollLeft >= max - 1);
+}
+
+/** Avance ou recule d'une page pleine (deux cartes au bureau, une au tél.). */
+function calGamesScroll(dir) {
+    const wrap = document.getElementById('fzdCalGames');
+    if (!wrap) return;
+    const page = calGameStep(wrap) * calGamesPerView(wrap);
+    wrap.scrollBy({ left: dir * (page || wrap.clientWidth), behavior: 'smooth' });
 }
 
 /**
@@ -503,9 +525,6 @@ function fzdRestoreCalendar() {
 }
 
 async function selectCalendarDay(dateStr) {
-    // Changer de journée replie les cartes de match : le « Voir les N autres »
-    // parlait du nombre de matchs de la journée qu'on vient de quitter.
-    calGamesExpanded = false;
     if (calData && calData.days.some(d => d.date === dateStr)) {
         calSelectedDate = dateStr;
         renderCalendar();
@@ -518,7 +537,6 @@ async function selectCalendarDay(dateStr) {
 
 async function calGoPrevWeek() {
     if (!calData || !calData.previousStartDate) return;
-    calGamesExpanded = false;
     calData = await fetchSchedule(calData.previousStartDate);
     calSelectedDate = calData.days[calData.days.length - 1]?.date || calData.previousStartDate;
     renderCalendar();
@@ -526,7 +544,6 @@ async function calGoPrevWeek() {
 
 async function calGoNextWeek() {
     if (!calData || !calData.nextStartDate) return;
-    calGamesExpanded = false;
     calData = await fetchSchedule(calData.nextStartDate);
     calSelectedDate = calData.days[0]?.date || calData.nextStartDate;
     renderCalendar();
@@ -1981,26 +1998,20 @@ function bindCalendarControls() {
     document.getElementById('fzdMonthPrevBtn')?.addEventListener('click', monthPrev);
     document.getElementById('fzdMonthNextBtn')?.addEventListener('click', monthNext);
 
-    document.getElementById('fzdCalMore')?.addEventListener('click', () => {
-        calGamesExpanded = !calGamesExpanded;
-        renderDayGames();
-    });
+    document.getElementById('fzdCalGamesPrev')?.addEventListener('click', () => calGamesScroll(-1));
+    document.getElementById('fzdCalGamesNext')?.addEventListener('click', () => calGamesScroll(1));
     document.getElementById('fzdCalGames')?.addEventListener('scroll', updateCalGameDots, { passive: true });
 
-    // Le même DOM sert la grille bureau et le carrousel téléphone, mais pas
-    // avec le même nombre de cartes (repli à 4 d'un côté, tout de l'autre) ni
-    // au même endroit dans la page : franchir 768px demande donc un re-rendu,
-    // pas seulement un changement de CSS.
-    let lastPhone = calIsPhone();
+    // Le carrousel ne montre pas le même nombre de cartes par vue de part et
+    // d'autre de 768px, et le calendrier ne vit pas au même endroit dans la
+    // page : un redimensionnement doit donc recompter les puces, pas seulement
+    // laisser la CSS faire.
     let resizeTimer = null;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
-            const phone = calIsPhone();
-            if (phone === lastPhone) return;
-            lastPhone = phone;
             fzdPlaceCalendar();
-            if (calData) renderDayGames();
+            renderCalGameDots();
         }, 150);
     });
 }
