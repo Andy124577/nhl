@@ -186,6 +186,34 @@
     const pageLieeAuDraft = /draftActif|draftFini/.test(window.location.pathname);
 
     /**
+     * Écrans du repêchage lui-même : la salle de sélection et le panneau qui
+     * y mène. Une fois le repêchage terminé, ils n'ont plus rien à offrir —
+     * la salle ne prend plus de choix, repechage.html n'est qu'un renvoi — et
+     * leur lien disparaît des barres de navigation (updateDraftLinkVisibility
+     * dans navbar.js). On ferme aussi la porte ici : une URL reste tapable, et
+     * un vieux favori ou lien de notification continue d'arriver.
+     *
+     * draftFini.html n'en fait pas partie : c'est l'archive des sélections,
+     * elle n'a de sens qu'une fois le repêchage fini.
+     */
+    const pageDuRepechage = /repechage\.html|draftActif\.html/.test(window.location.pathname);
+
+    /**
+     * Vérifié au chargement seulement, jamais sur une mise à jour temps réel :
+     * qui est présent au dernier choix doit voir le repêchage se terminer et
+     * son récapitulatif (draftFinPopup.js), pas être éjecté à la seconde où le
+     * tableau se complète.
+     */
+    function fermerLeRepechageSiTermine() {
+        if (!pageDuRepechage || !actif) return false;
+        const donnees = tousLesPools[actif];
+        if (!donnees || etatRepechage(donnees).etat !== 'termine') return false;
+        // replace : le bouton Retour ne doit pas ramener sur une porte fermée.
+        window.location.replace('index.html');
+        return true;
+    }
+
+    /**
      * Retire les paramètres de contexte de l'URL.
      *
      * Sans ce ménage, changer de pool sur une page arrivée par
@@ -210,6 +238,8 @@
             }
             actif = resoudreActif();
             memoriser(actif);
+
+            if (fermerLeRepechageSiTermine()) return API;
 
             // Le préréglage a pu retenir un pool devenu inaccessible : ces
             // pages-là ont déjà démarré dessus, il faut les relancer.

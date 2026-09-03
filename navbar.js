@@ -28,9 +28,13 @@ function initModernNavbar() {
         checkPendingTrades();
         checkActiveDrafts();
         updateTradeLinkVisibility();
+        updateDraftLinkVisibility();
         // Les pastilles parlent du pool actif : elles le suivent quand il change.
         if (window.FZPool) {
-            const majPastilles = () => { checkPendingTrades(); checkActiveDrafts(); updateTradeLinkVisibility(); };
+            const majPastilles = () => {
+                checkPendingTrades(); checkActiveDrafts();
+                updateTradeLinkVisibility(); updateDraftLinkVisibility();
+            };
             FZPool.on(majPastilles);
             FZPool.onData(majPastilles);
         }
@@ -470,6 +474,33 @@ async function checkActiveDrafts() {
         setNavBadge(['desktopDraftBadge', 'bottomDraftBadge'], aSignaler ? '' : null);
     } catch (error) {
         console.error('Error checking active drafts:', error);
+    }
+}
+
+/**
+ * Le lien « Repêchage » disparaît des barres de navigation une fois le
+ * repêchage du pool actif terminé : la salle ne prend plus de choix et
+ * repechage.html n'est plus qu'un panneau indicateur. Les écrans eux-mêmes
+ * referment la porte (fermerLeRepechageSiTermine dans activePool.js) — ceci
+ * ne fait qu'enlever l'onglet qui y menait.
+ *
+ * Sans pool actif, le lien reste : c'est par là qu'on rejoint un repêchage.
+ */
+async function updateDraftLinkVisibility() {
+    try {
+        if (!window.FZPool) return;
+        await FZPool.ready();
+
+        const actif = FZPool.get();
+        const pool = FZPool.mine().find(p => p.name === actif);
+        const visible = !pool || FZPool.draftState(pool.data).etat !== 'termine';
+
+        ['desktopPoolLink', 'bottomPoolLink'].forEach(id => {
+            const lien = document.getElementById(id);
+            if (lien) lien.style.display = visible ? '' : 'none';
+        });
+    } catch (error) {
+        console.error('Error checking draft link visibility:', error);
     }
 }
 

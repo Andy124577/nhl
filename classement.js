@@ -142,6 +142,16 @@ async function loadAllUserPools() {
         }
 
         showPoolStandings(pool.name);
+
+        // ?equipe=… ouvre directement la fiche d'une équipe. C'est par là
+        // qu'arrive « Voir mes joueurs repêchés » (bannière de l'accueil,
+        // accueil-dash.js) : une fois le repêchage terminé, c'est ici que
+        // vivent les choix qu'on y a faits. Le classement reste dessous, le
+        // fil d'Ariane y ramène.
+        const equipeDemandee = new URLSearchParams(window.location.search).get('equipe');
+        if (equipeDemandee && pool.data.teams && pool.data.teams[equipeDemandee]) {
+            showTeamRoster(pool.name, equipeDemandee);
+        }
     } catch (error) {
         console.error('Error loading pools:', error);
         showError('Erreur', 'Impossible de charger votre pool');

@@ -627,7 +627,10 @@ function renderMobileHome(tonight, movement, activeName) {
     const isDraft = mode === 'draft';
     const isPreseason = mode === 'preseason';
     const isLive = mode === 'live';
-    const isRegular = mode === 'regular';
+    // 'draftdone' ne change que la bannière : le corps de l'écran reste celui
+    // de la saison régulière. Sans ce rattachement, terminer son repêchage
+    // ferait disparaître le classement, les matchs et les joueurs du soir.
+    const isRegular = mode === 'regular' || mode === 'draftdone';
 
     const rosterNames = new Set(activeRosterNames());
 

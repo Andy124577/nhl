@@ -468,6 +468,26 @@ function renderPregame(container) {
 // REPÊCHAGE / ÉCHANGES — quick-action tiles, same logic
 // renderPoolGlance used to drive (accueil.js's draftActionFor).
 // ============================================================
+/**
+ * Lien vers la liste de tous les joueurs qu'on a repêchés : classement.html
+ * ouvre directement la fiche de l'équipe sur ce paramètre (voir
+ * loadAllUserPools dans classement.js). C'est ce que remplace le lien
+ * « Repêchage » une fois celui-ci terminé — l'onglet disparaît alors des
+ * barres de navigation et ses écrans se referment (navbar.js, activePool.js).
+ */
+function fzdMonEffectifHref(activeName, teamName) {
+    return `classement.html?pool=${encodeURIComponent(activeName)}`
+         + `&equipe=${encodeURIComponent(teamName)}`;
+}
+
+/** Tous les choix d'une équipe, l'équipe LNH repêchée comprise. */
+function fzdNombreDeChoix(teamData) {
+    const td = teamData || {};
+    return (td.offensive || []).length + (td.defensive || []).length
+         + (td.goalie || []).length + (td.rookie || []).length
+         + (td.teams || []).length;
+}
+
 function draftTileDetail(state, activeName) {
     if (state.etat === 'encours') return `${escapeHTML(activeName)} · choix ${(state.choixFait || 0) + 1}/${state.choixTotal || '—'}`;
     if (state.etat === 'termine') return 'Saison en cours';
@@ -487,7 +507,12 @@ function renderQuickActions() {
     const draftFallback = { attente: 'En attente de joueurs', termine: 'Terminé' };
 
     const draftValue = action ? action.label : (draftFallback[state.etat] || '—');
-    const draftHref = action ? action.href : `repechage.html?pool=${encodeURIComponent(activeName)}`;
+    // Repêchage terminé : repechage.html renverrait maintenant à l'accueil
+    // (activePool.js). La tuile mène plutôt là où le repêchage a abouti —
+    // l'effectif qu'on en a tiré.
+    const draftHref = action ? action.href
+        : state.etat === 'termine' ? fzdMonEffectifHref(activeName, team.name)
+        : `repechage.html?pool=${encodeURIComponent(activeName)}`;
     const draftLive = action?.kind === 'your-turn';
 
     const activeTrades = (userData.pendingTrades || []).filter(t => t.draftName === activeName);
@@ -532,6 +557,7 @@ function fzdHeroState(tonight) {
 
     const draftState = FZPool.draftState(poolData);
     const isDraft = draftState.etat === 'encours';
+    const draftDone = draftState.etat === 'termine';
     const today = todayISO();
     const seasonStart = calData?.regularSeasonStartDate;
     const isPreseason = !isDraft && !!seasonStart && today < seasonStart;
@@ -548,7 +574,13 @@ function fzdHeroState(tonight) {
     if (isPreseason) {
         const campStart = calData?.preSeasonStartDate;
         const beforeCamp = !!campStart && today < campStart;
-        return { mode: 'preseason', target: beforeCamp ? campStart : seasonStart, beforeCamp };
+        // `draftDone` ne change pas le décompte, seulement ce vers quoi la
+        // bannière renvoie : l'effectif qu'on vient de repêcher plutôt que la
+        // gestion d'équipe.
+        return {
+            mode: 'preseason', target: beforeCamp ? campStart : seasonStart, beforeCamp,
+            draftDone, activeName, teamName: team.name
+        };
     }
 
     const rosterNames = new Set(activeRosterNames());
@@ -560,6 +592,16 @@ function fzdHeroState(tonight) {
     if (liveCount > 0) {
         const totalPts = myLines.reduce((s, p) => s + (p.fantasyPointsTonight || 0), 0);
         return { mode: 'live', liveCount, totalPts };
+    }
+
+    // Repêchage terminé, rien de plus pressant à l'écran : la bannière —
+    // autrement masquée — sert de porte vers l'effectif repêché. Placée
+    // APRÈS 'live' : des joueurs sur la glace ce soir passent avant.
+    if (draftDone) {
+        return {
+            mode: 'draftdone', activeName, teamName: team.name,
+            picks: fzdNombreDeChoix(team.data)
+        };
     }
 
     return { mode: 'regular' };
@@ -613,16 +655,36 @@ function fzdHeroHTML(state) {
     }
 
     if (state.mode === 'preseason') {
+        // Repêchage terminé : le décompte reste, mais l'action utile n'est
+        // plus la gestion d'équipe — c'est de revoir qui on vient de repêcher.
+        const fait = state.draftDone && state.activeName && state.teamName;
         return `
             <span class="fzd-hero-shield" aria-hidden="true">F</span>
             <div class="fzd-hero-copy">
-                <div class="fzd-hero-eyebrow">${state.beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison'}</div>
-                <h2 class="fzd-hero-headline">Saison en préparation</h2>
+                <div class="fzd-hero-eyebrow">${fait ? 'Repêchage terminé' : (state.beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison')}</div>
+                <h2 class="fzd-hero-headline">${fait ? 'Votre équipe est au complet' : 'Saison en préparation'}</h2>
             </div>
             <div class="fzd-hero-stats">${fzdCountdownStatsHTML(state.target)}</div>
-            <a class="fzd-hero-cta" href="mes-pools.html">
+            <a class="fzd-hero-cta" href="${fait ? fzdMonEffectifHref(state.activeName, state.teamName) : 'mes-pools.html'}">
                 <span class="fzd-hero-cta-bar" aria-hidden="true"></span>
-                <span class="fzd-hero-cta-label">Gérer mon équipe</span>
+                <span class="fzd-hero-cta-label">${fait ? 'Voir mes joueurs repêchés' : 'Gérer mon équipe'}</span>
+                <span class="fzd-hero-cta-chev" aria-hidden="true">›</span>
+            </a>`;
+    }
+
+    if (state.mode === 'draftdone') {
+        return `
+            <span class="fzd-hero-shield" aria-hidden="true">F</span>
+            <div class="fzd-hero-copy">
+                <div class="fzd-hero-eyebrow">Repêchage terminé</div>
+                <h2 class="fzd-hero-headline">Votre équipe est au complet</h2>
+            </div>
+            <div class="fzd-hero-stats">
+                <div class="fzd-hero-stat"><span class="fzd-hero-stat-lbl">Choix</span><span class="fzd-hero-stat-val">${state.picks}</span></div>
+            </div>
+            <a class="fzd-hero-cta" href="${fzdMonEffectifHref(state.activeName, state.teamName)}">
+                <span class="fzd-hero-cta-bar" aria-hidden="true"></span>
+                <span class="fzd-hero-cta-label">Voir mes joueurs repêchés</span>
                 <span class="fzd-hero-cta-chev" aria-hidden="true">›</span>
             </a>`;
     }

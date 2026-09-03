@@ -46,6 +46,11 @@
         // ici plutôt que de laisser découvrir le refus dans la modale.
         const equipeVerrouillee = etat.commence;
 
+        // Le lien « Repêchage » du pied de carte tombe une fois le repêchage
+        // terminé : la page s'y refermerait d'elle-même (activePool.js). Le
+        // classement, lui, mène aux effectifs qui en sont sortis.
+        const repechageOuvert = etat.etat !== 'termine';
+
         return `
             <article class="mp-card${estActif ? ' is-active' : ''}">
                 <header class="mp-head">
@@ -101,7 +106,7 @@
 
                 <footer class="mp-foot">
                     <a class="mp-link" href="classement.html?${lien}">Classement</a>
-                    <a class="mp-link" href="repechage.html?${lien}">Repêchage</a>
+                    ${repechageOuvert ? `<a class="mp-link" href="repechage.html?${lien}">Repêchage</a>` : ''}
                     ${echanges ? `<a class="mp-link" href="trade.html?${lien}">Échanges</a>` : ''}
                 </footer>
             </article>`;
