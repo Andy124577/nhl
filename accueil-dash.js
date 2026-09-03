@@ -732,6 +732,58 @@ function fzdFormatClock(ms) {
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
+// Dernier choix affiché par piste : sert à savoir, au re-rendu, si un choix
+// vient d'être fait (index qui change) — auquel cas on ramène l'utilisateur
+// sur le choix en cours en douceur plutôt que d'un saut sec.
+const fzdDraftBoardPick = {};
+
+// Centre une carte dans sa piste. scrollTo ne touche que la piste, jamais le
+// défilement de la page. clientWidth vaut 0 tant que le panneau n'est pas
+// posé : on repasse alors à la frame suivante.
+function fzdCenterDraftCard(track, card, smooth) {
+    if (!track || !card) return;
+    if (!track.clientWidth) {
+        requestAnimationFrame(() => fzdCenterDraftCard(track, card, false));
+        return;
+    }
+    const left = Math.max(0, card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2);
+    track.scrollTo({ left, behavior: smooth ? 'smooth' : 'auto' });
+}
+
+// Glisser-déposer à la souris pour faire défiler la piste (le tactile la
+// fait déjà défiler nativement). Rebranché à chaque rendu : la piste est un
+// nœud neuf, donc aucun écouteur ne s'empile.
+function fzdBindDragScroll(track) {
+    let down = false, startX = 0, startScroll = 0, moved = 0;
+
+    track.addEventListener('pointerdown', e => {
+        if (e.pointerType === 'touch' || e.button !== 0) return;
+        down = true; moved = 0;
+        startX = e.clientX; startScroll = track.scrollLeft;
+        track.classList.add('is-dragging');
+        track.setPointerCapture(e.pointerId);
+    });
+    track.addEventListener('pointermove', e => {
+        if (!down) return;
+        const dx = e.clientX - startX;
+        moved += Math.abs(dx);
+        track.scrollLeft = startScroll - dx;
+    });
+    const end = e => {
+        if (!down) return;
+        down = false;
+        track.classList.remove('is-dragging');
+        try { track.releasePointerCapture(e.pointerId); } catch (_) {}
+    };
+    track.addEventListener('pointerup', end);
+    track.addEventListener('pointercancel', end);
+    // Un vrai glisser ne doit pas déclencher le clic d'un élément sous le
+    // curseur (lien futur dans une carte, etc.).
+    track.addEventListener('click', e => {
+        if (moved > 6) { e.preventDefault(); e.stopPropagation(); }
+    }, true);
+}
+
 function fzdRenderDraftBoard(containerId, poolData, team, activeName) {
     const box = document.getElementById(containerId);
     if (!box) return;
@@ -742,6 +794,7 @@ function fzdRenderDraftBoard(containerId, poolData, team, activeName) {
     if (draftState.etat !== 'encours' || !draftOrder.length) {
         box.style.display = 'none';
         box.innerHTML = '';
+        delete fzdDraftBoardPick[containerId];
         return;
     }
 
@@ -847,6 +900,13 @@ function fzdRenderDraftBoard(containerId, poolData, team, activeName) {
     const pct = Math.round((idx / total) * 100);
     const remaining = total - idx;
 
+    // Position de défilement d'avant le re-rendu : un rafraîchissement qui
+    // n'apporte pas de nouveau choix (pendule, mise à jour d'un autre pool)
+    // ne doit pas arracher l'utilisateur de là où il regarde.
+    const prevPick = fzdDraftBoardPick[containerId];
+    const prevTrack = box.querySelector('.fzd-db-track');
+    const prevScroll = prevTrack ? prevTrack.scrollLeft : null;
+
     box.style.display = '';
     box.innerHTML = `
         <div class="fzd-db-inner">
@@ -871,14 +931,20 @@ function fzdRenderDraftBoard(containerId, poolData, team, activeName) {
         </div>`;
 
     const track = box.querySelector('.fzd-db-track');
+    fzdBindDragScroll(track);
 
-    // Ouvre centré sur le choix en cours (positionnement immédiat, pas d'anim
-    // au chargement ni à chaque rafraîchissement de données). scrollLeft ne
-    // touche que la piste, jamais le défilement de la page.
+    // Premier rendu → on centre le choix en cours d'un placement sec.
+    // Un choix vient de tomber (l'index a bougé) → on y glisse en douceur
+    // pour ramener l'utilisateur dessus. Sinon → on rend la position qu'il
+    // avait avant le re-rendu.
     const current = track.querySelector('.is-current');
-    if (current) {
-        track.scrollLeft = Math.max(0, current.offsetLeft - (track.clientWidth - current.offsetWidth) / 2);
+    const pickChanged = prevPick != null && prevPick !== idx;
+    if (current && (prevPick == null || pickChanged)) {
+        fzdCenterDraftCard(track, current, pickChanged);
+    } else if (prevScroll != null) {
+        track.scrollLeft = prevScroll;
     }
+    fzdDraftBoardPick[containerId] = idx;
 
     box.querySelectorAll('.fzd-db-nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {

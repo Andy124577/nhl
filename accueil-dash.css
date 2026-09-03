@@ -465,8 +465,20 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
     margin: 16px -18px 0; padding: 2px 18px 4px;
+    cursor: grab;
 }
 .fzd-db-track::-webkit-scrollbar { display: none; }
+/* Glisser à la souris (fzdBindDragScroll) : on coupe l'accroche le temps du
+   geste — sinon le scroll-snap ramène la piste en arrière — et on neutralise
+   la sélection de texte. Elle se rétablit au relâché et cale sur la carte la
+   plus proche. */
+.fzd-db-track.is-dragging {
+    cursor: grabbing;
+    scroll-snap-type: none;
+    user-select: none;
+}
+/* Pas d'image fantôme traînée à la souris pendant le glisser. */
+.fzd-db-track img { -webkit-user-drag: none; user-select: none; }
 
 .fzd-db-card {
     flex: 0 0 192px; width: 192px;
