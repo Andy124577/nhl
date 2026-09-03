@@ -698,6 +698,31 @@ function renderHero(tonight, containerId = 'fzDashHero') {
 const FZD_POS_FR = { offensive: 'ATT', defensive: 'DÉF', goalie: 'GAR', rookie: 'REC', teams: 'ÉQ' };
 const fzdDraftBoardTimers = {};
 
+// Photo d'un joueur par son nom : picksHistory ne garde que le nom, sans
+// identifiant pour viser le CDN de la LNH directement. On la retrouve dans
+// les stats déjà chargées (userData.statsData, voir loadCurrentStats dans
+// accueil.js). Index construit une fois, reconstruit si la liste change.
+const fzdHeadshotByName = (() => {
+    let map = null;
+    return name => {
+        if (!name) return '';
+        const players = (typeof userData !== 'undefined' && userData.statsData && userData.statsData.players) || null;
+        if (!players) return '';
+        if (!map || map._n !== players.length) {
+            map = { _n: players.length };
+            players.forEach(p => { if (p.playerName) map[p.playerName.trim().toLowerCase()] = p.headshot || ''; });
+        }
+        return map[name.trim().toLowerCase()] || '';
+    };
+})();
+
+function fzdDraftFaceHTML(name) {
+    const src = fzdHeadshotByName(name);
+    return src
+        ? `<img class="fzd-db-face" src="${escapeHTML(src)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
+        : `<span class="fzd-db-face is-empty">${escapeHTML((name || '?').trim().charAt(0) || '?')}</span>`;
+}
+
 function fzdStopDraftBoardTimer(containerId) {
     if (fzdDraftBoardTimers[containerId]) { clearInterval(fzdDraftBoardTimers[containerId]); delete fzdDraftBoardTimers[containerId]; }
 }
@@ -753,9 +778,12 @@ function fzdRenderDraftBoard(containerId, poolData, team, activeName) {
                         <span class="fzd-db-num">Choix ${n}</span>
                         <span class="fzd-db-rc">${rc}</span>
                     </div>
-                    <div class="fzd-db-card-body">
-                        <span class="fzd-db-name">${escapeHTML(h.player || '—')}</span>
-                        <span class="fzd-db-sub">${pos ? escapeHTML(pos) + ' · ' : ''}${escapeHTML(h.team || teamName)}</span>
+                    <div class="fzd-db-card-body has-face">
+                        ${fzdDraftFaceHTML(h.player)}
+                        <span class="fzd-db-ident">
+                            <span class="fzd-db-name">${escapeHTML(h.player || '—')}</span>
+                            <span class="fzd-db-sub">${pos ? escapeHTML(pos) + ' · ' : ''}${escapeHTML(h.team || teamName)}</span>
+                        </span>
                     </div>
                     <div class="fzd-db-card-foot">
                         <span>${escapeHTML(teamName)}${mine ? ' · vous' : ''}</span>

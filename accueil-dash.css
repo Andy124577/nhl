@@ -504,7 +504,22 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 }
 
 .fzd-db-card-body { display: flex; flex-direction: column; gap: 5px; }
-.fzd-db-name { font: 600 13.5px/1.2 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink); }
+/* Choix déjà fait : mugshot du joueur (CDN LNH, fzdDraftFaceHTML) à gauche
+   du nom. Les autres cartes n'ont pas encore de joueur. */
+.fzd-db-card-body.has-face { flex-direction: row; align-items: center; gap: 9px; }
+.fzd-db-ident { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fzd-db-face {
+    width: 30px; height: 30px; flex-shrink: 0;
+    border-radius: 50%; object-fit: cover;
+    background: var(--fzd-bg-alt);
+    border: 1px solid var(--fzd-border);
+}
+.fzd-db-face.is-empty {
+    display: flex; align-items: center; justify-content: center;
+    font: 700 11px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-faint); text-transform: uppercase;
+}
+.fzd-db-name { font: 600 13.5px/1.2 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fzd-db-name.is-faint { color: var(--fzd-text-muted); }
 .fzd-db-sub { font: 400 11px/1.3 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
 
@@ -551,6 +566,8 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
     .fzd-db-track { gap: 10px; margin: 14px -16px 0; padding: 2px 16px 4px; }
     .fzd-db-card { flex-basis: 168px; width: 168px; }
     .fzd-db-card.is-current { flex-basis: 246px; width: 246px; }
+    .fzd-db-card-body.has-face { gap: 8px; }
+    .fzd-db-face { width: 28px; height: 28px; }
     .fzd-db-num-lg { font-size: 26px; }
     .fzd-db-clock { font-size: 20px; }
     .fzd-db-progress { min-width: 120px; }
