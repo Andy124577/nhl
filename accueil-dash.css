@@ -383,14 +383,31 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 .fzd-hero-cta {
     display: flex; align-items: center; gap: 13px;
     background: #16181a;
+    border: 0;
     border-radius: 11px;
     padding: 15px 18px;
     text-decoration: none;
     box-shadow: 0 6px 18px rgba(20,10,6,.22);
     transition: background .18s ease;
     flex-shrink: 0;
+    /* Le récapitulatif de repêchage est un <button> — rien à ouvrir, juste un
+       popup — et doit rester identique au <a> qui l'accompagne. */
+    font: inherit; cursor: pointer; text-align: left;
 }
 .fzd-hero-cta:hover { background: #1f2225; }
+
+/* Repêchage terminé : deux actions côte à côte — le récapitulatif en cartes
+   (plein) et le classement (contour). Le second est secondaire : même forme,
+   fond transparent, pour qu'un seul des deux tire l'œil. */
+.fzd-hero-ctas { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.fzd-hero-cta--ghost {
+    background: rgba(255,255,255,.12);
+    box-shadow: none;
+    border: 1px solid rgba(255,255,255,.34);
+}
+.fzd-hero-cta--ghost:hover { background: rgba(255,255,255,.2); }
+.fzd-hero-cta--ghost .fzd-hero-cta-bar { background: rgba(255,255,255,.7); }
+.fzd-hero-cta--ghost .fzd-hero-cta-chev { color: rgba(255,255,255,.7); }
 .fzd-hero-cta-bar { width: 3px; align-self: stretch; border-radius: 2px; background: var(--fzh-c); }
 .fzd-hero-cta-label {
     font: 600 14px/1 'Oswald', sans-serif; letter-spacing: .06em; text-transform: uppercase;
@@ -1247,4 +1264,8 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
     .fzd-hero-headline { font-size: 22px; }
     .fzd-hero-stats { flex: 1 1 100%; }
     .fzd-hero-cta { flex: 1 1 100%; justify-content: center; }
+    /* Les deux boutons de fin de repêchage passent l'un sous l'autre plutôt
+       que de se serrer sur une ligne : leurs libellés ne se coupent pas. */
+    .fzd-hero-ctas { flex: 1 1 100%; flex-wrap: wrap; gap: 8px; }
+    .fzd-hero-ctas .fzd-hero-cta { flex: 1 1 100%; }
 }

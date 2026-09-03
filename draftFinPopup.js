@@ -10,9 +10,15 @@
  * localStorage), pour ne pas ré-agresser l'écran à chaque rafraîchissement.
  * `window.fzShowDraftEndPopup()` permet de le rouvrir à la demande.
  *
- * Le fichier est autonome : il ne dépend que des globales déjà exposées par
- * draftActif.js (`draftData`, `getUserTeam`, `isDraftComplete`, …) et de
- * `resolveHeadshotByName` (headshots.js). Tout est gardé par `typeof`.
+ * Le fichier est autonome : sur draftActif.html il lit les globales déjà
+ * exposées par draftActif.js (`draftData`, `getUserTeam`, `isDraftComplete`,
+ * `fullPlayerData`, …) et `resolveHeadshotByName` (headshots.js) ; tout est
+ * gardé par `typeof`.
+ *
+ * Ailleurs — l'accueil, dont la bannière rouvre le même récapitulatif — la
+ * page fournit ses propres données par `window.fzSetDraftEndSource()` avant
+ * d'appeler `fzShowDraftEndPopup()`. L'auto-affichage, lui, reste réservé à
+ * la salle de repêchage : charger ce fichier ailleurs n'ouvre rien.
  *
  * Maquette : Claude Design — « Fin de repechage.dc.html ».
  */
@@ -38,6 +44,22 @@
   var lastFocus = null;     // pour rendre le focus à la fermeture
   var seenAutoShow = false; // évite un double auto-affichage dans la même session
 
+  /* Source de données.
+   *
+   * Par défaut : les globales de draftActif.js (draftData, fullPlayerData,
+   * getUserTeam…), comme à l'origine. Une page qui n'a pas ces globales —
+   * l'accueil, où la bannière rouvre le même récapitulatif — fournit les
+   * siennes par fzSetDraftEndSource() :
+   *
+   *   { draftData, teamName, clanName, complete,
+   *     skaters, goalies, teams, headshot(nom) }
+   *
+   * Chaque accesseur ci-dessous lit la source si elle existe, sinon retombe
+   * sur la globale : un seul popup, un seul rendu, deux origines de données.
+   */
+  var SRC = null;
+  window.fzSetDraftEndSource = function (source) { SRC = source || null; };
+
   /* ------------------------------------------------------------------ utils */
 
   function esc(s) {
@@ -47,20 +69,30 @@
   }
 
   function clan() {
+    if (SRC && SRC.clanName) return SRC.clanName;
     if (typeof currentClan !== "undefined" && currentClan) return currentClan;
     try { return localStorage.getItem("draftClan") || ""; } catch (e) { return ""; }
   }
 
+  /** Les données du pool : équipes, historique des choix, ordre. */
+  function donnees() {
+    if (SRC && SRC.draftData) return SRC.draftData;
+    return (typeof draftData !== "undefined" && draftData) ? draftData : null;
+  }
+
   function draftReady() {
-    return typeof draftData !== "undefined" && draftData && draftData.teams;
+    var d = donnees();
+    return !!(d && d.teams);
   }
 
   function draftComplete() {
+    if (SRC) return !!SRC.complete;
     try { return typeof isDraftComplete === "function" && isDraftComplete(); }
     catch (e) { return false; }
   }
 
   function myTeamName() {
+    if (SRC) return SRC.teamName || null;
     try { return typeof getUserTeam === "function" ? getUserTeam() : null; }
     catch (e) { return null; }
   }
@@ -72,6 +104,15 @@
   }
 
   function headshot(name) {
+    // resolveHeadshotByName (headshots.js) fouille les globales de la salle
+    // de repêchage ; ailleurs elles n'existent pas, d'où le résolveur que la
+    // page peut fournir avec sa source (l'accueil a déjà son index de photos).
+    if (SRC && typeof SRC.headshot === "function") {
+      try {
+        var s = SRC.headshot(name);
+        if (s) return s;
+      } catch (e) {}
+    }
     if (typeof resolveHeadshotByName === "function") {
       var u = resolveHeadshotByName(name);
       if (u) return u;
@@ -113,17 +154,47 @@
     }
   }
 
+  function liste(cle, global) {
+    if (SRC && Array.isArray(SRC[cle])) return SRC[cle];
+    return Array.isArray(global) ? global : null;
+  }
+
   function findSkater(name) {
-    if (typeof fullPlayerData === "undefined" || !Array.isArray(fullPlayerData)) return null;
-    return fullPlayerData.find(function (p) { return p.skaterFullName === name; }) || null;
+    var l = liste("skaters", typeof fullPlayerData === "undefined" ? null : fullPlayerData);
+    return l ? (l.find(function (p) { return p.skaterFullName === name; }) || null) : null;
   }
   function findGoalie(name) {
-    if (typeof goalieData === "undefined" || !Array.isArray(goalieData)) return null;
-    return goalieData.find(function (p) { return p.goalieFullName === name; }) || null;
+    var l = liste("goalies", typeof goalieData === "undefined" ? null : goalieData);
+    return l ? (l.find(function (p) { return p.goalieFullName === name; }) || null) : null;
   }
   function findTeam(name) {
-    if (typeof teamData === "undefined" || !Array.isArray(teamData)) return null;
-    return teamData.find(function (t) { return t.teamFullName === name; }) || null;
+    var l = liste("teams", typeof teamData === "undefined" ? null : teamData);
+    return l ? (l.find(function (t) { return t.teamFullName === name; }) || null) : null;
+  }
+
+  /* Abréviation d'un club à partir de son nom complet. draftActif.js expose
+   * la sienne ; ailleurs (l'accueil) il n'y en a pas, d'où cette copie —
+   * même parti pris que la table VILLES plus haut : ce fichier doit pouvoir
+   * s'ouvrir sur n'importe quelle page. */
+  var CLUBS_SPECIAUX = {
+    Florida: "FLA", Calgary: "CGY", "Montréal": "MTL", Nashville: "NSH",
+    Louis: "STL", Washington: "WSH", Toronto: "TOR", Winnipeg: "WPG",
+    Utah: "UTA", Detroit: "DET"
+  };
+
+  function abbrevClub(nomComplet) {
+    if (typeof getTeamAbbreviation === "function") {
+      try {
+        var g = getTeamAbbreviation(nomComplet);
+        if (g) return g;
+      } catch (e) {}
+    }
+    if (!nomComplet) return null;
+    var mots = String(nomComplet).split(" ");
+    if (CLUBS_SPECIAUX[mots[0]]) return CLUBS_SPECIAUX[mots[0]];
+    if (CLUBS_SPECIAUX[mots[1]]) return CLUBS_SPECIAUX[mots[1]];
+    if (mots.length === 3) return mots.map(function (m) { return m[0]; }).join("").toUpperCase();
+    return mots[0].substring(0, 3).toUpperCase();
   }
 
   /* ------------------------------------------------------- collecte des choix */
@@ -134,8 +205,9 @@
    * ajoutés ensuite, catégorie par catégorie. */
   function collectPicks() {
     if (!draftReady()) return [];
+    var d = donnees();
     var me = myTeamName();
-    var team = me && draftData.teams[me];
+    var team = me && d && d.teams[me];
     if (!team) return [];
 
     var owned = {};             // nom -> catégorie
@@ -146,8 +218,7 @@
 
     var order = [];
     var placed = {};
-    var histo = (draftData.picksHistory && Array.isArray(draftData.picksHistory))
-      ? draftData.picksHistory : [];
+    var histo = Array.isArray(d.picksHistory) ? d.picksHistory : [];
 
     histo.forEach(function (entry) {
       if (!entry || entry.team !== me || !entry.player) return;
@@ -190,10 +261,7 @@
       var tm = findTeam(item.name);
       if (tm || item.category === "teams") {
         out.isTeam = true;
-        var abbr = null;
-        if (typeof getTeamAbbreviation === "function") {
-          try { abbr = getTeamAbbreviation(item.name); } catch (e) {}
-        }
+        var abbr = abbrevClub(item.name);
         out.badge = abbr || "LNH";
         out.city = "Équipe LNH";
         out.photo = teamLogo(abbr);
@@ -208,9 +276,10 @@
   }
 
   function totalRounds() {
-    if (!draftReady() || !Array.isArray(draftData.draftOrder) || !draftData.draftOrder.length) return 0;
-    var teams = new Set(draftData.draftOrder).size || 1;
-    return Math.ceil(draftData.draftOrder.length / teams);
+    var d = donnees();
+    if (!d || !Array.isArray(d.draftOrder) || !d.draftOrder.length) return 0;
+    var teams = new Set(d.draftOrder).size || 1;
+    return Math.ceil(d.draftOrder.length / teams);
   }
 
   /* ------------------------------------------------------------------ rendu */
@@ -361,16 +430,22 @@
     try { localStorage.setItem(seenKey(), "1"); } catch (e) {}
   }
 
+  /* La salle de repêchage — la seule page qui ouvre le récapitulatif d'elle
+   * même. Ailleurs (l'accueil), le fichier est chargé pour son bouton
+   * « Voir mes joueurs repêchés » : il ne doit rien ouvrir tout seul. */
+  var DANS_LA_SALLE = /draftActif/.test(window.location.pathname);
+
   /* Auto-affichage : une seule fois par pool, quand le repêchage vient de
    * se terminer et que l'utilisateur a une équipe. */
   function maybeAutoShow() {
-    if (seenAutoShow) return;
+    if (seenAutoShow || !DANS_LA_SALLE) return;
     if (!draftReady() || !draftComplete()) return;
     // Attendre que les jeux de données joueurs soient chargés, sinon le
     // récapitulatif s'ouvrirait sans photos ni équipes (et ne se rejoue pas).
     if (typeof fullPlayerData === "undefined" || !fullPlayerData.length) return;
     var me = myTeamName();
-    if (!me || !draftData.teams[me]) return;
+    var d = donnees();
+    if (!me || !d || !d.teams[me]) return;
     if (alreadySeen()) { seenAutoShow = true; return; }
     if (overlay && overlay.classList.contains("is-open")) return;
 

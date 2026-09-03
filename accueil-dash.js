@@ -480,6 +480,76 @@ function fzdMonEffectifHref(activeName, teamName) {
          + `&equipe=${encodeURIComponent(teamName)}`;
 }
 
+/* ---- Récapitulatif de repêchage rouvert depuis l'accueil ----
+   Le popup est celui de la salle de repêchage (draftFinPopup.js) : même
+   cartes, même mise en page. Il y lit des globales que l'accueil n'a pas,
+   d'où la source explicite posée ici avant l'ouverture.
+
+   nhl_filtered_stats.json (position, équipe, photo de chaque joueur) n'est
+   chargé qu'au premier clic, et une seule fois : la home n'a aucune raison
+   de le télécharger pour un bouton qu'on ne pressera peut-être jamais. */
+let fzdBassinJoueurs = null;
+let fzdBassinEnCours = null;
+
+function fzdChargerBassinJoueurs() {
+    if (fzdBassinJoueurs) return Promise.resolve(fzdBassinJoueurs);
+    if (fzdBassinEnCours) return fzdBassinEnCours;
+    fzdBassinEnCours = fetch('nhl_filtered_stats.json')
+        .then(r => r.json())
+        .then(d => {
+            fzdBassinJoueurs = {
+                skaters: [].concat(d.Top_50_Defenders || [], d.Top_100_Offensive_Players || [], d.Top_Rookies || []),
+                goalies: d.Top_50_Goalies || [],
+                teams: d.Teams || []
+            };
+            return fzdBassinJoueurs;
+        })
+        .catch(err => {
+            console.warn('Récapitulatif : bassin de joueurs indisponible', err);
+            // Sans photos ni positions, le récapitulatif reste lisible (noms
+            // et ordre viennent du pool) : mieux vaut l'ouvrir dégradé que
+            // laisser le bouton sans effet.
+            fzdBassinJoueurs = { skaters: [], goalies: [], teams: [] };
+            return fzdBassinJoueurs;
+        })
+        .finally(() => { fzdBassinEnCours = null; });
+    return fzdBassinEnCours;
+}
+
+async function fzdOuvrirRecapRepechage() {
+    if (typeof window.fzShowDraftEndPopup !== 'function') return;
+    const poolData = FZPool.data();
+    const team = FZPool.team();
+    const activeName = FZPool.get();
+    if (!poolData || !team || !activeName) return;
+
+    const bassin = await fzdChargerBassinJoueurs();
+    window.fzSetDraftEndSource({
+        draftData: poolData,
+        teamName: team.name,
+        clanName: activeName,
+        complete: FZPool.draftState(poolData).etat === 'termine',
+        skaters: bassin.skaters,
+        goalies: bassin.goalies,
+        teams: bassin.teams,
+        // Le résolveur de photos de la salle de repêchage lit des globales
+        // que l'accueil n'a pas ; on passe le sien, celui-là même qui donne
+        // déjà leur visage aux cartes du carrousel de choix.
+        headshot: fzdHeadshotByName
+    });
+    window.fzShowDraftEndPopup();
+}
+
+// La bannière est reconstruite à chaque rendu, et elle existe en double
+// (#fzDashHero au bureau, #fzmHeroSlot sur téléphone) : un seul écouteur
+// délégué vaut mieux qu'un rebranchement après chaque innerHTML.
+document.addEventListener('click', event => {
+    const bouton = event.target.closest('[data-fzd-recap]');
+    if (!bouton) return;
+    event.preventDefault();
+    fzdOuvrirRecapRepechage();
+});
+
 /** Tous les choix d'une équipe, l'équipe LNH repêchée comprise. */
 function fzdNombreDeChoix(teamData) {
     const td = teamData || {};
@@ -617,6 +687,26 @@ function fzdCountdownStatsHTML(targetISO) {
         <div class="fzd-hero-stat"><span class="fzd-hero-stat-lbl">Heures</span><span class="fzd-hero-stat-val">${String(h).padStart(2, '0')}</span></div>`;
 }
 
+/* Les deux boutons de la bannière une fois le repêchage terminé : le
+   récapitulatif en cartes (le même popup qu'à la fin du repêchage, ouvert
+   ici sans quitter l'accueil) et, à côté, le classement. Le premier est un
+   <button> et non un lien : il n'y a pas de page à ouvrir. */
+function fzdCtasRepechageFini(activeName) {
+    return `
+        <div class="fzd-hero-ctas">
+            <button type="button" class="fzd-hero-cta" data-fzd-recap>
+                <span class="fzd-hero-cta-bar" aria-hidden="true"></span>
+                <span class="fzd-hero-cta-label">Voir mes joueurs repêchés</span>
+                <span class="fzd-hero-cta-chev" aria-hidden="true">›</span>
+            </button>
+            <a class="fzd-hero-cta fzd-hero-cta--ghost" href="classement.html?pool=${encodeURIComponent(activeName)}">
+                <span class="fzd-hero-cta-bar" aria-hidden="true"></span>
+                <span class="fzd-hero-cta-label">Classement</span>
+                <span class="fzd-hero-cta-chev" aria-hidden="true">›</span>
+            </a>
+        </div>`;
+}
+
 function fzdHeroHTML(state) {
     if (state.mode === 'draft') {
         const { poolData, team, activeName } = state;
@@ -665,11 +755,12 @@ function fzdHeroHTML(state) {
                 <h2 class="fzd-hero-headline">${fait ? 'Votre équipe est au complet' : 'Saison en préparation'}</h2>
             </div>
             <div class="fzd-hero-stats">${fzdCountdownStatsHTML(state.target)}</div>
-            <a class="fzd-hero-cta" href="${fait ? fzdMonEffectifHref(state.activeName, state.teamName) : 'mes-pools.html'}">
+            ${fait ? fzdCtasRepechageFini(state.activeName) : `
+            <a class="fzd-hero-cta" href="mes-pools.html">
                 <span class="fzd-hero-cta-bar" aria-hidden="true"></span>
-                <span class="fzd-hero-cta-label">${fait ? 'Voir mes joueurs repêchés' : 'Gérer mon équipe'}</span>
+                <span class="fzd-hero-cta-label">Gérer mon équipe</span>
                 <span class="fzd-hero-cta-chev" aria-hidden="true">›</span>
-            </a>`;
+            </a>`}`;
     }
 
     if (state.mode === 'draftdone') {
@@ -682,11 +773,7 @@ function fzdHeroHTML(state) {
             <div class="fzd-hero-stats">
                 <div class="fzd-hero-stat"><span class="fzd-hero-stat-lbl">Choix</span><span class="fzd-hero-stat-val">${state.picks}</span></div>
             </div>
-            <a class="fzd-hero-cta" href="${fzdMonEffectifHref(state.activeName, state.teamName)}">
-                <span class="fzd-hero-cta-bar" aria-hidden="true"></span>
-                <span class="fzd-hero-cta-label">Voir mes joueurs repêchés</span>
-                <span class="fzd-hero-cta-chev" aria-hidden="true">›</span>
-            </a>`;
+            ${fzdCtasRepechageFini(state.activeName)}`;
     }
 
     // 'live'
