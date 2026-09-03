@@ -345,31 +345,41 @@ function fzmActivityRowHTML(trade) {
 // n'écrit. Les deux se complètent, aucun ne remplace l'autre.
 // ============================================================
 const FZM_LEAGUE_TABS = [
+    { key: 'all', label: 'Tout' },
     { key: 'trade', label: 'Échanges' },
     { key: 'signing', label: 'Signatures' },
     { key: 'injury', label: 'Blessés' }
 ];
-let fzmLeagueTab = 'trade';
+let fzmLeagueTab = 'all';
 let fzmLeagueData = null;
 
+// Carrousel calqué sur celui du bureau (fzd-off-carousel, index.html /
+// renderOffseasonLeague, accueil-dash.js) : en-tête avec flèches, onglets
+// filtres, piste de cartes qu'on feuillette au doigt, points dessous.
 function fzmLeagueSectionHTML() {
     return `
         <div class="fzm-section" id="fzmLeagueSection">
-            <div class="fzm-section-title">Dans la LNH</div>
+            <div class="fzm-league-head">
+                <div class="fzm-section-title">Dans la LNH</div>
+                <div class="fzm-league-nav">
+                    <button type="button" class="fzm-league-nav-btn" id="fzmLeaguePrev" aria-label="Mouvements précédents">‹</button>
+                    <button type="button" class="fzm-league-nav-btn" id="fzmLeagueNext" aria-label="Mouvements suivants">›</button>
+                </div>
+            </div>
             <div class="fzm-tabs" id="fzmLeagueTabs">
                 ${FZM_LEAGUE_TABS.map(t => `
                     <button type="button" class="fzm-tab${t.key === fzmLeagueTab ? ' is-active' : ''}" data-tab="${t.key}">
                         ${t.label}<span class="fzm-tab-count" data-count="${t.key}"></span>
                     </button>`).join('')}
             </div>
-            <div class="fzm-league-list" id="fzmLeagueWrap"><p class="fzm-empty">Chargement…</p></div>
+            <div class="fzm-league-track" id="fzmLeagueTrack"><p class="fzm-empty">Chargement…</p></div>
+            <div class="fzm-league-dots" id="fzmLeagueDots"></div>
             <div class="fzm-news-list" id="fzmNewsWrap"></div>
         </div>`;
 }
 
 async function fzmLoadLeague() {
-    const wrap = document.getElementById('fzmLeagueWrap');
-    if (!wrap) return;
+    if (!document.getElementById('fzmLeagueTrack')) return;
 
     // limit=80 : tout le journal tient dedans, donc groupTrades (défini dans
     // accueil-dash.js, chargé avant) voit chaque échange en entier.
@@ -380,22 +390,38 @@ async function fzmLoadLeague() {
 
     const moves = tx?.transactions || [];
     const deals = groupTrades(moves.filter(t => t.type === 'trade'));
+    const signings = moves.filter(t => t.type === 'signing');
+    const injuries = inj?.injuries || [];
+
+    // « Tout » : les trois flux fondus et retriés du plus récent au plus
+    // ancien, chaque entrée gardant sa forme (`kind` dit quelle carte rendre).
+    // Même logique que renderOffseasonLeague (accueil-dash.js).
+    const stamp = iso => (iso ? new Date(iso).getTime() : 0) || 0;
+    const all = [
+        ...deals.map(d => ({ kind: 'trade', item: d, ts: stamp(d.date) })),
+        ...signings.map(s => ({ kind: 'signing', item: s, ts: stamp(s.date) })),
+        ...injuries.map(i => ({ kind: 'injury', item: i, ts: stamp(i.since) }))
+    ].sort((a, b) => b.ts - a.ts);
+
     fzmLeagueData = {
+        all,
         trade: deals,
-        signing: moves.filter(t => t.type === 'signing'),
-        injury: inj?.injuries || [],
+        signing: signings,
+        injury: injuries,
         counts: {
             // Échanges : nombre d'opérations regroupées. Signatures/blessés :
-            // total serveur, pour le « et N autres ».
+            // total serveur. « Tout » : la somme des trois.
             trade: deals.length,
             signing: tx?.counts?.signing || 0,
             injury: inj?.total || 0
         },
         tracking: !!tx?.tracking
     };
+    fzmLeagueData.counts.all = fzmLeagueData.counts.trade
+        + fzmLeagueData.counts.signing + fzmLeagueData.counts.injury;
 
     // Ouvrir sur un onglet qui a quelque chose à montrer plutôt que sur
-    // « Échanges » vide un lendemain de journée calme.
+    // un onglet vide un lendemain de journée calme.
     const firstFilled = FZM_LEAGUE_TABS.find(t => fzmLeagueData[t.key].length);
     if (firstFilled && !fzmLeagueData[fzmLeagueTab].length) fzmLeagueTab = firstFilled.key;
 
@@ -412,71 +438,90 @@ async function fzmLoadLeague() {
         });
     });
 
+    fzmBindLeagueCarousel();
     fzmRenderLeagueTab();
 }
 
-// Feuilletage — mêmes règles qu'au bureau (renderOffseasonLeague dans
-// accueil-dash.js) : la liste entière tient en main (fzmLoadLeague demande
-// tout, limit=80/60), donc chaque onglet se parcourt page par page plutôt
-// que de cacher le reste derrière un « et N autres » qui ne menait nulle
-// part. 5 par page : sur un écran de téléphone, une carte d'échange à deux
-// colonnes prend déjà plus de place qu'une ligne de signature ou de blessé.
-const FZM_PAGE_SIZE = 5;
-const fzmLeaguePages = { trade: 0, signing: 0, injury: 0 };
+// Flèches précédent/suivant + suivi du défilement. Rebranché à chaque rendu
+// de l'accueil (renderMobileHome recrée tout le DOM), mais une seule fois
+// par rendu : le contenu de la piste change avec l'onglet, pas ses boutons.
+function fzmBindLeagueCarousel() {
+    const track = document.getElementById('fzmLeagueTrack');
+    const prev = document.getElementById('fzmLeaguePrev');
+    const next = document.getElementById('fzmLeagueNext');
+    if (!track) return;
+
+    const step = () => {
+        const card = track.querySelector('.fzm-off-card');
+        return card ? card.getBoundingClientRect().width + 10 : track.clientWidth * 0.9;
+    };
+    prev?.addEventListener('click', () => track.scrollBy({ left: -step(), behavior: 'smooth' }));
+    next?.addEventListener('click', () => track.scrollBy({ left: step(), behavior: 'smooth' }));
+
+    let raf = 0;
+    track.addEventListener('scroll', () => {
+        if (raf) return;
+        raf = requestAnimationFrame(() => { raf = 0; fzmUpdateLeagueCarousel(); });
+    });
+}
 
 function fzmRenderLeagueTab() {
-    const wrap = document.getElementById('fzmLeagueWrap');
-    if (!wrap || !fzmLeagueData) return;
+    const track = document.getElementById('fzmLeagueTrack');
+    if (!track || !fzmLeagueData) return;
 
     const rows = fzmLeagueData[fzmLeagueTab] || [];
     if (!rows.length) {
-        wrap.innerHTML = `<p class="fzm-empty">${fzmLeagueEmptyText()}</p>`;
+        track.classList.add('is-empty');
+        track.innerHTML = `<p class="fzm-empty">${fzmLeagueEmptyText()}</p>`;
+        fzmRenderLeagueDots();
         return;
     }
 
-    const pageCount = Math.ceil(rows.length / FZM_PAGE_SIZE);
-    let page = fzmLeaguePages[fzmLeagueTab] || 0;
-    if (page > pageCount - 1) page = pageCount - 1;
-    if (page < 0) page = 0;
-    fzmLeaguePages[fzmLeagueTab] = page;
-
-    const start = page * FZM_PAGE_SIZE;
-    const shown = rows.slice(start, start + FZM_PAGE_SIZE);
-
-    // Ce qui reste au-delà de ce que le serveur a renvoyé (fenêtre limit) :
-    // impossible à feuilleter, signalé sur la dernière page seulement.
-    const total = fzmLeagueData.counts?.[fzmLeagueTab] || rows.length;
-    const beyond = page === pageCount - 1 ? Math.max(0, total - rows.length) : 0;
-
-    const rowHTML = fzmLeagueTab === 'injury' ? fzmInjuryRowHTML
-        : fzmLeagueTab === 'trade' ? fzmDealRowHTML
-        : fzmTxRowHTML;
-    wrap.innerHTML = shown.map(rowHTML).join('')
-        + (beyond ? `<p class="fzm-league-more">et ${beyond} autre${beyond > 1 ? 's' : ''}</p>` : '')
-        + fzmLeaguePagerHTML(page, pageCount);
-
-    const pager = wrap.querySelector('.fzm-league-pager');
-    if (pager) {
-        pager.addEventListener('click', e => {
-            const btn = e.target.closest('button[data-page]');
-            if (!btn || btn.disabled) return;
-            fzmLeaguePages[fzmLeagueTab] = Number(btn.dataset.page);
-            fzmRenderLeagueTab();
-            wrap.scrollIntoView({ block: 'nearest' });
-        });
-    }
+    track.classList.remove('is-empty');
+    track.innerHTML = rows.map(row => fzmLeagueTab === 'all'
+        ? fzmOffCardHTML(row.kind, row.item)
+        : fzmOffCardHTML(fzmLeagueTab, row)).join('');
+    track.scrollLeft = 0;
+    fzmRenderLeagueDots();
 }
 
-function fzmLeaguePagerHTML(page, pageCount) {
-    if (pageCount < 2) return '';
-    const first = page === 0;
-    const last = page === pageCount - 1;
-    return `
-        <div class="fzm-league-pager">
-            <button type="button" class="fzm-pager-btn" data-page="${page - 1}"${first ? ' disabled' : ''} aria-label="Page précédente">‹</button>
-            <span class="fzm-pager-info">Page ${page + 1} / ${pageCount}</span>
-            <button type="button" class="fzm-pager-btn" data-page="${page + 1}"${last ? ' disabled' : ''} aria-label="Page suivante">›</button>
-        </div>`;
+// Un point par « page » de défilement (largeur de piste), pas un par carte :
+// une centaine de blessés donnerait une centaine de points.
+function fzmRenderLeagueDots() {
+    const track = document.getElementById('fzmLeagueTrack');
+    const dots = document.getElementById('fzmLeagueDots');
+    if (!track || !dots) return;
+
+    const pages = track.classList.contains('is-empty')
+        ? 0
+        : Math.max(1, Math.round(track.scrollWidth / track.clientWidth));
+    if (pages < 2) { dots.innerHTML = ''; fzmUpdateLeagueCarousel(); return; }
+    dots.innerHTML = Array.from({ length: pages }, (_, i) =>
+        `<button type="button" class="fzm-league-dot" data-page="${i}" aria-label="Page ${i + 1}"></button>`).join('');
+    dots.querySelectorAll('.fzm-league-dot').forEach(dot => {
+        dot.addEventListener('click', () => {
+            track.scrollTo({ left: dot.dataset.page * track.clientWidth, behavior: 'smooth' });
+        });
+    });
+    fzmUpdateLeagueCarousel();
+}
+
+// Reflète la position de défilement : point actif + flèches grisées aux bouts.
+function fzmUpdateLeagueCarousel() {
+    const track = document.getElementById('fzmLeagueTrack');
+    const dots = document.getElementById('fzmLeagueDots');
+    const prev = document.getElementById('fzmLeaguePrev');
+    const next = document.getElementById('fzmLeagueNext');
+    if (!track) return;
+
+    const max = track.scrollWidth - track.clientWidth - 1;
+    if (prev) prev.disabled = track.scrollLeft <= 0;
+    if (next) next.disabled = track.scrollLeft >= max;
+
+    if (dots && dots.children.length) {
+        const active = Math.round(track.scrollLeft / track.clientWidth);
+        [...dots.children].forEach((d, i) => d.classList.toggle('is-active', i === active));
+    }
 }
 
 function fzmLeagueEmptyText() {
@@ -484,41 +529,28 @@ function fzmLeagueEmptyText() {
     // Tant que le serveur n'a pas deux photos d'alignements à comparer, il
     // n'a rien à dire — ce qui n'est pas la même chose qu'une ligue calme.
     if (!fzmLeagueData?.tracking) return 'Le suivi des mouvements démarre à la prochaine mise à jour des alignements.';
-    return fzmLeagueTab === 'trade' ? 'Aucun échange récent.' : 'Aucune signature récente.';
+    if (fzmLeagueTab === 'trade') return 'Aucun échange récent.';
+    if (fzmLeagueTab === 'signing') return 'Aucune signature récente.';
+    return 'Aucun mouvement récent.';
 }
 
-function fzmLeagueFaceHTML(src, name) {
-    return src
-        ? `<img class="fzm-league-face" src="${escapeHTML(src)}" alt="" loading="lazy">`
-        : `<span class="fzm-league-face fzm-league-face-empty">${escapeHTML((name || '?').charAt(0))}</span>`;
+// Une carte de carrousel selon le type de mouvement. `kind` vient soit de
+// l'onglet actif, soit de l'entrée fondue de l'onglet « Tout ». Calquées sur
+// offseasonCardHTML (accueil-dash.js), au jeton et à la police près.
+function fzmOffCardHTML(kind, item) {
+    if (kind === 'trade') return fzmOffDealCardHTML(item);
+    if (kind === 'signing') return fzmOffSigningCardHTML(item);
+    return fzmOffInjuryCardHTML(item);
 }
 
-function fzmTxRowHTML(t) {
-    const route = t.type === 'trade'
-        ? `${escapeHTML(t.fromTeam || '?')} → ${escapeHTML(t.toTeam || '?')}`
-        : `→ ${escapeHTML(t.toTeam || '?')}`;
-    const meta = [t.pos, route].filter(Boolean).join(' · ');
-    return `
-        <div class="fzm-league-row">
-            ${fzmLeagueFaceHTML(t.headshot, t.playerName)}
-            <div class="fzm-league-main">
-                <div class="fzm-league-name">${escapeHTML(t.playerName)}</div>
-                <div class="fzm-league-meta">${meta}</div>
-            </div>
-            <div class="fzm-league-side">${dayLabelFr(t.date)}</div>
-        </div>`;
+function fzmOffLogoHTML(abbr) {
+    return `<img src="teams/${escapeHTML(abbr || '')}.png" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`;
 }
 
-// Échange regroupé (voir groupTrades dans accueil-dash.js) : pas de
-// portrait, les deux côtés de l'opération empilés dans la zone principale.
-/**
- * Un échange sur téléphone : un club à gauche, un à droite, ce que chacun
- * reçoit dessous. Même lecture qu'au bureau (dealRowHTML dans
- * accueil-dash.js), au club près — ici c'est l'abréviation d'office, deux
- * noms complets ne tenant pas dans 358px, et le logo à côté suffit à
- * l'identifier.
- */
-function fzmDealRowHTML(d) {
+// Échange : les deux clubs empilés, ce que chacun reçoit dessous, séparés
+// par un filet — même lecture qu'au bureau (offDealCardHTML). Le club qui
+// reçoit quelque chose passe en tête ; « Rien en retour » finit en bas.
+function fzmOffDealCardHTML(d) {
     const colHTML = team => {
         const club = d.names[team] || team;
         const players = d.gets[team] || [];
@@ -537,32 +569,63 @@ function fzmDealRowHTML(d) {
                 <ul class="fzm-deal-assets">${assets}</ul>
             </section>`;
     };
-    // Le club qui reçoit quelque chose passe à gauche : sur un échange à sens
-    // unique, « Rien en retour » finit à droite plutôt qu'en tête.
     const [first, second] = [d.teamA, d.teamB]
         .sort((x, y) => (d.gets[y]?.length || 0) - (d.gets[x]?.length || 0));
     return `
-        <div class="fzm-league-row fzm-deal-row">
-            <div class="fzm-deal-date">${dayLabelFr(d.date)}</div>
+        <article class="fzm-off-card is-trade">
+            <div class="fzm-off-card-top">
+                <span class="fzm-off-tag is-trade">Échange</span>
+                <span class="fzm-off-card-date">${dayLabelFr(d.date)}</span>
+            </div>
             <div class="fzm-deal-grid">
                 ${colHTML(first)}
                 ${colHTML(second)}
             </div>
-        </div>`;
+        </article>`;
 }
 
-function fzmInjuryRowHTML(i) {
-    const detail = [i.injuryType, i.injuryDetail].filter(Boolean).join(' / ');
-    const meta = [i.team, detail].filter(Boolean).join(' · ');
+function fzmOffSigningCardHTML(t) {
+    const club = [t.toTeamName || t.toTeam || '?', t.pos].filter(Boolean).join(' · ');
     return `
-        <div class="fzm-league-row">
-            ${fzmLeagueFaceHTML(i.headshot, i.playerName)}
-            <div class="fzm-league-main">
-                <div class="fzm-league-name">${escapeHTML(i.playerName)}</div>
-                <div class="fzm-league-meta">${escapeHTML(meta)}</div>
+        <article class="fzm-off-card is-signing">
+            <div class="fzm-off-card-top">
+                <span class="fzm-off-tag is-signing">Signature</span>
+                <span class="fzm-off-card-date">${dayLabelFr(t.date)}</span>
             </div>
-            <div class="fzm-league-side fzm-league-status" data-status="${escapeHTML(i.status || '')}">${escapeHTML(i.statusFr || '')}</div>
-        </div>`;
+            <div class="fzm-off-card-name">${escapeHTML(t.playerName)}</div>
+            <div class="fzm-off-card-club">
+                ${fzmOffLogoHTML(t.toTeam)}
+                <span>${escapeHTML(club)}</span>
+            </div>
+        </article>`;
+}
+
+function fzmOffInjuryCardHTML(i) {
+    const club = [i.teamName || i.team, i.pos].filter(Boolean).join(' · ');
+    const detail = [i.injuryType, i.injuryDetail].filter(Boolean).join(' / ');
+    const back = i.returnDate ? dayLabelFr(i.returnDate) : (i.statusFr || '—');
+    return `
+        <article class="fzm-off-card is-injury">
+            <div class="fzm-off-card-top">
+                <span class="fzm-off-tag is-injury">Blessé</span>
+                <span class="fzm-off-card-date">${dayLabelFr(i.since)}</span>
+            </div>
+            <div class="fzm-off-card-name">${escapeHTML(i.playerName)}</div>
+            <div class="fzm-off-card-club">
+                ${fzmOffLogoHTML(i.team)}
+                <span>${escapeHTML(club)}</span>
+            </div>
+            <div class="fzm-off-card-stats">
+                <div class="fzm-off-stat">
+                    <span class="fzm-off-stat-lbl">Blessure</span>
+                    <span class="fzm-off-stat-val" data-status="${escapeHTML(i.status || '')}">${escapeHTML(detail || i.statusFr || '—')}</span>
+                </div>
+                <div class="fzm-off-stat">
+                    <span class="fzm-off-stat-lbl">Retour</span>
+                    <span class="fzm-off-stat-val">${escapeHTML(back)}</span>
+                </div>
+            </div>
+        </article>`;
 }
 
 // ============================================================
