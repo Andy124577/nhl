@@ -115,50 +115,12 @@ function fzmRankStrip(activeName, movement) {
 }
 
 // ============================================================
-// MATCHS DU JOUR — réutilise calData (déjà chargé par
-// initCalendar) plutôt qu'un nouvel appel réseau : mêmes champs
-// que gameCardHTML (accueil-dash.js), présentation en carrousel.
+// MATCHS DU JOUR — plus de bande « aujourd'hui seulement » propre au
+// téléphone : renderMobileHome pose #fzmCalSlot et fzdPlaceCalendar()
+// (accueil-dash.js) y déplace le calendrier complet, qui montre les
+// mêmes matchs du jour PLUS la semaine, avec le carrousel de vos
+// joueurs sous chaque carte (maquette Canvas-12, 1C/1D).
 // ============================================================
-function fzmGamesRow() {
-    const day = calData?.days?.find(d => d.date === todayISO());
-    const games = (day && day.games) || [];
-    if (!games.length) return '';
-    const counts = rosterTeamCounts();
-    return `
-        <div class="fzm-section" id="fzmGames">
-            <div class="fzm-section-title">En direct et à venir</div>
-            <div class="fzm-scroll-row">
-                ${games.slice(0, 6).map(g => fzmGameCard(g, counts)).join('')}
-            </div>
-        </div>`;
-}
-
-function fzmGameCard(game, counts) {
-    const isFinal = game.state === 'FINAL' || game.state === 'OFF';
-    const isLive = game.state === 'LIVE' || game.state === 'CRIT';
-    const isScheduled = !isFinal && !isLive;
-    const count = rosterCountForGame(counts, game);
-
-    const statusHTML = isLive
-        ? `<span class="fzm-game-live"><span class="fzm-live-dot"></span>${periodLabel(game.period, game.periodType)} ${escapeHTML(game.clock?.timeRemaining || '')}</span>`
-        : isFinal
-            ? `<span class="fzm-game-final">Final</span>`
-            : `<span class="fzm-game-time">${gameTimeLabel(game.startTimeUTC)}</span>`;
-
-    const row = side => `
-        <div class="fzm-game-row">
-            <span class="fzm-game-team">${escapeHTML(side.abbrev)}</span>
-            <span class="fzm-game-score">${isScheduled ? '—' : (side.score ?? 0)}</span>
-        </div>`;
-
-    return `
-        <div class="fzm-game-card">
-            ${statusHTML}
-            ${row(game.away)}
-            ${row(game.home)}
-            <div class="fzm-game-foot">${count > 0 ? `${count} de vos joueurs` : 'Aucun joueur'}</div>
-        </div>`;
-}
 
 // ============================================================
 // MES JOUEURS CE SOIR — croise mon effectif (activeRosterNames) et
@@ -614,6 +576,12 @@ function renderMobileHome(tonight, movement, activeName) {
     const root = document.getElementById('fzMobileHome');
     if (!root) return;
 
+    // Le calendrier (#fzDashCalendarWrap) est un nœud PARTAGÉ avec le bureau
+    // que fzdPlaceCalendar() déplace dans #fzmCalSlot sur téléphone. Il faut
+    // le sortir d'ici avant toute réécriture de root.innerHTML, sinon on
+    // l'effacerait pour de bon.
+    fzdRestoreCalendar();
+
     const poolData = FZPool.data();
     const team = FZPool.team();
     if (!activeName || !poolData || !team) { root.innerHTML = ''; fzdStopHeroTimer('fzmHeroSlot'); return; }
@@ -640,7 +608,7 @@ function renderMobileHome(tonight, movement, activeName) {
     let html = '<div class="fz-dash-hero" id="fzmHeroSlot" style="display:none;"></div>';
 
     if (isRegular || isLive) html += fzmRankStrip(activeName, movement);
-    if (isRegular || isLive) html += fzmGamesRow();
+    if (isRegular || isLive) html += '<div class="fzm-cal-slot" id="fzmCalSlot"></div>';
     if (isRegular || isLive) html += fzmPlayersRow(tonight, rosterNames);
 
     if (isDraft) html += '<div class="fz-dash-draftboard" id="fzmDraftBoard"></div>';
@@ -655,6 +623,12 @@ function renderMobileHome(tonight, movement, activeName) {
     html += fzmFooterLinks();
 
     root.innerHTML = html;
+
+    // root.innerHTML vient d'effacer le calendrier s'il était déjà dans le
+    // slot : on le re-déplace ici, puis on le redessine — un seul nœud
+    // partagé avec le bureau, jamais un second rendu qui diverge.
+    fzdPlaceCalendar();
+    if (calData) renderCalendar();
 
     renderHero(tonight, 'fzmHeroSlot');
     if (isDraft) fzdRenderDraftBoard('fzmDraftBoard', poolData, team, activeName);

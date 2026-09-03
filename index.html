@@ -278,19 +278,29 @@
                  accueil-dash.js. Maquette : handoff premium, Canvas-11. -->
             <div class="fz-dash-draftboard" id="fzDashDraftBoard" style="display:none;"><!-- Filled by accueil-dash.js --></div>
 
-            <!-- Calendrier — saison complète, GET /schedule/:date -->
+            <!-- Calendrier — saison complète, GET /schedule/:date.
+                 Maquette Claude Design « Canvas-12 » : bandeau de semaine avec
+                 le compte de matchs par jour, journée sélectionnée en titre,
+                 puis des cartes de match qui portent chacune un carrousel de
+                 VOS joueurs (stats en direct pendant le match, totaux de la
+                 saison avant la mise au jeu). Grille à deux colonnes au
+                 bureau, carrousel plein écran au téléphone (#fzdCalDots). -->
             <div class="fz-dash-calendar" id="fzDashCalendarWrap">
                 <div class="fzd-cal-head">
-                    <span class="fzd-eyebrow" id="fzdCalEyebrow">Calendrier</span>
+                    <span class="fzd-cal-title" id="fzdCalEyebrow">Calendrier</span>
                     <div class="fzd-cal-nav">
                         <button type="button" class="fzd-cal-nav-btn" id="fzdCalPrev" aria-label="Semaine précédente">‹</button>
+                        <span class="fzd-cal-range" id="fzdCalRange"></span>
                         <button type="button" class="fzd-cal-nav-btn" id="fzdCalNext" aria-label="Semaine suivante">›</button>
                     </div>
                     <div class="fzd-cal-spacer"></div>
-                    <button type="button" class="fzd-link" id="fzdCalMonthToggle" style="background:none;border:none;cursor:pointer;padding:0;">Calendrier complet de la saison →</button>
+                    <button type="button" class="fzd-link fzd-cal-full" id="fzdCalMonthToggle">Calendrier complet →</button>
                 </div>
                 <div class="fzd-cal-strip" id="fzdCalStrip"><!-- Filled by accueil-dash.js --></div>
+                <div class="fzd-cal-dayhead" id="fzdCalDayHead"><!-- Filled by accueil-dash.js --></div>
                 <div class="fzd-cal-games" id="fzdCalGames"><!-- Filled by accueil-dash.js --></div>
+                <div class="fzd-cal-dots" id="fzdCalDots" aria-hidden="true"><!-- Filled by accueil-dash.js --></div>
+                <button type="button" class="fzd-cal-more" id="fzdCalMore" style="display:none;"></button>
 
                 <div class="fzd-cal-month" id="fzdCalMonth">
                     <div class="fzd-month-head">

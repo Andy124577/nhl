@@ -111,16 +111,6 @@ html[data-theme="dark"] .fz-mobile-home {
 .fzm-section-title { font: 700 15px/1 'Archivo', sans-serif; margin-bottom: 10px; }
 .fzm-empty { font: 500 12.5px/1.4 'Archivo', sans-serif; color: var(--fzm-ink-faint); margin: 0; }
 
-/* Matchs */
-.fzm-game-card { flex-shrink: 0; width: 150px; background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 12px; padding: 13px; }
-.fzm-game-live, .fzm-game-final, .fzm-game-time { display: flex; align-items: center; gap: 5px; font: 700 10px/1 'Archivo', sans-serif; letter-spacing: .03em; margin-bottom: 9px; }
-.fzm-game-live { color: var(--fzm-red); }
-.fzm-game-final, .fzm-game-time { color: var(--fzm-ink-soft); font-weight: 600; }
-.fzm-game-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
-.fzm-game-row:last-of-type { margin-bottom: 0; }
-.fzm-game-team, .fzm-game-score { font: 700 14px/1 'Archivo', sans-serif; }
-.fzm-game-score { font-variant-numeric: tabular-nums; }
-.fzm-game-foot { font: 500 10.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); margin-top: 8px; }
 
 /* Joueurs */
 .fzm-player-card { flex-shrink: 0; width: 128px; background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 12px; padding: 12px; }
@@ -317,12 +307,22 @@ html[data-theme="dark"] .fz-mobile-home {
    un pool (déjà géré par accueil-dash.js/renderDash).
    ============================================================ */
 @media (max-width: 768px) {
-    /* La home mobile remplace ces trois blocs — mais elle ne s'affiche
-       qu'avec un pool actif (renderDash). Sans pool, elle est masquée et
-       c'est l'état vide qui occupe l'écran : le calendrier doit alors rester
-       ouvrable depuis sa carte « Calendrier LNH ». */
-    .fz-dash-section:not(.is-poolless) #fzDashCalendarWrap { display: none !important; }
+    /* Le calendrier est le même nœud qu'au bureau : fzdPlaceCalendar()
+       (accueil-dash.js) le DÉPLACE dans #fzmCalSlot, entre le classement et
+       « Vos joueurs ce soir », où il remplace l'ancienne bande « En direct et
+       à venir » qui ne montrait que la journée du jour. Le sélecteur ci-
+       dessous ne vise donc QUE le calendrier resté à sa place bureau (enfant
+       direct de .fz-dash) : la home mobile ne pose son slot qu'en saison
+       régulière / match en direct, et pendant un repêchage ou l'avant-saison
+       le calendrier doit rester masqué comme avant. Sans pool, la home mobile
+       n'existe pas et il reste ouvrable depuis la carte « Calendrier LNH ». */
+    .fz-dash-section:not(.is-poolless) .fz-dash > #fzDashCalendarWrap { display: none !important; }
     #fzDashOffseason, #fzDashBody, #fzDashHero, #fzDashDraftBoard { display: none !important; }
+
+    /* Le slot ne fait que porter le calendrier ; la marge basse de
+       .fz-dash-calendar vaut déjà celle de .fzm-section (18px), les blocs
+       de la home mobile restent donc régulièrement espacés. */
+    .fzm-cal-slot { display: block; }
 }
 @media (min-width: 769px) {
     .fz-mobile-home { display: none !important; }

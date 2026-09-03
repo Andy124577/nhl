@@ -42,6 +42,9 @@
     /* Aplat de la brique : --fzd-accent s'éclaircit en thème sombre pour
        rester lisible en TEXTE, le fond plein ne bouge pas. */
     --fzd-accent-fill: #b93d28;
+    /* Voile de brique (badge « En direct », journée sélectionnée au
+       téléphone) : il s'éclaircit avec l'accent en thème sombre. */
+    --fzd-accent-tint: rgba(185, 61, 40, .1);
     --fzd-on-accent: #ffffff;
     --fzd-tile-bg: #eceae4;
     /* --fzd-ink servait à la fois de couleur de texte la plus appuyée et
@@ -50,6 +53,9 @@
     --fzd-solid: #16181a;
     --fzd-solid-hover: #000000;
     --fzd-on-solid: #ffffff;
+    /* Texte secondaire POSÉ sur --fzd-solid : les deux s'inversent en thème
+       sombre, un rgba(255,255,255,…) figé deviendrait illisible. */
+    --fzd-on-solid-soft: rgba(255, 255, 255, .62);
     --fzd-pool-icon-a: #e6e3db;
     --fzd-pool-icon-b: #dcd8d0;
 
@@ -80,10 +86,12 @@ html[data-theme="dark"] .fz-dash {
     --fzd-border-soft: #27272c;
     --fzd-accent: #e8795e;
     --fzd-accent-dark: #f19b85;
+    --fzd-accent-tint: rgba(232, 121, 94, .16);
     --fzd-tile-bg: #26262b;
     --fzd-solid: #f0eee9;
     --fzd-solid-hover: #ffffff;
     --fzd-on-solid: #16181a;
+    --fzd-on-solid-soft: rgba(22, 24, 26, .6);
     --fzd-pool-icon-a: #2a2a2f;
     --fzd-pool-icon-b: #232328;
 }
@@ -739,123 +747,335 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 }
 
 /* ------------------------------------------------------------ */
-/* Calendrier — pleine largeur, au-dessus de tout le reste       */
+/* Calendrier — pleine largeur, au-dessus de tout le reste        */
+/* Maquette Claude Design « Canvas-12 » : bandeau de semaine avec  */
+/* le nombre de matchs par jour, journée sélectionnée en titre,    */
+/* puis des cartes de match qui portent chacune un carrousel de    */
+/* VOS joueurs. Grille de deux colonnes au bureau (1A/1B) ;        */
+/* carrousel plein écran, un match à la fois, au téléphone (1C/1D) */
+/* — voir le bloc ≤768px en bas de ce fichier.                     */
 /* ------------------------------------------------------------ */
 .fz-dash-calendar {
     background: var(--fzd-surface);
     border: 1px solid var(--fzd-border-strong);
     border-radius: 14px;
-    padding: 20px 22px 22px;
+    padding: 18px;
     margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 }
 
 .fzd-cal-head {
     display: flex;
     align-items: center;
-    gap: 16px;
-    margin-bottom: 14px;
+    gap: 11px;
     flex-wrap: wrap;
 }
 
-.fzd-cal-nav { display: flex; align-items: center; gap: 4px; }
+.fzd-cal-title {
+    font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--fzd-ink);
+}
+
+.fzd-cal-nav { display: flex; align-items: center; gap: 5px; }
 .fzd-cal-nav-btn {
-    width: 26px; height: 26px;
+    width: 22px; height: 22px;
     border: 1px solid var(--fzd-border);
-    border-radius: 7px;
+    border-radius: 5px;
     background: transparent;
     color: var(--fzd-text-muted);
-    font: 600 13px/1 'Helvetica Neue', Helvetica, sans-serif;
+    font: 400 12px/1 'Helvetica Neue', Helvetica, sans-serif;
     cursor: pointer;
     display: grid; place-items: center;
+    flex-shrink: 0;
 }
 .fzd-cal-nav-btn:hover { border-color: var(--fzd-ink); color: var(--fzd-ink); }
+.fzd-cal-range {
+    font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text);
+    min-width: 88px;
+    text-align: center;
+}
 
 .fzd-cal-spacer { flex: 1; }
 
+.fzd-cal-full {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font: 600 10px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--fzd-accent);
+}
+.fzd-cal-full:hover { color: var(--fzd-accent-dark); }
+
+/* --- Bandeau de semaine ------------------------------------- */
 .fzd-cal-strip {
     display: flex;
     gap: 6px;
     overflow-x: auto;
-    padding-bottom: 12px;
     scrollbar-width: none;
 }
 .fzd-cal-strip::-webkit-scrollbar { display: none; }
 
 .fzd-day-chip {
-    flex: 0 0 auto;
-    width: 46px;
-    padding: 8px 0;
-    text-align: center;
-    border-radius: 9px;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 9px;
+    border-radius: 8px;
     border: 1px solid var(--fzd-border);
-    background: var(--fzd-bg);
+    background: transparent;
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
 }
 .fzd-day-chip:hover { border-color: var(--fzd-ink); }
-.fzd-day-chip-dow { font: 500 9px/1 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--fzd-text-fainter); }
-.fzd-day-chip-num { margin-top: 5px; font: 600 16px/1 'Oswald', sans-serif; color: var(--fzd-text-muted); }
 
-.fzd-day-chip.is-today { background: var(--fzd-solid); border-color: var(--fzd-solid); }
-.fzd-day-chip.is-today .fzd-day-chip-dow { color: var(--fzd-text-faint); }
-.fzd-day-chip.is-today .fzd-day-chip-num { color: var(--fzd-on-solid); }
+.fzd-day-chip-top { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+.fzd-day-chip-num { font: 700 14px/1 'Oswald', sans-serif; color: var(--fzd-ink); }
+.fzd-day-chip-dow {
+    font: 600 8.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--fzd-text-faint);
+}
+.fzd-day-chip-count {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font: 400 10.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-faint);
+    white-space: nowrap;
+    overflow: hidden;
+}
 
-.fzd-day-chip.is-selected:not(.is-today) { border-color: var(--fzd-ink); }
-.fzd-day-chip.is-selected:not(.is-today) .fzd-day-chip-num { color: var(--fzd-ink); }
+/* Jour du jour : juste le libellé en brique, l'aplat reste réservé à la
+   journée SÉLECTIONNÉE — sinon les deux états se disputent la même case. */
+.fzd-day-chip.is-today:not(.is-selected) .fzd-day-chip-dow { color: var(--fzd-accent); }
 
+.fzd-day-chip.is-selected {
+    background: var(--fzd-solid);
+    border-color: var(--fzd-solid);
+}
+.fzd-day-chip.is-selected .fzd-day-chip-num { color: var(--fzd-on-solid); }
+.fzd-day-chip.is-selected .fzd-day-chip-dow,
+.fzd-day-chip.is-selected .fzd-day-chip-count { color: var(--fzd-on-solid-soft); }
+.fzd-day-chip.is-selected .fzd-day-chip-count.is-live { color: var(--fzd-on-solid); }
+
+/* --- Titre de la journée ------------------------------------- */
+.fzd-cal-dayhead {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--fzd-border);
+    padding-top: 13px;
+}
+.fzd-cal-dayname {
+    font: 700 20px/1 'Oswald', sans-serif;
+    text-transform: uppercase;
+    color: var(--fzd-ink);
+}
+.fzd-cal-daysub {
+    font: 400 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-faint);
+}
+
+/* --- Cartes de match ----------------------------------------- */
 .fzd-cal-games {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    /* Sans ça, une carte sans « Vos joueurs » s'étire à la hauteur de sa
+       voisine et laisse un grand vide sous les deux équipes. */
+    align-items: start;
+}
+
+.fzd-game-card {
+    min-width: 0;
+    border: 1px solid var(--fzd-border);
+    border-radius: 11px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--fzd-surface);
+}
+
+.fzd-game-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--fzd-border-soft);
+}
+.fzd-game-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 4px;
+    padding: 4px 7px;
+    background: var(--fzd-tile-bg);
+    color: var(--fzd-text);
+    font: 600 9px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .12em;
+    flex-shrink: 0;
+}
+/* L'heure de la mise au jeu garde sa casse : « 20 h 44 », pas « 20 H 44 ».
+   Seuls les deux états nommés passent en capitales. */
+.fzd-game-badge.is-live,
+.fzd-game-badge.is-final { text-transform: uppercase; }
+.fzd-game-badge.is-live { background: var(--fzd-accent-tint); color: var(--fzd-accent); }
+.fzd-game-badge.is-final { color: var(--fzd-text-faint); }
+.fzd-game-when {
+    font: 500 10.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-faint);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.fzd-live-dot {
+    width: 5px; height: 5px;
+    border-radius: 999px;
+    background: var(--fzd-accent-fill);
+    flex-shrink: 0;
+    animation: fzdLivePulse 1.6s ease-in-out infinite;
+}
+@keyframes fzdLivePulse { 0%, 100% { opacity: 1; } 50% { opacity: .28; } }
+@media (prefers-reduced-motion: reduce) { .fzd-live-dot { animation: none; } }
+
+.fzd-game-teams { padding: 11px 12px; display: flex; flex-direction: column; gap: 8px; }
+.fzd-game-row { display: flex; align-items: center; gap: 9px; }
+.fzd-team-logo {
+    width: 24px; height: 24px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: var(--fzd-tile-bg);
+    object-fit: contain;
+}
+.fzd-team-id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fzd-team-name {
+    font: 600 13px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fzd-team-name.is-trailing { color: var(--fzd-text-faint); }
+.fzd-team-rec { font: 400 10px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
+.fzd-team-score { font: 700 20px/1 'Oswald', sans-serif; color: var(--fzd-ink); flex: 0 0 auto; }
+.fzd-team-score.is-trailing { color: var(--fzd-text-faint); }
+
+/* --- Carrousel « Vos joueurs » sous chaque match --------------- */
+.fzd-game-players {
+    border-top: 1px solid var(--fzd-border-soft);
+    background: var(--fzd-bg);
+    padding: 10px 12px 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: auto;
+}
+.fzd-gp-head { display: flex; align-items: center; gap: 8px; }
+.fzd-gp-title {
+    font: 600 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--fzd-ink);
+}
+.fzd-gp-sub { font: 400 9.5px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-fainter); }
+
+.fzd-gp-track {
     display: flex;
     gap: 8px;
     overflow-x: auto;
     scrollbar-width: none;
+    scroll-snap-type: x mandatory;
 }
-.fzd-cal-games::-webkit-scrollbar { display: none; }
+.fzd-gp-track::-webkit-scrollbar { display: none; }
 
-.fzd-game-card {
+.fzd-gp-card {
+    width: 170px;
     flex: 0 0 auto;
-    width: 132px;
+    scroll-snap-align: start;
     border: 1px solid var(--fzd-border);
-    border-radius: 11px;
+    border-radius: 9px;
     background: var(--fzd-surface);
-    padding: 10px 11px;
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
-}
-.fzd-game-card.is-scheduled { background: var(--fzd-bg); }
-
-.fzd-game-status {
+    padding: 9px 10px;
     display: flex;
     align-items: center;
-    gap: 5px;
-    font: 700 8.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .14em;
+    gap: 9px;
+}
+.fzd-gp-photo {
+    width: 30px; height: 30px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: var(--fzd-tile-bg);
+    object-fit: cover;
+}
+.fzd-gp-photo.is-initials {
+    display: grid;
+    place-items: center;
+    font: 600 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-muted);
+}
+.fzd-gp-id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.fzd-gp-name {
+    font: 600 12px/1.1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fzd-gp-meta { font: 400 9.5px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
+.fzd-gp-stat { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.fzd-gp-num { font: 700 22px/1 'Oswald', sans-serif; color: var(--fzd-ink); }
+.fzd-gp-num.is-hot { color: var(--fzd-accent); }
+.fzd-gp-lbl {
+    font: 600 8px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--fzd-text-faint);
+}
+
+.fzd-gp-dots, .fzd-cal-dots { display: flex; align-items: center; justify-content: center; gap: 5px; }
+.fzd-gp-dot, .fzd-cal-dot {
+    width: 8px; height: 3px;
+    border-radius: 2px;
+    background: var(--fzd-border-strong);
+    transition: width .18s ease, background .18s ease;
+}
+.fzd-gp-dot.is-on, .fzd-cal-dot.is-on { width: 14px; background: var(--fzd-accent-fill); }
+
+/* Puces du carrousel des MATCHS : téléphone seulement, le bureau est une
+   grille où rien ne défile. */
+.fzd-cal-dots { display: none; }
+
+.fzd-cal-more {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font: 600 10px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .1em;
     text-transform: uppercase;
     color: var(--fzd-accent);
 }
-.fzd-game-card.is-scheduled .fzd-game-status,
-.fzd-game-card.is-final .fzd-game-status { color: var(--fzd-text-fainter); }
-.fzd-live-dot { width: 5px; height: 5px; border-radius: 999px; background: var(--fzd-accent-fill); flex-shrink: 0; }
-
-.fzd-game-row { display: flex; align-items: center; justify-content: space-between; }
-.fzd-game-team { display: flex; align-items: center; gap: 6px; }
-.fzd-team-logo { width: 19px; height: 19px; border-radius: 4px; background: var(--fzd-tile-bg); object-fit: contain; }
-.fzd-team-abbr { font: 600 12px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink); }
-.fzd-team-abbr.is-trailing { color: var(--fzd-text-faint); }
-.fzd-team-score { font: 600 16px/1 'Oswald', sans-serif; color: var(--fzd-ink); }
-.fzd-team-score.is-trailing { color: var(--fzd-text-faint); }
-.fzd-team-score.is-dash { font: 400 11px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-fainter); }
-
-.fzd-game-foot {
-    font: 400 10px/1 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzd-text-fainter);
-    border-top: 1px solid var(--fzd-border-soft);
-    padding-top: 7px;
-}
+.fzd-cal-more:hover { color: var(--fzd-accent-dark); }
 
 .fzd-cal-empty {
     padding: 20px 4px;
     font: 400 13px/1.4 'Helvetica Neue', Helvetica, sans-serif;
     color: var(--fzd-text-faint);
+    grid-column: 1 / -1;
 }
 
 /* Sélecteur de mois, dépliable — remplace un lien mort vers une page
@@ -1204,13 +1424,6 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 @media (min-width: 769px) {
     .fz-dash-section { padding: 0 32px 88px; }
 
-    .fzd-cal-games {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        overflow: visible;
-    }
-    .fzd-cal-games .fzd-game-card { width: auto; }
-
     .fz-dash-body {
         grid-template-columns: 1fr 400px;
         grid-template-areas:
@@ -1241,9 +1454,102 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
    ============================================================ */
 @media (max-width: 768px) {
     .fz-dash-section { padding: 0 16px 56px; }
-    .fzd-cal-strip { padding-bottom: 10px; }
     .fzd-actions-grid { gap: 10px; }
     .fzd-cta-grid { gap: 10px; }
+
+    /* ----------------------------------------------------------
+       CALENDRIER TÉLÉPHONE — maquette Canvas-12, 1C/1D.
+       Même DOM qu'au bureau : le titre passe en gros Oswald, la
+       semaine devient une barre pleine largeur, les sept jours se
+       centrent, et surtout les MATCHS DÉFILENT — une carte par
+       écran, accrochée au scroll, avec des puces dessous — au lieu
+       de s'empiler verticalement. renderDayGames() (accueil-dash.js)
+       leur envoie tous les matchs de la journée dans ce cas, le
+       repli « Voir les N autres » n'ayant plus de raison d'être.
+       ---------------------------------------------------------- */
+    .fz-dash-calendar { padding: 18px 16px; gap: 13px; }
+
+    .fzd-cal-head { gap: 12px; }
+    .fzd-cal-title {
+        flex: 1 1 100%;
+        font: 700 30px/1 'Oswald', sans-serif;
+        letter-spacing: -.01em;
+        text-transform: uppercase;
+    }
+    .fzd-cal-nav {
+        flex: 1 1 100%;
+        gap: 8px;
+        border: 1px solid var(--fzd-border);
+        border-radius: 10px;
+        padding: 10px 12px;
+    }
+    /* Scopé à la barre de semaine : les flèches du sélecteur de mois
+       gardent leur cadre. */
+    .fzd-cal-nav .fzd-cal-nav-btn { border: none; width: auto; height: auto; font-size: 15px; }
+    .fzd-cal-range { flex: 1; font-size: 13px; color: var(--fzd-ink); }
+    .fzd-cal-spacer { display: none; }
+    .fzd-cal-full { flex: 1 1 100%; text-align: left; }
+
+    .fzd-cal-strip { gap: 5px; }
+    .fzd-day-chip {
+        padding: 7px 2px 6px;
+        border-radius: 9px;
+        align-items: center;
+        gap: 3px;
+        text-align: center;
+    }
+    /* L'ordre s'inverse : jour de semaine au-dessus du chiffre. */
+    .fzd-day-chip-top { flex-direction: column-reverse; align-items: center; gap: 3px; }
+    .fzd-day-chip-num { font-size: 18px; }
+    .fzd-day-chip-dow { font-size: 8px; letter-spacing: .1em; }
+    .fzd-day-chip-count { justify-content: center; font-size: 9.5px; color: var(--fzd-text-fainter); }
+    /* Une case fait un septième d'écran : seul le chiffre y tient. */
+    .fzd-count-w { display: none; }
+
+    /* Journée sélectionnée : contour brique plutôt qu'aplat noir — sept
+       cases côte à côte, l'aplat écrasait la rangée. */
+    .fzd-day-chip.is-selected {
+        background: var(--fzd-accent-tint);
+        border-color: var(--fzd-accent-fill);
+    }
+    .fzd-day-chip.is-selected .fzd-day-chip-num { color: var(--fzd-accent); }
+    .fzd-day-chip.is-selected .fzd-day-chip-dow,
+    .fzd-day-chip.is-selected .fzd-day-chip-count { color: var(--fzd-text-faint); }
+    .fzd-day-chip.is-selected .fzd-day-chip-count.is-live { color: var(--fzd-accent); }
+
+    .fzd-cal-dayhead { gap: 9px; padding-top: 0; border-top: none; }
+    .fzd-cal-dayname { font-size: 21px; }
+
+    /* Le carrousel : une carte par écran, accrochée, débordant des 16px de
+       marge de la section pour que la carte suivante se devine au bord. */
+    .fzd-cal-games {
+        display: flex;
+        grid-template-columns: none;
+        align-items: stretch;
+        gap: 12px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        scroll-snap-type: x mandatory;
+        scroll-padding: 0;
+        margin: 0 -16px;
+        padding: 0 16px;
+    }
+    .fzd-cal-games::-webkit-scrollbar { display: none; }
+    .fzd-game-card {
+        flex: 0 0 86%;
+        scroll-snap-align: center;
+    }
+    /* Une seule carte : elle occupe toute la largeur, rien ne défile. */
+    .fzd-cal-games > .fzd-game-card:only-child { flex-basis: 100%; }
+
+    .fzd-cal-dots { display: flex; }
+    .fzd-cal-more { display: none; }
+    .fzd-cal-empty { padding: 14px 4px; }
+
+    .fzd-team-name { font-size: 14px; }
+    .fzd-team-score { font-size: 21px; }
+    .fzd-gp-card { width: 168px; }
+    .fzd-gp-num { font-size: 21px; }
 
     /* Ce panneau ne descend pas sous 768px : accueil-mobile.css le masque en
        !important et la home mobile rend les mêmes mouvements avec ses propres

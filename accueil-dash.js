@@ -9,7 +9,24 @@
 /* ============================================================ */
 
 const FR_DOW = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+const FR_DOW_LONG = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 const FR_MONTH = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+const FR_MONTH_SHORT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juill.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+
+/* Nom court d'équipe, en français là où l'usage l'est (Sénateurs, Canadiens).
+   /current-teams ne renvoie que le nom complet anglais : cette table est la
+   seule source des libellés que la maquette Canvas-12 met sur les cartes de
+   match. Le repli shortTeamName() couvre une équipe ajoutée à la ligue avant
+   qu'on pense à l'inscrire ici. */
+const NHL_TEAM_SHORT = {
+    ANA: 'Ducks', ARI: 'Coyotes', BOS: 'Bruins', BUF: 'Sabres', CAR: 'Hurricanes',
+    CBJ: 'Blue Jackets', CGY: 'Flames', CHI: 'Blackhawks', COL: 'Avalanche',
+    DAL: 'Stars', DET: 'Red Wings', EDM: 'Oilers', FLA: 'Panthers', LAK: 'Kings',
+    MIN: 'Wild', MTL: 'Canadiens', NJD: 'Devils', NSH: 'Predators', NYI: 'Islanders',
+    NYR: 'Rangers', OTT: 'Sénateurs', PHI: 'Flyers', PIT: 'Penguins', SEA: 'Kraken',
+    SJS: 'Sharks', STL: 'Blues', TBL: 'Lightning', TOR: 'Maple Leafs', UTA: 'Mammoth',
+    VAN: 'Canucks', VGK: 'Golden Knights', WPG: 'Jets', WSH: 'Capitals'
+};
 
 function todayISO() {
     return new Date().toISOString().slice(0, 10);
@@ -116,6 +133,51 @@ let calData = null;
 let calSelectedDate = null;
 let calMonthOpen = false;
 let calMonthCursor = null;
+// Feuilles de match du soir (GET /tonight-boxscores), posées par renderDash :
+// les cartes joueur du calendrier montrent la ligne EN DIRECT quand elle
+// existe, et retombent sur les totaux de la saison sinon.
+let calTonight = { players: [], games: [] };
+// Bureau : 4 cartes puis « Voir les N autres matchs ». Au téléphone les
+// matchs défilent, donc ce repli ne s'applique pas.
+let calGamesExpanded = false;
+const CAL_GAMES_COLLAPSED = 4;
+// abbrev → { name, record }, construit une fois depuis /current-teams.
+let nhlTeamIndex = null;
+
+const calIsPhone = () => window.matchMedia('(max-width: 768px)').matches;
+
+async function loadNhlTeams() {
+    if (nhlTeamIndex) return;
+    nhlTeamIndex = {};
+    try {
+        const res = await fetch(`${BASE_URL}/current-teams`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        (data.teams || []).forEach(t => {
+            if (!t.teamAbbrev) return;
+            nhlTeamIndex[t.teamAbbrev] = {
+                name: NHL_TEAM_SHORT[t.teamAbbrev] || shortTeamName(t.teamFullName),
+                record: `${t.wins || 0}-${t.losses || 0}-${t.otLosses || 0}`
+            };
+        });
+    } catch (err) {
+        console.warn('Could not load team standings:', err);
+    }
+}
+
+function shortTeamName(full) {
+    const parts = String(full || '').trim().split(/\s+/);
+    if (parts.length <= 1) return parts[0] || '';
+    return parts.length > 2 ? parts.slice(-2).join(' ') : parts[parts.length - 1];
+}
+
+function teamName(abbrev) {
+    return (nhlTeamIndex && nhlTeamIndex[abbrev]?.name) || NHL_TEAM_SHORT[abbrev] || abbrev;
+}
+
+function teamRecord(abbrev) {
+    return (nhlTeamIndex && nhlTeamIndex[abbrev]?.record) || '';
+}
 
 async function fetchSchedule(date) {
     try {
@@ -130,23 +192,30 @@ async function fetchSchedule(date) {
 
 async function initCalendar() {
     const today = todayISO();
-    calData = await fetchSchedule(today);
+    const [schedule] = await Promise.all([fetchSchedule(today), loadNhlTeams()]);
+    calData = schedule;
     calSelectedDate = calData.days.find(d => d.date === today) ? today : (calData.days[0]?.date || today);
     renderCalendar();
     renderOffseasonPanel();
 }
 
 function renderCalendar() {
-    renderCalEyebrow();
+    renderCalRange();
     renderDayStrip();
+    renderDayHead();
     renderDayGames();
 }
 
-function renderCalEyebrow() {
-    const eyebrow = document.getElementById('fzdCalEyebrow');
-    if (!eyebrow) return;
-    const d = new Date((calSelectedDate || todayISO()) + 'T00:00:00Z');
-    eyebrow.textContent = `Calendrier — ${FR_MONTH[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+/** « 18 – 24 oct. » : la semaine que /schedule/:date vient de renvoyer. */
+function renderCalRange() {
+    const el = document.getElementById('fzdCalRange');
+    if (!el || !calData || !calData.days.length) return;
+    const first = calData.days[0].date;
+    const last = calData.days[calData.days.length - 1].date;
+    const mon = iso => FR_MONTH_SHORT[Number(iso.slice(5, 7)) - 1];
+    el.textContent = mon(first) === mon(last)
+        ? `${dayNum(first)} – ${dayNum(last)} ${mon(last)}`
+        : `${dayNum(first)} ${mon(first)} – ${dayNum(last)} ${mon(last)}`;
 }
 
 function renderDayStrip() {
@@ -157,10 +226,20 @@ function renderDayStrip() {
     strip.innerHTML = calData.days.map(d => {
         const isToday = d.date === today;
         const isSelected = d.date === calSelectedDate;
+        const games = d.games || [];
+        const live = games.filter(g => g.state === 'LIVE' || g.state === 'CRIT').length;
+        // Le mot est dans un <span> à part : au téléphone la case ne fait
+        // qu'un septième d'écran, la CSS n'y garde que le chiffre.
+        const count = live
+            ? `<span class="fzd-day-chip-count is-live"><i class="fzd-live-dot"></i><span class="fzd-count-n">${live}</span><span class="fzd-count-w"> en direct</span></span>`
+            : `<span class="fzd-day-chip-count"><span class="fzd-count-n">${games.length}</span><span class="fzd-count-w"> match${games.length > 1 ? 's' : ''}</span></span>`;
         return `
-            <button type="button" class="fzd-day-chip${isToday ? ' is-today' : ''}${isSelected ? ' is-selected' : ''}" data-date="${d.date}">
-                <div class="fzd-day-chip-dow">${isToday ? 'Auj' : dowLabel(d.date)}</div>
-                <div class="fzd-day-chip-num">${dayNum(d.date)}</div>
+            <button type="button" class="fzd-day-chip${isToday ? ' is-today' : ''}${isSelected ? ' is-selected' : ''}" data-date="${d.date}" aria-pressed="${isSelected}">
+                <span class="fzd-day-chip-top">
+                    <span class="fzd-day-chip-num">${dayNum(d.date)}</span>
+                    <span class="fzd-day-chip-dow">${isToday ? 'Auj' : dowLabel(d.date)}</span>
+                </span>
+                ${count}
             </button>`;
     }).join('');
 
@@ -169,8 +248,28 @@ function renderDayStrip() {
     });
 }
 
+/** « Mercredi 21 octobre · 5 de vos joueurs à l'horaire ». */
+function renderDayHead() {
+    const el = document.getElementById('fzdCalDayHead');
+    if (!el) return;
+    const iso = calSelectedDate || todayISO();
+    const d = new Date(iso + 'T00:00:00Z');
+    const label = `${FR_DOW_LONG[d.getUTCDay()]} ${d.getUTCDate()} ${FR_MONTH[d.getUTCMonth()].toLowerCase()}`;
+
+    const day = calData && calData.days.find(x => x.date === iso);
+    const games = (day && day.games) || [];
+    const counts = rosterTeamCounts();
+    const mine = games.reduce((sum, g) => sum + rosterCountForGame(counts, g), 0);
+
+    el.innerHTML = `
+        <span class="fzd-cal-dayname">${escapeHTML(label)}</span>
+        ${mine ? `<span class="fzd-cal-daysub">${mine} de vos joueur${mine > 1 ? 's' : ''} à l'horaire</span>` : ''}`;
+}
+
 function renderDayGames() {
     const wrap = document.getElementById('fzdCalGames');
+    const dots = document.getElementById('fzdCalDots');
+    const more = document.getElementById('fzdCalMore');
     if (!wrap || !calData) return;
 
     const day = calData.days.find(d => d.date === calSelectedDate);
@@ -178,50 +277,235 @@ function renderDayGames() {
 
     if (!games.length) {
         wrap.innerHTML = `<p class="fzd-cal-empty">Aucun match cette journée.</p>`;
+        if (dots) dots.innerHTML = '';
+        if (more) more.style.display = 'none';
         return;
     }
 
+    // Téléphone : tous les matchs, ils défilent horizontalement (un par écran)
+    // au lieu de s'empiler. Bureau : grille de deux colonnes repliée à quatre
+    // cartes, le reste derrière « Voir les N autres matchs ».
+    const phone = calIsPhone();
+    const shown = (phone || calGamesExpanded) ? games : games.slice(0, CAL_GAMES_COLLAPSED);
+
     const counts = rosterTeamCounts();
-    wrap.innerHTML = games.map(g => gameCardHTML(g, counts)).join('');
+    wrap.innerHTML = shown.map(g => gameCardHTML(g, counts)).join('');
+    wrap.scrollLeft = 0;
+
+    if (dots) {
+        dots.innerHTML = shown.length > 1
+            ? shown.map((_, i) => `<i class="fzd-cal-dot${i === 0 ? ' is-on' : ''}"></i>`).join('')
+            : '';
+    }
+
+    const rest = games.length - shown.length;
+    if (more) {
+        if (phone || (!rest && !calGamesExpanded)) {
+            more.style.display = 'none';
+        } else {
+            more.style.display = '';
+            more.textContent = calGamesExpanded
+                ? '← Voir moins'
+                : `Voir les ${rest} autre${rest > 1 ? 's' : ''} match${rest > 1 ? 's' : ''} →`;
+        }
+    }
+
+    bindPlayerTracks(wrap);
 }
 
 function gameCardHTML(game, rosterCounts) {
     const isFinal = game.state === 'FINAL' || game.state === 'OFF';
     const isLive = game.state === 'LIVE' || game.state === 'CRIT';
     const isScheduled = !isFinal && !isLive;
-    const count = rosterCountForGame(rosterCounts, game);
 
-    let statusHTML;
+    let badge, when = '';
     if (isLive) {
-        statusHTML = `<div class="fzd-game-status"><span class="fzd-live-dot"></span>${periodLabel(game.period, game.periodType)} ${escapeHTML(game.clock?.timeRemaining || '')}</div>`;
+        badge = `<span class="fzd-game-badge is-live"><i class="fzd-live-dot"></i>En direct</span>`;
+        when = `${periodLabel(game.period, game.periodType)} · ${escapeHTML(game.clock?.timeRemaining || '')}`;
     } else if (isFinal) {
-        statusHTML = `<div class="fzd-game-status">Final</div>`;
+        badge = `<span class="fzd-game-badge is-final">Final</span>`;
     } else {
-        statusHTML = `<div class="fzd-game-status">${gameTimeLabel(game.startTimeUTC)}</div>`;
+        badge = `<span class="fzd-game-badge">${gameTimeLabel(game.startTimeUTC)}</span>`;
+        // « Dans 1 h 12 » n'a de sens qu'à quelques heures de la mise au jeu :
+        // à trois jours de là, countdownLabel écrirait « Dans 74 h 05 ».
+        const inMs = new Date(game.startTimeUTC) - Date.now();
+        if (inMs > 0 && inMs < 12 * 3600 * 1000) when = `Dans ${countdownLabel(game.startTimeUTC)}`;
     }
 
     const teamRow = (side, opponent) => {
         const trailing = !isScheduled && (side.score ?? 0) < (opponent.score ?? 0);
-        const scoreCell = isScheduled
-            ? `<div class="fzd-team-score is-dash">—</div>`
-            : `<div class="fzd-team-score${trailing ? ' is-trailing' : ''}">${side.score ?? 0}</div>`;
+        const record = teamRecord(side.abbrev);
         return `
             <div class="fzd-game-row">
-                <div class="fzd-game-team">${teamLogoImg(side.abbrev)}<div class="fzd-team-abbr${trailing ? ' is-trailing' : ''}">${side.abbrev}</div></div>
-                ${scoreCell}
+                ${teamLogoImg(side.abbrev)}
+                <div class="fzd-team-id">
+                    <div class="fzd-team-name${trailing ? ' is-trailing' : ''}">${escapeHTML(teamName(side.abbrev))}</div>
+                    <div class="fzd-team-rec">${escapeHTML(record || side.abbrev)}</div>
+                </div>
+                ${isScheduled ? '' : `<div class="fzd-team-score${trailing ? ' is-trailing' : ''}">${side.score ?? 0}</div>`}
             </div>`;
     };
 
     return `
-        <div class="fzd-game-card${isScheduled ? ' is-scheduled' : ''}${isFinal ? ' is-final' : ''}">
-            ${statusHTML}
-            ${teamRow(game.away, game.home)}
-            ${teamRow(game.home, game.away)}
-            <div class="fzd-game-foot">${count > 0 ? `${count} de vos joueurs` : 'Aucun joueur'}</div>
+        <article class="fzd-game-card${isScheduled ? ' is-scheduled' : ''}${isFinal ? ' is-final' : ''}${isLive ? ' is-live' : ''}">
+            <header class="fzd-game-head">
+                ${badge}
+                ${when ? `<span class="fzd-game-when">${when}</span>` : ''}
+            </header>
+            <div class="fzd-game-teams">
+                ${teamRow(game.away, game.home)}
+                ${teamRow(game.home, game.away)}
+            </div>
+            ${gamePlayersHTML(game)}
+        </article>`;
+}
+
+/**
+ * Le carrousel « Vos joueurs » sous chaque match — ce que la maquette
+ * Canvas-12 met à la place des meneurs par équipe. Pendant le match la ligne
+ * vient de /tonight-boxscores (calTonight) ; sinon ce sont les totaux de la
+ * saison de /current-stats. Rien n'est rendu si aucun de vos joueurs n'est
+ * dans ce match : mieux vaut pas de bandeau qu'un bandeau vide.
+ */
+function gamePlayersHTML(game) {
+    const abbrevs = [game.away.abbrev, game.home.abbrev];
+    const started = ['LIVE', 'CRIT', 'FINAL', 'OFF'].includes(game.state);
+
+    const tonightByName = {};
+    (calTonight.players || []).forEach(p => { tonightByName[p.playerName] = p; });
+
+    const rows = [];
+    activeRosterNames().forEach(name => {
+        const info = getPlayerStats(name);
+        if (!info || !abbrevs.includes(info.teamAbbrev)) return;
+        // Les feuilles de match ne couvrent que la journée en cours : pour un
+        // match d'un autre jour, tonightByName est vide et on retombe tout
+        // seul sur les totaux de la saison.
+        const live = started ? tonightByName[name] : null;
+        rows.push({ name, info, live });
+    });
+    if (!rows.length) return '';
+
+    const inPlay = rows.filter(r => r.live).length;
+    const sub = inPlay ? `${inPlay} en jeu` : 'Totaux de la saison';
+
+    return `
+        <footer class="fzd-game-players">
+            <div class="fzd-gp-head">
+                <span class="fzd-gp-title">Vos joueurs</span>
+                <span class="fzd-gp-sub">${sub}</span>
+            </div>
+            <div class="fzd-gp-track">${rows.map(r => playerCardHTML(r.name, r.info, r.live)).join('')}</div>
+            ${rows.length > 1 ? `<div class="fzd-gp-dots" aria-hidden="true">${rows.map((_, i) => `<i class="fzd-gp-dot${i === 0 ? ' is-on' : ''}"></i>`).join('')}</div>` : ''}
+        </footer>`;
+}
+
+function playerCardHTML(name, info, live) {
+    const pos = info.position && info.position !== 'N/A' ? info.position : '';
+    let meta, num, label, hot = false;
+
+    if (live) {
+        meta = [info.teamAbbrev, pos, live.toi].filter(Boolean).join(' · ');
+        if (live.position === 'G') {
+            const faced = live.shotsAgainst || ((live.saves || 0) + (live.goalsAgainst || 0));
+            num = faced ? (live.saves / faced).toFixed(3).replace(/^0/, '') : '—';
+            label = '%Arr';
+        } else if ((live.goals || 0) > 0) {
+            num = live.goals; label = live.goals > 1 ? 'Buts' : 'But'; hot = true;
+        } else if ((live.assists || 0) > 0) {
+            num = live.assists; label = 'Pass'; hot = true;
+        } else {
+            num = live.shots || 0; label = 'Tirs';
+        }
+    } else {
+        meta = [info.teamAbbrev, pos].filter(Boolean).join(' · ');
+        if (pos === 'G') { num = info.wins || 0; label = 'Vict'; }
+        else { num = info.points || 0; label = 'Pts'; }
+    }
+
+    const initials = name.split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+    const avatar = info.headshot
+        ? `<img class="fzd-gp-photo" src="${escapeHTML(info.headshot)}" alt="" loading="lazy" onerror="this.remove()">`
+        : `<span class="fzd-gp-photo is-initials">${escapeHTML(initials)}</span>`;
+
+    return `
+        <div class="fzd-gp-card">
+            ${avatar}
+            <div class="fzd-gp-id">
+                <div class="fzd-gp-name">${escapeHTML(name)}</div>
+                <div class="fzd-gp-meta">${escapeHTML(meta)}</div>
+            </div>
+            <div class="fzd-gp-stat">
+                <div class="fzd-gp-num${hot ? ' is-hot' : ''}">${escapeHTML(String(num))}</div>
+                <div class="fzd-gp-lbl">${escapeHTML(label)}</div>
+            </div>
         </div>`;
 }
 
+/** Puces du carrousel « Vos joueurs », une piste par carte de match. */
+function bindPlayerTracks(root) {
+    root.querySelectorAll('.fzd-gp-track').forEach(track => {
+        const dots = track.parentElement.querySelector('.fzd-gp-dots');
+        if (!dots || !dots.children.length) return;
+        track.addEventListener('scroll', () => {
+            const card = track.firstElementChild;
+            if (!card) return;
+            const step = card.offsetWidth + 8;
+            const i = Math.min(dots.children.length - 1, Math.round(track.scrollLeft / step));
+            Array.from(dots.children).forEach((d, k) => d.classList.toggle('is-on', k === i));
+        }, { passive: true });
+    });
+}
+
+/** Puces du carrousel des matchs — téléphone seulement : au bureau c'est une
+ *  grille et #fzdCalDots est masqué en CSS. */
+function updateCalGameDots() {
+    const wrap = document.getElementById('fzdCalGames');
+    const dots = document.getElementById('fzdCalDots');
+    if (!wrap || !dots || !dots.children.length) return;
+    const card = wrap.firstElementChild;
+    if (!card) return;
+    const step = card.offsetWidth + 12;
+    const i = Math.min(dots.children.length - 1, Math.round(wrap.scrollLeft / step));
+    Array.from(dots.children).forEach((d, k) => d.classList.toggle('is-on', k === i));
+}
+
+/**
+ * Le calendrier est UN seul nœud, pas deux rendus. Au bureau il vit à sa
+ * place dans .fz-dash ; au téléphone renderMobileHome() lui réserve
+ * #fzmCalSlot et on l'y déplace, pour qu'il tombe entre le classement et
+ * « Vos joueurs ce soir » plutôt qu'à la toute fin de l'écran. Le retour
+ * arrière évite qu'un simple redimensionnement le laisse coincé dans la home
+ * mobile, masquée au-dessus de 768px.
+ */
+function fzdPlaceCalendar() {
+    const cal = document.getElementById('fzDashCalendarWrap');
+    if (!cal) return;
+    const slot = document.getElementById('fzmCalSlot');
+    if (calIsPhone() && slot) {
+        if (cal.parentElement !== slot) slot.appendChild(cal);
+    } else {
+        fzdRestoreCalendar();
+    }
+}
+
+/**
+ * Ramène le calendrier à sa place bureau. renderMobileHome() l'appelle AVANT
+ * de réécrire son innerHTML : le nœud vit peut-être dans #fzmCalSlot, et une
+ * réécriture l'effacerait pour de bon — plus de calendrier jusqu'au prochain
+ * chargement de page.
+ */
+function fzdRestoreCalendar() {
+    const cal = document.getElementById('fzDashCalendarWrap');
+    const anchor = document.getElementById('fzDashOffseason');
+    if (!cal || !anchor || cal.nextElementSibling === anchor) return;
+    anchor.parentElement.insertBefore(cal, anchor);
+}
+
 async function selectCalendarDay(dateStr) {
+    // Changer de journée replie les cartes de match : le « Voir les N autres »
+    // parlait du nombre de matchs de la journée qu'on vient de quitter.
+    calGamesExpanded = false;
     if (calData && calData.days.some(d => d.date === dateStr)) {
         calSelectedDate = dateStr;
         renderCalendar();
@@ -234,6 +518,7 @@ async function selectCalendarDay(dateStr) {
 
 async function calGoPrevWeek() {
     if (!calData || !calData.previousStartDate) return;
+    calGamesExpanded = false;
     calData = await fetchSchedule(calData.previousStartDate);
     calSelectedDate = calData.days[calData.days.length - 1]?.date || calData.previousStartDate;
     renderCalendar();
@@ -241,6 +526,7 @@ async function calGoPrevWeek() {
 
 async function calGoNextWeek() {
     if (!calData || !calData.nextStartDate) return;
+    calGamesExpanded = false;
     calData = await fetchSchedule(calData.nextStartDate);
     calSelectedDate = calData.days[0]?.date || calData.nextStartDate;
     renderCalendar();
@@ -1694,6 +1980,29 @@ function bindCalendarControls() {
     document.getElementById('fzdCalMonthToggle')?.addEventListener('click', toggleMonthPicker);
     document.getElementById('fzdMonthPrevBtn')?.addEventListener('click', monthPrev);
     document.getElementById('fzdMonthNextBtn')?.addEventListener('click', monthNext);
+
+    document.getElementById('fzdCalMore')?.addEventListener('click', () => {
+        calGamesExpanded = !calGamesExpanded;
+        renderDayGames();
+    });
+    document.getElementById('fzdCalGames')?.addEventListener('scroll', updateCalGameDots, { passive: true });
+
+    // Le même DOM sert la grille bureau et le carrousel téléphone, mais pas
+    // avec le même nombre de cartes (repli à 4 d'un côté, tout de l'autre) ni
+    // au même endroit dans la page : franchir 768px demande donc un re-rendu,
+    // pas seulement un changement de CSS.
+    let lastPhone = calIsPhone();
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            const phone = calIsPhone();
+            if (phone === lastPhone) return;
+            lastPhone = phone;
+            fzdPlaceCalendar();
+            if (calData) renderDayGames();
+        }, 150);
+    });
 }
 
 // ============================================================
@@ -1813,12 +2122,17 @@ async function renderDash() {
     if (!hasPool) return;
 
     if (!calData) await initCalendar(); else renderCalendar();
+    fzdPlaceCalendar();
     renderQuickActions();
     renderMyPoolsList();
     renderActivityFeed();
 
     const dash = await loadDashData();
     if (dash) {
+        // Les cartes joueur du calendrier lisent calTonight : on le pose AVANT
+        // renderMobileHome (qui redessine le calendrier une fois déplacé), pour
+        // que les stats en direct arrivent du premier coup.
+        calTonight = dash.tonight || { players: [], games: [] };
         renderHero(dash.tonight);
         fzdRenderDraftBoard('fzDashDraftBoard', FZPool.data(), FZPool.team(), dash.activeName);
         renderLivePanel(dash.tonight, dash.movement, dash.activeName);

@@ -3208,6 +3208,11 @@ app.get('/tonight-boxscores', async (req, res) => {
                             assists: p.assists || 0,
                             shots: p.sog || 0,
                             plusMinus: p.plusMinus || 0,
+                            // toi : « 14:22 ». Sert la ligne meta des cartes
+                            // joueur du calendrier (voir gamePlayersHTML,
+                            // accueil-dash.js) — la seule donnée « en jeu »
+                            // que la maquette Canvas-12 demande en plus.
+                            toi: p.toi || '',
                             gameId: game.id,
                             gameState: game.gameState,
                             fantasyPointsTonight: skaterFantasyPointsTonight({
@@ -3224,9 +3229,11 @@ app.get('/tonight-boxscores', async (req, res) => {
                         teamAbbrev,
                         position: 'G',
                         saves: p.saveShotsAgainst ? parseInt((p.saveShotsAgainst.split('/')[0] || '0'), 10) : 0,
+                        shotsAgainst: p.saveShotsAgainst ? parseInt((p.saveShotsAgainst.split('/')[1] || '0'), 10) : 0,
                         goalsAgainst: p.goalsAgainst || 0,
                         decision,
                         shutout,
+                        toi: p.toi || '',
                         gameId: game.id,
                         gameState: game.gameState,
                         fantasyPointsTonight: goalieFantasyPointsTonight({
