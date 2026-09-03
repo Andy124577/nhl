@@ -4019,9 +4019,9 @@
       }
     },
     "h2hData": {
-      "currentWeek": 16,
+      "currentWeek": 17,
       "seasonStart": "2026-05-11T04:00:00.000Z",
-      "weekStart": "2026-08-24T04:00:00.000Z",
+      "weekStart": "2026-08-31T04:00:00.000Z",
       "matchups": [
         [
           {
@@ -4297,49 +4297,67 @@
           {
             "team1": "Équipe 4",
             "team2": "Équipe 2",
-            "team1Points": 0,
-            "team2Points": 0,
-            "winner": null,
+            "team1Points": 80,
+            "team2Points": 100,
+            "winner": "Équipe 2",
             "weekNumber": 16
           },
           {
             "team1": "Équipe 3",
             "team2": "Équipe 1",
+            "team1Points": 138,
+            "team2Points": 97,
+            "winner": "Équipe 3",
+            "weekNumber": 16
+          }
+        ],
+        [
+          {
+            "team1": "Équipe 3",
+            "team2": "Équipe 2",
             "team1Points": 0,
             "team2Points": 0,
             "winner": null,
-            "weekNumber": 16
+            "weekNumber": 17
+          },
+          {
+            "team1": "Équipe 1",
+            "team2": "Équipe 4",
+            "team1Points": 0,
+            "team2Points": 0,
+            "winner": null,
+            "weekNumber": 17
           }
         ]
       ],
       "standings": {
         "Équipe 1": {
           "wins": 6,
-          "losses": 9,
+          "losses": 10,
           "ties": 0,
-          "pointsFor": 1455,
-          "pointsAgainst": 1494
+          "pointsFor": 1552,
+          "pointsAgainst": 1632
         },
         "Équipe 2": {
-          "wins": 9,
+          "wins": 10,
           "losses": 6,
           "ties": 0,
-          "pointsFor": 1500,
-          "pointsAgainst": 1650
+          "pointsFor": 1600,
+          "pointsAgainst": 1730
         },
         "Équipe 3": {
-          "wins": 15,
+          "wins": 16,
           "losses": 0,
           "ties": 0,
-          "pointsFor": 2070,
-          "pointsAgainst": 1371
+          "pointsFor": 2208,
+          "pointsAgainst": 1468
         },
         "Équipe 4": {
           "wins": 0,
-          "losses": 15,
+          "losses": 16,
           "ties": 0,
-          "pointsFor": 1200,
-          "pointsAgainst": 1710
+          "pointsFor": 1280,
+          "pointsAgainst": 1810
         }
       },
       "matchupHistory": [
@@ -4702,6 +4720,30 @@
             }
           ],
           "completedDate": "2026-08-24T07:28:54.437Z"
+        },
+        {
+          "weekNumber": 16,
+          "weekStart": "2026-08-24T04:00:00.000Z",
+          "weekEnd": "2026-08-31T04:00:00.000Z",
+          "matchups": [
+            {
+              "team1": "Équipe 4",
+              "team2": "Équipe 2",
+              "team1Points": 80,
+              "team2Points": 100,
+              "winner": "Équipe 2",
+              "weekNumber": 16
+            },
+            {
+              "team1": "Équipe 3",
+              "team2": "Équipe 1",
+              "team1Points": 138,
+              "team2Points": 97,
+              "winner": "Équipe 3",
+              "weekNumber": 16
+            }
+          ],
+          "completedDate": "2026-09-03T02:21:35.699Z"
         }
       ]
     },
