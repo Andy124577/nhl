@@ -273,18 +273,10 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
    ce qui ne laissait plus que ~260px au titre de 62px sur un portable de
    1024 ou une tablette en paysage. Le panneau reste en deux colonnes, il
    se resserre juste. */
-/* Panneau étroit (fenêtre réduite, tablette en portrait) : deux noms de club
-   complets côte à côte ne tiennent plus, ils cèdent la place aux
-   abréviations — le logo porte déjà l'identité. */
+/* Panneau étroit (fenêtre réduite, tablette en portrait) : les cartes du
+   carrousel hors-saison se resserrent pour qu'on en voie toujours deux. */
 @media (max-width: 1000px) {
-    .fzd-deal-grid { gap: 10px; }
-    .fzd-deal-club-name { display: none; }
-    .fzd-deal-club-abbr {
-        display: inline;
-        font: 600 12px/1 'Helvetica Neue', Helvetica, sans-serif;
-        letter-spacing: .04em;
-        color: var(--fzd-ink);
-    }
+    .fzd-off-card { flex-basis: 264px; width: 264px; }
 }
 
 @media (max-width: 1200px) {
@@ -562,139 +554,159 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 .fzd-month-cell.is-selected:not(.is-today) { border: 1px solid var(--fzd-ink); color: var(--fzd-ink); }
 
 /* ------------------------------------------------------------ */
-/* Hors-saison — compte à rebours, transactions réelles, à surveiller */
+/* Hors-saison — compte à rebours + carrousel des mouvements     */
+/* (maquette Claude Design « Canvas-10 » : filtres Tout /        */
+/* Échanges / Signatures / Blessés avec compteur, puis cartes    */
+/* qui défilent — échange, signature, blessé). « À surveiller »   */
+/* garde sa liste simple dessous.                                 */
 /* ------------------------------------------------------------ */
 .fz-dash-offseason {
     background: var(--fzd-surface);
     border: 1px solid var(--fzd-border-strong);
     border-radius: 14px;
-    padding: 20px 22px 6px;
+    padding: 20px 22px;
     margin-bottom: 18px;
 }
 
-.fzd-off-count { margin: 14px 0 4px; }
+.fzd-off-count { margin: 12px 0 4px; }
 .fzd-off-days { display: block; font: 600 46px/1 'Oswald', sans-serif; color: var(--fzd-ink); }
 .fzd-off-sub { display: block; margin-top: 4px; font: 400 13px/1.4 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-muted); }
 
-.fzd-off-section { padding: 18px 0; border-top: 1px solid var(--fzd-border); }
+.fzd-off-section { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--fzd-border); }
 .fzd-off-section .fzd-section-title { display: block; margin-bottom: 4px; }
-.fzd-off-empty { padding: 10px 0; font: 400 13px/1.4 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
+.fzd-off-empty { padding: 22px 2px; font: 400 13px/1.4 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
 
-/* Mouvements récents — onglets échanges / signatures / blessés */
-.fzd-off-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
-.fzd-off-tabs { display: flex; gap: 4px; }
-.fzd-off-tab {
-    padding: 5px 10px;
-    background: none;
-    border: 1px solid var(--fzd-border);
-    border-radius: 999px;
-    font: 600 10.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    color: var(--fzd-text-faint);
-    cursor: pointer;
-    transition: background .15s ease, color .15s ease, border-color .15s ease;
+/* Carrousel — en-tête + flèches, filtres, piste, points */
+.fzd-off-carousel .fzd-off-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin-bottom: 12px;
 }
-.fzd-off-tab:hover { color: var(--fzd-ink); border-color: var(--fzd-border-strong); }
-.fzd-off-tab.is-active { background: var(--fzd-solid); border-color: var(--fzd-solid); color: var(--fzd-on-solid); }
-
-.fzd-move-row { display: flex; align-items: baseline; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--fzd-border-soft); }
-.fzd-move-row:last-child { border-bottom: none; }
-.fzd-move-main { flex: 1; min-width: 0; }
-.fzd-move-name { font: 600 13.5px/1.35 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink); }
-.fzd-move-pos { font: 400 10.5px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-fainter); letter-spacing: .04em; }
-.fzd-move-route { margin-top: 3px; font: 400 11.5px/1.35 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-muted); }
-.fzd-move-date {
-    flex-shrink: 0; text-align: right;
-    font: 400 11px/1.4 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzd-text-faint);
-}
-.fzd-move-status { display: block; font-weight: 600; }
-/* L'accent est réservé aux absences fermes : un joueur « au jour le jour »
-   joue peut-être ce soir, le colorer crierait au loup. */
-.fzd-move-status[data-status="Out"],
-.fzd-move-status[data-status="Injured Reserve"] { color: var(--fzd-accent); }
-.fzd-move-back { display: block; margin-top: 2px; color: var(--fzd-text-fainter); }
-.fzd-move-more { margin: 0; padding: 10px 0 0; font: 400 11.5px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-fainter); }
-
-/* Feuilletage du panneau — précédent / page X / Y / suivant */
-.fzd-move-pager {
-    display: flex; align-items: center; justify-content: center; gap: 12px;
-    padding-top: 12px; margin-top: 4px;
-    border-top: 1px solid var(--fzd-border-soft);
-}
-.fzd-pager-btn {
+.fzd-off-nav { display: flex; gap: 6px; }
+.fzd-off-nav-btn {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 26px; height: 26px;
-    background: none;
-    border: 1px solid var(--fzd-border);
-    border-radius: 999px;
-    font: 400 14px/1 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzd-ink);
-    cursor: pointer;
+    width: 28px; height: 28px;
+    background: none; border: 1px solid var(--fzd-border); border-radius: 999px;
+    font: 400 15px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-muted); cursor: pointer;
+    transition: background .15s ease, color .15s ease, border-color .15s ease, opacity .15s ease;
+}
+.fzd-off-nav-btn:hover:not(:disabled) { background: var(--fzd-solid); border-color: var(--fzd-solid); color: var(--fzd-on-solid); }
+.fzd-off-nav-btn:disabled { opacity: .3; cursor: default; }
+
+.fzd-off-filters { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+.fzd-off-filter {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 11px;
+    background: none; border: 1px solid var(--fzd-border); border-radius: 999px;
+    font: 600 10.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .06em; text-transform: uppercase;
+    color: var(--fzd-text-faint); cursor: pointer;
     transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
-.fzd-pager-btn:hover:not(:disabled) { background: var(--fzd-solid); border-color: var(--fzd-solid); color: var(--fzd-on-solid); }
-.fzd-pager-btn:disabled { opacity: .35; cursor: default; }
-.fzd-pager-info {
-    font: 600 10.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .04em; text-transform: uppercase;
-    color: var(--fzd-text-faint);
+.fzd-off-filter:hover { color: var(--fzd-ink); border-color: var(--fzd-border-strong); }
+.fzd-off-filter.is-active { background: var(--fzd-solid); border-color: var(--fzd-solid); color: var(--fzd-on-solid); }
+.fzd-off-filter-count { font-size: 9.5px; letter-spacing: 0; color: var(--fzd-text-fainter); }
+.fzd-off-filter.is-active .fzd-off-filter-count { color: var(--fzd-on-solid); opacity: .7; }
+
+/* Piste — cartes qui défilent, alignées sur les bords du panneau */
+.fzd-off-track {
+    display: flex; gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    margin: 0 -22px; padding: 2px 22px 4px;
 }
+.fzd-off-track::-webkit-scrollbar { display: none; }
+.fzd-off-track.is-empty { display: block; margin: 0; padding: 0; }
 
-/* ------------------------------------------------------------ */
-/* Échange regroupé — les deux clubs côte à côte, ce que chacun   */
-/* reçoit dessous (journal des transactions de la LNH pour        */
-/* référence). L'ancienne ligne compacte « ABC ⇄ XYZ » + deux     */
-/* lignes de noms obligeait à relire l'abréviation en tête de     */
-/* chaque ligne pour savoir qui obtenait quoi.                    */
-/* ------------------------------------------------------------ */
-.fzd-deal { padding: 12px 0; border-bottom: 1px solid var(--fzd-border-soft); }
-.fzd-deal:last-of-type { border-bottom: none; }
-
-.fzd-deal-date {
-    margin-bottom: 9px;
-    font: 600 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+.fzd-off-card {
+    flex: 0 0 300px; width: 300px;
+    scroll-snap-align: start;
+    display: flex; flex-direction: column; gap: 12px;
+    padding: 15px;
+    background: var(--fzd-bg-alt);
+    border: 1px solid var(--fzd-border);
+    border-radius: 12px;
+}
+.fzd-off-card-top { display: flex; align-items: center; gap: 8px; }
+.fzd-off-card-date {
+    margin-left: auto;
+    font: 600 9px/1 'Helvetica Neue', Helvetica, sans-serif;
     letter-spacing: .12em; text-transform: uppercase;
     color: var(--fzd-text-faint);
 }
-
-.fzd-deal-grid { display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: 14px; }
-.fzd-deal-col { min-width: 0; }
-
-.fzd-deal-club { display: flex; align-items: center; gap: 7px; min-width: 0; }
-.fzd-deal-club-name {
-    font: 600 12.5px/1.25 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzd-ink);
-    /* Un nom de club ne se coupe pas en deux dans un en-tête de colonne :
-       il s'abrège. Le repli complet est .fzd-deal-club-abbr, plus bas. */
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.fzd-deal-club-abbr { display: none; }
-
-.fzd-deal-acq {
-    margin: 7px 0 7px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--fzd-border-soft);
+.fzd-off-tag {
     font: 600 9px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .13em; text-transform: uppercase;
-    color: var(--fzd-text-fainter);
+    letter-spacing: .1em; text-transform: uppercase;
+    padding: 5px 8px; border-radius: 4px;
 }
+.fzd-off-tag.is-trade { background: var(--fzd-accent-fill); color: var(--fzd-on-accent); }
+.fzd-off-tag.is-signing { background: var(--fzd-solid); color: var(--fzd-on-solid); }
+.fzd-off-tag.is-injury { color: var(--fzd-accent); border: 1px solid var(--fzd-accent); padding: 4px 7px; }
 
-.fzd-deal-assets { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 5px; }
-.fzd-deal-asset {
-    display: flex; align-items: baseline; gap: 6px;
-    font: 500 12.5px/1.35 'Helvetica Neue', Helvetica, sans-serif;
+.fzd-off-card-name {
+    font: 600 18px/1.15 'Oswald', sans-serif;
+    text-transform: uppercase;
     color: var(--fzd-ink);
 }
-.fzd-deal-asset-name { min-width: 0; overflow-wrap: anywhere; }
-.fzd-deal-asset.is-empty { font-weight: 400; font-style: italic; color: var(--fzd-text-fainter); }
+.fzd-off-card-club {
+    display: flex; align-items: center; gap: 8px;
+    font: 400 12px/1.3 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-muted);
+}
+.fzd-off-card-club .fzd-team-logo { width: 20px; height: 20px; flex-shrink: 0; object-fit: contain; }
 
-.fzd-deal-swap {
-    align-self: center;
-    font: 400 14px/1 'Helvetica Neue', Helvetica, sans-serif;
+.fzd-off-card-stats {
+    display: flex; gap: 10px;
+    margin-top: auto; padding-top: 11px;
+    border-top: 1px solid var(--fzd-border);
+}
+.fzd-off-stat { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.fzd-off-stat-lbl {
+    font: 600 8.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .13em; text-transform: uppercase;
     color: var(--fzd-text-faint);
 }
+.fzd-off-stat-val { font: 600 14px/1.2 'Oswald', sans-serif; color: var(--fzd-ink); }
+.fzd-off-stat-val[data-status="Out"],
+.fzd-off-stat-val[data-status="Injured Reserve"] { color: var(--fzd-accent); }
+
+/* Échange — les deux clubs empilés, ce que chacun reçoit dessous */
+.fzd-off-deal { display: flex; flex-direction: column; gap: 10px; }
+.fzd-off-deal-rule { height: 1px; background: var(--fzd-border); }
+.fzd-off-deal-side { display: flex; flex-direction: column; gap: 6px; }
+.fzd-off-deal-club { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.fzd-off-deal-club .fzd-team-logo { width: 20px; height: 20px; flex-shrink: 0; object-fit: contain; }
+.fzd-off-deal-club-name {
+    flex: 1; min-width: 0;
+    font: 600 12.5px/1.2 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-ink);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fzd-off-deal-acq {
+    flex-shrink: 0;
+    font: 600 8.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .13em; text-transform: uppercase;
+    color: var(--fzd-text-faint);
+}
+.fzd-off-deal-gets { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.fzd-off-deal-get {
+    font: 500 12.5px/1.35 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text);
+    overflow-wrap: anywhere;
+}
+.fzd-off-deal-get.is-empty { font-weight: 400; font-style: italic; color: var(--fzd-text-fainter); }
+.fzd-off-pos { font-size: 10.5px; letter-spacing: .04em; color: var(--fzd-text-fainter); }
+
+.fzd-off-dots { display: flex; justify-content: center; gap: 6px; margin-top: 14px; }
+.fzd-off-dots:empty { display: none; }
+.fzd-off-dot {
+    width: 6px; height: 6px; padding: 0;
+    border: none; border-radius: 999px;
+    background: var(--fzd-border-strong); cursor: pointer;
+    transition: width .2s ease, background .2s ease;
+}
+.fzd-off-dot.is-active { width: 18px; background: var(--fzd-accent); }
 
 .fzd-watch-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; padding: 9px 0; border-bottom: 1px solid var(--fzd-border-soft); }
 .fzd-watch-row:last-child { border-bottom: none; }
@@ -900,9 +912,8 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
     .fzd-cta-grid { gap: 10px; }
 
     /* Ce panneau ne descend pas sous 768px : accueil-mobile.css le masque en
-       !important et la home mobile rend les mêmes trois onglets avec ses
-       propres classes .fzm-*. Le repli étroit du bloc .fzd-deal-* vit donc
-       là-bas, pas ici. */
+       !important et la home mobile rend les mêmes mouvements avec ses propres
+       classes .fzm-*. Le repli étroit du carrousel vit donc là-bas, pas ici. */
 
     /* La bannière (#fzDashHero bureau / #fzmHeroSlot téléphone, voir
        renderHero() dans accueil-dash.js) partage un seul balisage : ici on

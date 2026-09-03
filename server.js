@@ -2120,10 +2120,18 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
         const latestSeason = nhlRegularSeasons[0] ? Number(nhlRegularSeasons[0].season) : null;
         console.log(`📋 ${playerName}: latest NHL season found = ${latestSeason}, entries = ${nhlRegularSeasons.length}`);
 
-        // Collect all entries for the latest season (traded players may have multiple teams)
-        const nhlSeasonEntries = latestSeason
-            ? nhlRegularSeasons.filter(s => Number(s.season) === latestSeason)
+        // Only the CURRENT season is "current stats". A retired or inactive
+        // player's most recent NHL season is an old one — accepting it here
+        // wrote their last-active totals into the pool as if they were live
+        // (this is how Dennis Wideman's 2016-17 line kept resurfacing).
+        // Falls through to the featuredStats branch, then to zeros.
+        const CURRENT_SEASON = 20252026;
+        const nhlSeasonEntries = latestSeason === CURRENT_SEASON
+            ? nhlRegularSeasons.filter(s => Number(s.season) === CURRENT_SEASON)
             : [];
+        if (latestSeason && latestSeason !== CURRENT_SEASON) {
+            console.log(`↩︎ ${playerName}: latest NHL season ${latestSeason} ≠ ${CURRENT_SEASON} — treating as no current stats`);
+        }
 
         let seasonStats = null;
 

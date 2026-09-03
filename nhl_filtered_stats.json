@@ -351,16 +351,6 @@
             "points": 41
         },
         {
-            "playerId": 8467408,
-            "skaterFullName": "Matt Savoie",
-            "teamAbbrevs": "PHI",
-            "positionCode": "D",
-            "gamesPlayed": 4,
-            "goals": 0,
-            "assists": 0,
-            "points": 0
-        },
-        {
             "playerId": 8471724,
             "skaterFullName": "Kris Letang",
             "teamAbbrevs": "PIT",
@@ -821,16 +811,6 @@
             "points": 26
         },
         {
-            "playerId": 8469770,
-            "skaterFullName": "Dennis Wideman",
-            "teamAbbrevs": "CGY",
-            "positionCode": "D",
-            "gamesPlayed": 57,
-            "goals": 5,
-            "assists": 13,
-            "points": 18
-        },
-        {
             "playerId": 8480873,
             "skaterFullName": "Rasmus Sandin",
             "teamAbbrevs": "WSH",
@@ -1111,16 +1091,6 @@
             "points": 12
         },
         {
-            "playerId": 8470600,
-            "skaterFullName": "Ryan Suter",
-            "teamAbbrevs": "STL",
-            "positionCode": "D",
-            "gamesPlayed": 82,
-            "goals": 2,
-            "assists": 13,
-            "points": 15
-        },
-        {
             "playerId": 8475279,
             "skaterFullName": "Ben Chiarot",
             "teamAbbrevs": "DET",
@@ -1281,16 +1251,6 @@
             "points": 2
         },
         {
-            "playerId": 8470324,
-            "skaterFullName": "Josh Gorges",
-            "teamAbbrevs": "BUF",
-            "positionCode": "D",
-            "gamesPlayed": 34,
-            "goals": 0,
-            "assists": 2,
-            "points": 2
-        },
-        {
             "playerId": 8483466,
             "skaterFullName": "Kevin Korchinski",
             "teamAbbrevs": "CHI",
@@ -1299,16 +1259,6 @@
             "goals": 0,
             "assists": 2,
             "points": 2
-        },
-        {
-            "playerId": 8470724,
-            "skaterFullName": "Kyle Quincey",
-            "teamAbbrevs": "MIN",
-            "positionCode": "D",
-            "gamesPlayed": 18,
-            "goals": 0,
-            "assists": 3,
-            "points": 3
         },
         {
             "playerId": 8484148,
@@ -4141,6 +4091,16 @@
             "goals": 0,
             "assists": 0,
             "points": 0
+        },
+        {
+            "playerId": 8483512,
+            "skaterFullName": "Matt Savoie",
+            "teamAbbrevs": "EDM",
+            "positionCode": "C",
+            "gamesPlayed": 82,
+            "goals": 18,
+            "assists": 19,
+            "points": 37
         }
     ],
     "Top_Rookies": [
@@ -6010,19 +5970,6 @@
             "assists": 0,
             "shutouts": 0,
             "points": 0
-        },
-        {
-            "playerId": 8470594,
-            "goalieFullName": "Marc-Andre Fleury",
-            "teamAbbrevs": "MIN",
-            "gamesPlayed": 26,
-            "wins": 14,
-            "losses": 9,
-            "otLosses": 1,
-            "savePct": 0,
-            "assists": 0,
-            "shutouts": 1,
-            "points": 34
         },
         {
             "playerId": 8480022,

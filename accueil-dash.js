@@ -817,21 +817,18 @@ function renderOffseasonPanel() {
 // mouvements discrets dont aucun média ne parle. Les blessés viennent
 // d'ESPN (/nhl-injuries), api-web n'en publiant aucun.
 let offseasonLeague = null;
-let offseasonTab = 'trade';
-const OFFSEASON_TABS = ['trade', 'signing', 'injury'];
-
-// Pages du panneau : 6 lignes par page, position mémorisée par onglet pour
-// qu'un aller-retour Échanges → Blessés → Échanges ne renvoie pas au début.
-const OFFSEASON_PAGE_SIZE = 6;
-const offseasonPages = { trade: 0, signing: 0, injury: 0 };
+let offseasonTab = 'all';
+const OFFSEASON_TABS = ['all', 'trade', 'signing', 'injury'];
+const OFFSEASON_TAB_LABELS = { all: 'Tout', trade: 'Échanges', signing: 'Signatures', injury: 'Blessés' };
+let offseasonCarouselBound = false;
 
 async function loadOffseasonTransactions() {
     const wrap = document.getElementById('fzdOffTransactions');
     if (!wrap) return;
 
     // On demande tout le journal (TRANSACTIONS_KEEP=250, cap blessés=300) :
-    // le panneau se feuillette page par page, donc chaque onglet doit avoir
-    // sa liste complète en main — et groupTrades voit ainsi tout l'échange,
+    // le carrousel montre chaque onglet en entier, donc chaque liste doit
+    // être complète en main — et groupTrades voit ainsi tout l'échange,
     // pas une moitié tronquée par la fenêtre.
     const [tx, inj] = await Promise.all([
         fetch('/nhl-transactions?limit=250').then(r => r.json()).catch(() => null),
@@ -840,98 +837,153 @@ async function loadOffseasonTransactions() {
 
     const moves = tx?.transactions || [];
     const deals = groupTrades(moves.filter(t => t.type === 'trade'));
+    const signings = moves.filter(t => t.type === 'signing');
+    const injuries = inj?.injuries || [];
+
+    // « Tout » : les trois flux fondus et retriés du plus récent au plus
+    // ancien. Chaque entrée garde sa forme d'origine, `kind` dit quelle
+    // carte rendre. Échange → date jour ; signature → date jour ; blessé →
+    // `since` (date de déclaration ESPN).
+    const stamp = iso => (iso ? new Date(iso).getTime() : 0) || 0;
+    const all = [
+        ...deals.map(d => ({ kind: 'trade', item: d, ts: stamp(d.date) })),
+        ...signings.map(s => ({ kind: 'signing', item: s, ts: stamp(s.date) })),
+        ...injuries.map(i => ({ kind: 'injury', item: i, ts: stamp(i.since) }))
+    ].sort((a, b) => b.ts - a.ts);
+
     offseasonLeague = {
+        all,
         trade: deals,
-        signing: moves.filter(t => t.type === 'signing'),
-        injury: inj?.injuries || [],
+        signing: signings,
+        injury: injuries,
         counts: {
-            // Échanges : un décompte d'opérations (après regroupement), pas de
-            // lignes-joueur — c'est ce que le panneau affiche désormais. Pour
-            // signatures/blessés, le total serveur permet le « et N autres ».
+            // Échanges : un décompte d'opérations (après regroupement). Pour
+            // signatures/blessés, le total serveur (peut dépasser la fenêtre
+            // demandée). « Tout » : la somme des trois.
             trade: deals.length,
             signing: tx?.counts?.signing || 0,
             injury: inj?.total || 0
         },
         tracking: !!tx?.tracking
     };
+    offseasonLeague.counts.all = offseasonLeague.counts.trade
+        + offseasonLeague.counts.signing + offseasonLeague.counts.injury;
 
-    // Ouvrir sur un onglet qui a de quoi montrer plutôt que sur « Échanges »
+    // Ouvrir sur un onglet qui a de quoi montrer plutôt que sur un onglet
     // vide un lendemain de journée calme.
     const firstFilled = OFFSEASON_TABS.find(k => offseasonLeague[k].length);
     if (firstFilled && !offseasonLeague[offseasonTab].length) offseasonTab = firstFilled;
 
-    // Appelé une seule fois (garde offseasonNewsLoaded), donc pas de
-    // risque d'empiler les écouteurs.
-    document.querySelectorAll('#fzdOffTabs .fzd-off-tab').forEach(btn => {
-        btn.classList.toggle('is-active', btn.dataset.tab === offseasonTab);
-        btn.addEventListener('click', () => {
-            offseasonTab = btn.dataset.tab;
-            document.querySelectorAll('#fzdOffTabs .fzd-off-tab')
-                .forEach(b => b.classList.toggle('is-active', b === btn));
-            renderOffseasonLeague();
-        });
-    });
-
+    renderOffseasonFilters();
+    if (!offseasonCarouselBound) { offseasonCarouselBound = true; bindOffseasonCarousel(); }
     renderOffseasonLeague();
 }
 
+// Barre de filtres « Tout / Échanges / Signatures / Blessés » avec compteur,
+// re-rendue à chaque changement d'onglet pour l'état actif et les nombres.
+function renderOffseasonFilters() {
+    const bar = document.getElementById('fzdOffTabs');
+    if (!bar || !offseasonLeague) return;
+    bar.innerHTML = OFFSEASON_TABS.map(k => {
+        const n = offseasonLeague.counts[k] || 0;
+        return `<button type="button" class="fzd-off-filter${k === offseasonTab ? ' is-active' : ''}" data-tab="${k}">`
+            + `${OFFSEASON_TAB_LABELS[k]}<span class="fzd-off-filter-count">${n}</span></button>`;
+    }).join('');
+    bar.querySelectorAll('.fzd-off-filter').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (btn.dataset.tab === offseasonTab) return;
+            offseasonTab = btn.dataset.tab;
+            renderOffseasonFilters();
+            renderOffseasonLeague();
+        });
+    });
+}
+
+// Flèches précédent/suivant + points de progression du carrousel. Câblé une
+// seule fois (garde offseasonCarouselBound) : le contenu de la piste change,
+// pas ses contrôles.
+function bindOffseasonCarousel() {
+    const track = document.getElementById('fzdOffTransactions');
+    const prev = document.getElementById('fzdOffPrev');
+    const next = document.getElementById('fzdOffNext');
+    if (!track) return;
+
+    const step = () => {
+        const card = track.querySelector('.fzd-off-card');
+        // Un cran = une carte (gap compris) ; repli sur ~90 % de la fenêtre.
+        return card ? card.getBoundingClientRect().width + 12 : track.clientWidth * 0.9;
+    };
+    prev?.addEventListener('click', () => track.scrollBy({ left: -step(), behavior: 'smooth' }));
+    next?.addEventListener('click', () => track.scrollBy({ left: step(), behavior: 'smooth' }));
+
+    let raf = 0;
+    track.addEventListener('scroll', () => {
+        if (raf) return;
+        raf = requestAnimationFrame(() => { raf = 0; updateOffseasonCarousel(); });
+    });
+    window.addEventListener('resize', () => {
+        clearTimeout(bindOffseasonCarousel._t);
+        bindOffseasonCarousel._t = setTimeout(renderOffseasonDots, 150);
+    });
+}
+
 function renderOffseasonLeague() {
-    const wrap = document.getElementById('fzdOffTransactions');
-    if (!wrap || !offseasonLeague) return;
+    const track = document.getElementById('fzdOffTransactions');
+    if (!track || !offseasonLeague) return;
 
     const rows = offseasonLeague[offseasonTab] || [];
     if (!rows.length) {
-        wrap.innerHTML = `<p class="fzd-off-empty">${offseasonEmptyText()}</p>`;
+        track.classList.add('is-empty');
+        track.innerHTML = `<p class="fzd-off-empty">${offseasonEmptyText()}</p>`;
+        renderOffseasonDots();
         return;
     }
 
-    // Le panneau est une carte de tableau de bord, pas une page de
-    // rapport : 96 blessés à la file l'étiraient sur plusieurs écrans et
-    // noyaient « À surveiller » dessous. On les découpe en pages de six
-    // qu'on feuillette sur place, sans quitter l'index.
-    const pageCount = Math.ceil(rows.length / OFFSEASON_PAGE_SIZE);
-    let page = offseasonPages[offseasonTab] || 0;
-    if (page > pageCount - 1) page = pageCount - 1;
-    if (page < 0) page = 0;
-    offseasonPages[offseasonTab] = page;
-
-    const start = page * OFFSEASON_PAGE_SIZE;
-    const shown = rows.slice(start, start + OFFSEASON_PAGE_SIZE);
-
-    // Ce qui reste au-delà de ce que le serveur a renvoyé (fenêtre limit) :
-    // impossible à feuilleter, on le signale sur la dernière page.
-    const total = offseasonLeague.counts?.[offseasonTab] || rows.length;
-    const beyond = page === pageCount - 1 ? Math.max(0, total - rows.length) : 0;
-
-    const rowHTML = offseasonTab === 'injury' ? injuryRowHTML
-        : offseasonTab === 'trade' ? dealRowHTML
-        : movementRowHTML;
-    wrap.innerHTML = shown.map(rowHTML).join('')
-        + (beyond ? `<p class="fzd-move-more">et ${beyond} autre${beyond > 1 ? 's' : ''}</p>` : '')
-        + offseasonPagerHTML(page, pageCount);
-
-    const pager = wrap.querySelector('.fzd-move-pager');
-    if (pager) {
-        pager.addEventListener('click', e => {
-            const btn = e.target.closest('button[data-page]');
-            if (!btn || btn.disabled) return;
-            offseasonPages[offseasonTab] = Number(btn.dataset.page);
-            renderOffseasonLeague();
-            wrap.scrollIntoView({ block: 'nearest' });
-        });
-    }
+    track.classList.remove('is-empty');
+    track.innerHTML = rows.map(row => offseasonTab === 'all'
+        ? offseasonCardHTML(row.kind, row.item)
+        : offseasonCardHTML(offseasonTab, row)).join('');
+    track.scrollLeft = 0;
+    renderOffseasonDots();
 }
 
-function offseasonPagerHTML(page, pageCount) {
-    if (pageCount < 2) return '';
-    const first = page === 0;
-    const last = page === pageCount - 1;
-    return `
-        <div class="fzd-move-pager">
-            <button type="button" class="fzd-pager-btn" data-page="${page - 1}"${first ? ' disabled' : ''} aria-label="Page précédente">‹</button>
-            <span class="fzd-pager-info">Page ${page + 1} / ${pageCount}</span>
-            <button type="button" class="fzd-pager-btn" data-page="${page + 1}"${last ? ' disabled' : ''} aria-label="Page suivante">›</button>
-        </div>`;
+// Points de progression — un par « page » de défilement (largeur de piste),
+// pas un par carte : une centaine de blessés donnerait une centaine de points.
+function renderOffseasonDots() {
+    const track = document.getElementById('fzdOffTransactions');
+    const dots = document.getElementById('fzdOffDots');
+    if (!track || !dots) return;
+
+    const pages = track.classList.contains('is-empty')
+        ? 0
+        : Math.max(1, Math.round(track.scrollWidth / track.clientWidth));
+    if (pages < 2) { dots.innerHTML = ''; updateOffseasonCarousel(); return; }
+    dots.innerHTML = Array.from({ length: pages }, (_, i) =>
+        `<button type="button" class="fzd-off-dot" data-page="${i}" aria-label="Page ${i + 1}"></button>`).join('');
+    dots.querySelectorAll('.fzd-off-dot').forEach(dot => {
+        dot.addEventListener('click', () => {
+            track.scrollTo({ left: dot.dataset.page * track.clientWidth, behavior: 'smooth' });
+        });
+    });
+    updateOffseasonCarousel();
+}
+
+// Reflète la position de défilement : point actif + flèches grisées aux bouts.
+function updateOffseasonCarousel() {
+    const track = document.getElementById('fzdOffTransactions');
+    const dots = document.getElementById('fzdOffDots');
+    const prev = document.getElementById('fzdOffPrev');
+    const next = document.getElementById('fzdOffNext');
+    if (!track) return;
+
+    const max = track.scrollWidth - track.clientWidth - 1;
+    if (prev) prev.disabled = track.scrollLeft <= 0;
+    if (next) next.disabled = track.scrollLeft >= max;
+
+    if (dots && dots.children.length) {
+        const active = Math.round(track.scrollLeft / track.clientWidth);
+        [...dots.children].forEach((d, i) => d.classList.toggle('is-active', i === active));
+    }
 }
 
 // Regroupe les lignes-joueur d'un même échange (même date + même paire de
@@ -958,52 +1010,92 @@ function groupTrades(list) {
     return [...deals.values()];
 }
 
-/**
- * Un échange : les deux clubs côte à côte, ce que chacun reçoit dessous.
- *
- * Remplace la ligne compacte « ABC ⇄ XYZ » suivie de deux lignes de noms,
- * qui obligeait à relire l'abréviation en tête de chaque ligne pour savoir
- * qui obtenait quoi. Deux colonnes le disent d'un coup d'œil, et c'est la
- * seule disposition qui tienne encore sur un téléphone : la ligne compacte
- * y repliait les noms sous une abréviation orpheline.
- *
- * Le nom complet du club et son abréviation sont rendus tous les deux ;
- * c'est le CSS qui choisit selon la largeur, pas une mesure en JS.
- */
-function dealRowHTML(d) {
-    const colHTML = team => {
+// Une carte de carrousel selon le type de mouvement. `kind` vient soit de
+// l'onglet actif, soit de l'entrée fondue de l'onglet « Tout ».
+function offseasonCardHTML(kind, item) {
+    if (kind === 'trade') return offDealCardHTML(item);
+    if (kind === 'signing') return offSigningCardHTML(item);
+    return offInjuryCardHTML(item);
+}
+
+// Échange : les deux clubs empilés, ce que chacun reçoit dessous, séparés
+// par un filet — même lecture qu'avant (dealRowHTML), repliée dans une
+// carte de largeur fixe. Le club qui reçoit quelque chose passe en tête :
+// sur un échange à sens unique, « Rien en retour » finit en bas.
+function offDealCardHTML(d) {
+    const sideHTML = team => {
         const club = d.names[team] || team;
         const players = d.gets[team] || [];
-        const assets = players.length
-            ? players.map(p => `
-                <li class="fzd-deal-asset">
-                    <span class="fzd-deal-asset-name">${escapeHTML(p.name)}</span>
-                    ${p.pos ? `<span class="fzd-move-pos">${escapeHTML(p.pos)}</span>` : ''}
-                </li>`).join('')
-            : '<li class="fzd-deal-asset is-empty">Rien en retour</li>';
+        const gets = players.length
+            ? players.map(p => `<li class="fzd-off-deal-get">${escapeHTML(p.name)}`
+                + `${p.pos ? ` <span class="fzd-off-pos">${escapeHTML(p.pos)}</span>` : ''}</li>`).join('')
+            : '<li class="fzd-off-deal-get is-empty">Rien en retour</li>';
         return `
-            <section class="fzd-deal-col">
-                <div class="fzd-deal-club">
+            <div class="fzd-off-deal-side">
+                <div class="fzd-off-deal-club">
                     ${teamLogoImg(team)}
-                    <span class="fzd-deal-club-name">${escapeHTML(club)}</span>
-                    <span class="fzd-deal-club-abbr" title="${escapeHTML(club)}">${escapeHTML(team)}</span>
+                    <span class="fzd-off-deal-club-name">${escapeHTML(club)}</span>
+                    <span class="fzd-off-deal-acq">Acquiert</span>
                 </div>
-                <p class="fzd-deal-acq">Acquiert</p>
-                <ul class="fzd-deal-assets">${assets}</ul>
-            </section>`;
+                <ul class="fzd-off-deal-gets">${gets}</ul>
+            </div>`;
     };
-    // Le club qui reçoit quelque chose passe à gauche : sur un échange à sens
-    // unique (le cas courant dans ce journal), « Rien en retour » finit à
-    // droite plutôt qu'en tête.
     const [first, second] = [d.teamA, d.teamB]
         .sort((x, y) => (d.gets[y]?.length || 0) - (d.gets[x]?.length || 0));
     return `
-        <article class="fzd-deal">
-            <div class="fzd-deal-date">${dayLabelFr(d.date)}</div>
-            <div class="fzd-deal-grid">
-                ${colHTML(first)}
-                <div class="fzd-deal-swap" aria-hidden="true">⇄</div>
-                ${colHTML(second)}
+        <article class="fzd-off-card is-trade">
+            <div class="fzd-off-card-top">
+                <span class="fzd-off-tag is-trade">Échange</span>
+                <span class="fzd-off-card-date">${dayLabelFr(d.date)}</span>
+            </div>
+            <div class="fzd-off-deal">
+                ${sideHTML(first)}
+                <div class="fzd-off-deal-rule" aria-hidden="true"></div>
+                ${sideHTML(second)}
+            </div>
+        </article>`;
+}
+
+function offSigningCardHTML(t) {
+    const club = [t.toTeamName || t.toTeam || '?', t.pos].filter(Boolean).join(' · ');
+    return `
+        <article class="fzd-off-card is-signing">
+            <div class="fzd-off-card-top">
+                <span class="fzd-off-tag is-signing">Signature</span>
+                <span class="fzd-off-card-date">${dayLabelFr(t.date)}</span>
+            </div>
+            <div class="fzd-off-card-name fzd-display">${escapeHTML(t.playerName)}</div>
+            <div class="fzd-off-card-club">
+                ${teamLogoImg(t.toTeam || '')}
+                <span>${escapeHTML(club)}</span>
+            </div>
+        </article>`;
+}
+
+function offInjuryCardHTML(i) {
+    const club = [i.teamName || i.team, i.pos].filter(Boolean).join(' · ');
+    const detail = [i.injuryType, i.injuryDetail].filter(Boolean).join(' / ');
+    const back = i.returnDate ? dayLabelFr(i.returnDate) : (i.statusFr || '—');
+    return `
+        <article class="fzd-off-card is-injury">
+            <div class="fzd-off-card-top">
+                <span class="fzd-off-tag is-injury">Blessé</span>
+                <span class="fzd-off-card-date">${dayLabelFr(i.since)}</span>
+            </div>
+            <div class="fzd-off-card-name fzd-display">${escapeHTML(i.playerName)}</div>
+            <div class="fzd-off-card-club">
+                ${teamLogoImg(i.team || '')}
+                <span>${escapeHTML(club)}</span>
+            </div>
+            <div class="fzd-off-card-stats">
+                <div class="fzd-off-stat">
+                    <span class="fzd-off-stat-lbl">Blessure</span>
+                    <span class="fzd-off-stat-val" data-status="${escapeHTML(i.status || '')}">${escapeHTML(detail || i.statusFr || '—')}</span>
+                </div>
+                <div class="fzd-off-stat">
+                    <span class="fzd-off-stat-lbl">Retour</span>
+                    <span class="fzd-off-stat-val">${escapeHTML(back)}</span>
+                </div>
             </div>
         </article>`;
 }
@@ -1013,37 +1105,9 @@ function offseasonEmptyText() {
     // Tant que le serveur n'a pas deux photos d'alignements à comparer, il n'a
     // rien à dire — ce qui n'est pas la même chose qu'une ligue tranquille.
     if (!offseasonLeague?.tracking) return 'Le suivi des mouvements démarre à la prochaine mise à jour des alignements.';
-    return offseasonTab === 'trade' ? 'Aucun échange récent.' : 'Aucune signature récente.';
-}
-
-function movementRowHTML(t) {
-    const route = t.type === 'trade'
-        ? `${escapeHTML(t.fromTeamName || t.fromTeam || '?')} → ${escapeHTML(t.toTeamName || t.toTeam || '?')}`
-        : `→ ${escapeHTML(t.toTeamName || t.toTeam || '?')}`;
-    return `
-        <div class="fzd-move-row">
-            <div class="fzd-move-main">
-                <div class="fzd-move-name">${escapeHTML(t.playerName)}${t.pos ? ` <span class="fzd-move-pos">${escapeHTML(t.pos)}</span>` : ''}</div>
-                <div class="fzd-move-route">${route}</div>
-            </div>
-            <div class="fzd-move-date">${dayLabelFr(t.date)}</div>
-        </div>`;
-}
-
-function injuryRowHTML(i) {
-    const detail = [i.injuryType, i.injuryDetail].filter(Boolean).join(' / ');
-    const back = i.returnDate ? `Retour prévu ${dayLabelFr(i.returnDate)}` : '';
-    return `
-        <div class="fzd-move-row">
-            <div class="fzd-move-main">
-                <div class="fzd-move-name">${escapeHTML(i.playerName)}${i.pos ? ` <span class="fzd-move-pos">${escapeHTML(i.pos)}</span>` : ''}</div>
-                <div class="fzd-move-route">${escapeHTML([i.teamName || i.team, detail].filter(Boolean).join(' · '))}</div>
-            </div>
-            <div class="fzd-move-date">
-                <span class="fzd-move-status" data-status="${escapeHTML(i.status || '')}">${escapeHTML(i.statusFr || '')}</span>
-                ${back ? `<span class="fzd-move-back">${escapeHTML(back)}</span>` : ''}
-            </div>
-        </div>`;
+    if (offseasonTab === 'trade') return 'Aucun échange récent.';
+    if (offseasonTab === 'signing') return 'Aucune signature récente.';
+    return 'Aucun mouvement récent.';
 }
 
 function renderOffseasonWatchlist() {
