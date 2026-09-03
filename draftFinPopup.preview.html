@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview — Fin de repêchage</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="draftFinPopup.css">
+<style>
+  body { margin: 0; background: #0e1011; min-height: 100vh;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background-image: repeating-linear-gradient(135deg,#121415 0 14px,#151719 14px 28px); }
+  .bar { padding: 16px; display: flex; gap: 10px; }
+  .bar button { padding: 10px 16px; border-radius: 8px; border: 1px solid #3c4044;
+    background: #c4442e; color: #fff; font: 600 13px Oswald, sans-serif;
+    text-transform: uppercase; letter-spacing: .06em; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <button onclick="window.fzShowDraftEndPopup()">Ouvrir le popup</button>
+</div>
+
+<script>
+/* --- Stubs des globales fournies normalement par draftActif.js --- */
+var currentClan = "Les Boys 2026";
+
+var fullPlayerData = [
+  { skaterFullName: "Connor McDavid",   positionCode: "C", teamAbbrevs: "EDM", playerId: 8478402 },
+  { skaterFullName: "Nikita Kucherov",  positionCode: "R", teamAbbrevs: "TBL", playerId: 8476453 },
+  { skaterFullName: "Nick Suzuki",      positionCode: "C", teamAbbrevs: "MTL", playerId: 8480018 },
+  { skaterFullName: "Matt Boldy",       positionCode: "L", teamAbbrevs: "MIN", playerId: 8481557 },
+  { skaterFullName: "Macklin Celebrini",positionCode: "C", teamAbbrevs: "SJS", playerId: 8485517 },
+  { skaterFullName: "Jason Robertson",  positionCode: "L", teamAbbrevs: "DAL", playerId: 8480027 },
+  { skaterFullName: "Martin Necas",     positionCode: "R", teamAbbrevs: "COL", playerId: 8480039 },
+  { skaterFullName: "Rasmus Andersson", positionCode: "D", teamAbbrevs: "CGY", playerId: 8478397 },
+  { skaterFullName: "Evan Bouchard",    positionCode: "D", teamAbbrevs: "EDM", playerId: 8480803 },
+  { skaterFullName: "Quinn Hughes",     positionCode: "D", teamAbbrevs: "VAN", playerId: 8480800 },
+  { skaterFullName: "Beckett Sennecke", positionCode: "R", teamAbbrevs: "ANA", playerId: 8484166 }
+];
+var goalieData = [
+  { goalieFullName: "Connor Hellebuyck", teamAbbrevs: "WPG", savePct: 0.925, playerId: 8476945 },
+  { goalieFullName: "Jake Oettinger",    teamAbbrevs: "DAL", savePct: 0.909, playerId: 8479979 }
+];
+var teamData = [];
+
+var draftData = {
+  config: { numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1, numTeams: 1 },
+  draftOrder: Array.from({ length: 13 }, () => "Équipe 1"),
+  teams: {
+    "Équipe 1": {
+      members: ["moi"],
+      offensive: ["Connor McDavid","Nikita Kucherov","Nick Suzuki","Matt Boldy","Jason Robertson","Martin Necas"],
+      defensive: ["Rasmus Andersson","Evan Bouchard","Quinn Hughes"],
+      rookie: ["Macklin Celebrini"],
+      goalie: ["Connor Hellebuyck"],
+      teams: []
+    }
+  },
+  picksHistory: [
+    { team: "Équipe 1", player: "Connor McDavid",    position: "offensive" },
+    { team: "Équipe 1", player: "Nikita Kucherov",   position: "offensive" },
+    { team: "Équipe 1", player: "Nick Suzuki",       position: "offensive" },
+    { team: "Équipe 1", player: "Matt Boldy",        position: "offensive" },
+    { team: "Équipe 1", player: "Macklin Celebrini", position: "rookie" },
+    { team: "Équipe 1", player: "Jason Robertson",   position: "offensive" },
+    { team: "Équipe 1", player: "Martin Necas",      position: "offensive" },
+    { team: "Équipe 1", player: "Beckett Sennecke",  position: "offensive" },
+    { team: "Équipe 1", player: "Rasmus Andersson",  position: "defensive" },
+    { team: "Équipe 1", player: "Evan Bouchard",     position: "defensive" },
+    { team: "Équipe 1", player: "Quinn Hughes",      position: "defensive" },
+    { team: "Équipe 1", player: "Connor Hellebuyck", position: "goalie" }
+  ]
+};
+
+function getUserTeam() { return "Équipe 1"; }
+function isDraftComplete() { return true; }
+function getTeamAbbreviation(n) { return "LNH"; }
+function getTeamLogoPath(a) { return a ? "teams/" + String(a).split(",").pop().trim() + ".png" : null; }
+function getMatchingImage() { return null; }
+function resolveHeadshotByName(name) {
+  var all = fullPlayerData.concat(goalieData);
+  var hit = all.find(function (p) { return (p.skaterFullName || p.goalieFullName) === name; });
+  if (!hit) return null;
+  return "https://assets.nhle.com/mugs/nhl/20252026/" + hit.teamAbbrevs + "/" + hit.playerId + ".png";
+}
+function showCustomAlert(m) { alert(m); }
+</script>
+<script src="draftFinPopup.js"></script>
+</body>
+</html>

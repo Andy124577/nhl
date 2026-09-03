@@ -1,0 +1,253 @@
+/* =========================================================================
+ * Popup « Fin de repêchage »
+ *
+ * S'affiche par-dessus draftActif une fois que toutes les équipes ont
+ * terminé leurs sélections : un récapitulatif des joueurs repêchés par
+ * l'utilisateur (photo, nom, position, ronde), puis accès au classement
+ * et partage. Thème sombre du repêchage — palette propre, indépendante
+ * des variables de la page pour garder l'aspect « salle de repêchage ».
+ *
+ * Maquette : Claude Design — « Fin de repechage.dc.html » (artboards 3A / 3B).
+ * ========================================================================= */
+
+#draftEndOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10002;                     /* au-dessus de la confirmation de choix (10001) */
+  padding: 40px;
+  background: rgba(8, 9, 10, .72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  animation: fzEndFade .2s ease;
+}
+#draftEndOverlay.is-open { display: flex; }
+
+@keyframes fzEndFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fzEndRise {
+  from { opacity: 0; transform: translateY(18px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.fz-end-modal {
+  width: 1000px;
+  max-width: 100%;
+  margin: auto;
+  background: #17191b;
+  border: 1px solid #2a2d2f;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, .55);
+  display: flex;
+  flex-direction: column;
+  animation: fzEndRise .28s ease;
+}
+
+/* ---- En-tête -------------------------------------------------------------- */
+
+.fz-end-head {
+  padding: 26px 28px 20px;
+  border-bottom: 1px solid #2a2d2f;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(118deg,
+    rgba(142, 42, 26, .5) 0%,
+    rgba(196, 68, 46, .28) 62%,
+    rgba(23, 25, 27, 0) 100%);
+}
+.fz-end-crest {
+  width: 34px;
+  height: 39px;
+  flex: 0 0 auto;
+  background: #fff;
+  clip-path: polygon(50% 0, 100% 16%, 100% 62%, 50% 100%, 0 62%, 0 16%);
+  display: grid;
+  place-items: center;
+  font: 700 13px/1 Oswald, sans-serif;
+  color: #b03a26;
+}
+.fz-end-titles { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.fz-end-eyebrow {
+  font: 600 9.5px/1 "Helvetica Neue", Helvetica, sans-serif;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .7);
+}
+.fz-end-title {
+  margin: 0;
+  font: 700 34px/1 Oswald, sans-serif;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  color: #fff;
+}
+.fz-end-sub {
+  font: 400 12.5px/1.4 "Helvetica Neue", Helvetica, sans-serif;
+  color: #a49f97;
+}
+.fz-end-close {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border: 1px solid #3c4044;
+  border-radius: 999px;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  font: 400 13px/1 "Helvetica Neue", Helvetica, sans-serif;
+  color: #8d8981;
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+.fz-end-close:hover { color: #f2f0eb; border-color: #6f6b64; background: rgba(255, 255, 255, .04); }
+.fz-end-close:focus-visible { outline: 2px solid #c4442e; outline-offset: 2px; }
+
+/* ---- Corps : grille de joueurs ----------------------------------------- */
+
+.fz-end-body {
+  padding: 22px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.fz-end-body-label {
+  font: 600 10.5px/1 "Helvetica Neue", Helvetica, sans-serif;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #8d8981;
+}
+.fz-end-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.fz-end-card {
+  border: 1px solid #2a2d2f;
+  border-radius: 11px;
+  background: #1b1e20;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.fz-end-photo {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: repeating-linear-gradient(135deg, #212426 0 10px, #1b1e20 10px 20px);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.fz-end-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+.fz-end-photo .fz-end-photo-ph {
+  font: 400 9px/1 "Helvetica Neue", Helvetica, sans-serif;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #6f6b64;
+}
+.fz-end-round {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  font: 600 8.5px/1 "Helvetica Neue", Helvetica, sans-serif;
+  letter-spacing: .1em;
+  color: #8d8981;
+  background: rgba(14, 16, 17, .75);
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+.fz-end-pos {
+  position: absolute;
+  bottom: 7px;
+  right: 7px;
+  min-width: 20px;
+  text-align: center;
+  font: 700 9.5px/1 Oswald, sans-serif;
+  letter-spacing: .06em;
+  color: #fff;
+  background: #c4442e;
+  padding: 5px 6px;
+  border-radius: 4px;
+}
+.fz-end-ident {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.fz-end-name {
+  font: 600 12.5px/1.25 "Helvetica Neue", Helvetica, sans-serif;
+  color: #f2f0eb;
+}
+.fz-end-team {
+  font: 400 10.5px/1 "Helvetica Neue", Helvetica, sans-serif;
+  color: #8d8981;
+}
+.fz-end-empty {
+  padding: 30px 0;
+  text-align: center;
+  font: 400 12.5px/1.5 "Helvetica Neue", Helvetica, sans-serif;
+  color: #8d8981;
+}
+
+/* ---- Pied : actions --------------------------------------------------- */
+
+.fz-end-foot {
+  padding: 18px 28px 24px;
+  border-top: 1px solid #2a2d2f;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: #131517;
+}
+.fz-end-btn {
+  flex: 1;
+  min-width: 160px;
+  text-align: center;
+  border-radius: 10px;
+  padding: 15px 18px;
+  border: 1px solid transparent;
+  font: 600 13px/1 Oswald, sans-serif;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+.fz-end-btn:active { transform: translateY(1px); }
+.fz-end-btn:focus-visible { outline: 2px solid #c4442e; outline-offset: 2px; }
+.fz-end-btn--primary { background: #c4442e; color: #fff; }
+.fz-end-btn--primary:hover { background: #d1503a; }
+.fz-end-btn--ghost { border-color: #3c4044; color: #f2f0eb; background: transparent; }
+.fz-end-btn--ghost:hover { border-color: #6f6b64; background: rgba(255, 255, 255, .04); }
+
+/* ---- Adaptatif ------------------------------------------------------------ */
+
+@media (max-width: 900px) {
+  #draftEndOverlay { padding: 18px 12px; }
+  .fz-end-modal { border-radius: 18px; }
+  .fz-end-head { padding: 20px 16px 16px; align-items: flex-start; }
+  .fz-end-title { font-size: 26px; }
+  .fz-end-body { padding: 16px; }
+  .fz-end-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .fz-end-ident { padding: 9px 10px 11px; }
+  .fz-end-name { font-size: 12px; }
+  .fz-end-foot { padding: 14px 16px 18px; }
+}
+@media (max-width: 560px) {
+  .fz-end-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #draftEndOverlay,
+  .fz-end-modal { animation: none; }
+  .fz-end-btn:active { transform: none; }
+}
