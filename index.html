@@ -267,6 +267,14 @@
                  d'état à 4 modes. Voir renderHero() dans accueil-dash.js. -->
             <div class="fz-dash-hero" id="fzDashHero" style="display:none;"><!-- Filled by accueil-dash.js --></div>
 
+            <!-- Carrousel des choix — repêchage en cours seulement. Une seule
+                 bande qui remplace « Prochains choix » + « Choix récents » : on
+                 défile des choix déjà faits vers le choix en cours (au centre,
+                 en rouge) puis les choix à venir. Même balisage/JS que la home
+                 téléphone (#fzmDraftBoard) — voir fzdRenderDraftBoard() dans
+                 accueil-dash.js. Maquette : handoff premium, Canvas-11. -->
+            <div class="fz-dash-draftboard" id="fzDashDraftBoard" style="display:none;"><!-- Filled by accueil-dash.js --></div>
+
             <!-- Calendrier — saison complète, GET /schedule/:date -->
             <div class="fz-dash-calendar" id="fzDashCalendarWrap">
                 <div class="fzd-cal-head">

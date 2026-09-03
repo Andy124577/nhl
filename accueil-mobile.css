@@ -110,7 +110,6 @@ html[data-theme="dark"] .fz-mobile-home {
 .fzm-section { margin-bottom: 18px; }
 .fzm-section-title { font: 700 15px/1 'Archivo', sans-serif; margin-bottom: 10px; }
 .fzm-empty { font: 500 12.5px/1.4 'Archivo', sans-serif; color: var(--fzm-ink-faint); margin: 0; }
-.fzm-note { font: 500 11.5px/1.4 'Archivo', sans-serif; color: var(--fzm-ink-faint); text-align: center; margin: 0 0 18px; }
 
 /* Matchs */
 .fzm-game-card { flex-shrink: 0; width: 150px; background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 12px; padding: 13px; }
@@ -132,20 +131,10 @@ html[data-theme="dark"] .fz-mobile-home {
 .fzm-player-tag.is-live { background: var(--fzm-red-soft); color: var(--fzm-red); }
 .fzm-player-line { font: 600 11px/1 'Archivo', sans-serif; color: var(--fzm-ink); margin-top: 6px; opacity: .75; }
 
-/* Listes (repêchage, activité) */
+/* Listes (activité de la ligue) */
 .fzm-list-card { background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 12px; overflow: hidden; }
 .fzm-list-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border-bottom: 1px solid rgba(23,23,26,.06); }
 .fzm-list-row:last-child { border-bottom: none; }
-.fzm-list-row.is-onclock { background: var(--fzm-red-soft); }
-.fzm-list-row.is-mine:not(.is-onclock) { background: var(--fzm-panel); }
-.fzm-list-left { font: 600 12.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-soft); }
-.fzm-list-right { font: 700 13px/1 'Archivo', sans-serif; }
-.fzm-list-row.is-onclock .fzm-list-right { color: var(--fzm-red); }
-
-.fzm-pick-row { align-items: flex-start; }
-.fzm-pick-player { font: 700 13px/1 'Archivo', sans-serif; }
-.fzm-pick-meta { font: 500 11px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); margin-top: 1px; }
-.fzm-pick-num { font: 600 11.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); white-space: nowrap; }
 
 /* Tuile "Repêchage ouvre" (avant-saison, avant le début du repêchage) */
 .fzm-tile-row {
@@ -333,7 +322,7 @@ html[data-theme="dark"] .fz-mobile-home {
        c'est l'état vide qui occupe l'écran : le calendrier doit alors rester
        ouvrable depuis sa carte « Calendrier LNH ». */
     .fz-dash-section:not(.is-poolless) #fzDashCalendarWrap { display: none !important; }
-    #fzDashOffseason, #fzDashBody, #fzDashHero { display: none !important; }
+    #fzDashOffseason, #fzDashBody, #fzDashHero, #fzDashDraftBoard { display: none !important; }
 }
 @media (min-width: 769px) {
     .fz-mobile-home { display: none !important; }

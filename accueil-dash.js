@@ -685,6 +685,194 @@ function renderHero(tonight, containerId = 'fzDashHero') {
 }
 
 // ============================================================
+// CARROUSEL DES CHOIX — repêchage en cours. Une seule bande qui
+// remplace « Prochains choix » + « Choix récents » : on défile des
+// choix déjà faits (estompés) vers le choix EN COURS (centré, en
+// rouge) puis les choix à venir (les vôtres surlignés). Rendu à
+// l'identique sous la bannière au bureau (#fzDashDraftBoard) et dans
+// la home téléphone (#fzmDraftBoard, appelé depuis accueil-mobile.js)
+// — même fonction, comme renderHero, pour que les deux ne divergent
+// jamais. accueil-dash.css le met en page selon la largeur d'écran.
+// Maquette : handoff premium, Canvas-11.
+// ============================================================
+const FZD_POS_FR = { offensive: 'ATT', defensive: 'DÉF', goalie: 'GAR', rookie: 'REC', teams: 'ÉQ' };
+const fzdDraftBoardTimers = {};
+
+function fzdStopDraftBoardTimer(containerId) {
+    if (fzdDraftBoardTimers[containerId]) { clearInterval(fzdDraftBoardTimers[containerId]); delete fzdDraftBoardTimers[containerId]; }
+}
+
+function fzdFormatClock(ms) {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+function fzdRenderDraftBoard(containerId, poolData, team, activeName) {
+    const box = document.getElementById(containerId);
+    if (!box) return;
+    fzdStopDraftBoardTimer(containerId);
+
+    const draftState = poolData ? FZPool.draftState(poolData) : { etat: null };
+    const draftOrder = Array.isArray(poolData?.draftOrder) ? poolData.draftOrder : [];
+    if (draftState.etat !== 'encours' || !draftOrder.length) {
+        box.style.display = 'none';
+        box.innerHTML = '';
+        return;
+    }
+
+    const numTeams = new Set(draftOrder).size || 1;
+    const total = draftOrder.length;
+    const idx = Math.min(Math.max(poolData.currentPickIndex || 0, 0), total - 1);
+    const history = Array.isArray(poolData.picksHistory) ? poolData.picksHistory : [];
+    const myName = team && team.name;
+    const started = Number(poolData.turnStartedAt) || 0;
+
+    // Prochain choix qui est le vôtre (parmi ceux à venir) — reçoit le libellé
+    // « Prochain » plutôt que « Dans N choix ».
+    let nextMine = -1;
+    for (let i = idx + 1; i < total; i++) { if (draftOrder[i] === myName) { nextMine = i; break; } }
+
+    let awayFromMine = -1;
+    for (let i = idx; i < total; i++) { if (draftOrder[i] === myName) { awayFromMine = i - idx; break; } }
+    const headsub = awayFromMine === 0 ? "C'est votre tour"
+        : awayFromMine > 0 ? `Votre tour dans ${awayFromMine} choix`
+        : 'Vous avez fait tous vos choix';
+
+    const cards = draftOrder.map((teamName, i) => {
+        const rc = `R${Math.floor(i / numTeams) + 1} · C${(i % numTeams) + 1}`;
+        const mine = teamName === myName;
+        const n = i + 1;
+
+        if (i < idx) {
+            const h = history[i] || {};
+            const isLast = i === idx - 1;
+            const pos = FZD_POS_FR[h.position] || '';
+            return `
+                <article class="fzd-db-card is-done${isLast ? ' is-last' : ''}">
+                    <div class="fzd-db-card-top">
+                        <span class="fzd-db-num">Choix ${n}</span>
+                        <span class="fzd-db-rc">${rc}</span>
+                    </div>
+                    <div class="fzd-db-card-body">
+                        <span class="fzd-db-name">${escapeHTML(h.player || '—')}</span>
+                        <span class="fzd-db-sub">${pos ? escapeHTML(pos) + ' · ' : ''}${escapeHTML(h.team || teamName)}</span>
+                    </div>
+                    <div class="fzd-db-card-foot">
+                        <span>${escapeHTML(teamName)}${mine ? ' · vous' : ''}</span>
+                        ${isLast ? '<span class="fzd-db-foot-tag">Dernier</span>' : ''}
+                    </div>
+                </article>`;
+        }
+
+        if (i === idx) {
+            const pct = Math.min(100, Math.round((idx / total) * 100));
+            return `
+                <article class="fzd-db-card is-current">
+                    <div class="fzd-db-card-top">
+                        <span class="fzd-db-tag">En cours</span>
+                        <span class="fzd-db-rc">${rc}</span>
+                    </div>
+                    <div class="fzd-db-current-head">
+                        <span class="fzd-db-num-lg">Choix ${n}</span>
+                        <span class="fzd-db-current-team">${escapeHTML(teamName)}${mine ? ' · vous' : ''}</span>
+                    </div>
+                    <div class="fzd-db-bar"><i style="width:${pct}%"></i></div>
+                    <div class="fzd-db-clock-row">
+                        <span class="fzd-db-clock">${started ? fzdFormatClock(Date.now() - started) : '—:—'}</span>
+                        <span class="fzd-db-clock-lbl">Temps écoulé</span>
+                    </div>
+                </article>`;
+        }
+
+        const away = i - idx;
+        if (mine) {
+            const soonest = i === nextMine;
+            return `
+                <article class="fzd-db-card is-mine">
+                    <div class="fzd-db-card-top">
+                        <span class="fzd-db-num">Choix ${n}</span>
+                        <span class="fzd-db-rc is-accent">Vous</span>
+                    </div>
+                    <div class="fzd-db-card-body">
+                        <span class="fzd-db-name">${escapeHTML(teamName)}</span>
+                        <span class="fzd-db-sub">${soonest ? 'Préparez votre liste' : 'Votre choix'}</span>
+                    </div>
+                    <div class="fzd-db-card-foot">
+                        <span class="fzd-db-foot-tag is-accent">${soonest ? 'Prochain' : `Dans ${away} choix`}</span>
+                    </div>
+                </article>`;
+        }
+        return `
+            <article class="fzd-db-card is-future">
+                <div class="fzd-db-card-top">
+                    <span class="fzd-db-num">Choix ${n}</span>
+                    <span class="fzd-db-rc">${rc}</span>
+                </div>
+                <div class="fzd-db-card-body">
+                    <span class="fzd-db-name is-faint">${escapeHTML(teamName)}</span>
+                    <span class="fzd-db-sub">À venir</span>
+                </div>
+                <div class="fzd-db-card-foot"><span>Dans ${away} choix</span></div>
+            </article>`;
+    }).join('');
+
+    const pct = Math.round((idx / total) * 100);
+    const remaining = total - idx;
+
+    box.style.display = '';
+    box.innerHTML = `
+        <div class="fzd-db-inner">
+            <div class="fzd-db-head">
+                <div class="fzd-db-head-copy">
+                    <span class="fzd-db-eyebrow">Ordre des choix</span>
+                    <h2 class="fzd-db-title">En direct — choix ${idx + 1} / ${total}</h2>
+                    <span class="fzd-db-headsub">${escapeHTML(headsub)}</span>
+                </div>
+                <div class="fzd-db-nav">
+                    <button type="button" class="fzd-db-nav-btn" data-dir="-1" aria-label="Choix précédents">‹</button>
+                    <button type="button" class="fzd-db-nav-btn" data-dir="1" aria-label="Choix suivants">›</button>
+                </div>
+            </div>
+            <div class="fzd-db-track">${cards}</div>
+            <div class="fzd-db-foot">
+                <div class="fzd-db-progress"><i style="width:${pct}%"></i><b style="left:${pct}%"></b></div>
+                <span class="fzd-db-progress-lbl">${idx} choix fait${idx > 1 ? 's' : ''} · ${remaining} restant${remaining > 1 ? 's' : ''}</span>
+                <a class="fzd-db-full" href="draftActif.html?pool=${encodeURIComponent(activeName || '')}">Tableau complet →</a>
+            </div>
+            <p class="fzd-db-note">Le classement s'ouvre une fois le repêchage terminé.</p>
+        </div>`;
+
+    const track = box.querySelector('.fzd-db-track');
+
+    // Ouvre centré sur le choix en cours (positionnement immédiat, pas d'anim
+    // au chargement ni à chaque rafraîchissement de données). scrollLeft ne
+    // touche que la piste, jamais le défilement de la page.
+    const current = track.querySelector('.is-current');
+    if (current) {
+        track.scrollLeft = Math.max(0, current.offsetLeft - (track.clientWidth - current.offsetWidth) / 2);
+    }
+
+    box.querySelectorAll('.fzd-db-nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const card = track.querySelector('.fzd-db-card');
+            const step = ((card && card.offsetWidth) || 180) + 12;
+            track.scrollBy({ left: step * 2 * Number(btn.dataset.dir), behavior: 'smooth' });
+        });
+    });
+
+    // Pendule du tour : on ne remplace que le texte, jamais tout le carrousel
+    // (sinon la position de défilement sauterait à chaque seconde).
+    if (started) {
+        fzdDraftBoardTimers[containerId] = setInterval(() => {
+            const el = document.getElementById(containerId);
+            const clock = el && el.querySelector('.fzd-db-clock');
+            if (!clock) { fzdStopDraftBoardTimer(containerId); return; }
+            clock.textContent = fzdFormatClock(Date.now() - started);
+        }, 1000);
+    }
+}
+
+// ============================================================
 // MES POOLS — every pool the user is in, same ranking data
 // buildTeamScores already computes for classement.html parity.
 // ============================================================
@@ -1240,6 +1428,7 @@ async function renderDash() {
     section.classList.toggle('is-poolless', !hasPool);
     if (body) body.style.display = hasPool ? '' : 'none';
     if (!hasPool && hero) { fzdStopHeroTimer('fzDashHero'); hero.style.display = 'none'; hero.innerHTML = ''; }
+    if (!hasPool) fzdRenderDraftBoard('fzDashDraftBoard', null, null, null);
     // calRevealedNoPool : le visiteur sans pool a ouvert le calendrier depuis
     // la carte « Calendrier LNH » — ne pas le refermer sous lui au prochain
     // rafraîchissement de FZPool.
@@ -1261,10 +1450,12 @@ async function renderDash() {
     const dash = await loadDashData();
     if (dash) {
         renderHero(dash.tonight);
+        fzdRenderDraftBoard('fzDashDraftBoard', FZPool.data(), FZPool.team(), dash.activeName);
         renderLivePanel(dash.tonight, dash.movement, dash.activeName);
         renderMobileHome(dash.tonight, dash.movement, dash.activeName);
     } else {
         renderHero(null);
+        fzdRenderDraftBoard('fzDashDraftBoard', FZPool.data(), FZPool.team(), FZPool.get());
     }
 }
 

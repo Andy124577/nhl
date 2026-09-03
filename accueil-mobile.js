@@ -16,8 +16,6 @@
 /* bureau — jamais un second aller-retour réseau pour la même donnée. */
 /* ============================================================ */
 
-const POSITION_LABEL_FR = { offensive: 'ATT', defensive: 'DÉF', goalie: 'GAR', rookie: 'REC', teams: 'ÉQ' };
-
 function frOrdinal(n) {
     return n === 1 ? '1er' : `${n}e`;
 }
@@ -28,59 +26,12 @@ function frOrdinal(n) {
 // fzdHeroHTML. renderMobileHome() lui réserve un conteneur
 // (#fzmHeroSlot) plutôt que de reconstruire son propre balisage,
 // pour que téléphone et bureau ne puissent jamais diverger.
+//
+// Le repêchage en cours n'a plus de « Prochains choix » / « Choix
+// récents » propres au téléphone : renderMobileHome pose un
+// conteneur #fzmDraftBoard et fzdRenderDraftBoard() (accueil-dash.js)
+// y rend le même carrousel des choix qu'au bureau.
 // ============================================================
-
-function fzmDraftPicks(poolData, myTeamName) {
-    const draftOrder = Array.isArray(poolData.draftOrder) ? poolData.draftOrder : [];
-    const numTeams = new Set(draftOrder).size || 1;
-    const idx = poolData.currentPickIndex || 0;
-    const history = Array.isArray(poolData.picksHistory) ? poolData.picksHistory : [];
-
-    const upcoming = draftOrder.slice(idx, idx + 3).map((teamName, i) => ({
-        pickNum: idx + i + 1, teamName, isNow: i === 0
-    }));
-
-    const recent = history.slice(-3).reverse().map((entry, i) => {
-        const historyIndex = history.length - 1 - i;
-        return {
-            ...entry,
-            round: Math.floor(historyIndex / numTeams) + 1,
-            pickInRound: (historyIndex % numTeams) + 1
-        };
-    });
-
-    let html = '';
-    if (upcoming.length) {
-        html += `
-            <div class="fzm-section">
-                <div class="fzm-section-title">Prochains choix</div>
-                <div class="fzm-list-card">
-                    ${upcoming.map(u => `
-                        <div class="fzm-list-row${u.isNow ? ' is-onclock' : ''}${u.teamName === myTeamName ? ' is-mine' : ''}">
-                            <span class="fzm-list-left">Choix ${u.pickNum}</span>
-                            <span class="fzm-list-right">${escapeHTML(u.teamName)}${u.teamName === myTeamName ? ' (vous)' : ''}</span>
-                        </div>`).join('')}
-                </div>
-            </div>`;
-    }
-    if (recent.length) {
-        html += `
-            <div class="fzm-section">
-                <div class="fzm-section-title">Choix récents</div>
-                <div class="fzm-list-card">
-                    ${recent.map(r => `
-                        <div class="fzm-list-row fzm-pick-row">
-                            <div>
-                                <div class="fzm-pick-player">${escapeHTML(r.player)}</div>
-                                <div class="fzm-pick-meta">${POSITION_LABEL_FR[r.position] || ''} · repêché par ${escapeHTML(r.team)}</div>
-                            </div>
-                            <span class="fzm-pick-num">R${r.round} · C${r.pickInRound}</span>
-                        </div>`).join('')}
-                </div>
-            </div>`;
-    }
-    return html;
-}
 
 function fzmPreseasonExtras(draftState, activeName) {
     let html = '';
@@ -689,10 +640,7 @@ function renderMobileHome(tonight, movement, activeName) {
     if (isRegular || isLive) html += fzmGamesRow();
     if (isRegular || isLive) html += fzmPlayersRow(tonight, rosterNames);
 
-    if (isDraft) {
-        html += fzmDraftPicks(poolData, team.name);
-        html += `<p class="fzm-note">Le classement s'ouvre une fois le repêchage terminé.</p>`;
-    }
+    if (isDraft) html += '<div class="fz-dash-draftboard" id="fzmDraftBoard"></div>';
     if (isPreseason) html += fzmPreseasonExtras(draftState, activeName);
 
     const showActivity = isRegular || isLive || isDraft;
@@ -706,6 +654,7 @@ function renderMobileHome(tonight, movement, activeName) {
     root.innerHTML = html;
 
     renderHero(tonight, 'fzmHeroSlot');
+    if (isDraft) fzdRenderDraftBoard('fzmDraftBoard', poolData, team, activeName);
     // La bannière « en direct » pointe vers #fzdPlayersList (id bureau) :
     // sur téléphone la liste vit sous #fzmPlayers, donc on intercepte le
     // même bouton plutôt que de bifurquer le contenu de la bannière.
