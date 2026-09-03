@@ -903,4 +903,20 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
        !important et la home mobile rend les mêmes trois onglets avec ses
        propres classes .fzm-*. Le repli étroit du bloc .fzd-deal-* vit donc
        là-bas, pas ici. */
+
+    /* La bannière (#fzDashHero bureau / #fzmHeroSlot téléphone, voir
+       renderHero() dans accueil-dash.js) partage un seul balisage : ici on
+       ne fait qu'empiler écusson+texte, stats et CTA au lieu de les aligner
+       sur une seule ligne, comme la maquette Canvas-9 2C/2D. */
+    .fz-dash-hero {
+        flex-wrap: wrap;
+        column-gap: 12px;
+        row-gap: 14px;
+        padding: 18px 16px 16px;
+        margin-bottom: 14px;
+        border-radius: 16px;
+    }
+    .fzd-hero-headline { font-size: 22px; }
+    .fzd-hero-stats { flex: 1 1 100%; }
+    .fzd-hero-cta { flex: 1 1 100%; justify-content: center; }
 }

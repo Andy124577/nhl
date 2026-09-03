@@ -74,72 +74,18 @@ html[data-theme="dark"] .fz-mobile-home {
 .fzm-scroll-row::-webkit-scrollbar { display: none; }
 
 /* ---------------------------------------------------------- */
-/* HÉROS — un seul actif à la fois (direct / repêchage / avant- */
-/* saison), voir renderMobileHome (accueil-mobile.js). Même      */
-/* aplat de marque que le héros bureau (accueil-dash.css,        */
-/* .fz-dash-hero — maquette Canvas-9, Tour 2) : dégradé brique,   */
-/* écusson blanc, tout le détail intérieur en blanc/rgba(255,…),  */
-/* donc ne bascule pas avec le thème.                             */
+/* HÉROS — un seul actif à la fois (direct / repêchage / avant-  */
+/* saison). Rendu par renderHero() (accueil-dash.js) dans        */
+/* #fzmHeroSlot : même balisage .fz-dash-hero que le bureau, la  */
+/* mise en page bureau/téléphone se règle plus bas dans          */
+/* accueil-dash.css. .fzm-live-dot reste ici : fzmGameCard        */
+/* (matchs du jour) le réutilise pour son propre indicateur.      */
 /* ---------------------------------------------------------- */
-.fzm-hero {
-    border-radius: 16px;
-    padding: 18px 16px;
-    margin-bottom: 14px;
-    color: #fff;
-    background:
-        radial-gradient(130% 120% at 100% 0%, rgba(255,255,255,.15) 0%, rgba(255,255,255,0) 60%),
-        linear-gradient(150deg, #8e2a1a 0%, #a8351f 52%, #b93d28 100%);
-    box-shadow: 0 14px 32px rgba(140, 42, 26, .26);
-}
-.fzm-hero-brand { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 15px; }
-.fzm-hero-shield {
-    width: 28px; height: 32px; flex: 0 0 auto;
-    background: #fff;
-    clip-path: polygon(50% 0, 100% 16%, 100% 62%, 50% 100%, 0 62%, 0 16%);
-    display: grid; place-items: center;
-    font: 700 11px/1 'Oswald', 'Archivo', sans-serif;
-    color: #a8351f;
-}
-.fzm-hero-brand-copy { flex: 1; min-width: 0; }
-.fzm-hero-eyebrow {
-    display: flex; align-items: center; gap: 6px;
-    font: 700 11px/1 'Archivo', sans-serif;
-    letter-spacing: .08em; text-transform: uppercase;
-    opacity: .75; margin-bottom: 10px;
-}
-.fzm-hero-headline { font: 800 19px/1.25 'Archivo', sans-serif; margin-bottom: 12px; }
-.fzm-hero-btn {
-    display: inline-block;
-    background: #fff; color: #a8351f;
-    border: none; border-radius: 10px;
-    padding: 10px 16px;
-    font: 700 13px/1 'Archivo', sans-serif;
-    cursor: pointer;
-}
-.fzm-hero-divider { height: 1px; background: rgba(255,255,255,.14); margin: 4px 0 14px; }
-
 .fzm-live-dot {
     width: 7px; height: 7px; border-radius: 50%; background: currentColor;
     animation: fzm-pulse 1.6s ease-in-out infinite;
 }
 @keyframes fzm-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
-
-/* Repêchage */
-.fzm-draft-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.fzm-draft-top .fzm-hero-eyebrow { margin-bottom: 0; }
-.fzm-draft-elapsed { font: 600 11px/1 'Archivo', sans-serif; opacity: .55; font-variant-numeric: tabular-nums; }
-.fzm-draft-onclock-lbl { font-size: 13px; opacity: .7; margin-bottom: 2px; }
-.fzm-hero-draft .fzm-hero-headline { margin-bottom: 0; }
-.fzm-draft-turn-lbl { font-size: 13px; opacity: .7; margin-bottom: 4px; }
-.fzm-draft-turn-val { font: 800 30px/1 'Archivo', sans-serif; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
-.fzm-hero-draft .fzm-hero-btn { margin-top: 2px; }
-
-/* Avant-saison */
-.fzm-hero-preseason .fzm-hero-eyebrow { color: rgba(255,255,255,.5); opacity: 1; margin-bottom: 12px; }
-.fzm-countdown { display: flex; gap: 14px; }
-.fzm-cd-part { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.fzm-cd-val { font: 800 30px/1 'Archivo', sans-serif; font-variant-numeric: tabular-nums; }
-.fzm-cd-unit { font: 600 10px/1 'Archivo', sans-serif; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .05em; }
 
 /* ---------------------------------------------------------- */
 /* CLASSEMENT                                                  */
@@ -344,7 +290,7 @@ html[data-theme="dark"] .fz-mobile-home {
        c'est l'état vide qui occupe l'écran : le calendrier doit alors rester
        ouvrable depuis sa carte « Calendrier LNH ». */
     .fz-dash-section:not(.is-poolless) #fzDashCalendarWrap { display: none !important; }
-    #fzDashOffseason, #fzDashBody { display: none !important; }
+    #fzDashOffseason, #fzDashBody, #fzDashHero { display: none !important; }
 }
 @media (min-width: 769px) {
     .fz-mobile-home { display: none !important; }

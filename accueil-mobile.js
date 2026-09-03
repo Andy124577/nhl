@@ -23,135 +23,12 @@ function frOrdinal(n) {
 }
 
 // ============================================================
-// COMPTE À REBOURS — avant-saison, ticke chaque seconde tant que
-// la carte est affichée. Cible le début du camp ou de la saison
-// régulière (calData.preSeasonStartDate/regularSeasonStartDate,
-// déjà chargés par initCalendar) : aucune donnée inventée, juste
-// une précision heures/min/sec calculée sur une date réelle.
+// HÉROS — rendu par renderHero() (accueil-dash.js), même fonction
+// et même contenu que la bannière bureau : voir fzdHeroState/
+// fzdHeroHTML. renderMobileHome() lui réserve un conteneur
+// (#fzmHeroSlot) plutôt que de reconstruire son propre balisage,
+// pour que téléphone et bureau ne puissent jamais diverger.
 // ============================================================
-let fzmCountdownTimer = null;
-
-function fzmStopCountdown() {
-    if (fzmCountdownTimer) { clearInterval(fzmCountdownTimer); fzmCountdownTimer = null; }
-}
-
-function fzmCountdownParts(targetISO) {
-    const diff = Math.max(0, new Date(targetISO + 'T00:00:00Z').getTime() - Date.now());
-    const d = Math.floor(diff / 86400000);
-    const h = Math.floor((diff % 86400000) / 3600000);
-    const m = Math.floor((diff % 3600000) / 60000);
-    const s = Math.floor((diff % 60000) / 1000);
-    return [
-        { value: String(d), unit: 'jours' },
-        { value: String(h).padStart(2, '0'), unit: 'hrs' },
-        { value: String(m).padStart(2, '0'), unit: 'min' },
-        { value: String(s).padStart(2, '0'), unit: 'sec' },
-    ];
-}
-
-function fzmCountdownPartsHTML(target) {
-    return fzmCountdownParts(target).map(p => `
-        <div class="fzm-cd-part">
-            <div class="fzm-cd-val">${p.value}</div>
-            <div class="fzm-cd-unit">${p.unit}</div>
-        </div>`).join('');
-}
-
-function fzmStartCountdownTicker() {
-    fzmStopCountdown();
-    if (!document.getElementById('fzmCountdown')) return;
-    fzmCountdownTimer = setInterval(() => {
-        const el = document.getElementById('fzmCountdown');
-        if (!el) { fzmStopCountdown(); return; }
-        el.innerHTML = fzmCountdownPartsHTML(el.dataset.target);
-    }, 1000);
-}
-
-function fzmPreseasonHero(calDataRef) {
-    const today = todayISO();
-    const campStart = calDataRef?.preSeasonStartDate;
-    const seasonStart = calDataRef?.regularSeasonStartDate;
-    const beforeCamp = !!campStart && today < campStart;
-    const target = beforeCamp ? campStart : seasonStart;
-    if (!target) return '';
-
-    return `
-        <div class="fzm-hero fzm-hero-preseason">
-            <div class="fzm-hero-brand">
-                <span class="fzm-hero-shield" aria-hidden="true">F</span>
-                <div class="fzm-hero-brand-copy">
-                    <div class="fzm-hero-eyebrow">${beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison régulière'}</div>
-                    <div class="fzm-countdown" id="fzmCountdown" data-target="${target}">
-                        ${fzmCountdownPartsHTML(target)}
-                    </div>
-                </div>
-            </div>
-        </div>`;
-}
-
-// ============================================================
-// REPÊCHAGE EN COURS — ronde/choix réels (draftOrder +
-// currentPickIndex), temps d'attente réel depuis turnStartedAt
-// (pas un minuteur fictif : ce pool n'a pas de pendule à 90s, juste
-// un seuil "sauter le tour" après 3 min, voir SKIP_TURN_AFTER_MS
-// côté serveur). "Votre tour dans" compte les choix réels avant le
-// mien dans draftOrder plutôt qu'un temps inventé.
-// ============================================================
-function fzmFormatElapsed(ms) {
-    const totalSec = Math.max(0, Math.floor(ms / 1000));
-    const m = Math.floor(totalSec / 60);
-    const s = totalSec % 60;
-    return m > 0 ? `${m} min` : `${s} s`;
-}
-
-function fzmPicksUntilMyTurn(draftOrder, currentIndex, myTeamName) {
-    for (let i = currentIndex; i < draftOrder.length; i++) {
-        if (draftOrder[i] === myTeamName) return i - currentIndex;
-    }
-    return -1;
-}
-
-function fzmDraftHero(poolData, draftState, myTeamName, activeName) {
-    const draftOrder = Array.isArray(poolData.draftOrder) ? poolData.draftOrder : [];
-    const numTeams = new Set(draftOrder).size || 1;
-    const idx = poolData.currentPickIndex || 0;
-    const round = Math.floor(idx / numTeams) + 1;
-    const pickInRound = (idx % numTeams) + 1;
-    const onClockTeam = draftOrder[idx] || '—';
-
-    const started = Number(poolData.turnStartedAt) || 0;
-    const elapsedLabel = started ? `· en attente depuis ${fzmFormatElapsed(Date.now() - started)}` : '';
-
-    const away = fzmPicksUntilMyTurn(draftOrder, idx, myTeamName);
-    let turnBlock = '';
-    if (away === 0) {
-        turnBlock = `
-            <div class="fzm-hero-divider"></div>
-            <div class="fzm-draft-turn-lbl">C'est votre tour</div>
-            <a class="fzm-hero-btn" href="draftActif.html?pool=${encodeURIComponent(activeName)}">Repêcher →</a>`;
-    } else if (away > 0) {
-        turnBlock = `
-            <div class="fzm-hero-divider"></div>
-            <div class="fzm-draft-turn-lbl">Votre tour dans</div>
-            <div class="fzm-draft-turn-val">${away} choix</div>`;
-    }
-
-    return `
-        <div class="fzm-hero fzm-hero-draft">
-            <div class="fzm-hero-brand">
-                <span class="fzm-hero-shield" aria-hidden="true">F</span>
-                <div class="fzm-hero-brand-copy">
-                    <div class="fzm-draft-top">
-                        <span class="fzm-hero-eyebrow">Ronde ${round} · Choix ${pickInRound}</span>
-                        <span class="fzm-draft-elapsed">${escapeHTML(elapsedLabel)}</span>
-                    </div>
-                    <div class="fzm-draft-onclock-lbl">Au tour de</div>
-                    <div class="fzm-hero-headline">${escapeHTML(onClockTeam)}${onClockTeam === myTeamName ? ' (vous)' : ''}</div>
-                </div>
-            </div>
-            ${turnBlock}
-        </div>`;
-}
 
 function fzmDraftPicks(poolData, myTeamName) {
     const draftOrder = Array.isArray(poolData.draftOrder) ? poolData.draftOrder : [];
@@ -725,39 +602,25 @@ function renderMobileHome(tonight, movement, activeName) {
 
     const poolData = FZPool.data();
     const team = FZPool.team();
-    if (!activeName || !poolData || !team) { root.innerHTML = ''; fzmStopCountdown(); return; }
+    if (!activeName || !poolData || !team) { root.innerHTML = ''; fzdStopHeroTimer('fzmHeroSlot'); return; }
 
     const draftState = FZPool.draftState(poolData);
-    const isDraft = draftState.etat === 'encours';
-    const today = todayISO();
-    const seasonStart = calData?.regularSeasonStartDate;
-    const isPreseason = !isDraft && !!seasonStart && today < seasonStart;
+    // Même détection d'état que la bannière bureau (fzdHeroState,
+    // accueil-dash.js) : un seul calcul, jamais deux réponses différentes
+    // pour la même situation.
+    const heroState = fzdHeroState(tonight);
+    const mode = heroState ? heroState.mode : 'regular';
+    const isDraft = mode === 'draft';
+    const isPreseason = mode === 'preseason';
+    const isLive = mode === 'live';
+    const isRegular = mode === 'regular';
 
     const rosterNames = new Set(activeRosterNames());
-    const myLines = (tonight.players || []).filter(p => rosterNames.has(p.playerName));
-    const liveCount = myLines.filter(p => {
-        const g = (tonight.games || []).find(x => x.id === p.gameId);
-        return g && (g.state === 'LIVE' || g.state === 'CRIT');
-    }).length;
-    const isLive = !isDraft && !isPreseason && liveCount > 0;
-    const isRegular = !isDraft && !isPreseason && !isLive;
 
-    let html = '';
-    if (isLive) {
-        html += `
-            <div class="fzm-hero fzm-hero-live">
-                <div class="fzm-hero-brand">
-                    <span class="fzm-hero-shield" aria-hidden="true">F</span>
-                    <div class="fzm-hero-brand-copy">
-                        <div class="fzm-hero-eyebrow"><span class="fzm-live-dot"></span>En direct</div>
-                        <div class="fzm-hero-headline">${liveCount} de vos joueurs ${liveCount > 1 ? 'sont' : 'est'} sur la glace en ce moment</div>
-                    </div>
-                </div>
-                <button type="button" class="fzm-hero-btn" id="fzmWatchLiveBtn">Voir les pointages en direct →</button>
-            </div>`;
-    }
-    if (isDraft) html += fzmDraftHero(poolData, draftState, team.name, activeName);
-    if (isPreseason) html += fzmPreseasonHero(calData);
+    // La bannière elle-même vient de renderHero() (accueil-dash.js), qui la
+    // rend dans ce conteneur une fois root.innerHTML posé plus bas — même
+    // contenu, même minuteur, que la version bureau.
+    let html = '<div class="fz-dash-hero" id="fzmHeroSlot" style="display:none;"></div>';
 
     if (isRegular || isLive) html += fzmRankStrip(activeName, movement);
     if (isRegular || isLive) html += fzmGamesRow();
@@ -779,9 +642,12 @@ function renderMobileHome(tonight, movement, activeName) {
 
     root.innerHTML = html;
 
-    fzmStopCountdown();
-    if (isPreseason) fzmStartCountdownTicker();
-    document.getElementById('fzmWatchLiveBtn')?.addEventListener('click', () => {
+    renderHero(tonight, 'fzmHeroSlot');
+    // La bannière « en direct » pointe vers #fzdPlayersList (id bureau) :
+    // sur téléphone la liste vit sous #fzmPlayers, donc on intercepte le
+    // même bouton plutôt que de bifurquer le contenu de la bannière.
+    root.querySelector('.fzd-hero-cta[href="#fzdPlayersList"]')?.addEventListener('click', e => {
+        e.preventDefault();
         document.getElementById('fzmPlayers')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     if (showActivity) fzmLoadActivity(activeName);

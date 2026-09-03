@@ -639,17 +639,27 @@ function fzdHeroHTML(state) {
         </a>`;
 }
 
-let fzdHeroTimer = null;
+// Un minuteur par conteneur : bureau (#fzDashHero) et téléphone
+// (#fzmHeroSlot, accueil-mobile.js) rendent chacun leur propre copie de la
+// même bannière et tournent chacun leur propre intervalle, sinon rendre
+// l'un arrêterait le tic-tac de l'autre.
+const fzdHeroTimers = {};
 
-function fzdStopHeroTimer() {
-    if (fzdHeroTimer) { clearInterval(fzdHeroTimer); fzdHeroTimer = null; }
+function fzdStopHeroTimer(containerId) {
+    if (fzdHeroTimers[containerId]) { clearInterval(fzdHeroTimers[containerId]); delete fzdHeroTimers[containerId]; }
 }
 
-/** Called from renderDash() with the same tonight-boxscores it already loaded. */
-function renderHero(tonight) {
-    const container = document.getElementById('fzDashHero');
+/**
+ * Rend la bannière d'état dans le conteneur donné. Appelée depuis
+ * renderDash() pour #fzDashHero (bureau) et depuis renderMobileHome()
+ * (accueil-mobile.js) pour #fzmHeroSlot — même état, même balisage, même
+ * contenu des deux côtés ; seul accueil-dash.css les met en page
+ * différemment selon la largeur d'écran.
+ */
+function renderHero(tonight, containerId = 'fzDashHero') {
+    const container = document.getElementById(containerId);
     if (!container) return;
-    fzdStopHeroTimer();
+    fzdStopHeroTimer(containerId);
 
     const state = fzdHeroState(tonight);
     if (!state || state.mode === 'regular') {
@@ -658,7 +668,7 @@ function renderHero(tonight) {
         return;
     }
 
-    container.style.display = '';
+    container.style.display = 'flex';
     container.innerHTML = fzdHeroHTML(state);
 
     // Repêchage : le temps d'attente avance à la seconde. Avant-saison : le
@@ -666,9 +676,9 @@ function renderHero(tonight) {
     // même source de vérité (fzdHeroState) plutôt que de dériver localement,
     // pour ne jamais désynchroniser d'un tour de repêchage ou d'un minuit.
     if (state.mode === 'draft' || state.mode === 'preseason') {
-        fzdHeroTimer = setInterval(() => {
+        fzdHeroTimers[containerId] = setInterval(() => {
             const fresh = fzdHeroState(tonight);
-            if (!fresh || fresh.mode !== state.mode) { renderHero(tonight); return; }
+            if (!fresh || fresh.mode !== state.mode) { renderHero(tonight, containerId); return; }
             container.innerHTML = fzdHeroHTML(fresh);
         }, 1000);
     }
@@ -1165,7 +1175,7 @@ async function renderDash() {
     // « Calendrier LNH » de l'état vide doit pouvoir l'ouvrir.
     section.classList.toggle('is-poolless', !hasPool);
     if (body) body.style.display = hasPool ? '' : 'none';
-    if (!hasPool && hero) { fzdStopHeroTimer(); hero.style.display = 'none'; hero.innerHTML = ''; }
+    if (!hasPool && hero) { fzdStopHeroTimer('fzDashHero'); hero.style.display = 'none'; hero.innerHTML = ''; }
     // calRevealedNoPool : le visiteur sans pool a ouvert le calendrier depuis
     // la carte « Calendrier LNH » — ne pas le refermer sous lui au prochain
     // rafraîchissement de FZPool.
