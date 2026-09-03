@@ -536,7 +536,14 @@ function fzdHeroState(tonight) {
     const seasonStart = calData?.regularSeasonStartDate;
     const isPreseason = !isDraft && !!seasonStart && today < seasonStart;
 
-    if (isDraft) return { mode: 'draft', poolData, team, activeName };
+    if (isDraft) {
+        // `myTurn` pilote la bascule de la bannière : neutre quand le tour est
+        // à quelqu'un d'autre, rouge de marque quand c'est le vôtre (voir
+        // .fz-dash-hero.is-myturn dans accueil-dash.css).
+        const ordre = Array.isArray(poolData.draftOrder) ? poolData.draftOrder : [];
+        const pick = poolData.currentPickIndex || 0;
+        return { mode: 'draft', poolData, team, activeName, pick, myTurn: ordre[pick] === team.name };
+    }
 
     if (isPreseason) {
         const campStart = calData?.preSeasonStartDate;
@@ -596,7 +603,7 @@ function fzdHeroHTML(state) {
             <div class="fzd-hero-stats">
                 <div class="fzd-hero-stat"><span class="fzd-hero-stat-lbl">Ronde</span><span class="fzd-hero-stat-val">${round} / ${totalRounds}</span></div>
                 <div class="fzd-hero-stat-sep" aria-hidden="true"></div>
-                <div class="fzd-hero-stat"><span class="fzd-hero-stat-lbl">Attente</span><span class="fzd-hero-stat-val">${elapsed}</span></div>
+                <div class="fzd-hero-stat"><span class="fzd-hero-stat-lbl">Attente</span><span class="fzd-hero-stat-val fzd-hero-elapsed">${elapsed}</span></div>
             </div>
             <a class="fzd-hero-cta" href="draftActif.html?pool=${encodeURIComponent(activeName)}">
                 <span class="fzd-hero-cta-bar" aria-hidden="true"></span>
@@ -665,21 +672,49 @@ function renderHero(tonight, containerId = 'fzDashHero') {
     if (!state || state.mode === 'regular') {
         container.style.display = 'none';
         container.innerHTML = '';
+        container.classList.remove('is-draft', 'is-myturn');
         return;
     }
 
     container.style.display = 'flex';
     container.innerHTML = fzdHeroHTML(state);
 
-    // Repêchage : le temps d'attente avance à la seconde. Avant-saison : le
-    // compte à rebours suffit à l'heure. Les deux se recalculent depuis la
-    // même source de vérité (fzdHeroState) plutôt que de dériver localement,
-    // pour ne jamais désynchroniser d'un tour de repêchage ou d'un minuit.
-    if (state.mode === 'draft' || state.mode === 'preseason') {
+    // Bascule neutre → rouge de marque quand le tour devient le vôtre. La
+    // lecture forcée du layout entre les deux classes garantit que le calque
+    // rouge parte bien de sa position hors-champ : sans elle, le navigateur
+    // fond les deux états en un seul calcul et le balayage ne joue pas.
+    container.classList.toggle('is-draft', state.mode === 'draft');
+    const myTurn = state.mode === 'draft' && !!state.myTurn;
+    if (myTurn !== container.classList.contains('is-myturn')) void container.offsetWidth;
+    container.classList.toggle('is-myturn', myTurn);
+
+    // Avant-saison : le compte à rebours se contente d'un rendu complet.
+    if (state.mode === 'preseason') {
         fzdHeroTimers[containerId] = setInterval(() => {
             const fresh = fzdHeroState(tonight);
-            if (!fresh || fresh.mode !== state.mode) { renderHero(tonight, containerId); return; }
+            if (!fresh || fresh.mode !== 'preseason') { renderHero(tonight, containerId); return; }
             container.innerHTML = fzdHeroHTML(fresh);
+        }, 1000);
+        return;
+    }
+
+    // Repêchage : seule l'attente avance à la seconde, et on ne retouche que
+    // ce texte-là. Reconstruire toute la bannière chaque seconde effaçait le
+    // balayage rouge en pleine course. Un vrai changement — tour, choix,
+    // mode — repasse par un rendu complet, animation comprise.
+    if (state.mode === 'draft') {
+        const signature = `${state.pick}|${myTurn ? 1 : 0}`;
+        fzdHeroTimers[containerId] = setInterval(() => {
+            const fresh = fzdHeroState(tonight);
+            if (!fresh || fresh.mode !== 'draft'
+                || `${fresh.pick}|${fresh.myTurn ? 1 : 0}` !== signature) {
+                renderHero(tonight, containerId);
+                return;
+            }
+            const el = container.querySelector('.fzd-hero-elapsed');
+            if (!el) return;
+            const started = Number(fresh.poolData.turnStartedAt) || 0;
+            el.textContent = started ? fzdFormatElapsed(Date.now() - started) : '—';
         }, 1000);
     }
 }
@@ -732,22 +767,27 @@ function fzdFormatClock(ms) {
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
-// Dernier choix affiché par piste : sert à savoir, au re-rendu, si un choix
-// vient d'être fait (index qui change) — auquel cas on ramène l'utilisateur
-// sur le choix en cours en douceur plutôt que d'un saut sec.
+// État par piste, gardé hors du DOM pour survivre à la reconstruction du
+// conteneur : sur téléphone, renderMobileHome recrée #fzmDraftBoard à chaque
+// rafraîchissement, donc on ne peut pas relire l'ancienne position dans le
+// DOM — d'où `scroll` mémorisé ici.
+//   pick   — dernier index de choix rendu (a-t-il bougé = un choix est tombé)
+//   scroll — dernière position de défilement connue de l'utilisateur
 const fzdDraftBoardPick = {};
+const fzdDraftBoardScroll = {};
 
-// Centre une carte dans sa piste. scrollTo ne touche que la piste, jamais le
-// défilement de la page. clientWidth vaut 0 tant que le panneau n'est pas
-// posé : on repasse alors à la frame suivante.
+// Centre une carte dans sa piste et renvoie la position visée. scrollTo ne
+// touche que la piste, jamais le défilement de la page. clientWidth vaut 0
+// tant que le panneau n'est pas posé : on repasse alors à la frame suivante.
 function fzdCenterDraftCard(track, card, smooth) {
-    if (!track || !card) return;
+    if (!track || !card) return null;
     if (!track.clientWidth) {
         requestAnimationFrame(() => fzdCenterDraftCard(track, card, false));
-        return;
+        return null;
     }
     const left = Math.max(0, card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2);
     track.scrollTo({ left, behavior: smooth ? 'smooth' : 'auto' });
+    return left;
 }
 
 // Glisser-déposer à la souris pour faire défiler la piste (le tactile la
@@ -795,6 +835,7 @@ function fzdRenderDraftBoard(containerId, poolData, team, activeName) {
         box.style.display = 'none';
         box.innerHTML = '';
         delete fzdDraftBoardPick[containerId];
+        delete fzdDraftBoardScroll[containerId];
         return;
     }
 
@@ -900,12 +941,13 @@ function fzdRenderDraftBoard(containerId, poolData, team, activeName) {
     const pct = Math.round((idx / total) * 100);
     const remaining = total - idx;
 
-    // Position de défilement d'avant le re-rendu : un rafraîchissement qui
-    // n'apporte pas de nouveau choix (pendule, mise à jour d'un autre pool)
-    // ne doit pas arracher l'utilisateur de là où il regarde.
+    // Position d'avant le re-rendu. On la lit d'abord dans le DOM (bureau :
+    // le conteneur survit), sinon dans l'état mémorisé (téléphone :
+    // renderMobileHome vient de recréer #fzmDraftBoard vide, le DOM ne sait
+    // plus rien — c'est ce trou qui renvoyait la piste au début).
     const prevPick = fzdDraftBoardPick[containerId];
     const prevTrack = box.querySelector('.fzd-db-track');
-    const prevScroll = prevTrack ? prevTrack.scrollLeft : null;
+    const prevScroll = prevTrack ? prevTrack.scrollLeft : fzdDraftBoardScroll[containerId];
 
     box.style.display = '';
     box.innerHTML = `
@@ -940,11 +982,23 @@ function fzdRenderDraftBoard(containerId, poolData, team, activeName) {
     const current = track.querySelector('.is-current');
     const pickChanged = prevPick != null && prevPick !== idx;
     if (current && (prevPick == null || pickChanged)) {
-        fzdCenterDraftCard(track, current, pickChanged);
+        // La cible est mémorisée tout de suite : si un second rafraîchissement
+        // arrive pendant le glissement (le serveur en émet plusieurs par
+        // choix), il restaure le choix en cours et non la position d'avant.
+        const target = fzdCenterDraftCard(track, current, pickChanged);
+        if (target != null) fzdDraftBoardScroll[containerId] = target;
     } else if (prevScroll != null) {
         track.scrollLeft = prevScroll;
     }
     fzdDraftBoardPick[containerId] = idx;
+
+    // Mémorise ce que l'utilisateur fait défiler, pour le lui rendre au
+    // prochain rendu même si le conteneur a été recréé entre-temps.
+    let scrollSave;
+    track.addEventListener('scroll', () => {
+        clearTimeout(scrollSave);
+        scrollSave = setTimeout(() => { fzdDraftBoardScroll[containerId] = track.scrollLeft; }, 120);
+    });
 
     box.querySelectorAll('.fzd-db-nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {

@@ -294,12 +294,59 @@
     // Les mises à jour temps réel du serveur gardent la liste fraîche sans
     // qu'aucune page n'ait à s'en occuper.
     function brancherSocket() {
-        if (typeof io === 'undefined' || window.__fzSocketPool) return;
+        if (window.__fzSocketPool) return;
+
+        // socket.io est chargé en bas de page (et peut tarder, voire ne
+        // jamais arriver derrière un proxy). Abandonner en silence au
+        // premier essai laissait l'Accueil figé sur un tour périmé jusqu'à
+        // un rechargement manuel : on réessaie, puis le filet plus bas prend
+        // le relais si la bibliothèque ne vient jamais.
+        if (typeof io === 'undefined') {
+            brancherSocket.essais = (brancherSocket.essais || 0) + 1;
+            if (brancherSocket.essais <= 40) setTimeout(brancherSocket, 250);
+            return;
+        }
+
         try {
             window.__fzSocketPool = io(BASE_URL);
             window.__fzSocketPool.on('draftUpdated', () => { rafraichir(); });
-        } catch { /* socket indisponible : sans conséquence */ }
+            // Une coupure (veille du téléphone, changement de réseau) fait
+            // manquer les évènements émis pendant l'absence : on resynchronise
+            // à la reconnexion, pas seulement au premier branchement.
+            let dejaConnecte = false;
+            window.__fzSocketPool.on('connect', () => {
+                if (dejaConnecte) rafraichir();
+                dejaConnecte = true;
+            });
+        } catch { /* socket indisponible : le filet ci-dessous prend le relais */ }
     }
+
+    /**
+     * Filet de sécurité pendant un repêchage.
+     *
+     * Un choix manqué — socket jamais établi, évènement perdu, onglet en
+     * arrière-plan — laissait la page sur un tour périmé jusqu'à ce que
+     * l'utilisateur recharge lui-même. La salle de repêchage avait déjà son
+     * sondage (7 s, draftActif.js) ; l'Accueil, non. On le pose ici pour que
+     * toutes les pages en profitent, et seulement quand il sert : repêchage
+     * en cours et onglet visible.
+     */
+    function filetRepechage() {
+        const enRepechage = () => {
+            const donnees = API.data();
+            return !!donnees && etatRepechage(donnees).etat === 'encours';
+        };
+        setInterval(() => {
+            if (document.hidden || !enRepechage()) return;
+            rafraichir();
+        }, 20000);
+        // Revenir sur l'onglet doit montrer l'état réel, pas celui d'il y a
+        // dix minutes.
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && enRepechage()) rafraichir();
+        });
+    }
+    filetRepechage();
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => setTimeout(brancherSocket, 0));
     } else {

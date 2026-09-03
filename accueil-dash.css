@@ -405,6 +405,90 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 }
 
 /* ------------------------------------------------------------ */
+/* Repêchage — la bannière ne crie que quand c'est votre tour.    */
+/* Le tour est à quelqu'un d'autre : aplat neutre qui suit le     */
+/* thème (papier en clair, ardoise en sombre). Votre tour : le    */
+/* rouge de marque balaie depuis la gauche et le texte bascule au */
+/* blanc dans la foulée. Les autres états (avant-saison, direct)  */
+/* gardent le rouge permanent défini plus haut.                   */
+/* Classes posées par renderHero() (accueil-dash.js).             */
+/* ------------------------------------------------------------ */
+.fz-dash-hero { position: relative; overflow: hidden; }
+.fz-dash-hero > * { position: relative; z-index: 1; }
+
+.fz-dash-hero.is-draft {
+    background: var(--fzd-surface);
+    border: 1px solid var(--fzd-border-strong);
+    box-shadow: none;
+    transition: border-color .35s ease .2s, box-shadow .45s ease .15s;
+}
+/* Le rouge vit dans un calque : il peut ainsi balayer sans que la bannière
+   change de fond d'un coup sec. */
+.fz-dash-hero.is-draft::before {
+    content: '';
+    position: absolute; inset: 0; z-index: 0;
+    background:
+        radial-gradient(120% 170% at 100% 0%, rgba(255,255,255,.14) 0%, rgba(255,255,255,0) 58%),
+        linear-gradient(118deg, var(--fzh-a) 0%, var(--fzh-b) 46%, var(--fzh-c) 100%);
+    transform: translateX(-101%);
+    transition: transform .6s cubic-bezier(.22,.61,.36,1);
+}
+.fz-dash-hero.is-draft.is-myturn::before { transform: translateX(0); }
+.fz-dash-hero.is-draft.is-myturn {
+    border-color: transparent;
+    box-shadow: 0 18px 40px rgba(140, 42, 26, .26);
+}
+
+/* Teintes au repos. Le retard sur la transition laisse le balayage passer
+   avant que le texte ne blanchisse. */
+.fz-dash-hero.is-draft .fzd-hero-headline,
+.fz-dash-hero.is-draft .fzd-hero-stat-val,
+.fz-dash-hero.is-draft .fzd-hero-eyebrow,
+.fz-dash-hero.is-draft .fzd-hero-stat-lbl,
+.fz-dash-hero.is-draft .fzd-hero-stat-sep,
+.fz-dash-hero.is-draft .fzd-hero-shield,
+.fz-dash-hero.is-draft .fzd-hero-live-dot {
+    transition: color .35s ease .22s, background-color .35s ease .22s;
+}
+.fz-dash-hero.is-draft .fzd-hero-headline,
+.fz-dash-hero.is-draft .fzd-hero-stat-val { color: var(--fzd-ink); }
+.fz-dash-hero.is-draft .fzd-hero-eyebrow,
+.fz-dash-hero.is-draft .fzd-hero-stat-lbl { color: var(--fzd-text-faint); }
+.fz-dash-hero.is-draft .fzd-hero-stat-sep { background-color: var(--fzd-border-strong); }
+.fz-dash-hero.is-draft .fzd-hero-shield { background-color: var(--fzd-solid); color: var(--fzd-on-solid); }
+.fz-dash-hero.is-draft .fzd-hero-cta { background: var(--fzd-solid); }
+.fz-dash-hero.is-draft .fzd-hero-cta:hover { background: var(--fzd-solid-hover); }
+.fz-dash-hero.is-draft .fzd-hero-cta-label { color: var(--fzd-on-solid); }
+
+/* Votre tour — le rouge est passé, tout repasse en blanc. */
+.fz-dash-hero.is-draft.is-myturn .fzd-hero-headline,
+.fz-dash-hero.is-draft.is-myturn .fzd-hero-stat-val { color: #fff; }
+.fz-dash-hero.is-draft.is-myturn .fzd-hero-eyebrow { color: rgba(255,255,255,.72); }
+.fz-dash-hero.is-draft.is-myturn .fzd-hero-stat-lbl { color: rgba(255,255,255,.68); }
+.fz-dash-hero.is-draft.is-myturn .fzd-hero-stat-sep { background-color: rgba(255,255,255,.28); }
+.fz-dash-hero.is-draft.is-myturn .fzd-hero-shield { background-color: #fff; color: var(--fzh-b); }
+.fz-dash-hero.is-draft.is-myturn .fzd-hero-cta { background: #16181a; }
+.fz-dash-hero.is-draft.is-myturn .fzd-hero-cta:hover { background: #1f2225; }
+.fz-dash-hero.is-draft.is-myturn .fzd-hero-cta-label { color: #fff; }
+
+/* Le libellé change en même temps (« Votre tour dans 2 choix » → « C'est
+   votre tour ») : il monte en fondu pendant que le rouge le rattrape. */
+@keyframes fzd-hero-copy-in {
+    from { opacity: 0; transform: translateY(9px); }
+    to   { opacity: 1; transform: none; }
+}
+.fz-dash-hero.is-draft.is-myturn .fzd-hero-copy {
+    animation: fzd-hero-copy-in .45s cubic-bezier(.22,.61,.36,1) .2s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fz-dash-hero.is-draft,
+    .fz-dash-hero.is-draft::before,
+    .fz-dash-hero.is-draft * { transition-duration: .01ms; }
+    .fz-dash-hero.is-draft.is-myturn .fzd-hero-copy { animation: none; }
+}
+
+/* ------------------------------------------------------------ */
 /* CARROUSEL DES CHOIX — repêchage en cours, sous la bannière.   */
 /* Une bande qui remplace « Prochains choix » + « Choix récents »: */
 /* choix déjà faits estompés → choix EN COURS centré et en rouge  */
@@ -491,7 +575,13 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 .fzd-db-card.is-done { opacity: .62; }
 .fzd-db-card.is-done.is-last { opacity: 1; }
 .fzd-db-card.is-future { border-style: dashed; border-color: var(--fzd-border-strong); background: var(--fzd-bg-alt); }
-.fzd-db-card.is-mine { border-color: var(--fzd-accent); background: var(--fzd-bg-alt); }
+/* Vos choix à venir : un rouge estompé, sans le halo — distinct du choix EN
+   COURS (rouge plein + halo) même quand c'est votre tour et que les deux se
+   suivent. Repli sur la bordure grise par défaut si color-mix manque. */
+.fzd-db-card.is-mine {
+    border-color: color-mix(in srgb, var(--fzd-accent) 42%, transparent);
+    background: var(--fzd-bg-alt);
+}
 .fzd-db-card.is-current {
     flex-basis: 284px; width: 284px;
     padding: 15px; gap: 12px;
