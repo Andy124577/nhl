@@ -21,14 +21,8 @@
     --fzm-red: #E42027;
     --fzm-red-soft: #FCE4E4;
     --fzm-green: #0F8A3E;
-    /* Les héros sont des panneaux de couleur pleine — rouge de marque ou
-       aplat sombre — dont tout le détail intérieur est en blanc et en
-       rgba(255,255,255,…). Ils restent donc sombres dans les DEUX thèmes ;
-       seule leur valeur s'éclaircit un peu en sombre pour se détacher du
-       fond de page. */
-    --fzm-hero-ink: #17171A;
-    /* --fzm-ink servait aussi d'aplat plein (onglet actif, bouton de
-       tuile) : ce rôle-là s'inverse avec le fond, pas avec le texte. */
+    /* --fzm-ink sert aussi d'aplat plein (onglet actif, bouton de tuile) :
+       ce rôle-là s'inverse avec le fond, pas avec le texte. */
     --fzm-solid: #17171A;
     --fzm-on-solid: #ffffff;
     --fzm-avatar-a: #EDEBE7;
@@ -60,9 +54,6 @@ html[data-theme="dark"] .fz-mobile-home {
     --fzm-border: rgba(242, 242, 240, 0.14);
     --fzm-red-soft: #3a1618;
     --fzm-green: #4FBE7B;
-    /* Le héros s'éclaircit juste assez pour se détacher du fond de page,
-       qui est désormais plus sombre que lui. */
-    --fzm-hero-ink: #26262b;
     --fzm-solid: #F0EEE9;
     --fzm-on-solid: #17171A;
     --fzm-avatar-a: #2a2a2f;
@@ -84,9 +75,32 @@ html[data-theme="dark"] .fz-mobile-home {
 
 /* ---------------------------------------------------------- */
 /* HÉROS — un seul actif à la fois (direct / repêchage / avant- */
-/* saison), voir renderMobileHome (accueil-mobile.js).          */
+/* saison), voir renderMobileHome (accueil-mobile.js). Même      */
+/* aplat de marque que le héros bureau (accueil-dash.css,        */
+/* .fz-dash-hero — maquette Canvas-9, Tour 2) : dégradé brique,   */
+/* écusson blanc, tout le détail intérieur en blanc/rgba(255,…),  */
+/* donc ne bascule pas avec le thème.                             */
 /* ---------------------------------------------------------- */
-.fzm-hero { border-radius: 16px; padding: 20px 18px; margin-bottom: 14px; color: #fff; }
+.fzm-hero {
+    border-radius: 16px;
+    padding: 18px 16px;
+    margin-bottom: 14px;
+    color: #fff;
+    background:
+        radial-gradient(130% 120% at 100% 0%, rgba(255,255,255,.15) 0%, rgba(255,255,255,0) 60%),
+        linear-gradient(150deg, #8e2a1a 0%, #a8351f 52%, #b93d28 100%);
+    box-shadow: 0 14px 32px rgba(140, 42, 26, .26);
+}
+.fzm-hero-brand { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 15px; }
+.fzm-hero-shield {
+    width: 28px; height: 32px; flex: 0 0 auto;
+    background: #fff;
+    clip-path: polygon(50% 0, 100% 16%, 100% 62%, 50% 100%, 0 62%, 0 16%);
+    display: grid; place-items: center;
+    font: 700 11px/1 'Oswald', 'Archivo', sans-serif;
+    color: #a8351f;
+}
+.fzm-hero-brand-copy { flex: 1; min-width: 0; }
 .fzm-hero-eyebrow {
     display: flex; align-items: center; gap: 6px;
     font: 700 11px/1 'Archivo', sans-serif;
@@ -96,7 +110,7 @@ html[data-theme="dark"] .fz-mobile-home {
 .fzm-hero-headline { font: 800 19px/1.25 'Archivo', sans-serif; margin-bottom: 12px; }
 .fzm-hero-btn {
     display: inline-block;
-    background: #fff; color: var(--fzm-red);
+    background: #fff; color: #a8351f;
     border: none; border-radius: 10px;
     padding: 10px 16px;
     font: 700 13px/1 'Archivo', sans-serif;
@@ -110,11 +124,7 @@ html[data-theme="dark"] .fz-mobile-home {
 }
 @keyframes fzm-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 
-.fzm-hero-live { background: var(--fzm-red); }
-.fzm-hero-live .fzm-hero-btn { color: var(--fzm-red); }
-
 /* Repêchage */
-.fzm-hero-draft { background: var(--fzm-hero-ink); }
 .fzm-draft-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .fzm-draft-top .fzm-hero-eyebrow { margin-bottom: 0; }
 .fzm-draft-elapsed { font: 600 11px/1 'Archivo', sans-serif; opacity: .55; font-variant-numeric: tabular-nums; }
@@ -125,7 +135,6 @@ html[data-theme="dark"] .fz-mobile-home {
 .fzm-hero-draft .fzm-hero-btn { margin-top: 2px; }
 
 /* Avant-saison */
-.fzm-hero-preseason { background: var(--fzm-hero-ink); }
 .fzm-hero-preseason .fzm-hero-eyebrow { color: rgba(255,255,255,.5); opacity: 1; margin-bottom: 12px; }
 .fzm-countdown { display: flex; gap: 14px; }
 .fzm-cd-part { display: flex; flex-direction: column; align-items: center; gap: 2px; }

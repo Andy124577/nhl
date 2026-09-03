@@ -77,9 +77,14 @@ function fzmPreseasonHero(calDataRef) {
 
     return `
         <div class="fzm-hero fzm-hero-preseason">
-            <div class="fzm-hero-eyebrow">${beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison régulière'}</div>
-            <div class="fzm-countdown" id="fzmCountdown" data-target="${target}">
-                ${fzmCountdownPartsHTML(target)}
+            <div class="fzm-hero-brand">
+                <span class="fzm-hero-shield" aria-hidden="true">F</span>
+                <div class="fzm-hero-brand-copy">
+                    <div class="fzm-hero-eyebrow">${beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison régulière'}</div>
+                    <div class="fzm-countdown" id="fzmCountdown" data-target="${target}">
+                        ${fzmCountdownPartsHTML(target)}
+                    </div>
+                </div>
             </div>
         </div>`;
 }
@@ -133,12 +138,17 @@ function fzmDraftHero(poolData, draftState, myTeamName, activeName) {
 
     return `
         <div class="fzm-hero fzm-hero-draft">
-            <div class="fzm-draft-top">
-                <span class="fzm-hero-eyebrow">Ronde ${round} · Choix ${pickInRound}</span>
-                <span class="fzm-draft-elapsed">${escapeHTML(elapsedLabel)}</span>
+            <div class="fzm-hero-brand">
+                <span class="fzm-hero-shield" aria-hidden="true">F</span>
+                <div class="fzm-hero-brand-copy">
+                    <div class="fzm-draft-top">
+                        <span class="fzm-hero-eyebrow">Ronde ${round} · Choix ${pickInRound}</span>
+                        <span class="fzm-draft-elapsed">${escapeHTML(elapsedLabel)}</span>
+                    </div>
+                    <div class="fzm-draft-onclock-lbl">Au tour de</div>
+                    <div class="fzm-hero-headline">${escapeHTML(onClockTeam)}${onClockTeam === myTeamName ? ' (vous)' : ''}</div>
+                </div>
             </div>
-            <div class="fzm-draft-onclock-lbl">Au tour de</div>
-            <div class="fzm-hero-headline">${escapeHTML(onClockTeam)}${onClockTeam === myTeamName ? ' (vous)' : ''}</div>
             ${turnBlock}
         </div>`;
 }
@@ -736,8 +746,13 @@ function renderMobileHome(tonight, movement, activeName) {
     if (isLive) {
         html += `
             <div class="fzm-hero fzm-hero-live">
-                <div class="fzm-hero-eyebrow"><span class="fzm-live-dot"></span>En direct</div>
-                <div class="fzm-hero-headline">${liveCount} de vos joueurs ${liveCount > 1 ? 'sont' : 'est'} sur la glace en ce moment</div>
+                <div class="fzm-hero-brand">
+                    <span class="fzm-hero-shield" aria-hidden="true">F</span>
+                    <div class="fzm-hero-brand-copy">
+                        <div class="fzm-hero-eyebrow"><span class="fzm-live-dot"></span>En direct</div>
+                        <div class="fzm-hero-headline">${liveCount} de vos joueurs ${liveCount > 1 ? 'sont' : 'est'} sur la glace en ce moment</div>
+                    </div>
+                </div>
                 <button type="button" class="fzm-hero-btn" id="fzmWatchLiveBtn">Voir les pointages en direct →</button>
             </div>`;
     }
