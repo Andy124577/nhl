@@ -64,13 +64,17 @@ function fzAllAvailableCandidates() {
 function fzGroupesManquants() {
     const me = typeof getUserTeam === 'function' ? getUserTeam() : null;
     const cfg = (typeof draftData !== 'undefined' && draftData && draftData.config)
-        || { numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1 };
+        || { numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1, numTeams: 1 };
     const equipe = (me && typeof draftData !== 'undefined' && draftData && draftData.teams && draftData.teams[me]) || {};
     return {
         offensive: (equipe.offensive || []).length < (cfg.numOffensive ?? 6),
         defensive: (equipe.defensive || []).length < (cfg.numDefensive ?? 4),
         rookie: (equipe.rookie || []).length < (cfg.numRookies ?? 1),
-        goalie: (equipe.goalie || []).length < (cfg.numGoalies ?? 1)
+        goalie: (equipe.goalie || []).length < (cfg.numGoalies ?? 1),
+        // « team » : même clé que fzGroupKeyFor pour un club LNH. Sans elle,
+        // « Comble un trou » masquerait toutes les lignes de la catégorie
+        // Équipes — manquants['team'] valant undefined.
+        team: (equipe.teams || []).length < (cfg.numTeams ?? 1)
     };
 }
 
@@ -81,13 +85,14 @@ function fzGroupesManquants() {
 function fzPireGroupe() {
     const me = typeof getUserTeam === 'function' ? getUserTeam() : null;
     const cfg = (typeof draftData !== 'undefined' && draftData && draftData.config)
-        || { numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1 };
+        || { numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1, numTeams: 1 };
     const equipe = (me && typeof draftData !== 'undefined' && draftData && draftData.teams && draftData.teams[me]) || {};
     const groupes = [
         { cle: 'offensive', ecart: (cfg.numOffensive ?? 6) - (equipe.offensive || []).length },
         { cle: 'defensive', ecart: (cfg.numDefensive ?? 4) - (equipe.defensive || []).length },
         { cle: 'rookie', ecart: (cfg.numRookies ?? 1) - (equipe.rookie || []).length },
-        { cle: 'goalie', ecart: (cfg.numGoalies ?? 1) - (equipe.goalie || []).length }
+        { cle: 'goalie', ecart: (cfg.numGoalies ?? 1) - (equipe.goalie || []).length },
+        { cle: 'team', ecart: (cfg.numTeams ?? 1) - (equipe.teams || []).length }
     ];
     let pire = null;
     groupes.forEach(g => { if (g.ecart > 0 && (!pire || g.ecart > pire.ecart)) pire = g; });
@@ -988,7 +993,8 @@ function fzRenderSelectedPlayerCard() {
         { cle: 'offensive', libelle: 'Attaquants' },
         { cle: 'defensive', libelle: 'Défenseurs' },
         { cle: 'rookie', libelle: 'Recrue' },
-        { cle: 'goalie', libelle: 'Gardien' }
+        { cle: 'goalie', libelle: 'Gardien' },
+        { cle: 'team', libelle: 'Équipe' }
     ];
     let auMoinsUn = false;
     CATEGORIES.forEach(cat => {

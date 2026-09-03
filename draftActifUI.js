@@ -179,8 +179,11 @@ const CODES_CATEGORIE = {
     defensive: ['D'],
     goalies: ['G'],
     rookies: ['*'],
-    // Pas d'entrée « teams » : il n'y a plus d'onglet à éteindre pour cette
-    // catégorie, l'identité LNH (repechage.html) ayant remplacé le pick.
+    // « Équipes » redevient un choix du repêchage : l'identité LNH choisie
+    // avant le repêchage (repechage.html) ne sert plus qu'aux couleurs, elle
+    // ne remplit plus la case du roster — l'onglet doit donc s'éteindre quand
+    // le quota numTeams est atteint, comme les autres.
+    teams: ['T'],
     // « Joueurs » réunit les patineurs : il ne s'éteint que lorsque plus
     // aucune de ces positions n'a de place libre.
     all: ['C', 'D', '*']

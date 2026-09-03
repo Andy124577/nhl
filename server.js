@@ -1099,12 +1099,11 @@ app.post("/create-clan", async (req, res) => {
             numRookies: 1,
             numTeams: 1
         };
-        // Toujours 1, quoi qu'envoie l'appelant : l'unique équipe LNH de
-        // chaque équipe du pool vient de son identité choisie avant le
-        // repêchage (/choose-nhl-club), plus d'une quantité configurable —
-        // imposé côté serveur, le formulaire n'étant pas la seule porte
-        // d'entrée de cette route.
-        poolConfig.numTeams = 1;
+        // L'équipe LNH est de nouveau un choix du repêchage : la quantité
+        // vient donc du formulaire (creer-pool.html), comme les autres
+        // positions. Seul le défaut est imposé ici, si l'appelant n'envoie
+        // rien — l'identité (/choose-nhl-club) ne remplit plus cette case.
+        if (poolConfig.numTeams == null) poolConfig.numTeams = 1;
 
         // 🔥 Initialize 10 teams for the new clan
         let teams = {};
@@ -1872,14 +1871,11 @@ app.post("/choose-nhl-club", async (req, res) => {
         return res.status(409).json({ message: `${dejaPrise[0]} a déjà choisi cette équipe.` });
     }
 
+    // Identité seulement : couleurs et logo de l'équipe du pool. La case
+    // « équipe LNH » du roster (team.teams) se remplit au repêchage, comme
+    // toute autre position — choisir son identité ne consomme pas ce pick,
+    // et rien n'oblige à repêcher le club dont on porte les couleurs.
     team.nhlClub = code;
-    // L'identité EST la case « équipe LNH » du roster — numTeams vaut
-    // toujours 1 désormais (voir /create-clan), et cette route ne s'ouvre
-    // que tant que draftOrder n'existe pas, donc avant tout choix de joueur
-    // réel : personne ne perd un pick déjà fait en remplaçant le tableau.
-    // Remplacé plutôt qu'ajouté : changer d'idée avant le repêchage doit
-    // remplacer l'ancien choix, pas en accumuler un second.
-    team.teams = [NHL_CLUB_FULLNAME[code]];
     await saveDraftData(draftData);
     io.emit("draftUpdated", poolsPublics(draftData));
 
@@ -1926,6 +1922,13 @@ app.post("/start-draft", async (req, res) => {
             numTeams: 1
         };
         const totalPicks = config.numOffensive + config.numDefensive + config.numGoalies + config.numRookies + config.numTeams;
+
+        // Aucun choix réel n'a encore eu lieu : tout ce que team.teams
+        // contiendrait vient de l'époque où /choose-nhl-club remplissait
+        // lui-même la case du roster. On repart de zéro, sinon ces pools
+        // démarreraient avec leur case « équipe LNH » déjà pleine et le pick
+        // correspondant serait impossible à faire.
+        Object.values(clan.teams || {}).forEach(t => { t.teams = []; });
 
         clan.draftOrder = generateSnakeOrder(eligibleTeams, totalPicks);
         // Départ de la pendule du premier tour. L'heure vient du serveur pour
