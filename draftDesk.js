@@ -139,9 +139,6 @@ function fzDeskApply() {
         fzDeskDeplacer(document.getElementById(id), droite);
     });
 
-    // Colonne centrale : les favoris juste au-dessus de la liste.
-    fzDeskDeplacer(document.getElementById('favoritesCard'), centre, carteListe);
-
     // La colonne de filtres devient la bande de la maquette : pastilles
     // de position à gauche, recherche et équipe à droite.
     const filtres = document.getElementById('listFiltersSidebar');
@@ -487,41 +484,18 @@ function fzDeskDecorateRows() {
 }
 
 /* ============================================================
-   4. MES FAVORIS QUAND LE TOUR ARRIVE
+   4. MARQUE DU TOUR
    ------------------------------------------------------------
-   Les favoris se posent hors de son tour, à l'étoile de la colonne
-   Action (draftFavorites.js). Ce qui manquait, c'est de les
-   retrouver au moment où ils servent : la carte est maintenant
-   juste au-dessus de la liste, et elle se déplie d'elle-même quand
-   le tour arrive plutôt que d'attendre un clic de plus.
+   Une seule classe sur <body>, dont draftDesk.css se sert pour
+   colorer le bandeau d'alerte de la colonne centrale (celui qui
+   porte le favori proposé et son bouton « Choisir »). Le contenu du
+   bandeau, lui, est rendu par draftFavorites.js.
    ============================================================ */
 
-/** Choix pour lequel les groupes ont déjà été dépliés — sinon chaque
- *  rafraîchissement rouvrirait ce qu'on vient de replier. */
-let fzDeskTourDeplie = null;
-
-function fzDeskFavorisTour() {
-    const carte = document.getElementById('favoritesCard');
-    if (!carte) return;
-
+function fzDeskMarquerTour() {
     const monTour = typeof isUserTurn === 'function' && isUserTurn()
         && !(typeof checkIfUserTeamIsDone === 'function' && checkIfUserTeamIsDone());
-    carte.classList.toggle('is-my-turn', monTour);
     document.body.classList.toggle('fzd-my-turn', monTour);
-
-    if (!monTour) { fzDeskTourDeplie = null; return; }
-
-    const choix = (typeof draftData !== 'undefined' && draftData) ? draftData.currentPickIndex : null;
-    if (fzDeskTourDeplie === choix) return;
-    fzDeskTourDeplie = choix;
-
-    carte.querySelectorAll('.favorite-group:not(.is-open)').forEach(bloc => {
-        bloc.classList.add('is-open');
-        const poignee = bloc.querySelector('.favorite-group-header');
-        const corps = bloc.querySelector('.favorite-group-body');
-        if (poignee) poignee.setAttribute('aria-expanded', 'true');
-        if (corps) corps.hidden = false;
-    });
 }
 
 /* ============================================================
@@ -552,7 +526,7 @@ function fzDeskSync() {
 window.fzRefreshDeskUI = function () {
     try { fzDeskDecorateRows(); } catch (e) { console.error('[bureau] rangées :', e); }
     try { fzDeskRenderRail(); } catch (e) { console.error('[bureau] rail :', e); }
-    try { fzDeskFavorisTour(); } catch (e) { console.error('[bureau] favoris du tour :', e); }
+    try { fzDeskMarquerTour(); } catch (e) { console.error('[bureau] marque du tour :', e); }
 };
 
 /**

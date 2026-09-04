@@ -235,6 +235,11 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
         }
         if (actions && cta) {
             if (myTurn) {
+                // Bouton de repli : quand un favori encore libre est proposé
+                // dans la rangée, fzRenderTurnFavorite() (draftFavorites.js)
+                // le remasque au profit de son « Choisir », qui nomme le
+                // joueur au lieu de renvoyer à la liste. Il est rejoué après
+                // celui-ci dans refreshDraftViews().
                 actions.hidden = false;
                 cta.textContent = "Faire ma sélection";
                 cta.className = "turn-banner-cta";

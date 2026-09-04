@@ -482,6 +482,11 @@ body.fz-draft .turn-banner.your-turn .turn-clock { display: none; }
   }
   body.fz-draft .turn-banner-actions { display: flex; }
   body.fz-draft .turn-banner-cta { padding: 10px 20px; }
+
+  body.fz-draft .turn-banner-fav-photo { display: flex; }
+  body.fz-draft .turn-banner-fav-title { display: block; }
+  body.fz-draft .turn-banner-fav-label,
+  body.fz-draft .turn-banner-fav-meta { display: inline; }
 }
 
 body.fz-draft .draft-live-row { padding: 8px 16px; background: var(--fzd-bg); border-top: 1px solid var(--fzd-border); margin: 0; max-width: none; justify-content: flex-start; }
@@ -1010,31 +1015,55 @@ body.fz-draft .fzd-tile--reserve.is-empty .fzd-tile-code { color: var(--fzd-text
 }
 
 
-body.fz-draft .favorites-count {
-  display: inline-flex;
-  min-width: 20px; height: 20px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--fzd-solid);
-  color: var(--fzd-on-solid);
-  font-size: .68rem;
-  font-weight: 700;
-  align-items: center;
-  justify-content: center;
+/* Favori du bandeau de tour. Sous 769px la ligne est trop étroite pour
+   tout garder (comme les manques et l'action plus haut) : le portrait, le
+   titre et la ligne de contexte tombent, il ne reste que le nom et le
+   bouton — le minimum pour savoir qui et repêcher. */
+body.fz-draft .turn-banner-fav {
+  order: 0;
+  flex: 1 1 auto;
+  gap: 10px;
+  min-width: 0;
 }
-body.fz-draft .favorite-group-header { padding: 10px 0 6px; border-top: 1px solid var(--fzd-border-soft); }
-body.fz-draft .favorite-group:first-child .favorite-group-header { border-top: 0; }
-body.fz-draft .favorite-group-label { color: var(--fzd-text-muted); font-size: .72rem; letter-spacing: .07em; text-transform: uppercase; font-weight: 600; }
-body.fz-draft .favorite-group-count { color: var(--fzd-text-fainter); font-size: .72rem; }
-body.fz-draft .favorite-group-icon { color: var(--fzd-accent); }
-body.fz-draft .favorite-row { padding: 10px 0; border-bottom: 1px solid var(--fzd-border-soft); gap: 10px; }
-body.fz-draft .favorite-row:hover { border-color: var(--fzd-border-soft); }
-body.fz-draft .favorite-group-header:hover { background: var(--fzd-bg-alt); }
-body.fz-draft .favorite-group-icon { color: var(--fzd-accent); }
-body.fz-draft .favorite-group.is-open .favorite-group-header::after { color: var(--fzd-ink); }
-body.fz-draft .favorite-row-photo { background: var(--fzd-tile-bg); width: 30px; height: 30px; }
-body.fz-draft .favorite-row-name { color: var(--fzd-ink); font-weight: 600; font-size: .88rem; }
-body.fz-draft .favorite-row-pos { color: var(--fzd-text-faint); font-size: .72rem; }
+body.fz-draft .turn-banner-fav-photo {
+  background: var(--fzd-tile-bg);
+  width: 34px;
+  height: 34px;
+  display: none;
+}
+body.fz-draft .turn-banner-fav-title {
+  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+  color: var(--fzd-ink);
+  display: none;
+}
+body.fz-draft .turn-banner-fav-sub {
+  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-size: .78rem;
+  color: var(--fzd-text-faint);
+}
+body.fz-draft .turn-banner-fav-label,
+body.fz-draft .turn-banner-fav-meta { display: none; }
+body.fz-draft .turn-banner-fav-name { color: var(--fzd-accent-dark); font-weight: 600; }
+body.fz-draft .turn-banner-fav-cta {
+  order: 4;
+  align-self: center;
+  padding: 8px 16px;
+  border-color: var(--fzd-accent);
+  color: var(--fzd-accent-dark);
+  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .09em;
+}
+body.fz-draft .turn-banner-fav-cta[hidden] { display: none; }
+body.fz-draft .turn-banner-fav-cta:hover {
+  background: var(--fzd-accent-fill);
+  border-color: var(--fzd-accent-fill);
+  color: var(--fzd-on-accent);
+}
 body.fz-draft .favorite-btn { color: var(--fzd-accent); }
 body.fz-draft .favorite-btn:hover { color: var(--fzd-accent-dark); }
 

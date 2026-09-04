@@ -502,6 +502,13 @@
     min-width: 0;
   }
   body.fz-draft .draft-center > .turn-banner-hero .turn-banner-actions { margin: 0; }
+
+  /* Le favori proposé occupe toute la largeur laissée par le chiffre et
+     les manques ; son bouton se cale à droite, comme l'action du
+     bandeau qu'il remplace. */
+  body.fz-draft .draft-center > .turn-banner-hero .turn-banner-fav { flex: 1 1 auto; }
+  body.fz-draft .draft-center > .turn-banner-hero .turn-banner-fav-photo { width: 40px; height: 40px; }
+  body.fz-draft .draft-center > .turn-banner-hero .turn-banner-fav-cta { padding: 10px 22px; }
   /* Hors du bandeau, .turn-banner-metric-label perd le ::before que
      draftActif-premium.css lui donnait par état (« écoulé » / « avant
      vous ») — et avec lui sa raison d'être en font-size:0. Le texte
@@ -645,29 +652,6 @@
     padding: 10px 20px;
     border-bottom: 1px solid var(--fzd-border);
   }
-  body.fz-draft .draft-center > .favorites-card {
-    margin: 0;
-    padding: 12px 20px;
-    border: 0;
-    border-bottom: 1px solid var(--fzd-border-strong);
-    border-radius: 0;
-    background: none;
-  }
-  body.fz-draft .favorites-card.is-my-turn { background: var(--fzd-accent-wash); }
-  body.fz-draft .fzd-fav-hint {
-    display: none;
-    margin: 0 0 9px;
-    font: 600 .68rem/1.35 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzd-accent);
-  }
-  body.fz-draft .favorites-card.is-my-turn .fzd-fav-hint { display: block; }
-  body.fz-draft .draft-center > .favorites-card .favorites-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  body.fz-draft .draft-center > .favorites-card .favorite-group { flex: 1 1 200px; min-width: 0; }
-  body.fz-draft .draft-center > .favorites-card .favorite-group.is-open { flex-basis: 100%; }
 
 
   /* ==========================================================
@@ -938,7 +922,6 @@ html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="T"] { --fzd-tag-bg:
    repris. Le libellé d'origine (.player-pos) retrouve sa place. */
 @media (max-width: 1099px) {
   body.fz-draft .fzd-name-meta,
-  body.fz-draft .fzd-fav-hint,
   body.fz-draft .fzd-strip,
   body.fz-draft .draft-rail,
   body.fz-draft .fzd-rail-head,

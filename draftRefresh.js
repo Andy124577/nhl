@@ -102,8 +102,10 @@ function refreshDraftViews() {
     // Disponibilité des onglets de catégorie (draftActifUI.js) : elle
     // change dès qu'une position se remplit.
     'refreshCategoryTabs',
-    // Étoile de la colonne Action + carte « Mes favoris » (draftFavorites.js) :
-    // dépendent du tour courant et des choix faits, comme le reste ici.
+    // Étoile de la colonne Action + favori proposé dans le bandeau de tour
+    // (draftFavorites.js) : dépendent du tour courant et des choix faits,
+    // comme le reste ici. Après updateDraftHeader, dont le panneau de tour
+    // pose le bouton générique que le favori remplace quand il y en a un.
     'fzRefreshFavoritesUI',
     // Vue "Tous" (draftListePremium.js) : la liste des joueurs déjà pris
     // change à chaque choix, comme le reste de cette liste.
@@ -112,9 +114,8 @@ function refreshDraftViews() {
     // « Joueur sélectionné » (draftApercuExtra.js) : tous dépendent du
     // tour courant et des choix faits, comme le reste de cette liste.
     'fzRefreshApercuExtras',
-    // Pastilles de position du tableau et mise en avant des favoris quand
-    // le tour arrive (draftDesk.js). En dernier : la carte des favoris
-    // qu'il déplie vient d'être reconstruite par fzRefreshFavoritesUI.
+    // Pastilles de position du tableau, alignement du rail et marque du
+    // tour sur <body> (draftDesk.js).
     'fzRefreshDeskUI'
   ];
   rendus.forEach(nom => {

@@ -256,8 +256,8 @@ function refreshCategoryTabs() {}
    La carte de sélection de joueur n'est plus affichée en permanence à
    côté du suivi : les deux partagent le même espace, un seul visible à
    la fois, choisi par ces onglets — à toutes les tailles d'écran, pas
-   seulement sur téléphone comme avant la bascule. « Aperçu » réunit les
-   favoris et la progression ; « Liste des joueurs » est le tableau
+   seulement sur téléphone comme avant la bascule. « Aperçu » réunit la
+   suggestion et la progression ; « Liste des joueurs » est le tableau
    lui-même, avec ses filtres.
 
    Le bouton « Faire ma sélection » du carrousel (draftPickCards.js)
@@ -274,11 +274,10 @@ function initPanelTabs() {
             cle: 'apercu',
             libelle: 'Aperçu',
             // getElementById, pas querySelector('.progress-card') : cette
-            // classe est aussi portée par #favoritesCard (habillage partagé),
-            // et querySelector se serait arrêté au premier match.
+            // classe est l'habillage partagé de toutes ces cartes, et
+            // querySelector se serait arrêté à la première.
             els: [
                 document.getElementById('suggestionCard'),
-                document.getElementById('favoritesCard'),
                 document.getElementById('progressCard'),
                 document.getElementById('lineupCard'),
                 document.getElementById('recentPicksFeed')
@@ -463,7 +462,7 @@ function initPanelTabs() {
     };
 
     // Symétrique : appelé par draftPickFlow.js une fois un choix confirmé et
-    // envoyé, pour ramener sur Aperçu (favoris + progression) plutôt que de
+    // envoyé, pour ramener sur Aperçu (suggestion + progression) plutôt que de
     // laisser la personne sur le tableau qu'elle vient de quitter.
     window.fzOuvrirApercu = () => {
         if (fzEstBureau()) { amener(document.getElementById('progressCard')); return; }

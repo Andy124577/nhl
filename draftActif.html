@@ -23,11 +23,11 @@
 
   <link rel="stylesheet" href="poolNav.css">
   <link rel="stylesheet" href="skeleton-loader.css" />
-  <link rel="stylesheet" href="draftActif.css?v=20260820a" />
-  <link rel="stylesheet" href="draftActif-premium.css?v=20260820e" />
+  <link rel="stylesheet" href="draftActif.css?v=20260904a" />
+  <link rel="stylesheet" href="draftActif-premium.css?v=20260904a" />
   <!-- Après les deux précédents : la mise en page bureau (trois colonnes,
        portraits agrandis, pastilles de position) reprend leurs règles. -->
-  <link rel="stylesheet" href="draftDesk.css?v=20260903c" />
+  <link rel="stylesheet" href="draftDesk.css?v=20260904a" />
   
 
   <link rel="stylesheet" href="career-modal.css" />
@@ -90,6 +90,20 @@
 
           <div class="turn-banner-hero" id="turn-banner-hero" hidden>
             <div class="turn-banner-row">
+
+
+              <div class="turn-banner-fav" id="turn-banner-fav" hidden>
+                <div class="progress-player-photo turn-banner-fav-photo" id="turn-banner-fav-photo"></div>
+                <div class="turn-banner-fav-txt">
+                  <span class="turn-banner-fav-title">C'est votre tour !</span>
+                  <span class="turn-banner-fav-sub">
+                    <span class="turn-banner-fav-label">Prochain dans vos favoris :</span>
+                    <span class="turn-banner-fav-name" id="turn-banner-fav-name"></span>
+                    <span class="turn-banner-fav-meta" id="turn-banner-fav-meta"></span>
+                  </span>
+                </div>
+              </div>
+
               <div class="turn-banner-metric" id="turn-banner-metric" hidden>
                 <span class="turn-banner-metric-num" id="turn-banner-metric-num"></span>
                 <span class="turn-banner-metric-label" id="turn-banner-metric-label"></span>
@@ -98,6 +112,14 @@
                 <span class="turn-banner-needs-label">Il vous manque</span>
                 <span class="turn-banner-needs-value" id="turn-banner-needs-value"></span>
               </div>
+
+              <!-- Frère du bloc du favori, pas son enfant : le bouton se
+                   cale au bout de la rangée, après le chrono, plutôt que
+                   collé au nom. Les deux sont montrés ou cachés ensemble
+                   par fzRenderTurnFavorite() (draftFavorites.js). -->
+              <button type="button" class="turn-banner-fav-cta" id="turn-banner-fav-cta" hidden>
+                Choisir
+              </button>
             </div>
             <div class="turn-banner-actions" id="turn-banner-actions" hidden>
               <button type="button" class="turn-banner-cta" id="turn-banner-cta"></button>
@@ -147,17 +169,6 @@
         </div>
         <p class="no-picks suggestion-empty" id="suggestionEmpty">Aucune suggestion pour l'instant.</p>
         <div class="suggestion-body" hidden></div>
-      </div>
-
-      
-
-      <div class="favorites-card progress-card" id="favoritesCard">
-        <div class="card-header">
-          <h2>Mes favoris</h2>
-          <span class="favorites-count" id="favoritesCount" hidden>0</span>
-        </div>
-        <p class="no-picks" id="favoritesEmpty">Aucun favori pour l'instant — l'étoile de la liste des joueurs les ajoute ici.</p>
-        <div class="favorites-list" id="favoritesList"></div>
       </div>
 
       </div>
@@ -666,15 +677,15 @@
   <script defer src="draftPickCards.js"></script>
   
 
-  <script defer src="draftRefresh.js?v=20260820c"></script>
-  <script defer src="draftActif.js?v=20260820c"></script>
+  <script defer src="draftRefresh.js?v=20260904a"></script>
+  <script defer src="draftActif.js?v=20260904a"></script>
   <script defer src="draftPoolFilter.js?v=20260902a"></script>
 
 
   <script defer src="draftPickFlow.js"></script>
   
 
-  <script defer src="draftFavorites.js"></script>
+  <script defer src="draftFavorites.js?v=20260904a"></script>
 
 
   <script defer src="draftApercuExtra.js?v=20260820d"></script>
@@ -683,13 +694,12 @@
   <script defer src="draftListePremium.js"></script>
   
 
-  <script defer src="draftActifUI.js?v=20260903b"></script>
+  <script defer src="draftActifUI.js?v=20260904a"></script>
 
   <!-- Mise en page bureau : trois colonnes au lieu des deux onglets, et
        pastilles de position dans le tableau. Après draftActifUI.js, dont
-       il rejoue les onglets, et après draftFavorites.js, dont il déplie
-       la carte quand le tour arrive. -->
-  <script defer src="draftDesk.js?v=20260903c"></script>
+       il rejoue les onglets. -->
+  <script defer src="draftDesk.js?v=20260904a"></script>
 
   <script defer src="draftFinPopup.js?v=20260902a"></script>
 
