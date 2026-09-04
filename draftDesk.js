@@ -129,7 +129,12 @@ function fzDeskApply() {
     fzDeskMonterRail();
 
     // Colonne de droite : ce qui commente le repêchage sans servir à choisir.
+    // « Sauter ce tour » en tête : draftActifUI.js l'avait rangé dans la
+    // piste des onglets, qui n'a plus rien à porter ici (les onglets sont
+    // masqués sur bureau). Déplacé AVANT les deux cartes pour arriver en
+    // premier — un appendChild qui suit se range derrière lui.
     const droite = fzDeskBoite('draftRail', 'draft-rail', conteneur);
+    fzDeskDeplacer(document.getElementById('turn-skip-btn'), droite);
     ['suggestionCard', 'recentPicksFeed'].forEach(id => {
         fzDeskDeplacer(document.getElementById(id), droite);
     });

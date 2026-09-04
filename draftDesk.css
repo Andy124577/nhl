@@ -430,6 +430,30 @@
     border-radius: 0;
     background: none;
   }
+  /* Le bouton du haut du rail : pleine largeur, comme un en-tête
+     d'action. Il ne s'affiche que lorsque draftActif.js le démasque —
+     l'organisateur, quand un tour traîne. */
+  body.fz-draft .draft-rail > .turn-skip-btn {
+    flex: none;
+    width: 100%;
+    margin: 0;
+    padding: 12px 16px;
+    border: 0;
+    border-bottom: 1px solid var(--fzd-border);
+    border-radius: 0;
+    background: var(--fzd-bg-alt);
+    color: var(--fzd-ink);
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  body.fz-draft .draft-rail > .turn-skip-btn:hover {
+    background: var(--fzd-accent-wash);
+    color: var(--fzd-accent-dark);
+  }
+  body.fz-draft .draft-rail > .turn-skip-btn[hidden] { display: none; }
 
   /* Ce que la maquette ne reprend pas : la patinoire et les barres de
      progression sont maintenant l'alignement et les limites du rail,
@@ -441,18 +465,10 @@
   body.fz-draft #panelTabs,
   body.fz-draft #categoryTabs { display: none; }
 
-  /* La piste des onglets ne porte plus que « Sauter ce tour » : vidée
-     de sa bordure et de son fond, elle ne se voit plus tant que le
-     bouton est masqué. :has l'efface tout à fait là où il est reconnu,
-     et son absence ne coûte qu'une ligne de 0 pixel de haut. */
-  body.fz-draft .panel-tabs-band {
-    padding: 0 20px;
-    border-bottom: 0;
-    background: none;
-    justify-content: flex-end;
-  }
-  body.fz-draft .panel-tabs-band:has(.turn-skip-btn:not([hidden])) { padding: 6px 20px; }
-  body.fz-draft .panel-tabs-band:not(:has(.turn-skip-btn:not([hidden]))) { display: none; }
+  /* La piste des onglets ne porte plus rien : ses onglets sont masqués
+     ci-dessus et draftDesk.js emmène « Sauter ce tour » en tête du rail
+     de droite. Elle disparaît donc entièrement. */
+  body.fz-draft .panel-tabs-band { display: none; }
 
 
   /* ==========================================================
@@ -552,6 +568,11 @@
   }
   body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-positions {
     display: flex;
+    /* En colonne dans le rail d'origine (draftActif-premium.css) : cette
+       propriété-là n'est pas emportée par le display ci-dessus — la
+       cascade se joue déclaration par déclaration, et sans la nommer
+       ici, la colonne de la règle moins spécifique restait en place. */
+    flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
@@ -675,7 +696,7 @@
     position: sticky;
     top: 0;
     z-index: 3;
-    padding: 9px 8px;
+    padding: 10px;
     background: var(--fzd-surface);
     border-bottom: 1px solid var(--fzd-border-strong);
     font: 700 .62rem/1 'Helvetica Neue', Helvetica, sans-serif;
@@ -685,6 +706,42 @@
   }
   body.fz-draft #playerTable thead th:last-child { z-index: 4; }
   body.fz-draft #playerTable thead th.points-column { color: var(--fzd-accent); }
+
+  /* ---- Respiration et alignement des colonnes ----
+     draftActif.css serre toutes les cellules à 3px de marge latérale et
+     centre leur contenu ; ces règles-là n'étaient pas dans une media
+     query, elles s'appliquaient donc aussi sur bureau, où la colonne
+     centrale a largement de quoi respirer. Et comme
+     draftActif-premium.css aligne les EN-TÊTES à droite sans toucher au
+     corps, les chiffres tombaient au centre sous un titre à droite. */
+  body.fz-draft #playerTable tbody td {
+    padding: 5px 10px;
+    text-align: right;
+  }
+  body.fz-draft #playerTable thead th:first-child,
+  body.fz-draft #playerTable tbody td:first-child,
+  body.fz-draft #playerTable thead th:nth-child(2),
+  body.fz-draft #playerTable tbody td:nth-child(2) { text-align: left; }
+
+  /* Une rangée est une ligne, pas une carte : la bordure sur les quatre
+     côtés du <tr> (draftActif-premium.css) et les coins arrondis des
+     cellules d'extrémité (draftActif.css) supposaient l'espacement de
+     7px entre rangées que border-spacing:0 a supprimé — deux filets
+     voisins se doublaient. Un seul filet en bas de cellule suffit. */
+  body.fz-draft #playerTable tbody tr { border: 0; }
+  body.fz-draft #playerTable tbody td {
+    border: 0;
+    border-bottom: 1px solid var(--fzd-border);
+    border-radius: 0;
+  }
+
+  /* Plus de défilement horizontal dans la colonne centrale : la
+     dernière colonne n'a plus besoin de rester collée à droite. */
+  body.fz-draft #playerTable thead th:last-child,
+  body.fz-draft #playerTable tbody td:last-child {
+    position: static;
+    padding-right: 20px;
+  }
 
   /* ---- RANG : la première colonne ne porte plus que son numéro ----
      draftDesk.js emporte le portrait dans la colonne JOUEUR ; ne
@@ -790,7 +847,6 @@
     color: var(--fzd-text-muted);
   }
 
-  body.fz-draft #playerTable tbody td { padding-top: 4px; padding-bottom: 4px; }
   body.fz-draft #playerTable tbody td.points-column { font-size: .92rem; font-weight: 700; }
 
   /* ---- ACTION : l'étoile, puis « Repêcher » quand c'est votre tour ---- */
