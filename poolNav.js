@@ -185,8 +185,16 @@
             rail.setAttribute('aria-label', 'Navigation des pools');
             document.body.appendChild(rail);
         }
-        rail.innerHTML = blocPool('Rail') + blocGestion();
-        brancherBlocPool(rail, 'Rail');
+        // Une page peut reprendre le rail à son compte : le repêchage en
+        // direct y met l'alignement et les limites d'équipe, et renvoie le
+        // sélecteur de pool dans la barre du haut (la puce #fzNavbarPool,
+        // déjà construite plus bas par montrerPucePool). Sans ce garde-fou,
+        // la moindre mise à jour temps réel de FZPool rappellerait cette
+        // fonction et effacerait le contenu que la page y a posé.
+        if (document.body.dataset.fzRail !== 'page') {
+            rail.innerHTML = blocPool('Rail') + blocGestion();
+            brancherBlocPool(rail, 'Rail');
+        }
         document.body.classList.add('fz-has-sidebar');
     }
 

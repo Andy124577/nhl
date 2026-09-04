@@ -18,8 +18,13 @@
    est affiché à la fois en trois colonnes (draftDesk.css) ; en
    dessous, les onglets « Aperçu » / « Liste des joueurs » se
    partagent l'écran. draftDesk.js s'y réfère aussi, d'où window.
+
+   1100px, et pas 769 : c'est le seuil auquel poolNav.css sort le
+   rail des pools, dont la mise en page bureau reprend la place pour
+   y poser l'alignement et les limites d'équipe. Un seuil plus bas
+   aurait donné une colonne centrale de 300px entre deux rails.
    ============================================================ */
-const FZ_MQ_BUREAU = window.matchMedia('(min-width: 769px)');
+const FZ_MQ_BUREAU = window.matchMedia('(min-width: 1100px)');
 function fzEstBureau() { return FZ_MQ_BUREAU.matches; }
 window.fzEstBureau = fzEstBureau;
 
@@ -88,9 +93,9 @@ function initPositionProgress() {
    (draftApercuExtra.js) ; « Liste » est le bloc de barres déjà en place
    au-dessus, inchangé.
 
-   Sur bureau, la bascule disparaît : la colonne de gauche a la hauteur
-   qu'il faut pour empiler les deux — la glace en haut, les barres en
-   bas (draftDesk.css, §2). Il n'y a alors plus rien à choisir.
+   Sous 1100px seulement : au-delà, la carte « Ma progression » n'est
+   plus affichée du tout — l'alignement place par place et les barres de
+   limites vivent alors dans le rail de gauche (draftDesk.js).
    ============================================================ */
 function initProgressViewToggle() {
     const toggle = document.getElementById('progressViewToggle');
@@ -98,32 +103,19 @@ function initProgressViewToggle() {
     const vueListe = document.getElementById('progressListView');
     if (!toggle || !vueGlace || !vueListe) return;
 
-    let vueCourante = 'ice';
-
-    const appliquer = () => {
-        if (fzEstBureau()) {
-            vueGlace.hidden = false;
-            vueListe.hidden = false;
-            return;
-        }
+    const activer = (vue) => {
         toggle.querySelectorAll('.progress-view-chip').forEach(chip => {
-            chip.classList.toggle('is-active', chip.dataset.view === vueCourante);
+            chip.classList.toggle('is-active', chip.dataset.view === vue);
         });
-        vueGlace.hidden = vueCourante !== 'ice';
-        vueListe.hidden = vueCourante !== 'list';
+        vueGlace.hidden = vue !== 'ice';
+        vueListe.hidden = vue !== 'list';
     };
 
     toggle.querySelectorAll('.progress-view-chip').forEach(chip => {
-        chip.addEventListener('click', () => { vueCourante = chip.dataset.view; appliquer(); });
+        chip.addEventListener('click', () => activer(chip.dataset.view));
     });
 
-    // Un redimensionnement qui traverse le seuil doit rendre la vue
-    // masquée : sans ceci, passer du téléphone au bureau laissait la
-    // liste avec son attribut hidden, et la colonne à moitié vide.
-    if (FZ_MQ_BUREAU.addEventListener) FZ_MQ_BUREAU.addEventListener('change', appliquer);
-    else if (FZ_MQ_BUREAU.addListener) FZ_MQ_BUREAU.addListener(appliquer);
-
-    appliquer();
+    activer('ice');
 }
 
 /* ============================================================

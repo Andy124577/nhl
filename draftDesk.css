@@ -5,131 +5,634 @@
    deux onglets (« Aperçu » / « Liste des joueurs ») se partagent la
    place, et draftActifUI.js en cache un pendant que l'autre s'affiche.
 
-   Au-dessus de 769px, la place ne manque plus : les onglets ne
-   servaient qu'à cacher la moitié de ce qu'on veut voir pendant
-   qu'on repêche. Ce fichier reprend le plan des grandes salles de
-   repêchage en ligne — bande des derniers choix pleine largeur sous
-   la navbar, puis trois colonnes :
+   Au-dessus de 1100px, la place ne manque plus. La page prend le plan
+   de la maquette (Repechage.dc.html) :
 
-     colonne 1   ma progression : la glace en haut, les barres en bas
-     colonne 2   mes favoris, puis la liste des joueurs
-     colonne 3   suggestion, joueur sélectionné, fil des choix
+     barre du haut     puce du pool actif + navigation du site
+     bande de tour     chrono · équipe au bâton · carrousel des choix
+     rail de gauche    MON ALIGNEMENT (défile) + LIMITES D'ÉQUIPE (bas)
+     colonne centrale  panneau de tour, filtres, liste des joueurs
+     rail de droite    suggestion + derniers choix
 
-   Le déplacement des cartes d'une colonne à l'autre est fait par
-   draftDesk.js (et défait sous 769px, où les onglets reprennent la
-   main) ; ce fichier ne fait que la géométrie et l'habillage.
+   1100px et pas 769 : c'est le seuil auquel poolNav.css sort le rail
+   des pools, dont cette page reprend la place (draftDesk.js pose
+   body[data-fz-rail=page], poolNav.js lui laisse alors le contenu).
+   Entre 769 et 1099px, la page garde le comportement à onglets.
+
+   Écrit après draftActif.css et draftActif-premium.css : à
+   spécificité égale, les règles d'ici l'emportent.
    ============================================================ */
 
-@media (min-width: 769px) {
+@media (min-width: 1100px) {
 
-  /* ----------------------------------------------------------
-     1. GRILLE
-     ----------------------------------------------------------
-     Le bandeau de tour et le carrousel des derniers choix vivent
-     dans .draft-header, hors de cette grille : ils gardent donc
-     toute la largeur de la fenêtre, collés sous la navbar.
-     Jusqu'à 1279px la troisième colonne n'a pas de quoi respirer :
-     elle passe sous les deux autres, en bande.
-     ---------------------------------------------------------- */
-  body.fz-draft .draft-main-container {
-    max-width: 1720px;
-    display: grid;
-    grid-template-columns: 300px minmax(0, 1fr);
-    grid-template-areas:
-      "side center"
-      "rail rail";
-    gap: 18px;
-    align-items: start;
-    padding: 18px 22px 56px;
+  /* ==========================================================
+     1. CADRE — une seule page, trois colonnes qui défilent seules
+     ========================================================== */
+
+  /* Le rail de gauche est en position fixe : c'est le padding du body
+     (posé par poolNav.css) qui lui réserve sa colonne. On l'élargit
+     aux 284px de la maquette. */
+  body.fz-draft { --fz-rail-w: 284px; }
+
+  body.fz-draft .draft-header {
+    position: sticky;
+    top: var(--fz-nav-h, 70px);
+    z-index: 20;
+    padding: 0;
+    /* La bande sort du décalage que .fz-has-sidebar impose au contenu :
+       elle doit courir d'un bord à l'autre, par-dessus le rail. */
+    margin-left: calc(var(--fz-rail-w) * -1);
+    width: calc(100% + var(--fz-rail-w));
+    background: var(--fzd-bg);
+    border-bottom: 1px solid var(--fzd-border-strong);
   }
 
-  body.fz-draft .draft-sidebar {
-    grid-area: side;
+  /* Ce que la bande ne reprend pas. #draft-overall-progress garde son
+     display en ligne (draftActif.js l'écrit lui-même) : une fois ses
+     trois blocs partis dans la bande, il ne reste qu'une boîte vide de
+     hauteur nulle, inutile à masquer. .draft-live-row reste, elle : la
+     pastille de connexion qu'elle porte n'apparaît que si le direct
+     tombe, et c'est justement là qu'il faut la voir. */
+  body.fz-draft #dop-label,
+  body.fz-draft .dop-bar { display: none; }
+  body.fz-draft .draft-live-row { padding: 6px 20px; }
+
+  /* ---- La bande de tour ---- */
+  body.fz-draft .fzd-strip {
+    display: flex;
+    align-items: stretch;
+    height: 66px;
+    background: var(--fzd-bg-alt);
+  }
+
+  body.fz-draft .fzd-clock {
+    flex: none;
+    width: var(--fz-rail-w);
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    min-width: 0;
+    justify-content: center;
+    gap: 1px;
+    padding: 0 18px;
+    border-right: 1px solid var(--fzd-border-strong);
   }
-  body.fz-draft .draft-center {
-    grid-area: center;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    min-width: 0;
-  }
-  body.fz-draft .draft-rail {
-    grid-area: rail;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: start;
-    gap: 16px;
-    min-width: 0;
-  }
-  body.fz-draft .draft-rail > * { flex: 1 1 300px; min-width: 0; }
-  body.fz-draft .draft-rail:empty { display: none; }
-
-  /* Les deux enveloppes de l'ancienne vue « Aperçu » ne portent plus
-     rien : leurs cartes sont réparties dans les trois colonnes. */
-  body.fz-draft .apercu-col-main:empty,
-  body.fz-draft .apercu-col-side:empty { display: none; }
-
-  /* Le bandeau d'onglets n'a plus de raison d'être : tout est visible.
-     Sa piste, elle, reste — c'est là que draftActifUI.js range « Sauter
-     ce tour ». Vidée de sa bordure et de son fond, elle ne se voit plus
-     tant que le bouton est masqué (le cas courant : seul l'organisateur
-     l'a, et seulement quand un tour traîne) ; :has l'efface tout à fait
-     là où il est reconnu, et son absence ne coûte rien de plus qu'une
-     ligne de 0 pixel de haut. */
-  body.fz-draft #panelTabs { display: none; }
-  body.fz-draft .panel-tabs-band {
-    padding: 0 22px;
-    border-bottom: 0;
-    background: none;
-    justify-content: flex-end;
-  }
-  body.fz-draft .panel-tabs-band:has(.turn-skip-btn:not([hidden])) { padding: 6px 22px; }
-  body.fz-draft .panel-tabs-band:not(:has(.turn-skip-btn:not([hidden]))) { display: none; }
-
-  /* ----------------------------------------------------------
-     2. COLONNE 1 — MA PROGRESSION, GLACE PUIS LISTE
-     ----------------------------------------------------------
-     Les deux vues ne s'excluent plus : la glace donne l'alignement
-     d'un coup d'œil, les barres disent ce qu'il reste à combler.
-     La bascule Glace/Liste devient inutile (draftActifUI.js la
-     masque) et chaque vue reçoit son propre sous-titre.
-     ---------------------------------------------------------- */
-  body.fz-draft .progress-view-toggle { display: none; }
-
-  body.fz-draft .fzd-sub-title {
+  body.fz-draft .fzd-clock-label,
+  body.fz-draft .fzd-clock #dop-round {
     display: block;
-    margin: 4px 0 9px;
-    font: 600 .58rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    font: 700 .62rem/1.25 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--fzd-text-faint);
+  }
+  body.fz-draft .fzd-clock #dop-round { font-weight: 500; opacity: .85; }
+  body.fz-draft .fzd-clock .turn-clock {
+    display: block;
+    position: static;
+    margin: 1px 0 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    line-height: 1;
+    color: var(--fzd-ink);
+    opacity: 1;
+  }
+  body.fz-draft .fzd-clock .turn-clock[hidden] { display: none; }
+  body.fz-draft .fzd-clock .turn-clock.is-long { color: var(--fzd-warning); }
+
+  /* Le bandeau de tour redevient ce qu'il est dans la maquette : une
+     tuile de largeur fixe, colorée quand c'est à vous. */
+  body.fz-draft .fzd-strip .turn-banner {
+    position: static;
+    order: 0;
+    flex: none;
+    width: 330px;
+    min-height: 0;
+    margin: 0;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 0;
+    animation: none;
+  }
+  body.fz-draft .fzd-strip .turn-banner:not(.waiting):not(.your-turn):not(.done) {
+    display: flex;
+    background: var(--fzd-bg-alt);
+  }
+  body.fz-draft .fzd-strip .turn-banner.waiting,
+  body.fz-draft .fzd-strip .turn-banner.done {
+    background: var(--fzd-solid);
+    color: var(--fzd-on-solid);
+  }
+  body.fz-draft .fzd-strip .turn-banner.your-turn {
+    background: var(--fzd-accent-fill);
+    color: var(--fzd-on-accent);
+  }
+  body.fz-draft .fzd-strip .turn-banner .turn-banner-logo {
+    display: inline-flex;
+    width: 34px; height: 34px;
+    border: 0;
+    background: rgba(0, 0, 0, .22);
+  }
+  body.fz-draft .fzd-strip .turn-banner .turn-banner-logo[hidden] { display: none; }
+  body.fz-draft .fzd-strip .turn-banner-body::before { content: none; }
+  body.fz-draft .fzd-strip .turn-banner-body {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+  }
+  body.fz-draft .fzd-strip .turn-banner-sub {
+    order: -1;
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    opacity: .72;
+  }
+  body.fz-draft .fzd-strip .turn-banner-text {
+    font-size: 1rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Le carrousel prend tout ce qui reste de la bande. */
+  body.fz-draft .fzd-strip .recent-picks-card {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+  body.fz-draft .fzd-strip .picks-carousel {
+    height: 100%;
+    align-items: stretch;
+    gap: 0;
+    padding: 0;
+  }
+  body.fz-draft .fzd-strip .pick-card {
+    flex: none;
+    width: 118px;
+    height: 100%;
+    min-height: 0;
+    padding: 8px 11px;
+    gap: 3px;
+    justify-content: flex-start;
+    border: 0;
+    border-right: 1px solid var(--fzd-border);
+    border-radius: 0;
+    box-shadow: none;
+    /* Le dégradé aux couleurs de l'équipe (draftActif.css) demande la
+       hauteur d'une vraie carte ; sur 66px il ne se lit plus et impose
+       un texte blanc que le thème clair ne supporte pas. */
+    background: var(--fzd-bg-alt);
+    color: var(--fzd-ink);
+  }
+  body.fz-draft .fzd-strip .pick-card::before,
+  body.fz-draft .fzd-strip .pick-card::after { content: none; }
+  body.fz-draft .fzd-strip .pick-card-photo,
+  body.fz-draft .fzd-strip .pick-card-foot,
+  body.fz-draft .fzd-strip .pick-card-pos,
+  body.fz-draft .fzd-strip .pick-card-live-badge,
+  body.fz-draft .fzd-strip .pick-card-select-btn { display: none; }
+  body.fz-draft .fzd-strip .pick-card-turn {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+    margin: 0;
+  }
+  body.fz-draft .fzd-strip .pick-card-turn-num {
+    font: 700 .6rem/1 'Helvetica Neue', Helvetica, sans-serif;
     letter-spacing: .13em;
     text-transform: uppercase;
     color: var(--fzd-text-faint);
   }
-  body.fz-draft .fzd-sub-title--liste {
-    margin-top: 14px;
-    padding-top: 13px;
-    border-top: 1px solid var(--fzd-border);
+  body.fz-draft .fzd-strip .pick-card.is-current .pick-card-turn-num { color: var(--fzd-accent); }
+  body.fz-draft .fzd-strip .pick-card-turn-round {
+    font: 500 .55rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .1em;
+    color: var(--fzd-text-fainter);
   }
+  body.fz-draft .fzd-strip .pick-card-head { margin: 0; }
+  body.fz-draft .fzd-strip .pick-card-id { gap: 1px; }
+  body.fz-draft .fzd-strip .pick-card-name {
+    font-size: .72rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  body.fz-draft .fzd-strip .pick-card-owner {
+    display: block;
+    font-size: .62rem;
+    color: var(--fzd-text-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  body.fz-draft .fzd-strip .pick-card.is-current { background: var(--fzd-accent-wash); }
 
-  /* ----------------------------------------------------------
-     3. COLONNE 2 — MES FAVORIS AU-DESSUS DE LA LISTE
+
+  /* ==========================================================
+     2. RAIL DE GAUCHE — alignement, puis limites d'équipe
      ----------------------------------------------------------
-     L'étoile de la colonne Action reste cliquable hors de son tour :
-     c'est là qu'on prépare ses choix. Quand le tour arrive, la carte
-     passe en évidence juste au-dessus du tableau — les boutons de
-     sélection y sont déjà (draftFavorites.js), plus besoin de
-     retrouver le joueur dans la liste.
-     ---------------------------------------------------------- */
-  body.fz-draft .draft-center > .favorites-card { margin: 0; }
+     C'est le rail de poolNav.js : la page le reprend, le sélecteur
+     de pool passe dans la barre du haut (voir §6).
+     ========================================================== */
 
-  body.fz-draft .favorites-card.is-my-turn {
-    border-color: var(--fzd-accent);
-    box-shadow: 0 0 0 3px var(--fzd-accent-wash);
+  body.fz-draft #fzSidebar {
+    top: calc(var(--fz-nav-h, 70px) + 66px);
+    width: var(--fz-rail-w);
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--fzd-surface);
+    border-right: 1px solid var(--fzd-border-strong);
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--fzd-text);
   }
+  /* Le contenu d'origine du rail — pool actif, gestion — a laissé la
+     place ; poolNav.js ne le reconstruit plus sur cette page, mais un
+     rail déjà monté au moment du basculement peut encore le porter. */
+  body.fz-draft #fzSidebar > .fz-pool-block,
+  body.fz-draft #fzSidebar > .fz-rail-nav { display: none; }
+
+  body.fz-draft .fzd-rail-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--fzd-border);
+  }
+  body.fz-draft .fzd-rail-title {
+    font: 700 .68rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .17em;
+    text-transform: uppercase;
+    color: var(--fzd-text-muted);
+  }
+  body.fz-draft .fzd-rail-count { font-size: .74rem; color: var(--fzd-text-faint); }
+
+  body.fz-draft .fzd-rail-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  body.fz-draft .fzd-group { display: flex; flex-direction: column; gap: 7px; }
+  body.fz-draft .fzd-group-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  body.fz-draft .fzd-group-label {
+    font: 700 .62rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--fzd-text-muted);
+  }
+  body.fz-draft .fzd-group-count {
+    font-size: .68rem;
+    font-weight: 700;
+    color: var(--fzd-accent);
+  }
+  body.fz-draft .fzd-group-count.is-empty { color: var(--fzd-text-faint); }
+  body.fz-draft .fzd-group-count.is-full { color: var(--fzd-ok, #2e7d55); }
+  body.fz-draft .fzd-group-slots { display: flex; flex-direction: column; gap: 5px; }
+
+  body.fz-draft .fzd-slot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--fzd-border);
+    background: var(--fzd-bg-alt);
+    min-width: 0;
+  }
+  body.fz-draft .fzd-slot.is-empty {
+    border-style: dashed;
+    background: none;
+  }
+  body.fz-draft .fzd-slot-avatar {
+    flex: none;
+    width: 26px; height: 26px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--fzd-tile-bg);
+  }
+  body.fz-draft .fzd-slot.is-empty .fzd-slot-avatar { background: none; border: 1px dashed var(--fzd-border-strong); }
+  body.fz-draft .fzd-slot-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  body.fz-draft .fzd-slot-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+  body.fz-draft .fzd-slot-name {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--fzd-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  body.fz-draft .fzd-slot.is-empty .fzd-slot-name { color: var(--fzd-text-faint); font-weight: 500; }
+  body.fz-draft .fzd-slot-meta { font-size: .62rem; color: var(--fzd-text-faint); }
+  body.fz-draft .fzd-slot-pos {
+    flex: none;
+    font: 700 .62rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .1em;
+    color: var(--fzd-text-faint);
+  }
+
+  body.fz-draft .fzd-rail-foot {
+    flex: none;
+    padding: 12px 16px 14px;
+    border-top: 1px solid var(--fzd-border);
+    background: var(--fzd-bg-alt);
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  body.fz-draft .fzd-limits {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px 10px;
+  }
+  body.fz-draft .fzd-limit { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  body.fz-draft .fzd-limit-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 5px;
+  }
+  body.fz-draft .fzd-limit-label {
+    font: 600 .6rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--fzd-text-muted);
+  }
+  body.fz-draft .fzd-limit-value { font-size: .64rem; font-weight: 700; color: var(--fzd-ink); }
+  body.fz-draft .fzd-limit-track {
+    height: 3px;
+    border-radius: 3px;
+    background: var(--fzd-border-strong);
+    overflow: hidden;
+  }
+  body.fz-draft .fzd-limit-fill { height: 100%; background: var(--fzd-accent-fill); }
+  body.fz-draft .fzd-limit-fill.is-full { background: var(--fzd-ok, #2e7d55); }
+
+
+  /* ==========================================================
+     3. GRILLE CENTRALE
+     ========================================================== */
+
+  body.fz-draft .draft-main-container {
+    max-width: none;
+    margin: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+    gap: 0;
+    padding: 0;
+  }
+  body.fz-draft .draft-center {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 0;
+  }
+  body.fz-draft .draft-rail {
+    position: sticky;
+    top: calc(var(--fz-nav-h, 70px) + 66px);
+    height: calc(100vh - var(--fz-nav-h, 70px) - 66px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 0;
+    border-left: 1px solid var(--fzd-border-strong);
+    background: var(--fzd-surface);
+  }
+  body.fz-draft .draft-rail > * {
+    border: 0;
+    border-bottom: 1px solid var(--fzd-border);
+    border-radius: 0;
+    background: none;
+  }
+
+  /* Ce que la maquette ne reprend pas : la patinoire et les barres de
+     progression sont maintenant l'alignement et les limites du rail,
+     et la fiche « joueur sélectionné » n'y figure pas. */
+  body.fz-draft .draft-sidebar,
+  body.fz-draft #progressCard,
+  body.fz-draft #lineupCard,
+  body.fz-draft .selected-player-card,
+  body.fz-draft #panelTabs,
+  body.fz-draft #categoryTabs { display: none; }
+
+  /* La piste des onglets ne porte plus que « Sauter ce tour » : vidée
+     de sa bordure et de son fond, elle ne se voit plus tant que le
+     bouton est masqué. :has l'efface tout à fait là où il est reconnu,
+     et son absence ne coûte qu'une ligne de 0 pixel de haut. */
+  body.fz-draft .panel-tabs-band {
+    padding: 0 20px;
+    border-bottom: 0;
+    background: none;
+    justify-content: flex-end;
+  }
+  body.fz-draft .panel-tabs-band:has(.turn-skip-btn:not([hidden])) { padding: 6px 20px; }
+  body.fz-draft .panel-tabs-band:not(:has(.turn-skip-btn:not([hidden]))) { display: none; }
+
+
+  /* ==========================================================
+     4. COLONNE CENTRALE
+     ========================================================== */
+
+  /* ---- Bandeau d'alerte (le panneau du bandeau de tour, déplacé) ----
+     Ses règles d'origine ne l'affichaient qu'à l'intérieur d'un
+     .turn-banner en état ; hors de lui, c'est son propre attribut
+     hidden — celui que appliquerPanneauTour() pilote — qui décide. */
+  body.fz-draft .draft-center > .turn-banner-hero {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    margin: 0;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--fzd-border-strong);
+    background: var(--fzd-surface);
+  }
+  body.fz-draft .draft-center > .turn-banner-hero[hidden] { display: none; }
+  body.fz-draft.fzd-my-turn .draft-center > .turn-banner-hero {
+    background: var(--fzd-accent-wash);
+    border-bottom-color: var(--fzd-accent-border);
+  }
+  body.fz-draft .draft-center > .turn-banner-hero .turn-banner-row {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+  }
+  body.fz-draft .draft-center > .turn-banner-hero .turn-banner-actions { margin: 0; }
+  /* Hors du bandeau, .turn-banner-metric-label perd le ::before que
+     draftActif-premium.css lui donnait par état (« écoulé » / « avant
+     vous ») — et avec lui sa raison d'être en font-size:0. Le texte
+     qu'appliquerPanneauTour() y écrit reprend donc sa taille. */
+  body.fz-draft .draft-center > .turn-banner-hero .turn-banner-metric-label {
+    display: block;
+    font-size: .62rem;
+    line-height: 1.25;
+    font-weight: 500;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    color: var(--fzd-text-faint);
+  }
+  body.fz-draft .draft-center > .turn-banner-hero .turn-banner-metric-label::before { content: none; }
+
+  /* ---- Onglets Disponibles / Tous les choix / Mes choix ---- */
+  body.fz-draft .player-selection-card > #availabilityTabs {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin: 0;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--fzd-border-strong);
+    background: none;
+    border-radius: 0;
+  }
+  body.fz-draft .player-selection-card > #availabilityTabs .availability-tab {
+    padding: 12px 14px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: none;
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--fzd-text-muted);
+    box-shadow: none;
+  }
+  body.fz-draft .player-selection-card > #availabilityTabs .availability-tab:hover { color: var(--fzd-ink); }
+  body.fz-draft .player-selection-card > #availabilityTabs .availability-tab.is-active {
+    color: var(--fzd-ink);
+    border-bottom-color: var(--fzd-accent);
+    background: none;
+  }
+
+  /* ---- Bande de filtres : pastilles, recherche, équipe ---- */
+  body.fz-draft .player-selection-card > .list-filters-sidebar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 13px 20px;
+    border: 0;
+    border-bottom: 1px solid var(--fzd-border-strong);
+    background: none;
+  }
+  /* Les intertitres et la case « joueurs libres » disent ce que les
+     pastilles et les onglets au-dessus disent déjà. */
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-title,
+  body.fz-draft .player-selection-card > .list-filters-sidebar #listFilterAvailableOnly,
+  body.fz-draft .player-selection-card > .list-filters-sidebar #listFilterAvailableOnly + span { display: none; }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-block {
+    display: contents;
+  }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-positions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+  }
+  body.fz-draft .list-filter-position {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: auto;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--fzd-border-input);
+    background: var(--fzd-bg-alt);
+    color: var(--fzd-text);
+    font: 700 .66rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+  }
+  body.fz-draft .list-filter-position:hover:not(:disabled) { border-color: var(--fzd-accent); }
+  body.fz-draft .list-filter-position.is-active {
+    background: var(--fzd-accent-fill);
+    border-color: var(--fzd-accent-fill);
+    color: var(--fzd-on-accent);
+  }
+  body.fz-draft .list-filter-position:disabled { opacity: .4; }
+  body.fz-draft .list-filter-position .list-filter-count { opacity: .55; font-weight: 700; }
+  body.fz-draft .list-filter-position .list-filter-needed-tag { display: none; }
+
+  /* Recherche et équipe poussées à droite. */
+  /* La recherche est le PREMIER enfant du bloc dans le HTML ; sans
+     order, un margin-left:auto posé sur elle repousserait toute la
+     bande vers la droite au lieu de l'y envoyer seule. */
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-positions { order: 1; }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filter-checkbox { order: 2; }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-search {
+    order: 3;
+    margin-left: auto;
+    width: 230px;
+  }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-team {
+    order: 4;
+    width: auto;
+    min-width: 170px;
+  }
+  /* Les cases « comble un trou » / « mes favoris » restent, en fin de
+     bande : elles n'ont pas d'équivalent ailleurs dans la page. */
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filter-checkbox {
+    margin: 0;
+    white-space: nowrap;
+    font-size: .72rem;
+  }
+
+  /* ---- Reste de l'en-tête de la carte ---- */
+  body.fz-draft .player-selection-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+  /* « Joueurs disponibles · N libres · M pris » : les pastilles de
+     position portent déjà le compte de chaque catégorie, et les
+     onglets au-dessus disent lesquels sont affichés. */
+  body.fz-draft .player-selection-card > .filters-header { display: none; }
+  body.fz-draft .player-selection-card > .filters-row {
+    margin: 0;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--fzd-border);
+  }
+  body.fz-draft .draft-center > .favorites-card {
+    margin: 0;
+    padding: 12px 20px;
+    border: 0;
+    border-bottom: 1px solid var(--fzd-border-strong);
+    border-radius: 0;
+    background: none;
+  }
+  body.fz-draft .favorites-card.is-my-turn { background: var(--fzd-accent-wash); }
   body.fz-draft .fzd-fav-hint {
     display: none;
     margin: 0 0 9px;
@@ -137,205 +640,194 @@
     color: var(--fzd-accent);
   }
   body.fz-draft .favorites-card.is-my-turn .fzd-fav-hint { display: block; }
-
-  /* Repliés, les groupes tiennent sur une ou deux lignes de poignées ;
-     un groupe déplié prend toute la largeur pour ses rangées. */
   body.fz-draft .draft-center > .favorites-card .favorites-list {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
   }
-  body.fz-draft .draft-center > .favorites-card .favorite-group {
-    flex: 1 1 200px;
-    min-width: 0;
-  }
-  body.fz-draft .draft-center > .favorites-card .favorite-group.is-open {
-    flex-basis: 100%;
-  }
+  body.fz-draft .draft-center > .favorites-card .favorite-group { flex: 1 1 200px; min-width: 0; }
+  body.fz-draft .draft-center > .favorites-card .favorite-group.is-open { flex-basis: 100%; }
 
-  /* ----------------------------------------------------------
-     4. COLONNE 2 — BARRE DE FILTRES HORIZONTALE
-     ----------------------------------------------------------
-     L'ancienne colonne de filtres (250px à gauche du tableau) est
-     repliée en une bande au-dessus de celui-ci : la largeur gagnée
-     va au tableau. Le bloc « Position » y ferait doublon avec les
-     pastilles de catégorie, déjà juste en dessous — draftDesk.js le
-     marque .fzd-desk-hidden.
-     ---------------------------------------------------------- */
-  body.fz-draft .player-selection-card > .list-filters-sidebar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px 16px;
-    margin: 0 0 12px;
-    padding: 0 0 12px;
-    border-bottom: 1px solid var(--fzd-border);
-  }
-  body.fz-draft .player-selection-card > .list-filters-sidebar .fzd-desk-hidden { display: none; }
-  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-search {
-    flex: 1 1 220px;
-    min-width: 180px;
-  }
-  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-block {
-    display: flex;
-    align-items: center;
-    gap: 8px 12px;
-    margin: 0;
-    padding: 0;
-    border: 0;
-  }
-  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-title {
-    margin: 0;
-    font: 600 .58rem/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--fzd-text-faint);
-    white-space: nowrap;
-  }
-  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filter-checkbox {
-    margin: 0;
-    white-space: nowrap;
-  }
-  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-team {
-    width: auto;
-    min-width: 170px;
-  }
 
-  /* ----------------------------------------------------------
-     5. COLONNE 2 — LE TABLEAU
+  /* ==========================================================
+     5. LA LISTE DES JOUEURS
      ----------------------------------------------------------
-     Le tableau défile dans sa propre boîte plutôt que d'emmener la
-     page entière : les deux colonnes de côté restent en vue pendant
-     qu'on parcourt les joueurs, ce qui est tout l'intérêt d'avoir
-     tout affiché en même temps.
-     ---------------------------------------------------------- */
+     Seuls le rang et les filtres changent de disposition : le
+     tableau, ses colonnes et ses chiffres restent ceux d'avant.
+     ========================================================== */
+
   body.fz-draft .player-selection-card > #playerTableWrapper,
   body.fz-draft .player-selection-card > #fzPickedListWrapper {
-    max-height: calc(100vh - 340px);
-    min-height: 360px;
+    flex: 1 1 auto;
+    min-height: 340px;
+    max-height: calc(100vh - var(--fz-nav-h, 70px) - 66px - 210px);
     overflow-y: auto;
     overscroll-behavior-y: contain;
+    border: 0;
+    border-radius: 0;
   }
-  body.fz-draft .player-selection-card > .table-wrapper::-webkit-scrollbar { width: 9px; height: 9px; }
+
+  body.fz-draft #playerTable,
+  body.fz-draft #fzPickedList { border-spacing: 0; }
 
   body.fz-draft #playerTable thead th,
   body.fz-draft #fzPickedList thead th {
     position: sticky;
     top: 0;
     z-index: 3;
-    background: var(--fzd-bg-alt);
-    box-shadow: inset 0 -1px 0 var(--fzd-border-strong);
+    padding: 9px 8px;
+    background: var(--fzd-surface);
+    border-bottom: 1px solid var(--fzd-border-strong);
+    font: 700 .62rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--fzd-text-muted);
   }
-  /* La dernière colonne est déjà collante horizontalement
-     (draftActif.css) : à leur intersection, l'en-tête passe devant. */
   body.fz-draft #playerTable thead th:last-child { z-index: 4; }
+  body.fz-draft #playerTable thead th.points-column { color: var(--fzd-accent); }
 
-  /* ---- Mugshot : le portrait redevient le repère de la rangée ---- */
-  body.fz-draft #playerTable thead th:first-child,
-  body.fz-draft #playerTable tbody td:first-child {
-    /* Le rang (::before, draftActif.css) et le portrait se partagent
-       cette colonne : 21px pour le premier, 48 pour le second. */
-    width: 88px;
-    padding-left: 10px;
-    padding-right: 6px;
+  /* ---- RANG : la première colonne ne porte plus que son numéro ----
+     draftDesk.js emporte le portrait dans la colonne JOUEUR ; ne
+     reste ici que le compteur ::before de draftActif.css. */
+  body.fz-draft #playerTable thead th:first-child {
+    width: 52px;
+    padding-left: 20px;
   }
-  body.fz-draft #playerTable .player-photo {
+  /* La cellule reste en font-size:0 (draftActif.css) : c'est ce qui
+     masque le libellé « Photo » que updateTable() y écrit. Seule la
+     pastille ::before porte une taille. */
+  body.fz-draft #playerTable thead th:first-child::before {
+    content: 'Rang';
+    font-size: .62rem;
+    letter-spacing: .14em;
+  }
+  body.fz-draft #playerTable tbody td:first-child {
+    width: 52px;
+    padding-left: 20px;
+    padding-right: 4px;
+  }
+  body.fz-draft #playerTable tbody td:first-child::before {
+    min-width: 0;
+    margin: 0;
+    font-family: 'Helvetica Neue', Helvetica, sans-serif;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--fzd-text-faint);
+  }
+
+  /* ---- JOUEUR : portrait, nom, équipe, position ---- */
+  body.fz-draft #playerTable tbody td.fzd-name-cell {
+    padding: 8px 10px 8px 4px;
+    white-space: normal;
+  }
+  body.fz-draft .fzd-name-inner {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+  }
+  body.fz-draft #playerTable .fzd-name-inner .player-photo {
     position: relative;
-    display: inline-block;
-    width: 48px;
-    height: 48px;
+    flex: none;
+    display: block;
+    width: 34px;
+    height: 34px;
     border-radius: 999px;
     background: var(--fzd-tile-bg);
   }
-  body.fz-draft #playerTable .player-photo img.face {
+  body.fz-draft #playerTable .fzd-name-inner .player-photo img.face {
     display: block;
-    width: 48px;
-    height: 48px;
+    width: 34px;
+    height: 34px;
     border: 0;
     border-radius: 999px;
     object-fit: cover;
     object-position: top center;
     background: var(--fzd-tile-bg);
   }
-  body.fz-draft #playerTable .player-photo img.logo {
+  body.fz-draft #playerTable .fzd-name-inner .player-photo img.logo {
     position: absolute;
-    right: -4px;
-    bottom: -2px;
-    width: 21px !important;
-    height: 21px;
+    right: -3px;
+    bottom: -1px;
+    width: 16px !important;
+    height: 16px;
     padding: 1px;
     border-radius: 999px;
     background: var(--fzd-logo-bg);
     border: 1px solid var(--fzd-border-strong);
   }
   /* Rangées d'équipes LNH : l'écusson tient lieu de portrait. */
-  body.fz-draft #playerTable tbody td:first-child > img.logo {
-    width: 42px !important;
-    height: 42px;
-    padding: 3px;
+  body.fz-draft #playerTable .fzd-name-inner > img.logo {
+    flex: none;
+    width: 34px !important;
+    height: 34px;
+    padding: 2px;
+    border-radius: 999px;
+    background: var(--fzd-logo-bg);
     border: 1px solid var(--fzd-border);
   }
-  body.fz-draft #playerTable tbody td { padding-top: 6px; padding-bottom: 6px; }
-
-  /* ---- Cellule du nom : nom sur une ligne, équipe + position dessous ---- */
-  body.fz-draft #playerTable tbody td.fzd-name-cell {
-    padding-left: 4px;
-    line-height: 1.25;
-    white-space: normal;
+  body.fz-draft .fzd-name-txt {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
   body.fz-draft .fzd-name-main {
     display: block;
-    font-size: .86rem;
+    font-size: .84rem;
     font-weight: 600;
     color: var(--fzd-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   body.fz-draft .fzd-name-main .player-pos { display: none; }
-  body.fz-draft .fzd-name-meta {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 3px;
-  }
+  body.fz-draft .fzd-name-meta { display: flex; align-items: center; gap: 7px; }
   body.fz-draft .fzd-team-abbr {
-    font: 600 .66rem/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .06em;
+    font: 600 .64rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .1em;
     color: var(--fzd-text-muted);
   }
 
-  /* ----------------------------------------------------------
-     6. COLONNE 3 — toujours affichée, quelle que soit la largeur
-     ----------------------------------------------------------
-     draftActif-premium.css cachait « Joueur sélectionné » sous
-     1440px parce qu'il fallait alors trois colonnes DANS l'onglet
-     « Liste des joueurs ». La colonne de droite est maintenant une
-     bande sous les deux autres tant qu'elle ne tient pas à côté :
-     la carte n'a plus de raison de disparaître.
-     ---------------------------------------------------------- */
-  body.fz-draft .selected-player-card { display: block; }
-  body.fz-draft .lineup-card { display: block; }
-}
+  body.fz-draft #playerTable tbody td { padding-top: 4px; padding-bottom: 4px; }
+  body.fz-draft #playerTable tbody td.points-column { font-size: .92rem; font-weight: 700; }
+
+  /* ---- ACTION : l'étoile, puis « Repêcher » quand c'est votre tour ---- */
+  body.fz-draft #playerTable tbody td.action-column {
+    padding-right: 20px;
+    text-align: right;
+  }
+  body.fz-draft #playerTable tbody td.action-column button.select-button {
+    min-height: 0;
+    padding: 7px 15px;
+    border-radius: 6px;
+    background: var(--fzd-accent-fill);
+    border: 1px solid var(--fzd-accent-fill);
+    color: var(--fzd-on-accent);
+    font: 700 .64rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  /* Le libellé remplace l'icône : le bouton garde son aria-label
+     « Sélectionner <joueur> », c'est lui qui est annoncé. */
+  body.fz-draft #playerTable tbody td.action-column button.select-button .select-icon { display: none; }
+  body.fz-draft #playerTable tbody td.action-column button.select-button::after { content: 'Repêcher'; }
+  body.fz-draft #playerTable tbody td.action-column button.favorite-btn {
+    width: 30px;
+    height: 30px;
+    min-height: 0;
+    border-radius: 6px;
+    border: 1px solid var(--fzd-border-strong);
+    background: none;
+  }
+  body.fz-draft #playerTable tbody td.action-column button.favorite-btn:hover { border-color: var(--fzd-accent); }
 
 
-/* ----------------------------------------------------------
-   Trois colonnes dès qu'il y a de quoi les tenir.
-   ---------------------------------------------------------- */
-@media (min-width: 1280px) {
-  body.fz-draft .draft-main-container {
-    grid-template-columns: 300px minmax(0, 1fr) 330px;
-    grid-template-areas: "side center rail";
-  }
-  body.fz-draft .draft-rail {
-    flex-direction: column;
-    flex-wrap: nowrap;
-  }
-  body.fz-draft .draft-rail > * { flex: 0 0 auto; }
-}
-
-@media (min-width: 1600px) {
-  body.fz-draft .draft-main-container {
-    grid-template-columns: 330px minmax(0, 1fr) 360px;
-    gap: 20px;
-  }
+  /* ==========================================================
+     6. BARRE DU HAUT — la puce du pool actif y remplace le rail
+     ========================================================== */
+  body.fz-draft .fz-navbar-pool { display: flex; }
 }
 
 
@@ -345,7 +837,7 @@
    Une pastille par position, une couleur par pastille : dans une
    liste de plusieurs centaines de lignes, la couleur se repère
    avant que le texte ne se lise. Le code court (C, AG, AD, D, G,
-   REC, ÉQ) tient dans la pastille ; le libellé complet reste dans
+   Rec, Éq) tient dans la pastille ; le libellé complet reste dans
    le title et dans l'étiquette accessible — la couleur ne porte
    donc jamais l'information toute seule.
 
@@ -357,13 +849,13 @@ body.fz-draft .fzd-pos-tag {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 30px;
-  padding: 2px 6px;
+  min-width: 28px;
+  padding: 1px 6px;
   border-radius: 4px;
   background: var(--fzd-tag-bg, var(--fzd-tile-bg));
   color: var(--fzd-tag-fg, var(--fzd-text));
-  font: 700 .62rem/1.35 'Helvetica Neue', Helvetica, sans-serif;
-  letter-spacing: .06em;
+  font: 700 .6rem/1.5 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .1em;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -385,13 +877,17 @@ html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="star"] { --fzd-tag-
 html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="T"] { --fzd-tag-bg: #3d3113; --fzd-tag-fg: #e2c274; }
 
 
-/* Sous 769px, les onglets reprennent la main et la rangée reste
-   compacte : ni pastille de position, ni sous-titres de progression.
-   Le libellé d'origine (.player-pos) reprend sa place. */
-@media (max-width: 768px) {
+/* Sous 1100px, les onglets reprennent la main et la rangée reste
+   compacte : ni pastille de position, ni bande de tour, ni rail
+   repris. Le libellé d'origine (.player-pos) retrouve sa place. */
+@media (max-width: 1099px) {
   body.fz-draft .fzd-name-meta,
-  body.fz-draft .fzd-sub-title,
-  body.fz-draft .fzd-fav-hint { display: none; }
+  body.fz-draft .fzd-fav-hint,
+  body.fz-draft .fzd-strip,
+  body.fz-draft .draft-rail,
+  body.fz-draft .fzd-rail-head,
+  body.fz-draft .fzd-rail-body,
+  body.fz-draft .fzd-rail-foot { display: none; }
   body.fz-draft .fzd-name-main .player-pos { display: inline; }
-  body.fz-draft .draft-rail { display: none; }
+  body.fz-draft #playerTable tbody td.fzd-name-cell { display: table-cell; }
 }
