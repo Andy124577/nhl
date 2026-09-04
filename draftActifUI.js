@@ -12,6 +12,18 @@
  */
 
 /* ============================================================
+   0. LARGEUR — bureau ou téléphone
+   ------------------------------------------------------------
+   Un seul seuil pour toute la salle de repêchage : au-dessus, tout
+   est affiché à la fois en trois colonnes (draftDesk.css) ; en
+   dessous, les onglets « Aperçu » / « Liste des joueurs » se
+   partagent l'écran. draftDesk.js s'y réfère aussi, d'où window.
+   ============================================================ */
+const FZ_MQ_BUREAU = window.matchMedia('(min-width: 769px)');
+function fzEstBureau() { return FZ_MQ_BUREAU.matches; }
+window.fzEstBureau = fzEstBureau;
+
+/* ============================================================
    1. MA LISTE — progression par position, dépliable
    ============================================================ */
 
@@ -75,6 +87,10 @@ function initPositionProgress() {
    comme dans le mockup) est construite par fzRenderIceProgression()
    (draftApercuExtra.js) ; « Liste » est le bloc de barres déjà en place
    au-dessus, inchangé.
+
+   Sur bureau, la bascule disparaît : la colonne de gauche a la hauteur
+   qu'il faut pour empiler les deux — la glace en haut, les barres en
+   bas (draftDesk.css, §2). Il n'y a alors plus rien à choisir.
    ============================================================ */
 function initProgressViewToggle() {
     const toggle = document.getElementById('progressViewToggle');
@@ -82,19 +98,32 @@ function initProgressViewToggle() {
     const vueListe = document.getElementById('progressListView');
     if (!toggle || !vueGlace || !vueListe) return;
 
-    const activer = (vue) => {
+    let vueCourante = 'ice';
+
+    const appliquer = () => {
+        if (fzEstBureau()) {
+            vueGlace.hidden = false;
+            vueListe.hidden = false;
+            return;
+        }
         toggle.querySelectorAll('.progress-view-chip').forEach(chip => {
-            chip.classList.toggle('is-active', chip.dataset.view === vue);
+            chip.classList.toggle('is-active', chip.dataset.view === vueCourante);
         });
-        vueGlace.hidden = vue !== 'ice';
-        vueListe.hidden = vue !== 'list';
+        vueGlace.hidden = vueCourante !== 'ice';
+        vueListe.hidden = vueCourante !== 'list';
     };
 
     toggle.querySelectorAll('.progress-view-chip').forEach(chip => {
-        chip.addEventListener('click', () => activer(chip.dataset.view));
+        chip.addEventListener('click', () => { vueCourante = chip.dataset.view; appliquer(); });
     });
 
-    activer('ice');
+    // Un redimensionnement qui traverse le seuil doit rendre la vue
+    // masquée : sans ceci, passer du téléphone au bureau laissait la
+    // liste avec son attribut hidden, et la colonne à moitié vide.
+    if (FZ_MQ_BUREAU.addEventListener) FZ_MQ_BUREAU.addEventListener('change', appliquer);
+    else if (FZ_MQ_BUREAU.addListener) FZ_MQ_BUREAU.addListener(appliquer);
+
+    appliquer();
 }
 
 /* ============================================================
@@ -323,6 +352,23 @@ function initPanelTabs() {
     let actif = groupes[0].cle;
 
     const appliquer = () => {
+        // Bureau : les deux groupes sont affichés côte à côte dans la
+        // grille à trois colonnes (draftDesk.css) — il n'y a plus de
+        // panneau à cacher, et surtout plus de display en ligne à
+        // laisser derrière soi si on vient d'un écran étroit. Les
+        // classes de mode et le verrou de défilement, tous deux pensés
+        // pour l'onglet « Liste des joueurs », tombent avec.
+        if (fzEstBureau()) {
+            groupes.forEach(g => g.els.forEach(el => {
+                el.style.display = '';
+                el.removeAttribute('aria-hidden');
+            }));
+            if (entete) entete.classList.remove('is-liste-joueurs');
+            conteneur.classList.remove('mode-apercu', 'mode-joueurs');
+            document.documentElement.classList.remove('fz-list-lock');
+            document.body.classList.remove('fz-list-lock');
+            return;
+        }
         groupes.forEach(g => {
             const on = g.cle === actif;
             g.els.forEach(el => {
@@ -404,10 +450,22 @@ function initPanelTabs() {
 
     appliquer();
 
+    // Rejoué par draftDesk.js quand la fenêtre traverse le seuil : c'est
+    // cette fonction qui sait quels panneaux portent un display en ligne,
+    // donc elle seule peut le retirer proprement.
+    window.fzApplyPanelTabs = appliquer;
+
+    /** Amène un élément sous les yeux sans changer d'onglet — sur bureau,
+     *  il n'y a rien à ouvrir, tout est déjà affiché. */
+    const amener = (el) => {
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
     // Point d'entrée du bouton « Faire ma sélection » (draftPickCards.js) :
     // bascule sur le tableau et y ramène le regard — le bandeau d'onglets
     // peut être scrollé hors champ sur un repêchage à l'ordre long.
     window.fzOuvrirListeJoueurs = () => {
+        if (fzEstBureau()) { amener(document.querySelector('.player-selection-card')); return; }
         activer('joueurs', false);
         strip.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
@@ -416,6 +474,7 @@ function initPanelTabs() {
     // envoyé, pour ramener sur Aperçu (favoris + progression) plutôt que de
     // laisser la personne sur le tableau qu'elle vient de quitter.
     window.fzOuvrirApercu = () => {
+        if (fzEstBureau()) { amener(document.getElementById('progressCard')); return; }
         activer('apercu', false);
         strip.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };

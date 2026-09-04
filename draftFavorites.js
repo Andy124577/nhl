@@ -198,9 +198,15 @@ function fzBuildSelectButton(nom, code) {
 /* ============================================================
    4. COLONNE ACTION DU TABLEAU
    ------------------------------------------------------------
-   draftActif.js laisse la cellule vide dès que ce n'est pas votre tour
-   (ou que votre équipe est complète) : on ne touche jamais à un bouton de
-   sélection déjà présent, on ne remplit qu'une cellule vide.
+   draftActif.js met un bouton de sélection dans la cellule quand c'est
+   votre tour, et la laisse vide sinon. On ne touche jamais à ce bouton :
+   on ajoute l'étoile à côté, quel que soit le tour.
+
+   Elle y était réservée aux tours des autres, ce qui était l'inverse de
+   ce qu'il fallait : c'est en parcourant la liste PENDANT son propre
+   tour qu'on repère les joueurs qu'on ne prendra pas maintenant mais au
+   choix suivant. La mettre partout coûte un bouton de plus par rangée et
+   supprime le trou.
    ============================================================ */
 
 /** Nom du joueur porté par une rangée — patineurs/gardiens l'ont en data-*,
@@ -215,10 +221,14 @@ function fzRefreshActionColumns() {
     document.querySelectorAll('#playerTable tbody tr').forEach(tr => {
         const cellule = tr.querySelector('td.action-column');
         if (!cellule) return;
-        if (cellule.querySelector('button.select-button')) return;
         const nom = fzRowPlayerName(tr);
         if (!nom) return;
-        cellule.replaceChildren(fzBuildStarButton(nom));
+        // Remplacée plutôt qu'ajoutée : cette fonction est rejouée à chaque
+        // rafraîchissement, y compris sans reconstruction du tableau — une
+        // étoile de plus s'empilerait à chaque passage.
+        const etoile = cellule.querySelector('button.favorite-btn');
+        if (etoile) etoile.replaceWith(fzBuildStarButton(nom));
+        else cellule.appendChild(fzBuildStarButton(nom));
     });
 }
 

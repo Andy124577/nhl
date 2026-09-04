@@ -1,0 +1,397 @@
+/* ============================================================
+   REPÊCHAGE EN DIRECT — MISE EN PAGE BUREAU
+   ------------------------------------------------------------
+   Sur téléphone, la salle de repêchage tient sur un écran étroit :
+   deux onglets (« Aperçu » / « Liste des joueurs ») se partagent la
+   place, et draftActifUI.js en cache un pendant que l'autre s'affiche.
+
+   Au-dessus de 769px, la place ne manque plus : les onglets ne
+   servaient qu'à cacher la moitié de ce qu'on veut voir pendant
+   qu'on repêche. Ce fichier reprend le plan des grandes salles de
+   repêchage en ligne — bande des derniers choix pleine largeur sous
+   la navbar, puis trois colonnes :
+
+     colonne 1   ma progression : la glace en haut, les barres en bas
+     colonne 2   mes favoris, puis la liste des joueurs
+     colonne 3   suggestion, joueur sélectionné, fil des choix
+
+   Le déplacement des cartes d'une colonne à l'autre est fait par
+   draftDesk.js (et défait sous 769px, où les onglets reprennent la
+   main) ; ce fichier ne fait que la géométrie et l'habillage.
+   ============================================================ */
+
+@media (min-width: 769px) {
+
+  /* ----------------------------------------------------------
+     1. GRILLE
+     ----------------------------------------------------------
+     Le bandeau de tour et le carrousel des derniers choix vivent
+     dans .draft-header, hors de cette grille : ils gardent donc
+     toute la largeur de la fenêtre, collés sous la navbar.
+     Jusqu'à 1279px la troisième colonne n'a pas de quoi respirer :
+     elle passe sous les deux autres, en bande.
+     ---------------------------------------------------------- */
+  body.fz-draft .draft-main-container {
+    max-width: 1720px;
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-areas:
+      "side center"
+      "rail rail";
+    gap: 18px;
+    align-items: start;
+    padding: 18px 22px 56px;
+  }
+
+  body.fz-draft .draft-sidebar {
+    grid-area: side;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+  body.fz-draft .draft-center {
+    grid-area: center;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+  }
+  body.fz-draft .draft-rail {
+    grid-area: rail;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: start;
+    gap: 16px;
+    min-width: 0;
+  }
+  body.fz-draft .draft-rail > * { flex: 1 1 300px; min-width: 0; }
+  body.fz-draft .draft-rail:empty { display: none; }
+
+  /* Les deux enveloppes de l'ancienne vue « Aperçu » ne portent plus
+     rien : leurs cartes sont réparties dans les trois colonnes. */
+  body.fz-draft .apercu-col-main:empty,
+  body.fz-draft .apercu-col-side:empty { display: none; }
+
+  /* Le bandeau d'onglets n'a plus de raison d'être : tout est visible.
+     Sa piste, elle, reste — c'est là que draftActifUI.js range « Sauter
+     ce tour ». Vidée de sa bordure et de son fond, elle ne se voit plus
+     tant que le bouton est masqué (le cas courant : seul l'organisateur
+     l'a, et seulement quand un tour traîne) ; :has l'efface tout à fait
+     là où il est reconnu, et son absence ne coûte rien de plus qu'une
+     ligne de 0 pixel de haut. */
+  body.fz-draft #panelTabs { display: none; }
+  body.fz-draft .panel-tabs-band {
+    padding: 0 22px;
+    border-bottom: 0;
+    background: none;
+    justify-content: flex-end;
+  }
+  body.fz-draft .panel-tabs-band:has(.turn-skip-btn:not([hidden])) { padding: 6px 22px; }
+  body.fz-draft .panel-tabs-band:not(:has(.turn-skip-btn:not([hidden]))) { display: none; }
+
+  /* ----------------------------------------------------------
+     2. COLONNE 1 — MA PROGRESSION, GLACE PUIS LISTE
+     ----------------------------------------------------------
+     Les deux vues ne s'excluent plus : la glace donne l'alignement
+     d'un coup d'œil, les barres disent ce qu'il reste à combler.
+     La bascule Glace/Liste devient inutile (draftActifUI.js la
+     masque) et chaque vue reçoit son propre sous-titre.
+     ---------------------------------------------------------- */
+  body.fz-draft .progress-view-toggle { display: none; }
+
+  body.fz-draft .fzd-sub-title {
+    display: block;
+    margin: 4px 0 9px;
+    font: 600 .58rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--fzd-text-faint);
+  }
+  body.fz-draft .fzd-sub-title--liste {
+    margin-top: 14px;
+    padding-top: 13px;
+    border-top: 1px solid var(--fzd-border);
+  }
+
+  /* ----------------------------------------------------------
+     3. COLONNE 2 — MES FAVORIS AU-DESSUS DE LA LISTE
+     ----------------------------------------------------------
+     L'étoile de la colonne Action reste cliquable hors de son tour :
+     c'est là qu'on prépare ses choix. Quand le tour arrive, la carte
+     passe en évidence juste au-dessus du tableau — les boutons de
+     sélection y sont déjà (draftFavorites.js), plus besoin de
+     retrouver le joueur dans la liste.
+     ---------------------------------------------------------- */
+  body.fz-draft .draft-center > .favorites-card { margin: 0; }
+
+  body.fz-draft .favorites-card.is-my-turn {
+    border-color: var(--fzd-accent);
+    box-shadow: 0 0 0 3px var(--fzd-accent-wash);
+  }
+  body.fz-draft .fzd-fav-hint {
+    display: none;
+    margin: 0 0 9px;
+    font: 600 .68rem/1.35 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-accent);
+  }
+  body.fz-draft .favorites-card.is-my-turn .fzd-fav-hint { display: block; }
+
+  /* Repliés, les groupes tiennent sur une ou deux lignes de poignées ;
+     un groupe déplié prend toute la largeur pour ses rangées. */
+  body.fz-draft .draft-center > .favorites-card .favorites-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  body.fz-draft .draft-center > .favorites-card .favorite-group {
+    flex: 1 1 200px;
+    min-width: 0;
+  }
+  body.fz-draft .draft-center > .favorites-card .favorite-group.is-open {
+    flex-basis: 100%;
+  }
+
+  /* ----------------------------------------------------------
+     4. COLONNE 2 — BARRE DE FILTRES HORIZONTALE
+     ----------------------------------------------------------
+     L'ancienne colonne de filtres (250px à gauche du tableau) est
+     repliée en une bande au-dessus de celui-ci : la largeur gagnée
+     va au tableau. Le bloc « Position » y ferait doublon avec les
+     pastilles de catégorie, déjà juste en dessous — draftDesk.js le
+     marque .fzd-desk-hidden.
+     ---------------------------------------------------------- */
+  body.fz-draft .player-selection-card > .list-filters-sidebar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    margin: 0 0 12px;
+    padding: 0 0 12px;
+    border-bottom: 1px solid var(--fzd-border);
+  }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .fzd-desk-hidden { display: none; }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-search {
+    flex: 1 1 220px;
+    min-width: 180px;
+  }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-block {
+    display: flex;
+    align-items: center;
+    gap: 8px 12px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-title {
+    margin: 0;
+    font: 600 .58rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--fzd-text-faint);
+    white-space: nowrap;
+  }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filter-checkbox {
+    margin: 0;
+    white-space: nowrap;
+  }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-team {
+    width: auto;
+    min-width: 170px;
+  }
+
+  /* ----------------------------------------------------------
+     5. COLONNE 2 — LE TABLEAU
+     ----------------------------------------------------------
+     Le tableau défile dans sa propre boîte plutôt que d'emmener la
+     page entière : les deux colonnes de côté restent en vue pendant
+     qu'on parcourt les joueurs, ce qui est tout l'intérêt d'avoir
+     tout affiché en même temps.
+     ---------------------------------------------------------- */
+  body.fz-draft .player-selection-card > #playerTableWrapper,
+  body.fz-draft .player-selection-card > #fzPickedListWrapper {
+    max-height: calc(100vh - 340px);
+    min-height: 360px;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+  body.fz-draft .player-selection-card > .table-wrapper::-webkit-scrollbar { width: 9px; height: 9px; }
+
+  body.fz-draft #playerTable thead th,
+  body.fz-draft #fzPickedList thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: var(--fzd-bg-alt);
+    box-shadow: inset 0 -1px 0 var(--fzd-border-strong);
+  }
+  /* La dernière colonne est déjà collante horizontalement
+     (draftActif.css) : à leur intersection, l'en-tête passe devant. */
+  body.fz-draft #playerTable thead th:last-child { z-index: 4; }
+
+  /* ---- Mugshot : le portrait redevient le repère de la rangée ---- */
+  body.fz-draft #playerTable thead th:first-child,
+  body.fz-draft #playerTable tbody td:first-child {
+    /* Le rang (::before, draftActif.css) et le portrait se partagent
+       cette colonne : 21px pour le premier, 48 pour le second. */
+    width: 88px;
+    padding-left: 10px;
+    padding-right: 6px;
+  }
+  body.fz-draft #playerTable .player-photo {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    background: var(--fzd-tile-bg);
+  }
+  body.fz-draft #playerTable .player-photo img.face {
+    display: block;
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: 999px;
+    object-fit: cover;
+    object-position: top center;
+    background: var(--fzd-tile-bg);
+  }
+  body.fz-draft #playerTable .player-photo img.logo {
+    position: absolute;
+    right: -4px;
+    bottom: -2px;
+    width: 21px !important;
+    height: 21px;
+    padding: 1px;
+    border-radius: 999px;
+    background: var(--fzd-logo-bg);
+    border: 1px solid var(--fzd-border-strong);
+  }
+  /* Rangées d'équipes LNH : l'écusson tient lieu de portrait. */
+  body.fz-draft #playerTable tbody td:first-child > img.logo {
+    width: 42px !important;
+    height: 42px;
+    padding: 3px;
+    border: 1px solid var(--fzd-border);
+  }
+  body.fz-draft #playerTable tbody td { padding-top: 6px; padding-bottom: 6px; }
+
+  /* ---- Cellule du nom : nom sur une ligne, équipe + position dessous ---- */
+  body.fz-draft #playerTable tbody td.fzd-name-cell {
+    padding-left: 4px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+  body.fz-draft .fzd-name-main {
+    display: block;
+    font-size: .86rem;
+    font-weight: 600;
+    color: var(--fzd-ink);
+  }
+  body.fz-draft .fzd-name-main .player-pos { display: none; }
+  body.fz-draft .fzd-name-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 3px;
+  }
+  body.fz-draft .fzd-team-abbr {
+    font: 600 .66rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .06em;
+    color: var(--fzd-text-muted);
+  }
+
+  /* ----------------------------------------------------------
+     6. COLONNE 3 — toujours affichée, quelle que soit la largeur
+     ----------------------------------------------------------
+     draftActif-premium.css cachait « Joueur sélectionné » sous
+     1440px parce qu'il fallait alors trois colonnes DANS l'onglet
+     « Liste des joueurs ». La colonne de droite est maintenant une
+     bande sous les deux autres tant qu'elle ne tient pas à côté :
+     la carte n'a plus de raison de disparaître.
+     ---------------------------------------------------------- */
+  body.fz-draft .selected-player-card { display: block; }
+  body.fz-draft .lineup-card { display: block; }
+}
+
+
+/* ----------------------------------------------------------
+   Trois colonnes dès qu'il y a de quoi les tenir.
+   ---------------------------------------------------------- */
+@media (min-width: 1280px) {
+  body.fz-draft .draft-main-container {
+    grid-template-columns: 300px minmax(0, 1fr) 330px;
+    grid-template-areas: "side center rail";
+  }
+  body.fz-draft .draft-rail {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+  body.fz-draft .draft-rail > * { flex: 0 0 auto; }
+}
+
+@media (min-width: 1600px) {
+  body.fz-draft .draft-main-container {
+    grid-template-columns: 330px minmax(0, 1fr) 360px;
+    gap: 20px;
+  }
+}
+
+
+/* ============================================================
+   ÉTIQUETTES DE POSITION
+   ------------------------------------------------------------
+   Une pastille par position, une couleur par pastille : dans une
+   liste de plusieurs centaines de lignes, la couleur se repère
+   avant que le texte ne se lise. Le code court (C, AG, AD, D, G,
+   REC, ÉQ) tient dans la pastille ; le libellé complet reste dans
+   le title et dans l'étiquette accessible — la couleur ne porte
+   donc jamais l'information toute seule.
+
+   Chaque position porte ses deux jetons plutôt qu'une couleur en
+   dur : le thème sombre ne redéfinit que les jetons, jamais la
+   règle de dessin.
+   ============================================================ */
+body.fz-draft .fzd-pos-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--fzd-tag-bg, var(--fzd-tile-bg));
+  color: var(--fzd-tag-fg, var(--fzd-text));
+  font: 700 .62rem/1.35 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+body.fz-draft .fzd-pos-tag[data-pos="C"] { --fzd-tag-bg: #dbe9fb; --fzd-tag-fg: #1b4d92; }
+body.fz-draft .fzd-pos-tag[data-pos="L"] { --fzd-tag-bg: #e8ddfa; --fzd-tag-fg: #5a2f9e; }
+body.fz-draft .fzd-pos-tag[data-pos="R"] { --fzd-tag-bg: #fbdcee; --fzd-tag-fg: #93206a; }
+body.fz-draft .fzd-pos-tag[data-pos="D"] { --fzd-tag-bg: #fde3cf; --fzd-tag-fg: #8f4d0e; }
+body.fz-draft .fzd-pos-tag[data-pos="G"] { --fzd-tag-bg: #d1efec; --fzd-tag-fg: #0d5f59; }
+body.fz-draft .fzd-pos-tag[data-pos="star"] { --fzd-tag-bg: #d9f2dc; --fzd-tag-fg: #1d6631; }
+body.fz-draft .fzd-pos-tag[data-pos="T"] { --fzd-tag-bg: #f7e6bf; --fzd-tag-fg: #75560f; }
+
+html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="C"] { --fzd-tag-bg: #16304f; --fzd-tag-fg: #8dbdf5; }
+html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="L"] { --fzd-tag-bg: #2c1f4a; --fzd-tag-fg: #bfa4f0; }
+html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="R"] { --fzd-tag-bg: #43162f; --fzd-tag-fg: #f09ccb; }
+html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="D"] { --fzd-tag-bg: #4a2c11; --fzd-tag-fg: #f0b273; }
+html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="G"] { --fzd-tag-bg: #103733; --fzd-tag-fg: #7fd6cc; }
+html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="star"] { --fzd-tag-bg: #14361d; --fzd-tag-fg: #86d69a; }
+html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="T"] { --fzd-tag-bg: #3d3113; --fzd-tag-fg: #e2c274; }
+
+
+/* Sous 769px, les onglets reprennent la main et la rangée reste
+   compacte : ni pastille de position, ni sous-titres de progression.
+   Le libellé d'origine (.player-pos) reprend sa place. */
+@media (max-width: 768px) {
+  body.fz-draft .fzd-name-meta,
+  body.fz-draft .fzd-sub-title,
+  body.fz-draft .fzd-fav-hint { display: none; }
+  body.fz-draft .fzd-name-main .player-pos { display: inline; }
+  body.fz-draft .draft-rail { display: none; }
+}

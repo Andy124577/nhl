@@ -111,7 +111,11 @@ function refreshDraftViews() {
     // Suggestion, derniers choix, alignement, sidebar de position et carte
     // « Joueur sélectionné » (draftApercuExtra.js) : tous dépendent du
     // tour courant et des choix faits, comme le reste de cette liste.
-    'fzRefreshApercuExtras'
+    'fzRefreshApercuExtras',
+    // Pastilles de position du tableau et mise en avant des favoris quand
+    // le tour arrive (draftDesk.js). En dernier : la carte des favoris
+    // qu'il déplie vient d'être reconstruite par fzRefreshFavoritesUI.
+    'fzRefreshDeskUI'
   ];
   rendus.forEach(nom => {
     const fn = window[nom];
