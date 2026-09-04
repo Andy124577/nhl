@@ -223,8 +223,11 @@ function fzRefreshActionColumns() {
         // rafraîchissement, y compris sans reconstruction du tableau — une
         // étoile de plus s'empilerait à chaque passage.
         const etoile = cellule.querySelector('button.favorite-btn');
+        // En TETE de cellule : la maquette met l'etoile avant « Repecher »,
+        // et l'ordre du DOM est aussi celui du clavier — on tombe donc sur
+        // l'etoile avant le bouton qui engage le choix, pas apres.
         if (etoile) etoile.replaceWith(fzBuildStarButton(nom));
-        else cellule.appendChild(fzBuildStarButton(nom));
+        else cellule.prepend(fzBuildStarButton(nom));
     });
 }
 

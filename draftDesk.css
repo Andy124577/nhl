@@ -62,7 +62,7 @@
     display: flex;
     align-items: stretch;
     height: 66px;
-    background: var(--fzd-bg-alt);
+    background: var(--fzd-bg);
   }
 
   body.fz-draft .fzd-clock {
@@ -78,7 +78,7 @@
   body.fz-draft .fzd-clock-label,
   body.fz-draft .fzd-clock #dop-round {
     display: block;
-    font: 700 .62rem/1.25 'Helvetica Neue', Helvetica, sans-serif;
+    font: 700 .62rem/1.25 var(--fzd-font-cond);
     letter-spacing: .15em;
     text-transform: uppercase;
     color: var(--fzd-text-faint);
@@ -91,7 +91,7 @@
     padding: 0;
     border: 0;
     background: none;
-    font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+    font-family: var(--fzd-font-cond);
     font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: .03em;
@@ -158,6 +158,42 @@
     text-overflow: ellipsis;
   }
 
+  /* draftActif-premium.css dessine le MEME bandeau autrement : une barre
+     pleine largeur ou le contexte tient dans une pastille « En attente »
+     posee en ::before, ou le sous-titre disparait et ou le nom de
+     l'equipe passe en petit gris. Sur la tuile de 330px de la maquette,
+     c'est l'inverse : le contexte EST le sur-titre en petites capitales,
+     et le nom de l'equipe est la ligne forte. Ses regles portent une
+     classe d'etat (.waiting/.your-turn) de plus que les notres, d'ou le
+     .fzd-strip repete ici pour repasser devant. */
+  body.fz-draft .fzd-strip .turn-banner.waiting .turn-banner-body,
+  body.fz-draft .fzd-strip .turn-banner.your-turn .turn-banner-body {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+  }
+  body.fz-draft .fzd-strip .turn-banner.waiting .turn-banner-body::before,
+  body.fz-draft .fzd-strip .turn-banner.your-turn .turn-banner-body::before { content: none; }
+  body.fz-draft .fzd-strip .turn-banner.waiting .turn-banner-text,
+  body.fz-draft .fzd-strip .turn-banner.your-turn .turn-banner-text {
+    font-family: var(--fzd-font);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    color: inherit;
+  }
+  body.fz-draft .fzd-strip .turn-banner.waiting .turn-banner-sub,
+  body.fz-draft .fzd-strip .turn-banner.your-turn .turn-banner-sub {
+    display: block;
+    order: -1;
+    font: 700 .6875rem/1.3 var(--fzd-font-cond);
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    opacity: .72;
+  }
+  body.fz-draft .fzd-strip .turn-banner.waiting .turn-banner-sub:empty,
+  body.fz-draft .fzd-strip .turn-banner.your-turn .turn-banner-sub:empty { display: none; }
+
   /* Le carrousel prend tout ce qui reste de la bande. */
   body.fz-draft .fzd-strip .recent-picks-card {
     flex: 1 1 auto;
@@ -189,7 +225,7 @@
     /* Le dégradé aux couleurs de l'équipe (draftActif.css) demande la
        hauteur d'une vraie carte ; sur 66px il ne se lit plus et impose
        un texte blanc que le thème clair ne supporte pas. */
-    background: var(--fzd-bg-alt);
+    background: var(--fzd-bg);
     color: var(--fzd-ink);
   }
   body.fz-draft .fzd-strip .pick-card::before,
@@ -207,14 +243,14 @@
     margin: 0;
   }
   body.fz-draft .fzd-strip .pick-card-turn-num {
-    font: 700 .6rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    font: 700 .6rem/1 var(--fzd-font-cond);
     letter-spacing: .13em;
     text-transform: uppercase;
     color: var(--fzd-text-faint);
   }
   body.fz-draft .fzd-strip .pick-card.is-current .pick-card-turn-num { color: var(--fzd-accent); }
   body.fz-draft .fzd-strip .pick-card-turn-round {
-    font: 500 .55rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    font: 500 .55rem/1 var(--fzd-font-cond);
     letter-spacing: .1em;
     color: var(--fzd-text-fainter);
   }
@@ -254,7 +290,7 @@
     flex-direction: column;
     background: var(--fzd-surface);
     border-right: 1px solid var(--fzd-border-strong);
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: var(--fzd-font);
     color: var(--fzd-text);
   }
   /* Le contenu d'origine du rail — pool actif, gestion — a laissé la
@@ -273,7 +309,7 @@
     border-bottom: 1px solid var(--fzd-border);
   }
   body.fz-draft .fzd-rail-title {
-    font: 700 .68rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    font: 700 .68rem/1 var(--fzd-font-cond);
     letter-spacing: .17em;
     text-transform: uppercase;
     color: var(--fzd-text-muted);
@@ -299,7 +335,7 @@
     gap: 8px;
   }
   body.fz-draft .fzd-group-label {
-    font: 700 .62rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    font: 700 .62rem/1 var(--fzd-font-cond);
     letter-spacing: .15em;
     text-transform: uppercase;
     color: var(--fzd-text-muted);
@@ -349,7 +385,7 @@
   body.fz-draft .fzd-slot-meta { font-size: .62rem; color: var(--fzd-text-faint); }
   body.fz-draft .fzd-slot-pos {
     flex: none;
-    font: 700 .62rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    font: 700 .62rem/1 var(--fzd-font-cond);
     letter-spacing: .1em;
     color: var(--fzd-text-faint);
   }
@@ -357,8 +393,8 @@
   body.fz-draft .fzd-rail-foot {
     flex: none;
     padding: 12px 16px 14px;
-    border-top: 1px solid var(--fzd-border);
-    background: var(--fzd-bg-alt);
+    border-top: 1px solid var(--fzd-border-strong);
+    background: var(--fzd-rail-foot, var(--fzd-bg-alt));
     display: flex;
     flex-direction: column;
     gap: 9px;
@@ -376,7 +412,7 @@
     gap: 5px;
   }
   body.fz-draft .fzd-limit-label {
-    font: 600 .6rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    font: 600 .6rem/1 var(--fzd-font-cond);
     letter-spacing: .09em;
     text-transform: uppercase;
     color: var(--fzd-text-muted);
@@ -601,7 +637,7 @@
     border: 1px solid var(--fzd-border-input);
     background: var(--fzd-bg-alt);
     color: var(--fzd-text);
-    font: 700 .66rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    font: 700 .66rem/1 var(--fzd-font-cond);
     letter-spacing: .11em;
     text-transform: uppercase;
   }
@@ -673,8 +709,36 @@
   /* ==========================================================
      5. LA LISTE DES JOUEURS
      ----------------------------------------------------------
-     Seuls le rang et les filtres changent de disposition : le
-     tableau, ses colonnes et ses chiffres restent ceux d'avant.
+     Le tableau reprend au pixel la grille de la maquette :
+
+       20px | 44px | 1fr | 58px | 58px | 58px | 64px | 122px | 20px
+       marge  RANG  JOUEUR  PJ     B      A     PTS    ACTION  marge
+
+     avec 9px au-dessus et au-dessous de chaque rangée, un seul filet
+     de séparation, et aucune marge latérale dans les colonnes de
+     chiffres : leur largeur fixe fait tout le travail.
+
+     DEUX CHOSES À SAVOIR AVANT DE TOUCHER À CE BLOC.
+
+     1. Ce n'est plus un tableau. La fin de draftActif.css le repasse
+        en display:block / flex (thead et tbody en bloc, chaque rangée
+        en flex, chaque cellule en bloc) pour la vue téléphone, et sans
+        media query. Une `width` posée sur une cellule y est donc
+        ignorée : c'est le flex-basis qui décide. On règle la grille
+        par les variables --col-* que ce bloc-là définit déjà, et le
+        filet de séparation se pose sur la RANGÉE, pas sur la cellule —
+        il court ainsi d'un bout à l'autre sans se rompre entre deux
+        colonnes.
+
+     2. L'id est écrit deux fois. index.css cale les colonnes chiffrées
+        avec `#playerTable tbody td:not(.player-col):not(.photo-col)
+        :not(.rank-col)` — trois pseudo-classes, soit une spécificité
+        (1,3,2) qu'aucun sélecteur à un seul id et une seule classe ne
+        bat, quel que soit l'ordre des feuilles. Les classes qu'il
+        exclut n'existent pas dans CE tableau : la règle s'appliquait
+        donc à toutes les cellules et leur rendait 4px de marge
+        latérale. Doubler l'id (2,1,3) tranche une bonne fois, sans
+        !important et sans avoir à recopier ses trois :not().
      ========================================================== */
 
   body.fz-draft .player-selection-card > #playerTableWrapper,
@@ -682,104 +746,183 @@
     flex: 1 1 auto;
     min-height: 340px;
     max-height: calc(100vh - var(--fz-nav-h, 70px) - 66px - 210px);
+    overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior-y: contain;
     border: 0;
     border-radius: 0;
+    background: var(--fzd-bg-page);
   }
 
-  body.fz-draft #playerTable,
-  body.fz-draft #fzPickedList { border-spacing: 0; }
+  body.fz-draft #playerTable#playerTable {
+    --col-rank: 64px;     /* 20px de marge de page + 44px de contenu  */
+    --col-stat: 58px;
+    --col-points: 64px;
+    /* 122px de contenu + 20px de marge de page, plus les 4px que la
+       maquette n'avait pas comptes : « REPECHER » a 12px Barlow
+       Condensed avec .12em d'interlettrage fait 87px de bouton, pas
+       84 — a 142px l'etoile mordait sur la colonne PTS. */
+    --col-action: 146px;
+    width: 100%;
+    min-width: 0;
+    border-spacing: 0;
+  }
 
-  body.fz-draft #playerTable thead th,
-  body.fz-draft #fzPickedList thead th {
+  /* ---- L'EN-TÊTE ----
+     La rangée entière est collante et porte le fond : en display:block,
+     un thead ne peut pas le faire, et le poser cellule par cellule
+     laissait paraître le fond de la page dans les 4px qui les
+     séparaient. */
+  body.fz-draft #playerTable#playerTable thead tr {
     position: sticky;
     top: 0;
     z-index: 3;
-    padding: 10px;
-    background: var(--fzd-surface);
+    margin: 0;
+    border: 0;
     border-bottom: 1px solid var(--fzd-border-strong);
-    font: 700 .62rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    border-radius: 0;
+    overflow: visible;
+    background: var(--fzd-surface);
+  }
+  body.fz-draft #playerTable#playerTable thead th,
+  body.fz-draft #fzPickedList thead th {
+    position: static;
+    padding: 9px 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    font: 700 .6875rem/1 var(--fzd-font-cond);
     letter-spacing: .14em;
     text-transform: uppercase;
-    color: var(--fzd-text-muted);
-  }
-  body.fz-draft #playerTable thead th:last-child { z-index: 4; }
-  body.fz-draft #playerTable thead th.points-column { color: var(--fzd-accent); }
-
-  /* ---- Respiration et alignement des colonnes ----
-     draftActif.css serre toutes les cellules à 3px de marge latérale et
-     centre leur contenu ; ces règles-là n'étaient pas dans une media
-     query, elles s'appliquaient donc aussi sur bureau, où la colonne
-     centrale a largement de quoi respirer. Et comme
-     draftActif-premium.css aligne les EN-TÊTES à droite sans toucher au
-     corps, les chiffres tombaient au centre sous un titre à droite. */
-  body.fz-draft #playerTable tbody td {
-    padding: 5px 10px;
     text-align: right;
+    color: var(--fzd-text-dim);
   }
-  body.fz-draft #playerTable thead th:first-child,
-  body.fz-draft #playerTable tbody td:first-child,
-  body.fz-draft #playerTable thead th:nth-child(2),
-  body.fz-draft #playerTable tbody td:nth-child(2) { text-align: left; }
+  body.fz-draft #playerTable#playerTable thead th.points-column {
+    background: none;
+    color: var(--fzd-accent);
+  }
 
-  /* Une rangée est une ligne, pas une carte : la bordure sur les quatre
-     côtés du <tr> (draftActif-premium.css) et les coins arrondis des
-     cellules d'extrémité (draftActif.css) supposaient l'espacement de
-     7px entre rangées que border-spacing:0 a supprimé — deux filets
-     voisins se doublaient. Un seul filet en bas de cellule suffit. */
-  body.fz-draft #playerTable tbody tr { border: 0; }
-  body.fz-draft #playerTable tbody td {
+  /* ---- LA RANGÉE ----
+     Une rangée est une ligne, pas une carte : ni coins arrondis, ni
+     bordure sur quatre côtés, ni écart entre deux rangées. Le fond est
+     celui de la page ; seuls le survol et la rangée retenue s'en
+     détachent, et la rangée retenue porte en plus le trait de 2px de la
+     maquette. */
+  body.fz-draft #playerTable#playerTable tbody tr {
+    align-items: center;
+    margin: 0;
     border: 0;
     border-bottom: 1px solid var(--fzd-border);
     border-radius: 0;
+    background: none;
+  }
+  body.fz-draft #playerTable#playerTable tbody tr:hover,
+  body.fz-draft #playerTable#playerTable tbody tr:has(button.select-button:hover) {
+    background: var(--fzd-bg-alt);
+    border-bottom-color: var(--fzd-border);
+  }
+  body.fz-draft #playerTable#playerTable tbody tr.fzd-selected-row,
+  body.fz-draft #playerTable#playerTable tbody tr.fzd-selected-row:hover {
+    background: var(--fzd-bg-alt);
+    box-shadow: inset 2px 0 0 var(--fzd-accent);
   }
 
-  /* Plus de défilement horizontal dans la colonne centrale : la
-     dernière colonne n'a plus besoin de rester collée à droite. */
-  body.fz-draft #playerTable thead th:last-child,
-  body.fz-draft #playerTable tbody td:last-child {
-    position: static;
-    padding-right: 20px;
+  body.fz-draft #playerTable#playerTable tbody td {
+    padding: 9px 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    font-family: var(--fzd-font);
+    font-size: .8125rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--fzd-text-muted);
+    text-align: right;
   }
+
+  /* ---- Les colonnes ---- */
+  /* RANG : 44px de contenu derrière les 20px de marge de page. */
+  body.fz-draft #playerTable#playerTable thead th:first-child,
+  body.fz-draft #playerTable#playerTable tbody td:first-child {
+    flex: 0 0 var(--col-rank);
+    padding-left: 20px;
+    padding-right: 0;
+    text-align: left;
+  }
+  /* JOUEUR prend ce qui reste. */
+  body.fz-draft #playerTable#playerTable thead th:nth-child(2),
+  body.fz-draft #playerTable#playerTable tbody td:nth-child(2) {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    text-align: left;
+  }
+  /* PJ · B · A — et les six colonnes des gardiens, même règle. */
+  body.fz-draft #playerTable#playerTable thead th:not(:first-child):not(:nth-child(2)):not(.points-column):not(.action-column),
+  body.fz-draft #playerTable#playerTable tbody td:not(:first-child):not(:nth-child(2)):not(.points-column):not(.action-column) {
+    flex: 0 0 var(--col-stat);
+    padding-left: 0;
+    padding-right: 0;
+    text-align: right;
+  }
+  body.fz-draft #playerTable#playerTable thead th.points-column,
+  body.fz-draft #playerTable#playerTable tbody td.points-column {
+    flex: 0 0 var(--col-points);
+  }
+  /* ACTION : 122px de contenu devant les 20px de marge de page. */
+  body.fz-draft #playerTable#playerTable thead th.action-column,
+  body.fz-draft #playerTable#playerTable tbody td.action-column,
+  body.fz-draft #playerTable#playerTable thead th:last-child,
+  body.fz-draft #playerTable#playerTable tbody td:last-child {
+    position: static;
+    flex: 0 0 var(--col-action);
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 20px;
+    text-align: right;
+  }
+  /* Plus de filets verticaux entre les colonnes : la maquette n'en a pas. */
+  body.fz-draft #playerTable#playerTable thead th,
+  body.fz-draft #playerTable#playerTable tbody td { border-left: 0; }
 
   /* ---- RANG : la première colonne ne porte plus que son numéro ----
-     draftDesk.js emporte le portrait dans la colonne JOUEUR ; ne
-     reste ici que le compteur ::before de draftActif.css. */
-  body.fz-draft #playerTable thead th:first-child {
-    width: 52px;
-    padding-left: 20px;
+     draftDesk.js emporte le portrait dans la colonne JOUEUR ; ne reste
+     ici que le compteur ::before de draftActif.css. */
+  body.fz-draft #playerTable#playerTable thead th:first-child {
     /* Redit ici : le `font` raccourci de la règle partagée des en-têtes
-       (plus haut dans ce fichier) rend une taille au libellé « Photo »
-       que updateTable() écrit dans cette cellule — draftActif.css le met
-       bien à 0, mais avec une spécificité moindre. « RANG » et « PHOTO »
-       se chevauchaient dans les 52px de la colonne. */
+       (plus haut) rend une taille au libellé « Photo » que updateTable()
+       écrit dans cette cellule — draftActif.css le met bien à 0, mais
+       avec une spécificité moindre. « RANG » et « PHOTO » se
+       chevauchaient dans la colonne. */
     font-size: 0;
   }
   /* Seule la pastille ::before porte une taille. */
-  body.fz-draft #playerTable thead th:first-child::before {
+  body.fz-draft #playerTable#playerTable thead th:first-child::before {
     content: 'Rang';
-    font-size: .62rem;
+    font-size: .6875rem;
     letter-spacing: .14em;
   }
-  body.fz-draft #playerTable tbody td:first-child {
-    width: 52px;
-    padding-left: 20px;
-    padding-right: 4px;
-  }
-  body.fz-draft #playerTable tbody td:first-child::before {
+  body.fz-draft #playerTable#playerTable tbody td:first-child::before {
     min-width: 0;
     margin: 0;
-    font-family: 'Helvetica Neue', Helvetica, sans-serif;
-    font-size: .78rem;
-    font-weight: 500;
-    color: var(--fzd-text-faint);
+    font-family: var(--fzd-font);
+    font-size: .8125rem;
+    font-weight: 400;
+    color: var(--fzd-text-fainter);
   }
 
-  /* ---- JOUEUR : portrait, nom, équipe, position ---- */
-  body.fz-draft #playerTable tbody td.fzd-name-cell {
-    padding: 8px 10px 8px 4px;
+  /* ---- JOUEUR : portrait, nom, équipe, position ----
+     La cellule ne rajoute pas de marge : la hauteur de la rangée vient
+     du portrait de 34px encadré des 9px communs à toutes les cellules
+     (34 + 18 = 52px, la rangée de la maquette). C'est aussi pourquoi le
+     bloc nom + méta doit rester SOUS 34px de haut — d'où les
+     interlignes serrés du code d'équipe et de la pastille. */
+  body.fz-draft #playerTable#playerTable tbody td.fzd-name-cell {
+    padding: 9px 0;
+    overflow: visible;
     white-space: normal;
+    text-overflow: clip;
   }
   body.fz-draft .fzd-name-inner {
     display: flex;
@@ -793,6 +936,7 @@
     display: block;
     width: 34px;
     height: 34px;
+    max-width: none;
     border-radius: 999px;
     background: var(--fzd-tile-bg);
   }
@@ -800,6 +944,7 @@
     display: block;
     width: 34px;
     height: 34px;
+    max-width: none;
     border: 0;
     border-radius: 999px;
     object-fit: cover;
@@ -836,52 +981,89 @@
   }
   body.fz-draft .fzd-name-main {
     display: block;
-    font-size: .84rem;
+    font-family: var(--fzd-font);
+    font-size: .875rem;
     font-weight: 600;
+    line-height: 1.2;
     color: var(--fzd-ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   body.fz-draft .fzd-name-main .player-pos { display: none; }
-  body.fz-draft .fzd-name-meta { display: flex; align-items: center; gap: 7px; }
+  body.fz-draft .fzd-name-meta {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    line-height: 1;
+  }
   body.fz-draft .fzd-team-abbr {
-    font: 600 .64rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    font: 400 .6875rem/1.2 var(--fzd-font-cond);
     letter-spacing: .1em;
-    color: var(--fzd-text-muted);
+    text-transform: uppercase;
+    color: var(--fzd-text-dim);
   }
 
-  body.fz-draft #playerTable tbody td.points-column { font-size: .92rem; font-weight: 700; }
-
-  /* ---- ACTION : l'étoile, puis « Repêcher » quand c'est votre tour ---- */
-  body.fz-draft #playerTable tbody td.action-column {
-    padding-right: 20px;
-    text-align: right;
+  body.fz-draft #playerTable#playerTable tbody td.points-column {
+    background: none;
+    font-size: .9375rem;
+    font-weight: 700;
+    color: var(--fzd-ink);
   }
-  body.fz-draft #playerTable tbody td.action-column button.select-button {
+
+  /* ---- ACTION : l'étoile, puis « Repêcher » quand c'est votre tour ----
+     font-size:0 sur la cellule mange l'espace blanc du gabarit entre les
+     deux boutons — sans quoi il s'ajoutait aux 8px voulus. */
+  body.fz-draft #playerTable#playerTable tbody td.action-column {
+    white-space: nowrap;
+    font-size: 0;
+  }
+  body.fz-draft #playerTable td.action-column button.select-button,
+  body.fz-draft #playerTable td.action-column button.favorite-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-width: 0;
     min-height: 0;
+    vertical-align: middle;
+  }
+  body.fz-draft #playerTable td.action-column button.select-button {
+    margin-left: 8px;
     padding: 7px 15px;
     border-radius: 6px;
     background: var(--fzd-accent-fill);
     border: 1px solid var(--fzd-accent-fill);
     color: var(--fzd-on-accent);
-    font: 700 .64rem/1 'Helvetica Neue', Helvetica, sans-serif;
+    font: 700 .75rem/1 var(--fzd-font-cond);
     letter-spacing: .12em;
     text-transform: uppercase;
   }
+  body.fz-draft #playerTable td.action-column button.select-button:hover {
+    background: var(--fzd-accent-hover, var(--fzd-accent-fill));
+    border-color: var(--fzd-accent-hover, var(--fzd-accent-fill));
+    color: var(--fzd-on-accent);
+  }
   /* Le libellé remplace l'icône : le bouton garde son aria-label
      « Sélectionner <joueur> », c'est lui qui est annoncé. */
-  body.fz-draft #playerTable tbody td.action-column button.select-button .select-icon { display: none; }
-  body.fz-draft #playerTable tbody td.action-column button.select-button::after { content: 'Repêcher'; }
-  body.fz-draft #playerTable tbody td.action-column button.favorite-btn {
+  body.fz-draft #playerTable td.action-column button.select-button .select-icon { display: none; }
+  body.fz-draft #playerTable td.action-column button.select-button::after { content: 'Repêcher'; }
+  body.fz-draft #playerTable td.action-column button.favorite-btn {
     width: 30px;
     height: 30px;
-    min-height: 0;
+    padding: 0;
     border-radius: 6px;
-    border: 1px solid var(--fzd-border-strong);
+    border: 1px solid var(--fzd-tile-bg-strong);
     background: none;
+    color: var(--fzd-text-ghost);
+    font-size: .8125rem;
   }
-  body.fz-draft #playerTable tbody td.action-column button.favorite-btn:hover { border-color: var(--fzd-accent); }
+  body.fz-draft #playerTable td.action-column button.favorite-btn:hover { border-color: var(--fzd-accent); }
+  body.fz-draft #playerTable td.action-column button.favorite-btn.is-active {
+    background: none;
+    border-color: var(--fzd-tile-bg-strong);
+    color: var(--fzd-accent);
+  }
 
 
   /* ==========================================================
@@ -914,7 +1096,7 @@ body.fz-draft .fzd-pos-tag {
   border-radius: 4px;
   background: var(--fzd-tag-bg, var(--fzd-tile-bg));
   color: var(--fzd-tag-fg, var(--fzd-text));
-  font: 700 .6rem/1.5 'Helvetica Neue', Helvetica, sans-serif;
+  font: 700 .625rem/1.2 var(--fzd-font-cond);
   letter-spacing: .1em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -928,13 +1110,13 @@ body.fz-draft .fzd-pos-tag[data-pos="G"] { --fzd-tag-bg: #d1efec; --fzd-tag-fg: 
 body.fz-draft .fzd-pos-tag[data-pos="star"] { --fzd-tag-bg: #d9f2dc; --fzd-tag-fg: #1d6631; }
 body.fz-draft .fzd-pos-tag[data-pos="T"] { --fzd-tag-bg: #f7e6bf; --fzd-tag-fg: #75560f; }
 
-html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="C"] { --fzd-tag-bg: #16304f; --fzd-tag-fg: #8dbdf5; }
-html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="L"] { --fzd-tag-bg: #2c1f4a; --fzd-tag-fg: #bfa4f0; }
-html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="R"] { --fzd-tag-bg: #43162f; --fzd-tag-fg: #f09ccb; }
-html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="D"] { --fzd-tag-bg: #4a2c11; --fzd-tag-fg: #f0b273; }
-html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="G"] { --fzd-tag-bg: #103733; --fzd-tag-fg: #7fd6cc; }
-html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="star"] { --fzd-tag-bg: #14361d; --fzd-tag-fg: #86d69a; }
-html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="T"] { --fzd-tag-bg: #3d3113; --fzd-tag-fg: #e2c274; }
+html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="C"] { --fzd-tag-bg: #1e3a4d; --fzd-tag-fg: #7fc4e8; }
+html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="L"] { --fzd-tag-bg: #1f3b2e; --fzd-tag-fg: #7fd8a6; }
+html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="R"] { --fzd-tag-bg: #3d2c14; --fzd-tag-fg: #e0b466; }
+html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="D"] { --fzd-tag-bg: #3a2030; --fzd-tag-fg: #e195bb; }
+html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="G"] { --fzd-tag-bg: #2c2540; --fzd-tag-fg: #b3a6ee; }
+html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="star"] { --fzd-tag-bg: #332925; --fzd-tag-fg: #c8bcb5; }
+html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="T"] { --fzd-tag-bg: #2a2320; --fzd-tag-fg: #b6a9a2; }
 
 
 /* Sous 1100px, les onglets reprennent la main et la rangée reste

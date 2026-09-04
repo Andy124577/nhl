@@ -2,6 +2,12 @@
 
 
 body.fz-draft {
+  /* Les deux familles de la maquette (Repechage.dc.html) : Barlow pour
+     le texte courant, Barlow Condensed pour les intertitres en petites
+     capitales espacees. Nommees ici une fois, jamais en dur ailleurs. */
+  --fzd-font: 'Barlow', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --fzd-font-cond: 'Barlow Condensed', 'Oswald', 'Helvetica Neue', Helvetica, sans-serif;
+
   --fzd-bg: #f7f6f3;
   --fzd-bg-alt: #f2f0eb;
   --fzd-bg-page: #dedbd5;
@@ -12,12 +18,15 @@ body.fz-draft {
   --fzd-text-muted: #6d6a64;
   --fzd-text-faint: #8a877f;
   --fzd-text-fainter: #a8a49c;
+  --fzd-text-dim: #7b7872;    /* en-tete de tableau, code d'equipe */
+  --fzd-text-ghost: #a8a49c;  /* notes de rangee, codes de choix   */
   --fzd-border: #e2dfd8;
   --fzd-border-strong: #cdcac3;
   --fzd-border-soft: #eae7e0;
   --fzd-border-input: #d6d3cc;
   --fzd-accent: #b93d28;
   --fzd-accent-dark: #8f2e1a;
+  --fzd-accent-hover: #8f2e1a;
   --fzd-accent-wash: #f7e6e2;
   --fzd-accent-border: #eabdb2;
   /* Aplat de la brique. --fzd-accent s'éclaircit en thème sombre pour rester
@@ -26,6 +35,8 @@ body.fz-draft {
   --fzd-accent-fill: #b93d28;
   --fzd-on-accent: #ffffff;
   --fzd-tile-bg: #e6e3db;
+  --fzd-tile-bg-strong: #d8d5cd;
+  --fzd-success: #2e7d54;
   /* Pastille de logo : les écussons de la LNH sont dessinés pour un fond
      clair et se noieraient sur une surface sombre. Ce jeton ne bascule pas —
      c'est le seul blanc volontairement fixe des deux thèmes. */
@@ -68,7 +79,7 @@ body.fz-draft {
   min-height: 100vh;
   background: var(--fzd-bg-page);
   color: var(--fzd-text);
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: var(--fzd-font);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -88,48 +99,60 @@ body.fz-draft {
 /* 5,8:1 sur la carte sombre — 2,8:1 sinon, illisible.           */
 /* ============================================================ */
 html[data-theme="dark"] body.fz-draft {
-  --fzd-bg: #1a1a1e;
-  --fzd-bg-alt: #202025;
-  --fzd-bg-page: #131316;
-  --fzd-surface: #1e1e22;
-  --fzd-ink: #f5f5f2;
-  --fzd-ink-soft: #d5d2cb;
-  --fzd-text: #c9c6c0;
-  --fzd-text-muted: #a3a099;
-  --fzd-text-faint: #8a877f;
-  --fzd-text-fainter: #6e6b65;
-  --fzd-border: #2e2e33;
-  --fzd-border-strong: #3c3c43;
-  --fzd-border-soft: #27272c;
-  --fzd-border-input: #3a3a41;
-  --fzd-accent: #e8795e;
-  --fzd-accent-dark: #f19b85;
-  --fzd-accent-wash: #351d17;
-  --fzd-accent-border: #5a3227;
-  --fzd-tile-bg: #2a2a2f;
-  --fzd-warning: #dfb352;
-  --fzd-warning-bg: #33280f;
-  --fzd-warning-border: #5c4a1c;
-  --fzd-warning-text: #dfb352;
-  --fzd-danger: #e8795e;
+  /* Valeurs relevees une a une sur Repechage.dc.html : un brun tres
+     sombre plutot qu'un gris neutre, et la brique remontee a #e2552c.
+     Les ROLES ne bougent pas — seules les valeurs. */
+  --fzd-bg: #0f0c0b;          /* bandes du haut, tuiles du carrousel   */
+  --fzd-bg-alt: #1c1715;      /* pastilles, champs, survol de rangee   */
+  --fzd-bg-page: #141110;     /* le fond de la page                    */
+  --fzd-surface: #171312;     /* rails, en-tete du tableau             */
+  --fzd-rail-foot: #131010;   /* pied du rail gauche (limites d'equipe)*/
+  --fzd-ink: #f2ebe6;
+  --fzd-ink-soft: #c8bcb5;
+  --fzd-text: #c8bcb5;
+  --fzd-text-muted: #b6a9a2;
+  --fzd-text-faint: #9a8d86;
+  --fzd-text-fainter: #7d716b;
+  --fzd-text-dim: #8b7e78;    /* en-tete de tableau, code d'equipe */
+  --fzd-text-ghost: #6f625c;  /* notes de rangee, codes de choix       */
+  --fzd-border: #201a18;      /* filet entre deux rangees              */
+  --fzd-border-strong: #2a2320;
+  --fzd-border-soft: #241d1b;
+  --fzd-border-input: #2f2724;
+  --fzd-accent: #e2552c;
+  --fzd-accent-dark: #f07a56;
+  --fzd-accent-hover: #c94724;
+  --fzd-accent-wash: #1e1614;
+  --fzd-accent-border: #4a2c1f;
+  --fzd-accent-fill: #e2552c;
+  --fzd-on-accent: #ffffff;
+  --fzd-tile-bg: #2a2320;
+  --fzd-tile-bg-strong: #332925;
+  --fzd-success: #7fd8a6;
+  --fzd-warning: #e0b466;
+  --fzd-warning-bg: #3d2c14;
+  --fzd-warning-border: #4a2c1f;
+  --fzd-warning-text: #e0b466;
+  --fzd-danger: #e2552c;
 
-  /* L'aplat plein s'inverse avec le fond : clair sur sombre, comme il était
-     sombre sur clair. Son libellé suit dans la même bascule. */
-  --fzd-solid: #f0eee9;
-  --fzd-solid-soft: #d8d5ce;
-  --fzd-solid-hover: #ffffff;
-  --fzd-on-solid: #16181a;
-  --fzd-on-solid-muted: #4b4843;
-  --fzd-on-solid-faint: #6d6a64;
-  --fzd-on-solid-border: #b3b0a9;
+  /* L'aplat plein reste clair sur sombre : c'est la tuile « en attente »
+     de la maquette (#e9e2d3, texte #1b1512). */
+  --fzd-solid: #e9e2d3;
+  --fzd-solid-soft: #d6cdb9;
+  --fzd-solid-hover: #f3ecdd;
+  --fzd-on-solid: #1b1512;
+  --fzd-on-solid-muted: #4a3f38;
+  --fzd-on-solid-faint: #6f625c;
+  --fzd-on-solid-border: #b8ad9a;
 
-  --fzd-tab-track: #26262b;
-  --fzd-tab-hover: #303036;
-  --fzd-tab-text: #a3a099;
+  --fzd-tab-track: #1c1715;
+  --fzd-tab-hover: #241d1b;
+  --fzd-tab-text: #9a8d86;
 
-  /* La glace s'assombrit mais garde sa teinte : c'est encore de la glace,
-     pas une carte de plus. Les tracés bleus gagnent en luminosité pour
-     rester visibles dessus. */
+  --fzd-logo-bg: #f2ebe6;
+
+  /* La maquette ne montre pas de patinoire (draftDesk.css la masque sur
+     bureau) ; sous 1100px elle reste telle quelle. */
   --fzd-ice-top: #1e2a33;
   --fzd-ice-bottom: #16202a;
   --fzd-ice-line: #4a7ea8;
@@ -137,6 +160,46 @@ html[data-theme="dark"] body.fz-draft {
   --fzd-ice-dash: #4d6b81;
   --fzd-ice-label: #9db8cc;
   --fzd-ice-empty: rgba(255, 255, 255, .07);
+}
+
+/* ============================================================ */
+/* LE MOBILIER PARTAGE, AU TON DE LA MAQUETTE                    */
+/* ------------------------------------------------------------ */
+/* La barre du haut, le rail des pools et tout ce que index.css  */
+/* dessine sur cette page lisent les jetons GENERAUX du site, pas */
+/* les --fzd-*. Ils restaient donc sur le gris neutre et le cyan- */
+/* brique du reste du site pendant que la page passait au brun de */
+/* Repechage.dc.html : deux palettes sur un meme ecran.          */
+/*                                                               */
+/* Remappage porte par body.fz-draft, donc STRICTEMENT sur cette */
+/* page : aucune autre vue ne change. Les jetons gardent leur     */
+/* role — seules les valeurs suivent la maquette.                */
+/* ============================================================ */
+html[data-theme="dark"] body.fz-draft {
+  --navbar-bg: #0f0c0b;
+  --navbar-border: #2a2320;
+
+  --bg: #141110;
+  --bg-page: #141110;
+  --card: #171312;
+  --card-white: #1c1715;
+  --bg-gray-light: #171312;
+  --bg-odd-row: #1c1715;
+  --bg-hover: #1c1715;
+
+  --primary: #e2552c;
+  --primary-deep: #c94724;
+  --primary-rgb: 226, 85, 44;
+
+  --text-main: #f2ebe6;
+  --text-dark: #c8bcb5;
+  --text-secondary: #9a8d86;
+  --text-gray: #8b7e78;
+  --text-light-gray: #6f625c;
+
+  --border-light: #201a18;
+  --border-gray: #2a2320;
+  --border-table: #201a18;
 }
 
 body.fz-draft * { box-sizing: border-box; }
@@ -191,7 +254,7 @@ body.fz-draft .pick-card-live-badge,
 body.fz-draft .dop-round-num,
 body.fz-draft td.points-column,
 body.fz-draft th.points-column {
-  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+  font-family: var(--fzd-font-cond);
   font-variant-numeric: tabular-nums;
 }
 
@@ -265,7 +328,7 @@ body.fz-draft .turn-banner-logo[hidden] { display: none; }
 body.fz-draft .turn-banner-body { gap: 2px; }
 body.fz-draft .turn-banner-body[hidden] { display: none; }
 body.fz-draft .turn-banner-text {
-  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: var(--fzd-font);
   font-size: .92rem;
   font-weight: 600;
   letter-spacing: 0;
@@ -349,7 +412,7 @@ body.fz-draft .turn-banner.waiting .turn-banner-body::before {
 }
 body.fz-draft .turn-banner.waiting .turn-banner-text,
 body.fz-draft .turn-banner.your-turn .turn-banner-text {
-  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: var(--fzd-font);
   font-size: .78rem;
   font-weight: 400;
   letter-spacing: 0;
@@ -386,7 +449,7 @@ body.fz-draft .turn-banner-needs {
   text-overflow: ellipsis;
   text-align: left;
   padding-bottom: 0;
-  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: var(--fzd-font);
   font-size: .78rem;
   color: var(--fzd-text-faint);
   display: none;
@@ -419,7 +482,7 @@ body.fz-draft .turn-banner-metric {
 }
 body.fz-draft .turn-banner-metric[hidden] { display: none; }
 body.fz-draft .turn-banner-metric-num {
-  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+  font-family: var(--fzd-font-cond);
   font-size: 1.375rem;
   line-height: 1;
   font-weight: 600;
@@ -442,7 +505,7 @@ body.fz-draft .turn-banner-cta {
   border-radius: 8px;
   background: var(--fzd-accent-fill);
   color: var(--fzd-on-accent);
-  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: var(--fzd-font);
   font-size: .72rem;
   font-weight: 600;
   letter-spacing: .07em;
@@ -473,7 +536,7 @@ body.fz-draft .turn-banner.your-turn .turn-clock { display: none; }
   body.fz-draft .turn-banner.your-turn .turn-banner-metric-label::before { content: 'écoulé'; }
   body.fz-draft .turn-banner.waiting .turn-banner-metric-label::before { content: 'avant vous'; }
   body.fz-draft .turn-banner-metric-label::before {
-    font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+    font-family: var(--fzd-font-cond);
     font-size: .625rem;
     font-weight: 500;
     letter-spacing: .13em;
@@ -580,7 +643,7 @@ body.fz-draft .pick-card-turn {
   gap: 6px;
 }
 body.fz-draft .pick-card-turn-num {
-  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: var(--fzd-font);
   font-size: .64rem;
   font-weight: 600;
   letter-spacing: .1em;
@@ -632,7 +695,7 @@ body.fz-draft .pick-card-watermark { display: none; }
 body.fz-draft .pick-card-slot,
 body.fz-draft .pick-card-initials {
   position: static;
-  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+  font-family: var(--fzd-font-cond);
   font-size: .68rem;
   font-weight: 600;
   color: var(--fzd-text-muted);
@@ -651,7 +714,7 @@ body.fz-draft .pick-card-head {
 }
 body.fz-draft .pick-card-id { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 auto; }
 body.fz-draft .pick-card-name {
-  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: var(--fzd-font);
   font-weight: 600;
   font-size: .78rem;
   line-height: 1.2;
@@ -766,7 +829,7 @@ body.fz-draft .panel-tab {
   box-shadow: none;
   
   color: var(--fzd-tab-text);
-  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: var(--fzd-font);
   font-size: .75rem;
   font-weight: 600;
   letter-spacing: .08em;
@@ -818,7 +881,7 @@ body.fz-draft .recent-picks-card { padding: 0; border-radius: 0; }
 body.fz-draft .progress-card h2,
 body.fz-draft .card-header h2,
 body.fz-draft .filters-header h2 {
-  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: var(--fzd-font);
   font-size: .78rem;
   font-weight: 600;
   letter-spacing: .13em;
@@ -886,7 +949,7 @@ body.fz-draft .progress-view-chip {
   border: 0;
   border-radius: 7px;
   background: none;
-  font: 600 .66rem/1 'Helvetica Neue', Helvetica, sans-serif;
+  font: 600 .66rem/1 var(--fzd-font);
   letter-spacing: .04em;
   text-transform: uppercase;
   color: var(--fzd-text-muted);
@@ -959,7 +1022,7 @@ body.fz-draft .fzd-tile-box {
 body.fz-draft .fzd-tile.is-empty .fzd-tile-box { background: none; border: 1px dashed var(--fzd-ice-dash); }
 body.fz-draft .fzd-tile-box img { width: 100%; height: 100%; object-fit: contain; }
 body.fz-draft .fzd-tile-name {
-  font: 600 .62rem/1.2 'Helvetica Neue', Helvetica, sans-serif;
+  font: 600 .62rem/1.2 var(--fzd-font);
   color: var(--fzd-on-solid);
   max-width: 100%;
   overflow: hidden;
@@ -967,11 +1030,11 @@ body.fz-draft .fzd-tile-name {
   white-space: nowrap;
 }
 body.fz-draft .fzd-tile-label {
-  font: 500 .6rem/1.2 'Helvetica Neue', Helvetica, sans-serif;
+  font: 500 .6rem/1.2 var(--fzd-font);
   color: var(--fzd-ice-label);
 }
 body.fz-draft .fzd-tile-code {
-  font: 500 .56rem/1 'Helvetica Neue', Helvetica, sans-serif;
+  font: 500 .56rem/1 var(--fzd-font);
   letter-spacing: .07em;
   color: var(--fzd-on-solid-muted);
 }
@@ -986,7 +1049,7 @@ body.fz-draft .fzd-tile--rink {
 }
 
 body.fz-draft .progress-reserve-title {
-  font: 600 .58rem/1 'Helvetica Neue', Helvetica, sans-serif;
+  font: 600 .58rem/1 var(--fzd-font);
   letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--fzd-text-faint);
@@ -1046,7 +1109,7 @@ body.fz-draft .turn-banner-fav-photo {
    le bandeau d'alerte de la colonne centrale (draftDesk.css), qui n'a pas
    de pastille et repose sur --fzd-surface. */
 body.fz-draft .turn-banner-fav-title {
-  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+  font-family: var(--fzd-font-cond);
   font-size: .82rem;
   font-weight: 600;
   letter-spacing: .01em;
@@ -1054,7 +1117,7 @@ body.fz-draft .turn-banner-fav-title {
   display: none;
 }
 body.fz-draft .turn-banner-fav-sub {
-  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: var(--fzd-font);
   font-size: .78rem;
   color: var(--fzd-text-faint);
 }
@@ -1067,7 +1130,7 @@ body.fz-draft .turn-banner-fav-cta {
   padding: 8px 16px;
   border-color: var(--fzd-accent);
   color: var(--fzd-accent-dark);
-  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: var(--fzd-font);
   font-size: .7rem;
   font-weight: 700;
   letter-spacing: .09em;
@@ -1167,7 +1230,7 @@ body.fz-draft .recent-feed-row:last-child { border-bottom: 0; }
 body.fz-draft .recent-feed-slot {
   flex: 0 0 auto;
   width: 30px;
-  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+  font-family: var(--fzd-font-cond);
   font-weight: 600;
   font-size: .74rem;
   color: var(--fzd-text-fainter);
@@ -1262,7 +1325,7 @@ body.fz-draft .selected-player-tiles {
 }
 body.fz-draft .selected-player-tile { background: var(--fzd-surface); padding: 10px 0; text-align: center; }
 body.fz-draft .selected-player-tile-num {
-  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+  font-family: var(--fzd-font-cond);
   font-size: 1.18rem;
   font-weight: 600;
   color: var(--fzd-ink);
@@ -1300,8 +1363,8 @@ body.fz-draft .selected-player-need-row:last-child { border-bottom: 0; }
 
 
 body.fz-draft #playerTable tbody tr.fzd-selected-row {
-  background: var(--fzd-surface);
-  box-shadow: inset 3px 0 0 var(--fzd-accent);
+  background: var(--fzd-bg-alt);
+  box-shadow: inset 2px 0 0 var(--fzd-accent);
 }
 /* !important à contrecœur, contre celui de draftActif.css :
    « #playerTable tbody tr { display: flex !important } » y est posé sans
@@ -1463,7 +1526,7 @@ body.fz-draft #fzPickedList thead th {
   border-bottom: 1px solid var(--fzd-border-strong);
   border-radius: 0;
   color: var(--fzd-text-fainter);
-  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: var(--fzd-font);
   font-size: .64rem;
   font-weight: 600;
   letter-spacing: .09em;
@@ -1488,22 +1551,22 @@ body.fz-draft #playerTable tbody tr,
 body.fz-draft #fzPickedList tbody tr,
 body.fz-draft #fzPickedList tbody tr:nth-child(odd),
 body.fz-draft #fzPickedList tbody tr:nth-child(even) {
-  background: var(--fzd-surface);
-  border: 1px solid var(--fzd-border);
-  transition: background .15s ease, border-color .15s ease;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  transition: background .15s ease;
 }
 
 
 body.fz-draft #playerTable tbody tr:hover,
 body.fz-draft #fzPickedList tbody tr:hover {
   background: var(--fzd-bg-alt) !important;
-  border-color: var(--fzd-border-strong);
   transform: none;
   box-shadow: none;
 }
 
 
-body.fz-draft #playerTable tbody tr.fzd-selected-row:hover { box-shadow: inset 3px 0 0 var(--fzd-accent); }
+body.fz-draft #playerTable tbody tr.fzd-selected-row:hover { box-shadow: inset 2px 0 0 var(--fzd-accent); }
 
 body.fz-draft #playerTable tbody tr.draft-empty-row,
 body.fz-draft #playerTable tbody tr.draft-empty-row:hover {
@@ -1515,8 +1578,9 @@ body.fz-draft .draft-empty-icon { color: var(--fzd-text-fainter); }
 body.fz-draft #playerTable tbody td,
 body.fz-draft #fzPickedList tbody td {
   background: none;
-  border-top: 0;
-  border-bottom: 0;
+  border: 0;
+  border-bottom: 1px solid var(--fzd-border);
+  border-radius: 0;
   color: var(--fzd-text-muted);
   font-size: .82rem;
   vertical-align: middle;
@@ -1595,7 +1659,7 @@ body.fz-draft .player-list-more {
   background: none;
   padding: 0;
   color: var(--fzd-accent);
-  font-family: 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: var(--fzd-font);
   font-size: .72rem;
   font-weight: 600;
   letter-spacing: .06em;
@@ -1686,7 +1750,7 @@ body.fz-draft .finish-btn:hover { background: var(--fzd-solid-hover); }
 
 body.fz-draft .draft-done,
 body.fz-draft .draft-notstarted { color: var(--fzd-ink); }
-body.fz-draft .draft-done-title { color: var(--fzd-ink); font-family: 'Oswald', sans-serif; }
+body.fz-draft .draft-done-title { color: var(--fzd-ink); font-family: var(--fzd-font-cond); }
 body.fz-draft .draft-done-sub { color: var(--fzd-text-muted); }
 body.fz-draft .draft-done-last { color: var(--fzd-text-muted); }
 body.fz-draft .ddl-player { color: var(--fzd-ink); font-weight: 700; }

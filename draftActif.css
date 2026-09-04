@@ -1078,7 +1078,7 @@ html[data-theme="light"] .player-selection-card {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
   border: 1px solid var(--border-light);
-  border-radius: 12px;
+  border-radius: 0;
 }
 .table-wrapper::-webkit-scrollbar { height: 7px; }
 .table-wrapper::-webkit-scrollbar-track { background: var(--bg-gray-light); }
@@ -1755,7 +1755,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
 
 #playerTable {
   border-collapse: separate;
-  border-spacing: 0 7px;
+  border-spacing: 0;
 }
 #playerTable thead th {
   border-radius: 0;
@@ -1763,25 +1763,20 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   padding-bottom: 9px;
 }
 #playerTable tbody td {
-  border-bottom: 0;
-  border-top: 1px solid var(--border-light);
+  border: 0;
   border-bottom: 1px solid var(--border-light);
-  background: var(--bg-odd-row);
+  border-radius: 0;
+  background: none;
 }
-#playerTable tbody td:first-child {
-  border-left: 1px solid var(--border-light);
-  border-radius: 12px 0 0 12px;
-}
+#playerTable tbody td:first-child,
 #playerTable tbody td:last-child {
-  border-right: 1px solid var(--border-light);
-  border-radius: 0 12px 12px 0;
+  border-radius: 0;
 }
 
 #playerTable tbody tr:nth-child(even) { background: none; }
 @media (hover: hover) {
   #playerTable tbody tr:hover td {
     background: rgba(var(--primary-rgb), .07);
-    border-color: rgba(var(--primary-rgb), .35);
   }
 }
 
@@ -2195,24 +2190,23 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 
 
 #playerTable tbody tr {
-  margin-bottom: 7px;
-  background: var(--bg-odd-row);
-  border: 1px solid var(--border-light);
-  border-radius: 12px;
-  transition: border-color .16s ease, background .16s ease;
+  margin-bottom: 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--border-light);
+  border-radius: 0;
+  transition: background .16s ease;
 }
 
 
 @media (hover: hover) {
   #playerTable tbody tr:hover {
     background: rgba(var(--primary-rgb), .07);
-    border-color: rgba(var(--primary-rgb), .35);
   }
   
 
   #playerTable tbody tr:has(button.select-button:hover) {
-    background: var(--bg-odd-row);
-    border-color: var(--border-light);
+    background: none;
   }
 }
 #playerTable tbody td {
@@ -2228,9 +2222,8 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 
 
 #playerTable thead tr {
-  margin-bottom: 7px;
-  border-radius: 10px;
-  overflow: hidden;
+  margin-bottom: 0;
+  border-radius: 0;
 }
 #playerTable thead th {
   display: block;
