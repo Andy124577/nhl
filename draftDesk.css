@@ -1087,6 +1087,11 @@
    dur : le thème sombre ne redéfinit que les jetons, jamais la
    règle de dessin.
    ============================================================ */
+/* « 76 PJ · 44 B · 86 A », ecrite par fzDeskDecorateRows() pour la
+   maquette telephone : sur bureau les colonnes disent deja tout,
+   draftPhone.css est seul a la montrer. */
+body.fz-draft .fzd-name-line { display: none; }
+
 body.fz-draft .fzd-pos-tag {
   display: inline-flex;
   align-items: center;

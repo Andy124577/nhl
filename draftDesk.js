@@ -94,17 +94,31 @@ function fzDeskMonterBande() {
 }
 
 /**
- * Rail de gauche. Sa coquille (en-tête, corps qui défile, pied) est
- * construite ici ; son contenu est rempli à chaque rafraîchissement
- * par fzDeskRenderRail().
+ * Coquille de l'alignement — en-tête « MON ALIGNEMENT », corps qui
+ * défile, pied « LIMITES D'ÉQUIPE ». Son contenu est rempli à chaque
+ * rafraîchissement par fzDeskRenderRail().
+ *
+ * DEUX HÔTES, UNE SEULE COQUILLE. Sur bureau elle vit dans le rail de
+ * poolNav (#fzSidebar) ; sous 1100px, la maquette téléphone en fait
+ * l'onglet « Mon équipe », et elle passe dans #lineupCard — la carte
+ * qui portait jusqu'ici une simple liste à plat de mes choix, sans les
+ * cases vides ni les limites. Les ids sont uniques : on DÉPLACE la
+ * coquille quand la fenêtre traverse le seuil plutôt que d'en monter
+ * une seconde, ce qui casserait fzDeskRenderRail() (qui les cherche
+ * par id) et les compteurs d'onglets qui lisent #fzdRailCount.
  */
 function fzDeskMonterRail() {
-    const rail = document.getElementById('fzSidebar');
-    if (!rail) return null;
-    rail.classList.add('fz-sidebar--draft');
+    const surBureau = fzDeskEstBureau();
+    const hote = surBureau ? document.getElementById('fzSidebar')
+                           : document.getElementById('lineupCard');
+    if (!hote) return null;
+    if (surBureau) hote.classList.add('fz-sidebar--draft');
 
-    if (!document.getElementById('fzdRailHead')) {
-        rail.insertAdjacentHTML('afterbegin', `
+    let tete = document.getElementById('fzdRailHead');
+    if (!tete) {
+        // En tête du rail (au-dessus du reste de poolNav), en queue de la
+        // carte (sous son propre en-tête, que draftPhone.css masque).
+        hote.insertAdjacentHTML(surBureau ? 'afterbegin' : 'beforeend', `
             <div class="fzd-rail-head" id="fzdRailHead">
                 <span class="fzd-rail-title">Mon alignement</span>
                 <span class="fzd-rail-count" id="fzdRailCount"></span>
@@ -114,8 +128,17 @@ function fzDeskMonterRail() {
                 <span class="fzd-rail-title">Limites d'équipe</span>
                 <div class="fzd-limits" id="fzdLimits"></div>
             </div>`);
+        return hote;
     }
-    return rail;
+
+    if (tete.parentNode !== hote) {
+        const noeuds = [tete,
+                        document.getElementById('fzdRosterList'),
+                        document.getElementById('fzdRailFoot')].filter(Boolean);
+        if (surBureau) hote.prepend(...noeuds);
+        else hote.append(...noeuds);
+    }
+    return hote;
 }
 
 function fzDeskApply() {
@@ -407,6 +430,35 @@ function fzDeskRowCode(tr) {
     return FZ_DESK_POSITIONS[brut] ? brut : 'C';
 }
 
+/* ---- « 76 PJ · 44 B · 86 A » ----
+   Sur téléphone, la maquette n'a pas de colonnes de chiffres : les
+   trois premières passent sur la ligne de méta, sous le nom. On relit
+   ce que populateTable() a déjà écrit dans les cellules et l'en-tête
+   qu'elle a posé au-dessus — jamais la fiche du joueur, sinon la vue
+   « Gardiens » (PJ · V · D) et la vue « Équipes » n'y retrouveraient
+   pas leurs chiffres. draftPhone.css seul la montre ; sur bureau les
+   colonnes sont là et la ligne reste masquée. */
+const FZ_DESK_STAT_ABBR = {
+    'GP': 'PJ', 'G': 'B', 'A': 'A', 'PTS': 'PTS',
+    'W': 'V', 'L': 'D', 'OTL': 'DP', 'SV%': 'SV%', 'SO': 'BL',
+    'Victoires': 'V', 'Défaites': 'D', 'Points': 'PTS'
+};
+
+function fzDeskStatLine(tr, entetes) {
+    const morceaux = [];
+    for (let i = 2; i < tr.children.length && morceaux.length < 3; i++) {
+        const cell = tr.children[i];
+        if (cell.classList.contains('points-column')
+            || cell.classList.contains('action-column')) break;
+        const valeur = cell.textContent.trim();
+        if (!valeur) continue;
+        const titre = entetes[i] ? entetes[i].textContent.trim() : '';
+        const abrege = FZ_DESK_STAT_ABBR[titre] || titre;
+        morceaux.push(abrege ? valeur + ' ' + abrege : valeur);
+    }
+    return morceaux.join(' · ');
+}
+
 function fzDeskBuildTag(code) {
     const info = FZ_DESK_POSITIONS[code] || FZ_DESK_POSITIONS.C;
     const tag = document.createElement('span');
@@ -426,6 +478,9 @@ function fzDeskBuildTag(code) {
  * de ce que populateTable() a écrit.
  */
 function fzDeskDecorateRows() {
+    // Lu une fois : l'en-tête est le même pour toutes les rangées, et
+    // la liste en compte plusieurs centaines.
+    const entetes = [...document.querySelectorAll('#playerTable thead th')];
     document.querySelectorAll('#playerTable tbody tr').forEach(tr => {
         if (tr.classList.contains('draft-empty-row')) return;
         const photoCell = tr.children[0];
@@ -457,6 +512,13 @@ function fzDeskDecorateRows() {
             meta.appendChild(equipe);
         }
         meta.appendChild(fzDeskBuildTag(code));
+        const chiffres = fzDeskStatLine(tr, entetes);
+        if (chiffres) {
+            const ligne = document.createElement('span');
+            ligne.className = 'fzd-name-line';
+            ligne.textContent = chiffres;
+            meta.appendChild(ligne);
+        }
 
         const txt = document.createElement('span');
         txt.className = 'fzd-name-txt';
@@ -511,6 +573,8 @@ function fzDeskEstBureau() {
 function fzDeskSync() {
     if (fzDeskEstBureau()) fzDeskApply();
     else fzDeskUndo();
+    // La coquille de l'alignement change d'hôte avec le mode.
+    try { fzDeskMonterRail(); } catch (e) { console.error('[bureau] alignement :', e); }
     // Les onglets posent (ou retirent) leurs display en ligne selon le
     // mode : c'est leur propre fonction qui sait lesquels, on la rejoue.
     if (typeof window.fzApplyPanelTabs === 'function') window.fzApplyPanelTabs();
@@ -553,7 +617,11 @@ function fzDeskWatchTable() {
  * reste qu'à poser sa coquille quand poolNav l'a créé.
  */
 function fzDeskWatchRail() {
-    if (document.getElementById('fzSidebar')) { fzDeskMonterRail(); fzDeskRenderRail(); return; }
+    // Sous 1100px l'hôte (#lineupCard) est déjà là : on monte tout de
+    // suite, et on attend quand même le rail — la fenêtre peut passer
+    // sur bureau plus tard, et la coquille devra le rejoindre.
+    try { fzDeskMonterRail(); fzDeskRenderRail(); } catch (e) { console.error('[bureau] rail :', e); }
+    if (document.getElementById('fzSidebar')) return;
     const observateur = new MutationObserver(() => {
         if (!document.getElementById('fzSidebar')) return;
         observateur.disconnect();

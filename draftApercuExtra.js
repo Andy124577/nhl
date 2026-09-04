@@ -631,6 +631,11 @@ function fzCountAvailable(valeur) {
     }).length;
 }
 
+const FZ_POS_COURT = {
+    all: 'Tous', offensive: 'Att', defensive: 'Déf',
+    goalies: 'Gar', rookies: 'Rec', teams: 'Éq'
+};
+
 function fzRenderPositionSidebar() {
     const hote = document.getElementById('listFiltersSidebar');
     const select = document.getElementById('playerFilter');
@@ -650,6 +655,13 @@ function fzRenderPositionSidebar() {
         const groupe = FZ_GROUPE_PAR_VALEUR[option.value];
         const manque = groupe && groupe === pireGroupe;
         item.classList.toggle('is-needed', !!manque);
+
+        // La maquette téléphone n'a pas la place des libellés entiers :
+        // elle nomme les pastilles TOUS / ATT / DÉF / GAR / REC / ÉQ.
+        // Porté en data-*, affiché par draftPhone.css à la place du
+        // libellé — le texte complet reste dans le DOM pour les lecteurs
+        // d'écran et pour le bureau.
+        item.dataset.short = FZ_POS_COURT[option.value] || option.textContent.trim();
 
         const libelle = document.createElement('span');
         libelle.className = 'list-filter-label';

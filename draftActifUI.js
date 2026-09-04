@@ -269,23 +269,16 @@ function initPanelTabs() {
     const entete = document.querySelector('.draft-header');
     if (!conteneur || document.getElementById('panelTabs')) return;
 
+    // Trois onglets, dans l'ordre de la maquette téléphone
+    // (Repechage.dc.html) : la liste d'abord — c'est ce qu'on vient
+    // faire —, puis son équipe, puis ce qui s'est passé. « Aperçu »
+    // réunissait les quatre cartes ; il en mélangeait deux questions
+    // (« où j'en suis » et « qui vient d'être pris ») que la maquette
+    // sépare, et il fallait descendre pour trouver la seconde.
     const groupes = [
         {
-            cle: 'apercu',
-            libelle: 'Aperçu',
-            // getElementById, pas querySelector('.progress-card') : cette
-            // classe est l'habillage partagé de toutes ces cartes, et
-            // querySelector se serait arrêté à la première.
-            els: [
-                document.getElementById('suggestionCard'),
-                document.getElementById('progressCard'),
-                document.getElementById('lineupCard'),
-                document.getElementById('recentPicksFeed')
-            ].filter(Boolean)
-        },
-        {
             cle: 'joueurs',
-            libelle: 'Liste des joueurs',
+            libelle: 'Joueurs',
             // Sidebar de position et carte « Joueur sélectionné » (bureau
             // seulement, voir draftActif-premium.css, §11) : rangées avec le
             // tableau plutôt que dans un groupe séparé, un seul onglet en
@@ -294,6 +287,29 @@ function initPanelTabs() {
                 document.getElementById('listFiltersSidebar'),
                 document.querySelector('.player-selection-card'),
                 document.getElementById('selectedPlayerCard')
+            ].filter(Boolean)
+        },
+        {
+            cle: 'equipe',
+            libelle: 'Mon équipe',
+            // getElementById, pas querySelector('.progress-card') : cette
+            // classe est l'habillage partagé de toutes ces cartes, et
+            // querySelector se serait arrêté à la première.
+            // #lineupCard porte, sous 1100px, la coquille de l'alignement
+            // et des limites que draftDesk.js remplit (elle vit dans le
+            // rail sur bureau) ; #progressCard reste du groupe pour que
+            // l'onglet en garde la charge, même masqué par draftPhone.css.
+            els: [
+                document.getElementById('lineupCard'),
+                document.getElementById('progressCard')
+            ].filter(Boolean)
+        },
+        {
+            cle: 'choix',
+            libelle: 'Choix',
+            els: [
+                document.getElementById('suggestionCard'),
+                document.getElementById('recentPicksFeed')
             ].filter(Boolean)
         }
     ].filter(g => g.els.length);
@@ -343,6 +359,7 @@ function initPanelTabs() {
     let actif = groupes[0].cle;
 
     const appliquer = () => {
+        fzPlacerFiltreEquipe();
         // Bureau : les deux groupes sont affichés côte à côte dans la
         // grille à trois colonnes (draftDesk.css) — il n'y a plus de
         // panneau à cacher, et surtout plus de display en ligne à
@@ -355,7 +372,7 @@ function initPanelTabs() {
                 el.removeAttribute('aria-hidden');
             }));
             if (entete) entete.classList.remove('is-liste-joueurs');
-            conteneur.classList.remove('mode-apercu', 'mode-joueurs');
+            conteneur.classList.remove('mode-apercu', 'mode-joueurs', 'mode-equipe', 'mode-choix');
             document.documentElement.classList.remove('fz-list-lock');
             document.body.classList.remove('fz-list-lock');
             return;
@@ -385,8 +402,16 @@ function initPanelTabs() {
         // grille (3 colonnes pour la liste, 2 pour l'aperçu) — sans ce repère,
         // la colonne du panneau masqué restait réservée, vide, à côté de
         // l'autre.
-        conteneur.classList.toggle('mode-apercu', actif === 'apercu');
+        // mode-apercu vaut « tout sauf la liste » : c'est ce que la
+        // grille bureau de draftActif-premium.css (§11) en attend, et
+        // elle n'a pas à connaître le découpage en trois. Les deux
+        // classes plus fines servent, elles, à draftPhone.css — la
+        // colonne « Mon équipe » fige ses limites en pied, celle des
+        // choix défile d'un bloc.
+        conteneur.classList.toggle('mode-apercu', actif !== 'joueurs');
         conteneur.classList.toggle('mode-joueurs', actif === 'joueurs');
+        conteneur.classList.toggle('mode-equipe', actif === 'equipe');
+        conteneur.classList.toggle('mode-choix', actif === 'choix');
         // Mockups Claude Design 4A (mobile) / 4B (bureau) : navbar, bandeau
         // de tour, onglets et filtres restent visibles à l'écran — seule la
         // liste défile. Posée sur <body> (voir draftActif-premium.css, §12)
@@ -405,8 +430,14 @@ function initPanelTabs() {
         // pastilles de catégorie, mais pas propre à elles. Poser
         // overflow:hidden sur <html> aussi retire la précondition de la
         // propagation ; <body> redevient une boîte de défilement ordinaire.
-        document.documentElement.classList.toggle('fz-list-lock', actif === 'joueurs');
-        document.body.classList.toggle('fz-list-lock', actif === 'joueurs');
+        // Posé quel que soit l'onglet : la maquette téléphone donne le
+        // même modèle aux trois — barre du haut, bandeau de tour,
+        // carrousel et onglets figés, seul le corps de l'onglet défile.
+        // Il n'était posé que sur « Liste des joueurs » du temps où
+        // « Aperçu » était une pile de cartes qu'on faisait défiler avec
+        // la page.
+        document.documentElement.classList.add('fz-list-lock');
+        document.body.classList.add('fz-list-lock');
     };
 
     const activer = (cle, focus) => {
@@ -424,7 +455,16 @@ function initPanelTabs() {
         tab.id = 'tab-' + g.cle;
         tab.setAttribute('role', 'tab');
         tab.setAttribute('aria-controls', g.els.map(el => el.id).join(' '));
-        tab.textContent = g.libelle;
+        // Deux lignes : le nom, puis ce que l'onglet contient en ce
+        // moment (« 543 libres », « 3/17 », « 5 faits »). Le compteur est
+        // rempli par fzMajOngletsMeta(), rejouée a chaque rafraichissement.
+        const nom = document.createElement('span');
+        nom.className = 'panel-tab-label';
+        nom.textContent = g.libelle;
+        const meta = document.createElement('span');
+        meta.className = 'panel-tab-meta';
+        meta.dataset.cle = g.cle;
+        tab.append(nom, meta);
         tab.addEventListener('click', () => activer(g.cle, false));
         tab.addEventListener('keydown', e => {
             if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
@@ -466,10 +506,73 @@ function initPanelTabs() {
     // laisser la personne sur le tableau qu'elle vient de quitter.
     window.fzOuvrirApercu = () => {
         if (fzEstBureau()) { amener(document.getElementById('progressCard')); return; }
-        activer('apercu', false);
+        activer('equipe', false);
         strip.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 }
+
+/* ============================================================
+   3bis. LE FILTRE D'ÉQUIPE, DANS LA RANGÉE DE RECHERCHE
+   ------------------------------------------------------------
+   La maquette téléphone met sous les pastilles de position une
+   seule rangée : « Rechercher un joueur » et « Équipes ▾ ». Le
+   champ vit dans la carte du tableau (.filters-row), le sélecteur
+   dans le rail des filtres (#listFiltersSidebar) — deux parents
+   différents, qu'aucune règle CSS ne peut réunir sur une ligne.
+
+   On déplace donc le nœud, et on le remet où il était dès que la
+   fenêtre repasse sur bureau : le rail y reprend sa colonne, avec
+   ses intertitres et ses cases à cocher.
+   ============================================================ */
+function fzPlacerFiltreEquipe() {
+    const select = document.getElementById('listFilterTeam');
+    const rangee = document.querySelector('.player-selection-card > .filters-row');
+    const rail = document.getElementById('listFiltersSidebar');
+    if (!select || !rangee || !rail) return;
+
+    if (fzEstBureau()) {
+        // Sa place d'origine : dernier enfant de son bloc, après le
+        // <label> masqué qui le nomme.
+        const bloc = rail.querySelector('.list-filters-block:last-of-type');
+        if (bloc && select.parentNode !== bloc) bloc.appendChild(select);
+        return;
+    }
+    if (select.parentNode !== rangee) rangee.appendChild(select);
+}
+window.fzPlacerFiltreEquipe = fzPlacerFiltreEquipe;
+
+/* ============================================================
+   4. COMPTEURS DES ONGLETS
+   ------------------------------------------------------------
+   Chaque onglet dit ce qu'il contient : combien de joueurs restent
+   libres, ou en est mon alignement, combien de choix ont ete faits.
+   Rien n'est recalcule ici — les trois chiffres sont deja affiches
+   ailleurs dans la page, on ne fait que les recopier :
+
+     joueurs  fzCountAvailable() (draftApercuExtra.js), la meme
+              fonction que les pastilles de position ;
+     equipe   #fzdRailCount, ecrit par fzDeskRenderRail() ;
+     choix    draftData.picksHistory, comme « Derniers choix ».
+
+   Rejouee par refreshDraftViews() (draftRefresh.js).
+   ============================================================ */
+function fzMajOngletsMeta() {
+    const metas = document.querySelectorAll('.panel-tab-meta');
+    if (!metas.length) return;
+
+    const libres = typeof fzCountAvailable === 'function' ? fzCountAvailable('all') : null;
+    const compteEquipe = document.getElementById('fzdRailCount');
+    const faits = (typeof draftData !== 'undefined' && draftData && draftData.picksHistory)
+        ? draftData.picksHistory.length : null;
+
+    const textes = {
+        joueurs: libres == null ? '' : libres + ' libre' + (libres > 1 ? 's' : ''),
+        equipe: compteEquipe ? compteEquipe.textContent.trim() : '',
+        choix: faits == null ? '' : faits + ' fait' + (faits > 1 ? 's' : '')
+    };
+    metas.forEach(m => { m.textContent = textes[m.dataset.cle] || ''; });
+}
+window.fzMajOngletsMeta = fzMajOngletsMeta;
 
 /* ============================================================
    Initialisation

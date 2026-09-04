@@ -116,7 +116,11 @@ function refreshDraftViews() {
     'fzRefreshApercuExtras',
     // Pastilles de position du tableau, alignement du rail et marque du
     // tour sur <body> (draftDesk.js).
-    'fzRefreshDeskUI'
+    'fzRefreshDeskUI',
+    // Compteurs des trois onglets (draftActifUI.js). En dernier : deux
+    // des trois chiffres sont lus dans ce que les rendus ci-dessus
+    // viennent d'écrire.
+    'fzMajOngletsMeta'
   ];
   rendus.forEach(nom => {
     const fn = window[nom];
