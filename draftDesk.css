@@ -509,6 +509,7 @@
   body.fz-draft .draft-center > .turn-banner-hero .turn-banner-fav { flex: 1 1 auto; }
   body.fz-draft .draft-center > .turn-banner-hero .turn-banner-fav-photo { width: 40px; height: 40px; }
   body.fz-draft .draft-center > .turn-banner-hero .turn-banner-fav-cta { padding: 10px 22px; }
+  body.fz-draft .draft-center > .turn-banner-hero .turn-banner-fav-title { display: block; }
   /* Hors du bandeau, .turn-banner-metric-label perd le ::before que
      draftActif-premium.css lui donnait par état (« écoulé » / « avant
      vous ») — et avec lui sa raison d'être en font-size:0. Le texte
@@ -536,7 +537,7 @@
     border-radius: 0;
   }
   body.fz-draft .player-selection-card > #availabilityTabs .availability-tab {
-    padding: 12px 14px;
+    padding: 8px 14px;
     border: 0;
     border-bottom: 2px solid transparent;
     border-radius: 0;
@@ -558,9 +559,14 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
+    /* La bande passe à deux lignes dès que la fenêtre ne peut pas tenir
+       pastilles + cases + recherche + équipe : c'est la gouttière de
+       rangée, plus serrée que celle des colonnes, qui décide alors de sa
+       hauteur. */
+    column-gap: 10px;
+    row-gap: 6px;
     margin: 0;
-    padding: 13px 20px;
+    padding: 7px 20px;
     border: 0;
     border-bottom: 1px solid var(--fzd-border-strong);
     background: none;
@@ -590,7 +596,7 @@
     align-items: center;
     gap: 6px;
     width: auto;
-    padding: 7px 14px;
+    padding: 5px 13px;
     border-radius: 999px;
     border: 1px solid var(--fzd-border-input);
     background: var(--fzd-bg-alt);
@@ -620,6 +626,14 @@
     margin-left: auto;
     width: 230px;
   }
+  /* Le min-height de 44px de draftActif.css est une cible tactile : dans
+     cette bande, à la souris, elle ne sert qu'à l'épaissir. */
+  body.fz-draft .player-selection-card > .list-filters-sidebar .search-input,
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-team {
+    min-height: 0;
+    padding: 6px 12px;
+  }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .search-input { padding-left: 34px; }
   body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-team {
     order: 4;
     width: auto;
@@ -629,6 +643,7 @@
      bande : elles n'ont pas d'équivalent ailleurs dans la page. */
   body.fz-draft .player-selection-card > .list-filters-sidebar .list-filter-checkbox {
     margin: 0;
+    padding: 4px 8px;
     white-space: nowrap;
     font-size: .72rem;
   }
@@ -649,9 +664,10 @@
   body.fz-draft .player-selection-card > .filters-header { display: none; }
   body.fz-draft .player-selection-card > .filters-row {
     margin: 0;
-    padding: 10px 20px;
+    padding: 5px 20px;
     border-bottom: 1px solid var(--fzd-border);
   }
+  body.fz-draft .player-selection-card > .filters-row .sort-tab { padding: 5px 11px; }
 
 
   /* ==========================================================
@@ -733,10 +749,14 @@
   body.fz-draft #playerTable thead th:first-child {
     width: 52px;
     padding-left: 20px;
+    /* Redit ici : le `font` raccourci de la règle partagée des en-têtes
+       (plus haut dans ce fichier) rend une taille au libellé « Photo »
+       que updateTable() écrit dans cette cellule — draftActif.css le met
+       bien à 0, mais avec une spécificité moindre. « RANG » et « PHOTO »
+       se chevauchaient dans les 52px de la colonne. */
+    font-size: 0;
   }
-  /* La cellule reste en font-size:0 (draftActif.css) : c'est ce qui
-     masque le libellé « Photo » que updateTable() y écrit. Seule la
-     pastille ::before porte une taille. */
+  /* Seule la pastille ::before porte une taille. */
   body.fz-draft #playerTable thead th:first-child::before {
     content: 'Rang';
     font-size: .62rem;

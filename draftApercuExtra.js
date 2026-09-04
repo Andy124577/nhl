@@ -750,16 +750,32 @@ function fzPopulateTeamFilter() {
 /* ---- Filtres combinés posés sur le tableau déjà rendu : favoris seulement,
    comble un trou, équipe. "Joueurs libres seulement" ne filtre pas ici —
    il pilote #availabilityTabs (Libres/Tous), qui remplace le tableau
-   entier (draftListePremium.js). ---- */
+   entier (draftListePremium.js).
+
+   Les rangées écartées prennent .fzd-filtered-out, masquée en CSS avec un
+   !important (draftActif-premium.css) : sans lui, le
+   « display: flex !important » que draftActif.css pose sur toute rangée de
+   #playerTable l'emportait et rien ne disparaissait — les cases se
+   cochaient sans effet visible. ---- */
 let fzFavorisSeulement = false;
 let fzBesoinSeulement = false;
 let fzEquipeChoisie = '';
 
+/**
+ * « Comble un trou » ne filtre pas sur « tout groupe sous son quota » mais
+ * sur le SEUL groupe où il manque le plus (fzPireGroupe) — celui que les
+ * pastilles de position marquent déjà « · manquants ».
+ *
+ * Le critère d'avant ne pouvait rien filtrer : la liste des libres écarte
+ * déjà toute position comblée (populateTable → _isCategoryFull), donc tout
+ * ce qu'elle affiche est sous quota par construction. La case était cochable
+ * sans jamais rien changer.
+ */
 function fzApplyListFilters() {
     const corps = document.querySelector('#playerTable tbody');
     if (!corps) return;
     const favoris = new Set(typeof fzGetFavorites === 'function' ? fzGetFavorites() : []);
-    const manquants = fzGroupesManquants();
+    const groupeUrgent = fzBesoinSeulement ? fzPireGroupe() : null;
     corps.querySelectorAll('tr').forEach(tr => {
         if (tr.classList.contains('draft-empty-row')) return;
         const nom = typeof fzRowPlayerName === 'function' ? fzRowPlayerName(tr) : null;
@@ -768,13 +784,13 @@ function fzApplyListFilters() {
         let cache = false;
         if (fzFavorisSeulement && !favoris.has(nom)) cache = true;
 
-        if (!cache && (fzBesoinSeulement || fzEquipeChoisie)) {
+        if (!cache && (groupeUrgent || fzEquipeChoisie)) {
             const trouve = typeof fzFindRecord === 'function' ? fzFindRecord(nom) : null;
             if (trouve) {
-                if (!cache && fzBesoinSeulement) {
+                if (!cache && groupeUrgent) {
                     const code = typeof fzPositionCode === 'function' ? fzPositionCode(trouve.rec, trouve.kind) : '';
                     const groupe = typeof fzGroupKeyFor === 'function' ? fzGroupKeyFor(code, trouve.kind) : '';
-                    if (!manquants[groupe]) cache = true;
+                    if (groupe !== groupeUrgent) cache = true;
                 }
                 if (!cache && fzEquipeChoisie && fzPremierAbbrev(trouve.rec) !== fzEquipeChoisie) cache = true;
             }
@@ -783,21 +799,37 @@ function fzApplyListFilters() {
     });
 }
 
+/**
+ * Un changement de filtre change l'ensemble à paginer : sans repartir du
+ * premier lot, les rangées retenues au-delà du lot courant restaient
+ * masquées par .fzd-paged-out (« Mes favoris seulement » pouvait vider la
+ * liste alors que les favoris étaient bien là, plus bas), et le pied
+ * comptait un total qui n'était plus le bon.
+ *
+ * fzLotsAffiches et fzApplyPagination sont déclarés plus bas dans le
+ * fichier : la fonction n'est appelée qu'après son exécution complète.
+ */
+function fzReappliquerFiltres() {
+    fzLotsAffiches = 1;
+    fzApplyListFilters();
+    fzApplyPagination();
+}
+
 function fzInitListFilterControls() {
     const favCb = document.getElementById('listFilterFavoritesOnly');
     if (favCb && favCb.dataset.bound !== '1') {
         favCb.dataset.bound = '1';
-        favCb.addEventListener('change', () => { fzFavorisSeulement = favCb.checked; fzApplyListFilters(); });
+        favCb.addEventListener('change', () => { fzFavorisSeulement = favCb.checked; fzReappliquerFiltres(); });
     }
     const needCb = document.getElementById('listFilterNeedsOnly');
     if (needCb && needCb.dataset.bound !== '1') {
         needCb.dataset.bound = '1';
-        needCb.addEventListener('change', () => { fzBesoinSeulement = needCb.checked; fzApplyListFilters(); });
+        needCb.addEventListener('change', () => { fzBesoinSeulement = needCb.checked; fzReappliquerFiltres(); });
     }
     const teamSelect = document.getElementById('listFilterTeam');
     if (teamSelect && teamSelect.dataset.bound !== '1') {
         teamSelect.dataset.bound = '1';
-        teamSelect.addEventListener('change', () => { fzEquipeChoisie = teamSelect.value; fzApplyListFilters(); });
+        teamSelect.addEventListener('change', () => { fzEquipeChoisie = teamSelect.value; fzReappliquerFiltres(); });
     }
     // "Joueurs libres seulement" reflète et pilote #availabilityTabs — pas
     // un filtre distinct : décocher revient à cliquer "Tous" (draftListePremium.js).

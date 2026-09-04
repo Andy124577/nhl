@@ -482,11 +482,6 @@ body.fz-draft .turn-banner.your-turn .turn-clock { display: none; }
   }
   body.fz-draft .turn-banner-actions { display: flex; }
   body.fz-draft .turn-banner-cta { padding: 10px 20px; }
-
-  body.fz-draft .turn-banner-fav-photo { display: flex; }
-  body.fz-draft .turn-banner-fav-title { display: block; }
-  body.fz-draft .turn-banner-fav-label,
-  body.fz-draft .turn-banner-fav-meta { display: inline; }
 }
 
 body.fz-draft .draft-live-row { padding: 8px 16px; background: var(--fzd-bg); border-top: 1px solid var(--fzd-border); margin: 0; max-width: none; justify-content: flex-start; }
@@ -1021,9 +1016,23 @@ body.fz-draft .fzd-tile--reserve.is-empty .fzd-tile-code { color: var(--fzd-text
    bouton — le minimum pour savoir qui et repêcher. */
 body.fz-draft .turn-banner-fav {
   order: 0;
+  /* flex-shrink 1 contre le 3 du corps du bandeau juste en dessous :
+     quand la ligne déborde, c'est le contexte (« Choix 29 sur 30 · Ronde
+     15 de 15 ») qui rend la largeur, pas le nom du joueur. À 430px les
+     deux se partageaient l'ellipse et le nom sortait en « Darren Ra… ». */
   flex: 1 1 auto;
   gap: 10px;
   min-width: 0;
+}
+body.fz-draft .turn-banner.your-turn .turn-banner-body { flex-shrink: 3; }
+/* Sous 600px le compromis ne suffit plus : la pastille « À vous » est un
+   plancher que le corps ne peut pas franchir, et le nom sortait quand même
+   coupé. Le contexte s'efface alors complètement — le carrousel juste en
+   dessous répète « Choix 29 · À vous », donc rien ne se perd. */
+@media (max-width: 600px) {
+  body.fz-draft .turn-banner.your-turn:has(.turn-banner-fav:not([hidden])) .turn-banner-text {
+    display: none;
+  }
 }
 body.fz-draft .turn-banner-fav-photo {
   background: var(--fzd-tile-bg);
@@ -1031,6 +1040,11 @@ body.fz-draft .turn-banner-fav-photo {
   height: 34px;
   display: none;
 }
+/* Jamais dans le bandeau lui-même : la pastille « À vous » y est déjà, à
+   deux centimètres, et le bandeau est peint en --fzd-solid (clair même en
+   thème sombre) où --fzd-ink ne se lit pas. Le titre n'apparaît que dans
+   le bandeau d'alerte de la colonne centrale (draftDesk.css), qui n'a pas
+   de pastille et repose sur --fzd-surface. */
 body.fz-draft .turn-banner-fav-title {
   font-family: 'Oswald', 'Helvetica Neue', sans-serif;
   font-size: .82rem;
@@ -1063,6 +1077,24 @@ body.fz-draft .turn-banner-fav-cta:hover {
   background: var(--fzd-accent-fill);
   border-color: var(--fzd-accent-fill);
   color: var(--fzd-on-accent);
+}
+/* « Il vous manque … » cède la place au favori quand il y en a un : les
+   deux tenaient sur la même ligne et se faisaient couper à l'ellipse au
+   milieu d'un mot, et ce que l'équipe n'a pas encore est déjà écrit en
+   entier dans « Limites d'équipe » (rail de gauche). Le sélecteur suit
+   l'ordre du HTML — .turn-banner-needs est un frère PLUS BAS que
+   .turn-banner-fav, donc `~` suffit. */
+body.fz-draft .turn-banner-fav:not([hidden]) ~ .turn-banner-needs { display: none; }
+
+/* Au-delà de 769px la ligne a de quoi tout porter. Ce bloc doit suivre
+   les défauts ci-dessus, pas rejoindre celui du bandeau plus haut dans
+   le fichier : une media query n'ajoute pas de spécificité, et à
+   spécificité égale c'est la dernière règle qui gagne — placé avant, il
+   se faisait reprendre ses display par les display:none. */
+@media (min-width: 769px) {
+  body.fz-draft .turn-banner-fav-photo { display: flex; }
+  body.fz-draft .turn-banner-fav-label,
+  body.fz-draft .turn-banner-fav-meta { display: inline; }
 }
 body.fz-draft .favorite-btn { color: var(--fzd-accent); }
 body.fz-draft .favorite-btn:hover { color: var(--fzd-accent-dark); }
@@ -1271,7 +1303,13 @@ body.fz-draft #playerTable tbody tr.fzd-selected-row {
   background: var(--fzd-surface);
   box-shadow: inset 3px 0 0 var(--fzd-accent);
 }
-body.fz-draft #playerTable tbody tr.fzd-filtered-out { display: none; }
+/* !important à contrecœur, contre celui de draftActif.css :
+   « #playerTable tbody tr { display: flex !important } » y est posé sans
+   media query, pour battre le « display: table-row !important » que
+   index.css impose sous 480px. Sans le nôtre, les rangées écartées par
+   « Mes favoris seulement » / « Comble un trou » gardaient leur classe
+   mais restaient affichées — les deux cases semblaient ne rien faire. */
+body.fz-draft #playerTable tbody tr.fzd-filtered-out { display: none !important; }
 
 
 
@@ -1544,7 +1582,7 @@ body.fz-draft tr.fzd-picked-row td.points-column { color: var(--fzd-text-fainter
 
 
 
-body.fz-draft #playerTable tbody tr.fzd-paged-out { display: none; }
+body.fz-draft #playerTable tbody tr.fzd-paged-out { display: none !important; }  /* même raison que .fzd-filtered-out */
 body.fz-draft .player-list-footer {
   display: flex;
   align-items: center;
