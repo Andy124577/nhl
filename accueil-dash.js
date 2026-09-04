@@ -1650,6 +1650,8 @@ function renderOffseasonPanel() {
     const today = todayISO();
     const seasonStart = calData.regularSeasonStartDate;
 
+    fzdApplyPreseasonLayout(!!FZPool.get());
+
     if (!seasonStart || today >= seasonStart) {
         panel.style.display = 'none';
         return;
@@ -2101,9 +2103,28 @@ async function loadOpenPoolsCount() {
     }
 }
 
+// Avant le coup d'envoi de la saison régulière, le corps du tableau de
+// bord (match du soir, joueurs, mes pools, activité) n'a rien de réel à
+// montrer : on le retire et on pose à sa place trois raccourcis pools
+// entre le calendrier et le panneau hors-saison. Tant que le calendrier
+// n'est pas revenu, la date de début est inconnue — on n'affiche alors
+// ni l'un ni l'autre plutôt que de faire clignoter le mauvais.
+function fzdSeasonStarted() {
+    if (!calData) return null;
+    const start = calData.regularSeasonStartDate;
+    return !start || todayISO() >= start;
+}
+
+function fzdApplyPreseasonLayout(hasPool) {
+    const started = fzdSeasonStarted();
+    const body = document.getElementById('fzDashBody');
+    const chips = document.getElementById('fzDashPoolChips');
+    if (body) body.style.display = (hasPool && started === true) ? '' : 'none';
+    if (chips) chips.style.display = (hasPool && started === false) ? '' : 'none';
+}
+
 async function renderDash() {
     const section = document.getElementById('fzDashSection');
-    const body = document.getElementById('fzDashBody');
     const hero = document.getElementById('fzDashHero');
     const calWrap = document.getElementById('fzDashCalendarWrap');
     const onboard = document.getElementById('fzDashOnboard');
@@ -2116,7 +2137,7 @@ async function renderDash() {
     // calendrier — mais elle n'existe qu'avec un pool. Sans pool, la carte
     // « Calendrier LNH » de l'état vide doit pouvoir l'ouvrir.
     section.classList.toggle('is-poolless', !hasPool);
-    if (body) body.style.display = hasPool ? '' : 'none';
+    fzdApplyPreseasonLayout(hasPool);
     if (!hasPool && hero) { fzdStopHeroTimer('fzDashHero'); hero.style.display = 'none'; hero.innerHTML = ''; }
     if (!hasPool) fzdRenderDraftBoard('fzDashDraftBoard', null, null, null);
     // calRevealedNoPool : le visiteur sans pool a ouvert le calendrier depuis
@@ -2132,7 +2153,7 @@ async function renderDash() {
 
     if (!hasPool) return;
 
-    if (!calData) await initCalendar(); else renderCalendar();
+    if (!calData) await initCalendar(); else { renderCalendar(); renderOffseasonPanel(); }
     fzdPlaceCalendar();
     renderQuickActions();
     renderMyPoolsList();

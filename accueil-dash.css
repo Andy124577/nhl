@@ -1272,6 +1272,31 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 .fzd-watch-note { flex-basis: 100%; font: 400 12.5px/1.4 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-muted); }
 
 /* ------------------------------------------------------------ */
+/* ------------------------------------------------------------ */
+/* Raccourcis pools — avant-saison seulement (#fzDashPoolChips,   */
+/* posé entre le calendrier et le panneau hors-saison). Le corps  */
+/* du tableau de bord se retire tant que la saison n'est pas      */
+/* commencée : ces chips en reprennent les seules portes encore   */
+/* utiles. Mêmes pilules que .fzd-off-filter, en taille de lien.  */
+/* ------------------------------------------------------------ */
+.fz-dash-poolchips {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-bottom: 18px;
+}
+.fzd-poolchip {
+    display: inline-flex; align-items: center;
+    padding: 10px 16px;
+    background: var(--fzd-surface); border: 1px solid var(--fzd-border-strong);
+    border-radius: 999px;
+    font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .06em; text-transform: uppercase;
+    color: var(--fzd-ink); text-decoration: none;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.fzd-poolchip:hover { background: var(--fzd-bg-alt); border-color: var(--fzd-ink); }
+.fzd-poolchip.is-primary { background: var(--fzd-solid); border-color: var(--fzd-solid); color: var(--fzd-on-solid); }
+.fzd-poolchip.is-primary:hover { opacity: .88; }
+
 /* Corps — deux colonnes en bureau (2A), empilé en téléphone (1A) */
 /* Même DOM des deux côtés : seule la grille change d'agencement */
 /* via grid-template-areas, donc l'ordre 1A (live, joueurs, mes   */

@@ -315,6 +315,17 @@
                 </div>
             </div>
 
+            <!-- Raccourcis pools — avant le coup d'envoi de la saison régulière
+                 seulement. Le corps du tableau de bord (#fzDashBody : match du
+                 soir, joueurs, activité) n'a alors rien à montrer et se retire ;
+                 ces trois chips gardent l'accès aux pools entre le calendrier et
+                 le panneau hors-saison. Voir fzdApplyPreseasonLayout(). -->
+            <div class="fz-dash-poolchips" id="fzDashPoolChips" style="display:none;">
+                <a class="fzd-poolchip is-primary" href="mes-pools.html">Mes pools</a>
+                <a class="fzd-poolchip" href="creer-pool.html">Créer un pool</a>
+                <a class="fzd-poolchip" href="rejoindre-pool.html">Rejoindre un pool</a>
+            </div>
+
             <!-- Hors-saison — compte à rebours avant le camp/la saison, mouvements
                  de joueurs réels (GET /nhl-transactions, déduits des alignements
                  officiels), blessés (GET /nhl-injuries) et joueurs à surveiller.

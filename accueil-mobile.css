@@ -295,6 +295,20 @@ html[data-theme="dark"] .fz-mobile-home {
 .fzm-news-kicker { font: 700 9.5px/1 'Archivo', sans-serif; color: var(--fzm-red); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 3px; }
 .fzm-news-headline { font: 600 12.5px/1.35 'Archivo', sans-serif; color: var(--fzm-ink); }
 
+/* Raccourcis pools — avant-saison seulement (fzmPoolChips), entre le
+   calendrier et « Dans la LNH ». Le pied de page se retire alors : ce
+   sont les mêmes trois liens, en pilules cliquables au pouce. */
+.fzm-poolchips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.fzm-poolchip {
+    display: inline-flex; align-items: center;
+    padding: 10px 14px;
+    background: var(--fzm-surface); border: 1px solid var(--fzm-border);
+    border-radius: 999px;
+    font: 700 11.5px/1 'Archivo', sans-serif;
+    color: var(--fzm-ink); text-decoration: none;
+}
+.fzm-poolchip.is-primary { background: var(--fzm-solid); border-color: var(--fzm-solid); color: var(--fzm-on-solid); }
+
 /* Pied de page */
 .fzm-footer-links { display: flex; justify-content: center; align-items: center; gap: 14px; padding: 6px 0 16px; flex-wrap: wrap; }
 .fzm-footer-links a { font: 600 11.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-soft); }
@@ -314,7 +328,8 @@ html[data-theme="dark"] .fz-mobile-home {
        cachait surtout le calendrier pour de bon dès que la home mobile ne
        rendait pas (avant-saison, effectif pas encore chargé). Le laisser à sa
        place bureau est le bon repli : visible, simplement plus bas. */
-    #fzDashOffseason, #fzDashBody, #fzDashHero, #fzDashDraftBoard { display: none !important; }
+    #fzDashOffseason, #fzDashBody, #fzDashHero, #fzDashDraftBoard,
+    #fzDashPoolChips { display: none !important; }
 
     /* Le slot ne fait que porter le calendrier ; la marge basse de
        .fz-dash-calendar vaut déjà celle de .fzm-section (18px), les blocs

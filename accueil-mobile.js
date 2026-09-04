@@ -269,7 +269,7 @@ let fzmLeagueData = null;
 // Carrousel calqué sur celui du bureau (fzd-off-carousel, index.html /
 // renderOffseasonLeague, accueil-dash.js) : en-tête avec flèches, onglets
 // filtres, piste de cartes qu'on feuillette au doigt, points dessous.
-function fzmLeagueSectionHTML() {
+function fzmLeagueSectionHTML(showNews) {
     return `
         <div class="fzm-section" id="fzmLeagueSection">
             <div class="fzm-league-head">
@@ -287,7 +287,7 @@ function fzmLeagueSectionHTML() {
             </div>
             <div class="fzm-league-track" id="fzmLeagueTrack"><p class="fzm-empty">Chargement…</p></div>
             <div class="fzm-league-dots" id="fzmLeagueDots"></div>
-            <div class="fzm-news-list" id="fzmNewsWrap"></div>
+            ${showNews ? '<div class="fzm-news-list" id="fzmNewsWrap"></div>' : ''}
         </div>`;
 }
 
@@ -557,6 +557,20 @@ async function fzmLoadNews() {
         </a>`).join('');
 }
 
+// Raccourcis pools — avant le début de la saison régulière seulement,
+// posés entre le calendrier et le bloc hors-saison (« Dans la LNH »).
+// Pendant du #fzDashPoolChips du bureau : mêmes trois portes que le pied
+// de page, qui cède alors sa place plutôt que de les répéter deux fois
+// sur le même écran.
+function fzmPoolChips() {
+    return `
+        <div class="fzm-poolchips">
+            <a class="fzm-poolchip is-primary" href="mes-pools.html">Mes pools</a>
+            <a class="fzm-poolchip" href="creer-pool.html">Créer un pool</a>
+            <a class="fzm-poolchip" href="rejoindre-pool.html">Rejoindre un pool</a>
+        </div>`;
+}
+
 function fzmFooterLinks() {
     return `
         <div class="fzm-footer-links">
@@ -616,6 +630,12 @@ function renderMobileHome(tonight, movement, activeName) {
     // régulière il remplace en plus l'ancienne bande « En direct et à venir ».
     html += '<div class="fzm-cal-slot" id="fzmCalSlot"></div>';
 
+    // Saison régulière pas encore commencée : mêmes retraits qu'au bureau
+    // (fzdApplyPreseasonLayout) — les raccourcis pools prennent la suite du
+    // calendrier, et les actualités de presse quittent « Dans la LNH ».
+    const seasonStarted = fzdSeasonStarted() !== false;
+    if (!seasonStarted) html += fzmPoolChips();
+
     if (isRegular || isLive) html += fzmPlayersRow(tonight, rosterNames);
 
     if (isDraft) html += '<div class="fz-dash-draftboard" id="fzmDraftBoard"></div>';
@@ -626,8 +646,8 @@ function renderMobileHome(tonight, movement, activeName) {
         html += `<div class="fzm-section"><div class="fzm-section-title">Activité de la ligue</div><div id="fzmActivityWrap"></div></div>`;
     }
 
-    html += fzmLeagueSectionHTML();
-    html += fzmFooterLinks();
+    html += fzmLeagueSectionHTML(seasonStarted);
+    if (seasonStarted) html += fzmFooterLinks();
 
     root.innerHTML = html;
 
@@ -648,5 +668,5 @@ function renderMobileHome(tonight, movement, activeName) {
     });
     if (showActivity) fzmLoadActivity(activeName);
     fzmLoadLeague();
-    fzmLoadNews();
+    if (seasonStarted) fzmLoadNews();
 }
