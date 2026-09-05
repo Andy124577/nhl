@@ -91,6 +91,108 @@ function splitName(raw) {
     return { name: (m ? m[1] : raw).trim(), injury: m && m[2] ? m[2].length : 0 };
 }
 
+/**
+ * Recrue. La trousse n'a pas de colonne « recrue » : la règle s'appuie sur ce
+ * qu'elle donne — les matchs joués la SAISON DERNIÈRE et l'âge. Jamais sur la
+ * projection, qui est une saison pleine pour quiconque est censé rester.
+ *
+ * Une case vide veut dire « aucun match dans la LNH l'an dernier » : c'est la
+ * recrue la plus certaine du lot (Gavin McKenna, Ivar Stenberg, Roman
+ * Kantserov, Sebastian Cossa), pas un joueur à écarter.
+ *
+ * L'âge est la seconde moitié du test. Sans lui, le seuil de matchs attrape
+ * aussi les vétérans blessés une saison entière — c'est pour cela que
+ * l'ancien code portait une exception « Tyler Seguin » en dur — et les
+ * dossiers vides des joueurs en fin de carrière.
+ */
+const ROOKIE_MAX_GAMES = 27;
+const ROOKIE_MAX_AGE = 23;
+function isRookie(lastSeasonGames, age, who) {
+    const fewGames = lastSeasonGames == null || lastSeasonGames <= ROOKIE_MAX_GAMES;
+    if (age == null) {
+        // A handful of rows leave the age cell blank. Without it the games
+        // threshold alone cannot tell a prospect from a fringe veteran, so
+        // these are reported rather than guessed at.
+        if (fewGames && who) warn(`${who}: no age in the kit, so the rookie flag cannot be decided `
+            + `(${lastSeasonGames == null ? 'no' : lastSeasonGames} game(s) last season) — left out`);
+        return false;
+    }
+    return age <= ROOKIE_MAX_AGE && fewGames;
+}
+
+/* ── NHL player ids ─────────────────────────────────────────────────────────
+ * The kit carries no NHL id, but the app needs one for the headshot CDN and
+ * the career modal. Ids are stable, so they are resolved here, once, and
+ * written into draftkit.json — auditable in the diff — rather than guessed in
+ * the browser on every load.
+ *
+ * Two sources are read (ids only, never statistics): nhl_filtered_stats.json
+ * and current_stats.json.
+ */
+const ID_SOURCES = [
+    path.join(__dirname, '..', 'nhl_filtered_stats.json'),
+    path.join(__dirname, '..', 'current_stats.json')
+];
+
+/* Rows whose id belongs to a different player than the name on them. Chief
+ * offender: 8467408 is the retired Matt Walker, but current_stats.json labels
+ * it "Matt Savoie" — attaching it stole the real 22-year-old Oiler's identity.
+ * Keep aligned with FZ_IDS_ERRONES in draftkitData.js. */
+const BAD_IDS = new Set([8469770, 8470324, 8470724, 8470594, 8470600, 8467408]);
+
+/* The kit and the NHL spell a few players differently. Only entries verified
+ * to be the same person belong here — a shared surname is NOT enough
+ * (Ryan/Dylan Strome, Miles/Matthew Wood, and Vancouver's two Elias
+ * Petterssons are all distinct players). */
+const ID_NAME_ALIASES = {
+    'matt savoie': 'Matthew Savoie',      // le nom officiel de la LNH
+    'yegor chinakhov': 'Egor Chinakhov',  // translittération
+    'benjamin kindel': 'Ben Kindel',
+    'dmitriy simashev': 'Dmitri Simashev'
+};
+
+const TEAM_FIX = { LA: 'LAK', SJ: 'SJS', TB: 'TBL', NJ: 'NJD', WIN: 'WPG' };
+const normTeam = t => {
+    const a = String(t || '').split(',').pop().trim().toUpperCase();
+    return TEAM_FIX[a] || a;
+};
+
+function buildIdIndex() {
+    const index = new Map();
+    const add = (name, id, team) => {
+        if (!name || !id || BAD_IDS.has(id)) return;
+        const k = nameKey(name);
+        if (!index.has(k)) index.set(k, []);
+        const list = index.get(k);
+        if (!list.some(e => e.id === id)) list.push({ id, team: normTeam(team) });
+    };
+
+    for (const file of ID_SOURCES) {
+        let data;
+        try { data = JSON.parse(fs.readFileSync(file, 'utf8')); }
+        catch { warn(`id source unreadable, skipped: ${path.basename(file)}`); continue; }
+
+        for (const key of ['Top_50_Defenders', 'Top_100_Offensive_Players', 'Top_Rookies', 'Top_50_Goalies']) {
+            for (const p of data[key] || []) add(p.skaterFullName || p.goalieFullName, p.playerId, p.teamAbbrevs);
+        }
+        for (const p of data.players || []) add(p.playerName, p.playerId, p.teamAbbrev);
+    }
+    return index;
+}
+
+/** The id for one kit player, or null when it cannot be settled safely. */
+function resolveId(index, fullName, team) {
+    const alias = ID_NAME_ALIASES[nameKey(fullName)];
+    const candidates = index.get(nameKey(fullName)) || (alias ? index.get(nameKey(alias)) : null) || [];
+    if (candidates.length === 1) return candidates[0].id;
+    if (!candidates.length) return null;
+    // Two real players share the name (there are two Sam Montembeaults): the
+    // club settles it, and anything still ambiguous is left unresolved rather
+    // than assigned by coin flip.
+    const onTeam = candidates.filter(c => c.team === team);
+    return onTeam.length === 1 ? onTeam[0].id : null;
+}
+
 // ── 1. teams ───────────────────────────────────────────────────────────────
 // # | Nom | Ville | last: PJ V D DP Bl. | proj: PJ V D DP Bl.
 function buildTeams() {
@@ -124,7 +226,7 @@ function buildTeams() {
 //   | last: PJ B P Pts PPP +/- PUN MEE LB TG
 //   | proj: PJ B P Pts PPP +/- PUN MEE LB
 //   | Sal | CapH | (·)
-function buildSkaters() {
+function buildSkaters(idIndex) {
     const rows = readSheet(path.join(SRC, 'draftkit-fr-p.xlsx'));
     const players = [];
     for (const r of rows.slice(4)) {
@@ -146,6 +248,7 @@ function buildSkaters() {
             team: team || kitTeam,
             position,
             positionLabel: r[5],
+            playerId: resolveId(idIndex, `${firstName} ${lastName}`.trim(), team || kitTeam),
             lastSeason: {
                 gamesPlayed: int(r[6]), goals: int(r[7]), assists: int(r[8]), points: int(r[9]),
                 pointsPerGame: round(num(r[10]), 2), plusMinus: int(r[11]), pim: int(r[12]),
@@ -160,14 +263,7 @@ function buildSkaters() {
             capHit: num(r[26]),
             injuryFlag: injury,                 // ° Blessure (1–3 in the legend)
             contractYear: r[27] === '·',   // · Dernière année de contrat
-            // The kit has no rookie column. The draft's own long-standing
-            // threshold — 27 or fewer games — is applied to the games actually
-            // played last season, never to the projection (a full season for
-            // everyone expected to stick). Age is the second half of the test:
-            // without it the rule also catches veterans who missed most of a
-            // season injured, which is why the old code carried a hard-coded
-            // "Tyler Seguin" exception.
-            rookie: int(r[6]) != null && int(r[6]) <= 27 && int(r[3]) != null && int(r[3]) <= 23
+            rookie: isRookie(int(r[6]), int(r[3]), `skater #${rank} ${firstName} ${lastName}`)
         });
     }
     return players;
@@ -178,7 +274,7 @@ function buildSkaters() {
 //   | last: PJ V D DP Bl. MBA %ARR BA Arr. B P PUN
 //   | proj: PJ V D DP Bl. MBA %ARR BA Arr.
 //   | Sal | CapH | (·)
-function buildGoalies() {
+function buildGoalies(idIndex) {
     const rows = readSheet(path.join(SRC, 'draftkit-fr-g.xlsx'));
     const goalies = [];
     for (const r of rows.slice(4)) {
@@ -198,6 +294,7 @@ function buildGoalies() {
             age: int(r[3]),
             team: team || kitTeam,
             position: 'G',
+            playerId: resolveId(idIndex, `${firstName} ${lastName}`.trim(), team || kitTeam),
             lastSeason: {
                 gamesPlayed: int(r[6]), wins: int(r[7]), losses: int(r[8]), otLosses: int(r[9]),
                 shutouts: int(r[10]), gaa: round(num(r[11]), 2), savePct: round(num(r[12]), 3),
@@ -212,7 +309,8 @@ function buildGoalies() {
             salary: num(r[27]),
             capHit: num(r[28]),
             injuryFlag: injury,
-            contractYear: r[29] === '·'
+            contractYear: r[29] === '·',
+            rookie: isRookie(int(r[6]), int(r[3]), `goalie #${rank} ${firstName} ${lastName}`)
         });
     }
     return goalies;
@@ -492,8 +590,9 @@ function linkGuides(guides, skaters, goalies) {
 
 // ── build ──────────────────────────────────────────────────────────────────
 const teams = buildTeams();
-const skaters = buildSkaters();
-const goalies = buildGoalies();
+const idIndex = buildIdIndex();
+const skaters = buildSkaters(idIndex);
+const goalies = buildGoalies(idIndex);
 const guides = buildGuides(teams);
 linkGuides(guides, skaters, goalies);
 
@@ -519,7 +618,11 @@ const out = {
     source: 'Trousse de repêchage NHL 2026-2027 (PoolExpert.com)',
     season: SEASON,
     generatedAt: new Date().toISOString(),
-    counts: { teams: teams.length, skaters: skaters.length, goalies: goalies.length, watchlist: watchlist.length },
+    counts: {
+        teams: teams.length, skaters: skaters.length, goalies: goalies.length,
+        watchlist: watchlist.length,
+        withPlayerId: [...skaters, ...goalies].filter(p => p.playerId).length
+    },
     teams,
     skaters,
     goalies,
@@ -542,6 +645,8 @@ fs.writeFileSync(OUT_WATCHLIST, JSON.stringify({
 
 console.log(`✅ ${path.relative(process.cwd(), OUT)} — ${teams.length} teams, ${skaters.length} skaters, ${goalies.length} goalies, ${watchlist.length} watchlist entries`);
 console.log(`✅ ${path.relative(process.cwd(), OUT_WATCHLIST)} — ${watchlist.length} entries`);
+const withId = [...skaters, ...goalies].filter(p => p.playerId).length;
+console.log(`   ${withId}/${skaters.length + goalies.length} players matched to an NHL id (photo + career modal)`);
 if (warnings.length) {
     console.log(`\n⚠️  ${warnings.length} warning(s):`);
     for (const w of warnings) console.log('   ' + w);

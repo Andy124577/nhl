@@ -23,8 +23,30 @@
 (function (global) {
     'use strict';
 
-    var FICHIER = 'draftkit.json?v=20260905a';
-    var FICHIER_WATCHLIST = 'draftkit-watchlist.json?v=20260905a';
+    var FICHIER = 'draftkit.json?v=20260905c';
+    var FICHIER_WATCHLIST = 'draftkit-watchlist.json?v=20260905c';
+
+    /**
+     * Identifiants LNH à ne jamais rattacher à une fiche.
+     *
+     * /current-stats traîne des lignes fausses : la ligne 8467408 est celle de
+     * Matt Walker, retraité, mais elle est étiquetée « Matt Savoie ».
+     * Rapprochée par le nom, elle collait l'identité — et le visage — d'un
+     * retraité au vrai Matt Savoie (22 ans, Edmonton, alias LNH « Matthew
+     * Savoie »). Publié sur window : headshots.js et draftActif.js s'en
+     * servent pour écarter ces lignes de leurs recherches par nom.
+     *
+     * Garder cette liste alignée avec BAD_IDS dans tools/build_draftkit.js
+     * et REMOVE_IDS dans prune_retired_players.js.
+     */
+    global.FZ_IDS_ERRONES = [
+        8469770, // Dennis Wideman — retraité 2017
+        8470324, // Josh Gorges — retraité 2018
+        8470724, // Kyle Quincey — retraité 2018
+        8470594, // Marc-André Fleury — retraité après 2024-25
+        8470600, // Ryan Suter — sans contrat / retraité après 2024-25
+        8467408  // Matt Walker (retraité), étiqueté « Matt Savoie »
+    ];
 
     var promesse = null;
     var donnees = null;
@@ -79,7 +101,10 @@
         var skaters = donnees.skaters.map(function (p) {
             var s = p[cle];
             return {
-                playerId: null,                 // rempli par attacherIds()
+                // Résolu à la génération (tools/build_draftkit.js) : l'identifiant
+                // est écrit dans draftkit.json, vérifiable dans le diff. Ce qui
+                // reste à null est complété au vol par attacherIds().
+                playerId: p.playerId || null,
                 skaterFullName: p.fullName,
                 teamAbbrevs: p.team,
                 positionCode: p.position,
@@ -104,7 +129,7 @@
         var goalies = donnees.goalies.map(function (p) {
             var s = p[cle];
             return {
-                playerId: null,
+                playerId: p.playerId || null,
                 goalieFullName: p.fullName,
                 teamAbbrevs: p.team,
                 positionCode: 'G',
@@ -116,6 +141,9 @@
                 shutouts: s.shutouts,
                 goalsAgainstAvg: s.gaa,
                 points: pointsGardien(s),
+                // Un gardien aussi peut être une recrue (Jacob Fowler,
+                // Sebastian Cossa) : l'onglet « Recrues » les liste.
+                isRookie: !!p.rookie,
                 assists: cle === 'lastSeason' ? s.assists : null,
                 kitRank: p.rank,
                 age: p.age,
@@ -159,11 +187,18 @@
      */
     function attacherIds(listes, source) {
         if (!source || !source.length) return 0;
+        // /current-stats porte quelques lignes mal étiquetées : l'identifiant
+        // d'un retraité y traîne sous le nom d'un joueur actif. Rattaché par
+        // le nom, il volerait son identité au vrai joueur. Voir
+        // FZ_IDS_ERRONES en tête de ce fichier pour la liste et l'histoire.
+        var errones = {};
+        (global.FZ_IDS_ERRONES || []).forEach(function (id) { errones[id] = true; });
+
         var parNom = Object.create(null);
         source.forEach(function (e) {
             var nom = e.playerName || e.skaterFullName || e.goalieFullName;
             var id = e.playerId;
-            if (nom && id && !parNom[cleNom(nom)]) parNom[cleNom(nom)] = id;
+            if (nom && id && !errones[id] && !parNom[cleNom(nom)]) parNom[cleNom(nom)] = id;
         });
 
         var n = 0;

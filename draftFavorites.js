@@ -88,10 +88,13 @@ function fzFindRecord(nom) {
 function fzPositionCode(rec, kind) {
     if (kind === 'goalie') return 'G';
     if (kind === 'team') return 'T';
-    const estRecrue = (rec.gamesPlayed <= 27 || rec.playerId == null
-        || rec.teamAbbrevs == null || rec.teamAbbrevs === 'null')
-        && rec.skaterFullName !== 'Tyler Seguin';
-    return estRecrue ? '*' : rec.positionCode;
+    // Le drapeau vient de la trousse (matchs joués la saison dernière + âge,
+    // voir tools/build_draftkit.js). L'ancien test devinait la recrue à partir
+    // des matchs affichés et d'un playerId manquant : depuis que les chiffres
+    // portent la projection 2026-2027 et que l'identifiant LNH n'est plus
+    // rattaché qu'à une fiche sur deux, il classait la moitié du bassin comme
+    // recrue — d'où un compteur « Recrues » à plusieurs centaines.
+    return rec.isRookie === true ? '*' : rec.positionCode;
 }
 
 function fzPositionLabel(code) {

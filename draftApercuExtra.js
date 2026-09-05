@@ -618,15 +618,29 @@ function fzRenderProgressCount() {
 const FZ_GROUPE_PAR_VALEUR = { offensive: 'offensive', defensive: 'defensive', goalies: 'goalie', rookies: 'rookie' };
 
 function fzCountAvailable(valeur) {
+    // fzAllAvailableCandidates() ne rend que patineurs et gardiens — c'est ce
+    // qu'attendent la suggestion et le rail d'alignement. Les équipes LNH sont
+    // donc comptées à part, sans quoi la pastille « Équipes » affichait 0 en
+    // permanence à côté d'un onglet qui en listait trente.
+    if (valeur === 'teams') {
+        const pris = typeof fzPickedSet === 'function' ? fzPickedSet() : new Set();
+        const equipes = (typeof teamData !== 'undefined' && Array.isArray(teamData)) ? teamData : [];
+        return equipes.filter(t => !pris.has(t.teamFullName)).length;
+    }
+    // Chaque compteur doit annoncer ce que son onglet montre. Les catégories
+    // se chevauchent — une recrue attaquante est dans « Attaquants » ET dans
+    // « Recrues », un gardien recrue dans « Gardiens » ET dans « Recrues » —
+    // et c'est voulu : ce sont des vues du bassin, pas des parts d'un gâteau.
+    // L'ancien découpage les rendait exclusives et affichait donc moins de
+    // joueurs que la liste juste en dessous.
     const bassin = fzAllAvailableCandidates();
-    if (valeur === 'all') return bassin.length;
+    const patineur = c => c.kind === 'skater';
+    if (valeur === 'all') return bassin.filter(patineur).length;
     return bassin.filter(c => {
-        const code = typeof fzPositionCode === 'function' ? fzPositionCode(c.rec, c.kind) : '';
-        if (code === '*') return valeur === 'rookies';
-        if (valeur === 'rookies') return false;
+        if (valeur === 'rookies') return c.rec.isRookie === true;
         if (valeur === 'goalies') return c.kind === 'goalie';
-        if (valeur === 'defensive') return code === 'D';
-        if (valeur === 'offensive') return c.kind === 'skater' && code !== 'D';
+        if (valeur === 'defensive') return patineur(c) && c.rec.positionCode === 'D';
+        if (valeur === 'offensive') return patineur(c) && ['C', 'L', 'R'].includes(c.rec.positionCode);
         return false;
     }).length;
 }

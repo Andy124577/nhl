@@ -30,8 +30,14 @@ function resolveHeadshotByName(name) {
     const target = String(name).trim().toLowerCase();
 
     // 1. Statistiques courantes : contiennent souvent l'URL fournie par l'API.
+    //    Quelques lignes y portent l'identifiant d'un autre joueur que celui
+    //    qu'elles nomment — « Matt Savoie » y désigne un retraité — et la
+    //    recherche par nom leur empruntait alors le visage. Voir
+    //    FZ_IDS_ERRONES (draftkitData.js).
+    const idsErrones = (typeof window !== 'undefined' && window.FZ_IDS_ERRONES) || [];
     if (typeof currentStats !== 'undefined' && currentStats && currentStats.players) {
-        const hit = currentStats.players.find(p => (p.playerName || '').trim().toLowerCase() === target);
+        const hit = currentStats.players.find(p => (p.playerName || '').trim().toLowerCase() === target
+            && !idsErrones.includes(p.playerId));
         if (hit) {
             if (hit.headshot && !hit.headshot.includes('/teams/')) return hit.headshot;
             const url = buildHeadshotUrl(hit.playerId, hit.teamAbbrev);

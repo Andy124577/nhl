@@ -79,6 +79,38 @@ comme une prévision. Côté client, `FZDraftKit.pools('projection')` (défaut) 
 `FZDraftKit.pools('lastSeason')` rendent les deux, et chaque fiche garde les deux
 blocs pour l'affichage comparatif.
 
+## Recrues
+
+La trousse n'a pas de colonne « recrue ». Le drapeau `rookie` est calculé, sur
+les deux seuls indices qu'elle donne — les matchs joués **la saison dernière**
+et l'âge :
+
+```
+rookie = âge <= 23  ET  (aucun match l'an dernier  OU  27 matchs ou moins)
+```
+
+Deux pièges, tous deux rencontrés :
+
+* **Une case de matchs vide ne veut pas dire « à écarter »** — elle veut dire
+  « aucun match dans la LNH l'an dernier », c'est-à-dire la recrue la plus
+  certaine du lot : Gavin McKenna, Ivar Stenberg, Roman Kantserov,
+  Sebastian Cossa.
+* **Les gardiens comptent aussi.** Jacob Fowler et Sebastian Cossa sont des
+  recrues ; l'onglet « Recrues » du repêchage liste patineurs et gardiens
+  ensemble, d'où ses colonnes `B/V` et `A/%ARR` (buts/victoires,
+  passes/% d'arrêts), la pastille de position indiquant la lecture qui
+  s'applique.
+
+L'âge est indispensable : sans lui, le seuil de matchs attrape les vétérans
+blessés une saison entière — c'est pour cela que l'ancien code portait une
+exception « Tyler Seguin » écrite en dur.
+
+Total actuel : **94 patineurs et 6 gardiens**.
+
+Deux joueurs signalés comme recrues ailleurs sont **absents des trois
+documents** et ne peuvent donc pas être ajoutés depuis la trousse :
+Viggo Björck (WPG) et Nikita Klepov (ANA).
+
 ## Divergences internes aux documents
 
 Sur 448 « meilleurs choix » des pages d'équipe, 436 reprennent exactement la
@@ -88,6 +120,49 @@ dans `draftkit-fr-p.xlsx`. Le code n'arbitre pas : la feuille du bassin fait foi
 pour les statistiques d'un joueur (c'est « la liste complète » demandée), et les
 chiffres de la page d'équipe restent tels quels dans `guides[].topPicks`, comme
 citation du guide.
+
+## Identifiants LNH
+
+La trousse ne porte pas d'identifiant LNH ; l'application en a besoin pour la
+photo (CDN de la LNH) et la fiche de carrière. Ils sont résolus **à la
+génération** et écrits dans `draftkit.json`, où le diff les rend vérifiables,
+plutôt que devinés dans le navigateur à chaque chargement. Deux fichiers sont
+lus pour cela — `nhl_filtered_stats.json` et `current_stats.json` — et
+uniquement pour les identifiants, jamais pour les statistiques.
+
+Actuellement : **497 des 1013 joueurs** ont un identifiant. Les autres n'ont
+pas de photo, ce qui est sans conséquence pour le repêchage.
+
+Trois règles gouvernent la résolution, et chacune répare un vrai dégât :
+
+1. **Correspondance exacte du nom, jamais du seul nom de famille.** Rapprocher
+   par le patronyme donnait Ryan Strome → Dylan Strome, Miles Wood → Matthew
+   Wood, John Leonard → Ryan Leonard : des joueurs différents.
+2. **Un nom ambigu se tranche par le club.** Il existe deux Sam Montembeault
+   (MTL et CGY) ; celui de la trousse joue à Montréal. Ce qui reste ambigu
+   reste sans identifiant.
+3. **Les lignes fausses sont sur liste noire.** `current_stats.json` étiquette
+   « Matt Savoie » la ligne 8467408, qui est en réalité celle de Matt Walker,
+   retraité. Le vrai Matt Savoie — 22 ans, Edmonton, « Matthew Savoie » au
+   registre de la LNH — portait donc le visage et l'identité d'un retraité.
+   La liste vit dans `FZ_IDS_ERRONES` (`draftkitData.js`), que `headshots.js`
+   et `draftActif.js` consultent aussi pour écarter ces lignes de leurs
+   recherches par nom.
+
+`ID_NAME_ALIASES` couvre les cas où la trousse et la LNH n'écrivent pas le même
+nom pour la même personne — et **seulement** ceux-là, vérifiés un par un :
+
+| Trousse | LNH |
+| --- | --- |
+| Matt Savoie | Matthew Savoie |
+| Yegor Chinakhov | Egor Chinakhov |
+| Benjamin Kindel | Ben Kindel |
+| Dmitriy Simashev | Dmitri Simashev |
+
+Un piège à ne pas ajouter : Vancouver aligne **deux** Elias Pettersson, un
+attaquant et un défenseur, que la trousse distingue par « Elias-D Pettersson ».
+Le défenseur reste volontairement sans identifiant plutôt que d'hériter de
+celui de l'attaquant.
 
 ## Blessures
 

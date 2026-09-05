@@ -23,7 +23,7 @@
 
   <link rel="stylesheet" href="poolNav.css">
   <link rel="stylesheet" href="skeleton-loader.css" />
-  <link rel="stylesheet" href="draftActif.css?v=20260905a" />
+  <link rel="stylesheet" href="draftActif.css?v=20260905d" />
   <link rel="stylesheet" href="draftActif-premium.css?v=20260905b" />
   <!-- Après les deux précédents : la mise en page bureau (trois colonnes,
        portraits agrandis, pastilles de position) reprend leurs règles. -->
@@ -426,6 +426,7 @@
 
         <div class="table-wrapper" id="playerTableWrapper">
           <table id="playerTable">
+            <caption class="table-source">Projections <strong>2026-2027</strong> &middot; Trousse de repêchage</caption>
             <thead>
               <tr id="tableHeaderRow">
                 <th>Photo</th>
@@ -433,7 +434,7 @@
                 <th>GP</th>
                 <th>G</th>
                 <th>A</th>
-                <th>PTS</th>
+                <th title="Points projetés 2026-2027 (Trousse de repêchage)">PTS proj.</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -451,6 +452,7 @@
 
         <div class="table-wrapper" id="fzPickedListWrapper" hidden>
           <table id="fzPickedList">
+            <caption class="table-source">Projections <strong>2026-2027</strong> &middot; Trousse de repêchage</caption>
             <thead>
               <tr>
                 <th>Photo</th>
@@ -458,7 +460,7 @@
                 <th>GP</th>
                 <th>G</th>
                 <th>A</th>
-                <th>PTS</th>
+                <th title="Points projetés 2026-2027 (Trousse de repêchage)">PTS proj.</th>
                 <th>Statut</th>
               </tr>
             </thead>
@@ -711,19 +713,18 @@
 
   <!-- Trousse de repêchage 2026-2027 : bassin, gardiens, équipes et
        projections. Doit précéder draftActif.js, qui l'appelle. -->
-  <script defer src="draftkitData.js?v=20260905a"></script>
+  <script defer src="draftkitData.js?v=20260905c"></script>
   <script defer src="draftRefresh.js?v=20260905a"></script>
-  <script defer src="draftActif.js?v=20260905c"></script>
-  <script defer src="draftPoolFilter.js?v=20260902a"></script>
+  <script defer src="draftActif.js?v=20260905f"></script>
 
 
   <script defer src="draftPickFlow.js"></script>
   
 
-  <script defer src="draftFavorites.js?v=20260905a"></script>
+  <script defer src="draftFavorites.js?v=20260905b"></script>
 
 
-  <script defer src="draftApercuExtra.js?v=20260905a"></script>
+  <script defer src="draftApercuExtra.js?v=20260905b"></script>
   
 
   <script defer src="draftListePremium.js"></script>
