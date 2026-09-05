@@ -1088,15 +1088,14 @@ body.fz-draft .turn-banner-fav {
   min-width: 0;
 }
 body.fz-draft .turn-banner.your-turn .turn-banner-body { flex-shrink: 3; }
-/* Sous 600px le compromis ne suffit plus : la pastille « À vous » est un
-   plancher que le corps ne peut pas franchir, et le nom sortait quand même
-   coupé. Le contexte s'efface alors complètement — le carrousel juste en
-   dessous répète « Choix 29 · À vous », donc rien ne se perd. */
-@media (max-width: 600px) {
-  body.fz-draft .turn-banner.your-turn:has(.turn-banner-fav:not([hidden])) .turn-banner-text {
-    display: none;
-  }
-}
+/* Le compromis ci-dessus (les deux se partagent la ligne) ne vaut que là
+   où le bandeau garde sa forme compacte d'origine — au-delà de 1099px,
+   avant que draftDesk.js ne déplace .turn-banner-hero dans la colonne
+   centrale. En dessous, draftPhone.css masque .turn-banner-hero (donc
+   .turn-banner-fav) sur toute la largeur : il n'y avait plus de favori à
+   montrer ici, seulement du texte qu'une règle sous 600px effaçait quand
+   même — un bandeau vide à la place du contexte du choix. Supprimée : le
+   favori du téléphone reste à écrire, pas à faire semblant qu'il existe. */
 body.fz-draft .turn-banner-fav-photo {
   background: var(--fzd-tile-bg);
   width: 34px;
@@ -1855,6 +1854,13 @@ html.fz-list-lock { overflow: hidden; }
 body.fz-draft.fz-list-lock {
   height: 100vh;
   height: 100dvh;
+  /* La plus fiable des trois : window.innerHeight en pixels, posée par
+     l'inline-script en tête de <head> (draftActif.html) et recalculée à
+     chaque redimensionnement — voir son commentaire pour le problème
+     précis que dvh seul ne couvre pas. Tant que le script n'a pas encore
+     tourné (jamais plus d'une frame), la variable est absente et dvh sert
+     de repli. */
+  height: var(--fz-vh, 100dvh);
   overflow: hidden;
   display: flex;
   flex-direction: column;

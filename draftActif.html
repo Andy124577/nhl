@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="poolNav.css">
   <link rel="stylesheet" href="skeleton-loader.css" />
   <link rel="stylesheet" href="draftActif.css?v=20260905a" />
-  <link rel="stylesheet" href="draftActif-premium.css?v=20260905a" />
+  <link rel="stylesheet" href="draftActif-premium.css?v=20260905b" />
   <!-- Après les deux précédents : la mise en page bureau (trois colonnes,
        portraits agrandis, pastilles de position) reprend leurs règles. -->
   <link rel="stylesheet" href="draftDesk.css?v=20260905a" />
@@ -50,7 +50,36 @@
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   </script>
-    
+
+  <script>
+    /**
+     * Hauteur réelle de la fenêtre, pour le verrou de défilement du
+     * téléphone (body.fz-draft.fz-list-lock, draftActif-premium.css).
+     *
+     * 100vh/100dvh ne suffisent pas partout : un navigateur qui ne connaît
+     * pas dvh retombe sur vh, et vh y vaut la hauteur AVEC la barre
+     * d'adresse rétractée — plus grande que ce qui est réellement visible
+     * quand elle est affichée. La page se pose alors sur une colonne plus
+     * haute que l'écran, et il faut défiler pour voir la barre du bas et
+     * la navigation du site, même si aucun contenu ne déborde vraiment.
+     *
+     * window.innerHeight, lui, reflète toujours la fenêtre telle qu'elle
+     * est CE moment précis, barre d'adresse comprise — jamais le clavier
+     * virtuel (contrairement à visualViewport.height, qui rétrécit à son
+     * ouverture ; on ne veut pas que la colonne entière se réorganise
+     * pour ça). Posée en tête de <head>, avant tout CSS : la première
+     * peinture voit déjà la bonne valeur, jamais une bascule à vide.
+     */
+    (function () {
+      function fixerHauteur() {
+        document.documentElement.style.setProperty('--fz-vh', window.innerHeight + 'px');
+      }
+      fixerHauteur();
+      window.addEventListener('resize', fixerHauteur);
+      window.addEventListener('orientationchange', fixerHauteur);
+    })();
+  </script>
+
     <script defer src="activePool.js"></script>
 </head>
 <body class="fz-draft">
