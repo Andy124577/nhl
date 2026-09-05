@@ -2226,7 +2226,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     bindCalendarControls();
     bindOnboardCards();
-    await Promise.all([FZPool.ready(), loadCurrentStats(), loadPendingTrades()]);
+    // La liste « À surveiller » est chargée ici, avec le reste : elle doit
+    // être en main avant renderDash(), qui la rend du premier coup au
+    // bureau comme au téléphone.
+    await Promise.all([FZPool.ready(), loadCurrentStats(), loadPendingTrades(), loadOffseasonWatchlist()]);
     renderDash();
     FZPool.onData(renderDash);
 });
