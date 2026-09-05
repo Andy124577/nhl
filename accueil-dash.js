@@ -788,23 +788,30 @@ function fzdMonEffectifHref(activeName, teamName) {
    cartes, même mise en page. Il y lit des globales que l'accueil n'a pas,
    d'où la source explicite posée ici avant l'ouverture.
 
-   nhl_filtered_stats.json (position, équipe, photo de chaque joueur) n'est
-   chargé qu'au premier clic, et une seule fois : la home n'a aucune raison
-   de le télécharger pour un bouton qu'on ne pressera peut-être jamais. */
+   La trousse complète (position, équipe, photo de chaque joueur) n'est
+   chargée qu'au premier clic, et une seule fois : la home n'a aucune raison
+   de télécharger 1 Mo pour un bouton qu'on ne pressera peut-être jamais —
+   elle se contente sinon de draftkit-watchlist.json. */
 let fzdBassinJoueurs = null;
 let fzdBassinEnCours = null;
 
 function fzdChargerBassinJoueurs() {
     if (fzdBassinJoueurs) return Promise.resolve(fzdBassinJoueurs);
     if (fzdBassinEnCours) return fzdBassinEnCours;
-    fzdBassinEnCours = fetch('nhl_filtered_stats.json')
-        .then(r => r.json())
-        .then(d => {
-            fzdBassinJoueurs = {
-                skaters: [].concat(d.Top_50_Defenders || [], d.Top_100_Offensive_Players || [], d.Top_Rookies || []),
-                goalies: d.Top_50_Goalies || [],
-                teams: d.Teams || []
-            };
+    // Le script de la trousse peut manquer (cache, bloqueur) : sans garde,
+    // l'appel lèverait avant même d'entrer dans la chaîne de promesses et le
+    // bouton resterait sans effet, au lieu d'ouvrir le récapitulatif dégradé.
+    if (typeof FZDraftKit === 'undefined') {
+        fzdBassinJoueurs = { skaters: [], goalies: [], teams: [] };
+        return Promise.resolve(fzdBassinJoueurs);
+    }
+    fzdBassinEnCours = FZDraftKit.charger()
+        .then(() => {
+            // Même bassin que la salle de repêchage : la trousse, projections
+            // 2026-2027 comprises. Le récapitulatif doit pouvoir retrouver
+            // n'importe quel joueur repêché, y compris les centaines que
+            // l'ancien fichier de statistiques ne contenait pas.
+            fzdBassinJoueurs = FZDraftKit.pools('projection');
             return fzdBassinJoueurs;
         })
         .catch(err => {
@@ -1633,13 +1640,21 @@ async function renderActivityFeed() {
 // after playoffEndDate, so this never fires mid-playoffs).
 // ============================================================
 
-// Manually curated, updated by hand each off-season — there is no
-// live API for an editorial "watch" pick, and this app never invents
-// content to fill a gap (see the real trades used above instead of a
-// fabricated waiver-wire feed). Leave empty to hide the section.
-const OFFSEASON_WATCHLIST = [
-    // { name: 'Nom Joueur', team: 'MTL', note: 'Recrue attendue au camp d\'entraînement.' },
-];
+// « À surveiller » : la section « Joueurs à Surveiller » des 32 pages
+// d'équipe de la Trousse de repêchage 2026-2027, telle quelle. Ce n'est ni
+// une liste devinée ni un flux d'API — c'est le texte du document, mis à
+// plat par tools/build_draftkit.js dans draftkit.json. Reste vide (section
+// masquée) si le fichier ne charge pas.
+let OFFSEASON_WATCHLIST = [];
+
+async function loadOffseasonWatchlist() {
+    if (typeof FZDraftKit === 'undefined') return;
+    try {
+        OFFSEASON_WATCHLIST = await FZDraftKit.chargerWatchlist();
+    } catch (err) {
+        console.warn('⚠️ Trousse de repêchage indisponible :', err);
+    }
+}
 
 let offseasonNewsLoaded = false;
 
@@ -1973,6 +1988,12 @@ function offseasonEmptyText() {
     return 'Aucun mouvement récent.';
 }
 
+/* Les 70 entrées « Joueurs à Surveiller » des 32 équipes, dans l'ordre du
+   document. La liste est longue par nature — une équipe peut en compter
+   jusqu'à trois — donc le panneau la fait défiler plutôt que de s'étirer,
+   et un filtre par équipe permet d'aller droit au club voulu. */
+let offWatchTeam = 'all';
+
 function renderOffseasonWatchlist() {
     const wrap = document.getElementById('fzdOffWatchlist');
     if (!wrap) return;
@@ -1982,12 +2003,36 @@ function renderOffseasonWatchlist() {
         return;
     }
 
-    wrap.innerHTML = OFFSEASON_WATCHLIST.map(p => `
-        <div class="fzd-watch-row">
-            <span class="fzd-watch-name">${escapeHTML(p.name)}</span>
-            <span class="fzd-watch-team">(${escapeHTML(p.team)})</span>
-            ${p.note ? `<span class="fzd-watch-note">${escapeHTML(p.note)}</span>` : ''}
-        </div>`).join('');
+    const teams = [...new Set(OFFSEASON_WATCHLIST.map(p => p.team))].sort();
+    if (offWatchTeam !== 'all' && !teams.includes(offWatchTeam)) offWatchTeam = 'all';
+    const shown = offWatchTeam === 'all'
+        ? OFFSEASON_WATCHLIST
+        : OFFSEASON_WATCHLIST.filter(p => p.team === offWatchTeam);
+
+    const options = ['all', ...teams]
+        .map(t => `<option value="${escapeHTML(t)}"${t === offWatchTeam ? ' selected' : ''}>${t === 'all' ? `Toutes les équipes (${OFFSEASON_WATCHLIST.length})` : escapeHTML(t)}</option>`)
+        .join('');
+
+    wrap.innerHTML = `
+        <div class="fzd-watch-head">
+            <span class="fzd-watch-count">${shown.length} joueur${shown.length > 1 ? 's' : ''}</span>
+            <select class="fzd-watch-filter" id="fzdWatchFilter" aria-label="Filtrer par équipe">${options}</select>
+        </div>
+        <div class="fzd-watch-list">
+            ${shown.map(p => `
+                <div class="fzd-watch-row">
+                    <img class="fzd-watch-logo" src="teams/${escapeHTML(p.team)}.png" alt="" loading="lazy"
+                         onerror="this.remove()">
+                    <span class="fzd-watch-name">${escapeHTML(p.name)}</span>
+                    <span class="fzd-watch-team">${escapeHTML(p.team)}${p.position ? ' · ' + escapeHTML(p.position) : ''}</span>
+                    ${p.note ? `<span class="fzd-watch-note">${escapeHTML(p.note)}</span>` : ''}
+                </div>`).join('')}
+        </div>`;
+
+    document.getElementById('fzdWatchFilter')?.addEventListener('change', e => {
+        offWatchTeam = e.target.value;
+        renderOffseasonWatchlist();
+    });
 }
 
 // ============================================================

@@ -173,12 +173,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Load image data first
         await fetchImageData();
 
-        // Load player data (for metadata like names, positions)
-        const statsResponse = await fetch("nhl_filtered_stats.json");
-        const statsData = await statsResponse.json();
-        fullPlayerData = [...statsData.Top_50_Defenders, ...statsData.Top_100_Offensive_Players, ...statsData.Top_Rookies];
-        goalieData = statsData.Top_50_Goalies;
-        teamData = statsData.Teams;
+        // Bassin de joueurs : la Trousse de repêchage 2026-2027, la même que
+        // la salle de repêchage (draftkitData.js), avec les projections
+        // 2026-2027. Un joueur repêché doit se retrouver ici quel qu'il soit,
+        // et la trousse compte des centaines de joueurs que l'ancien fichier
+        // de statistiques n'avait pas.
+        await FZDraftKit.charger();
+        const bassin = FZDraftKit.pools("projection");
+        fullPlayerData = bassin.skaters;
+        goalieData = bassin.goalies;
+        teamData = bassin.teams;
 
         // Load current season stats from API
         try {

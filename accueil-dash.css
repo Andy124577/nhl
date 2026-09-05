@@ -1265,6 +1265,20 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 }
 .fzd-off-dot.is-active { width: 18px; background: var(--fzd-accent); }
 
+/* « À surveiller » — 70 entrées tirées de la trousse : la liste défile dans
+   le panneau au lieu de l'allonger, avec un filtre par équipe au-dessus. */
+.fzd-watch-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0 2px; }
+.fzd-watch-count { font: 600 10.5px/1 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--fzd-text-fainter); }
+.fzd-watch-filter {
+    max-width: 60%;
+    padding: 5px 8px;
+    background: var(--fzd-surface); border: 1px solid var(--fzd-border); border-radius: 8px;
+    font: 500 12px/1.2 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink);
+    cursor: pointer;
+}
+.fzd-watch-list { max-height: 320px; overflow-y: auto; overscroll-behavior: contain; }
+.fzd-watch-logo { width: 18px; height: 18px; object-fit: contain; align-self: center; flex: 0 0 auto; }
+
 .fzd-watch-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; padding: 9px 0; border-bottom: 1px solid var(--fzd-border-soft); }
 .fzd-watch-row:last-child { border-bottom: none; }
 .fzd-watch-name { font: 600 13.5px/1.3 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-ink); }

@@ -47,6 +47,9 @@ function fzmPreseasonExtras(draftState, activeName) {
             </div>`;
     }
 
+    // Les « Joueurs à Surveiller » des 32 équipes, dans l'ordre du document
+    // (voir OFFSEASON_WATCHLIST, accueil-dash.js). La rangée défile déjà à
+    // l'horizontale : les 70 cartes y tiennent sans tronquer la liste.
     html += `
         <div class="fzm-section">
             <div class="fzm-section-title">Joueurs à surveiller</div>
@@ -54,8 +57,9 @@ function fzmPreseasonExtras(draftState, activeName) {
                 ${OFFSEASON_WATCHLIST.length
                     ? OFFSEASON_WATCHLIST.map(w => `
                         <div class="fzm-watch-card">
+                            <img class="fzm-watch-logo" src="teams/${escapeHTML(w.team)}.png" alt="" loading="lazy" onerror="this.remove()">
                             <div class="fzm-watch-name">${escapeHTML(w.name)}</div>
-                            <div class="fzm-watch-team">${escapeHTML(w.team)}</div>
+                            <div class="fzm-watch-team">${escapeHTML(w.team)}${w.position ? ' · ' + escapeHTML(w.position) : ''}</div>
                             ${w.note ? `<div class="fzm-watch-note">${escapeHTML(w.note)}</div>` : ''}
                         </div>`).join('')
                     : `<p class="fzm-empty">Liste à venir.</p>`}

@@ -137,6 +137,7 @@ html[data-theme="dark"] .fz-mobile-home {
 
 /* Joueurs à surveiller */
 .fzm-watch-card { flex-shrink: 0; width: 150px; background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 12px; padding: 13px; }
+.fzm-watch-logo { width: 20px; height: 20px; object-fit: contain; margin-bottom: 6px; }
 .fzm-watch-name { font: 700 13px/1 'Archivo', sans-serif; margin-bottom: 2px; }
 .fzm-watch-team { font: 500 11px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); }
 .fzm-watch-note { font: 500 10.5px/1.35 'Archivo', sans-serif; color: var(--fzm-ink-faint); margin-top: 6px; }

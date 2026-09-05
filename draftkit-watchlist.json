@@ -1,0 +1,567 @@
+{
+ "source": "Trousse de repêchage NHL 2026-2027 (PoolExpert.com)",
+ "season": "2026-2027",
+ "generatedAt": "2026-09-05T15:23:59.763Z",
+ "watchlist": [
+  {
+   "name": "Lukas Dostal",
+   "team": "ANA",
+   "teamName": "Anaheim Ducks",
+   "position": "G",
+   "kind": "goalie",
+   "note": "Maintenant fermement établi comme le gardien numéro un des Ducks, cette saison pourrait bien être celle où Dostal devient un gardien élite de la LNH."
+  },
+  {
+   "name": "Beckett Sennecke",
+   "team": "ANA",
+   "teamName": "Anaheim Ducks",
+   "position": "R",
+   "kind": "skater",
+   "note": "Après une saison recrue impressionnante de 60 points l'an dernier, Sennecke pourrait très bien augmenter sa production s'il n'est pas trop affecté par la guigne de la deuxième année."
+  },
+  {
+   "name": "Pavel Mintyukov",
+   "team": "ANA",
+   "teamName": "Anaheim Ducks",
+   "position": "D",
+   "kind": "skater",
+   "note": "Haut choix de première ronde (10e en 2022), il a jusqu'à présent laissé les poolers sur leur faim en terme de production offensive. Avec les départs de John Carlson et Olen Zellweger qui n'ont pas été remplacés, il aura un rôle bonifié cette saison et pourrait connaître la meilleure année offensive de sa carrière."
+  },
+  {
+   "name": "JJ Peterka",
+   "team": "BOS",
+   "teamName": "Boston Bruins",
+   "position": "R",
+   "kind": "skater",
+   "note": "Son arrivée au Utah par voie de transaction l'an dernier n'a pas donné les résultats escomptés et il a connu une saison décevante alors qu'il a vu son temps de jeu de puissance grandement diminué. Maintenant à Boston, il pourrait être jumelé avec David Pastrnak et retrouver son rythme normal d'environ 60 points par saison."
+  },
+  {
+   "name": "Morgan Geekie",
+   "team": "BOS",
+   "teamName": "Boston Bruins",
+   "position": "C",
+   "kind": "skater",
+   "note": "Non seulement a-t-il prouvé l'an dernier qu'il n'est pas un feu de pailles mais il a même amélioré son nombre de buts (39) de passes (29) et de points (68). Il est maintenant un élément clé de l'avantage numérique à Boston."
+  },
+  {
+   "name": "Jiri Kulich",
+   "team": "BUF",
+   "teamName": "Buffalo Sabres",
+   "position": "C",
+   "kind": "skater",
+   "note": "Après avoir raté 70 matchs l'an dernier en raison d'un caillot de sang, Kulich est de retour en santé cette année. On voit toujours en lui un gros potentiel à Buffalo et pourrait se retrouver dans le Top-6 offensif de l'équipe pour amorcer la saison."
+  },
+  {
+   "name": "Zach Benson",
+   "team": "BUF",
+   "teamName": "Buffalo Sabres",
+   "position": "L",
+   "kind": "skater",
+   "note": "À sa troisième saison en carrière dans la LNH il semble avoir maintenant compris son rôle. Celui que l'on compare à Brad Marchand a connu de grosses séries éliminatoires après avoir terminé la saison régulière avec 16 points à ses 20 derniers matchs et pourrait atteindre un autre niveau cette saison alors qu'il pourrait se trouver un poste sur la première vague du jeu de puissance."
+  },
+  {
+   "name": "Logan Stankoven",
+   "team": "CAR",
+   "teamName": "Carolina Hurricanes",
+   "position": "C",
+   "kind": "skater",
+   "note": "Après avoir terminé la saison avec 44 points, il a connu des séries éliminatoires exceptionnelles acec 16 points, dont 11 buts, en 19 match. Un rythme d'environ 70 points sur une saison complète. S'agit-il des nouvelles attentes que nous devrions avoir pour lui à partir de maintenant?"
+  },
+  {
+   "name": "Jackson Blake",
+   "team": "CAR",
+   "teamName": "Carolina Hurricanes",
+   "position": "R",
+   "kind": "skater",
+   "note": "Complétait le trio le plus hot de la ligue durant les séries éliminatoires avec Logan Stankoven et Taylor Hall. Il a terminé la saison avec 53 points puis a produit en séries à un rythme de 86 points sur une saison complète. En saison régulière, il a récolté 27 points à ses 34 derniers matchs. On doit s'attendre à voir les trois réunis encore cette saison et Blake pourrait battre ses sommets offensifs personnels."
+  },
+  {
+   "name": "Kirill Marchenko",
+   "team": "CBJ",
+   "teamName": "Columbus Blue Jackets",
+   "position": "L",
+   "kind": "skater",
+   "note": "Plusieurs rumeurs circulent à l'effet qu'il tente de sortir de Columbus. Qu'il réussisse ou non à provoquer une transaction, il s'agit de la dernière saison de son contrat avant de devenir agent libre sans restriction et une grosse production lui vaudrait une véritable fortune sur le marché l'été prochain. Attendez-vous à une grosse saison de sa part."
+  },
+  {
+   "name": "Valeri Nichushkin",
+   "team": "CBJ",
+   "teamName": "Columbus Blue Jackets",
+   "position": "L",
+   "kind": "skater",
+   "note": "Après deux saisons décevantes au Colorado, Nichushkin a été échangé à Columbus durant la saison morte. Voyons voir s'il pourra y relancer sa carrière et revenir à une production de près d'un point par match."
+  },
+  {
+   "name": "Adam Fantilli",
+   "team": "CBJ",
+   "teamName": "Columbus Blue Jackets",
+   "position": "C",
+   "kind": "skater",
+   "note": "Aterminé la dernière saison avec 23 points en 26 matchs et semble prêt à atteindre un autre niveau."
+  },
+  {
+   "name": "Simon Nemec",
+   "team": "CGY",
+   "teamName": "Calgary Flames",
+   "position": "D",
+   "kind": "skater",
+   "note": "Acquis des Devils du New Jersey durant l'été, Nemec passera d'une organisation où il avait peu d'occasions de laisser parler son talent offensif à une organisation où il deviendra le défenseur numéro un de l'équipe. Ses statistiques offensives pourraient faire un pas de géant cette saison."
+  },
+  {
+   "name": "Patrick Kane",
+   "team": "CHI",
+   "teamName": "Chicago Blackhawks",
+   "position": "R",
+   "kind": "skater",
+   "note": "Même s'il est maintenant âgé de 37 ans, Patrick Kane a encore de l'essence dans le réservoir, tel que le démontre sa production de 57 points en 67 matchs l'an dernier. Lui qui fait son grand retour à Chicago, il pourrait s'amuser aux côtés de Connor bedard cette saison."
+  },
+  {
+   "name": "Bowen Byram",
+   "team": "CHI",
+   "teamName": "Chicago Blackhawks",
+   "position": "D",
+   "kind": "skater",
+   "note": "Après avoir été acquis à fort prix des Sabres de Buffalo cet été, Byram a signé un contrat monstre à la hauteur d'un défenseur #1 même s'il n'a jamais encore occupé ce rôle dans sa carrière. À moins d'une catastrophe, il devrait battre son record de points en carrière (42) dès cette saison alors qu'il sera utilisé à toutes les sauces à Chicago."
+  },
+  {
+   "name": "Nazem Kadri",
+   "team": "COL",
+   "teamName": "Colorado Avalanche",
+   "position": "C",
+   "kind": "skater",
+   "note": "De retour au Colorado après avoir été acquis des Flames à la date limite, Kadri a bien fait en fin de saison et en séries éliminatoires. Il est le joueur parfait pour évoluer sur le deuxième trio au Colorado."
+  },
+  {
+   "name": "Devon Toews",
+   "team": "COL",
+   "teamName": "Colorado Avalanche",
+   "position": "D",
+   "kind": "skater",
+   "note": "La diminution de production de Cale Makar a directement affecté celle de son compagnon de duo Devon Toews qui a vu sa production offensive fondre de moitié, lui qui est passé de 50, 50 et 44 à 24 points la saison dernière. Un retour en force de Makar la saison prochaine devrait tout rentrer dans l'ordre."
+  },
+  {
+   "name": "Wyatt Johnston",
+   "team": "DAL",
+   "teamName": "Dallas Stars",
+   "position": "C",
+   "kind": "skater",
+   "note": "Le jeune attaquant de 23 ans ne cesse de progresser année après année. Il est passé de 41 points en 2022-23 à 65 points en 2023-24 à 71 points en 2024- 25 à 86 points en 2025-26. Peut-il encore améliorer sa production offensive cette saison?"
+  },
+  {
+   "name": "Dylan Larkin",
+   "team": "DET",
+   "teamName": "Detroit Red Wings",
+   "position": "C",
+   "kind": "skater",
+   "note": "Au moment d'écrire ces lignes, Larkin n'avait toujours pas été échangé par les Red Wings mais maintiendrait son désir de quitter l'organisation malgré le départ de Steve Yzerman. Sa prochaine destination pourrait avoir un important impact sur sa production offensive la saison prochaine."
+  },
+  {
+   "name": "Marco Kasper",
+   "team": "DET",
+   "teamName": "Detroit Red Wings",
+   "position": "C",
+   "kind": "skater",
+   "note": "A connu une saison décevante l'an dernier, passant de 37 à 19 points. Son taux d'efficacité, qui est passé de 13.1% à 6.9%, et son temps de glace qui a été réduit de 2 minutes par match, expliquent cette baisse de régime. Avec Larkin qui désire quitter, de meilleures opportunités pourraient s'ouvrir pour lui."
+  },
+  {
+   "name": "Vasily Podkolzin",
+   "team": "EDM",
+   "teamName": "Edmonton Oilers",
+   "position": "R",
+   "kind": "skater",
+   "note": "À 25 ans, il a connu l'an dernier la meilleure saison de sa carrière, lui qui a terminé avec 37 points. Il devrait amorcer la prochaine saison dans le Top-6 de l'équipe, aux côtés de Leon Draisaitl, ce qui aidera certainement à améliorer sa production offensive."
+  },
+  {
+   "name": "Frederik Andersen",
+   "team": "EDM",
+   "teamName": "Edmonton Oilers",
+   "position": "G",
+   "kind": "goalie",
+   "note": "Signé à titre d'agent libre au cours de l'été, Andersen pourrait-il être la solution des Oilers devant le filet? Maintenant champion de la Coupe Stanley, il a cependant réussi à disputer plus de 35 matchs à une seule reprise dans les six dernières saisons et est la définition même de la fragilité."
+  },
+  {
+   "name": "Brady Tkachuk",
+   "team": "FLA",
+   "teamName": "Florida Panthers",
+   "position": "L",
+   "kind": "skater",
+   "note": "Après avoir vu son souhait se réaliser, il fait maintenant partie des Panthers de la Floride en compagnie de son frère Matthew. Voyons voir l'impact que cette transaction aura sur sa production offensive alors qu'il ne sera plus le joueur vedette de son équipe."
+  },
+  {
+   "name": "Jacob Markstrom",
+   "team": "FLA",
+   "teamName": "Florida Panthers",
+   "position": "G",
+   "kind": "goalie",
+   "note": "Suite à quelques saisons difficiles, Markstrom retrouve son ancien entraîneur de gardien en Floride, lui qui avait été repêché par les Panthers. Avec une formation favorite pour la Coupe Stanley devant lui, voyons voir s'il saura rebondir."
+  },
+  {
+   "name": "Quinton Byfield",
+   "team": "LAK",
+   "teamName": "Los Angeles Kings",
+   "position": "C",
+   "kind": "skater",
+   "note": "Avec le départ d'Anze Kopitar, Byfield devient officiellement le centre numéro un de l'équipe. On pourrait assister à une explosion offensive de sa part cette saison."
+  },
+  {
+   "name": "Erik Haula",
+   "team": "LAK",
+   "teamName": "Los Angeles Kings",
+   "position": "C",
+   "kind": "skater",
+   "note": "Lui qui a déjà connu une saison de 55 points dans le passé et quelques saisons d'une quarantaine de points pourrait profiter du manque de profondeur des Kings au centre pour pivoter le deuxième trio de l'équipe."
+  },
+  {
+   "name": "Brandt Clarke",
+   "team": "LAK",
+   "teamName": "Los Angeles Kings",
+   "position": "D",
+   "kind": "skater",
+   "note": "Est officiellement devenu le quart arrière de l'équipe et verra ses responsabilités augmenter cette saison. Après une récolte de 40 points l'an passée, il pourrait voir sa production offensive augmenter cette saison."
+  },
+  {
+   "name": "Matt Boldy",
+   "team": "MIN",
+   "teamName": "Minnesota Wild",
+   "position": "L",
+   "kind": "skater",
+   "note": "À 25 ans, il a connu une véritable éclosion la saison dernière, terminant avec 85 points. Voyons voir s'il est capable de prendre une autre coche cette saison."
+  },
+  {
+   "name": "Bobby Brink",
+   "team": "MIN",
+   "teamName": "Minnesota Wild",
+   "position": "R",
+   "kind": "skater",
+   "note": "Acquis des Flyers à la dernière date limite des transactions, il sera intéressant de surveiller son utilisation, lui qui pourrait se retrouver à l'aile d'un des deux premiers trios."
+  },
+  {
+   "name": "Maxim Shabanov",
+   "team": "MIN",
+   "teamName": "Minnesota Wild",
+   "position": "R",
+   "kind": "skater",
+   "note": "Signé à titre d'agent libre durant l'été, il sera intéressant de surveiller son utilisation, lui qui pourrait se retrouver à l'aile d'un des deux premiers trios."
+  },
+  {
+   "name": "Juraj Slafkovsky",
+   "team": "MTL",
+   "teamName": "Montréal Canadiens",
+   "position": "L",
+   "kind": "skater",
+   "note": "Le premier choix total de 2022 a pris une grosse coche l'an dernier, passant d'une production de 51 points à 73 points. À 22 ans seulement, ce pourrait n'être que la pointe du iceberg pour lui."
+  },
+  {
+   "name": "Cole Caufield",
+   "team": "MTL",
+   "teamName": "Montréal Canadiens",
+   "position": "R",
+   "kind": "skater",
+   "note": "A atteint pour la première fois de sa carrière l'an dernier le plateau des 50 buts et a connu sa meilleure saison avec 88 points. Attention à son taux d'efficacité qui est passé de 12.7% à 19.6% l'an dernier. Un retour à la normale ou quelque part entre ces deux taux ne serait pas surprenant."
+  },
+  {
+   "name": "Kirby Dach",
+   "team": "MTL",
+   "teamName": "Montréal Canadiens",
+   "position": "C",
+   "kind": "skater",
+   "note": "Il s'agit véritablement de l'année de la dernière chance cette saison pour l'attaquant sélectionné au 3e rang total en 2019 qui a passé les quatre dernières saisons à l'infirmerie. S'il a à éclore, c'est cette année qu'il le fera."
+  },
+  {
+   "name": "Jack Hughes",
+   "team": "NJD",
+   "teamName": "New Jersey Devils",
+   "position": "C",
+   "kind": "skater",
+   "note": "S'il était en mesure de disputer une saison complète une fois dans sa carrière, Hughes serait certainement dans la course au meilleur pointeur de toute la LNH. Prendrez-vous le pari cette saison?"
+  },
+  {
+   "name": "Anthony Mantha",
+   "team": "NJD",
+   "teamName": "New Jersey Devils",
+   "position": "R",
+   "kind": "skater",
+   "note": "Après avoir connu la meilleure saison de sa carrière l'an dernier à Pittsburgh avec 64 points, Mantha a pris le pari qu'il se retrouverait au New Jersey aux côtés de Jack Hughes ou Nico Hischier dans le Top-6. Si tel est le cas, il pourrait à nouveau marquer une trentaine de buts."
+  },
+  {
+   "name": "Ryan O'Reilly",
+   "team": "NSH",
+   "teamName": "Nashville Predators",
+   "position": "C",
+   "kind": "skater",
+   "note": "Après une saison 2024-25 décevante de 53 points, O'Reilly a rebondi l'an dernier avec une récolte de 74 points, sa meilleure saison depuis 2018-19. La prudence est toutefois de mise pour le vétéran qui fêtera ses 36 ans cette année et qui avait un taux d'efficacité anormalement élevé l'an dernier. Attendez-vous à une régression."
+  },
+  {
+   "name": "Steven Stamkos",
+   "team": "NSH",
+   "teamName": "Nashville Predators",
+   "position": "C",
+   "kind": "skater",
+   "note": "Tout comme O'Reilly, Stamkos a rebondi avec une grosse saison après une saison décevante. Gardez en tête qu'il fêtera ses 37 ans cette année et que lui aussi avait un taux d'efficacité trop élevé de 20.4%."
+  },
+  {
+   "name": "Luke Evangelista",
+   "team": "NSH",
+   "teamName": "Nashville Predators",
+   "position": "R",
+   "kind": "skater",
+   "note": "Le jeune attaquant a enfin débloqué l'an dernier, passant de 32 à 56 points. À seulement 24 ans, on croit à Nashville qu'il sera en mesure d'encore augmenter sa production offensive cette saison."
+  },
+  {
+   "name": "Emil Heineman",
+   "team": "NYI",
+   "teamName": "New York Islanders",
+   "position": "L",
+   "kind": "skater",
+   "note": "Acquis du Canadien dans l'échange de Noah Dobson, Heineman était un élément clé de la transaction aux yeux du DG Mathieu Darche. Il n'a pas déçu à sa première saison à Long Island, inscrivant 22 buts. Voyons voir s'il peut maintenant atteindre un autre niveau à 24 ans."
+  },
+  {
+   "name": "Simon Holmstrom",
+   "team": "NYI",
+   "teamName": "New York Islanders",
+   "position": "R",
+   "kind": "skater",
+   "note": "L'ancien choix de 1ere ronde sur qui on fondait beaucoup d'espoir semble vouloir sortir de sa coquille avec des saisons de 20 et 19 buts. Serait-ce l'année où il explose enfin?"
+  },
+  {
+   "name": "Mika Zibanejad",
+   "team": "NYR",
+   "teamName": "New York Rangers",
+   "position": "C",
+   "kind": "skater",
+   "note": "Véritable boîte à surprises, on ne sait jamais quelle genre de saison il va nous donner, lui qui peut produire n'importe où entre 60 et 90 points. A terminé la dernière saison avec 48 points à ses 40 derniers matchs."
+  },
+  {
+   "name": "Pavel Dorofeyev",
+   "team": "NYR",
+   "teamName": "New York Rangers",
+   "position": "L",
+   "kind": "skater",
+   "note": "Acquis des Golden Knights de Vegas durant la saison morte, Dorofeyev a ensuite signé un contrat de 7 ans d'une valeur de 11 millions par année. Lui qui a marqué 37 buts la saison dernière, il n'aura cependant plus Mitch Marner pour l'alimenter cette saison."
+  },
+  {
+   "name": "Alexis Lafreniere",
+   "team": "NYR",
+   "teamName": "New York Rangers",
+   "position": "L",
+   "kind": "skater",
+   "note": "Le départ d'Artemi Panarin pourrait être la meilleure chose pour sa carrière, alors qu'il pourra maintenant évoluer sur son côté naturel. Il a terminé la saison passée avec 28 points à ses 27 derniers matchs."
+  },
+  {
+   "name": "William Eklund",
+   "team": "OTT",
+   "teamName": "Ottawa Senators",
+   "position": "L",
+   "kind": "skater",
+   "note": "Acquis des Sharks de San Jose durant la saison morte pour aider à palier à la perte de Brady Tkachuk, Eklund a terminé avec 58 et 53 points à ses deux dernières saisons. Sa baisse de régime l'an dernier s'explique simplement par moins de temps de glace aux côtés de Macklin Celebrini. Le changement d'organisation pourrait-il lui permettre de passer au prochain niveau?"
+  },
+  {
+   "name": "Trevor Zegras",
+   "team": "PHI",
+   "teamName": "Philadelphia Flyers",
+   "position": "C",
+   "kind": "skater",
+   "note": "Après une fin de séjour atroce à Anaheim, Zegra a retrouvé ses ailes à Philadelphie, où il semble s'amuser comme un poisspn dans l'eau. Il est passé d'une production de 32 points avec les Ducks en 2024-25 à une production de 67 points la saison dernière vec sa nouvelle formation."
+  },
+  {
+   "name": "Evgeni Malkin",
+   "team": "PIT",
+   "teamName": "Pittsburgh Penguins",
+   "position": "C",
+   "kind": "skater",
+   "note": "À 40 ans, Malkin voulait disputer au moins une autre saison dans la LNH. Deux choses semblent certaines avec lui années après années: 1. Il ratera assurément une dizaine de matchs durant la saison. 2. Quand il joue, il produira à un rythme de plus d'un point par match."
+  },
+  {
+   "name": "Yegor Chinakhov",
+   "team": "PIT",
+   "teamName": "Pittsburgh Penguins",
+   "position": "R",
+   "kind": "skater",
+   "note": "Acquis des Blue Jackets la saison dernière, ce changement de décor a été la meilleure chose qui pouvait arriver à l'attaquant russe de 25 ans alors qu'il est passé d'un rythme de production de 16 points en 82 matchs à Columbus à un rythme de près de 70 points à Pittsburgh."
+  },
+  {
+   "name": "Mackie Samoskevich",
+   "team": "SEA",
+   "teamName": "Seattle Kraken",
+   "position": "C",
+   "kind": "skater",
+   "note": "Ancien coéquipier de Matty Beniers dans le junior, ce n'est pas un hasard si la direction du Kraken a payé le gros prix pour l'acquérir des Panthers. Il ne serait pas surprenant de voir les deux amis se retrouver sur un même trio et s'entraider tous les deux à connaître la meilleure saison de leur carrière respective."
+  },
+  {
+   "name": "Shane Wright",
+   "team": "SEA",
+   "teamName": "Seattle Kraken",
+   "position": "C",
+   "kind": "skater",
+   "note": "Lui qui a demandé à être échangé après une saison difficile, il pourrait rebondir la saison prochaine, dépendamment où il aboutira."
+  },
+  {
+   "name": "Bobby McMann",
+   "team": "SEA",
+   "teamName": "Seattle Kraken",
+   "position": "C",
+   "kind": "skater",
+   "note": "Après avoir été échangé au Kraken, il a terminé la saison avec 14 points en 18 matchs et semble avoir trouvé son rôle avec le Kraken."
+  },
+  {
+   "name": "Collin Graf",
+   "team": "SJS",
+   "teamName": "San Jose Sharks",
+   "position": "R",
+   "kind": "skater",
+   "note": "Lui qui a explosé l'an dernier avec 46 points, il devrait encore une fois avoir un rôle dans le Top-6 de l'attaque de l'équipe cette saison. Voyons voir s'il sera en mesure de surpasser cette production."
+  },
+  {
+   "name": "Mason Marchment",
+   "team": "SJS",
+   "teamName": "San Jose Sharks",
+   "position": "L",
+   "kind": "skater",
+   "note": "Signé à gros montant sur le marché des agents libres, Marchment s'amène à San Jose et portera l'ancien numéro de chandail de son défunt père. Son retour au bercail émouvant pourrait l'inspirer à connaitre une grosse saison avec sa nouvelle formation."
+  },
+  {
+   "name": "Mason McTavish",
+   "team": "STL",
+   "teamName": "St. Louis Blues",
+   "position": "C",
+   "kind": "skater",
+   "note": "Acquis des Ducks au repêchage en retour de deux choix de première ronde, McTavish s'amène à St. Louis pour un nouveau départ après une saison difficile. Il devrait amorcer la saison sur le deuxième trio de l'équipe et aura toutes les chances de se prouver avec sa nouvelle organisation."
+  },
+  {
+   "name": "Connor McMichael",
+   "team": "STL",
+   "teamName": "St. Louis Blues",
+   "position": "C",
+   "kind": "skater",
+   "note": "Acquis des Capitals dans l'échange de Jordan Kyrou, McMichael devrait lui aussi se retrouver sur le deuxième trio pour amorcer la prochaine saison et pourrait bien former un duo avec McTavish."
+  },
+  {
+   "name": "John Carlson",
+   "team": "TBL",
+   "teamName": "Tampa Bay Lightning",
+   "position": "D",
+   "kind": "skater",
+   "note": "Son acquisition cet été sur le marché des agents libres était écrite dans le ciel. On a décidé de laisser partir Darren Raddysh après une saison de 70 points parce que l'on considère Carlson supérieur et avec raison. Son arrivée à Tampa Bay sur le jeu de puissance du Lightning pourrait lui faire exploser sa production offensive. Il pourrait même potentiellement surpasser sa meilleure saison en carrière (71 points)."
+  },
+  {
+   "name": "Gage Goncalves",
+   "team": "TBL",
+   "teamName": "Tampa Bay Lightning",
+   "position": "C",
+   "kind": "skater",
+   "note": "A récolté 33 points en 74 matchs la saison dernière et obtenait du temps sur le jeu de puissance alors que Jon Cooper l'utilisait selon le côté où la mise en jeu était prise dans le territoire adverse. Pourrait continuer sa progression offensive cette saison."
+  },
+  {
+   "name": "Auston Matthews",
+   "team": "TOR",
+   "teamName": "Toronto Maple Leafs",
+   "position": "C",
+   "kind": "skater",
+   "note": "Grandement ennuyé par les blessures l'an dernier, plusieurs rumeurs planent à l'effet qu'il aurait des problèmes de dos. À prendre en considération pour la saison prochaine."
+  },
+  {
+   "name": "Darren Raddysh",
+   "team": "TOR",
+   "teamName": "Toronto Maple Leafs",
+   "position": "D",
+   "kind": "skater",
+   "note": "Après être passé d'une production de 37 à 70 points l'an dernier éclipsant par beaucoup son ancienne marque personnelle, Raddysh a quitté le Lightning cet été et se voit donner les clés du jeu de puissance des Leafs avec un gros contrat à long terme. Voyons voir s'il sera en mesure de maintenir ce rythme cette saison."
+  },
+  {
+   "name": "Sergei Bobrovsky",
+   "team": "TOR",
+   "teamName": "Toronto Maple Leafs",
+   "position": "G",
+   "kind": "goalie",
+   "note": "Le vétéran gardien de 38 ans s'amène avec une nouvelle formation et une moins bonne brigade défensive que celle des Panthers. Voyons voir comment il performera derrière une défensive poreuse."
+  },
+  {
+   "name": "Logan Cooley",
+   "team": "UTA",
+   "teamName": "Utah Mammoth",
+   "position": "C",
+   "kind": "skater",
+   "note": "Il a vu sa saison être stoppée par une blessure à la jambe l'an dernier mais devrait être de retour en santé. Il s'agira de sa quatrième saison dans la LNH et pourrait exploser et s'établir comme un joueur étoile dans la LNH, lui qui a terminé la dernière saison avec 13 points à ses 10 derniers matchs."
+  },
+  {
+   "name": "Dylan Guenther",
+   "team": "UTA",
+   "teamName": "Utah Mammoth",
+   "position": "R",
+   "kind": "skater",
+   "note": "Lui qui évolue sur un trio en compagnie de Logan Cooley, il a établi un sommet personnel l'an dernier avec 73 points. À 23 ans, tout indique que le sniper du Mammoth est encore capable de prendre une autre coche."
+  },
+  {
+   "name": "Vincent Trocheck",
+   "team": "UTA",
+   "teamName": "Utah Mammoth",
+   "position": "C",
+   "kind": "skater",
+   "note": "Son départ de New York pour une destination plus offensive devrait améliorer sa production."
+  },
+  {
+   "name": "Marco Rossi",
+   "team": "VAN",
+   "teamName": "Vancouver Canucks",
+   "position": "C",
+   "kind": "skater",
+   "note": "Lui qui a produit à un rythme d'environ 58 points l'an dernier, il a terminé la saison à Vancouver à un rythme de près d'un point par match et aura toute l'espace et les opportunités offensives possibles cette saison. Il y a par contre bien peu de profondeur autour de lui."
+  },
+  {
+   "name": "Brett Howden",
+   "team": "VGK",
+   "teamName": "Vegas Golden Knights",
+   "position": "C",
+   "kind": "skater",
+   "note": "A connu des séries éliminatoires fantastiques aux côtés de Mitch Marner et a marqué en 22 matchs plus de buts (14) qu'il n'en a réussi en 58 matchs de saison régulière (12). Il pourrait très bien battre sa marque personnelle de 40 points cette saison."
+  },
+  {
+   "name": "Shea Theodore",
+   "team": "VGK",
+   "teamName": "Vegas Golden Knights",
+   "position": "D",
+   "kind": "skater",
+   "note": "Avec le départ de Pavel Dorofeyev pour New York, les Golden Knights pourraient cesser d'évoluer à cinq attaquants sur le jeu de puissance, ce qui marquerait le retour de Theodore sur la première unité."
+  },
+  {
+   "name": "Victor Olofsson",
+   "team": "VGK",
+   "teamName": "Vegas Golden Knights",
+   "position": "L",
+   "kind": "skater",
+   "note": "Signature qui semble banale à première vue mais Olofsson a connu ses meilleurs moments dans la LNH aux côtés de Jack Eichel. Le duo pourrait à nouveau être réuni cette saison."
+  },
+  {
+   "name": "Gabriel Vilardi",
+   "team": "WPG",
+   "teamName": "Winnipeg Jets",
+   "position": "C",
+   "kind": "skater",
+   "note": "A connu la meilleure saison de sa carrière l'an dernier avec 69 points. Ses problèmes de dos semblent maintenant derrière lui. S'il réussi à demeurer en santé, il pourrait améliorer cette marque."
+  },
+  {
+   "name": "Cole Perfetti",
+   "team": "WPG",
+   "teamName": "Winnipeg Jets",
+   "position": "L",
+   "kind": "skater",
+   "note": "Après une saison encourageante de 50 points en 2024-25, il a connu une saison difficile de 32 points en 68 matchs l'an dernier. Voyons voir s'il sera en mesure de rebondir cette saison."
+  },
+  {
+   "name": "Stuart Skinner",
+   "team": "WPG",
+   "teamName": "Winnipeg Jets",
+   "position": "G",
+   "kind": "goalie",
+   "note": "Si les rumeurs qui circulent sont fondées et Connor Hellebuyck est échangé, Skinner prendrait automatiquement beaucoup de valeur et deviendrait le gardien numéro un des Jets."
+  },
+  {
+   "name": "Pierre-Luc Dubois",
+   "team": "WSH",
+   "teamName": "Washington Capitals",
+   "position": "C",
+   "kind": "skater",
+   "note": "Après avoir raté la majorité de la saison dernière, il est de retour en santé et sera très bien entouré avec les acquisitions estivales des Capitals."
+  }
+ ]
+}
