@@ -62,6 +62,8 @@ const FR_POS = { C: 'C', AG: 'L', AD: 'R', D: 'D', AC: 'C' };
 
 const warnings = [];
 const warn = msg => { warnings.push(msg); };
+// Les tests vident le collecteur entre deux cas : warnings est un état de module.
+const resetWarnings = () => { warnings.length = 0; };
 
 // ── helpers ────────────────────────────────────────────────────────────────
 const num = v => {
@@ -588,66 +590,83 @@ function linkGuides(guides, skaters, goalies) {
     }
 }
 
-// ── build ──────────────────────────────────────────────────────────────────
-const teams = buildTeams();
-const idIndex = buildIdIndex();
-const skaters = buildSkaters(idIndex);
-const goalies = buildGoalies(idIndex);
-const guides = buildGuides(teams);
-linkGuides(guides, skaters, goalies);
+// ── build ──────────────────────────────────────────────────
+// Sous require.main : importer ce fichier depuis un test ne doit pas relancer
+// la construction — elle lit les .xlsx et réécrit draftkit.json. Voir
+// UNIT_TESTS.md §5.2.
+function main() {
+    const teams = buildTeams();
+    const idIndex = buildIdIndex();
+    const skaters = buildSkaters(idIndex);
+    const goalies = buildGoalies(idIndex);
+    const guides = buildGuides(teams);
+    linkGuides(guides, skaters, goalies);
 
-// The home page's "À surveiller" strip: every team's Joueurs à Surveiller,
-// flattened once here so the client does no assembly of its own.
-const watchlist = [];
-for (const team of teams.slice().sort((a, b) => a.abbrev.localeCompare(b.abbrev))) {
-    const guide = guides[team.abbrev];
-    if (!guide) continue;
-    for (const note of guide.notes.joueursASurveiller) {
-        watchlist.push({
-            name: note.fullName,
-            team: team.abbrev,
-            teamName: team.fullName,
-            position: note.position,
-            kind: note.kind,
-            note: note.text
-        });
+    // The home page's "À surveiller" strip: every team's Joueurs à Surveiller,
+    // flattened once here so the client does no assembly of its own.
+    const watchlist = [];
+    for (const team of teams.slice().sort((a, b) => a.abbrev.localeCompare(b.abbrev))) {
+        const guide = guides[team.abbrev];
+        if (!guide) continue;
+        for (const note of guide.notes.joueursASurveiller) {
+            watchlist.push({
+                name: note.fullName,
+                team: team.abbrev,
+                teamName: team.fullName,
+                position: note.position,
+                kind: note.kind,
+                note: note.text
+            });
+        }
     }
+
+    const out = {
+        source: 'Trousse de repêchage NHL 2026-2027 (PoolExpert.com)',
+        season: SEASON,
+        generatedAt: new Date().toISOString(),
+        counts: {
+            teams: teams.length, skaters: skaters.length, goalies: goalies.length,
+            watchlist: watchlist.length,
+            withPlayerId: [...skaters, ...goalies].filter(p => p.playerId).length
+        },
+        teams,
+        skaters,
+        goalies,
+        guides,
+        watchlist
+    };
+
+    fs.writeFileSync(OUT, JSON.stringify(out, null, 1));
+
+    // The home page only needs the watch list. Pulling the whole kit (~1 MB) for a
+    // 70-line strip would be the most expensive request on that page, so the same
+    // build also drops a slim copy next to it — written here, never by hand, so
+    // the two can never drift.
+    fs.writeFileSync(OUT_WATCHLIST, JSON.stringify({
+        source: out.source,
+        season: SEASON,
+        generatedAt: out.generatedAt,
+        watchlist
+    }, null, 1));
+
+    console.log(`✅ ${path.relative(process.cwd(), OUT)} — ${teams.length} teams, ${skaters.length} skaters, ${goalies.length} goalies, ${watchlist.length} watchlist entries`);
+    console.log(`✅ ${path.relative(process.cwd(), OUT_WATCHLIST)} — ${watchlist.length} entries`);
+    const withId = [...skaters, ...goalies].filter(p => p.playerId).length;
+    console.log(`   ${withId}/${skaters.length + goalies.length} players matched to an NHL id (photo + career modal)`);
+    if (warnings.length) {
+        console.log(`\n⚠️  ${warnings.length} warning(s):`);
+        for (const w of warnings) console.log('   ' + w);
+    }
+
 }
 
-const out = {
-    source: 'Trousse de repêchage NHL 2026-2027 (PoolExpert.com)',
-    season: SEASON,
-    generatedAt: new Date().toISOString(),
-    counts: {
-        teams: teams.length, skaters: skaters.length, goalies: goalies.length,
-        watchlist: watchlist.length,
-        withPlayerId: [...skaters, ...goalies].filter(p => p.playerId).length
-    },
-    teams,
-    skaters,
-    goalies,
-    guides,
-    watchlist
+if (require.main === module) main();
+
+// Exporté pour test/unit/draftkit-build.test.js : les fonctions pures du
+// pipeline, plus les seuils que les tests verrouillent.
+module.exports = {
+    nameKey, splitName, isRookie, titleCase, editDistance, resolveId, round,
+    normTeam, num, int, parseTopPicks, parseLineup, parseInjury, parseNotes,
+    parseTeamPage, linkGuides, warnings, resetWarnings,
+    ROOKIE_MAX_GAMES, ROOKIE_MAX_AGE, KIT_TO_NHL, TEAM_NAME_TO_ABBREV
 };
-
-fs.writeFileSync(OUT, JSON.stringify(out, null, 1));
-
-// The home page only needs the watch list. Pulling the whole kit (~1 MB) for a
-// 70-line strip would be the most expensive request on that page, so the same
-// build also drops a slim copy next to it — written here, never by hand, so
-// the two can never drift.
-fs.writeFileSync(OUT_WATCHLIST, JSON.stringify({
-    source: out.source,
-    season: SEASON,
-    generatedAt: out.generatedAt,
-    watchlist
-}, null, 1));
-
-console.log(`✅ ${path.relative(process.cwd(), OUT)} — ${teams.length} teams, ${skaters.length} skaters, ${goalies.length} goalies, ${watchlist.length} watchlist entries`);
-console.log(`✅ ${path.relative(process.cwd(), OUT_WATCHLIST)} — ${watchlist.length} entries`);
-const withId = [...skaters, ...goalies].filter(p => p.playerId).length;
-console.log(`   ${withId}/${skaters.length + goalies.length} players matched to an NHL id (photo + career modal)`);
-if (warnings.length) {
-    console.log(`\n⚠️  ${warnings.length} warning(s):`);
-    for (const w of warnings) console.log('   ' + w);
-}

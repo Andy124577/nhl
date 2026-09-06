@@ -129,3 +129,17 @@ function hexLuminance(hex) {
        + 0.7152 * lin((num >> 8) & 0xff)
        + 0.0722 * lin(num & 0xff);
 }
+
+/* ────────────────────────────────────────────────────────────────────────
+ * Export double — même motif que profanity.js : le navigateur reçoit les
+ * fonctions sur window comme avant, et les tests unitaires peuvent faire un
+ * require() sans navigateur. Rien d'autre ne change pour la page.
+ * ──────────────────────────────────────────────────────────────────────── */
+(function () {
+    const api = { NHL_TEAM_COLORS, NHL_TEAM_COLORS_FALLBACK, getTeamColors, shadeHex, mixHex, hexLuminance };
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = api;                 // tests (CommonJS)
+    } else if (typeof window !== 'undefined') {
+        Object.assign(window, api);           // navigateur
+    }
+})();

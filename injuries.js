@@ -480,7 +480,26 @@ function injWatchDom() {
     observer.observe(document.body, { childList: true, subtree: true });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    injWatchDom();
-    loadInjuries();
-});
+// Garde `typeof` : dans un navigateur, document existe toujours et le
+// comportement est inchangé ; hors navigateur (tests unitaires), le
+// module se charge sans rien démarrer.
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        injWatchDom();
+        loadInjuries();
+    });
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+ * Export double — même motif que profanity.js : le navigateur reçoit les
+ * fonctions sur window comme avant, et les tests unitaires peuvent faire un
+ * require() sans navigateur. Rien d'autre ne change pour la page.
+ * ──────────────────────────────────────────────────────────────────────── */
+(function () {
+    const api = { injState, injNormalizeName, injLooseKey, injTeamCode, injIndex, getPlayerInjury, injStatusFr, injNatureFr, injDurationFr, injDayDiff, injParseDate, injFormatDate, injEscape, injuryTiming, injuryTimingSummary, injuryOneLiner };
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = api;                 // tests (CommonJS)
+    } else if (typeof window !== 'undefined') {
+        Object.assign(window, api);           // navigateur
+    }
+})();

@@ -17,6 +17,18 @@ const db = require("./db"); // ✅ PostgreSQL database module
 const multer = require("multer");
 const { v4: uuidv4 } = require("uuid");
 
+// Logique métier pure, extraite de ce fichier vers lib/ pour être testable
+// unitairement (voir UNIT_TESTS.md). Les corps de fonctions sont inchangés.
+const { FANTASY_SCORING, computeTeamSeasonScores, getTeamWeeklyPoints,
+    skaterFantasyPointsTonight, goalieFantasyPointsTonight } = require("./lib/scoring.js");
+const { generateWeeklyMatchups, ensureStandingsEntry, calculateWeeklyResults,
+    getCurrentWeekNumber, mondayOfWeek } = require("./lib/h2h.js");
+const { generateSnakeOrder, checkIfDraftComplete } = require("./lib/draft.js");
+const { teamHasPlayer, invalidateConflictingTrades, removeFromTeam, addToTeam,
+    getPositionLabel } = require("./lib/trades.js");
+const { NHL_CLUB_FULLNAME, diffRosterSnapshots, getTeamAbbreviationFromName } = require("./lib/roster.js");
+const { getStatsRefreshStatus } = require("./lib/statsCache.js");
+
 const app = express();
 const PORT = process.env.PORT || 3000; // ✅ Use Render's PORT
 
@@ -50,29 +62,6 @@ const NHL_CLUB_CODES = new Set([
     'WPG', 'WSH'
 ]);
 
-/**
- * Nom complet d'un club, pour l'inverse de getTeamAbbreviationFromName plus
- * bas dans ce fichier (nom → code). Une identité choisie (/choose-nhl-club)
- * doit remplir la case « équipe LNH » du roster avec le même format de nom
- * que celui utilisé partout ailleurs pour cette case — classement, échanges —
- * jamais l'abréviation seule. Recopié plutôt que dérivé de specialCases (bien
- * plus bas) : la sécurité d'une petite table statique en double l'emporte ici
- * sur l'économie d'une seule source, cette route touchant au calcul du
- * classement.
- */
-const NHL_CLUB_FULLNAME = {
-    ANA: 'Anaheim Ducks', BOS: 'Boston Bruins', BUF: 'Buffalo Sabres',
-    CAR: 'Carolina Hurricanes', CBJ: 'Columbus Blue Jackets', CGY: 'Calgary Flames',
-    CHI: 'Chicago Blackhawks', COL: 'Colorado Avalanche', DAL: 'Dallas Stars',
-    DET: 'Detroit Red Wings', EDM: 'Edmonton Oilers', FLA: 'Florida Panthers',
-    LAK: 'Los Angeles Kings', MIN: 'Minnesota Wild', MTL: 'Montréal Canadiens',
-    NJD: 'New Jersey Devils', NSH: 'Nashville Predators', NYI: 'New York Islanders',
-    NYR: 'New York Rangers', OTT: 'Ottawa Senators', PHI: 'Philadelphia Flyers',
-    PIT: 'Pittsburgh Penguins', SEA: 'Seattle Kraken', SJS: 'San Jose Sharks',
-    STL: 'St. Louis Blues', TBL: 'Tampa Bay Lightning', TOR: 'Toronto Maple Leafs',
-    UTA: 'Utah Hockey Club', VAN: 'Vancouver Canucks', VGK: 'Vegas Golden Knights',
-    WPG: 'Winnipeg Jets', WSH: 'Washington Capitals'
-};
 
 console.log(`📁 Data directory: ${DATA_DIR}`);
 
@@ -230,121 +219,6 @@ const saveDraftData = async (data) => {
 // HEAD-TO-HEAD HELPER FUNCTIONS
 // ==============================================
 
-// Generate random matchups for a week (avoid repeats if possible)
-function generateWeeklyMatchups(teams, previousMatchups = []) {
-    const teamNames = teams.filter(t => t.members && t.members.length > 0).map(t => t.name);
-
-    if (teamNames.length % 2 !== 0) {
-        console.error("⚠️ Cannot generate matchups: odd number of teams!");
-        return [];
-    }
-
-    if (teamNames.length === 0) {
-        console.error("⚠️ Cannot generate matchups: no active teams!");
-        return [];
-    }
-
-    // Special case: 2 teams always play each other
-    if (teamNames.length === 2) {
-        return [{
-            team1: teamNames[0],
-            team2: teamNames[1],
-            team1Points: 0,
-            team2Points: 0,
-            winner: null,
-            weekNumber: null // Will be set when saved
-        }];
-    }
-
-    // For >2 teams: try to avoid immediate repetition
-    // Build a set of recent pairings from last 2-3 weeks
-    const recentPairings = new Set();
-    const recentWeeks = previousMatchups.slice(-3); // Last 3 weeks
-    recentWeeks.forEach(weekMatchups => {
-        if (Array.isArray(weekMatchups)) {
-            weekMatchups.forEach(m => {
-                if (m.team1 && m.team2) {
-                    const pair1 = [m.team1, m.team2].sort().join('|');
-                    recentPairings.add(pair1);
-                }
-            });
-        }
-    });
-
-    // Try up to 10 shuffles to find a set of matchups with minimal repetition
-    let bestMatchups = null;
-    let bestScore = Infinity;
-
-    for (let attempt = 0; attempt < 10; attempt++) {
-        // Shuffle teams randomly
-        const shuffled = [...teamNames].sort(() => Math.random() - 0.5);
-
-        // Create pairs
-        const matchups = [];
-        let repetitionScore = 0;
-
-        for (let i = 0; i < shuffled.length; i += 2) {
-            const team1 = shuffled[i];
-            const team2 = shuffled[i + 1];
-            const pairKey = [team1, team2].sort().join('|');
-
-            // Count if this pairing was recent
-            if (recentPairings.has(pairKey)) {
-                repetitionScore++;
-            }
-
-            matchups.push({
-                team1,
-                team2,
-                team1Points: 0,
-                team2Points: 0,
-                winner: null,
-                weekNumber: null // Will be set when saved
-            });
-        }
-
-        // Keep track of best matchups (fewest repetitions)
-        if (repetitionScore < bestScore) {
-            bestScore = repetitionScore;
-            bestMatchups = matchups;
-        }
-
-        // If we found a perfect solution (no repetitions), use it
-        if (repetitionScore === 0) {
-            break;
-        }
-    }
-
-    return bestMatchups || [];
-}
-
-// Calculate total points for a team for a given week
-function getTeamWeeklyPoints(teamData, currentStats) {
-    if (!teamData) return 0;
-    let totalPoints = 0;
-
-    // Helper function to get current player stats
-    function getPlayerPoints(playerData) {
-        if (!currentStats || !currentStats.players) return 0;
-
-        const playerName = playerData.skaterFullName || playerData.goalieFullName || playerData;
-        if (!playerName) return 0;
-
-        const stats = currentStats.players.find(p => p.playerName === playerName);
-        return stats ? (stats.points || 0) : 0;
-    }
-
-    // Sum points from all positions (use correct pool key names)
-    ['offensive', 'defensive', 'rookie', 'goalie'].forEach(position => {
-        if (teamData[position]) {
-            teamData[position].forEach(player => {
-                totalPoints += getPlayerPoints(player);
-            });
-        }
-    });
-
-    return totalPoints;
-}
 
 // Calculate team fantasy points for a specific date range using player_game_logs
 async function getTeamPointsForDateRange(teamData, startDateISO, endDateISO) {
@@ -529,127 +403,6 @@ async function getTeamPlayerBreakdownForDateRange(teamData, startDateISO, endDat
     }
 }
 
-// Server-side twin of buildTeamScores in accueil.js (client, ~line 681) —
-// same season-cumulative formula (skater: NHL "points" stat; goalie:
-// shutouts*5 + wins*2 + otLosses*1), so a rank computed here matches what
-// the homepage's own "current rank" already shows. Kept in lockstep with
-// accueil.js on purpose: this is what both the daily snapshot and the live
-// side of /pool-rank-movement are computed with.
-function computeTeamSeasonScores(poolData, statsPlayers) {
-    const playerPts = {};
-    (statsPlayers || []).forEach(p => {
-        const name = p.playerName;
-        if (!name) return;
-        playerPts[name] = p.position === 'G'
-            ? (p.shutouts || 0) * 5 + (p.wins || 0) * 2 + (p.otLosses || 0) * 1
-            : (p.points || 0);
-    });
-
-    const rows = Object.entries(poolData.teams || {})
-        .filter(([, td]) => (td.members || []).length > 0)
-        .map(([teamName, td]) => {
-            const names = [
-                ...(td.offensive || []),
-                ...(td.defensive || []),
-                ...(td.goalie || []),
-                ...(td.rookie || [])
-            ].map(p => (typeof p === 'string') ? p : (p.skaterFullName || p.goalieFullName || p));
-            const score = names.reduce((s, n) => s + (playerPts[n] || 0), 0);
-            return { teamName, score };
-        });
-
-    rows.sort((a, b) => b.score - a.score);
-    rows.forEach((r, i) => { r.rank = i + 1; });
-    return rows;
-}
-
-// Helper to ensure standings entry exists for a team
-function ensureStandingsEntry(standings, teamName) {
-    if (!standings[teamName]) {
-        standings[teamName] = { wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0 };
-    }
-}
-
-// Calculate results for completed week and update standings
-function calculateWeeklyResults(poolData, weekNumber, currentStats) {
-    if (!poolData.h2hData || !poolData.h2hData.matchups[weekNumber - 1]) {
-        console.error("⚠️ No matchup data for week", weekNumber);
-        return;
-    }
-
-    const weekMatchups = poolData.h2hData.matchups[weekNumber - 1];
-    const standings = poolData.h2hData.standings || {};
-
-    weekMatchups.forEach(matchup => {
-        const team1Data = poolData.teams[matchup.team1];
-        const team2Data = poolData.teams[matchup.team2];
-
-        if (!team1Data || !team2Data) return;
-
-        // Calculate points for each team
-        matchup.team1Points = getTeamWeeklyPoints(team1Data, currentStats);
-        matchup.team2Points = getTeamWeeklyPoints(team2Data, currentStats);
-
-        // Determine winner
-        if (matchup.team1Points > matchup.team2Points) {
-            matchup.winner = matchup.team1;
-        } else if (matchup.team2Points > matchup.team1Points) {
-            matchup.winner = matchup.team2;
-        } else {
-            matchup.winner = 'tie'; // Tie
-        }
-
-        // Update standings
-        if (!standings[matchup.team1]) {
-            standings[matchup.team1] = { wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0 };
-        }
-        if (!standings[matchup.team2]) {
-            standings[matchup.team2] = { wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0 };
-        }
-
-        // Update wins/losses
-        if (matchup.winner === matchup.team1) {
-            standings[matchup.team1].wins++;
-            standings[matchup.team2].losses++;
-        } else if (matchup.winner === matchup.team2) {
-            standings[matchup.team2].wins++;
-            standings[matchup.team1].losses++;
-        } else {
-            standings[matchup.team1].ties++;
-            standings[matchup.team2].ties++;
-        }
-
-        // Update points for/against
-        standings[matchup.team1].pointsFor += matchup.team1Points;
-        standings[matchup.team1].pointsAgainst += matchup.team2Points;
-        standings[matchup.team2].pointsFor += matchup.team2Points;
-        standings[matchup.team2].pointsAgainst += matchup.team1Points;
-    });
-
-    poolData.h2hData.standings = standings;
-
-    // Save to history
-    if (!poolData.h2hData.matchupHistory) {
-        poolData.h2hData.matchupHistory = [];
-    }
-    poolData.h2hData.matchupHistory.push({
-        weekNumber: weekNumber,
-        matchups: weekMatchups,
-        completedDate: new Date().toISOString()
-    });
-
-    return poolData;
-}
-
-// Get current week number based on season start date
-function getCurrentWeekNumber(seasonStart) {
-    if (!seasonStart) return 1;
-    const start = new Date(seasonStart);
-    const now = new Date();
-    const diffMs = now - start;
-    if (diffMs < 0) return 1;
-    return Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000)) + 1;
-}
 
 // ✅ WebSocket Connection
 io.on("connection", async (socket) => {
@@ -1058,7 +811,6 @@ app.get("/draft-order/:clanName", async (req, res) => {
 
     res.json({ draftOrder: draftData[clanName].draftOrder });
 });
-
 
 
 // 🔥 Route pour créer un clan
@@ -1945,30 +1697,6 @@ app.post("/start-draft", async (req, res) => {
 });
 
 
-
-  // Fonction pour générer un ordre de draft en serpentin (snake draft)
-// ✅ Fonction centrale pour générer un ordre de draft en serpentin
-function generateSnakeOrder(teams, rounds = 15) {
-    const order = [];
-
-    if (teams.length === 2) {
-        // Simple alternating draft for 2 teams
-        for (let i = 0; i < rounds * teams.length; i++) {
-            order.push(teams[i % 2]);
-        }
-    } else {
-        // Snake draft for 3+ teams
-        for (let i = 0; i < rounds; i++) {
-            const round = i % 2 === 0 ? [...teams] : [...teams].reverse();
-            order.push(...round);
-        }
-    }
-
-    return order;
-}
-
-
-
 app.post("/randomize-draft-order", async (req, res) => {
     const { clanName } = req.body;
     if (!clanName) return res.status(400).json({ message: "Nom du clan requis." });
@@ -2006,34 +1734,6 @@ app.post("/randomize-draft-order", async (req, res) => {
 
     res.json({ message: "Ordre de draft généré en serpentin.", draftOrder: clan.draftOrder });
 });
-
-
-
-function checkIfDraftComplete(clan) {
-    // Check only teams with members (active teams in the draft)
-    const activeTeams = Object.values(clan.teams).filter(team =>
-        team.members && team.members.length > 0
-    );
-
-    if (activeTeams.length === 0) return false;
-
-    // Get pool configuration, fallback to defaults if not set
-    const config = clan.config || {
-        numOffensive: 6,
-        numDefensive: 4,
-        numGoalies: 1,
-        numRookies: 1,
-        numTeams: 1
-    };
-
-    return activeTeams.every(team =>
-        team.offensive.length === config.numOffensive &&
-        team.defensive.length === config.numDefensive &&
-        team.rookie?.length === config.numRookies &&
-        team.goalie?.length === config.numGoalies &&
-        team.teams?.length === config.numTeams
-    );
-}
 
 
 app.post("/cleanup-draft", async (req, res) => {
@@ -2406,23 +2106,6 @@ async function loadCurrentStats() {
     return { lastUpdated: null, season: null, players: [] };
 }
 
-// Checks whether the cached stats are missing, stale (>24h), for the wrong
-// season, or suspiciously incomplete. Shared by the /current-stats route and
-// the startup warm-up so both use the same staleness rule.
-function getStatsRefreshStatus(stats) {
-    const ageHours = stats.lastUpdated
-        ? (Date.now() - new Date(stats.lastUpdated).getTime()) / 3600000
-        : Infinity;
-    const expectedPlayerCount = loadAllPlayers().length;
-    const cacheIsIncomplete = stats.players.length < Math.min(expectedPlayerCount * 0.5, 200);
-    const needsRefresh = !stats.lastUpdated || stats.season !== 20252026 || ageHours > 24 || cacheIsIncomplete;
-    const reason = !stats.lastUpdated
-        ? 'no local cache yet'
-        : cacheIsIncomplete
-            ? `incomplete cache (${stats.players.length}/${expectedPlayerCount} players)`
-            : stats.season !== 20252026 ? `wrong season (${stats.season})` : `cache is ${ageHours.toFixed(1)}h old`;
-    return { needsRefresh, cacheIsIncomplete, expectedPlayerCount, ageHours, reason };
-}
 
 // Kicks off updateCurrentStats() in the background if a refresh isn't already
 // running. Safe to call from the route or at startup — it never blocks.
@@ -2440,7 +2123,7 @@ function triggerBackgroundStatsRefresh(reason) {
 app.get("/current-stats", async (req, res) => {
     try {
         const stats = await loadCurrentStats();
-        const { needsRefresh, reason } = getStatsRefreshStatus(stats);
+        const { needsRefresh, reason } = getStatsRefreshStatus(stats, loadAllPlayers().length);
 
         if (!stats.lastUpdated) {
             // Nothing in memory or persistence — block and fetch now (first ever start)
@@ -3155,19 +2838,6 @@ app.get('/schedule/:date', async (req, res) => {
 let tonightBoxscoresCache = { data: null, fetchedAt: 0 };
 const TONIGHT_BOXSCORES_TTL_MS = 25 * 1000;
 
-function skaterFantasyPointsTonight(s) {
-    let fp = (s.goals || 0) * FANTASY_SCORING.goal + (s.assists || 0) * FANTASY_SCORING.assist +
-        (s.shots || 0) * FANTASY_SCORING.shot + (s.plusMinus || 0) * FANTASY_SCORING.plusMinus;
-    return Math.round(fp * 10) / 10;
-}
-
-function goalieFantasyPointsTonight(s) {
-    let fp = (s.decision === 'W' ? FANTASY_SCORING.win : 0) +
-        (s.shutout ? FANTASY_SCORING.shutout : 0) +
-        (s.saves || 0) * FANTASY_SCORING.save +
-        (s.goalsAgainst || 0) * FANTASY_SCORING.goalsAgainst;
-    return Math.round(fp * 10) / 10;
-}
 
 app.get('/tonight-boxscores', async (req, res) => {
     try {
@@ -3478,57 +3148,6 @@ async function fetchAllRosters() {
     return { players, fetchedTeams, failedTeams };
 }
 
-/**
- * Compare deux photos (cartes id → joueur) et en tire les mouvements.
- *
- * `allowDepartures` doit être faux dès qu'un seul club a manqué à
- * l'appel. Un échange et une signature se prouvent par une *présence*
- * (le joueur est là, sur tel club) et restent donc fiables ; un départ
- * ne se déduit que d'une *absence*, et une absence est exactement ce
- * qu'une requête ratée fabrique. Un joueur passé à un club injoignable
- * paraîtrait autrement avoir quitté la ligue. Les départs manqués
- * ressortent à la première photo complète suivante.
- */
-function diffRosterSnapshots(previous, next, dateISO, allowDepartures = true) {
-    const moves = [];
-
-    Object.entries(next).forEach(([id, now]) => {
-        const before = previous[id];
-        if (!before) {
-            moves.push({ playerId: id, type: 'signing', player: now, fromTeam: null, toTeam: now.team });
-        } else if (before.team !== now.team) {
-            // La carte est globale, pas par club : un joueur qui change
-            // d'équipe apparaît donc ici en un seul mouvement, jamais en
-            // un départ plus une signature.
-            moves.push({ playerId: id, type: 'trade', player: now, fromTeam: before.team, toTeam: now.team });
-        }
-    });
-
-    if (allowDepartures) {
-        Object.entries(previous).forEach(([id, before]) => {
-            if (!next[id]) {
-                moves.push({ playerId: id, type: 'departure', player: before, fromTeam: before.team, toTeam: null });
-            }
-        });
-    }
-
-    return moves.map(m => ({
-        // Un joueur ne bouge qu'une fois par jour : date+id+type suffit à
-        // dédoublonner si une photo est reprise deux fois dans la journée.
-        id: `${dateISO}-${m.playerId}-${m.type}`,
-        date: dateISO,
-        type: m.type,
-        playerId: Number(m.playerId),
-        playerName: m.player.name,
-        pos: m.player.pos,
-        num: m.player.num,
-        headshot: m.player.headshot,
-        fromTeam: m.fromTeam,
-        fromTeamName: m.fromTeam ? (NHL_CLUB_FULLNAME[m.fromTeam] || m.fromTeam) : null,
-        toTeam: m.toTeam,
-        toTeamName: m.toTeam ? (NHL_CLUB_FULLNAME[m.toTeam] || m.toTeam) : null
-    }));
-}
 
 async function loadRosterSnapshot() {
     try {
@@ -4597,23 +4216,6 @@ let last14DaysCache = { lastUpdated: null, data: null };
 let last30DaysCache = { lastUpdated: null, data: null };
 let last180DaysCache = { lastUpdated: null, data: null };
 
-// Fantasy scoring rules
-const FANTASY_SCORING = {
-    goal: 3,
-    assist: 2,
-    shot: 0.5,
-    powerPlayGoal: 1,  // Bonus on top of goal
-    powerPlayPoint: 0.5,
-    shorthandedGoal: 2, // Bonus on top of goal
-    shorthandedPoint: 1,
-    gameWinningGoal: 1,
-    plusMinus: 0.5,
-    // Goalie stats
-    win: 5,
-    shutout: 3,
-    save: 0.2,
-    goalsAgainst: -1
-};
 
 // Generic function to calculate hot players for any time range
 async function calculateHotPlayers(days) {
@@ -4938,46 +4540,6 @@ app.get('/streaks', async (req, res) => {
     }
 });
 
-// Helper function to get team abbreviation from full name
-function getTeamAbbreviationFromName(teamName) {
-    const specialCases = {
-        "Florida Panthers": "FLA",
-        "Calgary Flames": "CGY",
-        "Montréal Canadiens": "MTL",
-        "Nashville Predators": "NSH",
-        "St. Louis Blues": "STL",
-        "Washington Capitals": "WSH",
-        "Toronto Maple Leafs": "TOR",
-        "Winnipeg Jets": "WPG",
-        "Utah Hockey Club": "UTA",
-        "Detroit Red Wings": "DET",
-        "Boston Bruins": "BOS",
-        "Tampa Bay Lightning": "TBL",
-        "New York Rangers": "NYR",
-        "New York Islanders": "NYI",
-        "New Jersey Devils": "NJD",
-        "Pittsburgh Penguins": "PIT",
-        "Philadelphia Flyers": "PHI",
-        "Columbus Blue Jackets": "CBJ",
-        "Carolina Hurricanes": "CAR",
-        "Buffalo Sabres": "BUF",
-        "Ottawa Senators": "OTT",
-        "Edmonton Oilers": "EDM",
-        "Vancouver Canucks": "VAN",
-        "Seattle Kraken": "SEA",
-        "Los Angeles Kings": "LAK",
-        "San Jose Sharks": "SJS",
-        "Anaheim Ducks": "ANA",
-        "Vegas Golden Knights": "VGK",
-        "Colorado Avalanche": "COL",
-        "Arizona Coyotes": "ARI",
-        "Minnesota Wild": "MIN",
-        "Dallas Stars": "DAL",
-        "Chicago Blackhawks": "CHI"
-    };
-
-    return specialCases[teamName] || teamName.split(' ')[0].substring(0, 3).toUpperCase();
-}
 
 console.log("✅ NHL current stats system initialized");
 console.log("✅ NHL team standings system initialized");
@@ -5079,120 +4641,6 @@ const saveTrades = async (tradesData) => {
     }
 };
 
-// Helper: Check if team has a specific player
-function teamHasPlayer(team, item) {
-    const arrays = {
-        'offensive': 'offensive',
-        'defensive': 'defensive',
-        'goalie': 'goalie',
-        'rookie': 'rookie',
-        'team': 'teams'
-    };
-
-    const arrayName = arrays[item.type];
-    if (!team[arrayName]) return false;
-
-    const index = team[arrayName].findIndex(p => {
-        const name = p.skaterFullName || p.goalieFullName || p.teamFullName || p;
-        return name === item.name;
-    });
-
-    return index !== -1;
-}
-
-// Helper: Invalidate conflicting pending trades after a trade is accepted
-function invalidateConflictingTrades(trades, acceptedTrade, draftData) {
-    if (!trades.pending || trades.pending.length === 0) return 0;
-
-    const involvedPlayers = new Set();
-
-    // Collect all player names involved in the accepted trade
-    acceptedTrade.offering.forEach(item => {
-        involvedPlayers.add(item.name);
-    });
-    acceptedTrade.receiving.forEach(item => {
-        involvedPlayers.add(item.name);
-    });
-
-    // Find trades that involve any of these players
-    const invalidTrades = [];
-    trades.pending.forEach(trade => {
-        if (trade.draftName !== acceptedTrade.draftName) return; // Different pool
-
-        let hasConflict = false;
-
-        // Check if any player in this trade was involved in the accepted trade
-        trade.offering.forEach(item => {
-            if (involvedPlayers.has(item.name)) {
-                hasConflict = true;
-            }
-        });
-        trade.receiving.forEach(item => {
-            if (involvedPlayers.has(item.name)) {
-                hasConflict = true;
-            }
-        });
-
-        if (hasConflict) {
-            invalidTrades.push(trade.id);
-        }
-    });
-
-    // Remove invalid trades
-    if (invalidTrades.length > 0) {
-        trades.pending = trades.pending.filter(t => !invalidTrades.includes(t.id));
-        console.log(`🗑️ Cancelled ${invalidTrades.length} conflicting trade(s) after trade acceptance`);
-    }
-
-    return invalidTrades.length;
-}
-
-// Helper: Remove item from team
-function removeFromTeam(team, item) {
-    const arrays = {
-        'offensive': 'offensive',
-        'defensive': 'defensive',
-        'goalie': 'goalie',
-        'rookie': 'rookie',
-        'team': 'teams'
-    };
-
-    const arrayName = arrays[item.type];
-    if (!team[arrayName]) return;
-
-    const index = team[arrayName].findIndex(p => {
-        const name = p.skaterFullName || p.goalieFullName || p.teamFullName || p;
-        return name === item.name;
-    });
-
-    if (index !== -1) {
-        team[arrayName].splice(index, 1);
-    }
-}
-
-// Helper: Add item to team
-function addToTeam(team, item) {
-    const arrays = {
-        'offensive': 'offensive',
-        'defensive': 'defensive',
-        'goalie': 'goalie',
-        'rookie': 'rookie',
-        'team': 'teams'
-    };
-
-    const arrayName = arrays[item.type];
-    if (!team[arrayName]) {
-        team[arrayName] = [];
-    }
-
-    // Add the full player object to preserve stats
-    if (item.playerData) {
-        team[arrayName].push(item.playerData);
-    } else {
-        // Fallback for simple strings (team names, etc.)
-        team[arrayName].push(item.name);
-    }
-}
 
 // Get completed trades for a draft
 app.get('/trades/:draftName', async (req, res) => {
@@ -5493,17 +4941,6 @@ app.post('/trade/propose', async (req, res) => {
     }
 });
 
-// Helper function to get position label for error messages
-function getPositionLabel(type) {
-    const labels = {
-        'offensive': 'Attaquant',
-        'defensive': 'Défenseur',
-        'goalie': 'Gardien',
-        'rookie': 'Rookie',
-        'team': 'Équipe NHL'
-    };
-    return labels[type] || type;
-}
 
 // Accept a trade
 app.post('/trade/accept', async (req, res) => {
@@ -5836,13 +5273,6 @@ app.get('/pool-leaderboard/:poolName', async (req, res) => {
     }
 });
 
-// Monday (UTC) of the ISO week containing a 'YYYY-MM-DD' date string.
-function mondayOfWeek(dateStr) {
-    const d = new Date(dateStr + 'T00:00:00Z');
-    const day = d.getUTCDay(); // 0 = Sunday
-    d.setUTCDate(d.getUTCDate() + (day === 0 ? -6 : 1 - day));
-    return d.toISOString().slice(0, 10);
-}
 
 // ✅ Hall of Fame: best/worst single day, week, and month of fantasy points
 // scored by any team in the pool this season, from player_game_logs.
@@ -6635,7 +6065,7 @@ async function warmStatsOnStartup() {
             console.log('📊 No local player stats cache found on disk.');
         }
 
-        const { needsRefresh, reason } = getStatsRefreshStatus(stats);
+        const { needsRefresh, reason } = getStatsRefreshStatus(stats, loadAllPlayers().length);
         if (needsRefresh) {
             triggerBackgroundStatsRefresh(`startup check — ${reason}`);
         } else {

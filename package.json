@@ -5,10 +5,17 @@
   "description": "Pools de hockey entre amis — service gratuit, sans affiliation avec la LNH.",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run test:unit",
+    "test:unit": "node --test \"test/**/*.test.js\"",
+    "test:watch": "node --test --watch \"test/**/*.test.js\"",
+    "test:cov": "node --test --experimental-test-coverage --test-coverage-include=\"lib/**\" --test-coverage-include=\"tools/build_draftkit.js\" --test-coverage-include=\"profanity.js\" --test-coverage-exclude=\"**/*.test.js\" \"test/**/*.test.js\"",
+    "test:cov:gate": "node --test --experimental-test-coverage --test-coverage-include=\"lib/**\" --test-coverage-exclude=\"**/*.test.js\" --test-coverage-lines=95 --test-coverage-branches=90 --test-coverage-functions=100 \"test/**/*.test.js\"",
+    "test:cov:lcov": "node -e \"require('fs').mkdirSync('coverage',{recursive:true})\" && node --test --experimental-test-coverage --test-coverage-include=\"lib/**\" --test-reporter=lcov --test-reporter-destination=coverage/lcov.info --test-reporter=spec --test-reporter-destination=stdout \"test/**/*.test.js\"",
+    "test:integration": "node test_suite.js && node test_h2h.js && node test_teams.js",
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "fetch-game-logs": "node fetch_game_logs.js"
+    "fetch-game-logs": "node fetch_game_logs.js",
+    "build-draftkit": "node tools/build_draftkit.js"
   },
   "keywords": [],
   "author": "",

@@ -291,4 +291,11 @@
         get donnees() { return donnees; },
         get saison() { return donnees ? donnees.season : null; }
     };
-})(window);
+// globalThis hors navigateur (tests unitaires) : l'IIFE pose FZDraftKit
+// sur l'objet global qu'elle reçoit, quel qu'il soit. En navigateur c'est
+// window, exactement comme avant.
+})(typeof window !== 'undefined' ? window : globalThis);
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = (typeof window !== 'undefined' ? window : globalThis).FZDraftKit;
+}

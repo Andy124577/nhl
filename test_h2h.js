@@ -27,6 +27,29 @@ async function api(method, path, body) {
   }
 }
 
+// ── Identité LNH avant le repêchage ─────────────────────────
+// Depuis « feat: implement NHL club selection » (687f17f), /start-draft
+// refuse de tirer l'ordre tant que chaque équipe active n'a pas choisi son
+// club. Ce préalable n'existait pas quand ce script a été écrit : sans lui,
+// le repêchage ne démarre pas et tous les tests qui en dépendent tombent.
+// Un club distinct par équipe — deux équipes d'un même pool ne peuvent pas
+// porter les mêmes couleurs.
+const CLUBS_TEST = ['MTL', 'TOR', 'BOS', 'EDM', 'CGY', 'VAN', 'NYR', 'PIT', 'COL', 'TBL'];
+
+async function chooseClubs(poolName) {
+  const r = await api('GET', '/draft');
+  const teams = r.body?.[poolName]?.teams || {};
+  let i = 0;
+  for (const [, team] of Object.entries(teams)) {
+    const membre = (team.members || [])[0];
+    if (!membre) continue;                       // équipe vide : pas concernée
+    await api('POST', '/choose-nhl-club', {
+      clanName: poolName, username: membre, club: CLUBS_TEST[i++ % CLUBS_TEST.length]
+    });
+  }
+}
+
+
 // ── Helpers ──────────────────────────────────────────────────
 async function getPool(poolName) {
   const r = await api('GET', '/draft');
@@ -131,6 +154,7 @@ async function testDraftCompletion() {
   join.ok ? ok('h2h_beta joined Équipe 2') : ko('h2h_beta join', JSON.stringify(join.body));
 
   // Start draft
+  await chooseClubs(pool2);
   const start = await api('POST', '/start-draft', { clanName: pool2 });
   start.ok ? ok('Draft started') : ko('Start draft', JSON.stringify(start.body));
 
@@ -174,6 +198,7 @@ async function testDraftCompletion() {
   await api('POST', '/join-team', { name: pool4, username: 'h2h_beta',    teamName: 'Équipe 2' });
   await api('POST', '/join-team', { name: pool4, username: 'h2h_charlie', teamName: 'Équipe 3' });
   await api('POST', '/join-team', { name: pool4, username: 'h2h_delta',   teamName: 'Équipe 4' });
+  await chooseClubs(pool4);
   await api('POST', '/start-draft', { clanName: pool4 });
 
   const picks4 = [
@@ -368,6 +393,7 @@ async function testCatchUp() {
   cr.ok ? ok('Catch-up test pool created') : ko('Create catch-up pool', JSON.stringify(cr.body));
 
   await api('POST', '/join-team', { name: poolName, username: 'h2h_beta', teamName: 'Équipe 2' });
+  await chooseClubs(poolName);
   await api('POST', '/start-draft', { clanName: poolName });
   await api('POST', '/pick-player', { clanName: poolName, username: 'h2h_alpha', playerName: 'Nikita Kucherov', position: 'offensive' });
   await api('POST', '/pick-player', { clanName: poolName, username: 'h2h_beta',  playerName: 'Nathan MacKinnon', position: 'offensive' });

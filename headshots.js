@@ -77,3 +77,17 @@ function resolveHeadshotByName(name) {
         /* localStorage indisponible : rien à purger */
     }
 })();
+
+/* ────────────────────────────────────────────────────────────────────────
+ * Export double — même motif que profanity.js : le navigateur reçoit les
+ * fonctions sur window comme avant, et les tests unitaires peuvent faire un
+ * require() sans navigateur. Rien d'autre ne change pour la page.
+ * ──────────────────────────────────────────────────────────────────────── */
+(function () {
+    const api = { HEADSHOT_SEASON, buildHeadshotUrl, resolveHeadshotByName };
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = api;                 // tests (CommonJS)
+    } else if (typeof window !== 'undefined') {
+        Object.assign(window, api);           // navigateur
+    }
+})();
