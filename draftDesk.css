@@ -12,7 +12,7 @@
      bande de tour     chrono · équipe au bâton · carrousel des choix
      rail de gauche    FAVORIS / CHOIX (deux pastilles, une seule vue)
      colonne centrale  panneau de tour, filtres, liste des joueurs
-     rail de droite    suggestion + MON ALIGNEMENT + LIMITES D'ÉQUIPE
+     rail de droite    MON ALIGNEMENT + LIMITES D'ÉQUIPE
 
    1100px et pas 769 : c'est le seuil auquel poolNav.css sort le rail
    des pools, dont cette page reprend la place (draftDesk.js pose
@@ -453,10 +453,10 @@
     min-width: 0;
     gap: 0;
   }
-  /* overflow:hidden et non auto : le rail porte maintenant l'alignement,
-     dont seul le corps défile — l'en-tête, la suggestion et les limites
-     d'équipe restent à vue, exactement comme quand la coquille vivait
-     dans le rail de gauche. */
+  /* overflow:hidden et non auto : le rail ne porte plus que l'alignement,
+     dont seul le corps défile — l'en-tête et les limites d'équipe restent
+     à vue, exactement comme quand la coquille vivait dans le rail de
+     gauche. */
   body.fz-draft .draft-rail {
     position: sticky;
     top: calc(var(--fz-nav-h, 70px) + 66px);
@@ -525,16 +525,20 @@
      progression sont maintenant l'alignement et les limites du rail,
      et la fiche « joueur sélectionné » n'y figure pas.
 
-     #recentPicksFeed s'y ajoute : la vue « Choix » du rail de gauche
-     (§7) donne le MÊME historique en entier, du plus récent au plus
-     ancien — la carte des trois derniers choix ne dirait plus rien de
-     neuf. Elle reste dans .draft-sidebar, que cette règle masque déjà
-     en bloc, et la maquette téléphone la retrouve intacte sous 1100px.
-     Nommée quand même, pour que la raison soit lisible ici. */
+     Deux cartes de l'aperçu s'y ajoutent. #recentPicksFeed : la vue
+     « Choix » du rail de gauche (§7) donne le MÊME historique en entier,
+     du plus récent au plus ancien — la carte des trois derniers choix ne
+     dirait plus rien de neuf. Et #suggestionCard : le rail de droite est
+     à l'alignement seul, et la vue « Favoris » y répond de plus près, à
+     partir d'une liste qu'on a soi-même faite. Les deux restent dans
+     .draft-sidebar, que cette règle masque déjà en bloc, et la maquette
+     téléphone les retrouve intactes sous 1100px. Nommées quand même,
+     pour que la raison soit lisible ici. */
   body.fz-draft .draft-sidebar,
   body.fz-draft #progressCard,
   body.fz-draft #lineupCard,
   body.fz-draft #recentPicksFeed,
+  body.fz-draft #suggestionCard,
   body.fz-draft .selected-player-card,
   body.fz-draft #panelTabs,
   body.fz-draft #categoryTabs { display: none; }
@@ -1140,11 +1144,8 @@
     border-bottom: 1px solid var(--fzd-border);
   }
   body.fz-draft .fzd-fav-row:last-child { border-bottom: 0; }
-  /* Un favori déjà repêché par quelqu'un d'autre reste en liste, en
-     retrait : c'est la trace de ce qu'on visait, et son étoile est
-     encore là pour faire le ménage. */
-  body.fz-draft .fzd-fav-row.is-picked { opacity: .55; }
-  body.fz-draft .fzd-fav-row.is-picked .fzd-fav-name { text-decoration: line-through; }
+  /* Pas d'état « déjà repêché » : un favori pris par une équipe sort de
+     la liste (fzDeskFavoris, draftDesk.js), il n'y a rien à griser. */
 
   body.fz-draft .fzd-fav-row button.favorite-btn {
     flex: none;
