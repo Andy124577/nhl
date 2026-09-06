@@ -375,8 +375,14 @@ function buildTeamScores(pool) {
     const stats  = userData.statsData;
 
     // Build player→points lookup from current-stats API
+    //
+    // Hors saison, /current-stats sert les totaux de la dernière saison
+    // complétée : c'est ce qu'il faut pour la page Stats, jamais pour un
+    // pointage de pool. Un pool repêché en septembre afficherait sinon les
+    // points de l'an dernier comme s'ils avaient été marqués pour lui —
+    // le même garde-fou existe déjà dans classement.js (seasonStat).
     const playerPts = {};
-    if (stats && stats.players) {
+    if (stats && stats.players && stats.seasonStarted !== false) {
         stats.players.forEach(p => {
             const name = p.playerName;
             if (!name) return;
@@ -390,9 +396,11 @@ function buildTeamScores(pool) {
     // lui, l'aperçu de la page d'accueil pouvait classer deux équipes
     // dans un autre ordre que le classement lui-même.
     const clubPts = {};
-    ((userData.teamsData && userData.teamsData.teams) || []).forEach(t => {
-        if (t && t.teamFullName) clubPts[t.teamFullName] = clubPoolPoints(t);
-    });
+    if (!stats || stats.seasonStarted !== false) {
+        ((userData.teamsData && userData.teamsData.teams) || []).forEach(t => {
+            if (t && t.teamFullName) clubPts[t.teamFullName] = clubPoolPoints(t);
+        });
+    }
 
     // Compute each team's score
     const rows = Object.entries(teams).map(([teamName, td]) => {

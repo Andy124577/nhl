@@ -28,7 +28,8 @@ const { teamHasPlayer, removeFromTeam, addToTeam, getPositionLabel } = require("
 const { NHL_CLUB_FULLNAME, diffRosterSnapshots, getTeamAbbreviationFromName } = require("./lib/roster.js");
 const { getStatsRefreshStatus } = require("./lib/statsCache.js");
 const { currentSeasonId, currentSeasonString, getSeasonWindow, seasonHasStarted,
-    seasonPhase } = require("./lib/season.js");
+    seasonPhase, statsSeasonId, statsSeasonString, cachedStatsSeasonString,
+    getStatsSeason } = require("./lib/season.js");
 
 const app = express();
 const PORT = process.env.PORT || 3000; // ✅ Use Render's PORT
@@ -1744,7 +1745,12 @@ function loadAllPlayers() {
 }
 
 // Function to fetch current season stats from NHL API
-async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false) {
+async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false, statsSeason = null) {
+    // Saison de référence : celle que la règle partagée désigne (voir
+    // statsSeasonId dans lib/season.js). Le paramètre est résolu une seule
+    // fois par updateCurrentStats plutôt qu'à chaque joueur — 547 appels au
+    // calendrier de la LNH pour une réponse identique n'apporteraient rien.
+    const SAISON_STATS = Number(statsSeason) || currentSeasonId();
     try {
         const url = `https://api-web.nhle.com/v1/player/${playerId}/landing`;
         let response = await fetch(url);
@@ -1765,7 +1771,7 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
         const data = await response.json();
 
         // Construct headshot URL - NHL API provides headshots at this URL format
-        const headshotUrl = data.headshot || `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${data.currentTeamAbbrev || 'NJD'}/${playerId}.png`;
+        const headshotUrl = data.headshot || `https://assets.nhle.com/mugs/nhl/${SAISON_STATS}/${data.currentTeamAbbrev || 'NJD'}/${playerId}.png`;
 
         // Get the most recent NHL regular season — same approach as career modal which works correctly.
         // Never hardcode the season number; always derive it from the data to avoid type/year mismatches.
@@ -1782,7 +1788,7 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
         // wrote their last-active totals into the pool as if they were live
         // (this is how Dennis Wideman's 2016-17 line kept resurfacing).
         // Falls through to the featuredStats branch, then to zeros.
-        const CURRENT_SEASON = currentSeasonId();
+        const CURRENT_SEASON = SAISON_STATS;
         const nhlSeasonEntries = latestSeason === CURRENT_SEASON
             ? nhlRegularSeasons.filter(s => Number(s.season) === CURRENT_SEASON)
             : [];
@@ -1948,7 +1954,11 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
 
 // Function to fetch and cache all current stats
 async function updateCurrentStats() {
-    console.log("🔄 Starting NHL stats update...");
+    // Une seule résolution de la saison pour toute la passe : la règle
+    // partagée décide si on collecte 2025-26 ou 2026-27 (lib/season.js).
+    const saison = await getStatsSeason();
+    console.log(`🔄 Starting NHL stats update — saison ${saison.label}` +
+        `${saison.hasStarted ? '' : ' (saison régulière pas encore commencée)'}...`);
 
     // Load existing stats to preserve as "previous"
     const existingStats = await loadCurrentStats();
@@ -1968,7 +1978,8 @@ async function updateCurrentStats() {
             const stats = await fetchCurrentStatsForPlayer(
                 player.playerId,
                 playerName,
-                player.isGoalie
+                player.isGoalie,
+                saison.seasonId
             );
             if (stats) {
                 const previousStats = previousPlayers.find(p => p.playerId === stats.playerId);
@@ -1987,7 +1998,11 @@ async function updateCurrentStats() {
 
     const currentStats = {
         lastUpdated: new Date().toISOString(),
-        season: currentSeasonId(),
+        season: saison.seasonId,
+        // Ce que valent ces totaux : ceux d'une saison en cours, ou ceux de
+        // la dernière saison complétée. Le classement et l'accueil s'en
+        // servent pour ne pas compter les points de l'an passé dans un pool.
+        seasonStarted: saison.hasStarted,
         players: newPlayers
     };
 
@@ -2079,7 +2094,8 @@ function triggerBackgroundStatsRefresh(reason) {
 app.get("/current-stats", async (req, res) => {
     try {
         const stats = await loadCurrentStats();
-        const { needsRefresh, reason } = getStatsRefreshStatus(stats, loadAllPlayers().length);
+        const saison = await getStatsSeason();
+        const { needsRefresh, reason } = getStatsRefreshStatus(stats, loadAllPlayers().length, saison.seasonId);
 
         if (!stats.lastUpdated) {
             // Nothing in memory or persistence — block and fetch now (first ever start)
@@ -2093,7 +2109,10 @@ app.get("/current-stats", async (req, res) => {
         }
 
         res.set('Cache-Control', 'no-store');
-        res.json(stats);
+        // Un cache écrit avant l'introduction de la règle ne porte pas le
+        // drapeau : on le renseigne à la volée pour que le classement et
+        // l'accueil sachent toujours à quoi s'en tenir.
+        res.json({ seasonStarted: saison.hasStarted, ...stats });
     } catch (error) {
         console.error("❌ Error in /current-stats route:", error);
         res.status(500).json({ message: "Error fetching current stats" });
@@ -3528,7 +3547,7 @@ app.get('/player-career/:playerId', async (req, res) => {
         const isGoalie = position === 'G';
         const currentTeam = data.currentTeamAbbrev || null;
         // Construct headshot URL - use API's headshot or construct from player ID and current team
-        const headshot = data.headshot || (currentTeam ? `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${currentTeam}/${playerId}.png` : null);
+        const headshot = data.headshot || (currentTeam ? `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${currentTeam}/${playerId}.png` : null);
         const teamLogo = data.teamLogo || null;
 
         // Extract player bio details
@@ -3626,7 +3645,9 @@ app.get('/player-gamelog/:playerId', async (req, res) => {
     try {
         const { playerId } = req.params;
         const playerIdNum = parseInt(playerId);
-        const currentSeason = currentSeasonString();
+        // Même règle que la page Stats : hors saison, on lit la dernière
+        // saison complétée plutôt qu'une saison sans un match joué.
+        const currentSeason = (await getStatsSeason()).season;
 
         console.log(`📊 Loading game log for player ${playerId} from database`);
 
@@ -3718,7 +3739,9 @@ const CACHE_DURATION = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
 // Helper function to calculate last 10 games stats for a player
 async function getPlayerLast10Stats(playerId, position) {
     try {
-        const currentSeason = currentSeasonString();
+        // Même règle que la page Stats : hors saison, on lit la dernière
+        // saison complétée plutôt qu'une saison sans un match joué.
+        const currentSeason = (await getStatsSeason()).season;
         const gameType = '2'; // Regular season
 
         const url = `https://api-web.nhle.com/v1/player/${playerId}/game-log/${currentSeason}/${gameType}`;
@@ -3802,7 +3825,9 @@ app.get('/hot-players-last10', async (req, res) => {
 
         console.log('📊 Calculating hot players based on last 10 games...');
 
-        const currentSeason = currentSeasonString();
+        // Même règle que la page Stats : hors saison, on lit la dernière
+        // saison complétée plutôt qu'une saison sans un match joué.
+        const currentSeason = (await getStatsSeason()).season;
 
         // Fetch top skaters and goalies from NHL API
         const skatersUrl = `https://api-web.nhle.com/v1/skater-stats-leaders/${currentSeason}/2?limit=200`;
@@ -3986,7 +4011,7 @@ app.get('/hot-players-last10', async (req, res) => {
                 playerName: p.skaterFullName,
                 teamAbbrev: p.teamAbbrevs,
                 position: p.positionCode,
-                headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
+                headshot: `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
                 gamesPlayedTotal: p.gamesPlayed,
                 last10Goals: p.goals,
                 last10Assists: p.assists,
@@ -4004,7 +4029,7 @@ app.get('/hot-players-last10', async (req, res) => {
                 playerName: validRookies[0].skaterFullName,
                 teamAbbrev: validRookies[0].teamAbbrevs,
                 position: validRookies[0].positionCode,
-                headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${validRookies[0].teamAbbrevs}/${validRookies[0].playerId}.png`,
+                headshot: `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${validRookies[0].teamAbbrevs}/${validRookies[0].playerId}.png`,
                 gamesPlayedTotal: validRookies[0].gamesPlayed,
                 last10Goals: validRookies[0].goals,
                 last10Assists: validRookies[0].assists,
@@ -4017,7 +4042,7 @@ app.get('/hot-players-last10', async (req, res) => {
                 playerName: p.skaterFullName,
                 teamAbbrev: p.teamAbbrevs,
                 position: p.positionCode,
-                headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
+                headshot: `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
                 gamesPlayedTotal: p.gamesPlayed,
                 last10Goals: p.goals,
                 last10Assists: p.assists,
@@ -4030,7 +4055,7 @@ app.get('/hot-players-last10', async (req, res) => {
                 playerName: p.goalieFullName,
                 teamAbbrev: p.teamAbbrevs,
                 position: 'G',
-                headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
+                headshot: `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
                 gamesPlayedTotal: p.gamesPlayed || 0,
                 last10Wins: p.wins || 0,
                 last10SavePct: p.savePct ? (p.savePct * 100).toFixed(1) : '0.0',
@@ -4081,7 +4106,7 @@ app.get('/hot-players', async (req, res) => {
             playerName: p.skaterFullName,
             teamAbbrev: p.teamAbbrevs,
             position: p.positionCode,
-            headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
+            headshot: `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
             gamesPlayedTotal: p.gamesPlayed,
             last10Goals: p.goals,
             last10Assists: p.assists,
@@ -4100,7 +4125,7 @@ app.get('/hot-players', async (req, res) => {
             playerName: validRookies[0].skaterFullName,
             teamAbbrev: validRookies[0].teamAbbrevs,
             position: validRookies[0].positionCode,
-            headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${validRookies[0].teamAbbrevs}/${validRookies[0].playerId}.png`,
+            headshot: `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${validRookies[0].teamAbbrevs}/${validRookies[0].playerId}.png`,
             gamesPlayedTotal: validRookies[0].gamesPlayed,
             last10Goals: validRookies[0].goals,
             last10Assists: validRookies[0].assists,
@@ -4114,7 +4139,7 @@ app.get('/hot-players', async (req, res) => {
             playerName: p.skaterFullName,
             teamAbbrev: p.teamAbbrevs,
             position: p.positionCode,
-            headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
+            headshot: `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
             gamesPlayedTotal: p.gamesPlayed,
             last10Goals: p.goals,
             last10Assists: p.assists,
@@ -4128,7 +4153,7 @@ app.get('/hot-players', async (req, res) => {
             playerName: p.goalieFullName,
             teamAbbrev: p.teamAbbrevs,
             position: 'G',
-            headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
+            headshot: `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
             gamesPlayedTotal: p.gamesPlayed,
             last10Wins: p.wins,
             last10SavePct: p.savePct
@@ -4172,7 +4197,7 @@ app.get('/stats-leaders', async (req, res) => {
             playerName: p.skaterFullName,
             teamAbbrev: p.teamAbbrevs,
             position: p.positionCode,
-            headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
+            headshot: `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
             gamesPlayed: p.gamesPlayed,
             goals: p.goals,
             assists: p.assists,
@@ -4183,7 +4208,7 @@ app.get('/stats-leaders', async (req, res) => {
             playerName: p.goalieFullName,
             teamAbbrev: p.teamAbbrevs,
             position: 'G',
-            headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
+            headshot: `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
             gamesPlayed: p.gamesPlayed,
             wins: p.wins,
             points: p.points
@@ -4222,7 +4247,8 @@ let last180DaysCache = { lastUpdated: null, data: null };
 
 // Generic function to calculate hot players for any time range
 async function calculateHotPlayers(days) {
-    const currentSeason = currentSeasonString();
+    // Même règle que la page Stats (voir statsSeasonId).
+    const currentSeason = (await getStatsSeason()).season;
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     const startDateStr = startDate.toISOString().split('T')[0];
@@ -4324,7 +4350,7 @@ async function calculateHotPlayers(days) {
             .map(p => {
                 // Calculate per-game average
                 p.fantasyPointsPerGame = p.totalFantasyPoints / p.gamesPlayed;
-                p.headshot = `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrev}/${p.playerId}.png`;
+                p.headshot = `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${p.teamAbbrev}/${p.playerId}.png`;
                 p.isHot = p.fantasyPointsPerGame >= 10; // Hot if averaging 10+ fantasy pts per game
                 return p;
             });
@@ -6340,7 +6366,8 @@ async function warmStatsOnStartup() {
             console.log('📊 No local player stats cache found on disk.');
         }
 
-        const { needsRefresh, reason } = getStatsRefreshStatus(stats, loadAllPlayers().length);
+        const saison = await getStatsSeason();
+        const { needsRefresh, reason } = getStatsRefreshStatus(stats, loadAllPlayers().length, saison.seasonId);
         if (needsRefresh) {
             triggerBackgroundStatsRefresh(`startup check — ${reason}`);
         } else {

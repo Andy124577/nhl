@@ -25,6 +25,69 @@ function getCurrentPlayerStats(t, e) {
 function getCurrentTeamStats(t) {
     return currentTeams && currentTeams.teams ? currentTeams.teams.find(e => e.teamFullName === t) : null
 }
+
+/* ==================== TRI : UNE SEULE SAISON ====================
+ *
+ * Le tri lisait `stats ? stats[cle] : joueur[cle]` — deux saisons dans un
+ * même classement. `joueur[cle]` vient de nhl_filtered_stats.json, la liste
+ * de repêchage, qui garde volontairement les totaux de l'an passé. Un joueur
+ * absent de /current-stats était donc comparé avec ses 100 points de la
+ * saison écoulée à des coéquipiers notés sur la saison en cours : il montait
+ * en tête d'un tableau par ailleurs à zéro. C'est ce qui rendait le tri par
+ * points incompréhensible.
+ *
+ * La règle est maintenant tranchée une fois pour tout le tableau : si
+ * /current-stats a répondu, il fait foi pour tout le monde (zéro compris) ;
+ * sinon on retombe en bloc sur la liste locale. Jamais un mélange.
+ *
+ * Quelle saison /current-stats contient est décidé côté serveur par
+ * statsSeasonId() (lib/season.js) : la dernière saison complétée tant que la
+ * saison régulière n'a pas commencé. Rien à décider ici.
+ */
+
+/** Vrai dès que /current-stats a répondu avec des joueurs. */
+function statsCourantesPretes() {
+    return !!(currentStats && Array.isArray(currentStats.players) && currentStats.players.length);
+}
+
+/** Un nombre, toujours : null, undefined, '' et NaN valent 0. */
+function nombreStat(valeur) {
+    const n = Number(valeur);
+    return Number.isFinite(n) ? n : 0;
+}
+
+/**
+ * Valeur de tri d'un joueur pour une colonne.
+ *
+ * `points` chez un gardien n'est pas la colonne `points` de la LNH mais son
+ * pointage de pool — même formule que le classement et l'accueil, tirée de
+ * lib/scoring.js plutôt que recopiée ici.
+ */
+function valeurDeTri(ligne, nom, playerId, cle, estGardien) {
+    const source = statsCourantesPretes()
+        ? getCurrentPlayerStats(nom, playerId)
+        : ligne;
+    if (!source) return 0;
+    if (estGardien && cle === "points") {
+        return "function" == typeof goaliePoolPoints
+            ? nombreStat(goaliePoolPoints(source))
+            : 5 * nombreStat(source.shutouts) + 2 * nombreStat(source.wins) + nombreStat(source.otLosses);
+    }
+    return nombreStat(source[cle]);
+}
+
+/**
+ * Comparateur décroissant, à égalité le nom par ordre alphabétique.
+ *
+ * Sans départage, deux joueurs à égalité gardaient l'ordre du fichier de
+ * repêchage : l'ordre changeait donc d'une colonne à l'autre sans raison
+ * visible. En début de saison, où tout le monde est à zéro, c'était tout le
+ * tableau qui paraissait aléatoire.
+ */
+function comparerParStat(valeurA, valeurB, nomA, nomB) {
+    if (valeurB !== valeurA) return valeurB - valeurA;
+    return String(nomA || "").localeCompare(String(nomB || ""), "fr");
+}
 async function fetchPlayerData() {
     showSkeletonLoader();
     try {
@@ -72,30 +135,29 @@ function updateTable() {
         a = document.getElementById("searchInput").value.toLowerCase();
     clearStatsPagination();
     if ("teams" === t) {
+        // Les clubs souffraient du même mélange : un club absent de
+        // /current-teams était classé sur ses points de l'an passé.
+        const clubsPrets = !!(currentTeams && currentTeams.teams && currentTeams.teams.length);
         return void populateTeamTable([...teamData].sort((t, e) => {
-            const a = getCurrentTeamStats(t.teamFullName),
-                n = getCurrentTeamStats(e.teamFullName),
-                s = a ? a.points : t.points;
-            return (n ? n.points : e.points) - s
+            const a = clubsPrets ? getCurrentTeamStats(t.teamFullName) : t,
+                n = clubsPrets ? getCurrentTeamStats(e.teamFullName) : e;
+            return comparerParStat(nombreStat(a && a.points), nombreStat(n && n.points),
+                t.teamFullName, e.teamFullName)
         }))
     }
     if ("goalies" === t) {
-        return void populateGoalieTable([...goalieData].sort((t, a) => {
-            const n = getCurrentPlayerStats(t.goalieFullName, t.playerId),
-                s = getCurrentPlayerStats(a.goalieFullName, a.playerId);
-            let l = 0,
-                o = 0;
-            return "points" === e ? (l = n ? 5 * n.shutouts + 2 * n.wins + 1 * n.otLosses : t.points || 0, o = s ? 5 * s.shutouts + 2 * s.wins + 1 * s.otLosses : a.points || 0) : (l = n ? n[e] || 0 : t[e] || 0, o = s ? s[e] || 0 : a[e] || 0), o - l
-        }))
+        return void populateGoalieTable([...goalieData].sort((t, a) => comparerParStat(
+            valeurDeTri(t, t.goalieFullName, t.playerId, e, !0),
+            valeurDeTri(a, a.goalieFullName, a.playerId, e, !0),
+            t.goalieFullName, a.goalieFullName
+        )))
     }
     let n = fullPlayerData;
-    "offensive" === t ? n = n.filter(t => ["C", "R", "L"].includes(t.positionCode)) : "defensive" === t ? n = n.filter(t => "D" === t.positionCode) : "rookies" === t && (n = rookiePlayerData.slice()), a && (n = n.filter(t => t.skaterFullName.toLowerCase().includes(a))), n.sort((t, a) => {
-        const n = getCurrentPlayerStats(t.skaterFullName, t.playerId),
-            s = getCurrentPlayerStats(a.skaterFullName, a.playerId),
-            l = n ? n[e] || 0 : t[e] || 0,
-            o = s ? s[e] || 0 : a[e] || 0;
-        return o - l
-    }), statsFullList = n, statsVisibleCount = STATS_PAGE_SIZE, populatePlayerTable(n)
+    "offensive" === t ? n = n.filter(t => ["C", "R", "L"].includes(t.positionCode)) : "defensive" === t ? n = n.filter(t => "D" === t.positionCode) : "rookies" === t && (n = rookiePlayerData.slice()), a && (n = n.filter(t => t.skaterFullName.toLowerCase().includes(a))), n.sort((t, a) => comparerParStat(
+        valeurDeTri(t, t.skaterFullName, t.playerId, e, !1),
+        valeurDeTri(a, a.skaterFullName, a.playerId, e, !1),
+        t.skaterFullName, a.skaterFullName
+    )), statsFullList = n, statsVisibleCount = STATS_PAGE_SIZE, populatePlayerTable(n)
 }
 /**
  * Colonnes du tableau des patineurs.
@@ -181,8 +243,16 @@ async function populatePlayerTable(t) {
             r = t.playerId && o ? buildHeadshotUrl(t.playerId, o) : null,
             d = s || l || r,
             i = n?.teamAbbrev ? `teams/${n.teamAbbrev}.png` : getTeamLogoPath(t.teamAbbrevs);
-        let c, u, m, h;
-        n && n.gamesPlayed > 0 ? (c = n.gamesPlayed || 0, u = n.goals || 0, m = n.assists || 0, h = n.points || 0) : (c = t.gamesPlayed || 0, u = t.goals || 0, m = t.assists || 0, h = t.points || 0);
+        // Même source que le tri : `n.gamesPlayed > 0` faisait retomber la
+        // ligne sur la liste de repêchage dès qu'un joueur n'avait pas encore
+        // joué, si bien que la colonne affichait les points de l'an passé
+        // pendant que le tri, lui, comparait des zéros. Les deux lisent
+        // désormais la même saison.
+        const src = statsCourantesPretes() ? n : t;
+        const c = nombreStat(src && src.gamesPlayed),
+            u = nombreStat(src && src.goals),
+            m = nombreStat(src && src.assists),
+            h = nombreStat(src && src.points);
         const g = d && i ? `\n            <div class="player-photo">\n                <img src="${d}" alt="" class="face">\n                <img src="${i}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n            </div>\n            ` : "",
             p = n?.position || t.positionCode || "N/A",
             y = document.createElement("tr");
@@ -306,7 +376,11 @@ function populateGoalieTable(t) {
             s = getMatchingImage(a),
             l = n?.teamAbbrev ? `teams/${n.teamAbbrev}.png` : getTeamLogoPath(t.teamAbbrevs);
         let o, r, d, i, c, u, m;
-        n && n.gamesPlayed > 0 ? (o = n.gamesPlayed || 0, r = n.wins || 0, d = n.losses || 0, i = n.otLosses || 0, c = n.savePct || 0, u = n.shutouts || 0, m = 5 * u + 2 * r + 1 * i) : (o = t.gamesPlayed || 0, r = t.wins || 0, d = t.losses || 0, i = t.otLosses || 0, c = t.savePct || 0, u = t.shutouts || 0, m = t.points || 0);
+        const srcG = statsCourantesPretes() ? n : t;
+        o = nombreStat(srcG && srcG.gamesPlayed), r = nombreStat(srcG && srcG.wins),
+        d = nombreStat(srcG && srcG.losses), i = nombreStat(srcG && srcG.otLosses),
+        c = nombreStat(srcG && srcG.savePct), u = nombreStat(srcG && srcG.shutouts),
+        m = valeurDeTri(t, a, t.playerId, "points", !0);
         const h = s && l ? `<div class="player-photo">\n                    <img src="${s}" alt="${a}" class="face">\n                    <img src="${l}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n               </div>` : "",
             g = document.createElement("tr");
         g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${h}<div class="player-ident"><span class="player-name">${a}${injBadge(a, n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}</span></div></div></td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c?.toFixed(3)}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
@@ -356,7 +430,10 @@ function populateTeamTable(t) {
         const a = `teams/${getTeamAbbreviation(t.teamFullName)}.png`,
             n = getCurrentTeamStats(t.teamFullName);
         let s, l, o, r, d;
-        n && n.gamesPlayed > 0 ? (s = n.gamesPlayed || 0, l = n.wins || 0, o = n.losses || 0, r = n.otLosses || 0, d = n.points || 2 * l + 1 * r) : (s = t.gamesPlayed || 0, l = t.wins || 0, o = t.losses || 0, r = t.otLosses || 0, d = t.points || 0);
+        const srcT = (currentTeams && currentTeams.teams && currentTeams.teams.length) ? n : t;
+        s = nombreStat(srcT && srcT.gamesPlayed), l = nombreStat(srcT && srcT.wins),
+        o = nombreStat(srcT && srcT.losses), r = nombreStat(srcT && srcT.otLosses),
+        d = nombreStat(srcT && srcT.points) || 2 * l + 1 * r;
         const i = document.createElement("tr");
         i.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell"><img src="${a}" alt="" class="team-logo-cell"><div class="player-ident"><span class="player-name">${t.teamFullName}</span></div></div></td>\n            <td>${s}</td>\n            <td>${l}</td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td class="points-column">${d}</td>\n        `;
         makeRowInteractive(i, () => showLastYearStats(t, "team"),

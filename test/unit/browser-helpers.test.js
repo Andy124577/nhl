@@ -555,3 +555,97 @@ describe('navbar — getCurrentPage', () => {
         assert.equal(page('/conditions.html'), '');
     });
 });
+
+// ── Tri de la page Stats : une seule saison ─────────────────────────────────
+describe('stats — tri sur une seule saison', () => {
+    // getCurrentPlayerStats et goaliePoolPoints sont fournis par le bac à
+    // sable : ce sont les dépendances réelles de valeurOfTri dans la page.
+    function charger(joueursCourants) {
+        const liste = joueursCourants || [];
+        const ctx = {
+            currentStats: joueursCourants ? { season: 20252026, players: liste } : null,
+            goaliePoolPoints: g => (g.shutouts || 0) * 5 + (g.wins || 0) * 2 + (g.otLosses || 0),
+            getCurrentPlayerStats: (nom, id) =>
+                liste.find(p => (id && p.playerId === id) || p.playerName === nom) || null
+        };
+        return chargerFonctions('index.js',
+            ['statsCourantesPretes', 'nombreStat', 'valeurDeTri', 'comparerParStat'], ctx);
+    }
+
+    const LISTE_REPECHAGE = [
+        // `points` ici = les totaux de l'an passé, tels que les porte
+        // nhl_filtered_stats.json (la liste de repêchage).
+        { skaterFullName: 'Vedette Absente', playerId: 1, points: 120, goals: 50 },
+        { skaterFullName: 'Joueur Actif', playerId: 2, points: 10, goals: 4 }
+    ];
+
+    test('un joueur absent de /current-stats ne remonte plus avec l’an passé', () => {
+        // Le bogue : « Vedette Absente » n'est pas dans currentStats, donc
+        // l'ancien code lui rendait ses 120 points de la saison écoulée et la
+        // plaçait devant un joueur réellement en tête cette saison.
+        const courants = [{ playerName: 'Joueur Actif', playerId: 2, points: 10 }];
+        const { valeurDeTri, comparerParStat } = charger(courants);
+
+        const absente = valeurDeTri(LISTE_REPECHAGE[0], 'Vedette Absente', 1, 'points', false);
+        const actif = valeurDeTri(LISTE_REPECHAGE[1], 'Joueur Actif', 2, 'points', false);
+
+        assert.equal(absente, 0, 'aucun total de la saison précédente ne doit fuiter');
+        assert.equal(actif, 10);
+        assert.ok(comparerParStat(absente, actif, 'Vedette Absente', 'Joueur Actif') > 0,
+            'le joueur réellement en tête doit passer devant');
+    });
+
+    test('sans /current-stats, tout le tableau retombe ensemble sur la liste locale', () => {
+        // Le repli reste possible — il doit juste valoir pour tout le monde,
+        // sinon deux saisons se retrouvent dans le même classement.
+        const { valeurDeTri, statsCourantesPretes } = charger(null);
+        assert.equal(statsCourantesPretes(), false);
+        assert.equal(valeurDeTri(LISTE_REPECHAGE[0], 'Vedette Absente', 1, 'points', false), 120);
+        assert.equal(valeurDeTri(LISTE_REPECHAGE[1], 'Joueur Actif', 2, 'points', false), 10);
+    });
+
+    test('le tri est numérique, pas alphabétique', () => {
+        // '9' > '100' en comparaison de chaînes : la valeur doit être un nombre.
+        const courants = [
+            { playerName: 'Cent', playerId: 3, points: '100' },
+            { playerName: 'Neuf', playerId: 4, points: '9' }
+        ];
+        const { valeurDeTri, comparerParStat } = charger(courants);
+        const cent = valeurDeTri({}, 'Cent', 3, 'points', false);
+        const neuf = valeurDeTri({}, 'Neuf', 4, 'points', false);
+
+        assert.equal(cent, 100);
+        assert.equal(neuf, 9);
+        assert.ok(comparerParStat(cent, neuf, 'Cent', 'Neuf') < 0, '100 doit précéder 9');
+    });
+
+    test('une statistique manquante ou illisible vaut zéro, jamais NaN', () => {
+        const courants = [
+            { playerName: 'Vide', playerId: 5 },
+            { playerName: 'Nul', playerId: 6, points: null },
+            { playerName: 'Texte', playerId: 7, points: 'n/d' }
+        ];
+        const { valeurDeTri } = charger(courants);
+        for (const [nom, id] of [['Vide', 5], ['Nul', 6], ['Texte', 7]]) {
+            const v = valeurDeTri({}, nom, id, 'points', false);
+            assert.equal(v, 0, `${nom} doit valoir 0`);
+            assert.ok(!Number.isNaN(v));
+        }
+    });
+
+    test('à égalité, l’ordre est alphabétique — donc stable et prévisible', () => {
+        // Avant le premier match, tout le monde est à zéro : sans départage,
+        // l'ordre venait du fichier de repêchage et changeait sans raison.
+        const { comparerParStat } = charger([]);
+        assert.ok(comparerParStat(0, 0, 'Aubin', 'Zidane') < 0);
+        assert.ok(comparerParStat(0, 0, 'Zidane', 'Aubin') > 0);
+        assert.equal(comparerParStat(0, 0, 'Même', 'Même'), 0);
+    });
+
+    test('« points » chez un gardien est son pointage de pool', () => {
+        // 2 blanchissages + 10 victoires + 3 défaites en prolongation.
+        const courants = [{ playerName: 'Gardien', playerId: 8, shutouts: 2, wins: 10, otLosses: 3, points: 0 }];
+        const { valeurDeTri } = charger(courants);
+        assert.equal(valeurDeTri({}, 'Gardien', 8, 'points', true), 2 * 5 + 10 * 2 + 3);
+    });
+});

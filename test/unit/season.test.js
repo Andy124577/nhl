@@ -6,7 +6,8 @@ const assert = require('node:assert/strict');
 const {
     seasonIdForDate, seasonLabel, currentSeasonId, currentSeasonString,
     fallbackWindow, getSeasonWindow, resetSeasonWindowCache,
-    seasonPhase, seasonHasStarted
+    seasonPhase, seasonHasStarted,
+    previousSeasonId, statsSeasonId, statsSeasonString, getStatsSeason
 } = require('../../lib/season.js');
 
 /** Une réponse d'API minimale, comme celle que doFetch reçoit. */
@@ -228,5 +229,99 @@ describe('seasonHasStarted', () => {
         // répond plus : le doute profite à l'affichage.
         assert.equal(seasonHasStarted(null), true);
         assert.equal(seasonHasStarted({ seasonId: 20262027 }), true);
+    });
+});
+
+describe('previousSeasonId', () => {
+    test('recule d’une saison', () => {
+        assert.equal(previousSeasonId(20262027), 20252026);
+        assert.equal(previousSeasonId(20252026), 20242025);
+    });
+
+    test('accepte une chaîne', () => {
+        assert.equal(previousSeasonId('20262027'), 20252026);
+    });
+
+    test('franchit un changement de siècle sans se casser', () => {
+        assert.equal(previousSeasonId(20002001), 19992000);
+    });
+});
+
+describe('statsSeasonId', () => {
+    const CALENDRIER = { seasonId: 20262027, ...CALENDRIER_2026 };
+
+    test('avant le premier match, on reste sur la dernière saison complétée', () => {
+        // Le cœur de la demande : en septembre 2026 on est déjà « dans »
+        // 20262027 au sens du calendrier, mais rien n'a été joué. Servir
+        // 20262027 remplissait la page de zéros.
+        assert.equal(seasonIdForDate('2026-09-06'), 20262027);
+        assert.equal(statsSeasonId(CALENDRIER, '2026-09-06'), 20252026);
+    });
+
+    test('toute la morte-saison est concernée, pas seulement septembre', () => {
+        assert.equal(statsSeasonId(CALENDRIER, '2026-07-01'), 20252026);
+        assert.equal(statsSeasonId(CALENDRIER, '2026-08-15'), 20252026);
+        assert.equal(statsSeasonId(CALENDRIER, '2026-09-20'), 20252026); // camp
+        assert.equal(statsSeasonId(CALENDRIER, '2026-10-06'), 20252026); // veille
+    });
+
+    test('le jour du premier match, la bascule est automatique', () => {
+        assert.equal(statsSeasonId(CALENDRIER, '2026-10-07'), 20262027);
+        assert.equal(statsSeasonId(CALENDRIER, '2027-01-15'), 20262027);
+    });
+
+    test('la bascule suit la date réelle, pas une année codée en dur', () => {
+        // Même règle, saison suivante : rien à modifier l'automne prochain.
+        const calendrier2027 = {
+            seasonId: 20272028,
+            preSeasonStartDate: '2027-09-19',
+            regularSeasonStartDate: '2027-10-05',
+            regularSeasonEndDate: '2028-04-14'
+        };
+        assert.equal(statsSeasonId(calendrier2027, '2027-09-06'), 20262027);
+        assert.equal(statsSeasonId(calendrier2027, '2027-10-05'), 20272028);
+    });
+
+    test('sans calendrier, on ne masque rien : la saison courante fait foi', () => {
+        assert.equal(statsSeasonId(null, '2026-09-06'), 20262027);
+    });
+
+    test('statsSeasonString rend la même chose en texte', () => {
+        assert.equal(statsSeasonString(CALENDRIER, '2026-09-06'), '20252026');
+        assert.equal(statsSeasonString(CALENDRIER, '2026-10-07'), '20262027');
+    });
+});
+
+describe('getStatsSeason', () => {
+    test('résout la règle et le calendrier d’un seul appel', async () => {
+        const saison = await getStatsSeason({
+            now: '2026-09-06',
+            fetchImpl: async () => reponse(CALENDRIER_2026)
+        });
+        assert.equal(saison.seasonId, 20252026);
+        assert.equal(saison.season, '20252026');
+        assert.equal(saison.label, '2025-26');
+        assert.equal(saison.hasStarted, false);
+        assert.equal(saison.window.regularSeasonStartDate, '2026-10-07');
+    });
+
+    test('une fois la saison commencée, elle sert la saison en cours', async () => {
+        const saison = await getStatsSeason({
+            now: '2026-11-01',
+            fetchImpl: async () => reponse(CALENDRIER_2026)
+        });
+        assert.equal(saison.seasonId, 20262027);
+        assert.equal(saison.label, '2026-27');
+        assert.equal(saison.hasStarted, true);
+    });
+
+    test('calendrier injoignable : le repli garde la règle applicable', async () => {
+        // fallbackWindow ouvre au 25 septembre : le 6, rien n'a commencé.
+        const saison = await getStatsSeason({
+            now: '2026-09-06',
+            fetchImpl: async () => { throw new Error('réseau'); }
+        });
+        assert.equal(saison.seasonId, 20252026);
+        assert.equal(saison.hasStarted, false);
     });
 });
