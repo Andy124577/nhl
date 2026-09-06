@@ -9,6 +9,10 @@ function getCurrentPage() {
         n.includes('draftActif.html') || n.includes('draftFini.html')) return 'repechage';
     if (n.includes('classement.html')) return 'classement';
     if (n.includes('trade.html')) return 'trade';
+    // Les trois écrans de gestion tiennent sous le même onglet « Pools » :
+    // on y crée, on y rejoint, on y règle — c'est une seule destination.
+    if (n.includes('mes-pools.html') || n.includes('creer-pool.html') ||
+        n.includes('rejoindre-pool.html')) return 'pools';
     return '';
 }
 
@@ -56,11 +60,12 @@ const NAV_ICON = {
     shield: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`
 };
 
-// Les 5 sections du site, dans l'ordre affiché partout (barre du haut,
+// Les 6 sections du site, dans l'ordre affiché partout (barre du haut,
 // barre du bas, tiroir des pools) : mêmes silhouettes, seule la couleur
 // suit currentColor pour s'accorder au thème et à l'état actif/survol.
 const PAGE_ICON = {
     accueil: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>`,
+    pools: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>`,
     repechage: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>`,
     echanges: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>`,
     classement: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>`,
@@ -140,7 +145,12 @@ function buildLoggedOutNavbar() {
 }
 
 // ==================== LOGGED IN NAVBAR ====================
-// Ordre : Accueil → Repêchage (🔴) → Échanges (🔴) → Classement → Stats
+// Ordre : Accueil → Pools → Repêchage (🔴) → Échanges (🔴) → Classement → Stats
+//
+// « Pools » est le seul lien que rien ne masque jamais : Repêchage disparaît
+// une fois le repêchage terminé et Échanges quand le pool les interdit, si
+// bien qu'on pouvait se retrouver sans aucun chemin vers ses pools depuis la
+// barre. Il mène à mes-pools.html, d'où l'on crée, rejoint et règle.
 //
 // Les pastilles ne comptent que le pool actif : c'est celui que ces liens
 // ouvriront. Ce qui se passe dans les autres pools est signalé par la
@@ -162,6 +172,10 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                     <a href="index.html" class="nav-link ${'accueil' === currentPage ? 'active' : ''}">
                         <span class="nav-icon-img" aria-hidden="true">${PAGE_ICON.accueil}</span>
                         <span class="nav-text">Accueil</span>
+                    </a>
+                    <a href="mes-pools.html" class="nav-link ${'pools' === currentPage ? 'active' : ''}">
+                        <span class="nav-icon-img" aria-hidden="true">${PAGE_ICON.pools}</span>
+                        <span class="nav-text">Pools</span>
                     </a>
                     <a href="repechage.html" class="nav-link ${'repechage' === currentPage ? 'active' : ''}" id="desktopPoolLink">
                         <span class="nav-icon-img" aria-hidden="true">${PAGE_ICON.repechage}</span>
@@ -260,7 +274,8 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
 }
 
 // ==================== MOBILE BOTTOM NAV ====================
-// Same order: Accueil → Pools → Échanges → Classement → Stats
+// Même ordre que la barre du haut :
+// Accueil → Pools → Repêchage → Échanges → Classement → Stats
 function buildBottomNav(currentPage) {
     const existing = document.querySelector('.bottom-nav');
     if (existing) existing.remove();
@@ -270,6 +285,10 @@ function buildBottomNav(currentPage) {
             <a href="index.html" class="bottom-nav-item ${'accueil' === currentPage ? 'active' : ''}">
                 <span class="bottom-nav-icon">${PAGE_ICON.accueil}</span>
                 <span class="bottom-nav-label">Accueil</span>
+            </a>
+            <a href="mes-pools.html" class="bottom-nav-item ${'pools' === currentPage ? 'active' : ''}">
+                <span class="bottom-nav-icon">${PAGE_ICON.pools}</span>
+                <span class="bottom-nav-label">Pools</span>
             </a>
             <a href="repechage.html" class="bottom-nav-item ${'repechage' === currentPage ? 'active' : ''}" id="bottomPoolLink">
                 <span class="bottom-nav-icon">${PAGE_ICON.repechage}</span>

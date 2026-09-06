@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { currentSeasonId } = require('./lib/season.js');
 
 // Known IDs from NHL.com and recent drafts
 const knownIds = {
@@ -125,7 +126,7 @@ async function updateWithKnownIds() {
 
                     // Get current season stats if available
                     const seasonStats = data.featuredStats?.regularSeason?.subSeason;
-                    const seasonTotals = data.seasonTotals?.find(s => s.season === 20252026 && s.gameTypeId === 2);
+                    const seasonTotals = data.seasonTotals?.find(s => s.season === currentSeasonId() && s.gameTypeId === 2);
                     const stats2025 = seasonStats || seasonTotals;
 
                     if (stats2025) {

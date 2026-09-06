@@ -3,25 +3,30 @@
 const { test, describe, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { buildHeadshotUrl, resolveHeadshotByName, HEADSHOT_SEASON } = require('../../headshots.js');
+const { buildHeadshotUrl, resolveHeadshotByName, headshotSeason } = require('../../headshots.js');
+const { seasonIdForDate } = require('../../lib/season.js');
 const colors = require('../../teamColors.js');
 const inj = require('../../injuries.js');
 const FZDraftKit = require('../../draftkitData.js');
 const { chargerFonctions } = require('../fixtures/helpers.js');
 
 describe('headshots — buildHeadshotUrl', () => {
-    test('la saison du CDN est bien celle en cours', () => {
-        // Vérifiée à part, en clair : l'URL attendue ci-dessous l'écrit en dur
-        // plutôt que d'interpoler la constante du module testé, sans quoi une
-        // saison erronée s'écrirait des deux côtés et le test passerait.
-        assert.equal(HEADSHOT_SEASON, '20252026');
+    test("la saison du CDN suit la date, elle n'est plus figée", () => {
+        // Elle valait 20252026 en dur : passé le 1er juillet suivant, toutes
+        // les pages pointaient vers un répertoire périmé du CDN. La règle est
+        // réécrite ici plutôt qu'importée du module testé, sinon une règle
+        // fausse s'écrirait des deux côtés et le test passerait quand même.
+        const maintenant = new Date();
+        const an = maintenant.getUTCFullYear();
+        const ouverture = (maintenant.getUTCMonth() + 1) >= 7 ? an : an - 1;
+        assert.equal(headshotSeason(), `${ouverture}${ouverture + 1}`);
     });
 
     test('pointe vers le CDN de la LNH, pas vers une copie locale', () => {
         // Les photos ne sont pas hébergées ni redistribuées : voir LICENSE.
         assert.equal(
             buildHeadshotUrl(8480018, 'MTL'),
-            'https://assets.nhle.com/mugs/nhl/20252026/MTL/8480018.png'
+            `https://assets.nhle.com/mugs/nhl/${seasonIdForDate(new Date())}/MTL/8480018.png`
         );
     });
 

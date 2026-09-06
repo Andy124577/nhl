@@ -640,3 +640,25 @@ html[data-theme="light"] .user-dropdown-header::after {
     .theme-toggle-btn { width: 38px; height: 38px; }
     .pool-selector { min-width: 158px; font-size: .86rem; padding: 7px 11px; }
 }
+
+/* ============================================================
+   SIX ONGLETS — « Pools » s'ajoute aux cinq sections d'origine.
+   Repêchage se masque une fois le repêchage terminé et Échanges quand le
+   pool les interdit : la barre pouvait alors ne plus offrir aucun chemin
+   vers ses pools. Le lien est permanent, il faut donc que six libellés
+   tiennent là où cinq suffisaient — d'où ce resserrement, appliqué aux
+   seules largeurs où la place manque vraiment.
+   ============================================================ */
+@media (max-width:1024px) and (min-width:769px){
+    .navbar-left{gap:14px}
+    .nav-links{gap:2px}
+    .nav-link{padding:8px 9px;font-size:.85rem;gap:6px}
+}
+@media (max-width:768px){
+    .bottom-nav-item{padding:8px 2px}
+    .bottom-nav-label{font-size:.68rem;letter-spacing:0;white-space:nowrap}
+}
+@media (max-width:400px){
+    .bottom-nav-label{font-size:.6rem}
+    .bottom-nav-icon{font-size:1.2rem}
+}

@@ -129,128 +129,24 @@
 }
 
 /* ============================================================
-   IDENTITÉ LNH — choix avant le repêchage
+   ÉQUIPES DU POOL — la liste de l'écran « Prêt »
    ------------------------------------------------------------
-   La seule couleur libre du système entre ici : chaque tuile porte la
-   teinte réelle du club qu'elle représente (Real Teams Only Rule). Le
-   l'accent reste réservé à UN signal — la tuile qu'on a soi-même choisie —
-   jamais à la grille entière.
+   Cet emplacement portait la grille de choix d'identité LNH : chaque
+   équipe prenait un vrai club, dont les couleurs habillaient ensuite ses
+   cartes de repêchage. L'étape a été retirée — l'équipe de la LNH se
+   repêche maintenant comme n'importe quelle autre position — et il ne
+   reste ici que le rappel de qui s'apprête à repêcher.
    ============================================================ */
-.nhlclub-picker { margin: 22px 0 26px; }
-.nhlclub-picker-title {
-    margin: 0 0 6px;
-    font-size: 1rem;
-    font-weight: 800;
-    color: var(--text-main);
-}
-.nhlclub-picker-sub {
-    margin: 0 0 16px;
-    font-size: .84rem;
-    line-height: 1.55;
-    color: var(--text-secondary);
-    max-width: 58ch;
-}
-
-.nhlclub-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
-    gap: 8px;
-}
-
-.nhlclub-tile {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    min-height: 96px;
-    padding: 12px 8px 10px;
-    /* --club-wash est calculé en JS (mixHex), pas par color-mix() CSS : voir
-       la note de teamColors.js sur le support mobile plus ancien. */
-    background: linear-gradient(180deg, var(--club-wash, var(--card)) 0%, var(--card) 100%);
-    border: 1px solid var(--border-light);
-    border-radius: 12px;
-    color: var(--text-main);
-    font-family: inherit;
-    cursor: pointer;
-    overflow: hidden;
-    transition: border-color .18s ease, transform .18s ease, opacity .18s ease;
-}
-.nhlclub-tile:hover:not(:disabled) {
-    border-color: var(--club-a, var(--border-gray));
-    transform: translateY(-2px);
-}
-.nhlclub-tile:focus-visible {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .15);
-}
-.nhlclub-tile:active:not(:disabled) { transform: translateY(0); }
-
-.nhlclub-logo { width: 40px; height: 40px; object-fit: contain; }
-.nhlclub-name {
-    font-size: .74rem;
-    font-weight: 700;
-    line-height: 1.25;
-    text-align: center;
-}
-/* Fiche V-D-DP · PTS : un chiffre qu'on compare d'une tuile à l'autre, donc
-   en monospace comme partout ailleurs dans l'app où des stats s'alignent. */
-.nhlclub-record {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: .78rem;
-    font-weight: 600;
-    letter-spacing: .02em;
-    color: var(--text-secondary);
-}
-
-/* La tuile choisie : seule autorisée à porter l'accent (Règle du Signal
-   Unique) — c'est l'unique chose « active » dans cette grille. */
-.nhlclub-tile.is-mine {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), .18);
-}
-.nhlclub-tile.is-mine .nhlclub-tile-tag {
-    background: var(--primary);
-    color: var(--bg);
-}
-
-.nhlclub-tile.is-taken {
-    opacity: .38;
-    cursor: not-allowed;
-    filter: grayscale(.6);
-}
-.nhlclub-tile.is-taken .nhlclub-tile-tag {
-    background: var(--bg-gray-light);
-    color: var(--text-secondary);
-}
-
-.nhlclub-tile-tag {
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: .68rem;
+.rp-roster-wrap { margin: 20px 0; }
+.rp-roster-title {
+    margin: 0 0 10px;
+    font-size: .8rem;
     font-weight: 800;
     letter-spacing: .04em;
     text-transform: uppercase;
-    white-space: nowrap;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    color: var(--text-secondary);
 }
-
-.nhlclub-grid[aria-busy="true"] { opacity: .6; pointer-events: none; }
-
-/* ---- Statut de l'équipe du pool ---- */
-.nhlclub-roster-wrap { margin: 20px 0; }
-.nhlclub-roster-title {
-    margin: 0 0 10px;
-    font-size: .69rem;
-    font-weight: 800;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--text-gray);
-}
-.nhlclub-roster {
+.rp-roster {
     display: flex;
     flex-direction: column;
     gap: 1px;
@@ -261,34 +157,20 @@
     overflow: hidden;
     background: var(--border-light);
 }
-.nhlclub-roster-item {
+.rp-roster-item {
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 10px 14px;
     background: var(--card);
 }
-.nhlclub-roster-item.is-pending { opacity: .7; }
-.nhlclub-roster-logo {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-    flex-shrink: 0;
-}
-.nhlclub-roster-logo.is-empty {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 1.5px dashed var(--border-gray);
-    flex-shrink: 0;
-}
-.nhlclub-roster-team {
+.rp-roster-team {
     flex: 0 0 auto;
     font-size: .84rem;
     font-weight: 700;
     color: var(--text-main);
 }
-.nhlclub-roster-club {
+.rp-roster-members {
     flex: 1 1 auto;
     min-width: 0;
     font-size: .84rem;
@@ -299,13 +181,7 @@
     text-align: right;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .nhlclub-tile:hover:not(:disabled),
-    .nhlclub-tile:active:not(:disabled) { transform: none; }
-}
-
 @media (max-width: 480px) {
-    .nhlclub-grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
-    .nhlclub-roster-club { text-align: left; }
-    .nhlclub-roster-item { flex-wrap: wrap; }
+    .rp-roster-members { text-align: left; }
+    .rp-roster-item { flex-wrap: wrap; }
 }

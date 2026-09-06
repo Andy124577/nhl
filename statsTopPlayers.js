@@ -109,7 +109,7 @@ function renderTopPlayers() {
         const wins    = p.wins || 0;
         const saves   = p.saves || 0;
 
-        const headshot = p.headshot || `https://assets.nhle.com/mugs/nhl/20252026/${p.teamAbbrev || ''}/${p.playerId}.png`;
+        const headshot = p.headshot || buildHeadshotUrl(p.playerId, p.teamAbbrev);
 
         return `
         <div class="player-card" onclick="showCareerStats(${p.playerId || 'null'})"

@@ -146,10 +146,12 @@ function draftActionFor(pool) {
             ? { kind: 'your-turn', label: "C'est votre tour", href: href('encours') }
             : { kind: 'live', label: `En direct — choix ${state.choixFait}/${state.choixTotal}`, href: href('encours') };
     }
+    // « Choisir votre club » vivait ici : le repêchage ne pouvait pas démarrer
+    // tant que chaque équipe n'avait pas pris une identité LNH. L'étape a été
+    // retirée — l'équipe de la LNH se repêche comme les autres positions —,
+    // il ne reste donc qu'un seul état possible.
     if (state.etat === 'pret') {
-        return pool.teamData.nhlClub
-            ? { kind: 'ready', label: 'Prêt à démarrer', href: href('pret') }
-            : { kind: 'choose-club', label: 'Choisir votre club', href: href('pret') };
+        return { kind: 'ready', label: 'Prêt à démarrer', href: href('pret') };
     }
     // attente / termine: nothing actionable here — attente has no action
     // for a regular member, and termine's rank/points live in the card itself.

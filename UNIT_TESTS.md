@@ -108,6 +108,7 @@ lib/                       ← pure logic extracted from server.js (new)
   trades.js
   roster.js
   statsCache.js
+  season.js
 test/
   unit/
     scoring.test.js
@@ -116,6 +117,7 @@ test/
     trades.test.js
     roster.test.js
     statsCache.test.js
+    season.test.js
     profanity.test.js
     draftkit-build.test.js
     browser-helpers.test.js
@@ -155,6 +157,7 @@ integration suite is there to prove nothing shifted.
 | `lib/trades.js` | `teamHasPlayer` [:5083](server.js#L5083), `invalidateConflictingTrades` [:5104](server.js#L5104), `removeFromTeam` [:5151](server.js#L5151), `addToTeam` [:5174](server.js#L5174), `getPositionLabel` [:5497](server.js#L5497) |
 | `lib/roster.js` | `diffRosterSnapshots` [:3492](server.js#L3492), `getTeamAbbreviationFromName` [:4942](server.js#L4942), `NHL_CLUB_FULLNAME` |
 | `lib/statsCache.js` | `getStatsRefreshStatus` [:2412](server.js#L2412) |
+| `lib/season.js` | saison en cours et fenêtre de saison régulière — le numéro `20252026` vivait en dur dans une trentaine d'endroits |
 
 Two functions need a small signature change to become pure:
 

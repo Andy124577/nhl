@@ -4,10 +4,13 @@ const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 
 const { CURRENT_SEASON, getStatsRefreshStatus } = require('../../lib/statsCache.js');
+const { seasonIdForDate, currentSeasonId } = require('../../lib/season.js');
 const { makeStats, makeSkaterStat } = require('../fixtures/stats.js');
 
 /** Un cache de `n` joueurs, daté de `ageHeures` heures avant `MAINTENANT`. */
 const MAINTENANT = new Date('2026-01-15T12:00:00.000Z').getTime();
+/** La saison attendue à cette horloge simulée — pas celle d'aujourd'hui. */
+const SAISON = seasonIdForDate(MAINTENANT);
 function cache(n, ageHeures, over = {}) {
     const players = Array.from({ length: n }, (_, i) => makeSkaterStat('Joueur' + i));
     return makeStats(players, {
@@ -21,7 +24,7 @@ const ATTENDUS = 800;   // taille type de nhl_filtered_stats.json
 describe('getStatsRefreshStatus', () => {
     test('sans cache local, il faut rafraîchir', () => {
         const stats = makeStats([], { lastUpdated: null });
-        const r = getStatsRefreshStatus(stats, ATTENDUS, CURRENT_SEASON, MAINTENANT);
+        const r = getStatsRefreshStatus(stats, ATTENDUS, SAISON, MAINTENANT);
 
         assert.equal(r.needsRefresh, true);
         assert.equal(r.reason, 'no local cache yet');
@@ -29,7 +32,7 @@ describe('getStatsRefreshStatus', () => {
     });
 
     test('un cache frais, complet et de la bonne saison n\'a rien à faire', () => {
-        const r = getStatsRefreshStatus(cache(ATTENDUS, 2), ATTENDUS, CURRENT_SEASON, MAINTENANT);
+        const r = getStatsRefreshStatus(cache(ATTENDUS, 2), ATTENDUS, SAISON, MAINTENANT);
 
         assert.equal(r.needsRefresh, false);
         assert.equal(r.cacheIsIncomplete, false);
@@ -37,20 +40,20 @@ describe('getStatsRefreshStatus', () => {
     });
 
     test('au-delà de 24 h, il faut rafraîchir', () => {
-        const r = getStatsRefreshStatus(cache(ATTENDUS, 25), ATTENDUS, CURRENT_SEASON, MAINTENANT);
+        const r = getStatsRefreshStatus(cache(ATTENDUS, 25), ATTENDUS, SAISON, MAINTENANT);
 
         assert.equal(r.needsRefresh, true);
         assert.equal(r.reason, 'cache is 25.0h old');
     });
 
     test('la limite est stricte : 24 h passent, 24,1 h non', () => {
-        assert.equal(getStatsRefreshStatus(cache(ATTENDUS, 24), ATTENDUS, CURRENT_SEASON, MAINTENANT).needsRefresh, false);
-        assert.equal(getStatsRefreshStatus(cache(ATTENDUS, 24.1), ATTENDUS, CURRENT_SEASON, MAINTENANT).needsRefresh, true);
+        assert.equal(getStatsRefreshStatus(cache(ATTENDUS, 24), ATTENDUS, SAISON, MAINTENANT).needsRefresh, false);
+        assert.equal(getStatsRefreshStatus(cache(ATTENDUS, 24.1), ATTENDUS, SAISON, MAINTENANT).needsRefresh, true);
     });
 
     test('un cache d\'une autre saison est périmé, quel que soit son âge', () => {
         const vieilleSaison = cache(ATTENDUS, 1, { season: 20242025 });
-        const r = getStatsRefreshStatus(vieilleSaison, ATTENDUS, CURRENT_SEASON, MAINTENANT);
+        const r = getStatsRefreshStatus(vieilleSaison, ATTENDUS, SAISON, MAINTENANT);
 
         assert.equal(r.needsRefresh, true);
         assert.equal(r.reason, 'wrong season (20242025)');
@@ -58,7 +61,7 @@ describe('getStatsRefreshStatus', () => {
 
     test('un cache trop maigre est incomplet', () => {
         // Le seuil vaut min(attendus × 0,5 ; 200). Ici : min(400 ; 200) = 200.
-        const r = getStatsRefreshStatus(cache(150, 1), ATTENDUS, CURRENT_SEASON, MAINTENANT);
+        const r = getStatsRefreshStatus(cache(150, 1), ATTENDUS, SAISON, MAINTENANT);
 
         assert.equal(r.cacheIsIncomplete, true);
         assert.equal(r.needsRefresh, true);
@@ -70,7 +73,7 @@ describe('getStatsRefreshStatus', () => {
         // l'incomplétude qui est annoncée, parce que c'est elle qui explique
         // le mieux ce qu'il faut refaire.
         const pire = cache(10, 99, { season: 20242025 });
-        const r = getStatsRefreshStatus(pire, ATTENDUS, CURRENT_SEASON, MAINTENANT);
+        const r = getStatsRefreshStatus(pire, ATTENDUS, SAISON, MAINTENANT);
 
         assert.match(r.reason, /^incomplete cache/);
     });
@@ -78,24 +81,24 @@ describe('getStatsRefreshStatus', () => {
     test('« pas de cache » l\'emporte sur tout le reste', () => {
         const rien = makeStats([], { lastUpdated: null, season: 20242025 });
 
-        assert.equal(getStatsRefreshStatus(rien, ATTENDUS, CURRENT_SEASON, MAINTENANT).reason, 'no local cache yet');
+        assert.equal(getStatsRefreshStatus(rien, ATTENDUS, SAISON, MAINTENANT).reason, 'no local cache yet');
     });
 
     test('le seuil bascule sur la moitié quand le total attendu est petit', () => {
         // min(100 × 0,5 ; 200) = 50 : 60 joueurs suffisent, 40 non.
-        assert.equal(getStatsRefreshStatus(cache(60, 1), 100, CURRENT_SEASON, MAINTENANT).cacheIsIncomplete, false);
-        assert.equal(getStatsRefreshStatus(cache(40, 1), 100, CURRENT_SEASON, MAINTENANT).cacheIsIncomplete, true);
+        assert.equal(getStatsRefreshStatus(cache(60, 1), 100, SAISON, MAINTENANT).cacheIsIncomplete, false);
+        assert.equal(getStatsRefreshStatus(cache(40, 1), 100, SAISON, MAINTENANT).cacheIsIncomplete, true);
     });
 
     test('le seuil plafonne à 200 quand le total attendu est grand', () => {
         // min(5000 × 0,5 ; 200) = 200, pas 2500 : un très gros fichier de
         // référence ne doit pas rendre tout cache « incomplet ».
-        assert.equal(getStatsRefreshStatus(cache(250, 1), 5000, CURRENT_SEASON, MAINTENANT).cacheIsIncomplete, false);
-        assert.equal(getStatsRefreshStatus(cache(199, 1), 5000, CURRENT_SEASON, MAINTENANT).cacheIsIncomplete, true);
+        assert.equal(getStatsRefreshStatus(cache(250, 1), 5000, SAISON, MAINTENANT).cacheIsIncomplete, false);
+        assert.equal(getStatsRefreshStatus(cache(199, 1), 5000, SAISON, MAINTENANT).cacheIsIncomplete, true);
     });
 
     test('le rapport reporte le total attendu et l\'âge calculé', () => {
-        const r = getStatsRefreshStatus(cache(ATTENDUS, 5), ATTENDUS, CURRENT_SEASON, MAINTENANT);
+        const r = getStatsRefreshStatus(cache(ATTENDUS, 5), ATTENDUS, SAISON, MAINTENANT);
 
         assert.equal(r.expectedPlayerCount, ATTENDUS);
         assert.equal(r.ageHours, 5);
@@ -106,13 +109,20 @@ describe('getStatsRefreshStatus', () => {
         // loadAllPlayers().length).
         const frais = makeStats(
             Array.from({ length: ATTENDUS }, (_, i) => makeSkaterStat('J' + i)),
-            { lastUpdated: new Date().toISOString() }
+            { lastUpdated: new Date().toISOString(), season: currentSeasonId() }
         );
 
         assert.equal(getStatsRefreshStatus(frais, ATTENDUS).needsRefresh, false);
     });
 
-    test('la saison en cours est celle que le serveur attend', () => {
-        assert.equal(CURRENT_SEASON, 20252026);
+    test("la saison en cours se déduit de la date, elle n'est plus figée", () => {
+        // Elle valait 20252026 en dur : chaque automne, tant qu'on ne l'avait
+        // pas changée à la main, un cache rempli des totaux de l'an passé
+        // passait pour frais. Règle réécrite ici plutôt qu'importée du module
+        // testé — voir le même motif dans browser-helpers.test.js.
+        const maintenant = new Date();
+        const an = maintenant.getUTCFullYear();
+        const ouverture = (maintenant.getUTCMonth() + 1) >= 7 ? an : an - 1;
+        assert.equal(CURRENT_SEASON, Number(`${ouverture}${ouverture + 1}`));
     });
 });

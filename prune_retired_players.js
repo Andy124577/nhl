@@ -32,7 +32,8 @@ const path = require('path');
 const https = require('https');
 
 const STATS_FILE = path.join(__dirname, 'nhl_filtered_stats.json');
-const SEASON = 20252026;
+const { currentSeasonId } = require('./lib/season.js');
+const SEASON = currentSeasonId();
 const DRY = process.argv.includes('--dry');
 
 /* Hand-verified: retired, or a bogus id. Keyed by playerId so a name

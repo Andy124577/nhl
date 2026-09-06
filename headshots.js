@@ -6,15 +6,30 @@
  * Voir la note légale dans LICENSE / legal.html.
  */
 
-const HEADSHOT_SEASON = '20252026';
+/**
+ * Le CDN range les photos par saison. Le numéro était figé ici (20252026) :
+ * une fois la saison suivante ouverte, toutes les pages pointaient vers un
+ * répertoire périmé. Il vient maintenant de lib/season.js — chargé avant ce
+ * fichier dans les pages, require() sous Node. En son absence, on retombe sur
+ * la photo « latest », qui n'est pas rangée par saison.
+ */
+const saisonModule = (typeof module !== 'undefined' && module.exports)
+    ? require('./lib/season.js')
+    : null;
+
+function headshotSeason() {
+    if (saisonModule) return saisonModule.currentSeasonString();
+    return (typeof currentSeasonString === 'function') ? currentSeasonString() : null;
+}
 
 /** Construit l'URL CDN à partir d'un identifiant de joueur et d'une équipe. */
 function buildHeadshotUrl(playerId, teamAbbrev) {
     if (!playerId) return null;
-    if (teamAbbrev) {
+    const saison = headshotSeason();
+    if (teamAbbrev && saison) {
         const abbrev = String(teamAbbrev).split(',').pop().trim();
         if (abbrev && abbrev !== 'null') {
-            return `https://assets.nhle.com/mugs/nhl/${HEADSHOT_SEASON}/${abbrev}/${playerId}.png`;
+            return `https://assets.nhle.com/mugs/nhl/${saison}/${abbrev}/${playerId}.png`;
         }
     }
     return `https://assets.web.nhl.com/mugs/nhl/latest/${playerId}.png`;
@@ -84,7 +99,7 @@ function resolveHeadshotByName(name) {
  * require() sans navigateur. Rien d'autre ne change pour la page.
  * ──────────────────────────────────────────────────────────────────────── */
 (function () {
-    const api = { HEADSHOT_SEASON, buildHeadshotUrl, resolveHeadshotByName };
+    const api = { headshotSeason, buildHeadshotUrl, resolveHeadshotByName };
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = api;                 // tests (CommonJS)
     } else if (typeof window !== 'undefined') {

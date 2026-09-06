@@ -26,6 +26,8 @@ const { generateSnakeOrder, checkIfDraftComplete } = require("./lib/draft.js");
 const { teamHasPlayer, removeFromTeam, addToTeam, getPositionLabel } = require("./lib/trades.js");
 const { NHL_CLUB_FULLNAME, diffRosterSnapshots, getTeamAbbreviationFromName } = require("./lib/roster.js");
 const { getStatsRefreshStatus } = require("./lib/statsCache.js");
+const { currentSeasonId, currentSeasonString, getSeasonWindow, seasonHasStarted,
+    seasonPhase } = require("./lib/season.js");
 
 const app = express();
 const PORT = process.env.PORT || 3000; // ✅ Use Render's PORT
@@ -47,8 +49,8 @@ const TRANSACTIONS_FILE = `${DATA_DIR}/nhl_transactions.json`;
 const USE_POSTGRES = !!process.env.DATABASE_URL;
 
 /**
- * Équipes de la LNH valides pour une identité de repêchage (voir
- * /choose-nhl-club). Reprend teamColors.js sans son entrée historique ARI —
+ * Codes des 32 clubs de la LNH (alignements, transactions).
+ * Reprend teamColors.js sans son entrée historique ARI —
  * l'Arizona n'existe plus, remplacée par l'Utah (UTA). Gardée statique
  * plutôt que lue depuis current_teams.json : la validation doit fonctionner
  * même avant le premier rafraîchissement des statistiques.
@@ -252,7 +254,7 @@ async function getTeamPointsForDateRange(teamData, startDateISO, endDateISO) {
                    decision, saves, goals_against, shutouts,
                    game_date
             FROM player_game_logs
-            WHERE season = '20252026'
+            WHERE season = '${currentSeasonString()}'
               AND game_date >= $1
               AND game_date < $2
               AND player_name = ANY($3)
@@ -341,7 +343,7 @@ async function getTeamPlayerBreakdownForDateRange(teamData, startDateISO, endDat
                    game_winning_goals,
                    decision, saves, goals_against, shutouts
             FROM player_game_logs
-            WHERE season = '20252026'
+            WHERE season = '${currentSeasonString()}'
               AND game_date >= $1
               AND game_date <= $2
               AND player_name = ANY($3)
@@ -849,18 +851,16 @@ app.post("/create-clan", async (req, res) => {
             numRookies: 1,
             numTeams: 1
         };
-        // L'équipe LNH est de nouveau un choix du repêchage : la quantité
-        // vient donc du formulaire (creer-pool.html), comme les autres
+        // L'équipe LNH est un choix du repêchage comme un autre : la
+        // quantité vient du formulaire (creer-pool.html), comme les autres
         // positions. Seul le défaut est imposé ici, si l'appelant n'envoie
-        // rien — l'identité (/choose-nhl-club) ne remplit plus cette case.
+        // rien.
         if (poolConfig.numTeams == null) poolConfig.numTeams = 1;
 
         // 🔥 Initialize 10 teams for the new clan
         let teams = {};
         for (let i = 1; i <= 10; i++) {
-            // nhlClub : l'identité LNH choisie avant le repêchage (voir
-            // /choose-nhl-club). null tant que personne n'a choisi.
-            teams[`Équipe ${i}`] = { members: [], offensive: [], defensive: [], goalie: [], rookie: [], teams: [], nhlClub: null };
+            teams[`Équipe ${i}`] = { members: [], offensive: [], defensive: [], goalie: [], rookie: [], teams: [] };
         }
 
         // ✅ Automatically add the creator to Équipe 1
@@ -1589,49 +1589,6 @@ app.get("/admin-users", async (req, res) => {
  * figées dans teamColors.js : deux personnes qui regardent la même bande
  * doivent voir la même chose.
  */
-app.post("/choose-nhl-club", async (req, res) => {
-    const { clanName, username, club } = req.body;
-    if (!clanName || !username || !club) {
-        return res.status(400).json({ message: "Données incomplètes." });
-    }
-
-    const code = String(club).trim().toUpperCase();
-    if (!NHL_CLUB_CODES.has(code)) {
-        return res.status(400).json({ message: "Équipe LNH invalide." });
-    }
-
-    const draftData = await loadDraftData();
-    const clan = draftData[clanName];
-    if (!clan) return res.status(404).json({ message: "Pool introuvable." });
-
-    if (Array.isArray(clan.draftOrder) && clan.draftOrder.length > 0) {
-        return res.status(403).json({ message: "Le repêchage est commencé : l'identité d'équipe ne peut plus changer." });
-    }
-
-    const entree = Object.entries(clan.teams || {})
-        .find(([, t]) => (t.members || []).includes(username));
-    if (!entree) return res.status(400).json({ message: "Vous n'êtes dans aucune équipe de ce pool." });
-    const [teamName, team] = entree;
-
-    // Deux équipes du même pool ne peuvent pas porter le même club : la bande
-    // perdrait la seule chose qui distingue leurs cartes à l'œil.
-    const dejaPrise = Object.entries(clan.teams || {})
-        .find(([nom, t]) => nom !== teamName && t.nhlClub === code);
-    if (dejaPrise) {
-        return res.status(409).json({ message: `${dejaPrise[0]} a déjà choisi cette équipe.` });
-    }
-
-    // Identité seulement : couleurs et logo de l'équipe du pool. La case
-    // « équipe LNH » du roster (team.teams) se remplit au repêchage, comme
-    // toute autre position — choisir son identité ne consomme pas ce pick,
-    // et rien n'oblige à repêcher le club dont on porte les couleurs.
-    team.nhlClub = code;
-    await saveDraftData(draftData);
-    io.emit("draftUpdated", poolsPublics(draftData));
-
-    return res.json({ message: `${teamName} portera les couleurs de ${code}.`, team: teamName, club: code });
-});
-
 app.post("/start-draft", async (req, res) => {
     const { clanName } = req.body;
     if (!clanName) return res.status(400).json({ message: "Nom du clan requis." });
@@ -1652,17 +1609,6 @@ app.post("/start-draft", async (req, res) => {
     }
 
     if (clan.draftOrder.length === 0) {
-        // Chaque équipe éligible doit avoir choisi son identité LNH avant que
-        // l'ordre soit tiré — sans quoi la bande démarrerait avec des cartes
-        // neutres que plus personne ne pourrait rattacher à une équipe.
-        const sansClub = eligibleTeams.filter(nom => !clan.teams[nom].nhlClub);
-        if (sansClub.length > 0) {
-            return res.status(400).json({
-                message: `En attente du choix d'équipe LNH : ${sansClub.join(', ')}.`,
-                teamsWithoutClub: sansClub
-            });
-        }
-
         // Calculate total picks based on pool configuration
         const config = clan.config || {
             numOffensive: 6,
@@ -1674,8 +1620,8 @@ app.post("/start-draft", async (req, res) => {
         const totalPicks = config.numOffensive + config.numDefensive + config.numGoalies + config.numRookies + config.numTeams;
 
         // Aucun choix réel n'a encore eu lieu : tout ce que team.teams
-        // contiendrait vient de l'époque où /choose-nhl-club remplissait
-        // lui-même la case du roster. On repart de zéro, sinon ces pools
+        // contiendrait vient d'un pool créé avant que l'équipe de la LNH
+        // devienne un pick comme un autre. On repart de zéro, sinon ces pools
         // démarreraient avec leur case « équipe LNH » déjà pleine et le pick
         // correspondant serait impossible à faire.
         Object.values(clan.teams || {}).forEach(t => { t.teams = []; });
@@ -1809,7 +1755,7 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
         const data = await response.json();
 
         // Construct headshot URL - NHL API provides headshots at this URL format
-        const headshotUrl = data.headshot || `https://assets.nhle.com/mugs/nhl/20252026/${data.currentTeamAbbrev || 'NJD'}/${playerId}.png`;
+        const headshotUrl = data.headshot || `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${data.currentTeamAbbrev || 'NJD'}/${playerId}.png`;
 
         // Get the most recent NHL regular season — same approach as career modal which works correctly.
         // Never hardcode the season number; always derive it from the data to avoid type/year mismatches.
@@ -1826,7 +1772,7 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
         // wrote their last-active totals into the pool as if they were live
         // (this is how Dennis Wideman's 2016-17 line kept resurfacing).
         // Falls through to the featuredStats branch, then to zeros.
-        const CURRENT_SEASON = 20252026;
+        const CURRENT_SEASON = currentSeasonId();
         const nhlSeasonEntries = latestSeason === CURRENT_SEASON
             ? nhlRegularSeasons.filter(s => Number(s.season) === CURRENT_SEASON)
             : [];
@@ -1870,7 +1816,7 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
         } else {
             // Fallback: try featuredStats (NHL API's explicit current-season stats)
             const featured = data.featuredStats;
-            if (featured && Number(featured.season) === 20252026) {
+            if (featured && Number(featured.season) === CURRENT_SEASON) {
                 const sub = isGoalie
                     ? featured.regularSeason?.subSeason
                     : featured.regularSeason?.subSeason;
@@ -1897,7 +1843,7 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
 
             if (!seasonStats) {
                 // No stats found at all - return zeros
-                console.log(`⚠️ ${playerName} has no NHL stats for 20252026 - returning zeros`);
+                console.log(`⚠️ ${playerName} has no NHL stats for ${CURRENT_SEASON} - returning zeros`);
                 return {
                     playerId: playerId,
                     playerName: playerName,
@@ -2031,7 +1977,7 @@ async function updateCurrentStats() {
 
     const currentStats = {
         lastUpdated: new Date().toISOString(),
-        season: 20252026,
+        season: currentSeasonId(),
         players: newPlayers
     };
 
@@ -2227,7 +2173,7 @@ let smartUpdateRunning = false;
 
 // Fetch one player's full season game log and upsert to DB
 async function fetchAndSavePlayerLog(playerId, playerName, position) {
-    const url = `https://api-web.nhle.com/v1/player/${playerId}/game-log/20252026/2`;
+    const url = `https://api-web.nhle.com/v1/player/${playerId}/game-log/${currentSeasonString()}/2`;
     try {
         const response = await fetch(url);
         if (!response.ok) return 0;
@@ -2262,7 +2208,7 @@ async function fetchAndSavePlayerLog(playerId, playerName, position) {
                     goals_against=EXCLUDED.goals_against, shutouts=EXCLUDED.shutouts,
                     team_abbrev=EXCLUDED.team_abbrev, last_updated=NOW()
             `, [
-                playerId, playerName, position, '20252026',
+                playerId, playerName, position, currentSeasonString(),
                 game.gameId, game.gameDate, game.homeRoadFlag, game.opponentAbbrev,
                 game.teamAbbrev, game.gameResult,
                 game.goals||0, game.assists||0, game.points||0, game.plusMinus||0,
@@ -2528,7 +2474,7 @@ app.get("/game-logs-status", async (req, res) => {
                 MIN(game_date) as earliest_game,
                 MAX(game_date) as latest_game
             FROM player_game_logs
-            WHERE season = '20252026'
+            WHERE season = '${currentSeasonString()}'
         `);
 
         const stats = result.rows[0];
@@ -2761,6 +2707,27 @@ app.get('/live-games', async (req, res) => {
     } catch (error) {
         console.error('❌ Error fetching live games:', error.message);
         res.json({ games: [], generatedAt: new Date().toISOString() });
+    }
+});
+
+// ============================================================
+// SAISON EN COURS — numéro (20262027), phase, dates d'ouverture et de
+// clôture de la saison régulière. Le classement s'en sert pour ne rien
+// afficher d'autre que des zéros avant le premier match : sans ça, un pool
+// repêché en septembre ouvrait sur les totaux de l'an passé. Voir
+// lib/season.js ; les dates viennent du même calendrier LNH que /schedule.
+// ============================================================
+app.get('/season-window', async (req, res) => {
+    try {
+        const fenetreSaison = await getSeasonWindow();
+        res.json({
+            ...fenetreSaison,
+            phase: seasonPhase(fenetreSaison),
+            hasStarted: seasonHasStarted(fenetreSaison)
+        });
+    } catch (error) {
+        console.error('❌ Error resolving season window:', error.message);
+        res.status(500).json({ message: 'Error resolving season window' });
     }
 });
 
@@ -3531,7 +3498,7 @@ app.get('/player-career/:playerId', async (req, res) => {
         const isGoalie = position === 'G';
         const currentTeam = data.currentTeamAbbrev || null;
         // Construct headshot URL - use API's headshot or construct from player ID and current team
-        const headshot = data.headshot || (currentTeam ? `https://assets.nhle.com/mugs/nhl/20252026/${currentTeam}/${playerId}.png` : null);
+        const headshot = data.headshot || (currentTeam ? `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${currentTeam}/${playerId}.png` : null);
         const teamLogo = data.teamLogo || null;
 
         // Extract player bio details
@@ -3629,7 +3596,7 @@ app.get('/player-gamelog/:playerId', async (req, res) => {
     try {
         const { playerId } = req.params;
         const playerIdNum = parseInt(playerId);
-        const currentSeason = '20252026';
+        const currentSeason = currentSeasonString();
 
         console.log(`📊 Loading game log for player ${playerId} from database`);
 
@@ -3721,7 +3688,7 @@ const CACHE_DURATION = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
 // Helper function to calculate last 10 games stats for a player
 async function getPlayerLast10Stats(playerId, position) {
     try {
-        const currentSeason = '20252026';
+        const currentSeason = currentSeasonString();
         const gameType = '2'; // Regular season
 
         const url = `https://api-web.nhle.com/v1/player/${playerId}/game-log/${currentSeason}/${gameType}`;
@@ -3805,7 +3772,7 @@ app.get('/hot-players-last10', async (req, res) => {
 
         console.log('📊 Calculating hot players based on last 10 games...');
 
-        const currentSeason = '20252026';
+        const currentSeason = currentSeasonString();
 
         // Fetch top skaters and goalies from NHL API
         const skatersUrl = `https://api-web.nhle.com/v1/skater-stats-leaders/${currentSeason}/2?limit=200`;
@@ -3989,7 +3956,7 @@ app.get('/hot-players-last10', async (req, res) => {
                 playerName: p.skaterFullName,
                 teamAbbrev: p.teamAbbrevs,
                 position: p.positionCode,
-                headshot: `https://assets.nhle.com/mugs/nhl/20252026/${p.teamAbbrevs}/${p.playerId}.png`,
+                headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
                 gamesPlayedTotal: p.gamesPlayed,
                 last10Goals: p.goals,
                 last10Assists: p.assists,
@@ -4007,7 +3974,7 @@ app.get('/hot-players-last10', async (req, res) => {
                 playerName: validRookies[0].skaterFullName,
                 teamAbbrev: validRookies[0].teamAbbrevs,
                 position: validRookies[0].positionCode,
-                headshot: `https://assets.nhle.com/mugs/nhl/20252026/${validRookies[0].teamAbbrevs}/${validRookies[0].playerId}.png`,
+                headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${validRookies[0].teamAbbrevs}/${validRookies[0].playerId}.png`,
                 gamesPlayedTotal: validRookies[0].gamesPlayed,
                 last10Goals: validRookies[0].goals,
                 last10Assists: validRookies[0].assists,
@@ -4020,7 +3987,7 @@ app.get('/hot-players-last10', async (req, res) => {
                 playerName: p.skaterFullName,
                 teamAbbrev: p.teamAbbrevs,
                 position: p.positionCode,
-                headshot: `https://assets.nhle.com/mugs/nhl/20252026/${p.teamAbbrevs}/${p.playerId}.png`,
+                headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
                 gamesPlayedTotal: p.gamesPlayed,
                 last10Goals: p.goals,
                 last10Assists: p.assists,
@@ -4033,7 +4000,7 @@ app.get('/hot-players-last10', async (req, res) => {
                 playerName: p.goalieFullName,
                 teamAbbrev: p.teamAbbrevs,
                 position: 'G',
-                headshot: `https://assets.nhle.com/mugs/nhl/20252026/${p.teamAbbrevs}/${p.playerId}.png`,
+                headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
                 gamesPlayedTotal: p.gamesPlayed || 0,
                 last10Wins: p.wins || 0,
                 last10SavePct: p.savePct ? (p.savePct * 100).toFixed(1) : '0.0',
@@ -4084,7 +4051,7 @@ app.get('/hot-players', async (req, res) => {
             playerName: p.skaterFullName,
             teamAbbrev: p.teamAbbrevs,
             position: p.positionCode,
-            headshot: `https://assets.nhle.com/mugs/nhl/20252026/${p.teamAbbrevs}/${p.playerId}.png`,
+            headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
             gamesPlayedTotal: p.gamesPlayed,
             last10Goals: p.goals,
             last10Assists: p.assists,
@@ -4103,7 +4070,7 @@ app.get('/hot-players', async (req, res) => {
             playerName: validRookies[0].skaterFullName,
             teamAbbrev: validRookies[0].teamAbbrevs,
             position: validRookies[0].positionCode,
-            headshot: `https://assets.nhle.com/mugs/nhl/20252026/${validRookies[0].teamAbbrevs}/${validRookies[0].playerId}.png`,
+            headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${validRookies[0].teamAbbrevs}/${validRookies[0].playerId}.png`,
             gamesPlayedTotal: validRookies[0].gamesPlayed,
             last10Goals: validRookies[0].goals,
             last10Assists: validRookies[0].assists,
@@ -4117,7 +4084,7 @@ app.get('/hot-players', async (req, res) => {
             playerName: p.skaterFullName,
             teamAbbrev: p.teamAbbrevs,
             position: p.positionCode,
-            headshot: `https://assets.nhle.com/mugs/nhl/20252026/${p.teamAbbrevs}/${p.playerId}.png`,
+            headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
             gamesPlayedTotal: p.gamesPlayed,
             last10Goals: p.goals,
             last10Assists: p.assists,
@@ -4131,7 +4098,7 @@ app.get('/hot-players', async (req, res) => {
             playerName: p.goalieFullName,
             teamAbbrev: p.teamAbbrevs,
             position: 'G',
-            headshot: `https://assets.nhle.com/mugs/nhl/20252026/${p.teamAbbrevs}/${p.playerId}.png`,
+            headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
             gamesPlayedTotal: p.gamesPlayed,
             last10Wins: p.wins,
             last10SavePct: p.savePct
@@ -4175,7 +4142,7 @@ app.get('/stats-leaders', async (req, res) => {
             playerName: p.skaterFullName,
             teamAbbrev: p.teamAbbrevs,
             position: p.positionCode,
-            headshot: `https://assets.nhle.com/mugs/nhl/20252026/${p.teamAbbrevs}/${p.playerId}.png`,
+            headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
             gamesPlayed: p.gamesPlayed,
             goals: p.goals,
             assists: p.assists,
@@ -4186,7 +4153,7 @@ app.get('/stats-leaders', async (req, res) => {
             playerName: p.goalieFullName,
             teamAbbrev: p.teamAbbrevs,
             position: 'G',
-            headshot: `https://assets.nhle.com/mugs/nhl/20252026/${p.teamAbbrevs}/${p.playerId}.png`,
+            headshot: `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
             gamesPlayed: p.gamesPlayed,
             wins: p.wins,
             points: p.points
@@ -4225,7 +4192,7 @@ let last180DaysCache = { lastUpdated: null, data: null };
 
 // Generic function to calculate hot players for any time range
 async function calculateHotPlayers(days) {
-    const currentSeason = '20252026';
+    const currentSeason = currentSeasonString();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     const startDateStr = startDate.toISOString().split('T')[0];
@@ -4327,7 +4294,7 @@ async function calculateHotPlayers(days) {
             .map(p => {
                 // Calculate per-game average
                 p.fantasyPointsPerGame = p.totalFantasyPoints / p.gamesPlayed;
-                p.headshot = `https://assets.nhle.com/mugs/nhl/20252026/${p.teamAbbrev}/${p.playerId}.png`;
+                p.headshot = `https://assets.nhle.com/mugs/nhl/${currentSeasonString()}/${p.teamAbbrev}/${p.playerId}.png`;
                 p.isHot = p.fantasyPointsPerGame >= 10; // Hot if averaging 10+ fantasy pts per game
                 return p;
             });
@@ -5154,6 +5121,10 @@ app.post('/trade-listings', async (req, res) => {
         }
 
         const pool = poolResult.rows[0].pool_data;
+        if (pool.allowTrades === false) {
+            return res.status(403).json({ message: "Les échanges ne sont pas autorisés dans ce pool" });
+        }
+
         const teamData = pool.teams[teamName];
         if (!teamData) {
             return res.status(404).json({ message: "Équipe introuvable" });
@@ -5243,6 +5214,17 @@ app.get('/pool-leaderboard/:poolName', async (req, res) => {
         }
         const pool = poolResult.rows[0].pool_data;
 
+        // Avant le premier match de la saison régulière il n'y a rien à
+        // classer. La fenêtre glissante retombait alors sur les totaux de
+        // saison, qui sont encore ceux de l'an passé pour un pool tout neuf.
+        const fenetreSaison = await getSeasonWindow();
+        if (!seasonHasStarted(fenetreSaison)) {
+            return res.json({
+                poolName, days, generatedAt: new Date().toISOString(),
+                seasonStarted: false, teams: []
+            });
+        }
+
         const endDate = new Date();
         const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
 
@@ -5278,7 +5260,7 @@ app.get('/pool-leaderboard/:poolName', async (req, res) => {
         teams.sort((a, b) => (b.points ?? -Infinity) - (a.points ?? -Infinity));
         teams.forEach((t, i) => { t.rank = i + 1; });
 
-        res.json({ poolName, days, generatedAt: new Date().toISOString(), teams });
+        res.json({ poolName, days, generatedAt: new Date().toISOString(), seasonStarted: true, teams });
     } catch (error) {
         console.error("Error building pool leaderboard:", error);
         res.status(500).json({ message: "Error building pool leaderboard" });
@@ -5320,7 +5302,17 @@ app.get('/pool-hall-of-fame/:poolName', async (req, res) => {
             });
         });
 
-        const empty = { poolName, generatedAt: new Date().toISOString(), bestDay: null, worstDay: null, bestWeek: null, worstWeek: null, bestMonth: null, worstMonth: null };
+        const empty = { poolName, generatedAt: new Date().toISOString(), seasonStarted: true, bestDay: null, worstDay: null, bestWeek: null, worstWeek: null, bestMonth: null, worstMonth: null };
+
+        // Un pool repêché pendant l'été ouvrait sur un temple de la renommée
+        // déjà bâti : les joueurs venaient d'être choisis, mais leurs matchs
+        // de la saison précédente étaient encore dans player_game_logs. La
+        // requête est maintenant bornée à la saison courante (voir la clause
+        // season plus bas) et, tant qu'aucun match n'a été joué, on ne la
+        // lance même pas.
+        const fenetreSaison = await getSeasonWindow();
+        if (!seasonHasStarted(fenetreSaison)) return res.json({ ...empty, seasonStarted: false });
+
         const allNames = [...teamByPlayer.keys()];
         if (allNames.length === 0) return res.json(empty);
 
@@ -5332,7 +5324,7 @@ app.get('/pool-hall-of-fame/:poolName', async (req, res) => {
                    game_winning_goals,
                    decision, saves, goals_against, shutouts
             FROM player_game_logs
-            WHERE season = '20252026'
+            WHERE season = '${currentSeasonString()}'
               AND player_name = ANY($1)
         `, [allNames]);
 
@@ -5405,6 +5397,7 @@ app.get('/pool-hall-of-fame/:poolName', async (req, res) => {
         res.json({
             poolName,
             generatedAt: new Date().toISOString(),
+            seasonStarted: true,
             bestDay: toResult(pickBest(dayEntries)),
             worstDay: toResult(pickWorst(dayEntries)),
             bestWeek: toResult(pickBest(weekEntries)),

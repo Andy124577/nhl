@@ -1,9 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 const db = require('./db');
+const { currentSeasonString } = require('./lib/season.js');
 
 // Configuration
-const CURRENT_SEASON = '20252026';
+const CURRENT_SEASON = currentSeasonString();
 const GAME_TYPE = '2'; // Regular season
 const STATS_FILE = path.join(__dirname, 'nhl_filtered_stats.json');
 const DELAY_BETWEEN_REQUESTS = 100; // ms to avoid rate limiting

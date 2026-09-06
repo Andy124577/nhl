@@ -178,7 +178,7 @@ async function populatePlayerTable(t) {
             s = getMatchingImage(a),
             l = n?.headshot,
             o = n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim(),
-            r = t.playerId && o ? `https://assets.nhle.com/mugs/nhl/20252026/${o}/${t.playerId}.png` : null,
+            r = t.playerId && o ? buildHeadshotUrl(t.playerId, o) : null,
             d = s || l || r,
             i = n?.teamAbbrev ? `teams/${n.teamAbbrev}.png` : getTeamLogoPath(t.teamAbbrevs);
         let c, u, m, h;

@@ -62,6 +62,28 @@ let h2hPeriod = 'today'; // 'today' | 'week'
 let standingsSortKey = null;
 let standingsSortDir = 'desc';
 
+// La saison régulière est-elle commencée ? Renseigné par /season-window au
+// chargement. Optimiste par défaut : si le calendrier ne répond pas, on
+// affiche les statistiques plutôt que de masquer des matchs réels.
+let seasonStarted = true;
+
+/**
+ * Une statistique de la saison EN COURS, jamais celle du repêchage.
+ *
+ * nhl_filtered_stats.json garde volontairement les totaux de l'an passé —
+ * c'est la liste de repêchage, on choisit ses joueurs sur la saison écoulée.
+ * Le classement, lui, ne compte que ce qui s'est joué cette saison. L'ancien
+ * `stats?.points || cache.points` faisait le contraire dès que le total
+ * courant valait 0 : un pool repêché en septembre s'ouvrait avec les 138
+ * points de McDavid de l'an dernier. Un joueur présent dans currentStats fait
+ * foi, zéro compris ; le cache ne sert que s'il en est absent.
+ */
+function seasonStat(stats, cached, key) {
+    if (!seasonStarted) return 0;
+    if (stats) return stats[key] || 0;
+    return (cached && cached[key]) || 0;
+}
+
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', async () => {
     await fetchImageData();
@@ -72,6 +94,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     fullPlayerData = [...data.Top_50_Defenders, ...data.Top_100_Offensive_Players, ...data.Top_Rookies];
     goalieData = data.Top_50_Goalies;
     teamData = data.Teams;
+
+    // Avant le premier match, tout vaut zéro : sans ce garde-fou, le
+    // classement d'un pool repêché l'été affiche les totaux de l'an passé.
+    try {
+        const seasonResponse = await fetch(`${BASE_URL}/season-window`, { cache: 'no-store' });
+        if (seasonResponse.ok) seasonStarted = (await seasonResponse.json()).hasStarted !== false;
+    } catch (error) {
+        console.warn('⚠️ Could not resolve season window:', error);
+    }
 
     // Load current stats
     try {
@@ -643,6 +674,9 @@ function buildHallOfFameHTML(data) {
             <p class="hof-title">Temple de la renommée</p>
             <span class="hof-subtitle">saison en cours</span>
         </div>`;
+    if (data && data.seasonStarted === false) {
+        return `${head}<p class="hof-empty">La saison n'est pas commencée : les records s'écriront au premier match.</p>`;
+    }
     if (!data || (!data.bestDay && !data.bestWeek && !data.bestMonth)) {
         return `${head}<p class="hof-empty">Pas encore assez de matchs joués cette saison pour établir des records.</p>`;
     }
@@ -705,7 +739,9 @@ async function loadRecentFormRows(poolName, days) {
         const teams = (data && data.teams) || [];
 
         if (!teams.length) {
-            list.innerHTML = `<p class="hof-empty">Pas assez de données pour classer les équipes sur cette période.</p>`;
+            list.innerHTML = data && data.seasonStarted === false
+                ? `<p class="hof-empty">La saison n'est pas commencée : aucune équipe n'a encore joué.</p>`
+                : `<p class="hof-empty">Pas assez de données pour classer les équipes sur cette période.</p>`;
             return;
         }
 
@@ -780,20 +816,26 @@ function showTeamRoster(poolName, teamName) {
     document.getElementById('rosterSkeleton').style.display = 'flex';
     document.getElementById('rosterList').style.display = 'none';
 
+    // Un pool sans échanges n'a rien à mettre en vente : on saute l'appel
+    // aux annonces et le bouton disparaît de la fiche.
+    const tradesAllowed = poolData.allowTrades !== false;
+
     // Render roster after short delay — fetch this team's active for-sale
     // listings first so the toggle starts in the right state on first paint.
     setTimeout(async () => {
         let activeListings = [];
-        try {
-            const res = await fetch(`${BASE_URL}/trade-listings/${encodeURIComponent(poolName)}`, { cache: 'no-store' });
-            if (res.ok) {
-                const listings = await res.json();
-                activeListings = listings.filter(l => l.teamName === teamName);
+        if (tradesAllowed) {
+            try {
+                const res = await fetch(`${BASE_URL}/trade-listings/${encodeURIComponent(poolName)}`, { cache: 'no-store' });
+                if (res.ok) {
+                    const listings = await res.json();
+                    activeListings = listings.filter(l => l.teamName === teamName);
+                }
+            } catch (err) {
+                console.warn('Could not load trade listings:', err);
             }
-        } catch (err) {
-            console.warn('Could not load trade listings:', err);
         }
-        renderTeamRoster(teamData, activeListings);
+        renderTeamRoster(teamData, activeListings, tradesAllowed);
     }, 100);
 }
 
@@ -851,14 +893,15 @@ async function toggleForSale(btn) {
     }
 }
 
-function renderTeamRoster(roster, activeListings = []) {
+function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
     const rosterList = document.getElementById('rosterList');
     rosterList.innerHTML = '';
 
-    // Only the roster's own team can list/unlist its players. category
-    // matches the vocabulary /trade/propose already validates against.
+    // Only the roster's own team can list/unlist its players, and only when
+    // the pool allows trades at all. category matches the vocabulary
+    // /trade/propose already validates against.
     const currentUsername = localStorage.getItem('username');
-    const isOwner = (roster.members || []).includes(currentUsername);
+    const isOwner = tradesAllowed && (roster.members || []).includes(currentUsername);
     const listingByPlayer = {};
     activeListings.forEach(l => { listingByPlayer[l.playerName] = l; });
 
@@ -1006,29 +1049,29 @@ function renderTeamRoster(roster, activeListings = []) {
         let stat2Label = 'P';
 
         if (player.type === 'goalie') {
-            gp = player.stats?.gamesPlayed || player.cached.gamesPlayed || 0;
-            const wins = player.stats?.wins || player.cached.wins || 0;
-            const shutouts = player.stats?.shutouts || player.cached.shutouts || 0;
-            const otLosses = player.stats?.otLosses || player.cached.otLosses || 0;
+            gp = seasonStat(player.stats, player.cached, 'gamesPlayed');
+            const wins = seasonStat(player.stats, player.cached, 'wins');
+            const shutouts = seasonStat(player.stats, player.cached, 'shutouts');
+            const otLosses = seasonStat(player.stats, player.cached, 'otLosses');
             points = goaliePoolPoints({ shutouts, wins, otLosses });
             stat1 = wins;
             stat2 = shutouts;
             stat1Label = 'V';
             stat2Label = 'BL';
         } else if (player.type === 'team') {
-            gp = player.stats?.gamesPlayed || player.cached.gamesPlayed || 0;
-            const wins = player.stats?.wins || player.cached.wins || 0;
-            const otLosses = player.stats?.otLosses || player.cached.otLosses || 0;
+            gp = seasonStat(player.stats, player.cached, 'gamesPlayed');
+            const wins = seasonStat(player.stats, player.cached, 'wins');
+            const otLosses = seasonStat(player.stats, player.cached, 'otLosses');
             points = clubPoolPoints({ wins, otLosses });
             stat1 = wins;
             stat2 = otLosses;
             stat1Label = 'V';
             stat2Label = 'DP';
         } else {
-            gp = player.stats?.gamesPlayed || player.cached.gamesPlayed || 0;
-            stat1 = player.stats?.goals || player.cached.goals || 0;
-            stat2 = player.stats?.assists || player.cached.assists || 0;
-            points = player.stats?.points || player.cached.points || 0;
+            gp = seasonStat(player.stats, player.cached, 'gamesPlayed');
+            stat1 = seasonStat(player.stats, player.cached, 'goals');
+            stat2 = seasonStat(player.stats, player.cached, 'assists');
+            points = seasonStat(player.stats, player.cached, 'points');
         }
 
         // Get team abbreviation for display
@@ -1146,10 +1189,10 @@ function calculateTeamPoints(roster) {
             const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
             if (playerData) {
                 const stats = getCurrentPlayerStats(playerName, playerData.playerId);
-                totalGP += stats?.gamesPlayed || playerData.gamesPlayed || 0;
-                totalGoals += stats?.goals || playerData.goals || 0;
-                totalAssists += stats?.assists || playerData.assists || 0;
-                totalPoints += stats?.points || playerData.points || 0;
+                totalGP += seasonStat(stats, playerData, 'gamesPlayed');
+                totalGoals += seasonStat(stats, playerData, 'goals');
+                totalAssists += seasonStat(stats, playerData, 'assists');
+                totalPoints += seasonStat(stats, playerData, 'points');
             }
         });
     });
@@ -1159,10 +1202,10 @@ function calculateTeamPoints(roster) {
         const playerData = goalieData.find(p => p.goalieFullName === playerName);
         if (playerData) {
             const stats = getCurrentPlayerStats(playerName, playerData.playerId);
-            const gp = stats?.gamesPlayed || playerData.gamesPlayed || 0;
-            const wins = stats?.wins || playerData.wins || 0;
-            const shutouts = stats?.shutouts || playerData.shutouts || 0;
-            const otLosses = stats?.otLosses || playerData.otLosses || 0;
+            const gp = seasonStat(stats, playerData, 'gamesPlayed');
+            const wins = seasonStat(stats, playerData, 'wins');
+            const shutouts = seasonStat(stats, playerData, 'shutouts');
+            const otLosses = seasonStat(stats, playerData, 'otLosses');
             // Formule partagée avec le serveur et la page d'accueil
             // (lib/scoring.js) : recopiée ici, elle finissait par diverger.
             const points = goaliePoolPoints({ shutouts, wins, otLosses });
@@ -1177,9 +1220,9 @@ function calculateTeamPoints(roster) {
         const teamInfo = teamData.find(t => t.teamFullName === teamName);
         if (teamInfo) {
             const stats = getCurrentTeamStats(teamName);
-            const gp = stats?.gamesPlayed || teamInfo.gamesPlayed || 0;
-            const wins = stats?.wins || teamInfo.wins || 0;
-            const otLosses = stats?.otLosses || teamInfo.otLosses || 0;
+            const gp = seasonStat(stats, teamInfo, 'gamesPlayed');
+            const wins = seasonStat(stats, teamInfo, 'wins');
+            const otLosses = seasonStat(stats, teamInfo, 'otLosses');
             const points = clubPoolPoints({ wins, otLosses });
 
             totalGP += gp;
@@ -1206,7 +1249,8 @@ function setH2HPeriod(period) {
 
 function playerHeadshot(playerId, teamAbbrev) {
     if (!playerId || !teamAbbrev) return null;
-    return `https://assets.nhle.com/mugs/nhl/20252026/${teamAbbrev}/${playerId}.png`;
+    // buildHeadshotUrl (headshots.js) tient la saison courante à jour.
+    return buildHeadshotUrl(playerId, teamAbbrev);
 }
 
 function buildMatchupCardHTML(m, poolName, showRecord) {

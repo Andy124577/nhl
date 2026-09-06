@@ -7,6 +7,8 @@
 
 'use strict';
 
+const { seasonIdForDate } = require('../../lib/season.js');
+
 /** Une ligne de patineur. `points` est ce que lisent les deux agrégats. */
 function makeSkaterStat(playerName, over = {}) {
     return {
@@ -41,11 +43,16 @@ function makeGoalieStat(playerName, over = {}) {
     };
 }
 
+/** Horloge simulée du cache : mi-janvier, donc en pleine saison 2025-26. */
+const CACHE_LAST_UPDATED = '2026-01-15T12:00:00.000Z';
+
 /** Le cache complet. */
 function makeStats(players = [], over = {}) {
     return {
-        season: 20252026,
-        lastUpdated: '2026-01-15T12:00:00.000Z',
+        // Déduite de lastUpdated plutôt qu'écrite en dur : les deux ne peuvent
+        // plus diverger le jour où la date de la fixture change.
+        season: seasonIdForDate(CACHE_LAST_UPDATED),
+        lastUpdated: CACHE_LAST_UPDATED,
         players,
         ...over
     };

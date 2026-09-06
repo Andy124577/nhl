@@ -79,23 +79,6 @@ function resolvePickInfo(pick) {
   return { nom, estEquipe, abbrev, logo, photo, position };
 }
 
-/**
- * Identité LNH choisie par l'équipe du pool qui détient ce tour — voir
- * /choose-nhl-club. C'est elle qui marque désormais la carte (fond et
- * écusson), et non plus le club du joueur qu'on y a repêché : la carte dit
- * « à qui ce choix appartient », pas « d'où vient le joueur ».
- *
- * `null` pour un repêchage commencé avant l'existence de ce choix ; les
- * appelants retombent alors sur l'ancien repère (le club du joueur).
- */
-function resolveDrafterClub(equipePool) {
-  const donnees = typeof draftData !== 'undefined' && draftData ? draftData : {};
-  const equipe = equipePool && donnees.teams ? donnees.teams[equipePool] : null;
-  const abbrev = equipe && equipe.nhlClub ? String(equipe.nhlClub).toUpperCase() : null;
-  if (!abbrev) return null;
-  return { abbrev, logo: `teams/${abbrev}.png` };
-}
-
 /* ============================================================
    2. CONSTRUCTION D'UNE CARTE
    ============================================================ */
@@ -125,11 +108,12 @@ function pickCardMuteRatio(couleur) {
 function buildPickCard(options) {
   const { pick, numero, ronde, equipePool, etat } = options;
   const info = pick ? resolvePickInfo(pick) : null;
-  const club = resolveDrafterClub(equipePool);
-  // Repli pour un repêchage commencé avant l'existence du choix d'identité :
-  // on retombe sur le club du joueur repêché plutôt que de laisser la carte
-  // neutre, mais uniquement là où club est inconnu.
-  const marque = club || (info ? { abbrev: info.abbrev, logo: info.logo } : null);
+  // La carte porte le club du joueur repêché. Une étape d'identité, avant le
+  // repêchage, faisait un temps porter à la place le club choisi par l'équipe
+  // du pool ; elle a été retirée — l'équipe de la LNH se repêche maintenant
+  // comme n'importe quelle autre position, il n'y a plus rien à porter avant
+  // que le choix soit fait.
+  const marque = info ? { abbrev: info.abbrev, logo: info.logo } : null;
 
   const carte = document.createElement('article');
   // is-unbranded : le CSS (.pick-card.is-unbranded) y fait suivre le texte
@@ -139,10 +123,6 @@ function buildPickCard(options) {
   // blanc en thème clair.
   carte.className = 'pick-card is-' + etat + (marque ? '' : ' is-unbranded');
 
-  // C'est l'identité de l'ÉQUIPE DU POOL qui marque la carte — la sienne dès
-  // que son ordre de tour est connu, pas seulement une fois son choix fait.
-  // Toute la bande d'une même équipe se reconnaît ainsi au premier coup
-  // d'œil, du premier tour au dernier.
   if (marque) {
     const [couleurA, couleurB] = getTeamColors(marque.abbrev);
     carte.style.setProperty('--team-a', mixHex(couleurA, PICK_CARD_BASE, pickCardMuteRatio(couleurA)));
@@ -184,30 +164,13 @@ function buildPickCard(options) {
     carte.appendChild(entete);
   }
 
-  /* ---- Milieu : le blason en fond, la photo ou les initiales par-dessus ----
+  /* ---- Milieu : la photo, les initiales, ou le numéro du tour ----
      Posée en couche de fond plutôt qu'en rangée : le portrait peut ainsi
-     déborder derrière le nom et le pied, comme sur une carte de collection.
-
-     Le blason de l'équipe du pool (`club`) et le contenu du choix (photo,
-     initiales, ou rien) sont deux couches indépendantes, pas des états qui
-     s'excluent : une fois le choix fait, l'identité de l'équipe reste
-     visible en filigrane derrière le joueur plutôt que de disparaître —
-     elle marque toute la carrière du tour, pas seulement son attente. */
+     déborder derrière le nom et le pied, comme sur une carte de collection. */
   const zonePhoto = document.createElement('div');
   zonePhoto.className = 'pick-card-photo';
 
   if (info && info.estEquipe) zonePhoto.classList.add('is-team');
-
-  if (club) {
-    const blason = document.createElement('img');
-    blason.className = 'pick-card-watermark';
-    blason.src = club.logo;
-    blason.alt = '';
-    blason.loading = 'lazy';
-    blason.draggable = false;
-    blason.addEventListener('error', () => blason.remove());
-    zonePhoto.appendChild(blason);
-  }
 
   if (info && info.photo) {
     const img = document.createElement('img');
@@ -226,18 +189,13 @@ function buildPickCard(options) {
   } else if (info) {
     zonePhoto.classList.add('is-empty');
     zonePhoto.appendChild(buildPickInitials(info.nom));
-  } else if (!club) {
-    // Ni choix fait, ni identité connue (repêchage antérieur à ce choix) :
-    // le numéro tient lieu d'illustration, comme avant.
+  } else {
+    // Tour pas encore joué : le numéro tient lieu d'illustration.
     zonePhoto.classList.add('is-empty');
     const chiffre = document.createElement('span');
     chiffre.className = 'pick-card-slot';
     chiffre.textContent = String(numero);
     zonePhoto.appendChild(chiffre);
-  } else {
-    // Identité connue, choix pas encore fait : le blason ci-dessus suffit,
-    // mais la couche doit tout de même se centrer comme un état « vide ».
-    zonePhoto.classList.add('is-empty');
   }
   carte.appendChild(zonePhoto);
 
@@ -276,9 +234,6 @@ function buildPickCard(options) {
   }
   haut.appendChild(identite);
 
-  // L'écusson en haut à droite porte désormais l'identité de l'équipe du
-  // pool, pas celle du joueur repêché — et paraît sur CHAQUE carte qui lui
-  // appartient, choix fait ou non, pas seulement les tours déjà joués.
   if (marque && (marque.logo || marque.abbrev)) {
     const badge = document.createElement('div');
     badge.className = 'pick-card-club';
