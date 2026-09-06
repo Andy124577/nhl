@@ -3490,12 +3490,32 @@ app.get('/nhl-injuries', async (req, res) => {
 app.get('/player-career/:playerId', async (req, res) => {
     try {
         const { playerId } = req.params;
+
+        // Plusieurs cartes de la page Stats sont générées avec
+        // `showCareerStats(${p.playerId || 'null'})` : sans ce garde-fou, la
+        // chaîne « null » partait vers la LNH et revenait en 404 « joueur
+        // introuvable », ce qui accusait le joueur plutôt que l'appel.
+        if (!/^\d+$/.test(String(playerId))) {
+            return res.status(400).json({ message: 'Invalid player id' });
+        }
+
         const url = `https://api-web.nhle.com/v1/player/${playerId}/landing`;
 
         const response = await fetch(url);
 
         if (!response.ok) {
-            return res.status(404).json({ message: 'Player not found' });
+            // Un 404 de la LNH signifie « ce joueur n'existe pas » ; tout le
+            // reste (429, 5xx, maintenance) est une panne en amont. Les
+            // confondre envoyait chercher un mauvais identifiant alors que
+            // l'API était simplement indisponible.
+            if (response.status === 404) {
+                return res.status(404).json({ message: 'Player not found' });
+            }
+            console.error(`❌ NHL API ${response.status} for player ${playerId}`);
+            return res.status(502).json({
+                message: 'NHL API unavailable',
+                upstreamStatus: response.status
+            });
         }
 
         const data = await response.json();

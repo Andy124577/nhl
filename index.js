@@ -405,9 +405,7 @@ async function showCareerStats(t, e, a = !1) {
             g = document.getElementById("careerNameBanner");
     currentPlayerId = t, n.style.display = "block", document.body.style.overflow = "hidden", showModalSkeleton(), document.getElementById("viewFilter").value = "career", document.getElementById("leagueFilter").value = "nhl", document.getElementById("gameTypeFilter").value = "regular";
     try {
-        const e = await fetch(`${BASE_URL}/player-career/${t}`);
-        if (!e.ok) throw new Error("Failed to fetch career stats");
-        const a = await e.json();
+        const a = await fzChargerCarriere(t, BASE_URL);
         if (currentCareerData = a, hideModalSkeleton(), s.style.display = "flex", i.style.display = "flex", l.textContent = a.playerName, o.textContent = a.isGoalie ? "🥅 Gardien de but" : "🏒 " + (a.position || "Joueur"), a.currentTeam) {
             const t = getTeamLogoPath(a.currentTeam);
             r.innerHTML = t ? `<img src="${t}" alt="${a.currentTeam}"> ${a.currentTeam}` : a.currentTeam
@@ -466,7 +464,7 @@ async function showCareerStats(t, e, a = !1) {
             u = document.querySelector(".filter-group-career:has(#gameTypeFilter)");
         c && (c.style.display = "flex"), u && (u.style.display = "flex")
     } catch (t) {
-        console.error("Error fetching career stats:", t), hideModalSkeleton(), s.style.display = "flex", c.innerHTML = '<p class="no-stats-message">❌ Erreur lors du chargement des statistiques</p>'
+        console.error("Error fetching career stats:", t), hideModalSkeleton(), s.style.display = "flex", c.innerHTML = `<p class="no-stats-message">❌ ${"function"==typeof fzMessageErreurCarriere?fzMessageErreurCarriere(t):"Erreur lors du chargement des statistiques"}</p>`
     }
 }
 

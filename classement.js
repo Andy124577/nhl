@@ -1837,10 +1837,7 @@ async function showCareerStats(playerId, playerName, isGoalie = false) {
     document.getElementById('gameTypeFilter').value = 'regular';
 
     try {
-        const response = await fetch(`${BASE_URL}/player-career/${playerId}`);
-        if (!response.ok) throw new Error('Failed to fetch career stats');
-
-        const data = await response.json();
+        const data = await fzChargerCarriere(playerId, BASE_URL);
         currentCareerData = data;
 
         // Hide spinner, show content
@@ -1909,7 +1906,12 @@ async function showCareerStats(playerId, playerName, isGoalie = false) {
     } catch (error) {
         console.error('Error fetching career stats:', error);
         spinner.style.display = 'none';
-        statsTable.innerHTML = '<p class="no-stats-message">❌ Erreur lors du chargement des statistiques</p>';
+        // Le chemin d'erreur ne doit jamais lui-même échouer : si
+        // careerFetch.js n'a pas été chargé, on retombe sur l'ancien texte.
+        const raison = typeof fzMessageErreurCarriere === 'function'
+            ? fzMessageErreurCarriere(error)
+            : 'Erreur lors du chargement des statistiques';
+        statsTable.innerHTML = `<p class="no-stats-message">❌ ${raison}</p>`;
     }
 }
 
