@@ -33,11 +33,13 @@ function initModernNavbar() {
         checkActiveDrafts();
         updateTradeLinkVisibility();
         updateDraftLinkVisibility();
+        updateClassementLinkVisibility();
         // Les pastilles parlent du pool actif : elles le suivent quand il change.
         if (window.FZPool) {
             const majPastilles = () => {
                 checkPendingTrades(); checkActiveDrafts();
                 updateTradeLinkVisibility(); updateDraftLinkVisibility();
+                updateClassementLinkVisibility();
             };
             FZPool.on(majPastilles);
             FZPool.onData(majPastilles);
@@ -187,7 +189,7 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                         <span class="nav-text">Échanges</span>
                         <span class="notif-badge" id="desktopTradeBadge" style="display: none;">0</span>
                     </a>
-                    <a href="classement.html" class="nav-link ${'classement' === currentPage ? 'active' : ''}">
+                    <a href="classement.html" class="nav-link ${'classement' === currentPage ? 'active' : ''}" id="desktopClassementLink">
                         <span class="nav-icon-img" aria-hidden="true">${PAGE_ICON.classement}</span>
                         <span class="nav-text">Classement</span>
                     </a>
@@ -300,7 +302,7 @@ function buildBottomNav(currentPage) {
                 <span class="bottom-nav-label">Échanges</span>
                 <span class="notif-badge" id="bottomTradeBadge" style="display: none;">0</span>
             </a>
-            <a href="classement.html" class="bottom-nav-item ${'classement' === currentPage ? 'active' : ''}">
+            <a href="classement.html" class="bottom-nav-item ${'classement' === currentPage ? 'active' : ''}" id="bottomClassementLink">
                 <span class="bottom-nav-icon">${PAGE_ICON.classement}</span>
                 <span class="bottom-nav-label">Classement</span>
             </a>
@@ -543,6 +545,39 @@ async function updateTradeLinkVisibility() {
         });
     } catch (error) {
         console.error('Error checking trade link visibility:', error);
+    }
+}
+
+/**
+ * Le lien « Classement » n'apparaît qu'une fois le repêchage du pool actif
+ * terminé — l'inverse exact du lien « Repêchage ».
+ *
+ * Tant qu'on repêche, les effectifs sont à moitié bâtis : un classement des
+ * équipes n'y compterait que les joueurs déjà choisis, et placerait en tête
+ * celui qui a simplement repêché le plus tôt dans le tour. Ce n'est pas un
+ * classement, c'est le hasard de l'ordre des choix. L'accueil l'annonce déjà
+ * pendant le repêchage (« Le classement s'ouvre une fois le repêchage
+ * terminé. ») ; ici on retire l'onglet qui y menait, et classement.html
+ * referme la porte de son côté (activePool.js) pour les URL tapées.
+ *
+ * Sans pool actif, le lien reste : la page sert alors de liste de pools,
+ * comme pour « Repêchage ».
+ */
+async function updateClassementLinkVisibility() {
+    try {
+        if (!window.FZPool) return;
+        await FZPool.ready();
+
+        const actif = FZPool.get();
+        const pool = FZPool.mine().find(p => p.name === actif);
+        const visible = !pool || FZPool.draftState(pool.data).etat === 'termine';
+
+        ['desktopClassementLink', 'bottomClassementLink'].forEach(id => {
+            const lien = document.getElementById(id);
+            if (lien) lien.style.display = visible ? '' : 'none';
+        });
+    } catch (error) {
+        console.error('Error checking classement link visibility:', error);
     }
 }
 

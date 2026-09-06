@@ -1,11 +1,104 @@
 /* ============================================================
-   MES POOLS — fiches de gestion
+   POOLS — portes d'entrée, puis fiches de gestion
    ------------------------------------------------------------
    Volontairement différent des cartes de « Pools disponibles » :
-   ici on ne choisit pas un pool, on règle celui qu'on a déjà.
+   ici on ne choisit pas un pool, on en ajoute un ou on règle celui
+   qu'on a déjà.
    ============================================================ */
 
+/* ==================== CRÉER / REJOINDRE ==================== */
+/* Deux rangées larges plutôt que deux boutons : la page s'ouvre là-dessus
+   quand on n'a encore aucun pool, et un bouton seul n'explique pas ce
+   qu'il y a derrière. */
+
+.mp-entry {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 26px;
+}
+
+.mp-entry-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 1px solid var(--border-gray);
+    border-radius: 16px;
+    background: var(--card);
+    text-decoration: none;
+    transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+.mp-entry-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--glow-primary);
+}
+
+.mp-entry-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: rgba(var(--primary-rgb), .14);
+    color: var(--primary);
+}
+
+.mp-entry-txt { flex: 1; min-width: 0; }
+
+.mp-entry-title {
+    display: block;
+    font-size: .99rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.mp-entry-sub {
+    display: block;
+    margin-top: 3px;
+    font-size: .81rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.mp-entry-chev {
+    flex-shrink: 0;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--text-gray);
+    transition: color .2s ease, transform .2s ease;
+}
+
+.mp-entry-card:hover .mp-entry-chev { color: var(--primary); transform: translateX(3px); }
+
+/* ==================== LISTE ==================== */
+
 .mp-list { display: flex; flex-direction: column; gap: 18px; }
+
+.mp-list-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-gray);
+}
+
+.mp-list-title span {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--bg-gray-light);
+    font-size: .72rem;
+    letter-spacing: 0;
+    color: var(--text-secondary);
+}
 
 .mp-card {
     background: var(--card);
@@ -160,6 +253,7 @@
 /* ==================== TÉLÉPHONE ==================== */
 
 @media (max-width: 760px) {
+    .mp-entry { grid-template-columns: 1fr; gap: 10px; margin-bottom: 20px; }
     .mp-head { flex-wrap: wrap; }
     .mp-activate { width: 100%; }
     .mp-body { grid-template-columns: 1fr; }

@@ -150,17 +150,21 @@
     function blocPages() {
         const page = pageCourante();
         const donneesActif = FZPool.data();
-        // Deux liens tombent selon l'état du pool actif :
+        // Trois liens tombent selon l'état du pool actif :
         //   — « Échanges », si le pool les a coupés : la page refuserait d'y
         //     afficher quoi que ce soit (voir trade.js) ;
         //   — « Repêchage », une fois celui-ci terminé : ses écrans se
         //     referment d'eux-mêmes (fermerLeRepechageSiTermine, activePool.js)
-        //     et la barre principale enlève déjà l'onglet (navbar.js).
+        //     et la barre principale enlève déjà l'onglet (navbar.js) ;
+        //   — « Classement », tant qu'il ne l'est pas : classer des effectifs
+        //     à moitié repêchés ne mesure que l'ordre des choix
+        //     (updateClassementLinkVisibility, navbar.js).
         const repechageFini = !!donneesActif
             && FZPool.draftState(donneesActif).etat === 'termine';
         const liens = LIENS_PAGE.filter(lien => {
             if (lien.cle === 'trade' && donneesActif && donneesActif.allowTrades === false) return false;
             if (lien.cle === 'repechage' && repechageFini) return false;
+            if (lien.cle === 'classement' && donneesActif && !repechageFini) return false;
             return true;
         });
         return `

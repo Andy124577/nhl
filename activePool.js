@@ -199,6 +199,17 @@
     const pageDuRepechage = /repechage\.html|draftActif\.html/.test(window.location.pathname);
 
     /**
+     * Le classement, lui, n'ouvre qu'à la fin du repêchage : c'est la même
+     * porte, dans l'autre sens. Classer des effectifs à moitié bâtis ne
+     * mesure rien d'autre que l'ordre des choix — celui qui a repêché en
+     * premier mène, ce qui n'apprend rien à personne. Les barres de
+     * navigation retirent déjà l'onglet (updateClassementLinkVisibility et
+     * blocPages) ; ceci ferme l'URL tapée, le vieux favori et le lien
+     * partagé.
+     */
+    const pageDuClassement = /classement\.html/.test(window.location.pathname);
+
+    /**
      * Vérifié au chargement seulement, jamais sur une mise à jour temps réel :
      * qui est présent au dernier choix doit voir le repêchage se terminer et
      * son récapitulatif (draftFinPopup.js), pas être éjecté à la seconde où le
@@ -209,6 +220,21 @@
         const donnees = tousLesPools[actif];
         if (!donnees || etatRepechage(donnees).etat !== 'termine') return false;
         // replace : le bouton Retour ne doit pas ramener sur une porte fermée.
+        window.location.replace('index.html');
+        return true;
+    }
+
+    /**
+     * Pendant le repêchage, classement.html renvoie à l'accueil — qui montre
+     * déjà l'ordre des choix en direct et annonce l'ouverture du classement.
+     *
+     * Sans pool actif on laisse passer : la page sert alors de liste de pools,
+     * il n'y a pas de repêchage en cours à protéger.
+     */
+    function fermerLeClassementSiRepechageEnCours() {
+        if (!pageDuClassement || !actif) return false;
+        const donnees = tousLesPools[actif];
+        if (!donnees || etatRepechage(donnees).etat === 'termine') return false;
         window.location.replace('index.html');
         return true;
     }
@@ -240,6 +266,7 @@
             memoriser(actif);
 
             if (fermerLeRepechageSiTermine()) return API;
+            if (fermerLeClassementSiRepechageEnCours()) return API;
 
             // Le préréglage a pu retenir un pool devenu inaccessible : ces
             // pages-là ont déjà démarré dessus, il faut les relancer.

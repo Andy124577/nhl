@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mes pools – Fantazy</title>
+    <title>Pools – Fantazy</title>
     <script src="theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css">
@@ -29,11 +29,12 @@
             <div class="ph-spot ph-sp2"></div>
         </div>
         <div class="pool-hero-inner">
-            <div class="pool-hero-badge"><span data-icon="settings" data-icon-size="16"></span> GESTION</div>
+            <div class="pool-hero-badge"><span data-icon="settings" data-icon-size="16"></span> POOLS</div>
             <h1 class="pool-hero-title">
-                Vos équipes et <span class="gradient-text">vos réglages.</span>
+                Créez, rejoignez, <span class="gradient-text">gérez.</span>
             </h1>
-            <p class="pool-hero-sub">Renommez votre équipe, changez-en, et retrouvez les règles de chaque ligue.</p>
+            <p class="pool-hero-sub">Lancez votre ligue, entrez dans celle d'un ami, ou réglez celles que
+                vous avez déjà — votre équipe, son nom, les règles de chacune.</p>
         </div>
     </header>
 
@@ -41,6 +42,28 @@
     <!-- LISTE DE GESTION                                              -->
     <!-- ============================================================ -->
     <div class="pool-page-container">
+        <!-- Créer et rejoindre passent avant la liste : ce sont les deux
+             portes d'entrée, et elles ne dépendent d'aucune donnée — elles
+             s'affichent donc tout de suite, pendant que /draft charge. -->
+        <section class="mp-entry" aria-label="Ajouter un pool">
+            <a class="mp-entry-card" href="creer-pool.html">
+                <span class="mp-entry-icon" data-icon="plus" data-icon-size="20"></span>
+                <span class="mp-entry-txt">
+                    <span class="mp-entry-title">Créer un pool</span>
+                    <span class="mp-entry-sub">Vos règles, vos participants, votre repêchage</span>
+                </span>
+                <span class="mp-entry-chev" aria-hidden="true">›</span>
+            </a>
+            <a class="mp-entry-card" href="rejoindre-pool.html">
+                <span class="mp-entry-icon" data-icon="globe" data-icon-size="20"></span>
+                <span class="mp-entry-txt">
+                    <span class="mp-entry-title">Rejoindre un pool</span>
+                    <span class="mp-entry-sub">Les ligues ouvertes, avant leur repêchage</span>
+                </span>
+                <span class="mp-entry-chev" aria-hidden="true">›</span>
+            </a>
+        </section>
+
         <div class="skeleton-loader" id="mesPoolsSkeleton">
             <div class="skeleton-list">
                 <div class="skeleton-card"><div class="skeleton-card-content">

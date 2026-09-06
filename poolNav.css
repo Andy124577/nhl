@@ -583,6 +583,9 @@ body.fz-drawer-open { overflow: hidden; }
 
 .fz-empty-pool h2 { margin: 0 0 10px; font-size: 1.3rem; color: var(--text-main); }
 .fz-empty-pool p { margin: 0 0 20px; color: var(--text-secondary); line-height: 1.5; }
+/* Le message peut être le dernier mot (mes-pools.html : les boutons vivent
+   désormais plus haut, dans les cartes d'entrée) — pas de blanc en trop. */
+.fz-empty-pool p:last-child { margin-bottom: 0; }
 
 .fz-empty-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 

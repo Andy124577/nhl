@@ -1,9 +1,13 @@
 /* ============================================================
-   MES POOLS — gestion, et non sélection
+   POOLS — créer, rejoindre, gérer
    ------------------------------------------------------------
-   Le pool actif se choisit dans le rail ou le tiroir. Cette page ne
-   redouble pas ce sélecteur : elle sert à gérer ce que le rail ne
-   peut pas montrer — votre équipe, son nom, les règles de la ligue.
+   Les deux portes d'entrée (créer, rejoindre) sont posées en dur dans
+   mes-pools.html, au-dessus : elles ne dépendent d'aucune donnée. Ce
+   fichier ne s'occupe que du reste — la liste de ce qu'on a déjà.
+
+   Ce n'est toujours pas un sélecteur de pool actif : celui-là vit dans
+   le rail et le tiroir (poolNav.js). Ici on gère ce que le rail ne peut
+   pas montrer — votre équipe, son nom, les règles de la ligue.
 
    La modale des équipes vient d'equipes.js (viewClanTeams) : c'est
    déjà là que vivent le renommage et le changement d'équipe.
@@ -46,9 +50,9 @@
         // ici plutôt que de laisser découvrir le refus dans la modale.
         const equipeVerrouillee = etat.commence;
 
-        // Le lien « Repêchage » du pied de carte tombe une fois le repêchage
-        // terminé : la page s'y refermerait d'elle-même (activePool.js). Le
-        // classement, lui, mène aux effectifs qui en sont sortis.
+        // Les deux liens du pied de carte s'excluent : on repêche, ou on
+        // consulte ce qui en est sorti. Chacun mène à une page qui se
+        // refermerait d'elle-même au mauvais moment (activePool.js).
         const repechageOuvert = etat.etat !== 'termine';
 
         return `
@@ -105,22 +109,22 @@
                 </div>
 
                 <footer class="mp-foot">
-                    <a class="mp-link" href="classement.html?${lien}">Classement</a>
-                    ${repechageOuvert ? `<a class="mp-link" href="repechage.html?${lien}">Repêchage</a>` : ''}
+                    ${repechageOuvert
+                        ? `<a class="mp-link" href="repechage.html?${lien}">Repêchage</a>`
+                        : `<a class="mp-link" href="classement.html?${lien}">Classement</a>`}
                     ${echanges ? `<a class="mp-link" href="trade.html?${lien}">Échanges</a>` : ''}
                 </footer>
             </article>`;
     }
 
+    // Sans les deux boutons d'usage : ils sont juste au-dessus, dans les
+    // cartes d'entrée. Les répéter à 200 pixels d'intervalle ferait douter
+    // qu'il s'agisse des mêmes.
     function videHtml() {
         return `
             <div class="fz-empty-pool">
                 <h2>Aucun pool pour l'instant</h2>
-                <p>Créez votre ligue ou rejoignez-en une pour commencer à repêcher.</p>
-                <div class="fz-empty-actions">
-                    <a class="primary" href="creer-pool.html">Créer un pool</a>
-                    <a class="secondary" href="rejoindre-pool.html">Rejoindre un pool</a>
-                </div>
+                <p>Créez votre ligue ou rejoignez-en une ci-dessus pour commencer à repêcher.</p>
             </div>`;
     }
 
@@ -130,7 +134,9 @@
         if (!conteneur) return;
 
         if (squelette) squelette.style.display = 'none';
-        conteneur.style.display = 'block';
+        // Chaîne vide et non 'block' : .mp-list est une colonne flex avec
+        // gouttière, que 'block' écrasait — les fiches se touchaient.
+        conteneur.style.display = '';
 
         const mesPools = FZPool.mine();
         if (mesPools.length === 0) {
@@ -139,7 +145,11 @@
         }
 
         const actif = FZPool.get();
-        conteneur.innerHTML = mesPools.map(pool => carte(pool, pool.name === actif)).join('');
+        // Le titre sépare ce qu'on a déjà des deux cartes d'entrée qui le
+        // précèdent : sans lui, la liste passe pour la suite du menu.
+        conteneur.innerHTML =
+            `<h2 class="mp-list-title">Mes pools<span>${mesPools.length}</span></h2>` +
+            mesPools.map(pool => carte(pool, pool.name === actif)).join('');
 
         conteneur.querySelectorAll('[data-activer]').forEach(bouton => {
             bouton.addEventListener('click', () => FZPool.set(bouton.dataset.activer));
