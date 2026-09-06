@@ -54,7 +54,7 @@ const VIEW_STATES = {
 };
 
 let currentView = VIEW_STATES.POOL_LIST;
-let currentH2HTab = 'matchups'; // 'matchups' | 'standings' | 'history'
+let currentH2HTab = 'matchups'; // 'matchups' | 'standings' | 'calendrier' | 'history'
 let h2hWeekCache = null; // cached full-week matchup data
 let h2hPeriod = 'today'; // 'today' | 'week'
 
@@ -197,6 +197,8 @@ function showPoolStandings(poolName) {
     currentPoolName = poolName;
     currentTeamName = null;
     h2hWeekCache = null; // clear cache when switching pools
+    h2hScheduleCache = null; // idem pour le calendrier de saison
+    h2hSchedTeam = null;
     standingsSortKey = null; // reset to canonical rank order for the new pool
     standingsSortDir = 'desc';
     standingsPeriod = 7; // reset rank-evolution period for the new pool
@@ -233,16 +235,23 @@ function showPoolStandings(poolName) {
     const h2hHistoryView = document.getElementById('h2hHistoryView');
 
     if (poolMode === 'head-to-head') {
-        // Show H2H tabs, default to matchups tab
+        // ?h2h=calendrier ouvre directement le carrousel : c'est la cible du
+        // bouton « Calendrier de la saison » de la bannière d'accueil, qui
+        // annonce le prochain duel et doit pouvoir montrer les suivants.
+        const ongletDemande = new URLSearchParams(window.location.search).get('h2h');
+        const onglet = ['matchups', 'standings', 'calendrier', 'history'].includes(ongletDemande)
+            ? ongletDemande : 'matchups';
+
         h2hTabs.style.display = 'flex';
-        currentH2HTab = 'matchups';
-        switchH2HTab('matchups');
-        loadH2HCurrentWeek(poolName);
+        currentH2HTab = onglet;
+        switchH2HTab(onglet);
+        if (onglet === 'matchups') loadH2HCurrentWeek(poolName);
     } else {
         // Hide H2H elements for cumulative pools
         h2hTabs.style.display = 'none';
         h2hMatchupsView.style.display = 'none';
         h2hHistoryView.style.display = 'none';
+        document.getElementById('h2hScheduleView').style.display = 'none';
 
         // Show skeleton initially
         document.getElementById('standingsSkeleton').style.display = 'flex';
@@ -1379,11 +1388,16 @@ function switchH2HTab(tab) {
     document.getElementById('h2hMatchupsView').style.display = (tab === 'matchups') ? 'block' : 'none';
     document.getElementById('standingsSkeleton').style.display = 'none';
     document.getElementById('standingsList').style.display = (tab === 'standings') ? 'block' : 'none';
+    document.getElementById('h2hScheduleView').style.display = (tab === 'calendrier') ? 'block' : 'none';
     document.getElementById('h2hHistoryView').style.display = (tab === 'history') ? 'block' : 'none';
 
     if (tab === 'standings' && currentPoolName) {
         const poolData = allPoolsData[currentPoolName];
         if (poolData) renderPoolStandings(poolData, currentPoolName);
+    }
+
+    if (tab === 'calendrier' && currentPoolName) {
+        renderH2HSchedule(currentPoolName);
     }
 
     if (tab === 'history' && currentPoolName) {
@@ -1455,6 +1469,235 @@ async function renderH2HMatchupsForPeriod(poolName) {
         console.error('Error loading H2H matchups:', err);
         matchupsList.innerHTML = '<div class="h2h-empty">Erreur lors du chargement</div>';
     }
+}
+
+// ==================== H2H — CALENDRIER DE LA SAISON ====================
+//
+// Le calendrier entier est tiré à la fin du repêchage (lib/h2h.js,
+// generateSeasonSchedule) : contre qui on joue en février se sait dès
+// octobre. /h2h/season-schedule le sert semaine par semaine, résultats
+// compris pour celles déjà finalisées ; le carrousel ci-dessous en fait une
+// bande horizontale, ouverte sur la semaine en cours.
+//
+// Le sélecteur d'équipe part de la vôtre — c'est la question qu'on se pose
+// en arrivant — mais donne accès au parcours de n'importe qui : « qui reste
+// à affronter au meneur ? » est la deuxième question, et elle se lit dans
+// le même carrousel.
+
+let h2hScheduleCache = null;   // { poolName, data }
+let h2hSchedTeam = null;       // équipe affichée dans le carrousel
+
+const H2H_SCHED_STATUS = {
+    completed: { label: 'Terminée', cls: 'is-done' },
+    ongoing:   { label: 'En cours', cls: 'is-live' },
+    upcoming:  { label: 'À venir',  cls: 'is-next' }
+};
+
+/** Nom de l'équipe de l'utilisateur dans ce pool, ou null s'il n'en a pas. */
+function myTeamIn(poolName) {
+    const poolData = allPoolsData[poolName];
+    const username = localStorage.getItem('username');
+    if (!poolData || !username) return null;
+    const entree = Object.entries(poolData.teams || {}).find(
+        ([, equipe]) => Array.isArray(equipe.members) && equipe.members.includes(username)
+    );
+    return entree ? entree[0] : null;
+}
+
+/** « 13 – 19 oct. » : weekEnd est le lundi SUIVANT, on recule d'un jour. */
+function h2hSchedDateRange(weekStart, weekEnd) {
+    const debut = new Date(weekStart);
+    const fin = new Date(weekEnd);
+    fin.setDate(fin.getDate() - 1);
+    const jour = d => d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+    return `${jour(debut)} – ${jour(fin)}`;
+}
+
+async function renderH2HSchedule(poolName) {
+    const track = document.getElementById('h2hSchedTrack');
+    const sub = document.getElementById('h2hSchedSub');
+    if (!track) return;
+
+    track.innerHTML = '<div class="h2h-loading">Chargement du calendrier...</div>';
+    sub.textContent = '';
+
+    try {
+        if (!h2hScheduleCache || h2hScheduleCache.poolName !== poolName) {
+            const res = await fetch(`${BASE_URL}/h2h/season-schedule?poolName=${encodeURIComponent(poolName)}`, { cache: 'no-store' });
+            if (!res.ok) throw new Error('Failed');
+            h2hScheduleCache = { poolName, data: await res.json() };
+        }
+        const data = h2hScheduleCache.data;
+
+        if (data.status === 'awaiting_draft_completion' || !data.weeks || data.weeks.length === 0) {
+            track.innerHTML = '<div class="h2h-empty">Le calendrier sera dressé à la fin du repêchage.</div>';
+            document.getElementById('h2hSchedTeam').innerHTML = '';
+            return;
+        }
+
+        // Les avatars des membres donnent un visage à chaque adversaire ; on
+        // les précharge une fois pour que avatarHtml(), qui est synchrone,
+        // ait de quoi répondre.
+        await prefetchAvatars((data.teams || []).flatMap(t => t.members || []));
+
+        remplirSelecteurEquipes(poolName, data);
+        dessinerCarrousel(data);
+
+    } catch (err) {
+        console.error('Error loading H2H season schedule:', err);
+        track.innerHTML = '<div class="h2h-empty">Erreur lors du chargement du calendrier</div>';
+    }
+}
+
+function remplirSelecteurEquipes(poolName, data) {
+    const select = document.getElementById('h2hSchedTeam');
+    const mienne = myTeamIn(poolName);
+
+    // Seules les équipes qui figurent au calendrier : une équipe sans membre
+    // n'a pas de duel, la proposer ne donnerait qu'une bande vide.
+    const auCalendrier = new Set();
+    data.weeks.forEach(w => w.matchups.forEach(m => { auCalendrier.add(m.team1); auCalendrier.add(m.team2); }));
+
+    const equipes = (data.teams || []).filter(t => auCalendrier.has(t.name));
+    if (!h2hSchedTeam || !auCalendrier.has(h2hSchedTeam)) {
+        h2hSchedTeam = (mienne && auCalendrier.has(mienne)) ? mienne : (equipes[0] && equipes[0].name) || null;
+    }
+
+    select.innerHTML = equipes.map(t => {
+        const nom = getDisplayName(t.name, t.members);
+        const suffixe = t.name === mienne ? ' (vous)' : '';
+        return `<option value="${escapeAttr(t.name)}"${t.name === h2hSchedTeam ? ' selected' : ''}>${escapeHtmlText(nom + suffixe)}</option>`;
+    }).join('');
+}
+
+function dessinerCarrousel(data) {
+    const track = document.getElementById('h2hSchedTrack');
+    const sub = document.getElementById('h2hSchedSub');
+    const equipe = h2hSchedTeam;
+    const parNom = new Map((data.teams || []).map(t => [t.name, t]));
+
+    let victoires = 0, defaites = 0, nulles = 0, restants = 0;
+
+    const cartes = data.weeks.map(week => {
+        const duel = week.matchups.find(m => m.team1 === equipe || m.team2 === equipe);
+        if (!duel) return '';
+
+        const premier = duel.team1 === equipe;
+        const adversaire = premier ? duel.team2 : duel.team1;
+        const mesPts = premier ? duel.team1Points : duel.team2Points;
+        const sesPts = premier ? duel.team2Points : duel.team1Points;
+
+        const infoAdv = parNom.get(adversaire);
+        const nomAdv = getDisplayName(adversaire, infoAdv && infoAdv.members);
+        const membre = (infoAdv && infoAdv.members && infoAdv.members[0]) || '';
+
+        const st = H2H_SCHED_STATUS[week.status] || H2H_SCHED_STATUS.upcoming;
+        const estCourante = week.weekNumber === data.currentWeek;
+        const joue = week.status === 'completed';
+        const enCours = week.status === 'ongoing';
+
+        let issue = '';
+        if (joue) {
+            if (duel.winner === 'tie') { nulles++; issue = 'tie'; }
+            else if (duel.winner === equipe) { victoires++; issue = 'win'; }
+            else if (duel.winner) { defaites++; issue = 'loss'; }
+            else {
+                // Semaine passée sans vainqueur inscrit : le pointage tranche.
+                if (mesPts > sesPts) { victoires++; issue = 'win'; }
+                else if (sesPts > mesPts) { defaites++; issue = 'loss'; }
+                else { nulles++; issue = 'tie'; }
+            }
+        } else {
+            restants++;
+        }
+
+        const issueLabel = { win: 'V', loss: 'D', tie: 'N' }[issue] || '';
+
+        // Un pointage ne s'affiche que sur une semaine réellement jouée :
+        // « 0.0 – 0.0 » en février se lirait comme un match nul.
+        const pointage = (joue || enCours)
+            ? `<div class="h2h-sched-score${issue ? ' r-' + issue : ''}">
+                   <span class="h2h-sched-pts mine">${mesPts.toFixed(1)}</span>
+                   <span class="h2h-sched-dash">–</span>
+                   <span class="h2h-sched-pts">${sesPts.toFixed(1)}</span>
+               </div>`
+            : `<div class="h2h-sched-score is-pending"><span class="h2h-sched-vs">VS</span></div>`;
+
+        return `
+            <article class="h2h-sched-card ${st.cls}${estCourante ? ' is-current' : ''}" data-week="${week.weekNumber}">
+                <header class="h2h-sched-card-top">
+                    <span class="h2h-sched-week">Semaine ${week.weekNumber}</span>
+                    <span class="h2h-sched-badge ${st.cls}">${st.label}</span>
+                </header>
+                <div class="h2h-sched-dates">${h2hSchedDateRange(week.weekStart, week.weekEnd)}</div>
+                <div class="h2h-sched-opp">
+                    ${avatarHtml(membre, 34)}
+                    <div class="h2h-sched-opp-txt">
+                        <span class="h2h-sched-opp-lbl">contre</span>
+                        <span class="h2h-sched-opp-name" title="${escapeAttr(nomAdv)}">${escapeHtmlText(nomAdv)}</span>
+                    </div>
+                </div>
+                ${pointage}
+                ${issueLabel ? `<div class="h2h-sched-result r-${issue}">${issueLabel}</div>` : ''}
+            </article>`;
+    }).filter(Boolean);
+
+    if (cartes.length === 0) {
+        track.innerHTML = '<div class="h2h-empty">Cette équipe n&rsquo;a aucun duel au calendrier.</div>';
+        sub.textContent = '';
+        return;
+    }
+
+    track.innerHTML = cartes.join('');
+
+    const infoMienne = parNom.get(equipe);
+    const nomMien = getDisplayName(equipe, infoMienne && infoMienne.members);
+    const joues = victoires + defaites + nulles;
+    sub.textContent = `${nomMien} · ${cartes.length} duels au calendrier · `
+        + `${victoires}V-${defaites}D-${nulles}N sur ${joues} joué${joues > 1 ? 's' : ''} · `
+        + `${restants} à venir`;
+
+    centrerSurSemaineCourante(track);
+}
+
+/**
+ * Ouvre le carrousel sur la semaine en cours plutôt qu'au mois d'octobre.
+ * scrollLeft plutôt que scrollIntoView : celui-ci fait aussi défiler la page
+ * verticalement, et la bande sauterait sous les yeux à chaque changement
+ * d'équipe.
+ */
+function centrerSurSemaineCourante(track) {
+    const carte = track.querySelector('.h2h-sched-card.is-current')
+        || track.querySelector('.h2h-sched-card.is-live')
+        || track.querySelector('.h2h-sched-card.is-next');
+    if (!carte) return;
+    track.scrollLeft = Math.max(0, carte.offsetLeft - (track.clientWidth - carte.clientWidth) / 2);
+}
+
+function onH2HScheduleTeamChange(teamName) {
+    h2hSchedTeam = teamName;
+    if (h2hScheduleCache) dessinerCarrousel(h2hScheduleCache.data);
+}
+
+/** Défile d'environ une pleine largeur de cartes, bornes comprises. */
+function scrollH2HSchedule(sens) {
+    const track = document.getElementById('h2hSchedTrack');
+    if (!track) return;
+    const carte = track.querySelector('.h2h-sched-card');
+    const largeur = carte ? carte.clientWidth + 12 : 0;
+    const pas = largeur
+        ? largeur * Math.max(1, Math.floor(track.clientWidth / largeur))
+        : track.clientWidth;
+    track.scrollBy({ left: sens * pas, behavior: 'smooth' });
+}
+
+/* Échappement — les noms d'équipe sont saisis par les utilisateurs et
+   atterrissent aussi bien dans du texte que dans des attributs. */
+function escapeHtmlText(s) {
+    return String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+}
+function escapeAttr(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 function renderH2HHistory(poolName) {

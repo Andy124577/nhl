@@ -3,7 +3,9 @@
 const { test, describe, mock, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { generateWeeklyMatchups, ensureStandingsEntry, mondayOfWeek } = require('../../lib/h2h.js');
+const { generateWeeklyMatchups, generateSeasonSchedule, seasonWeekCount,
+    ensureStandingsEntry, mondayOfWeek,
+    DEFAULT_SEASON_WEEKS, MAX_SEASON_WEEKS } = require('../../lib/h2h.js');
 const { makeMatchup, makeTeamList, makeStanding } = require('../fixtures/pool.js');
 
 afterEach(() => { mock.restoreAll(); });
@@ -214,5 +216,166 @@ describe('mondayOfWeek', () => {
         } finally {
             if (avant === undefined) delete process.env.TZ; else process.env.TZ = avant;
         }
+    });
+});
+
+describe('seasonWeekCount', () => {
+    test('compte les semaines entre deux bornes', () => {
+        // 2025-10-06 → 2026-04-16 : 192 jours, soit 27.43 semaines.
+        assert.equal(seasonWeekCount('2025-10-06', '2026-04-16'), 28);
+    });
+
+    test('arrondit au supérieur : une semaine entamée reste une semaine', () => {
+        // Huit jours = une semaine pleine plus un jour. Arrondir vers le bas
+        // laisserait la dernière équipe sans adversaire ce jour-là.
+        assert.equal(seasonWeekCount('2025-10-06', '2025-10-14'), 2);
+    });
+
+    test('une saison de sept jours pile tient en une semaine', () => {
+        assert.equal(seasonWeekCount('2025-10-06', '2025-10-13'), 1);
+    });
+
+    test('sans dates exploitables, on retombe sur la valeur par défaut', () => {
+        assert.equal(seasonWeekCount(null, null), DEFAULT_SEASON_WEEKS);
+        assert.equal(seasonWeekCount('2025-10-06', null), DEFAULT_SEASON_WEEKS);
+        assert.equal(seasonWeekCount('pas-une-date', '2026-04-16'), DEFAULT_SEASON_WEEKS);
+    });
+
+    test('une fin antérieure au début ne donne jamais zéro semaine', () => {
+        // Zéro semaine, ce serait un pool sans un seul duel. Une vaut mieux.
+        assert.equal(seasonWeekCount('2026-04-16', '2025-10-06'), 1);
+    });
+
+    test('une date aberrante est bornée par MAX_SEASON_WEEKS', () => {
+        assert.equal(seasonWeekCount('2025-10-06', '2099-04-16'), MAX_SEASON_WEEKS);
+    });
+
+    test('accepte des Date autant que des chaînes', () => {
+        assert.equal(
+            seasonWeekCount(new Date('2025-10-06'), new Date('2026-04-16')),
+            seasonWeekCount('2025-10-06', '2026-04-16')
+        );
+    });
+});
+
+describe('generateSeasonSchedule', () => {
+    test('un nombre impair d\'équipes actives ne produit aucun calendrier', () => {
+        muteConsole();
+
+        assert.deepEqual(generateSeasonSchedule(makeTeamList(['A', 'B', 'C']), 4), []);
+    });
+
+    test('aucune équipe active ne produit aucun calendrier', () => {
+        muteConsole();
+
+        assert.deepEqual(generateSeasonSchedule(makeTeamList(['A', 'B'], []), 4), []);
+    });
+
+    test('rend exactement le nombre de semaines demandé', () => {
+        const calendrier = generateSeasonSchedule(makeTeamList(['A', 'B', 'C', 'D']), 9);
+
+        assert.equal(calendrier.length, 9);
+        calendrier.forEach((semaine, i) => {
+            assert.equal(semaine.length, 2, `semaine ${i + 1}`);
+            semaine.forEach(duel => assert.equal(duel.weekNumber, i + 1));
+        });
+    });
+
+    test('chaque équipe joue une fois et une seule par semaine', () => {
+        const noms = ['A', 'B', 'C', 'D', 'E', 'F'];
+        const calendrier = generateSeasonSchedule(makeTeamList(noms), 12);
+
+        calendrier.forEach((semaine, i) => {
+            const engagees = semaine.flatMap(m => [m.team1, m.team2]);
+            assert.equal(new Set(engagees).size, noms.length,
+                `semaine ${i + 1} : une équipe joue deux fois ou pas du tout`);
+        });
+    });
+
+    test('un cycle complet fait s\'affronter toutes les paires, une fois chacune', () => {
+        // C'est ce que le tirage semaine par semaine ne garantissait pas : il
+        // évitait les redites récentes sans jamais promettre un tour complet.
+        const noms = ['A', 'B', 'C', 'D', 'E', 'F'];
+        const calendrier = generateSeasonSchedule(makeTeamList(noms), noms.length - 1);
+
+        const paires = calendrier.flat().map(m => [m.team1, m.team2].sort().join('|'));
+
+        assert.equal(paires.length, 15);                 // C(6,2)
+        assert.equal(new Set(paires).size, 15);          // toutes distinctes
+    });
+
+    test('deux équipes s\'affrontent toutes les semaines', () => {
+        const calendrier = generateSeasonSchedule(makeTeamList(['A', 'B']), 3);
+
+        assert.equal(calendrier.length, 3);
+        calendrier.forEach(semaine => {
+            assert.equal(semaine.length, 1);
+            assert.deepEqual([semaine[0].team1, semaine[0].team2].sort(), ['A', 'B']);
+        });
+    });
+
+    test('le second cycle inverse les côtés du « vs »', () => {
+        // Sans cela, la même équipe resterait à gauche de toutes les cartes de
+        // duel de la saison.
+        const noms = ['A', 'B', 'C', 'D'];
+        const calendrier = generateSeasonSchedule(makeTeamList(noms), 2 * (noms.length - 1));
+
+        const cle = m => `${m.team1}|${m.team2}`;
+        const cycle1 = calendrier.slice(0, 3).flat().map(cle);
+        const cycle2 = calendrier.slice(3, 6).flat().map(cle);
+
+        cycle2.forEach(duel => assert.ok(!cycle1.includes(duel),
+            `${duel} apparaît à l'identique dans les deux cycles`));
+
+        // Mêmes affiches, côtés échangés.
+        const nonOrdonnee = liste => liste.map(d => d.split('|').sort().join('|')).sort();
+        assert.deepEqual(nonOrdonnee(cycle2), nonOrdonnee(cycle1));
+    });
+
+    test('les duels naissent vierges : aucun point, aucun vainqueur', () => {
+        const calendrier = generateSeasonSchedule(makeTeamList(['A', 'B', 'C', 'D']), 2);
+
+        calendrier.flat().forEach(duel => {
+            assert.equal(duel.team1Points, 0);
+            assert.equal(duel.team2Points, 0);
+            assert.equal(duel.winner, null);
+        });
+    });
+
+    test('les équipes sans membre sont écartées du calendrier', () => {
+        const equipes = makeTeamList(['A', 'B', 'C', 'D'], ['A', 'B']);
+        const calendrier = generateSeasonSchedule(equipes, 2);
+
+        const engagees = new Set(calendrier.flat().flatMap(m => [m.team1, m.team2]));
+        assert.deepEqual([...engagees].sort(), ['A', 'B']);
+    });
+
+    test('sans nombre de semaines, la saison prend la longueur par défaut', () => {
+        assert.equal(generateSeasonSchedule(makeTeamList(['A', 'B'])).length, DEFAULT_SEASON_WEEKS);
+    });
+
+    test('un nombre de semaines absurde est ramené entre 1 et MAX_SEASON_WEEKS', () => {
+        const equipes = makeTeamList(['A', 'B']);
+
+        assert.equal(generateSeasonSchedule(equipes, 0).length, DEFAULT_SEASON_WEEKS);  // 0 → défaut
+        assert.equal(generateSeasonSchedule(equipes, -5).length, 1);
+        assert.equal(generateSeasonSchedule(equipes, 9999).length, MAX_SEASON_WEEKS);
+    });
+
+    test('l\'ordre de départ est brassé : deux pools identiques divergent', () => {
+        // Le brassage passe par Math.random ; deux graines différentes doivent
+        // produire deux calendriers différents, sinon tous les pools d'une même
+        // ligue joueraient exactement le même horaire.
+        const noms = ['A', 'B', 'C', 'D', 'E', 'F'];
+        const cle = c => c.flat().map(m => `${m.team1}|${m.team2}`).join(',');
+
+        mock.method(Math, 'random', tirageSeme(1));
+        const premier = cle(generateSeasonSchedule(makeTeamList(noms), 5));
+        mock.restoreAll();
+
+        mock.method(Math, 'random', tirageSeme(77));
+        const second = cle(generateSeasonSchedule(makeTeamList(noms), 5));
+
+        assert.notEqual(premier, second);
     });
 });

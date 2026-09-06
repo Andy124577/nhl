@@ -79,6 +79,7 @@
             <div id="h2hTabs" class="h2h-tabs" style="display: none;">
                 <button class="h2h-tab active" data-tab="matchups" onclick="switchH2HTab('matchups')">Duel en cours</button>
                 <button class="h2h-tab" data-tab="standings" onclick="switchH2HTab('standings')">Classement</button>
+                <button class="h2h-tab" data-tab="calendrier" onclick="switchH2HTab('calendrier')">Calendrier</button>
                 <button class="h2h-tab" data-tab="history" onclick="switchH2HTab('history')">Historique</button>
             </div>
 
@@ -132,6 +133,29 @@
                  accueil-dash.js — since that's the only place it lived. -->
             <div id="recentFormLeaderboard" class="recent-form-leaderboard" style="display: none;">
                 <!-- Injected by renderRecentFormLeaderboard() -->
+            </div>
+
+            <!-- H2H: Calendrier de la saison — carrousel de toutes les
+                 semaines de duel, du premier lundi au dernier, pour l'équipe
+                 choisie. Rempli par renderH2HSchedule(). -->
+            <div id="h2hScheduleView" class="h2h-section" style="display: none;">
+                <div class="h2h-sched-head">
+                    <div class="h2h-sched-intro">
+                        <div class="h2h-sched-title" id="h2hSchedTitle">Calendrier de la saison</div>
+                        <div class="h2h-sched-sub" id="h2hSchedSub"></div>
+                    </div>
+                    <label class="h2h-sched-picker">
+                        <span>Équipe</span>
+                        <select id="h2hSchedTeam" onchange="onH2HScheduleTeamChange(this.value)"></select>
+                    </label>
+                </div>
+                <div class="h2h-sched-carousel">
+                    <button type="button" class="h2h-sched-arrow prev" id="h2hSchedPrev"
+                            onclick="scrollH2HSchedule(-1)" aria-label="Semaines précédentes">&#8249;</button>
+                    <div class="h2h-sched-track" id="h2hSchedTrack"></div>
+                    <button type="button" class="h2h-sched-arrow next" id="h2hSchedNext"
+                            onclick="scrollH2HSchedule(1)" aria-label="Semaines suivantes">&#8250;</button>
+                </div>
             </div>
 
             <!-- H2H: History -->

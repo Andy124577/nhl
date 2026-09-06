@@ -21,7 +21,8 @@ const { v4: uuidv4 } = require("uuid");
 // unitairement (voir UNIT_TESTS.md). Les corps de fonctions sont inchangés.
 const { FANTASY_SCORING, goaliePoolPoints, clubPoolPoints, computeTeamSeasonScores,
     getTeamWeeklyPoints, skaterFantasyPointsTonight, goalieFantasyPointsTonight } = require("./lib/scoring.js");
-const { generateWeeklyMatchups, ensureStandingsEntry, mondayOfWeek } = require("./lib/h2h.js");
+const { generateWeeklyMatchups, generateSeasonSchedule, seasonWeekCount,
+    ensureStandingsEntry, mondayOfWeek } = require("./lib/h2h.js");
 const { generateSnakeOrder, checkIfDraftComplete } = require("./lib/draft.js");
 const { teamHasPlayer, removeFromTeam, addToTeam, getPositionLabel } = require("./lib/trades.js");
 const { NHL_CLUB_FULLNAME, diffRosterSnapshots, getTeamAbbreviationFromName } = require("./lib/roster.js");
@@ -624,17 +625,14 @@ app.post("/pick-player", async (req, res) => {
     if (checkIfDraftComplete(clan)) {
         io.emit("draftComplete", { clanName });
 
-        // If Head-to-Head mode, generate first week's matchups
+        // If Head-to-Head mode, build the whole season's matchup calendar
         if (clan.poolMode === 'head-to-head' && clan.h2hData) {
-            console.log("🏒 Generating first week matchups for H2H pool:", clanName);
+            console.log("🏒 Building season schedule for H2H pool:", clanName);
 
-            // Get active teams (must include members so generateWeeklyMatchups can filter correctly)
+            // Get active teams (must include members so the generators can filter correctly)
             const activeTeams = Object.entries(clan.teams)
                 .filter(([_, teamData]) => teamData.members && teamData.members.length > 0)
                 .map(([teamName, teamData]) => ({ name: teamName, members: teamData.members }));
-
-            // Generate matchups for week 1 (no previous matchups)
-            const weekOneMatchups = generateWeeklyMatchups(activeTeams, []);
 
             // Set week start to the current week's Monday 00:00:00
             const now = new Date();
@@ -644,10 +642,22 @@ app.post("/pick-player", async (req, res) => {
             currentMonday.setDate(now.getDate() + daysToMonday);
             currentMonday.setHours(0, 0, 0, 0);
 
+            // Tout le calendrier d'un coup, et non plus la seule semaine 1.
+            // Sans cela personne ne peut savoir qui il affronte la semaine
+            // prochaine avant que la semaine en cours soit finalisée — ce que
+            // la bannière d'accueil et le carrousel du classement annoncent
+            // maintenant dès la fin du repêchage.
+            const fenetreSaison = await getSeasonWindow();
+            const finSaison = fenetreSaison && fenetreSaison.regularSeasonEndDate;
+            const nbSemaines = seasonWeekCount(currentMonday, finSaison);
+            const calendrier = generateSeasonSchedule(activeTeams, nbSemaines);
+
             clan.h2hData.seasonStart = currentMonday.toISOString(); // Permanent — never changes
+            clan.h2hData.seasonEnd = finSaison || null;
+            clan.h2hData.seasonWeeks = calendrier.length;
             clan.h2hData.weekStart = currentMonday.toISOString();
             clan.h2hData.currentWeek = 1;
-            clan.h2hData.matchups = [weekOneMatchups.map(m => ({ ...m, weekNumber: 1 }))];
+            clan.h2hData.matchups = calendrier;
 
             // Initialize standings for all active teams
             activeTeams.forEach(team => {
@@ -663,8 +673,8 @@ app.post("/pick-player", async (req, res) => {
             // Save updated data
             await saveDraftData(draftData);
 
-            console.log("✅ Week 1 matchups generated:", weekOneMatchups);
-            console.log("📅 Season starts:", currentMonday.toISOString());
+            console.log(`✅ Season schedule built: ${calendrier.length} weeks, ${(calendrier[0] || []).length} duels per week`);
+            console.log("📅 Season starts:", currentMonday.toISOString(), "· ends:", finSaison || 'inconnu');
         }
     }
 
@@ -5412,6 +5422,32 @@ app.get('/pool-hall-of-fame/:poolName', async (req, res) => {
 });
 
 // ✅ H2H: Finalize current week and advance to next week
+/**
+ * Garantit que la semaine `numero` a des duels, et les renvoie.
+ *
+ * Depuis que le calendrier entier est tiré à la fin du repêchage, la semaine
+ * suivante existe déjà quand la finalisation arrive : elle n'a plus à
+ * l'inventer, et ne DOIT plus le faire — regénérer écraserait l'adversaire
+ * annoncé des semaines à l'avance par la bannière d'accueil et le carrousel
+ * du classement. Le tirage à la semaine reste le repli, pour les pools
+ * créés avant le calendrier complet et pour une saison qui déborderait la
+ * dernière semaine prévue.
+ */
+function ensureWeekMatchups(clan, numero) {
+    const existant = clan.h2hData.matchups[numero - 1];
+    if (Array.isArray(existant) && existant.length > 0) return existant;
+
+    const activeTeams = Object.entries(clan.teams)
+        .filter(([_, teamData]) => teamData.members && teamData.members.length > 0)
+        .map(([teamName, teamData]) => ({ name: teamName, members: teamData.members }));
+
+    const duels = generateWeeklyMatchups(activeTeams, clan.h2hData.matchups)
+        .map(m => ({ ...m, weekNumber: numero }));
+
+    clan.h2hData.matchups[numero - 1] = duels;
+    return duels;
+}
+
 app.post('/h2h/finalize-week', async (req, res) => {
     try {
         const { poolName } = req.body;
@@ -5542,17 +5578,9 @@ app.post('/h2h/finalize-week', async (req, res) => {
         // Advance to next week
         clan.h2hData.currentWeek++;
 
-        // Generate new matchups for next week
-        const activeTeams = Object.entries(clan.teams)
-            .filter(([_, teamData]) => teamData.members && teamData.members.length > 0)
-            .map(([teamName, teamData]) => ({ name: teamName, members: teamData.members }));
-
-        // Pass all previous matchups for better rotation
-        const nextWeekMatchups = generateWeeklyMatchups(activeTeams, clan.h2hData.matchups);
-
-        clan.h2hData.matchups.push(
-            nextWeekMatchups.map(m => ({ ...m, weekNumber: clan.h2hData.currentWeek }))
-        );
+        // Déjà au calendrier de saison dans la quasi-totalité des cas :
+        // ensureWeekMatchups() ne tire une semaine que si elle manque.
+        ensureWeekMatchups(clan, clan.h2hData.currentWeek);
 
         // Update week start date (add 7 days)
         clan.h2hData.weekStart = weekEnd.toISOString();
@@ -5807,6 +5835,149 @@ app.get('/h2h/today-scores', async (req, res) => {
     }
 });
 
+/* ✅ H2H : le calendrier de TOUTE la saison — chaque semaine, chaque duel.
+ *
+ * /h2h/current-week-scores ne connaît que la semaine en cours ; celle-ci
+ * répond à « contre qui vais-je jouer, et quand ? » du premier lundi au
+ * dernier. C'est la source du carrousel du classement et du décompte de la
+ * bannière d'accueil.
+ *
+ * Complète au passage les pools tirés avant que le calendrier complet
+ * existe : leurs semaines à venir sont générées ici, une fois, puis
+ * enregistrées. Les semaines déjà jouées ne sont jamais retouchées — un
+ * résultat inscrit est un résultat inscrit.
+ */
+app.get('/h2h/season-schedule', async (req, res) => {
+    try {
+        // Toutes les équipes, toujours : le client garde la réponse et
+        // rebascule d'une équipe à l'autre sans repasser par le réseau. Un
+        // filtre ?team= ici ne ferait qu'ajouter un aller-retour par clic.
+        const { poolName } = req.query;
+        if (!poolName) return res.status(400).json({ message: "poolName required" });
+
+        const draftData = await loadDraftData();
+        const clan = draftData[poolName];
+        if (!clan || clan.poolMode !== 'head-to-head' || !clan.h2hData) {
+            return res.status(400).json({ message: "Pool not found or not H2H mode" });
+        }
+
+        const h2h = clan.h2hData;
+        const seasonStartISO = h2h.seasonStart || h2h.weekStart || null;
+
+        if (!seasonStartISO) {
+            // Le repêchage n'est pas terminé : il n'y a pas encore de saison.
+            return res.json({
+                poolName, currentWeek: h2h.currentWeek || 1,
+                seasonStart: null, seasonEnd: null,
+                status: 'awaiting_draft_completion',
+                weeks: [], teams: []
+            });
+        }
+
+        const seasonStart = new Date(seasonStartISO);
+
+        // Fin de saison : celle figée au repêchage fait foi. Le calendrier de
+        // la LNH ne sert qu'aux pools antérieurs, qui n'en ont pas.
+        let seasonEnd = h2h.seasonEnd || null;
+        if (!seasonEnd) {
+            const fenetreSaison = await getSeasonWindow();
+            seasonEnd = (fenetreSaison && fenetreSaison.regularSeasonEndDate) || null;
+        }
+
+        const totalWeeks = h2h.seasonWeeks || seasonWeekCount(seasonStart, seasonEnd);
+
+        // Rattrapage des pools d'avant le calendrier complet : on ajoute les
+        // semaines manquantes SANS toucher à celles déjà au tableau.
+        const dejaPrevues = Array.isArray(h2h.matchups) ? h2h.matchups.length : 0;
+        if (dejaPrevues < totalWeeks) {
+            const activeTeams = Object.entries(clan.teams)
+                .filter(([_, td]) => td.members && td.members.length > 0)
+                .map(([teamName, td]) => ({ name: teamName, members: td.members }));
+
+            const complement = generateSeasonSchedule(activeTeams, totalWeeks - dejaPrevues);
+            if (complement.length > 0) {
+                if (!Array.isArray(h2h.matchups)) h2h.matchups = [];
+                complement.forEach((duels, i) => {
+                    h2h.matchups.push(duels.map(m => ({ ...m, weekNumber: dejaPrevues + i + 1 })));
+                });
+                h2h.seasonWeeks = h2h.matchups.length;
+                h2h.seasonEnd = h2h.seasonEnd || seasonEnd;
+                await saveDraftData(draftData);
+                console.log(`📅 Calendrier de ${poolName} complété : +${complement.length} semaine(s), ${h2h.matchups.length} au total`);
+            }
+        }
+
+        // Les résultats finalisés font foi sur les duels vierges du calendrier.
+        const parNumero = new Map();
+        (h2h.matchupHistory || []).forEach(w => { if (w && w.weekNumber) parNumero.set(w.weekNumber, w); });
+
+        const now = new Date();
+        const semaineEnCours = h2h.currentWeek || 1;
+
+        const weeks = (h2h.matchups || []).map((duels, index) => {
+            const numero = index + 1;
+            const debut = new Date(seasonStart);
+            debut.setDate(debut.getDate() + index * 7);
+            const fin = new Date(debut);
+            fin.setDate(fin.getDate() + 7);
+
+            const archive = parNumero.get(numero);
+            const source = (archive && Array.isArray(archive.matchups) && archive.matchups.length)
+                ? archive.matchups
+                : (duels || []);
+
+            // « Terminée » veut dire finalisée, pas seulement passée : une
+            // semaine échue mais non pointée reste en cours tant que le
+            // rattrapage n'a pas écrit ses résultats.
+            const status = archive ? 'completed'
+                : numero < semaineEnCours ? 'completed'
+                : (now >= debut && now < fin) ? 'ongoing'
+                : now < debut ? 'upcoming' : 'ongoing';
+
+            return {
+                weekNumber: numero,
+                weekStart: debut.toISOString(),
+                weekEnd: fin.toISOString(),
+                status,
+                matchups: source.map(m => ({
+                    team1: m.team1,
+                    team2: m.team2,
+                    team1Points: Math.round((m.team1Points || 0) * 10) / 10,
+                    team2Points: Math.round((m.team2Points || 0) * 10) / 10,
+                    winner: m.winner || null
+                }))
+            };
+        });
+
+        // Membres et fiche de chaque équipe : le carrousel affiche des noms
+        // lisibles et des avatars, pas des clés « Équipe 3 ». Les cases
+        // restées vides d'un pool jamais rempli n'ont rien à y faire — elles
+        // n'ont pas de duel et gonfleraient le sélecteur d'équipe pour rien.
+        const teams = Object.entries(clan.teams || {})
+            .filter(([, td]) => td && Array.isArray(td.members) && td.members.length > 0)
+            .map(([name, td]) => ({
+                name,
+                members: td.members,
+                record: (h2h.standings && h2h.standings[name]) || null
+            }));
+
+        res.json({
+            poolName,
+            currentWeek: semaineEnCours,
+            seasonStart: seasonStart.toISOString(),
+            seasonEnd,
+            totalWeeks: weeks.length,
+            status: 'ok',
+            weeks,
+            teams
+        });
+
+    } catch (error) {
+        console.error("❌ Error fetching H2H season schedule:", error);
+        res.status(500).json({ message: "Error fetching season schedule" });
+    }
+});
+
 console.log("✅ Trade system initialized");
 
 // ✅ Auto-check and finalize completed H2H weeks
@@ -5922,16 +6093,11 @@ async function checkAndFinalizeCompletedWeeks() {
                     completedDate: now.toISOString()
                 });
 
-                // Generate new matchups before advancing the counter
-                const activeTeams = Object.entries(clan.teams)
-                    .filter(([_, teamData]) => teamData.members && teamData.members.length > 0)
-                    .map(([teamName, teamData]) => ({ name: teamName, members: teamData.members }));
-                const nextWeekMatchups = generateWeeklyMatchups(activeTeams, clan.h2hData.matchups);
-
+                // La semaine suivante vient du calendrier de saison ; le
+                // tirage ne sert que si elle manque (pool ancien, saison
+                // plus longue que prévu).
                 clan.h2hData.currentWeek++;
-                clan.h2hData.matchups.push(
-                    nextWeekMatchups.map(m => ({ ...m, weekNumber: clan.h2hData.currentWeek }))
-                );
+                ensureWeekMatchups(clan, clan.h2hData.currentWeek);
 
                 // Roll the window forward by exactly 7 days
                 weekStart = new Date(weekEnd);
@@ -6091,6 +6257,21 @@ if (process.env.NODE_ENV !== 'production') {
         if (currentWeek !== undefined) clan.h2hData.currentWeek = currentWeek;
         await saveDraftData(draftData);
         res.json({ ok: true, weekStart: clan.h2hData.weekStart, seasonStart: clan.h2hData.seasonStart, currentWeek: clan.h2hData.currentWeek });
+    });
+
+    // Tronque le calendrier de saison — simule un pool tiré avant que le
+    // calendrier complet existe, dont /h2h/season-schedule doit combler les
+    // semaines manquantes sans toucher à celles déjà jouées.
+    app.post('/test/h2h-truncate-schedule', async (req, res) => {
+        const { poolName, keep } = req.body;
+        const draftData = await loadDraftData();
+        const clan = draftData[poolName];
+        if (!clan || !clan.h2hData)
+            return res.status(404).json({ message: 'Pool not found or not H2H' });
+        clan.h2hData.matchups = clan.h2hData.matchups.slice(0, Math.max(1, Number(keep) || 1));
+        delete clan.h2hData.seasonWeeks;
+        await saveDraftData(draftData);
+        res.json({ ok: true, weeks: clan.h2hData.matchups.length });
     });
 
     // Trigger the auto-finalize check and return new state for all H2H pools

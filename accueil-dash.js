@@ -929,6 +929,77 @@ function fzdFormatElapsed(ms) {
     return m > 0 ? `${m} min` : `${s} s`;
 }
 
+/**
+ * Prochain duel d'un pool tête-à-tête : contre qui, et à partir de quand.
+ *
+ * Le calendrier entier est tiré à la fin du repêchage (lib/h2h.js,
+ * generateSeasonSchedule) et voyage avec le pool dans /draft — on lit donc
+ * ici, sans requête, l'adversaire de n'importe quelle semaine. La semaine N
+ * commence `seasonStart + (N-1) × 7 jours` : la même règle que le serveur,
+ * pour que les deux ne racontent jamais deux histoires différentes.
+ *
+ * Renvoie `{ enCours, suivant }` — l'un des deux peut être null (avant le
+ * premier duel, ou après le dernier) — ou null si le pool n'est pas en
+ * tête-à-tête, si le repêchage n'a rien produit, ou si l'équipe ne figure
+ * dans aucune semaine.
+ */
+function fzdProchainDuel(poolData, teamName) {
+    const h2h = poolData && poolData.h2hData;
+    if (!poolData || poolData.poolMode !== 'head-to-head' || !h2h || !teamName) return null;
+
+    const debutSaison = h2h.seasonStart || h2h.weekStart;
+    const semaines = Array.isArray(h2h.matchups) ? h2h.matchups : [];
+    if (!debutSaison || semaines.length === 0) return null;
+
+    const depart = new Date(debutSaison);
+    if (Number.isNaN(depart.getTime())) return null;
+
+    const maintenant = Date.now();
+    let enCours = null;
+    let suivant = null;
+
+    for (let i = 0; i < semaines.length; i++) {
+        const duel = (semaines[i] || []).find(m => m && (m.team1 === teamName || m.team2 === teamName));
+        if (!duel) continue;   // équipe absente de cette semaine-là
+
+        const debut = new Date(depart);
+        debut.setDate(debut.getDate() + i * 7);
+        const fin = new Date(debut);
+        fin.setDate(fin.getDate() + 7);
+
+        const contre = duel.team1 === teamName ? duel.team2 : duel.team1;
+
+        if (maintenant >= debut.getTime() && maintenant < fin.getTime()) {
+            enCours = { semaine: i + 1, adversaire: contre, debut, fin };
+        } else if (maintenant < debut.getTime()) {
+            suivant = { semaine: i + 1, adversaire: contre, debut, fin };
+            break;   // le calendrier est chronologique : le premier à venir suffit
+        }
+    }
+
+    return (enCours || suivant) ? { enCours, suivant } : null;
+}
+
+/**
+ * Décompte de la bannière vers un instant précis. Passe des jours/heures aux
+ * heures/minutes sous la barre des 24 h : « 0 jour, 03 heures » ne dit rien
+ * de plus que « 03 heures, 12 minutes », et beaucoup moins bien.
+ */
+function fzdDuelCountdownHTML(cible) {
+    const diff = Math.max(0, new Date(cible).getTime() - Date.now());
+    const j = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+
+    const stat = (lbl, val) =>
+        `<div class="fzd-hero-stat"><span class="fzd-hero-stat-lbl">${lbl}</span><span class="fzd-hero-stat-val">${val}</span></div>`;
+    const sep = '<div class="fzd-hero-stat-sep" aria-hidden="true"></div>';
+
+    return j > 0
+        ? stat('Jours', j) + sep + stat('Heures', String(h).padStart(2, '0'))
+        : stat('Heures', String(h).padStart(2, '0')) + sep + stat('Minutes', String(m).padStart(2, '0'));
+}
+
 function fzdHeroState(tonight) {
     const poolData = FZPool.data();
     const team = FZPool.team();
@@ -951,7 +1022,13 @@ function fzdHeroState(tonight) {
         return { mode: 'draft', poolData, team, activeName, pick, myTurn: ordre[pick] === team.name };
     }
 
-    if (isPreseason) {
+    // Pool tête-à-tête, repêchage bouclé : la prochaine échéance n'est plus
+    // l'ouverture de la saison mais le duel de la semaine. Il passe donc
+    // devant le décompte d'avant-saison — mais derrière « en direct » plus
+    // bas : des joueurs sur la glace maintenant priment sur un duel à venir.
+    const duel = draftDone ? fzdProchainDuel(poolData, team.name) : null;
+
+    if (isPreseason && !duel) {
         const campStart = calData?.preSeasonStartDate;
         const beforeCamp = !!campStart && today < campStart;
         // `draftDone` ne change pas le décompte, seulement ce vers quoi la
@@ -972,6 +1049,10 @@ function fzdHeroState(tonight) {
     if (liveCount > 0) {
         const totalPts = myLines.reduce((s, p) => s + (p.fantasyPointsTonight || 0), 0);
         return { mode: 'live', liveCount, totalPts };
+    }
+
+    if (duel) {
+        return { mode: 'h2hduel', duel, activeName, teamName: team.name };
     }
 
     // Repêchage terminé, rien de plus pressant à l'écran : la bannière —
@@ -1073,6 +1154,33 @@ function fzdHeroHTML(state) {
             </a>`}`;
     }
 
+    // Duel de la semaine — pools tête-à-tête, une fois le repêchage bouclé.
+    // Le décompte vise le COUP D'ENVOI du prochain duel ; quand la saison
+    // n'en a plus, il vise la fin de celui qui se joue.
+    if (state.mode === 'h2hduel') {
+        const { enCours, suivant } = state.duel;
+        const eyebrow = enCours
+            ? `Duel en cours contre ${enCours.adversaire}`
+            : `Semaine ${suivant.semaine} · à venir`;
+        const headline = suivant
+            ? `Prochain duel contre ${suivant.adversaire}`
+            : `Duel en cours contre ${enCours.adversaire}`;
+        const cible = suivant ? suivant.debut : enCours.fin;
+
+        return `
+            <span class="fzd-hero-shield" aria-hidden="true">F</span>
+            <div class="fzd-hero-copy">
+                <div class="fzd-hero-eyebrow">${escapeHTML(eyebrow)}</div>
+                <h2 class="fzd-hero-headline">${escapeHTML(headline)}</h2>
+            </div>
+            <div class="fzd-hero-stats">${fzdDuelCountdownHTML(cible)}</div>
+            <a class="fzd-hero-cta" href="classement.html?pool=${encodeURIComponent(state.activeName)}&h2h=calendrier">
+                <span class="fzd-hero-cta-bar" aria-hidden="true"></span>
+                <span class="fzd-hero-cta-label">Calendrier de la saison</span>
+                <span class="fzd-hero-cta-chev" aria-hidden="true">›</span>
+            </a>`;
+    }
+
     if (state.mode === 'draftdone') {
         return `
             <span class="fzd-hero-shield" aria-hidden="true">F</span>
@@ -1147,11 +1255,13 @@ function renderHero(tonight, containerId = 'fzDashHero') {
     if (myTurn !== container.classList.contains('is-myturn')) void container.offsetWidth;
     container.classList.toggle('is-myturn', myTurn);
 
-    // Avant-saison : le compte à rebours se contente d'un rendu complet.
-    if (state.mode === 'preseason') {
+    // Avant-saison et duel de la semaine : un compte à rebours, rien qui
+    // s'anime — un rendu complet à la seconde suffit. Un changement de mode
+    // (le duel démarre, la saison s'ouvre) repasse par renderHero.
+    if (state.mode === 'preseason' || state.mode === 'h2hduel') {
         fzdHeroTimers[containerId] = setInterval(() => {
             const fresh = fzdHeroState(tonight);
-            if (!fresh || fresh.mode !== 'preseason') { renderHero(tonight, containerId); return; }
+            if (!fresh || fresh.mode !== state.mode) { renderHero(tonight, containerId); return; }
             container.innerHTML = fzdHeroHTML(fresh);
         }, 1000);
         return;

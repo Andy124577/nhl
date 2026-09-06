@@ -2196,6 +2196,311 @@ html[data-theme="light"] #careerStatsTable .league-col {
    ne rattrapait que le premier des trois — les deux autres restaient des
    aplats blancs pleins pendant tout le chargement. */
 
+
+/* ============================================================ */
+/* H2H — CALENDRIER DE LA SAISON (carrousel)                     */
+/* ------------------------------------------------------------ */
+/* Une bande horizontale d'une carte par semaine, du premier     */
+/* lundi au dernier. La carte de la semaine en cours est cerclée */
+/* de la couleur de marque et le carrousel s'ouvre dessus        */
+/* (centrerSurSemaineCourante, classement.js) : on arrive sur    */
+/* « où en suis-je », pas sur le mois d'octobre.                 */
+/* ============================================================ */
+
+.h2h-sched-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.h2h-sched-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.4px;
+}
+
+.h2h-sched-sub {
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.5);
+    margin-top: 3px;
+}
+
+.h2h-sched-picker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+}
+
+.h2h-sched-picker select {
+    padding: 7px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(15, 15, 40, 0.6);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    cursor: pointer;
+    max-width: 220px;
+}
+
+.h2h-sched-picker select:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* --- La bande --- */
+.h2h-sched-carousel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.h2h-sched-track {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    padding: 4px 2px 12px;
+    flex: 1;
+    min-width: 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--primary-rgb),0.4) transparent;
+}
+
+.h2h-sched-track::-webkit-scrollbar { height: 6px; }
+.h2h-sched-track::-webkit-scrollbar-track { background: transparent; }
+.h2h-sched-track::-webkit-scrollbar-thumb {
+    background: rgba(var(--primary-rgb),0.35);
+    border-radius: 3px;
+}
+
+.h2h-sched-arrow {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(15, 15, 40, 0.6);
+    color: rgba(255,255,255,0.7);
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.h2h-sched-arrow:hover {
+    color: var(--primary);
+    border-color: rgba(var(--primary-rgb),0.45);
+    background: rgba(var(--primary-rgb),0.12);
+}
+
+/* --- La carte d'une semaine --- */
+.h2h-sched-card {
+    flex: 0 0 168px;
+    scroll-snap-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(26, 26, 30, 0.7);
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.h2h-sched-card:hover { transform: translateY(-2px); }
+
+/* Semaine déjà jouée : en retrait, elle n'est plus actionnable. */
+.h2h-sched-card.is-done { opacity: 0.78; }
+
+.h2h-sched-card.is-current {
+    border-color: rgba(var(--primary-rgb),0.55);
+    box-shadow: 0 0 0 1px rgba(var(--primary-rgb),0.25), 0 6px 20px rgba(var(--primary-rgb),0.12);
+}
+
+.h2h-sched-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.h2h-sched-week {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+.h2h-sched-badge {
+    padding: 2px 7px;
+    border-radius: 12px;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.h2h-sched-badge.is-done {
+    background: rgba(0, 230, 118, 0.16);
+    color: #00e676;
+    border: 1px solid rgba(0, 230, 118, 0.28);
+}
+
+.h2h-sched-badge.is-live {
+    background: rgba(var(--primary-rgb), 0.2);
+    color: var(--primary);
+    border: 1px solid rgba(var(--primary-rgb), 0.3);
+    animation: pulse-ongoing 2s ease-in-out infinite;
+}
+
+.h2h-sched-badge.is-next {
+    background: rgba(156, 39, 176, 0.18);
+    color: #CE93D8;
+    border: 1px solid rgba(206, 147, 216, 0.28);
+}
+
+.h2h-sched-dates {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.45);
+}
+
+.h2h-sched-opp {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.h2h-sched-opp-txt {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.h2h-sched-opp-lbl {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+}
+
+.h2h-sched-opp-name {
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.h2h-sched-score {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.h2h-sched-pts {
+    font-size: 1rem;
+    font-weight: 800;
+    color: rgba(255,255,255,0.55);
+}
+
+.h2h-sched-pts.mine { color: #fff; }
+
+.h2h-sched-dash { color: rgba(255,255,255,0.25); }
+
+.h2h-sched-score.is-pending { justify-content: flex-start; }
+
+.h2h-sched-vs {
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.28);
+}
+
+/* La pastille V/D/N reprend la couleur du pointage gagnant. */
+.h2h-sched-score.r-win .h2h-sched-pts.mine { color: #00e676; }
+.h2h-sched-score.r-loss .h2h-sched-pts.mine { color: #ff5252; }
+
+.h2h-sched-result {
+    align-self: flex-start;
+    min-width: 22px;
+    padding: 1px 7px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+}
+
+.h2h-sched-result.r-win  { background: rgba(0, 230, 118, 0.18); color: #00e676; }
+.h2h-sched-result.r-loss { background: rgba(255, 82, 82, 0.18); color: #ff5252; }
+.h2h-sched-result.r-tie  { background: rgba(255, 255, 255, 0.1); color: rgba(255,255,255,0.7); }
+
+/* Téléphone : des cartes plus étroites, les flèches disparaissent —
+   le geste de balayage remplace avantageusement deux boutons de 34 px. */
+@media (max-width: 600px) {
+    .h2h-sched-card { flex-basis: 148px; }
+    .h2h-sched-arrow { display: none; }
+    .h2h-sched-head { align-items: flex-start; flex-direction: column; }
+    .h2h-sched-picker select { max-width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .h2h-sched-card { transition: none; }
+    .h2h-sched-card:hover { transform: none; }
+    .h2h-sched-badge.is-live { animation: none; }
+}
+
+/* --- Calendrier, thème clair --- */
+html[data-theme="light"] .h2h-sched-title { color: var(--text-main); }
+html[data-theme="light"] .h2h-sched-sub { color: var(--text-secondary); }
+html[data-theme="light"] .h2h-sched-picker { color: rgba(30,40,100,0.5); }
+html[data-theme="light"] .h2h-sched-picker select {
+    background: rgba(240, 244, 255, 0.95);
+    border-color: rgba(0,0,0,0.12);
+    color: var(--text-main);
+}
+html[data-theme="light"] .h2h-sched-arrow {
+    background: rgba(240, 244, 255, 0.95);
+    border-color: rgba(0,0,0,0.12);
+    color: rgba(30,40,100,0.6);
+}
+html[data-theme="light"] .h2h-sched-card {
+    background: rgba(240, 244, 255, 0.92);
+    border-color: rgba(0,0,0,0.08);
+}
+html[data-theme="light"] .h2h-sched-week { color: var(--text-main); }
+html[data-theme="light"] .h2h-sched-dates { color: var(--text-secondary); }
+html[data-theme="light"] .h2h-sched-opp-lbl { color: rgba(30,40,100,0.45); }
+html[data-theme="light"] .h2h-sched-opp-name { color: var(--text-main); }
+html[data-theme="light"] .h2h-sched-pts { color: rgba(30,40,100,0.55); }
+html[data-theme="light"] .h2h-sched-pts.mine { color: var(--text-main); }
+html[data-theme="light"] .h2h-sched-dash { color: rgba(30,40,100,0.25); }
+html[data-theme="light"] .h2h-sched-vs { color: rgba(30,40,100,0.3); }
+html[data-theme="light"] .h2h-sched-badge.is-done { color: #0a8f4d; }
+html[data-theme="light"] .h2h-sched-result.r-win { color: #0a8f4d; }
+html[data-theme="light"] .h2h-sched-result.r-tie { background: rgba(0,0,0,0.07); color: var(--text-secondary); }
+html[data-theme="light"] .h2h-sched-score.r-win .h2h-sched-pts.mine { color: #0a8f4d; }
+html[data-theme="light"] .h2h-sched-score.r-loss .h2h-sched-pts.mine { color: #d32f2f; }
+
 /* ==================== DENSITÉ SUR GRAND ÉCRAN ==================== */
 @media (min-width: 769px) {
     .player-headshot-container .no-photo { font-size: 2.3rem; }
