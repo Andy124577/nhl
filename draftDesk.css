@@ -10,9 +10,9 @@
 
      barre du haut     puce du pool actif + navigation du site
      bande de tour     chrono · équipe au bâton · carrousel des choix
-     rail de gauche    MON ALIGNEMENT (défile) + LIMITES D'ÉQUIPE (bas)
+     rail de gauche    FAVORIS / CHOIX (deux pastilles, une seule vue)
      colonne centrale  panneau de tour, filtres, liste des joueurs
-     rail de droite    suggestion + derniers choix
+     rail de droite    suggestion + MON ALIGNEMENT + LIMITES D'ÉQUIPE
 
    1100px et pas 769 : c'est le seuil auquel poolNav.css sort le rail
    des pools, dont cette page reprend la place (draftDesk.js pose
@@ -275,10 +275,16 @@
 
 
   /* ==========================================================
-     2. RAIL DE GAUCHE — alignement, puis limites d'équipe
+     2. RAIL DE GAUCHE — favoris ou choix, et la coquille de
+        l'alignement, qui vit maintenant dans le rail de droite
      ----------------------------------------------------------
      C'est le rail de poolNav.js : la page le reprend, le sélecteur
      de pool passe dans la barre du haut (voir §6).
+
+     Les règles .fzd-rail-* / .fzd-slot / .fzd-limit restent ici :
+     elles dessinent la coquille de l'alignement, qui a changé d'hôte
+     (§3) mais pas d'allure. Les règles du panneau à pastilles qui
+     occupe désormais ce rail sont plus bas, en §7.
      ========================================================== */
 
   body.fz-draft #fzSidebar {
@@ -447,11 +453,15 @@
     min-width: 0;
     gap: 0;
   }
+  /* overflow:hidden et non auto : le rail porte maintenant l'alignement,
+     dont seul le corps défile — l'en-tête, la suggestion et les limites
+     d'équipe restent à vue, exactement comme quand la coquille vivait
+     dans le rail de gauche. */
   body.fz-draft .draft-rail {
     position: sticky;
     top: calc(var(--fz-nav-h, 70px) + 66px);
     height: calc(100vh - var(--fz-nav-h, 70px) - 66px);
-    overflow-y: auto;
+    overflow: hidden;
     overscroll-behavior: contain;
     display: flex;
     flex-direction: column;
@@ -461,10 +471,30 @@
     background: var(--fzd-surface);
   }
   body.fz-draft .draft-rail > * {
+    flex: none;
     border: 0;
     border-bottom: 1px solid var(--fzd-border);
     border-radius: 0;
     background: none;
+  }
+
+  /* La coquille de l'alignement dans son nouvel hôte. La règle ci-dessus
+     remet à zéro bordure et fond de chaque enfant du rail : les trois
+     morceaux reprennent ici ce qui leur appartient (spécificité plus
+     forte, et non plus l'ordre de déclaration). */
+  body.fz-draft .draft-rail > .fzd-rail-head {
+    border-bottom: 1px solid var(--fzd-border);
+  }
+  body.fz-draft .draft-rail > .fzd-rail-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    border-bottom: 0;
+  }
+  body.fz-draft .draft-rail > .fzd-rail-foot {
+    border-bottom: 0;
+    border-top: 1px solid var(--fzd-border-strong);
+    background: var(--fzd-rail-foot, var(--fzd-bg-alt));
   }
   /* Le bouton du haut du rail : pleine largeur, comme un en-tête
      d'action. Il ne s'affiche que lorsque draftActif.js le démasque —
@@ -493,10 +523,18 @@
 
   /* Ce que la maquette ne reprend pas : la patinoire et les barres de
      progression sont maintenant l'alignement et les limites du rail,
-     et la fiche « joueur sélectionné » n'y figure pas. */
+     et la fiche « joueur sélectionné » n'y figure pas.
+
+     #recentPicksFeed s'y ajoute : la vue « Choix » du rail de gauche
+     (§7) donne le MÊME historique en entier, du plus récent au plus
+     ancien — la carte des trois derniers choix ne dirait plus rien de
+     neuf. Elle reste dans .draft-sidebar, que cette règle masque déjà
+     en bloc, et la maquette téléphone la retrouve intacte sous 1100px.
+     Nommée quand même, pour que la raison soit lisible ici. */
   body.fz-draft .draft-sidebar,
   body.fz-draft #progressCard,
   body.fz-draft #lineupCard,
+  body.fz-draft #recentPicksFeed,
   body.fz-draft .selected-player-card,
   body.fz-draft #panelTabs,
   body.fz-draft #categoryTabs { display: none; }
@@ -590,98 +628,43 @@
     background: none;
   }
 
-  /* ---- Bande de filtres : pastilles, recherche, équipe ---- */
+  /* ---- Recherche, position et tri ---- */
   body.fz-draft .player-selection-card > .list-filters-sidebar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    /* La bande passe à deux lignes dès que la fenêtre ne peut pas tenir
-       pastilles + cases + recherche + équipe : c'est la gouttière de
-       rangée, plus serrée que celle des colonnes, qui décide alors de sa
-       hauteur. */
     column-gap: 10px;
-    row-gap: 6px;
+    row-gap: 8px;
     margin: 0;
     padding: 7px 20px;
     border: 0;
     border-bottom: 1px solid var(--fzd-border-strong);
     background: none;
   }
-  /* Les intertitres et la case « joueurs libres » disent ce que les
-     pastilles et les onglets au-dessus disent déjà. */
-  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-title,
-  body.fz-draft .player-selection-card > .list-filters-sidebar #listFilterAvailableOnly,
-  body.fz-draft .player-selection-card > .list-filters-sidebar #listFilterAvailableOnly + span { display: none; }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-title { display: none; }
   body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-block {
     display: contents;
   }
-  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-positions {
-    display: flex;
-    /* En colonne dans le rail d'origine (draftActif-premium.css) : cette
-       propriété-là n'est pas emportée par le display ci-dessus — la
-       cascade se joue déclaration par déclaration, et sans la nommer
-       ici, la colonne de la règle moins spécifique restait en place. */
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-  }
-  body.fz-draft .list-filter-position {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    width: auto;
-    padding: 5px 13px;
-    border-radius: 999px;
-    border: 1px solid var(--fzd-border-input);
-    background: var(--fzd-bg-alt);
-    color: var(--fzd-text);
-    font: 700 .66rem/1 var(--fzd-font-cond);
-    letter-spacing: .11em;
-    text-transform: uppercase;
-  }
-  body.fz-draft .list-filter-position:hover:not(:disabled) { border-color: var(--fzd-accent); }
-  body.fz-draft .list-filter-position.is-active {
-    background: var(--fzd-accent-fill);
-    border-color: var(--fzd-accent-fill);
-    color: var(--fzd-on-accent);
-  }
-  body.fz-draft .list-filter-position:disabled { opacity: .4; }
-  body.fz-draft .list-filter-position .list-filter-count { opacity: .55; font-weight: 700; }
-  body.fz-draft .list-filter-position .list-filter-needed-tag { display: none; }
-
-  /* Recherche et équipe poussées à droite. */
-  /* La recherche est le PREMIER enfant du bloc dans le HTML ; sans
-     order, un margin-left:auto posé sur elle repousserait toute la
-     bande vers la droite au lieu de l'y envoyer seule. */
-  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-positions { order: 1; }
-  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filter-checkbox { order: 2; }
   body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-search {
-    order: 3;
-    margin-left: auto;
-    width: 230px;
+    flex: 1 1 180px;
+    min-width: 160px;
+    width: auto;
+    margin: 0;
   }
   /* Le min-height de 44px de draftActif.css est une cible tactile : dans
      cette bande, à la souris, elle ne sert qu'à l'épaissir. */
   body.fz-draft .player-selection-card > .list-filters-sidebar .search-input,
-  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-team {
-    min-height: 0;
+  body.fz-draft .player-selection-card > .list-filters-sidebar .filter-select {
+    min-height: 34px;
     padding: 6px 12px;
   }
   body.fz-draft .player-selection-card > .list-filters-sidebar .search-input { padding-left: 34px; }
-  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-team {
-    order: 4;
+  body.fz-draft .player-selection-card > .list-filters-sidebar .filter-select {
+    display: block;
+    flex: 0 1 150px;
     width: auto;
-    min-width: 170px;
-  }
-  /* Les cases « comble un trou » / « mes favoris » restent, en fin de
-     bande : elles n'ont pas d'équivalent ailleurs dans la page. */
-  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filter-checkbox {
+    min-width: 130px;
     margin: 0;
-    padding: 4px 8px;
-    white-space: nowrap;
-    font-size: .72rem;
   }
 
   /* ---- Reste de l'en-tête de la carte ---- */
@@ -694,16 +677,8 @@
     border-radius: 0;
     background: none;
   }
-  /* « Joueurs disponibles · N libres · M pris » : les pastilles de
-     position portent déjà le compte de chaque catégorie, et les
-     onglets au-dessus disent lesquels sont affichés. */
-  body.fz-draft .player-selection-card > .filters-header { display: none; }
-  body.fz-draft .player-selection-card > .filters-row {
-    margin: 0;
-    padding: 5px 20px;
-    border-bottom: 1px solid var(--fzd-border);
-  }
-  body.fz-draft .player-selection-card > .filters-row .sort-tab { padding: 5px 11px; }
+  body.fz-draft .player-selection-card > .filters-header,
+  body.fz-draft .player-selection-card > .filters-row { display: none; }
 
 
   /* ==========================================================
@@ -1070,6 +1045,257 @@
      6. BARRE DU HAUT — la puce du pool actif y remplace le rail
      ========================================================== */
   body.fz-draft .fz-navbar-pool { display: flex; }
+
+
+  /* ==========================================================
+     7. PANNEAU FAVORIS / CHOIX — le rail de gauche
+     ----------------------------------------------------------
+     Une piste de deux pastilles en tête, la vue active dessous,
+     elle seule qui défile. La piste reprend le dessin du contrôle
+     segmenté de la page (.panel-tabs, draftActif-premium.css) —
+     même piste, même pilule active — sans en reprendre les
+     classes : .panel-tab-meta est écrite en aveugle par
+     fzMajOngletsMeta() (draftActifUI.js) sur TOUT le document, et
+     les compteurs d'ici ne sont pas les siens.
+     ========================================================== */
+
+  body.fz-draft #fzSidebar > .fzd-side {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body.fz-draft .fzd-side-tabs {
+    flex: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin: 12px 14px 10px;
+    padding: 4px;
+    border-radius: 12px;
+    background: var(--fzd-tab-track);
+  }
+  body.fz-draft .fzd-side-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 36px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: 9px;
+    background: none;
+    color: var(--fzd-tab-text);
+    font: 600 .72rem/1 var(--fzd-font);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  body.fz-draft .fzd-side-tab:hover { background: var(--fzd-tab-hover); color: var(--fzd-ink); }
+  body.fz-draft .fzd-side-tab.is-active {
+    background: var(--fzd-solid);
+    color: var(--fzd-on-solid);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+  }
+  body.fz-draft .fzd-side-tab.is-active:hover { background: var(--fzd-solid); }
+  body.fz-draft .fzd-side-tab:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(196, 68, 46, .35);
+  }
+  body.fz-draft .fzd-side-tab-count {
+    min-width: 19px;
+    padding: 3px 5px;
+    border-radius: 999px;
+    background: var(--fzd-tile-bg);
+    color: var(--fzd-text-muted);
+    font: 700 .62rem/1 var(--fzd-font-cond);
+    letter-spacing: .06em;
+  }
+  body.fz-draft .fzd-side-tab.is-active .fzd-side-tab-count {
+    background: var(--fzd-accent-fill);
+    color: var(--fzd-on-accent);
+  }
+  body.fz-draft .fzd-side-tab-count[hidden] { display: none; }
+
+  body.fz-draft .fzd-side-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0 14px 18px;
+  }
+  body.fz-draft .fzd-side-panel[hidden] { display: none; }
+  body.fz-draft .fzd-side-panel:focus-visible { outline: none; }
+  body.fz-draft .fzd-side-empty { margin: 14px 2px 0; line-height: 1.45; }
+
+  /* ---- Favoris ---- */
+  body.fz-draft .fzd-fav-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--fzd-border);
+  }
+  body.fz-draft .fzd-fav-row:last-child { border-bottom: 0; }
+  /* Un favori déjà repêché par quelqu'un d'autre reste en liste, en
+     retrait : c'est la trace de ce qu'on visait, et son étoile est
+     encore là pour faire le ménage. */
+  body.fz-draft .fzd-fav-row.is-picked { opacity: .55; }
+  body.fz-draft .fzd-fav-row.is-picked .fzd-fav-name { text-decoration: line-through; }
+
+  body.fz-draft .fzd-fav-row button.favorite-btn {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid var(--fzd-border-input);
+    background: none;
+    color: var(--fzd-text-ghost);
+    font-size: .8125rem;
+  }
+  body.fz-draft .fzd-fav-row button.favorite-btn:hover { border-color: var(--fzd-accent); }
+  body.fz-draft .fzd-fav-row button.favorite-btn.is-active {
+    border-color: var(--fzd-accent-border);
+    background: var(--fzd-accent-wash);
+    color: var(--fzd-accent);
+  }
+
+  body.fz-draft .fzd-fav-photo {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--fzd-tile-bg);
+  }
+  body.fz-draft .fzd-fav-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+  body.fz-draft .fzd-fav-txt {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  body.fz-draft .fzd-fav-name {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--fzd-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  body.fz-draft .fzd-fav-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  body.fz-draft .fzd-fav-line {
+    font-size: .62rem;
+    color: var(--fzd-text-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  body.fz-draft .fzd-fav-action { flex: none; }
+  body.fz-draft .fzd-fav-action button.select-button {
+    min-height: 28px;
+    padding: 5px 9px;
+    font-size: .6rem;
+  }
+
+  /* ---- Choix ---- */
+  body.fz-draft .fzd-pick-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--fzd-border);
+  }
+  body.fz-draft .fzd-pick-row:last-child { border-bottom: 0; }
+  body.fz-draft .fzd-pick-row.is-skipped { opacity: .6; }
+  body.fz-draft .fzd-pick-num {
+    flex: none;
+    min-width: 26px;
+    padding-top: 1px;
+    font: 700 .82rem/1.3 var(--fzd-font-cond);
+    letter-spacing: .04em;
+    color: var(--fzd-text-faint);
+    text-align: right;
+  }
+  body.fz-draft .fzd-pick-row.is-me .fzd-pick-num { color: var(--fzd-accent); }
+
+  body.fz-draft .fzd-pick-body {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  body.fz-draft .fzd-pick-owner {
+    font: 600 .68rem/1.2 var(--fzd-font);
+    color: var(--fzd-ink-soft);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  body.fz-draft .fzd-pick-row.is-me .fzd-pick-owner {
+    color: var(--fzd-accent);
+    font-weight: 700;
+  }
+  body.fz-draft .fzd-pick-player {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+  }
+  body.fz-draft .fzd-pick-photo {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--fzd-tile-bg);
+  }
+  body.fz-draft .fzd-pick-photo img { width: 100%; height: 100%; object-fit: cover; }
+  body.fz-draft .fzd-pick-txt {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  body.fz-draft .fzd-pick-name {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--fzd-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  body.fz-draft .fzd-pick-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  body.fz-draft .fzd-pick-abbr {
+    font: 600 .62rem/1 var(--fzd-font-cond);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--fzd-text-faint);
+  }
+  body.fz-draft .fzd-pick-skip {
+    font-size: .68rem;
+    color: var(--fzd-text-faint);
+  }
 }
 
 
@@ -1131,6 +1357,7 @@ html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="T"] { --fzd-tag-bg:
   body.fz-draft .fzd-name-meta,
   body.fz-draft .fzd-strip,
   body.fz-draft .draft-rail,
+  body.fz-draft .fzd-side,
   body.fz-draft .fzd-rail-head,
   body.fz-draft .fzd-rail-body,
   body.fz-draft .fzd-rail-foot { display: none; }

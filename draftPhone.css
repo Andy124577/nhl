@@ -65,7 +65,7 @@
   }
   /* Les gouttieres de la grille bureau : entre deux bandes empilees
      d'une page telephone, elles ne font que des trous. */
-  body.fz-draft.fz-list-lock .draft-center {
+  body.fz-draft.fz-list-lock .draft-main-container .draft-center {
     display: flex;
     flex-direction: column;
     gap: 0;
@@ -447,128 +447,42 @@
      5. ONGLET « JOUEURS »
      ========================================================== */
 
-  /* ---- Les filtres : pastilles qui défilent, puis recherche ---- */
+  /* ---- Recherche, puis position et tri sur une seconde ligne ---- */
   body.fz-draft .list-filters-sidebar {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     flex: none;
-    gap: 0;
-    width: auto;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: none;
-    box-shadow: none;
-  }
-  /* Les intertitres et le sélecteur d'équipe du rail : la maquette
-     met les pastilles seules sur leur ligne, et l'équipe à côté de
-     la recherche (voir plus bas). */
-  body.fz-draft .list-filters-sidebar .list-filters-title,
-  body.fz-draft .list-filters-sidebar .list-filter-checkbox { display: none; }
-  body.fz-draft .list-filters-sidebar .list-filters-block { display: contents; }
-
-  body.fz-draft .list-filters-positions {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    gap: 7px;
-    margin: 0;
-    padding: 11px 14px;
-    overflow-x: auto;
-    border-bottom: 1px solid var(--fzd-border-strong);
-    scrollbar-width: none;
-  }
-  body.fz-draft .list-filters-positions::-webkit-scrollbar { display: none; }
-  body.fz-draft .list-filter-position {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    flex: none;
-    width: auto;
-    min-height: 0;
-    margin: 0;
-    padding: 7px 13px;
-    border: 1px solid var(--fzd-border-input);
-    border-radius: 999px;
-    background: var(--fzd-bg-alt);
-    color: var(--fzd-text);
-    font: 700 .75rem/1 var(--fzd-font-cond);
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-  /* Le libellé entier ne tient pas : la pastille prend le code court
-     que draftApercuExtra.js pose en data-short. Le texte complet
-     reste dans le DOM — c'est lui que les lecteurs d'écran lisent. */
-  body.fz-draft .list-filter-position .list-filter-label {
-    position: absolute;
-    width: 1px; height: 1px;
-    margin: -1px; padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-  body.fz-draft .list-filter-position[data-short]::before { content: attr(data-short); }
-  body.fz-draft .list-filter-position .list-filter-count { opacity: .55; font-weight: 700; }
-  body.fz-draft .list-filter-position.is-active {
-    background: var(--fzd-accent-fill);
-    border-color: var(--fzd-accent-fill);
-    color: var(--fzd-on-accent);
-  }
-  body.fz-draft .list-filter-position:disabled { opacity: .4; }
-
-  /* Le champ du rail fait double emploi avec celui de la carte, qui
-     est le vrai (l'autre n'en est qu'un miroir, fzInitSearchMirror). */
-  body.fz-draft .list-filters-sidebar .list-filters-search { display: none; }
-
-  body.fz-draft .player-selection-card > .filters-header,
-  body.fz-draft .player-selection-card > .category-tabs,
-  body.fz-draft .player-selection-card > .availability-tabs { display: none; }
-
-  body.fz-draft .player-selection-card > .filters-row {
-    display: flex;
-    align-items: center;
     gap: 8px;
+    width: auto;
     margin: 0;
     padding: 10px 14px;
     border: 0;
     border-bottom: 1px solid var(--fzd-border-strong);
+    border-radius: 0;
     background: none;
+    box-shadow: none;
   }
-  body.fz-draft .player-selection-card > .filters-row .search-field {
-    flex: 1 1 auto;
+  body.fz-draft .list-filters-sidebar .list-filters-title { display: none; }
+  body.fz-draft .list-filters-sidebar .list-filters-block { display: contents; }
+  body.fz-draft .list-filters-sidebar .list-filters-search {
+    grid-column: 1 / -1;
     min-width: 0;
     width: auto;
     margin: 0;
-  }
-  body.fz-draft .player-selection-card .search-field .search-input {
-    min-width: 0;
-    width: 100%;
-  }
-  body.fz-draft .player-selection-card .search-field .search-input {
-    min-height: 0;
-    padding: 9px 12px 9px 34px;
-    border: 1px solid var(--fzd-border-input);
-    border-radius: 8px;
     background: var(--fzd-bg-alt);
+  }
+  body.fz-draft .list-filters-sidebar .search-input {
+    min-height: 44px;
+    padding: 9px 12px 9px 34px;
     font-family: var(--fzd-font);
     font-size: .8125rem;
     color: var(--fzd-ink);
   }
-  body.fz-draft .player-selection-card .search-field .search-input::placeholder { color: var(--fzd-text-fainter); }
-  /* Les trois pastilles de tri prendraient à elles seules la moitié de
-     la ligne : sur téléphone c'est le <select> d'origine (#sortBy) qui
-     sert, à côté du filtre d'équipe que draftActifUI.js amène ici. La
-     maquette n'a que la recherche et les équipes ; le tri reste parce
-     que le retirer serait perdre une fonction, pas la redessiner. */
-  body.fz-draft .player-selection-card > .filters-row .sort-tabs { display: none; }
-  body.fz-draft .player-selection-card > .filters-row .sort-select,
-  body.fz-draft .player-selection-card > .filters-row .list-filters-team {
+  body.fz-draft .list-filters-sidebar .filter-select {
     display: block;
-    flex: none;
-    width: 94px;
-    min-height: 0;
+    min-width: 0;
+    width: 100%;
+    min-height: 44px;
     margin: 0;
     padding: 9px 22px 9px 10px;
     border: 1px solid var(--fzd-border-input);
@@ -579,6 +493,11 @@
     font-size: .8125rem;
     text-overflow: ellipsis;
   }
+
+  body.fz-draft .player-selection-card > .filters-header,
+  body.fz-draft .player-selection-card > .filters-row,
+  body.fz-draft .player-selection-card > .category-tabs,
+  body.fz-draft .player-selection-card > .availability-tabs { display: none; }
 
   /* ---- La liste ----
      Le tableau est une grille flex (fin de draftActif.css) : il n'y a

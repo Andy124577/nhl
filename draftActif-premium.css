@@ -1242,7 +1242,8 @@ body.fz-draft .recent-feed-removed { color: var(--fzd-accent); font-weight: 500;
 
 
 
-body.fz-draft .list-filters-search { margin-bottom: 20px; }
+body.fz-draft .list-filters-search { margin-bottom: 0; }
+body.fz-draft .list-filters-sidebar .search-input { min-width: 0; width: 100%; }
 body.fz-draft .list-filters-title {
   margin: 0 0 11px;
   font-size: .68rem;
@@ -1251,49 +1252,8 @@ body.fz-draft .list-filters-title {
   text-transform: uppercase;
   color: var(--fzd-text-faint);
 }
-body.fz-draft .list-filters-block { margin-bottom: 22px; }
-body.fz-draft .list-filters-positions { display: flex; flex-direction: column; gap: 2px; }
-body.fz-draft .list-filter-position {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 9px 11px;
-  border: 0;
-  border-radius: 8px;
-  background: none;
-  font-size: .84rem;
-  font-weight: 500;
-  color: var(--fzd-ink-soft);
-  cursor: pointer;
-}
-body.fz-draft .list-filter-position:hover:not(:disabled) { background: var(--fzd-bg-alt); }
-body.fz-draft .list-filter-position .list-filter-count { color: var(--fzd-text-fainter); font-weight: 400; font-size: .78rem; }
-body.fz-draft .list-filter-position.is-active {
-  background: var(--fzd-solid);
-  color: var(--fzd-on-solid);
-  font-weight: 600;
-}
-body.fz-draft .list-filter-position.is-active .list-filter-count { color: rgba(255, 255, 255, .65); font-weight: 600; }
-body.fz-draft .list-filter-position:disabled { opacity: .5; cursor: not-allowed; }
-
-
-body.fz-draft .list-filter-position.is-needed:not(.is-active) { color: var(--fzd-accent); }
-body.fz-draft .list-filter-position.is-needed:not(.is-active) .list-filter-count { color: var(--fzd-accent); }
-body.fz-draft .list-filter-needed-tag { text-transform: uppercase; font-size: .68rem; letter-spacing: .04em; }
-
-body.fz-draft .list-filter-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 9px 11px;
-  border-radius: 8px;
-  font-size: .84rem;
-  color: var(--fzd-ink-soft);
-  cursor: pointer;
-}
-body.fz-draft .list-filter-checkbox:hover { background: var(--fzd-bg-alt); }
-body.fz-draft .list-filter-checkbox input { width: 15px; height: 15px; accent-color: var(--fzd-ink); }
-body.fz-draft .list-filters-team { width: 100%; }
+body.fz-draft .list-filters-block { margin: 0; }
+body.fz-draft .list-filters-sidebar .filter-select { display: block; width: 100%; }
 
 
 
@@ -1364,13 +1324,6 @@ body.fz-draft #playerTable tbody tr.fzd-selected-row {
   background: var(--fzd-bg-alt);
   box-shadow: inset 2px 0 0 var(--fzd-accent);
 }
-/* !important à contrecœur, contre celui de draftActif.css :
-   « #playerTable tbody tr { display: flex !important } » y est posé sans
-   media query, pour battre le « display: table-row !important » que
-   index.css impose sous 480px. Sans le nôtre, les rangées écartées par
-   « Mes favoris seulement » / « Comble un trou » gardaient leur classe
-   mais restaient affichées — les deux cases semblaient ne rien faire. */
-body.fz-draft #playerTable tbody tr.fzd-filtered-out { display: none !important; }
 
 
 
@@ -1644,7 +1597,7 @@ body.fz-draft tr.fzd-picked-row td.points-column { color: var(--fzd-text-fainter
 
 
 
-body.fz-draft #playerTable tbody tr.fzd-paged-out { display: none !important; }  /* même raison que .fzd-filtered-out */
+body.fz-draft #playerTable tbody tr.fzd-paged-out { display: none !important; }  /* Prioritaire sur le display:flex !important des rangées. */
 body.fz-draft .player-list-footer {
   display: flex;
   align-items: center;

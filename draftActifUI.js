@@ -119,53 +119,21 @@ function initProgressViewToggle() {
 }
 
 /* ============================================================
-   2. ONGLETS DE CATÉGORIE
+   2. SÉLECTEUR DE POSITION
    ============================================================ */
 
 /**
- * Bandeau d'onglets construit à partir des options réelles de
- * #playerFilter : si une option est ajoutée ou retirée côté serveur, les
- * onglets suivent sans retouche. Le clic écrit dans le <select> et déclenche
- * son événement `change`, exactement comme une sélection manuelle.
+ * Le sélecteur #playerFilter pilote directement le tableau. Ses options
+ * suivent les places restantes dans l'alignement.
  */
-function initCategoryTabs() {
-    const strip = document.getElementById('categoryTabs');
+function initPositionFilter() {
     const select = document.getElementById('playerFilter');
-    if (!strip || !select) return;
-
-    // « Onglets » n'est vrai qu'en apparence : les six pastilles ne pilotent
-    // pas six panneaux distincts, elles filtrent toutes le même tableau. Le
-    // patron ARIA tablist suppose un panneau par onglet ; en poser un ici
-    // promettait un modèle clavier (flèches, un seul arrêt de tabulation)
-    // que rien ne tenait — d'où role=tablist sans aria-controls ni tabpanel.
-    // Un groupe de bascules dit la même chose sans rien devoir de plus.
-    strip.setAttribute('role', 'group');
-    strip.innerHTML = '';
-    [...select.options].forEach(option => {
-        const tab = document.createElement('button');
-        tab.type = 'button';
-        tab.className = 'category-tab';
-        tab.dataset.value = option.value;
-        tab.setAttribute('aria-pressed', 'false');
-        tab.textContent = option.textContent.trim();
-        tab.addEventListener('click', () => {
-            select.value = option.value;
-            // `change` n'est pas émis par une écriture scriptée : on le
-            // déclenche pour que le gestionnaire de draftActif.js s'exécute.
-            select.dispatchEvent(new Event('change', { bubbles: true }));
-        });
-        strip.appendChild(tab);
-    });
+    if (!select) return;
 
     const table = document.getElementById('playerTable');
 
     const refleter = () => {
-        strip.querySelectorAll('.category-tab').forEach(t => {
-            const actif = t.dataset.value === select.value;
-            t.classList.toggle('is-active', actif);
-            t.setAttribute('aria-pressed', String(actif));
-        });
-        appliquerDisponibilite(strip, select);
+        appliquerDisponibilite(select);
         // Marque la vue courante sur le tableau. Le nombre et l'ordre des
         // colonnes changent d'une catégorie à l'autre : sans ce repère, une
         // règle CSS ciblant « la 7e colonne » viserait SV% chez les gardiens
@@ -181,20 +149,17 @@ function initCategoryTabs() {
     refleter();
 
     // Rejoué après chaque rendu du tableau : une position se remplit en cours
-    // de repêchage, et son onglet doit alors s'éteindre. Appelée par
+    // de repêchage, et son option doit alors se désactiver. Appelée par
     // refreshDraftViews() dans draftRefresh.js.
     refreshCategoryTabs = refleter;
-
-    // Le <select> devient redondant une fois les onglets en place.
-    select.classList.add('is-replaced');
 }
 
 /* ---- Disponibilité des catégories ----
    Une position dont le quota de l'équipe est atteint disparaît de la liste
-   (draftActif.js la vide via _isCategoryFull). Son onglet mène donc à un
-   tableau vide : on l'éteint plutôt que de laisser cliquer dans le vide. */
+   (draftActif.js la vide via _isCategoryFull). On désactive son option pour
+   éviter de choisir une catégorie pleine. */
 
-/** Code de position que draftActif.js utilise pour chaque onglet. */
+/** Code de position que draftActif.js utilise pour chaque catégorie. */
 const CODES_CATEGORIE = {
     offensive: ['C'],
     defensive: ['D'],
@@ -216,38 +181,29 @@ function categorieEpuisee(valeur) {
     return codes.every(code => _isCategoryFull(code));
 }
 
-function appliquerDisponibilite(strip, select) {
+function appliquerDisponibilite(select) {
     let premierLibre = null;
     let actifEpuise = false;
 
-    strip.querySelectorAll('.category-tab').forEach(tab => {
-        const epuise = categorieEpuisee(tab.dataset.value);
-        tab.classList.toggle('is-unavailable', epuise);
-        tab.disabled = epuise;
-        tab.setAttribute('aria-disabled', String(epuise));
-        tab.title = epuise ? 'Plus de place à cette position' : '';
+    [...select.options].forEach(option => {
+        const epuise = categorieEpuisee(option.value);
+        option.disabled = epuise;
+        option.title = epuise ? 'Plus de place à cette position' : '';
 
-        // Sur téléphone, les pastilles disparaissent et #playerFilter — le
-        // même <select> — reprend directement la main : ses options doivent
-        // donc porter la même désactivation, sinon on peut y choisir une
-        // catégorie déjà pleine sans que rien ne l'explique.
-        const option = select.querySelector(`option[value="${tab.dataset.value}"]`);
-        if (option) option.disabled = epuise;
-
-        if (!epuise && !premierLibre) premierLibre = tab;
-        if (epuise && tab.dataset.value === select.value) actifEpuise = true;
+        if (!epuise && !premierLibre) premierLibre = option;
+        if (epuise && option.value === select.value) actifEpuise = true;
     });
 
     // La catégorie ouverte vient de se remplir : rester dessus afficherait un
     // tableau vide sans expliquer pourquoi. On bascule sur la première encore
     // ouverte, ce qui remet des joueurs sous les yeux.
     if (actifEpuise && premierLibre) {
-        select.value = premierLibre.dataset.value;
+        select.value = premierLibre.value;
         select.dispatchEvent(new Event('change', { bubbles: true }));
     }
 }
 
-/** Remplacée par initCategoryTabs() une fois le bandeau construit. */
+/** Point de rafraîchissement conservé pour draftRefresh.js. */
 function refreshCategoryTabs() {}
 
 /* ============================================================
@@ -359,7 +315,6 @@ function initPanelTabs() {
     let actif = groupes[0].cle;
 
     const appliquer = () => {
-        fzPlacerFiltreEquipe();
         // Bureau : les deux groupes sont affichés côte à côte dans la
         // grille à trois colonnes (draftDesk.css) — il n'y a plus de
         // panneau à cacher, et surtout plus de display en ligne à
@@ -512,36 +467,6 @@ function initPanelTabs() {
 }
 
 /* ============================================================
-   3bis. LE FILTRE D'ÉQUIPE, DANS LA RANGÉE DE RECHERCHE
-   ------------------------------------------------------------
-   La maquette téléphone met sous les pastilles de position une
-   seule rangée : « Rechercher un joueur » et « Équipes ▾ ». Le
-   champ vit dans la carte du tableau (.filters-row), le sélecteur
-   dans le rail des filtres (#listFiltersSidebar) — deux parents
-   différents, qu'aucune règle CSS ne peut réunir sur une ligne.
-
-   On déplace donc le nœud, et on le remet où il était dès que la
-   fenêtre repasse sur bureau : le rail y reprend sa colonne, avec
-   ses intertitres et ses cases à cocher.
-   ============================================================ */
-function fzPlacerFiltreEquipe() {
-    const select = document.getElementById('listFilterTeam');
-    const rangee = document.querySelector('.player-selection-card > .filters-row');
-    const rail = document.getElementById('listFiltersSidebar');
-    if (!select || !rangee || !rail) return;
-
-    if (fzEstBureau()) {
-        // Sa place d'origine : dernier enfant de son bloc, après le
-        // <label> masqué qui le nomme.
-        const bloc = rail.querySelector('.list-filters-block:last-of-type');
-        if (bloc && select.parentNode !== bloc) bloc.appendChild(select);
-        return;
-    }
-    if (select.parentNode !== rangee) rangee.appendChild(select);
-}
-window.fzPlacerFiltreEquipe = fzPlacerFiltreEquipe;
-
-/* ============================================================
    4. COMPTEURS DES ONGLETS
    ------------------------------------------------------------
    Chaque onglet dit ce qu'il contient : combien de joueurs restent
@@ -580,6 +505,6 @@ window.fzMajOngletsMeta = fzMajOngletsMeta;
 document.addEventListener('DOMContentLoaded', () => {
     initPositionProgress();
     initProgressViewToggle();
-    initCategoryTabs();
+    initPositionFilter();
     initPanelTabs();
 });

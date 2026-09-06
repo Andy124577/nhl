@@ -1,7 +1,7 @@
 /**
  * Compléments de l'onglet Aperçu et de la vue bureau de la Liste des
  * joueurs : suggestion, alignement, derniers choix (texte), sidebar de
- * position/affichage/équipe avec compteurs, et carte « Joueur sélectionné ».
+ * recherche avec compteurs, et carte « Joueur sélectionné ».
  *
  * Même règle que draftFavorites.js / draftActifUI.js : aucune logique de
  * repêchage ici, uniquement de la lecture des variables déjà globales de
@@ -19,7 +19,7 @@
    ------------------------------------------------------------
    Donnée publique fixe (32 clubs), pas une fiche du pool : sert à afficher
    « D · Montréal » plutôt que l'abréviation brute dans les cartes Suggestion
-   et Joueur sélectionné, et à peupler le filtre Équipe de la sidebar.
+   et Joueur sélectionné.
    ============================================================ */
 const FZ_VILLES = {
     ANA: 'Anaheim', ARI: 'Arizona', UTA: 'Utah', BOS: 'Boston', BUF: 'Buffalo',
@@ -71,15 +71,13 @@ function fzGroupesManquants() {
         defensive: (equipe.defensive || []).length < (cfg.numDefensive ?? 4),
         rookie: (equipe.rookie || []).length < (cfg.numRookies ?? 1),
         goalie: (equipe.goalie || []).length < (cfg.numGoalies ?? 1),
-        // « team » : même clé que fzGroupKeyFor pour un club LNH. Sans elle,
-        // « Comble un trou » masquerait toutes les lignes de la catégorie
-        // Équipes — manquants['team'] valant undefined.
+        // « team » : même clé que fzGroupKeyFor pour un club LNH.
         team: (equipe.teams || []).length < (cfg.numTeams ?? 1)
     };
 }
 
-/** Le seul groupe signalé "manquant" dans l'interface (sidebar de position,
- *  Ma progression) : celui où il manque le plus de joueurs, pas chaque
+/** Le seul groupe signalé "manquant" dans Ma progression : celui où il
+ *  manque le plus de joueurs, pas chaque
  *  groupe incomplet — sinon la page serait presque entièrement rouge dès le
  *  premier choix. Retourne null si tous les quotas sont atteints. */
 function fzPireGroupe() {
@@ -347,7 +345,7 @@ function fzRenderLineupCard() {
 function fzRenderSegmentedProgress() {
     const lignes = [...document.querySelectorAll('.progress-line[data-position]')];
     // Une seule catégorie signalée en rouge — celle où il manque le plus de
-    // joueurs (fzPireGroupe, même règle que la sidebar de position) —
+    // joueurs (fzPireGroupe) —
     // plutôt que chaque ligne incomplète : sinon la carte serait presque
     // entièrement rouge dès le premier choix.
     const pirePosition = fzPireGroupe();
@@ -607,15 +605,8 @@ function fzRenderProgressCount() {
 }
 
 /* ============================================================
-   6. SIDEBAR DE POSITION / AFFICHAGE / ÉQUIPE (bureau, Liste des joueurs)
-   ------------------------------------------------------------
-   Reprend les options réelles de #playerFilter, comme initCategoryTabs()
-   (draftActifUI.js) : un clic écrit dans le <select> caché et déclenche
-   son événement `change`. Ajoute un compteur de joueurs disponibles par
-   catégorie et un repère "manquants", absents des pastilles mobiles.
+   6. COMPTEURS ET RECHERCHE (Liste des joueurs)
    ============================================================ */
-
-const FZ_GROUPE_PAR_VALEUR = { offensive: 'offensive', defensive: 'defensive', goalies: 'goalie', rookies: 'rookie' };
 
 function fzCountAvailable(valeur) {
     // fzAllAvailableCandidates() ne rend que patineurs et gardiens — c'est ce
@@ -645,63 +636,6 @@ function fzCountAvailable(valeur) {
     }).length;
 }
 
-const FZ_POS_COURT = {
-    all: 'Tous', offensive: 'Att', defensive: 'Déf',
-    goalies: 'Gar', rookies: 'Rec', teams: 'Éq'
-};
-
-function fzRenderPositionSidebar() {
-    const hote = document.getElementById('listFiltersSidebar');
-    const select = document.getElementById('playerFilter');
-    const liste = hote && hote.querySelector('.list-filters-positions');
-    if (!hote || !select || !liste) return;
-
-    const pireGroupe = fzPireGroupe();
-    liste.replaceChildren();
-    [...select.options].forEach(option => {
-        const item = document.createElement('button');
-        item.type = 'button';
-        item.className = 'list-filter-position';
-        item.dataset.value = option.value;
-        item.disabled = option.disabled;
-        item.classList.toggle('is-active', option.value === select.value);
-
-        const groupe = FZ_GROUPE_PAR_VALEUR[option.value];
-        const manque = groupe && groupe === pireGroupe;
-        item.classList.toggle('is-needed', !!manque);
-
-        // La maquette téléphone n'a pas la place des libellés entiers :
-        // elle nomme les pastilles TOUS / ATT / DÉF / GAR / REC / ÉQ.
-        // Porté en data-*, affiché par draftPhone.css à la place du
-        // libellé — le texte complet reste dans le DOM pour les lecteurs
-        // d'écran et pour le bureau.
-        item.dataset.short = FZ_POS_COURT[option.value] || option.textContent.trim();
-
-        const libelle = document.createElement('span');
-        libelle.className = 'list-filter-label';
-        libelle.textContent = option.textContent.trim();
-        if (manque) {
-            const suffixe = document.createElement('span');
-            suffixe.className = 'list-filter-needed-tag';
-            suffixe.textContent = ' · manquants';
-            libelle.appendChild(suffixe);
-        }
-        item.appendChild(libelle);
-
-        const compte = document.createElement('span');
-        compte.className = 'list-filter-count';
-        compte.textContent = String(fzCountAvailable(option.value));
-        item.appendChild(compte);
-
-        item.addEventListener('click', () => {
-            if (item.disabled) return;
-            select.value = option.value;
-            select.dispatchEvent(new Event('change', { bubbles: true }));
-        });
-        liste.appendChild(item);
-    });
-}
-
 /* ---- Résumé "N libres · M pris" (en-tête de la carte principale) ---- */
 function fzRenderFiltersSummary() {
     const cible = document.getElementById('filtersHeaderSummary');
@@ -710,31 +644,6 @@ function fzRenderFiltersSummary() {
     const pris = (typeof draftData !== 'undefined' && draftData && draftData.picksHistory)
         ? draftData.picksHistory.length : 0;
     cible.textContent = `${libres} libres · ${pris} pris`;
-}
-
-/* ---- "Trier" en pastilles (bureau), même patron que #categoryTabs ---- */
-function fzRenderSortTabs() {
-    const strip = document.getElementById('sortTabs');
-    const select = document.getElementById('sortBy');
-    if (!strip || !select || strip.dataset.built === '1') return;
-    strip.dataset.built = '1';
-    [...select.options].forEach(option => {
-        const tab = document.createElement('button');
-        tab.type = 'button';
-        tab.className = 'sort-tab';
-        tab.dataset.value = option.value;
-        tab.textContent = option.textContent.trim();
-        tab.classList.toggle('is-active', option.value === select.value);
-        tab.addEventListener('click', () => {
-            select.value = option.value;
-            select.dispatchEvent(new Event('change', { bubbles: true }));
-            strip.querySelectorAll('.sort-tab').forEach(t => t.classList.toggle('is-active', t === tab));
-        });
-        strip.appendChild(tab);
-    });
-    select.addEventListener('change', () => {
-        strip.querySelectorAll('.sort-tab').forEach(t => t.classList.toggle('is-active', t.dataset.value === select.value));
-    });
 }
 
 /* ---- Miroir de recherche (sidebar bureau ↔ champ réel de la carte) ---- */
@@ -752,135 +661,14 @@ function fzInitSearchMirror() {
     reel.addEventListener('input', () => { if (miroir.value !== reel.value) miroir.value = reel.value; });
 }
 
-/* ---- Filtre Équipe : peuplé depuis les fiches réelles, jamais une liste
-   inventée — seules les équipes ayant au moins un joueur disponible
-   apparaissent. ---- */
-function fzPopulateTeamFilter() {
-    const select = document.getElementById('listFilterTeam');
-    if (!select || select.dataset.built === '1') return;
-    const codes = new Set();
-    fzAllAvailableCandidates().forEach(c => {
-        const code = fzPremierAbbrev(c.rec);
-        if (code) codes.add(code);
-    });
-    if (!codes.size) return; // données pas encore chargées — réessayer au prochain rafraîchissement
-    select.dataset.built = '1';
-    [...codes].sort((a, b) => (FZ_VILLES[a] || a).localeCompare(FZ_VILLES[b] || b)).forEach(code => {
-        const option = document.createElement('option');
-        option.value = code;
-        option.textContent = FZ_VILLES[code] || code;
-        select.appendChild(option);
-    });
-}
-
-/* ---- Filtres combinés posés sur le tableau déjà rendu : favoris seulement,
-   comble un trou, équipe. "Joueurs libres seulement" ne filtre pas ici —
-   il pilote #availabilityTabs (Libres/Tous), qui remplace le tableau
-   entier (draftListePremium.js).
-
-   Les rangées écartées prennent .fzd-filtered-out, masquée en CSS avec un
-   !important (draftActif-premium.css) : sans lui, le
-   « display: flex !important » que draftActif.css pose sur toute rangée de
-   #playerTable l'emportait et rien ne disparaissait — les cases se
-   cochaient sans effet visible. ---- */
-let fzFavorisSeulement = false;
-let fzBesoinSeulement = false;
-let fzEquipeChoisie = '';
-
-/**
- * « Comble un trou » ne filtre pas sur « tout groupe sous son quota » mais
- * sur le SEUL groupe où il manque le plus (fzPireGroupe) — celui que les
- * pastilles de position marquent déjà « · manquants ».
- *
- * Le critère d'avant ne pouvait rien filtrer : la liste des libres écarte
- * déjà toute position comblée (populateTable → _isCategoryFull), donc tout
- * ce qu'elle affiche est sous quota par construction. La case était cochable
- * sans jamais rien changer.
- */
-function fzApplyListFilters() {
-    const corps = document.querySelector('#playerTable tbody');
-    if (!corps) return;
-    const favoris = new Set(typeof fzGetFavorites === 'function' ? fzGetFavorites() : []);
-    const groupeUrgent = fzBesoinSeulement ? fzPireGroupe() : null;
-    corps.querySelectorAll('tr').forEach(tr => {
-        if (tr.classList.contains('draft-empty-row')) return;
-        const nom = typeof fzRowPlayerName === 'function' ? fzRowPlayerName(tr) : null;
-        if (!nom) return;
-
-        let cache = false;
-        if (fzFavorisSeulement && !favoris.has(nom)) cache = true;
-
-        if (!cache && (groupeUrgent || fzEquipeChoisie)) {
-            const trouve = typeof fzFindRecord === 'function' ? fzFindRecord(nom) : null;
-            if (trouve) {
-                if (!cache && groupeUrgent) {
-                    const code = typeof fzPositionCode === 'function' ? fzPositionCode(trouve.rec, trouve.kind) : '';
-                    const groupe = typeof fzGroupKeyFor === 'function' ? fzGroupKeyFor(code, trouve.kind) : '';
-                    if (groupe !== groupeUrgent) cache = true;
-                }
-                if (!cache && fzEquipeChoisie && fzPremierAbbrev(trouve.rec) !== fzEquipeChoisie) cache = true;
-            }
-        }
-        tr.classList.toggle('fzd-filtered-out', cache);
-    });
-}
-
-/**
- * Un changement de filtre change l'ensemble à paginer : sans repartir du
- * premier lot, les rangées retenues au-delà du lot courant restaient
- * masquées par .fzd-paged-out (« Mes favoris seulement » pouvait vider la
- * liste alors que les favoris étaient bien là, plus bas), et le pied
- * comptait un total qui n'était plus le bon.
- *
- * fzLotsAffiches et fzApplyPagination sont déclarés plus bas dans le
- * fichier : la fonction n'est appelée qu'après son exécution complète.
- */
-function fzReappliquerFiltres() {
-    fzLotsAffiches = 1;
-    fzApplyListFilters();
-    fzApplyPagination();
-}
-
-function fzInitListFilterControls() {
-    const favCb = document.getElementById('listFilterFavoritesOnly');
-    if (favCb && favCb.dataset.bound !== '1') {
-        favCb.dataset.bound = '1';
-        favCb.addEventListener('change', () => { fzFavorisSeulement = favCb.checked; fzReappliquerFiltres(); });
-    }
-    const needCb = document.getElementById('listFilterNeedsOnly');
-    if (needCb && needCb.dataset.bound !== '1') {
-        needCb.dataset.bound = '1';
-        needCb.addEventListener('change', () => { fzBesoinSeulement = needCb.checked; fzReappliquerFiltres(); });
-    }
-    const teamSelect = document.getElementById('listFilterTeam');
-    if (teamSelect && teamSelect.dataset.bound !== '1') {
-        teamSelect.dataset.bound = '1';
-        teamSelect.addEventListener('change', () => { fzEquipeChoisie = teamSelect.value; fzReappliquerFiltres(); });
-    }
-    // "Joueurs libres seulement" reflète et pilote #availabilityTabs — pas
-    // un filtre distinct : décocher revient à cliquer "Tous" (draftListePremium.js).
-    const availCb = document.getElementById('listFilterAvailableOnly');
-    const availSelect = document.getElementById('availabilityFilter');
-    if (availCb && availSelect && availCb.dataset.bound !== '1') {
-        availCb.dataset.bound = '1';
-        availCb.addEventListener('change', () => {
-            const cible = availCb.checked ? 'available' : 'picked';
-            const bouton = document.querySelector(`#availabilityTabs .availability-tab[data-valeur="${cible}"]`);
-            if (bouton) bouton.click();
-        });
-        availSelect.addEventListener('change', () => { availCb.checked = availSelect.value === 'available'; });
-    }
-}
-
 /* ============================================================
    6bis. PAGINATION VISUELLE — "Charger N joueurs de plus" (4A/4B)
    ------------------------------------------------------------
    populateTable()/populateGoalieTable() (draftActif.js) rendent déjà
    TOUTES les rangées disponibles d'un coup — rien n'est demandé au
    serveur par lots. Cette couche masque les rangées au-delà du lot
-   courant sous .fzd-paged-out, même patron que .fzd-filtered-out
-   ci-dessus : un filtre visuel de plus, jamais une vraie requête
-   supplémentaire. fzLotsAffiches repart à 1 chaque fois que #playerTable
+   courant sous .fzd-paged-out, sans requête supplémentaire.
+   fzLotsAffiches repart à 1 chaque fois que #playerTable
    tbody est reconstruit (fzWatchPlayerTableForExtras, plus bas) : un
    nouveau rendu — changement de catégorie, recherche, tri — recommence
    en haut de la liste plutôt que de garder un lot qui ne correspond
@@ -897,11 +685,10 @@ function fzApplyPagination() {
     const lignes = [...corps.querySelectorAll('tr')].filter(tr => !tr.classList.contains('draft-empty-row'));
     if (!lignes.length) { pied.hidden = true; return; }
 
-    const visibles = lignes.filter(tr => !tr.classList.contains('fzd-filtered-out'));
     const limite = FZ_TAILLE_LOT * fzLotsAffiches;
-    visibles.forEach((tr, i) => tr.classList.toggle('fzd-paged-out', i >= limite));
+    lignes.forEach((tr, i) => tr.classList.toggle('fzd-paged-out', i >= limite));
 
-    const total = visibles.length;
+    const total = lignes.length;
     const affiches = Math.min(limite, total);
     const bouton = pied.querySelector('.player-list-more');
     const compte = document.getElementById('playerListCount');
@@ -1121,12 +908,7 @@ window.fzRefreshApercuExtras = function () {
     try { fzRenderSegmentedProgress(); } catch (e) { console.error('[apercu] progression segmentée :', e); }
     try { fzRenderIceProgression(); } catch (e) { console.error('[apercu] progression glace :', e); }
     try { fzRenderProgressCount(); } catch (e) {}
-    try { fzRenderPositionSidebar(); } catch (e) { console.error('[apercu] sidebar position :', e); }
     try { fzRenderFiltersSummary(); } catch (e) {}
-    try { fzPopulateTeamFilter(); } catch (e) {}
-    try { fzApplyListFilters(); } catch (e) { console.error('[apercu] filtres liste :', e); }
-    // Après les filtres (juste au-dessus) : la pagination compte et limite
-    // les rangées encore visibles APRÈS filtrage, jamais le total brut.
     try { fzApplyPagination(); } catch (e) { console.error('[apercu] pagination :', e); }
     // Rendre d'abord : sans sélection explicite, fzRenderSelectedPlayerCard()
     // retombe sur la suggestion et met fzJoueurAffiche à jour — la rangée à
@@ -1142,7 +924,7 @@ window.fzRefreshApercuExtras = function () {
  * appelle refreshDraftViews(). jQuery capture la référence nue au moment de
  * la liaison, donc changer de catégorie / chercher / trier reconstruit bien
  * le tableau, mais sans jamais déclencher fzRefreshApercuExtras : les
- * compteurs, filtres et cartes retombées sur la suggestion restaient figés
+ * compteurs et cartes retombées sur la suggestion restaient figés
  * sur leur tout premier rendu. Même remède que fzWatchPlayerTable
  * (draftFavorites.js) : observer directement l'effet qui compte plutôt que
  * d'ajouter une couche de plus à cette chaîne d'appels fragile.
@@ -1152,7 +934,7 @@ function fzWatchPlayerTableForExtras() {
     if (!tbody) return;
     let planifie = false;
     const observer = new MutationObserver(() => {
-        // Les tr.fzd-selected-row/.fzd-filtered-out posées par ce fichier
+        // Les tr.fzd-selected-row/.fzd-paged-out posées par ce fichier
         // sont des mutations d'attribut (classList), jamais childList — cet
         // observateur ne se redéclenche donc pas lui-même.
         if (planifie) return;
@@ -1171,9 +953,7 @@ function fzWatchPlayerTableForExtras() {
 
 document.addEventListener('DOMContentLoaded', () => {
     try { window.fzRefreshApercuExtras(); } catch (e) {}
-    try { fzRenderSortTabs(); } catch (e) {}
     try { fzInitSearchMirror(); } catch (e) {}
-    try { fzInitListFilterControls(); } catch (e) {}
     try { fzInitPagination(); } catch (e) {}
     try { fzInitSelectedPlayerClicks(); } catch (e) {}
     try { fzWatchPlayerTableForExtras(); } catch (e) {}

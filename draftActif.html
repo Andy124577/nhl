@@ -24,13 +24,13 @@
   <link rel="stylesheet" href="poolNav.css">
   <link rel="stylesheet" href="skeleton-loader.css" />
   <link rel="stylesheet" href="draftActif.css?v=20260905f" />
-  <link rel="stylesheet" href="draftActif-premium.css?v=20260905b" />
+  <link rel="stylesheet" href="draftActif-premium.css?v=20260906a" />
   <!-- Après les deux précédents : la mise en page bureau (trois colonnes,
-       portraits agrandis, pastilles de position) reprend leurs règles. -->
-  <link rel="stylesheet" href="draftDesk.css?v=20260905a" />
+       portraits agrandis, filtres de joueurs) reprend leurs règles. -->
+  <link rel="stylesheet" href="draftDesk.css?v=20260906a" />
   <!-- Et son pendant pour l'autre côté du seuil : sous 1100px, la page
        prend le plan de la maquette téléphone. -->
-  <link rel="stylesheet" href="draftPhone.css?v=20260905a" />
+  <link rel="stylesheet" href="draftPhone.css?v=20260906a" />
   
 
   <link rel="stylesheet" href="career-modal.css" />
@@ -335,31 +335,22 @@
           <input type="text" id="listFilterSearch" placeholder="Rechercher" class="search-input"/>
         </div>
         <div class="list-filters-block">
-          <h3 class="list-filters-title">Position</h3>
-          <div class="list-filters-positions"></div>
+          <label for="playerFilter" class="list-filters-title">Position</label>
+          <select id="playerFilter" class="filter-select list-filters-position">
+            <option value="all">Joueurs</option>
+            <option value="offensive">Attaquants</option>
+            <option value="defensive">Défenseurs</option>
+            <option value="goalies">Gardiens</option>
+            <option value="rookies">Recrues</option>
+            <option value="teams">Équipes</option>
+          </select>
         </div>
         <div class="list-filters-block">
-          <h3 class="list-filters-title">Affichage</h3>
-          
-
-          <label class="list-filter-checkbox">
-            <input type="checkbox" id="listFilterAvailableOnly" checked>
-            <span>Joueurs libres seulement</span>
-          </label>
-          <label class="list-filter-checkbox">
-            <input type="checkbox" id="listFilterFavoritesOnly">
-            <span>Mes favoris seulement</span>
-          </label>
-          <label class="list-filter-checkbox">
-            <input type="checkbox" id="listFilterNeedsOnly">
-            <span>Comble un trou</span>
-          </label>
-        </div>
-        <div class="list-filters-block">
-          <h3 class="list-filters-title">Équipe</h3>
-          <label for="listFilterTeam" class="sr-only">Équipe LNH</label>
-          <select id="listFilterTeam" class="filter-select list-filters-team">
-            <option value="">Toutes les équipes</option>
+          <label for="sortBy" class="list-filters-title">Trier par</label>
+          <select id="sortBy" class="filter-select sort-select list-filters-sort">
+            <option value="points" selected>Points</option>
+            <option value="goals">Buts</option>
+            <option value="assists">Passes</option>
           </select>
         </div>
       </aside>
@@ -373,21 +364,6 @@
           <span class="filters-header-summary" id="filtersHeaderSummary"></span>
           
 
-          <label for="playerFilter" class="sr-only">Catégorie de joueurs</label>
-          <select id="playerFilter" class="filter-select filters-header-select">
-            
-
-            
-
-            <option value="all">Joueurs</option>
-            <option value="offensive">Attaquants</option>
-            <option value="defensive">Défenseurs</option>
-            <option value="goalies">Gardiens</option>
-            <option value="rookies">Recrues</option>
-            <option value="teams">Équipes</option>
-          </select>
-          
-
           <select id="availabilityFilter" class="filter-select is-replaced" hidden>
             <option value="available" selected>Disponibles</option>
             <option value="picked">Tous les choix</option>
@@ -397,13 +373,9 @@
 
         
 
-        <div class="category-tabs" id="categoryTabs" role="group" aria-label="Catégorie de joueurs"></div>
-
-        
-
         <div class="availability-tabs" id="availabilityTabs" role="group" aria-label="Joueurs libres ou tous"></div>
 
-        <div class="filters-row">
+        <div class="filters-row" hidden>
           
 
           <div class="search-field">
@@ -413,15 +385,6 @@
           </div>
           
 
-          <label for="sortBy" class="sr-only">Trier par</label>
-          <select id="sortBy" class="filter-select sort-select">
-            <option value="points">Points</option>
-            <option value="goals">Buts</option>
-            <option value="assists">Passes</option>
-          </select>
-          
-
-          <div class="sort-tabs" id="sortTabs" role="group" aria-label="Trier par"></div>
         </div>
 
         <div class="table-wrapper" id="playerTableWrapper">
@@ -723,18 +686,18 @@
   <script defer src="draftFavorites.js?v=20260905b"></script>
 
 
-  <script defer src="draftApercuExtra.js?v=20260905b"></script>
+  <script defer src="draftApercuExtra.js?v=20260906a"></script>
   
 
   <script defer src="draftListePremium.js"></script>
   
 
-  <script defer src="draftActifUI.js?v=20260905a"></script>
+  <script defer src="draftActifUI.js?v=20260906a"></script>
 
   <!-- Mise en page bureau : trois colonnes au lieu des deux onglets, et
        pastilles de position dans le tableau. Après draftActifUI.js, dont
        il rejoue les onglets. -->
-  <script defer src="draftDesk.js?v=20260905a"></script>
+  <script defer src="draftDesk.js?v=20260906a"></script>
 
   <script defer src="draftFinPopup.js?v=20260902a"></script>
 

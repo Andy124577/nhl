@@ -11,9 +11,16 @@
  *
  *   barre du haut     puce du pool actif (poolNav.js) + navigation
  *   bande de tour     chrono · équipe au bâton · carrousel des choix
- *   rail de gauche    MON ALIGNEMENT (défile) + LIMITES D'ÉQUIPE (au bas)
+ *   rail de gauche    FAVORIS / CHOIX — deux pastilles, une seule vue
  *   colonne centrale  panneau de tour, filtres, liste des joueurs
- *   rail de droite    suggestion + derniers choix
+ *   rail de droite    suggestion + MON ALIGNEMENT + LIMITES D'ÉQUIPE
+ *
+ * Les deux rails ont échangé leur contenu. L'alignement ne bouge qu'à mes
+ * propres choix — une fois par ronde : il part à droite, avec la
+ * suggestion, du côté de ce qui commente le repêchage. Le rail de gauche
+ * prend ce qu'on relit en boucle pendant qu'on repêche : la liste de ses
+ * favoris, et celle de TOUS les choix du plus récent au plus ancien. Une
+ * seule des deux à la fois, choisie par pastille (§1 bis).
  *
  * Le rail de gauche est celui de poolNav.js (#fzSidebar) : cette page
  * le reprend à son compte via `document.body.dataset.fzRail = 'page'`,
@@ -99,26 +106,29 @@ function fzDeskMonterBande() {
  * rafraîchissement par fzDeskRenderRail().
  *
  * DEUX HÔTES, UNE SEULE COQUILLE. Sur bureau elle vit dans le rail de
- * poolNav (#fzSidebar) ; sous 1100px, la maquette téléphone en fait
- * l'onglet « Mon équipe », et elle passe dans #lineupCard — la carte
- * qui portait jusqu'ici une simple liste à plat de mes choix, sans les
- * cases vides ni les limites. Les ids sont uniques : on DÉPLACE la
- * coquille quand la fenêtre traverse le seuil plutôt que d'en monter
- * une seconde, ce qui casserait fzDeskRenderRail() (qui les cherche
- * par id) et les compteurs d'onglets qui lisent #fzdRailCount.
+ * DROITE (#draftRail), sous la suggestion ; sous 1100px, la maquette
+ * téléphone en fait l'onglet « Mon équipe », et elle passe dans
+ * #lineupCard — la carte qui portait jusqu'ici une simple liste à plat
+ * de mes choix, sans les cases vides ni les limites. Les ids sont
+ * uniques : on DÉPLACE la coquille quand la fenêtre traverse le seuil
+ * plutôt que d'en monter une seconde, ce qui casserait fzDeskRenderRail()
+ * (qui les cherche par id) et les compteurs d'onglets qui lisent
+ * #fzdRailCount.
+ *
+ * Elle vivait dans le rail de gauche (#fzSidebar) ; celui-ci porte
+ * maintenant les favoris et les choix (§1 bis). Le rail de droite est
+ * monté par fzDeskApply() AVANT cet appel — d'où l'ordre, là-bas.
  */
 function fzDeskMonterRail() {
-    const surBureau = fzDeskEstBureau();
-    const hote = surBureau ? document.getElementById('fzSidebar')
-                           : document.getElementById('lineupCard');
+    const hote = fzDeskEstBureau() ? document.getElementById('draftRail')
+                                   : document.getElementById('lineupCard');
     if (!hote) return null;
-    if (surBureau) hote.classList.add('fz-sidebar--draft');
 
-    let tete = document.getElementById('fzdRailHead');
+    const tete = document.getElementById('fzdRailHead');
     if (!tete) {
-        // En tête du rail (au-dessus du reste de poolNav), en queue de la
-        // carte (sous son propre en-tête, que draftPhone.css masque).
-        hote.insertAdjacentHTML(surBureau ? 'afterbegin' : 'beforeend', `
+        // En queue des deux hôtes : derrière la suggestion dans le rail,
+        // sous l'en-tête de la carte (que draftPhone.css masque).
+        hote.insertAdjacentHTML('beforeend', `
             <div class="fzd-rail-head" id="fzdRailHead">
                 <span class="fzd-rail-title">Mon alignement</span>
                 <span class="fzd-rail-count" id="fzdRailCount"></span>
@@ -132,13 +142,382 @@ function fzDeskMonterRail() {
     }
 
     if (tete.parentNode !== hote) {
-        const noeuds = [tete,
+        hote.append(...[tete,
                         document.getElementById('fzdRosterList'),
-                        document.getElementById('fzdRailFoot')].filter(Boolean);
-        if (surBureau) hote.prepend(...noeuds);
-        else hote.append(...noeuds);
+                        document.getElementById('fzdRailFoot')].filter(Boolean));
     }
     return hote;
+}
+
+/* ============================================================
+   1 bis. RAIL DE GAUCHE — FAVORIS / CHOIX
+   ------------------------------------------------------------
+   Une colonne, deux vues, une pastille chacune : « Favoris », les
+   joueurs qu'on s'est mis de côté à l'étoile de la liste, et
+   « Choix », tout le repêchage à l'envers — le dernier choix en
+   haut. Une seule des deux affichée à la fois (patron ARIA tablist,
+   comme les onglets de draftActifUI.js).
+
+   Rien n'est calculé ici non plus. Les favoris viennent de
+   fzGetFavorites() (draftFavorites.js), leur ordre de valeur de
+   fzPointsCandidat() — la même mesure que le favori proposé dans le
+   bandeau de tour — et les choix de buildPickSlots()
+   (draftPickCards.js), la fonction qui numérote déjà les cartes de la
+   bande du haut : c'est elle qui sait qu'un tour sauté décale
+   picksHistory, donc qu'un choix ne porte pas son rang d'historique.
+   ============================================================ */
+
+const FZD_COTE_VUES = ['favoris', 'choix'];
+let fzDeskCoteVue = 'favoris';
+
+/**
+ * Monte le panneau dans le rail de poolNav. Bureau seulement : sous
+ * 1100px, poolNav.css met .fz-sidebar à display:none et la maquette
+ * téléphone garde ses propres cartes (#recentPicksFeed pour les choix,
+ * l'étoile du tableau pour les favoris) — rien à déplacer, rien à
+ * dupliquer.
+ */
+function fzDeskMonterCote() {
+    if (!fzDeskEstBureau()) return null;
+    const hote = document.getElementById('fzSidebar');
+    if (!hote) return null;
+    hote.classList.add('fz-sidebar--draft');
+    if (document.getElementById('fzdSide')) return hote;
+
+    // En tête du rail : ce qui restait du contenu de poolNav (bloc du pool
+    // actif, gestion) est masqué par draftDesk.css, mais un rail déjà monté
+    // au moment du basculement peut encore le porter.
+    hote.insertAdjacentHTML('afterbegin', `
+        <div class="fzd-side" id="fzdSide">
+            <div class="fzd-side-tabs" id="fzdSideTabs" role="tablist"
+                 aria-label="Favoris ou choix du repêchage">
+                <button type="button" class="fzd-side-tab is-active" id="fzdSideTabFavoris"
+                        role="tab" data-vue="favoris" aria-selected="true"
+                        aria-controls="fzdSideFavoris" tabindex="0">
+                    <span class="fzd-side-tab-label">Favoris</span>
+                    <span class="fzd-side-tab-count" id="fzdSideCountFavoris" hidden></span>
+                </button>
+                <button type="button" class="fzd-side-tab" id="fzdSideTabChoix"
+                        role="tab" data-vue="choix" aria-selected="false"
+                        aria-controls="fzdSideChoix" tabindex="-1">
+                    <span class="fzd-side-tab-label">Choix</span>
+                    <span class="fzd-side-tab-count" id="fzdSideCountChoix" hidden></span>
+                </button>
+            </div>
+            <div class="fzd-side-panel" id="fzdSideFavoris" role="tabpanel"
+                 aria-labelledby="fzdSideTabFavoris" tabindex="0"></div>
+            <div class="fzd-side-panel" id="fzdSideChoix" role="tabpanel"
+                 aria-labelledby="fzdSideTabChoix" tabindex="0" hidden></div>
+        </div>`);
+
+    const pistes = document.getElementById('fzdSideTabs');
+    pistes.addEventListener('click', e => {
+        const pastille = e.target.closest('.fzd-side-tab');
+        if (pastille) fzDeskCoteActiver(pastille.dataset.vue, false);
+    });
+    // Un seul arrêt de tabulation dans la piste (tabindex baladeur), les
+    // flèches déplacent le focus et activent la vue visée — même patron que
+    // les onglets de draftActifUI.js.
+    pistes.addEventListener('keydown', e => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+        e.preventDefault();
+        const n = FZD_COTE_VUES.length;
+        const i = FZD_COTE_VUES.indexOf(fzDeskCoteVue);
+        const cible = e.key === 'Home' ? 0
+            : e.key === 'End' ? n - 1
+            : (i + (e.key === 'ArrowRight' ? 1 : n - 1)) % n;
+        fzDeskCoteActiver(FZD_COTE_VUES[cible], true);
+    });
+
+    fzDeskCoteAppliquer(false);
+    return hote;
+}
+
+function fzDeskCoteActiver(vue, focus) {
+    if (!FZD_COTE_VUES.includes(vue)) return;
+    fzDeskCoteVue = vue;
+    fzDeskCoteAppliquer(focus);
+}
+
+/** Une pastille active, un panneau visible — les deux listes restent
+ *  rendues, seul le `hidden` change : basculer ne coûte rien et la vue
+ *  cachée est déjà à jour quand on y revient. */
+function fzDeskCoteAppliquer(focus) {
+    document.querySelectorAll('#fzdSideTabs .fzd-side-tab').forEach(pastille => {
+        const actif = pastille.dataset.vue === fzDeskCoteVue;
+        pastille.classList.toggle('is-active', actif);
+        pastille.setAttribute('aria-selected', String(actif));
+        pastille.tabIndex = actif ? 0 : -1;
+        if (actif && focus) pastille.focus();
+        const panneau = document.getElementById(pastille.getAttribute('aria-controls'));
+        if (panneau) panneau.hidden = !actif;
+    });
+}
+
+/** Message d'attente des deux vues — même habillage que les cartes de
+ *  l'aperçu (.no-picks, draftActif-premium.css). */
+function fzDeskCoteVide(texte) {
+    const p = document.createElement('p');
+    p.className = 'no-picks fzd-side-empty';
+    p.textContent = texte;
+    return p;
+}
+
+function fzDeskCoteCompte(id, n) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = n > 0 ? String(n) : '';
+    el.hidden = !(n > 0);
+}
+
+/* ---- Favoris ---------------------------------------------------- */
+
+/**
+ * Mes favoris, prêts à afficher. Les repêchables d'abord, du meilleur au
+ * moins bon (fzPointsCandidat, draftFavorites.js) ; ceux qu'une autre
+ * équipe a déjà pris passent en fin de liste plutôt que d'en disparaître —
+ * c'est la trace de ce qu'on visait, et l'étoile reste à portée pour faire
+ * le ménage.
+ *
+ * Une fiche introuvable ne fait pas sauter la ligne : le nom et son étoile
+ * suffisent à la retirer, ce qu'un favori escamoté interdirait.
+ */
+function fzDeskFavoris() {
+    const noms = typeof fzGetFavorites === 'function' ? fzGetFavorites() : [];
+    const pris = typeof fzPickedSet === 'function' ? fzPickedSet() : new Set();
+
+    const lignes = noms.map(nom => {
+        const trouve = typeof fzFindRecord === 'function' ? fzFindRecord(nom) : null;
+        return {
+            nom,
+            trouve,
+            rec: trouve ? trouve.rec : null,
+            kind: trouve ? trouve.kind : null,
+            code: trouve && typeof fzPositionCode === 'function'
+                ? fzPositionCode(trouve.rec, trouve.kind) : null,
+            pris: pris.has(nom)
+        };
+    });
+
+    const valeur = f => (f.rec && typeof fzPointsCandidat === 'function')
+        ? fzPointsCandidat(f.rec, f.kind) : -1;
+    return lignes.sort((a, b) => (a.pris - b.pris) || (valeur(b) - valeur(a)));
+}
+
+function fzDeskBuildFavori(f) {
+    const el = document.createElement('div');
+    el.className = 'fzd-fav-row' + (f.pris ? ' is-picked' : '');
+
+    // La même étoile que la colonne Action du tableau : un seul stockage,
+    // un seul comportement, et retirer un favori d'ici le retire partout.
+    if (typeof fzBuildStarButton === 'function') el.appendChild(fzBuildStarButton(f.nom));
+
+    const pastille = document.createElement('span');
+    pastille.className = 'fzd-fav-photo';
+    if (f.trouve && typeof fzPhotoAndLogo === 'function') {
+        const { photo, logo } = fzPhotoAndLogo(f.nom, f.rec, f.kind);
+        const src = f.kind === 'team' ? photo : (photo || logo);
+        if (src) {
+            const img = document.createElement('img');
+            img.src = src; img.alt = ''; img.loading = 'lazy';
+            img.addEventListener('error', () => img.remove());
+            pastille.appendChild(img);
+        }
+    }
+    el.appendChild(pastille);
+
+    const txt = document.createElement('span');
+    txt.className = 'fzd-fav-txt';
+    const nom = document.createElement('span');
+    nom.className = 'fzd-fav-name';
+    nom.textContent = f.nom;
+    nom.title = f.nom;
+    txt.appendChild(nom);
+
+    const meta = document.createElement('span');
+    meta.className = 'fzd-fav-meta';
+    if (f.code) meta.appendChild(fzDeskBuildTag(f.code));
+    const details = [
+        fzDeskAbbrev(f.nom, f.trouve),
+        f.pris ? 'Repêché'
+               : (f.rec && typeof fzStatBlurb === 'function' ? fzStatBlurb(f.rec, f.kind) : '')
+    ].filter(Boolean).join(' · ');
+    if (details) {
+        const ligne = document.createElement('span');
+        ligne.className = 'fzd-fav-line';
+        ligne.textContent = details;
+        meta.appendChild(ligne);
+    }
+    txt.appendChild(meta);
+    el.appendChild(txt);
+
+    // Bouton de sélection aux mêmes conditions que la carte Suggestion
+    // (fzPeutChoisir, draftApercuExtra.js) : c'est mon tour, mon équipe
+    // n'est pas complète, et la position ne l'est pas non plus. Un bouton
+    // qui mènerait à un refus du serveur ne doit pas être proposé.
+    if (!f.pris && f.code
+        && typeof fzPeutChoisir === 'function' && fzPeutChoisir(f.code)
+        && typeof fzBuildSelectButton === 'function') {
+        const action = document.createElement('span');
+        action.className = 'fzd-fav-action';
+        action.appendChild(fzBuildSelectButton(f.nom, f.code));
+        el.appendChild(action);
+    }
+
+    return el;
+}
+
+function fzDeskRenderFavoris() {
+    const zone = document.getElementById('fzdSideFavoris');
+    if (!zone) return;
+
+    const favoris = fzDeskFavoris();
+    zone.replaceChildren();
+    if (!favoris.length) {
+        zone.appendChild(fzDeskCoteVide(
+            'Aucun favori. L’étoile de la liste des joueurs en ajoute.'));
+    } else {
+        favoris.forEach(f => zone.appendChild(fzDeskBuildFavori(f)));
+    }
+    // Le compteur dit ce qui reste à prendre, pas la longueur de la liste :
+    // c'est le chiffre qu'on regarde pendant qu'on repêche.
+    fzDeskCoteCompte('fzdSideCountFavoris', favoris.filter(f => !f.pris).length);
+}
+
+/* ---- Choix ------------------------------------------------------ */
+
+/**
+ * Tous les tours joués, du plus récent au plus ancien. Même découpage que
+ * la bande du haut (buildPickSlots) : un tour par position de draftOrder,
+ * donc le numéro affiché est bien « Choix N » du repêchage et non le rang
+ * dans picksHistory, que les tours sautés décalent. Les tours sautés sont
+ * gardés — sans eux, la suite des numéros ferait des trous inexpliqués.
+ */
+function fzDeskChoix() {
+    const donnees = (typeof draftData !== 'undefined' && draftData) ? draftData : {};
+    const historique = Array.isArray(donnees.picksHistory) ? donnees.picksHistory : [];
+    const ordre = Array.isArray(donnees.draftOrder) ? donnees.draftOrder : [];
+    const index = Number.isInteger(donnees.currentPickIndex) ? donnees.currentPickIndex : 0;
+    const nbEquipes = donnees.teams ? Object.keys(donnees.teams).length : 0;
+
+    const tours = (ordre.length && typeof buildPickSlots === 'function')
+        ? buildPickSlots(ordre, historique, index)
+        // Ordre pas encore généré : au moins les choix déjà faits, comme le
+        // repli de renderPickCarousel().
+        : (typeof buildPickSlotsFromHistory === 'function'
+            ? buildPickSlotsFromHistory(historique)
+            : historique.map(pick => ({ equipePool: pick.team, pick, etat: 'done' })));
+
+    const faits = [];
+    tours.forEach((tour, i) => {
+        if (tour.etat !== 'done' && tour.etat !== 'skipped') return;
+        faits.push({
+            equipePool: tour.equipePool,
+            pick: tour.pick,
+            etat: tour.etat,
+            numero: i + 1,
+            ronde: nbEquipes > 0 ? Math.floor(i / nbEquipes) + 1 : 0
+        });
+    });
+    return faits.reverse();
+}
+
+function fzDeskBuildChoix(tour, moi) {
+    const aMoi = !!moi && tour.equipePool === moi;
+    const el = document.createElement('div');
+    el.className = 'fzd-pick-row'
+        + (tour.etat === 'skipped' ? ' is-skipped' : '')
+        + (aMoi ? ' is-me' : '');
+
+    const numero = document.createElement('span');
+    numero.className = 'fzd-pick-num';
+    numero.textContent = String(tour.numero);
+    numero.title = tour.ronde ? 'Ronde ' + tour.ronde : '';
+    el.appendChild(numero);
+
+    const corps = document.createElement('div');
+    corps.className = 'fzd-pick-body';
+
+    const proprio = document.createElement('span');
+    proprio.className = 'fzd-pick-owner';
+    proprio.textContent = aMoi ? 'Vous' : (tour.equipePool || '');
+    proprio.title = tour.equipePool || '';
+    corps.appendChild(proprio);
+
+    if (tour.pick) {
+        const ligne = document.createElement('div');
+        ligne.className = 'fzd-pick-player';
+
+        const nomJoueur = tour.pick.player || '';
+        const trouve = typeof fzFindRecord === 'function' ? fzFindRecord(nomJoueur) : null;
+
+        const pastille = document.createElement('span');
+        pastille.className = 'fzd-pick-photo';
+        if (trouve && typeof fzPhotoAndLogo === 'function') {
+            const { photo, logo } = fzPhotoAndLogo(nomJoueur, trouve.rec, trouve.kind);
+            const src = trouve.kind === 'team' ? photo : (photo || logo);
+            if (src) {
+                const img = document.createElement('img');
+                img.src = src; img.alt = ''; img.loading = 'lazy';
+                img.addEventListener('error', () => img.remove());
+                pastille.appendChild(img);
+            }
+        }
+        ligne.appendChild(pastille);
+
+        const txt = document.createElement('span');
+        txt.className = 'fzd-pick-txt';
+        const nom = document.createElement('span');
+        nom.className = 'fzd-pick-name';
+        nom.textContent = nomJoueur;
+        nom.title = nomJoueur;
+        txt.appendChild(nom);
+
+        const meta = document.createElement('span');
+        meta.className = 'fzd-pick-meta';
+        const code = trouve && typeof fzPositionCode === 'function'
+            ? fzPositionCode(trouve.rec, trouve.kind) : null;
+        if (code) meta.appendChild(fzDeskBuildTag(code));
+        const abbrev = fzDeskAbbrev(nomJoueur, trouve);
+        if (abbrev) {
+            const equipe = document.createElement('span');
+            equipe.className = 'fzd-pick-abbr';
+            equipe.textContent = abbrev;
+            meta.appendChild(equipe);
+        }
+        txt.appendChild(meta);
+        ligne.appendChild(txt);
+        corps.appendChild(ligne);
+    } else {
+        const saute = document.createElement('span');
+        saute.className = 'fzd-pick-skip';
+        saute.textContent = 'Tour sauté — équipe complète';
+        corps.appendChild(saute);
+    }
+
+    el.appendChild(corps);
+    return el;
+}
+
+function fzDeskRenderChoix() {
+    const zone = document.getElementById('fzdSideChoix');
+    if (!zone) return;
+
+    const moi = typeof getUserTeam === 'function' ? getUserTeam() : null;
+    const choix = fzDeskChoix();
+
+    zone.replaceChildren();
+    if (!choix.length) {
+        zone.appendChild(fzDeskCoteVide('Aucun choix pour l’instant.'));
+    } else {
+        choix.forEach(tour => zone.appendChild(fzDeskBuildChoix(tour, moi)));
+    }
+    fzDeskCoteCompte('fzdSideCountChoix', choix.filter(t => t.etat === 'done').length);
+}
+
+function fzDeskRenderCote() {
+    fzDeskRenderFavoris();
+    fzDeskRenderChoix();
 }
 
 function fzDeskApply() {
@@ -149,18 +528,25 @@ function fzDeskApply() {
     if (!conteneur || !centre || !carteListe) return;
 
     fzDeskMonterBande();
-    fzDeskMonterRail();
 
     // Colonne de droite : ce qui commente le repêchage sans servir à choisir.
     // « Sauter ce tour » en tête : draftActifUI.js l'avait rangé dans la
     // piste des onglets, qui n'a plus rien à porter ici (les onglets sont
-    // masqués sur bureau). Déplacé AVANT les deux cartes pour arriver en
-    // premier — un appendChild qui suit se range derrière lui.
+    // masqués sur bureau). Déplacé AVANT le reste pour arriver en premier —
+    // un appendChild qui suit se range derrière lui.
+    //
+    // « Derniers choix » (#recentPicksFeed) ne monte plus ici : le rail de
+    // gauche en donne maintenant la liste ENTIÈRE, du plus récent au plus
+    // ancien (§1 bis). On le laisse où il est, dans .draft-sidebar, que
+    // draftDesk.css masque sur bureau — la maquette téléphone le garde
+    // intact dans son onglet « Choix ».
     const droite = fzDeskBoite('draftRail', 'draft-rail', conteneur);
     fzDeskDeplacer(document.getElementById('turn-skip-btn'), droite);
-    ['suggestionCard', 'recentPicksFeed'].forEach(id => {
-        fzDeskDeplacer(document.getElementById(id), droite);
-    });
+    fzDeskDeplacer(document.getElementById('suggestionCard'), droite);
+
+    // Après le rail, jamais avant : la coquille de l'alignement s'y range
+    // en queue, et fzDeskMonterRail() a besoin qu'il existe.
+    fzDeskMonterRail();
 
     // La colonne de filtres devient la bande de la maquette : pastilles
     // de position à gauche, recherche et équipe à droite.
@@ -575,6 +961,7 @@ function fzDeskSync() {
     else fzDeskUndo();
     // La coquille de l'alignement change d'hôte avec le mode.
     try { fzDeskMonterRail(); } catch (e) { console.error('[bureau] alignement :', e); }
+    try { fzDeskMonterCote(); } catch (e) { console.error('[bureau] favoris/choix :', e); }
     // Les onglets posent (ou retirent) leurs display en ligne selon le
     // mode : c'est leur propre fonction qui sait lesquels, on la rejoue.
     if (typeof window.fzApplyPanelTabs === 'function') window.fzApplyPanelTabs();
@@ -590,6 +977,7 @@ function fzDeskSync() {
 window.fzRefreshDeskUI = function () {
     try { fzDeskDecorateRows(); } catch (e) { console.error('[bureau] rangées :', e); }
     try { fzDeskRenderRail(); } catch (e) { console.error('[bureau] rail :', e); }
+    try { fzDeskRenderCote(); } catch (e) { console.error('[bureau] favoris/choix :', e); }
     try { fzDeskMarquerTour(); } catch (e) { console.error('[bureau] marque du tour :', e); }
 };
 
@@ -617,21 +1005,49 @@ function fzDeskWatchTable() {
  * reste qu'à poser sa coquille quand poolNav l'a créé.
  */
 function fzDeskWatchRail() {
-    // Sous 1100px l'hôte (#lineupCard) est déjà là : on monte tout de
-    // suite, et on attend quand même le rail — la fenêtre peut passer
-    // sur bureau plus tard, et la coquille devra le rejoindre.
+    // La coquille de l'alignement, elle, n'attend plus personne : ses deux
+    // hôtes existent déjà à ce moment (#draftRail, monté par fzDeskApply ;
+    // #lineupCard, écrit dans le HTML). Seul le panneau favoris/choix
+    // dépend du rail de poolNav.
     try { fzDeskMonterRail(); fzDeskRenderRail(); } catch (e) { console.error('[bureau] rail :', e); }
+
+    const monterCote = () => {
+        try { fzDeskMonterCote(); fzDeskRenderCote(); }
+        catch (e) { console.error('[bureau] favoris/choix :', e); }
+    };
+    monterCote();
     if (document.getElementById('fzSidebar')) return;
     const observateur = new MutationObserver(() => {
         if (!document.getElementById('fzSidebar')) return;
         observateur.disconnect();
-        try { fzDeskMonterRail(); fzDeskRenderRail(); } catch (e) { console.error('[bureau] rail :', e); }
+        monterCote();
     });
     observateur.observe(document.body, { childList: true });
 }
 
+/**
+ * Poser ou retirer une étoile ne passe pas par refreshDraftViews() :
+ * fzToggleFavorite() (draftFavorites.js) rappelle directement
+ * window.fzRefreshFavoritesUI, qui ne connaît que la colonne Action du
+ * tableau et le bandeau de tour. Sans ce relais, la liste du rail restait
+ * celle d'avant le clic — y compris quand le clic venait de sa propre
+ * étoile.
+ *
+ * Emballée plutôt que remplacée : la version d'origine garde la main sur
+ * ce qu'elle rendait déjà, et refreshDraftViews() n'a rien à savoir de
+ * plus (elle relit window[nom] à chaque passage).
+ */
+function fzDeskBrancherFavoris() {
+    const origine = window.fzRefreshFavoritesUI;
+    window.fzRefreshFavoritesUI = function () {
+        if (typeof origine === 'function') origine.apply(this, arguments);
+        try { fzDeskRenderFavoris(); } catch (e) { console.error('[bureau] favoris :', e); }
+    };
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     document.body.dataset.fzRail = 'page';
+    try { fzDeskBrancherFavoris(); } catch (e) {}
     try { fzDeskSync(); } catch (e) { console.error('[bureau] mise en page :', e); }
     try { fzDeskWatchRail(); } catch (e) {}
     try { fzDeskWatchTable(); } catch (e) {}
