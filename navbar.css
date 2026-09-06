@@ -558,6 +558,7 @@ html[data-theme="light"] .user-dropdown-header::after {
     border: 0; background: transparent;
     color: var(--text-secondary);
     text-align: left; font: inherit; font-weight: 600;
+    text-decoration: none;
     cursor: pointer;
     transition: background .18s ease, color .18s ease;
 }

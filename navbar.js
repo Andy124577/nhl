@@ -59,7 +59,9 @@ const NAV_ICON = {
     download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
     trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
     logout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
-    shield: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`
+    shield: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+    shieldCheck: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11.5 11.2 13.7 15.2 9.7"/></svg>`,
+    fileText: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>`
 };
 
 // Les 6 sections du site, dans l'ordre affiché partout (barre du haut,
@@ -242,6 +244,29 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                                     <span class="dropdown-hint">Basculer l'affichage</span>
                                 </span>
                             </button>
+                        </div>
+
+                        <!-- Les politiques quittent le pied de page de chaque écran
+                             pour se ranger ici : un seul endroit, toujours à portée
+                             une fois connecté. L'avis de non-affiliation, lui, reste
+                             au pied des pages — il n'a de valeur que visible là où
+                             s'affichent les noms et logos d'équipes. -->
+                        <div class="dropdown-group">
+                            <p class="dropdown-label">Légal</p>
+                            <a href="confidentialite.html" class="dropdown-item" role="menuitem">
+                                <span class="dropdown-icon">${NAV_ICON.shieldCheck}</span>
+                                <span class="dropdown-text">
+                                    <span class="dropdown-title">Politique de confidentialité</span>
+                                    <span class="dropdown-hint">Ce qu'on collecte, et pourquoi</span>
+                                </span>
+                            </a>
+                            <a href="conditions.html" class="dropdown-item" role="menuitem">
+                                <span class="dropdown-icon">${NAV_ICON.fileText}</span>
+                                <span class="dropdown-text">
+                                    <span class="dropdown-title">Conditions d'utilisation</span>
+                                    <span class="dropdown-hint">Les règles du service</span>
+                                </span>
+                            </a>
                         </div>
 
                         <div class="dropdown-group">
@@ -794,11 +819,25 @@ async function deleteMyAccount() {
 
 // ==================== PIED DE PAGE / MENTIONS LÉGALES ====================
 // Avis de non-affiliation : obligatoire pour appuyer l'usage nominatif des
-// marques et logos d'équipes. Injecté sur toutes les pages via la navbar.
+// marques et logos d'équipes. Injecté sur toutes les pages via la navbar —
+// il ne protège que là où les noms et logos s'affichent, donc il y reste.
+//
+// Les liens vers les politiques, eux, n'ont pas à se répéter au bas de
+// chaque écran : une fois connecté, le menu du compte les porte. On ne les
+// garde ici que pour le visiteur, qui n'a pas ce menu — et pour qui
+// l'accueil est souvent le seul point d'entrée vers les politiques.
+// (login.html et signup.html gardent les leurs, au moment de la collecte.)
 function renderLegalFooter() {
     if (document.querySelector('.site-legal-footer')) return;
 
+    const invite = localStorage.getItem('isLoggedIn') !== 'true';
     const year = new Date().getFullYear();
+    const liens = invite
+        ? `<a href="confidentialite.html">Politique de confidentialité</a>
+           <span aria-hidden="true">·</span>
+           <a href="conditions.html">Conditions d'utilisation</a>
+           <span aria-hidden="true">·</span>`
+        : '';
     const html = `
         <footer class="site-legal-footer">
             <p class="legal-disclaimer">
@@ -810,10 +849,7 @@ function renderLegalFooter() {
                 Les statistiques proviennent de sources publiques.
             </p>
             <p class="legal-links">
-                <a href="confidentialite.html">Politique de confidentialité</a>
-                <span aria-hidden="true">·</span>
-                <a href="conditions.html">Conditions d'utilisation</a>
-                <span aria-hidden="true">·</span>
+                ${liens}
                 <span class="legal-copy">© ${year} Fantazy</span>
             </p>
         </footer>
