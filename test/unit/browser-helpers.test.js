@@ -192,23 +192,28 @@ describe('teamColors', () => {
 });
 
 describe('injuries — normalisation des noms', () => {
-    test('DÉFAUT — un accent laisse une espace au milieu du nom', () => {
-        // Comportement ACTUEL, verrouillé parce qu'il est faux.
-        //
-        // NFD sépare « é » en « e » + accent combinant, puis /[^a-z]+/ remplace
-        // l'accent par une ESPACE au lieu de le supprimer. « Bédard » devient
-        // donc « be dard » et non « bedard ». Le commentaire de source dit que
-        // le filtre « garde la lettre » : il la garde, mais il coupe le mot.
-        //
-        // Conséquence, couverte par le test de getPlayerInjury plus bas : un
-        // joueur dont le nom est accentué d'un côté et pas de l'autre n'est
-        // jamais rapproché, ni par la clé exacte ni par la clé approximative.
-        //
-        // Correctif d'une ligne, le même que nameKey() et profanity.js :
-        //     .replace(/[̀-ͯ]/g, '')   avant le filtre [^a-z]
-        // Quand il sera appliqué, c'est ce test qui doit changer.
-        assert.equal(inj.injNormalizeName('Connor Bédard'), 'connor be dard');
+    test('un accent est retiré, il ne coupe pas le nom en deux', () => {
+        // L'accent combinant laissé par NFD est supprimé avant le filtre
+        // [^a-z], qui remplace tout le reste par une espace. Sans cette
+        // suppression, « Bédard » devenait « be dard ».
+        assert.equal(inj.injNormalizeName('Connor Bédard'), 'connor bedard');
         assert.equal(inj.injNormalizeName('Connor Bedard'), 'connor bedard');
+    });
+
+    test('les deux orthographes d\'un nom accentué donnent la même clé', () => {
+        // C'est l'invariant qui compte : le flux d'ESPN écrit les noms sans
+        // accent, nos tableaux avec. Les deux doivent tomber sur la même clé
+        // exacte ET la même clé approximative.
+        for (const [accentue, ascii] of [
+            ['Connor Bédard', 'Connor Bedard'],
+            ['Sam Montembeault', 'Sam Montembeault'],
+            ['Timothée Chalamet', 'Timothee Chalamet']
+        ]) {
+            const a = inj.injNormalizeName(accentue);
+            const b = inj.injNormalizeName(ascii);
+            assert.equal(a, b, `${accentue} / ${ascii}`);
+            assert.equal(inj.injLooseKey(a), inj.injLooseKey(b), `clé approximative : ${accentue}`);
+        }
     });
 
     test('les suffixes de génération sont écartés', () => {
@@ -274,19 +279,15 @@ describe('injuries — getPlayerInjury', () => {
         assert.ok(inj.getPlayerInjury('K\'Andre Miller', 'NYR'));
     });
 
-    test('DÉFAUT — un nom accentué d\'un seul côté n\'est jamais rapproché', () => {
-        // La conséquence directe du défaut de injNormalizeName ci-dessus.
-        // Le flux d'ESPN écrit les noms sans accent, nos tableaux avec :
-        // aucune pastille de blessure ne s'affiche pour ces joueurs-là.
-        //   clé exacte        : « connor bedard » ≠ « connor be dard »
-        //   clé approximative : « bedard|c »      ≠ « dard|c »
-        // Ce test passe au VERT aujourd'hui parce qu'il constate l'échec ; il
-        // doit être retourné en même temps que le correctif.
+    test('un nom accentué d\'un seul côté est rapproché quand même', () => {
+        // Le flux d'ESPN écrit « Connor Bedard », nos tableaux « Connor
+        // Bédard ». Les deux sens doivent fonctionner, sans quoi aucun joueur
+        // au nom accentué n'obtient sa pastille.
         inj.injIndex({ injuries: [{ playerName: 'Connor Bedard', team: 'CHI' }] });
-        assert.equal(inj.getPlayerInjury('Connor Bédard', 'CHI'), null);
+        assert.ok(inj.getPlayerInjury('Connor Bédard', 'CHI'), 'flux ASCII, table accentuée');
 
         inj.injIndex({ injuries: [{ playerName: 'Connor Bédard', team: 'CHI' }] });
-        assert.equal(inj.getPlayerInjury('Connor Bedard', 'CHI'), null);
+        assert.ok(inj.getPlayerInjury('Connor Bedard', 'CHI'), 'flux accentué, table ASCII');
     });
 
     test('sans accent des deux côtés, le rapprochement fonctionne', () => {

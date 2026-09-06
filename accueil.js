@@ -11,6 +11,7 @@ let userData = {
     userPools: [],
     pendingTrades: [],
     statsData: null,
+    teamsData: null,
     statsLeaders: null
 };
 
@@ -33,8 +34,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Fetch pools, stats and pending trades in parallel
+    // loadCurrentTeamsData() : buildTeamScores() compte le club repêché par
+    // chaque équipe, il lui faut donc les fiches de clubs. Chargé ici, avec
+    // le reste, plutôt qu'à l'usage — la fonction de pointage est synchrone.
     await Promise.all([
-        FZPool.ready(), loadPools(), loadCurrentStats(), loadStatsLeaders(), loadPendingTrades()
+        FZPool.ready(), loadPools(), loadCurrentStats(), loadCurrentTeamsData(),
+        loadStatsLeaders(), loadPendingTrades()
     ]);
 
     // The pool-glance/roster card, "Mes classements", and the Activité tab
@@ -100,6 +105,18 @@ async function loadCurrentStats() {
         userData.statsData = await res.json();
     } catch (err) {
         console.warn('Could not load current stats:', err);
+    }
+}
+
+// Fiches de clubs : buildTeamScores() en a besoin pour compter le club
+// repêché par chaque équipe. Échec sans conséquence — les clubs valent
+// alors 0, comme avant.
+async function loadCurrentTeamsData() {
+    try {
+        const res = await fetch(`${BASE_URL}/current-teams`, { cache: 'no-store' });
+        userData.teamsData = await res.json();
+    } catch (err) {
+        console.warn('Could not load current teams:', err);
     }
 }
 
@@ -361,15 +378,19 @@ function buildTeamScores(pool) {
         stats.players.forEach(p => {
             const name = p.playerName;
             if (!name) return;
-            if (p.position === 'G') {
-                // Goalie fantasy points: shutouts*5 + wins*2 + otLosses*1
-                playerPts[name] = (p.shutouts || 0) * 5 + (p.wins || 0) * 2 + (p.otLosses || 0) * 1;
-            } else {
-                // Skater: use points from API
-                playerPts[name] = p.points || 0;
-            }
+            // Formule partagée (lib/scoring.js), plus recopiée ici.
+            playerPts[name] = p.position === 'G' ? goaliePoolPoints(p) : (p.points || 0);
         });
     }
+
+    // Le club repêché compte lui aussi (2×V + DP), comme sur la page de
+    // classement et comme dans le rang enregistré par le serveur. Sans
+    // lui, l'aperçu de la page d'accueil pouvait classer deux équipes
+    // dans un autre ordre que le classement lui-même.
+    const clubPts = {};
+    ((userData.teamsData && userData.teamsData.teams) || []).forEach(t => {
+        if (t && t.teamFullName) clubPts[t.teamFullName] = clubPoolPoints(t);
+    });
 
     // Compute each team's score
     const rows = Object.entries(teams).map(([teamName, td]) => {
@@ -379,7 +400,8 @@ function buildTeamScores(pool) {
             ...(td.goalie    || []),
             ...(td.rookie    || [])
         ];
-        const score = players.reduce((s, n) => s + (playerPts[n] || 0), 0);
+        const score = players.reduce((s, n) => s + (playerPts[n] || 0), 0)
+            + (td.teams || []).reduce((s, n) => s + (clubPts[n] || 0), 0);
         const isCurrentUser = !!td.members && td.members.includes(userData.username);
         return { teamName, score, isCurrentUser, memberCount: (td.members || []).length };
     });

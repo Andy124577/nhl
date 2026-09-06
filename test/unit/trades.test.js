@@ -3,9 +3,7 @@
 const { test, describe, mock, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 
-const {
-    teamHasPlayer, invalidateConflictingTrades, removeFromTeam, addToTeam, getPositionLabel
-} = require('../../lib/trades.js');
+const { teamHasPlayer, removeFromTeam, addToTeam, getPositionLabel } = require('../../lib/trades.js');
 const { makeTeam } = require('../fixtures/pool.js');
 
 afterEach(() => { mock.restoreAll(); });
@@ -161,73 +159,6 @@ describe('retrait puis ajout (aller-retour d\'un échange)', () => {
         assert.equal(teamHasPlayer(rouge, article), false);
         assert.equal(teamHasPlayer(bleu, article), true);
         assert.equal(bleu.offensive.at(-1), fiche, 'la même fiche, pas une copie');
-    });
-});
-
-describe('invalidateConflictingTrades', () => {
-    /** Une proposition d'échange en attente. */
-    function trade(id, over = {}) {
-        return {
-            id,
-            draftName: 'PoolA',
-            offering: [{ name: 'McDavid', type: 'offensive' }],
-            receiving: [{ name: 'Makar', type: 'defensive' }],
-            ...over
-        };
-    }
-
-    test('annule les propositions qui portent sur un joueur échangé', () => {
-        mock.method(console, 'log', () => {});
-        const trades = { pending: [trade(1), trade(2, { offering: [{ name: 'Crosby' }], receiving: [{ name: 'Autre' }] })] };
-        const accepte = trade(9);
-
-        const n = invalidateConflictingTrades(trades, accepte, {});
-
-        assert.equal(n, 1);
-        assert.deepEqual(trades.pending.map(t => t.id), [2]);
-    });
-
-    test('le conflit compte des deux côtés de la proposition', () => {
-        mock.method(console, 'log', () => {});
-        const cote1 = trade(1, { offering: [{ name: 'McDavid' }], receiving: [{ name: 'X' }] });
-        const cote2 = trade(2, { offering: [{ name: 'Y' }], receiving: [{ name: 'Makar' }] });
-        const trades = { pending: [cote1, cote2] };
-
-        assert.equal(invalidateConflictingTrades(trades, trade(9), {}), 2);
-        assert.deepEqual(trades.pending, []);
-    });
-
-    test('les propositions d\'un AUTRE pool ne sont pas touchées', () => {
-        // Le garde-fou qui empêche l'échange d'un pool d'annuler celui du
-        // voisin — deux pools peuvent très bien contenir le même joueur.
-        const autrePool = trade(2, { draftName: 'PoolB' });
-        const trades = { pending: [autrePool] };
-
-        assert.equal(invalidateConflictingTrades(trades, trade(9), {}), 0);
-        assert.deepEqual(trades.pending.map(t => t.id), [2]);
-    });
-
-    test('sans proposition en attente, il n\'y a rien à annuler', () => {
-        assert.equal(invalidateConflictingTrades({ pending: [] }, trade(9), {}), 0);
-        assert.equal(invalidateConflictingTrades({}, trade(9), {}), 0);
-        assert.equal(invalidateConflictingTrades({ pending: null }, trade(9), {}), 0);
-    });
-
-    test('sans joueur commun, rien n\'est retiré', () => {
-        const sansRapport = trade(2, { offering: [{ name: 'Crosby' }], receiving: [{ name: 'Hughes' }] });
-        const trades = { pending: [sansRapport] };
-
-        assert.equal(invalidateConflictingTrades(trades, trade(9), {}), 0);
-        assert.equal(trades.pending.length, 1);
-    });
-
-    test('la proposition acceptée est elle-même annulée si elle est encore en attente', () => {
-        mock.method(console, 'log', () => {});
-        const accepte = trade(1);
-        const trades = { pending: [accepte] };
-
-        assert.equal(invalidateConflictingTrades(trades, accepte, {}), 1);
-        assert.deepEqual(trades.pending, []);
     });
 });
 

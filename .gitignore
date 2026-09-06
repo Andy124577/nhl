@@ -32,6 +32,9 @@ coverage/
 
 # Cache files
 current_stats.json
+# Réécrit par le serveur au même titre que current_stats.json ci-dessus
+# (rafraîchissement des classements d'équipe).
+current_teams.json
 team-standings.json
 nhl_game_logs.json
 server.log

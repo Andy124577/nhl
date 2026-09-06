@@ -292,7 +292,7 @@ function renderTeamStatsTable(teams) {
 
                     const gp = currentGoalieStats?.gamesPlayed ?? goalie.gamesPlayed ?? 0;
 
-                    // Calculate goalie points: shutouts * 5 + wins * 2 + OTL * 1
+                    // Formule partagée : goaliePoolPoints() (lib/scoring.js).
                     let pts;
                     let wins, shutouts, otl;
 
@@ -300,12 +300,12 @@ function renderTeamStatsTable(teams) {
                         wins = currentGoalieStats.wins || 0;
                         shutouts = currentGoalieStats.shutouts || 0;
                         otl = currentGoalieStats.otLosses || 0;
-                        pts = (shutouts * 5) + (wins * 2) + (otl * 1);
+                        pts = goaliePoolPoints({ shutouts, wins, otLosses: otl });
                     } else {
                         wins = goalie.wins || 0;
                         shutouts = goalie.shutouts || 0;
                         otl = goalie.otLosses || 0;
-                        pts = goalie.points || ((shutouts * 5) + (wins * 2) + (otl * 1));
+                        pts = goalie.points || goaliePoolPoints({ shutouts, wins, otLosses: otl });
                     }
 
                     const todayPts = currentGoalieStats?.todayPoints ?? 0;
@@ -342,13 +342,13 @@ function renderTeamStatsTable(teams) {
                         gp = currentTeamStats.gamesPlayed || 0;
                         wins = currentTeamStats.wins || 0;
                         otl = currentTeamStats.otLosses || 0;
-                        pts = currentTeamStats.points || ((wins * 2) + (otl * 1));
+                        pts = currentTeamStats.points || clubPoolPoints({ wins, otLosses: otl });
                     } else {
                         // Fallback to cached data
                         gp = nhlTeam.gamesPlayed || 0;
                         wins = nhlTeam.wins || 0;
                         otl = nhlTeam.otLosses || 0;
-                        pts = (wins * 2) + (otl * 1);
+                        pts = clubPoolPoints({ wins, otLosses: otl });
                     }
 
                     totalGP += gp;

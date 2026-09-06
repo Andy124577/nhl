@@ -4,8 +4,8 @@ const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 
 const {
-    FANTASY_SCORING, computeTeamSeasonScores, getTeamWeeklyPoints,
-    skaterFantasyPointsTonight, goalieFantasyPointsTonight
+    FANTASY_SCORING, goaliePoolPoints, clubPoolPoints, computeTeamSeasonScores,
+    getTeamWeeklyPoints, skaterFantasyPointsTonight, goalieFantasyPointsTonight
 } = require('../../lib/scoring.js');
 const { makePool, makeTeam } = require('../fixtures/pool.js');
 const { makeSkaterStat, makeGoalieStat, makeBoxscoreSkater, makeBoxscoreGoalie } = require('../fixtures/stats.js');
@@ -27,6 +27,53 @@ describe('FANTASY_SCORING', () => {
         assert.equal(FANTASY_SCORING.shutout, 3);
         assert.equal(FANTASY_SCORING.save, 0.2);
         assert.equal(FANTASY_SCORING.goalsAgainst, -1);
+    });
+});
+
+describe('goaliePoolPoints', () => {
+    // Source unique de la formule : elle était recopiée dans six fichiers.
+    // Chaque poids est affirmé seul, pour qu'une modification fasse tomber un
+    // test évident plutôt qu'une douzaine de totaux.
+    test('un blanchissage vaut 5', () => {
+        assert.equal(goaliePoolPoints({ shutouts: 1 }), 5);
+    });
+
+    test('une victoire vaut 2', () => {
+        assert.equal(goaliePoolPoints({ wins: 1 }), 2);
+    });
+
+    test('une défaite en prolongation vaut 1', () => {
+        assert.equal(goaliePoolPoints({ otLosses: 1 }), 1);
+    });
+
+    test('une saison complète : 4 BL, 30 V, 6 DP = 86', () => {
+        assert.equal(goaliePoolPoints({ shutouts: 4, wins: 30, otLosses: 6 }), 86);
+    });
+
+    test('une fiche vide ou absente vaut 0', () => {
+        assert.equal(goaliePoolPoints({}), 0);
+        assert.equal(goaliePoolPoints(null), 0);
+        assert.equal(goaliePoolPoints(undefined), 0);
+    });
+});
+
+describe('clubPoolPoints', () => {
+    test('une victoire vaut 2, une défaite en prolongation 1', () => {
+        assert.equal(clubPoolPoints({ wins: 1 }), 2);
+        assert.equal(clubPoolPoints({ otLosses: 1 }), 1);
+    });
+
+    test('une saison complète : 50 V, 8 DP = 108', () => {
+        assert.equal(clubPoolPoints({ wins: 50, otLosses: 8 }), 108);
+    });
+
+    test('les défaites en temps réglementaire ne retranchent rien', () => {
+        assert.equal(clubPoolPoints({ wins: 10, losses: 40, otLosses: 0 }), 20);
+    });
+
+    test('une fiche vide ou absente vaut 0', () => {
+        assert.equal(clubPoolPoints({}), 0);
+        assert.equal(clubPoolPoints(null), 0);
     });
 });
 
@@ -193,6 +240,74 @@ describe('computeTeamSeasonScores', () => {
         assert.deepEqual(computeTeamSeasonScores(pool, []), []);
     });
 
+    test('le club repêché compte pour 2×V + DP', () => {
+        // Il ne comptait pour rien, alors que classement.js l'incluait déjà
+        // dans le total affiché : le rang enregistré ici et le total de la
+        // même ligne pouvaient donc classer deux équipes dans un autre ordre,
+        // et les flèches d'évolution annonçaient des mouvements fantômes.
+        const pool = makePool({
+            teams: { Rouge: makeTeam({ offensive: ['McDavid'], teams: ['Vegas Golden Knights'] }) }
+        });
+        const stats = [makeSkaterStat('McDavid', { points: 100 })];
+        const clubs = [{ teamFullName: 'Vegas Golden Knights', wins: 50, otLosses: 8 }];
+
+        assert.equal(computeTeamSeasonScores(pool, stats, clubs)[0].score, 208);   // 100 + 108
+    });
+
+    test('sans fiches de clubs, le club vaut 0 plutôt que de faire échouer le calcul', () => {
+        // Le cache de clubs peut être vide au tout début de la saison.
+        const pool = makePool({
+            teams: { Rouge: makeTeam({ offensive: ['McDavid'], teams: ['Vegas Golden Knights'] }) }
+        });
+        const stats = [makeSkaterStat('McDavid', { points: 100 })];
+
+        assert.equal(computeTeamSeasonScores(pool, stats)[0].score, 100);
+        assert.equal(computeTeamSeasonScores(pool, stats, [])[0].score, 100);
+        assert.equal(computeTeamSeasonScores(pool, stats, null)[0].score, 100);
+    });
+
+    test('un club inconnu du cache vaut 0', () => {
+        const pool = makePool({ teams: { Rouge: makeTeam({ teams: ['Nordiques de Québec'] }) } });
+        const clubs = [{ teamFullName: 'Vegas Golden Knights', wins: 50, otLosses: 8 }];
+
+        assert.equal(computeTeamSeasonScores(pool, clubs && [], clubs)[0].score, 0);
+    });
+
+    test('un club inscrit en objet est reconnu comme en chaîne', () => {
+        const pool = makePool({
+            teams: { Rouge: makeTeam({ teams: [{ teamFullName: 'Vegas Golden Knights' }] }) }
+        });
+        const clubs = [{ teamFullName: 'Vegas Golden Knights', wins: 50, otLosses: 8 }];
+
+        assert.equal(computeTeamSeasonScores(pool, [], clubs)[0].score, 108);
+    });
+
+    test('une fiche de club sans nom est ignorée', () => {
+        const pool = makePool({ teams: { Rouge: makeTeam({ teams: ['Vegas Golden Knights'] }) } });
+        const clubs = [{ wins: 99 }, { teamFullName: 'Vegas Golden Knights', wins: 50, otLosses: 8 }];
+
+        assert.equal(computeTeamSeasonScores(pool, [], clubs)[0].score, 108);
+    });
+
+    test('le club peut changer le classement entre deux équipes', () => {
+        // La raison d'être du correctif : deux équipes proches aux joueurs,
+        // séparées par la valeur de leur club.
+        const pool = makePool({
+            teams: {
+                Rouge: makeTeam({ offensive: ['McDavid'], teams: ['Faible'] }),
+                Bleu: makeTeam({ members: ['b'], offensive: ['Makar'], teams: ['Fort'] })
+            }
+        });
+        const stats = [makeSkaterStat('McDavid', { points: 100 }), makeSkaterStat('Makar', { points: 90 })];
+        const clubs = [
+            { teamFullName: 'Faible', wins: 20, otLosses: 5 },   // 45
+            { teamFullName: 'Fort', wins: 55, otLosses: 7 }      // 117
+        ];
+
+        assert.deepEqual(computeTeamSeasonScores(pool, stats).map(r => r.teamName), ['Rouge', 'Bleu']);
+        assert.deepEqual(computeTeamSeasonScores(pool, stats, clubs).map(r => r.teamName), ['Bleu', 'Rouge']);
+    });
+
     test('un gardien sans aucune statistique de victoire vaut 0', () => {
         const pool = makePool({ teams: { Rouge: makeTeam({ goalie: ['Recrue'] }) } });
         const stats = [makeGoalieStat('Recrue', { wins: 0, shutouts: 0, otLosses: 0 })];
@@ -224,12 +339,10 @@ describe('getTeamWeeklyPoints', () => {
     });
 
     test('les choix d\'équipe LNH ne comptent PAS ici', () => {
-        // Ni ici ni dans computeTeamSeasonScores : les deux serveurs ignorent
-        // la case `teams`. Le CLIENT, lui, les compte — classement.js
-        // calculateTeamPoints() ajoute 2×V + DP pour le club repêché. C'est
-        // là qu'est le vrai désaccord : le total affiché dans le tableau
-        // inclut le club, le rang enregistré par le serveur (qui alimente les
-        // flèches d'évolution) ne l'inclut pas.
+        // Le pointage de SAISON compte désormais le club (2×V + DP), pas le
+        // pointage HEBDOMADAIRE : une semaine est calculée sur les feuilles de
+        // match, et il n'existe pas d'historique match par match des victoires
+        // d'un club. Écart assumé, verrouillé ici.
         const avecClub = makeTeam({ offensive: ['McDavid'], teams: ['Montréal Canadiens'] });
         const statsAvecClub = {
             players: [...stats.players, { playerName: 'Montréal Canadiens', points: 999 }]
@@ -295,15 +408,14 @@ describe('getTeamWeeklyPoints', () => {
         assert.equal(getTeamWeeklyPoints(team, stats), 70);
     });
 
-    test('une entrée nulle dans une case lève une erreur', () => {
-        // Comportement actuel : `playerData.skaterFullName` n'est pas gardé.
-        // Une chaîne vide passe, un null non — la différence n'est pas
-        // intentionnelle, elle tient à l'ordre des accès. Verrouillé pour que
-        // l'appelant sache qu'un roster contenant un trou fait tomber le
-        // calcul de la semaine entière.
-        const team = makeTeam({ offensive: [null, 'McDavid'] });
+    test('une entrée nulle dans une case vaut 0, sans faire tomber la semaine', () => {
+        // Un roster peut contenir un trou après un échange mal appliqué.
+        // Avant la garde `?.`, un seul null faisait échouer le calcul de toute
+        // la semaine, pour les deux équipes du duel.
+        const team = makeTeam({ offensive: [null, undefined, '', 'McDavid'] });
 
-        assert.throws(() => getTeamWeeklyPoints(team, stats), TypeError);
+        assert.doesNotThrow(() => getTeamWeeklyPoints(team, stats));
+        assert.equal(getTeamWeeklyPoints(team, stats), 70);
     });
 });
 

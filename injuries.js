@@ -100,10 +100,21 @@ function loadInjuries() {
  */
 function injNormalizeName(value) {
     return String(value || '')
-        // NFD sépare « é » en « e » + accent combinant ; le filtre [^a-z]
-        // qui suit emporte l'accent et garde la lettre. Sans NFD, il
-        // emporterait le « é » entier (Bédard → « b dard »).
+        // NFD sépare « é » en « e » + accent combinant, puis les marques
+        // combinantes sont RETIRÉES — pas remplacées par une espace.
+        //
+        // Le filtre [^a-z] plus bas remplace tout le reste par ' ' : en le
+        // laissant traiter l'accent, « Bédard » devenait « be dard » et ne
+        // pouvait plus être rapproché de « Bedard », l'orthographe sans
+        // accent qu'emploie le flux d'ESPN. Ni la clé exacte ni la clé
+        // approximative (« dard|c » contre « bedard|c ») ne concordaient,
+        // et aucun joueur au nom accentué n'obtenait sa pastille.
+        //
+        // Même traitement que nameKey() (tools/build_draftkit.js) et que
+        // normaliser() (profanity.js), qui retirent les marques de la
+        // même façon.
         .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
         .replace(/[^a-z]+/g, ' ')
         .replace(/\b(jr|sr|ii|iii|iv)\b/g, ' ')

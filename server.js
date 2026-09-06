@@ -19,13 +19,11 @@ const { v4: uuidv4 } = require("uuid");
 
 // Logique métier pure, extraite de ce fichier vers lib/ pour être testable
 // unitairement (voir UNIT_TESTS.md). Les corps de fonctions sont inchangés.
-const { FANTASY_SCORING, computeTeamSeasonScores, getTeamWeeklyPoints,
-    skaterFantasyPointsTonight, goalieFantasyPointsTonight } = require("./lib/scoring.js");
-const { generateWeeklyMatchups, ensureStandingsEntry, calculateWeeklyResults,
-    getCurrentWeekNumber, mondayOfWeek } = require("./lib/h2h.js");
+const { FANTASY_SCORING, goaliePoolPoints, clubPoolPoints, computeTeamSeasonScores,
+    getTeamWeeklyPoints, skaterFantasyPointsTonight, goalieFantasyPointsTonight } = require("./lib/scoring.js");
+const { generateWeeklyMatchups, ensureStandingsEntry, mondayOfWeek } = require("./lib/h2h.js");
 const { generateSnakeOrder, checkIfDraftComplete } = require("./lib/draft.js");
-const { teamHasPlayer, invalidateConflictingTrades, removeFromTeam, addToTeam,
-    getPositionLabel } = require("./lib/trades.js");
+const { teamHasPlayer, removeFromTeam, addToTeam, getPositionLabel } = require("./lib/trades.js");
 const { NHL_CLUB_FULLNAME, diffRosterSnapshots, getTeamAbbreviationFromName } = require("./lib/roster.js");
 const { getStatsRefreshStatus } = require("./lib/statsCache.js");
 
@@ -1941,7 +1939,9 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
                 savePct = seasonStats.saves / seasonStats.shotsAgainst;
             }
 
-            calculatedPoints = (shutouts * 5) + (wins * 2) + (otLosses * 1);
+            // Même ligne que le classement et les deux pages : la formule
+            // vit dans lib/scoring.js, plus ici (voir goaliePoolPoints).
+            calculatedPoints = goaliePoolPoints({ shutouts, wins, otLosses });
         } else {
             // Skater: use regular points (goals + assists)
             calculatedPoints = seasonStats.points || 0;
@@ -2152,11 +2152,15 @@ async function snapshotAllPoolRanks() {
     try {
         const pools = await db.getAllPools();
         const statsData = await loadCurrentStats();
+        // Les clubs repêchés comptent dans le classement (2×V + DP) : sans
+        // eux, le rang enregistré ici ne correspondrait pas au total que
+        // classement.js affiche sur la même ligne.
+        const teamsData = await loadCurrentTeams();
         const todayISO = new Date().toISOString().slice(0, 10);
         let rowCount = 0;
 
         for (const [poolName, poolData] of Object.entries(pools)) {
-            const scores = computeTeamSeasonScores(poolData, statsData.players || []);
+            const scores = computeTeamSeasonScores(poolData, statsData.players || [], teamsData.teams || []);
             for (const t of scores) {
                 await db.query(`
                     INSERT INTO pool_rank_snapshots (pool_name, team_name, rank, points, snapshot_date)
@@ -2586,8 +2590,9 @@ async function fetchCurrentTeamStandings() {
         // Extract team data from standings
         if (data.standings) {
             data.standings.forEach(team => {
-                // Calculate points using custom scoring: wins * 2 + OTL * 1
-                const calculatedPoints = (team.wins * 2) + (team.otLosses * 1);
+                // Barème de pool d'un club : formule partagée avec le
+                // classement et les pages (lib/scoring.js, clubPoolPoints).
+                const calculatedPoints = clubPoolPoints(team);
 
                 // Get team name, handling special cases
                 let teamFullName = team.teamName?.default || team.teamCommonName?.default;
@@ -2949,7 +2954,8 @@ app.get('/pool-rank-movement/:poolName', async (req, res) => {
         const poolData = poolResult.rows[0].pool_data;
 
         const statsData = await loadCurrentStats();
-        const liveScores = computeTeamSeasonScores(poolData, statsData.players || []);
+        const teamsData = await loadCurrentTeams();
+        const liveScores = computeTeamSeasonScores(poolData, statsData.players || [], teamsData.teams || []);
 
         const todayISO = new Date().toISOString().slice(0, 10);
         const snapResult = await db.query(
@@ -5243,24 +5249,30 @@ app.get('/pool-leaderboard/:poolName', async (req, res) => {
         const activeTeams = Object.entries(pool.teams || {})
             .filter(([, teamData]) => (teamData.members || []).length > 0);
 
-        let currentStats = null; // loaded lazily, once, only if a fallback is actually needed
+        // Le repli sur les totaux de saison s'applique à TOUTES les équipes ou
+        // à aucune. Appliqué équipe par équipe, il plaçait dans un même tableau
+        // des cumuls d'année à côté de pointages d'une seule période : le
+        // classement n'était alors comparable pour personne.
+        const pointsParEquipe = await Promise.all(
+            activeTeams.map(async ([, teamData]) => getTeamPointsForDateRange(teamData, startDate, endDate))
+        );
 
-        const teams = await Promise.all(activeTeams.map(async ([teamName, teamData]) => {
-            let points = await getTeamPointsForDateRange(teamData, startDate, endDate);
-            let source = 'gameLogs';
+        let source = 'gameLogs';
+        let currentStats = null;
+        if (pointsParEquipe.some(p => p === null)) {
+            currentStats = await loadCurrentStats();
+            source = (currentStats && currentStats.players && currentStats.players.length > 0)
+                ? 'seasonFallback'
+                : 'none';
+        }
 
-            if (points === null) {
-                if (!currentStats) currentStats = await loadCurrentStats();
-                if (currentStats && currentStats.players && currentStats.players.length > 0) {
-                    points = getTeamWeeklyPoints(teamData, currentStats);
-                    source = 'seasonFallback';
-                } else {
-                    points = null;
-                    source = 'none';
-                }
-            }
-
-            return { teamName, members: teamData.members || [], points, source };
+        const teams = activeTeams.map(([teamName, teamData], i) => ({
+            teamName,
+            members: teamData.members || [],
+            points: source === 'gameLogs' ? pointsParEquipe[i]
+                : source === 'seasonFallback' ? getTeamWeeklyPoints(teamData, currentStats)
+                    : null,
+            source
         }));
 
         teams.sort((a, b) => (b.points ?? -Infinity) - (a.points ?? -Infinity));
@@ -5441,22 +5453,59 @@ app.post('/h2h/finalize-week', async (req, res) => {
         console.log(`📅 Finalizing Week ${currentWeek}: ${weekStart.toISOString().split('T')[0]} to ${weekEnd.toISOString().split('T')[0]}`);
 
         // Calculate points using date-range (true weekly scoring)
+        //
+        // Passe préalable : on pointe TOUS les duels avant d'écrire quoi que ce
+        // soit. Une semaine se finalise en entier ou pas du tout — un classement
+        // à moitié inscrit serait pire que pas de classement, et il n'existe
+        // aucun repli valable quand les feuilles de match manquent (voir la note
+        // sur les unités plus bas).
+        const pointages = [];
         for (const matchup of weekMatchups) {
             const team1Data = clan.teams[matchup.team1];
             const team2Data = clan.teams[matchup.team2];
             if (!team1Data) console.warn(`⚠️ finalize-week: team "${matchup.team1}" not found in pool ${poolName}`);
             if (!team2Data) console.warn(`⚠️ finalize-week: team "${matchup.team2}" not found in pool ${poolName}`);
 
-            let t1pts = await getTeamPointsForDateRange(team1Data, weekStart, weekEnd);
-            let t2pts = await getTeamPointsForDateRange(team2Data, weekStart, weekEnd);
+            const t1pts = await getTeamPointsForDateRange(team1Data, weekStart, weekEnd);
+            const t2pts = await getTeamPointsForDateRange(team2Data, weekStart, weekEnd);
+            pointages.push({ matchup, t1pts, t2pts });
+        }
 
-            if (t1pts === null || t2pts === null) {
-                console.log(`⚠️ Falling back to season stats for Week ${currentWeek}`);
-                const currentStats = await loadCurrentStats();
-                if (t1pts === null) t1pts = getTeamWeeklyPoints(team1Data, currentStats);
-                if (t2pts === null) t2pts = getTeamWeeklyPoints(team2Data, currentStats);
+        // Repli sur les totaux de saison : tout le monde ou personne.
+        //
+        // Ces totaux sont cumulés depuis le début de l'année, dans une autre
+        // unité que le pointage hebdomadaire. Appliqués duel par duel, ils
+        // opposaient un cumul de saison au pointage d'une seule semaine dès
+        // qu'un seul côté manquait — victoire garantie pour celui-là. Appliqués
+        // à tout le monde, la comparaison redevient équitable, ce qui permet à
+        // un environnement dépourvu de feuilles de match de fonctionner.
+        const valeurs = pointages.flatMap(p => [p.t1pts, p.t2pts]);
+        const aucuneFeuille = valeurs.every(v => v === null);
+        const feuillesPartielles = !aucuneFeuille && valeurs.some(v => v === null);
+
+        if (feuillesPartielles) {
+            const noms = pointages
+                .filter(p => p.t1pts === null || p.t2pts === null)
+                .map(p => `${p.matchup.team1} / ${p.matchup.team2}`).join(', ');
+            console.warn(`⏸️ Week ${currentWeek} non finalisée (${poolName}) : feuilles de match incomplètes — ${noms}`);
+            return res.status(503).json({
+                message: `Semaine ${currentWeek} non finalisée : les feuilles de match sont incomplètes (${noms}). Elles arrivent par lots ; réessayez plus tard.`,
+                weekNumber: currentWeek,
+                missing: pointages.filter(p => p.t1pts === null || p.t2pts === null)
+                    .map(p => ({ team1: p.matchup.team1, team2: p.matchup.team2 }))
+            });
+        }
+
+        if (aucuneFeuille) {
+            console.warn(`⚠️ Week ${currentWeek} (${poolName}) : aucune feuille de match — repli sur les totaux de saison pour TOUTES les équipes.`);
+            const currentStats = await loadCurrentStats();
+            for (const p of pointages) {
+                p.t1pts = getTeamWeeklyPoints(clan.teams[p.matchup.team1], currentStats);
+                p.t2pts = getTeamWeeklyPoints(clan.teams[p.matchup.team2], currentStats);
             }
+        }
 
+        for (const { matchup, t1pts, t2pts } of pointages) {
             matchup.team1Points = t1pts;
             matchup.team2Points = t2pts;
             matchup.weekNumber = currentWeek;
@@ -5804,23 +5853,46 @@ async function checkAndFinalizeCompletedWeeks() {
 
                 console.log(`🔔 Auto-finalizing Week ${currentWeek} for pool: ${poolName}`);
 
-                // Calculate points using date-range scoring, fall back to season stats
+                // Passe préalable : pointer tous les duels avant d'écrire.
+                // Sans feuilles de match, la semaine n'est PAS finalisée — on
+                // sort de la boucle de rattrapage et le prochain passage
+                // reprendra la même semaine. Substituer les totaux de saison,
+                // comme ici avant, mélangeait deux unités et pouvait opposer un
+                // cumul d'année au pointage d'une seule semaine.
+                const pointages = [];
                 for (const matchup of weekMatchups) {
                     const team1Data = clan.teams[matchup.team1];
                     const team2Data = clan.teams[matchup.team2];
                     if (!team1Data) console.warn(`⚠️ Auto-finalize: team "${matchup.team1}" not found in pool ${poolName}`);
                     if (!team2Data) console.warn(`⚠️ Auto-finalize: team "${matchup.team2}" not found in pool ${poolName}`);
 
-                    let t1pts = await getTeamPointsForDateRange(team1Data, weekStart, weekEnd);
-                    let t2pts = await getTeamPointsForDateRange(team2Data, weekStart, weekEnd);
+                    const t1pts = await getTeamPointsForDateRange(team1Data, weekStart, weekEnd);
+                    const t2pts = await getTeamPointsForDateRange(team2Data, weekStart, weekEnd);
+                    pointages.push({ matchup, t1pts, t2pts });
+                }
 
-                    if (t1pts === null || t2pts === null) {
-                        console.log(`⚠️ Falling back to season stats for auto-finalize Week ${currentWeek}`);
-                        const currentStats = await loadCurrentStats();
-                        if (t1pts === null) t1pts = getTeamWeeklyPoints(team1Data, currentStats);
-                        if (t2pts === null) t2pts = getTeamWeeklyPoints(team2Data, currentStats);
+                // Même règle que la route manuelle : repli pour tout le monde
+                // ou pour personne. Une semaine à moitié pointée n'est pas
+                // finalisée du tout — la boucle la reprendra au prochain
+                // passage, quand les feuilles seront arrivées.
+                const valeurs = pointages.flatMap(p => [p.t1pts, p.t2pts]);
+                const aucuneFeuille = valeurs.every(v => v === null);
+
+                if (!aucuneFeuille && valeurs.some(v => v === null)) {
+                    console.warn(`⏸️ Semaine ${currentWeek} de ${poolName} laissée en attente : feuilles de match incomplètes. Reprise au prochain passage.`);
+                    break;
+                }
+
+                if (aucuneFeuille) {
+                    console.warn(`⚠️ Semaine ${currentWeek} de ${poolName} : aucune feuille de match — repli sur les totaux de saison pour TOUTES les équipes.`);
+                    const currentStats = await loadCurrentStats();
+                    for (const p of pointages) {
+                        p.t1pts = getTeamWeeklyPoints(clan.teams[p.matchup.team1], currentStats);
+                        p.t2pts = getTeamWeeklyPoints(clan.teams[p.matchup.team2], currentStats);
                     }
+                }
 
+                for (const { matchup, t1pts, t2pts } of pointages) {
                     matchup.team1Points = t1pts;
                     matchup.team2Points = t2pts;
                     matchup.weekNumber = currentWeek;

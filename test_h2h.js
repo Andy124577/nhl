@@ -385,6 +385,7 @@ async function testCatchUp() {
 
   // Create a fresh pool for this test
   const poolName = `H2H_CATCHUP_${Date.now()}`;
+  poolsCrees.push(poolName);   // pour que cleanup() le supprime aussi
   const cr = await api('POST', '/create-clan', {
     name: poolName, username: 'h2h_alpha', maxPlayers: 2,
     config: { numOffensive: 1, numDefensive: 0, numGoalies: 0, numRookies: 0, numTeams: 0 },
@@ -656,11 +657,28 @@ async function testEdgeCases() {
 // ============================================================
 // CLEANUP
 // ============================================================
+// Tout pool créé en cours de route s'ajoute à cette liste : le pool de
+// rattrapage porte un nom local et échappait au nettoyage, laissant une
+// trace dans draft.json à chaque exécution.
+const poolsCrees = [];
+
 async function cleanup() {
   section('CLEANUP');
   for (const p of [pool2, pool4]) {
     const r = await api('POST', '/delete-clan', { clanName: p });
     r.ok ? ok(`Pool "${p}" deleted`) : ko(`Delete "${p}"`, JSON.stringify(r.body));
+  }
+
+  // Filet de sécurité pour les pools créés en cours de route. Ils se
+  // suppriment eux-mêmes quand leur test va au bout ; ce passage ne sert
+  // qu'aux exécutions interrompues, où ils resteraient sinon dans draft.json.
+  // « n'existe pas » est donc le cas NORMAL, pas un échec.
+  for (const p of poolsCrees) {
+    const r = await api('POST', '/delete-clan', { clanName: p });
+    const dejaParti = /n'existe pas|not found/i.test(r.body?.message || '');
+    if (r.ok) ok(`Pool résiduel "${p}" supprimé`);
+    else if (dejaParti) ok(`Pool "${p}" déjà nettoyé par son test`);
+    else ko(`Delete "${p}"`, JSON.stringify(r.body));
   }
 }
 

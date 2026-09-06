@@ -1010,7 +1010,7 @@ function renderTeamRoster(roster, activeListings = []) {
             const wins = player.stats?.wins || player.cached.wins || 0;
             const shutouts = player.stats?.shutouts || player.cached.shutouts || 0;
             const otLosses = player.stats?.otLosses || player.cached.otLosses || 0;
-            points = 5 * shutouts + 2 * wins + otLosses;
+            points = goaliePoolPoints({ shutouts, wins, otLosses });
             stat1 = wins;
             stat2 = shutouts;
             stat1Label = 'V';
@@ -1019,7 +1019,7 @@ function renderTeamRoster(roster, activeListings = []) {
             gp = player.stats?.gamesPlayed || player.cached.gamesPlayed || 0;
             const wins = player.stats?.wins || player.cached.wins || 0;
             const otLosses = player.stats?.otLosses || player.cached.otLosses || 0;
-            points = 2 * wins + otLosses;
+            points = clubPoolPoints({ wins, otLosses });
             stat1 = wins;
             stat2 = otLosses;
             stat1Label = 'V';
@@ -1163,7 +1163,9 @@ function calculateTeamPoints(roster) {
             const wins = stats?.wins || playerData.wins || 0;
             const shutouts = stats?.shutouts || playerData.shutouts || 0;
             const otLosses = stats?.otLosses || playerData.otLosses || 0;
-            const points = 5 * shutouts + 2 * wins + otLosses;
+            // Formule partagée avec le serveur et la page d'accueil
+            // (lib/scoring.js) : recopiée ici, elle finissait par diverger.
+            const points = goaliePoolPoints({ shutouts, wins, otLosses });
 
             totalGP += gp;
             totalPoints += points;
@@ -1178,7 +1180,7 @@ function calculateTeamPoints(roster) {
             const gp = stats?.gamesPlayed || teamInfo.gamesPlayed || 0;
             const wins = stats?.wins || teamInfo.wins || 0;
             const otLosses = stats?.otLosses || teamInfo.otLosses || 0;
-            const points = 2 * wins + otLosses;
+            const points = clubPoolPoints({ wins, otLosses });
 
             totalGP += gp;
             totalPoints += points;

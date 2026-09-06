@@ -503,56 +503,49 @@ and the mutation spot-check in `UNIT_TESTS_REVIEW.md` §6 — 11 of 11 caught.
 
 ---
 
-## 11. What the tests found
+## 11. What the tests found — and what was done about it
 
-Writing the suite turned up five things in the existing code. None were
-introduced by the extraction — all five predate it. Each is **documented by a
-test that passes today**, so the current behaviour is locked and any future
-change to it is deliberate.
+Writing the suite turned up a series of defects in the existing code. None were
+introduced by the extraction; all predate it. **All are now fixed**, each with a
+test that fails if it comes back.
 
-### Defects
+Two of the original findings turned out to be wrong on closer inspection, and
+are recorded here because the corrections are more instructive than the
+findings were:
 
-1. **`injNormalizeName` breaks accented names in two**
-   ([injuries.js:101](injuries.js#L101)). NFD splits `é` into `e` + a combining
-   accent, and the `/[^a-z]+/` filter replaces that accent with a **space**
-   instead of removing it. `Connor Bédard` normalises to `connor be dard`,
-   while the ESPN feed's ASCII `Connor Bedard` gives `connor bedard`. Neither
-   the exact key nor the loose key (`dard|c` vs `bedard|c`) matches, so
-   **no accented player ever gets an injury badge**. One-line fix, the same
-   one `nameKey()` and `profanity.js` already use:
-   `.replace(/[̀-ͯ]/g, '')` before the `[^a-z]` filter. Two tests in
-   `browser-helpers.test.js` are named `DÉFAUT — …` and must be flipped when
-   it is fixed.
+- **"The two scoring functions disagree about goalies."** They don't. The stats
+  cache pre-computes the pool formula into `points` at
+  [server.js](server.js) (`calculatedPoints`), so reading `points` and
+  recomputing from W/SO/OTL give the same number — verified across all 58
+  goalies in the cache. The test that "proved" the divergence had forced
+  `points: 2` onto a goalie with 30 wins, a row that cannot exist. It now locks
+  the *agreement* instead.
+- **"Conflicting pending trades are never cancelled."** They are — the
+  `/trade/accept` route does it inline in SQL. `invalidateConflictingTrades`
+  wasn't a missing feature, it was a superseded duplicate.
 
-2. **`calculateWeeklyResults` double-counts on a second call.** No guard against
-   finalizing the same week twice. Reachable: the automatic finalization runs
-   every six hours *and* a manual route exists. Currently harmless only because
-   of finding 4 below.
+### Fixed
 
-3. **`getTeamWeeklyPoints` throws on a `null` roster entry** but tolerates an
-   empty string — an accident of access order, not a decision.
+| # | Defect | Fix |
+|---|---|---|
+| 1 | **Accented players never got an injury badge.** `injNormalizeName` turned NFD's combining accent into a *space*: `Connor Bédard` → `connor be dard` vs the ESPN feed's `connor bedard`. Neither the exact key nor the loose key (`dard\|c` vs `bedard\|c`) matched. | Combining marks are now stripped, as `nameKey()` and `profanity.js` already did. Both spellings resolve, in both directions. |
+| 2 | **The weekly H2H fallback mixed units.** When game logs were missing, the score fell back to season-to-date totals — a different unit from the date-range fantasy scoring. The two guards were independent, so a team whose logs were missing got a season total (hundreds) against an opponent's one-week score (tens): a guaranteed win. | Fallback is now **all-or-nothing**. No logs at all → every team falls back, so the comparison stays fair. Some teams only → the week is not finalized (503 on the manual route, `break` in the catch-up loop, which retries). |
+| 3 | **The season standings ignored drafted NHL clubs** while `classement.js` counted them (2×W + OTL) in the total displayed on the same row. The server's number drives `pool_rank_snapshots` and the evolution arrows, so the arrow could report a move that never happened. | `computeTeamSeasonScores` takes `teamStandings` and counts clubs. `accueil.js` counts them too, so all three agree. |
+| 4 | **The goalie formula existed in six places**, the club formula in four. They agreed by maintenance, not construction — changing a weight in one spot silently diverged the displayed total from the recorded rank. | One `goaliePoolPoints()` and one `clubPoolPoints()` in `lib/scoring.js`, which now carries the dual-export footer and is loaded by `classement.html`, `index.html` and `draftFini.html`. Zero copies remain. |
+| 5 | **`getTeamWeeklyPoints` threw on a `null` roster entry** while tolerating `''` — an accident of access order that took down a whole week's calculation. | `?.` guard; holes score 0. |
+| 6 | **Three dead functions**, two of which duplicated live logic: `calculateWeeklyResults` (duplicate of the inline finalization in `checkAndFinalizeCompletedWeeks`, and it double-counted on a second call), `invalidateConflictingTrades` (duplicate of the SQL in `/trade/accept`), `getCurrentWeekNumber` (no callers, no replacement). | Deleted, with their tests. A standings fix can no longer land in the copy that never runs. |
+| 7 | `test_h2h.js` leaked its catch-up pool into `draft.json` on interrupted runs; `current_teams.json` was tracked despite being server-written. | Cleanup safety net that tolerates already-deleted pools; `current_teams.json` gitignored and removed from the index. |
 
-### Dead code
+### Still open, by choice
 
-4. **Three extracted functions have zero call sites**, confirmed against
-   `server.js.bak` (the pre-extraction copy): `calculateWeeklyResults`,
-   `getCurrentWeekNumber`, and `invalidateConflictingTrades`. The last one
-   matters: **conflicting pending trades are never cancelled** after a trade is
-   accepted, because nothing calls the function that does it.
-   `calculateWeeklyResults` is worse than unused — it is a *duplicate* of the
-   standings logic that `checkAndFinalizeCompletedWeeks` re-implements inline,
-   so someone fixing a standings bug could edit the copy that never runs.
-
-### Inconsistency
-
-5. **The two season-scoring functions disagree about goalies.**
-   `computeTeamSeasonScores` scores them `SO×5 + W×2 + OTL×1`;
-   `getTeamWeeklyPoints` reads their `points` field. `getTeamWeeklyPoints` also
-   ignores NHL-team picks entirely. Both behaviours are now locked by named
-   tests, so whichever is wrong, changing it is a decision rather than an
-   accident.
-
----
+- **NHL-team picks score 0 in the weekly H2H standings.** There is no
+  game-by-game log of club wins, so a week cannot be scored for them — the
+  source comment says as much. Season standings now count them; weekly cannot.
+  Locked by a test so the asymmetry is deliberate.
+- **`computeTeamSeasonScores` ranks ties sequentially** (1 and 2, not 1 and 1).
+  Unchanged, locked by a test.
+- Four test pools from May runs sit in `draft.json`. They are committed data,
+  not artefacts of this work.
 
 ## 12. Definition of done, per test file
 
