@@ -87,7 +87,7 @@ function metaFor(player) {
 // ============================================================
 let currentTradeTab = 'propose';
 
-function switchTradeTab(tab) {
+function switchTradeTab(tab, { load = true } = {}) {
     currentTradeTab = tab;
 
     document.querySelectorAll('.trade-tab').forEach(btn => {
@@ -106,11 +106,11 @@ function switchTradeTab(tab) {
         }
     }
 
-    if (tab === 'received') {
+    if (load && tab === 'received') {
         loadReceivedTrades();
     }
 
-    if (tab === 'history') {
+    if (load && tab === 'history') {
         loadHistory();
     }
 }
@@ -220,11 +220,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     draftData = FZPool.all();
     applyActivePool();
 
-    // Une notification d'échange arrive avec ?trade=<id> : l'onglet des
-    // échanges reçus s'ouvre alors directement sur la proposition visée.
+    // Une notification conservée peut viser une proposition déjà traitée.
+    // Ouvrir et cibler la carte dans l'onglet qui la contient maintenant.
     const cible = new URLSearchParams(window.location.search).get('trade');
-    if (cible) switchTradeTab('received');
-    await loadReceivedTrades(cible);
+    if (cible) {
+        switchTradeTab('received', { load: false });
+        const recue = await loadReceivedTrades(cible);
+        if (recue === false) {
+            switchTradeTab('history', { load: false });
+            const archivee = await loadHistory(cible);
+            if (archivee === false) {
+                const message = document.createElement('p');
+                message.className = 'history-empty';
+                message.setAttribute('role', 'status');
+                message.textContent = 'Cet échange n’est plus disponible. Les autres échanges de ce pool restent consultables ci-dessous.';
+                document.getElementById('historyTradesContent')?.prepend(message);
+            }
+        }
+    } else {
+        await loadReceivedTrades();
+    }
 
     // Changer de pool depuis le rail recompose la page sans rechargement.
     FZPool.on(() => {
@@ -913,6 +928,18 @@ function resetTrade() {
 // ============================================================
 // RECEIVED TRADES
 // ============================================================
+function focusTradeTarget(container, idCible) {
+    if (!idCible) return false;
+    const carte = Array.from(container.querySelectorAll('[data-trade-id]'))
+        .find(element => element.dataset.tradeId === String(idCible));
+    if (!carte) return false;
+    carte.tabIndex = -1;
+    carte.focus({ preventScroll: true });
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    carte.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
+    return true;
+}
+
 async function loadReceivedTrades(idCible) {
     const container = document.getElementById('receivedTradesContent');
     if (!container) return;
@@ -936,7 +963,7 @@ async function loadReceivedTrades(idCible) {
 
         if (trades.length === 0) {
             container.innerHTML = `<p class="received-empty">Aucune proposition d'échange reçue${poolActif ? ` dans « ${poolActif} »` : ''}</p>`;
-            return;
+            return false;
         }
 
         container.innerHTML = trades.map(trade => {
@@ -991,10 +1018,7 @@ async function loadReceivedTrades(idCible) {
             `;
         }).join('');
 
-        if (idCible) {
-            const carte = container.querySelector(`[data-trade-id="${CSS.escape(String(idCible))}"]`);
-            if (carte) carte.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        return focusTradeTarget(container, idCible);
 
     } catch (err) {
         console.error('Error loading received trades:', err);
@@ -1022,9 +1046,9 @@ function startCounterOffer(teamName) {
 }
 
 // ============================================================
-// HISTORY — completed AND declined trades for the active pool.
+// HISTORY — completed, declined and cancelled trades for the active pool.
 // ============================================================
-async function loadHistory() {
+async function loadHistory(idCible) {
     const container = document.getElementById('historyTradesContent');
     if (!container) return;
 
@@ -1044,23 +1068,25 @@ async function loadHistory() {
             : [];
 
         if (trades.length === 0) {
-            container.innerHTML = '<p class="history-empty">Aucun échange complété ou refusé pour le moment.</p>';
-            return;
+            container.innerHTML = '<p class="history-empty">Aucun échange traité pour le moment.</p>';
+            return false;
         }
 
         container.innerHTML = trades.map(trade => {
-            const declined = trade.status === 'declined';
+            const cancelled = trade.status === 'cancelled';
+            const declined = trade.status === 'declined' || cancelled;
             const date = new Date(trade.completedDate || trade.date);
             const dateStr = date.toLocaleDateString('fr-CA', { year: 'numeric', month: 'short', day: 'numeric' });
             const offering = trade.offering?.[0];
             const receiving = trade.receiving?.[0];
             const acquiresLbl = declined ? 'Aurait acquis :' : 'Acquiert :';
+            const estCible = idCible && String(trade.id) === String(idCible);
 
             return `
-                <div class="history-card${declined ? ' is-declined' : ''}">
+                <div class="history-card${declined ? ' is-declined' : ''}${estCible ? ' is-target' : ''}" data-trade-id="${trade.id}">
                     <div class="history-card-head">
                         <span class="history-card-date">${dateStr}</span>
-                        <span class="history-card-status">${declined ? 'Refusé' : 'Complété'}</span>
+                        <span class="history-card-status">${cancelled ? 'Annulé' : declined ? 'Refusé' : 'Complété'}</span>
                     </div>
                     <div class="history-card-sides">
                         <div>
@@ -1090,6 +1116,8 @@ async function loadHistory() {
                 </div>
             `;
         }).join('');
+
+        return focusTradeTarget(container, idCible);
 
     } catch (err) {
         console.error('Error loading history:', err);

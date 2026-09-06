@@ -4675,10 +4675,10 @@ app.get('/trades/completed/:username', async (req, res) => {
         console.log(`Fetching completed trades for user: ${username}`);
 
         if (USE_POSTGRES) {
-            // Get completed AND declined trades from PostgreSQL — the
-            // Historique tab shows both, muted for declined (see trade.js).
+            // Retain every resolved proposal, including conflicting trades
+            // cancelled on acceptance, so notification links remain useful.
             const tradesResult = await db.query(
-                "SELECT id, pool_name, trade_data, status, created_at, updated_at FROM trades WHERE status IN ('completed', 'declined') ORDER BY COALESCE(updated_at, created_at) DESC"
+                "SELECT id, pool_name, trade_data, status, created_at, updated_at FROM trades WHERE status IN ('completed', 'declined', 'cancelled') ORDER BY COALESCE(updated_at, created_at) DESC"
             );
 
             console.log(`Total completed/declined trades in DB: ${tradesResult.rows.length}`);
@@ -4915,6 +4915,10 @@ app.post('/trade/propose', async (req, res) => {
 
         const tradeId = insertResult.rows[0].id;
 
+        // Invalidate only: clients fetch their own proposals through the
+        // existing user endpoint. Never broadcast private trade details.
+        io.emit('tradePending');
+
         console.log(`📤 Trade proposed: ${fromTeam} → ${toTeam} (${offeredPlayer.type}: ${offeredPlayer.name} ↔ ${receivedPlayer.name})`);
 
         res.json({ message: "Trade proposal sent successfully", tradeId });
@@ -5057,6 +5061,9 @@ app.post('/trade/accept', async (req, res) => {
             }
         }
 
+        // All affected trade statuses have been persisted at this point.
+        io.emit('tradeUpdated');
+
         // A "for sale" listing on a player who just changed teams would be
         // actively misleading, so it auto-clears here — the one case a
         // listing disappears without the owner manually unlisting it.
@@ -5089,6 +5096,8 @@ app.post('/trade/decline', async (req, res) => {
         if (result.rowCount === 0) {
             return res.status(404).json({ message: "Trade not found or already processed" });
         }
+
+        io.emit('tradeUpdated');
 
         console.log(`❌ Trade declined: ${tradeId}`);
         res.json({ message: "Trade declined successfully" });

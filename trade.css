@@ -917,8 +917,14 @@ body.fz-trade .received-trade-card {
     transition: none;
 }
 body.fz-trade .received-trade-card:hover { box-shadow: none; }
-body.fz-trade .received-trade-card.is-target {
+body.fz-trade .received-trade-card.is-target,
+body.fz-trade .history-card.is-target,
+body.fz-trade .history-card.is-target.is-declined {
     border-color: var(--fzt-accent);
+    outline: 2px solid var(--fzt-accent);
+    outline-offset: 3px;
+    scroll-margin-block: 100px;
+    opacity: 1;
     animation: fztTargetPulse 1.6s ease-out 2;
 }
 @keyframes fztTargetPulse {
@@ -926,7 +932,9 @@ body.fz-trade .received-trade-card.is-target {
     50% { box-shadow: 0 0 0 6px rgba(196,68,46,.12); }
 }
 @media (prefers-reduced-motion: reduce) {
-    body.fz-trade .received-trade-card.is-target { animation: none; }
+    body.fz-trade .received-trade-card.is-target,
+    body.fz-trade .history-card.is-target,
+    body.fz-trade .history-card.is-target.is-declined { animation: none; }
 }
 
 body.fz-trade .trade-card-header {

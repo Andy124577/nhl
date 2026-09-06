@@ -29,10 +29,18 @@
      1. CADRE — une seule page, trois colonnes qui défilent seules
      ========================================================== */
 
-  /* Le rail de gauche est en position fixe : c'est le padding du body
-     (posé par poolNav.css) qui lui réserve sa colonne. On l'élargit
-     aux 284px de la maquette. */
-  body.fz-draft { --fz-rail-w: 284px; }
+  /* Les deux mesures dont tout le reste de la page dépend.
+
+     --fz-rail-w : le rail de gauche est en position fixe : c'est le
+     padding du body (posé par poolNav.css) qui lui réserve sa colonne.
+     On l'élargit aux 284px de la maquette.
+
+     --fz-strip-h : la bande porte maintenant, sur chaque carte de choix,
+     le portrait du joueur, son nom complet sur deux lignes et l'équipe du
+     pool. Les 66px d'origine ne tenaient qu'un nom tronqué ; la hauteur
+     passe en jeton pour que les quatre calculs qui s'y accrochent — les
+     deux rails, la hauteur de la liste — suivent d'eux-mêmes. */
+  body.fz-draft { --fz-rail-w: 284px; --fz-strip-h: 76px; }
 
   body.fz-draft .draft-header {
     position: sticky;
@@ -61,7 +69,7 @@
   body.fz-draft .fzd-strip {
     display: flex;
     align-items: stretch;
-    height: 66px;
+    height: var(--fz-strip-h);
     background: var(--fzd-bg);
   }
 
@@ -210,31 +218,49 @@
     gap: 0;
     padding: 0;
   }
+  /* Trois rangées, le portrait à cheval sur les deux dernières : le repère
+     du tour court sur toute la largeur, puis la photo tient tête au nom et
+     à l'équipe du pool. draftActif-premium.css pose déjà display:grid ; ce
+     sont ses zones qu'on redessine ici, le pied ayant repris sa place. */
   body.fz-draft .fzd-strip .pick-card {
     flex: none;
-    width: 118px;
+    width: 172px;
     height: 100%;
     min-height: 0;
     padding: 8px 11px;
-    gap: 3px;
-    justify-content: flex-start;
+    grid-template-columns: 38px minmax(0, 1fr);
+    grid-template-areas:
+      "turn  turn"
+      "photo name"
+      "photo foot";
+    align-content: start;
+    gap: 3px 9px;
     border: 0;
     border-right: 1px solid var(--fzd-border);
     border-radius: 0;
     box-shadow: none;
     /* Le dégradé aux couleurs de l'équipe (draftActif.css) demande la
-       hauteur d'une vraie carte ; sur 66px il ne se lit plus et impose
+       hauteur d'une vraie carte ; sur la bande il ne se lit plus et impose
        un texte blanc que le thème clair ne supporte pas. */
     background: var(--fzd-bg);
     color: var(--fzd-ink);
   }
   body.fz-draft .fzd-strip .pick-card::before,
   body.fz-draft .fzd-strip .pick-card::after { content: none; }
-  body.fz-draft .fzd-strip .pick-card-photo,
-  body.fz-draft .fzd-strip .pick-card-foot,
   body.fz-draft .fzd-strip .pick-card-pos,
   body.fz-draft .fzd-strip .pick-card-live-badge,
   body.fz-draft .fzd-strip .pick-card-select-btn { display: none; }
+
+  /* Le portrait du joueur repêché. Il manquait ici : la bande ne disait le
+     choix que par son nom, et un nom coupé à l'ellipse ne se reconnaît pas
+     d'un coup d'œil comme un visage. Les tours à venir n'en ont pas — le
+     numéro du choix (.pick-card-slot) leur tient lieu de vignette, posé
+     sur le même carré pour que la colonne de gauche reste droite. */
+  body.fz-draft .fzd-strip .pick-card-photo {
+    width: 38px;
+    height: 38px;
+    border-radius: 7px;
+  }
   body.fz-draft .fzd-strip .pick-card-turn {
     display: flex;
     align-items: baseline;
@@ -256,12 +282,30 @@
   }
   body.fz-draft .fzd-strip .pick-card-head { margin: 0; }
   body.fz-draft .fzd-strip .pick-card-id { gap: 1px; }
+  /* Le nom entier, sur deux lignes s'il le faut. Coupé à l'ellipse, la
+     bande affichait « Jean-Gabriel P… » : deux joueurs d'un même prénom
+     n'y étaient plus distinguables, et c'est justement ce que la carte
+     doit dire. Le pli à deux lignes tient dans la hauteur de la bande. */
   body.fz-draft .fzd-strip .pick-card-name {
     font-size: .72rem;
     font-weight: 600;
-    white-space: nowrap;
+    line-height: 1.2;
+    white-space: normal;
     overflow: hidden;
-    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  /* Le pied — l'équipe du pool qui détient le choix — était masqué ici :
+     la bande ne disait donc pas à qui appartenaient les tours à venir, la
+     seule chose qu'un tour pas encore joué ait à dire. Il revient, sans le
+     filet ni la marge que draftActif-premium.css lui donne sur la carte
+     haute : sur 76px, chaque pixel de trait est un pixel de nom en moins. */
+  body.fz-draft .fzd-strip .pick-card-foot {
+    padding: 0;
+    border: 0;
   }
   body.fz-draft .fzd-strip .pick-card-owner {
     display: block;
@@ -271,7 +315,42 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
+  /* Tour à venir : il n'y a pas de joueur à nommer, l'équipe du pool EST
+     l'identité de la carte. « À venir » passe donc en sur-titre — le même
+     motif que le bandeau de tour juste à gauche — et le nom de l'équipe
+     prend la ligne forte, entier lui aussi sur deux lignes. */
+  body.fz-draft .fzd-strip .pick-card.is-upcoming .pick-card-name {
+    font: 700 .52rem/1 var(--fzd-font-cond);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--fzd-text-fainter);
+  }
+  body.fz-draft .fzd-strip .pick-card.is-upcoming .pick-card-owner {
+    font-size: .72rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--fzd-ink);
+    white-space: normal;
+    text-overflow: clip;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+  /* Le tour en cours. draftActif-premium.css le peint en aplat plein et
+     passe son texte au blanc ; ici l'aplat est un lavis clair, sur lequel
+     ce blanc ne se lisait plus — le titre et le numéro du choix y étaient
+     invisibles. Les deux reprennent l'encre de la bande, et l'équipe au
+     bâton la brique, seul accent que la carte porte. */
   body.fz-draft .fzd-strip .pick-card.is-current { background: var(--fzd-accent-wash); }
+  body.fz-draft .fzd-strip .pick-card.is-current .pick-card-name { color: var(--fzd-ink); }
+  body.fz-draft .fzd-strip .pick-card.is-current .pick-card-slot {
+    color: var(--fzd-text-faint);
+    opacity: 1;
+  }
+  body.fz-draft .fzd-strip .pick-card.is-current .pick-card-turn-round { color: var(--fzd-text-fainter); }
+  body.fz-draft .fzd-strip .pick-card.is-current .pick-card-owner { color: var(--fzd-accent); }
 
 
   /* ==========================================================
@@ -288,7 +367,7 @@
      ========================================================== */
 
   body.fz-draft #fzSidebar {
-    top: calc(var(--fz-nav-h, 70px) + 66px);
+    top: calc(var(--fz-nav-h, 70px) + var(--fz-strip-h));
     width: var(--fz-rail-w);
     padding: 0;
     overflow: hidden;
@@ -459,8 +538,8 @@
      gauche. */
   body.fz-draft .draft-rail {
     position: sticky;
-    top: calc(var(--fz-nav-h, 70px) + 66px);
-    height: calc(100vh - var(--fz-nav-h, 70px) - 66px);
+    top: calc(var(--fz-nav-h, 70px) + var(--fz-strip-h));
+    height: calc(100vh - var(--fz-nav-h, 70px) - var(--fz-strip-h));
     overflow: hidden;
     overscroll-behavior: contain;
     display: flex;
@@ -724,7 +803,7 @@
   body.fz-draft .player-selection-card > #fzPickedListWrapper {
     flex: 1 1 auto;
     min-height: 340px;
-    max-height: calc(100vh - var(--fz-nav-h, 70px) - 66px - 210px);
+    max-height: calc(100vh - var(--fz-nav-h, 70px) - var(--fz-strip-h) - 210px);
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior-y: contain;

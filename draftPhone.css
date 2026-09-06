@@ -264,8 +264,16 @@
   /* ==========================================================
      3. LE CARROUSEL DES CHOIX
      ----------------------------------------------------------
-     Des tuiles de 106px qui défilent à l'horizontale, sans photo ni
-     bouton : le numéro du choix, le joueur, l'équipe du pool.
+     Des tuiles qui défilent à l'horizontale, sans bouton : le repère
+     du tour, puis le portrait du joueur à côté de son nom complet et
+     de l'équipe du pool.
+
+     Elles tenaient sur 106px, sans photo et le nom coupé à l'ellipse.
+     Un visage se reconnaît plus vite qu'un nom tronqué, et un tour pas
+     encore joué n'a que son équipe à dire : les deux manquaient. La
+     tuile passe donc à 150px, en grille de trois rangées — le portrait
+     à cheval sur les deux dernières, comme sur la bande de bureau
+     (draftDesk.css §1).
      ========================================================== */
 
   body.fz-draft .recent-picks-card {
@@ -289,15 +297,19 @@
   body.fz-draft .picks-carousel::-webkit-scrollbar { display: none; }
   body.fz-draft .picks-carousel .pick-card {
     flex: none;
-    width: 106px;
+    width: 150px;
     height: auto;
     min-height: 0;
     margin: 0;
     padding: 7px 10px;
-    gap: 3px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    grid-template-areas:
+      "turn  turn"
+      "photo name"
+      "photo foot";
+    align-content: start;
+    gap: 3px 8px;
     border: 0;
     border-right: 1px solid var(--fzd-border-soft);
     border-radius: 0;
@@ -307,12 +319,20 @@
   }
   body.fz-draft .picks-carousel .pick-card::before,
   body.fz-draft .picks-carousel .pick-card::after { content: none; }
-  body.fz-draft .picks-carousel .pick-card-photo,
   body.fz-draft .picks-carousel .pick-card-pos,
   body.fz-draft .picks-carousel .pick-card-club,
   body.fz-draft .picks-carousel .pick-card-meta,
   body.fz-draft .picks-carousel .pick-card-live-badge,
   body.fz-draft .picks-carousel .pick-card-select-btn { display: none; }
+
+  /* Le portrait. Les tours à venir n'en ont pas : le numéro du choix
+     (.pick-card-slot) occupe le même carré, pour que la colonne de
+     gauche reste droite d'une tuile à l'autre. */
+  body.fz-draft .picks-carousel .pick-card-photo {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+  }
   body.fz-draft .picks-carousel .pick-card-turn {
     display: flex;
     align-items: baseline;
@@ -335,14 +355,19 @@
   body.fz-draft .picks-carousel .pick-card-head,
   body.fz-draft .picks-carousel .pick-card-foot { margin: 0; padding: 0; border: 0; }
   body.fz-draft .picks-carousel .pick-card-id { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  /* Le nom entier, replié sur deux lignes plutôt que coupé à l'ellipse. */
   body.fz-draft .picks-carousel .pick-card-name {
     font-family: var(--fzd-font);
     font-size: .6875rem;
     font-weight: 600;
+    line-height: 1.2;
     color: var(--fzd-ink);
-    white-space: nowrap;
+    white-space: normal;
     overflow: hidden;
-    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
   body.fz-draft .picks-carousel .pick-card-owner {
     display: block;
@@ -354,7 +379,47 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
+  /* Tour à venir : pas de joueur à nommer, l'équipe du pool prend la
+     ligne forte et « À venir » passe en sur-titre. Même partage que sur
+     la bande de bureau. */
+  body.fz-draft .picks-carousel .pick-card.is-upcoming .pick-card-name {
+    font: 700 .5rem/1 var(--fzd-font-cond);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--fzd-text-fainter);
+  }
+  body.fz-draft .picks-carousel .pick-card.is-upcoming .pick-card-owner {
+    font-size: .6875rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--fzd-ink);
+    white-space: normal;
+    text-overflow: clip;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+  /* La tuile du tour en cours garde le même brun sombre dans les deux
+     thèmes ; son texte doit donc en faire autant. draftActif-premium.css
+     le tire de --fzd-on-solid, qui bascule au noir en thème sombre — le
+     titre et le numéro du choix y disparaissaient sur leur propre fond.
+     D'où les valeurs en clair, posées juste sous celles du fond qu'elles
+     accompagnent. Le nom de l'équipe garde la brique, qu'il tient de
+     .pick-card.is-current et qui se lit dans les deux thèmes. */
   body.fz-draft .picks-carousel .pick-card.is-current { background: #221a17; }
+  body.fz-draft .picks-carousel .pick-card.is-current .pick-card-name { color: #f2ebe6; }
+  /* Le carré du portrait suit le même sort : son fond de tuile est clair
+     en thème clair, et faisait un timbre blanc sur la tuile sombre. */
+  body.fz-draft .picks-carousel .pick-card.is-current .pick-card-photo {
+    background: rgba(255, 255, 255, .09);
+  }
+  body.fz-draft .picks-carousel .pick-card.is-current .pick-card-slot {
+    color: #f2ebe6;
+    opacity: .45;
+  }
+  body.fz-draft .picks-carousel .pick-card.is-current .pick-card-turn-round { color: #8f8179; }
   body.fz-draft .picks-carousel .pick-card.is-next { background: #181413; }
 
   /* ==========================================================

@@ -139,7 +139,8 @@
     function poolDeLUrl() {
         try {
             const valeur = new URLSearchParams(window.location.search).get('pool');
-            return valeur ? decodeURIComponent(valeur) : null;
+            // URLSearchParams a déjà décodé le nom, y compris ses « % » littéraux.
+            return valeur || null;
         } catch { return null; }
     }
 
