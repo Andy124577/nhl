@@ -270,6 +270,24 @@ describe('notifications — receiving and deliberately reading updates', () => {
         assert.equal(first.items().filter(item => item.classList.contains('is-unread')).length, 0);
     });
 
+    test('an arrival discovered in another tab still shows one popup in the visible tab', async () => {
+        const visible = await createNotificationBrowser();
+        const background = await createNotificationBrowser({ storage: visible.storage });
+        background.document.hidden = true;
+        background.setTrades([trade('new')]);
+        await background.emit('tradePending');
+        visible.dispatch(visible.window, 'storage', { key: 'fzNotifications:v1:Alice' });
+        assert.equal(visible.element('fzNotifToast').hidden, false);
+        assert.equal(toastLink(visible).dataset.notificationId, 'trade:new');
+        assert.equal(visible.element('fzNotifBadge').textContent, '1');
+        visible.element('fzNotifToastDismiss').click();
+        visible.setTrades([trade('new')]);
+        await visible.emit('tradePending');
+        visible.dispatch(visible.window, 'storage', { key: 'fzNotifications:v1:Alice' });
+        assert.equal(visible.element('fzNotifToast').hidden, true);
+        assert.equal(unread(visible), 1);
+    });
+
     test('reading a popup notification in another tab dismisses that popup', async () => {
         const first = await createNotificationBrowser();
         const second = await createNotificationBrowser({ storage: first.storage });
@@ -333,6 +351,47 @@ describe('notifications — receiving and deliberately reading updates', () => {
         assert.ok(item.querySelector('time')?.getAttribute('datetime'));
         assert.ok(item.querySelector('time').textContent.trim());
         assert.equal(item.querySelectorAll('img').length, 0);
+    });
+
+    test('an urgent turn takes popup priority while leaving other arrivals available', async () => {
+        const browser = await createNotificationBrowser();
+        browser.setTrades([trade('offer')]);
+        await browser.emit('tradePending');
+        browser.setPools([{
+            name: 'Pool', teamName: 'Canadiens',
+            data: { etat: 'encours', equipeAuTour: 'Canadiens', choixFait: 3, choixTotal: 20 }
+        }]);
+        await browser.updatePools();
+        assert.equal(toastLink(browser).dataset.notificationId, 'turn:Pool:3');
+        assert.equal(browser.element('fzNotifToastMore').hidden, false);
+        assert.equal(unread(browser), 3);
+        browser.setPools([{
+            name: 'Pool', teamName: 'Canadiens',
+            data: { etat: 'termine' }
+        }]);
+        await browser.updatePools();
+        assert.match(toastLink(browser).textContent, /terminé/);
+        assert.match(toastLink(browser).getAttribute('href'), /^draftFini\.html\?/);
+        assert.equal(unread(browser), 3);
+    });
+
+    test('an urgent arrival does not replace the popup link being hovered or focused', async () => {
+        for (const interaction of ['hover', 'focus']) {
+            const browser = await createNotificationBrowser();
+            browser.setTrades([trade('offer')]);
+            await browser.emit('tradePending');
+            if (interaction === 'hover') browser.dispatch(browser.element('fzNotifToast'), 'mouseenter');
+            else toastLink(browser).focus();
+            browser.setPools([{
+                name: 'Pool', teamName: 'Canadiens',
+                data: { etat: 'encours', equipeAuTour: 'Canadiens', choixFait: 3, choixTotal: 20 }
+            }]);
+            await browser.updatePools();
+            assert.equal(toastLink(browser).dataset.notificationId, 'trade:offer');
+            toastLink(browser).click();
+            assert.equal(browser.state().items.find(item => item.id === 'trade:offer').read, true);
+            assert.equal(browser.state().items.find(item => item.id === 'turn:Pool:3').read, false);
+        }
     });
 
     test('a newly actionable draft turn appears promptly with priority and its pool destination', async () => {

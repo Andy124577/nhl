@@ -192,6 +192,7 @@
         actualiserHistorique();
         sauvegarder();
         rendreListe();
+        if (popupIds.length) rendrePopup();
         if (annoncer && arrives.length) annoncerNouveaux(arrives);
     }
 
@@ -323,10 +324,19 @@
         // Une seule carte et un accès au reste du groupe, jamais une pile
         // ou une longue file de fenêtres après une rafale d'évènements.
         const dejaVisible = popupIds.length > 0;
+        const precedent = popupIds[0];
         popupIds = [...new Set([...popupIds, ...arrives.sort(trier).map(el => el.id)])];
+        // Une urgence passe devant, sauf pendant une interaction : le lien
+        // sous le pointeur ou le focus doit rester celui que l'utilisateur vise.
+        if (!popupSurvole && !parId('fzNotifToast').contains(document.activeElement)) {
+            const parIdentifiant = new Map(elements.map(el => [el.id, el]));
+            popupIds.sort((a, b) => Number(!!parIdentifiant.get(b)?.urgent)
+                - Number(!!parIdentifiant.get(a)?.urgent));
+        }
         rendrePopup();
         parId('fzNotifToast').hidden = document.hidden;
-        if (!dejaVisible) {
+        if (!dejaVisible || popupIds[0] !== precedent) {
+            pauserPopup();
             popupRestant = DUREE_POPUP;
             reprendrePopup();
         }
