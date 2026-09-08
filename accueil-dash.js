@@ -2239,9 +2239,15 @@ async function loadOpenPoolsCount() {
         if (!res.ok) return;
         const clans = await res.json();
         const moi = localStorage.getItem('username');
-        const ouverts = Object.values(clans || {}).filter(clan => {
+        const ouverts = Object.entries(clans || {}).filter(([nom, clan]) => {
             const equipes = Object.values(clan?.teams || {});
             if (!equipes.length) return false;
+            // Les files de repêchage instantané ne se comptent pas parmi les
+            // ligues ouvertes : elles ne se parcourent pas, elles se
+            // rejoignent d'un bouton. Même exclusion que updateUI().
+            if (window.FZInstant
+                ? window.FZInstant.estPoolInstantane(nom, clan)
+                : clan.instant) return false;
             // Déjà membre, ou repêchage commencé : plus rejoignable.
             if (equipes.some(e => (e.members || []).includes(moi))) return false;
             return !clan.draftStarted;

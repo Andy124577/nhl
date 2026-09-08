@@ -239,6 +239,35 @@ async function createOrUpdatePool(poolName, poolData) {
     return result.rows[0].pool_name;
 }
 
+/**
+ * Exécute `travail` en exclusion mutuelle sur l'ensemble des instances.
+ *
+ * Le repêchage instantané doit lire les pools puis en créer un seul si aucun
+ * n'attend : entre la lecture et l'écriture, une deuxième requête qui lit les
+ * mêmes données créerait un deuxième pool alors qu'une place existait. Une
+ * simple file en mémoire suffit tant qu'il n'y a qu'un processus Node ; le
+ * verrou consultatif de PostgreSQL couvre le jour où il y en a deux.
+ *
+ * `pg_advisory_lock` est pris sur une connexion dédiée — il est attaché à la
+ * session, donc le libérer depuis une autre connexion du pool ne ferait rien.
+ * Il est relâché quoi qu'il arrive : une exception dans `travail` ne doit pas
+ * laisser la file bloquée jusqu'au prochain redémarrage.
+ */
+async function withAdvisoryLock(key, travail) {
+    const client = await pool.connect();
+    try {
+        await client.query('SELECT pg_advisory_lock($1)', [key]);
+        return await travail();
+    } finally {
+        try {
+            await client.query('SELECT pg_advisory_unlock($1)', [key]);
+        } catch (error) {
+            console.error('❌ Impossible de relacher le verrou consultatif:', error);
+        }
+        client.release();
+    }
+}
+
 async function deletePool(poolName) {
     const result = await pool.query(
         'DELETE FROM pools WHERE pool_name = $1 RETURNING pool_name',
@@ -469,6 +498,7 @@ module.exports = {
     getPoolByName,
     createOrUpdatePool,
     deletePool,
+    withAdvisoryLock,
     // Trades
     getAllTrades,
     getPendingTrades,

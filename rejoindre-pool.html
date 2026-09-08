@@ -32,7 +32,8 @@
             <h1 class="pool-hero-title">
                 Rejoignez un <span class="gradient-text">pool existant.</span>
             </h1>
-            <p class="pool-hero-sub">Seuls les pools dont le repêchage n'a pas commencé apparaissent ici.</p>
+            <p class="pool-hero-sub">Laissez-vous placer dans un repêchage instantané, ou choisissez
+               vous-même parmi les pools dont le repêchage n'a pas commencé.</p>
         </div>
     </header>
 
@@ -40,6 +41,23 @@
     <!-- POOLS DISPONIBLES                                             -->
     <!-- ============================================================ -->
     <div class="pool-page-container">
+
+        <!-- Le chemin le plus court : aucun choix à faire. Placé avant la
+             liste parce que c'est ce que cherche la majorité de ceux qui
+             arrivent ici — jouer, pas comparer des ligues. -->
+        <button type="button" class="fz-instant" data-instant-draft>
+            <span class="fz-instant-icon" data-icon="bolt" data-icon-size="26"></span>
+            <span class="fz-instant-txt">
+                <span class="fz-instant-title" data-instant-label>Rejoindre un repêchage instantané</span>
+                <span class="fz-instant-sub">On vous place avec les prochains joueurs disponibles.
+                    Rien à créer, rien à choisir.</span>
+                <span class="fz-instant-meta">4 joueurs · le repêchage part dès que le pool est plein</span>
+            </span>
+            <span class="fz-instant-chev" aria-hidden="true">›</span>
+        </button>
+
+        <p class="fz-instant-or"><span>ou choisissez votre pool</span></p>
+
         <div class="pool-section">
             <div class="pool-section-header">
                 <h2 class="pool-section-title">Pools disponibles</h2>
@@ -139,6 +157,7 @@
     <script defer src="avatars.js"></script>
     <script src="profanity.js"></script>
     <script defer src="equipes.js"></script>
+    <script defer src="instantDraft.js"></script>
     <script defer src="navbar.js"></script>
     <script defer src="poolNav.js"></script>
     <script defer src="notifications.js"></script>

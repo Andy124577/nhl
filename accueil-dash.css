@@ -210,7 +210,13 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
     box-shadow: 0 6px 18px rgba(20, 10, 6, .22);
     text-decoration: none;
     transition: background .18s ease, transform .18s ease;
+    /* Le repêchage instantané ne mène pas à une page : sa rangée est un
+       <button>, à qui il faut retirer bordure, fond et police natifs pour
+       qu'il ressemble aux <a> qui l'entourent. */
+    width: 100%; border: 0; text-align: left; cursor: pointer; font: inherit;
 }
+.fzo-action:disabled { cursor: progress; opacity: .7; }
+.fzo-action:disabled:hover { transform: none; }
 .fzo-action:hover { background: var(--fzo-slab-hover); transform: translateY(-1px); }
 .fzo-action:focus-visible { outline: 2px solid var(--fzo-on-hero); outline-offset: 2px; }
 .fzo-action-bar { width: 3px; align-self: stretch; border-radius: 2px; background: var(--fzo-hero-c); }
@@ -1308,6 +1314,18 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
     transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
 .fzd-poolchip:hover { background: var(--fzd-bg-alt); border-color: var(--fzd-ink); }
+/* Le repêchage instantané est le seul chip qui ne mène pas à une page : il
+   lance la recherche sur place, donc c'est un <button>, à dépouiller de ses
+   styles natifs pour qu'il se range avec les <a> voisins. */
+button.fzd-poolchip {
+    font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
+    cursor: pointer;
+    /* `.fz-dash a` teinte tous les liens du tableau de bord en accent et
+       l'emporte sur `.fzd-poolchip` : sans ce rappel, le seul chip qui n'est
+       pas un lien serait aussi le seul en couleur de texte ordinaire. */
+    color: var(--fzd-accent);
+}
+button.fzd-poolchip:disabled { cursor: progress; opacity: .6; }
 .fzd-poolchip.is-primary { background: var(--fzd-solid); border-color: var(--fzd-solid); color: var(--fzd-on-solid); }
 .fzd-poolchip.is-primary:hover { opacity: .88; }
 

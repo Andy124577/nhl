@@ -24,6 +24,7 @@ const { FANTASY_SCORING, goaliePoolPoints, clubPoolPoints, computeTeamSeasonScor
 const { generateWeeklyMatchups, generateSeasonSchedule, seasonWeekCount,
     ensureStandingsEntry, mondayOfWeek } = require("./lib/h2h.js");
 const { generateSnakeOrder, checkIfDraftComplete } = require("./lib/draft.js");
+const instantDraft = require("./lib/instantDraft.js");
 const { teamHasPlayer, removeFromTeam, addToTeam, getPositionLabel } = require("./lib/trades.js");
 const { NHL_CLUB_FULLNAME, diffRosterSnapshots, getTeamAbbreviationFromName } = require("./lib/roster.js");
 const { getStatsRefreshStatus } = require("./lib/statsCache.js");
@@ -1026,6 +1027,204 @@ app.post("/join-clan", async (req, res) => {
         teams: draftData[name].teams,
         draftData // ✅ Ensure frontend gets updated data
     });
+});
+
+// ==============================================
+// REPÊCHAGE INSTANTANÉ
+// ----------------------------------------------
+// Une seule porte : « Rejoindre un repêchage instantané ». Le serveur trouve
+// le pool qui attend des joueurs, ou en ouvre un. L'utilisateur ne nomme rien,
+// ne choisit rien, ne saisit aucun code — c'est tout l'intérêt.
+//
+// Toute la difficulté est dans le « ou » : entre le moment où on lit les pools
+// et celui où on en écrit un, une deuxième requête peut lire les mêmes données
+// et conclure la même chose. Deux personnes cliquant à la même seconde
+// ouvriraient alors deux pools vides au lieu de se retrouver ensemble — la
+// seule chose que la file doit garantir. D'où le verrou ci-dessous : lecture,
+// décision et écriture forment un bloc que personne ne traverse.
+// ==============================================
+
+/**
+ * Clé du verrou consultatif PostgreSQL. Arbitraire, mais elle doit rester
+ * stable d'une version à l'autre : deux instances qui n'utiliseraient pas le
+ * même entier ne se verrouilleraient pas l'une l'autre.
+ */
+const CLE_VERROU_INSTANTANE = 4815162342;
+
+/**
+ * File d'exécution en mémoire.
+ *
+ * Chaque requête s'accroche à la précédente, terminée ou échouée — d'où le
+ * même `travail` dans les deux branches du .then. La chaîne conservée est
+ * neutralisée (`() => {}`) pour qu'un rejet ne se propage pas au suivant : une
+ * requête qui échoue ne doit pas emporter toutes celles d'après.
+ */
+let fileInstantanee = Promise.resolve();
+
+function enFileInstantanee(travail) {
+    const resultat = fileInstantanee.then(travail, travail);
+    fileInstantanee = resultat.then(() => {}, () => {});
+    return resultat;
+}
+
+/**
+ * Exécute `travail` seul au monde.
+ *
+ * Deux couches, parce qu'elles ne protègent pas de la même chose : la file en
+ * mémoire sérialise les requêtes d'un même processus Node (le cas réel, une
+ * instance sur Render), le verrou consultatif couvre plusieurs processus
+ * partageant la base.
+ *
+ * `travailLance` distingue l'échec du verrou de l'échec du travail. Sans lui,
+ * une exception venue de `travail` serait prise pour une base injoignable et
+ * rejouerait un travail déjà à moitié écrit.
+ */
+async function sousVerrouInstantane(travail) {
+    return enFileInstantanee(async () => {
+        if (!USE_POSTGRES) return travail();
+
+        let travailLance = false;
+        try {
+            return await db.withAdvisoryLock(CLE_VERROU_INSTANTANE, () => {
+                travailLance = true;
+                return travail();
+            });
+        } catch (erreur) {
+            if (travailLance) throw erreur;
+            // Verrou indisponible : la file en mémoire protège déjà le
+            // déploiement actuel. Refuser la requête serait pire que la servir.
+            console.error("⚠️ Verrou consultatif indisponible, repli sur la file en mémoire :", erreur);
+            return travail();
+        }
+    });
+}
+
+/**
+ * Écrit un seul pool.
+ *
+ * saveDraftData() réécrit tous les pools à chaque appel, ce qui rendrait à la
+ * base un pool voisin tel qu'il était au chargement — et effacerait au passage
+ * une modification faite entre-temps par quelqu'un d'autre. Ici on ne touche
+ * qu'au pool qu'on vient de modifier.
+ *
+ * En mode fichier, il faut bien réécrire draft.json en entier : on le relit
+ * juste avant pour repartir de son contenu réel plutôt que de la copie chargée
+ * au début de la requête.
+ */
+const sauvegarderUnPool = async (nomPool, poolData) => {
+    if (USE_POSTGRES) {
+        await db.createOrUpdatePool(nomPool, poolData);
+        return;
+    }
+    const tout = await loadDraftData();
+    tout[nomPool] = poolData;
+    fs.writeFileSync(DRAFT_FILE, JSON.stringify(tout, null, 2));
+};
+
+/** Équipe de l'utilisateur dans ce pool, ou null. */
+const equipeDeLUtilisateur = (pool, username) => {
+    const entree = Object.entries((pool && pool.teams) || {})
+        .find(([, equipe]) => ((equipe && equipe.members) || []).includes(username));
+    return entree ? entree[0] : null;
+};
+
+app.post("/join-instant-draft", async (req, res) => {
+    const username = typeof req.body?.username === "string" ? req.body.username.trim() : "";
+    if (!username) {
+        return res.status(400).json({ message: "Nom d'utilisateur requis." });
+    }
+
+    try {
+        const resultat = await sousVerrouInstantane(async () => {
+            const draftData = await loadDraftData();
+            const decision = instantDraft.deciderPool(draftData, username);
+
+            // Rien à écrire : il est déjà dans un pool instantané, en attente
+            // ou en plein repêchage. On lui redonne simplement l'adresse.
+            if (decision.action === "encours" || decision.action === "deja") {
+                const pool = draftData[decision.nom];
+                return {
+                    poolName: decision.nom,
+                    teamName: equipeDeLUtilisateur(pool, username),
+                    created: false,
+                    joined: false,
+                    started: instantDraft.repechageCommence(pool),
+                    participants: instantDraft.participants(pool),
+                    maxPlayers: pool.maxPlayers || instantDraft.JOUEURS_PAR_POOL
+                };
+            }
+
+            const creation = decision.action === "creer";
+            const pool = creation ? instantDraft.creerPool(username) : draftData[decision.nom];
+            // creerPool() a déjà installé son premier joueur dans Équipe 1.
+            const teamName = creation ? "Équipe 1" : instantDraft.inscrire(pool, username);
+
+            if (!teamName) {
+                // Sous verrou, la place ne peut pas s'être envolée entre la
+                // décision et l'inscription. Si ça arrive quand même, mieux
+                // vaut le dire que renvoyer un succès sans équipe.
+                return { echec: "Aucune place libre dans ce pool. Réessayez." };
+            }
+
+            // Pool complet : il part de lui-même. Attendre que quelqu'un
+            // appuie sur « Commencer » n'aurait pas de sens entre inconnus —
+            // personne n'est l'hôte, et tout le monde vient pour repêcher tout
+            // de suite. Les autres écrans suivent : repechage.html bascule sur
+            // la salle de repêchage dès que draftUpdated arrive.
+            let started = false;
+            const equipes = instantDraft.equipesEligibles(pool);
+            if (instantDraft.doitDemarrer(pool) && equipes.length >= 2) {
+                const ordreInitial = [...equipes].sort(() => Math.random() - 0.5);
+                pool.draftOrder = generateSnakeOrder(ordreInitial, instantDraft.totalSelections(pool));
+                // Même horloge que /start-draft : l'heure du serveur, pour que
+                // tous les écrans comptent la même durée de tour.
+                pool.turnStartedAt = Date.now();
+                started = true;
+            }
+
+            await sauvegarderUnPool(decision.nom, pool);
+
+            return {
+                poolName: decision.nom,
+                teamName,
+                created: creation,
+                joined: true,
+                started,
+                participants: instantDraft.participants(pool),
+                maxPlayers: pool.maxPlayers || instantDraft.JOUEURS_PAR_POOL
+            };
+        });
+
+        if (resultat.echec) {
+            return res.status(409).json({ message: resultat.echec });
+        }
+
+        // Hors verrou : la diffusion n'a pas à retarder le prochain arrivant.
+        // Elle prévient les autres membres du pool — leur compteur de places
+        // avance, et si le repêchage vient de partir, leur page bascule seule
+        // vers la salle de sélection.
+        try {
+            const frais = await loadDraftData();
+            io.emit("draftUpdated", poolsPublics(frais));
+        } catch (erreur) {
+            console.error("⚠️ Diffusion du repêchage instantané impossible :", erreur);
+        }
+
+        const restantes = Math.max(0, resultat.maxPlayers - resultat.participants);
+        const message = resultat.started
+            ? "Le pool est complet, le repêchage commence !"
+            : resultat.created
+                ? `Nouveau repêchage instantané ouvert. En attente de ${restantes} joueur${restantes > 1 ? "s" : ""}.`
+                : resultat.joined
+                    ? `Vous avez rejoint ${resultat.poolName}. Il manque ${restantes} joueur${restantes > 1 ? "s" : ""}.`
+                    : `Vous êtes déjà dans ${resultat.poolName}.`;
+
+        res.json({ ...resultat, message });
+
+    } catch (error) {
+        console.error("❌ Erreur lors du repêchage instantané :", error);
+        res.status(500).json({ message: "Erreur interne du serveur." });
+    }
 });
 
 // 🔥 Route pour rejoindre un clan

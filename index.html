@@ -214,6 +214,16 @@
                             </span>
                             <span class="fzo-action-chev" aria-hidden="true">›</span>
                         </a>
+                        <!-- Ne mène nulle part : lance la recherche sur place
+                             (instantDraft.js) et emmène directement au salon. -->
+                        <button type="button" class="fzo-action" data-instant-draft>
+                            <span class="fzo-action-bar" aria-hidden="true"></span>
+                            <span class="fzo-action-text">
+                                <span class="fzo-action-title" data-instant-label>Repêchage instantané</span>
+                                <span class="fzo-action-desc">Aucun choix à faire : on te place avec 3 joueurs et ça part</span>
+                            </span>
+                            <span class="fzo-action-chev" aria-hidden="true">›</span>
+                        </button>
                         <p class="fzo-invite">Tu as un code d'invitation&nbsp;? <a href="rejoindre-pool.html">Entre-le ici</a></p>
                     </div>
                 </div>
@@ -318,12 +328,17 @@
             <!-- Raccourcis pools — avant le coup d'envoi de la saison régulière
                  seulement. Le corps du tableau de bord (#fzDashBody : match du
                  soir, joueurs, activité) n'a alors rien à montrer et se retire ;
-                 ces trois chips gardent l'accès aux pools entre le calendrier et
-                 le panneau hors-saison. Voir fzdApplyPreseasonLayout(). -->
+                 ces chips gardent l'accès aux pools entre le calendrier et
+                 le panneau hors-saison. Voir fzdApplyPreseasonLayout().
+                 Le repêchage instantané n'est pas un lien : il lance la
+                 recherche sur place (instantDraft.js). -->
             <div class="fz-dash-poolchips" id="fzDashPoolChips" style="display:none;">
                 <a class="fzd-poolchip is-primary" href="mes-pools.html">Mes pools</a>
                 <a class="fzd-poolchip" href="creer-pool.html">Créer un pool</a>
                 <a class="fzd-poolchip" href="rejoindre-pool.html">Rejoindre un pool</a>
+                <button type="button" class="fzd-poolchip" data-instant-draft>
+                    <span data-instant-label>Repêchage instantané</span>
+                </button>
             </div>
 
             <!-- Hors-saison — compte à rebours avant le camp/la saison, mouvements
@@ -533,6 +548,7 @@
     <script defer src="lib/scoring.js"></script>
     <script defer src="accueil.js"></script>
     <script defer src="accueil-dash.js?v=20260905b"></script>
+    <script defer src="instantDraft.js"></script>
     <script defer src="accueil-mobile.js?v=20260905a"></script>
     <script defer src="demos.js"></script>
     <script defer src="navbar.js"></script>

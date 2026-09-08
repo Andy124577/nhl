@@ -380,11 +380,31 @@ async function createClan() {
     }
 }
 
+/**
+ * Un pool né de la file instantanée ?
+ *
+ * Le prédicat vient d'instantDraft.js ; le repli couvre l'ordre de
+ * chargement et suffit pour tout pool créé par la file, qui porte toujours
+ * `instant: true`.
+ */
+function estPoolInstantane(nom, clan) {
+    return window.FZInstant
+        ? window.FZInstant.estPoolInstantane(nom, clan)
+        : !!(clan && clan.instant);
+}
+
 // 🔄 Met à jour la liste des pools ouverts
 //
 // Les pools dont on est déjà membre ne figurent plus ici : ils sont gérés
 // par mes-pools.html, qui en montre bien plus que ce qu'une ligne de liste
 // permettait. Ne reste que ce qu'on peut rejoindre.
+//
+// Les pools de repêchage instantané en sont exclus : ce sont des files
+// d'attente, pas des ligues qu'on choisit. Les y laisser ouvrirait une
+// deuxième porte qui ne tient pas les mêmes promesses — on entrerait par
+// /join-team, qui ne lance pas le repêchage quand le pool se remplit, et le
+// bouton « Rejoindre un repêchage instantané » cesserait de partir tout
+// seul. Le bouton en tête de page est la seule entrée.
 function updateUI(draftData) {
     const liste = document.getElementById("available-clans-list");
     if (!liste) return;
@@ -396,6 +416,8 @@ function updateUI(draftData) {
 
     Object.keys(draftData).forEach(clanName => {
         const clan = draftData[clanName];
+        if (estPoolInstantane(clanName, clan)) return;
+
         const userInClan = Object.values(clan.teams).some(team => team.members.includes(username));
 
         // Count active teams

@@ -13,7 +13,10 @@
 
 .mp-entry {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    /* Trois portes depuis l'ajout du repêchage instantané. auto-fit plutôt
+       que trois colonnes fixes : sous 900px la troisième carte se placerait
+       seule sur sa rangée, à moitié vide. */
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 14px;
     margin-bottom: 26px;
 }
@@ -28,7 +31,24 @@
     background: var(--card);
     text-decoration: none;
     transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+    /* Le repêchage instantané n'ouvre pas une page : sa carte est un
+       <button>, qui arrive sinon avec le fond gris, le texte centré et la
+       police système du navigateur. */
+    width: 100%;
+    font: inherit;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
 }
+
+.mp-entry-card:focus-visible {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--focus-ring);
+}
+
+.mp-entry-card:disabled { cursor: progress; opacity: .75; }
+.mp-entry-card:disabled:hover { transform: none; box-shadow: none; }
 
 .mp-entry-card:hover {
     border-color: var(--primary);
