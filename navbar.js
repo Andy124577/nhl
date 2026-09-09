@@ -28,6 +28,9 @@ function initModernNavbar() {
     if (isLoggedIn) {
         buildLoggedInNavbar(username, isAdmin, currentPage);
         buildBottomNav(currentPage);
+        // Avant tout : replier les onglets que le dernier passage savait
+        // fermés. Dans la même tâche que la construction, donc jamais peints.
+        appliquerVisibiliteMemorisee();
         initializeEventListeners(username, isAdmin);
         checkPendingTrades();
         checkActiveDrafts();
@@ -496,6 +499,68 @@ async function checkPendingTrades() {
     }
 }
 
+// ==================== ONGLETS CONDITIONNELS ====================
+/*
+ * Trois onglets dépendent de l'état du pool actif — Repêchage, Échanges,
+ * Classement — et cet état n'arrive qu'avec /draft, un aller-retour réseau
+ * après la construction de la barre. Les afficher puis les retirer laissait
+ * voir, le temps d'un battement, un « Classement » qui n'ouvrira pas et un
+ * « Repêchage » déjà terminé.
+ *
+ * On retient donc la dernière réponse connue, par pool, et on l'applique
+ * dans la foulée de la construction — même tâche, donc avant le premier
+ * rendu. FZPool.ready() la confirme ou la corrige ensuite. Seule la toute
+ * première visite sur un pool n'a rien en mémoire ; elle retombe sur
+ * l'ancien comportement.
+ */
+const NAV_ONGLETS_CONDITIONNELS = {
+    repechage: ['desktopPoolLink', 'bottomPoolLink'],
+    trade: ['desktopTradeLink', 'bottomTradeLink'],
+    classement: ['desktopClassementLink', 'bottomClassementLink']
+};
+
+/**
+ * La mémoire est par pool : passer d'un pool en plein repêchage à un pool
+ * terminé n'a pas les mêmes onglets. activePool.js écrit `activePool` de
+ * façon synchrone, avant tout appel réseau, donc la clé est déjà juste ici.
+ */
+function navCleVisibilite() {
+    return `fzNavOnglets:${localStorage.getItem('activePool') || ''}`;
+}
+
+function navVisibiliteMemorisee() {
+    try { return JSON.parse(localStorage.getItem(navCleVisibilite())) || {}; }
+    catch { return {}; }
+}
+
+function navAppliquerVisibilite(cle, visible) {
+    NAV_ONGLETS_CONDITIONNELS[cle].forEach(id => {
+        const lien = document.getElementById(id);
+        if (lien) lien.style.display = visible ? '' : 'none';
+    });
+}
+
+/** Réponse confirmée : on l'applique et on s'en souvient pour la page suivante. */
+function navRetenirVisibilite(cle, visible) {
+    navAppliquerVisibilite(cle, visible);
+    const memoire = navVisibiliteMemorisee();
+    if (memoire[cle] === visible) return;
+    memoire[cle] = visible;
+    try { localStorage.setItem(navCleVisibilite(), JSON.stringify(memoire)); } catch { /* stockage plein ou refusé */ }
+}
+
+/**
+ * Seuls les onglets connus fermés sont repliés : ce qu'on ignore reste
+ * visible. Un onglet montré à tort disparaît une seconde plus tard, alors
+ * qu'un onglet caché à tort laisse l'utilisateur sans porte.
+ */
+function appliquerVisibiliteMemorisee() {
+    const memoire = navVisibiliteMemorisee();
+    Object.keys(NAV_ONGLETS_CONDITIONNELS).forEach(cle => {
+        if (memoire[cle] === false) navAppliquerVisibilite(cle, false);
+    });
+}
+
 /**
  * Le repêchage du pool actif réclame-t-il une action ?
  *
@@ -534,19 +599,19 @@ async function checkActiveDrafts() {
  */
 async function updateDraftLinkVisibility() {
     try {
-        if (!window.FZPool) return;
+        // Sans FZPool, rien ne dira jamais d'ouvrir : on montre plutôt que
+        // de laisser la mémoire tenir l'onglet fermé indéfiniment.
+        if (!window.FZPool) { navAppliquerVisibilite('repechage', true); return; }
         await FZPool.ready();
 
         const actif = FZPool.get();
         const pool = FZPool.mine().find(p => p.name === actif);
         const visible = !pool || FZPool.draftState(pool.data).etat !== 'termine';
 
-        ['desktopPoolLink', 'bottomPoolLink'].forEach(id => {
-            const lien = document.getElementById(id);
-            if (lien) lien.style.display = visible ? '' : 'none';
-        });
+        navRetenirVisibilite('repechage', visible);
     } catch (error) {
         console.error('Error checking draft link visibility:', error);
+        navAppliquerVisibilite('repechage', true);
     }
 }
 
@@ -557,19 +622,17 @@ async function updateDraftLinkVisibility() {
  */
 async function updateTradeLinkVisibility() {
     try {
-        if (!window.FZPool) return;
+        if (!window.FZPool) { navAppliquerVisibilite('trade', true); return; }
         await FZPool.ready();
 
         const actif = FZPool.get();
         const pool = FZPool.mine().find(p => p.name === actif);
         const visible = !pool || pool.data.allowTrades !== false;
 
-        ['desktopTradeLink', 'bottomTradeLink'].forEach(id => {
-            const lien = document.getElementById(id);
-            if (lien) lien.style.display = visible ? '' : 'none';
-        });
+        navRetenirVisibilite('trade', visible);
     } catch (error) {
         console.error('Error checking trade link visibility:', error);
+        navAppliquerVisibilite('trade', true);
     }
 }
 
@@ -590,19 +653,17 @@ async function updateTradeLinkVisibility() {
  */
 async function updateClassementLinkVisibility() {
     try {
-        if (!window.FZPool) return;
+        if (!window.FZPool) { navAppliquerVisibilite('classement', true); return; }
         await FZPool.ready();
 
         const actif = FZPool.get();
         const pool = FZPool.mine().find(p => p.name === actif);
         const visible = !pool || FZPool.draftState(pool.data).etat === 'termine';
 
-        ['desktopClassementLink', 'bottomClassementLink'].forEach(id => {
-            const lien = document.getElementById(id);
-            if (lien) lien.style.display = visible ? '' : 'none';
-        });
+        navRetenirVisibilite('classement', visible);
     } catch (error) {
         console.error('Error checking classement link visibility:', error);
+        navAppliquerVisibilite('classement', true);
     }
 }
 

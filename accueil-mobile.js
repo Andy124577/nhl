@@ -319,6 +319,11 @@ const FZM_LEAGUE_TABS = [
 ];
 let fzmLeagueTab = 'all';
 let fzmLeagueData = null;
+// Où en était la piste. renderMobileHome() recrée tout le DOM à chaque mise
+// à jour du pool — un choix de repêchage, un échange accepté — et sans cette
+// mémoire l'utilisateur qui feuilletait les derniers mouvements repartait de
+// la première carte.
+let fzmLeagueScroll = 0;
 
 // Carrousel calqué sur celui du bureau (fzd-off-carousel, index.html /
 // renderOffseasonLeague, accueil-dash.js) : en-tête avec flèches, onglets
@@ -348,49 +353,56 @@ function fzmLeagueSectionHTML(showNews, isDraft = false) {
 async function fzmLoadLeague() {
     if (!document.getElementById('fzmLeagueTrack')) return;
 
-    // limit=80 : tout le journal tient dedans, donc groupTrades (défini dans
-    // accueil-dash.js, chargé avant) voit chaque échange en entier.
-    const [tx, inj] = await Promise.all([
-        fetch('/nhl-transactions?limit=80').then(r => r.json()).catch(() => null),
-        fetch('/nhl-injuries?limit=60').then(r => r.json()).catch(() => null)
-    ]);
+    // Le journal de la LNH est chargé une fois par visite, comme au bureau
+    // (garde offseasonNewsLoaded, accueil-dash.js). Il ne bouge pas au rythme
+    // des choix de repêchage qui, eux, redessinent tout l'écran : le
+    // redemander à chaque fois coûtait deux appels réseau pour le même
+    // contenu, et faisait clignoter la piste.
+    if (!fzmLeagueData) {
+        // limit=80 : tout le journal tient dedans, donc groupTrades (défini dans
+        // accueil-dash.js, chargé avant) voit chaque échange en entier.
+        const [tx, inj] = await Promise.all([
+            fetch('/nhl-transactions?limit=80').then(r => r.json()).catch(() => null),
+            fetch('/nhl-injuries?limit=60').then(r => r.json()).catch(() => null)
+        ]);
 
-    const moves = tx?.transactions || [];
-    const deals = groupTrades(moves.filter(t => t.type === 'trade'));
-    const signings = moves.filter(t => t.type === 'signing');
-    const injuries = inj?.injuries || [];
+        const moves = tx?.transactions || [];
+        const deals = groupTrades(moves.filter(t => t.type === 'trade'));
+        const signings = moves.filter(t => t.type === 'signing');
+        const injuries = inj?.injuries || [];
 
-    // « Tout » : les trois flux fondus et retriés du plus récent au plus
-    // ancien, chaque entrée gardant sa forme (`kind` dit quelle carte rendre).
-    // Même logique que renderOffseasonLeague (accueil-dash.js).
-    const stamp = iso => (iso ? new Date(iso).getTime() : 0) || 0;
-    const all = [
-        ...deals.map(d => ({ kind: 'trade', item: d, ts: stamp(d.date) })),
-        ...signings.map(s => ({ kind: 'signing', item: s, ts: stamp(s.date) })),
-        ...injuries.map(i => ({ kind: 'injury', item: i, ts: stamp(i.since) }))
-    ].sort((a, b) => b.ts - a.ts);
+        // « Tout » : les trois flux fondus et retriés du plus récent au plus
+        // ancien, chaque entrée gardant sa forme (`kind` dit quelle carte rendre).
+        // Même logique que renderOffseasonLeague (accueil-dash.js).
+        const stamp = iso => (iso ? new Date(iso).getTime() : 0) || 0;
+        const all = [
+            ...deals.map(d => ({ kind: 'trade', item: d, ts: stamp(d.date) })),
+            ...signings.map(s => ({ kind: 'signing', item: s, ts: stamp(s.date) })),
+            ...injuries.map(i => ({ kind: 'injury', item: i, ts: stamp(i.since) }))
+        ].sort((a, b) => b.ts - a.ts);
 
-    fzmLeagueData = {
-        all,
-        trade: deals,
-        signing: signings,
-        injury: injuries,
-        counts: {
-            // Échanges : nombre d'opérations regroupées. Signatures/blessés :
-            // total serveur. « Tout » : la somme des trois.
-            trade: deals.length,
-            signing: tx?.counts?.signing || 0,
-            injury: inj?.total || 0
-        },
-        tracking: !!tx?.tracking
-    };
-    fzmLeagueData.counts.all = fzmLeagueData.counts.trade
-        + fzmLeagueData.counts.signing + fzmLeagueData.counts.injury;
+        fzmLeagueData = {
+            all,
+            trade: deals,
+            signing: signings,
+            injury: injuries,
+            counts: {
+                // Échanges : nombre d'opérations regroupées. Signatures/blessés :
+                // total serveur. « Tout » : la somme des trois.
+                trade: deals.length,
+                signing: tx?.counts?.signing || 0,
+                injury: inj?.total || 0
+            },
+            tracking: !!tx?.tracking
+        };
+        fzmLeagueData.counts.all = fzmLeagueData.counts.trade
+            + fzmLeagueData.counts.signing + fzmLeagueData.counts.injury;
 
-    // Ouvrir sur un onglet qui a quelque chose à montrer plutôt que sur
-    // un onglet vide un lendemain de journée calme.
-    const firstFilled = FZM_LEAGUE_TABS.find(t => fzmLeagueData[t.key].length);
-    if (firstFilled && !fzmLeagueData[fzmLeagueTab].length) fzmLeagueTab = firstFilled.key;
+        // Ouvrir sur un onglet qui a quelque chose à montrer plutôt que sur
+        // un onglet vide un lendemain de journée calme.
+        const firstFilled = FZM_LEAGUE_TABS.find(t => fzmLeagueData[t.key].length);
+        if (firstFilled && !fzmLeagueData[fzmLeagueTab].length) fzmLeagueTab = firstFilled.key;
+    }
 
     document.querySelectorAll('#fzmLeagueTabs .fzm-tab-count').forEach(el => {
         const n = fzmLeagueData.counts[el.dataset.count];
@@ -401,6 +413,8 @@ async function fzmLoadLeague() {
         btn.addEventListener('click', () => {
             fzmLeagueTab = btn.dataset.tab;
             document.querySelectorAll('#fzmLeagueTabs .fzm-tab').forEach(b => b.classList.toggle('is-active', b === btn));
+            // Changer d'onglet, c'est changer de liste : on repart du début.
+            fzmLeagueScroll = 0;
             fzmRenderLeagueTab();
         });
     });
@@ -427,6 +441,7 @@ function fzmBindLeagueCarousel() {
 
     let raf = 0;
     track.addEventListener('scroll', () => {
+        fzmLeagueScroll = track.scrollLeft;
         if (raf) return;
         raf = requestAnimationFrame(() => { raf = 0; fzmUpdateLeagueCarousel(); });
     });
@@ -448,7 +463,10 @@ function fzmRenderLeagueTab() {
     track.innerHTML = rows.map(row => fzmLeagueTab === 'all'
         ? fzmOffCardHTML(row.kind, row.item)
         : fzmOffCardHTML(fzmLeagueTab, row)).join('');
-    track.scrollLeft = 0;
+    // Les cartes ont une largeur fixe (accueil-mobile.css) : la piste est
+    // mesurable dès l'affectation, sans attendre les images. Un défilement
+    // devenu trop grand est ramené dans les bornes par le navigateur.
+    track.scrollLeft = fzmLeagueScroll;
     fzmRenderLeagueDots();
 }
 

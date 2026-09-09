@@ -130,10 +130,33 @@
 
     // ==================== CHARGEMENT ====================
 
+    /**
+     * Empreinte du dernier /draft reçu — la réponse brute, avant analyse.
+     *
+     * Le serveur envoie `draftUpdated` à chaque nouvelle connexion socket
+     * (io.on("connection"), server.js), donc quelques secondes après chaque
+     * chargement de page, avec les données qu'on vient déjà de lire. Sans
+     * cette comparaison, cet écho seul refaisait le tour des abonnés :
+     * l'accueil se reconstruisait sous l'utilisateur, ramenant au premier
+     * échange qui feuilletait les derniers mouvements de la LNH.
+     */
+    let empreinteDraft = '';
+
+    /** Renvoie true si les données ont changé depuis le dernier appel. */
     async function chargerDraft() {
         const reponse = await fetch(`${BASE_URL}/draft?timestamp=${Date.now()}`, { cache: 'no-store' });
-        tousLesPools = await reponse.json();
+        // Le texte brut sert d'empreinte : comparer avant d'analyser évite
+        // aussi de reconstruire des objets identiques à ceux déjà en main.
+        const texte = await reponse.text();
+        // Le nom d'utilisateur entre dans l'empreinte : mesPools en dépend
+        // autant que la réponse elle-même.
+        const empreinte = `${utilisateur()}\n${texte}`;
+        if (empreinte === empreinteDraft) return false;
+
+        empreinteDraft = empreinte;
+        tousLesPools = JSON.parse(texte);
         construireMesPools();
+        return true;
     }
 
     function poolDeLUrl() {
@@ -331,12 +354,18 @@
 
     async function rafraichir() {
         if (!utilisateur()) return;
+        let change;
         try {
-            await chargerDraft();
+            change = await chargerDraft();
         } catch (erreur) {
             console.error('Rafraîchissement des pools impossible :', erreur);
             return;
         }
+        // Rien de neuf : ne pas réveiller les abonnés. La plupart redessinent
+        // tout leur écran, ce qui perd le défilement en cours, referme ce qui
+        // était ouvert et relance des appels réseau — pour le même contenu.
+        if (!change) return;
+
         // Le pool actif a pu disparaître entre-temps (départ, suppression).
         if (actif && !estMembre(actif)) {
             actif = poolParDefaut();
