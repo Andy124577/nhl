@@ -236,6 +236,7 @@ function renderDayStrip() {
                     <span class="fzd-day-chip-dow">${isToday ? 'Auj' : dowLabel(d.date)}</span>
                 </span>
                 ${count}
+                <span class="fzd-day-chip-month">${FR_MONTH_SHORT[Number(d.date.slice(5, 7)) - 1]}</span>
             </button>`;
     }).join('');
 
@@ -326,6 +327,7 @@ function gameCardHTML(game, rosterCounts) {
     const isFinal = game.state === 'FINAL' || game.state === 'OFF';
     const isLive = game.state === 'LIVE' || game.state === 'CRIT';
     const isScheduled = !isFinal && !isLive;
+    const rosterCount = rosterCountForGame(rosterCounts, game);
 
     let badge, when = '';
     if (isLive) {
@@ -365,6 +367,7 @@ function gameCardHTML(game, rosterCounts) {
                 ${teamRow(game.away, game.home)}
                 ${teamRow(game.home, game.away)}
             </div>
+            <div class="fzd-game-roster-count${rosterCount ? ' has-players' : ''}">${rosterCount ? `★ ${rosterCount} de vos joueurs` : 'Aucun de vos joueurs'}</div>
             ${gamePlayersHTML(game)}
         </article>`;
 }
@@ -1098,7 +1101,8 @@ function fzdCtasRepechageFini(activeName) {
         </div>`;
 }
 
-function fzdHeroHTML(state) {
+function fzdHeroHTML(state, mobile = false) {
+    if (mobile && state.mode === 'draft') return fzmDraftHeroHTML(state);
     if (state.mode === 'draft') {
         const { poolData, team, activeName } = state;
         const draftOrder = Array.isArray(poolData.draftOrder) ? poolData.draftOrder : [];
@@ -1144,6 +1148,7 @@ function fzdHeroHTML(state) {
             <div class="fzd-hero-copy">
                 <div class="fzd-hero-eyebrow">${fait ? 'Repêchage terminé' : (state.beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison')}</div>
                 <h2 class="fzd-hero-headline">${fait ? 'Votre équipe est au complet' : 'Saison en préparation'}</h2>
+                ${mobile && !fait ? '<p class="fzm-preseason-sub">La saison approche. Finalisez votre formation !</p>' : ''}
             </div>
             <div class="fzd-hero-stats">${fzdCountdownStatsHTML(state.target)}</div>
             ${fait ? fzdCtasRepechageFini(state.activeName) : `
@@ -1244,7 +1249,8 @@ function renderHero(tonight, containerId = 'fzDashHero') {
     }
 
     container.style.display = 'flex';
-    container.innerHTML = fzdHeroHTML(state);
+    container.dataset.mode = state.mode;
+    container.innerHTML = fzdHeroHTML(state, containerId === 'fzmHeroSlot');
 
     // Bascule neutre → rouge de marque quand le tour devient le vôtre. La
     // lecture forcée du layout entre les deux classes garantit que le calque
@@ -1262,7 +1268,7 @@ function renderHero(tonight, containerId = 'fzDashHero') {
         fzdHeroTimers[containerId] = setInterval(() => {
             const fresh = fzdHeroState(tonight);
             if (!fresh || fresh.mode !== state.mode) { renderHero(tonight, containerId); return; }
-            container.innerHTML = fzdHeroHTML(fresh);
+            container.innerHTML = fzdHeroHTML(fresh, containerId === 'fzmHeroSlot');
         }, 1000);
         return;
     }
@@ -1283,24 +1289,11 @@ function renderHero(tonight, containerId = 'fzDashHero') {
             const el = container.querySelector('.fzd-hero-elapsed');
             if (!el) return;
             const started = Number(fresh.poolData.turnStartedAt) || 0;
-            el.textContent = started ? fzdFormatElapsed(Date.now() - started) : '—';
+            const format = containerId === 'fzmHeroSlot' ? fzmElapsedClock : fzdFormatElapsed;
+            el.textContent = started ? format(Date.now() - started) : '—';
         }, 1000);
     }
 }
-
-// ============================================================
-// CARROUSEL DES CHOIX — repêchage en cours. Une seule bande qui
-// remplace « Prochains choix » + « Choix récents » : on défile des
-// choix déjà faits (estompés) vers le choix EN COURS (centré, en
-// rouge) puis les choix à venir (les vôtres surlignés). Rendu à
-// l'identique sous la bannière au bureau (#fzDashDraftBoard) et dans
-// la home téléphone (#fzmDraftBoard, appelé depuis accueil-mobile.js)
-// — même fonction, comme renderHero, pour que les deux ne divergent
-// jamais. accueil-dash.css le met en page selon la largeur d'écran.
-// Maquette : handoff premium, Canvas-11.
-// ============================================================
-const FZD_POS_FR = { offensive: 'ATT', defensive: 'DÉF', goalie: 'GAR', rookie: 'REC', teams: 'ÉQ' };
-const fzdDraftBoardTimers = {};
 
 // Photo d'un joueur par son nom : picksHistory ne garde que le nom, sans
 // identifiant pour viser le CDN de la LNH directement. On la retrouve dans
@@ -1320,347 +1313,6 @@ const fzdHeadshotByName = (() => {
     };
 })();
 
-function fzdDraftFaceHTML(name) {
-    const src = fzdHeadshotByName(name);
-    return src
-        ? `<img class="fzd-db-face" src="${escapeHTML(src)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
-        : `<span class="fzd-db-face is-empty">${escapeHTML((name || '?').trim().charAt(0) || '?')}</span>`;
-}
-
-function fzdStopDraftBoardTimer(containerId) {
-    if (fzdDraftBoardTimers[containerId]) { clearInterval(fzdDraftBoardTimers[containerId]); delete fzdDraftBoardTimers[containerId]; }
-}
-
-function fzdFormatClock(ms) {
-    const s = Math.max(0, Math.floor(ms / 1000));
-    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-}
-
-// État par piste, gardé hors du DOM pour survivre à la reconstruction du
-// conteneur : sur téléphone, renderMobileHome recrée #fzmDraftBoard à chaque
-// rafraîchissement, donc on ne peut pas relire l'ancienne position dans le
-// DOM — d'où `scroll` mémorisé ici.
-//   pick   — dernier index de choix rendu (a-t-il bougé = un choix est tombé)
-//   scroll — dernière position de défilement connue de l'utilisateur
-//   reveal — dernier choix déjà mis en avant (une seule fois par choix : le
-//            serveur émet plusieurs « draftUpdated » pour un même choix, et
-//            le filet de 20 s en rejoue d'autres par-dessus)
-const fzdDraftBoardPick = {};
-const fzdDraftBoardScroll = {};
-const fzdDraftBoardReveal = {};
-const fzdDraftBoardRevealTimers = {};
-
-// Temps pendant lequel le choix qui vient de tomber reste au centre avant
-// que la piste glisse au choix suivant. Doit rester aligné sur les keyframes
-// fzd-db-* d'accueil-dash.css : c'est la durée de l'animation plus le temps
-// de la lire.
-const FZD_DB_REVEAL_MS = 1600;
-
-/** Le système demande-t-il moins d'animation ? On saute alors la mise en
- *  avant et on va droit au choix en cours, comme avant. */
-function fzdMoinsDAnimation() {
-    return typeof matchMedia === 'function'
-        && matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-function fzdStopDraftBoardReveal(containerId) {
-    clearTimeout(fzdDraftBoardRevealTimers[containerId]);
-    delete fzdDraftBoardRevealTimers[containerId];
-}
-
-/**
- * Un choix vient de tomber : on amène le joueur repêché au centre, sa photo
- * et son nom entrent (classe .is-reveal, animée en CSS), puis la piste glisse
- * au choix en cours. Deux temps plutôt qu'un seul saut : sinon la carte du
- * joueur défile hors champ au moment même où elle apparaît, et on ne voit
- * jamais qui vient d'être pris.
- */
-function fzdRevelerChoix(containerId, track, carte) {
-    fzdStopDraftBoardReveal(containerId);
-
-    const cible = fzdCenterDraftCard(track, carte, true);
-    if (cible != null) fzdDraftBoardScroll[containerId] = cible;
-
-    // Retirée puis reposée : sans ce cycle, réappliquer la classe sur une
-    // carte qui la porte déjà ne relance pas l'animation.
-    carte.classList.remove('is-reveal');
-    void carte.offsetWidth;
-    carte.classList.add('is-reveal');
-
-    fzdDraftBoardRevealTimers[containerId] = setTimeout(() => {
-        delete fzdDraftBoardRevealTimers[containerId];
-        // La piste est relue dans le DOM plutôt que capturée : un
-        // rafraîchissement a pu la reconstruire pendant l'animation.
-        const box = document.getElementById(containerId);
-        const piste = box && box.querySelector('.fzd-db-track');
-        const montre = piste && piste.querySelector('.fzd-db-card.is-reveal');
-        if (montre) montre.classList.remove('is-reveal');
-        const encours = piste && piste.querySelector('.fzd-db-card.is-current');
-        if (!piste || !encours) return;
-        const suivant = fzdCenterDraftCard(piste, encours, true);
-        if (suivant != null) fzdDraftBoardScroll[containerId] = suivant;
-    }, FZD_DB_REVEAL_MS);
-}
-
-// Centre une carte dans sa piste et renvoie la position visée. scrollTo ne
-// touche que la piste, jamais le défilement de la page. clientWidth vaut 0
-// tant que le panneau n'est pas posé : on repasse alors à la frame suivante.
-function fzdCenterDraftCard(track, card, smooth) {
-    if (!track || !card) return null;
-    if (!track.clientWidth) {
-        requestAnimationFrame(() => fzdCenterDraftCard(track, card, false));
-        return null;
-    }
-    const left = Math.max(0, card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2);
-    track.scrollTo({ left, behavior: smooth ? 'smooth' : 'auto' });
-    return left;
-}
-
-// Glisser-déposer à la souris pour faire défiler la piste (le tactile la
-// fait déjà défiler nativement). Rebranché à chaque rendu : la piste est un
-// nœud neuf, donc aucun écouteur ne s'empile.
-function fzdBindDragScroll(track) {
-    let down = false, startX = 0, startScroll = 0, moved = 0;
-
-    track.addEventListener('pointerdown', e => {
-        if (e.pointerType === 'touch' || e.button !== 0) return;
-        down = true; moved = 0;
-        startX = e.clientX; startScroll = track.scrollLeft;
-        track.classList.add('is-dragging');
-        track.setPointerCapture(e.pointerId);
-    });
-    track.addEventListener('pointermove', e => {
-        if (!down) return;
-        const dx = e.clientX - startX;
-        moved += Math.abs(dx);
-        track.scrollLeft = startScroll - dx;
-    });
-    const end = e => {
-        if (!down) return;
-        down = false;
-        track.classList.remove('is-dragging');
-        try { track.releasePointerCapture(e.pointerId); } catch (_) {}
-    };
-    track.addEventListener('pointerup', end);
-    track.addEventListener('pointercancel', end);
-    // Un vrai glisser ne doit pas déclencher le clic d'un élément sous le
-    // curseur (lien futur dans une carte, etc.).
-    track.addEventListener('click', e => {
-        if (moved > 6) { e.preventDefault(); e.stopPropagation(); }
-    }, true);
-}
-
-function fzdRenderDraftBoard(containerId, poolData, team, activeName) {
-    const box = document.getElementById(containerId);
-    if (!box) return;
-    fzdStopDraftBoardTimer(containerId);
-
-    const draftState = poolData ? FZPool.draftState(poolData) : { etat: null };
-    const draftOrder = Array.isArray(poolData?.draftOrder) ? poolData.draftOrder : [];
-    if (draftState.etat !== 'encours' || !draftOrder.length) {
-        box.style.display = 'none';
-        box.innerHTML = '';
-        fzdStopDraftBoardReveal(containerId);
-        delete fzdDraftBoardPick[containerId];
-        delete fzdDraftBoardScroll[containerId];
-        delete fzdDraftBoardReveal[containerId];
-        return;
-    }
-
-    const numTeams = new Set(draftOrder).size || 1;
-    const total = draftOrder.length;
-    const idx = Math.min(Math.max(poolData.currentPickIndex || 0, 0), total - 1);
-    const history = Array.isArray(poolData.picksHistory) ? poolData.picksHistory : [];
-    const myName = team && team.name;
-    const started = Number(poolData.turnStartedAt) || 0;
-
-    // Prochain choix qui est le vôtre (parmi ceux à venir) — reçoit le libellé
-    // « Prochain » plutôt que « Dans N choix ».
-    let nextMine = -1;
-    for (let i = idx + 1; i < total; i++) { if (draftOrder[i] === myName) { nextMine = i; break; } }
-
-    let awayFromMine = -1;
-    for (let i = idx; i < total; i++) { if (draftOrder[i] === myName) { awayFromMine = i - idx; break; } }
-    const headsub = awayFromMine === 0 ? "C'est votre tour"
-        : awayFromMine > 0 ? `Votre tour dans ${awayFromMine} choix`
-        : 'Vous avez fait tous vos choix';
-
-    const cards = draftOrder.map((teamName, i) => {
-        const rc = `R${Math.floor(i / numTeams) + 1} · C${(i % numTeams) + 1}`;
-        const mine = teamName === myName;
-        const n = i + 1;
-
-        if (i < idx) {
-            const h = history[i] || {};
-            const isLast = i === idx - 1;
-            const pos = FZD_POS_FR[h.position] || '';
-            return `
-                <article class="fzd-db-card is-done${isLast ? ' is-last' : ''}">
-                    <div class="fzd-db-card-top">
-                        <span class="fzd-db-num">Choix ${n}</span>
-                        <span class="fzd-db-rc">${rc}</span>
-                    </div>
-                    <div class="fzd-db-card-body has-face">
-                        ${fzdDraftFaceHTML(h.player)}
-                        <span class="fzd-db-ident">
-                            <span class="fzd-db-name">${escapeHTML(h.player || '—')}</span>
-                            <span class="fzd-db-sub">${pos ? escapeHTML(pos) + ' · ' : ''}${escapeHTML(h.team || teamName)}</span>
-                        </span>
-                    </div>
-                    <div class="fzd-db-card-foot">
-                        <span>${escapeHTML(teamName)}${mine ? ' · vous' : ''}</span>
-                        ${isLast ? '<span class="fzd-db-foot-tag">Dernier</span>' : ''}
-                    </div>
-                </article>`;
-        }
-
-        if (i === idx) {
-            const pct = Math.min(100, Math.round((idx / total) * 100));
-            return `
-                <article class="fzd-db-card is-current">
-                    <div class="fzd-db-card-top">
-                        <span class="fzd-db-tag">En cours</span>
-                        <span class="fzd-db-rc">${rc}</span>
-                    </div>
-                    <div class="fzd-db-current-head">
-                        <span class="fzd-db-num-lg">Choix ${n}</span>
-                        <span class="fzd-db-current-team">${escapeHTML(teamName)}${mine ? ' · vous' : ''}</span>
-                    </div>
-                    <div class="fzd-db-bar"><i style="width:${pct}%"></i></div>
-                    <div class="fzd-db-clock-row">
-                        <span class="fzd-db-clock">${started ? fzdFormatClock(Date.now() - started) : '—:—'}</span>
-                        <span class="fzd-db-clock-lbl">Temps écoulé</span>
-                    </div>
-                </article>`;
-        }
-
-        const away = i - idx;
-        if (mine) {
-            const soonest = i === nextMine;
-            return `
-                <article class="fzd-db-card is-mine">
-                    <div class="fzd-db-card-top">
-                        <span class="fzd-db-num">Choix ${n}</span>
-                        <span class="fzd-db-rc is-accent">Vous</span>
-                    </div>
-                    <div class="fzd-db-card-body">
-                        <span class="fzd-db-name">${escapeHTML(teamName)}</span>
-                        <span class="fzd-db-sub">${soonest ? 'Préparez votre liste' : 'Votre choix'}</span>
-                    </div>
-                    <div class="fzd-db-card-foot">
-                        <span class="fzd-db-foot-tag is-accent">${soonest ? 'Prochain' : `Dans ${away} choix`}</span>
-                    </div>
-                </article>`;
-        }
-        return `
-            <article class="fzd-db-card is-future">
-                <div class="fzd-db-card-top">
-                    <span class="fzd-db-num">Choix ${n}</span>
-                    <span class="fzd-db-rc">${rc}</span>
-                </div>
-                <div class="fzd-db-card-body">
-                    <span class="fzd-db-name is-faint">${escapeHTML(teamName)}</span>
-                    <span class="fzd-db-sub">À venir</span>
-                </div>
-                <div class="fzd-db-card-foot"><span>Dans ${away} choix</span></div>
-            </article>`;
-    }).join('');
-
-    const pct = Math.round((idx / total) * 100);
-    const remaining = total - idx;
-
-    // Position d'avant le re-rendu. On la lit d'abord dans le DOM (bureau :
-    // le conteneur survit), sinon dans l'état mémorisé (téléphone :
-    // renderMobileHome vient de recréer #fzmDraftBoard vide, le DOM ne sait
-    // plus rien — c'est ce trou qui renvoyait la piste au début).
-    const prevPick = fzdDraftBoardPick[containerId];
-    const prevTrack = box.querySelector('.fzd-db-track');
-    const prevScroll = prevTrack ? prevTrack.scrollLeft : fzdDraftBoardScroll[containerId];
-
-    box.style.display = '';
-    box.innerHTML = `
-        <div class="fzd-db-inner">
-            <div class="fzd-db-head">
-                <div class="fzd-db-head-copy">
-                    <span class="fzd-db-eyebrow">Ordre des choix</span>
-                    <h2 class="fzd-db-title">En direct — choix ${idx + 1} / ${total}</h2>
-                    <span class="fzd-db-headsub">${escapeHTML(headsub)}</span>
-                </div>
-                <div class="fzd-db-nav">
-                    <button type="button" class="fzd-db-nav-btn" data-dir="-1" aria-label="Choix précédents">‹</button>
-                    <button type="button" class="fzd-db-nav-btn" data-dir="1" aria-label="Choix suivants">›</button>
-                </div>
-            </div>
-            <div class="fzd-db-track">${cards}</div>
-            <div class="fzd-db-foot">
-                <div class="fzd-db-progress"><i style="width:${pct}%"></i><b style="left:${pct}%"></b></div>
-                <span class="fzd-db-progress-lbl">${idx} choix fait${idx > 1 ? 's' : ''} · ${remaining} restant${remaining > 1 ? 's' : ''}</span>
-                <a class="fzd-db-full" href="draftActif.html?pool=${encodeURIComponent(activeName || '')}">Tableau complet →</a>
-            </div>
-            <p class="fzd-db-note">Le classement s'ouvre une fois le repêchage terminé.</p>
-        </div>`;
-
-    const track = box.querySelector('.fzd-db-track');
-    fzdBindDragScroll(track);
-
-    // Premier rendu → on centre le choix en cours d'un placement sec.
-    // Un choix vient de tomber (l'index a bougé) → on montre d'abord le
-    // joueur repêché, puis on glisse au choix en cours (fzdRevelerChoix).
-    // Sinon → on rend la position que l'utilisateur avait avant le re-rendu.
-    const current = track.querySelector('.is-current');
-    const dernier = track.querySelector('.fzd-db-card.is-last');
-    const pickChanged = prevPick != null && prevPick !== idx;
-    // Rejouée aussi quand un rafraîchissement tombe au milieu de la mise en
-    // avant (le serveur en émet plusieurs par choix) : les cartes sont
-    // neuves, la classe et le minutage d'avant sont partis avec les
-    // anciennes. Toute la séquence repart, plutôt que de recoller la classe
-    // sur le minuteur déjà lancé — sinon l'animation redémarrerait de zéro
-    // pour être coupée net une fraction de seconde plus tard.
-    const aReveler = dernier && !fzdMoinsDAnimation()
-        && (!!fzdDraftBoardRevealTimers[containerId]
-            || (pickChanged && fzdDraftBoardReveal[containerId] !== idx));
-
-    if (aReveler) {
-        fzdDraftBoardReveal[containerId] = idx;
-        fzdRevelerChoix(containerId, track, dernier);
-    } else if (current && (prevPick == null || pickChanged)) {
-        // La cible est mémorisée tout de suite : si un second rafraîchissement
-        // arrive pendant le glissement (le serveur en émet plusieurs par
-        // choix), il restaure le choix en cours et non la position d'avant.
-        const target = fzdCenterDraftCard(track, current, pickChanged);
-        if (target != null) fzdDraftBoardScroll[containerId] = target;
-    } else if (prevScroll != null) {
-        track.scrollLeft = prevScroll;
-    }
-    fzdDraftBoardPick[containerId] = idx;
-
-    // Mémorise ce que l'utilisateur fait défiler, pour le lui rendre au
-    // prochain rendu même si le conteneur a été recréé entre-temps.
-    let scrollSave;
-    track.addEventListener('scroll', () => {
-        clearTimeout(scrollSave);
-        scrollSave = setTimeout(() => { fzdDraftBoardScroll[containerId] = track.scrollLeft; }, 120);
-    });
-
-    box.querySelectorAll('.fzd-db-nav-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const card = track.querySelector('.fzd-db-card');
-            const step = ((card && card.offsetWidth) || 180) + 12;
-            track.scrollBy({ left: step * 2 * Number(btn.dataset.dir), behavior: 'smooth' });
-        });
-    });
-
-    // Pendule du tour : on ne remplace que le texte, jamais tout le carrousel
-    // (sinon la position de défilement sauterait à chaque seconde).
-    if (started) {
-        fzdDraftBoardTimers[containerId] = setInterval(() => {
-            const el = document.getElementById(containerId);
-            const clock = el && el.querySelector('.fzd-db-clock');
-            if (!clock) { fzdStopDraftBoardTimer(containerId); return; }
-            clock.textContent = fzdFormatClock(Date.now() - started);
-        }, 1000);
-    }
-}
 
 // ============================================================
 // MES POOLS — every pool the user is in, same ranking data
@@ -2408,7 +2060,6 @@ async function renderDash() {
     section.classList.toggle('is-poolless', !hasPool);
     fzdApplyPreseasonLayout(hasPool);
     if (!hasPool && hero) { fzdStopHeroTimer('fzDashHero'); hero.style.display = 'none'; hero.innerHTML = ''; }
-    if (!hasPool) fzdRenderDraftBoard('fzDashDraftBoard', null, null, null);
     // calRevealedNoPool : le visiteur sans pool a ouvert le calendrier depuis
     // la carte « Calendrier LNH » — ne pas le refermer sous lui au prochain
     // rafraîchissement de FZPool.
@@ -2435,12 +2086,11 @@ async function renderDash() {
         // que les stats en direct arrivent du premier coup.
         calTonight = dash.tonight || { players: [], games: [] };
         renderHero(dash.tonight);
-        fzdRenderDraftBoard('fzDashDraftBoard', FZPool.data(), FZPool.team(), dash.activeName);
         renderLivePanel(dash.tonight, dash.movement, dash.activeName);
         renderMobileHome(dash.tonight, dash.movement, dash.activeName);
     } else {
         renderHero(null);
-        fzdRenderDraftBoard('fzDashDraftBoard', FZPool.data(), FZPool.team(), FZPool.get());
+        renderMobileHome({ players: [], games: [] }, null, FZPool.get());
     }
 }
 

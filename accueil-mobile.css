@@ -329,7 +329,7 @@ html[data-theme="dark"] .fz-mobile-home {
        cachait surtout le calendrier pour de bon dès que la home mobile ne
        rendait pas (avant-saison, effectif pas encore chargé). Le laisser à sa
        place bureau est le bon repli : visible, simplement plus bas. */
-    #fzDashOffseason, #fzDashBody, #fzDashHero, #fzDashDraftBoard,
+    #fzDashOffseason, #fzDashBody, #fzDashHero,
     #fzDashPoolChips { display: none !important; }
 
     /* Le slot ne fait que porter le calendrier ; la marge basse de
@@ -339,4 +339,144 @@ html[data-theme="dark"] .fz-mobile-home {
 }
 @media (min-width: 769px) {
     .fz-mobile-home { display: none !important; }
+}
+
+/* Accueil téléphone : actualités et préparation, ou repêchage en vedette. */
+@media (max-width: 768px) {
+    body:has(#fzMobileHome[data-mode]) #storiesSection { display: none !important; }
+    .fz-mobile-home {
+        --fzm-red: #f65325;
+        --fzm-red-soft: #f653251c;
+        padding-top: 8px;
+    }
+    html[data-theme="dark"] .fz-mobile-home {
+        --fzm-bg: #0d1011;
+        --fzm-panel: #171a1c;
+        --fzm-surface: #171a1c;
+        --fzm-border: #ffffff38;
+    }
+    .fzm-section { margin-bottom: 16px; }
+    .fzm-section-title { font-size: clamp(18px, 4.7vw, 25px); line-height: 1.15; letter-spacing: -.025em; }
+    .fzm-section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .fzm-section-head .fzm-section-title { margin: 0; }
+    .fz-mobile-home .fzm-see-all { flex-shrink: 0; padding: 8px 0; border: 0; background: none; color: var(--fzm-red); font: 600 11px/1.2 'Archivo', sans-serif; cursor: pointer; }
+    .fz-mobile-home a:focus-visible, .fz-mobile-home button:focus-visible { outline: 2px solid var(--fzm-red); outline-offset: 3px; }
+
+    .fzm-news-hero { position: relative; margin-bottom: 8px; }
+    .fzm-news-hero:empty { display: none; }
+    .fzm-news-hero-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; border: 1px solid var(--fzm-border); border-radius: 10px; }
+    .fzm-news-hero-card { position: relative; flex: 0 0 100%; min-width: 0; min-height: 130px; display: flex; align-items: flex-end; padding: 20px 42px 20px 14px; isolation: isolate; scroll-snap-align: start; background: #191e22; }
+    .fzm-news-hero-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+    .fzm-news-hero-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #080a0cee, #080a0c35), linear-gradient(0deg, #080a0cdd, transparent); z-index: -1; }
+    .fzm-news-hero-copy { color: #fff; }
+    .fzm-news-hero-copy > span { color: #ff764f; background: #401a13; padding: 4px 6px; border-radius: 5px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+    .fzm-news-hero-copy h2 { font-size: clamp(17px, 4.4vw, 26px); line-height: 1.08; margin: 7px 0 5px; max-width: 26ch; }
+    .fzm-news-hero-copy small { color: #b8bec8; font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
+    .fzm-news-hero-card > b { position: absolute; right: 12px; bottom: 16px; color: white; font-size: 22px; }
+    .fzm-news-hero-dots { position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); display: flex; }
+    .fzm-news-hero-dots button { width: 24px; height: 24px; border: 0; padding: 8px; background: none; cursor: pointer; }
+    .fzm-news-hero-dots button::before { content: ''; display: block; width: 8px; height: 8px; border-radius: 50%; background: #666; }
+    .fzm-news-hero-dots button[aria-pressed="true"]::before { background: var(--fzm-red); }
+
+    #fzmHeroSlot { border-radius: 10px; box-shadow: none; margin-bottom: 10px; }
+    #fzmHeroSlot[data-mode="preseason"] { gap: 12px 9px; padding: 14px 12px 10px; border: 1px solid #ee7248; }
+    #fzmHeroSlot[data-mode="preseason"] .fzd-hero-copy { flex: 1 1 52%; gap: 5px; }
+    #fzmHeroSlot[data-mode="preseason"] .fzd-hero-shield { width: 25px; height: 29px; }
+    #fzmHeroSlot[data-mode="preseason"] .fzd-hero-eyebrow { font-size: 8px; line-height: 1.35; letter-spacing: .12em; }
+    #fzmHeroSlot[data-mode="preseason"] .fzd-hero-headline { font-size: clamp(18px, 4.5vw, 30px); line-height: 1.1; }
+    .fzm-preseason-sub { color: #ffe2d6; font-size: 10px; line-height: 1.3; margin: 0; }
+    #fzmHeroSlot[data-mode="preseason"] .fzd-hero-stats { flex: 0 0 auto; gap: 10px; }
+    #fzmHeroSlot[data-mode="preseason"] .fzd-hero-stat { flex-direction: column-reverse; align-items: center; }
+    #fzmHeroSlot[data-mode="preseason"] .fzd-hero-stat-val { font-size: 24px; }
+    #fzmHeroSlot[data-mode="preseason"] .fzd-hero-stat-lbl { font-size: 8px; }
+    #fzmHeroSlot .fzd-hero-cta { background: #f65325; min-height: 44px; padding: 11px; }
+    #fzmHeroSlot .fzd-hero-cta-label { white-space: normal; text-align: center; }
+    #fzmHeroSlot .fzd-hero-cta-bar { display: none; }
+    #fzmHeroSlot .fzd-hero-cta-chev { color: #fff; font-size: 22px; }
+
+    #fzmHeroSlot.is-draft { display: block !important; padding: 18px 14px 12px; color: #fff; background: radial-gradient(ellipse at 90% 50%, #24343d, #111315 70%); border: 1px solid #ffffff38; min-height: 220px; }
+    #fzmHeroSlot.is-draft::before { transform: none; background: linear-gradient(90deg, #250c08dd, #090c0e88 70%, transparent); z-index: 1; }
+    #fzmHeroSlot.is-draft.is-myturn { border-color: #f6532580; }
+    #fzmHeroSlot .fzm-draft-portrait { position: absolute; z-index: 0; right: -12%; bottom: 0; height: 100%; width: 85%; object-fit: cover; object-position: top; opacity: .8; }
+    .fzm-draft-content { position: relative; z-index: 2; }
+    .fzm-draft-badge { display: inline-flex; align-items: center; gap: 7px; padding: 7px 9px; background: #772b214d; color: #ff9478; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .16em; border-radius: 8px; }
+    .fzm-draft-badge > span { width: 8px; height: 8px; border-radius: 50%; background: #ff633b; }
+    .fzm-draft-title { margin: 8px 0 12px; font: 800 clamp(24px, 6vw, 38px)/1.1 'Archivo', sans-serif; max-width: 16ch; letter-spacing: -.04em; }
+    .fzm-draft-stats { display: flex; gap: 18px; margin-bottom: 12px; }
+    .fzm-draft-stats > div + div { padding-left: 18px; border-left: 1px solid #ffffff55; }
+    .fzm-draft-stats span, .fzm-draft-clock > span { display: block; color: #c7c9ce; font-size: 9px; text-transform: uppercase; letter-spacing: .13em; margin-bottom: 5px; }
+    .fzm-draft-stats strong { font: 700 26px/1 'Oswald', sans-serif; }
+    .fzm-draft-clock { margin-bottom: 12px; }
+    .fzm-draft-clock strong { font: 800 28px/1 'Archivo', sans-serif; color: #ff633b; font-variant-numeric: tabular-nums; }
+    .fz-mobile-home .fzm-draft-cta { display: inline-flex; align-items: center; justify-content: center; gap: 15px; min-height: 44px; padding: 10px 18px; border: 1px solid #ff8452; border-radius: 8px; background: #e54b1c; color: #fff; font-weight: 700; font-size: 14px; }
+    .fzm-draft-cta > span { font-size: 22px; }
+
+    .fzm-poolchips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 10px; }
+    .fzm-poolchip { min-height: 44px; padding: 8px; gap: 7px; border-radius: 9px; font-size: clamp(9px, 2.35vw, 14px); line-height: 1.2; }
+    .fzm-poolchip img, .fzm-tile-icon { width: 20px; height: 20px; object-fit: contain; }
+    .fzm-poolchip-plus { display: grid; place-items: center; flex: 0 0 19px; height: 19px; border-radius: 50%; background: var(--fzm-ink); color: var(--fzm-bg); font: 700 21px/1 Arial, sans-serif; }
+    .fzm-poolchip b { margin-left: auto; font-size: 18px; font-weight: 400; }
+    .fzm-tile-row { padding: 9px 12px; margin-bottom: 12px; border: 1px solid var(--fzm-border); border-radius: 9px; }
+    .fzm-tile-row > div { flex: 1; }
+    .fz-mobile-home .fzm-tile-btn { background: var(--fzm-surface); color: var(--fzm-ink); border: 1px solid var(--fzm-border); min-height: 36px; }
+
+    .fzm-watch-card { position: relative; width: clamp(145px, 34vw, 220px); min-height: 108px; padding: 30px 8px 10px 59px; }
+    .fzm-watch-card .fzd-off-face { position: absolute; left: 3px; bottom: 10px; width: 52px; height: 78px; border-radius: 0; background: none; }
+    .fzm-watch-card .fzd-off-face img { object-fit: cover; }
+    .fzm-watch-logo { position: absolute; top: 8px; right: 9px; width: 22px; height: 22px; }
+    .fzm-watch-name { font-size: 11px; line-height: 1.2; }
+    .fzm-watch-team, .fzm-watch-note { font-size: 10px; line-height: 1.3; }
+    .fzm-watch-note { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+    .fzm-watch-track.is-expanded .fzm-watch-note { display: block; }
+    .fzm-watch-track.is-expanded { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); overflow: visible; }
+    .fzm-watch-track.is-expanded .fzm-watch-card { width: auto; }
+
+    .fz-mobile-home .fz-dash-calendar { padding: 0; background: none; border: 0; border-radius: 0; gap: 8px; }
+    .fz-mobile-home .fzd-cal-head { gap: 6px; }
+    .fz-mobile-home .fzd-cal-title { flex: 1; font: 700 clamp(20px, 5vw, 27px)/1.1 'Archivo', sans-serif; letter-spacing: -.03em; text-transform: none; }
+    .fz-mobile-home .fzd-cal-full { flex: 0 1 auto; font: 600 10px/1.2 'Archivo', sans-serif; color: var(--fzm-red); margin: 0; }
+    .fz-mobile-home .fzd-cal-nav { order: 3; padding: 4px 8px; border: 0; }
+    .fz-mobile-home .fzd-cal-nav-btn { min-width: 32px; min-height: 28px; }
+    .fz-mobile-home .fzd-cal-range { font-size: 10px; }
+    .fz-mobile-home .fzd-cal-strip { gap: 5px; }
+    .fz-mobile-home .fzd-day-chip { background: var(--fzm-surface); border-color: var(--fzm-border); padding: 7px 1px; }
+    .fz-mobile-home .fzd-day-chip.is-selected { border: 2px solid var(--fzm-red); background: var(--fzm-red-soft); }
+    .fz-mobile-home .fzd-day-chip.is-selected .fzd-day-chip-num { color: var(--fzm-red); }
+    .fz-mobile-home .fzd-day-chip-count { display: none; }
+    .fz-mobile-home .fzd-day-chip-month { display: block; font: 500 8px/1 'Archivo', sans-serif; text-transform: uppercase; color: var(--fzm-ink-soft); }
+    .fz-mobile-home .fzd-cal-dayname { font: 700 13px/1.2 'Archivo', sans-serif; }
+    .fz-mobile-home .fzd-cal-dayhead { padding: 6px 0; }
+    .fz-mobile-home .fzd-cal-empty { width: 100%; padding: 16px; margin: 0; border: 1px solid var(--fzm-border); border-radius: 9px; background: var(--fzm-surface); }
+    .fz-mobile-home .fzd-cal-games { margin: 0; padding: 0; gap: 8px; scroll-padding: 0; }
+    .fz-mobile-home .fzd-game-card { flex: 0 0 calc((100% - 8px) / 2); min-width: 145px; padding: 10px; background: var(--fzm-surface); border-color: var(--fzm-border); }
+    .fz-mobile-home .fzd-game-head { gap: 4px; flex-wrap: wrap; }
+    .fz-mobile-home .fzd-game-when { font-size: 9px; }
+    .fz-mobile-home .fzd-game-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .fz-mobile-home .fzd-game-row { display: flex; flex-direction: column; gap: 5px; text-align: center; padding: 8px 0; }
+    .fz-mobile-home .fzd-team-logo { width: 40px; height: 40px; }
+    .fz-mobile-home .fzd-team-name { font-size: 10px; line-height: 1.2; }
+    .fz-mobile-home .fzd-team-rec { display: none; }
+    .fz-mobile-home .fzd-game-roster-count { display: block; padding: 7px 3px; margin-top: auto; border-radius: 7px; background: var(--fzm-border); color: var(--fzm-ink-soft); text-align: center; font-size: 10px; }
+    .fz-mobile-home .fzd-game-roster-count.has-players { background: var(--fzm-red-soft); color: var(--fzm-red); }
+    .fz-mobile-home .fzd-game-players { display: none; }
+
+    #fzmLeagueTabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--fzm-border); border-radius: 9px; overflow: hidden; }
+    #fzmLeagueTabs .fzm-tab { min-width: 0; min-height: 36px; border: 0; border-right: 1px solid var(--fzm-border); border-radius: 0; font-size: 10px; }
+    #fzmLeagueTabs .fzm-tab:last-child { border-right: 0; }
+    #fzmLeagueTabs .fzm-tab.is-active { background: #e74a1e; color: #fff; border-radius: 8px; }
+    .fzm-tab-count { display: none; }
+    .fzm-off-card { position: relative; flex-basis: calc((100% - 10px) / 2); min-width: 155px; max-width: none; padding: 10px; gap: 8px; }
+    .fzm-off-card > .fzd-off-face { position: absolute; top: 39px; left: 9px; width: 35px; height: 40px; }
+    .fzm-off-card-name { font-size: 12px; padding-left: 40px; min-height: 20px; }
+    .fzm-off-card-club { font-size: 10px; padding-left: 40px; }
+    .fzm-off-card-club img { width: 18px; height: 18px; }
+    .fzm-off-card-date { font-size: 7px; letter-spacing: .03em; }
+    .fzm-off-tag { font-size: 8px; padding: 5px; }
+    .fzm-off-card-stats { flex-wrap: wrap; gap: 8px; }
+    .fzm-off-stat-val { font-size: 10px; }
+    .fzm-player-card { position: relative; flex: 0 0 calc((100% - 10px) / 2); min-width: 155px; padding: 10px 8px 10px 52px; }
+    .fzm-player-card > .fzd-off-face { position: absolute; left: 7px; top: 10px; width: 38px; height: 45px; }
+    .fzm-player-name { font-size: 11px; }
+    .fzm-player-tag.is-upcoming { display: none; }
+    .fzm-player-line { font-size: 10px; line-height: 1.3; }
 }

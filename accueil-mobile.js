@@ -20,6 +20,57 @@ function frOrdinal(n) {
     return n === 1 ? '1er' : `${n}e`;
 }
 
+function fzmElapsedClock(ms) {
+    const seconds = Math.max(0, Math.floor(ms / 1000));
+    return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+function fzmDraftHeroHTML(state) {
+    const order = state.poolData.draftOrder || [];
+    const teams = new Set(order).size || 1;
+    const round = Math.floor(state.pick / teams) + 1;
+    const rounds = Math.max(round, Math.ceil(order.length / teams));
+    const next = order.indexOf(state.team.name, state.pick);
+    const headline = state.myTurn ? 'C’est votre tour'
+        : next >= 0 ? `Votre tour dans ${next - state.pick} choix` : 'Repêchage en cours';
+    const started = Number(state.poolData.turnStartedAt) || 0;
+    const portrait = fzdHeadshotByName('Mark Scheifele');
+    return `
+        ${portrait ? `<img class="fzm-draft-portrait" src="${escapeHTML(portrait)}" alt="" onerror="this.remove()">` : ''}
+        <div class="fzm-draft-content">
+            <div class="fzm-draft-badge"><span aria-hidden="true"></span>Repêchage en cours</div>
+            <h2 class="fzm-draft-title">${escapeHTML(headline)}</h2>
+            <div class="fzm-draft-stats">
+                <div><span>Ronde</span><strong>${round} / ${rounds}</strong></div>
+                <div><span>Choix global</span><strong>${state.pick + 1}</strong></div>
+            </div>
+            <div class="fzm-draft-clock"><span>Temps écoulé</span><strong class="fzd-hero-elapsed">${started ? fzmElapsedClock(Date.now() - started) : '—'}</strong></div>
+            <a class="fzm-draft-cta" href="draftActif.html?pool=${encodeURIComponent(state.activeName)}">Aller au repêchage <span aria-hidden="true">→</span></a>
+        </div>`;
+}
+
+// Actualités avant-saison : cartes issues du même flux que l'accueil bureau.
+async function fzmLoadNewsHero() {
+    const slot = document.getElementById('fzmNewsHero');
+    if (!slot) return;
+    const articles = (await fetchNhlNews()).slice(0, 3);
+    if (!slot.isConnected || !articles.length) return;
+    slot.innerHTML = `<div class="fzm-news-hero-track">${articles.map(a => `
+        <a class="fzm-news-hero-card" href="${escapeHTML(a.url)}" target="_blank" rel="noopener noreferrer">
+            ${a.image ? `<img src="${escapeHTML(a.image)}" alt="" onerror="this.remove()">` : ''}
+            <div class="fzm-news-hero-copy"><span>Actualités</span><h2>${escapeHTML(a.title)}</h2><small>${escapeHTML(a.source || 'LNH')}</small></div>
+            <b aria-hidden="true">↗</b>
+        </a>`).join('')}</div>
+        ${articles.length > 1 ? `<div class="fzm-news-hero-dots">${articles.map((_, i) => `<button type="button" aria-label="Actualité ${i + 1}" aria-pressed="${i === 0}"></button>`).join('')}</div>` : ''}`;
+    const track = slot.querySelector('.fzm-news-hero-track');
+    const dots = [...slot.querySelectorAll('.fzm-news-hero-dots button')];
+    dots.forEach((dot, i) => dot.addEventListener('click', () => track.scrollTo({ left: i * track.clientWidth, behavior: 'smooth' })));
+    track.addEventListener('scroll', () => {
+        const index = Math.round(track.scrollLeft / track.clientWidth);
+        dots.forEach((dot, i) => dot.setAttribute('aria-pressed', String(i === index)));
+    }, { passive: true });
+}
+
 // ============================================================
 // HÉROS — rendu par renderHero() (accueil-dash.js), même fonction
 // et même contenu que la bannière bureau : voir fzdHeroState/
@@ -27,10 +78,7 @@ function frOrdinal(n) {
 // (#fzmHeroSlot) plutôt que de reconstruire son propre balisage,
 // pour que téléphone et bureau ne puissent jamais diverger.
 //
-// Le repêchage en cours n'a plus de « Prochains choix » / « Choix
-// récents » propres au téléphone : renderMobileHome pose un
-// conteneur #fzmDraftBoard et fzdRenderDraftBoard() (accueil-dash.js)
-// y rend le même carrousel des choix qu'au bureau.
+// Le repêchage reste accessible depuis la bannière d'état.
 // ============================================================
 
 function fzmPreseasonExtras(draftState, activeName) {
@@ -39,6 +87,7 @@ function fzmPreseasonExtras(draftState, activeName) {
         const ready = draftState.etat === 'pret';
         html += `
             <div class="fzm-tile-row">
+                <img class="fzm-tile-icon" src="Icons/grayGroup.png" alt="">
                 <div>
                     <div class="fzm-tile-title">${ready ? 'Prêt à repêcher' : 'En attente de joueurs'}</div>
                     <div class="fzm-tile-sub">${draftState.inscrits}/${draftState.max} gérants inscrits</div>
@@ -52,11 +101,12 @@ function fzmPreseasonExtras(draftState, activeName) {
     // l'horizontale : les 70 cartes y tiennent sans tronquer la liste.
     html += `
         <div class="fzm-section">
-            <div class="fzm-section-title">Joueurs à surveiller</div>
-            <div class="fzm-scroll-row">
+            <div class="fzm-section-head"><h2 class="fzm-section-title">Joueurs à surveiller</h2><button type="button" class="fzm-see-all" data-fzm-watch-all aria-expanded="false">Voir tout ›</button></div>
+            <div class="fzm-scroll-row fzm-watch-track">
                 ${OFFSEASON_WATCHLIST.length
                     ? OFFSEASON_WATCHLIST.map(w => `
                         <div class="fzm-watch-card">
+                            ${offPlayerFaceHTML(w.name, w.team, w.playerId)}
                             <img class="fzm-watch-logo" src="teams/${escapeHTML(w.team)}.png" alt="" loading="lazy" onerror="this.remove()">
                             <div class="fzm-watch-name">${escapeHTML(w.name)}</div>
                             <div class="fzm-watch-team">${escapeHTML(w.team)}${w.position ? ' · ' + escapeHTML(w.position) : ''}</div>
@@ -171,7 +221,7 @@ function fzmPlayersRow(tonight, rosterNames) {
                 name, meta,
                 tag: gameTimeLabel(game.startTimeUTC),
                 tagClass: 'is-upcoming',
-                line: 'À venir',
+                line: `${gameTimeLabel(game.startTimeUTC)} vs ${game.away.abbrev === abbrev ? game.home.abbrev : game.away.abbrev}`,
                 sortKey: 0,
                 pts: 0
             });
@@ -183,7 +233,7 @@ function fzmPlayersRow(tonight, rosterNames) {
 
     return `
         <div class="fzm-section" id="fzmPlayers">
-            <div class="fzm-section-title">Vos joueurs ce soir</div>
+            <div class="fzm-section-head"><h2 class="fzm-section-title">Mes joueurs ce soir</h2><a class="fzm-see-all" href="mes-pools.html">Mes joueurs ›</a></div>
             <div class="fzm-scroll-row">
                 ${tiles.map(fzmPlayerTile).join('')}
             </div>
@@ -193,7 +243,7 @@ function fzmPlayersRow(tonight, rosterNames) {
 function fzmPlayerTile(t) {
     return `
         <div class="fzm-player-card">
-            <div class="fzm-player-avatar"></div>
+            ${offPlayerFaceHTML(t.name, getPlayerStats(t.name)?.teamAbbrev)}
             <div class="fzm-player-name">${escapeHTML(t.name)}</div>
             <div class="fzm-player-meta">${escapeHTML(t.meta)}</div>
             <span class="fzm-player-tag ${t.tagClass}">${escapeHTML(t.tag)}</span>
@@ -273,11 +323,11 @@ let fzmLeagueData = null;
 // Carrousel calqué sur celui du bureau (fzd-off-carousel, index.html /
 // renderOffseasonLeague, accueil-dash.js) : en-tête avec flèches, onglets
 // filtres, piste de cartes qu'on feuillette au doigt, points dessous.
-function fzmLeagueSectionHTML(showNews) {
+function fzmLeagueSectionHTML(showNews, isDraft = false) {
     return `
         <div class="fzm-section" id="fzmLeagueSection">
             <div class="fzm-league-head">
-                <div class="fzm-section-title">Dans la LNH</div>
+                <h2 class="fzm-section-title">${isDraft ? 'Activité de la ligue' : 'Dans la LNH'}</h2>
                 <div class="fzm-league-nav">
                     <button type="button" class="fzm-league-nav-btn" id="fzmLeaguePrev" aria-label="Mouvements précédents">‹</button>
                     <button type="button" class="fzm-league-nav-btn" id="fzmLeagueNext" aria-label="Mouvements suivants">›</button>
@@ -510,6 +560,7 @@ function fzmOffSigningCardHTML(t) {
                 <span class="fzm-off-card-date">${dayLabelFr(t.date)}</span>
             </div>
             <div class="fzm-off-card-name">${escapeHTML(t.playerName)}</div>
+            ${offPlayerFaceHTML(t.playerName, t.toTeam, t.playerId)}
             <div class="fzm-off-card-club">
                 ${fzmOffLogoHTML(t.toTeam)}
                 <span>${escapeHTML(club)}</span>
@@ -528,6 +579,7 @@ function fzmOffInjuryCardHTML(i) {
                 <span class="fzm-off-card-date">${dayLabelFr(i.since)}</span>
             </div>
             <div class="fzm-off-card-name">${escapeHTML(i.playerName)}</div>
+            ${offPlayerFaceHTML(i.playerName, i.team, i.playerId, i.headshot)}
             <div class="fzm-off-card-club">
                 ${fzmOffLogoHTML(i.team)}
                 <span>${escapeHTML(club)}</span>
@@ -561,28 +613,13 @@ async function fzmLoadNews() {
         </a>`).join('');
 }
 
-// Raccourcis pools — avant le début de la saison régulière seulement,
-// posés entre le calendrier et le bloc hors-saison (« Dans la LNH »).
-// Pendant du #fzDashPoolChips du bureau : mêmes trois portes que le pied
-// de page, qui cède alors sa place plutôt que de les répéter deux fois
-// sur le même écran.
+// Les trois raccourcis restent accessibles sous la bannière dans chaque état.
 function fzmPoolChips() {
     return `
         <div class="fzm-poolchips">
-            <a class="fzm-poolchip is-primary" href="mes-pools.html">Mes pools</a>
-            <a class="fzm-poolchip" href="creer-pool.html">Créer un pool</a>
-            <a class="fzm-poolchip" href="rejoindre-pool.html">Rejoindre un pool</a>
-        </div>`;
-}
-
-function fzmFooterLinks() {
-    return `
-        <div class="fzm-footer-links">
-            <a href="mes-pools.html">Mes pools</a>
-            <span>·</span>
-            <a href="creer-pool.html">Créer un pool</a>
-            <span>·</span>
-            <a href="rejoindre-pool.html">Rejoindre un pool</a>
+            <a class="fzm-poolchip" href="mes-pools.html"><img src="Icons/grayGroup.png" alt=""><span>Mes pools</span><b aria-hidden="true">›</b></a>
+            <a class="fzm-poolchip" href="creer-pool.html"><span class="fzm-poolchip-plus" aria-hidden="true">+</span><span>Créer un pool</span><b aria-hidden="true">›</b></a>
+            <a class="fzm-poolchip" href="rejoindre-pool.html"><img src="Icons/grayGroup.png" alt=""><span>Rejoindre un pool</span><b aria-hidden="true">›</b></a>
         </div>`;
 }
 
@@ -623,7 +660,11 @@ function renderMobileHome(tonight, movement, activeName) {
     // La bannière elle-même vient de renderHero() (accueil-dash.js), qui la
     // rend dans ce conteneur une fois root.innerHTML posé plus bas — même
     // contenu, même minuteur, que la version bureau.
-    let html = '<div class="fz-dash-hero" id="fzmHeroSlot" style="display:none;"></div>';
+    root.dataset.mode = mode;
+    let html = isPreseason ? '<div class="fzm-news-hero" id="fzmNewsHero"></div>' : '';
+    html += '<div class="fz-dash-hero" id="fzmHeroSlot" style="display:none;"></div>';
+    html += fzmPoolChips();
+    if (isPreseason) html += fzmPreseasonExtras(draftState, activeName);
 
     if (isRegular || isLive) html += fzmRankStrip(activeName, movement);
 
@@ -634,35 +675,29 @@ function renderMobileHome(tonight, movement, activeName) {
     // régulière il remplace en plus l'ancienne bande « En direct et à venir ».
     html += '<div class="fzm-cal-slot" id="fzmCalSlot"></div>';
 
-    // Saison régulière pas encore commencée : mêmes retraits qu'au bureau
-    // (fzdApplyPreseasonLayout) — les raccourcis pools prennent la suite du
-    // calendrier, et les actualités de presse quittent « Dans la LNH ».
+    // Avant-saison : les actualités sont déjà en tête de page.
     const seasonStarted = fzdSeasonStarted() !== false;
-    if (!seasonStarted) html += fzmPoolChips();
-
-    if (isRegular || isLive) html += fzmPlayersRow(tonight, rosterNames);
-
-    if (isDraft) html += '<div class="fz-dash-draftboard" id="fzmDraftBoard"></div>';
-    if (isPreseason) html += fzmPreseasonExtras(draftState, activeName);
-
-    const showActivity = isRegular || isLive || isDraft;
+    const showActivity = isRegular || isLive;
     if (showActivity) {
         html += `<div class="fzm-section"><div class="fzm-section-title">Activité de la ligue</div><div id="fzmActivityWrap"></div></div>`;
     }
 
-    html += fzmLeagueSectionHTML(seasonStarted);
-    if (seasonStarted) html += fzmFooterLinks();
+    html += fzmLeagueSectionHTML(seasonStarted && !isDraft, isDraft);
+    if (isRegular || isLive || isDraft) html += fzmPlayersRow(tonight, rosterNames);
 
     root.innerHTML = html;
 
-    // root.innerHTML vient d'effacer le calendrier s'il était déjà dans le
-    // slot : on le re-déplace ici, puis on le redessine — un seul nœud
-    // partagé avec le bureau, jamais un second rendu qui diverge.
+    // Replacer le calendrier sauvegardé dans le nouveau conteneur mobile.
     fzdPlaceCalendar();
     if (calData) renderCalendar();
 
     renderHero(tonight, 'fzmHeroSlot');
-    if (isDraft) fzdRenderDraftBoard('fzmDraftBoard', poolData, team, activeName);
+    root.querySelector('[data-fzm-watch-all]')?.addEventListener('click', e => {
+        const expanded = root.querySelector('.fzm-watch-track').classList.toggle('is-expanded');
+        e.currentTarget.textContent = expanded ? 'Réduire ‹' : 'Voir tout ›';
+        e.currentTarget.setAttribute('aria-expanded', String(expanded));
+    });
+    if (isPreseason) fzmLoadNewsHero();
     // La bannière « en direct » pointe vers #fzdPlayersList (id bureau) :
     // sur téléphone la liste vit sous #fzmPlayers, donc on intercepte le
     // même bouton plutôt que de bifurquer le contenu de la bannière.
