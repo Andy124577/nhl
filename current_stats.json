@@ -1,6 +1,7 @@
 {
-  "lastUpdated": "2026-09-06T01:28:56.483Z",
+  "lastUpdated": "2026-09-09T00:31:27.684Z",
   "season": 20252026,
+  "seasonStarted": false,
   "players": [
     {
       "playerId": 8480803,
@@ -18,7 +19,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 95,
-      "lastUpdated": "2026-09-06T01:22:09.723Z",
+      "lastUpdated": "2026-09-09T00:24:36.280Z",
       "todayPoints": 0
     },
     {
@@ -37,7 +38,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 81,
-      "lastUpdated": "2026-09-06T01:22:09.701Z",
+      "lastUpdated": "2026-09-09T00:24:36.422Z",
       "todayPoints": 0
     },
     {
@@ -56,7 +57,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 79,
-      "lastUpdated": "2026-09-06T01:22:09.689Z",
+      "lastUpdated": "2026-09-09T00:24:36.281Z",
       "todayPoints": 0
     },
     {
@@ -75,7 +76,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 76,
-      "lastUpdated": "2026-09-06T01:22:11.942Z",
+      "lastUpdated": "2026-09-09T00:24:38.474Z",
       "todayPoints": 0
     },
     {
@@ -94,7 +95,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 74,
-      "lastUpdated": "2026-09-06T01:22:11.941Z",
+      "lastUpdated": "2026-09-09T00:24:38.501Z",
       "todayPoints": 0
     },
     {
@@ -113,7 +114,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 78,
-      "lastUpdated": "2026-09-06T01:22:11.909Z",
+      "lastUpdated": "2026-09-09T00:24:38.501Z",
       "todayPoints": 0
     },
     {
@@ -132,7 +133,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 53,
-      "lastUpdated": "2026-09-06T01:22:14.135Z",
+      "lastUpdated": "2026-09-09T00:24:40.756Z",
       "todayPoints": 0
     },
     {
@@ -151,7 +152,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 70,
-      "lastUpdated": "2026-09-06T01:22:14.122Z",
+      "lastUpdated": "2026-09-09T00:24:40.756Z",
       "todayPoints": 0
     },
     {
@@ -170,7 +171,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 55,
-      "lastUpdated": "2026-09-06T01:22:14.147Z",
+      "lastUpdated": "2026-09-09T00:24:40.818Z",
       "todayPoints": 0
     },
     {
@@ -189,7 +190,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 66,
-      "lastUpdated": "2026-09-06T01:22:16.330Z",
+      "lastUpdated": "2026-09-09T00:24:43.013Z",
       "todayPoints": 0
     },
     {
@@ -208,7 +209,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 59,
-      "lastUpdated": "2026-09-06T01:22:16.308Z",
+      "lastUpdated": "2026-09-09T00:24:43.057Z",
       "todayPoints": 0
     },
     {
@@ -227,7 +228,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 60,
-      "lastUpdated": "2026-09-06T01:22:16.345Z",
+      "lastUpdated": "2026-09-09T00:24:43.030Z",
       "todayPoints": 0
     },
     {
@@ -246,7 +247,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 63,
-      "lastUpdated": "2026-09-06T01:22:18.538Z",
+      "lastUpdated": "2026-09-09T00:24:45.254Z",
       "todayPoints": 0
     },
     {
@@ -265,7 +266,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 55,
-      "lastUpdated": "2026-09-06T01:22:18.420Z",
+      "lastUpdated": "2026-09-09T00:24:45.245Z",
       "todayPoints": 0
     },
     {
@@ -284,7 +285,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 60,
-      "lastUpdated": "2026-09-06T01:22:18.524Z",
+      "lastUpdated": "2026-09-09T00:24:45.583Z",
       "todayPoints": 0
     },
     {
@@ -303,7 +304,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 50,
-      "lastUpdated": "2026-09-06T01:22:20.729Z",
+      "lastUpdated": "2026-09-09T00:24:47.795Z",
       "todayPoints": 0
     },
     {
@@ -322,7 +323,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 60,
-      "lastUpdated": "2026-09-06T01:22:20.725Z",
+      "lastUpdated": "2026-09-09T00:24:47.780Z",
       "todayPoints": 0
     },
     {
@@ -341,7 +342,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 59,
-      "lastUpdated": "2026-09-06T01:22:20.712Z",
+      "lastUpdated": "2026-09-09T00:24:47.790Z",
       "todayPoints": 0
     },
     {
@@ -360,7 +361,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 54,
-      "lastUpdated": "2026-09-06T01:22:22.903Z",
+      "lastUpdated": "2026-09-09T00:24:50.008Z",
       "todayPoints": 0
     },
     {
@@ -379,7 +380,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 61,
-      "lastUpdated": "2026-09-06T01:22:22.908Z",
+      "lastUpdated": "2026-09-09T00:24:50.029Z",
       "todayPoints": 0
     },
     {
@@ -398,7 +399,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 47,
-      "lastUpdated": "2026-09-06T01:22:22.908Z",
+      "lastUpdated": "2026-09-09T00:24:50.017Z",
       "todayPoints": 0
     },
     {
@@ -417,7 +418,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 58,
-      "lastUpdated": "2026-09-06T01:22:25.082Z",
+      "lastUpdated": "2026-09-09T00:24:52.094Z",
       "todayPoints": 0
     },
     {
@@ -436,7 +437,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 17,
-      "lastUpdated": "2026-09-06T01:22:25.112Z",
+      "lastUpdated": "2026-09-09T00:24:52.432Z",
       "todayPoints": 0
     },
     {
@@ -455,7 +456,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 42,
-      "lastUpdated": "2026-09-06T01:22:25.085Z",
+      "lastUpdated": "2026-09-09T00:24:52.206Z",
       "todayPoints": 0
     },
     {
@@ -474,7 +475,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 49,
-      "lastUpdated": "2026-09-06T01:22:27.310Z",
+      "lastUpdated": "2026-09-09T00:24:54.638Z",
       "todayPoints": 0
     },
     {
@@ -493,7 +494,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 51,
-      "lastUpdated": "2026-09-06T01:22:27.302Z",
+      "lastUpdated": "2026-09-09T00:24:54.675Z",
       "todayPoints": 0
     },
     {
@@ -512,7 +513,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 37,
-      "lastUpdated": "2026-09-06T01:22:27.307Z",
+      "lastUpdated": "2026-09-09T00:24:54.646Z",
       "todayPoints": 0
     },
     {
@@ -531,7 +532,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 31,
-      "lastUpdated": "2026-09-06T01:22:29.485Z",
+      "lastUpdated": "2026-09-09T00:24:56.857Z",
       "todayPoints": 0
     },
     {
@@ -550,7 +551,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 44,
-      "lastUpdated": "2026-09-06T01:22:29.485Z",
+      "lastUpdated": "2026-09-09T00:24:56.888Z",
       "todayPoints": 0
     },
     {
@@ -569,7 +570,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 47,
-      "lastUpdated": "2026-09-06T01:22:29.490Z",
+      "lastUpdated": "2026-09-09T00:24:56.892Z",
       "todayPoints": 0
     },
     {
@@ -588,7 +589,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 39,
-      "lastUpdated": "2026-09-06T01:22:31.700Z",
+      "lastUpdated": "2026-09-09T00:24:59.248Z",
       "todayPoints": 0
     },
     {
@@ -607,7 +608,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 36,
-      "lastUpdated": "2026-09-06T01:22:31.710Z",
+      "lastUpdated": "2026-09-09T00:24:59.213Z",
       "todayPoints": 0
     },
     {
@@ -626,7 +627,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 36,
-      "lastUpdated": "2026-09-06T01:22:31.693Z",
+      "lastUpdated": "2026-09-09T00:24:59.249Z",
       "todayPoints": 0
     },
     {
@@ -645,7 +646,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 30,
-      "lastUpdated": "2026-09-06T01:22:33.898Z",
+      "lastUpdated": "2026-09-09T00:25:01.588Z",
       "todayPoints": 0
     },
     {
@@ -664,7 +665,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 41,
-      "lastUpdated": "2026-09-06T01:22:33.891Z",
+      "lastUpdated": "2026-09-09T00:25:01.593Z",
       "todayPoints": 0
     },
     {
@@ -683,7 +684,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 34,
-      "lastUpdated": "2026-09-06T01:22:33.905Z",
+      "lastUpdated": "2026-09-09T00:25:01.573Z",
       "todayPoints": 0
     },
     {
@@ -702,7 +703,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 40,
-      "lastUpdated": "2026-09-06T01:22:36.074Z",
+      "lastUpdated": "2026-09-09T00:25:03.916Z",
       "todayPoints": 0
     },
     {
@@ -721,7 +722,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 39,
-      "lastUpdated": "2026-09-06T01:22:36.074Z",
+      "lastUpdated": "2026-09-09T00:25:03.898Z",
       "todayPoints": 0
     },
     {
@@ -740,7 +741,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 37,
-      "lastUpdated": "2026-09-06T01:22:36.092Z",
+      "lastUpdated": "2026-09-09T00:25:03.942Z",
       "todayPoints": 0
     },
     {
@@ -759,7 +760,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:22:38.297Z",
+      "lastUpdated": "2026-09-09T00:25:06.261Z",
       "todayPoints": 0
     },
     {
@@ -778,7 +779,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 28,
-      "lastUpdated": "2026-09-06T01:22:38.277Z",
+      "lastUpdated": "2026-09-09T00:25:06.246Z",
       "todayPoints": 0
     },
     {
@@ -797,7 +798,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 24,
-      "lastUpdated": "2026-09-06T01:22:38.290Z",
+      "lastUpdated": "2026-09-09T00:25:06.482Z",
       "todayPoints": 0
     },
     {
@@ -816,7 +817,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 37,
-      "lastUpdated": "2026-09-06T01:22:40.490Z",
+      "lastUpdated": "2026-09-09T00:25:08.814Z",
       "todayPoints": 0
     },
     {
@@ -835,7 +836,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 40,
-      "lastUpdated": "2026-09-06T01:22:40.490Z",
+      "lastUpdated": "2026-09-09T00:25:08.568Z",
       "todayPoints": 0
     },
     {
@@ -854,7 +855,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 32,
-      "lastUpdated": "2026-09-06T01:22:40.495Z",
+      "lastUpdated": "2026-09-09T00:25:08.775Z",
       "todayPoints": 0
     },
     {
@@ -873,7 +874,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:22:42.684Z",
+      "lastUpdated": "2026-09-09T00:25:11.169Z",
       "todayPoints": 0
     },
     {
@@ -892,7 +893,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 41,
-      "lastUpdated": "2026-09-06T01:22:42.693Z",
+      "lastUpdated": "2026-09-09T00:25:11.147Z",
       "todayPoints": 0
     },
     {
@@ -911,7 +912,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 40,
-      "lastUpdated": "2026-09-06T01:22:42.667Z",
+      "lastUpdated": "2026-09-09T00:25:11.125Z",
       "todayPoints": 0
     },
     {
@@ -930,7 +931,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:22:44.867Z",
+      "lastUpdated": "2026-09-09T00:25:13.475Z",
       "todayPoints": 0
     },
     {
@@ -949,7 +950,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 37,
-      "lastUpdated": "2026-09-06T01:22:44.897Z",
+      "lastUpdated": "2026-09-09T00:25:13.475Z",
       "todayPoints": 0
     },
     {
@@ -968,7 +969,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:22:44.861Z",
+      "lastUpdated": "2026-09-09T00:25:13.475Z",
       "todayPoints": 0
     },
     {
@@ -987,7 +988,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 28,
-      "lastUpdated": "2026-09-06T01:22:47.080Z",
+      "lastUpdated": "2026-09-09T00:25:15.809Z",
       "todayPoints": 0
     },
     {
@@ -1006,7 +1007,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 31,
-      "lastUpdated": "2026-09-06T01:22:47.093Z",
+      "lastUpdated": "2026-09-09T00:25:15.770Z",
       "todayPoints": 0
     },
     {
@@ -1025,7 +1026,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 32,
-      "lastUpdated": "2026-09-06T01:22:47.074Z",
+      "lastUpdated": "2026-09-09T00:25:15.810Z",
       "todayPoints": 0
     },
     {
@@ -1044,7 +1045,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 33,
-      "lastUpdated": "2026-09-06T01:22:49.279Z",
+      "lastUpdated": "2026-09-09T00:25:18.266Z",
       "todayPoints": 0
     },
     {
@@ -1063,7 +1064,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 26,
-      "lastUpdated": "2026-09-06T01:22:49.279Z",
+      "lastUpdated": "2026-09-09T00:25:18.139Z",
       "todayPoints": 0
     },
     {
@@ -1082,7 +1083,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:22:49.313Z",
+      "lastUpdated": "2026-09-09T00:25:18.137Z",
       "todayPoints": 0
     },
     {
@@ -1101,7 +1102,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 39,
-      "lastUpdated": "2026-09-06T01:22:51.514Z",
+      "lastUpdated": "2026-09-09T00:25:20.595Z",
       "todayPoints": 0
     },
     {
@@ -1120,7 +1121,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 32,
-      "lastUpdated": "2026-09-06T01:22:51.532Z",
+      "lastUpdated": "2026-09-09T00:25:20.582Z",
       "todayPoints": 0
     },
     {
@@ -1139,7 +1140,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 36,
-      "lastUpdated": "2026-09-06T01:22:51.510Z",
+      "lastUpdated": "2026-09-09T00:25:20.572Z",
       "todayPoints": 0
     },
     {
@@ -1158,7 +1159,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:22:53.691Z",
+      "lastUpdated": "2026-09-09T00:25:22.903Z",
       "todayPoints": 0
     },
     {
@@ -1177,7 +1178,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 29,
-      "lastUpdated": "2026-09-06T01:22:53.721Z",
+      "lastUpdated": "2026-09-09T00:25:22.880Z",
       "todayPoints": 0
     },
     {
@@ -1196,7 +1197,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 31,
-      "lastUpdated": "2026-09-06T01:22:53.725Z",
+      "lastUpdated": "2026-09-09T00:25:22.889Z",
       "todayPoints": 0
     },
     {
@@ -1215,7 +1216,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 32,
-      "lastUpdated": "2026-09-06T01:22:55.962Z",
+      "lastUpdated": "2026-09-09T00:25:25.214Z",
       "todayPoints": 0
     },
     {
@@ -1234,7 +1235,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 28,
-      "lastUpdated": "2026-09-06T01:22:55.927Z",
+      "lastUpdated": "2026-09-09T00:25:25.218Z",
       "todayPoints": 0
     },
     {
@@ -1253,7 +1254,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 34,
-      "lastUpdated": "2026-09-06T01:22:55.913Z",
+      "lastUpdated": "2026-09-09T00:25:25.091Z",
       "todayPoints": 0
     },
     {
@@ -1272,7 +1273,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:22:58.157Z",
+      "lastUpdated": "2026-09-09T00:25:27.532Z",
       "todayPoints": 0
     },
     {
@@ -1291,7 +1292,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 31,
-      "lastUpdated": "2026-09-06T01:22:58.143Z",
+      "lastUpdated": "2026-09-09T00:25:27.520Z",
       "todayPoints": 0
     },
     {
@@ -1310,7 +1311,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 29,
-      "lastUpdated": "2026-09-06T01:22:58.157Z",
+      "lastUpdated": "2026-09-09T00:25:27.532Z",
       "todayPoints": 0
     },
     {
@@ -1329,7 +1330,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 31,
-      "lastUpdated": "2026-09-06T01:23:00.360Z",
+      "lastUpdated": "2026-09-09T00:25:29.885Z",
       "todayPoints": 0
     },
     {
@@ -1348,7 +1349,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 26,
-      "lastUpdated": "2026-09-06T01:23:00.547Z",
+      "lastUpdated": "2026-09-09T00:25:29.716Z",
       "todayPoints": 0
     },
     {
@@ -1367,7 +1368,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 23,
-      "lastUpdated": "2026-09-06T01:23:00.357Z",
+      "lastUpdated": "2026-09-09T00:25:29.737Z",
       "todayPoints": 0
     },
     {
@@ -1386,7 +1387,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 24,
-      "lastUpdated": "2026-09-06T01:23:02.728Z",
+      "lastUpdated": "2026-09-09T00:25:32.091Z",
       "todayPoints": 0
     },
     {
@@ -1405,7 +1406,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 27,
-      "lastUpdated": "2026-09-06T01:23:02.719Z",
+      "lastUpdated": "2026-09-09T00:25:32.081Z",
       "todayPoints": 0
     },
     {
@@ -1424,7 +1425,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 21,
-      "lastUpdated": "2026-09-06T01:23:02.729Z",
+      "lastUpdated": "2026-09-09T00:25:32.085Z",
       "todayPoints": 0
     },
     {
@@ -1443,7 +1444,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 27,
-      "lastUpdated": "2026-09-06T01:23:04.917Z",
+      "lastUpdated": "2026-09-09T00:25:34.278Z",
       "todayPoints": 0
     },
     {
@@ -1462,7 +1463,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 18,
-      "lastUpdated": "2026-09-06T01:23:04.904Z",
+      "lastUpdated": "2026-09-09T00:25:34.303Z",
       "todayPoints": 0
     },
     {
@@ -1481,7 +1482,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 25,
-      "lastUpdated": "2026-09-06T01:23:04.906Z",
+      "lastUpdated": "2026-09-09T00:25:34.312Z",
       "todayPoints": 0
     },
     {
@@ -1500,7 +1501,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 30,
-      "lastUpdated": "2026-09-06T01:23:07.106Z",
+      "lastUpdated": "2026-09-09T00:25:36.559Z",
       "todayPoints": 0
     },
     {
@@ -1519,7 +1520,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 22,
-      "lastUpdated": "2026-09-06T01:23:07.095Z",
+      "lastUpdated": "2026-09-09T00:25:36.396Z",
       "todayPoints": 0
     },
     {
@@ -1538,7 +1539,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 26,
-      "lastUpdated": "2026-09-06T01:23:07.305Z",
+      "lastUpdated": "2026-09-09T00:25:36.526Z",
       "todayPoints": 0
     },
     {
@@ -1557,7 +1558,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 29,
-      "lastUpdated": "2026-09-06T01:23:09.497Z",
+      "lastUpdated": "2026-09-09T00:25:38.782Z",
       "todayPoints": 0
     },
     {
@@ -1576,7 +1577,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 26,
-      "lastUpdated": "2026-09-06T01:23:09.486Z",
+      "lastUpdated": "2026-09-09T00:25:38.796Z",
       "todayPoints": 0
     },
     {
@@ -1595,7 +1596,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 29,
-      "lastUpdated": "2026-09-06T01:23:09.509Z",
+      "lastUpdated": "2026-09-09T00:25:38.753Z",
       "todayPoints": 0
     },
     {
@@ -1614,7 +1615,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 27,
-      "lastUpdated": "2026-09-06T01:23:11.715Z",
+      "lastUpdated": "2026-09-09T00:25:41.054Z",
       "todayPoints": 0
     },
     {
@@ -1633,7 +1634,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 31,
-      "lastUpdated": "2026-09-06T01:23:11.691Z",
+      "lastUpdated": "2026-09-09T00:25:41.060Z",
       "todayPoints": 0
     },
     {
@@ -1652,7 +1653,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 25,
-      "lastUpdated": "2026-09-06T01:23:11.692Z",
+      "lastUpdated": "2026-09-09T00:25:41.103Z",
       "todayPoints": 0
     },
     {
@@ -1671,7 +1672,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 32,
-      "lastUpdated": "2026-09-06T01:23:13.902Z",
+      "lastUpdated": "2026-09-09T00:25:43.299Z",
       "todayPoints": 0
     },
     {
@@ -1690,7 +1691,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 20,
-      "lastUpdated": "2026-09-06T01:23:13.909Z",
+      "lastUpdated": "2026-09-09T00:25:43.293Z",
       "todayPoints": 0
     },
     {
@@ -1709,7 +1710,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 21,
-      "lastUpdated": "2026-09-06T01:23:13.904Z",
+      "lastUpdated": "2026-09-09T00:25:43.316Z",
       "todayPoints": 0
     },
     {
@@ -1728,7 +1729,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 26,
-      "lastUpdated": "2026-09-06T01:23:16.083Z",
+      "lastUpdated": "2026-09-09T00:25:45.507Z",
       "todayPoints": 0
     },
     {
@@ -1747,7 +1748,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 12,
-      "lastUpdated": "2026-09-06T01:23:16.115Z",
+      "lastUpdated": "2026-09-09T00:25:45.499Z",
       "todayPoints": 0
     },
     {
@@ -1766,7 +1767,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 23,
-      "lastUpdated": "2026-09-06T01:23:16.115Z",
+      "lastUpdated": "2026-09-09T00:25:45.552Z",
       "todayPoints": 0
     },
     {
@@ -1785,7 +1786,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 22,
-      "lastUpdated": "2026-09-06T01:23:18.297Z",
+      "lastUpdated": "2026-09-09T00:25:47.731Z",
       "todayPoints": 0
     },
     {
@@ -1804,7 +1805,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 22,
-      "lastUpdated": "2026-09-06T01:23:18.322Z",
+      "lastUpdated": "2026-09-09T00:25:47.762Z",
       "todayPoints": 0
     },
     {
@@ -1823,7 +1824,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 25,
-      "lastUpdated": "2026-09-06T01:23:18.298Z",
+      "lastUpdated": "2026-09-09T00:25:47.679Z",
       "todayPoints": 0
     },
     {
@@ -1842,7 +1843,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 24,
-      "lastUpdated": "2026-09-06T01:23:20.502Z",
+      "lastUpdated": "2026-09-09T00:25:49.976Z",
       "todayPoints": 0
     },
     {
@@ -1861,7 +1862,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 22,
-      "lastUpdated": "2026-09-06T01:23:20.519Z",
+      "lastUpdated": "2026-09-09T00:25:50.183Z",
       "todayPoints": 0
     },
     {
@@ -1880,7 +1881,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 21,
-      "lastUpdated": "2026-09-06T01:23:20.507Z",
+      "lastUpdated": "2026-09-09T00:25:49.995Z",
       "todayPoints": 0
     },
     {
@@ -1899,7 +1900,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 21,
-      "lastUpdated": "2026-09-06T01:23:22.702Z",
+      "lastUpdated": "2026-09-09T00:25:52.380Z",
       "todayPoints": 0
     },
     {
@@ -1918,7 +1919,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 18,
-      "lastUpdated": "2026-09-06T01:23:22.693Z",
+      "lastUpdated": "2026-09-09T00:25:52.593Z",
       "todayPoints": 0
     },
     {
@@ -1937,7 +1938,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 22,
-      "lastUpdated": "2026-09-06T01:23:22.697Z",
+      "lastUpdated": "2026-09-09T00:25:52.368Z",
       "todayPoints": 0
     },
     {
@@ -1956,7 +1957,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 18,
-      "lastUpdated": "2026-09-06T01:23:24.865Z",
+      "lastUpdated": "2026-09-09T00:25:54.836Z",
       "todayPoints": 0
     },
     {
@@ -1975,7 +1976,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 17,
-      "lastUpdated": "2026-09-06T01:23:24.871Z",
+      "lastUpdated": "2026-09-09T00:25:54.786Z",
       "todayPoints": 0
     },
     {
@@ -1994,7 +1995,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 8,
-      "lastUpdated": "2026-09-06T01:23:24.888Z",
+      "lastUpdated": "2026-09-09T00:25:54.829Z",
       "todayPoints": 0
     },
     {
@@ -2013,7 +2014,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 26,
-      "lastUpdated": "2026-09-06T01:23:27.068Z",
+      "lastUpdated": "2026-09-09T00:25:57.032Z",
       "todayPoints": 0
     },
     {
@@ -2032,7 +2033,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 14,
-      "lastUpdated": "2026-09-06T01:23:27.056Z",
+      "lastUpdated": "2026-09-09T00:25:57.057Z",
       "todayPoints": 0
     },
     {
@@ -2051,7 +2052,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 23,
-      "lastUpdated": "2026-09-06T01:23:27.074Z",
+      "lastUpdated": "2026-09-09T00:25:57.073Z",
       "todayPoints": 0
     },
     {
@@ -2070,7 +2071,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 12,
-      "lastUpdated": "2026-09-06T01:23:29.243Z",
+      "lastUpdated": "2026-09-09T00:25:59.310Z",
       "todayPoints": 0
     },
     {
@@ -2089,7 +2090,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 15,
-      "lastUpdated": "2026-09-06T01:23:29.246Z",
+      "lastUpdated": "2026-09-09T00:25:59.287Z",
       "todayPoints": 0
     },
     {
@@ -2108,7 +2109,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 14,
-      "lastUpdated": "2026-09-06T01:23:29.243Z",
+      "lastUpdated": "2026-09-09T00:25:59.309Z",
       "todayPoints": 0
     },
     {
@@ -2127,7 +2128,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 11,
-      "lastUpdated": "2026-09-06T01:23:31.437Z",
+      "lastUpdated": "2026-09-09T00:26:01.511Z",
       "todayPoints": 0
     },
     {
@@ -2146,7 +2147,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 26,
-      "lastUpdated": "2026-09-06T01:23:31.443Z",
+      "lastUpdated": "2026-09-09T00:26:01.548Z",
       "todayPoints": 0
     },
     {
@@ -2165,7 +2166,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 14,
-      "lastUpdated": "2026-09-06T01:23:31.443Z",
+      "lastUpdated": "2026-09-09T00:26:01.501Z",
       "todayPoints": 0
     },
     {
@@ -2184,7 +2185,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 14,
-      "lastUpdated": "2026-09-06T01:23:33.640Z",
+      "lastUpdated": "2026-09-09T00:26:03.790Z",
       "todayPoints": 0
     },
     {
@@ -2203,7 +2204,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 26,
-      "lastUpdated": "2026-09-06T01:23:33.611Z",
+      "lastUpdated": "2026-09-09T00:26:03.773Z",
       "todayPoints": 0
     },
     {
@@ -2222,7 +2223,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 2,
-      "lastUpdated": "2026-09-06T01:23:33.617Z",
+      "lastUpdated": "2026-09-09T00:26:03.756Z",
       "todayPoints": 0
     },
     {
@@ -2241,7 +2242,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 6,
-      "lastUpdated": "2026-09-06T01:23:35.848Z",
+      "lastUpdated": "2026-09-09T00:26:05.997Z",
       "todayPoints": 0
     },
     {
@@ -2260,7 +2261,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 17,
-      "lastUpdated": "2026-09-06T01:23:35.853Z",
+      "lastUpdated": "2026-09-09T00:26:06.011Z",
       "todayPoints": 0
     },
     {
@@ -2279,7 +2280,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 8,
-      "lastUpdated": "2026-09-06T01:23:35.848Z",
+      "lastUpdated": "2026-09-09T00:26:05.998Z",
       "todayPoints": 0
     },
     {
@@ -2298,7 +2299,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 17,
-      "lastUpdated": "2026-09-06T01:23:38.062Z",
+      "lastUpdated": "2026-09-09T00:26:08.215Z",
       "todayPoints": 0
     },
     {
@@ -2317,7 +2318,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 13,
-      "lastUpdated": "2026-09-06T01:23:38.047Z",
+      "lastUpdated": "2026-09-09T00:26:08.245Z",
       "todayPoints": 0
     },
     {
@@ -2336,7 +2337,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 1,
-      "lastUpdated": "2026-09-06T01:23:38.051Z",
+      "lastUpdated": "2026-09-09T00:26:08.220Z",
       "todayPoints": 0
     },
     {
@@ -2355,7 +2356,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 4,
-      "lastUpdated": "2026-09-06T01:23:40.255Z",
+      "lastUpdated": "2026-09-09T00:26:10.446Z",
       "todayPoints": 0
     },
     {
@@ -2374,7 +2375,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 2,
-      "lastUpdated": "2026-09-06T01:23:40.267Z",
+      "lastUpdated": "2026-09-09T00:26:10.581Z",
       "todayPoints": 0
     },
     {
@@ -2393,7 +2394,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 2,
-      "lastUpdated": "2026-09-06T01:23:40.280Z",
+      "lastUpdated": "2026-09-09T00:26:10.454Z",
       "todayPoints": 0
     },
     {
@@ -2412,7 +2413,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 2,
-      "lastUpdated": "2026-09-06T01:23:42.452Z",
+      "lastUpdated": "2026-09-09T00:26:12.758Z",
       "todayPoints": 0
     },
     {
@@ -2431,7 +2432,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:23:42.452Z",
+      "lastUpdated": "2026-09-09T00:26:12.792Z",
       "todayPoints": 0
     },
     {
@@ -2450,7 +2451,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 138,
-      "lastUpdated": "2026-09-06T01:23:42.356Z",
+      "lastUpdated": "2026-09-09T00:26:12.802Z",
       "todayPoints": 0
     },
     {
@@ -2469,7 +2470,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 127,
-      "lastUpdated": "2026-09-06T01:23:44.659Z",
+      "lastUpdated": "2026-09-09T00:26:15.046Z",
       "todayPoints": 0
     },
     {
@@ -2488,7 +2489,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 130,
-      "lastUpdated": "2026-09-06T01:23:44.630Z",
+      "lastUpdated": "2026-09-09T00:26:15.009Z",
       "todayPoints": 0
     },
     {
@@ -2507,7 +2508,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 97,
-      "lastUpdated": "2026-09-06T01:23:44.661Z",
+      "lastUpdated": "2026-09-09T00:26:15.027Z",
       "todayPoints": 0
     },
     {
@@ -2526,7 +2527,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 115,
-      "lastUpdated": "2026-09-06T01:23:46.877Z",
+      "lastUpdated": "2026-09-09T00:26:17.246Z",
       "todayPoints": 0
     },
     {
@@ -2545,7 +2546,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 100,
-      "lastUpdated": "2026-09-06T01:23:46.846Z",
+      "lastUpdated": "2026-09-09T00:26:17.264Z",
       "todayPoints": 0
     },
     {
@@ -2564,7 +2565,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 103,
-      "lastUpdated": "2026-09-06T01:23:46.993Z",
+      "lastUpdated": "2026-09-09T00:26:17.528Z",
       "todayPoints": 0
     },
     {
@@ -2583,7 +2584,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 101,
-      "lastUpdated": "2026-09-06T01:23:49.196Z",
+      "lastUpdated": "2026-09-09T00:26:19.724Z",
       "todayPoints": 0
     },
     {
@@ -2602,7 +2603,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 100,
-      "lastUpdated": "2026-09-06T01:23:49.207Z",
+      "lastUpdated": "2026-09-09T00:26:19.730Z",
       "todayPoints": 0
     },
     {
@@ -2621,7 +2622,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 84,
-      "lastUpdated": "2026-09-06T01:23:49.289Z",
+      "lastUpdated": "2026-09-09T00:26:19.809Z",
       "todayPoints": 0
     },
     {
@@ -2640,7 +2641,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 88,
-      "lastUpdated": "2026-09-06T01:23:51.584Z",
+      "lastUpdated": "2026-09-09T00:26:22.044Z",
       "todayPoints": 0
     },
     {
@@ -2659,7 +2660,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 96,
-      "lastUpdated": "2026-09-06T01:23:51.492Z",
+      "lastUpdated": "2026-09-09T00:26:22.042Z",
       "todayPoints": 0
     },
     {
@@ -2678,7 +2679,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 92,
-      "lastUpdated": "2026-09-06T01:23:51.606Z",
+      "lastUpdated": "2026-09-09T00:26:22.018Z",
       "todayPoints": 0
     },
     {
@@ -2697,7 +2698,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 79,
-      "lastUpdated": "2026-09-06T01:23:53.802Z",
+      "lastUpdated": "2026-09-09T00:26:24.267Z",
       "todayPoints": 0
     },
     {
@@ -2716,7 +2717,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 88,
-      "lastUpdated": "2026-09-06T01:23:54.007Z",
+      "lastUpdated": "2026-09-09T00:26:24.252Z",
       "todayPoints": 0
     },
     {
@@ -2735,7 +2736,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 90,
-      "lastUpdated": "2026-09-06T01:23:53.802Z",
+      "lastUpdated": "2026-09-09T00:26:24.230Z",
       "todayPoints": 0
     },
     {
@@ -2754,7 +2755,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 89,
-      "lastUpdated": "2026-09-06T01:23:56.163Z",
+      "lastUpdated": "2026-09-09T00:26:26.470Z",
       "todayPoints": 0
     },
     {
@@ -2773,7 +2774,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 80,
-      "lastUpdated": "2026-09-06T01:23:56.193Z",
+      "lastUpdated": "2026-09-09T00:26:26.477Z",
       "todayPoints": 0
     },
     {
@@ -2792,7 +2793,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 85,
-      "lastUpdated": "2026-09-06T01:23:56.217Z",
+      "lastUpdated": "2026-09-09T00:26:26.478Z",
       "todayPoints": 0
     },
     {
@@ -2811,7 +2812,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 86,
-      "lastUpdated": "2026-09-06T01:23:58.415Z",
+      "lastUpdated": "2026-09-09T00:26:28.711Z",
       "todayPoints": 0
     },
     {
@@ -2830,7 +2831,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 34,
-      "lastUpdated": "2026-09-06T01:23:58.406Z",
+      "lastUpdated": "2026-09-09T00:26:28.671Z",
       "todayPoints": 0
     },
     {
@@ -2849,7 +2850,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 85,
-      "lastUpdated": "2026-09-06T01:23:58.502Z",
+      "lastUpdated": "2026-09-09T00:26:28.681Z",
       "todayPoints": 0
     },
     {
@@ -2868,7 +2869,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 77,
-      "lastUpdated": "2026-09-06T01:24:00.689Z",
+      "lastUpdated": "2026-09-09T00:26:30.941Z",
       "todayPoints": 0
     },
     {
@@ -2887,7 +2888,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 88,
-      "lastUpdated": "2026-09-06T01:24:00.699Z",
+      "lastUpdated": "2026-09-09T00:26:30.933Z",
       "todayPoints": 0
     },
     {
@@ -2906,7 +2907,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 74,
-      "lastUpdated": "2026-09-06T01:24:00.689Z",
+      "lastUpdated": "2026-09-09T00:26:30.892Z",
       "todayPoints": 0
     },
     {
@@ -2925,7 +2926,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 75,
-      "lastUpdated": "2026-09-06T01:24:02.988Z",
+      "lastUpdated": "2026-09-09T00:26:33.151Z",
       "todayPoints": 0
     },
     {
@@ -2944,7 +2945,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 80,
-      "lastUpdated": "2026-09-06T01:24:02.871Z",
+      "lastUpdated": "2026-09-09T00:26:33.182Z",
       "todayPoints": 0
     },
     {
@@ -2963,7 +2964,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 78,
-      "lastUpdated": "2026-09-06T01:24:03.013Z",
+      "lastUpdated": "2026-09-09T00:26:33.177Z",
       "todayPoints": 0
     },
     {
@@ -2982,7 +2983,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 71,
-      "lastUpdated": "2026-09-06T01:24:05.302Z",
+      "lastUpdated": "2026-09-09T00:26:35.395Z",
       "todayPoints": 0
     },
     {
@@ -3001,7 +3002,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 77,
-      "lastUpdated": "2026-09-06T01:24:05.185Z",
+      "lastUpdated": "2026-09-09T00:26:35.415Z",
       "todayPoints": 0
     },
     {
@@ -3020,7 +3021,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 81,
-      "lastUpdated": "2026-09-06T01:24:05.194Z",
+      "lastUpdated": "2026-09-09T00:26:35.398Z",
       "todayPoints": 0
     },
     {
@@ -3039,7 +3040,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 76,
-      "lastUpdated": "2026-09-06T01:24:07.654Z",
+      "lastUpdated": "2026-09-09T00:26:37.611Z",
       "todayPoints": 0
     },
     {
@@ -3058,7 +3059,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 74,
-      "lastUpdated": "2026-09-06T01:24:07.570Z",
+      "lastUpdated": "2026-09-09T00:26:37.619Z",
       "todayPoints": 0
     },
     {
@@ -3077,7 +3078,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 83,
-      "lastUpdated": "2026-09-06T01:24:07.549Z",
+      "lastUpdated": "2026-09-09T00:26:37.797Z",
       "todayPoints": 0
     },
     {
@@ -3096,7 +3097,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 45,
-      "lastUpdated": "2026-09-06T01:24:09.856Z",
+      "lastUpdated": "2026-09-09T00:26:40.047Z",
       "todayPoints": 0
     },
     {
@@ -3115,7 +3116,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 53,
-      "lastUpdated": "2026-09-06T01:24:09.847Z",
+      "lastUpdated": "2026-09-09T00:26:40.006Z",
       "todayPoints": 0
     },
     {
@@ -3134,7 +3135,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 59,
-      "lastUpdated": "2026-09-06T01:24:09.856Z",
+      "lastUpdated": "2026-09-09T00:26:40.016Z",
       "todayPoints": 0
     },
     {
@@ -3153,7 +3154,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 61,
-      "lastUpdated": "2026-09-06T01:24:11.930Z",
+      "lastUpdated": "2026-09-09T00:26:42.257Z",
       "todayPoints": 0
     },
     {
@@ -3172,7 +3173,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 52,
-      "lastUpdated": "2026-09-06T01:24:12.074Z",
+      "lastUpdated": "2026-09-09T00:26:42.258Z",
       "todayPoints": 0
     },
     {
@@ -3191,7 +3192,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 73,
-      "lastUpdated": "2026-09-06T01:24:12.029Z",
+      "lastUpdated": "2026-09-09T00:26:42.271Z",
       "todayPoints": 0
     },
     {
@@ -3210,7 +3211,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 50,
-      "lastUpdated": "2026-09-06T01:24:14.154Z",
+      "lastUpdated": "2026-09-09T00:26:44.447Z",
       "todayPoints": 0
     },
     {
@@ -3229,7 +3230,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 71,
-      "lastUpdated": "2026-09-06T01:24:14.255Z",
+      "lastUpdated": "2026-09-09T00:26:44.466Z",
       "todayPoints": 0
     },
     {
@@ -3248,7 +3249,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 74,
-      "lastUpdated": "2026-09-06T01:24:14.272Z",
+      "lastUpdated": "2026-09-09T00:26:44.473Z",
       "todayPoints": 0
     },
     {
@@ -3267,7 +3268,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 71,
-      "lastUpdated": "2026-09-06T01:24:16.460Z",
+      "lastUpdated": "2026-09-09T00:26:46.663Z",
       "todayPoints": 0
     },
     {
@@ -3286,7 +3287,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 64,
-      "lastUpdated": "2026-09-06T01:24:16.457Z",
+      "lastUpdated": "2026-09-09T00:26:46.551Z",
       "todayPoints": 0
     },
     {
@@ -3305,7 +3306,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 73,
-      "lastUpdated": "2026-09-06T01:24:16.457Z",
+      "lastUpdated": "2026-09-09T00:26:46.682Z",
       "todayPoints": 0
     },
     {
@@ -3324,7 +3325,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 67,
-      "lastUpdated": "2026-09-06T01:24:18.665Z",
+      "lastUpdated": "2026-09-09T00:26:48.906Z",
       "todayPoints": 0
     },
     {
@@ -3343,7 +3344,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 66,
-      "lastUpdated": "2026-09-06T01:24:18.634Z",
+      "lastUpdated": "2026-09-09T00:26:48.923Z",
       "todayPoints": 0
     },
     {
@@ -3362,7 +3363,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 75,
-      "lastUpdated": "2026-09-06T01:24:18.665Z",
+      "lastUpdated": "2026-09-09T00:26:48.923Z",
       "todayPoints": 0
     },
     {
@@ -3381,7 +3382,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 74,
-      "lastUpdated": "2026-09-06T01:24:20.847Z",
+      "lastUpdated": "2026-09-09T00:26:51.164Z",
       "todayPoints": 0
     },
     {
@@ -3400,7 +3401,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 73,
-      "lastUpdated": "2026-09-06T01:24:20.880Z",
+      "lastUpdated": "2026-09-09T00:26:51.165Z",
       "todayPoints": 0
     },
     {
@@ -3419,7 +3420,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 66,
-      "lastUpdated": "2026-09-06T01:24:20.873Z",
+      "lastUpdated": "2026-09-09T00:26:51.018Z",
       "todayPoints": 0
     },
     {
@@ -3438,7 +3439,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 73,
-      "lastUpdated": "2026-09-06T01:24:23.159Z",
+      "lastUpdated": "2026-09-09T00:26:53.380Z",
       "todayPoints": 0
     },
     {
@@ -3457,7 +3458,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:24:23.065Z",
+      "lastUpdated": "2026-09-09T00:26:53.397Z",
       "todayPoints": 0
     },
     {
@@ -3476,7 +3477,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 53,
-      "lastUpdated": "2026-09-06T01:24:23.065Z",
+      "lastUpdated": "2026-09-09T00:26:53.377Z",
       "todayPoints": 0
     },
     {
@@ -3495,7 +3496,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 68,
-      "lastUpdated": "2026-09-06T01:24:25.366Z",
+      "lastUpdated": "2026-09-09T00:26:55.656Z",
       "todayPoints": 0
     },
     {
@@ -3514,7 +3515,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 40,
-      "lastUpdated": "2026-09-06T01:24:25.345Z",
+      "lastUpdated": "2026-09-09T00:26:55.654Z",
       "todayPoints": 0
     },
     {
@@ -3533,7 +3534,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 61,
-      "lastUpdated": "2026-09-06T01:24:25.485Z",
+      "lastUpdated": "2026-09-09T00:26:55.668Z",
       "todayPoints": 0
     },
     {
@@ -3552,7 +3553,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 66,
-      "lastUpdated": "2026-09-06T01:24:27.665Z",
+      "lastUpdated": "2026-09-09T00:26:57.848Z",
       "todayPoints": 0
     },
     {
@@ -3571,7 +3572,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 67,
-      "lastUpdated": "2026-09-06T01:24:27.665Z",
+      "lastUpdated": "2026-09-09T00:26:57.863Z",
       "todayPoints": 0
     },
     {
@@ -3590,7 +3591,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 64,
-      "lastUpdated": "2026-09-06T01:24:27.671Z",
+      "lastUpdated": "2026-09-09T00:26:57.871Z",
       "todayPoints": 0
     },
     {
@@ -3609,7 +3610,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 68,
-      "lastUpdated": "2026-09-06T01:24:29.929Z",
+      "lastUpdated": "2026-09-09T00:27:00.095Z",
       "todayPoints": 0
     },
     {
@@ -3628,7 +3629,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 66,
-      "lastUpdated": "2026-09-06T01:24:29.947Z",
+      "lastUpdated": "2026-09-09T00:27:00.126Z",
       "todayPoints": 0
     },
     {
@@ -3647,7 +3648,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 43,
-      "lastUpdated": "2026-09-06T01:24:29.850Z",
+      "lastUpdated": "2026-09-09T00:27:00.067Z",
       "todayPoints": 0
     },
     {
@@ -3666,7 +3667,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 69,
-      "lastUpdated": "2026-09-06T01:24:32.268Z",
+      "lastUpdated": "2026-09-09T00:27:02.327Z",
       "todayPoints": 0
     },
     {
@@ -3685,7 +3686,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 71,
-      "lastUpdated": "2026-09-06T01:24:32.150Z",
+      "lastUpdated": "2026-09-09T00:27:02.319Z",
       "todayPoints": 0
     },
     {
@@ -3704,7 +3705,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 72,
-      "lastUpdated": "2026-09-06T01:24:32.138Z",
+      "lastUpdated": "2026-09-09T00:27:02.387Z",
       "todayPoints": 0
     },
     {
@@ -3723,7 +3724,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 65,
-      "lastUpdated": "2026-09-06T01:24:34.464Z",
+      "lastUpdated": "2026-09-09T00:27:04.627Z",
       "todayPoints": 0
     },
     {
@@ -3742,7 +3743,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 53,
-      "lastUpdated": "2026-09-06T01:24:34.495Z",
+      "lastUpdated": "2026-09-09T00:27:04.666Z",
       "todayPoints": 0
     },
     {
@@ -3761,7 +3762,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 58,
-      "lastUpdated": "2026-09-06T01:24:34.347Z",
+      "lastUpdated": "2026-09-09T00:27:04.623Z",
       "todayPoints": 0
     },
     {
@@ -3780,7 +3781,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 67,
-      "lastUpdated": "2026-09-06T01:24:36.758Z",
+      "lastUpdated": "2026-09-09T00:27:06.851Z",
       "todayPoints": 0
     },
     {
@@ -3799,7 +3800,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 44,
-      "lastUpdated": "2026-09-06T01:24:36.774Z",
+      "lastUpdated": "2026-09-09T00:27:06.871Z",
       "todayPoints": 0
     },
     {
@@ -3818,7 +3819,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 51,
-      "lastUpdated": "2026-09-06T01:24:36.573Z",
+      "lastUpdated": "2026-09-09T00:27:06.891Z",
       "todayPoints": 0
     },
     {
@@ -3837,7 +3838,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 65,
-      "lastUpdated": "2026-09-06T01:24:39.041Z",
+      "lastUpdated": "2026-09-09T00:27:09.095Z",
       "todayPoints": 0
     },
     {
@@ -3856,7 +3857,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 65,
-      "lastUpdated": "2026-09-06T01:24:38.977Z",
+      "lastUpdated": "2026-09-09T00:27:09.141Z",
       "todayPoints": 0
     },
     {
@@ -3875,7 +3876,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 51,
-      "lastUpdated": "2026-09-06T01:24:38.960Z",
+      "lastUpdated": "2026-09-09T00:27:09.221Z",
       "todayPoints": 0
     },
     {
@@ -3894,7 +3895,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 70,
-      "lastUpdated": "2026-09-06T01:24:41.260Z",
+      "lastUpdated": "2026-09-09T00:27:11.431Z",
       "todayPoints": 0
     },
     {
@@ -3913,7 +3914,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 69,
-      "lastUpdated": "2026-09-06T01:24:41.223Z",
+      "lastUpdated": "2026-09-09T00:27:11.428Z",
       "todayPoints": 0
     },
     {
@@ -3932,7 +3933,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 66,
-      "lastUpdated": "2026-09-06T01:24:41.240Z",
+      "lastUpdated": "2026-09-09T00:27:11.414Z",
       "todayPoints": 0
     },
     {
@@ -3951,7 +3952,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 62,
-      "lastUpdated": "2026-09-06T01:24:43.446Z",
+      "lastUpdated": "2026-09-09T00:27:13.661Z",
       "todayPoints": 0
     },
     {
@@ -3970,7 +3971,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 46,
-      "lastUpdated": "2026-09-06T01:24:43.428Z",
+      "lastUpdated": "2026-09-09T00:27:13.636Z",
       "todayPoints": 0
     },
     {
@@ -3989,7 +3990,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 64,
-      "lastUpdated": "2026-09-06T01:24:43.460Z",
+      "lastUpdated": "2026-09-09T00:27:13.636Z",
       "todayPoints": 0
     },
     {
@@ -4008,7 +4009,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 40,
-      "lastUpdated": "2026-09-06T01:24:45.648Z",
+      "lastUpdated": "2026-09-09T00:27:15.833Z",
       "todayPoints": 0
     },
     {
@@ -4027,7 +4028,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 54,
-      "lastUpdated": "2026-09-06T01:24:45.671Z",
+      "lastUpdated": "2026-09-09T00:27:15.907Z",
       "todayPoints": 0
     },
     {
@@ -4046,7 +4047,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 50,
-      "lastUpdated": "2026-09-06T01:24:45.636Z",
+      "lastUpdated": "2026-09-09T00:27:15.873Z",
       "todayPoints": 0
     },
     {
@@ -4065,7 +4066,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 60,
-      "lastUpdated": "2026-09-06T01:24:47.840Z",
+      "lastUpdated": "2026-09-09T00:27:18.094Z",
       "todayPoints": 0
     },
     {
@@ -4084,7 +4085,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 59,
-      "lastUpdated": "2026-09-06T01:24:47.945Z",
+      "lastUpdated": "2026-09-09T00:27:17.984Z",
       "todayPoints": 0
     },
     {
@@ -4103,7 +4104,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 58,
-      "lastUpdated": "2026-09-06T01:24:47.878Z",
+      "lastUpdated": "2026-09-09T00:27:18.114Z",
       "todayPoints": 0
     },
     {
@@ -4122,7 +4123,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 58,
-      "lastUpdated": "2026-09-06T01:24:50.279Z",
+      "lastUpdated": "2026-09-09T00:27:20.362Z",
       "todayPoints": 0
     },
     {
@@ -4141,7 +4142,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 59,
-      "lastUpdated": "2026-09-06T01:24:50.334Z",
+      "lastUpdated": "2026-09-09T00:27:20.313Z",
       "todayPoints": 0
     },
     {
@@ -4160,7 +4161,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 62,
-      "lastUpdated": "2026-09-06T01:24:50.139Z",
+      "lastUpdated": "2026-09-09T00:27:20.337Z",
       "todayPoints": 0
     },
     {
@@ -4179,7 +4180,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 59,
-      "lastUpdated": "2026-09-06T01:24:52.516Z",
+      "lastUpdated": "2026-09-09T00:27:22.543Z",
       "todayPoints": 0
     },
     {
@@ -4198,7 +4199,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 67,
-      "lastUpdated": "2026-09-06T01:24:52.607Z",
+      "lastUpdated": "2026-09-09T00:27:22.577Z",
       "todayPoints": 0
     },
     {
@@ -4217,7 +4218,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 49,
-      "lastUpdated": "2026-09-06T01:24:52.510Z",
+      "lastUpdated": "2026-09-09T00:27:22.569Z",
       "todayPoints": 0
     },
     {
@@ -4236,7 +4237,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 57,
-      "lastUpdated": "2026-09-06T01:24:54.917Z",
+      "lastUpdated": "2026-09-09T00:27:24.773Z",
       "todayPoints": 0
     },
     {
@@ -4255,7 +4256,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 55,
-      "lastUpdated": "2026-09-06T01:24:54.917Z",
+      "lastUpdated": "2026-09-09T00:27:24.776Z",
       "todayPoints": 0
     },
     {
@@ -4274,7 +4275,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 58,
-      "lastUpdated": "2026-09-06T01:24:54.917Z",
+      "lastUpdated": "2026-09-09T00:27:24.798Z",
       "todayPoints": 0
     },
     {
@@ -4293,7 +4294,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 61,
-      "lastUpdated": "2026-09-06T01:24:57.102Z",
+      "lastUpdated": "2026-09-09T00:27:26.871Z",
       "todayPoints": 0
     },
     {
@@ -4312,7 +4313,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 57,
-      "lastUpdated": "2026-09-06T01:24:57.114Z",
+      "lastUpdated": "2026-09-09T00:27:27.016Z",
       "todayPoints": 0
     },
     {
@@ -4331,7 +4332,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 57,
-      "lastUpdated": "2026-09-06T01:24:57.186Z",
+      "lastUpdated": "2026-09-09T00:27:27.011Z",
       "todayPoints": 0
     },
     {
@@ -4350,7 +4351,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 48,
-      "lastUpdated": "2026-09-06T01:24:59.366Z",
+      "lastUpdated": "2026-09-09T00:27:29.226Z",
       "todayPoints": 0
     },
     {
@@ -4369,7 +4370,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 41,
-      "lastUpdated": "2026-09-06T01:24:59.359Z",
+      "lastUpdated": "2026-09-09T00:27:29.220Z",
       "todayPoints": 0
     },
     {
@@ -4388,7 +4389,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 64,
-      "lastUpdated": "2026-09-06T01:24:59.403Z",
+      "lastUpdated": "2026-09-09T00:27:29.239Z",
       "todayPoints": 0
     },
     {
@@ -4407,7 +4408,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 57,
-      "lastUpdated": "2026-09-06T01:25:01.681Z",
+      "lastUpdated": "2026-09-09T00:27:31.460Z",
       "todayPoints": 0
     },
     {
@@ -4426,7 +4427,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:25:01.721Z",
+      "lastUpdated": "2026-09-09T00:27:31.458Z",
       "todayPoints": 0
     },
     {
@@ -4445,7 +4446,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 56,
-      "lastUpdated": "2026-09-06T01:25:01.689Z",
+      "lastUpdated": "2026-09-09T00:27:31.456Z",
       "todayPoints": 0
     },
     {
@@ -4464,7 +4465,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 58,
-      "lastUpdated": "2026-09-06T01:25:03.988Z",
+      "lastUpdated": "2026-09-09T00:27:33.677Z",
       "todayPoints": 0
     },
     {
@@ -4483,7 +4484,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 54,
-      "lastUpdated": "2026-09-06T01:25:04.031Z",
+      "lastUpdated": "2026-09-09T00:27:33.642Z",
       "todayPoints": 0
     },
     {
@@ -4502,7 +4503,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 51,
-      "lastUpdated": "2026-09-06T01:25:04.011Z",
+      "lastUpdated": "2026-09-09T00:27:33.659Z",
       "todayPoints": 0
     },
     {
@@ -4521,7 +4522,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 54,
-      "lastUpdated": "2026-09-06T01:25:06.300Z",
+      "lastUpdated": "2026-09-09T00:27:35.932Z",
       "todayPoints": 0
     },
     {
@@ -4540,7 +4541,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 48,
-      "lastUpdated": "2026-09-06T01:25:06.321Z",
+      "lastUpdated": "2026-09-09T00:27:35.915Z",
       "todayPoints": 0
     },
     {
@@ -4559,7 +4560,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 49,
-      "lastUpdated": "2026-09-06T01:25:06.321Z",
+      "lastUpdated": "2026-09-09T00:27:35.915Z",
       "todayPoints": 0
     },
     {
@@ -4578,7 +4579,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 48,
-      "lastUpdated": "2026-09-06T01:25:08.599Z",
+      "lastUpdated": "2026-09-09T00:27:38.012Z",
       "todayPoints": 0
     },
     {
@@ -4597,7 +4598,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 52,
-      "lastUpdated": "2026-09-06T01:25:08.609Z",
+      "lastUpdated": "2026-09-09T00:27:38.157Z",
       "todayPoints": 0
     },
     {
@@ -4616,7 +4617,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 47,
-      "lastUpdated": "2026-09-06T01:25:08.604Z",
+      "lastUpdated": "2026-09-09T00:27:38.135Z",
       "todayPoints": 0
     },
     {
@@ -4635,7 +4636,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 52,
-      "lastUpdated": "2026-09-06T01:25:10.954Z",
+      "lastUpdated": "2026-09-09T00:27:40.363Z",
       "todayPoints": 0
     },
     {
@@ -4654,7 +4655,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 51,
-      "lastUpdated": "2026-09-06T01:25:10.905Z",
+      "lastUpdated": "2026-09-09T00:27:40.400Z",
       "todayPoints": 0
     },
     {
@@ -4673,7 +4674,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 55,
-      "lastUpdated": "2026-09-06T01:25:10.899Z",
+      "lastUpdated": "2026-09-09T00:27:40.388Z",
       "todayPoints": 0
     },
     {
@@ -4692,7 +4693,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 49,
-      "lastUpdated": "2026-09-06T01:25:13.114Z",
+      "lastUpdated": "2026-09-09T00:27:42.604Z",
       "todayPoints": 0
     },
     {
@@ -4711,7 +4712,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 53,
-      "lastUpdated": "2026-09-06T01:25:13.256Z",
+      "lastUpdated": "2026-09-09T00:27:42.813Z",
       "todayPoints": 0
     },
     {
@@ -4730,7 +4731,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 53,
-      "lastUpdated": "2026-09-06T01:25:13.231Z",
+      "lastUpdated": "2026-09-09T00:27:42.617Z",
       "todayPoints": 0
     },
     {
@@ -4749,7 +4750,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 55,
-      "lastUpdated": "2026-09-06T01:25:15.534Z",
+      "lastUpdated": "2026-09-09T00:27:45.013Z",
       "todayPoints": 0
     },
     {
@@ -4768,7 +4769,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 51,
-      "lastUpdated": "2026-09-06T01:25:15.539Z",
+      "lastUpdated": "2026-09-09T00:27:44.998Z",
       "todayPoints": 0
     },
     {
@@ -4787,7 +4788,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 49,
-      "lastUpdated": "2026-09-06T01:25:15.535Z",
+      "lastUpdated": "2026-09-09T00:27:44.999Z",
       "todayPoints": 0
     },
     {
@@ -4806,7 +4807,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 51,
-      "lastUpdated": "2026-09-06T01:25:17.817Z",
+      "lastUpdated": "2026-09-09T00:27:47.227Z",
       "todayPoints": 0
     },
     {
@@ -4825,7 +4826,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 19,
-      "lastUpdated": "2026-09-06T01:25:17.825Z",
+      "lastUpdated": "2026-09-09T00:27:47.313Z",
       "todayPoints": 0
     },
     {
@@ -4844,7 +4845,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 56,
-      "lastUpdated": "2026-09-06T01:25:17.818Z",
+      "lastUpdated": "2026-09-09T00:27:47.223Z",
       "todayPoints": 0
     },
     {
@@ -4863,7 +4864,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 49,
-      "lastUpdated": "2026-09-06T01:25:20.183Z",
+      "lastUpdated": "2026-09-09T00:27:49.393Z",
       "todayPoints": 0
     },
     {
@@ -4882,7 +4883,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 46,
-      "lastUpdated": "2026-09-06T01:25:20.118Z",
+      "lastUpdated": "2026-09-09T00:27:49.549Z",
       "todayPoints": 0
     },
     {
@@ -4901,7 +4902,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 50,
-      "lastUpdated": "2026-09-06T01:25:20.332Z",
+      "lastUpdated": "2026-09-09T00:27:49.527Z",
       "todayPoints": 0
     },
     {
@@ -4920,7 +4921,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 31,
-      "lastUpdated": "2026-09-06T01:25:22.619Z",
+      "lastUpdated": "2026-09-09T00:27:51.786Z",
       "todayPoints": 0
     },
     {
@@ -4939,7 +4940,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 48,
-      "lastUpdated": "2026-09-06T01:25:22.635Z",
+      "lastUpdated": "2026-09-09T00:27:51.787Z",
       "todayPoints": 0
     },
     {
@@ -4958,7 +4959,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 48,
-      "lastUpdated": "2026-09-06T01:25:22.417Z",
+      "lastUpdated": "2026-09-09T00:27:51.752Z",
       "todayPoints": 0
     },
     {
@@ -4977,7 +4978,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 4,
-      "lastUpdated": "2026-09-06T01:25:24.933Z",
+      "lastUpdated": "2026-09-09T00:27:53.989Z",
       "todayPoints": 0
     },
     {
@@ -4996,7 +4997,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 39,
-      "lastUpdated": "2026-09-06T01:25:24.974Z",
+      "lastUpdated": "2026-09-09T00:27:53.862Z",
       "todayPoints": 0
     },
     {
@@ -5015,7 +5016,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 47,
-      "lastUpdated": "2026-09-06T01:25:24.898Z",
+      "lastUpdated": "2026-09-09T00:27:54.002Z",
       "todayPoints": 0
     },
     {
@@ -5034,7 +5035,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 54,
-      "lastUpdated": "2026-09-06T01:25:27.285Z",
+      "lastUpdated": "2026-09-09T00:27:56.303Z",
       "todayPoints": 0
     },
     {
@@ -5053,7 +5054,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 45,
-      "lastUpdated": "2026-09-06T01:25:27.271Z",
+      "lastUpdated": "2026-09-09T00:27:56.196Z",
       "todayPoints": 0
     },
     {
@@ -5072,7 +5073,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 45,
-      "lastUpdated": "2026-09-06T01:25:27.328Z",
+      "lastUpdated": "2026-09-09T00:27:56.200Z",
       "todayPoints": 0
     },
     {
@@ -5091,7 +5092,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 51,
-      "lastUpdated": "2026-09-06T01:25:29.616Z",
+      "lastUpdated": "2026-09-09T00:27:58.522Z",
       "todayPoints": 0
     },
     {
@@ -5110,7 +5111,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 44,
-      "lastUpdated": "2026-09-06T01:25:29.733Z",
+      "lastUpdated": "2026-09-09T00:27:58.532Z",
       "todayPoints": 0
     },
     {
@@ -5129,7 +5130,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 41,
-      "lastUpdated": "2026-09-06T01:25:29.600Z",
+      "lastUpdated": "2026-09-09T00:27:58.522Z",
       "todayPoints": 0
     },
     {
@@ -5148,7 +5149,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 46,
-      "lastUpdated": "2026-09-06T01:25:32.037Z",
+      "lastUpdated": "2026-09-09T00:28:00.719Z",
       "todayPoints": 0
     },
     {
@@ -5167,7 +5168,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 48,
-      "lastUpdated": "2026-09-06T01:25:32.037Z",
+      "lastUpdated": "2026-09-09T00:28:00.725Z",
       "todayPoints": 0
     },
     {
@@ -5186,7 +5187,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 25,
-      "lastUpdated": "2026-09-06T01:25:32.039Z",
+      "lastUpdated": "2026-09-09T00:28:00.733Z",
       "todayPoints": 0
     },
     {
@@ -5205,7 +5206,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 36,
-      "lastUpdated": "2026-09-06T01:25:34.350Z",
+      "lastUpdated": "2026-09-09T00:28:02.955Z",
       "todayPoints": 0
     },
     {
@@ -5224,7 +5225,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 45,
-      "lastUpdated": "2026-09-06T01:25:34.339Z",
+      "lastUpdated": "2026-09-09T00:28:02.989Z",
       "todayPoints": 0
     },
     {
@@ -5243,7 +5244,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 22,
-      "lastUpdated": "2026-09-06T01:25:34.335Z",
+      "lastUpdated": "2026-09-09T00:28:02.937Z",
       "todayPoints": 0
     },
     {
@@ -5262,7 +5263,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 42,
-      "lastUpdated": "2026-09-06T01:25:36.652Z",
+      "lastUpdated": "2026-09-09T00:28:05.223Z",
       "todayPoints": 0
     },
     {
@@ -5281,7 +5282,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 51,
-      "lastUpdated": "2026-09-06T01:25:36.641Z",
+      "lastUpdated": "2026-09-09T00:28:05.209Z",
       "todayPoints": 0
     },
     {
@@ -5300,7 +5301,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:25:36.539Z",
+      "lastUpdated": "2026-09-09T00:28:05.066Z",
       "todayPoints": 0
     },
     {
@@ -5319,7 +5320,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 36,
-      "lastUpdated": "2026-09-06T01:25:38.740Z",
+      "lastUpdated": "2026-09-09T00:28:07.448Z",
       "todayPoints": 0
     },
     {
@@ -5338,7 +5339,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 42,
-      "lastUpdated": "2026-09-06T01:25:38.956Z",
+      "lastUpdated": "2026-09-09T00:28:07.422Z",
       "todayPoints": 0
     },
     {
@@ -5357,7 +5358,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 44,
-      "lastUpdated": "2026-09-06T01:25:38.732Z",
+      "lastUpdated": "2026-09-09T00:28:07.454Z",
       "todayPoints": 0
     },
     {
@@ -5376,7 +5377,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 42,
-      "lastUpdated": "2026-09-06T01:25:41.271Z",
+      "lastUpdated": "2026-09-09T00:28:09.626Z",
       "todayPoints": 0
     },
     {
@@ -5395,7 +5396,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 41,
-      "lastUpdated": "2026-09-06T01:25:41.250Z",
+      "lastUpdated": "2026-09-09T00:28:09.654Z",
       "todayPoints": 0
     },
     {
@@ -5414,7 +5415,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 52,
-      "lastUpdated": "2026-09-06T01:25:41.159Z",
+      "lastUpdated": "2026-09-09T00:28:09.643Z",
       "todayPoints": 0
     },
     {
@@ -5433,7 +5434,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 39,
-      "lastUpdated": "2026-09-06T01:25:43.536Z",
+      "lastUpdated": "2026-09-09T00:28:11.837Z",
       "todayPoints": 0
     },
     {
@@ -5452,7 +5453,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 30,
-      "lastUpdated": "2026-09-06T01:25:43.757Z",
+      "lastUpdated": "2026-09-09T00:28:11.892Z",
       "todayPoints": 0
     },
     {
@@ -5471,7 +5472,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 45,
-      "lastUpdated": "2026-09-06T01:25:43.344Z",
+      "lastUpdated": "2026-09-09T00:28:11.885Z",
       "todayPoints": 0
     },
     {
@@ -5490,7 +5491,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 41,
-      "lastUpdated": "2026-09-06T01:25:45.840Z",
+      "lastUpdated": "2026-09-09T00:28:13.955Z",
       "todayPoints": 0
     },
     {
@@ -5509,7 +5510,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 46,
-      "lastUpdated": "2026-09-06T01:25:45.837Z",
+      "lastUpdated": "2026-09-09T00:28:14.072Z",
       "todayPoints": 0
     },
     {
@@ -5528,7 +5529,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 32,
-      "lastUpdated": "2026-09-06T01:25:45.949Z",
+      "lastUpdated": "2026-09-09T00:28:14.120Z",
       "todayPoints": 0
     },
     {
@@ -5547,7 +5548,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 47,
-      "lastUpdated": "2026-09-06T01:25:48.049Z",
+      "lastUpdated": "2026-09-09T00:28:16.355Z",
       "todayPoints": 0
     },
     {
@@ -5566,7 +5567,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 32,
-      "lastUpdated": "2026-09-06T01:25:48.020Z",
+      "lastUpdated": "2026-09-09T00:28:16.345Z",
       "todayPoints": 0
     },
     {
@@ -5585,7 +5586,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 44,
-      "lastUpdated": "2026-09-06T01:25:48.020Z",
+      "lastUpdated": "2026-09-09T00:28:16.343Z",
       "todayPoints": 0
     },
     {
@@ -5604,7 +5605,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 50,
-      "lastUpdated": "2026-09-06T01:25:50.127Z",
+      "lastUpdated": "2026-09-09T00:28:18.547Z",
       "todayPoints": 0
     },
     {
@@ -5623,7 +5624,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 43,
-      "lastUpdated": "2026-09-06T01:25:50.666Z",
+      "lastUpdated": "2026-09-09T00:28:18.578Z",
       "todayPoints": 0
     },
     {
@@ -5642,7 +5643,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 44,
-      "lastUpdated": "2026-09-06T01:25:50.122Z",
+      "lastUpdated": "2026-09-09T00:28:18.564Z",
       "todayPoints": 0
     },
     {
@@ -5661,7 +5662,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 29,
-      "lastUpdated": "2026-09-06T01:25:52.741Z",
+      "lastUpdated": "2026-09-09T00:28:20.788Z",
       "todayPoints": 0
     },
     {
@@ -5680,7 +5681,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 43,
-      "lastUpdated": "2026-09-06T01:25:52.742Z",
+      "lastUpdated": "2026-09-09T00:28:20.823Z",
       "todayPoints": 0
     },
     {
@@ -5699,7 +5700,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 33,
-      "lastUpdated": "2026-09-06T01:25:52.869Z",
+      "lastUpdated": "2026-09-09T00:28:20.803Z",
       "todayPoints": 0
     },
     {
@@ -5718,7 +5719,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 18,
-      "lastUpdated": "2026-09-06T01:25:54.940Z",
+      "lastUpdated": "2026-09-09T00:28:22.888Z",
       "todayPoints": 0
     },
     {
@@ -5737,7 +5738,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 43,
-      "lastUpdated": "2026-09-06T01:25:54.955Z",
+      "lastUpdated": "2026-09-09T00:28:23.034Z",
       "todayPoints": 0
     },
     {
@@ -5756,7 +5757,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:25:55.035Z",
+      "lastUpdated": "2026-09-09T00:28:23.023Z",
       "todayPoints": 0
     },
     {
@@ -5775,7 +5776,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 44,
-      "lastUpdated": "2026-09-06T01:25:57.227Z",
+      "lastUpdated": "2026-09-09T00:28:25.229Z",
       "todayPoints": 0
     },
     {
@@ -5794,7 +5795,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 42,
-      "lastUpdated": "2026-09-06T01:25:57.107Z",
+      "lastUpdated": "2026-09-09T00:28:25.326Z",
       "todayPoints": 0
     },
     {
@@ -5813,7 +5814,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 40,
-      "lastUpdated": "2026-09-06T01:25:57.112Z",
+      "lastUpdated": "2026-09-09T00:28:25.300Z",
       "todayPoints": 0
     },
     {
@@ -5832,7 +5833,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 49,
-      "lastUpdated": "2026-09-06T01:25:59.451Z",
+      "lastUpdated": "2026-09-09T00:28:27.503Z",
       "todayPoints": 0
     },
     {
@@ -5851,7 +5852,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 43,
-      "lastUpdated": "2026-09-06T01:25:59.438Z",
+      "lastUpdated": "2026-09-09T00:28:27.521Z",
       "todayPoints": 0
     },
     {
@@ -5870,7 +5871,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 43,
-      "lastUpdated": "2026-09-06T01:25:59.311Z",
+      "lastUpdated": "2026-09-09T00:28:27.568Z",
       "todayPoints": 0
     },
     {
@@ -5889,7 +5890,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 42,
-      "lastUpdated": "2026-09-06T01:26:01.638Z",
+      "lastUpdated": "2026-09-09T00:28:29.648Z",
       "todayPoints": 0
     },
     {
@@ -5908,7 +5909,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 41,
-      "lastUpdated": "2026-09-06T01:26:01.643Z",
+      "lastUpdated": "2026-09-09T00:28:29.757Z",
       "todayPoints": 0
     },
     {
@@ -5927,7 +5928,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 43,
-      "lastUpdated": "2026-09-06T01:26:01.642Z",
+      "lastUpdated": "2026-09-09T00:28:29.847Z",
       "todayPoints": 0
     },
     {
@@ -5946,7 +5947,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 38,
-      "lastUpdated": "2026-09-06T01:26:03.809Z",
+      "lastUpdated": "2026-09-09T00:28:32.050Z",
       "todayPoints": 0
     },
     {
@@ -5965,7 +5966,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 33,
-      "lastUpdated": "2026-09-06T01:26:03.839Z",
+      "lastUpdated": "2026-09-09T00:28:32.062Z",
       "todayPoints": 0
     },
     {
@@ -5984,7 +5985,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 38,
-      "lastUpdated": "2026-09-06T01:26:03.817Z",
+      "lastUpdated": "2026-09-09T00:28:32.062Z",
       "todayPoints": 0
     },
     {
@@ -6003,7 +6004,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 32,
-      "lastUpdated": "2026-09-06T01:26:06.108Z",
+      "lastUpdated": "2026-09-09T00:28:34.131Z",
       "todayPoints": 0
     },
     {
@@ -6022,7 +6023,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 36,
-      "lastUpdated": "2026-09-06T01:26:06.025Z",
+      "lastUpdated": "2026-09-09T00:28:34.290Z",
       "todayPoints": 0
     },
     {
@@ -6041,7 +6042,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 36,
-      "lastUpdated": "2026-09-06T01:26:06.019Z",
+      "lastUpdated": "2026-09-09T00:28:34.137Z",
       "todayPoints": 0
     },
     {
@@ -6060,7 +6061,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 36,
-      "lastUpdated": "2026-09-06T01:26:08.295Z",
+      "lastUpdated": "2026-09-09T00:28:36.583Z",
       "todayPoints": 0
     },
     {
@@ -6079,7 +6080,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 46,
-      "lastUpdated": "2026-09-06T01:26:08.303Z",
+      "lastUpdated": "2026-09-09T00:28:36.531Z",
       "todayPoints": 0
     },
     {
@@ -6098,7 +6099,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 36,
-      "lastUpdated": "2026-09-06T01:26:08.284Z",
+      "lastUpdated": "2026-09-09T00:28:36.497Z",
       "todayPoints": 0
     },
     {
@@ -6117,7 +6118,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 38,
-      "lastUpdated": "2026-09-06T01:26:10.484Z",
+      "lastUpdated": "2026-09-09T00:28:38.658Z",
       "todayPoints": 0
     },
     {
@@ -6136,7 +6137,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 36,
-      "lastUpdated": "2026-09-06T01:26:10.491Z",
+      "lastUpdated": "2026-09-09T00:28:38.772Z",
       "todayPoints": 0
     },
     {
@@ -6155,7 +6156,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 42,
-      "lastUpdated": "2026-09-06T01:26:10.469Z",
+      "lastUpdated": "2026-09-09T00:28:38.781Z",
       "todayPoints": 0
     },
     {
@@ -6174,7 +6175,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 36,
-      "lastUpdated": "2026-09-06T01:26:12.672Z",
+      "lastUpdated": "2026-09-09T00:28:40.994Z",
       "todayPoints": 0
     },
     {
@@ -6193,7 +6194,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 32,
-      "lastUpdated": "2026-09-06T01:26:12.667Z",
+      "lastUpdated": "2026-09-09T00:28:40.956Z",
       "todayPoints": 0
     },
     {
@@ -6212,7 +6213,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:26:12.681Z",
+      "lastUpdated": "2026-09-09T00:28:41.000Z",
       "todayPoints": 0
     },
     {
@@ -6231,7 +6232,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:26:14.846Z",
+      "lastUpdated": "2026-09-09T00:28:43.202Z",
       "todayPoints": 0
     },
     {
@@ -6250,7 +6251,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 33,
-      "lastUpdated": "2026-09-06T01:26:14.854Z",
+      "lastUpdated": "2026-09-09T00:28:43.081Z",
       "todayPoints": 0
     },
     {
@@ -6269,7 +6270,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 36,
-      "lastUpdated": "2026-09-06T01:26:14.848Z",
+      "lastUpdated": "2026-09-09T00:28:43.242Z",
       "todayPoints": 0
     },
     {
@@ -6288,7 +6289,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:26:17.054Z",
+      "lastUpdated": "2026-09-09T00:28:45.462Z",
       "todayPoints": 0
     },
     {
@@ -6307,7 +6308,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 31,
-      "lastUpdated": "2026-09-06T01:26:17.029Z",
+      "lastUpdated": "2026-09-09T00:28:45.440Z",
       "todayPoints": 0
     },
     {
@@ -6326,7 +6327,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 17,
-      "lastUpdated": "2026-09-06T01:26:17.029Z",
+      "lastUpdated": "2026-09-09T00:28:45.485Z",
       "todayPoints": 0
     },
     {
@@ -6345,7 +6346,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 34,
-      "lastUpdated": "2026-09-06T01:26:19.244Z",
+      "lastUpdated": "2026-09-09T00:28:47.714Z",
       "todayPoints": 0
     },
     {
@@ -6364,7 +6365,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 36,
-      "lastUpdated": "2026-09-06T01:26:19.244Z",
+      "lastUpdated": "2026-09-09T00:28:47.694Z",
       "todayPoints": 0
     },
     {
@@ -6383,7 +6384,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 38,
-      "lastUpdated": "2026-09-06T01:26:19.251Z",
+      "lastUpdated": "2026-09-09T00:28:47.706Z",
       "todayPoints": 0
     },
     {
@@ -6402,7 +6403,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 39,
-      "lastUpdated": "2026-09-06T01:26:21.438Z",
+      "lastUpdated": "2026-09-09T00:28:49.901Z",
       "todayPoints": 0
     },
     {
@@ -6421,7 +6422,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 24,
-      "lastUpdated": "2026-09-06T01:26:21.442Z",
+      "lastUpdated": "2026-09-09T00:28:49.913Z",
       "todayPoints": 0
     },
     {
@@ -6440,7 +6441,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 31,
-      "lastUpdated": "2026-09-06T01:26:21.450Z",
+      "lastUpdated": "2026-09-09T00:28:49.907Z",
       "todayPoints": 0
     },
     {
@@ -6459,7 +6460,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:26:23.648Z",
+      "lastUpdated": "2026-09-09T00:28:52.098Z",
       "todayPoints": 0
     },
     {
@@ -6478,7 +6479,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 37,
-      "lastUpdated": "2026-09-06T01:26:23.637Z",
+      "lastUpdated": "2026-09-09T00:28:52.139Z",
       "todayPoints": 0
     },
     {
@@ -6497,7 +6498,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:26:23.632Z",
+      "lastUpdated": "2026-09-09T00:28:52.128Z",
       "todayPoints": 0
     },
     {
@@ -6516,7 +6517,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 29,
-      "lastUpdated": "2026-09-06T01:26:25.851Z",
+      "lastUpdated": "2026-09-09T00:28:54.346Z",
       "todayPoints": 0
     },
     {
@@ -6535,7 +6536,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 36,
-      "lastUpdated": "2026-09-06T01:26:25.838Z",
+      "lastUpdated": "2026-09-09T00:28:54.327Z",
       "todayPoints": 0
     },
     {
@@ -6554,7 +6555,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 29,
-      "lastUpdated": "2026-09-06T01:26:25.842Z",
+      "lastUpdated": "2026-09-09T00:28:54.356Z",
       "todayPoints": 0
     },
     {
@@ -6573,7 +6574,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:26:28.032Z",
+      "lastUpdated": "2026-09-09T00:28:56.564Z",
       "todayPoints": 0
     },
     {
@@ -6592,7 +6593,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 33,
-      "lastUpdated": "2026-09-06T01:26:28.059Z",
+      "lastUpdated": "2026-09-09T00:28:56.568Z",
       "todayPoints": 0
     },
     {
@@ -6611,7 +6612,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 33,
-      "lastUpdated": "2026-09-06T01:26:27.940Z",
+      "lastUpdated": "2026-09-09T00:28:56.597Z",
       "todayPoints": 0
     },
     {
@@ -6630,7 +6631,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 33,
-      "lastUpdated": "2026-09-06T01:26:30.235Z",
+      "lastUpdated": "2026-09-09T00:28:58.818Z",
       "todayPoints": 0
     },
     {
@@ -6649,7 +6650,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:26:30.265Z",
+      "lastUpdated": "2026-09-09T00:28:58.781Z",
       "todayPoints": 0
     },
     {
@@ -6668,7 +6669,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 33,
-      "lastUpdated": "2026-09-06T01:26:30.259Z",
+      "lastUpdated": "2026-09-09T00:28:58.814Z",
       "todayPoints": 0
     },
     {
@@ -6687,7 +6688,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 37,
-      "lastUpdated": "2026-09-06T01:26:32.466Z",
+      "lastUpdated": "2026-09-09T00:29:01.035Z",
       "todayPoints": 0
     },
     {
@@ -6706,7 +6707,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 37,
-      "lastUpdated": "2026-09-06T01:26:32.459Z",
+      "lastUpdated": "2026-09-09T00:29:01.053Z",
       "todayPoints": 0
     },
     {
@@ -6725,7 +6726,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 31,
-      "lastUpdated": "2026-09-06T01:26:32.453Z",
+      "lastUpdated": "2026-09-09T00:29:01.021Z",
       "todayPoints": 0
     },
     {
@@ -6744,7 +6745,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:26:34.625Z",
+      "lastUpdated": "2026-09-09T00:29:03.254Z",
       "todayPoints": 0
     },
     {
@@ -6763,7 +6764,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 27,
-      "lastUpdated": "2026-09-06T01:26:34.649Z",
+      "lastUpdated": "2026-09-09T00:29:03.147Z",
       "todayPoints": 0
     },
     {
@@ -6782,7 +6783,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 34,
-      "lastUpdated": "2026-09-06T01:26:34.653Z",
+      "lastUpdated": "2026-09-09T00:29:03.317Z",
       "todayPoints": 0
     },
     {
@@ -6801,7 +6802,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 35,
-      "lastUpdated": "2026-09-06T01:26:36.834Z",
+      "lastUpdated": "2026-09-09T00:29:05.513Z",
       "todayPoints": 0
     },
     {
@@ -6820,7 +6821,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 30,
-      "lastUpdated": "2026-09-06T01:26:36.844Z",
+      "lastUpdated": "2026-09-09T00:29:05.554Z",
       "todayPoints": 0
     },
     {
@@ -6839,7 +6840,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 31,
-      "lastUpdated": "2026-09-06T01:26:36.857Z",
+      "lastUpdated": "2026-09-09T00:29:05.513Z",
       "todayPoints": 0
     },
     {
@@ -6858,7 +6859,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 7,
-      "lastUpdated": "2026-09-06T01:26:39.061Z",
+      "lastUpdated": "2026-09-09T00:29:07.758Z",
       "todayPoints": 0
     },
     {
@@ -6877,7 +6878,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:26:39.139Z",
+      "lastUpdated": "2026-09-09T00:29:07.774Z",
       "todayPoints": 0
     },
     {
@@ -6896,7 +6897,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 29,
-      "lastUpdated": "2026-09-06T01:26:39.062Z",
+      "lastUpdated": "2026-09-09T00:29:07.769Z",
       "todayPoints": 0
     },
     {
@@ -6915,7 +6916,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 30,
-      "lastUpdated": "2026-09-06T01:26:41.363Z",
+      "lastUpdated": "2026-09-09T00:29:09.854Z",
       "todayPoints": 0
     },
     {
@@ -6934,7 +6935,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 31,
-      "lastUpdated": "2026-09-06T01:26:41.317Z",
+      "lastUpdated": "2026-09-09T00:29:09.965Z",
       "todayPoints": 0
     },
     {
@@ -6953,7 +6954,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 29,
-      "lastUpdated": "2026-09-06T01:26:41.326Z",
+      "lastUpdated": "2026-09-09T00:29:10.115Z",
       "todayPoints": 0
     },
     {
@@ -6972,7 +6973,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 32,
-      "lastUpdated": "2026-09-06T01:26:43.535Z",
+      "lastUpdated": "2026-09-09T00:29:12.330Z",
       "todayPoints": 0
     },
     {
@@ -6991,7 +6992,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 28,
-      "lastUpdated": "2026-09-06T01:26:43.765Z",
+      "lastUpdated": "2026-09-09T00:29:12.311Z",
       "todayPoints": 0
     },
     {
@@ -7010,7 +7011,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 29,
-      "lastUpdated": "2026-09-06T01:26:43.556Z",
+      "lastUpdated": "2026-09-09T00:29:12.325Z",
       "todayPoints": 0
     },
     {
@@ -7029,7 +7030,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 29,
-      "lastUpdated": "2026-09-06T01:26:45.947Z",
+      "lastUpdated": "2026-09-09T00:29:14.504Z",
       "todayPoints": 0
     },
     {
@@ -7048,7 +7049,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 17,
-      "lastUpdated": "2026-09-06T01:26:45.954Z",
+      "lastUpdated": "2026-09-09T00:29:14.411Z",
       "todayPoints": 0
     },
     {
@@ -7067,7 +7068,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 25,
-      "lastUpdated": "2026-09-06T01:26:45.954Z",
+      "lastUpdated": "2026-09-09T00:29:14.531Z",
       "todayPoints": 0
     },
     {
@@ -7086,7 +7087,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 23,
-      "lastUpdated": "2026-09-06T01:26:48.148Z",
+      "lastUpdated": "2026-09-09T00:29:16.701Z",
       "todayPoints": 0
     },
     {
@@ -7105,7 +7106,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 25,
-      "lastUpdated": "2026-09-06T01:26:48.141Z",
+      "lastUpdated": "2026-09-09T00:29:16.731Z",
       "todayPoints": 0
     },
     {
@@ -7124,7 +7125,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 31,
-      "lastUpdated": "2026-09-06T01:26:48.131Z",
+      "lastUpdated": "2026-09-09T00:29:16.790Z",
       "todayPoints": 0
     },
     {
@@ -7143,7 +7144,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 32,
-      "lastUpdated": "2026-09-06T01:26:50.338Z",
+      "lastUpdated": "2026-09-09T00:29:18.993Z",
       "todayPoints": 0
     },
     {
@@ -7162,7 +7163,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 26,
-      "lastUpdated": "2026-09-06T01:26:50.358Z",
+      "lastUpdated": "2026-09-09T00:29:18.994Z",
       "todayPoints": 0
     },
     {
@@ -7181,7 +7182,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 27,
-      "lastUpdated": "2026-09-06T01:26:50.341Z",
+      "lastUpdated": "2026-09-09T00:29:18.881Z",
       "todayPoints": 0
     },
     {
@@ -7200,7 +7201,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 15,
-      "lastUpdated": "2026-09-06T01:26:52.525Z",
+      "lastUpdated": "2026-09-09T00:29:21.183Z",
       "todayPoints": 0
     },
     {
@@ -7219,7 +7220,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 30,
-      "lastUpdated": "2026-09-06T01:26:52.548Z",
+      "lastUpdated": "2026-09-09T00:29:21.198Z",
       "todayPoints": 0
     },
     {
@@ -7238,7 +7239,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 25,
-      "lastUpdated": "2026-09-06T01:26:52.548Z",
+      "lastUpdated": "2026-09-09T00:29:21.262Z",
       "todayPoints": 0
     },
     {
@@ -7257,7 +7258,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 22,
-      "lastUpdated": "2026-09-06T01:26:54.756Z",
+      "lastUpdated": "2026-09-09T00:29:23.444Z",
       "todayPoints": 0
     },
     {
@@ -7276,7 +7277,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 15,
-      "lastUpdated": "2026-09-06T01:26:54.747Z",
+      "lastUpdated": "2026-09-09T00:29:23.505Z",
       "todayPoints": 0
     },
     {
@@ -7295,7 +7296,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 32,
-      "lastUpdated": "2026-09-06T01:26:54.742Z",
+      "lastUpdated": "2026-09-09T00:29:23.527Z",
       "todayPoints": 0
     },
     {
@@ -7314,7 +7315,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 23,
-      "lastUpdated": "2026-09-06T01:26:56.933Z",
+      "lastUpdated": "2026-09-09T00:29:25.737Z",
       "todayPoints": 0
     },
     {
@@ -7333,7 +7334,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 33,
-      "lastUpdated": "2026-09-06T01:26:56.948Z",
+      "lastUpdated": "2026-09-09T00:29:25.740Z",
       "todayPoints": 0
     },
     {
@@ -7352,7 +7353,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 23,
-      "lastUpdated": "2026-09-06T01:26:56.933Z",
+      "lastUpdated": "2026-09-09T00:29:25.723Z",
       "todayPoints": 0
     },
     {
@@ -7371,7 +7372,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 17,
-      "lastUpdated": "2026-09-06T01:26:59.133Z",
+      "lastUpdated": "2026-09-09T00:29:27.972Z",
       "todayPoints": 0
     },
     {
@@ -7390,7 +7391,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 30,
-      "lastUpdated": "2026-09-06T01:26:59.164Z",
+      "lastUpdated": "2026-09-09T00:29:27.975Z",
       "todayPoints": 0
     },
     {
@@ -7409,7 +7410,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 21,
-      "lastUpdated": "2026-09-06T01:26:59.133Z",
+      "lastUpdated": "2026-09-09T00:29:28.139Z",
       "todayPoints": 0
     },
     {
@@ -7428,7 +7429,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 30,
-      "lastUpdated": "2026-09-06T01:27:01.337Z",
+      "lastUpdated": "2026-09-09T00:29:30.222Z",
       "todayPoints": 0
     },
     {
@@ -7447,7 +7448,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 15,
-      "lastUpdated": "2026-09-06T01:27:01.353Z",
+      "lastUpdated": "2026-09-09T00:29:30.389Z",
       "todayPoints": 0
     },
     {
@@ -7466,7 +7467,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 19,
-      "lastUpdated": "2026-09-06T01:27:01.351Z",
+      "lastUpdated": "2026-09-09T00:29:30.344Z",
       "todayPoints": 0
     },
     {
@@ -7485,7 +7486,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 19,
-      "lastUpdated": "2026-09-06T01:27:03.551Z",
+      "lastUpdated": "2026-09-09T00:29:32.631Z",
       "todayPoints": 0
     },
     {
@@ -7504,7 +7505,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 13,
-      "lastUpdated": "2026-09-06T01:27:03.554Z",
+      "lastUpdated": "2026-09-09T00:29:32.586Z",
       "todayPoints": 0
     },
     {
@@ -7523,7 +7524,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 17,
-      "lastUpdated": "2026-09-06T01:27:03.562Z",
+      "lastUpdated": "2026-09-09T00:29:32.616Z",
       "todayPoints": 0
     },
     {
@@ -7542,7 +7543,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 17,
-      "lastUpdated": "2026-09-06T01:27:05.839Z",
+      "lastUpdated": "2026-09-09T00:29:34.851Z",
       "todayPoints": 0
     },
     {
@@ -7561,7 +7562,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 7,
-      "lastUpdated": "2026-09-06T01:27:05.763Z",
+      "lastUpdated": "2026-09-09T00:29:34.839Z",
       "todayPoints": 0
     },
     {
@@ -7580,7 +7581,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 27,
-      "lastUpdated": "2026-09-06T01:27:05.763Z",
+      "lastUpdated": "2026-09-09T00:29:34.823Z",
       "todayPoints": 0
     },
     {
@@ -7599,7 +7600,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 27,
-      "lastUpdated": "2026-09-06T01:27:08.057Z",
+      "lastUpdated": "2026-09-09T00:29:37.069Z",
       "todayPoints": 0
     },
     {
@@ -7618,7 +7619,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 21,
-      "lastUpdated": "2026-09-06T01:27:08.018Z",
+      "lastUpdated": "2026-09-09T00:29:37.051Z",
       "todayPoints": 0
     },
     {
@@ -7637,7 +7638,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 15,
-      "lastUpdated": "2026-09-06T01:27:08.051Z",
+      "lastUpdated": "2026-09-09T00:29:37.050Z",
       "todayPoints": 0
     },
     {
@@ -7656,7 +7657,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 1,
-      "lastUpdated": "2026-09-06T01:27:10.272Z",
+      "lastUpdated": "2026-09-09T00:29:39.267Z",
       "todayPoints": 0
     },
     {
@@ -7675,7 +7676,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 5,
-      "lastUpdated": "2026-09-06T01:27:10.308Z",
+      "lastUpdated": "2026-09-09T00:29:39.255Z",
       "todayPoints": 0
     },
     {
@@ -7694,7 +7695,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 3,
-      "lastUpdated": "2026-09-06T01:27:10.256Z",
+      "lastUpdated": "2026-09-09T00:29:39.267Z",
       "todayPoints": 0
     },
     {
@@ -7713,7 +7714,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:12.540Z",
+      "lastUpdated": "2026-09-09T00:29:41.415Z",
       "todayPoints": 0
     },
     {
@@ -7732,7 +7733,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 1,
-      "lastUpdated": "2026-09-06T01:27:12.504Z",
+      "lastUpdated": "2026-09-09T00:29:41.476Z",
       "todayPoints": 0
     },
     {
@@ -7751,7 +7752,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:12.446Z",
+      "lastUpdated": "2026-09-09T00:29:41.402Z",
       "todayPoints": 0
     },
     {
@@ -7770,7 +7771,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:14.724Z",
+      "lastUpdated": "2026-09-09T00:29:43.669Z",
       "todayPoints": 0
     },
     {
@@ -7789,7 +7790,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 37,
-      "lastUpdated": "2026-09-06T01:27:14.763Z",
+      "lastUpdated": "2026-09-09T00:29:43.680Z",
       "todayPoints": 0
     },
     {
@@ -7808,7 +7809,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:14.712Z",
+      "lastUpdated": "2026-09-09T00:29:43.640Z",
       "todayPoints": 0
     },
     {
@@ -7827,7 +7828,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 10,
-      "lastUpdated": "2026-09-06T01:27:16.933Z",
+      "lastUpdated": "2026-09-09T00:29:45.908Z",
       "todayPoints": 0
     },
     {
@@ -7846,7 +7847,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:16.890Z",
+      "lastUpdated": "2026-09-09T00:29:46.056Z",
       "todayPoints": 0
     },
     {
@@ -7865,7 +7866,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:16.995Z",
+      "lastUpdated": "2026-09-09T00:29:45.851Z",
       "todayPoints": 0
     },
     {
@@ -7884,7 +7885,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:19.127Z",
+      "lastUpdated": "2026-09-09T00:29:48.228Z",
       "todayPoints": 0
     },
     {
@@ -7903,7 +7904,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 9,
-      "lastUpdated": "2026-09-06T01:27:19.224Z",
+      "lastUpdated": "2026-09-09T00:29:48.253Z",
       "todayPoints": 0
     },
     {
@@ -7922,7 +7923,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:19.126Z",
+      "lastUpdated": "2026-09-09T00:29:48.217Z",
       "todayPoints": 0
     },
     {
@@ -7941,7 +7942,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:21.363Z",
+      "lastUpdated": "2026-09-09T00:29:50.418Z",
       "todayPoints": 0
     },
     {
@@ -7960,7 +7961,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 9,
-      "lastUpdated": "2026-09-06T01:27:21.404Z",
+      "lastUpdated": "2026-09-09T00:29:50.466Z",
       "todayPoints": 0
     },
     {
@@ -7979,7 +7980,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 1,
-      "lastUpdated": "2026-09-06T01:27:21.404Z",
+      "lastUpdated": "2026-09-09T00:29:50.625Z",
       "todayPoints": 0
     },
     {
@@ -7998,7 +7999,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 4,
-      "lastUpdated": "2026-09-06T01:27:23.610Z",
+      "lastUpdated": "2026-09-09T00:29:52.706Z",
       "todayPoints": 0
     },
     {
@@ -8017,7 +8018,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:23.540Z",
+      "lastUpdated": "2026-09-09T00:29:52.781Z",
       "todayPoints": 0
     },
     {
@@ -8036,7 +8037,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 10,
-      "lastUpdated": "2026-09-06T01:27:23.591Z",
+      "lastUpdated": "2026-09-09T00:29:52.829Z",
       "todayPoints": 0
     },
     {
@@ -8055,7 +8056,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:25.766Z",
+      "lastUpdated": "2026-09-09T00:29:54.988Z",
       "todayPoints": 0
     },
     {
@@ -8074,7 +8075,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:25.852Z",
+      "lastUpdated": "2026-09-09T00:29:55.042Z",
       "todayPoints": 0
     },
     {
@@ -8093,7 +8094,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:25.774Z",
+      "lastUpdated": "2026-09-09T00:29:54.992Z",
       "todayPoints": 0
     },
     {
@@ -8112,7 +8113,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:28.006Z",
+      "lastUpdated": "2026-09-09T00:29:57.197Z",
       "todayPoints": 0
     },
     {
@@ -8131,7 +8132,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:28.009Z",
+      "lastUpdated": "2026-09-09T00:29:57.228Z",
       "todayPoints": 0
     },
     {
@@ -8150,7 +8151,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:28.007Z",
+      "lastUpdated": "2026-09-09T00:29:57.204Z",
       "todayPoints": 0
     },
     {
@@ -8169,7 +8170,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:30.170Z",
+      "lastUpdated": "2026-09-09T00:29:59.494Z",
       "todayPoints": 0
     },
     {
@@ -8188,7 +8189,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 4,
-      "lastUpdated": "2026-09-06T01:27:30.170Z",
+      "lastUpdated": "2026-09-09T00:29:59.525Z",
       "todayPoints": 0
     },
     {
@@ -8207,7 +8208,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:30.141Z",
+      "lastUpdated": "2026-09-09T00:29:59.484Z",
       "todayPoints": 0
     },
     {
@@ -8226,7 +8227,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:32.308Z",
+      "lastUpdated": "2026-09-09T00:30:01.774Z",
       "todayPoints": 0
     },
     {
@@ -8245,7 +8246,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 1,
-      "lastUpdated": "2026-09-06T01:27:32.378Z",
+      "lastUpdated": "2026-09-09T00:30:01.823Z",
       "todayPoints": 0
     },
     {
@@ -8264,7 +8265,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:32.406Z",
+      "lastUpdated": "2026-09-09T00:30:01.760Z",
       "todayPoints": 0
     },
     {
@@ -8283,7 +8284,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 2,
-      "lastUpdated": "2026-09-06T01:27:34.613Z",
+      "lastUpdated": "2026-09-09T00:30:04.134Z",
       "todayPoints": 0
     },
     {
@@ -8302,7 +8303,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:34.566Z",
+      "lastUpdated": "2026-09-09T00:30:04.081Z",
       "todayPoints": 0
     },
     {
@@ -8321,7 +8322,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 20,
-      "lastUpdated": "2026-09-06T01:27:34.581Z",
+      "lastUpdated": "2026-09-09T00:30:04.130Z",
       "todayPoints": 0
     },
     {
@@ -8340,7 +8341,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 19,
-      "lastUpdated": "2026-09-06T01:27:36.816Z",
+      "lastUpdated": "2026-09-09T00:30:06.404Z",
       "todayPoints": 0
     },
     {
@@ -8359,7 +8360,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:36.779Z",
+      "lastUpdated": "2026-09-09T00:30:06.367Z",
       "todayPoints": 0
     },
     {
@@ -8378,7 +8379,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:36.854Z",
+      "lastUpdated": "2026-09-09T00:30:06.380Z",
       "todayPoints": 0
     },
     {
@@ -8397,7 +8398,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 1,
-      "lastUpdated": "2026-09-06T01:27:39.022Z",
+      "lastUpdated": "2026-09-09T00:30:08.746Z",
       "todayPoints": 0
     },
     {
@@ -8416,7 +8417,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:39.085Z",
+      "lastUpdated": "2026-09-09T00:30:08.656Z",
       "todayPoints": 0
     },
     {
@@ -8435,7 +8436,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:39.054Z",
+      "lastUpdated": "2026-09-09T00:30:08.638Z",
       "todayPoints": 0
     },
     {
@@ -8454,7 +8455,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:41.246Z",
+      "lastUpdated": "2026-09-09T00:30:10.977Z",
       "todayPoints": 0
     },
     {
@@ -8473,7 +8474,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:41.229Z",
+      "lastUpdated": "2026-09-09T00:30:10.987Z",
       "todayPoints": 0
     },
     {
@@ -8492,7 +8493,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 1,
-      "lastUpdated": "2026-09-06T01:27:41.267Z",
+      "lastUpdated": "2026-09-09T00:30:11.054Z",
       "todayPoints": 0
     },
     {
@@ -8511,7 +8512,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:43.402Z",
+      "lastUpdated": "2026-09-09T00:30:13.294Z",
       "todayPoints": 0
     },
     {
@@ -8530,7 +8531,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:43.432Z",
+      "lastUpdated": "2026-09-09T00:30:13.277Z",
       "todayPoints": 0
     },
     {
@@ -8549,7 +8550,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:43.402Z",
+      "lastUpdated": "2026-09-09T00:30:13.311Z",
       "todayPoints": 0
     },
     {
@@ -8568,7 +8569,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:45.598Z",
+      "lastUpdated": "2026-09-09T00:30:15.555Z",
       "todayPoints": 0
     },
     {
@@ -8587,7 +8588,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:45.606Z",
+      "lastUpdated": "2026-09-09T00:30:15.573Z",
       "todayPoints": 0
     },
     {
@@ -8606,7 +8607,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 1,
-      "lastUpdated": "2026-09-06T01:27:45.644Z",
+      "lastUpdated": "2026-09-09T00:30:15.638Z",
       "todayPoints": 0
     },
     {
@@ -8625,7 +8626,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:47.802Z",
+      "lastUpdated": "2026-09-09T00:30:17.884Z",
       "todayPoints": 0
     },
     {
@@ -8644,7 +8645,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 1,
-      "lastUpdated": "2026-09-06T01:27:47.826Z",
+      "lastUpdated": "2026-09-09T00:30:17.936Z",
       "todayPoints": 0
     },
     {
@@ -8663,7 +8664,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:47.824Z",
+      "lastUpdated": "2026-09-09T00:30:17.923Z",
       "todayPoints": 0
     },
     {
@@ -8682,7 +8683,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:49.972Z",
+      "lastUpdated": "2026-09-09T00:30:20.167Z",
       "todayPoints": 0
     },
     {
@@ -8701,7 +8702,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:49.972Z",
+      "lastUpdated": "2026-09-09T00:30:20.181Z",
       "todayPoints": 0
     },
     {
@@ -8720,7 +8721,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:50.057Z",
+      "lastUpdated": "2026-09-09T00:30:20.195Z",
       "todayPoints": 0
     },
     {
@@ -8739,7 +8740,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 3,
-      "lastUpdated": "2026-09-06T01:27:52.237Z",
+      "lastUpdated": "2026-09-09T00:30:22.420Z",
       "todayPoints": 0
     },
     {
@@ -8758,7 +8759,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:52.205Z",
+      "lastUpdated": "2026-09-09T00:30:22.382Z",
       "todayPoints": 0
     },
     {
@@ -8777,7 +8778,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:52.214Z",
+      "lastUpdated": "2026-09-09T00:30:22.401Z",
       "todayPoints": 0
     },
     {
@@ -8796,7 +8797,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:54.392Z",
+      "lastUpdated": "2026-09-09T00:30:24.565Z",
       "todayPoints": 0
     },
     {
@@ -8815,7 +8816,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 15,
-      "lastUpdated": "2026-09-06T01:27:54.441Z",
+      "lastUpdated": "2026-09-09T00:30:24.623Z",
       "todayPoints": 0
     },
     {
@@ -8834,7 +8835,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:54.467Z",
+      "lastUpdated": "2026-09-09T00:30:24.572Z",
       "todayPoints": 0
     },
     {
@@ -8853,7 +8854,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:56.639Z",
+      "lastUpdated": "2026-09-09T00:30:26.775Z",
       "todayPoints": 0
     },
     {
@@ -8872,7 +8873,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:56.618Z",
+      "lastUpdated": "2026-09-09T00:30:26.819Z",
       "todayPoints": 0
     },
     {
@@ -8891,7 +8892,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 5,
-      "lastUpdated": "2026-09-06T01:27:56.657Z",
+      "lastUpdated": "2026-09-09T00:30:26.853Z",
       "todayPoints": 0
     },
     {
@@ -8910,7 +8911,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:58.801Z",
+      "lastUpdated": "2026-09-09T00:30:29.050Z",
       "todayPoints": 0
     },
     {
@@ -8929,7 +8930,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:58.801Z",
+      "lastUpdated": "2026-09-09T00:30:29.017Z",
       "todayPoints": 0
     },
     {
@@ -8948,7 +8949,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:27:58.811Z",
+      "lastUpdated": "2026-09-09T00:30:29.072Z",
       "todayPoints": 0
     },
     {
@@ -8967,7 +8968,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 7,
-      "lastUpdated": "2026-09-06T01:28:01.012Z",
+      "lastUpdated": "2026-09-09T00:30:31.166Z",
       "todayPoints": 0
     },
     {
@@ -8986,7 +8987,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 7,
-      "lastUpdated": "2026-09-06T01:28:01.015Z",
+      "lastUpdated": "2026-09-09T00:30:31.279Z",
       "todayPoints": 0
     },
     {
@@ -9005,7 +9006,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:28:00.963Z",
+      "lastUpdated": "2026-09-09T00:30:31.232Z",
       "todayPoints": 0
     },
     {
@@ -9024,7 +9025,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 1,
-      "lastUpdated": "2026-09-06T01:28:03.234Z",
+      "lastUpdated": "2026-09-09T00:30:33.504Z",
       "todayPoints": 0
     },
     {
@@ -9043,7 +9044,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:28:03.172Z",
+      "lastUpdated": "2026-09-09T00:30:33.458Z",
       "todayPoints": 0
     },
     {
@@ -9062,7 +9063,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:28:03.192Z",
+      "lastUpdated": "2026-09-09T00:30:33.454Z",
       "todayPoints": 0
     },
     {
@@ -9081,7 +9082,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 6,
-      "lastUpdated": "2026-09-06T01:28:05.418Z",
+      "lastUpdated": "2026-09-09T00:30:35.706Z",
       "todayPoints": 0
     },
     {
@@ -9100,7 +9101,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:28:05.474Z",
+      "lastUpdated": "2026-09-09T00:30:35.650Z",
       "todayPoints": 0
     },
     {
@@ -9119,7 +9120,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 7,
-      "lastUpdated": "2026-09-06T01:28:05.418Z",
+      "lastUpdated": "2026-09-09T00:30:35.584Z",
       "todayPoints": 0
     },
     {
@@ -9138,7 +9139,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:28:07.615Z",
+      "lastUpdated": "2026-09-09T00:30:37.887Z",
       "todayPoints": 0
     },
     {
@@ -9157,7 +9158,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:28:07.837Z",
+      "lastUpdated": "2026-09-09T00:30:37.860Z",
       "todayPoints": 0
     },
     {
@@ -9176,7 +9177,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:28:07.631Z",
+      "lastUpdated": "2026-09-09T00:30:37.860Z",
       "todayPoints": 0
     },
     {
@@ -9195,7 +9196,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 3,
-      "lastUpdated": "2026-09-06T01:28:10.075Z",
+      "lastUpdated": "2026-09-09T00:30:40.071Z",
       "todayPoints": 0
     },
     {
@@ -9214,7 +9215,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 1,
-      "lastUpdated": "2026-09-06T01:28:10.027Z",
+      "lastUpdated": "2026-09-09T00:30:40.088Z",
       "todayPoints": 0
     },
     {
@@ -9233,7 +9234,7 @@
       "otLosses": 4,
       "savePct": 0,
       "points": 92,
-      "lastUpdated": "2026-09-06T01:28:10.010Z",
+      "lastUpdated": "2026-09-09T00:30:40.124Z",
       "todayPoints": 0
     },
     {
@@ -9252,7 +9253,7 @@
       "otLosses": 6,
       "savePct": 0,
       "points": 96,
-      "lastUpdated": "2026-09-06T01:28:12.254Z",
+      "lastUpdated": "2026-09-09T00:30:42.322Z",
       "todayPoints": 0
     },
     {
@@ -9271,7 +9272,7 @@
       "otLosses": 3,
       "savePct": 0,
       "points": 89,
-      "lastUpdated": "2026-09-06T01:28:12.251Z",
+      "lastUpdated": "2026-09-09T00:30:42.326Z",
       "todayPoints": 0
     },
     {
@@ -9290,7 +9291,7 @@
       "otLosses": 6,
       "savePct": 0,
       "points": 88,
-      "lastUpdated": "2026-09-06T01:28:12.241Z",
+      "lastUpdated": "2026-09-09T00:30:42.341Z",
       "todayPoints": 0
     },
     {
@@ -9309,7 +9310,7 @@
       "otLosses": 2,
       "savePct": 0,
       "points": 74,
-      "lastUpdated": "2026-09-06T01:28:14.442Z",
+      "lastUpdated": "2026-09-09T00:30:44.530Z",
       "todayPoints": 0
     },
     {
@@ -9328,7 +9329,7 @@
       "otLosses": 1,
       "savePct": 0,
       "points": 75,
-      "lastUpdated": "2026-09-06T01:28:14.458Z",
+      "lastUpdated": "2026-09-09T00:30:44.523Z",
       "todayPoints": 0
     },
     {
@@ -9347,7 +9348,7 @@
       "otLosses": 4,
       "savePct": 0,
       "points": 76,
-      "lastUpdated": "2026-09-06T01:28:14.463Z",
+      "lastUpdated": "2026-09-09T00:30:44.568Z",
       "todayPoints": 0
     },
     {
@@ -9366,7 +9367,7 @@
       "otLosses": 2,
       "savePct": 0,
       "points": 95,
-      "lastUpdated": "2026-09-06T01:28:16.641Z",
+      "lastUpdated": "2026-09-09T00:30:46.813Z",
       "todayPoints": 0
     },
     {
@@ -9385,7 +9386,7 @@
       "otLosses": 4,
       "savePct": 0,
       "points": 64,
-      "lastUpdated": "2026-09-06T01:28:16.676Z",
+      "lastUpdated": "2026-09-09T00:30:46.854Z",
       "todayPoints": 0
     },
     {
@@ -9404,7 +9405,7 @@
       "otLosses": 8,
       "savePct": 0,
       "points": 79,
-      "lastUpdated": "2026-09-06T01:28:16.648Z",
+      "lastUpdated": "2026-09-09T00:30:46.793Z",
       "todayPoints": 0
     },
     {
@@ -9423,7 +9424,7 @@
       "otLosses": 11,
       "savePct": 0,
       "points": 57,
-      "lastUpdated": "2026-09-06T01:28:18.862Z",
+      "lastUpdated": "2026-09-09T00:30:48.932Z",
       "todayPoints": 0
     },
     {
@@ -9442,7 +9443,7 @@
       "otLosses": 8,
       "savePct": 0,
       "points": 64,
-      "lastUpdated": "2026-09-06T01:28:18.865Z",
+      "lastUpdated": "2026-09-09T00:30:49.060Z",
       "todayPoints": 0
     },
     {
@@ -9461,7 +9462,7 @@
       "otLosses": 6,
       "savePct": 0,
       "points": 82,
-      "lastUpdated": "2026-09-06T01:28:18.751Z",
+      "lastUpdated": "2026-09-09T00:30:49.068Z",
       "todayPoints": 0
     },
     {
@@ -9480,7 +9481,7 @@
       "otLosses": 6,
       "savePct": 0,
       "points": 88,
-      "lastUpdated": "2026-09-06T01:28:21.053Z",
+      "lastUpdated": "2026-09-09T00:30:51.329Z",
       "todayPoints": 0
     },
     {
@@ -9499,7 +9500,7 @@
       "otLosses": 6,
       "savePct": 0,
       "points": 61,
-      "lastUpdated": "2026-09-06T01:28:21.076Z",
+      "lastUpdated": "2026-09-09T00:30:51.134Z",
       "todayPoints": 0
     },
     {
@@ -9518,7 +9519,7 @@
       "otLosses": 3,
       "savePct": 0,
       "points": 52,
-      "lastUpdated": "2026-09-06T01:28:21.047Z",
+      "lastUpdated": "2026-09-09T00:30:51.254Z",
       "todayPoints": 0
     },
     {
@@ -9537,7 +9538,7 @@
       "otLosses": 9,
       "savePct": 0,
       "points": 65,
-      "lastUpdated": "2026-09-06T01:28:23.266Z",
+      "lastUpdated": "2026-09-09T00:30:53.528Z",
       "todayPoints": 0
     },
     {
@@ -9556,7 +9557,7 @@
       "otLosses": 4,
       "savePct": 0,
       "points": 82,
-      "lastUpdated": "2026-09-06T01:28:23.295Z",
+      "lastUpdated": "2026-09-09T00:30:53.420Z",
       "todayPoints": 0
     },
     {
@@ -9575,7 +9576,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:28:23.328Z",
+      "lastUpdated": "2026-09-09T00:30:53.539Z",
       "todayPoints": 0
     },
     {
@@ -9594,7 +9595,7 @@
       "otLosses": 4,
       "savePct": 0,
       "points": 62,
-      "lastUpdated": "2026-09-06T01:28:25.484Z",
+      "lastUpdated": "2026-09-09T00:30:55.667Z",
       "todayPoints": 0
     },
     {
@@ -9613,7 +9614,7 @@
       "otLosses": 2,
       "savePct": 0,
       "points": 63,
-      "lastUpdated": "2026-09-06T01:28:25.498Z",
+      "lastUpdated": "2026-09-09T00:30:55.673Z",
       "todayPoints": 0
     },
     {
@@ -9632,7 +9633,7 @@
       "otLosses": 1,
       "savePct": 0,
       "points": 52,
-      "lastUpdated": "2026-09-06T01:28:25.527Z",
+      "lastUpdated": "2026-09-09T00:30:55.763Z",
       "todayPoints": 0
     },
     {
@@ -9651,7 +9652,7 @@
       "otLosses": 5,
       "savePct": 0,
       "points": 83,
-      "lastUpdated": "2026-09-06T01:28:27.709Z",
+      "lastUpdated": "2026-09-09T00:30:57.830Z",
       "todayPoints": 0
     },
     {
@@ -9670,7 +9671,7 @@
       "otLosses": 3,
       "savePct": 0,
       "points": 59,
-      "lastUpdated": "2026-09-06T01:28:27.709Z",
+      "lastUpdated": "2026-09-09T00:30:57.843Z",
       "todayPoints": 0
     },
     {
@@ -9689,7 +9690,7 @@
       "otLosses": 4,
       "savePct": 0,
       "points": 59,
-      "lastUpdated": "2026-09-06T01:28:27.783Z",
+      "lastUpdated": "2026-09-09T00:30:57.826Z",
       "todayPoints": 0
     },
     {
@@ -9708,7 +9709,7 @@
       "otLosses": 15,
       "savePct": 0,
       "points": 68,
-      "lastUpdated": "2026-09-06T01:28:29.972Z",
+      "lastUpdated": "2026-09-09T00:31:00.078Z",
       "todayPoints": 0
     },
     {
@@ -9727,7 +9728,7 @@
       "otLosses": 6,
       "savePct": 0,
       "points": 56,
-      "lastUpdated": "2026-09-06T01:28:29.991Z",
+      "lastUpdated": "2026-09-09T00:31:00.083Z",
       "todayPoints": 0
     },
     {
@@ -9746,7 +9747,7 @@
       "otLosses": 3,
       "savePct": 0,
       "points": 49,
-      "lastUpdated": "2026-09-06T01:28:29.983Z",
+      "lastUpdated": "2026-09-09T00:31:00.058Z",
       "todayPoints": 0
     },
     {
@@ -9765,7 +9766,7 @@
       "otLosses": 9,
       "savePct": 0,
       "points": 71,
-      "lastUpdated": "2026-09-06T01:28:32.187Z",
+      "lastUpdated": "2026-09-09T00:31:02.512Z",
       "todayPoints": 0
     },
     {
@@ -9784,7 +9785,7 @@
       "otLosses": 6,
       "savePct": 0,
       "points": 31,
-      "lastUpdated": "2026-09-06T01:28:32.182Z",
+      "lastUpdated": "2026-09-09T00:31:02.339Z",
       "todayPoints": 0
     },
     {
@@ -9803,7 +9804,7 @@
       "otLosses": 11,
       "savePct": 0,
       "points": 64,
-      "lastUpdated": "2026-09-06T01:28:32.178Z",
+      "lastUpdated": "2026-09-09T00:31:02.290Z",
       "todayPoints": 0
     },
     {
@@ -9822,7 +9823,7 @@
       "otLosses": 4,
       "savePct": 0,
       "points": 40,
-      "lastUpdated": "2026-09-06T01:28:34.379Z",
+      "lastUpdated": "2026-09-09T00:31:04.716Z",
       "todayPoints": 0
     },
     {
@@ -9841,7 +9842,7 @@
       "otLosses": 6,
       "savePct": 0,
       "points": 39,
-      "lastUpdated": "2026-09-06T01:28:34.384Z",
+      "lastUpdated": "2026-09-09T00:31:04.716Z",
       "todayPoints": 0
     },
     {
@@ -9860,7 +9861,7 @@
       "otLosses": 7,
       "savePct": 0,
       "points": 38,
-      "lastUpdated": "2026-09-06T01:28:34.384Z",
+      "lastUpdated": "2026-09-09T00:31:04.719Z",
       "todayPoints": 0
     },
     {
@@ -9879,7 +9880,7 @@
       "otLosses": 2,
       "savePct": 0,
       "points": 41,
-      "lastUpdated": "2026-09-06T01:28:36.590Z",
+      "lastUpdated": "2026-09-09T00:31:07.179Z",
       "todayPoints": 0
     },
     {
@@ -9898,7 +9899,7 @@
       "otLosses": 3,
       "savePct": 0,
       "points": 36,
-      "lastUpdated": "2026-09-06T01:28:36.591Z",
+      "lastUpdated": "2026-09-09T00:31:06.930Z",
       "todayPoints": 0
     },
     {
@@ -9917,7 +9918,7 @@
       "otLosses": 4,
       "savePct": 0,
       "points": 46,
-      "lastUpdated": "2026-09-06T01:28:36.600Z",
+      "lastUpdated": "2026-09-09T00:31:06.900Z",
       "todayPoints": 0
     },
     {
@@ -9936,7 +9937,7 @@
       "otLosses": 7,
       "savePct": 0,
       "points": 47,
-      "lastUpdated": "2026-09-06T01:28:38.814Z",
+      "lastUpdated": "2026-09-09T00:31:09.357Z",
       "todayPoints": 0
     },
     {
@@ -9955,7 +9956,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 17,
-      "lastUpdated": "2026-09-06T01:28:38.814Z",
+      "lastUpdated": "2026-09-09T00:31:09.380Z",
       "todayPoints": 0
     },
     {
@@ -9974,7 +9975,7 @@
       "otLosses": 4,
       "savePct": 0,
       "points": 24,
-      "lastUpdated": "2026-09-06T01:28:38.791Z",
+      "lastUpdated": "2026-09-09T00:31:09.413Z",
       "todayPoints": 0
     },
     {
@@ -9993,7 +9994,7 @@
       "otLosses": 3,
       "savePct": 0,
       "points": 45,
-      "lastUpdated": "2026-09-06T01:28:41.024Z",
+      "lastUpdated": "2026-09-09T00:31:11.614Z",
       "todayPoints": 0
     },
     {
@@ -10012,7 +10013,7 @@
       "otLosses": 5,
       "savePct": 0,
       "points": 52,
-      "lastUpdated": "2026-09-06T01:28:41.020Z",
+      "lastUpdated": "2026-09-09T00:31:11.593Z",
       "todayPoints": 0
     },
     {
@@ -10031,7 +10032,7 @@
       "otLosses": 6,
       "savePct": 0,
       "points": 62,
-      "lastUpdated": "2026-09-06T01:28:41.002Z",
+      "lastUpdated": "2026-09-09T00:31:11.616Z",
       "todayPoints": 0
     },
     {
@@ -10050,7 +10051,7 @@
       "otLosses": 8,
       "savePct": 0,
       "points": 56,
-      "lastUpdated": "2026-09-06T01:28:43.227Z",
+      "lastUpdated": "2026-09-09T00:31:13.819Z",
       "todayPoints": 0
     },
     {
@@ -10069,7 +10070,7 @@
       "otLosses": 3,
       "savePct": 0,
       "points": 25,
-      "lastUpdated": "2026-09-06T01:28:43.210Z",
+      "lastUpdated": "2026-09-09T00:31:13.839Z",
       "todayPoints": 0
     },
     {
@@ -10088,7 +10089,7 @@
       "otLosses": 5,
       "savePct": 0,
       "points": 33,
-      "lastUpdated": "2026-09-06T01:28:43.233Z",
+      "lastUpdated": "2026-09-09T00:31:13.869Z",
       "todayPoints": 0
     },
     {
@@ -10107,7 +10108,7 @@
       "otLosses": 3,
       "savePct": 0,
       "points": 23,
-      "lastUpdated": "2026-09-06T01:28:45.434Z",
+      "lastUpdated": "2026-09-09T00:31:16.060Z",
       "todayPoints": 0
     },
     {
@@ -10126,7 +10127,7 @@
       "otLosses": 6,
       "savePct": 0,
       "points": 41,
-      "lastUpdated": "2026-09-06T01:28:45.454Z",
+      "lastUpdated": "2026-09-09T00:31:16.068Z",
       "todayPoints": 0
     },
     {
@@ -10145,7 +10146,7 @@
       "otLosses": 1,
       "savePct": 0,
       "points": 22,
-      "lastUpdated": "2026-09-06T01:28:45.408Z",
+      "lastUpdated": "2026-09-09T00:31:16.081Z",
       "todayPoints": 0
     },
     {
@@ -10164,7 +10165,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:28:47.745Z",
+      "lastUpdated": "2026-09-09T00:31:18.320Z",
       "todayPoints": 0
     },
     {
@@ -10183,7 +10184,7 @@
       "otLosses": 4,
       "savePct": 0,
       "points": 30,
-      "lastUpdated": "2026-09-06T01:28:47.641Z",
+      "lastUpdated": "2026-09-09T00:31:18.500Z",
       "todayPoints": 0
     },
     {
@@ -10202,7 +10203,7 @@
       "otLosses": 6,
       "savePct": 0,
       "points": 30,
-      "lastUpdated": "2026-09-06T01:28:47.650Z",
+      "lastUpdated": "2026-09-09T00:31:18.273Z",
       "todayPoints": 0
     },
     {
@@ -10221,7 +10222,7 @@
       "otLosses": 5,
       "savePct": 0,
       "points": 37,
-      "lastUpdated": "2026-09-06T01:28:49.920Z",
+      "lastUpdated": "2026-09-09T00:31:20.726Z",
       "todayPoints": 0
     },
     {
@@ -10240,7 +10241,7 @@
       "otLosses": 6,
       "savePct": 0,
       "points": 48,
-      "lastUpdated": "2026-09-06T01:28:49.950Z",
+      "lastUpdated": "2026-09-09T00:31:20.730Z",
       "todayPoints": 0
     },
     {
@@ -10259,7 +10260,7 @@
       "otLosses": 2,
       "savePct": 0,
       "points": 25,
-      "lastUpdated": "2026-09-06T01:28:49.937Z",
+      "lastUpdated": "2026-09-09T00:31:20.699Z",
       "todayPoints": 0
     },
     {
@@ -10278,7 +10279,7 @@
       "otLosses": 5,
       "savePct": 0,
       "points": 27,
-      "lastUpdated": "2026-09-06T01:28:52.140Z",
+      "lastUpdated": "2026-09-09T00:31:22.987Z",
       "todayPoints": 0
     },
     {
@@ -10297,7 +10298,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:28:52.124Z",
+      "lastUpdated": "2026-09-09T00:31:22.945Z",
       "todayPoints": 0
     },
     {
@@ -10316,7 +10317,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:28:52.207Z",
+      "lastUpdated": "2026-09-09T00:31:22.965Z",
       "todayPoints": 0
     },
     {
@@ -10335,7 +10336,7 @@
       "otLosses": 2,
       "savePct": 0,
       "points": 9,
-      "lastUpdated": "2026-09-06T01:28:54.384Z",
+      "lastUpdated": "2026-09-09T00:31:25.373Z",
       "todayPoints": 0
     },
     {
@@ -10354,7 +10355,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:28:54.392Z",
+      "lastUpdated": "2026-09-09T00:31:25.467Z",
       "todayPoints": 0
     },
     {
@@ -10373,7 +10374,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:28:54.406Z",
+      "lastUpdated": "2026-09-09T00:31:25.185Z",
       "todayPoints": 0
     },
     {
@@ -10392,7 +10393,7 @@
       "otLosses": 0,
       "savePct": 0,
       "points": 0,
-      "lastUpdated": "2026-09-06T01:28:56.483Z",
+      "lastUpdated": "2026-09-09T00:31:27.684Z",
       "todayPoints": 0
     }
   ]

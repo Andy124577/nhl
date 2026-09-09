@@ -18,14 +18,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <!-- Accueil dashboard ("éditorial calme") uniquement : voir accueil-dash.css -->
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Accueil mobile (≤768px, 4 modes) uniquement : voir accueil-mobile.css -->
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css">
     <link rel="stylesheet" href="poolNav.css">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="accueil.css">
-    <link rel="stylesheet" href="accueil-dash.css?v=20260905a">
+    <link rel="stylesheet" href="accueil-dash.css?v=20260908a">
     <link rel="stylesheet" href="accueil-mobile.css?v=20260905a">
     <link rel="stylesheet" href="demos.css">
     <link rel="stylesheet" href="skeleton-loader.css">
@@ -347,15 +347,27 @@
                  Masqué dès que la saison régulière est commencée (voir
                  renderOffseasonPanel). -->
             <div class="fz-dash-offseason" id="fzDashOffseason" style="display:none;">
-                <span class="fzd-eyebrow">Hors-saison</span>
-                <div class="fzd-off-count">
-                    <span class="fzd-off-days fzd-display" id="fzdOffDays">—</span>
-                    <span class="fzd-off-sub" id="fzdOffSub"></span>
+                <div class="fzd-off-summary">
+                    <section class="fzd-off-count" aria-labelledby="fzdOffTitle">
+                        <h2 class="fzd-section-title" id="fzdOffTitle"><span data-icon="clock" aria-hidden="true"></span>Hors-saison</h2>
+                        <span class="fzd-off-days fzd-display" id="fzdOffDays">—</span>
+                        <span class="fzd-off-sub" id="fzdOffSub"></span>
+                        <img class="fzd-off-emblem" src="https://assets.nhle.com/logos/nhl/svg/NHL_dark.svg" alt="" aria-hidden="true" onerror="this.style.display='none'">
+                    </section>
+                    <section class="fzd-off-position" aria-labelledby="fzdPositionTitle">
+                        <div class="fzd-off-head">
+                            <h2 class="fzd-section-title" id="fzdPositionTitle"><span data-icon="trophy" aria-hidden="true"></span>Ma position</h2>
+                            <a class="fzd-position-link" id="fzdPositionLink" href="mes-pools.html">Voir le classement →</a>
+                        </div>
+                        <div class="fzd-position-value fzd-display" id="fzdPositionValue">— / —</div>
+                        <span class="fzd-off-sub" id="fzdPositionSub">Classement général</span>
+                        <div class="fzd-position-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                    </section>
                 </div>
 
                 <div class="fzd-off-section fzd-off-carousel">
                     <div class="fzd-off-head">
-                        <span class="fzd-section-title">Mouvements récents</span>
+                        <h2 class="fzd-section-title"><span data-icon="swap" aria-hidden="true"></span>Mouvements récents</h2>
                         <div class="fzd-off-nav">
                             <button type="button" class="fzd-off-nav-btn" id="fzdOffPrev" aria-label="Mouvements précédents">‹</button>
                             <button type="button" class="fzd-off-nav-btn" id="fzdOffNext" aria-label="Mouvements suivants">›</button>
@@ -366,8 +378,7 @@
                     <div class="fzd-off-dots" id="fzdOffDots"><!-- Filled by accueil-dash.js --></div>
                 </div>
 
-                <div class="fzd-off-section">
-                    <span class="fzd-section-title">À surveiller</span>
+                <div class="fzd-off-section fzd-off-watch-section">
                     <div class="fzd-off-watchlist" id="fzdOffWatchlist"><!-- Filled by accueil-dash.js --></div>
                 </div>
             </div>
@@ -547,7 +558,7 @@
     <script src="lib/season.js"></script>
     <script defer src="lib/scoring.js"></script>
     <script defer src="accueil.js"></script>
-    <script defer src="accueil-dash.js?v=20260905b"></script>
+    <script defer src="accueil-dash.js?v=20260908a"></script>
     <script defer src="instantDraft.js"></script>
     <script defer src="accueil-mobile.js?v=20260905a"></script>
     <script defer src="demos.js"></script>

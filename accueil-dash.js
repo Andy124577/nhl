@@ -1791,11 +1791,28 @@ function renderOffseasonPanel() {
     document.getElementById('fzdOffDays').textContent = `${days} j`;
     document.getElementById('fzdOffSub').textContent = beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison';
 
+    renderOffseasonPosition();
     renderOffseasonWatchlist();
     if (!offseasonNewsLoaded) {
         offseasonNewsLoaded = true;
         loadOffseasonTransactions();
     }
+}
+
+function renderOffseasonPosition() {
+    const value = document.getElementById('fzdPositionValue');
+    const link = document.getElementById('fzdPositionLink');
+    if (!value || !link) return;
+    const name = FZPool.get();
+    const pool = FZPool.data();
+    const ready = name && pool && FZPool.draftState(pool).etat === 'termine';
+    const scores = ready ? buildTeamScores({ allTeams: pool.teams }).filter(t => t.memberCount > 0) : [];
+    const index = scores.findIndex(t => t.isCurrentUser);
+    const started = calData?.regularSeasonStartDate && todayISO() >= calData.regularSeasonStartDate;
+    value.textContent = started && index >= 0 ? `${index + 1} / ${scores.length}` : '— / —';
+    link.href = ready ? `classement.html?pool=${encodeURIComponent(name)}` : 'mes-pools.html';
+    link.textContent = ready ? 'Voir le classement →' : 'Voir mes pools →';
+    document.getElementById('fzdPositionSub').textContent = 'Classement général';
 }
 
 // Mouvements réels déduits des alignements officiels côté serveur
@@ -1874,7 +1891,7 @@ function renderOffseasonFilters() {
     if (!bar || !offseasonLeague) return;
     bar.innerHTML = OFFSEASON_TABS.map(k => {
         const n = offseasonLeague.counts[k] || 0;
-        return `<button type="button" class="fzd-off-filter${k === offseasonTab ? ' is-active' : ''}" data-tab="${k}">`
+        return `<button type="button" class="fzd-off-filter${k === offseasonTab ? ' is-active' : ''}" data-tab="${k}" aria-pressed="${k === offseasonTab}">`
             + `${OFFSEASON_TAB_LABELS[k]}<span class="fzd-off-filter-count">${n}</span></button>`;
     }).join('');
     bar.querySelectorAll('.fzd-off-filter').forEach(btn => {
@@ -1896,13 +1913,9 @@ function bindOffseasonCarousel() {
     const next = document.getElementById('fzdOffNext');
     if (!track) return;
 
-    const step = () => {
-        const card = track.querySelector('.fzd-off-card');
-        // Un cran = une carte (gap compris) ; repli sur ~90 % de la fenêtre.
-        return card ? card.getBoundingClientRect().width + 12 : track.clientWidth * 0.9;
-    };
-    prev?.addEventListener('click', () => track.scrollBy({ left: -step(), behavior: 'smooth' }));
-    next?.addEventListener('click', () => track.scrollBy({ left: step(), behavior: 'smooth' }));
+    const step = () => offseasonPageMetrics(track).step;
+    prev?.addEventListener('click', () => track.scrollBy({ left: -step(), behavior: offseasonScrollBehavior() }));
+    next?.addEventListener('click', () => track.scrollBy({ left: step(), behavior: offseasonScrollBehavior() }));
 
     let raf = 0;
     track.addEventListener('scroll', () => {
@@ -1937,22 +1950,38 @@ function renderOffseasonLeague() {
 
 // Points de progression — un par « page » de défilement (largeur de piste),
 // pas un par carte : une centaine de blessés donnerait une centaine de points.
+function offseasonScrollBehavior() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
+}
+
+function offseasonPageMetrics(track) {
+    const card = track.querySelector('.fzd-off-card');
+    if (!card || !track.clientWidth || track.classList.contains('is-empty')) return { pages: 0, step: 1 };
+    const gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+    const cardStep = card.getBoundingClientRect().width + gap;
+    const perPage = Math.max(1, Math.round((track.clientWidth + gap) / cardStep));
+    return { pages: Math.ceil(track.children.length / perPage), step: perPage * cardStep };
+}
+
 function renderOffseasonDots() {
     const track = document.getElementById('fzdOffTransactions');
     const dots = document.getElementById('fzdOffDots');
     if (!track || !dots) return;
 
-    const pages = track.classList.contains('is-empty')
-        ? 0
-        : Math.max(1, Math.round(track.scrollWidth / track.clientWidth));
+    const { pages, step } = offseasonPageMetrics(track);
     if (pages < 2) { dots.innerHTML = ''; updateOffseasonCarousel(); return; }
-    dots.innerHTML = Array.from({ length: pages }, (_, i) =>
-        `<button type="button" class="fzd-off-dot" data-page="${i}" aria-label="Page ${i + 1}"></button>`).join('');
+    dots.innerHTML = `<button type="button" class="fzd-off-page-arrow" data-direction="-1" aria-label="Page précédente">‹</button>`
+        + Array.from({ length: pages }, (_, i) =>
+            `<button type="button" class="fzd-off-dot" data-page="${i}" aria-label="Page ${i + 1} sur ${pages}"></button>`).join('')
+        + `<button type="button" class="fzd-off-page-arrow" data-direction="1" aria-label="Page suivante">›</button>`;
     dots.querySelectorAll('.fzd-off-dot').forEach(dot => {
         dot.addEventListener('click', () => {
-            track.scrollTo({ left: dot.dataset.page * track.clientWidth, behavior: 'smooth' });
+            track.scrollTo({ left: dot.dataset.page * step, behavior: offseasonScrollBehavior() });
         });
     });
+    dots.querySelectorAll('[data-direction]').forEach(button => button.addEventListener('click', () => {
+        track.scrollBy({ left: Number(button.dataset.direction) * step, behavior: offseasonScrollBehavior() });
+    }));
     updateOffseasonCarousel();
 }
 
@@ -1969,8 +1998,16 @@ function updateOffseasonCarousel() {
     if (next) next.disabled = track.scrollLeft >= max;
 
     if (dots && dots.children.length) {
-        const active = Math.round(track.scrollLeft / track.clientWidth);
-        [...dots.children].forEach((d, i) => d.classList.toggle('is-active', i === active));
+        const { pages, step } = offseasonPageMetrics(track);
+        const active = track.scrollLeft >= max ? pages - 1 : Math.round(track.scrollLeft / step);
+        const start = Math.max(0, Math.min(active - 2, pages - 5));
+        dots.querySelectorAll('.fzd-off-dot').forEach((d, i) => {
+            d.classList.toggle('is-active', i === active);
+            d.setAttribute('aria-current', i === active ? 'page' : 'false');
+            d.hidden = i < start || i >= start + 5;
+        });
+        dots.querySelector('[data-direction="-1"]').disabled = track.scrollLeft <= 0;
+        dots.querySelector('[data-direction="1"]').disabled = track.scrollLeft >= max;
     }
 }
 
@@ -2052,10 +2089,12 @@ function offSigningCardHTML(t) {
                 <span class="fzd-off-tag is-signing">Signature</span>
                 <span class="fzd-off-card-date">${dayLabelFr(t.date)}</span>
             </div>
-            <div class="fzd-off-card-name fzd-display">${escapeHTML(t.playerName)}</div>
-            <div class="fzd-off-card-club">
-                ${teamLogoImg(t.toTeam || '')}
-                <span>${escapeHTML(club)}</span>
+            <div class="fzd-off-player">
+                ${offPlayerFaceHTML(t.playerName, t.toTeam, t.playerId)}
+                <div class="fzd-off-player-info">
+                    <div class="fzd-off-card-name fzd-display">${escapeHTML(t.playerName)}</div>
+                    <div class="fzd-off-card-club">${escapeHTML(club)}</div>
+                </div>
             </div>
         </article>`;
 }
@@ -2070,10 +2109,12 @@ function offInjuryCardHTML(i) {
                 <span class="fzd-off-tag is-injury">Blessé</span>
                 <span class="fzd-off-card-date">${dayLabelFr(i.since)}</span>
             </div>
-            <div class="fzd-off-card-name fzd-display">${escapeHTML(i.playerName)}</div>
-            <div class="fzd-off-card-club">
-                ${teamLogoImg(i.team || '')}
-                <span>${escapeHTML(club)}</span>
+            <div class="fzd-off-player">
+                ${offPlayerFaceHTML(i.playerName, i.team, i.playerId, i.headshot)}
+                <div class="fzd-off-player-info">
+                    <div class="fzd-off-card-name fzd-display">${escapeHTML(i.playerName)}</div>
+                    <div class="fzd-off-card-club">${escapeHTML(club)}</div>
+                </div>
             </div>
             <div class="fzd-off-card-stats">
                 <div class="fzd-off-stat">
@@ -2103,13 +2144,49 @@ function offseasonEmptyText() {
    jusqu'à trois — donc le panneau la fait défiler plutôt que de s'étirer,
    et un filtre par équipe permet d'aller droit au club voulu. */
 let offWatchTeam = 'all';
+let offWatchExpanded = false;
+const offWatchFavorites = new Map();
+let offWatchFavoritesUser = null;
+
+function offPlayerFaceHTML(name, team, playerId, headshot) {
+    const stats = getPlayerStats(name);
+    const id = playerId || stats?.playerId;
+    const season = typeof currentSeasonString === 'function' ? currentSeasonString() : null;
+    const fallback = id && season && team
+        ? `https://assets.nhle.com/mugs/nhl/${season}/${encodeURIComponent(team)}/${encodeURIComponent(id)}.png`
+        : id ? `https://assets.web.nhl.com/mugs/nhl/latest/${encodeURIComponent(id)}.png` : '';
+    const src = headshot || fzdHeadshotByName(name) || fallback;
+    return `<span class="fzd-off-face">${escapeHTML((name || '?').charAt(0))}${src
+        ? `<img src="${escapeHTML(src)}" alt="" loading="lazy" onerror="this.remove()">`
+        : team ? `<img src="teams/${escapeHTML(team)}.png" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
+}
+
+function offWatchStorageKey() {
+    return `fz-watch-favorites:${userData.username || 'guest'}`;
+}
+
+function loadOffWatchFavorites() {
+    const key = offWatchStorageKey();
+    if (offWatchFavoritesUser === key) return;
+    offWatchFavoritesUser = key;
+    offWatchFavorites.clear();
+    try {
+        const saved = JSON.parse(localStorage.getItem(key) || '[]');
+        if (Array.isArray(saved)) saved.forEach(entry => {
+            if (Array.isArray(entry) && typeof entry[0] === 'string' && typeof entry[1] === 'string') {
+                offWatchFavorites.set(entry[0], entry[1]);
+            }
+        });
+    } catch (_) { /* Favorites remain available in memory if storage is unavailable. */ }
+}
 
 function renderOffseasonWatchlist() {
     const wrap = document.getElementById('fzdOffWatchlist');
     if (!wrap) return;
+    loadOffWatchFavorites();
 
     if (!OFFSEASON_WATCHLIST.length) {
-        wrap.innerHTML = `<p class="fzd-off-empty">Liste à venir.</p>`;
+        wrap.innerHTML = `<div class="fzd-watch-head"><h2 class="fzd-section-title">${getIcon('star')} À surveiller</h2></div><p class="fzd-off-empty">Liste à venir.</p>`;
         return;
     }
 
@@ -2123,26 +2200,57 @@ function renderOffseasonWatchlist() {
         .map(t => `<option value="${escapeHTML(t)}"${t === offWatchTeam ? ' selected' : ''}>${t === 'all' ? `Toutes les équipes (${OFFSEASON_WATCHLIST.length})` : escapeHTML(t)}</option>`)
         .join('');
 
+    const visible = offWatchExpanded ? shown : shown.slice(0, 3);
     wrap.innerHTML = `
         <div class="fzd-watch-head">
-            <span class="fzd-watch-count">${shown.length} joueur${shown.length > 1 ? 's' : ''}</span>
+            <div><h2 class="fzd-section-title"><span class="fzd-watch-icon" aria-hidden="true">${getIcon('star')}</span>À surveiller</h2>
+            <span class="fzd-watch-count">${shown.length} joueur${shown.length > 1 ? 's' : ''}</span></div>
             <select class="fzd-watch-filter" id="fzdWatchFilter" aria-label="Filtrer par équipe">${options}</select>
         </div>
-        <div class="fzd-watch-list">
-            ${shown.map(p => `
-                <div class="fzd-watch-row">
-                    <img class="fzd-watch-logo" src="teams/${escapeHTML(p.team)}.png" alt="" loading="lazy"
-                         onerror="this.remove()">
-                    <span class="fzd-watch-name">${escapeHTML(p.name)}</span>
-                    <span class="fzd-watch-team">${escapeHTML(p.team)}${p.position ? ' · ' + escapeHTML(p.position) : ''}</span>
-                    ${p.note ? `<span class="fzd-watch-note">${escapeHTML(p.note)}</span>` : ''}
-                </div>`).join('')}
-        </div>`;
+        <div class="fzd-watch-list" id="fzdWatchTable" tabindex="0" role="region" aria-label="Joueurs à surveiller">
+            <table class="fzd-watch-table">
+                <thead><tr><th scope="col">Joueur</th><th scope="col">Équipe</th><th scope="col">Position</th><th scope="col">Statut</th><th scope="col">Notes</th><th scope="col">Ajouté le</th><th scope="col"><span class="fzd-sr-only">Favori</span></th></tr></thead>
+                <tbody>${visible.map(p => {
+                    const key = p.name;
+                    const saved = offWatchFavorites.has(key);
+                    const added = offWatchFavorites.get(key) || p.addedAt;
+                    return `<tr>
+                        <td><span class="fzd-watch-player">${offPlayerFaceHTML(p.name, p.team, p.playerId)}<span class="fzd-watch-name">${escapeHTML(p.name)}</span></span></td>
+                        <td>${escapeHTML(p.team)}</td><td class="fzd-watch-position">${escapeHTML(p.position || '—')}</td>
+                        <td><span class="fzd-watch-status"><span aria-hidden="true">${getIcon('eye', 10)}</span>À surveiller</span></td>
+                        <td>${p.note ? `<details class="fzd-watch-note"><summary>Surveillance</summary><p>${escapeHTML(p.note)}</p></details>` : '—'}</td>
+                        <td>${added ? escapeHTML(dayLabelFr(added)) : '<span title="Date d’ajout non disponible">—</span>'}</td>
+                        <td><button type="button" class="fzd-watch-save" data-player="${escapeHTML(key)}" aria-pressed="${saved}" aria-label="${saved ? 'Retirer' : 'Ajouter'} ${escapeHTML(p.name)} ${saved ? 'des' : 'aux'} favoris">${getIcon('star', 17)}</button></td>
+                    </tr>`;
+                }).join('')}</tbody>
+            </table>
+        </div>
+        ${shown.length > 3 ? `<button type="button" class="fzd-watch-more" id="fzdWatchMore" aria-expanded="${offWatchExpanded}" aria-controls="fzdWatchTable">${offWatchExpanded ? 'Réduire la liste ↑' : 'Voir tous les joueurs à surveiller →'}</button>` : ''}`;
 
     document.getElementById('fzdWatchFilter')?.addEventListener('change', e => {
         offWatchTeam = e.target.value;
+        offWatchExpanded = false;
         renderOffseasonWatchlist();
+        document.getElementById('fzdWatchFilter')?.focus();
     });
+    document.getElementById('fzdWatchMore')?.addEventListener('click', () => {
+        offWatchExpanded = !offWatchExpanded;
+        renderOffseasonWatchlist();
+        document.getElementById('fzdWatchMore')?.focus({ preventScroll: true });
+    });
+    wrap.querySelectorAll('.fzd-watch-save').forEach(button => button.addEventListener('click', () => {
+        const key = button.dataset.player;
+        if (offWatchFavorites.has(key)) offWatchFavorites.delete(key);
+        else offWatchFavorites.set(key, new Date().toISOString());
+        try { localStorage.setItem(offWatchStorageKey(), JSON.stringify([...offWatchFavorites])); } catch (_) { /* Memory fallback. */ }
+        const scrollTop = document.getElementById('fzdWatchTable').scrollTop;
+        const scrollLeft = document.getElementById('fzdWatchTable').scrollLeft;
+        renderOffseasonWatchlist();
+        const table = document.getElementById('fzdWatchTable');
+        table.scrollTop = scrollTop;
+        table.scrollLeft = scrollLeft;
+        [...wrap.querySelectorAll('.fzd-watch-save')].find(b => b.dataset.player === key)?.focus({ preventScroll: true });
+    }));
 }
 
 // ============================================================
