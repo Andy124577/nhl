@@ -265,13 +265,11 @@ html[data-theme="dark"] .fz-mobile-home {
 }
 .fzm-league-dot.is-active { width: 16px; background: var(--fzm-red); }
 
-/* Échange regroupé — un club à gauche, un à droite, ce que chacun reçoit
-   dessous, dans la carte du carrousel. Même disposition qu'au bureau
-   (.fzd-off-deal-*) : le club est ici son abréviation d'office, deux noms
-   complets ne tenant pas côte à côte, et le logo à côté porte l'identité. */
-.fzm-deal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+/* Un club par rangée : le logo et l'abréviation gardent assez de place
+   à côté d'« Acquiert », même dans les petites cartes du téléphone. */
+.fzm-deal-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
 .fzm-deal-col { min-width: 0; }
-.fzm-deal-col + .fzm-deal-col { padding-left: 12px; border-left: 1px solid var(--fzm-border); }
+.fzm-deal-col + .fzm-deal-col { padding-top: 12px; border-top: 1px solid var(--fzm-border); }
 .fzm-deal-head {
     display: flex; align-items: center; justify-content: space-between; gap: 8px;
     padding-bottom: 6px; margin-bottom: 7px;
@@ -442,7 +440,7 @@ html[data-theme="dark"] .fz-mobile-home {
     .fz-mobile-home .fzd-day-chip { background: var(--fzm-surface); border-color: var(--fzm-border); padding: 7px 1px; }
     .fz-mobile-home .fzd-day-chip.is-selected { border: 2px solid var(--fzm-red); background: var(--fzm-red-soft); }
     .fz-mobile-home .fzd-day-chip.is-selected .fzd-day-chip-num { color: var(--fzm-red); }
-    .fz-mobile-home .fzd-day-chip-count { display: none; }
+    .fz-mobile-home .fzd-day-chip-count { display: flex; order: 2; justify-content: center; gap: 3px; min-height: 12px; font-size: 10px; color: var(--fzm-ink-soft); }
     .fz-mobile-home .fzd-day-chip-month { display: block; font: 500 8px/1 'Archivo', sans-serif; text-transform: uppercase; color: var(--fzm-ink-soft); }
     .fz-mobile-home .fzd-cal-dayname { font: 700 13px/1.2 'Archivo', sans-serif; }
     .fz-mobile-home .fzd-cal-dayhead { padding: 6px 0; }

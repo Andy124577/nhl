@@ -226,9 +226,8 @@ function renderDayStrip() {
         const live = games.filter(g => g.state === 'LIVE' || g.state === 'CRIT').length;
         // Le mot est dans un <span> à part : au téléphone la case ne fait
         // qu'un septième d'écran, la CSS n'y garde que le chiffre.
-        const count = live
-            ? `<span class="fzd-day-chip-count is-live"><i class="fzd-live-dot"></i><span class="fzd-count-n">${live}</span><span class="fzd-count-w"> en direct</span></span>`
-            : `<span class="fzd-day-chip-count"><span class="fzd-count-n">${games.length}</span><span class="fzd-count-w"> match${games.length > 1 ? 's' : ''}</span></span>`;
+        const countLabel = `${games.length} match${games.length > 1 ? 's' : ''}${live ? `, dont ${live} en direct` : ''}`;
+        const count = `<span class="fzd-day-chip-count${live ? ' is-live' : ''}" title="${countLabel}">${live ? '<i class="fzd-live-dot" aria-hidden="true"></i>' : ''}<span class="fzd-count-n">${games.length}</span><span class="fzd-count-w"> match${games.length > 1 ? 's' : ''}</span></span>`;
         return `
             <button type="button" class="fzd-day-chip${isToday ? ' is-today' : ''}${isSelected ? ' is-selected' : ''}" data-date="${d.date}" aria-pressed="${isSelected}">
                 <span class="fzd-day-chip-top">
