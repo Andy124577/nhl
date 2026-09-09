@@ -307,6 +307,9 @@ html[data-theme="dark"] .fz-mobile-home {
     color: var(--fzm-ink); text-decoration: none;
 }
 .fzm-poolchip.is-primary { background: var(--fzm-solid); border-color: var(--fzm-solid); color: var(--fzm-on-solid); }
+/* « Mes pools » n'est plus un lien : il ouvre le tiroir des pools sur place.
+   Un <button> arrive avec la police et l'alignement du système. */
+button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left; cursor: pointer; }
 
 /* Pied de page */
 .fzm-footer-links { display: flex; justify-content: center; align-items: center; gap: 14px; padding: 6px 0 16px; flex-wrap: wrap; }

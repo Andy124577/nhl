@@ -1303,6 +1303,18 @@ button.fzd-poolchip:disabled { cursor: progress; opacity: .6; }
 .fzd-pool-rank-num { font: 600 27px/1 'Oswald', sans-serif; color: var(--fzd-ink); }
 .fzd-pool-rank-total { font: 400 13px/1 'Oswald', sans-serif; color: var(--fzd-text-fainter); }
 .fzd-mypools-more { display: block; padding-top: 14px; }
+/* Ce lien ouvre le tiroir des pools plutôt qu'une page : c'est un <button>,
+   que `.fz-dash a` ne teinte donc pas et dont il faut retirer le fond, la
+   bordure et la police natifs. Vide (aucun pool), il ne doit rien occuper. */
+button.fzd-mypools-more {
+    width: 100%;
+    padding-left: 0; padding-right: 0; padding-bottom: 0;
+    background: none; border: 0;
+    text-align: left; cursor: pointer;
+    color: var(--fzd-accent);
+}
+button.fzd-mypools-more:hover { color: var(--fzd-accent-dark); }
+button.fzd-mypools-more:empty { display: none; }
 
 /* ---- Activité de la ligue ---- */
 .fzd-activity-title { margin-bottom: 4px; }

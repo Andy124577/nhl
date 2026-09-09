@@ -233,7 +233,7 @@ function fzmPlayersRow(tonight, rosterNames) {
 
     return `
         <div class="fzm-section" id="fzmPlayers">
-            <div class="fzm-section-head"><h2 class="fzm-section-title">Mes joueurs ce soir</h2><a class="fzm-see-all" href="mes-pools.html">Mes joueurs ›</a></div>
+            <div class="fzm-section-head"><h2 class="fzm-section-title">Mes joueurs ce soir</h2><button type="button" class="fzm-see-all" data-fz-reglages="equipes">Mes joueurs ›</button></div>
             <div class="fzm-scroll-row">
                 ${tiles.map(fzmPlayerTile).join('')}
             </div>
@@ -635,7 +635,7 @@ async function fzmLoadNews() {
 function fzmPoolChips() {
     return `
         <div class="fzm-poolchips">
-            <a class="fzm-poolchip" href="mes-pools.html"><img src="Icons/grayGroup.png" alt=""><span>Mes pools</span><b aria-hidden="true">›</b></a>
+            <button type="button" class="fzm-poolchip" data-fz-pools><img src="Icons/grayGroup.png" alt=""><span>Mes pools</span><b aria-hidden="true">›</b></button>
             <a class="fzm-poolchip" href="creer-pool.html"><span class="fzm-poolchip-plus" aria-hidden="true">+</span><span>Créer un pool</span><b aria-hidden="true">›</b></a>
             <a class="fzm-poolchip" href="rejoindre-pool.html"><img src="Icons/grayGroup.png" alt=""><span>Rejoindre un pool</span><b aria-hidden="true">›</b></a>
         </div>`;

@@ -113,7 +113,7 @@
                     <p class="rp-progress-lbl">${etat.inscrits} / ${etat.max} participants</p>
                     ${rendreInscrits(pool, etat)}
                     <div class="rp-actions">
-                        <a class="rp-btn secondary" href="mes-pools.html">Gérer mon équipe</a>
+                        <button type="button" class="rp-btn secondary" data-fz-reglages="equipes">Gérer mon équipe</button>
                         ${instantane
                             ? '<button type="button" class="rp-btn secondary rp-quitter" id="rpQuitter">Quitter la file</button>'
                             : ''}

@@ -338,6 +338,8 @@ async function createClan() {
                 const formData = new FormData();
                 formData.append('image', poolImageInput.files[0]);
                 formData.append('poolName', clanName);
+                // Le serveur n'accepte l'image que du créateur du pool.
+                formData.append('username', username);
                 try {
                     await fetch(`${BASE_URL}/upload/pool-image`, { method: 'POST', body: formData });
                 } catch (e) {
@@ -368,7 +370,10 @@ async function createClan() {
             // suivante le lise dès sa première ligne.
             localStorage.setItem("activePool", clanName);
             localStorage.setItem("draftClan", clanName);
-            window.location.href = "mes-pools.html";
+            // Le pool vient de naître : ce qui l'attend, c'est de se remplir
+            // puis de repêcher. Ses réglages sont à un engrenage de là, dans
+            // le rail (poolNav.js), sur toutes les pages.
+            window.location.href = "repechage.html";
         } else {
             const error = await response.json();
             alert(`Erreur lors de la création du pool: ${error.message || 'Erreur inconnue'}`);
@@ -396,8 +401,8 @@ function estPoolInstantane(nom, clan) {
 // 🔄 Met à jour la liste des pools ouverts
 //
 // Les pools dont on est déjà membre ne figurent plus ici : ils sont gérés
-// par mes-pools.html, qui en montre bien plus que ce qu'une ligne de liste
-// permettait. Ne reste que ce qu'on peut rejoindre.
+// par le rail et le panneau de réglages, qui en montrent bien plus que ce
+// qu'une ligne de liste permettait. Ne reste que ce qu'on peut rejoindre.
 //
 // Les pools de repêchage instantané en sont exclus : ce sont des files
 // d'attente, pas des ligues qu'on choisit. Les y laisser ouvrirait une

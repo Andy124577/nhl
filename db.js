@@ -276,6 +276,70 @@ async function deletePool(poolName) {
     return result.rowCount > 0;
 }
 
+/**
+ * Renomme un pool partout ou son nom sert de cle.
+ *
+ * Le nom du pool n'est pas qu'une etiquette : c'est la cle primaire de la
+ * table `pools` et la cle etrangere de tout ce qui s'y rattache — echanges,
+ * annonces d'echange, releves de classement quotidiens. Le renommer d'un
+ * seul cote laisserait ces lignes orphelines : les echanges disparaitraient
+ * de la page Echanges et le mouvement de rang de l'accueil repartirait de
+ * zero. Les cinq mises a jour tiennent donc dans une seule transaction.
+ *
+ * `trade_data.draftName` porte une deuxieme copie du nom, lue par
+ * /trades/:draftName et par la page d'echange : la colonne seule ne suffit
+ * pas.
+ */
+async function renamePool(oldName, newName) {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        const existant = await client.query(
+            'SELECT 1 FROM pools WHERE pool_name = $1',
+            [newName]
+        );
+        if (existant.rowCount > 0) {
+            await client.query('ROLLBACK');
+            return { ok: false, raison: 'existe' };
+        }
+
+        const renomme = await client.query(
+            'UPDATE pools SET pool_name = $1, updated_at = CURRENT_TIMESTAMP WHERE pool_name = $2 RETURNING pool_name',
+            [newName, oldName]
+        );
+        if (renomme.rowCount === 0) {
+            await client.query('ROLLBACK');
+            return { ok: false, raison: 'introuvable' };
+        }
+
+        await client.query(
+            `UPDATE trades
+                SET pool_name = $1,
+                    trade_data = jsonb_set(trade_data, '{draftName}', to_jsonb($1::text), true),
+                    updated_at = CURRENT_TIMESTAMP
+              WHERE pool_name = $2`,
+            [newName, oldName]
+        );
+        await client.query(
+            'UPDATE trade_listings SET pool_name = $1 WHERE pool_name = $2',
+            [newName, oldName]
+        );
+        await client.query(
+            'UPDATE pool_rank_snapshots SET pool_name = $1 WHERE pool_name = $2',
+            [newName, oldName]
+        );
+
+        await client.query('COMMIT');
+        return { ok: true };
+    } catch (error) {
+        try { await client.query('ROLLBACK'); } catch { /* la transaction est deja perdue */ }
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
 // =============================================
 // TRADE OPERATIONS
 // =============================================
@@ -498,6 +562,7 @@ module.exports = {
     getPoolByName,
     createOrUpdatePool,
     deletePool,
+    renamePool,
     withAdvisoryLock,
     // Trades
     getAllTrades,

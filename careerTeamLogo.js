@@ -23,9 +23,9 @@
     function cheminLogo(nomEquipe) {
         if (!nomEquipe || nomEquipe === '-') return null;
         // getTeamAbbreviation est défini par index.js comme par draftActif.js.
-        if (typeof getTeamAbbreviation !== 'function') return null;
         try {
-            const abbr = getTeamAbbreviation(nomEquipe);
+            const abbr = (typeof fzCareerTeamCode === 'function' && fzCareerTeamCode(nomEquipe))
+                || (typeof getTeamAbbreviation === 'function' && getTeamAbbreviation(nomEquipe));
             return abbr ? 'teams/' + abbr + '.png' : null;
         } catch (e) {
             return null;
@@ -47,13 +47,12 @@
         const chemin = cheminLogo(nom);
         cellule.textContent = '';
 
-        // Nom en clair : seul contenu quand aucun logo n'est disponible.
-        // Affiché d'emblée, puis retiré si le logo se charge — la colonne
-        // est étroite et « Edmonton Oilers » s'y trouvait tronqué, alors que
-        // le logo suffit à identifier l'équipe.
+        // Abbreviation beside NHL crests; full name for other leagues.
         const texte = document.createElement('span');
         texte.className = 'career-team-name';
-        texte.textContent = nom;
+        const abbr = chemin && chemin.match(/teams\/([A-Z]{3})\.png$/);
+        texte.textContent = abbr ? abbr[1] : nom;
+        texte.title = nom;
         cellule.appendChild(texte);
 
         if (!chemin) return;
@@ -63,7 +62,6 @@
         logo.src = chemin;
         logo.alt = nom;
         logo.title = nom;          // le nom reste accessible au survol
-        logo.addEventListener('load', () => texte.remove());
         // Ligue junior ou universitaire sans logo : l'image disparaît et le
         // nom reste.
         logo.addEventListener('error', () => logo.remove());

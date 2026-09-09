@@ -58,6 +58,35 @@
 
 .fz-pool-block { position: relative; margin-bottom: 26px; }
 
+/* Le sélecteur et ses deux outils tiennent sur une ligne. Le sélecteur
+   prend la place restante ; l'engrenage et le crayon gardent la leur. */
+.fz-pool-row { display: flex; align-items: stretch; gap: 6px; }
+.fz-pool-row .fz-active-pool { flex: 1; min-width: 0; }
+
+.fz-pool-tools { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+
+.fz-pool-tool {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    flex: 1;
+    padding: 0;
+    color: var(--text-secondary);
+    background: var(--card);
+    border: 1px solid var(--border-gray);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: color .18s ease, border-color .18s ease, background .18s ease;
+}
+
+.fz-pool-tool:hover {
+    color: var(--primary);
+    border-color: var(--primary);
+    background: var(--bg-hover);
+}
+
+.fz-pool-tool svg { width: 16px; height: 16px; }
+
 .fz-active-pool {
     display: flex;
     align-items: center;
@@ -237,6 +266,14 @@
     text-decoration: none;
     color: var(--text-secondary);
     transition: background .18s ease, color .18s ease;
+    /* « Mon équipe » est un <button> au milieu de liens : il n'ouvre pas de
+       page, il déplie le panneau de réglages sur place. */
+    width: 100%;
+    font: inherit;
+    text-align: left;
+    background: transparent;
+    border: none;
+    cursor: pointer;
 }
 
 .fz-rail-link:hover { background: var(--bg-hover); color: var(--text-main); }
@@ -799,7 +836,7 @@ body.fz-drawer-open { overflow: hidden; }
 
 .fz-empty-pool h2 { margin: 0 0 10px; font-size: 1.3rem; color: var(--text-main); }
 .fz-empty-pool p { margin: 0 0 20px; color: var(--text-secondary); line-height: 1.5; }
-/* Le message peut être le dernier mot (mes-pools.html : les boutons vivent
+/* Le message peut être le dernier mot (rejoindre-pool.html : les boutons vivent
    désormais plus haut, dans les cartes d'entrée) — pas de blanc en trop. */
 .fz-empty-pool p:last-child { margin-bottom: 0; }
 

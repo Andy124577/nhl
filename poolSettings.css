@@ -1,0 +1,480 @@
+/* ============================================================
+   RÉGLAGES DU POOL — le panneau derrière l'engrenage
+   ------------------------------------------------------------
+   Reprend les variables d'index.css : rien n'est codé en dur, le thème
+   clair suit sans règle supplémentaire.
+
+   Sur ordinateur le panneau est une fiche centrée ; sous 640px il monte
+   du bas de l'écran et occupe presque toute la hauteur — un pouce
+   n'atteint pas le haut d'un téléphone.
+   ============================================================ */
+
+.ps-scrim {
+    position: fixed;
+    inset: 0;
+    background: var(--overlay-dark);
+    backdrop-filter: blur(3px);
+    z-index: 1400;
+}
+
+.ps-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -46%) scale(.97);
+    width: min(620px, calc(100vw - 32px));
+    max-height: min(760px, calc(100vh - 64px));
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-page);
+    border: 1px solid var(--border-gray);
+    border-radius: 20px;
+    box-shadow: 0 24px 70px var(--shadow-lg);
+    opacity: 0;
+    z-index: 1401;
+    transition: opacity .2s ease, transform .2s ease;
+}
+
+.ps-panel.is-open {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+body.ps-open { overflow: hidden; }
+
+/* ==================== EN-TÊTE ==================== */
+
+.ps-head {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 18px 18px 15px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.ps-head-img {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 1px solid var(--border-gray);
+}
+
+.ps-head-txt { min-width: 0; flex: 1; }
+
+.ps-head-label {
+    margin: 0;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--text-gray);
+}
+
+.ps-head-name {
+    margin: 2px 0 0;
+    font-size: 1.22rem;
+    font-weight: 800;
+    color: var(--text-main);
+    /* Un nom de 30 caractères ne doit pas pousser la croix hors de la fiche. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ps-close {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    display: grid;
+    place-items: center;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--text-gray);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+}
+
+.ps-close:hover { background: var(--bg-hover); color: var(--text-main); }
+
+/* ==================== ONGLETS ==================== */
+
+.ps-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 12px 18px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.ps-tab {
+    padding: 9px 14px 11px;
+    font-size: .88rem;
+    font-weight: 700;
+    color: var(--text-gray);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: color .15s ease, border-color .15s ease;
+}
+
+.ps-tab:hover { color: var(--text-main); }
+
+.ps-tab.is-active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+/* ==================== CORPS ==================== */
+
+.ps-body {
+    padding: 18px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.ps-block { margin-bottom: 22px; }
+.ps-block:last-child { margin-bottom: 0; }
+
+.ps-block-title {
+    margin: 0 0 10px;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-gray);
+}
+
+/* ---- Listes de faits (règles de la ligue) ---- */
+
+.ps-facts {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: var(--card);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.ps-facts li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 11px 14px;
+    font-size: .9rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.ps-facts li:last-child { border-bottom: none; }
+.ps-facts span { color: var(--text-secondary); }
+.ps-facts strong { color: var(--text-main); font-weight: 700; }
+
+.ps-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 10px 2px 0;
+    font-size: .9rem;
+}
+
+.ps-total span { color: var(--text-secondary); }
+.ps-total strong { color: var(--primary); font-weight: 800; }
+
+.ps-note {
+    margin: 10px 2px 0;
+    font-size: .8rem;
+    line-height: 1.5;
+    color: var(--text-gray);
+}
+
+/* ==================== ÉQUIPES ==================== */
+
+.ps-teams { display: flex; flex-direction: column; gap: 12px; }
+
+.ps-team {
+    padding: 13px 14px;
+    background: var(--card);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+}
+
+.ps-team.is-mine {
+    border-color: var(--primary);
+    box-shadow: var(--glow-primary);
+}
+
+.ps-team-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.ps-team-name {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    min-width: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.ps-team-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ps-team-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.ps-badge {
+    padding: 3px 9px;
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: var(--bg-gray-light);
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.ps-badge.is-mine {
+    color: var(--primary);
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), .1);
+}
+
+.ps-members {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    margin: 11px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ps-members li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .85rem;
+    color: var(--text-secondary);
+}
+
+.ps-member-img,
+.ps-members .member-avatar {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.ps-empty {
+    margin: 10px 0 0;
+    font-size: .82rem;
+    font-style: italic;
+    color: var(--text-light-gray);
+}
+
+/* ---- Effectif d'une équipe ---- */
+
+.ps-picks {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-top: 12px;
+    padding-top: 11px;
+    border-top: 1px solid var(--border-light);
+}
+
+.ps-pick-cat { display: flex; gap: 10px; align-items: baseline; }
+
+.ps-pick-label {
+    flex: 0 0 84px;
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--text-gray);
+}
+
+.ps-pick-names {
+    flex: 1;
+    min-width: 0;
+    font-size: .84rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.ps-join {
+    margin-top: 12px;
+    padding: 8px 14px;
+    font-size: .84rem;
+    font-weight: 700;
+    color: var(--text-main);
+    background: var(--bg-hover);
+    border: 1px solid var(--border-gray);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color .15s ease, color .15s ease;
+}
+
+.ps-join:hover { border-color: var(--primary); color: var(--primary); }
+.ps-join:disabled { opacity: .55; cursor: default; }
+
+/* ---- Crayon et coche du renommage d'équipe ---- */
+
+.ps-icon-btn {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    padding: 0;
+    color: var(--text-gray);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: color .15s ease, background .15s ease, border-color .15s ease;
+}
+
+.ps-icon-btn:hover {
+    color: var(--primary);
+    background: var(--bg-hover);
+    border-color: var(--border-gray);
+}
+
+.ps-icon-btn.is-ok { color: var(--success); }
+
+.ps-rename-input {
+    flex: 1;
+    min-width: 0;
+    padding: 5px 9px;
+    font: inherit;
+    font-size: .92rem;
+    color: var(--text-main);
+    background: var(--bg);
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    outline: none;
+}
+
+/* ==================== IDENTITÉ ==================== */
+
+.ps-field { display: flex; gap: 10px; align-items: center; }
+
+.ps-input {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 13px;
+    font: inherit;
+    font-size: .95rem;
+    color: var(--text-main);
+    background: var(--card);
+    border: 1px solid var(--border-gray);
+    border-radius: 11px;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.ps-input:focus {
+    border-color: var(--primary);
+    box-shadow: var(--focus-ring);
+}
+
+.ps-primary,
+.ps-secondary {
+    display: inline-block;
+    padding: 11px 17px;
+    font: inherit;
+    font-size: .88rem;
+    font-weight: 700;
+    border-radius: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: filter .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.ps-primary {
+    color: #fff;
+    background: var(--primary);
+    border: 1px solid var(--primary);
+}
+
+.ps-primary:hover { filter: brightness(1.08); }
+.ps-primary:disabled { opacity: .6; cursor: default; filter: none; }
+
+.ps-secondary {
+    color: var(--text-main);
+    background: var(--bg-hover);
+    border: 1px solid var(--border-gray);
+}
+
+.ps-secondary:hover { border-color: var(--primary); color: var(--primary); }
+
+.ps-image-row { display: flex; gap: 14px; align-items: flex-start; }
+
+.ps-image-preview {
+    width: 76px;
+    height: 76px;
+    min-width: 76px;
+    border-radius: 14px;
+    object-fit: cover;
+    border: 1px solid var(--border-gray);
+}
+
+.ps-image-row .ps-note { margin-top: 8px; }
+
+.ps-msg {
+    margin: 10px 2px 0;
+    font-size: .84rem;
+    font-weight: 600;
+    color: var(--success);
+}
+
+.ps-msg.is-error { color: var(--danger); }
+
+/* ==================== TÉLÉPHONE ==================== */
+
+@media (max-width: 640px) {
+    .ps-panel {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        max-height: 88vh;
+        border-radius: 20px 20px 0 0;
+        border-bottom: none;
+        transform: translate(0, 100%);
+    }
+
+    .ps-panel.is-open { transform: translate(0, 0); }
+
+    .ps-head { padding: 16px 16px 13px; }
+    .ps-tabs { padding: 10px 16px 0; }
+    .ps-body { padding: 16px 16px 26px; }
+
+    /* Le champ et son bouton ne tiennent plus côte à côte sans écraser
+       l'un des deux. */
+    .ps-field { flex-direction: column; align-items: stretch; }
+
+    /* Une colonne d'étiquettes de 84px laisserait deux mots par ligne aux
+       noms de joueurs. */
+    .ps-pick-cat { flex-direction: column; gap: 2px; }
+    .ps-pick-label { flex: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ps-panel { transition: none; }
+}

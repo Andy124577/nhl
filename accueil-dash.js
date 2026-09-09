@@ -1151,11 +1151,11 @@ function fzdHeroHTML(state, mobile = false) {
             </div>
             <div class="fzd-hero-stats">${fzdCountdownStatsHTML(state.target)}</div>
             ${fait ? fzdCtasRepechageFini(state.activeName) : `
-            <a class="fzd-hero-cta" href="mes-pools.html">
+            <button type="button" class="fzd-hero-cta" data-fz-reglages="equipes">
                 <span class="fzd-hero-cta-bar" aria-hidden="true"></span>
                 <span class="fzd-hero-cta-label">Gérer mon équipe</span>
                 <span class="fzd-hero-cta-chev" aria-hidden="true">›</span>
-            </a>`}`;
+            </button>`}`;
     }
 
     // Duel de la semaine — pools tête-à-tête, une fois le repêchage bouclé.
@@ -1461,8 +1461,10 @@ function renderOffseasonPosition() {
     const index = scores.findIndex(t => t.isCurrentUser);
     const started = calData?.regularSeasonStartDate && todayISO() >= calData.regularSeasonStartDate;
     value.textContent = started && index >= 0 ? `${index + 1} / ${scores.length}` : '— / —';
-    link.href = ready ? `classement.html?pool=${encodeURIComponent(name)}` : 'mes-pools.html';
-    link.textContent = ready ? 'Voir le classement →' : 'Voir mes pools →';
+    // Tant que le repêchage n'est pas bouclé, le classement refuse d'ouvrir
+    // (activePool.js) : le lien mène alors là où la position se joue encore.
+    link.href = ready ? `classement.html?pool=${encodeURIComponent(name)}` : 'repechage.html';
+    link.textContent = ready ? 'Voir le classement →' : 'Voir le repêchage →';
     document.getElementById('fzdPositionSub').textContent = 'Classement général';
 }
 

@@ -19,6 +19,7 @@
         chevron: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`,
         check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
         reglages: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`,
+        crayon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>`,
         plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16m8-8H4"/></svg>`,
         entrer: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>`,
         accueil: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>`,
@@ -43,9 +44,15 @@
         { href: 'stats.html',      cle: 'stats',      texte: 'Stats',      icone: 'stats' }
     ];
 
+    // « Mes pools » n'est plus une page : la liste des pools est ce rail
+    // lui-même, et les réglages de chacun tiennent dans le panneau ouvert par
+    // l'engrenage (poolSettings.js). Reste ici « Mon équipe », qui ouvre ce
+    // même panneau sur l'onglet Équipes — le seul geste de l'ancienne page
+    // que l'engrenage ne propose pas à tout le monde, puisqu'il est réservé
+    // à la personne qui a créé le pool.
     const LIENS_GESTION = [
-        { href: 'mes-pools.html',      icone: 'reglages', titre: 'Mes pools',        detail: 'Équipe, nom, paramètres' },
-        { href: 'creer-pool.html',     icone: 'plus',     titre: 'Créer un pool',    detail: 'Nouvelle ligue' },
+        { onglet: 'equipes',           icone: 'reglages', titre: 'Mon équipe',        detail: 'Nom, membres, changement' },
+        { href: 'creer-pool.html',     icone: 'plus',     titre: 'Créer un pool',     detail: 'Nouvelle ligue' },
         { href: 'rejoindre-pool.html', icone: 'entrer',   titre: 'Rejoindre un pool', detail: 'Ligues ouvertes' }
     ];
 
@@ -55,7 +62,6 @@
 
     function pageCourante() {
         const chemin = window.location.pathname;
-        if (chemin.includes('mes-pools')) return 'mespools';
         if (chemin.includes('creer-pool')) return 'creer';
         if (chemin.includes('rejoindre-pool')) return 'rejoindre';
         if (chemin.includes('repechage') || chemin.includes('draftActif') ||
@@ -113,18 +119,38 @@
                 </li>`;
         }).join('');
 
+        // Engrenage et crayon ne s'affichent que pour la personne qui a créé
+        // le pool : ils mènent aux deux seules choses qu'elle seule peut
+        // faire — lire et régler la ligue, changer son nom et sa vignette.
+        // Les autres membres passent par « Mon équipe », juste en dessous.
+        const reglable = !!(window.FZPoolSettings && FZPoolSettings.isCreator(courant.name));
+        const outils = reglable ? `
+            <div class="fz-pool-tools">
+                <button type="button" class="fz-pool-tool" data-reglages="regles"
+                        title="Réglages du pool" aria-label="Réglages du pool">
+                    ${ICONES.reglages}
+                </button>
+                <button type="button" class="fz-pool-tool" data-reglages="identite"
+                        title="Renommer le pool" aria-label="Renommer le pool">
+                    ${ICONES.crayon}
+                </button>
+            </div>` : '';
+
         return `
             <div class="fz-pool-block">
                 <p class="fz-rail-label">Pool actif</p>
-                <button type="button" class="fz-active-pool" id="fzActiveBtn${suffixe}"
-                        aria-expanded="false" aria-controls="fzPoolList${suffixe}">
-                    ${vignette(courant, 'fz-active-pool-img')}
-                    <span class="fz-active-pool-txt">
-                        <span class="fz-active-pool-name">${echapper(courant.name)}</span>
-                        <span class="fz-active-pool-meta">${echapper(courant.teamName)}</span>
-                    </span>
-                    <span class="fz-chevron">${ICONES.chevron}</span>
-                </button>
+                <div class="fz-pool-row">
+                    <button type="button" class="fz-active-pool" id="fzActiveBtn${suffixe}"
+                            aria-expanded="false" aria-controls="fzPoolList${suffixe}">
+                        ${vignette(courant, 'fz-active-pool-img')}
+                        <span class="fz-active-pool-txt">
+                            <span class="fz-active-pool-name">${echapper(courant.name)}</span>
+                            <span class="fz-active-pool-meta">${echapper(courant.teamName)}</span>
+                        </span>
+                        <span class="fz-chevron">${ICONES.chevron}</span>
+                    </button>
+                    ${outils}
+                </div>
                 <span class="fz-pool-state fz-state-${etat.etat}">${LIBELLE_ETAT[etat.etat]}</span>
                 <ul class="fz-pool-list" id="fzPoolList${suffixe}" hidden>${options}</ul>
             </div>`;
@@ -132,18 +158,33 @@
 
     function blocGestion() {
         const page = pageCourante();
-        const cleParHref = { 'mes-pools.html': 'mespools', 'creer-pool.html': 'creer', 'rejoindre-pool.html': 'rejoindre' };
+        const cleParHref = { 'creer-pool.html': 'creer', 'rejoindre-pool.html': 'rejoindre' };
+        // « Mon équipe » n'ouvre pas de page : il déplie le panneau de
+        // réglages sur place. Sans pool actif il n'aurait rien à montrer.
+        const sansPool = !FZPool.get();
+
+        const contenu = lien => `
+            <span class="fz-rail-icon">${ICONES[lien.icone]}</span>
+            <span class="fz-rail-txt">
+                <span class="fz-rail-title">${lien.titre}</span>
+                <span class="fz-rail-detail">${lien.detail}</span>
+            </span>`;
+
         return `
             <nav class="fz-rail-nav" aria-label="Gestion des pools">
                 <p class="fz-rail-label">Gestion</p>
-                ${LIENS_GESTION.map(lien => `
-                    <a href="${lien.href}" class="fz-rail-link${cleParHref[lien.href] === page ? ' is-active' : ''}">
-                        <span class="fz-rail-icon">${ICONES[lien.icone]}</span>
-                        <span class="fz-rail-txt">
-                            <span class="fz-rail-title">${lien.titre}</span>
-                            <span class="fz-rail-detail">${lien.detail}</span>
-                        </span>
-                    </a>`).join('')}
+                ${LIENS_GESTION.map(lien => {
+                    if (lien.onglet) {
+                        if (sansPool) return '';
+                        return `
+                            <button type="button" class="fz-rail-link"
+                                    data-reglages="${lien.onglet}">${contenu(lien)}</button>`;
+                    }
+                    return `
+                        <a href="${lien.href}" class="fz-rail-link${cleParHref[lien.href] === page ? ' is-active' : ''}">
+                            ${contenu(lien)}
+                        </a>`;
+                }).join('')}
             </nav>`;
     }
 
@@ -198,6 +239,7 @@
         if (document.body.dataset.fzRail !== 'page') {
             rail.innerHTML = blocPool('Rail') + blocGestion();
             brancherBlocPool(rail, 'Rail');
+            brancherReglages(rail);
         }
         document.body.classList.add('fz-has-sidebar');
     }
@@ -210,7 +252,7 @@
                 <div class="fz-drawer" id="fzDrawer" role="dialog" aria-modal="true"
                      aria-label="Menu des pools" hidden>
                     <div class="fz-drawer-head">
-                        <span class="fz-drawer-title">Mes pools</span>
+                        <span class="fz-drawer-title">Pools</span>
                         <button type="button" class="fz-drawer-close" id="fzDrawerClose"
                                 aria-label="Fermer le menu">${ICONES.fermer}</button>
                     </div>
@@ -229,6 +271,7 @@
         const corps = document.getElementById('fzDrawerBody');
         corps.innerHTML = blocPool('Drawer') + blocGestion() + blocPages();
         brancherBlocPool(corps, 'Drawer');
+        brancherReglages(corps);
     }
 
     function monterHamburger() {
@@ -281,6 +324,27 @@
 
     // ==================== INTERACTIONS ====================
 
+    /**
+     * Branche tout ce qui ouvre le panneau de réglages : l'engrenage et le
+     * crayon posés contre le pool actif, et « Mon équipe » dans la Gestion.
+     *
+     * Appelé sur le rail comme sur le tiroir — les deux surfaces sont
+     * rendues par les mêmes fonctions, et un même identifiant ne peut pas
+     * servir deux fois.
+     */
+    function brancherReglages(racine) {
+        racine.querySelectorAll('[data-reglages]').forEach(bouton => {
+            bouton.addEventListener('click', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!window.FZPoolSettings) return;
+                // Le tiroir recouvrirait le panneau sur téléphone.
+                fermerTiroir();
+                FZPoolSettings.open(FZPool.get(), bouton.dataset.reglages);
+            });
+        });
+    }
+
     function brancherBlocPool(racine, suffixe) {
         const bouton = racine.querySelector(`#fzActiveBtn${suffixe}`);
         const liste = racine.querySelector(`#fzPoolList${suffixe}`);
@@ -319,6 +383,22 @@
     function listeOuverte() {
         return [...document.querySelectorAll('.fz-pool-list')].some(l => !l.hidden);
     }
+
+    /**
+     * N'importe quel élément portant `data-fz-pools` ouvre le tiroir.
+     *
+     * L'accueil a deux entrées de ce genre — la puce « Mes pools » du
+     * téléphone et le « Voir les N pools » du tableau de bord — et se
+     * redessine entièrement à chaque rafraîchissement des données. L'écoute
+     * est donc posée sur le document, une fois, plutôt que sur des éléments
+     * qui n'existeront plus dans dix secondes.
+     */
+    document.addEventListener('click', e => {
+        const declencheur = e.target.closest && e.target.closest('[data-fz-pools]');
+        if (!declencheur) return;
+        e.preventDefault();
+        ouvrirTiroir();
+    });
 
     // Un clic ailleurs referme la liste : elle recouvre le contenu du rail.
     // Posé une seule fois — le rail, lui, se reconstruit à chaque mise à jour.

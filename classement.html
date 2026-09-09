@@ -16,12 +16,15 @@
     <link rel="stylesheet" href="skeleton-loader.css" />
     <link rel="stylesheet" href="navbar.css">
     <link rel="stylesheet" href="poolNav.css">
+    <link rel="stylesheet" href="poolSettings.css">
     <!-- jQuery FIRST, synchronous -->
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
     <script defer src="activePool.js"></script>
     <!-- Icônes injectées dans les cartes de rôle (toggle "mettre en vente") -->
     <script defer src="icons.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="career-modal.css">
 </head>
 <body class="fz-classement">
     <nav class="navbar">
@@ -31,7 +34,7 @@
     <div class="container">
         <!-- Breadcrumb Navigation -->
         <div id="breadcrumb" class="breadcrumb" style="display: none;">
-            <span class="breadcrumb-item" onclick="window.location.href='mes-pools.html'">Mes pools</span>
+            <span class="breadcrumb-item" onclick="window.location.href='index.html'">Accueil</span>
             <span class="breadcrumb-separator" id="poolBreadcrumbSep" style="display: none;">&gt;</span>
             <span class="breadcrumb-item" id="poolBreadcrumb" style="display: none;"></span>
             <span class="breadcrumb-separator" id="teamBreadcrumbSep" style="display: none;">&gt;</span>
@@ -236,67 +239,8 @@
         </div>
 
         <!-- Career Stats Modal -->
-        <div id="careerStatsModal" class="modal">
-            <div class="modal-content career-modal">
-                <div class="career-modal-header" id="careerModalHeader" style="display: none;">
-                    <span class="close-modal" onclick="closeCareerModal()">&times;</span>
-                    <div class="player-header-top">
-                        <div class="player-headshot-container" id="playerHeadshotContainer">
-                            <div class="no-photo">🏒</div>
-                        </div>
-                        <div class="player-header-right">
-                            <div class="player-name-section">
-                                <h2 id="careerPlayerName"></h2>
-                                <div class="player-position-team">
-                                    <span id="careerPlayerPosition"></span>
-                                    <span id="careerPlayerTeam"></span>
-                                </div>
-                            </div>
-                            <div class="player-bio-pills">
-                                <span class="bio-pill"><span class="bio-pill-lbl">Taille</span><strong class="bio-pill-val" id="playerHeight">-</strong></span>
-                                <span class="bio-pill"><span class="bio-pill-lbl">Poids</span><strong class="bio-pill-val" id="playerWeight">-</strong></span>
-                                <span class="bio-pill"><span class="bio-pill-lbl">Lance</span><strong class="bio-pill-val" id="playerShoots">-</strong></span>
-                                <span class="bio-pill"><span class="bio-pill-lbl">Né le</span><strong class="bio-pill-val" id="playerBirthDate">-</strong></span>
-                                <span class="bio-pill"><span class="bio-pill-lbl">Lieu</span><strong class="bio-pill-val" id="playerBirthPlace">-</strong></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="player-draft-strip">
-                        <span class="draft-label">Repêchage</span>
-                        <span class="draft-value" id="playerDraft">-</span>
-                    </div>
-                    <!-- Indisponibilité en cours : nature et durée, remplies
-                         par renderInjuryBanner() (injuries.js). Reste masqué
-                         pour un joueur en santé. -->
-                    <div class="cmh-injury" id="careerInjuryBanner" hidden></div>
-                </div>
-                <div class="loading-spinner" id="loadingSpinner">
-                    Chargement des statistiques...
-                </div>
-                <div class="career-filters" id="careerFilters" style="display: none;">
-                    <div class="filter-group-career">
-                        <label for="leagueFilter">Ligue</label>
-                        <select id="leagueFilter" onchange="filterCareerStats()">
-                            <option value="all">Toutes les ligues</option>
-                            <option value="nhl">NHL seulement</option>
-                            <option value="other">Autres ligues</option>
-                        </select>
-                    </div>
-                    <div class="filter-group-career">
-                        <label for="gameTypeFilter">Type de saison</label>
-                        <select id="gameTypeFilter" onchange="filterCareerStats()">
-                            <option value="all">Tous</option>
-                            <option value="regular">Saison régulière</option>
-                            <option value="playoffs">Playoffs</option>
-                        </select>
-                    </div>
-                    <div class="stats-count-badge" id="statsCountBadge">
-                        0 saisons affichées
-                    </div>
-                </div>
-                <div id="careerStatsTable"></div>
-            </div>
-        </div>
+        <!-- Shared player profile, mounted by careerModal.js. -->
+    <div id="careerStatsModal" class="modal"></div>
     </div>
 
     <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
@@ -306,9 +250,15 @@
     <script src="lib/season.js"></script>
     <script src="headshots.js"></script>
     <script defer src="injuries.js"></script>
+    <script defer src="teamColors.js"></script>
     <script defer src="careerFetch.js"></script>
+    <script defer src="careerModal.js"></script>
+    <script defer src="careerTeamLogo.js"></script>
+    <script defer src="careerTotals.js"></script>
     <script defer src="classement.js"></script>
     <script defer src="navbar.js"></script>
+    <script defer src="profanity.js"></script>
+    <script defer src="poolSettings.js"></script>
     <script defer src="poolNav.js"></script>
     <script defer src="notifications.js"></script>
 </body>

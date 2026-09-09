@@ -2174,102 +2174,11 @@ function showError(title, message) {
 
 // ==================== CAREER STATS MODAL ====================
 async function showCareerStats(playerId, playerName, isGoalie = false) {
-    const modal = document.getElementById('careerStatsModal');
-    const header = document.getElementById('careerModalHeader');
-    const spinner = document.getElementById('loadingSpinner');
-    const filters = document.getElementById('careerFilters');
-    const statsTable = document.getElementById('careerStatsTable');
-
-    modal.style.display = 'block';
-    document.body.style.overflow = 'hidden';
-
-    // Show spinner
-    spinner.style.display = 'block';
-    header.style.display = 'none';
-    filters.style.display = 'none';
-    statsTable.innerHTML = '';
-
-    // Reset filters
-    document.getElementById('leagueFilter').value = 'nhl';
-    document.getElementById('gameTypeFilter').value = 'regular';
-
-    try {
-        const data = await fzChargerCarriere(playerId, BASE_URL);
-        currentCareerData = data;
-
-        // Hide spinner, show content
-        spinner.style.display = 'none';
-        header.style.display = 'flex';
-        filters.style.display = 'flex';
-
-        // Populate header
-        document.getElementById('careerPlayerName').textContent = data.playerName;
-        document.getElementById('careerPlayerPosition').textContent = data.isGoalie ? '🥅 Gardien de but' : '🏒 ' + (data.position || 'Joueur');
-
-        if (data.currentTeam) {
-            const teamLogo = `teams/${data.currentTeam.split(' ').pop()}.png`;
-            document.getElementById('careerPlayerTeam').innerHTML = `<img src="${teamLogo}" alt="${data.currentTeam}" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;">${data.currentTeam}`;
-        } else {
-            document.getElementById('careerPlayerTeam').textContent = '';
-        }
-
-        // Populate headshot
-        const headshotContainer = document.getElementById('playerHeadshotContainer');
-        if (data.headshot) {
-            headshotContainer.innerHTML = `<img src="${data.headshot}" alt="${data.playerName}">`;
-        } else {
-            headshotContainer.innerHTML = '<div class="no-photo">🏒</div>';
-        }
-
-        // Populate bio
-        document.getElementById('playerHeight').textContent = data.height || '-';
-        document.getElementById('playerWeight').textContent = data.weight ? `${data.weight} lb` : '-';
-
-        if (data.birthDate) {
-            const birthDate = new Date(data.birthDate);
-            const today = new Date();
-            let age = today.getFullYear() - birthDate.getFullYear();
-            const monthDiff = today.getMonth() - birthDate.getMonth();
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                age--;
-            }
-            document.getElementById('playerBirthDate').textContent = `${data.birthDate} (Âge: ${age})`;
-        } else {
-            document.getElementById('playerBirthDate').textContent = '-';
-        }
-
-        let birthPlace = '';
-        if (data.birthCity) birthPlace += data.birthCity;
-        if (data.birthStateProvince) birthPlace += (birthPlace ? ', ' : '') + data.birthStateProvince;
-        if (data.birthCountry) birthPlace += (birthPlace ? ', ' : '') + data.birthCountry;
-        document.getElementById('playerBirthPlace').textContent = birthPlace || '-';
-
-        document.getElementById('playerShoots').textContent = data.shootsCatches || '-';
-
-        // Indisponibilité : `currentTeam` est déjà l'abréviation officielle
-        // (currentTeamAbbrev côté serveur), ce qui départage les homonymes.
-        if (typeof renderInjuryBanner === 'function') renderInjuryBanner(data.playerName, data.currentTeam);
-
-        if (data.draftInfo) {
-            const draft = data.draftInfo;
-            document.getElementById('playerDraft').textContent = `${draft.year}, ${draft.teamAbbrev} (${draft.overallPick}e au total), ${draft.round}e ronde, ${draft.pickInRound}e choix`;
-        } else {
-            document.getElementById('playerDraft').textContent = 'Non repêché';
-        }
-
-        // Render stats table
-        filterCareerStats();
-
-    } catch (error) {
-        console.error('Error fetching career stats:', error);
-        spinner.style.display = 'none';
-        // Le chemin d'erreur ne doit jamais lui-même échouer : si
-        // careerFetch.js n'a pas été chargé, on retombe sur l'ancien texte.
-        const raison = typeof fzMessageErreurCarriere === 'function'
-            ? fzMessageErreurCarriere(error)
-            : 'Erreur lors du chargement des statistiques';
-        statsTable.innerHTML = `<p class="no-stats-message">❌ ${raison}</p>`;
-    }
+    currentCareerData = null;
+    return fzOpenCareerModal(playerId, playerName, {
+        onData(data) { currentCareerData = data; },
+        renderStats: filterCareerStats
+    });
 }
 
 function filterCareerStats() {
@@ -2426,8 +2335,7 @@ function filterCareerStats() {
 }
 
 function closeCareerModal() {
-    document.getElementById('careerStatsModal').style.display = 'none';
-    document.body.style.overflow = '';
+    fzCloseCareerModal();
     currentCareerData = null;
 }
 

@@ -23,6 +23,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css">
     <link rel="stylesheet" href="poolNav.css">
+    <link rel="stylesheet" href="poolSettings.css">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="accueil.css">
     <link rel="stylesheet" href="accueil-dash.css?v=20260908b">
@@ -327,7 +328,7 @@
                  Le repêchage instantané n'est pas un lien : il lance la
                  recherche sur place (instantDraft.js). -->
             <div class="fz-dash-poolchips" id="fzDashPoolChips" style="display:none;">
-                <a class="fzd-poolchip is-primary" href="mes-pools.html">Mes pools</a>
+                <button type="button" class="fzd-poolchip is-primary" data-fz-reglages="equipes">Mon équipe</button>
                 <a class="fzd-poolchip" href="creer-pool.html">Créer un pool</a>
                 <a class="fzd-poolchip" href="rejoindre-pool.html">Rejoindre un pool</a>
                 <button type="button" class="fzd-poolchip" data-instant-draft>
@@ -351,7 +352,7 @@
                     <section class="fzd-off-position" aria-labelledby="fzdPositionTitle">
                         <div class="fzd-off-head">
                             <h2 class="fzd-section-title" id="fzdPositionTitle"><span data-icon="trophy" aria-hidden="true"></span>Ma position</h2>
-                            <a class="fzd-position-link" id="fzdPositionLink" href="mes-pools.html">Voir le classement →</a>
+                            <a class="fzd-position-link" id="fzdPositionLink" href="repechage.html">Voir le classement →</a>
                         </div>
                         <div class="fzd-position-value fzd-display" id="fzdPositionValue">— / —</div>
                         <span class="fzd-off-sub" id="fzdPositionSub">Classement général</span>
@@ -395,10 +396,11 @@
                         <span class="fzd-mypools-count" id="fzdMyPoolsCount"></span>
                     </div>
                     <div id="fzdMyPoolsList"><!-- Filled by accueil-dash.js --></div>
-                    <!-- La page des pools, et non le classement : ce lien montre
-                         TOUS les pools, y compris ceux encore en repêchage — que le
+                    <!-- Le tiroir des pools, et non le classement : il montre TOUS
+                         les pools, y compris ceux encore en repêchage — que le
                          classement refuse désormais d'ouvrir (activePool.js). -->
-                    <a class="fzd-link fzd-mypools-more" id="fzdMyPoolsSeeAll" href="mes-pools.html"></a>
+                    <button type="button" class="fzd-link fzd-mypools-more" id="fzdMyPoolsSeeAll"
+                            data-fz-pools></button>
                 </div>
 
                 <div class="fz-dash-quickactions" id="fzdQuickActions"><!-- Filled by accueil-dash.js --></div>
@@ -455,7 +457,7 @@
                     </div>
                     <h3 class="step-title">Rejoindre ou créer un pool</h3>
                     <p class="step-desc">Invitez vos amis et configurez votre ligue personnalisée avec vos propres règles de scoring.</p>
-                    <a href="mes-pools.html" class="step-cta">Commencer →</a>
+                    <a href="creer-pool.html" class="step-cta">Commencer →</a>
                 </div>
 
                 <!-- Connector -->
@@ -557,6 +559,9 @@
     <script defer src="accueil-mobile.js?v=20260908d"></script>
     <script defer src="demos.js"></script>
     <script defer src="navbar.js"></script>
+    <script defer src="avatars.js"></script>
+    <script defer src="profanity.js"></script>
+    <script defer src="poolSettings.js"></script>
     <script defer src="poolNav.js"></script>
     <script defer src="notifications.js"></script>
 </body>

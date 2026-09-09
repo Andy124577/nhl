@@ -22,6 +22,7 @@
   
 
   <link rel="stylesheet" href="poolNav.css">
+  <link rel="stylesheet" href="poolSettings.css">
   <link rel="stylesheet" href="skeleton-loader.css" />
   <link rel="stylesheet" href="draftActif.css?v=20260905f" />
   <link rel="stylesheet" href="draftActif-premium.css?v=20260906a" />
@@ -31,9 +32,6 @@
   <!-- Et son pendant pour l'autre côté du seuil : sous 1100px, la page
        prend le plan de la maquette téléphone. -->
   <link rel="stylesheet" href="draftPhone.css?v=20260906b" />
-  
-
-  <link rel="stylesheet" href="career-modal.css" />
   <link rel="stylesheet" href="injuries.css" />
   <link rel="stylesheet" href="draftFinPopup.css?v=20260902a" />
   <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -81,6 +79,8 @@
   </script>
 
     <script defer src="activePool.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="career-modal.css">
 </head>
 <body class="fz-draft">
   <nav class="navbar">
@@ -511,152 +511,8 @@
   </div>
 
   
-  <div id="careerStatsModal" class="modal">
-    <div class="modal-content career-modal">
-      
-
-      <div class="cmh-name-banner" id="careerNameBanner" style="display: none;">
-        <h2 id="careerPlayerName"></h2>
-        <span class="close-modal" onclick="closeCareerModal()">&times;</span>
-      </div>
-
-      
-      <div class="career-modal-header" id="careerModalHeader" style="display: none;">
-        
-
-
-        
-        <div class="cmh-identity">
-          <div class="player-headshot-container" id="playerHeadshotContainer">
-            <div class="no-photo" data-icon="person" data-icon-size="44"></div>
-          </div>
-          <div class="cmh-ident-text">
-            <div class="cmh-chips">
-              
-
-              <span class="cmh-chip"><span id="careerPlayerPosition"></span></span>
-              <span class="cmh-chip cmh-chip-team"><span id="careerPlayerTeam"></span></span>
-            </div>
-            <div class="cmh-stats">
-              <div class="cmh-stats-col">
-                <div class="cmh-stat-row">
-                  <span class="cmh-mini-lbl">Taille/Poids</span>
-                  <span class="cmh-stat-val"><span id="playerHeight">-</span><span class="cmh-stat-sep">,</span><span id="playerWeight">-</span></span>
-                </div>
-                <div class="cmh-stat-row">
-                  <span class="cmh-mini-lbl">Né le</span>
-                  <span class="cmh-stat-val" id="playerBirthDate">-</span>
-                </div>
-              </div>
-              <div class="cmh-stats-col">
-                <div class="cmh-stat-row">
-                  <span class="cmh-mini-lbl">Lieu</span>
-                  <span class="cmh-stat-val" id="playerBirthPlace">-</span>
-                </div>
-                <div class="cmh-stat-row">
-                  <span class="cmh-mini-lbl">Repêchage</span>
-                  <span class="cmh-stat-val" id="playerDraft">-</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-
-        <!-- Indisponibilité en cours : nature et durée, remplies par
-             renderInjuryBanner() (injuries.js) à partir du rapport d'ESPN.
-             Reste masqué pour un joueur en santé. -->
-        <div class="cmh-injury" id="careerInjuryBanner" hidden></div>
-
-        <div class="cmh-season-highlight" id="careerSeasonHighlight" style="display: none;"></div>
-      </div>
-
-      
-
-      <div class="skeleton-loader career-skeleton" id="loadingSpinner">
-        <div class="cs-name-banner">
-          <div class="skeleton cs-name-bar"></div>
-        </div>
-        <div class="cs-header">
-          <div class="cs-identity">
-            <div class="skeleton cs-photo"></div>
-            <div class="cs-ident-text">
-              <div class="cs-chips">
-                <div class="skeleton cs-chip"></div>
-                <div class="skeleton cs-chip"></div>
-              </div>
-              <div class="cs-stats">
-                <div class="cs-stats-col">
-                  <div class="skeleton cs-stat-row"></div>
-                  <div class="skeleton cs-stat-row"></div>
-                  <div class="skeleton cs-stat-row"></div>
-                </div>
-                <div class="cs-stats-col">
-                  <div class="skeleton cs-stat-row"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="cs-season">
-            <div class="skeleton cs-season-label"></div>
-            <div class="cs-season-tiles">
-              <div class="cs-season-tile">
-                <div class="skeleton cs-season-num"></div>
-                <div class="skeleton cs-season-rk"></div>
-              </div>
-              <div class="cs-season-tile">
-                <div class="skeleton cs-season-num"></div>
-                <div class="skeleton cs-season-rk"></div>
-              </div>
-              <div class="cs-season-tile">
-                <div class="skeleton cs-season-num"></div>
-                <div class="skeleton cs-season-rk"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="cs-filters">
-          <div class="skeleton cs-filter"></div>
-          <div class="skeleton cs-filter"></div>
-        </div>
-        <div class="cs-table">
-          <div class="cs-thead"></div>
-          <div class="cs-row"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-          <div class="cs-row"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-          <div class="cs-row"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-          <div class="cs-row"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-          <div class="cs-row"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-          <div class="cs-row"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-        </div>
-      </div>
-
-      
-      <div class="career-filters" id="careerFilters" style="display: none;">
-        <div class="filter-group-career">
-          <label for="leagueFilter">Ligue</label>
-          <select id="leagueFilter" onchange="filterCareerStats()">
-            <option value="all">Toutes les ligues</option>
-            <option value="nhl">NHL seulement</option>
-            <option value="other">Autres ligues</option>
-          </select>
-        </div>
-        <div class="filter-group-career">
-          <label for="gameTypeFilter">Type de saison</label>
-          <select id="gameTypeFilter" onchange="filterCareerStats()">
-            <option value="all">Tous</option>
-            <option value="regular">Saison régulière</option>
-            <option value="playoffs">Playoffs</option>
-          </select>
-        </div>
-        <div class="stats-count-badge" id="statsCountBadge">
-          0 saisons affichées
-        </div>
-      </div>
-
-      
-      <div id="careerStatsTable"></div>
-    </div>
-  </div>
+  <!-- Shared player profile, mounted by careerModal.js. -->
+    <div id="careerStatsModal" class="modal"></div>
 
   <button id="finishButton" class="finish-btn" style="display: none;" onclick="window.location.href='classement.html'">Terminer le draft</button>
 
@@ -702,10 +558,13 @@
   <script defer src="draftFinPopup.js?v=20260902a"></script>
 
   <script defer src="careerFetch.js"></script>
+    <script defer src="careerModal.js"></script>
   <script defer src="careerTeamLogo.js"></script>
   
   <script defer src="careerTotals.js"></script>
   <script defer src="navbar.js"></script>
+  <script defer src="profanity.js"></script>
+  <script defer src="poolSettings.js"></script>
   <script defer src="poolNav.js"></script>
   <script defer src="notifications.js"></script>
 </body>

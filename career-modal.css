@@ -1,702 +1,172 @@
-/* ============================================================
-   MODALE DE CARRIÈRE — feuille partagée
-   ------------------------------------------------------------
-   Chargée par stats.html ET draftActif.html, en dernier dans les
-   deux cas afin de spécialiser sans recourir à !important.
-
-   Cette modale existait en double : mêmes identifiants, mêmes
-   fonctions, mais deux jeux de styles qui divergeaient. Trois
-   bugs en sont venus (valeurs tronquées à 110px, logo d'équipe
-   à sa taille naturelle, vignette masquée à tort). Un seul
-   fichier fait désormais foi.
-
-   Les jetons (--primary, --card…) viennent de index.css.
-   ============================================================ */
-
-/* ============================================================
-   10. MODALE DE CARRIÈRE
-   ============================================================ */
-.modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  padding: 12px;
-  overflow-y: auto;
-  background: var(--overlay-dark);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+/* Shared player profile. Team tokens come from careerModal.js / teamColors.js. */
+#careerStatsModal { display:none; position:fixed; inset:0; z-index:10000; padding:42px 24px; overflow:auto; background:#05080dd1; backdrop-filter:blur(9px); -webkit-backdrop-filter:blur(9px); color:#f6f7f9; font:16px/1.3 'Barlow','Segoe UI',sans-serif; color-scheme:dark; }
+#careerStatsModal *, #careerStatsModal *::before, #careerStatsModal *::after { box-sizing:border-box; }
+#careerStatsModal [hidden] { display:none !important; }
+#careerStatsModal .career-modal { --team-primary:#3a414d; --team-secondary:#171a20; --team-surface:#3a414d; --team-edge:#8995a8; --team-trim:#8995a8; --team-rgb:58,65,77; --team-secondary-rgb:23,26,32; --team-logo:none; position:relative; display:flex; flex-direction:column; width:100%; max-width:1380px; max-height:calc(100dvh - 84px); margin:0 auto; padding:0; overflow:hidden; border:1px solid #3c434d; border-radius:19px; background:#0d1013; color:#f6f7f9; backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:0 30px 90px #000b,0 0 0 1px #ffffff04; animation:careerEnter .2s ease-out; }
+#careerStatsModal .cmh-name-banner { isolation:isolate; position:relative; display:flex; flex:0 0 auto; align-items:center; gap:22px; min-height:96px; margin:0; padding:8px 20px 8px 28px; overflow:hidden; border-radius:18px 18px 0 0; border-top:1px solid var(--team-edge); border-bottom:3px solid var(--team-trim); background:linear-gradient(100deg,#ffffff09,transparent 45%,#0005),var(--team-surface); }
+/* Upper-right motif: an oversized cropped crest beneath translucent diagonal
+   panels and a fine woven texture, matching the portrait's layered artwork. */
+#careerStatsModal .cmh-name-banner::before { content:''; position:absolute; z-index:-2; inset:-105px 55px -115px auto; width:325px; background:var(--team-logo) center/contain no-repeat; opacity:.18; transform:rotate(-13deg); filter:saturate(.85) contrast(1.15); }
+#careerStatsModal .cmh-name-banner::after { content:''; position:absolute; z-index:-1; inset:0; pointer-events:none; background:linear-gradient(132deg,transparent 71%,#0002 71% 76%,transparent 76%),linear-gradient(132deg,transparent 86%,rgba(var(--team-secondary-rgb),.16) 86%,transparent 96%),repeating-linear-gradient(24deg,#ffffff02 0 1px,transparent 1px 4px); box-shadow:inset 0 1px #ffffff17; }
+#careerStatsModal .cmh-banner-logo { width:124px; height:76px; transform:scale(1.25); object-fit:contain; filter:drop-shadow(0 3px 3px #0007); }
+#careerStatsModal .cmh-banner-copy { min-width:0; flex:1; }
+#careerStatsModal #careerBannerName { font:800 clamp(28px,3.6vw,52px)/1 'Barlow Condensed','Arial Narrow',Impact,sans-serif; text-transform:uppercase; letter-spacing:.2px; overflow-wrap:anywhere; text-shadow:0 2px 3px #0004; }
+#careerStatsModal .cmh-team-caption { margin-top:6px; color:#e4e5e9; font-size:13px; font-weight:700; letter-spacing:.4em; text-transform:uppercase; }
+#careerStatsModal .close-modal { position:relative; inset:auto; display:grid; place-items:center; flex:0 0 48px; width:48px; height:48px; margin:0; padding:0 0 4px; border:1.5px solid var(--team-edge); border-radius:50%; background:#07090c99; color:#fff; font:500 34px/1 'Barlow',sans-serif; cursor:pointer; }
+#careerStatsModal .close-modal:hover { background:#07090ce0; transform:none; box-shadow:none; }
+#careerStatsModal button:focus-visible, #careerStatsModal select:focus-visible, #careerStatsModal [tabindex]:focus-visible { outline:2px solid var(--team-edge); outline-offset:3px; }
+#careerStatsModal .career-profile-body { position:relative; min-height:0; padding:18px 26px 24px; overflow-y:auto; scrollbar-color:#49515c #101316; background:linear-gradient(132deg,transparent 0 54%,#ffffff02 54% 62%,transparent 62%),repeating-linear-gradient(126deg,#ffffff01 0 1px,transparent 1px 5px),#0d1013; }
+#careerStatsModal .career-modal-header { display:grid; grid-template-columns:minmax(210px,290px) minmax(0,1fr) minmax(230px,296px); grid-template-rows:minmax(150px,auto) auto auto; gap:10px 28px; margin:0; padding:0; background:none; border:0; backdrop-filter:none; -webkit-backdrop-filter:none; }
+#careerStatsModal .cmh-portrait { position:relative; isolation:isolate; grid-column:1; grid-row:1/3; align-self:stretch; min-height:272px; margin:0; overflow:hidden; border:2px solid var(--team-edge); border-radius:21px; background:#0b0c0f; box-shadow:0 8px 20px #0006,inset 0 0 30px #000; }
+#careerStatsModal .cmh-portrait-art { position:absolute; z-index:-2; inset:0; overflow:hidden; background:radial-gradient(ellipse at 20% 25%,rgba(var(--team-rgb),.66),transparent 68%),#090b0e; }
+#careerStatsModal .cmh-portrait-art::before { content:''; position:absolute; inset:12% 24% -2% -25%; background:var(--team-logo) center/contain no-repeat; opacity:.3; transform:rotate(-15deg) scale(1.12); filter:saturate(.7); }
+#careerStatsModal .cmh-portrait-art::after { content:''; position:absolute; inset:0; background:linear-gradient(145deg,transparent 18%,rgba(var(--team-rgb),.2) 18% 27%,transparent 27% 39%,rgba(var(--team-secondary-rgb),.15) 39% 41%,transparent 41%),linear-gradient(100deg,transparent 50%,#05070b99),radial-gradient(circle,rgba(var(--team-rgb),.16) .75px,transparent 1px) 0 0/4px 4px; box-shadow:inset 0 0 24px #0009,inset 0 1px 15px rgba(var(--team-rgb),.35); }
+#careerStatsModal .cmh-portrait-number { position:absolute; top:30%; right:5%; z-index:-1; color:transparent; -webkit-text-stroke:1px var(--team-edge); opacity:.65; font:700 98px/1 'Barlow Condensed',Impact,sans-serif; }
+#careerStatsModal .player-headshot-container { position:absolute; inset:4% -3% 24px; width:auto; height:auto; margin:0; border:0; border-radius:0; background:none; box-shadow:none; overflow:hidden; }
+#careerStatsModal .player-headshot-container img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:center bottom; transform:scale(1.23); transform-origin:center bottom; filter:drop-shadow(0 6px 9px #0008); }
+#careerStatsModal .no-photo { display:grid; place-items:center; height:100%; color:#bbc0c955; }
+#careerStatsModal .no-photo svg { width:58%; height:70%; }
+#careerStatsModal .player-headshot-container.has-photo .no-photo { visibility:hidden; }
+#careerStatsModal .cmh-portrait figcaption { position:absolute; bottom:0; inset-inline:0; display:flex; align-items:center; height:34px; border-top:1px solid #7777; background:#080b0fee; }
+#careerStatsModal .cmh-portrait figcaption b { align-self:stretch; display:grid; place-items:center; padding:0 12px; border-right:1px solid #7777; color:var(--team-trim); font:700 26px/1 'Barlow Condensed',sans-serif; }
+#careerStatsModal .cmh-portrait figcaption span { flex:1; padding:0 8px; overflow:hidden; text-align:center; color:#b0b4bd; font-size:9px; font-weight:600; letter-spacing:.32em; text-transform:uppercase; }
+#careerStatsModal .cmh-ident-text { grid-column:2; min-width:0; align-self:center; }
+#careerStatsModal .cmh-position, #careerStatsModal .cmh-mini-lbl { display:block; color:#b9c0ce; font-size:12px; line-height:1.3; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
+#careerStatsModal .cmh-position { margin-bottom:8px; white-space:pre-wrap; }
+#careerStatsModal #careerPlayerName { margin:0 0 10px; color:#f9fafc; font:800 clamp(38px,4.4vw,64px)/.98 'Barlow Condensed','Arial Narrow',Impact,sans-serif; text-transform:uppercase; overflow-wrap:anywhere; letter-spacing:-.3px; }
+#careerStatsModal .cmh-team-badge { display:inline-block; max-width:100%; padding:6px 18px; border:1px solid var(--team-edge); border-radius:7px; background:var(--team-surface); box-shadow:inset 0 1px 8px #ffffff0d; color:#fff; font-size:13px; font-weight:700; letter-spacing:.34em; text-transform:uppercase; }
+#careerStatsModal .cmh-actions { grid-column:3; align-self:center; display:grid; gap:12px; }
+#careerStatsModal .cmh-action { display:flex; justify-content:center; align-items:center; gap:16px; min-height:54px; padding:10px 14px; border:1px solid #626873; border-radius:10px; background:linear-gradient(115deg,#ffffff05,#ffffff02),#14171c; box-shadow:inset 0 0 0 1px #ffffff06; color:#f9fafc; font:600 17px/1.2 'Barlow','Segoe UI',sans-serif; cursor:pointer; }
+#careerStatsModal .cmh-action svg { flex:0 0 26px; width:26px; height:26px; }
+#careerStatsModal .cmh-action:hover { border-color:var(--team-edge); background-color:#22262d; }
+#careerStatsModal .cmh-action[aria-pressed="true"] svg { color:var(--team-trim); fill:var(--team-trim); }
+#careerStatsModal .cmh-action-pick { border-color:var(--team-edge); background:linear-gradient(120deg,#ffffff06,#0002),var(--team-surface); }
+#careerStatsModal .cmh-action-pick svg { border-radius:50%; background:#fff; color:var(--team-surface); padding:4px; stroke-width:3px; }
+#careerStatsModal .cmh-action:disabled { cursor:default; opacity:.5; }
+#careerStatsModal .cmh-stats { grid-column:2/4; display:grid; grid-template-columns:.95fr 1.15fr 1fr 1.5fr; align-items:center; gap:20px; padding:21px 0; border-block:1px solid #2b3037; }
+#careerStatsModal .cmh-stat-row { min-width:0; }
+#careerStatsModal .cmh-stat-row + .cmh-stat-row { padding-left:20px; border-left:1px solid #555b64; }
+#careerStatsModal .cmh-stat-val { display:block; margin-top:6px; color:#f6f7f9; font-size:18px; font-weight:600; line-height:1.35; overflow-wrap:anywhere; }
+#careerStatsModal .cmh-season-highlight { grid-column:1/-1; display:grid; grid-template-columns:minmax(210px,290px) repeat(3,minmax(0,1fr)); gap:32px; margin:0; padding:0; border:0; }
+#careerStatsModal .cmh-season-label, #careerStatsModal .cmh-season-tile { position:relative; min-width:0; min-height:122px; padding:16px 24px; border:1px solid #373e48; border-radius:12px; background:linear-gradient(120deg,#ffffff02,#ffffff00 55%),#111519; box-shadow:inset 0 1px 12px #ffffff03; }
+#careerStatsModal .cmh-season-label { display:flex; flex-direction:column; justify-content:center; }
+#careerStatsModal .cmh-season-label strong { margin:3px 0 0; font:700 36px/1.15 'Barlow',sans-serif; }
+#careerStatsModal .cmh-season-label > span:last-child { margin-top:3px; color:#b9bec8; font-size:15px; letter-spacing:.03em; }
+#careerStatsModal .cmh-season-label::after { content:''; position:absolute; bottom:0; left:24px; width:36px; height:5px; background:var(--team-edge); }
+#careerStatsModal .cmh-season-tile { display:flex; align-items:center; justify-content:center; gap:30px; background:linear-gradient(115deg,#ffffff04,#ffffff00),#15191d; overflow:hidden; }
+#careerStatsModal .cmh-season-tile::after { content:''; position:absolute; inset:auto 0 0; height:3px; background:var(--team-trim); }
+#careerStatsModal .cmh-season-tile > svg { flex:0 0 36px; width:36px; height:36px; color:var(--team-edge); }
+#careerStatsModal .cmh-season-tile > div { min-width:0; }
+#careerStatsModal .cmh-season-val { display:block; color:#fafbfd; font:700 50px/1.06 'Barlow',sans-serif; font-variant-numeric:tabular-nums; }
+#careerStatsModal .cmh-season-rank { display:block; margin-top:3px; color:#b9bec8; font-size:15px; letter-spacing:.025em; }
+#careerStatsModal .cmh-injury { grid-column:1/-1; margin:0; }
+#careerStatsModal .career-filters { display:flex; align-items:center; flex-wrap:wrap; gap:24px; margin:18px -6px 14px; padding:16px 24px; border:1px solid #272d34; border-radius:12px; background:#ffffff02; }
+#careerStatsModal .filter-group-career { display:flex; flex-direction:row; align-items:center; flex:1 1 240px; gap:18px; min-width:0; }
+#careerStatsModal .filter-group-career label { flex-shrink:0; color:#b9c0ce; font-size:12px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; }
+#careerStatsModal .filter-group-career select { width:100%; min-width:0; min-height:48px; padding:10px 32px 10px 16px; border:1px solid #4b535f; border-radius:9px; background-color:#0d1014; color:#f6f7f9; font:600 17px/1.2 'Barlow',sans-serif; cursor:pointer; }
+#careerStatsModal .stats-count-badge { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+#careerStatsModal #careerStatsTable { margin:0; padding:0; overflow:auto; border:1px solid #3a414c; border-radius:12px; background:#101316; scrollbar-color:#49515c #101316; }
+#careerStatsModal #careerStatsTable:empty { display:none; }
+#careerStatsModal #careerStatsTable table { width:100%; min-width:690px; margin:0; border-collapse:collapse; table-layout:auto; color:#f6f7f9; font:500 18px/1.3 'Barlow',sans-serif; font-variant-numeric:tabular-nums; }
+#careerStatsModal #careerStatsTable th { position:sticky; top:0; z-index:1; height:41px; padding:10px 16px; background:#20242a; border-bottom:1px solid #424952; color:#c7cedb; font:700 13px/1.2 'Barlow','Segoe UI',sans-serif; letter-spacing:.09em; text-transform:uppercase; text-align:center; white-space:nowrap; }
+#careerStatsModal #careerStatsTable td { height:39px; padding:5px 16px; border-bottom:1px solid #2c333b; color:#f6f7f9; font-size:inherit; font-weight:inherit; text-align:center; white-space:nowrap; }
+#careerStatsModal #careerStatsTable tr { background:#101316; }
+#careerStatsModal #careerStatsTable tr:nth-child(even) { background:#15191d; }
+/* The legacy index.css hover is important; keep its light page color out of this dark table. */
+#careerStatsModal #careerStatsTable tbody tr:hover { background:#20252b !important; box-shadow:none; }
+#careerStatsModal #careerStatsTable .season-col, #careerStatsModal #careerStatsTable .team-col { text-align:left; }
+#careerStatsModal #careerStatsTable .season-col { width:12%; font-weight:600; padding-left:22px; }
+#careerStatsModal #careerStatsTable .team-col { width:15%; max-width:none; min-width:110px; overflow:visible; }
+#careerStatsModal #careerStatsTable .career-team-logo { display:inline-block; width:30px; height:28px; padding:0; margin-right:10px; vertical-align:middle; object-fit:contain; border:0; border-radius:0; background:none; box-shadow:none; filter:drop-shadow(0 0 1px #dbe3ef88); }
+#careerStatsModal #careerStatsTable .career-team-name { color:#c6cbd5; font-size:15px; vertical-align:middle; }
+#careerStatsModal #careerFilters:has(#leagueFilter option[value="nhl"]:checked) ~ #careerStatsTable .league-col { display:none; }
+#careerStatsModal #careerStatsTable tr.current-season { background:linear-gradient(90deg,rgba(var(--team-rgb),.43),rgba(var(--team-rgb),.28)),#101316; font-weight:700; }
+#careerStatsModal #careerStatsTable tr.current-season td { border-block:1px solid var(--team-edge); }
+#careerStatsModal #careerStatsTable tr.current-season td:first-child { box-shadow:inset 5px 0 var(--team-edge); }
+#careerStatsModal #careerStatsTable .career-totals-row { background:#0d1114; font-weight:700; }
+#careerStatsModal #careerStatsTable .career-totals-row td { height:50px; border-top:1px solid var(--team-trim); border-bottom:0; }
+#careerStatsModal #careerStatsTable .career-totals-label { padding-left:22px; text-align:left; text-transform:uppercase; letter-spacing:.025em; }
+#careerStatsModal .no-stats-message { padding:32px 20px; margin:0; color:#c7cedb; text-align:center; }
+#careerStatsModal .career-loading { position:relative; display:grid; grid-template-columns:27% 1fr; gap:28px; min-height:410px; padding-bottom:70px; color:#bec6d3; }
+#careerStatsModal .career-loading > div { border-radius:16px; background:linear-gradient(100deg,#1b2027 20%,#282f38 40%,#1b2027 60%); background-size:300% 100%; animation:careerShimmer 1.8s ease-in-out infinite; }
+#careerStatsModal .cm-skeleton-lines { margin-top:22px; clip-path:polygon(0 0,70% 0,70% 20%,0 20%,0 34%,100% 34%,100% 52%,0 52%,0 68%,100% 68%,100% 100%,0 100%); }
+#careerStatsModal .career-loading > span { position:absolute; bottom:24px; inset-inline:0; text-align:center; }
+@keyframes careerEnter { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes careerShimmer { to { background-position:-150% 0; } }
+@media (max-width:1100px) {
+  #careerStatsModal .career-modal-header { grid-template-columns:220px minmax(0,1fr) 230px; gap:16px 20px; }
+  #careerStatsModal .cmh-season-highlight { grid-template-columns:220px repeat(3,minmax(0,1fr)); gap:20px; }
+  #careerStatsModal .cmh-stat-val { font-size:15px; }
+  #careerStatsModal .cmh-stats { gap:12px; }
+  #careerStatsModal .cmh-stat-row + .cmh-stat-row { padding-left:12px; }
+  #careerStatsModal .cmh-mini-lbl { font-size:10px; }
+  #careerStatsModal .cmh-season-tile { gap:14px; padding:14px; }
+  #careerStatsModal .cmh-season-rank { font-size:12px; }
+  #careerStatsModal .cmh-team-badge { font-size:11px; letter-spacing:.2em; padding-inline:12px; }
+  #careerStatsModal .career-filters { gap:16px; padding:12px; }
+  #careerStatsModal .filter-group-career { gap:10px; flex-basis:220px; }
 }
-.modal-content {
-  position: relative;
-  width: 100%;
-  max-width: 640px;
-  margin: 16px auto;
-  padding: 20px;
-  background: var(--card);
-  border: 1px solid var(--border-light);
-  border-radius: 18px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, .55);
-  animation: modalSlideIn .28s ease;
+@media (max-width:900px) {
+  #careerStatsModal { padding:16px; }
+  #careerStatsModal .career-modal { max-height:calc(100dvh - 32px); }
+  #careerStatsModal .career-profile-body { padding:18px; }
+  #careerStatsModal .career-modal-header { grid-template-columns:200px minmax(0,1fr); grid-template-rows:auto auto auto auto; }
+  #careerStatsModal .cmh-portrait { grid-row:1/3; min-height:260px; }
+  #careerStatsModal .cmh-ident-text { align-self:end; }
+  #careerStatsModal .cmh-actions { grid-column:2; align-self:start; grid-template-columns:1fr 1fr; gap:8px; }
+  #careerStatsModal .cmh-action { font-size:14px; gap:8px; padding-inline:8px; }
+  #careerStatsModal .cmh-stats { grid-column:1/-1; }
+  #careerStatsModal .cmh-season-highlight { grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+  #careerStatsModal .cmh-season-label { grid-column:1/-1; min-height:64px; flex-direction:row; align-items:center; justify-content:flex-start; gap:16px; padding:12px 18px; }
+  #careerStatsModal .cmh-season-label strong { font-size:26px; }
+  #careerStatsModal .cmh-season-label > span:last-child { font-size:13px; }
+  #careerStatsModal .cmh-season-tile { min-height:105px; }
+  #careerStatsModal .cmh-season-val { font-size:42px; }
 }
-.career-modal { max-width: 1100px; }
-
-/* Vit désormais dans .cmh-name-banner (rangée flex), tout à droite —
-   plus une superposition en position absolute sur .modal-content. */
-.close-modal {
-  flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, .28);
-  color: var(--text-main);
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
-  transition: background .2s ease, transform .2s ease;
+@media (max-width:600px) {
+  #careerStatsModal { padding:8px; }
+  #careerStatsModal .career-modal { max-height:calc(100dvh - 16px); border-radius:14px; }
+  #careerStatsModal .cmh-name-banner { min-height:76px; padding:10px 12px; gap:10px; border-radius:13px 13px 0 0; }
+  #careerStatsModal .cmh-banner-logo { transform:none; width:56px; height:52px; }
+  #careerStatsModal #careerBannerName { font-size:28px; }
+  #careerStatsModal .cmh-team-caption { font-size:9px; letter-spacing:.18em; }
+  #careerStatsModal .close-modal { flex-basis:40px; width:40px; height:40px; font-size:28px; }
+  #careerStatsModal .cmh-name-banner::before { right:20px; width:190px; inset-block:-60px; }
+  #careerStatsModal .career-profile-body { padding:14px 12px; }
+  #careerStatsModal .career-modal-header { grid-template-columns:116px minmax(0,1fr); gap:14px 12px; }
+  #careerStatsModal .cmh-portrait { grid-row:1; min-height:152px; border-radius:12px; }
+  #careerStatsModal .cmh-portrait-number { font-size:54px; }
+  #careerStatsModal .cmh-portrait figcaption { height:25px; }
+  #careerStatsModal .cmh-portrait figcaption b { font-size:20px; padding:0 6px; }
+  #careerStatsModal .cmh-portrait figcaption span { font-size:6px; letter-spacing:.08em; padding:0 4px; }
+  #careerStatsModal .player-headshot-container { bottom:20px; inset-inline:-10%; }
+  #careerStatsModal .cmh-ident-text { align-self:center; }
+  #careerStatsModal .cmh-position { font-size:9px; letter-spacing:.1em; margin-bottom:7px; }
+  #careerStatsModal #careerPlayerName { font-size:clamp(29px,7.8vw,44px); margin-bottom:8px; }
+  #careerStatsModal .cmh-team-badge { font-size:9px; padding:5px 7px; letter-spacing:.13em; }
+  #careerStatsModal .cmh-actions { grid-column:1/-1; }
+  #careerStatsModal .cmh-action { min-height:46px; font-size:13px; }
+  #careerStatsModal .cmh-action svg { width:21px; height:21px; flex-basis:21px; }
+  #careerStatsModal .cmh-stats { grid-template-columns:1fr 1fr; gap:16px 12px; padding:16px 0; }
+  #careerStatsModal .cmh-stat-row:nth-child(3) { border-left:0; padding-left:0; }
+  #careerStatsModal .cmh-stat-val { font-size:14px; margin-top:4px; }
+  #careerStatsModal .cmh-mini-lbl { font-size:9px; letter-spacing:.1em; }
+  #careerStatsModal .cmh-season-highlight { gap:8px; }
+  #careerStatsModal .cmh-season-label { gap:10px; flex-wrap:wrap; padding:12px; min-height:64px; }
+  #careerStatsModal .cmh-season-label strong { font-size:24px; }
+  #careerStatsModal .cmh-season-label > span:last-child { font-size:11px; }
+  #careerStatsModal .cmh-season-tile { min-height:104px; gap:6px; padding:10px 6px; justify-content:center; }
+  #careerStatsModal .cmh-season-tile > svg { flex-basis:19px; width:19px; height:25px; }
+  #careerStatsModal .cmh-season-val { font-size:32px; }
+  #careerStatsModal .cmh-season-rank { font-size:10px; letter-spacing:0; }
+  #careerStatsModal .career-filters { margin:14px 0 12px; padding:12px; gap:10px; }
+  #careerStatsModal .filter-group-career { flex-basis:100%; display:grid; grid-template-columns:91px minmax(0,1fr); }
+  #careerStatsModal .filter-group-career label { font-size:10px; letter-spacing:.08em; }
+  #careerStatsModal .filter-group-career select { min-height:44px; font-size:14px; padding-left:10px; }
+  #careerStatsModal #careerStatsTable table { min-width:660px; font-size:14px; }
+  #careerStatsModal #careerStatsTable td, #careerStatsModal #careerStatsTable th { padding-inline:12px; }
+  #careerStatsModal .career-loading { min-height:460px; grid-template-columns:35% 1fr; gap:14px; }
 }
-.close-modal:hover { background: rgba(0, 0, 0, .45); transform: rotate(90deg); }
-
-.modal-content h2 { margin-bottom: 6px; font-size: 1.3rem; color: var(--text-main); }
-.modal-content h3 {
-  margin-bottom: 14px;
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-/* ---------- Bandeau du nom, aux couleurs de l'équipe ----------
-   Nouvelle première rangée de la carte, au-dessus de .career-modal-header
-   — c'est donc elle qui porte les coins arrondis du haut désormais.
-   --team-primary / --team-secondary sont posées en ligne par JS via
-   getTeamColors() (teamColors.js) : même source que les cartes de
-   repêchage (voir DESIGN.md, « Real Teams Only Rule ») — jamais de
-   couleur inventée, et le repli neutre de getTeamColors() couvre déjà le
-   joueur sans équipe courante. Fond uni + liseré bas dans la secondaire :
-   même convention que --team-accent sur la carte de choix.
-   Le blanc du nom est littéral (demande explicite), avec une ombre portée
-   sombre pour rester lisible même sur les couleurs primaires claires
-   (BOS/NSH/PIT jaune, VGK doré, UTA bleu pâle) où un blanc nu manquerait
-   de contraste.
-   Rangée flex : le bouton de fermeture (.close-modal) vit maintenant ici,
-   après le nom dans le HTML, poussé tout à droite par `justify-content:
-   space-between` plutôt que superposé en position absolute sur toute la
-   carte. */
-.cmh-name-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin: -20px -20px 0;
-  padding: 12px 20px 10px;
-  border-radius: 18px 18px 0 0;
-  background: var(--team-primary, var(--bg-gray-light));
-  border-bottom: 3px solid var(--team-secondary, var(--border-light));
-}
-.cmh-name-banner h2 {
-  margin: 0;
-  min-width: 0;
-  font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
-  font-size: 1.5rem;
-  font-weight: 400; /* Bebas Neue est nativement grasse */
-  line-height: 1;
-  letter-spacing: .4px;
-  text-transform: uppercase;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, .55), 0 0 10px rgba(0, 0, 0, .3);
-  overflow-wrap: break-word;
-}
-
-.career-modal-header {
-  margin: 0 -20px 14px;
-  padding: 20px;
-  background:
-    linear-gradient(135deg, rgba(var(--primary-rgb), .14), rgba(var(--primary-rgb), 0) 65%),
-    var(--bg);
-  border-bottom: 1px solid var(--border-light);
-}
-/* ---------- Identité : photo agrandie + nom, une seule rangée ---------- */
-.cmh-identity {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-.player-headshot-container {
-  flex: 0 0 auto;
-  width: 116px;
-  height: 116px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 14px;
-  overflow: hidden;
-  background: var(--bg-gray-light);
-  border: 2px solid var(--primary);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, .4);
-}
-.player-headshot-container img { width: 100%; height: 100%; object-fit: cover; }
-.player-headshot-container .no-photo { color: var(--text-light-gray); font-size: 2rem; }
-
-.cmh-ident-text { flex: 1; min-width: 0; }
-.cmh-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 6px;
-}
-.cmh-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 6px;
-  background: rgba(var(--primary-rgb), .13);
-  font-size: .66rem;
-  font-weight: 800;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--text-main);
-}
-.cmh-chip:empty { display: none; }
-/* rgb(168,168,176) = --text-secondary (#A8A8B0) actuel ; littéral pour la
-   même raison qu'ailleurs (color-mix() indisponible sur d'assez vieux
-   mobiles), donc pas mis à jour automatiquement par la palette. */
-.cmh-chip-team { background: rgba(168, 168, 176, .16); }
-/* Le JS injecte le logo de l'équipe dans #careerPlayerTeam. index.css le
-   dimensionnait via `.player-position-team img`, sélecteur qui ne
-   s'applique plus ici : sans cette règle, l'image s'affiche à sa taille
-   naturelle et fait exploser la hauteur de l'en-tête. */
-/* Même traitement dans le jeton d'équipe, mais à taille réduite : la
-   pastille doit rester compacte à côté du nom du joueur. */
-.cmh-chip img {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1px solid var(--border-gray);
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-  padding: 1px;
-  object-fit: contain;
-  vertical-align: middle;
-}
-.cmh-chip > span { display: inline-flex; align-items: center; gap: 4px; }
-
-/* ---------- Libellé minuscule commun ---------- */
-.cmh-mini-lbl {
-  display: block;
-  font-size: .58rem;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--text-gray);
-}
-
-/* ---------- Liste compacte des informations secondaires ----------
-   Remplace l'ancienne grille de cellules (.cmh-grid/.cmh-cell) : deux
-   colonnes (.cmh-stats-col) côte à côte plutôt qu'une pile pleine
-   largeur — même nombre de faits, environ moitié moins de hauteur.
-   Libellé au-dessus de la valeur dans chaque rangée (pas côte à côte) :
-   une fois la largeur coupée en deux, une rangée libellé/valeur sur une
-   ligne n'a plus la place de respirer. Vit sous .cmh-chips, dans la
-   même colonne que le nom, à côté de la photo agrandie. */
-.cmh-stats {
-  display: flex;
-  gap: 16px;
-  margin-top: 8px;
-  padding-top: 7px;
-  border-top: 1px solid var(--border-light);
-}
-.cmh-stats-col {
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.cmh-stat-row { min-width: 0; }
-.cmh-stat-row .cmh-mini-lbl { margin-bottom: 1px; }
-.cmh-stat-val {
-  display: block;
-  font-size: .72rem;
-  font-weight: 700;
-  line-height: 1.25;
-  color: var(--text-main);
-  overflow-wrap: break-word;
-}
-.cmh-stat-sep { color: var(--text-main); font-weight: 700; margin: 0 4px 0 0; }
-/* Repêchage : chaîne plus longue que les autres rangées (année, tour,
-   choix, équipe) — un cran plus petit pour rester sur une seule ligne. */
-#playerDraft { font-size: .64rem; }
-/* Lieu : une seule ligne, jamais de retour. L'état/province est déjà
-   abrégé côté JS (PROV_ABBR dans draftActif.js/index.js — Ontario → ON) ;
-   ceci tronque la ville avec des points de suspension si le résultat ne
-   tient toujours pas (grandes villes, pays sans abréviation connue). */
-#playerBirthPlace {
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ---------- Faits saillants de la saison en cours ----------
-   Pleine largeur, sous .cmh-identity (photo + colonne d'identité) plutôt
-   qu'à côté — trois chiffres ont besoin de respirer, pas d'être coincés
-   contre la vignette. Peuplé par JS depuis `currentStats` ; masqué au
-   repos et si le joueur n'a pas de ligne dans les statistiques courantes
-   (voir le commentaire au-dessus de #careerSeasonHighlight dans le HTML). */
-.cmh-season-highlight {
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border-light);
-}
-.cmh-season-label {
-  font-size: .56rem;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--text-gray);
-  margin-bottom: 4px;
-}
-.cmh-season-tiles {
-  display: flex;
-}
-.cmh-season-tile {
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  padding: 0 6px;
-  text-align: center;
-}
-.cmh-season-tile + .cmh-season-tile { border-left: 1px solid var(--border-light); }
-.cmh-season-tile .cmh-mini-lbl { text-align: center; }
-.cmh-season-val {
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 1.3rem;
-  font-weight: 700;
-  line-height: 1.1;
-  color: var(--text-main);
-}
-.cmh-season-rank {
-  font-size: .62rem;
-  font-weight: 600;
-  color: var(--text-gray);
-  white-space: nowrap;
-}
-
-.loading-spinner {
-  padding: 34px 16px;
-  text-align: center;
-  font-size: .95rem;
-  color: var(--text-secondary);
-}
-
-/* ---------- Filtres de carrière ---------- */
-.career-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.filter-group-career {
-  flex: 1 1 140px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.filter-group-career label {
-  font-size: .66rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  color: var(--text-secondary);
-}
-.filter-group-career select {
-  padding: 6px 9px;
-  min-height: 34px;
-  border: 1px solid var(--border-gray);
-  border-radius: 9px;
-  background: var(--bg-gray-light);
-  color: var(--text-main);
-  font-size: .8rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.filter-group-career select:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
-/* Compteur de saisons retiré : il répétait ce que le tableau montre déjà,
-   et sur téléphone il occupait à lui seul une rangée entière du bloc de
-   filtres — 40px pris sur la hauteur du tableau.
-
-   L'élément reste dans le DOM : filterCareerStats() et showGameLog() y
-   écrivent, et ces fonctions vivent dans du JS minifié côté draftActif.
-
-   `!important` est ici le seul recours : en passant à l'historique de match,
-   handleViewChange() applique `statsCountBadge.style.display = "block"`, et
-   une déclaration inline l'emporte sur toute règle de classe. */
-.stats-count-badge { display: none !important; }
-
-/* ---------- Tableau de carrière ---------- */
-#careerStatsTable {
-  margin-top: 14px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border: 1px solid var(--border-light);
-  border-radius: 12px;
-}
-#careerStatsTable table {
-  width: 100%;
-  min-width: 620px;
-  border-collapse: collapse;
-  font-size: .76rem;
-  font-variant-numeric: tabular-nums;
-}
-#careerStatsTable th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  /* Densité « nano » : le tableau est le contenu principal de la modale,
-     on lui rend la hauteur économisée sur l'en-tête. */
-  padding: 6px 6px;
-  background: rgba(var(--primary-rgb), .35);
-  color: var(--text-main);
-  font-size: .64rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .4px;
-  text-align: center;
-  white-space: nowrap;
-}
-#careerStatsTable td {
-  padding: 4px 6px;
-  text-align: center;
-  border-bottom: 1px solid var(--border-light);
-  color: var(--text-dark);
-  white-space: nowrap;
-}
-#careerStatsTable tbody tr { height: 32px; }
-#careerStatsTable tbody tr:hover { background: rgba(var(--primary-rgb), .07); }
-#careerStatsTable tr.nhl-season { background: rgba(var(--primary-rgb), .05); }
-#careerStatsTable tr.current-season { background: rgba(var(--primary-rgb), .12); font-weight: 800; }
-#careerStatsTable .season-col { font-weight: 800; color: var(--text-main); }
-#careerStatsTable .league-col { font-size: .76rem; color: var(--text-secondary); }
-/* Le JS construit `teams/${e.team}.png` où e.team est le NOM COMPLET
-   renvoyé par l'API (« Anaheim Ducks ») et non l'abréviation : le fichier
-   n'existe pas et l'image tombe sur son texte alternatif. Défaut de
-   données antérieur, dans du JS minifié — non corrigé ici.
-   On borne donc les vrais logos par la hauteur (largeur libre) et on rend
-   le texte alternatif lisible sur une seule ligne : le nom de l'équipe
-   reste affiché, sans gonfler la rangée. */
-#careerStatsTable td.team-col img {
-  width: auto;
-  object-fit: contain;
-  vertical-align: middle;
-  font-size: .6rem;
-  font-weight: 700;
-  line-height: 1.1;
-  color: var(--text-secondary);
-}
-/* Colonne « Ligue » masquée quand le filtre vaut « NHL seulement » : toutes
-   les lignes y afficheraient la même valeur. Elle réapparaît dès qu'on
-   élargit le filtre (Toutes les ligues / Autres ligues).
-
-   Fait en CSS pur via :has() plutôt qu'en modifiant filterCareerStats(),
-   qui vit dans du JS minifié. #careerFilters précède #careerStatsTable
-   parmi ses frères, d'où le combinateur ~.
-
-   Si :has() n'est pas reconnu, la règle est ignorée et la colonne reste
-   visible — dégradation sans casse. */
-#careerFilters:has(#leagueFilter option[value="nhl"]:checked)
-  ~ #careerStatsTable .league-col {
-  display: none;
-}
-
-.career-totals-row { background: rgba(var(--primary-rgb), .14); font-weight: 800; }
-.career-totals-row td { border-top: 2px solid var(--primary); color: var(--text-main); }
-.career-totals-label { text-align: left; text-transform: uppercase; letter-spacing: .5px; }
-
-/* La modale ne défile pas : elle tient dans la fenêtre et c'est le tableau
-   qui défile en son sein. Auparavant `.modal-content` débordait de sa
-   hauteur maximale et c'était le calque de fond qui prenait le défilement,
-   emportant l'en-tête du joueur hors de vue.
-
-   La hauteur maximale retranche le rembourrage du calque (12px) ET la marge
-   de `.modal-content` (16px), en haut comme en bas : les compter pour rien
-   laissait 56px de débordement. */
-.career-modal {
-  display: flex;
-  flex-direction: column;
-  height: auto;
-  max-height: calc(100dvh - 56px);
-  overflow: hidden;
-}
-.cmh-name-banner, .career-modal-header { flex: 0 0 auto; }
-/* `flex: 0 1 auto` : le tableau se rétracte quand la place manque, mais ne
-   s'étire jamais — une seule saison ne doit pas occuper la hauteur de dix.
-   `min-height: 0` autorise cette rétraction en contexte flex, sans quoi la
-   taille du contenu ferait plancher et le débordement reviendrait. */
-#careerStatsTable {
-  flex: 0 1 auto;
-  min-height: 0;
-  overflow: auto;
-}
-
-.career-filters {
-  overflow: visible;
-  flex-wrap: wrap;
-  flex: 0 0 auto;
-}
-.career-filters > * { min-width: 0; }
-.filter-group-career { flex: 1 1 132px; min-width: 0; }
-@media (min-width: 600px) {
-  /* Sans `flex-grow: 0`, deux groupes suffisent à remplir la ligne et
-     repoussent le troisième sur une seconde rangée. */
-  .filter-group-career { flex: 0 1 200px; }
-}
-
-@media (min-width: 600px) {
-  .player-headshot-container { width: 152px; height: 152px; border-radius: 18px; }
-  .player-headshot-container .no-photo { font-size: 2.6rem; }
-  .cmh-name-banner { padding: 14px 20px 12px; }
-  .cmh-name-banner h2 { font-size: 1.9rem; letter-spacing: .6px; }
-  .cmh-identity { gap: 18px; }
-  .cmh-chip { font-size: .7rem; padding: 3px 9px; }
-  .cmh-stats { gap: 22px; margin-top: 10px; padding-top: 9px; }
-  .cmh-stats-col { gap: 6px; }
-  .cmh-stat-row .cmh-mini-lbl { font-size: .62rem; }
-  .cmh-stat-val { font-size: .82rem; }
-  #playerDraft { font-size: .72rem; }
-  .cmh-season-highlight { margin-top: 12px; padding-top: 10px; }
-  .cmh-season-label { font-size: .6rem; margin-bottom: 6px; }
-  .cmh-season-val { font-size: 1.6rem; }
-  .cmh-season-rank { font-size: .7rem; }
-}
-
-@media (min-width: 1024px) {
-  .modal { padding: 26px; }
-  .modal-content { margin: 24px auto; padding: 24px; }
-  /* En-tête resserré (padding vertical + marge basse réduits) : la photo et
-     l'identité du joueur cèdent de la hauteur à #careerStatsTable, contenu
-     principal de la modale sur desktop. */
-  .career-modal-header { margin: 0 -24px 10px; padding: 16px 24px; }
-  /* Rembourrage et marge changent ici : la hauteur maximale suit. */
-  .career-modal { max-height: calc(100dvh - 100px); }
-  /* 184px → 144px : la rangée .cmh-identity était dictée par la hauteur de
-     la photo alors que le texte à côté (chips + stats) tient dans bien
-     moins ; ce cran redonne l'écart au tableau sans rogner le texte. */
-  .player-headshot-container { width: 144px; height: 144px; border-radius: 16px; border-width: 3px; }
-  .player-headshot-container .no-photo { font-size: 2.6rem; }
-  .cmh-name-banner { margin: -24px -24px 0; padding: 12px 24px 10px; }
-  .cmh-name-banner h2 { font-size: 2.1rem; letter-spacing: .8px; }
-  .cmh-identity { gap: 22px; }
-  .cmh-season-val { font-size: 1.9rem; }
-  .cmh-season-highlight { margin-top: 8px; padding-top: 8px; }
-}
-
-/* ---- Logo d'équipe dans le tableau de carrière ----
-   Posé par careerTeamLogo.js, partagé par les deux pages. */
-#careerStatsTable td.team-col {
-  white-space: nowrap;
-}
-/* Pastille blanche cerclée, comme les badges d'équipe du reste du site.
-   Sans ce fond, les logos sombres (Oilers, Bruins, Kings…) étaient
-   illisibles sur le thème sombre.
-   Le `position: absolute; bottom/right` du modèle d'origine n'est pas
-   repris : là-bas le logo est un badge posé sur une photo, ici il est dans
-   le flux d'une cellule de tableau et sortirait de la mise en page. */
-#careerStatsTable .career-team-logo {
-  width: var(--d-photo-logo);
-  height: var(--d-photo-logo);
-  border-radius: 50%;
-  border: 2px solid var(--border-gray);
-  background: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  padding: 2px;
-  object-fit: contain;
-  vertical-align: middle;
-}
-#careerStatsTable .career-team-name {
-  vertical-align: middle;
-  font-size: .74rem;
-}
-
-/* ============================================================
-   SQUELETTE DE CHARGEMENT
-   ------------------------------------------------------------
-   Il calque la structure réelle de la modale : en-tête à fond
-   débordant, grille d'informations, filtres, tableau à en-tête.
-
-   Le squelette générique de skeleton-loader.css ne correspondait à
-   rien de ce qui s'affiche ensuite — avatar rond de 120px là où la
-   photo est un carré arrondi de 48px, six cellules sur une seule
-   colonne là où la grille en compte quatre sur deux, aucun
-   emplacement pour les filtres ni pour l'en-tête du tableau. La
-   modale sautait de 345px à l'arrivée des données sur draftActif
-   en 390px.
-
-   Les valeurs ci-dessous reprennent celles des sélecteurs réels
-   plus haut dans ce fichier ; toute retouche de l'un doit suivre
-   dans l'autre.
-
-   Le squelette reste en `display: block` : le JS des deux pages
-   l'affiche par `style.display = "block"`, qui l'emporterait sur
-   toute autre valeur posée ici.
-   ============================================================ */
-.career-skeleton {
-  flex: 0 1 auto;
-  min-height: 0;
-  overflow: hidden;
-}
-
-/* ---- Bandeau du nom : calque .cmh-name-banner ----
-   Neutre au chargement (pas encore de couleur d'équipe à afficher) — le
-   fond vient de .cs-header .skeleton comme le reste du squelette. */
-.cs-name-banner {
-  margin: -20px -20px 0;
-  padding: 12px 20px 10px;
-  border-radius: 18px 18px 0 0;
-  border-bottom: 3px solid var(--border-light);
-}
-.cs-name-bar { height: 20px; width: min(60%, 220px); border-radius: 5px; }
-
-/* ---- En-tête : calque .career-modal-header ---- */
-.cs-header {
-  margin: 0 -20px 14px;
-  padding: 20px;
-  background:
-    linear-gradient(135deg, rgba(var(--primary-rgb), .14), rgba(var(--primary-rgb), 0) 65%),
-    var(--bg);
-  border-bottom: 1px solid var(--border-light);
-}
-/* Le degrade de .skeleton part de --bg, qui est aussi le fond de
-   .cs-header : au repos les blocs y disparaissent et seule la lueur qui
-   passe les revele. On repart donc du fond des cellules reelles. */
-.cs-header .skeleton, .cs-name-banner .skeleton {
-  background-image: linear-gradient(90deg,
-    var(--bg-odd-row) 0, var(--card-white) 20%, var(--bg-odd-row) 40%, var(--bg-odd-row) 100%);
-}
-.cs-identity { display: flex; align-items: center; gap: 12px; }
-.cs-photo { flex: 0 0 auto; width: 116px; height: 116px; border-radius: 14px; }
-.cs-ident-text { flex: 1; min-width: 0; }
-.cs-chips { display: flex; gap: 5px; margin-top: 6px; }
-.cs-chip { width: 46px; height: 20px; border-radius: 5px; }
-
-/* ---- Liste d'informations : calque .cmh-stats / .cmh-stats-col ---- */
-.cs-stats {
-  display: flex;
-  gap: 16px;
-  margin-top: 8px;
-  padding-top: 7px;
-  border-top: 1px solid var(--border-light);
-}
-.cs-stats-col {
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.cs-stat-row { height: 12px; border-radius: 6px; }
-.cs-stats-col:nth-child(1) .cs-stat-row:nth-child(1) { width: 75%; }
-.cs-stats-col:nth-child(1) .cs-stat-row:nth-child(2) { width: 55%; }
-.cs-stats-col:nth-child(2) .cs-stat-row:nth-child(1) { width: 85%; }
-.cs-stats-col:nth-child(2) .cs-stat-row:nth-child(2) { width: 65%; }
-
-/* ---- Faits saillants de saison : calque .cmh-season-highlight ---- */
-.cs-season {
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border-light);
-}
-.cs-season-label { width: 90px; height: 9px; border-radius: 4px; margin-bottom: 8px; }
-.cs-season-tiles { display: flex; }
-.cs-season-tile {
-  flex: 1 1 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  padding: 0 6px;
-}
-.cs-season-tile + .cs-season-tile { border-left: 1px solid var(--border-light); }
-.cs-season-num { width: 28px; height: 18px; border-radius: 4px; }
-.cs-season-rk { width: 40px; height: 9px; border-radius: 4px; }
-
-/* ---- Filtres : calque .career-filters / .filter-group-career ---- */
-/* 51px : hauteur mesuree d'un .filter-group-career (etiquette 14 + ecart 3
-   + menu 34). */
-/* Le rembourrage vertical vient d'une autre feuille appliquee a
-   .career-filters (8px, 10px des 600px) : sans lui le squelette est 17px
-   trop court. */
-.cs-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px 0;
-  margin-bottom: 10px;
-}
-.cs-filter { flex: 1 1 132px; height: 51px; border-radius: 9px; }
-
-/* ---- Tableau : calque #careerStatsTable ---- */
-.cs-table {
-  margin-top: 14px;
-  border: 1px solid var(--border-light);
-  border-radius: 12px;
-  overflow: hidden;
-}
-.cs-thead { height: 27px; background: rgba(var(--primary-rgb), .35); }
-.cs-row {
-  display: grid;
-  grid-template-columns: 1.3fr .9fr repeat(7, minmax(0, 1fr));
-  gap: 6px;
-  align-items: center;
-  height: 38px;
-  padding: 0 6px;
-  border-bottom: 1px solid var(--border-light);
-}
-.cs-row:last-child { border-bottom: 0; }
-/* Les cellules ne portent pas la classe .skeleton — trop de balisage pour
-   neuf colonnes sur six rangées ; le dégradé est repris ici, avec la même
-   animation `shimmer` que skeleton-loader.css déclare globalement. */
-.cs-row i {
-  height: 11px;
-  border-radius: 4px;
-  background: linear-gradient(90deg, var(--bg) 0, var(--card) 20%, var(--bg) 40%, var(--bg) 100%);
-  background-size: 1000px 100%;
-  animation: shimmer 2s infinite;
-}
-
-@media (min-width: 600px) {
-  .cs-name-banner { padding: 14px 20px 12px; }
-  .cs-name-bar { height: 24px; }
-  .cs-identity { gap: 18px; }
-  .cs-photo { width: 152px; height: 152px; border-radius: 18px; }
-  .cs-stats { gap: 22px; margin-top: 10px; padding-top: 9px; }
-  .cs-stats-col { gap: 10px; }
-  .cs-stat-row { height: 14px; }
-  .cs-filters { padding: 10px 0; }
-  .cs-filter { flex: 0 1 200px; }
-  .cs-row { height: 32px; }
-  .cs-season { margin-top: 12px; padding-top: 10px; }
-  .cs-season-num { width: 34px; height: 22px; }
-}
-@media (min-width: 1024px) {
-  .cs-name-banner { margin: -24px -24px 0; padding: 16px 24px 14px; }
-  .cs-name-bar { height: 28px; }
-  .cs-header { margin: 0 -24px 16px; padding: 24px; }
-  .cs-identity { gap: 22px; }
-  .cs-photo { width: 184px; height: 184px; border-radius: 18px; }
-  .cs-season-num { width: 38px; height: 26px; }
-}
-
-/* Mouvement réduit : la lueur défilante devient un simple aplat. */
-@media (prefers-reduced-motion: reduce) {
-  .cs-row i { animation: none; }
+@media (prefers-reduced-motion:reduce) {
+  #careerStatsModal .career-modal, #careerStatsModal .career-loading > div { animation:none; }
 }

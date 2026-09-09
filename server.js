@@ -190,6 +190,21 @@ const poolsPublics = (data) => {
     return publics;
 };
 
+/**
+ * Qui a cree ce pool.
+ *
+ * Champ explicite sur les pools recents ; pour ceux nes avant que le champ
+ * existe, le premier membre d'Equipe 1 — c'est la personne que /create-clan
+ * y a deposee automatiquement. Renvoie null si meme ce repli est vide, et
+ * l'appelant refuse alors l'action plutot que de l'ouvrir a tout le monde.
+ */
+const createurDuPool = (clan) => {
+    if (!clan || typeof clan !== "object") return null;
+    if (clan.creator) return clan.creator;
+    const equipe1 = clan.teams && clan.teams["Équipe 1"];
+    return (equipe1 && Array.isArray(equipe1.members) && equipe1.members[0]) || null;
+};
+
 const saveDraftData = async (data) => {
     if (USE_POSTGRES) {
         try {
@@ -705,10 +720,7 @@ app.post("/skip-turn", async (req, res) => {
     const clan = draftData[clanName];
     if (!clan) return res.status(404).json({ message: "Pool introuvable." });
 
-    // Le créateur : champ explicite sur les pools récents, premier membre
-    // d'Équipe 1 pour ceux créés avant que le champ existe.
-    const equipe1 = clan.teams && clan.teams["Équipe 1"];
-    const createur = clan.creator || (equipe1 && equipe1.members && equipe1.members[0]) || null;
+    const createur = createurDuPool(clan);
     if (!createur || createur !== username) {
         return res.status(403).json({ message: "Seule la personne qui a créé le pool peut sauter un tour." });
     }
@@ -1474,6 +1486,139 @@ app.post("/rename-team", async (req, res) => {
     }
 });
 
+/* ✏️ Renommer un pool — réservé à la personne qui l'a créé.
+ *
+ * Le nom d'un pool n'est pas une étiquette posée à côté des données : c'est
+ * la clé sous laquelle elles vivent, dans draftData comme en base. Le changer
+ * demande donc de déplacer l'entrée entière, puis de suivre le nom partout
+ * où il a été recopié — les échanges le portent dans `draftName`, les annonces
+ * et les relevés de rang dans leur colonne `pool_name`. Un renommage à
+ * moitié fait ferait disparaître l'historique d'échanges du pool.
+ *
+ * L'ordre des clés de draftData est reconstruit à l'identique : /draft le
+ * diffuse tel quel et plusieurs écrans s'appuient sur cet ordre.
+ */
+app.post("/rename-pool", async (req, res) => {
+    try {
+        const { oldName, newName, username } = req.body;
+
+        if (!oldName || !newName || !username) {
+            return res.status(400).json({ message: "Paramètres manquants." });
+        }
+
+        const draftData = await loadDraftData();
+        const clan = draftData[oldName];
+        if (!clan) return res.status(404).json({ message: "Pool introuvable." });
+
+        const createur = createurDuPool(clan);
+        if (!createur || createur !== username) {
+            return res.status(403).json({
+                message: "Seule la personne qui a créé le pool peut le renommer."
+            });
+        }
+
+        const propre = String(newName).trim();
+
+        if (propre === oldName) {
+            return res.status(400).json({ message: "Le nouveau nom est identique à l'ancien." });
+        }
+        if (propre.length < 3 || propre.length > 30) {
+            return res.status(400).json({
+                message: "Le nom du pool doit contenir entre 3 et 30 caractères."
+            });
+        }
+        if (!/^[\p{L}\p{N}\s'\-_]+$/u.test(propre)) {
+            return res.status(400).json({ message: "Nom invalide. Caractères non autorisés." });
+        }
+        if (contientGrossierete(propre)) {
+            return res.status(400).json({
+                message: "Ce nom de pool contient un terme inapproprié. Choisissez-en un autre."
+            });
+        }
+        // Comparaison insensible à la casse et aux accents : deux pools qui ne
+        // se distinguent que par un accent seraient impossibles à téléphoner.
+        const reduire = t => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        const collision = Object.keys(draftData).some(
+            nom => nom !== oldName && reduire(nom) === reduire(propre)
+        );
+        if (collision) {
+            return res.status(400).json({ message: "Un pool porte déjà ce nom." });
+        }
+
+        if (USE_POSTGRES) {
+            const resultat = await db.renamePool(oldName, propre);
+            if (!resultat.ok) {
+                return res.status(resultat.raison === 'existe' ? 400 : 404).json({
+                    message: resultat.raison === 'existe'
+                        ? "Un pool porte déjà ce nom."
+                        : "Pool introuvable."
+                });
+            }
+        }
+
+        // Même en Postgres on refait le tour en mémoire : loadDraftData() a pu
+        // servir depuis le fichier de repli, et saveDraftData() réécrit ensuite
+        // l'ensemble. La clé est reposée à sa place d'origine.
+        const reconstruit = {};
+        for (const [nom, donnees] of Object.entries(draftData)) {
+            if (nom === oldName) reconstruit[propre] = donnees;
+            else reconstruit[nom] = donnees;
+        }
+        for (const nom of Object.keys(draftData)) delete draftData[nom];
+        Object.assign(draftData, reconstruit);
+
+        await saveDraftData(draftData);
+
+        // L'ancienne entrée survivrait à côté de la nouvelle : saveDraftData()
+        // écrit pool par pool et ne supprime jamais rien.
+        if (USE_POSTGRES) {
+            try { await db.deletePool(oldName); } catch (e) {
+                console.error("Suppression de l'ancienne clé impossible :", e);
+            }
+        }
+
+        // Les échanges portent le nom du pool dans `draftName`. En Postgres
+        // db.renamePool() s'en est chargé ; en mode fichier c'est ici.
+        if (!USE_POSTGRES) {
+            try {
+                const trades = await loadTrades();
+                let touche = false;
+                const suivre = liste => {
+                    if (!Array.isArray(liste)) return;
+                    liste.forEach(t => {
+                        if (t && t.draftName === oldName) { t.draftName = propre; touche = true; }
+                        if (t && t.poolName === oldName) { t.poolName = propre; touche = true; }
+                    });
+                };
+                // Deux formes coexistent : à plat ({completed, pending}) dans le
+                // fichier, groupée par pool quand elle vient de la base.
+                suivre(trades.completed);
+                suivre(trades.pending);
+                Object.entries(trades).forEach(([cle, valeur]) => {
+                    if (cle === 'completed' || cle === 'pending' || !valeur) return;
+                    suivre(valeur.completed);
+                    suivre(valeur.pending);
+                    if (cle === oldName) { trades[propre] = valeur; delete trades[cle]; touche = true; }
+                });
+                if (touche) await saveTrades(trades);
+            } catch (erreur) {
+                console.error("Renommage des échanges impossible :", erreur);
+            }
+        }
+
+        // `draftUpdated` suffit à ramener tout le monde : les autres membres
+        // voient l'ancienne clé disparaître, et activePool.js retombe alors
+        // sur le pool par défaut — qui fait passer un repêchage en cours
+        // devant tout le reste, donc le pool renommé lui-même.
+        io.emit("draftUpdated", poolsPublics(draftData));
+
+        res.json({ message: `Pool renommé en « ${propre} ».`, newName: propre });
+    } catch (error) {
+        console.error("Erreur /rename-pool:", error);
+        res.status(500).json({ message: "Erreur serveur." });
+    }
+});
+
 // 🔒 Route d'inscription
 app.post("/signup", async (req, res) => {
     try {
@@ -1793,25 +1938,54 @@ app.post("/upload/user-avatar", uploadAvatar.single('avatar'), async (req, res) 
     }
 });
 
-// POST /upload/pool-image — multipart, field "image", body param "poolName"
+// POST /upload/pool-image — multipart, field "image", body params
+// "poolName" et "username".
+//
+// L'image d'un pool n'appartient qu'à la personne qui l'a créé : sans ce
+// contrôle, n'importe quel compte pouvait remplacer la vignette de n'importe
+// quelle ligue. La création appelle cette route juste après /create-clan,
+// donc le pool existe déjà et son créateur est connu.
 app.post("/upload/pool-image", uploadPool.single('image'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ message: "Aucun fichier reçu." });
-        const { poolName } = req.body;
+        const { poolName, username } = req.body;
         if (!poolName) return res.status(400).json({ message: "Nom du pool requis." });
 
         const imageUrl = `/uploads/pools/${req.file.filename}`;
         const draftData = await loadDraftData();
-        if (!draftData[poolName]) return res.status(404).json({ message: "Pool non trouvé." });
+        const clan = draftData[poolName];
+
+        // multer a déjà écrit le fichier sur le disque quand ce gestionnaire
+        // s'exécute : un refus laisserait un orphelin que plus rien ne
+        // référence. On le retire avant de répondre.
+        const jeter = () => {
+            try {
+                const chemin = path.join(__dirname, 'uploads', 'pools', req.file.filename);
+                if (fs.existsSync(chemin)) fs.unlinkSync(chemin);
+            } catch (e) {
+                console.error("Nettoyage de l'image refusée impossible :", e);
+            }
+        };
+
+        if (!clan) { jeter(); return res.status(404).json({ message: "Pool non trouvé." }); }
+
+        const createur = createurDuPool(clan);
+        if (!createur || createur !== username) {
+            jeter();
+            return res.status(403).json({
+                message: "Seule la personne qui a créé le pool peut changer son image."
+            });
+        }
 
         // Delete old image if present
-        if (draftData[poolName].imageUrl && draftData[poolName].imageUrl.startsWith('/uploads/')) {
-            const oldPath = path.join(__dirname, draftData[poolName].imageUrl);
+        if (clan.imageUrl && clan.imageUrl.startsWith('/uploads/')) {
+            const oldPath = path.join(__dirname, clan.imageUrl);
             if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
         }
 
-        draftData[poolName].imageUrl = imageUrl;
+        clan.imageUrl = imageUrl;
         await saveDraftData(draftData);
+        io.emit("draftUpdated", poolsPublics(draftData));
 
         res.json({ imageUrl });
     } catch (error) {
@@ -3920,6 +4094,7 @@ app.get('/player-career/:playerId', async (req, res) => {
             headshot,
             teamLogo,
             currentTeam,
+            sweaterNumber: data.sweaterNumber ?? null,
             seasons: formattedSeasons,
             // Bio details
             height: heightFeetInches,

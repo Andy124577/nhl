@@ -74,6 +74,12 @@
 .rp-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
 .rp-btn {
+    /* « Gérer mon équipe » est un <button> — il ouvre le panneau de réglages
+       sur place — et doit rester identique aux <a> qui l'entourent. Un bouton
+       n'hérite ni de la police du document ni de son alignement. */
+    font-family: inherit;
+    text-align: center;
+    background: none;
     padding: 11px 20px;
     border-radius: 11px;
     font-weight: 800;

@@ -444,7 +444,9 @@ function renderInjuryBanner(playerName, teamAbbrev, elementId) {
         banner.hidden = true;
         banner.innerHTML = '';
         loadInjuries().then(() => {
-            if (banner.dataset.player === String(playerName || '')) {
+            // A failed request leaves ready=false. Re-entering immediately
+            // would recurse through the settled promise and freeze the modal.
+            if (injState.ready && banner.dataset.player === String(playerName || '')) {
                 renderInjuryBanner(playerName, teamAbbrev, elementId);
             }
         });
