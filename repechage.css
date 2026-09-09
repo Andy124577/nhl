@@ -185,3 +185,76 @@
     .rp-roster-members { text-align: left; }
     .rp-roster-item { flex-wrap: wrap; }
 }
+
+/* ============================================================
+   LES PLACES — qui attend, et ce qu'il reste à remplir
+   ------------------------------------------------------------
+   L'écran d'attente ne donnait qu'un compteur. Ces pastilles nomment
+   les inscrits et dessinent les places vides en pointillé : la file se
+   lit alors d'un coup d'œil, et chaque arrivée se voit.
+   ============================================================ */
+.rp-seats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.rp-seat {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px 5px 5px;
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    background: var(--card);
+    font-size: .82rem;
+    color: var(--text-main);
+}
+.rp-seat-ini {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: rgba(var(--primary-rgb), .18);
+    color: var(--primary);
+    font-size: .68rem;
+    font-weight: 800;
+}
+.rp-seat-nom {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.rp-seat.is-me { border-color: var(--primary); }
+.rp-seat-toi {
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: var(--bg);
+    font-size: .58rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.rp-seat.is-free {
+    border-style: dashed;
+    background: transparent;
+    color: var(--text-light-gray);
+}
+.rp-seat.is-free .rp-seat-ini {
+    background: transparent;
+    border: 1px dashed var(--border-gray);
+    color: var(--text-light-gray);
+}
+
+/* Quitter la file : offert, jamais poussé. Le rouge n'apparaît qu'au
+   survol, pour dire ce que le clic va faire sans crier avant. */
+.rp-btn.rp-quitter:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+}

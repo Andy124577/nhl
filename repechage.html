@@ -32,6 +32,9 @@
     </div>
 
     <script defer src="/socket.io/socket.io.js"></script>
+    <!-- FZInstant : reconnaît une file instantanée et sait en sortir.
+         Chargé avant repechage.js, qui s'en sert pour le bouton Quitter. -->
+    <script defer src="instantDraft.js"></script>
     <script defer src="repechage.js"></script>
     <script defer src="navbar.js"></script>
     <script defer src="poolNav.js"></script>

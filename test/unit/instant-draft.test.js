@@ -9,7 +9,7 @@ const {
     estPoolInstantane, participants, repechageCommence, placesRestantes,
     accepteEncore, estMembre, premiereEquipeLibre, poolEnAttente,
     poolDejaRejoint, poolEnRepechage, prochainNom, deciderPool, creerPool,
-    inscrire, doitDemarrer, totalSelections, equipesEligibles
+    inscrire, retirer, membres, doitDemarrer, totalSelections, equipesEligibles
 } = instant;
 
 const { makeFullTeam } = require('../fixtures/pool.js');
@@ -350,6 +350,94 @@ describe('inscrire', () => {
 
     test('un pool absent ne fait pas planter', () => {
         assert.equal(inscrire(null, 'a'), null);
+    });
+});
+
+describe('membres', () => {
+    test("les participants sortent dans l'ordre des équipes", () => {
+        // C'est cette liste que le salon d'attente affiche : elle doit être
+        // stable d'un rafraîchissement à l'autre, sinon les noms dansent à
+        // chaque évènement du socket.
+        assert.deepEqual(membres(poolAvec(['alice', 'bob', 'carl'])), ['alice', 'bob', 'carl']);
+    });
+
+    test('une équipe à plusieurs rend tout son monde', () => {
+        const pool = creerPool('alice');
+        pool.teams['Équipe 1'].members.push('bob');
+
+        assert.deepEqual(membres(pool), ['alice', 'bob']);
+    });
+
+    test('un pool vide, absent ou sans équipes rend une liste vide', () => {
+        assert.deepEqual(membres(creerPool('a')).length, 1);
+        assert.deepEqual(membres({ teams: {} }), []);
+        assert.deepEqual(membres({}), []);
+        assert.deepEqual(membres(null), []);
+    });
+
+    test('la liste est une copie : la modifier ne touche pas le pool', () => {
+        const pool = poolAvec(['alice']);
+        membres(pool).push('intrus');
+
+        assert.deepEqual(pool.teams['Équipe 1'].members, ['alice']);
+    });
+});
+
+describe('retirer', () => {
+    test('le partant libère sa place', () => {
+        const pool = poolAvec(['alice', 'bob']);
+
+        assert.equal(retirer(pool, 'bob'), 'Équipe 2');
+        assert.deepEqual(membres(pool), ['alice']);
+        assert.equal(placesRestantes(pool), 3);
+    });
+
+    test('la place libérée revient au prochain arrivant', () => {
+        // Tout l'intérêt de quitter : le pool ne reste pas bloqué sur une
+        // équipe vide que la file croirait prise.
+        const pool = poolAvec(['alice', 'bob']);
+        retirer(pool, 'alice');
+
+        assert.equal(inscrire(pool, 'carl'), 'Équipe 1');
+        assert.deepEqual(membres(pool), ['carl', 'bob']);
+    });
+
+    test('quitter deux fois ne retire rien de plus', () => {
+        const pool = poolAvec(['alice', 'bob']);
+        retirer(pool, 'bob');
+
+        assert.equal(retirer(pool, 'bob'), null);
+        assert.deepEqual(membres(pool), ['alice']);
+    });
+
+    test('un inconnu ne retire personne', () => {
+        const pool = poolAvec(['alice', 'bob']);
+
+        assert.equal(retirer(pool, 'carl'), null);
+        assert.equal(participants(pool), 2);
+    });
+
+    test('un repêchage commencé retient tout le monde', () => {
+        // L'ordre de sélection nomme les équipes : en retirer une laisserait
+        // un tour qui revient à personne, et le repêchage s'arrêterait là pour
+        // les trois autres.
+        const pool = poolAvec(['alice', 'bob'], { draftOrder: ['Équipe 1', 'Équipe 2'] });
+
+        assert.equal(retirer(pool, 'bob'), null);
+        assert.equal(participants(pool), 2);
+    });
+
+    test('un pool absent ne fait pas planter', () => {
+        assert.equal(retirer(null, 'alice'), null);
+        assert.equal(retirer({}, 'alice'), null);
+    });
+
+    test('le dernier parti laisse un pool vide', () => {
+        // Le cas qui décide de la suppression du pool côté serveur.
+        const pool = poolAvec(['alice']);
+
+        assert.equal(retirer(pool, 'alice'), 'Équipe 1');
+        assert.equal(participants(pool), 0);
     });
 });
 

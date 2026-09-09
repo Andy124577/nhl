@@ -46,9 +46,58 @@
             </div>`;
     }
 
+    /** Ce pool sort-il de la file du repêchage instantané ? */
+    function estInstantane(pool) {
+        return window.FZInstant
+            ? window.FZInstant.estPoolInstantane(pool.name, pool.data)
+            : pool.data.instant === true;
+    }
+
+    /**
+     * Qui attend déjà, et les places encore libres.
+     *
+     * L'écran ne montrait qu'un compteur : « il manque 2 participants ». Or
+     * ce qu'on veut savoir en attendant, c'est avec qui — surtout dans une
+     * file instantanée, où le pool est fait d'inconnus et où la seule preuve
+     * qu'elle avance est de voir un nom de plus apparaître.
+     */
+    function rendreInscrits(pool, etat) {
+        const inscrits = Object.values(pool.data.teams || {})
+            .flatMap(equipe => ((equipe && equipe.members) || []).slice());
+        if (!inscrits.length) return '';
+
+        const moi = localStorage.getItem('username') || '';
+        const libres = Math.max(0, etat.max - inscrits.length);
+
+        const places = inscrits.map(nom => `
+            <li class="rp-seat${nom === moi ? ' is-me' : ''}">
+                <span class="rp-seat-ini" aria-hidden="true">${echapper(nom.charAt(0).toUpperCase())}</span>
+                <span class="rp-seat-nom">${echapper(nom)}</span>
+                ${nom === moi ? '<span class="rp-seat-toi">toi</span>' : ''}
+            </li>`);
+
+        const vides = Array.from({ length: libres }, () => `
+            <li class="rp-seat is-free">
+                <span class="rp-seat-ini" aria-hidden="true">+</span>
+                <span class="rp-seat-nom">En attente…</span>
+            </li>`);
+
+        return `
+            <div class="rp-roster-wrap">
+                <h3 class="rp-roster-title">Déjà inscrits</h3>
+                <ul class="rp-seats">${places.concat(vides).join('')}</ul>
+            </div>`;
+    }
+
     function rendreAttente(pool, etat) {
         const restants = Math.max(0, etat.max - etat.inscrits);
         const progression = etat.max > 0 ? Math.round((etat.inscrits / etat.max) * 100) : 0;
+        // Quitter n'est proposé que dans une file instantanée : on y est entré
+        // d'un clic, sans rien choisir, donc on doit pouvoir en ressortir de
+        // même. Un pool ordinaire se quitte depuis Mes pools, avec le reste de
+        // sa gestion.
+        const instantane = estInstantane(pool);
+
         conteneur().innerHTML = `
             <article class="rp-card">
                 ${entete(pool, 'En attente', 'attente')}
@@ -62,11 +111,43 @@
                         <div class="rp-progress-fill" style="width:${progression}%"></div>
                     </div>
                     <p class="rp-progress-lbl">${etat.inscrits} / ${etat.max} participants</p>
+                    ${rendreInscrits(pool, etat)}
                     <div class="rp-actions">
                         <a class="rp-btn secondary" href="mes-pools.html">Gérer mon équipe</a>
+                        ${instantane
+                            ? '<button type="button" class="rp-btn secondary rp-quitter" id="rpQuitter">Quitter la file</button>'
+                            : ''}
                     </div>
                 </div>
             </article>`;
+
+        document.getElementById('rpQuitter')?.addEventListener('click', quitterLaFile);
+    }
+
+    /**
+     * Sortie de la file instantanée.
+     *
+     * Tout se passe dans instantDraft.js : l'appel au serveur, le contexte de
+     * pool à nettoyer, la confirmation. Ici on ne décide que de la suite —
+     * partir de cette page, qui ne montre plus rien une fois la place rendue.
+     */
+    async function quitterLaFile() {
+        const bouton = document.getElementById('rpQuitter');
+        if (!window.FZInstant || typeof window.FZInstant.quitter !== 'function') {
+            alert('Action indisponible : rechargez la page.');
+            return;
+        }
+        if (bouton) { bouton.disabled = true; }
+
+        const parti = await window.FZInstant.quitter();
+        if (parti) {
+            window.location.replace('rejoindre-pool.html');
+            return;
+        }
+        if (bouton) { bouton.disabled = false; }
+        // Refus du serveur (repêchage parti entre-temps) : FZInstant a déjà
+        // relu les pools, le rendu suivant montre le bon écran.
+        rendre();
     }
 
     /** Équipes du pool avec au moins un membre — les seules qui comptent ici. */

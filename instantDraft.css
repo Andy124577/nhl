@@ -1,0 +1,263 @@
+/* ============================================================
+   REPÊCHAGE INSTANTANÉ — le panneau sous le bouton
+   ------------------------------------------------------------
+   Qui attend déjà, et combien de places restent. Le panneau est écrit
+   par instantDraft.js et glissé juste après le bouton, sur les trois
+   pages qui l'affichent : l'Accueil (bandeau rouge, cartes sombres),
+   Mes pools (grille de cartes) et Rejoindre (grande carte éclair).
+
+   D'où la forme de cette feuille : un habillage neutre bâti sur les
+   variables du site, puis un bloc par contexte — chacune de ces pages a
+   sa propre palette, et un panneau qui ignorerait la sienne se verrait
+   tout de suite comme une pièce rapportée.
+   ============================================================ */
+
+.fzid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    background: var(--card);
+}
+
+/* Le panneau existe dans le DOM avant d'être rempli (premier rendu, puis
+   chaque rafraîchissement) : sans ceci, un cadre vide clignoterait. */
+.fzid:empty { display: none; }
+
+.fzid-resume {
+    margin: 0;
+    font: 400 12.5px/1.4 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--text-secondary);
+}
+
+.fzid-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.fzid-slot {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px 5px 5px;
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    background: var(--card-white);
+    font: 500 12.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--text-main);
+}
+
+/* L'initiale, faute d'avatar : la liste se rafraîchit à chaque évènement
+   du socket, et aller chercher une image par nom à chaque fois coûterait
+   plus cher que ce qu'elle apporte ici. */
+.fzid-ini {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: rgba(var(--primary-rgb), .18);
+    color: var(--primary);
+    font: 700 11px/1 'Helvetica Neue', Helvetica, sans-serif;
+}
+
+.fzid-nom {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Les places encore libres. En pointillé, parce qu'elles disent une
+   attente et non une présence : c'est ce contraste qui fait lire la file
+   d'un coup d'œil. */
+.fzid-slot.is-free {
+    border-style: dashed;
+    background: transparent;
+    color: var(--text-light-gray);
+}
+.fzid-slot.is-free .fzid-ini {
+    background: transparent;
+    border: 1px dashed var(--border-gray);
+    color: var(--text-light-gray);
+}
+
+.fzid-slot.is-me { border-color: var(--primary); }
+
+.fzid-toi {
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: var(--bg);
+    font: 700 9px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.fzid-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.fzid-btn {
+    padding: 9px 15px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.fzid-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.fzid-btn.is-primary {
+    background: var(--primary);
+    color: var(--bg);
+}
+.fzid-btn.is-primary:hover { background: var(--primary-deep); }
+
+/* Quitter reste discret jusqu'au survol : c'est une sortie offerte, pas
+   une action qu'on pousse. Le rouge n'arrive qu'au moment où la souris
+   s'y pose, pour dire ce que le clic va faire. */
+.fzid-btn.is-ghost {
+    background: transparent;
+    border-color: var(--border-gray);
+    color: var(--text-secondary);
+}
+.fzid-btn.is-ghost:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+/* Déjà dans la file : le bouton d'entrée est verrouillé pour de bon, pas
+   en train de charger — le curseur d'attente qu'il porte le reste du
+   temps promettrait une réponse qui ne viendra pas. */
+[data-instant-draft].is-joined:disabled {
+    cursor: default;
+    opacity: .9;
+}
+
+/* ------------------------------------------------------------
+   ACCUEIL — le bandeau d'accueil (fzo-*)
+   Cartes sombres posées sur un dégradé rouge : le panneau prend la
+   même dalle, sinon il perce le bandeau d'un rectangle clair.
+   ------------------------------------------------------------ */
+.fzo-actions .fzid {
+    border-color: rgba(255, 255, 255, .14);
+    background: var(--fzo-slab);
+    border-radius: 11px;
+}
+.fzo-actions .fzid-resume { color: var(--fzo-on-slab-muted); }
+.fzo-actions .fzid-slot {
+    border-color: rgba(255, 255, 255, .16);
+    background: rgba(255, 255, 255, .06);
+    color: var(--fzo-on-hero);
+}
+.fzo-actions .fzid-ini {
+    background: rgba(255, 255, 255, .14);
+    color: var(--fzo-on-hero);
+}
+.fzo-actions .fzid-slot.is-free {
+    background: transparent;
+    color: var(--fzo-chev);
+}
+.fzo-actions .fzid-slot.is-free .fzid-ini {
+    border-color: rgba(255, 255, 255, .22);
+    color: var(--fzo-chev);
+}
+.fzo-actions .fzid-slot.is-me { border-color: var(--fzo-hero-c); }
+.fzo-actions .fzid-toi { background: var(--fzo-hero-c); color: var(--fzo-on-hero); }
+.fzo-actions .fzid-btn.is-primary {
+    background: var(--fzo-on-hero);
+    color: var(--fzo-slab);
+}
+.fzo-actions .fzid-btn.is-primary:hover { background: rgba(255, 255, 255, .86); }
+.fzo-actions .fzid-btn.is-ghost {
+    border-color: rgba(255, 255, 255, .28);
+    color: var(--fzo-on-slab-muted);
+}
+.fzo-actions .fzid-btn.is-ghost:hover {
+    border-color: var(--fzo-on-hero);
+    color: var(--fzo-on-hero);
+}
+
+/* ------------------------------------------------------------
+   ACCUEIL — la rangée de chips hors-saison (fzd-*)
+   Rangée en flex-wrap : le panneau réclame sa ligne entière, sinon il
+   s'insère entre deux pastilles.
+   ------------------------------------------------------------ */
+.fz-dash-poolchips .fzid {
+    flex: 1 0 100%;
+    margin-top: 2px;
+    border-color: var(--fzd-border-strong);
+    background: var(--fzd-surface);
+}
+.fz-dash-poolchips .fzid-resume { color: var(--fzd-text-muted); }
+.fz-dash-poolchips .fzid-slot {
+    border-color: var(--fzd-border);
+    background: var(--fzd-bg-alt);
+    color: var(--fzd-ink);
+}
+.fz-dash-poolchips .fzid-ini {
+    background: var(--fzd-accent-tint);
+    color: var(--fzd-accent);
+}
+.fz-dash-poolchips .fzid-slot.is-free { color: var(--fzd-text-faint); }
+.fz-dash-poolchips .fzid-slot.is-free .fzid-ini {
+    border-color: var(--fzd-border-strong);
+    color: var(--fzd-text-fainter);
+}
+.fz-dash-poolchips .fzid-slot.is-me { border-color: var(--fzd-accent); }
+.fz-dash-poolchips .fzid-toi { background: var(--fzd-accent-fill); color: var(--fzd-on-accent); }
+.fz-dash-poolchips .fzid-btn.is-primary {
+    background: var(--fzd-solid);
+    color: var(--fzd-on-solid);
+}
+.fz-dash-poolchips .fzid-btn.is-primary:hover { background: var(--fzd-solid-hover); }
+.fz-dash-poolchips .fzid-btn.is-ghost {
+    border-color: var(--fzd-border-strong);
+    color: var(--fzd-text);
+}
+.fz-dash-poolchips .fzid-btn.is-ghost:hover {
+    border-color: var(--fzd-ink);
+    color: var(--fzd-ink);
+}
+
+/* ------------------------------------------------------------
+   MES POOLS — la grille des trois portes
+   auto-fit place les cartes en colonnes ; le panneau appartient à la
+   file, pas à une colonne, donc il prend la rangée entière.
+   ------------------------------------------------------------ */
+.mp-entry .fzid {
+    grid-column: 1 / -1;
+    margin-top: 0;
+}
+
+/* ------------------------------------------------------------
+   REJOINDRE UN POOL — la grande carte éclair
+   Elle porte 28px de marge basse ; le panneau se recolle dessous et
+   reprend cette marge à son compte.
+   ------------------------------------------------------------ */
+.fz-instant + .fzid {
+    margin-top: -20px;
+    margin-bottom: 28px;
+    border-color: rgba(var(--primary-rgb), .25);
+    border-radius: 18px;
+}
+
+@media (max-width: 600px) {
+    .fzid { padding: 11px 12px; }
+    .fzid-nom { max-width: 110px; }
+    .fzid-btn { flex: 1 1 auto; text-align: center; }
+}

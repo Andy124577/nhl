@@ -1121,6 +1121,24 @@ const sauvegarderUnPool = async (nomPool, poolData) => {
     fs.writeFileSync(DRAFT_FILE, JSON.stringify(tout, null, 2));
 };
 
+/**
+ * Efface un pool instantané que plus personne n'attend.
+ *
+ * Le dernier qui quitte la file emporte le pool avec lui : le laisser vide
+ * ferait de lui le plus « ancien » candidat de poolEnAttente(), donc celui
+ * qu'on rouvrirait au prochain clic — un pool fantôme de plus à chaque
+ * aller-retour.
+ */
+const supprimerUnPool = async (nomPool) => {
+    if (USE_POSTGRES) {
+        await db.deletePool(nomPool);
+        return;
+    }
+    const tout = await loadDraftData();
+    delete tout[nomPool];
+    fs.writeFileSync(DRAFT_FILE, JSON.stringify(tout, null, 2));
+};
+
 /** Équipe de l'utilisateur dans ce pool, ou null. */
 const equipeDeLUtilisateur = (pool, username) => {
     const entree = Object.entries((pool && pool.teams) || {})
@@ -1223,6 +1241,86 @@ app.post("/join-instant-draft", async (req, res) => {
 
     } catch (error) {
         console.error("❌ Erreur lors du repêchage instantané :", error);
+        res.status(500).json({ message: "Erreur interne du serveur." });
+    }
+});
+
+/**
+ * Quitter la file.
+ *
+ * On entre dans un repêchage instantané en un clic ; il faut pouvoir en
+ * sortir de la même façon, sinon le bouton devient un piège — trois joueurs
+ * qui ne viennent jamais, et on reste accroché à un pool qu'on n'a pas choisi.
+ *
+ * Même verrou que l'entrée, pour la même raison : entre la lecture et
+ * l'écriture, un arrivant peut remplir le pool et lancer le repêchage. Sans
+ * le verrou, ce départ effacerait une équipe dont l'ordre de sélection vient
+ * d'être tiré.
+ */
+app.post("/leave-instant-draft", async (req, res) => {
+    const username = typeof req.body?.username === "string" ? req.body.username.trim() : "";
+    if (!username) {
+        return res.status(400).json({ message: "Nom d'utilisateur requis." });
+    }
+
+    try {
+        const resultat = await sousVerrouInstantane(async () => {
+            const draftData = await loadDraftData();
+            const nomPool = instantDraft.poolDejaRejoint(draftData, username);
+
+            if (!nomPool) {
+                // Deux façons de ne pas être dans une file d'attente, et elles
+                // ne se disent pas pareil : n'y avoir jamais été, ou en être
+                // sorti parce que le repêchage est parti pendant qu'on hésitait.
+                return instantDraft.poolEnRepechage(draftData, username)
+                    ? { echec: "Le repêchage a déjà commencé : impossible de quitter maintenant.", code: 409 }
+                    : { echec: "Vous n'êtes dans aucun repêchage instantané.", code: 400 };
+            }
+
+            const pool = draftData[nomPool];
+            const teamName = instantDraft.retirer(pool, username);
+            if (!teamName) {
+                return { echec: "Impossible de quitter ce repêchage.", code: 409 };
+            }
+
+            const restants = instantDraft.participants(pool);
+            if (restants === 0) {
+                await supprimerUnPool(nomPool);
+            } else {
+                await sauvegarderUnPool(nomPool, pool);
+            }
+
+            return {
+                poolName: nomPool,
+                teamName,
+                participants: restants,
+                maxPlayers: pool.maxPlayers || instantDraft.JOUEURS_PAR_POOL,
+                deleted: restants === 0
+            };
+        });
+
+        if (resultat.echec) {
+            return res.status(resultat.code).json({ message: resultat.echec });
+        }
+
+        // Hors verrou, comme à l'entrée : ceux qui restent voient leur
+        // compteur reculer sans recharger.
+        try {
+            const frais = await loadDraftData();
+            io.emit("draftUpdated", poolsPublics(frais));
+        } catch (erreur) {
+            console.error("⚠️ Diffusion du départ instantané impossible :", erreur);
+        }
+
+        res.json({
+            ...resultat,
+            message: resultat.deleted
+                ? "Vous avez quitté la file. Le pool s'est refermé, personne n'y attendait plus."
+                : `Vous avez quitté ${resultat.poolName}.`
+        });
+
+    } catch (error) {
+        console.error("❌ Erreur lors du départ du repêchage instantané :", error);
         res.status(500).json({ message: "Erreur interne du serveur." });
     }
 });
