@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Aperçu — Classement H2H</title>
+    <!--
+      Banc d'essai visuel de l'onglet Classement d'un pool H2H, sur le
+      modèle de draftFinPopup.preview.html : mêmes feuilles de style et
+      mêmes fonctions de rendu que la vraie page, mais des données figées
+      et un FZPool factice, pour regarder la mise en page sans serveur ni
+      session. Aucune page de production n'en dépend.
+    -->
+    <script src="theme.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="classement.css" />
+    <link rel="stylesheet" href="classement-premium.css" />
+    <link rel="stylesheet" href="index.css" />
+    <link rel="stylesheet" href="injuries.css" />
+    <link rel="stylesheet" href="skeleton-loader.css" />
+    <style>
+        /* Le banc d'essai n'a ni barre du haut ni rail de pools. */
+        .container { padding-top: 24px; }
+        .navbar { display: none; }
+    </style>
+</head>
+<body class="fz-classement">
+    <div class="container">
+        <div id="breadcrumb" class="breadcrumb" style="display: none;">
+            <span class="breadcrumb-item">Mes pools</span>
+            <span class="breadcrumb-separator" id="poolBreadcrumbSep" style="display: none;">&gt;</span>
+            <span class="breadcrumb-item" id="poolBreadcrumb" style="display: none;"></span>
+            <span class="breadcrumb-separator" id="teamBreadcrumbSep" style="display: none;">&gt;</span>
+            <span class="breadcrumb-item" id="teamBreadcrumb" style="display: none;"></span>
+        </div>
+
+        <h1 id="pageTitle" class="page-title">Classement</h1>
+
+        <div id="poolHeaderMeta" class="pool-header-meta" style="display: none;">
+            <p class="phm-line" id="poolHeaderLine"></p>
+            <span class="phm-badge" id="poolHeaderBadge">Saison en cours</span>
+        </div>
+
+        <div id="poolListView" class="view-container" style="display:none;">
+            <div class="skeleton-loader" id="poolListSkeleton"></div>
+            <div id="poolList" class="pool-list" style="display: none;"></div>
+        </div>
+
+        <div id="poolStandingsView" class="view-container" style="display: none;">
+            <div id="h2hTabs" class="h2h-tabs" style="display: none;">
+                <button class="h2h-tab active" data-tab="matchups" onclick="switchH2HTab('matchups')">
+                    <svg class="h2h-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/></svg>
+                    <span>Duel en cours</span>
+                </button>
+                <button class="h2h-tab" data-tab="standings" onclick="switchH2HTab('standings')">
+                    <svg class="h2h-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V10M12 21V4M19 21v-7"/></svg>
+                    <span>Classement</span>
+                </button>
+                <button class="h2h-tab" data-tab="calendrier" onclick="switchH2HTab('calendrier')">
+                    <svg class="h2h-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+                    <span>Calendrier</span>
+                </button>
+                <button class="h2h-tab" data-tab="history" onclick="switchH2HTab('history')">
+                    <svg class="h2h-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+                    <span>Historique</span>
+                </button>
+            </div>
+
+            <div id="h2hStandingsStrip" class="h2h-strip" style="display: none;"></div>
+
+            <div id="h2hMatchupsView" class="h2h-section" style="display: none;">
+                <div class="h2h-week-header" id="h2hWeekHeader"></div>
+                <div class="h2h-period-filter" id="h2hPeriodFilter">
+                    <button class="h2h-period-btn active" id="filterToday" onclick="setH2HPeriod('today')">Aujourd'hui</button>
+                    <button class="h2h-period-btn" id="filterWeek" onclick="setH2HPeriod('week')">Semaine</button>
+                </div>
+                <div id="h2hMatchupsList" class="h2h-matchups-list"></div>
+            </div>
+
+            <div class="skeleton-loader" id="standingsSkeleton" style="display:none;"></div>
+            <div id="standingsList" class="standings-list" style="display: none;"></div>
+
+            <div id="standingsInsights" class="standings-insights">
+                <div id="hallOfFame" class="hall-of-fame" style="display: none;"></div>
+                <div id="recentFormLeaderboard" class="recent-form-leaderboard" style="display: none;"></div>
+                <div id="h2hRecentResults" class="h2h-recent-results" style="display: none;"></div>
+            </div>
+
+            <div id="h2hScheduleView" class="h2h-section" style="display: none;">
+                <div class="h2h-sched-head">
+                    <div class="h2h-sched-intro">
+                        <div class="h2h-sched-title" id="h2hSchedTitle">Calendrier de la saison</div>
+                        <div class="h2h-sched-sub" id="h2hSchedSub"></div>
+                    </div>
+                    <label class="h2h-sched-picker">
+                        <span>Équipe</span>
+                        <select id="h2hSchedTeam"></select>
+                    </label>
+                </div>
+                <div class="h2h-sched-carousel">
+                    <div class="h2h-sched-track" id="h2hSchedTrack"></div>
+                </div>
+            </div>
+
+            <div id="h2hHistoryView" class="h2h-section" style="display: none;">
+                <div id="h2hHistoryList" class="h2h-history-list"></div>
+            </div>
+        </div>
+
+        <div id="teamRosterView" class="view-container" style="display: none;">
+            <div class="skeleton-loader" id="rosterSkeleton"></div>
+            <div id="rosterList" class="roster-list" style="display: none;"></div>
+        </div>
+
+        <div id="careerStatsModal" class="modal"><div class="modal-content career-modal"></div></div>
+    </div>
+
+    <script>
+        // Les données du banc d'essai. Deux participants, huit semaines
+        // jouées : de quoi voir les pastilles de forme se remplir, la ligne
+        // de tête se colorer, et les trois cartes du bas se ranger.
+        const APERCU_POOL = 'h2h_01';
+        localStorage.setItem('username', 'user1');
+
+        const semaines = [];
+        const debutSaison = new Date('2026-07-13T04:00:00.000Z');
+        // Sept semaines qui donnent bien 3-4 pour l'Équipe 1 et 4-3 pour
+        // l'Équipe 2 : les pastilles de forme doivent concorder avec le bilan.
+        const scores = [
+            [268.4, 251.0], [271.3, 262.7], [244.1, 289.9], [255.0, 275.3],
+            [249.8, 281.4], [255.4, 251.4], [250.0, 268.0]
+        ];
+        scores.forEach((paire, i) => {
+            const debut = new Date(debutSaison);
+            debut.setDate(debut.getDate() + i * 7);
+            const fin = new Date(debut);
+            fin.setDate(fin.getDate() + 7);
+            semaines.push({
+                weekNumber: i + 1,
+                weekStart: debut.toISOString(),
+                weekEnd: fin.toISOString(),
+                matchups: [{
+                    team1: 'Équipe 1', team2: 'Équipe 2',
+                    team1Points: paire[0], team2Points: paire[1],
+                    winner: paire[0] > paire[1] ? 'Équipe 1' : 'Équipe 2'
+                }]
+            });
+        });
+
+        const semaineCourante = new Date(debutSaison);
+        semaineCourante.setDate(semaineCourante.getDate() + 7 * 7);
+
+        // ?mode=cumul montre le même banc d'essai avec un pool cumulatif :
+        // c'est le témoin, il doit rester identique à l'habillage précédent.
+        const MODE_CUMUL = new URLSearchParams(location.search).get('mode') === 'cumul';
+
+        const DONNEES = MODE_CUMUL ? {
+            [APERCU_POOL]: {
+                poolMode: 'cumulative',
+                teams: {
+                    'Équipe 1': { members: ['user1'], teams: ['Winnipeg Jets'], offensive: [], defensive: [], rookie: [], goalie: [] },
+                    'Équipe 2': { members: ['user2'], teams: ['Washington Capitals'], offensive: [], defensive: [], rookie: [], goalie: [] }
+                }
+            }
+        } : {
+            [APERCU_POOL]: {
+                poolMode: 'head-to-head',
+                teams: {
+                    'Équipe 1': { members: ['user1'], teams: ['Winnipeg Jets'] },
+                    'Équipe 2': { members: ['user2'], teams: ['Washington Capitals'] }
+                },
+                h2hData: {
+                    currentWeek: 8,
+                    weekStart: semaineCourante.toISOString(),
+                    standings: {
+                        'Équipe 1': { wins: 3, losses: 4, ties: 0, pointsFor: 1781.7, pointsAgainst: 1879.7 },
+                        'Équipe 2': { wins: 4, losses: 3, ties: 0, pointsFor: 1879.7, pointsAgainst: 1781.7 }
+                    },
+                    matchupHistory: semaines
+                }
+            }
+        };
+
+        // FZPool factice : juste ce que loadAllUserPools consomme.
+        window.FZPool = {
+            ready: () => Promise.resolve(),
+            all: () => DONNEES,
+            get: () => APERCU_POOL,
+            mine: () => [{ name: APERCU_POOL, data: DONNEES[APERCU_POOL] }],
+            draftState: () => ({ etat: 'termine' }),
+            on: () => {}
+        };
+
+        // Le temple de la renommée et les équipes récentes interrogent le
+        // serveur ; ici on répond « saison pas commencée » pour montrer les
+        // états vides du mockup, et on laisse passer le reste.
+        const vraiFetch = window.fetch.bind(window);
+        window.fetch = (url, options) => {
+            const u = String(url);
+            if (u.includes('/pool-hall-of-fame/')) {
+                return Promise.resolve(new Response(JSON.stringify({ seasonStarted: false }), { status: 200 }));
+            }
+            if (u.includes('/pool-leaderboard/')) {
+                return Promise.resolve(new Response(JSON.stringify({ seasonStarted: false, teams: [] }), { status: 200 }));
+            }
+            if (u.includes('/season-window')) {
+                return Promise.resolve(new Response(JSON.stringify({ hasStarted: true }), { status: 200 }));
+            }
+            if (u.includes('/current-stats') || u.includes('/current-teams')) {
+                return Promise.resolve(new Response(JSON.stringify({ players: [], teams: [] }), { status: 200 }));
+            }
+            if (u.includes('nhl_filtered_stats.json')) {
+                return Promise.resolve(new Response(JSON.stringify({
+                    Top_50_Defenders: [], Top_100_Offensive_Players: [],
+                    Top_Rookies: [], Top_50_Goalies: [], Teams: []
+                }), { status: 200 }));
+            }
+            return vraiFetch(url, options);
+        };
+
+        // Le mockup montre l'onglet Classement : on y ouvre directement.
+        history.replaceState(null, '', location.pathname + '?h2h=standings');
+    </script>
+    <script src="lib/scoring.js"></script>
+    <script src="lib/season.js"></script>
+    <script src="headshots.js"></script>
+    <script src="avatars.js"></script>
+    <script src="injuries.js"></script>
+    <script src="classement.js"></script>
+</body>
+</html>

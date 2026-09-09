@@ -5,10 +5,11 @@
    redéclare pas :root, tout est scopé sous body.fz-classement pour ne pas
    fuir vers les pages non reskinnées.
 
-   Le mockup ne couvre que le niveau 2 (classement + temple de la
-   renommée) : la liste de pools, la fiche d'équipe et les onglets H2H
-   gardent leur habillage existant (classement.css), volontairement pas
-   touchés ici.
+   Le mockup d'origine ne couvrait que le niveau 2 d'un pool cumulatif
+   (classement + temple de la renommée). L'onglet Classement d'un pool H2H
+   a été repris depuis (bloc en fin de fichier). La liste de pools, la
+   fiche d'équipe et les autres onglets H2H gardent leur habillage existant
+   (classement.css), volontairement pas touchés ici.
    ==================================================================== */
 
 body.fz-classement {
@@ -487,4 +488,500 @@ body.fz-classement .skeleton-circle {
     justify-content: center;
     margin: 0;
   }
+}
+
+/* ====================================================================
+   H2H — ONGLET CLASSEMENT
+   --------------------------------------------------------------------
+   Le mockup d'origine s'arrêtait au pool cumulatif (voir la note en tête
+   de fichier) ; l'onglet Classement d'un pool H2H est maintenant couvert
+   lui aussi. Il se lit en trois temps : une bande de tuiles de contexte,
+   la table de saison dans une carte titrée, puis trois cartes côte à côte
+   (temple de la renommée, équipes récentes, derniers résultats).
+
+   Tout est scopé : `.st-card` pour la table H2H, `.standings-insights
+   .is-h2h` pour le bas de page. Un pool cumulatif ne traverse aucune de
+   ces règles et garde exactement l'habillage précédent.
+   ==================================================================== */
+
+/* -------------------- Sous-titre du pool -------------------- */
+/* Le titre donne le nom du pool ; cette ligne dit de quelle ligue il
+   s'agit et où en est la saison — les deux questions qu'on se pose avant
+   de lire un classement. */
+body.fz-classement .pool-header-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: -4px 0 20px;
+}
+body.fz-classement .phm-line {
+  margin: 0;
+  font: 400 12.5px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--fzc-text-faint);
+}
+body.fz-classement .phm-badge {
+  padding: 5px 11px;
+  border: 1px solid color-mix(in srgb, var(--fzc-accent-fill) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fzc-accent-fill) 12%, transparent);
+  color: var(--fzc-accent);
+  font: 600 10.5px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* -------------------- Onglets H2H -------------------- */
+body.fz-classement .h2h-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 16px;
+  background: var(--fzc-surface);
+  border: 1px solid var(--fzc-border);
+  border-radius: 12px;
+}
+body.fz-classement .h2h-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 8px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--fzc-text-muted);
+  font: 600 12.5px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+body.fz-classement .h2h-tab-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+body.fz-classement .h2h-tab:hover {
+  background: var(--fzc-bg);
+  color: var(--fzc-ink);
+}
+body.fz-classement .h2h-tab.active {
+  background: color-mix(in srgb, var(--fzc-accent-fill) 16%, transparent);
+  border-color: color-mix(in srgb, var(--fzc-accent-fill) 45%, transparent);
+  color: var(--fzc-accent);
+  box-shadow: none;
+}
+body.fz-classement .h2h-tab:focus-visible {
+  outline: 2px solid var(--fzc-accent);
+  outline-offset: -2px;
+}
+
+/* -------------------- Bande de tuiles -------------------- */
+/* Cinq tuiles tiennent de front sur grand écran ; en dessous la bande
+   défile latéralement plutôt que de casser en grille — c'est une frise de
+   contexte, pas un contenu à parcourir. */
+body.fz-classement .h2h-strip {
+  display: flex;
+  gap: 10px;
+  margin: 0 0 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+body.fz-classement .h2h-strip::-webkit-scrollbar { display: none; }
+
+body.fz-classement .h2h-strip-card {
+  flex: 1 0 166px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 13px;
+  border: 1px solid var(--fzc-border);
+  border-radius: 12px;
+  background: var(--fzc-surface);
+  min-width: 0;
+}
+body.fz-classement .h2h-strip-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--fzc-tile);
+  color: var(--fzc-accent);
+}
+body.fz-classement .h2h-strip-icon svg { width: 16px; height: 16px; }
+body.fz-classement .h2h-strip-icon img { width: 20px; height: 20px; object-fit: contain; }
+body.fz-classement .h2h-strip-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+body.fz-classement .h2h-strip-label,
+body.fz-classement .h2h-strip-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Le sous-titre est le seul texte libre de la tuile — « Aujourd'hui —
+   mercredi 8 sept. » ne tient pas sur une ligne de 110 px. Il passe donc à
+   la ligne plutôt que de se couper ; les tuiles étant étirées sur la même
+   hauteur, la bande ne bouge pas pour autant. */
+body.fz-classement .h2h-strip-sub {
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+body.fz-classement .h2h-strip-label {
+  font: 600 9px/1.1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--fzc-text-faint);
+}
+body.fz-classement .h2h-strip-value {
+  font: 700 17px/1.15 'Oswald', sans-serif;
+  color: var(--fzc-ink);
+}
+body.fz-classement .h2h-strip-sub {
+  font: 400 10px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--fzc-text-faint);
+}
+
+/* -------------------- En-tête de carte partagé -------------------- */
+/* Les classes fz-* voyagent avec le balisage du temple de la renommée et
+   des équipes récentes, qui servent aux deux modes de pool. Leur mise en
+   page n'est donc appliquée que dans les contextes H2H — un pool
+   cumulatif ne voit ni l'icône ni le titre en casse normale. */
+body.fz-classement .st-card .fz-card-head,
+body.fz-classement .standings-insights.is-h2h .fz-card-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  padding: 13px 15px;
+  border-bottom: 1px solid var(--fzc-border-soft);
+}
+body.fz-classement .st-card .fz-card-icon,
+body.fz-classement .standings-insights.is-h2h .fz-card-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--fzc-accent);
+}
+body.fz-classement .fz-card-icon svg { width: 16px; height: 16px; display: block; }
+body.fz-classement .standings-insights:not(.is-h2h) .fz-card-icon { display: none; }
+
+body.fz-classement .fz-card-title { margin: 0; color: var(--fzc-ink); }
+body.fz-classement .st-card .fz-card-title,
+body.fz-classement .standings-insights.is-h2h .fz-card-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: 600 12.5px/1.25 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+}
+body.fz-classement .standings-insights.is-h2h .fz-card-note {
+  flex-shrink: 0;
+  margin-left: auto;
+  font: 400 9.5px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--fzc-text-faint);
+  white-space: nowrap;
+}
+body.fz-classement .fz-card-link {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--fzc-accent);
+  font: 600 11px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  cursor: pointer;
+}
+body.fz-classement .fz-card-link:hover { color: var(--fzc-accent-dark); }
+
+/* -------------------- État vide de carte -------------------- */
+body.fz-classement .fz-empty {
+  padding: 34px 18px;
+  text-align: center;
+}
+body.fz-classement .standings-insights.is-h2h .fz-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+body.fz-classement .fz-empty-icon {
+  display: block;
+  width: 30px;
+  height: 30px;
+  margin: 0 auto 12px;
+  color: var(--fzc-text-fainter);
+}
+body.fz-classement .fz-empty-icon svg { width: 30px; height: 30px; display: block; }
+body.fz-classement .fz-empty-title {
+  margin: 0 0 5px;
+  font: 600 12.5px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--fzc-text-muted);
+}
+body.fz-classement .fz-empty-hint {
+  margin: 0;
+  font: 400 11px/1.4 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--fzc-text-fainter);
+}
+
+/* -------------------- Table de saison (carte) -------------------- */
+body.fz-classement .st-card {
+  border: 1px solid var(--fzc-border);
+  border-radius: 12px;
+  background: var(--fzc-surface);
+  overflow: hidden;
+}
+/* La carte porte déjà le cadre : le conteneur de table redevient un simple
+   plan de défilement horizontal. */
+body.fz-classement .st-card .standings-table-container {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+body.fz-classement .st-card #standingsTable { min-width: 560px; }
+
+/* La colonne PTS est la réponse à « qui mène » : une bande continue la
+   sort du bloc de chiffres, en-tête compris. */
+body.fz-classement .st-card #standingsTable th.points-column,
+body.fz-classement .st-card #standingsTable td.points-column {
+  background: var(--fzc-bg-alt);
+}
+body.fz-classement .st-card #standingsTable tbody tr.is-leader,
+body.fz-classement .st-card #standingsTable tbody tr.is-leader td.rank-col,
+body.fz-classement .st-card #standingsTable tbody tr.is-leader td.player-col {
+  background: color-mix(in srgb, var(--fzc-accent-fill) 9%, var(--fzc-surface));
+}
+body.fz-classement .st-card #standingsTable tbody tr.is-leader td.points-column {
+  background: color-mix(in srgb, var(--fzc-accent-fill) 34%, var(--fzc-surface));
+  color: var(--fzc-ink);
+}
+/* Le meneur d'un pool H2H se marque en brique, pas en or : ici l'or ne dit
+   rien de plus que le rang 1 déjà lisible à gauche. */
+body.fz-classement .st-card #standingsTable tbody tr.is-leader.is-clickable::after {
+  background: var(--fzc-accent-fill);
+  opacity: 1;
+}
+body.fz-classement .st-card #standingsTable td.st-diff-col { color: var(--fzc-text-faint); }
+
+/* V/D/N : trois colonnes triables sur grand écran, une seule colonne
+   « V - D - N » sur téléphone. Le rendu produit toujours les deux, seul
+   l'affichage bascule — pas de re-rendu au redimensionnement. */
+body.fz-classement .st-vdn-col { display: none; }
+
+/* -------------------- Colonne Forme -------------------- */
+body.fz-classement th.st-form-col,
+body.fz-classement td.st-form-col { text-align: center; }
+body.fz-classement .st-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+body.fz-classement .st-form-dot {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--fzc-flat-bg);
+}
+body.fz-classement .st-form-dot.is-w { background: var(--fzc-good); }
+body.fz-classement .st-form-dot.is-l { background: var(--fzc-bad); }
+body.fz-classement .st-form-dot.is-t { background: var(--fzc-text-fainter); }
+
+/* -------------------- Bas de page : trois cartes -------------------- */
+body.fz-classement .standings-insights.is-h2h {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+/* Les trois cartes s'alignent en haut ET en bas : leur contenu est de
+   longueur très inégale (un état vide contre trois semaines de résultats),
+   et trois hauteurs différentes se voient plus que le vide gagné. */
+body.fz-classement .standings-insights.is-h2h > div {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0;
+  padding-top: 0;
+  border: 1px solid var(--fzc-border);
+  border-radius: 12px;
+  background: var(--fzc-surface);
+  overflow: hidden;
+}
+body.fz-classement .standings-insights.is-h2h .hof-grid,
+body.fz-classement .standings-insights.is-h2h .leaderboard-list {
+  padding: 14px 15px;
+}
+/* Une colonne du trio est trop étroite pour les trois cartes de records
+   côte à côte : elles s'empilent. */
+body.fz-classement .standings-insights.is-h2h .hof-grid {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+body.fz-classement .standings-insights.is-h2h .hof-card { padding: 13px 14px; }
+
+/* Le sélecteur de période passe sous le titre, en bandeau pleine largeur —
+   six puces ne tiennent pas à droite d'un titre dans une colonne étroite. */
+body.fz-classement .standings-insights.is-h2h .recent-form-head {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  row-gap: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+body.fz-classement .standings-insights.is-h2h .time-filters {
+  flex-basis: 100%;
+  display: flex;
+  gap: 4px;
+  margin: 13px -15px 0;
+  padding: 11px 15px;
+  border-top: 1px solid var(--fzc-border-soft);
+  border-bottom: 1px solid var(--fzc-border-soft);
+}
+body.fz-classement .standings-insights.is-h2h .time-filter {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 6px 2px;
+  border-radius: 7px;
+  font: 600 10.5px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  text-align: center;
+}
+body.fz-classement .standings-insights.is-h2h .time-filter.active {
+  background: color-mix(in srgb, var(--fzc-accent-fill) 16%, transparent);
+  border-color: color-mix(in srgb, var(--fzc-accent-fill) 45%, transparent);
+  color: var(--fzc-accent);
+}
+
+/* -------------------- Derniers résultats -------------------- */
+body.fz-classement .h2h-res-list { padding: 0 15px; }
+body.fz-classement .h2h-res-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--fzc-border-soft);
+}
+body.fz-classement .h2h-res-row:last-child { border-bottom: none; }
+body.fz-classement .h2h-res-when {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+body.fz-classement .h2h-res-week {
+  font: 600 12.5px/1.1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--fzc-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.fz-classement .h2h-res-dates {
+  font: 400 10.5px/1.1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--fzc-text-faint);
+  white-space: nowrap;
+}
+body.fz-classement .h2h-res-score {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+}
+body.fz-classement .h2h-res-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+body.fz-classement .h2h-res-pts {
+  font: 700 14px/1 'Oswald', sans-serif;
+  color: var(--fzc-text-muted);
+}
+body.fz-classement .h2h-res-pts.is-top { color: var(--fzc-good); }
+body.fz-classement .h2h-res-team {
+  max-width: 64px;
+  font: 400 9.5px/1.1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--fzc-text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.fz-classement .h2h-res-sep {
+  padding-top: 2px;
+  font: 400 12px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--fzc-text-fainter);
+}
+body.fz-classement .h2h-res-badge {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  font: 700 12px/1 'Oswald', sans-serif;
+}
+body.fz-classement .h2h-res-badge.is-win { background: var(--fzc-good-bg); color: var(--fzc-good); }
+body.fz-classement .h2h-res-badge.is-loss { background: var(--fzc-bad-bg); color: var(--fzc-bad); }
+body.fz-classement .h2h-res-badge.is-tie,
+body.fz-classement .h2h-res-badge.is-none { background: var(--fzc-flat-bg); color: var(--fzc-text-faint); }
+
+body.fz-classement .h2h-res-more {
+  display: block;
+  width: 100%;
+  padding: 12px 15px;
+  border: none;
+  border-top: 1px solid var(--fzc-border-soft);
+  background: transparent;
+  color: var(--fzc-accent);
+  font: 600 11.5px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+body.fz-classement .h2h-res-more:hover { color: var(--fzc-accent-dark); }
+
+/* -------------------- Téléphone -------------------- */
+@media (max-width: 680px) {
+  /* Le bloc "TABLEAU (MOBILE : cartes)" plus haut masque la table au profit
+     de .st-mobile-list, qui n'existe qu'en cumulatif. Un pool H2H garde donc
+     sa table — comme le mockup —, en la faisant défiler si besoin. */
+  body.fz-classement .st-card .standings-table-container {
+    display: block;
+    overflow-x: auto;
+  }
+  body.fz-classement .st-card #standingsTable { min-width: 340px; }
+  body.fz-classement .st-card #standingsTable th,
+  body.fz-classement .st-card #standingsTable td {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+  body.fz-classement .st-card #standingsTable td:not(.player-col),
+  body.fz-classement .st-card #standingsTable th:not(.player-col):not(.rank-col) {
+    min-width: 0;
+  }
+  body.fz-classement .st-card #standingsTable th.player-col,
+  body.fz-classement .st-card #standingsTable td.player-col { min-width: 92px; }
+  body.fz-classement .st-card .st-name { font-size: 12px; }
+  body.fz-classement .st-card .st-avatar { width: 22px; height: 22px; }
+  body.fz-classement .st-card .st-avatar img { width: 15px; height: 15px; }
+
+  body.fz-classement .st-card .st-wlt-col { display: none; }
+  body.fz-classement .st-card .st-vdn-col { display: table-cell; }
+  body.fz-classement .st-form { gap: 4px; }
+  body.fz-classement .st-form-dot { width: 7px; height: 7px; }
+
+  body.fz-classement .h2h-tabs { gap: 2px; padding: 3px; }
+  body.fz-classement .h2h-tab {
+    gap: 5px;
+    padding: 9px 3px;
+    font-size: 10px;
+  }
+  body.fz-classement .h2h-tab-icon { width: 13px; height: 13px; }
+
+  body.fz-classement .h2h-strip-card { flex: 0 0 172px; }
+  body.fz-classement .standings-insights.is-h2h { gap: 12px; }
 }

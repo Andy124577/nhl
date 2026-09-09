@@ -228,8 +228,29 @@ function showPoolStandings(poolName) {
     // it, and a stale record from the previous pool must not linger.
     document.getElementById('hallOfFame').style.display = 'none';
     document.getElementById('recentFormLeaderboard').style.display = 'none';
+    document.getElementById('h2hRecentResults').style.display = 'none';
+    const bandeH2H = document.getElementById('h2hStandingsStrip');
+    bandeH2H.innerHTML = '';
+    bandeH2H.style.display = 'none';
+    const insightsReset = document.getElementById('standingsInsights');
+    insightsReset.classList.remove('is-h2h');
+    insightsReset.style.display = '';   // switchH2HTab a pu le masquer pour le pool précédent
 
     const poolMode = poolData.poolMode || 'cumulative';
+
+    // Sous-titre du pool. Un pool H2H a un mode de ligue et un état de saison
+    // à annoncer ; un pool cumulatif n'a que son nom, déjà dans le titre.
+    const meta = document.getElementById('poolHeaderMeta');
+    if (poolMode === 'head-to-head') {
+        const participants = Object.values(poolData.teams || {})
+            .filter(td => td.members && td.members.length > 0).length;
+        document.getElementById('poolHeaderLine').textContent =
+            `Ligue H2H · ${participants} participant${participants > 1 ? 's' : ''}`;
+        meta.style.display = 'flex';
+    } else {
+        meta.style.display = 'none';
+    }
+
     const h2hTabs = document.getElementById('h2hTabs');
     const h2hMatchupsView = document.getElementById('h2hMatchupsView');
     const h2hHistoryView = document.getElementById('h2hHistoryView');
@@ -271,15 +292,21 @@ function showPoolStandings(poolName) {
 // couper les nombres en plusieurs lignes.
 function getStandingsColumns(poolMode) {
     if (poolMode === 'head-to-head') {
+        // V/D/N existent en deux versions : trois colonnes triables sur
+        // grand écran, une seule « V - D - N » sur téléphone. Les deux sont
+        // toujours rendues ; le CSS n'en montre qu'une, ce qui évite de
+        // re-rendre la table au redimensionnement.
         return [
             { label: 'Pos', cls: 'rank-col' },
             { label: 'Participant', cls: 'player-col' },
             { label: 'PJ', sort: 'gamesPlayed', title: 'Parties jouées' },
-            { label: 'V', sort: 'wins', title: 'Victoires' },
-            { label: 'D', sort: 'losses', title: 'Défaites' },
-            { label: 'N', sort: 'ties', title: 'Nuls' },
-            { label: 'PTS', sort: 'points', cls: 'points-column', title: 'Points pour' },
-            { label: 'Écart', sort: 'diff', title: 'Différentiel (pour - contre)' }
+            { label: 'V - D - N', cls: 'st-vdn-col', title: 'Victoires - défaites - nulles' },
+            { label: 'V', sort: 'wins', cls: 'st-wlt-col', title: 'Victoires' },
+            { label: 'D', sort: 'losses', cls: 'st-wlt-col', title: 'Défaites' },
+            { label: 'N', sort: 'ties', cls: 'st-wlt-col', title: 'Nuls' },
+            { label: 'PTS', sort: 'points', cls: 'points-column', title: 'Points marqués' },
+            { label: 'Écart', sort: 'diff', title: 'Différentiel (marqués - encaissés)' },
+            { label: 'Forme', cls: 'st-form-col', title: 'Résultats des 5 dernières semaines, du plus récent au plus ancien' }
         ];
     }
     return [
@@ -409,6 +436,290 @@ function handleStandingsSort(key) {
     if (poolData) renderPoolStandings(poolData, currentPoolName).catch(console.error);
 }
 
+// ==================== H2H — ONGLET CLASSEMENT ====================
+//
+// L'onglet Classement d'un pool H2H ne se lit pas comme celui d'un pool
+// cumulatif : un total de points n'y dit rien seul, ce qui compte est le
+// bilan (V-D-N), la tendance récente et l'échéance suivante. D'où trois
+// pièces autour de la table :
+//
+//   1. une bande de tuiles de contexte (semaine en cours, bilan de chaque
+//      participant, points marqués, prochain duel) ;
+//   2. une colonne « Forme » dans la table — cinq pastilles disent mieux
+//      qu'un différentiel qui monte et qui coule ;
+//   3. les derniers résultats en bas, à côté du temple de la renommée et
+//      des meilleures équipes récentes.
+//
+// Rien de tout cela n'a besoin du réseau : le bilan, l'historique et la
+// semaine en cours sont déjà dans poolData.h2hData, chargé une fois par
+// FZPool. Les tuiles s'affichent donc en même temps que la table.
+
+const H2H_FORM_LENGTH = 5;
+const H2H_STRIP_MAX_RECORDS = 4;   // au-delà, la bande devient un défilé
+
+const H2H_FORM_LABEL = { W: 'Victoire', L: 'Défaite', T: 'Nulle' };
+
+const H2H_ICON = {
+    calendrier: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`,
+    graphique: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V10M12 21V4M19 21v-7"/></svg>`,
+    horloge: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>`,
+    trophee: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/></svg>`
+};
+
+/** Issue d'un duel pour une équipe : 'W', 'L', 'T', ou null si non pointé. */
+function h2hOutcome(matchup, teamName) {
+    if (!matchup || !matchup.winner) return null;
+    if (matchup.winner === 'tie') return 'T';
+    return matchup.winner === teamName ? 'W' : 'L';
+}
+
+/**
+ * Les H2H_FORM_LENGTH derniers résultats de chaque équipe, du PLUS RÉCENT
+ * au plus ancien — c'est l'ordre d'affichage des pastilles, et il pousse les
+ * cases vides d'un début de saison à droite plutôt qu'en tête.
+ */
+function computeH2HForm(poolData) {
+    const formes = new Map();
+    const historique = (poolData.h2hData && poolData.h2hData.matchupHistory) || [];
+
+    [...historique]
+        .sort((a, b) => (a.weekNumber || 0) - (b.weekNumber || 0))
+        .forEach(semaine => (semaine.matchups || []).forEach(duel => {
+            [duel.team1, duel.team2].forEach(nom => {
+                const issue = h2hOutcome(duel, nom);
+                if (!issue) return;
+                if (!formes.has(nom)) formes.set(nom, []);
+                formes.get(nom).push(issue);
+            });
+        }));
+
+    formes.forEach((suite, nom) => formes.set(nom, suite.slice(-H2H_FORM_LENGTH).reverse()));
+    return formes;
+}
+
+function h2hFormDotsHTML(suite) {
+    const resultats = suite || [];
+    const vides = Math.max(0, H2H_FORM_LENGTH - resultats.length);
+    const pastilles = resultats
+        .map(r => `<span class="st-form-dot is-${r.toLowerCase()}" title="${H2H_FORM_LABEL[r]}"></span>`)
+        .concat(Array.from({ length: vides }, () => `<span class="st-form-dot is-empty" title="Pas encore joué"></span>`))
+        .join('');
+    const resume = resultats.length
+        ? resultats.map(r => H2H_FORM_LABEL[r]).join(', ') + ' (du plus récent au plus ancien)'
+        : 'Aucun duel terminé';
+    return `<span class="st-form" role="img" aria-label="${escapeAttr(resume)}">${pastilles}</span>`;
+}
+
+/** Points de pool : une décimale, mais pas de « ,0 » inutile. */
+function fmtH2HPts(valeur) {
+    const n = Math.round((Number(valeur) || 0) * 10) / 10;
+    return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+
+/** Différentiel signé : le « + » d'une équipe positive doit se voir. */
+function fmtH2HDiff(valeur) {
+    const n = Math.round((Number(valeur) || 0) * 10) / 10;
+    return (n > 0 ? '+' : '') + fmtH2HPts(n);
+}
+
+/** Pourcentage de victoires façon fiche d'équipe : « .571 », nulle = demie. */
+function h2hWinPct(bilan) {
+    if (!bilan.gamesPlayed) return '—';
+    const pct = (bilan.wins + bilan.ties / 2) / bilan.gamesPlayed;
+    return pct.toFixed(3).replace(/^0/, '');
+}
+
+function h2hStripCardHTML(icone, libelle, valeur, sous) {
+    return `
+        <div class="h2h-strip-card">
+            <span class="h2h-strip-icon">${icone}</span>
+            <span class="h2h-strip-text">
+                <span class="h2h-strip-label">${escapeHtmlText(libelle)}</span>
+                <span class="h2h-strip-value">${escapeHtmlText(valeur)}</span>
+                <span class="h2h-strip-sub">${escapeHtmlText(sous)}</span>
+            </span>
+        </div>`;
+}
+
+/**
+ * La bande de contexte au-dessus de la table. `standings` est le classement
+ * déjà calculé par renderPoolStandings — le recalculer ici ferait diverger
+ * les deux affichages au premier changement de règle de départage.
+ */
+function renderH2HStandingsStrip(poolName, standings) {
+    const bande = document.getElementById('h2hStandingsStrip');
+    if (!bande) return;
+
+    const poolData = allPoolsData[poolName];
+    const h2h = (poolData && poolData.h2hData) || {};
+    if (!standings.length) {
+        bande.style.display = 'none';
+        return;
+    }
+
+    const semaine = h2h.currentWeek || 1;
+    const cartes = [];
+
+    const aujourdhui = new Date().toLocaleDateString('fr-CA', {
+        weekday: 'long', day: 'numeric', month: 'short'
+    });
+    cartes.push(h2hStripCardHTML(
+        H2H_ICON.calendrier, 'Semaine actuelle', `Semaine ${semaine}`, `Aujourd'hui — ${aujourdhui}`
+    ));
+
+    // Bilans : le vôtre d'abord — c'est celui qu'on vient vérifier —, puis
+    // les autres par rang. Au-delà de H2H_STRIP_MAX_RECORDS la bande ne dit
+    // plus rien d'un coup d'œil ; la table juste dessous les porte tous.
+    const mienne = myTeamIn(poolName);
+    [...standings]
+        .sort((a, b) => {
+            if (a.teamName === mienne) return -1;
+            if (b.teamName === mienne) return 1;
+            return a.rank - b.rank;
+        })
+        .slice(0, H2H_STRIP_MAX_RECORDS)
+        .forEach(equipe => {
+            const nom = getDisplayName(equipe.teamName, equipe.members);
+            const logo = getTeamLogoHTML(equipe.nhlTeams, 22)
+                || `<span class="st-avatar-fallback">${initialsFromName(nom)}</span>`;
+            cartes.push(h2hStripCardHTML(
+                logo,
+                `Bilan ${nom}`,
+                `${equipe.wins} - ${equipe.losses} - ${equipe.ties}`,
+                h2hWinPct(equipe)
+            ));
+        });
+
+    const totalPour = standings.reduce((somme, e) => somme + (e.points || 0), 0);
+    cartes.push(h2hStripCardHTML(
+        H2H_ICON.graphique,
+        'Points marqués',
+        fmtH2HPts(Math.round(totalPour / standings.length)),
+        'Moyenne par équipe'
+    ));
+
+    cartes.push(h2hStripCardHTML(H2H_ICON.calendrier, 'Prochain duel', ...h2hNextWeekLabels(h2h, semaine)));
+
+    bande.innerHTML = cartes.join('');
+    bande.style.display = 'flex';
+}
+
+/**
+ * [valeur, sous-titre] de la tuile « Prochain duel ». Les dates se déduisent
+ * du lundi de la semaine en cours : le calendrier complet vit derrière
+ * /h2h/season-schedule, mais une tuile ne vaut pas un aller-retour réseau.
+ */
+function h2hNextWeekLabels(h2h, semaineCourante) {
+    const suivante = semaineCourante + 1;
+
+    if (h2h.seasonWeeks && suivante > h2h.seasonWeeks) {
+        return ['Saison terminée', `${h2h.seasonWeeks} semaines jouées`];
+    }
+    if (!h2h.weekStart) {
+        return [`Semaine ${suivante}`, 'Dates à confirmer'];
+    }
+
+    const debut = new Date(h2h.weekStart);
+    debut.setDate(debut.getDate() + 7);
+    const fin = new Date(debut);
+    fin.setDate(fin.getDate() + 7);
+    return [`Semaine ${suivante}`, h2hSchedDateRange(debut, fin)];
+}
+
+/**
+ * Les dernières semaines finalisées, vues du côté de votre équipe : votre
+ * score à gauche, celui de l'adversaire à droite, l'issue en pastille. Sans
+ * équipe dans le pool (spectateur), le premier duel de la semaine sert de
+ * point de vue — mieux qu'une carte vide.
+ */
+function renderH2HRecentResults(poolName) {
+    const container = document.getElementById('h2hRecentResults');
+    if (!container) return;
+
+    const poolData = allPoolsData[poolName];
+    const historique = [...(((poolData || {}).h2hData || {}).matchupHistory || [])]
+        .sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0))
+        .slice(0, 3);
+
+    const tete = `
+        <div class="fz-card-head">
+            <span class="fz-card-icon">${H2H_ICON.horloge}</span>
+            <h2 class="fz-card-title">Derniers résultats</h2>
+            ${historique.length ? `<button type="button" class="fz-card-link" onclick="switchH2HTab('history')">Voir tout</button>` : ''}
+        </div>`;
+
+    if (!historique.length) {
+        container.innerHTML = tete + fzEmptyHTML(
+            H2H_ICON.horloge,
+            'Aucun duel terminé',
+            "Les résultats s'afficheront à la fin de la première semaine."
+        );
+        container.style.display = 'block';
+        return;
+    }
+
+    const mienne = myTeamIn(poolName);
+    // L'historique ne garde que les clés d'équipe : les membres viennent du
+    // pool, pour afficher « user1 » là où la table affiche « user1 ».
+    const equipes = (poolData && poolData.teams) || {};
+    const nomAffiche = (cle) => getDisplayName(cle, (equipes[cle] || {}).members);
+
+    const lignes = historique.map(semaine => {
+        const duels = semaine.matchups || [];
+        const duel = duels.find(m => m.team1 === mienne || m.team2 === mienne) || duels[0];
+        if (!duel) return '';
+
+        // Le point de vue : votre équipe à gauche, faute de quoi team1.
+        const inverse = duel.team2 === mienne;
+        const nousNom = inverse ? duel.team2 : duel.team1;
+        const euxNom = inverse ? duel.team1 : duel.team2;
+        const nousPts = inverse ? duel.team2Points : duel.team1Points;
+        const euxPts = inverse ? duel.team1Points : duel.team2Points;
+
+        const issue = h2hOutcome(duel, nousNom);
+        const badge = { W: 'V', L: 'D', T: 'N' }[issue] || '—';
+        const classeIssue = { W: 'is-win', L: 'is-loss', T: 'is-tie' }[issue] || 'is-none';
+
+        const plage = (semaine.weekStart && semaine.weekEnd)
+            ? h2hSchedDateRange(semaine.weekStart, semaine.weekEnd) : '';
+
+        return `
+            <div class="h2h-res-row">
+                <span class="h2h-res-when">
+                    <span class="h2h-res-week">Semaine ${semaine.weekNumber}</span>
+                    <span class="h2h-res-dates">${escapeHtmlText(plage)}</span>
+                </span>
+                <span class="h2h-res-score">
+                    <span class="h2h-res-side">
+                        <span class="h2h-res-pts ${issue === 'W' ? 'is-top' : ''}">${fmtH2HPts(nousPts)}</span>
+                        <span class="h2h-res-team" title="${escapeAttr(nomAffiche(nousNom))}">${escapeHtmlText(nomAffiche(nousNom))}</span>
+                    </span>
+                    <span class="h2h-res-sep">-</span>
+                    <span class="h2h-res-side">
+                        <span class="h2h-res-pts ${issue === 'L' ? 'is-top' : ''}">${fmtH2HPts(euxPts)}</span>
+                        <span class="h2h-res-team" title="${escapeAttr(nomAffiche(euxNom))}">${escapeHtmlText(nomAffiche(euxNom))}</span>
+                    </span>
+                </span>
+                <span class="h2h-res-badge ${classeIssue}">${badge}</span>
+            </div>`;
+    }).join('');
+
+    container.innerHTML = `${tete}
+        <div class="h2h-res-list">${lignes}</div>
+        <button type="button" class="h2h-res-more" onclick="switchH2HTab('history')">Voir l'historique complet <span aria-hidden="true">&rarr;</span></button>`;
+    container.style.display = 'block';
+}
+
+/** État vide d'une carte : une icône fantôme, un constat, ce qui le lèvera. */
+function fzEmptyHTML(icone, titre, indice) {
+    return `
+        <div class="fz-empty">
+            <span class="fz-empty-icon">${icone}</span>
+            <p class="fz-empty-title">${escapeHtmlText(titre)}</p>
+            <p class="fz-empty-hint">${escapeHtmlText(indice)}</p>
+        </div>`;
+}
+
 async function renderPoolStandings(poolData, poolName) {
     const poolMode = poolData.poolMode || 'cumulative';
     const standingsList = document.getElementById('standingsList');
@@ -458,6 +769,10 @@ async function renderPoolStandings(poolData, poolName) {
     }
     standings.forEach((s, i) => { s.rank = i + 1; });
 
+    // Bande de contexte H2H : au-dessus de la table, et masquée d'elle-même
+    // quand il n'y a pas encore d'équipe complète.
+    if (poolMode === 'head-to-head') renderH2HStandingsStrip(poolName, standings);
+
     const columns = getStandingsColumns(poolMode);
 
     if (standings.length === 0) {
@@ -492,13 +807,30 @@ async function renderPoolStandings(poolData, poolName) {
     const byDays = poolMode === 'head-to-head' ? null : await fetchStandingsPeriodPoints(poolName);
     const periodRankByTeam = byDays ? rankByPeriodPoints(standings, byDays[standingsPeriod]) : null;
 
-    const chipsHTML = poolMode === 'head-to-head' ? '' : standingsPeriodChipsHTML();
-    const mobileListHTML = poolMode === 'head-to-head' ? '' : '<div class="st-mobile-list"></div>';
-    standingsList.innerHTML = `${chipsHTML}<div class="standings-table-container"><table id="standingsTable">${buildStandingsHead(columns, activeSortKey)}</table></div>${mobileListHTML}`;
+    // En H2H la table vit dans une carte titrée — elle n'est plus qu'un bloc
+    // parmi d'autres sur l'onglet. En cumulatif elle reste à plat sur la
+    // page, avec ses chips de période et sa liste téléphone.
+    const enH2H = poolMode === 'head-to-head';
+    const chipsHTML = enH2H ? '' : standingsPeriodChipsHTML();
+    const mobileListHTML = enH2H ? '' : '<div class="st-mobile-list"></div>';
+    const tableHTML = `<div class="standings-table-container"><table id="standingsTable">${buildStandingsHead(columns, activeSortKey)}</table></div>`;
+
+    standingsList.innerHTML = enH2H
+        ? `<section class="fz-card st-card">
+               <div class="fz-card-head">
+                   <span class="fz-card-icon">${H2H_ICON.graphique}</span>
+                   <h2 class="fz-card-title">Classement de la saison</h2>
+               </div>
+               ${tableHTML}
+           </section>`
+        : `${chipsHTML}${tableHTML}${mobileListHTML}`;
     const table = document.getElementById('standingsTable');
 
     const tbody = document.createElement('tbody');
     const mobileRowsHTML = [];
+    // Les pastilles de forme se lisent dans l'historique des semaines
+    // finalisées, pas dans le bilan cumulé : une passe pour tout le tableau.
+    const h2hForms = enH2H ? computeH2HForm(poolData) : null;
     displayList.forEach(standing => {
         const displayName = getDisplayName(standing.teamName, standing.members);
         const logoHTML = getTeamLogoHTML(standing.nhlTeams, 20);
@@ -522,13 +854,15 @@ async function renderPoolStandings(poolData, poolName) {
             evoHTML = evolutionBadgeHTML(move, hasData);
         }
 
-        const statCells = poolMode === 'head-to-head'
+        const statCells = enH2H
             ? `<td>${standing.gamesPlayed}</td>
-               <td>${standing.wins}</td>
-               <td>${standing.losses}</td>
-               <td>${standing.ties}</td>
-               <td class="points-column">${standing.points}</td>
-               <td class="st-diff-col">${standing.diff > 0 ? '+' + standing.diff : standing.diff}</td>`
+               <td class="st-vdn-col">${standing.wins} - ${standing.losses} - ${standing.ties}</td>
+               <td class="st-wlt-col">${standing.wins}</td>
+               <td class="st-wlt-col">${standing.losses}</td>
+               <td class="st-wlt-col">${standing.ties}</td>
+               <td class="points-column">${fmtH2HPts(standing.points)}</td>
+               <td class="st-diff-col">${fmtH2HDiff(standing.diff)}</td>
+               <td class="st-form-col">${h2hFormDotsHTML(h2hForms.get(standing.teamName))}</td>`
             : `<td>${standing.gamesPlayed}</td>
                <td>${standing.goals}</td>
                <td>${standing.assists}</td>
@@ -573,38 +907,35 @@ async function renderPoolStandings(poolData, poolName) {
         if (mobileList) mobileList.innerHTML = mobileRowsHTML.join('');
     }
 
-    const n = standings.length;
-    const rawAvg = (key) => standings.reduce((sum, s) => sum + (s[key] || 0), 0) / n;
-    const avg = (key) => Math.round(rawAvg(key));
-    const avgPeriod = (days) => {
-        const vals = [...byDays[days].values()].filter(v => v !== null && v !== undefined);
-        return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-    };
-    const tfoot = document.createElement('tfoot');
-    const avgStatCells = poolMode === 'head-to-head'
-        ? `<td>${avg('gamesPlayed')}</td>
-           <td>${avg('wins')}</td>
-           <td>${avg('losses')}</td>
-           <td>${avg('ties')}</td>
-           <td class="points-column">${avg('points')}</td>
-           <td class="st-diff-col">—</td>`
-        : `<td>${avg('gamesPlayed')}</td>
-           <td>${avg('goals')}</td>
-           <td>${avg('assists')}</td>
-           <td class="st-period-col">${fmtPeriodPts(avgPeriod(1))}</td>
-           <td class="st-period-col">${fmtPeriodPts(avgPeriod(7))}</td>
-           <td class="st-period-col">${fmtPeriodPts(avgPeriod(30))}</td>
-           <td class="points-column">${avg('points')}</td>
-           <td>${rawAvg('ppg').toFixed(2)}</td>
-           <td class="st-evo-col">—</td>`;
-    tfoot.innerHTML = `
-        <tr class="standings-avg-row">
-            <td class="rank-col">—</td>
-            <td class="player-col standings-avg-label">Moyenne</td>
-            ${avgStatCells}
-        </tr>
-    `;
-    table.appendChild(tfoot);
+    // Ligne « Moyenne » : elle situe une équipe dans le peloton, ce qui n'a
+    // de sens que sur un classement cumulatif. En H2H la moyenne d'un bilan
+    // V-D-N ne veut rien dire — chaque victoire est la défaite d'un autre.
+    if (!enH2H) {
+        const n = standings.length;
+        const rawAvg = (key) => standings.reduce((sum, s) => sum + (s[key] || 0), 0) / n;
+        const avg = (key) => Math.round(rawAvg(key));
+        const avgPeriod = (days) => {
+            const vals = [...byDays[days].values()].filter(v => v !== null && v !== undefined);
+            return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+        };
+        const tfoot = document.createElement('tfoot');
+        tfoot.innerHTML = `
+            <tr class="standings-avg-row">
+                <td class="rank-col">—</td>
+                <td class="player-col standings-avg-label">Moyenne</td>
+                <td>${avg('gamesPlayed')}</td>
+                <td>${avg('goals')}</td>
+                <td>${avg('assists')}</td>
+                <td class="st-period-col">${fmtPeriodPts(avgPeriod(1))}</td>
+                <td class="st-period-col">${fmtPeriodPts(avgPeriod(7))}</td>
+                <td class="st-period-col">${fmtPeriodPts(avgPeriod(30))}</td>
+                <td class="points-column">${avg('points')}</td>
+                <td>${rawAvg('ppg').toFixed(2)}</td>
+                <td class="st-evo-col">—</td>
+            </tr>
+        `;
+        table.appendChild(tfoot);
+    }
 
     // Délégation sur le conteneur : reconstruit à chaque tri/période/rendu, un
     // écouteur par <th>/.st-period-chip/.st-mobile-row fuirait à chaque passe
@@ -632,8 +963,14 @@ async function renderPoolStandings(poolData, poolName) {
     document.getElementById('standingsSkeleton').style.display = 'none';
     standingsList.style.display = 'block';
 
+    // En H2H les trois blocs du bas se rangent côte à côte ; en cumulatif ils
+    // restent empilés, comme avant.
+    const insights = document.getElementById('standingsInsights');
+    if (insights) insights.classList.toggle('is-h2h', enH2H);
+
     renderHallOfFame(poolName);
     renderRecentFormLeaderboard(poolName);
+    if (enH2H) renderH2HRecentResults(poolName);
 }
 
 // ==================== HALL OF FAME ====================
@@ -678,16 +1015,24 @@ function hofCardHTML(entry, kind, label, dateFormatter) {
 }
 
 function buildHallOfFameHTML(data) {
+    // Même en-tête que les autres cartes de bas de classement : icône,
+    // titre, mention à droite. Les classes historiques (hof-*) restent pour
+    // l'habillage cumulatif, les fz-* portent celui des cartes H2H.
     const head = `
-        <div class="hof-head">
-            <p class="hof-title">Temple de la renommée</p>
-            <span class="hof-subtitle">saison en cours</span>
+        <div class="hof-head fz-card-head">
+            <span class="fz-card-icon">${H2H_ICON.trophee}</span>
+            <p class="hof-title fz-card-title">Temple de la renommée</p>
+            <span class="hof-subtitle fz-card-note">Saison en cours</span>
         </div>`;
     if (data && data.seasonStarted === false) {
-        return `${head}<p class="hof-empty">La saison n'est pas commencée : les records s'écriront au premier match.</p>`;
+        return head + fzEmptyHTML(H2H_ICON.trophee,
+            "La saison n'est pas commencée",
+            "Les records s'écriront au premier match.");
     }
     if (!data || (!data.bestDay && !data.bestWeek && !data.bestMonth)) {
-        return `${head}<p class="hof-empty">Pas encore assez de matchs joués cette saison pour établir des records.</p>`;
+        return head + fzEmptyHTML(H2H_ICON.trophee,
+            'Pas encore de records',
+            "Il faut au moins un match joué cette saison.");
     }
     // Ordre du mockup : la meilleure semaine sert de carte « héro » (fond
     // sombre), puis meilleurs mois/jour, puis les trois pires en fin de
@@ -749,8 +1094,8 @@ async function loadRecentFormRows(poolName, days) {
 
         if (!teams.length) {
             list.innerHTML = data && data.seasonStarted === false
-                ? `<p class="hof-empty">La saison n'est pas commencée : aucune équipe n'a encore joué.</p>`
-                : `<p class="hof-empty">Pas assez de données pour classer les équipes sur cette période.</p>`;
+                ? fzEmptyHTML(H2H_ICON.graphique, "La saison n'est pas commencée", "Aucune équipe n'a encore joué.")
+                : fzEmptyHTML(H2H_ICON.graphique, 'Pas assez de données', 'Aucun résultat sur cette période.');
             return;
         }
 
@@ -778,8 +1123,9 @@ function renderRecentFormLeaderboard(poolName) {
 
     recentFormWindow = 7;
     container.innerHTML = `
-        <div class="recent-form-head">
-            <p class="hof-title">Meilleures équipes récentes</p>
+        <div class="recent-form-head fz-card-head">
+            <span class="fz-card-icon">${H2H_ICON.graphique}</span>
+            <p class="hof-title fz-card-title">Meilleures équipes récentes</p>
             <div class="time-filters">
                 ${RECENT_FORM_WINDOWS.map(d => `<button type="button" class="time-filter${d === 7 ? ' active' : ''}" data-days="${d}">${d}J</button>`).join('')}
             </div>
@@ -797,6 +1143,7 @@ function renderRecentFormLeaderboard(poolName) {
 // Level 3: Team Roster View
 function showTeamRoster(poolName, teamName) {
     currentView = VIEW_STATES.TEAM_ROSTER;
+    document.getElementById('poolHeaderMeta').style.display = 'none';
     currentPoolName = poolName;
     currentTeamName = teamName;
 
@@ -1391,6 +1738,15 @@ function switchH2HTab(tab) {
     document.getElementById('h2hScheduleView').style.display = (tab === 'calendrier') ? 'block' : 'none';
     document.getElementById('h2hHistoryView').style.display = (tab === 'history') ? 'block' : 'none';
 
+    // La bande de tuiles et les trois blocs du bas appartiennent au seul
+    // onglet Classement. Sans ce ménage ils restaient affichés sous les
+    // duels en cours et sous le calendrier, une fois l'onglet visité.
+    const surClassement = tab === 'standings';
+    const bande = document.getElementById('h2hStandingsStrip');
+    if (bande) bande.style.display = (surClassement && bande.innerHTML.trim()) ? 'flex' : 'none';
+    const insights = document.getElementById('standingsInsights');
+    if (insights) insights.style.display = surClassement ? '' : 'none';
+
     if (tab === 'standings' && currentPoolName) {
         const poolData = allPoolsData[currentPoolName];
         if (poolData) renderPoolStandings(poolData, currentPoolName);
@@ -1802,6 +2158,7 @@ function showError(title, message) {
     document.getElementById('teamRosterView').style.display = 'none';
     document.getElementById('breadcrumb').style.display = 'none';
     document.getElementById('pageTitle').textContent = 'Classement';
+    document.getElementById('poolHeaderMeta').style.display = 'none';
 
     const poolList = document.getElementById('poolList');
     poolList.style.display = 'block';

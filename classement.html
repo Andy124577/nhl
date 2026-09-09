@@ -41,6 +41,13 @@
         <!-- Page Title -->
         <h1 id="pageTitle" class="page-title">Classement</h1>
 
+        <!-- Sous-titre d'un pool H2H : mode de ligue, nombre de participants
+             et état de la saison. Rempli par showPoolStandings(). -->
+        <div id="poolHeaderMeta" class="pool-header-meta" style="display: none;">
+            <p class="phm-line" id="poolHeaderLine"></p>
+            <span class="phm-badge" id="poolHeaderBadge">Saison en cours</span>
+        </div>
+
         <!-- Level 1: Pool List View -->
         <div id="poolListView" class="view-container">
             <!-- Skeleton Loader -->
@@ -77,11 +84,28 @@
         <div id="poolStandingsView" class="view-container" style="display: none;">
             <!-- H2H Tabs (shown only for H2H pools) -->
             <div id="h2hTabs" class="h2h-tabs" style="display: none;">
-                <button class="h2h-tab active" data-tab="matchups" onclick="switchH2HTab('matchups')">Duel en cours</button>
-                <button class="h2h-tab" data-tab="standings" onclick="switchH2HTab('standings')">Classement</button>
-                <button class="h2h-tab" data-tab="calendrier" onclick="switchH2HTab('calendrier')">Calendrier</button>
-                <button class="h2h-tab" data-tab="history" onclick="switchH2HTab('history')">Historique</button>
+                <button class="h2h-tab active" data-tab="matchups" onclick="switchH2HTab('matchups')">
+                    <svg class="h2h-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/></svg>
+                    <span>Duel en cours</span>
+                </button>
+                <button class="h2h-tab" data-tab="standings" onclick="switchH2HTab('standings')">
+                    <svg class="h2h-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V10M12 21V4M19 21v-7"/></svg>
+                    <span>Classement</span>
+                </button>
+                <button class="h2h-tab" data-tab="calendrier" onclick="switchH2HTab('calendrier')">
+                    <svg class="h2h-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+                    <span>Calendrier</span>
+                </button>
+                <button class="h2h-tab" data-tab="history" onclick="switchH2HTab('history')">
+                    <svg class="h2h-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+                    <span>Historique</span>
+                </button>
             </div>
+
+            <!-- H2H — Classement : bande de tuiles de contexte (semaine en
+                 cours, bilan de chaque participant, points marqués, prochain
+                 duel). Remplie par renderH2HStandingsStrip(). -->
+            <div id="h2hStandingsStrip" class="h2h-strip" style="display: none;"></div>
 
             <!-- H2H: Current Matchups -->
             <div id="h2hMatchupsView" class="h2h-section" style="display: none;">
@@ -123,16 +147,28 @@
                 <!-- Standings table is injected here -->
             </div>
 
-            <!-- Hall of Fame: best/worst day, week, month (cumulative pools) -->
-            <div id="hallOfFame" class="hall-of-fame" style="display: none;">
-                <!-- Injected by renderHallOfFame() -->
-            </div>
+            <!-- Bas du classement : temple de la renommée, meilleures équipes
+                 récentes et — en H2H seulement — les derniers résultats. En
+                 H2H la classe `is-h2h` les met côte à côte sur grand écran ;
+                 en cumulatif ils restent empilés comme avant. -->
+            <div id="standingsInsights" class="standings-insights">
+                <!-- Hall of Fame: best/worst day, week, month -->
+                <div id="hallOfFame" class="hall-of-fame" style="display: none;">
+                    <!-- Injected by renderHallOfFame() -->
+                </div>
 
-            <!-- Recent form: windowed best-team leaderboard (cumulative pools).
-                 Relocated from the old homepage Activity tab — see
-                 accueil-dash.js — since that's the only place it lived. -->
-            <div id="recentFormLeaderboard" class="recent-form-leaderboard" style="display: none;">
-                <!-- Injected by renderRecentFormLeaderboard() -->
+                <!-- Recent form: windowed best-team leaderboard.
+                     Relocated from the old homepage Activity tab — see
+                     accueil-dash.js — since that's the only place it lived. -->
+                <div id="recentFormLeaderboard" class="recent-form-leaderboard" style="display: none;">
+                    <!-- Injected by renderRecentFormLeaderboard() -->
+                </div>
+
+                <!-- H2H : les dernières semaines finalisées, vues du côté de
+                     votre équipe. Rempli par renderH2HRecentResults(). -->
+                <div id="h2hRecentResults" class="h2h-recent-results" style="display: none;">
+                    <!-- Injected by renderH2HRecentResults() -->
+                </div>
             </div>
 
             <!-- H2H: Calendrier de la saison — carrousel de toutes les
