@@ -1,0 +1,185 @@
+/* Guest homepage: photographic ice with a readable, HTML product preview.
+   This scene intentionally stays dark in both themes, like a product photo.
+   The existing fz-auth rule in accueil.css still hides it for members. */
+.hero-section.fz-arena-hero {
+    --arena-red: #b93d28;
+    position: relative;
+    isolation: isolate;
+    min-height: 760px;
+    padding: 50px 4.5% 90px;
+    background: #080d11;
+    color: #f5f5f7;
+}
+.arena-ice { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: left bottom; z-index: -3; pointer-events: none; }
+.fz-arena-hero::before { content: ''; position: absolute; inset: 0; z-index: -2; background: linear-gradient(90deg, rgba(5,10,14,.18), transparent 65%), linear-gradient(0deg, rgba(5,9,12,.35), transparent 20%); }
+.fz-arena-hero .hero-inner { max-width: 1640px; grid-template-columns: minmax(0, .86fr) minmax(0, 1.4fr); gap: clamp(28px, 3vw, 58px); }
+.fz-arena-hero .hero-text { text-align: left; align-items: flex-start; }
+.fz-arena-hero .hero-badge { padding: 0; border: 0; border-radius: 0; background: none; color: #d8dde0; font: 600 11px/1.5 'Archivo', 'Segoe UI', sans-serif; letter-spacing: .18em; gap: 12px; margin-bottom: 22px; }
+.fz-arena-hero .hero-badge > span { width: 25px; height: 3px; background: var(--arena-red); }
+.fz-arena-hero .hero-headline { font: 400 clamp(64px, 6.3vw, 104px)/.97 'Bebas Neue', Impact, sans-serif; letter-spacing: .01em; color: #f5f5f7; margin: 0 0 24px; text-transform: uppercase; }
+.fz-arena-hero .hero-headline > span { color: var(--arena-red); }
+.fz-arena-hero .hero-sub { font-size: clamp(14px, 1.13vw, 17px); line-height: 1.75; color: #c3cbd0; margin-bottom: 28px; max-width: 420px; }
+.fz-arena-hero .hero-actions { gap: 12px; margin: 0 0 18px; flex-direction: row; }
+.fz-arena-hero .btn-hero-primary, .fz-arena-hero .btn-hero-secondary { min-height: 48px; border-radius: 5px; padding: 14px 18px; font-size: 13px; font-weight: 700; color: #fff; box-shadow: none; transition: background .18s, border-color .18s; }
+.fz-arena-hero .btn-hero-primary { background: var(--arena-red); gap: 20px; }
+.fz-arena-hero .btn-hero-primary:hover { background: #a73523; transform: none; }
+.fz-arena-hero .btn-hero-secondary { border: 1px solid #6d767c; background: rgba(9,15,19,.58); }
+.fz-arena-hero .btn-hero-secondary:hover { background: #222c32; border-color: #c3cbd0; transform: none; }
+.arena-footnote { color: #d6dfe5; font-size: 11px; line-height: 1.6; text-shadow: 0 1px 5px #000; }
+.arena-footnote > span { margin: 0 8px; color: #8d969d; }
+.fz-arena-hero .btn-hero-tertiary { min-height: 44px; margin-top: 14px; padding: 10px 0; font-size: 12px; border-radius: 2px; color: #d0d6da; gap: 8px; }
+.fz-arena-hero .btn-hero-tertiary:hover { color: #fff; transform: none; text-decoration: underline; text-underline-offset: 4px; }
+.fz-arena-hero a:focus-visible, .fz-arena-hero button:focus-visible { outline: 2px solid #fff; outline-offset: 5px; }
+
+/* Restrained perspective and a physical bezel ground the screen on the ice.
+   No scaled screenshot: names, tables and actions stay real, selectable HTML. */
+.arena-product { position: relative; min-width: 0; margin: 34px 0 0; perspective: 1800px; }
+.arena-product::before { content: ''; position: absolute; left: 4%; right: -3%; height: 35px; bottom: 22px; border-radius: 50%; background: #000; opacity: .85; filter: blur(18px); z-index: -1; }
+.arena-device { position: relative; padding: 10px; background: linear-gradient(135deg, #45505a, #141b22 24%, #0b1016 70%, #4b535b); border: 1px solid #69737c; border-radius: 24px; box-shadow: 0 2px 0 #020608, 7px 12px 0 -5px #0a0e13, 0 30px 48px #0009; transform: rotateY(-5deg) rotateZ(1deg); transform-origin: center; }
+.arena-device::after { content: ''; position: absolute; top: 4px; left: 50%; width: 4px; height: 4px; border-radius: 50%; background: #05080c; box-shadow: inset 0 0 1px #8292a1; }
+.arena-screen { overflow: hidden; border: 1px solid #080b0e; border-radius: 15px; background: #111518; color: #f3f5f7; font: 400 12px/1.4 'Archivo', 'Segoe UI', sans-serif; }
+.ap-nav { display: flex; align-items: center; gap: clamp(14px, 1.8vw, 27px); min-height: 52px; padding: 0 22px; background: #0b0e11; border-bottom: 1px solid #2b3035; font-size: 11px; }
+.ap-nav > img { width: 100px; height: auto; margin-right: auto; }
+.ap-nav > a { text-decoration: none; color: #adb6bd; padding: 16px 0; }
+.ap-nav > a:hover { color: #fff; }
+.ap-nav-active { align-self: stretch; display: flex; align-items: center; border-bottom: 2px solid var(--arena-red); font-weight: 700; }
+.ap-account { width: 26px; height: 26px; border: 1px solid #394048; border-radius: 50%; color: #b4bdc5; }
+.ap-body { padding: 16px; }
+.ap-page-heading { display: flex; justify-content: space-between; gap: 10px; color: #adb5bc; font: 500 9px/1.5 'Archivo', sans-serif; letter-spacing: .14em; margin-bottom: 10px; }
+.ap-page-heading > span:last-child { color: #909aa3; }
+.ap-welcome { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 20px; border-radius: 5px; background: var(--arena-red); }
+.ap-eyebrow { display: block; color: #fff; font-size: 9px; font-weight: 600; line-height: 1.5; letter-spacing: .12em; }
+.ap-welcome h2 { font: 500 clamp(26px, 2.3vw, 36px)/1.04 'Barlow Condensed', Impact, sans-serif; text-transform: uppercase; letter-spacing: .015em; margin: 6px 0 8px; color: #fff; }
+.ap-welcome p { font-size: 10px; color: #fff; line-height: 1.5; }
+.ap-welcome-actions { display: flex; flex-direction: column; gap: 9px; min-width: 158px; }
+.ap-welcome-actions a { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px; border-radius: 3px; background: #14181c; color: #fff; font-size: 11px; font-weight: 600; text-decoration: none; }
+.ap-welcome-actions a:last-child { background: #812b1d; border: 1px solid #d58072; }
+.ap-welcome-actions a:hover { background: #282d32; }
+.ap-content { display: grid; grid-template-columns: minmax(0, 1fr) 166px; gap: 18px; margin-top: 18px; }
+.ap-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.ap-section-heading h3 { font: 500 21px/1.2 'Barlow Condensed', Impact, sans-serif; color: #f3f5f7; }
+.ap-section-heading > span { color: #aab3bb; font-size: 10px; white-space: nowrap; }
+.ap-table { width: 100%; border-collapse: collapse; table-layout: auto; text-align: right; white-space: nowrap; }
+.ap-table thead { position: static; }
+.ap-table th, .ap-table td { border-bottom: 1px solid #2a3035; text-align: right; }
+.ap-table th { font-family: 'Archivo', 'Segoe UI', sans-serif; background: transparent; backdrop-filter: none; box-shadow: none; text-transform: none; letter-spacing: normal; color: #f3f5f7; }
+.ap-table tbody tr { background: transparent; cursor: default; border-color: #2a3035; }
+/* The shared stats stylesheet applies an !important hover to every table. */
+.ap-table tbody tr:hover { background: #1c2329 !important; transform: none; box-shadow: none; }
+.ap-table thead th { font-size: 9px; font-weight: 500; color: #aeb7bf; padding: 0 6px 9px; }
+.ap-table th:first-child { text-align: left; padding-left: 0; }
+.ap-table tbody th { font-size: 12px; font-weight: 600; padding: 6px 4px 6px 0; }
+.ap-table td { font: 500 11px/1.4 'JetBrains Mono', monospace; color: #c7cdd3; padding: 8px 6px; }
+.ap-table td:last-child { color: #fff; font-weight: 700; background: #ffffff04; }
+.ap-player { display: flex; align-items: center; gap: 7px; }
+.ap-player > img { width: 32px; height: 32px; object-fit: contain; }
+.ap-player small { display: block; font-size: 9px; font-weight: 400; color: #9ba7b1; margin-top: 5px; }
+.ap-view-stats { display: flex; justify-content: space-between; min-height: 40px; align-items: center; color: #bdc6cd; font-size: 10px; text-decoration: none; }
+.ap-view-stats:hover { color: #fff; }
+.ap-side { display: flex; flex-direction: column; gap: 12px; }
+.ap-draft-card { position: relative; padding: 14px; background: #1c2329; border: 1px solid #333e47; border-radius: 4px; }
+.ap-card-icon { color: #dce1e5; margin-bottom: 13px; }
+.ap-draft-card .ap-eyebrow { font-size: 8px; line-height: 1.6; color: #b6c0c8; letter-spacing: .08em; }
+.ap-draft-card h3, .ap-pool-card h3 { font: 500 25px/1.07 'Barlow Condensed', Impact, sans-serif; margin: 6px 0 9px; color: #f3f5f7; }
+.ap-draft-card p, .ap-pool-card p { color: #b7c0c8; font-size: 10px; line-height: 1.6; }
+.ap-draft-card a { display: flex; justify-content: space-between; align-items: center; gap: 5px; min-height: 36px; border-top: 1px solid #414b54; margin-top: 12px; padding-top: 7px; color: #fff; text-decoration: none; font-size: 9px; }
+.ap-draft-card a:hover { text-decoration: underline; }
+.ap-pool-card { padding: 2px 5px; display: none; }
+.ap-status { margin-top: 12px; padding-top: 12px; border-top: 1px solid #2b3238; display: flex; justify-content: space-between; gap: 8px; color: #9ca8b2; font-size: 8px; letter-spacing: .08em; line-height: 1.5; }
+.ap-status i { font-style: normal; color: #78848e; margin: 0 5px; }
+.arena-product figcaption { display: flex; justify-content: center; align-items: center; gap: 7px; font-size: 10px; color: #c2cbd2; text-align: center; margin-top: 25px; line-height: 1.5; }
+.arena-product figcaption > span { width: 5px; height: 5px; border-radius: 50%; background: #c2cbd2; }
+.arena-product figcaption > b { font-weight: 400; color: #a2adb6; }
+.arena-baseline { position: absolute; bottom: 25px; left: 4.5%; right: 4.5%; display: flex; justify-content: space-between; border-top: 1px solid #c4d3dc29; padding-top: 17px; font: 500 9px/1.5 'Archivo', sans-serif; letter-spacing: .18em; color: #b4bec6; }
+.ap-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@media (min-width: 1600px) {
+    .hero-section.fz-arena-hero { min-height: 850px; }
+    .ap-nav { min-height: 64px; font-size: 12px; }
+    .ap-body { padding: 24px; }
+    .ap-content { grid-template-columns: minmax(0, 1fr) 190px; }
+    .ap-table tbody th, .ap-table td { font-size: 13px; padding-top: 12px; padding-bottom: 12px; }
+    .ap-player > img { width: 40px; height: 42px; }
+    .ap-table thead th, .ap-player small { font-size: 11px; }
+    .ap-draft-card { padding: 20px; }
+    .ap-draft-card h3 { font-size: 30px; }
+    .ap-draft-card p { font-size: 12px; }
+    .ap-draft-card a { font-size: 11px; }
+}
+@media (max-width: 1024px) {
+    .hero-section.fz-arena-hero { padding: 55px 4% 90px; min-height: 690px; }
+    .fz-arena-hero .hero-inner { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 24px; text-align: left; }
+    .fz-arena-hero .hero-headline { font-size: clamp(56px, 7vw, 72px); }
+    .fz-arena-hero .hero-badge { font-size: 9px; letter-spacing: .1em; gap: 8px; }
+    .fz-arena-hero .hero-actions { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .ap-nav { gap: 15px; padding: 0 14px; }
+    .ap-nav > img { width: 80px; }
+    .ap-nav > a[href="classement.html"], .ap-account { display: none; }
+    .ap-body { padding: 15px; }
+    .ap-content { grid-template-columns: minmax(0, 1fr); }
+    .ap-side { display: none; }
+    .ap-welcome { padding: 18px; gap: 10px; }
+    .ap-welcome h2 { font-size: 30px; }
+    .ap-welcome p { max-width: 150px; }
+    .ap-welcome-actions { min-width: 130px; }
+    .ap-welcome-actions a { padding: 12px 10px; font-size: 10px; }
+    .ap-status > span:last-child { display: none; }
+    .ap-table tbody th, .ap-table td { font-size: 12px; }
+    .arena-footnote > span { margin: 0 4px; }
+    .arena-product figcaption { font-size: 9px; gap: 4px; }
+}
+@media (max-width: 768px) {
+    .hero-section.fz-arena-hero { padding: 44px 24px 72px; min-height: auto; }
+    .arena-ice { object-position: 60% bottom; }
+    .fz-arena-hero::before { background: linear-gradient(180deg, #080d11e0, #080d11ad 35%, #080d1140 70%, #080d11a6); }
+    .fz-arena-hero .hero-inner { grid-template-columns: minmax(0, 1fr); gap: 32px; max-width: 600px; }
+    .fz-arena-hero .hero-text { display: block; }
+    .fz-arena-hero .hero-badge { font-size: 10px; margin-bottom: 18px; }
+    .fz-arena-hero .hero-headline { font-size: clamp(64px, 12vw, 86px); margin-bottom: 18px; }
+    .fz-arena-hero .hero-sub { font-size: 14px; margin-bottom: 24px; }
+    .fz-arena-hero .hero-actions { flex-direction: row; width: auto; }
+    .fz-arena-hero .btn-hero-primary, .fz-arena-hero .btn-hero-secondary { justify-content: center; font-size: 12px; padding: 13px 15px; }
+    .arena-footnote { font-size: 10px; }
+    .arena-product { margin: 0; }
+    .arena-device { transform: none; padding: 7px; border-radius: 18px; box-shadow: 0 3px 0 #030609, 0 20px 35px #000a; }
+    .arena-screen { border-radius: 11px; }
+    .ap-nav > a { min-height: 44px; display: flex; align-items: center; }
+    .ap-nav > a[href="classement.html"] { display: none; }
+    .ap-welcome-actions a, .ap-view-stats { min-height: 44px; }
+    .ap-page-heading { font-size: 8px; }
+    .ap-table thead th { font-size: 10px; }
+    .ap-player small { font-size: 10px; }
+    .arena-product figcaption { font-size: 10px; margin-top: 20px; flex-wrap: wrap; }
+    .arena-baseline { left: 24px; right: 24px; bottom: 20px; font-size: 8px; letter-spacing: .1em; }
+    .arena-baseline > span:last-child { display: none; }
+}
+@media (max-width: 480px) {
+    .hero-section.fz-arena-hero { padding-left: 20px; padding-right: 20px; }
+    .fz-arena-hero .hero-headline { font-size: clamp(50px, 15vw, 64px); }
+    .fz-arena-hero .hero-actions { flex-direction: column; align-items: stretch; }
+    .fz-arena-hero .btn-hero-primary, .fz-arena-hero .btn-hero-secondary { font-size: 13px; }
+    .ap-nav { gap: 14px; padding: 0 12px; font-size: 10px; min-height: 48px; }
+    .ap-nav > img { width: 75px; }
+    .ap-nav > a[href="repechage.html"] { display: none; }
+    .ap-body { padding: 12px; }
+    .ap-page-heading > span:last-child { display: none; }
+    .ap-welcome { display: block; padding: 16px; }
+    .ap-welcome h2 { font-size: 34px; }
+    .ap-welcome p { max-width: none; font-size: 11px; }
+    .ap-welcome-actions { flex-direction: row; margin-top: 15px; gap: 8px; min-width: 0; }
+    .ap-welcome-actions a { flex: 1; font-size: 10px; padding: 10px 8px; gap: 5px; }
+    .ap-section-heading { gap: 6px; }
+    .ap-section-heading h3 { font-size: 20px; }
+    .ap-content { margin-top: 18px; }
+    .ap-table td, .ap-table thead th { padding-left: 4px; padding-right: 4px; }
+    .ap-table tbody th, .ap-table td { font-size: 11px; }
+    .ap-player { gap: 5px; }
+    .ap-player > img { width: 26px; height: 32px; }
+    /* Remove a secondary statistic instead of shrinking the entire UI. */
+    .ap-table th:nth-child(2), .ap-table td:nth-child(2) { display: none; }
+    .ap-status { font-size: 7px; }
+    .ap-status i { margin: 0 3px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .fz-arena-hero a, .fz-arena-hero button { transition: none; }
+}

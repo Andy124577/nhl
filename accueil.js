@@ -21,17 +21,7 @@ let userData = {
 document.addEventListener('DOMContentLoaded', async () => {
     userData.username = localStorage.getItem('username');
 
-    // Adapt hero CTAs for logged-out visitors
-    if (!userData.username) {
-        const actions = document.querySelector('.hero-actions');
-        if (actions) {
-            actions.innerHTML = `
-                <a href="signup.html" class="btn-hero-primary">🚀 Commencer gratuitement</a>
-                <a href="login.html" class="btn-hero-secondary">Se connecter →</a>
-                <button onclick="scrollToHowItWorks()" class="btn-hero-tertiary">Comment ça marche ?</button>
-            `;
-        }
-    }
+    // Guest hero actions are authored in index.html, ready before JS loads.
 
     // Fetch pools, stats and pending trades in parallel
     // loadCurrentTeamsData() : buildTeamScores() compte le club repêché par

@@ -29,6 +29,7 @@
     <link rel="stylesheet" href="accueil-dash.css?v=20260908b">
     <link rel="stylesheet" href="accueil-mobile.css?v=20260908c">
     <link rel="stylesheet" href="demos.css">
+    <link rel="stylesheet" href="hero.css">
     <link rel="stylesheet" href="skeleton-loader.css">
     <!-- Panneau de la file du repêchage instantané (instantDraft.js). -->
     <link rel="stylesheet" href="instantDraft.css?v=20260908a">
@@ -66,113 +67,70 @@
     <!-- ============================================================ -->
     <!-- HERO SECTION                                                  -->
     <!-- ============================================================ -->
-    <section class="hero-section">
-        <!-- Background spotlight glows -->
-        <div class="hero-spotlights">
-            <div class="spotlight sp-1"></div>
-            <div class="spotlight sp-2"></div>
-            <div class="spotlight sp-3"></div>
-        </div>
-
+    <section class="hero-section fz-arena-hero" aria-labelledby="heroTitle">
+        <img class="arena-ice" src="assets/hero/fantazy-ice-reference.png" alt="" width="1774" height="887" fetchpriority="high">
         <div class="hero-inner">
-            <!-- Left: headline + CTAs -->
             <div class="hero-text">
-                <div class="hero-badge"><span data-icon="hockey" data-icon-size="16"></span> POOLS DE HOCKEY</div>
-                <h1 class="hero-headline">
-                    Dominez votre<br>
-                    <span class="gradient-text">ligue de pools de hockey.</span>
-                </h1>
-                <p class="hero-sub">Repêchez mieux. Échangez intelligemment. Grimpez le classement.</p>
+                <div class="hero-badge"><span aria-hidden="true"></span> LE HOCKEY FANTASY, ENTRE AMIS</div>
+                <h1 class="hero-headline" id="heroTitle">Votre ligue.<br>Votre équipe.<br><span>Votre saison.</span></h1>
+                <p class="hero-sub">Le hockey ne se regarde plus seulement.<br>Repêchez vos joueurs. Défiez vos amis.<br>Faites la différence, jusqu’au dernier match.</p>
                 <div class="hero-actions">
-                    <a href="creer-pool.html" class="btn-hero-primary"><span data-icon="rocket" data-icon-size="16"></span> Créer un pool</a>
-                    <a href="rejoindre-pool.html" class="btn-hero-secondary">Rejoindre un pool →</a>
-                    <button onclick="scrollToHowItWorks()" class="btn-hero-tertiary">Comment ça marche ?</button>
+                    <a href="signup.html" class="btn-hero-primary">Commencer gratuitement <span aria-hidden="true">→</span></a>
+                    <a href="rejoindre-pool.html" class="btn-hero-secondary">Rejoindre un pool</a>
                 </div>
+                <p class="arena-footnote">100 % gratuit <span aria-hidden="true">/</span> Toute la saison <span aria-hidden="true">/</span> Toute votre gang</p>
+                <button type="button" onclick="scrollToHowItWorks()" class="btn-hero-tertiary"><span data-icon="info" data-icon-size="14" aria-hidden="true"></span> Comment ça marche</button>
             </div>
 
-            <!-- Right: aperçu flottant -->
-            <!-- Deux cartes, une seule affichée : le visiteur voit ce que le
-                 site permet de faire (repêcher), le membre voit où il en est
-                 (son classement). Le choix est posé par le script en ligne
-                 du <head>, avant le premier rendu. -->
-            <div class="hero-preview-wrap">
-                <!-- Visiteur : la salle de repêchage en action -->
-                <div class="hero-floating-card hfc-draft" id="heroCardDraft">
-                    <div class="hfc-header">
-                        <span class="live-dot"></span>
-                        <span>Repêchage en direct</span>
-                        <span class="hfc-pick-counter" id="demoPickCounter">Choix 7 / 40</span>
-                    </div>
-
-                    <div class="dm-banner is-your-turn" id="demoTurnBanner">🎯 C'est votre tour — sélectionnez un joueur !</div>
-
-                    <div class="dm-players">
-                        <div class="dm-player">
-                            <span class="dm-mono">NM</span>
-                            <span class="dm-name">Nathan MacKinnon</span>
-                            <span class="dm-tag att">ATT</span>
-                            <span class="dm-pts">92</span>
-                            <button class="dm-pick" type="button" tabindex="-1" aria-hidden="true">
-                                <img src="Icons/sign.png" alt="">
-                            </button>
-                            <span class="dm-check">✓</span>
+            <figure class="arena-product" aria-labelledby="arenaPreviewCaption">
+                <div class="arena-device">
+                    <div class="arena-screen">
+                        <div class="ap-nav">
+                            <img src="Icons/fantazy.png" alt="Fantazy" width="268" height="73">
+                            <span class="ap-nav-active">Accueil</span>
+                            <a href="repechage.html">Repêchage</a>
+                            <a href="classement.html">Classement</a>
+                            <a href="stats.html">Stats</a>
+                            <span class="ap-account" aria-hidden="true" data-icon="person" data-icon-size="16"></span>
                         </div>
-                        <div class="dm-player">
-                            <span class="dm-mono">CM</span>
-                            <span class="dm-name">Cale Makar</span>
-                            <span class="dm-tag def">DÉF</span>
-                            <span class="dm-pts">71</span>
-                            <button class="dm-pick" type="button" tabindex="-1" aria-hidden="true">
-                                <img src="Icons/sign.png" alt="">
-                            </button>
-                            <span class="dm-check">✓</span>
-                        </div>
-                        <div class="dm-player">
-                            <span class="dm-mono">CH</span>
-                            <span class="dm-name">Connor Hellebuyck</span>
-                            <span class="dm-tag gar">GAR</span>
-                            <span class="dm-pts">28</span>
-                            <button class="dm-pick" type="button" tabindex="-1" aria-hidden="true">
-                                <img src="Icons/sign.png" alt="">
-                            </button>
-                            <span class="dm-check">✓</span>
+                        <div class="ap-body">
+                            <div class="ap-page-heading"><span>VOTRE SAISON COMMENCE ICI</span><span>HOCKEY FANTASY</span></div>
+                            <!-- Compact presentation of the homepage's existing onboarding
+                                 and season preparation sections. No invented pool or live score. -->
+                            <div class="ap-welcome">
+                                <div><span class="ap-eyebrow">SOIS LE MVP</span><h2>Bâtis ton<br>équipe de rêve.</h2><p>Ta ligue. Ta gang. Le hockey, à ta façon.</p></div>
+                                <div class="ap-welcome-actions"><a href="creer-pool.html">Créer un pool <span aria-hidden="true">↗</span></a><a href="rejoindre-pool.html">Rejoindre un pool <span aria-hidden="true">↗</span></a></div>
+                            </div>
+                            <div class="ap-content">
+                                <section class="ap-leaders" aria-labelledby="apLeadersTitle">
+                                    <div class="ap-section-heading"><h3 id="apLeadersTitle">Les meneurs de la LNH</h3><span>2025–26</span></div>
+                                    <table class="ap-table">
+                                        <caption class="ap-sr-only">Statistiques de la saison 2025–2026, extrait des données LNH de Fantazy au 9 septembre 2026.</caption>
+                                        <thead><tr><th scope="col">Joueur</th><th scope="col">PJ</th><th scope="col">B</th><th scope="col">A</th><th scope="col">PTS</th></tr></thead>
+                                        <tbody>
+                                            <tr><th scope="row"><span class="ap-player"><img src="teams/EDM.png" alt="" width="40" height="40"><span>Connor McDavid<small>EDM · Centre</small></span></span></th><td>82</td><td>48</td><td>90</td><td>138</td></tr>
+                                            <tr><th scope="row"><span class="ap-player"><img src="teams/TBL.png" alt="" width="40" height="40"><span>Nikita Kucherov<small>TBL · Ailier droit</small></span></span></th><td>76</td><td>44</td><td>86</td><td>130</td></tr>
+                                            <tr><th scope="row"><span class="ap-player"><img src="teams/COL.png" alt="" width="40" height="40"><span>Nathan MacKinnon<small>COL · Centre</small></span></span></th><td>80</td><td>53</td><td>74</td><td>127</td></tr>
+                                            <tr><th scope="row"><span class="ap-player"><img src="teams/BOS.png" alt="" width="40" height="40"><span>David Pastrnak<small>BOS · Ailier droit</small></span></span></th><td>77</td><td>29</td><td>71</td><td>100</td></tr>
+                                        </tbody>
+                                    </table>
+                                    <a class="ap-view-stats" href="stats.html">Toutes les statistiques <span aria-hidden="true">→</span></a>
+                                </section>
+                                <aside class="ap-side">
+                                    <div class="ap-draft-card"><span class="ap-card-icon" data-icon="hockey" data-icon-size="24" aria-hidden="true"></span><span class="ap-eyebrow">LE PROCHAIN CHOIX EST À VOUS</span><h3>Prépare ton<br>repêchage.</h3><p>Les bons joueurs.<br>Au bon moment.</p><a href="stats.html">Explorer les joueurs <span aria-hidden="true">→</span></a></div>
+                                    <div class="ap-pool-card"><span data-icon="trophy" data-icon-size="20" aria-hidden="true"></span><h3>Une saison.<br>Votre rivalité.</h3><p>Cumulatif ou face-à-face.<br>À vous de choisir.</p></div>
+                                </aside>
+                            </div>
+                            <div class="ap-status"><span>REPÊCHAGE <i> / </i> ÉCHANGES <i> / </i> CLASSEMENT</span><span>LE HOCKEY, À VOTRE FAÇON.</span></div>
                         </div>
                     </div>
-
-                    <!-- « Ma progression », comme dans la salle de repêchage -->
-                    <div class="dm-progress">
-                        <div class="dm-line" data-cat="off">
-                            <span class="dm-line-lbl">Attaquants</span>
-                            <span class="dm-bar"><i style="width:33%"></i></span>
-                            <span class="dm-count">2/6</span>
-                        </div>
-                        <div class="dm-line" data-cat="def">
-                            <span class="dm-line-lbl">Défenseurs</span>
-                            <span class="dm-bar"><i style="width:25%"></i></span>
-                            <span class="dm-count">1/4</span>
-                        </div>
-                    </div>
-
-                    <a href="signup.html" class="dm-cta">Repêcher votre équipe →</a>
                 </div>
-
-                <!-- Decorative floating chips -->
-                <div class="hero-stat-chip chip-1">
-                    <span class="chip-icon" data-icon="bolt" data-icon-size="14"></span>
-                    <span>LIVE</span>
-                </div>
-                <div class="hero-stat-chip chip-2">
-                    <span class="chip-icon" data-icon="flame" data-icon-size="14"></span>
-                    <span>En feu</span>
-                </div>
-            </div>
+                <figcaption id="arenaPreviewCaption"><span></span> Aperçu Fantazy <b>—</b> Votre prochain avantage commence ici.</figcaption>
+            </figure>
         </div>
-
-        <!-- Membre : le tableau de bord "éditorial calme" (accueil-dash.js /
-             accueil-dash.css) remplace tout le contenu marketing ci-dessus,
-             basculé par la classe posée avant le premier rendu (voir le
-             script en tête de <head>). -->
+        <div class="arena-baseline" aria-hidden="true"><span>UNE LIGUE. UNE GANG. TOUTE UNE SAISON.</span><span>FAITES VOTRE MARQUE.</span></div>
     </section>
+
 
     <!-- ============================================================ -->
     <!-- TABLEAU DE BORD — calendrier saison complète, suivi en direct, -->
