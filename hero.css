@@ -35,57 +35,95 @@
    No scaled screenshot: names, tables and actions stay real, selectable HTML. */
 .arena-product { position: relative; min-width: 0; margin: 34px 0 0; perspective: 1800px; }
 .arena-product::before { content: ''; position: absolute; left: 4%; right: -3%; height: 35px; bottom: 22px; border-radius: 50%; background: #000; opacity: .85; filter: blur(18px); z-index: -1; }
-.arena-device { position: relative; padding: 10px; background: linear-gradient(135deg, #45505a, #141b22 24%, #0b1016 70%, #4b535b); border: 1px solid #69737c; border-radius: 24px; box-shadow: 0 2px 0 #020608, 7px 12px 0 -5px #0a0e13, 0 30px 48px #0009; transform: rotateY(-5deg) rotateZ(1deg); transform-origin: center; }
+.arena-device { position: relative; padding: 9px; background: linear-gradient(135deg, #343e48, #11171d 24%, #0b1016 70%, #343d46); border: 1px solid #58636e; border-radius: 22px; box-shadow: inset 0 0 0 1px #ffffff08, 0 2px 0 #020608, 7px 12px 0 -5px #0a0e13, 0 30px 48px #0009; transform: rotateY(-3deg) rotateZ(.65deg); transform-origin: center; }
 .arena-device::after { content: ''; position: absolute; top: 4px; left: 50%; width: 4px; height: 4px; border-radius: 50%; background: #05080c; box-shadow: inset 0 0 1px #8292a1; }
 .arena-screen { overflow: hidden; border: 1px solid #080b0e; border-radius: 15px; background: #111518; color: #f3f5f7; font: 400 12px/1.4 'Archivo', 'Segoe UI', sans-serif; }
-.ap-nav { display: flex; align-items: center; gap: clamp(14px, 1.8vw, 27px); min-height: 52px; padding: 0 22px; background: #0b0e11; border-bottom: 1px solid #2b3035; font-size: 11px; }
-.ap-nav > img { width: 100px; height: auto; margin-right: auto; }
-.ap-nav > a { text-decoration: none; color: #adb6bd; padding: 16px 0; }
+.ap-nav { display: flex; align-items: center; gap: clamp(12px, 1.5vw, 24px); min-height: 50px; padding: 0 18px; background: #0b0e11; border-bottom: 1px solid #ffffff10; font-size: 11px; }
+.ap-nav > img { width: 94px; height: auto; margin-right: auto; }
+.ap-nav > a { text-decoration: none; color: #aeb7bf; padding: 17px 0; }
 .ap-nav > a:hover { color: #fff; }
-.ap-nav-active { align-self: stretch; display: flex; align-items: center; border-bottom: 2px solid var(--arena-red); font-weight: 700; }
-.ap-account { width: 26px; height: 26px; border: 1px solid #394048; border-radius: 50%; color: #b4bdc5; }
-.ap-body { padding: 16px; }
-.ap-page-heading { display: flex; justify-content: space-between; gap: 10px; color: #adb5bc; font: 500 9px/1.5 'Archivo', sans-serif; letter-spacing: .14em; margin-bottom: 10px; }
-.ap-page-heading > span:last-child { color: #909aa3; }
-.ap-welcome { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 20px; border-radius: 5px; background: var(--arena-red); }
-.ap-eyebrow { display: block; color: #fff; font-size: 9px; font-weight: 600; line-height: 1.5; letter-spacing: .12em; }
-.ap-welcome h2 { font: 500 clamp(26px, 2.3vw, 36px)/1.04 'Barlow Condensed', Impact, sans-serif; text-transform: uppercase; letter-spacing: .015em; margin: 6px 0 8px; color: #fff; }
-.ap-welcome p { font-size: 10px; color: #fff; line-height: 1.5; }
-.ap-welcome-actions { display: flex; flex-direction: column; gap: 9px; min-width: 158px; }
-.ap-welcome-actions a { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px; border-radius: 3px; background: #14181c; color: #fff; font-size: 11px; font-weight: 600; text-decoration: none; }
-.ap-welcome-actions a:last-child { background: #812b1d; border: 1px solid #d58072; }
-.ap-welcome-actions a:hover { background: #282d32; }
-.ap-content { display: grid; grid-template-columns: minmax(0, 1fr) 166px; gap: 18px; margin-top: 18px; }
-.ap-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-.ap-section-heading h3 { font: 500 21px/1.2 'Barlow Condensed', Impact, sans-serif; color: #f3f5f7; }
-.ap-section-heading > span { color: #aab3bb; font-size: 10px; white-space: nowrap; }
+.ap-nav-active { display: flex; align-self: stretch; align-items: center; gap: 6px; border-bottom: 2px solid var(--arena-red); color: #fff; font-weight: 600; }
+.ap-nav > .ap-account { display: flex; align-items: center; justify-content: center; width: 28px; min-height: 28px; padding: 0; border: 1px solid #ffffff20; border-radius: 50%; background: #1b2025; }
+.ap-body { padding: 14px; }
+.ap-page-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; color: #b8c0c7; font: 600 9px/1.5 'Archivo', sans-serif; letter-spacing: .13em; margin-bottom: 12px; }
+.ap-season { display: flex; align-items: center; gap: 5px; color: #9aa5ae; font-size: 8px; font-weight: 500; letter-spacing: .06em; }
+.ap-welcome { position: relative; display: grid; grid-template-columns: 1.1fr 1fr; min-height: 174px; overflow: hidden; border: 1px solid #ad493651; border-radius: 7px; background: linear-gradient(110deg, #862e21 0%, #b93d28 53%, #1c242c 53.2%, #131a21 100%); }
+.ap-welcome-copy { position: relative; z-index: 2; padding: 20px; }
+.ap-eyebrow { display: block; color: #ffded5; font-size: 8px; font-weight: 600; line-height: 1.5; letter-spacing: .11em; }
+.ap-welcome h2 { font: 600 clamp(28px, 2.5vw, 38px)/.98 'Barlow Condensed', Impact, sans-serif; text-transform: uppercase; letter-spacing: .01em; margin: 8px 0; color: #fff; }
+.ap-welcome p { font-size: 10px; color: #fff1ed; line-height: 1.5; }
+.ap-create { display: inline-flex; justify-content: space-between; align-items: center; gap: 28px; min-height: 32px; padding: 8px 12px; margin-top: 12px; color: #fff; font-size: 10px; font-weight: 600; text-decoration: none; background: #14181c; border: 1px solid #ffffff18; border-radius: 3px; }
+.ap-create:hover { background: #29323b; }
+.ap-cover-player { position: relative; min-width: 0; isolation: isolate; }
+.ap-cover-crest { position: absolute; width: 155px; height: 155px; object-fit: contain; right: 38%; top: 10%; opacity: .13; transform: rotate(-12deg); z-index: -1; }
+.ap-cover-portrait { position: absolute; height: 225px; width: 225px; max-width: none; object-fit: contain; bottom: -7px; left: -24px; }
+.ap-cover-player::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, #10171ff5, #10171f88 18%, transparent 52%); pointer-events: none; }
+.ap-cover-score { position: absolute; right: 14px; top: 22px; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; }
+.ap-cover-score strong { color: #fff; font: 500 42px/.95 'Barlow Condensed', Impact, sans-serif; letter-spacing: -.03em; }
+.ap-cover-score span { font-size: 7px; line-height: 1.5; letter-spacing: .06em; margin-top: 5px; color: #bdc8d0; }
+.ap-cover-name { position: absolute; left: 18px; right: 12px; bottom: 16px; z-index: 1; display: flex; flex-direction: column; gap: 4px; }
+.ap-cover-name > span { font-size: 8px; letter-spacing: .1em; color: #c1ced9; }
+.ap-cover-name > strong { color: #fff; font: 600 26px/1 'Barlow Condensed', sans-serif; }
+.ap-content { display: grid; grid-template-columns: minmax(0, 1fr) 174px; gap: 14px; margin-top: 18px; }
+.ap-leaders { min-width: 0; }
+.ap-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.ap-section-kicker { display: block; color: #98a5af; font-size: 7px; letter-spacing: .1em; margin-bottom: 4px; }
+.ap-section-heading h3 { font: 500 23px/1 'Barlow Condensed', Impact, sans-serif; color: #f3f5f7; }
+.ap-season-label { padding: 4px 6px; border: 1px solid #333d46; border-radius: 3px; color: #c0cad1; font-size: 9px; white-space: nowrap; }
 .ap-table { width: 100%; border-collapse: collapse; table-layout: auto; text-align: right; white-space: nowrap; }
 .ap-table thead { position: static; }
-.ap-table th, .ap-table td { border-bottom: 1px solid #2a3035; text-align: right; }
+.ap-table th, .ap-table td { border-bottom: 1px solid #ffffff0c; text-align: right; }
 .ap-table th { font-family: 'Archivo', 'Segoe UI', sans-serif; background: transparent; backdrop-filter: none; box-shadow: none; text-transform: none; letter-spacing: normal; color: #f3f5f7; }
-.ap-table tbody tr { background: transparent; cursor: default; border-color: #2a3035; }
-/* The shared stats stylesheet applies an !important hover to every table. */
+.ap-table tbody tr { background: transparent; cursor: default; border-color: #ffffff0c; }
+.ap-table tbody tr.ap-player-featured { background: #b93d280a; }
+/* Neutralize the shared stats table's global hover treatment. */
 .ap-table tbody tr:hover { background: #1c2329 !important; transform: none; box-shadow: none; }
-.ap-table thead th { font-size: 9px; font-weight: 500; color: #aeb7bf; padding: 0 6px 9px; }
+.ap-table thead th { font-size: 8px; font-weight: 500; color: #9aa8b3; padding: 0 7px 8px; }
 .ap-table th:first-child { text-align: left; padding-left: 0; }
-.ap-table tbody th { font-size: 12px; font-weight: 600; padding: 6px 4px 6px 0; }
-.ap-table td { font: 500 11px/1.4 'JetBrains Mono', monospace; color: #c7cdd3; padding: 8px 6px; }
-.ap-table td:last-child { color: #fff; font-weight: 700; background: #ffffff04; }
-.ap-player { display: flex; align-items: center; gap: 7px; }
-.ap-player > img { width: 32px; height: 32px; object-fit: contain; }
-.ap-player small { display: block; font-size: 9px; font-weight: 400; color: #9ba7b1; margin-top: 5px; }
-.ap-view-stats { display: flex; justify-content: space-between; min-height: 40px; align-items: center; color: #bdc6cd; font-size: 10px; text-decoration: none; }
+.ap-table abbr { text-decoration: none; }
+.ap-table tbody th { font-size: 12px; font-weight: 600; padding: 5px 4px 5px 0; }
+.ap-table td { font: 500 12px/1.4 'JetBrains Mono', monospace; color: #b9c4cc; padding: 5px 7px; }
+.ap-table td:last-child { color: #fff; background: #ffffff02; padding-right: 7px; }
+.ap-player { display: flex; align-items: center; gap: 9px; }
+.ap-portrait { position: relative; display: block; flex: 0 0 43px; height: 43px; border-radius: 5px; background: linear-gradient(#2c353e, #192028); border: 1px solid #ffffff09; }
+.ap-headshot { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; object-fit: contain; border-radius: 4px; }
+.ap-team-mark { position: absolute; width: 18px; height: 18px; object-fit: contain; right: -4px; bottom: -1px; border-radius: 50%; background: #11171d; padding: 1px; }
+.ap-player small { display: flex; align-items: center; gap: 5px; font-size: 9px; font-weight: 400; color: #a4b1bc; margin-top: 5px; }
+.ap-position { min-width: 17px; padding: 1px 3px; border: 1px solid #39444f; border-radius: 2px; font-size: 7px; line-height: 1.4; text-align: center; color: #c5d3dd; }
+.ap-points { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.ap-points strong { font-size: 15px; line-height: 1; font-weight: 700; }
+.ap-points small { font-size: 8px; color: #a9b5bf; white-space: nowrap; }
+.ap-view-stats { display: flex; justify-content: space-between; min-height: 34px; align-items: center; color: #c9d2d9; font-size: 9px; text-decoration: none; }
 .ap-view-stats:hover { color: #fff; }
-.ap-side { display: flex; flex-direction: column; gap: 12px; }
-.ap-draft-card { position: relative; padding: 14px; background: #1c2329; border: 1px solid #333e47; border-radius: 4px; }
-.ap-card-icon { color: #dce1e5; margin-bottom: 13px; }
-.ap-draft-card .ap-eyebrow { font-size: 8px; line-height: 1.6; color: #b6c0c8; letter-spacing: .08em; }
-.ap-draft-card h3, .ap-pool-card h3 { font: 500 25px/1.07 'Barlow Condensed', Impact, sans-serif; margin: 6px 0 9px; color: #f3f5f7; }
-.ap-draft-card p, .ap-pool-card p { color: #b7c0c8; font-size: 10px; line-height: 1.6; }
-.ap-draft-card a { display: flex; justify-content: space-between; align-items: center; gap: 5px; min-height: 36px; border-top: 1px solid #414b54; margin-top: 12px; padding-top: 7px; color: #fff; text-decoration: none; font-size: 9px; }
-.ap-draft-card a:hover { text-decoration: underline; }
-.ap-pool-card { padding: 2px 5px; display: none; }
-.ap-status { margin-top: 12px; padding-top: 12px; border-top: 1px solid #2b3238; display: flex; justify-content: space-between; gap: 8px; color: #9ca8b2; font-size: 8px; letter-spacing: .08em; line-height: 1.5; }
+.ap-side { display: flex; flex-direction: column; gap: 10px; }
+.ap-scout-card { overflow: hidden; border: 1px solid #35414c; border-radius: 6px; background: #1a222a; }
+.ap-scout-label { position: relative; z-index: 1; display: flex; align-items: center; gap: 6px; padding: 12px 12px 0; font-size: 7px; letter-spacing: .07em; color: #d1dbe2; }
+.ap-scout-label > span { color: #d1dbe2; }
+.ap-scout-photo { position: relative; isolation: isolate; height: 94px; overflow: hidden; }
+.ap-scout-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, #1a222a, transparent 35%); }
+.ap-scout-crest { position: absolute; width: 92px; height: 92px; object-fit: contain; top: 0; left: 8px; opacity: .2; }
+.ap-scout-portrait { position: absolute; width: 119px; height: 119px; object-fit: contain; bottom: -15px; left: calc(50% - 52px); }
+.ap-scout-position { position: absolute; bottom: 8px; left: 12px; z-index: 1; font-size: 8px; letter-spacing: .06em; color: #d2dce4; }
+.ap-scout-info { padding: 0 12px 11px; }
+.ap-scout-info h3 { font: 500 23px/1 'Barlow Condensed', sans-serif; color: #fff; margin: 0 0 4px; }
+.ap-scout-info p { color: #aebbc5; font-size: 8px; margin: 0; }
+.ap-scout-stats { display: grid; grid-template-columns: repeat(3, 1fr); margin: 12px 0 7px; }
+.ap-scout-stats > div { display: flex; flex-direction: column-reverse; gap: 4px; padding-left: 8px; border-left: 1px solid #ffffff12; }
+.ap-scout-stats > div:first-child { padding-left: 0; border: 0; }
+.ap-scout-stats dt { font-size: 7px; color: #a9b6c0; }
+.ap-scout-stats dd { margin: 0; color: #f3f6f8; font: 500 18px/1 'Barlow Condensed', sans-serif; }
+.ap-scout-season { color: #9aa9b6; font-size: 6px; letter-spacing: .08em; }
+.ap-pool-link { display: flex; align-items: center; gap: 8px; padding: 10px; border: 1px solid #303b45; border-radius: 5px; color: #d6dfe6; font-size: 9px; text-decoration: none; background: #171e25; }
+.ap-pool-link > span:nth-child(2) { flex: 1; }
+.ap-pool-link small { display: block; color: #a5b3bd; font-size: 7px; margin-top: 4px; line-height: 1.4; }
+.ap-pool-link:hover { background: #242d35; }
+.ap-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 7px; }
+.ap-tools a { display: flex; align-items: center; gap: 8px; min-height: 45px; padding: 8px 10px; background: #1a2026; border: 1px solid #ffffff0c; border-radius: 4px; color: #dbe1e7; font-size: 10px; font-weight: 500; text-decoration: none; }
+.ap-tools a:hover { background: #262e36; border-color: #4a5661; }
+.ap-tools a > span:first-child { color: #b8c5cf; }
+.ap-tools a > span:last-child { margin-left: auto; color: #93a3b0; font-size: 11px; }
+.ap-tools small { display: block; margin-top: 3px; color: #9dacb7; font-size: 7px; font-weight: 400; }
+.ap-status { margin-top: 12px; display: flex; justify-content: space-between; gap: 8px; color: #9ca8b2; font-size: 7px; letter-spacing: .08em; line-height: 1.5; }
 .ap-status i { font-style: normal; color: #78848e; margin: 0 5px; }
 .arena-product figcaption { display: flex; justify-content: center; align-items: center; gap: 7px; font-size: 10px; color: #c2cbd2; text-align: center; margin-top: 25px; line-height: 1.5; }
 .arena-product figcaption > span { width: 5px; height: 5px; border-radius: 50%; background: #c2cbd2; }
@@ -95,16 +133,28 @@
 
 @media (min-width: 1600px) {
     .hero-section.fz-arena-hero { min-height: 850px; }
-    .ap-nav { min-height: 64px; font-size: 12px; }
-    .ap-body { padding: 24px; }
-    .ap-content { grid-template-columns: minmax(0, 1fr) 190px; }
-    .ap-table tbody th, .ap-table td { font-size: 13px; padding-top: 12px; padding-bottom: 12px; }
-    .ap-player > img { width: 40px; height: 42px; }
-    .ap-table thead th, .ap-player small { font-size: 11px; }
-    .ap-draft-card { padding: 20px; }
-    .ap-draft-card h3 { font-size: 30px; }
-    .ap-draft-card p { font-size: 12px; }
-    .ap-draft-card a { font-size: 11px; }
+    .ap-nav { min-height: 56px; font-size: 12px; }
+    .ap-body { padding: 20px; }
+    .ap-welcome-copy { padding: 22px; }
+    .ap-content { grid-template-columns: minmax(0, 1fr) 195px; gap: 20px; }
+    .ap-table tbody th, .ap-table td { font-size: 13px; padding-top: 7px; padding-bottom: 7px; }
+    .ap-portrait { flex-basis: 48px; height: 48px; }
+    .ap-player small { font-size: 9px; }
+    .ap-table thead th { font-size: 10px; }
+    .ap-points strong { font-size: 17px; }
+    .ap-points small { font-size: 8px; }
+    .ap-cover-portrait { left: 0; height: 245px; width: 245px; }
+    .ap-cover-score strong { font-size: 52px; }
+    .ap-cover-score span { font-size: 9px; }
+    .ap-scout-photo { height: 112px; }
+    .ap-scout-portrait { width: 140px; height: 140px; left: calc(50% - 65px); }
+    .ap-scout-info h3 { font-size: 26px; }
+    .ap-scout-info p { font-size: 9px; }
+    .ap-scout-stats dd { font-size: 22px; }
+    .ap-scout-stats dt { font-size: 9px; }
+    .ap-scout-season { font-size: 8px; }
+    .ap-tools a { font-size: 11px; }
+    .ap-tools small { font-size: 8px; }
 }
 @media (max-width: 1024px) {
     .hero-section.fz-arena-hero { padding: 55px 4% 90px; min-height: 690px; }
@@ -112,21 +162,30 @@
     .fz-arena-hero .hero-headline { font-size: clamp(56px, 7vw, 72px); }
     .fz-arena-hero .hero-badge { font-size: 9px; letter-spacing: .1em; gap: 8px; }
     .fz-arena-hero .hero-actions { flex-direction: column; align-items: flex-start; gap: 10px; }
-    .ap-nav { gap: 15px; padding: 0 14px; }
-    .ap-nav > img { width: 80px; }
-    .ap-nav > a[href="classement.html"], .ap-account { display: none; }
-    .ap-body { padding: 15px; }
-    .ap-content { grid-template-columns: minmax(0, 1fr); }
-    .ap-side { display: none; }
-    .ap-welcome { padding: 18px; gap: 10px; }
-    .ap-welcome h2 { font-size: 30px; }
-    .ap-welcome p { max-width: 150px; }
-    .ap-welcome-actions { min-width: 130px; }
-    .ap-welcome-actions a { padding: 12px 10px; font-size: 10px; }
-    .ap-status > span:last-child { display: none; }
-    .ap-table tbody th, .ap-table td { font-size: 12px; }
     .arena-footnote > span { margin: 0 4px; }
     .arena-product figcaption { font-size: 9px; gap: 4px; }
+    .ap-nav { padding: 0 12px; gap: 13px; }
+    .ap-nav > img { width: 80px; }
+    .ap-nav > a[href="classement.html"], .ap-nav > .ap-account { display: none; }
+    .ap-body { padding: 12px; }
+    .ap-welcome { grid-template-columns: 1.1fr 1fr; }
+    .ap-welcome-copy { padding: 16px; }
+    .ap-welcome h2 { font-size: 30px; }
+    .ap-welcome p { max-width: 150px; font-size: 9px; }
+    .ap-eyebrow { font-size: 7px; }
+    .ap-cover-portrait { width: 185px; height: 185px; left: -22px; bottom: 8px; }
+    .ap-cover-score { top: 12px; right: 10px; }
+    .ap-cover-score strong { font-size: 33px; }
+    .ap-cover-score span { font-size: 6px; max-width: 48px; text-align: right; }
+    .ap-cover-name { left: 10px; bottom: 14px; }
+    .ap-cover-name > strong { font-size: 22px; }
+    .ap-cover-name > span { font-size: 6px; }
+    .ap-content { grid-template-columns: minmax(0, 1fr); }
+    .ap-side { display: none; }
+    .ap-tools a { gap: 6px; padding: 9px 7px; font-size: 9px; }
+    .ap-tools small, .ap-tools a > span:last-child { display: none; }
+    .ap-tools a > span:first-child svg { width: 14px; height: 14px; }
+    .ap-status { font-size: 6px; }
 }
 @media (max-width: 768px) {
     .hero-section.fz-arena-hero { padding: 44px 24px 72px; min-height: auto; }
@@ -143,42 +202,55 @@
     .arena-product { margin: 0; }
     .arena-device { transform: none; padding: 7px; border-radius: 18px; box-shadow: 0 3px 0 #030609, 0 20px 35px #000a; }
     .arena-screen { border-radius: 11px; }
-    .ap-nav > a { min-height: 44px; display: flex; align-items: center; }
-    .ap-nav > a[href="classement.html"] { display: none; }
-    .ap-welcome-actions a, .ap-view-stats { min-height: 44px; }
-    .ap-page-heading { font-size: 8px; }
-    .ap-table thead th { font-size: 10px; }
-    .ap-player small { font-size: 10px; }
     .arena-product figcaption { font-size: 10px; margin-top: 20px; flex-wrap: wrap; }
     .arena-baseline { left: 24px; right: 24px; bottom: 20px; font-size: 8px; letter-spacing: .1em; }
     .arena-baseline > span:last-child { display: none; }
+    .ap-nav > a, .ap-nav > .ap-account, .ap-create, .ap-view-stats, .ap-tools a { min-height: 44px; }
+    .ap-table tbody th, .ap-table td { font-size: 12px; }
+    .ap-player small { font-size: 9px; }
+    .ap-section-kicker { font-size: 8px; }
+    .ap-table thead th { font-size: 9px; }
+    .ap-cover-portrait { left: 0; width: 210px; height: 210px; }
+    .ap-welcome h2 { font-size: 34px; }
+    .ap-welcome p { font-size: 10px; }
 }
 @media (max-width: 480px) {
     .hero-section.fz-arena-hero { padding-left: 20px; padding-right: 20px; }
     .fz-arena-hero .hero-headline { font-size: clamp(50px, 15vw, 64px); }
     .fz-arena-hero .hero-actions { flex-direction: column; align-items: stretch; }
     .fz-arena-hero .btn-hero-primary, .fz-arena-hero .btn-hero-secondary { font-size: 13px; }
-    .ap-nav { gap: 14px; padding: 0 12px; font-size: 10px; min-height: 48px; }
-    .ap-nav > img { width: 75px; }
+    .ap-nav > img { width: 78px; }
     .ap-nav > a[href="repechage.html"] { display: none; }
-    .ap-body { padding: 12px; }
-    .ap-page-heading > span:last-child { display: none; }
-    .ap-welcome { display: block; padding: 16px; }
-    .ap-welcome h2 { font-size: 34px; }
-    .ap-welcome p { max-width: none; font-size: 11px; }
-    .ap-welcome-actions { flex-direction: row; margin-top: 15px; gap: 8px; min-width: 0; }
-    .ap-welcome-actions a { flex: 1; font-size: 10px; padding: 10px 8px; gap: 5px; }
-    .ap-section-heading { gap: 6px; }
-    .ap-section-heading h3 { font-size: 20px; }
-    .ap-content { margin-top: 18px; }
+    .ap-page-heading { font-size: 8px; }
+    .ap-season { font-size: 6px; gap: 3px; }
+    .ap-welcome-copy { padding: 16px 10px 14px 12px; }
+    .ap-eyebrow { font-size: 6px; max-width: 150px; }
+    .ap-welcome h2 { font-size: clamp(26px, 7.7vw, 33px); }
+    .ap-welcome p { font-size: 9px; max-width: 135px; }
+    .ap-create { font-size: 9px; gap: 10px; padding: 9px; }
+    .ap-cover-portrait { width: 155px; height: 155px; left: -25px; bottom: 44px; }
+    .ap-cover-score { top: 11px; right: 8px; }
+    .ap-cover-score strong { font-size: 28px; }
+    .ap-cover-score span { font-size: 5px; max-width: 38px; }
+    .ap-cover-crest { width: 100px; height: 100px; left: 0; top: 20%; }
+    .ap-cover-name > strong { font-size: 20px; }
+    .ap-cover-name > span { font-size: 6px; line-height: 1.5; }
+    .ap-section-kicker { font-size: 6px; }
+    .ap-section-heading h3 { font-size: 21px; }
+    .ap-season-label { font-size: 8px; }
+    .ap-player { gap: 7px; }
+    .ap-portrait { flex-basis: 34px; height: 38px; }
+    .ap-team-mark { width: 15px; height: 15px; }
+    .ap-player small { font-size: 8px; }
+    .ap-player-role { display: none; }
+    .ap-table tbody th, .ap-table td { font-size: 10px; }
     .ap-table td, .ap-table thead th { padding-left: 4px; padding-right: 4px; }
-    .ap-table tbody th, .ap-table td { font-size: 11px; }
-    .ap-player { gap: 5px; }
-    .ap-player > img { width: 26px; height: 32px; }
-    /* Remove a secondary statistic instead of shrinking the entire UI. */
+    .ap-points strong { font-size: 14px; }
+    .ap-points small { font-size: 6px; }
     .ap-table th:nth-child(2), .ap-table td:nth-child(2) { display: none; }
-    .ap-status { font-size: 7px; }
-    .ap-status i { margin: 0 3px; }
+    .ap-tools { gap: 5px; }
+    .ap-tools a { flex-direction: column; justify-content: center; gap: 5px; font-size: 8px; min-height: 55px; padding: 8px 4px; }
+    .ap-status > span:last-child { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
     .fz-arena-hero a, .fz-arena-hero button { transition: none; }

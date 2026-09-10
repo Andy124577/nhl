@@ -87,41 +87,60 @@
                     <div class="arena-screen">
                         <div class="ap-nav">
                             <img src="Icons/fantazy.png" alt="Fantazy" width="268" height="73">
-                            <span class="ap-nav-active">Accueil</span>
+                            <span class="ap-nav-active"><span data-icon="home" data-icon-size="13" aria-hidden="true"></span>Accueil</span>
                             <a href="repechage.html">Repêchage</a>
                             <a href="classement.html">Classement</a>
                             <a href="stats.html">Stats</a>
-                            <span class="ap-account" aria-hidden="true" data-icon="person" data-icon-size="16"></span>
+                            <a class="ap-account" href="login.html" aria-label="Se connecter à Fantazy"><span data-icon="person" data-icon-size="15" aria-hidden="true"></span></a>
                         </div>
                         <div class="ap-body">
-                            <div class="ap-page-heading"><span>VOTRE SAISON COMMENCE ICI</span><span>HOCKEY FANTASY</span></div>
-                            <!-- Compact presentation of the homepage's existing onboarding
-                                 and season preparation sections. No invented pool or live score. -->
+                            <div class="ap-page-heading"><span>LE BUREAU DU GÉRANT</span><span class="ap-season"><span data-icon="hockey" data-icon-size="12" aria-hidden="true"></span> HOCKEY FANTASY</span></div>
+                            <!-- Official NHL portraits and the existing 2025–26 data snapshot.
+                                 This is a product preview, not a simulated live pool. -->
                             <div class="ap-welcome">
-                                <div><span class="ap-eyebrow">SOIS LE MVP</span><h2>Bâtis ton<br>équipe de rêve.</h2><p>Ta ligue. Ta gang. Le hockey, à ta façon.</p></div>
-                                <div class="ap-welcome-actions"><a href="creer-pool.html">Créer un pool <span aria-hidden="true">↗</span></a><a href="rejoindre-pool.html">Rejoindre un pool <span aria-hidden="true">↗</span></a></div>
+                                <div class="ap-welcome-copy">
+                                    <span class="ap-eyebrow">VOTRE PROCHAINE GRANDE SAISON</span>
+                                    <h2>Bâtis ton<br>équipe de rêve.</h2>
+                                    <p>Les bons choix font les grandes équipes.</p>
+                                    <a class="ap-create" href="creer-pool.html">Créer mon pool <span aria-hidden="true">↗</span></a>
+                                </div>
+                                <div class="ap-cover-player">
+                                    <img class="ap-cover-crest" src="teams/EDM.png" alt="" width="180" height="180">
+                                    <img class="ap-cover-portrait" src="https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png" alt="Connor McDavid" width="240" height="240" decoding="async" onerror="this.hidden=true">
+                                    <div class="ap-cover-score"><strong>138</strong><span>POINTS · 2025–26</span></div>
+                                    <div class="ap-cover-name"><span>EDMONTON · CENTRE</span><strong>Connor McDavid</strong></div>
+                                </div>
                             </div>
                             <div class="ap-content">
                                 <section class="ap-leaders" aria-labelledby="apLeadersTitle">
-                                    <div class="ap-section-heading"><h3 id="apLeadersTitle">Les meneurs de la LNH</h3><span>2025–26</span></div>
+                                    <div class="ap-section-heading"><div><span class="ap-section-kicker">PRÉPAREZ VOTRE ALIGNEMENT</span><h3 id="apLeadersTitle">Les joueurs à suivre</h3></div><span class="ap-season-label">2025–26</span></div>
                                     <table class="ap-table">
-                                        <caption class="ap-sr-only">Statistiques de la saison 2025–2026, extrait des données LNH de Fantazy au 9 septembre 2026.</caption>
-                                        <thead><tr><th scope="col">Joueur</th><th scope="col">PJ</th><th scope="col">B</th><th scope="col">A</th><th scope="col">PTS</th></tr></thead>
+                                        <caption class="ap-sr-only">Sélection de joueurs. Statistiques de la saison 2025–2026, extrait des données LNH de Fantazy au 9 septembre 2026. P/M : points par match.</caption>
+                                        <thead><tr><th scope="col">Joueur</th><th scope="col"><abbr title="Parties jouées">PJ</abbr></th><th scope="col"><abbr title="Buts">B</abbr></th><th scope="col"><abbr title="Aides">A</abbr></th><th scope="col"><abbr title="Points">PTS</abbr></th></tr></thead>
                                         <tbody>
-                                            <tr><th scope="row"><span class="ap-player"><img src="teams/EDM.png" alt="" width="40" height="40"><span>Connor McDavid<small>EDM · Centre</small></span></span></th><td>82</td><td>48</td><td>90</td><td>138</td></tr>
-                                            <tr><th scope="row"><span class="ap-player"><img src="teams/TBL.png" alt="" width="40" height="40"><span>Nikita Kucherov<small>TBL · Ailier droit</small></span></span></th><td>76</td><td>44</td><td>86</td><td>130</td></tr>
-                                            <tr><th scope="row"><span class="ap-player"><img src="teams/COL.png" alt="" width="40" height="40"><span>Nathan MacKinnon<small>COL · Centre</small></span></span></th><td>80</td><td>53</td><td>74</td><td>127</td></tr>
-                                            <tr><th scope="row"><span class="ap-player"><img src="teams/BOS.png" alt="" width="40" height="40"><span>David Pastrnak<small>BOS · Ailier droit</small></span></span></th><td>77</td><td>29</td><td>71</td><td>100</td></tr>
+                                            <tr class="ap-player-featured"><th scope="row"><span class="ap-player"><span class="ap-portrait"><img class="ap-headshot" src="https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png" alt="" width="64" height="64" decoding="async" onerror="this.hidden=true"><img class="ap-team-mark" src="teams/EDM.png" alt="" width="20" height="20"></span><span>Connor McDavid<small><span class="ap-position">C</span> EDM <span class="ap-player-role">· Attaquant</span></small></span></span></th><td>82</td><td>48</td><td>90</td><td><span class="ap-points"><strong>138</strong><small>1,68 P/M</small></span></td></tr>
+                                            <tr><th scope="row"><span class="ap-player"><span class="ap-portrait"><img class="ap-headshot" src="https://assets.nhle.com/mugs/nhl/20252026/TBL/8476453.png" alt="" width="64" height="64" decoding="async" onerror="this.hidden=true"><img class="ap-team-mark" src="teams/TBL.png" alt="" width="20" height="20"></span><span>Nikita Kucherov<small><span class="ap-position">AD</span> TBL <span class="ap-player-role">· Attaquant</span></small></span></span></th><td>76</td><td>44</td><td>86</td><td><span class="ap-points"><strong>130</strong><small>1,71 P/M</small></span></td></tr>
+                                            <tr><th scope="row"><span class="ap-player"><span class="ap-portrait"><img class="ap-headshot" src="https://assets.nhle.com/mugs/nhl/20252026/COL/8477492.png" alt="" width="64" height="64" decoding="async" onerror="this.hidden=true"><img class="ap-team-mark" src="teams/COL.png" alt="" width="20" height="20"></span><span>Nathan MacKinnon<small><span class="ap-position">C</span> COL <span class="ap-player-role">· Attaquant</span></small></span></span></th><td>80</td><td>53</td><td>74</td><td><span class="ap-points"><strong>127</strong><small>1,59 P/M</small></span></td></tr>
+                                            <tr><th scope="row"><span class="ap-player"><span class="ap-portrait"><img class="ap-headshot" src="https://assets.nhle.com/mugs/nhl/20252026/BOS/8477956.png" alt="" width="64" height="64" decoding="async" onerror="this.hidden=true"><img class="ap-team-mark" src="teams/BOS.png" alt="" width="20" height="20"></span><span>David Pastrnak<small><span class="ap-position">AD</span> BOS <span class="ap-player-role">· Attaquant</span></small></span></span></th><td>77</td><td>29</td><td>71</td><td><span class="ap-points"><strong>100</strong><small>1,30 P/M</small></span></td></tr>
                                         </tbody>
                                     </table>
-                                    <a class="ap-view-stats" href="stats.html">Toutes les statistiques <span aria-hidden="true">→</span></a>
+                                    <a class="ap-view-stats" href="stats.html">Explorer tous les joueurs <span aria-hidden="true">→</span></a>
                                 </section>
-                                <aside class="ap-side">
-                                    <div class="ap-draft-card"><span class="ap-card-icon" data-icon="hockey" data-icon-size="24" aria-hidden="true"></span><span class="ap-eyebrow">LE PROCHAIN CHOIX EST À VOUS</span><h3>Prépare ton<br>repêchage.</h3><p>Les bons joueurs.<br>Au bon moment.</p><a href="stats.html">Explorer les joueurs <span aria-hidden="true">→</span></a></div>
-                                    <div class="ap-pool-card"><span data-icon="trophy" data-icon-size="20" aria-hidden="true"></span><h3>Une saison.<br>Votre rivalité.</h3><p>Cumulatif ou face-à-face.<br>À vous de choisir.</p></div>
+                                <aside class="ap-side" aria-label="Préparation du repêchage">
+                                    <div class="ap-scout-card">
+                                        <span class="ap-scout-label"><span data-icon="star" data-icon-size="12" aria-hidden="true"></span> À LA LIGNE BLEUE</span>
+                                        <div class="ap-scout-photo"><img class="ap-scout-crest" src="teams/COL.png" alt="" width="110" height="110"><img class="ap-scout-portrait" src="https://assets.nhle.com/mugs/nhl/20252026/COL/8480069.png" alt="Cale Makar" width="160" height="160" decoding="async" onerror="this.hidden=true"><span class="ap-scout-position">DÉF</span></div>
+                                        <div class="ap-scout-info"><h3>Cale Makar</h3><p>Avalanche du Colorado</p><dl class="ap-scout-stats"><div><dt>Buts</dt><dd>20</dd></div><div><dt>Aides</dt><dd>59</dd></div><div><dt>Points</dt><dd>79</dd></div></dl><span class="ap-scout-season">SAISON 2025–26</span></div>
+                                    </div>
+                                    <a class="ap-pool-link" href="rejoindre-pool.html"><span data-icon="trophy" data-icon-size="18" aria-hidden="true"></span><span>Trouvez votre ligue<small>La compétition commence ici</small></span><span aria-hidden="true">↗</span></a>
                                 </aside>
                             </div>
-                            <div class="ap-status"><span>REPÊCHAGE <i> / </i> ÉCHANGES <i> / </i> CLASSEMENT</span><span>LE HOCKEY, À VOTRE FAÇON.</span></div>
+                            <div class="ap-tools" aria-label="Découvrir Fantazy">
+                                <a href="repechage.html"><span data-icon="hockey" data-icon-size="17" aria-hidden="true"></span><span>Repêchage<small>Bâtissez votre équipe</small></span><span aria-hidden="true">↗</span></a>
+                                <a href="trade.html"><span data-icon="swap" data-icon-size="17" aria-hidden="true"></span><span>Échanges<small>Faites le bon mouvement</small></span><span aria-hidden="true">↗</span></a>
+                                <a href="classement.html"><span data-icon="trophy" data-icon-size="17" aria-hidden="true"></span><span>Classement<small>Visez le sommet</small></span><span aria-hidden="true">↗</span></a>
+                            </div>
+                            <div class="ap-status"><span>VOTRE LIGUE. VOS DÉCISIONS.</span><span>100 % HOCKEY <i>/</i> 100 % GRATUIT</span></div>
                         </div>
                     </div>
                 </div>
