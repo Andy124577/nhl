@@ -1,0 +1,39 @@
+/*
+ * Logos d'équipe lisibles sur fond sombre.
+ *
+ * Quatre crests sont dessinés en bleu marine plein, sans contour clair :
+ * Edmonton, Tampa Bay, Toronto et Washington. Sur le thème sombre — celui par
+ * défaut — ils se confondent avec l'arrière-plan. La LNH publie pour chacun une
+ * variante prévue exactement pour ce cas (disque ou tracé blanc) : elle vit
+ * dans teams/dark/, recadrée sur le même cadrage que les PNG de teams/ pour
+ * qu'aucune règle de dimension existante ne soit à revoir.
+ *
+ * Ces logos sont écrits en dur dans une trentaine d'`<img src="teams/XX.png">`
+ * répartis sur autant de fichiers, dont certains minifiés. Plutôt que de
+ * reprendre chaque appel, la substitution se fait ici, au rendu : `content`
+ * remplace l'image affichée sans toucher à l'attribut `src`, donc les
+ * gestionnaires `onerror` et le code qui relit `src` continuent de fonctionner,
+ * y compris sur le contenu inséré après coup.
+ *
+ * Les autres équipes gardent leur PNG : leur crest porte déjà du blanc, du
+ * jaune ou du rouge vif qui ressort sur les deux thèmes.
+ */
+
+/* Le sombre est l'état par défaut, comme le :root d'index.css : la variante
+   claire est donc la règle de base, et le thème clair revient au PNG. */
+img[src$="teams/EDM.png"] { content: url("teams/dark/EDM.svg"); }
+img[src$="teams/TBL.png"] { content: url("teams/dark/TBL.svg"); }
+img[src$="teams/TOR.png"] { content: url("teams/dark/TOR.svg"); }
+img[src$="teams/WSH.png"] { content: url("teams/dark/WSH.svg"); }
+
+html[data-theme="light"] img[src$="teams/EDM.png"],
+html[data-theme="light"] img[src$="teams/TBL.png"],
+html[data-theme="light"] img[src$="teams/TOR.png"],
+html[data-theme="light"] img[src$="teams/WSH.png"] { content: normal; }
+
+/* La fiche de carrière garde son fond noir dans les deux thèmes : elle reste
+   sur les variantes claires même quand le reste de la page passe au blanc. */
+html[data-theme="light"] #careerStatsModal img[src$="teams/EDM.png"] { content: url("teams/dark/EDM.svg"); }
+html[data-theme="light"] #careerStatsModal img[src$="teams/TBL.png"] { content: url("teams/dark/TBL.svg"); }
+html[data-theme="light"] #careerStatsModal img[src$="teams/TOR.png"] { content: url("teams/dark/TOR.svg"); }
+html[data-theme="light"] #careerStatsModal img[src$="teams/WSH.png"] { content: url("teams/dark/WSH.svg"); }

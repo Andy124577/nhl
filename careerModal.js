@@ -21,6 +21,11 @@
         points: 'M3 14h4v8H3ZM10 9h4v13h-4ZM17 3h4v19h-4Z',
         person: 'M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8M4 22v-3a8 8 0 0 1 16 0v3'
     };
+    // La fiche reste sur fond noir dans les deux thèmes. Quatre crests sont en
+    // bleu marine plein et s'y effacent : on prend la variante claire, celle que
+    // teamLogos.css sert déjà aux <img> de la page.
+    const crestsClairs = ['EDM', 'TBL', 'TOR', 'WSH'];
+    const crest = code => crestsClairs.includes(code) ? `teams/dark/${code}.svg` : `teams/${code}.png`;
     const icon = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]}"></path></svg>`;
     const el = id => document.getElementById(id);
     let request = 0, active = null, previousFocus = null, previousOverflow = '';
@@ -110,7 +115,7 @@
         const rgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)).join(', ');
         const vars = { 'team-primary': primary, 'team-secondary': secondary, 'team-surface': surface,
             'team-edge': edge, 'team-trim': trim, 'team-rgb': rgb(primary), 'team-secondary-rgb': rgb(secondary),
-            'team-logo': code && code !== 'ARI' ? `url("teams/${code}.png")` : 'none' };
+            'team-logo': code && code !== 'ARI' ? `url("${crest(code)}")` : 'none' };
         Object.entries(vars).forEach(([key, value]) => card.style.setProperty(`--${key}`, value));
         card.dataset.team = code || 'neutral';
         const logo = el('careerBannerLogo');
