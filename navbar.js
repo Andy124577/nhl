@@ -404,24 +404,57 @@ function initializeEventListeners(username, isAdmin) {
 async function loadAdminUsers() {
     try {
         const baseUrl = window.location.hostname.includes('localhost') ? 'http://localhost:3000' : window.location.origin;
-        const response = await fetch(`${baseUrl}/admin-users?adminToken=admin`);
+        const response = await fetch(`${baseUrl}/admin-users`);
         const data = await response.json();
 
         if (response.ok) {
-            const users = data.users.filter(u => u !== 'admin').slice(0, 5);
+            // Tous les comptes, pas les cinq premiers : une liste tronquée sans
+            // le dire laisse chercher un nom qui ne s'affichera jamais. C'est la
+            // hauteur du panneau qui borne l'affichage, et il défile.
+            //
+            // Seul le compte actif est retiré — basculer vers soi-même ne veut
+            // rien dire. Le compte d'administration, lui, reste dans la liste :
+            // c'est par là qu'on rentre chez soi après un dépannage.
+            const actif = localStorage.getItem('username') || '';
+            const users = data.users.filter(u => u !== actif);
             const container = document.getElementById('adminUsersList');
             if (container && users.length > 0) {
-                container.innerHTML = `
-                    <p class="dropdown-label">Changer d'utilisateur</p>
-                    ${users.map(u => `
-                        <button class="dropdown-item" role="menuitem" onclick="switchToUser('${u}')">
-                            <span class="dropdown-icon">
-                                <img src="Icons/grayUser.png" alt="" class="dropdown-user-thumb">
-                            </span>
-                            <span class="dropdown-title">${u}</span>
-                        </button>
-                    `).join('')}
-                `;
+                const etiquette = document.createElement('p');
+                etiquette.className = 'dropdown-label';
+                etiquette.textContent = `Changer d'utilisateur (${users.length})`;
+
+                const liste = document.createElement('div');
+                liste.className = 'admin-users-scroll';
+
+                // Les noms passent par textContent et par un attribut de
+                // données, jamais par une chaîne de HTML ni par un `onclick`
+                // interpolé : un nom contenant une apostrophe cassait le
+                // bouton, et un nom contenant du balisage faisait pire.
+                for (const u of users) {
+                    const bouton = document.createElement('button');
+                    bouton.className = 'dropdown-item';
+                    bouton.type = 'button';
+                    bouton.setAttribute('role', 'menuitem');
+                    bouton.dataset.username = u;
+
+                    const icone = document.createElement('span');
+                    icone.className = 'dropdown-icon';
+                    const vignette = document.createElement('img');
+                    vignette.src = 'Icons/grayUser.png';
+                    vignette.alt = '';
+                    vignette.className = 'dropdown-user-thumb';
+                    icone.appendChild(vignette);
+
+                    const nom = document.createElement('span');
+                    nom.className = 'dropdown-title';
+                    nom.textContent = u;
+
+                    bouton.append(icone, nom);
+                    bouton.addEventListener('click', () => switchToUser(u));
+                    liste.appendChild(bouton);
+                }
+
+                container.replaceChildren(etiquette, liste);
             }
         }
     } catch (error) {
@@ -435,7 +468,7 @@ async function switchToUser(username) {
         const response = await fetch(`${baseUrl}/admin-switch-user`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ adminToken: 'admin', targetUsername: username })
+            body: JSON.stringify({ targetUsername: username })
         });
 
         if (response.ok) {

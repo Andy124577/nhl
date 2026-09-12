@@ -649,3 +649,95 @@ describe('stats — tri sur une seule saison', () => {
         assert.equal(valeurDeTri({}, 'Gardien', 8, 'points', true), 2 * 5 + 10 * 2 + 3);
     });
 });
+
+// ─────────── navbar — la liste des comptes de la bascule d'administration ───────────
+//
+// Elle s'arrêtait à cinq (`slice(0, 5)`) sans le dire : au-delà, un compte
+// était simplement introuvable, et rien à l'écran ne laissait deviner qu'il
+// existait. La liste porte maintenant tous les comptes et c'est sa hauteur
+// qui est bornée, pas son contenu.
+
+/** Le strict nécessaire du DOM pour faire tourner loadAdminUsers. */
+function domSimule() {
+    const creer = (tag) => ({
+        tag, className: '', type: '', src: '', alt: '', textContent: '',
+        dataset: {}, attributs: {}, enfants: [], ecouteurs: {},
+        setAttribute(n, v) { this.attributs[n] = v; },
+        appendChild(e) { this.enfants.push(e); return e; },
+        append(...e) { this.enfants.push(...e); },
+        replaceChildren(...e) { this.enfants = [...e]; },
+        addEventListener(nom, fn) { (this.ecouteurs[nom] = this.ecouteurs[nom] || []).push(fn); }
+    });
+    const conteneur = creer('div');
+    return {
+        conteneur,
+        document: { createElement: creer, getElementById: () => conteneur }
+    };
+}
+
+/** Toutes les valeurs de `textContent` de l'arbre, à plat. */
+function textes(noeud, sortie = []) {
+    if (noeud.textContent) sortie.push(noeud.textContent);
+    for (const enfant of noeud.enfants || []) textes(enfant, sortie);
+    return sortie;
+}
+
+describe("navbar — bascule d'administration", () => {
+    const comptes = ['admin', 'fza', 'fzb', 'fzc', 'fzd', 'h2h_alpha',
+                     'h2h_beta', 'h2h_charlie', 'h2h_delta', 'jos', 'luc', 'zoe'];
+
+    const executer = async (users, actif) => {
+        const dom = domSimule();
+        const { loadAdminUsers } = chargerFonctions('navbar.js', ['loadAdminUsers'], {
+            document: dom.document,
+            window: { location: { hostname: 'fantazy.example', origin: 'https://fantazy.example' } },
+            localStorage: { getItem: (c) => (c === 'username' ? actif : null) },
+            fetch: async () => ({ ok: true, json: async () => ({ users }) }),
+            switchToUser: () => {}
+        });
+        await loadAdminUsers();
+        return dom.conteneur;
+    };
+
+    test('tous les comptes sont proposés, pas les cinq premiers', async () => {
+        const conteneur = await executer(comptes, 'admin');
+        const liste = conteneur.enfants.find(e => e.className === 'admin-users-scroll');
+
+        assert.ok(liste, 'la liste doit vivre dans son propre cadre défilant');
+        assert.equal(liste.enfants.length, comptes.length - 1,
+            'un seul compte manque à l’appel : celui sous lequel on est déjà');
+        assert.ok(liste.enfants.length > 5, 'la troncature à cinq est bien levée');
+    });
+
+    test('le compte actif est retiré, celui d administration reste', async () => {
+        // Il reste parce que c'est par lui qu'on rentre chez soi après un
+        // dépannage : le filtrer, c'était condamner la porte de sortie.
+        const conteneur = await executer(comptes, 'fza');
+        const liste = conteneur.enfants.find(e => e.className === 'admin-users-scroll');
+        const noms = liste.enfants.map(b => b.dataset.username);
+
+        assert.ok(!noms.includes('fza'), 'basculer vers soi-même ne veut rien dire');
+        assert.ok(noms.includes('admin'), 'le retour au compte d’administration doit rester offert');
+    });
+
+    test('le nombre de comptes est annoncé', async () => {
+        const conteneur = await executer(comptes, 'admin');
+        const etiquette = conteneur.enfants.find(e => e.className === 'dropdown-label');
+        assert.equal(etiquette.textContent, `Changer d'utilisateur (${comptes.length - 1})`);
+    });
+
+    test('un nom d utilisateur est du texte, jamais du balisage', async () => {
+        // L'ancienne version interpolait le nom dans une chaîne de HTML et
+        // dans un `onclick` entre apostrophes : une apostrophe cassait le
+        // bouton, et une balise faisait bien pire.
+        const piege = `<img src=x onerror=alert(1)>`;
+        const apostrophe = `o'brien`;
+        const conteneur = await executer(['admin', piege, apostrophe], 'admin');
+        const liste = conteneur.enfants.find(e => e.className === 'admin-users-scroll');
+
+        assert.deepEqual(liste.enfants.map(b => b.dataset.username), [piege, apostrophe]);
+        assert.ok(textes(liste).includes(piege), 'le nom doit arriver par textContent');
+        assert.equal(liste.enfants[1].attributs.onclick, undefined,
+            'aucun gestionnaire ne doit être écrit en attribut');
+    });
+});
