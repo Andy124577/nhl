@@ -36,7 +36,7 @@ function magasinMemoire() {
 
     return {
         type: 'memoire',
-        async creer(utilisateur, empreinte, expireLe, userAgent) {
+        async creer(utilisateur, empreinte, expireLe, userAgent, bascule) {
             const ligne = {
                 id: crypto.randomUUID(),
                 userId: utilisateur.id || utilisateur.username,
@@ -48,7 +48,9 @@ function magasinMemoire() {
                 lastSeenAt: new Date(),
                 expiresAt: expireLe,
                 revokedAt: null,
-                userAgent: userAgent || null
+                userAgent: userAgent || null,
+                impersonatedBy: (bascule && bascule.impersonatedBy) || null,
+                impersonatorUsername: (bascule && bascule.impersonatorUsername) || null
             };
             parEmpreinte.set(empreinte, ligne);
             return ligne;
@@ -89,9 +91,17 @@ function magasinMemoire() {
 function magasinPostgres(db) {
     return {
         type: 'postgres',
-        async creer(utilisateur, empreinte, expireLe, userAgent) {
-            const ligne = await db.createSession(utilisateur.id, empreinte, expireLe, userAgent);
-            return { ...ligne, username: utilisateur.username, isAdmin: !!utilisateur.isAdmin };
+        async creer(utilisateur, empreinte, expireLe, userAgent, bascule) {
+            const ligne = await db.createSession(
+                utilisateur.id, empreinte, expireLe, userAgent,
+                (bascule && bascule.impersonatedBy) || null
+            );
+            return {
+                ...ligne,
+                username: utilisateur.username,
+                isAdmin: !!utilisateur.isAdmin,
+                impersonatorUsername: (bascule && bascule.impersonatorUsername) || null
+            };
         },
         lire: (empreinte) => db.getSessionByTokenHash(empreinte),
         toucher: (id) => db.touchSession(id),
@@ -116,12 +126,16 @@ function creerAuth({ db, usePostgres, secure = true, originesAutorisees = [] } =
      * Le jeton n'est jamais renvoyé dans le corps de la réponse : il ne doit
      * exister que dans le cookie, hors de portée de tout script de la page.
      */
-    async function ouvrirSession(res, utilisateur, req) {
+    async function ouvrirSession(res, utilisateur, req, bascule = null) {
         const jeton = session.genererJeton();
         const empreinte = session.empreinteJeton(jeton);
         const expireLe = new Date(Date.now() + session.DUREE_SESSION_MS);
 
-        await magasin.creer(utilisateur, empreinte, expireLe, req && req.headers && req.headers['user-agent']);
+        await magasin.creer(
+            utilisateur, empreinte, expireLe,
+            req && req.headers && req.headers['user-agent'],
+            bascule
+        );
         res.setHeader('Set-Cookie', session.cookieSession(jeton, { secure }));
         return { expiresAt: expireLe };
     }
@@ -161,7 +175,13 @@ function creerAuth({ db, usePostgres, secure = true, originesAutorisees = [] } =
                 userId: ligne.userId,
                 username: ligne.username,
                 isAdmin: !!ligne.isAdmin,
-                avatarUrl: ligne.avatarUrl || ''
+                avatarUrl: ligne.avatarUrl || '',
+                // Renseignes seulement sur une session ouverte par bascule.
+                // `isAdmin` reste celui de la personne visee : l'interet du
+                // depannage est de voir ce qu'elle voit, pas de garder ses
+                // propres pouvoirs en main.
+                impersonatedBy: ligne.impersonatedBy || null,
+                impersonatorUsername: ligne.impersonatorUsername || null
             };
 
             // Sans await : marquer l'activité ne doit pas retarder la réponse,
@@ -230,6 +250,27 @@ function creerAuth({ db, usePostgres, secure = true, originesAutorisees = [] } =
     }
 
     /**
+     * Le poste de pilotage de la bascule — et rien de plus.
+     *
+     * Ouvre trois choses à une session ouverte par bascule : lister les
+     * comptes, basculer encore, revenir chez soi. Volontairement séparée de
+     * `requireAdmin` : une session de bascule n'est PAS une session
+     * d'administration. Si elle l'était, l'administration verrait partout des
+     * boutons que la personne dépannée n'a pas, et le dépannage mentirait sur
+     * ce qu'elle vit. Toute future route d'administration reste donc derrière
+     * `requireAdmin`, qui ne connaît que la colonne `is_admin`.
+     */
+    function requireBascule(req, res, next) {
+        if (!req.auth) {
+            return res.status(401).json({ message: "Vous devez être connecté.", code: 'non_authentifie' });
+        }
+        if (!req.auth.isAdmin && !req.auth.impersonatedBy) {
+            return res.status(403).json({ message: "Action réservée à l'administration.", code: 'non_admin' });
+        }
+        next();
+    }
+
+    /**
      * L'identité à utiliser, à partir de la session — et rien d'autre.
      *
      * Si la requête porte aussi un nom d'utilisateur (des dizaines d'appels
@@ -280,6 +321,7 @@ function creerAuth({ db, usePostgres, secure = true, originesAutorisees = [] } =
         csrfGuard,
         requireAuth,
         requireAdmin,
+        requireBascule,
         identite,
         identifierSocket,
         ouvrirSession,

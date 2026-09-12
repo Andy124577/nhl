@@ -804,12 +804,12 @@ async function deletePoolDependencies(poolName) {
  * Ouvre une session. Seule l'empreinte du jeton est ecrite : le jeton lui-meme
  * ne vit que dans le cookie du navigateur.
  */
-async function createSession(userId, tokenHash, expiresAt, userAgent = null) {
+async function createSession(userId, tokenHash, expiresAt, userAgent = null, impersonatedBy = null) {
     const resultat = await pool.query(
-        `INSERT INTO sessions (user_id, token_hash, expires_at, user_agent)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id, created_at, expires_at`,
-        [userId, tokenHash, expiresAt, userAgent ? String(userAgent).slice(0, 500) : null]
+        `INSERT INTO sessions (user_id, token_hash, expires_at, user_agent, impersonated_by)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id, created_at, expires_at, impersonated_by`,
+        [userId, tokenHash, expiresAt, userAgent ? String(userAgent).slice(0, 500) : null, impersonatedBy]
     );
     return resultat.rows[0];
 }
@@ -824,10 +824,12 @@ async function createSession(userId, tokenHash, expiresAt, userAgent = null) {
 async function getSessionByTokenHash(tokenHash) {
     const resultat = await pool.query(
         `SELECT s.id, s.user_id, s.token_hash, s.created_at, s.last_seen_at,
-                s.expires_at, s.revoked_at,
-                u.username, u.is_admin, u.avatar_url
+                s.expires_at, s.revoked_at, s.impersonated_by,
+                u.username, u.is_admin, u.avatar_url,
+                a.username AS impersonator_username
            FROM sessions s
            JOIN users u ON u.id = s.user_id
+           LEFT JOIN users a ON a.id = s.impersonated_by
           WHERE s.token_hash = $1`,
         [tokenHash]
     );
@@ -843,7 +845,9 @@ async function getSessionByTokenHash(tokenHash) {
         revokedAt: r.revoked_at,
         username: r.username,
         isAdmin: !!r.is_admin,
-        avatarUrl: r.avatar_url || ''
+        avatarUrl: r.avatar_url || '',
+        impersonatedBy: r.impersonated_by || null,
+        impersonatorUsername: r.impersonator_username || null
     };
 }
 

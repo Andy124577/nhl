@@ -149,3 +149,100 @@ test('une lecture ne passe pas par le contrôle d origine', () => {
     );
     assert.equal(suivant, true, 'une lecture ne change rien : rien à protéger de ce côté');
 });
+
+// ─────────────────── Bascule d'administration ───────────────────
+//
+// `/admin-switch-user` ouvre une vraie session au nom de la personne visée.
+// C'est voulu : le dépannage doit voir ce qu'elle voit. Mais la session
+// ne gardait aucune trace de son origine, et l'administration s'y retrouvait
+// enfermée — plus moyen de lister les comptes ni de basculer ailleurs, la
+// personne visée n'étant pas administratrice. Un aller sans retour.
+
+/** Une réponse minimale, qui retient ce qu'on lui pose. */
+function fausseReponse() {
+    return {
+        statusCode: 200, corps: null, entetes: {},
+        status(code) { this.statusCode = code; return this; },
+        json(c) { this.corps = c; return this; },
+        setHeader(nom, valeur) { this.entetes[nom] = valeur; }
+    };
+}
+
+/** Le cookie de session tel qu'une requête suivante le renverrait. */
+function cookieDe(res) {
+    return String(res.entetes['Set-Cookie']).split(';')[0];
+}
+
+test('une session ouverte par bascule se souvient de qui l a ouverte', async () => {
+    const { creerAuth } = require('../../middleware/auth.js');
+    const auth = creerAuth({ usePostgres: false, secure: false });
+
+    const res = fausseReponse();
+    await auth.ouvrirSession(res, { id: 'fza', username: 'fza', isAdmin: false }, { headers: {} },
+        { impersonatedBy: 'admin', impersonatorUsername: 'admin' });
+
+    const req = { headers: { cookie: cookieDe(res) } };
+    await auth.sessionMiddleware(req, fausseReponse(), () => {});
+
+    assert.equal(req.auth.username, 'fza');
+    assert.equal(req.auth.isAdmin, false,
+        'la bascule ne laisse aucun privilège résiduel : on voit ce que la personne voit');
+    assert.equal(req.auth.impersonatorUsername, 'admin',
+        "mais la session sait qui la pilote, sinon l'administration y reste enfermée");
+});
+
+test('une session ordinaire ne porte aucune origine de bascule', async () => {
+    const { creerAuth } = require('../../middleware/auth.js');
+    const auth = creerAuth({ usePostgres: false, secure: false });
+
+    const res = fausseReponse();
+    await auth.ouvrirSession(res, { id: 'fza', username: 'fza', isAdmin: false }, { headers: {} });
+
+    const req = { headers: { cookie: cookieDe(res) } };
+    await auth.sessionMiddleware(req, fausseReponse(), () => {});
+
+    assert.equal(req.auth.impersonatedBy, null);
+    assert.equal(req.auth.impersonatorUsername, null);
+});
+
+test('le poste de pilotage de la bascule s ouvre à l administration et à ses bascules', () => {
+    const { creerAuth } = require('../../middleware/auth.js');
+    const auth = creerAuth({ usePostgres: false, secure: false });
+
+    const appeler = (identite) => {
+        const res = fausseReponse();
+        let suivant = false;
+        auth.requireBascule({ auth: identite }, res, () => { suivant = true; });
+        return { suivant, statut: res.statusCode, code: res.corps && res.corps.code };
+    };
+
+    assert.equal(appeler(null).statut, 401, 'anonyme');
+
+    const ordinaire = appeler({ username: 'fza', isAdmin: false, impersonatedBy: null });
+    assert.equal(ordinaire.suivant, false);
+    assert.equal(ordinaire.statut, 403);
+    assert.equal(ordinaire.code, 'non_admin');
+
+    assert.equal(appeler({ username: 'admin', isAdmin: true }).suivant, true,
+        'une administration ordinaire pilote');
+    assert.equal(appeler({ username: 'fza', isAdmin: false, impersonatedBy: 7 }).suivant, true,
+        'et une bascule garde de quoi rebasculer ou rentrer');
+});
+
+test('une bascule n est pas une session d administration', () => {
+    // La distinction est tout l'intérêt : si `requireAdmin` s'ouvrait aussi
+    // aux bascules, l'administration verrait pendant son dépannage des boutons
+    // que la personne dépannée n'a pas, et le dépannage mentirait sur ce
+    // qu'elle vit. Toute route d'administration reste derrière `is_admin`.
+    const { creerAuth } = require('../../middleware/auth.js');
+    const auth = creerAuth({ usePostgres: false, secure: false });
+
+    const res = fausseReponse();
+    let suivant = false;
+    auth.requireAdmin({ auth: { username: 'fza', isAdmin: false, impersonatedBy: 7 } }, res,
+        () => { suivant = true; });
+
+    assert.equal(suivant, false);
+    assert.equal(res.statusCode, 403);
+    assert.equal(res.corps.code, 'non_admin');
+});

@@ -205,7 +205,11 @@ function monter(app, ctx) {
             authenticated: true,
             username: req.auth.username,
             isAdmin: req.auth.isAdmin,
-            avatarUrl
+            avatarUrl,
+            // Non nul quand une administration est en train de dépanner sous
+            // cette identité : c'est ce qui permet à la page de garder le menu
+            // de bascule et d'offrir le retour.
+            impersonatedBy: req.auth.impersonatorUsername || null
         });
     });
 
@@ -335,7 +339,37 @@ function monter(app, ctx) {
 
     // ───────────────────────────── Administration ─────────────────────────────
 
-    app.get('/admin-users', auth.requireAdmin, async (req, res) => {
+    /**
+     * Le pilote d'une session de bascule est-il encore administrateur ?
+     *
+     * `requireBascule` ne lit que la session, et la session porte l'identité
+     * du pilote telle qu'elle était à l'ouverture. Si ses droits lui ont été
+     * retirés depuis, la session de bascule continuerait sinon de circuler
+     * d'un compte à l'autre jusqu'à son expiration. On relit donc la colonne,
+     * comme partout ailleurs : `is_admin` vient de la base, jamais d'un
+     * souvenir.
+     *
+     * Une session d'administration ordinaire ne coûte aucune lecture : son
+     * `isAdmin` sort déjà de la jointure sur `users`.
+     */
+    async function piloteEncoreAdmin(req) {
+        if (!req.auth || !req.auth.impersonatedBy) return true;
+        const pilote = await lireCompte(req.auth.impersonatorUsername);
+        return !!(pilote && pilote.isAdmin);
+    }
+
+    /** Refus commun aux deux routes de bascule. */
+    async function refuserPiloteDechu(req, res) {
+        if (await piloteEncoreAdmin(req)) return false;
+        res.status(403).json({
+            message: "La session d'administration qui a ouvert cette bascule n'est plus valable. Reconnectez-vous.",
+            code: 'bascule_perimee'
+        });
+        return true;
+    }
+
+    app.get('/admin-users', auth.requireBascule, async (req, res) => {
+        if (await refuserPiloteDechu(req, res)) return;
         try {
             const utilisateurs = await chargerUtilisateurs();
             res.json({ users: utilisateurs.map(u => u.username) });
@@ -354,13 +388,27 @@ function monter(app, ctx) {
      * rien demander à personne. Le basculement est journalisé : usurper une
      * identité, même pour aider, doit laisser une trace.
      */
-    app.post('/admin-switch-user', auth.requireAdmin, async (req, res) => {
+    app.post('/admin-switch-user', auth.requireBascule, async (req, res) => {
         try {
+            if (await refuserPiloteDechu(req, res)) return;
+
             const cible = typeof req.body?.targetUsername === 'string' ? req.body.targetUsername.trim() : '';
             if (!cible) return res.status(400).json({ message: "Compte cible requis." });
 
             const compte = await lireCompte(cible);
             if (!compte) return res.status(404).json({ message: "Compte introuvable." });
+
+            // La racine de la chaîne, pas le maillon précédent. Sur
+            // admin → fza → fzb, c'est toujours `admin` qui pilote : retenir
+            // `fza` ferait d'une bascule un moyen de se donner un billet de
+            // retour vers un compte qu'on n'a jamais possédé.
+            const pilote = req.auth.impersonatedBy
+                ? { id: req.auth.impersonatedBy, username: req.auth.impersonatorUsername }
+                : { id: req.auth.userId, username: req.auth.username };
+
+            // Revenir chez soi n'est pas une bascule : la session redevient
+            // pleinement celle de l'administration, sans billet de retour.
+            const retourChezSoi = compte.username === pilote.username;
 
             const identifiant = usePostgres ? await db.getUserId(cible) : cible;
             await auth.ouvrirSession(res, {
@@ -368,10 +416,19 @@ function monter(app, ctx) {
                 username: compte.username,
                 isAdmin: !!compte.isAdmin,
                 avatarUrl: compte.avatarUrl || ''
-            }, req);
+            }, req, retourChezSoi ? null : { impersonatedBy: pilote.id, impersonatorUsername: pilote.username });
 
-            logger.warn(`🔐 Bascule d'administration : ${req.auth.username} → ${cible}`);
-            res.json({ message: `Basculé vers ${cible}.`, username: cible });
+            logger.warn(
+                retourChezSoi
+                    ? `🔐 Fin de bascule : ${req.auth.username} → ${cible} (retour)`
+                    : `🔐 Bascule d'administration : ${pilote.username} → ${cible}`
+            );
+            res.json({
+                message: retourChezSoi ? `Retour au compte ${cible}.` : `Basculé vers ${cible}.`,
+                username: cible,
+                isAdmin: !!compte.isAdmin,
+                impersonatedBy: retourChezSoi ? null : pilote.username
+            });
         } catch (erreur) {
             logger.error('Erreur au changement de compte :', erreur);
             res.status(500).json({ message: "Erreur interne du serveur." });
