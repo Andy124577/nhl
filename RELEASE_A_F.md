@@ -19,6 +19,11 @@ production, expiration à 30 jours, inactivité à 14 jours, révocation à la
 déconnexion et à la suppression de compte. Seule l'empreinte du jeton est
 stockée.
 
+Le contrôle d'origine couvre aussi `/login` et `/signup`, pas seulement les
+requêtes déjà authentifiées : sans lui, une page tierce peut poster des
+identifiants et connecter la personne au compte de l'attaquant. Le cookie n'y
+est pas encore au départ, mais il y sera au retour.
+
 Trois portes ouvertes se sont fermées :
 
 | Avant | Après |
@@ -174,7 +179,7 @@ serveur. Sans elle, l'hôte servi fait foi.
 
 | Vérification | Résultat |
 | --- | --- |
-| `npm run test:unit` | **766 passent**, 0 échec, 0 ignoré (515 au départ) |
+| `npm run test:unit` | **768 passent**, 0 échec, 0 ignoré (515 au départ) |
 | `test_suite.js` contre un serveur jetable | 44 passent, 0 échec, 9 ignorés |
 | `test_h2h.js` contre un serveur jetable | 51 passent, 0 échec, 5 ignorés |
 | `test_teams.js` contre un serveur jetable | 62 passent, 0 échec |
@@ -283,6 +288,6 @@ test/      fixtures/routeHarness, integration/client, pg/concurrency, 12 suites
 racine     fzToday.js, fzToday.css, tradeMarket.css, migrate.js
 ```
 
-`server.js` passe de 6 922 à environ 3 800 lignes. Ce qui y reste : les
+`server.js` passe de 6 922 à 4 128 lignes. Ce qui y reste : les
 statistiques de la LNH, les caches, le calendrier, les travaux de fond, et la
 composition.

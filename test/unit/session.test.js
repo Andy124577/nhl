@@ -108,3 +108,44 @@ test('une requête sans aucune origine annoncée passe, puisqu aucun cookie ne s
     // Mais une origine illisible n'est pas une absence d'origine.
     assert.equal(session.origineAutorisee({ origin: 'pas-une-url', host: 'fantazy.example' }), false);
 });
+
+test('le contrôle d origine couvre aussi la connexion elle-même', () => {
+    // Sans lui, une page tierce peut poster des identifiants et connecter la
+    // personne au compte de l'attaquant : le cookie n'y est pas encore, mais
+    // il y sera au retour, et tout ce qu'elle fera ensuite ira dans ce compte.
+    const { creerAuth } = require('../../middleware/auth.js');
+    const auth = creerAuth({ usePostgres: false, secure: false });
+
+    const appeler = (entetes, identite = null) => {
+        const req = { method: 'POST', path: '/login', headers: entetes, auth: identite };
+        const res = {
+            statusCode: 200, corps: null,
+            status(code) { this.statusCode = code; return this; },
+            json(c) { this.corps = c; return this; }
+        };
+        let suivant = false;
+        auth.csrfGuard(req, res, () => { suivant = true; });
+        return { suivant, statut: res.statusCode, corps: res.corps };
+    };
+
+    const etrangere = appeler({ origin: 'https://mechant.example', host: 'fantazy.example' });
+    assert.equal(etrangere.suivant, false);
+    assert.equal(etrangere.statut, 403);
+    assert.equal(etrangere.corps.code, 'origine_refusee');
+
+    assert.equal(appeler({ origin: 'http://fantazy.example', host: 'fantazy.example' }).suivant, true);
+    assert.equal(appeler({ host: 'fantazy.example' }).suivant, true,
+        'un client sans origine annoncée passe : aucun cookie ne s y attache seul');
+});
+
+test('une lecture ne passe pas par le contrôle d origine', () => {
+    const { creerAuth } = require('../../middleware/auth.js');
+    const auth = creerAuth({ usePostgres: false, secure: false });
+    let suivant = false;
+    auth.csrfGuard(
+        { method: 'GET', headers: { origin: 'https://mechant.example', host: 'fantazy.example' }, auth: {} },
+        { status() { return this; }, json() { return this; } },
+        () => { suivant = true; }
+    );
+    assert.equal(suivant, true, 'une lecture ne change rien : rien à protéger de ce côté');
+});

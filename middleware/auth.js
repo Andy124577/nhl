@@ -177,13 +177,20 @@ function creerAuth({ db, usePostgres, secure = true, originesAutorisees = [] } =
      * Refuse une requête mutante venue d'un autre site.
      *
      * SameSite=Lax bloque déjà le cas courant côté navigateur ; ceci est la
-     * serrure qui ne dépend pas du navigateur. Les requêtes non authentifiées
-     * passent : sans cookie, il n'y a pas d'autorité à emprunter.
+     * serrure qui ne dépend pas du navigateur.
+     *
+     * Une requête qui n'annonce AUCUNE origine passe : un client non
+     * navigateur n'en envoie pas, et aucun cookie ne s'y attache tout seul.
+     * Une requête qui en annonce une doit être chez elle.
      */
     function csrfGuard(req, res, next) {
         if (!METHODES_MUTANTES.has(req.method)) return next();
-        if (!req.auth) return next();
 
+        // Le contrôle s'applique AUSSI aux requêtes non authentifiées.
+        // `/login` en est la raison : une page tierce qui poste des
+        // identifiants connectera la personne au compte de l'attaquant, et
+        // tout ce qu'elle fera ensuite ira dans ce compte. Le cookie n'y est
+        // pas encore, mais il y sera au retour.
         const permis = session.origineAutorisee({
             origin: req.headers.origin,
             referer: req.headers.referer,
