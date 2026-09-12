@@ -163,6 +163,18 @@ function creerServiceH2H({ store, db, pointage, diffusion, saisonCourante, logge
             const pointsB = p2.points == null ? 0 : p2.points;
             const issue = issueDuDuel(pointsA, pointsB);
 
+            // Les meilleurs pointeurs sont FIGES avec le resultat.
+            //
+            // C'est ce qui rend « joueur de la semaine » defendable : il est
+            // calcule sur l'alignement qui etait en place a la finalisation, et
+            // conserve tel quel. Le recalculer plus tard depuis l'alignement du
+            // jour ferait gagner la semaine derniere a un joueur acquis mardi.
+            const meilleurs = (resultat, equipe) => (resultat.detail?.joueurs || [])
+                .filter(j => j.matchs > 0)
+                .sort((a, b) => b.fantasyPoints - a.fantasyPoints)
+                .slice(0, 3)
+                .map(j => ({ name: j.name, team: equipe, fantasyPoints: j.fantasyPoints, matchs: j.matchs }));
+
             resultats.push({
                 team1: duel.team1,
                 team2: duel.team2,
@@ -170,7 +182,9 @@ function creerServiceH2H({ store, db, pointage, diffusion, saisonCourante, logge
                 team2Points: scoring.arrondi(pointsB),
                 winner: issue === 'tie' ? 'tie' : duel[issue],
                 weekNumber: numero,
-                club: p1.detail && p1.detail.club
+                club: p1.detail && p1.detail.club,
+                team1Top: meilleurs(p1, duel.team1),
+                team2Top: meilleurs(p2, duel.team2)
             });
         }
 

@@ -209,11 +209,15 @@ async function createNotificationBrowser(options = {}) {
 
     let trades = options.trades || [];
     let pools = options.pools || [];
+    // L'historique durable du serveur. `null` = indisponible, ce qui est le cas
+    // en mode fichier : la cloche retombe alors sur ses sources dérivées.
+    let notificationsServeur = options.serverNotifications ?? null;
     let fetchFailure = false;
     let deferredFetch = null;
     const sockets = new Map();
     const dataListeners = [];
     const requests = [];
+    const lectures = [];
     const socket = { on: (type, callback) => { const list = sockets.get(type) || []; list.push(callback); sockets.set(type, list); } };
     const window = new EventTarget();
     window.location = new URL('http://localhost:3000/index.html');
@@ -236,8 +240,31 @@ async function createNotificationBrowser(options = {}) {
         setInterval: (fn, ms) => schedule(fn, ms, true), clearInterval: id => timers.delete(id),
         requestAnimationFrame: fn => schedule(fn, 16),
         MutationObserver: class { observe() {} disconnect() {} },
-        fetch: async url => {
-            requests.push(String(url));
+        fetch: async (url, options) => {
+            const adresse = String(url);
+            requests.push(adresse);
+
+            // Le marquage de lecture part sans attendre : il ne consomme pas
+            // une réponse retenue, et n'entre pas dans les comptages.
+            if (adresse.includes('/api/notifications/read')) {
+                lectures.push(JSON.parse((options && options.body) || '{}'));
+                return { ok: true, json: async () => ({ disponible: true, marquees: 0 }) };
+            }
+
+            if (adresse.includes('/api/notifications')) {
+                if (fetchFailure) throw new Error('Offline');
+                return {
+                    ok: true,
+                    json: async () => (notificationsServeur === null
+                        ? { disponible: false, raison: 'postgres_requis', notifications: [], nonLues: 0 }
+                        : {
+                            disponible: true,
+                            notifications: JSON.parse(JSON.stringify(notificationsServeur)),
+                            nonLues: notificationsServeur.filter(n => !n.read).length
+                        })
+                };
+            }
+
             if (deferredFetch) {
                 const pending = deferredFetch;
                 deferredFetch = null;
@@ -253,11 +280,12 @@ async function createNotificationBrowser(options = {}) {
     await advance(1000);
 
     return {
-        document, window, storage, requests, flush, advance,
+        document, window, storage, requests, lectures, flush, advance,
         element: id => document.getElementById(id),
         items: () => document.getElementById('fzNotifList').querySelectorAll('a[data-notification-id]'),
         state: () => JSON.parse(storage.get(`fzNotifications:v1:${encodeURIComponent(username)}`) || 'null'),
         setTrades: value => { trades = value; },
+        setServerNotifications: value => { notificationsServeur = value; },
         setPools: value => { pools = value; },
         failFetch: () => { fetchFailure = true; },
         holdNextFetch: () => {

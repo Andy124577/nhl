@@ -45,6 +45,10 @@ const routesInstantane = require("./routes/instantDraft.js");
 const routesEchanges = require("./routes/trades.js");
 const routesH2H = require("./routes/h2h.js");
 const routesRecords = require("./routes/records.js");
+const routesNotifications = require("./routes/notifications.js");
+const routesAujourdhui = require("./routes/today.js");
+const { creerServiceAujourdhui } = require("./services/today.js");
+const { creerServiceRecap } = require("./services/recap.js");
 const { creerServicePointage } = require("./services/scoring.js");
 const { creerServiceH2H } = require("./services/h2h.js");
 const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
@@ -458,8 +462,38 @@ const serviceH2H = creerServiceH2H({
     saisonCourante: () => currentSeasonString()
 });
 
+/**
+ * « Fantazy Aujourd'hui » : une seule reponse, lue par les deux dispositions
+ * de l'accueil. Chacune choisissait sa propre priorite auparavant, donc deux
+ * ecrans cote a cote pouvaient annoncer deux actions differentes.
+ */
+const aujourdhui = creerServiceAujourdhui({
+    store: poolStore,
+    db,
+    usePostgres: USE_POSTGRES,
+    pointage,
+    serviceH2H,
+    saisonCourante: () => currentSeasonString(),
+    calendrierLNH
+});
+
 contexteRoutes.pointage = pointage;
 contexteRoutes.serviceH2H = serviceH2H;
+/**
+ * Recapitulatifs : produits a partir des resultats FIGES, jamais des
+ * alignements du jour. Idempotents et rattrapables : un redemarrage entre la
+ * finalisation et la generation ne laisse pas de trou.
+ */
+const serviceRecap = creerServiceRecap({
+    store: poolStore,
+    db,
+    usePostgres: USE_POSTGRES,
+    diffusion,
+    saisonCourante: () => currentSeasonString()
+});
+
+contexteRoutes.aujourdhui = aujourdhui;
+contexteRoutes.serviceRecap = serviceRecap;
 contexteRoutes.calendrierLNH = calendrierLNH;
 contexteRoutes.fenetreSaison = () => getSeasonWindow();
 contexteRoutes.saisonCommencee = (fenetre) => seasonHasStarted(fenetre);
@@ -471,6 +505,8 @@ routesInstantane.monter(app, contexteRoutes);
 routesEchanges.monter(app, contexteRoutes);
 routesH2H.monter(app, contexteRoutes);
 routesRecords.monter(app, contexteRoutes);
+routesNotifications.monter(app, contexteRoutes);
+routesAujourdhui.monter(app, contexteRoutes);
 
 
 
@@ -3749,6 +3785,16 @@ async function rattraperSemainesH2H({ maxSemainesParPool = 4 } = {}) {
             }
         }
 
+        // Les recaps suivent la finalisation, dans le meme passage : un
+        // redemarrage entre les deux ne doit pas laisser une semaine close
+        // sans son recap.
+        try {
+            const recaps = await serviceRecap.rattraperTout({ maxSemainesParPool });
+            if (recaps > 0) console.log(`📝 ${recaps} recapitulatif(s) produit(s) ou mis a jour`);
+        } catch (erreur) {
+            console.error('❌ Rattrapage des recapitulatifs impossible :', erreur.message);
+        }
+
         if (closes > 0) io.emit('h2hWeekAutoFinalized', { semaines: closes });
         return closes;
     } catch (erreur) {
@@ -3757,15 +3803,43 @@ async function rattraperSemainesH2H({ maxSemainesParPool = 4 } = {}) {
     }
 }
 
+/**
+ * Menage des donnees durables.
+ *
+ * La politique de confidentialite promet de ne pas garder indefiniment, et
+ * garder six mois d'alertes de tour ne sert personne : ca allonge simplement
+ * ce qu'une fuite exposerait. Les bornes sont explicites et verifiables.
+ */
+const RETENTION_NOTIFICATIONS_JOURS = 180;
+const RETENTION_ACTIVITE_JOURS = 365;
+
+async function menageDonneesDurables() {
+    if (!USE_POSTGRES) return;
+    try {
+        const sessions = await db.purgeExpiredSessions();
+        const operations = await db.purgeOldOperations();
+        const notifications = await db.purgeOldNotifications(RETENTION_NOTIFICATIONS_JOURS);
+        const activite = await db.purgeOldActivity(RETENTION_ACTIVITE_JOURS);
+        if (sessions || operations || notifications || activite) {
+            console.log(`🧹 Menage : ${sessions} session(s), ${operations} operation(s), ` +
+                        `${notifications} notification(s), ${activite} evenement(s)`);
+        }
+    } catch (erreur) {
+        console.error('❌ Menage des donnees durables impossible :', erreur.message);
+    }
+}
+
 // Un passage au demarrage, puis toutes les six heures.
 console.log("🔍 Verification des semaines tete-a-tete terminees...");
 rattraperSemainesH2H();
+menageDonneesDurables();
 
 // Run check every 6 hours (21600000 ms)
 const SIX_HOURS = 6 * 60 * 60 * 1000;
 setInterval(() => {
-    console.log("🔍 Running periodic check for completed H2H weeks...");
+    console.log("🔍 Verification periodique des semaines terminees...");
     rattraperSemainesH2H();
+    menageDonneesDurables();
 }, SIX_HOURS);
 
 console.log("✅ H2H auto-finalization scheduler initialized (checks every 6 hours)");

@@ -125,7 +125,7 @@ test('une acceptation echange les alignements, annule les concurrentes et retire
         // la lecture. Les deux notions restent separees.
         const offreRecue = h.etat.notifications.find(n => n.type === 'trade_received');
         assert.ok(offreRecue.resolvedAt, "l'offre acceptee doit cesser d'etre en attente");
-        assert.equal(offreRecue.readAt, undefined, 'accepter ne marque pas la notification comme lue');
+        assert.ok(!offreRecue.readAt, 'accepter ne marque pas la notification comme lue');
     } finally { h.nettoyer(); }
 });
 

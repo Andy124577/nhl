@@ -29,7 +29,7 @@ const FENETRES = [1, 7, 14, 30, 90, 180, 365];
 
 function monter(app, ctx) {
     const { auth, store, db, pointage, saisonCourante, fenetreSaison,
-            saisonCommencee, logger = console } = ctx;
+            saisonCommencee, serviceRecap, logger = console } = ctx;
 
     function repondreErreur(res, erreur, contexte) {
         if (erreur.name === 'ErreurMetier' || erreur.name === 'ErreurConflit') {
@@ -255,6 +255,53 @@ function monter(app, ctx) {
             });
         } catch (erreur) {
             repondreErreur(res, erreur, '/pool-hall-of-fame');
+        }
+    });
+
+
+    // ───────────────────────────── Récapitulatifs ─────────────────────────────
+
+    /**
+     * Le récap d'une semaine, ou le plus récent.
+     *
+     * Lecture seule : le récap est produit après la finalisation, à partir des
+     * résultats figés. Le régénérer à la demande ferait dépendre son contenu du
+     * moment où on le consulte — un échange de mardi changerait ce que la
+     * semaine dernière raconte.
+     */
+    app.get('/api/pools/:poolName/recap', auth.requireAuth, async (req, res) => {
+        try {
+            const nomPool = req.params.poolName;
+            const enveloppe = await poolMembre(req, res, nomPool);
+            if (!enveloppe) return;
+
+            if (!serviceRecap) {
+                return res.json({ disponible: false, raison: 'postgres_requis', recap: null });
+            }
+
+            const numero = req.query.week ? Number(req.query.week) : null;
+            const ligne = await serviceRecap.lire(nomPool, numero);
+
+            if (!ligne) {
+                return res.json({
+                    disponible: true,
+                    recap: null,
+                    // Aucun récap n'est pas une panne : c'est l'état normal
+                    // avant la première semaine close.
+                    raison: 'aucune_semaine_finalisee'
+                });
+            }
+
+            res.json({
+                disponible: true,
+                recap: ligne.payload,
+                weekNumber: Number(ligne.week_number),
+                resultRevision: Number(ligne.result_revision),
+                poolMode: ligne.pool_mode,
+                generatedAt: ligne.generated_at
+            });
+        } catch (erreur) {
+            repondreErreur(res, erreur, '/api/pools/recap');
         }
     });
 

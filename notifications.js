@@ -1,6 +1,25 @@
-/* Notifications : historique et lectures conservés par compte dans ce navigateur.
-   Seuls un clic sur une notification ou « Tout marquer comme lu » changent la lecture.
-   Les données viennent des services existants de pools et d'échanges. */
+/* Notifications.
+ *
+ * La source est le serveur : /api/notifications renvoie des notifications
+ * durables, avec leur texte, leur urgence et leur destination déjà décidés
+ * (lib/events.js). La cloche, le bandeau et l'accueil racontent donc la même
+ * chose et mènent au même endroit — chacun composait son propre texte avant,
+ * et deux surfaces pouvaient diverger.
+ *
+ * L'historique local reste, pour deux raisons précises :
+ *
+ *   - il porte l'état de lecture déjà acquis. Les identifiants du serveur
+ *     reprennent exactement le schéma local (`trade:42`, `turn:pool:3`), donc
+ *     une notification déjà vue reste vue au lieu de réapparaître non lue ;
+ *   - il permet à la cloche de fonctionner quand le serveur ne répond pas, ou
+ *     quand l'historique durable n'est pas disponible (mode fichier).
+ *
+ * Une seule source à la fois : dès que le serveur répond, les sources dérivées
+ * des pools et des échanges se taisent. Deux flux produiraient deux entrées
+ * pour le même fait.
+ *
+ * Seuls un clic sur une notification ou « Tout marquer comme lu » changent la
+ * lecture. Ouvrir le panneau ne marque rien. */
 (function () {
     const ICONES = {
         cloche: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>`,
@@ -19,6 +38,15 @@
 
     let compte, cle, elements = [], initialise = false;
     let draftsInitialises = false, echangesInitialises = false;
+    // null = pas encore demandé, true = le serveur fait foi, false = repli.
+    let serveurDisponible = null;
+    // Une réponse claire « pas d'historique durable ici » (mode fichier) ne se
+    // redemande pas à chaque évènement : ce serait une requête par clic pour
+    // une réponse qui ne changera pas de la session. Un échec réseau, lui,
+    // reste réessayable — il n'a rien décidé.
+    let serveurEcarte = false;
+    let serveurInitialise = false;
+    let requeteServeur = null;
     let requete = null, relancer = false, derniereListe = '';
     let erreurReseau = false, erreurStockage = false;
     let migration = new Set();
@@ -33,8 +61,8 @@
             const sauvegarde = JSON.parse(localStorage.getItem(cle) || 'null');
             if (sauvegarde?.version !== 1 || !Array.isArray(sauvegarde.items)) return null;
             sauvegarde.items = sauvegarde.items.filter(el => el && typeof el.id === 'string'
-                && ['echange', 'repechage'].includes(el.type) && typeof el.pool === 'string'
-                && /^(trade|repechage|draftActif|draftFini)\.html\?/.test(el.href)
+                && ['echange', 'repechage', 'semaine'].includes(el.type) && typeof el.pool === 'string'
+                && /^(trade|repechage|draftActif|draftFini|classement)\.html\?/.test(el.href)
                 && Number.isFinite(el.date));
             return sauvegarde;
         } catch { return null; }
@@ -68,6 +96,26 @@
         }
     }
 
+    /**
+     * Signale au serveur ce qui vient d'être lu.
+     *
+     * Sans attente : la liste se met à jour localement tout de suite, et une
+     * requête perdue se rattrape au prochain chargement — l'état de lecture
+     * local reste, et le serveur le recevra plus tard.
+     */
+    function signalerLecture(ids) {
+        if (serveurDisponible !== true) return;
+        const serveurIds = ids
+            .map(id => (elements.find(el => el.id === id) || {}).serverId)
+            .filter(Boolean);
+        if (serveurIds.length === 0) return;
+        fetch(`${FZPool.BASE_URL}/api/notifications/read`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: serveurIds })
+        }).catch(() => { /* le prochain chargement rattrapera */ });
+    }
+
     function marquerLus(ids) {
         if (!compteActuel()) return;
         fusionnerStockage();
@@ -85,6 +133,7 @@
         popupIds = popupIds.filter(id => !elements.find(el => el.id === id)?.read);
         if (popupIds.length) rendrePopup();
         else fermerPopup();
+        signalerLecture(ids);
     }
 
     function selectionner(e) {
@@ -149,6 +198,10 @@
     }
 
     function actualiserHistorique() {
+        // Quand le serveur fait foi, il a déjà décidé du texte et de l'urgence
+        // de chaque entrée : les réécrire ici ferait diverger la cloche du
+        // reste du site, ce que ce changement existe justement pour éviter.
+        if (serveurDisponible === true) return;
         const pools = new Map(FZPool.mine().map(pool => [pool.name, pool]));
         elements.filter(el => el.type === 'repechage').forEach(el => {
             const pool = pools.get(el.pool);
@@ -181,9 +234,14 @@
         nouveaux.forEach(el => {
             const precedent = connus.get(el.id);
             if (precedent) {
-                Object.assign(precedent, el, { date: precedent.date, read: precedent.read });
+                // La lecture est monotone : ni le serveur ni un autre onglet ne
+                // peuvent « dé-lire » ce qui a été lu ici.
+                Object.assign(precedent, el, {
+                    date: precedent.date,
+                    read: precedent.read === true || el.read === true
+                });
             } else {
-                const ajout = { ...el, read: migration.has(el.id) };
+                const ajout = { ...el, read: el.read === true || migration.has(el.id) };
                 elements.push(ajout);
                 connus.set(el.id, ajout);
                 if (!ajout.read) arrives.push(ajout);
@@ -404,8 +462,79 @@
         return true;
     }
 
+    /**
+     * La source serveur.
+     *
+     * Les entrées arrivent prêtes à afficher. En cas d'échec ou
+     * d'indisponibilité, `serveurDisponible` passe à false et les sources
+     * dérivées reprennent — la cloche continue de fonctionner, simplement sans
+     * historique durable.
+     */
+    async function rafraichirServeur() {
+        if (!compteActuel()) return;
+        if (serveurEcarte) return;
+        if (requeteServeur) return requeteServeur;
+
+        requeteServeur = (async () => {
+            try {
+                const reponse = await fetch(`${FZPool.BASE_URL}/api/notifications`,
+                    { cache: 'no-store', signal: AbortSignal.timeout(15000) });
+                if (!reponse.ok) throw new Error('Notifications indisponibles');
+                const charge = await reponse.json();
+                if (!compteActuel()) return;
+
+                if (!charge || charge.disponible !== true || !Array.isArray(charge.notifications)) {
+                    // Réponse claire : il n'y a pas d'historique durable ici.
+                    serveurDisponible = false;
+                    serveurEcarte = true;
+                    return;
+                }
+
+                serveurDisponible = true;
+                erreurReseau = false;
+
+                const nouveaux = charge.notifications.map(el => ({
+                    id: el.id,
+                    serverId: el.serverId,
+                    type: el.type,
+                    pool: el.pool,
+                    titre: el.titre,
+                    detail: el.detail,
+                    action: el.action,
+                    date: el.date,
+                    href: el.href,
+                    urgent: el.urgent === true,
+                    read: el.read === true
+                }));
+
+                const annoncer = serveurInitialise;
+                serveurInitialise = true;
+                initialise = true;
+                integrer(nouveaux, annoncer);
+
+                // La migration de l'ancien stockage se termine une fois que le
+                // serveur a répondu : ses identifiants sont les mêmes, donc les
+                // lectures déjà acquises ont été reprises.
+                if (migration.size && !erreurStockage) {
+                    localStorage.removeItem('fzNotifsVues');
+                    migration.clear();
+                }
+            } catch {
+                // Un premier échec ne condamne pas le serveur : on retombe sur
+                // les sources dérivées, et on réessaiera au prochain signal.
+                if (serveurDisponible === null) serveurDisponible = false;
+                if (compteActuel()) { erreurReseau = true; majBadge(); }
+            }
+        })();
+
+        try { await requeteServeur; } finally { requeteServeur = null; }
+    }
+
     async function rafraichirEchanges() {
         if (!compteActuel()) return;
+        // Le serveur porte déjà les offres reçues : deux sources produiraient
+        // deux entrées pour la même proposition.
+        if (serveurDisponible === true) return;
         if (requete) { relancer = true; return requete; }
         requete = (async () => {
             try {
@@ -444,6 +573,8 @@
 
     function rafraichirDrafts() {
         if (!compteActuel()) return;
+        // Idem : le serveur porte les alertes de tour et de départ.
+        if (serveurDisponible === true) return;
         integrer(repechages(), draftsInitialises);
         draftsInitialises = true;
     }
@@ -456,9 +587,12 @@
         }
         try {
             const socket = window.__fzSocketPool || io(FZPool.BASE_URL);
-            socket.on('tradePending', rafraichirEchanges);
-            socket.on('tradeUpdated', rafraichirEchanges);
-            socket.on('connect', rafraichirEchanges);
+            const tout = () => { rafraichirServeur(); rafraichirEchanges(); };
+            socket.on('tradePending', tout);
+            socket.on('tradeUpdated', tout);
+            socket.on('poolUpdated', rafraichirServeur);
+            socket.on('h2hWeekFinalized', rafraichirServeur);
+            socket.on('connect', tout);
         } catch { /* Le sondage et le retour sur l'onglet prennent le relais. */ }
     }
 
@@ -481,6 +615,9 @@
         await FZPool.ready();
         if (!compteActuel()) return;
         FZPool.onData(rafraichirDrafts);
+        // Le serveur d'abord : sa réponse décide si les sources dérivées
+        // doivent parler. Elles suivent, et se taisent d'elles-mêmes si oui.
+        await rafraichirServeur();
         rafraichirDrafts();
         rafraichirEchanges();
         brancherSocket();

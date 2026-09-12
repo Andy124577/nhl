@@ -201,7 +201,11 @@ function creerBaseSimulee(poolsInitiaux, users) {
             const existant = etat.activity.find(a => a.dedupKey === evenement.dedupKey);
             if (existant) return { id: existant.id, cree: false };
             const id = etat.activity.length + 1;
-            etat.activity.push({ id, ...evenement, subject: copie(evenement.subject || {}) });
+            etat.activity.push({
+                id, ...evenement,
+                subject: copie(evenement.subject || {}),
+                occurredAt: evenement.occurredAt || new Date().toISOString()
+            });
             return { id, cree: true };
         },
         async insertNotificationInTx(_client, notification) {
@@ -209,7 +213,14 @@ function creerBaseSimulee(poolsInitiaux, users) {
                 n => n.recipientUserId === notification.recipientUserId && n.dedupKey === notification.dedupKey);
             if (doublon) return null;
             const id = etat.notifications.length + 1;
-            etat.notifications.push({ id, ...notification, subject: copie(notification.subject || {}) });
+            etat.notifications.push({
+                id, ...notification,
+                subject: copie(notification.subject || {}),
+                occurredAt: notification.occurredAt || new Date().toISOString(),
+                poolName: notification.poolName || (notification.subject || {}).poolName || null,
+                readAt: null,
+                resolvedAt: null
+            });
             return id;
         },
         async resolveNotificationsInTx(_client, { type, subjectKey, subjectValue }) {
@@ -288,6 +299,73 @@ function creerBaseSimulee(poolsInitiaux, users) {
                 return { rows: pool ? [{ id: pool.id, pool_name: pool.name, pool_data: pool.data, revision: pool.revision }] : [] };
             }
             return client.query(sql, params);
+        },
+
+        // ── Lectures de notifications et d'activite ────────────────────────
+        async getNotificationsForUser(userId, { limite = 50, inclureLues = true } = {}) {
+            return etat.notifications
+                .filter(n => n.recipientUserId === userId)
+                .filter(n => inclureLues || !n.readAt)
+                .sort((a, b) => new Date(b.occurredAt) - new Date(a.occurredAt) || b.id - a.id)
+                .slice(0, limite)
+                .map(n => ({
+                    id: String(n.id),
+                    type: n.type,
+                    poolName: n.poolName || (n.subject && n.subject.poolName) || null,
+                    subject: n.subject || {},
+                    occurredAt: n.occurredAt,
+                    readAt: n.readAt || null,
+                    resolvedAt: n.resolvedAt || null,
+                    expiresAt: n.expiresAt || null
+                }));
+        },
+        async countUnreadNotifications(userId) {
+            const maintenant = Date.now();
+            return etat.notifications.filter(n =>
+                n.recipientUserId === userId && !n.readAt &&
+                (!n.expiresAt || new Date(n.expiresAt).getTime() > maintenant)).length;
+        },
+        async markNotificationsRead(userId, ids) {
+            const vises = new Set((ids || []).map(String));
+            let n = 0;
+            for (const notification of etat.notifications) {
+                if (notification.recipientUserId === userId &&
+                    vises.has(String(notification.id)) && !notification.readAt) {
+                    notification.readAt = new Date();
+                    n++;
+                }
+            }
+            return n;
+        },
+        async markAllNotificationsRead(userId) {
+            let n = 0;
+            for (const notification of etat.notifications) {
+                if (notification.recipientUserId === userId && !notification.readAt) {
+                    notification.readAt = new Date();
+                    n++;
+                }
+            }
+            return n;
+        },
+        async getPoolActivity(poolId, { limite = 20, avantDate = null, avantId = null } = {}) {
+            let liste = etat.activity
+                .filter(a => a.poolId === poolId)
+                .sort((a, b) => new Date(b.occurredAt || 0) - new Date(a.occurredAt || 0) || b.id - a.id);
+            if (avantDate && avantId) {
+                liste = liste.filter(a =>
+                    new Date(a.occurredAt || 0) < new Date(avantDate) ||
+                    (String(a.occurredAt) === String(avantDate) && a.id < Number(avantId)));
+            }
+            return liste.slice(0, limite).map(a => ({
+                id: String(a.id),
+                type: a.type,
+                actor: a.actorUserId || null,
+                subject: a.subject || {},
+                occurredAt: a.occurredAt || new Date()
+            }));
+        },
+        async exportNotificationsForUser(userId) {
+            return etat.notifications.filter(n => n.recipientUserId === userId);
         },
 
         // ── Semaines figees et recaps ──────────────────────────────────────
