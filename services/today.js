@@ -44,11 +44,20 @@ function creerServiceAujourdhui({ store, db, usePostgres, pointage, serviceH2H,
     /** username → { charge, calculeLe } */
     const cache = new Map();
 
-    /** Vide le cache d'une personne : son état vient de changer. */
-    function oublier(username) { cache.delete(username); }
+    /**
+     * Vide le cache d'une personne : son état vient de changer.
+     *
+     * La clé de cache porte le pool actif et la vedette affichée, donc une
+     * personne peut avoir plusieurs entrées. On les retire toutes.
+     */
+    function oublier(username) {
+        for (const cle of [...cache.keys()]) {
+            if (cle.startsWith(`${username}|`)) cache.delete(cle);
+        }
+    }
 
-    /** Vide le cache de tous les membres d'un pool. */
-    function oublierPool(usernames) { for (const u of usernames || []) cache.delete(u); }
+    /** Vide le cache de tous les membres d'un pool qui vient de changer. */
+    function oublierPool(usernames) { for (const u of usernames || []) oublier(u); }
 
     // ─────────────────────── Collecte ───────────────────────
 

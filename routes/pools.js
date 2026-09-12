@@ -105,6 +105,54 @@ function monter(app, ctx) {
         }
     });
 
+
+    /**
+     * Les équipes d'un pool : ce qu'il faut pour en choisir une.
+     *
+     * Deux vues selon qui demande. Un membre voit ses coéquipiers, comme avant.
+     * Quelqu'un qui envisage d'entrer voit le nom des équipes, combien de
+     * places sont prises, et lesquelles sont pleines — assez pour choisir, sans
+     * la liste des participants. Savoir QUI est dans une équipe est déjà une
+     * information de membre.
+     *
+     * C'est cette route que la page « Rejoindre un pool » interroge : /draft ne
+     * livre plus les alignements des pools qu'on n'a pas rejoints.
+     */
+    app.get('/pool-teams/:poolName', async (req, res) => {
+        try {
+            const nom = req.params.poolName;
+            const enveloppe = await store.lire(nom);
+            if (!enveloppe) return res.status(404).json({ message: "Pool introuvable." });
+
+            const data = enveloppe.data;
+            const membre = req.auth && (req.auth.isAdmin || authz.estMembre(data, req.auth.username));
+            const equipes = Object.entries(data.teams || {});
+
+            res.json({
+                poolName: nom,
+                isMember: !!membre,
+                hasPassword: !!data.passwordHash,
+                imageUrl: data.imageUrl || '',
+                draftStarted: Array.isArray(data.draftOrder) && data.draftOrder.length > 0,
+                maxParTeam: poolOps.MEMBRES_PAR_EQUIPE,
+                monEquipe: req.auth ? authz.equipeDe(data, req.auth.username) : null,
+                revision: enveloppe.revision,
+                teams: equipes.map(([nomEquipe, equipe]) => {
+                    const membres = equipe.members || [];
+                    const commun = {
+                        name: nomEquipe,
+                        memberCount: membres.length,
+                        full: membres.length >= poolOps.MEMBRES_PAR_EQUIPE,
+                        clubs: equipe.teams || []
+                    };
+                    return membre ? { ...commun, members: membres } : commun;
+                })
+            });
+        } catch (erreur) {
+            repondreErreur(res, erreur, '/pool-teams');
+        }
+    });
+
     // ───────────────────────────── Création ─────────────────────────────
 
     app.post('/create-clan', auth.requireAuth, async (req, res) => {

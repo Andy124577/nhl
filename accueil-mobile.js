@@ -679,7 +679,11 @@ function renderMobileHome(tonight, movement, activeName) {
     // rend dans ce conteneur une fois root.innerHTML posé plus bas — même
     // contenu, même minuteur, que la version bureau.
     root.dataset.mode = mode;
-    let html = isPreseason ? '<div class="fzm-news-hero" id="fzmNewsHero"></div>' : '';
+    // La bande « à faire maintenant » vient EN PREMIER, avant la bannière
+    // d'état : elle porte la seule chose qui puisse être plus urgente que le
+    // pool affiché — un tour de repêchage dans un autre pool.
+    let html = '<div id="fzTodayMobile" hidden></div>';
+    html += isPreseason ? '<div class="fzm-news-hero" id="fzmNewsHero"></div>' : '';
     html += '<div class="fz-dash-hero" id="fzmHeroSlot" style="display:none;"></div>';
     html += fzmPoolChips();
     if (isPreseason) html += fzmPreseasonExtras(draftState, activeName);
@@ -710,6 +714,9 @@ function renderMobileHome(tonight, movement, activeName) {
     if (calData) renderCalendar();
 
     renderHero(tonight, 'fzmHeroSlot');
+    // Le DOM de l'accueil téléphone est recréé à chaque rendu : la bande se
+    // repose depuis la dernière réponse connue, sans nouvelle requête.
+    if (window.FZToday) FZToday.rendre('fzTodayMobile');
     root.querySelector('[data-fzm-watch-all]')?.addEventListener('click', e => {
         const expanded = root.querySelector('.fzm-watch-track').classList.toggle('is-expanded');
         e.currentTarget.textContent = expanded ? 'Réduire ‹' : 'Voir tout ›';

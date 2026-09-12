@@ -270,6 +270,16 @@ const diffusion = creerDiffusion({
     auth,
     store: poolStore,
     crochets: {
+        /**
+         * Un pool a change : tout ce qui en decoule est perime.
+         *
+         * `aujourdhui` est cree plus bas, d'ou la lecture paresseuse : la
+         * diffusion existe avant lui parce que les routes s'en servent toutes.
+         */
+        auPoolMisAJour(nomPool, membres) {
+            if (typeof aujourdhui !== 'undefined' && aujourdhui) aujourdhui.oublierPool(membres);
+        },
+
         // Une personne arrive : si elle attend dans un salon instantané, sa
         // présence y compte, et le salon peut devenir prêt à démarrer.
         async auConnecte({ socket, username, pools }) {

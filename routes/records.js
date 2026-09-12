@@ -275,7 +275,7 @@ function monter(app, ctx) {
             const enveloppe = await poolMembre(req, res, nomPool);
             if (!enveloppe) return;
 
-            if (!serviceRecap) {
+            if (!serviceRecap || serviceRecap.disponible() === false) {
                 return res.json({ disponible: false, raison: 'postgres_requis', recap: null });
             }
 

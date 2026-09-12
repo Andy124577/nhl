@@ -1,0 +1,179 @@
+/* « À faire maintenant » — la bande de priorité de l'accueil.
+ *
+ * Une vedette, puis au plus trois lignes. Même rendu au bureau et au
+ * téléphone : ce sont les mêmes données, et deux mises en page différentes
+ * pour la même information ont déjà produit deux réponses différentes.
+ *
+ * Direction Broadcast Desk (DESIGN.md) : fond sombre, accent brique sur ce
+ * qui attend une action, texte lisible avant tout. Rien ne clignote — une
+ * page d'accueil qui bouge en permanence empêche de lire ce qu'elle dit.
+ */
+
+.fzt {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0 0 20px;
+}
+
+.fzt-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--fz-border, rgba(255, 255, 255, .1));
+    background: var(--fz-surface, rgba(255, 255, 255, .04));
+    color: inherit;
+    text-decoration: none;
+    /* Une transition courte : assez pour ne pas sauter, trop brève pour
+       attirer l'œil pendant qu'on lit autre chose. */
+    transition: border-color .15s ease, background-color .15s ease;
+}
+
+.fzt-item:hover,
+.fzt-item:focus-visible {
+    border-color: var(--fz-accent, #c8442f);
+    background: var(--fz-surface-hover, rgba(255, 255, 255, .07));
+}
+
+/* Le focus reste visible : c'est la seule façon de suivre au clavier. */
+.fzt-item:focus-visible {
+    outline: 2px solid var(--fz-accent, #c8442f);
+    outline-offset: 2px;
+}
+
+.fzt-item--vedette {
+    padding: 18px 20px;
+    border-width: 2px;
+    /* Assez de hauteur pour rester une cible confortable au doigt. */
+    min-height: 64px;
+}
+
+.fzt-item--urgent {
+    border-color: var(--fz-accent, #c8442f);
+    background: var(--fz-accent-soft, rgba(200, 68, 47, .12));
+}
+
+/* Une section en panne se distingue d'une section vide : elle est atténuée,
+   et son texte le dit. Rien ne se cache. */
+.fzt-item--indispo {
+    opacity: .7;
+    border-style: dashed;
+}
+
+.fzt-icone {
+    font-size: 20px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.fzt-texte {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.fzt-titre {
+    font-weight: 650;
+    font-size: 15px;
+    line-height: 1.3;
+}
+
+.fzt-item--vedette .fzt-titre { font-size: 17px; }
+
+.fzt-detail {
+    font-size: 13px;
+    opacity: .78;
+    line-height: 1.35;
+}
+
+/* Le pool est nommé sur chaque ligne : « c'est votre tour » sans dire dans
+   quelle partie oblige à deviner, et suivre le lien ouvrirait le mauvais
+   contexte. */
+.fzt-pool {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    opacity: .6;
+    margin-top: 2px;
+}
+
+.fzt-action {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: .85;
+    flex-shrink: 0;
+}
+
+.fzt-secondaires {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fzt-secondaires .fzt-item { padding: 10px 14px; }
+.fzt-secondaires .fzt-titre { font-size: 14px; font-weight: 600; }
+
+.fzt-vide {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px dashed var(--fz-border, rgba(255, 255, 255, .14));
+    margin: 0 0 20px;
+}
+
+.fzt-vide-titre { font-weight: 650; font-size: 16px; }
+.fzt-vide-detail { font-size: 13px; opacity: .78; }
+
+.fzt-vide-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.fzt-vide-action {
+    padding: 9px 14px;
+    border-radius: 9px;
+    border: 1px solid var(--fz-border, rgba(255, 255, 255, .14));
+    text-decoration: none;
+    color: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    /* Cible confortable au doigt, même sur un petit écran. */
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.fzt-vide-action:hover,
+.fzt-vide-action:focus-visible { border-color: var(--fz-accent, #c8442f); }
+.fzt-vide-action:focus-visible { outline: 2px solid var(--fz-accent, #c8442f); outline-offset: 2px; }
+
+/* Écrans étroits : l'action passe sous le texte plutôt que de le comprimer.
+   Testé à 320, 360, 390 et 430 pixels CSS. */
+@media (max-width: 480px) {
+    .fzt-item {
+        flex-wrap: wrap;
+        /* 44 px de haut minimum, même quand le texte tient sur une ligne. */
+        min-height: 44px;
+    }
+    .fzt-action {
+        width: 100%;
+        padding-left: 32px;
+        margin-top: 2px;
+    }
+    .fzt-item--vedette { padding: 16px; }
+    .fzt-item--vedette .fzt-titre { font-size: 16px; }
+}
+
+/* Mouvement réduit : rien ne bouge du tout. */
+@media (prefers-reduced-motion: reduce) {
+    .fzt-item { transition: none; }
+}

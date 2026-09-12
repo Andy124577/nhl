@@ -423,11 +423,19 @@ function updateUI(draftData) {
         const clan = draftData[clanName];
         if (estPoolInstantane(clanName, clan)) return;
 
-        const userInClan = Object.values(clan.teams).some(team => team.members.includes(username));
+        // /draft ne livre plus les alignements des pools qu'on n'a pas
+        // rejoints : un résumé de découverte porte les compteurs directement.
+        // On garde le calcul depuis `teams` pour les pools dont on EST membre,
+        // dont la réponse est complète.
+        const userInClan = clan.isMember === true
+            || (clan.teams && Object.values(clan.teams).some(team => (team.members || []).includes(username)));
 
-        // Count active teams
-        const activeTeams = Object.values(clan.teams).filter(team => team.members.length > 0).length;
-        const totalParticipants = Object.values(clan.teams).reduce((sum, team) => sum + team.members.length, 0);
+        const activeTeams = clan.teams
+            ? Object.values(clan.teams).filter(team => (team.members || []).length > 0).length
+            : (clan.occupiedTeamCount || 0);
+        const totalParticipants = clan.teams
+            ? Object.values(clan.teams).reduce((sum, team) => sum + (team.members || []).length, 0)
+            : (clan.participantCount || 0);
 
         // Get pool configuration
         const config = clan.config || {
@@ -438,13 +446,15 @@ function updateUI(draftData) {
             numTeams: 1
         };
 
-        const totalPicks = config.numOffensive + config.numDefensive + config.numGoalies + config.numRookies + config.numTeams;
+        const totalPicks = clan.totalPicks
+            || (config.numOffensive + config.numDefensive + config.numGoalies + config.numRookies + config.numTeams);
 
         const poolImgHtml = clan.imageUrl
             ? `<img src="${clan.imageUrl}" class="pool-item-img" alt="${clanName}" onerror="this.style.display='none'">`
             : `<img src="Icons/grayGroup.png" class="pool-item-img pool-item-img-placeholder" alt="${clanName}">`;
 
-        const draftStarted = !!(clan.draftOrder && clan.draftOrder.length > 0);
+        const draftStarted = clan.draftStarted === true
+            || !!(clan.draftOrder && clan.draftOrder.length > 0);
 
         if (!userInClan && !draftStarted) {
             // `hasPassword` vient de poolsPublics() côté serveur ; l'empreinte
@@ -547,19 +557,27 @@ document.addEventListener('DOMContentLoaded', () => {
 // 🔎 Voir les équipes d'un clan
 async function viewClanTeams(clanName) {
     try {
-        const response = await fetch(`${BASE_URL}/draft?timestamp=${new Date().getTime()}`, { cache: "no-store" });
-        const draftData = await response.json();
-        const teams = draftData[clanName].teams;
-        const username = localStorage.getItem("username");
-        const draftStarted = !!(draftData[clanName].draftOrder && draftData[clanName].draftOrder.length > 0);
+        // Route dédiée : elle donne le nom des équipes et le nombre de places
+        // prises à tout le monde, et la liste des membres aux seuls membres.
+        // /draft ne livre plus les alignements d'un pool qu'on n'a pas rejoint.
+        const response = await fetch(`${BASE_URL}/pool-teams/${encodeURIComponent(clanName)}?t=${Date.now()}`,
+            { cache: "no-store" });
+        if (!response.ok) throw new Error('Pool introuvable');
+        const vue = await response.json();
 
-        let userTeam = null;
-        for (const [teamName, teamData] of Object.entries(teams)) {
-            if (teamData.members.includes(username)) {
-                userTeam = teamName;
-                break;
-            }
-        }
+        const teams = {};
+        (vue.teams || []).forEach(equipe => {
+            teams[equipe.name] = {
+                members: equipe.members || [],
+                memberCount: equipe.memberCount,
+                full: equipe.full,
+                teams: equipe.clubs || []
+            };
+        });
+
+        const username = localStorage.getItem("username");
+        const draftStarted = vue.draftStarted === true;
+        const userTeam = vue.monEquipe || null;
 
         // Pre-fetch avatars and player map in parallel
         const allMembers = Object.values(teams).flatMap(t => t.members || []);
@@ -568,8 +586,8 @@ async function viewClanTeams(clanName) {
             loadPlayerMap()
         ]);
 
-        const poolImgTag = draftData[clanName]?.imageUrl
-            ? `<img src="${draftData[clanName].imageUrl}" class="cm-pool-img" onerror="this.style.display='none'" alt="">`
+        const poolImgTag = vue.imageUrl
+            ? `<img src="${vue.imageUrl}" class="cm-pool-img" onerror="this.style.display='none'" alt="">`
             : `<img src="Icons/grayGroup.png" class="cm-pool-img" alt="">`;
 
         const draftBanner = draftStarted
@@ -579,12 +597,16 @@ async function viewClanTeams(clanName) {
         let teamHTML = `<h3 class="cm-title">${poolImgTag}<span>Équipes de ${clanName}</span></h3>${draftBanner}`;
 
         for (const [teamName, teamData] of Object.entries(teams)) {
-            const isFull = teamData.members.length >= 5;
+            const isFull = teamData.full === true || (teamData.memberCount ?? teamData.members.length) >= 5;
             const userInTeam = userTeam === teamName;
             const teamId = teamName.replace(/[^a-zA-Z0-9]/g, '_');
             const displayName = getDisplayName(teamName, teamData.members);
             const logoHTML = getTeamLogoHTML(teamData.teams);
-            const membersDisplay = teamData.members.length > 0
+            // Pour un non-membre, on annonce le nombre de places prises sans
+            // nommer personne : c'est ce qu'il faut pour choisir son équipe.
+            const membersDisplay = (!vue.isMember && (teamData.memberCount || 0) > 0)
+                ? `<div class="cm-members"><span class="cm-members-label">${teamData.memberCount} participant${teamData.memberCount > 1 ? 's' : ''}</span></div>`
+                : teamData.members.length > 0
                 ? `<div class="cm-members">
                      <span class="cm-members-label">Membres</span>
                      <ul class="cm-member-list">
@@ -887,9 +909,10 @@ async function joinTeam(clanName, teamName) {
     try {
         // Check draft status before touching anything — /leave-team has no draft guard
         // so we must stop here to avoid orphaning the user from their current team.
-        const checkResp = await fetch(`${BASE_URL}/draft?timestamp=${new Date().getTime()}`, { cache: "no-store" });
-        const checkData = await checkResp.json();
-        if (checkData[clanName]?.draftOrder && checkData[clanName].draftOrder.length > 0) {
+        const checkResp = await fetch(`${BASE_URL}/pool-teams/${encodeURIComponent(clanName)}?t=${Date.now()}`,
+            { cache: "no-store" });
+        const vueEquipes = await checkResp.json();
+        if (vueEquipes.draftStarted) {
             alert("Le draft a déjà commencé ! Vous ne pouvez plus changer d'équipe.");
             return;
         }
@@ -897,10 +920,9 @@ async function joinTeam(clanName, teamName) {
         // Mot de passe : demandé seulement pour entrer dans un pool protégé
         // où l'on n'est pas encore. Changer d'équipe une fois dedans ne le
         // redemande pas — le serveur applique exactement la même règle.
-        const dejaMembre = Object.values(checkData[clanName]?.teams || {})
-            .some(equipe => (equipe.members || []).includes(username));
+        const dejaMembre = vueEquipes.isMember === true;
         let motDePasse = null;
-        if (checkData[clanName]?.hasPassword && !dejaMembre) {
+        if (vueEquipes.hasPassword && !dejaMembre) {
             motDePasse = await demanderMotDePasse(clanName);
             if (motDePasse === null) return;   // renoncement
         }

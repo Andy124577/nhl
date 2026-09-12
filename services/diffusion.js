@@ -167,6 +167,15 @@ function creerDiffusion({ io, auth, store, crochets = {}, logger = console }) {
      * changement qu'un ROLLBACK pourrait encore effacer.
      */
     function poolMisAJour(nomPool, data, revision = null) {
+        // Tout ce qui est calculé À PARTIR de ce pool devient périmé au même
+        // instant. Sans ce signal, un cache de quelques secondes cache à la
+        // personne l'action qu'elle vient elle-même de faire — le pire moment
+        // possible pour servir une réponse d'il y a dix secondes.
+        if (crochets.auPoolMisAJour) {
+            try { crochets.auPoolMisAJour(nomPool, authz.membresDuPool(data)); }
+            catch (erreur) { logger.error('⚠️ Invalidation impossible :', erreur.message); }
+        }
+
         const vue = authz.vueMembre(nomPool, data, revision);
         io.to(sallePool(nomPool)).emit('draftUpdated', { [nomPool]: vue });
         io.to(sallePool(nomPool)).emit('poolUpdated', { poolName: nomPool, revision });

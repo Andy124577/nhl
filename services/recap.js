@@ -154,7 +154,14 @@ function creerServiceRecap({ store, db, usePostgres, diffusion, saisonCourante, 
             : db.getLatestRecap(enveloppe.id, saisonEffective);
     }
 
-    return { genererSemaine, rattraperPool, rattraperTout, lire, semainesFinalisees };
+    return {
+        genererSemaine, rattraperPool, rattraperTout, lire, semainesFinalisees,
+        // Les recaps derivent de resultats figes, qui vivent dans une table
+        // PostgreSQL. En mode fichier l'ensemble n'existe pas, et il vaut
+        // mieux le dire que renvoyer « aucune semaine finalisee » — ce serait
+        // vrai mais trompeur, puisqu'aucune ne le sera jamais ici.
+        disponible: () => !!usePostgres
+    };
 }
 
 module.exports = { creerServiceRecap };

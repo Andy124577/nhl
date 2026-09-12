@@ -659,13 +659,31 @@ async function updateClassementLinkVisibility() {
 }
 
 // ==================== LOGOUT ====================
-function logout() {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('username');
-    localStorage.removeItem('isAdmin');
-    localStorage.removeItem('avatarUrl');
+/**
+ * Déconnexion.
+ *
+ * Effacer localStorage ne déconnectait rien : la session vivait dans un cookie
+ * que le serveur continuait d'accepter. On la révoque d'abord, et le serveur
+ * périme le cookie dans sa réponse. Le nettoyage local suit — il ne fait que
+ * remettre l'affichage d'aplomb.
+ *
+ * Même en cas d'échec réseau, on nettoie et on recharge : rester sur un écran
+ * qui se croit connecté serait pire, et le cookie finira par expirer.
+ */
+async function logout(event) {
+    if (event && event.preventDefault) event.preventDefault();
+    try {
+        await fetch(`${typeof BASE_URL !== 'undefined' ? BASE_URL : ''}/logout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch { /* le cookie expirera de lui-même */ }
+
+    ['isLoggedIn', 'username', 'isAdmin', 'activeUser', 'avatarUrl', 'activePool', 'draftClan']
+        .forEach(cle => localStorage.removeItem(cle));
     window.location.href = 'index.html';
 }
+
 
 // ==================== DROITS SUR LES DONNÉES (LOI 25) ====================
 // Le mot de passe est redemandé : /account/export expose l'ensemble des

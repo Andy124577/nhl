@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="poolSettings.css">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="accueil.css">
+    <link rel="stylesheet" href="fzToday.css">
     <link rel="stylesheet" href="accueil-dash.css?v=20260908b">
     <link rel="stylesheet" href="accueil-mobile.css?v=20260908c">
     <link rel="stylesheet" href="demos.css">
@@ -259,6 +260,13 @@
                  match plus bas couvre déjà ce cas). Bureau seulement — la
                  home téléphone (accueil-mobile.js) a son propre système
                  d'état à 4 modes. Voir renderHero() dans accueil-dash.js. -->
+            <!-- « À faire maintenant » — une seule bande de priorité, la même
+                 au bureau et au téléphone, alimentée par GET /api/me/today.
+                 La bannière d'état ci-dessous ne regarde que le pool actif ;
+                 celle-ci considère tous les pools, ce qui est la seule façon
+                 de voir un tour de repêchage ailleurs. Voir fzToday.js. -->
+            <div id="fzTodayDash" hidden><!-- Rempli par fzToday.js --></div>
+
             <div class="fz-dash-hero" id="fzDashHero" style="display:none;"><!-- Filled by accueil-dash.js --></div>
 
             <!-- Calendrier — saison complète, GET /schedule/:date.
@@ -532,6 +540,10 @@
     <script src="lib/season.js"></script>
     <script defer src="lib/scoring.js"></script>
     <script defer src="accueil.js"></script>
+    <!-- « A faire maintenant » : une seule reponse serveur, la meme bande
+         au bureau et au telephone. Doit preceder accueil-dash.js, qui
+         l'appelle au chargement. -->
+    <script defer src="fzToday.js"></script>
     <script defer src="accueil-dash.js?v=20260908c"></script>
     <script defer src="instantDraft.js"></script>
     <script defer src="accueil-mobile.js?v=20260908d"></script>
