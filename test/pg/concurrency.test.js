@@ -492,6 +492,74 @@ describe('concurrence PostgreSQL', { skip: RAISON }, () => {
         assert.equal(await db.getSessionByTokenHash(empreinte), null);
     });
 
+    // ─────────────────────── Nettoyage en cascade ───────────────────────
+
+    test('supprimer un pool emporte son activite, ses alertes et ses resultats', async () => {
+        const nom = 'ZZTest cascade';
+        const poolId = await creerPool(nom, { teams: {}, poolMode: 'head-to-head' });
+        const userId = await creerCompte('zztest_cascade');
+
+        await store.transaction(async (tx) => {
+            await db.insertActivityInTx(tx.client, {
+                poolId, type: 'pick', actorUserId: userId,
+                subject: { player: 'X' }, dedupKey: 'zztest-cascade-a'
+            });
+            await db.insertNotificationInTx(tx.client, {
+                recipientUserId: userId, type: 'turn_current', poolId,
+                subject: {}, dedupKey: 'zztest-cascade-n'
+            });
+            await db.insertFinalizedWeekInTx(tx.client, {
+                poolId, season: '20262027', weekNumber: 1, revision: 1,
+                weekStart: '2026-11-02', weekEnd: '2026-11-09',
+                scoringVersion: '1.0.0', rosterBasis: 'current_roster',
+                results: [], standingsDelta: {}
+            });
+            await db.upsertRecap({
+                poolId, season: '20262027', weekNumber: 1, resultRevision: 1,
+                poolMode: 'head-to-head', payload: { sections: [] }
+            });
+            return {};
+        }, { scope: 'zztest:cascade' });
+
+        await pool.query('DELETE FROM pools WHERE id = $1', [poolId]);
+
+        for (const table of ['pool_activity', 'notifications', 'h2h_finalized_results', 'weekly_recaps']) {
+            const r = await pool.query(`SELECT COUNT(*)::int AS n FROM ${table} WHERE pool_id = $1`, [poolId]);
+            assert.equal(r.rows[0].n, 0, `${table} garde des lignes d'un pool supprime`);
+        }
+    });
+
+    test('supprimer un compte emporte ses sessions et ses alertes, pas l’histoire du pool', async () => {
+        const nom = 'ZZTest suppression compte';
+        const poolId = await creerPool(nom, { teams: {} });
+        const userId = await creerCompte('zztest_partant');
+
+        await store.transaction(async (tx) => {
+            await db.insertActivityInTx(tx.client, {
+                poolId, type: 'pick', actorUserId: userId,
+                subject: { player: 'Y' }, dedupKey: 'zztest-compte-a'
+            });
+            await db.insertNotificationInTx(tx.client, {
+                recipientUserId: userId, type: 'turn_current', poolId,
+                subject: {}, dedupKey: 'zztest-compte-n'
+            });
+            return {};
+        }, { scope: 'zztest:compte' });
+
+        await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+
+        const alertes = await pool.query(
+            'SELECT COUNT(*)::int AS n FROM notifications WHERE recipient_user_id = $1', [userId]);
+        assert.equal(alertes.rows[0].n, 0, 'les alertes personnelles partent avec le compte');
+
+        // L'evenement reste, sans acteur : le resultat de competition survit,
+        // le profil personnel non.
+        const evenement = await pool.query(
+            'SELECT actor_user_id FROM pool_activity WHERE dedup_key = $1', ['zztest-compte-a']);
+        assert.equal(evenement.rowCount, 1, "l'histoire du pool ne s'efface pas");
+        assert.equal(evenement.rows[0].actor_user_id, null, "mais elle ne garde pas de profil");
+    });
+
     // ─────────────────────── Registre de migrations ───────────────────────
 
     test('rejouer les migrations est sans effet', async () => {

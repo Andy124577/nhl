@@ -179,7 +179,7 @@ serveur. Sans elle, l'hôte servi fait foi.
 
 | Vérification | Résultat |
 | --- | --- |
-| `npm run test:unit` | **768 passent**, 0 échec, 0 ignoré (515 au départ) |
+| `npm run test:unit` | **779 passent**, 0 échec, 0 ignoré (515 au départ) |
 | `test_suite.js` contre un serveur jetable | 44 passent, 0 échec, 9 ignorés |
 | `test_h2h.js` contre un serveur jetable | 51 passent, 0 échec, 5 ignorés |
 | `test_teams.js` contre un serveur jetable | 62 passent, 0 échec |
@@ -198,11 +198,12 @@ critères non atteints plutôt que de les présenter comme acquis.
 
 ### Concurrence PostgreSQL — écrite, non exécutée
 
-`test/pg/concurrency.test.js` couvre les quatorze scénarios que le plan exige :
+`test/pg/concurrency.test.js` couvre les scénarios que le plan exige :
 écritures perdues, isolation entre pools, deux choix sur un même tour, réessais
 idempotents séquentiels et simultanés, identifiant recyclé, annulation après
 panne injectée, déduplication, salon instantané depuis une file vide, dernière
-place, double finalisation, révision, révocation de session, dérive du registre.
+place, double finalisation, révision, révocation de session, suppression en
+cascade d'un pool et d'un compte, dérive du registre.
 
 **Aucun PostgreSQL n'est joignable dans cet environnement** (`psql` absent,
 Docker indisponible, port 5432 fermé). La suite s'ignore proprement et dit

@@ -418,3 +418,75 @@ test('seule la personne qui a créé le pool finalise une semaine', async () => 
     const res = await h.appeler('POST', '/h2h/finalize-week', { auth: bob, body: { poolName: 'Ligue' } });
     assert.equal(res.statusCode, 403);
 });
+
+test('un pool cumulatif n’entre jamais dans la finalisation tête-à-tête', async () => {
+    const cumulatif = poolH2H();
+    cumulatif.poolMode = 'cumulative';
+    delete cumulatif.h2hData;
+    const h = banc({ pool: cumulatif });
+
+    await assert.rejects(
+        () => h.serviceH2H.finaliserSemaine('Ligue'),
+        (erreur) => {
+            assert.equal(erreur.code, 400);
+            assert.match(erreur.message, /tête-à-tête/);
+            return true;
+        }
+    );
+
+    // Et le rattrapage ne l'essaie même pas.
+    const closes = await h.serviceH2H.rattraper('Ligue', { maxSemaines: 4 });
+    assert.deepEqual(closes, []);
+});
+
+test('la somme des contributions par joueur égale le total du duel', async () => {
+    const feuilles = [
+        feuille('Attaquant A', S1.debut, 2),
+        feuille('Attaquant A', dates.ajouterJours(S1.debut, 1), 1),
+        feuille('Attaquant B', S1.debut, 3)
+    ];
+    const h = banc({ feuilles, calendrier: async (j) => (j <= dates.ajouterJours(S1.debut, 1) && j >= S1.debut ? 1 : 0) });
+
+    const res = await h.appeler('GET', '/h2h/matchup', {
+        auth: { username: 'alice', userId: 'alice', isAdmin: false },
+        query: { poolName: 'Ligue', week: '1' }
+    });
+    assert.equal(res.statusCode, 200);
+
+    const carte = res.body.matchups[0];
+    const sommeUn = carte.team1Players.reduce((s, j) => s + j.fantasyPoints, 0);
+    const sommeDeux = carte.team2Players.reduce((s, j) => s + j.fantasyPoints, 0);
+
+    assert.equal(scoring.arrondi(sommeUn), carte.team1Points,
+        'le détail doit se réconcilier avec le total affiché');
+    assert.equal(scoring.arrondi(sommeDeux), carte.team2Points);
+
+    // Le club est nommé explicitement : sa contribution vaut zéro et le dit.
+    assert.equal(carte.club.inclus, false);
+    assert.equal(carte.club.points, 0);
+});
+
+test('les scores figés survivent à un renommage d’équipe', async () => {
+    const feuilles = [feuille('Attaquant A', S1.debut, 2), feuille('Attaquant B', S1.debut, 1)];
+    const h = banc({ feuilles, calendrier: async (j) => (j === S1.debut ? 1 : 0) });
+    await h.serviceH2H.finaliserSemaine('Ligue');
+
+    const avantPoints = h.lirePool('Ligue').h2hData.matchupHistory[0].matchups[0].team1Points;
+
+    const poolOps = require('../../lib/poolOps.js');
+    await h.store.muterPool('Ligue', {
+        scope: 'test:renommage',
+        appliquer: async ({ data }) => {
+            const r = poolOps.renommerEquipe(data, {
+                ancien: 'Équipe 1', nouveau: 'Les Fusées', username: 'alice'
+            });
+            assert.equal(r.ok, true);
+            return { valeur: {} };
+        }
+    });
+
+    const apres = h.lirePool('Ligue').h2hData.matchupHistory[0].matchups[0];
+    assert.equal(apres.team1Points, avantPoints, 'le pointage inscrit ne change pas');
+    assert.equal(apres.team1, 'Les Fusées', 'mais le nom suit, sinon l’équipe disparaît de son propre passé');
+    assert.ok(h.lirePool('Ligue').h2hData.standings['Les Fusées']);
+});
