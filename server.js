@@ -32,6 +32,23 @@ const { currentSeasonId, currentSeasonString, getSeasonWindow, seasonHasStarted,
     seasonPhase, statsSeasonId, statsSeasonString, cachedStatsSeasonString,
     getStatsSeason } = require("./lib/season.js");
 
+// Identité, autorisation, écriture transactionnelle. Voir FANTAZY_EVOLUTION_PLAN
+// section 4 : une session serveur remplace le nom d'utilisateur envoyé par le
+// client, et toute écriture de pool passe par une transaction verrouillée.
+const authz = require("./lib/authz.js");
+const poolOps = require("./lib/poolOps.js");
+const evenementsLib = require("./lib/events.js");
+const { creerAuth } = require("./middleware/auth.js");
+const { creerGardeStatique } = require("./middleware/staticAssets.js");
+const { creerPoolStore } = require("./services/poolStore.js");
+const { creerDiffusion } = require("./services/diffusion.js");
+const { creerPresence } = require("./services/presence.js");
+const routesIdentite = require("./routes/identity.js");
+const routesPools = require("./routes/pools.js");
+const routesRepechage = require("./routes/draft.js");
+const routesInstantane = require("./routes/instantDraft.js");
+const routesEchanges = require("./routes/trades.js");
+
 const app = express();
 const PORT = process.env.PORT || 3000; // ✅ Use Render's PORT
 
@@ -69,11 +86,52 @@ const NHL_CLUB_CODES = new Set([
 console.log(`📁 Data directory: ${DATA_DIR}`);
 
 const server = http.createServer(app);
-const io = socketIo(server, { cors: { origin: "*" } }); // ✅ allow public access for now
 
-app.use(cors());
+/**
+ * Origines autorisées à envoyer des requêtes authentifiées par cookie.
+ *
+ * `origin: "*"` acceptait n'importe quel site. Avec une session en cookie, ça
+ * reviendrait à laisser n'importe quelle page du web agir au nom de la personne
+ * connectée. La liste vient de l'environnement ; elle est vide en local, où
+ * l'hôte servi suffit (voir origineAutorisee dans lib/session.js).
+ */
+const ORIGINES_AUTORISEES = (process.env.ALLOWED_ORIGINS || "")
+    .split(",").map(o => o.trim()).filter(Boolean);
+
+const io = socketIo(server, {
+    cors: {
+        // `credentials: true` interdit le joker : le navigateur refuse
+        // d'envoyer un cookie vers une origine « * ».
+        origin: ORIGINES_AUTORISEES.length > 0 ? ORIGINES_AUTORISEES : true,
+        credentials: true
+    }
+});
+
+app.use(cors({
+    origin: ORIGINES_AUTORISEES.length > 0 ? ORIGINES_AUTORISEES : true,
+    credentials: true
+}));
 app.use(express.json());
 app.use(bodyParser.json());
+
+// ─── Identité, magasin de pools, diffusion ───────────────────────────────────
+const auth = creerAuth({
+    db,
+    usePostgres: USE_POSTGRES,
+    // Le cookie n'est marqué Secure qu'en production : en développement le
+    // serveur répond en clair, et un cookie Secure n'y serait jamais renvoyé.
+    secure: process.env.NODE_ENV === 'production',
+    originesAutorisees: ORIGINES_AUTORISEES
+});
+
+const poolStore = creerPoolStore({ db, usePostgres: USE_POSTGRES, draftFile: DRAFT_FILE });
+const presence = creerPresence();
+
+// La session est résolue avant toute route : `req.auth` est la seule source
+// d'identité que les routes ont le droit de lire.
+app.use((req, res, next) => auth.sessionMiddleware(req, res, next));
+// Et une requête mutante authentifiée doit venir d'une origine connue.
+app.use(auth.csrfGuard);
 
 // Cache control middleware (must come BEFORE static file serving)
 app.use((req, res, next) => {
@@ -103,11 +161,20 @@ app.use((req, res, next) => {
     next();
 });
 
-// ✅ Serve static files like HTML, CSS, JS
+// ✅ Fichiers publics — liste explicite, pas la racine du dépôt
+//
+// `express.static(__dirname)` servait TOUT : server.js, db.js, users.json et
+// ses empreintes de mots de passe, draft.json avec l'état de tous les pools,
+// les scripts de migration, et .env s'il se trouve là. La garde ci-dessous
+// laisse passer ce qui est public et répond 404 pour le reste — 404 et non
+// 403, qui confirmerait l'existence du fichier.
+app.use(creerGardeStatique());
 app.use(express.static(__dirname, {
-    maxAge: 0, // Let our custom middleware handle caching
+    maxAge: 0, // le middleware de cache plus haut décide
     etag: true,
-    lastModified: true
+    lastModified: true,
+    dotfiles: 'deny',
+    index: false
 }));
 
 // ✅ Serve uploaded images (user avatars, pool images)
@@ -167,70 +234,34 @@ const loadDraftData = async () => {
 
 
 /**
- * Version publiable des pools : l'empreinte du mot de passe ne quitte
- * jamais le serveur.
+ * Écriture d'un seul pool, hors transaction — réservée aux travaux de fond.
  *
- * `/draft` et l'événement socket `draftUpdated` diffusent l'objet complet à
- * tous les clients connectés. Une empreinte bcrypt exposée là serait
- * attaquable hors ligne à volonté, exactement ce que le stockage haché doit
- * empêcher. Elle est donc remplacée par un simple booléen — la seule chose
- * dont l'interface a besoin pour savoir s'il faut demander le mot de passe.
+ * Ce qui a disparu ici :
  *
- * La copie est superficielle par pool : seul le premier niveau est
- * réécrit, le reste est partagé avec l'original, ce qui suffit puisque
- * l'empreinte n'y vit qu'à ce niveau.
+ *   - la réécriture de TOUS les pools à chaque appel. Elle rendait à la base
+ *     les pools voisins tels qu'ils étaient au chargement, effaçant toute
+ *     modification faite entre-temps par quelqu'un d'autre ;
+ *   - le repli vers draft.json en cas d'échec PostgreSQL, suivi d'une
+ *     diffusion de succès. Une écriture ratée avait exactement la même forme
+ *     qu'une réussie ;
+ *   - la diffusion à tout le monde de l'état de tous les pools.
+ *
+ * Les mutations demandées par une personne passent désormais par
+ * services/poolStore.js. Cette fonction ne sert plus qu'aux tâches de fond qui
+ * touchent un pool identifié, et elle propage ses erreurs.
  */
-const poolsPublics = (data) => {
-    const publics = {};
-    for (const [nom, pool] of Object.entries(data || {})) {
-        if (!pool || typeof pool !== "object") { publics[nom] = pool; continue; }
-        const { passwordHash, ...reste } = pool;
-        publics[nom] = { ...reste, hasPassword: !!passwordHash };
-    }
-    return publics;
-};
-
-/**
- * Qui a cree ce pool.
- *
- * Champ explicite sur les pools recents ; pour ceux nes avant que le champ
- * existe, le premier membre d'Equipe 1 — c'est la personne que /create-clan
- * y a deposee automatiquement. Renvoie null si meme ce repli est vide, et
- * l'appelant refuse alors l'action plutot que de l'ouvrir a tout le monde.
- */
-const createurDuPool = (clan) => {
-    if (!clan || typeof clan !== "object") return null;
-    if (clan.creator) return clan.creator;
-    const equipe1 = clan.teams && clan.teams["Équipe 1"];
-    return (equipe1 && Array.isArray(equipe1.members) && equipe1.members[0]) || null;
-};
-
-const saveDraftData = async (data) => {
+const sauvegarderPool = async (nomPool, poolData) => {
     if (USE_POSTGRES) {
-        try {
-            // Save each pool to PostgreSQL
-            for (const [poolName, poolData] of Object.entries(data)) {
-                await db.createOrUpdatePool(poolName, poolData);
-            }
-        } catch (error) {
-            console.error("❌ Error saving to PostgreSQL:", error);
-            // Fallback to JSON file
-            fs.writeFileSync(DRAFT_FILE, JSON.stringify(data, null, 2));
-        }
+        await db.createOrUpdatePool(nomPool, poolData);
     } else {
-        // Use JSON file
-        fs.writeFileSync(DRAFT_FILE, JSON.stringify(data, null, 2));
+        const tout = await loadDraftData();
+        tout[nomPool] = poolData;
+        const temporaire = `${DRAFT_FILE}.${process.pid}.tmp`;
+        fs.writeFileSync(temporaire, JSON.stringify(tout, null, 2));
+        fs.renameSync(temporaire, DRAFT_FILE);
     }
-
-    setTimeout(async () => {
-        console.log("✅ Reloading fresh data...");
-        const freshData = await loadDraftData(); // 🔥 Ensure latest data is broadcast
-        console.log("🔥 Sending fresh draft data via WebSocket:", freshData);
-        io.emit("draftUpdated", poolsPublics(freshData)); // ✅ Broadcast ONLY fresh data
-        setTimeout(() => {
-            io.emit("forceRefresh"); // 🔥 Envoie un signal aux clients pour recharger /draft
-        }, 500);
-    }, 200); // ✅ Small delay ensures data is fully written before broadcasting
+    const frais = await poolStore.lire(nomPool);
+    if (frais) diffusion.poolMisAJour(nomPool, frais.data, frais.revision);
 };
 
 // ==============================================
@@ -422,358 +453,222 @@ async function getTeamPlayerBreakdownForDateRange(teamData, startDateISO, endDat
 }
 
 
-// ✅ WebSocket Connection
-io.on("connection", async (socket) => {
-    console.log("📡 Client connecté via WebSockets");
-    const draftData = await loadDraftData();
-    socket.emit("draftUpdated", draftData); // Send initial data on connection
-});
+// ══════════════════════════════════════════════════════════════════════════
+// COMPOSITION : diffusion, présence, routes
+// ══════════════════════════════════════════════════════════════════════════
+//
+// server.js ne définit plus les routes de comptes, de pools, de repêchage,
+// d'échanges ni de file instantanée : elles vivent dans routes/, au-dessus du
+// contrat d'écriture de services/poolStore.js. Ce qui reste ici est ce qui n'a
+// pas encore de domaine propre — statistiques LNH, caches, calendrier, tâches
+// de fond — plus la composition ci-dessous.
 
-app.post("/leave-team", async (req, res) => {
-    try {
-        const { name, username } = req.body;
-        let draftData = await loadDraftData();
-
-        if (!draftData[name]) {
-            return res.status(400).json({ message: "Clan introuvable !" });
+/**
+ * Les membres du pool, prévenus quand il change.
+ *
+ * Créée avant les routes : `sauvegarderPool` s'en sert, et les crochets de
+ * présence du salon instantané se branchent dessus.
+ */
+const diffusion = creerDiffusion({
+    io,
+    auth,
+    store: poolStore,
+    crochets: {
+        // Une personne arrive : si elle attend dans un salon instantané, sa
+        // présence y compte, et le salon peut devenir prêt à démarrer.
+        async auConnecte({ socket, username, pools }) {
+            for (const nomPool of pools) {
+                const enveloppe = await poolStore.lire(nomPool);
+                if (!enveloppe || !instantDraft.estPoolInstantane(nomPool, enveloppe.data)) continue;
+                if (instantDraft.repechageCommence(enveloppe.data)) continue;
+                presence.arrive(nomPool, username, socket.id);
+                if (contexteRoutes.armerDemarrageInstantane) {
+                    contexteRoutes.armerDemarrageInstantane(nomPool, enveloppe.data);
+                }
+                diffusion.versPool(nomPool, 'salonMisAJour', {
+                    pool: nomPool,
+                    ...(contexteRoutes.vueSalonInstantane
+                        ? contexteRoutes.vueSalonInstantane(nomPool, enveloppe.data)
+                        : {})
+                });
+            }
+        },
+        // Une connexion part. La personne n'est absente que lorsque son dernier
+        // onglet est parti, et le délai de grâce couvre une coupure brève.
+        async auDeconnecte({ socket, username }) {
+            const pools = await poolStore.lireTous();
+            for (const [nomPool, enveloppe] of Object.entries(pools)) {
+                if (!instantDraft.estPoolInstantane(nomPool, enveloppe.data)) continue;
+                if (!authz.estMembre(enveloppe.data, username)) continue;
+                if (instantDraft.repechageCommence(enveloppe.data)) continue;
+                const restantes = presence.part(nomPool, username, socket.id);
+                if (restantes === 0) {
+                    // Le compte à rebours s'arrête : on ne lance pas un
+                    // repêchage à quatre dont l'un vient de fermer son écran.
+                    presence.annulerCompte(nomPool);
+                    diffusion.versPool(nomPool, 'salonMisAJour', {
+                        pool: nomPool,
+                        ...(contexteRoutes.vueSalonInstantane
+                            ? contexteRoutes.vueSalonInstantane(nomPool, enveloppe.data)
+                            : {})
+                    });
+                }
+            }
         }
-
-        // Trouver l'équipe actuelle de l'utilisateur
-        let currentTeam = Object.entries(draftData[name].teams)
-            .find(([teamName, teamData]) => teamData.members.includes(username));
-
-        if (!currentTeam) return res.status(400).json({ message: "Vous n'êtes dans aucune équipe !" });
-
-        // Supprimer l'utilisateur de son équipe actuelle
-        draftData[name].teams[currentTeam[0]].members = draftData[name].teams[currentTeam[0]].members.filter(user => user !== username);
-        await saveDraftData(draftData);
-        setTimeout(() => {
-            io.emit("draftUpdated", poolsPublics(draftData));
-        }, 2000); // ou 200ms
-        // 🔔 Notifie tous les clients
-
-
-        res.json({ message: `✅ ${username} a quitté ${currentTeam[0]} avec succès !` });
-
-    } catch (error) {
-        console.error("❌ Erreur lors du retrait de l'équipe :", error);
-        res.status(500).json({ message: "Erreur interne du serveur." });
     }
 });
+
+diffusion.enregistrer();
+
+/**
+ * Renomme un pool partout où son nom sert de clé.
+ *
+ * Le nom est la clé primaire de `pools` et la clé étrangère des échanges, des
+ * annonces et des relevés de rang. Les cinq mises à jour tiennent dans une
+ * seule transaction : un renommage à moitié fait laisserait ces lignes
+ * orphelines, et l'historique d'échanges du pool disparaîtrait de la page
+ * Échanges.
+ */
+async function renommerPoolPartout({ ancien, propose, auth: identite, reduire }) {
+    const existants = await poolStore.lireTous();
+    const collision = Object.keys(existants).some(
+        nom => nom !== ancien && reduire(nom) === reduire(propose)
+    );
+    if (collision) throw new poolStore.ErreurMetier(409, "Un pool porte déjà ce nom.");
+
+    const source = existants[ancien];
+    if (!source) throw new poolStore.ErreurMetier(404, "Pool introuvable.");
+    if (!authz.peutAdministrer(source.data, { username: identite.username, isAdmin: identite.isAdmin })) {
+        throw new poolStore.ErreurMetier(403, "Seule la personne qui a créé le pool peut le renommer.");
+    }
+
+    const membres = authz.membresDuPool(source.data);
+
+    if (USE_POSTGRES) {
+        const resultat = await db.renamePool(ancien, propose);
+        if (!resultat.ok) {
+            throw new poolStore.ErreurMetier(
+                resultat.raison === 'existe' ? 409 : 404,
+                resultat.raison === 'existe' ? "Un pool porte déjà ce nom." : "Pool introuvable."
+            );
+        }
+        return membres;
+    }
+
+    // Mode fichier : la même opération, sérialisée par la file du magasin.
+    await poolStore.transaction(async (tx) => {
+        const verrouille = await tx.verrouillerPool(ancien);
+        if (!verrouille) throw new poolStore.ErreurMetier(404, "Pool introuvable.");
+        const cree = await tx.creerPool(propose, verrouille.data);
+        if (!cree) throw new poolStore.ErreurMetier(409, "Un pool porte déjà ce nom.");
+        await tx.supprimerPool(ancien);
+        return { propose };
+    }, { scope: 'pool:renommer' });
+
+    return membres;
+}
+
+/**
+ * Construit le calendrier de saison d'un pool tête-à-tête, après le repêchage.
+ *
+ * Dans sa propre transaction, et surtout pas dans celle du dernier choix : la
+ * fenêtre de saison vient du réseau, et on ne tient jamais un verrou ouvert
+ * pendant un appel réseau — tout le pool attendrait la LNH.
+ */
+async function construireCalendrierH2H(nomPool) {
+    const fenetre = await getSeasonWindow();
+    const finSaison = fenetre && fenetre.regularSeasonEndDate;
+
+    return poolStore.muterPool(nomPool, {
+        scope: 'h2h:calendrier',
+        appliquer: async ({ data }) => {
+            if (data.poolMode !== 'head-to-head' || !data.h2hData) {
+                return { sauvegarder: false, valeur: { ignore: true } };
+            }
+            // Déjà construit : un réessai ne doit pas retirer les duels joués.
+            if (Array.isArray(data.h2hData.matchups) && data.h2hData.matchups.length > 0) {
+                return { sauvegarder: false, valeur: { deja: true } };
+            }
+
+            const equipes = Object.entries(data.teams)
+                .filter(([, td]) => (td.members || []).length > 0)
+                .map(([nom, td]) => ({ name: nom, members: td.members }));
+
+            const lundi = lundiDeLaSemaine(new Date());
+            const nbSemaines = seasonWeekCount(lundi, finSaison);
+            const calendrier = generateSeasonSchedule(equipes, nbSemaines);
+
+            data.h2hData.seasonStart = lundi.toISOString();
+            data.h2hData.seasonEnd = finSaison || null;
+            data.h2hData.seasonWeeks = calendrier.length;
+            data.h2hData.weekStart = lundi.toISOString();
+            data.h2hData.currentWeek = 1;
+            data.h2hData.matchups = calendrier;
+            data.h2hData.standings = data.h2hData.standings || {};
+            equipes.forEach(e => ensureStandingsEntry(data.h2hData.standings, e.name));
+
+            console.log(`📅 Calendrier bâti pour ${nomPool} : ${calendrier.length} semaines`);
+            return { valeur: { semaines: calendrier.length } };
+        }
+    });
+}
+
+/** Lundi 00:00 (heure locale du serveur) de la semaine d'une date. */
+function lundiDeLaSemaine(date) {
+    const lundi = new Date(date);
+    const jour = lundi.getDay();
+    lundi.setDate(lundi.getDate() + (jour === 0 ? -6 : 1 - jour));
+    lundi.setHours(0, 0, 0, 0);
+    return lundi;
+}
+
+/**
+ * Contexte partagé par les modules de routes.
+ *
+ * Les fonctions passées en flèche sont volontairement paresseuses : certaines
+ * (`loadUsers`, `saveUsers`) sont déclarées plus bas dans ce fichier, et une
+ * référence directe ici les lirait avant leur initialisation.
+ */
+const contexteRoutes = {
+    auth,
+    db,
+    store: poolStore,
+    diffusion,
+    presence,
+    usePostgres: USE_POSTGRES,
+    racine: __dirname,
+    uploadPool,
+    uploadAvatar,
+    chargerUtilisateurs: (...args) => loadUsers(...args),
+    sauvegarderUtilisateurs: (...args) => saveUsers(...args),
+    renommerPool: (options) => renommerPoolPartout(options),
+    nettoyerDependances: (nomPool) => (USE_POSTGRES ? db.deletePoolDependencies(nomPool) : Promise.resolve()),
+    construireCalendrierH2H,
+    saisonCourante: () => currentSeasonString()
+};
+
+routesIdentite.monter(app, contexteRoutes);
+routesPools.monter(app, contexteRoutes);
+routesRepechage.monter(app, contexteRoutes);
+routesInstantane.monter(app, contexteRoutes);
+routesEchanges.monter(app, contexteRoutes);
+
+
 
 // ✅ Route to Join a Clan
-app.post("/join-clan", async (req, res) => {
-    const { name, username } = req.body;
-    let draftData = await loadDraftData();
-
-    if (!draftData[name]) {
-        return res.status(400).json({ message: "Clan introuvable !" });
-    }
-
-    const userInClan = Object.values(draftData[name].teams).some(team => team.members.includes(username));
-    if (userInClan) {
-        return res.status(400).json({ message: "Vous êtes déjà membre d'une équipe de ce clan !" });
-    }
-
-    res.json({ message: `Vous avez rejoint le clan ${name}, choisissez une équipe !`, teams: draftData[name].teams });
-});
 
 
 // ✅ Route to Delete a Clan
-app.post("/delete-clan", async (req, res) => {
-    const { clanName } = req.body;
-    let draftData = await loadDraftData();
-
-    if (!draftData[clanName]) {
-        return res.status(400).json({ message: "Le clan n'existe pas !" });
-    }
-
-    delete draftData[clanName];
-    await saveDraftData(draftData);
-    setTimeout(() => {
-            io.emit("draftUpdated", poolsPublics(draftData));
-        }, 2000); // ou 200ms
-        // 🔔 Notifie tous les clients
-
-    res.json({ message: `Clan ${clanName} supprimé avec succès !` });
-});
 
 // 📌 Route pour récupérer tous les pools et équipes
-app.get("/draft", async (req, res) => {
-    try {
-        const draftData = await loadDraftData();
-        console.log("📤 Draft envoyé :", Object.keys(draftData));
-        res.json(poolsPublics(draftData));
-    } catch (error) {
-        console.error("Error loading draft data:", error);
-        res.status(500).json({ error: "Failed to load draft data" });
-    }
-});
 
 // 🔥 Route pour sélectionner un joueur pour une équipe
-app.post("/pick-player", async (req, res) => {
-    const { clanName, username, playerName, position } = req.body;
-
-    if (!clanName || !username || !playerName || !position) {
-        return res.status(400).json({ message: "Données incomplètes." });
-    }
-
-    let draftData = await loadDraftData();
-    const clan = draftData[clanName];
-    if (!clan) return res.status(404).json({ message: "Clan introuvable." });
-
-    const userTeamEntry = Object.entries(clan.teams).find(([_, team]) => team.members.includes(username));
-    if (!userTeamEntry) return res.status(400).json({ message: "Vous n'êtes dans aucune équipe." });
-
-    const [userTeamName, userTeam] = userTeamEntry;
-
-    const currentTeamTurn = clan.draftOrder[clan.currentPickIndex];
-
-    if (currentTeamTurn !== userTeamName) {
-        return res.status(403).json({ message: "Ce n'est pas votre tour de drafter." });
-    }
-
-    const allPicked = Object.values(clan.teams).flatMap(team =>
-        [].concat(
-            team.offensive || [],
-            team.defensive || [],
-            team.rookie || [],
-            team.goalie || [],
-            team.teams || []
-        )
-    );
-
-    if (allPicked.includes(playerName)) {
-        return res.status(400).json({ message: "Ce joueur a déjà été sélectionné." });
-    }
-
-    // Get pool configuration, fallback to defaults if not set
-    const config = clan.config || {
-        numOffensive: 6,
-        numDefensive: 4,
-        numGoalies: 1,
-        numRookies: 1,
-        numTeams: 1
-    };
-
-    if (position === "offensive") {
-        if (userTeam.offensive.length >= config.numOffensive) {
-            return res.status(400).json({ message: `Votre équipe a déjà ${config.numOffensive} joueur${config.numOffensive > 1 ? 's' : ''} offensif${config.numOffensive > 1 ? 's' : ''}.` });
-        }
-        userTeam.offensive.push(playerName);
-    } else if (position === "defensive") {
-        if (userTeam.defensive.length >= config.numDefensive) {
-            return res.status(400).json({ message: `Votre équipe a déjà ${config.numDefensive} défenseur${config.numDefensive > 1 ? 's' : ''}.` });
-        }
-        userTeam.defensive.push(playerName);
-    } else if (position === "rookie") {
-        if (!userTeam.rookie) userTeam.rookie = [];
-        if (userTeam.rookie.length >= config.numRookies) {
-            return res.status(400).json({ message: `Votre équipe a déjà ${config.numRookies} rookie${config.numRookies > 1 ? 's' : ''}.` });
-        }
-        userTeam.rookie.push(playerName);
-    } else if (position === "goalie") {
-        if (!userTeam.goalie) userTeam.goalie = [];
-        if (userTeam.goalie.length >= config.numGoalies) {
-            return res.status(400).json({ message: `Votre équipe a déjà ${config.numGoalies} gardien${config.numGoalies > 1 ? 's' : ''}.` });
-        }
-        userTeam.goalie.push(playerName);
-    } else if (position === "teams") {
-        if (!userTeam.teams) userTeam.teams = [];
-        if (userTeam.teams.length >= config.numTeams) {
-            return res.status(400).json({ message: `Votre équipe a déjà ${config.numTeams} équipe${config.numTeams > 1 ? 's' : ''} NHL.` });
-        }
-        userTeam.teams.push(playerName);
-    } else {
-        return res.status(400).json({ message: "Position invalide." });
-    }
-
-    // ✅ Empêche les doubles sélections pour le même tour
-    if (clan.lastPickIndex === clan.currentPickIndex) {
-    // Check if the team can still pick anything
-    const team = clan.teams[userTeamName];
-    const canPickOffensive = team.offensive.length < config.numOffensive;
-    const canPickDefensive = team.defensive.length < config.numDefensive;
-
-    if (!canPickOffensive && !canPickDefensive) {
-        // Skip this team and move to the next pick
-        if (clan.currentPickIndex < clan.draftOrder.length - 1) {
-            clan.currentPickIndex += 1;
-            clan.turnStartedAt = Date.now();
-            await saveDraftData(draftData);
-            return res.status(200).json({ message: "Tour sauté : équipe complète." });
-            } else {
-                return res.status(200).json({ message: "Dernier tour atteint." });
-            }
-        }
-
-        return res.status(400).json({ message: "Ce tour a déjà été complété." });
-    }
 
 
-    clan.lastPickIndex = clan.currentPickIndex;
 
-    // ✅ N'avance que si on n'est pas à la fin du draftOrder
-    if (clan.currentPickIndex < clan.draftOrder.length - 1) {
-        clan.currentPickIndex += 1;
-        clan.turnStartedAt = Date.now();   // la pendule repart pour le tour suivant
-    } else {
-        console.log("✅ Dernier tour atteint. Le draft est terminé.");
-    }
-
-    // 🔥 Enregistre le pick dans l'historique
-    if (!clan.picksHistory) clan.picksHistory = [];
-    clan.picksHistory.push({
-        team: userTeamName,
-        player: playerName,
-        position
-    });
-
-
-    console.log("✅", playerName, "ajouté à", userTeamName);
-
-    await saveDraftData(draftData);
-
-    setTimeout(() => {
-        io.emit("draftUpdated", poolsPublics(draftData));
-        io.emit("forceRefresh");
-    }, 200);
-
-    if (checkIfDraftComplete(clan)) {
-        io.emit("draftComplete", { clanName });
-
-        // If Head-to-Head mode, build the whole season's matchup calendar
-        if (clan.poolMode === 'head-to-head' && clan.h2hData) {
-            console.log("🏒 Building season schedule for H2H pool:", clanName);
-
-            // Get active teams (must include members so the generators can filter correctly)
-            const activeTeams = Object.entries(clan.teams)
-                .filter(([_, teamData]) => teamData.members && teamData.members.length > 0)
-                .map(([teamName, teamData]) => ({ name: teamName, members: teamData.members }));
-
-            // Set week start to the current week's Monday 00:00:00
-            const now = new Date();
-            const currentMonday = new Date(now);
-            const dayOfWeek = now.getDay();
-            const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // 0=Sun goes back 6, else go to Mon
-            currentMonday.setDate(now.getDate() + daysToMonday);
-            currentMonday.setHours(0, 0, 0, 0);
-
-            // Tout le calendrier d'un coup, et non plus la seule semaine 1.
-            // Sans cela personne ne peut savoir qui il affronte la semaine
-            // prochaine avant que la semaine en cours soit finalisée — ce que
-            // la bannière d'accueil et le carrousel du classement annoncent
-            // maintenant dès la fin du repêchage.
-            const fenetreSaison = await getSeasonWindow();
-            const finSaison = fenetreSaison && fenetreSaison.regularSeasonEndDate;
-            const nbSemaines = seasonWeekCount(currentMonday, finSaison);
-            const calendrier = generateSeasonSchedule(activeTeams, nbSemaines);
-
-            clan.h2hData.seasonStart = currentMonday.toISOString(); // Permanent — never changes
-            clan.h2hData.seasonEnd = finSaison || null;
-            clan.h2hData.seasonWeeks = calendrier.length;
-            clan.h2hData.weekStart = currentMonday.toISOString();
-            clan.h2hData.currentWeek = 1;
-            clan.h2hData.matchups = calendrier;
-
-            // Initialize standings for all active teams
-            activeTeams.forEach(team => {
-                clan.h2hData.standings[team.name] = {
-                    wins: 0,
-                    losses: 0,
-                    ties: 0,
-                    pointsFor: 0,
-                    pointsAgainst: 0
-                };
-            });
-
-            // Save updated data
-            await saveDraftData(draftData);
-
-            console.log(`✅ Season schedule built: ${calendrier.length} weeks, ${(calendrier[0] || []).length} duels per week`);
-            console.log("📅 Season starts:", currentMonday.toISOString(), "· ends:", finSaison || 'inconnu');
-        }
-    }
-
-    res.json({ message: `✅ ${playerName} a été sélectionné par ${userTeamName}.` });
-});
-
-
-/* 🔥 Sauter un tour qui traîne — pendule douce.
- *
- * Il n'y a pas de limite de temps dans Fantazy : personne n'est jamais
- * dépossédé de son choix par un chronomètre, et le serveur ne saute jamais
- * un tour de lui-même. Mais une salle figée sur quelqu'un qui a perdu son
- * réseau bloque tout le monde sans recours. Cette route est ce recours :
- * elle appartient à la personne qui a créé le pool, ne s'ouvre qu'après un
- * délai, et ne peut pas servir à se sauter soi-même pour repousser son choix.
- */
-const SKIP_TURN_AFTER_MS = 180000;   // 3 minutes, même seuil que côté client
-
-app.post("/skip-turn", async (req, res) => {
-    const { clanName, username } = req.body;
-    if (!clanName || !username) {
-        return res.status(400).json({ message: "Données incomplètes." });
-    }
-
-    const draftData = await loadDraftData();
-    const clan = draftData[clanName];
-    if (!clan) return res.status(404).json({ message: "Pool introuvable." });
-
-    const createur = createurDuPool(clan);
-    if (!createur || createur !== username) {
-        return res.status(403).json({ message: "Seule la personne qui a créé le pool peut sauter un tour." });
-    }
-
-    if (!Array.isArray(clan.draftOrder) || clan.draftOrder.length === 0) {
-        return res.status(400).json({ message: "Le repêchage n'a pas encore commencé." });
-    }
-    if (clan.currentPickIndex >= clan.draftOrder.length - 1) {
-        return res.status(400).json({ message: "Dernier tour : il n'y a plus de tour à sauter." });
-    }
-
-    // Se sauter soi-même reviendrait à repousser son propre choix sans
-    // conséquence : refusé.
-    const equipeDuTour = clan.draftOrder[clan.currentPickIndex];
-    const monEquipe = Object.entries(clan.teams || {})
-        .find(([, t]) => (t.members || []).includes(username));
-    if (monEquipe && monEquipe[0] === equipeDuTour) {
-        return res.status(403).json({ message: "Vous ne pouvez pas sauter votre propre tour." });
-    }
-
-    const depuis = Date.now() - (Number(clan.turnStartedAt) || 0);
-    if (!clan.turnStartedAt || depuis < SKIP_TURN_AFTER_MS) {
-        const reste = Math.ceil((SKIP_TURN_AFTER_MS - depuis) / 60000);
-        return res.status(400).json({
-            message: `Ce tour est trop récent. Réessayez dans ${Math.max(1, reste)} min.`
-        });
-    }
-
-    // Aucune entrée dans picksHistory : c'est exactement ainsi que le client
-    // reconnaît un tour sauté (buildPickSlots avance son curseur sans consommer
-    // d'entrée). Le saut se dessine tout seul dans la bande de choix.
-    clan.currentPickIndex += 1;
-    clan.turnStartedAt = Date.now();
-    await saveDraftData(draftData);
-
-    io.emit("draftUpdated", poolsPublics(draftData));
-    io.emit("forceRefresh");
-
-    return res.json({ message: `Tour de ${equipeDuTour} sauté.`, skipped: equipeDuTour });
-});
 
 
 // 📌 Route pour récupérer l'ordre du draft d'un clan
-app.get("/draft-order/:clanName", async (req, res) => {
-    const { clanName } = req.params;
-    const draftData = await loadDraftData();
-
-    if (!draftData[clanName]) {
-        return res.status(400).json({ message: "Clan introuvable !" });
-    }
-
-    res.json({ draftOrder: draftData[clanName].draftOrder });
-});
 
 // 📌 Charger et sauvegarder `users.json`
 const loadUsers = async () => {
@@ -810,452 +705,16 @@ const saveUsers = async (users) => {
 };
 
 // 🔥 Route pour récupérer les drafts actifs
-app.get("/active-drafts", async (req, res) => {
-    const { username } = req.query;
-    if (!username) return res.status(400).json({ message: "Nom d'utilisateur requis !" });
-
-    const draftData = await loadDraftData();
-
-    // Recherche des drafts où l'utilisateur est membre d'une équipe
-    const activeDrafts = Object.keys(draftData).filter(clan =>
-        Object.values(draftData[clan].teams).some(team => team.members.includes(username))
-    );
-
-    res.json({ activeDrafts });
-});
 
 // 🔥 Route pour récupérer l'ordre du draft d'un clan
-app.get("/draft-order/:clanName", async (req, res) => {
-    const { clanName } = req.params;
-    const draftData = await loadDraftData();
-
-    if (!draftData[clanName]) {
-        return res.status(400).json({ message: "Clan introuvable !" });
-    }
-
-    res.json({ draftOrder: draftData[clanName].draftOrder });
-});
 
 
 // 🔥 Route pour créer un clan
-app.post("/create-clan", async (req, res) => {
-    try {
-        const { name, maxPlayers, config, poolMode, allowTrades, username, password } = req.body;
-        let draftData = await loadDraftData();
-
-        if (draftData[name]) {
-            return res.status(400).json({ message: "Ce clan existe déjà !" });
-        }
-
-        if (contientGrossierete(name)) {
-            return res.status(400).json({
-                message: "Ce nom de pool contient un terme inapproprié. Choisissez-en un autre."
-            });
-        }
-
-        // Mot de passe du pool : facultatif, mais traité comme celui d'un
-        // compte — même algorithme, même coût, jamais conservé en clair.
-        // La borne haute vient de bcrypt, qui ignore silencieusement tout
-        // octet au-delà du 72e : mieux vaut refuser que tronquer sans le dire.
-        let passwordHash = null;
-        if (typeof password === "string" && password.length > 0) {
-            if (password.length < 4 || password.length > 72) {
-                return res.status(400).json({
-                    message: "Le mot de passe du pool doit contenir entre 4 et 72 caractères."
-                });
-            }
-            passwordHash = await bcrypt.hash(password, 10);
-        }
-
-        // Default configuration values if not provided
-        const poolConfig = config || {
-            numOffensive: 6,
-            numDefensive: 4,
-            numGoalies: 1,
-            numRookies: 1,
-            numTeams: 1
-        };
-        // L'équipe LNH est un choix du repêchage comme un autre : la
-        // quantité vient du formulaire (creer-pool.html), comme les autres
-        // positions. Seul le défaut est imposé ici, si l'appelant n'envoie
-        // rien.
-        if (poolConfig.numTeams == null) poolConfig.numTeams = 1;
-
-        // 🔥 Initialize 10 teams for the new clan
-        let teams = {};
-        for (let i = 1; i <= 10; i++) {
-            teams[`Équipe ${i}`] = { members: [], offensive: [], defensive: [], goalie: [], rookie: [], teams: [] };
-        }
-
-        // ✅ Automatically add the creator to Équipe 1
-        if (username) {
-            teams['Équipe 1'].members.push(username);
-        }
-
-        // Initialize pool data
-        draftData[name] = {
-            maxPlayers: parseInt(maxPlayers),
-            // Qui a créé le pool. Sert au repêchage : cette personne seule peut
-            // sauter un tour qui traîne. Les pools créés avant ce champ sont
-            // rattrapés côté client par le premier membre d'Équipe 1.
-            creator: username || null,
-            draftOrder: [],
-            currentPickIndex: 0,
-            lastPickIndex: -1,
-            config: poolConfig,
-            poolMode: poolMode || 'cumulative', // 'cumulative' or 'head-to-head'
-            allowTrades: allowTrades !== false, // Default true
-            teams
-        };
-
-        // Absent du pool quand il n'y a pas de mot de passe : poolsPublics()
-        // en déduit `hasPassword: false` et l'interface n'en demande pas.
-        if (passwordHash) {
-            draftData[name].passwordHash = passwordHash;
-        }
-
-        // If Head-to-Head mode, initialize matchup structure
-        if (poolMode === 'head-to-head') {
-            draftData[name].h2hData = {
-                currentWeek: 1,
-                seasonStart: null, // Permanent start date — set when draft completes, never changes
-                weekStart: null,   // Rolling current-week start — advances each week
-                matchups: [],
-                standings: {},
-                matchupHistory: []
-            };
-        }
-
-        await saveDraftData(draftData);
-        setTimeout(() => {
-        io.emit("draftUpdated", poolsPublics(draftData));
-        }, 2000); // ou 200ms
-        // 🔔 Notifie tous les clients
-
-        // ✅ Return fully updated draft data
-        res.json({
-            message: `Pool "${name}" créé avec succès ! Vous avez été ajouté à l'Équipe 1.`,
-            draftData,
-            autoJoined: !!username
-        });
-
-    } catch (error) {
-        console.error("Erreur lors de la création du clan :", error);
-        res.status(500).json({ message: "Erreur interne du serveur." });
-    }
-});
-
-app.post("/delete-clan", async (req, res) => {
-    const { clanName } = req.body;
-    let draftData = await loadDraftData();
-
-    if (!draftData[clanName]) {
-        return res.status(400).json({ message: "Le clan n'existe pas !" });
-    }
-
-    // Remove the clan from the draft data
-    delete draftData[clanName];
-    await saveDraftData(draftData);
-    setTimeout(() => {
-        io.emit("draftUpdated", poolsPublics(draftData));
-        }, 2000); // ou 200ms
-        // 🔔 Notifie tous les clients
 
 
-    res.json({ message: `Clan ${clanName} supprimé avec succès !` });
-});
 
-app.post("/change-team", async (req, res) => {
-    try {
-        const { name, username, newTeamNumber } = req.body;
-        let draftData = await loadDraftData();
 
-        if (!draftData[name] || !draftData[name].teams[newTeamNumber]) {
-            return res.status(400).json({ message: "Clan ou équipe introuvable !" });
-        }
 
-        // Check if draft has already started
-        if (draftData[name].draftOrder && draftData[name].draftOrder.length > 0) {
-            return res.status(400).json({ message: "Le draft a déjà commencé ! Vous ne pouvez plus changer d'équipe." });
-        }
-
-        // Vérifier que l'utilisateur est bien dans une équipe
-        let currentTeam = Object.entries(draftData[name].teams)
-            .find(([teamName, teamData]) => teamData.members.includes(username));
-
-        if (!currentTeam) return res.status(400).json({ message: "Vous n'êtes dans aucune équipe !" });
-
-        // Vérifier que l'équipe cible n'est pas pleine
-        if (draftData[name].teams[newTeamNumber].members.length >= 5) {
-            return res.status(400).json({ message: "Cette équipe est complète !" });
-        }
-
-        // Mise à jour des membres
-        draftData[name].teams[currentTeam[0]].members = draftData[name].teams[currentTeam[0]].members.filter(user => user !== username);
-        draftData[name].teams[newTeamNumber].members.push(username);
-
-        await saveDraftData(draftData);
-        setTimeout(() => {
-            io.emit("draftUpdated", poolsPublics(draftData));
-        }, 2000); // ou 200ms
-        // 🔔 Notifie tous les clients
-
-        res.json({ message: `Vous avez rejoint l'équipe ${newTeamNumber} du clan ${name} !` });
-
-    } catch (error) {
-        console.error("Erreur lors du changement d'équipe :", error);
-        res.status(500).json({ message: "Erreur interne du serveur." });
-    }
-});
-
-app.post("/join-clan", async (req, res) => {
-    const { name, username } = req.body;
-    let draftData = await loadDraftData();
-
-    if (!draftData[name]) {
-        return res.status(400).json({ message: "Clan introuvable !" });
-    }
-
-    // ✅ Check if user is already part of the clan
-    const userInClan = Object.values(draftData[name].teams).some(team => team.members.includes(username));
-    if (userInClan) {
-        return res.status(400).json({ message: "Vous êtes déjà membre d'une équipe de ce clan !" });
-    }
-
-    // 🔥 Assign user to a default placeholder team until they choose one
-    const availableTeam = Object.entries(draftData[name].teams).find(([teamName, teamData]) => teamData.members.length < 5);
-    if (availableTeam) {
-        draftData[name].teams[availableTeam[0]].members.push(username);
-        await saveDraftData(draftData);
-        setTimeout(() => {
-            io.emit("draftUpdated", poolsPublics(draftData));
-        }, 2000); // ou 200ms
-        // 🔔 Notifie tous les clients
-
-    }
-
-    res.json({ 
-        message: `Vous avez rejoint le clan ${name}, choisissez une équipe !`, 
-        teams: draftData[name].teams,
-        draftData // ✅ Ensure frontend gets updated data
-    });
-});
-
-// ==============================================
-// REPÊCHAGE INSTANTANÉ
-// ----------------------------------------------
-// Une seule porte : « Rejoindre un repêchage instantané ». Le serveur trouve
-// le pool qui attend des joueurs, ou en ouvre un. L'utilisateur ne nomme rien,
-// ne choisit rien, ne saisit aucun code — c'est tout l'intérêt.
-//
-// Toute la difficulté est dans le « ou » : entre le moment où on lit les pools
-// et celui où on en écrit un, une deuxième requête peut lire les mêmes données
-// et conclure la même chose. Deux personnes cliquant à la même seconde
-// ouvriraient alors deux pools vides au lieu de se retrouver ensemble — la
-// seule chose que la file doit garantir. D'où le verrou ci-dessous : lecture,
-// décision et écriture forment un bloc que personne ne traverse.
-// ==============================================
-
-/**
- * Clé du verrou consultatif PostgreSQL. Arbitraire, mais elle doit rester
- * stable d'une version à l'autre : deux instances qui n'utiliseraient pas le
- * même entier ne se verrouilleraient pas l'une l'autre.
- */
-const CLE_VERROU_INSTANTANE = 4815162342;
-
-/**
- * File d'exécution en mémoire.
- *
- * Chaque requête s'accroche à la précédente, terminée ou échouée — d'où le
- * même `travail` dans les deux branches du .then. La chaîne conservée est
- * neutralisée (`() => {}`) pour qu'un rejet ne se propage pas au suivant : une
- * requête qui échoue ne doit pas emporter toutes celles d'après.
- */
-let fileInstantanee = Promise.resolve();
-
-function enFileInstantanee(travail) {
-    const resultat = fileInstantanee.then(travail, travail);
-    fileInstantanee = resultat.then(() => {}, () => {});
-    return resultat;
-}
-
-/**
- * Exécute `travail` seul au monde.
- *
- * Deux couches, parce qu'elles ne protègent pas de la même chose : la file en
- * mémoire sérialise les requêtes d'un même processus Node (le cas réel, une
- * instance sur Render), le verrou consultatif couvre plusieurs processus
- * partageant la base.
- *
- * `travailLance` distingue l'échec du verrou de l'échec du travail. Sans lui,
- * une exception venue de `travail` serait prise pour une base injoignable et
- * rejouerait un travail déjà à moitié écrit.
- */
-async function sousVerrouInstantane(travail) {
-    return enFileInstantanee(async () => {
-        if (!USE_POSTGRES) return travail();
-
-        let travailLance = false;
-        try {
-            return await db.withAdvisoryLock(CLE_VERROU_INSTANTANE, () => {
-                travailLance = true;
-                return travail();
-            });
-        } catch (erreur) {
-            if (travailLance) throw erreur;
-            // Verrou indisponible : la file en mémoire protège déjà le
-            // déploiement actuel. Refuser la requête serait pire que la servir.
-            console.error("⚠️ Verrou consultatif indisponible, repli sur la file en mémoire :", erreur);
-            return travail();
-        }
-    });
-}
-
-/**
- * Écrit un seul pool.
- *
- * saveDraftData() réécrit tous les pools à chaque appel, ce qui rendrait à la
- * base un pool voisin tel qu'il était au chargement — et effacerait au passage
- * une modification faite entre-temps par quelqu'un d'autre. Ici on ne touche
- * qu'au pool qu'on vient de modifier.
- *
- * En mode fichier, il faut bien réécrire draft.json en entier : on le relit
- * juste avant pour repartir de son contenu réel plutôt que de la copie chargée
- * au début de la requête.
- */
-const sauvegarderUnPool = async (nomPool, poolData) => {
-    if (USE_POSTGRES) {
-        await db.createOrUpdatePool(nomPool, poolData);
-        return;
-    }
-    const tout = await loadDraftData();
-    tout[nomPool] = poolData;
-    fs.writeFileSync(DRAFT_FILE, JSON.stringify(tout, null, 2));
-};
-
-/**
- * Efface un pool instantané que plus personne n'attend.
- *
- * Le dernier qui quitte la file emporte le pool avec lui : le laisser vide
- * ferait de lui le plus « ancien » candidat de poolEnAttente(), donc celui
- * qu'on rouvrirait au prochain clic — un pool fantôme de plus à chaque
- * aller-retour.
- */
-const supprimerUnPool = async (nomPool) => {
-    if (USE_POSTGRES) {
-        await db.deletePool(nomPool);
-        return;
-    }
-    const tout = await loadDraftData();
-    delete tout[nomPool];
-    fs.writeFileSync(DRAFT_FILE, JSON.stringify(tout, null, 2));
-};
-
-/** Équipe de l'utilisateur dans ce pool, ou null. */
-const equipeDeLUtilisateur = (pool, username) => {
-    const entree = Object.entries((pool && pool.teams) || {})
-        .find(([, equipe]) => ((equipe && equipe.members) || []).includes(username));
-    return entree ? entree[0] : null;
-};
-
-app.post("/join-instant-draft", async (req, res) => {
-    const username = typeof req.body?.username === "string" ? req.body.username.trim() : "";
-    if (!username) {
-        return res.status(400).json({ message: "Nom d'utilisateur requis." });
-    }
-
-    try {
-        const resultat = await sousVerrouInstantane(async () => {
-            const draftData = await loadDraftData();
-            const decision = instantDraft.deciderPool(draftData, username);
-
-            // Rien à écrire : il est déjà dans un pool instantané, en attente
-            // ou en plein repêchage. On lui redonne simplement l'adresse.
-            if (decision.action === "encours" || decision.action === "deja") {
-                const pool = draftData[decision.nom];
-                return {
-                    poolName: decision.nom,
-                    teamName: equipeDeLUtilisateur(pool, username),
-                    created: false,
-                    joined: false,
-                    started: instantDraft.repechageCommence(pool),
-                    participants: instantDraft.participants(pool),
-                    maxPlayers: pool.maxPlayers || instantDraft.JOUEURS_PAR_POOL
-                };
-            }
-
-            const creation = decision.action === "creer";
-            const pool = creation ? instantDraft.creerPool(username) : draftData[decision.nom];
-            // creerPool() a déjà installé son premier joueur dans Équipe 1.
-            const teamName = creation ? "Équipe 1" : instantDraft.inscrire(pool, username);
-
-            if (!teamName) {
-                // Sous verrou, la place ne peut pas s'être envolée entre la
-                // décision et l'inscription. Si ça arrive quand même, mieux
-                // vaut le dire que renvoyer un succès sans équipe.
-                return { echec: "Aucune place libre dans ce pool. Réessayez." };
-            }
-
-            // Pool complet : il part de lui-même. Attendre que quelqu'un
-            // appuie sur « Commencer » n'aurait pas de sens entre inconnus —
-            // personne n'est l'hôte, et tout le monde vient pour repêcher tout
-            // de suite. Les autres écrans suivent : repechage.html bascule sur
-            // la salle de repêchage dès que draftUpdated arrive.
-            let started = false;
-            const equipes = instantDraft.equipesEligibles(pool);
-            if (instantDraft.doitDemarrer(pool) && equipes.length >= 2) {
-                const ordreInitial = [...equipes].sort(() => Math.random() - 0.5);
-                pool.draftOrder = generateSnakeOrder(ordreInitial, instantDraft.totalSelections(pool));
-                // Même horloge que /start-draft : l'heure du serveur, pour que
-                // tous les écrans comptent la même durée de tour.
-                pool.turnStartedAt = Date.now();
-                started = true;
-            }
-
-            await sauvegarderUnPool(decision.nom, pool);
-
-            return {
-                poolName: decision.nom,
-                teamName,
-                created: creation,
-                joined: true,
-                started,
-                participants: instantDraft.participants(pool),
-                maxPlayers: pool.maxPlayers || instantDraft.JOUEURS_PAR_POOL
-            };
-        });
-
-        if (resultat.echec) {
-            return res.status(409).json({ message: resultat.echec });
-        }
-
-        // Hors verrou : la diffusion n'a pas à retarder le prochain arrivant.
-        // Elle prévient les autres membres du pool — leur compteur de places
-        // avance, et si le repêchage vient de partir, leur page bascule seule
-        // vers la salle de sélection.
-        try {
-            const frais = await loadDraftData();
-            io.emit("draftUpdated", poolsPublics(frais));
-        } catch (erreur) {
-            console.error("⚠️ Diffusion du repêchage instantané impossible :", erreur);
-        }
-
-        const restantes = Math.max(0, resultat.maxPlayers - resultat.participants);
-        const message = resultat.started
-            ? "Le pool est complet, le repêchage commence !"
-            : resultat.created
-                ? `Nouveau repêchage instantané ouvert. En attente de ${restantes} joueur${restantes > 1 ? "s" : ""}.`
-                : resultat.joined
-                    ? `Vous avez rejoint ${resultat.poolName}. Il manque ${restantes} joueur${restantes > 1 ? "s" : ""}.`
-                    : `Vous êtes déjà dans ${resultat.poolName}.`;
-
-        res.json({ ...resultat, message });
-
-    } catch (error) {
-        console.error("❌ Erreur lors du repêchage instantané :", error);
-        res.status(500).json({ message: "Erreur interne du serveur." });
-    }
-});
 
 /**
  * Quitter la file.
@@ -1269,222 +728,10 @@ app.post("/join-instant-draft", async (req, res) => {
  * le verrou, ce départ effacerait une équipe dont l'ordre de sélection vient
  * d'être tiré.
  */
-app.post("/leave-instant-draft", async (req, res) => {
-    const username = typeof req.body?.username === "string" ? req.body.username.trim() : "";
-    if (!username) {
-        return res.status(400).json({ message: "Nom d'utilisateur requis." });
-    }
-
-    try {
-        const resultat = await sousVerrouInstantane(async () => {
-            const draftData = await loadDraftData();
-            const nomPool = instantDraft.poolDejaRejoint(draftData, username);
-
-            if (!nomPool) {
-                // Deux façons de ne pas être dans une file d'attente, et elles
-                // ne se disent pas pareil : n'y avoir jamais été, ou en être
-                // sorti parce que le repêchage est parti pendant qu'on hésitait.
-                return instantDraft.poolEnRepechage(draftData, username)
-                    ? { echec: "Le repêchage a déjà commencé : impossible de quitter maintenant.", code: 409 }
-                    : { echec: "Vous n'êtes dans aucun repêchage instantané.", code: 400 };
-            }
-
-            const pool = draftData[nomPool];
-            const teamName = instantDraft.retirer(pool, username);
-            if (!teamName) {
-                return { echec: "Impossible de quitter ce repêchage.", code: 409 };
-            }
-
-            const restants = instantDraft.participants(pool);
-            if (restants === 0) {
-                await supprimerUnPool(nomPool);
-            } else {
-                await sauvegarderUnPool(nomPool, pool);
-            }
-
-            return {
-                poolName: nomPool,
-                teamName,
-                participants: restants,
-                maxPlayers: pool.maxPlayers || instantDraft.JOUEURS_PAR_POOL,
-                deleted: restants === 0
-            };
-        });
-
-        if (resultat.echec) {
-            return res.status(resultat.code).json({ message: resultat.echec });
-        }
-
-        // Hors verrou, comme à l'entrée : ceux qui restent voient leur
-        // compteur reculer sans recharger.
-        try {
-            const frais = await loadDraftData();
-            io.emit("draftUpdated", poolsPublics(frais));
-        } catch (erreur) {
-            console.error("⚠️ Diffusion du départ instantané impossible :", erreur);
-        }
-
-        res.json({
-            ...resultat,
-            message: resultat.deleted
-                ? "Vous avez quitté la file. Le pool s'est refermé, personne n'y attendait plus."
-                : `Vous avez quitté ${resultat.poolName}.`
-        });
-
-    } catch (error) {
-        console.error("❌ Erreur lors du départ du repêchage instantané :", error);
-        res.status(500).json({ message: "Erreur interne du serveur." });
-    }
-});
 
 // 🔥 Route pour rejoindre un clan
-app.post("/join-team", async (req, res) => {
-    const { name, username, teamName, password } = req.body;
-    let draftData = await loadDraftData();
-
-    if (!draftData[name] || !draftData[name].teams[teamName]) {
-        return res.status(400).json({ message: "Clan ou équipe introuvable !" });
-    }
-
-    // Mot de passe du pool : exigé pour entrer, pas pour changer d'équipe
-    // une fois dedans. Un membre a déjà franchi la porte ; la lui refermer
-    // au nez à chaque changement n'ajouterait rien à la sécurité.
-    if (draftData[name].passwordHash) {
-        const dejaMembre = Object.values(draftData[name].teams)
-            .some(equipe => (equipe.members || []).includes(username));
-
-        if (!dejaMembre) {
-            if (typeof password !== "string" || password.length === 0) {
-                return res.status(401).json({
-                    message: "Ce pool est protégé par un mot de passe.",
-                    passwordRequired: true
-                });
-            }
-            const correspond = await bcrypt.compare(password, draftData[name].passwordHash);
-            if (!correspond) {
-                return res.status(401).json({
-                    message: "Mot de passe incorrect.",
-                    passwordRequired: true
-                });
-            }
-        }
-    }
-
-    // Check if draft has already started
-    if (draftData[name].draftOrder && draftData[name].draftOrder.length > 0) {
-        return res.status(400).json({ message: "Le draft a déjà commencé ! Vous ne pouvez plus rejoindre ou changer d'équipe." });
-    }
-
-    if (draftData[name].teams[teamName].members.includes(username)) {
-        return res.status(400).json({ message: "Vous êtes déjà membre de cette équipe !" });
-    }
-
-    if (draftData[name].teams[teamName].members.length >= 5) {
-        return res.status(400).json({ message: "Cette équipe est complète !" });
-    }
-
-    // Remove user from any other team in this clan first
-    Object.keys(draftData[name].teams).forEach(team => {
-        draftData[name].teams[team].members = draftData[name].teams[team].members.filter(m => m !== username);
-    });
-
-    draftData[name].teams[teamName].members.push(username);
-    await saveDraftData(draftData);
-    setTimeout(() => {
-            io.emit("draftUpdated", poolsPublics(draftData));
-        }, 2000); // ou 200ms
-        // 🔔 Notifie tous les clients
-
-
-    // ✅ Return full updated draft data so frontend refreshes
-    res.json({
-        message: `Vous avez rejoint l'équipe ${teamName} du clan ${name} avec succès !`,
-        draftData: poolsPublics(draftData)
-    });
-});
 
 // ✏️ Rename a team (only the member of that team can rename it)
-app.post("/rename-team", async (req, res) => {
-    try {
-        const { clanName, oldTeamName, newTeamName, username } = req.body;
-
-        if (!clanName || !oldTeamName || !newTeamName || !username) {
-            return res.status(400).json({ message: "Paramètres manquants." });
-        }
-
-        const sanitized = newTeamName.trim();
-
-        if (sanitized.length === 0 || sanitized.length > 20) {
-            return res.status(400).json({ message: "Le nom doit contenir entre 1 et 20 caractères." });
-        }
-
-        if (contientGrossierete(sanitized)) {
-            return res.status(400).json({
-                message: "Ce nom d'équipe contient un terme inapproprié. Choisissez-en un autre."
-            });
-        }
-
-        // Allow letters (incl. accented), numbers, spaces, hyphens, apostrophes, underscores
-        if (!/^[\p{L}\p{N}\s'\-_]+$/u.test(sanitized)) {
-            return res.status(400).json({ message: "Nom invalide. Caractères non autorisés." });
-        }
-
-        const draftData = await loadDraftData();
-        const clan = draftData[clanName];
-
-        if (!clan) return res.status(404).json({ message: "Pool introuvable." });
-        if (!clan.teams[oldTeamName]) return res.status(404).json({ message: "Équipe introuvable." });
-
-        if (!clan.teams[oldTeamName].members.includes(username)) {
-            return res.status(403).json({ message: "Vous ne pouvez renommer que votre propre équipe." });
-        }
-
-        if (sanitized === oldTeamName) {
-            return res.status(400).json({ message: "Le nouveau nom est identique à l'ancien." });
-        }
-
-        if (clan.teams[sanitized]) {
-            return res.status(400).json({ message: "Ce nom d'équipe est déjà utilisé." });
-        }
-
-        // Rename in teams object
-        clan.teams[sanitized] = clan.teams[oldTeamName];
-        delete clan.teams[oldTeamName];
-
-        // Update draftOrder
-        if (Array.isArray(clan.draftOrder)) {
-            clan.draftOrder = clan.draftOrder.map(t => t === oldTeamName ? sanitized : t);
-        }
-
-        // Update H2H data
-        if (clan.h2hData) {
-            if (clan.h2hData.standings && clan.h2hData.standings[oldTeamName]) {
-                clan.h2hData.standings[sanitized] = clan.h2hData.standings[oldTeamName];
-                delete clan.h2hData.standings[oldTeamName];
-            }
-            const updateMatchups = (matchups) => {
-                if (!Array.isArray(matchups)) return;
-                matchups.forEach(m => {
-                    if (m.team1 === oldTeamName) m.team1 = sanitized;
-                    if (m.team2 === oldTeamName) m.team2 = sanitized;
-                    if (m.winner === oldTeamName) m.winner = sanitized;
-                });
-            };
-            updateMatchups(clan.h2hData.matchups);
-            if (Array.isArray(clan.h2hData.matchupHistory)) {
-                clan.h2hData.matchupHistory.forEach(week => updateMatchups(week.matchups));
-            }
-        }
-
-        await saveDraftData(draftData);
-        io.emit("draftUpdated", poolsPublics(draftData));
-
-        res.json({ message: `Équipe renommée en "${sanitized}" avec succès !`, newTeamName: sanitized });
-    } catch (error) {
-        console.error("Erreur /rename-team:", error);
-        res.status(500).json({ message: "Erreur serveur." });
-    }
-});
 
 /* ✏️ Renommer un pool — réservé à la personne qui l'a créé.
  *
@@ -1498,414 +745,36 @@ app.post("/rename-team", async (req, res) => {
  * L'ordre des clés de draftData est reconstruit à l'identique : /draft le
  * diffuse tel quel et plusieurs écrans s'appuient sur cet ordre.
  */
-app.post("/rename-pool", async (req, res) => {
-    try {
-        const { oldName, newName, username } = req.body;
-
-        if (!oldName || !newName || !username) {
-            return res.status(400).json({ message: "Paramètres manquants." });
-        }
-
-        const draftData = await loadDraftData();
-        const clan = draftData[oldName];
-        if (!clan) return res.status(404).json({ message: "Pool introuvable." });
-
-        const createur = createurDuPool(clan);
-        if (!createur || createur !== username) {
-            return res.status(403).json({
-                message: "Seule la personne qui a créé le pool peut le renommer."
-            });
-        }
-
-        const propre = String(newName).trim();
-
-        if (propre === oldName) {
-            return res.status(400).json({ message: "Le nouveau nom est identique à l'ancien." });
-        }
-        if (propre.length < 3 || propre.length > 30) {
-            return res.status(400).json({
-                message: "Le nom du pool doit contenir entre 3 et 30 caractères."
-            });
-        }
-        if (!/^[\p{L}\p{N}\s'\-_]+$/u.test(propre)) {
-            return res.status(400).json({ message: "Nom invalide. Caractères non autorisés." });
-        }
-        if (contientGrossierete(propre)) {
-            return res.status(400).json({
-                message: "Ce nom de pool contient un terme inapproprié. Choisissez-en un autre."
-            });
-        }
-        // Comparaison insensible à la casse et aux accents : deux pools qui ne
-        // se distinguent que par un accent seraient impossibles à téléphoner.
-        const reduire = t => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        const collision = Object.keys(draftData).some(
-            nom => nom !== oldName && reduire(nom) === reduire(propre)
-        );
-        if (collision) {
-            return res.status(400).json({ message: "Un pool porte déjà ce nom." });
-        }
-
-        if (USE_POSTGRES) {
-            const resultat = await db.renamePool(oldName, propre);
-            if (!resultat.ok) {
-                return res.status(resultat.raison === 'existe' ? 400 : 404).json({
-                    message: resultat.raison === 'existe'
-                        ? "Un pool porte déjà ce nom."
-                        : "Pool introuvable."
-                });
-            }
-        }
-
-        // Même en Postgres on refait le tour en mémoire : loadDraftData() a pu
-        // servir depuis le fichier de repli, et saveDraftData() réécrit ensuite
-        // l'ensemble. La clé est reposée à sa place d'origine.
-        const reconstruit = {};
-        for (const [nom, donnees] of Object.entries(draftData)) {
-            if (nom === oldName) reconstruit[propre] = donnees;
-            else reconstruit[nom] = donnees;
-        }
-        for (const nom of Object.keys(draftData)) delete draftData[nom];
-        Object.assign(draftData, reconstruit);
-
-        await saveDraftData(draftData);
-
-        // L'ancienne entrée survivrait à côté de la nouvelle : saveDraftData()
-        // écrit pool par pool et ne supprime jamais rien.
-        if (USE_POSTGRES) {
-            try { await db.deletePool(oldName); } catch (e) {
-                console.error("Suppression de l'ancienne clé impossible :", e);
-            }
-        }
-
-        // Les échanges portent le nom du pool dans `draftName`. En Postgres
-        // db.renamePool() s'en est chargé ; en mode fichier c'est ici.
-        if (!USE_POSTGRES) {
-            try {
-                const trades = await loadTrades();
-                let touche = false;
-                const suivre = liste => {
-                    if (!Array.isArray(liste)) return;
-                    liste.forEach(t => {
-                        if (t && t.draftName === oldName) { t.draftName = propre; touche = true; }
-                        if (t && t.poolName === oldName) { t.poolName = propre; touche = true; }
-                    });
-                };
-                // Deux formes coexistent : à plat ({completed, pending}) dans le
-                // fichier, groupée par pool quand elle vient de la base.
-                suivre(trades.completed);
-                suivre(trades.pending);
-                Object.entries(trades).forEach(([cle, valeur]) => {
-                    if (cle === 'completed' || cle === 'pending' || !valeur) return;
-                    suivre(valeur.completed);
-                    suivre(valeur.pending);
-                    if (cle === oldName) { trades[propre] = valeur; delete trades[cle]; touche = true; }
-                });
-                if (touche) await saveTrades(trades);
-            } catch (erreur) {
-                console.error("Renommage des échanges impossible :", erreur);
-            }
-        }
-
-        // `draftUpdated` suffit à ramener tout le monde : les autres membres
-        // voient l'ancienne clé disparaître, et activePool.js retombe alors
-        // sur le pool par défaut — qui fait passer un repêchage en cours
-        // devant tout le reste, donc le pool renommé lui-même.
-        io.emit("draftUpdated", poolsPublics(draftData));
-
-        res.json({ message: `Pool renommé en « ${propre} ».`, newName: propre });
-    } catch (error) {
-        console.error("Erreur /rename-pool:", error);
-        res.status(500).json({ message: "Erreur serveur." });
-    }
-});
 
 // 🔒 Route d'inscription
-app.post("/signup", async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        if (!username || !password) return res.status(400).json({ message: "Nom d'utilisateur et mot de passe requis !" });
 
-        // Le contrôle vit ici et pas seulement dans le formulaire : la route
-        // est ouverte, un client n'est pas obligé de passer par la page.
-        if (contientGrossierete(username)) {
-            return res.status(400).json({
-                message: "Ce nom d'utilisateur contient un terme inapproprié. Choisissez-en un autre."
-            });
-        }
-
-        // Check if user already exists
-        if (USE_POSTGRES) {
-            const existingUser = await db.getUserByUsername(username);
-            if (existingUser) {
-                return res.status(400).json({ message: "Ce nom d'utilisateur est déjà pris !" });
-            }
-
-            // Create user in PostgreSQL
-            const hashedPassword = await bcrypt.hash(password, 10);
-            await db.createUser(username, hashedPassword, false);
-            console.log(`✅ User "${username}" created in PostgreSQL`);
-        } else {
-            // JSON file mode
-            let users = await loadUsers();
-            if (users.some(user => user.username === username)) {
-                return res.status(400).json({ message: "Ce nom d'utilisateur est déjà pris !" });
-            }
-
-            const hashedPassword = await bcrypt.hash(password, 10);
-            users.push({ username, password: hashedPassword });
-            await saveUsers(users);
-        }
-
-        res.json({ message: "Inscription réussie !" });
-    } catch (error) {
-        console.error("Erreur lors de l'inscription :", error);
-        res.status(500).json({ message: "Erreur interne du serveur." });
-    }
-});
-
-// 🧪 Route to create test users (admin only - use with caution)
-app.post("/create-test-users", async (req, res) => {
-    try {
-        const { adminToken } = req.body;
-
-        // Simple security check - only allow with admin token
-        if (adminToken !== 'admin') {
-            return res.status(403).json({ message: "Accès non autorisé" });
-        }
-
-        const testUsers = [
-            { username: 'alex', password: 'test123' },
-            { username: 'marie', password: 'test123' },
-            { username: 'jean', password: 'test123' },
-            { username: 'sophie', password: 'test123' },
-            { username: 'thomas', password: 'test123' },
-            { username: 'emma', password: 'test123' },
-        ];
-
-        let users = await loadUsers();
-        const created = [];
-        const skipped = [];
-
-        for (const testUser of testUsers) {
-            if (users.some(user => user.username === testUser.username)) {
-                skipped.push(testUser.username);
-                continue;
-            }
-
-            const hashedPassword = await bcrypt.hash(testUser.password, 10);
-            users.push({ username: testUser.username, password: hashedPassword, isAdmin: false });
-            created.push(testUser.username);
-        }
-
-        if (created.length > 0) {
-            await saveUsers(users);
-        }
-
-        res.json({
-            message: `Utilisateurs de test créés avec succès!`,
-            created: created,
-            skipped: skipped,
-            info: "Mot de passe pour tous: test123"
-        });
-    } catch (error) {
-        console.error("Erreur lors de la création des utilisateurs de test:", error);
-        res.status(500).json({ message: "Erreur interne du serveur." });
-    }
-});
 
 // 🔑 Route de connexion
-app.post("/login", async (req, res) => {
-    try {
-        const { username, password } = req.body;
-
-        let user;
-        if (USE_POSTGRES) {
-            // Get user with password from PostgreSQL
-            user = await db.getUserByUsername(username);
-        } else {
-            // JSON file mode
-            let users = await loadUsers();
-            user = users.find(u => u.username === username);
-        }
-
-        if (!user) return res.status(400).json({ message: "Utilisateur non trouvé !" });
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ message: "Mot de passe incorrect !" });
-
-        // Include avatarUrl so client can store it in localStorage
-        const avatarUrl = USE_POSTGRES ? (user.avatarUrl || '') : (user.avatarUrl || '');
-        res.json({ message: "Connexion réussie !", username, avatarUrl });
-
-    } catch (error) {
-        console.error("Erreur lors de la connexion :", error);
-        res.status(500).json({ message: "Erreur interne du serveur." });
-    }
-});
 
 // 🔐 Admin login endpoint
-app.post("/admin-login", async (req, res) => {
-    try {
-        const { username, password } = req.body;
-
-        // Hardcoded admin credentials
-        if (username === "admin" && password === "zubzub") {
-            return res.json({
-                message: "Admin connexion réussie !",
-                isAdmin: true,
-                username: "admin"
-            });
-        }
-
-        return res.status(401).json({ message: "Identifiants admin invalides !" });
-    } catch (error) {
-        console.error("Erreur lors de la connexion admin :", error);
-        res.status(500).json({ message: "Erreur interne du serveur." });
-    }
-});
 
 // ─── Droits Loi 25 : portabilité et suppression de compte ─────────────────────
 // La politique de confidentialité promet ces droits ; ils doivent être
 // réellement exécutables. Les deux routes exigent le mot de passe : ce sont des
 // opérations sensibles (l'une expose toutes les données, l'autre les détruit).
 
-/** Vérifie username + mot de passe. Retourne l'utilisateur ou null. */
-const authenticateUser = async (username, password) => {
-    if (!username || !password) return null;
-    let user;
-    if (USE_POSTGRES) {
-        user = await db.getUserByUsername(username);
-    } else {
-        const users = await loadUsers();
-        user = users.find(u => u.username === username);
-    }
-    if (!user) return null;
-    const isMatch = await bcrypt.compare(password, user.password);
-    return isMatch ? user : null;
-};
 
 // POST /account/export — portabilité : toutes les données de l'utilisateur.
-app.post("/account/export", async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        const user = await authenticateUser(username, password);
-        if (!user) return res.status(401).json({ message: "Identifiants invalides." });
-
-        const draftData = await loadDraftData();
-        const pools = [];
-        Object.entries(draftData || {}).forEach(([poolName, poolData]) => {
-            Object.entries(poolData.teams || {}).forEach(([teamName, teamData]) => {
-                if ((teamData.members || []).includes(username)) {
-                    pools.push({
-                        pool: poolName,
-                        equipe: teamName,
-                        joueursRepeches: {
-                            offensive: teamData.offensive || [],
-                            defensive: teamData.defensive || [],
-                            goalie: teamData.goalie || [],
-                            team: teamData.team || []
-                        }
-                    });
-                }
-            });
-        });
-
-        // Le mot de passe (même haché) n'est jamais exporté.
-        res.setHeader('Content-Disposition',
-            `attachment; filename="fantazy-donnees-${username}.json"`);
-        res.json({
-            genereLe: new Date().toISOString(),
-            compte: {
-                nomUtilisateur: user.username,
-                photoProfil: user.avatarUrl || null
-            },
-            pools,
-            note: "Export complet des renseignements personnels détenus par Fantazy. "
-                + "Le mot de passe n'est conservé que sous forme de empreinte bcrypt "
-                + "et n'est pas exportable."
-        });
-    } catch (error) {
-        console.error("Erreur lors de l'export du compte :", error);
-        res.status(500).json({ message: "Erreur interne du serveur." });
-    }
-});
 
 // POST /account/delete — droit à la suppression.
-app.post("/account/delete", async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        const user = await authenticateUser(username, password);
-        if (!user) return res.status(401).json({ message: "Identifiants invalides." });
-
-        // 1. Dissocier l'utilisateur de tous les pools. On retire l'appartenance
-        //    sans effacer les sélections : supprimer une équipe entière fausserait
-        //    le classement des autres participants (cf. politique, section 5).
-        const draftData = await loadDraftData();
-        let poolsTouches = 0;
-        Object.values(draftData || {}).forEach(poolData => {
-            Object.values(poolData.teams || {}).forEach(teamData => {
-                if (Array.isArray(teamData.members) && teamData.members.includes(username)) {
-                    teamData.members = teamData.members.filter(m => m !== username);
-                    poolsTouches++;
-                }
-            });
-        });
-        if (poolsTouches > 0) await saveDraftData(draftData);
-
-        // 2. Supprimer la photo de profil téléversée.
-        if (user.avatarUrl && user.avatarUrl.startsWith('/uploads/avatars/')) {
-            const avatarPath = path.join(__dirname, user.avatarUrl.replace(/^\//, ''));
-            try {
-                if (fs.existsSync(avatarPath)) fs.unlinkSync(avatarPath);
-            } catch (e) {
-                console.warn("⚠️ Photo de profil non supprimée :", e.message);
-            }
-        }
-
-        // 3. Supprimer le compte.
-        if (USE_POSTGRES) {
-            await db.deleteUser(username);
-        } else {
-            const users = await loadUsers();
-            await saveUsers(users.filter(u => u.username !== username));
-        }
-
-        console.log(`🗑️ Compte supprimé : ${username} (dissocié de ${poolsTouches} équipe(s))`);
-        res.json({ message: "Compte supprimé définitivement.", poolsTouches });
-    } catch (error) {
-        console.error("Erreur lors de la suppression du compte :", error);
-        res.status(500).json({ message: "Erreur interne du serveur." });
-    }
-});
 
 // ─── Profile picture endpoints ────────────────────────────────────────────────
 
 // GET /user-profile/:username — public profile info (no password)
-app.get("/user-profile/:username", async (req, res) => {
-    try {
-        const { username } = req.params;
-        if (USE_POSTGRES) {
-            const user = await db.getUserByUsername(username);
-            if (!user) return res.status(404).json({ message: "Utilisateur non trouvé." });
-            return res.json({ username: user.username, avatarUrl: user.avatarUrl || '' });
-        } else {
-            const users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
-            const user = users.find(u => u.username === username);
-            if (!user) return res.status(404).json({ message: "Utilisateur non trouvé." });
-            return res.json({ username: user.username, avatarUrl: user.avatarUrl || '' });
-        }
-    } catch (error) {
-        console.error("Erreur /user-profile:", error);
-        res.status(500).json({ message: "Erreur interne." });
-    }
-});
 
 // POST /upload/user-avatar — multipart, field "avatar", body param "username"
-app.post("/upload/user-avatar", uploadAvatar.single('avatar'), async (req, res) => {
+app.post("/upload/user-avatar", (req, res, next) => auth.requireAuth(req, res, next),
+    uploadAvatar.single('avatar'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ message: "Aucun fichier reçu." });
-        const { username } = req.body;
-        if (!username) return res.status(400).json({ message: "Nom d'utilisateur requis." });
+        // L'identité vient de la session : le champ du formulaire permettait de
+        // remplacer la photo de profil de n'importe qui.
+        const username = req.auth.username;
 
         const avatarUrl = `/uploads/avatars/${req.file.filename}`;
 
@@ -1945,54 +814,6 @@ app.post("/upload/user-avatar", uploadAvatar.single('avatar'), async (req, res) 
 // contrôle, n'importe quel compte pouvait remplacer la vignette de n'importe
 // quelle ligue. La création appelle cette route juste après /create-clan,
 // donc le pool existe déjà et son créateur est connu.
-app.post("/upload/pool-image", uploadPool.single('image'), async (req, res) => {
-    try {
-        if (!req.file) return res.status(400).json({ message: "Aucun fichier reçu." });
-        const { poolName, username } = req.body;
-        if (!poolName) return res.status(400).json({ message: "Nom du pool requis." });
-
-        const imageUrl = `/uploads/pools/${req.file.filename}`;
-        const draftData = await loadDraftData();
-        const clan = draftData[poolName];
-
-        // multer a déjà écrit le fichier sur le disque quand ce gestionnaire
-        // s'exécute : un refus laisserait un orphelin que plus rien ne
-        // référence. On le retire avant de répondre.
-        const jeter = () => {
-            try {
-                const chemin = path.join(__dirname, 'uploads', 'pools', req.file.filename);
-                if (fs.existsSync(chemin)) fs.unlinkSync(chemin);
-            } catch (e) {
-                console.error("Nettoyage de l'image refusée impossible :", e);
-            }
-        };
-
-        if (!clan) { jeter(); return res.status(404).json({ message: "Pool non trouvé." }); }
-
-        const createur = createurDuPool(clan);
-        if (!createur || createur !== username) {
-            jeter();
-            return res.status(403).json({
-                message: "Seule la personne qui a créé le pool peut changer son image."
-            });
-        }
-
-        // Delete old image if present
-        if (clan.imageUrl && clan.imageUrl.startsWith('/uploads/')) {
-            const oldPath = path.join(__dirname, clan.imageUrl);
-            if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-        }
-
-        clan.imageUrl = imageUrl;
-        await saveDraftData(draftData);
-        io.emit("draftUpdated", poolsPublics(draftData));
-
-        res.json({ imageUrl });
-    } catch (error) {
-        console.error("Erreur upload pool image:", error);
-        res.status(500).json({ message: error.message || "Erreur interne." });
-    }
-});
 
 // Multer error handler (file type / size rejections)
 app.use((err, req, res, next) => {
@@ -2005,57 +826,9 @@ app.use((err, req, res, next) => {
 // ──────────────────────────────────────────────────────────────────────────────
 
 // 🔐 Admin switch user endpoint
-app.post("/admin-switch-user", async (req, res) => {
-    try {
-        const { adminToken, targetUsername } = req.body;
-
-        // Verify admin token (in a real app, use proper JWT or session)
-        if (adminToken !== "admin") {
-            return res.status(403).json({ message: "Accès refusé. Admin seulement." });
-        }
-
-        // Check if target user exists
-        let users = await loadUsers();
-        const user = users.find(u => u.username === targetUsername);
-
-        if (!user) {
-            return res.status(404).json({ message: "Utilisateur non trouvé !" });
-        }
-
-        res.json({
-            message: `Basculé vers l'utilisateur ${targetUsername}`,
-            username: targetUsername
-        });
-    } catch (error) {
-        console.error("Erreur lors du changement d'utilisateur :", error);
-        res.status(500).json({ message: "Erreur interne du serveur." });
-    }
-});
 
 // 🔐 Get all users (admin only)
-app.get("/admin-users", async (req, res) => {
-    try {
-        const { adminToken } = req.query;
 
-        if (adminToken !== "admin") {
-            return res.status(403).json({ message: "Accès refusé. Admin seulement." });
-        }
-
-        let users = await loadUsers();
-        const usernames = users.map(u => u.username);
-
-        res.json({ users: usernames });
-    } catch (error) {
-        console.error("Erreur lors de la récupération des utilisateurs :", error);
-        res.status(500).json({ message: "Erreur interne du serveur." });
-    }
-});
-
-(async () => {
-    const hash = await bcrypt.hash("testpassword", 10);
-    const isMatch = await bcrypt.compare("testpassword", hash);
-    console.log("Test bcrypt:", isMatch);
-})();
 
 
 /* 🔥 Choisir l'identité LNH d'une équipe du pool — avant le repêchage.
@@ -2071,119 +844,10 @@ app.get("/admin-users", async (req, res) => {
  * figées dans teamColors.js : deux personnes qui regardent la même bande
  * doivent voir la même chose.
  */
-app.post("/start-draft", async (req, res) => {
-    const { clanName } = req.body;
-    if (!clanName) return res.status(400).json({ message: "Nom du clan requis." });
-
-    let draftData = await loadDraftData();
-    const clan = draftData[clanName];
-    if (!clan) return res.status(404).json({ message: "Clan introuvable." });
-
-    const eligibleTeams = Object.entries(clan.teams)
-        .filter(([_, team]) => team.members.length > 0)
-        .map(([teamName]) => teamName)
-        .sort(); // ✅ Sort alphabetically: Équipe 1, Équipe 2, Équipe 3
-
-    if (eligibleTeams.length < 2) {
-        return res.status(400).json({
-            message: "Il faut au moins 2 équipes avec des joueurs pour démarrer le draft."
-        });
-    }
-
-    if (clan.draftOrder.length === 0) {
-        // Calculate total picks based on pool configuration
-        const config = clan.config || {
-            numOffensive: 6,
-            numDefensive: 4,
-            numGoalies: 1,
-            numRookies: 1,
-            numTeams: 1
-        };
-        const totalPicks = config.numOffensive + config.numDefensive + config.numGoalies + config.numRookies + config.numTeams;
-
-        // Aucun choix réel n'a encore eu lieu : tout ce que team.teams
-        // contiendrait vient d'un pool créé avant que l'équipe de la LNH
-        // devienne un pick comme un autre. On repart de zéro, sinon ces pools
-        // démarreraient avec leur case « équipe LNH » déjà pleine et le pick
-        // correspondant serait impossible à faire.
-        Object.values(clan.teams || {}).forEach(t => { t.teams = []; });
-
-        clan.draftOrder = generateSnakeOrder(eligibleTeams, totalPicks);
-        // Départ de la pendule du premier tour. L'heure vient du serveur pour
-        // que les dix écrans comptent la même durée : une horloge locale ferait
-        // dire à chacun autre chose, et « ça dure depuis 4 min » ne voudrait
-        // plus rien dire.
-        clan.turnStartedAt = Date.now();
-        await saveDraftData(draftData);
-        io.emit("draftUpdated", poolsPublics(draftData));
-        return res.json({ message: "✅ Draft démarré avec succès avec ordre serpentin !" });
-    } else {
-        return res.json({ message: "Le draft est déjà en cours." });
-    }
-});
 
 
-app.post("/randomize-draft-order", async (req, res) => {
-    const { clanName } = req.body;
-    if (!clanName) return res.status(400).json({ message: "Nom du clan requis." });
-
-    let draftData = await loadDraftData();
-    const clan = draftData[clanName];
-    if (!clan) return res.status(404).json({ message: "Clan introuvable." });
-
-    // ✅ Cette vérification doit venir après avoir défini `clan`
-    if (clan.draftOrder && clan.draftOrder.length > 0) {
-        return res.status(400).json({ message: "Le draft a déjà un ordre défini." });
-    }
-
-    const eligibleTeams = Object.entries(clan.teams)
-        .filter(([_, team]) => team.members.length > 0)
-        .map(([teamName]) => teamName);
-
-    if (eligibleTeams.length < 2) {
-        return res.status(400).json({ message: "Pas assez d'équipes pour générer un ordre de draft." });
-    }
-
-    // Calculate total picks based on pool configuration
-    const config = clan.config || {
-        numOffensive: 6,
-        numDefensive: 4,
-        numGoalies: 1,
-        numRookies: 1,
-        numTeams: 1
-    };
-    const totalPicks = config.numOffensive + config.numDefensive + config.numGoalies + config.numRookies + config.numTeams;
-
-    const initialOrder = [...eligibleTeams].sort(() => Math.random() - 0.5);
-    clan.draftOrder = generateSnakeOrder(initialOrder, totalPicks);
-    await saveDraftData(draftData);
-
-    res.json({ message: "Ordre de draft généré en serpentin.", draftOrder: clan.draftOrder });
-});
 
 
-app.post("/cleanup-draft", async (req, res) => {
-    const { clanName } = req.body;
-    let draftData = await loadDraftData();
-
-    if (!draftData[clanName]) {
-        return res.status(400).json({ message: "Clan introuvable." });
-    }
-
-    const teams = draftData[clanName].teams;
-    Object.keys(teams).forEach(team => {
-        if (
-            teams[team].members.length === 0 &&
-            teams[team].offensive.length === 0 &&
-            teams[team].defensive.length === 0
-        ) {
-            delete teams[team];
-        }
-    });
-
-    await saveDraftData(draftData);
-    res.json({ message: "Nettoyage effectué.", draftData: poolsPublics(draftData)[clanName] });
-});
 
 // ==================== NHL CURRENT STATS SYSTEM ====================
 
@@ -5144,486 +3808,19 @@ const saveTrades = async (tradesData) => {
 
 
 // Get completed trades for a draft
-app.get('/trades/:draftName', async (req, res) => {
-    try {
-        const { draftName } = req.params;
-        const trades = await loadTrades();
-        const draftTrades = (trades.completed || []).filter(t => t.draftName === draftName);
-        res.json(draftTrades);
-    } catch (error) {
-        console.error("Error loading trades:", error);
-        res.status(500).json({ message: "Error loading trades" });
-    }
-});
 
 // Get all trades (for completed trades history)
-app.get('/trades/all', async (req, res) => {
-    try {
-        if (USE_POSTGRES) {
-            const tradesResult = await db.query(
-                'SELECT id, pool_name, trade_data, status, created_at FROM trades ORDER BY created_at DESC'
-            );
-
-            const allTrades = tradesResult.rows.map(row => ({
-                id: row.id,
-                draftName: row.pool_name,
-                ...row.trade_data,
-                status: row.status
-            }));
-
-            return res.json(allTrades);
-        }
-
-        // JSON-file fallback (dev without a database)
-        const trades = await loadTrades();
-        const allTrades = [...(trades.completed || []), ...(trades.pending || [])]
-            .sort((a, b) => new Date(b.date) - new Date(a.date));
-        res.json(allTrades);
-    } catch (error) {
-        console.error("Error loading all trades:", error);
-        res.status(500).json({ message: "Error loading trades" });
-    }
-});
 
 // Get completed trades for a user
-app.get('/trades/completed/:username', async (req, res) => {
-    try {
-        const { username } = req.params;
-
-        console.log(`Fetching completed trades for user: ${username}`);
-
-        if (USE_POSTGRES) {
-            // Retain every resolved proposal, including conflicting trades
-            // cancelled on acceptance, so notification links remain useful.
-            const tradesResult = await db.query(
-                "SELECT id, pool_name, trade_data, status, created_at, updated_at FROM trades WHERE status IN ('completed', 'declined', 'cancelled') ORDER BY COALESCE(updated_at, created_at) DESC"
-            );
-
-            console.log(`Total completed/declined trades in DB: ${tradesResult.rows.length}`);
-
-            const userCompletedTrades = [];
-
-            // Filter trades where user is involved (member of fromTeam or toTeam)
-            for (const row of tradesResult.rows) {
-                const tradeData = row.trade_data;
-                const poolName = row.pool_name;
-
-                // Get pool data
-                const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
-                if (poolResult.rows.length === 0) {
-                    console.log(`Pool ${poolName} not found`);
-                    continue;
-                }
-
-                const pool = poolResult.rows[0].pool_data;
-                const fromTeam = pool.teams[tradeData.fromTeam];
-                const toTeam = pool.teams[tradeData.toTeam];
-
-                if (!fromTeam || !toTeam) {
-                    console.log(`Teams not found in pool ${poolName}`);
-                    continue;
-                }
-
-                // Check if user is member of either team
-                const isInFromTeam = fromTeam.members && fromTeam.members.includes(username);
-                const isInToTeam = toTeam.members && toTeam.members.includes(username);
-
-                if (isInFromTeam || isInToTeam) {
-                    userCompletedTrades.push({
-                        id: row.id,
-                        draftName: poolName,
-                        fromTeam: tradeData.fromTeam,
-                        toTeam: tradeData.toTeam,
-                        offering: tradeData.offering,
-                        receiving: tradeData.receiving,
-                        status: row.status,
-                        date: tradeData.date,
-                        completedDate: tradeData.completedDate || row.updated_at || row.created_at
-                    });
-                }
-            }
-
-            console.log(`Found ${userCompletedTrades.length} completed/declined trades for ${username}`);
-            return res.json(userCompletedTrades);
-        }
-
-        // JSON-file fallback (dev without a database)
-        const trades = await loadTrades();
-        const draftData = await loadDraftData();
-
-        const userCompletedTrades = (trades.completed || []).filter(trade => {
-            const pool = draftData[trade.draftName];
-            const fromTeam = pool?.teams?.[trade.fromTeam];
-            const toTeam = pool?.teams?.[trade.toTeam];
-            if (!fromTeam || !toTeam) return false;
-            return fromTeam.members?.includes(username) || toTeam.members?.includes(username);
-        });
-
-        console.log(`Found ${userCompletedTrades.length} completed trades for ${username}`);
-        res.json(userCompletedTrades);
-    } catch (error) {
-        console.error("Error loading completed trades:", error);
-        res.status(500).json({ message: "Error loading completed trades" });
-    }
-});
 
 // Get pending trades for a user
-app.get('/trades/pending/:username', async (req, res) => {
-    try {
-        const { username } = req.params;
-
-        console.log(`Checking pending trades for user: ${username}`);
-
-        if (USE_POSTGRES) {
-            // Get all pending trades from PostgreSQL
-            const tradesResult = await db.query(
-                'SELECT id, pool_name, trade_data, created_at FROM trades WHERE status = $1',
-                ['pending']
-            );
-
-            console.log(`Total pending trades in DB: ${tradesResult.rows.length}`);
-
-            // Filter trades where user is the recipient
-            const userPendingTrades = [];
-
-            for (const row of tradesResult.rows) {
-                const tradeData = row.trade_data;
-                const poolName = row.pool_name;
-
-                // Get pool data
-                const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
-                if (poolResult.rows.length === 0) {
-                    console.log(`Pool ${poolName} not found`);
-                    continue;
-                }
-
-                const pool = poolResult.rows[0].pool_data;
-                const targetTeam = pool.teams[tradeData.toTeam];
-
-                if (!targetTeam) {
-                    console.log(`Team ${tradeData.toTeam} not found in pool ${poolName}`);
-                    continue;
-                }
-
-                const isRecipient = targetTeam.members && targetTeam.members.includes(username);
-                console.log(`Trade ${row.id}: ${tradeData.fromTeam} → ${tradeData.toTeam}, User is recipient: ${isRecipient}`);
-
-                if (isRecipient) {
-                    userPendingTrades.push({
-                        id: row.id,
-                        draftName: poolName,
-                        fromTeam: tradeData.fromTeam,
-                        toTeam: tradeData.toTeam,
-                        offering: tradeData.offering,
-                        receiving: tradeData.receiving,
-                        status: 'pending',
-                        date: tradeData.date
-                    });
-                }
-            }
-
-            console.log(`Found ${userPendingTrades.length} pending trades for ${username}`);
-            return res.json(userPendingTrades);
-        }
-
-        // JSON-file fallback (dev without a database)
-        const trades = await loadTrades();
-        const draftData = await loadDraftData();
-
-        const userPendingTrades = (trades.pending || []).filter(trade => {
-            const pool = draftData[trade.draftName];
-            const targetTeam = pool?.teams?.[trade.toTeam];
-            return targetTeam?.members?.includes(username);
-        });
-
-        console.log(`Found ${userPendingTrades.length} pending trades for ${username}`);
-        res.json(userPendingTrades);
-    } catch (error) {
-        console.error("Error loading pending trades:", error);
-        res.status(500).json({ message: "Error loading pending trades" });
-    }
-});
 
 // Send a trade proposal
-app.post('/trade/propose', async (req, res) => {
-    try {
-        const { draftName, fromTeam, toTeam, offering, receiving } = req.body;
-
-        if (!draftName || !fromTeam || !toTeam || !offering || !receiving) {
-            return res.status(400).json({ message: "Missing required fields" });
-        }
-
-        // ============================================================
-        // VALIDATION: 1-for-1 Position-Locked Trades ONLY
-        // ============================================================
-
-        // Validate exactly 1 player offered and 1 received
-        if (offering.length !== 1 || receiving.length !== 1) {
-            return res.status(400).json({
-                message: "❌ Échanges 1-pour-1 seulement! Vous devez échanger exactement 1 joueur contre 1 joueur."
-            });
-        }
-
-        const offeredPlayer = offering[0];
-        const receivedPlayer = receiving[0];
-
-        // Validate position/type match
-        if (offeredPlayer.type !== receivedPlayer.type) {
-            return res.status(400).json({
-                message: `❌ Position invalide! Les joueurs doivent être de la même catégorie.\nVous offrez: ${getPositionLabel(offeredPlayer.type)}\nVous recevez: ${getPositionLabel(receivedPlayer.type)}\n\nÉchanges autorisés:\n• Attaquant ↔ Attaquant\n• Défenseur ↔ Défenseur\n• Gardien ↔ Gardien`
-            });
-        }
-
-        // Get pool data from PostgreSQL
-        const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [draftName]);
-        if (poolResult.rows.length === 0) {
-            return res.status(404).json({ message: "Pool not found" });
-        }
-
-        const pool = poolResult.rows[0].pool_data;
-        if (pool.allowTrades === false) {
-            return res.status(403).json({ message: "Les échanges ne sont pas autorisés dans ce pool" });
-        }
-
-        // Le repêchage doit être terminé pour TOUTES les équipes avant qu'un
-        // échange ait un sens : sinon on négocierait des joueurs qu'un pick
-        // à venir pourrait encore rendre indisponibles, ou qu'une équipe
-        // n'a même pas fini de sélectionner. Le client bloque déjà l'assistant
-        // (voir trade.js), ce contrôle est la version qui ne se contourne pas.
-        if (!checkIfDraftComplete(pool)) {
-            return res.status(403).json({
-                message: "Le repêchage de ce pool n'est pas encore terminé. Les échanges ouvrent une fois tous les choix faits."
-            });
-        }
-
-        // VALIDATION: Check if fromTeam exists and has offered player
-        const fromTeamData = pool.teams[fromTeam];
-        if (!fromTeamData) {
-            return res.status(404).json({ message: "Votre équipe n'a pas été trouvée" });
-        }
-
-        const missingPlayers = [];
-        offering.forEach(item => {
-            if (!teamHasPlayer(fromTeamData, item)) {
-                missingPlayers.push(item.name);
-            }
-        });
-
-        if (missingPlayers.length > 0) {
-            return res.status(400).json({
-                message: `Vous ne possédez pas: ${missingPlayers.join(', ')}`
-            });
-        }
-
-        // Insert trade into PostgreSQL
-        const tradeData = {
-            fromTeam,
-            toTeam,
-            offering,
-            receiving,
-            date: new Date().toISOString()
-        };
-
-        const insertResult = await db.query(
-            `INSERT INTO trades (pool_name, trade_data, status, created_at, updated_at)
-             VALUES ($1, $2, $3, NOW(), NOW())
-             RETURNING id`,
-            [draftName, JSON.stringify(tradeData), 'pending']
-        );
-
-        const tradeId = insertResult.rows[0].id;
-
-        // Invalidate only: clients fetch their own proposals through the
-        // existing user endpoint. Never broadcast private trade details.
-        io.emit('tradePending');
-
-        console.log(`📤 Trade proposed: ${fromTeam} → ${toTeam} (${offeredPlayer.type}: ${offeredPlayer.name} ↔ ${receivedPlayer.name})`);
-
-        res.json({ message: "Trade proposal sent successfully", tradeId });
-    } catch (error) {
-        console.error("Error sending trade proposal:", error);
-        res.status(500).json({ message: "Error sending trade proposal" });
-    }
-});
 
 
 // Accept a trade
-app.post('/trade/accept', async (req, res) => {
-    try {
-        const { tradeId } = req.body;
-        console.log(`Accepting trade ID: ${tradeId}`);
-
-        // Get trade from PostgreSQL
-        const tradeResult = await db.query(
-            'SELECT id, pool_name, trade_data, status FROM trades WHERE id = $1',
-            [tradeId]
-        );
-
-        if (tradeResult.rows.length === 0) {
-            return res.status(404).json({ message: "Trade not found" });
-        }
-
-        const tradeRow = tradeResult.rows[0];
-        if (tradeRow.status !== 'pending') {
-            return res.status(400).json({ message: "Trade is no longer pending" });
-        }
-
-        const trade = tradeRow.trade_data;
-        const poolName = tradeRow.pool_name;
-
-        // Get pool data
-        const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
-        if (poolResult.rows.length === 0) {
-            return res.status(404).json({ message: "Pool not found" });
-        }
-
-        const pool = poolResult.rows[0].pool_data;
-
-        // Check if pool allows trades
-        if (pool.allowTrades === false) {
-            return res.status(403).json({ message: "Les échanges ne sont pas autorisés dans ce pool" });
-        }
-
-        const fromTeam = pool.teams[trade.fromTeam];
-        const toTeam = pool.teams[trade.toTeam];
-
-        if (!fromTeam || !toTeam) {
-            return res.status(404).json({ message: "Teams not found" });
-        }
-
-        // VALIDATION: Check if fromTeam still has all offered players
-        const fromMissingPlayers = [];
-        trade.offering.forEach(item => {
-            if (!teamHasPlayer(fromTeam, item)) {
-                fromMissingPlayers.push(item.name);
-            }
-        });
-
-        if (fromMissingPlayers.length > 0) {
-            return res.status(400).json({
-                message: `${trade.fromTeam} no longer has: ${fromMissingPlayers.join(', ')}`
-            });
-        }
-
-        // VALIDATION: Check if toTeam still has all receiving players
-        const toMissingPlayers = [];
-        trade.receiving.forEach(item => {
-            if (!teamHasPlayer(toTeam, item)) {
-                toMissingPlayers.push(item.name);
-            }
-        });
-
-        if (toMissingPlayers.length > 0) {
-            return res.status(400).json({
-                message: `${trade.toTeam} no longer has: ${toMissingPlayers.join(', ')}`
-            });
-        }
-
-        // EXECUTE TRADE: Swap players between teams
-        trade.offering.forEach(item => {
-            removeFromTeam(fromTeam, item);
-            addToTeam(toTeam, item);
-        });
-
-        trade.receiving.forEach(item => {
-            removeFromTeam(toTeam, item);
-            addToTeam(fromTeam, item);
-        });
-
-        // Update pool in PostgreSQL
-        await db.query(
-            'UPDATE pools SET pool_data = $1, updated_at = NOW() WHERE pool_name = $2',
-            [JSON.stringify(pool), poolName]
-        );
-
-        // Mark trade as completed in PostgreSQL
-        const updatedTradeData = {
-            ...trade,
-            status: 'accepted',
-            completedDate: new Date().toISOString()
-        };
-
-        await db.query(
-            'UPDATE trades SET trade_data = $1, status = $2, updated_at = NOW() WHERE id = $3',
-            [JSON.stringify(updatedTradeData), 'completed', tradeId]
-        );
-
-        // Cancel conflicting trades
-        const conflictingTrades = await db.query(
-            `SELECT id, trade_data FROM trades
-             WHERE pool_name = $1 AND status = 'pending' AND id != $2`,
-            [poolName, tradeId]
-        );
-
-        let cancelledCount = 0;
-        for (const conflictRow of conflictingTrades.rows) {
-            const conflictTrade = conflictRow.trade_data;
-
-            // Check if any players in this trade were involved in the accepted trade
-            const involvesOfferedPlayers = trade.offering.some(p =>
-                conflictTrade.offering.some(cp => cp.name === p.name) ||
-                conflictTrade.receiving.some(cp => cp.name === p.name)
-            );
-
-            const involvesReceivedPlayers = trade.receiving.some(p =>
-                conflictTrade.offering.some(cp => cp.name === p.name) ||
-                conflictTrade.receiving.some(cp => cp.name === p.name)
-            );
-
-            if (involvesOfferedPlayers || involvesReceivedPlayers) {
-                await db.query(
-                    'UPDATE trades SET status = $1, updated_at = NOW() WHERE id = $2',
-                    ['cancelled', conflictRow.id]
-                );
-                cancelledCount++;
-            }
-        }
-
-        // All affected trade statuses have been persisted at this point.
-        io.emit('tradeUpdated');
-
-        // A "for sale" listing on a player who just changed teams would be
-        // actively misleading, so it auto-clears here — the one case a
-        // listing disappears without the owner manually unlisting it.
-        await db.removeTradeListingByPlayer(poolName, trade.offering[0].name);
-        await db.removeTradeListingByPlayer(poolName, trade.receiving[0].name);
-
-        console.log(`✅ Trade accepted: ${trade.fromTeam} ↔ ${trade.toTeam} (${cancelledCount} conflicting trades cancelled)`);
-
-        res.json({
-            message: "Trade accepted successfully",
-            cancelledConflictingTrades: cancelledCount
-        });
-    } catch (error) {
-        console.error("Error accepting trade:", error);
-        res.status(500).json({ message: "Error accepting trade" });
-    }
-});
 
 // Decline a trade
-app.post('/trade/decline', async (req, res) => {
-    try {
-        const { tradeId } = req.body;
-
-        // Update trade status to declined in PostgreSQL
-        const result = await db.query(
-            'UPDATE trades SET status = $1, updated_at = NOW() WHERE id = $2 AND status = $3',
-            ['declined', tradeId, 'pending']
-        );
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({ message: "Trade not found or already processed" });
-        }
-
-        io.emit('tradeUpdated');
-
-        console.log(`❌ Trade declined: ${tradeId}`);
-        res.json({ message: "Trade declined successfully" });
-    } catch (error) {
-        console.error("Error declining trade:", error);
-        res.status(500).json({ message: "Error declining trade" });
-    }
-});
 
 // ============================================================
 // TRADE LISTINGS — a member flags one of their own players as open
@@ -5632,103 +3829,10 @@ app.post('/trade/decline', async (req, res) => {
 // ============================================================
 
 // Get all active listings for a pool
-app.get('/trade-listings/:poolName', async (req, res) => {
-    try {
-        const { poolName } = req.params;
-        const listings = await db.getActiveListingsForPool(poolName);
-        res.json(listings);
-    } catch (error) {
-        console.error("Error loading trade listings:", error);
-        res.status(500).json({ message: "Error loading trade listings" });
-    }
-});
 
 // List a player as open to offers
-app.post('/trade-listings', async (req, res) => {
-    try {
-        const { poolName, teamName, playerName, category, username } = req.body;
-
-        if (!poolName || !teamName || !playerName || !category || !username) {
-            return res.status(400).json({ message: "Missing required fields" });
-        }
-
-        const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
-        if (poolResult.rows.length === 0) {
-            return res.status(404).json({ message: "Pool not found" });
-        }
-
-        const pool = poolResult.rows[0].pool_data;
-        if (pool.allowTrades === false) {
-            return res.status(403).json({ message: "Les échanges ne sont pas autorisés dans ce pool" });
-        }
-
-        const teamData = pool.teams[teamName];
-        if (!teamData) {
-            return res.status(404).json({ message: "Équipe introuvable" });
-        }
-
-        if (!teamData.members || !teamData.members.includes(username)) {
-            return res.status(403).json({ message: "Vous ne faites pas partie de cette équipe" });
-        }
-
-        if (!teamHasPlayer(teamData, { type: category, name: playerName })) {
-            return res.status(400).json({ message: "Vous ne possédez pas ce joueur" });
-        }
-
-        if (!checkIfDraftComplete(pool)) {
-            return res.status(403).json({ message: "Le repêchage de ce pool n'est pas encore terminé." });
-        }
-
-        const id = await db.createTradeListing(poolName, teamName, playerName, category, username);
-        if (id === null) {
-            return res.status(409).json({ message: "Ce joueur est déjà en vente" });
-        }
-
-        io.emit('tradeListingsUpdated', { poolName });
-        console.log(`🏷️ ${playerName} listed for trade by ${teamName} (${poolName})`);
-        res.json({ id, message: "Joueur mis en vente" });
-    } catch (error) {
-        console.error("Error creating trade listing:", error);
-        res.status(500).json({ message: "Error creating trade listing" });
-    }
-});
 
 // Remove a listing (manual unlist)
-app.post('/trade-listings/:id/remove', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { username } = req.body;
-
-        if (!username) {
-            return res.status(400).json({ message: "Missing username" });
-        }
-
-        const listing = await db.getTradeListingById(id);
-        if (!listing || listing.status !== 'active') {
-            return res.status(404).json({ message: "Annonce introuvable" });
-        }
-
-        const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [listing.poolName]);
-        if (poolResult.rows.length === 0) {
-            return res.status(404).json({ message: "Pool not found" });
-        }
-        const teamData = poolResult.rows[0].pool_data.teams[listing.teamName];
-        if (!teamData || !teamData.members || !teamData.members.includes(username)) {
-            return res.status(403).json({ message: "Vous ne faites pas partie de cette équipe" });
-        }
-
-        const removed = await db.removeTradeListing(Number(id), listing.poolName, listing.teamName);
-        if (!removed) {
-            return res.status(404).json({ message: "Annonce déjà retirée" });
-        }
-
-        io.emit('tradeListingsUpdated', { poolName: listing.poolName });
-        res.json({ message: "Joueur retiré de la vente" });
-    } catch (error) {
-        console.error("Error removing trade listing:", error);
-        res.status(500).json({ message: "Error removing trade listing" });
-    }
-});
 
 // ============================================================
 // POOL LEADERBOARD — best team over a trailing window (7/14/30/90/
