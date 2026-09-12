@@ -32,6 +32,20 @@ Trois portes ouvertes se sont fermées :
 | `/admin-login` acceptait un mot de passe écrit dans le dépôt | Vérification normale, plus la colonne `is_admin` |
 | `?adminToken=admin` ouvrait `/admin-users` et la bascule de compte | Session d'administration exigée |
 
+Fermer `/admin-login` a laissé la serrure sans clé : rien ne mettait jamais
+`is_admin` à vrai. `/signup` crée `is_admin = false`, la migration la déclare
+`DEFAULT FALSE`, et aucune route ne la modifie — c'est voulu, une route qui
+promeut est une route qu'on attaque. La clé se taille hors ligne :
+
+```
+node tools/creer-admin.js <nom>                     # mot de passe tiré au sort
+node tools/creer-admin.js <nom> --mot-de-passe <m>  # mot de passe choisi
+```
+
+Le script écrit dans le magasin que le serveur utilise — PostgreSQL si
+`DATABASE_URL` est présent, sinon `users.json`. Sur un compte qui existe déjà,
+il promeut sans toucher au mot de passe.
+
 **Portée des données.** `/draft` distingue le résumé de découverte de la vue de
 membre. La connexion Socket.IO n'émet plus l'état de tous les pools : chaque
 socket entre dans une salle par pool dont il est membre, recalculée à chaque
