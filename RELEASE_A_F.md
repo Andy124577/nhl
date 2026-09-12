@@ -46,6 +46,28 @@ Le script écrit dans le magasin que le serveur utilise — PostgreSQL si
 `DATABASE_URL` est présent, sinon `users.json`. Sur un compte qui existe déjà,
 il promeut sans toucher au mot de passe.
 
+La base de production est externe (voir `render.yaml` : aucune section
+`databases`), donc joignable depuis un poste de travail. Le shell Render, qui
+est payant, n'est pas nécessaire — on pointe le script sur l'URL de la base le
+temps d'une commande :
+
+```
+DATABASE_URL='postgresql://…' node tools/creer-admin.js <nom>
+```
+
+Le script relit ensuite le compte depuis le magasin et échoue si `is_admin`
+n'y est pas : contre une base distante, personne ne peut aller vérifier à la
+main.
+
+Si rien ne peut joindre la base depuis le poste — pare-feu, liste d'adresses
+permises — `--sql` n'écrit rien et imprime l'ordre à coller dans la console web
+de la base. L'empreinte bcrypt est calculée localement : le mot de passe en
+clair ne quitte pas la machine.
+
+```
+node tools/creer-admin.js <nom> --sql
+```
+
 **Portée des données.** `/draft` distingue le résumé de découverte de la vue de
 membre. La connexion Socket.IO n'émet plus l'état de tous les pools : chaque
 socket entre dans une salle par pool dont il est membre, recalculée à chaque
