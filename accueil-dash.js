@@ -505,6 +505,11 @@ function calGamesScroll(dir) {
 function fzdPlaceCalendar() {
     const cal = document.getElementById('fzDashCalendarWrap');
     if (!cal) return;
+    const draftSlot = document.getElementById('fzhCalendarSlot');
+    if (document.getElementById('fzDashSection')?.classList.contains('is-drafting') && draftSlot) {
+        draftSlot.appendChild(cal);
+        return;
+    }
     const seasonSlot = document.getElementById('fzSeasonCalendar');
     if (document.getElementById('fzDashSection')?.classList.contains('is-season') && seasonSlot) {
         seasonSlot.appendChild(cal);
@@ -2094,6 +2099,7 @@ async function renderDash() {
     if (onboard) onboard.style.display = hasPool ? 'none' : 'flex';
 
     if (!hasPool) {
+        if (typeof fzhReset === 'function') fzhReset();
         if (typeof fzsReset === 'function') fzsReset();
         return;
     }
@@ -2110,11 +2116,14 @@ async function renderDash() {
         // renderMobileHome (qui redessine le calendrier une fois déplacé), pour
         // que les stats en direct arrivent du premier coup.
         calTonight = dash.tonight || { players: [], games: [] };
+        if (typeof renderDraftHome === 'function' && renderDraftHome(dash)) return;
         if (typeof renderSeasonHome === 'function' && renderSeasonHome(dash)) return;
         renderHero(dash.tonight);
         renderLivePanel(dash.tonight, dash.movement, dash.activeName);
         renderMobileHome(dash.tonight, dash.movement, dash.activeName);
     } else {
+        if (typeof fzhReset === 'function') fzhReset();
+        if (typeof fzsReset === 'function') fzsReset();
         renderHero(null);
         renderMobileHome({ players: [], games: [] }, null, FZPool.get());
     }
