@@ -455,11 +455,21 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
             });
 
             const resultat = sortie || {};
-            if (resultat.sauvegarder !== false) {
-                const ecrit = await tx.sauvegarderPool(nomPool, verrouille.data);
-                return { ...(resultat.valeur || {}), revision: ecrit.revision };
-            }
-            return { ...(resultat.valeur || {}), revision: verrouille.revision };
+            const valeur = resultat.valeur || {};
+
+            const revisionPool = resultat.sauvegarder !== false
+                ? (await tx.sauvegarderPool(nomPool, verrouille.data)).revision
+                : verrouille.revision;
+
+            // `poolRevision` est toujours la revision du POOL. `revision` reste
+            // la ou l'operation l'a mise si elle en porte une : une revision de
+            // semaine finalisee et une revision de pool sont deux nombres
+            // differents, et l'une ecrasait silencieusement l'autre.
+            return {
+                ...valeur,
+                poolRevision: revisionPool,
+                revision: valeur.revision !== undefined ? valeur.revision : revisionPool
+            };
         }, { operationId, requete, scope, userId });
     }
 

@@ -81,6 +81,8 @@ function creerBaseSimulee(poolsInitiaux, users) {
         listings: [],
         activity: [],
         notifications: [],
+        finalizedWeeks: [],
+        recaps: [],
         operations: new Map(),
         users: users.slice(),
         emissions: [],
@@ -102,6 +104,8 @@ function creerBaseSimulee(poolsInitiaux, users) {
             listings: copie(etat.listings),
             activity: copie(etat.activity),
             notifications: copie(etat.notifications),
+            finalizedWeeks: copie(etat.finalizedWeeks),
+            recaps: copie(etat.recaps),
             operations: new Map(etat.operations),
             compteurs: { prochainEchange, prochaineAnnonce, prochainIdPool }
         };
@@ -113,6 +117,8 @@ function creerBaseSimulee(poolsInitiaux, users) {
         etat.listings = photo.listings;
         etat.activity = photo.activity;
         etat.notifications = photo.notifications;
+        etat.finalizedWeeks = photo.finalizedWeeks;
+        etat.recaps = photo.recaps;
         etat.operations = photo.operations;
         prochainEchange = photo.compteurs.prochainEchange;
         prochaineAnnonce = photo.compteurs.prochaineAnnonce;
@@ -284,6 +290,82 @@ function creerBaseSimulee(poolsInitiaux, users) {
             return client.query(sql, params);
         },
 
+        // ── Semaines figees et recaps ──────────────────────────────────────
+        async insertFinalizedWeekInTx(_client, entree) {
+            const doublon = etat.finalizedWeeks.some(
+                f => f.poolId === entree.poolId && f.season === entree.season &&
+                     f.weekNumber === entree.weekNumber && f.revision === entree.revision);
+            if (doublon) return null;
+            const id = etat.finalizedWeeks.length + 1;
+            etat.finalizedWeeks.push({ id, supersededAt: null, ...copie(entree) });
+            return { id, revision: entree.revision };
+        },
+        async getFinalizedWeek(_client, poolId, season, weekNumber) {
+            const candidats = etat.finalizedWeeks
+                .filter(f => f.poolId === poolId && f.season === season && f.weekNumber === weekNumber)
+                .sort((a, b) => b.revision - a.revision);
+            if (candidats.length === 0) return null;
+            const f = candidats[0];
+            return {
+                id: f.id, revision: f.revision,
+                week_start: f.weekStart, week_end: f.weekEnd,
+                scoring_version: f.scoringVersion, roster_basis: f.rosterBasis,
+                results: f.results, standings_delta: f.standingsDelta,
+                finalized_at: new Date(), superseded_at: f.supersededAt
+            };
+        },
+        async listFinalizedWeeks(poolId, season) {
+            const parSemaine = new Map();
+            for (const f of etat.finalizedWeeks.filter(x => x.poolId === poolId && x.season === season)) {
+                const deja = parSemaine.get(f.weekNumber);
+                if (!deja || f.revision > deja.revision) parSemaine.set(f.weekNumber, f);
+            }
+            return [...parSemaine.values()]
+                .sort((a, b) => b.weekNumber - a.weekNumber)
+                .map(f => ({
+                    week_number: f.weekNumber, revision: f.revision,
+                    week_start: f.weekStart, week_end: f.weekEnd,
+                    results: f.results, finalized_at: new Date()
+                }));
+        },
+        async supersedeFinalizedWeekInTx(_client, poolId, season, weekNumber, nouvelleRevision) {
+            for (const f of etat.finalizedWeeks) {
+                if (f.poolId === poolId && f.season === season &&
+                    f.weekNumber === weekNumber && f.revision < nouvelleRevision && !f.supersededAt) {
+                    f.supersededAt = new Date();
+                }
+            }
+        },
+        async upsertRecap({ poolId, season, weekNumber, resultRevision, poolMode, payload }) {
+            const deja = etat.recaps.find(
+                r => r.poolId === poolId && r.season === season && r.weekNumber === weekNumber);
+            if (deja) {
+                deja.resultRevision = resultRevision;
+                deja.poolMode = poolMode;
+                deja.payload = copie(payload);
+                deja.generatedAt = new Date();
+                return { id: deja.id, result_revision: resultRevision };
+            }
+            const id = etat.recaps.length + 1;
+            etat.recaps.push({ id, poolId, season, weekNumber, resultRevision, poolMode,
+                               payload: copie(payload), generatedAt: new Date() });
+            return { id, result_revision: resultRevision };
+        },
+        async getRecap(poolId, season, weekNumber) {
+            const r = etat.recaps.find(
+                x => x.poolId === poolId && x.season === season && x.weekNumber === weekNumber);
+            return r ? { week_number: r.weekNumber, result_revision: r.resultRevision,
+                         pool_mode: r.poolMode, payload: r.payload, generated_at: r.generatedAt } : null;
+        },
+        async getLatestRecap(poolId, season) {
+            const liste = etat.recaps.filter(x => x.poolId === poolId && x.season === season)
+                .sort((a, b) => b.weekNumber - a.weekNumber);
+            if (liste.length === 0) return null;
+            const r = liste[0];
+            return { week_number: r.weekNumber, result_revision: r.resultRevision,
+                     pool_mode: r.poolMode, payload: r.payload, generated_at: r.generatedAt };
+        },
+
         async getUserId(username) {
             const u = etat.users.find(x => x.username === username);
             return u ? (u.id ?? username) : null;
@@ -374,9 +456,14 @@ function monterRoutes(modules, { pools = {}, users = null, ctxExtra = {} } = {})
         nettoyerDependances: (nom) => db.deletePoolDependencies(nom),
         renommerPool: async () => [],
         construireCalendrierH2H: async () => {},
-        saisonCourante: () => '20262027',
-        ...ctxExtra
+        saisonCourante: () => '20262027'
     };
+
+    // `ctxExtra` peut etre une fonction : certains services (pointage, H2H) se
+    // construisent AU-DESSUS de la base simulee, donc apres elle, mais doivent
+    // etre dans le contexte AVANT le montage — les routes lisent le contexte
+    // une seule fois, a l'enregistrement.
+    Object.assign(ctx, typeof ctxExtra === 'function' ? ctxExtra(ctx) : ctxExtra);
 
     for (const module of [].concat(modules)) module.monter(app, ctx);
 

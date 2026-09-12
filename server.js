@@ -6,8 +6,6 @@ const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
 const bcrypt = require("bcryptjs");
-// Filtre de grossieretes, partage avec le navigateur (profanity.js).
-const { contientGrossierete } = require("./profanity.js");
 const fs = require("fs");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -20,12 +18,9 @@ const { v4: uuidv4 } = require("uuid");
 // Logique métier pure, extraite de ce fichier vers lib/ pour être testable
 // unitairement (voir UNIT_TESTS.md). Les corps de fonctions sont inchangés.
 const { FANTASY_SCORING, goaliePoolPoints, clubPoolPoints, computeTeamSeasonScores,
-    getTeamWeeklyPoints, skaterFantasyPointsTonight, goalieFantasyPointsTonight } = require("./lib/scoring.js");
-const { generateWeeklyMatchups, generateSeasonSchedule, seasonWeekCount,
-    ensureStandingsEntry, mondayOfWeek } = require("./lib/h2h.js");
-const { generateSnakeOrder, checkIfDraftComplete } = require("./lib/draft.js");
+    skaterFantasyPointsTonight, goalieFantasyPointsTonight } = require("./lib/scoring.js");
+const { generateSeasonSchedule, ensureStandingsEntry } = require("./lib/h2h.js");
 const instantDraft = require("./lib/instantDraft.js");
-const { teamHasPlayer, removeFromTeam, addToTeam, getPositionLabel } = require("./lib/trades.js");
 const { NHL_CLUB_FULLNAME, diffRosterSnapshots, getTeamAbbreviationFromName } = require("./lib/roster.js");
 const { getStatsRefreshStatus } = require("./lib/statsCache.js");
 const { currentSeasonId, currentSeasonString, getSeasonWindow, seasonHasStarted,
@@ -48,6 +43,12 @@ const routesPools = require("./routes/pools.js");
 const routesRepechage = require("./routes/draft.js");
 const routesInstantane = require("./routes/instantDraft.js");
 const routesEchanges = require("./routes/trades.js");
+const routesH2H = require("./routes/h2h.js");
+const routesRecords = require("./routes/records.js");
+const { creerServicePointage } = require("./services/scoring.js");
+const { creerServiceH2H } = require("./services/h2h.js");
+const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
+const datesPool = require("./lib/dates.js");
 
 const app = express();
 const PORT = process.env.PORT || 3000; // ✅ Use Render's PORT
@@ -233,36 +234,6 @@ const loadDraftData = async () => {
 };
 
 
-/**
- * Écriture d'un seul pool, hors transaction — réservée aux travaux de fond.
- *
- * Ce qui a disparu ici :
- *
- *   - la réécriture de TOUS les pools à chaque appel. Elle rendait à la base
- *     les pools voisins tels qu'ils étaient au chargement, effaçant toute
- *     modification faite entre-temps par quelqu'un d'autre ;
- *   - le repli vers draft.json en cas d'échec PostgreSQL, suivi d'une
- *     diffusion de succès. Une écriture ratée avait exactement la même forme
- *     qu'une réussie ;
- *   - la diffusion à tout le monde de l'état de tous les pools.
- *
- * Les mutations demandées par une personne passent désormais par
- * services/poolStore.js. Cette fonction ne sert plus qu'aux tâches de fond qui
- * touchent un pool identifié, et elle propage ses erreurs.
- */
-const sauvegarderPool = async (nomPool, poolData) => {
-    if (USE_POSTGRES) {
-        await db.createOrUpdatePool(nomPool, poolData);
-    } else {
-        const tout = await loadDraftData();
-        tout[nomPool] = poolData;
-        const temporaire = `${DRAFT_FILE}.${process.pid}.tmp`;
-        fs.writeFileSync(temporaire, JSON.stringify(tout, null, 2));
-        fs.renameSync(temporaire, DRAFT_FILE);
-    }
-    const frais = await poolStore.lire(nomPool);
-    if (frais) diffusion.poolMisAJour(nomPool, frais.data, frais.revision);
-};
 
 // ==============================================
 // HEAD-TO-HEAD HELPER FUNCTIONS
@@ -270,187 +241,8 @@ const sauvegarderPool = async (nomPool, poolData) => {
 
 
 // Calculate team fantasy points for a specific date range using player_game_logs
-async function getTeamPointsForDateRange(teamData, startDateISO, endDateISO) {
-    if (!teamData) return null;
-    const startDate = new Date(startDateISO).toISOString().split('T')[0];
-    const endDate = new Date(endDateISO).toISOString().split('T')[0];
-
-    // Collect all player names from the team roster
-    const playerNames = [];
-    ['offensive', 'defensive', 'rookie'].forEach(pos => {
-        (teamData[pos] || []).forEach(p => {
-            const name = (typeof p === 'string') ? p : (p.skaterFullName || p.goalieFullName || p);
-            if (name) playerNames.push(name);
-        });
-    });
-    const goalieNames = [];
-    (teamData.goalie || []).forEach(p => {
-        const name = (typeof p === 'string') ? p : (p.goalieFullName || p.skaterFullName || p);
-        if (name) goalieNames.push(name);
-    });
-
-    const allNames = [...playerNames, ...goalieNames];
-    if (allNames.length === 0) return 0;
-
-    try {
-        // Query game logs for all team players within the date range
-        const result = await db.query(`
-            SELECT player_name, position,
-                   goals, assists, points, shots, plus_minus,
-                   power_play_goals, power_play_points,
-                   shorthanded_goals, shorthanded_points,
-                   game_winning_goals,
-                   decision, saves, goals_against, shutouts,
-                   game_date
-            FROM player_game_logs
-            WHERE season = '${currentSeasonString()}'
-              AND game_date >= $1
-              AND game_date < $2
-              AND player_name = ANY($3)
-            ORDER BY game_date DESC
-        `, [startDate, endDate, allNames]);
-
-        if (result.rows.length === 0) {
-            console.log(`⚠️ No game logs found for team players between ${startDate} and ${endDate}, falling back to season stats`);
-            return null; // Signal to caller to use fallback
-        }
-
-        let totalFantasyPoints = 0;
-
-        result.rows.forEach(game => {
-            let fantasyPoints = 0;
-
-            if (game.position === 'G') {
-                // Goalie scoring
-                fantasyPoints += (game.decision === 'W') ? FANTASY_SCORING.win : 0;
-                fantasyPoints += (game.shutouts || 0) * FANTASY_SCORING.shutout;
-                fantasyPoints += (game.saves || 0) * FANTASY_SCORING.save;
-                fantasyPoints += (game.goals_against || 0) * FANTASY_SCORING.goalsAgainst;
-            } else {
-                // Skater scoring
-                fantasyPoints += (game.goals || 0) * FANTASY_SCORING.goal;
-                fantasyPoints += (game.assists || 0) * FANTASY_SCORING.assist;
-                fantasyPoints += (game.shots || 0) * FANTASY_SCORING.shot;
-                fantasyPoints += (game.plus_minus || 0) * FANTASY_SCORING.plusMinus;
-                fantasyPoints += (game.power_play_goals || 0) * FANTASY_SCORING.powerPlayGoal;
-                fantasyPoints += (game.power_play_points || 0) * FANTASY_SCORING.powerPlayPoint;
-                fantasyPoints += (game.shorthanded_goals || 0) * FANTASY_SCORING.shorthandedGoal;
-                fantasyPoints += (game.shorthanded_points || 0) * FANTASY_SCORING.shorthandedPoint;
-                fantasyPoints += (game.game_winning_goals || 0) * FANTASY_SCORING.gameWinningGoal;
-            }
-
-            totalFantasyPoints += fantasyPoints;
-        });
-
-        console.log(`📊 Team scored ${totalFantasyPoints.toFixed(1)} fantasy points between ${startDate} and ${endDate} (${result.rows.length} game logs)`);
-        return Math.round(totalFantasyPoints * 10) / 10;
-    } catch (error) {
-        console.error('❌ Error querying game logs for date range:', error);
-        return null; // Fallback signal
-    }
-}
 
 // Returns per-player FPTS breakdown for a team over a date range
-async function getTeamPlayerBreakdownForDateRange(teamData, startDateISO, endDateISO) {
-    const startDate = new Date(startDateISO).toISOString().split('T')[0];
-    const endDate = new Date(endDateISO).toISOString().split('T')[0];
-
-    // Build roster with position labels
-    const roster = [];
-    ['offensive', 'defensive', 'rookie'].forEach(pos => {
-        (teamData[pos] || []).forEach(p => {
-            const name = (typeof p === 'string') ? p : (p.skaterFullName || p.goalieFullName || p);
-            if (name) roster.push({ name, isGoalie: false });
-        });
-    });
-    (teamData.goalie || []).forEach(p => {
-        const name = (typeof p === 'string') ? p : (p.goalieFullName || p.skaterFullName || p);
-        if (name) roster.push({ name, isGoalie: true });
-    });
-
-    if (roster.length === 0) return [];
-
-    const allNames = roster.map(r => r.name);
-
-    try {
-        // Get latest player_id and team_abbrev for each player (for headshot URLs)
-        const metaResult = await db.query(`
-            SELECT DISTINCT ON (player_name) player_name, player_id, team_abbrev
-            FROM player_game_logs
-            WHERE player_name = ANY($1)
-            ORDER BY player_name, game_date DESC
-        `, [allNames]);
-        const playerMeta = new Map();
-        metaResult.rows.forEach(r => playerMeta.set(r.player_name, { playerId: r.player_id, teamAbbrev: r.team_abbrev }));
-
-        // Get game stats for the date range
-        const result = await db.query(`
-            SELECT player_name, player_id, team_abbrev, position,
-                   goals, assists, shots, plus_minus,
-                   power_play_goals, power_play_points,
-                   shorthanded_goals, shorthanded_points,
-                   game_winning_goals,
-                   decision, saves, goals_against, shutouts
-            FROM player_game_logs
-            WHERE season = '${currentSeasonString()}'
-              AND game_date >= $1
-              AND game_date <= $2
-              AND player_name = ANY($3)
-        `, [startDate, endDate, allNames]);
-
-        // Aggregate per player
-        const playerMap = new Map();
-        result.rows.forEach(game => {
-            const key = game.player_name;
-            if (!playerMap.has(key)) {
-                playerMap.set(key, {
-                    name: key,
-                    position: game.position,
-                    playerId: game.player_id,
-                    teamAbbrev: game.team_abbrev,
-                    fantasyPoints: 0,
-                    goals: 0, assists: 0,
-                    wins: 0, saves: 0, shutouts: 0
-                });
-            }
-            const p = playerMap.get(key);
-            let fp = 0;
-            if (game.position === 'G') {
-                fp += (game.decision === 'W') ? FANTASY_SCORING.win : 0;
-                fp += (game.shutouts || 0) * FANTASY_SCORING.shutout;
-                fp += (game.saves || 0) * FANTASY_SCORING.save;
-                fp += (game.goals_against || 0) * FANTASY_SCORING.goalsAgainst;
-                p.wins += (game.decision === 'W') ? 1 : 0;
-                p.saves += game.saves || 0;
-                p.shutouts += game.shutouts || 0;
-            } else {
-                fp += (game.goals || 0) * FANTASY_SCORING.goal;
-                fp += (game.assists || 0) * FANTASY_SCORING.assist;
-                fp += (game.shots || 0) * FANTASY_SCORING.shot;
-                fp += (game.plus_minus || 0) * FANTASY_SCORING.plusMinus;
-                fp += (game.power_play_goals || 0) * FANTASY_SCORING.powerPlayGoal;
-                fp += (game.power_play_points || 0) * FANTASY_SCORING.powerPlayPoint;
-                fp += (game.shorthanded_goals || 0) * FANTASY_SCORING.shorthandedGoal;
-                fp += (game.shorthanded_points || 0) * FANTASY_SCORING.shorthandedPoint;
-                fp += (game.game_winning_goals || 0) * FANTASY_SCORING.gameWinningGoal;
-                p.goals += game.goals || 0;
-                p.assists += game.assists || 0;
-            }
-            p.fantasyPoints += fp;
-        });
-
-        // Return roster order with metadata, 0 FPTS for players with no games
-        return roster.map(r => {
-            const stats = playerMap.get(r.name);
-            const meta = playerMeta.get(r.name) || {};
-            if (stats) return { ...stats, ...meta, fantasyPoints: Math.round(stats.fantasyPoints * 10) / 10 };
-            return { name: r.name, position: r.isGoalie ? 'G' : 'F', fantasyPoints: 0, goals: 0, assists: 0, wins: 0, saves: 0, shutouts: 0, ...meta };
-        });
-    } catch (err) {
-        console.error('❌ Error getting player breakdown:', err);
-        return roster.map(r => ({ name: r.name, position: r.isGoalie ? 'G' : 'F', fantasyPoints: 0, goals: 0, assists: 0, wins: 0, saves: 0, shutouts: 0 }));
-    }
-}
 
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -466,8 +258,8 @@ async function getTeamPlayerBreakdownForDateRange(teamData, startDateISO, endDat
 /**
  * Les membres du pool, prévenus quand il change.
  *
- * Créée avant les routes : `sauvegarderPool` s'en sert, et les crochets de
- * présence du salon instantané se branchent dessus.
+ * Créée avant les routes : les crochets de présence du salon instantané s'y
+ * branchent, et les routes s'en servent pour prévenir les membres d'un pool.
  */
 const diffusion = creerDiffusion({
     io,
@@ -594,15 +386,19 @@ async function construireCalendrierH2H(nomPool) {
                 .filter(([, td]) => (td.members || []).length > 0)
                 .map(([nom, td]) => ({ name: nom, members: td.members }));
 
-            const lundi = lundiDeLaSemaine(new Date());
-            const nbSemaines = seasonWeekCount(lundi, finSaison);
+            // Le lundi vient du meme module que partout ailleurs : celui qui
+            // decoupe les journees sur « America/Toronto » et ajoute des jours
+            // de calendrier plutot que des multiples de 24 heures.
+            const lundi = datesPool.lundiDe(datesPool.journeeLocale());
+            const nbSemaines = datesPool.nombreDeSemaines(lundi, finSaison);
             const calendrier = generateSeasonSchedule(equipes, nbSemaines);
 
-            data.h2hData.seasonStart = lundi.toISOString();
+            data.h2hData.seasonStart = lundi;
             data.h2hData.seasonEnd = finSaison || null;
             data.h2hData.seasonWeeks = calendrier.length;
-            data.h2hData.weekStart = lundi.toISOString();
+            data.h2hData.weekStart = lundi;
             data.h2hData.currentWeek = 1;
+            data.h2hData.season = currentSeasonString();
             data.h2hData.matchups = calendrier;
             data.h2hData.standings = data.h2hData.standings || {};
             equipes.forEach(e => ensureStandingsEntry(data.h2hData.standings, e.name));
@@ -611,15 +407,6 @@ async function construireCalendrierH2H(nomPool) {
             return { valeur: { semaines: calendrier.length } };
         }
     });
-}
-
-/** Lundi 00:00 (heure locale du serveur) de la semaine d'une date. */
-function lundiDeLaSemaine(date) {
-    const lundi = new Date(date);
-    const jour = lundi.getDay();
-    lundi.setDate(lundi.getDate() + (jour === 0 ? -6 : 1 - jour));
-    lundi.setHours(0, 0, 0, 0);
-    return lundi;
 }
 
 /**
@@ -647,11 +434,43 @@ const contexteRoutes = {
     saisonCourante: () => currentSeasonString()
 };
 
+/**
+ * Combien de matchs la LNH a reellement joues chaque journee.
+ *
+ * C'est la reference exterieure sans laquelle « donnees completes » ne veut
+ * rien dire : compter les feuilles recues pour decider si elles sont toutes la
+ * serait circulaire.
+ */
+const calendrierLNH = creerCalendrierLNH({ db });
+
+/** Le service de pointage : une seule porte vers « combien vaut cette equipe ». */
+const pointage = creerServicePointage({
+    db,
+    calendrierDuJour: (journee) => calendrierLNH.matchsTermines(journee)
+});
+
+/** Le service de finalisation, partage par la route manuelle et le travail de fond. */
+const serviceH2H = creerServiceH2H({
+    store: poolStore,
+    db,
+    pointage,
+    diffusion,
+    saisonCourante: () => currentSeasonString()
+});
+
+contexteRoutes.pointage = pointage;
+contexteRoutes.serviceH2H = serviceH2H;
+contexteRoutes.calendrierLNH = calendrierLNH;
+contexteRoutes.fenetreSaison = () => getSeasonWindow();
+contexteRoutes.saisonCommencee = (fenetre) => seasonHasStarted(fenetre);
+
 routesIdentite.monter(app, contexteRoutes);
 routesPools.monter(app, contexteRoutes);
 routesRepechage.monter(app, contexteRoutes);
 routesInstantane.monter(app, contexteRoutes);
 routesEchanges.monter(app, contexteRoutes);
+routesH2H.monter(app, contexteRoutes);
+routesRecords.monter(app, contexteRoutes);
 
 
 
@@ -3843,70 +3662,6 @@ const saveTrades = async (tradesData) => {
 // ============================================================
 const LEADERBOARD_WINDOWS = [1, 7, 14, 30, 90, 180, 365];
 
-app.get('/pool-leaderboard/:poolName', async (req, res) => {
-    try {
-        const { poolName } = req.params;
-        let days = parseInt(req.query.days, 10);
-        if (!LEADERBOARD_WINDOWS.includes(days)) days = 7;
-
-        const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
-        if (poolResult.rows.length === 0) {
-            return res.status(404).json({ message: "Pool not found" });
-        }
-        const pool = poolResult.rows[0].pool_data;
-
-        // Avant le premier match de la saison régulière il n'y a rien à
-        // classer. La fenêtre glissante retombait alors sur les totaux de
-        // saison, qui sont encore ceux de l'an passé pour un pool tout neuf.
-        const fenetreSaison = await getSeasonWindow();
-        if (!seasonHasStarted(fenetreSaison)) {
-            return res.json({
-                poolName, days, generatedAt: new Date().toISOString(),
-                seasonStarted: false, teams: []
-            });
-        }
-
-        const endDate = new Date();
-        const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
-
-        const activeTeams = Object.entries(pool.teams || {})
-            .filter(([, teamData]) => (teamData.members || []).length > 0);
-
-        // Le repli sur les totaux de saison s'applique à TOUTES les équipes ou
-        // à aucune. Appliqué équipe par équipe, il plaçait dans un même tableau
-        // des cumuls d'année à côté de pointages d'une seule période : le
-        // classement n'était alors comparable pour personne.
-        const pointsParEquipe = await Promise.all(
-            activeTeams.map(async ([, teamData]) => getTeamPointsForDateRange(teamData, startDate, endDate))
-        );
-
-        let source = 'gameLogs';
-        let currentStats = null;
-        if (pointsParEquipe.some(p => p === null)) {
-            currentStats = await loadCurrentStats();
-            source = (currentStats && currentStats.players && currentStats.players.length > 0)
-                ? 'seasonFallback'
-                : 'none';
-        }
-
-        const teams = activeTeams.map(([teamName, teamData], i) => ({
-            teamName,
-            members: teamData.members || [],
-            points: source === 'gameLogs' ? pointsParEquipe[i]
-                : source === 'seasonFallback' ? getTeamWeeklyPoints(teamData, currentStats)
-                    : null,
-            source
-        }));
-
-        teams.sort((a, b) => (b.points ?? -Infinity) - (a.points ?? -Infinity));
-        teams.forEach((t, i) => { t.rank = i + 1; });
-
-        res.json({ poolName, days, generatedAt: new Date().toISOString(), seasonStarted: true, teams });
-    } catch (error) {
-        console.error("Error building pool leaderboard:", error);
-        res.status(500).json({ message: "Error building pool leaderboard" });
-    }
-});
 
 
 // ✅ Hall of Fame: best/worst single day, week, and month of fantasy points
@@ -3915,142 +3670,6 @@ app.get('/pool-leaderboard/:poolName', async (req, res) => {
 // weekly leaderboard) — NOT the same scale as the cumulative "PPts" column
 // on the standings table. NHL-team roster picks aren't included: there's no
 // historical game-by-game team-win log, same gap as the leaderboard route.
-app.get('/pool-hall-of-fame/:poolName', async (req, res) => {
-    try {
-        const { poolName } = req.params;
-        const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
-        if (poolResult.rows.length === 0) {
-            return res.status(404).json({ message: "Pool not found" });
-        }
-        const pool = poolResult.rows[0].pool_data;
-
-        const activeTeams = Object.entries(pool.teams || {})
-            .filter(([, teamData]) => (teamData.members || []).length > 0);
-
-        const teamByPlayer = new Map();
-        const teamMeta = new Map();
-        activeTeams.forEach(([teamName, teamData]) => {
-            teamMeta.set(teamName, { members: teamData.members || [] });
-            ['offensive', 'defensive', 'rookie'].forEach(pos => {
-                (teamData[pos] || []).forEach(p => {
-                    const name = (typeof p === 'string') ? p : (p.skaterFullName || p.goalieFullName || p);
-                    if (name) teamByPlayer.set(name, teamName);
-                });
-            });
-            (teamData.goalie || []).forEach(p => {
-                const name = (typeof p === 'string') ? p : (p.goalieFullName || p.skaterFullName || p);
-                if (name) teamByPlayer.set(name, teamName);
-            });
-        });
-
-        const empty = { poolName, generatedAt: new Date().toISOString(), seasonStarted: true, bestDay: null, worstDay: null, bestWeek: null, worstWeek: null, bestMonth: null, worstMonth: null };
-
-        // Un pool repêché pendant l'été ouvrait sur un temple de la renommée
-        // déjà bâti : les joueurs venaient d'être choisis, mais leurs matchs
-        // de la saison précédente étaient encore dans player_game_logs. La
-        // requête est maintenant bornée à la saison courante (voir la clause
-        // season plus bas) et, tant qu'aucun match n'a été joué, on ne la
-        // lance même pas.
-        const fenetreSaison = await getSeasonWindow();
-        if (!seasonHasStarted(fenetreSaison)) return res.json({ ...empty, seasonStarted: false });
-
-        const allNames = [...teamByPlayer.keys()];
-        if (allNames.length === 0) return res.json(empty);
-
-        const result = await db.query(`
-            SELECT player_name, game_date, position,
-                   goals, assists, shots, plus_minus,
-                   power_play_goals, power_play_points,
-                   shorthanded_goals, shorthanded_points,
-                   game_winning_goals,
-                   decision, saves, goals_against, shutouts
-            FROM player_game_logs
-            WHERE season = '${currentSeasonString()}'
-              AND player_name = ANY($1)
-        `, [allNames]);
-
-        if (result.rows.length === 0) return res.json(empty);
-
-        // teamName -> 'YYYY-MM-DD' -> fantasy points
-        const dailyByTeam = new Map();
-        result.rows.forEach(game => {
-            const teamName = teamByPlayer.get(game.player_name);
-            if (!teamName) return;
-
-            let fp = 0;
-            if (game.position === 'G') {
-                fp += (game.decision === 'W') ? FANTASY_SCORING.win : 0;
-                fp += (game.shutouts || 0) * FANTASY_SCORING.shutout;
-                fp += (game.saves || 0) * FANTASY_SCORING.save;
-                fp += (game.goals_against || 0) * FANTASY_SCORING.goalsAgainst;
-            } else {
-                fp += (game.goals || 0) * FANTASY_SCORING.goal;
-                fp += (game.assists || 0) * FANTASY_SCORING.assist;
-                fp += (game.shots || 0) * FANTASY_SCORING.shot;
-                fp += (game.plus_minus || 0) * FANTASY_SCORING.plusMinus;
-                fp += (game.power_play_goals || 0) * FANTASY_SCORING.powerPlayGoal;
-                fp += (game.power_play_points || 0) * FANTASY_SCORING.powerPlayPoint;
-                fp += (game.shorthanded_goals || 0) * FANTASY_SCORING.shorthandedGoal;
-                fp += (game.shorthanded_points || 0) * FANTASY_SCORING.shorthandedPoint;
-                fp += (game.game_winning_goals || 0) * FANTASY_SCORING.gameWinningGoal;
-            }
-
-            const dateStr = game.game_date.toISOString().slice(0, 10);
-            if (!dailyByTeam.has(teamName)) dailyByTeam.set(teamName, new Map());
-            const teamDaily = dailyByTeam.get(teamName);
-            teamDaily.set(dateStr, (teamDaily.get(dateStr) || 0) + fp);
-        });
-
-        // Roll daily totals up into per-team weeks (Mon-start) and months,
-        // only for periods where the team actually had a logged game.
-        const dayEntries = [];
-        const weekTotals = new Map();  // "team|weekStart" -> points
-        const monthTotals = new Map(); // "team|YYYY-MM" -> points
-
-        dailyByTeam.forEach((dates, teamName) => {
-            dates.forEach((points, dateStr) => {
-                dayEntries.push({ teamName, dateStr, points: Math.round(points * 10) / 10 });
-
-                const weekKey = `${teamName}|${mondayOfWeek(dateStr)}`;
-                weekTotals.set(weekKey, (weekTotals.get(weekKey) || 0) + points);
-
-                const monthKey = `${teamName}|${dateStr.slice(0, 7)}`;
-                monthTotals.set(monthKey, (monthTotals.get(monthKey) || 0) + points);
-            });
-        });
-
-        const splitEntries = (totals) => [...totals.entries()].map(([key, points]) => {
-            const sep = key.lastIndexOf('|');
-            return { teamName: key.slice(0, sep), dateStr: key.slice(sep + 1), points: Math.round(points * 10) / 10 };
-        });
-        const weekEntries = splitEntries(weekTotals);
-        const monthEntries = splitEntries(monthTotals).map(e => ({ ...e, dateStr: `${e.dateStr}-01` }));
-
-        const pickBest = (entries) => entries.length ? entries.reduce((a, b) => b.points > a.points ? b : a) : null;
-        const pickWorst = (entries) => entries.length ? entries.reduce((a, b) => b.points < a.points ? b : a) : null;
-        const toResult = (entry) => !entry ? null : {
-            teamName: entry.teamName,
-            members: (teamMeta.get(entry.teamName) || {}).members || [],
-            points: entry.points,
-            date: entry.dateStr
-        };
-
-        res.json({
-            poolName,
-            generatedAt: new Date().toISOString(),
-            seasonStarted: true,
-            bestDay: toResult(pickBest(dayEntries)),
-            worstDay: toResult(pickWorst(dayEntries)),
-            bestWeek: toResult(pickBest(weekEntries)),
-            worstWeek: toResult(pickWorst(weekEntries)),
-            bestMonth: toResult(pickBest(monthEntries)),
-            worstMonth: toResult(pickWorst(monthEntries))
-        });
-    } catch (error) {
-        console.error("Error building pool hall of fame:", error);
-        res.status(500).json({ message: "Error building pool hall of fame" });
-    }
-});
 
 // ✅ H2H: Finalize current week and advance to next week
 /**
@@ -4064,407 +3683,11 @@ app.get('/pool-hall-of-fame/:poolName', async (req, res) => {
  * créés avant le calendrier complet et pour une saison qui déborderait la
  * dernière semaine prévue.
  */
-function ensureWeekMatchups(clan, numero) {
-    const existant = clan.h2hData.matchups[numero - 1];
-    if (Array.isArray(existant) && existant.length > 0) return existant;
 
-    const activeTeams = Object.entries(clan.teams)
-        .filter(([_, teamData]) => teamData.members && teamData.members.length > 0)
-        .map(([teamName, teamData]) => ({ name: teamName, members: teamData.members }));
-
-    const duels = generateWeeklyMatchups(activeTeams, clan.h2hData.matchups)
-        .map(m => ({ ...m, weekNumber: numero }));
-
-    clan.h2hData.matchups[numero - 1] = duels;
-    return duels;
-}
-
-app.post('/h2h/finalize-week', async (req, res) => {
-    try {
-        const { poolName } = req.body;
-
-        if (!poolName) {
-            return res.status(400).json({ message: "Pool name required" });
-        }
-
-        let draftData = await loadDraftData();
-        const clan = draftData[poolName];
-
-        if (!clan) {
-            return res.status(404).json({ message: "Pool not found" });
-        }
-
-        if (clan.poolMode !== 'head-to-head' || !clan.h2hData) {
-            return res.status(400).json({ message: "Pool is not in Head-to-Head mode" });
-        }
-
-        const currentWeek = clan.h2hData.currentWeek;
-        const weekMatchups = clan.h2hData.matchups[currentWeek - 1];
-
-        if (!weekMatchups || weekMatchups.length === 0) {
-            return res.status(400).json({ message: "No matchups found for current week" });
-        }
-
-        // Calculate week date window
-        const weekStart = new Date(clan.h2hData.weekStart);
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 7);
-
-        console.log(`📅 Finalizing Week ${currentWeek}: ${weekStart.toISOString().split('T')[0]} to ${weekEnd.toISOString().split('T')[0]}`);
-
-        // Calculate points using date-range (true weekly scoring)
-        //
-        // Passe préalable : on pointe TOUS les duels avant d'écrire quoi que ce
-        // soit. Une semaine se finalise en entier ou pas du tout — un classement
-        // à moitié inscrit serait pire que pas de classement, et il n'existe
-        // aucun repli valable quand les feuilles de match manquent (voir la note
-        // sur les unités plus bas).
-        const pointages = [];
-        for (const matchup of weekMatchups) {
-            const team1Data = clan.teams[matchup.team1];
-            const team2Data = clan.teams[matchup.team2];
-            if (!team1Data) console.warn(`⚠️ finalize-week: team "${matchup.team1}" not found in pool ${poolName}`);
-            if (!team2Data) console.warn(`⚠️ finalize-week: team "${matchup.team2}" not found in pool ${poolName}`);
-
-            const t1pts = await getTeamPointsForDateRange(team1Data, weekStart, weekEnd);
-            const t2pts = await getTeamPointsForDateRange(team2Data, weekStart, weekEnd);
-            pointages.push({ matchup, t1pts, t2pts });
-        }
-
-        // Repli sur les totaux de saison : tout le monde ou personne.
-        //
-        // Ces totaux sont cumulés depuis le début de l'année, dans une autre
-        // unité que le pointage hebdomadaire. Appliqués duel par duel, ils
-        // opposaient un cumul de saison au pointage d'une seule semaine dès
-        // qu'un seul côté manquait — victoire garantie pour celui-là. Appliqués
-        // à tout le monde, la comparaison redevient équitable, ce qui permet à
-        // un environnement dépourvu de feuilles de match de fonctionner.
-        const valeurs = pointages.flatMap(p => [p.t1pts, p.t2pts]);
-        const aucuneFeuille = valeurs.every(v => v === null);
-        const feuillesPartielles = !aucuneFeuille && valeurs.some(v => v === null);
-
-        if (feuillesPartielles) {
-            const noms = pointages
-                .filter(p => p.t1pts === null || p.t2pts === null)
-                .map(p => `${p.matchup.team1} / ${p.matchup.team2}`).join(', ');
-            console.warn(`⏸️ Week ${currentWeek} non finalisée (${poolName}) : feuilles de match incomplètes — ${noms}`);
-            return res.status(503).json({
-                message: `Semaine ${currentWeek} non finalisée : les feuilles de match sont incomplètes (${noms}). Elles arrivent par lots ; réessayez plus tard.`,
-                weekNumber: currentWeek,
-                missing: pointages.filter(p => p.t1pts === null || p.t2pts === null)
-                    .map(p => ({ team1: p.matchup.team1, team2: p.matchup.team2 }))
-            });
-        }
-
-        if (aucuneFeuille) {
-            console.warn(`⚠️ Week ${currentWeek} (${poolName}) : aucune feuille de match — repli sur les totaux de saison pour TOUTES les équipes.`);
-            const currentStats = await loadCurrentStats();
-            for (const p of pointages) {
-                p.t1pts = getTeamWeeklyPoints(clan.teams[p.matchup.team1], currentStats);
-                p.t2pts = getTeamWeeklyPoints(clan.teams[p.matchup.team2], currentStats);
-            }
-        }
-
-        for (const { matchup, t1pts, t2pts } of pointages) {
-            matchup.team1Points = t1pts;
-            matchup.team2Points = t2pts;
-            matchup.weekNumber = currentWeek;
-
-            // Defensive: ensure standings entries exist
-            ensureStandingsEntry(clan.h2hData.standings, matchup.team1);
-            ensureStandingsEntry(clan.h2hData.standings, matchup.team2);
-
-            // Determine winner
-            if (matchup.team1Points > matchup.team2Points) {
-                matchup.winner = matchup.team1;
-                clan.h2hData.standings[matchup.team1].wins++;
-                clan.h2hData.standings[matchup.team2].losses++;
-            } else if (matchup.team2Points > matchup.team1Points) {
-                matchup.winner = matchup.team2;
-                clan.h2hData.standings[matchup.team2].wins++;
-                clan.h2hData.standings[matchup.team1].losses++;
-            } else {
-                matchup.winner = 'tie';
-                clan.h2hData.standings[matchup.team1].ties++;
-                clan.h2hData.standings[matchup.team2].ties++;
-            }
-
-            // Update points for/against
-            clan.h2hData.standings[matchup.team1].pointsFor += matchup.team1Points;
-            clan.h2hData.standings[matchup.team1].pointsAgainst += matchup.team2Points;
-            clan.h2hData.standings[matchup.team2].pointsFor += matchup.team2Points;
-            clan.h2hData.standings[matchup.team2].pointsAgainst += matchup.team1Points;
-        }
-
-        // Move completed week to history
-        if (!clan.h2hData.matchupHistory) clan.h2hData.matchupHistory = [];
-        clan.h2hData.matchupHistory.push({
-            weekNumber: currentWeek,
-            weekStart: weekStart.toISOString(),
-            weekEnd: weekEnd.toISOString(),
-            matchups: weekMatchups,
-            completedDate: new Date().toISOString()
-        });
-
-        // Advance to next week
-        clan.h2hData.currentWeek++;
-
-        // Déjà au calendrier de saison dans la quasi-totalité des cas :
-        // ensureWeekMatchups() ne tire une semaine que si elle manque.
-        ensureWeekMatchups(clan, clan.h2hData.currentWeek);
-
-        // Update week start date (add 7 days)
-        clan.h2hData.weekStart = weekEnd.toISOString();
-
-        // Save updated data
-        await saveDraftData(draftData);
-
-        // Emit socket event to update all clients
-        io.emit('h2hWeekFinalized', { poolName, newWeek: clan.h2hData.currentWeek });
-
-        console.log(`✅ H2H Week ${currentWeek} finalized for pool: ${poolName}`);
-        console.log(`📅 Advanced to Week ${clan.h2hData.currentWeek}`);
-
-        res.json({
-            message: `Week ${currentWeek} finalized successfully`,
-            previousWeek: currentWeek,
-            currentWeek: clan.h2hData.currentWeek,
-            results: weekMatchups,
-            standings: clan.h2hData.standings
-        });
-
-    } catch (error) {
-        console.error("❌ Error finalizing H2H week:", error);
-        res.status(500).json({ message: "Error finalizing week" });
-    }
-});
 
 // ✅ H2H: Get current or upcoming week scores for a pool
-app.get('/h2h/current-week-scores', async (req, res) => {
-    try {
-        const { poolName } = req.query;
-
-        if (!poolName) {
-            return res.status(400).json({ message: "poolName query param required" });
-        }
-
-        const draftData = await loadDraftData();
-        const clan = draftData[poolName];
-
-        if (!clan || clan.poolMode !== 'head-to-head' || !clan.h2hData) {
-            return res.status(400).json({ message: "Pool not found or not H2H mode" });
-        }
-
-        const currentWeek = clan.h2hData.currentWeek;
-        const weekMatchups = clan.h2hData.matchups[currentWeek - 1];
-
-        if (!weekMatchups || weekMatchups.length === 0) {
-            // Auto-repair: if the draft is done and teams have rosters, generate matchups now
-            const activeTeams = Object.entries(clan.teams)
-                .filter(([_, td]) => td.members && td.members.length > 0 &&
-                    ((td.offensive || []).length + (td.defensive || []).length + (td.goalie || []).length) > 0)
-                .map(([teamName, td]) => ({ name: teamName, members: td.members }));
-
-            if (activeTeams.length >= 2 && activeTeams.length % 2 === 0) {
-                console.log(`🔧 Auto-generating matchups for pool ${poolName} (${activeTeams.length} teams)`);
-
-                const previousMatchups = clan.h2hData.matchups || [];
-                const newMatchups = generateWeeklyMatchups(activeTeams, previousMatchups);
-
-                if (newMatchups.length > 0) {
-                    // Derive the correct weekStart from seasonStart so week N always maps to the
-                    // right calendar dates, even after a server restart or missed catch-up.
-                    const now = new Date();
-                    let monday;
-                    if (clan.h2hData.seasonStart) {
-                        monday = new Date(clan.h2hData.seasonStart);
-                        monday.setDate(monday.getDate() + (currentWeek - 1) * 7);
-                    } else {
-                        // Fallback for legacy pools without seasonStart
-                        monday = new Date(now);
-                        const dayOfWeek = now.getDay();
-                        monday.setDate(now.getDate() + (dayOfWeek === 0 ? -6 : 1 - dayOfWeek));
-                        monday.setHours(0, 0, 0, 0);
-                    }
-
-                    clan.h2hData.weekStart = monday.toISOString();
-                    clan.h2hData.currentWeek = currentWeek;
-                    clan.h2hData.matchups[currentWeek - 1] = newMatchups.map(m => ({ ...m, weekNumber: currentWeek }));
-
-                    if (!clan.h2hData.standings) clan.h2hData.standings = {};
-                    activeTeams.forEach(t => ensureStandingsEntry(clan.h2hData.standings, t.name));
-
-                    const draftData2 = await loadDraftData();
-                    draftData2[poolName] = clan;
-                    await saveDraftData(draftData2);
-
-                    console.log(`✅ Auto-generated ${newMatchups.length} matchups for week ${currentWeek}, weekStart: ${monday.toISOString()}`);
-
-                    const weekEnd2 = new Date(monday);
-                    weekEnd2.setDate(weekEnd2.getDate() + 7);
-                    const now2 = new Date();
-                    const weekStatus2 = now2 < monday ? 'upcoming' : now2 >= weekEnd2 ? 'completed' : 'ongoing';
-                    const displayMatchups2 = newMatchups.map(m => ({
-                        team1: m.team1, team2: m.team2, team1Points: 0, team2Points: 0
-                    }));
-                    return res.json({
-                        currentWeek,
-                        weekStart: monday.toISOString(),
-                        weekEnd: weekEnd2.toISOString(),
-                        weekStatus: weekStatus2,
-                        matchups: displayMatchups2,
-                        standings: clan.h2hData.standings,
-                        matchupHistory: clan.h2hData.matchupHistory || []
-                    });
-                }
-            }
-
-            return res.json({
-                currentWeek,
-                matchups: [],
-                weekStart: clan.h2hData.weekStart,
-                weekEnd: clan.h2hData.weekStart ? new Date(new Date(clan.h2hData.weekStart).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString() : null,
-                weekStatus: activeTeams.length < 2 ? 'awaiting_draft_completion' : 'no_matchups'
-            });
-        }
-
-        // Check if draft has completed and weekStart is set
-        if (!clan.h2hData.weekStart) {
-            return res.json({
-                currentWeek,
-                matchups: weekMatchups.map(m => ({
-                    team1: m.team1,
-                    team2: m.team2,
-                    team1Points: 0,
-                    team2Points: 0
-                })),
-                weekStart: null,
-                weekEnd: null,
-                weekStatus: 'awaiting_draft_completion'
-            });
-        }
-
-        const weekStart = new Date(clan.h2hData.weekStart);
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 7);
-        const now = new Date();
-
-        // Determine week status
-        let weekStatus = 'ongoing'; // Default
-        let displayMatchups = [];
-
-        if (now < weekStart) {
-            // UPCOMING: Season hasn't started yet or this week is in the future
-            weekStatus = 'upcoming';
-            for (const matchup of weekMatchups) {
-                const t1players = await getTeamPlayerBreakdownForDateRange(clan.teams[matchup.team1], weekStart, weekEnd);
-                const t2players = await getTeamPlayerBreakdownForDateRange(clan.teams[matchup.team2], weekStart, weekEnd);
-                displayMatchups.push({
-                    team1: matchup.team1, team2: matchup.team2,
-                    team1Points: 0, team2Points: 0,
-                    team1Players: t1players, team2Players: t2players
-                });
-            }
-        } else if (now >= weekEnd) {
-            // COMPLETED: Week has ended
-            weekStatus = 'completed';
-            for (const matchup of weekMatchups) {
-                const t1players = await getTeamPlayerBreakdownForDateRange(clan.teams[matchup.team1], weekStart, weekEnd);
-                const t2players = await getTeamPlayerBreakdownForDateRange(clan.teams[matchup.team2], weekStart, weekEnd);
-                let t1pts = t1players.reduce((s, p) => s + p.fantasyPoints, 0);
-                let t2pts = t2players.reduce((s, p) => s + p.fantasyPoints, 0);
-                if (t1pts === 0 && t2pts === 0) {
-                    t1pts = matchup.team1Points || 0;
-                    t2pts = matchup.team2Points || 0;
-                }
-                t1pts = Math.round(t1pts * 10) / 10;
-                t2pts = Math.round(t2pts * 10) / 10;
-                displayMatchups.push({
-                    team1: matchup.team1, team2: matchup.team2,
-                    team1Points: t1pts, team2Points: t2pts,
-                    team1Players: t1players, team2Players: t2players,
-                    winner: matchup.winner
-                });
-            }
-        } else {
-            // ONGOING: Live scoring from weekStart to now
-            weekStatus = 'ongoing';
-            for (const matchup of weekMatchups) {
-                const t1players = await getTeamPlayerBreakdownForDateRange(clan.teams[matchup.team1], weekStart, now);
-                const t2players = await getTeamPlayerBreakdownForDateRange(clan.teams[matchup.team2], weekStart, now);
-                const t1pts = Math.round(t1players.reduce((s, p) => s + p.fantasyPoints, 0) * 10) / 10;
-                const t2pts = Math.round(t2players.reduce((s, p) => s + p.fantasyPoints, 0) * 10) / 10;
-                displayMatchups.push({
-                    team1: matchup.team1, team2: matchup.team2,
-                    team1Points: t1pts, team2Points: t2pts,
-                    team1Players: t1players, team2Players: t2players
-                });
-            }
-        }
-
-        res.json({
-            currentWeek,
-            weekStart: weekStart.toISOString(),
-            weekEnd: weekEnd.toISOString(),
-            weekStatus, // 'upcoming', 'ongoing', or 'completed'
-            matchups: displayMatchups,
-            standings: clan.h2hData.standings,
-            matchupHistory: clan.h2hData.matchupHistory || []
-        });
-
-    } catch (error) {
-        console.error("❌ Error fetching H2H current week scores:", error);
-        res.status(500).json({ message: "Error fetching scores" });
-    }
-});
 
 // ✅ H2H: Get today's player stats for each matchup
-app.get('/h2h/today-scores', async (req, res) => {
-    try {
-        const { poolName } = req.query;
-        if (!poolName) return res.status(400).json({ message: "poolName required" });
-
-        const draftData = await loadDraftData();
-        const clan = draftData[poolName];
-        if (!clan || clan.poolMode !== 'head-to-head' || !clan.h2hData) {
-            return res.status(400).json({ message: "Pool not found or not H2H" });
-        }
-
-        const currentWeek = clan.h2hData.currentWeek;
-        const weekMatchups = clan.h2hData.matchups[currentWeek - 1];
-        if (!weekMatchups || weekMatchups.length === 0) {
-            return res.json({ currentWeek, matchups: [], weekStatus: 'no_matchups' });
-        }
-
-        // Today: midnight to now
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const now = new Date();
-
-        const displayMatchups = [];
-        for (const matchup of weekMatchups) {
-            const t1players = await getTeamPlayerBreakdownForDateRange(clan.teams[matchup.team1], todayStart, now);
-            const t2players = await getTeamPlayerBreakdownForDateRange(clan.teams[matchup.team2], todayStart, now);
-            const t1pts = Math.round(t1players.reduce((s, p) => s + p.fantasyPoints, 0) * 10) / 10;
-            const t2pts = Math.round(t2players.reduce((s, p) => s + p.fantasyPoints, 0) * 10) / 10;
-            displayMatchups.push({
-                team1: matchup.team1, team2: matchup.team2,
-                team1Points: t1pts, team2Points: t2pts,
-                team1Players: t1players, team2Players: t2players
-            });
-        }
-
-        res.json({
-            currentWeek,
-            date: todayStart.toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long' }),
-            matchups: displayMatchups,
-            standings: clan.h2hData.standings
-        });
-    } catch (err) {
-        console.error("❌ Error fetching today scores:", err);
-        res.status(500).json({ message: "Error fetching today scores" });
-    }
-});
 
 /* ✅ H2H : le calendrier de TOUTE la saison — chaque semaine, chaque duel.
  *
@@ -4478,294 +3701,71 @@ app.get('/h2h/today-scores', async (req, res) => {
  * enregistrées. Les semaines déjà jouées ne sont jamais retouchées — un
  * résultat inscrit est un résultat inscrit.
  */
-app.get('/h2h/season-schedule', async (req, res) => {
-    try {
-        // Toutes les équipes, toujours : le client garde la réponse et
-        // rebascule d'une équipe à l'autre sans repasser par le réseau. Un
-        // filtre ?team= ici ne ferait qu'ajouter un aller-retour par clic.
-        const { poolName } = req.query;
-        if (!poolName) return res.status(400).json({ message: "poolName required" });
-
-        const draftData = await loadDraftData();
-        const clan = draftData[poolName];
-        if (!clan || clan.poolMode !== 'head-to-head' || !clan.h2hData) {
-            return res.status(400).json({ message: "Pool not found or not H2H mode" });
-        }
-
-        const h2h = clan.h2hData;
-        const seasonStartISO = h2h.seasonStart || h2h.weekStart || null;
-
-        if (!seasonStartISO) {
-            // Le repêchage n'est pas terminé : il n'y a pas encore de saison.
-            return res.json({
-                poolName, currentWeek: h2h.currentWeek || 1,
-                seasonStart: null, seasonEnd: null,
-                status: 'awaiting_draft_completion',
-                weeks: [], teams: []
-            });
-        }
-
-        const seasonStart = new Date(seasonStartISO);
-
-        // Fin de saison : celle figée au repêchage fait foi. Le calendrier de
-        // la LNH ne sert qu'aux pools antérieurs, qui n'en ont pas.
-        let seasonEnd = h2h.seasonEnd || null;
-        if (!seasonEnd) {
-            const fenetreSaison = await getSeasonWindow();
-            seasonEnd = (fenetreSaison && fenetreSaison.regularSeasonEndDate) || null;
-        }
-
-        const totalWeeks = h2h.seasonWeeks || seasonWeekCount(seasonStart, seasonEnd);
-
-        // Rattrapage des pools d'avant le calendrier complet : on ajoute les
-        // semaines manquantes SANS toucher à celles déjà au tableau.
-        const dejaPrevues = Array.isArray(h2h.matchups) ? h2h.matchups.length : 0;
-        if (dejaPrevues < totalWeeks) {
-            const activeTeams = Object.entries(clan.teams)
-                .filter(([_, td]) => td.members && td.members.length > 0)
-                .map(([teamName, td]) => ({ name: teamName, members: td.members }));
-
-            const complement = generateSeasonSchedule(activeTeams, totalWeeks - dejaPrevues);
-            if (complement.length > 0) {
-                if (!Array.isArray(h2h.matchups)) h2h.matchups = [];
-                complement.forEach((duels, i) => {
-                    h2h.matchups.push(duels.map(m => ({ ...m, weekNumber: dejaPrevues + i + 1 })));
-                });
-                h2h.seasonWeeks = h2h.matchups.length;
-                h2h.seasonEnd = h2h.seasonEnd || seasonEnd;
-                await saveDraftData(draftData);
-                console.log(`📅 Calendrier de ${poolName} complété : +${complement.length} semaine(s), ${h2h.matchups.length} au total`);
-            }
-        }
-
-        // Les résultats finalisés font foi sur les duels vierges du calendrier.
-        const parNumero = new Map();
-        (h2h.matchupHistory || []).forEach(w => { if (w && w.weekNumber) parNumero.set(w.weekNumber, w); });
-
-        const now = new Date();
-        const semaineEnCours = h2h.currentWeek || 1;
-
-        const weeks = (h2h.matchups || []).map((duels, index) => {
-            const numero = index + 1;
-            const debut = new Date(seasonStart);
-            debut.setDate(debut.getDate() + index * 7);
-            const fin = new Date(debut);
-            fin.setDate(fin.getDate() + 7);
-
-            const archive = parNumero.get(numero);
-            const source = (archive && Array.isArray(archive.matchups) && archive.matchups.length)
-                ? archive.matchups
-                : (duels || []);
-
-            // « Terminée » veut dire finalisée, pas seulement passée : une
-            // semaine échue mais non pointée reste en cours tant que le
-            // rattrapage n'a pas écrit ses résultats.
-            const status = archive ? 'completed'
-                : numero < semaineEnCours ? 'completed'
-                : (now >= debut && now < fin) ? 'ongoing'
-                : now < debut ? 'upcoming' : 'ongoing';
-
-            return {
-                weekNumber: numero,
-                weekStart: debut.toISOString(),
-                weekEnd: fin.toISOString(),
-                status,
-                matchups: source.map(m => ({
-                    team1: m.team1,
-                    team2: m.team2,
-                    team1Points: Math.round((m.team1Points || 0) * 10) / 10,
-                    team2Points: Math.round((m.team2Points || 0) * 10) / 10,
-                    winner: m.winner || null
-                }))
-            };
-        });
-
-        // Membres et fiche de chaque équipe : le carrousel affiche des noms
-        // lisibles et des avatars, pas des clés « Équipe 3 ». Les cases
-        // restées vides d'un pool jamais rempli n'ont rien à y faire — elles
-        // n'ont pas de duel et gonfleraient le sélecteur d'équipe pour rien.
-        const teams = Object.entries(clan.teams || {})
-            .filter(([, td]) => td && Array.isArray(td.members) && td.members.length > 0)
-            .map(([name, td]) => ({
-                name,
-                members: td.members,
-                record: (h2h.standings && h2h.standings[name]) || null
-            }));
-
-        res.json({
-            poolName,
-            currentWeek: semaineEnCours,
-            seasonStart: seasonStart.toISOString(),
-            seasonEnd,
-            totalWeeks: weeks.length,
-            status: 'ok',
-            weeks,
-            teams
-        });
-
-    } catch (error) {
-        console.error("❌ Error fetching H2H season schedule:", error);
-        res.status(500).json({ message: "Error fetching season schedule" });
-    }
-});
 
 console.log("✅ Trade system initialized");
 
 // ✅ Auto-check and finalize completed H2H weeks
-async function checkAndFinalizeCompletedWeeks() {
+
+/**
+ * Rattrape les semaines terminees mais jamais closes.
+ *
+ * Meme service que le bouton manuel, donc meme resultat : c'est tout l'objet du
+ * changement. L'ancienne version manuelle remplacait les feuilles manquantes
+ * par les totaux de saison la ou l'automatique attendait — la meme semaine
+ * pouvait donc etre close de deux facons selon le chemin emprunte.
+ *
+ * Le travail est borne : un redemarrage apres une longue absence ne doit pas
+ * essayer de fermer quinze semaines d'un coup, en interrogeant les feuilles de
+ * chacune, pendant que le site repond aux visiteurs.
+ */
+async function rattraperSemainesH2H({ maxSemainesParPool = 4 } = {}) {
+    // Le pointage hebdomadaire lit les feuilles de match, qui vivent dans une
+    // table PostgreSQL. En mode fichier l'operation n'existe pas — et le dire
+    // vaut mieux que faire semblant de l'avoir tentee.
+    if (!USE_POSTGRES) {
+        console.log('ℹ️ Rattrapage tete-a-tete ignore : les feuilles de match exigent PostgreSQL.');
+        return 0;
+    }
+
     try {
-        const draftData = await loadDraftData();
-        let updatedAnyPool = false;
+        const pools = await poolStore.lireTous();
+        let closes = 0;
 
-        for (const [poolName, clan] of Object.entries(draftData)) {
-            // Skip non-H2H pools
-            if (clan.poolMode !== 'head-to-head' || !clan.h2hData) {
-                continue;
-            }
+        for (const [nomPool, enveloppe] of Object.entries(pools)) {
+            const data = enveloppe.data;
+            if (data.poolMode !== 'head-to-head' || !data.h2hData) continue;
+            if (!data.h2hData.seasonStart && !data.h2hData.weekStart) continue;
 
-            // Skip pools where draft hasn't completed yet
-            if (!clan.h2hData.weekStart) {
-                continue;
-            }
-
-            let weekStart = new Date(clan.h2hData.weekStart);
-            let weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekEnd.getDate() + 7);
-            const now = new Date();
-
-            // Backfill ALL missed weeks in a single pass (safety cap: 52 weeks)
-            let catchUpCount = 0;
-            const MAX_CATCHUP = 52;
-
-            while (now >= weekEnd && catchUpCount < MAX_CATCHUP) {
-                const currentWeek = clan.h2hData.currentWeek;
-                const weekMatchups = clan.h2hData.matchups[currentWeek - 1];
-
-                if (!weekMatchups || weekMatchups.length === 0) {
-                    console.log(`⚠️ No matchups for Week ${currentWeek} in pool ${poolName} — stopping catch-up`);
-                    break;
+            try {
+                const faites = await serviceH2H.rattraper(nomPool, { maxSemaines: maxSemainesParPool });
+                if (faites.length > 0) {
+                    closes += faites.length;
+                    console.log(`✅ ${nomPool} : semaine(s) ${faites.join(', ')} finalisee(s)`);
                 }
-
-                console.log(`🔔 Auto-finalizing Week ${currentWeek} for pool: ${poolName}`);
-
-                // Passe préalable : pointer tous les duels avant d'écrire.
-                // Sans feuilles de match, la semaine n'est PAS finalisée — on
-                // sort de la boucle de rattrapage et le prochain passage
-                // reprendra la même semaine. Substituer les totaux de saison,
-                // comme ici avant, mélangeait deux unités et pouvait opposer un
-                // cumul d'année au pointage d'une seule semaine.
-                const pointages = [];
-                for (const matchup of weekMatchups) {
-                    const team1Data = clan.teams[matchup.team1];
-                    const team2Data = clan.teams[matchup.team2];
-                    if (!team1Data) console.warn(`⚠️ Auto-finalize: team "${matchup.team1}" not found in pool ${poolName}`);
-                    if (!team2Data) console.warn(`⚠️ Auto-finalize: team "${matchup.team2}" not found in pool ${poolName}`);
-
-                    const t1pts = await getTeamPointsForDateRange(team1Data, weekStart, weekEnd);
-                    const t2pts = await getTeamPointsForDateRange(team2Data, weekStart, weekEnd);
-                    pointages.push({ matchup, t1pts, t2pts });
-                }
-
-                // Même règle que la route manuelle : repli pour tout le monde
-                // ou pour personne. Une semaine à moitié pointée n'est pas
-                // finalisée du tout — la boucle la reprendra au prochain
-                // passage, quand les feuilles seront arrivées.
-                const valeurs = pointages.flatMap(p => [p.t1pts, p.t2pts]);
-                const aucuneFeuille = valeurs.every(v => v === null);
-
-                if (!aucuneFeuille && valeurs.some(v => v === null)) {
-                    console.warn(`⏸️ Semaine ${currentWeek} de ${poolName} laissée en attente : feuilles de match incomplètes. Reprise au prochain passage.`);
-                    break;
-                }
-
-                if (aucuneFeuille) {
-                    console.warn(`⚠️ Semaine ${currentWeek} de ${poolName} : aucune feuille de match — repli sur les totaux de saison pour TOUTES les équipes.`);
-                    const currentStats = await loadCurrentStats();
-                    for (const p of pointages) {
-                        p.t1pts = getTeamWeeklyPoints(clan.teams[p.matchup.team1], currentStats);
-                        p.t2pts = getTeamWeeklyPoints(clan.teams[p.matchup.team2], currentStats);
-                    }
-                }
-
-                for (const { matchup, t1pts, t2pts } of pointages) {
-                    matchup.team1Points = t1pts;
-                    matchup.team2Points = t2pts;
-                    matchup.weekNumber = currentWeek;
-
-                    ensureStandingsEntry(clan.h2hData.standings, matchup.team1);
-                    ensureStandingsEntry(clan.h2hData.standings, matchup.team2);
-
-                    if (matchup.team1Points > matchup.team2Points) {
-                        matchup.winner = matchup.team1;
-                        clan.h2hData.standings[matchup.team1].wins++;
-                        clan.h2hData.standings[matchup.team2].losses++;
-                    } else if (matchup.team2Points > matchup.team1Points) {
-                        matchup.winner = matchup.team2;
-                        clan.h2hData.standings[matchup.team2].wins++;
-                        clan.h2hData.standings[matchup.team1].losses++;
-                    } else {
-                        matchup.winner = 'tie';
-                        clan.h2hData.standings[matchup.team1].ties++;
-                        clan.h2hData.standings[matchup.team2].ties++;
-                    }
-
-                    clan.h2hData.standings[matchup.team1].pointsFor  += matchup.team1Points;
-                    clan.h2hData.standings[matchup.team1].pointsAgainst += matchup.team2Points;
-                    clan.h2hData.standings[matchup.team2].pointsFor  += matchup.team2Points;
-                    clan.h2hData.standings[matchup.team2].pointsAgainst += matchup.team1Points;
-                }
-
-                if (!clan.h2hData.matchupHistory) clan.h2hData.matchupHistory = [];
-                clan.h2hData.matchupHistory.push({
-                    weekNumber: currentWeek,
-                    weekStart: weekStart.toISOString(),
-                    weekEnd: weekEnd.toISOString(),
-                    matchups: weekMatchups,
-                    completedDate: now.toISOString()
-                });
-
-                // La semaine suivante vient du calendrier de saison ; le
-                // tirage ne sert que si elle manque (pool ancien, saison
-                // plus longue que prévu).
-                clan.h2hData.currentWeek++;
-                ensureWeekMatchups(clan, clan.h2hData.currentWeek);
-
-                // Roll the window forward by exactly 7 days
-                weekStart = new Date(weekEnd);
-                weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekEnd.getDate() + 7);
-                clan.h2hData.weekStart = weekStart.toISOString();
-
-                catchUpCount++;
-            }
-
-            if (catchUpCount > 0) {
-                console.log(`✅ Pool ${poolName}: caught up ${catchUpCount} week(s), now at Week ${clan.h2hData.currentWeek}`);
-                updatedAnyPool = true;
+            } catch (erreur) {
+                // Un pool en echec n'empeche pas les autres d'etre rattrapes.
+                console.error(`❌ Rattrapage impossible pour ${nomPool} :`,
+                    erreur.message || erreur.code || erreur.name || erreur);
             }
         }
 
-        // Save if any pool was updated
-        if (updatedAnyPool) {
-            await saveDraftData(draftData);
-            io.emit('h2hWeekAutoFinalized');
-            console.log("💾 H2H data saved after auto-finalization");
-        }
-
-    } catch (error) {
-        console.error("❌ Error in auto-check for completed weeks:", error);
+        if (closes > 0) io.emit('h2hWeekAutoFinalized', { semaines: closes });
+        return closes;
+    } catch (erreur) {
+        console.error('❌ Erreur au rattrapage des semaines :', erreur.message);
+        return 0;
     }
 }
 
-// Run check on server startup
-console.log("🔍 Checking for completed H2H weeks on startup...");
-checkAndFinalizeCompletedWeeks();
+// Un passage au demarrage, puis toutes les six heures.
+console.log("🔍 Verification des semaines tete-a-tete terminees...");
+rattraperSemainesH2H();
 
 // Run check every 6 hours (21600000 ms)
 const SIX_HOURS = 6 * 60 * 60 * 1000;
 setInterval(() => {
     console.log("🔍 Running periodic check for completed H2H weeks...");
-    checkAndFinalizeCompletedWeeks();
+    rattraperSemainesH2H();
 }, SIX_HOURS);
 
 console.log("✅ H2H auto-finalization scheduler initialized (checks every 6 hours)");
@@ -4876,18 +3876,30 @@ function initializeDataFiles() {
 // ──────────────────────────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'production') {
 
-    // Set h2hData.weekStart and/or currentWeek directly — used to simulate time passing
+    // Place l'horloge de la saison — simule le temps qui passe.
+    // Passe par le contrat d'ecriture comme tout le reste : un utilitaire de
+    // test qui ecrirait autrement ne testerait pas le vrai chemin.
     app.post('/test/h2h-set-state', async (req, res) => {
         const { poolName, weekStart, currentWeek, seasonStart } = req.body;
-        const draftData = await loadDraftData();
-        const clan = draftData[poolName];
-        if (!clan || !clan.h2hData)
-            return res.status(404).json({ message: 'Pool not found or not H2H' });
-        if (weekStart   !== undefined) clan.h2hData.weekStart   = weekStart;
-        if (seasonStart !== undefined) clan.h2hData.seasonStart = seasonStart;
-        if (currentWeek !== undefined) clan.h2hData.currentWeek = currentWeek;
-        await saveDraftData(draftData);
-        res.json({ ok: true, weekStart: clan.h2hData.weekStart, seasonStart: clan.h2hData.seasonStart, currentWeek: clan.h2hData.currentWeek });
+        try {
+            const { valeur } = await poolStore.muterPool(poolName, {
+                scope: 'test:h2h-etat',
+                appliquer: async ({ data }) => {
+                    if (!data.h2hData) throw new poolStore.ErreurMetier(404, 'Pool non tete-a-tete');
+                    if (weekStart !== undefined) data.h2hData.weekStart = weekStart;
+                    if (seasonStart !== undefined) data.h2hData.seasonStart = seasonStart;
+                    if (currentWeek !== undefined) data.h2hData.currentWeek = currentWeek;
+                    return { valeur: {
+                        weekStart: data.h2hData.weekStart,
+                        seasonStart: data.h2hData.seasonStart,
+                        currentWeek: data.h2hData.currentWeek
+                    } };
+                }
+            });
+            res.json({ ok: true, ...valeur });
+        } catch (erreur) {
+            res.status(erreur.code || 500).json({ message: erreur.message });
+        }
     });
 
     // Tronque le calendrier de saison — simule un pool tiré avant que le
@@ -4895,19 +3907,25 @@ if (process.env.NODE_ENV !== 'production') {
     // semaines manquantes sans toucher à celles déjà jouées.
     app.post('/test/h2h-truncate-schedule', async (req, res) => {
         const { poolName, keep } = req.body;
-        const draftData = await loadDraftData();
-        const clan = draftData[poolName];
-        if (!clan || !clan.h2hData)
-            return res.status(404).json({ message: 'Pool not found or not H2H' });
-        clan.h2hData.matchups = clan.h2hData.matchups.slice(0, Math.max(1, Number(keep) || 1));
-        delete clan.h2hData.seasonWeeks;
-        await saveDraftData(draftData);
-        res.json({ ok: true, weeks: clan.h2hData.matchups.length });
+        try {
+            const { valeur } = await poolStore.muterPool(poolName, {
+                scope: 'test:h2h-tronquer',
+                appliquer: async ({ data }) => {
+                    if (!data.h2hData) throw new poolStore.ErreurMetier(404, 'Pool non tete-a-tete');
+                    data.h2hData.matchups = (data.h2hData.matchups || []).slice(0, Math.max(1, Number(keep) || 1));
+                    delete data.h2hData.seasonWeeks;
+                    return { valeur: { weeks: data.h2hData.matchups.length } };
+                }
+            });
+            res.json({ ok: true, ...valeur });
+        } catch (erreur) {
+            res.status(erreur.code || 500).json({ message: erreur.message });
+        }
     });
 
     // Trigger the auto-finalize check and return new state for all H2H pools
     app.post('/test/h2h-trigger-catchup', async (req, res) => {
-        await checkAndFinalizeCompletedWeeks();
+        await rattraperSemainesH2H();
         const draftData = await loadDraftData();
         const result = {};
         for (const [name, clan] of Object.entries(draftData)) {
