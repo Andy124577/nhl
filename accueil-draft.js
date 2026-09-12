@@ -11,7 +11,6 @@ function fzhReset() {
     document.getElementById('fzDraftHome').remove();
     document.getElementById('fzDashSection')?.classList.remove('is-drafting');
     document.body.classList.remove('fz-draft-page');
-    document.querySelectorAll('[data-fzh-nav]').forEach(el => el.remove());
     fzhActivePool = null;
 }
 
@@ -144,7 +143,6 @@ function renderDraftHome({ tonight, activeName }) {
     renderCalendar();
     fzmLoadLeague();
     fzhLoadNews(root);
-    fzhEnsureNav();
     return true;
 }
 
@@ -198,41 +196,4 @@ async function fzhLoadNews(root) {
         slot.querySelectorAll('[data-fzh-slide]').forEach(b => b.addEventListener('click', () => { fzhNewsIndex = Number(b.dataset.fzhSlide); render(); slot.querySelector(`[data-fzh-slide="${fzhNewsIndex}"]`)?.focus({ preventScroll:true }); }));
     };
     render();
-}
-
-function fzhEnsureNav() {
-    // Reuse the existing delegated team-settings action; draft rosters cannot open standings.
-    for (const [selector, cls, labelCls, iconCls] of [['.nav-links','nav-link','nav-text','nav-icon'], ['.bottom-nav','bottom-nav-item','bottom-nav-label','bottom-nav-icon']]) {
-        const nav = document.querySelector(selector);
-        if (!nav || nav.querySelector('[data-fzh-nav]')) continue;
-        const button = document.createElement('button');
-        button.type = 'button'; button.className = cls;
-        button.setAttribute('data-fzh-nav',''); button.setAttribute('data-fz-reglages','equipes');
-        button.innerHTML = `<span class="${iconCls}">${getIcon('person',22)}</span><span class="${labelCls}">Mon équipe</span>`;
-        nav.firstElementChild?.after(button);
-    }
-    const desktop = document.querySelector('.nav-links');
-    if (desktop && !desktop.querySelector('.fzh-nav-extra')) {
-        for (const [label, icon, action] of [['Calendrier', 'calendar', 'calendar'], ['Classements', 'chart', 'standings'], ['Actualités', 'scroll', 'news']]) {
-            const button = document.createElement('button');
-            button.type = 'button'; button.className = 'nav-link fzh-nav-extra';
-            button.setAttribute('data-fzh-nav', '');
-            button.innerHTML = `<span class="nav-icon">${fzhIcon(icon)}</span><span class="nav-text">${label}</span>`;
-            if (action === 'standings') {
-                button.disabled = true;
-                button.title = 'Classements disponibles après le repêchage';
-            } else button.addEventListener('click', () => {
-                if (action === 'calendar') document.querySelector('#fzDraftHome .fzh-camp')?.click();
-                else document.getElementById('fzhNews')?.scrollIntoView({ behavior:'smooth', block:'center' });
-            });
-            desktop.appendChild(button);
-        }
-    }
-    const rail = document.querySelector('.fz-sidebar');
-    if (rail && !rail.querySelector('.fzh-rail-season')) {
-        const badge = document.createElement('div');
-        badge.className = 'fzh-rail-season'; badge.setAttribute('data-fzh-nav', '');
-        badge.innerHTML = `<img src="https://assets.nhle.com/logos/nhl/svg/NHL_dark.svg" alt="LNH"><span><strong>${fzdSeasonStarted() === true ? 'La saison est en cours' : 'La saison approche'}</strong><small>${fzdSeasonStarted() === true ? 'Suivez chaque match.' : 'Le compte à rebours est lancé.'}</small></span>`;
-        rail.appendChild(badge);
-    }
 }
