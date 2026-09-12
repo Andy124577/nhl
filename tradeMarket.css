@@ -1,0 +1,173 @@
+/* Le marché des échanges.
+ *
+ * Une surface, pas un filtre. Chaque ligne dit qui est disponible, chez qui,
+ * dans quelle catégorie, ce que le joueur vaut DANS CE POOL, et si l'on peut
+ * répondre — avec la raison quand on ne peut pas.
+ *
+ * Direction Broadcast Desk (DESIGN.md) : sobre, lisible, accent brique
+ * réservé à ce sur quoi on peut agir.
+ */
+
+.tm-market {
+    margin: 0 0 24px;
+    border: 1px solid var(--fz-border, rgba(255, 255, 255, .1));
+    border-radius: 14px;
+    background: var(--fz-surface, rgba(255, 255, 255, .03));
+    overflow: hidden;
+}
+
+.tm-market-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--fz-border, rgba(255, 255, 255, .08));
+}
+
+.tm-market-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .01em;
+}
+
+.tm-market-count {
+    font-size: 12px;
+    opacity: .7;
+    flex: 1;
+}
+
+.tm-market-toggle {
+    background: none;
+    border: 1px solid var(--fz-border, rgba(255, 255, 255, .14));
+    border-radius: 8px;
+    color: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    /* Cible confortable au doigt. */
+    min-height: 44px;
+    padding: 0 14px;
+}
+
+.tm-market-toggle:focus-visible {
+    outline: 2px solid var(--fz-accent, #c8442f);
+    outline-offset: 2px;
+}
+
+.tm-market-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.tmm-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--fz-border-faint, rgba(255, 255, 255, .05));
+}
+
+.tmm-row:last-child { border-bottom: 0; }
+
+.tmm-who {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.tmm-player {
+    font-weight: 650;
+    font-size: 14px;
+    /* Le nom ne se coupe pas au milieu : il sert à reconnaître quelqu'un. */
+    overflow-wrap: anywhere;
+}
+
+/* L'équipe qui possède le joueur : sans elle, « faire une offre » ne dit pas
+   à qui. */
+.tmm-team {
+    font-size: 12px;
+    opacity: .68;
+}
+
+.tmm-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 12px;
+}
+
+.tmm-cat {
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--fz-border, rgba(255, 255, 255, .12));
+    opacity: .85;
+}
+
+.tmm-stat {
+    font-variant-numeric: tabular-nums;
+    opacity: .8;
+}
+
+.tmm-act {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.tmm-offrir {
+    border: 1px solid var(--fz-accent, #c8442f);
+    background: var(--fz-accent, #c8442f);
+    color: #fff;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+    min-height: 44px;
+    padding: 0 16px;
+    white-space: nowrap;
+}
+
+.tmm-offrir:focus-visible {
+    outline: 2px solid var(--fz-accent, #c8442f);
+    outline-offset: 3px;
+}
+
+/* Un bouton désactivé reste lisible : il faut pouvoir lire à côté POURQUOI
+   il l'est. Un bouton effacé au point d'être illisible n'explique rien. */
+.tmm-offrir[disabled] {
+    background: transparent;
+    color: inherit;
+    border-color: var(--fz-border, rgba(255, 255, 255, .16));
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+/* La raison du refus, à côté du bouton plutôt que dans une infobulle : elle
+   doit se lire sans survol, donc aussi au doigt et au clavier. */
+.tmm-refus {
+    font-size: 11.5px;
+    opacity: .75;
+    text-align: right;
+    max-width: 26ch;
+    line-height: 1.3;
+}
+
+/* Écrans étroits : une ligne devient une pile, et le bouton prend la largeur.
+   Testé à 320, 360, 390 et 430 pixels CSS. */
+@media (max-width: 640px) {
+    .tmm-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 14px 16px;
+    }
+    .tmm-act {
+        align-items: stretch;
+    }
+    .tmm-offrir { width: 100%; }
+    .tmm-refus { text-align: left; max-width: none; }
+}

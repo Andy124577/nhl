@@ -5,33 +5,37 @@
 //         current-week-scores endpoint, and edge cases.
 // Run: node test_h2h.js  (server must be running on :3000)
 // ============================================================
-const BASE = 'http://localhost:3000';
+// BASE vient de TEST_SERVER_URL, via test/integration/client.js.
 
-let pass = 0, fail = 0;
+let pass = 0, fail = 0, skip = 0;
 const results = [];
 
 function ok(label)         { pass++; results.push(`  ✓  ${label}`); }
+function sk(label, raison) { skip++; results.push(`  ○  ${label} [IGNORÉ : ${raison}]`); }
 function ko(label, detail) { fail++; results.push(`  ✗  ${label}${detail ? ` → ${detail}` : ''}`); }
 function section(title)    { results.push(`\n── ${title} ──`); }
 
-async function api(method, path, body) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
-  if (body) opts.body = JSON.stringify(body);
-  try {
-    const r = await fetch(`${BASE}${path}`, opts);
-    let json;
-    try { json = await r.json(); } catch { json = {}; }
-    return { status: r.status, ok: r.ok, body: json };
-  } catch (e) {
-    return { status: 0, ok: false, body: {}, error: e.message };
-  }
-}
+// L'identite ne vient plus du corps de la requete mais d'un cookie de session.
+// Le client partage (test/integration/client.js) ouvre une session par compte
+// et bascule d'office sur celle que la requete mentionne — les appels ci-dessous
+// restent ecrits comme avant, mais s'executent maintenant sous une identite
+// verifiee. Il refuse aussi de demarrer sans TEST_SERVER_URL : ces scripts
+// creent et suppriment des pools.
+const { api, apiAnonyme, identifier, deconnecterTout, exigerServeurDEssai, configurer } =
+  require('./test/integration/client.js');
+
+// Ce script cree ses comptes avec un « ! » final : le client doit connaitre la
+// convention pour pouvoir ROUVRIR une session sur un compte laisse par une
+// execution precedente, pas seulement en creer une.
+configurer({ motDePasse: (compte) => `${compte}Pass1!` });
+
+exigerServeurDEssai();
 
 
 
-// ── Helpers ──────────────────────────────────────────────────
+
 async function getPool(poolName) {
-  const r = await api('GET', '/draft');
+  const r = await api('GET', '/draft', undefined, { as: ACTEUR });
   return r.body?.[poolName] ?? null;
 }
 
@@ -42,22 +46,23 @@ async function getH2H(poolName) {
 
 // Set weekStart / currentWeek directly (test utility)
 async function setState(poolName, opts) {
-  return api('POST', '/test/h2h-set-state', { poolName, ...opts });
+  return api('POST', '/test/h2h-set-state', { poolName, ...opts }, { as: ACTEUR });
 }
 
 // Trigger the auto-finalize pass and return new state
 async function triggerCatchup() {
-  return api('POST', '/test/h2h-trigger-catchup');
+  return api('POST', '/test/h2h-trigger-catchup', undefined, { as: ACTEUR });
 }
 
 // Finalize the current week manually
 async function finalizeWeek(poolName) {
-  return api('POST', '/h2h/finalize-week', { poolName });
+  return api('POST', '/h2h/finalize-week', { poolName }, { as: ACTEUR });
 }
 
 // Current week scores endpoint
 async function currentWeekScores(poolName) {
-  return api('GET', `/h2h/current-week-scores?poolName=${encodeURIComponent(poolName)}`);
+  return api('GET', `/h2h/current-week-scores?poolName=${encodeURIComponent(poolName)}`,
+    undefined, { as: ACTEUR });
 }
 
 // ISO date N weeks in the past from now
@@ -66,7 +71,28 @@ function weeksAgo(n) {
 }
 
 // ── Test users ────────────────────────────────────────────────
-const USERS = ['h2h_alpha', 'h2h_beta', 'h2h_charlie', 'h2h_delta'];
+/**
+ * Comptes propres a CETTE execution.
+ *
+ * Des noms fixes obligeaient a connaitre le mot de passe des comptes laisses
+ * par une execution precedente — impossible, puisqu'une empreinte ne se relit
+ * pas. Un suffixe par execution rend chaque essai independant du precedent.
+ */
+const SUFFIXE = Date.now().toString(36);
+const U = {
+  alpha: `h2h_alpha_${SUFFIXE}`,
+  beta: `h2h_beta_${SUFFIXE}`,
+  charlie: `h2h_charlie_${SUFFIXE}`,
+  delta: `h2h_delta_${SUFFIXE}`
+};
+const USERS = [U.alpha, U.beta, U.charlie, U.delta];
+
+// ── Helpers ──────────────────────────────────────────────────
+// L'ACTEUR de cet essai : le compte qui cree les pools, donc celui qui peut
+// les lire en detail, lancer leur repechage, finaliser une semaine et les
+// supprimer. /draft ne livre plus les alignements des pools qu'on n'a pas
+// rejoints, et ces actions appartiennent a la personne qui a cree le pool.
+const ACTEUR = U.alpha;
 let pool2;  // 2-team pool name
 let pool4;  // 4-team pool name
 
@@ -86,7 +112,7 @@ async function setup() {
   // 2-team H2H pool — 1 offensive pick per team (minimal config to complete draft quickly)
   pool2 = `H2H2_${Date.now()}`;
   const c2 = await api('POST', '/create-clan', {
-    name: pool2, username: 'h2h_alpha', maxPlayers: 2,
+    name: pool2, username: U.alpha, maxPlayers: 2,
     config: { numOffensive: 1, numDefensive: 0, numGoalies: 0, numRookies: 0, numTeams: 0 },
     poolMode: 'head-to-head', allowTrades: false
   });
@@ -95,7 +121,7 @@ async function setup() {
   // 4-team H2H pool
   pool4 = `H2H4_${Date.now()}`;
   const c4 = await api('POST', '/create-clan', {
-    name: pool4, username: 'h2h_alpha', maxPlayers: 4,
+    name: pool4, username: U.alpha, maxPlayers: 4,
     config: { numOffensive: 1, numDefensive: 0, numGoalies: 0, numRookies: 0, numTeams: 0 },
     poolMode: 'head-to-head', allowTrades: false
   });
@@ -129,19 +155,19 @@ async function testDraftCompletion() {
 
   // ── 2-team pool ──────────────────────────────────────────
   // User h2h_beta joins team 2 (h2h_alpha auto-placed on Équipe 1)
-  const join = await api('POST', '/join-team', { name: pool2, username: 'h2h_beta', teamName: 'Équipe 2' });
+  const join = await api('POST', '/join-team', { name: pool2, username: U.beta, teamName: 'Équipe 2' });
   join.ok ? ok('h2h_beta joined Équipe 2') : ko('h2h_beta join', JSON.stringify(join.body));
 
   // Start draft
-  const start = await api('POST', '/start-draft', { clanName: pool2 });
+  const start = await api('POST', '/start-draft', { clanName: pool2 }, { as: ACTEUR });
   start.ok ? ok('Draft started') : ko('Start draft', JSON.stringify(start.body));
 
   // Pick 1: h2h_alpha (Équipe 1)
-  const p1 = await api('POST', '/pick-player', { clanName: pool2, username: 'h2h_alpha', playerName: 'Nikita Kucherov', position: 'offensive' });
+  const p1 = await api('POST', '/pick-player', { clanName: pool2, username: U.alpha, playerName: 'Nikita Kucherov', position: 'offensive' });
   p1.ok ? ok('Pick 1 made (h2h_alpha → Kucherov)') : ko('Pick 1', JSON.stringify(p1.body));
 
   // Pick 2: h2h_beta (Équipe 2) — this is the last pick → draft complete → H2H init
-  const p2 = await api('POST', '/pick-player', { clanName: pool2, username: 'h2h_beta', playerName: 'Nathan MacKinnon', position: 'offensive' });
+  const p2 = await api('POST', '/pick-player', { clanName: pool2, username: U.beta, playerName: 'Nathan MacKinnon', position: 'offensive' });
   p2.ok ? ok('Pick 2 made (h2h_beta → MacKinnon) — draft complete') : ko('Pick 2', JSON.stringify(p2.body));
 
   // Wait briefly for async save
@@ -173,16 +199,16 @@ async function testDraftCompletion() {
   standingKeys.length === 2 ? ok('Standings initialized for both teams') : ko('Standings wrong count', String(standingKeys.length));
 
   // ── 4-team pool: add members and complete draft ──────────
-  await api('POST', '/join-team', { name: pool4, username: 'h2h_beta',    teamName: 'Équipe 2' });
-  await api('POST', '/join-team', { name: pool4, username: 'h2h_charlie', teamName: 'Équipe 3' });
-  await api('POST', '/join-team', { name: pool4, username: 'h2h_delta',   teamName: 'Équipe 4' });
-  await api('POST', '/start-draft', { clanName: pool4 });
+  await api('POST', '/join-team', { name: pool4, username: U.beta,    teamName: 'Équipe 2' });
+  await api('POST', '/join-team', { name: pool4, username: U.charlie, teamName: 'Équipe 3' });
+  await api('POST', '/join-team', { name: pool4, username: U.delta,   teamName: 'Équipe 4' });
+  await api('POST', '/start-draft', { clanName: pool4 }, { as: ACTEUR });
 
   const picks4 = [
-    { username: 'h2h_alpha',   player: 'Leon Draisaitl',   team: 'Équipe 1' },
-    { username: 'h2h_beta',    player: 'David Pastrnak',   team: 'Équipe 2' },
-    { username: 'h2h_charlie', player: 'Connor McDavid',   team: 'Équipe 3' },
-    { username: 'h2h_delta',   player: 'Mitchell Marner',  team: 'Équipe 4' },
+    { username: U.alpha,   player: 'Leon Draisaitl',   team: 'Équipe 1' },
+    { username: U.beta,    player: 'David Pastrnak',   team: 'Équipe 2' },
+    { username: U.charlie, player: 'Connor McDavid',   team: 'Équipe 3' },
+    { username: U.delta,   player: 'Mitchell Marner',  team: 'Équipe 4' },
   ];
   let allPicked = true;
   for (const { username, player } of picks4) {
@@ -209,7 +235,7 @@ async function testSingleWeekFinalization() {
   const weekBefore = before?.currentWeek;
   const weekStartBefore = before?.weekStart;
 
-  const r = await api('POST', '/h2h/finalize-week', { poolName: pool2 });
+  const r = await api('POST', '/h2h/finalize-week', { poolName: pool2 }, { as: ACTEUR });
   r.ok ? ok('finalize-week returned 200') : ko('finalize-week failed', JSON.stringify(r.body));
 
   // Verify response structure
@@ -287,7 +313,7 @@ async function testMultiWeekFinalization() {
   const EXTRA_WEEKS = 6;
   let allOk = true;
   for (let i = 0; i < EXTRA_WEEKS; i++) {
-    const r = await api('POST', '/h2h/finalize-week', { poolName: pool2 });
+    const r = await api('POST', '/h2h/finalize-week', { poolName: pool2 }, { as: ACTEUR });
     if (!r.ok) { allOk = false; ko(`Finalize week ${i + 2}`, JSON.stringify(r.body)); }
   }
   if (allOk) ok(`${EXTRA_WEEKS} additional weeks finalized`);
@@ -364,16 +390,16 @@ async function testCatchUp() {
   const poolName = `H2H_CATCHUP_${Date.now()}`;
   poolsCrees.push(poolName);   // pour que cleanup() le supprime aussi
   const cr = await api('POST', '/create-clan', {
-    name: poolName, username: 'h2h_alpha', maxPlayers: 2,
+    name: poolName, username: U.alpha, maxPlayers: 2,
     config: { numOffensive: 1, numDefensive: 0, numGoalies: 0, numRookies: 0, numTeams: 0 },
     poolMode: 'head-to-head', allowTrades: false
   });
   cr.ok ? ok('Catch-up test pool created') : ko('Create catch-up pool', JSON.stringify(cr.body));
 
-  await api('POST', '/join-team', { name: poolName, username: 'h2h_beta', teamName: 'Équipe 2' });
-  await api('POST', '/start-draft', { clanName: poolName });
-  await api('POST', '/pick-player', { clanName: poolName, username: 'h2h_alpha', playerName: 'Nikita Kucherov', position: 'offensive' });
-  await api('POST', '/pick-player', { clanName: poolName, username: 'h2h_beta',  playerName: 'Nathan MacKinnon', position: 'offensive' });
+  await api('POST', '/join-team', { name: poolName, username: U.beta, teamName: 'Équipe 2' });
+  await api('POST', '/start-draft', { clanName: poolName }, { as: ACTEUR });
+  await api('POST', '/pick-player', { clanName: poolName, username: U.alpha, playerName: 'Nikita Kucherov', position: 'offensive' });
+  await api('POST', '/pick-player', { clanName: poolName, username: U.beta,  playerName: 'Nathan MacKinnon', position: 'offensive' });
   await new Promise(r => setTimeout(r, 400));
 
   // Verify draft initialized
@@ -433,7 +459,7 @@ async function testCatchUp() {
     : ko('weekStart still in the distant past after catch-up', h2h.weekStart);
 
   // Cleanup
-  await api('POST', '/delete-clan', { clanName: poolName });
+  await api('POST', '/delete-clan', { clanName: poolName }, { as: ACTEUR });
   ok('Catch-up test pool cleaned up');
 }
 
@@ -507,7 +533,7 @@ async function testFourTeamPool() {
   }
 
   // Finalize week 1 for 4-team pool
-  const fin = await api('POST', '/h2h/finalize-week', { poolName: pool4 });
+  const fin = await api('POST', '/h2h/finalize-week', { poolName: pool4 }, { as: ACTEUR });
   fin.ok ? ok('4-team pool week 1 finalized') : ko('4-team finalize', JSON.stringify(fin.body));
 
   const h4after = await getH2H(pool4);
@@ -528,7 +554,7 @@ async function testFourTeamPool() {
   w2?.length === 2 ? ok('Week 2 has 2 matchups') : ko('Week 2 matchup count', String(w2?.length));
 
   // Finalize 5 more weeks, verify standing totals
-  for (let i = 0; i < 5; i++) await api('POST', '/h2h/finalize-week', { poolName: pool4 });
+  for (let i = 0; i < 5; i++) await api('POST', '/h2h/finalize-week', { poolName: pool4 }, { as: ACTEUR });
   const h4final = await getH2H(pool4);
   const totalWeeks = 6; // 1 + 5
   for (const t of Object.keys(h4final?.standings || {})) {
@@ -587,11 +613,11 @@ async function testEdgeCases() {
   section('EDGE CASES');
 
   // Non-existent pool → 404
-  const r1 = await api('POST', '/h2h/finalize-week', { poolName: 'NO_SUCH_POOL_XYZ' });
+  const r1 = await api('POST', '/h2h/finalize-week', { poolName: 'NO_SUCH_POOL_XYZ' }, { as: ACTEUR });
   r1.status === 404 ? ok('finalize-week: unknown pool → 404') : ko('unknown pool should 404', String(r1.status));
 
   // Missing poolName → 400
-  const r2 = await api('POST', '/h2h/finalize-week', {});
+  const r2 = await api('POST', '/h2h/finalize-week', {}, { as: ACTEUR });
   r2.status === 400 ? ok('finalize-week: missing poolName → 400') : ko('missing poolName should 400', String(r2.status));
 
   // current-week-scores without poolName param → 400
@@ -601,14 +627,14 @@ async function testEdgeCases() {
   // seasonStart never changes across multiple finalizations
   const ss = await getH2H(pool2);
   const originalSeasonStart = ss?.seasonStart;
-  await api('POST', '/h2h/finalize-week', { poolName: pool2 });
+  await api('POST', '/h2h/finalize-week', { poolName: pool2 }, { as: ACTEUR });
   const ss2 = await getH2H(pool2);
   ss2?.seasonStart === originalSeasonStart
     ? ok('seasonStart unchanged after another finalization')
     : ko('seasonStart changed after finalization', ss2?.seasonStart);
 
   // currentWeek response from finalize-week is always 1 more than previousWeek
-  const r4 = await api('POST', '/h2h/finalize-week', { poolName: pool2 });
+  const r4 = await api('POST', '/h2h/finalize-week', { poolName: pool2 }, { as: ACTEUR });
   if (r4.ok) {
     r4.body.currentWeek === r4.body.previousWeek + 1
       ? ok('finalize-week response: currentWeek = previousWeek + 1')
@@ -641,7 +667,7 @@ const poolsCrees = [];
 async function cleanup() {
   section('CLEANUP');
   for (const p of [pool2, pool4]) {
-    const r = await api('POST', '/delete-clan', { clanName: p });
+    const r = await api('POST', '/delete-clan', { clanName: p }, { as: ACTEUR });
     r.ok ? ok(`Pool "${p}" deleted`) : ko(`Delete "${p}"`, JSON.stringify(r.body));
   }
 
@@ -650,13 +676,39 @@ async function cleanup() {
   // qu'aux exécutions interrompues, où ils resteraient sinon dans draft.json.
   // « n'existe pas » est donc le cas NORMAL, pas un échec.
   for (const p of poolsCrees) {
-    const r = await api('POST', '/delete-clan', { clanName: p });
+    const r = await api('POST', '/delete-clan', { clanName: p }, { as: ACTEUR });
     const dejaParti = /n'existe pas|not found/i.test(r.body?.message || '');
     if (r.ok) ok(`Pool résiduel "${p}" supprimé`);
     else if (dejaParti) ok(`Pool "${p}" déjà nettoyé par son test`);
     else ko(`Delete "${p}"`, JSON.stringify(r.body));
   }
 }
+
+/**
+ * La finalisation hebdomadaire est-elle possible ici ?
+ *
+ * Elle lit les feuilles de match, qui vivent dans une table PostgreSQL. En
+ * mode fichier, elle refuse — et c'est le comportement voulu : la version
+ * precedente remplacait les feuilles manquantes par les totaux de saison,
+ * c'est-a-dire un cumul depuis octobre oppose au pointage d'une semaine.
+ *
+ * Un essai qui ne peut pas s'executer doit se DIRE ignore, pas echouer. Un
+ * echec annonce un produit casse ; ici, c'est l'environnement qui manque.
+ */
+let finalisationPossible = null;
+
+async function verifierFinalisation(poolName) {
+  if (finalisationPossible !== null) return finalisationPossible;
+  const sonde = await finalizeWeek(poolName);
+  finalisationPossible = !(sonde.status === 503 && sonde.body?.code === 'postgres_requis');
+  if (!finalisationPossible) {
+    results.push('\n  ℹ  Finalisation indisponible : PostgreSQL absent.');
+    results.push('     Les sections qui en dependent sont ignorees, pas echouees.');
+  }
+  return finalisationPossible;
+}
+
+const RAISON_PG = 'PostgreSQL absent : les feuilles de match y vivent';
 
 // ============================================================
 // MAIN
@@ -671,12 +723,33 @@ async function run() {
   await setup();
   await testInitialStructure();
   await testDraftCompletion();
-  await testSingleWeekFinalization();
-  await testMultiWeekFinalization();
-  await testCatchUp();
+
+  // Une sonde unique : inutile de faire echouer cinq sections pour apprendre
+  // cinq fois la meme chose.
+  const peutFinaliser = await verifierFinalisation(pool2);
+
+  if (peutFinaliser) {
+    await testSingleWeekFinalization();
+    await testMultiWeekFinalization();
+    await testCatchUp();
+  } else {
+    section('FINALISATION');
+    sk('Finalisation d’une semaine', RAISON_PG);
+    sk('Finalisation de plusieurs semaines', RAISON_PG);
+    sk('Rattrapage automatique', RAISON_PG);
+  }
+
   await testCurrentWeekScores();
-  await testFourTeamPool();
-  await testWeekNumberIntegrity();
+
+  if (peutFinaliser) {
+    await testFourTeamPool();
+    await testWeekNumberIntegrity();
+  } else {
+    section('POOL À QUATRE ÉQUIPES / INTÉGRITÉ DES SEMAINES');
+    sk('Pool à quatre équipes', RAISON_PG);
+    sk('Intégrité des numéros de semaine', RAISON_PG);
+  }
+
   await testEdgeCases();
   await cleanup();
 
@@ -684,7 +757,7 @@ async function run() {
   results.forEach(l => console.log(l));
   console.log('');
   console.log('─'.repeat(51));
-  console.log(`  ✓ PASSED: ${pass}   ✗ FAILED: ${fail}   TOTAL: ${pass + fail}`);
+  console.log(`  ✓ PASSED: ${pass}   ✗ FAILED: ${fail}   ○ IGNORÉS: ${skip}   TOTAL: ${pass + fail + skip}`);
   console.log('─'.repeat(51));
 
   if (fail > 0) process.exit(1);

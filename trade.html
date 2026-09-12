@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="poolNav.css">
     <link rel="stylesheet" href="poolSettings.css">
     <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="tradeMarket.css">
     <link rel="stylesheet" href="trade.css">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
@@ -50,6 +51,26 @@
         <div id="proposeTradeSection" class="trade-section active">
 
             <p class="empty-msg" id="proposeEmptyMsg" style="display:none;"></p>
+
+            <!-- LE MARCHÉ — les joueurs que leurs équipes ont ouverts aux
+                 offres. C'était un simple filtre sur l'alignement du
+                 partenaire déjà choisi : pour le voir, il fallait deviner
+                 chez qui chercher. C'est maintenant une surface : qui est
+                 disponible, chez qui, dans quelle catégorie, et un bouton
+                 qui ouvre le composeur avec la cible déjà en place.
+
+                 Chaque ligne dit aussi si vous POUVEZ répondre, et sinon
+                 pourquoi. Ouvrir un sélecteur vide et laisser chercher ce
+                 qui cloche est la pire réponse possible. -->
+            <section class="tm-market" id="tmMarket" hidden>
+                <div class="tm-market-head">
+                    <h2 class="tm-market-title">Marché des échanges</h2>
+                    <span class="tm-market-count" id="tmMarketCount"></span>
+                    <button type="button" class="tm-market-toggle" id="tmMarketToggle"
+                            aria-expanded="true" aria-controls="tmMarketList">Masquer</button>
+                </div>
+                <div class="tm-market-list" id="tmMarketList"><!-- Rempli par trade.js --></div>
+            </section>
 
             <div id="tmBuilder" class="tm-builder">
 

@@ -15,7 +15,10 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "fetch-game-logs": "node fetch_game_logs.js",
-    "build-draftkit": "node tools/build_draftkit.js"
+    "build-draftkit": "node tools/build_draftkit.js",
+    "test:pg": "node --test \"test/pg/**/*.test.js\"",
+    "test:all": "npm run test:unit && npm run test:pg",
+    "migrate": "node migrate.js"
   },
   "keywords": [],
   "author": "",

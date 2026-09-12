@@ -133,6 +133,7 @@ async function loadForSaleListings() {
         forSaleListings = [];
     }
     renderForSaleToggle();
+    renderMarket();
     renderPartnerRoster();
 }
 

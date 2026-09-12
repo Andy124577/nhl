@@ -4,7 +4,7 @@
 //         both BEFORE and AFTER the draft starts
 // Run: node test_teams.js  (server must be running on :3000)
 // ============================================================
-const BASE = 'http://localhost:3000';
+// BASE vient de TEST_SERVER_URL, via test/integration/client.js.
 
 let pass = 0, fail = 0;
 const results = [];
@@ -13,24 +13,24 @@ function ok(label)         { pass++; results.push(`  ✓  ${label}`); }
 function ko(label, detail) { fail++; results.push(`  ✗  ${label}${detail ? ` → ${detail}` : ''}`); }
 function section(title)    { results.push(`\n── ${title} ──`); }
 
-async function api(method, path, body) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
-  if (body) opts.body = JSON.stringify(body);
-  try {
-    const r = await fetch(`${BASE}${path}`, opts);
-    let json;
-    try { json = await r.json(); } catch { json = {}; }
-    return { status: r.status, ok: r.ok, body: json };
-  } catch (e) {
-    return { status: 0, ok: false, body: {}, error: e.message };
-  }
-}
+// L'identite ne vient plus du corps de la requete mais d'un cookie de session.
+// Le client partage (test/integration/client.js) ouvre une session par compte
+// et bascule d'office sur celle que la requete mentionne — les appels ci-dessous
+// restent ecrits comme avant, mais s'executent maintenant sous une identite
+// verifiee. Il refuse aussi de demarrer sans TEST_SERVER_URL : ces scripts
+// creent et suppriment des pools.
+const { api, apiAnonyme, identifier, deconnecterTout, exigerServeurDEssai } =
+  require('./test/integration/client.js');
+
+exigerServeurDEssai();
 
 
 
 // Get current pool state and return the teams object
 async function getPoolTeams(poolName) {
-  const r = await api('GET', '/draft');
+  // /draft ne livre les alignements qu'aux membres : on lit sous l'identite
+  // de fza, qui cree le pool de cet essai.
+  const r = await api('GET', '/draft', undefined, { as: 'fza' });
   return r.body?.[poolName]?.teams || null;
 }
 
@@ -297,15 +297,32 @@ async function testPreDraftRename() {
     ? ok('Reject: rename missing clanName')
     : ko('Reject: rename missing clanName', 'Should have failed');
 
-  // Missing username param
-  const missingUser = await api('POST', '/rename-team', {
+  // Le nom d'utilisateur dans le corps n'est plus une exigence : l'identite
+  // vient de la session. Cet essai verifiait que le client devait s'annoncer ;
+  // il verifie maintenant la propriete qui compte vraiment — on ne renomme que
+  // SON equipe, quoi que le corps de la requete raconte.
+  const sansNom = await api('POST', '/rename-team', {
     clanName: teamPool,
     oldTeamName: 'Les Géants',
     newTeamName: 'Valide',
-  });
-  !missingUser.ok
-    ? ok('Reject: rename missing username')
-    : ko('Reject: rename missing username', 'Should have failed');
+  }, { as: 'fza' });
+  sansNom.ok
+    ? ok('Rename works from the session alone')
+    : ko('Rename works from the session alone', JSON.stringify(sansNom.body));
+
+  // Remettre le nom en place pour la suite de l'essai.
+  await api('POST', '/rename-team', {
+    clanName: teamPool, oldTeamName: 'Valide', newTeamName: 'Les Géants',
+  }, { as: 'fza' });
+
+  const equipeDAutrui = await api('POST', '/rename-team', {
+    clanName: teamPool,
+    oldTeamName: 'Les Géants',
+    newTeamName: 'Volée',
+  }, { as: 'fzb' });
+  equipeDAutrui.status === 403
+    ? ok("Reject: rename someone else's team")
+    : ko("Reject: rename someone else's team", JSON.stringify(equipeDAutrui.body));
 
   // Unknown pool
   const unknownPool = await api('POST', '/rename-team', {
@@ -370,13 +387,15 @@ async function testPostDraft() {
   section('POST-DRAFT — Start Draft');
 
   // Pool state: fza on Les Géants, fzb on Équipe 2, fzc on Équipe 3
-  const start = await api('POST', '/start-draft', { clanName: teamPool });
+  // Lancer le repechage appartient a la personne qui a cree le pool : la
+  // requete doit donc dire sous quelle identite elle s'execute.
+  const start = await api('POST', '/start-draft', { clanName: teamPool }, { as: 'fza' });
   start.ok
     ? ok('Draft started')
     : ko('Start draft', JSON.stringify(start.body));
 
   // Verify draftOrder is populated
-  const r = await api('GET', `/draft-order/${encodeURIComponent(teamPool)}`);
+  const r = await api('GET', `/draft-order/${encodeURIComponent(teamPool)}`, undefined, { as: 'fza' });
   const hasOrder = Array.isArray(r.body?.draftOrder) && r.body.draftOrder.length > 0;
   hasOrder
     ? ok(`Draft order generated (${r.body.draftOrder.length} picks)`)
@@ -472,7 +491,7 @@ async function testPostDraft() {
 // ────────────────────────────────────────────────────────────
 async function cleanup() {
   section('CLEANUP');
-  const del = await api('POST', '/delete-clan', { clanName: teamPool });
+  const del = await api('POST', '/delete-clan', { clanName: teamPool }, { as: 'fza' });
   del.ok
     ? ok(`Pool "${teamPool}" deleted`)
     : ko('Delete pool', JSON.stringify(del.body));

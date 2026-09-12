@@ -1,7 +1,7 @@
 // ============================================================
 // FANTAZY — Full Integration Test Suite
 // ============================================================
-const BASE = 'http://localhost:3000';
+// BASE vient de TEST_SERVER_URL, via test/integration/client.js.
 
 let pass = 0, fail = 0, skip = 0;
 const results = [];
@@ -11,18 +11,16 @@ function ko(label, detail)  { fail++;  results.push(`  ✗  ${label}${detail ? `
 function sk(label, reason)  { skip++;  results.push(`  ○  ${label} [SKIP: ${reason}]`); }
 function section(title)     { results.push(`\n── ${title} ──`); }
 
-async function api(method, path, body) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
-  if (body) opts.body = JSON.stringify(body);
-  try {
-    const r = await fetch(`${BASE}${path}`, opts);
-    let json;
-    try { json = await r.json(); } catch { json = {}; }
-    return { status: r.status, ok: r.ok, body: json };
-  } catch (e) {
-    return { status: 0, ok: false, body: {}, error: e.message };
-  }
-}
+// L'identite ne vient plus du corps de la requete mais d'un cookie de session.
+// Le client partage (test/integration/client.js) ouvre une session par compte
+// et bascule d'office sur celle que la requete mentionne — les appels ci-dessous
+// restent ecrits comme avant, mais s'executent maintenant sous une identite
+// verifiee. Il refuse aussi de demarrer sans TEST_SERVER_URL : ces scripts
+// creent et suppriment des pools.
+const { api, apiAnonyme, identifier, deconnecterTout, exigerServeurDEssai } =
+  require('./test/integration/client.js');
+
+exigerServeurDEssai();
 
 
 
@@ -48,11 +46,23 @@ async function testAuth() {
   const lempty = await api('POST', '/login', { username: '', password: '' });
   !lempty.ok ? ok('Reject empty credentials') : ko('Reject empty credentials', 'Should have failed');
 
-  const admin = await api('POST', '/admin-login', { username: 'admin', password: 'zubzub' });
-  admin.ok ? ok('Admin login') : ko('Admin login', JSON.stringify(admin.body));
+  // Le mot de passe d'administration etait ecrit dans le code source, donc
+  // lisible dans le depot. Cet essai verifiait qu'il fonctionnait ; il verifie
+  // maintenant qu'il ne fonctionne plus. L'administration se decide sur la
+  // colonne is_admin de la base, comme toute autre autorisation.
+  const codeEnDur = await apiAnonyme('POST', '/admin-login', { username: 'admin', password: 'zubzub' });
+  !codeEnDur.ok
+    ? ok('Reject hardcoded admin credentials')
+    : ko('Reject hardcoded admin credentials', 'Le mot de passe du depot ouvre encore une session');
 
-  const badAdmin = await api('POST', '/admin-login', { username: 'admin', password: 'wrongpass' });
+  const badAdmin = await apiAnonyme('POST', '/admin-login', { username: 'admin', password: 'wrongpass' });
   !badAdmin.ok ? ok('Reject bad admin password') : ko('Reject bad admin password', 'Should have failed');
+
+  // Un compte ordinaire ne devient pas administrateur en le demandant.
+  const ordinaire = await api('POST', '/admin-login', { username: 'fza', password: 'fzaPass1' });
+  !ordinaire.ok
+    ? ok('Reject non-admin at admin login')
+    : ko('Reject non-admin at admin login', 'Un compte ordinaire a obtenu une session admin');
 }
 
 // ────────────────────────────────────────────────────────────
@@ -334,8 +344,17 @@ async function testScoring() {
 async function testAdmin() {
   section('ADMIN & MISC');
 
-  const users = await api('GET', '/admin-users?adminToken=admin');
-  users.ok ? ok('GET /admin-users') : ko('GET /admin-users', JSON.stringify(users.body));
+  // ?adminToken=admin ouvrait la liste des comptes a quiconque connaissait la
+  // chaine. Elle exige maintenant une vraie session d'administration.
+  const parJeton = await apiAnonyme('GET', '/admin-users?adminToken=admin');
+  parJeton.status === 401 || parJeton.status === 403
+    ? ok('GET /admin-users refuses the old query token')
+    : ko('GET /admin-users refuses the old query token', `statut ${parJeton.status}`);
+
+  const parCompteOrdinaire = await api('GET', '/admin-users', undefined, { as: 'fza' });
+  parCompteOrdinaire.status === 403
+    ? ok('GET /admin-users refuses a normal account')
+    : ko('GET /admin-users refuses a normal account', `statut ${parCompteOrdinaire.status}`);
 
   // change-team only works before draft starts — our pool already has a draft going, so expect failure
   const rename = await api('POST', '/change-team', {
@@ -343,7 +362,9 @@ async function testAdmin() {
     username: 'fza',
     newTeamNumber: 'Équipe 1',
   });
-  if (!rename.ok && (rename.body?.message || '').toLowerCase().includes('draft')) {
+  const messageRefus = (rename.body?.message || '').toLowerCase();
+  if (!rename.ok && (messageRefus.includes('draft') || messageRefus.includes('repêchage')
+                     || messageRefus.includes('repechage'))) {
     ok('POST /change-team blocked after draft start (expected)');
   } else if (rename.ok) {
     ok('POST /change-team');

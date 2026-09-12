@@ -27,7 +27,7 @@ const { generateSeasonSchedule } = require('../lib/h2h.js');
 
 function monter(app, ctx) {
     const { auth, store, db, pointage, serviceH2H, saisonCourante,
-            fenetreSaison, logger = console } = ctx;
+            fenetreSaison, usePostgres, logger = console } = ctx;
     const { ErreurMetier } = store;
 
     function repondreErreur(res, erreur, contexte) {
@@ -58,6 +58,37 @@ function monter(app, ctx) {
             return null;
         }
         return enveloppe;
+    }
+
+    /**
+     * Le pointage d'un duel, ou son absence annoncée.
+     *
+     * Les feuilles de match vivent dans une table PostgreSQL. Sans elle, le
+     * CALENDRIER reste lisible — il vit dans le pool — mais les points ne le
+     * sont pas. Renvoyer zéro serait pire que ne rien renvoyer : personne ne
+     * distinguerait « ce duel est à 0-0 » de « on ne sait pas ».
+     */
+    async function pointerDuel(duel, teams, contexte, ingestion) {
+        if (!usePostgres) {
+            const vide = {
+                points: null,
+                completude: scoring.COMPLETUDE.INDISPONIBLE,
+                detail: { joueurs: [], club: null }
+            };
+            return [vide, vide];
+        }
+        return Promise.all([
+            pointage.pointsEquipe(teams[duel.team1], { ...contexte, ingestion }),
+            pointage.pointsEquipe(teams[duel.team2], { ...contexte, ingestion })
+        ]);
+    }
+
+    /** L'état d'ingestion, ou un état « indisponible » assumé. */
+    async function etatIngestion(contexte) {
+        if (!usePostgres) {
+            return { completude: scoring.COMPLETUDE.INDISPONIBLE, attendus: null, recus: 0, journees: [] };
+        }
+        return pointage.etatIngestion(contexte);
     }
 
     /**
@@ -124,14 +155,11 @@ function monter(app, ctx) {
                 debut: fenetre.debut, fin: finEffective, saison,
                 mode: 'head-to-head', baseAlignement: pointage.BASE_ALIGNEMENT.COURANT
             };
-            const ingestion = await pointage.etatIngestion(contexte);
+            const ingestion = await etatIngestion(contexte);
 
             const affichage = [];
             for (const duel of duels) {
-                const [p1, p2] = await Promise.all([
-                    pointage.pointsEquipe(enveloppe.data.teams[duel.team1], { ...contexte, ingestion }),
-                    pointage.pointsEquipe(enveloppe.data.teams[duel.team2], { ...contexte, ingestion })
-                ]);
+                const [p1, p2] = await pointerDuel(duel, enveloppe.data.teams, contexte, ingestion);
                 affichage.push(carteDeDuel(duel, p1, p2, enveloppe.data));
             }
 
@@ -144,6 +172,8 @@ function monter(app, ctx) {
                 weekStatus: etat,
                 scoredThrough: finEffective,
                 completude: ingestion.completude,
+                // Le calendrier reste lisible sans PostgreSQL ; les points, non.
+                pointageDisponible: !!usePostgres,
                 provisoire: etat === 'ongoing',
                 scoringVersion: scoring.VERSION_BAREME,
                 rosterBasis: pointage.BASE_ALIGNEMENT.COURANT,
@@ -323,14 +353,11 @@ function monter(app, ctx) {
                 debut: aujourdhui, fin: dates.ajouterJours(aujourdhui, 1), saison,
                 mode: 'head-to-head', baseAlignement: pointage.BASE_ALIGNEMENT.COURANT
             };
-            const ingestion = await pointage.etatIngestion(contexte);
+            const ingestion = await etatIngestion(contexte);
 
             const affichage = [];
             for (const duel of duels) {
-                const [p1, p2] = await Promise.all([
-                    pointage.pointsEquipe(enveloppe.data.teams[duel.team1], { ...contexte, ingestion }),
-                    pointage.pointsEquipe(enveloppe.data.teams[duel.team2], { ...contexte, ingestion })
-                ]);
+                const [p1, p2] = await pointerDuel(duel, enveloppe.data.teams, contexte, ingestion);
                 affichage.push(carteDeDuel(duel, p1, p2, enveloppe.data));
             }
 
