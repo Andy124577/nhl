@@ -1,7 +1,6 @@
 ﻿/* Draft-state homepage. NHL content and pool state remain owned by the existing feeds. */
 let fzhNewsPromise = null;
 let fzhNewsIndex = 0;
-let fzhWatchExpanded = false;
 let fzhCalendarOpen = false;
 let fzhActivePool = null;
 
@@ -41,7 +40,6 @@ function renderDraftHome({ tonight, activeName }) {
     fzdStopHeroTimer('fzmHeroSlot');
     document.getElementById('fzMobileHome').innerHTML = '';
     if (fzhActivePool !== activeName) {
-        fzhWatchExpanded = false;
         fzhCalendarOpen = false;
         fzhActivePool = activeName;
     }
@@ -91,15 +89,9 @@ function renderDraftHome({ tonight, activeName }) {
         <button type="button" class="fzh-team fzh-panel fzh-summary" data-fz-reglages="equipes">${fzhIcon('users', 38)}<span><span class="fzh-eyebrow">Mon équipe</span><strong>${drafted} / ${slots}</strong><span class="fzh-team-progress"><span class="fzh-progress" role="progressbar" aria-label="Joueurs repêchés" aria-valuenow="${drafted}" aria-valuemin="0" aria-valuemax="${Math.max(slots, drafted)}"><i style="width:${progress}%"></i></span><small>joueurs repêchés</small></span></span>${fzhIcon('chevron-right', 19)}</button>
         <section class="fzh-scores fzh-panel">${fzhHeading('zap', 'Matchs en direct', '<button type="button" class="fzh-link" data-fzh-calendar>Voir tous <span aria-hidden="true">→</span></button>')}<div class="fzh-score-track">${fzhGamesHTML(tonight)}</div></section>
         <section class="fzh-moves fzh-panel">${fzmLeagueSectionHTML(false).replace('Dans la LNH', 'Mouvements récents')}</section>
-        <section class="fzh-watch fzh-panel">${fzhHeading('star', 'À surveiller', `<button class="fzh-link" id="fzhWatchMore" type="button" aria-expanded="${fzhWatchExpanded}" aria-controls="fzhWatchRows">${fzhWatchExpanded ? 'Réduire' : `Voir les ${OFFSEASON_WATCHLIST.length} joueurs`} <span aria-hidden="true">→</span></button>`)}<div id="fzhWatchRows"></div></section>
+        <section class="fzh-watch fzh-panel" data-watch-panel>${fzhWatchHTML()}</section>
         <section class="fzh-calendar fzh-panel"><div class="fzh-calendar-summary">${fzhIcon('calendar', 32)}<h2>Calendrier${target ? ' présaison' : ''}</h2><div><strong>${weekGames ? `${weekGames} match${weekGames > 1 ? 's' : ''} cette semaine.` : 'Aucun match cette semaine.'}</strong><p>${escapeHTML(seasonText)}</p></div><button type="button" class="fzh-calendar-button" data-fzh-calendar aria-expanded="${fzhCalendarOpen}" aria-controls="fzhCalendarSlot">${fzhCalendarOpen ? 'Fermer' : 'Voir le calendrier'} <span aria-hidden="true">→</span></button></div><div id="fzhCalendarSlot"${fzhCalendarOpen ? '' : ' hidden'}></div></section>`;
     fzhRenderWatch(root);
-    root.querySelector('#fzhWatchMore').addEventListener('click', e => {
-        fzhWatchExpanded = !fzhWatchExpanded;
-        e.currentTarget.setAttribute('aria-expanded', String(fzhWatchExpanded));
-        e.currentTarget.innerHTML = `${fzhWatchExpanded ? 'Réduire' : `Voir les ${OFFSEASON_WATCHLIST.length} joueurs`} <span aria-hidden="true">→</span>`;
-        fzhRenderWatch(root);
-    });
     root.querySelectorAll('[data-fzh-calendar]').forEach(button => button.addEventListener('click', () => {
         fzhCalendarOpen = button.classList.contains('fzh-calendar-button') ? !fzhCalendarOpen : true;
         const slot = root.querySelector('#fzhCalendarSlot'); slot.hidden = !fzhCalendarOpen;
@@ -126,19 +118,6 @@ function renderDraftHome({ tonight, activeName }) {
     const moves = root.querySelector('.fzh-moves');
     const movesTitle = moves.querySelector('.fzm-section-title');
     if (movesTitle) movesTitle.innerHTML = `${fzhIcon('swap')} Mouvements récents`;
-    const movesHead = moves.querySelector('.fzm-league-head');
-    if (movesHead) {
-        const more = document.createElement('button');
-        more.type = 'button'; more.className = 'fzh-link';
-        more.innerHTML = 'Voir tout <span aria-hidden="true">→</span>';
-        more.setAttribute('aria-expanded', 'false');
-        more.addEventListener('click', () => {
-            const expanded = moves.classList.toggle('is-expanded');
-            more.setAttribute('aria-expanded', String(expanded));
-            more.innerHTML = `${expanded ? 'Réduire' : 'Voir tout'} <span aria-hidden="true">→</span>`;
-        });
-        movesHead.appendChild(more);
-    }
     fzdPlaceCalendar();
     renderCalendar();
     fzmLoadLeague();
@@ -156,26 +135,6 @@ function fzhGamesHTML(tonight) {
         const upcoming = ['FUT', 'PRE'].includes(g.state);
         return `<article class="fzh-game"><p>${live ? `${periodLabel(g.period, g.periodType)} période · ${escapeHTML(g.clock?.timeRemaining || '')}` : upcoming && g.startTimeUTC ? gameTimeLabel(g.startTimeUTC) : 'Terminé'}</p>${[g.away, g.home].map(t => `<div>${teamLogoImg(t.abbrev)}<strong>${escapeHTML(t.abbrev)}</strong><b>${upcoming ? '–' : t.score ?? '–'}</b></div>`).join('')}<span class="fzh-game-badge${live ? ' is-live' : ''}">${live ? 'En direct' : upcoming ? 'À venir' : 'Final'}</span></article>`;
     }).join('');
-}
-
-function fzhRenderWatch(root) {
-    loadOffWatchFavorites();
-    const shown = fzhWatchExpanded ? OFFSEASON_WATCHLIST : OFFSEASON_WATCHLIST.slice(0, 4);
-    const wrap = root.querySelector('#fzhWatchRows');
-    wrap.innerHTML = shown.length ? shown.map(p => {
-        const saved = offWatchFavorites.has(p.name);
-        return `<div class="fzh-watch-row">${offPlayerFaceHTML(p.name, p.team, p.playerId)}<div class="fzh-watch-name"><strong>${escapeHTML(p.name)}</strong><small>${escapeHTML(p.team)} · ${escapeHTML(p.position || '—')}</small></div><span class="fzh-watch-status">${fzhIcon('eye', 17)}<span>${escapeHTML(p.note || 'Surveillance')}</span></span><button type="button" class="fzh-watch-star${saved ? ' is-saved' : ''}" data-fzh-player="${escapeHTML(p.name)}" aria-label="${saved ? 'Retirer' : 'Ajouter'} ${escapeHTML(p.name)} ${saved ? 'des' : 'aux'} favoris" aria-pressed="${saved}">${fzhIcon('star', 22)}</button></div>`;
-    }).join('') : '<p class="fzh-empty">La liste des joueurs à surveiller sera disponible prochainement.</p>';
-    wrap.querySelectorAll('[data-fzh-player]').forEach(button => button.addEventListener('click', () => {
-        const name = button.dataset.fzhPlayer;
-        if (offWatchFavorites.has(name)) offWatchFavorites.delete(name);
-        else offWatchFavorites.set(name, new Date().toISOString());
-        try { localStorage.setItem(offWatchStorageKey(), JSON.stringify([...offWatchFavorites])); } catch (_) { /* Keep the session favorite in memory. */ }
-        const saved = offWatchFavorites.has(name);
-        button.classList.toggle('is-saved', saved);
-        button.setAttribute('aria-pressed', String(saved));
-        button.setAttribute('aria-label', `${saved ? 'Retirer' : 'Ajouter'} ${name} ${saved ? 'des' : 'aux'} favoris`);
-    }));
 }
 
 async function fzhLoadNews(root) {

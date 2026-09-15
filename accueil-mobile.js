@@ -428,23 +428,8 @@ async function fzmLoadLeague() {
 // par rendu : le contenu de la piste change avec l'onglet, pas ses boutons.
 function fzmBindLeagueCarousel() {
     const track = document.getElementById('fzmLeagueTrack');
-    const prev = document.getElementById('fzmLeaguePrev');
-    const next = document.getElementById('fzmLeagueNext');
-    if (!track) return;
-
-    const step = () => {
-        const card = track.querySelector('.fzm-off-card');
-        return card ? card.getBoundingClientRect().width + 10 : track.clientWidth * 0.9;
-    };
-    prev?.addEventListener('click', () => track.scrollBy({ left: -step(), behavior: 'smooth' }));
-    next?.addEventListener('click', () => track.scrollBy({ left: step(), behavior: 'smooth' }));
-
-    let raf = 0;
-    track.addEventListener('scroll', () => {
-        fzmLeagueScroll = track.scrollLeft;
-        if (raf) return;
-        raf = requestAnimationFrame(() => { raf = 0; fzmUpdateLeagueCarousel(); });
-    });
+    if (track && !track.dataset.carouselBound) track.addEventListener('scroll', () => { fzmLeagueScroll = track.scrollLeft; });
+    bindOffseasonCarousel(document.getElementById('fzmLeagueTrack'), document.getElementById('fzmLeagueDots'), document.getElementById('fzmLeaguePrev'), document.getElementById('fzmLeagueNext'));
 }
 
 function fzmRenderLeagueTab() {
@@ -473,40 +458,11 @@ function fzmRenderLeagueTab() {
 // Un point par « page » de défilement (largeur de piste), pas un par carte :
 // une centaine de blessés donnerait une centaine de points.
 function fzmRenderLeagueDots() {
-    const track = document.getElementById('fzmLeagueTrack');
-    const dots = document.getElementById('fzmLeagueDots');
-    if (!track || !dots) return;
-
-    const pages = track.classList.contains('is-empty')
-        ? 0
-        : Math.max(1, Math.round(track.scrollWidth / track.clientWidth));
-    if (pages < 2) { dots.innerHTML = ''; fzmUpdateLeagueCarousel(); return; }
-    dots.innerHTML = Array.from({ length: pages }, (_, i) =>
-        `<button type="button" class="fzm-league-dot" data-page="${i}" aria-label="Page ${i + 1}"></button>`).join('');
-    dots.querySelectorAll('.fzm-league-dot').forEach(dot => {
-        dot.addEventListener('click', () => {
-            track.scrollTo({ left: dot.dataset.page * track.clientWidth, behavior: 'smooth' });
-        });
-    });
-    fzmUpdateLeagueCarousel();
+    renderOffseasonDots(document.getElementById('fzmLeagueTrack'), document.getElementById('fzmLeagueDots'), document.getElementById('fzmLeaguePrev'), document.getElementById('fzmLeagueNext'));
 }
 
-// Reflète la position de défilement : point actif + flèches grisées aux bouts.
 function fzmUpdateLeagueCarousel() {
-    const track = document.getElementById('fzmLeagueTrack');
-    const dots = document.getElementById('fzmLeagueDots');
-    const prev = document.getElementById('fzmLeaguePrev');
-    const next = document.getElementById('fzmLeagueNext');
-    if (!track) return;
-
-    const max = track.scrollWidth - track.clientWidth - 1;
-    if (prev) prev.disabled = track.scrollLeft <= 0;
-    if (next) next.disabled = track.scrollLeft >= max;
-
-    if (dots && dots.children.length) {
-        const active = Math.round(track.scrollLeft / track.clientWidth);
-        [...dots.children].forEach((d, i) => d.classList.toggle('is-active', i === active));
-    }
+    updateOffseasonCarousel(document.getElementById('fzmLeagueTrack'), document.getElementById('fzmLeagueDots'), document.getElementById('fzmLeaguePrev'), document.getElementById('fzmLeagueNext'));
 }
 
 function fzmLeagueEmptyText() {

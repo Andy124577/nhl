@@ -180,6 +180,8 @@
             return;
         }
 
+        // One horizontal row keeps every action reachable without increasing
+        // the strip height as pools accumulate; the urgent lead stays first.
         const secondaires = (charge.secondaires || []).map(el => ligne(el, false)).join('');
         conteneur.hidden = false;
         conteneur.innerHTML = `

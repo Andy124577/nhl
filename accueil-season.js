@@ -83,13 +83,10 @@ function renderSeasonHome({ tonight, movement, activeName }) {
         }).join('')}</section>
         <section class="fzs-calendar fzs-panel" id="fzSeasonCalendar" aria-label="Calendrier LNH"></section>
         <section class="fzs-activity fzs-panel">${heading('⇄ &nbsp; Activité récente', 'trade.html', 'Voir les échanges')}<div id="fzmActivityWrap"></div></section>
-        <section class="fzs-watch fzs-panel">${heading('★ &nbsp; À surveiller', 'stats.html', 'Voir les joueurs')} ${(() => {
-            loadOffWatchFavorites();
-            const watched = OFFSEASON_WATCHLIST.filter(p => offWatchFavorites.has(p.name));
-            return watched.length ? watched.slice(0, 3).map(p => `<a class="fzs-watch-player" href="stats.html">${offPlayerFaceHTML(p.name, p.team, p.playerId)}<span><strong>${esc(p.name)}</strong><small>${esc(p.team)}</small></span><span class="fzs-green">★</span></a>`).join('') : empty('Ajoutez des joueurs à votre liste de surveillance.');
-        })()}</section>
+        <section class="fzs-watch fzs-panel" data-watch-panel>${fzhWatchHTML()}</section>
         <section class="fzs-news fzs-panel">${heading('▤ &nbsp; Actualités NHL')}<div id="fzmNewsWrap">${empty('Chargement des actualités…')}</div></section>
         <section class="fzs-moves fzs-panel">${fzmLeagueSectionHTML(false).replace('Dans la LNH', 'Mouvements récents')}</section>`;
+    fzhRenderWatch(root);
     fzdPlaceCalendar();
     renderCalendar();
     fzmLoadActivity(activeName);

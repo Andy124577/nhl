@@ -24,7 +24,7 @@
     'use strict';
 
     var FICHIER = 'draftkit.json?v=20260905c';
-    var FICHIER_WATCHLIST = 'draftkit-watchlist.json?v=20260905c';
+    var FICHIER_WATCHLIST = 'draftkit-watchlist.json?v=20260915';
 
     /**
      * Identifiants LNH à ne jamais rattacher à une fiche.
@@ -251,12 +251,11 @@
     /**
      * « Joueurs à Surveiller » des 32 équipes, déjà mis à plat. Charge le
      * fichier allégé (~28 ko) plutôt que la trousse entière : l'accueil n'a
-     * besoin de rien d'autre. Les deux fichiers sortent du même build, donc
-     * ils ne peuvent pas diverger. Si la trousse complète est déjà en main
-     * (page de repêchage), on s'en sert et on ne redemande rien.
+     * besoin de rien d'autre. Ce fichier porte aussi les résumés éditoriaux,
+     * et reste la référence lorsque la trousse complète est déjà en main.
      */
     function chargerWatchlist() {
-        if (donnees) return Promise.resolve(donnees.watchlist || []);
+        // The lightweight file owns the editorial summaries, even after pools load.
         if (promesseWatchlist) return promesseWatchlist;
         promesseWatchlist = fetch(FICHIER_WATCHLIST)
             .then(function (r) {
@@ -275,7 +274,7 @@
     }
 
     function watchlist() {
-        var liste = (donnees && donnees.watchlist) || listeSurveiller;
+        var liste = listeSurveiller || (donnees && donnees.watchlist);
         return liste ? liste.slice() : [];
     }
 

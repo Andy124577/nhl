@@ -1,0 +1,3 @@
+.draft-watch-badge { display:inline-flex; align-items:center; gap:3px; margin-left:5px; color:#26a6ff; font-size:10px; font-weight:600; white-space:nowrap; vertical-align:middle; }
+.draft-watch-badge svg { flex-shrink:0; }
+@media(max-width:1000px) { .draft-watch-badge > span { display:none; } }
