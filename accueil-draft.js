@@ -75,6 +75,7 @@ function renderDraftHome({ tonight, activeName }) {
     const seasonLabel = year ? `${year}-${String(Number(year) + 1).slice(-2)}` : '';
     const seasonText = season && today < season ? `La saison régulière commence le ${new Date(season + 'T12:00:00').toLocaleDateString('fr-CA', { day:'numeric', month:'long', year:'numeric' })}.` : 'Consultez les prochains matchs de la LNH.';
     const weekGames = (calData?.days || []).reduce((n, d) => n + (d.games || []).length, 0);
+    const liveGames = fzhLiveGames(tonight);
     root.innerHTML = `
         <section class="fzh-news fzh-panel" id="fzhNews" aria-label="Actualités LNH"><div class="fzh-news-copy"><span class="fzh-news-badge">LNH</span><h2>Le hockey n’attend pas.</h2><p>Préparez votre prochain choix.</p><small>Chargement des actualités…</small></div></section>
         <section class="fzh-draft fzh-panel${away === 0 ? ' is-my-turn' : ''}" aria-labelledby="fzhDraftTitle">
@@ -87,7 +88,7 @@ function renderDraftHome({ tonight, activeName }) {
         </section>
         <button type="button" class="fzh-camp fzh-panel fzh-summary" data-fzh-calendar>${fzhIcon('calendar', 40)}<span><span class="fzh-eyebrow">${target === camp && target ? 'Camp d’entraînement' : target ? 'Début de saison' : 'Calendrier LNH'}</span><strong>${days === null ? 'La saison est en cours' : `Dans ${days} jour${days > 1 ? 's' : ''}`}</strong><small>${target ? `La saison ${seasonLabel} commence bientôt.` : 'Chaque match compte.'}</small></span>${fzhIcon('chevron-right', 19)}<img class="fzh-nhl" src="https://assets.nhle.com/logos/nhl/svg/NHL_dark.svg" alt=""></button>
         <button type="button" class="fzh-team fzh-panel fzh-summary" data-fz-reglages="equipes">${fzhIcon('users', 38)}<span><span class="fzh-eyebrow">Mon équipe</span><strong>${drafted} / ${slots}</strong><span class="fzh-team-progress"><span class="fzh-progress" role="progressbar" aria-label="Joueurs repêchés" aria-valuenow="${drafted}" aria-valuemin="0" aria-valuemax="${Math.max(slots, drafted)}"><i style="width:${progress}%"></i></span><small>joueurs repêchés</small></span></span>${fzhIcon('chevron-right', 19)}</button>
-        <section class="fzh-scores fzh-panel">${fzhHeading('zap', 'Matchs en direct', '<button type="button" class="fzh-link" data-fzh-calendar>Voir tous <span aria-hidden="true">→</span></button>')}<div class="fzh-score-track">${fzhGamesHTML(tonight)}</div></section>
+        ${liveGames.length ? `<section class="fzh-scores fzh-panel">${fzhHeading('zap', 'Matchs en direct', '<button type="button" class="fzh-link" data-fzh-calendar>Voir tous <span aria-hidden="true">→</span></button>')}<div class="fzh-score-track">${fzhGamesHTML(liveGames)}</div></section>` : ''}
         <section class="fzh-moves fzh-panel">${fzmLeagueSectionHTML(false).replace('Dans la LNH', 'Mouvements récents')}</section>
         <section class="fzh-watch fzh-panel" data-watch-panel>${fzhWatchHTML()}</section>
         <section class="fzh-calendar fzh-panel"><div class="fzh-calendar-summary">${fzhIcon('calendar', 32)}<h2>Calendrier${target ? ' présaison' : ''}</h2><div><strong>${weekGames ? `${weekGames} match${weekGames > 1 ? 's' : ''} cette semaine.` : 'Aucun match cette semaine.'}</strong><p>${escapeHTML(seasonText)}</p></div><button type="button" class="fzh-calendar-button" data-fzh-calendar aria-expanded="${fzhCalendarOpen}" aria-controls="fzhCalendarSlot">${fzhCalendarOpen ? 'Fermer' : 'Voir le calendrier'} <span aria-hidden="true">→</span></button></div><div id="fzhCalendarSlot"${fzhCalendarOpen ? '' : ' hidden'}></div></section>`;
@@ -125,16 +126,12 @@ function renderDraftHome({ tonight, activeName }) {
     return true;
 }
 
-function fzhGamesHTML(tonight) {
-    const started = tonight.games || [];
-    const scheduled = calData?.days.find(d => d.date === todayISO())?.games || [];
-    const games = [...started, ...scheduled.filter(g => !started.some(x => x.id === g.id))];
-    if (!games.length) return '<p class="fzh-empty">Aucun match aujourd’hui. Retrouvez les prochains matchs dans le calendrier.</p>';
-    return games.map(g => {
-        const live = ['LIVE', 'CRIT'].includes(g.state);
-        const upcoming = ['FUT', 'PRE'].includes(g.state);
-        return `<article class="fzh-game"><p>${live ? `${periodLabel(g.period, g.periodType)} période · ${escapeHTML(g.clock?.timeRemaining || '')}` : upcoming && g.startTimeUTC ? gameTimeLabel(g.startTimeUTC) : 'Terminé'}</p>${[g.away, g.home].map(t => `<div>${teamLogoImg(t.abbrev)}<strong>${escapeHTML(t.abbrev)}</strong><b>${upcoming ? '–' : t.score ?? '–'}</b></div>`).join('')}<span class="fzh-game-badge${live ? ' is-live' : ''}">${live ? 'En direct' : upcoming ? 'À venir' : 'Final'}</span></article>`;
-    }).join('');
+function fzhLiveGames(tonight) {
+    return (tonight.games || []).filter(g => ['LIVE', 'CRIT'].includes(g.state));
+}
+
+function fzhGamesHTML(games) {
+    return games.map(g => `<article class="fzh-game"><p>${periodLabel(g.period, g.periodType)} période · ${escapeHTML(g.clock?.timeRemaining || '')}</p>${[g.away, g.home].map(t => `<div>${teamLogoImg(t.abbrev)}<strong>${escapeHTML(t.abbrev)}</strong><b>${t.score ?? '–'}</b></div>`).join('')}<span class="fzh-game-badge is-live">En direct</span></article>`).join('');
 }
 
 async function fzhLoadNews(root) {

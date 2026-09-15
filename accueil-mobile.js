@@ -333,6 +333,7 @@ function fzmLeagueSectionHTML(showNews, isDraft = false) {
         <div class="fzm-section" id="fzmLeagueSection">
             <div class="fzm-league-head">
                 <h2 class="fzm-section-title">${isDraft ? 'Activité de la ligue' : 'Dans la LNH'}</h2>
+                <span class="fzm-league-count" data-league-count role="status"></span>
                 <div class="fzm-league-nav">
                     <button type="button" class="fzm-league-nav-btn" id="fzmLeaguePrev" aria-label="Mouvements précédents">‹</button>
                     <button type="button" class="fzm-league-nav-btn" id="fzmLeagueNext" aria-label="Mouvements suivants">›</button>
@@ -437,6 +438,9 @@ function fzmRenderLeagueTab() {
     if (!track || !fzmLeagueData) return;
 
     const rows = fzmLeagueData[fzmLeagueTab] || [];
+    // Le compte suit l'onglet affiché, pas le total de la ligue.
+    const count = document.querySelector('[data-league-count]');
+    if (count) count.textContent = rows.length ? `${rows.length} mouvement${rows.length > 1 ? 's' : ''}` : '';
     if (!rows.length) {
         track.classList.add('is-empty');
         track.innerHTML = `<p class="fzm-empty">${fzmLeagueEmptyText()}</p>`;

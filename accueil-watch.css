@@ -1,32 +1,54 @@
 /* Scoped shared panels; fixed tracks preserve the surrounding grid. */
 [data-watch-panel] { min-width:0; overflow:hidden; }
-[data-watch-panel] .fzh-heading { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
-.fzh-watch-filter { display:flex; flex-basis:100%; align-items:center; gap:10px; min-width:0; }
-.fzh-watch-filter select { flex:1; min-width:0; max-width:100%; background:#132431; color:#e9f2ff; border:1px solid #304d63; border-radius:6px; padding:8px; }
-[data-watch-count] { white-space:nowrap; color:#abc2dc; font-size:12px; }
-[data-watch-panel] .fzh-watch-track { display:flex; gap:12px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; scroll-padding-inline:4px; height:170px; padding:4px; min-width:0; }
-[data-watch-panel] .fzh-watch-row { box-sizing:border-box; position:relative; display:grid; grid-template-columns:40px minmax(0,1fr); grid-template-rows:48px 1fr; align-items:center; gap:10px; flex:0 0 260px; height:150px; padding:12px 38px 12px 12px; border:1px solid #294152; border-radius:9px; scroll-snap-align:start; background:#10212e; }
+[data-watch-panel] .fzh-heading { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.fzh-watch-tools { display:flex; align-items:center; gap:6px; margin-left:auto; }
+.fzh-watch-tools > button { width:28px; height:28px; display:grid; place-items:center; padding:0; border:1px solid #243040; border-radius:50%; background:transparent; color:#8b98a8; }
+.fzh-watch-tools > button:hover:not(:disabled) { border-color:#ff4b35; color:#eff5ff; }
+.fzh-watch-tools > button:disabled { opacity:.35; cursor:default; }
+[data-watch-count] { white-space:nowrap; color:#8b98a8; font-size:13px; }
+.fzh-watch-filter { min-width:0; margin-bottom:12px; }
+.fzh-watch-filter select { width:100%; max-width:100%; background:#151d27; color:#e9f2ff; border:1px solid #243040; border-radius:8px; padding:9px 12px; }
+.fzh-watch-filter select:hover { border-color:#3a4c63; }
+[data-watch-panel] .fzh-watch-track { display:flex; align-items:stretch; gap:12px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; scroll-padding-inline:2px; padding:2px 0 4px; min-width:0; }
+/* Carte de joueur : même gabarit que les cartes de mouvement d'à côté. */
+[data-watch-panel] .fzh-watch-row { box-sizing:border-box; display:flex; flex-direction:column; gap:11px; flex:0 0 246px; padding:14px; border:1px solid #223041; border-radius:10px; scroll-snap-align:start; background:#151d27; }
 [data-watch-panel] .fzh-watch-row[role=button] { cursor:pointer; }
-[data-watch-panel] .fzh-watch-name { display:block; min-width:0; }
-[data-watch-panel] .fzh-watch-name strong { display:block; font-size:15px; color:#eff5ff; }
-[data-watch-panel] .fzh-watch-name small { display:block; font-size:12px; color:#abc2dc; }
-[data-watch-panel] .fzh-watch-status { grid-column:1/-1; max-width:none; font-size:14px; display:flex; gap:8px; color:#abc2dc; }
-[data-watch-panel] .fzh-watch-status > span:last-child { white-space:normal; overflow:visible; text-overflow:clip; }
-[data-watch-panel] .fzh-watch-status .fzh-icon { display:inline-flex; color:#26a6ff; }
-[data-watch-panel] .fzh-watch-star { position:absolute; top:10px; right:4px; padding:5px; border:0; background:transparent; color:#d4e0ed; }
+[data-watch-panel] .fzh-watch-row:hover { border-color:#2d3d52; }
+.fzh-watch-top { display:flex; align-items:center; gap:8px; }
+.fzh-watch-kicker, .fzh-watch-date { font:600 12px/1 'Barlow Condensed',sans-serif; letter-spacing:.14em; text-transform:uppercase; color:#6f7d8d; }
+.fzh-watch-date { margin-left:auto; white-space:nowrap; }
+.fzh-watch-id { display:flex; align-items:center; gap:11px; min-width:0; }
+[data-watch-panel] .fzh-watch-name { display:block; flex:1; min-width:0; }
+[data-watch-panel] .fzh-watch-name strong { display:block; font-size:16px; color:#eff5ff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+[data-watch-panel] .fzh-watch-name small { display:block; font-size:13px; color:#8b98a8; }
+[data-watch-panel] .fzh-watch-status { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; max-width:none; font-size:14px; line-height:1.35; color:#9aa7b6; }
+[data-watch-panel] .fzh-watch-star { position:static; flex:none; width:30px; height:30px; display:grid; place-items:center; padding:0; border:1px solid #243040; border-radius:8px; background:transparent; color:#5d6b7c; }
+[data-watch-panel] .fzh-watch-star:hover { border-color:#ff4b35; }
 [data-watch-panel] .fzh-watch-star.is-saved { color:#ff5841; }
-[data-watch-panel] .fzd-off-face { width:40px; height:40px; }
+[data-watch-panel] .fzd-off-face { width:38px; height:38px; flex:0 0 38px; border-radius:50%; }
 .fzs .fzh-heading h2 { display:flex; align-items:center; gap:10px; }
 .fzh-career-note { margin:0 0 16px; padding:12px; border-left:3px solid #26a6ff; color:#c9d9e9; line-height:1.5; }
-.fzh-watch-controls { display:flex; align-items:center; justify-content:center; gap:8px; height:32px; }
-.fzh-watch-controls > button { background:transparent; border:1px solid #304d63; color:#eff5ff; border-radius:5px; width:30px; height:28px; }
-.fzh-watch-controls .fzd-off-dots { margin:0; }
+.fzh-watch-controls { display:flex; align-items:center; gap:8px; min-height:14px; margin-top:6px; }
+.fzh-watch-controls .fzd-off-dots { margin:0; justify-content:flex-start; }
 .fzh-watch-controls .fzd-off-page-arrow { display:none; }
-.fzh-watch-controls button:disabled { opacity:.35; cursor:default; }
+/* Points en barres fines, comme la maquette : l'actif s'allonge. */
+.fzh .fzd-off-dots, .fzs .fzh-watch-controls .fzd-off-dots { gap:5px; }
+.fzh .fzd-off-dot, .fzs [data-watch-panel] .fzd-off-dot { width:6px; height:12px; }
+.fzh .fzd-off-dot::after, .fzs [data-watch-panel] .fzd-off-dot::after { height:3px; background:#2a3648; }
+.fzh .fzd-off-dot.is-active, .fzs [data-watch-panel] .fzd-off-dot.is-active { width:16px; }
+.fzh .fzd-off-dot.is-active::after, .fzs [data-watch-panel] .fzd-off-dot.is-active::after { background:#f3372c; }
 [data-watch-panel] :focus-visible, .fzm-league-nav button:focus-visible, .fzm-league-dots button:focus-visible { outline:2px solid #26a6ff; outline-offset:2px; }
-.fzh .fzm-league-track, .fzs .fzm-league-track { display:flex; flex-wrap:nowrap; height:260px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; }
-.fzh .fzm-off-card, .fzs .fzm-off-card { box-sizing:border-box; height:244px; overflow-y:auto; scroll-snap-align:start; }
-.fzs .fzm-off-card { flex:0 0 260px; }
+.fzh .fzm-league-track, .fzs .fzm-league-track { display:flex; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; }
+.fzh .fzm-off-card, .fzs .fzm-off-card { box-sizing:border-box; overflow-y:auto; scroll-snap-align:start; }
+.fzs .fzm-league-track { height:260px; }
+.fzs .fzm-off-card { flex:0 0 260px; height:244px; }
+/* Les cartes s'étirent à la plus haute de la rangée (un échange en montre deux
+   clubs) sans figer la piste à une hauteur qui la creuse les jours calmes. */
+.fzh .fzm-league-track { min-height:150px; }
+.fzh .fzm-off-card { max-height:290px; }
 .fzm-league-dots .fzd-off-dot[hidden], .fzh-watch-controls .fzd-off-dot[hidden] { display:none; }
-@media(max-width:480px) { [data-watch-panel] .fzh-watch-row { flex-basis:250px; } }
+/* Le compte d'en-tête n'appartient qu'aux deux accueils, pas à la home téléphone. */
+.fzm-league-count { display:none; }
+.fzh .fzm-league-count, .fzs .fzm-league-count { display:inline; margin-left:auto; color:#8b98a8; font-size:13px; white-space:nowrap; }
+@media(max-width:768px) { [data-watch-panel] .fzh-watch-row { flex-basis:268px; } }
 @media(prefers-reduced-motion:reduce) { .fzh-watch-track, .fzm-league-track { scroll-behavior:auto!important; } }

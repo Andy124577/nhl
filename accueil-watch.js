@@ -1,6 +1,8 @@
 /* Shared draft / season watchlist. The data owns both short and full notes. */
 function fzhWatchHTML() {
-    return `${fzhHeading('eye', 'À surveiller', '<div class="fzh-watch-filter"><select aria-label="Filtrer par équipe"></select><span data-watch-count role="status"></span></div>')}<div class="fzh-watch-track"></div><div class="fzh-watch-controls"><button type="button" data-watch-prev aria-label="Joueurs précédents">‹</button><div class="fzd-off-dots" data-watch-dots></div><button type="button" data-watch-next aria-label="Joueurs suivants">›</button></div>`;
+    // Même châssis que « Mouvements récents » : compte et flèches dans l'en-tête,
+    // filtre sur sa propre ligne, piste de cartes, points en bas.
+    return `${fzhHeading('eye', 'À surveiller', '<div class="fzh-watch-tools"><span data-watch-count role="status"></span><button type="button" data-watch-prev aria-label="Joueurs précédents">‹</button><button type="button" data-watch-next aria-label="Joueurs suivants">›</button></div>')}<div class="fzh-watch-filter"><select aria-label="Filtrer par équipe"></select></div><div class="fzh-watch-track"></div><div class="fzh-watch-controls"><div class="fzd-off-dots" data-watch-dots></div></div>`;
 }
 
 function fzhWatchDots(panel, bind = false) {
@@ -19,6 +21,18 @@ function fzhWatchId(p) {
     return Number.isInteger(id) && id > 0 && !(window.FZ_IDS_ERRONES || []).includes(id) ? id : null;
 }
 
+// La trousse ne date pas ses fiches : seule une mise en favori porte une date,
+// celle du geste de l'utilisateur. Les autres cartes n'annoncent donc qu'un
+// suivi à venir, plutôt qu'une date inventée.
+function fzhWatchKicker(saved) {
+    return saved ? 'Suivi depuis' : 'À surveiller';
+}
+
+function fzhWatchSince(name) {
+    const iso = offWatchFavorites.get(name);
+    return iso && typeof dayLabelFr === 'function' ? dayLabelFr(iso) : '';
+}
+
 function fzhRenderWatch(root) {
     const panel = root.querySelector('[data-watch-panel]');
     if (!panel) return;
@@ -35,7 +49,7 @@ function fzhRenderWatch(root) {
         track.classList.toggle('is-empty', !shown.length);
         track.innerHTML = shown.length ? shown.map((p, i) => {
             const id = fzhWatchId(p), saved = offWatchFavorites.has(p.name);
-            return `<article class="fzh-watch-row"${id ? ` role="button" tabindex="0" data-watch-index="${i}" aria-label="Voir la fiche de ${escapeHTML(p.name)}"` : ''} title="${escapeHTML(p.note || '')}">${offPlayerFaceHTML(p.name, p.team, id)}<div class="fzh-watch-name"><strong>${escapeHTML(p.name)}</strong><small>${escapeHTML(p.team)} · ${escapeHTML(p.position || '—')}</small></div><span class="fzh-watch-status">${fzhIcon('eye', 17)}<span>${escapeHTML(p.summary || p.note || 'Surveillance')}</span></span><button type="button" class="fzh-watch-star${saved ? ' is-saved' : ''}" data-fzh-player="${escapeHTML(p.name)}" aria-label="${saved ? 'Retirer' : 'Ajouter'} ${escapeHTML(p.name)} ${saved ? 'des' : 'aux'} favoris" aria-pressed="${saved}">${fzhIcon('star', 22)}</button></article>`;
+            return `<article class="fzh-watch-row"${id ? ` role="button" tabindex="0" data-watch-index="${i}" aria-label="Voir la fiche de ${escapeHTML(p.name)}"` : ''} title="${escapeHTML(p.note || '')}"><div class="fzh-watch-top"><span class="fzh-watch-kicker">${fzhWatchKicker(saved)}</span><span class="fzh-watch-date">${escapeHTML(fzhWatchSince(p.name))}</span></div><div class="fzh-watch-id">${offPlayerFaceHTML(p.name, p.team, id)}<div class="fzh-watch-name"><strong>${escapeHTML(p.name)}</strong><small>${escapeHTML(p.team)} · ${escapeHTML(p.position || '—')}</small></div><button type="button" class="fzh-watch-star${saved ? ' is-saved' : ''}" data-fzh-player="${escapeHTML(p.name)}" aria-label="${saved ? 'Retirer' : 'Ajouter'} ${escapeHTML(p.name)} ${saved ? 'des' : 'aux'} favoris" aria-pressed="${saved}">${fzhIcon('star', 18)}</button></div><span class="fzh-watch-status">${escapeHTML(p.summary || p.note || 'Surveillance')}</span></article>`;
         }).join('') : '<p class="fzh-empty">Aucun joueur à surveiller pour le moment.</p>';
         track.scrollLeft = 0;
         track.querySelectorAll('[data-watch-index]').forEach(card => {
@@ -56,6 +70,9 @@ function fzhRenderWatch(root) {
             button.classList.toggle('is-saved', saved);
             button.setAttribute('aria-pressed', String(saved));
             button.setAttribute('aria-label', `${saved ? 'Retirer' : 'Ajouter'} ${name} ${saved ? 'des' : 'aux'} favoris`);
+            const card = button.closest('.fzh-watch-row');
+            card.querySelector('.fzh-watch-kicker').textContent = fzhWatchKicker(saved);
+            card.querySelector('.fzh-watch-date').textContent = fzhWatchSince(name);
         }));
         fzhWatchDots(panel, true);
     };
