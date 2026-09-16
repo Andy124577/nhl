@@ -196,6 +196,9 @@ async function initCalendar() {
 }
 
 function renderCalendar() {
+    // Pendant un repêchage, la home de repêchage a son propre calendrier
+    // présaison (accueil-draft.js) et le bloc partagé est hors écran.
+    if (typeof fzhRenderCalendar === 'function' && fzhRenderCalendar()) return;
     renderCalRange();
     renderDayStrip();
     renderDayHead();
@@ -512,11 +515,6 @@ function calGamesScroll(dir) {
 function fzdPlaceCalendar() {
     const cal = document.getElementById('fzDashCalendarWrap');
     if (!cal) return;
-    const draftSlot = document.getElementById('fzhCalendarSlot');
-    if (document.getElementById('fzDashSection')?.classList.contains('is-drafting') && draftSlot) {
-        draftSlot.appendChild(cal);
-        return;
-    }
     const seasonSlot = document.getElementById('fzSeasonCalendar');
     if (document.getElementById('fzDashSection')?.classList.contains('is-season') && seasonSlot) {
         seasonSlot.appendChild(cal);
