@@ -29,8 +29,8 @@
     <link rel="stylesheet" href="accueil.css">
     <link rel="stylesheet" href="fzToday.css?v=20260915">
     <link rel="stylesheet" href="career-modal.css">
-    <link rel="stylesheet" href="accueil-dash.css?v=20260915">
-    <link rel="stylesheet" href="accueil-mobile.css?v=20260915">
+    <link rel="stylesheet" href="accueil-dash.css?v=20260916">
+    <link rel="stylesheet" href="accueil-mobile.css?v=20260916">
     <link rel="stylesheet" href="demos.css">
     <link rel="stylesheet" href="hero.css">
     <link rel="stylesheet" href="accueil-season.css?v=20260915">
@@ -238,11 +238,14 @@
                         <span class="fzo-card-chev" aria-hidden="true">›</span>
                     </a>
 
+                    <!-- Le calendrier n'est plus à déplier : sans pool il est
+                         déroulé en permanence sous ce bloc (renderDash). La carte
+                         n'a donc plus qu'à y amener le regard. -->
                     <button type="button" class="fzo-card" id="fzoCalCard"
-                            aria-expanded="false" aria-controls="fzDashCalendarWrap">
+                            aria-controls="fzDashCalendarWrap">
                         <span class="fzo-card-body">
                             <span class="fzo-card-title">Calendrier LNH</span>
-                            <span class="fzo-card-desc">Regarde les matchs du soir sans être dans un pool.</span>
+                            <span class="fzo-card-desc">Les matchs du soir, plus bas, sans être dans un pool.</span>
                         </span>
                         <span class="fzo-card-chev" aria-hidden="true">›</span>
                     </button>
@@ -367,6 +370,16 @@
                     <div class="fzd-off-watchlist" id="fzdOffWatchlist"><!-- Filled by accueil-dash.js --></div>
                 </div>
             </div>
+
+            <!-- Actualités LNH — accueil SANS pool. Le membre qui a un pool voit
+                 déjà le même flux défiler tout en haut (#storiesSection,
+                 accueil.js), bandeau qui reste masqué sans pool : cette carte
+                 le remplace, feuilletée à la main plutôt qu'à l'automatique,
+                 puisque rien d'autre ne bouge sur cet écran. Même source
+                 (GET /nhl-news). Rempli par renderDashNews() ; masqué tant
+                 qu'il n'y a aucun article — jamais de carte creuse. -->
+            <section class="fz-dash-news" id="fzDashNews" style="display:none;"
+                     aria-labelledby="fzdNewsTitle"><!-- Filled by accueil-dash.js --></section>
 
             <div class="fz-dash-body" id="fzDashBody">
                 <div class="fz-dash-live">
@@ -556,7 +569,7 @@
     <script defer src="careerTotals.js"></script>
     <script defer src="accueil-carousel.js?v=20260915"></script>
     <script defer src="accueil-watch.js?v=20260915"></script>
-    <script defer src="accueil-dash.js?v=20260915"></script>
+    <script defer src="accueil-dash.js?v=20260916"></script>
     <script defer src="instantDraft.js"></script>
     <script defer src="accueil-mobile.js?v=20260915"></script>
     <script defer src="accueil-season.js?v=20260915"></script>

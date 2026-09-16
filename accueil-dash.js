@@ -1457,24 +1457,37 @@ function renderOffseasonPanel() {
 
     const today = todayISO();
     const seasonStart = calData.regularSeasonStartDate;
+    const hasPool = !!FZPool.get();
 
-    fzdApplyPreseasonLayout(!!FZPool.get());
+    fzdApplyPreseasonLayout(hasPool);
 
-    if (!seasonStart || today >= seasonStart) {
+    const horsSaison = !!seasonStart && today < seasonStart;
+    // Sans pool, la LNH est tout ce que cet accueil a à montrer : les
+    // mouvements récents et la liste « À surveiller » restent donc à
+    // l'écran même une fois la saison commencée. Seul le résumé du haut
+    // s'en va — un compte à rebours sans cible et une position sans pool
+    // n'ont rien à dire.
+    if (!horsSaison && hasPool) {
         panel.style.display = 'none';
         return;
     }
     panel.style.display = '';
+    // .fzd-off-summary est une grille : l'attribut `hidden` ne l'emporterait
+    // pas sur son propre display.
+    panel.querySelector('.fzd-off-summary').style.display = horsSaison ? '' : 'none';
 
-    const campStart = calData.preSeasonStartDate;
-    const beforeCamp = !!campStart && today < campStart;
-    const target = beforeCamp ? campStart : seasonStart;
-    const days = Math.max(0, Math.ceil((new Date(target + 'T00:00:00Z') - new Date(today + 'T00:00:00Z')) / 86400000));
+    if (horsSaison) {
+        const campStart = calData.preSeasonStartDate;
+        const beforeCamp = !!campStart && today < campStart;
+        const target = beforeCamp ? campStart : seasonStart;
+        const days = Math.max(0, Math.ceil((new Date(target + 'T00:00:00Z') - new Date(today + 'T00:00:00Z')) / 86400000));
 
-    document.getElementById('fzdOffDays').textContent = `${days} j`;
-    document.getElementById('fzdOffSub').textContent = beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison';
+        document.getElementById('fzdOffDays').textContent = `${days} j`;
+        document.getElementById('fzdOffSub').textContent = beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison';
 
-    renderOffseasonPosition();
+        renderOffseasonPosition();
+    }
+
     renderOffseasonWatchlist();
     if (!offseasonNewsLoaded) {
         offseasonNewsLoaded = true;
@@ -1857,6 +1870,73 @@ function renderOffseasonWatchlist() {
 }
 
 // ============================================================
+// ACTUALITÉS LNH — accueil sans pool (#fzDashNews). Même flux que le
+// bandeau d'histoires du membre (GET /nhl-news via fetchNhlNews,
+// accueil.js), qui lui reste masqué tant qu'aucun pool n'est actif.
+// Feuilleté à la main : sur cet écran rien d'autre ne bouge tout seul,
+// un défilement automatique y volerait le regard. Une seule requête par
+// visite — le journal ne bouge pas à la minute.
+// ============================================================
+let dashNews = null;
+let dashNewsIndex = 0;
+
+async function renderDashNews() {
+    const panel = document.getElementById('fzDashNews');
+    if (!panel) return;
+    if (!dashNews) dashNews = (await fetchNhlNews()).slice(0, 5);
+    // Jamais de carte creuse : sans article, la section disparaît plutôt
+    // que d'annoncer une actualité qui n'existe pas.
+    if (!dashNews.length) { panel.style.display = 'none'; return; }
+    panel.style.display = '';
+    // renderDash() repasse à chaque rafraîchissement de FZPool : la carte
+    // n'est redessinée que la première fois, sinon elle sauterait à la
+    // figure du lecteur en plein article.
+    if (!panel.firstElementChild) drawDashNews();
+}
+
+function drawDashNews() {
+    const panel = document.getElementById('fzDashNews');
+    if (!panel || !dashNews || !dashNews.length) return;
+
+    dashNewsIndex = (dashNewsIndex + dashNews.length) % dashNews.length;
+    const a = dashNews[dashNewsIndex];
+    const multiple = dashNews.length > 1;
+
+    panel.innerHTML = `
+        <div class="fzd-news-head">
+            <h2 class="fzd-section-title" id="fzdNewsTitle">${getIcon('scroll', 16)}Actualités LNH</h2>
+            ${multiple ? `<div class="fzd-off-nav">
+                <button type="button" class="fzd-off-nav-btn" data-news-step="-1" aria-label="Actualité précédente">‹</button>
+                <button type="button" class="fzd-off-nav-btn" data-news-step="1" aria-label="Actualité suivante">›</button>
+            </div>` : ''}
+        </div>
+        <article class="fzd-news-card${a.image ? '' : ' is-flat'}">
+            ${a.image ? `<img class="fzd-news-image" src="${escapeHTML(a.image)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+            <div class="fzd-news-copy">
+                <span class="fzd-news-badge">${escapeHTML(a.source || 'LNH')}</span>
+                <h3 class="fzd-news-title"><a href="${escapeHTML(a.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(a.title)}</a></h3>
+                ${a.description ? `<p class="fzd-news-desc">${escapeHTML(a.description)}</p>` : ''}
+                <small class="fzd-news-meta">${escapeHTML(a.source || 'LNH')}${a.publishedAt ? ` · ${escapeHTML(relativeTimeFr(a.publishedAt))}` : ''}</small>
+            </div>
+        </article>
+        ${multiple ? `<div class="fzd-news-dots" role="tablist" aria-label="Actualités">${dashNews.map((_, i) =>
+            `<button type="button" class="fzd-off-dot${i === dashNewsIndex ? ' is-active' : ''}" data-news-slide="${i}" aria-label="Actualité ${i + 1} sur ${dashNews.length}" aria-current="${i === dashNewsIndex ? 'true' : 'false'}"></button>`).join('')}</div>` : ''}`;
+
+    panel.querySelectorAll('[data-news-step]').forEach(button => button.addEventListener('click', () => {
+        dashNewsIndex += Number(button.dataset.newsStep);
+        drawDashNews();
+        // Le bouton vient d'être remplacé : on rend le focus à son remplaçant,
+        // sinon feuilleter au clavier renvoie au début de la page.
+        panel.querySelector(`[data-news-step="${button.dataset.newsStep}"]`)?.focus({ preventScroll: true });
+    }));
+    panel.querySelectorAll('[data-news-slide]').forEach(dot => dot.addEventListener('click', () => {
+        dashNewsIndex = Number(dot.dataset.newsSlide);
+        drawDashNews();
+        panel.querySelector(`[data-news-slide="${dashNewsIndex}"]`)?.focus({ preventScroll: true });
+    }));
+}
+
+// ============================================================
 // ORCHESTRATION
 // ============================================================
 function bindCalendarControls() {
@@ -1888,11 +1968,6 @@ function bindCalendarControls() {
 // ÉTAT VIDE — les trois cartes « En attendant » (Canvas-9)
 // ============================================================
 
-// Le calendrier est masqué tant qu'aucun pool n'est actif ; la carte
-// « Calendrier LNH » le rouvre. renderDash() relit ce drapeau, sinon le
-// prochain FZPool.onData() refermerait le panneau sous le visiteur.
-let calRevealedNoPool = false;
-
 /**
  * Déplie une section et amène le regard dessus.
  *
@@ -1921,15 +1996,15 @@ function bindOnboardCards() {
         toggleReveal(how, hiw, how.getAttribute('aria-expanded') !== 'true', 'fzo-revealed');
     });
 
+    // Le calendrier, le hors-saison et les actualités sont désormais
+    // déroulés d'office sans pool (renderDash) : ils ne tirent que sur
+    // /schedule/:date, /nhl-transactions, /nhl-injuries et /nhl-news,
+    // aucune donnée de pool. La carte n'a donc plus rien à ouvrir, elle
+    // amène le regard.
     const calBtn = document.getElementById('fzoCalCard');
     const calWrap = document.getElementById('fzDashCalendarWrap');
-    calBtn?.addEventListener('click', async () => {
-        calRevealedNoPool = calBtn.getAttribute('aria-expanded') !== 'true';
-        toggleReveal(calBtn, calWrap, calRevealedNoPool);
-        // Le calendrier et le panneau hors-saison ne tirent que sur
-        // /schedule/:date, /nhl-transactions et /nhl-injuries : aucune donnée
-        // de pool, donc ils se remplissent aussi bien sans pool actif.
-        if (calRevealedNoPool && !calData) await initCalendar();
+    calBtn?.addEventListener('click', () => {
+        calWrap?.scrollIntoView({ behavior: offseasonScrollBehavior(), block: 'start' });
     });
 
     loadOpenPoolsCount();
@@ -2001,6 +2076,7 @@ async function renderDash() {
     const calWrap = document.getElementById('fzDashCalendarWrap');
     const onboard = document.getElementById('fzDashOnboard');
     const mobileHome = document.getElementById('fzMobileHome');
+    const news = document.getElementById('fzDashNews');
     if (!section || !userData.username) return;
 
     const hasPool = !!FZPool.get();
@@ -2011,20 +2087,31 @@ async function renderDash() {
     section.classList.toggle('is-poolless', !hasPool);
     fzdApplyPreseasonLayout(hasPool);
     if (!hasPool && hero) { fzdStopHeroTimer('fzDashHero'); hero.style.display = 'none'; hero.innerHTML = ''; }
-    // calRevealedNoPool : le visiteur sans pool a ouvert le calendrier depuis
-    // la carte « Calendrier LNH » — ne pas le refermer sous lui au prochain
-    // rafraîchissement de FZPool.
-    if (calWrap) calWrap.style.display = (hasPool || calRevealedNoPool) ? '' : 'none';
+    if (calWrap) calWrap.style.display = '';
     // .fz-mobile-home defaults to display:none in CSS (hidden until a pool
     // is active, and force-hidden on desktop via @media min-width:769px) —
     // an explicit 'block' is required here, an empty string would just fall
     // back to that same CSS default instead of overriding it.
     if (mobileHome) mobileHome.style.display = hasPool ? 'block' : 'none';
     if (onboard) onboard.style.display = hasPool ? 'none' : 'flex';
+    // Actualités LNH : dès qu'un pool est actif, le bandeau d'histoires du
+    // haut de page (accueil.js) reprend le même flux — le visiteur qui
+    // vient de rejoindre un pool ne doit pas le lire deux fois.
+    if (news && hasPool) news.style.display = 'none';
 
     if (!hasPool) {
         if (typeof fzhReset === 'function') fzhReset();
         if (typeof fzsReset === 'function') fzsReset();
+        // La home mobile ne rend pas sans pool : le calendrier doit revenir à
+        // sa place bureau, sinon il reste coincé dans #fzmCalSlot (vidé).
+        fzdRestoreCalendar();
+        // L'état vide n'est plus une page d'inscription et rien d'autre : le
+        // calendrier LNH, le compte à rebours du camp, les mouvements
+        // récents, la liste « À surveiller » et les actualités s'ouvrent
+        // d'eux-mêmes sous le panneau d'accueil. Aucun de ces blocs ne lit
+        // de données de pool.
+        if (!calData) await initCalendar(); else { renderCalendar(); renderOffseasonPanel(); }
+        renderDashNews();
         return;
     }
 

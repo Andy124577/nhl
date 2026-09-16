@@ -1146,6 +1146,85 @@ html[data-theme="dark"] .fz-dash-offseason {
 }
 
 /* ------------------------------------------------------------ */
+/* ACCUEIL SANS POOL — des blocs ci-dessus, tout ce qui parle de   */
+/* VOTRE équipe se tait ; le reste (LNH pure) sert tel quel. Posé  */
+/* en une classe sur la section (renderDash) plutôt qu'en blocs    */
+/* dupliqués : même DOM, même code, un seul rendu à maintenir.    */
+/* ------------------------------------------------------------ */
+/* « Ma position » n'a ni classement ni pool à nommer ; le compte
+   à rebours prend alors toute la ligne. */
+.fz-dash-section.is-poolless .fzd-off-position { display: none; }
+.fz-dash-section.is-poolless .fzd-off-summary { grid-template-columns: 1fr; }
+/* « Aucun de vos joueurs » sous chaque match du calendrier : une
+   non-réponse pour qui n'a pas encore d'équipe. */
+.fz-dash-section.is-poolless .fzd-game-roster-count { display: none; }
+
+/* ------------------------------------------------------------ */
+/* Actualités LNH (#fzDashNews) — accueil sans pool. La photo porte */
+/* le texte, donc la carte reste sombre dans les deux thèmes, comme */
+/* la brique d'accueil : seuls son cadre et son en-tête suivent     */
+/* --fzd-*.                                                        */
+/* ------------------------------------------------------------ */
+.fz-dash-news { display: block; margin-bottom: 18px; }
+.fzd-news-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.fz-dash-news .fzd-section-title {
+    display: flex; align-items: center; gap: 12px; margin: 0;
+    font: 600 14px/1.3 'Barlow Condensed', sans-serif;
+    letter-spacing: .07em; text-transform: uppercase; color: var(--fzd-ink);
+}
+.fz-dash-news .fzd-section-title svg { color: var(--fzd-accent); }
+.fzd-news-card {
+    position: relative; isolation: isolate; overflow: hidden;
+    display: flex; align-items: flex-end;
+    min-height: 210px;
+    border: 1px solid var(--fzd-border);
+    border-radius: 10px;
+    background: linear-gradient(118deg, #17202b, #0d141c);
+}
+.fzd-news-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 35%; z-index: -2; }
+/* Voile de lecture : opaque à gauche où vit le texte, transparent à
+   droite pour laisser voir la photo. Sur une carte sans image le dégradé
+   se pose sur l'aplat et ne se voit pas. */
+.fzd-news-card::after {
+    content: ''; position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(90deg, rgba(9, 15, 21, .95) 0%, rgba(9, 15, 21, .86) 32%, rgba(9, 15, 21, .35) 72%, rgba(9, 15, 21, .7) 100%);
+}
+.fzd-news-copy { max-width: 58%; padding: 20px 24px; }
+/* Sans photo, il n'y a rien à voiler : le dégradé ne ferait qu'éclaircir
+   l'aplat sur sa droite, en bande bien visible. */
+.fzd-news-card.is-flat::after { display: none; }
+.fzd-news-card.is-flat .fzd-news-copy { max-width: 100%; }
+.fzd-news-badge {
+    display: inline-block; max-width: 100%;
+    padding: 4px 13px; border-radius: 999px;
+    background: var(--fzd-accent-fill); color: #fff;
+    font: 600 10.5px/1.5 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .1em; text-transform: uppercase;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fzd-news-title { margin: 10px 0 0; font: 700 23px/1.18 'Barlow Condensed', sans-serif; }
+.fz-dash-news .fzd-news-title a { color: #f6f8fb; }
+.fz-dash-news .fzd-news-title a:hover { color: #fff; text-decoration: underline; }
+.fzd-news-desc {
+    margin: 7px 0 0;
+    font: 400 14px/1.45 'Helvetica Neue', Helvetica, sans-serif;
+    color: #dbe3ee;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.fzd-news-meta {
+    display: block; margin-top: 10px;
+    font: 400 12px/1.4 'Barlow Condensed', sans-serif;
+    letter-spacing: .05em; color: #b6c3d3;
+}
+.fzd-news-dots { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; }
+@media (max-width: 600px) {
+    .fzd-news-card { min-height: 190px; }
+    .fzd-news-copy { max-width: 82%; padding: 16px 18px; }
+    .fzd-news-title { font-size: 20px; }
+    .fzd-news-card::after { background: linear-gradient(90deg, rgba(9, 15, 21, .95) 0%, rgba(9, 15, 21, .8) 62%, rgba(9, 15, 21, .55) 100%); }
+}
+
+/* ------------------------------------------------------------ */
 /* ------------------------------------------------------------ */
 /* Raccourcis pools — avant-saison seulement (#fzDashPoolChips,   */
 /* posé entre le calendrier et le panneau hors-saison). Le corps  */

@@ -330,7 +330,11 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
        cachait surtout le calendrier pour de bon dès que la home mobile ne
        rendait pas (avant-saison, effectif pas encore chargé). Le laisser à sa
        place bureau est le bon repli : visible, simplement plus bas. */
-    #fzDashOffseason, #fzDashBody, #fzDashHero,
+    /* Sans pool la home mobile ne rend rien : le panneau hors-saison
+       (camp, mouvements récents, « À surveiller ») est alors la seule
+       chose que le téléphone a à montrer sous l'accueil, il reste. */
+    .fz-dash-section:not(.is-poolless) #fzDashOffseason,
+    #fzDashBody, #fzDashHero,
     #fzDashPoolChips { display: none !important; }
 
     /* Le slot ne fait que porter le calendrier ; la marge basse de
