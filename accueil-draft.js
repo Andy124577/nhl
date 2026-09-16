@@ -77,7 +77,6 @@ function renderDraftHome({ tonight, activeName }) {
     const weekGames = (calData?.days || []).reduce((n, d) => n + (d.games || []).length, 0);
     const liveGames = fzhLiveGames(tonight);
     root.innerHTML = `
-        <section class="fzh-news fzh-panel" id="fzhNews" aria-label="Actualités LNH"><div class="fzh-news-copy"><span class="fzh-news-badge">LNH</span><h2>Le hockey n’attend pas.</h2><p>Préparez votre prochain choix.</p><small>Chargement des actualités…</small></div></section>
         <section class="fzh-draft fzh-panel${away === 0 ? ' is-my-turn' : ''}" aria-labelledby="fzhDraftTitle">
             <span class="fzh-status"><i></i>${away === 0 ? 'À vous de jouer' : 'En cours'}</span>
             <div class="fzh-draft-main"><div class="fzh-puck" aria-hidden="true"><i></i></div>
@@ -91,7 +90,8 @@ function renderDraftHome({ tonight, activeName }) {
         ${liveGames.length ? `<section class="fzh-scores fzh-panel">${fzhHeading('zap', 'Matchs en direct', '<button type="button" class="fzh-link" data-fzh-calendar>Voir tous <span aria-hidden="true">→</span></button>')}<div class="fzh-score-track">${fzhGamesHTML(liveGames)}</div></section>` : ''}
         <section class="fzh-moves fzh-panel">${fzmLeagueSectionHTML(false).replace('Dans la LNH', 'Mouvements récents')}</section>
         <section class="fzh-watch fzh-panel" data-watch-panel>${fzhWatchHTML()}</section>
-        <section class="fzh-calendar fzh-panel"><div class="fzh-calendar-summary">${fzhIcon('calendar', 32)}<h2>Calendrier${target ? ' présaison' : ''}</h2><div><strong>${weekGames ? `${weekGames} match${weekGames > 1 ? 's' : ''} cette semaine.` : 'Aucun match cette semaine.'}</strong><p>${escapeHTML(seasonText)}</p></div><button type="button" class="fzh-calendar-button" data-fzh-calendar aria-expanded="${fzhCalendarOpen}" aria-controls="fzhCalendarSlot">${fzhCalendarOpen ? 'Fermer' : 'Voir le calendrier'} <span aria-hidden="true">→</span></button></div><div id="fzhCalendarSlot"${fzhCalendarOpen ? '' : ' hidden'}></div></section>`;
+        <section class="fzh-calendar fzh-panel"><div class="fzh-calendar-summary">${fzhIcon('calendar', 32)}<h2>Calendrier${target ? ' présaison' : ''}</h2><div><strong>${weekGames ? `${weekGames} match${weekGames > 1 ? 's' : ''} cette semaine.` : 'Aucun match cette semaine.'}</strong><p>${escapeHTML(seasonText)}</p></div><button type="button" class="fzh-calendar-button" data-fzh-calendar aria-expanded="${fzhCalendarOpen}" aria-controls="fzhCalendarSlot">${fzhCalendarOpen ? 'Fermer' : 'Voir le calendrier'} <span aria-hidden="true">→</span></button></div><div id="fzhCalendarSlot"${fzhCalendarOpen ? '' : ' hidden'}></div></section>
+        <section class="fzh-news fzh-panel" id="fzhNews" aria-label="Actualités LNH"><div class="fzh-news-copy"><span class="fzh-news-badge">LNH</span><h2>Le hockey n’attend pas.</h2><p>Préparez votre prochain choix.</p><small>Chargement des actualités…</small></div></section>`;
     fzhRenderWatch(root);
     root.querySelectorAll('[data-fzh-calendar]').forEach(button => button.addEventListener('click', () => {
         fzhCalendarOpen = button.classList.contains('fzh-calendar-button') ? !fzhCalendarOpen : true;
