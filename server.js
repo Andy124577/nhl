@@ -2390,11 +2390,25 @@ app.get('/nhl-transactions', async (req, res) => {
 
 // ============================================================
 // BLESSÉS — api-web.nhle.com n'expose aucun rapport de blessures (un
-// alignement ne dit pas qui est blessé), mais ESPN en publie un,
-// structuré et sans clé : statut, nature, date de retour prévue. Chaque
-// entrée porte déjà l'abréviation officielle du club dans
-// athlete.team.abbreviation, donc aucune table nom → code n'est
-// nécessaire. Caché 30 min.
+// alignement ne dit pas qui est blessé). Deux sources extérieures en
+// publient un, et il faut les deux :
+//
+//   ESPN     — la plus riche : date de déclaration, retour prévu,
+//              nature ET détail (« Knee » + « Surgery »), côté, photo.
+//              Mais elle est remise à zéro au changement de saison. Le
+//              15 septembre 2026, au basculement vers la présaison
+//              2026-27, elle ne contenait plus qu'UNE entrée pour toute
+//              la ligue — 77 joueurs étaient pourtant blessés.
+//   Rotowire — la plus complète, et tenue à jour hors saison. En
+//              revanche aucune date : celle du retour est réservée aux
+//              abonnés (`rDate` vaut littéralement « Subscribers
+//              Only »), et le champ `date` est le prochain match du
+//              joueur, pas la date de déclaration.
+//
+// Aucune ne suffit seule : ESPN donne la profondeur, Rotowire la
+// couverture. On prend donc l'union des deux, ESPN l'emportant sur les
+// doublons puisqu'elle en dit plus. Une source muette ou en panne ne
+// fait perdre que ce qu'elle apportait. Caché 30 min.
 // ============================================================
 const INJURY_STATUS_FR = {
     'Out': 'Absent',
@@ -2408,10 +2422,169 @@ const INJURY_STATUS_FR = {
 // avec un code que ni NHL_CLUB_FULLNAME, ni /teams/XXX.png, ni les stats
 // du jour (teamAbbrev) ne reconnaissent — la ligne perdait son nom de
 // club et le rapprochement joueur ↔ blessure côté client échouait.
+// Rotowire, lui, écrit déjà les codes officiels : la table le traverse
+// sans rien changer.
 const ESPN_TO_NHL_ABBREV = {
     LA: 'LAK', NJ: 'NJD', SJ: 'SJS', TB: 'TBL',
     VGS: 'VGK', UTAH: 'UTA', MON: 'MTL', WAS: 'WSH', CLS: 'CBJ'
 };
+
+// Rotowire distingue trois réserves des blessés là où notre vocabulaire
+// — celui d'ESPN, dont dépendent le glyphe, le tri et le filtre
+// ?status= — n'en connaît qu'une. On ramène donc `status` au vocabulaire
+// commun et on garde la nuance dans `statusFr`, qui est ce que
+// l'utilisateur lit.
+const ROTOWIRE_STATUS_FR = {
+    'Day-To-Day': ['Day-To-Day', 'Au jour le jour'],
+    'Out': ['Out', 'Absent'],
+    'IR': ['Injured Reserve', 'Réserve des blessés'],
+    'IR-LT': ['Injured Reserve', 'Réserve des blessés (long terme)'],
+    'IR-NR': ['Injured Reserve', 'Réserve des blessés (hors alignement)']
+};
+
+const ESPN_INJURIES_URL = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/injuries';
+const ROTOWIRE_INJURIES_URL = 'https://www.rotowire.com/hockey/tables/injury-report.php?team=ALL&pos=ALL';
+// Une source lente ne doit pas retenir la route : au pire on sert ce que
+// l'autre a répondu.
+const INJURY_SOURCE_TIMEOUT_MS = 8000;
+
+function injuryTeamCode(value) {
+    const raw = String(value || '').trim().toUpperCase();
+    if (!raw) return null;
+    return ESPN_TO_NHL_ABBREV[raw] || raw;
+}
+
+/**
+ * Nom comparable d'une source à l'autre : sans accents, sans ponctuation,
+ * sans suffixe générationnel. Même traitement qu'injNormalizeName()
+ * (injuries.js) et que nameKey() (tools/build_draftkit.js) — les marques
+ * combinantes sont RETIRÉES, pas remplacées par une espace, sans quoi
+ * « Bédard » donnerait « be dard ».
+ */
+function injuryNameKey(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z]+/g, ' ')
+        .replace(/\b(jr|sr|ii|iii|iv)\b/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+async function fetchEspnInjuries() {
+    const response = await fetch(ESPN_INJURIES_URL, { signal: AbortSignal.timeout(INJURY_SOURCE_TIMEOUT_MS) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+
+    const injuries = [];
+    (data.injuries || []).forEach(teamEntry => {
+        (teamEntry.injuries || []).forEach(entry => {
+            const athlete = entry.athlete || {};
+            const code = injuryTeamCode(athlete.team?.abbreviation);
+            if (!code || !athlete.displayName) return;
+            injuries.push({
+                playerName: athlete.displayName,
+                pos: athlete.position?.abbreviation || null,
+                headshot: athlete.headshot?.href || null,
+                team: code,
+                teamName: NHL_CLUB_FULLNAME[code] || teamEntry.displayName || code,
+                status: entry.status || null,
+                statusFr: INJURY_STATUS_FR[entry.status] || entry.status || null,
+                // `type` est la partie du corps (« Knee »), `detail`
+                // la précision (« Surgery ») — les deux peuvent
+                // manquer, d'où le null plutôt qu'une chaîne vide.
+                injuryType: entry.details?.type || null,
+                injuryDetail: entry.details?.detail || null,
+                // « Not Specified » revient très souvent dans `side` :
+                // le laisser passer ferait écrire « Genou (Not
+                // Specified) » au client, d'où le null ici.
+                injurySide: entry.details?.side && entry.details.side !== 'Not Specified'
+                    ? entry.details.side : null,
+                returnDate: entry.details?.returnDate || null,
+                since: entry.date || null,
+                comment: entry.longComment || entry.shortComment || null,
+                source: 'espn'
+            });
+        });
+    });
+    return injuries;
+}
+
+async function fetchRotowireInjuries() {
+    const response = await fetch(ROTOWIRE_INJURIES_URL, { signal: AbortSignal.timeout(INJURY_SOURCE_TIMEOUT_MS) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const rows = await response.json();
+    if (!Array.isArray(rows)) throw new Error('réponse inattendue');
+
+    return rows.map(row => {
+        const code = injuryTeamCode(row.team);
+        const name = row.player || [row.firstname, row.lastname].filter(Boolean).join(' ');
+        if (!code || !name) return null;
+        // Une suspension arrive ici avec status « Out » et injury
+        // « Suspension » : c'est `status` que lit le client pour choisir
+        // le glyphe (croix barrée plutôt que croix médicale, injuries.js),
+        // donc c'est `status` qu'il faut corriger.
+        const suspended = row.injury === 'Suspension';
+        const [status, statusFr] = suspended
+            ? ['Suspension', 'Suspension']
+            : (ROTOWIRE_STATUS_FR[row.status] || [row.status || null, row.status || null]);
+        return {
+            playerName: name,
+            pos: row.position || null,
+            headshot: null,
+            team: code,
+            teamName: NHL_CLUB_FULLNAME[code] || code,
+            status,
+            statusFr,
+            // Rotowire ne donne que la partie du corps, jamais la
+            // précision ni le côté — d'où les null plutôt que des
+            // valeurs inventées.
+            injuryType: row.injury || null,
+            injuryDetail: null,
+            injurySide: null,
+            // `rDate` vaut « <i>Subscribers Only</i> » pour tout le
+            // monde, et `date` est le prochain match du joueur, pas la
+            // date de déclaration : ni l'un ni l'autre n'est une date
+            // exploitable. Mieux vaut ne rien annoncer qu'annoncer un
+            // retour faux.
+            returnDate: null,
+            since: null,
+            comment: null,
+            source: 'rotowire'
+        };
+    }).filter(Boolean);
+}
+
+/**
+ * L'union des deux sources. Un joueur présent des deux côtés est gardé
+ * dans sa version ESPN, plus détaillée.
+ *
+ * Le rapprochement se fait sur « nom + club », et non sur le nom seul :
+ * deux joueurs de la LNH portent parfois le même nom (Sebastian Aho, à
+ * CAR et à NYI) et peuvent être blessés en même temps. Mais si un nom
+ * n'apparaît qu'une seule fois chez ESPN, c'est forcément le même joueur
+ * — même si les deux sources le rattachent à des clubs différents, ce
+ * qui arrive après un échange ou une invitation au camp. D'où les deux
+ * index.
+ */
+function mergeInjurySources(espn, rotowire) {
+    const byTeam = new Set();
+    const nameCount = new Map();
+    espn.forEach(entry => {
+        const key = injuryNameKey(entry.playerName);
+        byTeam.add(`${key}|${entry.team}`);
+        nameCount.set(key, (nameCount.get(key) || 0) + 1);
+    });
+
+    const extra = rotowire.filter(entry => {
+        const key = injuryNameKey(entry.playerName);
+        if (byTeam.has(`${key}|${entry.team}`)) return false;
+        return nameCount.get(key) !== 1;
+    });
+
+    return [...espn, ...extra];
+}
 
 let nhlInjuriesCache = { data: null, fetchedAt: 0 };
 const NHL_INJURIES_TTL_MS = 30 * 60 * 1000;
@@ -2420,62 +2593,47 @@ app.get('/nhl-injuries', async (req, res) => {
     try {
         const now = Date.now();
         if (!nhlInjuriesCache.data || (now - nhlInjuriesCache.fetchedAt) >= NHL_INJURIES_TTL_MS) {
-            const response = await fetch('https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/injuries');
-            if (!response.ok) {
-                console.error('❌ ESPN injuries request failed:', response.status);
-                return res.json({ lastUpdated: null, injuries: [], counts: {} });
-            }
-            const data = await response.json();
+            const [espn, rotowire] = await Promise.all([
+                fetchEspnInjuries().catch(error => {
+                    console.error('❌ ESPN injuries request failed:', error.message);
+                    return null;
+                }),
+                fetchRotowireInjuries().catch(error => {
+                    console.error('❌ Rotowire injuries request failed:', error.message);
+                    return null;
+                })
+            ]);
 
-            const injuries = [];
-            (data.injuries || []).forEach(teamEntry => {
-                (teamEntry.injuries || []).forEach(entry => {
-                    const athlete = entry.athlete || {};
-                    const raw = athlete.team?.abbreviation || null;
-                    const code = raw ? (ESPN_TO_NHL_ABBREV[raw.toUpperCase()] || raw.toUpperCase()) : null;
-                    if (!code || !athlete.displayName) return;
-                    injuries.push({
-                        playerName: athlete.displayName,
-                        pos: athlete.position?.abbreviation || null,
-                        headshot: athlete.headshot?.href || null,
-                        team: code,
-                        teamName: NHL_CLUB_FULLNAME[code] || teamEntry.displayName || code,
-                        status: entry.status || null,
-                        statusFr: INJURY_STATUS_FR[entry.status] || entry.status || null,
-                        // `type` est la partie du corps (« Knee »), `detail`
-                        // la précision (« Surgery ») — les deux peuvent
-                        // manquer, d'où le null plutôt qu'une chaîne vide.
-                        injuryType: entry.details?.type || null,
-                        injuryDetail: entry.details?.detail || null,
-                        // « Not Specified » revient très souvent dans `side` :
-                        // le laisser passer ferait écrire « Genou (Not
-                        // Specified) » au client, d'où le null ici.
-                        injurySide: entry.details?.side && entry.details.side !== 'Not Specified'
-                            ? entry.details.side : null,
-                        returnDate: entry.details?.returnDate || null,
-                        since: entry.date || null,
-                        comment: entry.longComment || entry.shortComment || null
-                    });
+            // Les deux sources muettes, ce n'est pas « personne n'est
+            // blessé » : on garde le dernier rapport connu, même périmé,
+            // plutôt que de vider la liste sur une panne réseau.
+            if (!espn && !rotowire) {
+                if (!nhlInjuriesCache.data) {
+                    return res.json({ lastUpdated: null, total: 0, counts: {}, injuries: [] });
+                }
+                console.warn('⚠️ Rapport de blessures indisponible — service du dernier connu');
+            } else {
+                const injuries = mergeInjurySources(espn || [], rotowire || []);
+
+                // Les plus récemment déclarés d'abord. Trier par statut puis par
+                // nom paraissait plus logique, mais le client n'affiche qu'une
+                // poignée de lignes : par ordre alphabétique, cette poignée
+                // n'aurait aucun sens (les Anderson, toujours), alors que par
+                // date elle répond à « quoi de neuf ». Statut en départage —
+                // et c'est lui qui classe tout l'apport de Rotowire, sans date.
+                const ORDER = ['Injured Reserve', 'Out', 'Suspension', 'Day-To-Day'];
+                injuries.sort((a, b) => {
+                    const dateDiff = new Date(b.since || 0) - new Date(a.since || 0);
+                    if (dateDiff) return dateDiff;
+                    const rank = ORDER.indexOf(a.status) - ORDER.indexOf(b.status);
+                    return rank !== 0 ? rank : a.playerName.localeCompare(b.playerName);
                 });
-            });
 
-            // Les plus récemment déclarés d'abord. Trier par statut puis par
-            // nom paraissait plus logique, mais le client n'affiche qu'une
-            // poignée de lignes : par ordre alphabétique, cette poignée
-            // n'aurait aucun sens (les Anderson, toujours), alors que par
-            // date elle répond à « quoi de neuf ». Statut en départage.
-            const ORDER = ['Injured Reserve', 'Out', 'Suspension', 'Day-To-Day'];
-            injuries.sort((a, b) => {
-                const dateDiff = new Date(b.since || 0) - new Date(a.since || 0);
-                if (dateDiff) return dateDiff;
-                const rank = ORDER.indexOf(a.status) - ORDER.indexOf(b.status);
-                return rank !== 0 ? rank : a.playerName.localeCompare(b.playerName);
-            });
-
-            nhlInjuriesCache = {
-                data: { lastUpdated: new Date().toISOString(), injuries },
-                fetchedAt: now
-            };
+                nhlInjuriesCache = {
+                    data: { lastUpdated: new Date().toISOString(), injuries },
+                    fetchedAt: now
+                };
+            }
         }
 
         const payload = nhlInjuriesCache.data;

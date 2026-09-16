@@ -362,9 +362,12 @@ async function fzmLoadLeague() {
     if (!fzmLeagueData) {
         // limit=80 : tout le journal tient dedans, donc groupTrades (défini dans
         // accueil-dash.js, chargé avant) voit chaque échange en entier.
+        // Blessés au maximum (300) plutôt qu'une fenêtre : l'onglet annonce
+        // `counts.injury`, le total du serveur, et montrait donc « 77 » au-
+        // dessus d'une piste qui n'en portait que 60.
         const [tx, inj] = await Promise.all([
             fetch('/nhl-transactions?limit=80').then(r => r.json()).catch(() => null),
-            fetch('/nhl-injuries?limit=60').then(r => r.json()).catch(() => null)
+            fetch('/nhl-injuries?limit=300').then(r => r.json()).catch(() => null)
         ]);
 
         const moves = tx?.transactions || [];
