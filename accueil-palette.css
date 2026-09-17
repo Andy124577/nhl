@@ -1,0 +1,77 @@
+/* Shared home palette, matching the charcoal calendar reference. */
+#fzDashSection {
+    --fzh-page: #131316;
+    --fzh-panel: #1e1e22;
+    --fzh-raised: #26262b;
+    --fzh-border: #2e2e33;
+    --fzh-outline: #3c3c43;
+    --fzh-ink: #f5f5f2;
+    --fzh-text: #c9c6c0;
+    --fzh-muted: #a3a099;
+    --fzh-accent: #e8795e;
+    --fzh-accent-fill: #b93d28;
+    --fzh-tint: rgba(232, 121, 94, .16);
+}
+html[data-theme="dark"] #fzDashSection,
+#fzDashSection:is(.is-drafting, .is-season) { background: var(--fzh-page); }
+body:is(.fz-draft-page, .fz-season-page) { background: #131316; }
+html[data-theme="dark"] #fzDashSection .fz-dash,
+#fzDashSection:is(.is-drafting, .is-season) .fz-dash {
+    --fzd-bg: var(--fzh-panel);
+    --fzd-bg-alt: var(--fzh-panel);
+    --fzd-surface: var(--fzh-panel);
+    --fzd-tile-bg: var(--fzh-raised);
+    --fzd-border: var(--fzh-border);
+    --fzd-border-soft: var(--fzh-border);
+    --fzd-border-strong: var(--fzh-outline);
+    --fzd-ink: var(--fzh-ink);
+    --fzd-ink-soft: var(--fzh-text);
+    --fzd-text: var(--fzh-text);
+    --fzd-text-muted: var(--fzh-muted);
+    --fzd-text-faint: var(--fzh-muted);
+    --fzd-accent: var(--fzh-accent);
+    --fzd-accent-fill: var(--fzh-accent-fill);
+    --fzd-accent-dark: #f19b85;
+    --fzd-accent-tint: var(--fzh-tint);
+}
+html[data-theme="dark"] #fzDashSection .fz-mobile-home,
+#fzDashSection :is(.fzh, .fzs) {
+    --fzm-bg: var(--fzh-page);
+    --fzm-panel: var(--fzh-panel);
+    --fzm-surface: var(--fzh-panel);
+    --fzm-border: var(--fzh-border);
+    --fzm-ink: var(--fzh-ink);
+    --fzm-ink-soft: var(--fzh-text);
+    --fzm-ink-faint: var(--fzh-muted);
+    --fzm-red: var(--fzh-accent);
+    --fzm-red-soft: var(--fzh-tint);
+    color: var(--fzh-ink);
+}
+#fzDashSection :is(.fzh-panel, .fzs-panel) {
+    background: var(--fzh-panel);
+    border-color: var(--fzh-outline);
+    box-shadow: none;
+}
+#fzDashSection :is(.fzh-cal-game, .fzh-game, .fzs-game, .fzh-cal-day, .fzh-participant-more, .fzh-watch-filter select, .fzh-moves .fzm-off-card) {
+    background: var(--fzh-panel);
+    border-color: var(--fzh-border);
+    color: var(--fzh-ink);
+}
+#fzDashSection :is(.fzh-cta, .fzs-cta, .fzm-draft-cta),
+html[data-theme="dark"] #fzDashSection .fzd-hero-cta {
+    background: var(--fzh-accent-fill);
+    border-color: var(--fzh-accent);
+    color: #fff;
+}
+#fzDashSection :is(.fzh-link, .fzs a:not(.fzs-cta)) { color: var(--fzh-accent); }
+#fzDashSection .fzh-cal-day.is-selected { background: var(--fzh-tint); border-color: var(--fzh-accent); }
+#fzDashSection :is(.fzh-watch-tools > button, .fzh-cal-controls, .fzh-draft-bottom) { border-color: var(--fzh-border); }
+#fzDashSection :is(.fzs-tag, .fzs .fzd-off-face, .fzh-moves .fzm-off-tag:not(.is-injury)) { background: var(--fzh-raised); }
+#fzDashSection .fzs-hero::after { background: linear-gradient(90deg, #1e1e22 5%, #1e1e22b8 45%, transparent); }
+html[data-theme="dark"] #fzDashSection :is(.fz-dash-hero, #fzmHeroSlot.is-draft) {
+    background: var(--fzh-panel);
+    border-color: var(--fzh-outline);
+    box-shadow: none;
+}
+html[data-theme="dark"] #fzDashSection #fzmLeagueTabs .fzm-tab.is-active { background: var(--fzh-accent-fill); }
+html[data-theme="dark"] #fzDashSection .fzo-start { border-color: var(--fzh-outline); }
