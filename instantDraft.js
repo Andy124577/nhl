@@ -277,6 +277,17 @@
 
         const panneau = panneauDe(bouton);
         panneau.classList.toggle('is-joined', dedans);
+        if (bouton.dataset.instantLayout === 'onboarding') {
+            const slots = Array.from({ length: etat.places }, (_, i) => {
+                const nom = etat.joueurs[i];
+                const moi = nom === utilisateur();
+                return `<li class="fzo-queue-seat${nom ? ' is-taken' : ' is-free'}${moi ? ' is-me' : ''}"><i aria-hidden="true"></i><span>${moi ? 'Toi' : nom ? echapper(nom) : 'Libre'}</span></li>`;
+            }).join('');
+            panneau.innerHTML = `<div class="fzo-queue-heading"><span>La file</span><span>${etat.joueurs.length} / ${etat.places} places</span></div>
+                <ul class="fzo-queue-seats">${slots}</ul>
+                <p class="fzid-resume" role="status">${echapper(resume(etat))}</p>${actions(etat)}`;
+            return;
+        }
         panneau.innerHTML = `
             <p class="fzid-resume">${echapper(resume(etat))}</p>
             ${etat.joueurs.length ? listeJoueurs(etat) : ''}
