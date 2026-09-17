@@ -124,7 +124,8 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 
 /* ------------------------------------------------------------ */
 /* Canvas-3: first pool welcome and live instant-draft queue. */
-.fz-dash-onboard { display:none; flex-direction:column; gap:26px; width:100%; max-width:944px; margin:0 auto 36px; padding:56px 32px 48px; background:radial-gradient(120% 70% at 50% -10%,#1d0f0d 0%,#0b0b0c 58%); color:#f2efe9; font-family:'Barlow',system-ui,sans-serif; }
+.fz-dash-section.is-poolless #fzTodayDash { display:none; }
+.fz-dash-onboard { display:none; flex-direction:column; gap:26px; width:100%; max-width:944px; margin:0 auto 36px; padding:56px 32px 48px; color:#f2efe9; font-family:'Barlow',system-ui,sans-serif; }
 .fz-dash-onboard *, .fz-dash-onboard *::before, .fz-dash-onboard *::after { box-sizing:border-box; }
 .fzo-intro { display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center; }
 .fzo-welcome { margin:0; font:700 11px/1.4 'Barlow Condensed',sans-serif; letter-spacing:.24em; text-transform:uppercase; color:#8b8478; }
