@@ -2094,6 +2094,8 @@ async function renderDash() {
     // back to that same CSS default instead of overriding it.
     if (mobileHome) mobileHome.style.display = hasPool ? 'block' : 'none';
     if (onboard) onboard.style.display = hasPool ? 'none' : 'flex';
+    const welcome = document.getElementById('fzoWelcome');
+    if (!hasPool && welcome) welcome.textContent = `Bienvenue, ${userData.username}`;
     // Actualités LNH : dès qu'un pool est actif, le bandeau d'histoires du
     // haut de page (accueil.js) reprend le même flux — le visiteur qui
     // vient de rejoindre un pool ne doit pas le lire deux fois.
