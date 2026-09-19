@@ -360,13 +360,17 @@ async function fzmLoadLeague() {
     // redemander à chaque fois coûtait deux appels réseau pour le même
     // contenu, et faisait clignoter la piste.
     if (!fzmLeagueData) {
-        // limit=80 : tout le journal tient dedans, donc groupTrades (défini dans
-        // accueil-dash.js, chargé avant) voit chaque échange en entier.
+        // Tout le journal (TRANSACTIONS_KEEP=250), comme au bureau : les
+        // échanges manuels de juin-août sont les plus anciennes lignes, et
+        // l'ancienne fenêtre de 80 était remplie par les signatures et départs
+        // du camp dès septembre — l'onglet n'affichait plus qu'un échange.
+        // groupTrades (défini dans accueil-dash.js, chargé avant) voit ainsi
+        // chaque échange en entier.
         // Blessés au maximum (300) plutôt qu'une fenêtre : l'onglet annonce
         // `counts.injury`, le total du serveur, et montrait donc « 77 » au-
         // dessus d'une piste qui n'en portait que 60.
         const [tx, inj] = await Promise.all([
-            fetch('/nhl-transactions?limit=80').then(r => r.json()).catch(() => null),
+            fetch('/nhl-transactions?limit=250').then(r => r.json()).catch(() => null),
             fetch('/nhl-injuries?limit=300').then(r => r.json()).catch(() => null)
         ]);
 
