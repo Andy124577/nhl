@@ -2070,6 +2070,50 @@ function fzdApplyPreseasonLayout(hasPool) {
     if (chips) chips.style.display = (hasPool && started === false) ? '' : 'none';
 }
 
+/**
+ * La disposition de l'accueil est choisie : la page peut se montrer.
+ *
+ * Un membre charge l'accueil en `html.fz-home-pending` (posé dans le <head>
+ * d'index.html) : le repêchage et la saison remplacent le tableau de bord
+ * par défaut, mais seulement une fois leurs données arrivées. Sans cette
+ * attente, le tableau de bord par défaut — et le bandeau d'histoires —
+ * s'affichaient une seconde avant d'être remplacés.
+ */
+function fzdRevelerAccueil() {
+    document.documentElement.classList.remove('fz-home-pending');
+}
+
+/**
+ * Les polices des dispositions de l'accueil, demandées dès le démarrage.
+ *
+ * Le navigateur ne télécharge une police qu'au premier texte affiché qui
+ * s'en sert. Masqué pendant l'attente, l'accueil ne les demandait qu'en se
+ * montrant : il s'affichait dans la police de repli, puis changeait de
+ * police — et de hauteur — sous les yeux. Barlow Condensed et Oswald
+ * portent les homes repêchage et saison ; Archivo, la home téléphone.
+ */
+const FZD_POLICES = [
+    "400 16px 'Barlow Condensed'", "600 16px 'Barlow Condensed'", "700 16px 'Barlow Condensed'",
+    "500 16px 'Oswald'", "400 16px 'Barlow'", "700 16px 'Barlow'"
+];
+let fzdPolices = null;
+
+function fzdChargerPolices() {
+    if (fzdPolices) return fzdPolices;
+    const liste = window.matchMedia('(max-width: 768px)').matches
+        ? [...FZD_POLICES, "700 16px 'Archivo'"] : FZD_POLICES;
+    fzdPolices = document.fonts
+        ? Promise.all(liste.map(police => document.fonts.load(police).catch(() => null)))
+        : Promise.resolve();
+    return fzdPolices;
+}
+
+/** Attend les polices, jamais plus de `plafondMs` : sur un réseau lent, un
+ *  changement de police vaut mieux qu'un accueil qui reste vide. */
+function fzdPolicesPretes(plafondMs = 1200) {
+    return Promise.race([fzdChargerPolices(), new Promise(r => setTimeout(r, plafondMs))]);
+}
+
 async function renderDash() {
     const section = document.getElementById('fzDashSection');
     const hero = document.getElementById('fzDashHero');
@@ -2077,7 +2121,7 @@ async function renderDash() {
     const onboard = document.getElementById('fzDashOnboard');
     const mobileHome = document.getElementById('fzMobileHome');
     const news = document.getElementById('fzDashNews');
-    if (!section || !userData.username) return;
+    if (!section || !userData.username) { fzdRevelerAccueil(); return; }
 
     const hasPool = !!FZPool.get();
     section.style.display = 'block';
@@ -2102,6 +2146,9 @@ async function renderDash() {
     if (news && hasPool) news.style.display = 'none';
 
     if (!hasPool) {
+        // L'état vide est déjà la bonne disposition : ses blocs se remplissent
+        // sur place, aucun ne sera remplacé.
+        fzdRevelerAccueil();
         if (typeof fzhReset === 'function') fzhReset();
         if (typeof fzsReset === 'function') fzsReset();
         // La home mobile ne rend pas sans pool : le calendrier doit revenir à
@@ -2117,42 +2164,61 @@ async function renderDash() {
         return;
     }
 
-    if (!calData) await initCalendar(); else { renderCalendar(); renderOffseasonPanel(); }
-    fzdPlaceCalendar();
-    renderQuickActions();
-    renderMyPoolsList();
-    renderActivityFeed();
+    // Le calendrier et les données du soir ne dépendent pas l'un de l'autre :
+    // ils partent ensemble. Les attendre l'un après l'autre allongeait
+    // d'autant l'attente avant que la disposition ne soit choisie.
+    const dashData = loadDashData();
+    try {
+        if (!calData) await initCalendar(); else { renderCalendar(); renderOffseasonPanel(); }
+        fzdPlaceCalendar();
+        renderQuickActions();
+        renderMyPoolsList();
+        renderActivityFeed();
 
-    const dash = await loadDashData();
-    if (dash) {
-        // Les cartes joueur du calendrier lisent calTonight : on le pose AVANT
-        // renderMobileHome (qui redessine le calendrier une fois déplacé), pour
-        // que les stats en direct arrivent du premier coup.
-        calTonight = dash.tonight || { players: [], games: [] };
-        if (typeof renderDraftHome === 'function' && renderDraftHome(dash)) return;
-        if (typeof renderSeasonHome === 'function' && renderSeasonHome(dash)) return;
-        renderHero(dash.tonight);
-        renderLivePanel(dash.tonight, dash.movement, dash.activeName);
-        renderMobileHome(dash.tonight, dash.movement, dash.activeName);
-    } else {
-        if (typeof fzhReset === 'function') fzhReset();
-        if (typeof fzsReset === 'function') fzsReset();
-        renderHero(null);
-        renderMobileHome({ players: [], games: [] }, null, FZPool.get());
+        const dash = await dashData;
+        if (dash) {
+            // Les cartes joueur du calendrier lisent calTonight : on le pose AVANT
+            // renderMobileHome (qui redessine le calendrier une fois déplacé), pour
+            // que les stats en direct arrivent du premier coup.
+            calTonight = dash.tonight || { players: [], games: [] };
+            if (typeof renderDraftHome === 'function' && renderDraftHome(dash)) return;
+            if (typeof renderSeasonHome === 'function' && renderSeasonHome(dash)) return;
+            renderHero(dash.tonight);
+            renderLivePanel(dash.tonight, dash.movement, dash.activeName);
+            renderMobileHome(dash.tonight, dash.movement, dash.activeName);
+        } else {
+            if (typeof fzhReset === 'function') fzhReset();
+            if (typeof fzsReset === 'function') fzsReset();
+            renderHero(null);
+            renderMobileHome({ players: [], games: [] }, null, FZPool.get());
+        }
+    } finally {
+        // Même en cas d'erreur : un accueil masqué pour de bon serait pire
+        // qu'un accueil incomplet.
+        await fzdPolicesPretes();
+        fzdRevelerAccueil();
     }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
     fzdDemarrerAujourdhui();
     if (!userData.username) userData.username = localStorage.getItem('username');
-    if (!userData.username) return;
+    if (!userData.username) { fzdRevelerAccueil(); return; }
 
+    // En parallèle des données : prêtes, en général, avant elles.
+    fzdChargerPolices();
     bindCalendarControls();
     bindOnboardCards();
     // La liste « À surveiller » est chargée ici, avec le reste : elle doit
     // être en main avant renderDash(), qui la rend du premier coup au
     // bureau comme au téléphone.
-    await Promise.all([FZPool.ready(), loadCurrentStats(), loadPendingTrades(), loadOffseasonWatchlist()]);
+    try {
+        await Promise.all([FZPool.ready(), loadCurrentStats(), loadPendingTrades(), loadOffseasonWatchlist()]);
+    } catch (erreur) {
+        // renderDash() ne passera pas : rien ne choisirait de disposition.
+        fzdRevelerAccueil();
+        throw erreur;
+    }
     renderDash();
     FZPool.onData(renderDash);
 });

@@ -7,12 +7,24 @@
     <script src="theme.js"></script>
     <!-- Quelle carte affiche le héros ? Décidé avant le premier rendu, comme
          le thème : sinon le visiteur verrait passer le classement d'un membre
-         avant que le script de page ne le remplace. -->
+         avant que le script de page ne le remplace.
+         Un membre part aussi en « fz-home-pending » : la disposition de son
+         accueil (repêchage, saison, tableau de bord) dépend de données
+         réseau, et tant qu'elle n'est pas choisie rien ne s'affiche — plutôt
+         que le tableau de bord par défaut une seconde. accueil-dash.js
+         retire la classe (fzdRevelerAccueil). -->
     <script>
         (function () {
             var connecte = localStorage.getItem('isLoggedIn') === 'true'
                 && !!localStorage.getItem('username');
             document.documentElement.classList.add(connecte ? 'fz-auth' : 'fz-anon');
+            if (connecte) {
+                document.documentElement.classList.add('fz-home-pending');
+                // Filet : un script en échec ne doit pas laisser l'accueil vide.
+                setTimeout(function () {
+                    document.documentElement.classList.remove('fz-home-pending');
+                }, 8000);
+            }
         })();
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -26,7 +38,7 @@
     <link rel="stylesheet" href="poolNav.css">
     <link rel="stylesheet" href="poolSettings.css">
     <link rel="stylesheet" href="index.css">
-    <link rel="stylesheet" href="accueil.css">
+    <link rel="stylesheet" href="accueil.css?v=20260919">
     <link rel="stylesheet" href="fzToday.css?v=20260919">
     <link rel="stylesheet" href="career-modal.css">
     <link rel="stylesheet" href="accueil-dash.css?v=20260916-palette">
@@ -520,7 +532,7 @@
     <script defer src="careerTotals.js"></script>
     <script defer src="accueil-carousel.js?v=20260915"></script>
     <script defer src="accueil-watch.js?v=20260915"></script>
-    <script defer src="accueil-dash.js?v=20260916-onboarding"></script>
+    <script defer src="accueil-dash.js?v=20260919-pending"></script>
     <script defer src="instantDraft.js?v=20260916-canvas3"></script>
     <script defer src="accueil-mobile.js?v=20260915"></script>
     <script defer src="accueil-season.js?v=20260915"></script>

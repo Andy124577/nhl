@@ -230,6 +230,17 @@ html.fz-auth .hero-section { display: none; }
 html.fz-auth #comment-ca-marche { display: none; }
 html.fz-auth #comment-ca-marche.fzo-revealed { display: block; }
 
+/* Accueil d'un membre, disposition pas encore choisie (voir index.html
+   <head> et fzdRevelerAccueil dans accueil-dash.js). Le repêchage et la
+   saison masquent chacun le tableau de bord par défaut et les histoires —
+   mais seulement une fois leurs données arrivées. Avant, on ne montre rien
+   de ce qui pourrait disparaître : la bande « À faire maintenant » reste,
+   elle est identique dans toutes les dispositions. La hauteur réservée
+   garde le pied de page hors de l'écran pendant l'attente. */
+html.fz-home-pending #storiesSection,
+html.fz-home-pending #fzDashSection .fz-dash > :not(#fzTodayDash) { display: none !important; }
+html.fz-home-pending #fzDashSection { min-height: 100vh; }
+
 /* ============================================================ */
 /* ALERTS STRIP                                                  */
 /* ============================================================ */
