@@ -136,10 +136,16 @@
         // ne dit pas dans quelle partie, et suivre le lien ouvrirait le
         // mauvais contexte.
         const pool = element.pool
-            ? `<span class="fzt-pool">${echapper(element.pool)}</span>` : '';
+            ? `<span class="fzt-pool"><span class="fzt-pool-label">Pool</span><span class="fzt-pool-nom">${echapper(element.pool)}</span></span>` : '';
+
+        // La vedette porte un signal (le point de la bannière d'alerte) ; les
+        // lignes secondaires gardent leur icône, plus lisible en petit.
+        const marque = principal
+            ? '<span class="fzt-signal" aria-hidden="true"></span>'
+            : `<span class="fzt-icone" aria-hidden="true">${icone(element.urgence)}</span>`;
 
         const corps = `
-            <span class="fzt-icone" aria-hidden="true">${icone(element.urgence)}</span>
+            ${marque}
             <span class="fzt-texte">
                 <span class="fzt-titre">${echapper(element.titre)}</span>
                 ${element.detail ? `<span class="fzt-detail">${echapper(element.detail)}</span>` : ''}

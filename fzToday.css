@@ -4,16 +4,74 @@
  * téléphone : ce sont les mêmes données, et deux mises en page différentes
  * pour la même information ont déjà produit deux réponses différentes.
  *
- * Direction Broadcast Desk (DESIGN.md) : fond sombre, accent brique sur ce
- * qui attend une action, texte lisible avant tout. Rien ne clignote — une
- * page d'accueil qui bouge en permanence empêche de lire ce qu'elle dit.
+ * La vedette suit la maquette « Alert Banner » (Design UX improvements) : une
+ * seule rangée — signal, titre, détail, pool — puis un bouton. Direction
+ * Broadcast Desk (DESIGN.md) : fond sombre, accent brique sur ce qui attend
+ * une action. Seul le point d'un élément urgent pulse : un signal, pas la
+ * bande entière, et rien ne bouge en mouvement réduit.
  */
 
 .fzt {
+    /* Urgent : tour, repêchage, échange. */
+    --fzt-alert-bg: #1c100d;
+    --fzt-alert-bg-hover: #24140f;
+    --fzt-alert-border: #45211a;
+    --fzt-alert-border-hover: #5c2c22;
+    --fzt-alert-edge: #d94a2d;
+    --fzt-alert-signal: #ff7a5c;
+    --fzt-alert-ink: #fff;
+    --fzt-alert-text: #e3b3a6;
+    --fzt-alert-tag-bg: rgba(217, 74, 45, .14);
+    --fzt-alert-tag-ink: #ffb39f;
+    --fzt-alert-cta: #c8401f;
+    --fzt-alert-cta-hover: #e85c3e;
+    /* Calme : duel, résultat, information. Même forme, sans l'alarme. */
+    --fzt-calm-bg: #1e1e22;
+    --fzt-calm-border: #2e2e33;
+    --fzt-calm-border-hover: #3c3c43;
+    --fzt-calm-edge: #3c3c43;
+    --fzt-calm-signal: #a3a099;
+    --fzt-calm-ink: #f5f5f2;
+    --fzt-calm-text: #c9c6c0;
+    --fzt-calm-tag-bg: #26262b;
+    --fzt-calm-tag-ink: #c9c6c0;
+    --fzt-calm-cta: #26262b;
+    --fzt-calm-cta-hover: #2e2e33;
+    --fzt-calm-cta-ink: #f5f5f2;
+
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-width: 0;
     margin: 0 0 20px;
+    font-family: 'Barlow', system-ui, sans-serif;
+}
+
+html[data-theme="light"] .fzt {
+    --fzt-alert-bg: #fdf1ed;
+    --fzt-alert-bg-hover: #fbe7e0;
+    --fzt-alert-border: #f0cdc2;
+    --fzt-alert-border-hover: #e6b3a4;
+    --fzt-alert-edge: #d94a2d;
+    --fzt-alert-signal: #d94a2d;
+    --fzt-alert-ink: #16181a;
+    --fzt-alert-text: #8a3a26;
+    --fzt-alert-tag-bg: rgba(217, 74, 45, .1);
+    --fzt-alert-tag-ink: #a3371f;
+    --fzt-alert-cta: #c8401f;
+    --fzt-alert-cta-hover: #a8341a;
+    --fzt-calm-bg: #ffffff;
+    --fzt-calm-border: #e2dfd8;
+    --fzt-calm-border-hover: #cfcbc2;
+    --fzt-calm-edge: #cfcbc2;
+    --fzt-calm-signal: #8a877f;
+    --fzt-calm-ink: #16181a;
+    --fzt-calm-text: #4b4843;
+    --fzt-calm-tag-bg: #f0eee8;
+    --fzt-calm-tag-ink: #4b4843;
+    --fzt-calm-cta: #f0eee8;
+    --fzt-calm-cta-hover: #e2dfd8;
+    --fzt-calm-cta-ink: #16181a;
 }
 
 .fzt-item {
@@ -22,37 +80,37 @@
     gap: 12px;
     padding: 14px 16px;
     border-radius: 12px;
-    border: 1px solid var(--fz-border, rgba(255, 255, 255, .1));
-    background: var(--fz-surface, rgba(255, 255, 255, .04));
-    color: inherit;
+    border: 1px solid var(--fzt-calm-border);
+    background: var(--fzt-calm-bg);
+    color: var(--fzt-calm-ink);
     text-decoration: none;
     /* Une transition courte : assez pour ne pas sauter, trop brève pour
        attirer l'œil pendant qu'on lit autre chose. */
-    transition: border-color .15s ease, background-color .15s ease;
+    transition: border-color .2s ease, background-color .2s ease;
 }
 
 .fzt-item:hover,
-.fzt-item:focus-visible {
-    border-color: var(--fz-accent, #c8442f);
-    background: var(--fz-surface-hover, rgba(255, 255, 255, .07));
-}
+.fzt-item:focus-visible { border-color: var(--fzt-calm-border-hover); }
 
 /* Le focus reste visible : c'est la seule façon de suivre au clavier. */
 .fzt-item:focus-visible {
-    outline: 2px solid var(--fz-accent, #c8442f);
+    outline: 2px solid var(--fzt-alert-edge);
     outline-offset: 2px;
 }
 
-.fzt-item--vedette {
-    padding: 18px 20px;
-    border-width: 2px;
-    /* Assez de hauteur pour rester une cible confortable au doigt. */
-    min-height: 64px;
+/* Le filet gauche brique marque ce qui attend une action, vedette ou non. */
+.fzt-item--urgent {
+    border-color: var(--fzt-alert-border);
+    border-left: 3px solid var(--fzt-alert-edge);
+    background: var(--fzt-alert-bg);
+    color: var(--fzt-alert-ink);
 }
 
-.fzt-item--urgent {
-    border-color: var(--fz-accent, #c8442f);
-    background: var(--fz-accent-soft, rgba(200, 68, 47, .12));
+.fzt-item--urgent:hover,
+.fzt-item--urgent:focus-visible {
+    border-color: var(--fzt-alert-border-hover);
+    border-left-color: var(--fzt-alert-edge);
+    background: var(--fzt-alert-bg-hover);
 }
 
 /* Une section en panne se distingue d'une section vide : elle est atténuée,
@@ -77,37 +135,152 @@
 }
 
 .fzt-titre {
-    font-weight: 650;
+    font-weight: 700;
     font-size: 15px;
     line-height: 1.3;
 }
 
-.fzt-item--vedette .fzt-titre { font-size: 17px; }
-
 .fzt-detail {
     font-size: 13px;
-    opacity: .78;
     line-height: 1.35;
+    color: var(--fzt-calm-text);
 }
+
+.fzt-item--urgent .fzt-detail { color: var(--fzt-alert-text); }
 
 /* Le pool est nommé sur chaque ligne : « c'est votre tour » sans dire dans
    quelle partie oblige à deviner, et suivre le lien ouvrirait le mauvais
-   contexte. */
+   contexte. Une étiquette plutôt qu'une note de bas de ligne : c'est le
+   premier repère quand on joue dans plusieurs pools. */
 .fzt-pool {
-    font-size: 11px;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    align-self: flex-start;
+    max-width: 100%;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--fzt-calm-tag-bg);
+    color: var(--fzt-calm-tag-ink);
+    font: 700 13px/1.3 'Barlow Condensed', sans-serif;
+    letter-spacing: .08em;
     text-transform: uppercase;
-    letter-spacing: .06em;
-    opacity: .6;
-    margin-top: 2px;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.fzt-pool-label {
+    font-weight: 600;
+    opacity: .7;
+}
+
+/* Un nom de pool trop long se coupe proprement plutôt qu'au milieu d'un mot. */
+.fzt-pool-nom {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fzt-item--urgent .fzt-pool {
+    background: var(--fzt-alert-tag-bg);
+    color: var(--fzt-alert-tag-ink);
 }
 
 .fzt-action {
     font-size: 13px;
     font-weight: 600;
     white-space: nowrap;
-    opacity: .85;
     flex-shrink: 0;
 }
+
+/* ─────────────── Vedette : la bannière d'alerte ─────────────── */
+
+.fzt-item--vedette {
+    gap: 16px;
+    padding: 14px 18px;
+    flex-wrap: wrap;
+    border-left: 3px solid var(--fzt-calm-edge);
+    /* Assez de hauteur pour rester une cible confortable au doigt. */
+    min-height: 44px;
+}
+
+.fzt-item--vedette.fzt-item--urgent { border-left-color: var(--fzt-alert-edge); }
+
+/* Titre, détail et pool sur une même ligne de base : la maquette se lit
+   d'un seul regard, comme un bandeau de télé. */
+.fzt-item--vedette .fzt-texte {
+    flex: 1 1 320px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 10px;
+    row-gap: 4px;
+}
+
+.fzt-item--vedette .fzt-titre { font-size: 16px; line-height: 1.35; }
+.fzt-item--vedette .fzt-detail { font-size: 16px; }
+.fzt-item--vedette .fzt-pool { align-self: auto; }
+
+/* Le signal : un point, et son anneau qui s'étend quand c'est urgent. */
+.fzt-signal {
+    position: relative;
+    flex: none;
+    width: 8px;
+    height: 8px;
+}
+
+.fzt-signal::before,
+.fzt-signal::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--fzt-calm-signal);
+}
+
+.fzt-signal::after { opacity: 0; }
+
+.fzt-item--urgent .fzt-signal::before,
+.fzt-item--urgent .fzt-signal::after { background: var(--fzt-alert-signal); }
+
+.fzt-item--urgent .fzt-signal::before { animation: fzt-pulse-dot 1.8s ease-in-out infinite; }
+.fzt-item--urgent .fzt-signal::after { animation: fzt-pulse-ring 1.8s ease-out infinite; }
+
+@keyframes fzt-pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .45; transform: scale(.82); }
+}
+
+@keyframes fzt-pulse-ring {
+    0% { opacity: .55; transform: scale(1); }
+    100% { opacity: 0; transform: scale(2.4); }
+}
+
+/* Le bouton est un span : toute la bannière est déjà le lien, donc la cible
+   est large, et on n'imbrique pas un lien dans un lien. */
+.fzt-item--vedette .fzt-action {
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: var(--fzt-calm-cta);
+    color: var(--fzt-calm-cta-ink);
+    font: 700 17px/1.1 'Barlow Condensed', sans-serif;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    transition: background-color .2s ease;
+}
+
+.fzt-item--vedette:hover .fzt-action,
+.fzt-item--vedette:focus-visible .fzt-action { background: var(--fzt-calm-cta-hover); }
+
+.fzt-item--vedette.fzt-item--urgent .fzt-action {
+    background: var(--fzt-alert-cta);
+    color: #fff;
+}
+
+.fzt-item--vedette.fzt-item--urgent:hover .fzt-action,
+.fzt-item--vedette.fzt-item--urgent:focus-visible .fzt-action { background: var(--fzt-alert-cta-hover); }
+
+/* ─────────────── Piste secondaire ─────────────── */
 
 .fzt-secondaires {
     display: flex;
@@ -121,8 +294,29 @@
     gap: 6px;
 }
 
-.fzt-secondaires .fzt-item { padding: 10px 14px; }
+.fzt-secondaires .fzt-item {
+    box-sizing: border-box;
+    flex: 0 0 310px;
+    max-width: 100%;
+    height: 76px;
+    padding: 10px 14px;
+    flex-wrap: nowrap;
+    scroll-snap-align: start;
+}
+
 .fzt-secondaires .fzt-titre { font-size: 14px; font-weight: 600; }
+.fzt-secondaires .fzt-action { display: none; }
+
+.fzt-secondaires .fzt-titre,
+.fzt-secondaires .fzt-detail {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fzt-secondaires .fzt-pool { font-size: 11px; padding: 1px 6px; }
+
+/* ─────────────── Aucune action en attente ─────────────── */
 
 .fzt-vide {
     display: flex;
@@ -162,30 +356,31 @@
 .fzt-vide-action:focus-visible { border-color: var(--fz-accent, #c8442f); }
 .fzt-vide-action:focus-visible { outline: 2px solid var(--fz-accent, #c8442f); outline-offset: 2px; }
 
-/* Écrans étroits : l'action passe sous le texte plutôt que de le comprimer.
-   Testé à 320, 360, 390 et 430 pixels CSS. */
+/* Écrans étroits : le bouton passe sous le texte, sur toute la largeur, plutôt
+   que de le comprimer. Testé à 320, 360, 390 et 430 pixels CSS. */
 @media (max-width: 480px) {
-    .fzt-item {
-        flex-wrap: wrap;
-        /* 44 px de haut minimum, même quand le texte tient sur une ligne. */
+    .fzt-item--vedette { padding: 14px 16px; }
+    .fzt-item--vedette .fzt-texte { flex-basis: 0; }
+    /* Le texte passe sur plusieurs lignes : le point s'aligne sur le titre,
+       pas sur le milieu du bloc. (15 px × 1,35 − 8 px) ÷ 2 ≈ 6 px. */
+    .fzt-item--vedette .fzt-signal { align-self: flex-start; margin-top: 6px; }
+    .fzt-item--vedette .fzt-titre,
+    .fzt-item--vedette .fzt-detail { font-size: 15px; }
+    .fzt-item--vedette .fzt-action {
+        flex: 1 1 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* 44 px de haut : une cible confortable au pouce. */
         min-height: 44px;
+        box-sizing: border-box;
     }
-    .fzt-action {
-        width: 100%;
-        padding-left: 32px;
-        margin-top: 2px;
-    }
-    .fzt-item--vedette { padding: 16px; }
-    .fzt-item--vedette .fzt-titre { font-size: 16px; }
 }
 
-/* Mouvement réduit : rien ne bouge du tout. */
+/* Mouvement réduit : rien ne bouge du tout. Le point reste plein. */
 @media (prefers-reduced-motion: reduce) {
-    .fzt-item { transition: none; }
+    .fzt-item,
+    .fzt-item--vedette .fzt-action { transition: none; }
+    .fzt-signal::before,
+    .fzt-signal::after { animation: none !important; }
 }
-
-.fzt { min-width:0; min-height:204px; }
-.fzt-secondaires .fzt-item { box-sizing:border-box; flex:0 0 310px; max-width:100%; height:76px; flex-wrap:nowrap; scroll-snap-align:start; }
-.fzt-secondaires .fzt-action { display:none; }
-.fzt-secondaires .fzt-titre, .fzt-secondaires .fzt-detail, .fzt-secondaires .fzt-pool { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.fzt-item--vedette { box-sizing:border-box; height:112px; overflow-y:auto; }
