@@ -1118,3 +1118,161 @@ describe('accueil — les buteurs sous chaque match', () => {
         assert.ok(!html.includes('"><b>'), 'l’abréviation doit être échappée');
     });
 });
+
+// ── accueil ─ l'horloge des matchs en cours ─────────────────────────
+
+describe('accueil — le direct sous chaque match', () => {
+    const { escapeHTML } = chargerFonctions('accueil.js', ['escapeHTML']);
+
+    // Ce que l'horaire donne : aucune horloge, jamais — vérifié sur
+    // /v1/schedule un soir de match en cours. C'est la feuille du jour qui
+    // les porte, et elle arrive par /day-goals.
+    const HORAIRE = {
+        id: 2026010009, state: 'PRE', period: null, periodType: null, clock: null,
+        away: { abbrev: 'SJS', score: null }, home: { abbrev: 'ANA', score: null }
+    };
+    const EN_DIRECT = {
+        state: 'LIVE', period: 1, periodType: 'REG',
+        clock: { timeRemaining: '08:23', secondsRemaining: 503, running: true, inIntermission: false },
+        away: 1, home: 2
+    };
+
+    /** Les aides du direct, avec une feuille du jour déjà en main. */
+    function rendu(live = { 2026010009: EN_DIRECT }) {
+        return chargerFonctions(
+            'accueil-dash.js',
+            ['ETAT_RANG', 'rangEtat', 'etatDirect', 'horlogeMMSS', 'horlogeHTML', 'periodLabel'],
+            { escapeHTML, calGoals: { date: '2026-09-20', games: {}, live, at: 0 } }
+        );
+    }
+
+    test('la feuille du jour fait avancer un match que l’horaire croit à venir', () => {
+        // calData est figé pour la session : sans cette fusion, une carte
+        // ouverte avant la mise au jeu restait « PRE », sans marque, jusqu'au
+        // prochain rechargement de la page.
+        const { etatDirect } = rendu();
+        const vu = etatDirect(HORAIRE);
+
+        assert.equal(vu.state, 'LIVE');
+        assert.equal(vu.period, 1);
+        assert.equal(vu.away.score, 1);
+        assert.equal(vu.home.score, 2);
+        assert.equal(vu.clock.secondsRemaining, 503);
+    });
+
+    test('elle ne le fait jamais RECULER', () => {
+        // Les deux flux de la LNH ne tombent pas en panne ensemble : on a vu
+        // la feuille du jour resservir « à venir » des heures sur un match que
+        // l'horaire donnait final. Une carte terminée ne doit pas repartir en
+        // première période.
+        const { etatDirect } = rendu({ 2026010009: { ...EN_DIRECT, state: 'FUT', clock: null, away: null, home: null } });
+        const fini = { ...HORAIRE, state: 'FINAL', period: 3, periodType: 'REG',
+            away: { abbrev: 'SJS', score: 3 }, home: { abbrev: 'ANA', score: 2 } };
+
+        const vu = etatDirect(fini);
+        assert.equal(vu.state, 'FINAL');
+        assert.equal(vu.period, 3);
+        assert.equal(vu.away.score, 3);
+    });
+
+    test('un match absent de la feuille garde ce que dit l’horaire', () => {
+        const { etatDirect } = rendu({});
+        assert.deepEqual(etatDirect(HORAIRE), HORAIRE);
+    });
+
+    test('l’en-tête porte la période ET le chronomètre', () => {
+        const { etatDirect, horlogeHTML } = rendu();
+        const html = horlogeHTML(etatDirect(HORAIRE));
+
+        assert.match(html, /1<sup>re<\/sup> ·/);
+        assert.match(html, /class="fzd-game-clock"/);
+        assert.match(html, />08:23</);
+    });
+
+    test('le chronomètre porte de quoi se recalculer tout seul', () => {
+        // Décompter à l'aveugle prendrait du retard dans un onglet ralenti :
+        // on garde les secondes de la LNH et l'instant où on les a reçues,
+        // et chaque battement refait la soustraction.
+        const { etatDirect, horlogeHTML } = rendu();
+        const html = horlogeHTML(etatDirect(HORAIRE));
+
+        assert.match(html, /data-fzd-clock="503"/);
+        assert.match(html, /data-fzd-run="1"/);
+        const pose = Number(html.match(/data-fzd-at="(\d+)"/)[1]);
+        assert.ok(Math.abs(Date.now() - pose) < 5000, 'l’instant de pose doit être celui du rendu');
+    });
+
+    test('une horloge arrêtée ne bat pas', () => {
+        // Sifflet, fin de période : le temps affiché est le bon, il ne doit
+        // simplement plus descendre.
+        const { horlogeHTML } = rendu();
+        const arret = { ...EN_DIRECT, clock: { ...EN_DIRECT.clock, running: false } };
+
+        assert.match(horlogeHTML(arret), /data-fzd-run="0"/);
+        assert.match(horlogeHTML(arret), />08:23</);
+    });
+
+    test('l’entracte dit la période qui vient de finir', () => {
+        // « 3e · 20:00 » ferait croire que la période a commencé. Le décompte
+        // de l'entracte dit quand elle commencera.
+        const { horlogeHTML } = rendu();
+        const pause = { ...EN_DIRECT, period: 2,
+            clock: { timeRemaining: '15:00', secondsRemaining: 900, running: true, inIntermission: true } };
+
+        assert.match(horlogeHTML(pause), /^Fin 2<sup>e<\/sup> ·/);
+        assert.match(horlogeHTML(pause), />15:00</);
+    });
+
+    test('sans horloge du tout, la période reste seule', () => {
+        // Un vieux match, une feuille du jour en panne : la carte revient à ce
+        // qu'elle affichait avant, pas à un chronomètre vide.
+        const { horlogeHTML } = rendu();
+        const html = horlogeHTML({ ...EN_DIRECT, clock: null });
+
+        assert.equal(html, '1<sup>re</sup>');
+        assert.ok(!html.includes('fzd-game-clock'));
+    });
+
+    test('les minutes tiennent sur deux chiffres', () => {
+        // 10:00 → 09:59 ne doit pas rétrécir d'un caractère : tout l'en-tête
+        // se décalerait à chaque tour de minute.
+        const { horlogeMMSS } = rendu();
+
+        assert.equal(horlogeMMSS(600), '10:00');
+        assert.equal(horlogeMMSS(599), '09:59');
+        assert.equal(horlogeMMSS(503), '08:23');
+        assert.equal(horlogeMMSS(0), '00:00');
+        assert.equal(horlogeMMSS(-5), '00:00', 'jamais de temps négatif');
+    });
+
+    test('le battement recalcule depuis l’instant de pose', () => {
+        const pose = Date.now() - 7000;
+        const pendules = [
+            { textContent: '08:23', dataset: { fzdClock: '503', fzdAt: String(pose), fzdRun: '1' } },
+            { textContent: '00:03', dataset: { fzdClock: '3', fzdAt: String(pose), fzdRun: '1' } }
+        ];
+        const { fzdTickHorloges } = chargerFonctions('accueil-dash.js',
+            ['fzdTickHorloges', 'fzdArreterHorloges', 'horlogeMMSS'],
+            { fzdHorlogeTimer: 1, document: { querySelectorAll: () => pendules.filter(p => p.dataset.fzdRun === '1') },
+              clearInterval: () => {} });
+
+        fzdTickHorloges();
+
+        // Sept secondes passées, sept secondes de moins — pas un battement
+        // manqué, même si le navigateur en a sauté.
+        assert.equal(pendules[0].textContent, '08:16');
+        // Arrivée à zéro, l'horloge s'arrête d'elle-même.
+        assert.equal(pendules[1].textContent, '00:00');
+        assert.equal(pendules[1].dataset.fzdRun, '0');
+    });
+
+    test('plus une seule horloge à l’écran, plus de battement', () => {
+        let arrets = 0;
+        const { fzdTickHorloges } = chargerFonctions('accueil-dash.js',
+            ['fzdTickHorloges', 'fzdArreterHorloges', 'horlogeMMSS'],
+            { fzdHorlogeTimer: 1, document: { querySelectorAll: () => [] }, clearInterval: () => { arrets++; } });
+
+        fzdTickHorloges();
+        assert.equal(arrets, 1, 'le minuteur doit se couper tout seul');
+    });
+});

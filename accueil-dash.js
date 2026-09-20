@@ -176,7 +176,12 @@ let calTonight = { players: [], games: [] };
 // Buts de la journée AFFICHÉE (GET /day-goals/:date), indexés par identifiant
 // de match. Chargés à part du calendrier : une semaine de feuilles de
 // pointage ne sert à rien quand une seule journée est à l'écran.
-let calGoals = { date: null, games: {}, at: 0 };
+//
+// `live` vient de la même requête : état, période, horloge et pointage de
+// chaque match commencé. L'horaire n'a pas d'horloge du tout (voir
+// /day-goals côté serveur) et il ne se recharge pas de la session ; c'est
+// donc lui qui fait battre les cartes tant qu'un match joue.
+let calGoals = { date: null, games: {}, live: {}, at: 0 };
 let calGoalsEnCours = null;
 const CAL_GOALS_FRAIS_MS = 30 * 1000;
 // abbrev → { name, record }, construit une fois depuis /current-teams.
@@ -267,6 +272,13 @@ function chargerButsDuJour(date, games) {
     if (aJour || calGoalsEnCours === date) return;
 
     calGoalsEnCours = date;
+    // L'ÂGE DE LA FEUILLE SE COMPTE DEPUIS LA DEMANDE, pas depuis la réponse.
+    // C'est plus honnête — ce qui revient est au moins aussi vieux que ça —
+    // et surtout : le battement du direct rappelle toutes les 30 s, la même
+    // durée que la fenêtre de fraîcheur. Datée du retour, la feuille aurait
+    // toujours paru fraîche d'un aller-retour réseau au moment du rappel, et
+    // le suivi serait passé de trente secondes à une minute.
+    const parti = Date.now();
     // Le marqueur ne se libère que s’il est encore le nôtre : une requête
     // partie pour une autre journée a pu le reprendre entre-temps.
     const liberer = () => { if (calGoalsEnCours === date) calGoalsEnCours = null; };
@@ -275,7 +287,7 @@ function chargerButsDuJour(date, games) {
         // L'utilisateur a pu changer de journée pendant la requête : poser
         // ces buts-là les afficherait sous les matchs d'une autre date.
         if (calSelectedDate !== date) return;
-        calGoals = { date, games: data.games || {}, at: Date.now() };
+        calGoals = { date, games: data.games || {}, live: data.live || {}, at: parti };
         // renderDayGames() ramène la piste des matchs à zéro. Ici le lecteur
         // n'a rien demandé — les buts arrivent d'eux-mêmes — et voir les
         // cartes revenir au premier match serait une main sur l'épaule.
@@ -289,17 +301,63 @@ function chargerButsDuJour(date, games) {
 async function fetchDayGoals(date) {
     try {
         const res = await fetch(`${BASE_URL}/day-goals/${date}`, { cache: 'no-store' });
-        if (!res.ok) return { date, games: {} };
+        if (!res.ok) return { date, games: {}, live: {} };
         return await res.json();
     } catch (err) {
         console.warn('Could not load day goals:', err);
-        return { date, games: {} };
+        return { date, games: {}, live: {} };
     }
+}
+
+// ============================================================
+// PRÉCHARGEMENT — les requêtes de l'accueil qui n'attendent pas le pool.
+//
+// L'ouverture se faisait en DEUX VAGUES l'une après l'autre : d'abord le
+// pool, les stats, les échanges et la trousse ; ensuite seulement l'horaire,
+// les fiches de clubs et les feuilles du soir. Or aucune des trois dernières
+// ne lit quoi que ce soit du pool — elles attendaient pour rien. Sur un
+// téléphone en 4G vers Render, cet aller-retour de trop se voit.
+//
+// Elles partent donc avec la première vague, et ceux qui les consomment
+// prennent la promesse déjà en vol. UNE SEULE FOIS : `renderDash()` repasse
+// à chaque rafraîchissement de FZPool, et resservir éternellement la réponse
+// de l'ouverture y figerait les feuilles du soir. Une fois consommée, la
+// promesse est retirée et l'appel suivant repart sur le réseau, comme avant.
+// ============================================================
+let fzdPrecharge = null;
+
+function fzdPrecharger() {
+    if (fzdPrecharge) return fzdPrecharge;
+    fzdPrecharge = {
+        jour: todayISO(),
+        horaire: fetchSchedule(todayISO()),
+        equipes: loadNhlTeams(),
+        tonight: fetchTonightBoxscores()
+    };
+    return fzdPrecharge;
+}
+
+/**
+ * La promesse préchargée, ou rien si elle a déjà servi.
+ *
+ * `jour` garde la journée du pool au moment du départ : une page laissée
+ * ouverte jusqu'après minuit à l'Est reprendrait sinon l'horaire de la
+ * veille pour celui d'aujourd'hui.
+ */
+function fzdPrise(cle) {
+    if (!fzdPrecharge) return null;
+    if (cle !== 'equipes' && fzdPrecharge.jour !== todayISO()) return null;
+    const promesse = fzdPrecharge[cle];
+    fzdPrecharge[cle] = null;
+    return promesse || null;
 }
 
 async function initCalendar() {
     const today = todayISO();
-    const [schedule] = await Promise.all([fetchSchedule(today), loadNhlTeams()]);
+    const [schedule] = await Promise.all([
+        fzdPrise('horaire') || fetchSchedule(today),
+        fzdPrise('equipes') || loadNhlTeams()
+    ]);
     calData = schedule;
     calSelectedDate = calData.days.find(d => d.date === today) ? today : (calData.days[0]?.date || today);
     renderCalendar();
@@ -337,7 +395,10 @@ function renderDayStrip() {
         const isToday = d.date === today;
         const isSelected = d.date === calSelectedDate;
         const games = d.games || [];
-        const live = games.filter(g => g.state === 'LIVE' || g.state === 'CRIT').length;
+        const live = games.filter(g => {
+            const e = d.date === calGoals.date ? etatDirect(g).state : g.state;
+            return e === 'LIVE' || e === 'CRIT';
+        }).length;
         // Le mot est dans un <span> à part : au téléphone la case ne fait
         // qu'un septième d'écran, la CSS n'y garde que le chiffre.
         const countLabel = `${games.length} match${games.length > 1 ? 's' : ''}${live ? `, dont ${live} en direct` : ''}`;
@@ -406,6 +467,8 @@ function renderDayGames() {
     renderCalGameDots();
     bindPlayerTracks(wrap);
     bindGoalTracks(wrap);
+    fzdMajHorloges();
+    reglerSuiviDirect();
 }
 
 /** Largeur d'un « saut » de carrousel : une carte + le gap de la piste. */
@@ -442,7 +505,176 @@ function renderCalGameDots() {
     updateCalGameDots();
 }
 
-function gameCardHTML(game, rosterCounts) {
+// ============================================================
+// LE DIRECT — horloge, période et pointage d'un match qui joue.
+//
+// `calData` est figé pour la session : l'horaire est demandé une fois au
+// démarrage, et rien ne le redemande. Une carte « En direct » gardait donc
+// la marque et la période du moment où la page s'est ouverte, sans horloge
+// — l'horaire de la LNH n'en publie aucune. /day-goals, lui, lit la feuille
+// du jour, qui porte les quatre. C'est cette feuille qui fait vivre les
+// cartes, et le battement ci-dessous qui la redemande.
+// ============================================================
+const ETAT_RANG = { FUT: 0, PRE: 0, LIVE: 1, CRIT: 1, FINAL: 2, OFF: 2 };
+const CAL_DIRECT_MS = 30 * 1000;
+let calDirectTimer = null;
+let fzdHorlogeTimer = null;
+
+/** Rang d'un état de match : à venir, en cours, terminé. */
+function rangEtat(state) {
+    return ETAT_RANG[state] ?? 0;
+}
+
+/**
+ * Le match tel qu'il est MAINTENANT : l'horaire, corrigé par la feuille du jour.
+ *
+ * La feuille ne sert qu'à FAIRE AVANCER un match, jamais à le faire reculer.
+ * Les deux flux de la LNH ne tombent pas en panne ensemble — on a vu la
+ * feuille du jour resservir « à venir » pendant des heures sur un match que
+ * l'horaire donnait final. Comparer les rangs avant de recopier coûte une
+ * ligne et évite qu'une carte terminée reparte en première période.
+ */
+function etatDirect(game) {
+    const direct = calGoals.live && calGoals.live[game.id];
+    if (!direct || rangEtat(direct.state) < rangEtat(game.state)) return game;
+
+    return {
+        ...game,
+        state: direct.state,
+        period: direct.period ?? game.period,
+        periodType: direct.periodType || game.periodType,
+        clock: direct.clock || game.clock,
+        away: { ...game.away, score: direct.away ?? game.away.score },
+        home: { ...game.home, score: direct.home ?? game.home.score }
+    };
+}
+
+/**
+ * « 08:23 » à partir d'un nombre de secondes.
+ *
+ * Minutes sur deux chiffres, comme la LNH les écrit — et surtout : la
+ * largeur ne change plus au passage de 10:00 à 09:59. Un chronomètre qui
+ * rétrécit d'un caractère en pleine descente décale tout l'en-tête.
+ */
+function horlogeMMSS(secondes) {
+    const s = Math.max(0, Math.floor(secondes));
+    return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+}
+
+/**
+ * La ligne de droite de l'en-tête d'un match en cours : « 2e · 12:34 ».
+ *
+ * Le chiffre vit dans son propre <span> : le battement ne réécrit que lui,
+ * jamais la période autour. `data-fzd-clock` garde les secondes telles que
+ * la LNH les a données et `data-fzd-at` l'instant où on les a reçues — le
+ * temps restant se RECALCULE à chaque battement au lieu de se décrémenter.
+ * Un onglet en arrière-plan, que le navigateur ralentit à un battement par
+ * minute, revient ainsi à la bonne seconde au lieu d'avoir pris du retard.
+ *
+ * Pendant l'entracte, l'horloge de la LNH compte l'attente avant la reprise.
+ * « Fin 2e » dit alors la période qui vient de finir, et le décompte, ce
+ * qu'on attend — deux informations qu'un simple « 3e · 20:00 » perdrait.
+ */
+function horlogeHTML(game) {
+    const h = game.clock;
+    const periode = periodLabel(game.period, game.periodType);
+    if (!h) return periode;
+
+    const secondes = Number.isFinite(h.secondsRemaining) ? h.secondsRemaining : null;
+    const texte = secondes != null ? horlogeMMSS(secondes) : (h.timeRemaining || '');
+    if (!texte) return periode;
+
+    // Une horloge arrêtée — sifflet, fin de période — reste affichée telle
+    // quelle : c'est l'heure du match, pas une valeur périmée.
+    const avance = h.running && secondes != null ? '1' : '0';
+    const pendule = `<span class="fzd-game-clock" data-fzd-clock="${escapeHTML(String(secondes ?? ''))}"`
+        + ` data-fzd-at="${Date.now()}" data-fzd-run="${avance}">${escapeHTML(texte)}</span>`;
+
+    return h.inIntermission
+        ? `Fin ${periode} · ${pendule}`
+        : `${periode} · ${pendule}`;
+}
+
+/**
+ * Un battement par seconde, partagé par toutes les horloges à l'écran.
+ *
+ * Un minuteur par carte ferait quatorze réveils par seconde un soir chargé,
+ * et autant de fuites à chaque redessin du calendrier. Celui-ci s'arrête de
+ * lui-même dès qu'il ne reste plus une seule horloge qui avance.
+ */
+function fzdTickHorloges() {
+    const pendules = document.querySelectorAll('.fzd-game-clock[data-fzd-run="1"]');
+    if (!pendules.length) { fzdArreterHorloges(); return; }
+
+    pendules.forEach(el => {
+        const base = Number(el.dataset.fzdClock);
+        const pose = Number(el.dataset.fzdAt);
+        if (!Number.isFinite(base) || !Number.isFinite(pose)) return;
+
+        const restant = Math.max(0, base - Math.floor((Date.now() - pose) / 1000));
+        const texte = horlogeMMSS(restant);
+        if (el.textContent !== texte) el.textContent = texte;
+        // À zéro, la sirène a sonné : plus rien à décompter tant que la
+        // prochaine feuille n'a pas dit ce qui suit.
+        if (!restant) el.dataset.fzdRun = '0';
+    });
+}
+
+function fzdArreterHorloges() {
+    if (!fzdHorlogeTimer) return;
+    clearInterval(fzdHorlogeTimer);
+    fzdHorlogeTimer = null;
+}
+
+/** Démarre ou arrête le battement selon ce qui est réellement à l'écran. */
+function fzdMajHorloges() {
+    const besoin = !!document.querySelector('.fzd-game-clock[data-fzd-run="1"]');
+    if (besoin && !fzdHorlogeTimer) fzdHorlogeTimer = setInterval(fzdTickHorloges, 1000);
+    else if (!besoin) fzdArreterHorloges();
+}
+
+/**
+ * Le suivi d'une journée qui joue : une feuille fraîche toutes les 30 s.
+ *
+ * L'horloge locale avance seule entre deux feuilles, mais elle ne sait rien
+ * d'un but, d'un arrêt de jeu ou d'une fin de période — d'où le rappel. Il ne
+ * part que si un match est VRAIMENT en cours, état fusionné en main : sans
+ * ça, un horaire figé sur « LIVE » aurait sondé la LNH jusqu'au lendemain.
+ * Onglet caché, on ne demande rien ; en revenant, on demande tout de suite,
+ * parce que la carte affiche alors une horloge vieille de tout le détour.
+ */
+function reglerSuiviDirect() {
+    const jour = calData && calData.days.find(d => d.date === calSelectedDate);
+    const parties = (jour && jour.games) || [];
+    const enDirect = parties.some(g => {
+        const e = etatDirect(g).state;
+        return e === 'LIVE' || e === 'CRIT';
+    });
+
+    if (!enDirect) {
+        if (calDirectTimer) { clearInterval(calDirectTimer); calDirectTimer = null; }
+        return;
+    }
+    if (calDirectTimer) return;
+
+    calDirectTimer = setInterval(() => {
+        if (document.hidden) return;
+        const j = calData && calData.days.find(d => d.date === calSelectedDate);
+        chargerButsDuJour(calSelectedDate, (j && j.games) || []);
+    }, CAL_DIRECT_MS);
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden || !calData || !calSelectedDate) return;
+    const jour = calData.days.find(d => d.date === calSelectedDate);
+    if (jour) chargerButsDuJour(calSelectedDate, jour.games || []);
+});
+
+function gameCardHTML(gameHoraire, rosterCounts) {
+    // Une seule fusion en haut de la carte : le badge, le pointage, l'ordre
+    // des buteurs et le compte de vos joueurs doivent tous raconter la même
+    // minute du match.
+    const game = etatDirect(gameHoraire);
     const isFinal = game.state === 'FINAL' || game.state === 'OFF';
     const isLive = game.state === 'LIVE' || game.state === 'CRIT';
     const isScheduled = !isFinal && !isLive;
@@ -451,7 +683,7 @@ function gameCardHTML(game, rosterCounts) {
     let badge, when = '';
     if (isLive) {
         badge = `<span class="fzd-game-badge is-live"><i class="fzd-live-dot"></i>En direct</span>`;
-        when = `${periodLabel(game.period, game.periodType)} · ${escapeHTML(game.clock?.timeRemaining || '')}`;
+        when = horlogeHTML(game);
     } else if (isFinal) {
         badge = `<span class="fzd-game-badge is-final">Final</span>`;
     } else {
@@ -992,7 +1224,10 @@ async function loadDashData() {
     const team = FZPool.team();
     const activeName = FZPool.get();
     if (!team || !activeName) return null;
-    const [tonight, movement] = await Promise.all([fetchTonightBoxscores(), fetchRankMovement(activeName)]);
+    const [tonight, movement] = await Promise.all([
+        fzdPrise('tonight') || fetchTonightBoxscores(),
+        fetchRankMovement(activeName)
+    ]);
     return { tonight, movement, activeName };
 }
 
@@ -2499,6 +2734,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // En parallèle des données : prêtes, en général, avant elles.
     fzdChargerPolices();
+    // Horaire, fiches de clubs et feuilles du soir : aucune n'attend le pool.
+    // Elles partent donc maintenant, avec lui, au lieu d'après lui.
+    fzdPrecharger();
     bindCalendarControls();
     bindOnboardCards();
     // La liste « À surveiller » est chargée ici, avec le reste : elle doit

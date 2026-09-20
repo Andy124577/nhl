@@ -9,6 +9,7 @@ const bcrypt = require("bcryptjs");
 const fs = require("fs");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const compression = require("compression");
 const path = require("path"); // ✅ for static paths
 const cron = require("node-cron");
 const db = require("./db"); // ✅ PostgreSQL database module
@@ -111,6 +112,21 @@ const io = socketIo(server, {
         credentials: true
     }
 });
+
+// ✅ Gzip — AVANT tout ce qui écrit une réponse, sinon il n'a plus rien à
+// comprimer.
+//
+// Rien ne l'était. L'accueil tirait 885 Ko de JS et de CSS en 49 requêtes,
+// plus 211 Ko de /current-stats : du texte, qui se comprime à un dixième.
+// Mesuré ici : 885 → 254 Ko pour les fichiers, 211 → 22 Ko pour les stats.
+// Presque 800 Ko de moins par ouverture, et c'est la première ouverture —
+// celle qui n'a rien en cache — qui en profite le plus.
+//
+// Le seuil par défaut (1 Ko) laisse passer les petites réponses en clair :
+// sous cette taille, l'en-tête gzip coûte plus qu'il ne rend. Socket.io
+// n'est pas concerné, il se branche sur le serveur HTTP sans passer par les
+// intergiciels d'Express.
+app.use(compression());
 
 app.use(cors({
     origin: ORIGINES_AUTORISEES.length > 0 ? ORIGINES_AUTORISEES : true,
@@ -1927,7 +1943,7 @@ app.get('/day-goals/:date', async (req, res) => {
         return res.status(400).json({ message: 'Invalid date, expected YYYY-MM-DD' });
     }
 
-    const vide = { date, games: {} };
+    const vide = { date, games: {}, live: {} };
     try {
         // « Chaud » : un match en cours, ou simplement la journée du jour —
         // sinon la première lecture d'un soir où rien n'a encore commencé
@@ -1951,9 +1967,39 @@ app.get('/day-goals/:date', async (req, res) => {
         }
 
         const games = {};
+        const live = {};
         let enCours = false;
         for (const partie of brut?.games || []) {
             if (partie.gameState === 'LIVE' || partie.gameState === 'CRIT') enCours = true;
+
+            // L'ÉTAT DU MATCH, et pas seulement ses buts.
+            //
+            // `/v1/schedule` ne porte AUCUNE horloge — vérifié le 20 septembre
+            // 2026 sur un match en cours : ni `clock`, ni temps restant. La
+            // feuille du jour, elle, en a une complète. Le calendrier tenait
+            // donc son pointage d'un flux et ne pouvait pas afficher de
+            // chronomètre ; il lisait `game.clock` sur l'horaire, toujours
+            // indéfini. Tout ce que le client doit rafraîchir pendant qu'un
+            // match joue sort maintenant d'ici, d'une seule requête qu'il
+            // demande déjà toutes les trente secondes pour les buts.
+            live[partie.id] = {
+                state: partie.gameState,
+                period: partie.periodDescriptor?.number ?? partie.period ?? null,
+                periodType: partie.periodDescriptor?.periodType || 'REG',
+                // `secondsRemaining` est ce qui fait avancer l'horloge entre
+                // deux requêtes ; `running` dit si elle doit avancer du tout —
+                // un arrêt de jeu fige le temps, et une horloge qui descendrait
+                // quand même mentirait de plusieurs secondes à la reprise.
+                clock: partie.clock ? {
+                    timeRemaining: partie.clock.timeRemaining || '',
+                    secondsRemaining: partie.clock.secondsRemaining ?? null,
+                    running: !!partie.clock.running,
+                    inIntermission: !!partie.clock.inIntermission
+                } : null,
+                away: partie.awayTeam?.score ?? null,
+                home: partie.homeTeam?.score ?? null
+            };
+
             const buts = partie.goals || [];
             if (!buts.length) continue;
             games[partie.id] = buts.map(b => ({
@@ -2006,7 +2052,7 @@ app.get('/day-goals/:date', async (req, res) => {
             });
         }
 
-        const payload = { date, games };
+        const payload = { date, games, live };
         dayGoalsCache.set(date, {
             data: payload,
             fetchedAt: Date.now(),

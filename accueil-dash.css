@@ -583,6 +583,13 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+/* Le chronomètre d'un match en cours, réécrit chaque seconde (horlogeHTML).
+   Chiffres à chasse fixe : sans eux, « 1 » plus étroit qu'un « 8 » faisait
+   frémir la période à sa gauche à chaque battement. */
+.fzd-game-clock {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+}
 .fzd-live-dot {
     width: 5px; height: 5px;
     border-radius: 999px;
