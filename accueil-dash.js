@@ -238,8 +238,10 @@ async function fetchSchedule(date) {
  * Trois gardes empêchent la boucle — renderDayGames rappelle cette fonction :
  * la journée déjà en main ne se recharge pas, une requête en vol n'est pas
  * doublée, et une journée dont aucun match n'a commencé n'a rien à demander.
- * Seul un match EN COURS rouvre la porte, et pas plus d'une fois par demi-
- * minute : c'est le seul cas où la feuille peut encore changer.
+ * Deux cas rouvrent la porte, et pas plus d'une fois par demi-minute : un
+ * match EN COURS, dont la feuille grandit encore, et un match commencé dont
+ * la marque n'est pas 0-0 alors qu'on n'a aucun de ses buts — la LNH n'avait
+ * rien publié la dernière fois, ce n'est pas une réponse à garder.
  */
 function chargerButsDuJour(date, games) {
     const commences = games.some(g => ['LIVE', 'CRIT', 'FINAL', 'OFF'].includes(g.state));
@@ -249,8 +251,19 @@ function chargerButsDuJour(date, games) {
     }
 
     const enDirect = games.some(g => g.state === 'LIVE' || g.state === 'CRIT');
+    // Un match commencé, marqué, dont on n'a pas un seul buteur en main : la
+    // LNH n'a pas encore publié sa feuille. Sans ce troisième cas, la première
+    // réponse vide de la journée valait pour toute la session — aucun match en
+    // direct pour rouvrir la porte, et la carte gardait son pointage sans
+    // jamais retrouver ses buteurs. Un vrai 0-0 ne compte pas : il n'a rien à
+    // attendre.
+    const manquant = calGoals.date === date && games.some(g =>
+        ['LIVE', 'CRIT', 'FINAL', 'OFF'].includes(g.state)
+        && ((g.away?.score ?? 0) + (g.home?.score ?? 0)) > 0
+        && !((calGoals.games && calGoals.games[g.id]) || []).length);
+
     const aJour = calGoals.date === date
-        && (!enDirect || Date.now() - calGoals.at < CAL_GOALS_FRAIS_MS);
+        && (!(enDirect || manquant) || Date.now() - calGoals.at < CAL_GOALS_FRAIS_MS);
     if (aJour || calGoalsEnCours === date) return;
 
     calGoalsEnCours = date;
