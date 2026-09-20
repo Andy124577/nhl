@@ -28,8 +28,43 @@ const NHL_TEAM_SHORT = {
     VAN: 'Canucks', VGK: 'Golden Knights', WPG: 'Jets', WSH: 'Capitals'
 };
 
+/**
+ * La journée du pool, découpée sur l'Est — jamais sur UTC.
+ *
+ * `toISOString()` rend la journée UTC. À 20 h à Montréal, UTC est déjà au
+ * lendemain : le calendrier marquait « Auj » sur le 20 pendant que les matchs
+ * du 19 jouaient encore, et la bande des jours sautait une case chaque soir.
+ *
+ * Les journées de /schedule sont celles que la LNH attribue à ses matchs, et
+ * le serveur découpe les siennes sur « America/Toronto » (lib/dates.js). On
+ * lit l'heure dans ce fuseau-là pour que « aujourd'hui » désigne la même
+ * journée des deux côtés du réseau, quel que soit le fuseau du visiteur.
+ */
+const FZD_JOUR_POOL = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Toronto', year: 'numeric', month: '2-digit', day: '2-digit'
+});
+
+/** La journée du pool d'un instant, en « AAAA-MM-JJ ». */
+function poolDayISO(instant) {
+    const d = instant instanceof Date ? instant : new Date(instant);
+    return isNaN(d) ? null : FZD_JOUR_POOL.format(d);
+}
+
 function todayISO() {
-    return new Date().toISOString().slice(0, 10);
+    return FZD_JOUR_POOL.format(new Date());
+}
+
+/**
+ * Ajoute des jours de CALENDRIER à une journée « AAAA-MM-JJ ».
+ *
+ * L'arithmétique se fait en UTC sur une date sans heure : la veille reste la
+ * veille même quand la nuit a duré 23 ou 25 heures.
+ */
+function shiftISO(iso, days) {
+    const d = new Date(iso + 'T00:00:00Z');
+    if (isNaN(d)) return null;
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().slice(0, 10);
 }
 
 function dowLabel(dateISO) {
@@ -68,28 +103,29 @@ function relativeTimeFr(dateStr) {
 /**
  * Journée d'un mouvement ou d'un retour de blessure.
  *
- * Une chaîne « AAAA-MM-JJ » se parse en UTC, pas en heure locale : à
- * Montréal, minuit UTC tombe la veille à 20 h, et le 25 août s'affichait
- * donc « 24 août ». On reconstruit la date à la main pour ces chaînes-là.
- * Les horodatages complets (ESPN, avec heure et fuseau) gardent le
- * parsing normal, qui est correct pour eux.
+ * Tout se compare en journées « AAAA-MM-JJ », jamais en objets Date : une
+ * telle chaîne se parse en UTC, et à Montréal minuit UTC tombe la veille à
+ * 20 h — le 25 août s'affichait donc « 24 août ». L'ordre lexicographique
+ * de ces chaînes est l'ordre chronologique : ni fuseau ni arrondi ne peuvent
+ * s'y glisser.
+ *
+ * « Aujourd'hui » et « Hier » se lisent sur la journée du pool, la même que
+ * le calendrier : sinon un visiteur de Vancouver et un de Montréal dataient
+ * le même mouvement de deux jours différents.
+ *
+ * Un horodatage complet (ESPN, avec heure et fuseau) désigne un instant : on
+ * le ramène à la journée du pool où il tombe.
  */
 function dayLabelFr(iso) {
     if (!iso) return '';
-    const d = /^\d{4}-\d{2}-\d{2}$/.test(iso)
-        ? new Date(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10))
-        : new Date(iso);
-    if (isNaN(d)) return '';
+    const jour = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : poolDayISO(iso);
+    if (!jour) return '';
 
-    const sameDay = (a, b) => a.getFullYear() === b.getFullYear()
-        && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-    const today = new Date();
-    if (sameDay(d, today)) return 'Aujourd’hui';
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    if (sameDay(d, yesterday)) return 'Hier';
+    const today = todayISO();
+    if (jour === today) return 'Aujourd’hui';
+    if (jour === shiftISO(today, -1)) return 'Hier';
 
-    return d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+    return `${dayNum(jour)} ${FR_MONTH_SHORT[Number(jour.slice(5, 7)) - 1]}`;
 }
 
 function countdownLabel(startISO) {

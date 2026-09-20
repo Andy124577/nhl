@@ -741,3 +741,74 @@ describe("navbar — bascule d'administration", () => {
             'aucun gestionnaire ne doit être écrit en attribut');
     });
 });
+// ── accueil ─ la journée du pool ──────────────────────────────────
+
+describe('accueil — todayISO, la journée du pool', () => {
+    /**
+     * Un `Date` figé à un instant donné.
+     *
+     * `todayISO()` lit l'heure courante : sans instant fixe, le test ne
+     * pourrait pas interroger 20 h un soir de match. Les constructions avec
+     * arguments gardent leur sens, seul `new Date()` est détourné.
+     */
+    function dateFigee(instant) {
+        const Vrai = Date;
+        return class extends Vrai {
+            constructor(...args) { super(...(args.length ? args : [instant])); }
+            static now() { return new Vrai(instant).getTime(); }
+        };
+    }
+
+    const aides = instant => chargerFonctions(
+        'accueil-dash.js',
+        ['FR_MONTH_SHORT', 'FZD_JOUR_POOL', 'poolDayISO', 'todayISO', 'shiftISO', 'dayNum', 'dayLabelFr'],
+        { Date: dateFigee(instant) }
+    );
+
+    test('à 20 h un soir de match, la journée est encore celle des matchs en cours', () => {
+        // Le bogue d'origine : 20 h 30 à Montréal le 19, c'est déjà le 20 en
+        // UTC. La bande des jours marquait « Auj » sur le 20 pendant que les
+        // matchs du 19 jouaient, et /schedule était interrogé sur le mauvais
+        // jour.
+        assert.equal(aides('2026-09-20T00:30:00Z').todayISO(), '2026-09-19');
+    });
+
+    test('la journée ne tourne qu’à minuit à l’Est', () => {
+        assert.equal(aides('2026-09-20T03:59:00Z').todayISO(), '2026-09-19');
+        assert.equal(aides('2026-09-20T04:01:00Z').todayISO(), '2026-09-20');
+    });
+
+    test('en hiver aussi, où l’Est est à UTC-5', () => {
+        assert.equal(aides('2026-01-15T04:59:00Z').todayISO(), '2026-01-14');
+        assert.equal(aides('2026-01-15T05:01:00Z').todayISO(), '2026-01-15');
+    });
+
+    test('poolDayISO ramène un horodatage complet à sa journée de pool', () => {
+        const { poolDayISO } = aides('2026-09-20T00:30:00Z');
+
+        // Une mise au jeu à 22 h à Vancouver, c'est 1 h du matin à l'Est.
+        assert.equal(poolDayISO('2026-09-20T05:00:00Z'), '2026-09-20');
+        assert.equal(poolDayISO('2026-09-20T02:00:00Z'), '2026-09-19');
+        assert.equal(poolDayISO('pas une date'), null);
+    });
+
+    test('shiftISO ajoute des jours de calendrier, pas des tranches de 24 h', () => {
+        const { shiftISO } = aides('2026-09-20T00:30:00Z');
+
+        // Nuit du changement d'heure : elle dure 25 heures, la veille du
+        // 1er novembre reste le 31 octobre.
+        assert.equal(shiftISO('2026-11-01', -1), '2026-10-31');
+        assert.equal(shiftISO('2026-03-01', -1), '2026-02-28');
+        assert.equal(shiftISO('2026-12-31', 1), '2027-01-01');
+    });
+
+    test('« Aujourd’hui » et « Hier » suivent la journée du pool', () => {
+        const { dayLabelFr } = aides('2026-09-20T00:30:00Z');
+
+        assert.equal(dayLabelFr('2026-09-19'), 'Aujourd’hui');
+        assert.equal(dayLabelFr('2026-09-18'), 'Hier');
+        assert.equal(dayLabelFr('2026-09-17'), '17 sept.');
+        assert.equal(dayLabelFr(''), '');
+        assert.equal(dayLabelFr('n’importe quoi'), '');
+    });
+});

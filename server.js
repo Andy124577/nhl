@@ -1131,7 +1131,9 @@ async function snapshotAllPoolRanks() {
         // eux, le rang enregistré ici ne correspondrait pas au total que
         // classement.js affiche sur la même ligne.
         const teamsData = await loadCurrentTeams();
-        const todayISO = new Date().toISOString().slice(0, 10);
+        // La journée du pool, pas celle d'UTC : la tâche tourne à minuit à
+        // l'Est, et c'est cette journée-là que /pool-rank-movement relira.
+        const todayISO = datesPool.journeeLocale();
         let rowCount = 0;
 
         for (const [poolName, poolData] of Object.entries(pools)) {
@@ -1780,8 +1782,13 @@ app.get('/schedule/:date', async (req, res) => {
     }
 
     try {
-        const todayISO = new Date().toISOString().slice(0, 10);
-        const daysFromToday = Math.abs((new Date(date) - new Date(todayISO)) / 86400000);
+        // « Proche » se mesure en journées du pool. Lue en UTC, la journée
+        // en cours passait au lendemain dès 20 h à l'Est : les matchs du soir
+        // tombaient alors dans le cache de 12 heures et leurs scores figeaient
+        // en pleine 3è période.
+        const todayISO = datesPool.journeeLocale();
+        const [tot, tard] = date < todayISO ? [date, todayISO] : [todayISO, date];
+        const daysFromToday = datesPool.nombreDeJours(tot, tard);
         const ttl = daysFromToday <= 1 ? SCHEDULE_NEAR_TTL_MS : SCHEDULE_FAR_TTL_MS;
 
         const cached = scheduleCache.get(date);
@@ -1953,7 +1960,11 @@ app.get('/pool-rank-movement/:poolName', async (req, res) => {
         const teamsData = await loadCurrentTeams();
         const liveScores = computeTeamSeasonScores(poolData, statsData.players || [], teamsData.teams || []);
 
-        const todayISO = new Date().toISOString().slice(0, 10);
+        // Même journée que celle sous laquelle snapshotAllPoolRanks écrit.
+        // Lue en UTC, elle passait au lendemain dès 20 h à l'Est : la requête
+        // cherchait un instantané pas encore pris, et les flèches de
+        // progression disparaissaient tous les soirs jusqu'à minuit.
+        const todayISO = datesPool.journeeLocale();
         const snapResult = await db.query(
             `SELECT team_name, rank, points FROM pool_rank_snapshots WHERE pool_name = $1 AND snapshot_date = $2`,
             [poolName, todayISO]
