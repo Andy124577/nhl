@@ -1,0 +1,175 @@
+/* Thème clair des accueils « repêchage » (.fzh) et « saison » (.fzs), plus
+ * deux retouches de l'accueil sans pool (section 5).
+ *
+ * accueil-draft.css et accueil-season.css ont été dessinés sombres, avec
+ * leurs couleurs en dur ; accueil-palette.css en remplace une partie par les
+ * jetons --fzh-*. En thème clair, rien ne les rendait clairs : l'accueil
+ * restait un bloc noir au milieu d'une barre et d'un menu blancs.
+ *
+ * Deux étages, chargés APRÈS toutes les feuilles de l'accueil :
+ *   1. les jetons --fzh-* reçoivent des valeurs claires — tout ce que
+ *      accueil-palette.css fait déjà passer par eux suit sans autre règle ;
+ *   2. les couleurs restées en dur dans les feuilles sombres sont reprises
+ *      une à une, sous html[data-theme="light"] seulement.
+ *
+ * Le thème sombre n'est pas touché par ce fichier. Les panneaux photo (glace,
+ * actualités) restent sombres dans les deux thèmes, comme une photo.
+ *
+ * Mêmes teintes que le tableau de bord clair (accueil-dash.css) : page
+ * #dedbd5, panneaux blancs, encre #16181a, brique #b93d28. Le texte
+ * secondaire (#6b6862) garde 5,5:1 sur blanc.
+ */
+
+/* ─────────────────────────── 1. Jetons ─────────────────────────── */
+
+html[data-theme="light"] #fzDashSection {
+    --fzh-page: #dedbd5;
+    --fzh-panel: #ffffff;
+    --fzh-raised: #f4f2ee;
+    --fzh-border: #e2dfd8;
+    --fzh-outline: #d6d2ca;
+    --fzh-ink: #16181a;
+    --fzh-text: #4b4843;
+    --fzh-muted: #6b6862;
+    --fzh-accent: #b93d28;
+    --fzh-accent-fill: #b93d28;
+    --fzh-tint: rgba(185, 61, 40, .1);
+    --fzh-green: #1a7f43;
+    --fzh-red: #b8321f;
+}
+
+/* Les deux accueils posent leur propre --fzd-solid (rouge vif) : en clair,
+   la puce de jour choisie reprend le noir du tableau de bord clair. */
+html[data-theme="light"] #fzDashSection:is(.is-drafting, .is-season) .fz-dash {
+    --fzd-solid: #16181a;
+    --fzd-solid-hover: #000;
+    --fzd-on-solid: #fff;
+    --fzd-on-solid-soft: rgba(255, 255, 255, .7);
+    --fzd-accent-dark: #8f2e1a;
+    --fzd-text-faint: var(--fzh-muted);
+}
+
+/* accueil-palette.css pose #131316 sur la page entière pendant ces accueils. */
+html[data-theme="light"] body:is(.fz-draft-page, .fz-season-page) { background: #dedbd5; }
+
+/* ─────────────────── 2. Accueil repêchage (.fzh) ─────────────────── */
+
+html[data-theme="light"] .fzh h2,
+html[data-theme="light"] .fzh-moves .fzm-section-title { color: var(--fzh-ink); }
+html[data-theme="light"] .fzh :is(.fzh-eyebrow, .fzh-summary small, .fzh-game p, .fzh-cal-range,
+    .fzh-cal-day-meta, .fzh-cal-daycount, .fzh-cal-game-date, .fzh-cal-side, .fzh-cal-chip small, .fzh-empty,
+    .fzm-league-count, .fzm-off-card-club) { color: var(--fzh-muted); }
+html[data-theme="light"] .fzh :is(.fzh-draft-description, .fzm-off-card-stats) { color: var(--fzh-text); }
+html[data-theme="light"] .fzh .fzh-draft-description span,
+html[data-theme="light"] .fzh .fzh-estimate .fzh-icon { color: var(--fzh-muted); }
+html[data-theme="light"] .fzh .fzh-draft-stats > div { border-left-color: var(--fzh-border); }
+html[data-theme="light"] .fzh .fzh-draft-stats dt { color: var(--fzh-muted); }
+html[data-theme="light"] .fzh .fzh-puck:after { background: var(--fzh-border); }
+
+/* Pastille « En cours » : le vert reste, sur fond clair. */
+html[data-theme="light"] .fzh .fzh-status { background: #e2f3e8; color: #155e33; }
+html[data-theme="light"] .fzh .fzh-status i { background: #22a356; box-shadow: 0 0 10px #22a35655; }
+
+html[data-theme="light"] .fzh .fzh-participant { color: var(--fzh-ink); }
+html[data-theme="light"] .fzh .fzh-participant i { background: var(--fzh-tint); color: #9c3320; }
+html[data-theme="light"] .fzh .fzh-participant:nth-child(n+5) i { background: var(--fzh-raised); color: var(--fzh-text); }
+
+html[data-theme="light"] .fzh .fzh-summary { color: var(--fzh-ink); }
+html[data-theme="light"] .fzh .fzh-summary .fzh-nhl { opacity: .16; }
+html[data-theme="light"] .fzh .fzh-progress { background: #e6e3dc; }
+
+html[data-theme="light"] .fzh .fzh-game-badge:not(.is-live) { background: var(--fzh-raised); color: var(--fzh-text); }
+
+/* Carte d'actualité. AVEC photo, c'est un voile sombre posé sur l'image : le
+   texte y reste blanc dans les deux thèmes, et le fond de panneau clair de la
+   palette effacerait le voile. SANS photo — un article sans image, ou le mot
+   d'accueil avant le premier choix — c'est un panneau comme les autres : il
+   suit le thème, sinon il faisait une dalle noire au milieu d'une page claire. */
+html[data-theme="light"] #fzDashSection .fzh .fzh-news:has(.fzh-news-image) {
+    background-color: #1e1e22; border-color: transparent; color: #fff;
+}
+html[data-theme="light"] .fzh .fzh-news:has(.fzh-news-image) h2 { color: #fff; }
+html[data-theme="light"] .fzh .fzh-news:not(:has(.fzh-news-image))::after { background: none; }
+html[data-theme="light"] .fzh .fzh-news:not(:has(.fzh-news-image)) :is(h2, h2 a) { color: var(--fzh-ink); }
+html[data-theme="light"] .fzh .fzh-news:not(:has(.fzh-news-image)) .fzh-news-copy p { color: var(--fzh-text); }
+html[data-theme="light"] .fzh .fzh-news:not(:has(.fzh-news-image)) .fzh-news-copy small { color: var(--fzh-muted); }
+
+/* Mouvements récents */
+html[data-theme="light"] .fzh-moves :is(.fzm-league-nav-btn, .fzm-tab) { border-color: var(--fzh-border); color: var(--fzh-muted); }
+html[data-theme="light"] .fzh-moves .fzm-league-nav-btn:hover:not(:disabled) { border-color: var(--fzh-accent); color: var(--fzh-ink); }
+html[data-theme="light"] .fzh-moves .fzm-tab:hover { border-color: var(--fzh-outline); }
+html[data-theme="light"] #fzDashSection :is(.fzh, .fzs) #fzmLeagueTabs .fzm-tab.is-active {
+    background: var(--fzh-accent-fill); border-color: var(--fzh-accent-fill); color: #fff;
+}
+html[data-theme="light"] #fzDashSection :is(.fzh, .fzs) .fzm-off-card { background: var(--fzh-panel); border-color: var(--fzh-border); }
+html[data-theme="light"] #fzDashSection .fzh-moves .fzm-off-tag:not(.is-injury) { color: var(--fzh-ink); }
+html[data-theme="light"] .fzh .fzd-off-face { background: var(--fzh-raised); }
+
+/* Calendrier présaison */
+html[data-theme="light"] .fzh .fzh-cal-nav button { border-color: var(--fzh-border); color: var(--fzh-muted); }
+html[data-theme="light"] .fzh .fzh-cal-nav button:hover:not(:disabled) { border-color: var(--fzh-accent); color: var(--fzh-ink); }
+html[data-theme="light"] .fzh .fzh-cal-day-dow { color: var(--fzh-muted); }
+html[data-theme="light"] .fzh .fzh-cal-day.is-today .fzh-cal-day-dow { color: var(--fzh-accent); }
+html[data-theme="light"] .fzh .fzh-cal-game-time { color: var(--fzh-ink); }
+html[data-theme="light"] .fzh .fzh-cal-mine { border-top-color: var(--fzh-border); }
+html[data-theme="light"] .fzh .fzh-cal-chip { border-color: var(--fzh-border); background: var(--fzh-raised); }
+html[data-theme="light"] .fzh .fzh-cal-filter select { border-color: var(--fzh-border); background: var(--fzh-panel); color: var(--fzh-ink); }
+html[data-theme="light"] .fzh .fzh-cal-filter select:hover { border-color: var(--fzh-outline); }
+
+/* ─────────────── 3. Panneaux partagés (accueil-watch.css) ─────────────── */
+
+html[data-theme="light"] .fzh-watch-tools > button { border-color: var(--fzh-border); color: var(--fzh-muted); }
+html[data-theme="light"] .fzh-watch-tools > button:hover:not(:disabled) { border-color: var(--fzh-accent); color: var(--fzh-ink); }
+html[data-theme="light"] :is(.fzh, .fzs) :is([data-watch-count], .fzm-league-count) { color: var(--fzh-muted); }
+html[data-theme="light"] #fzDashSection .fzh-watch-filter select { background: var(--fzh-panel); color: var(--fzh-ink); border-color: var(--fzh-border); }
+html[data-theme="light"] [data-watch-panel] .fzh-watch-row { background: var(--fzh-panel); border-color: var(--fzh-border); }
+html[data-theme="light"] [data-watch-panel] .fzh-watch-row:hover { border-color: var(--fzh-outline); }
+html[data-theme="light"] :is(.fzh-watch-kicker, .fzh-watch-date) { color: var(--fzh-muted); }
+html[data-theme="light"] [data-watch-panel] .fzh-watch-name strong { color: var(--fzh-ink); }
+html[data-theme="light"] [data-watch-panel] .fzh-watch-name small { color: var(--fzh-muted); }
+html[data-theme="light"] [data-watch-panel] .fzh-watch-status { color: var(--fzh-text); }
+html[data-theme="light"] [data-watch-panel] .fzh-watch-star { border-color: var(--fzh-border); color: var(--fzh-muted); }
+html[data-theme="light"] [data-watch-panel] .fzh-watch-star.is-saved { color: var(--fzh-accent); }
+html[data-theme="light"] .fzh-career-note { color: var(--fzh-text); }
+html[data-theme="light"] :is(.fzh, .fzs) .fzd-off-dot::after { background: var(--fzh-outline); }
+html[data-theme="light"] :is(.fzh, .fzs) .fzd-off-dot.is-active::after { background: var(--fzh-accent); }
+
+/* ─────────────────── 4. Accueil saison (.fzs) ─────────────────── */
+
+html[data-theme="light"] .fzs p,
+html[data-theme="light"] .fzs .fzm-activity-text { color: var(--fzh-text); }
+html[data-theme="light"] .fzs :is(.fzs-rank p span, .fzs-game footer, .fzs-player-name small, .fzs-watch-player small) { color: var(--fzh-muted); }
+html[data-theme="light"] .fzs :is(.fzs-player-name strong, .fzs-watch-player strong, .fzm-section-title, .fzm-news-row, .fzm-news-headline) { color: var(--fzh-ink); }
+html[data-theme="light"] .fzs .fzs-player-stats { color: var(--fzh-text); }
+/* Le héros garde sa glace, fondue dans le panneau clair plutôt que noir. */
+html[data-theme="light"] #fzDashSection .fzs-hero::after { background: linear-gradient(90deg, #fff 5%, #ffffffd9 45%, transparent); }
+html[data-theme="light"] .fzs .fzs-ice { opacity: .18; }
+html[data-theme="light"] .fzs .fzs-green { color: var(--fzh-green); }
+html[data-theme="light"] .fzs .fzs-red { color: var(--fzh-red); }
+html[data-theme="light"] .fzs .fzs-bars i { background: var(--fzh-outline); }
+html[data-theme="light"] #fzDashSection .fzs-tag:not(.is-live) { color: var(--fzh-ink); }
+html[data-theme="light"] .fzs :is(.fzs-player, .fzs-stat, .fzs-watch-player) { border-bottom-color: var(--fzh-border); }
+html[data-theme="light"] .fzs .fzm-list-row { border-color: var(--fzh-border); }
+html[data-theme="light"] .fzs .fzs-stat > div { background: #ebe8e2; }
+html[data-theme="light"] .fzs .fzs-dots i { background: var(--fzh-outline); }
+html[data-theme="light"] .fzs .fzs-dots .is-on { background: #22a356; }
+@media (max-width: 768px) {
+    html[data-theme="light"] .fzs .fzs-player,
+    html[data-theme="light"] .fzs .fzs-player:last-child { border-color: var(--fzh-border); }
+    html[data-theme="light"] .fzs .fzs-player-stats small { border-top-color: var(--fzh-border); }
+    html[data-theme="light"] .fzh .fzh-participant { border-color: var(--fzh-border); }
+}
+
+/* ─────────────── 5. Accueil sans pool, carte d'actualité ─────────────── */
+
+/* Posés à même la page (#dedbd5), et non sur une carte : le gris secondaire
+   n'y tenait que 3,9:1. */
+html[data-theme="light"] :is(.fzo-welcome, .fzo-section-label h3) { color: var(--fzd-text); }
+/* Le lien d'une carte à photo vit sur le voile sombre : il garde la brique
+   éclaircie du thème sombre (la brique claire y faisait 3:1). */
+html[data-theme="light"] #fzDashSection .fzh .fzh-news:has(.fzh-news-image) .fzh-link { color: #e8795e; }
+html[data-theme="light"] #fzDashSection .fzh .fzh-news:has(.fzh-news-image) .fzh-link:hover { color: #f19b85; }
+html[data-theme="light"] .fzh .fzh-game-badge.is-live { color: #fff; }
+/* La pastille rouge de la carte d'actualité garde son texte blanc, que la
+   carte porte une photo ou non. */
+html[data-theme="light"] .fzh .fzh-news-badge { color: #fff; }

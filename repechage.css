@@ -225,7 +225,7 @@
     height: 24px;
     flex: 0 0 auto;
     border-radius: 50%;
-    background: rgba(var(--primary-rgb), .18);
+    background: rgba(var(--primary-rgb), .1); /* à .18, l'initiale restait sous 4,5:1 */
     color: var(--primary);
     font-size: .68rem;
     font-weight: 800;
@@ -264,3 +264,12 @@
     border-color: var(--danger);
     color: var(--danger);
 }
+
+/* Thème clair : l'ambre de --warning (#CC8800) est fait pour un aplat, pas
+   pour du texte — 2,6:1 sur sa propre teinte. Le libellé prend un ambre
+   foncé ; le fond ne change pas. Même chose pour les places libres. */
+html[data-theme="light"] .rp-state-attente { color: #7f5300; }
+html[data-theme="light"] .rp-seat.is-free,
+html[data-theme="light"] .rp-seat.is-free .rp-seat-ini { color: #6b6b73; }
+html[data-theme="dark"] .rp-seat.is-free,
+html[data-theme="dark"] .rp-seat.is-free .rp-seat-ini { color: #8c8c95; }

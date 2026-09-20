@@ -15,7 +15,7 @@
 [data-watch-panel] .fzh-watch-row[role=button] { cursor:pointer; }
 [data-watch-panel] .fzh-watch-row:hover { border-color:#2d3d52; }
 .fzh-watch-top { display:flex; align-items:center; gap:8px; }
-.fzh-watch-kicker, .fzh-watch-date { font:600 12px/1 'Barlow Condensed',sans-serif; letter-spacing:.14em; text-transform:uppercase; color:#6f7d8d; }
+.fzh-watch-kicker, .fzh-watch-date { font:600 12px/1 'Barlow Condensed',sans-serif; letter-spacing:.14em; text-transform:uppercase; color:#8b98a8; }
 .fzh-watch-date { margin-left:auto; white-space:nowrap; }
 .fzh-watch-id { display:flex; align-items:center; gap:11px; min-width:0; }
 [data-watch-panel] .fzh-watch-name { display:block; flex:1; min-width:0; }

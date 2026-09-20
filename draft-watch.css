@@ -1,3 +1,5 @@
 .draft-watch-badge { display:inline-flex; align-items:center; gap:3px; margin-left:5px; color:#26a6ff; font-size:10px; font-weight:600; white-space:nowrap; vertical-align:middle; }
 .draft-watch-badge svg { flex-shrink:0; }
 @media(max-width:1000px) { .draft-watch-badge > span { display:none; } }
+/* Le bleu vif ne tient que sur fond sombre : 1,9:1 sur le papier clair. */
+html[data-theme="light"] .draft-watch-badge { color:#0b6fb8; }

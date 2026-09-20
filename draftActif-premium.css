@@ -15,11 +15,11 @@ body.fz-draft {
   --fzd-ink: #16181a;
   --fzd-ink-soft: #3d3a35;
   --fzd-text: #4b4843;
-  --fzd-text-muted: #6d6a64;
-  --fzd-text-faint: #8a877f;
-  --fzd-text-fainter: #a8a49c;
-  --fzd-text-dim: #7b7872;    /* en-tete de tableau, code d'equipe */
-  --fzd-text-ghost: #a8a49c;  /* notes de rangee, codes de choix   */
+  --fzd-text-muted: #65625c;
+  --fzd-text-faint: #68655f;   /* 4,6:1 sur les tuiles #e6e3db ; #8a877f restait à 3,3:1 */
+  --fzd-text-fainter: #68655f;
+  --fzd-text-dim: #68655f;    /* en-tete de tableau, code d'equipe */
+  --fzd-text-ghost: #68655f;  /* notes de rangee, codes de choix ; #a8a49c tombait à 2,3:1 */
   --fzd-border: #e2dfd8;
   --fzd-border-strong: #cdcac3;
   --fzd-border-soft: #eae7e0;
@@ -112,19 +112,19 @@ html[data-theme="dark"] body.fz-draft {
   --fzd-text: #c8bcb5;
   --fzd-text-muted: #b6a9a2;
   --fzd-text-faint: #9a8d86;
-  --fzd-text-fainter: #7d716b;
+  --fzd-text-fainter: #8f837c; /* #7d716b : 3,8:1 sur les tuiles */
   --fzd-text-dim: #8b7e78;    /* en-tete de tableau, code d'equipe */
-  --fzd-text-ghost: #6f625c;  /* notes de rangee, codes de choix       */
+  --fzd-text-ghost: #8f837c;  /* notes de rangee, codes de choix ; #6f625c : 3:1 */
   --fzd-border: #201a18;      /* filet entre deux rangees              */
   --fzd-border-strong: #2a2320;
   --fzd-border-soft: #241d1b;
   --fzd-border-input: #2f2724;
   --fzd-accent: #e2552c;
   --fzd-accent-dark: #f07a56;
-  --fzd-accent-hover: #c94724;
+  --fzd-accent-hover: #b03c1f;
   --fzd-accent-wash: #1e1614;
   --fzd-accent-border: #4a2c1f;
-  --fzd-accent-fill: #e2552c;
+  --fzd-accent-fill: #c94724; /* blanc dessus : 4,8:1 (#e2552c : 3,8:1) */
   --fzd-on-accent: #ffffff;
   --fzd-tile-bg: #2a2320;
   --fzd-tile-bg-strong: #332925;
@@ -195,7 +195,7 @@ html[data-theme="dark"] body.fz-draft {
   --text-dark: #c8bcb5;
   --text-secondary: #9a8d86;
   --text-gray: #8b7e78;
-  --text-light-gray: #6f625c;
+  --text-light-gray: #8f837c;
 
   --border-light: #201a18;
   --border-gray: #2a2320;
@@ -1902,3 +1902,18 @@ body.fz-draft.fz-list-lock #fzPickedList thead th {
    joueurs partagent la même version depuis que les deux tiennent sous
    100px de haut ; plus besoin d'un jeu de règles séparé ici. */
 
+
+/* ============================================================ */
+/* THÈME CLAIR — la liste de joueurs sur le papier              */
+/* ------------------------------------------------------------ */
+/* draftDesk.css pose la liste sur --fzd-bg-page : en sombre, la */
+/* page et les cartes sont presque du même noir, et la liste     */
+/* s'y fond. En clair, #dedbd5 est nettement plus foncé que les  */
+/* cartes : la liste virait au beige sale sous un en-tête blanc, */
+/* et le texte secondaire y tombait sous 4:1. Elle reprend donc  */
+/* le papier (--fzd-bg), comme le reste des cartes claires.      */
+/* ============================================================ */
+html[data-theme="light"] body.fz-draft .player-selection-card,
+html[data-theme="light"] body.fz-draft .player-selection-card > :is(#playerTableWrapper, #fzPickedListWrapper) {
+  background: var(--fzd-bg);
+}

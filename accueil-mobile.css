@@ -15,8 +15,9 @@
     --fzm-panel: #F4F3F1;
     --fzm-surface: #ffffff;
     --fzm-ink: #17171A;
-    --fzm-ink-soft: rgba(23, 23, 26, 0.5);
-    --fzm-ink-faint: rgba(23, 23, 26, 0.4);
+    /* Gris secondaires : à .5 et .4, 3,4:1 et 2,5:1 sur blanc. */
+    --fzm-ink-soft: rgba(23, 23, 26, 0.72);
+    --fzm-ink-faint: rgba(23, 23, 26, 0.66);
     --fzm-border: rgba(23, 23, 26, 0.1);
     --fzm-red: #E42027;
     --fzm-red-soft: #FCE4E4;
@@ -349,12 +350,20 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
 /* Accueil téléphone : actualités et préparation, ou repêchage en vedette. */
 @media (max-width: 768px) {
     body:has(#fzMobileHome[data-mode]) #storiesSection { display: none !important; }
+    /* Clair : la brique du reste de l'accueil clair. L'orange vif ne tenait
+       ni en texte sur le papier (2,8:1) ni sous du blanc (3,4:1). */
     .fz-mobile-home {
-        --fzm-red: #f65325;
-        --fzm-red-soft: #f653251c;
+        --fzm-red: #b93d28;
+        --fzm-red-soft: #b93d281a;
         padding-top: 8px;
     }
+    /* Clair : le calendrier déplacé ici repose sur le gris de la page
+       (#EAE8E4), plus foncé que ses cartes ; ses gris secondaires y
+       tombaient à 4,3:1. */
+    html[data-theme="light"] .fz-mobile-home { --fzd-text-muted: #605d58; --fzd-text-faint: #65625c; }
     html[data-theme="dark"] .fz-mobile-home {
+        --fzm-red: #f65325;
+        --fzm-red-soft: #f653251c;
         --fzm-bg: #0d1011;
         --fzm-panel: #171a1c;
         --fzm-surface: #171a1c;
@@ -394,7 +403,7 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
     #fzmHeroSlot[data-mode="preseason"] .fzd-hero-stat { flex-direction: column-reverse; align-items: center; }
     #fzmHeroSlot[data-mode="preseason"] .fzd-hero-stat-val { font-size: 24px; }
     #fzmHeroSlot[data-mode="preseason"] .fzd-hero-stat-lbl { font-size: 8px; }
-    #fzmHeroSlot .fzd-hero-cta { background: #f65325; min-height: 44px; padding: 11px; }
+    #fzmHeroSlot .fzd-hero-cta { background: var(--fzm-red); min-height: 44px; padding: 11px; }
     #fzmHeroSlot .fzd-hero-cta-label { white-space: normal; text-align: center; }
     #fzmHeroSlot .fzd-hero-cta-bar { display: none; }
     #fzmHeroSlot .fzd-hero-cta-chev { color: #fff; font-size: 22px; }
@@ -445,7 +454,9 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
     .fz-mobile-home .fzd-cal-range { font-size: 10px; }
     .fz-mobile-home .fzd-cal-strip { gap: 5px; }
     .fz-mobile-home .fzd-day-chip { background: var(--fzm-surface); border-color: var(--fzm-border); padding: 7px 1px; }
-    .fz-mobile-home .fzd-day-chip.is-selected { border: 2px solid var(--fzm-red); background: var(--fzm-red-soft); }
+    /* La teinte se pose sur la carte, pas sur le fond gris de la page : sur
+       le gris, elle fonçait assez pour faire tomber le texte sous 4:1. */
+    .fz-mobile-home .fzd-day-chip.is-selected { border: 2px solid var(--fzm-red); background: linear-gradient(var(--fzm-red-soft), var(--fzm-red-soft)), var(--fzm-surface); }
     .fz-mobile-home .fzd-day-chip.is-selected .fzd-day-chip-num { color: var(--fzm-red); }
     .fz-mobile-home .fzd-day-chip-count { display: flex; order: 2; justify-content: center; gap: 3px; min-height: 12px; font-size: 10px; color: var(--fzm-ink-soft); }
     .fz-mobile-home .fzd-day-chip-month { display: block; font: 500 8px/1 'Archivo', sans-serif; text-transform: uppercase; color: var(--fzm-ink-soft); }
@@ -468,7 +479,7 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
     #fzmLeagueTabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--fzm-border); border-radius: 9px; overflow: hidden; }
     #fzmLeagueTabs .fzm-tab { min-width: 0; min-height: 36px; border: 0; border-right: 1px solid var(--fzm-border); border-radius: 0; font-size: 10px; }
     #fzmLeagueTabs .fzm-tab:last-child { border-right: 0; }
-    #fzmLeagueTabs .fzm-tab.is-active { background: #e74a1e; color: #fff; border-radius: 8px; }
+    #fzmLeagueTabs .fzm-tab.is-active { background: var(--fzm-red); color: #fff; border-radius: 8px; }
     .fzm-tab-count { display: none; }
     .fzm-off-card { position: relative; flex-basis: calc((100% - 10px) / 2); min-width: 155px; max-width: none; padding: 10px; gap: 8px; }
     .fzm-off-card > .fzd-off-face { position: absolute; top: 39px; left: 9px; width: 35px; height: 40px; }

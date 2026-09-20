@@ -39,7 +39,7 @@ body.fz-season-page { background:#060e13; }
 .fzs .fzd-team-logo { width:30px; height:30px; object-fit:contain; }
 .fzs-game b { font-size:21px; }.fzs-game footer { font-size:13px; color:#b6c5d6; white-space:nowrap; margin-top:8px; }
 .fzs-tag { display:inline-block; border-radius:3px; padding:1px 6px; background:#344555; color:white; font-size:11px; font-weight:700; text-transform:uppercase; width:max-content; }
-.fzs-tag.is-live { background:#eb382a; }
+.fzs-tag.is-live { background:#c8321f; } /* blanc dessus : 5:1 (#eb382a : 4,3:1) */
 .fzs-players { grid-column:span 6; grid-row:span 2; }
 .fzs-player { display:grid; grid-template-columns:55px 1.15fr 1.4fr 30px; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #172933; }
 .fzs-player:last-child { border:0; }

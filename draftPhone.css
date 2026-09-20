@@ -410,6 +410,9 @@
      .pick-card.is-current et qui se lit dans les deux thèmes. */
   body.fz-draft .picks-carousel .pick-card.is-current { background: #221a17; }
   body.fz-draft .picks-carousel .pick-card.is-current .pick-card-name { color: #f2ebe6; }
+  /* La brique du thème clair (#b93d28) tombait à 3:1 sur cette tuile, qui
+     reste sombre dans les deux thèmes : elle prend la brique éclaircie. */
+  body.fz-draft .picks-carousel .pick-card.is-current :is(.pick-card-turn-num, .pick-card-owner) { color: #e8795e; }
   /* Le carré du portrait suit le même sort : son fond de tuile est clair
      en thème clair, et faisait un timbre blanc sur la tuile sombre. */
   body.fz-draft .picks-carousel .pick-card.is-current .pick-card-photo {
@@ -491,7 +494,8 @@
     border-color: var(--fzd-accent-fill);
   }
   body.fz-draft .panel-tab.is-active .panel-tab-label { color: var(--fzd-on-accent); }
-  body.fz-draft .panel-tab.is-active .panel-tab-meta { color: rgba(255, 255, 255, .7); }
+  /* Blanc plein : à 70 %, le compte tombait à 3:1 sur l'aplat. */
+  body.fz-draft .panel-tab.is-active .panel-tab-meta { color: #fff; }
 
   body.fz-draft .panel-tabs-band .turn-skip-btn {
     flex: none;

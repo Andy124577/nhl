@@ -25,6 +25,10 @@
 .fz-arena-hero .btn-hero-primary:hover { background: #a73523; transform: none; }
 .fz-arena-hero .btn-hero-secondary { border: 1px solid #6d767c; background: rgba(9,15,19,.58); }
 .fz-arena-hero .btn-hero-secondary:hover { background: #222c32; border-color: #c3cbd0; transform: none; }
+/* La scène reste sombre en thème clair (voir l'en-tête), mais la règle claire
+   générique d'accueil.css, plus spécifique, rendait ce bouton noir sur noir. */
+html[data-theme="light"] .fz-arena-hero .btn-hero-secondary { border-color: #6d767c; color: #fff; }
+html[data-theme="light"] .fz-arena-hero .btn-hero-secondary:hover { background: #222c32; border-color: #c3cbd0; }
 .arena-footnote { color: #d6dfe5; font-size: 11px; line-height: 1.6; text-shadow: 0 1px 5px #000; }
 .arena-footnote > span { margin: 0 8px; color: #8d969d; }
 .fz-arena-hero .btn-hero-tertiary { min-height: 44px; margin-top: 14px; padding: 10px 0; font-size: 12px; border-radius: 2px; color: #d0d6da; gap: 8px; }
@@ -76,6 +80,8 @@
 .ap-table th { font-family: 'Archivo', 'Segoe UI', sans-serif; background: transparent; backdrop-filter: none; box-shadow: none; text-transform: none; letter-spacing: normal; color: #f3f5f7; }
 .ap-table tbody tr { background: transparent; cursor: default; border-color: #ffffff0c; }
 .ap-table tbody tr.ap-player-featured { background: #b93d280a; }
+/* Même chose pour les lignes paires, que le thème clair (index.css) grise. */
+html[data-theme="light"] .ap-table tbody tr:nth-child(even) { background: transparent; }
 /* Neutralize the shared stats table's global hover treatment. */
 .ap-table tbody tr:hover { background: #1c2329 !important; transform: none; box-shadow: none; }
 .ap-table thead th { font-size: 8px; font-weight: 500; color: #9aa8b3; padding: 0 7px 8px; }

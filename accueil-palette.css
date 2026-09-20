@@ -64,9 +64,21 @@ html[data-theme="dark"] #fzDashSection .fzd-hero-cta {
     color: #fff;
 }
 #fzDashSection :is(.fzh-link, .fzs a:not(.fzs-cta)) { color: var(--fzh-accent); }
-#fzDashSection .fzh-cal-day.is-selected { background: var(--fzh-tint); border-color: var(--fzh-accent); }
+/* Le chevron garde le gris prévu pour l'aplat d'encre du thème clair : sur la
+   brique du thème sombre, il tombait à 1,6:1. */
+html[data-theme="dark"] #fzDashSection .fzd-hero-cta .fzd-hero-cta-chev { color: #fff; }
+#fzDashSection .fzh-cal-day.is-selected { background: var(--fzh-tint); border-color: var(--fzh-accent); color: var(--fzh-ink); }
+/* accueil-draft.css écrit ce jour en encre sombre, pour son ancien fond blanc :
+   sur la teinte brique, il devenait illisible (1,8:1). */
+#fzDashSection .fzh-cal-day.is-selected .fzh-cal-day-dow { color: var(--fzh-accent); }
+#fzDashSection .fzh-cal-day.is-selected .fzh-cal-day-meta { color: var(--fzh-text); }
+/* Pastilles pleines portant du texte blanc : le rouge vif d'origine restait
+   sous 4,5:1. La brique pleine de la palette le tient dans les deux thèmes. */
+#fzDashSection :is(.fzh, .fzs) { --fzm-solid: var(--fzh-accent-fill); --fzm-on-solid: #fff; }
+#fzDashSection .fzh-participant b { background: var(--fzh-accent-fill); }
+#fzDashSection .fzh .fzm-off-tag.is-injury { background: #c8321f; color: #fff; }
 #fzDashSection :is(.fzh-watch-tools > button, .fzh-cal-controls, .fzh-draft-bottom) { border-color: var(--fzh-border); }
-#fzDashSection :is(.fzs-tag, .fzs .fzd-off-face, .fzh-moves .fzm-off-tag:not(.is-injury)) { background: var(--fzh-raised); }
+#fzDashSection :is(.fzs-tag:not(.is-live), .fzs .fzd-off-face, .fzh-moves .fzm-off-tag:not(.is-injury)) { background: var(--fzh-raised); }
 #fzDashSection .fzs-hero::after { background: linear-gradient(90deg, #1e1e22 5%, #1e1e22b8 45%, transparent); }
 html[data-theme="dark"] #fzDashSection :is(.fz-dash-hero, #fzmHeroSlot.is-draft) {
     background: var(--fzh-panel);
