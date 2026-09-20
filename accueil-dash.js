@@ -545,9 +545,17 @@ function gameGoalsHTML(game, isFinal) {
  *
  * `periodLabel` rend du balisage (« 2<sup>e</sup> ») : c'est la seule pièce
  * ici qui ne passe pas par escapeHTML, et tout ce qui vient de la LNH y passe.
+ *
+ * La carte entière ouvre la fiche du buteur (voir bindGoalTracks) : un nom
+ * qui vient de marquer est la première chose qu'on veut aller voir, et viser
+ * le nom seul demanderait de la précision sur une ligne de 11 pixels. La
+ * feuille de pointage de la LNH donne l'identifiant du buteur ; sans lui —
+ * un vieux match, une réponse incomplète — la carte reste une simple carte
+ * plutôt qu'un bouton qui ne mènerait nulle part.
  */
 function goalCardHTML(but, equipes) {
     const nom = but.name || '';
+    const fiche = Number(but.playerId) > 0 ? Number(but.playerId) : 0;
     const initiales = nom.split(/\s+/).map(m => m[0] || '').join('').slice(0, 2).toUpperCase();
     // getTeamColors vient de teamColors.js, chargé avant ce fichier ; le
     // garde-fou sert aux tests, qui chargent cette fonction toute seule.
@@ -571,8 +579,12 @@ function goalCardHTML(but, equipes) {
         : '';
     const quand = `${periodLabel(but.period, but.periodType)} - ${escapeHTML(but.timeInPeriod || '')}`;
 
+    const ouvre = fiche
+        ? ` role="button" tabindex="0" data-goal-player="${fiche}" data-goal-name="${escapeHTML(nom)}" aria-label="Voir la fiche de ${escapeHTML(nom)}"`
+        : '';
+
     return `
-        <div class="fzd-goal-card"${couleur ? ` style="--fzd-goal-team: ${escapeHTML(couleur)}"` : ''}>
+        <div class="fzd-goal-card"${ouvre}${couleur ? ` style="--fzd-goal-team: ${escapeHTML(couleur)}"` : ''}>
             ${photo}
             <div class="fzd-goal-id">
                 <div class="fzd-goal-name" title="${escapeHTML(nom)}">${escapeHTML(nom)}${compteurHTML(but.goalsToDate)}</div>
@@ -725,7 +737,16 @@ function majFlechesButs(bloc) {
     bloc.querySelector('[data-dir="next"]')?.classList.toggle('is-off', track.scrollLeft >= max - 1);
 }
 
-/** Flèches des buteurs : une paire par carte de match, posées à chaque rendu. */
+/**
+ * Flèches des buteurs et ouverture de leur fiche : une paire par carte de
+ * match, posées à chaque rendu.
+ *
+ * La fiche est celle qu'ouvre « À surveiller » (accueil-watch.js) — même
+ * modale, mêmes filtres, sans la note de la trousse que ce buteur n'a pas.
+ * L'écouteur est posé sur la piste et non sur chaque carte : une piste se
+ * réécrit à chaque rafraîchissement d'un match en cours, et autant
+ * d'écouteurs que de buts marqués finiraient par s'y empiler.
+ */
 function bindGoalTracks(root) {
     root.querySelectorAll('.fzd-goals').forEach(bloc => {
         const track = bloc.querySelector('.fzd-goals-track');
@@ -733,8 +754,21 @@ function bindGoalTracks(root) {
         bloc.querySelector('[data-dir="prev"]')?.addEventListener('click', () => goalsScroll(track, -1));
         bloc.querySelector('[data-dir="next"]')?.addEventListener('click', () => goalsScroll(track, 1));
         track.addEventListener('scroll', () => majFlechesButs(bloc), { passive: true });
+        track.addEventListener('click', event => ouvrirFicheButeur(event.target.closest('[data-goal-player]')));
+        track.addEventListener('keydown', event => {
+            const carte = event.target.closest?.('[data-goal-player]');
+            if (!carte || event.target !== carte || !['Enter', ' '].includes(event.key)) return;
+            event.preventDefault();
+            ouvrirFicheButeur(carte);
+        });
         majFlechesButs(bloc);
     });
+}
+
+/** La fiche du joueur d'une carte de but, si la LNH a donné son identifiant. */
+function ouvrirFicheButeur(carte) {
+    if (!carte || typeof fzhOpenPlayerCareer !== 'function') return;
+    fzhOpenPlayerCareer(carte.dataset.goalPlayer, carte.dataset.goalName || '');
 }
 
 /** Reflète la position du carrousel des matchs : puce active, flèches

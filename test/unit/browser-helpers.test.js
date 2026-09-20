@@ -964,6 +964,42 @@ describe('accueil — les buteurs sous chaque match', () => {
         assert.ok(goalCardHTML(BUTS[1], EQUIPES).includes('--fzd-goal-team: ' + getTeamColors('TOR')[0]));
     });
 
+    test('la carte entière ouvre la fiche du buteur', () => {
+        // Viser le nom seul demanderait de la précision sur une ligne de 11
+        // pixels : c'est la carte qui prend le clic, et le clavier avec elle.
+        const { goalCardHTML } = rendu();
+        const html = goalCardHTML({ ...BUTS[0], playerId: 8476479 }, EQUIPES);
+
+        assert.match(html, /data-goal-player="8476479"/);
+        assert.match(html, /role="button" tabindex="0"/);
+        assert.match(html, /data-goal-name="Phillip Danault"/);
+        assert.match(html, /aria-label="Voir la fiche de Phillip Danault"/);
+    });
+
+    test('sans identifiant, la carte ne promet pas un clic sans effet', () => {
+        // Un vieux match revient parfois sans playerId : mieux vaut une carte
+        // muette qu'un bouton qui ne mène nulle part.
+        const { goalCardHTML } = rendu();
+        const html = goalCardHTML(BUTS[0], EQUIPES);
+
+        assert.ok(!html.includes('data-goal-player'), 'aucune fiche à ouvrir');
+        assert.ok(!html.includes('role="button"'), 'la carte ne se dit pas bouton');
+        assert.ok(!html.includes('tabindex'), 'et ne prend pas le clavier');
+    });
+
+    test('la fiche demandée est celle de la carte cliquée', () => {
+        const appels = [];
+        const { ouvrirFicheButeur } = chargerFonctions('accueil-dash.js', ['ouvrirFicheButeur'],
+            { fzhOpenPlayerCareer: (id, nom) => appels.push([id, nom]) });
+
+        ouvrirFicheButeur({ dataset: { goalPlayer: '8476479', goalName: 'Phillip Danault' } });
+        // Un clic à côté d'une carte ne trouve rien à ouvrir : closest() rend
+        // null, et la fonction doit s'en accommoder sans lever.
+        assert.doesNotThrow(() => ouvrirFicheButeur(null));
+
+        assert.deepEqual(appels, [['8476479', 'Phillip Danault']]);
+    });
+
     test('sans photo, les initiales tiennent la place', () => {
         const { goalCardHTML } = rendu();
         const html = goalCardHTML(BUTS[1], EQUIPES);

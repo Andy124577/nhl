@@ -97,19 +97,12 @@ html[data-theme="light"] .fzh .fzd-off-face { background: var(--fzh-raised); }
 
 /* ─────────────── 3. Panneaux partagés (accueil-watch.css) ─────────────── */
 
-html[data-theme="light"] .fzh-watch-tools > button { border-color: var(--fzh-border); color: var(--fzh-muted); }
-html[data-theme="light"] .fzh-watch-tools > button:hover:not(:disabled) { border-color: var(--fzh-accent); color: var(--fzh-ink); }
-html[data-theme="light"] :is(.fzh, .fzs) [data-watch-count] { color: var(--fzh-muted); }
-html[data-theme="light"] #fzDashSection .fzh-watch-filter select { background: var(--fzh-panel); color: var(--fzh-ink); border-color: var(--fzh-border); }
-html[data-theme="light"] [data-watch-panel] .fzh-watch-row { background: var(--fzh-panel); border-color: var(--fzh-border); }
-html[data-theme="light"] [data-watch-panel] .fzh-watch-row:hover { border-color: var(--fzh-outline); }
-html[data-theme="light"] :is(.fzh-watch-kicker, .fzh-watch-date) { color: var(--fzh-muted); }
-html[data-theme="light"] [data-watch-panel] .fzh-watch-name strong { color: var(--fzh-ink); }
-html[data-theme="light"] [data-watch-panel] .fzh-watch-name small { color: var(--fzh-muted); }
-html[data-theme="light"] [data-watch-panel] .fzh-watch-status { color: var(--fzh-text); }
-html[data-theme="light"] [data-watch-panel] .fzh-watch-star { border-color: var(--fzh-border); color: var(--fzh-muted); }
-html[data-theme="light"] [data-watch-panel] .fzh-watch-star.is-saved { color: var(--fzh-accent); }
-html[data-theme="light"] .fzh-career-note { color: var(--fzh-text); }
+/* « À surveiller » a rejoint « Mouvements récents » : mêmes classes
+   .fzd-off-*, mêmes jetons --fzd-*, donc plus rien à reprendre ici. Les deux
+   panneaux suivent désormais l'accueil qui les héberge — clair sur le tableau
+   de bord, encre bleue sur l'accueil repêchage — au lieu de se contredire
+   côte à côte. La note de la trousse, elle, reste posée sur la fiche du
+   joueur, noire dans les deux thèmes (career-modal.css). */
 html[data-theme="light"] :is(.fzh, .fzs) .fzd-off-dot::after { background: var(--fzh-outline); }
 html[data-theme="light"] :is(.fzh, .fzs) .fzd-off-dot.is-active::after { background: var(--fzh-accent); }
 

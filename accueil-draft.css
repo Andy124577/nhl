@@ -48,7 +48,7 @@ body.fz-draft-page { background:#060f14; }
    alors la rangée entière plutôt que de laisser une moitié creuse. */
 .fzh:has(#fzdOffCount[hidden]) .fzh-team { grid-column:1/-1; }
 
-.fzh .fzd-off-face { width:37px; height:37px; flex-shrink:0; border-radius:50%; background:#213544; }.fzh-watch-star.is-saved svg { fill:#ff584133; }
+.fzh .fzd-off-face { width:37px; height:37px; flex-shrink:0; border-radius:50%; background:#213544; }
 .fzh-empty { color:#b5c8dc; padding:12px; font-size:15px; }
 /* Le calendrier est celui du tableau de bord (#fzDashCalendarWrap), déplacé
    ici par fzdPlaceCalendar() : il garde sa propre mise en forme. */

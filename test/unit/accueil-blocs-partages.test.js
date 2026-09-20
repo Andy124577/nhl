@@ -17,6 +17,7 @@ const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const { chargerFonctions } = require('../fixtures/helpers.js');
 
 const racine = path.join(__dirname, '../..');
 const lire = f => fs.readFileSync(path.join(racine, f), 'utf8');
@@ -59,8 +60,11 @@ describe('accueil — blocs partagés', () => {
     test('« À surveiller » est le panneau du repêchage partout', () => {
         // L'accueil sans pool et l'accueil hors-saison le montrent aussi : le
         // panneau vit dans index.html, avec le balisage que fzhWatchHTML()
-        // remplit (accueil-watch.js).
-        assert.match(INDEX, /class="fzh-watch fzh-panel" id="fzdOffWatch" data-watch-panel/);
+        // remplit (accueil-watch.js). Il porte le châssis de « Mouvements
+        // récents » — .fzd-off-section pour le cadre, .fzd-off-carousel pour
+        // l'en-tête à flèches — pour que les deux panneaux voisins se lisent
+        // comme un seul jeu de cartes.
+        assert.match(INDEX, /class="fzh-watch fzd-off-section fzd-off-carousel" id="fzdOffWatch" data-watch-panel/);
     });
 
     test('aucun accueil ne réécrit un bloc partagé, chacun ouvre un emplacement', () => {
@@ -86,6 +90,49 @@ describe('accueil — blocs partagés', () => {
             for (const m of source.matchAll(/data-fz-bloc="([^"]+)"/g)) {
                 assert.ok(BLOCS[m[1]], `${nom} déclare un emplacement inconnu : ${m[1]}`);
             }
+        }
+    });
+
+    test('« À surveiller » rend les cartes de « Mouvements récents »', () => {
+        // Les deux panneaux se suivent dans le bloc hors-saison : ils partagent
+        // le gabarit .fzd-off-card plutôt que d'entretenir deux jeux de cartes
+        // qui divergeraient à la première retouche. Seules la pastille de
+        // surveillance et l'étoile des favoris leur sont propres.
+        const favoris = new Map([['Cole Caufield', '2026-09-05T00:00:00.000Z']]);
+        const { fzhWatchCardHTML } = chargerFonctions(
+            'accueil-watch.js',
+            ['fzhWatchKicker', 'fzhWatchSince', 'fzhWatchCardHTML'],
+            {
+                escapeHTML: t => String(t),
+                offPlayerFaceHTML: () => '<span class="fzd-off-face"></span>',
+                fzhIcon: () => '<svg></svg>',
+                dayLabelFr: () => '5 sept.',
+                offWatchFavorites: favoris
+            }
+        );
+
+        const joueur = { name: 'Cole Caufield', team: 'MTL', teamName: 'Montréal Canadiens', position: 'L', summary: 'Tireur d’élite' };
+        const suivi = fzhWatchCardHTML(joueur, 0, 8481540, true);
+
+        for (const classe of ['fzd-off-card', 'fzd-off-card-top', 'fzd-off-player', 'fzd-off-card-name', 'fzd-off-card-stats']) {
+            assert.ok(suivi.includes(classe), `la carte devrait porter .${classe}`);
+        }
+        assert.match(suivi, /class="fzd-off-tag is-watch">Suivi</);
+        assert.match(suivi, /class="fzd-off-card-date">5 sept\.</);
+        assert.match(suivi, />Montréal Canadiens · L</);
+        assert.match(suivi, /aria-label="Voir la fiche de Cole Caufield"/);
+
+        // Sans favori, la carte n'invente pas de date : elle annonce l'attente.
+        const neuf = fzhWatchCardHTML({ ...joueur, name: 'Ivan Demidov' }, 1, 8484143, false);
+        assert.match(neuf, /class="fzd-off-tag is-watch">À surveiller</);
+        assert.match(neuf, /class="fzd-off-card-date"><\/span>/);
+
+        // Le pied annonce toujours la même chose — la raison de suivre ce
+        // joueur. Mise en favori ou non, c'est la seule phrase qu'il porte :
+        // une étiquette « Suivi depuis » y coifferait un résumé, pas une date.
+        for (const carte of [suivi, neuf]) {
+            assert.match(carte, /class="fzd-off-stat-lbl">Pourquoi le suivre</);
+            assert.match(carte, /Tireur d’élite</);
         }
     });
 

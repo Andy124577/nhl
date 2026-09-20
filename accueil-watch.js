@@ -1,8 +1,32 @@
 /* Shared draft / season watchlist. The data owns both short and full notes. */
+
+/**
+ * Le châssis du panneau — celui de « Mouvements récents », à l'identique.
+ *
+ * Les deux panneaux sont voisins dans le bloc hors-saison et racontent la
+ * même chose sous deux angles : ce qui vient d'arriver, ce qui s'en vient.
+ * Ils partagent donc les classes .fzd-off-* plutôt que d'entretenir deux
+ * jeux de cartes qui finiraient par diverger. Seuls le filtre par équipe et
+ * l'étoile des favoris appartiennent en propre à « À surveiller ».
+ */
 function fzhWatchHTML() {
-    // Même châssis que « Mouvements récents » : compte et flèches dans l'en-tête,
-    // filtre sur sa propre ligne, piste de cartes, points en bas.
-    return `${fzhHeading('eye', 'À surveiller', '<div class="fzh-watch-tools"><span data-watch-count role="status"></span><button type="button" data-watch-prev aria-label="Joueurs précédents">‹</button><button type="button" data-watch-next aria-label="Joueurs suivants">›</button></div>')}<div class="fzh-watch-filter"><select aria-label="Filtrer par équipe"></select></div><div class="fzh-watch-track"></div><div class="fzh-watch-controls"><div class="fzd-off-dots" data-watch-dots></div></div>`;
+    // icons.js ne remplit les [data-icon] qu'au DOMContentLoaded ; ce panneau
+    // est écrit bien après, il pose donc son SVG lui-même.
+    const oeil = typeof getIcon === 'function' ? getIcon('eye', 20) : '';
+    return `
+        <div class="fzd-off-head">
+            <h2 class="fzd-section-title"><span data-icon="eye" aria-hidden="true">${oeil}</span>À surveiller</h2>
+            <div class="fzd-off-nav">
+                <button type="button" class="fzd-off-nav-btn" data-watch-prev aria-label="Joueurs précédents">‹</button>
+                <button type="button" class="fzd-off-nav-btn" data-watch-next aria-label="Joueurs suivants">›</button>
+            </div>
+        </div>
+        <div class="fzh-watch-filter">
+            <select aria-label="Filtrer par équipe"></select>
+            <span class="fzh-watch-count" data-watch-count role="status"></span>
+        </div>
+        <div class="fzd-off-track fzh-watch-track"></div>
+        <div class="fzd-off-dots" data-watch-dots></div>`;
 }
 
 function fzhWatchDots(panel, bind = false) {
@@ -23,14 +47,50 @@ function fzhWatchId(p) {
 
 // La trousse ne date pas ses fiches : seule une mise en favori porte une date,
 // celle du geste de l'utilisateur. Les autres cartes n'annoncent donc qu'un
-// suivi à venir, plutôt qu'une date inventée.
+// suivi à venir, plutôt qu'une date inventée. Le mot tient dans la pastille
+// de la carte, là où « Échange » ou « Blessé » tient sur celles d'à côté.
 function fzhWatchKicker(saved) {
-    return saved ? 'Suivi depuis' : 'À surveiller';
+    return saved ? 'Suivi' : 'À surveiller';
 }
 
 function fzhWatchSince(name) {
     const iso = offWatchFavorites.get(name);
     return iso && typeof dayLabelFr === 'function' ? dayLabelFr(iso) : '';
+}
+
+/**
+ * Une carte de joueur, sur le gabarit des cartes de mouvement : pastille et
+ * date en tête, photo et identité au milieu, le pied que la carte de blessure
+ * réserve à ses deux chiffres. L'étoile des favoris prend le coin resté libre.
+ *
+ * Le pied porte toujours la même chose — la raison de suivre ce joueur, telle
+ * que la trousse l'écrit. La mise en favori ne la change pas : elle ne fait
+ * qu'ajouter une date en tête, la seule que ces fiches connaissent.
+ */
+function fzhWatchCardHTML(p, index, id, saved) {
+    const club = [p.teamName || p.team, p.position && p.position !== '—' ? p.position : '']
+        .filter(Boolean).join(' · ');
+    return `
+        <article class="fzd-off-card fzh-watch-row${saved ? ' is-saved' : ''}"${id ? ` role="button" tabindex="0" data-watch-index="${index}" aria-label="Voir la fiche de ${escapeHTML(p.name)}"` : ''}>
+            <div class="fzd-off-card-top">
+                <span class="fzd-off-tag is-watch">${fzhWatchKicker(saved)}</span>
+                <span class="fzd-off-card-date">${escapeHTML(fzhWatchSince(p.name))}</span>
+                <button type="button" class="fzh-watch-star${saved ? ' is-saved' : ''}" data-fzh-player="${escapeHTML(p.name)}" aria-label="${saved ? 'Retirer' : 'Ajouter'} ${escapeHTML(p.name)} ${saved ? 'des' : 'aux'} favoris" aria-pressed="${saved}">${fzhIcon('star', 15)}</button>
+            </div>
+            <div class="fzd-off-player">
+                ${offPlayerFaceHTML(p.name, p.team, id)}
+                <div class="fzd-off-player-info">
+                    <div class="fzd-off-card-name fzd-display">${escapeHTML(p.name)}</div>
+                    <div class="fzd-off-card-club">${escapeHTML(club)}</div>
+                </div>
+            </div>
+            <div class="fzd-off-card-stats">
+                <div class="fzd-off-stat">
+                    <span class="fzd-off-stat-lbl">Pourquoi le suivre</span>
+                    <span class="fzd-off-stat-val fzh-watch-status" title="${escapeHTML(p.note || '')}">${escapeHTML(p.summary || p.note || 'Surveillance')}</span>
+                </div>
+            </div>
+        </article>`;
 }
 
 /** `root` est soit le panneau lui-même, soit l'accueil qui le contient. */
@@ -48,10 +108,9 @@ function fzhRenderWatch(root) {
         panel.querySelector('[data-watch-count]').textContent = `${shown.length} joueur${shown.length === 1 ? '' : 's'}`;
         const track = panel.querySelector('.fzh-watch-track');
         track.classList.toggle('is-empty', !shown.length);
-        track.innerHTML = shown.length ? shown.map((p, i) => {
-            const id = fzhWatchId(p), saved = offWatchFavorites.has(p.name);
-            return `<article class="fzh-watch-row"${id ? ` role="button" tabindex="0" data-watch-index="${i}" aria-label="Voir la fiche de ${escapeHTML(p.name)}"` : ''} title="${escapeHTML(p.note || '')}"><div class="fzh-watch-top"><span class="fzh-watch-kicker">${fzhWatchKicker(saved)}</span><span class="fzh-watch-date">${escapeHTML(fzhWatchSince(p.name))}</span></div><div class="fzh-watch-id">${offPlayerFaceHTML(p.name, p.team, id)}<div class="fzh-watch-name"><strong>${escapeHTML(p.name)}</strong><small>${escapeHTML(p.team)} · ${escapeHTML(p.position || '—')}</small></div><button type="button" class="fzh-watch-star${saved ? ' is-saved' : ''}" data-fzh-player="${escapeHTML(p.name)}" aria-label="${saved ? 'Retirer' : 'Ajouter'} ${escapeHTML(p.name)} ${saved ? 'des' : 'aux'} favoris" aria-pressed="${saved}">${fzhIcon('star', 18)}</button></div><span class="fzh-watch-status">${escapeHTML(p.summary || p.note || 'Surveillance')}</span></article>`;
-        }).join('') : '<p class="fzh-empty">Aucun joueur à surveiller pour le moment.</p>';
+        track.innerHTML = shown.length
+            ? shown.map((p, i) => fzhWatchCardHTML(p, i, fzhWatchId(p), offWatchFavorites.has(p.name))).join('')
+            : '<p class="fzd-off-empty">Aucun joueur à surveiller pour le moment.</p>';
         track.scrollLeft = 0;
         track.querySelectorAll('[data-watch-index]').forEach(card => {
             const open = () => { const p = shown[Number(card.dataset.watchIndex)]; fzhOpenWatchCareer(p, fzhWatchId(p)); };
@@ -72,8 +131,9 @@ function fzhRenderWatch(root) {
             button.setAttribute('aria-pressed', String(saved));
             button.setAttribute('aria-label', `${saved ? 'Retirer' : 'Ajouter'} ${name} ${saved ? 'des' : 'aux'} favoris`);
             const card = button.closest('.fzh-watch-row');
-            card.querySelector('.fzh-watch-kicker').textContent = fzhWatchKicker(saved);
-            card.querySelector('.fzh-watch-date').textContent = fzhWatchSince(name);
+            card.classList.toggle('is-saved', saved);
+            card.querySelector('.fzd-off-tag').textContent = fzhWatchKicker(saved);
+            card.querySelector('.fzd-off-card-date').textContent = fzhWatchSince(name);
         }));
         fzhWatchDots(panel, true);
     };
@@ -95,7 +155,10 @@ function fzhOpenWatchCareer(player, id) {
     if (!id) return;
     fzhCareerData = null;
     const request = fzOpenCareerModal(id, player.name, {
-        onData(data) { data.isGoalie = player.kind === 'goalie'; fzhCareerData = data; },
+        // La trousse dit d'avance si la fiche est celle d'un gardien ; un
+        // buteur du calendrier, lui, n'arrive qu'avec un nom, et c'est alors
+        // la fiche elle-même qui tranche une fois chargée.
+        onData(data) { data.isGoalie = player.kind ? player.kind === 'goalie' : data.position === 'G'; fzhCareerData = data; },
         renderStats: filterCareerStats
     });
     let note = document.getElementById('fzhWatchCareerNote');
@@ -104,7 +167,20 @@ function fzhOpenWatchCareer(player, id) {
         document.getElementById('careerProfileBody').prepend(note);
     }
     note.textContent = player.note || '';
+    // Sans note, le filet bleu de la note resterait seul en haut de la fiche.
+    note.hidden = !player.note;
     return request;
+}
+
+/**
+ * La même fiche, ouverte depuis ailleurs qu'« À surveiller » — un buteur du
+ * calendrier, par exemple. Il n'y a rien de plus à dire que le nom : la note
+ * de la trousse reste vide et la fiche se lit telle quelle.
+ */
+function fzhOpenPlayerCareer(playerId, name) {
+    const id = Number(playerId);
+    if (!Number.isInteger(id) || id <= 0) return;
+    return fzhOpenWatchCareer({ name, note: '' }, id);
 }
 
 function closeCareerModal() { fzCloseCareerModal(); fzhCareerData = null; }

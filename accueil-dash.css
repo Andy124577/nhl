@@ -685,7 +685,15 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
     border-radius: 9px;
     background: var(--fzd-surface);
     padding: 7px 9px;
+    transition: border-color .15s ease, background .15s ease;
 }
+/* La carte ouvre la fiche du buteur (goalCardHTML) — mais seulement quand la
+   LNH a donné son identifiant : une carte muette ne prend ni la main ni le
+   curseur, plutôt que de promettre un clic sans effet. */
+.fzd-goal-card[data-goal-player] { cursor: pointer; }
+.fzd-goal-card[data-goal-player]:hover { border-color: var(--fzd-border-strong); background: var(--fzd-bg-alt); }
+.fzd-goal-card[data-goal-player]:hover .fzd-goal-name { color: var(--fzd-accent); }
+.fzd-goal-card[data-goal-player]:focus-visible { outline: 2px solid var(--fzd-accent); outline-offset: 2px; }
 /* L'anneau dit de quel club vient le but — voir goalCardHTML. En
    box-shadow plutôt qu'en border : la photo garde ses 28 pixels, et deux
    cartes voisines gardent la même hauteur. */
@@ -918,7 +926,13 @@ html[data-theme="dark"] .fz-dash-offseason {
 }
 .fzd-off-count, .fzd-off-position { position: relative; overflow: hidden; min-height: 120px; padding: 18px 22px 15px; }
 .fzd-off-count { margin: 0; isolation: isolate; }
-.fz-dash-offseason .fzd-section-title, .fzd-off-count .fzd-section-title {
+/* Le titre est accroché AUX PANNEAUX et non au bloc hors-saison : trois
+   d'entre eux le quittent le temps d'un repêchage ou d'une saison (voir
+   fzdPlaceCalendar), et un titre scopé au conteneur d'origine y perdait sa
+   police et l'espace entre son icône et son mot. */
+.fz-dash-offseason .fzd-section-title,
+.fzd-off-section .fzd-section-title,
+.fzd-off-count .fzd-section-title {
     display: flex; align-items: center; gap: 12px; margin: 0;
     font: 600 14px/1.3 'Barlow Condensed', sans-serif;
     letter-spacing: .07em; text-transform: uppercase; color: var(--fzd-ink);

@@ -52,7 +52,9 @@ html[data-theme="dark"] #fzDashSection .fz-mobile-home,
     border-color: var(--fzh-outline);
     box-shadow: none;
 }
-#fzDashSection :is(.fzh-game, .fzs-game, .fzh-participant-more, .fzh-watch-filter select) {
+/* Le filtre d'« À surveiller » n'est plus de la partie : il suit les jetons
+   --fzd-* du panneau qui l'entoure, comme les onglets des mouvements. */
+#fzDashSection :is(.fzh-game, .fzs-game, .fzh-participant-more) {
     background: var(--fzh-panel);
     border-color: var(--fzh-border);
     color: var(--fzh-ink);
@@ -71,7 +73,7 @@ html[data-theme="dark"] #fzDashSection .fzd-hero-cta .fzd-hero-cta-chev { color:
    sous 4,5:1. La brique pleine de la palette le tient dans les deux thèmes. */
 #fzDashSection :is(.fzh, .fzs) { --fzm-solid: var(--fzh-accent-fill); --fzm-on-solid: #fff; }
 #fzDashSection .fzh-participant b { background: var(--fzh-accent-fill); }
-#fzDashSection :is(.fzh-watch-tools > button, .fzh-draft-bottom) { border-color: var(--fzh-border); }
+#fzDashSection .fzh-draft-bottom { border-color: var(--fzh-border); }
 #fzDashSection :is(.fzs-tag:not(.is-live), .fzs .fzd-off-face) { background: var(--fzh-raised); }
 #fzDashSection .fzs-hero::after { background: linear-gradient(90deg, #1e1e22 5%, #1e1e22b8 45%, transparent); }
 html[data-theme="dark"] #fzDashSection :is(.fz-dash-hero, #fzmHeroSlot.is-draft) {

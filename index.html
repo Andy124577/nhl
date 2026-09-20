@@ -41,22 +41,22 @@
     <link rel="stylesheet" href="accueil.css?v=20260919">
     <link rel="stylesheet" href="fzToday.css?v=20260920">
     <link rel="stylesheet" href="career-modal.css">
-    <link rel="stylesheet" href="accueil-dash.css?v=20260919">
+    <link rel="stylesheet" href="accueil-dash.css?v=20260920b">
     <link rel="stylesheet" href="accueil-mobile.css?v=20260919">
     <link rel="stylesheet" href="demos.css">
     <link rel="stylesheet" href="hero.css?v=20260919">
     <link rel="stylesheet" href="accueil-season.css?v=20260919">
-    <link rel="stylesheet" href="accueil-draft.css?v=20260919">
-    <link rel="stylesheet" href="accueil-watch.css?v=20260919">
+    <link rel="stylesheet" href="accueil-draft.css?v=20260920b">
+    <link rel="stylesheet" href="accueil-watch.css?v=20260920b">
     <link rel="stylesheet" href="skeleton-loader.css">
     <!-- Panneau de la file du repêchage instantané (instantDraft.js). -->
     <link rel="stylesheet" href="instantDraft.css?v=20260908a">
     <!-- Récapitulatif de repêchage : le même popup qu'à la fin du repêchage,
          rouvert ici par la bannière (voir fzdOuvrirRecapRepechage). -->
     <link rel="stylesheet" href="draftFinPopup.css?v=20260902a">
-    <link rel="stylesheet" href="accueil-palette.css?v=20260919">
+    <link rel="stylesheet" href="accueil-palette.css?v=20260920b">
     <!-- Thème clair des accueils repêchage et saison : APRÈS la palette. -->
-    <link rel="stylesheet" href="accueil-light.css?v=20260919">
+    <link rel="stylesheet" href="accueil-light.css?v=20260920b">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
@@ -337,7 +337,11 @@
                     <div class="fzd-off-dots" id="fzdOffDots"><!-- Filled by accueil-dash.js --></div>
                 </div>
 
-                <section class="fzh-watch fzh-panel" id="fzdOffWatch" data-watch-panel><!-- Filled by accueil-watch.js --></section>
+                <!-- Même châssis que « Mouvements récents » juste au-dessus :
+                     .fzd-off-section porte le cadre, .fzd-off-carousel
+                     l'en-tête à flèches. accueil-watch.js y écrit les mêmes
+                     cartes .fzd-off-card. -->
+                <section class="fzh-watch fzd-off-section fzd-off-carousel" id="fzdOffWatch" data-watch-panel><!-- Filled by accueil-watch.js --></section>
             </div>
 
             <!-- Actualités LNH — accueil SANS pool. Le membre qui a un pool voit
@@ -537,8 +541,8 @@
     <script defer src="teamColors.js"></script>
     <script defer src="careerTotals.js"></script>
     <script defer src="accueil-carousel.js?v=20260915"></script>
-    <script defer src="accueil-watch.js?v=20260915"></script>
-    <script defer src="accueil-dash.js?v=20260920-pending"></script>
+    <script defer src="accueil-watch.js?v=20260920b"></script>
+    <script defer src="accueil-dash.js?v=20260920b"></script>
     <script defer src="instantDraft.js?v=20260920-canvas3"></script>
     <script defer src="accueil-mobile.js?v=20260920"></script>
     <script defer src="accueil-season.js?v=20260915"></script>
