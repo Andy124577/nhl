@@ -1505,6 +1505,32 @@ button.fzd-mypools-more:empty { display: none; }
     /* Une seule carte : elle occupe toute la largeur, rien ne défile. */
     .fzd-cal-games > .fzd-game-card:only-child { flex-basis: 100%; }
 
+    /* --- Carte de but au téléphone : un rectangle, pas un timbre ---
+       Elle gardait les 204 px du bureau dans une carte de match devenue
+       pleine largeur : buteur, aides et marque se faisaient couper aux
+       points de suspension au milieu d'une carte à moitié vide. Elle suit
+       désormais la largeur de l'écran, et les trois lignes y tiennent.
+       88 % plutôt que 100 % : la carte suivante se devine au bord, seul
+       signe qu'il y a une suite une fois les flèches retirées. */
+    .fzd-goal-card { width: auto; flex: 0 0 88%; gap: 11px; padding: 9px 11px; }
+    .fzd-goals-track > .fzd-goal-card:only-child { flex-basis: 100%; }
+    .fzd-goal-photo { width: 34px; height: 34px; }
+    /* La place est là : un nom trop long se replie au lieu d'être tronqué. */
+    .fzd-goal-name, .fzd-goal-assist, .fzd-goal-run {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        /* Sans min-width, une ligne plus large que la carte la ferait
+           déborder au lieu de se replier. */
+        min-width: 0;
+        overflow-wrap: break-word;
+    }
+    .fzd-goal-score { flex-wrap: wrap; white-space: normal; }
+    .fzd-goal-name { font-size: 12.5px; }
+    .fzd-goal-assist, .fzd-goal-run, .fzd-goal-when { font-size: 10.5px; }
+    /* Les flèches sont pour la souris ; ici le pouce balaie la piste. */
+    .fzd-goals.has-nav .fzd-goals-nav { display: none; }
+
     /* Au doigt on balaie : les flèches ne servent qu'à la souris. */
     .fzd-cal-arrow { display: none; }
     .fzd-cal-empty { padding: 14px 4px; }

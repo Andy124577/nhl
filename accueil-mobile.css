@@ -311,7 +311,11 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
     .fz-mobile-home .fzd-cal-dayhead { padding: 6px 0; }
     .fz-mobile-home .fzd-cal-empty { width: 100%; padding: 16px; margin: 0; border: 1px solid var(--fzm-border); border-radius: 9px; background: var(--fzm-surface); }
     .fz-mobile-home .fzd-cal-games { margin: 0; padding: 0; gap: 8px; scroll-padding: 0; }
-    .fz-mobile-home .fzd-game-card { flex: 0 0 calc((100% - 8px) / 2); min-width: 145px; padding: 10px; background: var(--fzm-surface); border-color: var(--fzm-border); }
+    /* Largeur : celle du calendrier partagé (une carte par écran, 86 % —
+       accueil-dash.css), la même que dans les accueils repêchage et saison.
+       Deux cartes par vue ne laissaient à la carte de but qu'une demi-demi-
+       largeur d'écran, où plus rien du but ne tenait sur une ligne. */
+    .fz-mobile-home .fzd-game-card { padding: 10px; background: var(--fzm-surface); border-color: var(--fzm-border); }
     .fz-mobile-home .fzd-game-head { gap: 4px; flex-wrap: wrap; }
     .fz-mobile-home .fzd-game-when { font-size: 9px; }
     .fz-mobile-home .fzd-game-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -329,55 +333,12 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
     .fz-mobile-home .fzd-goals { grid-column: 1 / -1; padding-top: 7px; border-top-color: var(--fzm-border); }
     .fz-mobile-home .fzd-goals-title { color: var(--fzm-ink); }
     .fz-mobile-home .fzd-goals-sub { color: var(--fzm-ink-faint); }
-    /* UNE CARTE DE BUT ENTIÈRE PAR VUE.
-       Au bureau la photo tient à gauche des trois lignes, qui se coupent aux
-       points de suspension si elles débordent. Au téléphone la carte de match
-       ne fait qu'une demi-largeur d'écran : garder cette mise en page
-       couperait « Marat Khusnutdinov » au milieu, et une carte à moitié lue
-       ne vaut pas la place qu'elle prend.
-       Ici la photo ne retient donc que la ligne du nom, et l'aide comme la
-       marque reprennent toute la largeur en dessous, où elles se replient sur
-       deux lignes plutôt que de se faire couper. La carte grandit en hauteur,
-       ce qui ne coûte rien : elle est seule à l'écran. */
-    .fz-mobile-home .fzd-goal-card {
-        flex: 0 0 100%;
-        width: auto;
-        display: grid;
-        grid-template-columns: auto 1fr;
-        align-items: center;
-        gap: 3px 7px;
-        padding: 7px 8px;
-        background: var(--fzm-bg);
-        border-color: var(--fzm-border);
-    }
-    .fz-mobile-home .fzd-goal-photo { width: 26px; height: 26px; }
-    /* `display: contents` : les trois lignes deviennent elles-mêmes les cases
-       de la grille, sans quoi la photo ne pourrait pas se poser à côté du
-       seul nom. */
-    .fz-mobile-home .fzd-goal-id { display: contents; }
-    .fz-mobile-home .fzd-goal-name { grid-column: 2; font-size: 10.5px; color: var(--fzm-ink); }
-    .fz-mobile-home .fzd-goal-assist,
-    .fz-mobile-home .fzd-goal-score { grid-column: 1 / -1; }
-    .fz-mobile-home .fzd-goal-name,
-    .fz-mobile-home .fzd-goal-assist,
-    .fz-mobile-home .fzd-goal-run {
-        white-space: normal;
-        overflow: visible;
-        text-overflow: clip;
-        /* Une case de grille refuse de rétrécir sous son contenu tant qu'on
-           ne le lui dit pas : sans ces deux lignes, un « Khusnutdinov » plus
-           large que la colonne la ferait déborder au lieu de se replier. */
-        min-width: 0;
-        overflow-wrap: break-word;
-    }
-    /* Les flèches sont pour la souris. Ici le pouce fait le travail, et la
-       piste débordant toujours (une carte par vue), `has-nav` les ferait
-       paraître sur chaque carte — d'où le sélecteur aussi long que le sien. */
-    .fz-mobile-home .fzd-goals.has-nav .fzd-goals-nav { display: none; }
-    .fz-mobile-home .fzd-goal-score { flex-wrap: wrap; white-space: normal; }
-    .fz-mobile-home .fzd-goal-assist,
-    .fz-mobile-home .fzd-goal-run,
-    .fz-mobile-home .fzd-goal-when { font-size: 9px; }
+    /* La carte de but est large et rectangulaire sur tous les accueils
+       téléphone (accueil-dash.css) : buteur, aides et marque y tiennent
+       chacun sur sa ligne. Il ne reste ici que les couleurs de l'accueil
+       téléphone, que la carte partagée ne connaît pas. */
+    .fz-mobile-home .fzd-goal-card { background: var(--fzm-bg); border-color: var(--fzm-border); }
+    .fz-mobile-home .fzd-goal-name { color: var(--fzm-ink); }
     .fz-mobile-home .fzd-goal-run { color: var(--fzm-ink); }
     .fz-mobile-home .fzd-goal-assist { color: var(--fzm-ink-soft); }
     .fz-mobile-home .fzd-goal-tally,
