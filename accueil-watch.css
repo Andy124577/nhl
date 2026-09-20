@@ -37,18 +37,7 @@
 .fzh .fzd-off-dot::after, .fzs [data-watch-panel] .fzd-off-dot::after { height:3px; background:#2a3648; }
 .fzh .fzd-off-dot.is-active, .fzs [data-watch-panel] .fzd-off-dot.is-active { width:16px; }
 .fzh .fzd-off-dot.is-active::after, .fzs [data-watch-panel] .fzd-off-dot.is-active::after { background:#f3372c; }
-[data-watch-panel] :focus-visible, .fzm-league-nav button:focus-visible, .fzm-league-dots button:focus-visible { outline:2px solid #26a6ff; outline-offset:2px; }
-.fzh .fzm-league-track, .fzs .fzm-league-track { display:flex; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; }
-.fzh .fzm-off-card, .fzs .fzm-off-card { box-sizing:border-box; overflow-y:auto; scroll-snap-align:start; }
-.fzs .fzm-league-track { height:260px; }
-.fzs .fzm-off-card { flex:0 0 260px; height:244px; }
-/* Les cartes s'étirent à la plus haute de la rangée (un échange en montre deux
-   clubs) sans figer la piste à une hauteur qui la creuse les jours calmes. */
-.fzh .fzm-league-track { min-height:150px; }
-.fzh .fzm-off-card { max-height:290px; }
-.fzm-league-dots .fzd-off-dot[hidden], .fzh-watch-controls .fzd-off-dot[hidden] { display:none; }
-/* Le compte d'en-tête n'appartient qu'aux deux accueils, pas à la home téléphone. */
-.fzm-league-count { display:none; }
-.fzh .fzm-league-count, .fzs .fzm-league-count { display:inline; margin-left:auto; color:#8b98a8; font-size:13px; white-space:nowrap; }
+[data-watch-panel] :focus-visible { outline:2px solid #26a6ff; outline-offset:2px; }
+.fzh-watch-controls .fzd-off-dot[hidden] { display:none; }
 @media(max-width:768px) { [data-watch-panel] .fzh-watch-row { flex-basis:268px; } }
-@media(prefers-reduced-motion:reduce) { .fzh-watch-track, .fzm-league-track { scroll-behavior:auto!important; } }
+@media(prefers-reduced-motion:reduce) { .fzh-watch-track { scroll-behavior:auto!important; } }

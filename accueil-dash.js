@@ -294,9 +294,6 @@ async function initCalendar() {
 }
 
 function renderCalendar() {
-    // Pendant un repêchage, la home de repêchage a son propre calendrier
-    // présaison (accueil-draft.js) et le bloc partagé est hors écran.
-    if (typeof fzhRenderCalendar === 'function' && fzhRenderCalendar()) return;
     renderCalRange();
     renderDayStrip();
     renderDayHead();
@@ -766,41 +763,72 @@ function calGamesScroll(dir) {
     wrap.scrollBy({ left: dir * (page || wrap.clientWidth), behavior: 'smooth' });
 }
 
-/**
- * Le calendrier est UN seul nœud, pas deux rendus. Au bureau il vit à sa
- * place dans .fz-dash ; au téléphone renderMobileHome() lui réserve
- * #fzmCalSlot et on l'y déplace, pour qu'il tombe entre le classement et
- * « Vos joueurs ce soir » plutôt qu'à la toute fin de l'écran. Le retour
- * arrière évite qu'un simple redimensionnement le laisse coincé dans la home
- * mobile, masquée au-dessus de 768px.
- */
-function fzdPlaceCalendar() {
-    const cal = document.getElementById('fzDashCalendarWrap');
-    if (!cal) return;
-    const seasonSlot = document.getElementById('fzSeasonCalendar');
-    if (document.getElementById('fzDashSection')?.classList.contains('is-season') && seasonSlot) {
-        seasonSlot.appendChild(cal);
-        return;
+// ============================================================
+// BLOCS PARTAGÉS — un seul nœud par panneau, déplacé d'un accueil à l'autre
+//
+// Le calendrier, le compte à rebours hors-saison, « Mouvements récents » et
+// « À surveiller » sont les mêmes quatre panneaux sur les quatre accueils
+// (tableau de bord, repêchage, saison, téléphone). Ils existent donc UNE
+// seule fois dans index.html et chaque accueil ouvre un emplacement vide
+// `data-fz-bloc="<clé>"` où on les déplace : un seul balisage, un seul
+// rendu, jamais deux versions du même panneau qui finissent par diverger.
+//
+// Les emplacements portent display:contents (accueil-dash.css) : c'est le
+// nœud déplacé qui devient l'enfant de grille, pas l'emplacement.
+// ============================================================
+const FZD_BLOCS = [
+    { cle: 'calendrier', id: 'fzDashCalendarWrap' },
+    { cle: 'horssaison', id: 'fzdOffCount' },
+    { cle: 'mouvements', id: 'fzdOffMoves' },
+    { cle: 'surveiller', id: 'fzdOffWatch' }
+];
+let fzdBlocsMaison = null;
+
+/** Où chaque bloc vit dans index.html, relevé avant le premier déplacement. */
+function fzdBlocs() {
+    if (!fzdBlocsMaison) {
+        fzdBlocsMaison = FZD_BLOCS.map(({ cle, id }) => {
+            const noeud = document.getElementById(id);
+            return noeud && { cle, noeud, parent: noeud.parentElement, avant: noeud.nextElementSibling };
+        }).filter(Boolean);
     }
-    const slot = document.getElementById('fzmCalSlot');
-    if (calIsPhone() && slot) {
-        if (cal.parentElement !== slot) slot.appendChild(cal);
-    } else {
-        fzdRestoreCalendar();
-    }
+    return fzdBlocsMaison;
 }
 
 /**
- * Ramène le calendrier à sa place bureau. renderMobileHome() l'appelle AVANT
- * de réécrire son innerHTML : le nœud vit peut-être dans #fzmCalSlot, et une
- * réécriture l'effacerait pour de bon — plus de calendrier jusqu'au prochain
- * chargement de page.
+ * L'emplacement qui réclame ce bloc, s'il y en a un à l'écran.
+ *
+ * Ceux de la home téléphone ne comptent qu'au téléphone : son balisage reste
+ * dans le DOM au bureau, où .fz-mobile-home est masquée (accueil-mobile.css)
+ * — un bloc qui y tomberait disparaîtrait de l'écran.
+ */
+function fzdSlotBloc(cle) {
+    return [...document.querySelectorAll(`[data-fz-bloc="${cle}"]`)]
+        .find(slot => calIsPhone() || !slot.closest('#fzMobileHome')) || null;
+}
+
+/** Place chaque bloc dans l'emplacement de l'accueil affiché, ou le rend. */
+function fzdPlaceCalendar() {
+    fzdRestoreCalendar();
+    fzdBlocs().forEach(({ cle, noeud }) => {
+        const slot = fzdSlotBloc(cle);
+        if (slot && noeud.parentElement !== slot) slot.appendChild(noeud);
+    });
+}
+
+/**
+ * Ramène les blocs à leur place d'origine. Chaque accueil l'appelle AVANT de
+ * réécrire son innerHTML : les nœuds vivent peut-être dans l'emplacement
+ * qu'on efface, et la réécriture les supprimerait pour de bon — plus de
+ * calendrier ni de mouvements jusqu'au prochain chargement de page.
  */
 function fzdRestoreCalendar() {
-    const cal = document.getElementById('fzDashCalendarWrap');
-    const anchor = document.getElementById('fzDashOffseason');
-    if (!cal || !anchor || cal.nextElementSibling === anchor) return;
-    anchor.parentElement.insertBefore(cal, anchor);
+    // À rebours : chaque bloc se repose devant le suivant, qui doit donc
+    // être rentré le premier.
+    fzdBlocs().slice().reverse().forEach(({ noeud, parent, avant }) => {
+        if (noeud.parentElement === parent && noeud.nextElementSibling === avant) return;
+        parent.insertBefore(noeud, avant && avant.parentElement === parent ? avant : null);
+    });
 }
 
 async function selectCalendarDay(dateStr) {
@@ -1724,6 +1752,14 @@ function renderOffseasonPanel() {
     fzdApplyPreseasonLayout(hasPool);
 
     const horsSaison = !!seasonStart && today < seasonStart;
+
+    // Les trois blocs partagés se remplissent d'abord : ils vivent peut-être
+    // déjà dans l'accueil de repêchage, de saison ou du téléphone, où ce
+    // panneau-ci n'a plus son mot à dire sur ce qui s'affiche.
+    fzdRendreHorsSaison(horsSaison);
+    fzdRendreSurveiller();
+    fzdRendreMouvements();
+
     // Sans pool, la LNH est tout ce que cet accueil a à montrer : les
     // mouvements récents et la liste « À surveiller » restent donc à
     // l'écran même une fois la saison commencée. Seul le résumé du haut
@@ -1738,23 +1774,55 @@ function renderOffseasonPanel() {
     // pas sur son propre display.
     panel.querySelector('.fzd-off-summary').style.display = horsSaison ? '' : 'none';
 
-    if (horsSaison) {
-        const campStart = calData.preSeasonStartDate;
-        const beforeCamp = !!campStart && today < campStart;
-        const target = beforeCamp ? campStart : seasonStart;
-        const days = Math.max(0, Math.ceil((new Date(target + 'T00:00:00Z') - new Date(today + 'T00:00:00Z')) / 86400000));
+    if (horsSaison) renderOffseasonPosition();
+}
 
-        document.getElementById('fzdOffDays').textContent = `${days} j`;
-        document.getElementById('fzdOffSub').textContent = beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison';
+/**
+ * Le compte à rebours hors-saison — le même bloc sur tous les accueils.
+ * Il se retire de lui-même une fois la saison commencée : un décompte sans
+ * cible n'a rien à dire, et il n'est plus forcément dans #fzDashOffseason
+ * pour disparaître avec lui.
+ */
+function fzdRendreHorsSaison(horsSaison) {
+    const bloc = document.getElementById('fzdOffCount');
+    if (!bloc) return;
+    bloc.hidden = !horsSaison;
+    if (!horsSaison) return;
 
-        renderOffseasonPosition();
-    }
+    const today = todayISO();
+    const campStart = calData.preSeasonStartDate;
+    const beforeCamp = !!campStart && today < campStart;
+    const target = beforeCamp ? campStart : calData.regularSeasonStartDate;
+    const days = Math.max(0, Math.ceil((new Date(target + 'T00:00:00Z') - new Date(today + 'T00:00:00Z')) / 86400000));
 
-    renderOffseasonWatchlist();
+    document.getElementById('fzdOffDays').textContent = `${days} j`;
+    document.getElementById('fzdOffSub').textContent = beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison';
+}
+
+/**
+ * « À surveiller » — le panneau de la home de repêchage (accueil-watch.js),
+ * désormais le seul. Son balisage n'est posé qu'une fois : le nœud survit
+ * aux changements d'accueil, donc la piste garde son filtre et sa position.
+ */
+function fzdRendreSurveiller() {
+    const panel = document.getElementById('fzdOffWatch');
+    if (!panel) return;
+    if (!panel.firstElementChild) panel.innerHTML = fzhWatchHTML();
+    fzhRenderWatch(panel);
+}
+
+/**
+ * « Mouvements récents ». Le journal n'est demandé qu'une fois par visite ;
+ * ensuite le nœud est déjà rempli et seuls les points du carrousel sont à
+ * recompter — il vient de changer de place, donc de largeur.
+ */
+function fzdRendreMouvements() {
     if (!offseasonNewsLoaded) {
         offseasonNewsLoaded = true;
         loadOffseasonTransactions();
+        return;
     }
+    renderOffseasonDots();
 }
 
 function renderOffseasonPosition() {
@@ -2018,11 +2086,9 @@ function offseasonEmptyText() {
 }
 
 /* Les 70 entrées « Joueurs à Surveiller » des 32 équipes, dans l'ordre du
-   document. La liste est longue par nature — une équipe peut en compter
-   jusqu'à trois — donc le panneau la fait défiler plutôt que de s'étirer,
-   et un filtre par équipe permet d'aller droit au club voulu. */
-let offWatchTeam = 'all';
-let offWatchExpanded = false;
+   document (OFFSEASON_WATCHLIST). Le panneau lui-même vit dans
+   accueil-watch.js : ces favoris sont la seule part que le tableau de bord
+   garde, parce qu'ils sont propres au membre et non à la trousse. */
 const offWatchFavorites = new Map();
 let offWatchFavoritesUser = null;
 
@@ -2056,79 +2122,6 @@ function loadOffWatchFavorites() {
             }
         });
     } catch (_) { /* Favorites remain available in memory if storage is unavailable. */ }
-}
-
-function renderOffseasonWatchlist() {
-    const wrap = document.getElementById('fzdOffWatchlist');
-    if (!wrap) return;
-    loadOffWatchFavorites();
-
-    if (!OFFSEASON_WATCHLIST.length) {
-        wrap.innerHTML = `<div class="fzd-watch-head"><h2 class="fzd-section-title">${getIcon('star')} À surveiller</h2></div><p class="fzd-off-empty">Liste à venir.</p>`;
-        return;
-    }
-
-    const teams = [...new Set(OFFSEASON_WATCHLIST.map(p => p.team))].sort();
-    if (offWatchTeam !== 'all' && !teams.includes(offWatchTeam)) offWatchTeam = 'all';
-    const shown = offWatchTeam === 'all'
-        ? OFFSEASON_WATCHLIST
-        : OFFSEASON_WATCHLIST.filter(p => p.team === offWatchTeam);
-
-    const options = ['all', ...teams]
-        .map(t => `<option value="${escapeHTML(t)}"${t === offWatchTeam ? ' selected' : ''}>${t === 'all' ? `Toutes les équipes (${OFFSEASON_WATCHLIST.length})` : escapeHTML(t)}</option>`)
-        .join('');
-
-    const visible = offWatchExpanded ? shown : shown.slice(0, 3);
-    wrap.innerHTML = `
-        <div class="fzd-watch-head">
-            <div><h2 class="fzd-section-title"><span class="fzd-watch-icon" aria-hidden="true">${getIcon('star')}</span>À surveiller</h2>
-            <span class="fzd-watch-count">${shown.length} joueur${shown.length > 1 ? 's' : ''}</span></div>
-            <select class="fzd-watch-filter" id="fzdWatchFilter" aria-label="Filtrer par équipe">${options}</select>
-        </div>
-        <div class="fzd-watch-list" id="fzdWatchTable" tabindex="0" role="region" aria-label="Joueurs à surveiller">
-            <table class="fzd-watch-table">
-                <thead><tr><th scope="col">Joueur</th><th scope="col">Équipe</th><th scope="col">Position</th><th scope="col">Statut</th><th scope="col">Notes</th><th scope="col">Ajouté le</th><th scope="col"><span class="fzd-sr-only">Favori</span></th></tr></thead>
-                <tbody>${visible.map(p => {
-                    const key = p.name;
-                    const saved = offWatchFavorites.has(key);
-                    const added = offWatchFavorites.get(key) || p.addedAt;
-                    return `<tr>
-                        <td><span class="fzd-watch-player">${offPlayerFaceHTML(p.name, p.team, p.playerId)}<span class="fzd-watch-name">${escapeHTML(p.name)}</span></span></td>
-                        <td>${escapeHTML(p.team)}</td><td class="fzd-watch-position">${escapeHTML(p.position || '—')}</td>
-                        <td><span class="fzd-watch-status"><span aria-hidden="true">${getIcon('eye', 10)}</span>À surveiller</span></td>
-                        <td>${p.note ? `<details class="fzd-watch-note"><summary>Surveillance</summary><p>${escapeHTML(p.note)}</p></details>` : '—'}</td>
-                        <td>${added ? escapeHTML(dayLabelFr(added)) : '<span title="Date d’ajout non disponible">—</span>'}</td>
-                        <td><button type="button" class="fzd-watch-save" data-player="${escapeHTML(key)}" aria-pressed="${saved}" aria-label="${saved ? 'Retirer' : 'Ajouter'} ${escapeHTML(p.name)} ${saved ? 'des' : 'aux'} favoris">${getIcon('star', 17)}</button></td>
-                    </tr>`;
-                }).join('')}</tbody>
-            </table>
-        </div>
-        ${shown.length > 3 ? `<button type="button" class="fzd-watch-more" id="fzdWatchMore" aria-expanded="${offWatchExpanded}" aria-controls="fzdWatchTable">${offWatchExpanded ? 'Réduire la liste ↑' : 'Voir tous les joueurs à surveiller →'}</button>` : ''}`;
-
-    document.getElementById('fzdWatchFilter')?.addEventListener('change', e => {
-        offWatchTeam = e.target.value;
-        offWatchExpanded = false;
-        renderOffseasonWatchlist();
-        document.getElementById('fzdWatchFilter')?.focus();
-    });
-    document.getElementById('fzdWatchMore')?.addEventListener('click', () => {
-        offWatchExpanded = !offWatchExpanded;
-        renderOffseasonWatchlist();
-        document.getElementById('fzdWatchMore')?.focus({ preventScroll: true });
-    });
-    wrap.querySelectorAll('.fzd-watch-save').forEach(button => button.addEventListener('click', () => {
-        const key = button.dataset.player;
-        if (offWatchFavorites.has(key)) offWatchFavorites.delete(key);
-        else offWatchFavorites.set(key, new Date().toISOString());
-        try { localStorage.setItem(offWatchStorageKey(), JSON.stringify([...offWatchFavorites])); } catch (_) { /* Memory fallback. */ }
-        const scrollTop = document.getElementById('fzdWatchTable').scrollTop;
-        const scrollLeft = document.getElementById('fzdWatchTable').scrollLeft;
-        renderOffseasonWatchlist();
-        const table = document.getElementById('fzdWatchTable');
-        table.scrollTop = scrollTop;
-        table.scrollLeft = scrollLeft;
-        [...wrap.querySelectorAll('.fzd-watch-save')].find(b => b.dataset.player === key)?.focus({ preventScroll: true });
-    }));
 }
 
 // ============================================================
@@ -2417,9 +2410,12 @@ async function renderDash() {
         fzdRevelerAccueil();
         if (typeof fzhReset === 'function') fzhReset();
         if (typeof fzsReset === 'function') fzsReset();
-        // La home mobile ne rend pas sans pool : le calendrier doit revenir à
-        // sa place bureau, sinon il reste coincé dans #fzmCalSlot (vidé).
+        // La home mobile ne rend pas sans pool : les blocs partagés doivent
+        // revenir à leur place, sinon ils restent coincés dans ses
+        // emplacements — qu'on efface juste après, pour qu'un rendu suivant
+        // ne les y renvoie pas.
         fzdRestoreCalendar();
+        if (mobileHome) mobileHome.innerHTML = '';
         // L'état vide n'est plus une page d'inscription et rien d'autre : le
         // calendrier LNH, le compte à rebours du camp, les mouvements
         // récents, la liste « À surveiller » et les actualités s'ouvrent

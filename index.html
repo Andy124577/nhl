@@ -247,7 +247,11 @@
                  puis des cartes de match qui portent chacune un carrousel de
                  VOS joueurs (stats en direct pendant le match, totaux de la
                  saison avant la mise au jeu). Grille à deux colonnes au
-                 bureau, carrousel plein écran au téléphone (#fzdCalDots). -->
+                 bureau, carrousel plein écran au téléphone (#fzdCalDots).
+                 BLOC PARTAGÉ : c'est le seul calendrier de l'accueil. Les
+                 homes repêchage, saison et téléphone ouvrent un emplacement
+                 data-fz-bloc="calendrier" et fzdPlaceCalendar() l'y déplace
+                 (accueil-dash.js) — ne jamais le dupliquer ni le réécrire. -->
             <div class="fz-dash-calendar" id="fzDashCalendarWrap">
                 <div class="fzd-cal-head">
                     <span class="fzd-cal-title" id="fzdCalEyebrow">Calendrier</span>
@@ -298,10 +302,14 @@
                  de joueurs réels (GET /nhl-transactions, déduits des alignements
                  officiels), blessés (GET /nhl-injuries) et joueurs à surveiller.
                  Masqué dès que la saison régulière est commencée (voir
-                 renderOffseasonPanel). -->
+                 renderOffseasonPanel).
+                 Trois de ses blocs sont PARTAGÉS avec les autres accueils et
+                 les quittent le temps d'un repêchage ou d'une saison :
+                 #fzdOffCount, #fzdOffMoves et #fzdOffWatch. Seule « Ma
+                 position » appartient en propre à ce panneau. -->
             <div class="fz-dash-offseason" id="fzDashOffseason" style="display:none;">
                 <div class="fzd-off-summary">
-                    <section class="fzd-off-count" aria-labelledby="fzdOffTitle">
+                    <section class="fzd-off-count" id="fzdOffCount" aria-labelledby="fzdOffTitle">
                         <h2 class="fzd-section-title" id="fzdOffTitle"><span data-icon="clock" aria-hidden="true"></span>Hors-saison</h2>
                         <span class="fzd-off-days fzd-display" id="fzdOffDays">—</span>
                         <span class="fzd-off-sub" id="fzdOffSub"></span>
@@ -318,7 +326,7 @@
                     </section>
                 </div>
 
-                <div class="fzd-off-section fzd-off-carousel">
+                <div class="fzd-off-section fzd-off-carousel" id="fzdOffMoves">
                     <div class="fzd-off-head">
                         <h2 class="fzd-section-title"><span data-icon="swap" aria-hidden="true"></span>Mouvements récents</h2>
                         <div class="fzd-off-nav">
@@ -331,9 +339,7 @@
                     <div class="fzd-off-dots" id="fzdOffDots"><!-- Filled by accueil-dash.js --></div>
                 </div>
 
-                <div class="fzd-off-section fzd-off-watch-section">
-                    <div class="fzd-off-watchlist" id="fzdOffWatchlist"><!-- Filled by accueil-dash.js --></div>
-                </div>
+                <section class="fzh-watch fzh-panel" id="fzdOffWatch" data-watch-panel><!-- Filled by accueil-watch.js --></section>
             </div>
 
             <!-- Actualités LNH — accueil SANS pool. Le membre qui a un pool voit

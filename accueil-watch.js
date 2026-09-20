@@ -33,8 +33,9 @@ function fzhWatchSince(name) {
     return iso && typeof dayLabelFr === 'function' ? dayLabelFr(iso) : '';
 }
 
+/** `root` est soit le panneau lui-même, soit l'accueil qui le contient. */
 function fzhRenderWatch(root) {
-    const panel = root.querySelector('[data-watch-panel]');
+    const panel = root.matches('[data-watch-panel]') ? root : root.querySelector('[data-watch-panel]');
     if (!panel) return;
     loadOffWatchFavorites();
     const select = panel.querySelector('select');
@@ -84,7 +85,7 @@ function fzhRenderWatch(root) {
         Promise.all([FZDraftKit.chargerWatchlist(), FZDraftKit.charger()]).then(([list]) => {
             if (!panel.isConnected) return;
             OFFSEASON_WATCHLIST = list;
-            fzhRenderWatch(root);
+            fzhRenderWatch(panel);
         }).catch(() => {});
     }
 }

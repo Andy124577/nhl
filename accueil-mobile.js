@@ -96,25 +96,9 @@ function fzmPreseasonExtras(draftState, activeName) {
             </div>`;
     }
 
-    // Les « Joueurs à Surveiller » des 32 équipes, dans l'ordre du document
-    // (voir OFFSEASON_WATCHLIST, accueil-dash.js). La rangée défile déjà à
-    // l'horizontale : les 70 cartes y tiennent sans tronquer la liste.
-    html += `
-        <div class="fzm-section">
-            <div class="fzm-section-head"><h2 class="fzm-section-title">Joueurs à surveiller</h2><button type="button" class="fzm-see-all" data-fzm-watch-all aria-expanded="false">Voir tout ›</button></div>
-            <div class="fzm-scroll-row fzm-watch-track">
-                ${OFFSEASON_WATCHLIST.length
-                    ? OFFSEASON_WATCHLIST.map(w => `
-                        <div class="fzm-watch-card">
-                            ${offPlayerFaceHTML(w.name, w.team, w.playerId)}
-                            <img class="fzm-watch-logo" src="teams/${escapeHTML(w.team)}.png" alt="" loading="lazy" onerror="this.remove()">
-                            <div class="fzm-watch-name">${escapeHTML(w.name)}</div>
-                            <div class="fzm-watch-team">${escapeHTML(w.team)}${w.position ? ' · ' + escapeHTML(w.position) : ''}</div>
-                            ${w.note ? `<div class="fzm-watch-note">${escapeHTML(w.note)}</div>` : ''}
-                        </div>`).join('')
-                    : `<p class="fzm-empty">Liste à venir.</p>`}
-            </div>
-        </div>`;
+    // « À surveiller » : l'emplacement du panneau partagé (accueil-watch.js),
+    // le même ici qu'au repêchage, en saison et au tableau de bord.
+    html += '<div class="fzm-slot" data-fz-bloc="surveiller"></div>';
     return html;
 }
 
@@ -170,7 +154,7 @@ function fzmRankStrip(activeName, movement) {
 
 // ============================================================
 // MATCHS DU JOUR — plus de bande « aujourd'hui seulement » propre au
-// téléphone : renderMobileHome pose #fzmCalSlot et fzdPlaceCalendar()
+// téléphone : renderMobileHome pose son emplacement et fzdPlaceCalendar()
 // (accueil-dash.js) y déplace le calendrier complet, qui montre les
 // mêmes matchs du jour PLUS la semaine, avec le carrousel de vos
 // joueurs sous chaque carte (maquette Canvas-12, 1C/1D).
@@ -301,286 +285,11 @@ function fzmActivityRowHTML(trade) {
 }
 
 // ============================================================
-// DANS LA LNH — mouvements de joueurs (échanges, signatures) déduits
-// des alignements officiels côté serveur (GET /nhl-transactions) et
-// blessés du circuit (GET /nhl-injuries), en onglets.
-//
-// Les actualités NewsAPI restent affichées dessous plutôt que fondues
-// dans les onglets : un titre de presse raconte le contexte (le montant,
-// la raison) qu'une comparaison d'alignements ne donnera jamais, et
-// inversement le journal attrape les mouvements discrets dont personne
-// n'écrit. Les deux se complètent, aucun ne remplace l'autre.
+// MOUVEMENTS RÉCENTS — le carrousel est désormais celui du tableau de bord
+// (#fzdOffMoves, fzd-off-carousel), déplacé ici par fzdPlaceCalendar()
+// comme le calendrier : un seul balisage et un seul rendu pour les quatre
+// accueils. Voir renderOffseasonLeague / fzdRendreMouvements, accueil-dash.js.
 // ============================================================
-const FZM_LEAGUE_TABS = [
-    { key: 'all', label: 'Tout' },
-    { key: 'trade', label: 'Échanges' },
-    { key: 'signing', label: 'Signatures' },
-    { key: 'injury', label: 'Blessés' }
-];
-let fzmLeagueTab = 'all';
-let fzmLeagueData = null;
-// Où en était la piste. renderMobileHome() recrée tout le DOM à chaque mise
-// à jour du pool — un choix de repêchage, un échange accepté — et sans cette
-// mémoire l'utilisateur qui feuilletait les derniers mouvements repartait de
-// la première carte.
-let fzmLeagueScroll = 0;
-
-// Carrousel calqué sur celui du bureau (fzd-off-carousel, index.html /
-// renderOffseasonLeague, accueil-dash.js) : en-tête avec flèches, onglets
-// filtres, piste de cartes qu'on feuillette au doigt, points dessous.
-function fzmLeagueSectionHTML(showNews, isDraft = false) {
-    return `
-        <div class="fzm-section" id="fzmLeagueSection">
-            <div class="fzm-league-head">
-                <h2 class="fzm-section-title">${isDraft ? 'Activité de la ligue' : 'Dans la LNH'}</h2>
-                <span class="fzm-league-count" data-league-count role="status"></span>
-                <div class="fzm-league-nav">
-                    <button type="button" class="fzm-league-nav-btn" id="fzmLeaguePrev" aria-label="Mouvements précédents">‹</button>
-                    <button type="button" class="fzm-league-nav-btn" id="fzmLeagueNext" aria-label="Mouvements suivants">›</button>
-                </div>
-            </div>
-            <div class="fzm-tabs" id="fzmLeagueTabs">
-                ${FZM_LEAGUE_TABS.map(t => `
-                    <button type="button" class="fzm-tab${t.key === fzmLeagueTab ? ' is-active' : ''}" data-tab="${t.key}">
-                        ${t.label}<span class="fzm-tab-count" data-count="${t.key}"></span>
-                    </button>`).join('')}
-            </div>
-            <div class="fzm-league-track" id="fzmLeagueTrack"><p class="fzm-empty">Chargement…</p></div>
-            <div class="fzm-league-dots" id="fzmLeagueDots"></div>
-            ${showNews ? '<div class="fzm-news-list" id="fzmNewsWrap"></div>' : ''}
-        </div>`;
-}
-
-async function fzmLoadLeague() {
-    if (!document.getElementById('fzmLeagueTrack')) return;
-
-    // Le journal de la LNH est chargé une fois par visite, comme au bureau
-    // (garde offseasonNewsLoaded, accueil-dash.js). Il ne bouge pas au rythme
-    // des choix de repêchage qui, eux, redessinent tout l'écran : le
-    // redemander à chaque fois coûtait deux appels réseau pour le même
-    // contenu, et faisait clignoter la piste.
-    if (!fzmLeagueData) {
-        // Tout le journal (TRANSACTIONS_KEEP=250), comme au bureau : les
-        // échanges manuels de juin-août sont les plus anciennes lignes, et
-        // l'ancienne fenêtre de 80 était remplie par les signatures et départs
-        // du camp dès septembre — l'onglet n'affichait plus qu'un échange.
-        // groupTrades (défini dans accueil-dash.js, chargé avant) voit ainsi
-        // chaque échange en entier.
-        // Blessés au maximum (300) plutôt qu'une fenêtre : l'onglet annonce
-        // `counts.injury`, le total du serveur, et montrait donc « 77 » au-
-        // dessus d'une piste qui n'en portait que 60.
-        const [tx, inj] = await Promise.all([
-            fetch('/nhl-transactions?limit=250').then(r => r.json()).catch(() => null),
-            fetch('/nhl-injuries?limit=300').then(r => r.json()).catch(() => null)
-        ]);
-
-        const moves = tx?.transactions || [];
-        const deals = groupTrades(moves.filter(t => t.type === 'trade'));
-        const signings = moves.filter(t => t.type === 'signing');
-        const injuries = inj?.injuries || [];
-
-        // « Tout » : les trois flux fondus et retriés du plus récent au plus
-        // ancien, chaque entrée gardant sa forme (`kind` dit quelle carte rendre).
-        // Même logique que renderOffseasonLeague (accueil-dash.js).
-        const stamp = iso => (iso ? new Date(iso).getTime() : 0) || 0;
-        const all = [
-            ...deals.map(d => ({ kind: 'trade', item: d, ts: stamp(d.date) })),
-            ...signings.map(s => ({ kind: 'signing', item: s, ts: stamp(s.date) })),
-            ...injuries.map(i => ({ kind: 'injury', item: i, ts: stamp(i.since) }))
-        ].sort((a, b) => b.ts - a.ts);
-
-        fzmLeagueData = {
-            all,
-            trade: deals,
-            signing: signings,
-            injury: injuries,
-            counts: {
-                // Échanges : nombre d'opérations regroupées. Signatures/blessés :
-                // total serveur. « Tout » : la somme des trois.
-                trade: deals.length,
-                signing: tx?.counts?.signing || 0,
-                injury: inj?.total || 0
-            },
-            tracking: !!tx?.tracking
-        };
-        fzmLeagueData.counts.all = fzmLeagueData.counts.trade
-            + fzmLeagueData.counts.signing + fzmLeagueData.counts.injury;
-
-        // Ouvrir sur un onglet qui a quelque chose à montrer plutôt que sur
-        // un onglet vide un lendemain de journée calme.
-        const firstFilled = FZM_LEAGUE_TABS.find(t => fzmLeagueData[t.key].length);
-        if (firstFilled && !fzmLeagueData[fzmLeagueTab].length) fzmLeagueTab = firstFilled.key;
-    }
-
-    document.querySelectorAll('#fzmLeagueTabs .fzm-tab-count').forEach(el => {
-        const n = fzmLeagueData.counts[el.dataset.count];
-        el.textContent = n ? ` ${n}` : '';
-    });
-    document.querySelectorAll('#fzmLeagueTabs .fzm-tab').forEach(btn => {
-        btn.classList.toggle('is-active', btn.dataset.tab === fzmLeagueTab);
-        btn.addEventListener('click', () => {
-            fzmLeagueTab = btn.dataset.tab;
-            document.querySelectorAll('#fzmLeagueTabs .fzm-tab').forEach(b => b.classList.toggle('is-active', b === btn));
-            // Changer d'onglet, c'est changer de liste : on repart du début.
-            fzmLeagueScroll = 0;
-            fzmRenderLeagueTab();
-        });
-    });
-
-    fzmBindLeagueCarousel();
-    fzmRenderLeagueTab();
-}
-
-// Flèches précédent/suivant + suivi du défilement. Rebranché à chaque rendu
-// de l'accueil (renderMobileHome recrée tout le DOM), mais une seule fois
-// par rendu : le contenu de la piste change avec l'onglet, pas ses boutons.
-function fzmBindLeagueCarousel() {
-    const track = document.getElementById('fzmLeagueTrack');
-    if (track && !track.dataset.carouselBound) track.addEventListener('scroll', () => { fzmLeagueScroll = track.scrollLeft; });
-    bindOffseasonCarousel(document.getElementById('fzmLeagueTrack'), document.getElementById('fzmLeagueDots'), document.getElementById('fzmLeaguePrev'), document.getElementById('fzmLeagueNext'));
-}
-
-function fzmRenderLeagueTab() {
-    const track = document.getElementById('fzmLeagueTrack');
-    if (!track || !fzmLeagueData) return;
-
-    const rows = fzmLeagueData[fzmLeagueTab] || [];
-    // Le compte suit l'onglet affiché, pas le total de la ligue.
-    const count = document.querySelector('[data-league-count]');
-    if (count) count.textContent = rows.length ? `${rows.length} mouvement${rows.length > 1 ? 's' : ''}` : '';
-    if (!rows.length) {
-        track.classList.add('is-empty');
-        track.innerHTML = `<p class="fzm-empty">${fzmLeagueEmptyText()}</p>`;
-        fzmRenderLeagueDots();
-        return;
-    }
-
-    track.classList.remove('is-empty');
-    track.innerHTML = rows.map(row => fzmLeagueTab === 'all'
-        ? fzmOffCardHTML(row.kind, row.item)
-        : fzmOffCardHTML(fzmLeagueTab, row)).join('');
-    // Les cartes ont une largeur fixe (accueil-mobile.css) : la piste est
-    // mesurable dès l'affectation, sans attendre les images. Un défilement
-    // devenu trop grand est ramené dans les bornes par le navigateur.
-    track.scrollLeft = fzmLeagueScroll;
-    fzmRenderLeagueDots();
-}
-
-// Un point par « page » de défilement (largeur de piste), pas un par carte :
-// une centaine de blessés donnerait une centaine de points.
-function fzmRenderLeagueDots() {
-    renderOffseasonDots(document.getElementById('fzmLeagueTrack'), document.getElementById('fzmLeagueDots'), document.getElementById('fzmLeaguePrev'), document.getElementById('fzmLeagueNext'));
-}
-
-function fzmUpdateLeagueCarousel() {
-    updateOffseasonCarousel(document.getElementById('fzmLeagueTrack'), document.getElementById('fzmLeagueDots'), document.getElementById('fzmLeaguePrev'), document.getElementById('fzmLeagueNext'));
-}
-
-function fzmLeagueEmptyText() {
-    if (fzmLeagueTab === 'injury') return 'Aucun blessé signalé.';
-    // Tant que le serveur n'a pas deux photos d'alignements à comparer, il
-    // n'a rien à dire — ce qui n'est pas la même chose qu'une ligue calme.
-    if (!fzmLeagueData?.tracking) return 'Le suivi des mouvements démarre à la prochaine mise à jour des alignements.';
-    if (fzmLeagueTab === 'trade') return 'Aucun échange récent.';
-    if (fzmLeagueTab === 'signing') return 'Aucune signature récente.';
-    return 'Aucun mouvement récent.';
-}
-
-// Une carte de carrousel selon le type de mouvement. `kind` vient soit de
-// l'onglet actif, soit de l'entrée fondue de l'onglet « Tout ». Calquées sur
-// offseasonCardHTML (accueil-dash.js), au jeton et à la police près.
-function fzmOffCardHTML(kind, item) {
-    if (kind === 'trade') return fzmOffDealCardHTML(item);
-    if (kind === 'signing') return fzmOffSigningCardHTML(item);
-    return fzmOffInjuryCardHTML(item);
-}
-
-function fzmOffLogoHTML(abbr) {
-    return `<img src="teams/${escapeHTML(abbr || '')}.png" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`;
-}
-
-// Échange : les deux clubs empilés, ce que chacun reçoit dessous, séparés
-// par un filet — même lecture qu'au bureau (offDealCardHTML). Le club qui
-// reçoit quelque chose passe en tête ; « Rien en retour » finit en bas.
-function fzmOffDealCardHTML(d) {
-    const colHTML = team => {
-        const club = d.names[team] || team;
-        const players = d.gets[team] || [];
-        const assets = players.length
-            ? players.map(p => `<li class="fzm-deal-asset">${escapeHTML(p.name)}${p.pos ? ` <span class="fzm-deal-pos">${escapeHTML(p.pos)}</span>` : ''}</li>`).join('')
-            : '<li class="fzm-deal-asset is-empty">Rien en retour</li>';
-        return `
-            <section class="fzm-deal-col">
-                <div class="fzm-deal-head">
-                    <span class="fzm-deal-club">
-                        <img class="fzm-deal-logo" src="teams/${escapeHTML(team)}.png" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
-                        <span class="fzm-deal-club-abbr" title="${escapeHTML(club)}">${escapeHTML(team)}</span>
-                    </span>
-                    <span class="fzm-deal-acq">Acquiert</span>
-                </div>
-                <ul class="fzm-deal-assets">${assets}</ul>
-            </section>`;
-    };
-    const [first, second] = [d.teamA, d.teamB]
-        .sort((x, y) => (d.gets[y]?.length || 0) - (d.gets[x]?.length || 0));
-    return `
-        <article class="fzm-off-card is-trade">
-            <div class="fzm-off-card-top">
-                <span class="fzm-off-tag is-trade">Échange</span>
-                <span class="fzm-off-card-date">${dayLabelFr(d.date)}</span>
-            </div>
-            <div class="fzm-deal-grid">
-                ${colHTML(first)}
-                ${colHTML(second)}
-            </div>
-        </article>`;
-}
-
-function fzmOffSigningCardHTML(t) {
-    const club = [t.toTeamName || t.toTeam || '?', t.pos].filter(Boolean).join(' · ');
-    return `
-        <article class="fzm-off-card is-signing">
-            <div class="fzm-off-card-top">
-                <span class="fzm-off-tag is-signing">Signature</span>
-                <span class="fzm-off-card-date">${dayLabelFr(t.date)}</span>
-            </div>
-            <div class="fzm-off-card-name">${escapeHTML(t.playerName)}</div>
-            ${offPlayerFaceHTML(t.playerName, t.toTeam, t.playerId)}
-            <div class="fzm-off-card-club">
-                ${fzmOffLogoHTML(t.toTeam)}
-                <span>${escapeHTML(club)}</span>
-            </div>
-        </article>`;
-}
-
-function fzmOffInjuryCardHTML(i) {
-    const club = [i.teamName || i.team, i.pos].filter(Boolean).join(' · ');
-    const detail = [i.injuryType, i.injuryDetail].filter(Boolean).join(' / ');
-    const back = i.returnDate ? dayLabelFr(i.returnDate) : (i.statusFr || '—');
-    return `
-        <article class="fzm-off-card is-injury">
-            <div class="fzm-off-card-top">
-                <span class="fzm-off-tag is-injury">Blessé</span>
-                <span class="fzm-off-card-date">${dayLabelFr(i.since)}</span>
-            </div>
-            <div class="fzm-off-card-name">${escapeHTML(i.playerName)}</div>
-            ${offPlayerFaceHTML(i.playerName, i.team, i.playerId, i.headshot)}
-            <div class="fzm-off-card-club">
-                ${fzmOffLogoHTML(i.team)}
-                <span>${escapeHTML(club)}</span>
-            </div>
-            <div class="fzm-off-card-stats">
-                <div class="fzm-off-stat">
-                    <span class="fzm-off-stat-lbl">Blessure</span>
-                    <span class="fzm-off-stat-val" data-status="${escapeHTML(i.status || '')}">${escapeHTML(detail || i.statusFr || '—')}</span>
-                </div>
-                <div class="fzm-off-stat">
-                    <span class="fzm-off-stat-lbl">Retour</span>
-                    <span class="fzm-off-stat-val">${escapeHTML(back)}</span>
-                </div>
-            </div>
-        </article>`;
-}
 
 // ============================================================
 // ACTUALITÉS LNH — même flux NewsAPI que le carrousel d'accueil et
@@ -616,10 +325,10 @@ function renderMobileHome(tonight, movement, activeName) {
     const root = document.getElementById('fzMobileHome');
     if (!root) return;
 
-    // Le calendrier (#fzDashCalendarWrap) est un nœud PARTAGÉ avec le bureau
-    // que fzdPlaceCalendar() déplace dans #fzmCalSlot sur téléphone. Il faut
-    // le sortir d'ici avant toute réécriture de root.innerHTML, sinon on
-    // l'effacerait pour de bon.
+    // Le calendrier, les mouvements récents et « À surveiller » sont des nœuds
+    // PARTAGÉS avec les autres accueils, que fzdPlaceCalendar() déplace dans
+    // les emplacements posés plus bas. Il faut les sortir d'ici avant toute
+    // réécriture de root.innerHTML, sinon on les effacerait pour de bon.
     fzdRestoreCalendar();
 
     const poolData = FZPool.data();
@@ -662,7 +371,7 @@ function renderMobileHome(tonight, movement, activeName) {
     // place bureau), et un repêchage ou l'avant-saison sont justement les
     // moments où l'on veut voir arriver le calendrier de la LNH. En saison
     // régulière il remplace en plus l'ancienne bande « En direct et à venir ».
-    html += '<div class="fzm-cal-slot" id="fzmCalSlot"></div>';
+    html += '<div class="fzm-slot" data-fz-bloc="calendrier"></div>';
 
     // Avant-saison : les actualités sont déjà en tête de page.
     const seasonStarted = fzdSeasonStarted() !== false;
@@ -671,7 +380,10 @@ function renderMobileHome(tonight, movement, activeName) {
         html += `<div class="fzm-section"><div class="fzm-section-title">Activité de la ligue</div><div id="fzmActivityWrap"></div></div>`;
     }
 
-    html += fzmLeagueSectionHTML(seasonStarted && !isDraft, isDraft);
+    // « Mouvements récents » : le carrousel partagé (fzd-off-carousel), suivi
+    // des actualités, qui vivaient jusqu'ici dans le même bloc.
+    html += '<div class="fzm-slot" data-fz-bloc="mouvements"></div>';
+    if (seasonStarted && !isDraft) html += '<div class="fzm-news-list" id="fzmNewsWrap"></div>';
     if (isRegular || isLive || isDraft) html += fzmPlayersRow(tonight, rosterNames);
 
     root.innerHTML = html;
@@ -684,11 +396,6 @@ function renderMobileHome(tonight, movement, activeName) {
     // Le DOM de l'accueil téléphone est recréé à chaque rendu : la bande se
     // repose depuis la dernière réponse connue, sans nouvelle requête.
     if (window.FZToday) FZToday.rendre('fzTodayMobile');
-    root.querySelector('[data-fzm-watch-all]')?.addEventListener('click', e => {
-        const expanded = root.querySelector('.fzm-watch-track').classList.toggle('is-expanded');
-        e.currentTarget.textContent = expanded ? 'Réduire ‹' : 'Voir tout ›';
-        e.currentTarget.setAttribute('aria-expanded', String(expanded));
-    });
     if (isPreseason) fzmLoadNewsHero();
     // La bannière « en direct » pointe vers #fzdPlayersList (id bureau) :
     // sur téléphone la liste vit sous #fzmPlayers, donc on intercepte le
@@ -698,6 +405,7 @@ function renderMobileHome(tonight, movement, activeName) {
         document.getElementById('fzmPlayers')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     if (showActivity) fzmLoadActivity(activeName);
-    fzmLoadLeague();
+    fzdRendreMouvements();
+    if (isPreseason) fzdRendreSurveiller();
     if (seasonStarted) fzmLoadNews();
 }

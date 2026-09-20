@@ -54,12 +54,9 @@ html[data-theme="light"] body:is(.fz-draft-page, .fz-season-page) { background: 
 
 /* ─────────────────── 2. Accueil repêchage (.fzh) ─────────────────── */
 
-html[data-theme="light"] .fzh h2,
-html[data-theme="light"] .fzh-moves .fzm-section-title { color: var(--fzh-ink); }
-html[data-theme="light"] .fzh :is(.fzh-eyebrow, .fzh-summary small, .fzh-game p, .fzh-cal-range,
-    .fzh-cal-day-meta, .fzh-cal-daycount, .fzh-cal-game-date, .fzh-cal-side, .fzh-cal-chip small, .fzh-empty,
-    .fzm-league-count, .fzm-off-card-club) { color: var(--fzh-muted); }
-html[data-theme="light"] .fzh :is(.fzh-draft-description, .fzm-off-card-stats) { color: var(--fzh-text); }
+html[data-theme="light"] .fzh h2 { color: var(--fzh-ink); }
+html[data-theme="light"] .fzh :is(.fzh-eyebrow, .fzh-summary small, .fzh-game p, .fzh-empty) { color: var(--fzh-muted); }
+html[data-theme="light"] .fzh .fzh-draft-description { color: var(--fzh-text); }
 html[data-theme="light"] .fzh .fzh-draft-description span,
 html[data-theme="light"] .fzh .fzh-estimate .fzh-icon { color: var(--fzh-muted); }
 html[data-theme="light"] .fzh .fzh-draft-stats > div { border-left-color: var(--fzh-border); }
@@ -75,7 +72,6 @@ html[data-theme="light"] .fzh .fzh-participant i { background: var(--fzh-tint); 
 html[data-theme="light"] .fzh .fzh-participant:nth-child(n+5) i { background: var(--fzh-raised); color: var(--fzh-text); }
 
 html[data-theme="light"] .fzh .fzh-summary { color: var(--fzh-ink); }
-html[data-theme="light"] .fzh .fzh-summary .fzh-nhl { opacity: .16; }
 html[data-theme="light"] .fzh .fzh-progress { background: #e6e3dc; }
 
 html[data-theme="light"] .fzh .fzh-game-badge:not(.is-live) { background: var(--fzh-raised); color: var(--fzh-text); }
@@ -94,33 +90,16 @@ html[data-theme="light"] .fzh .fzh-news:not(:has(.fzh-news-image)) :is(h2, h2 a)
 html[data-theme="light"] .fzh .fzh-news:not(:has(.fzh-news-image)) .fzh-news-copy p { color: var(--fzh-text); }
 html[data-theme="light"] .fzh .fzh-news:not(:has(.fzh-news-image)) .fzh-news-copy small { color: var(--fzh-muted); }
 
-/* Mouvements récents */
-html[data-theme="light"] .fzh-moves :is(.fzm-league-nav-btn, .fzm-tab) { border-color: var(--fzh-border); color: var(--fzh-muted); }
-html[data-theme="light"] .fzh-moves .fzm-league-nav-btn:hover:not(:disabled) { border-color: var(--fzh-accent); color: var(--fzh-ink); }
-html[data-theme="light"] .fzh-moves .fzm-tab:hover { border-color: var(--fzh-outline); }
-html[data-theme="light"] #fzDashSection :is(.fzh, .fzs) #fzmLeagueTabs .fzm-tab.is-active {
-    background: var(--fzh-accent-fill); border-color: var(--fzh-accent-fill); color: #fff;
-}
-html[data-theme="light"] #fzDashSection :is(.fzh, .fzs) .fzm-off-card { background: var(--fzh-panel); border-color: var(--fzh-border); }
-html[data-theme="light"] #fzDashSection .fzh-moves .fzm-off-tag:not(.is-injury) { color: var(--fzh-ink); }
 html[data-theme="light"] .fzh .fzd-off-face { background: var(--fzh-raised); }
 
-/* Calendrier présaison */
-html[data-theme="light"] .fzh .fzh-cal-nav button { border-color: var(--fzh-border); color: var(--fzh-muted); }
-html[data-theme="light"] .fzh .fzh-cal-nav button:hover:not(:disabled) { border-color: var(--fzh-accent); color: var(--fzh-ink); }
-html[data-theme="light"] .fzh .fzh-cal-day-dow { color: var(--fzh-muted); }
-html[data-theme="light"] .fzh .fzh-cal-day.is-today .fzh-cal-day-dow { color: var(--fzh-accent); }
-html[data-theme="light"] .fzh .fzh-cal-game-time { color: var(--fzh-ink); }
-html[data-theme="light"] .fzh .fzh-cal-mine { border-top-color: var(--fzh-border); }
-html[data-theme="light"] .fzh .fzh-cal-chip { border-color: var(--fzh-border); background: var(--fzh-raised); }
-html[data-theme="light"] .fzh .fzh-cal-filter select { border-color: var(--fzh-border); background: var(--fzh-panel); color: var(--fzh-ink); }
-html[data-theme="light"] .fzh .fzh-cal-filter select:hover { border-color: var(--fzh-outline); }
+/* Le calendrier et « Mouvements récents » sont les blocs partagés du tableau
+   de bord : ils lisent les jetons --fzd-*, déjà remappés en clair plus haut. */
 
 /* ─────────────── 3. Panneaux partagés (accueil-watch.css) ─────────────── */
 
 html[data-theme="light"] .fzh-watch-tools > button { border-color: var(--fzh-border); color: var(--fzh-muted); }
 html[data-theme="light"] .fzh-watch-tools > button:hover:not(:disabled) { border-color: var(--fzh-accent); color: var(--fzh-ink); }
-html[data-theme="light"] :is(.fzh, .fzs) :is([data-watch-count], .fzm-league-count) { color: var(--fzh-muted); }
+html[data-theme="light"] :is(.fzh, .fzs) [data-watch-count] { color: var(--fzh-muted); }
 html[data-theme="light"] #fzDashSection .fzh-watch-filter select { background: var(--fzh-panel); color: var(--fzh-ink); border-color: var(--fzh-border); }
 html[data-theme="light"] [data-watch-panel] .fzh-watch-row { background: var(--fzh-panel); border-color: var(--fzh-border); }
 html[data-theme="light"] [data-watch-panel] .fzh-watch-row:hover { border-color: var(--fzh-outline); }
@@ -138,8 +117,8 @@ html[data-theme="light"] :is(.fzh, .fzs) .fzd-off-dot.is-active::after { backgro
 
 html[data-theme="light"] .fzs p,
 html[data-theme="light"] .fzs .fzm-activity-text { color: var(--fzh-text); }
-html[data-theme="light"] .fzs :is(.fzs-rank p span, .fzs-game footer, .fzs-player-name small, .fzs-watch-player small) { color: var(--fzh-muted); }
-html[data-theme="light"] .fzs :is(.fzs-player-name strong, .fzs-watch-player strong, .fzm-section-title, .fzm-news-row, .fzm-news-headline) { color: var(--fzh-ink); }
+html[data-theme="light"] .fzs :is(.fzs-rank p span, .fzs-game footer, .fzs-player-name small) { color: var(--fzh-muted); }
+html[data-theme="light"] .fzs :is(.fzs-player-name strong, .fzm-news-row, .fzm-news-headline) { color: var(--fzh-ink); }
 html[data-theme="light"] .fzs .fzs-player-stats { color: var(--fzh-text); }
 /* Le héros garde sa glace, fondue dans le panneau clair plutôt que noir. */
 html[data-theme="light"] #fzDashSection .fzs-hero::after { background: linear-gradient(90deg, #fff 5%, #ffffffd9 45%, transparent); }
@@ -148,7 +127,7 @@ html[data-theme="light"] .fzs .fzs-green { color: var(--fzh-green); }
 html[data-theme="light"] .fzs .fzs-red { color: var(--fzh-red); }
 html[data-theme="light"] .fzs .fzs-bars i { background: var(--fzh-outline); }
 html[data-theme="light"] #fzDashSection .fzs-tag:not(.is-live) { color: var(--fzh-ink); }
-html[data-theme="light"] .fzs :is(.fzs-player, .fzs-stat, .fzs-watch-player) { border-bottom-color: var(--fzh-border); }
+html[data-theme="light"] .fzs :is(.fzs-player, .fzs-stat) { border-bottom-color: var(--fzh-border); }
 html[data-theme="light"] .fzs .fzm-list-row { border-color: var(--fzh-border); }
 html[data-theme="light"] .fzs .fzs-stat > div { background: #ebe8e2; }
 html[data-theme="light"] .fzs .fzs-dots i { background: var(--fzh-outline); }
