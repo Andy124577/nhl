@@ -1540,22 +1540,6 @@ function fzdStopHeroTimer(containerId) {
  * contenu des deux côtés ; seul accueil-dash.css les met en page
  * différemment selon la largeur d'écran.
  */
-/**
- * Démarre la bande « à faire maintenant ».
- *
- * Une seule requête pour les deux dispositions, et un seul abonnement : la
- * bande se redessine d'elle-même quand la réponse change, sans que l'accueil
- * ait à la surveiller.
- */
-function fzdDemarrerAujourdhui() {
-    if (!window.FZToday) return;
-    FZToday.surReponse(() => {
-        FZToday.rendre('fzTodayDash');
-        FZToday.rendre('fzTodayMobile');
-    });
-    FZToday.demarrer(['fzTodayDash', 'fzTodayMobile']);
-}
-
 function renderHero(tonight, containerId = 'fzDashHero') {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -2463,7 +2447,6 @@ async function renderDash() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    fzdDemarrerAujourdhui();
     if (!userData.username) userData.username = localStorage.getItem('username');
     if (!userData.username) { fzdRevelerAccueil(); return; }
 

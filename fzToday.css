@@ -1,8 +1,12 @@
-/* « À faire maintenant » — la bande de priorité de l'accueil.
+/* « À faire maintenant » — la bande de priorité.
  *
  * Une vedette, puis une piste horizontale compacte. Même rendu au bureau et au
  * téléphone : ce sont les mêmes données, et deux mises en page différentes
  * pour la même information ont déjà produit deux réponses différentes.
+ *
+ * Elle vit dans le panneau de notifications (notifications.js), en tête de
+ * l'historique — voir la section « Dans le panneau de notifications » en bas
+ * de ce fichier, seul endroit où sa mise en page change.
  *
  * La vedette suit la maquette « Alert Banner » (Design UX improvements) : une
  * seule rangée — signal, titre, détail, pool — puis un bouton. Direction
@@ -384,3 +388,63 @@ html[data-theme="light"] .fzt {
     .fzt-signal::before,
     .fzt-signal::after { animation: none !important; }
 }
+
+/* ─────────── Dans le panneau de notifications ─────────── */
+/* La bande a quitté l'accueil pour la cloche : même balisage, une mise en page
+   resserrée. Le panneau fait 420 px au plus et porte déjà sa liste — la bande
+   y prend la place d'une carte, pas d'une bannière pleine largeur.
+
+   Hauteur bornée et défilement propre : le panneau ne grandit pas, donc tout
+   ce que la bande prend est pris à l'historique. Trois lignes secondaires plus
+   une vedette ne doivent pas repousser les notifications hors de l'écran. */
+
+.fz-notif-today {
+    flex-shrink: 0;
+    max-height: 260px;
+    padding: 12px 16px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.fz-notif-today .fzt { gap: 6px; margin: 0; }
+
+/* La vedette perd sa rangée unique : à cette largeur, titre, détail et pool
+   tiennent mieux empilés, et le bouton passe dessous sur toute la largeur —
+   la même solution que l'accueil en dessous de 480 px. */
+.fz-notif-today .fzt-item--vedette { gap: 10px; padding: 12px 14px; }
+.fz-notif-today .fzt-item--vedette .fzt-texte { flex-basis: 0; }
+.fz-notif-today .fzt-item--vedette .fzt-signal { align-self: flex-start; margin-top: 6px; }
+.fz-notif-today .fzt-item--vedette .fzt-titre,
+.fz-notif-today .fzt-item--vedette .fzt-detail { font-size: 15px; }
+
+.fz-notif-today .fzt-item--vedette .fzt-action {
+    flex: 1 1 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 44px;
+    font-size: 16px;
+}
+
+/* Les secondaires s'empilent au lieu de défiler à l'horizontale : dans un
+   panneau étroit, une piste qui se pousse au doigt cache ses propres lignes. */
+.fz-notif-today .fzt-secondaires {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    height: auto;
+    padding: 0;
+    overflow-x: visible;
+    scroll-snap-type: none;
+}
+
+.fz-notif-today .fzt-secondaires .fzt-item {
+    flex: 0 0 auto;
+    height: auto;
+    min-height: 44px;
+}
+
+.fz-notif-today .fzt-vide { margin: 0; padding: 14px; }
+.fz-notif-today .fzt-vide-action { padding: 8px 12px; }

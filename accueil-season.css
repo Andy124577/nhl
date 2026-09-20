@@ -2,7 +2,7 @@
 body.fz-season-page { background:#060e13; }
 #fzDashSection.is-season { background:#060e13; padding:18px 20px 48px; }
 .is-season .fz-dash { max-width:1500px; --fzd-bg:#091218; --fzd-bg-alt:#0c171e; --fzd-surface:#0b151c; --fzd-ink:#f3f5f8; --fzd-text:#bdcad8; --fzd-text-muted:#a6b6c8; --fzd-border:#203440; --fzd-border-soft:#162832; --fzd-accent:#ff4435; --fzd-solid:#f33b2c; --fzd-on-solid:#fff; }
-.is-season .fz-dash > :not(#fzSeasonHome):not(#fzTodayDash) { display:none!important; }
+.is-season .fz-dash > :not(#fzSeasonHome) { display:none!important; }
 .fzs { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:14px; color:#eef2f8; font:400 16px/1.35 'Barlow Condensed',sans-serif; }
 .fzs .fzs-panel { min-width:0; padding:16px; border:1px solid #203440; border-radius:11px; background:linear-gradient(115deg,#0b151c,#071015); overflow:hidden; }
 .fzs .fzs-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }

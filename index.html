@@ -39,7 +39,7 @@
     <link rel="stylesheet" href="poolSettings.css">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="accueil.css?v=20260919">
-    <link rel="stylesheet" href="fzToday.css?v=20260919">
+    <link rel="stylesheet" href="fzToday.css?v=20260920">
     <link rel="stylesheet" href="career-modal.css">
     <link rel="stylesheet" href="accueil-dash.css?v=20260919">
     <link rel="stylesheet" href="accueil-mobile.css?v=20260919">
@@ -232,12 +232,10 @@
                  match plus bas couvre déjà ce cas). Bureau seulement — la
                  home téléphone (accueil-mobile.js) a son propre système
                  d'état à 4 modes. Voir renderHero() dans accueil-dash.js. -->
-            <!-- « À faire maintenant » — une seule bande de priorité, la même
-                 au bureau et au téléphone, alimentée par GET /api/me/today.
-                 La bannière d'état ci-dessous ne regarde que le pool actif ;
-                 celle-ci considère tous les pools, ce qui est la seule façon
-                 de voir un tour de repêchage ailleurs. Voir fzToday.js. -->
-            <div id="fzTodayDash" hidden><!-- Rempli par fzToday.js --></div>
+            <!-- « À faire maintenant » — la bande de priorité alimentée par
+                 GET /api/me/today (fzToday.js) ne s'affiche plus ici : elle
+                 est rendue dans le panneau de notifications, que notifications.js
+                 monte dans la navbar. -->
 
             <div class="fz-dash-hero" id="fzDashHero" style="display:none;"><!-- Filled by accueil-dash.js --></div>
 
@@ -532,7 +530,7 @@
     <!-- « A faire maintenant » : une seule reponse serveur, la meme bande
          au bureau et au telephone. Doit preceder accueil-dash.js, qui
          l'appelle au chargement. -->
-    <script defer src="fzToday.js?v=20260919"></script>
+    <script defer src="fzToday.js?v=20260920"></script>
     <script defer src="careerFetch.js"></script>
     <script defer src="careerModal.js"></script>
     <script defer src="careerTeamLogo.js"></script>
@@ -540,9 +538,9 @@
     <script defer src="careerTotals.js"></script>
     <script defer src="accueil-carousel.js?v=20260915"></script>
     <script defer src="accueil-watch.js?v=20260915"></script>
-    <script defer src="accueil-dash.js?v=20260919-pending"></script>
-    <script defer src="instantDraft.js?v=20260916-canvas3"></script>
-    <script defer src="accueil-mobile.js?v=20260915"></script>
+    <script defer src="accueil-dash.js?v=20260920-pending"></script>
+    <script defer src="instantDraft.js?v=20260920-canvas3"></script>
+    <script defer src="accueil-mobile.js?v=20260920"></script>
     <script defer src="accueil-season.js?v=20260915"></script>
     <script defer src="accueil-draft.js?v=20260915"></script>
     <script defer src="demos.js"></script>

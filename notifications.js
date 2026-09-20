@@ -418,6 +418,7 @@
                         <button type="button" class="fz-notif-mark-all" id="fzNotifMarkAll" aria-disabled="true">Tout marquer comme lu</button>
                         <p class="fz-notif-help" id="fzNotifHelp"></p>
                     </div>
+                    <div class="fz-notif-today" id="fzTodayNotif" hidden><!-- Rempli par fzToday.js --></div>
                     <ul class="fz-notif-list" id="fzNotifList"></ul>
                 </section>
             </div>`);
@@ -460,6 +461,24 @@
             else if (!toast.hidden) fermerPopup();
         });
         return true;
+    }
+
+    /**
+     * « À faire maintenant » en tête du panneau.
+     *
+     * La bande de priorité vivait sur l'accueil, au-dessus du tableau de bord.
+     * Elle dit la même chose que la cloche — ce qui réclame une action, tous
+     * pools confondus — et la répéter à deux endroits obligeait à lire deux
+     * fois la même liste. Elle vit donc ici, avec l'historique.
+     *
+     * fzToday.js n'est chargé que sur les pages qui l'affichent : ailleurs,
+     * l'emplacement reste vide et le panneau garde sa forme habituelle.
+     */
+    function brancherAujourdhui() {
+        if (!window.FZToday) return;
+        // `demarrer` rend une première fois, puis à chaque réponse suivante :
+        // un seul abonnement, donc un seul rendu par réponse.
+        FZToday.demarrer(['fzTodayNotif']);
     }
 
     /**
@@ -611,6 +630,7 @@
             } catch { /* Stockage ancien invalide. */ }
         }
         if (!monterCloche()) return;
+        brancherAujourdhui();
         rendreListe();
         await FZPool.ready();
         if (!compteActuel()) return;
