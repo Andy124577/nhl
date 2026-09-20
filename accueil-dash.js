@@ -507,6 +507,9 @@ function gameGoalsHTML(game, isFinal) {
     if (!buts.length) return '';
 
     const ordonnes = isFinal ? buts : buts.slice().reverse();
+    // Le pointage courant s'écrit « visiteur — local », dans l'ordre du
+    // tableau d'affichage ; les abréviations viennent du match, pas du but.
+    const equipes = { away: game.away?.abbrev || '', home: game.home?.abbrev || '' };
 
     return `
         <div class="fzd-goals">
@@ -514,40 +517,81 @@ function gameGoalsHTML(game, isFinal) {
                 <span class="fzd-goals-title">Buts</span>
                 <span class="fzd-goals-sub">${isFinal ? 'Du premier au dernier' : 'Le plus récent d’abord'}</span>
             </div>
-            <div class="fzd-goals-track">${ordonnes.map(goalCardHTML).join('')}</div>
+            <div class="fzd-goals-track">${ordonnes.map(b => goalCardHTML(b, equipes)).join('')}</div>
         </div>`;
 }
 
 /**
- * Une carte de but : la photo, le nom, quand, et qui a aidé.
+ * Une carte de but : qui a marqué, qui a aidé, et où en était le match.
  *
- * L'abréviation d'équipe n'est pas décorative : les buts des deux clubs se
- * suivent dans la même piste, et sans elle une remontée ressemble à une
- * débâcle. `periodLabel` rend du balisage (« 1<sup>re</sup> ») : c'est la
- * seule pièce ici qui ne passe pas par escapeHTML, et tout ce qui vient de
- * la LNH y passe.
+ * Trois lignes, trois échelles de temps :
+ *
+ *   Phillip Danault (1)              ← son 1er but DE LA SAISON
+ *   Z. Bolduc (1) et A. Texier (1)   ← leurs aides de la saison
+ *   MTL 1 - TOR 0 (2e - 00:51)       ← la marque APRÈS ce but
+ *
+ * Les nombres entre parenthèses ne sont pas décoratifs : ils transforment le
+ * carrousel en deux récits à la fois. De gauche à droite sur un match
+ * terminé, la marque raconte la soirée — qui menait, quand ça a basculé —
+ * et les compteurs racontent la saison de chaque joueur, un but à la fois.
+ *
+ * L'anneau de la photo porte la couleur du club du buteur. Les buts des deux
+ * équipes se suivent dans la même piste : sans lui, il faudrait comparer
+ * deux nombres pour savoir qui vient de marquer. Une couleur se lit d'un
+ * coup, et elle ne coûte pas une ligne de texte sur une carte qui en a déjà
+ * trois.
+ *
+ * `periodLabel` rend du balisage (« 2<sup>e</sup> ») : c'est la seule pièce
+ * ici qui ne passe pas par escapeHTML, et tout ce qui vient de la LNH y passe.
  */
-function goalCardHTML(but) {
+function goalCardHTML(but, equipes) {
     const nom = but.name || '';
     const initiales = nom.split(/\s+/).map(m => m[0] || '').join('').slice(0, 2).toUpperCase();
+    // getTeamColors vient de teamColors.js, chargé avant ce fichier ; le
+    // garde-fou sert aux tests, qui chargent cette fonction toute seule.
+    const couleur = typeof getTeamColors === 'function'
+        ? getTeamColors(but.teamAbbrev)[0] : '';
     const photo = but.headshot
         ? `<img class="fzd-goal-photo" src="${escapeHTML(but.headshot)}" alt="" loading="lazy" onerror="this.remove()">`
         : `<span class="fzd-goal-photo is-initials">${escapeHTML(initiales)}</span>`;
 
-    const aides = (but.assists || []).map(a => a.name).filter(Boolean);
-    const aide = aides.length ? aides.join(', ') : 'Sans aide';
-    const quand = [escapeHTML(but.teamAbbrev || ''), periodLabel(but.period, but.periodType),
-        escapeHTML(but.timeInPeriod || '')].filter(Boolean).join(' · ');
+    const aides = (but.assists || []).filter(a => a.name);
+    const aide = aides.length
+        ? aides.map(a => escapeHTML(a.name) + compteurHTML(a.assistsToDate)).join(' et ')
+        : 'Sans aide';
+    const aideTitre = aides.length
+        ? aides.map(a => a.assistsToDate ? `${a.name} (${a.assistsToDate})` : a.name).join(' et ')
+        : 'Sans aide';
+
+    const marque = but.awayScore != null && but.homeScore != null
+        ? `${escapeHTML(equipes.away)} ${escapeHTML(String(but.awayScore))}`
+          + ` - ${escapeHTML(equipes.home)} ${escapeHTML(String(but.homeScore))}`
+        : '';
+    const quand = `${periodLabel(but.period, but.periodType)} - ${escapeHTML(but.timeInPeriod || '')}`;
 
     return `
-        <div class="fzd-goal-card">
+        <div class="fzd-goal-card"${couleur ? ` style="--fzd-goal-team: ${escapeHTML(couleur)}"` : ''}>
             ${photo}
             <div class="fzd-goal-id">
-                <div class="fzd-goal-name" title="${escapeHTML(nom)}">${escapeHTML(nom)}</div>
-                <div class="fzd-goal-when">${quand}</div>
-                <div class="fzd-goal-assist" title="${escapeHTML(aide)}">${escapeHTML(aide)}</div>
+                <div class="fzd-goal-name" title="${escapeHTML(nom)}">${escapeHTML(nom)}${compteurHTML(but.goalsToDate)}</div>
+                <div class="fzd-goal-assist" title="${escapeHTML(aideTitre)}">${aide}</div>
+                <div class="fzd-goal-score">
+                    <span class="fzd-goal-run">${marque}</span>
+                    <span class="fzd-goal-when">(${quand})</span>
+                </div>
             </div>
         </div>`;
+}
+
+/**
+ * « (12) » : le total de la saison d'un joueur après ce jeu.
+ *
+ * Zéro n'arrive pas — un but marqué vaut au moins un — mais un ancien match
+ * peut venir sans compteur, et « (0) » se lirait comme une erreur. Absent,
+ * rien ne s'affiche.
+ */
+function compteurHTML(total) {
+    return total ? ` <span class="fzd-goal-tally">(${escapeHTML(String(total))})</span>` : '';
 }
 
 /**

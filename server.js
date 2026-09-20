@@ -1881,18 +1881,25 @@ app.get('/day-goals/:date', async (req, res) => {
             if (!buts.length) continue;
             games[partie.id] = buts.map(b => ({
                 playerId: b.playerId,
-                // « E. Lilleberg » : la LNH abrège déjà le prénom, et c'est
-                // exactement ce qui tient sur une carte de 150 pixels.
-                name: b.name?.default
-                    || [b.firstName?.default, b.lastName?.default].filter(Boolean).join(' '),
+                name: [b.firstName?.default, b.lastName?.default].filter(Boolean).join(' ')
+                    || b.name?.default || '',
+                // Son compte de buts de la saison APRÈS celui-ci. Lus de
+                // gauche à droite sur un match terminé, ces nombres racontent
+                // la saison du joueur autant que la soirée.
+                goalsToDate: b.goalsToDate ?? null,
                 headshot: b.mugshot || '',
                 teamAbbrev: b.teamAbbrev || '',
                 period: b.periodDescriptor?.number ?? b.period ?? null,
                 periodType: b.periodDescriptor?.periodType || 'REG',
                 timeInPeriod: b.timeInPeriod || '',
+                // Le pointage TEL QU'IL ÉTAIT après ce but, pas celui du match.
+                // C'est ce qui fait défiler la marque avec le carrousel.
+                awayScore: b.awayScore ?? null,
+                homeScore: b.homeScore ?? null,
                 assists: (b.assists || []).map(a => ({
                     playerId: a.playerId,
-                    name: a.name?.default || ''
+                    name: a.name?.default || '',
+                    assistsToDate: a.assistsToDate ?? null
                 }))
             }));
         }

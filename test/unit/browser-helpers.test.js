@@ -816,32 +816,41 @@ describe('accueil — todayISO, la journée du pool', () => {
 
 describe('accueil — les buteurs sous chaque match', () => {
     const { escapeHTML } = chargerFonctions('accueil.js', ['escapeHTML']);
+    const { getTeamColors } = colors;
 
-    // Trois buts dans l'ordre de la LNH : chronologique, du premier au dernier.
+    // Trois buts dans l'ordre de la LNH : chronologique, du premier au
+    // dernier. Les compteurs et la marque sont ceux d'APRÈS chaque but.
     const BUTS = [
-        { name: 'E. Lilleberg', teamAbbrev: 'TBL', period: 1, periodType: 'REG',
-          timeInPeriod: '12:19', headshot: 'https://cdn/1.png',
-          assists: [{ name: 'N. Kucherov' }] },
-        { name: 'S. Reinhart', teamAbbrev: 'FLA', period: 2, periodType: 'REG',
-          timeInPeriod: '04:02', headshot: '', assists: [] },
-        { name: 'B. Point', teamAbbrev: 'TBL', period: 3, periodType: 'REG',
-          timeInPeriod: '18:47', headshot: 'https://cdn/3.png',
-          assists: [{ name: 'V. Hedman' }, { name: 'N. Kucherov' }] }
+        { name: 'Phillip Danault', teamAbbrev: 'MTL', goalsToDate: 1,
+          period: 1, periodType: 'REG', timeInPeriod: '12:19',
+          headshot: 'https://cdn/1.png', awayScore: 1, homeScore: 0,
+          assists: [{ name: 'Z. Bolduc', assistsToDate: 1 }] },
+        { name: 'Auston Matthews', teamAbbrev: 'TOR', goalsToDate: 14,
+          period: 2, periodType: 'REG', timeInPeriod: '04:02',
+          headshot: '', awayScore: 1, homeScore: 1, assists: [] },
+        { name: 'Cole Caufield', teamAbbrev: 'MTL', goalsToDate: 9,
+          period: 3, periodType: 'REG', timeInPeriod: '18:47',
+          headshot: 'https://cdn/3.png', awayScore: 2, homeScore: 1,
+          assists: [{ name: 'N. Suzuki', assistsToDate: 22 },
+                    { name: 'M. Matheson', assistsToDate: 8 }] }
     ];
 
-    const MATCH = { id: 2025020321, away: { abbrev: 'TBL' }, home: { abbrev: 'FLA' } };
+    const MATCH = { id: 2025020321, away: { abbrev: 'MTL' }, home: { abbrev: 'TOR' } };
+    const EQUIPES = { away: 'MTL', home: 'TOR' };
 
     /** Les aides de rendu, avec une feuille de pointage déjà en main. */
     function rendu(buts = BUTS) {
         return chargerFonctions(
             'accueil-dash.js',
-            ['periodLabel', 'goalCardHTML', 'gameGoalsHTML'],
-            { escapeHTML, calGoals: { date: '2025-11-15', games: { 2025020321: buts }, at: 0 } }
+            ['periodLabel', 'compteurHTML', 'goalCardHTML', 'gameGoalsHTML'],
+            { escapeHTML, getTeamColors, calGoals: { date: '2025-11-15', games: { 2025020321: buts }, at: 0 } }
         );
     }
 
     /** Les noms des buteurs, dans l'ordre où la piste les pose. */
-    const ordre = html => [...html.matchAll(/class="fzd-goal-name"[^>]*>([^<]+)</g)].map(m => m[1]);
+    const ordre = html => [...html.matchAll(/class="fzd-goal-name"[^>]*>([^<]+)</g)].map(m => m[1].trim());
+    /** La marque de chaque carte, dans l'ordre de la piste. */
+    const marques = html => [...html.matchAll(/class="fzd-goal-run">([^<]*)</g)].map(m => m[1]);
 
     test('match en cours : le but le plus récent est à gauche', () => {
         // La carte répond à « qu'est-ce qui vient de se passer » : la réponse
@@ -849,14 +858,25 @@ describe('accueil — les buteurs sous chaque match', () => {
         const { gameGoalsHTML } = rendu();
 
         assert.deepEqual(ordre(gameGoalsHTML(MATCH, false)),
-            ['B. Point', 'S. Reinhart', 'E. Lilleberg']);
+            ['Cole Caufield', 'Auston Matthews', 'Phillip Danault']);
     });
 
     test('match terminé : l’ordre s’inverse, du premier but au dernier', () => {
         const { gameGoalsHTML } = rendu();
 
         assert.deepEqual(ordre(gameGoalsHTML(MATCH, true)),
-            ['E. Lilleberg', 'S. Reinhart', 'B. Point']);
+            ['Phillip Danault', 'Auston Matthews', 'Cole Caufield']);
+    });
+
+    test('la marque suit le carrousel, but par but', () => {
+        // C'est tout l'intérêt de l'ordre : lue de gauche à droite sur un
+        // match terminé, la marque raconte comment la soirée a basculé.
+        const { gameGoalsHTML } = rendu();
+
+        assert.deepEqual(marques(gameGoalsHTML(MATCH, true)),
+            ['MTL 1 - TOR 0', 'MTL 1 - TOR 1', 'MTL 2 - TOR 1']);
+        assert.deepEqual(marques(gameGoalsHTML(MATCH, false)),
+            ['MTL 2 - TOR 1', 'MTL 1 - TOR 1', 'MTL 1 - TOR 0']);
     });
 
     test('le mot dit quel ordre est à l’écran', () => {
@@ -880,51 +900,97 @@ describe('accueil — les buteurs sous chaque match', () => {
         const { gameGoalsHTML } = rendu([]);
 
         assert.equal(gameGoalsHTML(MATCH, true), '');
-        assert.equal(gameGoalsHTML({ id: 999 }, true), '');
+        assert.equal(gameGoalsHTML({ id: 999, away: {}, home: {} }, true), '');
     });
 
-    test('la carte porte la photo, le nom, la période, le temps et l’aide', () => {
+    test('la carte porte la photo, le nom, l’aide, la marque et le moment', () => {
         const { goalCardHTML } = rendu();
-        const html = goalCardHTML(BUTS[0]);
+        const html = goalCardHTML(BUTS[0], EQUIPES);
 
         assert.match(html, /src="https:\/\/cdn\/1\.png"/);
-        assert.match(html, />E\. Lilleberg</);
-        assert.match(html, /TBL · 1<sup>re<\/sup> · 12:19/);
-        assert.match(html, />N\. Kucherov</);
+        assert.match(html, />Phillip Danault/);
+        assert.match(html, />Z\. Bolduc/);
+        assert.match(html, />MTL 1 - TOR 0</);
+        assert.match(html, /\(1<sup>re<\/sup> - 12:19\)/);
     });
 
-    test('plusieurs aides se suivent, aucune se dit', () => {
+    test('le compteur de saison suit chaque nom', () => {
+        // « (1) » derrière le buteur, « (1) » derrière le passeur : le
+        // premier but de l'un, la première aide de l'autre.
+        const { goalCardHTML } = rendu();
+        const un = goalCardHTML(BUTS[0], EQUIPES);
+
+        assert.match(un, /Phillip Danault <span class="fzd-goal-tally">\(1\)<\/span>/);
+        assert.match(un, /Z\. Bolduc <span class="fzd-goal-tally">\(1\)<\/span>/);
+        assert.match(goalCardHTML(BUTS[1], EQUIPES),
+            /Auston Matthews <span class="fzd-goal-tally">\(14\)<\/span>/);
+    });
+
+    test('plusieurs aides se suivent avec « et », aucune se dit', () => {
         const { goalCardHTML } = rendu();
 
-        assert.match(goalCardHTML(BUTS[2]), />V\. Hedman, N\. Kucherov</);
-        assert.match(goalCardHTML(BUTS[1]), />Sans aide</);
+        assert.match(goalCardHTML(BUTS[2], EQUIPES),
+            /N\. Suzuki <span class="fzd-goal-tally">\(22\)<\/span> et M\. Matheson <span class="fzd-goal-tally">\(8\)<\/span>/);
+        assert.match(goalCardHTML(BUTS[1], EQUIPES), />Sans aide</);
+    });
+
+    test('un compteur absent ne s’écrit pas « (0) »', () => {
+        // Les vieux matchs reviennent parfois sans total : mieux vaut rien
+        // qu'un zéro, qui se lirait comme une erreur de calcul.
+        const { compteurHTML, goalCardHTML } = rendu();
+
+        assert.equal(compteurHTML(null), '');
+        assert.equal(compteurHTML(0), '');
+        assert.equal(compteurHTML(7), ' <span class="fzd-goal-tally">(7)</span>');
+
+        const sansTotal = goalCardHTML({ ...BUTS[0], goalsToDate: null, assists: [] }, EQUIPES);
+        assert.ok(!sansTotal.includes('fzd-goal-tally'), 'aucun compteur ne doit paraître');
+    });
+
+    test('sans marque connue, la ligne reste vide plutôt qu’inventée', () => {
+        const { goalCardHTML } = rendu();
+        const html = goalCardHTML({ ...BUTS[0], awayScore: null, homeScore: null }, EQUIPES);
+
+        assert.match(html, /class="fzd-goal-run"><\/span>/);
+        assert.match(html, /\(1<sup>re<\/sup> - 12:19\)/);
+    });
+
+    test('l’anneau de la photo porte la couleur du club du buteur', () => {
+        // Les buts des deux équipes se suivent dans la même piste : la
+        // couleur est ce qui dit d'un coup d'œil qui vient de marquer.
+        const { goalCardHTML } = rendu();
+
+        assert.ok(goalCardHTML(BUTS[0], EQUIPES).includes('--fzd-goal-team: ' + getTeamColors('MTL')[0]));
+        assert.ok(goalCardHTML(BUTS[1], EQUIPES).includes('--fzd-goal-team: ' + getTeamColors('TOR')[0]));
     });
 
     test('sans photo, les initiales tiennent la place', () => {
         const { goalCardHTML } = rendu();
-        const html = goalCardHTML(BUTS[1]);
+        const html = goalCardHTML(BUTS[1], EQUIPES);
 
-        assert.match(html, /class="fzd-goal-photo is-initials">SR</);
+        assert.match(html, /class="fzd-goal-photo is-initials">AM</);
         assert.ok(!html.includes('<img'), 'aucune image ne doit être demandée');
     });
 
     test('prolongation et tirs de barrage portent leur nom', () => {
         const { goalCardHTML } = rendu();
 
-        assert.match(goalCardHTML({ ...BUTS[0], period: 4, periodType: 'OT' }), /· Prol ·/);
-        assert.match(goalCardHTML({ ...BUTS[0], period: 5, periodType: 'SO' }), /· TB ·/);
+        assert.match(goalCardHTML({ ...BUTS[0], period: 4, periodType: 'OT' }, EQUIPES), /\(Prol - /);
+        assert.match(goalCardHTML({ ...BUTS[0], period: 5, periodType: 'SO' }, EQUIPES), /\(TB - /);
     });
 
     test('un nom venu de la LNH est du texte, jamais du balisage', () => {
         const { goalCardHTML } = rendu();
         const html = goalCardHTML({
-            name: '<img src=x onerror=alert(1)>', teamAbbrev: '"><b>', period: 1,
-            periodType: 'REG', timeInPeriod: '01:00', headshot: 'x" onerror="alert(1)',
-            assists: [{ name: '<script>' }]
-        });
+            name: '<img src=x onerror=alert(1)>', teamAbbrev: 'MTL', goalsToDate: 1,
+            period: 1, periodType: 'REG', timeInPeriod: '01:00',
+            headshot: 'x" onerror="alert(1)', awayScore: 1, homeScore: 0,
+            assists: [{ name: '<script>', assistsToDate: 1 }]
+        }, { away: '"><b>', home: 'TOR' });
 
         assert.ok(!html.includes('<img src=x'), 'le nom doit être échappé');
         assert.ok(!html.includes('<script>'), 'l’aide doit être échappée');
         assert.ok(!html.includes('onerror="alert(1)"'), 'la photo doit être échappée');
+        assert.ok(!html.includes('"><b>'), 'l’abréviation doit être échappée');
     });
 });
