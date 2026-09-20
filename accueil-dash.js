@@ -395,6 +395,7 @@ function renderDayGames() {
 
     renderCalGameDots();
     bindPlayerTracks(wrap);
+    bindGoalTracks(wrap);
 }
 
 /** Largeur d'un « saut » de carrousel : une carte + le gap de la piste. */
@@ -516,6 +517,10 @@ function gameGoalsHTML(game, isFinal) {
             <div class="fzd-goals-head">
                 <span class="fzd-goals-title">Buts</span>
                 <span class="fzd-goals-sub">${isFinal ? 'Du premier au dernier' : 'Le plus récent d’abord'}</span>
+                <span class="fzd-goals-nav">
+                    <button type="button" class="fzd-goals-arrow" data-dir="prev" aria-label="But précédent">‹</button>
+                    <button type="button" class="fzd-goals-arrow" data-dir="next" aria-label="But suivant">›</button>
+                </span>
             </div>
             <div class="fzd-goals-track">${ordonnes.map(b => goalCardHTML(b, equipes)).join('')}</div>
         </div>`;
@@ -688,6 +693,50 @@ function bindPlayerTracks(root) {
             const i = Math.min(dots.children.length - 1, Math.round(track.scrollLeft / step));
             Array.from(dots.children).forEach((d, k) => d.classList.toggle('is-on', k === i));
         }, { passive: true });
+    });
+}
+
+/**
+ * Avance ou recule d'UN BUT.
+ *
+ * Pas d'une page pleine, comme le carrousel des matchs : on vient lire une
+ * séquence, et sauter deux buts pour en montrer un troisième perdrait
+ * justement ce que l'ordre raconte.
+ */
+function goalsScroll(track, dir) {
+    if (!track) return;
+    const carte = track.firstElementChild;
+    const gap = parseFloat(getComputedStyle(track).columnGap || '0') || 0;
+    const pas = carte ? carte.offsetWidth + gap : track.clientWidth;
+    track.scrollBy({ left: dir * pas, behavior: 'smooth' });
+}
+
+/**
+ * L'état des flèches d'un bloc de buts.
+ *
+ * Une piste qui tient entière n'a rien à faire défiler : ses flèches ne
+ * s'affichent pas du tout, plutôt que de s'afficher mortes. Aux deux bouts,
+ * celle qui ne mène nulle part se grise — même `is-off` que les flèches du
+ * carrousel des matchs, juste au-dessus.
+ */
+function majFlechesButs(bloc) {
+    const track = bloc.querySelector('.fzd-goals-track');
+    if (!track) return;
+    const max = track.scrollWidth - track.clientWidth;
+    bloc.classList.toggle('has-nav', max > 1);
+    bloc.querySelector('[data-dir="prev"]')?.classList.toggle('is-off', track.scrollLeft <= 1);
+    bloc.querySelector('[data-dir="next"]')?.classList.toggle('is-off', track.scrollLeft >= max - 1);
+}
+
+/** Flèches des buteurs : une paire par carte de match, posées à chaque rendu. */
+function bindGoalTracks(root) {
+    root.querySelectorAll('.fzd-goals').forEach(bloc => {
+        const track = bloc.querySelector('.fzd-goals-track');
+        if (!track) return;
+        bloc.querySelector('[data-dir="prev"]')?.addEventListener('click', () => goalsScroll(track, -1));
+        bloc.querySelector('[data-dir="next"]')?.addEventListener('click', () => goalsScroll(track, 1));
+        track.addEventListener('scroll', () => majFlechesButs(bloc), { passive: true });
+        majFlechesButs(bloc);
     });
 }
 
@@ -2173,6 +2222,10 @@ function bindCalendarControls() {
         resizeTimer = setTimeout(() => {
             fzdPlaceCalendar();
             renderCalGameDots();
+            // Les cartes de but ne changent pas de largeur, mais la carte de
+            // match si : une piste qui tenait entière peut désormais déborder,
+            // et ses flèches doivent paraître sans attendre un nouveau rendu.
+            document.querySelectorAll('.fzd-goals').forEach(majFlechesButs);
         }, 150);
     });
 }

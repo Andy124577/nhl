@@ -482,11 +482,52 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
     .fz-mobile-home .fzd-goals { grid-column: 1 / -1; padding-top: 7px; border-top-color: var(--fzm-border); }
     .fz-mobile-home .fzd-goals-title { color: var(--fzm-ink); }
     .fz-mobile-home .fzd-goals-sub { color: var(--fzm-ink-faint); }
-    /* Une carte de but PAR VUE : la carte de match fait la moitié d'un
-       téléphone, et trois lignes de texte n'y tiennent pas deux fois. */
-    .fz-mobile-home .fzd-goal-card { flex: 0 0 100%; width: auto; gap: 7px; padding: 6px 7px; background: var(--fzm-bg); border-color: var(--fzm-border); }
+    /* UNE CARTE DE BUT ENTIÈRE PAR VUE.
+       Au bureau la photo tient à gauche des trois lignes, qui se coupent aux
+       points de suspension si elles débordent. Au téléphone la carte de match
+       ne fait qu'une demi-largeur d'écran : garder cette mise en page
+       couperait « Marat Khusnutdinov » au milieu, et une carte à moitié lue
+       ne vaut pas la place qu'elle prend.
+       Ici la photo ne retient donc que la ligne du nom, et l'aide comme la
+       marque reprennent toute la largeur en dessous, où elles se replient sur
+       deux lignes plutôt que de se faire couper. La carte grandit en hauteur,
+       ce qui ne coûte rien : elle est seule à l'écran. */
+    .fz-mobile-home .fzd-goal-card {
+        flex: 0 0 100%;
+        width: auto;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 3px 7px;
+        padding: 7px 8px;
+        background: var(--fzm-bg);
+        border-color: var(--fzm-border);
+    }
     .fz-mobile-home .fzd-goal-photo { width: 26px; height: 26px; }
-    .fz-mobile-home .fzd-goal-name { font-size: 10.5px; color: var(--fzm-ink); }
+    /* `display: contents` : les trois lignes deviennent elles-mêmes les cases
+       de la grille, sans quoi la photo ne pourrait pas se poser à côté du
+       seul nom. */
+    .fz-mobile-home .fzd-goal-id { display: contents; }
+    .fz-mobile-home .fzd-goal-name { grid-column: 2; font-size: 10.5px; color: var(--fzm-ink); }
+    .fz-mobile-home .fzd-goal-assist,
+    .fz-mobile-home .fzd-goal-score { grid-column: 1 / -1; }
+    .fz-mobile-home .fzd-goal-name,
+    .fz-mobile-home .fzd-goal-assist,
+    .fz-mobile-home .fzd-goal-run {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        /* Une case de grille refuse de rétrécir sous son contenu tant qu'on
+           ne le lui dit pas : sans ces deux lignes, un « Khusnutdinov » plus
+           large que la colonne la ferait déborder au lieu de se replier. */
+        min-width: 0;
+        overflow-wrap: break-word;
+    }
+    /* Les flèches sont pour la souris. Ici le pouce fait le travail, et la
+       piste débordant toujours (une carte par vue), `has-nav` les ferait
+       paraître sur chaque carte — d'où le sélecteur aussi long que le sien. */
+    .fz-mobile-home .fzd-goals.has-nav .fzd-goals-nav { display: none; }
+    .fz-mobile-home .fzd-goal-score { flex-wrap: wrap; white-space: normal; }
     .fz-mobile-home .fzd-goal-assist,
     .fz-mobile-home .fzd-goal-run,
     .fz-mobile-home .fzd-goal-when { font-size: 9px; }

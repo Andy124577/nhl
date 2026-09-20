@@ -979,6 +979,94 @@ describe('accueil — les buteurs sous chaque match', () => {
         assert.match(goalCardHTML({ ...BUTS[0], period: 5, periodType: 'SO' }, EQUIPES), /\(TB - /);
     });
 
+    test('les flèches de navigation accompagnent chaque piste', () => {
+        const { gameGoalsHTML } = rendu();
+        const html = gameGoalsHTML(MATCH, true);
+
+        assert.match(html, /class="fzd-goals-arrow" data-dir="prev"/);
+        assert.match(html, /class="fzd-goals-arrow" data-dir="next"/);
+        // Un bouton sans nom ne dit rien à un lecteur d'écran : « ‹ » non plus.
+        assert.match(html, /aria-label="But précédent"/);
+        assert.match(html, /aria-label="But suivant"/);
+    });
+
+    test('la flèche avance d’UN but, pas d’une page', () => {
+        // Sauter deux buts pour en montrer un troisième perdrait la séquence
+        // que le carrousel est justement là pour raconter.
+        const { goalsScroll } = chargerFonctions('accueil-dash.js', ['goalsScroll'],
+            { getComputedStyle: () => ({ columnGap: '6px' }) });
+
+        const appels = [];
+        const piste = { firstElementChild: { offsetWidth: 204 }, clientWidth: 276, scrollBy: o => appels.push(o) };
+
+        goalsScroll(piste, 1);
+        goalsScroll(piste, -1);
+
+        // 204 de carte + 6 de gouttiere : la carte suivante arrive pile au bord.
+        assert.deepEqual(appels.map(a => a.left), [210, -210]);
+        assert.ok(appels.every(a => a.behavior === 'smooth'), 'le saut doit être animé');
+    });
+
+    test('une piste vide ne fait pas défiler le vide', () => {
+        const { goalsScroll } = chargerFonctions('accueil-dash.js', ['goalsScroll'],
+            { getComputedStyle: () => ({ columnGap: '6px' }) });
+
+        const appels = [];
+        // Sans carte, il reste la largeur visible : mieux que zéro, qui
+        // laisserait le bouton sans effet.
+        goalsScroll({ firstElementChild: null, clientWidth: 276, scrollBy: o => appels.push(o) }, 1);
+        assert.deepEqual(appels.map(a => a.left), [276]);
+
+        assert.doesNotThrow(() => goalsScroll(null, 1));
+    });
+
+    /** Un bloc de buts en carton-pâte : ce que majFlechesButs touche, rien de plus. */
+    function blocFactice(piste) {
+        const classes = new Set();
+        const bouton = () => {
+            const c = new Set();
+            return { classList: { toggle: (n, on) => (on ? c.add(n) : c.delete(n)) }, off: () => c.has('is-off') };
+        };
+        const prev = bouton(), next = bouton();
+        return {
+            classList: { toggle: (n, on) => (on ? classes.add(n) : classes.delete(n)) },
+            querySelector: sel => sel === '.fzd-goals-track' ? piste
+                : sel === '[data-dir="prev"]' ? prev
+                : sel === '[data-dir="next"]' ? next : null,
+            navVisible: () => classes.has('has-nav'), prev, next
+        };
+    }
+
+    test('une piste qui tient entière n’affiche aucune flèche', () => {
+        // Deux boutons morts sous un match à deux buts : autant ne rien mettre.
+        const { majFlechesButs } = chargerFonctions('accueil-dash.js', ['majFlechesButs']);
+        const bloc = blocFactice({ scrollWidth: 300, clientWidth: 300, scrollLeft: 0 });
+
+        majFlechesButs(bloc);
+
+        assert.equal(bloc.navVisible(), false);
+    });
+
+    test('aux deux bouts, la flèche qui ne mène nulle part se grise', () => {
+        const { majFlechesButs } = chargerFonctions('accueil-dash.js', ['majFlechesButs']);
+        const piste = { scrollWidth: 900, clientWidth: 300, scrollLeft: 0 };
+        const bloc = blocFactice(piste);
+
+        majFlechesButs(bloc);
+        assert.equal(bloc.navVisible(), true, 'la piste déborde : les flèches servent');
+        assert.equal(bloc.prev.off(), true, 'au départ, rien avant');
+        assert.equal(bloc.next.off(), false);
+
+        piste.scrollLeft = 300;
+        majFlechesButs(bloc);
+        assert.equal(bloc.prev.off(), false, 'au milieu, les deux mènent quelque part');
+        assert.equal(bloc.next.off(), false);
+
+        piste.scrollLeft = 600;
+        majFlechesButs(bloc);
+        assert.equal(bloc.next.off(), true, 'au bout, rien après');
+    });
+
     test('un nom venu de la LNH est du texte, jamais du balisage', () => {
         const { goalCardHTML } = rendu();
         const html = goalCardHTML({

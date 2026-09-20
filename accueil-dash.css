@@ -627,7 +627,7 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
     padding-top: 9px;
     border-top: 1px solid var(--fzd-border-soft);
 }
-.fzd-goals-head { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.fzd-goals-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .fzd-goals-title {
     font: 600 9px/1 'Helvetica Neue', Helvetica, sans-serif;
     letter-spacing: .14em;
@@ -645,6 +645,25 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+/* Les flèches ne paraissent que si la piste déborde (`has-nav`, posé par
+   majFlechesButs) : un match à deux buts ne montre pas deux boutons morts.
+   Au téléphone elles ne paraissent jamais — le pouce fait le travail, et la
+   carte est trop étroite pour leur céder de la place. */
+.fzd-goals-nav { display: none; margin-left: auto; flex: 0 0 auto; gap: 1px; }
+.fzd-goals.has-nav .fzd-goals-nav { display: flex; }
+.fzd-goals-arrow {
+    background: none;
+    border: none;
+    padding: 0 3px;
+    cursor: pointer;
+    font: 400 14px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-muted);
+}
+.fzd-goals-arrow:hover { color: var(--fzd-ink); }
+/* Au bout de la piste : grisée, mais toujours là pour ne pas faire sauter
+   l'autre d'un pixel à l'autre. */
+.fzd-goals-arrow.is-off { color: var(--fzd-text-fainter); cursor: default; }
 
 .fzd-goals-track {
     display: flex;
