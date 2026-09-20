@@ -812,3 +812,119 @@ describe('accueil — todayISO, la journée du pool', () => {
         assert.equal(dayLabelFr('n’importe quoi'), '');
     });
 });
+// ── accueil ─ le carrousel des buteurs ──────────────────────────────
+
+describe('accueil — les buteurs sous chaque match', () => {
+    const { escapeHTML } = chargerFonctions('accueil.js', ['escapeHTML']);
+
+    // Trois buts dans l'ordre de la LNH : chronologique, du premier au dernier.
+    const BUTS = [
+        { name: 'E. Lilleberg', teamAbbrev: 'TBL', period: 1, periodType: 'REG',
+          timeInPeriod: '12:19', headshot: 'https://cdn/1.png',
+          assists: [{ name: 'N. Kucherov' }] },
+        { name: 'S. Reinhart', teamAbbrev: 'FLA', period: 2, periodType: 'REG',
+          timeInPeriod: '04:02', headshot: '', assists: [] },
+        { name: 'B. Point', teamAbbrev: 'TBL', period: 3, periodType: 'REG',
+          timeInPeriod: '18:47', headshot: 'https://cdn/3.png',
+          assists: [{ name: 'V. Hedman' }, { name: 'N. Kucherov' }] }
+    ];
+
+    const MATCH = { id: 2025020321, away: { abbrev: 'TBL' }, home: { abbrev: 'FLA' } };
+
+    /** Les aides de rendu, avec une feuille de pointage déjà en main. */
+    function rendu(buts = BUTS) {
+        return chargerFonctions(
+            'accueil-dash.js',
+            ['periodLabel', 'goalCardHTML', 'gameGoalsHTML'],
+            { escapeHTML, calGoals: { date: '2025-11-15', games: { 2025020321: buts }, at: 0 } }
+        );
+    }
+
+    /** Les noms des buteurs, dans l'ordre où la piste les pose. */
+    const ordre = html => [...html.matchAll(/class="fzd-goal-name"[^>]*>([^<]+)</g)].map(m => m[1]);
+
+    test('match en cours : le but le plus récent est à gauche', () => {
+        // La carte répond à « qu'est-ce qui vient de se passer » : la réponse
+        // doit être sous les yeux, pas à trois cartes de défilement.
+        const { gameGoalsHTML } = rendu();
+
+        assert.deepEqual(ordre(gameGoalsHTML(MATCH, false)),
+            ['B. Point', 'S. Reinhart', 'E. Lilleberg']);
+    });
+
+    test('match terminé : l’ordre s’inverse, du premier but au dernier', () => {
+        const { gameGoalsHTML } = rendu();
+
+        assert.deepEqual(ordre(gameGoalsHTML(MATCH, true)),
+            ['E. Lilleberg', 'S. Reinhart', 'B. Point']);
+    });
+
+    test('le mot dit quel ordre est à l’écran', () => {
+        const { gameGoalsHTML } = rendu();
+
+        assert.match(gameGoalsHTML(MATCH, false), /Le plus récent d’abord/);
+        assert.match(gameGoalsHTML(MATCH, true), /Du premier au dernier/);
+    });
+
+    test('relire la feuille ne la retourne pas sur place', () => {
+        // `reverse()` seul muterait la liste gardée dans calGoals : le match
+        // basculerait d'un ordre à l'autre à chaque rafraîchissement.
+        const { gameGoalsHTML } = rendu();
+
+        const un = gameGoalsHTML(MATCH, false);
+        gameGoalsHTML(MATCH, true);
+        assert.deepEqual(ordre(gameGoalsHTML(MATCH, false)), ordre(un));
+    });
+
+    test('un match sans but n’affiche pas de bandeau vide', () => {
+        const { gameGoalsHTML } = rendu([]);
+
+        assert.equal(gameGoalsHTML(MATCH, true), '');
+        assert.equal(gameGoalsHTML({ id: 999 }, true), '');
+    });
+
+    test('la carte porte la photo, le nom, la période, le temps et l’aide', () => {
+        const { goalCardHTML } = rendu();
+        const html = goalCardHTML(BUTS[0]);
+
+        assert.match(html, /src="https:\/\/cdn\/1\.png"/);
+        assert.match(html, />E\. Lilleberg</);
+        assert.match(html, /TBL · 1<sup>re<\/sup> · 12:19/);
+        assert.match(html, />N\. Kucherov</);
+    });
+
+    test('plusieurs aides se suivent, aucune se dit', () => {
+        const { goalCardHTML } = rendu();
+
+        assert.match(goalCardHTML(BUTS[2]), />V\. Hedman, N\. Kucherov</);
+        assert.match(goalCardHTML(BUTS[1]), />Sans aide</);
+    });
+
+    test('sans photo, les initiales tiennent la place', () => {
+        const { goalCardHTML } = rendu();
+        const html = goalCardHTML(BUTS[1]);
+
+        assert.match(html, /class="fzd-goal-photo is-initials">SR</);
+        assert.ok(!html.includes('<img'), 'aucune image ne doit être demandée');
+    });
+
+    test('prolongation et tirs de barrage portent leur nom', () => {
+        const { goalCardHTML } = rendu();
+
+        assert.match(goalCardHTML({ ...BUTS[0], period: 4, periodType: 'OT' }), /· Prol ·/);
+        assert.match(goalCardHTML({ ...BUTS[0], period: 5, periodType: 'SO' }), /· TB ·/);
+    });
+
+    test('un nom venu de la LNH est du texte, jamais du balisage', () => {
+        const { goalCardHTML } = rendu();
+        const html = goalCardHTML({
+            name: '<img src=x onerror=alert(1)>', teamAbbrev: '"><b>', period: 1,
+            periodType: 'REG', timeInPeriod: '01:00', headshot: 'x" onerror="alert(1)',
+            assists: [{ name: '<script>' }]
+        });
+
+        assert.ok(!html.includes('<img src=x'), 'le nom doit être échappé');
+        assert.ok(!html.includes('<script>'), 'l’aide doit être échappée');
+        assert.ok(!html.includes('onerror="alert(1)"'), 'la photo doit être échappée');
+    });
+});

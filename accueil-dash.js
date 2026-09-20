@@ -173,6 +173,12 @@ let calMonthCursor = null;
 // les cartes joueur du calendrier montrent la ligne EN DIRECT quand elle
 // existe, et retombent sur les totaux de la saison sinon.
 let calTonight = { players: [], games: [] };
+// Buts de la journée AFFICHÉE (GET /day-goals/:date), indexés par identifiant
+// de match. Chargés à part du calendrier : une semaine de feuilles de
+// pointage ne sert à rien quand une seule journée est à l'écran.
+let calGoals = { date: null, games: {}, at: 0 };
+let calGoalsEnCours = null;
+const CAL_GOALS_FRAIS_MS = 30 * 1000;
 // abbrev → { name, record }, construit une fois depuis /current-teams.
 let nhlTeamIndex = null;
 
@@ -219,6 +225,62 @@ async function fetchSchedule(date) {
     } catch (err) {
         console.warn('Could not load schedule:', err);
         return { days: [], nextStartDate: null, previousStartDate: null };
+    }
+}
+
+/**
+ * Les buts de la journée affichée, chargés en arrière-plan.
+ *
+ * `renderDayGames()` est synchrone et redessine à chaque rafraîchissement du
+ * tableau de bord : l'attendre sur le réseau ferait clignoter les cartes.
+ * On dessine donc avec ce qu'on a, et le retour de la requête redessine.
+ *
+ * Trois gardes empêchent la boucle — renderDayGames rappelle cette fonction :
+ * la journée déjà en main ne se recharge pas, une requête en vol n'est pas
+ * doublée, et une journée dont aucun match n'a commencé n'a rien à demander.
+ * Seul un match EN COURS rouvre la porte, et pas plus d'une fois par demi-
+ * minute : c'est le seul cas où la feuille peut encore changer.
+ */
+function chargerButsDuJour(date, games) {
+    const commences = games.some(g => ['LIVE', 'CRIT', 'FINAL', 'OFF'].includes(g.state));
+    if (!commences) {
+        if (calGoals.date !== date) calGoals = { date, games: {}, at: Date.now() };
+        return;
+    }
+
+    const enDirect = games.some(g => g.state === 'LIVE' || g.state === 'CRIT');
+    const aJour = calGoals.date === date
+        && (!enDirect || Date.now() - calGoals.at < CAL_GOALS_FRAIS_MS);
+    if (aJour || calGoalsEnCours === date) return;
+
+    calGoalsEnCours = date;
+    // Le marqueur ne se libère que s’il est encore le nôtre : une requête
+    // partie pour une autre journée a pu le reprendre entre-temps.
+    const liberer = () => { if (calGoalsEnCours === date) calGoalsEnCours = null; };
+    fetchDayGoals(date).then(data => {
+        liberer();
+        // L'utilisateur a pu changer de journée pendant la requête : poser
+        // ces buts-là les afficherait sous les matchs d'une autre date.
+        if (calSelectedDate !== date) return;
+        calGoals = { date, games: data.games || {}, at: Date.now() };
+        // renderDayGames() ramène la piste des matchs à zéro. Ici le lecteur
+        // n'a rien demandé — les buts arrivent d'eux-mêmes — et voir les
+        // cartes revenir au premier match serait une main sur l'épaule.
+        const piste = document.getElementById('fzdCalGames');
+        const garde = piste ? piste.scrollLeft : 0;
+        renderDayGames();
+        if (piste) piste.scrollLeft = garde;
+    }).catch(liberer);
+}
+
+async function fetchDayGoals(date) {
+    try {
+        const res = await fetch(`${BASE_URL}/day-goals/${date}`, { cache: 'no-store' });
+        if (!res.ok) return { date, games: {} };
+        return await res.json();
+    } catch (err) {
+        console.warn('Could not load day goals:', err);
+        return { date, games: {} };
     }
 }
 
@@ -326,6 +388,7 @@ function renderDayGames() {
     // vue au bureau, une au téléphone) au lieu de s'empiler. Plus de repli
     // « Voir les N autres » — le carrousel les atteint tous.
     const counts = rosterTeamCounts();
+    chargerButsDuJour(calSelectedDate, games);
     wrap.innerHTML = games.map(g => gameCardHTML(g, counts)).join('');
     wrap.scrollLeft = 0;
     if (nav) nav.style.display = '';
@@ -411,10 +474,80 @@ function gameCardHTML(game, rosterCounts) {
             <div class="fzd-game-teams">
                 ${teamRow(game.away, game.home)}
                 ${teamRow(game.home, game.away)}
+                ${gameGoalsHTML(game, isFinal)}
             </div>
             <div class="fzd-game-roster-count${rosterCount ? ' has-players' : ''}">${rosterCount ? `★ ${rosterCount} de vos joueurs` : 'Aucun de vos joueurs'}</div>
             ${gamePlayersHTML(game)}
         </article>`;
+}
+
+/**
+ * Les buteurs du match, en carrousel, sous le pointage.
+ *
+ * L'ORDRE DIT OÙ REGARDER, et il s'inverse quand la sirène sonne :
+ *
+ *   - match en cours, le plus récent à GAUCHE. Une carte qui suit un match
+ *     répond à « qu'est-ce qui vient de se passer » ; la réponse doit être
+ *     là où l'œil se pose, sans faire défiler. Chaque but pousse les
+ *     précédents vers la droite ;
+ *   - match terminé, le premier à GAUCHE. Plus rien n'arrive, la question
+ *     devient « comment ça s'est joué » : on relit la feuille dans l'ordre
+ *     où elle s'est écrite, du premier but au dernier.
+ *
+ * La liste arrive du serveur dans l'ordre de la LNH — chronologique — et
+ * c'est `slice().reverse()` qui la retourne, jamais `reverse()` seul : la
+ * même liste est relue à chaque rendu, et l'inverser sur place la ferait
+ * basculer d'un rendu à l'autre.
+ *
+ * Un match sans but n'affiche rien plutôt qu'un bandeau vide — c'est déjà
+ * la règle du carrousel « Vos joueurs » juste en dessous.
+ */
+function gameGoalsHTML(game, isFinal) {
+    const buts = (calGoals.games && calGoals.games[game.id]) || [];
+    if (!buts.length) return '';
+
+    const ordonnes = isFinal ? buts : buts.slice().reverse();
+
+    return `
+        <div class="fzd-goals">
+            <div class="fzd-goals-head">
+                <span class="fzd-goals-title">Buts</span>
+                <span class="fzd-goals-sub">${isFinal ? 'Du premier au dernier' : 'Le plus récent d’abord'}</span>
+            </div>
+            <div class="fzd-goals-track">${ordonnes.map(goalCardHTML).join('')}</div>
+        </div>`;
+}
+
+/**
+ * Une carte de but : la photo, le nom, quand, et qui a aidé.
+ *
+ * L'abréviation d'équipe n'est pas décorative : les buts des deux clubs se
+ * suivent dans la même piste, et sans elle une remontée ressemble à une
+ * débâcle. `periodLabel` rend du balisage (« 1<sup>re</sup> ») : c'est la
+ * seule pièce ici qui ne passe pas par escapeHTML, et tout ce qui vient de
+ * la LNH y passe.
+ */
+function goalCardHTML(but) {
+    const nom = but.name || '';
+    const initiales = nom.split(/\s+/).map(m => m[0] || '').join('').slice(0, 2).toUpperCase();
+    const photo = but.headshot
+        ? `<img class="fzd-goal-photo" src="${escapeHTML(but.headshot)}" alt="" loading="lazy" onerror="this.remove()">`
+        : `<span class="fzd-goal-photo is-initials">${escapeHTML(initiales)}</span>`;
+
+    const aides = (but.assists || []).map(a => a.name).filter(Boolean);
+    const aide = aides.length ? aides.join(', ') : 'Sans aide';
+    const quand = [escapeHTML(but.teamAbbrev || ''), periodLabel(but.period, but.periodType),
+        escapeHTML(but.timeInPeriod || '')].filter(Boolean).join(' · ');
+
+    return `
+        <div class="fzd-goal-card">
+            ${photo}
+            <div class="fzd-goal-id">
+                <div class="fzd-goal-name" title="${escapeHTML(nom)}">${escapeHTML(nom)}</div>
+                <div class="fzd-goal-when">${quand}</div>
+                <div class="fzd-goal-assist" title="${escapeHTML(aide)}">${escapeHTML(aide)}</div>
+            </div>
+        </div>`;
 }
 
 /**

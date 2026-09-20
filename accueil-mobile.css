@@ -476,6 +476,19 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
     .fz-mobile-home .fzd-game-roster-count.has-players { background: var(--fzm-red-soft); color: var(--fzm-red); }
     .fz-mobile-home .fzd-game-players { display: none; }
 
+    /* Le bloc équipes passe à deux colonnes au téléphone : les buts
+       reprennent toute la largeur sous les deux, sinon la piste se
+       retrouverait coincée dans la moitié gauche de la carte. */
+    .fz-mobile-home .fzd-goals { grid-column: 1 / -1; padding-top: 7px; border-top-color: var(--fzm-border); }
+    .fz-mobile-home .fzd-goals-title { color: var(--fzm-ink); }
+    .fz-mobile-home .fzd-goals-sub { color: var(--fzm-ink-faint); }
+    .fz-mobile-home .fzd-goal-card { width: 118px; gap: 6px; padding: 5px 6px; background: var(--fzm-bg); border-color: var(--fzm-border); }
+    .fz-mobile-home .fzd-goal-photo { width: 24px; height: 24px; }
+    .fz-mobile-home .fzd-goal-name { font-size: 10.5px; }
+    .fz-mobile-home .fzd-goal-when,
+    .fz-mobile-home .fzd-goal-assist { font-size: 8.5px; color: var(--fzm-ink-soft); }
+    .fz-mobile-home .fzd-goal-assist { color: var(--fzm-ink-faint); }
+
     #fzmLeagueTabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--fzm-border); border-radius: 9px; overflow: hidden; }
     #fzmLeagueTabs .fzm-tab { min-width: 0; min-height: 36px; border: 0; border-right: 1px solid var(--fzm-border); border-radius: 0; font-size: 10px; }
     #fzmLeagueTabs .fzm-tab:last-child { border-right: 0; }

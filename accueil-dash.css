@@ -616,6 +616,95 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 .fzd-team-score { font: 700 20px/1 'Oswald', sans-serif; color: var(--fzd-ink); flex: 0 0 auto; }
 .fzd-team-score.is-trailing { color: var(--fzd-text-faint); }
 
+/* --- Buts du match : les buteurs, en carrousel, sous le pointage ---
+   Dans .fzd-game-teams plutôt qu'en pied de carte : un but appartient au
+   tableau d'affichage, et s'en éloigner obligerait à relire le score pour
+   savoir ce que le but vient de changer. */
+.fzd-goals {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 9px;
+    border-top: 1px solid var(--fzd-border-soft);
+}
+.fzd-goals-head { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.fzd-goals-title {
+    font: 600 9px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--fzd-ink);
+    flex: 0 0 auto;
+}
+/* L'ordre s'inverse à la fin du match : sans un mot, le lecteur ne peut pas
+   savoir si la carte de gauche est le premier but ou le dernier. */
+.fzd-goals-sub {
+    font: 400 9px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-fainter);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fzd-goals-track {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+}
+.fzd-goals-track::-webkit-scrollbar { display: none; }
+
+.fzd-goal-card {
+    width: 152px;
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--fzd-border);
+    border-radius: 8px;
+    background: var(--fzd-surface);
+    padding: 6px 8px;
+}
+.fzd-goal-photo {
+    width: 28px; height: 28px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: var(--fzd-tile-bg);
+    object-fit: cover;
+}
+.fzd-goal-photo.is-initials {
+    display: grid;
+    place-items: center;
+    font: 600 9px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-muted);
+}
+.fzd-goal-id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fzd-goal-name {
+    font: 600 11.5px/1.1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fzd-goal-when {
+    font: 400 9px/1.1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-faint);
+    white-space: nowrap;
+}
+.fzd-goal-when sup { font-size: .78em; vertical-align: super; line-height: 0; }
+/* La passe est l'information la plus basse de la carte : elle s'efface
+   d'abord quand le nom du passeur est trop long pour la largeur. */
+.fzd-goal-assist {
+    font: 400 9px/1.1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-fainter);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* --- Carrousel « Vos joueurs » sous chaque match --------------- */
 .fzd-game-players {
     border-top: 1px solid var(--fzd-border-soft);

@@ -1834,6 +1834,83 @@ app.get('/schedule/:date', async (req, res) => {
 });
 
 // ============================================================
+// BUTS D'UNE JOURNÉE — qui a marqué, quand, et avec l'aide de qui.
+//
+// `/schedule/:date` rend une semaine, mais la LNH n'y met aucun but : la
+// feuille de pointage vit dans `/v1/score/{date}`. Une seule requête couvre
+// tous les matchs d'une journée — les cartes du calendrier en affichent
+// jusqu'à quatorze côte à côte, et autant d'appels à `gamecenter` par carte
+// tiendrait la page ouverte sur la LNH pendant tout le rendu.
+//
+// Les buts sortent d'ici DANS L'ORDRE OÙ LA LNH LES DONNE, du premier au
+// dernier. C'est le client qui retourne la liste pour un match en cours :
+// l'ordre est une question d'affichage, et deux dispositions qui liraient
+// deux ordres différents du serveur finiraient par diverger.
+// ============================================================
+const dayGoalsCache = new Map(); // date -> { data, fetchedAt, chaud }
+const DAY_GOALS_HOT_TTL_MS = 30 * 1000;
+const DAY_GOALS_COLD_TTL_MS = 6 * 60 * 60 * 1000;
+
+app.get('/day-goals/:date', async (req, res) => {
+    const { date } = req.params;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ message: 'Invalid date, expected YYYY-MM-DD' });
+    }
+
+    const vide = { date, games: {} };
+    try {
+        // « Chaud » : un match en cours, ou simplement la journée du jour —
+        // sinon la première lecture d'un soir où rien n'a encore commencé
+        // figerait une feuille vide pour six heures, jusqu'après la dernière
+        // sirène.
+        const cached = dayGoalsCache.get(date);
+        if (cached) {
+            const ttl = cached.chaud ? DAY_GOALS_HOT_TTL_MS : DAY_GOALS_COLD_TTL_MS;
+            if ((Date.now() - cached.fetchedAt) < ttl) return res.json(cached.data);
+        }
+
+        const reponse = await fetch(`https://api-web.nhle.com/v1/score/${date}`);
+        if (!reponse.ok) return res.json(vide);
+        const brut = await reponse.json();
+
+        const games = {};
+        let enCours = false;
+        for (const partie of brut.games || []) {
+            if (partie.gameState === 'LIVE' || partie.gameState === 'CRIT') enCours = true;
+            const buts = partie.goals || [];
+            if (!buts.length) continue;
+            games[partie.id] = buts.map(b => ({
+                playerId: b.playerId,
+                // « E. Lilleberg » : la LNH abrège déjà le prénom, et c'est
+                // exactement ce qui tient sur une carte de 150 pixels.
+                name: b.name?.default
+                    || [b.firstName?.default, b.lastName?.default].filter(Boolean).join(' '),
+                headshot: b.mugshot || '',
+                teamAbbrev: b.teamAbbrev || '',
+                period: b.periodDescriptor?.number ?? b.period ?? null,
+                periodType: b.periodDescriptor?.periodType || 'REG',
+                timeInPeriod: b.timeInPeriod || '',
+                assists: (b.assists || []).map(a => ({
+                    playerId: a.playerId,
+                    name: a.name?.default || ''
+                }))
+            }));
+        }
+
+        const payload = { date, games };
+        dayGoalsCache.set(date, {
+            data: payload,
+            fetchedAt: Date.now(),
+            chaud: enCours || date === datesPool.journeeLocale()
+        });
+        res.json(payload);
+    } catch (error) {
+        console.error('❌ Error fetching day goals:', error.message);
+        res.json(vide);
+    }
+});
+
+// ============================================================
 // TONIGHT BOXSCORES — real per-player stat lines for every game that has
 // started today, live or final. Deliberately reads NHL's boxscore endpoint
 // directly rather than player_game_logs: that table is only written once a
