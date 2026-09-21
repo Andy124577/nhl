@@ -2,7 +2,7 @@
 body.fz-season-page { background:#060e13; }
 #fzDashSection.is-season { background:#060e13; padding:18px 20px 48px; }
 .is-season .fz-dash { max-width:1500px; --fzd-bg:#091218; --fzd-bg-alt:#0c171e; --fzd-surface:#0b151c; --fzd-ink:#f3f5f8; --fzd-text:#bdcad8; --fzd-text-muted:#a6b6c8; --fzd-border:#203440; --fzd-border-soft:#162832; --fzd-accent:#ff4435; --fzd-solid:#f33b2c; --fzd-on-solid:#fff; }
-.is-season .fz-dash > :not(#fzSeasonHome):not(#fzTodayDash) { display:none!important; }
+.is-season .fz-dash > :not(#fzSeasonHome) { display:none!important; }
 .fzs { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:14px; color:#eef2f8; font:400 16px/1.35 'Barlow Condensed',sans-serif; }
 .fzs .fzs-panel { min-width:0; padding:16px; border:1px solid #203440; border-radius:11px; background:linear-gradient(115deg,#0b151c,#071015); overflow:hidden; }
 .fzs .fzs-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
@@ -39,22 +39,28 @@ body.fz-season-page { background:#060e13; }
 .fzs .fzd-team-logo { width:30px; height:30px; object-fit:contain; }
 .fzs-game b { font-size:21px; }.fzs-game footer { font-size:13px; color:#b6c5d6; white-space:nowrap; margin-top:8px; }
 .fzs-tag { display:inline-block; border-radius:3px; padding:1px 6px; background:#344555; color:white; font-size:11px; font-weight:700; text-transform:uppercase; width:max-content; }
-.fzs-tag.is-live { background:#eb382a; }
+.fzs-tag.is-live { background:#c8321f; } /* blanc dessus : 5:1 (#eb382a : 4,3:1) */
 .fzs-players { grid-column:span 6; grid-row:span 2; }
 .fzs-player { display:grid; grid-template-columns:55px 1.15fr 1.4fr 30px; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #172933; }
 .fzs-player:last-child { border:0; }
 .fzs .fzd-off-face { width:55px; height:55px; border-radius:50%; background:#1d303c; flex-shrink:0; }
 .fzs-player-name { min-width:0; }.fzs-player-name strong { color:#f2f5fa; font-size:16px; }
-.fzs-player-name small,.fzs-watch-player small { display:block; color:#acbed0; margin:2px 0 4px; font-size:13px; }
+.fzs-player-name small { display:block; color:#acbed0; margin:2px 0 4px; font-size:13px; }
 .fzs-player-stats { display:flex; flex-wrap:wrap; justify-content:space-between; gap:5px; color:#c1cfde; font-size:12px; }
 .fzs-player-stats b,.fzs-player-stats strong { font-size:20px; }.fzs-player-stats small { flex-basis:100%; font-size:12px; }
 .fzs-total,.fzs-playing { grid-column:span 3; }
 .fzs-dots { display:flex; gap:6px; flex-wrap:wrap; margin-top:15px; }.fzs-dots i { width:13px; height:13px; border-radius:50%; background:#293c4c; }.fzs-dots .is-on { background:#2dcc64; }
 .fzs-breakdown { grid-column:span 6; }.fzs-stat { display:grid; grid-template-columns:115px 30px 1fr; align-items:center; gap:12px; border-bottom:1px solid #152731; padding:7px 0; font-size:14px; }.fzs-stat > div { background:#15242d; border-radius:10px; height:9px; overflow:hidden; }.fzs-stat i { display:block; height:100%; background:linear-gradient(90deg,#c92921,#f34c36); border-radius:10px; }
-.fzs-calendar { grid-column:span 12; }.fzs #fzDashCalendarWrap { display:block!important; margin:0; padding:0; border:0; background:transparent; }.fzs .fzd-cal-games { grid-template-columns:repeat(4,minmax(0,1fr)); }.fzs .fzd-game-players { display:none; }.fzs .fzd-cal-strip { margin-bottom:12px; }
-.fzs-activity,.fzs-watch,.fzs-news { grid-column:span 4; }
-.fzs-watch-player { display:flex; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid #1b2c36; }.fzs-watch-player > span:last-child { margin-left:auto; }.fzs-watch-player strong { color:white; }
-.fzs-moves { grid-column:span 12; }.fzs .fzm-section { margin:0; padding:0; }.fzs .fzm-section-title { color:#f3f5f8; font:500 15px 'Oswald',sans-serif; text-transform:uppercase; }.fzs .fzm-news-list { display:grid; gap:10px; }.fzs .fzm-news-row { color:#f1f4f9; }.fzs .fzm-list-card { background:transparent; border:0; }.fzs .fzm-list-row { border-color:#1b303b; }.fzs .fzm-activity-text { color:#c4d1de; }.fzs-empty { padding:20px 0; font-size:15px; }
+/* Blocs partagés (accueil-dash.js) : l'accueil de saison ne leur donne que
+   leur place dans la grille et, pour « À surveiller », son fond de panneau —
+   le reste de leur mise en forme les suit d'un accueil à l'autre. */
+.fzs :is(#fzDashCalendarWrap, #fzdOffMoves) { grid-column:span 12; min-width:0; }
+/* Le fond et la bordure viennent des jetons --fzd-* que la palette remappe
+   pour cet accueil (accueil-palette.css) : ils suivent donc les deux thèmes. */
+.fzs #fzdOffWatch { grid-column:span 4; min-width:0; padding:16px; border:1px solid var(--fzd-border); border-radius:11px; overflow:hidden; }
+.fzs #fzDashCalendarWrap { display:block!important; margin:0; padding:16px; border-radius:11px; }.fzs .fzd-cal-games { grid-template-columns:repeat(4,minmax(0,1fr)); }.fzs .fzd-game-players { display:none; }.fzs .fzd-cal-strip { margin-bottom:12px; }
+.fzs-activity,.fzs-news { grid-column:span 4; }
+.fzs .fzm-news-list { display:grid; gap:10px; }.fzs .fzm-news-row { color:#f1f4f9; }.fzs .fzm-list-card { background:transparent; border:0; }.fzs .fzm-list-row { border-color:#1b303b; }.fzs .fzm-activity-text { color:#c4d1de; }.fzs-empty { padding:20px 0; font-size:15px; }
 @media(max-width:1100px) and (min-width:769px) { .fzs-player { grid-template-columns:42px 1fr; }.fzs-player-stats { grid-column:2; }.fzs-player > .fzd-team-logo { display:none; }.fzs .fzd-cal-games { grid-template-columns:repeat(2,minmax(0,1fr)); }.fzs-head a { font-size:12px; }.fzs-bars { opacity:.25; } }
 @media(max-width:768px) {
  #fzDashSection.is-season { padding:12px 12px calc(90px + env(safe-area-inset-bottom)); }
@@ -63,7 +69,7 @@ body.fz-season-page { background:#060e13; }
  .fzs .fzs-hero { grid-column:1/-1; order:0; min-height:225px; padding:20px; }
  .fzs-hero-copy { max-width:75%; }.fzs h1 { font-size:34px; max-width:250px; }.fzs-cover { right:-15%; width:80%; opacity:.7; }.fzs-hero p { max-width:210px; }
  .fzs-players { grid-column:1/-1; grid-row:auto; order:1; }.fzs-player-list { display:flex; overflow-x:auto; scroll-snap-type:x proximity; gap:12px; padding-bottom:5px; }.fzs-player { flex:0 0 205px; display:grid; grid-template-columns:48px 1fr; border:1px solid #1c303b; border-radius:8px; padding:10px; scroll-snap-align:start; gap:8px; }.fzs-player:last-child { border:1px solid #1c303b; }.fzs-player .fzd-off-face { width:48px; height:48px; }.fzs-player-stats { grid-column:1/-1; }.fzs-player > .fzd-team-logo { display:none; }.fzs-player-stats small { text-align:center; border-top:1px solid #1b2c36; padding-top:6px; }
- .fzs-rank { grid-column:span 1; order:2; }.fzs-playing { grid-column:span 1; order:3; }.fzs-number { font-size:30px; }.fzs-number small { font-size:22px; }.fzs-rank .fzs-head a { display:none; }.fzs-bars { display:none; }.fzs-calendar { grid-column:1/-1; order:4; }.fzs-moves { grid-column:1/-1; order:5; }.fzs-news { grid-column:1/-1; order:6; }.fzs-scores { grid-column:1/-1; order:7; }.fzs-total { grid-column:span 1; order:8; }.fzs-breakdown { grid-column:1/-1; order:9; }.fzs-activity { grid-column:1/-1; order:10; }.fzs-watch { grid-column:1/-1; order:11; }
+ .fzs-rank { grid-column:span 1; order:2; }.fzs-playing { grid-column:span 1; order:3; }.fzs-number { font-size:30px; }.fzs-number small { font-size:22px; }.fzs-rank .fzs-head a { display:none; }.fzs-bars { display:none; }.fzs #fzDashCalendarWrap { grid-column:1/-1; order:4; }.fzs #fzdOffMoves { grid-column:1/-1; order:5; }.fzs-news { grid-column:1/-1; order:6; }.fzs-scores { grid-column:1/-1; order:7; }.fzs-total { grid-column:span 1; order:8; }.fzs-breakdown { grid-column:1/-1; order:9; }.fzs-activity { grid-column:1/-1; order:10; }.fzs #fzdOffWatch { grid-column:1/-1; order:11; }
  .fzs h2 { font-size:13px; }.fzs-head { gap:8px; }.fzs-head a { font-size:13px; }.fzs .fzd-cal-games { display:flex; }.fzs .fzd-game-card { flex:0 0 85%; }.fzs .fzd-cal-strip { display:flex; overflow-x:auto; }.fzs .fzd-day-chip { flex:0 0 64px; }.fzs-stat { grid-template-columns:80px 25px 1fr; }
 }
 @media(prefers-reduced-motion:reduce) { .fzs * { scroll-behavior:auto!important; } }

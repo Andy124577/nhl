@@ -7,18 +7,30 @@
     <script src="theme.js"></script>
     <!-- Quelle carte affiche le héros ? Décidé avant le premier rendu, comme
          le thème : sinon le visiteur verrait passer le classement d'un membre
-         avant que le script de page ne le remplace. -->
+         avant que le script de page ne le remplace.
+         Un membre part aussi en « fz-home-pending » : la disposition de son
+         accueil (repêchage, saison, tableau de bord) dépend de données
+         réseau, et tant qu'elle n'est pas choisie rien ne s'affiche — plutôt
+         que le tableau de bord par défaut une seconde. accueil-dash.js
+         retire la classe (fzdRevelerAccueil). -->
     <script>
         (function () {
             var connecte = localStorage.getItem('isLoggedIn') === 'true'
                 && !!localStorage.getItem('username');
             document.documentElement.classList.add(connecte ? 'fz-auth' : 'fz-anon');
+            if (connecte) {
+                document.documentElement.classList.add('fz-home-pending');
+                // Filet : un script en échec ne doit pas laisser l'accueil vide.
+                setTimeout(function () {
+                    document.documentElement.classList.remove('fz-home-pending');
+                }, 8000);
+            }
         })();
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <!-- Accueil dashboard ("éditorial calme") uniquement : voir accueil-dash.css -->
-    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Accueil mobile (≤768px, 4 modes) uniquement : voir accueil-mobile.css -->
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css">
@@ -26,23 +38,25 @@
     <link rel="stylesheet" href="poolNav.css">
     <link rel="stylesheet" href="poolSettings.css">
     <link rel="stylesheet" href="index.css">
-    <link rel="stylesheet" href="accueil.css">
-    <link rel="stylesheet" href="fzToday.css?v=20260915">
+    <link rel="stylesheet" href="accueil.css?v=20260920c">
+    <link rel="stylesheet" href="fzToday.css?v=20260920">
     <link rel="stylesheet" href="career-modal.css">
-    <link rel="stylesheet" href="accueil-dash.css?v=20260916-palette">
-    <link rel="stylesheet" href="accueil-mobile.css?v=20260916">
+    <link rel="stylesheet" href="accueil-dash.css?v=20260920b">
+    <link rel="stylesheet" href="accueil-mobile.css?v=20260919">
     <link rel="stylesheet" href="demos.css">
-    <link rel="stylesheet" href="hero.css">
-    <link rel="stylesheet" href="accueil-season.css?v=20260915">
-    <link rel="stylesheet" href="accueil-draft.css?v=20260915">
-    <link rel="stylesheet" href="accueil-watch.css?v=20260915">
+    <link rel="stylesheet" href="hero.css?v=20260919">
+    <link rel="stylesheet" href="accueil-season.css?v=20260919">
+    <link rel="stylesheet" href="accueil-draft.css?v=20260920b">
+    <link rel="stylesheet" href="accueil-watch.css?v=20260920b">
     <link rel="stylesheet" href="skeleton-loader.css">
     <!-- Panneau de la file du repêchage instantané (instantDraft.js). -->
     <link rel="stylesheet" href="instantDraft.css?v=20260908a">
     <!-- Récapitulatif de repêchage : le même popup qu'à la fin du repêchage,
          rouvert ici par la bannière (voir fzdOuvrirRecapRepechage). -->
     <link rel="stylesheet" href="draftFinPopup.css?v=20260902a">
-    <link rel="stylesheet" href="accueil-palette.css?v=20260916">
+    <link rel="stylesheet" href="accueil-palette.css?v=20260920b">
+    <!-- Thème clair des accueils repêchage et saison : APRÈS la palette. -->
+    <link rel="stylesheet" href="accueil-light.css?v=20260920b">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
@@ -63,7 +77,7 @@
     <section class="home-section stories-section" id="storiesSection" style="display:none;">
         <div class="section-container">
             <div class="stories-card" id="storiesCard">
-                <!-- Filled by JS: a .stories-news or .stories-live slide -->
+                <!-- Filled by JS: a .stories-news or .sl-live slide -->
             </div>
             <div class="stories-progress-track">
                 <div class="stories-progress-fill" id="storiesProgressFill"></div>
@@ -218,12 +232,10 @@
                  match plus bas couvre déjà ce cas). Bureau seulement — la
                  home téléphone (accueil-mobile.js) a son propre système
                  d'état à 4 modes. Voir renderHero() dans accueil-dash.js. -->
-            <!-- « À faire maintenant » — une seule bande de priorité, la même
-                 au bureau et au téléphone, alimentée par GET /api/me/today.
-                 La bannière d'état ci-dessous ne regarde que le pool actif ;
-                 celle-ci considère tous les pools, ce qui est la seule façon
-                 de voir un tour de repêchage ailleurs. Voir fzToday.js. -->
-            <div id="fzTodayDash" hidden><!-- Rempli par fzToday.js --></div>
+            <!-- « À faire maintenant » — la bande de priorité alimentée par
+                 GET /api/me/today (fzToday.js) ne s'affiche plus ici : elle
+                 est rendue dans le panneau de notifications, que notifications.js
+                 monte dans la navbar. -->
 
             <div class="fz-dash-hero" id="fzDashHero" style="display:none;"><!-- Filled by accueil-dash.js --></div>
 
@@ -233,7 +245,11 @@
                  puis des cartes de match qui portent chacune un carrousel de
                  VOS joueurs (stats en direct pendant le match, totaux de la
                  saison avant la mise au jeu). Grille à deux colonnes au
-                 bureau, carrousel plein écran au téléphone (#fzdCalDots). -->
+                 bureau, carrousel plein écran au téléphone (#fzdCalDots).
+                 BLOC PARTAGÉ : c'est le seul calendrier de l'accueil. Les
+                 homes repêchage, saison et téléphone ouvrent un emplacement
+                 data-fz-bloc="calendrier" et fzdPlaceCalendar() l'y déplace
+                 (accueil-dash.js) — ne jamais le dupliquer ni le réécrire. -->
             <div class="fz-dash-calendar" id="fzDashCalendarWrap">
                 <div class="fzd-cal-head">
                     <span class="fzd-cal-title" id="fzdCalEyebrow">Calendrier</span>
@@ -284,10 +300,14 @@
                  de joueurs réels (GET /nhl-transactions, déduits des alignements
                  officiels), blessés (GET /nhl-injuries) et joueurs à surveiller.
                  Masqué dès que la saison régulière est commencée (voir
-                 renderOffseasonPanel). -->
+                 renderOffseasonPanel).
+                 Trois de ses blocs sont PARTAGÉS avec les autres accueils et
+                 les quittent le temps d'un repêchage ou d'une saison :
+                 #fzdOffCount, #fzdOffMoves et #fzdOffWatch. Seule « Ma
+                 position » appartient en propre à ce panneau. -->
             <div class="fz-dash-offseason" id="fzDashOffseason" style="display:none;">
                 <div class="fzd-off-summary">
-                    <section class="fzd-off-count" aria-labelledby="fzdOffTitle">
+                    <section class="fzd-off-count" id="fzdOffCount" aria-labelledby="fzdOffTitle">
                         <h2 class="fzd-section-title" id="fzdOffTitle"><span data-icon="clock" aria-hidden="true"></span>Hors-saison</h2>
                         <span class="fzd-off-days fzd-display" id="fzdOffDays">—</span>
                         <span class="fzd-off-sub" id="fzdOffSub"></span>
@@ -304,7 +324,7 @@
                     </section>
                 </div>
 
-                <div class="fzd-off-section fzd-off-carousel">
+                <div class="fzd-off-section fzd-off-carousel" id="fzdOffMoves">
                     <div class="fzd-off-head">
                         <h2 class="fzd-section-title"><span data-icon="swap" aria-hidden="true"></span>Mouvements récents</h2>
                         <div class="fzd-off-nav">
@@ -317,9 +337,11 @@
                     <div class="fzd-off-dots" id="fzdOffDots"><!-- Filled by accueil-dash.js --></div>
                 </div>
 
-                <div class="fzd-off-section fzd-off-watch-section">
-                    <div class="fzd-off-watchlist" id="fzdOffWatchlist"><!-- Filled by accueil-dash.js --></div>
-                </div>
+                <!-- Même châssis que « Mouvements récents » juste au-dessus :
+                     .fzd-off-section porte le cadre, .fzd-off-carousel
+                     l'en-tête à flèches. accueil-watch.js y écrit les mêmes
+                     cartes .fzd-off-card. -->
+                <section class="fzh-watch fzd-off-section fzd-off-carousel" id="fzdOffWatch" data-watch-panel><!-- Filled by accueil-watch.js --></section>
             </div>
 
             <!-- Actualités LNH — accueil SANS pool. Le membre qui a un pool voit
@@ -512,17 +534,17 @@
     <!-- « A faire maintenant » : une seule reponse serveur, la meme bande
          au bureau et au telephone. Doit preceder accueil-dash.js, qui
          l'appelle au chargement. -->
-    <script defer src="fzToday.js"></script>
+    <script defer src="fzToday.js?v=20260920"></script>
     <script defer src="careerFetch.js"></script>
     <script defer src="careerModal.js"></script>
     <script defer src="careerTeamLogo.js"></script>
     <script defer src="teamColors.js"></script>
     <script defer src="careerTotals.js"></script>
     <script defer src="accueil-carousel.js?v=20260915"></script>
-    <script defer src="accueil-watch.js?v=20260915"></script>
-    <script defer src="accueil-dash.js?v=20260916-onboarding"></script>
-    <script defer src="instantDraft.js?v=20260916-canvas3"></script>
-    <script defer src="accueil-mobile.js?v=20260915"></script>
+    <script defer src="accueil-watch.js?v=20260920b"></script>
+    <script defer src="accueil-dash.js?v=20260920b"></script>
+    <script defer src="instantDraft.js?v=20260920-canvas3"></script>
+    <script defer src="accueil-mobile.js?v=20260920"></script>
     <script defer src="accueil-season.js?v=20260915"></script>
     <script defer src="accueil-draft.js?v=20260915"></script>
     <script defer src="demos.js"></script>

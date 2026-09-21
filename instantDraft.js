@@ -17,7 +17,9 @@
 
    Et quand on est dedans, le bouton ne sert plus à entrer : il se
    verrouille, et le panneau propose les deux seules choses qui restent à
-   faire — retourner au salon, ou quitter la file.
+   faire — ouvrir le salon, ou quitter la file. Une fois le repêchage parti,
+   le panneau disparaît : il n'y a plus de file à montrer, et le bouton
+   verrouillé dit déjà où en est le repêchage.
 
    Le bouton se branche tout seul sur n'importe quel élément portant
    `data-instant-draft`, pour que les trois pages qui l'affichent
@@ -172,10 +174,16 @@
         return el;
     }
 
+    /** Le panneau qui suit ce bouton, s'il en existe un. */
+    function panneauExistant(bouton) {
+        const suivant = bouton.nextElementSibling;
+        return suivant && suivant.hasAttribute('data-instant-panel') ? suivant : null;
+    }
+
     /** Le panneau qui suit ce bouton, créé au premier rendu. */
     function panneauDe(bouton) {
-        const suivant = bouton.nextElementSibling;
-        if (suivant && suivant.hasAttribute('data-instant-panel')) return suivant;
+        const existant = panneauExistant(bouton);
+        if (existant) return existant;
 
         const panneau = document.createElement('div');
         panneau.className = 'fzid';
@@ -189,8 +197,6 @@
     /** La phrase qui résume l'état de la file. */
     function resume(etat) {
         const manque = Math.max(0, etat.places - etat.joueurs.length);
-
-        if (etat.situation === 'encours') return 'Ton repêchage instantané est commencé.';
 
         if (etat.situation === 'inscrit') {
             return manque === 0
@@ -231,18 +237,12 @@
     /**
      * Les actions offertes à un inscrit.
      *
-     * Une fois le repêchage parti, quitter n'est plus proposé : le serveur le
-     * refuse — l'ordre de sélection nomme les équipes, en retirer une casse le
-     * repêchage des trois autres — et un bouton qui répond toujours non ne
-     * vaut pas mieux que pas de bouton.
+     * Une fois le repêchage parti il n'y a plus de panneau du tout : quitter
+     * n'aurait de toute façon pas de sens — le serveur le refuse, l'ordre de
+     * sélection nomme les équipes et en retirer une casse le repêchage des
+     * trois autres.
      */
     function actions(etat) {
-        if (etat.situation === 'encours') {
-            return `<div class="fzid-actions">
-                        <a class="fzid-btn is-primary" href="draftActif.html">Retourner au repêchage</a>
-                    </div>`;
-        }
-
         if (etat.situation !== 'inscrit') return '';
 
         return `<div class="fzid-actions">
@@ -273,6 +273,14 @@
                     ? 'Ta salle de repêchage est ouverte.'
                     : 'Ta place est gardée. Tu peux quitter la file ci-dessous.')
                 : descriptionsOrigine.get(bouton);
+        }
+
+        // Le repêchage est parti : il n'y a plus de file à montrer. Le panneau
+        // s'en va au lieu de rester sous le bouton avec une phrase qui répète
+        // ce que le bouton verrouillé dit déjà.
+        if (etat.situation === 'encours') {
+            panneauExistant(bouton)?.remove();
+            return;
         }
 
         const panneau = panneauDe(bouton);

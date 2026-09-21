@@ -52,7 +52,9 @@ html[data-theme="dark"] #fzDashSection .fz-mobile-home,
     border-color: var(--fzh-outline);
     box-shadow: none;
 }
-#fzDashSection :is(.fzh-cal-game, .fzh-game, .fzs-game, .fzh-cal-day, .fzh-participant-more, .fzh-watch-filter select, .fzh-moves .fzm-off-card) {
+/* Le filtre d'« À surveiller » n'est plus de la partie : il suit les jetons
+   --fzd-* du panneau qui l'entoure, comme les onglets des mouvements. */
+#fzDashSection :is(.fzh-game, .fzs-game, .fzh-participant-more) {
     background: var(--fzh-panel);
     border-color: var(--fzh-border);
     color: var(--fzh-ink);
@@ -64,14 +66,19 @@ html[data-theme="dark"] #fzDashSection .fzd-hero-cta {
     color: #fff;
 }
 #fzDashSection :is(.fzh-link, .fzs a:not(.fzs-cta)) { color: var(--fzh-accent); }
-#fzDashSection .fzh-cal-day.is-selected { background: var(--fzh-tint); border-color: var(--fzh-accent); }
-#fzDashSection :is(.fzh-watch-tools > button, .fzh-cal-controls, .fzh-draft-bottom) { border-color: var(--fzh-border); }
-#fzDashSection :is(.fzs-tag, .fzs .fzd-off-face, .fzh-moves .fzm-off-tag:not(.is-injury)) { background: var(--fzh-raised); }
+/* Le chevron garde le gris prévu pour l'aplat d'encre du thème clair : sur la
+   brique du thème sombre, il tombait à 1,6:1. */
+html[data-theme="dark"] #fzDashSection .fzd-hero-cta .fzd-hero-cta-chev { color: #fff; }
+/* Pastilles pleines portant du texte blanc : le rouge vif d'origine restait
+   sous 4,5:1. La brique pleine de la palette le tient dans les deux thèmes. */
+#fzDashSection :is(.fzh, .fzs) { --fzm-solid: var(--fzh-accent-fill); --fzm-on-solid: #fff; }
+#fzDashSection .fzh-participant b { background: var(--fzh-accent-fill); }
+#fzDashSection .fzh-draft-bottom { border-color: var(--fzh-border); }
+#fzDashSection :is(.fzs-tag:not(.is-live), .fzs .fzd-off-face) { background: var(--fzh-raised); }
 #fzDashSection .fzs-hero::after { background: linear-gradient(90deg, #1e1e22 5%, #1e1e22b8 45%, transparent); }
 html[data-theme="dark"] #fzDashSection :is(.fz-dash-hero, #fzmHeroSlot.is-draft) {
     background: var(--fzh-panel);
     border-color: var(--fzh-outline);
     box-shadow: none;
 }
-html[data-theme="dark"] #fzDashSection #fzmLeagueTabs .fzm-tab.is-active { background: var(--fzh-accent-fill); }
 html[data-theme="dark"] #fzDashSection .fzo-start { border-color: var(--fzh-outline); }

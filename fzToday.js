@@ -2,8 +2,12 @@
  * « Fantazy Aujourd'hui » côté navigateur.
  *
  * Une seule bande de priorité, alimentée par une seule réponse du serveur
- * (`/api/me/today`), rendue à l'identique par les deux dispositions de
- * l'accueil. Ce qui change par rapport à l'existant :
+ * (`/api/me/today`), rendue en tête du panneau de notifications — c'est
+ * notifications.js qui pose l'emplacement et appelle `demarrer`. Elle a
+ * quitté l'accueil : ce qui réclame une action se lit maintenant à un seul
+ * endroit, et pas une fois dans la page et une fois dans la cloche.
+ *
+ * Ce qui change par rapport à l'existant :
  *
  *   - la bannière d'état ne regardait que le pool ACTIF. Un tour de repêchage
  *     dans un autre pool était donc invisible tant qu'on n'y basculait pas —
@@ -136,10 +140,16 @@
         // ne dit pas dans quelle partie, et suivre le lien ouvrirait le
         // mauvais contexte.
         const pool = element.pool
-            ? `<span class="fzt-pool">${echapper(element.pool)}</span>` : '';
+            ? `<span class="fzt-pool"><span class="fzt-pool-label">Pool</span><span class="fzt-pool-nom">${echapper(element.pool)}</span></span>` : '';
+
+        // La vedette porte un signal (le point de la bannière d'alerte) ; les
+        // lignes secondaires gardent leur icône, plus lisible en petit.
+        const marque = principal
+            ? '<span class="fzt-signal" aria-hidden="true"></span>'
+            : `<span class="fzt-icone" aria-hidden="true">${icone(element.urgence)}</span>`;
 
         const corps = `
-            <span class="fzt-icone" aria-hidden="true">${icone(element.urgence)}</span>
+            ${marque}
             <span class="fzt-texte">
                 <span class="fzt-titre">${echapper(element.titre)}</span>
                 ${element.detail ? `<span class="fzt-detail">${echapper(element.detail)}</span>` : ''}

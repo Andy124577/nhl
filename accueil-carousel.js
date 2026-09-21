@@ -20,7 +20,7 @@ function offseasonScrollBehavior() {
 }
 
 function offseasonPageMetrics(track) {
-    const card = track.querySelector('.fzd-off-card, .fzm-off-card, .fzh-watch-row, .fzh-cal-game');
+    const card = track.querySelector('.fzd-off-card, .fzh-watch-row');
     if (!card || !track.clientWidth || track.classList.contains('is-empty')) return { pages: 0, step: 1 };
     const gap = parseFloat(getComputedStyle(track).columnGap) || 0;
     const cardStep = card.getBoundingClientRect().width + gap;
@@ -75,8 +75,6 @@ window.addEventListener('resize', () => {
     clearTimeout(bindOffseasonCarousel._t);
     bindOffseasonCarousel._t = setTimeout(() => {
         renderOffseasonDots();
-        if (typeof fzmRenderLeagueDots === 'function') fzmRenderLeagueDots();
         document.querySelectorAll('[data-watch-panel]').forEach(panel => fzhWatchDots(panel));
-        if (typeof fzhCalDots === 'function') fzhCalDots();
     }, 150);
 });

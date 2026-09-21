@@ -58,3 +58,10 @@ html[data-theme="light"] #careerStatsModal img[src$="teams/EDM.png"] { content: 
 html[data-theme="light"] #careerStatsModal img[src$="teams/TBL.png"] { content: url("teams/dark/TBL.svg"); }
 html[data-theme="light"] #careerStatsModal img[src$="teams/TOR.png"] { content: url("teams/dark/TOR.svg"); }
 html[data-theme="light"] #careerStatsModal img[src$="teams/WSH.png"] { content: url("teams/dark/WSH.svg"); }
+
+/* Le tableau indicateur d’un match en direct (accueil) garde lui aussi son
+   fond noir en thème clair : voir .stories-card.is-live dans accueil.css. */
+html[data-theme="light"] .sl-live img[src$="teams/EDM.png"] { content: url("teams/dark/EDM.svg"); }
+html[data-theme="light"] .sl-live img[src$="teams/TBL.png"] { content: url("teams/dark/TBL.svg"); }
+html[data-theme="light"] .sl-live img[src$="teams/TOR.png"] { content: url("teams/dark/TOR.svg"); }
+html[data-theme="light"] .sl-live img[src$="teams/WSH.png"] { content: url("teams/dark/WSH.svg"); }

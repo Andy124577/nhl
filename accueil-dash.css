@@ -32,8 +32,8 @@
     --fzd-ink-soft: #3d3a35;
     --fzd-text: #4b4843;
     --fzd-text-muted: #6d6a64;
-    --fzd-text-faint: #8a877f;
-    --fzd-text-fainter: #a8a49c;
+    --fzd-text-faint: #6f6c66;   /* 4,8:1 sur #f7f6f3 — #8a877f restait à 3,3:1 */
+    --fzd-text-fainter: #726f68; /* idem : #a8a49c tombait à 2,3:1 */
     --fzd-border: #e2dfd8;
     --fzd-border-strong: #cdcac3;
     --fzd-border-soft: #eae7e0;
@@ -80,7 +80,7 @@ html[data-theme="dark"] .fz-dash {
     --fzd-text: #c9c6c0;
     --fzd-text-muted: #a3a099;
     --fzd-text-faint: #8a877f;
-    --fzd-text-fainter: #6e6b65;
+    --fzd-text-fainter: #8a877f; /* #6e6b65 : 3,1:1 sur #1e1e22 */
     --fzd-border: #2e2e33;
     --fzd-border-strong: #3c3c43;
     --fzd-border-soft: #27272c;
@@ -91,7 +91,7 @@ html[data-theme="dark"] .fz-dash {
     --fzd-solid: #f0eee9;
     --fzd-solid-hover: #ffffff;
     --fzd-on-solid: #16181a;
-    --fzd-on-solid-soft: rgba(22, 24, 26, .6);
+    --fzd-on-solid-soft: rgba(22, 24, 26, .7);
     --fzd-pool-icon-a: #2a2a2f;
     --fzd-pool-icon-b: #232328;
 }
@@ -124,7 +124,6 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 
 /* ------------------------------------------------------------ */
 /* Canvas-3: first pool welcome and live instant-draft queue. */
-.fz-dash-section.is-poolless #fzTodayDash { display:none; }
 .fz-dash-onboard { display:none; flex-direction:column; gap:26px; width:100%; max-width:944px; margin:0 auto 36px; padding:56px 32px 48px; color:var(--fzd-ink); font-family:'Barlow',system-ui,sans-serif; }
 .fz-dash-onboard *, .fz-dash-onboard *::before, .fz-dash-onboard *::after { box-sizing:border-box; }
 .fzo-intro { display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center; }
@@ -584,6 +583,13 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+/* Le chronomètre d'un match en cours, réécrit chaque seconde (horlogeHTML).
+   Chiffres à chasse fixe : sans eux, « 1 » plus étroit qu'un « 8 » faisait
+   frémir la période à sa gauche à chaque battement. */
+.fzd-game-clock {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+}
 .fzd-live-dot {
     width: 5px; height: 5px;
     border-radius: 999px;
@@ -615,6 +621,145 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
 .fzd-team-rec { font: 400 10px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzd-text-faint); }
 .fzd-team-score { font: 700 20px/1 'Oswald', sans-serif; color: var(--fzd-ink); flex: 0 0 auto; }
 .fzd-team-score.is-trailing { color: var(--fzd-text-faint); }
+
+/* --- Buts du match : les buteurs, en carrousel, sous le pointage ---
+   Dans .fzd-game-teams plutôt qu'en pied de carte : un but appartient au
+   tableau d'affichage, et s'en éloigner obligerait à relire le score pour
+   savoir ce que le but vient de changer. */
+.fzd-goals {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 9px;
+    border-top: 1px solid var(--fzd-border-soft);
+}
+.fzd-goals-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.fzd-goals-title {
+    font: 600 9px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--fzd-ink);
+    flex: 0 0 auto;
+}
+/* L'ordre s'inverse à la fin du match : sans un mot, le lecteur ne peut pas
+   savoir si la carte de gauche est le premier but ou le dernier. */
+.fzd-goals-sub {
+    font: 400 9px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-fainter);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Les flèches ne paraissent que si la piste déborde (`has-nav`, posé par
+   majFlechesButs) : un match à deux buts ne montre pas deux boutons morts.
+   Au téléphone elles ne paraissent jamais — le pouce fait le travail, et la
+   carte est trop étroite pour leur céder de la place. */
+.fzd-goals-nav { display: none; margin-left: auto; flex: 0 0 auto; gap: 1px; }
+.fzd-goals.has-nav .fzd-goals-nav { display: flex; }
+.fzd-goals-arrow {
+    background: none;
+    border: none;
+    padding: 0 3px;
+    cursor: pointer;
+    font: 400 14px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-muted);
+}
+.fzd-goals-arrow:hover { color: var(--fzd-ink); }
+/* Au bout de la piste : grisée, mais toujours là pour ne pas faire sauter
+   l'autre d'un pixel à l'autre. */
+.fzd-goals-arrow.is-off { color: var(--fzd-text-fainter); cursor: default; }
+
+.fzd-goals-track {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+}
+.fzd-goals-track::-webkit-scrollbar { display: none; }
+
+.fzd-goal-card {
+    width: 204px;
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    border: 1px solid var(--fzd-border);
+    border-radius: 9px;
+    background: var(--fzd-surface);
+    padding: 7px 9px;
+    transition: border-color .15s ease, background .15s ease;
+}
+/* La carte ouvre la fiche du buteur (goalCardHTML) — mais seulement quand la
+   LNH a donné son identifiant : une carte muette ne prend ni la main ni le
+   curseur, plutôt que de promettre un clic sans effet. */
+.fzd-goal-card[data-goal-player] { cursor: pointer; }
+.fzd-goal-card[data-goal-player]:hover { border-color: var(--fzd-border-strong); background: var(--fzd-bg-alt); }
+.fzd-goal-card[data-goal-player]:hover .fzd-goal-name { color: var(--fzd-accent); }
+.fzd-goal-card[data-goal-player]:focus-visible { outline: 2px solid var(--fzd-accent); outline-offset: 2px; }
+/* L'anneau dit de quel club vient le but — voir goalCardHTML. En
+   box-shadow plutôt qu'en border : la photo garde ses 28 pixels, et deux
+   cartes voisines gardent la même hauteur. */
+.fzd-goal-photo {
+    width: 28px; height: 28px;
+    flex: 0 0 auto;
+    margin: 2px;
+    border-radius: 999px;
+    background: var(--fzd-tile-bg);
+    object-fit: cover;
+    box-shadow: 0 0 0 2px var(--fzd-goal-team, transparent);
+}
+.fzd-goal-photo.is-initials {
+    display: grid;
+    place-items: center;
+    font: 600 9px/1 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-muted);
+}
+.fzd-goal-id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fzd-goal-name {
+    font: 600 11.5px/1.15 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* Le total de la saison : présent, mais jamais avant le nom qu'il suit. */
+.fzd-goal-tally { font-weight: 400; color: var(--fzd-text-faint); }
+/* La passe s'efface en premier : c'est la ligne la plus longue et la moins
+   essentielle des trois. */
+.fzd-goal-assist {
+    font: 400 9.5px/1.15 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fzd-goal-score {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    min-width: 0;
+    white-space: nowrap;
+}
+/* La marque après le but : c'est elle qui défile avec le carrousel, donc
+   elle porte le poids que le reste de la ligne n'a pas. */
+.fzd-goal-run {
+    font: 600 9.5px/1.15 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-ink);
+    flex: 0 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fzd-goal-when {
+    font: 400 9.5px/1.15 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzd-text-fainter);
+    flex: 0 0 auto;
+}
+.fzd-goal-when sup { font-size: .78em; vertical-align: super; line-height: 0; }
 
 /* --- Carrousel « Vos joueurs » sous chaque match --------------- */
 .fzd-game-players {
@@ -772,6 +917,13 @@ html[data-theme="dark"] .fz-dash-offseason {
     --fzd-accent-dark: #ff8068;
     --fzd-accent-fill: #df342b;
 }
+/* Emplacements des blocs partagés (calendrier, hors-saison, mouvements,
+   « À surveiller »). display:contents efface la boîte de l'emplacement :
+   c'est le nœud déplacé qui devient l'enfant de grille de l'accueil, et qui
+   porte donc lui-même sa colonne et son ordre. Voir fzdPlaceCalendar()
+   dans accueil-dash.js. */
+[data-fz-bloc] { display: contents; }
+
 .fzd-off-summary { display: grid; grid-template-columns: 1.05fr 1fr; gap: 12px; }
 .fzd-off-count, .fzd-off-position, .fzd-off-section {
     min-width: 0;
@@ -781,7 +933,13 @@ html[data-theme="dark"] .fz-dash-offseason {
 }
 .fzd-off-count, .fzd-off-position { position: relative; overflow: hidden; min-height: 120px; padding: 18px 22px 15px; }
 .fzd-off-count { margin: 0; isolation: isolate; }
-.fz-dash-offseason .fzd-section-title {
+/* Le titre est accroché AUX PANNEAUX et non au bloc hors-saison : trois
+   d'entre eux le quittent le temps d'un repêchage ou d'une saison (voir
+   fzdPlaceCalendar), et un titre scopé au conteneur d'origine y perdait sa
+   police et l'espace entre son icône et son mot. */
+.fz-dash-offseason .fzd-section-title,
+.fzd-off-section .fzd-section-title,
+.fzd-off-count .fzd-section-title {
     display: flex; align-items: center; gap: 12px; margin: 0;
     font: 600 14px/1.3 'Barlow Condensed', sans-serif;
     letter-spacing: .07em; text-transform: uppercase; color: var(--fzd-ink);
@@ -953,45 +1111,17 @@ html[data-theme="dark"] .fz-dash-offseason {
 .fzd-off-page-arrow { width: 22px; height: 24px; padding: 0; border: 0; background: transparent; color: var(--fzd-text-muted); cursor: pointer; font-size: 18px; }
 .fzd-off-page-arrow:disabled { opacity: .3; cursor: default; }
 
-/* « À surveiller » — 70 entrées tirées de la trousse : la liste défile dans
-   le panneau au lieu de l'allonger, avec un filtre par équipe au-dessus. */
-.fzd-off-watch-section { padding: 0; overflow: hidden; }
-.fzd-watch-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 15px 18px 10px; }
-.fzd-watch-icon { display: inline-flex; color: var(--fzd-accent); }
-.fzd-watch-icon svg { fill: currentColor; }
-.fzd-watch-count { display: block; margin-top: 8px; font: 400 12px/1 'Barlow Condensed', sans-serif; letter-spacing: .04em; text-transform: uppercase; color: var(--fzd-text-muted); }
-.fzd-watch-filter {
-    max-width: 60%;
-    padding: 9px 12px;
-    background: var(--fzd-bg-alt); border: 1px solid var(--fzd-border); border-radius: 7px;
-    font: 400 11px/1.2 'Barlow Condensed', sans-serif; color: var(--fzd-ink);
-    cursor: pointer;
+/* « À surveiller » — panneau partagé avec les autres accueils : son balisage
+   et sa mise en forme vivent dans accueil-watch.css. Ici, seule la place
+   qu'il prend dans le panneau hors-saison. */
+.fz-dash-offseason #fzdOffWatch {
+    padding: 15px 14px 12px;
+    background: var(--fzd-surface);
+    border: 1px solid var(--fzd-border);
+    border-radius: 10px;
 }
-.fzd-watch-list { max-height: 420px; overflow: auto; overscroll-behavior: contain; }
-.fzd-watch-table { border-collapse: collapse; width: 100%; text-align: left; font: 400 14px/1.4 'Barlow Condensed', sans-serif; color: var(--fzd-text-muted); }
-.fzd-watch-table th { position: sticky; top: 0; z-index: 2; background: var(--fzd-bg-alt); font-size: 9px; font-weight: 400; text-transform: uppercase; letter-spacing: .09em; }
-.fzd-watch-table th, .fzd-watch-table td { padding: 5px 12px; border-bottom: 1px solid var(--fzd-border-soft); }
-.fz-dash-offseason .fzd-watch-table td { font: inherit; color: inherit; text-align: left; }
-.fz-dash-offseason .fzd-watch-table th { text-align: left; font-family: 'Barlow Condensed', sans-serif; }
-.fz-dash-offseason .fzd-watch-table tbody tr { background: transparent; }
-.fzd-watch-table th:first-child, .fzd-watch-table td:first-child { padding-left: 22px; }
-.fz-dash-offseason .fzd-watch-table th:nth-child(3), .fz-dash-offseason .fzd-watch-table .fzd-watch-position { text-align: center; }
-.fz-dash-offseason .fzd-watch-table tbody tr:hover { background: var(--fzd-bg-alt); }
-.fzd-watch-player { display: flex; align-items: center; gap: 12px; }
-.fzd-watch-player .fzd-off-face { width: 28px; height: 28px; flex-basis: 28px; }
-.fzd-watch-name { color: var(--fzd-ink); white-space: nowrap; }
-.fzd-watch-status { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; color: var(--fzd-ink); }
-.fzd-watch-status > span { display: inline-grid; place-items: center; width: 13px; height: 13px; border-radius: 50%; background: #008cf0; color: #fff; }
-.fzd-watch-note summary { cursor: pointer; list-style: none; }
-.fzd-watch-note summary::-webkit-details-marker { display: none; }
-.fzd-watch-note summary:hover { color: var(--fzd-accent); }
-.fzd-watch-note p { max-width: 260px; min-width: 130px; white-space: normal; margin: 8px 0; font: 400 12px/1.6 'Helvetica Neue', sans-serif; }
-.fzd-watch-save { display: grid; place-items: center; width: 33px; height: 26px; border: 1px solid var(--fzd-border-strong); border-radius: 6px; background: transparent; color: var(--fzd-ink); cursor: pointer; }
-.fzd-watch-save[aria-pressed="true"] { color: var(--fzd-accent); }
-.fzd-watch-save[aria-pressed="true"] svg { fill: currentColor; }
-.fzd-watch-more { display: block; padding: 14px 18px 18px; border: 0; background: transparent; font: 400 14px/1.4 'Barlow Condensed', sans-serif; color: var(--fzd-accent); cursor: pointer; }
+
 .fz-dash-offseason :is(button, a, select, summary, [tabindex]):focus-visible { outline: 2px solid var(--fzd-accent); outline-offset: 3px; }
-.fzd-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (min-width: 769px) and (max-width: 900px) {
     .fzd-off-card { padding: 10px; }
     .fzd-off-player { gap: 6px; }
@@ -999,12 +1129,10 @@ html[data-theme="dark"] .fz-dash-offseason {
     .fzd-off-card-name { font-size: 12px; }
     .fzd-off-count, .fzd-off-position { padding-left: 18px; padding-right: 18px; }
     .fzd-position-bars { opacity: .45; }
-    .fzd-watch-table th, .fzd-watch-table td { padding-left: 8px; padding-right: 8px; }
 }
 @media (max-width: 600px) {
     .fzd-off-summary { grid-template-columns: 1fr; }
     .fzd-off-card { flex-basis: 80%; }
-    .fzd-watch-table { min-width: 680px; }
 }
 
 /* ------------------------------------------------------------ */
@@ -1396,6 +1524,32 @@ button.fzd-mypools-more:empty { display: none; }
     .fzd-game-card { flex-basis: 86%; }
     /* Une seule carte : elle occupe toute la largeur, rien ne défile. */
     .fzd-cal-games > .fzd-game-card:only-child { flex-basis: 100%; }
+
+    /* --- Carte de but au téléphone : un rectangle, pas un timbre ---
+       Elle gardait les 204 px du bureau dans une carte de match devenue
+       pleine largeur : buteur, aides et marque se faisaient couper aux
+       points de suspension au milieu d'une carte à moitié vide. Elle suit
+       désormais la largeur de l'écran, et les trois lignes y tiennent.
+       88 % plutôt que 100 % : la carte suivante se devine au bord, seul
+       signe qu'il y a une suite une fois les flèches retirées. */
+    .fzd-goal-card { width: auto; flex: 0 0 88%; gap: 11px; padding: 9px 11px; }
+    .fzd-goals-track > .fzd-goal-card:only-child { flex-basis: 100%; }
+    .fzd-goal-photo { width: 34px; height: 34px; }
+    /* La place est là : un nom trop long se replie au lieu d'être tronqué. */
+    .fzd-goal-name, .fzd-goal-assist, .fzd-goal-run {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        /* Sans min-width, une ligne plus large que la carte la ferait
+           déborder au lieu de se replier. */
+        min-width: 0;
+        overflow-wrap: break-word;
+    }
+    .fzd-goal-score { flex-wrap: wrap; white-space: normal; }
+    .fzd-goal-name { font-size: 12.5px; }
+    .fzd-goal-assist, .fzd-goal-run, .fzd-goal-when { font-size: 10.5px; }
+    /* Les flèches sont pour la souris ; ici le pouce balaie la piste. */
+    .fzd-goals.has-nav .fzd-goals-nav { display: none; }
 
     /* Au doigt on balaie : les flèches ne servent qu'à la souris. */
     .fzd-cal-arrow { display: none; }

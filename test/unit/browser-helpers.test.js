@@ -741,3 +741,538 @@ describe("navbar — bascule d'administration", () => {
             'aucun gestionnaire ne doit être écrit en attribut');
     });
 });
+// ── accueil ─ la journée du pool ──────────────────────────────────
+
+describe('accueil — todayISO, la journée du pool', () => {
+    /**
+     * Un `Date` figé à un instant donné.
+     *
+     * `todayISO()` lit l'heure courante : sans instant fixe, le test ne
+     * pourrait pas interroger 20 h un soir de match. Les constructions avec
+     * arguments gardent leur sens, seul `new Date()` est détourné.
+     */
+    function dateFigee(instant) {
+        const Vrai = Date;
+        return class extends Vrai {
+            constructor(...args) { super(...(args.length ? args : [instant])); }
+            static now() { return new Vrai(instant).getTime(); }
+        };
+    }
+
+    const aides = instant => chargerFonctions(
+        'accueil-dash.js',
+        ['FR_MONTH_SHORT', 'FZD_JOUR_POOL', 'poolDayISO', 'todayISO', 'shiftISO', 'dayNum', 'dayLabelFr'],
+        { Date: dateFigee(instant) }
+    );
+
+    test('à 20 h un soir de match, la journée est encore celle des matchs en cours', () => {
+        // Le bogue d'origine : 20 h 30 à Montréal le 19, c'est déjà le 20 en
+        // UTC. La bande des jours marquait « Auj » sur le 20 pendant que les
+        // matchs du 19 jouaient, et /schedule était interrogé sur le mauvais
+        // jour.
+        assert.equal(aides('2026-09-20T00:30:00Z').todayISO(), '2026-09-19');
+    });
+
+    test('la journée ne tourne qu’à minuit à l’Est', () => {
+        assert.equal(aides('2026-09-20T03:59:00Z').todayISO(), '2026-09-19');
+        assert.equal(aides('2026-09-20T04:01:00Z').todayISO(), '2026-09-20');
+    });
+
+    test('en hiver aussi, où l’Est est à UTC-5', () => {
+        assert.equal(aides('2026-01-15T04:59:00Z').todayISO(), '2026-01-14');
+        assert.equal(aides('2026-01-15T05:01:00Z').todayISO(), '2026-01-15');
+    });
+
+    test('poolDayISO ramène un horodatage complet à sa journée de pool', () => {
+        const { poolDayISO } = aides('2026-09-20T00:30:00Z');
+
+        // Une mise au jeu à 22 h à Vancouver, c'est 1 h du matin à l'Est.
+        assert.equal(poolDayISO('2026-09-20T05:00:00Z'), '2026-09-20');
+        assert.equal(poolDayISO('2026-09-20T02:00:00Z'), '2026-09-19');
+        assert.equal(poolDayISO('pas une date'), null);
+    });
+
+    test('shiftISO ajoute des jours de calendrier, pas des tranches de 24 h', () => {
+        const { shiftISO } = aides('2026-09-20T00:30:00Z');
+
+        // Nuit du changement d'heure : elle dure 25 heures, la veille du
+        // 1er novembre reste le 31 octobre.
+        assert.equal(shiftISO('2026-11-01', -1), '2026-10-31');
+        assert.equal(shiftISO('2026-03-01', -1), '2026-02-28');
+        assert.equal(shiftISO('2026-12-31', 1), '2027-01-01');
+    });
+
+    test('« Aujourd’hui » et « Hier » suivent la journée du pool', () => {
+        const { dayLabelFr } = aides('2026-09-20T00:30:00Z');
+
+        assert.equal(dayLabelFr('2026-09-19'), 'Aujourd’hui');
+        assert.equal(dayLabelFr('2026-09-18'), 'Hier');
+        assert.equal(dayLabelFr('2026-09-17'), '17 sept.');
+        assert.equal(dayLabelFr(''), '');
+        assert.equal(dayLabelFr('n’importe quoi'), '');
+    });
+});
+// ── accueil ─ le carrousel des buteurs ──────────────────────────────
+
+describe('accueil — les buteurs sous chaque match', () => {
+    const { escapeHTML } = chargerFonctions('accueil.js', ['escapeHTML']);
+    const { getTeamColors } = colors;
+
+    // Trois buts dans l'ordre de la LNH : chronologique, du premier au
+    // dernier. Les compteurs et la marque sont ceux d'APRÈS chaque but.
+    const BUTS = [
+        { name: 'Phillip Danault', teamAbbrev: 'MTL', goalsToDate: 1,
+          period: 1, periodType: 'REG', timeInPeriod: '12:19',
+          headshot: 'https://cdn/1.png', awayScore: 1, homeScore: 0,
+          assists: [{ name: 'Z. Bolduc', assistsToDate: 1 }] },
+        { name: 'Auston Matthews', teamAbbrev: 'TOR', goalsToDate: 14,
+          period: 2, periodType: 'REG', timeInPeriod: '04:02',
+          headshot: '', awayScore: 1, homeScore: 1, assists: [] },
+        { name: 'Cole Caufield', teamAbbrev: 'MTL', goalsToDate: 9,
+          period: 3, periodType: 'REG', timeInPeriod: '18:47',
+          headshot: 'https://cdn/3.png', awayScore: 2, homeScore: 1,
+          assists: [{ name: 'N. Suzuki', assistsToDate: 22 },
+                    { name: 'M. Matheson', assistsToDate: 8 }] }
+    ];
+
+    const MATCH = { id: 2025020321, away: { abbrev: 'MTL' }, home: { abbrev: 'TOR' } };
+    const EQUIPES = { away: 'MTL', home: 'TOR' };
+
+    /** Les aides de rendu, avec une feuille de pointage déjà en main. */
+    function rendu(buts = BUTS) {
+        return chargerFonctions(
+            'accueil-dash.js',
+            ['periodLabel', 'compteurHTML', 'goalCardHTML', 'gameGoalsHTML'],
+            { escapeHTML, getTeamColors, calGoals: { date: '2025-11-15', games: { 2025020321: buts }, at: 0 } }
+        );
+    }
+
+    /** Les noms des buteurs, dans l'ordre où la piste les pose. */
+    const ordre = html => [...html.matchAll(/class="fzd-goal-name"[^>]*>([^<]+)</g)].map(m => m[1].trim());
+    /** La marque de chaque carte, dans l'ordre de la piste. */
+    const marques = html => [...html.matchAll(/class="fzd-goal-run">([^<]*)</g)].map(m => m[1]);
+
+    test('match en cours : le but le plus récent est à gauche', () => {
+        // La carte répond à « qu'est-ce qui vient de se passer » : la réponse
+        // doit être sous les yeux, pas à trois cartes de défilement.
+        const { gameGoalsHTML } = rendu();
+
+        assert.deepEqual(ordre(gameGoalsHTML(MATCH, false)),
+            ['Cole Caufield', 'Auston Matthews', 'Phillip Danault']);
+    });
+
+    test('match terminé : l’ordre s’inverse, du premier but au dernier', () => {
+        const { gameGoalsHTML } = rendu();
+
+        assert.deepEqual(ordre(gameGoalsHTML(MATCH, true)),
+            ['Phillip Danault', 'Auston Matthews', 'Cole Caufield']);
+    });
+
+    test('la marque suit le carrousel, but par but', () => {
+        // C'est tout l'intérêt de l'ordre : lue de gauche à droite sur un
+        // match terminé, la marque raconte comment la soirée a basculé.
+        const { gameGoalsHTML } = rendu();
+
+        assert.deepEqual(marques(gameGoalsHTML(MATCH, true)),
+            ['MTL 1 - TOR 0', 'MTL 1 - TOR 1', 'MTL 2 - TOR 1']);
+        assert.deepEqual(marques(gameGoalsHTML(MATCH, false)),
+            ['MTL 2 - TOR 1', 'MTL 1 - TOR 1', 'MTL 1 - TOR 0']);
+    });
+
+    test('le mot dit quel ordre est à l’écran', () => {
+        const { gameGoalsHTML } = rendu();
+
+        assert.match(gameGoalsHTML(MATCH, false), /Le plus récent d’abord/);
+        assert.match(gameGoalsHTML(MATCH, true), /Du premier au dernier/);
+    });
+
+    test('relire la feuille ne la retourne pas sur place', () => {
+        // `reverse()` seul muterait la liste gardée dans calGoals : le match
+        // basculerait d'un ordre à l'autre à chaque rafraîchissement.
+        const { gameGoalsHTML } = rendu();
+
+        const un = gameGoalsHTML(MATCH, false);
+        gameGoalsHTML(MATCH, true);
+        assert.deepEqual(ordre(gameGoalsHTML(MATCH, false)), ordre(un));
+    });
+
+    test('un match sans but n’affiche pas de bandeau vide', () => {
+        const { gameGoalsHTML } = rendu([]);
+
+        assert.equal(gameGoalsHTML(MATCH, true), '');
+        assert.equal(gameGoalsHTML({ id: 999, away: {}, home: {} }, true), '');
+    });
+
+    test('la carte porte la photo, le nom, l’aide, la marque et le moment', () => {
+        const { goalCardHTML } = rendu();
+        const html = goalCardHTML(BUTS[0], EQUIPES);
+
+        assert.match(html, /src="https:\/\/cdn\/1\.png"/);
+        assert.match(html, />Phillip Danault/);
+        assert.match(html, />Z\. Bolduc/);
+        assert.match(html, />MTL 1 - TOR 0</);
+        assert.match(html, /\(1<sup>re<\/sup> - 12:19\)/);
+    });
+
+    test('le compteur de saison suit chaque nom', () => {
+        // « (1) » derrière le buteur, « (1) » derrière le passeur : le
+        // premier but de l'un, la première aide de l'autre.
+        const { goalCardHTML } = rendu();
+        const un = goalCardHTML(BUTS[0], EQUIPES);
+
+        assert.match(un, /Phillip Danault <span class="fzd-goal-tally">\(1\)<\/span>/);
+        assert.match(un, /Z\. Bolduc <span class="fzd-goal-tally">\(1\)<\/span>/);
+        assert.match(goalCardHTML(BUTS[1], EQUIPES),
+            /Auston Matthews <span class="fzd-goal-tally">\(14\)<\/span>/);
+    });
+
+    test('plusieurs aides se suivent avec « et », aucune se dit', () => {
+        const { goalCardHTML } = rendu();
+
+        assert.match(goalCardHTML(BUTS[2], EQUIPES),
+            /N\. Suzuki <span class="fzd-goal-tally">\(22\)<\/span> et M\. Matheson <span class="fzd-goal-tally">\(8\)<\/span>/);
+        assert.match(goalCardHTML(BUTS[1], EQUIPES), />Sans aide</);
+    });
+
+    test('un compteur absent ne s’écrit pas « (0) »', () => {
+        // Les vieux matchs reviennent parfois sans total : mieux vaut rien
+        // qu'un zéro, qui se lirait comme une erreur de calcul.
+        const { compteurHTML, goalCardHTML } = rendu();
+
+        assert.equal(compteurHTML(null), '');
+        assert.equal(compteurHTML(0), '');
+        assert.equal(compteurHTML(7), ' <span class="fzd-goal-tally">(7)</span>');
+
+        const sansTotal = goalCardHTML({ ...BUTS[0], goalsToDate: null, assists: [] }, EQUIPES);
+        assert.ok(!sansTotal.includes('fzd-goal-tally'), 'aucun compteur ne doit paraître');
+    });
+
+    test('sans marque connue, la ligne reste vide plutôt qu’inventée', () => {
+        const { goalCardHTML } = rendu();
+        const html = goalCardHTML({ ...BUTS[0], awayScore: null, homeScore: null }, EQUIPES);
+
+        assert.match(html, /class="fzd-goal-run"><\/span>/);
+        assert.match(html, /\(1<sup>re<\/sup> - 12:19\)/);
+    });
+
+    test('l’anneau de la photo porte la couleur du club du buteur', () => {
+        // Les buts des deux équipes se suivent dans la même piste : la
+        // couleur est ce qui dit d'un coup d'œil qui vient de marquer.
+        const { goalCardHTML } = rendu();
+
+        assert.ok(goalCardHTML(BUTS[0], EQUIPES).includes('--fzd-goal-team: ' + getTeamColors('MTL')[0]));
+        assert.ok(goalCardHTML(BUTS[1], EQUIPES).includes('--fzd-goal-team: ' + getTeamColors('TOR')[0]));
+    });
+
+    test('la carte entière ouvre la fiche du buteur', () => {
+        // Viser le nom seul demanderait de la précision sur une ligne de 11
+        // pixels : c'est la carte qui prend le clic, et le clavier avec elle.
+        const { goalCardHTML } = rendu();
+        const html = goalCardHTML({ ...BUTS[0], playerId: 8476479 }, EQUIPES);
+
+        assert.match(html, /data-goal-player="8476479"/);
+        assert.match(html, /role="button" tabindex="0"/);
+        assert.match(html, /data-goal-name="Phillip Danault"/);
+        assert.match(html, /aria-label="Voir la fiche de Phillip Danault"/);
+    });
+
+    test('sans identifiant, la carte ne promet pas un clic sans effet', () => {
+        // Un vieux match revient parfois sans playerId : mieux vaut une carte
+        // muette qu'un bouton qui ne mène nulle part.
+        const { goalCardHTML } = rendu();
+        const html = goalCardHTML(BUTS[0], EQUIPES);
+
+        assert.ok(!html.includes('data-goal-player'), 'aucune fiche à ouvrir');
+        assert.ok(!html.includes('role="button"'), 'la carte ne se dit pas bouton');
+        assert.ok(!html.includes('tabindex'), 'et ne prend pas le clavier');
+    });
+
+    test('la fiche demandée est celle de la carte cliquée', () => {
+        const appels = [];
+        const { ouvrirFicheButeur } = chargerFonctions('accueil-dash.js', ['ouvrirFicheButeur'],
+            { fzhOpenPlayerCareer: (id, nom) => appels.push([id, nom]) });
+
+        ouvrirFicheButeur({ dataset: { goalPlayer: '8476479', goalName: 'Phillip Danault' } });
+        // Un clic à côté d'une carte ne trouve rien à ouvrir : closest() rend
+        // null, et la fonction doit s'en accommoder sans lever.
+        assert.doesNotThrow(() => ouvrirFicheButeur(null));
+
+        assert.deepEqual(appels, [['8476479', 'Phillip Danault']]);
+    });
+
+    test('sans photo, les initiales tiennent la place', () => {
+        const { goalCardHTML } = rendu();
+        const html = goalCardHTML(BUTS[1], EQUIPES);
+
+        assert.match(html, /class="fzd-goal-photo is-initials">AM</);
+        assert.ok(!html.includes('<img'), 'aucune image ne doit être demandée');
+    });
+
+    test('prolongation et tirs de barrage portent leur nom', () => {
+        const { goalCardHTML } = rendu();
+
+        assert.match(goalCardHTML({ ...BUTS[0], period: 4, periodType: 'OT' }, EQUIPES), /\(Prol - /);
+        assert.match(goalCardHTML({ ...BUTS[0], period: 5, periodType: 'SO' }, EQUIPES), /\(TB - /);
+    });
+
+    test('les flèches de navigation accompagnent chaque piste', () => {
+        const { gameGoalsHTML } = rendu();
+        const html = gameGoalsHTML(MATCH, true);
+
+        assert.match(html, /class="fzd-goals-arrow" data-dir="prev"/);
+        assert.match(html, /class="fzd-goals-arrow" data-dir="next"/);
+        // Un bouton sans nom ne dit rien à un lecteur d'écran : « ‹ » non plus.
+        assert.match(html, /aria-label="But précédent"/);
+        assert.match(html, /aria-label="But suivant"/);
+    });
+
+    test('la flèche avance d’UN but, pas d’une page', () => {
+        // Sauter deux buts pour en montrer un troisième perdrait la séquence
+        // que le carrousel est justement là pour raconter.
+        const { goalsScroll } = chargerFonctions('accueil-dash.js', ['goalsScroll'],
+            { getComputedStyle: () => ({ columnGap: '6px' }) });
+
+        const appels = [];
+        const piste = { firstElementChild: { offsetWidth: 204 }, clientWidth: 276, scrollBy: o => appels.push(o) };
+
+        goalsScroll(piste, 1);
+        goalsScroll(piste, -1);
+
+        // 204 de carte + 6 de gouttiere : la carte suivante arrive pile au bord.
+        assert.deepEqual(appels.map(a => a.left), [210, -210]);
+        assert.ok(appels.every(a => a.behavior === 'smooth'), 'le saut doit être animé');
+    });
+
+    test('une piste vide ne fait pas défiler le vide', () => {
+        const { goalsScroll } = chargerFonctions('accueil-dash.js', ['goalsScroll'],
+            { getComputedStyle: () => ({ columnGap: '6px' }) });
+
+        const appels = [];
+        // Sans carte, il reste la largeur visible : mieux que zéro, qui
+        // laisserait le bouton sans effet.
+        goalsScroll({ firstElementChild: null, clientWidth: 276, scrollBy: o => appels.push(o) }, 1);
+        assert.deepEqual(appels.map(a => a.left), [276]);
+
+        assert.doesNotThrow(() => goalsScroll(null, 1));
+    });
+
+    /** Un bloc de buts en carton-pâte : ce que majFlechesButs touche, rien de plus. */
+    function blocFactice(piste) {
+        const classes = new Set();
+        const bouton = () => {
+            const c = new Set();
+            return { classList: { toggle: (n, on) => (on ? c.add(n) : c.delete(n)) }, off: () => c.has('is-off') };
+        };
+        const prev = bouton(), next = bouton();
+        return {
+            classList: { toggle: (n, on) => (on ? classes.add(n) : classes.delete(n)) },
+            querySelector: sel => sel === '.fzd-goals-track' ? piste
+                : sel === '[data-dir="prev"]' ? prev
+                : sel === '[data-dir="next"]' ? next : null,
+            navVisible: () => classes.has('has-nav'), prev, next
+        };
+    }
+
+    test('une piste qui tient entière n’affiche aucune flèche', () => {
+        // Deux boutons morts sous un match à deux buts : autant ne rien mettre.
+        const { majFlechesButs } = chargerFonctions('accueil-dash.js', ['majFlechesButs']);
+        const bloc = blocFactice({ scrollWidth: 300, clientWidth: 300, scrollLeft: 0 });
+
+        majFlechesButs(bloc);
+
+        assert.equal(bloc.navVisible(), false);
+    });
+
+    test('aux deux bouts, la flèche qui ne mène nulle part se grise', () => {
+        const { majFlechesButs } = chargerFonctions('accueil-dash.js', ['majFlechesButs']);
+        const piste = { scrollWidth: 900, clientWidth: 300, scrollLeft: 0 };
+        const bloc = blocFactice(piste);
+
+        majFlechesButs(bloc);
+        assert.equal(bloc.navVisible(), true, 'la piste déborde : les flèches servent');
+        assert.equal(bloc.prev.off(), true, 'au départ, rien avant');
+        assert.equal(bloc.next.off(), false);
+
+        piste.scrollLeft = 300;
+        majFlechesButs(bloc);
+        assert.equal(bloc.prev.off(), false, 'au milieu, les deux mènent quelque part');
+        assert.equal(bloc.next.off(), false);
+
+        piste.scrollLeft = 600;
+        majFlechesButs(bloc);
+        assert.equal(bloc.next.off(), true, 'au bout, rien après');
+    });
+
+    test('un nom venu de la LNH est du texte, jamais du balisage', () => {
+        const { goalCardHTML } = rendu();
+        const html = goalCardHTML({
+            name: '<img src=x onerror=alert(1)>', teamAbbrev: 'MTL', goalsToDate: 1,
+            period: 1, periodType: 'REG', timeInPeriod: '01:00',
+            headshot: 'x" onerror="alert(1)', awayScore: 1, homeScore: 0,
+            assists: [{ name: '<script>', assistsToDate: 1 }]
+        }, { away: '"><b>', home: 'TOR' });
+
+        assert.ok(!html.includes('<img src=x'), 'le nom doit être échappé');
+        assert.ok(!html.includes('<script>'), 'l’aide doit être échappée');
+        assert.ok(!html.includes('onerror="alert(1)"'), 'la photo doit être échappée');
+        assert.ok(!html.includes('"><b>'), 'l’abréviation doit être échappée');
+    });
+});
+
+// ── accueil ─ l'horloge des matchs en cours ─────────────────────────
+
+describe('accueil — le direct sous chaque match', () => {
+    const { escapeHTML } = chargerFonctions('accueil.js', ['escapeHTML']);
+
+    // Ce que l'horaire donne : aucune horloge, jamais — vérifié sur
+    // /v1/schedule un soir de match en cours. C'est la feuille du jour qui
+    // les porte, et elle arrive par /day-goals.
+    const HORAIRE = {
+        id: 2026010009, state: 'PRE', period: null, periodType: null, clock: null,
+        away: { abbrev: 'SJS', score: null }, home: { abbrev: 'ANA', score: null }
+    };
+    const EN_DIRECT = {
+        state: 'LIVE', period: 1, periodType: 'REG',
+        clock: { timeRemaining: '08:23', secondsRemaining: 503, running: true, inIntermission: false },
+        away: 1, home: 2
+    };
+
+    /** Les aides du direct, avec une feuille du jour déjà en main. */
+    function rendu(live = { 2026010009: EN_DIRECT }) {
+        return chargerFonctions(
+            'accueil-dash.js',
+            ['ETAT_RANG', 'rangEtat', 'etatDirect', 'horlogeMMSS', 'horlogeHTML', 'periodLabel'],
+            { escapeHTML, calGoals: { date: '2026-09-20', games: {}, live, at: 0 } }
+        );
+    }
+
+    test('la feuille du jour fait avancer un match que l’horaire croit à venir', () => {
+        // calData est figé pour la session : sans cette fusion, une carte
+        // ouverte avant la mise au jeu restait « PRE », sans marque, jusqu'au
+        // prochain rechargement de la page.
+        const { etatDirect } = rendu();
+        const vu = etatDirect(HORAIRE);
+
+        assert.equal(vu.state, 'LIVE');
+        assert.equal(vu.period, 1);
+        assert.equal(vu.away.score, 1);
+        assert.equal(vu.home.score, 2);
+        assert.equal(vu.clock.secondsRemaining, 503);
+    });
+
+    test('elle ne le fait jamais RECULER', () => {
+        // Les deux flux de la LNH ne tombent pas en panne ensemble : on a vu
+        // la feuille du jour resservir « à venir » des heures sur un match que
+        // l'horaire donnait final. Une carte terminée ne doit pas repartir en
+        // première période.
+        const { etatDirect } = rendu({ 2026010009: { ...EN_DIRECT, state: 'FUT', clock: null, away: null, home: null } });
+        const fini = { ...HORAIRE, state: 'FINAL', period: 3, periodType: 'REG',
+            away: { abbrev: 'SJS', score: 3 }, home: { abbrev: 'ANA', score: 2 } };
+
+        const vu = etatDirect(fini);
+        assert.equal(vu.state, 'FINAL');
+        assert.equal(vu.period, 3);
+        assert.equal(vu.away.score, 3);
+    });
+
+    test('un match absent de la feuille garde ce que dit l’horaire', () => {
+        const { etatDirect } = rendu({});
+        assert.deepEqual(etatDirect(HORAIRE), HORAIRE);
+    });
+
+    test('l’en-tête porte la période ET le chronomètre', () => {
+        const { etatDirect, horlogeHTML } = rendu();
+        const html = horlogeHTML(etatDirect(HORAIRE));
+
+        assert.match(html, /1<sup>re<\/sup> ·/);
+        assert.match(html, /class="fzd-game-clock"/);
+        assert.match(html, />08:23</);
+    });
+
+    test('le chronomètre porte de quoi se recalculer tout seul', () => {
+        // Décompter à l'aveugle prendrait du retard dans un onglet ralenti :
+        // on garde les secondes de la LNH et l'instant où on les a reçues,
+        // et chaque battement refait la soustraction.
+        const { etatDirect, horlogeHTML } = rendu();
+        const html = horlogeHTML(etatDirect(HORAIRE));
+
+        assert.match(html, /data-fzd-clock="503"/);
+        assert.match(html, /data-fzd-run="1"/);
+        const pose = Number(html.match(/data-fzd-at="(\d+)"/)[1]);
+        assert.ok(Math.abs(Date.now() - pose) < 5000, 'l’instant de pose doit être celui du rendu');
+    });
+
+    test('une horloge arrêtée ne bat pas', () => {
+        // Sifflet, fin de période : le temps affiché est le bon, il ne doit
+        // simplement plus descendre.
+        const { horlogeHTML } = rendu();
+        const arret = { ...EN_DIRECT, clock: { ...EN_DIRECT.clock, running: false } };
+
+        assert.match(horlogeHTML(arret), /data-fzd-run="0"/);
+        assert.match(horlogeHTML(arret), />08:23</);
+    });
+
+    test('l’entracte dit la période qui vient de finir', () => {
+        // « 3e · 20:00 » ferait croire que la période a commencé. Le décompte
+        // de l'entracte dit quand elle commencera.
+        const { horlogeHTML } = rendu();
+        const pause = { ...EN_DIRECT, period: 2,
+            clock: { timeRemaining: '15:00', secondsRemaining: 900, running: true, inIntermission: true } };
+
+        assert.match(horlogeHTML(pause), /^Fin 2<sup>e<\/sup> ·/);
+        assert.match(horlogeHTML(pause), />15:00</);
+    });
+
+    test('sans horloge du tout, la période reste seule', () => {
+        // Un vieux match, une feuille du jour en panne : la carte revient à ce
+        // qu'elle affichait avant, pas à un chronomètre vide.
+        const { horlogeHTML } = rendu();
+        const html = horlogeHTML({ ...EN_DIRECT, clock: null });
+
+        assert.equal(html, '1<sup>re</sup>');
+        assert.ok(!html.includes('fzd-game-clock'));
+    });
+
+    test('les minutes tiennent sur deux chiffres', () => {
+        // 10:00 → 09:59 ne doit pas rétrécir d'un caractère : tout l'en-tête
+        // se décalerait à chaque tour de minute.
+        const { horlogeMMSS } = rendu();
+
+        assert.equal(horlogeMMSS(600), '10:00');
+        assert.equal(horlogeMMSS(599), '09:59');
+        assert.equal(horlogeMMSS(503), '08:23');
+        assert.equal(horlogeMMSS(0), '00:00');
+        assert.equal(horlogeMMSS(-5), '00:00', 'jamais de temps négatif');
+    });
+
+    test('le battement recalcule depuis l’instant de pose', () => {
+        const pose = Date.now() - 7000;
+        const pendules = [
+            { textContent: '08:23', dataset: { fzdClock: '503', fzdAt: String(pose), fzdRun: '1' } },
+            { textContent: '00:03', dataset: { fzdClock: '3', fzdAt: String(pose), fzdRun: '1' } }
+        ];
+        const { fzdTickHorloges } = chargerFonctions('accueil-dash.js',
+            ['fzdTickHorloges', 'fzdArreterHorloges', 'horlogeMMSS'],
+            { fzdHorlogeTimer: 1, document: { querySelectorAll: () => pendules.filter(p => p.dataset.fzdRun === '1') },
+              clearInterval: () => {} });
+
+        fzdTickHorloges();
+
+        // Sept secondes passées, sept secondes de moins — pas un battement
+        // manqué, même si le navigateur en a sauté.
+        assert.equal(pendules[0].textContent, '08:16');
+        // Arrivée à zéro, l'horloge s'arrête d'elle-même.
+        assert.equal(pendules[1].textContent, '00:00');
+        assert.equal(pendules[1].dataset.fzdRun, '0');
+    });
+
+    test('plus une seule horloge à l’écran, plus de battement', () => {
+        let arrets = 0;
+        const { fzdTickHorloges } = chargerFonctions('accueil-dash.js',
+            ['fzdTickHorloges', 'fzdArreterHorloges', 'horlogeMMSS'],
+            { fzdHorlogeTimer: 1, document: { querySelectorAll: () => [] }, clearInterval: () => { arrets++; } });
+
+        fzdTickHorloges();
+        assert.equal(arrets, 1, 'le minuteur doit se couper tout seul');
+    });
+});

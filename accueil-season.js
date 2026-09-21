@@ -65,7 +65,7 @@ function renderSeasonHome({ tonight, movement, activeName }) {
             ${delta ? `<p class="${delta > 0 ? 'fzs-green' : 'fzs-red'}">${delta > 0 ? '↑ +' : '↓ '}${delta} <span>depuis le début de la journée</span></p>` : ''}
             <div class="fzs-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
         </section>
-        <section class="fzs-scores fzs-panel">${heading(`${games.some(live) ? '<i class="fzs-dot"></i> Matchs en direct' : 'Matchs du soir'}`, '#fzSeasonCalendar', 'Voir tous les scores')}
+        <section class="fzs-scores fzs-panel">${heading(`${games.some(live) ? '<i class="fzs-dot"></i> Matchs en direct' : 'Matchs du soir'}`, '#fzDashCalendarWrap', 'Voir tous les scores')}
             <div class="fzs-score-track">${allGames.length ? allGames.map(g => `<article class="fzs-game">${[g.away, g.home].map(t => `<div>${teamLogoImg(t.abbrev)}<span>${esc(t.abbrev)}</span><b>${['FUT', 'PRE'].includes(g.state) ? '—' : t.score ?? '—'}</b></div>`).join('')}<footer><span class="fzs-tag ${live(g) ? 'is-live' : ''}">${live(g) ? 'En direct' : ['OFF', 'FINAL'].includes(g.state) ? 'Final' : 'À venir'}</span> ${live(g) ? `${periodLabel(g.period, g.periodType)} · ${esc(g.clock?.timeRemaining || '')}` : g.startTimeUTC ? gameTimeLabel(g.startTimeUTC) : ''}</footer></article>`).join('') : empty('Aucun match à l’horaire ce soir.')}</div>
         </section>
         <section class="fzs-players fzs-panel">${heading(`${playing ? '<i class="fzs-dot"></i> Mes joueurs en direct' : 'Mes joueurs ce soir'} (${playing || lines.length})`, href, 'Voir mon équipe')}
@@ -81,16 +81,16 @@ function renderSeasonHome({ tonight, movement, activeName }) {
             const max = Math.max(1, ...['goals', 'assists', 'shots', 'saves'].map(k => lines.reduce((n, p) => n + (Number(p[k]) || 0), 0)));
             return `<div class="fzs-stat"><span>${label}</span><b>${value}</b><div><i style="width:${value / max * 100}%"></i></div></div>`;
         }).join('')}</section>
-        <section class="fzs-calendar fzs-panel" id="fzSeasonCalendar" aria-label="Calendrier LNH"></section>
+        <div class="fzs-slot" data-fz-bloc="calendrier"></div>
         <section class="fzs-activity fzs-panel">${heading('⇄ &nbsp; Activité récente', 'trade.html', 'Voir les échanges')}<div id="fzmActivityWrap"></div></section>
-        <section class="fzs-watch fzs-panel" data-watch-panel>${fzhWatchHTML()}</section>
+        <div class="fzs-slot" data-fz-bloc="surveiller"></div>
         <section class="fzs-news fzs-panel">${heading('▤ &nbsp; Actualités NHL')}<div id="fzmNewsWrap">${empty('Chargement des actualités…')}</div></section>
-        <section class="fzs-moves fzs-panel">${fzmLeagueSectionHTML(false).replace('Dans la LNH', 'Mouvements récents')}</section>`;
-    fzhRenderWatch(root);
+        <div class="fzs-slot" data-fz-bloc="mouvements"></div>`;
     fzdPlaceCalendar();
     renderCalendar();
+    fzdRendreSurveiller();
+    fzdRendreMouvements();
     fzmLoadActivity(activeName);
-    fzmLoadLeague();
     fzsLoadNews(root);
     return true;
 }

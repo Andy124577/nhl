@@ -28,8 +28,43 @@ const NHL_TEAM_SHORT = {
     VAN: 'Canucks', VGK: 'Golden Knights', WPG: 'Jets', WSH: 'Capitals'
 };
 
+/**
+ * La journée du pool, découpée sur l'Est — jamais sur UTC.
+ *
+ * `toISOString()` rend la journée UTC. À 20 h à Montréal, UTC est déjà au
+ * lendemain : le calendrier marquait « Auj » sur le 20 pendant que les matchs
+ * du 19 jouaient encore, et la bande des jours sautait une case chaque soir.
+ *
+ * Les journées de /schedule sont celles que la LNH attribue à ses matchs, et
+ * le serveur découpe les siennes sur « America/Toronto » (lib/dates.js). On
+ * lit l'heure dans ce fuseau-là pour que « aujourd'hui » désigne la même
+ * journée des deux côtés du réseau, quel que soit le fuseau du visiteur.
+ */
+const FZD_JOUR_POOL = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Toronto', year: 'numeric', month: '2-digit', day: '2-digit'
+});
+
+/** La journée du pool d'un instant, en « AAAA-MM-JJ ». */
+function poolDayISO(instant) {
+    const d = instant instanceof Date ? instant : new Date(instant);
+    return isNaN(d) ? null : FZD_JOUR_POOL.format(d);
+}
+
 function todayISO() {
-    return new Date().toISOString().slice(0, 10);
+    return FZD_JOUR_POOL.format(new Date());
+}
+
+/**
+ * Ajoute des jours de CALENDRIER à une journée « AAAA-MM-JJ ».
+ *
+ * L'arithmétique se fait en UTC sur une date sans heure : la veille reste la
+ * veille même quand la nuit a duré 23 ou 25 heures.
+ */
+function shiftISO(iso, days) {
+    const d = new Date(iso + 'T00:00:00Z');
+    if (isNaN(d)) return null;
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().slice(0, 10);
 }
 
 function dowLabel(dateISO) {
@@ -68,28 +103,29 @@ function relativeTimeFr(dateStr) {
 /**
  * Journée d'un mouvement ou d'un retour de blessure.
  *
- * Une chaîne « AAAA-MM-JJ » se parse en UTC, pas en heure locale : à
- * Montréal, minuit UTC tombe la veille à 20 h, et le 25 août s'affichait
- * donc « 24 août ». On reconstruit la date à la main pour ces chaînes-là.
- * Les horodatages complets (ESPN, avec heure et fuseau) gardent le
- * parsing normal, qui est correct pour eux.
+ * Tout se compare en journées « AAAA-MM-JJ », jamais en objets Date : une
+ * telle chaîne se parse en UTC, et à Montréal minuit UTC tombe la veille à
+ * 20 h — le 25 août s'affichait donc « 24 août ». L'ordre lexicographique
+ * de ces chaînes est l'ordre chronologique : ni fuseau ni arrondi ne peuvent
+ * s'y glisser.
+ *
+ * « Aujourd'hui » et « Hier » se lisent sur la journée du pool, la même que
+ * le calendrier : sinon un visiteur de Vancouver et un de Montréal dataient
+ * le même mouvement de deux jours différents.
+ *
+ * Un horodatage complet (ESPN, avec heure et fuseau) désigne un instant : on
+ * le ramène à la journée du pool où il tombe.
  */
 function dayLabelFr(iso) {
     if (!iso) return '';
-    const d = /^\d{4}-\d{2}-\d{2}$/.test(iso)
-        ? new Date(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10))
-        : new Date(iso);
-    if (isNaN(d)) return '';
+    const jour = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : poolDayISO(iso);
+    if (!jour) return '';
 
-    const sameDay = (a, b) => a.getFullYear() === b.getFullYear()
-        && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-    const today = new Date();
-    if (sameDay(d, today)) return 'Aujourd’hui';
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    if (sameDay(d, yesterday)) return 'Hier';
+    const today = todayISO();
+    if (jour === today) return 'Aujourd’hui';
+    if (jour === shiftISO(today, -1)) return 'Hier';
 
-    return d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+    return `${dayNum(jour)} ${FR_MONTH_SHORT[Number(jour.slice(5, 7)) - 1]}`;
 }
 
 function countdownLabel(startISO) {
@@ -137,6 +173,17 @@ let calMonthCursor = null;
 // les cartes joueur du calendrier montrent la ligne EN DIRECT quand elle
 // existe, et retombent sur les totaux de la saison sinon.
 let calTonight = { players: [], games: [] };
+// Buts de la journée AFFICHÉE (GET /day-goals/:date), indexés par identifiant
+// de match. Chargés à part du calendrier : une semaine de feuilles de
+// pointage ne sert à rien quand une seule journée est à l'écran.
+//
+// `live` vient de la même requête : état, période, horloge et pointage de
+// chaque match commencé. L'horaire n'a pas d'horloge du tout (voir
+// /day-goals côté serveur) et il ne se recharge pas de la session ; c'est
+// donc lui qui fait battre les cartes tant qu'un match joue.
+let calGoals = { date: null, games: {}, live: {}, at: 0 };
+let calGoalsEnCours = null;
+const CAL_GOALS_FRAIS_MS = 30 * 1000;
 // abbrev → { name, record }, construit une fois depuis /current-teams.
 let nhlTeamIndex = null;
 
@@ -186,9 +233,131 @@ async function fetchSchedule(date) {
     }
 }
 
+/**
+ * Les buts de la journée affichée, chargés en arrière-plan.
+ *
+ * `renderDayGames()` est synchrone et redessine à chaque rafraîchissement du
+ * tableau de bord : l'attendre sur le réseau ferait clignoter les cartes.
+ * On dessine donc avec ce qu'on a, et le retour de la requête redessine.
+ *
+ * Trois gardes empêchent la boucle — renderDayGames rappelle cette fonction :
+ * la journée déjà en main ne se recharge pas, une requête en vol n'est pas
+ * doublée, et une journée dont aucun match n'a commencé n'a rien à demander.
+ * Deux cas rouvrent la porte, et pas plus d'une fois par demi-minute : un
+ * match EN COURS, dont la feuille grandit encore, et un match commencé dont
+ * la marque n'est pas 0-0 alors qu'on n'a aucun de ses buts — la LNH n'avait
+ * rien publié la dernière fois, ce n'est pas une réponse à garder.
+ */
+function chargerButsDuJour(date, games) {
+    const commences = games.some(g => ['LIVE', 'CRIT', 'FINAL', 'OFF'].includes(g.state));
+    if (!commences) {
+        if (calGoals.date !== date) calGoals = { date, games: {}, at: Date.now() };
+        return;
+    }
+
+    const enDirect = games.some(g => g.state === 'LIVE' || g.state === 'CRIT');
+    // Un match commencé, marqué, dont on n'a pas un seul buteur en main : la
+    // LNH n'a pas encore publié sa feuille. Sans ce troisième cas, la première
+    // réponse vide de la journée valait pour toute la session — aucun match en
+    // direct pour rouvrir la porte, et la carte gardait son pointage sans
+    // jamais retrouver ses buteurs. Un vrai 0-0 ne compte pas : il n'a rien à
+    // attendre.
+    const manquant = calGoals.date === date && games.some(g =>
+        ['LIVE', 'CRIT', 'FINAL', 'OFF'].includes(g.state)
+        && ((g.away?.score ?? 0) + (g.home?.score ?? 0)) > 0
+        && !((calGoals.games && calGoals.games[g.id]) || []).length);
+
+    const aJour = calGoals.date === date
+        && (!(enDirect || manquant) || Date.now() - calGoals.at < CAL_GOALS_FRAIS_MS);
+    if (aJour || calGoalsEnCours === date) return;
+
+    calGoalsEnCours = date;
+    // L'ÂGE DE LA FEUILLE SE COMPTE DEPUIS LA DEMANDE, pas depuis la réponse.
+    // C'est plus honnête — ce qui revient est au moins aussi vieux que ça —
+    // et surtout : le battement du direct rappelle toutes les 30 s, la même
+    // durée que la fenêtre de fraîcheur. Datée du retour, la feuille aurait
+    // toujours paru fraîche d'un aller-retour réseau au moment du rappel, et
+    // le suivi serait passé de trente secondes à une minute.
+    const parti = Date.now();
+    // Le marqueur ne se libère que s’il est encore le nôtre : une requête
+    // partie pour une autre journée a pu le reprendre entre-temps.
+    const liberer = () => { if (calGoalsEnCours === date) calGoalsEnCours = null; };
+    fetchDayGoals(date).then(data => {
+        liberer();
+        // L'utilisateur a pu changer de journée pendant la requête : poser
+        // ces buts-là les afficherait sous les matchs d'une autre date.
+        if (calSelectedDate !== date) return;
+        calGoals = { date, games: data.games || {}, live: data.live || {}, at: parti };
+        // renderDayGames() ramène la piste des matchs à zéro. Ici le lecteur
+        // n'a rien demandé — les buts arrivent d'eux-mêmes — et voir les
+        // cartes revenir au premier match serait une main sur l'épaule.
+        const piste = document.getElementById('fzdCalGames');
+        const garde = piste ? piste.scrollLeft : 0;
+        renderDayGames();
+        if (piste) piste.scrollLeft = garde;
+    }).catch(liberer);
+}
+
+async function fetchDayGoals(date) {
+    try {
+        const res = await fetch(`${BASE_URL}/day-goals/${date}`, { cache: 'no-store' });
+        if (!res.ok) return { date, games: {}, live: {} };
+        return await res.json();
+    } catch (err) {
+        console.warn('Could not load day goals:', err);
+        return { date, games: {}, live: {} };
+    }
+}
+
+// ============================================================
+// PRÉCHARGEMENT — les requêtes de l'accueil qui n'attendent pas le pool.
+//
+// L'ouverture se faisait en DEUX VAGUES l'une après l'autre : d'abord le
+// pool, les stats, les échanges et la trousse ; ensuite seulement l'horaire,
+// les fiches de clubs et les feuilles du soir. Or aucune des trois dernières
+// ne lit quoi que ce soit du pool — elles attendaient pour rien. Sur un
+// téléphone en 4G vers Render, cet aller-retour de trop se voit.
+//
+// Elles partent donc avec la première vague, et ceux qui les consomment
+// prennent la promesse déjà en vol. UNE SEULE FOIS : `renderDash()` repasse
+// à chaque rafraîchissement de FZPool, et resservir éternellement la réponse
+// de l'ouverture y figerait les feuilles du soir. Une fois consommée, la
+// promesse est retirée et l'appel suivant repart sur le réseau, comme avant.
+// ============================================================
+let fzdPrecharge = null;
+
+function fzdPrecharger() {
+    if (fzdPrecharge) return fzdPrecharge;
+    fzdPrecharge = {
+        jour: todayISO(),
+        horaire: fetchSchedule(todayISO()),
+        equipes: loadNhlTeams(),
+        tonight: fetchTonightBoxscores()
+    };
+    return fzdPrecharge;
+}
+
+/**
+ * La promesse préchargée, ou rien si elle a déjà servi.
+ *
+ * `jour` garde la journée du pool au moment du départ : une page laissée
+ * ouverte jusqu'après minuit à l'Est reprendrait sinon l'horaire de la
+ * veille pour celui d'aujourd'hui.
+ */
+function fzdPrise(cle) {
+    if (!fzdPrecharge) return null;
+    if (cle !== 'equipes' && fzdPrecharge.jour !== todayISO()) return null;
+    const promesse = fzdPrecharge[cle];
+    fzdPrecharge[cle] = null;
+    return promesse || null;
+}
+
 async function initCalendar() {
     const today = todayISO();
-    const [schedule] = await Promise.all([fetchSchedule(today), loadNhlTeams()]);
+    const [schedule] = await Promise.all([
+        fzdPrise('horaire') || fetchSchedule(today),
+        fzdPrise('equipes') || loadNhlTeams()
+    ]);
     calData = schedule;
     calSelectedDate = calData.days.find(d => d.date === today) ? today : (calData.days[0]?.date || today);
     renderCalendar();
@@ -196,9 +365,6 @@ async function initCalendar() {
 }
 
 function renderCalendar() {
-    // Pendant un repêchage, la home de repêchage a son propre calendrier
-    // présaison (accueil-draft.js) et le bloc partagé est hors écran.
-    if (typeof fzhRenderCalendar === 'function' && fzhRenderCalendar()) return;
     renderCalRange();
     renderDayStrip();
     renderDayHead();
@@ -229,7 +395,10 @@ function renderDayStrip() {
         const isToday = d.date === today;
         const isSelected = d.date === calSelectedDate;
         const games = d.games || [];
-        const live = games.filter(g => g.state === 'LIVE' || g.state === 'CRIT').length;
+        const live = games.filter(g => {
+            const e = d.date === calGoals.date ? etatDirect(g).state : g.state;
+            return e === 'LIVE' || e === 'CRIT';
+        }).length;
         // Le mot est dans un <span> à part : au téléphone la case ne fait
         // qu'un septième d'écran, la CSS n'y garde que le chiffre.
         const countLabel = `${games.length} match${games.length > 1 ? 's' : ''}${live ? `, dont ${live} en direct` : ''}`;
@@ -290,12 +459,16 @@ function renderDayGames() {
     // vue au bureau, une au téléphone) au lieu de s'empiler. Plus de repli
     // « Voir les N autres » — le carrousel les atteint tous.
     const counts = rosterTeamCounts();
+    chargerButsDuJour(calSelectedDate, games);
     wrap.innerHTML = games.map(g => gameCardHTML(g, counts)).join('');
     wrap.scrollLeft = 0;
     if (nav) nav.style.display = '';
 
     renderCalGameDots();
     bindPlayerTracks(wrap);
+    bindGoalTracks(wrap);
+    fzdMajHorloges();
+    reglerSuiviDirect();
 }
 
 /** Largeur d'un « saut » de carrousel : une carte + le gap de la piste. */
@@ -332,7 +505,176 @@ function renderCalGameDots() {
     updateCalGameDots();
 }
 
-function gameCardHTML(game, rosterCounts) {
+// ============================================================
+// LE DIRECT — horloge, période et pointage d'un match qui joue.
+//
+// `calData` est figé pour la session : l'horaire est demandé une fois au
+// démarrage, et rien ne le redemande. Une carte « En direct » gardait donc
+// la marque et la période du moment où la page s'est ouverte, sans horloge
+// — l'horaire de la LNH n'en publie aucune. /day-goals, lui, lit la feuille
+// du jour, qui porte les quatre. C'est cette feuille qui fait vivre les
+// cartes, et le battement ci-dessous qui la redemande.
+// ============================================================
+const ETAT_RANG = { FUT: 0, PRE: 0, LIVE: 1, CRIT: 1, FINAL: 2, OFF: 2 };
+const CAL_DIRECT_MS = 30 * 1000;
+let calDirectTimer = null;
+let fzdHorlogeTimer = null;
+
+/** Rang d'un état de match : à venir, en cours, terminé. */
+function rangEtat(state) {
+    return ETAT_RANG[state] ?? 0;
+}
+
+/**
+ * Le match tel qu'il est MAINTENANT : l'horaire, corrigé par la feuille du jour.
+ *
+ * La feuille ne sert qu'à FAIRE AVANCER un match, jamais à le faire reculer.
+ * Les deux flux de la LNH ne tombent pas en panne ensemble — on a vu la
+ * feuille du jour resservir « à venir » pendant des heures sur un match que
+ * l'horaire donnait final. Comparer les rangs avant de recopier coûte une
+ * ligne et évite qu'une carte terminée reparte en première période.
+ */
+function etatDirect(game) {
+    const direct = calGoals.live && calGoals.live[game.id];
+    if (!direct || rangEtat(direct.state) < rangEtat(game.state)) return game;
+
+    return {
+        ...game,
+        state: direct.state,
+        period: direct.period ?? game.period,
+        periodType: direct.periodType || game.periodType,
+        clock: direct.clock || game.clock,
+        away: { ...game.away, score: direct.away ?? game.away.score },
+        home: { ...game.home, score: direct.home ?? game.home.score }
+    };
+}
+
+/**
+ * « 08:23 » à partir d'un nombre de secondes.
+ *
+ * Minutes sur deux chiffres, comme la LNH les écrit — et surtout : la
+ * largeur ne change plus au passage de 10:00 à 09:59. Un chronomètre qui
+ * rétrécit d'un caractère en pleine descente décale tout l'en-tête.
+ */
+function horlogeMMSS(secondes) {
+    const s = Math.max(0, Math.floor(secondes));
+    return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+}
+
+/**
+ * La ligne de droite de l'en-tête d'un match en cours : « 2e · 12:34 ».
+ *
+ * Le chiffre vit dans son propre <span> : le battement ne réécrit que lui,
+ * jamais la période autour. `data-fzd-clock` garde les secondes telles que
+ * la LNH les a données et `data-fzd-at` l'instant où on les a reçues — le
+ * temps restant se RECALCULE à chaque battement au lieu de se décrémenter.
+ * Un onglet en arrière-plan, que le navigateur ralentit à un battement par
+ * minute, revient ainsi à la bonne seconde au lieu d'avoir pris du retard.
+ *
+ * Pendant l'entracte, l'horloge de la LNH compte l'attente avant la reprise.
+ * « Fin 2e » dit alors la période qui vient de finir, et le décompte, ce
+ * qu'on attend — deux informations qu'un simple « 3e · 20:00 » perdrait.
+ */
+function horlogeHTML(game) {
+    const h = game.clock;
+    const periode = periodLabel(game.period, game.periodType);
+    if (!h) return periode;
+
+    const secondes = Number.isFinite(h.secondsRemaining) ? h.secondsRemaining : null;
+    const texte = secondes != null ? horlogeMMSS(secondes) : (h.timeRemaining || '');
+    if (!texte) return periode;
+
+    // Une horloge arrêtée — sifflet, fin de période — reste affichée telle
+    // quelle : c'est l'heure du match, pas une valeur périmée.
+    const avance = h.running && secondes != null ? '1' : '0';
+    const pendule = `<span class="fzd-game-clock" data-fzd-clock="${escapeHTML(String(secondes ?? ''))}"`
+        + ` data-fzd-at="${Date.now()}" data-fzd-run="${avance}">${escapeHTML(texte)}</span>`;
+
+    return h.inIntermission
+        ? `Fin ${periode} · ${pendule}`
+        : `${periode} · ${pendule}`;
+}
+
+/**
+ * Un battement par seconde, partagé par toutes les horloges à l'écran.
+ *
+ * Un minuteur par carte ferait quatorze réveils par seconde un soir chargé,
+ * et autant de fuites à chaque redessin du calendrier. Celui-ci s'arrête de
+ * lui-même dès qu'il ne reste plus une seule horloge qui avance.
+ */
+function fzdTickHorloges() {
+    const pendules = document.querySelectorAll('.fzd-game-clock[data-fzd-run="1"]');
+    if (!pendules.length) { fzdArreterHorloges(); return; }
+
+    pendules.forEach(el => {
+        const base = Number(el.dataset.fzdClock);
+        const pose = Number(el.dataset.fzdAt);
+        if (!Number.isFinite(base) || !Number.isFinite(pose)) return;
+
+        const restant = Math.max(0, base - Math.floor((Date.now() - pose) / 1000));
+        const texte = horlogeMMSS(restant);
+        if (el.textContent !== texte) el.textContent = texte;
+        // À zéro, la sirène a sonné : plus rien à décompter tant que la
+        // prochaine feuille n'a pas dit ce qui suit.
+        if (!restant) el.dataset.fzdRun = '0';
+    });
+}
+
+function fzdArreterHorloges() {
+    if (!fzdHorlogeTimer) return;
+    clearInterval(fzdHorlogeTimer);
+    fzdHorlogeTimer = null;
+}
+
+/** Démarre ou arrête le battement selon ce qui est réellement à l'écran. */
+function fzdMajHorloges() {
+    const besoin = !!document.querySelector('.fzd-game-clock[data-fzd-run="1"]');
+    if (besoin && !fzdHorlogeTimer) fzdHorlogeTimer = setInterval(fzdTickHorloges, 1000);
+    else if (!besoin) fzdArreterHorloges();
+}
+
+/**
+ * Le suivi d'une journée qui joue : une feuille fraîche toutes les 30 s.
+ *
+ * L'horloge locale avance seule entre deux feuilles, mais elle ne sait rien
+ * d'un but, d'un arrêt de jeu ou d'une fin de période — d'où le rappel. Il ne
+ * part que si un match est VRAIMENT en cours, état fusionné en main : sans
+ * ça, un horaire figé sur « LIVE » aurait sondé la LNH jusqu'au lendemain.
+ * Onglet caché, on ne demande rien ; en revenant, on demande tout de suite,
+ * parce que la carte affiche alors une horloge vieille de tout le détour.
+ */
+function reglerSuiviDirect() {
+    const jour = calData && calData.days.find(d => d.date === calSelectedDate);
+    const parties = (jour && jour.games) || [];
+    const enDirect = parties.some(g => {
+        const e = etatDirect(g).state;
+        return e === 'LIVE' || e === 'CRIT';
+    });
+
+    if (!enDirect) {
+        if (calDirectTimer) { clearInterval(calDirectTimer); calDirectTimer = null; }
+        return;
+    }
+    if (calDirectTimer) return;
+
+    calDirectTimer = setInterval(() => {
+        if (document.hidden) return;
+        const j = calData && calData.days.find(d => d.date === calSelectedDate);
+        chargerButsDuJour(calSelectedDate, (j && j.games) || []);
+    }, CAL_DIRECT_MS);
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden || !calData || !calSelectedDate) return;
+    const jour = calData.days.find(d => d.date === calSelectedDate);
+    if (jour) chargerButsDuJour(calSelectedDate, jour.games || []);
+});
+
+function gameCardHTML(gameHoraire, rosterCounts) {
+    // Une seule fusion en haut de la carte : le badge, le pointage, l'ordre
+    // des buteurs et le compte de vos joueurs doivent tous raconter la même
+    // minute du match.
+    const game = etatDirect(gameHoraire);
     const isFinal = game.state === 'FINAL' || game.state === 'OFF';
     const isLive = game.state === 'LIVE' || game.state === 'CRIT';
     const isScheduled = !isFinal && !isLive;
@@ -341,7 +683,7 @@ function gameCardHTML(game, rosterCounts) {
     let badge, when = '';
     if (isLive) {
         badge = `<span class="fzd-game-badge is-live"><i class="fzd-live-dot"></i>En direct</span>`;
-        when = `${periodLabel(game.period, game.periodType)} · ${escapeHTML(game.clock?.timeRemaining || '')}`;
+        when = horlogeHTML(game);
     } else if (isFinal) {
         badge = `<span class="fzd-game-badge is-final">Final</span>`;
     } else {
@@ -375,10 +717,140 @@ function gameCardHTML(game, rosterCounts) {
             <div class="fzd-game-teams">
                 ${teamRow(game.away, game.home)}
                 ${teamRow(game.home, game.away)}
+                ${gameGoalsHTML(game, isFinal)}
             </div>
             <div class="fzd-game-roster-count${rosterCount ? ' has-players' : ''}">${rosterCount ? `★ ${rosterCount} de vos joueurs` : 'Aucun de vos joueurs'}</div>
             ${gamePlayersHTML(game)}
         </article>`;
+}
+
+/**
+ * Les buteurs du match, en carrousel, sous le pointage.
+ *
+ * L'ORDRE DIT OÙ REGARDER, et il s'inverse quand la sirène sonne :
+ *
+ *   - match en cours, le plus récent à GAUCHE. Une carte qui suit un match
+ *     répond à « qu'est-ce qui vient de se passer » ; la réponse doit être
+ *     là où l'œil se pose, sans faire défiler. Chaque but pousse les
+ *     précédents vers la droite ;
+ *   - match terminé, le premier à GAUCHE. Plus rien n'arrive, la question
+ *     devient « comment ça s'est joué » : on relit la feuille dans l'ordre
+ *     où elle s'est écrite, du premier but au dernier.
+ *
+ * La liste arrive du serveur dans l'ordre de la LNH — chronologique — et
+ * c'est `slice().reverse()` qui la retourne, jamais `reverse()` seul : la
+ * même liste est relue à chaque rendu, et l'inverser sur place la ferait
+ * basculer d'un rendu à l'autre.
+ *
+ * Un match sans but n'affiche rien plutôt qu'un bandeau vide — c'est déjà
+ * la règle du carrousel « Vos joueurs » juste en dessous.
+ */
+function gameGoalsHTML(game, isFinal) {
+    const buts = (calGoals.games && calGoals.games[game.id]) || [];
+    if (!buts.length) return '';
+
+    const ordonnes = isFinal ? buts : buts.slice().reverse();
+    // Le pointage courant s'écrit « visiteur — local », dans l'ordre du
+    // tableau d'affichage ; les abréviations viennent du match, pas du but.
+    const equipes = { away: game.away?.abbrev || '', home: game.home?.abbrev || '' };
+
+    return `
+        <div class="fzd-goals">
+            <div class="fzd-goals-head">
+                <span class="fzd-goals-title">Buts</span>
+                <span class="fzd-goals-sub">${isFinal ? 'Du premier au dernier' : 'Le plus récent d’abord'}</span>
+                <span class="fzd-goals-nav">
+                    <button type="button" class="fzd-goals-arrow" data-dir="prev" aria-label="But précédent">‹</button>
+                    <button type="button" class="fzd-goals-arrow" data-dir="next" aria-label="But suivant">›</button>
+                </span>
+            </div>
+            <div class="fzd-goals-track">${ordonnes.map(b => goalCardHTML(b, equipes)).join('')}</div>
+        </div>`;
+}
+
+/**
+ * Une carte de but : qui a marqué, qui a aidé, et où en était le match.
+ *
+ * Trois lignes, trois échelles de temps :
+ *
+ *   Phillip Danault (1)              ← son 1er but DE LA SAISON
+ *   Z. Bolduc (1) et A. Texier (1)   ← leurs aides de la saison
+ *   MTL 1 - TOR 0 (2e - 00:51)       ← la marque APRÈS ce but
+ *
+ * Les nombres entre parenthèses ne sont pas décoratifs : ils transforment le
+ * carrousel en deux récits à la fois. De gauche à droite sur un match
+ * terminé, la marque raconte la soirée — qui menait, quand ça a basculé —
+ * et les compteurs racontent la saison de chaque joueur, un but à la fois.
+ *
+ * L'anneau de la photo porte la couleur du club du buteur. Les buts des deux
+ * équipes se suivent dans la même piste : sans lui, il faudrait comparer
+ * deux nombres pour savoir qui vient de marquer. Une couleur se lit d'un
+ * coup, et elle ne coûte pas une ligne de texte sur une carte qui en a déjà
+ * trois.
+ *
+ * `periodLabel` rend du balisage (« 2<sup>e</sup> ») : c'est la seule pièce
+ * ici qui ne passe pas par escapeHTML, et tout ce qui vient de la LNH y passe.
+ *
+ * La carte entière ouvre la fiche du buteur (voir bindGoalTracks) : un nom
+ * qui vient de marquer est la première chose qu'on veut aller voir, et viser
+ * le nom seul demanderait de la précision sur une ligne de 11 pixels. La
+ * feuille de pointage de la LNH donne l'identifiant du buteur ; sans lui —
+ * un vieux match, une réponse incomplète — la carte reste une simple carte
+ * plutôt qu'un bouton qui ne mènerait nulle part.
+ */
+function goalCardHTML(but, equipes) {
+    const nom = but.name || '';
+    const fiche = Number(but.playerId) > 0 ? Number(but.playerId) : 0;
+    const initiales = nom.split(/\s+/).map(m => m[0] || '').join('').slice(0, 2).toUpperCase();
+    // getTeamColors vient de teamColors.js, chargé avant ce fichier ; le
+    // garde-fou sert aux tests, qui chargent cette fonction toute seule.
+    const couleur = typeof getTeamColors === 'function'
+        ? getTeamColors(but.teamAbbrev)[0] : '';
+    const photo = but.headshot
+        ? `<img class="fzd-goal-photo" src="${escapeHTML(but.headshot)}" alt="" loading="lazy" onerror="this.remove()">`
+        : `<span class="fzd-goal-photo is-initials">${escapeHTML(initiales)}</span>`;
+
+    const aides = (but.assists || []).filter(a => a.name);
+    const aide = aides.length
+        ? aides.map(a => escapeHTML(a.name) + compteurHTML(a.assistsToDate)).join(' et ')
+        : 'Sans aide';
+    const aideTitre = aides.length
+        ? aides.map(a => a.assistsToDate ? `${a.name} (${a.assistsToDate})` : a.name).join(' et ')
+        : 'Sans aide';
+
+    const marque = but.awayScore != null && but.homeScore != null
+        ? `${escapeHTML(equipes.away)} ${escapeHTML(String(but.awayScore))}`
+          + ` - ${escapeHTML(equipes.home)} ${escapeHTML(String(but.homeScore))}`
+        : '';
+    const quand = `${periodLabel(but.period, but.periodType)} - ${escapeHTML(but.timeInPeriod || '')}`;
+
+    const ouvre = fiche
+        ? ` role="button" tabindex="0" data-goal-player="${fiche}" data-goal-name="${escapeHTML(nom)}" aria-label="Voir la fiche de ${escapeHTML(nom)}"`
+        : '';
+
+    return `
+        <div class="fzd-goal-card"${ouvre}${couleur ? ` style="--fzd-goal-team: ${escapeHTML(couleur)}"` : ''}>
+            ${photo}
+            <div class="fzd-goal-id">
+                <div class="fzd-goal-name" title="${escapeHTML(nom)}">${escapeHTML(nom)}${compteurHTML(but.goalsToDate)}</div>
+                <div class="fzd-goal-assist" title="${escapeHTML(aideTitre)}">${aide}</div>
+                <div class="fzd-goal-score">
+                    <span class="fzd-goal-run">${marque}</span>
+                    <span class="fzd-goal-when">(${quand})</span>
+                </div>
+            </div>
+        </div>`;
+}
+
+/**
+ * « (12) » : le total de la saison d'un joueur après ce jeu.
+ *
+ * Zéro n'arrive pas — un but marqué vaut au moins un — mais un ancien match
+ * peut venir sans compteur, et « (0) » se lirait comme une erreur. Absent,
+ * rien ne s'affiche.
+ */
+function compteurHTML(total) {
+    return total ? ` <span class="fzd-goal-tally">(${escapeHTML(String(total))})</span>` : '';
 }
 
 /**
@@ -478,6 +950,72 @@ function bindPlayerTracks(root) {
     });
 }
 
+/**
+ * Avance ou recule d'UN BUT.
+ *
+ * Pas d'une page pleine, comme le carrousel des matchs : on vient lire une
+ * séquence, et sauter deux buts pour en montrer un troisième perdrait
+ * justement ce que l'ordre raconte.
+ */
+function goalsScroll(track, dir) {
+    if (!track) return;
+    const carte = track.firstElementChild;
+    const gap = parseFloat(getComputedStyle(track).columnGap || '0') || 0;
+    const pas = carte ? carte.offsetWidth + gap : track.clientWidth;
+    track.scrollBy({ left: dir * pas, behavior: 'smooth' });
+}
+
+/**
+ * L'état des flèches d'un bloc de buts.
+ *
+ * Une piste qui tient entière n'a rien à faire défiler : ses flèches ne
+ * s'affichent pas du tout, plutôt que de s'afficher mortes. Aux deux bouts,
+ * celle qui ne mène nulle part se grise — même `is-off` que les flèches du
+ * carrousel des matchs, juste au-dessus.
+ */
+function majFlechesButs(bloc) {
+    const track = bloc.querySelector('.fzd-goals-track');
+    if (!track) return;
+    const max = track.scrollWidth - track.clientWidth;
+    bloc.classList.toggle('has-nav', max > 1);
+    bloc.querySelector('[data-dir="prev"]')?.classList.toggle('is-off', track.scrollLeft <= 1);
+    bloc.querySelector('[data-dir="next"]')?.classList.toggle('is-off', track.scrollLeft >= max - 1);
+}
+
+/**
+ * Flèches des buteurs et ouverture de leur fiche : une paire par carte de
+ * match, posées à chaque rendu.
+ *
+ * La fiche est celle qu'ouvre « À surveiller » (accueil-watch.js) — même
+ * modale, mêmes filtres, sans la note de la trousse que ce buteur n'a pas.
+ * L'écouteur est posé sur la piste et non sur chaque carte : une piste se
+ * réécrit à chaque rafraîchissement d'un match en cours, et autant
+ * d'écouteurs que de buts marqués finiraient par s'y empiler.
+ */
+function bindGoalTracks(root) {
+    root.querySelectorAll('.fzd-goals').forEach(bloc => {
+        const track = bloc.querySelector('.fzd-goals-track');
+        if (!track) return;
+        bloc.querySelector('[data-dir="prev"]')?.addEventListener('click', () => goalsScroll(track, -1));
+        bloc.querySelector('[data-dir="next"]')?.addEventListener('click', () => goalsScroll(track, 1));
+        track.addEventListener('scroll', () => majFlechesButs(bloc), { passive: true });
+        track.addEventListener('click', event => ouvrirFicheButeur(event.target.closest('[data-goal-player]')));
+        track.addEventListener('keydown', event => {
+            const carte = event.target.closest?.('[data-goal-player]');
+            if (!carte || event.target !== carte || !['Enter', ' '].includes(event.key)) return;
+            event.preventDefault();
+            ouvrirFicheButeur(carte);
+        });
+        majFlechesButs(bloc);
+    });
+}
+
+/** La fiche du joueur d'une carte de but, si la LNH a donné son identifiant. */
+function ouvrirFicheButeur(carte) {
+    if (!carte || typeof fzhOpenPlayerCareer !== 'function') return;
+    fzhOpenPlayerCareer(carte.dataset.goalPlayer, carte.dataset.goalName || '');
+}
+
 /** Reflète la position du carrousel des matchs : puce active, flèches
  *  grisées aux deux bouts. */
 function updateCalGameDots() {
@@ -504,41 +1042,72 @@ function calGamesScroll(dir) {
     wrap.scrollBy({ left: dir * (page || wrap.clientWidth), behavior: 'smooth' });
 }
 
-/**
- * Le calendrier est UN seul nœud, pas deux rendus. Au bureau il vit à sa
- * place dans .fz-dash ; au téléphone renderMobileHome() lui réserve
- * #fzmCalSlot et on l'y déplace, pour qu'il tombe entre le classement et
- * « Vos joueurs ce soir » plutôt qu'à la toute fin de l'écran. Le retour
- * arrière évite qu'un simple redimensionnement le laisse coincé dans la home
- * mobile, masquée au-dessus de 768px.
- */
-function fzdPlaceCalendar() {
-    const cal = document.getElementById('fzDashCalendarWrap');
-    if (!cal) return;
-    const seasonSlot = document.getElementById('fzSeasonCalendar');
-    if (document.getElementById('fzDashSection')?.classList.contains('is-season') && seasonSlot) {
-        seasonSlot.appendChild(cal);
-        return;
+// ============================================================
+// BLOCS PARTAGÉS — un seul nœud par panneau, déplacé d'un accueil à l'autre
+//
+// Le calendrier, le compte à rebours hors-saison, « Mouvements récents » et
+// « À surveiller » sont les mêmes quatre panneaux sur les quatre accueils
+// (tableau de bord, repêchage, saison, téléphone). Ils existent donc UNE
+// seule fois dans index.html et chaque accueil ouvre un emplacement vide
+// `data-fz-bloc="<clé>"` où on les déplace : un seul balisage, un seul
+// rendu, jamais deux versions du même panneau qui finissent par diverger.
+//
+// Les emplacements portent display:contents (accueil-dash.css) : c'est le
+// nœud déplacé qui devient l'enfant de grille, pas l'emplacement.
+// ============================================================
+const FZD_BLOCS = [
+    { cle: 'calendrier', id: 'fzDashCalendarWrap' },
+    { cle: 'horssaison', id: 'fzdOffCount' },
+    { cle: 'mouvements', id: 'fzdOffMoves' },
+    { cle: 'surveiller', id: 'fzdOffWatch' }
+];
+let fzdBlocsMaison = null;
+
+/** Où chaque bloc vit dans index.html, relevé avant le premier déplacement. */
+function fzdBlocs() {
+    if (!fzdBlocsMaison) {
+        fzdBlocsMaison = FZD_BLOCS.map(({ cle, id }) => {
+            const noeud = document.getElementById(id);
+            return noeud && { cle, noeud, parent: noeud.parentElement, avant: noeud.nextElementSibling };
+        }).filter(Boolean);
     }
-    const slot = document.getElementById('fzmCalSlot');
-    if (calIsPhone() && slot) {
-        if (cal.parentElement !== slot) slot.appendChild(cal);
-    } else {
-        fzdRestoreCalendar();
-    }
+    return fzdBlocsMaison;
 }
 
 /**
- * Ramène le calendrier à sa place bureau. renderMobileHome() l'appelle AVANT
- * de réécrire son innerHTML : le nœud vit peut-être dans #fzmCalSlot, et une
- * réécriture l'effacerait pour de bon — plus de calendrier jusqu'au prochain
- * chargement de page.
+ * L'emplacement qui réclame ce bloc, s'il y en a un à l'écran.
+ *
+ * Ceux de la home téléphone ne comptent qu'au téléphone : son balisage reste
+ * dans le DOM au bureau, où .fz-mobile-home est masquée (accueil-mobile.css)
+ * — un bloc qui y tomberait disparaîtrait de l'écran.
+ */
+function fzdSlotBloc(cle) {
+    return [...document.querySelectorAll(`[data-fz-bloc="${cle}"]`)]
+        .find(slot => calIsPhone() || !slot.closest('#fzMobileHome')) || null;
+}
+
+/** Place chaque bloc dans l'emplacement de l'accueil affiché, ou le rend. */
+function fzdPlaceCalendar() {
+    fzdRestoreCalendar();
+    fzdBlocs().forEach(({ cle, noeud }) => {
+        const slot = fzdSlotBloc(cle);
+        if (slot && noeud.parentElement !== slot) slot.appendChild(noeud);
+    });
+}
+
+/**
+ * Ramène les blocs à leur place d'origine. Chaque accueil l'appelle AVANT de
+ * réécrire son innerHTML : les nœuds vivent peut-être dans l'emplacement
+ * qu'on efface, et la réécriture les supprimerait pour de bon — plus de
+ * calendrier ni de mouvements jusqu'au prochain chargement de page.
  */
 function fzdRestoreCalendar() {
-    const cal = document.getElementById('fzDashCalendarWrap');
-    const anchor = document.getElementById('fzDashOffseason');
-    if (!cal || !anchor || cal.nextElementSibling === anchor) return;
-    anchor.parentElement.insertBefore(cal, anchor);
+    // À rebours : chaque bloc se repose devant le suivant, qui doit donc
+    // être rentré le premier.
+    fzdBlocs().slice().reverse().forEach(({ noeud, parent, avant }) => {
+        if (noeud.parentElement === parent && noeud.nextElementSibling === avant) return;
+        parent.insertBefore(noeud, avant && avant.parentElement === parent ? avant : null);
+    });
 }
 
 async function selectCalendarDay(dateStr) {
@@ -655,7 +1224,10 @@ async function loadDashData() {
     const team = FZPool.team();
     const activeName = FZPool.get();
     if (!team || !activeName) return null;
-    const [tonight, movement] = await Promise.all([fetchTonightBoxscores(), fetchRankMovement(activeName)]);
+    const [tonight, movement] = await Promise.all([
+        fzdPrise('tonight') || fetchTonightBoxscores(),
+        fetchRankMovement(activeName)
+    ]);
     return { tonight, movement, activeName };
 }
 
@@ -1250,22 +1822,6 @@ function fzdStopHeroTimer(containerId) {
  * contenu des deux côtés ; seul accueil-dash.css les met en page
  * différemment selon la largeur d'écran.
  */
-/**
- * Démarre la bande « à faire maintenant ».
- *
- * Une seule requête pour les deux dispositions, et un seul abonnement : la
- * bande se redessine d'elle-même quand la réponse change, sans que l'accueil
- * ait à la surveiller.
- */
-function fzdDemarrerAujourdhui() {
-    if (!window.FZToday) return;
-    FZToday.surReponse(() => {
-        FZToday.rendre('fzTodayDash');
-        FZToday.rendre('fzTodayMobile');
-    });
-    FZToday.demarrer(['fzTodayDash', 'fzTodayMobile']);
-}
-
 function renderHero(tonight, containerId = 'fzDashHero') {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -1462,6 +2018,14 @@ function renderOffseasonPanel() {
     fzdApplyPreseasonLayout(hasPool);
 
     const horsSaison = !!seasonStart && today < seasonStart;
+
+    // Les trois blocs partagés se remplissent d'abord : ils vivent peut-être
+    // déjà dans l'accueil de repêchage, de saison ou du téléphone, où ce
+    // panneau-ci n'a plus son mot à dire sur ce qui s'affiche.
+    fzdRendreHorsSaison(horsSaison);
+    fzdRendreSurveiller();
+    fzdRendreMouvements();
+
     // Sans pool, la LNH est tout ce que cet accueil a à montrer : les
     // mouvements récents et la liste « À surveiller » restent donc à
     // l'écran même une fois la saison commencée. Seul le résumé du haut
@@ -1476,23 +2040,55 @@ function renderOffseasonPanel() {
     // pas sur son propre display.
     panel.querySelector('.fzd-off-summary').style.display = horsSaison ? '' : 'none';
 
-    if (horsSaison) {
-        const campStart = calData.preSeasonStartDate;
-        const beforeCamp = !!campStart && today < campStart;
-        const target = beforeCamp ? campStart : seasonStart;
-        const days = Math.max(0, Math.ceil((new Date(target + 'T00:00:00Z') - new Date(today + 'T00:00:00Z')) / 86400000));
+    if (horsSaison) renderOffseasonPosition();
+}
 
-        document.getElementById('fzdOffDays').textContent = `${days} j`;
-        document.getElementById('fzdOffSub').textContent = beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison';
+/**
+ * Le compte à rebours hors-saison — le même bloc sur tous les accueils.
+ * Il se retire de lui-même une fois la saison commencée : un décompte sans
+ * cible n'a rien à dire, et il n'est plus forcément dans #fzDashOffseason
+ * pour disparaître avec lui.
+ */
+function fzdRendreHorsSaison(horsSaison) {
+    const bloc = document.getElementById('fzdOffCount');
+    if (!bloc) return;
+    bloc.hidden = !horsSaison;
+    if (!horsSaison) return;
 
-        renderOffseasonPosition();
-    }
+    const today = todayISO();
+    const campStart = calData.preSeasonStartDate;
+    const beforeCamp = !!campStart && today < campStart;
+    const target = beforeCamp ? campStart : calData.regularSeasonStartDate;
+    const days = Math.max(0, Math.ceil((new Date(target + 'T00:00:00Z') - new Date(today + 'T00:00:00Z')) / 86400000));
 
-    renderOffseasonWatchlist();
+    document.getElementById('fzdOffDays').textContent = `${days} j`;
+    document.getElementById('fzdOffSub').textContent = beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison';
+}
+
+/**
+ * « À surveiller » — le panneau de la home de repêchage (accueil-watch.js),
+ * désormais le seul. Son balisage n'est posé qu'une fois : le nœud survit
+ * aux changements d'accueil, donc la piste garde son filtre et sa position.
+ */
+function fzdRendreSurveiller() {
+    const panel = document.getElementById('fzdOffWatch');
+    if (!panel) return;
+    if (!panel.firstElementChild) panel.innerHTML = fzhWatchHTML();
+    fzhRenderWatch(panel);
+}
+
+/**
+ * « Mouvements récents ». Le journal n'est demandé qu'une fois par visite ;
+ * ensuite le nœud est déjà rempli et seuls les points du carrousel sont à
+ * recompter — il vient de changer de place, donc de largeur.
+ */
+function fzdRendreMouvements() {
     if (!offseasonNewsLoaded) {
         offseasonNewsLoaded = true;
         loadOffseasonTransactions();
+        return;
     }
+    renderOffseasonDots();
 }
 
 function renderOffseasonPosition() {
@@ -1756,11 +2352,9 @@ function offseasonEmptyText() {
 }
 
 /* Les 70 entrées « Joueurs à Surveiller » des 32 équipes, dans l'ordre du
-   document. La liste est longue par nature — une équipe peut en compter
-   jusqu'à trois — donc le panneau la fait défiler plutôt que de s'étirer,
-   et un filtre par équipe permet d'aller droit au club voulu. */
-let offWatchTeam = 'all';
-let offWatchExpanded = false;
+   document (OFFSEASON_WATCHLIST). Le panneau lui-même vit dans
+   accueil-watch.js : ces favoris sont la seule part que le tableau de bord
+   garde, parce qu'ils sont propres au membre et non à la trousse. */
 const offWatchFavorites = new Map();
 let offWatchFavoritesUser = null;
 
@@ -1794,79 +2388,6 @@ function loadOffWatchFavorites() {
             }
         });
     } catch (_) { /* Favorites remain available in memory if storage is unavailable. */ }
-}
-
-function renderOffseasonWatchlist() {
-    const wrap = document.getElementById('fzdOffWatchlist');
-    if (!wrap) return;
-    loadOffWatchFavorites();
-
-    if (!OFFSEASON_WATCHLIST.length) {
-        wrap.innerHTML = `<div class="fzd-watch-head"><h2 class="fzd-section-title">${getIcon('star')} À surveiller</h2></div><p class="fzd-off-empty">Liste à venir.</p>`;
-        return;
-    }
-
-    const teams = [...new Set(OFFSEASON_WATCHLIST.map(p => p.team))].sort();
-    if (offWatchTeam !== 'all' && !teams.includes(offWatchTeam)) offWatchTeam = 'all';
-    const shown = offWatchTeam === 'all'
-        ? OFFSEASON_WATCHLIST
-        : OFFSEASON_WATCHLIST.filter(p => p.team === offWatchTeam);
-
-    const options = ['all', ...teams]
-        .map(t => `<option value="${escapeHTML(t)}"${t === offWatchTeam ? ' selected' : ''}>${t === 'all' ? `Toutes les équipes (${OFFSEASON_WATCHLIST.length})` : escapeHTML(t)}</option>`)
-        .join('');
-
-    const visible = offWatchExpanded ? shown : shown.slice(0, 3);
-    wrap.innerHTML = `
-        <div class="fzd-watch-head">
-            <div><h2 class="fzd-section-title"><span class="fzd-watch-icon" aria-hidden="true">${getIcon('star')}</span>À surveiller</h2>
-            <span class="fzd-watch-count">${shown.length} joueur${shown.length > 1 ? 's' : ''}</span></div>
-            <select class="fzd-watch-filter" id="fzdWatchFilter" aria-label="Filtrer par équipe">${options}</select>
-        </div>
-        <div class="fzd-watch-list" id="fzdWatchTable" tabindex="0" role="region" aria-label="Joueurs à surveiller">
-            <table class="fzd-watch-table">
-                <thead><tr><th scope="col">Joueur</th><th scope="col">Équipe</th><th scope="col">Position</th><th scope="col">Statut</th><th scope="col">Notes</th><th scope="col">Ajouté le</th><th scope="col"><span class="fzd-sr-only">Favori</span></th></tr></thead>
-                <tbody>${visible.map(p => {
-                    const key = p.name;
-                    const saved = offWatchFavorites.has(key);
-                    const added = offWatchFavorites.get(key) || p.addedAt;
-                    return `<tr>
-                        <td><span class="fzd-watch-player">${offPlayerFaceHTML(p.name, p.team, p.playerId)}<span class="fzd-watch-name">${escapeHTML(p.name)}</span></span></td>
-                        <td>${escapeHTML(p.team)}</td><td class="fzd-watch-position">${escapeHTML(p.position || '—')}</td>
-                        <td><span class="fzd-watch-status"><span aria-hidden="true">${getIcon('eye', 10)}</span>À surveiller</span></td>
-                        <td>${p.note ? `<details class="fzd-watch-note"><summary>Surveillance</summary><p>${escapeHTML(p.note)}</p></details>` : '—'}</td>
-                        <td>${added ? escapeHTML(dayLabelFr(added)) : '<span title="Date d’ajout non disponible">—</span>'}</td>
-                        <td><button type="button" class="fzd-watch-save" data-player="${escapeHTML(key)}" aria-pressed="${saved}" aria-label="${saved ? 'Retirer' : 'Ajouter'} ${escapeHTML(p.name)} ${saved ? 'des' : 'aux'} favoris">${getIcon('star', 17)}</button></td>
-                    </tr>`;
-                }).join('')}</tbody>
-            </table>
-        </div>
-        ${shown.length > 3 ? `<button type="button" class="fzd-watch-more" id="fzdWatchMore" aria-expanded="${offWatchExpanded}" aria-controls="fzdWatchTable">${offWatchExpanded ? 'Réduire la liste ↑' : 'Voir tous les joueurs à surveiller →'}</button>` : ''}`;
-
-    document.getElementById('fzdWatchFilter')?.addEventListener('change', e => {
-        offWatchTeam = e.target.value;
-        offWatchExpanded = false;
-        renderOffseasonWatchlist();
-        document.getElementById('fzdWatchFilter')?.focus();
-    });
-    document.getElementById('fzdWatchMore')?.addEventListener('click', () => {
-        offWatchExpanded = !offWatchExpanded;
-        renderOffseasonWatchlist();
-        document.getElementById('fzdWatchMore')?.focus({ preventScroll: true });
-    });
-    wrap.querySelectorAll('.fzd-watch-save').forEach(button => button.addEventListener('click', () => {
-        const key = button.dataset.player;
-        if (offWatchFavorites.has(key)) offWatchFavorites.delete(key);
-        else offWatchFavorites.set(key, new Date().toISOString());
-        try { localStorage.setItem(offWatchStorageKey(), JSON.stringify([...offWatchFavorites])); } catch (_) { /* Memory fallback. */ }
-        const scrollTop = document.getElementById('fzdWatchTable').scrollTop;
-        const scrollLeft = document.getElementById('fzdWatchTable').scrollLeft;
-        renderOffseasonWatchlist();
-        const table = document.getElementById('fzdWatchTable');
-        table.scrollTop = scrollTop;
-        table.scrollLeft = scrollLeft;
-        [...wrap.querySelectorAll('.fzd-watch-save')].find(b => b.dataset.player === key)?.focus({ preventScroll: true });
-    }));
 }
 
 // ============================================================
@@ -1960,6 +2481,10 @@ function bindCalendarControls() {
         resizeTimer = setTimeout(() => {
             fzdPlaceCalendar();
             renderCalGameDots();
+            // Les cartes de but ne changent pas de largeur, mais la carte de
+            // match si : une piste qui tenait entière peut désormais déborder,
+            // et ses flèches doivent paraître sans attendre un nouveau rendu.
+            document.querySelectorAll('.fzd-goals').forEach(majFlechesButs);
         }, 150);
     });
 }
@@ -2070,6 +2595,50 @@ function fzdApplyPreseasonLayout(hasPool) {
     if (chips) chips.style.display = (hasPool && started === false) ? '' : 'none';
 }
 
+/**
+ * La disposition de l'accueil est choisie : la page peut se montrer.
+ *
+ * Un membre charge l'accueil en `html.fz-home-pending` (posé dans le <head>
+ * d'index.html) : le repêchage et la saison remplacent le tableau de bord
+ * par défaut, mais seulement une fois leurs données arrivées. Sans cette
+ * attente, le tableau de bord par défaut — et le bandeau d'histoires —
+ * s'affichaient une seconde avant d'être remplacés.
+ */
+function fzdRevelerAccueil() {
+    document.documentElement.classList.remove('fz-home-pending');
+}
+
+/**
+ * Les polices des dispositions de l'accueil, demandées dès le démarrage.
+ *
+ * Le navigateur ne télécharge une police qu'au premier texte affiché qui
+ * s'en sert. Masqué pendant l'attente, l'accueil ne les demandait qu'en se
+ * montrant : il s'affichait dans la police de repli, puis changeait de
+ * police — et de hauteur — sous les yeux. Barlow Condensed et Oswald
+ * portent les homes repêchage et saison ; Archivo, la home téléphone.
+ */
+const FZD_POLICES = [
+    "400 16px 'Barlow Condensed'", "600 16px 'Barlow Condensed'", "700 16px 'Barlow Condensed'",
+    "500 16px 'Oswald'", "400 16px 'Barlow'", "700 16px 'Barlow'"
+];
+let fzdPolices = null;
+
+function fzdChargerPolices() {
+    if (fzdPolices) return fzdPolices;
+    const liste = window.matchMedia('(max-width: 768px)').matches
+        ? [...FZD_POLICES, "700 16px 'Archivo'"] : FZD_POLICES;
+    fzdPolices = document.fonts
+        ? Promise.all(liste.map(police => document.fonts.load(police).catch(() => null)))
+        : Promise.resolve();
+    return fzdPolices;
+}
+
+/** Attend les polices, jamais plus de `plafondMs` : sur un réseau lent, un
+ *  changement de police vaut mieux qu'un accueil qui reste vide. */
+function fzdPolicesPretes(plafondMs = 1200) {
+    return Promise.race([fzdChargerPolices(), new Promise(r => setTimeout(r, plafondMs))]);
+}
+
 async function renderDash() {
     const section = document.getElementById('fzDashSection');
     const hero = document.getElementById('fzDashHero');
@@ -2077,7 +2646,7 @@ async function renderDash() {
     const onboard = document.getElementById('fzDashOnboard');
     const mobileHome = document.getElementById('fzMobileHome');
     const news = document.getElementById('fzDashNews');
-    if (!section || !userData.username) return;
+    if (!section || !userData.username) { fzdRevelerAccueil(); return; }
 
     const hasPool = !!FZPool.get();
     section.style.display = 'block';
@@ -2102,11 +2671,17 @@ async function renderDash() {
     if (news && hasPool) news.style.display = 'none';
 
     if (!hasPool) {
+        // L'état vide est déjà la bonne disposition : ses blocs se remplissent
+        // sur place, aucun ne sera remplacé.
+        fzdRevelerAccueil();
         if (typeof fzhReset === 'function') fzhReset();
         if (typeof fzsReset === 'function') fzsReset();
-        // La home mobile ne rend pas sans pool : le calendrier doit revenir à
-        // sa place bureau, sinon il reste coincé dans #fzmCalSlot (vidé).
+        // La home mobile ne rend pas sans pool : les blocs partagés doivent
+        // revenir à leur place, sinon ils restent coincés dans ses
+        // emplacements — qu'on efface juste après, pour qu'un rendu suivant
+        // ne les y renvoie pas.
         fzdRestoreCalendar();
+        if (mobileHome) mobileHome.innerHTML = '';
         // L'état vide n'est plus une page d'inscription et rien d'autre : le
         // calendrier LNH, le compte à rebours du camp, les mouvements
         // récents, la liste « À surveiller » et les actualités s'ouvrent
@@ -2117,42 +2692,63 @@ async function renderDash() {
         return;
     }
 
-    if (!calData) await initCalendar(); else { renderCalendar(); renderOffseasonPanel(); }
-    fzdPlaceCalendar();
-    renderQuickActions();
-    renderMyPoolsList();
-    renderActivityFeed();
+    // Le calendrier et les données du soir ne dépendent pas l'un de l'autre :
+    // ils partent ensemble. Les attendre l'un après l'autre allongeait
+    // d'autant l'attente avant que la disposition ne soit choisie.
+    const dashData = loadDashData();
+    try {
+        if (!calData) await initCalendar(); else { renderCalendar(); renderOffseasonPanel(); }
+        fzdPlaceCalendar();
+        renderQuickActions();
+        renderMyPoolsList();
+        renderActivityFeed();
 
-    const dash = await loadDashData();
-    if (dash) {
-        // Les cartes joueur du calendrier lisent calTonight : on le pose AVANT
-        // renderMobileHome (qui redessine le calendrier une fois déplacé), pour
-        // que les stats en direct arrivent du premier coup.
-        calTonight = dash.tonight || { players: [], games: [] };
-        if (typeof renderDraftHome === 'function' && renderDraftHome(dash)) return;
-        if (typeof renderSeasonHome === 'function' && renderSeasonHome(dash)) return;
-        renderHero(dash.tonight);
-        renderLivePanel(dash.tonight, dash.movement, dash.activeName);
-        renderMobileHome(dash.tonight, dash.movement, dash.activeName);
-    } else {
-        if (typeof fzhReset === 'function') fzhReset();
-        if (typeof fzsReset === 'function') fzsReset();
-        renderHero(null);
-        renderMobileHome({ players: [], games: [] }, null, FZPool.get());
+        const dash = await dashData;
+        if (dash) {
+            // Les cartes joueur du calendrier lisent calTonight : on le pose AVANT
+            // renderMobileHome (qui redessine le calendrier une fois déplacé), pour
+            // que les stats en direct arrivent du premier coup.
+            calTonight = dash.tonight || { players: [], games: [] };
+            if (typeof renderDraftHome === 'function' && renderDraftHome(dash)) return;
+            if (typeof renderSeasonHome === 'function' && renderSeasonHome(dash)) return;
+            renderHero(dash.tonight);
+            renderLivePanel(dash.tonight, dash.movement, dash.activeName);
+            renderMobileHome(dash.tonight, dash.movement, dash.activeName);
+        } else {
+            if (typeof fzhReset === 'function') fzhReset();
+            if (typeof fzsReset === 'function') fzsReset();
+            renderHero(null);
+            renderMobileHome({ players: [], games: [] }, null, FZPool.get());
+        }
+    } finally {
+        // Même en cas d'erreur : un accueil masqué pour de bon serait pire
+        // qu'un accueil incomplet.
+        await fzdPolicesPretes();
+        fzdRevelerAccueil();
     }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    fzdDemarrerAujourdhui();
     if (!userData.username) userData.username = localStorage.getItem('username');
-    if (!userData.username) return;
+    if (!userData.username) { fzdRevelerAccueil(); return; }
 
+    // En parallèle des données : prêtes, en général, avant elles.
+    fzdChargerPolices();
+    // Horaire, fiches de clubs et feuilles du soir : aucune n'attend le pool.
+    // Elles partent donc maintenant, avec lui, au lieu d'après lui.
+    fzdPrecharger();
     bindCalendarControls();
     bindOnboardCards();
     // La liste « À surveiller » est chargée ici, avec le reste : elle doit
     // être en main avant renderDash(), qui la rend du premier coup au
     // bureau comme au téléphone.
-    await Promise.all([FZPool.ready(), loadCurrentStats(), loadPendingTrades(), loadOffseasonWatchlist()]);
+    try {
+        await Promise.all([FZPool.ready(), loadCurrentStats(), loadPendingTrades(), loadOffseasonWatchlist()]);
+    } catch (erreur) {
+        // renderDash() ne passera pas : rien ne choisirait de disposition.
+        fzdRevelerAccueil();
+        throw erreur;
+    }
     renderDash();
     FZPool.onData(renderDash);
 });

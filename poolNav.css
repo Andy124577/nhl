@@ -878,3 +878,6 @@ body.fz-drawer-open { overflow: hidden; }
     .fz-chevron { transition: none; }
     .fz-notif-toast { animation: none; }
 }
+
+/* Thème clair : même ambre foncé que la pastille du salon (repechage.css). */
+html[data-theme="light"] .fz-state-attente { color: #7f5300; }

@@ -9,6 +9,7 @@ const bcrypt = require("bcryptjs");
 const fs = require("fs");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const compression = require("compression");
 const path = require("path"); // ✅ for static paths
 const cron = require("node-cron");
 const db = require("./db"); // ✅ PostgreSQL database module
@@ -111,6 +112,21 @@ const io = socketIo(server, {
         credentials: true
     }
 });
+
+// ✅ Gzip — AVANT tout ce qui écrit une réponse, sinon il n'a plus rien à
+// comprimer.
+//
+// Rien ne l'était. L'accueil tirait 885 Ko de JS et de CSS en 49 requêtes,
+// plus 211 Ko de /current-stats : du texte, qui se comprime à un dixième.
+// Mesuré ici : 885 → 254 Ko pour les fichiers, 211 → 22 Ko pour les stats.
+// Presque 800 Ko de moins par ouverture, et c'est la première ouverture —
+// celle qui n'a rien en cache — qui en profite le plus.
+//
+// Le seuil par défaut (1 Ko) laisse passer les petites réponses en clair :
+// sous cette taille, l'en-tête gzip coûte plus qu'il ne rend. Socket.io
+// n'est pas concerné, il se branche sur le serveur HTTP sans passer par les
+// intergiciels d'Express.
+app.use(compression());
 
 app.use(cors({
     origin: ORIGINES_AUTORISEES.length > 0 ? ORIGINES_AUTORISEES : true,
@@ -1131,7 +1147,9 @@ async function snapshotAllPoolRanks() {
         // eux, le rang enregistré ici ne correspondrait pas au total que
         // classement.js affiche sur la même ligne.
         const teamsData = await loadCurrentTeams();
-        const todayISO = new Date().toISOString().slice(0, 10);
+        // La journée du pool, pas celle d'UTC : la tâche tourne à minuit à
+        // l'Est, et c'est cette journée-là que /pool-rank-movement relira.
+        const todayISO = datesPool.journeeLocale();
         let rowCount = 0;
 
         for (const [poolName, poolData] of Object.entries(pools)) {
@@ -1773,6 +1791,63 @@ const scheduleCache = new Map(); // date -> { data, fetchedAt }
 const SCHEDULE_NEAR_TTL_MS = 60 * 1000;
 const SCHEDULE_FAR_TTL_MS = 12 * 60 * 60 * 1000;
 
+const HORAIRE_VIDE = {
+    days: [], nextStartDate: null, previousStartDate: null,
+    preSeasonStartDate: null, regularSeasonStartDate: null, regularSeasonEndDate: null
+};
+
+/**
+ * La semaine d'horaire autour d'une date, mise en cache par date demandée.
+ *
+ * Sortie de la route parce que `/day-goals/:date` s'en sert aussi : c'est
+ * l'horaire — et non la feuille du jour — qui dit quels matchs ont commencé
+ * et sur quelle marque. Les deux routes partagent ainsi le même cache, et une
+ * journée déjà affichée au calendrier ne coûte pas un appel de plus.
+ */
+async function chargerHoraireLNH(date) {
+    // « Proche » se mesure en journées du pool. Lue en UTC, la journée
+    // en cours passait au lendemain dès 20 h à l'Est : les matchs du soir
+    // tombaient alors dans le cache de 12 heures et leurs scores figeaient
+    // en pleine 3è période.
+    const todayISO = datesPool.journeeLocale();
+    const [tot, tard] = date < todayISO ? [date, todayISO] : [todayISO, date];
+    const daysFromToday = datesPool.nombreDeJours(tot, tard);
+    const ttl = daysFromToday <= 1 ? SCHEDULE_NEAR_TTL_MS : SCHEDULE_FAR_TTL_MS;
+
+    const cached = scheduleCache.get(date);
+    if (cached && (Date.now() - cached.fetchedAt) < ttl) return cached.data;
+
+    const response = await fetch(`https://api-web.nhle.com/v1/schedule/${date}`);
+    if (!response.ok) return HORAIRE_VIDE;
+    const raw = await response.json();
+
+    const days = (raw.gameWeek || []).map(day => ({
+        date: day.date,
+        dayAbbrev: day.dayAbbrev,
+        games: (day.games || []).map(g => ({
+            id: g.id,
+            state: g.gameState,
+            startTimeUTC: g.startTimeUTC,
+            period: g.periodDescriptor?.number ?? null,
+            periodType: g.periodDescriptor?.periodType || null,
+            clock: g.clock ? { timeRemaining: g.clock.timeRemaining || '', inIntermission: !!g.clock.inIntermission } : null,
+            away: { abbrev: g.awayTeam?.abbrev || '', score: g.awayTeam?.score ?? null },
+            home: { abbrev: g.homeTeam?.abbrev || '', score: g.homeTeam?.score ?? null }
+        }))
+    }));
+
+    const payload = {
+        days,
+        nextStartDate: raw.nextStartDate || null,
+        previousStartDate: raw.previousStartDate || null,
+        preSeasonStartDate: raw.preSeasonStartDate || null,
+        regularSeasonStartDate: raw.regularSeasonStartDate || null,
+        regularSeasonEndDate: raw.regularSeasonEndDate || null
+    };
+    scheduleCache.set(date, { data: payload, fetchedAt: Date.now() });
+    return payload;
+}
+
 app.get('/schedule/:date', async (req, res) => {
     const { date } = req.params;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -1780,49 +1855,213 @@ app.get('/schedule/:date', async (req, res) => {
     }
 
     try {
-        const todayISO = new Date().toISOString().slice(0, 10);
-        const daysFromToday = Math.abs((new Date(date) - new Date(todayISO)) / 86400000);
-        const ttl = daysFromToday <= 1 ? SCHEDULE_NEAR_TTL_MS : SCHEDULE_FAR_TTL_MS;
-
-        const cached = scheduleCache.get(date);
-        if (cached && (Date.now() - cached.fetchedAt) < ttl) {
-            return res.json(cached.data);
-        }
-
-        const response = await fetch(`https://api-web.nhle.com/v1/schedule/${date}`);
-        if (!response.ok) {
-            return res.json({ days: [], nextStartDate: null, previousStartDate: null, preSeasonStartDate: null, regularSeasonStartDate: null, regularSeasonEndDate: null });
-        }
-        const raw = await response.json();
-
-        const days = (raw.gameWeek || []).map(day => ({
-            date: day.date,
-            dayAbbrev: day.dayAbbrev,
-            games: (day.games || []).map(g => ({
-                id: g.id,
-                state: g.gameState,
-                startTimeUTC: g.startTimeUTC,
-                period: g.periodDescriptor?.number ?? null,
-                periodType: g.periodDescriptor?.periodType || null,
-                clock: g.clock ? { timeRemaining: g.clock.timeRemaining || '', inIntermission: !!g.clock.inIntermission } : null,
-                away: { abbrev: g.awayTeam?.abbrev || '', score: g.awayTeam?.score ?? null },
-                home: { abbrev: g.homeTeam?.abbrev || '', score: g.homeTeam?.score ?? null }
-            }))
-        }));
-
-        const payload = {
-            days,
-            nextStartDate: raw.nextStartDate || null,
-            previousStartDate: raw.previousStartDate || null,
-            preSeasonStartDate: raw.preSeasonStartDate || null,
-            regularSeasonStartDate: raw.regularSeasonStartDate || null,
-            regularSeasonEndDate: raw.regularSeasonEndDate || null
-        };
-        scheduleCache.set(date, { data: payload, fetchedAt: Date.now() });
-        res.json(payload);
+        res.json(await chargerHoraireLNH(date));
     } catch (error) {
         console.error('❌ Error fetching schedule:', error.message);
-        res.json({ days: [], nextStartDate: null, previousStartDate: null, preSeasonStartDate: null, regularSeasonStartDate: null, regularSeasonEndDate: null });
+        res.json(HORAIRE_VIDE);
+    }
+});
+
+// ============================================================
+// BUTS D'UNE JOURNÉE — qui a marqué, quand, et avec l'aide de qui.
+//
+// `/schedule/:date` rend une semaine, mais la LNH n'y met aucun but : la
+// feuille de pointage vit dans `/v1/score/{date}`. Une seule requête couvre
+// tous les matchs d'une journée — les cartes du calendrier en affichent
+// jusqu'à quatorze côte à côte, et autant d'appels à `gamecenter` par carte
+// tiendrait la page ouverte sur la LNH pendant tout le rendu.
+//
+// SAUF QUE `/v1/score/{date}` DÉCROCHE. Vu le 20 septembre 2026 : son
+// origine répondait 500 et le cache de la LNH resservait la copie du matin —
+// sept matchs « à venir », aucun but — pendant que `/v1/schedule` donnait
+// déjà NYI 1 - NJD 2 final. La carte montrait alors un pointage sans ses
+// buteurs. L'horaire tranche : un match commencé dont la marque n'est pas
+// 0-0 A des buts, quoi qu'en dise la feuille du jour, et on va les lire un
+// par un sur `gamecenter` — POUR CEUX-LÀ SEULEMENT. Une journée où la LNH
+// répond bien n'en paie aucun.
+//
+// Les buts sortent d'ici DANS L'ORDRE OÙ LA LNH LES DONNE, du premier au
+// dernier. C'est le client qui retourne la liste pour un match en cours :
+// l'ordre est une question d'affichage, et deux dispositions qui liraient
+// deux ordres différents du serveur finiraient par diverger.
+// ============================================================
+const dayGoalsCache = new Map(); // date -> { data, fetchedAt, chaud }
+const DAY_GOALS_HOT_TTL_MS = 30 * 1000;
+const DAY_GOALS_COLD_TTL_MS = 6 * 60 * 60 * 1000;
+const MATCH_COMMENCE = ['LIVE', 'CRIT', 'FINAL', 'OFF'];
+
+/** La marque d'un match d'horaire, zéro tant que rien n'est inscrit. */
+function marqueTotale(partie) {
+    return (partie.away?.score ?? 0) + (partie.home?.score ?? 0);
+}
+
+/**
+ * Les buts d'UN match, lus sur sa propre feuille de pointage.
+ *
+ * Le repli de `/day-goals` quand la feuille du jour est muette. `landing`
+ * range les buts par période, d'où l'aplatissement ; la période vient de
+ * l'en-tête du groupe, que le but ne répète pas. Deux champs n'y portent pas
+ * le même nom que dans `/v1/score` — `headshot` pour `mugshot`, un objet
+ * `{ default }` pour `teamAbbrev` — et les deux lectures sont gardées : ce
+ * qui sort d'ici doit être indistinguable de l'autre chemin, la carte du
+ * client ne sait pas lequel l'a servie.
+ */
+async function butsDuMatchLNH(gameId) {
+    const reponse = await fetch(`https://api-web.nhle.com/v1/gamecenter/${gameId}/landing`);
+    if (!reponse.ok) return [];
+    const partie = await reponse.json();
+
+    const buts = [];
+    for (const periode of partie.summary?.scoring || []) {
+        for (const b of periode.goals || []) {
+            buts.push({
+                playerId: b.playerId,
+                name: [b.firstName?.default, b.lastName?.default].filter(Boolean).join(' ')
+                    || b.name?.default || '',
+                goalsToDate: b.goalsToDate ?? null,
+                headshot: b.headshot || b.mugshot || '',
+                teamAbbrev: b.teamAbbrev?.default || b.teamAbbrev || '',
+                period: periode.periodDescriptor?.number ?? null,
+                periodType: periode.periodDescriptor?.periodType || 'REG',
+                timeInPeriod: b.timeInPeriod || '',
+                awayScore: b.awayScore ?? null,
+                homeScore: b.homeScore ?? null,
+                assists: (b.assists || []).map(a => ({
+                    playerId: a.playerId,
+                    name: a.name?.default || '',
+                    assistsToDate: a.assistsToDate ?? null
+                }))
+            });
+        }
+    }
+    return buts;
+}
+
+app.get('/day-goals/:date', async (req, res) => {
+    const { date } = req.params;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ message: 'Invalid date, expected YYYY-MM-DD' });
+    }
+
+    const vide = { date, games: {}, live: {} };
+    try {
+        // « Chaud » : un match en cours, ou simplement la journée du jour —
+        // sinon la première lecture d'un soir où rien n'a encore commencé
+        // figerait une feuille vide pour six heures, jusqu'après la dernière
+        // sirène.
+        const cached = dayGoalsCache.get(date);
+        if (cached) {
+            const ttl = cached.chaud ? DAY_GOALS_HOT_TTL_MS : DAY_GOALS_COLD_TTL_MS;
+            if ((Date.now() - cached.fetchedAt) < ttl) return res.json(cached.data);
+        }
+
+        // Une feuille du jour en panne ne vaut pas mieux qu'une feuille vide :
+        // dans les deux cas l'horaire, plus bas, reprend la main. C'est pour
+        // ça qu'un échec ne sort plus d'ici les mains vides.
+        let brut = null;
+        try {
+            const reponse = await fetch(`https://api-web.nhle.com/v1/score/${date}`);
+            if (reponse.ok) brut = await reponse.json();
+        } catch (erreur) {
+            console.warn('⚠️  Feuille du jour indisponible:', erreur.message);
+        }
+
+        const games = {};
+        const live = {};
+        let enCours = false;
+        for (const partie of brut?.games || []) {
+            if (partie.gameState === 'LIVE' || partie.gameState === 'CRIT') enCours = true;
+
+            // L'ÉTAT DU MATCH, et pas seulement ses buts.
+            //
+            // `/v1/schedule` ne porte AUCUNE horloge — vérifié le 20 septembre
+            // 2026 sur un match en cours : ni `clock`, ni temps restant. La
+            // feuille du jour, elle, en a une complète. Le calendrier tenait
+            // donc son pointage d'un flux et ne pouvait pas afficher de
+            // chronomètre ; il lisait `game.clock` sur l'horaire, toujours
+            // indéfini. Tout ce que le client doit rafraîchir pendant qu'un
+            // match joue sort maintenant d'ici, d'une seule requête qu'il
+            // demande déjà toutes les trente secondes pour les buts.
+            live[partie.id] = {
+                state: partie.gameState,
+                period: partie.periodDescriptor?.number ?? partie.period ?? null,
+                periodType: partie.periodDescriptor?.periodType || 'REG',
+                // `secondsRemaining` est ce qui fait avancer l'horloge entre
+                // deux requêtes ; `running` dit si elle doit avancer du tout —
+                // un arrêt de jeu fige le temps, et une horloge qui descendrait
+                // quand même mentirait de plusieurs secondes à la reprise.
+                clock: partie.clock ? {
+                    timeRemaining: partie.clock.timeRemaining || '',
+                    secondsRemaining: partie.clock.secondsRemaining ?? null,
+                    running: !!partie.clock.running,
+                    inIntermission: !!partie.clock.inIntermission
+                } : null,
+                away: partie.awayTeam?.score ?? null,
+                home: partie.homeTeam?.score ?? null
+            };
+
+            const buts = partie.goals || [];
+            if (!buts.length) continue;
+            games[partie.id] = buts.map(b => ({
+                playerId: b.playerId,
+                name: [b.firstName?.default, b.lastName?.default].filter(Boolean).join(' ')
+                    || b.name?.default || '',
+                // Son compte de buts de la saison APRÈS celui-ci. Lus de
+                // gauche à droite sur un match terminé, ces nombres racontent
+                // la saison du joueur autant que la soirée.
+                goalsToDate: b.goalsToDate ?? null,
+                headshot: b.mugshot || '',
+                teamAbbrev: b.teamAbbrev || '',
+                period: b.periodDescriptor?.number ?? b.period ?? null,
+                periodType: b.periodDescriptor?.periodType || 'REG',
+                timeInPeriod: b.timeInPeriod || '',
+                // Le pointage TEL QU'IL ÉTAIT après ce but, pas celui du match.
+                // C'est ce qui fait défiler la marque avec le carrousel.
+                awayScore: b.awayScore ?? null,
+                homeScore: b.homeScore ?? null,
+                assists: (b.assists || []).map(a => ({
+                    playerId: a.playerId,
+                    name: a.name?.default || '',
+                    assistsToDate: a.assistsToDate ?? null
+                }))
+            }));
+        }
+
+        // Le rattrapage. L'horaire dit qui a commencé et sur quelle marque ;
+        // un match marqué reparti d'ici sans un seul but est un trou, pas un
+        // match sans but, et un 0-0 n'envoie personne lire une feuille vide.
+        // `manquants` reste vide les soirs où la LNH répond bien.
+        const horaire = await chargerHoraireLNH(date).catch(() => HORAIRE_VIDE);
+        const duJour = (horaire.days || []).find(j => j.date === date);
+        const parties = duJour?.games || [];
+        if (parties.some(g => g.state === 'LIVE' || g.state === 'CRIT')) enCours = true;
+
+        const manquants = parties.filter(g => MATCH_COMMENCE.includes(g.state)
+            && marqueTotale(g) > 0 && !(games[g.id] || []).length);
+
+        // Un trou qui survit au rattrapage garde la journée « chaude » : mieux
+        // vaut redemander dans trente secondes que figer six heures une
+        // feuille qu'on sait incomplète.
+        let incomplet = false;
+        if (manquants.length) {
+            const feuilles = await Promise.all(manquants.map(g =>
+                butsDuMatchLNH(g.id).catch(() => [])));
+            feuilles.forEach((buts, i) => {
+                if (buts.length) games[manquants[i].id] = buts;
+                else incomplet = true;
+            });
+        }
+
+        const payload = { date, games, live };
+        dayGoalsCache.set(date, {
+            data: payload,
+            fetchedAt: Date.now(),
+            chaud: enCours || incomplet || date === datesPool.journeeLocale()
+        });
+        res.json(payload);
+    } catch (error) {
+        console.error('❌ Error fetching day goals:', error.message);
+        res.json(vide);
     }
 });
 
@@ -1953,7 +2192,11 @@ app.get('/pool-rank-movement/:poolName', async (req, res) => {
         const teamsData = await loadCurrentTeams();
         const liveScores = computeTeamSeasonScores(poolData, statsData.players || [], teamsData.teams || []);
 
-        const todayISO = new Date().toISOString().slice(0, 10);
+        // Même journée que celle sous laquelle snapshotAllPoolRanks écrit.
+        // Lue en UTC, elle passait au lendemain dès 20 h à l'Est : la requête
+        // cherchait un instantané pas encore pris, et les flèches de
+        // progression disparaissaient tous les soirs jusqu'à minuit.
+        const todayISO = datesPool.journeeLocale();
         const snapResult = await db.query(
             `SELECT team_name, rank, points FROM pool_rank_snapshots WHERE pool_name = $1 AND snapshot_date = $2`,
             [poolName, todayISO]

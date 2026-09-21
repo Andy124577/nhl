@@ -15,8 +15,9 @@
     --fzm-panel: #F4F3F1;
     --fzm-surface: #ffffff;
     --fzm-ink: #17171A;
-    --fzm-ink-soft: rgba(23, 23, 26, 0.5);
-    --fzm-ink-faint: rgba(23, 23, 26, 0.4);
+    /* Gris secondaires : à .5 et .4, 3,4:1 et 2,5:1 sur blanc. */
+    --fzm-ink-soft: rgba(23, 23, 26, 0.72);
+    --fzm-ink-faint: rgba(23, 23, 26, 0.66);
     --fzm-border: rgba(23, 23, 26, 0.1);
     --fzm-red: #E42027;
     --fzm-red-soft: #FCE4E4;
@@ -135,160 +136,23 @@ html[data-theme="dark"] .fz-mobile-home {
 .fzm-tile-sub { font: 500 11.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-soft); }
 .fzm-tile-btn { flex-shrink: 0; background: var(--fzm-solid); color: var(--fzm-on-solid); border-radius: 9px; padding: 9px 13px; font: 700 12px/1 'Archivo', sans-serif; }
 
-/* Joueurs à surveiller */
-.fzm-watch-card { flex-shrink: 0; width: 150px; background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 12px; padding: 13px; }
-.fzm-watch-logo { width: 20px; height: 20px; object-fit: contain; margin-bottom: 6px; }
-.fzm-watch-name { font: 700 13px/1 'Archivo', sans-serif; margin-bottom: 2px; }
-.fzm-watch-team { font: 500 11px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); }
-.fzm-watch-note { font: 500 10.5px/1.35 'Archivo', sans-serif; color: var(--fzm-ink-faint); margin-top: 6px; }
-
 /* Activité */
 .fzm-activity-row { display: block; padding: 11px 14px; }
 .fzm-activity-time { font: 500 10.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); margin-bottom: 3px; }
 .fzm-activity-text { font: 500 12.5px/1.4 'Archivo', sans-serif; }
 .fzm-toggle-btn { display: block; margin: 8px auto 0; background: none; border: none; font: 600 12px/1 'Archivo', sans-serif; color: var(--fzm-red); cursor: pointer; padding: 4px; }
 
+/* Blocs partagés — « Mouvements récents » (#fzdOffMoves) et « À surveiller »
+   (#fzdOffWatch) sont les panneaux du tableau de bord, déplacés ici par
+   fzdPlaceCalendar() comme le calendrier. Leur mise en forme les suit
+   (accueil-dash.css, accueil-watch.css) : la home téléphone ne leur donne
+   que l'espacement de ses propres sections. */
+.fz-mobile-home :is(#fzdOffMoves, #fzdOffWatch) { margin-bottom: 18px; }
+/* Une carte à la fois, qu'on feuillette au doigt : les quatre par vue du
+   bureau tiendraient dans 90 px de large chacune. */
+.fz-mobile-home .fzd-off-card { flex-basis: 84%; max-width: 320px; }
+
 /* Actualités LNH */
-/* Dans la LNH — onglets Tout / Échanges / Signatures / Blessés au-dessus
-   d'un carrousel de cartes, calqué sur .fzd-off-* du bureau. */
-.fzm-league-head {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 10px; margin-bottom: 10px;
-}
-.fzm-league-head .fzm-section-title { margin-bottom: 0; }
-.fzm-league-nav { display: flex; gap: 6px; flex-shrink: 0; }
-.fzm-league-nav-btn {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 30px; height: 30px;
-    background: none; border: 1px solid var(--fzm-border); border-radius: 999px;
-    font: 400 15px/1 'Archivo', sans-serif; color: var(--fzm-ink-soft);
-    cursor: pointer;
-    transition: opacity .15s ease;
-}
-.fzm-league-nav-btn:disabled { opacity: .3; cursor: default; }
-
-.fzm-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
-.fzm-tab {
-    /* 26px de haut auparavant : sous la cible tactile de 44px que DESIGN.md
-       impose au reste de la navigation, sur le seul écran qui soit
-       exclusivement tactile. */
-    flex: 1; min-height: 40px; padding: 7px 4px;
-    display: inline-flex; align-items: center; justify-content: center;
-    border: 1px solid var(--fzm-border); border-radius: 8px;
-    background: var(--fzm-surface); color: var(--fzm-ink-soft);
-    font: 600 11.5px/1 'Archivo', sans-serif; cursor: pointer; white-space: nowrap;
-}
-.fzm-tab.is-active { background: var(--fzm-solid); border-color: var(--fzm-solid); color: var(--fzm-on-solid); }
-.fzm-tab-count { font-weight: 700; opacity: .55; margin-left: 3px; }
-
-/* « Dans la LNH » a quatre onglets (Tout / Échanges / Signatures / Blessés) :
-   un cran plus petits que les barres à trois, avec le droit de passer à deux
-   lignes si « Signatures » plus son compteur ne rentre pas sur un petit écran. */
-#fzmLeagueTabs { flex-wrap: wrap; }
-#fzmLeagueTabs .fzm-tab { flex: 1 1 auto; min-width: 74px; padding-left: 3px; padding-right: 3px; font-size: 11px; }
-
-/* Piste — une carte par mouvement, on feuillette au doigt (scroll-snap),
-   la carte suivante dépasse pour signaler qu'il y a une suite. */
-.fzm-league-track {
-    display: flex; gap: 10px;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    padding-bottom: 2px;
-}
-.fzm-league-track::-webkit-scrollbar { display: none; }
-.fzm-league-track.is-empty { display: block; }
-.fzm-league-track > .fzm-empty {
-    background: var(--fzm-surface); border: 1px solid var(--fzm-border);
-    border-radius: 12px; padding: 16px;
-}
-
-.fzm-off-card {
-    flex: 0 0 84%; max-width: 320px;
-    scroll-snap-align: start;
-    display: flex; flex-direction: column; gap: 11px;
-    padding: 14px;
-    background: var(--fzm-surface);
-    border: 1px solid var(--fzm-border);
-    border-radius: 12px;
-}
-.fzm-off-card-top { display: flex; align-items: center; gap: 8px; }
-.fzm-off-card-date {
-    margin-left: auto;
-    font: 700 9px/1 'Archivo', sans-serif;
-    letter-spacing: .1em; text-transform: uppercase;
-    color: var(--fzm-ink-faint);
-}
-.fzm-off-tag {
-    font: 700 9px/1 'Archivo', sans-serif;
-    letter-spacing: .09em; text-transform: uppercase;
-    padding: 5px 8px; border-radius: 5px;
-    background: var(--fzm-panel); color: var(--fzm-ink-soft);
-}
-.fzm-off-tag.is-trade { background: var(--fzm-solid); color: var(--fzm-on-solid); }
-.fzm-off-tag.is-injury { background: var(--fzm-red-soft); color: var(--fzm-red); }
-
-.fzm-off-card-name { font: 700 16px/1.15 'Archivo', sans-serif; }
-.fzm-off-card-club {
-    display: flex; align-items: center; gap: 7px;
-    font: 500 11.5px/1.3 'Archivo', sans-serif; color: var(--fzm-ink-soft);
-}
-.fzm-off-card-club img { width: 18px; height: 18px; flex-shrink: 0; object-fit: contain; }
-
-.fzm-off-card-stats {
-    display: flex; gap: 10px;
-    margin-top: auto; padding-top: 10px;
-    border-top: 1px solid var(--fzm-border);
-}
-.fzm-off-stat { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.fzm-off-stat-lbl {
-    font: 700 8.5px/1 'Archivo', sans-serif;
-    letter-spacing: .11em; text-transform: uppercase;
-    color: var(--fzm-ink-faint);
-}
-.fzm-off-stat-val { font: 700 12.5px/1.2 'Archivo', sans-serif; }
-/* Le rouge est réservé aux absences fermes ; le « jour le jour » reste neutre
-   pour ne pas crier au loup sur un joueur qui joue peut-être ce soir. */
-.fzm-off-stat-val[data-status="Out"],
-.fzm-off-stat-val[data-status="Injured Reserve"] { color: var(--fzm-red); }
-
-/* Carte d'échange : réutilise .fzm-deal-* (les deux colonnes de clubs). */
-.fzm-off-card .fzm-deal-grid { margin-top: 2px; }
-
-.fzm-league-dots { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
-.fzm-league-dots:empty { display: none; }
-.fzm-league-dot {
-    width: 6px; height: 6px; padding: 0;
-    border: none; border-radius: 999px;
-    background: var(--fzm-ink-faint); cursor: pointer;
-    transition: width .2s ease, background .2s ease;
-}
-.fzm-league-dot.is-active { width: 16px; background: var(--fzm-red); }
-
-/* Un club par rangée : le logo et l'abréviation gardent assez de place
-   à côté d'« Acquiert », même dans les petites cartes du téléphone. */
-.fzm-deal-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
-.fzm-deal-col { min-width: 0; }
-.fzm-deal-col + .fzm-deal-col { padding-top: 12px; border-top: 1px solid var(--fzm-border); }
-.fzm-deal-head {
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    padding-bottom: 6px; margin-bottom: 7px;
-    border-bottom: 1px solid var(--fzm-border);
-}
-.fzm-deal-club { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.fzm-deal-logo { width: 18px; height: 18px; flex-shrink: 0; object-fit: contain; }
-.fzm-deal-club-abbr { font: 700 12px/1 'Archivo', sans-serif; letter-spacing: .03em; }
-.fzm-deal-acq {
-    flex-shrink: 0;
-    font: 700 8.5px/1 'Archivo', sans-serif;
-    letter-spacing: .13em; text-transform: uppercase;
-    color: var(--fzm-ink-faint);
-}
-.fzm-deal-assets { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 5px; }
-.fzm-deal-asset { font: 600 11.5px/1.35 'Archivo', sans-serif; overflow-wrap: anywhere; }
-.fzm-deal-asset.is-empty { font-weight: 500; font-style: italic; color: var(--fzm-ink-faint); }
-.fzm-deal-pos { font-weight: 500; color: var(--fzm-ink-faint); }
-
 .fzm-news-list { display: flex; flex-direction: column; gap: 8px; }
 .fzm-news-card { display: block; background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 10px; padding: 10px 12px; }
 .fzm-news-kicker { font: 700 9.5px/1 'Archivo', sans-serif; color: var(--fzm-red); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 3px; }
@@ -337,10 +201,6 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
     #fzDashBody, #fzDashHero,
     #fzDashPoolChips { display: none !important; }
 
-    /* Le slot ne fait que porter le calendrier ; la marge basse de
-       .fz-dash-calendar vaut déjà celle de .fzm-section (18px), les blocs
-       de la home mobile restent donc régulièrement espacés. */
-    .fzm-cal-slot { display: block; }
 }
 @media (min-width: 769px) {
     .fz-mobile-home { display: none !important; }
@@ -349,12 +209,20 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
 /* Accueil téléphone : actualités et préparation, ou repêchage en vedette. */
 @media (max-width: 768px) {
     body:has(#fzMobileHome[data-mode]) #storiesSection { display: none !important; }
+    /* Clair : la brique du reste de l'accueil clair. L'orange vif ne tenait
+       ni en texte sur le papier (2,8:1) ni sous du blanc (3,4:1). */
     .fz-mobile-home {
-        --fzm-red: #f65325;
-        --fzm-red-soft: #f653251c;
+        --fzm-red: #b93d28;
+        --fzm-red-soft: #b93d281a;
         padding-top: 8px;
     }
+    /* Clair : le calendrier déplacé ici repose sur le gris de la page
+       (#EAE8E4), plus foncé que ses cartes ; ses gris secondaires y
+       tombaient à 4,3:1. */
+    html[data-theme="light"] .fz-mobile-home { --fzd-text-muted: #605d58; --fzd-text-faint: #65625c; }
     html[data-theme="dark"] .fz-mobile-home {
+        --fzm-red: #f65325;
+        --fzm-red-soft: #f653251c;
         --fzm-bg: #0d1011;
         --fzm-panel: #171a1c;
         --fzm-surface: #171a1c;
@@ -394,7 +262,7 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
     #fzmHeroSlot[data-mode="preseason"] .fzd-hero-stat { flex-direction: column-reverse; align-items: center; }
     #fzmHeroSlot[data-mode="preseason"] .fzd-hero-stat-val { font-size: 24px; }
     #fzmHeroSlot[data-mode="preseason"] .fzd-hero-stat-lbl { font-size: 8px; }
-    #fzmHeroSlot .fzd-hero-cta { background: #f65325; min-height: 44px; padding: 11px; }
+    #fzmHeroSlot .fzd-hero-cta { background: var(--fzm-red); min-height: 44px; padding: 11px; }
     #fzmHeroSlot .fzd-hero-cta-label { white-space: normal; text-align: center; }
     #fzmHeroSlot .fzd-hero-cta-bar { display: none; }
     #fzmHeroSlot .fzd-hero-cta-chev { color: #fff; font-size: 22px; }
@@ -424,18 +292,6 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
     .fzm-tile-row { padding: 9px 12px; margin-bottom: 12px; border: 1px solid var(--fzm-border); border-radius: 9px; }
     .fzm-tile-row > div { flex: 1; }
     .fz-mobile-home .fzm-tile-btn { background: var(--fzm-surface); color: var(--fzm-ink); border: 1px solid var(--fzm-border); min-height: 36px; }
-
-    .fzm-watch-card { position: relative; width: clamp(145px, 34vw, 220px); min-height: 108px; padding: 30px 8px 10px 59px; }
-    .fzm-watch-card .fzd-off-face { position: absolute; left: 3px; bottom: 10px; width: 52px; height: 78px; border-radius: 0; background: none; }
-    .fzm-watch-card .fzd-off-face img { object-fit: cover; }
-    .fzm-watch-logo { position: absolute; top: 8px; right: 9px; width: 22px; height: 22px; }
-    .fzm-watch-name { font-size: 11px; line-height: 1.2; }
-    .fzm-watch-team, .fzm-watch-note { font-size: 10px; line-height: 1.3; }
-    .fzm-watch-note { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
-    .fzm-watch-track.is-expanded .fzm-watch-note { display: block; }
-    .fzm-watch-track.is-expanded { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); overflow: visible; }
-    .fzm-watch-track.is-expanded .fzm-watch-card { width: auto; }
-
     .fz-mobile-home .fz-dash-calendar { padding: 0; background: none; border: 0; border-radius: 0; gap: 8px; }
     .fz-mobile-home .fzd-cal-head { gap: 6px; }
     .fz-mobile-home .fzd-cal-title { flex: 1; font: 700 clamp(20px, 5vw, 27px)/1.1 'Archivo', sans-serif; letter-spacing: -.03em; text-transform: none; }
@@ -445,7 +301,9 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
     .fz-mobile-home .fzd-cal-range { font-size: 10px; }
     .fz-mobile-home .fzd-cal-strip { gap: 5px; }
     .fz-mobile-home .fzd-day-chip { background: var(--fzm-surface); border-color: var(--fzm-border); padding: 7px 1px; }
-    .fz-mobile-home .fzd-day-chip.is-selected { border: 2px solid var(--fzm-red); background: var(--fzm-red-soft); }
+    /* La teinte se pose sur la carte, pas sur le fond gris de la page : sur
+       le gris, elle fonçait assez pour faire tomber le texte sous 4:1. */
+    .fz-mobile-home .fzd-day-chip.is-selected { border: 2px solid var(--fzm-red); background: linear-gradient(var(--fzm-red-soft), var(--fzm-red-soft)), var(--fzm-surface); }
     .fz-mobile-home .fzd-day-chip.is-selected .fzd-day-chip-num { color: var(--fzm-red); }
     .fz-mobile-home .fzd-day-chip-count { display: flex; order: 2; justify-content: center; gap: 3px; min-height: 12px; font-size: 10px; color: var(--fzm-ink-soft); }
     .fz-mobile-home .fzd-day-chip-month { display: block; font: 500 8px/1 'Archivo', sans-serif; text-transform: uppercase; color: var(--fzm-ink-soft); }
@@ -453,7 +311,11 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
     .fz-mobile-home .fzd-cal-dayhead { padding: 6px 0; }
     .fz-mobile-home .fzd-cal-empty { width: 100%; padding: 16px; margin: 0; border: 1px solid var(--fzm-border); border-radius: 9px; background: var(--fzm-surface); }
     .fz-mobile-home .fzd-cal-games { margin: 0; padding: 0; gap: 8px; scroll-padding: 0; }
-    .fz-mobile-home .fzd-game-card { flex: 0 0 calc((100% - 8px) / 2); min-width: 145px; padding: 10px; background: var(--fzm-surface); border-color: var(--fzm-border); }
+    /* Largeur : celle du calendrier partagé (une carte par écran, 86 % —
+       accueil-dash.css), la même que dans les accueils repêchage et saison.
+       Deux cartes par vue ne laissaient à la carte de but qu'une demi-demi-
+       largeur d'écran, où plus rien du but ne tenait sur une ligne. */
+    .fz-mobile-home .fzd-game-card { padding: 10px; background: var(--fzm-surface); border-color: var(--fzm-border); }
     .fz-mobile-home .fzd-game-head { gap: 4px; flex-wrap: wrap; }
     .fz-mobile-home .fzd-game-when { font-size: 9px; }
     .fz-mobile-home .fzd-game-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -465,20 +327,23 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
     .fz-mobile-home .fzd-game-roster-count.has-players { background: var(--fzm-red-soft); color: var(--fzm-red); }
     .fz-mobile-home .fzd-game-players { display: none; }
 
-    #fzmLeagueTabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--fzm-border); border-radius: 9px; overflow: hidden; }
-    #fzmLeagueTabs .fzm-tab { min-width: 0; min-height: 36px; border: 0; border-right: 1px solid var(--fzm-border); border-radius: 0; font-size: 10px; }
-    #fzmLeagueTabs .fzm-tab:last-child { border-right: 0; }
-    #fzmLeagueTabs .fzm-tab.is-active { background: #e74a1e; color: #fff; border-radius: 8px; }
-    .fzm-tab-count { display: none; }
-    .fzm-off-card { position: relative; flex-basis: calc((100% - 10px) / 2); min-width: 155px; max-width: none; padding: 10px; gap: 8px; }
-    .fzm-off-card > .fzd-off-face { position: absolute; top: 39px; left: 9px; width: 35px; height: 40px; }
-    .fzm-off-card-name { font-size: 12px; padding-left: 40px; min-height: 20px; }
-    .fzm-off-card-club { font-size: 10px; padding-left: 40px; }
-    .fzm-off-card-club img { width: 18px; height: 18px; }
-    .fzm-off-card-date { font-size: 7px; letter-spacing: .03em; }
-    .fzm-off-tag { font-size: 8px; padding: 5px; }
-    .fzm-off-card-stats { flex-wrap: wrap; gap: 8px; }
-    .fzm-off-stat-val { font-size: 10px; }
+    /* Le bloc équipes passe à deux colonnes au téléphone : les buts
+       reprennent toute la largeur sous les deux, sinon la piste se
+       retrouverait coincée dans la moitié gauche de la carte. */
+    .fz-mobile-home .fzd-goals { grid-column: 1 / -1; padding-top: 7px; border-top-color: var(--fzm-border); }
+    .fz-mobile-home .fzd-goals-title { color: var(--fzm-ink); }
+    .fz-mobile-home .fzd-goals-sub { color: var(--fzm-ink-faint); }
+    /* La carte de but est large et rectangulaire sur tous les accueils
+       téléphone (accueil-dash.css) : buteur, aides et marque y tiennent
+       chacun sur sa ligne. Il ne reste ici que les couleurs de l'accueil
+       téléphone, que la carte partagée ne connaît pas. */
+    .fz-mobile-home .fzd-goal-card { background: var(--fzm-bg); border-color: var(--fzm-border); }
+    .fz-mobile-home .fzd-goal-name { color: var(--fzm-ink); }
+    .fz-mobile-home .fzd-goal-run { color: var(--fzm-ink); }
+    .fz-mobile-home .fzd-goal-assist { color: var(--fzm-ink-soft); }
+    .fz-mobile-home .fzd-goal-tally,
+    .fz-mobile-home .fzd-goal-when { color: var(--fzm-ink-faint); }
+
     .fzm-player-card { position: relative; flex: 0 0 calc((100% - 10px) / 2); min-width: 155px; padding: 10px 8px 10px 52px; }
     .fzm-player-card > .fzd-off-face { position: absolute; left: 7px; top: 10px; width: 38px; height: 45px; }
     .fzm-player-name { font-size: 11px; }

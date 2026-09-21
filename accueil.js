@@ -219,6 +219,10 @@ function renderStoriesEmpty() {
     if (track) track.style.display = 'none';
     if (!card) return;
 
+    // La carte reprend sa hauteur fixe : le message vide est posé en absolu,
+    // il ne porte pas la carte comme le fait le tableau indicateur.
+    card.classList.remove('is-live');
+
     card.innerHTML = `
         <div class="stories-empty">
             <span class="stories-empty-icon" data-icon="hockey" data-icon-size="22"></span>
@@ -255,13 +259,99 @@ async function fetchNhlNews() {
 }
 
 const STORY_STRENGTH_LABEL = { pp: 'AN', sh: 'DN' };
-const STORY_PERIOD_LABEL = { OT: 'Prolongation', SO: 'Tirs de barrage' };
+// Capitales d'affichage, sauf l'ordinal : « 1re PÉRIODE » s'écrit ainsi en
+// français, et un text-transform sur toute la ligne donnerait « 1RE ».
+const STORY_PERIOD_LABEL = { OT: 'PROLONGATION', SO: 'TIRS DE BARRAGE' };
+
+// Surnoms en deux mots : partout ailleurs le dernier mot du nom complet suffit
+// (« San Jose Sharks » → « Sharks »), sauf pour ces cinq-là.
+const STORY_NICKNAMES_2_MOTS = ['Maple Leafs', 'Blue Jackets', 'Red Wings', 'Golden Knights', 'Hockey Club'];
+
+/**
+ * Ville + surnom + fiche (V-D-DP) d'un club, pour le tableau indicateur.
+ * Les fiches viennent du classement déjà chargé (/current-teams) : le flux
+ * des matchs en direct ne les porte pas. Sans classement, la ligne de fiche
+ * est simplement absente — jamais un « 0 - 0 - 0 » inventé.
+ */
+function storyTeamIdentity(abbrev, nomDeSecours) {
+    const code = String(abbrev || '').trim().toUpperCase();
+    const fiches = (userData.teamsData && userData.teamsData.teams) || [];
+    const fiche = fiches.find(t => String(t.teamAbbrev || '').toUpperCase() === code);
+
+    const complet = (fiche && fiche.teamFullName) || nomDeSecours || code;
+    const surnomDouble = STORY_NICKNAMES_2_MOTS.find(n => complet.endsWith(n));
+    const surnom = surnomDouble || complet.split(' ').pop() || code;
+    const ville = complet.slice(0, complet.length - surnom.length).trim();
+
+    return {
+        ville: ville || code,
+        surnom,
+        fiche: fiche ? `${fiche.wins} - ${fiche.losses} - ${fiche.otLosses}` : ''
+    };
+}
+
+/**
+ * Couleur d'accent d'un club pour une surface sombre. La couleur principale
+ * gagne, sauf quand elle est quasi noire (Los Angeles, Seattle, Toronto) :
+ * elle ne teinterait alors rien du tout, et c'est la seconde couleur —
+ * toujours la plus claire de la paire — qui porte l'identité.
+ */
+function storyTeamAccent(abbrev) {
+    const paire = (typeof getTeamColors === 'function') ? getTeamColors(abbrev) : ['#3A414D', '#171A20'];
+    const lum = (typeof hexLuminance === 'function') ? hexLuminance : () => 1;
+    const [principale, seconde] = paire;
+    return (lum(principale) >= 0.03 || lum(seconde) <= lum(principale)) ? principale : seconde;
+}
+
+/** « #006D75 » → « 0, 109, 117 », pour les rgba() du CSS. */
+function storyHexToRgb(hex) {
+    const clean = String(hex).replace('#', '');
+    const full = clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean;
+    const num = parseInt(full, 16);
+    if (Number.isNaN(num)) return '58, 65, 77';
+    return `${(num >> 16) & 0xff}, ${(num >> 8) & 0xff}, ${num & 0xff}`;
+}
+
+/** Les variables CSS d'un camp : teinte de fond, pastille, chiffre. */
+function storyTeamVars(cote, abbrev) {
+    const accent = storyTeamAccent(abbrev);
+    const teinter = (typeof shadeHex === 'function') ? shadeHex : (h => h);
+    const melanger = (typeof mixHex === 'function') ? mixHex : (a => a);
+    return [
+        `--sl-${cote}: ${accent}`,
+        `--sl-${cote}-rgb: ${storyHexToRgb(accent)}`,
+        // Les chiffres de pointage montent d'un cran : la couleur brute d'un
+        // club sombre (Toronto, Vancouver) ne se lit pas en petit sur du noir.
+        `--sl-${cote}-vif: ${teinter(accent, 0.22)}`,
+        `--sl-${cote}-puce: ${melanger(accent, '#0C1318', 0.45)}`
+    ].join('; ');
+}
+
+/**
+ * Les surnoms les plus longs (GOLDEN KNIGHTS, BLUE JACKETS, MAPLE LEAFS)
+ * viendraient toucher le pointage géant à la taille du dessin : ils passent
+ * d'un cran, puis de deux. Tous les autres gardent la taille d'origine.
+ */
+function storyNomLong(surnom) {
+    const n = String(surnom || '').length;
+    if (n >= 13) return ' is-xlong';
+    if (n >= 10) return ' is-long';
+    return '';
+}
+
+/** Un chiffre de pointage : blanc à zéro, couleur du club dès le premier but. */
+function storyGoalScore(valeur, cote) {
+    const n = Number(valeur);
+    const style = n > 0 ? ` style="color: var(--sl-${cote}-vif)"` : '';
+    return `<b${style}>${Number.isFinite(n) ? n : 0}</b>`;
+}
 
 function renderStorySlide() {
     const card = document.getElementById('storiesCard');
     if (!card || !storySlides.length) return;
 
     const slide = storySlides[storyIndex];
+    card.classList.toggle('is-live', slide.type === 'live');
 
     if (slide.type === 'news') {
         const a = slide.article;
@@ -277,36 +367,76 @@ function renderStorySlide() {
         return;
     }
 
-    const g = slide.game;
-    const periodLabel = STORY_PERIOD_LABEL[g.periodType] || `${g.period}e période`;
-    const clockLabel = (g.clock && g.clock.inIntermission) ? 'Entracte' : ((g.clock && g.clock.timeRemaining) || '');
-    const events = (g.events || []).map(e => `
-        <div class="stories-live-event">
-            <span class="sle-team">${escapeHTML(e.team)}</span>
-            <span class="sle-scorer">${escapeHTML(e.scorer)}${STORY_STRENGTH_LABEL[e.strength] ? ' · ' + STORY_STRENGTH_LABEL[e.strength] : ''}</span>
-            <span class="sle-time">P${e.period} ${escapeHTML(e.timeInPeriod)}</span>
-        </div>`).join('');
+    card.innerHTML = storyLiveHTML(slide.game);
+}
 
-    card.innerHTML = `
-        <div class="stories-live">
-            <span class="stories-badge stories-badge-live"><span class="stories-live-dot"></span> En direct</span>
-            <div class="stories-live-teams">
-                <span class="stories-live-team">
-                    <img src="teams/${escapeHTML(g.away.abbrev)}.png" alt="" onerror="this.style.display='none'">
-                    <span class="stories-live-abbrev">${escapeHTML(g.away.abbrev)}</span>
-                    <span class="stories-live-score">${g.away.score}</span>
-                </span>
-                <span class="stories-live-mid">
-                    <span class="stories-live-period">${periodLabel}</span>
-                    <span class="stories-live-clock">${escapeHTML(clockLabel)}</span>
-                </span>
-                <span class="stories-live-team">
-                    <img src="teams/${escapeHTML(g.home.abbrev)}.png" alt="" onerror="this.style.display='none'">
-                    <span class="stories-live-abbrev">${escapeHTML(g.home.abbrev)}</span>
-                    <span class="stories-live-score">${g.home.score}</span>
-                </span>
+/**
+ * Le tableau indicateur d'un match en cours : bandeau des deux clubs
+ * (crest, ville, surnom, fiche, pointage, période et chrono) puis la liste
+ * des buts, du plus récent au plus ancien. Fonction pure — elle ne lit que
+ * le match reçu et le classement déjà en mémoire.
+ */
+function storyLiveHTML(g) {
+    const entracte = !!(g.clock && g.clock.inIntermission);
+    const periode = STORY_PERIOD_LABEL[g.periodType]
+        || `${g.period}${Number(g.period) === 1 ? 're' : 'e'} PÉRIODE`;
+    const chrono = entracte ? 'ENTRACTE' : ((g.clock && g.clock.timeRemaining) || '');
+    const pastilles = Array.from({ length: Math.max(3, Number(g.period) || 3) }, (_, i) =>
+        `<i${i + 1 === Number(g.period) ? ' class="is-on"' : ''}></i>`).join('');
+
+    const visiteur = storyTeamIdentity(g.away.abbrev, g.away.name);
+    const local = storyTeamIdentity(g.home.abbrev, g.home.name);
+
+    const camp = (cote, equipe, identite) => `
+                <div class="sl-side sl-side-${cote}">
+                    <img class="sl-crest" src="teams/${escapeHTML(equipe.abbrev)}.png" alt="" onerror="this.style.visibility='hidden'">
+                    <span class="sl-ident">
+                        <span class="sl-place">${escapeHTML(identite.ville)}</span>
+                        <span class="sl-name${storyNomLong(identite.surnom)}">${escapeHTML(identite.surnom)}</span>
+                        ${identite.fiche ? `<span class="sl-record">${escapeHTML(identite.fiche)}</span>` : ''}
+                    </span>
+                </div>`;
+
+    const buts = (g.events || []).map(e => `
+                <div class="sl-goal">
+                    <span class="sl-goal-time">${escapeHTML(e.timeInPeriod)}</span>
+                    <span class="sl-goal-team sl-goal-team-${e.team === g.home.abbrev ? 'home' : 'away'}">${escapeHTML(e.team)}</span>
+                    <span class="sl-goal-scorer">${escapeHTML(e.scorer)}</span>
+                    <span class="sl-goal-sep"></span>
+                    <span class="sl-goal-tag">But</span>
+                    ${STORY_STRENGTH_LABEL[e.strength] ? `<span class="sl-goal-strength">${STORY_STRENGTH_LABEL[e.strength]}</span>` : ''}
+                    <span class="sl-goal-score">${storyGoalScore(e.awayScore, 'away')}<i>-</i>${storyGoalScore(e.homeScore, 'home')}</span>
+                    <span class="sl-goal-period">P${escapeHTML(e.period)}</span>
+                </div>`).join('');
+
+    return `
+        <div class="sl-live" style="${storyTeamVars('away', g.away.abbrev)}; ${storyTeamVars('home', g.home.abbrev)}">
+            <div class="sl-top">
+                <span class="sl-badge"><span class="sl-badge-dot"></span>En direct</span>
+                <span class="sl-league">LNH</span>
             </div>
-            <div class="stories-live-events">${events || '<p class="activity-empty">Aucun but pour l’instant.</p>'}</div>
+
+            <div class="sl-board">
+                <img class="sl-mark sl-mark-away" src="teams/${escapeHTML(g.away.abbrev)}.png" alt="" aria-hidden="true" onerror="this.style.display='none'">
+                <img class="sl-mark sl-mark-home" src="teams/${escapeHTML(g.home.abbrev)}.png" alt="" aria-hidden="true" onerror="this.style.display='none'">
+                <span class="sl-edge sl-edge-away"></span>
+                <span class="sl-edge sl-edge-home"></span>
+                <span class="sl-rule sl-rule-away"></span>
+                <span class="sl-rule sl-rule-home"></span>
+${camp('away', g.away, visiteur)}
+                <div class="sl-center">
+                    <span class="sl-score">${g.away.score}</span>
+                    <span class="sl-state">
+                        <span class="sl-period">${escapeHTML(periode)}</span>
+                        <span class="sl-clock${entracte ? ' is-word' : ''}">${escapeHTML(chrono)}</span>
+                        <span class="sl-dots">${pastilles}</span>
+                    </span>
+                    <span class="sl-score">${g.home.score}</span>
+                </div>
+${camp('home', g.home, local)}
+            </div>
+
+            <div class="sl-goals">${buts || '<div class="sl-goal sl-goal-none">Aucun but pour l’instant.</div>'}</div>
         </div>`;
 }
 
