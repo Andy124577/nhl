@@ -655,7 +655,10 @@ async function viewClanTeams(clanName) {
         $("#clan-members-modal").css("display", "flex");
 
     } catch (error) {
+        // Un échec muet ici ressemble à un bouton mort : la modale ne s'ouvre
+        // pas et rien ne l'explique. On le dit.
         console.error("❌ Erreur lors de l'affichage des équipes :", error);
+        alert("Impossible d'afficher les équipes de ce pool pour l'instant. Réessayez dans un moment.");
     }
 }
 
@@ -768,57 +771,18 @@ async function submitRename(clanName, oldTeamName, teamId) {
 }
 
 // 🔥 Rejoindre un clan
-async function joinClan(clanName) {
-    const username = localStorage.getItem("username");
-
-    try {
-        const response = await fetch(`${BASE_URL}/draft?timestamp=${new Date().getTime()}`, { cache: "no-store" });
-        const draftData = await response.json();
-
-        if (draftData[clanName].draftOrder && draftData[clanName].draftOrder.length > 0) {
-            alert("Ce pool a déjà commencé son draft. Il n'est plus possible de le rejoindre.");
-            return;
-        }
-
-        const teams = draftData[clanName].teams;
-
-        // 🔥 Affiche les équipes disponibles pour le clan sélectionné
-        let teamHTML = `<h3 class="cm-title"><span>Choisissez une équipe dans ${clanName}</span></h3>`;
-
-        Object.entries(teams).forEach(([teamName, teamData]) => {
-            const isFull = teamData.members.length >= 5;
-            const membersDisplay = teamData.members.length > 0
-                ? `<div class="cm-members">
-                     <span class="cm-members-label">Membres</span>
-                     <ul class="cm-member-list">
-                       ${teamData.members.map(member => `<li class="cm-member"><span>${member}</span></li>`).join("")}
-                     </ul>
-                   </div>`
-                : `<div class="cm-empty">Aucun membre pour l'instant</div>`;
-
-            teamHTML += `
-                <div class="cm-team${isFull ? ' is-full' : ''}">
-                    <div class="cm-team-head">
-                        <strong class="cm-team-name"><span>${teamName}</span></strong>
-                        <div class="cm-badges">
-                            <span class="cm-badge cm-badge-count">${teamData.members.length}/5 joueurs</span>
-                        </div>
-                    </div>
-                    ${membersDisplay}
-                    ${!isFull ? `<button type="button" class="cm-join-btn" onclick="joinTeam('${clanName}', '${teamName}')">Rejoindre cette équipe</button>` : `<div class="cm-full-note">Équipe complète</div>`}
-                </div>
-            `;
-        });
-
-        $("#clan-members-content").html(teamHTML);
-        $("#clan-members-modal").css("display", "flex");
-
-
-        
-
-    } catch (error) {
-        console.error("❌ Erreur lors de l'affichage des équipes :", error);
-    }
+//
+// Le choix d'équipe passe par viewClanTeams, qui interroge /pool-teams :
+// c'est la seule route qui serve une vue à quelqu'un qui n'est pas encore
+// membre — nom des équipes, places prises, lesquelles sont pleines.
+//
+// Cette fonction lisait auparavant les alignements dans /draft. Depuis que
+// /draft ne renvoie qu'un résumé de découverte pour les pools qu'on n'a pas
+// rejoints, `teams` y est absent : Object.entries(undefined) levait une
+// exception que le catch avalait dans la console, et le bouton
+// « Rejoindre » de la liste ne faisait plus rien du tout.
+function joinClan(clanName) {
+    return viewClanTeams(clanName);
 }
 
 // ============================================================
