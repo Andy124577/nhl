@@ -555,112 +555,254 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 🔎 Voir les équipes d'un clan
+//
+// La modale « Choisir une équipe » est un écran de décision : on y vient
+// pour savoir où il reste de la place, et avec qui on va jouer. Tout ce qui
+// suit sert ces deux questions, dans cet ordre.
+
+/** Places par équipe. Le serveur l'annonce ; ce repli ne sert qu'au cas où. */
+const CM_PLACES_PAR_DEFAUT = 5;
+
+/**
+ * Échappe un texte destiné à du HTML construit à la main.
+ *
+ * Les noms de pool et d'équipe sont écrits par les utilisateurs : les coller
+ * tels quels dans un gabarit, c'est leur laisser fermer la balise.
+ */
+function cmEchapper(texte) {
+    return String(texte == null ? '' : texte)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/**
+ * Le squelette affiché pendant l'aller-retour réseau.
+ *
+ * La modale ne s'ouvrait qu'une fois la réponse arrivée : sur une connexion
+ * lente, le clic restait sans effet visible et on recliquait. Elle s'ouvre
+ * maintenant tout de suite, et se remplit ensuite.
+ */
+function cmSquelette() {
+    const carte = `
+        <li class="cm-team is-loading">
+            <span class="cm-skel cm-skel-name"></span>
+            <span class="cm-skel cm-skel-line"></span>
+        </li>`;
+    return `
+        <div class="cm-head">
+            <span class="cm-skel cm-skel-img"></span>
+            <span class="cm-skel cm-skel-title"></span>
+        </div>
+        <ul class="cm-teams">${carte.repeat(3)}</ul>`;
+}
+
+/**
+ * Les places d'une équipe, en pastilles.
+ *
+ * Un « 3/5 » se lit ; cinq pastilles dont trois pleines se voient. Les deux
+ * sont là, parce qu'on balaie une liste d'équipes du regard avant de lire
+ * quoi que ce soit — et parce qu'une forme seule ne dit rien à un lecteur
+ * d'écran.
+ */
+function cmPlaces(pris, total) {
+    const puces = Array.from({ length: total }, (_, i) =>
+        `<span class="cm-seat${i < pris ? ' is-taken' : ''}"></span>`).join('');
+    const libres = Math.max(0, total - pris);
+    return `
+        <div class="cm-seats">
+            <span class="cm-seat-dots" aria-hidden="true">${puces}</span>
+            <span class="cm-seat-txt">${pris}/${total}</span>
+            <span class="cm-seat-free">${libres > 0
+                ? `${libres} place${libres > 1 ? 's' : ''} libre${libres > 1 ? 's' : ''}`
+                : 'complète'}</span>
+        </div>`;
+}
+
 async function viewClanTeams(clanName) {
+    // On ouvre avant de demander : un clic doit répondre tout de suite.
+    $("#clan-members-content").html(cmSquelette());
+    $("#clan-members-modal").css("display", "flex");
+
     try {
-        // Route dédiée : elle donne le nom des équipes et le nombre de places
-        // prises à tout le monde, et la liste des membres aux seuls membres.
-        // /draft ne livre plus les alignements d'un pool qu'on n'a pas rejoint.
+        // Route dédiée : elle donne le nom des équipes, qui s'y trouve déjà
+        // et combien de places restent. /draft ne livre plus les alignements
+        // d'un pool qu'on n'a pas rejoint.
         const response = await fetch(`${BASE_URL}/pool-teams/${encodeURIComponent(clanName)}?t=${Date.now()}`,
             { cache: "no-store" });
         if (!response.ok) throw new Error('Pool introuvable');
         const vue = await response.json();
 
-        const teams = {};
-        (vue.teams || []).forEach(equipe => {
-            teams[equipe.name] = {
-                members: equipe.members || [],
-                memberCount: equipe.memberCount,
-                full: equipe.full,
-                teams: equipe.clubs || []
+        const username = localStorage.getItem("username");
+        const places = vue.maxParTeam || CM_PLACES_PAR_DEFAUT;
+        const draftStarted = vue.draftStarted === true;
+        const monEquipe = vue.monEquipe || null;
+
+        const equipes = (vue.teams || []).map(e => {
+            const membres = e.members || [];
+            // `memberCount` fait foi sur le nombre, `full` sur le quota : le
+            // serveur connaît les deux. Compter les noms reçus affichait
+            // « 0/5 joueurs » sur une équipe pleine, du temps où ils
+            // n'arrivaient pas jusqu'ici.
+            const pris = e.memberCount ?? membres.length;
+            return {
+                nom: e.name,
+                membres,
+                pris,
+                pleine: e.full === true || pris >= places,
+                mienne: !!monEquipe && e.name === monEquipe,
+                clubs: e.clubs || []
             };
         });
 
-        const username = localStorage.getItem("username");
-        const draftStarted = vue.draftStarted === true;
-        const userTeam = vue.monEquipe || null;
-
-        // Pre-fetch avatars and player map in parallel
-        const allMembers = Object.values(teams).flatMap(t => t.members || []);
         await Promise.all([
-            typeof prefetchAvatars === 'function' ? prefetchAvatars(allMembers) : Promise.resolve(),
-            loadPlayerMap()
+            typeof prefetchAvatars === 'function'
+                ? prefetchAvatars(equipes.flatMap(e => e.membres))
+                : Promise.resolve(),
+            // La carte des joueurs ne sert qu'aux vignettes des choix déjà
+            // faits. Sans choix à dessiner, c'est un aller-retour pour rien.
+            equipes.some(e => e.clubs.length > 0) ? loadPlayerMap() : Promise.resolve()
         ]);
 
-        const poolImgTag = vue.imageUrl
-            ? `<img src="${vue.imageUrl}" class="cm-pool-img" onerror="this.style.display='none'" alt="">`
+        // L'ordre porte la décision : la sienne d'abord — c'est souvent pour
+        // elle qu'on ouvre —, puis ce qu'on peut rejoindre, et les équipes
+        // pleines en fin de liste plutôt qu'intercalées entre deux choix
+        // possibles.
+        const rang = e => e.mienne ? 0 : (e.pleine ? 2 : 1);
+        equipes.sort((a, b) => rang(a) - rang(b));
+
+        const total = equipes.reduce((n, e) => n + e.pris, 0);
+        const ouvertes = equipes.filter(e => !e.pleine && !e.mienne).length;
+
+        const etat = !equipes.length
+            // Sans équipe du tout, « toutes les équipes sont complètes »
+            // se contredirait avec le message affiché juste en dessous.
+            ? 'aucune équipe configurée'
+            : draftStarted
+            ? 'repêchage commencé'
+            : ouvertes > 0
+            ? `${ouvertes} équipe${ouvertes > 1 ? 's' : ''} ouverte${ouvertes > 1 ? 's' : ''}`
+            : 'toutes les équipes sont complètes';
+
+        const poolImg = vue.imageUrl
+            ? `<img src="${cmEchapper(vue.imageUrl)}" class="cm-pool-img" alt=""
+                    onerror="this.src='Icons/grayGroup.png'">`
             : `<img src="Icons/grayGroup.png" class="cm-pool-img" alt="">`;
 
-        const draftBanner = draftStarted
-            ? `<div class="cm-banner">Le draft est commencé — le changement d'équipe n'est plus possible.</div>`
-            : '';
-
-        let teamHTML = `<h3 class="cm-title">${poolImgTag}<span>Équipes de ${clanName}</span></h3>${draftBanner}`;
-
-        for (const [teamName, teamData] of Object.entries(teams)) {
-            const isFull = teamData.full === true || (teamData.memberCount ?? teamData.members.length) >= 5;
-            const userInTeam = userTeam === teamName;
-            const teamId = teamName.replace(/[^a-zA-Z0-9]/g, '_');
-            const displayName = getDisplayName(teamName, teamData.members);
-            const logoHTML = getTeamLogoHTML(teamData.teams);
-            // Pour un non-membre, on annonce le nombre de places prises sans
-            // nommer personne : c'est ce qu'il faut pour choisir son équipe.
-            const membersDisplay = (!vue.isMember && (teamData.memberCount || 0) > 0)
-                ? `<div class="cm-members"><span class="cm-members-label">${teamData.memberCount} participant${teamData.memberCount > 1 ? 's' : ''}</span></div>`
-                : teamData.members.length > 0
-                ? `<div class="cm-members">
-                     <span class="cm-members-label">Membres</span>
-                     <ul class="cm-member-list">
-                       ${teamData.members.map(member => `
-                         <li class="cm-member">
-                           ${typeof avatarHtml === 'function' ? avatarHtml(member, 26) : `<img src="Icons/grayUser.png" class="cm-member-avatar" alt="">`}
-                           <span>${member}</span>
-                         </li>`).join("")}
-                     </ul>
-                   </div>`
-                : `<div class="cm-empty">Aucun membre pour l'instant</div>`;
-
-            const prefill = (displayName !== teamName && displayName.length <= 20)
-                ? displayName
-                : teamName;
-            // Le renommage tient dans un crayon posé contre le nom : le bloc
-            // « Renommer mon équipe » qui le précédait ajoutait une étiquette,
-            // un champ et un bouton visibles en permanence sous chaque carte,
-            // pour une action qu'on ne fait qu'une fois.
-            const renameBtn = userInTeam ? `
-                <button type="button" class="cm-rename-pencil"
-                        title="Renommer mon équipe" aria-label="Renommer mon équipe"
-                        onclick="startRename(this, '${clanName.replace(/'/g, "\\'")}', '${teamName.replace(/'/g, "\\'")}', '${teamId}')">
-                    ${typeof getIcon === 'function' ? getIcon('pencil', 14) : '&#9998;'}
-                </button>
-            ` : '';
-
-            teamHTML += `
-                <div class="cm-team${userInTeam ? ' is-mine' : ''}${isFull ? ' is-full' : ''}">
-                    <div class="cm-team-head">
-                        <strong class="cm-team-name">${logoHTML}<span class="cm-team-label">${displayName}</span>${renameBtn}</strong>
-                        <div class="cm-badges">
-                            ${userInTeam ? `<span class="cm-badge cm-badge-mine">Votre équipe</span>` : ''}
-                            <span class="cm-badge cm-badge-count">${teamData.members.length}/5 joueurs</span>
-                        </div>
-                    </div>
-                    ${membersDisplay}
-                    ${buildPicksSection(teamData)}
-                    ${!userInTeam && !isFull && !draftStarted ? `<button type="button" class="cm-join-btn" onclick="joinTeam('${clanName}', '${teamName}')">Rejoindre cette équipe</button>` : ''}
-                    ${isFull && !userInTeam ? `<div class="cm-full-note">Équipe complète</div>` : ''}
+        // L'en-tête de la modale dit déjà « Choisir une équipe » ; cette
+        // ligne dit dans quel pool, et ce qu'il y reste.
+        let html = `
+            <div class="cm-head">
+                ${poolImg}
+                <div class="cm-head-txt">
+                    <span class="cm-head-name">${cmEchapper(clanName)}</span>
+                    <span class="cm-head-meta">${total} participant${total > 1 ? 's' : ''} · ${etat}</span>
                 </div>
-            `;
+            </div>`;
+
+        if (draftStarted) {
+            html += `<div class="cm-banner">Le repêchage est commencé — le changement d'équipe n'est plus possible.</div>`;
         }
 
-        $("#clan-members-content").html(teamHTML);
-        $("#clan-members-modal").css("display", "flex");
+        if (!equipes.length) {
+            html += `<p class="cm-vide">Ce pool n'a aucune équipe configurée.</p>`;
+        }
+
+        html += '<ul class="cm-teams">';
+
+        for (const e of equipes) {
+            const nomEchappe = cmEchapper(e.nom);
+            const teamId = e.nom.replace(/[^a-zA-Z0-9]/g, '_');
+            const peutRejoindre = !e.mienne && !e.pleine && !draftStarted;
+            const etatClasse = e.mienne ? ' is-mine' : e.pleine ? ' is-full' : peutRejoindre ? ' is-open' : '';
+
+            const badge = e.mienne
+                ? `<span class="cm-badge cm-badge-mine">Votre équipe</span>`
+                : e.pleine
+                ? `<span class="cm-badge cm-badge-full">Complète</span>`
+                : '';
+
+            const crayon = e.mienne ? `
+                <button type="button" class="cm-rename-pencil"
+                        data-cm-rename data-cm-pool="${cmEchapper(clanName)}"
+                        data-cm-team="${nomEchappe}" data-cm-id="${teamId}"
+                        title="Renommer mon équipe" aria-label="Renommer mon équipe">
+                    ${typeof getIcon === 'function' ? getIcon('pencil', 14) : '&#9998;'}
+                </button>` : '';
+
+            // Voir qui est déjà là décide du choix plus sûrement que le
+            // décompte : on vient rejoindre quelqu'un.
+            const membres = e.membres.length
+                ? `<ul class="cm-member-list">${e.membres.map(m => `
+                       <li class="cm-member${m === username ? ' is-me' : ''}">
+                           ${typeof avatarHtml === 'function'
+                               ? avatarHtml(m, 24)
+                               : `<img src="Icons/grayUser.png" class="cm-member-avatar" alt="">`}
+                           <span>${cmEchapper(m)}</span>
+                       </li>`).join('')}</ul>`
+                : e.pris > 0
+                // Repli : un décompte sans les noms vaut mieux qu'une carte
+                // qui se contredit, si la réponse arrive incomplète.
+                ? `<p class="cm-empty">${e.pris} participant${e.pris > 1 ? 's' : ''}</p>`
+                : `<p class="cm-empty">Personne pour l'instant — soyez le premier.</p>`;
+
+            const action = peutRejoindre ? `
+                <button type="button" class="cm-join-btn"
+                        data-cm-join data-cm-pool="${cmEchapper(clanName)}" data-cm-team="${nomEchappe}">
+                    Rejoindre cette équipe
+                </button>` : '';
+
+            // « Équipe 3 » ne dit rien de qui joue dedans : tant qu'une équipe
+            // porte sa clé par défaut, on montre ses membres à la place — même
+            // règle que poolSettings.js et classement.js. La clé reste écrite
+            // en dessous, parce que c'est elle qu'on rejoint.
+            const titre = getDisplayName(e.nom, e.membres);
+            const cle = titre !== e.nom ? `<span class="cm-team-key">${nomEchappe}</span>` : '';
+
+            html += `
+                <li class="cm-team${etatClasse}">
+                    <div class="cm-team-head">
+                        ${getTeamLogoHTML(e.clubs)}
+                        <div class="cm-team-id">
+                            <strong class="cm-team-name"><span class="cm-team-label">${cmEchapper(titre)}</span>${crayon}</strong>
+                            ${cle}
+                        </div>
+                        ${badge}
+                    </div>
+                    ${cmPlaces(e.pris, places)}
+                    ${membres}
+                    ${action}
+                </li>`;
+        }
+
+        html += '</ul>';
+
+        $("#clan-members-content").html(html);
 
     } catch (error) {
-        // Un échec muet ici ressemble à un bouton mort : la modale ne s'ouvre
-        // pas et rien ne l'explique. On le dit.
+        // Un échec muet ici ressemble à un bouton mort : la modale s'ouvre et
+        // reste vide, sans rien dire. On l'écrit dedans plutôt que de refermer
+        // au nez de la personne.
         console.error("❌ Erreur lors de l'affichage des équipes :", error);
-        alert("Impossible d'afficher les équipes de ce pool pour l'instant. Réessayez dans un moment.");
+        $("#clan-members-content").html(`
+            <p class="cm-vide">Impossible d'afficher les équipes de ce pool pour l'instant.
+               Réessayez dans un moment.</p>`);
     }
 }
+
+// Un seul écouteur pour toute la modale, dont le balisage est reconstruit à
+// chaque ouverture. Les attributs `onclick` d'avant collaient les noms dans
+// du code : « Pool d'Andy » cassait l'appel sur son apostrophe.
+document.addEventListener('click', event => {
+    const rejoindre = event.target.closest('[data-cm-join]');
+    if (rejoindre) {
+        joinTeam(rejoindre.dataset.cmPool, rejoindre.dataset.cmTeam);
+        return;
+    }
+    const renommer = event.target.closest('[data-cm-rename]');
+    if (renommer) {
+        startRename(renommer, renommer.dataset.cmPool, renommer.dataset.cmTeam, renommer.dataset.cmId);
+    }
+});
 
 
 // ✏️ Rename user's team

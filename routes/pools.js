@@ -109,11 +109,16 @@ function monter(app, ctx) {
     /**
      * Les équipes d'un pool : ce qu'il faut pour en choisir une.
      *
-     * Deux vues selon qui demande. Un membre voit ses coéquipiers, comme avant.
-     * Quelqu'un qui envisage d'entrer voit le nom des équipes, combien de
-     * places sont prises, et lesquelles sont pleines — assez pour choisir, sans
-     * la liste des participants. Savoir QUI est dans une équipe est déjà une
-     * information de membre.
+     * Tout le monde voit la même chose : le nom des équipes, qui s'y trouve
+     * déjà, et combien de places restent. On choisit une équipe pour y
+     * retrouver quelqu'un — masquer les noms à qui n'est pas encore entré
+     * revenait à faire choisir à l'aveugle, dans une application de pools
+     * entre amis où ces noms circulent de toute façon par ailleurs.
+     *
+     * Ce qui reste fermé : cette route ne sert que des noms et des places.
+     * Les alignements, l'historique des choix et le classement restent
+     * derrière vueMembre() — /draft continue de n'en rien dire à un
+     * non-membre.
      *
      * C'est cette route que la page « Rejoindre un pool » interroge : /draft ne
      * livre plus les alignements des pools qu'on n'a pas rejoints.
@@ -139,13 +144,13 @@ function monter(app, ctx) {
                 revision: enveloppe.revision,
                 teams: equipes.map(([nomEquipe, equipe]) => {
                     const membres = equipe.members || [];
-                    const commun = {
+                    return {
                         name: nomEquipe,
+                        members: membres,
                         memberCount: membres.length,
                         full: membres.length >= poolOps.MEMBRES_PAR_EQUIPE,
                         clubs: equipe.teams || []
                     };
-                    return membre ? { ...commun, members: membres } : commun;
                 })
             });
         } catch (erreur) {

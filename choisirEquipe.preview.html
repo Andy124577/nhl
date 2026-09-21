@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview — Choisir une équipe</title>
+
+<!-- Le thème doit être posé avant les feuilles, comme sur les vraies pages. -->
+<script src="theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="index.css">
+<link rel="stylesheet" href="teamLogos.css">
+<link rel="stylesheet" href="pool.css">
+
+<!--
+  Aperçu de la modale « Choisir une équipe » (#clan-members-modal), rendue
+  par viewClanTeams() dans equipes.js.
+
+  Elle vit normalement sur rejoindre-pool.html, derrière une session, un pool
+  et une base Postgres. Cette page sert la vraie fonction avec un /pool-teams
+  simulé, pour juger la mise en page sans rien de tout ça — et pour comparer
+  d'un clic les cas qui se voient rarement en vrai : équipe pleine, pool
+  vide, repêchage commencé, réponse qui ne vient pas.
+
+  Même esprit que draftFinPopup.preview.html et h2h-classement.preview.html.
+-->
+<style>
+  body { margin: 0; min-height: 100vh; background: var(--bg, #141416);
+         font-family: "Segoe UI", Helvetica, Arial, sans-serif; }
+  .pv-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+            padding: 16px; border-bottom: 1px solid var(--border-light, #2c2c32); }
+  .pv-bar b { color: var(--text-gray, #8c8c95); font-size: .7rem; letter-spacing: .08em;
+              text-transform: uppercase; margin-right: 4px; }
+  .pv-bar button { padding: 9px 14px; border-radius: 9px; cursor: pointer;
+                   border: 1px solid var(--border-gray, #3a3a42);
+                   background: var(--bg-odd-row, #19191d); color: var(--text-main, #fff);
+                   font: 600 .8rem "Segoe UI", sans-serif; }
+  .pv-bar button:hover { border-color: var(--primary, #e8795e); }
+  .pv-note { padding: 16px; color: var(--text-gray, #8c8c95); font-size: .84rem; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="pv-bar">
+  <b>Cas</b>
+  <button onclick="apercu('normal')">Non-membre</button>
+  <button onclick="apercu('membre')">Membre</button>
+  <button onclick="apercu('pleine')">Tout complet</button>
+  <button onclick="apercu('repechage')">Repêchage commencé</button>
+  <button onclick="apercu('vide')">Aucune équipe</button>
+  <button onclick="apercu('lent')">Chargement (3 s)</button>
+  <button onclick="apercu('panne')">Réponse en panne</button>
+  <button onclick="toggleTheme()">Thème clair / sombre</button>
+</div>
+
+<p class="pv-note">
+  La modale s'ouvre par-dessus. « Chargement » montre le squelette d'attente ;
+  « Réponse en panne » montre ce qu'on affiche quand /pool-teams ne répond pas.
+</p>
+
+<!-- Le balisage exact de rejoindre-pool.html. -->
+<div id="clan-members-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Choisir une équipe</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="clan-members-content"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="secondary" onclick="closeModal()">Fermer</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ---- Ce qu'une session fournirait normalement ---- */
+localStorage.setItem('isLoggedIn', 'true');
+localStorage.setItem('username', 'carl');
+localStorage.setItem('isAdmin', 'false');
+
+/* ---- Les jeux d'essai, sous la forme exacte que /pool-teams renvoie ---- */
+const CAS = {
+    normal: {
+        poolName: 'Les Boys 2026', isMember: false, draftStarted: false,
+        maxParTeam: 5, monEquipe: null, imageUrl: '',
+        teams: [
+            { name: 'Équipe 1', members: ['alice', 'bob'], memberCount: 2, full: false, clubs: [] },
+            { name: 'Les Requins', members: ['dora', 'eli', 'fred', 'gil', 'hugo'], memberCount: 5, full: true, clubs: [] },
+            { name: 'Équipe 3', members: ['ingrid'], memberCount: 1, full: false, clubs: [] },
+            { name: 'Équipe 4', members: [], memberCount: 0, full: false, clubs: [] }
+        ]
+    },
+    membre: {
+        poolName: 'Les Boys 2026', isMember: true, draftStarted: false,
+        maxParTeam: 5, monEquipe: 'Équipe 3', imageUrl: '',
+        teams: [
+            { name: 'Équipe 1', members: ['alice', 'bob'], memberCount: 2, full: false, clubs: [] },
+            { name: 'Les Requins', members: ['dora', 'eli', 'fred', 'gil', 'hugo'], memberCount: 5, full: true, clubs: [] },
+            { name: 'Équipe 3', members: ['carl', 'ingrid'], memberCount: 2, full: false, clubs: [] },
+            { name: 'Équipe 4', members: [], memberCount: 0, full: false, clubs: [] }
+        ]
+    },
+    pleine: {
+        poolName: 'Ligue fermée', isMember: false, draftStarted: false,
+        maxParTeam: 5, monEquipe: null, imageUrl: '',
+        teams: [
+            { name: 'Équipe 1', members: ['a', 'b', 'c', 'd', 'e'], memberCount: 5, full: true, clubs: [] },
+            { name: 'Équipe 2', members: ['f', 'g', 'h', 'i', 'j'], memberCount: 5, full: true, clubs: [] }
+        ]
+    },
+    repechage: {
+        poolName: 'Ligue en cours', isMember: true, draftStarted: true,
+        maxParTeam: 5, monEquipe: 'Équipe 1', imageUrl: '',
+        teams: [
+            { name: 'Équipe 1', members: ['carl', 'alice'], memberCount: 2, full: false, clubs: [] },
+            { name: 'Équipe 2', members: ['bob'], memberCount: 1, full: false, clubs: [] }
+        ]
+    },
+    vide: {
+        poolName: 'Ligue sans équipes', isMember: false, draftStarted: false,
+        maxParTeam: 5, monEquipe: null, imageUrl: '', teams: []
+    }
+};
+
+let casCourant = 'normal';
+let retard = 0;
+let enPanne = false;
+
+/* ---- /pool-teams simulé. Tout le reste passe au vrai réseau. ---- */
+const vraiFetch = window.fetch.bind(window);
+window.fetch = async (url, options) => {
+    const u = String(url);
+    if (u.includes('/pool-teams/')) {
+        if (retard) await new Promise(r => setTimeout(r, retard));
+        if (enPanne) return { ok: false, status: 500, json: async () => ({}) };
+        return { ok: true, json: async () => CAS[casCourant] };
+    }
+    // Les avatars n'existent pas ici : avatars.js retombe sur l'icône grise.
+    if (u.includes('/user-profile/')) return { ok: false, json: async () => ({}) };
+    if (u.includes('/draft')) return { ok: true, json: async () => ({}) };
+    return vraiFetch(url, options);
+};
+
+function apercu(cas) {
+    enPanne = cas === 'panne';
+    retard = cas === 'lent' ? 3000 : 0;
+    casCourant = (cas === 'lent' || cas === 'panne') ? 'normal' : cas;
+    viewClanTeams(CAS[casCourant].poolName);
+}
+</script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="icons.js"></script>
+<script src="avatars.js"></script>
+<script src="equipes.js"></script>
+
+<script>
+/* equipes.js s'attend à des pages qui ont une barre de navigation et un
+   bouton de déconnexion ; ici, il n'y en a pas. Rien à faire de plus. */
+window.addEventListener('load', () => apercu('normal'));
+</script>
+
+</body>
+</html>
