@@ -20,7 +20,7 @@ const { v4: uuidv4 } = require("uuid");
 // unitairement (voir UNIT_TESTS.md). Les corps de fonctions sont inchangés.
 const { FANTASY_SCORING, goaliePoolPoints, clubPoolPoints, computeTeamSeasonScores,
     skaterFantasyPointsTonight, goalieFantasyPointsTonight } = require("./lib/scoring.js");
-const { generateSeasonSchedule, ensureStandingsEntry } = require("./lib/h2h.js");
+const { generateSeasonSchedule, ensureStandingsEntry, lundiDepartSaison } = require("./lib/h2h.js");
 const instantDraft = require("./lib/instantDraft.js");
 const { NHL_CLUB_FULLNAME, diffRosterSnapshots, getTeamAbbreviationFromName } = require("./lib/roster.js");
 const { getStatsRefreshStatus } = require("./lib/statsCache.js");
@@ -400,6 +400,7 @@ async function renommerPoolPartout({ ancien, propose, auth: identite, reduire })
 async function construireCalendrierH2H(nomPool) {
     const fenetre = await getSeasonWindow();
     const finSaison = fenetre && fenetre.regularSeasonEndDate;
+    const lundiDepart = lundiDepartSaison(fenetre);
 
     return poolStore.muterPool(nomPool, {
         scope: 'h2h:calendrier',
@@ -418,8 +419,9 @@ async function construireCalendrierH2H(nomPool) {
 
             // Le lundi vient du meme module que partout ailleurs : celui qui
             // decoupe les journees sur « America/Toronto » et ajoute des jours
-            // de calendrier plutot que des multiples de 24 heures.
-            const lundi = datesPool.lundiDe(datesPool.journeeLocale());
+            // de calendrier plutot que des multiples de 24 heures. Et il ne
+            // precede jamais le premier match de la saison reguliere.
+            const lundi = lundiDepart;
             const nbSemaines = datesPool.nombreDeSemaines(lundi, finSaison);
             const calendrier = generateSeasonSchedule(equipes, nbSemaines);
 
@@ -4151,6 +4153,101 @@ const LEADERBOARD_WINDOWS = [1, 7, 14, 30, 90, 180, 365];
 
 console.log("✅ Trade system initialized");
 
+/**
+ * Recale les calendriers ouverts avant le premier match de la saison.
+ *
+ * Le calendrier se batissait sur le lundi du REPECHAGE. Un pool tire en
+ * septembre ouvrait donc sa semaine 1 sur une semaine sans un seul match de
+ * saison reguliere : le duel s'affichait « en cours » a 0,0 contre 0,0, puis
+ * se finalisait sur une feuille vide. construireCalendrierH2H() ne fait plus
+ * l'erreur ; reste a reparer les pools deja crees.
+ *
+ * Trois gardes, parce qu'un calendrier deja joue ne se rejoue pas :
+ *
+ *   1. aucune semaine finalisee (`matchupHistory` vide, `currentWeek` a 1) —
+ *      sinon le decalage reecrirait les dates d'un resultat inscrit ;
+ *   2. on n'avance que VERS l'ouverture, jamais en arriere ;
+ *   3. le nombre de semaines est recalcule : partir plus tard sur une fin de
+ *      saison inchangee en laisse moins.
+ *
+ * Idempotente : une fois recale, un pool ne satisfait plus la condition.
+ */
+async function realignerDepartsH2H() {
+    let fenetre;
+    try {
+        fenetre = await getSeasonWindow();
+    } catch (erreur) {
+        console.error('❌ Fenetre de saison indisponible, recalage reporte :', erreur.message);
+        return 0;
+    }
+
+    const ouverture = fenetre && fenetre.regularSeasonStartDate;
+    if (!ouverture) return 0;
+    const lundiOuverture = datesPool.lundiDe(datesPool.journeeDe(ouverture));
+    if (!lundiOuverture) return 0;
+
+    // On ne recale QUE ce qui précède l'ouverture, mais jamais vers une semaine
+    // déjà échue : un serveur redémarré en novembre place le pool à la semaine
+    // courante, pas au 5 octobre — sinon le rattrapage fermerait d'un coup
+    // cinq semaines où personne n'avait d'alignement.
+    const cible = lundiDepartSaison(fenetre);
+    const finSaison = (fenetre && fenetre.regularSeasonEndDate) || null;
+    let recales = 0;
+
+    try {
+        const pools = await poolStore.lireTous();
+
+        for (const [nomPool, enveloppe] of Object.entries(pools)) {
+            const h2h = enveloppe.data.poolMode === 'head-to-head' ? enveloppe.data.h2hData : null;
+            if (!h2h) continue;
+
+            const depart = h2h.seasonStart || h2h.weekStart;
+            if (!depart || datesPool.journeeDe(depart) >= lundiOuverture) continue;
+            if ((h2h.matchupHistory || []).length > 0) continue;
+            if (Number(h2h.currentWeek || 1) > 1) continue;
+
+            try {
+                await poolStore.muterPool(nomPool, {
+                    scope: 'h2h:recalage-depart',
+                    appliquer: async ({ data }) => {
+                        const h2hCible = data.h2hData;
+                        if (!h2hCible) return { sauvegarder: false, valeur: { ignore: true } };
+
+                        // Reverifie sous verrou : une finalisation a pu passer
+                        // entre la lecture et l'ecriture.
+                        const actuel = h2hCible.seasonStart || h2hCible.weekStart;
+                        if (!actuel || datesPool.journeeDe(actuel) >= lundiOuverture
+                            || (h2hCible.matchupHistory || []).length > 0
+                            || Number(h2hCible.currentWeek || 1) > 1) {
+                            return { sauvegarder: false, valeur: { ignore: true } };
+                        }
+
+                        const nbSemaines = datesPool.nombreDeSemaines(cible, finSaison);
+                        h2hCible.seasonStart = cible;
+                        h2hCible.weekStart = cible;
+                        h2hCible.seasonEnd = h2hCible.seasonEnd || finSaison;
+                        if (Array.isArray(h2hCible.matchups) && h2hCible.matchups.length > nbSemaines) {
+                            h2hCible.matchups = h2hCible.matchups.slice(0, nbSemaines);
+                        }
+                        h2hCible.seasonWeeks = Array.isArray(h2hCible.matchups)
+                            ? h2hCible.matchups.length : nbSemaines;
+                        return { valeur: { depart: cible, semaines: h2hCible.seasonWeeks } };
+                    }
+                });
+                recales++;
+                console.log(`📅 ${nomPool} : calendrier recale au ${cible} (ouverture ${ouverture})`);
+            } catch (erreur) {
+                console.error(`❌ Recalage impossible pour ${nomPool} :`, erreur.message);
+            }
+        }
+    } catch (erreur) {
+        console.error('❌ Recalage des calendriers impossible :', erreur.message);
+        return recales;
+    }
+
+    return recales;
+}
+
 // ✅ Auto-check and finalize completed H2H weeks
 
 /**
@@ -4240,16 +4337,31 @@ async function menageDonneesDurables() {
     }
 }
 
+/**
+ * Le passage complet : recalage PUIS rattrapage.
+ *
+ * L'ordre compte. Finaliser une semaine dont les dates sont encore fausses la
+ * figerait sur une periode sans match — et un resultat fige ne se reecrit pas.
+ * Un recalage en echec n'empeche pas le rattrapage : les deux etapes
+ * journalisent elles-memes ce qu'elles n'ont pas pu faire.
+ */
+function verifierSemainesH2H() {
+    return realignerDepartsH2H()
+        .catch(() => 0)
+        .then(() => rattraperSemainesH2H())
+        .catch(() => 0);
+}
+
 // Un passage au demarrage, puis toutes les six heures.
 console.log("🔍 Verification des semaines tete-a-tete terminees...");
-rattraperSemainesH2H();
+verifierSemainesH2H();
 menageDonneesDurables();
 
 // Run check every 6 hours (21600000 ms)
 const SIX_HOURS = 6 * 60 * 60 * 1000;
 setInterval(() => {
     console.log("🔍 Verification periodique des semaines terminees...");
-    rattraperSemainesH2H();
+    verifierSemainesH2H();
     menageDonneesDurables();
 }, SIX_HOURS);
 

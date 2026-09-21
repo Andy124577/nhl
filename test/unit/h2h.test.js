@@ -4,7 +4,7 @@ const { test, describe, mock, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 
 const { generateWeeklyMatchups, generateSeasonSchedule, seasonWeekCount,
-    ensureStandingsEntry, mondayOfWeek,
+    ensureStandingsEntry, mondayOfWeek, lundiDepartSaison,
     DEFAULT_SEASON_WEEKS, MAX_SEASON_WEEKS } = require('../../lib/h2h.js');
 const { makeMatchup, makeTeamList, makeStanding } = require('../fixtures/pool.js');
 
@@ -255,6 +255,46 @@ describe('seasonWeekCount', () => {
             seasonWeekCount(new Date('2025-10-06'), new Date('2026-04-16')),
             seasonWeekCount('2025-10-06', '2026-04-16')
         );
+    });
+});
+
+describe('lundiDepartSaison', () => {
+    // Le 7 octobre 2026 est un mercredi ; le lundi de sa semaine est le 5.
+    const fenetre = { regularSeasonStartDate: '2026-10-07', regularSeasonEndDate: '2027-04-13' };
+
+    test("un pool tiré avant l'ouverture part la semaine du premier match", () => {
+        // C'était le bogue : le repechage du 20 septembre ouvrait la semaine 1
+        // le 14 septembre, deux semaines avant le moindre match.
+        assert.equal(lundiDepartSaison(fenetre, '2026-09-20'), '2026-10-05');
+    });
+
+    test("la semaine de l'ouverture elle-même part ce lundi-là", () => {
+        assert.equal(lundiDepartSaison(fenetre, '2026-10-05'), '2026-10-05');
+        assert.equal(lundiDepartSaison(fenetre, '2026-10-07'), '2026-10-05');
+    });
+
+    test('un pool tiré en cours de saison part de la semaine courante', () => {
+        // Le faire partir en octobre laisserait treize semaines déjà échues,
+        // que le rattrapage fermerait toutes à zéro au premier passage.
+        assert.equal(lundiDepartSaison(fenetre, '2027-01-15'), '2027-01-11');
+    });
+
+    test("sans date d'ouverture, on s'en tient au lundi courant", () => {
+        assert.equal(lundiDepartSaison(null, '2026-09-20'), '2026-09-14');
+        assert.equal(lundiDepartSaison({}, '2026-09-20'), '2026-09-14');
+        assert.equal(lundiDepartSaison({ regularSeasonStartDate: null }, '2026-09-20'), '2026-09-14');
+    });
+
+    test("une journée courante illisible n'empêche pas de situer l'ouverture", () => {
+        assert.equal(lundiDepartSaison(fenetre, 'pas-une-date'), '2026-10-05');
+    });
+
+    test('le départ tombe toujours un lundi', () => {
+        const jours = ['2026-09-20', '2026-10-07', '2027-01-15', '2027-02-28'];
+        for (const jour of jours) {
+            const depart = lundiDepartSaison(fenetre, jour);
+            assert.equal(new Date(depart + 'T00:00:00Z').getUTCDay(), 1, `${jour} → ${depart}`);
+        }
     });
 });
 

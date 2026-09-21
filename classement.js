@@ -619,10 +619,13 @@ function h2hNextWeekLabels(h2h, semaineCourante) {
         return [`Semaine ${suivante}`, 'Dates à confirmer'];
     }
 
-    const debut = new Date(h2h.weekStart);
-    debut.setDate(debut.getDate() + 7);
-    const fin = new Date(debut);
-    fin.setDate(fin.getDate() + 7);
+    // Jours de calendrier ajoutés en UTC : `setDate` sur une journée lue à
+    // minuit UTC travaille dans le fuseau du visiteur et décale la borne.
+    const debut = h2hJourUTC(h2h.weekStart);
+    if (!debut) return [`Semaine ${suivante}`, 'Dates à confirmer'];
+    debut.setUTCDate(debut.getUTCDate() + 7);
+    const fin = new Date(debut.getTime());
+    fin.setUTCDate(fin.getUTCDate() + 7);
     return [`Semaine ${suivante}`, h2hSchedDateRange(debut, fin)];
 }
 
@@ -1603,10 +1606,41 @@ function setH2HPeriod(period) {
 
 // ==================== H2H SHARED HELPERS ====================
 
-function playerHeadshot(playerId, teamAbbrev) {
-    if (!playerId || !teamAbbrev) return null;
-    // buildHeadshotUrl (headshots.js) tient la saison courante à jour.
-    return buildHeadshotUrl(playerId, teamAbbrev);
+/**
+ * La photo d'un joueur d'alignement, même avant le premier match.
+ *
+ * `playerId` et `teamAbbrev` viennent des feuilles de match (services/
+ * scoring.js) : tant qu'aucun match n'est joué, il n'y a pas de feuille, donc
+ * pas d'identifiant — et toute la colonne restait à des pastilles grises.
+ * Le repli passe par le nom, résolu dans les jeux de données déjà chargés
+ * par la page (nhl_filtered_stats.json et /current-stats), qui portent
+ * l'identifiant LNH de tous les joueurs repêchés.
+ */
+function playerHeadshot(joueur) {
+    if (!joueur) return null;
+    if (joueur.playerId && joueur.teamAbbrev) {
+        // buildHeadshotUrl (headshots.js) tient la saison courante à jour.
+        const url = buildHeadshotUrl(joueur.playerId, joueur.teamAbbrev);
+        if (url) return url;
+    }
+    return getMatchingImage(joueur.name) || null;
+}
+
+/**
+ * La pastille d'un joueur : sa photo, ses initiales dessous.
+ *
+ * Les initiales sont dans le DOM dès le départ, sous l'image. Une photo qui
+ * ne charge pas (joueur sans identifiant, répertoire de saison pas encore
+ * publié sur le CDN) se retire et les découvre — là où elle laissait un trou.
+ */
+function h2hPlayerPhotoHTML(joueur) {
+    if (!joueur) return '<span class="h2h-player-photo-wrap is-empty"></span>';
+    const initiales = escapeHtmlText(initialsFromName(joueur.name || ''));
+    const url = playerHeadshot(joueur);
+    const image = url
+        ? `<img class="h2h-player-photo" src="${escapeAttr(url)}" alt="" loading="lazy" onerror="this.remove()">`
+        : '';
+    return `<span class="h2h-player-photo-wrap"><span class="h2h-player-initials">${initiales}</span>${image}</span>`;
 }
 
 function buildMatchupCardHTML(m, poolName, showRecord) {
@@ -1641,16 +1675,13 @@ function buildMatchupCardHTML(m, poolName, showRecord) {
             ? `${rp.wins}V ${rp.saves}ARR${rp.shutouts ? ' ' + rp.shutouts + 'BL' : ''}`
             : `${rp.goals}B ${rp.assists}A`) : '';
 
-        const lpPhoto = lp ? playerHeadshot(lp.playerId, lp.teamAbbrev) : null;
-        const rpPhoto = rp ? playerHeadshot(rp.playerId, rp.teamAbbrev) : null;
-
         playerRowsHTML += `
             <div class="h2h-player-row">
                 <div class="h2h-player-left ${lpBetter ? 'h2h-player-winning' : ''}">
-                    ${lpPhoto ? `<img class="h2h-player-photo" src="${lpPhoto}" alt="" onerror="this.style.display='none'">` : '<div class="h2h-player-photo-placeholder"></div>'}
+                    ${h2hPlayerPhotoHTML(lp)}
                     <div class="h2h-player-info">
-                        <span class="h2h-player-name">${lp ? lp.name : ''}</span>
-                        ${lp ? `<span class="h2h-player-sub">${lpSub}</span>` : ''}
+                        <span class="h2h-player-name" title="${escapeAttr(lp ? lp.name : '')}">${escapeHtmlText(lp ? lp.name : '')}</span>
+                        ${lp ? `<span class="h2h-player-sub">${escapeHtmlText(lpSub)}</span>` : ''}
                     </div>
                 </div>
                 <div class="h2h-player-pts-block">
@@ -1659,35 +1690,42 @@ function buildMatchupCardHTML(m, poolName, showRecord) {
                     <span class="h2h-player-pts ${rpBetter ? 'h2h-pts-leading' : ''}">${rpFpts !== null ? rpFpts.toFixed(1) : '—'}</span>
                 </div>
                 <div class="h2h-player-right ${rpBetter ? 'h2h-player-winning' : ''}">
-                    ${rpPhoto ? `<img class="h2h-player-photo" src="${rpPhoto}" alt="" onerror="this.style.display='none'">` : '<div class="h2h-player-photo-placeholder"></div>'}
+                    ${h2hPlayerPhotoHTML(rp)}
                     <div class="h2h-player-info right">
-                        <span class="h2h-player-name">${rp ? rp.name : ''}</span>
-                        ${rp ? `<span class="h2h-player-sub">${rpSub}</span>` : ''}
+                        <span class="h2h-player-name" title="${escapeAttr(rp ? rp.name : '')}">${escapeHtmlText(rp ? rp.name : '')}</span>
+                        ${rp ? `<span class="h2h-player-sub">${escapeHtmlText(rpSub)}</span>` : ''}
                     </div>
                 </div>
             </div>`;
     }
 
+    // Un nom d'équipe vient d'une saisie : il est échappé, et tronqué par le
+    // CSS plutôt que de pousser la carte hors de l'écran sur téléphone.
+    const nom1 = escapeHtmlText(m.team1);
+    const nom2 = escapeHtmlText(m.team2);
+    const titre1 = escapeAttr(m.team1);
+    const titre2 = escapeAttr(m.team2);
+
     return `
         <div class="h2h-matchup-card">
             <div class="h2h-matchup-header">
                 <div class="h2h-header-team ${t1Leading ? 'leading' : ''}">
-                    <div class="h2h-header-team-name">${m.team1}</div>
+                    <div class="h2h-header-team-name" title="${titre1}">${nom1}</div>
                     ${recordHTML(m.team1)}
                     <div class="h2h-header-score ${t1Leading ? 'leading' : ''}">${m.team1Points.toFixed(1)}</div>
                 </div>
                 <div class="h2h-header-vs">VS</div>
                 <div class="h2h-header-team right ${t2Leading ? 'leading' : ''}">
-                    <div class="h2h-header-team-name">${m.team2}</div>
+                    <div class="h2h-header-team-name" title="${titre2}">${nom2}</div>
                     ${recordHTML(m.team2)}
                     <div class="h2h-header-score ${t2Leading ? 'leading' : ''}">${m.team2Points.toFixed(1)}</div>
                 </div>
             </div>
             <div class="h2h-players-list">
                 <div class="h2h-players-header">
-                    <span>${m.team1}</span>
+                    <span title="${titre1}">${nom1}</span>
                     <span>FPTS</span>
-                    <span>${m.team2}</span>
+                    <span title="${titre2}">${nom2}</span>
                 </div>
                 ${playerRowsHTML || '<div class="h2h-no-players">Aucun joueur à afficher</div>'}
             </div>
@@ -1785,11 +1823,16 @@ async function renderH2HMatchupsForPeriod(poolName) {
             if (!res.ok) throw new Error('Failed');
             data = await res.json();
 
-            const today = new Date();
-            const dateLabel = today.toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long' });
+            // L'état vient du serveur. En dur, la bandeau annonçait « EN COURS »
+            // sur une semaine 1 qui n'ouvre qu'au premier match de la saison.
+            const ws = data.weekStatus || 'ongoing';
+            const plage = h2hSchedDateRange(data.weekStart, data.weekEnd);
+            const sousTitre = (ws === 'upcoming' && plage)
+                ? `Semaine du ${plage} — premier duel à venir`
+                : `Aujourd'hui — ${h2hJourLong(data.date) || jourLocalLong()}`;
             weekHeader.innerHTML = `
-                <div class="h2h-week-label">Semaine ${data.currentWeek} <span class="h2h-week-status status-ongoing">🔴 EN COURS</span></div>
-                <div class="h2h-week-dates">Aujourd'hui — ${data.date || dateLabel}</div>`;
+                <div class="h2h-week-label">Semaine ${data.currentWeek} <span class="h2h-week-status ${H2H_WEEK_STATUS_CLASS[ws] || ''}">${H2H_WEEK_STATUS_LABEL[ws] || ''}</span></div>
+                <div class="h2h-week-dates">${escapeHtmlText(sousTitre)}</div>`;
         } else {
             // Use cache if available
             if (!h2hWeekCache || h2hWeekCache.poolName !== poolName) {
@@ -1801,16 +1844,12 @@ async function renderH2HMatchupsForPeriod(poolName) {
                 data = h2hWeekCache.data;
             }
 
-            let dateRange = 'Semaine en cours';
-            if (data.weekStart && data.weekEnd) {
-                const fmt = d => new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
-                dateRange = `${fmt(data.weekStart)} – ${fmt(data.weekEnd)}`;
-            }
-            const statusMap = { upcoming: '📅 À VENIR', ongoing: '🔴 EN COURS', completed: '✓ TERMINÉE' };
-            const statusClass = { upcoming: 'status-upcoming', ongoing: 'status-ongoing', completed: 'status-completed' };
+            // `weekEnd` est le lundi SUIVANT : la plage recule d'un jour pour
+            // se lire « lundi au dimanche », comme partout ailleurs.
+            const dateRange = h2hSchedDateRange(data.weekStart, data.weekEnd) || 'Semaine en cours';
             const ws = data.weekStatus || 'ongoing';
             weekHeader.innerHTML = `
-                <div class="h2h-week-label">Semaine ${data.currentWeek} <span class="h2h-week-status ${statusClass[ws] || ''}">${statusMap[ws] || ''}</span></div>
+                <div class="h2h-week-label">Semaine ${data.currentWeek} <span class="h2h-week-status ${H2H_WEEK_STATUS_CLASS[ws] || ''}">${H2H_WEEK_STATUS_LABEL[ws] || ''}</span></div>
                 <div class="h2h-week-dates">${dateRange}</div>`;
         }
 
@@ -1843,9 +1882,32 @@ async function renderH2HMatchupsForPeriod(poolName) {
 let h2hScheduleCache = null;   // { poolName, data }
 let h2hSchedTeam = null;       // équipe affichée dans le carrousel
 
+/**
+ * Les états de semaine que le serveur renvoie (routes/h2h.js,
+ * etatDeSemaine). `pending_finalization` en fait partie : une semaine échue
+ * dont les feuilles de match ne sont pas toutes arrivées n'est ni en cours ni
+ * terminée. Les tables qui l'oubliaient la montraient « À venir ».
+ */
+const H2H_WEEK_STATUS_LABEL = {
+    upcoming: '📅 À VENIR',
+    ongoing: '🔴 EN COURS',
+    pending_finalization: '⏳ EN ATTENTE',
+    completed: '✓ TERMINÉE',
+    no_matchups: '—',
+    awaiting_draft_completion: '—'
+};
+
+const H2H_WEEK_STATUS_CLASS = {
+    upcoming: 'status-upcoming',
+    ongoing: 'status-ongoing',
+    pending_finalization: 'status-awaiting',
+    completed: 'status-completed'
+};
+
 const H2H_SCHED_STATUS = {
     completed: { label: 'Terminée', cls: 'is-done' },
     ongoing:   { label: 'En cours', cls: 'is-live' },
+    pending_finalization: { label: 'En attente', cls: 'is-live' },
     upcoming:  { label: 'À venir',  cls: 'is-next' }
 };
 
@@ -1860,12 +1922,49 @@ function myTeamIn(poolName) {
     return entree ? entree[0] : null;
 }
 
+/**
+ * Une borne de semaine, lue comme une JOURNÉE de calendrier.
+ *
+ * Le serveur envoie `2026-10-13` : une journée, pas un instant. `new Date()`
+ * la lisait à minuit UTC, puis `toLocaleDateString` la rendait dans le fuseau
+ * du visiteur — à Montréal, le 13 s'affichait « 12 ». Toute la bande de
+ * dates du tête-à-tête était donc annoncée un jour trop tôt. On reste en UTC
+ * de la lecture au formatage, et la journée écrite est celle qui s'affiche.
+ */
+function h2hJourUTC(valeur) {
+    if (valeur instanceof Date) return Number.isNaN(valeur.getTime()) ? null : new Date(valeur.getTime());
+    const texte = String(valeur == null ? '' : valeur);
+    if (!texte) return null;
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(texte) ? new Date(texte + 'T00:00:00Z') : new Date(texte);
+    return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * La journée d'aujourd'hui, dans le fuseau du visiteur.
+ *
+ * Repli quand le serveur n'a pas envoyé sa date. Pas de `timeZone: 'UTC'`
+ * ici, contrairement à h2hJourLong : « maintenant » est un instant, et le
+ * forcer en UTC ferait passer la soirée de Montréal au lendemain.
+ */
+function jourLocalLong() {
+    return new Date().toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+/** « dimanche 13 octobre » — même règle, forme longue. */
+function h2hJourLong(valeur) {
+    const d = h2hJourUTC(valeur);
+    return d ? d.toLocaleDateString('fr-CA', {
+        weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'
+    }) : '';
+}
+
 /** « 13 – 19 oct. » : weekEnd est le lundi SUIVANT, on recule d'un jour. */
 function h2hSchedDateRange(weekStart, weekEnd) {
-    const debut = new Date(weekStart);
-    const fin = new Date(weekEnd);
-    fin.setDate(fin.getDate() - 1);
-    const jour = d => d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+    const debut = h2hJourUTC(weekStart);
+    const fin = h2hJourUTC(weekEnd);
+    if (!debut || !fin) return '';
+    fin.setUTCDate(fin.getUTCDate() - 1);
+    const jour = d => d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', timeZone: 'UTC' });
     return `${jour(debut)} – ${jour(fin)}`;
 }
 
@@ -2068,10 +2167,9 @@ function renderH2HHistory(poolName) {
     const history = [...poolData.h2hData.matchupHistory].reverse(); // Newest first
 
     historyList.innerHTML = history.map(week => {
-        const weekStart = week.weekStart ? new Date(week.weekStart) : null;
-        const weekEnd = week.weekEnd ? new Date(week.weekEnd) : null;
-        const formatDate = d => d ? d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' }) : '';
-        const dateRange = weekStart && weekEnd ? `${formatDate(weekStart)} - ${formatDate(weekEnd)}` : '';
+        // Même règle que le calendrier : bornes lues comme des journées, et
+        // `weekEnd` — le lundi SUIVANT — reculé d'un jour pour l'affichage.
+        const dateRange = h2hSchedDateRange(week.weekStart, week.weekEnd);
 
         const matchupsHTML = week.matchups.map(m => {
             const isT1Winner = m.winner === m.team1;

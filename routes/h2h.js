@@ -361,9 +361,19 @@ function monter(app, ctx) {
                 affichage.push(carteDeDuel(duel, p1, p2, enveloppe.data));
             }
 
+            // Les bornes de la semaine voyagent avec la journée : « aujourd'hui »
+            // ne dit pas si la semaine a commencé, et l'écran annonçait « EN
+            // COURS » sur une semaine 1 qui n'ouvre que dans quinze jours.
+            const fenetre = serviceH2H.fenetreDeSemaine(h2h, numero);
+            const etat = fenetre ? etatDeSemaine(fenetre, numero, numero, false) : 'awaiting_draft_completion';
+
             res.json({
                 currentWeek: numero,
                 date: aujourdhui,
+                weekStart: fenetre ? fenetre.debut : null,
+                weekEnd: fenetre ? fenetre.fin : null,
+                weekLastDay: fenetre ? fenetre.dernierJour : null,
+                weekStatus: etat,
                 completude: ingestion.completude,
                 provisoire: true,
                 matchups: affichage,

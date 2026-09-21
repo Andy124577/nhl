@@ -388,6 +388,32 @@ test('la semaine en cours est annoncée comme provisoire et dit jusqu où elle e
     assert.equal(res.body.scoringVersion, scoring.VERSION_BAREME);
 });
 
+test("« aujourd'hui » porte l'état de la semaine : une semaine à venir ne s'annonce pas en cours", async () => {
+    // Le bandeau du « duel en cours » écrivait « EN COURS » en dur. Un pool
+    // repêché avant l'ouverture de la saison affichait donc une semaine 1
+    // « en cours » à 0,0 contre 0,0, des semaines avant le premier match.
+    const futur = dates.ajouterJours(dates.lundiDe(dates.journeeLocale()), 21);
+    const h = banc({ pool: poolH2H({ seasonStart: futur }), calendrier: async () => 0 });
+
+    const res = await h.appeler('GET', '/h2h/today-scores', { auth: ALICE, query: { poolName: 'Ligue' } });
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.weekStatus, 'upcoming');
+    assert.equal(res.body.weekStart, futur);
+    assert.equal(res.body.weekEnd, dates.ajouterJours(futur, 7));
+    assert.equal(res.body.weekLastDay, dates.ajouterJours(futur, 6),
+        'la borne de fin est le lundi suivant : le dernier jour affiché est le dimanche');
+});
+
+test("« aujourd'hui » annonce « en cours » quand la semaine est bien ouverte", async () => {
+    const enCours = dates.lundiDe(dates.journeeLocale());
+    const h = banc({ pool: poolH2H({ seasonStart: enCours }), calendrier: async () => 0 });
+
+    const res = await h.appeler('GET', '/h2h/today-scores', { auth: ALICE, query: { poolName: 'Ligue' } });
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.weekStatus, 'ongoing');
+    assert.equal(res.body.date, dates.journeeLocale());
+});
+
 test('une semaine échue mais non pointée est « en attente de finalisation », pas « terminée »', async () => {
     const h = banc({ calendrier: async () => 0 });
     const res = await h.appeler('GET', '/h2h/season-schedule', { auth: ALICE, query: { poolName: 'Ligue' } });
