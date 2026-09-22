@@ -1703,12 +1703,17 @@ app.get('/current-teams', async (req, res) => {
 // slide type instead of breaking, exactly like "no games today."
 // ============================================================
 let liveGamesCache = { data: null, fetchedAt: 0 };
-const LIVE_GAMES_TTL_MS = 25 * 1000;
+// Cinq secondes : c'est ce cache qui fixait le gros du retard d'un but sur la
+// carte d'accueil (jusqu'à 25 s d'attente avant même que le client redemande).
+// Il reste partagé par tous les membres — la LNH n'est donc sollicitée qu'une
+// fois par tranche de cinq secondes, quel que soit le nombre de spectateurs.
+const LIVE_GAMES_TTL_MS = 5 * 1000;
 
 app.get('/live-games', async (req, res) => {
     try {
         const now = Date.now();
         if (liveGamesCache.data && (now - liveGamesCache.fetchedAt) < LIVE_GAMES_TTL_MS) {
+            res.set('Cache-Control', 'no-store');
             return res.json(liveGamesCache.data);
         }
 
@@ -1752,6 +1757,7 @@ app.get('/live-games', async (req, res) => {
 
         const payload = { games: liveGames, generatedAt: new Date().toISOString() };
         liveGamesCache = { data: payload, fetchedAt: now };
+        res.set('Cache-Control', 'no-store');
         res.json(payload);
     } catch (error) {
         console.error('❌ Error fetching live games:', error.message);

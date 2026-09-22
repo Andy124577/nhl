@@ -761,6 +761,38 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
     color: #7A8798;
     font-size: calc(var(--su) * 16.5); font-weight: 500;
 }
+/* ---- Un but qui tombe sous les yeux du membre ----
+   La rangée se glisse en haut de la liste et s'allume une fois aux couleurs
+   du club marqueur, puis se range parmi les autres. Seuls les buts arrivés
+   pendant que la carte est à l'écran portent `is-new` (voir patchStoryGoals) :
+   ouvrir la page en troisième période n'allume rien. */
+.sl-goal-from-away { --sl-flash: var(--sl-away-rgb); }
+.sl-goal-from-home { --sl-flash: var(--sl-home-rgb); }
+
+@keyframes sl-goal-arrive {
+    from { opacity: 0; transform: translateY(calc(var(--su) * -14)); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes sl-goal-flash {
+    0%   { background: rgba(var(--sl-flash), .34); border-color: rgba(var(--sl-flash), .8);
+           box-shadow: 0 0 calc(var(--su) * 26) rgba(var(--sl-flash), .30); }
+    100% { background: rgba(255,255,255,.032); border-color: rgba(255,255,255,.055);
+           box-shadow: none; }
+}
+.sl-goal.is-new {
+    animation: sl-goal-arrive .3s ease-out, sl-goal-flash 2.6s ease-out .3s;
+}
+
+/* Sans animation : le but reste simplement teinté jusqu'au prochain
+   rafraîchissement — repéré tout autant, sans rien qui bouge. */
+@media (prefers-reduced-motion: reduce) {
+    .sl-goal.is-new {
+        animation: none;
+        background: rgba(var(--sl-flash), .20);
+        border-color: rgba(var(--sl-flash), .55);
+    }
+}
+
 .sl-goal-none {
     justify-content: center;
     color: #78848F;

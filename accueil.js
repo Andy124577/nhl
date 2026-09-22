@@ -185,18 +185,41 @@ let storyElapsed = 0;
 let storyPaused = false;
 // Le match choisi à la main dans le sélecteur (null = rotation libre). La
 // carte s'arrête dessus et continue de se mettre à jour toute seule.
-const STORY_PINNED_REFRESH_MS = 20000;
+// Le filet de sécurité est long : c'est le suivi rapproché ci-dessous qui
+// tient la carte à jour, celui-ci ne sert qu'au cas où il resterait muet.
+const STORY_PINNED_REFRESH_MS = 120000;
 let storyPinnedGameId = null;
+
+// Suivi rapproché des matchs en cours. Il tourne à part de la rotation des
+// diapos : avant, la carte n'allait rechercher le pointage qu'une fois le
+// carrousel bouclé — sept secondes par diapo, soit plus d'une minute un soir
+// à huit matchs. Le retard restant est celui de la LNH elle-même, qui publie
+// un but dans /score/now une dizaine de secondes après qu'il est marqué.
+const STORY_LIVE_POLL_MS = 5000;
+let storyLiveTimer = null;
+
+// Durée du clignotement d'un but, animation comprise (voir .sl-goal.is-new
+// dans accueil.css). Passé ce délai la classe retombe : sans ça le dernier
+// but resterait teinté pour toujours chez qui a désactivé les animations,
+// et se lirait comme s'il venait d'être marqué.
+const STORY_FLASH_MS = 3200;
+let storyFlashSeq = 0;
+
+// Par match : l'ordre des buts déjà affichés, pour ne reconstruire la liste
+// que lorsqu'elle change vraiment, et pour ne faire clignoter que les buts
+// arrivés sous les yeux du membre.
+const storyGoalState = new Map();
 
 async function loadStories() {
     const section = document.getElementById('storiesSection');
     if (!section) return;
     stopStoryTimer();
+    stopStoryLivePoll();
 
     const [liveGames, news] = await Promise.all([fetchLiveGames(), fetchNhlNews()]);
 
     storySlides = [
-        ...liveGames.map(game => ({ type: 'live', game })),
+        ...(liveGames || []).map(game => ({ type: 'live', game })),
         ...news.map(article => ({ type: 'news', article }))
     ];
 
@@ -226,10 +249,154 @@ async function loadStories() {
 
     storyIndex = epingle < 0 ? 0 : epingle;
     renderStorySlide();
+    startStoryLivePoll();
 
     if (storyPinnedGameId === null) startStoryTimer();
     else startStoryPinnedRefresh();
 }
+
+// ---- Suivi rapproché des matchs en cours --------------------------------
+// Le pointage, le chrono et les buts se mettent à jour sur la diapo affichée
+// sans la redessiner : la rotation garde son rythme, la barre de progression
+// ne repart pas de zéro, et un but qui tombe se voit tout de suite.
+
+function startStoryLivePoll() {
+    stopStoryLivePoll();
+    if (!storySlides.some(s => s.type === 'live')) return;
+    // Un onglet caché ne consomme ni réseau ni batterie — même règle que le
+    // calendrier du tableau de bord et que fzToday.
+    if (document.visibilityState !== 'visible') return;
+    storyLiveTimer = setInterval(refreshStoryLive, STORY_LIVE_POLL_MS);
+}
+
+function stopStoryLivePoll() {
+    if (storyLiveTimer) { clearInterval(storyLiveTimer); storyLiveTimer = null; }
+}
+
+async function refreshStoryLive() {
+    if (document.hidden) return;
+
+    const matchs = await fetchLiveGames();
+    // Panne réseau : on garde ce qui est à l'écran. Traiter l'échec comme
+    // « plus aucun match » effacerait un tableau indicateur bien vivant.
+    if (matchs === null) return;
+
+    const avant = storySlides.filter(s => s.type === 'live').map(s => String(s.game.id)).join('|');
+    const apres = matchs.map(g => String(g.id)).join('|');
+
+    // Un match qui commence ou qui se termine change la liste des diapos :
+    // il faut la reconstruire, pas seulement rafraîchir des chiffres.
+    if (avant !== apres) { loadStories(); return; }
+
+    matchs.forEach(g => {
+        const slide = storySlides.find(s => s.type === 'live' && String(s.game.id) === String(g.id));
+        if (slide) slide.game = g;
+    });
+
+    updateStoryPickerScores();
+
+    const courant = storySlides[storyIndex];
+    if (courant && courant.type === 'live') patchStoryLive(courant.game);
+}
+
+/**
+ * Remet à jour le tableau indicateur affiché, case par case. Redessiner la
+ * carte entière toutes les cinq secondes ferait clignoter les crests et
+ * couperait l'animation du but qui vient d'arriver.
+ */
+function patchStoryLive(g) {
+    const card = document.getElementById('storiesCard');
+    const live = card && card.querySelector('.sl-live');
+    if (!live) return;
+
+    const scores = live.querySelectorAll('.sl-center .sl-score');
+    if (scores[0]) scores[0].textContent = g.away.score;
+    if (scores[1]) scores[1].textContent = g.home.score;
+
+    const periode = live.querySelector('.sl-period');
+    if (periode) periode.textContent = storyPeriodLabel(g);
+
+    const chrono = live.querySelector('.sl-clock');
+    if (chrono) {
+        chrono.textContent = storyClockLabel(g);
+        chrono.classList.toggle('is-word', storyEnEntracte(g));
+    }
+
+    const pastilles = live.querySelector('.sl-dots');
+    if (pastilles) pastilles.innerHTML = storyPeriodDots(g);
+
+    patchStoryGoals(live, g);
+}
+
+/**
+ * La liste des buts, reconstruite seulement quand elle a changé — sinon
+ * l'animation du dernier but repartirait à chaque passage. Les buts arrivés
+ * depuis le dernier passage sont marqués « is-new » : eux seuls s'allument.
+ */
+function patchStoryGoals(live, g) {
+    const liste = live.querySelector('.sl-goals');
+    if (!liste) return;
+
+    const id = String(g.id);
+    const etat = storyGoalState.get(id);
+    const cles = (g.events || []).map(storyGoalKey);
+    const ordre = cles.join('~');
+    if (etat && etat.ordre === ordre) return;
+
+    // Au tout premier passage sur un match, rien ne clignote : les buts déjà
+    // marqués avant l'ouverture de la page ne viennent pas de tomber.
+    const nouvelles = etat ? new Set(cles.filter(c => !etat.vues.has(c))) : new Set();
+
+    liste.innerHTML = storyGoalsHTML(g, nouvelles);
+    storyGoalState.set(id, { ordre, vues: new Set(cles) });
+    if (nouvelles.size) eteindreFlash(liste);
+}
+
+/**
+ * Éteint le clignotement une fois l'animation terminée. Le jeton évite qu'un
+ * but chasse l'autre : deux buts à quelques secondes d'écart, et c'est le
+ * dernier compte à rebours qui nettoie les deux.
+ */
+function eteindreFlash(liste) {
+    const jeton = ++storyFlashSeq;
+    setTimeout(() => {
+        if (jeton !== storyFlashSeq) return;
+        liste.querySelectorAll('.sl-goal.is-new').forEach(el => el.classList.remove('is-new'));
+    }, STORY_FLASH_MS);
+}
+
+/** Ce qui identifie un but d'un rafraîchissement à l'autre. */
+function storyGoalKey(e) {
+    return [e.team, e.period, e.timeInPeriod, e.scorer].join('|');
+}
+
+/** Note les buts d'un match comme « déjà vus », sans les faire clignoter. */
+function seedStoryGoalState(g) {
+    const cles = (g.events || []).map(storyGoalKey);
+    storyGoalState.set(String(g.id), { ordre: cles.join('~'), vues: new Set(cles) });
+}
+
+/** Les pointages des jetons suivent le direct, même hors de la diapo affichée. */
+function updateStoryPickerScores() {
+    const picker = document.getElementById('storiesPicker');
+    if (!picker || picker.style.display === 'none') return;
+
+    picker.querySelectorAll('[data-story-pick]').forEach(btn => {
+        const v = btn.getAttribute('data-story-pick');
+        const slide = storySlides.find(s => s.type === 'live' && String(s.game.id) === v);
+        const cell = slide && btn.querySelector('.stories-chip-score');
+        if (cell) cell.innerHTML = `${slide.game.away.score}<i>-</i>${slide.game.home.score}`;
+    });
+}
+
+// Revenir sur l'onglet doit montrer le pointage actuel, pas celui d'il
+// y a dix minutes : on rattrape d'abord, on reprend le suivi ensuite.
+document.addEventListener('visibilitychange', () => {
+    if (!storySlides.length) return;
+    if (document.hidden) { stopStoryLivePoll(); return; }
+    refreshStoryLive();
+    startStoryLivePoll();
+});
 
 // ---- Sélecteur de match -------------------------------------------------
 // Plusieurs matchs sont souvent en cours au même moment, et le carrousel les
@@ -335,14 +502,20 @@ function renderStoriesEmpty() {
     }
 }
 
+/**
+ * Les matchs en cours, ou `null` si la requête n'a pas abouti. La nuance
+ * compte pour le suivi rapproché : « aucun match » efface la carte, « je n'ai
+ * pas pu demander » doit la laisser telle quelle.
+ */
 async function fetchLiveGames() {
     try {
         const res = await fetch(`${BASE_URL}/live-games`, { cache: 'no-store' });
-        const data = res.ok ? await res.json() : null;
+        if (!res.ok) return null;
+        const data = await res.json();
         return (data && data.games) || [];
     } catch (err) {
         console.warn('Could not load live games:', err);
-        return [];
+        return null;
     }
 }
 
@@ -480,6 +653,56 @@ function renderStorySlide() {
     }
 
     card.innerHTML = storyLiveHTML(slide.game);
+    seedStoryGoalState(slide.game);
+}
+
+/* Période, chrono et pastilles : écrits une seule fois, parce que le premier
+   rendu (storyLiveHTML) et le suivi rapproché (patchStoryLive) les réclament
+   tous les deux. Deux copies finiraient par se contredire à l'entracte ou en
+   prolongation, et c'est précisément là que la ligne compte. */
+
+function storyEnEntracte(g) {
+    return !!(g.clock && g.clock.inIntermission);
+}
+
+function storyPeriodLabel(g) {
+    return STORY_PERIOD_LABEL[g.periodType]
+        || `${g.period}${Number(g.period) === 1 ? 're' : 'e'} PÉRIODE`;
+}
+
+function storyClockLabel(g) {
+    return storyEnEntracte(g) ? 'ENTRACTE' : ((g.clock && g.clock.timeRemaining) || '');
+}
+
+function storyPeriodDots(g) {
+    return Array.from({ length: Math.max(3, Number(g.period) || 3) }, (_, i) =>
+        `<i${i + 1 === Number(g.period) ? ' class="is-on"' : ''}></i>`).join('');
+}
+
+/**
+ * Les rangées de buts, du plus récent au plus ancien. `nouvelles` porte les
+ * clés des buts qui viennent d'arriver : eux seuls s'allument (voir
+ * patchStoryGoals). Au premier rendu l'ensemble est vide — un membre qui
+ * ouvre la page en troisième période ne doit pas voir quatre buts clignoter.
+ */
+function storyGoalsHTML(g, nouvelles) {
+    const neufs = nouvelles || new Set();
+    return (g.events || []).map(e => {
+        const cote = e.team === g.home.abbrev ? 'home' : 'away';
+        const neuf = neufs.has(storyGoalKey(e)) ? ' is-new' : '';
+        return `
+                <div class="sl-goal sl-goal-from-${cote}${neuf}">
+                    <span class="sl-goal-time">${escapeHTML(e.timeInPeriod)}</span>
+                    <span class="sl-goal-team sl-goal-team-${cote}">${escapeHTML(e.team)}</span>
+                    <span class="sl-goal-scorer">${escapeHTML(e.scorer)}</span>
+                    <span class="sl-goal-sep"></span>
+                    <span class="sl-goal-tag">But</span>
+                    ${STORY_STRENGTH_LABEL[e.strength] ? `<span class="sl-goal-strength">${STORY_STRENGTH_LABEL[e.strength]}</span>` : ''}
+                    ${storyAssistsHTML(e)}
+                    <span class="sl-goal-score">${storyGoalScore(e.awayScore, 'away')}<i>-</i>${storyGoalScore(e.homeScore, 'home')}</span>
+                    <span class="sl-goal-period">P${escapeHTML(e.period)}</span>
+                </div>`;
+    }).join('');
 }
 
 /**
@@ -489,12 +712,10 @@ function renderStorySlide() {
  * le match reçu et le classement déjà en mémoire.
  */
 function storyLiveHTML(g) {
-    const entracte = !!(g.clock && g.clock.inIntermission);
-    const periode = STORY_PERIOD_LABEL[g.periodType]
-        || `${g.period}${Number(g.period) === 1 ? 're' : 'e'} PÉRIODE`;
-    const chrono = entracte ? 'ENTRACTE' : ((g.clock && g.clock.timeRemaining) || '');
-    const pastilles = Array.from({ length: Math.max(3, Number(g.period) || 3) }, (_, i) =>
-        `<i${i + 1 === Number(g.period) ? ' class="is-on"' : ''}></i>`).join('');
+    const entracte = storyEnEntracte(g);
+    const periode = storyPeriodLabel(g);
+    const chrono = storyClockLabel(g);
+    const pastilles = storyPeriodDots(g);
 
     const visiteur = storyTeamIdentity(g.away.abbrev, g.away.name);
     const local = storyTeamIdentity(g.home.abbrev, g.home.name);
@@ -509,18 +730,7 @@ function storyLiveHTML(g) {
                     </span>
                 </div>`;
 
-    const buts = (g.events || []).map(e => `
-                <div class="sl-goal">
-                    <span class="sl-goal-time">${escapeHTML(e.timeInPeriod)}</span>
-                    <span class="sl-goal-team sl-goal-team-${e.team === g.home.abbrev ? 'home' : 'away'}">${escapeHTML(e.team)}</span>
-                    <span class="sl-goal-scorer">${escapeHTML(e.scorer)}</span>
-                    <span class="sl-goal-sep"></span>
-                    <span class="sl-goal-tag">But</span>
-                    ${STORY_STRENGTH_LABEL[e.strength] ? `<span class="sl-goal-strength">${STORY_STRENGTH_LABEL[e.strength]}</span>` : ''}
-                    ${storyAssistsHTML(e)}
-                    <span class="sl-goal-score">${storyGoalScore(e.awayScore, 'away')}<i>-</i>${storyGoalScore(e.homeScore, 'home')}</span>
-                    <span class="sl-goal-period">P${escapeHTML(e.period)}</span>
-                </div>`).join('');
+    const buts = storyGoalsHTML(g);
 
     return `
         <div class="sl-live" style="${storyTeamVars('away', g.away.abbrev)}; ${storyTeamVars('home', g.home.abbrev)}">
@@ -584,9 +794,9 @@ function startStoryTimer() {
 }
 
 /**
- * Mode épinglé : plus de rotation, donc plus de barre de progression — mais
- * la carte doit continuer de suivre le match. On redemande simplement le flux
- * en direct, et loadStories() retombe d'elle-même sur le match épinglé.
+ * Mode épinglé : plus de rotation, donc plus de barre de progression. Le
+ * pointage, lui, continue d'avancer grâce au suivi rapproché ; ce rechargement
+ * complet n'est qu'un filet, pour le jour où le suivi resterait muet.
  */
 function startStoryPinnedRefresh() {
     stopStoryTimer();
