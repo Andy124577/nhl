@@ -272,9 +272,21 @@ describe('accueil — le sélecteur de match', () => {
         assert.match(ACCUEIL_JS, /storyTimer = setTimeout\(loadStories, STORY_PINNED_REFRESH_MS\)/);
     });
 
-    test('le match épinglé survit au rafraîchissement, et seulement tant qu’il joue', () => {
-        assert.match(ACCUEIL_JS, /const epingle = storyPinnedGameId === null \? -1/);
-        assert.match(ACCUEIL_JS, /if \(epingle < 0\) storyPinnedGameId = null;/);
+    test('la diapo épinglée survit au rafraîchissement, et seulement tant qu’elle est au flux', () => {
+        assert.match(ACCUEIL_JS, /const epingle = storyPinnedKey === null \? -1/);
+        assert.match(ACCUEIL_JS, /if \(epingle < 0\) storyPinnedKey = null;/);
+    });
+
+    test('sans match en direct, le sélecteur propose les actualités', () => {
+        assert.match(ACCUEIL_JS, /const jetons = matchs\.length \? matchs : nouvelles;/);
+        assert.match(ACCUEIL_JS, /function storyNewsChipHTML\(slide\)/);
+    });
+
+    test('une diapo se reconnaît par sa clé, pas par sa position', () => {
+        const { storySlideKey } = chargerFonctions('accueil.js', ['storySlideKey'], {});
+        assert.equal(storySlideKey({ type: 'live', game: { id: 42 } }), 'live:42');
+        assert.equal(storySlideKey({ type: 'news', article: { url: 'https://x/a', title: 'T' } }), 'news:https://x/a');
+        assert.equal(storySlideKey(undefined), null);
     });
 
     test('le choix du membre et le match à l’écran ne s’allument pas pareil', () => {

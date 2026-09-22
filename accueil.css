@@ -829,7 +829,8 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
     border-radius: 100px;
 }
 
-/* ---- Sélecteur de match : un jeton par match en cours, « Auto » en tête.
+/* ---- Sélecteur de diapo : un jeton par match en cours (ou par actualité les
+   soirs sans match), « Auto » en tête.
    Le carrousel choisissait seul ce qu'on regardait ; ici on peut s'arrêter sur
    un match, et la carte continue de le suivre (voir startStoryPinnedRefresh
    dans accueil.js). Masqué dès qu'il n'y a rien à choisir. ---- */
@@ -871,6 +872,20 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
     color: var(--primary);
 }
 .stories-chip.is-on .stories-chip-score { color: var(--primary); }
+
+/* Jeton d'actualité (soirs sans match) : vignette ronde et titre tronqué. */
+.stories-chip-news { padding-left: 4px; max-width: 240px; }
+.stories-chip-thumb {
+    flex: none;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--border-light) center / cover no-repeat;
+}
+.stories-chip-title {
+    min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-weight: 600;
+}
 
 @media (min-width: 769px) {
     .stories-card { height: 300px; }
