@@ -38,7 +38,7 @@
     <link rel="stylesheet" href="poolNav.css">
     <link rel="stylesheet" href="poolSettings.css">
     <link rel="stylesheet" href="index.css">
-    <link rel="stylesheet" href="accueil.css?v=20260920c">
+    <link rel="stylesheet" href="accueil.css?v=20260921a">
     <link rel="stylesheet" href="fzToday.css?v=20260920">
     <link rel="stylesheet" href="career-modal.css">
     <link rel="stylesheet" href="accueil-dash.css?v=20260920b">
@@ -82,6 +82,10 @@
             <div class="stories-progress-track">
                 <div class="stories-progress-fill" id="storiesProgressFill"></div>
             </div>
+            <!-- Sélecteur de match : un jeton par match en cours, plus « Auto ».
+                 Rempli par renderStoryPicker() (accueil.js) ; masqué tant qu'il
+                 n'y a rien à choisir. -->
+            <div class="stories-picker" id="storiesPicker" style="display:none;"></div>
         </div>
     </section>
 

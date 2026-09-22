@@ -728,6 +728,24 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
     color: #8E9AA8;
     font-size: calc(var(--su) * 13); font-weight: 700; letter-spacing: .06em;
 }
+/* Les aides, sur la même ligne que le but : elles prennent l'espace resté
+   libre entre « But » et le pointage plutôt qu'une seconde ligne, qui aurait
+   fait grandir chaque rangée — et la carte avec. */
+.sl-goal-assists {
+    flex: 1 1 auto; min-width: 0;
+    margin-left: calc(var(--su) * 18);
+    color: #9AA6B3;
+    font-size: calc(var(--su) * 15.5); font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sl-goal-assists i {
+    font-style: normal; font-weight: 700;
+    margin-right: calc(var(--su) * 7);
+    color: #6E7B8A;
+    letter-spacing: .06em;
+}
+.sl-goal-assists.is-none { color: #66717D; font-style: italic; }
+
 .sl-goal-score {
     margin-left: auto;
     display: inline-flex; align-items: baseline; gap: calc(var(--su) * 5);
@@ -778,6 +796,49 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
     background: var(--primary);
     border-radius: 100px;
 }
+
+/* ---- Sélecteur de match : un jeton par match en cours, « Auto » en tête.
+   Le carrousel choisissait seul ce qu'on regardait ; ici on peut s'arrêter sur
+   un match, et la carte continue de le suivre (voir startStoryPinnedRefresh
+   dans accueil.js). Masqué dès qu'il n'y a rien à choisir. ---- */
+.stories-picker {
+    display: flex; gap: 8px;
+    max-width: 1200px;
+    margin: 10px auto 0;
+    padding-bottom: 3px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+.stories-chip {
+    flex: none;
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 100px;
+    border: 1px solid var(--border-light);
+    background: var(--card);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: .78rem; font-weight: 700; letter-spacing: .02em;
+    cursor: pointer;
+    transition: color .15s, border-color .15s, background .15s;
+}
+.stories-chip:hover { color: var(--text-main); border-color: rgba(var(--primary-rgb),.45); }
+.stories-chip img { width: 18px; height: 18px; object-fit: contain; flex: none; }
+.stories-chip-score { color: var(--text-main); font-variant-numeric: tabular-nums; }
+.stories-chip-score i { font-style: normal; opacity: .4; margin: 0 2px; }
+
+/* Le match qui passe à l'écran pendant la rotation libre : un simple liseré,
+   pour ne pas se confondre avec le jeton réellement choisi. */
+.stories-chip.is-current { color: var(--text-main); border-color: rgba(var(--primary-rgb),.45); }
+
+/* Le choix du membre : « Auto », ou le match épinglé. */
+.stories-chip.is-on {
+    background: rgba(var(--primary-rgb),.14);
+    border-color: rgba(var(--primary-rgb),.55);
+    color: var(--primary);
+}
+.stories-chip.is-on .stories-chip-score { color: var(--primary); }
 
 @media (min-width: 769px) {
     .stories-card { height: 300px; }

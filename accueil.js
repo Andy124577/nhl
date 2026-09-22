@@ -183,6 +183,10 @@ let storyIndex = 0;
 let storyTimer = null;
 let storyElapsed = 0;
 let storyPaused = false;
+// Le match choisi à la main dans le sélecteur (null = rotation libre). La
+// carte s'arrête dessus et continue de se mettre à jour toute seule.
+const STORY_PINNED_REFRESH_MS = 20000;
+let storyPinnedGameId = null;
 
 async function loadStories() {
     const section = document.getElementById('storiesSection');
@@ -203,14 +207,109 @@ async function loadStories() {
     section.style.display = '';
 
     if (!storySlides.length) {
+        storyPinnedGameId = null;
+        renderStoryPicker();
         renderStoriesEmpty();
         storyTimer = setTimeout(loadStories, 60000);
         return;
     }
 
-    storyIndex = 0;
+    renderStoryPicker();
+    bindStoryHover();
+
+    // Un match épinglé le reste d'un rafraîchissement à l'autre, tant qu'il
+    // est encore en cours — c'est tout l'intérêt de l'avoir choisi. Dès
+    // qu'il se termine il quitte le flux, et la rotation reprend seule.
+    const epingle = storyPinnedGameId === null ? -1
+        : storySlides.findIndex(s => s.type === 'live' && String(s.game.id) === storyPinnedGameId);
+    if (epingle < 0) storyPinnedGameId = null;
+
+    storyIndex = epingle < 0 ? 0 : epingle;
     renderStorySlide();
-    startStoryTimer();
+
+    if (storyPinnedGameId === null) startStoryTimer();
+    else startStoryPinnedRefresh();
+}
+
+// ---- Sélecteur de match -------------------------------------------------
+// Plusieurs matchs sont souvent en cours au même moment, et le carrousel les
+// fait défiler à son rythme : on ne pouvait pas choisir celui qu'on regarde.
+// Les jetons donnent ce choix — « Auto » laisse tourner, un match l'épingle.
+
+function renderStoryPicker() {
+    const picker = document.getElementById('storiesPicker');
+    if (!picker) return;
+
+    const matchs = storySlides.filter(s => s.type === 'live').map(s => s.game);
+
+    // Rien à choisir : aucun match en cours, ou un seul écran en tout.
+    if (!matchs.length || storySlides.length < 2) {
+        picker.style.display = 'none';
+        picker.innerHTML = '';
+        return;
+    }
+
+    picker.style.display = '';
+    picker.innerHTML = `
+        <button type="button" class="stories-chip stories-chip-auto" data-story-pick="auto">Auto</button>
+        ${matchs.map(g => `
+        <button type="button" class="stories-chip" data-story-pick="${escapeHTML(String(g.id))}">
+            <img src="teams/${escapeHTML(g.away.abbrev)}.png" alt="" onerror="this.style.display='none'">
+            <span class="stories-chip-team">${escapeHTML(g.away.abbrev)}</span>
+            <span class="stories-chip-score">${g.away.score}<i>-</i>${g.home.score}</span>
+            <span class="stories-chip-team">${escapeHTML(g.home.abbrev)}</span>
+            <img src="teams/${escapeHTML(g.home.abbrev)}.png" alt="" onerror="this.style.display='none'">
+        </button>`).join('')}`;
+
+    if (!picker.dataset.bound) {
+        picker.dataset.bound = '1';
+        picker.addEventListener('click', ev => {
+            const btn = ev.target.closest('[data-story-pick]');
+            if (btn) pickStory(btn.getAttribute('data-story-pick'));
+        });
+    }
+
+    updateStoryPickerActive();
+}
+
+/** « Auto » relâche l'épingle et relance la rotation ; un match l'épingle. */
+function pickStory(valeur) {
+    if (valeur === 'auto') {
+        storyPinnedGameId = null;
+        updateStoryPickerActive();
+        startStoryTimer();
+        return;
+    }
+
+    const i = storySlides.findIndex(s => s.type === 'live' && String(s.game.id) === valeur);
+    if (i < 0) return;
+
+    storyPinnedGameId = valeur;
+    storyIndex = i;
+    renderStorySlide();
+    startStoryPinnedRefresh();
+}
+
+/**
+ * Deux états distincts : `is-on` marque le choix du membre (« Auto », ou le
+ * match épinglé), `is-current` le match qui passe à l'écran quand la rotation
+ * est libre. Sans cette différence, « Auto » et un match s'allumeraient pareil
+ * et on ne saurait plus lequel est épinglé.
+ */
+function updateStoryPickerActive() {
+    const picker = document.getElementById('storiesPicker');
+    if (!picker) return;
+
+    const slide = storySlides[storyIndex];
+    const aEcran = (slide && slide.type === 'live') ? String(slide.game.id) : null;
+
+    picker.querySelectorAll('[data-story-pick]').forEach(btn => {
+        const v = btn.getAttribute('data-story-pick');
+        const choisi = v === 'auto' ? storyPinnedGameId === null : v === storyPinnedGameId;
+        btn.classList.toggle('is-on', choisi);
+        btn.classList.toggle('is-current', !choisi && v !== 'auto' && v === aEcran);
+        btn.setAttribute('aria-pressed', choisi ? 'true' : 'false');
+    });
 }
 
 function renderStoriesEmpty() {
@@ -339,6 +438,18 @@ function storyNomLong(surnom) {
     return '';
 }
 
+/**
+ * Les aides d'un but. Le flux les portait déjà (voir /live-games dans
+ * server.js) ; elles n'étaient simplement jamais affichées. Un but sans aide
+ * le dit : « Sans aide » est une vraie information, pas un remplissage.
+ */
+function storyAssistsHTML(e) {
+    const aides = (Array.isArray(e.assists) ? e.assists : []).filter(Boolean);
+    if (!aides.length) return '<span class="sl-goal-assists is-none">Sans aide</span>';
+    const liste = aides.join(', ');
+    return `<span class="sl-goal-assists" title="${escapeHTML(liste)}"><i>A</i>${escapeHTML(liste)}</span>`;
+}
+
 /** Un chiffre de pointage : blanc à zéro, couleur du club dès le premier but. */
 function storyGoalScore(valeur, cote) {
     const n = Number(valeur);
@@ -352,6 +463,7 @@ function renderStorySlide() {
 
     const slide = storySlides[storyIndex];
     card.classList.toggle('is-live', slide.type === 'live');
+    updateStoryPickerActive();
 
     if (slide.type === 'news') {
         const a = slide.article;
@@ -405,6 +517,7 @@ function storyLiveHTML(g) {
                     <span class="sl-goal-sep"></span>
                     <span class="sl-goal-tag">But</span>
                     ${STORY_STRENGTH_LABEL[e.strength] ? `<span class="sl-goal-strength">${STORY_STRENGTH_LABEL[e.strength]}</span>` : ''}
+                    ${storyAssistsHTML(e)}
                     <span class="sl-goal-score">${storyGoalScore(e.awayScore, 'away')}<i>-</i>${storyGoalScore(e.homeScore, 'home')}</span>
                     <span class="sl-goal-period">P${escapeHTML(e.period)}</span>
                 </div>`).join('');
@@ -467,12 +580,27 @@ function startStoryTimer() {
         }
     }, 100);
 
+    bindStoryHover();
+}
+
+/**
+ * Mode épinglé : plus de rotation, donc plus de barre de progression — mais
+ * la carte doit continuer de suivre le match. On redemande simplement le flux
+ * en direct, et loadStories() retombe d'elle-même sur le match épinglé.
+ */
+function startStoryPinnedRefresh() {
+    stopStoryTimer();
+    const track = document.querySelector('.stories-progress-track');
+    if (track) track.style.display = 'none';
+    storyTimer = setTimeout(loadStories, STORY_PINNED_REFRESH_MS);
+}
+
+function bindStoryHover() {
     const card = document.getElementById('storiesCard');
-    if (card && !card.dataset.hoverBound) {
-        card.dataset.hoverBound = '1';
-        card.addEventListener('mouseenter', () => { storyPaused = true; });
-        card.addEventListener('mouseleave', () => { storyPaused = false; });
-    }
+    if (!card || card.dataset.hoverBound) return;
+    card.dataset.hoverBound = '1';
+    card.addEventListener('mouseenter', () => { storyPaused = true; });
+    card.addEventListener('mouseleave', () => { storyPaused = false; });
 }
 
 function stopStoryTimer() {
