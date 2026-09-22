@@ -1690,6 +1690,7 @@ function fzdCtasRepechageFini(activeName) {
 
 function fzdHeroHTML(state, mobile = false) {
     if (mobile && state.mode === 'draft') return fzmDraftHeroHTML(state);
+    if (mobile && state.mode === 'preseason') return fzmPreseasonHeroHTML(state);
     if (state.mode === 'draft') {
         const { poolData, team, activeName } = state;
         const draftOrder = Array.isArray(poolData.draftOrder) ? poolData.draftOrder : [];
@@ -1735,7 +1736,6 @@ function fzdHeroHTML(state, mobile = false) {
             <div class="fzd-hero-copy">
                 <div class="fzd-hero-eyebrow">${fait ? 'Repêchage terminé' : (state.beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison')}</div>
                 <h2 class="fzd-hero-headline">${fait ? 'Votre équipe est au complet' : 'Saison en préparation'}</h2>
-                ${mobile && !fait ? '<p class="fzm-preseason-sub">La saison approche. Finalisez votre formation !</p>' : ''}
             </div>
             <div class="fzd-hero-stats">${fzdCountdownStatsHTML(state.target)}</div>
             ${fait ? fzdCtasRepechageFini(state.activeName) : `

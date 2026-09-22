@@ -49,6 +49,35 @@ function fzmDraftHeroHTML(state) {
         </div>`;
 }
 
+// Avant-saison : décompte en trois cases (jours, heures, minutes) et une seule
+// action pleine largeur. Même état que la bannière bureau (fzdHeroState) —
+// seul le balisage change, comme fzmDraftHeroHTML pour le repêchage.
+function fzmPreseasonHeroHTML(state) {
+    const fait = state.draftDone && state.activeName && state.teamName;
+    const eyebrow = fait ? 'Repêchage terminé'
+        : state.beforeCamp ? 'Avant le camp d’entraînement' : 'Avant le début de la saison';
+    const diff = Math.max(0, new Date(state.target + 'T00:00:00Z').getTime() - Date.now());
+    const units = [
+        ['Jours', Math.floor(diff / 86400000)],
+        ['Heures', String(Math.floor((diff % 86400000) / 3600000)).padStart(2, '0')],
+        ['Min', String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0')]
+    ];
+    const cta = fait ? `
+        <div class="fzm-pre-ctas">
+            <button type="button" class="fzm-pre-cta" data-fzd-recap>Mes joueurs repêchés <span aria-hidden="true">→</span></button>
+            <a class="fzm-pre-cta is-ghost" href="classement.html?pool=${encodeURIComponent(state.activeName)}">Classement</a>
+        </div>`
+        : `<button type="button" class="fzm-pre-cta" data-fz-reglages="equipes">Gérer mon équipe <span aria-hidden="true">→</span></button>`;
+    return `
+        <div class="fzm-pre-eyebrow">${eyebrow}</div>
+        <h2 class="fzm-pre-title">${fait ? 'Votre équipe est au complet' : 'Saison en préparation'}</h2>
+        <p class="fzm-pre-sub">${fait ? 'Vos choix sont faits. Place au début de la saison !' : 'La saison approche. Finalisez votre formation !'}</p>
+        <div class="fzm-pre-countdown">${units.map(([lbl, val], i) => `
+            <div class="fzm-pre-unit${i === units.length - 1 ? ' is-accent' : ''}"><strong>${val}</strong><span>${lbl}</span></div>`).join('')}
+        </div>
+        ${cta}`;
+}
+
 // Actualités avant-saison : cartes issues du même flux que l'accueil bureau.
 async function fzmLoadNewsHero() {
     const slot = document.getElementById('fzmNewsHero');
@@ -81,18 +110,28 @@ async function fzmLoadNewsHero() {
 // Le repêchage reste accessible depuis la bannière d'état.
 // ============================================================
 
+// Une case de la barre par gérant attendu : on voit d'un coup d'œil combien
+// de places restent à pourvoir avant de pouvoir repêcher.
 function fzmPreseasonExtras(draftState, activeName) {
     let html = '';
     if (draftState.etat === 'attente' || draftState.etat === 'pret') {
         const ready = draftState.etat === 'pret';
+        const max = Math.max(1, draftState.max);
+        const inscrits = Math.min(draftState.inscrits, max);
+        const segments = Array.from({ length: max }, (_, i) => `<span${i < inscrits ? ' class="is-on"' : ''}></span>`).join('');
+        const action = ready
+            ? `<a class="fzm-wait-btn is-primary" href="repechage.html?pool=${encodeURIComponent(activeName)}">Démarrer</a>`
+            : `<button type="button" class="fzm-wait-btn" data-fzm-inviter="${escapeHTML(activeName)}"><span aria-live="polite">Inviter</span></button>`;
         html += `
-            <div class="fzm-tile-row">
-                <img class="fzm-tile-icon" src="Icons/grayGroup.png" alt="">
-                <div>
-                    <div class="fzm-tile-title">${ready ? 'Prêt à repêcher' : 'En attente de joueurs'}</div>
-                    <div class="fzm-tile-sub">${draftState.inscrits}/${draftState.max} gérants inscrits</div>
+            <div class="fzm-wait">
+                <div class="fzm-wait-main">
+                    <div class="fzm-wait-head">
+                        <span class="fzm-wait-title">${ready ? 'Prêt à repêcher' : 'En attente de joueurs'}</span>
+                        <span class="fzm-wait-count"><strong>${draftState.inscrits}</strong>/${draftState.max} gérants inscrits</span>
+                    </div>
+                    <div class="fzm-wait-bar" aria-hidden="true">${segments}</div>
                 </div>
-                <a class="fzm-tile-btn" href="repechage.html?pool=${encodeURIComponent(activeName)}">${ready ? 'Démarrer →' : 'Voir →'}</a>
+                ${action}
             </div>`;
     }
 
@@ -307,13 +346,42 @@ async function fzmLoadNews() {
         </a>`).join('');
 }
 
+// « Inviter » : le lien de la page Rejoindre, déjà filtrée sur ce pool
+// (?q=, lu par equipes.js). La feuille de partage du téléphone quand il en a
+// une, sinon le presse-papiers.
+async function fzmInviter(bouton) {
+    const nom = bouton.dataset.fzmInviter;
+    const url = new URL(`rejoindre-pool.html?q=${encodeURIComponent(nom)}`, location.href).href;
+    if (navigator.share) {
+        try {
+            await navigator.share({ title: 'Fantazy', text: `Rejoins mon pool « ${nom} » sur Fantazy !`, url });
+            return;
+        } catch (err) {
+            if (err.name === 'AbortError') return;
+        }
+    }
+    const label = bouton.querySelector('span');
+    try {
+        await navigator.clipboard.writeText(url);
+        label.textContent = 'Lien copié';
+    } catch (err) {
+        label.textContent = 'Copie impossible';
+    }
+    clearTimeout(bouton._fzmReset);
+    bouton._fzmReset = setTimeout(() => { label.textContent = 'Inviter'; }, 2200);
+}
+
+function fzmIcon(paths) {
+    return `<span class="fzm-poolchip-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg></span>`;
+}
+
 // Les trois raccourcis restent accessibles sous la bannière dans chaque état.
 function fzmPoolChips() {
     return `
         <div class="fzm-poolchips">
-            <button type="button" class="fzm-poolchip" data-fz-pools><img src="Icons/grayGroup.png" alt=""><span>Mes pools</span><b aria-hidden="true">›</b></button>
-            <a class="fzm-poolchip" href="creer-pool.html"><span class="fzm-poolchip-plus" aria-hidden="true">+</span><span>Créer un pool</span><b aria-hidden="true">›</b></a>
-            <a class="fzm-poolchip" href="rejoindre-pool.html"><img src="Icons/grayGroup.png" alt=""><span>Rejoindre un pool</span><b aria-hidden="true">›</b></a>
+            <button type="button" class="fzm-poolchip" data-fz-pools>${fzmIcon('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/>')}<span>Mes pools</span></button>
+            <a class="fzm-poolchip" href="creer-pool.html">${fzmIcon('<path d="M12 5v14M5 12h14"/>')}<span>Créer un pool</span></a>
+            <a class="fzm-poolchip" href="rejoindre-pool.html">${fzmIcon('<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5M15 12H3"/>')}<span>Rejoindre un pool</span></a>
         </div>`;
 }
 
@@ -400,6 +468,7 @@ function renderMobileHome(tonight, movement, activeName) {
         e.preventDefault();
         document.getElementById('fzmPlayers')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
+    root.querySelector('[data-fzm-inviter]')?.addEventListener('click', e => fzmInviter(e.currentTarget));
     if (showActivity) fzmLoadActivity(activeName);
     fzdRendreMouvements();
     if (isPreseason) fzdRendreSurveiller();

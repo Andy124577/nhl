@@ -527,6 +527,10 @@ function filtrerPoolsDisponibles() {
 document.addEventListener('DOMContentLoaded', () => {
     const champ = document.getElementById('poolSearchInput');
     if (champ) {
+        // Lien « Inviter » de l'accueil (accueil-mobile.js) : la liste
+        // arrive déjà filtrée sur le pool de celui qui a invité.
+        const demande = new URLSearchParams(location.search).get('q');
+        if (demande) { champ.value = demande; filtrerPoolsDisponibles(); }
         champ.addEventListener('input', filtrerPoolsDisponibles);
         // `search` couvre la croix native du champ sur certains navigateurs.
         champ.addEventListener('search', filtrerPoolsDisponibles);

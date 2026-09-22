@@ -127,15 +127,6 @@ html[data-theme="dark"] .fz-mobile-home {
 .fzm-list-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border-bottom: 1px solid rgba(23,23,26,.06); }
 .fzm-list-row:last-child { border-bottom: none; }
 
-/* Tuile "Repêchage ouvre" (avant-saison, avant le début du repêchage) */
-.fzm-tile-row {
-    background: var(--fzm-panel); border-radius: 14px; padding: 14px 16px; margin-bottom: 18px;
-    display: flex; align-items: center; justify-content: space-between; gap: 10px;
-}
-.fzm-tile-title { font: 700 13px/1 'Archivo', sans-serif; margin-bottom: 2px; }
-.fzm-tile-sub { font: 500 11.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-soft); }
-.fzm-tile-btn { flex-shrink: 0; background: var(--fzm-solid); color: var(--fzm-on-solid); border-radius: 9px; padding: 9px 13px; font: 700 12px/1 'Archivo', sans-serif; }
-
 /* Activité */
 .fzm-activity-row { display: block; padding: 11px 14px; }
 .fzm-activity-time { font: 500 10.5px/1 'Archivo', sans-serif; color: var(--fzm-ink-faint); margin-bottom: 3px; }
@@ -157,23 +148,6 @@ html[data-theme="dark"] .fz-mobile-home {
 .fzm-news-card { display: block; background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 10px; padding: 10px 12px; }
 .fzm-news-kicker { font: 700 9.5px/1 'Archivo', sans-serif; color: var(--fzm-red); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 3px; }
 .fzm-news-headline { font: 600 12.5px/1.35 'Archivo', sans-serif; color: var(--fzm-ink); }
-
-/* Raccourcis pools — avant-saison seulement (fzmPoolChips), entre le
-   calendrier et « Dans la LNH ». Le pied de page se retire alors : ce
-   sont les mêmes trois liens, en pilules cliquables au pouce. */
-.fzm-poolchips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
-.fzm-poolchip {
-    display: inline-flex; align-items: center;
-    padding: 10px 14px;
-    background: var(--fzm-surface); border: 1px solid var(--fzm-border);
-    border-radius: 999px;
-    font: 700 11.5px/1 'Archivo', sans-serif;
-    color: var(--fzm-ink); text-decoration: none;
-}
-.fzm-poolchip.is-primary { background: var(--fzm-solid); border-color: var(--fzm-solid); color: var(--fzm-on-solid); }
-/* « Mes pools » n'est plus un lien : il ouvre le tiroir des pools sur place.
-   Un <button> arrive avec la police et l'alignement du système. */
-button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left; cursor: pointer; }
 
 /* Pied de page */
 .fzm-footer-links { display: flex; justify-content: center; align-items: center; gap: 14px; padding: 6px 0 16px; flex-wrap: wrap; }
@@ -214,6 +188,11 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
     .fz-mobile-home {
         --fzm-red: #b93d28;
         --fzm-red-soft: #b93d281a;
+        /* Texte posé sur un aplat --fzm-red : blanc sur la brique (5,6:1),
+           encre sur le corail du thème sombre (6,2:1 — le blanc y tombait
+           à 2,9:1). */
+        --fzm-on-red: #ffffff;
+        --fzm-glow: rgba(185, 61, 40, .09);
         padding-top: 8px;
     }
     /* Clair : le calendrier déplacé ici repose sur le gris de la page
@@ -227,6 +206,8 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
         --fzm-panel: #171a1c;
         --fzm-surface: #171a1c;
         --fzm-border: #ffffff38;
+        --fzm-on-red: #17171a;
+        --fzm-glow: rgba(232, 121, 94, .2);
     }
     .fzm-section { margin-bottom: 16px; }
     .fzm-section-title { font-size: clamp(18px, 4.7vw, 25px); line-height: 1.15; letter-spacing: -.025em; }
@@ -252,16 +233,49 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
     .fzm-news-hero-dots button[aria-pressed="true"]::before { background: var(--fzm-red); }
 
     #fzmHeroSlot { border-radius: 10px; box-shadow: none; margin-bottom: 10px; }
-    #fzmHeroSlot[data-mode="preseason"] { gap: 12px 9px; padding: 14px 12px 10px; border: 1px solid #ee7248; }
-    #fzmHeroSlot[data-mode="preseason"] .fzd-hero-copy { flex: 1 1 52%; gap: 5px; }
-    #fzmHeroSlot[data-mode="preseason"] .fzd-hero-shield { width: 25px; height: 29px; }
-    #fzmHeroSlot[data-mode="preseason"] .fzd-hero-eyebrow { font-size: 8px; line-height: 1.35; letter-spacing: .12em; }
-    #fzmHeroSlot[data-mode="preseason"] .fzd-hero-headline { font-size: clamp(18px, 4.5vw, 30px); line-height: 1.1; }
-    .fzm-preseason-sub { color: #ffe2d6; font-size: 10px; line-height: 1.3; margin: 0; }
-    #fzmHeroSlot[data-mode="preseason"] .fzd-hero-stats { flex: 0 0 auto; gap: 10px; }
-    #fzmHeroSlot[data-mode="preseason"] .fzd-hero-stat { flex-direction: column-reverse; align-items: center; }
-    #fzmHeroSlot[data-mode="preseason"] .fzd-hero-stat-val { font-size: 24px; }
-    #fzmHeroSlot[data-mode="preseason"] .fzd-hero-stat-lbl { font-size: 8px; }
+    /* Avant-saison (fzmPreseasonHeroHTML) : une carte du thème plutôt que
+       l'aplat brique du bureau — titre, décompte en trois cases, une action.
+       En sombre, accueil-palette.css pose déjà le fond et le contour ; la
+       lueur du coin passe donc par ::before, que sa règle ne touche pas. */
+    #fzmHeroSlot[data-mode="preseason"] {
+        flex-direction: column; align-items: stretch; gap: 0;
+        padding: 18px 16px 16px; border-radius: 16px;
+        background: var(--fzm-surface); border: 1px solid var(--fzm-border);
+        color: var(--fzm-ink);
+    }
+    #fzmHeroSlot[data-mode="preseason"]::before {
+        content: ''; position: absolute; inset: 0; pointer-events: none;
+        background: radial-gradient(80% 95% at 100% 0%, var(--fzm-glow), transparent 70%);
+    }
+    .fzm-pre-eyebrow { font: 700 11px/1.2 'Barlow', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--fzm-red); }
+    .fzm-pre-title { margin: 7px 0 4px; font: 700 clamp(25px, 6.6vw, 31px)/1.05 'Barlow Condensed', sans-serif; color: var(--fzm-ink); }
+    .fzm-pre-sub { margin: 0 0 16px; font: 400 13.5px/1.35 'Barlow', sans-serif; color: var(--fzm-ink-soft); }
+    .fzm-pre-countdown { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+    .fzm-pre-unit {
+        display: flex; flex-direction: column; align-items: center; gap: 7px;
+        padding: 13px 4px 11px; border-radius: 12px;
+        background: var(--fzm-bg); border: 1px solid var(--fzm-border);
+    }
+    .fzm-pre-unit strong { font: 700 clamp(30px, 8.6vw, 38px)/1 'Barlow Condensed', sans-serif; font-variant-numeric: tabular-nums; color: var(--fzm-ink); }
+    .fzm-pre-unit span { font: 700 10px/1 'Barlow', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--fzm-ink-faint); }
+    .fzm-pre-unit.is-accent strong { color: var(--fzm-red); }
+    .fz-mobile-home .fzm-pre-cta {
+        display: flex; align-items: center; justify-content: center; gap: 14px;
+        width: 100%; min-height: 52px; padding: 12px 18px;
+        border: 0; border-radius: 12px;
+        background: var(--fzm-red); color: var(--fzm-on-red);
+        font: 700 17px/1 'Barlow Condensed', sans-serif; letter-spacing: .08em; text-transform: uppercase;
+        cursor: pointer; transition: filter .15s ease, transform .15s ease;
+    }
+    .fzm-pre-cta > span { font: 400 24px/1 'Barlow', sans-serif; letter-spacing: 0; }
+    .fzm-pre-cta:active { transform: scale(.985); }
+    .fzm-pre-ctas { display: grid; gap: 8px; }
+    .fz-mobile-home .fzm-pre-cta.is-ghost { background: transparent; color: var(--fzm-ink); border: 1px solid var(--fzm-border); }
+    @media (hover: hover) {
+        .fzm-pre-cta:hover { filter: brightness(1.07); }
+        .fzm-pre-cta.is-ghost:hover { filter: none; border-color: var(--fzm-red); }
+    }
+
     #fzmHeroSlot .fzd-hero-cta { background: var(--fzm-red); min-height: 44px; padding: 11px; }
     #fzmHeroSlot .fzd-hero-cta-label { white-space: normal; text-align: center; }
     #fzmHeroSlot .fzd-hero-cta-bar { display: none; }
@@ -284,14 +298,44 @@ button.fzm-poolchip { font: 700 11.5px/1 'Archivo', sans-serif; text-align: left
     .fz-mobile-home .fzm-draft-cta { display: inline-flex; align-items: center; justify-content: center; gap: 15px; min-height: 44px; padding: 10px 18px; border: 1px solid #ff8452; border-radius: 8px; background: #e54b1c; color: #fff; font-weight: 700; font-size: 14px; }
     .fzm-draft-cta > span { font-size: 22px; }
 
-    .fzm-poolchips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 10px; }
-    .fzm-poolchip { min-height: 44px; padding: 8px; gap: 7px; border-radius: 9px; font-size: clamp(9px, 2.35vw, 14px); line-height: 1.2; }
-    .fzm-poolchip img, .fzm-tile-icon { width: 20px; height: 20px; object-fit: contain; }
-    .fzm-poolchip-plus { display: grid; place-items: center; flex: 0 0 19px; height: 19px; border-radius: 50%; background: var(--fzm-ink); color: var(--fzm-bg); font: 700 21px/1 Arial, sans-serif; }
-    .fzm-poolchip b { margin-left: auto; font-size: 18px; font-weight: 400; }
-    .fzm-tile-row { padding: 9px 12px; margin-bottom: 12px; border: 1px solid var(--fzm-border); border-radius: 9px; }
-    .fzm-tile-row > div { flex: 1; }
-    .fz-mobile-home .fzm-tile-btn { background: var(--fzm-surface); color: var(--fzm-ink); border: 1px solid var(--fzm-border); min-height: 36px; }
+    /* Raccourcis pools (fzmPoolChips) : trois tuiles égales sous la bannière,
+       pastille d'icône en haut, libellé en bas. « Mes pools » est un
+       <button> (il ouvre le tiroir des pools) : la police se pose ici,
+       un bouton ne l'hérite pas. */
+    .fzm-poolchips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+    .fz-mobile-home .fzm-poolchip {
+        display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 14px;
+        min-height: 96px; padding: 14px 12px 13px;
+        background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 14px;
+        color: var(--fzm-ink); font: 700 clamp(12.5px, 3.5vw, 15px)/1.2 'Barlow', sans-serif;
+        text-align: left; cursor: pointer; transition: border-color .15s ease, background-color .15s ease;
+    }
+    .fzm-poolchip-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: var(--fzm-red-soft); color: var(--fzm-red); }
+    .fz-mobile-home .fzm-poolchip:active { background-color: var(--fzm-panel); }
+    @media (hover: hover) { .fz-mobile-home .fzm-poolchip:hover { border-color: var(--fzm-red); } }
+
+    /* Gérants inscrits (fzmPreseasonExtras) : une case par place du pool. */
+    .fzm-wait {
+        display: flex; align-items: center; gap: 14px;
+        padding: 14px 14px 14px 16px; margin-bottom: 12px;
+        background: var(--fzm-surface); border: 1px solid var(--fzm-border); border-radius: 14px;
+    }
+    .fzm-wait-main { flex: 1; min-width: 0; }
+    .fzm-wait-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 10px; }
+    .fzm-wait-title { font: 700 15px/1.2 'Barlow', sans-serif; color: var(--fzm-ink); }
+    .fzm-wait-count { font: 400 12.5px/1.2 'Barlow', sans-serif; color: var(--fzm-ink-soft); }
+    .fzm-wait-count strong { font-weight: 700; color: var(--fzm-ink); }
+    .fzm-wait-bar { display: flex; gap: 4px; }
+    .fzm-wait-bar span { flex: 1; height: 5px; border-radius: 3px; background: var(--fzm-border); }
+    .fzm-wait-bar span.is-on { background: var(--fzm-red); }
+    .fz-mobile-home .fzm-wait-btn {
+        flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+        min-height: 42px; min-width: 80px; padding: 0 14px;
+        background: transparent; border: 1px solid var(--fzm-border); border-radius: 10px;
+        color: var(--fzm-ink); font: 700 13.5px/1 'Barlow', sans-serif; white-space: nowrap; cursor: pointer;
+    }
+    .fz-mobile-home .fzm-wait-btn.is-primary { background: var(--fzm-red); border-color: var(--fzm-red); color: var(--fzm-on-red); }
+    @media (hover: hover) { .fz-mobile-home .fzm-wait-btn:not(.is-primary):hover { border-color: var(--fzm-red); } }
     .fz-mobile-home .fz-dash-calendar { padding: 0; background: none; border: 0; border-radius: 0; gap: 8px; }
     .fz-mobile-home .fzd-cal-head { gap: 6px; }
     .fz-mobile-home .fzd-cal-title { flex: 1; font: 700 clamp(20px, 5vw, 27px)/1.1 'Archivo', sans-serif; letter-spacing: -.03em; text-transform: none; }
