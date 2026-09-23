@@ -107,8 +107,7 @@ function remplirPickConfirm(nom, code) {
   if (note) {
     const donnees = typeof draftData !== 'undefined' && draftData ? draftData : {};
     const index = Number.isInteger(donnees.currentPickIndex) ? donnees.currentPickIndex : 0;
-    const nbEquipes = donnees.teams ? Object.keys(donnees.teams).length : 0;
-    const ronde = nbEquipes > 0 ? Math.floor(index / nbEquipes) + 1 : 0;
+    const ronde = typeof fzRondeDe === 'function' ? fzRondeDe(index, donnees) : 0;
     const repere = ronde ? `ronde ${ronde}, choix ${index + 1}` : `choix ${index + 1}`;
     note.textContent = `Ce choix est définitif et occupera votre ${repere}.`;
   }

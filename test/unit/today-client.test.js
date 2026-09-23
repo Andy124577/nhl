@@ -194,14 +194,14 @@ describe('« Aujourd’hui » côté navigateur', () => {
             vedette: null, secondaires: [], pools: [],
             vide: {
                 cas: 'aucun_pool', titre: 'Commencez par un pool', detail: 'Rejoignez-en un.',
-                actions: [{ titre: 'Repêchage instantané', href: 'repechage.html' }]
+                actions: [{ titre: 'Pool rapide (4 joueurs)', href: 'rejoindre-pool.html' }]
             }
         });
         await banc.FZToday.demarrer(['fzTodayDash']);
 
         const html = banc.elements.get('fzTodayDash').innerHTML;
         assert.match(html, /Commencez par un pool/);
-        assert.match(html, /repechage\.html/);
+        assert.match(html, /rejoindre-pool\.html/);
     });
 
     test('un échec réseau garde ce qui est affiché', async () => {

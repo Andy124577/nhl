@@ -10,10 +10,13 @@
 /* ============================================================ */
 
 const TOP_PLAYERS_SIX_MONTHS_DAYS = 180;
+const TOP_PLAYERS_WINDOWS = [7, 14, 30, TOP_PLAYERS_SIX_MONTHS_DAYS];
 let topPlayersRange = 7;
 let topPlayersData = null;
+/** Réponse de chaque fenêtre, chargée une fois : days → données (ou null). */
+const topPlayersCache = new Map();
 
-document.addEventListener('DOMContentLoaded', () => loadTopPlayers(7));
+document.addEventListener('DOMContentLoaded', () => loadTopPlayers());
 
 function topPlayersRangeText(days) {
     return days === TOP_PLAYERS_SIX_MONTHS_DAYS ? '6 derniers mois' : `${days} derniers jours`;
@@ -28,45 +31,70 @@ async function fetchTopPlayers(days) {
     return await res.json();
 }
 
-async function loadTopPlayers(days) {
+/**
+ * Charge les quatre fenêtres d'un coup, puis n'offre que celles qui ont
+ * quelque chose à montrer.
+ *
+ * Un onglet « 7J » qui ouvre sur « Aucun joueur trouvé » — en début de
+ * saison, ou hors saison — ne sert à rien : il disparaît, et la page ouvre
+ * sur la plus courte fenêtre qui a des joueurs. Si aucune n'en a, il n'y a
+ * plus d'onglets du tout, seulement une phrase.
+ */
+async function loadTopPlayers() {
     try {
-        let data = await fetchTopPlayers(days);
+        const reponses = await Promise.all(TOP_PLAYERS_WINDOWS.map(days =>
+            fetchTopPlayers(days).then(data => [days, data]).catch(() => [days, null])));
+        reponses.forEach(([days, data]) => topPlayersCache.set(days, data));
 
-        // Off-season / empty DB: if nothing happened in the last 30 days, reveal the
-        // 6-month filter and open on it instead of showing an empty section.
-        if (days === 7 && !hasTopPlayers(data)) {
-            const last30 = await fetchTopPlayers(30);
-            if (!hasTopPlayers(last30)) {
-                const sixMonthBtn = document.getElementById('timeFilter6M');
-                if (sixMonthBtn) sixMonthBtn.style.display = '';
-                days = TOP_PLAYERS_SIX_MONTHS_DAYS;
-                data = await fetchTopPlayers(TOP_PLAYERS_SIX_MONTHS_DAYS);
-            }
-        }
-
-        topPlayersRange = days;
-        topPlayersData = data;
-
+        const disponibles = TOP_PLAYERS_WINDOWS.filter(days => hasTopPlayers(topPlayersCache.get(days)));
         document.querySelectorAll('.top-players-section .time-filter').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.days == topPlayersRange);
+            btn.style.display = disponibles.includes(Number(btn.dataset.days)) ? '' : 'none';
         });
-        const label = document.getElementById('timeRangeLabel');
-        if (label) label.textContent = topPlayersRangeText(topPlayersRange);
+        const filtres = document.querySelector('.top-players-section .time-filters');
+        if (filtres) filtres.hidden = disponibles.length < 2;
 
-        renderTopPlayers();
+        if (!disponibles.length) {
+            if (reponses.every(([, data]) => data === null)) { renderTopPlayersError(); return; }
+            renderTopPlayersVide();
+            return;
+        }
+        selectTopPlayersRange(disponibles[0]);
     } catch (err) {
         console.error('Error loading top players:', err);
         renderTopPlayersError();
     }
 }
 
-function changeTimeRange(days) {
+function selectTopPlayersRange(days) {
+    topPlayersRange = days;
+    topPlayersData = topPlayersCache.get(days) || null;
     document.querySelectorAll('.top-players-section .time-filter').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.days == days);
+        btn.classList.toggle('active', Number(btn.dataset.days) === topPlayersRange);
     });
     const label = document.getElementById('timeRangeLabel');
-    if (label) label.textContent = topPlayersRangeText(days);
-    loadTopPlayers(days);
+    if (label) label.textContent = topPlayersRangeText(topPlayersRange);
+    renderTopPlayers();
+}
+
+function changeTimeRange(days) {
+    if (topPlayersCache.has(days)) { selectTopPlayersRange(days); return; }
+    fetchTopPlayers(days)
+        .then(data => { topPlayersCache.set(days, data); selectTopPlayersRange(days); })
+        .catch(() => renderTopPlayersError());
+}
+
+/** Aucune fenêtre n'a de joueurs : une phrase, pas quatre onglets vides. */
+function renderTopPlayersVide() {
+    const skeleton = document.getElementById('topPlayersSkeleton');
+    const content  = document.getElementById('topPlayersList');
+    if (skeleton) skeleton.style.display = 'none';
+    const label = document.getElementById('timeRangeLabel');
+    if (label) label.textContent = '';
+    if (!content) return;
+    content.style.display = '';
+    content.innerHTML = `<p style="grid-column:1/-1;width:100%;text-align:center;
+        padding:48px;color:var(--text-gray);">Pas encore de match joué : les meilleurs joueurs
+        apparaîtront après les premières rencontres.</p>`;
 }
 
 function renderTopPlayers() {

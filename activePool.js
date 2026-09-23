@@ -47,13 +47,16 @@
      * État du repêchage d'un pool.
      *
      * Renvoie `etat` parmi :
-     *   attente  — le pool n'est pas encore plein
-     *   pret     — plein, mais le repêchage n'a pas démarré
+     *   attente  — pas encore de quoi repêcher (moins de deux équipes, nombre
+     *              impair en tête-à-tête, ou pool rapide pas encore plein)
+     *   pret     — la personne qui a créé le pool peut lancer quand elle veut ;
+     *              `maxPlayers` est un plafond, pas un quota à atteindre
      *   encours  — draftOrder existe et toutes les sélections ne sont pas faites
      *   termine  — chaque équipe a rempli toutes ses cases
      */
     function etatRepechage(poolData) {
-        if (!poolData) return { etat: 'attente', inscrits: 0, max: 0 };
+        if (!poolData) return { etat: 'attente', inscrits: 0, max: 0, equipes: 0 };
+        const banc = quotaBanc(poolData);
 
         const config = poolData.config || CONFIG_DEFAUT;
         const equipesActives = Object.values(poolData.teams || {})
@@ -64,7 +67,8 @@
             (equipe.defensive || []).length === config.numDefensive &&
             (equipe.rookie || []).length === config.numRookies &&
             (equipe.goalie || []).length === config.numGoalies &&
-            (equipe.teams || []).length === config.numTeams
+            (equipe.teams || []).length === config.numTeams &&
+            (equipe.bench || []).length === banc
         );
 
         const commence = Array.isArray(poolData.draftOrder) && poolData.draftOrder.length > 0;
@@ -84,8 +88,28 @@
             };
         }
 
-        return { etat: inscrits >= max ? 'pret' : 'attente', inscrits, max, commence };
+        const equipes = equipesActives.length;
+        const plein = inscrits >= max;
+        // Le pool rapide part tout seul, et seulement plein : c'est sa promesse.
+        if (poolData.instant === true) {
+            return { etat: plein ? 'pret' : 'attente', inscrits, max, equipes, commence, plein };
+        }
+        let raison = null;
+        if (equipes < 2) raison = 'deux';
+        else if (poolData.poolMode === 'head-to-head' && equipes % 2 !== 0) raison = 'pair';
+        return { etat: raison ? 'attente' : 'pret', inscrits, max, equipes, commence, plein, raison };
     }
+
+    /**
+     * Places de banc du pool (tête-à-tête seulement). Même règle que
+     * lib/lineup.js côté serveur : zéro hors tête-à-tête, cinq au plus.
+     */
+    function quotaBanc(poolData) {
+        if (!poolData || poolData.poolMode !== 'head-to-head') return 0;
+        const n = parseInt(poolData.config && poolData.config.numBench, 10);
+        return Number.isFinite(n) && n > 0 ? Math.min(n, 5) : 0;
+    }
+    window.fzQuotaBanc = quotaBanc;
 
     /** Un effectif existe-t-il ? Sert à savoir si échanges et classement ont du sens. */
     function aUnEffectif(teamData) {

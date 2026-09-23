@@ -57,12 +57,14 @@
        dans une liste, et un ajout par la porte normale (/join-team) ne
        déclencherait pas le départ automatique promis par le bouton.
        -------------------------------------------------------------- */
-    const PREFIXE_INSTANTANE = 'Repêchage instantané #';
+    const PREFIXE_INSTANTANE = 'Pool rapide #';
+    const PREFIXES_HISTORIQUES = ['Repêchage instantané #'];
     const JOUEURS_PAR_POOL = 4;
 
     function estPoolInstantane(nom, pool) {
         if (pool && pool.instant === true) return true;
-        return typeof nom === 'string' && nom.startsWith(PREFIXE_INSTANTANE);
+        return typeof nom === 'string' &&
+            [PREFIXE_INSTANTANE, ...PREFIXES_HISTORIQUES].some(prefixe => nom.startsWith(prefixe));
     }
 
     /** Les inscrits du pool, dans l'ordre des équipes. */
@@ -372,7 +374,7 @@
             const resultat = await reponse.json().catch(() => ({}));
 
             if (!reponse.ok) {
-                alert(resultat.message || 'Impossible de rejoindre un repêchage instantané.');
+                alert(resultat.message || 'Impossible de rejoindre un pool rapide.');
                 return;
             }
 
@@ -415,7 +417,7 @@
         }
 
         if (opts.confirmer !== false &&
-            !window.confirm('Quitter la file du repêchage instantané ? Ta place sera reprise par le prochain joueur.')) {
+            !window.confirm('Quitter la file du pool rapide ? Ta place sera reprise par le prochain joueur.')) {
             return false;
         }
 

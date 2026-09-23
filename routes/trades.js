@@ -189,6 +189,14 @@ function monter(app, ctx) {
             if (!draftName || !fromTeam || !toTeam || !Array.isArray(offering) || !Array.isArray(receiving)) {
                 return res.status(400).json({ message: "Données incomplètes." });
             }
+            // Contre-offre : la proposition reçue à laquelle celle-ci répond.
+            // Elle est refusée dans la même transaction — on ne laisse pas deux
+            // versions de la même négociation en attente.
+            const counterOf = req.body?.counterOf != null && req.body.counterOf !== ''
+                ? Number(req.body.counterOf) : null;
+            if (counterOf !== null && !Number.isInteger(counterOf)) {
+                return res.status(400).json({ message: "Identifiant de contre-offre invalide." });
+            }
             if (offering.length !== 1 || receiving.length !== 1) {
                 return res.status(400).json({
                     message: "Échanges 1 pour 1 seulement : exactement un joueur contre un joueur."
@@ -208,6 +216,20 @@ function monter(app, ctx) {
             }
 
             const { valeur } = await store.transaction(async (tx) => {
+                // Même ordre de verrous que /trade/decline : l'échange, puis le pool.
+                const original = counterOf !== null ? await db.lockTradeInTx(tx.client, counterOf) : null;
+                if (counterOf !== null) {
+                    if (!original || original.poolName !== draftName) {
+                        throw new ErreurMetier(404, "La proposition d'origine est introuvable.");
+                    }
+                    if (original.status !== 'pending') {
+                        throw new ErreurMetier(409, "La proposition d'origine n'est plus en attente.", { statut: original.status });
+                    }
+                    if (original.data.toTeam !== fromTeam || original.data.fromTeam !== toTeam) {
+                        throw new ErreurMetier(400, "Une contre-offre répond à la personne qui vous a fait la proposition.");
+                    }
+                }
+
                 const verrouille = await tx.verrouillerPool(draftName);
                 if (!verrouille) throw new ErreurMetier(404, "Pool introuvable.");
                 const data = verrouille.data;
@@ -242,9 +264,25 @@ function monter(app, ctx) {
                 const tradeData = {
                     fromTeam, toTeam, offering, receiving,
                     proposedBy: req.auth.username,
-                    date: new Date().toISOString()
+                    date: new Date().toISOString(),
+                    ...(original ? { counterOf } : {})
                 };
                 const tradeId = await db.createTradeInTx(tx.client, draftName, tradeData);
+
+                if (original) {
+                    await db.updateTradeInTx(tx.client, counterOf, 'declined', {
+                        ...original.data,
+                        status: 'declined',
+                        declinedBy: req.auth.username,
+                        declinedDate: new Date().toISOString(),
+                        counteredBy: tradeId
+                    });
+                    await db.resolveNotificationsInTx(tx.client, {
+                        type: evenements.NOTIFICATION.ECHANGE_RECU,
+                        subjectKey: 'tradeId',
+                        subjectValue: counterOf
+                    });
+                }
 
                 // Les destinataires sont prévenus dans la MÊME transaction :
                 // une notification ne doit pas survivre à un ROLLBACK.
@@ -268,8 +306,15 @@ function monter(app, ctx) {
             }
             diffusion.versPool(draftName, 'tradePending', { poolName: draftName });
 
-            logger.log(`📤 Échange proposé : ${fromTeam} → ${toTeam} (${offert.name} ↔ ${recu.name})`);
-            res.json({ message: "Proposition envoyée.", tradeId: valeur.tradeId });
+            if (counterOf !== null) diffusion.versPool(draftName, 'tradeUpdated', { poolName: draftName, tradeId: counterOf });
+
+            logger.log(`📤 Échange proposé : ${fromTeam} → ${toTeam} (${offert.name} ↔ ${recu.name})${counterOf !== null ? ` — contre-offre à #${counterOf}` : ''}`);
+            res.json({
+                message: counterOf !== null
+                    ? "Contre-offre envoyée. La proposition d'origine a été refusée."
+                    : "Proposition envoyée.",
+                tradeId: valeur.tradeId
+            });
         } catch (erreur) {
             repondreErreur(res, erreur, '/trade/propose');
         }

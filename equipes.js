@@ -231,6 +231,7 @@ function updatePoolModeInfo() {
     const mode = $('input[name="poolMode"]:checked').val();
     const maxPlayers = parseInt($("#maxPlayers").val());
     const warning = $("#h2h-warning");
+    $("#benchGroup").toggle(mode === 'head-to-head');
 
     if (mode === 'head-to-head' && maxPlayers % 2 !== 0) {
         warning.show();
@@ -260,6 +261,7 @@ function previewPoolImage(input) {
 // 🏗️ Créer un clan
 async function createClan() {
     const clanName = $("#clanName").val();
+    const teamName = ($("#teamName").val() || "").trim();
     const maxPlayers = parseInt($("#maxPlayers").val());
     const numOffensive = parseInt($("#numOffensive").val());
     const numDefensive = parseInt($("#numDefensive").val());
@@ -270,12 +272,28 @@ async function createClan() {
     // ne donne que les couleurs, elle ne remplit pas cette case.
     const numTeams = parseInt($("#numTeams").val());
     const poolMode = $('input[name="poolMode"]:checked').val();
+    const numBench = poolMode === 'head-to-head'
+        ? Math.min(5, Math.max(0, parseInt($("#numBench").val(), 10) || 0)) : 0;
     const allowTrades = $("#allowTrades").is(':checked');
     const poolPassword = ($("#poolPassword").val() || "").trim();
     const username = localStorage.getItem("username");
 
     if (!clanName || !maxPlayers) {
         alert("Veuillez remplir tous les champs !");
+        return;
+    }
+
+    if (!teamName) {
+        alert("Donnez un nom à votre équipe.");
+        $("#teamName").trigger('focus');
+        return;
+    }
+    if (teamName.length > 20 || !/^[\p{L}\p{N}\s'\-_]+$/u.test(teamName)) {
+        alert("Nom d'équipe invalide : 1 à 20 caractères, lettres, chiffres, espaces, tirets ou apostrophes.");
+        return;
+    }
+    if (typeof contientGrossierete === 'function' && contientGrossierete(teamName)) {
+        alert("Ce nom d'équipe contient un terme inapproprié. Choisissez-en un autre.");
         return;
     }
 
@@ -297,14 +315,16 @@ async function createClan() {
         return;
     }
 
-    // Validation Head-to-Head: nombre pair de participants
+    // Head-to-Head : le plafond reste pair, pour qu'un pool plein puisse
+    // toujours partir. Le serveur vérifie la parité des équipes au départ.
     if (poolMode === 'head-to-head' && maxPlayers % 2 !== 0) {
-        alert("⚠️ Le mode Head-to-Head nécessite un nombre pair de participants !\n\nVeuillez choisir 2, 4, 6, 8 ou 10 participants.");
+        alert("⚠️ En Head-to-Head, choisissez un maximum pair (2, 4, 6, 8 ou 10) : les duels se jouent à deux.");
         return;
     }
 
     const poolConfig = {
         name: clanName,
+        teamName,
         maxPlayers: maxPlayers,
         username: username,
         poolMode: poolMode || 'cumulative', // Par défaut cumulatif
@@ -317,7 +337,8 @@ async function createClan() {
             numDefensive: numDefensive,
             numGoalies: numGoalies,
             numRookies: numRookies,
-            numTeams: numTeams
+            numTeams: numTeams,
+            ...(numBench > 0 ? { numBench } : {})
         }
     };
 
@@ -348,10 +369,11 @@ async function createClan() {
             }
 
             // Show success message with auto-join confirmation
-            alert(`✅ ${result.message}\n\nVous pouvez maintenant inviter d'autres participants !`);
+            alert(`✅ ${result.message}\n\nInvitez d'autres participants : le repêchage pourra commencer dès qu'il y a 2 équipes.`);
 
             // Clear form
             $("#clanName").val("");
+            $("#teamName").val("");
             $("#poolPassword").val("");
             $("#numOffensive").val("6");
             $("#numDefensive").val("4");
@@ -460,22 +482,26 @@ function updateUI(draftData) {
             // `hasPassword` vient de poolsPublics() côté serveur ; l'empreinte
             // elle-même n'arrive jamais jusqu'ici.
             const protege = !!clan.hasPassword;
+            const plafond = clan.maxPlayers || 10;
+            const plein = totalParticipants >= plafond;
+            const nomEchappe = cmEchapper(clanName);
             $("#available-clans-list").append(`
-                <li data-nom="${clanName.toLowerCase().replace(/"/g, '&quot;')}"
+                <li data-nom="${nomEchappe.toLowerCase()}"
                     data-acces="${protege ? 'protege' : 'ouvert'}">
                     <div class="pool-item-img-wrap">${poolImgHtml}</div>
                     <div class="pool-item-content">
-                        <span class="pool-item-name">${clanName}</span>
+                        <span class="pool-item-name">${nomEchappe}</span>
                         <div class="pool-item-info">
-                            <span class="pool-item-badge">👥 ${totalParticipants}/${clan.maxPlayers || 10} participants</span>
+                            <span class="pool-item-badge">👥 ${totalParticipants}/${plafond} participants</span>
                             <span class="pool-item-badge">📋 ${totalPicks} sélections</span>
-                            <span class="pool-item-badge">🏒 ${activeTeams} équipes</span>
                             <span class="pool-item-badge pool-acces-badge ${protege ? 'is-protege' : 'is-ouvert'}">
                                 ${protege ? '🔒 Mot de passe' : '🔓 Accès libre'}
                             </span>
                         </div>
                     </div>
-                    <button class="pool-action-btn secondary" onclick="joinClan('${clanName}')">Rejoindre</button>
+                    <button class="pool-action-btn secondary" data-rejoindre-pool="${nomEchappe}"${plein ? ' disabled' : ''}>
+                        ${plein ? 'Complet' : 'Rejoindre'}
+                    </button>
                 </li>
             `);
         }
@@ -524,6 +550,14 @@ function filtrerPoolsDisponibles() {
     if (effacer) effacer.hidden = !(champ && champ.value.length);
 }
 
+// Un seul écouteur pour la liste, reconstruite à chaque rafraîchissement.
+// L'ancien `onclick="joinClan('…')"` collait le nom dans du code : « Pool
+// d'Andy » cassait l'appel sur son apostrophe.
+document.addEventListener('click', event => {
+    const bouton = event.target.closest && event.target.closest('[data-rejoindre-pool]');
+    if (bouton && !bouton.disabled) joinClan(bouton.dataset.rejoindrePool);
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     const champ = document.getElementById('poolSearchInput');
     if (champ) {
@@ -534,14 +568,16 @@ document.addEventListener('DOMContentLoaded', () => {
         champ.addEventListener('input', filtrerPoolsDisponibles);
         // `search` couvre la croix native du champ sur certains navigateurs.
         champ.addEventListener('search', filtrerPoolsDisponibles);
+        champ.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && champ.value) { e.preventDefault(); viderRecherchePools(); }
+        });
     }
 
     const effacer = document.getElementById('poolSearchClear');
     if (effacer) {
         effacer.addEventListener('click', () => {
-            champ.value = '';
+            viderRecherchePools();
             champ.focus();
-            filtrerPoolsDisponibles();
         });
     }
 
@@ -558,14 +594,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// 🔎 Voir les équipes d'un clan
+// 🔎 Rejoindre un pool
 //
-// La modale « Choisir une équipe » est un écran de décision : on y vient
-// pour savoir où il reste de la place, et avec qui on va jouer. Tout ce qui
-// suit sert ces deux questions, dans cet ordre.
-
-/** Places par équipe. Le serveur l'annonce ; ce repli ne sert qu'au cas où. */
-const CM_PLACES_PAR_DEFAUT = 5;
+// La modale « Rejoindre le pool » est un écran de décision : on y vient pour
+// savoir s'il reste de la place, et avec qui on va jouer. Tout ce qui suit
+// sert ces deux questions, dans cet ordre.
 
 /**
  * Échappe un texte destiné à du HTML construit à la main.
@@ -601,12 +634,11 @@ function cmSquelette() {
 }
 
 /**
- * Les places d'une équipe, en pastilles.
+ * Les places du pool, en pastilles : une par participant possible.
  *
- * Un « 3/5 » se lit ; cinq pastilles dont trois pleines se voient. Les deux
- * sont là, parce qu'on balaie une liste d'équipes du regard avant de lire
- * quoi que ce soit — et parce qu'une forme seule ne dit rien à un lecteur
- * d'écran.
+ * Un « 3/10 » se lit ; dix pastilles dont trois pleines se voient. Les deux
+ * sont là, parce qu'on balaie la modale du regard avant de lire quoi que ce
+ * soit — et parce qu'une forme seule ne dit rien à un lecteur d'écran.
  */
 function cmPlaces(pris, total) {
     const puces = Array.from({ length: total }, (_, i) =>
@@ -622,305 +654,137 @@ function cmPlaces(pris, total) {
         </div>`;
 }
 
+/**
+ * Le nom d'équipe tapé à l'entrée, validé comme le serveur le fera
+ * (routes/pools.js, refusNomEquipe). Renvoie un message, ou null.
+ */
+function cmValiderNomEquipe(nom) {
+    const propre = String(nom == null ? '' : nom).trim();
+    if (!propre || propre.length > 20) return "Le nom d'équipe doit contenir entre 1 et 20 caractères.";
+    if (!/^[\p{L}\p{N}\s'\-_]+$/u.test(propre)) return "Lettres, chiffres, espaces, tirets et apostrophes seulement.";
+    if (typeof contientGrossierete === 'function' && contientGrossierete(propre)) {
+        return "Ce nom d'équipe contient un terme inapproprié. Choisissez-en un autre.";
+    }
+    return null;
+}
+
+/**
+ * La modale « Rejoindre le pool ».
+ *
+ * Une personne, une équipe : on n'y choisit plus une case à partager, on
+ * nomme la sienne. La modale montre donc ce qui aide à décider d'entrer —
+ * qui est déjà là, combien de places restent sous le plafond, le format —
+ * puis un seul champ : le nom de son équipe (et le mot de passe si le pool
+ * en demande un).
+ */
 async function viewClanTeams(clanName) {
     // On ouvre avant de demander : un clic doit répondre tout de suite.
     $("#clan-members-content").html(cmSquelette());
     $("#clan-members-modal").css("display", "flex");
 
     try {
-        // Route dédiée : elle donne le nom des équipes, qui s'y trouve déjà
-        // et combien de places restent. /draft ne livre plus les alignements
-        // d'un pool qu'on n'a pas rejoint.
         const response = await fetch(`${BASE_URL}/pool-teams/${encodeURIComponent(clanName)}?t=${Date.now()}`,
             { cache: "no-store" });
         if (!response.ok) throw new Error('Pool introuvable');
         const vue = await response.json();
 
         const username = localStorage.getItem("username");
-        const places = vue.maxParTeam || CM_PLACES_PAR_DEFAUT;
+        const equipes = (vue.teams || []).filter(e => (e.memberCount ?? (e.members || []).length) > 0);
+        const inscrits = vue.participantCount ?? equipes.reduce((n, e) => n + (e.memberCount || 0), 0);
+        const max = vue.maxPlayers || 10;
+        const plein = inscrits >= max;
         const draftStarted = vue.draftStarted === true;
-        const monEquipe = vue.monEquipe || null;
 
-        const equipes = (vue.teams || []).map(e => {
-            const membres = e.members || [];
-            // `memberCount` fait foi sur le nombre, `full` sur le quota : le
-            // serveur connaît les deux. Compter les noms reçus affichait
-            // « 0/5 joueurs » sur une équipe pleine, du temps où ils
-            // n'arrivaient pas jusqu'ici.
-            const pris = e.memberCount ?? membres.length;
-            return {
-                nom: e.name,
-                membres,
-                pris,
-                pleine: e.full === true || pris >= places,
-                mienne: !!monEquipe && e.name === monEquipe,
-                clubs: e.clubs || []
-            };
-        });
-
-        await Promise.all([
-            typeof prefetchAvatars === 'function'
-                ? prefetchAvatars(equipes.flatMap(e => e.membres))
-                : Promise.resolve(),
-            // La carte des joueurs ne sert qu'aux vignettes des choix déjà
-            // faits. Sans choix à dessiner, c'est un aller-retour pour rien.
-            equipes.some(e => e.clubs.length > 0) ? loadPlayerMap() : Promise.resolve()
-        ]);
-
-        // L'ordre porte la décision : la sienne d'abord — c'est souvent pour
-        // elle qu'on ouvre —, puis ce qu'on peut rejoindre, et les équipes
-        // pleines en fin de liste plutôt qu'intercalées entre deux choix
-        // possibles.
-        const rang = e => e.mienne ? 0 : (e.pleine ? 2 : 1);
-        equipes.sort((a, b) => rang(a) - rang(b));
-
-        const total = equipes.reduce((n, e) => n + e.pris, 0);
-        const ouvertes = equipes.filter(e => !e.pleine && !e.mienne).length;
-
-        const etat = !equipes.length
-            // Sans équipe du tout, « toutes les équipes sont complètes »
-            // se contredirait avec le message affiché juste en dessous.
-            ? 'aucune équipe configurée'
-            : draftStarted
-            ? 'repêchage commencé'
-            : ouvertes > 0
-            ? `${ouvertes} équipe${ouvertes > 1 ? 's' : ''} ouverte${ouvertes > 1 ? 's' : ''}`
-            : 'toutes les équipes sont complètes';
+        if (typeof prefetchAvatars === 'function') {
+            await prefetchAvatars(equipes.flatMap(e => e.members || [])).catch(() => {});
+        }
 
         const poolImg = vue.imageUrl
             ? `<img src="${cmEchapper(vue.imageUrl)}" class="cm-pool-img" alt=""
                     onerror="this.src='Icons/grayGroup.png'">`
             : `<img src="Icons/grayGroup.png" class="cm-pool-img" alt="">`;
+        const mode = vue.poolMode === 'head-to-head' ? 'Tête-à-tête' : 'Cumulatif';
 
-        // L'en-tête de la modale dit déjà « Choisir une équipe » ; cette
-        // ligne dit dans quel pool, et ce qu'il y reste.
         let html = `
             <div class="cm-head">
                 ${poolImg}
                 <div class="cm-head-txt">
                     <span class="cm-head-name">${cmEchapper(clanName)}</span>
-                    <span class="cm-head-meta">${total} participant${total > 1 ? 's' : ''} · ${etat}</span>
+                    <span class="cm-head-meta">${mode}${vue.totalPicks ? ` · ${vue.totalPicks} sélections` : ''}${vue.creator ? ` · créé par ${cmEchapper(vue.creator)}` : ''}</span>
                 </div>
-            </div>`;
+            </div>
+            ${cmPlaces(inscrits, max)}`;
+
+        html += `<h3 class="cm-sub">Déjà inscrits</h3>`;
+        html += equipes.length
+            ? `<ul class="cm-teams">${equipes.map(e => `
+                    <li class="cm-team">
+                        <div class="cm-team-head">
+                            ${getTeamLogoHTML(e.clubs || [])}
+                            <div class="cm-team-id">
+                                <strong class="cm-team-name"><span class="cm-team-label">${cmEchapper(getDisplayName(e.name, e.members))}</span></strong>
+                            </div>
+                        </div>
+                        <ul class="cm-member-list">${(e.members || []).map(m => `
+                            <li class="cm-member${m === username ? ' is-me' : ''}">
+                                ${typeof avatarHtml === 'function'
+                                    ? avatarHtml(m, 24)
+                                    : `<img src="Icons/grayUser.png" class="cm-member-avatar" alt="">`}
+                                <span>${cmEchapper(m)}</span>
+                            </li>`).join('')}</ul>
+                    </li>`).join('')}</ul>`
+            : `<p class="cm-empty">Personne pour l'instant — soyez le premier.</p>`;
 
         if (draftStarted) {
-            html += `<div class="cm-banner">Le repêchage est commencé — le changement d'équipe n'est plus possible.</div>`;
-        }
-
-        if (!equipes.length) {
-            html += `<p class="cm-vide">Ce pool n'a aucune équipe configurée.</p>`;
-        }
-
-        html += '<ul class="cm-teams">';
-
-        for (const e of equipes) {
-            const nomEchappe = cmEchapper(e.nom);
-            const teamId = e.nom.replace(/[^a-zA-Z0-9]/g, '_');
-            const peutRejoindre = !e.mienne && !e.pleine && !draftStarted;
-            const etatClasse = e.mienne ? ' is-mine' : e.pleine ? ' is-full' : peutRejoindre ? ' is-open' : '';
-
-            const badge = e.mienne
-                ? `<span class="cm-badge cm-badge-mine">Votre équipe</span>`
-                : e.pleine
-                ? `<span class="cm-badge cm-badge-full">Complète</span>`
-                : '';
-
-            const crayon = e.mienne ? `
-                <button type="button" class="cm-rename-pencil"
-                        data-cm-rename data-cm-pool="${cmEchapper(clanName)}"
-                        data-cm-team="${nomEchappe}" data-cm-id="${teamId}"
-                        title="Renommer mon équipe" aria-label="Renommer mon équipe">
-                    ${typeof getIcon === 'function' ? getIcon('pencil', 14) : '&#9998;'}
-                </button>` : '';
-
-            // Voir qui est déjà là décide du choix plus sûrement que le
-            // décompte : on vient rejoindre quelqu'un.
-            const membres = e.membres.length
-                ? `<ul class="cm-member-list">${e.membres.map(m => `
-                       <li class="cm-member${m === username ? ' is-me' : ''}">
-                           ${typeof avatarHtml === 'function'
-                               ? avatarHtml(m, 24)
-                               : `<img src="Icons/grayUser.png" class="cm-member-avatar" alt="">`}
-                           <span>${cmEchapper(m)}</span>
-                       </li>`).join('')}</ul>`
-                : e.pris > 0
-                // Repli : un décompte sans les noms vaut mieux qu'une carte
-                // qui se contredit, si la réponse arrive incomplète.
-                ? `<p class="cm-empty">${e.pris} participant${e.pris > 1 ? 's' : ''}</p>`
-                : `<p class="cm-empty">Personne pour l'instant — soyez le premier.</p>`;
-
-            const action = peutRejoindre ? `
-                <button type="button" class="cm-join-btn"
-                        data-cm-join data-cm-pool="${cmEchapper(clanName)}" data-cm-team="${nomEchappe}">
-                    Rejoindre cette équipe
-                </button>` : '';
-
-            // « Équipe 3 » ne dit rien de qui joue dedans : tant qu'une équipe
-            // porte sa clé par défaut, on montre ses membres à la place — même
-            // règle que poolSettings.js et classement.js. La clé reste écrite
-            // en dessous, parce que c'est elle qu'on rejoint.
-            const titre = getDisplayName(e.nom, e.membres);
-            const cle = titre !== e.nom ? `<span class="cm-team-key">${nomEchappe}</span>` : '';
-
+            html += `<div class="cm-banner">Le repêchage de ce pool est commencé : il n'accepte plus de participants.</div>`;
+        } else if (plein) {
+            html += `<div class="cm-banner">Ce pool est complet (${max} participants maximum).</div>`;
+        } else {
+            const suggestion = vue.nomSuggere || (username || '').slice(0, 20);
             html += `
-                <li class="cm-team${etatClasse}">
-                    <div class="cm-team-head">
-                        ${getTeamLogoHTML(e.clubs)}
-                        <div class="cm-team-id">
-                            <strong class="cm-team-name"><span class="cm-team-label">${cmEchapper(titre)}</span>${crayon}</strong>
-                            ${cle}
-                        </div>
-                        ${badge}
-                    </div>
-                    ${cmPlaces(e.pris, places)}
-                    ${membres}
-                    ${action}
-                </li>`;
+                <form class="cm-join-form" id="cmJoinForm" novalidate>
+                    <label for="cmTeamName" class="cm-join-label">Nom de ton équipe</label>
+                    <input type="text" id="cmTeamName" class="cm-join-input" maxlength="20" autocomplete="off"
+                           value="${cmEchapper(suggestion)}" placeholder="Ex: Les Castors" required>
+                    <p class="cm-join-hint">C'est le nom que les autres verront au repêchage et au classement. Modifiable plus tard.</p>
+                    ${vue.hasPassword ? `
+                        <label for="cmPassword" class="cm-join-label">Mot de passe du pool</label>
+                        <input type="password" id="cmPassword" class="cm-join-input" maxlength="72" autocomplete="off"
+                               placeholder="Demandez-le à ${cmEchapper(vue.creator || 'la personne qui a créé le pool')}">` : ''}
+                    <p class="cm-join-error" id="cmJoinError" role="alert" hidden></p>
+                    <button type="submit" class="cm-join-btn" id="cmJoinBtn">Rejoindre le pool</button>
+                </form>`;
         }
-
-        html += '</ul>';
 
         $("#clan-members-content").html(html);
+
+        const formulaire = document.getElementById('cmJoinForm');
+        if (formulaire) {
+            formulaire.addEventListener('submit', (e) => {
+                e.preventDefault();
+                joinTeam(clanName, document.getElementById('cmTeamName').value, !!vue.hasPassword);
+            });
+            const champ = document.getElementById('cmTeamName');
+            champ.focus();
+            champ.select();
+        }
 
     } catch (error) {
         // Un échec muet ici ressemble à un bouton mort : la modale s'ouvre et
         // reste vide, sans rien dire. On l'écrit dedans plutôt que de refermer
         // au nez de la personne.
-        console.error("❌ Erreur lors de l'affichage des équipes :", error);
+        console.error("❌ Erreur lors de l'affichage du pool :", error);
         $("#clan-members-content").html(`
-            <p class="cm-vide">Impossible d'afficher les équipes de ce pool pour l'instant.
+            <p class="cm-vide">Impossible d'afficher ce pool pour l'instant.
                Réessayez dans un moment.</p>`);
-    }
-}
-
-// Un seul écouteur pour toute la modale, dont le balisage est reconstruit à
-// chaque ouverture. Les attributs `onclick` d'avant collaient les noms dans
-// du code : « Pool d'Andy » cassait l'appel sur son apostrophe.
-document.addEventListener('click', event => {
-    const rejoindre = event.target.closest('[data-cm-join]');
-    if (rejoindre) {
-        joinTeam(rejoindre.dataset.cmPool, rejoindre.dataset.cmTeam);
-        return;
-    }
-    const renommer = event.target.closest('[data-cm-rename]');
-    if (renommer) {
-        startRename(renommer, renommer.dataset.cmPool, renommer.dataset.cmTeam, renommer.dataset.cmId);
-    }
-});
-
-
-// ✏️ Rename user's team
-/**
- * Bascule le nom de l'équipe en champ de saisie, sur place.
- *
- * Le renommage occupait auparavant un bloc permanent sous chaque carte —
- * étiquette, champ et bouton — pour une action qu'on ne fait qu'une fois.
- * Il tient désormais dans un crayon posé contre le nom.
- *
- * Le champ garde l'identifiant `rename-input-<teamId>` : submitRename() le
- * lit par cet identifiant et n'a pas eu à changer. En cas de succès elle
- * recharge la modale, ce qui rétablit l'affichage normal ; l'annulation est
- * donc le seul retour en arrière à gérer ici.
- */
-function startRename(bouton, clanName, teamName, teamId) {
-    const titre = bouton.closest('.cm-team-name');
-    const libelle = titre && titre.querySelector('.cm-team-label');
-    if (!libelle || titre.querySelector('.cm-rename-input')) return;
-
-    const nomAffiche = libelle.textContent.trim();
-    // Le nom affiché peut être la liste des membres (« alice et bob ») quand
-    // l'équipe porte encore sa clé par défaut : trop long, et ce n'est pas un
-    // nom d'équipe. On repart alors de la clé.
-    const depart = (nomAffiche !== teamName && nomAffiche.length <= 20)
-        ? nomAffiche
-        : teamName;
-
-    const champ = document.createElement('input');
-    champ.type = 'text';
-    champ.id = `rename-input-${teamId}`;
-    champ.className = 'cm-rename-input';
-    champ.maxLength = 20;
-    champ.value = depart;
-    champ.placeholder = 'Nouveau nom (max 20)';
-    champ.setAttribute('aria-label', "Nouveau nom de l'équipe");
-
-    const annuler = () => {
-        champ.remove();
-        valider.remove();
-        libelle.hidden = false;
-        bouton.hidden = false;
-    };
-
-    const valider = document.createElement('button');
-    valider.type = 'button';
-    valider.className = 'cm-rename-ok';
-    valider.title = 'Enregistrer';
-    valider.setAttribute('aria-label', 'Enregistrer le nom');
-    valider.innerHTML = typeof getIcon === 'function' ? getIcon('check', 14) : '✓';
-    valider.addEventListener('click', () => submitRename(clanName, teamName, teamId));
-
-    champ.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); submitRename(clanName, teamName, teamId); }
-        if (e.key === 'Escape') { e.preventDefault(); annuler(); }
-    });
-
-    libelle.hidden = true;
-    bouton.hidden = true;
-    titre.appendChild(champ);
-    titre.appendChild(valider);
-    champ.focus();
-    champ.select();
-}
-
-async function submitRename(clanName, oldTeamName, teamId) {
-    const input = document.getElementById(`rename-input-${teamId}`);
-    if (!input) return;
-
-    const newName = input.value.trim();
-
-    if (newName.length === 0 || newName.length > 20) {
-        alert("Le nom doit contenir entre 1 et 20 caractères.");
-        return;
-    }
-
-    if (!/^[\p{L}\p{N}\s'\-_]+$/u.test(newName)) {
-        alert("Nom invalide. Utilisez uniquement des lettres, chiffres, espaces, tirets ou apostrophes.");
-        return;
-    }
-
-    if (typeof contientGrossierete === 'function' && contientGrossierete(newName)) {
-        alert("Ce nom d'équipe contient un terme inapproprié. Choisissez-en un autre.");
-        return;
-    }
-
-    const username = localStorage.getItem("username");
-
-    try {
-        const response = await fetch(`${BASE_URL}/rename-team`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ clanName, oldTeamName, newTeamName: newName, username })
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-            alert(result.message);
-            viewClanTeams(clanName);
-        } else {
-            alert(result.message || "Erreur lors du renommage.");
-        }
-    } catch (error) {
-        console.error("Erreur rename-team:", error);
-        alert("Erreur de connexion au serveur.");
     }
 }
 
 // 🔥 Rejoindre un clan
 //
-// Le choix d'équipe passe par viewClanTeams, qui interroge /pool-teams :
-// c'est la seule route qui serve une vue à quelqu'un qui n'est pas encore
-// membre — nom des équipes, places prises, lesquelles sont pleines.
+// La modale passe par /pool-teams : c'est la seule route qui serve une vue à
+// quelqu'un qui n'est pas encore membre — qui est inscrit, et combien de
+// places restent.
 //
 // Cette fonction lisait auparavant les alignements dans /draft. Depuis que
 // /draft ne renvoie qu'un résumé de découverte pour les pools qu'on n'a pas
@@ -930,14 +794,6 @@ async function submitRename(clanName, oldTeamName, teamId) {
 function joinClan(clanName) {
     return viewClanTeams(clanName);
 }
-
-// ============================================================
-// MOT DE PASSE DE POOL
-// ------------------------------------------------------------
-// Le mot de passe n'est jamais conservé côté client : il est saisi,
-// envoyé à /join-team, puis oublié. Le serveur le compare à une empreinte
-// bcrypt, comme celui d'un compte, et ne renvoie que `hasPassword`.
-// ============================================================
 
 /** Bascule l'affichage en clair d'un champ de mot de passe. */
 function togglePoolPassword(bouton, champId) {
@@ -951,139 +807,74 @@ function togglePoolPassword(bouton, champId) {
 }
 
 /**
- * Ouvre la modale de saisie et résout avec le mot de passe, ou null si
- * l'utilisateur renonce.
- *
- * `erreur` permet de rouvrir la modale après un refus du serveur sans
- * perdre le contexte : c'est le seul endroit qui sait pourquoi ça a échoué.
+ * La recherche a servi : on la vide, et on retire `?q=` de l'adresse, sinon
+ * le prochain chargement remettrait le nom tapé dans le champ.
  */
-function demanderMotDePasse(nomPool, erreur) {
-    return new Promise(resolve => {
-        const modale = document.getElementById('pool-password-modal');
-        const champ = document.getElementById('poolPwInput');
-        const zoneErreur = document.getElementById('poolPwError');
-        const valider = document.getElementById('poolPwOk');
-        const annulerBtn = document.getElementById('poolPwCancelBtn');
-        const fermer = document.getElementById('poolPwCancel');
-        if (!modale || !champ) { resolve(null); return; }
-
-        document.getElementById('poolPwName').textContent = nomPool;
-        champ.value = '';
-        champ.type = 'password';
-        document.getElementById('poolPwToggle').classList.remove('is-visible');
-        zoneErreur.hidden = !erreur;
-        zoneErreur.textContent = erreur || '';
-
-        const terminer = (valeur) => {
-            modale.style.display = 'none';
-            valider.removeEventListener('click', surValider);
-            annulerBtn.removeEventListener('click', surAnnuler);
-            fermer.removeEventListener('click', surAnnuler);
-            champ.removeEventListener('keydown', surTouche);
-            modale.removeEventListener('click', surFond);
-            resolve(valeur);
-        };
-        const surValider = () => {
-            const v = champ.value.trim();
-            if (!v) {
-                zoneErreur.hidden = false;
-                zoneErreur.textContent = 'Entrez le mot de passe du pool.';
-                champ.focus();
-                return;
-            }
-            terminer(v);
-        };
-        const surAnnuler = () => terminer(null);
-        const surTouche = e => {
-            if (e.key === 'Enter') { e.preventDefault(); surValider(); }
-            if (e.key === 'Escape') { e.preventDefault(); surAnnuler(); }
-        };
-        // Clic sur le fond seulement, pas sur la boîte.
-        const surFond = e => { if (e.target === modale) surAnnuler(); };
-
-        valider.addEventListener('click', surValider);
-        annulerBtn.addEventListener('click', surAnnuler);
-        fermer.addEventListener('click', surAnnuler);
-        champ.addEventListener('keydown', surTouche);
-        modale.addEventListener('click', surFond);
-
-        modale.style.display = 'flex';
-        champ.focus();
-    });
+function viderRecherchePools() {
+    const champ = document.getElementById('poolSearchInput');
+    if (champ) champ.value = '';
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('q')) {
+        url.searchParams.delete('q');
+        window.history.replaceState(null, '', url.toString());
+    }
+    if (typeof filtrerPoolsDisponibles === 'function') filtrerPoolsDisponibles();
 }
 
-// 🔥 Rejoindre une équipe dans un clan
-async function joinTeam(clanName, teamName) {
-    const username = localStorage.getItem("username");
+// 🔥 Entrer dans un pool avec son équipe
+//
+// Le mot de passe n'est jamais conservé côté client : il est saisi, envoyé à
+// /join-team, puis oublié. Le serveur le compare à une empreinte bcrypt,
+// comme celui d'un compte, et ne renvoie que `hasPassword`.
+async function joinTeam(clanName, teamName, avecMotDePasse) {
+    const erreur = document.getElementById('cmJoinError');
+    const bouton = document.getElementById('cmJoinBtn');
+    const dire = (texte) => {
+        if (!erreur) { if (texte) alert(texte); return; }
+        erreur.textContent = texte || '';
+        erreur.hidden = !texte;
+    };
+
+    const nom = String(teamName || '').trim();
+    const refus = cmValiderNomEquipe(nom);
+    if (refus) { dire(refus); document.getElementById('cmTeamName')?.focus(); return; }
+
+    const motDePasse = avecMotDePasse ? (document.getElementById('cmPassword')?.value || '').trim() : null;
+    if (avecMotDePasse && !motDePasse) {
+        dire('Entrez le mot de passe du pool.');
+        document.getElementById('cmPassword')?.focus();
+        return;
+    }
+
+    dire('');
+    if (bouton) { bouton.disabled = true; bouton.textContent = 'Inscription…'; }
 
     try {
-        // Check draft status before touching anything — /leave-team has no draft guard
-        // so we must stop here to avoid orphaning the user from their current team.
-        const checkResp = await fetch(`${BASE_URL}/pool-teams/${encodeURIComponent(clanName)}?t=${Date.now()}`,
-            { cache: "no-store" });
-        const vueEquipes = await checkResp.json();
-        if (vueEquipes.draftStarted) {
-            alert("Le draft a déjà commencé ! Vous ne pouvez plus changer d'équipe.");
+        const reponse = await fetch(`${BASE_URL}/join-team`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: clanName, teamName: nom, password: motDePasse })
+        });
+        const resultat = await reponse.json().catch(() => ({}));
+
+        if (!reponse.ok) {
+            dire(resultat.message || "Impossible de rejoindre ce pool.");
+            if (resultat.passwordRequired) document.getElementById('cmPassword')?.focus();
             return;
         }
 
-        // Mot de passe : demandé seulement pour entrer dans un pool protégé
-        // où l'on n'est pas encore. Changer d'équipe une fois dedans ne le
-        // redemande pas — le serveur applique exactement la même règle.
-        const dejaMembre = vueEquipes.isMember === true;
-        let motDePasse = null;
-        if (vueEquipes.hasPassword && !dejaMembre) {
-            motDePasse = await demanderMotDePasse(clanName);
-            if (motDePasse === null) return;   // renoncement
-        }
-
-        // Remove from current team first (only safe now that we know draft hasn't started)
-        await fetch(`${BASE_URL}/leave-team`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: clanName, username })
-        });
-
-        console.log(`🚪 ${username} a quitté son ancienne équipe`);
-
-        // 🔥 Ajouter l'utilisateur à la nouvelle équipe
-        let joinResponse = await fetch(`${BASE_URL}/join-team`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: clanName, username, teamName, password: motDePasse })
-        });
-        let result = await joinResponse.json();
-
-        // Mot de passe refusé : on redemande sur place plutôt que de renvoyer
-        // l'utilisateur au point de départ. `/leave-team` est sans effet pour
-        // qui n'était membre de rien, donc rien n'a été perdu entre-temps.
-        while (result.passwordRequired) {
-            motDePasse = await demanderMotDePasse(clanName, result.message);
-            if (motDePasse === null) return;
-            joinResponse = await fetch(`${BASE_URL}/join-team`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: clanName, username, teamName, password: motDePasse })
-            });
-            result = await joinResponse.json();
-        }
-
-        alert(result.message);
-
-        // On vient d'entrer dans ce pool : il devient le contexte courant,
-        // sinon la page rechargerait sur un autre pool que celui qu'on
-        // vient de rejoindre.
+        // On vient d'entrer dans ce pool : il devient le contexte courant, et
+        // la suite se passe dans son salon d'attente.
         localStorage.setItem("activePool", clanName);
         localStorage.setItem("draftClan", clanName);
-
-        // 🔄 Recharge les données après l'action
-        viewClanTeams(clanName);
-        setTimeout(() => {
-            location.reload();
-        }, 1000);
-
+        viderRecherchePools();
+        closeModal();
+        window.location.href = "repechage.html";
     } catch (error) {
-        console.error("❌ Erreur lors du changement d'équipe :", error);
+        console.error("❌ Erreur lors de l'inscription :", error);
+        dire("Erreur de connexion au serveur.");
+    } finally {
+        if (bouton) { bouton.disabled = false; bouton.textContent = 'Rejoindre le pool'; }
     }
 }
 

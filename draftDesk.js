@@ -127,10 +127,18 @@ function fzDeskMonterRail() {
     if (!tete) {
         // En queue des deux hôtes : sous « Sauter ce tour » dans le rail,
         // sous l'en-tête de la carte (que draftPhone.css masque).
+        // Le titre est un sélecteur : « Mon équipe » par défaut, mais on peut
+        // regarder l'alignement de n'importe quelle équipe du pool pendant le
+        // repêchage — savoir ce que les autres ont pris décide souvent du
+        // prochain choix.
         hote.insertAdjacentHTML('beforeend', `
             <div class="fzd-rail-head" id="fzdRailHead">
-                <span class="fzd-rail-title">Mon alignement</span>
+                <label class="fzd-rail-title" for="fzdRailTeam" id="fzdRailTitle">Alignement</label>
                 <span class="fzd-rail-count" id="fzdRailCount"></span>
+            </div>
+            <div class="fzd-rail-picker" id="fzdRailPicker">
+                <select id="fzdRailTeam" class="fzd-rail-select"></select>
+                <button type="button" class="fzd-rail-back" id="fzdRailBack" hidden>Revenir à mon équipe</button>
             </div>
             <div class="fzd-rail-body" id="fzdRosterList"></div>
             <div class="fzd-rail-foot" id="fzdRailFoot">
@@ -142,10 +150,66 @@ function fzDeskMonterRail() {
 
     if (tete.parentNode !== hote) {
         hote.append(...[tete,
+                        document.getElementById('fzdRailPicker'),
                         document.getElementById('fzdRosterList'),
                         document.getElementById('fzdRailFoot')].filter(Boolean));
     }
     return hote;
+}
+
+/** L'équipe dont le rail montre l'alignement ; null = la mienne. */
+let fzDeskEquipeVue = null;
+
+/** Les équipes qui repêchent, dans l'ordre du premier tour. */
+function fzDeskEquipesDuPool() {
+    const donnees = (typeof draftData !== 'undefined' && draftData) ? draftData : {};
+    const ordre = Array.isArray(donnees.draftOrder) ? donnees.draftOrder : [];
+    const vues = [...new Set(ordre)];
+    Object.entries(donnees.teams || {}).forEach(([nom, e]) => {
+        if (!vues.includes(nom) && e && (e.members || []).length) vues.push(nom);
+    });
+    return vues;
+}
+
+/** Remplit le sélecteur d'équipe sans perdre le choix en cours. */
+function fzDeskRenderSelecteur(me, cible) {
+    const select = document.getElementById('fzdRailTeam');
+    if (!select) return;
+    const equipes = fzDeskEquipesDuPool();
+    const cle = equipes.join('|') + '#' + (me || '');
+    if (select.dataset.cle !== cle) {
+        select.replaceChildren(...equipes.map(nom => {
+            const opt = document.createElement('option');
+            opt.value = nom;
+            opt.textContent = nom === me ? `${nom} (vous)` : nom;
+            return opt;
+        }));
+        select.dataset.cle = cle;
+    }
+    if (cible) select.value = cible;
+    select.setAttribute('aria-label', "Voir l'alignement de l'équipe");
+
+    const autre = !!(cible && me && cible !== me);
+    const titre = document.getElementById('fzdRailTitle');
+    if (titre) titre.textContent = autre ? 'Alignement adverse' : 'Mon alignement';
+    const retour = document.getElementById('fzdRailBack');
+    if (retour) retour.hidden = !autre;
+    document.getElementById('fzdRailHead')?.classList.toggle('is-other', autre);
+    document.getElementById('fzdRailPicker')?.classList.toggle('is-other', autre);
+    const pied = document.getElementById('fzdRailFoot');
+    if (pied) pied.hidden = autre;
+
+    if (!select.dataset.branche) {
+        select.dataset.branche = '1';
+        select.addEventListener('change', () => {
+            fzDeskEquipeVue = select.value === me ? null : select.value;
+            fzDeskRenderRail();
+        });
+        document.getElementById('fzdRailBack')?.addEventListener('click', () => {
+            fzDeskEquipeVue = null;
+            fzDeskRenderRail();
+        });
+    }
 }
 
 /* ============================================================
@@ -407,8 +471,6 @@ function fzDeskChoix() {
     const historique = Array.isArray(donnees.picksHistory) ? donnees.picksHistory : [];
     const ordre = Array.isArray(donnees.draftOrder) ? donnees.draftOrder : [];
     const index = Number.isInteger(donnees.currentPickIndex) ? donnees.currentPickIndex : 0;
-    const nbEquipes = donnees.teams ? Object.keys(donnees.teams).length : 0;
-
     const tours = (ordre.length && typeof buildPickSlots === 'function')
         ? buildPickSlots(ordre, historique, index)
         // Ordre pas encore généré : au moins les choix déjà faits, comme le
@@ -425,7 +487,7 @@ function fzDeskChoix() {
             pick: tour.pick,
             etat: tour.etat,
             numero: i + 1,
-            ronde: nbEquipes > 0 ? Math.floor(i / nbEquipes) + 1 : 0
+            ronde: typeof fzRondeDe === 'function' ? fzRondeDe(i, donnees) : 0
         });
     });
     return faits.reverse();
@@ -590,18 +652,24 @@ function fzDeskUndo() {
    ============================================================ */
 
 function fzDeskRoster() {
-    const me = typeof getUserTeam === 'function' ? getUserTeam() : null;
+    const moi = typeof getUserTeam === 'function' ? getUserTeam() : null;
     const donnees = (typeof draftData !== 'undefined' && draftData) ? draftData : null;
+    // L'équipe affichée : la mienne, sauf si on a choisi d'en regarder une autre.
+    const me = (fzDeskEquipeVue && donnees && donnees.teams && donnees.teams[fzDeskEquipeVue])
+        ? fzDeskEquipeVue : moi;
     const equipe = (me && donnees && donnees.teams && donnees.teams[me]) || {};
     const cfg = (donnees && donnees.config)
         || { numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1, numTeams: 1 };
-    const nbEquipes = (donnees && donnees.teams) ? Object.keys(donnees.teams).length : 0;
     const historique = (donnees && donnees.picksHistory) || [];
 
     // Ronde de chacun de mes choix, pour la méta « EDM · R1 » des places.
+    // L'indice du tour (pickIndex), pas le rang dans l'historique : un tour
+    // sauté décalerait tout ce qui suit.
     const rondes = {};
     historique.forEach((pick, i) => {
-        if (me && pick.team === me && nbEquipes > 0) rondes[pick.player] = Math.floor(i / nbEquipes) + 1;
+        if (!me || pick.team !== me || typeof fzRondeDe !== 'function') return;
+        const ronde = fzRondeDe(Number.isInteger(pick.pickIndex) ? pick.pickIndex : i, donnees);
+        if (ronde) rondes[pick.player] = ronde;
     });
 
     const defs = [
@@ -609,7 +677,11 @@ function fzDeskRoster() {
         { cle: 'defensive', label: 'Défenseurs', court: 'DÉF', noms: equipe.defensive || [], max: cfg.numDefensive ?? 4, videCode: 'D' },
         { cle: 'goalie', label: 'Gardiens', court: 'GAR', noms: equipe.goalie || [], max: cfg.numGoalies ?? 1, videCode: 'G' },
         { cle: 'rookie', label: 'Recrues', court: 'REC', noms: equipe.rookie || [], max: cfg.numRookies ?? 1, videCode: 'Rec' },
-        { cle: 'team', label: 'Équipes', court: 'ÉQ', noms: equipe.teams || [], max: cfg.numTeams ?? 1, videCode: 'Éq' }
+        { cle: 'team', label: 'Équipes NHL', court: 'ÉQ', noms: equipe.teams || [], max: cfg.numTeams ?? 1, videCode: 'Éq' },
+        // Le banc du tête-à-tête : n'importe quelle position, sauf un club.
+        { cle: 'bench', label: 'Banc', court: 'BANC', videCode: 'Banc',
+          noms: (equipe.bench || []).map(b => (typeof b === 'string' ? b : b && b.nom)).filter(Boolean),
+          max: typeof window.fzQuotaBanc === 'function' ? window.fzQuotaBanc(donnees) : 0 }
     ].map(d => {
         const slots = [];
         for (let i = 0; i < d.max; i++) {
@@ -629,23 +701,14 @@ function fzDeskRoster() {
 
     const total = defs.reduce((s, d) => ({ have: s.have + d.have, of: s.of + d.max }), { have: 0, of: 0 });
 
-    // La maquette réunit recrues et équipes sous un seul intertitre : ce
-    // sont les deux places « à part » du roster, et séparées elles
-    // n'auraient souvent qu'une ligne chacune.
-    const parCle = Object.fromEntries(defs.map(d => [d.cle, d]));
-    const groupes = [
-        { label: 'Attaquants', have: parCle.offensive.have, of: parCle.offensive.max, slots: parCle.offensive.slots },
-        { label: 'Défenseurs', have: parCle.defensive.have, of: parCle.defensive.max, slots: parCle.defensive.slots },
-        { label: 'Gardiens', have: parCle.goalie.have, of: parCle.goalie.max, slots: parCle.goalie.slots },
-        {
-            label: 'Recrues · Équipes',
-            have: parCle.rookie.have + parCle.team.have,
-            of: parCle.rookie.max + parCle.team.max,
-            slots: [...parCle.rookie.slots, ...parCle.team.slots]
-        }
-    ].filter(g => g.of > 0);
+    // Une section par catégorie. Recrues et équipes de la LNH partageaient
+    // un seul intertitre (« 2 » pour une recrue et un club) : on lisait
+    // « 2 recrues » là où on ne pouvait en choisir qu'une.
+    const groupes = defs
+        .map(d => ({ label: d.label, have: d.have, of: d.max, slots: d.slots }))
+        .filter(g => g.of > 0);
 
-    return { defs, groupes, total };
+    return { defs, groupes, total, equipeVue: me, moi };
 }
 
 /** Abréviation d'équipe d'une fiche — celle des statistiques courantes
@@ -709,7 +772,8 @@ function fzDeskRenderRail() {
     const compte = document.getElementById('fzdRailCount');
     if (!liste || !limites) return;
 
-    const { defs, groupes, total } = fzDeskRoster();
+    const { defs, groupes, total, equipeVue, moi } = fzDeskRoster();
+    fzDeskRenderSelecteur(moi, equipeVue);
 
     if (compte) compte.textContent = total.of > 0 ? `${total.have}/${total.of}` : '';
 

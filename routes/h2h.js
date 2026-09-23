@@ -24,6 +24,8 @@ const authz = require('../lib/authz.js');
 const dates = require('../lib/dates.js');
 const scoring = require('../lib/scoring.js');
 const { generateSeasonSchedule } = require('../lib/h2h.js');
+const lineup = require('../lib/lineup.js');
+const { checkIfDraftComplete } = require('../lib/draft.js');
 
 function monter(app, ctx) {
     const { auth, store, db, pointage, serviceH2H, saisonCourante,
@@ -574,6 +576,57 @@ function monter(app, ctx) {
             });
         } catch (erreur) {
             repondreErreur(res, erreur, '/h2h/revise-week');
+        }
+    });
+
+    // ─────────────────────── Banc ───────────────────────
+
+    /**
+     * Faire entrer un joueur du banc à la place d'un partant.
+     *
+     * La règle vit dans lib/lineup.js : même catégorie, et en vigueur dès le
+     * lendemain. On ne gère que sa propre équipe, et seulement une fois le
+     * repêchage terminé — avant, le banc se remplit encore.
+     */
+    app.post('/h2h/lineup/swap', auth.requireAuth, async (req, res) => {
+        try {
+            const nomPool = typeof req.body?.poolName === 'string' ? req.body.poolName.trim() : '';
+            const entre = typeof req.body?.entre === 'string' ? req.body.entre.trim() : '';
+            const sort = typeof req.body?.sort === 'string' ? req.body.sort.trim() : '';
+            if (!nomPool || !entre || !sort) return res.status(400).json({ message: "Pool, joueur du banc et partant requis." });
+
+            const { valeur } = await store.muterPool(nomPool, {
+                scope: 'h2h:banc',
+                userId: req.auth.userId,
+                appliquer: async ({ data }) => {
+                    if (data.poolMode !== 'head-to-head' || lineup.quotaBanc(data) === 0) {
+                        throw new ErreurMetier(400, "Ce pool n'a pas de banc.");
+                    }
+                    if (!checkIfDraftComplete(data)) {
+                        throw new ErreurMetier(409, "Le banc se gère une fois le repêchage terminé.");
+                    }
+                    const nomEquipe = authz.equipeDe(data, req.auth.username);
+                    if (!nomEquipe) throw new ErreurMetier(403, "Vous n'êtes dans aucune équipe de ce pool.");
+
+                    const resultat = lineup.echangerBanc(data.teams[nomEquipe], {
+                        entre, sort, par: req.auth.username
+                    });
+                    if (!resultat.ok) throw new ErreurMetier(resultat.code || 400, resultat.message);
+                    return { valeur: { ...resultat, teamName: nomEquipe } };
+                }
+            });
+
+            const frais = await store.lire(nomPool);
+            if (frais && ctx.diffusion) ctx.diffusion.poolMisAJour(nomPool, frais.data, frais.revision);
+
+            res.json({
+                message: valeur.annule
+                    ? `Changement annulé : ${valeur.entre} reste partant.`
+                    : `${valeur.entre} entre dans l'alignement à la place de ${valeur.sort} à partir du ${valeur.date}.`,
+                ...valeur
+            });
+        } catch (erreur) {
+            repondreErreur(res, erreur, '/h2h/lineup/swap');
         }
     });
 

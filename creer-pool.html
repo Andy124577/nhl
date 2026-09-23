@@ -6,17 +6,17 @@
     <title>Créer un pool – Fantazy</title>
     <script src="theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="navbar.css?v=20260922">
     <link rel="stylesheet" href="teamLogos.css">
     <link rel="stylesheet" href="index.css">
-    <link rel="stylesheet" href="pool.css">
-    <link rel="stylesheet" href="poolNav.css">
-    <link rel="stylesheet" href="poolSettings.css">
+    <link rel="stylesheet" href="pool.css?v=20260922">
+    <link rel="stylesheet" href="poolNav.css?v=20260922">
+    <link rel="stylesheet" href="poolSettings.css?v=20260922">
     <link rel="stylesheet" href="skeleton-loader.css">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
-    <script defer src="activePool.js"></script>
+    <script defer src="activePool.js?v=20260922"></script>
 </head>
 <body>
     <nav class="navbar"></nav>
@@ -54,6 +54,15 @@
                 <div class="form-group">
                     <label for="clanName">Nom du pool</label>
                     <input type="text" id="clanName" placeholder="Ex: Pool des champions 2025" required>
+                </div>
+                <!-- Une personne, une équipe : on nomme la sienne dès la
+                     création, comme chaque participant le fera en entrant. -->
+                <div class="form-group">
+                    <label for="teamName">Nom de ton équipe</label>
+                    <input type="text" id="teamName" maxlength="20" autocomplete="off"
+                           placeholder="Ex: Les Castors" required>
+                    <p class="form-hint">C'est le nom que les autres verront au repêchage et au classement.
+                        Tu pourras le changer plus tard.</p>
                 </div>
                 <div class="form-group">
                     <label>Photo du pool <span style="opacity:.6;font-weight:400;">(optionnel)</span></label>
@@ -125,11 +134,11 @@
             <div class="form-card">
                 <div class="form-card-header">
                     <h2 class="form-card-title">Nombre de participants</h2>
-                    <p class="form-card-desc">Combien de gérants dans votre ligue</p>
+                    <p class="form-card-desc">Un maximum, pas un minimum</p>
                 </div>
                 <div class="form-group">
                     <label for="maxPlayers">Maximum de participants</label>
-                    <select id="maxPlayers">
+                    <select id="maxPlayers" aria-describedby="maxPlayersHint">
                         <option value="2">2 participants</option>
                         <option value="3">3 participants</option>
                         <option value="4">4 participants</option>
@@ -138,8 +147,10 @@
                         <option value="7">7 participants</option>
                         <option value="8">8 participants</option>
                         <option value="9">9 participants</option>
-                        <option value="10">10 participants</option>
+                        <option value="10" selected>10 participants</option>
                     </select>
+                    <p class="form-hint" id="maxPlayersHint">Le repêchage peut commencer dès qu'il y a 2 équipes :
+                        pas besoin d'attendre que le pool soit plein. Personne ne peut entrer au-delà de ce nombre.</p>
                 </div>
             </div>
 
@@ -171,9 +182,18 @@
                             </label>
                         </div>
                     </div>
+                    <!-- Banc du tête-à-tête : des remplaçants repêchés, qui n'ont
+                         de sens que lorsqu'un duel se joue avec un alignement. -->
+                    <div class="form-group" id="benchGroup" style="display:none;">
+                        <label for="numBench">Joueurs de banc</label>
+                        <input type="number" id="numBench" value="2" min="0" max="5" aria-describedby="benchHint">
+                        <p class="form-hint" id="benchHint">Repêchés en plus de l'alignement, ils ne marquent pas
+                            tant qu'ils sont sur le banc. En cas de blessure, faites entrer un joueur du banc à la place
+                            d'un partant de la même position : le changement compte dès le lendemain.</p>
+                    </div>
                     <div id="h2h-warning" class="warning-message" style="display:none;">
                         <span class="warning-icon" data-icon="warning" data-icon-size="17"></span>
-                        Mode Head-to-Head nécessite un nombre <strong>pair</strong> de participants
+                        En Head-to-Head, le repêchage demandera un nombre <strong>pair</strong> d'équipes au moment du départ
                     </div>
                 </div>
 
@@ -201,11 +221,11 @@
     <!-- Filtre de grossieretes, partage avec le serveur. Charge avant
          equipes.js, qui s'en sert. -->
     <script src="profanity.js"></script>
-    <script defer src="equipes.js"></script>
-    <script defer src="navbar.js"></script>
+    <script defer src="equipes.js?v=20260922"></script>
+    <script defer src="navbar.js?v=20260922"></script>
     <script defer src="avatars.js"></script>
-    <script defer src="poolSettings.js"></script>
-    <script defer src="poolNav.js"></script>
-    <script defer src="notifications.js"></script>
+    <script defer src="poolSettings.js?v=20260922"></script>
+    <script defer src="poolNav.js?v=20260922"></script>
+    <script defer src="notifications.js?v=20260922"></script>
 </body>
 </html>

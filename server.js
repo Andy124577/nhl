@@ -53,6 +53,7 @@ const { creerServiceRecap } = require("./services/recap.js");
 const { creerServicePointage } = require("./services/scoring.js");
 const { creerServiceH2H } = require("./services/h2h.js");
 const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
+const { creerModerateur } = require("./services/moderationImage.js");
 const datesPool = require("./lib/dates.js");
 
 const app = express();
@@ -221,6 +222,16 @@ function imgFilter(req, file, cb) {
 
 const uploadAvatar = multer({ storage: makeStorage('avatars'), fileFilter: imgFilter, limits: { fileSize: 2 * 1024 * 1024 } });
 const uploadPool   = multer({ storage: makeStorage('pools'),   fileFilter: imgFilter, limits: { fileSize: 2 * 1024 * 1024 } });
+
+// Vérification du contenu des images (services/moderationImage.js) : signature
+// du fichier toujours, analyse par Claude quand ANTHROPIC_API_KEY est définie.
+const moderationImages = creerModerateur({ logger: console });
+
+/** Retire un fichier téléversé qu'on ne garde pas. */
+function retirerTeleversement(fichier) {
+    if (!fichier || !fichier.path) return;
+    fs.promises.unlink(fichier.path).catch(() => {});
+}
 // ──────────────────────────────────────────────────────────────────────────────
 
 // ✅ Optional: Force / to serve index.html
@@ -524,6 +535,14 @@ contexteRoutes.aujourdhui = aujourdhui;
 contexteRoutes.serviceRecap = serviceRecap;
 contexteRoutes.calendrierLNH = calendrierLNH;
 contexteRoutes.fenetreSaison = () => getSeasonWindow();
+contexteRoutes.moderationImages = moderationImages;
+// Classement cumulatif d'un pool avec les statistiques de saison en mémoire :
+// le même calcul que l'instantané quotidien des rangs.
+contexteRoutes.scoresSaison = async (poolData) => {
+    const statsData = await loadCurrentStats();
+    const teamsData = await loadCurrentTeams();
+    return computeTeamSeasonScores(poolData, statsData.players || [], teamsData.teams || []);
+};
 contexteRoutes.saisonCommencee = (fenetre) => seasonHasStarted(fenetre);
 
 routesIdentite.monter(app, contexteRoutes);
@@ -658,6 +677,14 @@ app.post("/upload/user-avatar", (req, res, next) => auth.requireAuth(req, res, n
         // L'identité vient de la session : le champ du formulaire permettait de
         // remplacer la photo de profil de n'importe qui.
         const username = req.auth.username;
+
+        // Une photo de profil est vue par tous les membres de ses pools : elle
+        // passe la vérification avant d'être publiée, et part sinon.
+        const verification = await moderationImages.verifier({ chemin: req.file.path, mimetype: req.file.mimetype });
+        if (!verification.ok) {
+            retirerTeleversement(req.file);
+            return res.status(verification.code).json({ message: verification.message });
+        }
 
         const avatarUrl = `/uploads/avatars/${req.file.filename}`;
 

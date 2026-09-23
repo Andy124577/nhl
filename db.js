@@ -1114,6 +1114,26 @@ async function resolveNotificationsInTx(client, { type, subjectKey, subjectValue
     return resultat.rowCount;
 }
 
+/**
+ * Clôture des notifications par leur clé de déduplication.
+ *
+ * Sert au tour de repêchage : « C'est votre tour » cesse d'être une alerte
+ * au moment où ce tour est joué (ou sauté). Elle passe aussi pour lue — il
+ * n'y a plus rien à y faire, et la pastille de la cloche ne doit pas compter
+ * des tours terminés.
+ */
+async function resolveNotificationsByKeyInTx(client, dedupKeys) {
+    const cles = [...new Set((dedupKeys || []).filter(Boolean).map(String))];
+    if (cles.length === 0) return 0;
+    const resultat = await client.query(
+        `UPDATE notifications
+            SET resolved_at = NOW(), read_at = COALESCE(read_at, NOW())
+          WHERE dedup_key = ANY($1) AND resolved_at IS NULL`,
+        [cles]
+    );
+    return resultat.rowCount;
+}
+
 /** Toutes les notifications d'une personne — export Loi 25. */
 async function exportNotificationsForUser(userId) {
     const resultat = await pool.query(
@@ -1302,6 +1322,7 @@ module.exports = {
     markNotificationsRead,
     markAllNotificationsRead,
     resolveNotificationsInTx,
+    resolveNotificationsByKeyInTx,
     exportNotificationsForUser,
     purgeOldNotifications,
     purgeOldActivity,

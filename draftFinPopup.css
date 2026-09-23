@@ -251,3 +251,32 @@
   .fz-end-modal { animation: none; }
   .fz-end-btn:active { transform: none; }
 }
+
+/* ---- Une équipe à la fois : mes choix, puis ceux des autres ----------------
+   Le récapitulatif ne montrait que ses propres joueurs ; on revoit
+   maintenant aussi ce que les autres ont repêché, sans quitter la fenêtre. */
+.fz-end-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding-bottom: 4px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.fz-end-tabs[hidden] { display: none; }
+.fz-end-tab {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #2a2d2f;
+  border-radius: 999px;
+  background: transparent;
+  color: #c9c5bd;
+  font: 600 13px/1 "Helvetica Neue", Helvetica, sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+.fz-end-tab:hover { border-color: #E8795E; color: #f3efe7; }
+.fz-end-tab:focus-visible { outline: 2px solid #E8795E; outline-offset: 2px; }
+.fz-end-tab.is-active { background: #E8795E; border-color: #E8795E; color: #17191b; }

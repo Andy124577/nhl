@@ -83,3 +83,29 @@
 @media (prefers-reduced-motion: reduce) {
     .fzh-watch-track { scroll-behavior: auto !important; }
 }
+
+/* ---- Après le repêchage : activité de la ligue ----
+   Même châssis que « À surveiller » : ce panneau EST le même nœud, qui
+   change de contenu une fois les choix faits (fzdRendreSurveiller). */
+.fzd-off-tag.is-sale { background: var(--fzd-accent-tint); color: var(--fzd-accent); }
+a.fzh-ligue-card { color: inherit; text-decoration: none; }
+a.fzh-ligue-card:hover { border-color: var(--fzd-border-strong); }
+a.fzh-ligue-card:focus-visible { outline: 2px solid var(--fzd-accent); outline-offset: 2px; }
+.fzh-ligue-card.is-sale .fzd-off-stat-val { color: var(--fzd-accent); }
+.fzh-ligue-text {
+    margin: 4px 0 0;
+    font: 500 13px/1.45 'Barlow', system-ui, sans-serif;
+    color: var(--fzd-ink);
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.fzh-ligue-link {
+    flex: 1 1 auto;
+    font: 600 12px/1.2 'Barlow Condensed', sans-serif;
+    letter-spacing: .04em;
+    color: var(--fzd-accent);
+    text-decoration: none;
+}
+.fzh-ligue-link:hover { text-decoration: underline; }

@@ -304,8 +304,8 @@ function getStandingsColumns(poolMode) {
             { label: 'V', sort: 'wins', cls: 'st-wlt-col', title: 'Victoires' },
             { label: 'D', sort: 'losses', cls: 'st-wlt-col', title: 'Défaites' },
             { label: 'N', sort: 'ties', cls: 'st-wlt-col', title: 'Nuls' },
-            { label: 'PTS', sort: 'points', cls: 'points-column', title: 'Points marqués' },
-            { label: 'Écart', sort: 'diff', title: 'Différentiel (marqués - encaissés)' },
+            { label: 'Pts marqués', sort: 'points', cls: 'points-column', title: 'Points fantasy marqués dans tous vos duels' },
+            { label: 'Écart', sort: 'diff', title: 'Points marqués moins points encaissés' },
             { label: 'Forme', cls: 'st-form-col', title: 'Résultats des 5 dernières semaines, du plus récent au plus ancien' }
         ];
     }
@@ -315,12 +315,12 @@ function getStandingsColumns(poolMode) {
         { label: 'PJ', sort: 'gamesPlayed', title: 'Parties jouées' },
         { label: 'B', sort: 'goals', title: 'Buts' },
         { label: 'P', sort: 'assists', title: 'Passes décisives' },
-        { label: '1', cls: 'st-period-col', title: 'Points des dernières 24 heures' },
-        { label: '7', cls: 'st-period-col', title: 'Points des 7 derniers jours' },
-        { label: '30', cls: 'st-period-col', title: 'Points des 30 derniers jours' },
-        { label: 'PPts', sort: 'points', cls: 'points-column', title: 'Points de pool' },
-        { label: 'PPts/PJ', sort: 'ppg', title: 'Points par partie jouée' },
-        { label: 'Rang', cls: 'st-evo-col', title: 'Évolution du rang depuis le début de la période sélectionnée' }
+        { label: '24 h', cls: 'st-period-col', title: 'Forme : points fantasy des dernières 24 heures' },
+        { label: '7 j', cls: 'st-period-col', title: 'Forme : points fantasy des 7 derniers jours' },
+        { label: '30 j', cls: 'st-period-col', title: 'Forme : points fantasy des 30 derniers jours' },
+        { label: 'Total', sort: 'points', cls: 'points-column', title: 'Points de la saison — ce qui décide du classement' },
+        { label: 'Moy./PJ', sort: 'ppg', title: 'Points de la saison par partie jouée' },
+        { label: 'Tendance', cls: 'st-evo-col', title: 'Places gagnées ou perdues si l’on classait seulement sur la période choisie' }
     ];
 }
 
@@ -394,9 +394,70 @@ function evolutionBadgeHTML(move, hasData) {
 }
 
 function standingsPeriodChipsHTML() {
-    return `<div class="st-period-chips" role="group" aria-label="Période pour l'évolution du rang">
-        ${STANDINGS_PERIODS.map(d => `<button type="button" class="st-period-chip${d === standingsPeriod ? ' active' : ''}" data-period="${d}">${d}J</button>`).join('')}
+    return `<div class="st-period-bar">
+        <span class="st-period-label" id="stPeriodLabel">Tendance sur</span>
+        <div class="st-period-chips" role="group" aria-labelledby="stPeriodLabel">
+            ${STANDINGS_PERIODS.map(d => `<button type="button" class="st-period-chip${d === standingsPeriod ? ' active' : ''}" data-period="${d}" aria-pressed="${d === standingsPeriod}">${d === 1 ? '24 h' : `${d} j`}</button>`).join('')}
+        </div>
     </div>`;
+}
+
+/**
+ * « Où en suis-je ? » — la réponse, avant le tableau.
+ *
+ * Un tableau de onze colonnes répond à tout sauf à la seule question qu'on
+ * se pose en l'ouvrant. Une phrase la donne d'abord : son rang, et ce qui le
+ * sépare de la place d'au-dessus (ou d'en dessous, quand on mène).
+ */
+function standingsSummaryHTML(standings, poolMode) {
+    const moi = localStorage.getItem('username');
+    const mienne = standings.find(s => (s.members || []).includes(moi));
+    if (!mienne) return '';
+    const total = standings.length;
+    const nom = s => escapeHtmlText(getDisplayName(s.teamName, s.members));
+    const ordinal = n => n === 1 ? '1<sup>er</sup>' : `${n}<sup>e</sup>`;
+    let detail;
+    if (poolMode === 'head-to-head') {
+        detail = `Bilan ${mienne.wins} V · ${mienne.losses} D · ${mienne.ties} N, ${fmtH2HPts(mienne.points)} points marqués.`;
+    } else if (mienne.rank === 1 && total > 1) {
+        const second = standings[1];
+        detail = `Vous menez par <strong>${second ? mienne.points - second.points : 0} pts</strong> devant ${second ? nom(second) : '—'}.`;
+    } else if (mienne.rank > 1) {
+        const devant = standings[mienne.rank - 2];
+        const leader = standings[0];
+        detail = `<strong>${devant.points - mienne.points} pts</strong> derrière ${nom(devant)}`
+            + (mienne.rank > 2 ? ` · ${leader.points - mienne.points} pts du 1<sup>er</sup>` : '') + '.';
+    } else {
+        detail = 'Seule équipe du pool pour l’instant.';
+    }
+    return `
+        <div class="st-summary" role="status">
+            <span class="st-summary-rank fz-display">${ordinal(mienne.rank)}<small> / ${total}</small></span>
+            <span class="st-summary-txt"><strong>${nom(mienne)}</strong><span>${detail}</span></span>
+        </div>`;
+}
+
+/** Comment se lit le tableau — replié, pour ceux qui le demandent. */
+function standingsLegendHTML(poolMode) {
+    const lignes = poolMode === 'head-to-head'
+        ? [
+            ['Classement', 'Selon les victoires, puis l’écart. Chaque semaine (lundi au dimanche), vous affrontez une équipe : celle qui marque le plus de points fantasy gagne le duel.'],
+            ['V - D - N', 'Victoires, défaites et nulles dans vos duels.'],
+            ['Pts marqués', 'Total des points fantasy de vos joueurs pendant vos duels : but 3, passe 2, tir 0,5, avantage numérique et désavantage en bonus ; gardiens : victoire 5, blanchissage 3, arrêt 0,2, but accordé −1.'],
+            ['Écart', 'Points marqués moins points encaissés.'],
+            ['Forme', 'Vos 5 dernières semaines, la plus récente à gauche.']
+        ]
+        : [
+            ['Total', 'Ce qui décide du classement : les points de la saison. Patineurs : 1 par but et 1 par passe. Gardiens : 2 par victoire, 5 par blanchissage, 1 par défaite en prolongation. Clubs de la LNH : 2 par victoire, 1 par défaite en prolongation.'],
+            ['24 h · 7 j · 30 j', 'La forme récente, en points fantasy (but 3, passe 2, tir 0,5…). Elle ne change pas le classement : elle montre qui monte.'],
+            ['Tendance', 'Les places qu’une équipe gagnerait (▲) ou perdrait (▼) si l’on classait seulement sur la période choisie.'],
+            ['PJ · B · P', 'Parties jouées, buts et passes de tout l’alignement.']
+        ];
+    return `
+        <details class="st-legend">
+            <summary>Comment lire ce classement</summary>
+            <dl>${lignes.map(([t, d]) => `<dt>${t}</dt><dd>${d}</dd>`).join('')}</dl>
+        </details>`;
 }
 
 function buildStandingsHead(columns, activeSortKey) {
@@ -818,15 +879,18 @@ async function renderPoolStandings(poolData, poolName) {
     const mobileListHTML = enH2H ? '' : '<div class="st-mobile-list"></div>';
     const tableHTML = `<div class="standings-table-container"><table id="standingsTable">${buildStandingsHead(columns, activeSortKey)}</table></div>`;
 
+    const resumeHTML = standingsSummaryHTML(standings, poolMode);
+    const legendeHTML = standingsLegendHTML(poolMode);
     standingsList.innerHTML = enH2H
-        ? `<section class="fz-card st-card">
+        ? `${resumeHTML}<section class="fz-card st-card">
                <div class="fz-card-head">
                    <span class="fz-card-icon">${H2H_ICON.graphique}</span>
                    <h2 class="fz-card-title">Classement de la saison</h2>
                </div>
                ${tableHTML}
+               ${legendeHTML}
            </section>`
-        : `${chipsHTML}${tableHTML}${mobileListHTML}`;
+        : `${resumeHTML}${chipsHTML}${tableHTML}${mobileListHTML}${legendeHTML}`;
     const table = document.getElementById('standingsTable');
 
     const tbody = document.createElement('tbody');
@@ -840,7 +904,8 @@ async function renderPoolStandings(poolData, poolName) {
         const avatarHTML = logoHTML || `<span class="st-avatar-fallback">${initialsFromName(displayName)}</span>`;
 
         const tr = document.createElement('tr');
-        tr.className = standing.rank === 1 ? 'is-clickable is-leader' : 'is-clickable';
+        const estMoi = (standing.members || []).includes(localStorage.getItem('username'));
+        tr.className = (standing.rank === 1 ? 'is-clickable is-leader' : 'is-clickable') + (estMoi ? ' is-me' : '');
         tr.tabIndex = 0;
         tr.setAttribute('role', 'button');
         tr.setAttribute('aria-label', `Voir l'équipe de ${displayName}`);
@@ -896,7 +961,7 @@ async function renderPoolStandings(poolData, poolName) {
                     <span class="st-avatar">${avatarHTML}</span>
                     <div class="st-mobile-info">
                         <span class="st-mobile-name" title="${displayName}">${displayName}</span>
-                        <span class="st-mobile-sub">${periodPts} pts période</span>
+                        <span class="st-mobile-sub">Forme ${standingsPeriod === 1 ? '24 h' : `${standingsPeriod} j`} : ${periodPts} pts</span>
                     </div>
                     <span class="st-mobile-pts">${standing.points}</span>
                     ${evoHTML}
@@ -1087,59 +1152,97 @@ function changeRecentFormWindow(poolName, days) {
     loadRecentFormRows(poolName, days);
 }
 
+/** Réponses de /pool-leaderboard par fenêtre, pour le pool affiché. */
+let recentFormCache = { poolName: null, byDays: new Map() };
+
+async function fetchRecentForm(poolName, days) {
+    if (recentFormCache.poolName !== poolName) recentFormCache = { poolName, byDays: new Map() };
+    if (recentFormCache.byDays.has(days)) return recentFormCache.byDays.get(days);
+    let data = null;
+    try {
+        const res = await fetch(`${BASE_URL}/pool-leaderboard/${encodeURIComponent(poolName)}?days=${days}`, { cache: 'no-store' });
+        data = res.ok ? await res.json() : null;
+    } catch (error) {
+        console.warn('⚠️ Could not load recent-form leaderboard:', error);
+    }
+    recentFormCache.byDays.set(days, data);
+    return data;
+}
+
+/** Une fenêtre qui a de vrais points sur SA période — pas le repli « saison ». */
+function recentFormHasData(data) {
+    return !!(data && (data.teams || []).some(t => t.points !== null && t.source !== 'seasonFallback'));
+}
+
 async function loadRecentFormRows(poolName, days) {
     const list = document.getElementById('recentFormLeaderboardRows');
     if (!list) return;
-    try {
-        const res = await fetch(`${BASE_URL}/pool-leaderboard/${encodeURIComponent(poolName)}?days=${days}`, { cache: 'no-store' });
-        const data = res.ok ? await res.json() : null;
-        const teams = (data && data.teams) || [];
-
-        if (!teams.length) {
-            list.innerHTML = data && data.seasonStarted === false
-                ? fzEmptyHTML(H2H_ICON.graphique, "La saison n'est pas commencée", "Aucune équipe n'a encore joué.")
-                : fzEmptyHTML(H2H_ICON.graphique, 'Pas assez de données', 'Aucun résultat sur cette période.');
-            return;
-        }
-
-        // "Real data, just not from the exact window" vs. "nothing at all" —
-        // the caption keeps the fallback honest instead of implying precision.
-        const sourceLabel = { seasonFallback: '(saison)', none: '' };
-
-        list.innerHTML = teams.map(t => `
-            <div class="leaderboard-row">
-                <span class="lb-rank ${recentFormRankClass(t.rank)}">${t.rank}</span>
-                <span class="lb-team">${t.teamName}</span>
-                ${t.points === null
-                    ? '<span class="lb-pts">—</span>'
-                    : `<span class="lb-pts">${t.points} pts</span><span class="lb-source">${sourceLabel[t.source] || ''}</span>`}
-            </div>`).join('');
-    } catch (error) {
-        console.warn('⚠️ Could not load recent-form leaderboard:', error);
+    const data = await fetchRecentForm(poolName, days);
+    if (!list.isConnected) return;
+    if (data === null) {
         list.innerHTML = `<p class="hof-empty">Impossible de charger ce classement.</p>`;
+        return;
     }
+    const teams = (data && data.teams) || [];
+
+    if (!teams.length) {
+        list.innerHTML = data && data.seasonStarted === false
+            ? fzEmptyHTML(H2H_ICON.graphique, "La saison n'est pas commencée", "Aucune équipe n'a encore joué.")
+            : fzEmptyHTML(H2H_ICON.graphique, 'Pas assez de données', 'Aucun résultat sur cette période.');
+        return;
+    }
+
+    // "Real data, just not from the exact window" vs. "nothing at all" —
+    // the caption keeps the fallback honest instead of implying precision.
+    const sourceLabel = { seasonFallback: '(saison)', none: '' };
+    const equipes = (allPoolsData[poolName] && allPoolsData[poolName].teams) || {};
+
+    list.innerHTML = teams.map(t => `
+        <div class="leaderboard-row">
+            <span class="lb-rank ${recentFormRankClass(t.rank)}">${t.rank}</span>
+            <span class="lb-team">${escapeHtmlText(getDisplayName(t.teamName, (equipes[t.teamName] && equipes[t.teamName].members) || []))}</span>
+            ${t.points === null
+                ? '<span class="lb-pts">—</span>'
+                : `<span class="lb-pts">${t.points} pts</span><span class="lb-source">${sourceLabel[t.source] || ''}</span>`}
+        </div>`).join('');
 }
 
-function renderRecentFormLeaderboard(poolName) {
+/**
+ * « Meilleures équipes récentes » : seulement les fenêtres qui ont quelque
+ * chose à dire.
+ *
+ * Six boutons (7 j à 365 j) dont la moitié ouvrait sur « Pas assez de
+ * données » en début de saison : on interroge les six d'un coup, on retire
+ * ceux qui sont vides, et le panneau ouvre sur la plus courte qui a des
+ * points. Si aucune n'en a, plus de boutons du tout — seulement le message.
+ */
+async function renderRecentFormLeaderboard(poolName) {
     const container = document.getElementById('recentFormLeaderboard');
     if (!container) return;
 
-    recentFormWindow = 7;
     container.innerHTML = `
         <div class="recent-form-head fz-card-head">
             <span class="fz-card-icon">${H2H_ICON.graphique}</span>
             <p class="hof-title fz-card-title">Meilleures équipes récentes</p>
-            <div class="time-filters">
-                ${RECENT_FORM_WINDOWS.map(d => `<button type="button" class="time-filter${d === 7 ? ' active' : ''}" data-days="${d}">${d}J</button>`).join('')}
-            </div>
+            <div class="time-filters" hidden></div>
         </div>
-        <div class="leaderboard-list" id="recentFormLeaderboardRows"></div>`;
-
-    container.querySelectorAll('.time-filter').forEach(btn => {
-        btn.addEventListener('click', () => changeRecentFormWindow(poolName, Number(btn.dataset.days)));
-    });
-
+        <div class="leaderboard-list" id="recentFormLeaderboardRows"><p class="hof-empty">Chargement…</p></div>`;
     container.style.display = 'block';
+
+    const reponses = await Promise.all(RECENT_FORM_WINDOWS.map(d => fetchRecentForm(poolName, d)));
+    if (!container.isConnected) return;
+    const disponibles = RECENT_FORM_WINDOWS.filter((d, i) => recentFormHasData(reponses[i]));
+    recentFormWindow = disponibles[0] || RECENT_FORM_WINDOWS[0];
+
+    const filtres = container.querySelector('.time-filters');
+    if (disponibles.length > 1) {
+        filtres.innerHTML = disponibles.map(d =>
+            `<button type="button" class="time-filter${d === recentFormWindow ? ' active' : ''}" data-days="${d}">${d} j</button>`).join('');
+        filtres.hidden = false;
+        filtres.querySelectorAll('.time-filter').forEach(btn => {
+            btn.addEventListener('click', () => changeRecentFormWindow(poolName, Number(btn.dataset.days)));
+        });
+    }
     loadRecentFormRows(poolName, recentFormWindow);
 }
 
@@ -1490,9 +1593,134 @@ function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
         rosterList.appendChild(card);
     });
 
+    renderBenchPanel(rosterList, roster);
+
     // Hide skeleton, show content
     document.getElementById('rosterSkeleton').style.display = 'none';
     rosterList.style.display = 'flex';
+}
+
+// ==================== BANC (TÊTE-À-TÊTE) ====================
+// Les joueurs de banc ne marquent rien. On en fait entrer un à la place d'un
+// partant de la même position — en cas de blessure, le plus souvent — et le
+// changement compte à partir du lendemain (lib/lineup.js, /h2h/lineup/swap).
+
+const BANC_LIBELLES = { offensive: 'Attaquant', defensive: 'Défenseur', goalie: 'Gardien', rookie: 'Recrue' };
+
+/** Le message du dernier changement, affiché au prochain rendu du banc. */
+let benchMessageEnAttente = '';
+
+/** Points de la saison d'un joueur, pour choisir qui sort en connaissance de cause. */
+function benchSeasonPoints(nom, categorie) {
+    if (categorie === 'goalie') {
+        const fiche = goalieData.find(p => p.goalieFullName === nom);
+        if (!fiche) return null;
+        const stats = getCurrentPlayerStats(nom, fiche.playerId);
+        return goaliePoolPoints({
+            shutouts: seasonStat(stats, fiche, 'shutouts'),
+            wins: seasonStat(stats, fiche, 'wins'),
+            otLosses: seasonStat(stats, fiche, 'otLosses')
+        });
+    }
+    const fiche = fullPlayerData.find(p => p.skaterFullName === nom);
+    if (!fiche) return null;
+    return seasonStat(getCurrentPlayerStats(nom, fiche.playerId), fiche, 'points');
+}
+
+function renderBenchPanel(rosterList, roster) {
+    const poolData = allPoolsData[currentPoolName];
+    const quota = typeof window.fzQuotaBanc === 'function' ? window.fzQuotaBanc(poolData) : 0;
+    if (!quota) return;
+
+    const moi = localStorage.getItem('username');
+    const mienne = (roster.members || []).includes(moi);
+    const banc = (roster.bench || []).map(b => (typeof b === 'string' ? { nom: b, categorie: null } : b));
+    const aujourdhui = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+    const prevus = (roster.lineupChanges || []).filter(c => c.date > aujourdhui);
+    const esc = escapeHtmlText;
+    const jour = iso => new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+    const pts = v => (v == null ? '—' : `${v} pts`);
+
+    const lignes = banc.map((b, i) => {
+        const partants = roster[b.categorie] || [];
+        const choix = mienne && partants.length ? `
+            <div class="bench-swap">
+                <label class="bench-sr" for="benchSwap-${i}">Remplacer quel partant par ${esc(b.nom)} ?</label>
+                <select class="bench-select" id="benchSwap-${i}" data-bench-entre="${escapeAttr(b.nom)}">
+                    <option value="">Remplacer…</option>
+                    ${partants.map(nom => `<option value="${escapeAttr(nom)}">${esc(nom)} · ${pts(benchSeasonPoints(nom, b.categorie))}</option>`).join('')}
+                </select>
+                <button type="button" class="bench-go" data-bench-go="${escapeAttr(b.nom)}" disabled>Faire entrer</button>
+            </div>` : '';
+        return `
+            <li class="bench-row">
+                <div class="bench-id">
+                    <span class="bench-name">${esc(b.nom)}</span>${injBadge(b.nom, '')}
+                    <span class="bench-meta">${esc(BANC_LIBELLES[b.categorie] || 'Joueur')} · ${pts(benchSeasonPoints(b.nom, b.categorie))}</span>
+                </div>
+                ${choix}
+            </li>`;
+    }).join('');
+
+    const panneau = document.createElement('section');
+    panneau.className = 'bench-panel';
+    panneau.setAttribute('aria-labelledby', 'benchTitle');
+    panneau.innerHTML = `
+        <header class="bench-head">
+            <h3 class="bench-title" id="benchTitle">Banc · ${banc.length}/${quota}</h3>
+            <p class="bench-hint">Les joueurs de banc ne marquent pas. ${mienne
+                ? 'Faites-en entrer un à la place d’un partant de la même position : le changement compte dès demain.'
+                : 'Seule l’équipe elle-même peut modifier son alignement.'}</p>
+        </header>
+        ${prevus.length ? `<ul class="bench-pending">${prevus.map(c =>
+            `<li><strong>${esc(c.entre)}</strong> remplace ${esc(c.sort)} à partir du ${esc(jour(c.date))}.</li>`).join('')}</ul>` : ''}
+        ${banc.length ? `<ul class="bench-list">${lignes}</ul>` : '<p class="bench-empty">Banc vide.</p>'}
+        <p class="bench-msg" id="benchMsg" role="status"${benchMessageEnAttente ? '' : ' hidden'}>${esc(benchMessageEnAttente)}</p>`;
+    benchMessageEnAttente = '';
+    rosterList.appendChild(panneau);
+
+    panneau.querySelectorAll('.bench-select').forEach(select => {
+        select.addEventListener('change', () => {
+            const bouton = panneau.querySelector(`[data-bench-go="${CSS.escape(select.dataset.benchEntre)}"]`);
+            if (bouton) bouton.disabled = !select.value;
+        });
+    });
+    panneau.querySelectorAll('[data-bench-go]').forEach(bouton => {
+        bouton.addEventListener('click', () => {
+            const entre = bouton.dataset.benchGo;
+            const select = panneau.querySelector(`[data-bench-entre="${CSS.escape(entre)}"]`);
+            if (select && select.value) faireEntrerDuBanc(entre, select.value, bouton);
+        });
+    });
+}
+
+async function faireEntrerDuBanc(entre, sort, bouton) {
+    const message = document.getElementById('benchMsg');
+    const dire = (texte, erreur) => {
+        if (!message) return;
+        message.textContent = texte;
+        message.hidden = !texte;
+        message.classList.toggle('is-error', !!erreur);
+    };
+    bouton.disabled = true;
+    dire('Changement en cours…', false);
+    try {
+        const reponse = await fetch(`${BASE_URL}/h2h/lineup/swap`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ poolName: currentPoolName, entre, sort })
+        });
+        const resultat = await reponse.json().catch(() => ({}));
+        if (!reponse.ok) { dire(resultat.message || 'Changement impossible.', true); bouton.disabled = false; return; }
+        await FZPool.refresh();
+        allPoolsData = FZPool.all();
+        benchMessageEnAttente = resultat.message || 'Alignement mis à jour.';
+        showTeamRoster(currentPoolName, currentTeamName);
+    } catch (erreur) {
+        console.error('Erreur /h2h/lineup/swap :', erreur);
+        dire('Erreur de connexion au serveur.', true);
+        bouton.disabled = false;
+    }
 }
 
 /**
@@ -1655,8 +1883,14 @@ function buildMatchupCardHTML(m, poolName, showRecord) {
         return `<div class="h2h-team-record">${s.wins}V-${s.losses}D-${s.ties}N · ${pts}PTS</div>`;
     };
 
-    const t1p = m.team1Players || [];
-    const t2p = m.team2Players || [];
+    // Chaque colonne est triée du meilleur pointeur au moins bon. Les rangées
+    // appariaient avant deux joueurs au hasard de l'ordre de repêchage, et en
+    // surlignaient un comme « gagnant » — un duel entre un gardien et un
+    // attaquant qui ne voulait rien dire. Les points restent côte à côte ;
+    // plus aucune comparaison implicite.
+    const parPoints = liste => [...(liste || [])].sort((a, b) => (b.fantasyPoints || 0) - (a.fantasyPoints || 0));
+    const t1p = parPoints(m.team1Players);
+    const t2p = parPoints(m.team2Players);
     const maxRows = Math.max(t1p.length, t2p.length);
     let playerRowsHTML = '';
 
@@ -1665,8 +1899,8 @@ function buildMatchupCardHTML(m, poolName, showRecord) {
         const rp = t2p[i];
         const lpFpts = lp ? lp.fantasyPoints : null;
         const rpFpts = rp ? rp.fantasyPoints : null;
-        const lpBetter = lpFpts !== null && rpFpts !== null && lpFpts > rpFpts;
-        const rpBetter = lpFpts !== null && rpFpts !== null && rpFpts > lpFpts;
+        const lpBetter = false;
+        const rpBetter = false;
 
         const lpSub = lp ? (lp.position === 'G'
             ? `${lp.wins}V ${lp.saves}ARR${lp.shutouts ? ' ' + lp.shutouts + 'BL' : ''}`
@@ -1701,10 +1935,12 @@ function buildMatchupCardHTML(m, poolName, showRecord) {
 
     // Un nom d'équipe vient d'une saisie : il est échappé, et tronqué par le
     // CSS plutôt que de pousser la carte hors de l'écran sur téléphone.
-    const nom1 = escapeHtmlText(m.team1);
-    const nom2 = escapeHtmlText(m.team2);
-    const titre1 = escapeAttr(m.team1);
-    const titre2 = escapeAttr(m.team2);
+    const equipes = (allPoolsData[poolName] && allPoolsData[poolName].teams) || {};
+    const affiche = cle => getDisplayName(cle, (equipes[cle] && equipes[cle].members) || []);
+    const nom1 = escapeHtmlText(affiche(m.team1));
+    const nom2 = escapeHtmlText(affiche(m.team2));
+    const titre1 = escapeAttr(affiche(m.team1));
+    const titre2 = escapeAttr(affiche(m.team2));
 
     return `
         <div class="h2h-matchup-card">
@@ -2171,19 +2407,22 @@ function renderH2HHistory(poolName) {
         // `weekEnd` — le lundi SUIVANT — reculé d'un jour pour l'affichage.
         const dateRange = h2hSchedDateRange(week.weekStart, week.weekEnd);
 
+        // Le nom affiché, échappé : la clé brute (« Équipe 3 ») ne dit pas qui
+        // jouait, et un nom saisi ne va jamais tel quel dans du HTML.
+        const affiche = cle => escapeHtmlText(getDisplayName(cle, (poolData.teams?.[cle]?.members) || []));
         const matchupsHTML = week.matchups.map(m => {
             const isT1Winner = m.winner === m.team1;
             const isT2Winner = m.winner === m.team2;
             const isTie = m.winner === 'tie';
             return `
                 <div class="h2h-history-matchup">
-                    <span class="h2h-hist-team ${isT1Winner ? 'winner' : ''}">${m.team1}</span>
+                    <span class="h2h-hist-team ${isT1Winner ? 'winner' : ''}">${affiche(m.team1)}</span>
                     <span class="h2h-hist-score">
                         <span class="${isT1Winner ? 'winner' : ''}">${(m.team1Points || 0).toFixed(1)}</span>
                         <span class="h2h-hist-sep">${isTie ? '=' : '-'}</span>
                         <span class="${isT2Winner ? 'winner' : ''}">${(m.team2Points || 0).toFixed(1)}</span>
                     </span>
-                    <span class="h2h-hist-team ${isT2Winner ? 'winner' : ''}">${m.team2}</span>
+                    <span class="h2h-hist-team ${isT2Winner ? 'winner' : ''}">${affiche(m.team2)}</span>
                 </div>
             `;
         }).join('');

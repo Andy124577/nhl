@@ -91,6 +91,11 @@ function monter(app, ctx) {
                         dedupKey: evenements.clesActivite.choix(poolId, resultat.pickIndex)
                     });
 
+                    // Le tour qui vient d'être joué ne réclame plus rien : son
+                    // « C'est votre tour » quitte la cloche au lieu d'y
+                    // rester jusqu'à expiration, un par tour.
+                    journal.resoudre(evenements.clesNotification.votreTour(poolId, resultat.pickIndex));
+
                     // L'équipe qui vient de prendre la main est prévenue. La
                     // clé porte l'indice du tour : au renversement du serpentin
                     // la même équipe est alertée deux fois, mais pour deux
@@ -126,6 +131,7 @@ function monter(app, ctx) {
                             playerName,
                             position,
                             pickIndex: resultat.pickIndex,
+                            banc: !!resultat.banc,
                             tourSuivant: resultat.tourSuivant,
                             draftComplet: resultat.draftComplet
                         }
@@ -149,7 +155,7 @@ function monter(app, ctx) {
             }
 
             res.json({
-                message: `${playerName} a été sélectionné par ${valeur.teamName}.`,
+                message: `${playerName} a été sélectionné par ${valeur.teamName}${valeur.banc ? ' (au banc)' : ''}.`,
                 ...valeur,
                 rejouee: !!rejouee
             });
@@ -187,6 +193,9 @@ function monter(app, ctx) {
                         estAdmin: false // sauter son propre tour reste interdit, admin ou non
                     });
                     if (!resultat.ok) throw refus(resultat);
+
+                    // Le tour sauté est fini aussi : son alerte s'éteint.
+                    journal.resoudre(evenements.clesNotification.votreTour(poolId, data.currentPickIndex - 1));
 
                     const prochainIndice = data.currentPickIndex;
                     const equipeSuivante = data.teams[resultat.tourSuivant];

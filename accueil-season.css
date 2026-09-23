@@ -75,3 +75,21 @@ body.fz-season-page { background:#060e13; }
 @media(prefers-reduced-motion:reduce) { .fzs * { scroll-behavior:auto!important; } }
 .fzs { --fzm-bg:#071015; --fzm-panel:#0b151c; --fzm-surface:#0b151c; --fzm-ink:#f1f4f9; --fzm-ink-soft:#afbed0; --fzm-ink-faint:#91a4b8; --fzm-border:#1c303c; --fzm-red:#ff4435; --fzm-red-soft:#41201e; --fzm-green:#2dd564; --fzm-solid:#f33b2c; --fzm-on-solid:#fff; }
 .fzs .fzm-news-card { margin-bottom:10px; }.fzs .fzm-news-headline { color:#eff4fa; }.fzs-news-image { width:90px; height:70px; object-fit:cover; border-radius:6px; float:left; margin-right:12px; }.fzs .fzm-news-card:after { content:''; display:block; clear:both; }
+
+/* Mon duel (tête-à-tête) : en cours, sinon à venir, sinon le dernier joué. */
+.fzs-duel { grid-column:span 4; }
+.fzs-duel-score { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px; margin:6px 0 4px; }
+.fzs-duel-side { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.fzs-duel-side:last-child { text-align:right; align-items:flex-end; }
+.fzs-duel-side span { font-size:14px; color:#b8c8d9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
+.fzs-duel-side.is-me span { color:#eef2f8; font-weight:700; }
+.fzs-duel-side strong { font:600 32px/1.1 'Oswald',sans-serif; font-variant-numeric:tabular-nums; }
+.fzs-duel-score.is-ahead .fzs-duel-side.is-me strong { color:#2dd564; }
+.fzs-duel-score.is-behind .fzs-duel-side.is-me strong { color:#ff5d55; }
+.fzs-duel-vs { font:600 13px/1 'Oswald',sans-serif; text-transform:uppercase; color:#7f93a8; }
+.fzs-duel-status { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:14px; }
+.fzs-duel-prev { font-size:13px; color:#91a4b8; border-top:1px solid #1b303c; padding-top:8px; margin-top:10px !important; }
+@media (max-width:768px) {
+ .fzs-duel { grid-column:1/-1; order:1; }
+ .fzs-duel-side strong { font-size:28px; }
+}

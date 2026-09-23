@@ -75,7 +75,7 @@ describe('participants et placesRestantes', () => {
         // Cinq membres pour quatre places : arriver à -1 ferait passer le pool
         // pour « en attente » là où placesRestantes > 0 est le test d'entrée.
         const pool = poolAvec(['a', 'b', 'c', 'd']);
-        pool.teams['Équipe 5'].members.push('intrus');
+        pool.teams.intrus = { members: ['intrus'] };
 
         assert.equal(participants(pool), 5);
         assert.equal(placesRestantes(pool), 0);
@@ -127,34 +127,35 @@ describe('accepteEncore', () => {
     });
 });
 
-describe('premiereEquipeLibre', () => {
-    test('chaque arrivant prend une équipe vide', () => {
-        const pool = creerPool('a');
-        assert.equal(premiereEquipeLibre(pool), 'Équipe 2');
-
-        inscrire(pool, 'b');
-        assert.equal(premiereEquipeLibre(pool), 'Équipe 3');
+describe('premiereEquipeLibre (anciens pools à cases préparées)', () => {
+    /** Un pool d'avant la règle « une personne, une équipe ». */
+    const ancienPool = (nb) => ({
+        instant: true, maxPlayers: 4, draftOrder: [],
+        teams: Object.fromEntries(Array.from({ length: nb }, (_, i) =>
+            [`Équipe ${i + 1}`, { members: [], offensive: [], defensive: [], goalie: [], rookie: [], teams: [] }]))
     });
 
-    test('sans équipe vide, on se rabat sur une équipe non pleine', () => {
-        // Ne peut pas arriver à quatre joueurs pour dix équipes, mais refuser
-        // une place à quelqu'un que la file vient d'aiguiller ici serait pire
-        // que de le mettre en colocation.
-        const pool = creerPool('a', { maxPlayers: 60 });
-        Object.keys(pool.teams).forEach((nom, i) => {
-            pool.teams[nom].members = i === 0 ? ['a'] : [`occupant${i}`];
-        });
-
-        assert.equal(premiereEquipeLibre(pool), 'Équipe 1');
+    test('la première case vide est proposée', () => {
+        const pool = ancienPool(3);
+        pool.teams['Équipe 1'].members = ['a'];
+        assert.equal(premiereEquipeLibre(pool), 'Équipe 2');
     });
 
     test('toutes les équipes pleines ne renvoie rien', () => {
-        const pool = creerPool('a', { maxPlayers: 99 });
+        const pool = ancienPool(2);
         Object.keys(pool.teams).forEach(nom => {
             pool.teams[nom].members = ['m1', 'm2', 'm3', 'm4', 'm5'];
         });
 
         assert.equal(premiereEquipeLibre(pool), null);
+    });
+
+    test("inscrire dans un ancien pool retire les cases jamais servies", () => {
+        const pool = ancienPool(10);
+        pool.teams['Équipe 1'].members = ['a'];
+
+        assert.equal(inscrire(pool, 'bob'), 'bob');
+        assert.deepEqual(Object.keys(pool.teams).sort(), ['bob', 'Équipe 1'].sort());
     });
 });
 
@@ -247,10 +248,11 @@ describe('prochainNom', () => {
 });
 
 describe('creerPool', () => {
-    test('le créateur est seul, dans Équipe 1', () => {
+    test('le créateur est seul, dans une équipe à son nom', () => {
         const pool = creerPool('alice');
 
-        assert.deepEqual(pool.teams['Équipe 1'].members, ['alice']);
+        assert.deepEqual(Object.keys(pool.teams), ['alice']);
+        assert.deepEqual(pool.teams.alice.members, ['alice']);
         assert.equal(participants(pool), 1);
         assert.equal(pool.creator, 'alice');
     });
@@ -264,16 +266,23 @@ describe('creerPool', () => {
         assert.equal(repechageCommence(pool), false);
     });
 
-    test('dix équipes sont préparées, comme dans un pool normal', () => {
-        assert.equal(Object.keys(creerPool('alice').teams).length, instant.EQUIPES_PAR_POOL);
+    test("aucune case vide n'est préparée : une équipe par personne présente", () => {
+        assert.equal(Object.keys(creerPool('alice').teams).length, 1);
     });
 
     test('chaque équipe a ses cinq casiers de sélection', () => {
-        const equipe = creerPool('alice').teams['Équipe 2'];
+        const equipe = creerPool('alice').teams.alice;
 
         assert.deepEqual(equipe, {
-            members: [], offensive: [], defensive: [], goalie: [], rookie: [], teams: []
+            members: ['alice'], offensive: [], defensive: [], goalie: [], rookie: [], teams: []
         });
+    });
+
+    test("un nom d'utilisateur inutilisable comme nom d'équipe est nettoyé", () => {
+        const pool = creerPool('bob@exemple.com-un-nom-bien-trop-long');
+        const [nom] = Object.keys(pool.teams);
+        assert.ok(nom.length <= 20, nom);
+        assert.ok(/^[\p{L}\p{N}\s'\-_]+$/u.test(nom), nom);
     });
 
     test('le pool est marqué instantané et daté', () => {
@@ -308,11 +317,11 @@ describe('creerPool', () => {
         // Les objets d'équipe sont mutés en place à chaque inscription et à
         // chaque sélection : un littéral partagé lierait deux pools entre eux.
         const a = creerPool('alice');
-        const b = creerPool('bob');
+        const b = creerPool('alice');
         inscrire(a, 'carol');
 
-        assert.deepEqual(b.teams['Équipe 2'].members, []);
-        assert.notEqual(a.teams['Équipe 1'], b.teams['Équipe 1']);
+        assert.equal(b.teams.carol, undefined);
+        assert.notEqual(a.teams.alice, b.teams.alice);
     });
 });
 
@@ -320,8 +329,8 @@ describe('inscrire', () => {
     test('l\'arrivant reçoit sa propre équipe', () => {
         const pool = creerPool('alice');
 
-        assert.equal(inscrire(pool, 'bob'), 'Équipe 2');
-        assert.deepEqual(pool.teams['Équipe 2'].members, ['bob']);
+        assert.equal(inscrire(pool, 'bob'), 'bob');
+        assert.deepEqual(pool.teams.bob.members, ['bob']);
         assert.equal(participants(pool), 2);
     });
 
@@ -363,7 +372,7 @@ describe('membres', () => {
 
     test('une équipe à plusieurs rend tout son monde', () => {
         const pool = creerPool('alice');
-        pool.teams['Équipe 1'].members.push('bob');
+        pool.teams.alice.members.push('bob');
 
         assert.deepEqual(membres(pool), ['alice', 'bob']);
     });
@@ -379,7 +388,7 @@ describe('membres', () => {
         const pool = poolAvec(['alice']);
         membres(pool).push('intrus');
 
-        assert.deepEqual(pool.teams['Équipe 1'].members, ['alice']);
+        assert.deepEqual(pool.teams.alice.members, ['alice']);
     });
 });
 
@@ -387,9 +396,10 @@ describe('retirer', () => {
     test('le partant libère sa place', () => {
         const pool = poolAvec(['alice', 'bob']);
 
-        assert.equal(retirer(pool, 'bob'), 'Équipe 2');
+        assert.equal(retirer(pool, 'bob'), 'bob');
         assert.deepEqual(membres(pool), ['alice']);
         assert.equal(placesRestantes(pool), 3);
+        assert.equal(pool.teams.bob, undefined, "son équipe part avec lui");
     });
 
     test('la place libérée revient au prochain arrivant', () => {
@@ -398,8 +408,8 @@ describe('retirer', () => {
         const pool = poolAvec(['alice', 'bob']);
         retirer(pool, 'alice');
 
-        assert.equal(inscrire(pool, 'carl'), 'Équipe 1');
-        assert.deepEqual(membres(pool), ['carl', 'bob']);
+        assert.equal(inscrire(pool, 'carl'), 'carl');
+        assert.deepEqual(membres(pool).sort(), ['bob', 'carl']);
     });
 
     test('quitter deux fois ne retire rien de plus', () => {
@@ -436,8 +446,9 @@ describe('retirer', () => {
         // Le cas qui décide de la suppression du pool côté serveur.
         const pool = poolAvec(['alice']);
 
-        assert.equal(retirer(pool, 'alice'), 'Équipe 1');
+        assert.equal(retirer(pool, 'alice'), 'alice');
         assert.equal(participants(pool), 0);
+        assert.deepEqual(pool.teams, {});
     });
 });
 
@@ -474,10 +485,11 @@ describe('totalSelections et equipesEligibles', () => {
     });
 
     test('seules les équipes peuplées repêchent', () => {
-        // Dix équipes existent, quatre seulement ont quelqu'un : générer un
-        // ordre sur les dix ferait attendre le pool sur des tours fantômes.
-        assert.deepEqual(equipesEligibles(poolAvec(['a', 'b', 'c'])),
-            ['Équipe 1', 'Équipe 2', 'Équipe 3']);
+        // Une équipe restée sans personne (ancien pool, départ) ne doit pas
+        // faire attendre le pool sur des tours fantômes.
+        const pool = poolAvec(['a', 'b', 'c']);
+        pool.teams['Équipe 9'] = { members: [] };
+        assert.deepEqual(equipesEligibles(pool), ['a', 'b', 'c']);
     });
 });
 
@@ -507,9 +519,9 @@ describe('poolDejaRejoint et poolEnRepechage', () => {
     test('un repêchage terminé ne retient plus personne', () => {
         // La saison est lancée, il n'y a plus rien à choisir : rien ne doit
         // empêcher d'entrer dans une nouvelle partie.
-        const pool = poolAvec(['alice', 'bob'], { draftOrder: ['Équipe 1', 'Équipe 2'] });
-        pool.teams['Équipe 1'] = makeFullTeam('A', { members: ['alice'] });
-        pool.teams['Équipe 2'] = makeFullTeam('B', { members: ['bob'] });
+        const pool = poolAvec(['alice', 'bob'], { draftOrder: ['alice', 'bob'] });
+        pool.teams.alice = makeFullTeam('A', { members: ['alice'] });
+        pool.teams.bob = makeFullTeam('B', { members: ['bob'] });
 
         assert.equal(poolEnRepechage(monde([nomInstantane(1), pool]), 'alice'), null);
     });

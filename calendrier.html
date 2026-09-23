@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendrier – Fantazy</title>
+    <script src="theme.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="navbar.css?v=20260922">
+    <link rel="stylesheet" href="teamLogos.css">
+    <link rel="stylesheet" href="poolNav.css?v=20260922">
+    <link rel="stylesheet" href="poolSettings.css?v=20260922">
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="calendrier.css?v=20260922">
+    <script src="icons.js" defer></script>
+    <!-- Contexte de pool actif : doit précéder tout script de page. -->
+    <script defer src="activePool.js?v=20260922"></script>
+</head>
+<body data-page="calendrier" class="fz-cal-page">
+    <nav class="navbar"></nav>
+
+    <div data-fz-context></div>
+
+    <main class="cal-page" id="calPage">
+        <header class="cal-head">
+            <div class="cal-head-txt">
+                <p class="cal-eyebrow">Calendrier de la LNH</p>
+                <h1 class="cal-title" id="calTitle">Matchs de la semaine</h1>
+                <p class="cal-season" id="calSeason" hidden></p>
+            </div>
+            <div class="cal-controls">
+                <button type="button" class="cal-nav" id="calPrev" aria-label="Semaine précédente">‹</button>
+                <button type="button" class="cal-today" id="calToday">Aujourd’hui</button>
+                <button type="button" class="cal-nav" id="calNext" aria-label="Semaine suivante">›</button>
+                <label class="cal-jump">
+                    <span class="cal-sr">Aller à une date</span>
+                    <input type="date" id="calDate" aria-label="Aller à une date">
+                </label>
+            </div>
+        </header>
+
+        <div class="cal-strip" id="calStrip" role="tablist" aria-label="Jours de la semaine"></div>
+
+        <div class="cal-filter" id="calFilter" hidden>
+            <label class="cal-toggle">
+                <input type="checkbox" id="calMine">
+                <span>Seulement les matchs de mes joueurs</span>
+            </label>
+            <span class="cal-filter-note" id="calMineNote"></span>
+        </div>
+
+        <section class="cal-day" aria-live="polite">
+            <h2 class="cal-day-title" id="calDayTitle"></h2>
+            <div class="cal-games" id="calGames">
+                <div class="cal-loading"><span class="cal-spinner" aria-hidden="true"></span>Chargement du calendrier…</div>
+            </div>
+        </section>
+    </main>
+
+    <script defer src="/socket.io/socket.io.js"></script>
+    <script defer src="calendrier.js?v=20260922"></script>
+    <script defer src="navbar.js?v=20260922"></script>
+    <script defer src="avatars.js"></script>
+    <script defer src="profanity.js"></script>
+    <script defer src="poolSettings.js?v=20260922"></script>
+    <script defer src="poolNav.js?v=20260922"></script>
+    <script defer src="notifications.js?v=20260922"></script>
+</body>
+</html>

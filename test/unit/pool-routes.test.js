@@ -47,10 +47,12 @@ test("l'ordre de sélection n'est visible que des membres", async () => {
 test('créer un pool inscrit son auteur et refuse un nom déjà pris, accents compris', async () => {
     const h = banc({});
     const res = await h.appeler('POST', '/create-clan', {
-        auth: ALICE, body: { name: 'Les Élans', maxPlayers: 4 }
+        auth: ALICE, body: { name: 'Les Élans', maxPlayers: 4, teamName: 'Les Fusées' }
     });
     assert.equal(res.statusCode, 200);
-    assert.equal(h.lirePool('Les Élans').teams['Équipe 1'].members[0], 'alice');
+    assert.deepEqual(Object.keys(h.lirePool('Les Élans').teams), ['Les Fusées'],
+        'une seule équipe à la naissance : celle de la personne qui crée');
+    assert.deepEqual(h.lirePool('Les Élans').teams['Les Fusées'].members, ['alice']);
     assert.equal(h.lirePool('Les Élans').creator, 'alice');
 
     const double = await h.appeler('POST', '/create-clan', { auth: BOB, body: { name: 'les elans', maxPlayers: 4 } });
@@ -291,4 +293,118 @@ test('sauter un tour est réservé au créateur et refusé sur son propre tour',
         assert.equal(h.lirePool('Ligue').picksHistory, undefined,
             'un tour sauté ne consomme pas d entrée d historique');
     }
+});
+
+// ───────────────────────── Une personne, une équipe ─────────────────────────
+
+test("rejoindre un pool crée l'équipe au nom choisi, validé comme un renommage", async () => {
+    const h = banc({ Ligue: poolNeuf({ nbEquipes: 0, membres: { 'Les Fusées': ['alice'] } }) });
+
+    const grossier = await h.appeler('POST', '/join-team', { auth: BOB, body: { name: 'Ligue', teamName: 'x<script>' } });
+    assert.equal(grossier.statusCode, 400);
+
+    const res = await h.appeler('POST', '/join-team', { auth: BOB, body: { name: 'Ligue', teamName: 'Les Castors' } });
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.teamName, 'Les Castors');
+    assert.deepEqual(h.lirePool('Ligue').teams['Les Castors'].members, ['bob']);
+
+    const doublon = await h.appeler('POST', '/join-team', { auth: CARL, body: { name: 'Ligue', teamName: 'les castors' } });
+    assert.equal(doublon.statusCode, 409);
+});
+
+test('un pool plein refuse le participant de trop', async () => {
+    const h = banc({ Ligue: poolNeuf({ nbEquipes: 0, maxPlayers: 2, membres: { A: ['alice'], B: ['bob'] } }) });
+    const res = await h.appeler('POST', '/join-team', { auth: CARL, body: { name: 'Ligue', teamName: 'Carl' } });
+    assert.equal(res.statusCode, 409);
+    assert.match(res.body.message, /complet/);
+});
+
+test('/pool-teams annonce le plafond et cache les cases jamais servies', async () => {
+    const h = banc({ Ligue: poolNeuf({ nbEquipes: 10, maxPlayers: 8 }) });
+    const res = await h.appeler('GET', '/pool-teams/Ligue', { auth: BOB });
+    assert.equal(res.body.maxPlayers, 8);
+    assert.equal(res.body.participantCount, 1);
+    assert.deepEqual(res.body.teams.map(t => t.name), ['Équipe 1']);
+    assert.equal(res.body.nomSuggere, 'bob');
+});
+
+// ───────────────────────────── Nouvelle saison ─────────────────────────────
+
+test('la nouvelle saison est réservée au créateur et suit le classement inversé au repêchage suivant', async () => {
+    const fini = poolTermine({
+        teams: {
+            Premier: { members: ['alice'], offensive: ['Joueur A'], defensive: [], goalie: [], rookie: [], teams: [] },
+            Dernier: { members: ['bob'], offensive: ['Joueur B'], defensive: [], goalie: [], rookie: [], teams: [] }
+        },
+        draftOrder: ['Premier', 'Dernier']
+    });
+    fini.saisonRepechage = 20242025;
+    const h = monterRoutes([routesPools, routesRepechage], {
+        pools: { Ligue: fini },
+        ctxExtra: {
+            fenetreSaison: async () => ({ regularSeasonStartDate: '2999-10-01', regularSeasonEndDate: '2999-04-15' }),
+            scoresSaison: async () => [
+                { teamName: 'Premier', score: 80, rank: 1 },
+                { teamName: 'Dernier', score: 20, rank: 2 }
+            ]
+        }
+    });
+
+    assert.equal((await h.appeler('POST', '/pool/new-season', { auth: BOB, body: { clanName: 'Ligue' } })).statusCode, 403);
+
+    const res = await h.appeler('POST', '/pool/new-season', { auth: ALICE, body: { clanName: 'Ligue' } });
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    const apres = h.lirePool('Ligue');
+    assert.deepEqual(apres.draftOrder, []);
+    assert.deepEqual(apres.teams.Premier.offensive, []);
+
+    const depart = await h.appeler('POST', '/start-draft', { auth: ALICE, body: { clanName: 'Ligue' } });
+    assert.equal(depart.statusCode, 200);
+    assert.equal(h.lirePool('Ligue').draftOrder[0], 'Dernier', 'le dernier choisit en premier');
+});
+
+test("jouer son tour éteint son « C'est votre tour » dans la cloche", async () => {
+    const h = await poolPret();
+    const premier = await h.appeler('POST', '/pick-player', {
+        auth: ALICE, body: { clanName: 'Ligue', playerName: 'Joueur A', position: 'offensive', expectedPickIndex: 0 }
+    });
+    assert.equal(premier.statusCode, 200);
+    const tourBob = h.etat.notifications.find(n => n.type === 'turn_current' && n.recipientUserId === 'bob');
+    assert.ok(tourBob && !tourBob.resolvedAt, 'le tour de Bob vient de commencer');
+
+    const second = await h.appeler('POST', '/pick-player', {
+        auth: BOB, body: { clanName: 'Ligue', playerName: 'Joueur B', position: 'offensive', expectedPickIndex: 1 }
+    });
+    assert.equal(second.statusCode, 200);
+    assert.ok(tourBob.resolvedAt, 'une fois joué, le tour quitte la liste des choses à faire');
+    assert.ok(tourBob.readAt, 'et ne compte plus dans la pastille');
+});
+
+// ───────────────────────────── Banc (route) ─────────────────────────────
+
+test('on ne gère que son propre banc, et le changement est daté du lendemain', async () => {
+    const routesH2H = require('../../routes/h2h.js');
+    const fini = {
+        poolMode: 'head-to-head', creator: 'alice', maxPlayers: 2,
+        config: { numOffensive: 1, numDefensive: 0, numGoalies: 0, numRookies: 0, numTeams: 0, numBench: 1 },
+        draftOrder: ['A', 'B', 'B', 'A'], currentPickIndex: 3, lastPickIndex: 3,
+        h2hData: { currentWeek: 1, matchups: [], standings: {}, matchupHistory: [] },
+        createdAt: '2026-09-01T00:00:00.000Z',
+        teams: {
+            A: { members: ['alice'], offensive: ['J1'], defensive: [], goalie: [], rookie: [], teams: [], bench: [{ nom: 'J4', categorie: 'offensive' }] },
+            B: { members: ['bob'], offensive: ['J2'], defensive: [], goalie: [], rookie: [], teams: [], bench: [{ nom: 'J3', categorie: 'offensive' }] }
+        }
+    };
+    const h = monterRoutes([routesH2H], { pools: { Duels: fini } });
+
+    const volee = await h.appeler('POST', '/h2h/lineup/swap', { auth: ALICE, body: { poolName: 'Duels', entre: 'J3', sort: 'J2' } });
+    assert.equal(volee.statusCode, 404, "le banc de Bob n'est pas celui d'Alice");
+
+    const res = await h.appeler('POST', '/h2h/lineup/swap', { auth: ALICE, body: { poolName: 'Duels', entre: 'J4', sort: 'J1' } });
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    const apres = h.lirePool('Duels').teams.A;
+    assert.deepEqual(apres.offensive, ['J4']);
+    assert.equal(apres.lineupChanges.length, 1);
+    const demain = require('../../lib/dates.js').ajouterJours(require('../../lib/dates.js').journeeLocale(), 1);
+    assert.equal(apres.lineupChanges[0].date, demain);
 });

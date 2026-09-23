@@ -448,6 +448,7 @@ html[data-theme="dark"] .fz-dash-section { --fzd-page: #131316; }
     color: var(--fzd-accent);
 }
 .fzd-cal-full:hover { color: var(--fzd-accent-dark); }
+a.fzd-cal-full { text-decoration: none; }
 
 /* --- Bandeau de semaine ------------------------------------- */
 .fzd-cal-strip {

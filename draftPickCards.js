@@ -267,8 +267,12 @@ function buildPickCard(options) {
 
   const pool = document.createElement('span');
   pool.className = 'pick-card-owner';
-  pool.textContent = equipePool || '';
+  // Ses propres tours se repèrent dans la bande : « Vous » plutôt que son
+  // nom d'équipe, qu'on reconnaît moins vite que le mot.
+  const estAMoi = !!equipePool && !!monEquipe && equipePool === monEquipe;
+  pool.textContent = estAMoi ? 'Vous' : (equipePool || '');
   pool.title = equipePool || '';
+  if (estAMoi) carte.classList.add('is-mine');
   bas.appendChild(pool);
 
   const repere = document.createElement('span');
@@ -407,6 +411,26 @@ function pickCardKey(tour, numero, ronde) {
  * Un choix ne change en pratique que deux cartes : celle qui vient d'être
  * remplie et la suivante, qui devient le tour en cours.
  */
+/**
+ * Combien d'équipes repêchent vraiment : celles de l'ordre de sélection.
+ *
+ * `Object.keys(teams).length` comptait aussi les cases « Équipe N » restées
+ * vides des anciens pools — dix équipes pour quatre joueurs, et une « ronde
+ * 1 » qui durait dix choix pendant que le bandeau annonçait déjà la ronde 3.
+ */
+function fzEquipesQuiRepechent(donnees) {
+  const ordre = donnees && Array.isArray(donnees.draftOrder) ? donnees.draftOrder : [];
+  if (ordre.length) return new Set(ordre).size;
+  return Object.values((donnees && donnees.teams) || {})
+    .filter(e => e && Array.isArray(e.members) && e.members.length > 0).length;
+}
+
+/** La ronde (à partir de 1) d'un indice de l'ordre de sélection, ou 0. */
+function fzRondeDe(indice, donnees) {
+  const n = fzEquipesQuiRepechent(donnees);
+  return n > 0 && Number.isInteger(indice) && indice >= 0 ? Math.floor(indice / n) + 1 : 0;
+}
+
 function reconcilePickCards(bande, tours, nbEquipes) {
   const vide = bande.querySelector('.picks-carousel-empty');
   if (vide) vide.remove();
@@ -488,7 +512,7 @@ function renderPickCarousel(picks) {
 
   // Nombre d'équipes du pool : sert à retrouver la ronde, que ni
   // l'historique ni l'ordre ne stockent.
-  const nbEquipes = donnees.teams ? Object.keys(donnees.teams).length : 0;
+  const nbEquipes = fzEquipesQuiRepechent(donnees);
   const { cartes, modifie } = reconcilePickCards(bande, tours, nbEquipes);
 
   initPickCarouselScroll();

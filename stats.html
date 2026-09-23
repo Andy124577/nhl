@@ -8,10 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="navbar.css?v=20260922">
     <link rel="stylesheet" href="teamLogos.css">
-    <link rel="stylesheet" href="poolNav.css">
-    <link rel="stylesheet" href="poolSettings.css">
+    <link rel="stylesheet" href="poolNav.css?v=20260922">
+    <link rel="stylesheet" href="poolSettings.css?v=20260922">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="skeleton-loader.css">
     <!-- Modale de carrière : même feuille que draftActif.html, chargée en
@@ -23,7 +23,7 @@
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
-    <script defer src="activePool.js"></script>
+    <script defer src="activePool.js?v=20260922"></script>
     <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="career-modal.css">
 </head>
@@ -86,8 +86,8 @@
                     <button class="time-filter active" data-days="7" onclick="changeTimeRange(7)">7J</button>
                     <button class="time-filter" data-days="14" onclick="changeTimeRange(14)">14J</button>
                     <button class="time-filter" data-days="30" onclick="changeTimeRange(30)">30J</button>
-                    <!-- Revealed by statsTopPlayers.js only when the 30-day window is empty -->
-                    <button class="time-filter" data-days="180" onclick="changeTimeRange(180)" id="timeFilter6M" style="display:none;">6M</button>
+                    <!-- statsTopPlayers.js ne laisse visibles que les fenêtres qui ont des joueurs -->
+                    <button class="time-filter" data-days="180" onclick="changeTimeRange(180)" id="timeFilter6M">6M</button>
                 </div>
             </div>
 
@@ -274,19 +274,19 @@
     <!-- Meneurs de la ligue : lit BASE_URL déjà déclaré par index.js ci-dessus. -->
     <script defer src="statsLeaders.js"></script>
     <!-- Meilleurs joueurs : lit BASE_URL (index.js) et escapeHTML (statsLeaders.js). -->
-    <script defer src="statsTopPlayers.js"></script>
+    <script defer src="statsTopPlayers.js?v=20260922"></script>
     <!-- Logo d'équipe du tableau de carrière, partagé avec draftActif.html. -->
     <script defer src="careerFetch.js"></script>
     <script defer src="careerModal.js"></script>
     <script defer src="careerTeamLogo.js"></script>
     <!-- Alignement de la rangée « Carrière », partagé avec draftActif.html. -->
     <script defer src="careerTotals.js"></script>
-    <script defer src="navbar.js"></script>
+    <script defer src="navbar.js?v=20260922"></script>
     <script defer src="avatars.js"></script>
     <script defer src="profanity.js"></script>
-    <script defer src="poolSettings.js"></script>
-    <script defer src="poolNav.js"></script>
-    <script defer src="notifications.js"></script>
+    <script defer src="poolSettings.js?v=20260922"></script>
+    <script defer src="poolNav.js?v=20260922"></script>
+    <script defer src="notifications.js?v=20260922"></script>
     <script>
     // Sub-nav — "Tous les joueurs" / "Meneurs" tabs
     function switchStatsTab(tab) {

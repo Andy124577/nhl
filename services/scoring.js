@@ -31,6 +31,7 @@
 
 const scoring = require('../lib/scoring.js');
 const dates = require('../lib/dates.js');
+const lineup = require('../lib/lineup.js');
 
 /**
  * Le club de la LNH repêché compte-t-il dans un pointage de tête-à-tête ?
@@ -174,10 +175,25 @@ function creerServicePointage({ db, calendrierDuJour = null, logger = console })
      */
     async function detailEquipe(teamData, { debut, fin, saison }) {
         const alignement = alignementDe(teamData);
-        if (alignement.joueurs.length === 0) return [];
 
-        const noms = alignement.joueurs.map(j => j.nom);
-        const lignes = await feuilles({ noms, debut, fin, saison });
+        // Le banc du tête-à-tête : un changement compte à partir de sa date
+        // (lib/lineup.js). On lit donc les feuilles de TOUS ceux qui ont été
+        // partants pendant la période, puis on ne garde que les matchs joués
+        // un jour où ils l'étaient. Sans changement, rien ne bouge : ce sont
+        // les partants actuels, toute la période.
+        const changements = (teamData && teamData.lineupChanges) || [];
+        const joueursPeriode = changements.length
+            ? [...lineup.partantsDeLaPeriode(teamData, debut, fin)].map(([nom, categorie]) =>
+                ({ nom, categorie, gardien: categorie === 'goalie' }))
+            : alignement.joueurs;
+        if (joueursPeriode.length === 0) return [];
+
+        const noms = joueursPeriode.map(j => j.nom);
+        const toutes = await feuilles({ noms, debut, fin, saison });
+        const estPartant = changements.length ? lineup.lecteurPartants(teamData) : null;
+        const lignes = estPartant
+            ? toutes.filter(l => estPartant(l.player_name, dates.journeeDe(l.game_date)))
+            : toutes;
 
         // Une passe pour les métadonnées d'affichage : identifiant LNH et club
         // les plus récents, pour la photo et l'écusson.
@@ -210,7 +226,7 @@ function creerServicePointage({ db, calendrierDuJour = null, logger = console })
             }
         }
 
-        return alignement.joueurs.map(joueur => {
+        return joueursPeriode.map(joueur => {
             const total = cumul.get(joueur.nom);
             const infos = meta.get(joueur.nom) || {};
             return {

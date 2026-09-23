@@ -199,14 +199,14 @@
 
   /* ------------------------------------------------------- collecte des choix */
 
-  /* Renvoie la liste ordonnée des choix de l'utilisateur :
-   * { name, category, badge, city, photo, isTeam }. L'ordre vient de
-   * picksHistory ; les joueurs absents de l'historique (vieux pools) sont
-   * ajoutés ensuite, catégorie par catégorie. */
-  function collectPicks() {
+  /* Renvoie la liste ordonnée des choix d'une équipe — la mienne par
+   * défaut : { name, category, badge, city, photo, isTeam }. L'ordre vient
+   * de picksHistory ; les joueurs absents de l'historique (vieux pools)
+   * sont ajoutés ensuite, catégorie par catégorie. */
+  function collectPicks(equipe) {
     if (!draftReady()) return [];
     var d = donnees();
-    var me = myTeamName();
+    var me = equipe || myTeamName();
     var team = me && d && d.teams[me];
     if (!team) return [];
 
@@ -224,7 +224,8 @@
       if (!entry || entry.team !== me || !entry.player) return;
       if (placed[entry.player]) return;
       placed[entry.player] = true;
-      order.push({ name: entry.player, category: owned[entry.player] || normCategory(entry.position) });
+      order.push({ name: entry.player, category: owned[entry.player] || normCategory(entry.position),
+                   pickIndex: entry.pickIndex });
     });
 
     // Reliquat : présents dans l'alignement mais pas dans l'historique.
@@ -238,10 +239,14 @@
     });
 
     return order.map(function (item, i) {
+      // La ronde du vrai tour quand l'historique la connaît ; sinon le rang
+      // du choix, qui lui correspond tant qu'aucun tour n'a été sauté.
+      var ronde = (typeof fzRondeDe === "function" && Number.isInteger(item.pickIndex))
+        ? fzRondeDe(item.pickIndex, d) : 0;
       var out = {
         name: item.name,
         category: item.category,
-        round: "R" + (i + 1),
+        round: "R" + (ronde || (i + 1)),
         badge: "",
         city: "",
         photo: null,
@@ -304,7 +309,8 @@
           '<button type="button" class="fz-end-close" id="fzEndClose" aria-label="Fermer">✕</button>' +
         '</div>' +
         '<div class="fz-end-body">' +
-          '<div class="fz-end-body-label">Tes joueurs</div>' +
+          '<div class="fz-end-tabs" id="fzEndTeams" role="tablist" aria-label="Choix de quelle équipe"></div>' +
+          '<div class="fz-end-body-label" id="fzEndBodyLabel">Tes joueurs</div>' +
           '<div class="fz-end-grid" id="fzEndGrid"></div>' +
         '</div>' +
         '<div class="fz-end-foot">' +
@@ -323,8 +329,45 @@
       window.location.href = "classement.html";
     });
     overlay.querySelector("#fzEndShare").addEventListener("click", sharePicks);
+    overlay.querySelector("#fzEndTeams").addEventListener("click", function (e) {
+      var bouton = e.target.closest("[data-fz-end-team]");
+      if (!bouton) return;
+      equipeVue = bouton.getAttribute("data-fz-end-team") || null;
+      render();
+    });
 
     return overlay;
+  }
+
+  /* L'équipe dont le récapitulatif montre les choix ; null = la mienne. */
+  var equipeVue = null;
+
+  function equipesDuRepechage() {
+    var d = donnees();
+    if (!d) return [];
+    var ordre = Array.isArray(d.draftOrder) ? d.draftOrder : [];
+    var vues = [];
+    ordre.forEach(function (n) { if (vues.indexOf(n) < 0) vues.push(n); });
+    Object.keys(d.teams || {}).forEach(function (n) {
+      var t = d.teams[n];
+      if (vues.indexOf(n) < 0 && t && (t.members || []).length) vues.push(n);
+    });
+    return vues;
+  }
+
+  /* Une pastille par équipe : on revoit ses choix, puis ceux des autres. */
+  function renderTeamChips(me, vue) {
+    var zone = overlay.querySelector("#fzEndTeams");
+    var equipes = equipesDuRepechage();
+    if (equipes.length < 2) { zone.innerHTML = ""; zone.hidden = true; return; }
+    zone.hidden = false;
+    var ordre = me ? [me].concat(equipes.filter(function (n) { return n !== me; })) : equipes;
+    zone.innerHTML = ordre.map(function (n) {
+      var actif = n === vue;
+      return '<button type="button" role="tab" class="fz-end-tab' + (actif ? ' is-active' : '') + '"' +
+        ' aria-selected="' + actif + '" data-fz-end-team="' + esc(n === me ? "" : n) + '">' +
+        esc(n === me ? "Mes choix" : n) + '</button>';
+    }).join("");
   }
 
   function cardHTML(p) {
@@ -346,20 +389,29 @@
 
   function render() {
     build();
-    var picks = collectPicks();
     var me = myTeamName() || "";
+    var d = donnees();
+    if (equipeVue && !(d && d.teams && d.teams[equipeVue])) equipeVue = null;
+    var vue = equipeVue || me;
+    var picks = collectPicks(vue);
     var rounds = totalRounds();
 
     var sub = [];
     if (me) sub.push(me);
-    sub.push(picks.length + " choix");
-    if (rounds) sub.push("ronde " + rounds + " de " + rounds);
+    sub.push(collectPicks(me).length + " choix");
+    if (rounds) sub.push(rounds + " rondes");
     overlay.querySelector("#fzEndSub").textContent = sub.join(" · ");
+
+    renderTeamChips(me, vue);
+    overlay.querySelector("#fzEndBodyLabel").textContent =
+      vue && vue !== me ? "Joueurs de " + vue : "Tes joueurs";
 
     var grid = overlay.querySelector("#fzEndGrid");
     if (!picks.length) {
-      grid.innerHTML = '<div class="fz-end-empty">Vous suiviez ce repêchage sans y participer :' +
-        ' il n\'y a pas d\'alignement à afficher.</div>';
+      grid.innerHTML = vue && vue !== me
+        ? '<div class="fz-end-empty">Cette équipe n\'a encore aucun choix.</div>'
+        : '<div class="fz-end-empty">Vous suiviez ce repêchage sans y participer :' +
+          ' il n\'y a pas d\'alignement à afficher.</div>';
     } else {
       grid.innerHTML = picks.map(cardHTML).join("");
     }
@@ -367,7 +419,7 @@
   }
 
   function sharePicks() {
-    var picks = collectPicks();
+    var picks = collectPicks(myTeamName());
     var me = myTeamName() || "Mon équipe";
     var lines = picks.map(function (p, i) {
       return (i + 1) + ". " + p.name + (p.city ? " (" + p.city + ")" : "");

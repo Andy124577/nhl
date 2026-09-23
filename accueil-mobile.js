@@ -55,8 +55,9 @@ function fzmDraftHeroHTML(state) {
 function fzmPreseasonHeroHTML(state) {
     const fait = state.draftDone && state.activeName && state.teamName;
     const eyebrow = fait ? 'Repêchage terminé'
-        : state.beforeCamp ? 'Avant le camp d’entraînement' : 'Avant le début de la saison';
-    const diff = Math.max(0, new Date(state.target + 'T00:00:00Z').getTime() - Date.now());
+        : (typeof fzdPrecisionCamp === 'function' ? fzdPrecisionCamp(state) : 'Avant le début de la saison');
+    const cible = typeof fzdMinuitEst === 'function' ? fzdMinuitEst(state.target) : new Date(state.target + 'T00:00:00Z').getTime();
+    const diff = Math.max(0, cible - Date.now());
     const units = [
         ['Jours', Math.floor(diff / 86400000)],
         ['Heures', String(Math.floor((diff % 86400000) / 3600000)).padStart(2, '0')],
@@ -67,10 +68,11 @@ function fzmPreseasonHeroHTML(state) {
             <button type="button" class="fzm-pre-cta" data-fzd-recap>Mes joueurs repêchés <span aria-hidden="true">→</span></button>
             <a class="fzm-pre-cta is-ghost" href="classement.html?pool=${encodeURIComponent(state.activeName)}">Classement</a>
         </div>`
-        : `<button type="button" class="fzm-pre-cta" data-fz-reglages="equipes">Gérer mon équipe <span aria-hidden="true">→</span></button>`;
+        : `<button type="button" class="fzm-pre-cta" data-fz-reglages="equipes">Voir les participants <span aria-hidden="true">→</span></button>`;
     return `
         <div class="fzm-pre-eyebrow">${eyebrow}</div>
-        <h2 class="fzm-pre-title">${fait ? 'Votre équipe est au complet' : 'Saison en préparation'}</h2>
+        <h2 class="fzm-pre-title">${fait ? 'Votre équipe est au complet'
+            : escapeHTML(typeof fzdLibelleSaison === 'function' ? fzdLibelleSaison(state.target) : 'Saison en préparation')}</h2>
         <p class="fzm-pre-sub">${fait ? 'Vos choix sont faits. Place au début de la saison !' : 'La saison approche. Finalisez votre formation !'}</p>
         <div class="fzm-pre-countdown">${units.map(([lbl, val], i) => `
             <div class="fzm-pre-unit${i === units.length - 1 ? ' is-accent' : ''}"><strong>${val}</strong><span>${lbl}</span></div>`).join('')}
@@ -119,14 +121,17 @@ function fzmPreseasonExtras(draftState, activeName) {
         const max = Math.max(1, draftState.max);
         const inscrits = Math.min(draftState.inscrits, max);
         const segments = Array.from({ length: max }, (_, i) => `<span${i < inscrits ? ' class="is-on"' : ''}></span>`).join('');
-        const action = ready
+        // Seule la personne qui a créé le pool peut le lancer : aux autres,
+        // un « Démarrer » finirait en refus du serveur.
+        const admin = !!(window.FZPoolSettings && FZPoolSettings.isCreator(activeName));
+        const action = ready && admin
             ? `<a class="fzm-wait-btn is-primary" href="repechage.html?pool=${encodeURIComponent(activeName)}">Démarrer</a>`
             : `<button type="button" class="fzm-wait-btn" data-fzm-inviter="${escapeHTML(activeName)}"><span aria-live="polite">Inviter</span></button>`;
         html += `
             <div class="fzm-wait">
                 <div class="fzm-wait-main">
                     <div class="fzm-wait-head">
-                        <span class="fzm-wait-title">${ready ? 'Prêt à repêcher' : 'En attente de joueurs'}</span>
+                        <span class="fzm-wait-title">${ready ? (admin ? 'Prêt : vous pouvez lancer' : 'Prêt : en attente de l’admin') : 'En attente de joueurs'}</span>
                         <span class="fzm-wait-count"><strong>${draftState.inscrits}</strong>/${draftState.max} gérants inscrits</span>
                     </div>
                     <div class="fzm-wait-bar" aria-hidden="true">${segments}</div>
@@ -206,6 +211,15 @@ function fzmRankStrip(activeName, movement) {
 // matchs déjà débutés) ; les lignes live/final viennent de
 // tonight.players, déjà chargé par loadDashData.
 // ============================================================
+/** L'alignement complet de mon équipe, au Classement. */
+function fzmMonAlignementHref() {
+    const actif = window.FZPool ? FZPool.get() : null;
+    const moi = actif && window.FZPool ? (FZPool.mine() || []).find(p => p.name === actif) : null;
+    return moi && typeof fzdMonEffectifHref === 'function'
+        ? fzdMonEffectifHref(actif, moi.teamName)
+        : 'classement.html';
+}
+
 function fzmPlayersRow(tonight, rosterNames) {
     const day = calData?.days?.find(d => d.date === todayISO());
     const todaysGames = (day && day.games) || [];
@@ -256,7 +270,7 @@ function fzmPlayersRow(tonight, rosterNames) {
 
     return `
         <div class="fzm-section" id="fzmPlayers">
-            <div class="fzm-section-head"><h2 class="fzm-section-title">Mes joueurs ce soir</h2><button type="button" class="fzm-see-all" data-fz-reglages="equipes">Mes joueurs ›</button></div>
+            <div class="fzm-section-head"><h2 class="fzm-section-title">Mes joueurs ce soir</h2><a class="fzm-see-all" href="${fzmMonAlignementHref()}">Mon alignement ›</a></div>
             <div class="fzm-scroll-row">
                 ${tiles.map(fzmPlayerTile).join('')}
             </div>
@@ -272,55 +286,6 @@ function fzmPlayerTile(t) {
             <span class="fzm-player-tag ${t.tagClass}">${escapeHTML(t.tag)}</span>
             <div class="fzm-player-line">${escapeHTML(t.line)}</div>
         </div>`;
-}
-
-// ============================================================
-// ACTIVITÉ DE LA LIGUE — mêmes échanges complétés que
-// renderActivityFeed (accueil-dash.js), mais avec un "Voir tout"
-// repliable (3 par défaut) comme la maquette, plutôt qu'une liste
-// bureau figée à 8.
-// ============================================================
-let fzmActivityFull = [];
-let fzmActivityExpanded = false;
-
-async function fzmLoadActivity(activeName) {
-    try {
-        const res = await fetch(`${BASE_URL}/trades/${encodeURIComponent(activeName)}`, { cache: 'no-store' });
-        fzmActivityFull = res.ok ? await res.json() : [];
-    } catch (err) {
-        console.warn('Could not load mobile activity feed:', err);
-        fzmActivityFull = [];
-    }
-    fzmActivityExpanded = false;
-    fzmRenderActivity();
-}
-
-function fzmRenderActivity() {
-    const wrap = document.getElementById('fzmActivityWrap');
-    if (!wrap) return;
-    if (!fzmActivityFull.length) {
-        wrap.innerHTML = `<p class="fzm-empty">Aucun échange complété dans ce pool.</p>`;
-        return;
-    }
-    const visible = fzmActivityExpanded ? fzmActivityFull.slice(0, 8) : fzmActivityFull.slice(0, 3);
-    wrap.innerHTML = `
-        <div class="fzm-list-card">${visible.map(fzmActivityRowHTML).join('')}</div>
-        ${fzmActivityFull.length > 3 ? `<button type="button" class="fzm-toggle-btn" id="fzmActivityToggle">${fzmActivityExpanded ? 'Réduire' : 'Voir tout'}</button>` : ''}`;
-    document.getElementById('fzmActivityToggle')?.addEventListener('click', () => {
-        fzmActivityExpanded = !fzmActivityExpanded;
-        fzmRenderActivity();
-    });
-}
-
-function fzmActivityRowHTML(trade) {
-    const offering = trade.offering && trade.offering[0];
-    const receiving = trade.receiving && trade.receiving[0];
-    const dateRaw = trade.completedDate || trade.date;
-    const timeLabel = dateRaw ? relativeTimeFr(dateRaw) : '';
-    const text = offering && receiving
-        ? `Échange complété : <strong>${escapeHTML(offering.name)}</strong> ↔ <strong>${escapeHTML(receiving.name)}</strong> (${escapeHTML(trade.fromTeam)} ⇄ ${escapeHTML(trade.toTeam)}).`
-        : `Échange complété entre <strong>${escapeHTML(trade.fromTeam)}</strong> et <strong>${escapeHTML(trade.toTeam)}</strong>.`;
-    return `<div class="fzm-list-row fzm-activity-row"><div class="fzm-activity-time">${timeLabel}</div><div class="fzm-activity-text">${text}</div></div>`;
 }
 
 // ============================================================
@@ -442,10 +407,10 @@ function renderMobileHome(tonight, movement, activeName) {
 
     // Avant-saison : les actualités sont déjà en tête de page.
     const seasonStarted = fzdSeasonStarted() !== false;
+    // Saison en cours : le bloc partagé « surveiller » montre l'activité de
+    // la ligue (marché, échanges) — même contenu qu'au bureau.
     const showActivity = isRegular || isLive;
-    if (showActivity) {
-        html += `<div class="fzm-section"><div class="fzm-section-title">Activité de la ligue</div><div id="fzmActivityWrap"></div></div>`;
-    }
+    if (showActivity) html += '<div class="fzm-slot" data-fz-bloc="surveiller"></div>';
 
     // « Mouvements récents » : le carrousel partagé (fzd-off-carousel), suivi
     // des actualités, qui vivaient jusqu'ici dans le même bloc.
@@ -469,8 +434,7 @@ function renderMobileHome(tonight, movement, activeName) {
         document.getElementById('fzmPlayers')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     root.querySelector('[data-fzm-inviter]')?.addEventListener('click', e => fzmInviter(e.currentTarget));
-    if (showActivity) fzmLoadActivity(activeName);
     fzdRendreMouvements();
-    if (isPreseason) fzdRendreSurveiller();
+    if (isPreseason || showActivity) fzdRendreSurveiller();
     if (seasonStarted) fzmLoadNews();
 }

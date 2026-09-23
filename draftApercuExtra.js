@@ -66,11 +66,15 @@ function fzGroupesManquants() {
     const cfg = (typeof draftData !== 'undefined' && draftData && draftData.config)
         || { numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1, numTeams: 1 };
     const equipe = (me && typeof draftData !== 'undefined' && draftData && draftData.teams && draftData.teams[me]) || {};
+    // Une place de banc libre (tête-à-tête) rouvre toutes les positions de
+    // joueur : le prochain choix d'une catégorie pleine ira au banc.
+    const bancLibre = typeof window.fzQuotaBanc === 'function' && typeof draftData !== 'undefined'
+        && (equipe.bench || []).length < window.fzQuotaBanc(draftData);
     return {
-        offensive: (equipe.offensive || []).length < (cfg.numOffensive ?? 6),
-        defensive: (equipe.defensive || []).length < (cfg.numDefensive ?? 4),
-        rookie: (equipe.rookie || []).length < (cfg.numRookies ?? 1),
-        goalie: (equipe.goalie || []).length < (cfg.numGoalies ?? 1),
+        offensive: bancLibre || (equipe.offensive || []).length < (cfg.numOffensive ?? 6),
+        defensive: bancLibre || (equipe.defensive || []).length < (cfg.numDefensive ?? 4),
+        rookie: bancLibre || (equipe.rookie || []).length < (cfg.numRookies ?? 1),
+        goalie: bancLibre || (equipe.goalie || []).length < (cfg.numGoalies ?? 1),
         // « team » : même clé que fzGroupKeyFor pour un club LNH.
         team: (equipe.teams || []).length < (cfg.numTeams ?? 1)
     };
@@ -283,8 +287,6 @@ function fzRenderLineupCard() {
 
     const me = typeof getUserTeam === 'function' ? getUserTeam() : null;
     const historique = (typeof draftData !== 'undefined' && draftData && draftData.picksHistory) || [];
-    const nbEquipes = (typeof draftData !== 'undefined' && draftData && draftData.teams)
-        ? Object.keys(draftData.teams).length : 0;
 
     const mesChoix = historique
         .map((pick, index) => ({ pick, index }))
@@ -325,7 +327,9 @@ function fzRenderLineupCard() {
         const detail = document.createElement('span');
         detail.className = 'lineup-round';
         const code = trouve && typeof fzPositionCode === 'function' ? fzPositionCode(trouve.rec, trouve.kind) : '';
-        const ronde = nbEquipes > 0 ? Math.floor(index / nbEquipes) + 1 : 0;
+        const ronde = typeof fzRondeDe === 'function'
+            ? fzRondeDe(Number.isInteger(pick.pickIndex) ? pick.pickIndex : index, draftData)
+            : 0;
         detail.textContent = [code, ronde ? 'R' + ronde : ''].filter(Boolean).join(' · ');
         rangee.appendChild(detail);
 

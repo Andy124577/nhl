@@ -1624,8 +1624,10 @@ function fzdHeroState(tonight) {
         // `draftDone` ne change pas le décompte, seulement ce vers quoi la
         // bannière renvoie : l'effectif qu'on vient de repêcher plutôt que la
         // gestion d'équipe.
+        // Le décompte vise toujours le premier match de la saison régulière :
+        // c'est la date qu'on attend. Le camp n'est plus qu'une précision.
         return {
-            mode: 'preseason', target: beforeCamp ? campStart : seasonStart, beforeCamp,
+            mode: 'preseason', target: seasonStart, beforeCamp, campStart,
             draftDone, activeName, teamName: team.name
         };
     }
@@ -1658,8 +1660,22 @@ function fzdHeroState(tonight) {
     return { mode: 'regular' };
 }
 
+/**
+ * Minuit à Montréal le jour `iso`, en millisecondes. Le décompte visait
+ * minuit UTC — 20 h la veille à l'Est — et annonçait donc un jour de moins
+ * que le titre « Saison régulière dans N jours ».
+ */
+function fzdMinuitEst(iso) {
+    const midi = new Date(`${iso}T12:00:00Z`);
+    const nom = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', timeZoneName: 'shortOffset' })
+        .formatToParts(midi).find(p => p.type === 'timeZoneName')?.value || 'GMT-5';
+    const m = nom.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
+    const decalage = m ? `${m[1]}${m[2].padStart(2, '0')}:${m[3] || '00'}` : '-05:00';
+    return new Date(`${iso}T00:00:00${decalage}`).getTime();
+}
+
 function fzdCountdownStatsHTML(targetISO) {
-    const diff = Math.max(0, new Date(targetISO + 'T00:00:00Z').getTime() - Date.now());
+    const diff = Math.max(0, fzdMinuitEst(targetISO) - Date.now());
     const d = Math.floor(diff / 86400000);
     const h = Math.floor((diff % 86400000) / 3600000);
     return `
@@ -1734,14 +1750,14 @@ function fzdHeroHTML(state, mobile = false) {
         return `
             <span class="fzd-hero-shield" aria-hidden="true">F</span>
             <div class="fzd-hero-copy">
-                <div class="fzd-hero-eyebrow">${fait ? 'Repêchage terminé' : (state.beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison')}</div>
-                <h2 class="fzd-hero-headline">${fait ? 'Votre équipe est au complet' : 'Saison en préparation'}</h2>
+                <div class="fzd-hero-eyebrow">${fait ? `Repêchage terminé · ${escapeHTML(fzdLibelleSaison(state.target))}` : escapeHTML(fzdPrecisionCamp(state))}</div>
+                <h2 class="fzd-hero-headline">${fait ? 'Votre équipe est au complet' : escapeHTML(fzdLibelleSaison(state.target))}</h2>
             </div>
             <div class="fzd-hero-stats">${fzdCountdownStatsHTML(state.target)}</div>
             ${fait ? fzdCtasRepechageFini(state.activeName) : `
             <button type="button" class="fzd-hero-cta" data-fz-reglages="equipes">
                 <span class="fzd-hero-cta-bar" aria-hidden="true"></span>
-                <span class="fzd-hero-cta-label">Gérer mon équipe</span>
+                <span class="fzd-hero-cta-label">Voir les participants</span>
                 <span class="fzd-hero-cta-chev" aria-hidden="true">›</span>
             </button>`}`;
     }
@@ -2058,11 +2074,41 @@ function fzdRendreHorsSaison(horsSaison) {
     const today = todayISO();
     const campStart = calData.preSeasonStartDate;
     const beforeCamp = !!campStart && today < campStart;
-    const target = beforeCamp ? campStart : calData.regularSeasonStartDate;
-    const days = Math.max(0, Math.ceil((new Date(target + 'T00:00:00Z') - new Date(today + 'T00:00:00Z')) / 86400000));
+    const target = calData.regularSeasonStartDate;
+    const days = fzdJoursAvant(target);
 
+    // « Hors-saison » ne disait pas combien de temps : le titre annonce
+    // maintenant l'échéance elle-même.
+    const titre = document.getElementById('fzdOffTitle');
+    const texte = titre && titre.querySelector('[data-fzd-off-title]');
+    if (texte) texte.textContent = fzdLibelleSaison(target);
     document.getElementById('fzdOffDays').textContent = `${days} j`;
-    document.getElementById('fzdOffSub').textContent = beforeCamp ? "Avant le camp d'entraînement" : 'Avant le début de la saison';
+    document.getElementById('fzdOffSub').textContent = fzdPrecisionCamp({ beforeCamp, campStart });
+}
+
+/** Jours pleins d'ici une date ISO (0 le jour même). */
+function fzdJoursAvant(dateISO) {
+    if (!dateISO) return 0;
+    return Math.max(0, Math.ceil((new Date(dateISO + 'T00:00:00Z') - new Date(todayISO() + 'T00:00:00Z')) / 86400000));
+}
+
+/** « Saison régulière dans 5 jours », « … demain », « … aujourd'hui ». */
+function fzdLibelleSaison(dateISO) {
+    if (!dateISO) return 'Saison régulière bientôt';
+    const n = fzdJoursAvant(dateISO);
+    if (n === 0) return 'Saison régulière aujourd’hui';
+    if (n === 1) return 'Saison régulière demain';
+    return `Saison régulière dans ${n} jours`;
+}
+
+/** La précision du camp, sous le décompte de la saison. */
+function fzdPrecisionCamp(state) {
+    if (state && state.beforeCamp && state.campStart) {
+        const n = fzdJoursAvant(state.campStart);
+        return n <= 1 ? 'Camp d’entraînement ' + (n === 0 ? 'aujourd’hui' : 'demain')
+                      : `Camp d’entraînement dans ${n} jours`;
+    }
+    return 'Matchs préparatoires en cours';
 }
 
 /**
@@ -2073,8 +2119,16 @@ function fzdRendreHorsSaison(horsSaison) {
 function fzdRendreSurveiller() {
     const panel = document.getElementById('fzdOffWatch');
     if (!panel) return;
-    if (!panel.firstElementChild) panel.innerHTML = fzhWatchHTML();
-    fzhRenderWatch(panel);
+    // Avant et pendant le repêchage : les joueurs à surveiller. Après : la
+    // vie de la ligue (accueil-watch.js, fzhRenderLigue) — une liste d'espoirs
+    // n'aide plus personne une fois les choix faits.
+    const vue = (typeof fzhRepechageFini === 'function' && fzhRepechageFini()) ? 'ligue' : 'watch';
+    if (panel.dataset.vue !== vue || !panel.firstElementChild) {
+        panel.innerHTML = vue === 'ligue' ? fzhLigueHTML() : fzhWatchHTML();
+        panel.dataset.vue = vue;
+    }
+    if (vue === 'ligue') fzhRenderLigue(panel);
+    else fzhRenderWatch(panel);
 }
 
 /**
@@ -2463,7 +2517,6 @@ function drawDashNews() {
 function bindCalendarControls() {
     document.getElementById('fzdCalPrev')?.addEventListener('click', calGoPrevWeek);
     document.getElementById('fzdCalNext')?.addEventListener('click', calGoNextWeek);
-    document.getElementById('fzdCalMonthToggle')?.addEventListener('click', toggleMonthPicker);
     document.getElementById('fzdMonthPrevBtn')?.addEventListener('click', monthPrev);
     document.getElementById('fzdMonthNextBtn')?.addEventListener('click', monthNext);
 

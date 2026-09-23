@@ -691,3 +691,27 @@ html[data-theme="light"] .user-dropdown-header::after {
     .bottom-nav-label{font-size:.6rem}
     .bottom-nav-icon{font-size:1.2rem}
 }
+
+/* ==================== MENU « POOLS » ====================
+   Un menu, pas une page : mes pools (pour changer de pool actif), puis
+   créer et rejoindre. Il réutilise l'habillage du menu du compte. */
+.nav-pools { position: relative; }
+.nav-pools-btn { border: 0; background: transparent; font: inherit; cursor: pointer; }
+.nav-caret { font-size: .7rem; opacity: .7; margin-left: -2px; }
+.nav-pools-menu { left: 0; right: auto; min-width: 300px; }
+.nav-pools-scroll { max-height: min(320px, 50vh); overflow-y: auto; overscroll-behavior: contain; }
+.nav-pools-empty { margin: 0; padding: 6px 18px 10px; font-size: .84rem; color: var(--text-secondary); }
+.nav-pool-row.is-active .dropdown-title { color: var(--primary); }
+.nav-pool-check { margin-left: auto; color: var(--primary); font-weight: 800; }
+.nav-pool-row .dropdown-text { min-width: 0; }
+.nav-pool-row .dropdown-title,
+.nav-pool-row .dropdown-hint { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 1280px) and (min-width: 769px) {
+    /* Sept onglets ne tiennent pas sous 1280px à côté du logo, de la cloche
+       et de l'avatar : les libellés cèdent la place aux icônes, qui gardent
+       leur nom en infobulle (title) et pour les lecteurs d'écran
+       (aria-label, posés par navbar.js). « Pools » garde son mot : c'est un
+       menu, pas une page, et son icône seule ne le dirait pas. */
+    .nav-links .nav-link .nav-text { display: none; }
+    .nav-links .nav-pools-btn .nav-text { display: inline; }
+}

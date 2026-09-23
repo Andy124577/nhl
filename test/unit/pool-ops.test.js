@@ -253,3 +253,165 @@ test('la dissociation retire une personne de tous ses pools sans effacer ses cho
     assert.deepEqual(pools.A.teams['Équipe 1'].members, []);
     assert.deepEqual(pools.A.teams['Équipe 1'].offensive, ['Joueur A']);
 });
+
+// ───────────────────────── Une personne, une équipe ─────────────────────────
+
+test("entrer dans un pool crée sa propre équipe, sous le nom qu'on lui donne", () => {
+    const p = pool({ membres: { 'Les Fusées': ['alice'] }, nbEquipes: 0 });
+    const resultat = poolOps.inscrireParticipant(p, { username: 'bob', teamName: 'Les Castors' });
+    assert.equal(resultat.ok, true);
+    assert.deepEqual(p.teams['Les Castors'].members, ['bob']);
+    assert.deepEqual(Object.keys(p.teams).sort(), ['Les Castors', 'Les Fusées']);
+});
+
+test("un nom d'équipe déjà porté est refusé, à la casse et aux accents près", () => {
+    const p = pool({ membres: { 'Les Élans': ['alice'] }, nbEquipes: 0 });
+    assert.equal(poolOps.inscrireParticipant(p, { username: 'bob', teamName: 'les elans' }).code, 409);
+    assert.equal(poolOps.nombreParticipants(p), 1);
+});
+
+test("les cases « Équipe N » d'un ancien pool partent à la première inscription", () => {
+    const p = pool({ nbEquipes: 10, membres: { 'Équipe 1': ['alice'] } });
+    poolOps.inscrireParticipant(p, { username: 'bob', teamName: 'Bob' });
+    assert.deepEqual(Object.keys(p.teams).sort(), ['Bob', 'Équipe 1']);
+});
+
+test('maxPlayers est un plafond : au-delà, on refuse ; en dessous, on repêche', () => {
+    const p = pool({ nbEquipes: 0, membres: { A: ['alice'], B: ['bob'] } });
+    p.maxPlayers = 3;
+    assert.equal(poolOps.inscrireParticipant(p, { username: 'carl', teamName: 'C' }).ok, true);
+    assert.equal(poolOps.inscrireParticipant(p, { username: 'dora', teamName: 'D' }).code, 409);
+
+    const partiel = pool({ nbEquipes: 0, membres: { A: ['alice'], B: ['bob'] } });
+    partiel.maxPlayers = 10;
+    assert.equal(poolOps.demarrerRepechage(partiel).ok, true, 'deux sur dix suffisent pour partir');
+});
+
+test('déjà membre, on ne rentre pas une deuxième fois', () => {
+    const p = pool({ nbEquipes: 0, membres: { A: ['alice'] } });
+    assert.equal(poolOps.inscrireParticipant(p, { username: 'alice', teamName: 'Autre' }).code, 400);
+});
+
+test("quitter avant le repêchage retire son équipe ; après, l'équipe reste avec ses choix", () => {
+    const avant = pool({ nbEquipes: 0, membres: { A: ['alice'], B: ['bob'] } });
+    assert.equal(poolOps.quitterEquipe(avant, 'bob').retiree, true);
+    assert.equal(avant.teams.B, undefined);
+
+    const apres = pool({ nbEquipes: 0, membres: { A: ['alice'], B: ['bob'] }, draftOrder: ['A', 'B'] });
+    apres.teams.B.offensive = ['Joueur B'];
+    assert.equal(poolOps.quitterEquipe(apres, 'bob').retiree, false);
+    assert.deepEqual(apres.teams.B.offensive, ['Joueur B']);
+});
+
+test("on ne rejoint plus l'équipe de quelqu'un d'autre", () => {
+    const p = pool({ membres: { 'Équipe 1': ['alice'], 'Équipe 2': [] } });
+    assert.equal(poolOps.rejoindreEquipe(p, { username: 'bob', teamName: 'Équipe 1' }).code, 409);
+});
+
+test('nomEquipeLibre nettoie la base et évite les doublons', () => {
+    const p = pool({ nbEquipes: 0, membres: { bob: ['bob'] } });
+    assert.equal(poolOps.nomEquipeLibre(p, 'bob'), 'bob 2');
+    assert.equal(poolOps.nomEquipeLibre({}, 'x@y.z'), 'xyz');
+    assert.ok(poolOps.nomEquipeLibre({}, 'a'.repeat(40)).length <= 20);
+});
+
+// ───────────────────────────── Départ du repêchage ─────────────────────────────
+
+test("le tête-à-tête refuse de partir avec un nombre impair d'équipes", () => {
+    const p = pool({ nbEquipes: 0, membres: { A: ['a'], B: ['b'], C: ['c'] } });
+    p.poolMode = 'head-to-head';
+    const refus = poolOps.demarrerRepechage(p);
+    assert.equal(refus.code, 400);
+    assert.match(refus.message, /pair/);
+});
+
+test('sans saison précédente, le départ suit le brassage fourni', () => {
+    const p = pool({ nbEquipes: 0, membres: { A: ['a'], B: ['b'], C: ['c'] } });
+    const resultat = poolOps.demarrerRepechage(p, { melanger: l => [...l].reverse() });
+    assert.deepEqual(resultat.premiereRonde, ['C', 'B', 'A']);
+});
+
+test('après une saison, le dernier au classement choisit en premier ; les nouveaux passent après', () => {
+    const p = pool({ nbEquipes: 0, membres: { Or: ['a'], Argent: ['b'], Bronze: ['c'], Neuf: ['d'] } });
+    p.saisonsPrecedentes = [{
+        saison: 20252026,
+        classement: [
+            { equipe: 'Or', membres: ['a'], rang: 1 },
+            { equipe: 'Argent', membres: ['b'], rang: 2 },
+            { equipe: 'Bronze', membres: ['c'], rang: 3 }
+        ]
+    }];
+    assert.deepEqual(poolOps.ordreDeDepart(p, ['Argent', 'Bronze', 'Neuf', 'Or']), ['Bronze', 'Argent', 'Or', 'Neuf']);
+});
+
+test('une équipe renommée depuis la saison passée se retrouve par ses membres', () => {
+    const p = pool({ nbEquipes: 0, membres: { 'Nouveau nom': ['a'], Argent: ['b'] } });
+    p.saisonsPrecedentes = [{ classement: [
+        { equipe: 'Ancien nom', membres: ['a'], rang: 1 },
+        { equipe: 'Argent', membres: ['b'], rang: 2 }
+    ] }];
+    assert.deepEqual(poolOps.ordreDeDepart(p, ['Argent', 'Nouveau nom']), ['Argent', 'Nouveau nom']);
+});
+
+test('renommer une équipe met à jour le classement archivé', () => {
+    const p = pool({ nbEquipes: 0, membres: { A: ['alice'], B: ['bob'] } });
+    p.saisonsPrecedentes = [{ classement: [{ equipe: 'A', rang: 1 }, { equipe: 'B', rang: 2 }] }];
+    poolOps.renommerEquipe(p, { ancien: 'A', nouveau: 'Alpha', username: 'alice' });
+    assert.equal(p.saisonsPrecedentes[0].classement[0].equipe, 'Alpha');
+});
+
+// ───────────────────────────── Nouvelle saison ─────────────────────────────
+
+function poolFini() {
+    const p = pool({ nbEquipes: 0, membres: { A: ['alice'], B: ['bob'] }, draftOrder: ['A', 'B'] });
+    p.config = { numOffensive: 1, numDefensive: 0, numGoalies: 0, numRookies: 0, numTeams: 0 };
+    p.teams.A.offensive = ['Joueur A'];
+    p.teams.B.offensive = ['Joueur B'];
+    p.picksHistory = [{ team: 'A' }, { team: 'B' }];
+    return p;
+}
+
+test('la nouvelle saison archive le classement, vide les alignements et garde les participants', () => {
+    const p = poolFini();
+    const resultat = poolOps.nouvelleSaison(p, { classement: [{ equipe: 'B', points: 90 }, { equipe: 'A', points: 40 }] });
+    assert.equal(resultat.ok, true);
+    assert.deepEqual(p.draftOrder, []);
+    assert.deepEqual(p.picksHistory, []);
+    assert.deepEqual(p.teams.A.offensive, []);
+    assert.deepEqual(p.teams.A.members, ['alice']);
+    assert.deepEqual(p.saisonsPrecedentes[0].classement.map(l => [l.equipe, l.rang]), [['B', 1], ['A', 2]]);
+    assert.deepEqual(poolOps.ordreDeDepart(p, ['A', 'B']), ['A', 'B'], 'A, dernier, choisit en premier');
+});
+
+test("la nouvelle saison est refusée tant que le repêchage n'est pas terminé", () => {
+    const p = poolFini();
+    p.teams.B.offensive = [];
+    assert.equal(poolOps.nouvelleSaison(p, { classement: [{ equipe: 'A' }] }).code, 409);
+});
+
+test('le classement final du tête-à-tête suit victoires, nulles, puis points marqués', () => {
+    const p = poolFini();
+    p.poolMode = 'head-to-head';
+    p.teams.C = { members: ['carl'], offensive: [] };
+    p.h2hData = { standings: {
+        A: { wins: 3, ties: 0, pointsFor: 100 },
+        B: { wins: 2, ties: 2, pointsFor: 120 },
+        C: { wins: 3, ties: 0, pointsFor: 90 }
+    } };
+    assert.deepEqual(poolOps.classementFinalH2H(p).map(l => l.equipe), ['B', 'A', 'C']);
+});
+
+test("la nouvelle saison ne s'ouvre pas en pleine saison régulière ni sur un repêchage tout frais", () => {
+    const fenetre = { regularSeasonStartDate: '2026-10-07', regularSeasonEndDate: '2027-04-15' };
+    const p = poolFini();
+
+    p.saisonRepechage = 20252026;
+    assert.equal(poolOps.peutOuvrirNouvelleSaison(p, { fenetre, aujourdhui: '2026-12-01', saisonCourante: 20262027 }).ok, false);
+    assert.equal(poolOps.peutOuvrirNouvelleSaison(p, { fenetre, aujourdhui: '2026-09-22', saisonCourante: 20262027 }).ok, true);
+
+    p.saisonRepechage = 20262027;
+    assert.equal(poolOps.peutOuvrirNouvelleSaison(p, { fenetre, aujourdhui: '2026-09-22', saisonCourante: 20262027 }).ok, false,
+        'repêché ce mois-ci pour la saison qui vient');
+    assert.equal(poolOps.peutOuvrirNouvelleSaison(p, { fenetre, aujourdhui: '2027-05-01', saisonCourante: 20262027 }).ok, true,
+        'la saison est finie');
+});

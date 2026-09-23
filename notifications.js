@@ -188,7 +188,7 @@
                 liste.push({
                     id: 'ready:' + pool.name, type: 'repechage', pool: pool.name,
                     titre: 'Repêchage prêt à commencer',
-                    detail: `${etat.inscrits}/${etat.max} participants sont inscrits. Rejoignez votre groupe pour commencer.`,
+                    detail: `${etat.inscrits} participants inscrits (max. ${etat.max}). Le repêchage peut être lancé.`,
                     action: 'Préparer le repêchage', date: Date.now(),
                     href: `repechage.html?${lienPool(pool.name)}`, urgent: false
                 });
@@ -247,11 +247,33 @@
                 if (!ajout.read) arrives.push(ajout);
             }
         });
+        // Dans la salle de repêchage, les alertes de repêchage de CE pool
+        // doublent ce que la salle montre déjà — bandeau de tour, son,
+        // vibration. Elles ne surgissent pas en fenêtre et ne gonflent pas la
+        // pastille : on les range comme lues. Les autres pools, les échanges
+        // et le reste s'annoncent normalement.
+        const redondantes = arrives.filter(estDansLaSalle);
+        if (redondantes.length) {
+            redondantes.forEach(el => { el.read = true; });
+            signalerLecture(redondantes.map(el => el.id));
+        }
+        const aAnnoncer = arrives.filter(el => !el.read);
         actualiserHistorique();
         sauvegarder();
         rendreListe();
+        if (redondantes.length) majBadge();
         if (popupIds.length) rendrePopup();
-        if (annoncer && arrives.length) annoncerNouveaux(arrives);
+        if (annoncer && aAnnoncer.length) annoncerNouveaux(aAnnoncer);
+    }
+
+    /** Alerte de repêchage du pool dont on regarde déjà la salle ? */
+    function estDansLaSalle(el) {
+        if (!el || el.type !== 'repechage') return false;
+        if (!window.location.pathname.includes('draftActif')) return false;
+        let salle = null;
+        try { salle = localStorage.getItem('draftClan'); } catch (e) { /* stockage bloqué */ }
+        salle = salle || (window.FZPool && FZPool.get());
+        return !!salle && el.pool === salle;
     }
 
     function trier(a, b) {

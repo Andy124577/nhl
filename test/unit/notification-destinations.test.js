@@ -244,3 +244,43 @@ test('archived notification destinations focus the correct card and respect redu
         assert.deepEqual(focused, []);
     }
 });
+
+test("une contre-offre refuse l'offre d'origine dans la même transaction", async () => {
+    const pool = poolTermine({
+        teams: {
+            'Équipe 1': { members: ['alice'], offensive: ['Joueur A', 'Joueur C'], defensive: [], goalie: [], rookie: [], teams: [] },
+            'Équipe 2': { members: ['bob'], offensive: ['Joueur B'], defensive: [], goalie: [], rookie: [], teams: [] }
+        },
+        config: { numOffensive: 2, numDefensive: 0, numGoalies: 0, numRookies: 0, numTeams: 0 }
+    });
+    pool.teams['Équipe 2'].offensive.push('Joueur D');
+    const h = banc({ Pool: pool });
+    try {
+        await proposer(h);
+        const originale = h.etat.trades[0].id;
+
+        // Un tiers ne peut pas répondre à une offre qui ne lui était pas faite.
+        const intrus = await h.appeler('POST', '/trade/propose', {
+            auth: ALICE,
+            body: {
+                draftName: 'Pool', fromTeam: 'Équipe 1', toTeam: 'Équipe 2', counterOf: originale,
+                offering: [{ name: 'Joueur C', type: 'offensive' }], receiving: [{ name: 'Joueur B', type: 'offensive' }]
+            }
+        });
+        assert.equal(intrus.statusCode, 400);
+        assert.equal(h.etat.trades.find(t => t.id === originale).status, 'pending');
+
+        const res = await h.appeler('POST', '/trade/propose', {
+            auth: BOB,
+            body: {
+                draftName: 'Pool', fromTeam: 'Équipe 2', toTeam: 'Équipe 1', counterOf: originale,
+                offering: [{ name: 'Joueur D', type: 'offensive' }], receiving: [{ name: 'Joueur A', type: 'offensive' }]
+            }
+        });
+        assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+        const avant = h.etat.trades.find(t => t.id === originale);
+        assert.equal(avant.status, 'declined');
+        assert.equal(avant.data.counteredBy, res.body.tradeId);
+        assert.equal(h.etat.trades.find(t => t.id === res.body.tradeId).data.counterOf, originale);
+    } finally { h.nettoyer(); }
+});

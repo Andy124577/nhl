@@ -6,18 +6,18 @@
     <title>Rejoindre un pool – Fantazy</title>
     <script src="theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="navbar.css?v=20260922">
     <link rel="stylesheet" href="teamLogos.css">
     <link rel="stylesheet" href="index.css">
-    <link rel="stylesheet" href="pool.css">
-    <link rel="stylesheet" href="poolNav.css">
-    <link rel="stylesheet" href="poolSettings.css">
+    <link rel="stylesheet" href="pool.css?v=20260922">
+    <link rel="stylesheet" href="poolNav.css?v=20260922">
+    <link rel="stylesheet" href="poolSettings.css?v=20260922">
     <link rel="stylesheet" href="instantDraft.css?v=20260908a">
     <link rel="stylesheet" href="skeleton-loader.css">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
-    <script defer src="activePool.js"></script>
+    <script defer src="activePool.js?v=20260922"></script>
 </head>
 <body>
     <nav class="navbar"></nav>
@@ -35,7 +35,7 @@
             <h1 class="pool-hero-title">
                 Rejoignez un <span class="gradient-text">pool existant.</span>
             </h1>
-            <p class="pool-hero-sub">Laissez-vous placer dans un repêchage instantané, ou choisissez
+            <p class="pool-hero-sub">Laissez-vous placer dans un pool rapide avec 3 autres joueurs, ou choisissez
                vous-même parmi les pools dont le repêchage n'a pas commencé.</p>
         </div>
     </header>
@@ -51,10 +51,10 @@
         <button type="button" class="fz-instant" data-instant-draft>
             <span class="fz-instant-icon" data-icon="bolt" data-icon-size="26"></span>
             <span class="fz-instant-txt">
-                <span class="fz-instant-title" data-instant-label>Rejoindre un repêchage instantané</span>
-                <span class="fz-instant-sub" data-instant-desc>On vous place avec les prochains joueurs disponibles.
-                    Rien à créer, rien à choisir.</span>
-                <span class="fz-instant-meta">4 joueurs · le repêchage part dès que le pool est plein</span>
+                <span class="fz-instant-title" data-instant-label>Pool rapide : jouer maintenant à 4</span>
+                <span class="fz-instant-sub" data-instant-desc>On vous place dans un pool avec les 3 prochains joueurs
+                    disponibles. Rien à créer, rien à choisir.</span>
+                <span class="fz-instant-meta">4 joueurs · cumulatif · le repêchage démarre tout seul dès que vous êtes 4</span>
             </span>
             <span class="fz-instant-chev" aria-hidden="true">›</span>
         </button>
@@ -111,40 +111,10 @@
     <!-- MODALES                                                       -->
     <!-- ============================================================ -->
 
-    <!-- Saisie du mot de passe d'un pool protégé. Piloté par
-         demanderMotDePasse() dans equipes.js, qui renvoie une promesse. -->
-    <div id="pool-password-modal" class="modal" style="display:none;">
-        <div class="modal-content pool-password-modal">
-            <div class="modal-header">
-                <h2>Pool protégé</h2>
-                <button class="modal-close" id="poolPwCancel" aria-label="Annuler">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p class="pool-pw-intro">Le pool <strong id="poolPwName"></strong> demande un mot de passe pour
-                    y entrer. Demandez-le à la personne qui l'a créé.</p>
-                <div class="form-group">
-                    <label for="poolPwInput">Mot de passe</label>
-                    <div class="password-field">
-                        <input type="password" id="poolPwInput" autocomplete="off" maxlength="72"
-                               placeholder="Mot de passe du pool">
-                        <button type="button" class="password-toggle" id="poolPwToggle"
-                                aria-label="Afficher le mot de passe"
-                                onclick="togglePoolPassword(this, 'poolPwInput')"><span class="pw-eye" data-icon="eye" data-icon-size="17"></span><span class="pw-eye-off" data-icon="eye-off" data-icon-size="17"></span></button>
-                    </div>
-                </div>
-                <p class="pool-pw-error" id="poolPwError" role="alert" hidden></p>
-            </div>
-            <div class="modal-footer">
-                <button class="secondary" id="poolPwCancelBtn">Annuler</button>
-                <button id="poolPwOk">Rejoindre</button>
-            </div>
-        </div>
-    </div>
-
     <div id="clan-members-modal" class="modal" style="display:none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Choisir une équipe</h2>
+                <h2>Rejoindre le pool</h2>
                 <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
             <div class="modal-body">
@@ -159,11 +129,11 @@
     <script defer src="/socket.io/socket.io.js"></script>
     <script defer src="avatars.js"></script>
     <script src="profanity.js"></script>
-    <script defer src="equipes.js"></script>
-    <script defer src="instantDraft.js"></script>
-    <script defer src="navbar.js"></script>
-    <script defer src="poolSettings.js"></script>
-    <script defer src="poolNav.js"></script>
-    <script defer src="notifications.js"></script>
+    <script defer src="equipes.js?v=20260922"></script>
+    <script defer src="instantDraft.js?v=20260922"></script>
+    <script defer src="navbar.js?v=20260922"></script>
+    <script defer src="poolSettings.js?v=20260922"></script>
+    <script defer src="poolNav.js?v=20260922"></script>
+    <script defer src="notifications.js?v=20260922"></script>
 </body>
 </html>

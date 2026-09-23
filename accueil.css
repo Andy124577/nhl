@@ -930,3 +930,39 @@ html[data-theme="light"] .btn-hero-secondary:hover {
     .how-it-works-section { padding: 60px 24px; }
     .step-icon-wrap { font-size: 2.5rem; margin-bottom: 14px; }
 }
+
+/* ============================================================
+   STORIES — une hauteur, quel que soit le contenu
+   ------------------------------------------------------------
+   La carte d'un match en direct grandissait d'une rangée à chaque but :
+   la page sautait sous les yeux, et le carrousel changeait de taille en
+   passant d'une actualité à un match. Toutes les diapositives ont
+   maintenant la même hauteur — celle du tableau indicateur et de trois
+   buts — et la liste des buts défile à l'intérieur de la carte, le plus
+   récent en haut. Même échelle --su que le dessin du tableau.
+   ============================================================ */
+.stories-card { --su: min(1px, (100vw - 66px) / 1200); }
+.stories-card.is-live { height: 220px; }
+@media (min-width: 769px) {
+    .stories-card,
+    .stories-card.is-live { height: max(240px, calc(var(--su) * 366)); }
+}
+.stories-card.is-live .sl-live {
+    box-sizing: border-box;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.stories-card.is-live .sl-live > * { flex: none; }
+.stories-card.is-live .sl-goals {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, .22) transparent;
+    padding-bottom: calc(var(--su) * 4);
+}
+.stories-card.is-live .sl-goals::-webkit-scrollbar { width: 6px; }
+.stories-card.is-live .sl-goals::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .22); border-radius: 3px; }
+.stories-card.is-live .sl-goal { flex: none; }

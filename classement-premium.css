@@ -985,3 +985,155 @@ body.fz-classement .h2h-res-more:hover { color: var(--fzc-accent-dark); }
   body.fz-classement .h2h-strip-card { flex: 0 0 172px; }
   body.fz-classement .standings-insights.is-h2h { gap: 12px; }
 }
+
+/* ==================== LISIBILITÉ DU CLASSEMENT ====================
+   1. « Où en suis-je ? » avant le tableau.
+   2. La période de la tendance, nommée et choisissable partout — elle ne
+      l'était qu'au téléphone, alors que la colonne « Tendance » en dépend
+      aussi sur ordinateur.
+   3. Ma rangée repérée dans le tableau.
+   4. Une légende repliée : ce que veut dire chaque colonne. */
+body.fz-classement .st-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--fzc-border);
+  border-left: 4px solid var(--fzc-accent);
+  border-radius: 12px;
+  background: var(--fzc-surface);
+}
+body.fz-classement .st-summary-rank {
+  flex: none;
+  font-family: 'Bebas Neue', system-ui, sans-serif;
+  font-size: 2.4rem;
+  line-height: 1;
+  color: var(--fzc-ink);
+}
+body.fz-classement .st-summary-rank small { font-size: 1.1rem; color: var(--fzc-text-faint); }
+body.fz-classement .st-summary-rank sup { font-size: .55em; }
+body.fz-classement .st-summary-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+body.fz-classement .st-summary-txt strong { color: var(--fzc-ink); }
+body.fz-classement .st-summary-txt span { font-size: .9rem; color: var(--fzc-text); }
+
+body.fz-classement .st-period-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; }
+body.fz-classement .st-period-label {
+  font: 600 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--fzc-text-muted);
+}
+body.fz-classement .st-period-bar .st-period-chips { display: flex; margin: 0; }
+
+body.fz-classement #standingsTable tbody tr.is-me td { background: color-mix(in srgb, var(--fzc-accent) 7%, transparent); }
+body.fz-classement #standingsTable tbody tr.is-me td.player-col .st-name { font-weight: 800; color: var(--fzc-ink); }
+body.fz-classement #standingsTable tbody tr.is-me td.rank-col { box-shadow: inset 3px 0 0 var(--fzc-accent); }
+
+body.fz-classement .st-legend {
+  margin: 12px 0 0;
+  border: 1px solid var(--fzc-border);
+  border-radius: 12px;
+  background: var(--fzc-surface);
+}
+body.fz-classement .st-legend summary {
+  padding: 12px 16px;
+  min-height: 44px;
+  box-sizing: border-box;
+  cursor: pointer;
+  font: 600 13px/1.3 'Helvetica Neue', Helvetica, sans-serif;
+  color: var(--fzc-accent);
+}
+body.fz-classement .st-legend summary:focus-visible { outline: 2px solid var(--fzc-accent); outline-offset: 2px; }
+body.fz-classement .st-legend dl {
+  display: grid;
+  grid-template-columns: minmax(90px, max-content) 1fr;
+  gap: 8px 16px;
+  margin: 0;
+  padding: 0 16px 14px;
+  font-size: .86rem;
+  line-height: 1.45;
+}
+body.fz-classement .st-legend dt { font-weight: 700; color: var(--fzc-ink); }
+body.fz-classement .st-legend dd { margin: 0; color: var(--fzc-text); }
+@media (max-width: 520px) {
+  body.fz-classement .st-legend dl { grid-template-columns: 1fr; gap: 2px; }
+  body.fz-classement .st-legend dd { margin-bottom: 8px; }
+}
+
+/* ==================== BANC (TÊTE-À-TÊTE) ==================== */
+body.fz-classement .bench-panel {
+  width: 100%;
+  margin-top: 8px;
+  padding: 16px;
+  border: 1px solid var(--fzc-border);
+  border-radius: 12px;
+  background: var(--fzc-surface);
+}
+body.fz-classement .bench-title {
+  margin: 0 0 4px;
+  font: 700 15px/1.2 'Oswald', 'Helvetica Neue', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--fzc-ink);
+}
+body.fz-classement .bench-hint { margin: 0 0 12px; font-size: .86rem; line-height: 1.45; color: var(--fzc-text); }
+body.fz-classement .bench-pending {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  list-style: none;
+  border-left: 3px solid var(--fzc-accent);
+  border-radius: 8px;
+  background: var(--fzc-bg-alt);
+  font-size: .86rem;
+  color: var(--fzc-text);
+}
+body.fz-classement .bench-list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+body.fz-classement .bench-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--fzc-border-soft);
+  border-radius: 10px;
+}
+body.fz-classement .bench-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+body.fz-classement .bench-name { font-weight: 700; color: var(--fzc-ink); }
+body.fz-classement .bench-meta { font-size: .8rem; color: var(--fzc-text-muted); }
+body.fz-classement .bench-swap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+body.fz-classement .bench-sr {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+body.fz-classement .bench-select {
+  min-height: 44px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 12px;
+  border: 1px solid var(--fzc-border-input);
+  border-radius: 10px;
+  background: var(--fzc-surface);
+  color: var(--fzc-ink);
+  font: inherit;
+}
+body.fz-classement .bench-go {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--fzc-accent);
+  color: #fff;
+  font: 700 .86rem/1 inherit;
+  cursor: pointer;
+}
+body.fz-classement .bench-go:disabled { opacity: .45; cursor: default; }
+body.fz-classement .bench-select:focus-visible,
+body.fz-classement .bench-go:focus-visible { outline: 2px solid var(--fzc-accent); outline-offset: 2px; }
+body.fz-classement .bench-empty { margin: 0; color: var(--fzc-text-faint); }
+body.fz-classement .bench-msg { margin: 12px 0 0; font-size: .86rem; font-weight: 600; color: var(--fzc-ink); }
+body.fz-classement .bench-msg.is-error { color: #c4293a; }
+@media (max-width: 520px) {
+  body.fz-classement .bench-swap { width: 100%; }
+  body.fz-classement .bench-select { flex: 1 1 auto; }
+}

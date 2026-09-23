@@ -478,3 +478,25 @@ body.ps-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
     .ps-panel { transition: none; }
 }
+
+/* ---- Saisons passées & nouvelle saison ---- */
+.ps-season-name {
+    margin: 10px 0 6px;
+    font-size: .8rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+.ps-season-rank {
+    margin: 0;
+    padding: 0 0 0 1.4em;
+    font-size: .84rem;
+    color: var(--text-main);
+}
+.ps-season-rank li { padding: 4px 0; }
+.ps-season-rank li span { margin-right: 8px; }
+.ps-season-rank li strong {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: .78rem;
+    color: var(--text-secondary);
+}
+.ps-block-season .ps-primary { margin-top: 10px; }

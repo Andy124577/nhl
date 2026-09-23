@@ -231,6 +231,12 @@ function creerBaseSimulee(poolsInitiaux, users) {
             return touchees.length;
         },
 
+        async resolveNotificationsByKeyInTx(_client, cles) {
+            const touchees = etat.notifications.filter(n => !n.resolvedAt && (cles || []).includes(n.dedupKey));
+            touchees.forEach(n => { n.resolvedAt = new Date(); n.readAt = n.readAt || new Date(); });
+            return touchees.length;
+        },
+
         async lockTradeInTx(_client, id) {
             const echange = etat.trades.find(t => t.id === Number(id));
             return echange ? { id: echange.id, poolName: echange.poolName, data: echange.data, status: echange.status } : null;
@@ -534,7 +540,10 @@ function monterRoutes(modules, { pools = {}, users = null, ctxExtra = {} } = {})
         nettoyerDependances: (nom) => db.deletePoolDependencies(nom),
         renommerPool: async () => [],
         construireCalendrierH2H: async () => {},
-        saisonCourante: () => '20262027'
+        saisonCourante: () => '20262027',
+        // L'ordre de départ est tiré au hasard en production ; ici il suit
+        // l'ordre alphabétique, pour que chaque test sache qui choisit.
+        melangerEquipes: (liste) => [...liste]
     };
 
     // `ctxExtra` peut etre une fonction : certains services (pointage, H2H) se

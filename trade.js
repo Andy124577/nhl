@@ -23,6 +23,14 @@ let pairs = [];
 let draftGive = null;
 let draftGet = null;
 
+// Contre-offre en cours : l'identifiant de la proposition reçue à laquelle
+// le panier répond. Envoyée avec la première paire, elle fait refuser
+// l'originale côté serveur (/trade/propose, counterOf).
+let counterOfTradeId = null;
+// Les propositions reçues affichées, par identifiant — le bouton
+// « Contre-offre » ne transporte que l'identifiant.
+const tradesRecusParId = new Map();
+
 // Position + text filters, one set per side
 let myPositionFilter = 'all';
 let partnerPositionFilter = 'all';
@@ -135,6 +143,70 @@ async function loadForSaleListings() {
     renderForSaleToggle();
     renderMarket();
     renderPartnerRoster();
+}
+
+/**
+ * Le marché des échanges : qui est en vente, chez qui, et si l'on peut
+ * répondre (voir le commentaire de #tmMarket, trade.html).
+ *
+ * L'appel à cette fonction existait sans elle : chaque chargement des
+ * annonces s'arrêtait sur une ReferenceError, avant même de redessiner
+ * l'effectif du partenaire.
+ */
+const MARCHE_RAISONS = {
+    propre_equipe: 'Votre annonce',
+    aucun_joueur_compatible: 'Aucun joueur de la même catégorie à offrir'
+};
+
+function renderMarket() {
+    const section = document.getElementById('tmMarket');
+    const liste = document.getElementById('tmMarketList');
+    const compte = document.getElementById('tmMarketCount');
+    if (!section || !liste) return;
+
+    const annonces = Array.isArray(forSaleListings) ? forSaleListings : [];
+    section.hidden = annonces.length === 0;
+    if (!annonces.length) { liste.innerHTML = ''; return; }
+    if (compte) compte.textContent = `${annonces.length} joueur${annonces.length > 1 ? 's' : ''} disponible${annonces.length > 1 ? 's' : ''}`;
+
+    liste.innerHTML = annonces.map((a, i) => {
+        const code = getCategory(a.category);
+        const action = a.peutOffrir
+            ? `<button type="button" class="tmm-offrir" data-market-index="${i}">Faire une offre</button>`
+            : `<span class="tmm-refus">${escapeTradeHTML(MARCHE_RAISONS[a.raison] || '—')}</span>`;
+        return `
+            <div class="tmm-row">
+                <div class="tmm-who">
+                    <span class="tmm-player">${escapeTradeHTML(a.playerName)}</span>
+                    <span class="tmm-meta"><span class="tmm-team">${escapeTradeHTML(a.teamName)}</span>
+                        · <span class="tmm-cat">${escapeTradeHTML(getCategoryLabel(code))}</span></span>
+                </div>
+                <span class="tmm-stat">${a.createdAt ? escapeTradeHTML(new Date(a.createdAt).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' })) : ''}</span>
+                <div class="tmm-act">${action}</div>
+            </div>`;
+    }).join('');
+
+    liste.querySelectorAll('[data-market-index]').forEach(bouton => {
+        bouton.addEventListener('click', () => {
+            const annonce = annonces[Number(bouton.dataset.marketIndex)];
+            if (!annonce || !selectedPoolData || !selectedPoolData.teams[annonce.teamName]) return;
+            switchTradeTab('propose');
+            selectPartnerTeam(annonce.teamName);
+            handlePartnerPick(annonce.playerName, getCategory(annonce.category), null);
+            document.getElementById('tmBuilder')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+
+    const bascule = document.getElementById('tmMarketToggle');
+    if (bascule && !bascule.dataset.branche) {
+        bascule.dataset.branche = '1';
+        bascule.addEventListener('click', () => {
+            const ouvert = bascule.getAttribute('aria-expanded') === 'true';
+            bascule.setAttribute('aria-expanded', String(!ouvert));
+            bascule.textContent = ouvert ? 'Afficher' : 'Masquer';
+            liste.hidden = ouvert;
+        });
+    }
 }
 
 function partnerForSaleNames() {
@@ -453,6 +525,7 @@ function selectPartnerTeam(teamName) {
     pairs = [];
     draftGive = null;
     draftGet = null;
+    counterOfTradeId = null;
     partnerSearchTerm = '';
     partnerPositionFilter = 'all';
     forSaleFilterActive = false;
@@ -689,7 +762,13 @@ function renderBasket() {
 
     const rows = pairs.map((pair, idx) => pairRowHTML(pair.give, pair.get, idx)).join('');
     const draftRow = (draftGive || draftGet) ? draftRowHTML() : '';
-    document.getElementById('tbPairs').innerHTML = rows + draftRow;
+    const noteContre = counterOfTradeId ? `
+        <div class="tb-counter-note" role="note">
+            <strong>Contre-offre à ${escapeTradeHTML(selectedPartnerTeam || '')}</strong>
+            <span>L'offre reçue est préremplie : changez un joueur, puis envoyez.
+                  L'offre d'origine sera refusée à l'envoi.</span>
+        </div>` : '';
+    document.getElementById('tbPairs').innerHTML = noteContre + rows + draftRow;
 
     document.querySelectorAll('.tb-card-remove').forEach(btn => {
         btn.addEventListener('click', () => removePair(parseInt(btn.dataset.pairIdx)));
@@ -851,6 +930,8 @@ async function proposeTrade() {
 
     let succeeded = 0;
     const failures = [];
+    // Une seule proposition répond à l'originale : la première envoyée.
+    let enReponseA = counterOfTradeId;
 
     for (const pair of pairs) {
         const proposal = {
@@ -859,6 +940,7 @@ async function proposeTrade() {
             toTeam: selectedPartnerTeam,
             offering: [{ name: pair.give.name, type: pair.give.type || getCategoryType(pair.give.category) }],
             receiving: [{ name: pair.get.name, type: pair.get.type || getCategoryType(pair.get.category) }],
+            ...(enReponseA ? { counterOf: enReponseA } : {}),
             status: 'pending',
             date: new Date().toISOString()
         };
@@ -870,7 +952,7 @@ async function proposeTrade() {
                 body: JSON.stringify(proposal)
             });
             const data = await res.json();
-            if (res.ok) succeeded++;
+            if (res.ok) { succeeded++; enReponseA = null; }
             else failures.push(`${pair.give.name} ⇄ ${pair.get.name} : ${data.message || 'échec'}`);
         } catch (err) {
             console.error('Error proposing trade:', err);
@@ -908,6 +990,7 @@ function showTradeSuccess(succeeded, failures) {
     pairs = [];
     draftGive = null;
     draftGet = null;
+    counterOfTradeId = null;
 }
 
 // ============================================================
@@ -917,6 +1000,7 @@ function resetTrade() {
     pairs = [];
     draftGive = null;
     draftGet = null;
+    counterOfTradeId = null;
 
     document.getElementById('tradeSuccessScreen').classList.add('hidden');
     document.getElementById('tmBuilder').classList.remove('hidden');
@@ -967,6 +1051,9 @@ async function loadReceivedTrades(idCible) {
             return false;
         }
 
+        tradesRecusParId.clear();
+        trades.forEach(t => tradesRecusParId.set(String(t.id), t));
+
         container.innerHTML = trades.map(trade => {
             const date = new Date(trade.date);
             const relatif = relativeDate(date);
@@ -1013,7 +1100,7 @@ async function loadReceivedTrades(idCible) {
                     <div class="trade-card-actions">
                         <button class="btn-accept-trade" onclick="acceptTradeProposal('${trade.id}')">Accepter</button>
                         <button class="btn-decline-trade" onclick="declineTradeProposal('${trade.id}')">Refuser</button>
-                        <button class="btn-counter-trade" onclick="startCounterOffer('${trade.fromTeam.replace(/'/g, "\\'")}')">Contre-offre</button>
+                        <button class="btn-counter-trade" onclick="startCounterOffer('${trade.id}')">Contre-offre</button>
                     </div>
                 </div>
             `;
@@ -1037,13 +1124,42 @@ function relativeDate(date) {
     return date.toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-/** Jumps to the propose tab with that team pre-selected as partner —
- *  a fresh proposal to the same team, not a pre-filled negotiation. */
-function startCounterOffer(teamName) {
+/**
+ * Contre-offre : l'onglet « Proposer », face à la même équipe, avec l'offre
+ * reçue déjà dans le panier — sens inversé, puisque c'est maintenant soi
+ * qui propose. On change le joueur qui ne convient pas, on envoie, et
+ * l'offre d'origine est refusée du même coup.
+ *
+ * Le panier repart TOUJOURS de cette offre-là : un reste de sélection d'un
+ * autre échange ne doit jamais se glisser dans la contre-offre.
+ */
+function startCounterOffer(tradeId) {
+    const trade = tradesRecusParId.get(String(tradeId));
     switchTradeTab('propose');
-    if (selectedPoolData && selectedPoolData.teams[teamName]) {
-        selectPartnerTeam(teamName);
+    if (!trade || !selectedPoolData || !selectedPoolData.teams[trade.fromTeam]) {
+        resetTrade();
+        showNotification("Cette proposition n'est plus disponible. Rechargez la page.", 'error');
+        return;
     }
+
+    selectPartnerTeam(trade.fromTeam);   // vide le panier
+
+    const monJoueur = trade.receiving && trade.receiving[0];
+    const sonJoueur = trade.offering && trade.offering[0];
+    const mine = monJoueur && buildRosterPlayers(myTeamData).find(p => p.name === monJoueur.name);
+    const theirs = sonJoueur && buildRosterPlayers(partnerTeamData).find(p => p.name === sonJoueur.name);
+    if (mine && theirs && mine.category === theirs.category) {
+        pairs = [{
+            give: { name: mine.name, category: mine.category, data: mine, type: getCategoryType(mine.category) },
+            get: { name: theirs.name, category: theirs.category, data: theirs, type: getCategoryType(theirs.category) }
+        }];
+    }
+    counterOfTradeId = trade.id;
+
+    renderMyRoster();
+    renderPartnerRoster();
+    renderBasket();
+    document.getElementById('tradeBasket')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // ============================================================
@@ -1306,4 +1422,12 @@ async function tmProposeTrade() {
             cta.disabled = source ? source.disabled : true;
         }
     }
+}
+
+
+/** Échappe un nom d'équipe avant de le poser dans du HTML construit à la main. */
+function escapeTradeHTML(texte) {
+    return String(texte == null ? '' : texte)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }

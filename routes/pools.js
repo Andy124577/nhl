@@ -23,6 +23,17 @@ const authz = require('../lib/authz.js');
 const poolOps = require('../lib/poolOps.js');
 const evenements = require('../lib/events.js');
 const { checkIfDraftComplete } = require('../lib/draft.js');
+const { seasonIdForDate } = require('../lib/season.js');
+
+/** Fisher-Yates : `sort(() => Math.random() - 0.5)` ne brasse pas uniformément. */
+function melangerEquipes(liste) {
+    const copie = [...liste];
+    for (let i = copie.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copie[i], copie[j]] = [copie[j], copie[i]];
+    }
+    return copie;
+}
 
 /** Équipes préparées d'avance à la création. */
 const EQUIPES_PAR_POOL = 10;
@@ -37,6 +48,8 @@ const reduire = (t) => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowe
 function monter(app, ctx) {
     const { auth, store, diffusion, racine, uploadPool, logger = console } = ctx;
     const { ErreurMetier } = store;
+    // Remplaçable pour les tests : l'ordre tiré doit y être prévisible.
+    const melanger = ctx.melangerEquipes || melangerEquipes;
 
     /** Traduit une erreur du contrat en réponse HTTP. */
     function repondreErreur(res, erreur, contexte) {
@@ -131,7 +144,11 @@ function monter(app, ctx) {
 
             const data = enveloppe.data;
             const membre = req.auth && (req.auth.isAdmin || authz.estMembre(data, req.auth.username));
-            const equipes = Object.entries(data.teams || {});
+            // Les cases « Équipe N » jamais servies des anciens pools ne sont
+            // pas des équipes : les montrer ferait croire à des adversaires.
+            const equipes = Object.entries(data.teams || {})
+                .filter(([, equipe]) => !poolOps.equipeInutilisee(equipe));
+            const quotas = poolOps.config(data);
 
             res.json({
                 poolName: nom,
@@ -140,7 +157,14 @@ function monter(app, ctx) {
                 imageUrl: data.imageUrl || '',
                 draftStarted: Array.isArray(data.draftOrder) && data.draftOrder.length > 0,
                 maxParTeam: poolOps.MEMBRES_PAR_EQUIPE,
+                maxPlayers: poolOps.capacite(data),
+                participantCount: poolOps.nombreParticipants(data),
+                poolMode: data.poolMode || 'cumulative',
+                creator: authz.createurDuPool(data),
+                totalPicks: poolOps.totalSelections(data),
+                config: quotas,
                 monEquipe: req.auth ? authz.equipeDe(data, req.auth.username) : null,
+                nomSuggere: req.auth ? poolOps.nomEquipeLibre(data, req.auth.username) : null,
                 revision: enveloppe.revision,
                 teams: equipes.map(([nomEquipe, equipe]) => {
                     const membres = equipe.members || [];
@@ -160,11 +184,29 @@ function monter(app, ctx) {
 
     // ───────────────────────────── Création ─────────────────────────────
 
+    /**
+     * Le nom d'une équipe, validé comme au renommage. Renvoie un message
+     * d'erreur, ou null si le nom passe.
+     */
+    function refusNomEquipe(nomEquipe) {
+        if (!nomEquipe || nomEquipe.length > poolOps.NOM_EQUIPE_MAX) {
+            return `Le nom d'équipe doit contenir entre 1 et ${poolOps.NOM_EQUIPE_MAX} caractères.`;
+        }
+        if (!NOM_VALIDE.test(nomEquipe)) return "Nom d'équipe invalide. Caractères non autorisés.";
+        if (contientGrossierete(nomEquipe)) {
+            return "Ce nom d'équipe contient un terme inapproprié. Choisissez-en un autre.";
+        }
+        return null;
+    }
+
     app.post('/create-clan', auth.requireAuth, async (req, res) => {
         try {
             const nom = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
             const { maxPlayers, config, poolMode, allowTrades, password } = req.body || {};
             const username = req.auth.username;
+            const nomEquipe = typeof req.body?.teamName === 'string' && req.body.teamName.trim()
+                ? req.body.teamName.trim()
+                : poolOps.nomEquipeLibre({}, username);
 
             if (!nom) return res.status(400).json({ message: "Nom de pool requis." });
             if (nom.length < 3 || nom.length > 30) {
@@ -188,23 +230,38 @@ function monter(app, ctx) {
                 passwordHash = await bcrypt.hash(password, 10);
             }
 
+            const refusEquipe = refusNomEquipe(nomEquipe);
+            if (refusEquipe) return res.status(400).json({ message: refusEquipe });
+
+            const mode = poolMode === 'head-to-head' ? 'head-to-head' : 'cumulative';
+            // Un plafond, pas un quota : le repêchage peut partir avant qu'il
+            // soit atteint. Borné comme le formulaire, 2 à 10.
+            const plafond = Math.min(poolOps.PARTICIPANTS_MAX,
+                Math.max(2, parseInt(maxPlayers, 10) || poolOps.PARTICIPANTS_MAX));
+
             const quotas = { ...poolOps.CONFIG_PAR_DEFAUT, ...(config || {}) };
             if (quotas.numTeams == null) quotas.numTeams = 1;
-
-            const teams = {};
-            for (let i = 1; i <= EQUIPES_PAR_POOL; i++) {
-                teams[`Équipe ${i}`] = { members: [], offensive: [], defensive: [], goalie: [], rookie: [], teams: [] };
+            // Le banc n'existe qu'en tête-à-tête : il n'y a rien à remplacer
+            // dans un cumulatif, où chaque point de la saison compte déjà.
+            const banc = parseInt(quotas.numBench, 10);
+            if (mode === 'head-to-head' && Number.isFinite(banc) && banc > 0) {
+                quotas.numBench = Math.min(banc, 5);
+            } else {
+                delete quotas.numBench;
             }
-            teams['Équipe 1'].members.push(username);
+
+            // Une seule équipe à la naissance du pool : celle de la personne
+            // qui le crée. Les autres arrivent avec la leur.
+            const teams = { [nomEquipe]: poolOps.equipeVide([username]) };
 
             const poolData = {
-                maxPlayers: parseInt(maxPlayers, 10) || EQUIPES_PAR_POOL,
+                maxPlayers: plafond,
                 creator: username,
                 draftOrder: [],
                 currentPickIndex: 0,
                 lastPickIndex: -1,
                 config: quotas,
-                poolMode: poolMode === 'head-to-head' ? 'head-to-head' : 'cumulative',
+                poolMode: mode,
                 allowTrades: allowTrades !== false,
                 createdAt: new Date().toISOString(),
                 teams
@@ -239,7 +296,8 @@ function monter(app, ctx) {
 
             logger.log(`🆕 Pool créé : ${nom} par ${username}`);
             res.json({
-                message: `Pool « ${nom} » créé. Vous avez été ajouté à l'Équipe 1.`,
+                message: `Pool « ${nom} » créé avec votre équipe « ${nomEquipe} ».`,
+                teamName: nomEquipe,
                 poolName: nom,
                 revision: valeur.revision,
                 pool: authz.vueMembre(nom, poolData, valeur.revision),
@@ -290,27 +348,33 @@ function monter(app, ctx) {
     // ───────────────────────────── Appartenance ─────────────────────────────
 
     /**
-     * Entrer dans un pool, ou changer d'équipe.
+     * Entrer dans un pool en nommant son équipe.
      *
-     * Le mot de passe n'est exigé qu'à l'entrée : un membre a déjà franchi la
-     * porte, la lui refermer au nez à chaque changement d'équipe n'ajouterait
-     * rien. La vérification bcrypt a lieu AVANT la transaction — elle prend du
+     * `teamName` est le nom que la personne donne à SON équipe, pas une case
+     * existante à rejoindre : une personne, une équipe.
+     *
+     * La vérification bcrypt a lieu AVANT la transaction — elle prend du
      * temps, et tenir un verrou de ligne pendant ce temps ferait attendre tout
      * le pool.
      */
     app.post('/join-team', auth.requireAuth, async (req, res) => {
         try {
             const nom = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
-            const teamName = req.body?.teamName;
+            const teamName = typeof req.body?.teamName === 'string' ? req.body.teamName.trim() : '';
             const username = req.auth.username;
 
-            if (!nom || !teamName) return res.status(400).json({ message: "Pool et équipe requis." });
+            if (!nom || !teamName) return res.status(400).json({ message: "Pool et nom d'équipe requis." });
+            const refusEquipe = refusNomEquipe(teamName);
+            if (refusEquipe) return res.status(400).json({ message: refusEquipe });
 
             const enveloppe = await store.lire(nom);
             if (!enveloppe) return res.status(404).json({ message: "Pool introuvable." });
 
             const dejaMembre = authz.estMembre(enveloppe.data, username);
-            if (enveloppe.data.passwordHash && !dejaMembre) {
+            if (dejaMembre) {
+                return res.status(400).json({ message: "Vous êtes déjà dans ce pool.", teamName: authz.equipeDe(enveloppe.data, username) });
+            }
+            if (enveloppe.data.passwordHash) {
                 const fourni = req.body?.password;
                 if (typeof fourni !== 'string' || fourni.length === 0) {
                     return res.status(401).json({ message: "Ce pool est protégé par un mot de passe.", passwordRequired: true });
@@ -330,9 +394,9 @@ function monter(app, ctx) {
                     if (data.passwordHash && !authz.estMembre(data, username) && !enveloppe.data.passwordHash) {
                         throw new ErreurMetier(401, "Ce pool est maintenant protégé par un mot de passe.");
                     }
-                    const resultat = poolOps.rejoindreEquipe(data, { username, teamName });
+                    const resultat = poolOps.inscrireParticipant(data, { username, teamName });
                     if (!resultat.ok) throw refus(resultat);
-                    return { valeur: { teamName: resultat.teamName, equipePrecedente: resultat.equipePrecedente } };
+                    return { valeur: { teamName: resultat.teamName } };
                 }
             });
 
@@ -341,7 +405,7 @@ function monter(app, ctx) {
             diffusion.poolMisAJour(nom, frais.data, frais.revision);
 
             res.json({
-                message: `Vous avez rejoint ${valeur.teamName} dans ${nom}.`,
+                message: `Vous avez rejoint ${nom} avec l'équipe « ${valeur.teamName} ».`,
                 teamName: valeur.teamName,
                 revision: valeur.revision,
                 pool: authz.vueMembre(nom, frais.data, frais.revision)
@@ -384,11 +448,11 @@ function monter(app, ctx) {
                     if (authz.estMembre(data, username)) {
                         return { sauvegarder: false, valeur: { teamName: authz.equipeDe(data, username), deja: true } };
                     }
-                    const libre = Object.entries(data.teams || {})
-                        .find(([, equipe]) => (equipe.members || []).length < poolOps.MEMBRES_PAR_EQUIPE);
-                    if (!libre) throw new ErreurMetier(409, "Toutes les équipes de ce pool sont complètes.");
-
-                    const resultat = poolOps.rejoindreEquipe(data, { username, teamName: libre[0] });
+                    // Pas de nom fourni : l'équipe prend celui de la personne,
+                    // qu'elle pourra renommer ensuite.
+                    const resultat = poolOps.inscrireParticipant(data, {
+                        username, teamName: poolOps.nomEquipeLibre(data, username)
+                    });
                     if (!resultat.ok) throw refus(resultat);
                     return { valeur: { teamName: resultat.teamName, deja: false } };
                 }
@@ -401,7 +465,7 @@ function monter(app, ctx) {
             res.json({
                 message: valeur.deja
                     ? `Vous êtes déjà membre de ${nom}.`
-                    : `Vous avez rejoint ${nom}. Choisissez votre équipe.`,
+                    : `Vous avez rejoint ${nom} avec l'équipe « ${valeur.teamName} ».`,
                 teamName: valeur.teamName,
                 revision: valeur.revision,
                 pool: authz.vueMembre(nom, frais.data, frais.revision)
@@ -568,10 +632,14 @@ function monter(app, ctx) {
                     if (!authz.peutAdministrer(data, { username: req.auth.username, isAdmin: req.auth.isAdmin })) {
                         throw new ErreurMetier(403, "Seule la personne qui a créé le pool peut lancer le repêchage.");
                     }
-                    const resultat = poolOps.demarrerRepechage(data);
+                    // L'écran d'attente annonce un ordre tiré au hasard — sauf
+                    // après une saison, où le dernier au classement ouvre le
+                    // bal (poolOps.ordreDeDepart).
+                    const resultat = poolOps.demarrerRepechage(data, { melanger });
                     if (!resultat.ok) throw refus(resultat);
 
                     data.turnStartedAt = Date.now();
+                    data.saisonRepechage = seasonIdForDate(new Date());
 
                     journal.evenement({
                         poolId,
@@ -622,11 +690,10 @@ function monter(app, ctx) {
                     if (!authz.peutAdministrer(data, { username: req.auth.username, isAdmin: req.auth.isAdmin })) {
                         throw new ErreurMetier(403, "Seule la personne qui a créé le pool peut tirer l'ordre.");
                     }
-                    const resultat = poolOps.demarrerRepechage(data, {
-                        melanger: (equipes) => equipes.sort(() => Math.random() - 0.5)
-                    });
+                    const resultat = poolOps.demarrerRepechage(data, { melanger });
                     if (!resultat.ok) throw refus(resultat);
                     data.turnStartedAt = Date.now();
+                    data.saisonRepechage = seasonIdForDate(new Date());
                     return { valeur: { draftOrder: data.draftOrder } };
                 }
             });
@@ -672,13 +739,102 @@ function monter(app, ctx) {
         }
     });
 
+    /**
+     * Clore la saison et préparer la suivante.
+     *
+     * Le classement final est calculé ici, puis archivé dans le pool : c'est
+     * lui qui ordonnera le prochain repêchage, le dernier choisissant en
+     * premier. Les participants restent, leurs alignements repartent de zéro.
+     *
+     * Le calcul du cumulatif lit les statistiques de la saison ; il se fait
+     * avant la transaction, qui ne doit jamais attendre un fichier ou le
+     * réseau.
+     */
+    app.post('/pool/new-season', auth.requireAuth, async (req, res) => {
+        try {
+            const nom = typeof req.body?.clanName === 'string' ? req.body.clanName.trim() : '';
+            if (!nom) return res.status(400).json({ message: "Nom du pool requis." });
+
+            const enveloppe = await store.lire(nom);
+            if (!enveloppe) return res.status(404).json({ message: "Pool introuvable." });
+
+            const fenetre = ctx.fenetreSaison ? await ctx.fenetreSaison() : null;
+            const maintenant = new Date();
+            const aujourdhui = maintenant.toISOString().slice(0, 10);
+            const saisonCourante = seasonIdForDate(maintenant);
+
+            const precalcul = enveloppe.data.poolMode === 'head-to-head'
+                ? null
+                : (ctx.scoresSaison ? await ctx.scoresSaison(enveloppe.data) : []);
+
+            const { valeur } = await store.muterPool(nom, {
+                scope: 'pool:nouvelle-saison',
+                userId: req.auth.userId,
+                appliquer: async ({ data }) => {
+                    if (!authz.peutAdministrer(data, { username: req.auth.username, isAdmin: req.auth.isAdmin })) {
+                        throw new ErreurMetier(403, "Seule la personne qui a créé le pool peut ouvrir une nouvelle saison.");
+                    }
+                    if (!req.auth.isAdmin) {
+                        const permis = poolOps.peutOuvrirNouvelleSaison(data, { fenetre, aujourdhui, saisonCourante });
+                        if (!permis.ok) throw refus(permis);
+                    }
+
+                    const classement = data.poolMode === 'head-to-head'
+                        ? poolOps.classementFinalH2H(data)
+                        : (precalcul || [])
+                            .filter(ligne => data.teams[ligne.teamName])
+                            .map(ligne => ({ equipe: ligne.teamName, points: ligne.score }));
+
+                    const resultat = poolOps.nouvelleSaison(data, {
+                        classement,
+                        saison: data.saisonRepechage || null,
+                        maintenant: maintenant.getTime()
+                    });
+                    if (!resultat.ok) throw refus(resultat);
+                    return { valeur: { archivee: resultat.archivee } };
+                }
+            });
+
+            const frais = await store.lire(nom);
+            diffusion.poolMisAJour(nom, frais.data, frais.revision);
+
+            logger.log(`🔁 Nouvelle saison ouverte : ${nom} par ${req.auth.username}`);
+            res.json({
+                message: "Nouvelle saison prête. Le prochain repêchage suivra le classement inversé : le dernier choisit en premier.",
+                classement: valeur.archivee.classement,
+                revision: valeur.revision
+            });
+        } catch (erreur) {
+            repondreErreur(res, erreur, '/pool/new-season');
+        }
+    });
+
     // ───────────────────────────── Image du pool ─────────────────────────────
 
     app.post('/upload/pool-image', auth.requireAuth, uploadPool.single('image'), async (req, res) => {
+        // multer a déjà écrit le fichier : tout refus doit le retirer, sinon il
+        // reste orphelin dans uploads/ — et servi publiquement.
+        const retirer = () => { if (req.file && req.file.path) fs.promises.unlink(req.file.path).catch(() => {}); };
         try {
             const nom = typeof req.body?.poolName === 'string' ? req.body.poolName.trim() : '';
             if (!req.file) return res.status(400).json({ message: "Aucune image reçue." });
-            if (!nom) return res.status(400).json({ message: "Nom du pool requis." });
+            if (!nom) { retirer(); return res.status(400).json({ message: "Nom du pool requis." }); }
+
+            // Le droit d'abord : on n'envoie pas à l'analyse l'image de
+            // quelqu'un qui ne pourrait de toute façon pas la poser.
+            const avant = await store.lire(nom);
+            if (!avant) { retirer(); return res.status(404).json({ message: "Pool introuvable." }); }
+            if (!authz.peutAdministrer(avant.data, { username: req.auth.username, isAdmin: req.auth.isAdmin })) {
+                retirer();
+                return res.status(403).json({ message: "Seule la personne qui a créé le pool peut changer son image." });
+            }
+            if (ctx.moderationImages) {
+                const verification = await ctx.moderationImages.verifier({ chemin: req.file.path, mimetype: req.file.mimetype });
+                if (!verification.ok) {
+                    retirer();
+                    return res.status(verification.code).json({ message: verification.message });
+                }
+            }
 
             const imageUrl = `/uploads/pools/${req.file.filename}`;
             let ancienne = null;
@@ -709,6 +865,7 @@ function monter(app, ctx) {
 
             res.json({ imageUrl });
         } catch (erreur) {
+            retirer();
             repondreErreur(res, erreur, '/upload/pool-image');
         }
     });

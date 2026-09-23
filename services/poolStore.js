@@ -73,13 +73,16 @@ function creerJournal() {
     const evenements = [];
     const notifications = [];
     const diffusions = [];
+    const resolutions = [];
 
     return {
         evenement(entree) { evenements.push(entree); return entree; },
         notifier(entree) { notifications.push(entree); return entree; },
+        /** Clôt, dans la même transaction, les notifications de cette clé. */
+        resoudre(dedupKey) { if (dedupKey) resolutions.push(dedupKey); },
         /** Signal socket à émettre APRÈS le commit, jamais avant. */
         diffuser(nom, charge) { diffusions.push({ nom, charge }); },
-        get contenu() { return { evenements, notifications, diffusions }; }
+        get contenu() { return { evenements, notifications, diffusions, resolutions }; }
     };
 }
 
@@ -288,7 +291,10 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
 
     /** Écrit activité et notifications accumulées, dans la transaction en cours. */
     async function ecrireJournal(client, journal) {
-        const { evenements, notifications } = journal.contenu;
+        const { evenements, notifications, resolutions } = journal.contenu;
+        if (resolutions.length > 0 && typeof db.resolveNotificationsByKeyInTx === 'function') {
+            await db.resolveNotificationsByKeyInTx(client, resolutions);
+        }
         if (evenements.length === 0 && notifications.length === 0) return;
 
         const idsEvenements = new Map();

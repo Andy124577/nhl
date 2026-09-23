@@ -1474,3 +1474,18 @@ body.fz-trade .notification-message { color: var(--fzt-ink); font: 500 13px/1.4 
     body.fz-trade .tc-arrow { transform: rotate(90deg); }
     body.fz-trade #partnerTeamTriggerName { max-width: 160px; }
 }
+
+/* Contre-offre : le panier dit à qui il répond, et ce qui arrivera à
+   l'offre reçue. */
+body.fz-trade .tb-counter-note {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px 12px;
+    border: 1px solid var(--fzt-accent);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--fzt-accent) 8%, transparent);
+    font: 500 12px/1.4 'Helvetica Neue', Helvetica, sans-serif;
+    color: var(--fzt-ink);
+}
+body.fz-trade .tb-counter-note strong { color: var(--fzt-accent); font-weight: 700; }

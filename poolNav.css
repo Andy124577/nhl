@@ -881,3 +881,55 @@ body.fz-drawer-open { overflow: hidden; }
 
 /* Thème clair : même ambre foncé que la pastille du salon (repechage.css). */
 html[data-theme="light"] .fz-state-attente { color: #7f5300; }
+
+/* ==================== RACCOURCIS & BASCULE DU RAIL ==================== */
+
+.fz-rail-nav + .fz-rail-nav { margin-top: 22px; }
+.fz-rail-badge {
+    margin-left: auto;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--danger);
+    color: #fff;
+    font-size: .72rem;
+    font-weight: 800;
+}
+
+/* Le bouton qui range le rail : une languette posée sur son bord droit,
+   qui glisse au bord de la fenêtre quand le rail est rangé. */
+.fz-rail-toggle { display: none; }
+
+@media (min-width: 1100px) {
+    .fz-rail-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: calc(var(--fz-nav-h) + 16px);
+        left: calc(var(--fz-rail-w) - 14px);
+        z-index: 950;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border: 1px solid var(--navbar-border);
+        border-radius: 50%;
+        background: var(--navbar-bg);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: left .2s ease, color .15s ease, border-color .15s ease;
+    }
+    .fz-rail-toggle svg { width: 16px; height: 16px; transform: rotate(90deg); transition: transform .2s ease; }
+    .fz-rail-toggle:hover,
+    .fz-rail-toggle:focus-visible { color: var(--primary); border-color: var(--primary); }
+    .fz-rail-toggle[hidden] { display: none; }
+
+    body.fz-rail-ferme { --fz-rail-w: 0px; }
+    body.fz-rail-ferme .fz-sidebar { display: none; }
+    body.fz-rail-ferme .fz-rail-toggle { left: 10px; }
+    body.fz-rail-ferme .fz-rail-toggle svg { transform: rotate(-90deg); }
+}

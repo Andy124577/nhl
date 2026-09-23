@@ -79,7 +79,7 @@ const JS_SERVEUR = new Set([
 const PREFIXES_OUTILS = ['test_', 'migrate', 'migration', 'fetch_', 'seed_', 'run_'];
 
 /** Modules de lib/ chargés par le navigateur. Les autres restent serveur. */
-const LIB_PUBLIQUE = new Set(['scoring.js', 'season.js']);
+const LIB_PUBLIQUE = new Set(['scoring.js', 'season.js', 'duelAccueil.js']);
 
 /**
  * Normalise une URL en chemin relatif, ou renvoie null si le chemin sort de la

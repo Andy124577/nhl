@@ -26,7 +26,8 @@
         repechage: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>`,
         echanges: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>`,
         classement: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>`,
-        stats: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>`
+        stats: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>`,
+        calendrier: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h2M14 14h2M8 18h2"/></svg>`
     };
 
     const LIBELLE_ETAT = {
@@ -41,17 +42,18 @@
         { href: 'repechage.html',  cle: 'repechage',  texte: 'Repêchage',  icone: 'repechage' },
         { href: 'trade.html',      cle: 'trade',      texte: 'Échanges',   icone: 'echanges' },
         { href: 'classement.html', cle: 'classement', texte: 'Classement', icone: 'classement' },
+        { href: 'calendrier.html', cle: 'calendrier', texte: 'Calendrier', icone: 'calendrier' },
         { href: 'stats.html',      cle: 'stats',      texte: 'Stats',      icone: 'stats' }
     ];
 
     // « Mes pools » n'est plus une page : la liste des pools est ce rail
     // lui-même, et les réglages de chacun tiennent dans le panneau ouvert par
-    // l'engrenage (poolSettings.js). Reste ici « Mon équipe », qui ouvre ce
-    // même panneau sur l'onglet Équipes — le seul geste de l'ancienne page
-    // que l'engrenage ne propose pas à tout le monde, puisqu'il est réservé
-    // à la personne qui a créé le pool.
+    // l'engrenage (poolSettings.js). Reste ici « Participants », qui ouvre ce
+    // même panneau sur l'onglet du même nom — qui est inscrit, et le nom de
+    // sa propre équipe. Il s'appelait « Mon équipe », ce qu'on lisait comme
+    // « mes joueurs » : l'alignement, lui, est au Classement.
     const LIENS_GESTION = [
-        { onglet: 'equipes',           icone: 'reglages', titre: 'Mon équipe',        detail: 'Nom, membres, changement' },
+        { onglet: 'equipes',           icone: 'reglages', titre: 'Participants',      detail: 'Qui joue, nom de mon équipe' },
         { href: 'creer-pool.html',     icone: 'plus',     titre: 'Créer un pool',     detail: 'Nouvelle ligue' },
         { href: 'rejoindre-pool.html', icone: 'entrer',   titre: 'Rejoindre un pool', detail: 'Ligues ouvertes' }
     ];
@@ -69,6 +71,7 @@
         if (chemin.includes('classement')) return 'classement';
         if (chemin.includes('trade')) return 'trade';
         if (chemin.includes('stats')) return 'stats';
+        if (chemin.includes('calendrier')) return 'calendrier';
         if (chemin.includes('index.html') || chemin.endsWith('/')) return 'accueil';
         return '';
     }
@@ -188,6 +191,32 @@
             </nav>`;
     }
 
+    /**
+     * Raccourcis du rail : les échanges du pool actif, à un clic.
+     *
+     * Sur ordinateur, les échanges n'avaient qu'un onglet dans la barre du
+     * haut ; le rail — là où l'on choisit son pool — n'en disait rien. La
+     * pastille reprend le compte que navbar.js calcule (checkPendingTrades).
+     */
+    function blocRaccourcis() {
+        const donnees = FZPool.data();
+        if (!donnees || donnees.allowTrades === false) return '';
+        const page = pageCourante();
+        const enAttente = Number(window.fzEchangesEnAttente) || 0;
+        return `
+            <nav class="fz-rail-nav" aria-label="Raccourcis">
+                <p class="fz-rail-label">Raccourcis</p>
+                <a href="trade.html" class="fz-rail-link${page === 'trade' ? ' is-active' : ''}">
+                    <span class="fz-rail-icon">${ICONES.echanges}</span>
+                    <span class="fz-rail-txt">
+                        <span class="fz-rail-title">Échanges</span>
+                        <span class="fz-rail-detail">Proposer, répondre, joueurs en vente</span>
+                    </span>
+                    <span class="fz-rail-badge" id="railTradeBadge"${enAttente ? '' : ' style="display:none"'}>${enAttente || ''}</span>
+                </a>
+            </nav>`;
+    }
+
     function blocPages() {
         const page = pageCourante();
         const donneesActif = FZPool.data();
@@ -237,11 +266,58 @@
         // la moindre mise à jour temps réel de FZPool rappellerait cette
         // fonction et effacerait le contenu que la page y a posé.
         if (document.body.dataset.fzRail !== 'page') {
-            rail.innerHTML = blocPool('Rail') + blocGestion();
+            rail.innerHTML = blocPool('Rail') + blocRaccourcis() + blocGestion();
             brancherBlocPool(rail, 'Rail');
             brancherReglages(rail);
         }
         document.body.classList.add('fz-has-sidebar');
+        monterBasculeRail();
+    }
+
+    /**
+     * Masquer ou montrer le rail, au choix de chacun.
+     *
+     * Le rail prend 268px sur ordinateur : sur un écran étroit, ou pour lire
+     * un grand tableau, on veut pouvoir le ranger. Le choix est mémorisé par
+     * navigateur. La salle de repêchage garde toujours le sien : sa pendule et
+     * l'alignement y sont calés sur la même colonne.
+     */
+    const CLE_RAIL_FERME = 'fzRailFerme';
+
+    function railFerme() {
+        try { return localStorage.getItem(CLE_RAIL_FERME) === '1'; } catch (e) { return false; }
+    }
+
+    function appliquerRail(ferme) {
+        const permis = !document.body.classList.contains('fz-draft') &&
+            !window.location.pathname.includes('draftActif');
+        const effectif = ferme && permis;
+        document.body.classList.toggle('fz-rail-ferme', effectif);
+        const bouton = document.getElementById('fzRailToggle');
+        if (bouton) {
+            bouton.hidden = !permis;
+            bouton.setAttribute('aria-expanded', String(!effectif));
+            bouton.setAttribute('aria-label', effectif ? 'Afficher le panneau des pools' : 'Masquer le panneau des pools');
+            bouton.title = effectif ? 'Afficher le panneau' : 'Masquer le panneau';
+        }
+    }
+
+    function monterBasculeRail() {
+        if (!document.getElementById('fzRailToggle')) {
+            const bouton = document.createElement('button');
+            bouton.type = 'button';
+            bouton.className = 'fz-rail-toggle';
+            bouton.id = 'fzRailToggle';
+            bouton.setAttribute('aria-controls', 'fzSidebar');
+            bouton.innerHTML = ICONES.chevron;
+            bouton.addEventListener('click', () => {
+                const ferme = !document.body.classList.contains('fz-rail-ferme');
+                try { localStorage.setItem(CLE_RAIL_FERME, ferme ? '1' : '0'); } catch (e) { /* navigation privée */ }
+                appliquerRail(ferme);
+            });
+            document.body.appendChild(bouton);
+        }
+        appliquerRail(railFerme());
     }
 
     function monterTiroir() {

@@ -145,3 +145,12 @@ html[data-theme="light"] .fzh .fzh-game-badge.is-live { color: #fff; }
 /* La pastille rouge de la carte d'actualité garde son texte blanc, que la
    carte porte une photo ou non. */
 html[data-theme="light"] .fzh .fzh-news-badge { color: #fff; }
+
+/* Mon duel (tête-à-tête) — accueil saison, thème clair. */
+html[data-theme="light"] .fzs .fzs-duel-side span { color: var(--fzh-muted); }
+html[data-theme="light"] .fzs .fzs-duel-side.is-me span { color: var(--fzh-ink); }
+html[data-theme="light"] .fzs .fzs-duel-side strong { color: var(--fzh-ink); }
+html[data-theme="light"] .fzs .fzs-duel-score.is-ahead .fzs-duel-side.is-me strong { color: var(--fzh-green); }
+html[data-theme="light"] .fzs .fzs-duel-score.is-behind .fzs-duel-side.is-me strong { color: var(--fzh-red); }
+html[data-theme="light"] .fzs .fzs-duel-vs,
+html[data-theme="light"] .fzs .fzs-duel-prev { color: var(--fzh-muted); border-color: var(--fzh-border); }

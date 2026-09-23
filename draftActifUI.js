@@ -247,7 +247,7 @@ function initPanelTabs() {
         },
         {
             cle: 'equipe',
-            libelle: 'Mon équipe',
+            libelle: 'Mon alignement',
             // getElementById, pas querySelector('.progress-card') : cette
             // classe est l'habillage partagé de toutes ces cartes, et
             // querySelector se serait arrêté à la première.

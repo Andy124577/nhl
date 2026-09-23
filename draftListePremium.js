@@ -91,6 +91,9 @@ function fzBuildPickedRow(pick, numeroChoix) {
 
     const tr = document.createElement('tr');
     tr.className = 'fzd-picked-row';
+    // Mes choix se repèrent d'un coup d'œil dans la liste de tout le monde.
+    const moi = typeof getUserTeam === 'function' ? getUserTeam() : null;
+    if (moi && pick.team === moi) tr.classList.add('is-me');
 
     // Stats du jour : la photo, le logo ET le club servant à rapprocher le
     // joueur du rapport de blessures en sortent, la base statique en repli.
@@ -156,7 +159,10 @@ function fzBuildPickedRow(pick, numeroChoix) {
 
     const tdStatut = document.createElement('td');
     tdStatut.className = 'fzd-status-cell';
-    tdStatut.textContent = `${pick.team} · C${numeroChoix}`;
+    const ronde = typeof fzRondeDe === 'function' && typeof draftData !== 'undefined'
+        ? fzRondeDe(numeroChoix - 1, draftData) : 0;
+    tdStatut.textContent = [moi && pick.team === moi ? 'Vous' : pick.team,
+        ronde ? `R${ronde}` : '', `C${numeroChoix}`].filter(Boolean).join(' · ');
     tr.appendChild(tdStatut);
 
     return tr;
@@ -185,7 +191,9 @@ function fzRefreshPickedList() {
 
     const tri = typeof currentSortBy !== 'undefined' ? currentSortBy : 'points';
     const lignes = historique
-        .map((pick, i) => ({ pick, numero: i + 1 }))
+        // Le numéro du tour, pas le rang dans l'historique : un tour sauté
+        // ne consomme pas d'entrée, et décalait tous les numéros suivants.
+        .map((pick, i) => ({ pick, numero: (Number.isInteger(pick.pickIndex) ? pick.pickIndex : i) + 1 }))
         .filter(({ pick }) => fzTrouverFichePick(pick))
         .sort((a, b) => {
             const fa = fzTrouverFichePick(a.pick).data, fb = fzTrouverFichePick(b.pick).data;

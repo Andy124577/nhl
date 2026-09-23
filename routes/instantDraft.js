@@ -266,7 +266,7 @@ function monter(app, ctx) {
 
                 return {
                     poolName: nom,
-                    teamName: 'Équipe 1',
+                    teamName: Object.keys(data.teams)[0],
                     created: true, joined: true, started: false,
                     salon: instantDraft.vueSalon(nom, data)
                 };
@@ -282,7 +282,7 @@ function monter(app, ctx) {
             const message = valeur.started
                 ? "Votre repêchage est déjà en cours. On vous y ramène."
                 : valeur.created
-                    ? `Nouveau repêchage instantané ouvert. En attente de ${restantes} joueur${restantes > 1 ? 's' : ''}.`
+                    ? `Nouveau pool rapide ouvert. En attente de ${restantes} joueur${restantes > 1 ? 's' : ''}.`
                     : valeur.joined
                         ? (restantes > 0
                             ? `Vous avez rejoint ${valeur.poolName}. Il manque ${restantes} joueur${restantes > 1 ? 's' : ''}.`

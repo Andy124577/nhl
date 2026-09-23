@@ -132,7 +132,9 @@ test('un élément ne reçoit pas d échéance qu on ne lui a pas donnée', () =
 test('chaque état vide propose le geste qui lui correspond', () => {
     const sansPool = priorite.etatVide({ aDesPools: false });
     assert.equal(sansPool.cas, 'aucun_pool');
-    assert.ok(sansPool.actions.some(a => a.href === 'repechage.html'));
+    // Le pool rapide se lance depuis « Rejoindre un pool » : repechage.html
+    // n'a rien à montrer à quelqu'un qui n'a encore aucun pool.
+    assert.ok(sansPool.actions.some(a => a.href === 'rejoindre-pool.html' && /pool rapide/i.test(a.titre)));
 
     assert.equal(priorite.etatVide({ aDesPools: true, enAttente: true }).cas, 'salon_attente');
     assert.equal(priorite.etatVide({ aDesPools: true, horsSaison: true }).cas, 'hors_saison');

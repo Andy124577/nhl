@@ -53,29 +53,77 @@
             : pool.data.instant === true;
     }
 
+    /** Qui a créé ce pool — même règle que le serveur (authz.createurDuPool). */
+    function createurDe(poolData) {
+        if (poolData.creator) return poolData.creator;
+        const equipe1 = poolData.teams && poolData.teams['Équipe 1'];
+        return (equipe1 && (equipe1.members || [])[0]) || null;
+    }
+
+    /** Équipes du pool avec au moins un membre — les seules qui comptent ici. */
+    function equipesEligibles(poolData) {
+        return Object.entries(poolData.teams || {})
+            .filter(([, equipe]) => (equipe.members || []).length > 0)
+            .sort(([a], [b]) => a.localeCompare(b, 'fr'));
+    }
+
     /**
-     * Qui attend déjà, et les places encore libres.
+     * L'ordre du premier tour, s'il est déjà connu.
      *
-     * L'écran ne montrait qu'un compteur : « il manque 2 participants ». Or
-     * ce qu'on veut savoir en attendant, c'est avec qui — surtout dans une
-     * file instantanée, où le pool est fait d'inconnus et où la seule preuve
-     * qu'elle avance est de voir un nom de plus apparaître.
+     * Après une saison, il ne doit rien au hasard : le dernier au classement
+     * choisit en premier (lib/poolOps.js, ordreDeDepart). On l'annonce avant
+     * le départ, pour que personne ne le découvre dans la salle.
      */
-    function rendreInscrits(pool, etat) {
-        const inscrits = Object.values(pool.data.teams || {})
-            .flatMap(equipe => ((equipe && equipe.members) || []).slice());
-        if (!inscrits.length) return '';
+    function ordreAnnonce(poolData) {
+        const saisons = poolData.saisonsPrecedentes || [];
+        const derniere = saisons[saisons.length - 1];
+        if (!derniere || !Array.isArray(derniere.classement) || !derniere.classement.length) return null;
 
+        const restantes = new Set(equipesEligibles(poolData).map(([nom]) => nom));
+        const ordre = [];
+        [...derniere.classement].sort((a, b) => (b.rang || 0) - (a.rang || 0)).forEach(ligne => {
+            let nom = restantes.has(ligne.equipe) ? ligne.equipe : null;
+            if (!nom && Array.isArray(ligne.membres)) {
+                nom = [...restantes].find(n => (poolData.teams[n].members || []).some(m => ligne.membres.includes(m))) || null;
+            }
+            if (nom) { ordre.push({ nom, rang: ligne.rang }); restantes.delete(nom); }
+        });
+        [...restantes].forEach(nom => ordre.push({ nom, rang: null }));
+        return ordre;
+    }
+
+    /**
+     * Qui est là, équipe par équipe.
+     *
+     * Une personne, une équipe : la carte porte le nom que chacun a donné à
+     * la sienne, et la personne derrière. Dans un pool rapide, les places
+     * encore libres sont dessinées en pointillé — la file se remplit sous les
+     * yeux, et c'est la seule preuve qu'elle avance.
+     */
+    function rendreInscrits(pool, etat, createur) {
         const moi = localStorage.getItem('username') || '';
-        const libres = Math.max(0, etat.max - inscrits.length);
+        const equipes = equipesEligibles(pool.data);
 
-        const places = inscrits.map(nom => `
-            <li class="rp-seat${nom === moi ? ' is-me' : ''}">
-                <span class="rp-seat-ini" aria-hidden="true">${echapper(nom.charAt(0).toUpperCase())}</span>
-                <span class="rp-seat-nom">${echapper(nom)}</span>
-                ${nom === moi ? '<span class="rp-seat-toi">toi</span>' : ''}
-            </li>`);
+        const places = equipes.map(([nom, equipe]) => {
+            const membres = equipe.members || [];
+            const estMoi = membres.includes(moi);
+            const qui = membres.join(', ');
+            return `
+            <li class="rp-seat${estMoi ? ' is-me' : ''}">
+                <span class="rp-seat-ini" aria-hidden="true">${echapper(((membres[0] || nom).charAt(0) || '?').toUpperCase())}</span>
+                <span class="rp-seat-txt">
+                    <span class="rp-seat-nom">${echapper(nom)}</span>
+                    ${qui && qui !== nom ? `<span class="rp-seat-qui">${echapper(qui)}</span>` : ''}
+                </span>
+                ${estMoi ? '<span class="rp-seat-toi">toi</span>' : ''}
+                ${createur && membres.includes(createur) ? '<span class="rp-seat-admin" title="A créé le pool">admin</span>' : ''}
+            </li>`;
+        });
 
+        // Les places vides n'ont de sens que là où le pool doit être plein
+        // pour partir. Ailleurs, dix pointillés pour cinq inscrits feraient
+        // croire qu'il faut attendre les cinq autres.
+        const libres = estInstantane(pool) ? Math.max(0, etat.max - etat.inscrits) : 0;
         const vides = Array.from({ length: libres }, () => `
             <li class="rp-seat is-free">
                 <span class="rp-seat-ini" aria-hidden="true">+</span>
@@ -84,36 +132,90 @@
 
         return `
             <div class="rp-roster-wrap">
-                <h3 class="rp-roster-title">Déjà inscrits</h3>
+                <h3 class="rp-roster-title">Participants · ${etat.inscrits} / ${etat.max} max.</h3>
                 <ul class="rp-seats">${places.concat(vides).join('')}</ul>
             </div>`;
     }
 
-    function rendreAttente(pool, etat) {
-        const restants = Math.max(0, etat.max - etat.inscrits);
-        const progression = etat.max > 0 ? Math.round((etat.inscrits / etat.max) * 100) : 0;
-        // Quitter n'est proposé que dans une file instantanée : on y est entré
-        // d'un clic, sans rien choisir, donc on doit pouvoir en ressortir de
-        // même. Un pool ordinaire se quitte depuis Mes pools, avec le reste de
-        // sa gestion.
+    function blocOrdre(pool) {
+        const ordre = ordreAnnonce(pool.data);
+        if (!ordre) {
+            return `<p class="rp-note">L'ordre de sélection sera tiré au hasard au démarrage.</p>`;
+        }
+        return `
+            <div class="rp-roster-wrap">
+                <h3 class="rp-roster-title">Ordre du 1<sup>er</sup> tour · classement inversé</h3>
+                <ol class="rp-order">
+                    ${ordre.map(e => `
+                        <li><span class="rp-order-nom">${echapper(e.nom)}</span>
+                            <span class="rp-order-rang">${e.rang ? `${e.rang}<sup>${e.rang === 1 ? 'er' : 'e'}</sup> la saison passée` : 'nouvelle équipe'}</span></li>`).join('')}
+                </ol>
+                <p class="rp-note">Le dernier de la saison passée choisit en premier. Les nouvelles équipes passent après, tirées au sort.</p>
+            </div>`;
+    }
+
+    /**
+     * Le salon d'avant-repêchage : qui est là, et qui peut lancer.
+     *
+     * `maxPlayers` est un plafond : cinq personnes dans un pool à dix places
+     * peuvent repêcher. Le bouton de départ n'apparaît qu'à la personne qui a
+     * créé le pool — le serveur refuserait tout autre clic, et un bouton qui
+     * finit en « vous n'avez pas le droit » n'a rien à faire à l'écran des
+     * autres.
+     */
+    function rendreSalon(pool, etat) {
         const instantane = estInstantane(pool);
+        const createur = createurDe(pool.data);
+        const moi = localStorage.getItem('username') || '';
+        const jeSuisCreateur = !!createur && createur === moi;
+        const pret = etat.etat === 'pret';
+
+        let lead;
+        if (instantane) {
+            const restants = Math.max(0, etat.max - etat.inscrits);
+            lead = restants > 0
+                ? `Le repêchage démarre tout seul dès que vous êtes ${etat.max}. Il manque ${restants} joueur${restants > 1 ? 's' : ''}.`
+                : 'Tout le monde est là : le repêchage va démarrer.';
+        } else if (etat.raison === 'deux') {
+            lead = 'Il faut au moins 2 équipes pour repêcher. Invitez quelqu’un à rejoindre le pool.';
+        } else if (etat.raison === 'pair') {
+            lead = `Tête-à-tête : les duels se jouent à deux, il faut donc un nombre pair d'équipes (${etat.equipes} pour l'instant).`;
+        } else if (jeSuisCreateur) {
+            lead = `${etat.equipes} équipes sont prêtes. Vous pouvez lancer maintenant ou attendre d'autres participants (jusqu'à ${etat.max}).`;
+        } else {
+            lead = `${etat.equipes} équipes sont prêtes. ${createur ? echapper(createur) : 'La personne qui a créé le pool'} lancera le repêchage.`;
+        }
+
+        const progression = etat.max > 0 ? Math.round((etat.inscrits / etat.max) * 100) : 0;
+        const barre = instantane ? `
+                    <div class="rp-progress" role="img" aria-label="${etat.inscrits} participants sur ${etat.max}">
+                        <div class="rp-progress-fill" style="width:${progression}%"></div>
+                    </div>` : '';
+
+        let depart = '';
+        if (!instantane) {
+            if (jeSuisCreateur) {
+                depart = `
+                        <button type="button" class="rp-btn primary" id="rpStart"${pret ? '' : ' disabled'}>
+                            Commencer le repêchage
+                        </button>`;
+            } else if (pret) {
+                depart = `<p class="rp-wait-admin" role="status">En attente du lancement par ${echapper(createur || "l'admin du pool")}.</p>`;
+            }
+        }
 
         conteneur().innerHTML = `
             <article class="rp-card">
-                ${entete(pool, 'En attente', 'attente')}
+                ${entete(pool, pret ? 'Prêt' : 'En attente', pret ? 'pret' : 'attente')}
                 <div class="rp-body">
-                    <p class="rp-lead">
-                        Le repêchage démarrera une fois le pool complet.
-                        Il manque ${restants} participant${restants > 1 ? 's' : ''}.
-                    </p>
-                    <div class="rp-progress" role="img"
-                         aria-label="${etat.inscrits} participants sur ${etat.max}">
-                        <div class="rp-progress-fill" style="width:${progression}%"></div>
-                    </div>
-                    <p class="rp-progress-lbl">${etat.inscrits} / ${etat.max} participants</p>
-                    ${rendreInscrits(pool, etat)}
+                    <p class="rp-lead">${lead}</p>
+                    ${barre}
+                    ${rendreInscrits(pool, etat, createur)}
+                    ${instantane ? '' : blocOrdre(pool)}
                     <div class="rp-actions">
-                        <button type="button" class="rp-btn secondary" data-fz-reglages="equipes">Gérer mon équipe</button>
+                        ${depart}
+                        ${instantane ? '' : '<button type="button" class="rp-btn secondary" id="rpInviter">Copier le lien d’invitation</button>'}
+                        <button type="button" class="rp-btn secondary" data-fz-reglages="equipes">Renommer mon équipe</button>
                         ${instantane
                             ? '<button type="button" class="rp-btn secondary rp-quitter" id="rpQuitter">Quitter la file</button>'
                             : ''}
@@ -122,6 +224,21 @@
             </article>`;
 
         document.getElementById('rpQuitter')?.addEventListener('click', quitterLaFile);
+        document.getElementById('rpStart')?.addEventListener('click', () => demarrer(pool.name));
+        document.getElementById('rpInviter')?.addEventListener('click', () => inviter(pool.name));
+    }
+
+    /** Le lien « Rejoindre » filtré sur ce pool, dans le presse-papiers. */
+    async function inviter(nomPool) {
+        const bouton = document.getElementById('rpInviter');
+        const lien = `${window.location.origin}/rejoindre-pool.html?q=${encodeURIComponent(nomPool)}`;
+        try {
+            await navigator.clipboard.writeText(lien);
+            if (bouton) bouton.textContent = 'Lien copié !';
+        } catch (e) {
+            window.prompt('Copiez ce lien pour inviter :', lien);
+        }
+        if (bouton) setTimeout(() => { bouton.textContent = 'Copier le lien d’invitation'; }, 2500);
     }
 
     /**
@@ -148,59 +265,6 @@
         // Refus du serveur (repêchage parti entre-temps) : FZInstant a déjà
         // relu les pools, le rendu suivant montre le bon écran.
         rendre();
-    }
-
-    /** Équipes du pool avec au moins un membre — les seules qui comptent ici. */
-    function equipesEligibles(poolData) {
-        return Object.entries(poolData.teams || {})
-            .filter(([, equipe]) => (equipe.members || []).length > 0)
-            .sort(([a], [b]) => a.localeCompare(b, 'fr'));
-    }
-
-    /**
-     * Écran « Prêt » : le pool est complet, il ne reste qu'à lancer.
-     *
-     * Il portait avant une étape d'identité — chaque équipe choisissait un
-     * club de la LNH, qui habillait ensuite ses cartes dans la salle de
-     * repêchage, et le départ restait bloqué tant que tout le monde n'avait
-     * pas choisi. L'étape faisait doublon : l'équipe de la LNH se repêche
-     * maintenant comme n'importe quelle autre position (config.numTeams),
-     * pendant le repêchage. Les cartes retombent sur le club du joueur choisi
-     * (voir draftPickCards.js), et plus rien ne retarde le départ.
-     */
-    function rendrePret(pool, etat) {
-        const equipes = equipesEligibles(pool.data);
-
-        conteneur().innerHTML = `
-            <article class="rp-card">
-                ${entete(pool, 'Prêt', 'pret')}
-                <div class="rp-body">
-                    <p class="rp-lead">
-                        Le pool est complet : ${etat.inscrits} participants sur ${etat.max}.
-                    </p>
-                    <p class="rp-note">L'ordre de sélection est tiré au hasard au démarrage.</p>
-
-                    <div class="rp-roster-wrap">
-                        <h3 class="rp-roster-title">Équipes du pool</h3>
-                        <ul class="rp-roster">
-                            ${equipes.map(([nom, data]) => `
-                                <li class="rp-roster-item">
-                                    <span class="rp-roster-team">${echapper(nom)}</span>
-                                    <span class="rp-roster-members">${echapper((data.members || []).join(', '))}</span>
-                                </li>`).join('')}
-                        </ul>
-                    </div>
-
-                    <div class="rp-actions">
-                        <button type="button" class="rp-btn primary" id="rpStart">
-                            Commencer le repêchage
-                        </button>
-                    </div>
-                </div>
-            </article>`;
-
-        document.getElementById('rpStart')
-            ?.addEventListener('click', () => demarrer(pool.name));
     }
 
     function rendreTermine(pool) {
@@ -282,9 +346,8 @@
             return;
         }
 
-        if (etat.etat === 'pret') { rendrePret(pool, etat); return; }
         if (etat.etat === 'termine') { rendreTermine(pool); return; }
-        rendreAttente(pool, etat);
+        rendreSalon(pool, etat);
     }
 
     // Le pool actif change depuis le rail : la page se remet à jour sans

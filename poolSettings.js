@@ -9,10 +9,11 @@
    Ne reste ici que ce qui porte sur un seul pool, à portée de l'engrenage
    posé contre son nom :
 
-     Règles   — la configuration figée à la création, en lecture seule.
-     Équipes  — toutes les équipes, leurs noms, leurs membres, leurs choix.
-                On y renomme son équipe et on en change tant que le
-                repêchage n'a pas démarré.
+     Règles   — la configuration figée à la création, en lecture seule,
+                l'historique des saisons, et pour la personne qui a créé
+                le pool, l'ouverture d'une nouvelle saison.
+     Participants — une personne, une équipe : qui est là, sous quel nom,
+                avec quels choix. On y renomme la sienne.
      Identité — le nom du pool et sa vignette. Réservé à la personne qui a
                 créé le pool : c'est le seul onglet que les autres ne
                 voient pas.
@@ -38,7 +39,7 @@
 
     const ONGLETS = [
         { cle: 'regles',   titre: 'Règles' },
-        { cle: 'equipes',  titre: 'Équipes' },
+        { cle: 'equipes',  titre: 'Participants' },
         { cle: 'identite', titre: 'Identité', createurSeulement: true }
     ];
 
@@ -102,8 +103,9 @@
     function blocRegles(nom, donnees) {
         const config = donnees.config || {};
         const valeur = (cle, defaut) => (config[cle] != null ? config[cle] : defaut);
+        const banc = typeof window.fzQuotaBanc === 'function' ? window.fzQuotaBanc(donnees) : 0;
         const selections = ['numOffensive', 'numDefensive', 'numGoalies', 'numRookies', 'numTeams']
-            .reduce((somme, cle) => somme + (config[cle] || 0), 0);
+            .reduce((somme, cle) => somme + (config[cle] || 0), 0) + banc;
         const etat = FZPool.draftState(donnees);
         const mode = (donnees.poolMode || 'cumulative') === 'head-to-head'
             ? 'Head-to-Head' : 'Cumulatif';
@@ -118,7 +120,7 @@
                     <h3 class="ps-block-title">Format</h3>
                     <ul class="ps-facts">
                         ${ligne('Mode de pointage', mode)}
-                        ${ligne('Participants', `${etat.inscrits} / ${etat.max}`)}
+                        ${ligne('Participants', `${etat.inscrits} (max. ${etat.max})`)}
                         ${ligne('Échanges', donnees.allowTrades !== false ? 'Autorisés' : 'Désactivés')}
                         ${ligne('Accès', donnees.hasPassword ? 'Mot de passe' : 'Libre')}
                         ${ligne('Repêchage', LIBELLE_ETAT[etat.etat])}
@@ -134,13 +136,54 @@
                         ${ligne('Gardiens', valeur('numGoalies', 1))}
                         ${ligne('Recrues', valeur('numRookies', 1))}
                         ${ligne('Équipes LNH', valeur('numTeams', 1))}
+                        ${banc ? ligne('Banc (tête-à-tête)', banc) : ''}
                     </ul>
                     <p class="ps-total"><span>Total</span><strong>${selections} sélections</strong></p>
                 </section>
 
                 <p class="ps-note">Les règles sont fixées à la création du pool et ne
                     changent plus : les effectifs déjà repêchés en dépendent.</p>
+
+                ${blocSaisons(donnees)}
+                ${estCreateur(donnees) && etat.etat === 'termine' ? blocNouvelleSaison() : ''}
             </div>`;
+    }
+
+    /** Le classement final des saisons passées, la plus récente d'abord. */
+    function blocSaisons(donnees) {
+        const saisons = (donnees.saisonsPrecedentes || []).slice().reverse();
+        if (!saisons.length) return '';
+        const etiquette = (id) => {
+            const t = String(id || '');
+            return t.length === 8 ? `${t.slice(0, 4)}-${t.slice(6, 8)}` : 'Saison passée';
+        };
+        return `
+                <section class="ps-block">
+                    <h3 class="ps-block-title">Saisons passées</h3>
+                    ${saisons.map(saison => `
+                        <p class="ps-season-name">${echapper(etiquette(saison.saison))}</p>
+                        <ol class="ps-season-rank">
+                            ${(saison.classement || []).map(l => `
+                                <li><span>${echapper(l.equipe)}</span>${l.points != null ? `<strong>${echapper(Math.round(l.points))} pts</strong>` : ''}</li>`).join('')}
+                        </ol>`).join('')}
+                </section>`;
+    }
+
+    /**
+     * Tourner la page. Le serveur décide si c'est permis (hors saison
+     * régulière, repêchage d'une saison précédente) : ce bloc ne fait que
+     * poser la question, et dire clairement ce qui va se passer.
+     */
+    function blocNouvelleSaison() {
+        return `
+                <section class="ps-block ps-block-season">
+                    <h3 class="ps-block-title">Nouvelle saison</h3>
+                    <p class="ps-note">Le classement final est archivé, les alignements sont vidés et
+                        tout le monde garde sa place et son nom d'équipe. Au prochain repêchage,
+                        <strong>le dernier au classement choisit en premier</strong>.</p>
+                    <button type="button" class="ps-primary" id="psNouvelleSaison">Ouvrir une nouvelle saison</button>
+                    <p class="ps-msg" id="psMsgSaison" role="alert" hidden></p>
+                </section>`;
     }
 
     const CATEGORIES = [
@@ -182,21 +225,16 @@
         );
         const cleMonEquipe = monEquipe ? monEquipe[0] : null;
 
-        // Les équipes vides passent après : ce sont des places libres, pas
-        // des adversaires. Elles restent affichées tant qu'on peut encore
-        // les rejoindre, et disparaissent une fois le repêchage lancé.
+        // Une personne, une équipe : seules comptent les équipes de ceux qui
+        // sont là. La sienne d'abord — c'est pour elle qu'on ouvre l'onglet.
+        const createur = createurDuPool(donnees);
         const entrees = Object.entries(teams)
-            .filter(([, equipe]) => (equipe.members || []).length > 0 || !repechageCommence)
-            .sort((a, b) => {
-                const va = (a[1].members || []).length === 0 ? 1 : 0;
-                const vb = (b[1].members || []).length === 0 ? 1 : 0;
-                return va - vb;
-            });
+            .filter(([, equipe]) => (equipe.members || []).length > 0)
+            .sort((a, b) => (a[0] === cleMonEquipe ? -1 : b[0] === cleMonEquipe ? 1 : a[0].localeCompare(b[0], 'fr')));
 
         const cartes = entrees.map(([cle, equipe]) => {
             const membres = equipe.members || [];
             const estMienne = cle === cleMonEquipe;
-            const pleine = membres.length >= 5;
             const affiche = nomAffiche(cle, membres);
 
             const compte = categorie => (equipe[categorie] || []).length;
@@ -222,11 +260,6 @@
                     ${icone('pencil', 14)}
                 </button>` : '';
 
-            const rejoindre = (!estMienne && !pleine && !repechageCommence && cleMonEquipe) ? `
-                <button type="button" class="ps-join" data-changer-equipe="${echapper(cle)}">
-                    Rejoindre cette équipe
-                </button>` : '';
-
             return `
                 <article class="ps-team${estMienne ? ' is-mine' : ''}" data-equipe="${echapper(cle)}">
                     <header class="ps-team-head">
@@ -235,20 +268,18 @@
                         </h4>
                         <div class="ps-team-badges">
                             ${estMienne ? '<span class="ps-badge is-mine">Votre équipe</span>' : ''}
-                            <span class="ps-badge">${membres.length}/5</span>
+                            ${createur && membres.includes(createur) ? '<span class="ps-badge">Admin</span>' : ''}
                             ${total ? `<span class="ps-badge">${total} choix</span>` : ''}
                         </div>
                     </header>
                     ${listeMembres}
                     ${blocChoix(equipe)}
-                    ${rejoindre}
                 </article>`;
         }).join('');
 
-        const avis = repechageCommence
-            ? `<p class="ps-note">Le repêchage est lancé : on ne change plus d'équipe.
-                   Le renommage, lui, reste ouvert.</p>`
-            : '';
+        const avis = `<p class="ps-note">Chaque participant dirige sa propre équipe.
+                   ${cleMonEquipe ? 'Renommez la vôtre avec le crayon, à tout moment.' : ''}
+                   ${repechageCommence ? '' : `${entrees.length} équipe${entrees.length > 1 ? 's' : ''} inscrite${entrees.length > 1 ? 's' : ''} sur ${etat.max} au maximum.`}</p>`;
 
         return `
             <div class="ps-pane" data-pane="equipes">
@@ -376,9 +407,8 @@
             bouton.addEventListener('click', () => ouvrirRenommageEquipe(bouton));
         });
 
-        corps.querySelectorAll('[data-changer-equipe]').forEach(bouton => {
-            bouton.addEventListener('click', () => changerEquipe(bouton.dataset.changerEquipe, bouton));
-        });
+        const saison = document.getElementById('psNouvelleSaison');
+        if (saison) saison.addEventListener('click', () => ouvrirNouvelleSaison(saison));
 
         const renommer = document.getElementById('psRenommer');
         if (renommer) {
@@ -495,25 +525,35 @@
         }
     }
 
-    async function changerEquipe(cible, bouton) {
+    async function ouvrirNouvelleSaison(bouton) {
+        const ok = window.confirm(
+            'Ouvrir une nouvelle saison ?\n\n' +
+            '• Le classement final est archivé.\n' +
+            '• Tous les alignements sont vidés.\n' +
+            '• Le prochain repêchage suivra le classement inversé : le dernier choisit en premier.\n\n' +
+            'Cette action ne peut pas être annulée.');
+        if (!ok) return;
+
         bouton.disabled = true;
+        message('psMsgSaison', 'Ouverture de la nouvelle saison…', false);
         try {
-            const reponse = await fetch(`${BASE_URL}/change-team`, {
+            const reponse = await fetch(`${BASE_URL}/pool/new-season`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: poolOuvert,
-                    username: utilisateur(),
-                    newTeamNumber: cible
-                })
+                body: JSON.stringify({ clanName: poolOuvert })
             });
             const resultat = await reponse.json().catch(() => ({}));
-            if (!reponse.ok) { alert(resultat.message || "Changement d'équipe impossible."); return; }
+            if (!reponse.ok) {
+                message('psMsgSaison', resultat.message || 'Impossible d’ouvrir une nouvelle saison.', true);
+                return;
+            }
             await FZPool.refresh();
             rendre();
+            if (window.FZNav) FZNav.render();
+            alert(resultat.message || 'Nouvelle saison prête.');
         } catch (erreur) {
-            console.error('Erreur /change-team :', erreur);
-            alert('Erreur de connexion au serveur.');
+            console.error('Erreur /pool/new-season :', erreur);
+            message('psMsgSaison', 'Erreur de connexion au serveur.', true);
         } finally {
             bouton.disabled = false;
         }

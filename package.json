@@ -24,6 +24,7 @@
   "author": "",
   "license": "UNLICENSED",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
     "bcryptjs": "^3.0.2",
     "body-parser": "^2.2.0",
     "compression": "^1.8.2",

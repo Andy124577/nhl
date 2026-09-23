@@ -16,6 +16,11 @@ services:
         # Set this manually in Render Dashboard (same value as your local .env).
         # Without it, /nhl-news returns an empty list and storiesCard shows no news.
         sync: false
+      - key: ANTHROPIC_API_KEY
+        # Set this manually in Render Dashboard. Used to check uploaded avatars and
+        # pool images (services/moderationImage.js). Without it, uploads are still
+        # accepted (file signature checked) but their content is not analysed.
+        sync: false
 
 # External database configuration (Neon.tech, Supabase, etc.)
 # No database section needed - using external PostgreSQL to save Render hours

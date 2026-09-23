@@ -273,3 +273,71 @@ html[data-theme="light"] .rp-seat.is-free,
 html[data-theme="light"] .rp-seat.is-free .rp-seat-ini { color: #6b6b73; }
 html[data-theme="dark"] .rp-seat.is-free,
 html[data-theme="dark"] .rp-seat.is-free .rp-seat-ini { color: #8c8c95; }
+
+/* ============================================================
+   SALON — une personne, une équipe
+   ------------------------------------------------------------
+   Chaque pastille porte le nom d'équipe choisi à l'entrée, et en
+   dessous la personne qui la dirige. L'admin du pool est marqué :
+   c'est la seule personne qui peut lancer le repêchage.
+   ============================================================ */
+.rp-seat-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.rp-seat-qui {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .7rem;
+    color: var(--text-secondary);
+}
+.rp-seat-admin {
+    padding: 3px 7px;
+    border: 1px solid var(--border-gray);
+    border-radius: 999px;
+    color: var(--text-secondary);
+    font-size: .58rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.rp-wait-admin {
+    flex: 1 1 100%;
+    margin: 0 0 4px;
+    padding: 10px 14px;
+    border: 1px dashed var(--border-gray);
+    border-radius: 10px;
+    font-size: .86rem;
+    color: var(--text-secondary);
+}
+.rp-btn.primary:disabled { cursor: not-allowed; }
+
+.rp-order {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin: 0 0 10px;
+    padding: 0;
+    list-style: none;
+    counter-reset: rp-ordre;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--border-light);
+}
+.rp-order li {
+    counter-increment: rp-ordre;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    background: var(--card);
+    font-size: .86rem;
+}
+.rp-order li::before {
+    content: counter(rp-ordre);
+    min-width: 1.4em;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-weight: 700;
+    color: var(--primary);
+}
+.rp-order-nom { flex: 1 1 auto; min-width: 0; font-weight: 700; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-order-rang { flex: 0 0 auto; font-size: .76rem; color: var(--text-secondary); }

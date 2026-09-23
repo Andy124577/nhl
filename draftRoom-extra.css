@@ -1,0 +1,168 @@
+/* ============================================================
+   SALLE DE REPÊCHAGE — COMPLÉMENTS
+   ------------------------------------------------------------
+   Chargé après draftDesk.css et draftPhone.css. Réunit ce qui a été
+   ajouté à la salle depuis :
+
+     1. le sélecteur d'équipe de l'alignement (voir les autres équipes)
+     2. mes choix repérés dans la liste de tout le monde
+     3. la fenêtre « Connexion perdue » et son retour
+     4. le récapitulatif : mes choix / tous les choix
+     5. le banc (tête-à-tête)
+   ============================================================ */
+
+/* ---------- 1. Sélecteur d'équipe ---------- */
+body.fz-draft .fzd-rail-picker {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--fzd-border, var(--border-light));
+}
+body.fz-draft .fzd-rail-select {
+  flex: 1 1 160px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 32px 8px 12px;
+  border: 1px solid var(--fzd-border-strong, var(--border-gray));
+  border-radius: 10px;
+  background: var(--fzd-surface, var(--card)) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23999' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E") no-repeat right 12px center;
+  color: var(--fzd-text, var(--text-main));
+  font: 600 .88rem/1.2 var(--fzd-font, inherit);
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+body.fz-draft .fzd-rail-select:focus-visible {
+  outline: 2px solid var(--fzd-accent, var(--primary));
+  outline-offset: 1px;
+}
+body.fz-draft .fzd-rail-back {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--fzd-accent, var(--primary));
+  border-radius: 10px;
+  background: transparent;
+  color: var(--fzd-accent, var(--primary));
+  font: 700 .8rem/1 var(--fzd-font, inherit);
+  cursor: pointer;
+}
+body.fz-draft .fzd-rail-back[hidden] { display: none; }
+/* Une autre équipe à l'écran : le cadre le dit, pour qu'on ne confonde
+   jamais l'alignement adverse avec le sien. */
+body.fz-draft .fzd-rail-picker.is-other {
+  background: var(--fzd-accent-wash, rgba(var(--primary-rgb), .08));
+}
+body.fz-draft .fzd-rail-head.is-other .fzd-rail-title { color: var(--fzd-accent, var(--primary)); }
+body.fz-draft .fzd-rail-foot[hidden] { display: none !important; }
+
+/* ---------- 2. Mes choix dans la liste « Tous » et le carrousel ---------- */
+body.fz-draft tr.fzd-picked-row.is-me {
+  opacity: 1;
+  box-shadow: inset 3px 0 0 var(--fzd-accent, var(--primary));
+}
+body.fz-draft tr.fzd-picked-row.is-me td:nth-child(2) { text-decoration: none; font-weight: 700; }
+body.fz-draft tr.fzd-picked-row.is-me .fzd-status-cell { color: var(--fzd-accent, var(--primary)); font-weight: 700; }
+
+.pick-card.is-mine { box-shadow: inset 0 -3px 0 var(--fzd-accent, var(--primary)); }
+.pick-card.is-mine .pick-card-owner { color: var(--fzd-accent, var(--primary)); font-weight: 800; }
+
+/* « Votre équipe : … » sous le bandeau de tour. */
+.turn-banner-sub:empty { display: none; }
+.turn-banner-sub .fz-me-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(var(--primary-rgb), .14);
+  color: var(--primary);
+  font-weight: 800;
+  font-size: .78em;
+  letter-spacing: .02em;
+}
+
+/* ---------- 3. Connexion perdue ---------- */
+.fz-conn-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(8, 8, 10, .62);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+.fz-conn-overlay.is-open { opacity: 1; }
+.fz-conn-overlay[hidden] { display: none; }
+.fz-conn-box {
+  width: min(360px, 100%);
+  padding: 26px 22px 22px;
+  border: 1px solid var(--border-gray);
+  border-radius: 18px;
+  background: var(--card);
+  color: var(--text-main);
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .45);
+}
+.fz-conn-icon {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 14px;
+}
+.fz-conn-spinner {
+  position: absolute;
+  inset: 0;
+  border: 4px solid var(--border-gray);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: fzConnTourne .9s linear infinite;
+}
+.fz-conn-check {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--success, #00E676);
+  color: #0b0b0d;
+  font-size: 1.9rem;
+  font-weight: 900;
+}
+.fz-conn-title { margin: 0 0 6px; font-size: 1.1rem; font-weight: 800; }
+.fz-conn-text { margin: 0; font-size: .88rem; line-height: 1.5; color: var(--text-secondary); }
+.fz-conn-retry {
+  margin-top: 16px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--border-gray);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-main);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.fz-conn-retry:hover { border-color: var(--primary); color: var(--primary); }
+.fz-conn-overlay.is-back .fz-conn-spinner { display: none; }
+.fz-conn-overlay.is-back .fz-conn-check { display: flex; animation: fzConnPop .45s cubic-bezier(.2, 1.4, .4, 1) both; }
+.fz-conn-overlay.is-back .fz-conn-retry { display: none; }
+
+@keyframes fzConnTourne { to { transform: rotate(360deg); } }
+@keyframes fzConnPop {
+  from { transform: scale(.3); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fz-conn-spinner { animation-duration: 2.4s; }
+  .fz-conn-overlay.is-back .fz-conn-check { animation: none; }
+}

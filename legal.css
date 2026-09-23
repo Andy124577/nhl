@@ -137,3 +137,9 @@ body {
 @media (max-width: 768px) {
   .legal-page { padding: 32px 16px 20px; }
 }
+
+.legal-page h3 {
+  font-size: 1rem;
+  margin: 20px 0 8px;
+  color: var(--text-main);
+}

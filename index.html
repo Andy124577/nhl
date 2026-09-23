@@ -33,34 +33,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Accueil mobile (≤768px, 4 modes) uniquement : voir accueil-mobile.css -->
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="navbar.css?v=20260922">
     <link rel="stylesheet" href="teamLogos.css">
-    <link rel="stylesheet" href="poolNav.css">
-    <link rel="stylesheet" href="poolSettings.css">
+    <link rel="stylesheet" href="poolNav.css?v=20260922">
+    <link rel="stylesheet" href="poolSettings.css?v=20260922">
     <link rel="stylesheet" href="index.css">
-    <link rel="stylesheet" href="accueil.css?v=20260921a">
+    <link rel="stylesheet" href="accueil.css?v=20260922">
     <link rel="stylesheet" href="fzToday.css?v=20260920">
     <link rel="stylesheet" href="career-modal.css">
-    <link rel="stylesheet" href="accueil-dash.css?v=20260920b">
+    <link rel="stylesheet" href="accueil-dash.css?v=20260922">
     <link rel="stylesheet" href="accueil-mobile.css?v=20260922">
     <link rel="stylesheet" href="demos.css">
     <link rel="stylesheet" href="hero.css?v=20260919">
-    <link rel="stylesheet" href="accueil-season.css?v=20260919">
+    <link rel="stylesheet" href="accueil-season.css?v=20260922">
     <link rel="stylesheet" href="accueil-draft.css?v=20260920b">
-    <link rel="stylesheet" href="accueil-watch.css?v=20260920b">
+    <link rel="stylesheet" href="accueil-watch.css?v=20260922">
     <link rel="stylesheet" href="skeleton-loader.css">
     <!-- Panneau de la file du repêchage instantané (instantDraft.js). -->
     <link rel="stylesheet" href="instantDraft.css?v=20260908a">
     <!-- Récapitulatif de repêchage : le même popup qu'à la fin du repêchage,
          rouvert ici par la bannière (voir fzdOuvrirRecapRepechage). -->
-    <link rel="stylesheet" href="draftFinPopup.css?v=20260902a">
+    <link rel="stylesheet" href="draftFinPopup.css?v=20260922">
     <link rel="stylesheet" href="accueil-palette.css?v=20260920b">
     <!-- Thème clair des accueils repêchage et saison : APRÈS la palette. -->
-    <link rel="stylesheet" href="accueil-light.css?v=20260920b">
+    <link rel="stylesheet" href="accueil-light.css?v=20260922">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
-    <script defer src="activePool.js"></script>
+    <script defer src="activePool.js?v=20260922"></script>
 </head>
 <body>
     <!-- Navigation -->
@@ -197,7 +197,7 @@
                     <div class="fzo-start-copy">
                         <span class="fzo-badge"><span aria-hidden="true">ϟ</span> Le plus rapide</span>
                         <h3>Jouer maintenant</h3>
-                        <p>Repêchage instantané · aucune configuration</p>
+                        <p>Pool rapide · 4 joueurs placés ensemble, rien à configurer</p>
                     </div>
                     <button type="button" class="fzo-start-button" data-instant-draft data-instant-layout="onboarding"><span data-instant-label>Commencer</span><span aria-hidden="true"> →</span></button>
                 </div>
@@ -263,7 +263,9 @@
                         <button type="button" class="fzd-cal-nav-btn" id="fzdCalNext" aria-label="Semaine suivante">›</button>
                     </div>
                     <div class="fzd-cal-spacer"></div>
-                    <button type="button" class="fzd-link fzd-cal-full" id="fzdCalMonthToggle">Calendrier complet →</button>
+                    <!-- Le calendrier complet a son propre onglet (calendrier.html) :
+                         l'accueil ne garde que la semaine en cours. -->
+                    <a class="fzd-link fzd-cal-full" id="fzdCalMonthToggle" href="calendrier.html">Calendrier complet →</a>
                 </div>
                 <div class="fzd-cal-strip" id="fzdCalStrip"><!-- Filled by accueil-dash.js --></div>
                 <div class="fzd-cal-dayhead" id="fzdCalDayHead"><!-- Filled by accueil-dash.js --></div>
@@ -292,11 +294,11 @@
                  Le repêchage instantané n'est pas un lien : il lance la
                  recherche sur place (instantDraft.js). -->
             <div class="fz-dash-poolchips" id="fzDashPoolChips" style="display:none;">
-                <button type="button" class="fzd-poolchip is-primary" data-fz-reglages="equipes">Mon équipe</button>
+                <button type="button" class="fzd-poolchip is-primary" data-fz-reglages="equipes">Participants</button>
                 <a class="fzd-poolchip" href="creer-pool.html">Créer un pool</a>
                 <a class="fzd-poolchip" href="rejoindre-pool.html">Rejoindre un pool</a>
                 <button type="button" class="fzd-poolchip" data-instant-draft>
-                    <span data-instant-label>Repêchage instantané</span>
+                    <span data-instant-label>Pool rapide (4 joueurs)</span>
                 </button>
             </div>
 
@@ -312,7 +314,7 @@
             <div class="fz-dash-offseason" id="fzDashOffseason" style="display:none;">
                 <div class="fzd-off-summary">
                     <section class="fzd-off-count" id="fzdOffCount" aria-labelledby="fzdOffTitle">
-                        <h2 class="fzd-section-title" id="fzdOffTitle"><span data-icon="clock" aria-hidden="true"></span>Hors-saison</h2>
+                        <h2 class="fzd-section-title" id="fzdOffTitle"><span data-icon="clock" aria-hidden="true"></span><span data-fzd-off-title>Saison régulière bientôt</span></h2>
                         <span class="fzd-off-days fzd-display" id="fzdOffDays">—</span>
                         <span class="fzd-off-sub" id="fzdOffSub"></span>
                         <img class="fzd-off-emblem" src="https://assets.nhle.com/logos/nhl/svg/NHL_dark.svg" alt="" aria-hidden="true" onerror="this.style.display='none'">
@@ -528,12 +530,13 @@
     <div id="careerStatsModal" class="modal"></div>
     <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script defer src="lazy-load.js"></script>
-    <script defer src="draftFinPopup.js?v=20260902a"></script>
+    <script defer src="draftFinPopup.js?v=20260922"></script>
     <!-- Trousse de repechage 2026-2027 : alimente la liste "A surveiller".
          Doit preceder accueil-dash.js, qui l'appelle. -->
     <script defer src="draftkitData.js?v=20260915"></script>
     <script src="lib/season.js"></script>
     <script defer src="lib/scoring.js"></script>
+    <script defer src="lib/duelAccueil.js?v=20260922"></script>
     <script defer src="accueil.js"></script>
     <!-- « A faire maintenant » : une seule reponse serveur, la meme bande
          au bureau et au telephone. Doit preceder accueil-dash.js, qui
@@ -545,18 +548,18 @@
     <script defer src="teamColors.js"></script>
     <script defer src="careerTotals.js"></script>
     <script defer src="accueil-carousel.js?v=20260915"></script>
-    <script defer src="accueil-watch.js?v=20260920b"></script>
+    <script defer src="accueil-watch.js?v=20260922"></script>
     <script defer src="accueil-dash.js?v=20260922"></script>
-    <script defer src="instantDraft.js?v=20260920-canvas3"></script>
+    <script defer src="instantDraft.js?v=20260922"></script>
     <script defer src="accueil-mobile.js?v=20260922"></script>
-    <script defer src="accueil-season.js?v=20260915"></script>
-    <script defer src="accueil-draft.js?v=20260915"></script>
+    <script defer src="accueil-season.js?v=20260922"></script>
+    <script defer src="accueil-draft.js?v=20260922"></script>
     <script defer src="demos.js"></script>
-    <script defer src="navbar.js"></script>
+    <script defer src="navbar.js?v=20260922"></script>
     <script defer src="avatars.js"></script>
     <script defer src="profanity.js"></script>
-    <script defer src="poolSettings.js"></script>
-    <script defer src="poolNav.js"></script>
-    <script defer src="notifications.js"></script>
+    <script defer src="poolSettings.js?v=20260922"></script>
+    <script defer src="poolNav.js?v=20260922"></script>
+    <script defer src="notifications.js?v=20260922"></script>
 </body>
 </html>
