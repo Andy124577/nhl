@@ -3,7 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fantazy — Pools de hockey entre amis</title>
+    <title>Fantazy — Pool de hockey simple et gratuit, entre amis ou au bureau</title>
+    <meta name="description" content="Le pool de hockey LNH sans casse-tête. Joue avec tes amis, tes collègues ou contre des inconnus en pool rapide : tout est réglé par défaut, tout est modifiable. Repêchage en direct, classement calculé chaque nuit avec les vraies stats de la LNH. Gratuit, en français.">
+    <link rel="canonical" href="https://fantazy.ca/">
+    <meta name="theme-color" content="#07090C">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="fr_CA">
+    <meta property="og:site_name" content="Fantazy">
+    <meta property="og:url" content="https://fantazy.ca/">
+    <meta property="og:title" content="Fantazy — Le pool de hockey sans casse-tête">
+    <meta property="og:description" content="Entre amis, entre collègues ou contre des inconnus. Tout est réglé par défaut, tout est modifiable. Repêchage en direct et classement automatique avec les vraies stats de la LNH. Gratuit.">
+    <meta property="og:image" content="https://fantazy.ca/assets/hero/fantazy-ice-reference.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <!-- Données structurées : l'application, puis la FAQ de la landing.
+         Le texte des réponses doit rester identique à celui de la section
+         #questions (index.html) — les moteurs comparent les deux. -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Fantazy",
+        "url": "https://fantazy.ca/",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "fr-CA",
+        "description": "Pool de hockey LNH simple et gratuit, entre amis, entre collègues ou contre des inconnus : réglages par défaut prêts à jouer et entièrement modifiables, repêchage en direct, échanges, duels tête-à-tête et classement calculé chaque nuit avec les statistiques publiques de la LNH.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CAD" }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            { "@type": "Question", "name": "Je n'ai jamais fait de pool. Est-ce que j'ai des chances ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui. Tout est réglé par défaut, et la salle de repêchage t'aide à choisir : les points de la dernière saison, les points projetés de la trousse de repêchage, les positions qu'il te reste à combler et tes favoris, prêts quand ton tour arrive. Ensuite, Fantazy suit tes joueurs et calcule les points tout seul, toute la saison." } },
+            { "@type": "Question", "name": "Est-ce que Fantazy est vraiment gratuit ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui. Aucun abonnement, aucuns frais d'entrée, aucune carte de crédit. Fantazy ne permet pas non plus de mises, de paris ni de prix : on joue pour l'honneur." } },
+            { "@type": "Question", "name": "Combien de personnes peuvent jouer dans un pool ?", "acceptedAnswer": { "@type": "Answer", "text": "De 2 à 10 dans un pool que tu crées. Le pool rapide, lui, réunit toujours 4 gérants. En mode tête-à-tête, il faut un nombre pair de participants." } },
+            { "@type": "Question", "name": "Comment les points sont-ils calculés ?", "acceptedAnswer": { "@type": "Answer", "text": "Avec les statistiques publiques de la LNH, compilées automatiquement. En mode cumulatif, un patineur rapporte un point par but ou par passe ; en tête-à-tête, chaque match est compté selon le barème détaillé." } },
+            { "@type": "Question", "name": "Je n'ai pas de gang pour jouer. Je fais quoi ?", "acceptedAnswer": { "@type": "Answer", "text": "Lance un pool rapide : Fantazy te place avec trois autres joueurs, et le repêchage démarre dès que les quatre places sont prises. Tu peux aussi parcourir les pools ouverts." } },
+            { "@type": "Question", "name": "Faut-il télécharger une application ?", "acceptedAnswer": { "@type": "Answer", "text": "Non. Fantazy fonctionne dans le navigateur de ton téléphone ou de ton ordinateur, y compris le repêchage en direct." } },
+            { "@type": "Question", "name": "Est-ce que je peux faire des échanges ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui, si le créateur du pool les active. Les échanges se font un pour un, entre joueurs de la même position." } },
+            { "@type": "Question", "name": "Fantazy est-il affilié à la LNH ?", "acceptedAnswer": { "@type": "Answer", "text": "Non. Fantazy est un service indépendant, sans affiliation avec la Ligue nationale de hockey ni ses équipes. Les statistiques proviennent de sources publiques." } },
+            { "@type": "Question", "name": "Qu'arrive-t-il à mes données ?", "acceptedAnswer": { "@type": "Answer", "text": "Elles t'appartiennent. Tu peux exporter tes données ou supprimer ton compte en tout temps. Les détails sont dans la politique de confidentialité." } }
+        ]
+    }
+    </script>
     <script src="theme.js"></script>
     <!-- Quelle carte affiche le héros ? Décidé avant le premier rendu, comme
          le thème : sinon le visiteur verrait passer le classement d'un membre
@@ -44,7 +88,9 @@
     <link rel="stylesheet" href="accueil-dash.css?v=20260922">
     <link rel="stylesheet" href="accueil-mobile.css?v=20260922">
     <link rel="stylesheet" href="demos.css">
-    <link rel="stylesheet" href="hero.css?v=20260919">
+    <!-- Landing des visiteurs (html.fz-anon) : remplace l'ancien héros
+         « aréna » (hero.css). Voir LANDING.md. -->
+    <link rel="stylesheet" href="landing.css?v=20260923">
     <link rel="stylesheet" href="accueil-season.css?v=20260922">
     <link rel="stylesheet" href="accueil-draft.css?v=20260920b">
     <link rel="stylesheet" href="accueil-watch.css?v=20260922">
@@ -90,90 +136,629 @@
     </section>
 
     <!-- ============================================================ -->
-    <!-- HERO SECTION                                                  -->
+    <!-- LANDING — visiteurs seulement (html.fz-anon). Un match en six -->
+    <!-- temps : mise au jeu → 1re (problème) → 2e (solution) → 3e     -->
+    <!-- (produit) → reprise (faits) → prolongation (action).          -->
+    <!-- Intentions et règles : LANDING.md. Styles : landing.css.      -->
+    <!-- Mouvement : landing.js.                                        -->
+    <!--                                                                -->
+    <!-- Tous les chiffres viennent de current_stats.json et             -->
+    <!-- current_teams.json (saison 2025–26, instantané du 9 sept. 2026). -->
+    <!-- Les totaux du pool d'exemple sont calculés avec la formule de    -->
+    <!-- lib/scoring.js (computeTeamSeasonScores) sur un repêchage en     -->
+    <!-- serpent des meilleurs disponibles. Aucun chiffre n'est inventé.  -->
     <!-- ============================================================ -->
-    <section class="hero-section fz-arena-hero" aria-labelledby="heroTitle">
-        <img class="arena-ice" src="assets/hero/fantazy-ice-reference.png" alt="" width="1774" height="887" fetchpriority="high">
-        <div class="hero-inner">
-            <div class="hero-text">
-                <div class="hero-badge"><span aria-hidden="true"></span> LE HOCKEY FANTASY, ENTRE AMIS</div>
-                <h1 class="hero-headline" id="heroTitle">Votre ligue.<br>Votre équipe.<br><span>Votre saison.</span></h1>
-                <p class="hero-sub">Le hockey ne se regarde plus seulement.<br>Repêchez vos joueurs. Défiez vos amis.<br>Faites la différence, jusqu’au dernier match.</p>
-                <div class="hero-actions">
-                    <a href="signup.html" class="btn-hero-primary">Commencer gratuitement <span aria-hidden="true">→</span></a>
-                    <a href="rejoindre-pool.html" class="btn-hero-secondary">Rejoindre un pool</a>
+    <main class="fzl" id="fzLanding" aria-labelledby="fzlTitle">
+
+        <!-- Scorebug : le repère fixe qui suit la période en cours. -->
+        <nav class="fzl-bug" id="fzlBug" aria-label="Sections de la page">
+            <span class="fzl-bug-mark" aria-hidden="true">FZ</span>
+            <span class="fzl-bug-now">
+                <span class="fzl-bug-line">
+                    <span class="fzl-bug-period" id="fzlBugPeriod">Mise au jeu</span>
+                    <span class="fzl-bug-title" id="fzlBugTitle">Fantazy</span>
+                </span>
+                <span class="fzl-bug-pips">
+                    <a href="#mise-au-jeu" data-pip="mise-au-jeu" aria-label="Mise au jeu : Fantazy" aria-current="step"></a>
+                    <a href="#probleme" data-pip="probleme" aria-label="1re période : le problème"></a>
+                    <a href="#solution" data-pip="solution" aria-label="2e période : la solution"></a>
+                    <a href="#produit" data-pip="produit" aria-label="3e période : le produit"></a>
+                    <a href="#faits" data-pip="faits" aria-label="Reprise : les faits"></a>
+                    <a href="#a-toi" data-pip="a-toi" aria-label="Prolongation : à toi de jouer"></a>
+                </span>
+            </span>
+            <a class="fzl-bug-cta" href="signup.html"><span class="fzl-bug-cta-short">Jouer</span><span class="fzl-bug-cta-long">Jouer gratuitement</span> <span aria-hidden="true">→</span></a>
+        </nav>
+
+        <!-- ======================= MISE AU JEU ======================= -->
+        <section class="fzl-hero" id="mise-au-jeu" data-period="Mise au jeu" data-title="Fantazy">
+            <img class="fzl-hero-ice" src="assets/hero/fantazy-ice-reference.png" alt="" width="1774" height="887" fetchpriority="high">
+            <div class="fzl-hero-grid">
+                <div class="fzl-hero-copy">
+                    <p class="fzl-eyebrow">Pool de hockey LNH · Gratuit</p>
+                    <h1 class="fzl-h1" id="fzlTitle">Le pool de hockey <span>sans <span class="nw">casse-tête.</span></span></h1>
+                    <p class="fzl-hero-sub">Pour le fun, avec tes amis ou tes collègues, ou contre des inconnus. Même sans expérience, <strong>t'as tes chances</strong> : tout est déjà réglé, et tu peux tout modifier à ta guise.</p>
+                    <div class="fzl-hero-actions" id="fzlHeroCta">
+                        <a class="fzl-btn fzl-btn-primary" href="signup.html">Jouer gratuitement <span class="fzl-arrow" aria-hidden="true">→</span></a>
+                        <a class="fzl-btn fzl-btn-ghost" href="rejoindre-pool.html">Rejoindre un pool</a>
+                    </div>
+                    <ul class="fzl-assure">
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Rien à configurer pour commencer</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Gratuit, aucune mise</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Pensé pour le téléphone</li>
+                    </ul>
                 </div>
-                <p class="arena-footnote">100 % gratuit <span aria-hidden="true">/</span> Toute la saison <span aria-hidden="true">/</span> Toute votre gang</p>
-                <button type="button" onclick="scrollToHowItWorks()" class="btn-hero-tertiary"><span data-icon="info" data-icon-size="14" aria-hidden="true"></span> Comment ça marche</button>
+
+                <figure class="fzl-stage">
+                    <figcaption class="fzl-sr">Aperçu de la salle de repêchage de Fantazy sur téléphone : c'est ton tour de choisir. Les trois premiers choix sont Connor McDavid, Nikita Kucherov et Nathan MacKinnon ; Macklin Celebrini, Mark Scheifele et Nick Suzuki sont encore disponibles.</figcaption>
+
+                    <div class="fzl-float fzl-float-board" aria-hidden="true">
+                        <p class="fzl-float-t">Classement · pool d'exemple</p>
+                        <ol>
+                            <li><span>1</span><span>Les Glorieux</span><b>1&#8239;095</b></li>
+                            <li><span>2</span><span>Pool des boys</span><b>1&#8239;072</b></li>
+                            <li><span>3</span><span>Ice Storm MTL</span><b>1&#8239;070</b></li>
+                        </ol>
+                    </div>
+
+                    <div class="fzl-phone" aria-hidden="true">
+                        <div class="fzl-screen" id="fzlPhone">
+                            <div class="fzl-ph-top"><span class="fzl-live">En direct</span><span>Pool rapide · <span class="fzl-mono" id="fzlPhPick">4/52</span></span></div>
+                            <div class="fzl-ph-banner" id="fzlPhBanner" data-state="turn">
+                                <span class="fzl-ph-label" id="fzlPhLabel">C'est ton tour<small>Ronde 1 · Choix 4</small></span>
+                                <span class="fzl-ph-clock" id="fzlPhClock">0:05</span>
+                            </div>
+                            <div class="fzl-ph-stripwrap">
+                                <ol class="fzl-ph-strip" id="fzlPhStrip">
+                                    <li class="fzl-pk" style="--c1:#041E42;--c2:#FF4C00"><span class="fzl-pk-no">1</span><img class="fzl-pk-logo" src="teams/EDM.png" alt="" width="18" height="18"><img class="fzl-pk-face" src="https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png" alt="" width="80" height="80" decoding="async" onerror="this.hidden=true"><span class="fzl-pk-name">McDavid</span><span class="fzl-pk-meta">C · EDM</span></li>
+                                    <li class="fzl-pk" style="--c1:#002868;--c2:#5F9BE0"><span class="fzl-pk-no">2</span><img class="fzl-pk-logo" src="teams/TBL.png" alt="" width="18" height="18"><img class="fzl-pk-face" src="https://assets.nhle.com/mugs/nhl/20252026/TBL/8476453.png" alt="" width="80" height="80" decoding="async" onerror="this.hidden=true"><span class="fzl-pk-name">Kucherov</span><span class="fzl-pk-meta">AD · TBL</span></li>
+                                    <li class="fzl-pk" style="--c1:#6F263D;--c2:#236192"><span class="fzl-pk-no">3</span><img class="fzl-pk-logo" src="teams/COL.png" alt="" width="18" height="18"><img class="fzl-pk-face" src="https://assets.nhle.com/mugs/nhl/20252026/COL/8477492.png" alt="" width="80" height="80" decoding="async" onerror="this.hidden=true"><span class="fzl-pk-name">MacKinnon</span><span class="fzl-pk-meta">C · COL</span></li>
+                                    <li class="fzl-pk is-empty is-current" id="fzlPhSlot4"><span class="fzl-pk-no">4</span></li>
+                                    <li class="fzl-pk is-empty" id="fzlPhSlot5"><span class="fzl-pk-no">5</span></li>
+                                </ol>
+                            </div>
+                            <div class="fzl-ph-head"><span>Disponibles</span><span>Pts 2025–26</span></div>
+                            <ul class="fzl-ph-list">
+                                <li class="fzl-ph-row is-armed" id="fzlPhRow1" data-club="SJS" data-c1="#006D75" data-c2="#EA7200" data-face="https://assets.nhle.com/mugs/nhl/20252026/SJS/8484801.png" data-name="Celebrini" data-meta="C · SJS">
+                                    <span class="fzl-ph-face"><img src="https://assets.nhle.com/mugs/nhl/20252026/SJS/8484801.png" alt="" width="38" height="38" decoding="async" onerror="this.hidden=true"></span>
+                                    <span class="fzl-ph-who"><strong>Macklin Celebrini</strong><small>C · San Jose</small></span>
+                                    <span class="fzl-ph-pts">115<small>PTS</small></span>
+                                    <span class="fzl-ph-pick">Repêcher</span>
+                                </li>
+                                <li class="fzl-ph-row" id="fzlPhRow2" data-club="WPG" data-c1="#041E42" data-c2="#7B303E" data-face="https://assets.nhle.com/mugs/nhl/20252026/WPG/8476460.png" data-name="Scheifele" data-meta="C · WPG">
+                                    <span class="fzl-ph-face"><img src="https://assets.nhle.com/mugs/nhl/20252026/WPG/8476460.png" alt="" width="38" height="38" decoding="async" onerror="this.hidden=true"></span>
+                                    <span class="fzl-ph-who"><strong>Mark Scheifele</strong><small>C · Winnipeg</small></span>
+                                    <span class="fzl-ph-pts">103<small>PTS</small></span>
+                                    <span class="fzl-ph-pick">Repêcher</span>
+                                </li>
+                                <li class="fzl-ph-row" id="fzlPhRow3">
+                                    <span class="fzl-ph-face"><img src="https://assets.nhle.com/mugs/nhl/20252026/MTL/8480018.png" alt="" width="38" height="38" decoding="async" onerror="this.hidden=true"></span>
+                                    <span class="fzl-ph-who"><strong>Nick Suzuki</strong><small>C · Montréal</small></span>
+                                    <span class="fzl-ph-pts">101<small>PTS</small></span>
+                                    <span class="fzl-ph-pick">Repêcher</span>
+                                </li>
+                            </ul>
+                            <div class="fzl-ph-prog"><span>Attaquants</span><span class="fzl-ph-bar"><i id="fzlPhBar" style="--p:0"></i></span><b id="fzlPhCount">0/6</b></div>
+                        </div>
+                    </div>
+
+                    <div class="fzl-float fzl-float-trade" aria-hidden="true">
+                        <span class="fzl-ok"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Échange accepté</span>
+                        <p>Lane Hutson <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h13l-4-4M17 17H4l4 4"/></svg> Cale Makar</p>
+                        <small>Défenseur contre défenseur · alignements à jour</small>
+                    </div>
+                </figure>
             </div>
 
-            <figure class="arena-product" aria-labelledby="arenaPreviewCaption">
-                <div class="arena-device">
-                    <div class="arena-screen">
-                        <div class="ap-nav">
-                            <img src="Icons/fantazy.png" alt="Fantazy" width="268" height="73">
-                            <span class="ap-nav-active"><span data-icon="home" data-icon-size="13" aria-hidden="true"></span>Accueil</span>
-                            <a href="repechage.html">Repêchage</a>
-                            <a href="classement.html">Classement</a>
-                            <a href="stats.html">Stats</a>
-                            <a class="ap-account" href="login.html" aria-label="Se connecter à Fantazy"><span data-icon="person" data-icon-size="15" aria-hidden="true"></span></a>
+            <!-- Crawl : les meilleurs pointeurs réels de la saison 2025–26. -->
+            <div class="fzl-ticker" role="region" aria-label="Meilleurs pointeurs de la LNH, saison 2025–26">
+                <span class="fzl-ticker-label">Saison 2025–26</span>
+                <div class="fzl-ticker-view">
+                    <div class="fzl-ticker-track">
+                        <ul>
+                            <li><em>1</em><img src="teams/EDM.png" alt="" width="22" height="22" loading="lazy"><strong>Connor McDavid</strong><b>138 pts</b></li>
+                            <li><em>2</em><img src="teams/TBL.png" alt="" width="22" height="22" loading="lazy"><strong>Nikita Kucherov</strong><b>130 pts</b></li>
+                            <li><em>3</em><img src="teams/COL.png" alt="" width="22" height="22" loading="lazy"><strong>Nathan MacKinnon</strong><b>127 pts</b></li>
+                            <li><em>4</em><img src="teams/SJS.png" alt="" width="22" height="22" loading="lazy"><strong>Macklin Celebrini</strong><b>115 pts</b></li>
+                            <li><em>5</em><img src="teams/WPG.png" alt="" width="22" height="22" loading="lazy"><strong>Mark Scheifele</strong><b>103 pts</b></li>
+                            <li><em>6</em><img src="teams/MTL.png" alt="" width="22" height="22" loading="lazy"><strong>Nick Suzuki</strong><b>101 pts</b></li>
+                            <li><em>7</em><img src="teams/BOS.png" alt="" width="22" height="22" loading="lazy"><strong>David Pastrnak</strong><b>100 pts</b></li>
+                            <li><em>8</em><img src="teams/COL.png" alt="" width="22" height="22" loading="lazy"><strong>Martin Necas</strong><b>100 pts</b></li>
+                            <li><em>9</em><img src="teams/EDM.png" alt="" width="22" height="22" loading="lazy"><strong>Leon Draisaitl</strong><b>97 pts</b></li>
+                            <li><em>10</em><img src="teams/DAL.png" alt="" width="22" height="22" loading="lazy"><strong>Jason Robertson</strong><b>96 pts</b></li>
+                            <li><em>11</em><img src="teams/EDM.png" alt="" width="22" height="22" loading="lazy"><strong>Evan Bouchard</strong><b>95 pts</b></li>
+                            <li><em>12</em><img src="teams/WPG.png" alt="" width="22" height="22" loading="lazy"><strong>Kyle Connor</strong><b>92 pts</b></li>
+                        </ul>
+                        <ul aria-hidden="true">
+                            <li><em>1</em><img src="teams/EDM.png" alt="" width="22" height="22" loading="lazy"><strong>Connor McDavid</strong><b>138 pts</b></li>
+                            <li><em>2</em><img src="teams/TBL.png" alt="" width="22" height="22" loading="lazy"><strong>Nikita Kucherov</strong><b>130 pts</b></li>
+                            <li><em>3</em><img src="teams/COL.png" alt="" width="22" height="22" loading="lazy"><strong>Nathan MacKinnon</strong><b>127 pts</b></li>
+                            <li><em>4</em><img src="teams/SJS.png" alt="" width="22" height="22" loading="lazy"><strong>Macklin Celebrini</strong><b>115 pts</b></li>
+                            <li><em>5</em><img src="teams/WPG.png" alt="" width="22" height="22" loading="lazy"><strong>Mark Scheifele</strong><b>103 pts</b></li>
+                            <li><em>6</em><img src="teams/MTL.png" alt="" width="22" height="22" loading="lazy"><strong>Nick Suzuki</strong><b>101 pts</b></li>
+                            <li><em>7</em><img src="teams/BOS.png" alt="" width="22" height="22" loading="lazy"><strong>David Pastrnak</strong><b>100 pts</b></li>
+                            <li><em>8</em><img src="teams/COL.png" alt="" width="22" height="22" loading="lazy"><strong>Martin Necas</strong><b>100 pts</b></li>
+                            <li><em>9</em><img src="teams/EDM.png" alt="" width="22" height="22" loading="lazy"><strong>Leon Draisaitl</strong><b>97 pts</b></li>
+                            <li><em>10</em><img src="teams/DAL.png" alt="" width="22" height="22" loading="lazy"><strong>Jason Robertson</strong><b>96 pts</b></li>
+                            <li><em>11</em><img src="teams/EDM.png" alt="" width="22" height="22" loading="lazy"><strong>Evan Bouchard</strong><b>95 pts</b></li>
+                            <li><em>12</em><img src="teams/WPG.png" alt="" width="22" height="22" loading="lazy"><strong>Kyle Connor</strong><b>92 pts</b></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================= 1RE PÉRIODE ======================= -->
+        <section class="fzl-sec fzl-problem" id="probleme" data-period="1re" data-title="Le problème" aria-labelledby="fzlProblemTitle">
+            <div class="fzl-wrap">
+                <div class="fzl-period" aria-hidden="true"><span class="fzl-period-num">1<sup>re</sup></span><span class="fzl-period-label">période</span><span class="fzl-period-rule"><i></i><b></b></span><span class="fzl-period-name">Le problème</span></div>
+                <h2 class="fzl-h2" id="fzlProblemTitle">Gérer un pool, ça ne devrait pas être <em>une deuxième job.</em></h2>
+                <p class="fzl-lead">Chaque automne, c'est la même histoire : le repêchage sur un coin de table, les stats compilées à la main, les échanges négociés dans le chat de groupe. Un commissaire qui fait tout, tout seul. Et celui qui n'a jamais joué est perdu avant même le premier choix.</p>
+
+                <div class="fzl-mess">
+                    <figure class="fzl-xls" aria-label="Un fichier Excel de pool, plein d'erreurs">
+                        <div class="fzl-xls-bar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>pool_2025-26_FINAL_v3 (2).xlsx</div>
+                        <div class="fzl-xls-scroll">
+                            <div class="fzl-xls-grid">
+                                <span class="h"></span><span class="h">A</span><span class="h">B</span><span class="h">C</span><span class="h">D</span><span class="h">E</span>
+                                <span class="n">1</span><span class="name">Joueur</span><span class="r">B</span><span class="r">A</span><span class="r">PTS</span><span class="name">Équipe</span>
+                                <span class="n">2</span><span class="name">Connor McDavid</span><span class="r">48</span><span class="r">90</span><span class="r">138</span><span>Les Glorieux</span>
+                                <span class="n">3</span><span class="name">Nikita Kucherov</span><span class="r">44</span><span class="r">86</span><span class="err">#REF!</span><span>Ice Storm MTL</span>
+                                <span class="n">4</span><span class="name">Nathan MacKinnon</span><span class="r">53</span><span class="r">74</span><span class="f sel">=B4+C4</span><span>Pool des boys</span>
+                                <span class="n">5</span><span class="name">Cale Makar</span><span class="r">20</span><span class="r">59</span><span class="err">#N/A</span><span>???</span>
+                                <span class="n">6</span><span class="name">Lane Hutson</span><span class="r">12</span><span class="r">66</span><span class="err">#VALEUR!</span><span>Mon équipe</span>
+                                <span class="n">7</span><span class="name">Macklin Celebrini</span><span class="r">45</span><span class="r">70</span><span class="r">115</span><span>Mon équipe</span>
+                            </div>
                         </div>
-                        <div class="ap-body">
-                            <div class="ap-page-heading"><span>LE BUREAU DU GÉRANT</span><span class="ap-season"><span data-icon="hockey" data-icon-size="12" aria-hidden="true"></span> HOCKEY FANTASY</span></div>
-                            <!-- Official NHL portraits and the existing 2025–26 data snapshot.
-                                 This is a product preview, not a simulated live pool. -->
-                            <div class="ap-welcome">
-                                <div class="ap-welcome-copy">
-                                    <span class="ap-eyebrow">VOTRE PROCHAINE GRANDE SAISON</span>
-                                    <h2>Bâtis ton<br>équipe de rêve.</h2>
-                                    <p>Les bons choix font les grandes équipes.</p>
-                                    <a class="ap-create" href="creer-pool.html">Créer mon pool <span aria-hidden="true">↗</span></a>
-                                </div>
-                                <div class="ap-cover-player">
-                                    <img class="ap-cover-crest" src="teams/EDM.png" alt="" width="180" height="180">
-                                    <img class="ap-cover-portrait" src="https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png" alt="Connor McDavid" width="240" height="240" decoding="async" onerror="this.hidden=true">
-                                    <div class="ap-cover-score"><strong>138</strong><span>POINTS · 2025–26</span></div>
-                                    <div class="ap-cover-name"><span>EDMONTON · CENTRE</span><strong>Connor McDavid</strong></div>
-                                </div>
+                        <figcaption class="fzl-xls-foot">Dernière mise à jour : ça dépend à qui tu demandes.</figcaption>
+                    </figure>
+
+                    <figure class="fzl-chat" aria-label="Le chat de groupe du pool">
+                        <div class="fzl-chat-head"><span aria-hidden="true">PB</span><span><strong>Pool des boys</strong><small>Discussion de groupe</small></span></div>
+                        <ol>
+                            <li style="--i:0"><small>Max</small>Qui a repêché Makar déjà ??</li>
+                            <li style="--i:1"><small>JF</small>Le fichier est-tu à jour ?</li>
+                            <li class="me" style="--i:2">Attendez, je recompte les passes de Kucherov…</li>
+                            <li style="--i:3"><small>Max</small>Mon échange compte-tu ou pas ?</li>
+                            <li style="--i:4"><small>JF</small>C'est qui qui a la feuille du repêchage ???</li>
+                            <li class="typing" style="--i:5" aria-label="Quelqu'un écrit"><i></i><i></i><i></i></li>
+                        </ol>
+                    </figure>
+                </div>
+
+                <h3 class="fzl-tasks-title">Tout ce que le commissaire fait à la main</h3>
+                <ol class="fzl-tasks">
+                    <li><span class="no">01</span><span class="t">Inscriptions</span><span class="how">Des textos, un par un</span></li>
+                    <li><span class="no">02</span><span class="t">Ordre de repêchage</span><span class="how">Des noms pigés dans une tuque</span></li>
+                    <li><span class="no">03</span><span class="t">Choix</span><span class="how">Une feuille qui passe de main en main</span></li>
+                    <li><span class="no">04</span><span class="t">Compilation des points</span><span class="how">Excel, calculatrice et patience</span></li>
+                    <li><span class="no">05</span><span class="t">Classement</span><span class="how">À refaire chaque semaine</span></li>
+                    <li><span class="no">06</span><span class="t">Échanges</span><span class="how">Négociés dans le chat, notés… peut-être</span></li>
+                    <li><span class="no">07</span><span class="t">Communication</span><span class="how">Le chat de groupe, jour et nuit</span></li>
+                </ol>
+                <p class="fzl-punch">Résultat : la gestion prend le dessus <em>sur le hockey.</em></p>
+            </div>
+        </section>
+
+        <!-- ======================= 2E PÉRIODE ======================= -->
+        <section class="fzl-sec fzl-solution" id="solution" data-period="2e" data-title="La solution" aria-labelledby="fzlSolutionTitle">
+            <div class="fzl-wrap">
+                <div class="fzl-period" aria-hidden="true"><span class="fzl-period-num">2<sup>e</sup></span><span class="fzl-period-label">période</span><span class="fzl-period-rule"><i></i><b></b></span><span class="fzl-period-name">La solution</span></div>
+                <h2 class="fzl-h2" id="fzlSolutionTitle">Fantazy gère. <em>Toi, tu joues.</em></h2>
+                <p class="fzl-lead">Une seule plateforme remplace la feuille, le fichier et le chat de groupe. Tu crées le pool, ta gang repêche en direct, et le reste roule tout seul, toute la saison. Assez simple pour que ton collègue qui n'a jamais fait de pool s'y retrouve du premier coup.</p>
+
+                <!-- Les sept mêmes tâches qu'en 1re période : le visiteur voit
+                     chacune passer de « à la main » à « réglé ». -->
+                <ol class="fzl-swap">
+                    <li style="--i:0"><span class="no">01</span><span class="t">Inscriptions</span><span class="old">Des textos, un par un</span><span class="new"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Un lien à partager, ou un pool ouvert à tous</span></li>
+                    <li style="--i:1"><span class="no">02</span><span class="t">Ordre de repêchage</span><span class="old">Des noms pigés dans une tuque</span><span class="new"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Tiré au hasard en un clic</span></li>
+                    <li style="--i:2"><span class="no">03</span><span class="t">Choix</span><span class="old">Une feuille qui passe de main en main</span><span class="new"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Repêchage en direct, tour par tour, sur tous les téléphones</span></li>
+                    <li style="--i:3"><span class="no">04</span><span class="t">Compilation des points</span><span class="old">Excel, calculatrice et patience</span><span class="new"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Automatique, avec les stats de la LNH</span></li>
+                    <li style="--i:4"><span class="no">05</span><span class="t">Classement</span><span class="old">À refaire chaque semaine</span><span class="new"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Recalculé chaque nuit, avec ton mouvement au classement</span></li>
+                    <li style="--i:5"><span class="no">06</span><span class="t">Échanges</span><span class="old">Négociés dans le chat, notés… peut-être</span><span class="new"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Proposés, acceptés et appliqués aux alignements</span></li>
+                    <li style="--i:6"><span class="no">07</span><span class="t">Communication</span><span class="old">Le chat de groupe, jour et nuit</span><span class="new"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Notifications dans l'app : ton tour au repêchage, une offre d'échange</span></li>
+                </ol>
+
+                <!-- Pour qui : les trois publics de Fantazy, chacun avec sa porte. -->
+                <h3 class="fzl-ways-title">Trois façons de jouer</h3>
+                <ul class="fzl-ways">
+                    <li>
+                        <span class="ic" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c0-3.2 2.5-5.3 5.5-5.3s5.5 2.1 5.5 5.3M16 5.2a3 3 0 0 1 0 5.6M17.5 13.9c1.8.6 3 2.4 3 4.9"/></svg></span>
+                        <strong>Entre amis</strong>
+                        <p>Crée ton pool, envoie le lien à ta gang, et vous repêchez ensemble, en direct.</p>
+                    </li>
+                    <li>
+                        <span class="ic" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8.5 7V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5V7M3 12.5h18"/></svg></span>
+                        <strong>Entre collègues</strong>
+                        <p>Un pool privé pour le bureau, protégé par un mot de passe, de 2 à 10 gérants.</p>
+                    </li>
+                    <li>
+                        <span class="ic" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/></svg></span>
+                        <strong>Contre des inconnus</strong>
+                        <p>Pas de gang sous la main ? Le pool rapide te place avec trois autres joueurs. Ou choisis parmi les pools ouverts.</p>
+                    </li>
+                </ul>
+
+                <ol class="fzl-steps">
+                    <li><span class="n">01</span><strong>Crée ton compte</strong><p>Gratuit, sans carte de crédit.</p></li>
+                    <li><span class="n">02</span><strong>Choisis ta formule</strong><p>Un pool rapide à quatre, ou ton pool à toi, de 2 à 10 gérants.</p></li>
+                    <li><span class="n">03</span><strong>Repêche et suis ta saison</strong><p>Le classement se met à jour tout seul, chaque nuit.</p></li>
+                </ol>
+                <a class="fzl-btn fzl-btn-primary" href="signup.html">Créer mon compte gratuit <span class="fzl-arrow" aria-hidden="true">→</span></a>
+            </div>
+        </section>
+
+        <!-- ======================= 3E PÉRIODE ======================= -->
+        <section class="fzl-sec fzl-product" id="produit" data-period="3e" data-title="Le produit" aria-labelledby="fzlProductTitle">
+            <div class="fzl-wrap">
+                <div class="fzl-period" aria-hidden="true"><span class="fzl-period-num">3<sup>e</sup></span><span class="fzl-period-label">période</span><span class="fzl-period-rule"><i></i><b></b></span><span class="fzl-period-name">Le produit</span></div>
+                <h2 class="fzl-h2" id="fzlProductTitle">Tout ce qu'il faut pour <em>une vraie saison.</em></h2>
+                <p class="fzl-lead">Du premier choix au dernier match. Voici Fantazy en action, avec les vraies stats de la saison 2025–26.</p>
+
+                <!-- A · Pool rapide -->
+                <article class="fzl-scene">
+                    <div class="fzl-scene-copy">
+                        <span class="fzl-tag"><b>01</b> Pool rapide</span>
+                        <h3 class="fzl-h3">Un clic. Quatre gérants. On repêche.</h3>
+                        <p>Pas de nom à trouver, pas de règles à régler, pas d'amis à convaincre. Le pool rapide te place avec trois autres joueurs, et le repêchage démarre dès que les quatre places sont prises.</p>
+                        <ul class="fzl-facts">
+                            <li><b>4</b> gérants</li>
+                            <li><b>13</b> choix chacun</li>
+                            <li><b>0</b> réglage</li>
+                            <li>Mode cumulatif</li>
+                        </ul>
+                        <a class="fzl-scene-link" href="signup.html">Lancer un pool rapide <span class="fzl-arrow" aria-hidden="true">→</span></a>
+                    </div>
+                    <div class="fzl-visual fzl-queue" id="fzlQueue" data-filled="1" aria-hidden="true">
+                        <div class="fzl-queue-head"><strong>Pool rapide</strong><span class="fzl-queue-status"><b id="fzlQueueCount">1/4</b> gérants</span></div>
+                        <ol class="fzl-slots">
+                            <li class="fzl-slot is-filled is-me"><span class="fzl-slot-ava"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="9" r="3.4"/><path d="M5.5 19.5c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5"/></svg></span>Toi</li>
+                            <li class="fzl-slot"><span class="fzl-slot-ava"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="9" r="3.4"/><path d="M5.5 19.5c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5"/></svg></span><span class="off">Place libre</span><span class="on">Gérant 2</span></li>
+                            <li class="fzl-slot"><span class="fzl-slot-ava"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="9" r="3.4"/><path d="M5.5 19.5c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5"/></svg></span><span class="off">Place libre</span><span class="on">Gérant 3</span></li>
+                            <li class="fzl-slot"><span class="fzl-slot-ava"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="9" r="3.4"/><path d="M5.5 19.5c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5"/></svg></span><span class="off">Place libre</span><span class="on">Gérant 4</span></li>
+                        </ol>
+                        <div class="fzl-queue-bar"><i></i><i></i><i></i><i></i></div>
+                        <div class="fzl-queue-go" id="fzlQueueGo">En attente de joueurs…</div>
+                    </div>
+                </article>
+
+                <!-- B · Ton pool : simple par défaut, modifiable à ta guise.
+                     Valeurs par défaut réelles de creer-pool.html. -->
+                <article class="fzl-scene is-flip">
+                    <div class="fzl-scene-copy">
+                        <span class="fzl-tag"><b>02</b> Ton pool</span>
+                        <h3 class="fzl-h3">Simple par défaut. À ta guise si tu veux.</h3>
+                        <p>Tout est déjà réglé : tu peux créer ton pool sans toucher à une seule règle. Et si ta gang veut jouer autrement, tu changes ce que tu veux : l'alignement, le nombre de gérants, le mode de pointage, les échanges.</p>
+                        <ul class="fzl-facts">
+                            <li>Alignement modifiable</li>
+                            <li><b>2</b> à <b>10</b> gérants</li>
+                            <li>Cumulatif ou tête-à-tête</li>
+                            <li>Échanges oui ou non</li>
+                            <li>Joueurs de banc</li>
+                            <li>Mot de passe optionnel</li>
+                        </ul>
+                        <a class="fzl-scene-link" href="signup.html">Créer mon pool <span class="fzl-arrow" aria-hidden="true">→</span></a>
+                    </div>
+                    <div class="fzl-visual fzl-config" role="img" aria-label="Formulaire de création de pool avec ses réglages par défaut : 6 attaquants, 4 défenseurs, 1 gardien, 1 recrue, 1 équipe de la LNH, 10 participants, mode cumulatif, échanges activés. Chaque valeur peut être modifiée.">
+                        <div aria-hidden="true">
+                            <div class="fzl-config-head"><strong>Nouveau pool</strong><span class="fzl-config-badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Déjà réglé pour toi</span></div>
+                            <p class="fzl-config-label">Alignement</p>
+                            <ul class="fzl-config-list">
+                                <li><span>Attaquants</span><span class="fzl-stepper"><i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14"/></svg></i><b>6</b><i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></i></span></li>
+                                <li><span>Défenseurs</span><span class="fzl-stepper"><i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14"/></svg></i><b>4</b><i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></i></span></li>
+                                <li><span>Gardiens</span><span class="fzl-stepper"><i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14"/></svg></i><b>1</b><i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></i></span></li>
+                                <li><span>Recrues</span><span class="fzl-stepper"><i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14"/></svg></i><b>1</b><i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></i></span></li>
+                                <li><span>Équipes LNH</span><span class="fzl-stepper"><i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14"/></svg></i><b>1</b><i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></i></span></li>
+                            </ul>
+                            <div class="fzl-config-row"><span>Participants</span><span class="fzl-select">10 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></div>
+                            <div class="fzl-config-row"><span>Mode</span><span class="fzl-seg"><b>Cumulatif</b><i>Tête-à-tête</i></span></div>
+                            <div class="fzl-config-row"><span>Échanges</span><span class="fzl-toggle is-on"><i></i></span></div>
+                            <span class="fzl-config-go">Créer le pool</span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- C · Repêchage en direct : tableau en serpent -->
+                <article class="fzl-scene">
+                    <div class="fzl-scene-copy">
+                        <span class="fzl-tag"><b>03</b> Repêchage en direct</span>
+                        <h3 class="fzl-h3">Le soir du repêchage, tout le monde est là.</h3>
+                        <p>Chaque choix apparaît en même temps sur tous les téléphones. Ordre en serpent, tour par tour : quand c'est ton tour, tu le sais. Et chaque joueur arrive aux couleurs de son club.</p>
+                        <ul class="fzl-facts">
+                            <li>Ordre en serpent</li>
+                            <li>Ordre tiré au hasard</li>
+                            <li>Tour bloqué ? Le créateur peut le passer</li>
+                        </ul>
+                    </div>
+                    <div class="fzl-visual">
+                        <div class="fzl-board-draft" id="fzlDraftBoard" role="img" aria-label="Tableau de repêchage en serpent. Ronde 1 : Les Glorieux choisissent Connor McDavid, Ice Storm MTL Nikita Kucherov, Pool des boys Nathan MacKinnon, Mon équipe Macklin Celebrini. Ronde 2, en sens inverse : Mon équipe choisit Mark Scheifele, Pool des boys Nick Suzuki, Ice Storm MTL David Pastrnak, Les Glorieux Martin Necas.">
+                            <span class="team">Les Glorieux</span><span class="team">Ice Storm MTL</span><span class="team">Pool des boys</span><span class="team is-me">Mon équipe</span>
+                            <span class="fzl-round"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M14 6l6 6-6 6"/></svg>Ronde 1</span>
+                            <span class="fzl-pk" style="--i:0;--c1:#041E42;--c2:#FF4C00"><span class="fzl-pk-no">1</span><img class="fzl-pk-logo" src="teams/EDM.png" alt="" width="18" height="18" loading="lazy"><img class="fzl-pk-face" src="https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png" alt="" width="96" height="96" loading="lazy" decoding="async" onerror="this.hidden=true"><span class="fzl-pk-name">McDavid</span><span class="fzl-pk-meta">C · 138</span></span>
+                            <span class="fzl-pk" style="--i:1;--c1:#002868;--c2:#5F9BE0"><span class="fzl-pk-no">2</span><img class="fzl-pk-logo" src="teams/TBL.png" alt="" width="18" height="18" loading="lazy"><img class="fzl-pk-face" src="https://assets.nhle.com/mugs/nhl/20252026/TBL/8476453.png" alt="" width="96" height="96" loading="lazy" decoding="async" onerror="this.hidden=true"><span class="fzl-pk-name">Kucherov</span><span class="fzl-pk-meta">AD · 130</span></span>
+                            <span class="fzl-pk" style="--i:2;--c1:#6F263D;--c2:#236192"><span class="fzl-pk-no">3</span><img class="fzl-pk-logo" src="teams/COL.png" alt="" width="18" height="18" loading="lazy"><img class="fzl-pk-face" src="https://assets.nhle.com/mugs/nhl/20252026/COL/8477492.png" alt="" width="96" height="96" loading="lazy" decoding="async" onerror="this.hidden=true"><span class="fzl-pk-name">MacKinnon</span><span class="fzl-pk-meta">C · 127</span></span>
+                            <span class="fzl-pk" style="--i:3;--c1:#006D75;--c2:#EA7200"><span class="fzl-pk-no">4</span><img class="fzl-pk-logo" src="teams/SJS.png" alt="" width="18" height="18" loading="lazy"><img class="fzl-pk-face" src="https://assets.nhle.com/mugs/nhl/20252026/SJS/8484801.png" alt="" width="96" height="96" loading="lazy" decoding="async" onerror="this.hidden=true"><span class="fzl-pk-name">Celebrini</span><span class="fzl-pk-meta">C · 115</span></span>
+                            <span class="fzl-round"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12H5M10 6l-6 6 6 6"/></svg>Ronde 2 · l'ordre s'inverse</span>
+                            <span class="fzl-pk" style="--i:7;--c1:#6F263D;--c2:#236192"><span class="fzl-pk-no">8</span><img class="fzl-pk-logo" src="teams/COL.png" alt="" width="18" height="18" loading="lazy"><img class="fzl-pk-face" src="https://assets.nhle.com/mugs/nhl/20252026/COL/8480039.png" alt="" width="96" height="96" loading="lazy" decoding="async" onerror="this.hidden=true"><span class="fzl-pk-name">Necas</span><span class="fzl-pk-meta">C · 100</span></span>
+                            <span class="fzl-pk" style="--i:6;--c1:#FFB81C;--c2:#111111"><span class="fzl-pk-no">7</span><img class="fzl-pk-logo" src="teams/BOS.png" alt="" width="18" height="18" loading="lazy"><img class="fzl-pk-face" src="https://assets.nhle.com/mugs/nhl/20252026/BOS/8477956.png" alt="" width="96" height="96" loading="lazy" decoding="async" onerror="this.hidden=true"><span class="fzl-pk-name">Pastrnak</span><span class="fzl-pk-meta">AD · 100</span></span>
+                            <span class="fzl-pk" style="--i:5;--c1:#AF1E2D;--c2:#192168"><span class="fzl-pk-no">6</span><img class="fzl-pk-logo" src="teams/MTL.png" alt="" width="18" height="18" loading="lazy"><img class="fzl-pk-face" src="https://assets.nhle.com/mugs/nhl/20252026/MTL/8480018.png" alt="" width="96" height="96" loading="lazy" decoding="async" onerror="this.hidden=true"><span class="fzl-pk-name">Suzuki</span><span class="fzl-pk-meta">C · 101</span></span>
+                            <span class="fzl-pk" style="--i:4;--c1:#041E42;--c2:#7B303E"><span class="fzl-pk-no">5</span><img class="fzl-pk-logo" src="teams/WPG.png" alt="" width="18" height="18" loading="lazy"><img class="fzl-pk-face" src="https://assets.nhle.com/mugs/nhl/20252026/WPG/8476460.png" alt="" width="96" height="96" loading="lazy" decoding="async" onerror="this.hidden=true"><span class="fzl-pk-name">Scheifele</span><span class="fzl-pk-meta">C · 103</span></span>
+                        </div>
+                        <p class="fzl-note">Points de la saison 2025–26. Les cartes apparaissent dans l'ordre des choix : de gauche à droite, puis de droite à gauche.</p>
+                    </div>
+                </article>
+
+                <!-- D · Même sans expérience : l'aide au repêchage.
+                     Projections : draftkit.json (trousse de repêchage 2026-2027). -->
+                <article class="fzl-scene is-flip">
+                    <div class="fzl-scene-copy">
+                        <span class="fzl-tag"><b>04</b> Ton avantage</span>
+                        <h3 class="fzl-h3">Même sans expérience, t'as tes chances.</h3>
+                        <p>Pas besoin de connaître tous les joueurs de la ligue. Pendant le repêchage, tu vois les points de la dernière saison, les points projetés de la trousse de repêchage et les positions qu'il te reste à combler. Marque tes favoris d'avance : quand ton tour arrive, ils sont là.</p>
+                        <ul class="fzl-facts">
+                            <li>Points projetés 2026–27</li>
+                            <li>Favoris</li>
+                            <li>Joueurs à surveiller</li>
+                            <li>Positions à combler</li>
+                        </ul>
+                    </div>
+                    <div class="fzl-visual fzl-help" role="img" aria-label="Aide au repêchage : ton favori Mark Scheifele est le prochain disponible. Attaquants disponibles, avec les points 2025-2026 puis les points projetés 2026-2027 : Leon Draisaitl 97 et 103, Mark Scheifele 103 et 101, Nick Suzuki 101 et 100, Cole Caufield 88 et 86.">
+                        <div aria-hidden="true">
+                            <div class="fzl-help-fav"><span class="st"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8z"/></svg></span><span>Prochain dans tes favoris<strong>Mark Scheifele</strong></span><span class="fzl-ph-pick">Repêcher</span></div>
+                            <div class="fzl-help-head"><span>Attaquants disponibles</span><span>25–26</span><span>Proj.</span><span></span></div>
+                            <ol class="fzl-help-list">
+                                <li><span class="fzl-ph-face"><img src="https://assets.nhle.com/mugs/nhl/20252026/EDM/8477934.png" alt="" width="38" height="38" loading="lazy" onerror="this.hidden=true"></span><span class="fzl-ph-who"><strong>Leon Draisaitl</strong><small>C · EDM</small></span><span class="n">97</span><span class="n is-proj">103</span><span class="st"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8z"/></svg></span></li>
+                                <li class="is-fav"><span class="fzl-ph-face"><img src="https://assets.nhle.com/mugs/nhl/20252026/WPG/8476460.png" alt="" width="38" height="38" loading="lazy" onerror="this.hidden=true"></span><span class="fzl-ph-who"><strong>Mark Scheifele</strong><small>C · WPG</small></span><span class="n">103</span><span class="n is-proj">101</span><span class="st"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8z"/></svg></span></li>
+                                <li><span class="fzl-ph-face"><img src="https://assets.nhle.com/mugs/nhl/20252026/MTL/8480018.png" alt="" width="38" height="38" loading="lazy" onerror="this.hidden=true"></span><span class="fzl-ph-who"><strong>Nick Suzuki</strong><small>C · MTL</small></span><span class="n">101</span><span class="n is-proj">100</span><span class="st"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8z"/></svg></span></li>
+                                <li><span class="fzl-ph-face"><img src="https://assets.nhle.com/mugs/nhl/20252026/MTL/8481540.png" alt="" width="38" height="38" loading="lazy" onerror="this.hidden=true"></span><span class="fzl-ph-who"><strong>Cole Caufield</strong><small>AD · MTL</small></span><span class="n">88</span><span class="n is-proj">86</span><span class="st"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8z"/></svg></span></li>
+                            </ol>
+                            <div class="fzl-help-need"><span>À combler</span><b>ATT 5</b><b>DÉF 3</b><b>GAR 1</b><b>REC 1</b><b>ÉQ 1</b></div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- E · Classement -->
+                <article class="fzl-scene">
+                    <div class="fzl-scene-copy">
+                        <span class="fzl-tag"><b>05</b> Classement</span>
+                        <h3 class="fzl-h3">Le classement se fait tout seul.</h3>
+                        <p>Chaque nuit, Fantazy compile les stats de la LNH et recalcule le classement. Le matin, ton rang est déjà à jour, et le temple de la renommée garde les meilleures journées, semaines et mois de ton pool.</p>
+                        <ul class="fzl-facts">
+                            <li>Mis à jour chaque nuit</li>
+                            <li>Mouvement de rang</li>
+                            <li>Temple de la renommée</li>
+                        </ul>
+                    </div>
+                    <div class="fzl-visual">
+                        <div class="fzl-standings">
+                            <div class="fzl-standings-head" aria-hidden="true"><span>Rg</span><span>Équipe</span><span>Pts</span><span>Écart</span></div>
+                            <ol id="fzlStandings">
+                                <li><span class="rk">1</span><span class="nm"><strong>Les Glorieux</strong><small>McDavid · Necas · Bouchard</small></span><span class="pts" data-count="1095">1&#8239;095</span><span class="gap">—</span></li>
+                                <li><span class="rk">2</span><span class="nm"><strong>Pool des boys</strong><small>MacKinnon · Suzuki · Makar</small></span><span class="pts" data-count="1072">1&#8239;072</span><span class="gap">−23</span></li>
+                                <li><span class="rk">3</span><span class="nm"><strong>Ice Storm MTL</strong><small>Kucherov · Pastrnak · Werenski</small></span><span class="pts" data-count="1070">1&#8239;070</span><span class="gap">−25</span></li>
+                                <li class="is-me"><span class="rk">4</span><span class="nm"><strong>Mon équipe</strong><small>Celebrini · Scheifele · Hutson</small></span><span class="pts" data-count="1059">1&#8239;059</span><span class="gap">−36</span></li>
+                            </ol>
+                        </div>
+                        <p class="fzl-note">Pool d'exemple à quatre, repêché en serpent parmi les meilleurs joueurs disponibles. Totaux calculés avec le barème cumulatif de Fantazy sur la vraie saison 2025–26 : 13 choix par équipe, gardien et club de la LNH compris.</p>
+                    </div>
+                </article>
+
+                <!-- F · Le suivi des joueurs : blessures, séquences, joueurs en feu.
+                     Chiffres : saison 2025–26 (current_stats.json). Les onglets
+                     sont des filtres ; aucun statut de joueur n'est affiché. -->
+                <article class="fzl-scene is-flip">
+                    <div class="fzl-scene-copy">
+                        <span class="fzl-tag"><b>06</b> Tes joueurs</span>
+                        <h3 class="fzl-h3">Tes joueurs, suivis pour toi.</h3>
+                        <p>Les matchs de la soirée, les blessures et les dates de retour, les joueurs en feu, les séquences : tout ce qu'il faut pour gérer ton équipe, sans fouiller dix sites.</p>
+                        <ul class="fzl-facts">
+                            <li>Blessés et retour prévu</li>
+                            <li>Joueurs en feu · <b>7</b> à <b>180</b> jours</li>
+                            <li>Séquences</li>
+                            <li>Matchs en direct</li>
+                            <li>Fiches carrière</li>
+                            <li>Notifications</li>
+                        </ul>
+                    </div>
+                    <div class="fzl-visual fzl-roster" role="img" aria-label="Liste Mes joueurs avec les filtres Tous, Ce soir, En feu, Blessés et Séquences. Totaux 2025-2026 : Macklin Celebrini 115 points, Mark Scheifele 103, Leon Draisaitl 97, Lane Hutson 78, et le gardien Jake Oettinger 35 victoires.">
+                        <div aria-hidden="true">
+                            <div class="fzl-roster-head"><strong>Mes joueurs</strong><span>Saison 2025–26</span></div>
+                            <div class="fzl-tabs"><b>Tous</b><i>Ce soir</i><i>En feu</i><i>Blessés</i><i>Séquences</i></div>
+                            <ol class="fzl-ph-list">
+                                <li><span class="fzl-ph-face"><img src="https://assets.nhle.com/mugs/nhl/20252026/SJS/8484801.png" alt="" width="38" height="38" loading="lazy" onerror="this.hidden=true"></span><span class="fzl-ph-who"><strong>Macklin Celebrini</strong><small>C · SJS</small></span><span class="fzl-ph-pts">115<small>PTS</small></span></li>
+                                <li><span class="fzl-ph-face"><img src="https://assets.nhle.com/mugs/nhl/20252026/WPG/8476460.png" alt="" width="38" height="38" loading="lazy" onerror="this.hidden=true"></span><span class="fzl-ph-who"><strong>Mark Scheifele</strong><small>C · WPG</small></span><span class="fzl-ph-pts">103<small>PTS</small></span></li>
+                                <li><span class="fzl-ph-face"><img src="https://assets.nhle.com/mugs/nhl/20252026/EDM/8477934.png" alt="" width="38" height="38" loading="lazy" onerror="this.hidden=true"></span><span class="fzl-ph-who"><strong>Leon Draisaitl</strong><small>C · EDM</small></span><span class="fzl-ph-pts">97<small>PTS</small></span></li>
+                                <li><span class="fzl-ph-face"><img src="https://assets.nhle.com/mugs/nhl/20252026/MTL/8483457.png" alt="" width="38" height="38" loading="lazy" onerror="this.hidden=true"></span><span class="fzl-ph-who"><strong>Lane Hutson</strong><small>D · MTL</small></span><span class="fzl-ph-pts">78<small>PTS</small></span></li>
+                                <li><span class="fzl-ph-face"><img src="https://assets.nhle.com/mugs/nhl/20252026/DAL/8479979.png" alt="" width="38" height="38" loading="lazy" onerror="this.hidden=true"></span><span class="fzl-ph-who"><strong>Jake Oettinger</strong><small>G · DAL</small></span><span class="fzl-ph-pts">35<small>VICT.</small></span></li>
+                            </ol>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- G · Tête-à-tête -->
+                <article class="fzl-scene">
+                    <div class="fzl-scene-copy">
+                        <span class="fzl-tag"><b>07</b> Tête-à-tête</span>
+                        <h3 class="fzl-h3">Chaque semaine, un nouveau duel.</h3>
+                        <p>Du lundi au dimanche, ton équipe affronte celle d'un ami. Victoire, défaite ou nulle : tout compte à ta fiche. Une mauvaise semaine ? La suivante repart à zéro.</p>
+                        <ul class="fzl-facts">
+                            <li>Lundi → dimanche</li>
+                            <li>Fiche V‑D‑N</li>
+                            <li>Points pour et contre</li>
+                        </ul>
+                    </div>
+                    <div class="fzl-visual" role="img" aria-label="Duel de la semaine entre Mon équipe et Les Glorieux, au début de la semaine : zéro à zéro.">
+                        <div class="fzl-duel" aria-hidden="true">
+                            <div class="fzl-duel-side is-me">
+                                <div class="fzl-faces"><img src="https://assets.nhle.com/mugs/nhl/20252026/SJS/8484801.png" alt="" width="44" height="44" loading="lazy" onerror="this.hidden=true"><img src="https://assets.nhle.com/mugs/nhl/20252026/WPG/8476460.png" alt="" width="44" height="44" loading="lazy" onerror="this.hidden=true"><img src="https://assets.nhle.com/mugs/nhl/20252026/MTL/8483457.png" alt="" width="44" height="44" loading="lazy" onerror="this.hidden=true"></div>
+                                <strong>Mon équipe</strong>
                             </div>
-                            <div class="ap-content">
-                                <section class="ap-leaders" aria-labelledby="apLeadersTitle">
-                                    <div class="ap-section-heading"><div><span class="ap-section-kicker">PRÉPAREZ VOTRE ALIGNEMENT</span><h3 id="apLeadersTitle">Les joueurs à suivre</h3></div><span class="ap-season-label">2025–26</span></div>
-                                    <table class="ap-table">
-                                        <caption class="ap-sr-only">Sélection de joueurs. Statistiques de la saison 2025–2026, extrait des données LNH de Fantazy au 9 septembre 2026. P/M : points par match.</caption>
-                                        <thead><tr><th scope="col">Joueur</th><th scope="col"><abbr title="Parties jouées">PJ</abbr></th><th scope="col"><abbr title="Buts">B</abbr></th><th scope="col"><abbr title="Aides">A</abbr></th><th scope="col"><abbr title="Points">PTS</abbr></th></tr></thead>
-                                        <tbody>
-                                            <tr class="ap-player-featured"><th scope="row"><span class="ap-player"><span class="ap-portrait"><img class="ap-headshot" src="https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png" alt="" width="64" height="64" decoding="async" onerror="this.hidden=true"><img class="ap-team-mark" src="teams/EDM.png" alt="" width="20" height="20"></span><span>Connor McDavid<small><span class="ap-position">C</span> EDM <span class="ap-player-role">· Attaquant</span></small></span></span></th><td>82</td><td>48</td><td>90</td><td><span class="ap-points"><strong>138</strong><small>1,68 P/M</small></span></td></tr>
-                                            <tr><th scope="row"><span class="ap-player"><span class="ap-portrait"><img class="ap-headshot" src="https://assets.nhle.com/mugs/nhl/20252026/TBL/8476453.png" alt="" width="64" height="64" decoding="async" onerror="this.hidden=true"><img class="ap-team-mark" src="teams/TBL.png" alt="" width="20" height="20"></span><span>Nikita Kucherov<small><span class="ap-position">AD</span> TBL <span class="ap-player-role">· Attaquant</span></small></span></span></th><td>76</td><td>44</td><td>86</td><td><span class="ap-points"><strong>130</strong><small>1,71 P/M</small></span></td></tr>
-                                            <tr><th scope="row"><span class="ap-player"><span class="ap-portrait"><img class="ap-headshot" src="https://assets.nhle.com/mugs/nhl/20252026/COL/8477492.png" alt="" width="64" height="64" decoding="async" onerror="this.hidden=true"><img class="ap-team-mark" src="teams/COL.png" alt="" width="20" height="20"></span><span>Nathan MacKinnon<small><span class="ap-position">C</span> COL <span class="ap-player-role">· Attaquant</span></small></span></span></th><td>80</td><td>53</td><td>74</td><td><span class="ap-points"><strong>127</strong><small>1,59 P/M</small></span></td></tr>
-                                            <tr><th scope="row"><span class="ap-player"><span class="ap-portrait"><img class="ap-headshot" src="https://assets.nhle.com/mugs/nhl/20252026/BOS/8477956.png" alt="" width="64" height="64" decoding="async" onerror="this.hidden=true"><img class="ap-team-mark" src="teams/BOS.png" alt="" width="20" height="20"></span><span>David Pastrnak<small><span class="ap-position">AD</span> BOS <span class="ap-player-role">· Attaquant</span></small></span></span></th><td>77</td><td>29</td><td>71</td><td><span class="ap-points"><strong>100</strong><small>1,30 P/M</small></span></td></tr>
-                                        </tbody>
-                                    </table>
-                                    <a class="ap-view-stats" href="stats.html">Explorer tous les joueurs <span aria-hidden="true">→</span></a>
-                                </section>
-                                <aside class="ap-side" aria-label="Préparation du repêchage">
-                                    <div class="ap-scout-card">
-                                        <span class="ap-scout-label"><span data-icon="star" data-icon-size="12" aria-hidden="true"></span> À LA LIGNE BLEUE</span>
-                                        <div class="ap-scout-photo"><img class="ap-scout-crest" src="teams/COL.png" alt="" width="110" height="110"><img class="ap-scout-portrait" src="https://assets.nhle.com/mugs/nhl/20252026/COL/8480069.png" alt="Cale Makar" width="160" height="160" decoding="async" onerror="this.hidden=true"><span class="ap-scout-position">DÉF</span></div>
-                                        <div class="ap-scout-info"><h3>Cale Makar</h3><p>Avalanche du Colorado</p><dl class="ap-scout-stats"><div><dt>Buts</dt><dd>20</dd></div><div><dt>Aides</dt><dd>59</dd></div><div><dt>Points</dt><dd>79</dd></div></dl><span class="ap-scout-season">SAISON 2025–26</span></div>
-                                    </div>
-                                    <a class="ap-pool-link" href="rejoindre-pool.html"><span data-icon="trophy" data-icon-size="18" aria-hidden="true"></span><span>Trouvez votre ligue<small>La compétition commence ici</small></span><span aria-hidden="true">↗</span></a>
-                                </aside>
+                            <div class="fzl-duel-score"><b>0 – 0</b><small>Début lundi</small></div>
+                            <div class="fzl-duel-side is-right">
+                                <div class="fzl-faces"><img src="https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png" alt="" width="44" height="44" loading="lazy" onerror="this.hidden=true"><img src="https://assets.nhle.com/mugs/nhl/20252026/COL/8480039.png" alt="" width="44" height="44" loading="lazy" onerror="this.hidden=true"><img src="https://assets.nhle.com/mugs/nhl/20252026/EDM/8480803.png" alt="" width="44" height="44" loading="lazy" onerror="this.hidden=true"></div>
+                                <strong>Les Glorieux</strong>
                             </div>
-                            <div class="ap-tools" aria-label="Découvrir Fantazy">
-                                <a href="repechage.html"><span data-icon="hockey" data-icon-size="17" aria-hidden="true"></span><span>Repêchage<small>Bâtissez votre équipe</small></span><span aria-hidden="true">↗</span></a>
-                                <a href="trade.html"><span data-icon="swap" data-icon-size="17" aria-hidden="true"></span><span>Échanges<small>Faites le bon mouvement</small></span><span aria-hidden="true">↗</span></a>
-                                <a href="classement.html"><span data-icon="trophy" data-icon-size="17" aria-hidden="true"></span><span>Classement<small>Visez le sommet</small></span><span aria-hidden="true">↗</span></a>
+                        </div>
+                        <ol class="fzl-days" aria-hidden="true"><li>L</li><li>M</li><li>M</li><li>J</li><li>V</li><li>S</li><li>D</li></ol>
+                        <p class="fzl-record" aria-hidden="true"><span><b>V</b> victoire</span><span><b>D</b> défaite</span><span><b>N</b> nulle</span><span><b>PP</b> points pour</span><span><b>PC</b> points contre</span></p>
+                    </div>
+                </article>
+
+                <!-- H · Échanges -->
+                <article class="fzl-scene is-flip">
+                    <div class="fzl-scene-copy">
+                        <span class="fzl-tag"><b>08</b> Échanges</span>
+                        <h3 class="fzl-h3">Négocie. Échange. Assume.</h3>
+                        <p>Propose un échange, l'autre gérant accepte ou refuse, et les alignements se mettent à jour tout seuls. Affiche tes joueurs sur le marché pour attirer les offres.</p>
+                        <ul class="fzl-facts">
+                            <li>Un pour un</li>
+                            <li>Même position</li>
+                            <li>Marché des échanges</li>
+                        </ul>
+                    </div>
+                    <div class="fzl-visual" role="img" aria-label="Échange entre Mon équipe et Pool des boys : Lane Hutson, défenseur de Montréal, 78 points, contre Cale Makar, défenseur du Colorado, 79 points. L'échange passe de proposé à accepté.">
+                        <div class="fzl-trade" aria-hidden="true">
+                            <div class="fzl-trade-card" style="--c1:#AF1E2D;--c2:#192168">
+                                <span class="owner">Mon équipe</span>
+                                <img class="logo" src="teams/MTL.png" alt="" width="26" height="26" loading="lazy">
+                                <img class="face" src="https://assets.nhle.com/mugs/nhl/20252026/MTL/8483457.png" alt="" width="150" height="150" loading="lazy" onerror="this.hidden=true">
+                                <strong>Lane Hutson</strong><small>D · MTL · 78 pts</small>
                             </div>
-                            <div class="ap-status"><span>VOTRE LIGUE. VOS DÉCISIONS.</span><span>100 % HOCKEY <i>/</i> 100 % GRATUIT</span></div>
+                            <div class="fzl-trade-mid"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h13l-4-4M17 17H4l4 4"/></svg></div>
+                            <div class="fzl-trade-card" style="--c1:#6F263D;--c2:#236192">
+                                <span class="owner">Pool des boys</span>
+                                <img class="logo" src="teams/COL.png" alt="" width="26" height="26" loading="lazy">
+                                <img class="face" src="https://assets.nhle.com/mugs/nhl/20252026/COL/8480069.png" alt="" width="150" height="150" loading="lazy" onerror="this.hidden=true">
+                                <strong>Cale Makar</strong><small>D · COL · 79 pts</small>
+                            </div>
+                        </div>
+                        <div class="fzl-trade-status" id="fzlTradeStatus" aria-hidden="true"><span class="sent">Proposé</span><span class="done"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Accepté</span></div>
+                    </div>
+                </article>
+
+            </div>
+
+            <!-- Les 32 clubs : la seule couleur libre du système, et
+                 toujours attachée à son club (teamColors.js). -->
+            <div class="fzl-clubs">
+                <div class="fzl-clubs-copy">
+                    <h3 class="fzl-sub-h" style="margin-top:0">Toute la LNH dans ton pool.</h3>
+                    <p class="fzl-sub-p">Les 32 clubs et tous leurs joueurs. Tu peux même repêcher un club au complet.</p>
+                </div>
+                <div class="fzl-marquee">
+                    <div class="fzl-marquee-track">
+                        <ul><li style="--c1:#F47A38;--c2:#B9975B"><img src="teams/ANA.png" alt="Anaheim Ducks" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#FFB81C;--c2:#111111"><img src="teams/BOS.png" alt="Boston Bruins" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#002654;--c2:#FCB514"><img src="teams/BUF.png" alt="Buffalo Sabres" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#CC0000;--c2:#111111"><img src="teams/CAR.png" alt="Carolina Hurricanes" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#002654;--c2:#CE1126"><img src="teams/CBJ.png" alt="Columbus Blue Jackets" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#D2001C;--c2:#FAAF19"><img src="teams/CGY.png" alt="Calgary Flames" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#CF0A2C;--c2:#111111"><img src="teams/CHI.png" alt="Chicago Blackhawks" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#6F263D;--c2:#236192"><img src="teams/COL.png" alt="Colorado Avalanche" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#006847;--c2:#8F8F8C"><img src="teams/DAL.png" alt="Dallas Stars" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#CE1126;--c2:#7A0A16"><img src="teams/DET.png" alt="Detroit Red Wings" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#041E42;--c2:#FF4C00"><img src="teams/EDM.png" alt="Edmonton Oilers" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#041E42;--c2:#C8102E"><img src="teams/FLA.png" alt="Florida Panthers" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#1A1A1A;--c2:#A2AAAD"><img src="teams/LAK.png" alt="Los Angeles Kings" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#154734;--c2:#A6192E"><img src="teams/MIN.png" alt="Minnesota Wild" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#AF1E2D;--c2:#192168"><img src="teams/MTL.png" alt="Montréal Canadiens" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#CE1126;--c2:#111111"><img src="teams/NJD.png" alt="New Jersey Devils" width="56" height="56" loading="lazy" decoding="async"></li></ul>
+                        <ul aria-hidden="true"><li style="--c1:#F47A38;--c2:#B9975B"><img src="teams/ANA.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#FFB81C;--c2:#111111"><img src="teams/BOS.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#002654;--c2:#FCB514"><img src="teams/BUF.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#CC0000;--c2:#111111"><img src="teams/CAR.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#002654;--c2:#CE1126"><img src="teams/CBJ.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#D2001C;--c2:#FAAF19"><img src="teams/CGY.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#CF0A2C;--c2:#111111"><img src="teams/CHI.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#6F263D;--c2:#236192"><img src="teams/COL.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#006847;--c2:#8F8F8C"><img src="teams/DAL.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#CE1126;--c2:#7A0A16"><img src="teams/DET.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#041E42;--c2:#FF4C00"><img src="teams/EDM.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#041E42;--c2:#C8102E"><img src="teams/FLA.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#1A1A1A;--c2:#A2AAAD"><img src="teams/LAK.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#154734;--c2:#A6192E"><img src="teams/MIN.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#AF1E2D;--c2:#192168"><img src="teams/MTL.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#CE1126;--c2:#111111"><img src="teams/NJD.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li></ul>
+                    </div>
+                </div>
+                <div class="fzl-marquee is-rev">
+                    <div class="fzl-marquee-track">
+                        <ul><li style="--c1:#FFB81C;--c2:#041E42"><img src="teams/NSH.png" alt="Nashville Predators" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#00539B;--c2:#F47D30"><img src="teams/NYI.png" alt="New York Islanders" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#0038A8;--c2:#CE1126"><img src="teams/NYR.png" alt="New York Rangers" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#C52032;--c2:#C2912C"><img src="teams/OTT.png" alt="Ottawa Senators" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#F74902;--c2:#111111"><img src="teams/PHI.png" alt="Philadelphia Flyers" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#FCB514;--c2:#111111"><img src="teams/PIT.png" alt="Pittsburgh Penguins" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#001628;--c2:#99D9D9"><img src="teams/SEA.png" alt="Seattle Kraken" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#006D75;--c2:#EA7200"><img src="teams/SJS.png" alt="San Jose Sharks" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#002F87;--c2:#FCB514"><img src="teams/STL.png" alt="St. Louis Blues" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#002868;--c2:#5F9BE0"><img src="teams/TBL.png" alt="Tampa Bay Lightning" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#00205B;--c2:#0B4CA1"><img src="teams/TOR.png" alt="Toronto Maple Leafs" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#71AFE5;--c2:#010101"><img src="teams/UTA.png" alt="Utah Hockey Club" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#00205B;--c2:#00843D"><img src="teams/VAN.png" alt="Vancouver Canucks" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#B4975A;--c2:#333F42"><img src="teams/VGK.png" alt="Vegas Golden Knights" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#041E42;--c2:#7B303E"><img src="teams/WPG.png" alt="Winnipeg Jets" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#C8102E;--c2:#041E42"><img src="teams/WSH.png" alt="Washington Capitals" width="56" height="56" loading="lazy" decoding="async"></li></ul>
+                        <ul aria-hidden="true"><li style="--c1:#FFB81C;--c2:#041E42"><img src="teams/NSH.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#00539B;--c2:#F47D30"><img src="teams/NYI.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#0038A8;--c2:#CE1126"><img src="teams/NYR.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#C52032;--c2:#C2912C"><img src="teams/OTT.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#F74902;--c2:#111111"><img src="teams/PHI.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#FCB514;--c2:#111111"><img src="teams/PIT.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#001628;--c2:#99D9D9"><img src="teams/SEA.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#006D75;--c2:#EA7200"><img src="teams/SJS.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#002F87;--c2:#FCB514"><img src="teams/STL.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#002868;--c2:#5F9BE0"><img src="teams/TBL.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#00205B;--c2:#0B4CA1"><img src="teams/TOR.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#71AFE5;--c2:#010101"><img src="teams/UTA.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#00205B;--c2:#00843D"><img src="teams/VAN.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#B4975A;--c2:#333F42"><img src="teams/VGK.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#041E42;--c2:#7B303E"><img src="teams/WPG.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li><li style="--c1:#C8102E;--c2:#041E42"><img src="teams/WSH.png" alt="" width="56" height="56" loading="lazy" decoding="async"></li></ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================= REPRISE ======================= -->
+        <section class="fzl-sec fzl-proof" id="faits" data-period="Reprise" data-title="Les faits" aria-labelledby="fzlProofTitle">
+            <div class="fzl-wrap">
+                <div class="fzl-period" aria-hidden="true"><span class="fzl-period-num">Reprise</span><span class="fzl-period-rule"><i></i><b></b></span><span class="fzl-period-name">Les faits</span></div>
+                <h2 class="fzl-h2" id="fzlProofTitle">Pas de promesses. <em>Des faits.</em></h2>
+                <p class="fzl-lead">Pas de faux témoignages, pas de chiffres gonflés. Voici exactement ce que tu obtiens, et comment chaque point est calculé.</p>
+
+                <ul class="fzl-facts-grid">
+                    <li><span class="big">0 $</span><strong>Gratuit, pour vrai</strong><p>Aucun abonnement, aucuns frais d'entrée, aucune carte de crédit à fournir.</p></li>
+                    <li><span class="big">0 mise</span><strong>Juste l'honneur</strong><p>Ni pari, ni mise, ni prix. Le trophée, c'est d'avoir raison devant ta gang.</p></li>
+                    <li><span class="big">Stats LNH</span><strong>Des vraies stats</strong><p>Chaque point vient des statistiques publiques de la LNH, compilées automatiquement.</p></li>
+                    <li><span class="big">En direct</span><strong>Un vrai repêchage en temps réel</strong><p>Chaque choix apparaît sur tous les téléphones en même temps.</p></li>
+                    <li><span class="big">FR</span><strong>En français, avec nos mots</strong><p>Repêchage, échanges, classement, recrues : le vocabulaire du pool, pas une traduction.</p></li>
+                    <li><span class="big">Loi 25</span><strong>Tes données t'appartiennent</strong><p>Exporte-les ou supprime ton compte quand tu veux.</p></li>
+                </ul>
+
+                <!-- Barème : lib/scoring.js (goaliePoolPoints, clubPoolPoints,
+                     FANTASY_SCORING). À garder synchronisé si le barème change. -->
+                <div class="fzl-bareme" id="bareme">
+                    <h3>Le barème, au complet</h3>
+                    <p>Le même calcul pour tout le monde, appliqué automatiquement.</p>
+                    <div class="fzl-bareme-cols">
+                        <div>
+                            <h4>Cumulatif · toute la saison</h4>
+                            <dl>
+                                <div><dt>Patineur : but ou passe</dt><dd>1 pt</dd></div>
+                                <div><dt>Gardien : victoire</dt><dd>2 pts</dd></div>
+                                <div><dt>Gardien : blanchissage</dt><dd>5 pts</dd></div>
+                                <div><dt>Gardien : défaite en prolongation</dt><dd>1 pt</dd></div>
+                                <div><dt>Club LNH : victoire</dt><dd>2 pts</dd></div>
+                                <div><dt>Club LNH : défaite en prolongation</dt><dd>1 pt</dd></div>
+                            </dl>
+                        </div>
+                        <div>
+                            <h4>Tête-à-tête · par match</h4>
+                            <dl>
+                                <div><dt>But</dt><dd>3 pts</dd></div>
+                                <div><dt>Passe</dt><dd>2 pts</dd></div>
+                                <div><dt>Tir</dt><dd>0,5 pt</dd></div>
+                                <div><dt>Différentiel +/−</dt><dd>0,5 pt</dd></div>
+                                <div><dt>But en avantage numérique</dt><dd>+1 pt</dd></div>
+                                <div><dt>Point en avantage numérique</dt><dd>+0,5 pt</dd></div>
+                                <div><dt>But en infériorité</dt><dd>+2 pts</dd></div>
+                                <div><dt>Point en infériorité</dt><dd>+1 pt</dd></div>
+                                <div><dt>But gagnant</dt><dd>+1 pt</dd></div>
+                                <div><dt>Gardien : victoire</dt><dd>5 pts</dd></div>
+                                <div><dt>Gardien : blanchissage</dt><dd>3 pts</dd></div>
+                                <div><dt>Gardien : arrêt</dt><dd>0,2 pt</dd></div>
+                                <div><dt>Gardien : but accordé</dt><dd>−1 pt</dd></div>
+                            </dl>
                         </div>
                     </div>
                 </div>
-                <figcaption id="arenaPreviewCaption"><span></span> Aperçu Fantazy <b>—</b> Votre prochain avantage commence ici.</figcaption>
-            </figure>
-        </div>
-        <div class="arena-baseline" aria-hidden="true"><span>UNE LIGUE. UNE GANG. TOUTE UNE SAISON.</span><span>FAITES VOTRE MARQUE.</span></div>
-    </section>
+                <p class="fzl-indep">Fantazy est un service indépendant, sans affiliation avec la Ligue nationale de hockey ni ses équipes. Les statistiques proviennent de sources publiques.</p>
+            </div>
+        </section>
+
+        <!-- Questions fréquentes : même contenu que le FAQPage du <head>. -->
+        <section class="fzl-sec fzl-faq" id="questions" data-period="Reprise" data-title="Les faits" aria-labelledby="fzlFaqTitle">
+            <div class="fzl-wrap fzl-faq-grid">
+                <div>
+                    <h2 class="fzl-h2" id="fzlFaqTitle">Questions <em>fréquentes</em></h2>
+                    <p class="fzl-lead">Tout ce qu'il faut savoir pour commencer seul, sans avoir à écrire à personne.</p>
+                </div>
+                <div class="fzl-qa">
+                    <details><summary>Je n'ai jamais fait de pool. Est-ce que j'ai des chances ?</summary><p>Oui. Tout est réglé par défaut, et la salle de repêchage t'aide à choisir : les points de la dernière saison, les points projetés de la trousse de repêchage, les positions qu'il te reste à combler et tes favoris, prêts quand ton tour arrive. Ensuite, Fantazy suit tes joueurs et calcule les points tout seul, toute la saison.</p></details>
+                    <details><summary>Est-ce que Fantazy est vraiment gratuit ?</summary><p>Oui. Aucun abonnement, aucuns frais d'entrée, aucune carte de crédit. Fantazy ne permet pas non plus de mises, de paris ni de prix : on joue pour l'honneur.</p></details>
+                    <details><summary>Combien de personnes peuvent jouer dans un pool ?</summary><p>De 2 à 10 dans un pool que tu crées. Le pool rapide, lui, réunit toujours 4 gérants. En mode tête-à-tête, il faut un nombre pair de participants.</p></details>
+                    <details><summary>Comment les points sont-ils calculés ?</summary><p>Avec les statistiques publiques de la LNH, compilées automatiquement. En mode cumulatif, un patineur rapporte un point par but ou par passe ; en tête-à-tête, chaque match est compté selon le <a href="#bareme">barème détaillé</a>.</p></details>
+                    <details><summary>Je n'ai pas de gang pour jouer. Je fais quoi ?</summary><p>Lance un pool rapide : Fantazy te place avec trois autres joueurs, et le repêchage démarre dès que les quatre places sont prises. Tu peux aussi <a href="rejoindre-pool.html">parcourir les pools ouverts</a>.</p></details>
+                    <details><summary>Faut-il télécharger une application ?</summary><p>Non. Fantazy fonctionne dans le navigateur de ton téléphone ou de ton ordinateur, y compris le repêchage en direct.</p></details>
+                    <details><summary>Est-ce que je peux faire des échanges ?</summary><p>Oui, si le créateur du pool les active. Les échanges se font un pour un, entre joueurs de la même position.</p></details>
+                    <details><summary>Fantazy est-il affilié à la LNH ?</summary><p>Non. Fantazy est un service indépendant, sans affiliation avec la Ligue nationale de hockey ni ses équipes. Les statistiques proviennent de sources publiques.</p></details>
+                    <details><summary>Qu'arrive-t-il à mes données ?</summary><p>Elles t'appartiennent. Tu peux exporter tes données ou supprimer ton compte en tout temps. Les détails sont dans la <a href="confidentialite.html">politique de confidentialité</a>.</p></details>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================= PROLONGATION ======================= -->
+        <section class="fzl-sec fzl-cta" id="a-toi" data-period="Prolongation" data-title="À toi de jouer" aria-labelledby="fzlCtaTitle">
+            <img class="fzl-cta-ice" src="assets/hero/fantazy-ice-reference.png" alt="" width="1774" height="887" loading="lazy">
+            <div class="fzl-wrap">
+                <div class="fzl-period" aria-hidden="true"><span class="fzl-period-num">Prolongation</span><span class="fzl-period-rule"><i></i><b></b></span><span class="fzl-period-name">À toi de jouer</span></div>
+                <h2 class="fzl-h2" id="fzlCtaTitle">À toi de faire <em>le premier choix.</em></h2>
+                <p class="fzl-lead">Crée ton compte et lance ton premier pool. Tout se fait en libre-service : pas d'appel, pas d'attente.</p>
+                <div class="fzl-doors">
+                    <a class="fzl-door is-main" href="signup.html"><span class="k">Le plus rapide</span><strong>Jouer maintenant</strong><span class="d">Pool rapide : quatre gérants, rien à configurer.</span><span class="go">Créer mon compte <span aria-hidden="true">→</span></span></a>
+                    <a class="fzl-door" href="signup.html"><span class="k">Pour ta gang</span><strong>Créer mon pool</strong><span class="d">Tes règles, de 2 à 10 gérants.</span><span class="go">Commencer <span aria-hidden="true">→</span></span></a>
+                    <a class="fzl-door" href="rejoindre-pool.html"><span class="k">Déjà invité ?</span><strong>Rejoindre un pool</strong><span class="d">Avec un lien d'invitation ou parmi les pools ouverts.</span><span class="go">Trouver un pool <span aria-hidden="true">→</span></span></a>
+                </div>
+                <ul class="fzl-selfserve">
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Gratuit, sans carte de crédit</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Tout se fait en libre-service</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Tes amis entrent avec un lien</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
 
 
     <!-- ============================================================ -->
@@ -555,6 +1140,7 @@
     <script defer src="accueil-season.js?v=20260922"></script>
     <script defer src="accueil-draft.js?v=20260922"></script>
     <script defer src="demos.js"></script>
+    <script defer src="landing.js?v=20260923"></script>
     <script defer src="navbar.js?v=20260922"></script>
     <script defer src="avatars.js"></script>
     <script defer src="profanity.js"></script>
