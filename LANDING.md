@@ -33,52 +33,45 @@ Fantazy doit être reconnu pour sa **simplicité** : simple par défaut, modifia
 
 | Question | Réponse dans le héros |
 | --- | --- |
-| C'est quoi ? | « Le pool de hockey sans casse-tête. » + « Pool de hockey LNH · Gratuit » |
-| Pour qui ? | « Pour le fun, avec tes amis ou tes collègues, ou contre des inconnus. » |
-| Quel problème ça règle ? | « Sans casse-tête » ; « tout est déjà réglé ». |
-| Pourquoi ça m'intéresse ? | « Même sans expérience, t'as tes chances. » + le téléphone qui montre un vrai repêchage en direct. |
+| C'est quoi ? | « Le pool de hockey sans casse-tête. » |
+| Pour qui ? | Celui qui veut jouer sans se casser la tête : le bouton « Jouer gratuitement » et le téléphone disent le reste. |
+| Quel problème ça règle ? | « Sans casse-tête ». |
+| Pourquoi ça m'intéresse ? | Le téléphone qui montre un vrai repêchage en direct ; la première scène : « Même sans expérience, t'as tes chances. » |
 
-## 4. Structure : un match en six temps
+## 4. Structure : courte, parce que le produit est simple
 
-Chaque section est une période. Le visiteur sait toujours où il est.
+Une page qui vend la simplicité ne peut pas être compliquée. Règle : **une idée par bloc, une phrase par idée, un seul bouton**. Tout ajout doit en remplacer un autre.
 
-| Temps | Section | Message | Fond | Visuel principal |
-| --- | --- | --- | --- | --- |
-| Mise au jeu | Héros | Le pool de hockey sans casse-tête | Scène sombre, photo de glace (fixe) | Téléphone : la salle de repêchage animée |
-| 1re période | Problème | Gérer un pool, ça ne devrait pas être une deuxième job | Papier quadrillé (fixe) | Fichier Excel plein d'erreurs, chat de groupe, 7 tâches faites à la main |
-| 2e période | Solution | Fantazy gère. Toi, tu joues. | Surface du thème | Les **mêmes 7 tâches**, chacune réglée ; trois façons de jouer ; trois étapes |
-| 3e période | Produit | Tout ce qu'il faut pour une vraie saison | Plateau de diffusion (fixe) | 8 scènes : pool rapide, ton pool, repêchage, ton avantage, classement, tes joueurs, tête-à-tête, échanges ; puis les 32 clubs |
-| Reprise | Faits + FAQ | Pas de promesses. Des faits. | Glace blanche (fixe), puis surface du thème | 6 faits vérifiables, le barème complet, 9 questions |
-| Prolongation | Action | À toi de faire le premier choix | Brique (fixe) | Trois portes en libre-service |
+| Bloc | Contenu | Fond |
+| --- | --- | --- |
+| Héros | Le titre, **un** bouton « Jouer gratuitement », le téléphone (salle de repêchage animée). Rien d'autre : pas de sur-titre, de paragraphe, de cartes flottantes ni de bandeau défilant. | Bandeau noir et rouge |
+| Scènes | 01 Ton avantage (aide au repêchage), 02 Classement (automatique), 03 Échanges. Chacune : étiquette, titre, une phrase, 2-3 pastilles, un visuel. | Corps de la fiche joueur |
+| Clubs | Les 32 clubs qui défilent sur deux rangées. | Idem |
+| Questions | 4 questions repliées. | Idem |
+| Dernier appel | Titre, le même bouton, un lien « Rejoindre un pool » pour les invités. | Bandeau noir et rouge |
 
-Les scènes fixes restent identiques dans les deux thèmes, comme l'ancien héros. Les sections de lecture (solution, FAQ) suivent le thème clair ou sombre.
+Retirés le 23 sept. 2026 (trop de texte, trop d'éléments pour une promesse de simplicité) : la section problème (Excel, chat de groupe, 7 tâches), la section solution (tâches réglées, trois façons de jouer, trois étapes), les scènes pool rapide, ton pool, tableau de repêchage, tes joueurs et tête-à-tête, les 6 faits, le barème complet, 5 des 9 questions, les onglets de période et le scorebug. La barre de navigation, collante, garde « S'inscrire » à portée de main.
 
-## 5. Les repères visuels d'un message à l'autre
+## 5. Le bandeau
 
-- **Onglet de période** en tête de chaque section (« 1re période — Le problème »), avec une ligne qui se trace et une rondelle qui glisse, reprise de la ligne rouge de la photo du héros.
-- **Scorebug** fixe (bas d'écran au téléphone, pastille en bas à gauche au bureau) : période en cours, 6 pastilles de progression cliquables, bouton « Jouer ». Un volet brique le balaie à chaque changement de période.
-- **Même biais** à chaque transition de section : la « coupe » d'un habillage télé.
-- **Changement de fond franc** d'une section à l'autre (sombre → papier → thème → plateau → glace → brique).
-- **Continuité narrative** : les 7 tâches du problème reviennent dans la solution ; le pool d'exemple (Les Glorieux, Pool des boys, Ice Storm MTL, Mon équipe) revient dans le repêchage, le classement, le duel et l'échange.
+Le héros et le dernier appel reprennent le haut de la fiche joueur (`career-modal.css`, `.cmh-name-banner`) : un aplat, un filigrane incliné à −13°, rogné, une bande sombre et une bande de couleur en biais à 132°, une trame fine à 24°, un filet de 3 px. Sur la fiche, ce sont les couleurs et l'écusson du club ; ici, **noir et rouge**, avec le mot-symbole Fantazy (`Icons/fantazy.png`) en filigrane. Les jetons sont en tête de `landing.css` (`--fzl-banner`, `--fzl-red`). Les scènes reprennent le fond du corps de la fiche (`#0D1013` et ses deux trames).
+
+Tout reste sombre dans les deux thèmes : ce sont des décors.
 
 ## 6. Mouvement
 
 Le mouvement montre que la compétition est vivante ; il ne décore pas.
 
 - Téléphone du héros : ton tour → choix confirmé → « encore toi » (l'ordre en serpent) → au suivant.
-- Crawl des meilleurs pointeurs 2025–26.
-- Chat de groupe qui s'empile, erreurs Excel qui clignotent.
-- Tâches qui passent de « à la main » (barré) à « réglé ».
-- File du pool rapide qui se remplit, tableau de repêchage révélé dans l'ordre du serpent, totaux du classement qui montent, échange qui passe de « proposé » à « accepté ».
+- Totaux du classement qui montent, échange qui passe de « proposé » à « accepté », clubs qui défilent.
 
 Chaque boucle ne tourne que visible à l'écran et s'arrête quand l'onglet est caché. `prefers-reduced-motion` : tout s'affiche dans son état final.
 
 ## 7. Règles tenues
 
-- **Aucun chiffre inventé.** Stats : `current_stats.json` et `current_teams.json` (saison 2025–26). Projections : `draftkit.json`. Les totaux du pool d'exemple sont calculés avec `lib/scoring.js` sur un repêchage en serpent des meilleurs disponibles ; le calcul est décrit sous le classement. Le duel est montré à 0–0, en début de semaine. Les onglets « Blessés », « En feu » de la scène « Tes joueurs » sont des filtres : aucun statut de joueur n'est affiché.
-- **Aucun faux témoignage**, aucun nombre d'utilisateurs, aucune presse : il n'y en a pas. La preuve, c'est le produit réel et la transparence (barème complet).
-- **Gratuit, sans mise, indépendant de la LNH**, dit clairement.
-- **Barème** : la section `#bareme` recopie `lib/scoring.js`. À mettre à jour si le barème change.
+- **Aucun chiffre inventé.** Stats : `current_stats.json` et `current_teams.json` (saison 2025–26). Projections : `draftkit.json`. Les totaux du pool d'exemple sont calculés avec `lib/scoring.js` sur un repêchage en serpent des meilleurs disponibles, 13 choix par équipe, gardien et club de la LNH compris.
+- **Aucun faux témoignage**, aucun nombre d'utilisateurs, aucune presse : il n'y en a pas. La preuve, c'est le produit réel.
+- **Gratuit, sans mise** : dans le bouton et la FAQ. **Indépendant de la LNH** : dans le pied de page légal (`navbar.js`).
 - **FAQ** : le texte visible et le `FAQPage` du `<head>` doivent rester identiques.
 
 ## 8. SEO
@@ -87,12 +80,12 @@ Chaque boucle ne tourne que visible à l'écran et s'arrête quand l'onglet est 
 - Open Graph (`fr_CA`), URL canonique `https://fantazy.ca/`.
 - Données structurées : `WebApplication` (prix 0 $) et `FAQPage`.
 - Tout le texte est dans le HTML, pas injecté en JS : lisible par les moteurs et les IA.
-- Un seul `<h1>`, une hiérarchie `h2` par période, `h3` par scène.
+- Un seul `<h1>`, puis un `h2` par scène, pour les clubs, la FAQ et le dernier appel.
 
 ## 9. Prochaines étapes
 
 1. **Photos réelles.** Il manque des « vrais moments sportifs » : des photos de vos propres soirées de repêchage (amis, bureau, téléphones en main). Pas de photos de matchs de la LNH : elles ne nous appartiennent pas.
 2. **Mesurer.** Clics sur « Jouer gratuitement » → inscriptions → premier pool → repêchage terminé.
-3. **Image de partage** (`og:image`) dédiée : aujourd'hui, c'est la photo de glace du héros.
+3. **Image de partage** (`og:image`) dédiée : aujourd'hui, c'est l'ancienne photo de glace du héros.
 4. **Bilingue.** Le texte est en dur en français (voir `PRODUCT.md`, décision ouverte).
-5. **Rafraîchir les chiffres** à la prochaine saison : le crawl, le téléphone, le tableau de repêchage, le classement d'exemple et la scène « Ton avantage » citent la saison 2025–26.
+5. **Rafraîchir les chiffres** à la prochaine saison : le téléphone, le classement d'exemple et les scènes « Ton avantage » et « Échanges » citent la saison 2025–26.

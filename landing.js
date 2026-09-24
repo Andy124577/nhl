@@ -5,12 +5,9 @@
    déjà dans le HTML (index.html, <main class="fzl">), tirés des
    vraies stats 2025–26. Ce fichier ne fait que les animer :
 
-     1. révéler les blocs quand ils arrivent à l'écran ;
-     2. le scorebug — la période en cours, au défilement ;
-     3. la salle de repêchage du téléphone, en boucle ;
-     4. la file du pool rapide qui se remplit ;
-     5. le compteur du classement ;
-     6. l'échange qui passe de « proposé » à « accepté ».
+     1. la salle de repêchage du téléphone, en boucle ;
+     2. l'échange qui passe de « proposé » à « accepté » ;
+     3. le compteur du classement.
 
    Le mouvement sert à montrer que la compétition est vivante :
    chaque boucle ne tourne que visible à l'écran, et s'arrête
@@ -27,19 +24,10 @@
         if (document.documentElement.classList.contains('fz-auth')) return;
 
         const reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const avecObservateur = 'IntersectionObserver' in window;
-        const anime = !reduit && avecObservateur;
-
-        // Les états « avant animation » (landing.css) ne s'appliquent qu'avec
-        // cette classe : sans JS, ou en mouvement réduit, tout est visible.
-        if (anime) racine.classList.add('is-anim');
-
-        reveler(racine, anime);
-        scorebug(racine, reduit, avecObservateur);
+        const anime = !reduit && 'IntersectionObserver' in window;
 
         const boucles = [
             boucleTelephone(),
-            boucleFile(),
             boucleEchange()
         ].filter(Boolean);
 
@@ -107,119 +95,7 @@
     }
 
     /* ------------------------------------------------------------
-       1. Révélations — une fois chacune.
-       ------------------------------------------------------------ */
-    function reveler(racine, anime) {
-        const cibles = racine.querySelectorAll('.fzl-period, .fzl-xls, .fzl-chat, .fzl-swap, .fzl-board-draft');
-        if (!anime) {
-            cibles.forEach(el => el.classList.add('is-in'));
-            return;
-        }
-        const io = new IntersectionObserver(entrees => {
-            entrees.forEach(e => {
-                if (!e.isIntersecting) return;
-                e.target.classList.add('is-in');
-                io.unobserve(e.target);
-            });
-        }, { threshold: 0.25, rootMargin: '0px 0px -8% 0px' });
-        cibles.forEach(el => io.observe(el));
-    }
-
-    /* ------------------------------------------------------------
-       2. Scorebug — la période en cours.
-
-       La section active est celle qui coupe le milieu de l'écran. Le
-       changement passe par un volet brique (landing.css, fzlWipe) ; le
-       texte change à mi-course, quand le volet couvre la pastille.
-       ------------------------------------------------------------ */
-    function scorebug(racine, reduit, avecObservateur) {
-        const bug = document.getElementById('fzlBug');
-        const periode = document.getElementById('fzlBugPeriod');
-        const titre = document.getElementById('fzlBugTitle');
-        const cta = document.getElementById('fzlHeroCta');
-        if (!bug || !periode || !titre || !avecObservateur) return;
-
-        const pastilles = Array.from(bug.querySelectorAll('[data-pip]'));
-        const sections = Array.from(racine.querySelectorAll('[data-period]'));
-        let courante = null;
-        let piedVisible = false;
-        let ctaPasse = false;
-
-        function appliquer(section) {
-            periode.textContent = section.dataset.period;
-            titre.textContent = section.dataset.title;
-            // La FAQ appartient à la même période que les faits.
-            const id = section.id === 'questions' ? 'faits' : section.id;
-            let avant = true;
-            pastilles.forEach(p => {
-                const active = p.dataset.pip === id;
-                if (active) {
-                    p.setAttribute('aria-current', 'step');
-                    avant = false;
-                } else {
-                    p.removeAttribute('aria-current');
-                }
-                p.classList.toggle('is-past', avant && !active);
-            });
-            bug.classList.toggle('is-final', section.id === 'a-toi');
-        }
-
-        function activer(section) {
-            if (section === courante) return;
-            const memePeriode = courante && courante.dataset.period === section.dataset.period;
-            courante = section;
-            if (reduit || memePeriode || !bug.classList.contains('is-shown')) {
-                appliquer(section);
-                return;
-            }
-            bug.classList.remove('is-wiping');
-            void bug.offsetWidth; // relance l'animation
-            bug.classList.add('is-wiping');
-            setTimeout(() => appliquer(section), 260);
-        }
-
-        const io = new IntersectionObserver(entrees => {
-            entrees.forEach(e => { if (e.isIntersecting) activer(e.target); });
-        }, { rootMargin: '-50% 0px -50% 0px', threshold: 0 });
-        sections.forEach(s => io.observe(s));
-
-        bug.addEventListener('animationend', () => bug.classList.remove('is-wiping'));
-
-        // Visible une fois les boutons du héros dépassés, et caché au-dessus
-        // des mentions légales pour ne jamais les recouvrir.
-        function montrer() {
-            bug.classList.toggle('is-shown', ctaPasse && !piedVisible);
-        }
-        if (cta) {
-            new IntersectionObserver(([e]) => {
-                ctaPasse = !e.isIntersecting && e.boundingClientRect.top < 0;
-                montrer();
-            }).observe(cta);
-        }
-        // navbar.js ajoute le pied de page au DOMContentLoaded, après nous.
-        requestAnimationFrame(() => {
-            const pied = document.querySelector('.site-legal-footer');
-            if (!pied) return;
-            new IntersectionObserver(([e]) => {
-                piedVisible = e.isIntersecting;
-                montrer();
-            }).observe(pied);
-        });
-
-        bug.addEventListener('click', e => {
-            const lien = e.target.closest('[data-pip]');
-            if (!lien) return;
-            // Le focus suit le saut, pour les claviers et lecteurs d'écran.
-            const cible = document.getElementById(lien.dataset.pip);
-            if (cible) {
-                cible.setAttribute('tabindex', '-1');
-                setTimeout(() => cible.focus({ preventScroll: true }), reduit ? 0 : 500);
-            }
-        });
-    }
-
-    /* ------------------------------------------------------------
-       3. Le téléphone — deux choix de suite, grâce au serpent.
+       1. Le téléphone — deux choix de suite, grâce au serpent.
 
        Choix 4 : Celebrini. Puis, l'ordre s'inversant à la ronde 2, la
        même équipe choisit encore (choix 5 : Scheifele). Puis c'est au
@@ -370,33 +246,7 @@
     }
 
     /* ------------------------------------------------------------
-       4. Pool rapide — la file se remplit, puis le repêchage part.
-       ------------------------------------------------------------ */
-    function boucleFile() {
-        const file = document.getElementById('fzlQueue');
-        const nombre = document.getElementById('fzlQueueCount');
-        const depart = document.getElementById('fzlQueueGo');
-        if (!file || !nombre || !depart) return null;
-        const places = Array.from(file.querySelectorAll('.fzl-slot'));
-
-        function remplir(n) {
-            file.dataset.filled = String(n);
-            places.forEach((p, i) => p.classList.toggle('is-filled', i < n));
-            nombre.textContent = n + '/4';
-            depart.textContent = n === 4 ? 'Complet · le repêchage commence' : 'En attente de joueurs…';
-        }
-
-        const etapes = [
-            [1100, () => remplir(2)],
-            [900, () => remplir(3)],
-            [1000, () => remplir(4)],
-            [2800, () => remplir(1)]
-        ];
-        return creerBoucle(file, etapes, () => remplir(1), () => remplir(4));
-    }
-
-    /* ------------------------------------------------------------
-       6. L'échange — proposé, puis accepté.
+       2. L'échange — proposé, puis accepté.
        ------------------------------------------------------------ */
     function boucleEchange() {
         const statut = document.getElementById('fzlTradeStatus');
@@ -411,7 +261,7 @@
     }
 
     /* ------------------------------------------------------------
-       5. Le classement — les totaux montent jusqu'à leur vraie valeur.
+       3. Le classement — les totaux montent jusqu'à leur vraie valeur.
        ------------------------------------------------------------ */
     function compteurClassement(anime) {
         const liste = document.getElementById('fzlStandings');
