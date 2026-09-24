@@ -66,6 +66,13 @@ html[data-theme="light"] .fzh .fzh-puck:after { background: var(--fzh-border); }
 /* Pastille « En cours » : le vert reste, sur fond clair. */
 html[data-theme="light"] .fzh .fzh-status { background: #e2f3e8; color: #155e33; }
 html[data-theme="light"] .fzh .fzh-status i { background: #22a356; box-shadow: 0 0 10px #22a35655; }
+@media (prefers-reduced-motion: no-preference) {
+    html[data-theme="light"] .fzh .fzh-status { animation-name: fzh-live-glow-light; }
+}
+@keyframes fzh-live-glow-light {
+    0%, 100% { box-shadow: 0 0 0 1px #22a35633, 0 0 0 0 #22a35600; }
+    50% { box-shadow: 0 0 0 1px #22a35680, 0 0 16px 2px #22a35633; }
+}
 
 html[data-theme="light"] .fzh .fzh-participant { color: var(--fzh-ink); }
 html[data-theme="light"] .fzh .fzh-participant i { background: var(--fzh-tint); color: #9c3320; }
@@ -114,8 +121,8 @@ html[data-theme="light"] .fzs :is(.fzs-rank p span, .fzs-game footer, .fzs-playe
 html[data-theme="light"] .fzs :is(.fzs-player-name strong, .fzm-news-row, .fzm-news-headline) { color: var(--fzh-ink); }
 html[data-theme="light"] .fzs .fzs-player-stats { color: var(--fzh-text); }
 /* Le héros garde sa glace, fondue dans le panneau clair plutôt que noir. */
-html[data-theme="light"] #fzDashSection .fzs-hero::after { background: linear-gradient(90deg, #fff 5%, #ffffffd9 45%, transparent); }
-html[data-theme="light"] .fzs .fzs-ice { opacity: .18; }
+html[data-theme="light"] #fzDashSection :is(.fzs-hero, .fzh-draft)::after { background: linear-gradient(90deg, #fff 5%, #ffffffd9 45%, transparent); }
+html[data-theme="light"] :is(.fzs .fzs-ice, .fzh .fzh-ice) { opacity: .18; }
 html[data-theme="light"] .fzs .fzs-green { color: var(--fzh-green); }
 html[data-theme="light"] .fzs .fzs-red { color: var(--fzh-red); }
 html[data-theme="light"] .fzs .fzs-bars i { background: var(--fzh-outline); }

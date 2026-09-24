@@ -24,8 +24,21 @@ body.fz-draft-page { background:#060f14; }
 .fzh-news-controls { position:absolute; right:16px; bottom:12px; display:flex; align-items:center; gap:10px; }.fzh-news-controls > button { width:42px; height:42px; display:grid; place-items:center; border:1px solid #3a526a; border-radius:50%; background:#08121cb3; color:white; }.fzh-news-dots { display:flex; margin-right:28px; gap:10px; }.fzh-news-dots button { width:12px; height:12px; background:#657b91; border:0; border-radius:50%; padding:0; }.fzh-news-dots button[aria-pressed=true] { background:#ff493d; }
 .fzh .fzh-draft { grid-column:1/-1; padding:12px 28px 16px; position:relative; overflow:hidden; background:repeating-radial-gradient(ellipse at 100% -140%,transparent 0 65px,#4c6c8310 66px 67px),linear-gradient(110deg,#0c1921,#0b1821); }
 .fzh-draft.is-my-turn { border-color:#ec493d; box-shadow:inset 0 0 40px #f13b2410; }
-.fzh-status { display:inline-flex; align-items:center; gap:16px; border-radius:20px; padding:4px 18px 4px 12px; background:linear-gradient(90deg,#164b36,#103a2c); color:#f2fff6; font-weight:600; text-transform:uppercase; font-size:14px; letter-spacing:.5px; }
-.fzh-status i { width:14px; height:14px; border-radius:50%; background:#6cec85; box-shadow:0 0 13px #66e98166; }
+/* Même glace que le héros de la saison (.fzs-ice) : la photo sous un fondu
+   qui laisse le texte de gauche sur un fond plein. */
+.fzh .fzh-draft { isolation:isolate; }
+.fzh-ice { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 62%; opacity:.3; z-index:-2; pointer-events:none; }
+.fzh-draft:after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,#081219 5%,#081219b8 45%,transparent); z-index:-1; pointer-events:none; }
+/* Pastille « En cours » : c'est du direct, elle doit battre. Le point
+   respire et lance deux ondes décalées ; la pastille luit au même rythme. */
+.fzh-status { display:inline-flex; align-items:center; gap:16px; border-radius:20px; padding:4px 18px 4px 12px; background:linear-gradient(90deg,#164b36,#103a2c); color:#f2fff6; font-weight:600; text-transform:uppercase; font-size:14px; letter-spacing:.5px; box-shadow:0 0 0 1px #6cec8533; animation:fzh-live-glow 1.8s ease-in-out infinite; }
+.fzh-status i { position:relative; width:14px; height:14px; border-radius:50%; background:#6cec85; box-shadow:0 0 13px #66e98166; animation:fzh-live-dot 1.8s ease-in-out infinite; }
+.fzh-status i:before,.fzh-status i:after { content:''; position:absolute; inset:0; border-radius:50%; background:inherit; animation:fzh-live-ring 1.8s cubic-bezier(0,0,.2,1) infinite; }
+.fzh-status i:after { animation-delay:.9s; }
+@keyframes fzh-live-ring { 0% { transform:scale(1); opacity:.75; } 100% { transform:scale(2.9); opacity:0; } }
+@keyframes fzh-live-dot { 0%,100% { transform:scale(1); } 50% { transform:scale(.78); } }
+@keyframes fzh-live-glow { 0%,100% { box-shadow:0 0 0 1px #6cec8533,0 0 0 0 #6cec8500; } 50% { box-shadow:0 0 0 1px #6cec8566,0 0 18px 2px #6cec8533; } }
+@media(prefers-reduced-motion:reduce) { .fzh-status,.fzh-status i,.fzh-status i:before,.fzh-status i:after { animation:none; } }
 .fzh-draft-main { display:flex; align-items:center; gap:30px; min-height:92px; }.fzh-draft-copy { flex:1; min-width:0; }.fzh-eyebrow { display:block; color:#b4c8df; font:400 13px/1.4 'Oswald',sans-serif; text-transform:uppercase; letter-spacing:1.3px; margin:0; }
 .fzh h1 { font:700 clamp(25px,2.1vw,37px)/1.2 'Barlow Condensed',sans-serif; text-transform:uppercase; margin:3px 0; letter-spacing:.3px; }.fzh-draft-description { margin:0; color:#bfcee2; font-size:17px; }.fzh-draft-description span { margin:0 10px; color:#91a6be; }
 .fzh-puck { position:relative; width:80px; height:67px; flex-shrink:0; margin-right:0; }.fzh-puck:before { content:''; position:absolute; top:14px; left:3px; width:71px; height:43px; border-radius:50%; background:linear-gradient(120deg,#182b3d,#050b10 65%); border:1px solid #637c96; box-shadow:0 13px 0 -1px #050b11,0 14px 0 #668097,0 19px 12px #0009; transform:rotate(-23deg); }.fzh-puck:after { content:''; position:absolute; left:108px; top:0; width:1px; height:76px; background:#243a49; }

@@ -75,7 +75,7 @@ html[data-theme="dark"] #fzDashSection .fzd-hero-cta .fzd-hero-cta-chev { color:
 #fzDashSection .fzh-participant b { background: var(--fzh-accent-fill); }
 #fzDashSection .fzh-draft-bottom { border-color: var(--fzh-border); }
 #fzDashSection :is(.fzs-tag:not(.is-live), .fzs .fzd-off-face) { background: var(--fzh-raised); }
-#fzDashSection .fzs-hero::after { background: linear-gradient(90deg, #1e1e22 5%, #1e1e22b8 45%, transparent); }
+#fzDashSection :is(.fzs-hero, .fzh-draft)::after { background: linear-gradient(90deg, #1e1e22 5%, #1e1e22b8 45%, transparent); }
 html[data-theme="dark"] #fzDashSection :is(.fz-dash-hero, #fzmHeroSlot.is-draft) {
     background: var(--fzh-panel);
     border-color: var(--fzh-outline);

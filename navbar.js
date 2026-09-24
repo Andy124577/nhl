@@ -64,7 +64,9 @@ const NAV_ICON = {
     logout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
     shield: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
     shieldCheck: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11.5 11.2 13.7 15.2 9.7"/></svg>`,
-    fileText: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>`
+    fileText: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>`,
+    sun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></svg>`,
+    moon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.1A8.5 8.5 0 1 1 9.9 3.5a6.6 6.6 0 0 0 10.6 10.6z"/></svg>`
 };
 
 // Les 5 sections du site, dans l'ordre affiché partout (barre du haut,
@@ -90,17 +92,32 @@ function _themeIsDark() {
     return actuel === 'dark';
 }
 
+function _themeToggleLabel() {
+    return _themeIsDark() ? 'Passer au thème clair' : 'Passer au thème sombre';
+}
+
 /**
- * Bascule le thème depuis le menu du compte.
+ * Pose le thème choisi, avec le même attribut et la même clé que theme.js.
  *
- * toggleTheme() (theme.js) s'occupe déjà de l'attribut, du stockage et de
- * l'icône #themeIcon ; il reste à réaccorder le libellé, qui annonce le
- * thème vers lequel on va et non celui qu'on quitte.
+ * Les icônes suivent l'attribut en CSS : il ne reste ici qu'à tenir à jour
+ * ce que lit un lecteur d'écran. Pas d'appel à toggleTheme() : theme.js
+ * n'est pas versionné, et une ancienne copie en cache réécrirait l'icône
+ * avec un emoji.
  */
-function toggleThemeFromMenu() {
-    toggleTheme();
-    const titre = document.getElementById('themeMenuTitle');
-    if (titre) titre.textContent = _themeIsDark() ? 'Thème clair' : 'Thème sombre';
+function fzSetTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem('theme', theme); } catch { /* stockage bloqué : le thème vaut pour la page */ }
+    document.querySelectorAll('[data-theme-choice]').forEach(opt =>
+        opt.setAttribute('aria-checked', String(opt.dataset.themeChoice === theme)));
+    const bouton = document.getElementById('themeToggleBtn');
+    if (bouton) {
+        bouton.title = _themeToggleLabel();
+        bouton.setAttribute('aria-label', _themeToggleLabel());
+    }
+}
+
+function fzToggleTheme() {
+    fzSetTheme(_themeIsDark() ? 'light' : 'dark');
 }
 
 // ==================== AVATAR HELPERS ====================
@@ -137,8 +154,10 @@ function buildLoggedOutNavbar() {
             </a>
             <div class="navbar-guest-actions">
                 <!-- Visiteur : pas de menu de compte où le loger. -->
-                <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Changer le thème">
-                    <span id="themeIcon">${_themeIsDark() ? '☀️' : '🌙'}</span>
+                <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="fzToggleTheme()"
+                        title="${_themeToggleLabel()}" aria-label="${_themeToggleLabel()}">
+                    <span class="theme-toggle-icon is-sun" aria-hidden="true">${NAV_ICON.sun}</span>
+                    <span class="theme-toggle-icon is-moon" aria-hidden="true">${NAV_ICON.moon}</span>
                 </button>
                 <a href="login.html" class="btn-nav-login">
                     <span>Connexion</span>
@@ -249,15 +268,21 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
 
                         ${isAdmin ? '<div id="adminUsersList" class="dropdown-group"></div>' : ''}
 
+                        <!-- Les deux thèmes côte à côte : on voit celui qui est
+                             actif, et le menu reste ouvert pendant la bascule. -->
                         <div class="dropdown-group">
-                            <p class="dropdown-label">Apparence</p>
-                            <button class="dropdown-item" role="menuitem" onclick="toggleThemeFromMenu()">
-                                <span class="dropdown-icon" id="themeIcon">${_themeIsDark() ? '☀️' : '🌙'}</span>
-                                <span class="dropdown-text">
-                                    <span class="dropdown-title" id="themeMenuTitle">${_themeIsDark() ? 'Thème clair' : 'Thème sombre'}</span>
-                                    <span class="dropdown-hint">Basculer l'affichage</span>
-                                </span>
-                            </button>
+                            <p class="dropdown-label" id="themeSwitchLabel">Apparence</p>
+                            <div class="theme-switch" role="group" aria-labelledby="themeSwitchLabel">
+                                <span class="theme-switch-thumb" aria-hidden="true"></span>
+                                <button type="button" class="theme-switch-opt" role="menuitemradio"
+                                        data-theme-choice="dark" aria-checked="${_themeIsDark()}" onclick="fzSetTheme('dark')">
+                                    ${NAV_ICON.moon}<span>Sombre</span>
+                                </button>
+                                <button type="button" class="theme-switch-opt" role="menuitemradio"
+                                        data-theme-choice="light" aria-checked="${!_themeIsDark()}" onclick="fzSetTheme('light')">
+                                    ${NAV_ICON.sun}<span>Clair</span>
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Les politiques quittent le pied de page de chaque écran

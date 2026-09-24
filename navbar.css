@@ -58,26 +58,44 @@ html[data-theme="light"] .navbar-logo {
     border-radius: 50%;
 }
 
-/* Theme toggle button */
+/* Bouton de thème (visiteur). Les deux icônes sont toujours là : l'attribut
+   data-theme choisit laquelle se montre, et la bascule tourne de l'une à
+   l'autre. Il affiche le thème vers lequel on va. */
 .theme-toggle-btn {
-    background: none;
-    border: 1px solid var(--border-gray);
-    border-radius: 8px;
+    position: relative;
     width: 38px;
     height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0;
+    border: 1px solid var(--border-gray);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-secondary);
     cursor: pointer;
-    font-size: 1.1rem;
-    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    overflow: hidden;
+    transition: background .2s ease, border-color .2s ease, color .2s ease;
     flex-shrink: 0;
 }
 .theme-toggle-btn:hover {
-    background: var(--bg-hover);
-    border-color: var(--primary);
-    transform: scale(1.1);
+    background: rgba(var(--primary-rgb), .10);
+    border-color: rgba(var(--primary-rgb), .55);
+    color: var(--primary);
 }
+.theme-toggle-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.theme-toggle-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform .45s cubic-bezier(.2, .8, .2, 1), opacity .25s ease;
+}
+.theme-toggle-icon svg { width: 18px; height: 18px; }
+.theme-toggle-icon.is-moon { opacity: 0; transform: rotate(-90deg) scale(.4); }
+html[data-theme="light"] .theme-toggle-icon.is-sun { opacity: 0; transform: rotate(90deg) scale(.4); }
+html[data-theme="light"] .theme-toggle-icon.is-moon { opacity: 1; transform: none; }
 @media (max-width: 768px) {
     .theme-toggle-btn {
         display: none;
@@ -619,9 +637,53 @@ html[data-theme="light"] .user-dropdown-header::after {
 }
 .dropdown-icon svg { width: 18px; height: 18px; }
 .dropdown-item:hover .dropdown-icon { opacity: 1; }
-/* L'icône de thème est un emoji et non un trait SVG : l'atténuation
-   prévue pour les autres rangées le rendrait délavé. */
-#themeIcon.dropdown-icon { opacity: 1; font-size: 1rem; }
+
+/* ---- Sélecteur de thème : Sombre | Clair ----
+   Le curseur glisse sous l'option active ; sa position suit l'attribut
+   data-theme, pas l'état JS, pour qu'il soit juste dès la construction. */
+.theme-switch {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin: 0 14px 6px;
+    padding: 3px;
+    border: 1px solid var(--navbar-border);
+    border-radius: 11px;
+    background: rgba(0, 0, 0, .22);
+}
+html[data-theme="light"] .theme-switch { background: rgba(0, 0, 0, .05); }
+.theme-switch-thumb {
+    position: absolute;
+    top: 3px; bottom: 3px; left: 3px;
+    width: calc(50% - 3px);
+    border-radius: 8px;
+    background: var(--bg-hover, #2C2C32);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .35), inset 0 0 0 1px rgba(255, 255, 255, .06);
+    transition: transform .3s cubic-bezier(.2, .8, .2, 1);
+}
+html[data-theme="light"] .theme-switch-thumb {
+    transform: translateX(100%);
+    background: var(--card, #fff);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .14), inset 0 0 0 1px rgba(0, 0, 0, .06);
+}
+.theme-switch-opt {
+    position: relative;
+    z-index: 1;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    min-height: 36px;
+    padding: 0 10px;
+    border: 0; border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit; font-size: .85rem; font-weight: 700;
+    cursor: pointer;
+    transition: color .2s ease;
+}
+.theme-switch-opt svg { width: 16px; height: 16px; flex: 0 0 auto; }
+.theme-switch-opt:hover { color: var(--text-main); }
+.theme-switch-opt[aria-checked="true"] { color: var(--text-main); }
+.theme-switch-opt[aria-checked="true"] svg { color: var(--primary); }
+.theme-switch-opt:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 .dropdown-user-thumb { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
 
 .dropdown-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
@@ -655,6 +717,7 @@ html[data-theme="light"] .user-dropdown-header::after {
 @media (prefers-reduced-motion: reduce) {
     .user-dropdown.show { animation: none; }
     .dropdown-item, .dropdown-icon, .udh-avatar-edit { transition: none; }
+    .theme-toggle-icon, .theme-switch-thumb, .theme-switch-opt { transition: none; }
 }
 
 /* ==================== DENSITÉ DE LA BARRE (grand écran) ====================

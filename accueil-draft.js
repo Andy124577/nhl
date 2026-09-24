@@ -63,6 +63,7 @@ function renderDraftHome({ tonight, activeName }) {
     const liveGames = fzhLiveGames(tonight);
     root.innerHTML = `
         <section class="fzh-draft fzh-panel${away === 0 ? ' is-my-turn' : ''}" aria-labelledby="fzhDraftTitle">
+            <img class="fzh-ice" src="assets/hero/fantazy-ice-reference.png" alt="">
             <span class="fzh-status"><i></i>${away === 0 ? 'À vous de jouer' : 'En cours'}</span>
             <div class="fzh-draft-main"><div class="fzh-puck" aria-hidden="true"><i></i></div>
                 <div class="fzh-draft-copy"><p class="fzh-eyebrow" role="status">${away === 0 ? 'C’est votre tour' : away === null ? 'Tous vos choix sont faits' : `Votre tour dans ${away} choix`}</p><h1 id="fzhDraftTitle">Repêchage en cours</h1><p class="fzh-draft-description">${poolData.instant ? 'Pool rapide' : escapeHTML(activeName)} <span>•</span> ${teams} équipes <span>•</span> ${rounds} rondes</p></div>
