@@ -777,6 +777,9 @@ async function updateDraftLinkVisibility() {
  * Le lien « Échanges » n'a rien à faire dans les barres de navigation si le
  * pool actif a désactivé les échanges — la page elle-même refuse déjà d'y
  * bâtir quoi que ce soit (voir trade.js), le lien serait un cul-de-sac.
+ *
+ * Sans pool, même chose : il n'y a personne avec qui échanger, et
+ * trade.html renvoie à l'accueil (activePool.js).
  */
 async function updateTradeLinkVisibility() {
     try {
@@ -785,7 +788,7 @@ async function updateTradeLinkVisibility() {
 
         const actif = FZPool.get();
         const pool = FZPool.mine().find(p => p.name === actif);
-        const visible = !pool || pool.data.allowTrades !== false;
+        const visible = !!pool && pool.data.allowTrades !== false;
 
         navRetenirVisibilite('trade', visible);
     } catch (error) {
@@ -806,8 +809,8 @@ async function updateTradeLinkVisibility() {
  * terminé. ») ; ici on retire l'onglet qui y menait, et classement.html
  * referme la porte de son côté (activePool.js) pour les URL tapées.
  *
- * Sans pool actif, le lien reste : la page sert alors de liste de pools,
- * comme pour « Repêchage ».
+ * Sans pool, le lien tombe aussi : il n'y a rien à classer, et
+ * classement.html renvoie à l'accueil.
  */
 async function updateClassementLinkVisibility() {
     try {
@@ -816,7 +819,7 @@ async function updateClassementLinkVisibility() {
 
         const actif = FZPool.get();
         const pool = FZPool.mine().find(p => p.name === actif);
-        const visible = !pool || FZPool.draftState(pool.data).etat === 'termine';
+        const visible = !!pool && FZPool.draftState(pool.data).etat === 'termine';
 
         navRetenirVisibilite('classement', visible);
     } catch (error) {

@@ -257,6 +257,9 @@
      */
     const pageDuClassement = /classement\.html/.test(window.location.pathname);
 
+    /** Échanges : rien à y faire tant qu'on n'est membre d'aucun pool. */
+    const pageDesEchanges = /trade\.html/.test(window.location.pathname);
+
     /**
      * Vérifié au chargement seulement, jamais sur une mise à jour temps réel :
      * qui est présent au dernier choix doit voir le repêchage se terminer et
@@ -273,11 +276,26 @@
     }
 
     /**
+     * Sans aucun pool, Classement et Échanges n'ont rien à montrer : pas
+     * d'équipes à classer, personne avec qui échanger. Les barres de
+     * navigation retirent déjà les onglets (navbar.js, poolNav.js) ; ceci
+     * ferme l'URL tapée et le vieux favori. L'accueil, lui, propose de créer
+     * ou de rejoindre un pool.
+     *
+     * Seulement si /draft a bien répondu : une panne réseau laisse mesPools
+     * vide sans rien dire de l'appartenance réelle.
+     */
+    function fermerLesPagesDePoolSansPool(charge) {
+        if (!charge || mesPools.length > 0) return false;
+        if (!pageDuClassement && !pageDesEchanges) return false;
+        window.location.replace('index.html');
+        return true;
+    }
+
+    /**
      * Pendant le repêchage, classement.html renvoie à l'accueil — qui montre
      * déjà l'ordre des choix en direct et annonce l'ouverture du classement.
-     *
-     * Sans pool actif on laisse passer : la page sert alors de liste de pools,
-     * il n'y a pas de repêchage en cours à protéger.
+     * Le cas « aucun pool » est réglé plus haut (fermerLesPagesDePoolSansPool).
      */
     function fermerLeClassementSiRepechageEnCours() {
         if (!pageDuClassement || !actif) return false;
@@ -305,14 +323,17 @@
         if (chargement) return chargement;
         chargement = (async () => {
             if (!utilisateur()) { tousLesPools = {}; mesPools = []; actif = null; return API; }
+            let charge = false;
             try {
                 await chargerDraft();
+                charge = true;
             } catch (erreur) {
                 console.error('Chargement des pools impossible :', erreur);
             }
             actif = resoudreActif();
             memoriser(actif);
 
+            if (fermerLesPagesDePoolSansPool(charge)) return API;
             if (fermerLeRepechageSiTermine()) return API;
             if (fermerLeClassementSiRepechageEnCours()) return API;
 
