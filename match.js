@@ -321,35 +321,54 @@
                 <span class="mt-when">${jourHTML(f.gameDate)}</span>`;
     }
 
-    function equipeHTML(f, c) {
+    /**
+     * Les jetons du bandeau d'un club — les mêmes que la fiche du joueur
+     * (teamBannerTokens, teamColors.js) : le tableau d'affichage reste sur
+     * fond noir dans les deux thèmes, comme elle.
+     */
+    function bandeau(abbr) {
+        if (typeof teamBannerTokens === 'function') return teamBannerTokens(abbr);
+        return { surface: '#3a414d', edge: '#8995a8', trim: '#8995a8', crest: null };
+    }
+
+    function equipeHTML(f, c, jetons) {
         const t = f[c];
+        const src = jetons.crest || `teams/${t.abbrev}.png`;
         return `
             <div class="mt-team is-${c}">
-                ${logo(t.abbrev, 'mt-logo')}
+                <img class="mt-logo" src="${echapper(src)}" alt="" onerror="this.style.visibility='hidden'">
                 <div class="mt-team-id">
                     <span class="mt-team-name"><span class="mt-long">${echapper(t.name || t.abbrev)}</span><span class="mt-short">${echapper(t.abbrev)}</span></span>
-                    <span class="mt-team-place">${echapper(t.place)}</span>
-                    ${t.sog != null ? `<span class="mt-team-sog">Tirs : ${t.sog}</span>` : ''}
+                    ${t.place ? `<span class="mt-team-place">${echapper(t.place)}</span>` : ''}
+                    ${t.sog != null ? `<span class="mt-team-sog">Tirs ${t.sog}</span>` : ''}
                 </div>
             </div>`;
     }
 
-    function tableauHTML(f, couleurs) {
+    function tableauHTML(f) {
         const joue = f.started && f.away.score != null && f.home.score != null;
         const fini = f.state === 'FINAL' || f.state === 'OFF';
         const perd = c => fini && f[c].score < f[c === 'away' ? 'home' : 'away'].score;
-        const marque = c => joue ? `<div class="mt-score is-${c}${perd(c) ? ' is-loser' : ''}">${f[c].score}</div>`
-            : `<div class="mt-score is-${c} is-empty" aria-hidden="true"></div>`;
+        const marque = c => joue ? `<span class="mt-score is-${c}${perd(c) ? ' is-loser' : ''}">${f[c].score}</span>` : '';
         const titre = joue
             ? `${f.away.name || f.away.abbrev} ${f.away.score}, ${f.home.name || f.home.abbrev} ${f.home.score}`
             : `${f.away.name || f.away.abbrev} contre ${f.home.name || f.home.abbrev}`;
+        const jetons = { away: bandeau(f.away.abbrev), home: bandeau(f.home.abbrev) };
+        // Les couleurs sortent de la table des clubs, le crest d'un chemin
+        // bâti sur une abréviation connue : rien du réseau n'entre dans le style.
+        const style = ['away', 'home'].map(c => {
+            const j = jetons[c];
+            return `--${c}-surface:${j.surface};--${c}-edge:${j.edge};--${c}-trim:${j.trim};--${c}-crest:${j.crest ? `url('${j.crest}')` : 'none'}`;
+        }).join(';');
         return `
-            <section class="mt-board" style="--mt-away:${couleurs.away};--mt-home:${couleurs.home}" aria-label="${echapper(titre)}">
-                ${equipeHTML(f, 'away')}
-                ${marque('away')}
-                <div class="mt-status">${statutHTML(f)}</div>
-                ${marque('home')}
-                ${equipeHTML(f, 'home')}
+            <section class="mt-board" style="${echapper(style)}" aria-label="${echapper(titre)}">
+                ${equipeHTML(f, 'away', jetons.away)}
+                <div class="mt-plate${joue ? '' : ' is-pregame'}">
+                    ${marque('away')}
+                    <div class="mt-status">${statutHTML(f)}</div>
+                    ${marque('home')}
+                </div>
+                ${equipeHTML(f, 'home', jetons.home)}
             </section>`;
     }
 
@@ -690,7 +709,7 @@
         }
 
         racine.innerHTML = `
-            ${tableauHTML(f, couleurs)}
+            ${tableauHTML(f)}
             <div class="mt-layout${rail ? '' : ' is-single'}" style="--mt-away:${couleurs.away};--mt-home:${couleurs.home}">
                 <div class="mt-main">${principal}</div>
                 ${rail ? `<aside class="mt-rail" aria-label="Le match en chiffres">${rail}</aside>` : ''}

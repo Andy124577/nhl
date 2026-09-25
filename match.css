@@ -53,64 +53,127 @@ body.fz-match-page { background: var(--bg); }
 a.mt-duel:focus-visible,
 .mt-legend summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-/* ---- Tableau d'affichage ------------------------------------------------ */
+/* ---- Tableau d'affichage ------------------------------------------------
+   Le bandeau de la fiche du joueur (career-modal.css), dédoublé : chaque
+   club occupe sa moitié avec sa surface, son crest géant délavé et son
+   liseré, et la marque se lit sur une plaque sombre au centre. Comme la
+   fiche, il reste sur fond noir dans les deux thèmes ; ses couleurs
+   viennent de teamBannerTokens (teamColors.js), le même calcul qu'elle. */
 .mt-board {
+    --away-surface: #3a414d; --away-edge: #8995a8; --away-trim: #8995a8; --away-crest: none;
+    --home-surface: #3a414d; --home-edge: #8995a8; --home-trim: #8995a8; --home-crest: none;
+    isolation: isolate;
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: 8px;
-    padding: 16px 30px;
-    border: 1px solid var(--border-light);
-    border-radius: 14px;
-    background: var(--card);
+    min-height: 128px;
+    padding: 16px 12px 19px;
     overflow: hidden;
+    border: 1px solid #3c434d;
+    border-radius: 18px;
+    background:
+        repeating-linear-gradient(24deg, #ffffff02 0 1px, transparent 1px 4px),
+        linear-gradient(100deg, #ffffff09, transparent 38%),
+        linear-gradient(280deg, #ffffff09, transparent 38%),
+        radial-gradient(ellipse 34% 95% at 50% 50%, #0007, transparent),
+        linear-gradient(104deg, var(--away-surface) 0 calc(50% - 1px), #05070b calc(50% - 1px) calc(50% + 1px), var(--home-surface) calc(50% + 1px));
+    box-shadow: 0 12px 30px #0003;
+    color: #f6f7f9;
+    font-family: 'Barlow', 'Segoe UI', sans-serif;
 }
-/* Les bandes aux couleurs des clubs : un aplat, une fente, un filet. */
+/* Le filet du haut et le liseré du bas, chacun aux couleurs de sa moitié. */
 .mt-board::before,
 .mt-board::after {
     content: '';
     position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 22px;
+    left: 0;
+    right: 0;
     pointer-events: none;
-    background: linear-gradient(110deg, var(--c) 0 50%, transparent 50% 64%, var(--c) 64% 78%, transparent 78%);
 }
-.mt-board::before { left: 0; --c: var(--mt-away); }
-.mt-board::after { right: 0; --c: var(--mt-home); transform: scaleX(-1); }
+.mt-board::before { top: 0; height: 1px; background: linear-gradient(90deg, var(--away-edge) 50%, var(--home-edge) 50%); }
+.mt-board::after { bottom: 0; height: 3px; background: linear-gradient(90deg, var(--away-trim) 50%, var(--home-trim) 50%); }
 
 .mt-team {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     min-width: 0;
     text-align: center;
 }
-.mt-logo { width: 40px; height: 40px; object-fit: contain; }
-.mt-team-id { display: flex; flex-direction: column; min-width: 0; }
+/* Le crest géant, rogné par le bord, sous des panneaux translucides. */
+.mt-team::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    top: -70px;
+    bottom: -80px;
+    width: 190px;
+    background: var(--crest) center / contain no-repeat;
+    opacity: .18;
+    filter: saturate(.85) contrast(1.15);
+    pointer-events: none;
+}
+.mt-team.is-away::before { --crest: var(--away-crest); left: -64px; transform: rotate(-13deg); }
+.mt-team.is-home::before { --crest: var(--home-crest); right: -64px; transform: rotate(13deg); }
+
+.mt-logo {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    filter: drop-shadow(0 3px 3px #0007);
+}
+.mt-team-id { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .mt-team-name {
-    font-weight: 800;
-    font-size: .95rem;
-    line-height: 1.15;
+    color: #f9fafc;
+    font: 800 24px/1 'Barlow Condensed', 'Arial Narrow', Impact, sans-serif;
+    letter-spacing: .2px;
+    text-transform: uppercase;
+    text-shadow: 0 2px 3px #0004;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.mt-team-place { display: none; font-size: .82rem; color: var(--text-secondary); }
-.mt-team-sog { font-size: .72rem; color: var(--text-gray); }
+.mt-team-place {
+    display: none;
+    color: #e4e5e9;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+}
+.mt-team-sog {
+    color: #b9c0ce;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
 
+/* La plaque de la marque. */
+.mt-plate {
+    display: grid;
+    grid-auto-flow: column;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid #ffffff1f;
+    border-radius: 12px;
+    background: #07090cb8;
+    box-shadow: inset 0 1px #ffffff12, 0 6px 18px #0006;
+}
 .mt-score {
     min-width: 1ch;
-    font-family: 'Bebas Neue', system-ui, sans-serif;
-    font-size: clamp(2.4rem, 9vw, 4.2rem);
-    line-height: .9;
+    color: #f9fafc;
+    font: 800 44px/.9 'Barlow Condensed', 'Arial Narrow', Impact, sans-serif;
     font-variant-numeric: tabular-nums;
     text-align: center;
+    text-shadow: 0 2px 3px #0005;
 }
-.mt-score.is-loser { color: var(--text-gray); }
-.mt-score.is-empty { min-width: 0; }
+.mt-score.is-loser { color: #f9fafc80; }
 
 .mt-status {
     display: flex;
@@ -123,40 +186,57 @@ a.mt-duel:focus-visible,
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 3px 8px;
-    border-radius: 6px;
-    background: var(--bg-hover);
-    color: var(--text-main);
-    font-size: .72rem;
-    font-weight: 800;
-    letter-spacing: .04em;
+    padding: 4px 8px;
+    border: 1px solid #ffffff3d;
+    border-radius: 7px;
+    background: #ffffff12;
+    box-shadow: inset 0 1px 8px #ffffff0d;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .14em;
     text-transform: uppercase;
     white-space: nowrap;
 }
-.mt-pill.is-soon { text-transform: none; background: transparent; border: 1px solid var(--border-gray); }
-.mt-pill.is-live { background: var(--danger); color: #fff; }
+/* « 22 h 00 » garde sa casse. */
+.mt-pill.is-soon { text-transform: none; letter-spacing: .06em; font-size: 13px; }
+.mt-pill.is-live { border-color: transparent; background: var(--danger); }
 .mt-pill.is-live i {
     width: 7px; height: 7px; border-radius: 50%; background: #fff;
     animation: mtPouls 1.4s ease-in-out infinite;
 }
 @keyframes mtPouls { 50% { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .mt-pill.is-live i { animation: none; } }
-.mt-when { font-size: .78rem; font-weight: 600; color: var(--text-secondary); }
+.mt-when {
+    color: #b9c0ce;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
 
 @media (min-width: 720px) {
-    .mt-board { gap: 16px; padding: 20px 170px; min-height: 108px; }
-    .mt-board::before, .mt-board::after { width: 150px; }
-    .mt-team { flex-direction: row; gap: 14px; text-align: left; }
+    .mt-board { gap: 20px; min-height: 140px; padding: 20px 26px 23px; }
+    .mt-team { flex-direction: row; gap: 18px; text-align: left; }
     .mt-team.is-home { flex-direction: row-reverse; text-align: right; }
-    .mt-logo { width: 60px; height: 60px; }
-    .mt-team-name { font-size: 1.3rem; }
+    .mt-team::before { width: 300px; top: -100px; bottom: -110px; }
+    .mt-team.is-away::before { left: -90px; }
+    .mt-team.is-home::before { right: -90px; }
+    .mt-logo { width: 84px; height: 72px; transform: scale(1.15); }
+    .mt-team-name { font-size: clamp(30px, 3.4vw, 46px); }
     .mt-team-place { display: block; }
-    .mt-team-sog { font-size: .8rem; }
+    .mt-team-sog { letter-spacing: .16em; }
+    .mt-plate { gap: 18px; padding: 10px 22px; }
+    .mt-score { font-size: clamp(52px, 5.6vw, 76px); }
+    .mt-pill { padding: 5px 14px; font-size: 12px; letter-spacing: .3em; }
+    .mt-pill.is-soon { font-size: 15px; letter-spacing: .08em; }
+    .mt-when { font-size: 11px; letter-spacing: .16em; }
 }
-/* Entre 720 et 1000 px, les bandes laissent la place aux noms. */
+/* Entre 720 et 1000 px, le nom de la ville cède la place. */
 @media (min-width: 720px) and (max-width: 999px) {
-    .mt-board { padding: 20px 64px; }
-    .mt-board::before, .mt-board::after { width: 52px; }
+    .mt-team-place { display: none; }
+    .mt-logo { width: 60px; height: 56px; }
 }
 
 /* ---- Mise en page --------------------------------------------------------- */

@@ -130,13 +130,59 @@ function hexLuminance(hex) {
        + 0.0722 * lin(num & 0xff);
 }
 
+/**
+ * Crests dessinés en bleu marine plein : sur fond sombre, on sert la
+ * variante tracée en blanc (teams/dark/, voir teamLogos.css).
+ */
+const NHL_CRESTS_CLAIRS = ['EDM', 'TBL', 'TOR', 'WSH'];
+
+/**
+ * Les jetons d'un bandeau d'équipe sur fond noir — celui de la fiche du
+ * joueur (careerModal.js, applyTeam) et du tableau d'affichage de la
+ * feuille de match. Même calcul aux deux endroits, pour qu'un club ait la
+ * même allure partout sur le site :
+ *
+ *   - surface : la couleur principale assombrie jusqu'à porter du texte
+ *     blanc ;
+ *   - edge    : la même teinte poussée à sa pleine intensité, puis
+ *     éclaircie, pour que les clubs en marine ou en noir gardent un filet
+ *     aussi net que les clubs en rouge ou en or ;
+ *   - trim    : le liseré, tiré de la seconde couleur, ou de edge quand
+ *     celle-ci est presque noire ;
+ *   - crest   : le logo à poser sur ce fond sombre, null si le club est
+ *     inconnu (ou historique, comme l'Arizona).
+ */
+function teamBannerTokens(abbrev) {
+  const code = String(abbrev || '').trim().toUpperCase();
+  const [primary, secondary] = getTeamColors(code);
+
+  let surface = shadeHex(primary, -0.12);
+  while (hexLuminance(surface) > 0.14) surface = shadeHex(surface, -0.1);
+
+  const channels = [1, 3, 5].map(i => parseInt(primary.slice(i, i + 2), 16));
+  const boost = 255 / Math.max(...channels, 1);
+  let edge = '#' + channels.map(v => Math.round(v * boost).toString(16).padStart(2, '0')).join('');
+  while (hexLuminance(edge) < 0.23) edge = shadeHex(edge, 0.14);
+
+  const trim = hexLuminance(secondary) < 0.08 ? edge : shadeHex(secondary, 0.2);
+  const rgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)).join(', ');
+  const connu = Object.prototype.hasOwnProperty.call(NHL_TEAM_COLORS, code) && code !== 'ARI';
+
+  return {
+    primary, secondary, surface, edge, trim,
+    rgb: rgb(primary),
+    secondaryRgb: rgb(secondary),
+    crest: connu ? (NHL_CRESTS_CLAIRS.includes(code) ? `teams/dark/${code}.svg` : `teams/${code}.png`) : null
+  };
+}
+
 /* ────────────────────────────────────────────────────────────────────────
  * Export double — même motif que profanity.js : le navigateur reçoit les
  * fonctions sur window comme avant, et les tests unitaires peuvent faire un
  * require() sans navigateur. Rien d'autre ne change pour la page.
  * ──────────────────────────────────────────────────────────────────────── */
 (function () {
-    const api = { NHL_TEAM_COLORS, NHL_TEAM_COLORS_FALLBACK, getTeamColors, shadeHex, mixHex, hexLuminance };
+    const api = { NHL_TEAM_COLORS, NHL_TEAM_COLORS_FALLBACK, getTeamColors, shadeHex, mixHex, hexLuminance, teamBannerTokens };
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = api;                 // tests (CommonJS)
     } else if (typeof window !== 'undefined') {

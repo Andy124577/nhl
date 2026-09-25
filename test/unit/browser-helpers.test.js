@@ -170,6 +170,39 @@ describe('teamColors', () => {
             > colors.hexLuminance(colors.NHL_TEAM_COLORS.TOR[0]));
     });
 
+    test('teamBannerTokens : chaque club porte du blanc sur sa surface, avec un filet net', () => {
+        for (const code of Object.keys(colors.NHL_TEAM_COLORS)) {
+            const t = colors.teamBannerTokens(code);
+            assert.ok(colors.hexLuminance(t.surface) <= 0.14, `${code} : surface trop claire (${t.surface})`);
+            assert.ok(colors.hexLuminance(t.edge) >= 0.23, `${code} : filet trop sombre (${t.edge})`);
+            assert.match(t.trim, /^#[0-9a-f]{6}$/i);
+        }
+    });
+
+    test('teamBannerTokens : le marine d\'Edmonton gagne un filet visible et son crest clair', () => {
+        const edm = colors.teamBannerTokens(' edm ');
+        assert.equal(edm.primary, colors.NHL_TEAM_COLORS.EDM[0]);
+        assert.equal(edm.crest, 'teams/dark/EDM.svg');
+        assert.equal(edm.rgb, '4, 30, 66');
+        // Seconde couleur orange, assez claire : c'est elle qui fait le liseré.
+        assert.equal(edm.trim, colors.shadeHex(colors.NHL_TEAM_COLORS.EDM[1], 0.2));
+    });
+
+    test('teamBannerTokens : un liseré presque noir reprend le filet', () => {
+        // Caroline : rouge et noir.
+        const car = colors.teamBannerTokens('CAR');
+        assert.equal(car.trim, car.edge);
+        assert.equal(car.crest, 'teams/CAR.png');
+    });
+
+    test('teamBannerTokens : club inconnu ou historique, couleurs neutres et aucun crest', () => {
+        const inconnu = colors.teamBannerTokens('XXX');
+        assert.equal(inconnu.primary, colors.NHL_TEAM_COLORS_FALLBACK[0]);
+        assert.equal(inconnu.crest, null);
+        assert.equal(colors.teamBannerTokens('').crest, null);
+        assert.equal(colors.teamBannerTokens('ARI').crest, null);
+    });
+
     test('shadeHex éclaircit et assombrit', () => {
         assert.equal(colors.shadeHex('#808080', 1), '#ffffff');
         assert.equal(colors.shadeHex('#808080', -1), '#000000');
