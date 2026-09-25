@@ -290,9 +290,62 @@
             background: var(--border);
         }
 
+        .divider-top { margin: 20px 0; }
+
+        /* ── Google ── thème sombre des consignes de marque Google : fond
+           #131314, contour #8E918F, logo « G » en couleurs d'origine. */
+        .btn-google {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px;
+            background: #131314;
+            color: #e3e3e3;
+            border: 1px solid #8e918f;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+        .btn-google:hover { background: #1e1e21; border-color: #b4b7b5; }
+        .btn-google:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--input-focus); }
+        .btn-google.is-loading { opacity: 0.7; pointer-events: none; }
+        .btn-google svg { width: 18px; height: 18px; flex: none; }
+
+        .card-subtitle strong { color: var(--text); font-weight: 600; }
+
+        .form-hint {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        /* Bascule entre « nouveau compte » et « lier un compte existant ». */
+        .switch-note {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+        .link-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            font: inherit;
+            color: var(--primary);
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .link-btn:hover { text-decoration: underline; }
+        .link-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
+
         .login-link {
             text-align: center;
-            margin-top: 16px;
+            margin-top: 24px;
             font-size: 0.9rem;
             color: var(--text-muted);
         }
@@ -413,13 +466,149 @@
             el.style.display = "block";
         }
 
+        // ── Retour de Google sans compte : choisir un nom, ou lier un compte ──
+
+        let emailGoogle = "";
+
+        function ecrireEnTete(eyebrow, titre, sousTitre) {
+            document.getElementById("cardEyebrow").textContent = eyebrow;
+            document.getElementById("cardTitle").textContent = titre;
+            const sous = document.getElementById("cardSubtitle");
+            sous.replaceChildren();
+            if (emailGoogle) {
+                const compte = document.createElement("strong");
+                compte.textContent = emailGoogle;
+                sous.append("Compte Google : ", compte, ". ");
+            }
+            sous.append(sousTitre);
+        }
+
+        /** `mode` : "creer" (nouveau compte), "lier" (compte existant) ou null (formulaire classique). */
+        function afficherEtapeGoogle(mode) {
+            hideMessages();
+            document.getElementById("classicStep").hidden = !!mode;
+            document.getElementById("googleCreate").hidden = mode !== "creer";
+            document.getElementById("googleLink").hidden = mode !== "lier";
+            document.getElementById("loginLink").hidden = !!mode;
+            // Lier ne crée rien : l'acceptation date de l'inscription d'origine.
+            document.getElementById("consentNote").hidden = mode === "lier";
+
+            if (mode === "creer") {
+                ecrireEnTete("Presque fini", "Choisissez votre nom d'utilisateur",
+                    "C'est le nom que verront les membres de vos pools.");
+                document.getElementById("googleUsername").focus();
+            } else if (mode === "lier") {
+                ecrireEnTete("Compte existant", "Lier votre compte",
+                    "Connectez-vous une dernière fois avec votre mot de passe : ensuite, Google suffira.");
+                document.getElementById("linkUsername").focus();
+            } else {
+                emailGoogle = "";
+                ecrireEnTete("Rejoindre la ligue", "Créer un compte",
+                    "Créez votre compte pour participer à votre ligue fantasy NHL.");
+            }
+        }
+
+        async function ouvrirEtapeGoogle() {
+            document.getElementById("classicStep").hidden = true;
+            try {
+                const response = await fetch(`${BASE_URL}/auth/google/attente`, { cache: "no-store" });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message);
+                emailGoogle = result.email || "";
+                document.getElementById("googleUsername").value = result.suggestion || "";
+                afficherEtapeGoogle("creer");
+            } catch (erreur) {
+                // Attente expirée (plus de 15 min) ou serveur injoignable : on
+                // revient au formulaire, bouton Google compris.
+                history.replaceState(null, "", window.location.pathname);
+                afficherEtapeGoogle(null);
+                showError(erreur.message || fzGoogle.MESSAGES.erreur);
+            }
+        }
+
+        async function envoyerGoogle(route, corps, bouton, enCours, succes) {
+            if (isSubmitting) return;
+            hideMessages();
+            isSubmitting = true;
+            const libelle = bouton.textContent;
+            bouton.disabled = true;
+            bouton.innerHTML = `<span class="btn-spinner"></span>${enCours}`;
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
+                const response = await fetch(`${BASE_URL}/auth/google/${route}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(corps),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                const result = await response.json();
+
+                if (response.ok) {
+                    fzGoogle.memoriser(result);
+                    showSuccess(succes);
+                    setTimeout(() => { window.location.href = "index.html"; }, 500);
+                    return;
+                }
+                if (result.code === "attente_expiree") {
+                    history.replaceState(null, "", window.location.pathname);
+                    afficherEtapeGoogle(null);
+                }
+                showError(result.message || fzGoogle.MESSAGES.erreur);
+            } catch (error) {
+                if (error.name === 'AbortError') showError("La demande a pris trop de temps. Réessayez.");
+                else if (!navigator.onLine) showError("Pas de connexion internet. Vérifiez votre réseau.");
+                else showError("Impossible de joindre le serveur. Réessayez.");
+            } finally {
+                isSubmitting = false;
+                bouton.disabled = false;
+                bouton.textContent = libelle;
+            }
+        }
+
+        function creerCompteGoogle() {
+            const username = document.getElementById("googleUsername").value.trim();
+            hideMessages();
+            if (username.length < 3) { showError("Le nom d'utilisateur doit contenir au moins 3 caractères."); return; }
+            if (username.length > 20) { showError("Le nom d'utilisateur ne peut pas dépasser 20 caractères."); return; }
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) { showError("Lettres, chiffres et underscores uniquement."); return; }
+            if (typeof contientGrossierete === 'function' && contientGrossierete(username)) {
+                showError("Ce nom d'utilisateur contient un terme inapproprié. Choisissez-en un autre."); return;
+            }
+            envoyerGoogle("creer", { username }, document.getElementById("googleCreateBtn"),
+                "Création en cours…", "Compte créé ! Redirection…");
+        }
+
+        function lierCompteGoogle() {
+            const username = document.getElementById("linkUsername").value.trim();
+            const password = document.getElementById("linkPassword").value;
+            hideMessages();
+            if (!username || !password) { showError("Veuillez remplir tous les champs."); return; }
+            envoyerGoogle("lier", { username, password }, document.getElementById("googleLinkBtn"),
+                "Connexion en cours…", "Compte lié à Google ! Redirection…");
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("newPassword").addEventListener("input", updatePasswordRequirements);
             document.querySelectorAll("#newUsername, #newPassword, #confirmPassword").forEach(el => {
                 el.addEventListener("keydown", e => { if (e.key === "Enter") signup(); });
             });
+            document.getElementById("googleUsername").addEventListener("keydown", e => {
+                if (e.key === "Enter") creerCompteGoogle();
+            });
+            document.querySelectorAll("#linkUsername, #linkPassword").forEach(el => {
+                el.addEventListener("keydown", e => { if (e.key === "Enter") lierCompteGoogle(); });
+            });
+
+            fzGoogle.preparerBouton("signup");
+            const code = fzGoogle.codeRetour();
+            if (code === "nouveau") ouvrirEtapeGoogle();
+            else if (fzGoogle.MESSAGES[code]) showError(fzGoogle.MESSAGES[code]);
         });
     </script>
+    <script defer src="authGoogle.js?v=20260925"></script>
 </head>
 <body>
 
@@ -433,44 +622,80 @@
 
     <main class="auth-main">
         <div class="auth-card">
-            <p class="card-eyebrow">Rejoindre la ligue</p>
-            <h1 class="card-title">Créer un compte</h1>
-            <p class="card-subtitle">Créez votre compte pour participer à votre ligue fantasy NHL.</p>
+            <p class="card-eyebrow" id="cardEyebrow">Rejoindre la ligue</p>
+            <h1 class="card-title" id="cardTitle">Créer un compte</h1>
+            <p class="card-subtitle" id="cardSubtitle">Créez votre compte pour participer à votre ligue fantasy NHL.</p>
 
             <div id="errorMsg" class="msg msg-error" role="alert"></div>
             <div id="successMsg" class="msg msg-success" role="status"></div>
 
-            <div class="form-group">
-                <label class="form-label" for="newUsername">Nom d'utilisateur</label>
-                <input class="form-input" type="text" id="newUsername" placeholder="3–20 caractères, lettres et chiffres" autocomplete="username" required>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="newPassword">Mot de passe</label>
-                <input class="form-input" type="password" id="newPassword" placeholder="Au moins 6 caractères" autocomplete="new-password" required>
-                <div class="pw-requirements">
-                    <span class="pw-req" id="req-length">6 caractères min.</span>
-                    <span class="pw-req" id="req-number">1 chiffre</span>
+            <!-- Inscription classique, précédée du raccourci Google. -->
+            <div id="classicStep">
+                <div id="googleBlock">
+                    <a id="googleBtn" class="btn-google" href="/auth/google?depuis=signup">
+                        <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                        <span class="btn-google-label">Continuer avec Google</span>
+                    </a>
+                    <div class="divider divider-top">ou</div>
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="newUsername">Nom d'utilisateur</label>
+                    <input class="form-input" type="text" id="newUsername" placeholder="3–20 caractères, lettres et chiffres" autocomplete="username" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="newPassword">Mot de passe</label>
+                    <input class="form-input" type="password" id="newPassword" placeholder="Au moins 6 caractères" autocomplete="new-password" required>
+                    <div class="pw-requirements">
+                        <span class="pw-req" id="req-length">6 caractères min.</span>
+                        <span class="pw-req" id="req-number">1 chiffre</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="confirmPassword">Confirmer le mot de passe</label>
+                    <input class="form-input" type="password" id="confirmPassword" placeholder="Répétez votre mot de passe" autocomplete="new-password" required>
+                </div>
+
+                <button id="signupBtn" class="btn-submit" onclick="signup()">Créer mon compte</button>
             </div>
 
-            <div class="form-group">
-                <label class="form-label" for="confirmPassword">Confirmer le mot de passe</label>
-                <input class="form-input" type="password" id="confirmPassword" placeholder="Répétez votre mot de passe" autocomplete="new-password" required>
+            <!-- Retour de Google sans compte Fantazy : choisir un nom, ou lier
+                 un compte existant. Affiché par ?google=nouveau. -->
+            <div id="googleCreate" hidden>
+                <div class="form-group">
+                    <label class="form-label" for="googleUsername">Nom d'utilisateur</label>
+                    <input class="form-input" type="text" id="googleUsername" maxlength="20" placeholder="3–20 caractères, lettres et chiffres" autocomplete="username" required>
+                    <span class="form-hint">Lettres, chiffres et underscores. Il ne pourra pas être changé.</span>
+                </div>
+                <button id="googleCreateBtn" class="btn-submit" onclick="creerCompteGoogle()">Créer mon compte</button>
+                <p class="switch-note">Vous avez déjà un compte Fantazy ?
+                    <button type="button" class="link-btn" onclick="afficherEtapeGoogle('lier')">Le lier à Google</button></p>
             </div>
 
-            <button id="signupBtn" class="btn-submit" onclick="signup()">Créer mon compte</button>
+            <div id="googleLink" hidden>
+                <div class="form-group">
+                    <label class="form-label" for="linkUsername">Nom d'utilisateur</label>
+                    <input class="form-input" type="text" id="linkUsername" placeholder="Votre nom d'utilisateur" autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="linkPassword">Mot de passe</label>
+                    <input class="form-input" type="password" id="linkPassword" placeholder="Votre mot de passe" autocomplete="current-password" required>
+                </div>
+                <button id="googleLinkBtn" class="btn-submit" onclick="lierCompteGoogle()">Lier et se connecter</button>
+                <p class="switch-note">Pas encore de compte ?
+                    <button type="button" class="link-btn" onclick="afficherEtapeGoogle('creer')">Créer un nouveau compte</button></p>
+            </div>
 
-            <p class="consent-note">
+            <p class="consent-note" id="consentNote">
                 En créant un compte, vous acceptez les
                 <a href="conditions.html">conditions d'utilisation</a> et la
                 <a href="confidentialite.html">politique de confidentialité</a>.
                 Fantazy est gratuit et sans lien avec la LNH.
             </p>
 
-            <div class="divider">ou</div>
-
-            <p class="login-link">Déjà un compte ? <a href="login.html">Se connecter</a></p>
+            <p class="login-link" id="loginLink">Déjà un compte ? <a href="login.html">Se connecter</a></p>
         </div>
     </main>
 

@@ -40,6 +40,7 @@ const { creerPoolStore } = require("./services/poolStore.js");
 const { creerDiffusion } = require("./services/diffusion.js");
 const { creerPresence } = require("./services/presence.js");
 const routesIdentite = require("./routes/identity.js");
+const routesGoogle = require("./routes/google.js");
 const routesPools = require("./routes/pools.js");
 const routesRepechage = require("./routes/draft.js");
 const routesInstantane = require("./routes/instantDraft.js");
@@ -545,7 +546,19 @@ contexteRoutes.scoresSaison = async (poolData) => {
 };
 contexteRoutes.saisonCommencee = (fenetre) => seasonHasStarted(fenetre);
 
-routesIdentite.monter(app, contexteRoutes);
+const comptes = routesIdentite.monter(app, contexteRoutes);
+// Connexion avec Google : inactive (bouton masqué) tant que les deux clés ne
+// sont pas posées. Voir DEPLOY_RENDER.md pour la console Google Cloud.
+routesGoogle.monter(app, {
+    ...contexteRoutes,
+    identite: comptes,
+    secure: process.env.NODE_ENV === 'production',
+    config: {
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        redirectUri: process.env.GOOGLE_REDIRECT_URI
+    }
+});
 routesPools.monter(app, contexteRoutes);
 routesRepechage.monter(app, contexteRoutes);
 routesInstantane.monter(app, contexteRoutes);

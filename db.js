@@ -241,20 +241,48 @@ async function getAllUsers() {
     }));
 }
 
-async function getUserByUsername(username) {
-    const result = await pool.query(
-        'SELECT username, password, is_admin, avatar_url FROM users WHERE username = $1',
-        [username]
-    );
-    if (result.rows.length === 0) return null;
-
-    const row = result.rows[0];
+function compteDepuisLigne(row) {
     return {
         username: row.username,
         password: row.password,
         isAdmin: row.is_admin,
-        avatarUrl: row.avatar_url || ''
+        avatarUrl: row.avatar_url || '',
+        googleSub: row.google_sub || null
     };
+}
+
+async function getUserByUsername(username) {
+    const result = await pool.query(
+        'SELECT username, password, is_admin, avatar_url, google_sub FROM users WHERE username = $1',
+        [username]
+    );
+    return result.rows.length === 0 ? null : compteDepuisLigne(result.rows[0]);
+}
+
+/** Le compte rattaché à un identifiant Google (`sub`), ou null. */
+async function getUserByGoogleSub(googleSub) {
+    const result = await pool.query(
+        'SELECT username, password, is_admin, avatar_url, google_sub FROM users WHERE google_sub = $1',
+        [googleSub]
+    );
+    return result.rows.length === 0 ? null : compteDepuisLigne(result.rows[0]);
+}
+
+/**
+ * Rattache un compte Google à un compte existant.
+ *
+ * Ne remplace jamais un rattachement différent : renvoie false si le compte
+ * est déjà lié à un autre compte Google. L'index unique refuse, lui, qu'un
+ * même compte Google soit lié à deux comptes Fantazy.
+ */
+async function linkGoogleAccount(username, googleSub) {
+    const result = await pool.query(
+        `UPDATE users SET google_sub = $2
+          WHERE username = $1 AND (google_sub IS NULL OR google_sub = $2)
+          RETURNING username`,
+        [username, googleSub]
+    );
+    return result.rowCount > 0;
 }
 
 async function updateUserAvatar(username, avatarUrl) {
@@ -264,11 +292,11 @@ async function updateUserAvatar(username, avatarUrl) {
     );
 }
 
-async function createUser(username, hashedPassword, isAdmin = false) {
+async function createUser(username, hashedPassword, isAdmin = false, googleSub = null) {
     try {
         const result = await pool.query(
-            'INSERT INTO users (username, password, is_admin) VALUES ($1, $2, $3) RETURNING username, is_admin',
-            [username, hashedPassword, isAdmin]
+            'INSERT INTO users (username, password, is_admin, google_sub) VALUES ($1, $2, $3, $4) RETURNING username, is_admin',
+            [username, hashedPassword, isAdmin, googleSub]
         );
         return {
             username: result.rows[0].username,
@@ -1337,6 +1365,8 @@ module.exports = {
     // Users
     getAllUsers,
     getUserByUsername,
+    getUserByGoogleSub,
+    linkGoogleAccount,
     createUser,
     deleteUser,
     updateUserAvatar,

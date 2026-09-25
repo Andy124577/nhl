@@ -63,13 +63,24 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
 
 
 (function () {
-    const BASE_TITLE = "Draft Actif";
+    // Le titre de l'onglet suit le repêchage : « Votre tour dans 4 choix »,
+    // recalculé à chaque choix par refreshTurnAlert(). Un onglet en arrière-
+    // plan dit donc où l'on en est sans qu'il faille revenir sur la page.
+    const TITRE_PAGE = document.title;
+    let titreTour = TITRE_PAGE;
     let flashTimer = null;
     let wasMyTurn = false;
 
+    function titreSelonTour(hasData, myTurn, done, away) {
+        if (!hasData) return TITRE_PAGE;
+        if (done || away === -1) return "✓ Vos choix sont faits";
+        if (myTurn) return "🎯 C'est votre tour !";
+        return `Votre tour dans ${away} choix`;
+    }
+
     function stopTitleFlash() {
         if (flashTimer) { clearInterval(flashTimer); flashTimer = null; }
-        document.title = BASE_TITLE;
+        document.title = titreTour;
     }
 
     function startTitleFlash() {
@@ -77,7 +88,7 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
         let on = true;
         document.title = "🎯 À vous !";
         flashTimer = setInterval(function () {
-            document.title = on ? BASE_TITLE : "🎯 À vous !";
+            document.title = on ? titreTour : "🎯 À vous !";
             on = !on;
         }, 1000);
     }
@@ -389,6 +400,9 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
             }
         }
         if (header) header.classList.toggle("is-my-turn", !!(myTurn && !done));
+
+        titreTour = titreSelonTour(hasData, myTurn, done, away);
+        if (!flashTimer) document.title = titreTour;
 
         if (myTurn && !done) {
             if (!wasMyTurn) {

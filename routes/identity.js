@@ -43,7 +43,9 @@ function monter(app, ctx) {
     async function verifier(username, password) {
         if (!username || !password) return null;
         const compte = await lireCompte(username);
-        if (!compte) {
+        // Un compte ouvert par Google n'a pas de mot de passe : aucun mot de
+        // passe ne doit l'ouvrir, pas même une chaîne vide.
+        if (!compte || !compte.password) {
             // Comparaison malgré tout : sans elle, un compte inexistant
             // répondrait nettement plus vite qu'un mot de passe faux, ce qui
             // suffit à énumérer les comptes.
@@ -52,6 +54,25 @@ function monter(app, ctx) {
         }
         const correspond = await bcrypt.compare(String(password), compte.password);
         return correspond ? compte : null;
+    }
+
+    /**
+     * Confirme l'identité avant un geste lourd (export, suppression).
+     *
+     * Compte à mot de passe : le mot de passe. Compte ouvert par Google : il
+     * n'y a rien à redemander, on exige alors le nom du compte retapé — une
+     * barrière contre le geste réflexe, à défaut d'une preuve de possession.
+     */
+    async function confirmer(req) {
+        const compte = await lireCompte(req.auth.username);
+        if (compte && !compte.password) {
+            const confirmation = typeof req.body?.confirmation === 'string' ? req.body.confirmation.trim() : '';
+            return confirmation === compte.username
+                ? { compte }
+                : { message: "Le nom d'utilisateur saisi ne correspond pas." };
+        }
+        const verifie = await verifier(req.auth.username, req.body?.password);
+        return verifie ? { compte: verifie } : { message: "Mot de passe incorrect." };
     }
 
     /** L'identifiant relationnel du compte, nécessaire aux nouvelles tables. */
@@ -196,9 +217,13 @@ function monter(app, ctx) {
         if (!req.auth) return res.json({ authenticated: false });
 
         let avatarUrl = req.auth.avatarUrl || '';
+        let hasPassword = true;
         try {
             const compte = await lireCompte(req.auth.username);
-            if (compte) avatarUrl = compte.avatarUrl || '';
+            if (compte) {
+                avatarUrl = compte.avatarUrl || '';
+                hasPassword = !!compte.password;
+            }
         } catch { /* l'avatar est cosmétique : son échec n'invalide pas la session */ }
 
         res.json({
@@ -206,6 +231,9 @@ function monter(app, ctx) {
             username: req.auth.username,
             isAdmin: req.auth.isAdmin,
             avatarUrl,
+            // Faux pour un compte ouvert par Google : l'export et la
+            // suppression demandent alors le nom du compte, pas un mot de passe.
+            hasPassword,
             // Non nul quand une administration est en train de dépanner sous
             // cette identité : c'est ce qui permet à la page de garder le menu
             // de bascule et d'offrir le retour.
@@ -221,8 +249,8 @@ function monter(app, ctx) {
      */
     app.post('/account/export', auth.requireAuth, async (req, res) => {
         try {
-            const compte = await verifier(req.auth.username, req.body?.password);
-            if (!compte) return res.status(401).json({ message: "Mot de passe incorrect." });
+            const { compte, message } = await confirmer(req);
+            if (!compte) return res.status(401).json({ message });
 
             const username = req.auth.username;
             const tousLesPools = await store.lireTous();
@@ -257,7 +285,7 @@ function monter(app, ctx) {
 
             res.json({
                 genereLe: new Date().toISOString(),
-                compte: { username, avatarUrl: compte.avatarUrl || '' },
+                compte: { username, avatarUrl: compte.avatarUrl || '', connexionGoogle: !!compte.googleSub },
                 pools,
                 notifications
             });
@@ -279,8 +307,8 @@ function monter(app, ctx) {
      */
     app.post('/account/delete', auth.requireAuth, async (req, res) => {
         try {
-            const compte = await verifier(req.auth.username, req.body?.password);
-            if (!compte) return res.status(401).json({ message: "Mot de passe incorrect." });
+            const { compte, message } = await confirmer(req);
+            if (!compte) return res.status(401).json({ message });
 
             const username = req.auth.username;
             const identifiant = usePostgres ? await db.getUserId(username) : username;

@@ -873,7 +873,10 @@ function navbarBaseUrl() {
  * (ex. mauvais mot de passe) : retourner une chaîne = message d'erreur.
  */
 function fzModal({ title, bodyHTML, confirmLabel = 'Confirmer', cancelLabel = 'Annuler',
-                   danger = false, password = false, onSubmit = null }) {
+                   danger = false, password = false, confirmation = false, onSubmit = null }) {
+    // `confirmation` : champ texte où retaper son nom d'utilisateur, pour les
+    // comptes ouverts par Google, qui n'ont pas de mot de passe à redemander.
+    const champ = password || confirmation;
     return new Promise(resolve => {
         const overlay = document.createElement('div');
         overlay.className = 'fz-modal';
@@ -889,8 +892,12 @@ function fzModal({ title, bodyHTML, confirmLabel = 'Confirmer', cancelLabel = 'A
                     ${password ? `
                         <input type="password" class="fz-modal-input"
                                autocomplete="current-password"
-                               placeholder="Votre mot de passe">
-                        <div class="fz-modal-error" aria-live="polite"></div>` : ''}
+                               placeholder="Votre mot de passe">` : ''}
+                    ${confirmation ? `
+                        <input type="text" class="fz-modal-input"
+                               autocomplete="off" autocapitalize="off" spellcheck="false"
+                               placeholder="Votre nom d'utilisateur">` : ''}
+                    ${champ ? '<div class="fz-modal-error" aria-live="polite"></div>' : ''}
                 </div>
                 <div class="fz-modal-footer">
                     <button class="fz-modal-btn secondary" data-act="cancel">${cancelLabel}</button>
@@ -914,9 +921,11 @@ function fzModal({ title, bodyHTML, confirmLabel = 'Confirmer', cancelLabel = 'A
         };
 
         const submit = async () => {
-            const value = password ? (input.value || '') : true;
-            if (password && !value) {
-                errorBox.textContent = 'Veuillez saisir votre mot de passe.';
+            const value = champ ? (input.value || '') : true;
+            if (champ && !value) {
+                errorBox.textContent = password
+                    ? 'Veuillez saisir votre mot de passe.'
+                    : "Veuillez saisir votre nom d'utilisateur.";
                 return;
             }
             if (!onSubmit) return close(value);
@@ -957,9 +966,30 @@ function fzNotice(title, bodyHTML, danger = false) {
     });
 }
 
+/**
+ * Faux pour un compte ouvert par Google : il n'a pas de mot de passe, et la
+ * confirmation se fait en retapant son nom d'utilisateur. En cas de doute
+ * (serveur injoignable), on suppose un mot de passe, le cas le plus courant.
+ */
+async function compteAMotDePasse() {
+    try {
+        const res = await fetch(`${navbarBaseUrl()}/session`, { cache: 'no-store' });
+        const session = await res.json();
+        return session.hasPassword !== false;
+    } catch {
+        return true;
+    }
+}
+
+/** Le corps envoyé à /account/export et /account/delete. */
+function corpsConfirmation(username, motDePasse, valeur) {
+    return motDePasse ? { username, password: valeur } : { username, confirmation: valeur };
+}
+
 async function exportMyData() {
     const username = localStorage.getItem('username');
     if (!username) return;
+    const motDePasse = await compteAMotDePasse();
 
     await fzModal({
         title: 'Télécharger mes données',
@@ -967,15 +997,18 @@ async function exportMyData() {
             <p>Vous obtiendrez un fichier <strong>JSON</strong> contenant votre compte
             et vos participations aux pools.</p>
             <p>Votre mot de passe n'est jamais inclus dans l'export.</p>
-            <p>Confirmez votre mot de passe pour continuer :</p>`,
+            <p>${motDePasse
+                ? 'Confirmez votre mot de passe pour continuer :'
+                : "Saisissez votre nom d'utilisateur pour continuer :"}</p>`,
         confirmLabel: 'Télécharger',
-        password: true,
-        onSubmit: async (motDePasse) => {
+        password: motDePasse,
+        confirmation: !motDePasse,
+        onSubmit: async (valeur) => {
             try {
                 const res = await fetch(`${navbarBaseUrl()}/account/export`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password: motDePasse })
+                    body: JSON.stringify(corpsConfirmation(username, motDePasse, valeur))
                 });
                 const data = await res.json();
                 if (!res.ok) return data.message || 'Export impossible.';
@@ -1024,18 +1057,22 @@ async function deleteMyAccount() {
     if (!confirme) return;
 
     // Étape 2 : confirmation d'identité.
+    const motDePasse = await compteAMotDePasse();
     const supprime = await fzModal({
         title: 'Confirmer la suppression',
-        bodyHTML: '<p>Saisissez votre mot de passe pour supprimer définitivement votre compte.</p>',
+        bodyHTML: motDePasse
+            ? '<p>Saisissez votre mot de passe pour supprimer définitivement votre compte.</p>'
+            : "<p>Saisissez votre nom d'utilisateur pour supprimer définitivement votre compte.</p>",
         confirmLabel: 'Supprimer définitivement',
         danger: true,
-        password: true,
-        onSubmit: async (motDePasse) => {
+        password: motDePasse,
+        confirmation: !motDePasse,
+        onSubmit: async (valeur) => {
             try {
                 const res = await fetch(`${navbarBaseUrl()}/account/delete`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password: motDePasse })
+                    body: JSON.stringify(corpsConfirmation(username, motDePasse, valeur))
                 });
                 const data = await res.json();
                 if (!res.ok) return data.message || 'Suppression impossible.';

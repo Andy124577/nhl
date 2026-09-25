@@ -16,6 +16,12 @@ services:
         # Set this manually in Render Dashboard (same value as your local .env).
         # Without it, /nhl-news returns an empty list and storiesCard shows no news.
         sync: false
+      - key: GOOGLE_CLIENT_ID
+        # "Continuer avec Google" on login/signup. Set both in Render Dashboard;
+        # the button stays hidden until they are. Setup: DEPLOY_RENDER.md.
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
       - key: ANTHROPIC_API_KEY
         # Set this manually in Render Dashboard. Used to check uploaded avatars and
         # pool images (services/moderationImage.js). Without it, uploads are still

@@ -319,6 +319,21 @@ Variables déjà configurées:
 - `NODE_ENV=production`
 - `DATABASE_URL` (automatique depuis la base de données)
 
+### Connexion avec Google
+
+Le bouton « Continuer avec Google » reste masqué tant que ces deux variables ne sont pas posées.
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → créez (ou choisissez) un projet.
+2. **APIs & Services → OAuth consent screen** : type *External*, nom de l'application « Fantazy », courriel d'assistance. Portées : `openid`, `email`, `profile` (aucune vérification Google requise pour ces trois). Passez l'application en **production** pour que tout le monde puisse se connecter, pas seulement les comptes de test.
+3. **APIs & Services → Credentials → Create credentials → OAuth client ID** : type *Web application*.
+   - **Authorized redirect URIs** : `https://<votre-service>.onrender.com/auth/google/callback` (et votre domaine personnalisé s'il y en a un). Pour le développement : `http://127.0.0.1:3000/auth/google/callback`.
+4. Dans Render → **Environment** :
+   - `GOOGLE_CLIENT_ID` = l'identifiant du client (`….apps.googleusercontent.com`)
+   - `GOOGLE_CLIENT_SECRET` = le secret du client
+   - `GOOGLE_REDIRECT_URI` *(facultatif)* : à poser seulement si l'adresse de retour déduite de la requête ne convient pas (proxy inhabituel). Elle doit alors correspondre exactement à celle déclarée chez Google.
+
+La migration `0009_google_auth.sql` s'applique seule au démarrage : elle ajoute la colonne `users.google_sub` et rend le mot de passe facultatif (un compte créé par Google n'en a pas).
+
 ### Custom Domain
 
 Pour utiliser votre propre domaine:
