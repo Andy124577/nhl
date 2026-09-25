@@ -337,7 +337,9 @@ body {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(var(--primary-rgb),.15);
-  background: var(--card);
+  /* La couleur seule : le raccourci `background` remettait la flèche du
+     select en mosaïque (background-repeat: repeat) au focus. */
+  background-color: var(--card);
 }
 .filter-group select {
   appearance: none;

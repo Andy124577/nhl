@@ -333,6 +333,75 @@ body.fz-stats tbody tr:hover .player-photo img.face {
 }
 body.fz-stats .player-photo img.logo { border-color: var(--fzs-border-input); }
 
+/* ==================== TOUS LES JOUEURS — chiffres et identité ==================== */
+/* Les chiffres passent en Barlow Condensed, déjà chargée pour la fiche du
+   joueur — la même famille que le tableau de la salle de repêchage — et en
+   chiffres tabulaires pour s'aligner d'une rangée à l'autre. 'Oswald',
+   demandée plus haut, n'est pas chargée sur cette page : le rang et les
+   points retombaient sur la police système. */
+body.fz-stats #playerTable tbody td:not(.player-col) {
+  font-family: 'Barlow Condensed', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 1.08rem;
+  color: var(--fzs-text);
+}
+body.fz-stats #playerTable tbody td.rank-col { font-size: 1rem; color: var(--fzs-text-fainter); }
+body.fz-stats #playerTable tbody tr:nth-child(-n+3) td.rank-col { color: var(--fzs-accent); }
+body.fz-stats #playerTable tbody td.points-column {
+  font-weight: 800;
+  font-size: 1.32rem;
+  color: var(--fzs-ink);
+}
+/* La colonne triée se suit du regard jusqu'en bas, pas seulement dans
+   l'en-tête (marquerColonneTriee, index.js). */
+body.fz-stats #playerTable tbody td.is-sorted-col {
+  background: color-mix(in srgb, var(--fzs-ink) 4%, transparent);
+  color: var(--fzs-ink);
+}
+
+body.fz-stats #playerTable .player-name { font-size: .95rem; color: var(--fzs-ink); }
+body.fz-stats .player-meta { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+body.fz-stats .player-team {
+  font: 700 .74rem/1.2 'Barlow Condensed', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  letter-spacing: .1em;
+  color: var(--fzs-text-faint);
+}
+/* Pastilles de position : mêmes couleurs que draftDesk.css (.fzd-pos-tag),
+   pour qu'un AD de la salle de repêchage reste un AD ici. */
+body.fz-stats .pos-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--pos-bg, var(--fzs-tile));
+  color: var(--pos-fg, var(--fzs-text));
+  font: 700 .7rem/1.3 'Barlow Condensed', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  letter-spacing: .08em;
+  text-decoration: none;
+  cursor: inherit;
+}
+body.fz-stats .pos-tag[data-pos="C"] { --pos-bg: #dbe9fb; --pos-fg: #1b4d92; }
+body.fz-stats .pos-tag[data-pos="L"] { --pos-bg: #e8ddfa; --pos-fg: #5a2f9e; }
+body.fz-stats .pos-tag[data-pos="R"] { --pos-bg: #fbdcee; --pos-fg: #93206a; }
+body.fz-stats .pos-tag[data-pos="D"] { --pos-bg: #fde3cf; --pos-fg: #8f4d0e; }
+body.fz-stats .pos-tag[data-pos="G"] { --pos-bg: #d1efec; --pos-fg: #0d5f59; }
+html[data-theme="dark"] body.fz-stats .pos-tag[data-pos="C"] { --pos-bg: #1e3a4d; --pos-fg: #7fc4e8; }
+html[data-theme="dark"] body.fz-stats .pos-tag[data-pos="L"] { --pos-bg: #1f3b2e; --pos-fg: #7fd8a6; }
+html[data-theme="dark"] body.fz-stats .pos-tag[data-pos="R"] { --pos-bg: #3d2c14; --pos-fg: #e0b466; }
+html[data-theme="dark"] body.fz-stats .pos-tag[data-pos="D"] { --pos-bg: #3a2030; --pos-fg: #e195bb; }
+html[data-theme="dark"] body.fz-stats .pos-tag[data-pos="G"] { --pos-bg: #2c2540; --pos-fg: #b3a6ee; }
+
+/* Téléphone : le logo remplace déjà la photo (index.css) et nomme le club,
+   son sigle ferait doublon dans une colonne étroite. */
+@media (max-width: 450px) {
+  body.fz-stats .player-team { display: none; }
+  body.fz-stats #playerTable tbody td:not(.player-col) { font-size: 1rem; }
+  body.fz-stats #playerTable tbody td.points-column { font-size: 1.15rem; }
+}
+
 /* ==================== PAGINATION ==================== */
 body.fz-stats .stats-page-info { color: var(--fzs-text-muted); }
 body.fz-stats .stats-show-more {

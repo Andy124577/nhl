@@ -242,11 +242,11 @@ function updateTable() {
  */
 const SKATER_COLUMNS = [
     { label: '#', cls: 'rank-col', title: 'Rang', w: '6%' },
-    { label: 'Joueur', cls: 'player-col', w: '58%' },
-    { label: 'PJ', sort: 'gamesPlayed', title: 'Parties jouées', w: '9%' },
-    { label: 'B', sort: 'goals', title: 'Buts', w: '9%' },
-    { label: 'A', sort: 'assists', title: 'Passes décisives', w: '9%' },
-    { label: 'PTS', sort: 'points', title: 'Points', cls: 'points-column', w: '9%' }
+    { label: 'Joueur', cls: 'player-col', w: '50%' },
+    { label: 'PJ', sort: 'gamesPlayed', title: 'Parties jouées', w: '11%' },
+    { label: 'B', sort: 'goals', title: 'Buts', w: '11%' },
+    { label: 'A', sort: 'assists', title: 'Passes décisives', w: '11%' },
+    { label: 'PTS', sort: 'points', title: 'Points', cls: 'points-column', w: '11%' }
 ];
 
 /**
@@ -326,12 +326,13 @@ async function populatePlayerTable(t) {
         const g = d && i ? `\n            <div class="player-photo">\n                <img src="${d}" alt="" class="face">\n                <img src="${i}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n            </div>\n            ` : "",
             p = n?.position || t.positionCode || "N/A",
             y = document.createElement("tr");
-        y.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${g}<div class="player-ident"><span class="player-name">${a}${injBadge(a, o)}${watchBadge(a, o)}</span><span class="player-pos">${p}</span></div></div></td>\n            <td>${c}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n            <td class="points-column">${h}</td>\n        `;
+        y.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${g}<div class="player-ident"><span class="player-name">${a}${injBadge(a, o)}${watchBadge(a, o)}</span>${metaJoueur(o, p)}</div></div></td>\n            <td>${c}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n            <td class="points-column">${h}</td>\n        `;
         // Une fiche de la trousse sans identifiant LNH n'a pas de fiche à ouvrir.
         t.playerId && makeRowInteractive(y, () => showCareerStats(t.playerId, t.skaterFullName, !1),
             `Voir la fiche de ${a}`);
         tbody.appendChild(y)
     });
+    marquerColonneTriee(e);
     renderStatsPagination(t.length)
 }
 
@@ -347,6 +348,30 @@ function injBadge(playerName, teamAbbrev) {
 /** Pastille « À surveiller » de la trousse, même principe (draft-watch.js). */
 function watchBadge(playerName, teamAbbrev) {
     return typeof watchBadgeHTML === 'function' ? watchBadgeHTML(playerName, teamAbbrev) : '';
+}
+
+/**
+ * Ligne sous le nom : le club, puis la position en pastille. Mêmes libellés
+ * que la salle de repêchage (draftDesk.js) — la LNH écrit « R », un pooler
+ * lit « AD », et un même joueur doit se lire pareil d'une page à l'autre.
+ */
+const POSITIONS_FR = {
+    C: ['C', 'Centre'], L: ['AG', 'Ailier gauche'], R: ['AD', 'Ailier droit'],
+    D: ['D', 'Défenseur'], G: ['G', 'Gardien']
+};
+
+function metaJoueur(equipe, position) {
+    const pos = POSITIONS_FR[position];
+    const club = equipe && "null" !== equipe ? `<span class="player-team">${equipe}</span>` : "";
+    const pastille = pos ? `<abbr class="pos-tag" data-pos="${position}" title="${pos[1]}">${pos[0]}</abbr>` : "";
+    return club || pastille ? `<span class="player-meta">${club}${pastille}</span>` : "";
+}
+
+/** Le tri se lit dans la colonne entière, pas seulement dans son en-tête. */
+function marquerColonneTriee(table) {
+    const th = table.querySelector("thead th.is-sorted");
+    if (!th) return;
+    table.querySelectorAll("tbody tr").forEach(tr => tr.cells[th.cellIndex]?.classList.add("is-sorted-col"));
 }
 
 /**
@@ -455,12 +480,13 @@ function populateGoalieTable(t) {
         const srcG = !modeProjection() && statsCourantesPretes() ? n : t;
         o = nombreStat(srcG && srcG.gamesPlayed), r = nombreStat(srcG && srcG.wins),
         d = nombreStat(srcG && srcG.losses), i = nombreStat(srcG && srcG.otLosses),
-        // Sans partie jouée, pas de pourcentage : « — », pas 0.000.
-        c = o > 0 ? nombreStat(srcG && srcG.savePct) : null, u = nombreStat(srcG && srcG.shutouts),
+        // Sans partie jouée, ou sans pourcentage connu (0 = donnée absente,
+        // voir lib/savePct.js), pas de pourcentage : « — », pas 0.000.
+        c = o > 0 && nombreStat(srcG && srcG.savePct) > 0 ? nombreStat(srcG.savePct) : null, u = nombreStat(srcG && srcG.shutouts),
         m = valeurDeTri(t, a, t.playerId, "points", !0);
         const h = s && l ? `<div class="player-photo">\n                    <img src="${s}" alt="${a}" class="face">\n                    <img src="${l}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n               </div>` : "",
             g = document.createElement("tr");
-        g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${h}<div class="player-ident"><span class="player-name">${a}${injBadge(a, n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}${watchBadge(a, n?.teamAbbrev || t.teamAbbrevs)}</span></div></div></td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c != null ? c.toFixed(3) : "—"}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
+        g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${h}<div class="player-ident"><span class="player-name">${a}${injBadge(a, n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}${watchBadge(a, n?.teamAbbrev || t.teamAbbrevs)}</span>${metaJoueur(n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}</div></div></td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c != null ? c.toFixed(3) : "—"}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
         t.playerId && makeRowInteractive(g, () => showCareerStats(t.playerId, t.goalieFullName, !0),
             `Voir la fiche de ${a}`);
         tbody.appendChild(g)
