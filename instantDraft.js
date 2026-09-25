@@ -24,6 +24,10 @@
    Le bouton se branche tout seul sur n'importe quel élément portant
    `data-instant-draft`, pour que les trois pages qui l'affichent
    (Accueil, Mes pools, Rejoindre) n'aient qu'à poser le balisage.
+
+   L'accueil sans pool montre plutôt une carte (`data-instant-card`) :
+   les sièges de la file en ronds, et un bouton unique qui change de
+   rôle selon l'état. Voir rendreCarte().
    ============================================================ */
 (function () {
     const BASE_URL = window.location.hostname.includes('localhost')
@@ -71,8 +75,18 @@
     const membres = pool => Object.values((pool && pool.teams) || {})
         .flatMap(equipe => (((equipe && equipe.members) || []).slice()));
 
-    const repechageCommence = pool =>
-        !!(pool && Array.isArray(pool.draftOrder) && pool.draftOrder.length > 0);
+    /**
+     * Combien attendent dans ce pool.
+     *
+     * Pour un pool dont on n'est pas membre, /draft ne livre qu'un résumé
+     * public : le nombre d'inscrits, jamais leurs noms (lib/authz.js,
+     * resumePublic). Compter les noms donnait donc toujours zéro, et la
+     * file des autres paraissait vide.
+     */
+    const inscrits = pool => membres(pool).length || Number(pool && pool.participantCount) || 0;
+
+    const repechageCommence = pool => !!(pool && (pool.draftStarted === true ||
+        (Array.isArray(pool.draftOrder) && pool.draftOrder.length > 0)));
 
     const placesDuPool = pool => (pool && pool.maxPlayers) || JOUEURS_PAR_POOL;
 
@@ -118,16 +132,17 @@
                 situation: repechageCommence(pool) ? 'encours' : 'inscrit',
                 nom,
                 joueurs: membres(pool),
+                nombre: membres(pool).length,
                 places: placesDuPool(pool)
             };
         }
 
         const attente = pools
             .filter(([, pool]) => !repechageCommence(pool) &&
-                                  membres(pool).length > 0 &&
-                                  membres(pool).length < placesDuPool(pool))
+                                  inscrits(pool) > 0 &&
+                                  inscrits(pool) < placesDuPool(pool))
             .sort(([nomA, a], [nomB, b]) => {
-                const parRemplissage = membres(b).length - membres(a).length;
+                const parRemplissage = inscrits(b) - inscrits(a);
                 if (parRemplissage !== 0) return parRemplissage;
                 const dateA = Date.parse(a.createdAt || '') || 0;
                 const dateB = Date.parse(b.createdAt || '') || 0;
@@ -135,10 +150,12 @@
                 return nomA.localeCompare(nomB, 'fr');
             })[0];
 
-        if (!attente) return { situation: 'vide', nom: null, joueurs: [], places: JOUEURS_PAR_POOL };
+        if (!attente) return { situation: 'vide', nom: null, joueurs: [], nombre: 0, places: JOUEURS_PAR_POOL };
 
+        // `joueurs` est vide ici : les noms d'un pool dont on n'est pas
+        // membre ne sont pas publics. `nombre` dit combien attendent.
         const [nom, pool] = attente;
-        return { situation: 'libre', nom, joueurs: membres(pool), places: placesDuPool(pool) };
+        return { situation: 'libre', nom, joueurs: membres(pool), nombre: inscrits(pool), places: placesDuPool(pool) };
     }
 
     /* ==============================================================
@@ -198,7 +215,7 @@
 
     /** La phrase qui résume l'état de la file. */
     function resume(etat) {
-        const manque = Math.max(0, etat.places - etat.joueurs.length);
+        const manque = Math.max(0, etat.places - etat.nombre);
 
         if (etat.situation === 'inscrit') {
             return manque === 0
@@ -207,8 +224,8 @@
         }
 
         if (etat.situation === 'libre') {
-            const attendent = etat.joueurs.length > 1 ? 'attendent' : 'attend';
-            return `${pluriel(etat.joueurs.length, 'joueur')} ${attendent} déjà. ` +
+            const attendent = etat.nombre > 1 ? 'attendent' : 'attend';
+            return `${pluriel(etat.nombre, 'joueur')} ${attendent} déjà. ` +
                    `${pluriel(manque, 'place')} libre${manque > 1 ? 's' : ''}.`;
         }
 
@@ -287,33 +304,130 @@
 
         const panneau = panneauDe(bouton);
         panneau.classList.toggle('is-joined', dedans);
-        if (bouton.dataset.instantLayout === 'onboarding') {
-            const slots = Array.from({ length: etat.places }, (_, i) => {
-                const nom = etat.joueurs[i];
-                const moi = nom === utilisateur();
-                return `<li class="fzo-queue-seat${nom ? ' is-taken' : ' is-free'}${moi ? ' is-me' : ''}"><i aria-hidden="true"></i><span>${moi ? 'Toi' : nom ? echapper(nom) : 'Libre'}</span></li>`;
-            }).join('');
-            panneau.innerHTML = `<div class="fzo-queue-heading"><span>La file</span><span>${etat.joueurs.length} / ${etat.places} places</span></div>
-                <ul class="fzo-queue-seats">${slots}</ul>
-                <p class="fzid-resume" role="status">${echapper(resume(etat))}</p>${actions(etat)}`;
-            return;
-        }
         panneau.innerHTML = `
             <p class="fzid-resume">${echapper(resume(etat))}</p>
             ${etat.joueurs.length ? listeJoueurs(etat) : ''}
             ${actions(etat)}`;
     }
 
-    /** Tous les boutons de la page, à chaque changement de données. */
+    /* ==============================================================
+       LA CARTE (accueil)
+
+       Quatre sièges qui se remplissent sous les yeux, une ligne qui
+       compte, et un seul bouton dont le rôle suit l'état : entrer, sortir,
+       ou aller au repêchage. Le balisage vit dans la page
+       (`data-instant-card`) ; ici on ne fait que le tenir à jour.
+       ============================================================== */
+
+    /** Couleurs des sièges des autres joueurs ; le sien prend l'accent. */
+    const COULEURS_SIEGE = ['#2f7d5b', '#5b4a9e', '#c07a1f', '#2b6c9e', '#8a4b6e', '#3d7a80'];
+
+    /** Toujours la même couleur pour le même joueur, d'un rendu à l'autre. */
+    function couleurSiege(nom) {
+        let h = 0;
+        for (const c of String(nom)) h = (h * 31 + c.codePointAt(0)) >>> 0;
+        return COULEURS_SIEGE[h % COULEURS_SIEGE.length];
+    }
+
+    /** « MaxTremblay » → MT, « jerome_qa » → JQ, « Andy124577 » → AN. */
+    function initiales(nom) {
+        const mots = String(nom).replace(/([a-z])([A-Z])/g, '$1 $2').split(/[\s_.-]+/).filter(Boolean);
+        return (mots.length > 1 ? mots[0][0] + mots[1][0] : String(nom).slice(0, 2)).toUpperCase();
+    }
+
+    /** Siège d'un joueur dont le nom n'est pas public : une silhouette. */
+    const SILHOUETTE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="9" r="3.4"/>' +
+        '<path d="M5.5 19.5c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5"/></svg>';
+
+    function rendreCarte(carte, etat) {
+        const moi = utilisateur();
+        const occupes = Math.min(etat.nombre, etat.places);
+        const manque = etat.places - occupes;
+        const complet = etat.situation === 'encours' || (etat.situation === 'inscrit' && manque === 0);
+
+        // Siège par siège : réécrire toute la rangée à chaque évènement du
+        // socket relancerait l'animation des places encore libres.
+        const sieges = carte.querySelector('[data-instant-seats]');
+        if (sieges) {
+            while (sieges.children.length > etat.places) sieges.lastElementChild.remove();
+            while (sieges.children.length < etat.places) sieges.appendChild(document.createElement('li'));
+            Array.from(sieges.children).forEach((li, i) => {
+                const pris = i < occupes;
+                const nom = pris ? (etat.joueurs[i] || '') : '';
+                const estMoi = !!nom && nom === moi;
+                const signature = !pris ? '' : nom ? `${estMoi ? 'moi' : 'nom'}:${nom}` : `anonyme:${i}`;
+                if (li.dataset.siege === signature) return;
+                li.dataset.siege = signature;
+
+                if (!pris) {
+                    li.className = 'fzo-seat is-free';
+                    li.removeAttribute('title');
+                    li.style.removeProperty('--fzo-seat');
+                    li.innerHTML = '<span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span>';
+                    return;
+                }
+                li.className = `fzo-seat is-taken${estMoi ? ' is-me' : ''}`;
+                if (estMoi) li.style.removeProperty('--fzo-seat');
+                else li.style.setProperty('--fzo-seat', nom ? couleurSiege(nom) : COULEURS_SIEGE[i % COULEURS_SIEGE.length]);
+                if (nom) li.title = nom; else li.removeAttribute('title');
+                li.innerHTML = !nom
+                    ? `${SILHOUETTE}<span class="fzo-sr">Joueur en attente</span>`
+                    : `<span aria-hidden="true">${estMoi ? 'TOI' : echapper(initiales(nom))}</span>` +
+                      `<span class="fzo-sr">${estMoi ? 'Toi' : echapper(nom)}</span>`;
+            });
+        }
+
+        // Réécrite seulement si elle change : c'est une région `status`,
+        // chaque écriture serait relue par un lecteur d'écran.
+        const statut = carte.querySelector('[data-instant-status]');
+        const texte = complet
+            ? 'Complet — le repêchage commence !'
+            : `${occupes} / ${etat.places} joueurs · encore ${pluriel(manque, 'place')}`;
+        if (statut && statut.textContent !== texte) statut.textContent = texte;
+
+        // Pendant un appel, c'est occuper() qui tient le bouton.
+        const bouton = carte.querySelector('[data-instant-action]');
+        if (bouton && !bouton.classList.contains('is-loading')) {
+            const [action, libelle] = complet
+                ? ['aller', 'Aller au repêchage →']
+                : etat.situation === 'inscrit'
+                    ? ['quitter', 'Quitter']
+                    : ['rejoindre', 'Repêcher maintenant'];
+            bouton.dataset.instantAction = action;
+            if (etat.nom && action === 'aller') bouton.dataset.pool = etat.nom;
+            else delete bouton.dataset.pool;
+            if (bouton.textContent !== libelle) bouton.textContent = libelle;
+        }
+    }
+
+    /**
+     * Le repêchage est parti : ouvrir le salon de CE pool. repechage.html
+     * bascule seul vers la salle de sélection ; encore faut-il qu'il lise le
+     * bon pool, d'où les deux clés écrites avant de partir.
+     */
+    function allerAuRepechage(nomPool) {
+        if (nomPool) {
+            localStorage.setItem('activePool', nomPool);
+            localStorage.setItem('draftClan', nomPool);
+        }
+        window.location.href = 'repechage.html';
+    }
+
+    /** Toutes les cartes et tous les boutons de la page, à chaque changement de données. */
     function rendre() {
         const boutons = document.querySelectorAll('[data-instant-draft]');
-        if (!boutons.length) return;
+        const cartes = document.querySelectorAll('[data-instant-card]');
+        if (!boutons.length && !cartes.length) return;
+
+        const etat = lireEtat();
+        // La carte montre la file même à qui n'est pas connecté : son bouton
+        // l'emmènera à la connexion.
+        cartes.forEach(carte => rendreCarte(carte, etat));
 
         // Déconnecté, il n'y a pas de « toi » à situer dans la file : le
         // bouton garde son libellé et emmène à la page de connexion.
         if (!connecte()) return;
-
-        const etat = lireEtat();
         boutons.forEach(bouton => rendreBouton(bouton, etat));
     }
 
@@ -474,6 +588,16 @@
     // (poolNav.js et navbar.js construisent leurs blocs à l'exécution), et le
     // panneau, lui, est réécrit à chaque rafraîchissement.
     document.addEventListener('click', event => {
+        const carte = event.target.closest('[data-instant-action]');
+        if (carte) {
+            event.preventDefault();
+            const action = carte.dataset.instantAction;
+            if (action === 'quitter') quitter({ bouton: carte });
+            else if (action === 'aller') allerAuRepechage(carte.dataset.pool);
+            else rejoindre(carte);
+            return;
+        }
+
         const depart = event.target.closest('[data-instant-leave]');
         if (depart) {
             event.preventDefault();
@@ -496,7 +620,7 @@
      * chargement, et une file qui se remplit ressemblerait à une file morte.
      */
     function brancher() {
-        if (!document.querySelector('[data-instant-draft]')) return;
+        if (!document.querySelector('[data-instant-draft], [data-instant-card]')) return;
 
         rendre();
         if (window.FZPool && typeof window.FZPool.onData === 'function') {

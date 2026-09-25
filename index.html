@@ -80,7 +80,7 @@
     <link rel="stylesheet" href="accueil.css?v=20260922">
     <link rel="stylesheet" href="fzToday.css?v=20260920">
     <link rel="stylesheet" href="career-modal.css">
-    <link rel="stylesheet" href="accueil-dash.css?v=20260922">
+    <link rel="stylesheet" href="accueil-dash.css?v=20260925">
     <link rel="stylesheet" href="accueil-mobile.css?v=20260922">
     <link rel="stylesheet" href="demos.css">
     <!-- Landing des visiteurs (html.fz-anon) : remplace l'ancien héros
@@ -358,14 +358,31 @@
                     <h2 class="fzo-headline">Ton premier pool<br>commence ici</h2>
                     <p class="fzo-sub">Une partie en une minute, avec tes amis ou avec d’autres passionnés.</p>
                 </header>
-                <div class="fzo-start">
-                    <div class="fzo-start-copy">
-                        <span class="fzo-badge"><span aria-hidden="true">ϟ</span> Le plus rapide</span>
-                        <h3>Jouer maintenant</h3>
-                        <p>Pool rapide · 4 joueurs placés ensemble, rien à configurer</p>
+                <!-- Repêchage instantané : les sièges, la ligne d'état et le
+                     bouton suivent la file en direct (instantDraft.js,
+                     rendreCarte). Les quatre sièges vides sont posés ici pour
+                     que la carte ait sa taille finale avant le premier rendu. -->
+                <section class="fzo-start" data-instant-card aria-labelledby="fzoInstantTitle">
+                    <header class="fzo-start-head">
+                        <svg class="fzo-start-bolt" viewBox="0 0 24 24" aria-hidden="true"><polygon points="13,2 4,14 11,14 10,22 20,9 13,9"/></svg>
+                        <div class="fzo-start-copy">
+                            <h3 id="fzoInstantTitle">Repêchage instantané</h3>
+                            <p>Dès que les 4 places sont prises, le repêchage commence.</p>
+                        </div>
+                    </header>
+                    <div class="fzo-start-well">
+                        <div class="fzo-start-queue">
+                            <ul class="fzo-seats" data-instant-seats aria-label="Places du pool rapide">
+                                <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
+                                <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
+                                <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
+                                <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
+                            </ul>
+                            <p class="fzo-start-status" data-instant-status role="status">0 / 4 joueurs · encore 4 places</p>
+                        </div>
+                        <button type="button" class="fzo-start-button" data-instant-action="rejoindre">Repêcher maintenant</button>
                     </div>
-                    <button type="button" class="fzo-start-button" data-instant-draft data-instant-layout="onboarding"><span data-instant-label>Commencer</span><span aria-hidden="true"> →</span></button>
-                </div>
+                </section>
                 <div class="fzo-paths">
                     <a class="fzo-path" href="rejoindre-pool.html">
                         <span class="fzo-path-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 4a3 3 0 0 1 0 6M18 13a5 5 0 0 1 3 5v3"/></svg></span>
@@ -715,7 +732,7 @@
     <script defer src="accueil-carousel.js?v=20260915"></script>
     <script defer src="accueil-watch.js?v=20260922"></script>
     <script defer src="accueil-dash.js?v=20260922"></script>
-    <script defer src="instantDraft.js?v=20260922"></script>
+    <script defer src="instantDraft.js?v=20260925"></script>
     <script defer src="accueil-mobile.js?v=20260922"></script>
     <script defer src="accueil-season.js?v=20260922"></script>
     <script defer src="accueil-draft.js?v=20260923"></script>
