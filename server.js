@@ -22,7 +22,8 @@ const { FANTASY_SCORING, goaliePoolPoints, clubPoolPoints, computeTeamSeasonScor
     skaterFantasyPointsTonight, goalieFantasyPointsTonight } = require("./lib/scoring.js");
 const { generateSeasonSchedule, ensureStandingsEntry, lundiDepartSaison } = require("./lib/h2h.js");
 const instantDraft = require("./lib/instantDraft.js");
-const { NHL_CLUB_FULLNAME, diffRosterSnapshots, getTeamAbbreviationFromName } = require("./lib/roster.js");
+const { NHL_CLUB_FULLNAME, diffRosterSnapshots, trimTransactionLog, getTeamAbbreviationFromName } = require("./lib/roster.js");
+const { savePctFromSeasons } = require("./lib/savePct.js");
 const { getStatsRefreshStatus } = require("./lib/statsCache.js");
 const { currentSeasonId, currentSeasonString, getSeasonWindow, seasonHasStarted,
     seasonPhase, statsSeasonId, statsSeasonString, cachedStatsSeasonString,
@@ -876,19 +877,12 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
                     wins: (combined.wins || 0) + (entry.wins || 0),
                     losses: (combined.losses || 0) + (entry.losses || 0),
                     shutouts: (combined.shutouts || 0) + (entry.shutouts || 0),
-                    otLosses: (combined.otLosses || 0) + (entry.otLosses || 0),
-                    // Track saves and shotsAgainst for correct SV% calculation
-                    saves: (combined.saves || 0) + (entry.saves || 0),
-                    shotsAgainst: (combined.shotsAgainst || 0) + (entry.shotsAgainst || 0)
+                    otLosses: (combined.otLosses || 0) + (entry.otLosses || 0)
                 };
             }, {});
 
-            // Compute savePct from combined saves/shotsAgainst for traded goalies
-            if (seasonStats.shotsAgainst > 0) {
-                seasonStats.savePct = seasonStats.saves / seasonStats.shotsAgainst;
-            } else {
-                seasonStats.savePct = 0;
-            }
+            // Un gardien échangé a une ligne par club : pondérée par les tirs.
+            seasonStats.savePct = savePctFromSeasons(nhlSeasonEntries) ?? 0;
         } else {
             // Fallback: try featuredStats (NHL API's explicit current-season stats)
             const featured = data.featuredStats;
@@ -907,13 +901,8 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
                         losses: sub.losses || 0,
                         shutouts: sub.shutouts || 0,
                         otLosses: sub.otLosses || 0,
-                        saves: sub.saves || 0,
-                        shotsAgainst: sub.shotsAgainst || 0,
-                        savePct: sub.savePct || sub.savePercentage || 0
+                        savePct: savePctFromSeasons([sub]) ?? 0
                     };
-                    if (seasonStats.shotsAgainst > 0) {
-                        seasonStats.savePct = seasonStats.saves / seasonStats.shotsAgainst;
-                    }
                 }
             }
 
@@ -954,12 +943,7 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
             losses = seasonStats.losses || 0;
             shutouts = seasonStats.shutouts || 0;
             otLosses = seasonStats.otLosses || 0;
-
-            // Try savePct from API, or savePercentage, or compute from saves/shotsAgainst
-            savePct = seasonStats.savePct || seasonStats.savePercentage || 0;
-            if (!savePct && seasonStats.saves && seasonStats.shotsAgainst && seasonStats.shotsAgainst > 0) {
-                savePct = seasonStats.saves / seasonStats.shotsAgainst;
-            }
+            savePct = seasonStats.savePct || 0;
 
             // Même ligne que le classement et les deux pages : la formule
             // vit dans lib/scoring.js, plus ici (voir goaliePoolPoints).
@@ -2418,6 +2402,7 @@ app.get('/nhl-news', async (req, res) => {
 // aucun alignement), et rien n'est rétroactif — le journal ne commence
 // qu'à la première photo, d'où le drapeau `tracking` renvoyé au client.
 // ============================================================
+// Par type (échange, signature, départ) : voir trimTransactionLog.
 const TRANSACTIONS_KEEP = 250;
 
 // api-web étrangle les rafales : 32 requêtes en parallèle (même par lots
@@ -2645,7 +2630,8 @@ async function doRefreshNhlTransactions() {
         // Toujours retouché, même sans mouvement : `lastUpdated` dit « le
         // journal est à jour », pas « quelque chose a bougé ».
         lastUpdated: capturedAt,
-        transactions: [...fresh, ...(log.transactions || [])].slice(0, TRANSACTIONS_KEEP)
+        // Par type : les départs du camp ne chassent plus les échanges.
+        transactions: trimTransactionLog([...fresh, ...(log.transactions || [])], TRANSACTIONS_KEEP)
     });
     await saveRosterSnapshot({ capturedAt, players: snapshotPlayers });
 
@@ -3094,7 +3080,11 @@ app.get('/player-career/:playerId', async (req, res) => {
                     wins: season.wins || 0,
                     losses: season.losses || 0,
                     otLosses: season.otLosses || 0,
-                    savePct: season.savePct || season.savePercentage || 0,
+                    // null, pas 0, quand la saison n'a pas de tirs (avant
+                    // 1983, certaines ligues mineures) ; shotsAgainst sert à
+                    // pondérer la rangée « Carrière ».
+                    savePct: savePctFromSeasons([season]),
+                    shotsAgainst: typeof season.shotsAgainst === 'number' ? season.shotsAgainst : null,
                     gaa: season.goalsAgainstAvg || 0,
                     shutouts: season.shutouts || 0
                 };

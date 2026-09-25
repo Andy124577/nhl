@@ -3,7 +3,7 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { NHL_CLUB_FULLNAME, diffRosterSnapshots, getTeamAbbreviationFromName } = require('../../lib/roster.js');
+const { NHL_CLUB_FULLNAME, diffRosterSnapshots, trimTransactionLog, getTeamAbbreviationFromName } = require('../../lib/roster.js');
 
 /** Une entrée de photo de roster, telle que fetchAllRosters la produit. */
 function joueur(over = {}) {
@@ -207,5 +207,32 @@ describe('getTeamAbbreviationFromName', () => {
         // que l'appelant sache qu'il doit filtrer en amont.
         assert.throws(() => getTeamAbbreviationFromName(null), TypeError);
         assert.throws(() => getTeamAbbreviationFromName(undefined), TypeError);
+    });
+});
+
+describe('trimTransactionLog', () => {
+    const t = (type, n) => ({ id: `${type}-${n}`, type });
+
+    test('borne chaque type séparément : les départs ne chassent plus les échanges', () => {
+        // Fin septembre : une avalanche de retranchements du camp, plus
+        // récents que tous les échanges de l'été.
+        const journal = [
+            t('departure', 1), t('departure', 2), t('departure', 3), t('signing', 1),
+            t('trade', 1), t('trade', 2)
+        ];
+
+        const garde = trimTransactionLog(journal, 2);
+
+        assert.deepEqual(garde.map(x => x.id), ['departure-1', 'departure-2', 'signing-1', 'trade-1', 'trade-2']);
+    });
+
+    test('garde les plus récentes de chaque type, dans l\'ordre reçu', () => {
+        const journal = [t('trade', 1), t('signing', 1), t('trade', 2), t('trade', 3)];
+
+        assert.deepEqual(trimTransactionLog(journal, 2).map(x => x.id), ['trade-1', 'signing-1', 'trade-2']);
+    });
+
+    test('un journal absent rend une liste vide', () => {
+        assert.deepEqual(trimTransactionLog(undefined, 250), []);
     });
 });

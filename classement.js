@@ -2589,7 +2589,7 @@ function filterCareerStats() {
                 <td>${season.wins}</td>
                 <td>${season.losses}</td>
                 <td>${season.otLosses}</td>
-                <td>${season.savePct ? season.savePct.toFixed(3) : '0.000'}</td>
+                <td>${season.savePct != null ? season.savePct.toFixed(3) : '—'}</td>
                 <td>${season.gaa ? season.gaa.toFixed(2) : '0.00'}</td>
                 <td>${season.shutouts}</td>
             `;
@@ -2611,7 +2611,10 @@ function filterCareerStats() {
     if (leagueFilter === 'nhl' && filteredSeasons.length > 0) {
         const totals = {
             gp: 0, goals: 0, assists: 0, points: 0, plusMinus: 0, pim: 0, shots: 0,
-            wins: 0, losses: 0, otLosses: 0, shutouts: 0, gamesForAvg: 0, totalGAA: 0, totalSVPct: 0
+            wins: 0, losses: 0, otLosses: 0, shutouts: 0, gamesForAvg: 0, totalGAA: 0,
+            // % d'arrêts de carrière : arrêts sur tirs, pas la moyenne des
+            // saisons — une saison de 5 parties pesait autant qu'une de 60.
+            svSaves: 0, svShots: 0
         };
 
         filteredSeasons.forEach(season => {
@@ -2625,8 +2628,9 @@ function filterCareerStats() {
                     totals.totalGAA += season.gaa * season.gp;
                     totals.gamesForAvg += season.gp;
                 }
-                if (season.savePct) {
-                    totals.totalSVPct += season.savePct;
+                if (season.savePct != null && season.shotsAgainst > 0) {
+                    totals.svShots += season.shotsAgainst;
+                    totals.svSaves += season.savePct * season.shotsAgainst;
                 }
             } else {
                 totals.goals += season.goals || 0;
@@ -2644,7 +2648,7 @@ function filterCareerStats() {
 
         if (currentCareerData.isGoalie) {
             const avgGAA = totals.gamesForAvg > 0 ? (totals.totalGAA / totals.gamesForAvg).toFixed(2) : '0.00';
-            const avgSVPct = filteredSeasons.length > 0 ? (totals.totalSVPct / filteredSeasons.length).toFixed(3) : '0.000';
+            const avgSVPct = totals.svShots > 0 ? (totals.svSaves / totals.svShots).toFixed(3) : '—';
             html += `
                 <td>${totals.wins}</td>
                 <td>${totals.losses}</td>

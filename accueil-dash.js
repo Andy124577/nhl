@@ -2182,18 +2182,22 @@ async function loadOffseasonTransactions() {
     const wrap = document.getElementById('fzdOffTransactions');
     if (!wrap) return;
 
-    // On demande tout le journal (TRANSACTIONS_KEEP=250, cap blessés=300) :
-    // le carrousel montre chaque onglet en entier, donc chaque liste doit
-    // être complète en main — et groupTrades voit ainsi tout l'échange,
-    // pas une moitié tronquée par la fenêtre.
-    const [tx, inj] = await Promise.all([
-        fetch('/nhl-transactions?limit=250').then(r => r.json()).catch(() => null),
+    // Chaque onglet est demandé en entier (TRANSACTIONS_KEEP=250 par type,
+    // cap blessés=300) : le carrousel montre tout, et groupTrades voit ainsi
+    // tout l'échange, pas une moitié tronquée par la fenêtre. Un type par
+    // requête : une seule fenêtre de 250 pour tout le journal se remplissait
+    // des retranchements du camp (des départs, que l'accueil n'affiche pas)
+    // et l'onglet « Échanges » restait vide.
+    const journal = type => fetch(`/nhl-transactions?type=${type}&limit=250`)
+        .then(r => r.json()).catch(() => null);
+    const [tx, signed, inj] = await Promise.all([
+        journal('trade'),
+        journal('signing'),
         fetch('/nhl-injuries?limit=300').then(r => r.json()).catch(() => null)
     ]);
 
-    const moves = tx?.transactions || [];
-    const deals = groupTrades(moves.filter(t => t.type === 'trade'));
-    const signings = moves.filter(t => t.type === 'signing');
+    const deals = groupTrades(tx?.transactions || []);
+    const signings = signed?.transactions || [];
     const injuries = inj?.injuries || [];
 
     // « Tout » : les trois flux fondus et retriés du plus récent au plus
@@ -2217,10 +2221,10 @@ async function loadOffseasonTransactions() {
             // signatures/blessés, le total serveur (peut dépasser la fenêtre
             // demandée). « Tout » : la somme des trois.
             trade: deals.length,
-            signing: tx?.counts?.signing || 0,
+            signing: signed?.counts?.signing || 0,
             injury: inj?.total || 0
         },
-        tracking: !!tx?.tracking
+        tracking: !!(tx?.tracking || signed?.tracking)
     };
     offseasonLeague.counts.all = offseasonLeague.counts.trade
         + offseasonLeague.counts.signing + offseasonLeague.counts.injury;
