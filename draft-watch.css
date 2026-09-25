@@ -3,3 +3,8 @@
 @media(max-width:1000px) { .draft-watch-badge > span { display:none; } }
 /* Le bleu vif ne tient que sur fond sombre : 1,9:1 sur le papier clair. */
 html[data-theme="light"] .draft-watch-badge { color:#0b6fb8; }
+/* Note de la trousse dans la fiche du joueur, toujours sur fond noir. */
+#careerStatsModal .cmh-watch { margin:0 0 16px; padding:12px 16px; border-left:3px solid #26a6ff; border-radius:0 10px 10px 0; background:#26a6ff0f; }
+#careerStatsModal .cmh-watch-label { display:flex; align-items:center; gap:7px; margin-bottom:5px; color:#26a6ff; font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
+#careerStatsModal .cmh-watch-label svg { flex:0 0 16px; width:16px; height:16px; }
+#careerStatsModal .cmh-watch p { margin:0; color:#c9d9e9; font-size:16px; line-height:1.5; }

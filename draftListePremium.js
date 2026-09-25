@@ -135,6 +135,9 @@ function fzBuildPickedRow(pick, numeroChoix) {
     if (categorie !== 'team' && typeof injuryBadgeHTML === 'function') {
         tdNom.insertAdjacentHTML('beforeend', injuryBadgeHTML(nom, teamAbbrev));
     }
+    if (categorie !== 'team' && typeof watchBadgeHTML === 'function') {
+        tdNom.insertAdjacentHTML('beforeend', watchBadgeHTML(nom, teamAbbrev));
+    }
     tr.appendChild(tdNom);
 
     const tdGP = document.createElement('td');

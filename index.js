@@ -256,7 +256,7 @@ async function populatePlayerTable(t) {
         const g = d && i ? `\n            <div class="player-photo">\n                <img src="${d}" alt="" class="face">\n                <img src="${i}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n            </div>\n            ` : "",
             p = n?.position || t.positionCode || "N/A",
             y = document.createElement("tr");
-        y.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${g}<div class="player-ident"><span class="player-name">${a}${injBadge(a, o)}</span><span class="player-pos">${p}</span></div></div></td>\n            <td>${c}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n            <td class="points-column">${h}</td>\n        `;
+        y.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${g}<div class="player-ident"><span class="player-name">${a}${injBadge(a, o)}${watchBadge(a, o)}</span><span class="player-pos">${p}</span></div></div></td>\n            <td>${c}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n            <td class="points-column">${h}</td>\n        `;
         makeRowInteractive(y, () => showCareerStats(t.playerId, t.skaterFullName, !1),
             `Voir la fiche de ${a}`);
         tbody.appendChild(y)
@@ -271,6 +271,11 @@ async function populatePlayerTable(t) {
  */
 function injBadge(playerName, teamAbbrev) {
     return typeof injuryBadgeHTML === 'function' ? injuryBadgeHTML(playerName, teamAbbrev) : '';
+}
+
+/** Pastille « À surveiller » de la trousse, même principe (draft-watch.js). */
+function watchBadge(playerName, teamAbbrev) {
+    return typeof watchBadgeHTML === 'function' ? watchBadgeHTML(playerName, teamAbbrev) : '';
 }
 
 /**
@@ -384,7 +389,7 @@ function populateGoalieTable(t) {
         m = valeurDeTri(t, a, t.playerId, "points", !0);
         const h = s && l ? `<div class="player-photo">\n                    <img src="${s}" alt="${a}" class="face">\n                    <img src="${l}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n               </div>` : "",
             g = document.createElement("tr");
-        g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${h}<div class="player-ident"><span class="player-name">${a}${injBadge(a, n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}</span></div></div></td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c != null ? c.toFixed(3) : "—"}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
+        g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${h}<div class="player-ident"><span class="player-name">${a}${injBadge(a, n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}${watchBadge(a, n?.teamAbbrev || t.teamAbbrevs)}</span></div></div></td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c != null ? c.toFixed(3) : "—"}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
         makeRowInteractive(g, () => showCareerStats(t.playerId, t.goalieFullName, !0),
             `Voir la fiche de ${a}`);
         tbody.appendChild(g)

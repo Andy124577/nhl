@@ -48,6 +48,7 @@
             </header>
             <div class="career-profile-body" id="careerProfileBody">
                 <div id="careerLoading" class="career-loading" role="status" hidden><div class="cm-skeleton-photo"></div><div class="cm-skeleton-lines"></div><span>Chargement de la fiche du joueur…</span></div>
+                <aside class="cmh-watch" id="careerWatchBanner" aria-label="Joueur à surveiller" hidden><span class="cmh-watch-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>À surveiller</span><p></p></aside>
                 <div class="career-modal-header" id="careerModalHeader" hidden>
                     <figure class="cmh-portrait"><div class="cmh-portrait-art" aria-hidden="true"></div><span class="cmh-portrait-number" id="careerArtNumber" aria-hidden="true"></span>
                         <div class="player-headshot-container" id="playerHeadshotContainer"></div>
@@ -222,6 +223,7 @@
         el('playerDraft').textContent = draft ? `${draft.year}: Rd ${draft.round}, Ch. ${draft.pickInRound} (${draft.teamAbbrev})` : 'Non repêché';
         el('careerInjuryBanner').hidden = true;
         if (typeof renderInjuryBanner === 'function') renderInjuryBanner(data.playerName, code);
+        if (typeof renderWatchBanner === 'function') renderWatchBanner(data.playerName, code);
         renderSeason(data, playerId);
         updateFavorite();
         el('careerPick').disabled = !canPick();
@@ -256,7 +258,7 @@
         el('careerPlayerName').textContent = playerName || 'Fiche du joueur';
         el('careerBannerTeam').textContent = '';
         el('careerLoading').hidden = false;
-        el('careerModalHeader').hidden = true; el('careerFilters').hidden = true;
+        el('careerModalHeader').hidden = true; el('careerFilters').hidden = true; el('careerWatchBanner').hidden = true;
         el('careerStatsTable').replaceChildren();
         el('viewFilter').value = 'career'; el('leagueFilter').value = 'nhl'; el('gameTypeFilter').value = 'regular';
         el('leagueFilter').parentElement.style.display = ''; el('gameTypeFilter').parentElement.style.display = '';

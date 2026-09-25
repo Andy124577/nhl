@@ -27,6 +27,7 @@
     <script defer src="activePool.js?v=20260925"></script>
     <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="career-modal.css">
+    <link rel="stylesheet" href="draft-watch.css?v=20260925">
 </head>
 <body data-page="stats" class="fz-stats">
     <nav class="navbar"></nav>
@@ -296,7 +297,11 @@
          partagé avec draftActif.html. -->
     <script defer src="teamColors.js"></script>
     <script defer src="injuries.js"></script>
-    <script defer src="index.js?v=20260925"></script>
+    <!-- Pastille « À surveiller » et note de la trousse dans la fiche :
+         le fichier allégé draftkit-watchlist.json, pas la trousse entière. -->
+    <script defer src="draftkitData.js?v=20260915"></script>
+    <script defer src="draft-watch.js?v=20260925"></script>
+    <script defer src="index.js?v=20260925b"></script>
     <!-- Meneurs de la ligue : lit BASE_URL déjà déclaré par index.js ci-dessus. -->
     <script defer src="statsLeaders.js?v=20260925c"></script>
     <!-- Meilleurs joueurs : lit BASE_URL (index.js) et escapeHTML (statsLeaders.js). -->
@@ -305,7 +310,7 @@
     <script defer src="statsLineup.js?v=20260925c"></script>
     <!-- Logo d'équipe du tableau de carrière, partagé avec draftActif.html. -->
     <script defer src="careerFetch.js"></script>
-    <script defer src="careerModal.js"></script>
+    <script defer src="careerModal.js?v=20260925"></script>
     <script defer src="careerTeamLogo.js"></script>
     <!-- Alignement de la rangée « Carrière », partagé avec draftActif.html. -->
     <script defer src="careerTotals.js"></script>
