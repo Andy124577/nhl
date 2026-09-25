@@ -374,3 +374,9 @@ body.fz-stats .top-players-section .skeleton {
 @media (max-width: 640px) {
   body.fz-stats .stats-subnav-inner { background: var(--fzs-surface); }
 }
+/* Trois onglets sur un petit téléphone (Alignements s'est ajouté) :
+   « Tous les joueurs » passait sur deux lignes. */
+@media (max-width: 480px) {
+  body.fz-stats .stats-subnav { padding-left: 16px; padding-right: 16px; }
+  body.fz-stats .stats-subnav-btn { padding: 9px 6px; font-size: 12px; white-space: nowrap; }
+}

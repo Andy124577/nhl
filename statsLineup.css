@@ -1,0 +1,467 @@
+/* ====================================================================
+   Alignements — onglet de stats.html (statsLineup.js)
+
+   Même palette éditoriale que stats-premium.css : tout passe par les
+   jetons --fzs-*, qui basculent déjà avec le thème. La seule couleur qui
+   n'en vient pas est celle du club affiché (--lu-c1/--lu-c2/--lu-ink,
+   posées par le script depuis teamColors.js) : elle habille le chandail
+   et le fond de la photo, et rien d'autre.
+
+   Écrit téléphone d'abord ; 480 / 769 / 1024 enrichissent.
+   ==================================================================== */
+
+body.fz-stats .lu {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px 16px 32px;
+}
+
+body.fz-stats .lu-sr {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+body.fz-stats .lu-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* ─── En-tête : club + affichage ─────────────────────────────────── */
+body.fz-stats .lu-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+body.fz-stats .lu-team {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 260px;
+  min-width: 0;
+}
+body.fz-stats .lu-team-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex: none;
+}
+body.fz-stats .lu-team-select {
+  flex: 1;
+  min-width: 0;
+  max-width: 360px;
+  height: 48px;
+  padding: 0 40px 0 14px;
+  border: 1px solid var(--fzs-border-input);
+  border-radius: 12px;
+  background-color: var(--fzs-surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236d6a64' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  color: var(--fzs-ink);
+  font: 700 16px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+body.fz-stats .lu-team-select:focus-visible {
+  outline: none;
+  border-color: var(--fzs-accent);
+  box-shadow: 0 0 0 3px var(--fzs-accent-wash);
+}
+
+body.fz-stats .lu-views {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--fzs-border);
+  border-radius: 12px;
+  background: var(--fzs-surface);
+}
+body.fz-stats .lu-views button {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--fzs-text-muted);
+  font: 600 13px/1 'Helvetica Neue', Helvetica, sans-serif;
+  cursor: pointer;
+  transition: background-color .2s cubic-bezier(.4,0,.2,1), color .2s cubic-bezier(.4,0,.2,1);
+}
+body.fz-stats .lu-views button:hover { color: var(--fzs-ink); }
+body.fz-stats .lu-views button.is-active {
+  background: var(--fzs-solid);
+  color: var(--fzs-on-solid);
+}
+body.fz-stats .lu-views button:focus-visible {
+  outline: 2px solid var(--fzs-accent);
+  outline-offset: 2px;
+}
+
+body.fz-stats .lu-source {
+  margin: 12px 0 0;
+  color: var(--fzs-text-faint);
+  font-size: .8rem;
+  line-height: 1.5;
+}
+body.fz-stats .lu-source a { color: var(--fzs-text-muted); text-decoration: underline; text-underline-offset: 2px; }
+body.fz-stats .lu-source a:hover { color: var(--fzs-accent); }
+body.fz-stats .lu-stale { color: var(--fzs-accent); font-weight: 600; }
+
+/* ─── Sections ───────────────────────────────────────────────────── */
+body.fz-stats .lu-sec {
+  margin-top: 20px;
+  padding: 18px 12px 20px;
+  border: 1px solid var(--fzs-border);
+  border-radius: 18px;
+  background: var(--fzs-surface);
+}
+body.fz-stats .lu-sec-title {
+  margin: 0 0 4px;
+  padding: 0 4px;
+  color: var(--fzs-ink);
+  font: 400 1.55rem/1.1 'Bebas Neue', 'Segoe UI', sans-serif;
+  letter-spacing: 1.5px;
+}
+body.fz-stats .lu-sec-note {
+  margin: 0 0 8px;
+  padding: 0 4px;
+  color: var(--fzs-text-faint);
+  font-size: .8rem;
+}
+body.fz-stats .lu-notice {
+  margin: 20px 0 0;
+  padding: 14px 16px;
+  border: 1px solid var(--fzs-border);
+  border-radius: 12px;
+  background: var(--fzs-bg-alt);
+  color: var(--fzs-text);
+  font-size: .9rem;
+}
+
+body.fz-stats .lu-row-label {
+  grid-column: 1 / -1;
+  margin: 14px 0 2px;
+  padding: 0 4px;
+  color: var(--fzs-text-faint);
+  font: 700 .72rem/1.2 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+body.fz-stats .lu-row-label:first-of-type { margin-top: 6px; }
+
+/* Trios et paires : une colonne par position, rangées séparées d'un filet. */
+body.fz-stats .lu-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--lu-cols, 3), minmax(0, 1fr));
+  column-gap: 4px;
+}
+body.fz-stats .lu-colhead {
+  padding: 6px 0;
+  border-radius: 8px;
+  background: var(--fzs-bg-alt);
+  color: var(--fzs-text-muted);
+  font: 700 .72rem/1.2 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .1em;
+  text-align: center;
+  text-transform: uppercase;
+}
+body.fz-stats .lu-grid > .lu-row-label:not(:first-of-type) {
+  padding-top: 12px;
+  border-top: 1px solid var(--fzs-border-soft);
+}
+
+/* Unités spéciales, gardiens, blessés : des cartes qui passent à la ligne. */
+body.fz-stats .lu-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}
+body.fz-stats .lu-row > .lu-p { flex: 0 0 calc((100% - 8px) / 3); }
+
+/* ─── Un joueur ──────────────────────────────────────────────────── */
+body.fz-stats .lu-p {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px 4px 10px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--fzs-ink);
+  font: inherit;
+  text-align: center;
+}
+body.fz-stats button.lu-p {
+  cursor: pointer;
+  transition: background-color .2s cubic-bezier(.4,0,.2,1);
+}
+body.fz-stats button.lu-p:hover { background: var(--fzs-bg-alt); }
+body.fz-stats button.lu-p:focus-visible {
+  outline: 2px solid var(--fzs-accent);
+  outline-offset: -2px;
+  background: var(--fzs-bg-alt);
+}
+body.fz-stats .lu-p.is-empty { visibility: hidden; }
+body.fz-stats .lu-p.is-out .lu-jersey,
+body.fz-stats .lu-p.is-out .lu-photo { opacity: .6; }
+
+body.fz-stats .lu-p-slot {
+  color: var(--fzs-text-faint);
+  font: 700 .7rem/1.2 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+body.fz-stats .lu-p-name {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+}
+
+body.fz-stats .lu-p-last {
+  overflow: hidden;
+  color: var(--fzs-ink);
+  font: 700 .8rem/1.2 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+body.fz-stats .lu-p-first {
+  overflow: hidden;
+  color: var(--fzs-text-muted);
+  font-size: .72rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.fz-stats .lu-p-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+body.fz-stats .lu-p-badges:empty { display: none; }
+body.fz-stats .lu-badge {
+  padding: 2px 7px;
+  border: 1px solid var(--fzs-border-strong);
+  border-radius: 999px;
+  color: var(--fzs-text-muted);
+  font: 700 .7rem/1.3 'Helvetica Neue', Helvetica, sans-serif;
+  white-space: nowrap;
+}
+body.fz-stats .lu-badge.is-out {
+  border-color: transparent;
+  background: var(--fzs-accent-wash);
+  color: var(--fzs-accent);
+}
+
+/* ─── Chandail ───────────────────────────────────────────────────── */
+body.fz-stats .lu-jersey {
+  display: block;
+  width: 100%;
+  max-width: 132px;
+  height: auto;
+  overflow: visible;
+}
+body.fz-stats .lu-j-c1 { fill: var(--lu-c1); }
+body.fz-stats .lu-j-c2 { fill: var(--lu-c2); }
+body.fz-stats .lu-j-trim { fill: #f4f3ef; }
+body.fz-stats .lu-j-inside { fill: #cfcdc7; }
+body.fz-stats .lu-j-collar { fill: none; stroke: var(--lu-c2); stroke-width: 3; stroke-linecap: round; }
+body.fz-stats .lu-j-edge { fill: none; stroke: rgba(0,0,0,.28); stroke-width: .8; }
+body.fz-stats .lu-j-name,
+body.fz-stats .lu-j-num {
+  fill: var(--lu-ink);
+  font-family: 'Barlow Condensed', 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 800;
+  text-anchor: middle;
+}
+body.fz-stats .lu-j-name { font-size: 11.5px; letter-spacing: .3px; }
+body.fz-stats .lu-j-num {
+  font-size: 40px;
+  stroke: var(--lu-stroke, var(--lu-c2));
+  stroke-width: 2.4px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
+/* ─── Photo ──────────────────────────────────────────────────────── */
+body.fz-stats .lu-photo {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background-color: var(--lu-c1);
+  background-image: linear-gradient(160deg, rgba(255,255,255,.12), rgba(0,0,0,.28));
+  overflow: visible;
+}
+body.fz-stats .lu-photo img {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+}
+body.fz-stats .lu-photo-init {
+  color: var(--lu-ink);
+  font: 800 1.4rem/1 'Barlow Condensed', sans-serif;
+  letter-spacing: .04em;
+}
+body.fz-stats .lu-photo-num {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  z-index: 2;
+  min-width: 28px;
+  padding: 3px 5px;
+  border: 2px solid var(--fzs-surface);
+  border-radius: 999px;
+  background: var(--lu-c2);
+  color: #fff;
+  font: 800 .85rem/1 'Barlow Condensed', sans-serif;
+  text-align: center;
+}
+
+/* ─── Vue « stats » ──────────────────────────────────────────────── */
+body.fz-stats .lu-table-wrap {
+  margin: 4px -4px 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+/* index.css habille TOUS les tableaux de la page pour le grand tableau
+   « Tous les joueurs » : disposition fixe, en-tête collant et flouté,
+   largeurs par numéro de colonne, rangée qui se soulève au survol. Rien
+   de tout ça ne convient à un petit tableau par trio ; on le défait ici. */
+body.fz-stats .lu-table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  table-layout: auto;
+  font-size: .85rem;
+}
+body.fz-stats .lu-table thead { position: static; }
+body.fz-stats .lu-table th,
+body.fz-stats .lu-table td {
+  width: auto;
+  max-width: none;
+  padding: 9px 8px;
+  text-align: right;
+  white-space: nowrap;
+}
+body.fz-stats .lu-table thead th {
+  border-bottom: 1px solid var(--fzs-border-strong);
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: var(--fzs-text-muted);
+  font: 700 .72rem/1.2 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+body.fz-stats .lu-table .lu-t-slot,
+body.fz-stats .lu-table .lu-t-name { text-align: left; }
+body.fz-stats .lu-table .lu-t-num { width: 36px; color: var(--fzs-text-faint); }
+body.fz-stats .lu-table td.lu-t-slot {
+  width: 44px;
+  color: var(--fzs-text-faint);
+  font: 700 .72rem/1.2 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .06em;
+}
+body.fz-stats .lu-table .lu-t-name { width: 40%; }
+body.fz-stats .lu-table td.lu-t-name { color: var(--fzs-ink); font-weight: 700; }
+body.fz-stats .lu-table td.lu-t-name .lu-badge { margin-left: 8px; }
+body.fz-stats .lu-table td:nth-child(n+4) {
+  color: var(--fzs-text);
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .8rem;
+}
+body.fz-stats .lu-table tbody tr {
+  border-bottom: 1px solid var(--fzs-border-soft);
+  cursor: default;
+  transition: background-color .2s cubic-bezier(.4,0,.2,1);
+}
+body.fz-stats .lu-table tbody tr:nth-child(even),
+body.fz-stats .lu-table tbody tr:nth-child(odd) { background: transparent; }
+body.fz-stats .lu-table tbody tr:hover { transform: none; box-shadow: none; }
+body.fz-stats .lu-table tbody tr:not(.is-clickable):hover { background: transparent !important; }
+body.fz-stats .lu-table tr.is-clickable { cursor: pointer; }
+body.fz-stats .lu-table tr.is-clickable:hover,
+body.fz-stats .lu-table tr.is-clickable:focus-visible {
+  background: var(--fzs-accent-wash) !important;
+  outline: none;
+}
+body.fz-stats .lu-table tr.lu-t-group th {
+  padding: 14px 8px 6px;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: var(--fzs-text-faint);
+  font: 700 .72rem/1.2 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .1em;
+  text-align: left;
+  text-transform: uppercase;
+  border: 0;
+}
+
+/* ─── Chargement, erreur ─────────────────────────────────────────── */
+body.fz-stats .lu-loading {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+body.fz-stats .lu-skel { display: block; height: 150px; border-radius: 12px; }
+body.fz-stats .lu-empty {
+  margin-top: 20px;
+  padding: 32px 16px;
+  border: 1px solid var(--fzs-border);
+  border-radius: 18px;
+  background: var(--fzs-surface);
+  color: var(--fzs-text-muted);
+  text-align: center;
+}
+body.fz-stats .lu-retry {
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--fzs-accent-fill);
+  color: var(--fzs-on-accent);
+  font-weight: 700;
+  cursor: pointer;
+}
+body.fz-stats .lu-retry:focus-visible { outline: 2px solid var(--fzs-ink); outline-offset: 2px; }
+
+/* ─── Plus large ─────────────────────────────────────────────────── */
+@media (min-width: 480px) {
+  body.fz-stats .lu-photo { width: 88px; height: 88px; }
+  body.fz-stats .lu-p-last { font-size: .85rem; }
+}
+
+@media (min-width: 769px) {
+  body.fz-stats .lu { padding: 24px 24px 40px; }
+  body.fz-stats .lu-sec { padding: 22px 24px 24px; }
+  body.fz-stats .lu-grid { column-gap: 12px; }
+  body.fz-stats .lu-row { gap: 12px; }
+  body.fz-stats .lu-row > .lu-p { flex: 0 0 150px; }
+  body.fz-stats .lu-photo { width: 96px; height: 96px; }
+  body.fz-stats .lu-table { font-size: .9rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.fz-stats .lu-views button,
+  body.fz-stats button.lu-p { transition: none; }
+}

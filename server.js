@@ -55,6 +55,7 @@ const { creerServicePointage } = require("./services/scoring.js");
 const { creerServiceH2H } = require("./services/h2h.js");
 const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
 const { creerFeuillesDeMatch, MatchIntrouvable } = require("./services/feuilleMatch.js");
+const { creerAlignements, EquipeInconnue } = require("./services/alignement.js");
 const { creerModerateur } = require("./services/moderationImage.js");
 const datesPool = require("./lib/dates.js");
 
@@ -2243,6 +2244,32 @@ app.get('/game/:gameId/boxscore', async (req, res) => {
         }
         console.error('❌ Error fetching game boxscore:', error.message);
         res.status(502).json({ message: 'La LNH ne répond pas pour le moment' });
+    }
+});
+
+// ============================================================
+// ALIGNEMENT D'UN CLUB — l'onglet « Alignements » de stats.html : trios,
+// paires, gardiens, unités spéciales et blessés. Les trios viennent de Daily
+// Faceoff (la LNH n'en publie pas), le numéro, la photo et les statistiques
+// de la LNH ; voir lib/alignement.js et services/alignement.js. Sans trios,
+// la réponse porte l'effectif officiel par position.
+// ============================================================
+const alignements = creerAlignements({
+    db: USE_POSTGRES ? db : null,
+    saison: () => getStatsSeason()
+});
+
+app.get('/team-lineup/:team', async (req, res) => {
+    try {
+        const alignement = await alignements.lire(req.params.team);
+        res.set('Cache-Control', 'no-store');
+        res.json(alignement);
+    } catch (error) {
+        if (error instanceof EquipeInconnue) {
+            return res.status(404).json({ message: 'Équipe inconnue' });
+        }
+        console.error('❌ Error fetching team lineup:', error.message);
+        res.status(502).json({ message: 'L’alignement est indisponible pour le moment' });
     }
 });
 

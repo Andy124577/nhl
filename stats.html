@@ -19,7 +19,8 @@
     <link rel="stylesheet" href="injuries.css">
     <link rel="stylesheet" href="statsLeaders.css">
     <link rel="stylesheet" href="statsTopPlayers.css">
-    <link rel="stylesheet" href="stats-premium.css">
+    <link rel="stylesheet" href="stats-premium.css?v=20260925">
+    <link rel="stylesheet" href="statsLineup.css?v=20260925">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
@@ -46,12 +47,13 @@
     </header>
 
     <!-- ============================================================ -->
-    <!-- SUB-NAV — Tous les joueurs / Meneurs                          -->
+    <!-- SUB-NAV — Tous les joueurs / Meneurs / Alignements           -->
     <!-- ============================================================ -->
     <div class="stats-subnav">
         <div class="stats-subnav-inner">
             <button class="stats-subnav-btn active" data-stats-tab="tous" onclick="switchStatsTab('tous')">Tous les joueurs</button>
             <button class="stats-subnav-btn" data-stats-tab="meneurs" onclick="switchStatsTab('meneurs')">Meneurs</button>
+            <button class="stats-subnav-btn" data-stats-tab="alignements" onclick="switchStatsTab('alignements')">Alignements</button>
         </div>
     </div>
 
@@ -106,6 +108,30 @@
                 <!-- Filled by JS -->
             </div>
         </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ALIGNEMENTS TAB — trios, paires, gardiens, unités spéciales   -->
+    <!-- de chaque club (statsLineup.js, GET /team-lineup/:club)       -->
+    <!-- ============================================================ -->
+    <div class="stats-tab-panel" data-stats-panel="alignements" id="lineupPanel" style="display:none;">
+        <section class="lu" aria-labelledby="luHeading">
+            <h2 class="lu-sr" id="luHeading">Alignements</h2>
+            <div class="lu-head">
+                <label class="lu-team">
+                    <img class="lu-team-logo" id="luLogo" src="teams/MTL.png" alt="" width="44" height="44">
+                    <span class="lu-sr">Équipe</span>
+                    <select id="luTeam" class="lu-team-select"></select>
+                </label>
+                <div class="lu-views" id="luViews" role="radiogroup" aria-label="Affichage">
+                    <button type="button" role="radio" data-lu-view="chandails">Chandails</button>
+                    <button type="button" role="radio" data-lu-view="photos">Photos</button>
+                    <button type="button" role="radio" data-lu-view="stats">Stats</button>
+                </div>
+            </div>
+            <p class="lu-source" id="luSource"></p>
+            <div class="lu-body" id="luBody" aria-live="polite"></div>
+        </section>
     </div>
 
     <!-- ============================================================ -->
@@ -275,6 +301,8 @@
     <script defer src="statsLeaders.js"></script>
     <!-- Meilleurs joueurs : lit BASE_URL (index.js) et escapeHTML (statsLeaders.js). -->
     <script defer src="statsTopPlayers.js?v=20260922"></script>
+    <!-- Alignements : trios de chaque club, chargés à l'ouverture de l'onglet. -->
+    <script defer src="statsLineup.js?v=20260925"></script>
     <!-- Logo d'équipe du tableau de carrière, partagé avec draftActif.html. -->
     <script defer src="careerFetch.js"></script>
     <script defer src="careerModal.js"></script>
@@ -288,7 +316,7 @@
     <script defer src="poolNav.js?v=20260925"></script>
     <script defer src="notifications.js?v=20260922"></script>
     <script>
-    // Sub-nav — "Tous les joueurs" / "Meneurs" tabs
+    // Sub-nav — "Tous les joueurs" / "Meneurs" / "Alignements" tabs
     function switchStatsTab(tab) {
         document.querySelectorAll('.stats-subnav-btn').forEach(function(btn) {
             btn.classList.toggle('active', btn.dataset.statsTab === tab);
@@ -296,6 +324,8 @@
         document.querySelectorAll('.stats-tab-panel').forEach(function(panel) {
             panel.style.display = panel.dataset.statsPanel === tab ? '' : 'none';
         });
+        // statsLineup.js ne charge rien tant que son onglet reste fermé.
+        document.dispatchEvent(new CustomEvent('fz:stats-tab', { detail: tab }));
     }
 
     // Auto-open player career modal when coming from accueil hot players

@@ -40,23 +40,56 @@
         return `${JOURS[d.getUTCDay()]} ${d.getUTCDate()} ${MOIS[d.getUTCMonth()]}`;
     };
     const joursEntre = (a, b) => Math.round((dateUTC(b) - dateUTC(a)) / 86400000);
+    const decaler = (iso, n) => {
+        const d = dateUTC(iso);
+        d.setUTCDate(d.getUTCDate() + n);
+        return d.toISOString().slice(0, 10);
+    };
+
+    /**
+     * Le lundi de la semaine d'une date.
+     *
+     * La LNH rend sept jours à partir de la date DEMANDÉE : ouvrir la page un
+     * jeudi montrait du jeudi au mercredi. Demander toujours le lundi fixe la
+     * semaine du lundi au dimanche, et les flèches avancent d'un lundi à
+     * l'autre.
+     */
+    const lundiDe = iso => decaler(iso, -((dateUTC(iso).getUTCDay() + 6) % 7));
+
+    /**
+     * Les sept jours du lundi au dimanche, qu'ils aient des matchs ou non.
+     * En bord de calendrier, la LNH peut rendre moins de sept jours ; le jour
+     * manquant s'affiche alors vide plutôt que de décaler la semaine.
+     */
+    function septJours(lundi, jours) {
+        const parDate = new Map((jours || []).map(d => [d.date, d]));
+        return Array.from({ length: 7 }, (_, i) => {
+            const date = decaler(lundi, i);
+            return parDate.get(date) || { date, games: [] };
+        });
+    }
 
     let semaine = null;      // réponse de /schedule/:date
     let jourChoisi = null;   // ISO
     let mesClubs = new Map(); // abbrev → [noms de mes joueurs]
     let seulementMiens = false;
     let chargement = 0;
+    // Le lundi DEMANDÉ, posé avant la réponse : deux clics rapides sur une
+    // flèche reculent de deux semaines, pas deux fois de la même.
+    let lundiVise = null;
 
     // ---------------------------------------------------------- données
 
     async function chargerSemaine(date, { silencieux = false } = {}) {
         const jeton = ++chargement;
+        const lundi = lundiDe(date);
+        lundiVise = lundi;
         if (!silencieux) {
             document.getElementById('calGames').innerHTML =
                 '<div class="cal-loading"><span class="cal-spinner" aria-hidden="true"></span>Chargement du calendrier…</div>';
         }
         try {
-            const reponse = await fetch(`${BASE_URL}/schedule/${date}`, { cache: 'no-store' });
+            const reponse = await fetch(`${BASE_URL}/schedule/${lundi}`, { cache: 'no-store' });
             const donnees = reponse.ok ? await reponse.json() : null;
             if (jeton !== chargement) return;
             semaine = donnees && Array.isArray(donnees.days) ? donnees : { days: [] };
@@ -64,6 +97,9 @@
             if (jeton !== chargement) return;
             semaine = { days: [] };
         }
+        // Une semaine vide reste vide : sept jours sans match inventés
+        // cacheraient le message « calendrier indisponible ».
+        if (semaine.days.length) semaine.days = septJours(lundi, semaine.days);
         const jours = semaine.days.map(d => d.date);
         jourChoisi = jours.includes(date) ? date
             : (jours.includes(jourChoisi) ? jourChoisi : (jours.find(d => d >= date) || jours[0] || date));
@@ -277,11 +313,14 @@
             rendreBande(); rendreJour();
             document.querySelector(`.cal-chip[data-jour="${jourChoisi}"]`)?.focus();
         });
+        // D'un lundi à l'autre. Les dates de la LNH ne servent qu'à savoir
+        // s'il existe une semaine avant ou après : elles suivent la date
+        // demandée, pas le lundi.
         document.getElementById('calPrev').addEventListener('click', () => {
-            if (semaine && semaine.previousStartDate) { jourChoisi = null; chargerSemaine(semaine.previousStartDate); }
+            if (semaine && semaine.previousStartDate) { jourChoisi = null; chargerSemaine(decaler(lundiVise, -7)); }
         });
         document.getElementById('calNext').addEventListener('click', () => {
-            if (semaine && semaine.nextStartDate) { jourChoisi = null; chargerSemaine(semaine.nextStartDate); }
+            if (semaine && semaine.nextStartDate) { jourChoisi = null; chargerSemaine(decaler(lundiVise, 7)); }
         });
         document.getElementById('calToday').addEventListener('click', () => {
             jourChoisi = aujourdhui();
