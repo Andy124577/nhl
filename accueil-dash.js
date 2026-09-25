@@ -713,6 +713,7 @@ function gameCardHTML(gameHoraire, rosterCounts) {
             <header class="fzd-game-head">
                 ${badge}
                 ${when ? `<span class="fzd-game-when">${when}</span>` : ''}
+                ${isScheduled || !game.id ? '' : `<a class="fzd-game-box" href="match.html?id=${encodeURIComponent(game.id)}">Feuille de match<span aria-hidden="true">›</span></a>`}
             </header>
             <div class="fzd-game-teams">
                 ${teamRow(game.away, game.home)}

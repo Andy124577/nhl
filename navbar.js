@@ -9,7 +9,8 @@ function getCurrentPage() {
         n.includes('draftActif.html') || n.includes('draftFini.html')) return 'repechage';
     if (n.includes('classement.html')) return 'classement';
     if (n.includes('trade.html')) return 'trade';
-    if (n.includes('calendrier.html')) return 'calendrier';
+    // Une feuille de match s'ouvre depuis le calendrier : elle en garde l'onglet.
+    if (n.includes('calendrier.html') || n.includes('match.html')) return 'calendrier';
     // Créer et rejoindre vivent sous le menu « Pools », avec la liste des
     // pools dont on est membre.
     if (n.includes('creer-pool.html') || n.includes('rejoindre-pool.html')) return 'pools';

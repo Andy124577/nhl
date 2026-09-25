@@ -54,6 +54,7 @@ const { creerServiceRecap } = require("./services/recap.js");
 const { creerServicePointage } = require("./services/scoring.js");
 const { creerServiceH2H } = require("./services/h2h.js");
 const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
+const { creerFeuillesDeMatch, MatchIntrouvable } = require("./services/feuilleMatch.js");
 const { creerModerateur } = require("./services/moderationImage.js");
 const datesPool = require("./lib/dates.js");
 
@@ -2219,6 +2220,29 @@ app.get('/tonight-boxscores', async (req, res) => {
     } catch (error) {
         console.error('❌ Error fetching tonight boxscores:', error.message);
         res.json({ players: [], games: [], generatedAt: new Date().toISOString() });
+    }
+});
+
+// ============================================================
+// FEUILLE DE MATCH — tout un match pour match.html : la ligne de chaque
+// joueur, le pointage et les tirs par période, les statistiques d'équipe,
+// les buts, les pénalités, les trois étoiles et les duels de la saison.
+// Trois réponses de la LNH fondues en une (voir lib/boxscore.js), mises en
+// cache selon l'état du match (services/feuilleMatch.js).
+// ============================================================
+const feuillesDeMatch = creerFeuillesDeMatch();
+
+app.get('/game/:gameId/boxscore', async (req, res) => {
+    try {
+        const feuille = await feuillesDeMatch.lire(req.params.gameId);
+        res.set('Cache-Control', 'no-store');
+        res.json(feuille);
+    } catch (error) {
+        if (error instanceof MatchIntrouvable) {
+            return res.status(404).json({ message: 'Match introuvable' });
+        }
+        console.error('❌ Error fetching game boxscore:', error.message);
+        res.status(502).json({ message: 'La LNH ne répond pas pour le moment' });
     }
 });
 

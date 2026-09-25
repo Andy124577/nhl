@@ -71,7 +71,7 @@
         if (chemin.includes('classement')) return 'classement';
         if (chemin.includes('trade')) return 'trade';
         if (chemin.includes('stats')) return 'stats';
-        if (chemin.includes('calendrier')) return 'calendrier';
+        if (chemin.includes('calendrier') || chemin.includes('match.html')) return 'calendrier';
         if (chemin.includes('index.html') || chemin.endsWith('/')) return 'accueil';
         return '';
     }

@@ -196,6 +196,26 @@ body.fz-cal-page { background: var(--bg); }
 }
 .cal-game-mine strong { color: var(--primary); }
 
+/* Vers match.html : au pied de la carte, sur toute sa largeur. */
+.cal-game-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 44px;
+    margin: auto -14px -14px;
+    padding: 0 14px;
+    border-top: 1px solid var(--border-light);
+    border-radius: 0 0 14px 14px;
+    color: var(--primary);
+    font-size: .86rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+.cal-game-box span { font-size: 1.2rem; line-height: 1; }
+.cal-game-box:hover { background: var(--bg-hover); }
+.cal-game-box:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+
 .cal-tag {
     display: inline-flex;
     align-items: center;

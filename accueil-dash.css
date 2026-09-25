@@ -584,6 +584,25 @@ a.fzd-cal-full { text-decoration: none; }
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+/* Vers match.html, poussé à droite de l'en-tête. Les marges négatives
+   agrandissent la zone de toucher sans épaissir l'en-tête. */
+.fzd-game-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    margin: -9px -12px -9px auto;
+    padding: 9px 12px;
+    min-height: 40px;
+    color: var(--fzd-accent);
+    font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .02em;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.fzd-game-box span { font-size: 15px; line-height: 1; }
+.fzd-game-box:hover { text-decoration: underline; text-underline-offset: 2px; }
+.fzd-game-box:focus-visible { outline: 2px solid var(--fzd-accent); outline-offset: -3px; border-radius: 6px; }
 /* Le chronomètre d'un match en cours, réécrit chaque seconde (horlogeHTML).
    Chiffres à chasse fixe : sans eux, « 1 » plus étroit qu'un « 8 » faisait
    frémir la période à sa gauche à chaque battement. */

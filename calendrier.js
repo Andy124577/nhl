@@ -188,12 +188,17 @@
         const a = m.away || {}, h = m.home || {};
         const fini = m.state === 'FINAL' || m.state === 'OFF';
         const miens = [...(mesClubs.get(a.abbrev) || []), ...(mesClubs.get(h.abbrev) || [])];
+        // La feuille de match n'existe qu'une fois la rondelle au jeu.
+        const feuille = joue && m.id
+            ? `<a class="cal-game-box" href="match.html?id=${encodeURIComponent(m.id)}">Feuille de match<span aria-hidden="true">›</span></a>`
+            : '';
         return `
             <article class="cal-game${miens.length ? ' is-mine' : ''}${m.state === 'LIVE' || m.state === 'CRIT' ? ' is-live' : ''}">
                 <div class="cal-game-status">${statut(m)}</div>
                 ${carteEquipe(a, fini && a.score > h.score, joue)}
                 ${carteEquipe(h, fini && h.score > a.score, joue)}
                 ${miens.length ? `<p class="cal-game-mine"><strong>Mes joueurs :</strong> ${miens.map(echapper).join(', ')}</p>` : ''}
+                ${feuille}
             </article>`;
     }
 
