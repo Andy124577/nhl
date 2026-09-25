@@ -349,7 +349,7 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
 
 // ==================== MOBILE BOTTOM NAV ====================
 // Même ordre que la barre du haut :
-// Accueil → Repêchage → Échanges → Classement → Stats
+// Accueil → Repêchage → Échanges → Classement → Calendrier → Stats
 function buildBottomNav(currentPage) {
     const existing = document.querySelector('.bottom-nav');
     if (existing) existing.remove();
@@ -373,6 +373,10 @@ function buildBottomNav(currentPage) {
             <a href="classement.html" class="bottom-nav-item ${'classement' === currentPage ? 'active' : ''}" id="bottomClassementLink">
                 <span class="bottom-nav-icon">${PAGE_ICON.classement}</span>
                 <span class="bottom-nav-label">Classement</span>
+            </a>
+            <a href="calendrier.html" class="bottom-nav-item ${'calendrier' === currentPage ? 'active' : ''}">
+                <span class="bottom-nav-icon">${PAGE_ICON.calendrier}</span>
+                <span class="bottom-nav-label">Calendrier</span>
             </a>
             <a href="stats.html" class="bottom-nav-item ${'stats' === currentPage ? 'active' : ''}">
                 <span class="bottom-nav-icon">${PAGE_ICON.stats}</span>

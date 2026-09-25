@@ -24,6 +24,8 @@
     const JOURS_COURTS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
     const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août',
                   'septembre', 'octobre', 'novembre', 'décembre'];
+    const MOIS_COURTS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juill.', 'août',
+                         'sept.', 'oct.', 'nov.', 'déc.'];
 
     /** La journée du pool (heure de l'Est), comme le reste du site. */
     function aujourdhui() {
@@ -84,6 +86,7 @@
         const jeton = ++chargement;
         const lundi = lundiDe(date);
         lundiVise = lundi;
+        rendreSemaine();
         if (!silencieux) {
             document.getElementById('calGames').innerHTML =
                 '<div class="cal-loading"><span class="cal-spinner" aria-hidden="true"></span>Chargement du calendrier…</div>';
@@ -280,8 +283,24 @@
             : `Du ${d1.getUTCDate()} ${MOIS[d1.getUTCMonth()]} au ${d2.getUTCDate()} ${MOIS[d2.getUTCMonth()]}`;
     }
 
+    /**
+     * « 21 sept. - 27 », ou « 28 sept. - 4 oct. » à cheval sur deux mois.
+     * Tirée du lundi demandé, pas des jours reçus : une semaine que la LNH
+     * n'a pas pu rendre dit quand même laquelle on regarde.
+     */
+    function rendreSemaine() {
+        const el = document.getElementById('calRange');
+        if (!el || !lundiVise) return;
+        const d1 = dateUTC(lundiVise), d2 = dateUTC(decaler(lundiVise, 6));
+        const debut = `${d1.getUTCDate()} ${MOIS_COURTS[d1.getUTCMonth()]}`;
+        el.textContent = d1.getUTCMonth() === d2.getUTCMonth()
+            ? `${debut} - ${d2.getUTCDate()}`
+            : `${debut} - ${d2.getUTCDate()} ${MOIS_COURTS[d2.getUTCMonth()]}`;
+    }
+
     function rendre() {
         rendreTitre();
+        rendreSemaine();
         libelleSaison();
         rendreBande();
         rendreJour();

@@ -53,7 +53,6 @@ body.fz-cal-page { background: var(--bg); }
 }
 
 .cal-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.cal-nav,
 .cal-today,
 .cal-jump input {
     min-height: 44px;
@@ -64,12 +63,58 @@ body.fz-cal-page { background: var(--bg); }
     font: inherit;
     font-weight: 700;
 }
-.cal-nav { width: 44px; font-size: 1.3rem; cursor: pointer; }
 .cal-today { padding: 0 14px; cursor: pointer; }
 .cal-jump input { padding: 0 10px; font-weight: 600; color-scheme: light dark; }
-.cal-nav:hover:not(:disabled),
 .cal-today:hover { border-color: var(--primary); color: var(--primary); }
-.cal-nav:disabled { opacity: .4; cursor: default; }
+
+/* Semaine : ‹ 21 sept. - 27 › dans une seule pastille. Les flèches n'ont
+   pas de cadre à elles ; c'est la pastille qui en porte un. */
+.cal-week {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 2px;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    background: var(--card);
+}
+.cal-nav {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.cal-nav svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.cal-nav:hover:not(:disabled) { color: var(--primary); }
+.cal-nav:disabled { opacity: .35; cursor: default; }
+.cal-week-label {
+    min-width: 8.5em;
+    padding: 0 2px;
+    text-align: center;
+    font-weight: 800;
+    font-size: .95rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--text-main);
+}
+@media (max-width: 559px) {
+    /* Téléphone : la pastille prend la ligne, la date au centre. */
+    .cal-controls { width: 100%; }
+    .cal-week { flex: 1 1 100%; }
+    .cal-week-label { flex: 1; }
+}
 .cal-nav:focus-visible,
 .cal-today:focus-visible,
 .cal-jump input:focus-visible,
