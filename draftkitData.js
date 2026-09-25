@@ -52,6 +52,9 @@
     var donnees = null;
     var promesseWatchlist = null;
     var listeSurveiller = null;
+    // La saison de la trousse, connue dès le fichier allégé : la page Stats
+    // en titre ses projections sans télécharger la trousse entière.
+    var saisonWatchlist = null;
 
     // Barème du pool, identique à celui du serveur (server.js) : un gardien
     // vaut shutouts*5 + wins*2 + otLosses, une équipe wins*2 + otLosses. On
@@ -264,6 +267,7 @@
             })
             .then(function (d) {
                 listeSurveiller = d.watchlist || [];
+                saisonWatchlist = d.season || null;
                 return listeSurveiller;
             })
             .catch(function (err) {
@@ -288,7 +292,7 @@
         guide: guide,
         watchlist: watchlist,
         get donnees() { return donnees; },
-        get saison() { return donnees ? donnees.season : null; }
+        get saison() { return donnees ? donnees.season : saisonWatchlist; }
     };
 // globalThis hors navigateur (tests unitaires) : l'IIFE pose FZDraftKit
 // sur l'objet global qu'elle reçoit, quel qu'il soit. En navigateur c'est

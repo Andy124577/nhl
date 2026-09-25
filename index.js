@@ -50,6 +50,72 @@ function statsCourantesPretes() {
     return !!(currentStats && Array.isArray(currentStats.players) && currentStats.players.length);
 }
 
+/* ==================== SAISON AFFICHÉE : RÉELLE OU PROJETÉE ====================
+ *
+ * Le sélecteur « Saison » bascule tout le tableau d'une source à l'autre,
+ * jamais un mélange des deux (même règle que le tri ci-dessus) :
+ *   - « stats » : /current-stats, soit la dernière saison complétée tant que
+ *     la saison régulière n'a pas commencé, puis la saison en cours dès son
+ *     ouverture — le serveur en décide (statsSeasonId, lib/season.js). Le
+ *     libellé suit `currentStats.season` : il nomme toujours la saison que
+ *     le tableau affiche réellement, sans rien à changer ici chaque automne.
+ *   - « projection » : les chiffres projetés de la trousse de repêchage
+ *     (draftkitData.js), téléchargée au premier choix seulement — 1 Mo que
+ *     la plupart des visites n'ont pas à payer.
+ */
+let statsMode = "stats";
+let projectionPools = null;
+
+function modeProjection() {
+    return statsMode === "projection" && !!projectionPools;
+}
+
+/** « 2025-26 », depuis 20252026 comme depuis « 2025-2026 ». */
+function libelleSaison(saison) {
+    const chiffres = String(saison || "").replace(/\D/g, "");
+    return chiffres.length === 8 && "function" == typeof seasonLabel ? seasonLabel(chiffres) : "";
+}
+
+function libellerModesSaison() {
+    const reel = document.querySelector('#seasonMode option[value="stats"]'),
+        projete = document.querySelector('#seasonMode option[value="projection"]');
+    if (!reel || !projete) return;
+    const saison = statsCourantesPretes() ? libelleSaison(currentStats.season) : "";
+    // L'année d'abord : sur téléphone, le sélecteur tronque la fin du libellé.
+    reel.textContent = saison || "Réelle";
+    const kit = "undefined" != typeof FZDraftKit ? libelleSaison(FZDraftKit.saison) : "";
+    projete.textContent = kit ? `${kit} projetée` : "Projections";
+}
+
+async function changerModeSaison() {
+    const select = document.getElementById("seasonMode");
+    statsMode = select.value;
+    if ("projection" === statsMode && !projectionPools) {
+        showSkeletonLoader();
+        try {
+            await FZDraftKit.charger();
+            const pools = FZDraftKit.pools("projection");
+            // La moitié des fiches de la trousse n'ont pas d'identifiant LNH :
+            // sans lui, ni photo ni fiche du joueur.
+            FZDraftKit.attacherIds([pools.skaters, pools.goalies],
+                [...(statsCourantesPretes() ? currentStats.players : []), ...fullPlayerData, ...goalieData]);
+            projectionPools = pools;
+        } catch (err) {
+            console.warn("⚠️ Projections indisponibles :", err);
+            select.value = statsMode = "stats";
+        }
+        hideSkeletonLoader();
+    }
+    libellerModesSaison();
+    updateTable();
+}
+
+/** En projection, chaque colonne chiffrée le dit dans son infobulle. */
+function colonnesDuMode(columns) {
+    if (!modeProjection()) return columns;
+    return columns.map(c => "rank-col" === c.cls || "player-col" === c.cls ? c : { ...c, title: `${c.title} (projection)` });
+}
+
 /** Un nombre, toujours : null, undefined, '' et NaN valent 0. */
 function nombreStat(valeur) {
     const n = Number(valeur);
@@ -64,7 +130,7 @@ function nombreStat(valeur) {
  * lib/scoring.js plutôt que recopiée ici.
  */
 function valeurDeTri(ligne, nom, playerId, cle, estGardien) {
-    const source = statsCourantesPretes()
+    const source = !modeProjection() && statsCourantesPretes()
         ? getCurrentPlayerStats(nom, playerId)
         : ligne;
     if (!source) return 0;
@@ -111,7 +177,7 @@ async function fetchPlayerData() {
         } catch (t) {
             console.warn("⚠️ Could not load current team standings, using cached data:", t)
         }
-        updateTable(), hideSkeletonLoader()
+        libellerModesSaison(), updateTable(), hideSkeletonLoader()
     } catch (t) {
         console.error("Failed to fetch player data:", t), hideSkeletonLoader()
     }
@@ -134,11 +200,15 @@ function updateTable() {
         e = document.getElementById("sortBy").value,
         a = document.getElementById("searchInput").value.toLowerCase();
     clearStatsPagination();
+    const projete = modeProjection(),
+        patineurs = projete ? projectionPools.skaters : fullPlayerData,
+        gardiens = projete ? projectionPools.goalies : goalieData,
+        clubs = projete ? projectionPools.teams : teamData;
     if ("teams" === t) {
         // Les clubs souffraient du même mélange : un club absent de
         // /current-teams était classé sur ses points de l'an passé.
-        const clubsPrets = !!(currentTeams && currentTeams.teams && currentTeams.teams.length);
-        return void populateTeamTable([...teamData].sort((t, e) => {
+        const clubsPrets = !projete && !!(currentTeams && currentTeams.teams && currentTeams.teams.length);
+        return void populateTeamTable([...clubs].sort((t, e) => {
             const a = clubsPrets ? getCurrentTeamStats(t.teamFullName) : t,
                 n = clubsPrets ? getCurrentTeamStats(e.teamFullName) : e;
             return comparerParStat(nombreStat(a && a.points), nombreStat(n && n.points),
@@ -146,14 +216,14 @@ function updateTable() {
         }))
     }
     if ("goalies" === t) {
-        return void populateGoalieTable([...goalieData].sort((t, a) => comparerParStat(
+        return void populateGoalieTable([...gardiens].sort((t, a) => comparerParStat(
             valeurDeTri(t, t.goalieFullName, t.playerId, e, !0),
             valeurDeTri(a, a.goalieFullName, a.playerId, e, !0),
             t.goalieFullName, a.goalieFullName
         )))
     }
-    let n = fullPlayerData;
-    "offensive" === t ? n = n.filter(t => ["C", "R", "L"].includes(t.positionCode)) : "defensive" === t ? n = n.filter(t => "D" === t.positionCode) : "rookies" === t && (n = rookiePlayerData.slice()), a && (n = n.filter(t => t.skaterFullName.toLowerCase().includes(a))), n.sort((t, a) => comparerParStat(
+    let n = patineurs;
+    "offensive" === t ? n = n.filter(t => ["C", "R", "L"].includes(t.positionCode)) : "defensive" === t ? n = n.filter(t => "D" === t.positionCode) : "rookies" === t && (n = projete ? patineurs.filter(t => t.isRookie) : rookiePlayerData.slice()), a && (n = n.filter(t => t.skaterFullName.toLowerCase().includes(a))), n.sort((t, a) => comparerParStat(
         valeurDeTri(t, t.skaterFullName, t.playerId, e, !1),
         valeurDeTri(a, a.skaterFullName, a.playerId, e, !1),
         t.skaterFullName, a.skaterFullName
@@ -224,14 +294,14 @@ async function populatePlayerTable(t) {
     const sortKey = document.getElementById("sortBy")?.value;
 
     if (!t.length) {
-        e.innerHTML = buildTableHead(SKATER_COLUMNS, sortKey)
+        e.innerHTML = buildTableHead(colonnesDuMode(SKATER_COLUMNS), sortKey)
             + buildEmptyState(SKATER_COLUMNS.length, 'Aucun joueur ne correspond',
                 'Vérifiez l\'orthographe ou effacez la recherche.');
         renderStatsPagination(0);
         return;
     }
 
-    e.innerHTML = buildTableHead(SKATER_COLUMNS, sortKey);
+    e.innerHTML = buildTableHead(colonnesDuMode(SKATER_COLUMNS), sortKey);
     const tbody = document.createElement("tbody");
     e.appendChild(tbody);
     visible.forEach((t, index) => {
@@ -248,7 +318,7 @@ async function populatePlayerTable(t) {
         // joué, si bien que la colonne affichait les points de l'an passé
         // pendant que le tri, lui, comparait des zéros. Les deux lisent
         // désormais la même saison.
-        const src = statsCourantesPretes() ? n : t;
+        const src = !modeProjection() && statsCourantesPretes() ? n : t;
         const c = nombreStat(src && src.gamesPlayed),
             u = nombreStat(src && src.goals),
             m = nombreStat(src && src.assists),
@@ -257,7 +327,8 @@ async function populatePlayerTable(t) {
             p = n?.position || t.positionCode || "N/A",
             y = document.createElement("tr");
         y.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${g}<div class="player-ident"><span class="player-name">${a}${injBadge(a, o)}${watchBadge(a, o)}</span><span class="player-pos">${p}</span></div></div></td>\n            <td>${c}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n            <td class="points-column">${h}</td>\n        `;
-        makeRowInteractive(y, () => showCareerStats(t.playerId, t.skaterFullName, !1),
+        // Une fiche de la trousse sans identifiant LNH n'a pas de fiche à ouvrir.
+        t.playerId && makeRowInteractive(y, () => showCareerStats(t.playerId, t.skaterFullName, !1),
             `Voir la fiche de ${a}`);
         tbody.appendChild(y)
     });
@@ -368,11 +439,11 @@ function populateGoalieTable(t) {
         { label: 'PTS', title: 'Points', cls: 'points-column', w: '9%' }
     ];
     if (!t.length) {
-        e.innerHTML = buildTableHead(GOALIE_COLUMNS)
+        e.innerHTML = buildTableHead(colonnesDuMode(GOALIE_COLUMNS))
             + buildEmptyState(GOALIE_COLUMNS.length, 'Aucun gardien à afficher');
         return;
     }
-    e.innerHTML = buildTableHead(GOALIE_COLUMNS);
+    e.innerHTML = buildTableHead(colonnesDuMode(GOALIE_COLUMNS));
     const tbody = document.createElement("tbody");
     e.appendChild(tbody);
     t.forEach((t, index) => {
@@ -381,7 +452,7 @@ function populateGoalieTable(t) {
             s = getMatchingImage(a),
             l = n?.teamAbbrev ? `teams/${n.teamAbbrev}.png` : getTeamLogoPath(t.teamAbbrevs);
         let o, r, d, i, c, u, m;
-        const srcG = statsCourantesPretes() ? n : t;
+        const srcG = !modeProjection() && statsCourantesPretes() ? n : t;
         o = nombreStat(srcG && srcG.gamesPlayed), r = nombreStat(srcG && srcG.wins),
         d = nombreStat(srcG && srcG.losses), i = nombreStat(srcG && srcG.otLosses),
         // Sans partie jouée, pas de pourcentage : « — », pas 0.000.
@@ -390,7 +461,7 @@ function populateGoalieTable(t) {
         const h = s && l ? `<div class="player-photo">\n                    <img src="${s}" alt="${a}" class="face">\n                    <img src="${l}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n               </div>` : "",
             g = document.createElement("tr");
         g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${h}<div class="player-ident"><span class="player-name">${a}${injBadge(a, n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}${watchBadge(a, n?.teamAbbrev || t.teamAbbrevs)}</span></div></div></td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c != null ? c.toFixed(3) : "—"}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
-        makeRowInteractive(g, () => showCareerStats(t.playerId, t.goalieFullName, !0),
+        t.playerId && makeRowInteractive(g, () => showCareerStats(t.playerId, t.goalieFullName, !0),
             `Voir la fiche de ${a}`);
         tbody.appendChild(g)
     })
@@ -425,18 +496,18 @@ function populateTeamTable(t) {
         { label: 'PTS', title: 'Points', cls: 'points-column', w: '8%' }
     ];
     if (!t.length) {
-        e.innerHTML = buildTableHead(TEAM_COLUMNS)
+        e.innerHTML = buildTableHead(colonnesDuMode(TEAM_COLUMNS))
             + buildEmptyState(TEAM_COLUMNS.length, 'Aucune équipe à afficher');
         return;
     }
-    e.innerHTML = buildTableHead(TEAM_COLUMNS);
+    e.innerHTML = buildTableHead(colonnesDuMode(TEAM_COLUMNS));
     const tbody = document.createElement("tbody");
     e.appendChild(tbody);
     t.forEach((t, index) => {
-        const a = `teams/${getTeamAbbreviation(t.teamFullName)}.png`,
+        const a = `teams/${t.teamAbbrev || getTeamAbbreviation(t.teamFullName)}.png`,
             n = getCurrentTeamStats(t.teamFullName);
         let s, l, o, r, d;
-        const srcT = (currentTeams && currentTeams.teams && currentTeams.teams.length) ? n : t;
+        const srcT = !modeProjection() && (currentTeams && currentTeams.teams && currentTeams.teams.length) ? n : t;
         s = nombreStat(srcT && srcT.gamesPlayed), l = nombreStat(srcT && srcT.wins),
         o = nombreStat(srcT && srcT.losses), r = nombreStat(srcT && srcT.otLosses),
         d = nombreStat(srcT && srcT.points) || 2 * l + 1 * r;
@@ -647,7 +718,7 @@ async function switchToUser(t, e) {
 function logout(t) {
     t && t.preventDefault(), localStorage.removeItem("isLoggedIn"), localStorage.removeItem("username"), localStorage.removeItem("isAdmin"), localStorage.removeItem("activeUser"), location.reload()
 }
-document.getElementById("searchInput").addEventListener("input", updateTable), document.getElementById("playerFilter").addEventListener("change", updateTable), document.getElementById("sortBy").addEventListener("change", updateTable), fetchPlayerData(), $(document).ready(function() {
+document.getElementById("searchInput").addEventListener("input", updateTable), document.getElementById("playerFilter").addEventListener("change", updateTable), document.getElementById("sortBy").addEventListener("change", updateTable), document.getElementById("seasonMode").addEventListener("change", changerModeSaison), "undefined" != typeof FZDraftKit && FZDraftKit.chargerWatchlist().then(libellerModesSaison, () => {}), fetchPlayerData(), $(document).ready(function() {
     const t = "true" === localStorage.getItem("isLoggedIn"),
         e = localStorage.getItem("username"),
         a = "true" === localStorage.getItem("isAdmin");
