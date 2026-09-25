@@ -298,8 +298,9 @@ body.fz-stats .lu-photo {
   width: 76px;
   height: 76px;
   border-radius: 50%;
-  background-color: var(--lu-c1);
-  background-image: linear-gradient(160deg, rgba(255,255,255,.12), rgba(0,0,0,.28));
+  /* Le fond lui-même vient de .fz-shot (teamLogos.css), partagé avec les
+     buts de l'accueil, les Meneurs et la salle de repêchage. */
+  --fz-shot-team: var(--lu-c1);
   overflow: visible;
 }
 body.fz-stats .lu-photo img {
@@ -317,6 +318,10 @@ body.fz-stats .lu-photo-init {
   font: 800 1.4rem/1 'Barlow Condensed', sans-serif;
   letter-spacing: .04em;
 }
+/* La photo est détourée : les initiales se voyaient derrière le joueur.
+   Elles ne servent que s'il n'y a pas de photo, ou si elle ne charge pas
+   (le onerror de l'<img> la retire, et elles réapparaissent). */
+body.fz-stats .lu-photo img ~ .lu-photo-init { display: none; }
 body.fz-stats .lu-photo-num {
   position: absolute;
   right: -4px;

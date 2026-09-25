@@ -807,9 +807,11 @@ function goalCardHTML(but, equipes) {
     // garde-fou sert aux tests, qui chargent cette fonction toute seule.
     const couleur = typeof getTeamColors === 'function'
         ? getTeamColors(but.teamAbbrev)[0] : '';
+    // La photo détourée sur la couleur du club (.fz-shot, teamLogos.css) :
+    // le même fond que les photos de l'onglet Alignements.
     const photo = but.headshot
-        ? `<img class="fzd-goal-photo" src="${escapeHTML(but.headshot)}" alt="" loading="lazy" onerror="this.remove()">`
-        : `<span class="fzd-goal-photo is-initials">${escapeHTML(initiales)}</span>`;
+        ? `<img class="fzd-goal-photo fz-shot" src="${escapeHTML(but.headshot)}" alt="" loading="lazy" onerror="this.remove()">`
+        : `<span class="fzd-goal-photo fz-shot is-initials">${escapeHTML(initiales)}</span>`;
 
     const aides = (but.assists || []).filter(a => a.name);
     const aide = aides.length
@@ -830,7 +832,7 @@ function goalCardHTML(but, equipes) {
         : '';
 
     return `
-        <div class="fzd-goal-card"${ouvre}${couleur ? ` style="--fzd-goal-team: ${escapeHTML(couleur)}"` : ''}>
+        <div class="fzd-goal-card"${ouvre}${couleur ? ` style="--fz-shot-team: ${escapeHTML(couleur)}"` : ''}>
             ${photo}
             <div class="fzd-goal-id">
                 <div class="fzd-goal-name" title="${escapeHTML(nom)}">${escapeHTML(nom)}${compteurHTML(but.goalsToDate)}</div>

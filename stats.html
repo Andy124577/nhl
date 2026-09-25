@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css?v=20260923">
-    <link rel="stylesheet" href="teamLogos.css">
+    <link rel="stylesheet" href="teamLogos.css?v=20260925c">
     <link rel="stylesheet" href="poolNav.css?v=20260922">
     <link rel="stylesheet" href="poolSettings.css?v=20260922">
     <link rel="stylesheet" href="index.css">
@@ -17,10 +17,10 @@
     <!-- Modale de carrière : même feuille que draftActif.html, chargée en
          dernier pour que ses règles spécialisent celles d'index.css. -->
     <link rel="stylesheet" href="injuries.css">
-    <link rel="stylesheet" href="statsLeaders.css">
-    <link rel="stylesheet" href="statsTopPlayers.css">
-    <link rel="stylesheet" href="stats-premium.css?v=20260925">
-    <link rel="stylesheet" href="statsLineup.css?v=20260925">
+    <link rel="stylesheet" href="statsLeaders.css?v=20260925c">
+    <link rel="stylesheet" href="statsTopPlayers.css?v=20260925c">
+    <link rel="stylesheet" href="stats-premium.css?v=20260925c">
+    <link rel="stylesheet" href="statsLineup.css?v=20260925c">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
@@ -124,8 +124,8 @@
                     <select id="luTeam" class="lu-team-select"></select>
                 </label>
                 <div class="lu-views" id="luViews" role="radiogroup" aria-label="Affichage">
-                    <button type="button" role="radio" data-lu-view="chandails">Chandails</button>
                     <button type="button" role="radio" data-lu-view="photos">Photos</button>
+                    <button type="button" role="radio" data-lu-view="chandails">Chandails</button>
                     <button type="button" role="radio" data-lu-view="stats">Stats</button>
                 </div>
             </div>
@@ -298,11 +298,11 @@
     <script defer src="injuries.js"></script>
     <script defer src="index.js?v=20250101-debug2"></script>
     <!-- Meneurs de la ligue : lit BASE_URL déjà déclaré par index.js ci-dessus. -->
-    <script defer src="statsLeaders.js"></script>
+    <script defer src="statsLeaders.js?v=20260925c"></script>
     <!-- Meilleurs joueurs : lit BASE_URL (index.js) et escapeHTML (statsLeaders.js). -->
-    <script defer src="statsTopPlayers.js?v=20260922"></script>
+    <script defer src="statsTopPlayers.js?v=20260925c"></script>
     <!-- Alignements : trios de chaque club, chargés à l'ouverture de l'onglet. -->
-    <script defer src="statsLineup.js?v=20260925"></script>
+    <script defer src="statsLineup.js?v=20260925c"></script>
     <!-- Logo d'équipe du tableau de carrière, partagé avec draftActif.html. -->
     <script defer src="careerFetch.js"></script>
     <script defer src="careerModal.js"></script>

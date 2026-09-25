@@ -144,7 +144,7 @@ function renderTopPlayers() {
              style="animation-delay:${i * 0.07}s">
             <div class="player-rank-badge ${rankCls(i)}">${i + 1}</div>
             ${isHot ? '<span class="hot-streak" title="En feu!">🔥</span>' : ''}
-            <div class="player-card-photo">
+            <div class="player-card-photo fz-shot" style="--fz-shot-team: ${escapeHTML(teamShotColor(p.teamAbbrev))}">
                 <img src="${headshot}" alt="${name}"
                      onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';"
                      loading="lazy">

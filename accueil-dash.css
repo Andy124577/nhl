@@ -721,23 +721,21 @@ a.fzd-cal-full { text-decoration: none; }
 .fzd-goal-card[data-goal-player]:hover { border-color: var(--fzd-border-strong); background: var(--fzd-bg-alt); }
 .fzd-goal-card[data-goal-player]:hover .fzd-goal-name { color: var(--fzd-accent); }
 .fzd-goal-card[data-goal-player]:focus-visible { outline: 2px solid var(--fzd-accent); outline-offset: 2px; }
-/* L'anneau dit de quel club vient le but — voir goalCardHTML. En
-   box-shadow plutôt qu'en border : la photo garde ses 28 pixels, et deux
-   cartes voisines gardent la même hauteur. */
+/* Le club du buteur se lit au fond de la photo : sa couleur principale,
+   posée par .fz-shot (teamLogos.css) comme à l'onglet Alignements. Il
+   remplace l'anneau d'avant, qui disait la même chose en deux pixels. */
 .fzd-goal-photo {
-    width: 28px; height: 28px;
+    width: 32px; height: 32px;
     flex: 0 0 auto;
-    margin: 2px;
     border-radius: 999px;
-    background: var(--fzd-tile-bg);
     object-fit: cover;
-    box-shadow: 0 0 0 2px var(--fzd-goal-team, transparent);
+    object-position: top;
 }
 .fzd-goal-photo.is-initials {
     display: grid;
     place-items: center;
     font: 600 9px/1 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzd-text-muted);
+    color: #fff;
 }
 .fzd-goal-id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .fzd-goal-name {

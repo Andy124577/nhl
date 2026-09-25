@@ -160,7 +160,7 @@ body.fz-stats .leader-card-empty { color: var(--fzs-text-faint); }
 body.fz-stats .leader-featured { background: var(--fzs-bg-alt); }
 body.fz-stats .leader-featured:hover,
 body.fz-stats .leader-featured:focus-visible { box-shadow: 0 0 0 1px var(--fzs-accent) inset; }
-body.fz-stats .leader-featured-photo { background: var(--fzs-tile); border-color: var(--fzs-accent); }
+body.fz-stats .leader-featured-photo { border-color: var(--fzs-accent); }
 body.fz-stats .leader-featured-name { color: var(--fzs-ink); }
 body.fz-stats .leader-featured-meta { color: var(--fzs-text-faint); }
 body.fz-stats .leader-featured-val {
@@ -227,7 +227,6 @@ body.fz-stats .player-rank-badge.normal {
 }
 body.fz-stats .player-card-photo {
   border-color: var(--fzs-border);
-  background: var(--fzs-bg-alt);
 }
 body.fz-stats .player-card:hover .player-card-photo {
   border-color: var(--fzs-accent);

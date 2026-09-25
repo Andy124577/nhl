@@ -65,3 +65,15 @@ html[data-theme="light"] .sl-live img[src$="teams/EDM.png"] { content: url("team
 html[data-theme="light"] .sl-live img[src$="teams/TBL.png"] { content: url("teams/dark/TBL.svg"); }
 html[data-theme="light"] .sl-live img[src$="teams/TOR.png"] { content: url("teams/dark/TOR.svg"); }
 html[data-theme="light"] .sl-live img[src$="teams/WSH.png"] { content: url("teams/dark/WSH.svg"); }
+
+/* ─── 4. Photos de joueurs sur la couleur de leur club ─────────────────────
+   Les photos officielles de la LNH sont détourées : derrière le joueur, on
+   pose la couleur principale de SON club (--fz-shot-team, tirée de
+   teamColors.js par le script qui dessine la photo), éclairée en haut et
+   assombrie en bas. Une seule recette pour l'onglet Alignements, les buts de
+   l'accueil, les Meneurs et la salle de repêchage. Sans club connu, le gris
+   ardoise du repli de teamColors.js. */
+.fz-shot {
+  background-color: var(--fz-shot-team, #3A414D);
+  background-image: linear-gradient(160deg, rgba(255,255,255,.12), rgba(0,0,0,.28));
+}

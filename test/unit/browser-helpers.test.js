@@ -988,13 +988,15 @@ describe('accueil — les buteurs sous chaque match', () => {
         assert.match(html, /\(1<sup>re<\/sup> - 12:19\)/);
     });
 
-    test('l’anneau de la photo porte la couleur du club du buteur', () => {
+    test('le fond de la photo porte la couleur du club du buteur', () => {
         // Les buts des deux équipes se suivent dans la même piste : la
         // couleur est ce qui dit d'un coup d'œil qui vient de marquer.
         const { goalCardHTML } = rendu();
 
-        assert.ok(goalCardHTML(BUTS[0], EQUIPES).includes('--fzd-goal-team: ' + getTeamColors('MTL')[0]));
-        assert.ok(goalCardHTML(BUTS[1], EQUIPES).includes('--fzd-goal-team: ' + getTeamColors('TOR')[0]));
+        const un = goalCardHTML(BUTS[0], EQUIPES);
+        assert.ok(un.includes('--fz-shot-team: ' + getTeamColors('MTL')[0]));
+        assert.match(un, /class="fzd-goal-photo fz-shot"/);
+        assert.ok(goalCardHTML(BUTS[1], EQUIPES).includes('--fz-shot-team: ' + getTeamColors('TOR')[0]));
     });
 
     test('la carte entière ouvre la fiche du buteur', () => {
@@ -1037,7 +1039,7 @@ describe('accueil — les buteurs sous chaque match', () => {
         const { goalCardHTML } = rendu();
         const html = goalCardHTML(BUTS[1], EQUIPES);
 
-        assert.match(html, /class="fzd-goal-photo is-initials">AM</);
+        assert.match(html, /class="fzd-goal-photo fz-shot is-initials">AM</);
         assert.ok(!html.includes('<img'), 'aucune image ne doit être demandée');
     });
 

@@ -70,7 +70,8 @@ function buildLeaderCard(cat, players) {
     <div class="leader-card">
         ${head}
         <div class="leader-featured" onclick="${openCareer(first)}">
-            <img class="leader-featured-photo" src="${first.headshot}" alt="${escapeHTML(first.playerName)}"
+            <img class="leader-featured-photo fz-shot" src="${first.headshot}" alt="${escapeHTML(first.playerName)}"
+                 style="--fz-shot-team: ${escapeHTML(teamShotColor(first.teamAbbrev))}"
                  loading="lazy" onerror="this.style.visibility='hidden'">
             <span class="leader-featured-id">
                 <span class="leader-featured-line"><span class="leader-featured-name">${escapeHTML(first.playerName)}</span>${typeof injuryBadgeHTML === 'function' ? injuryBadgeHTML(first.playerName, first.teamAbbrev) : ''}</span>
@@ -89,6 +90,15 @@ function buildLeaderCard(cat, players) {
                 <span class="leader-row-val">${p[cat.stat] ?? 0}</span>
             </div>`).join('')}
     </div>`;
+}
+
+/**
+ * La couleur du club derrière une photo (.fz-shot, teamLogos.css) — le même
+ * fond qu'à l'onglet Alignements. teamColors.js est chargé avant ce fichier ;
+ * sans lui, ou pour un club inconnu, le gris ardoise de son repli.
+ */
+function teamShotColor(teamAbbrev) {
+    return typeof getTeamColors === 'function' ? getTeamColors(teamAbbrev)[0] : '#3A414D';
 }
 
 function escapeHTML(str) {

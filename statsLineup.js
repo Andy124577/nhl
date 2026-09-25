@@ -5,9 +5,9 @@
    les blessés d'un club, tels que GET /team-lineup/:club les
    rend (voir lib/alignement.js). Trois façons de les lire :
 
+     - photos    : la photo officielle de la LNH (par défaut) ;
      - chandails : le dos du chandail, nom et numéro, aux
                    couleurs du club (teamColors.js) ;
-     - photos    : la photo officielle de la LNH ;
      - stats     : un tableau, ligne par ligne, avec la saison
                    de chacun.
 
@@ -24,22 +24,29 @@
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
+    /**
+     * Les 32 clubs, triés par ville. La ville vient en tête du libellé
+     * (« Montréal – Canadiens ») pour que l'ordre se lise dans la liste.
+     */
     const CLUBS = [
-        ['ANA', 'Ducks d’Anaheim'], ['BOS', 'Bruins de Boston'], ['BUF', 'Sabres de Buffalo'],
-        ['CGY', 'Flames de Calgary'], ['CAR', 'Hurricanes de la Caroline'], ['CHI', 'Blackhawks de Chicago'],
-        ['COL', 'Avalanche du Colorado'], ['CBJ', 'Blue Jackets de Columbus'], ['DAL', 'Stars de Dallas'],
-        ['DET', 'Red Wings de Détroit'], ['EDM', 'Oilers d’Edmonton'], ['FLA', 'Panthers de la Floride'],
-        ['LAK', 'Kings de Los Angeles'], ['MIN', 'Wild du Minnesota'], ['MTL', 'Canadiens de Montréal'],
-        ['NSH', 'Predators de Nashville'], ['NJD', 'Devils du New Jersey'], ['NYI', 'Islanders de New York'],
-        ['NYR', 'Rangers de New York'], ['OTT', 'Sénateurs d’Ottawa'], ['PHI', 'Flyers de Philadelphie'],
-        ['PIT', 'Penguins de Pittsburgh'], ['SJS', 'Sharks de San Jose'], ['SEA', 'Kraken de Seattle'],
-        ['STL', 'Blues de St. Louis'], ['TBL', 'Lightning de Tampa Bay'], ['TOR', 'Maple Leafs de Toronto'],
-        ['UTA', 'Mammoth de l’Utah'], ['VAN', 'Canucks de Vancouver'], ['VGK', 'Golden Knights de Vegas'],
-        ['WSH', 'Capitals de Washington'], ['WPG', 'Jets de Winnipeg']
-    ].sort((a, b) => a[1].localeCompare(b[1], 'fr'));
+        ['ANA', 'Anaheim', 'Ducks'], ['BOS', 'Boston', 'Bruins'], ['BUF', 'Buffalo', 'Sabres'],
+        ['CGY', 'Calgary', 'Flames'], ['CAR', 'Caroline', 'Hurricanes'], ['CHI', 'Chicago', 'Blackhawks'],
+        ['COL', 'Colorado', 'Avalanche'], ['CBJ', 'Columbus', 'Blue Jackets'], ['DAL', 'Dallas', 'Stars'],
+        ['DET', 'Détroit', 'Red Wings'], ['EDM', 'Edmonton', 'Oilers'], ['FLA', 'Floride', 'Panthers'],
+        ['LAK', 'Los Angeles', 'Kings'], ['MIN', 'Minnesota', 'Wild'], ['MTL', 'Montréal', 'Canadiens'],
+        ['NSH', 'Nashville', 'Predators'], ['NJD', 'New Jersey', 'Devils'], ['NYI', 'New York', 'Islanders'],
+        ['NYR', 'New York', 'Rangers'], ['OTT', 'Ottawa', 'Sénateurs'], ['PHI', 'Philadelphie', 'Flyers'],
+        ['PIT', 'Pittsburgh', 'Penguins'], ['SJS', 'San Jose', 'Sharks'], ['SEA', 'Seattle', 'Kraken'],
+        ['STL', 'St. Louis', 'Blues'], ['TBL', 'Tampa Bay', 'Lightning'], ['TOR', 'Toronto', 'Maple Leafs'],
+        ['UTA', 'Utah', 'Mammoth'], ['VAN', 'Vancouver', 'Canucks'], ['VGK', 'Vegas', 'Golden Knights'],
+        ['WSH', 'Washington', 'Capitals'], ['WPG', 'Winnipeg', 'Jets']
+    ]
+        .sort((a, b) => a[1].localeCompare(b[1], 'fr') || a[2].localeCompare(b[2], 'fr'))
+        .map(([code, ville, surnom]) => [code, `${ville} – ${surnom}`]);
     const NOMS = new Map(CLUBS);
 
-    const VUES = ['chandails', 'photos', 'stats'];
+    /** Dans l'ordre des boutons ; le premier est l'affichage par défaut. */
+    const VUES = ['photos', 'chandails', 'stats'];
 
     /** Au-delà, un retour sur l'onglet relit l'alignement. */
     const FRAICHEUR_MS = 10 * 60 * 1000;
@@ -66,7 +73,7 @@
     };
 
     let club = NOMS.has(memoire.lire('fzLineupTeam')) ? memoire.lire('fzLineupTeam') : 'MTL';
-    let vue = VUES.includes(memoire.lire('fzLineupView')) ? memoire.lire('fzLineupView') : 'chandails';
+    let vue = VUES.includes(memoire.lire('fzLineupView')) ? memoire.lire('fzLineupView') : VUES[0];
     let donnees = null;
     let luA = 0;
     let jeton = 0;
@@ -182,7 +189,7 @@
 
     function photo(p) {
         return `
-            <span class="lu-photo">
+            <span class="lu-photo fz-shot">
                 ${p.headshot
                     ? `<img src="${echapper(p.headshot)}" alt="" loading="lazy" onerror="this.remove()">`
                     : ''}

@@ -500,6 +500,55 @@ function fzMajOngletsMeta() {
 window.fzMajOngletsMeta = fzMajOngletsMeta;
 
 /* ============================================================
+   5. PHOTOS SUR LA COULEUR DU CLUB
+   ------------------------------------------------------------
+   Même fond que les photos de l'onglet Alignements (stats.html) :
+   la photo officielle, détourée, posée sur la couleur principale
+   du club du joueur (.fz-shot, teamLogos.css).
+
+   La salle de repêchage pose des photos depuis une dizaine
+   d'endroits — liste des joueurs, favoris, suggestions, joueur
+   choisi, choix récents — dont draftActif.js, qui est minifié.
+   Plutôt que de les reprendre un à un, on lit le club dans
+   l'adresse de la photo, où la LNH le met déjà
+   (…/mugs/nhl/20262027/MTL/8480018.png), et on colore chaque
+   photo à son arrivée dans la page. Une photo sans club dans son
+   adresse garde le fond de sa case.
+
+   Exclues : les cartes de choix, qui portent l'identité de
+   l'équipe du POOL et pas le club du joueur (DESIGN.md, Pick
+   Card), et la fiche de carrière, qui a déjà son bandeau.
+   ============================================================ */
+const FZ_PHOTO_LNH = /\/mugs\/nhl\/\d{8}\/([A-Z]{2,3})\/\d+\.png/;
+
+function fzColorerPhoto(img) {
+    if (typeof getTeamColors !== 'function') return;
+    if (img.closest('.pick-card, #careerStatsModal')) return;
+    const club = FZ_PHOTO_LNH.exec(img.getAttribute('src') || '');
+    if (!club) return;
+    img.style.setProperty('--fz-shot-team', getTeamColors(club[1])[0]);
+    img.classList.add('fz-shot');
+}
+
+function fzColorerPhotos(noeud) {
+    if (noeud.nodeType !== 1) return;
+    if (noeud.tagName === 'IMG') { fzColorerPhoto(noeud); return; }
+    noeud.querySelectorAll('img[src*="/mugs/nhl/"]').forEach(fzColorerPhoto);
+}
+
+function initPhotosClub() {
+    fzColorerPhotos(document.body);
+    // Les listes se redessinent à chaque choix et à chaque message du
+    // serveur ; une photo peut aussi changer d'adresse sans être recréée.
+    new MutationObserver(changements => {
+        for (const c of changements) {
+            if (c.type === 'attributes') { if (c.target.tagName === 'IMG') fzColorerPhoto(c.target); }
+            else c.addedNodes.forEach(fzColorerPhotos);
+        }
+    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
+}
+
+/* ============================================================
    Initialisation
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -507,4 +556,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initProgressViewToggle();
     initPositionFilter();
     initPanelTabs();
+    initPhotosClub();
 });
