@@ -225,13 +225,6 @@ body.fz-stats .player-rank-badge.normal {
   background: var(--fzs-bg-alt);
   color: var(--fzs-text-fainter);
 }
-body.fz-stats .player-card-photo {
-  border-color: var(--fzs-border);
-}
-body.fz-stats .player-card:hover .player-card-photo {
-  border-color: var(--fzs-accent);
-  box-shadow: none;
-}
 body.fz-stats .player-card-photo .no-photo { color: var(--fzs-text-fainter); }
 body.fz-stats .player-card-name { color: var(--fzs-ink); }
 body.fz-stats .player-card-team { color: var(--fzs-accent); }
