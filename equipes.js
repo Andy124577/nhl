@@ -104,8 +104,16 @@ $(document).ready(function() {
     const isAdmin = localStorage.getItem("isAdmin") === "true";
 
     if (!isLoggedIn) {
-        alert("⛔ Vous devez être connecté pour accéder à cette page !");
-        window.location.href = "login.html"; // 🔄 Redirection vers la page de connexion
+        // La redirection attend la fermeture : sinon la fenêtre disparaîtrait
+        // avant d'avoir été lue.
+        fzAlert({
+            type: 'warning',
+            icon: 'user',
+            title: 'Connexion requise',
+            message: 'Connectez-vous pour créer ou rejoindre un pool.',
+            confirmLabel: 'Se connecter',
+            dismissible: false
+        }).then(() => { window.location.href = "login.html"; });
     } else {
         if (isAdmin) {
             // Admin mode - show Utilisateur dropdown and normal logout
@@ -191,11 +199,11 @@ async function switchToUser(event, username) {
             // Keep isAdmin flag - admin privileges persist across user switches
             window.location.reload();
         } else {
-            alert('Erreur lors du changement d\'utilisateur');
+            fzAlert({ type: 'error', title: 'Changement impossible', message: 'Le changement d’utilisateur a échoué.' });
         }
     } catch (error) {
         console.error('Error switching user:', error);
-        alert('Erreur de connexion');
+        fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
     }
 }
 
@@ -278,48 +286,49 @@ async function createClan() {
     const poolPassword = ($("#poolPassword").val() || "").trim();
     const username = localStorage.getItem("username");
 
+    // Un refus de formulaire : la fenêtre dit quoi corriger, puis rend la
+    // main au champ fautif.
+    const refuser = async (title, message, champ) => {
+        await fzAlert({ type: 'warning', title, message, confirmLabel: 'Corriger' });
+        if (champ) $(champ).trigger('focus');
+    };
+
     if (!clanName || !maxPlayers) {
-        alert("Veuillez remplir tous les champs !");
-        return;
+        return refuser('Formulaire incomplet', 'Donnez un nom au pool et choisissez le nombre maximum de participants.',
+            clanName ? '#maxPlayers' : '#clanName');
     }
 
     if (!teamName) {
-        alert("Donnez un nom à votre équipe.");
-        $("#teamName").trigger('focus');
-        return;
+        return refuser('Nom d’équipe manquant', 'Donnez un nom à votre équipe.', '#teamName');
     }
     if (teamName.length > 20 || !/^[\p{L}\p{N}\s'\-_]+$/u.test(teamName)) {
-        alert("Nom d'équipe invalide : 1 à 20 caractères, lettres, chiffres, espaces, tirets ou apostrophes.");
-        return;
+        return refuser('Nom d’équipe invalide',
+            'De 1 à 20 caractères : lettres, chiffres, espaces, tirets ou apostrophes.', '#teamName');
     }
     if (typeof contientGrossierete === 'function' && contientGrossierete(teamName)) {
-        alert("Ce nom d'équipe contient un terme inapproprié. Choisissez-en un autre.");
-        return;
+        return refuser('Nom d’équipe refusé', 'Ce nom contient un terme inapproprié. Choisissez-en un autre.', '#teamName');
     }
 
     // Validation des valeurs
     if (numOffensive < 0 || numDefensive < 0 || numGoalies < 0 || numRookies < 0 || numTeams < 0) {
-        alert("Les valeurs de configuration ne peuvent pas être négatives !");
-        return;
+        return refuser('Configuration invalide', 'Le nombre de joueurs par position ne peut pas être négatif.');
     }
 
     if (typeof contientGrossierete === 'function' && contientGrossierete(clanName)) {
-        alert("Ce nom de pool contient un terme inapproprié. Choisissez-en un autre.");
-        return;
+        return refuser('Nom de pool refusé', 'Ce nom contient un terme inapproprié. Choisissez-en un autre.', '#clanName');
     }
 
     // Le serveur rejetterait de toute façon, mais autant le dire avant
     // d'envoyer : la même borne y est appliquée.
     if (poolPassword && (poolPassword.length < 4 || poolPassword.length > 72)) {
-        alert("Le mot de passe du pool doit contenir entre 4 et 72 caractères.");
-        return;
+        return refuser('Mot de passe trop court', 'Le mot de passe du pool doit contenir entre 4 et 72 caractères.', '#poolPassword');
     }
 
     // Head-to-Head : le plafond reste pair, pour qu'un pool plein puisse
     // toujours partir. Le serveur vérifie la parité des équipes au départ.
     if (poolMode === 'head-to-head' && maxPlayers % 2 !== 0) {
-        alert("⚠️ En Head-to-Head, choisissez un maximum pair (2, 4, 6, 8 ou 10) : les duels se jouent à deux.");
-        return;
+        return refuser('Nombre pair requis',
+            'En tête-à-tête, les duels se jouent à deux : choisissez un maximum pair (2, 4, 6, 8 ou 10).', '#maxPlayers');
     }
 
     const poolConfig = {
@@ -368,8 +377,21 @@ async function createClan() {
                 }
             }
 
-            // Show success message with auto-join confirmation
-            alert(`✅ ${result.message}\n\nInvitez d'autres participants : le repêchage pourra commencer dès qu'il y a 2 équipes.`);
+            // La suite logique est d'inviter : la page du repêchage, où
+            // l'on arrive en fermant, porte la recherche de participants.
+            const esc = fzDialog.escape;
+            await fzAlert({
+                type: 'success',
+                title: 'Votre pool est créé !',
+                bodyHTML: `<p><strong>${esc(clanName)}</strong> est prêt. Vous y participez avec
+                    l’équipe <strong>${esc(teamName)}</strong>.</p>`,
+                note: {
+                    icon: 'users',
+                    title: 'Prochaine étape',
+                    text: 'Invitez vos amis : le repêchage pourra commencer dès qu’il y aura 2 équipes.'
+                },
+                confirmLabel: 'Inviter des participants'
+            });
 
             // Clear form
             $("#clanName").val("");
@@ -398,12 +420,16 @@ async function createClan() {
             window.location.href = "repechage.html";
         } else {
             const error = await response.json();
-            alert(`Erreur lors de la création du pool: ${error.message || 'Erreur inconnue'}`);
+            fzAlert({
+                type: 'error',
+                title: 'Création impossible',
+                message: error.message || 'Le pool n’a pas pu être créé. Réessayez dans un instant.'
+            });
         }
 
     } catch (error) {
         console.error("❌ Erreur lors de la création du clan :", error);
-        alert("Erreur de connexion au serveur");
+        fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
     }
 }
 
@@ -830,7 +856,7 @@ async function joinTeam(clanName, teamName, avecMotDePasse) {
     const erreur = document.getElementById('cmJoinError');
     const bouton = document.getElementById('cmJoinBtn');
     const dire = (texte) => {
-        if (!erreur) { if (texte) alert(texte); return; }
+        if (!erreur) { if (texte) fzAlert({ type: 'warning', title: 'Impossible de rejoindre', message: texte }); return; }
         erreur.textContent = texte || '';
         erreur.hidden = !texte;
     };

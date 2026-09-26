@@ -95,11 +95,11 @@ async function switchToUser(event, username) {
             localStorage.setItem('activeUser', username);
             window.location.reload();
         } else {
-            alert('Erreur lors du changement d\'utilisateur');
+            fzAlert({ type: 'error', title: 'Changement impossible', message: 'Le changement d’utilisateur a échoué.' });
         }
     } catch (error) {
         console.error('Error switching user:', error);
-        alert('Erreur de connexion');
+        fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
     }
 }
 
@@ -164,7 +164,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const clanName = localStorage.getItem("draftClan");
     if (!clanName) {
-        alert("Aucun clan sélectionné.");
+        await fzAlert({ type: 'info', title: 'Aucun pool sélectionné', message: 'Choisissez un pool pour revoir ses sélections.', confirmLabel: 'Voir mes pools', dismissible: false });
         window.location.href = "classement.html";
         return;
     }
@@ -208,7 +208,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const clan = draftData[clanName];
 
         if (!clan) {
-            alert("Clan introuvable.");
+            fzAlert({ type: 'error', title: 'Pool introuvable', message: `Le pool « ${clanName} » n’existe plus ou vous n’en faites plus partie.` });
             return;
         }
 

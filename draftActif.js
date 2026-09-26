@@ -445,11 +445,14 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
         skip.addEventListener("click", async function () {
             const equipe = currentTurnTeam();
             if (!equipe) return;
-            const ok = window.confirm(
-                "Sauter le tour de " + equipe + " ?\n\n"
-                + "Cette équipe perdra ce choix et le repêchage passera à la suivante. "
-                + "L'action est définitive."
-            );
+            const ok = await fzConfirm({
+                danger: true,
+                icon: "skip",
+                title: "Sauter le tour de " + equipe + " ?",
+                message: "Cette équipe perdra ce choix et le repêchage passera à la suivante. "
+                    + "L'action est définitive.",
+                confirmLabel: "Sauter le tour"
+            });
             if (!ok) return;
             skip.disabled = true;
             try {

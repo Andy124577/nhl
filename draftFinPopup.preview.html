@@ -6,6 +6,9 @@
 <title>Preview — Fin de repêchage</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="draftFinPopup.css?v=20260922">
+<link rel="stylesheet" href="fzDialog.css?v=20260926a">
+<!-- Fenêtres de dialogue (fzAlert, fzConfirm) : avant tout script de page. -->
+<script src="fzDialog.js?v=20260926a"></script>
 <link rel="stylesheet" href="teamLogos.css?v=20260926">
 <style>
   body { margin: 0; background: #0e1011; min-height: 100vh;
@@ -85,8 +88,8 @@ function resolveHeadshotByName(name) {
   if (!hit) return null;
   return "https://assets.nhle.com/mugs/nhl/20252026/" + hit.teamAbbrevs + "/" + hit.playerId + ".png";
 }
-function showCustomAlert(m) { alert(m); }
+function showCustomAlert(m, type) { fzAlert(m, type); }
 </script>
-<script src="draftFinPopup.js?v=20260922"></script>
+<script src="draftFinPopup.js?v=20260926a"></script>
 </body>
 </html>

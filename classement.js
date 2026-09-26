@@ -1320,7 +1320,7 @@ async function toggleForSale(btn) {
             });
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
-                alert(data.message || 'Impossible de retirer ce joueur de la vente.');
+                fzAlert({ type: 'error', title: 'Retrait impossible', message: data.message || 'Impossible de retirer ce joueur de la vente.' });
                 return;
             }
             btn.classList.remove('is-listed');
@@ -1339,7 +1339,7 @@ async function toggleForSale(btn) {
             });
             const data = await res.json();
             if (!res.ok) {
-                alert(data.message || 'Impossible de mettre ce joueur en vente.');
+                fzAlert({ type: 'error', title: 'Mise en vente impossible', message: data.message || 'Impossible de mettre ce joueur en vente.' });
                 return;
             }
             btn.classList.add('is-listed');
@@ -1349,7 +1349,7 @@ async function toggleForSale(btn) {
         if (label) label.textContent = btn.classList.contains('is-listed') ? 'Retirer de la vente' : 'Mettre en vente';
     } catch (err) {
         console.error('Error toggling trade listing:', err);
-        alert('Erreur de connexion au serveur.');
+        fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
     } finally {
         btn.disabled = false;
     }
@@ -2453,7 +2453,14 @@ async function finalizeCurrentWeek() {
     const poolName = btn.dataset.poolName;
     if (!poolName) return;
 
-    if (!confirm(`Voulez-vous finaliser la semaine en cours pour "${poolName}" ?`)) return;
+    const ok = await fzConfirm({
+        icon: 'calendar',
+        title: 'Finaliser la semaine ?',
+        bodyHTML: `<p>Les duels de la semaine en cours de <strong>${fzDialog.escape(poolName)}</strong>
+            seront clos et la semaine suivante commencera.</p>`,
+        confirmLabel: 'Finaliser'
+    });
+    if (!ok) return;
 
     btn.disabled = true;
     btn.textContent = 'Finalisation...';
@@ -2468,11 +2475,15 @@ async function finalizeCurrentWeek() {
         const data = await res.json();
 
         if (!res.ok) {
-            alert(data.message || 'Erreur lors de la finalisation');
+            fzAlert({ type: 'error', title: 'Finalisation impossible', message: data.message || 'La semaine n’a pas pu être finalisée.' });
             return;
         }
 
-        alert(`Semaine ${data.previousWeek} finalisee! Semaine ${data.currentWeek} commencee.`);
+        fzAlert({
+            type: 'success',
+            title: `Semaine ${data.previousWeek} finalisée`,
+            message: `La semaine ${data.currentWeek} est commencée. Bonne chance à tous !`
+        });
 
         // Reload pool data and refresh
         await loadAllUserPools();
@@ -2480,7 +2491,7 @@ async function finalizeCurrentWeek() {
 
     } catch (error) {
         console.error('Error finalizing week:', error);
-        alert('Erreur lors de la finalisation');
+        fzAlert({ type: 'error', icon: 'offline', title: 'Finalisation impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
     } finally {
         btn.disabled = false;
         btn.textContent = 'Finaliser la semaine';

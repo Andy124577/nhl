@@ -341,3 +341,258 @@ html[data-theme="dark"] .rp-seat.is-free .rp-seat-ini { color: #8c8c95; }
 }
 .rp-order-nom { flex: 1 1 auto; min-width: 0; font-weight: 700; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rp-order-rang { flex: 0 0 auto; font-size: .76rem; color: var(--text-secondary); }
+
+/* ============================================================
+   INVITER DES JOUEURS — la recherche posée dans le salon
+   ------------------------------------------------------------
+   Même geste que l'onglet « Inviter » de la page du pool : taper un
+   nom, inviter d'un clic. Un puits plus sombre que la carte, pour dire
+   « c'est ici qu'on agit » sans ajouter de couleur.
+   ============================================================ */
+.rp-invite {
+    margin: 22px 0 18px;
+    padding: 18px 18px 16px;
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    background: var(--bg-gray-light);
+}
+.rp-invite .rp-roster-title { margin-bottom: 4px; }
+.rp-invite-sub {
+    margin: 0 0 14px;
+    font-size: .84rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.rp-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 0 14px;
+    border: 2px solid var(--border-gray);
+    border-radius: 12px;
+    background: var(--card);
+    color: var(--text-secondary);
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+.rp-search:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .18);
+}
+.rp-search-ico { display: grid; place-items: center; flex: 0 0 auto; }
+.rp-search-input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 1rem;            /* 16px : iOS ne zoome pas au focus */
+    font-weight: 600;
+}
+.rp-search-input::placeholder { color: var(--text-light-gray); font-weight: 400; }
+/* La croix native est bleue sur certains navigateurs : on la redessine en gris. */
+.rp-search-input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    background-color: var(--text-secondary);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.rp-search-input::-webkit-search-cancel-button:hover { background-color: var(--text-main); }
+.rp-search-spin {
+    display: none;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    border: 2px solid var(--border-gray);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: rp-spin .7s linear infinite;
+}
+.rp-search.is-busy .rp-search-spin { display: block; }
+
+.rp-results {
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    background: var(--card);
+    overflow: hidden;
+}
+.rp-results:empty { display: none; }
+.rp-result {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 10px 9px 12px;
+}
+.rp-result + .rp-result { border-top: 1px solid var(--border-light); }
+.rp-results-empty {
+    padding: 14px;
+    text-align: center;
+    font-size: .88rem;
+    color: var(--text-secondary);
+}
+
+.rp-avatar {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.rp-avatar-ini {
+    display: grid;
+    place-items: center;
+    background: rgba(var(--primary-rgb), .1);
+    color: var(--primary);
+    font-size: .82rem;
+    font-weight: 800;
+}
+.rp-result-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+/* Brique pleine, texte foncé : même règle que tous les boutons primaires. */
+.rp-invite-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--primary);
+    color: var(--bg);
+    font: inherit;
+    font-size: .86rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform .2s cubic-bezier(.4, 0, .2, 1), box-shadow .2s ease;
+}
+.rp-invite-btn svg { width: 14px; height: 14px; }
+.rp-invite-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0, 0, 0, .32); }
+.rp-invite-btn:active:not(:disabled) { transform: none; box-shadow: none; }
+.rp-invite-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .4); }
+.rp-invite-btn:disabled { opacity: .6; cursor: default; }
+
+.rp-result-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex: 0 0 auto;
+    padding: 0 6px;
+    font-size: .8rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.rp-result-state.is-sent { color: var(--success); }
+
+.rp-invite-msg {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 10px 0 0;
+    font-size: .86rem;
+    font-weight: 700;
+    color: var(--success);
+}
+.rp-invite-msg[hidden] { display: none; }
+.rp-invite-msg.is-error { color: var(--danger); }
+
+.rp-invite-full {
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px dashed var(--border-gray);
+    border-radius: 10px;
+    font-size: .88rem;
+    color: var(--text-secondary);
+}
+
+.rp-invite-alt {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 10px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border-gray);
+    font-size: .84rem;
+    color: var(--text-secondary);
+}
+.rp-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 0 2px;
+    border: 0;
+    background: none;
+    color: var(--primary);
+    font: inherit;
+    font-size: .86rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+.rp-link-btn:hover span { text-decoration: underline; text-underline-offset: 3px; }
+.rp-link-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+
+/* Une invitation en attente : une place réservée, pas encore prise. */
+.rp-seat.is-invited {
+    border-style: dashed;
+    border-color: var(--border-gray);
+    background: transparent;
+}
+.rp-seat.is-invited .rp-seat-ini {
+    background: transparent;
+    border: 1px dashed var(--border-gray);
+    color: var(--text-secondary);
+}
+.rp-seat.is-invited .rp-seat-nom { color: var(--text-secondary); }
+.rp-seat-cancel {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    margin-left: 2px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease;
+}
+/* La croix est petite ; sa zone de clic ne l'est pas. */
+.rp-seat-cancel::after { content: ''; position: absolute; inset: -10px; }
+.rp-seat-cancel:hover { background: rgba(255, 71, 87, .12); color: var(--danger); }
+.rp-seat-cancel:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.rp-seat-cancel:disabled { opacity: .5; cursor: default; }
+
+@media (max-width: 480px) {
+    .rp-invite { padding: 16px 14px 14px; }
+    .rp-result { gap: 10px; padding: 9px 8px 9px 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rp-search-spin { animation-duration: 2s; }
+    .rp-invite-btn:hover:not(:disabled) { transform: none; }
+}

@@ -488,7 +488,7 @@
             const resultat = await reponse.json().catch(() => ({}));
 
             if (!reponse.ok) {
-                alert(resultat.message || 'Impossible de rejoindre un pool rapide.');
+                fzAlert({ type: 'error', title: 'Pool rapide indisponible', message: resultat.message || 'Impossible de rejoindre un pool rapide pour l’instant.' });
                 return;
             }
 
@@ -504,7 +504,7 @@
 
         } catch (erreur) {
             console.error('Repêchage instantané impossible :', erreur);
-            alert('Erreur de connexion au serveur.');
+            fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
         } finally {
             enCours = false;
             liberer();
@@ -530,8 +530,14 @@
             return false;
         }
 
-        if (opts.confirmer !== false &&
-            !window.confirm('Quitter la file du pool rapide ? Ta place sera reprise par le prochain joueur.')) {
+        if (opts.confirmer !== false && !(await fzConfirm({
+            danger: true,
+            icon: 'leave',
+            title: 'Quitter la file ?',
+            message: 'Ta place dans le pool rapide sera reprise par le prochain joueur.',
+            confirmLabel: 'Quitter la file',
+            cancelLabel: 'Rester'
+        }))) {
             return false;
         }
 
@@ -547,7 +553,7 @@
             const resultat = await reponse.json().catch(() => ({}));
 
             if (!reponse.ok) {
-                alert(resultat.message || 'Impossible de quitter ce repêchage.');
+                fzAlert({ type: 'error', title: 'Départ impossible', message: resultat.message || 'Impossible de quitter ce repêchage.' });
                 // Le refus vient presque toujours d'un repêchage parti entre
                 // le rendu et le clic : on relit plutôt que d'insister.
                 await rafraichirPools();
@@ -568,7 +574,7 @@
 
         } catch (erreur) {
             console.error('Sortie du repêchage instantané impossible :', erreur);
-            alert('Erreur de connexion au serveur.');
+            fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
             return false;
         } finally {
             enCours = false;

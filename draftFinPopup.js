@@ -443,7 +443,7 @@
 
   function notify(msg, type) {
     if (typeof showCustomAlert === "function") showCustomAlert(msg, type || "info");
-    else alert(msg);
+    else fzAlert(msg, type || "info");
   }
 
   /* ---------------------------------------------------------- ouverture/fermeture */

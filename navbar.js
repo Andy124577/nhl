@@ -399,7 +399,10 @@ async function uploadUserAvatar(input) {
     try {
         const r = await fetch(`${base}/upload/user-avatar`, { method: 'POST', body: formData });
         const d = await r.json();
-        if (!r.ok) { alert(d.message || 'Erreur lors du téléversement.'); return; }
+        if (!r.ok) {
+            fzAlert({ type: 'error', title: 'Photo refusée', message: d.message || 'Le téléversement de la photo a échoué.' });
+            return;
+        }
 
         localStorage.setItem('avatarUrl', d.avatarUrl);
         // Update navbar avatar immediately
@@ -410,7 +413,7 @@ async function uploadUserAvatar(input) {
         // Close dropdown
         document.getElementById('userDropdownMenu')?.classList.remove('show');
     } catch (e) {
-        alert('Erreur de connexion au serveur.');
+        fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
     }
     // Clear the input so the same file can be re-selected
     input.value = '';
@@ -525,11 +528,11 @@ async function switchToUser(username) {
             localStorage.removeItem('avatarUrl');
             window.location.reload();
         } else {
-            alert('Erreur lors du changement d\'utilisateur');
+            fzAlert({ type: 'error', title: 'Changement impossible', message: 'Le changement d’utilisateur a échoué.' });
         }
     } catch (error) {
         console.error('Error switching user:', error);
-        alert('Erreur de connexion au serveur');
+        fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
     }
 }
 
@@ -783,109 +786,9 @@ function navbarBaseUrl() {
         : window.location.origin;
 }
 
-/**
- * Modale générique, en remplacement de prompt()/confirm()/alert().
- *
- * Retourne une promesse :
- *   - champ mot de passe  -> la valeur saisie, ou null si annulé
- *   - sans champ          -> true si confirmé, null si annulé
- *
- * `onSubmit` permet de garder la modale ouverte et d'y afficher une erreur
- * (ex. mauvais mot de passe) : retourner une chaîne = message d'erreur.
- */
-function fzModal({ title, bodyHTML, confirmLabel = 'Confirmer', cancelLabel = 'Annuler',
-                   danger = false, password = false, confirmation = false, onSubmit = null }) {
-    // `confirmation` : champ texte où retaper son nom d'utilisateur, pour les
-    // comptes ouverts par Google, qui n'ont pas de mot de passe à redemander.
-    const champ = password || confirmation;
-    return new Promise(resolve => {
-        const overlay = document.createElement('div');
-        overlay.className = 'fz-modal';
-        overlay.setAttribute('role', 'dialog');
-        overlay.setAttribute('aria-modal', 'true');
-        overlay.innerHTML = `
-            <div class="fz-modal-card">
-                <div class="fz-modal-header ${danger ? 'danger' : ''}">
-                    <h3>${title}</h3>
-                </div>
-                <div class="fz-modal-body">
-                    ${bodyHTML || ''}
-                    ${password ? `
-                        <input type="password" class="fz-modal-input"
-                               autocomplete="current-password"
-                               placeholder="Votre mot de passe">` : ''}
-                    ${confirmation ? `
-                        <input type="text" class="fz-modal-input"
-                               autocomplete="off" autocapitalize="off" spellcheck="false"
-                               placeholder="Votre nom d'utilisateur">` : ''}
-                    ${champ ? '<div class="fz-modal-error" aria-live="polite"></div>' : ''}
-                </div>
-                <div class="fz-modal-footer">
-                    <button class="fz-modal-btn secondary" data-act="cancel">${cancelLabel}</button>
-                    <button class="fz-modal-btn ${danger ? 'danger' : ''}" data-act="ok">${confirmLabel}</button>
-                </div>
-            </div>`;
+// fzModal(), fzNotice(), fzAlert(), fzConfirm() : fzDialog.js, chargé sur
+// toutes les pages avant ce fichier.
 
-        const previousFocus = document.activeElement;
-        document.body.appendChild(overlay);
-
-        const input = overlay.querySelector('.fz-modal-input');
-        const errorBox = overlay.querySelector('.fz-modal-error');
-        const okBtn = overlay.querySelector('[data-act="ok"]');
-        (input || okBtn).focus();
-
-        const close = value => {
-            document.removeEventListener('keydown', onKey);
-            overlay.remove();
-            if (previousFocus && previousFocus.focus) previousFocus.focus();
-            resolve(value);
-        };
-
-        const submit = async () => {
-            const value = champ ? (input.value || '') : true;
-            if (champ && !value) {
-                errorBox.textContent = password
-                    ? 'Veuillez saisir votre mot de passe.'
-                    : "Veuillez saisir votre nom d'utilisateur.";
-                return;
-            }
-            if (!onSubmit) return close(value);
-
-            okBtn.disabled = true;
-            const previousLabel = okBtn.textContent;
-            okBtn.textContent = 'Un instant…';
-            const error = await onSubmit(value);
-            okBtn.disabled = false;
-            okBtn.textContent = previousLabel;
-
-            if (error) {
-                if (errorBox) errorBox.textContent = error;
-                if (input) { input.value = ''; input.focus(); }
-                return;
-            }
-            close(value);
-        };
-
-        function onKey(e) {
-            if (e.key === 'Escape') close(null);
-            if (e.key === 'Enter' && overlay.contains(document.activeElement)) submit();
-        }
-
-        document.addEventListener('keydown', onKey);
-        overlay.addEventListener('click', e => { if (e.target === overlay) close(null); });
-        overlay.querySelector('[data-act="cancel"]').addEventListener('click', () => close(null));
-        okBtn.addEventListener('click', submit);
-    });
-}
-
-/** Message simple, en remplacement de alert(). */
-function fzNotice(title, bodyHTML, danger = false) {
-    return fzModal({
-        title, bodyHTML, danger,
-        confirmLabel: 'OK',
-        cancelLabel: 'Fermer'
-    });
-}
 
 /**
  * Faux pour un compte ouvert par Google : il n'a pas de mot de passe, et la
@@ -922,6 +825,8 @@ async function exportMyData() {
                 ? 'Confirmez votre mot de passe pour continuer :'
                 : "Saisissez votre nom d'utilisateur pour continuer :"}</p>`,
         confirmLabel: 'Télécharger',
+        icon: 'download',
+        align: 'start',
         password: motDePasse,
         confirmation: !motDePasse,
         onSubmit: async (valeur) => {
@@ -973,6 +878,8 @@ async function deleteMyAccount() {
             <p>Vous pouvez d'abord utiliser <strong>« Télécharger mes données »</strong>
             pour en conserver une copie.</p>`,
         confirmLabel: 'Continuer',
+        icon: 'trash',
+        align: 'start',
         danger: true
     });
     if (!confirme) return;
@@ -985,6 +892,7 @@ async function deleteMyAccount() {
             ? '<p>Saisissez votre mot de passe pour supprimer définitivement votre compte.</p>'
             : "<p>Saisissez votre nom d'utilisateur pour supprimer définitivement votre compte.</p>",
         confirmLabel: 'Supprimer définitivement',
+        icon: 'lock',
         danger: true,
         password: motDePasse,
         confirmation: !motDePasse,
@@ -1006,8 +914,12 @@ async function deleteMyAccount() {
     });
     if (!supprime) return;
 
-    await fzNotice('Compte supprimé',
-        "<p>Votre compte a été supprimé. Merci d'avoir utilisé Fantazy.</p>");
+    await fzAlert({
+        type: 'success',
+        title: 'Compte supprimé',
+        message: "Votre compte a été supprimé. Merci d'avoir utilisé Fantazy.",
+        confirmLabel: "Retour à l'accueil"
+    });
     localStorage.clear();
     window.location.href = 'index.html';
 }

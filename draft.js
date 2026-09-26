@@ -93,11 +93,11 @@ async function switchToUser(event, username) {
             // Keep isAdmin flag - admin privileges persist across user switches
             window.location.reload();
         } else {
-            alert('Erreur lors du changement d\'utilisateur');
+            fzAlert({ type: 'error', title: 'Changement impossible', message: 'Le changement d’utilisateur a échoué.' });
         }
     } catch (error) {
         console.error('Error switching user:', error);
-        alert('Erreur de connexion');
+        fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
     }
 }
 
@@ -121,7 +121,7 @@ async function loadActiveDrafts() {
         const username = localStorage.getItem("username");
 
         if (!username) {
-            alert("Vous devez être connecté !");
+            await fzAlert({ type: 'warning', icon: 'user', title: 'Connexion requise', message: 'Connectez-vous pour accéder au repêchage.', confirmLabel: 'Se connecter', dismissible: false });
             window.location.href = "login.html";
             return;
         }
@@ -223,7 +223,7 @@ async function joinDraft(clanName) {
         window.location.href = "draftActif.html";
     } catch (error) {
         console.error("Erreur lors de la vérification ou du lancement du draft :", error);
-        alert("Erreur lors de la préparation du draft.");
+        fzAlert({ type: 'error', title: 'Repêchage indisponible', message: 'Le repêchage n’a pas pu être préparé. Réessayez dans un instant.' });
     }
 }
 
@@ -238,9 +238,9 @@ async function startDraft(clanName) {
         });
 
         const result = await response.json();
-        alert(result.message);
+        fzAlert({ type: response.ok ? 'success' : 'error', title: response.ok ? 'Repêchage lancé' : 'Démarrage impossible', message: result.message });
     } catch (error) {
         console.error("Erreur lors du démarrage du draft :", error);
-        alert("Erreur serveur.");
+        fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
     }
 }

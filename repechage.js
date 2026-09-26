@@ -130,10 +130,29 @@
                 <span class="rp-seat-nom">En attente…</span>
             </li>`);
 
+        // Les invitations en attente prennent place à la suite, en
+        // pointillé : on voit qui doit encore arriver. Seule la personne qui
+        // a créé le pool peut en retirer une.
+        const gerer = !!createur && createur === moi;
+        const invites = invitationsEnAttente(pool.data).map(inv => `
+            <li class="rp-seat is-invited">
+                <span class="rp-seat-ini" aria-hidden="true">${echapper((inv.username.charAt(0) || '?').toUpperCase())}</span>
+                <span class="rp-seat-txt">
+                    <span class="rp-seat-nom">${echapper(inv.username)}</span>
+                    <span class="rp-seat-qui">Invitation envoyée</span>
+                </span>
+                ${gerer ? `
+                <button type="button" class="rp-seat-cancel" data-annuler-invitation="${echapper(inv.username)}"
+                        aria-label="Annuler l’invitation de ${echapper(inv.username)}" title="Annuler l’invitation">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4"
+                         stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>` : ''}
+            </li>`);
+
         return `
             <div class="rp-roster-wrap">
                 <h3 class="rp-roster-title">Participants · ${etat.inscrits} / ${etat.max} max.</h3>
-                <ul class="rp-seats">${places.concat(vides).join('')}</ul>
+                <ul class="rp-seats" id="rpSeats">${places.concat(invites, vides).join('')}</ul>
             </div>`;
     }
 
@@ -152,6 +171,228 @@
                 </ol>
                 <p class="rp-note">Le dernier de la saison passée choisit en premier. Les nouvelles équipes passent après, tirées au sort.</p>
             </div>`;
+    }
+
+    // ==================== INVITER DES JOUEURS ====================
+    //
+    // La même recherche que l'onglet « Inviter » de la page du pool
+    // (poolSettings.js), posée là où l'on attend ses amis : taper un nom,
+    // inviter d'un clic. La personne invitée reçoit une notification et une
+    // fenêtre qui la fait entrer sans le mot de passe du pool
+    // (poolInvites.js). Le serveur réserve tout cela à la personne qui a
+    // créé le pool : les autres gardent le lien à copier.
+
+    /** La recherche en cours : elle survit aux redessins temps réel. */
+    let recherche = { pool: null, q: '', resultats: [], charge: false, enCours: false, message: '', erreur: false };
+    let minuterieRecherche = null;
+    let numeroRecherche = 0;
+
+    const urlPool = (nom, suite) => `${FZPool.BASE_URL}/api/pools/${encodeURIComponent(nom)}${suite}`;
+    const icone = (nom, taille) => (typeof getIcon === 'function' ? getIcon(nom, taille || 16) : '');
+    const ICONE_LIEN = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>`;
+    const ICONE_OK = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6"
+        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>`;
+
+    function invitationsEnAttente(poolData) {
+        return (Array.isArray(poolData.invitations) ? poolData.invitations : [])
+            .filter(inv => inv && typeof inv.username === 'string' && inv.username)
+            .sort((a, b) => String(a.invitedAt).localeCompare(String(b.invitedAt)));
+    }
+
+    function etatRecherche(nom) {
+        if (recherche.pool !== nom) {
+            recherche = { pool: nom, q: '', resultats: [], charge: false, enCours: false, message: '', erreur: false };
+        }
+        return recherche;
+    }
+
+    function avatarDe(username, url) {
+        if (url) {
+            return `<img src="${echapper(url)}" class="rp-avatar" alt="" onerror="this.src='Icons/grayUser.png'">`;
+        }
+        return `<span class="rp-avatar rp-avatar-ini" aria-hidden="true">${echapper((username.charAt(0) || '?').toUpperCase())}</span>`;
+    }
+
+    function lignesResultats(etat) {
+        if (!etat.q || etat.q.trim().length < 2) return '';
+        if (!etat.resultats.length) {
+            if (etat.enCours) return '<li class="rp-results-empty">Recherche…</li>';
+            return etat.charge
+                ? `<li class="rp-results-empty">Aucun joueur ne s’appelle « ${echapper(etat.q.trim())} ».</li>`
+                : '';
+        }
+        return etat.resultats.map(r => {
+            const action = r.statut === 'membre'
+                ? '<span class="rp-result-state">Déjà dans le pool</span>'
+                : r.statut === 'invite'
+                    ? `<span class="rp-result-state is-sent">${ICONE_OK} Invité</span>`
+                    : `<button type="button" class="rp-invite-btn" data-inviter="${echapper(r.username)}">
+                           ${icone('send', 14)} Inviter
+                       </button>`;
+            return `
+                <li class="rp-result">
+                    ${avatarDe(r.username, r.avatarUrl)}
+                    <span class="rp-result-name">${echapper(r.username)}</span>
+                    ${action}
+                </li>`;
+        }).join('');
+    }
+
+    function blocInviter(pool, etat) {
+        const complet = etat.inscrits >= etat.max;
+        const r = etatRecherche(pool.name);
+
+        const corps = complet
+            ? `<p class="rp-invite-full">Le pool est complet (${etat.max} participants maximum).</p>`
+            : `
+                <div class="rp-search${r.enCours ? ' is-busy' : ''}" id="rpSearch">
+                    <span class="rp-search-ico" aria-hidden="true">${icone('search', 18)}</span>
+                    <input type="search" id="rpInviteQ" class="rp-search-input" maxlength="40"
+                           autocomplete="off" autocapitalize="off" spellcheck="false"
+                           placeholder="Rechercher un nom d’utilisateur"
+                           aria-label="Rechercher un joueur à inviter" aria-describedby="rpInviteSub"
+                           aria-controls="rpInviteResults" value="${echapper(r.q)}">
+                    <span class="rp-search-spin" aria-hidden="true"></span>
+                </div>
+                <ul class="rp-results" id="rpInviteResults" aria-live="polite">${lignesResultats(r)}</ul>
+                <p class="rp-invite-msg${r.erreur ? ' is-error' : ''}" id="rpInviteMsg" role="status"
+                   ${r.message ? '' : 'hidden'}>${r.erreur ? '' : ICONE_OK}<span>${echapper(r.message)}</span></p>`;
+
+        return `
+            <section class="rp-invite" aria-labelledby="rpInviteTitre">
+                <h3 class="rp-roster-title" id="rpInviteTitre">Inviter des joueurs</h3>
+                <p class="rp-invite-sub" id="rpInviteSub">La personne reçoit une notification et entre d’un clic,
+                    sans le mot de passe du pool.</p>
+                ${corps}
+                <div class="rp-invite-alt">
+                    <span>Un ami n’a pas encore de compte ?</span>
+                    <button type="button" class="rp-link-btn" id="rpInviter">${ICONE_LIEN}<span>Copier le lien d’invitation</span></button>
+                </div>
+            </section>`;
+    }
+
+    /** Redessine la liste et le message seulement : le champ garde son focus. */
+    function majResultats() {
+        const liste = document.getElementById('rpInviteResults');
+        if (liste) liste.innerHTML = lignesResultats(recherche);
+        document.getElementById('rpSearch')?.classList.toggle('is-busy', !!recherche.enCours);
+        const msg = document.getElementById('rpInviteMsg');
+        if (msg) {
+            msg.innerHTML = `${recherche.erreur ? '' : ICONE_OK}<span>${echapper(recherche.message || '')}</span>`;
+            msg.hidden = !recherche.message;
+            msg.classList.toggle('is-error', !!recherche.erreur);
+        }
+    }
+
+    /** Une frappe relance la recherche un instant plus tard, pas à chaque lettre. */
+    function programmerRecherche(nom, valeur) {
+        const etat = etatRecherche(nom);
+        Object.assign(etat, { q: valeur, message: '', erreur: false });
+        clearTimeout(minuterieRecherche);
+        if (valeur.trim().length < 2) {
+            numeroRecherche++;   // une réponse encore en route ne doit plus s'afficher
+            Object.assign(etat, { resultats: [], charge: false, enCours: false });
+            majResultats();
+            return;
+        }
+        etat.enCours = true;
+        majResultats();
+        minuterieRecherche = setTimeout(() => lancerRecherche(nom, valeur), 250);
+    }
+
+    async function lancerRecherche(nom, valeur) {
+        clearTimeout(minuterieRecherche);
+        const q = String(valeur || '').trim();
+        if (q.length < 2) return;
+        const numero = ++numeroRecherche;
+        etatRecherche(nom).enCours = true;
+        majResultats();
+        try {
+            const reponse = await fetch(`${urlPool(nom, '/invite-search')}?q=${encodeURIComponent(q)}`, { cache: 'no-store' });
+            const corps = await reponse.json().catch(() => ({}));
+            // Une réponse lente ne doit pas écraser celle d'une frappe plus récente.
+            if (numero !== numeroRecherche || recherche.pool !== nom) return;
+            if (!reponse.ok) throw new Error(corps.message || 'Recherche impossible.');
+            Object.assign(recherche, { resultats: corps.resultats || [], charge: true, enCours: false });
+        } catch (erreur) {
+            if (numero !== numeroRecherche) return;
+            Object.assign(recherche, {
+                resultats: [], charge: false, enCours: false,
+                message: erreur.message || 'Erreur de connexion au serveur.', erreur: true
+            });
+        }
+        majResultats();
+    }
+
+    async function inviterCompte(nom, username, bouton) {
+        if (bouton) { bouton.disabled = true; bouton.textContent = 'Envoi…'; }
+        try {
+            const reponse = await fetch(urlPool(nom, '/invitations'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            const corps = await reponse.json().catch(() => ({}));
+            if (!reponse.ok) throw new Error(corps.message || 'Invitation impossible.');
+            Object.assign(etatRecherche(nom), {
+                resultats: recherche.resultats.map(r => r.username === username ? { ...r, statut: 'invite' } : r),
+                message: corps.message || `Invitation envoyée à ${username}.`,
+                erreur: false
+            });
+            await FZPool.refresh();
+        } catch (erreur) {
+            Object.assign(etatRecherche(nom), { message: erreur.message || 'Erreur de connexion au serveur.', erreur: true });
+        }
+        rendre();
+        // On invite souvent plusieurs amis d'affilée : le champ reprend la main.
+        document.getElementById('rpInviteQ')?.focus({ preventScroll: true });
+    }
+
+    async function annulerInvitation(nom, username, bouton) {
+        if (bouton) bouton.disabled = true;
+        try {
+            const reponse = await fetch(urlPool(nom, '/invitations/cancel'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            const corps = await reponse.json().catch(() => ({}));
+            // 404 : déjà partie (acceptée, refusée) — le but est atteint.
+            if (!reponse.ok && reponse.status !== 404) throw new Error(corps.message || 'Annulation impossible.');
+            Object.assign(etatRecherche(nom), {
+                resultats: recherche.resultats.map(r => r.username === username ? { ...r, statut: null } : r),
+                message: `Invitation de ${username} annulée.`,
+                erreur: false
+            });
+            await FZPool.refresh();
+        } catch (erreur) {
+            if (bouton) bouton.disabled = false;
+            fzAlert({ type: 'error', title: 'Annulation impossible', message: erreur.message || 'Erreur de connexion au serveur.' });
+            return;
+        }
+        rendre();
+    }
+
+    function brancherInvitations(pool) {
+        const champ = document.getElementById('rpInviteQ');
+        if (champ) {
+            champ.addEventListener('input', () => programmerRecherche(pool.name, champ.value));
+            champ.addEventListener('keydown', e => {
+                if (e.key === 'Enter') { e.preventDefault(); lancerRecherche(pool.name, champ.value); }
+            });
+            // La croix native du champ « search » vide sans événement input
+            // sur certains navigateurs.
+            champ.addEventListener('search', () => programmerRecherche(pool.name, champ.value));
+        }
+        document.getElementById('rpInviteResults')?.addEventListener('click', e => {
+            const bouton = e.target.closest('[data-inviter]');
+            if (bouton && !bouton.disabled) inviterCompte(pool.name, bouton.dataset.inviter, bouton);
+        });
+        document.getElementById('rpSeats')?.addEventListener('click', e => {
+            const bouton = e.target.closest('[data-annuler-invitation]');
+            if (bouton && !bouton.disabled) annulerInvitation(pool.name, bouton.dataset.annulerInvitation, bouton);
+        });
     }
 
     /**
@@ -204,6 +445,20 @@
             }
         }
 
+        // La recherche d'invités : pour qui a créé le pool, tant qu'il n'est
+        // pas une file instantanée (celle-ci se remplit toute seule).
+        const inviterParNom = jeSuisCreateur && !instantane;
+        const lienSeul = !instantane && !inviterParNom
+            ? '<button type="button" class="rp-btn secondary" id="rpInviter"><span>Copier le lien d’invitation</span></button>'
+            : '';
+
+        // Une mise à jour temps réel redessine toute la carte : si l'on était
+        // en train de taper un nom, le champ reprend focus et curseur.
+        const actif = document.activeElement;
+        const saisie = actif && actif.id === 'rpInviteQ'
+            ? { debut: actif.selectionStart, fin: actif.selectionEnd }
+            : null;
+
         conteneur().innerHTML = `
             <article class="rp-card">
                 ${entete(pool, pret ? 'Prêt' : 'En attente', pret ? 'pret' : 'attente')}
@@ -211,10 +466,11 @@
                     <p class="rp-lead">${lead}</p>
                     ${barre}
                     ${rendreInscrits(pool, etat, createur)}
+                    ${inviterParNom ? blocInviter(pool, etat) : ''}
                     ${instantane ? '' : blocOrdre(pool)}
                     <div class="rp-actions">
                         ${depart}
-                        ${instantane ? '' : '<button type="button" class="rp-btn secondary" id="rpInviter">Copier le lien d’invitation</button>'}
+                        ${lienSeul}
                         <button type="button" class="rp-btn secondary" data-fz-reglages="equipes">Renommer mon équipe</button>
                         ${instantane
                             ? '<button type="button" class="rp-btn secondary rp-quitter" id="rpQuitter">Quitter la file</button>'
@@ -226,19 +482,35 @@
         document.getElementById('rpQuitter')?.addEventListener('click', quitterLaFile);
         document.getElementById('rpStart')?.addEventListener('click', () => demarrer(pool.name));
         document.getElementById('rpInviter')?.addEventListener('click', () => inviter(pool.name));
+        brancherInvitations(pool);
+
+        if (saisie) {
+            const champ = document.getElementById('rpInviteQ');
+            if (champ) {
+                champ.focus({ preventScroll: true });
+                try { champ.setSelectionRange(saisie.debut, saisie.fin); } catch { /* type sans sélection */ }
+            }
+        }
     }
 
     /** Le lien « Rejoindre » filtré sur ce pool, dans le presse-papiers. */
     async function inviter(nomPool) {
         const bouton = document.getElementById('rpInviter');
+        const libelle = bouton && (bouton.querySelector('span') || bouton);
         const lien = `${window.location.origin}/rejoindre-pool.html?q=${encodeURIComponent(nomPool)}`;
         try {
             await navigator.clipboard.writeText(lien);
-            if (bouton) bouton.textContent = 'Lien copié !';
+            if (libelle) libelle.textContent = 'Lien copié !';
         } catch (e) {
-            window.prompt('Copiez ce lien pour inviter :', lien);
+            // Presse-papiers refusé (page non sécurisée, permission) : le
+            // lien s'affiche, sélectionné, avec son propre bouton Copier.
+            fzCopy({
+                title: 'Lien d’invitation',
+                message: 'Envoyez ce lien à vos amis : il les mène directement à votre pool.',
+                value: lien
+            });
         }
-        if (bouton) setTimeout(() => { bouton.textContent = 'Copier le lien d’invitation'; }, 2500);
+        if (libelle) setTimeout(() => { libelle.textContent = 'Copier le lien d’invitation'; }, 2500);
     }
 
     /**
@@ -251,7 +523,7 @@
     async function quitterLaFile() {
         const bouton = document.getElementById('rpQuitter');
         if (!window.FZInstant || typeof window.FZInstant.quitter !== 'function') {
-            alert('Action indisponible : rechargez la page.');
+            fzAlert({ type: 'warning', title: 'Action indisponible', message: 'Rechargez la page, puis réessayez.' });
             return;
         }
         if (bouton) { bouton.disabled = true; }
@@ -311,7 +583,7 @@
                     // parti, par exemple) : le serveur reste la source de
                     // vérité, on relit l'état plutôt que d'insister sur un
                     // départ déjà refusé.
-                    alert(donnees.message || "Impossible de démarrer le repêchage.");
+                    fzAlert({ type: 'error', title: 'Démarrage impossible', message: donnees.message || 'Le repêchage n’a pas pu démarrer.' });
                     if (bouton) { bouton.disabled = false; bouton.textContent = 'Commencer le repêchage'; }
                     await FZPool.refresh();
                     rendre();
@@ -324,7 +596,7 @@
         } catch (erreur) {
             console.error('Démarrage du repêchage impossible :', erreur);
             if (bouton) { bouton.disabled = false; bouton.textContent = 'Commencer le repêchage'; }
-            alert('Erreur lors de la préparation du repêchage.');
+            fzAlert({ type: 'error', title: 'Démarrage impossible', message: 'Le repêchage n’a pas pu être préparé. Vérifiez votre connexion et réessayez.' });
         }
     }
 

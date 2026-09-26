@@ -868,7 +868,8 @@ function showTradeConfirm(detailHtml) {
         const cancelBtn = document.getElementById('tradeConfirmCancel');
 
         if (!overlay || !body || !okBtn || !cancelBtn) {
-            resolve(window.confirm('Proposer cet échange ?'));
+            fzConfirm({ icon: 'swap', title: 'Proposer cet échange ?', bodyHTML: detailHtml, confirmLabel: 'Proposer l’échange' })
+                .then(resolve);
             return;
         }
 
@@ -1273,9 +1274,15 @@ function getCategory(type) {
 }
 
 async function acceptTradeProposal(tradeId) {
-    if (!confirm('Accepter cet échange? Les joueurs seront échangés immédiatement.')) return;
-
+    // Le bouton est lu avant d'attendre : après l'await, `event` n'existe plus.
     const btn = event.target;
+    const ok = await fzConfirm({
+        icon: 'swap',
+        title: 'Accepter cet échange ?',
+        message: 'Les joueurs seront échangés immédiatement.',
+        confirmLabel: 'Accepter'
+    });
+    if (!ok) return;
     showLoading(btn, 'Acceptation...');
 
     try {
@@ -1306,9 +1313,16 @@ async function acceptTradeProposal(tradeId) {
 }
 
 async function declineTradeProposal(tradeId) {
-    if (!confirm('Refuser cet échange?')) return;
-
     const btn = event.target;
+    const ok = await fzConfirm({
+        danger: true,
+        icon: 'swap',
+        title: 'Refuser cet échange ?',
+        message: 'L’autre équipe sera avisée de votre refus.',
+        confirmLabel: 'Refuser',
+        cancelLabel: 'Revenir'
+    });
+    if (!ok) return;
     showLoading(btn, 'Refus...');
 
     try {

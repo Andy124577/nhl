@@ -735,9 +735,9 @@ async function switchToUser(t, e) {
                 adminToken: "admin",
                 targetUsername: e
             })
-        })).ok ? (localStorage.setItem("username", e), localStorage.setItem("activeUser", e), window.location.reload()) : alert("Erreur lors du changement d'utilisateur")
+        })).ok ? (localStorage.setItem("username", e), localStorage.setItem("activeUser", e), window.location.reload()) : fzAlert({ type: 'error', title: 'Changement impossible', message: 'Le changement d’utilisateur a échoué.' })
     } catch (t) {
-        console.error("Error switching user:", t), alert("Erreur de connexion")
+        console.error("Error switching user:", t), fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' })
     }
 }
 

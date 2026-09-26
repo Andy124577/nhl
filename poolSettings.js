@@ -964,7 +964,13 @@
                 if (encore) { encore.value = valeur; encore.focus(); }
                 return;
             }
-            if (action === 'retirer' && !window.confirm('Retirer le mot de passe ?\n\nTout le monde pourra entrer dans le pool tant qu’il reste des places.')) {
+            if (action === 'retirer' && !(await fzConfirm({
+                type: 'warning',
+                icon: 'unlock',
+                title: 'Retirer le mot de passe ?',
+                message: 'Tout le monde pourra entrer dans le pool tant qu’il reste des places.',
+                confirmLabel: 'Retirer'
+            }))) {
                 return;
             }
             try {
@@ -1157,15 +1163,15 @@
     async function renommerEquipe(ancienNom, nouveauNom) {
         const propre = String(nouveauNom || '').trim();
         if (propre.length === 0 || propre.length > 20) {
-            alert('Le nom doit contenir entre 1 et 20 caractères.');
+            fzAlert({ type: 'warning', title: 'Nom invalide', message: 'Le nom doit contenir entre 1 et 20 caractères.' });
             return;
         }
         if (!/^[\p{L}\p{N}\s'\-_]+$/u.test(propre)) {
-            alert('Nom invalide. Lettres, chiffres, espaces, tirets et apostrophes seulement.');
+            fzAlert({ type: 'warning', title: 'Nom invalide', message: 'Lettres, chiffres, espaces, tirets et apostrophes seulement.' });
             return;
         }
         if (typeof contientGrossierete === 'function' && contientGrossierete(propre)) {
-            alert("Ce nom d'équipe contient un terme inapproprié. Choisissez-en un autre.");
+            fzAlert({ type: 'warning', title: 'Nom refusé', message: "Ce nom d'équipe contient un terme inapproprié. Choisissez-en un autre." });
             return;
         }
 
@@ -1181,24 +1187,35 @@
                 })
             });
             const resultat = await reponse.json().catch(() => ({}));
-            if (!reponse.ok) { alert(resultat.message || 'Renommage impossible.'); return; }
+            if (!reponse.ok) {
+                fzAlert({ type: 'error', title: 'Renommage impossible', message: resultat.message || 'L’équipe n’a pas pu être renommée.' });
+                return;
+            }
             // /rename-team diffuse `draftUpdated` : FZPool.refresh() ramène le
             // nouveau nom et rendre() est rappelé par l'abonnement plus bas.
             await FZPool.refresh();
             rendre();
         } catch (erreur) {
             console.error('Erreur /rename-team :', erreur);
-            alert('Erreur de connexion au serveur.');
+            fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
         }
     }
 
     async function ouvrirNouvelleSaison(bouton) {
-        const ok = window.confirm(
-            'Ouvrir une nouvelle saison ?\n\n' +
-            '• Le classement final est archivé.\n' +
-            '• Tous les alignements sont vidés.\n' +
-            '• Le prochain repêchage suivra le classement inversé : le dernier choisit en premier.\n\n' +
-            'Cette action ne peut pas être annulée.');
+        const ok = await fzConfirm({
+            danger: true,
+            icon: 'refresh',
+            align: 'start',
+            title: 'Ouvrir une nouvelle saison ?',
+            bodyHTML: `
+                <ul>
+                    <li>Le classement final est archivé.</li>
+                    <li>Tous les alignements sont vidés.</li>
+                    <li>Le prochain repêchage suivra le classement inversé : le dernier choisit en premier.</li>
+                </ul>
+                <p><strong>Cette action ne peut pas être annulée.</strong></p>`,
+            confirmLabel: 'Ouvrir la saison'
+        });
         if (!ok) return;
 
         bouton.disabled = true;
@@ -1217,7 +1234,7 @@
             await FZPool.refresh();
             rendre();
             if (window.FZNav) FZNav.render();
-            alert(resultat.message || 'Nouvelle saison prête.');
+            fzAlert({ type: 'success', title: 'Nouvelle saison prête', message: resultat.message || 'Le pool est prêt pour son prochain repêchage.' });
         } catch (erreur) {
             console.error('Erreur /pool/new-season :', erreur);
             message('psMsgSaison', 'Erreur de connexion au serveur.', true);
