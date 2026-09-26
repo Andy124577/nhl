@@ -3,7 +3,7 @@
 #careerStatsModal *, #careerStatsModal *::before, #careerStatsModal *::after { box-sizing:border-box; }
 #careerStatsModal [hidden] { display:none !important; }
 #careerStatsModal .career-modal { --team-primary:#3a414d; --team-secondary:#171a20; --team-surface:#3a414d; --team-edge:#8995a8; --team-trim:#8995a8; --team-rgb:58,65,77; --team-secondary-rgb:23,26,32; --team-logo:none; position:relative; display:flex; flex-direction:column; width:100%; max-width:1380px; max-height:calc(100dvh - 84px); margin:0 auto; padding:0; overflow:hidden; border:1px solid #3c434d; border-radius:19px; background:#0d1013; color:#f6f7f9; backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:0 30px 90px #000b,0 0 0 1px #ffffff04; animation:careerEnter .2s ease-out; }
-#careerStatsModal .cmh-name-banner { isolation:isolate; position:relative; display:flex; flex:0 0 auto; align-items:center; gap:22px; min-height:96px; margin:0; padding:8px 20px 8px 28px; overflow:hidden; border-radius:18px 18px 0 0; border-top:1px solid var(--team-edge); border-bottom:3px solid var(--team-trim); background:linear-gradient(100deg,#ffffff09,transparent 45%,#0005),var(--team-surface); }
+#careerStatsModal .cmh-name-banner { isolation:isolate; position:relative; display:flex; flex:0 0 auto; align-items:center; gap:22px; min-height:96px; margin:0; padding:8px 20px 8px 28px; overflow:hidden; border-radius:18px 18px 0 0; border-top:1px solid var(--team-edge); border-bottom:3px solid var(--team-trim); background:linear-gradient(100deg,#ffffff09,transparent 45%,#0005),var(--team-surface); color:#f6f7f9; }
 /* Upper-right motif: an oversized cropped crest beneath translucent diagonal
    panels and a fine woven texture, matching the portrait's layered artwork. */
 #careerStatsModal .cmh-name-banner::before { content:''; position:absolute; z-index:-2; inset:-105px 55px -115px auto; width:325px; background:var(--team-logo) center/contain no-repeat; opacity:.18; transform:rotate(-13deg); filter:saturate(.85) contrast(1.15); }
@@ -170,3 +170,45 @@
 @media (prefers-reduced-motion:reduce) {
   #careerStatsModal .career-modal, #careerStatsModal .career-loading > div { animation:none; }
 }
+/* Light theme. The name banner, team badge, pick button and portrait card keep
+   their dark team artwork; every other surface follows index.css's light tokens.
+   --team-edge/--team-trim are brightened for dark ground, so accents on pale
+   surfaces use the darkened --team-surface and the raw --team-secondary. */
+html[data-theme="light"] #careerStatsModal { background:var(--overlay-dark,#1414148c); color:var(--text-main,#1c1c1e); color-scheme:light; }
+html[data-theme="light"] #careerStatsModal .career-modal { border-color:var(--border-light,#e0e0dc); background:var(--bg,#f2f2f0); color:var(--text-main,#1c1c1e); box-shadow:0 30px 90px #0004,0 0 0 1px #0000000a; }
+html[data-theme="light"] #careerStatsModal .career-profile-body { scrollbar-color:#c4c4bf var(--bg,#f2f2f0); background:linear-gradient(132deg,transparent 0 54%,#00000003 54% 62%,transparent 62%),var(--bg,#f2f2f0); }
+html[data-theme="light"] #careerStatsModal .career-profile-body button:focus-visible, html[data-theme="light"] #careerStatsModal .career-profile-body select:focus-visible, html[data-theme="light"] #careerStatsModal .career-profile-body [tabindex]:focus-visible { outline-color:var(--team-surface); }
+html[data-theme="light"] #careerStatsModal .cmh-portrait { box-shadow:0 8px 20px #0003,inset 0 0 30px #000; }
+html[data-theme="light"] #careerStatsModal .cmh-position, html[data-theme="light"] #careerStatsModal .cmh-mini-lbl, html[data-theme="light"] #careerStatsModal .filter-group-career label { color:var(--text-gray,#68686f); }
+html[data-theme="light"] #careerStatsModal #careerPlayerName, html[data-theme="light"] #careerStatsModal .cmh-stat-val, html[data-theme="light"] #careerStatsModal .cmh-season-val { color:var(--text-main,#1c1c1e); }
+html[data-theme="light"] #careerStatsModal .cmh-action { border-color:var(--border-gray,#ccccc8); background:var(--card,#fff); box-shadow:0 1px 2px #0000000d; color:var(--text-main,#1c1c1e); }
+html[data-theme="light"] #careerStatsModal .cmh-action:hover { border-color:var(--team-surface); background-color:var(--bg-gray-light,#f5f5f3); }
+html[data-theme="light"] #careerStatsModal .cmh-action[aria-pressed="true"] svg { color:var(--team-surface); fill:var(--team-surface); }
+html[data-theme="light"] #careerStatsModal .cmh-action-pick, html[data-theme="light"] #careerStatsModal .cmh-action-pick:hover { border-color:var(--team-surface); background:linear-gradient(120deg,#ffffff06,#0002),var(--team-surface); color:#f9fafc; }
+html[data-theme="light"] #careerStatsModal .cmh-action-pick:not(:disabled):hover { box-shadow:0 4px 14px rgba(var(--team-rgb),.35); }
+html[data-theme="light"] #careerStatsModal .cmh-stats { border-color:var(--border-light,#e0e0dc); }
+html[data-theme="light"] #careerStatsModal .cmh-stat-row + .cmh-stat-row { border-left-color:var(--border-gray,#ccccc8); }
+html[data-theme="light"] #careerStatsModal .cmh-season-label, html[data-theme="light"] #careerStatsModal .cmh-season-tile { border-color:var(--border-light,#e0e0dc); background:var(--card,#fff); box-shadow:0 1px 2px #0000000a; }
+html[data-theme="light"] #careerStatsModal .cmh-season-label > span:last-child, html[data-theme="light"] #careerStatsModal .cmh-season-rank { color:var(--text-gray,#68686f); }
+html[data-theme="light"] #careerStatsModal .cmh-season-label::after { background:var(--team-surface); }
+html[data-theme="light"] #careerStatsModal .cmh-season-tile::after { background:var(--team-secondary); }
+html[data-theme="light"] #careerStatsModal .cmh-season-tile > svg { color:var(--team-surface); }
+html[data-theme="light"] #careerStatsModal .career-filters { border-color:var(--border-light,#e0e0dc); background:var(--card,#fff); }
+html[data-theme="light"] #careerStatsModal .filter-group-career select { border-color:var(--border-gray,#ccccc8); background-color:var(--bg-gray-light,#f5f5f3); color:var(--text-main,#1c1c1e); }
+html[data-theme="light"] #careerStatsModal #careerStatsTable { border-color:var(--border-light,#e0e0dc); background:var(--card,#fff); scrollbar-color:#c4c4bf var(--card,#fff); }
+html[data-theme="light"] #careerStatsModal #careerStatsTable table, html[data-theme="light"] #careerStatsModal #careerStatsTable td { color:var(--text-main,#1c1c1e); }
+html[data-theme="light"] #careerStatsModal #careerStatsTable th { background:var(--bg-gray-light,#f5f5f3); border-bottom-color:var(--border-gray,#ccccc8); color:var(--text-secondary,#54545c); }
+html[data-theme="light"] #careerStatsModal #careerStatsTable td { border-bottom-color:var(--border-light,#e0e0dc); }
+html[data-theme="light"] #careerStatsModal #careerStatsTable tr { background:var(--card,#fff); }
+html[data-theme="light"] #careerStatsModal #careerStatsTable tr:nth-child(even) { background:var(--card-white,#fafaf8); }
+html[data-theme="light"] #careerStatsModal #careerStatsTable tbody tr:hover { background:var(--bg-hover,#e6e6e2) !important; }
+html[data-theme="light"] #careerStatsModal #careerStatsTable .career-team-logo { filter:none; }
+html[data-theme="light"] #careerStatsModal #careerStatsTable .career-team-name { color:var(--text-secondary,#54545c); }
+html[data-theme="light"] #careerStatsModal #careerStatsTable tr.current-season { background:linear-gradient(90deg,rgba(var(--team-rgb),.18),rgba(var(--team-rgb),.08)),var(--card,#fff); }
+html[data-theme="light"] #careerStatsModal #careerStatsTable tr.current-season td { border-block-color:var(--team-surface); }
+html[data-theme="light"] #careerStatsModal #careerStatsTable tr.current-season td:first-child { box-shadow:inset 5px 0 var(--team-surface); }
+html[data-theme="light"] #careerStatsModal #careerStatsTable tr.career-totals-row { background:var(--bg-gray-light,#f5f5f3); }
+html[data-theme="light"] #careerStatsModal #careerStatsTable .career-totals-row td { border-top-color:var(--team-surface); }
+html[data-theme="light"] #careerStatsModal .no-stats-message { color:var(--text-secondary,#54545c); }
+html[data-theme="light"] #careerStatsModal .career-loading { color:var(--text-gray,#68686f); }
+html[data-theme="light"] #careerStatsModal .career-loading > div { background-image:linear-gradient(100deg,#e4e4e0 20%,#f0f0ed 40%,#e4e4e0 60%); }

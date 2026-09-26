@@ -52,12 +52,13 @@ img.logo[src*="teams/"],
 .turn-banner-logo img[src*="teams/"] { content: normal; }
 
 /* ─── 3. Surfaces sombres en toutes circonstances ──────────────────────────
-   La fiche de carrière garde son fond noir même quand la page passe au blanc :
-   elle reste donc sur les variantes claires dans les deux thèmes. */
-html[data-theme="light"] #careerStatsModal img[src$="teams/EDM.png"] { content: url("teams/dark/EDM.svg"); }
-html[data-theme="light"] #careerStatsModal img[src$="teams/TBL.png"] { content: url("teams/dark/TBL.svg"); }
-html[data-theme="light"] #careerStatsModal img[src$="teams/TOR.png"] { content: url("teams/dark/TOR.svg"); }
-html[data-theme="light"] #careerStatsModal img[src$="teams/WSH.png"] { content: url("teams/dark/WSH.svg"); }
+   Le bandeau de la fiche de carrière reste sur la couleur sombre du club même
+   quand la page passe au blanc : il garde donc les variantes claires dans les
+   deux thèmes. Le reste de la fiche suit le thème, comme la page. */
+html[data-theme="light"] #careerStatsModal .cmh-name-banner img[src$="teams/EDM.png"] { content: url("teams/dark/EDM.svg"); }
+html[data-theme="light"] #careerStatsModal .cmh-name-banner img[src$="teams/TBL.png"] { content: url("teams/dark/TBL.svg"); }
+html[data-theme="light"] #careerStatsModal .cmh-name-banner img[src$="teams/TOR.png"] { content: url("teams/dark/TOR.svg"); }
+html[data-theme="light"] #careerStatsModal .cmh-name-banner img[src$="teams/WSH.png"] { content: url("teams/dark/WSH.svg"); }
 
 /* Le tableau indicateur d’un match en direct (accueil) garde lui aussi son
    fond noir en thème clair : voir .stories-card.is-live dans accueil.css. */
