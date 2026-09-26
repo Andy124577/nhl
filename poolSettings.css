@@ -103,14 +103,21 @@ body.ps-open { overflow: hidden; }
 
 /* ==================== ONGLETS ==================== */
 
+/* Cinq onglets pour la personne qui a créé le pool : sur un téléphone ils
+   défilent de côté plutôt que de passer à la ligne. */
 .ps-tabs {
     display: flex;
     gap: 4px;
     padding: 12px 18px 0;
     border-bottom: 1px solid var(--border-light);
+    overflow-x: auto;
+    scrollbar-width: none;
 }
 
+.ps-tabs::-webkit-scrollbar { display: none; }
+
 .ps-tab {
+    flex-shrink: 0;
     padding: 9px 14px 11px;
     font-size: .88rem;
     font-weight: 700;
@@ -445,9 +452,344 @@ body.ps-open { overflow: hidden; }
 
 .ps-msg.is-error { color: var(--danger); }
 
+/* ==================== APERÇU ==================== */
+
+.ps-state-card {
+    margin-bottom: 14px;
+    padding: 14px 15px;
+    background: var(--card);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+}
+
+.ps-state {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .02em;
+}
+
+.ps-state-encours { background: rgba(255, 71, 87, .16); color: var(--danger); }
+.ps-state-pret    { background: rgba(0, 230, 118, .15); color: var(--success); }
+.ps-state-attente { background: rgba(255, 179, 0, .15); color: var(--warning); }
+.ps-state-termine { background: rgba(var(--primary-rgb), .14); color: var(--primary); }
+
+.ps-state-line {
+    margin: 10px 0 0;
+    font-size: .9rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.ps-state-line strong { color: var(--text-main); }
+
+.ps-progress {
+    height: 6px;
+    margin-top: 10px;
+    background: var(--bg-gray-light);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.ps-progress i {
+    display: block;
+    height: 100%;
+    background: var(--primary);
+    border-radius: inherit;
+}
+
+.ps-state-actions { margin-top: 13px; }
+
+/* Un lien habillé en bouton : les pages colorent leurs liens (body.fz-stats a,
+   par exemple), ce qui le rendait illisible sur son propre fond. */
+.ps-panel a.ps-primary,
+.ps-panel a.ps-primary:hover,
+.ps-panel a.ps-primary:visited {
+    color: #fff;
+    text-decoration: none;
+}
+
+.ps-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.ps-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    padding: 11px 12px;
+    background: var(--card);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+}
+
+.ps-tile strong {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ps-tile span {
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--text-gray);
+}
+
+.ps-callout {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 18px;
+    padding: 11px 14px;
+    font: inherit;
+    font-size: .88rem;
+    font-weight: 700;
+    color: var(--primary);
+    background: rgba(var(--primary-rgb), .08);
+    border: 1px solid rgba(var(--primary-rgb), .35);
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.ps-callout:hover { background: rgba(var(--primary-rgb), .14); }
+
+/* ---- Toutes les équipes, une ligne chacune ---- */
+
+.ps-team-rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: var(--card);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.ps-team-rows li + li { border-top: 1px solid var(--border-light); }
+
+.ps-team-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    padding: 10px 14px;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    text-align: left;
+    transition: background .15s ease;
+}
+
+.ps-team-row:hover { background: var(--bg-hover); }
+.ps-team-row.is-mine { box-shadow: inset 3px 0 0 var(--primary); }
+
+.ps-team-row-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+
+.ps-team-row-name {
+    font-size: .92rem;
+    font-weight: 800;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ps-team-row-meta {
+    font-size: .76rem;
+    color: var(--text-gray);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ps-team-row-badges { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+.ps-team-row-count {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: .76rem;
+    color: var(--text-secondary);
+}
+
+.ps-team.is-focus {
+    border-color: var(--primary);
+    box-shadow: var(--glow-primary);
+}
+
+/* ---- Accès et mot de passe ---- */
+
+.ps-facts li.ps-fact-access { display: block; }
+
+.ps-access-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.ps-secret {
+    padding: 3px 9px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: .88rem;
+    color: var(--text-main);
+    background: var(--bg-gray-light);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    user-select: all;
+    word-break: break-all;
+}
+
+.ps-secret.is-masked { letter-spacing: .12em; user-select: none; }
+
+.ps-access-tools {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px 14px;
+    margin-top: 8px;
+}
+
+.ps-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 0;
+    font: inherit;
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--primary);
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.ps-link-btn:hover { text-decoration: underline; }
+.ps-link-btn:disabled { opacity: .55; cursor: default; text-decoration: none; }
+.ps-link-btn.is-danger { color: var(--danger); }
+
+.ps-mdp-edit { margin-top: 10px; }
+.ps-fact-access .ps-note .ps-link-btn { margin-left: 6px; }
+
+/* ==================== INVITER ==================== */
+
+.ps-search {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 13px;
+    color: var(--text-gray);
+    background: var(--card);
+    border: 1px solid var(--border-gray);
+    border-radius: 11px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.ps-search:focus-within {
+    border-color: var(--primary);
+    box-shadow: var(--focus-ring);
+}
+
+.ps-search-input {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 0;
+    font: inherit;
+    font-size: .95rem;
+    color: var(--text-main);
+    background: transparent;
+    border: 0;
+    outline: none;
+}
+
+.ps-results,
+.ps-invites {
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ps-results:empty { display: none; }
+
+.ps-results li,
+.ps-invites li {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 9px 4px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.ps-results li:last-child,
+.ps-invites li:last-child { border-bottom: none; }
+
+.ps-results .ps-results-empty {
+    display: block;
+    font-size: .85rem;
+    color: var(--text-gray);
+}
+
+.ps-result-name {
+    flex: 1;
+    min-width: 0;
+    font-size: .92rem;
+    font-weight: 700;
+    color: var(--text-main);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ps-result-state {
+    font-size: .78rem;
+    font-weight: 700;
+    color: var(--text-gray);
+    white-space: nowrap;
+}
+
+.ps-result-state.is-sent { color: var(--success); }
+
+.ps-invite-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    font: inherit;
+    font-size: .82rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: 9px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.ps-invite-btn:hover { filter: brightness(1.08); }
+.ps-invite-btn:disabled { opacity: .6; cursor: default; filter: none; }
+
+.ps-invite-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.ps-invite-name { font-size: .9rem; font-weight: 700; color: var(--text-main); }
+.ps-invite-meta { font-size: .75rem; color: var(--text-gray); }
+
 /* ==================== TÉLÉPHONE ==================== */
 
 @media (max-width: 640px) {
+    .ps-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
     .ps-panel {
         top: auto;
         bottom: 0;
@@ -500,3 +842,169 @@ body.ps-open { overflow: hidden; }
     color: var(--text-secondary);
 }
 .ps-block-season .ps-primary { margin-top: 10px; }
+
+/* ==================== INVITATION REÇUE (poolInvites.js) ==================== */
+
+.pi-scrim {
+    position: fixed;
+    inset: 0;
+    background: var(--overlay-dark);
+    backdrop-filter: blur(3px);
+    z-index: 1500;
+}
+
+.pi-card {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: min(420px, calc(100vw - 32px));
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 26px 24px 18px;
+    text-align: center;
+    background: var(--bg-page);
+    border: 1px solid var(--border-gray);
+    border-radius: 20px;
+    box-shadow: 0 24px 70px var(--shadow-lg);
+    opacity: 0;
+    transform: translate(-50%, -46%) scale(.97);
+    transition: opacity .18s ease, transform .18s ease;
+    z-index: 1501;
+}
+
+.pi-card.is-open {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+body.pi-open { overflow: hidden; }
+
+.pi-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--text-gray);
+    background: transparent;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.pi-close:hover { background: var(--bg-hover); color: var(--text-main); }
+
+.pi-img {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    object-fit: cover;
+    border: 1px solid var(--border-gray);
+}
+
+.pi-label {
+    margin: 14px 0 4px;
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--primary);
+}
+
+.pi-title {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text-secondary);
+}
+
+.pi-title strong { color: var(--text-main); font-weight: 800; }
+
+.pi-facts {
+    margin: 8px 0 18px;
+    font-size: .84rem;
+    color: var(--text-gray);
+}
+
+.pi-field-label {
+    display: block;
+    margin-bottom: 6px;
+    text-align: left;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-gray);
+}
+
+.pi-input { width: 100%; box-sizing: border-box; }
+
+.pi-note {
+    margin: 8px 0 0;
+    text-align: left;
+    font-size: .8rem;
+    line-height: 1.45;
+    color: var(--text-gray);
+}
+
+.pi-msg {
+    margin: 10px 0 0;
+    font-size: .84rem;
+    font-weight: 600;
+    color: var(--success);
+}
+
+.pi-msg.is-error { color: var(--danger); }
+
+.pi-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.pi-actions .ps-primary { flex: 1; }
+
+.pi-later {
+    margin-top: 12px;
+    padding: 6px 10px;
+    font: inherit;
+    font-size: .84rem;
+    font-weight: 700;
+    color: var(--text-gray);
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.pi-later:hover { color: var(--text-main); }
+
+.pi-more {
+    margin: 4px 0 0;
+    font-size: .76rem;
+    color: var(--text-gray);
+}
+
+@media (max-width: 640px) {
+    .pi-card {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        max-height: 90vh;
+        border-radius: 20px 20px 0 0;
+        border-bottom: none;
+        transform: translate(0, 100%);
+        padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .pi-card.is-open { transform: translate(0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pi-card { transition: none; }
+}

@@ -58,34 +58,47 @@
 
 .fz-pool-block { position: relative; margin-bottom: 26px; }
 
-/* Le sélecteur et ses deux outils tiennent sur une ligne. Le sélecteur
-   prend la place restante ; l'engrenage et le crayon gardent la leur. */
+/* Le pool actif et le bouton « changer de pool » tiennent sur une ligne.
+   Le pool prend la place restante ; le chevron garde la sienne. */
 .fz-pool-row { display: flex; align-items: stretch; gap: 6px; }
 .fz-pool-row .fz-active-pool { flex: 1; min-width: 0; }
 
-.fz-pool-tools { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
-
-.fz-pool-tool {
+.fz-pool-switch {
     display: grid;
     place-items: center;
     width: 32px;
-    flex: 1;
+    flex-shrink: 0;
     padding: 0;
     color: var(--text-secondary);
     background: var(--card);
     border: 1px solid var(--border-gray);
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
     transition: color .18s ease, border-color .18s ease, background .18s ease;
 }
 
-.fz-pool-tool:hover {
+.fz-pool-switch:hover,
+.fz-pool-switch.is-open {
     color: var(--primary);
     border-color: var(--primary);
     background: var(--bg-hover);
 }
 
-.fz-pool-tool svg { width: 16px; height: 16px; }
+/* Invitations envoyées et encore sans réponse, pour la personne qui a
+   créé le pool. */
+.fz-pool-invites {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    font-size: .7rem;
+    font-weight: 800;
+    color: var(--primary);
+    background: rgba(var(--primary-rgb), .14);
+    border-radius: 999px;
+}
 
 .fz-active-pool {
     display: flex;
@@ -102,7 +115,7 @@
 }
 
 .fz-active-pool:hover,
-.fz-active-pool.is-open {
+.fz-active-pool:focus-visible {
     border-color: var(--primary);
     box-shadow: var(--glow-primary);
 }
@@ -136,7 +149,7 @@
 
 .fz-chevron { width: 17px; height: 17px; color: var(--text-secondary); flex-shrink: 0; transition: transform .2s ease; }
 .fz-chevron svg { width: 100%; height: 100%; }
-.fz-active-pool.is-open .fz-chevron { transform: rotate(180deg); }
+.fz-pool-switch.is-open .fz-chevron { transform: rotate(180deg); }
 
 /* Pastille d'état du pool actif, sous le sélecteur. */
 .fz-pool-state {
@@ -664,6 +677,11 @@ body.fz-drawer-open { overflow: hidden; }
 .is-urgent .fz-notif-icon-repechage {
     background: color-mix(in srgb, var(--warning) 12%, var(--card));
     color: var(--warning);
+}
+.fz-notif-icon-invitation { background: var(--bg-hover); color: var(--text-secondary); }
+.is-urgent .fz-notif-icon-invitation {
+    background: rgba(var(--primary-rgb), .14);
+    color: var(--primary);
 }
 
 .fz-notif-txt { display: flex; flex: 1; flex-direction: column; gap: 5px; min-width: 0; overflow-wrap: anywhere; }

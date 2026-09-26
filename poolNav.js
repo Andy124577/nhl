@@ -19,7 +19,6 @@
         chevron: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`,
         check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
         reglages: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`,
-        crayon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>`,
         plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16m8-8H4"/></svg>`,
         entrer: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>`,
         accueil: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>`,
@@ -47,8 +46,8 @@
     ];
 
     // « Mes pools » n'est plus une page : la liste des pools est ce rail
-    // lui-même, et les réglages de chacun tiennent dans le panneau ouvert par
-    // l'engrenage (poolSettings.js). Reste ici « Participants », qui ouvre ce
+    // lui-même, et tout ce qui porte sur l'un d'eux tient dans la fiche
+    // ouverte d'un clic sur son nom (poolSettings.js). Reste ici « Participants », qui ouvre ce
     // même panneau sur l'onglet du même nom — qui est inscrit, et le nom de
     // sa propre équipe. Il s'appelait « Mon équipe », ce qu'on lisait comme
     // « mes joueurs » : l'alignement, lui, est au Classement.
@@ -122,37 +121,31 @@
                 </li>`;
         }).join('');
 
-        // Engrenage et crayon ne s'affichent que pour la personne qui a créé
-        // le pool : ils mènent aux deux seules choses qu'elle seule peut
-        // faire — lire et régler la ligue, changer son nom et sa vignette.
-        // Les autres membres passent par « Mon équipe », juste en dessous.
-        const reglable = !!(window.FZPoolSettings && FZPoolSettings.isCreator(courant.name));
-        const outils = reglable ? `
-            <div class="fz-pool-tools">
-                <button type="button" class="fz-pool-tool" data-reglages="regles"
-                        title="Réglages du pool" aria-label="Réglages du pool">
-                    ${ICONES.reglages}
-                </button>
-                <button type="button" class="fz-pool-tool" data-reglages="identite"
-                        title="Renommer le pool" aria-label="Renommer le pool">
-                    ${ICONES.crayon}
-                </button>
-            </div>` : '';
+        // Deux gestes, deux boutons. Le pool actif lui-même ouvre sa fiche
+        // complète — état, équipes, règles, et pour la personne qui l'a créé,
+        // le mot de passe, les invitations et l'identité (poolSettings.js).
+        // Le chevron, à côté, déroule la liste pour changer de pool.
+        const admin = !!(window.FZPoolSettings && FZPoolSettings.isCreator(courant.name));
+        const enAttente = admin ? ((courant.data && courant.data.invitations) || []).length : 0;
 
         return `
             <div class="fz-pool-block">
                 <p class="fz-rail-label">Pool actif</p>
                 <div class="fz-pool-row">
-                    <button type="button" class="fz-active-pool" id="fzActiveBtn${suffixe}"
-                            aria-expanded="false" aria-controls="fzPoolList${suffixe}">
+                    <button type="button" class="fz-active-pool" data-reglages="apercu"
+                            title="Tout sur ce pool" aria-label="${echapper(courant.name)} — voir tout le pool">
                         ${vignette(courant, 'fz-active-pool-img')}
                         <span class="fz-active-pool-txt">
                             <span class="fz-active-pool-name">${echapper(courant.name)}</span>
                             <span class="fz-active-pool-meta">${echapper(courant.teamName)}</span>
                         </span>
+                        ${enAttente ? `<span class="fz-pool-invites" title="Invitations en attente">${enAttente}</span>` : ''}
+                    </button>
+                    <button type="button" class="fz-pool-switch" id="fzActiveBtn${suffixe}"
+                            aria-expanded="false" aria-controls="fzPoolList${suffixe}"
+                            title="Changer de pool" aria-label="Changer de pool">
                         <span class="fz-chevron">${ICONES.chevron}</span>
                     </button>
-                    ${outils}
                 </div>
                 <span class="fz-pool-state fz-state-${etat.etat}">${LIBELLE_ETAT[etat.etat]}</span>
                 <ul class="fz-pool-list" id="fzPoolList${suffixe}" hidden>${options}</ul>
@@ -401,8 +394,8 @@
     // ==================== INTERACTIONS ====================
 
     /**
-     * Branche tout ce qui ouvre le panneau de réglages : l'engrenage et le
-     * crayon posés contre le pool actif, et « Mon équipe » dans la Gestion.
+     * Branche tout ce qui ouvre la fiche du pool : le pool actif lui-même,
+     * et « Participants » dans la Gestion.
      *
      * Appelé sur le rail comme sur le tiroir — les deux surfaces sont
      * rendues par les mêmes fonctions, et un même identifiant ne peut pas
@@ -447,7 +440,7 @@
     function fermerListes() {
         document.querySelectorAll('.fz-pool-list').forEach(liste => {
             liste.hidden = true;
-            const bouton = liste.parentElement.querySelector('.fz-active-pool');
+            const bouton = liste.parentElement.querySelector('.fz-pool-switch');
             if (bouton) {
                 bouton.setAttribute('aria-expanded', 'false');
                 bouton.classList.remove('is-open');

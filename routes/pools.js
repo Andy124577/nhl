@@ -45,9 +45,48 @@ const NOM_VALIDE = /^[\p{L}\p{N}\s'\-_]+$/u;
  *  seraient impossibles à distinguer au téléphone. */
 const reduire = (t) => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
+/** Bornes du mot de passe d'un pool. La haute vient de bcrypt, qui ignore
+ *  tout octet au-delà du 72e. */
+const MOT_DE_PASSE_MIN = 4;
+const MOT_DE_PASSE_MAX = 72;
+
+/**
+ * Le nom d'une équipe, validé comme au renommage. Renvoie un message
+ * d'erreur, ou null si le nom passe.
+ */
+function refusNomEquipe(nomEquipe) {
+    if (!nomEquipe || nomEquipe.length > poolOps.NOM_EQUIPE_MAX) {
+        return `Le nom d'équipe doit contenir entre 1 et ${poolOps.NOM_EQUIPE_MAX} caractères.`;
+    }
+    if (!NOM_VALIDE.test(nomEquipe)) return "Nom d'équipe invalide. Caractères non autorisés.";
+    if (contientGrossierete(nomEquipe)) {
+        return "Ce nom d'équipe contient un terme inapproprié. Choisissez-en un autre.";
+    }
+    return null;
+}
+
 function monter(app, ctx) {
     const { auth, store, diffusion, racine, uploadPool, logger = console } = ctx;
+    // Chiffre la copie lisible du mot de passe (lib/poolSecret.js). Absent,
+    // le pool garde sa seule empreinte, comme avant.
+    const coffre = ctx.coffre || null;
     const { ErreurMetier } = store;
+
+    /**
+     * L'empreinte qui ouvre la porte, et la copie que seule la personne qui a
+     * créé le pool peut relire. Renvoie un message de refus, ou les deux champs.
+     */
+    async function protegerMotDePasse(motDePasse) {
+        if (motDePasse.length < MOT_DE_PASSE_MIN || motDePasse.length > MOT_DE_PASSE_MAX) {
+            return { refus: `Le mot de passe du pool doit contenir entre ${MOT_DE_PASSE_MIN} et ${MOT_DE_PASSE_MAX} caractères.` };
+        }
+        let passwordSecret = null;
+        if (coffre) {
+            try { passwordSecret = coffre.chiffrer(motDePasse); }
+            catch (erreur) { logger.error('Chiffrement du mot de passe de pool impossible :', erreur.message); }
+        }
+        return { passwordHash: await bcrypt.hash(motDePasse, 10), passwordSecret };
+    }
     // Remplaçable pour les tests : l'ordre tiré doit y être prévisible.
     const melanger = ctx.melangerEquipes || melangerEquipes;
 
@@ -184,21 +223,6 @@ function monter(app, ctx) {
 
     // ───────────────────────────── Création ─────────────────────────────
 
-    /**
-     * Le nom d'une équipe, validé comme au renommage. Renvoie un message
-     * d'erreur, ou null si le nom passe.
-     */
-    function refusNomEquipe(nomEquipe) {
-        if (!nomEquipe || nomEquipe.length > poolOps.NOM_EQUIPE_MAX) {
-            return `Le nom d'équipe doit contenir entre 1 et ${poolOps.NOM_EQUIPE_MAX} caractères.`;
-        }
-        if (!NOM_VALIDE.test(nomEquipe)) return "Nom d'équipe invalide. Caractères non autorisés.";
-        if (contientGrossierete(nomEquipe)) {
-            return "Ce nom d'équipe contient un terme inapproprié. Choisissez-en un autre.";
-        }
-        return null;
-    }
-
     app.post('/create-clan', auth.requireAuth, async (req, res) => {
         try {
             const nom = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
@@ -219,15 +243,13 @@ function monter(app, ctx) {
                 return res.status(400).json({ message: "Ce nom de pool contient un terme inapproprié. Choisissez-en un autre." });
             }
 
-            // Le mot de passe du pool est traité comme celui d'un compte :
-            // même algorithme, même coût, jamais conservé en clair. La borne
-            // haute vient de bcrypt, qui ignore tout octet au-delà du 72e.
-            let passwordHash = null;
+            // Le mot de passe du pool est vérifié comme celui d'un compte :
+            // même algorithme, même coût, jamais conservé en clair. Sa copie
+            // lisible est chiffrée avec une clé qui ne quitte pas le serveur.
+            let protection = null;
             if (typeof password === 'string' && password.length > 0) {
-                if (password.length < 4 || password.length > 72) {
-                    return res.status(400).json({ message: "Le mot de passe du pool doit contenir entre 4 et 72 caractères." });
-                }
-                passwordHash = await bcrypt.hash(password, 10);
+                protection = await protegerMotDePasse(password);
+                if (protection.refus) return res.status(400).json({ message: protection.refus });
             }
 
             const refusEquipe = refusNomEquipe(nomEquipe);
@@ -266,7 +288,10 @@ function monter(app, ctx) {
                 createdAt: new Date().toISOString(),
                 teams
             };
-            if (passwordHash) poolData.passwordHash = passwordHash;
+            if (protection) {
+                poolData.passwordHash = protection.passwordHash;
+                if (protection.passwordSecret) poolData.passwordSecret = protection.passwordSecret;
+            }
             if (poolData.poolMode === 'head-to-head') {
                 poolData.h2hData = {
                     currentWeek: 1,
@@ -391,8 +416,8 @@ function monter(app, ctx) {
                 appliquer: async ({ data }) => {
                     // Revérifié sous verrou : le mot de passe a pu changer, ou
                     // la dernière place partir, entre la lecture et l'écriture.
-                    if (data.passwordHash && !authz.estMembre(data, username) && !enveloppe.data.passwordHash) {
-                        throw new ErreurMetier(401, "Ce pool est maintenant protégé par un mot de passe.");
+                    if (data.passwordHash && data.passwordHash !== enveloppe.data.passwordHash) {
+                        throw new ErreurMetier(401, "Le mot de passe de ce pool vient de changer.", { passwordRequired: true });
                     }
                     const resultat = poolOps.inscrireParticipant(data, { username, teamName });
                     if (!resultat.ok) throw refus(resultat);
@@ -447,6 +472,9 @@ function monter(app, ctx) {
                 appliquer: async ({ data }) => {
                     if (authz.estMembre(data, username)) {
                         return { sauvegarder: false, valeur: { teamName: authz.equipeDe(data, username), deja: true } };
+                    }
+                    if (data.passwordHash && data.passwordHash !== enveloppe.data.passwordHash) {
+                        throw new ErreurMetier(401, "Le mot de passe de ce pool vient de changer.", { passwordRequired: true });
                     }
                     // Pas de nom fourni : l'équipe prend celui de la personne,
                     // qu'elle pourra renommer ensuite.
@@ -809,6 +837,91 @@ function monter(app, ctx) {
         }
     });
 
+    // ───────────────────────────── Mot de passe du pool ─────────────────────────────
+
+    /**
+     * Relire le mot de passe du pool. Réservé à la personne qui l'a créé (et à
+     * l'administration du site) : c'est elle qui le donne à ses amis.
+     *
+     * `recuperable` est faux pour un pool protégé avant que la copie chiffrée
+     * existe, ou dont la clé a changé : il n'y a alors rien à relire, seulement
+     * un nouveau mot de passe à choisir.
+     */
+    app.get('/api/pools/:poolName/password', auth.requireAuth, async (req, res) => {
+        try {
+            const enveloppe = await store.lire(req.params.poolName);
+            if (!enveloppe) return res.status(404).json({ message: "Pool introuvable." });
+            if (!authz.peutAdministrer(enveloppe.data, { username: req.auth.username, isAdmin: req.auth.isAdmin })) {
+                return res.status(403).json({ message: "Seule la personne qui a créé le pool peut voir son mot de passe." });
+            }
+            const data = enveloppe.data;
+            const password = data.passwordHash && data.passwordSecret && coffre
+                ? coffre.dechiffrer(data.passwordSecret)
+                : null;
+            res.setHeader('Cache-Control', 'no-store');
+            res.json({
+                hasPassword: !!data.passwordHash,
+                recuperable: password !== null,
+                password
+            });
+        } catch (erreur) {
+            repondreErreur(res, erreur, '/api/pools/password');
+        }
+    });
+
+    /**
+     * Poser, changer ou retirer le mot de passe du pool. Un mot de passe vide
+     * ouvre le pool à tout le monde.
+     *
+     * Les membres déjà inscrits ne le repassent jamais : il ne garde que la
+     * porte d'entrée.
+     */
+    app.post('/api/pools/:poolName/password', auth.requireAuth, async (req, res) => {
+        try {
+            const nom = req.params.poolName;
+            const brut = req.body?.password;
+            if (brut != null && typeof brut !== 'string') {
+                return res.status(400).json({ message: "Mot de passe invalide." });
+            }
+            const motDePasse = brut || '';
+
+            let protection = null;
+            if (motDePasse.length > 0) {
+                protection = await protegerMotDePasse(motDePasse);
+                if (protection.refus) return res.status(400).json({ message: protection.refus });
+            }
+
+            await store.muterPool(nom, {
+                scope: 'pool:mot-de-passe',
+                userId: req.auth.userId,
+                appliquer: async ({ data }) => {
+                    if (!authz.peutAdministrer(data, { username: req.auth.username, isAdmin: req.auth.isAdmin })) {
+                        throw new ErreurMetier(403, "Seule la personne qui a créé le pool peut changer son mot de passe.");
+                    }
+                    delete data.passwordHash;
+                    delete data.passwordSecret;
+                    if (protection) {
+                        data.passwordHash = protection.passwordHash;
+                        if (protection.passwordSecret) data.passwordSecret = protection.passwordSecret;
+                    }
+                    return { valeur: {} };
+                }
+            });
+
+            const frais = await store.lire(nom);
+            diffusion.poolMisAJour(nom, frais.data, frais.revision);
+
+            logger.log(`🔑 Mot de passe ${protection ? 'changé' : 'retiré'} : ${nom} par ${req.auth.username}`);
+            res.json({
+                message: protection ? "Mot de passe du pool enregistré." : "Le pool est maintenant ouvert, sans mot de passe.",
+                hasPassword: !!protection,
+                recuperable: !!(protection && protection.passwordSecret)
+            });
+        } catch (erreur) {
+            repondreErreur(res, erreur, '/api/pools/password');
+        }
+    });
+
     // ───────────────────────────── Image du pool ─────────────────────────────
 
     app.post('/upload/pool-image', auth.requireAuth, uploadPool.single('image'), async (req, res) => {
@@ -873,4 +986,4 @@ function monter(app, ctx) {
     return { repondreErreur, refus, checkIfDraftComplete };
 }
 
-module.exports = { monter, EQUIPES_PAR_POOL, NOM_VALIDE, reduire };
+module.exports = { monter, EQUIPES_PAR_POOL, NOM_VALIDE, reduire, refusNomEquipe };

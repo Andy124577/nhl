@@ -234,10 +234,11 @@ async function deletePoolInTx(client, poolName) {
 // =============================================
 
 async function getAllUsers() {
-    const result = await pool.query('SELECT username, is_admin FROM users ORDER BY username');
+    const result = await pool.query('SELECT username, is_admin, avatar_url FROM users ORDER BY username');
     return result.rows.map(row => ({
         username: row.username,
-        isAdmin: row.is_admin
+        isAdmin: row.is_admin,
+        avatarUrl: row.avatar_url || ''
     }));
 }
 

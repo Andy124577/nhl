@@ -22,6 +22,12 @@ services:
         sync: false
       - key: GOOGLE_CLIENT_SECRET
         sync: false
+      - key: POOL_PASSWORD_KEY
+        # Encrypts the readable copy of pool passwords (shown to the pool's
+        # creator, lib/poolSecret.js). Generated once by Render; never change it
+        # afterwards or existing passwords become unreadable (they still work to
+        # join — the creator would just have to set a new one to see it).
+        generateValue: true
       - key: ANTHROPIC_API_KEY
         # Set this manually in Render Dashboard. Used to check uploaded avatars and
         # pool images (services/moderationImage.js). Without it, uploads are still

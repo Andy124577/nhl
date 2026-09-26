@@ -334,6 +334,14 @@ Le bouton « Continuer avec Google » reste masqué tant que ces deux variables 
 
 La migration `0009_google_auth.sql` s'applique seule au démarrage : elle ajoute la colonne `users.google_sub` et rend le mot de passe facultatif (un compte créé par Google n'en a pas).
 
+### Mot de passe des pools (`POOL_PASSWORD_KEY`)
+
+La personne qui crée un pool peut relire son mot de passe dans la fiche du pool. Le serveur en garde une copie chiffrée (AES-256-GCM, `lib/poolSecret.js`) en plus de l'empreinte bcrypt qui sert à entrer.
+
+- `POOL_PASSWORD_KEY` = une longue chaîne aléatoire. Le Blueprint la génère (`generateValue: true`) ; sinon, posez-la à la main dans **Environment**.
+- Sans elle, la clé est dérivée de `DATABASE_URL` (ou d'un fichier local `.pool-password.key` en mode fichier). Poser `POOL_PASSWORD_KEY` après coup ne casse rien : les anciennes copies restent lisibles.
+- **Ne changez plus la clé une fois posée.** Les mots de passe continueraient d'ouvrir les pools, mais leur créateur devrait en choisir un nouveau pour pouvoir le relire. C'est aussi le cas des pools protégés avant cette fonction.
+
 ### Custom Domain
 
 Pour utiliser votre propre domaine:

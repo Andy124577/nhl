@@ -314,8 +314,11 @@ function monter(app, ctx) {
             const identifiant = usePostgres ? await db.getUserId(username) : username;
 
             const tousLesPools = await store.lireTous();
+            // Une invitation en attente porte aussi le nom de la personne :
+            // elle part avec le compte, comme l'appartenance.
             const concernes = Object.entries(tousLesPools)
-                .filter(([, enveloppe]) => poolOps.estMembre(enveloppe.data, username))
+                .filter(([, enveloppe]) => poolOps.estMembre(enveloppe.data, username) ||
+                    !!poolOps.invitationPour(enveloppe.data, username))
                 .map(([nom]) => nom);
 
             for (const nomPool of concernes) {
@@ -323,7 +326,8 @@ function monter(app, ctx) {
                     await store.muterPool(nomPool, {
                         scope: 'compte:suppression',
                         appliquer: async ({ data }) => {
-                            poolOps.quitterEquipe(data, username);
+                            if (poolOps.estMembre(data, username)) poolOps.quitterEquipe(data, username);
+                            poolOps.retirerInvitation(data, username);
                             return { valeur: { pool: nomPool } };
                         }
                     });

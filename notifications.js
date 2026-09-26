@@ -25,8 +25,11 @@
         cloche: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>`,
         echange: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`,
         cible: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
-        depart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>`
+        depart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>`,
+        invitation: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>`
     };
+
+    const ICONE_PAR_TYPE = { echange: 'echange', invitation: 'invitation' };
 
 
     const echapper = texte => String(texte == null ? '' : texte)
@@ -61,8 +64,8 @@
             const sauvegarde = JSON.parse(localStorage.getItem(cle) || 'null');
             if (sauvegarde?.version !== 1 || !Array.isArray(sauvegarde.items)) return null;
             sauvegarde.items = sauvegarde.items.filter(el => el && typeof el.id === 'string'
-                && ['echange', 'repechage', 'semaine'].includes(el.type) && typeof el.pool === 'string'
-                && /^(trade|repechage|draftActif|draftFini|classement)\.html\?/.test(el.href)
+                && ['echange', 'repechage', 'semaine', 'invitation'].includes(el.type) && typeof el.pool === 'string'
+                && /^(trade|repechage|draftActif|draftFini|classement|index)\.html\?/.test(el.href)
                 && Number.isFinite(el.date));
             return sauvegarde;
         } catch { return null; }
@@ -143,8 +146,54 @@
             // Ne pas remplacer l'URL de la popup pendant son clic natif.
             const depuisPopup = lien.id === 'fzNotifToastLink';
             if (depuisPopup) fermerPopup();
+            // Une invitation encore en attente s'ouvre sur place, dans sa
+            // fenêtre : quitter la page pour y répondre n'apporterait rien.
+            const el = elements.find(item => item.id === lien.dataset.notificationId);
+            if (e.type === 'click' && el && el.type === 'invitation' && window.FZInvites
+                && FZInvites.open(el.pool)) {
+                e.preventDefault();
+                ouvrirPanneau(false);
+            }
             marquerLus([lien.dataset.notificationId]);
         }
+    }
+
+    /**
+     * Les invitations à rejoindre un pool.
+     *
+     * Elles vivent dans les données du pool, pas dans l'historique durable :
+     * elles s'ajoutent donc à la cloche quelle que soit la source qui fait
+     * foi. poolInvites.js les charge et fait surgir leur fenêtre ; ici on ne
+     * fait que les ranger — sans aperçu en bas d'écran, la fenêtre suffit.
+     *
+     * Une invitation acceptée, refusée ou annulée reste lisible, mais cesse
+     * de réclamer une réponse.
+     */
+    function rafraichirInvitations(liste) {
+        if (!compteActuel()) return;
+        const nouveaux = (liste || []).map(inv => {
+            const date = Date.parse(inv.invitedAt);
+            return {
+                id: `invite:${inv.poolName}:${inv.invitedAt}`,
+                type: 'invitation', pool: inv.poolName,
+                titre: 'Invitation à rejoindre un pool',
+                detail: `${inv.invitedBy || 'On'} vous invite à rejoindre ${inv.poolName}.`,
+                action: 'Voir l’invitation',
+                date: Number.isFinite(date) ? date : Date.now(),
+                href: `index.html?invitation=${encodeURIComponent(inv.poolName)}`,
+                urgent: true
+            };
+        });
+        const actives = new Set(nouveaux.map(el => el.id));
+        elements.filter(el => el.type === 'invitation' && !actives.has(el.id)).forEach(el => {
+            el.read = true;
+            el.urgent = false;
+            el.titre = 'Invitation traitée';
+            el.detail = `L’invitation à rejoindre ${el.pool} n’attend plus de réponse.`;
+            el.action = 'Voir mes pools';
+            el.href = `index.html?${lienPool(el.pool)}`;
+        });
+        integrer(nouveaux, false);
     }
 
     function notificationEchange(echange) {
@@ -294,7 +343,7 @@
     }
 
     function contenu(el, afficherEtat) {
-        return `<span class="fz-notif-icon fz-notif-icon-${el.type}" aria-hidden="true">${el.type === 'echange' ? ICONES.echange : ICONES.cible}</span>
+        return `<span class="fz-notif-icon fz-notif-icon-${el.type}" aria-hidden="true">${ICONES[ICONE_PAR_TYPE[el.type]] || ICONES.cible}</span>
             <span class="fz-notif-txt">
                 <span class="fz-notif-title">${echapper(el.titre)}</span>
                 <span class="fz-notif-pool">${echapper(el.pool)}</span>
@@ -332,7 +381,7 @@
                 href="${echapper(el.href)}" data-notification-id="${echapper(el.id)}">${contenu(el, true)}</a></li>`).join('')
             : `<li class="fz-notif-empty"><span class="fz-notif-empty-icon" aria-hidden="true">${ICONES.cloche}</span>
                 <p>Aucune notification pour le moment.</p>
-                <p>Vos propositions d’échange et les nouvelles de vos repêchages apparaîtront ici.</p></li>`;
+                <p>Vos invitations, propositions d’échange et nouvelles de repêchage apparaîtront ici.</p></li>`;
         if (html !== derniereListe) {
             const focus = document.activeElement?.closest('[data-notification-id]');
             const focusId = focus && liste.contains(focus) ? focus.dataset.notificationId : null;
@@ -662,6 +711,11 @@
         await rafraichirServeur();
         rafraichirDrafts();
         rafraichirEchanges();
+        if (window.FZInvites) {
+            FZInvites.onChange(rafraichirInvitations);
+            // Déjà chargées avant nous : la liste ne reviendra qu'au prochain signal.
+            if (FZInvites.loaded()) rafraichirInvitations(FZInvites.list());
+        }
         brancherSocket();
         window.addEventListener('storage', e => {
             if (!compteActuel()) { fermerPopup(); parId('fzNotifWrap').hidden = true; return; }

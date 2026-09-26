@@ -50,6 +50,7 @@ const routesH2H = require("./routes/h2h.js");
 const routesRecords = require("./routes/records.js");
 const routesNotifications = require("./routes/notifications.js");
 const routesAujourdhui = require("./routes/today.js");
+const routesInvitations = require("./routes/invitations.js");
 const { creerServiceAujourdhui } = require("./services/today.js");
 const { creerServiceRecap } = require("./services/recap.js");
 const { creerServicePointage } = require("./services/scoring.js");
@@ -58,6 +59,7 @@ const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
 const { creerFeuillesDeMatch, MatchIntrouvable } = require("./services/feuilleMatch.js");
 const { creerAlignements, EquipeInconnue } = require("./services/alignement.js");
 const { creerModerateur } = require("./services/moderationImage.js");
+const { creerCoffre, clesDepuisEnvironnement } = require("./lib/poolSecret.js");
 const datesPool = require("./lib/dates.js");
 
 const app = express();
@@ -478,7 +480,15 @@ const contexteRoutes = {
     renommerPool: (options) => renommerPoolPartout(options),
     nettoyerDependances: (nomPool) => (USE_POSTGRES ? db.deletePoolDependencies(nomPool) : Promise.resolve()),
     construireCalendrierH2H,
-    saisonCourante: () => currentSeasonString()
+    saisonCourante: () => currentSeasonString(),
+    // Copie chiffrée du mot de passe d'un pool, relisible par la personne qui
+    // l'a créé (lib/poolSecret.js). POOL_PASSWORD_KEY d'abord ; à défaut, une
+    // clé dérivée de DATABASE_URL, ou un fichier local en mode fichier.
+    coffre: creerCoffre(clesDepuisEnvironnement(process.env, {
+        cheminFichier: `${DATA_DIR}/.pool-password.key`,
+        lireFichier: (chemin) => (fs.existsSync(chemin) ? fs.readFileSync(chemin, 'utf8') : null),
+        ecrireFichier: (chemin, contenu) => fs.writeFileSync(chemin, contenu, { mode: 0o600 })
+    }))
 };
 
 /**
@@ -569,6 +579,7 @@ routesEchanges.monter(app, contexteRoutes);
 routesH2H.monter(app, contexteRoutes);
 routesRecords.monter(app, contexteRoutes);
 routesNotifications.monter(app, contexteRoutes);
+routesInvitations.monter(app, contexteRoutes);
 routesAujourdhui.monter(app, contexteRoutes);
 
 

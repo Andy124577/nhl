@@ -2924,7 +2924,7 @@
     },
     "h2hData": {
       "currentWeek": 1,
-      "weekStart": "2026-01-05T05:00:00.000Z",
+      "weekStart": "2026-09-28",
       "matchups": [
         []
       ],
@@ -2944,7 +2944,10 @@
           "pointsAgainst": 0
         }
       },
-      "matchupHistory": []
+      "matchupHistory": [],
+      "seasonStart": "2026-09-28",
+      "seasonEnd": "2027-04-10",
+      "seasonWeeks": 1
     },
     "picksHistory": [
       {
@@ -3132,7 +3135,7 @@
     },
     "h2hData": {
       "currentWeek": 1,
-      "weekStart": "2026-01-05T05:00:00.000Z",
+      "weekStart": "2026-09-28",
       "matchups": [
         []
       ],
@@ -3152,7 +3155,10 @@
           "pointsAgainst": 0
         }
       },
-      "matchupHistory": []
+      "matchupHistory": [],
+      "seasonStart": "2026-09-28",
+      "seasonEnd": "2027-04-10",
+      "seasonWeeks": 1
     },
     "picksHistory": [
       {

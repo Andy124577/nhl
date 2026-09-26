@@ -1,24 +1,26 @@
 /* ============================================================
-   RÉGLAGES DU POOL — le panneau derrière l'engrenage
+   FICHE DU POOL — le panneau ouvert d'un clic sur le pool actif
    ------------------------------------------------------------
    Ce panneau remplace la page « Mes pools ». Celle-ci obligeait à quitter
    l'écran en cours pour lire une règle ou renommer une équipe, et affichait
    côte à côte des choses qui ne se ressemblent pas : la liste des pools (qui
    vit désormais dans le rail, poolNav.js) et les réglages de chacun.
 
-   Ne reste ici que ce qui porte sur un seul pool, à portée de l'engrenage
-   posé contre son nom :
+   Ne reste ici que ce qui porte sur un seul pool, à un clic de son nom
+   dans le rail :
 
+     Aperçu   — tout le pool d'un coup d'œil : où en est le repêchage, le
+                format, l'accès, toutes les équipes. La personne qui a créé
+                le pool y relit et change son mot de passe.
+     Participants — une personne, une équipe : qui est là, sous quel nom,
+                avec quels choix. On y renomme la sienne.
      Règles   — la configuration figée à la création, en lecture seule,
                 l'historique des saisons, et pour la personne qui a créé
                 le pool, l'ouverture d'une nouvelle saison.
-     Participants — une personne, une équipe : qui est là, sous quel nom,
-                avec quels choix. On y renomme la sienne.
+     Inviter  — chercher un compte et l'inviter ; les invitations en
+                attente. Réservé à la personne qui a créé le pool.
      Identité — le nom du pool et sa vignette. Réservé à la personne qui a
-                créé le pool : c'est le seul onglet que les autres ne
-                voient pas.
-
-   Le crayon du rail ouvre directement « Identité », l'engrenage « Règles ».
+                créé le pool.
 
    Aucune dépendance : ni jQuery, ni equipes.js. Le panneau est chargé sur
    toutes les pages qui portent le rail, et plusieurs d'entre elles n'ont
@@ -38,10 +40,18 @@
     };
 
     const ONGLETS = [
-        { cle: 'regles',   titre: 'Règles' },
+        { cle: 'apercu',   titre: 'Aperçu' },
         { cle: 'equipes',  titre: 'Participants' },
+        { cle: 'regles',   titre: 'Règles' },
+        { cle: 'inviter',  titre: 'Inviter', createurSeulement: true },
         { cle: 'identite', titre: 'Identité', createurSeulement: true }
     ];
+
+    /** Ce qui retient encore un pool qui n'a pas commencé à repêcher. */
+    const RAISON_ATTENTE = {
+        deux: 'Il faut au moins deux équipes pour repêcher.',
+        pair: 'Le tête-à-tête demande un nombre pair d’équipes.'
+    };
 
     const echapper = texte => String(texte == null ? '' : texte)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -86,11 +96,57 @@
         return typeof getIcon === 'function' ? getIcon(nom, taille || 16) : '';
     }
 
+    function dateLongue(iso) {
+        const date = new Date(iso);
+        if (!iso || Number.isNaN(date.getTime())) return '';
+        return date.toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    function ilYa(iso) {
+        const ecart = Date.now() - new Date(iso).getTime();
+        if (!Number.isFinite(ecart)) return '';
+        const minutes = Math.max(0, Math.floor(ecart / 60000));
+        if (minutes < 1) return 'à l’instant';
+        if (minutes < 60) return `il y a ${minutes} min`;
+        const heures = Math.floor(minutes / 60);
+        if (heures < 24) return `il y a ${heures} h`;
+        return `il y a ${Math.floor(heures / 24)} j`;
+    }
+
+    /** Avatar d'un compte : la photo servie par le serveur, sinon celle du cache. */
+    function avatar(username, taille, url) {
+        if (url) {
+            return `<img src="${echapper(url)}" class="member-avatar" alt=""
+                         style="width:${taille}px;height:${taille}px;min-width:${taille}px;border-radius:50%;object-fit:cover;"
+                         onerror="this.src='Icons/grayUser.png'">`;
+        }
+        return typeof avatarHtml === 'function'
+            ? avatarHtml(username, taille)
+            : `<img src="Icons/grayUser.png" class="ps-member-img" alt="">`;
+    }
+
     // ==================== ÉTAT ====================
 
     let poolOuvert = null;      // nom du pool affiché, ou null
-    let ongletActif = 'regles';
+    let ongletActif = 'apercu';
     let racine = null;          // l'élément du panneau, construit une fois
+    // L'équipe à montrer en ouvrant « Participants » depuis l'aperçu.
+    let equipeVisee = null;
+
+    /**
+     * Le mot de passe relu, pour la seule personne qui a créé le pool.
+     *
+     * Jamais demandé à l'ouverture : il ne quitte le serveur que sur un clic
+     * « Afficher », et s'oublie à la fermeture du panneau. Le panneau se
+     * redessine à chaque mise à jour temps réel ; sans cet état, le mot de
+     * passe se recacherait sous les yeux de qui vient de l'afficher.
+     */
+    let mdp = null;   // { pool, hasPassword, recuperable, password, visible, edition, message, erreur }
+
+    /** La recherche en cours dans « Inviter » : elle survit aux redessins. */
+    let recherche = { pool: null, q: '', resultats: [], message: '', erreur: false };
+    let minuterieRecherche = null;
+    let numeroRecherche = 0;
 
     function donneesDuPool(nom) {
         if (!window.FZPool) return null;
@@ -322,6 +378,285 @@
             </div>`;
     }
 
+    /**
+     * Où en est le pool, et le prochain geste qui a du sens.
+     *
+     * Un seul bouton au plus : l'aperçu répond à « qu'est-ce qui se passe
+     * dans ce pool ? », pas à « qu'est-ce que je peux y faire ? ».
+     */
+    function blocEtat(nom, donnees, etat) {
+        const lien = page => `${page}?pool=${encodeURIComponent(nom)}`;
+        const createur = createurDuPool(donnees);
+        let detail = '';
+        let action = '';
+
+        if (etat.etat === 'encours') {
+            const auTour = etat.equipeAuTour
+                ? nomAffiche(etat.equipeAuTour, ((donnees.teams || {})[etat.equipeAuTour] || {}).members)
+                : null;
+            const pourcent = etat.choixTotal ? Math.round((etat.choixFait / etat.choixTotal) * 100) : 0;
+            detail = `
+                <p class="ps-state-line">Choix <strong>${etat.choixFait + 1}</strong> sur ${etat.choixTotal}${auTour ? ` · au tour de <strong>${echapper(auTour)}</strong>` : ''}</p>
+                <div class="ps-progress" role="progressbar" aria-label="Avancement du repêchage"
+                     aria-valuenow="${etat.choixFait}" aria-valuemin="0" aria-valuemax="${etat.choixTotal}">
+                    <i style="width:${pourcent}%"></i>
+                </div>`;
+            action = `<a class="ps-primary" href="${lien('draftActif.html')}">Ouvrir la salle de repêchage</a>`;
+        } else if (etat.etat === 'pret') {
+            detail = `<p class="ps-state-line">${etat.inscrits} participant${etat.inscrits > 1 ? 's' : ''} inscrit${etat.inscrits > 1 ? 's' : ''}. Le repêchage peut partir quand ${estCreateur(donnees) ? 'vous le lancez' : `${echapper(createur || 'l’administration')} le lance`}.</p>`;
+            if (estCreateur(donnees)) action = `<a class="ps-primary" href="${lien('repechage.html')}">Préparer le repêchage</a>`;
+        } else if (etat.etat === 'attente') {
+            const raison = donnees.instant === true
+                ? 'Le pool rapide part dès qu’il est plein.'
+                : (RAISON_ATTENTE[etat.raison] || 'En attente de participants.');
+            detail = `<p class="ps-state-line">${raison}</p>`;
+        } else {
+            const h2h = donnees.poolMode === 'head-to-head' && donnees.h2hData && donnees.h2hData.currentWeek;
+            detail = `<p class="ps-state-line">Repêchage terminé${h2h ? ` · semaine ${echapper(donnees.h2hData.currentWeek)}` : ''}. Les points s’accumulent chaque soir de match.</p>`;
+            action = `<a class="ps-primary" href="${lien('classement.html')}">Voir le classement</a>`;
+        }
+
+        return `
+            <section class="ps-state-card">
+                <span class="ps-state ps-state-${etat.etat}">${LIBELLE_ETAT[etat.etat]}</span>
+                ${detail}
+                ${action ? `<div class="ps-state-actions">${action}</div>` : ''}
+            </section>`;
+    }
+
+    /**
+     * L'accès au pool. Pour la personne qui l'a créé : le mot de passe, à
+     * relire, copier, changer ou retirer. Pour les autres : un simple fait.
+     */
+    function blocAcces(nom, donnees) {
+        if (!estCreateur(donnees)) {
+            return `
+                <li><span>Accès</span><strong>${donnees.hasPassword ? 'Protégé par mot de passe' : 'Libre'}</strong></li>`;
+        }
+
+        const etat = mdp && mdp.pool === nom ? mdp : null;
+        const aUnMotDePasse = etat ? etat.hasPassword : !!donnees.hasPassword;
+        let valeur;
+        let boutons = '';
+
+        if (!aUnMotDePasse) {
+            valeur = '<strong>Libre</strong>';
+            boutons = `<button type="button" class="ps-link-btn" data-mdp="editer">Ajouter un mot de passe</button>`;
+        } else if (etat && etat.visible && etat.recuperable) {
+            valeur = `<code class="ps-secret" id="psMotDePasse">${echapper(etat.password)}</code>`;
+            boutons = `
+                <button type="button" class="ps-link-btn" data-mdp="copier">Copier</button>
+                <button type="button" class="ps-link-btn" data-mdp="cacher">Masquer</button>
+                <button type="button" class="ps-link-btn" data-mdp="editer">Changer</button>`;
+        } else if (etat && !etat.recuperable) {
+            valeur = '<strong>Mot de passe</strong>';
+            boutons = `<button type="button" class="ps-link-btn" data-mdp="editer">Choisir un nouveau</button>`;
+        } else {
+            valeur = '<code class="ps-secret is-masked" aria-label="Mot de passe masqué">••••••••</code>';
+            boutons = `
+                <button type="button" class="ps-link-btn" data-mdp="afficher">${icone('eye', 14)} Afficher</button>
+                <button type="button" class="ps-link-btn" data-mdp="editer">Changer</button>`;
+        }
+
+        const edition = etat && etat.edition ? `
+                <div class="ps-field ps-mdp-edit">
+                    <input type="text" id="psNouveauMdp" class="ps-input" maxlength="72" autocomplete="off"
+                           spellcheck="false" placeholder="Nouveau mot de passe" aria-label="Nouveau mot de passe du pool">
+                    <button type="button" class="ps-primary" data-mdp="enregistrer">Enregistrer</button>
+                </div>
+                <p class="ps-note">De 4 à 72 caractères. Les membres déjà inscrits ne le repassent jamais.
+                    ${aUnMotDePasse ? '<button type="button" class="ps-link-btn is-danger" data-mdp="retirer">Retirer le mot de passe</button>' : ''}</p>` : '';
+
+        const avis = etat && etat.hasPassword && !etat.recuperable && !etat.edition
+            ? `<p class="ps-note">Ce mot de passe a été choisi avant qu’on puisse le relire ici. Choisissez-en un nouveau pour le retrouver à tout moment.</p>`
+            : '';
+        const message = etat && etat.message
+            ? `<p class="ps-msg${etat.erreur ? ' is-error' : ''}" role="alert">${echapper(etat.message)}</p>` : '';
+
+        return `
+                <li class="ps-fact-access">
+                    <div class="ps-access-row">
+                        <span>Mot de passe</span>
+                        ${valeur}
+                    </div>
+                    <div class="ps-access-tools">${boutons}</div>
+                    ${edition}${avis}${message}
+                </li>`;
+    }
+
+    /** Toutes les équipes du pool, en une ligne chacune. */
+    function blocListeEquipes(donnees) {
+        const moi = utilisateur();
+        const createur = createurDuPool(donnees);
+        const config = donnees.config || {};
+        const parEquipe = ['numOffensive', 'numDefensive', 'numGoalies', 'numRookies', 'numTeams']
+            .reduce((somme, cle) => somme + (config[cle] || 0), 0) +
+            (typeof window.fzQuotaBanc === 'function' ? window.fzQuotaBanc(donnees) : 0);
+
+        const entrees = Object.entries(donnees.teams || {})
+            .filter(([, equipe]) => (equipe.members || []).length > 0)
+            .sort((a, b) => {
+                const aMoi = (a[1].members || []).includes(moi);
+                const bMoi = (b[1].members || []).includes(moi);
+                return aMoi !== bMoi ? (aMoi ? -1 : 1) : a[0].localeCompare(b[0], 'fr');
+            });
+
+        if (entrees.length === 0) return '';
+
+        const lignes = entrees.map(([cle, equipe]) => {
+            const membres = equipe.members || [];
+            const choix = ['offensive', 'defensive', 'goalie', 'rookie', 'teams', 'bench']
+                .reduce((somme, c) => somme + (equipe[c] || []).length, 0);
+            const mienne = membres.includes(moi);
+            return `
+                <li>
+                    <button type="button" class="ps-team-row${mienne ? ' is-mine' : ''}" data-voir-equipe="${echapper(cle)}">
+                        ${avatar(membres[0], 30)}
+                        <span class="ps-team-row-txt">
+                            <span class="ps-team-row-name">${echapper(nomAffiche(cle, membres))}</span>
+                            <span class="ps-team-row-meta">${echapper(membres.join(', '))}</span>
+                        </span>
+                        <span class="ps-team-row-badges">
+                            ${mienne ? '<span class="ps-badge is-mine">Vous</span>' : ''}
+                            ${createur && membres.includes(createur) ? '<span class="ps-badge">Admin</span>' : ''}
+                            ${parEquipe ? `<span class="ps-team-row-count">${choix}/${parEquipe}</span>` : ''}
+                        </span>
+                    </button>
+                </li>`;
+        }).join('');
+
+        return `
+            <section class="ps-block">
+                <h3 class="ps-block-title">Équipes (${entrees.length})</h3>
+                <ul class="ps-team-rows">${lignes}</ul>
+            </section>`;
+    }
+
+    function blocApercu(nom, donnees) {
+        const etat = FZPool.draftState(donnees);
+        const config = donnees.config || {};
+        const banc = typeof window.fzQuotaBanc === 'function' ? window.fzQuotaBanc(donnees) : 0;
+        const selections = ['numOffensive', 'numDefensive', 'numGoalies', 'numRookies', 'numTeams']
+            .reduce((somme, cle) => somme + (config[cle] || 0), 0) + banc;
+        const mode = (donnees.poolMode || 'cumulative') === 'head-to-head' ? 'Tête-à-tête' : 'Cumulatif';
+        const createur = createurDuPool(donnees);
+        const creeLe = dateLongue(donnees.createdAt);
+        const ligne = (etiquette, val) =>
+            `<li><span>${echapper(etiquette)}</span><strong>${echapper(val)}</strong></li>`;
+
+        const tuile = (valeur, etiquette) => `
+            <div class="ps-tile"><strong>${echapper(valeur)}</strong><span>${echapper(etiquette)}</span></div>`;
+
+        const invitations = (donnees.invitations || []).length;
+        const rappelInvitations = estCreateur(donnees) && invitations > 0 ? `
+            <button type="button" class="ps-callout" data-aller="inviter">
+                <span>${invitations} invitation${invitations > 1 ? 's' : ''} en attente</span>
+                <span aria-hidden="true">→</span>
+            </button>` : '';
+
+        return `
+            <div class="ps-pane" data-pane="apercu">
+                ${blocEtat(nom, donnees, etat)}
+
+                <div class="ps-tiles">
+                    ${tuile(`${etat.inscrits}/${etat.max}`, 'Participants')}
+                    ${tuile(selections, 'Choix par équipe')}
+                    ${tuile(mode, 'Pointage')}
+                    ${tuile(donnees.allowTrades !== false ? 'Ouverts' : 'Fermés', 'Échanges')}
+                </div>
+
+                ${rappelInvitations}
+                ${blocListeEquipes(donnees)}
+
+                <section class="ps-block">
+                    <h3 class="ps-block-title">Le pool</h3>
+                    <ul class="ps-facts">
+                        ${createur ? ligne('Créé par', createur) : ''}
+                        ${creeLe ? ligne('Créé le', creeLe) : ''}
+                        ${donnees.instant === true ? ligne('Type', 'Pool rapide') : ''}
+                        ${blocAcces(nom, donnees)}
+                    </ul>
+                </section>
+            </div>`;
+    }
+
+    /**
+     * Inviter : chercher un compte, l'inviter, voir qui attend encore.
+     *
+     * La personne invitée reçoit une notification et une fenêtre qui lui
+     * permet d'entrer d'un clic — sans le mot de passe du pool.
+     */
+    function blocInviter(nom, donnees) {
+        const etat = FZPool.draftState(donnees);
+        const enAttente = (donnees.invitations || []).slice()
+            .sort((a, b) => String(b.invitedAt).localeCompare(String(a.invitedAt)));
+        const ferme = etat.commence
+            ? 'Le repêchage a commencé : ce pool n’accepte plus de participants.'
+            : etat.inscrits >= etat.max
+                ? `Ce pool est complet (${etat.max} participants maximum).`
+                : null;
+
+        const recherchePropre = recherche.pool === nom ? recherche : { q: '', resultats: [], message: '' };
+
+        const chercher = ferme ? `<p class="ps-note">${echapper(ferme)}</p>` : `
+                <label class="ps-search" for="psInviteQ">
+                    ${icone('search', 16)}
+                    <input type="search" id="psInviteQ" class="ps-search-input" maxlength="40"
+                           autocomplete="off" spellcheck="false" placeholder="Nom d’utilisateur"
+                           value="${echapper(recherchePropre.q)}">
+                </label>
+                <ul class="ps-results" id="psInviteResults">${lignesResultats(recherchePropre)}</ul>
+                <p class="ps-msg${recherchePropre.erreur ? ' is-error' : ''}" id="psMsgInvite" role="status"
+                   ${recherchePropre.message ? '' : 'hidden'}>${echapper(recherchePropre.message)}</p>
+                <p class="ps-note">La personne reçoit une notification et entre d’un clic, sans le mot de passe du pool.</p>`;
+
+        const attente = enAttente.length ? `
+                <ul class="ps-invites">
+                    ${enAttente.map(inv => `
+                        <li>
+                            ${avatar(inv.username, 28)}
+                            <span class="ps-invite-txt">
+                                <span class="ps-invite-name">${echapper(inv.username)}</span>
+                                <span class="ps-invite-meta">Invité ${echapper(ilYa(inv.invitedAt))}</span>
+                            </span>
+                            <button type="button" class="ps-link-btn is-danger" data-annuler-invitation="${echapper(inv.username)}">Annuler</button>
+                        </li>`).join('')}
+                </ul>`
+            : '<p class="ps-empty">Aucune invitation en attente.</p>';
+
+        return `
+            <div class="ps-pane" data-pane="inviter">
+                <section class="ps-block">
+                    <h3 class="ps-block-title">Inviter quelqu’un</h3>
+                    ${chercher}
+                </section>
+                <section class="ps-block">
+                    <h3 class="ps-block-title">En attente${enAttente.length ? ` (${enAttente.length})` : ''}</h3>
+                    ${attente}
+                </section>
+            </div>`;
+    }
+
+    function lignesResultats(etat) {
+        if (!etat.q || etat.q.trim().length < 2) return '';
+        if (!etat.resultats.length) {
+            return etat.charge ? '<li class="ps-results-empty">Aucun compte ne porte ce nom.</li>' : '';
+        }
+        return etat.resultats.map(r => {
+            const bouton = r.statut === 'membre'
+                ? '<span class="ps-result-state">Déjà dans le pool</span>'
+                : r.statut === 'invite'
+                    ? '<span class="ps-result-state is-sent">Invitation envoyée</span>'
+                    : `<button type="button" class="ps-invite-btn" data-inviter="${echapper(r.username)}">${icone('send', 14)} Inviter</button>`;
+            return `
+                <li>
+                    ${avatar(r.username, 30, r.avatarUrl)}
+                    <span class="ps-result-name">${echapper(r.username)}</span>
+                    ${bouton}
+                </li>`;
+        }).join('');
+    }
+
     // ==================== RENDU ====================
 
     function construireCoquille() {
@@ -334,11 +669,11 @@
                     <img src="Icons/grayGroup.png" class="ps-head-img" id="psHeadImg" alt=""
                          onerror="this.src='Icons/grayGroup.png'">
                     <div class="ps-head-txt">
-                        <p class="ps-head-label">Réglages du pool</p>
+                        <p class="ps-head-label" id="psHeadLabel">Pool actif</p>
                         <h2 class="ps-head-name" id="psTitre"></h2>
                     </div>
                     <button type="button" class="ps-close" id="psClose"
-                            aria-label="Fermer les réglages">&times;</button>
+                            aria-label="Fermer la fiche du pool">&times;</button>
                 </header>
                 <nav class="ps-tabs" id="psTabs" role="tablist"></nav>
                 <div class="ps-body" id="psBody"></div>
@@ -367,6 +702,8 @@
         if (!visibles.some(o => o.cle === ongletActif)) ongletActif = visibles[0].cle;
 
         document.getElementById('psTitre').textContent = poolOuvert;
+        document.getElementById('psHeadLabel').textContent =
+            poolOuvert === FZPool.get() ? 'Pool actif' : 'Pool';
         document.getElementById('psHeadImg').src = FZPool.image(donnees);
 
         document.getElementById('psTabs').innerHTML = visibles.map(onglet => `
@@ -375,32 +712,96 @@
                     data-onglet="${onglet.cle}">${onglet.titre}</button>`).join('');
 
         const corps = document.getElementById('psBody');
+        const defilement = corps.scrollTop;
+        if (ongletActif === 'apercu')   corps.innerHTML = blocApercu(poolOuvert, donnees);
         if (ongletActif === 'regles')   corps.innerHTML = blocRegles(poolOuvert, donnees);
         if (ongletActif === 'equipes')  corps.innerHTML = blocEquipes(poolOuvert, donnees);
+        if (ongletActif === 'inviter')  corps.innerHTML = blocInviter(poolOuvert, donnees);
         if (ongletActif === 'identite') corps.innerHTML = blocIdentite(poolOuvert, donnees);
+        // Une mise à jour temps réel redessine l'onglet : elle ne doit pas
+        // ramener en haut quelqu'un qui lisait la dixième équipe.
+        if (rendre.ongletPrecedent === ongletActif) corps.scrollTop = defilement;
+        rendre.ongletPrecedent = ongletActif;
 
         brancher(corps, donnees);
 
+        if (ongletActif === 'equipes' && equipeVisee) {
+            const cible = [...corps.querySelectorAll('[data-equipe]')]
+                .find(carte => carte.dataset.equipe === equipeVisee);
+            equipeVisee = null;
+            if (cible) {
+                cible.classList.add('is-focus');
+                cible.scrollIntoView({ block: 'center' });
+            }
+        }
+
         // Les avatars arrivent après coup : on redessine l'onglet une fois le
         // cache rempli, plutôt que de retarder l'ouverture du panneau.
-        if (ongletActif === 'equipes' && typeof prefetchAvatars === 'function') {
-            const membres = Object.values(donnees.teams || {}).flatMap(t => t.members || []);
-            const dejaEnCache = membres.length === 0;
-            if (!dejaEnCache && !rendre.avatarsDemandes) {
+        if (typeof prefetchAvatars === 'function' && !rendre.avatarsDemandes) {
+            const noms = [
+                ...Object.values(donnees.teams || {}).flatMap(t => t.members || []),
+                ...(donnees.invitations || []).map(inv => inv.username)
+            ];
+            if (noms.length > 0) {
                 rendre.avatarsDemandes = true;
-                prefetchAvatars(membres).then(() => {
-                    if (poolOuvert && ongletActif === 'equipes') rendre();
-                });
+                prefetchAvatars(noms).then(() => { if (poolOuvert && !saisieEnCours()) rendre(); });
             }
         }
     }
 
+    /** Un champ du panneau a le focus : le redessiner effacerait la saisie. */
+    function saisieEnCours() {
+        const actif = document.activeElement;
+        return !!(actif && racine && racine.contains(actif) && actif.tagName === 'INPUT');
+    }
+
+    function allerA(onglet) {
+        ongletActif = onglet;
+        // Un autre onglet repart du haut — sauf pour aller montrer une équipe,
+        // dont rendre() amène lui-même la carte à l'écran.
+        const corps = document.getElementById('psBody');
+        if (corps && !equipeVisee) corps.scrollTop = 0;
+        rendre();
+    }
+
     function brancher(corps, donnees) {
         document.getElementById('psTabs').querySelectorAll('.ps-tab').forEach(bouton => {
+            bouton.addEventListener('click', () => allerA(bouton.dataset.onglet));
+        });
+
+        corps.querySelectorAll('[data-aller]').forEach(bouton => {
+            bouton.addEventListener('click', () => allerA(bouton.dataset.aller));
+        });
+
+        corps.querySelectorAll('[data-voir-equipe]').forEach(bouton => {
             bouton.addEventListener('click', () => {
-                ongletActif = bouton.dataset.onglet;
-                rendre();
+                equipeVisee = bouton.dataset.voirEquipe;
+                allerA('equipes');
             });
+        });
+
+        corps.querySelectorAll('[data-mdp]').forEach(bouton => {
+            bouton.addEventListener('click', () => actionMotDePasse(bouton.dataset.mdp, bouton));
+        });
+        const nouveauMdp = document.getElementById('psNouveauMdp');
+        if (nouveauMdp) {
+            nouveauMdp.addEventListener('keydown', e => {
+                if (e.key === 'Enter') { e.preventDefault(); actionMotDePasse('enregistrer'); }
+                if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); actionMotDePasse('fermer-edition'); }
+            });
+        }
+
+        const champRecherche = document.getElementById('psInviteQ');
+        if (champRecherche) {
+            champRecherche.addEventListener('input', () => programmerRecherche(champRecherche.value));
+            champRecherche.addEventListener('keydown', e => {
+                if (e.key === 'Enter') { e.preventDefault(); lancerRecherche(champRecherche.value); }
+            });
+        }
+        brancherResultats(corps);
+
+        corps.querySelectorAll('[data-annuler-invitation]').forEach(bouton => {
+            bouton.addEventListener('click', () => annulerInvitation(bouton.dataset.annulerInvitation, bouton));
         });
 
         corps.querySelectorAll('[data-renommer-equipe]').forEach(bouton => {
@@ -432,6 +833,220 @@
     }
 
     // ==================== ACTIONS ====================
+
+    const urlPool = suite => `${BASE_URL}/api/pools/${encodeURIComponent(poolOuvert)}${suite}`;
+
+    async function lireJson(reponse) {
+        return reponse.json().catch(() => ({}));
+    }
+
+    /**
+     * Le mot de passe du pool : afficher, masquer, copier, changer, retirer.
+     *
+     * « Afficher » est le seul geste qui le fait sortir du serveur. Il reste
+     * ensuite en mémoire, le temps que le panneau est ouvert.
+     */
+    async function actionMotDePasse(action, bouton) {
+        const nom = poolOuvert;
+        const donnees = donneesDuPool(nom);
+        if (!nom || !donnees) return;
+        const etat = (mdp && mdp.pool === nom) ? mdp : (mdp = {
+            pool: nom, hasPassword: !!donnees.hasPassword, recuperable: true,
+            password: null, visible: false, edition: false, message: '', erreur: false
+        });
+        etat.message = '';
+        etat.erreur = false;
+
+        if (action === 'afficher') {
+            if (bouton) bouton.disabled = true;
+            try {
+                const reponse = await fetch(urlPool('/password'), { cache: 'no-store' });
+                const resultat = await lireJson(reponse);
+                if (!reponse.ok) throw new Error(resultat.message || 'Lecture impossible.');
+                Object.assign(etat, {
+                    hasPassword: !!resultat.hasPassword,
+                    recuperable: !!resultat.recuperable,
+                    password: resultat.password,
+                    visible: !!resultat.recuperable
+                });
+            } catch (erreur) {
+                etat.message = erreur.message || 'Erreur de connexion au serveur.';
+                etat.erreur = true;
+            }
+            if (poolOuvert === nom) rendre();
+            return;
+        }
+
+        if (action === 'cacher') { etat.visible = false; rendre(); return; }
+
+        if (action === 'copier') {
+            try {
+                await navigator.clipboard.writeText(etat.password || '');
+                etat.message = 'Mot de passe copié.';
+            } catch {
+                etat.message = 'Copie impossible : sélectionnez le mot de passe pour le copier.';
+                etat.erreur = true;
+            }
+            rendre();
+            return;
+        }
+
+        if (action === 'editer') {
+            etat.edition = !etat.edition;
+            rendre();
+            const champ = document.getElementById('psNouveauMdp');
+            if (champ) champ.focus();
+            return;
+        }
+
+        if (action === 'fermer-edition') { etat.edition = false; rendre(); return; }
+
+        if (action === 'enregistrer' || action === 'retirer') {
+            const champ = document.getElementById('psNouveauMdp');
+            const valeur = action === 'retirer' ? '' : (champ ? champ.value : '');
+            if (action === 'enregistrer' && (valeur.length < 4 || valeur.length > 72)) {
+                etat.message = 'Le mot de passe doit contenir entre 4 et 72 caractères.';
+                etat.erreur = true;
+                rendre();
+                const encore = document.getElementById('psNouveauMdp');
+                if (encore) { encore.value = valeur; encore.focus(); }
+                return;
+            }
+            if (action === 'retirer' && !window.confirm('Retirer le mot de passe ?\n\nTout le monde pourra entrer dans le pool tant qu’il reste des places.')) {
+                return;
+            }
+            try {
+                const reponse = await fetch(urlPool('/password'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: valeur })
+                });
+                const resultat = await lireJson(reponse);
+                if (!reponse.ok) throw new Error(resultat.message || 'Enregistrement impossible.');
+                Object.assign(etat, {
+                    hasPassword: !!resultat.hasPassword,
+                    recuperable: resultat.hasPassword ? !!resultat.recuperable : true,
+                    password: resultat.hasPassword ? valeur : null,
+                    visible: !!resultat.hasPassword,
+                    edition: false,
+                    message: resultat.message || ''
+                });
+                // Le blur qui suit l'enregistrement ne doit pas laisser le
+                // champ bloquer le redessin que le rafraîchissement demande.
+                if (document.activeElement && racine.contains(document.activeElement)) document.activeElement.blur();
+                await FZPool.refresh();
+            } catch (erreur) {
+                etat.message = erreur.message || 'Erreur de connexion au serveur.';
+                etat.erreur = true;
+            }
+            if (poolOuvert === nom) rendre();
+        }
+    }
+
+    /** Une frappe relance la recherche un instant plus tard, pas à chaque lettre. */
+    function programmerRecherche(valeur) {
+        recherche = { ...recherche, pool: poolOuvert, q: valeur, message: '', erreur: false };
+        clearTimeout(minuterieRecherche);
+        if (valeur.trim().length < 2) {
+            recherche.resultats = [];
+            recherche.charge = false;
+            majResultats();
+            return;
+        }
+        minuterieRecherche = setTimeout(() => lancerRecherche(valeur), 250);
+    }
+
+    async function lancerRecherche(valeur) {
+        clearTimeout(minuterieRecherche);
+        const q = String(valeur || '').trim();
+        const nom = poolOuvert;
+        if (!nom || q.length < 2) return;
+        const numero = ++numeroRecherche;
+        try {
+            const reponse = await fetch(`${urlPool('/invite-search')}?q=${encodeURIComponent(q)}`, { cache: 'no-store' });
+            const resultat = await lireJson(reponse);
+            // Une réponse lente ne doit pas écraser celle d'une frappe plus récente.
+            if (numero !== numeroRecherche || poolOuvert !== nom) return;
+            if (!reponse.ok) throw new Error(resultat.message || 'Recherche impossible.');
+            recherche = { ...recherche, pool: nom, resultats: resultat.resultats || [], charge: true, message: '', erreur: false };
+        } catch (erreur) {
+            if (numero !== numeroRecherche) return;
+            recherche = { ...recherche, pool: nom, resultats: [], charge: false, message: erreur.message || 'Erreur de connexion au serveur.', erreur: true };
+        }
+        majResultats();
+    }
+
+    /** Redessine la seule liste des résultats : le champ garde son focus. */
+    function majResultats() {
+        const liste = document.getElementById('psInviteResults');
+        if (!liste) return;
+        liste.innerHTML = lignesResultats(recherche);
+        brancherResultats(liste);
+        const msg = document.getElementById('psMsgInvite');
+        if (msg) {
+            msg.textContent = recherche.message || '';
+            msg.hidden = !recherche.message;
+            msg.classList.toggle('is-error', !!recherche.erreur);
+        }
+    }
+
+    function brancherResultats(racineListe) {
+        racineListe.querySelectorAll('[data-inviter]').forEach(bouton => {
+            bouton.addEventListener('click', () => inviterCompte(bouton.dataset.inviter, bouton));
+        });
+    }
+
+    async function inviterCompte(username, bouton) {
+        const nom = poolOuvert;
+        if (bouton) { bouton.disabled = true; bouton.textContent = 'Envoi…'; }
+        try {
+            const reponse = await fetch(urlPool('/invitations'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            const resultat = await lireJson(reponse);
+            if (!reponse.ok) throw new Error(resultat.message || 'Invitation impossible.');
+            recherche = {
+                ...recherche,
+                resultats: recherche.resultats.map(r => r.username === username ? { ...r, statut: 'invite' } : r),
+                message: resultat.message || `Invitation envoyée à ${username}.`,
+                erreur: false
+            };
+            if (typeof getAvatarUrl === 'function') getAvatarUrl(username);
+            await FZPool.refresh();
+        } catch (erreur) {
+            recherche = { ...recherche, message: erreur.message || 'Erreur de connexion au serveur.', erreur: true };
+        }
+        if (poolOuvert !== nom) return;
+        rendre();
+        // On invite souvent plusieurs amis d'affilée : le champ reprend la main.
+        const champ = document.getElementById('psInviteQ');
+        if (champ) champ.focus({ preventScroll: true });
+    }
+
+    async function annulerInvitation(username, bouton) {
+        const nom = poolOuvert;
+        if (bouton) bouton.disabled = true;
+        try {
+            const reponse = await fetch(urlPool('/invitations/cancel'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            const resultat = await lireJson(reponse);
+            if (!reponse.ok && reponse.status !== 404) throw new Error(resultat.message || 'Annulation impossible.');
+            recherche = {
+                ...recherche,
+                resultats: recherche.resultats.map(r => r.username === username ? { ...r, statut: null } : r),
+                message: '', erreur: false
+            };
+            await FZPool.refresh();
+        } catch (erreur) {
+            recherche = { ...recherche, pool: nom, message: erreur.message || 'Erreur de connexion au serveur.', erreur: true };
+        }
+        if (poolOuvert === nom) rendre();
+    }
 
     /**
      * Le renommage d'équipe se fait sur place, dans le titre de la carte.
@@ -662,8 +1277,11 @@
         if (!cible || !donneesDuPool(cible)) return;
 
         poolOuvert = cible;
-        ongletActif = onglet || 'regles';
+        ongletActif = onglet || 'apercu';
         rendre.avatarsDemandes = false;
+        rendre.ongletPrecedent = null;
+        if (mdp && mdp.pool !== cible) mdp = null;
+        if (recherche.pool !== cible) recherche = { pool: cible, q: '', resultats: [], message: '', erreur: false };
 
         construireCoquille();
         rendre();
@@ -682,6 +1300,9 @@
     function fermer() {
         if (!racine || racine.hidden) return;
         poolOuvert = null;
+        // Le mot de passe relu ne survit pas à la fermeture du panneau.
+        mdp = null;
+        clearTimeout(minuterieRecherche);
         racine.classList.remove('is-open');
         document.body.classList.remove('ps-open');
         setTimeout(() => {
@@ -700,8 +1321,7 @@
         if (!window.FZPool) return;
         FZPool.onData(() => {
             if (!poolOuvert || !racine || racine.hidden) return;
-            const actif = document.activeElement;
-            if (actif && racine.contains(actif) && actif.tagName === 'INPUT') return;
+            if (saisieEnCours()) return;
             rendre();
         });
     }
@@ -719,7 +1339,7 @@
         const declencheur = e.target.closest && e.target.closest('[data-fz-reglages]');
         if (!declencheur) return;
         e.preventDefault();
-        ouvrir(FZPool.get(), declencheur.dataset.fzReglages || 'regles');
+        ouvrir(FZPool.get(), declencheur.dataset.fzReglages || 'apercu');
     });
 
     if (document.readyState === 'loading') {
