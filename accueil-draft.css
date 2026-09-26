@@ -53,7 +53,6 @@ body.fz-draft-page { background:var(--bg); }
    et leur propre mise en forme ; l'accueil de repêchage ne leur donne que
    leur place dans la grille et son fond de panneau. */
 .fzh :is(#fzdOffCount, #fzdOffMoves, #fzdOffWatch) { grid-column:span 6; min-width:0; }
-.fzh #fzDashCalendarWrap { grid-column:1/-1; margin-bottom:0; }
 .fzh #fzdOffCount { padding:16px 22px; min-height:100px; }
 .fzh #fzdOffWatch { padding:18px; }
 /* Une demi-colonne, pas la largeur du tableau de bord : les cartes de
@@ -65,8 +64,34 @@ body.fz-draft-page { background:var(--bg); }
 
 .fzh .fzd-off-face { width:37px; height:37px; flex-shrink:0; border-radius:50%; background:#2C2C2E; }
 .fzh-empty { color:#A1A1A6; padding:12px; font-size:15px; }
-/* Le calendrier est celui du tableau de bord (#fzDashCalendarWrap), déplacé
-   ici par fzdPlaceCalendar() : il garde sa propre mise en forme. */
+/* Alignements : une pastille par équipe du pool, l'alignement de celle qui
+   est choisie en dessous, une rangée par catégorie. Le calendrier de la LNH
+   n'a pas d'emplacement sur cet accueil : il reste masqué à sa place. */
+.fzh .fzh-lineups { grid-column:1/-1; padding:16px 22px 18px; }
+.fzh-lineup-tabs { position:relative; display:flex; gap:8px; overflow-x:auto; scrollbar-width:thin; margin-bottom:14px; padding-bottom:4px; }
+.fzh .fzh-lineup-tab { display:inline-flex; align-items:center; gap:8px; flex-shrink:0; padding:6px 14px; border:1px solid var(--fzh-border); border-radius:20px; background:transparent; color:var(--fzh-ink); font-size:15px; white-space:nowrap; }
+.fzh .fzh-lineup-tab:hover { border-color:var(--fzh-muted); }
+.fzh .fzh-lineup-tab[aria-pressed="true"] { background:var(--fzh-accent-fill); border-color:var(--fzh-accent-fill); color:var(--on-primary); }
+.fzh-lineup-tab b { padding:1px 8px; border-radius:12px; background:var(--fzh-tint); color:var(--fzh-accent); font-size:12px; font-weight:600; text-transform:uppercase; }
+.fzh-lineup-tab[aria-pressed="true"] b { background:rgba(255,255,255,.2); color:var(--on-primary); }
+/* L'équipe au choix : le point vert de la pastille « En cours ». */
+.fzh-lineup-tab i { width:8px; height:8px; border-radius:50%; background:var(--success); }
+.fzh-lineup-tab[aria-pressed="true"] i { background:var(--on-primary); }
+.fzh-lineup-body { display:grid; gap:12px; }
+.fzh-lineup-body > .fzh-empty { padding:4px 0; margin:0; }
+.fzh-lineup-group { display:grid; grid-template-columns:150px minmax(0,1fr); gap:14px; align-items:start; padding-top:12px; border-top:1px solid var(--fzh-border); }
+.fzh-lineup-group:first-child { padding-top:0; border-top:0; }
+.fzh-lineup-label { display:flex; justify-content:space-between; gap:8px; margin:10px 0 0; color:var(--fzh-muted); font:400 13px/1.4 'Oswald',sans-serif; text-transform:uppercase; letter-spacing:1px; }
+.fzh-lineup-label span { color:var(--fzh-ink); letter-spacing:0; }
+.fzh-lineup-players { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; margin:0; padding:0; list-style:none; }
+.fzh-lineup-player { display:flex; align-items:center; gap:10px; min-width:0; padding:6px 12px 6px 6px; border-radius:10px; background:var(--fzh-raised); }
+.fzh-lineup-player > span { min-width:0; }
+.fzh-lineup-player strong { display:block; overflow:hidden; font-size:16px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+.fzh-lineup-player small { display:block; color:var(--fzh-muted); font-size:13px; }
+.fzh .fzh-lineup-player .fzd-off-face { width:34px; height:34px; background:var(--fzh-panel); }
+/* Un logo de club se lit entier, pas recadré comme un portrait. */
+.fzh-lineup-player.is-club .fzd-off-face img { object-fit:contain; padding:4px; background:transparent; }
+.fzh-lineup-none { margin:10px 0 0; color:var(--fzh-muted); font-size:15px; }
 
 @media(min-width:769px) and (max-width:1350px) { .fzh-draft-main { gap:20px; }.fzh-draft-stats > div { padding:0 14px; }.fzh-draft-stats dd { font-size:23px; }.fzh-draft-stats .fzh-estimate { font-size:18px; }.fzh-puck { width:65px; transform:scale(.85); }.fzh-puck:after { left:83px; }.fzh-draft-description { font-size:15px; }.fzh .fzh-cta { min-width:225px; }.fzh .fzh-summary { gap:18px; padding:16px 20px; }.fzh-team-progress small { display:none; } }
 @media(max-width:1000px) and (min-width:769px) { .fzh-draft-main { flex-wrap:wrap; }.fzh-draft-stats { margin-left:85px; margin-bottom:8px; }.fzh-draft-stats > div:first-child { padding-left:0; border:0; }.fzh-news-copy { max-width:65%; } }
@@ -77,7 +102,7 @@ body.fz-draft-page { background:var(--bg); }
  .fzh .fzh-draft { order:1; padding:14px 18px 16px; }.fzh-status { font-size:12px; padding:4px 14px 4px 10px; gap:10px; }.fzh-status i { width:12px; height:12px; }.fzh-draft-main { display:grid; grid-template-columns:70px minmax(0,1fr); gap:0 24px; margin-top:8px; }.fzh-puck { width:68px; grid-row:span 2; transform:scale(.85); transform-origin:left center; }.fzh-puck:after { left:91px; height:76px; }.fzh h1 { font-size:30px; white-space:normal; line-height:1.1; margin:6px 0; }.fzh-eyebrow { font-size:11px; letter-spacing:1.1px; }.fzh-draft-description { display:none; }.fzh-draft-stats { display:flex; flex-wrap:wrap; gap:4px 10px; grid-column:2; }.fzh-draft-stats > div { border:0; padding:0; display:flex; align-items:baseline; gap:4px; }.fzh-draft-stats dt { font-size:13px; letter-spacing:0; text-transform:none; }.fzh-draft-stats dd,.fzh-draft-stats .fzh-estimate { margin:0; font:400 14px 'Barlow Condensed',sans-serif; }.fzh-estimate .fzh-icon { display:none; }.fzh-draft-bottom { gap:12px; align-items:center; margin-top:16px; }.fzh-participants > .fzh-eyebrow { display:none; }.fzh-participant-track { gap:8px; }.fzh-participant { gap:7px; font-size:13px; padding:3px 8px 3px 3px; border:1px solid #38383A; border-radius:22px; }.fzh-participant i { width:28px; height:28px; font-size:15px; }.fzh-participant b { font-size:11px; padding:1px 6px; }.fzh .fzh-cta { min-width:0; padding:14px 17px; font-size:15px; gap:10px; border-radius:8px; white-space:nowrap; }.fzh-cta svg { width:20px; }
  .fzh .fzh-summary { grid-column:span 1; order:2; padding:16px; min-height:96px; gap:17px; }.fzh-summary > .fzh-icon:first-child svg { width:30px; height:30px; }.fzh-summary strong { font-size:25px; }.fzh-summary small { font-size:13px; }.fzh-team-progress small { display:none; }.fzh-progress { width:100%; height:10px; margin-top:7px; }
  .fzh-scores { grid-column:1/-1; display:block; order:3; padding:14px; }.fzh :is(#fzdOffCount, #fzdOffMoves, #fzdOffWatch) { grid-column:1/-1; }.fzh #fzdOffCount { order:2; padding:16px; }.fzh #fzdOffMoves { order:4; }.fzh #fzdOffWatch { order:5; padding:14px; }.fzh h2 { font-size:15px; gap:12px; }
- .fzh #fzDashCalendarWrap { order:6; }
+ .fzh .fzh-lineups { order:3; padding:14px; }.fzh-lineup-group { grid-template-columns:minmax(0,1fr); gap:6px; }.fzh-lineup-label { margin:0; justify-content:flex-start; }.fzh-lineup-players { grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px; }.fzh-lineup-player { gap:7px; padding:5px 8px 5px 5px; }.fzh-lineup-player strong { font-size:15px; }.fzh .fzh-lineup-player .fzd-off-face { width:30px; height:30px; }.fzh-lineup-none { margin:0; }
 }
 @media(max-width:480px) {
  #fzDashSection.is-drafting { padding-left:12px; padding-right:12px; }.fzh-news-copy { max-width:86%; padding:17px; }.fzh .fzh-news h2 { max-width:260px; }.fzh-news-copy p { max-width:230px; }.fzh-news-copy small { max-width:190px; }.fzh-news-controls { bottom:12px; }.fzh-news-dots { display:none; }.fzh-news:after { background:linear-gradient(90deg,#1C1C1Ef5,#1C1C1Ead 60%,#1C1C1E66); }.fzh-news-image { object-position:65% center; }.fzh .fzh-draft { padding:14px; }.fzh-draft-main { grid-template-columns:45px minmax(0,1fr); column-gap:15px; }.fzh-puck { transform:scale(.58); }.fzh-puck:after { left:86px; }.fzh h1 { font-size:27px; }.fzh-draft-stats { column-gap:10px; }.fzh-draft-stats > div:last-child { flex-basis:100%; }.fzh-draft-bottom { flex-wrap:wrap; }.fzh-participants { flex-basis:100%; }.fzh .fzh-cta { width:100%; justify-content:center; padding:13px; }.fzh .fzh-summary { padding:13px 10px; gap:9px; }.fzh-summary > .fzh-icon:first-child svg { width:24px; }.fzh-summary > .fzh-icon:last-of-type { display:none; }.fzh-summary .fzh-eyebrow { font-size:10px; letter-spacing:.7px; }.fzh-summary strong { font-size:22px; }.fzh-summary small { font-size:12px; }.fzh .fzh-link { font-size:13px; gap:6px; }

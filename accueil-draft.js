@@ -74,18 +74,16 @@ function renderDraftHome({ tonight, activeName }) {
         <div class="fzh-slot" data-fz-bloc="horssaison"></div>
         <button type="button" class="fzh-team fzh-panel fzh-summary" data-fz-reglages="equipes">${fzhIcon('users', 38)}<span><span class="fzh-eyebrow">Mes choix</span><strong>${drafted} / ${slots}</strong><span class="fzh-team-progress"><span class="fzh-progress" role="progressbar" aria-label="Joueurs repêchés" aria-valuenow="${drafted}" aria-valuemin="0" aria-valuemax="${Math.max(slots, drafted)}"><i style="width:${progress}%"></i></span><small>joueurs repêchés</small></span></span>${fzhIcon('chevron-right', 19)}</button>
         ${liveGames.length ? `<section class="fzh-scores fzh-panel">${fzhHeading('zap', 'Matchs en direct', '<a class="fzh-link" href="calendrier.html">Calendrier complet <span aria-hidden="true">→</span></a>')}<div class="fzh-score-track">${fzhGamesHTML(liveGames)}</div></section>` : ''}
+        <section class="fzh-lineups fzh-panel" id="fzhLineups" aria-labelledby="fzhLineupsTitle">${fzhHeading('users', '<span id="fzhLineupsTitle">Alignements</span>')}<div class="fzh-lineup-tabs" role="group" aria-label="Équipes du pool"></div><div class="fzh-lineup-body" aria-live="polite"></div></section>
         <div class="fzh-slot" data-fz-bloc="mouvements"></div>
         <div class="fzh-slot" data-fz-bloc="surveiller"></div>
-        <div class="fzh-slot" data-fz-bloc="calendrier"></div>
         <section class="fzh-news fzh-panel" id="fzhNews" aria-label="Actualités LNH"><div class="fzh-news-copy"><span class="fzh-news-badge">LNH</span><h2>Le hockey n’attend pas.</h2><p>Préparez votre prochain choix.</p><small>Chargement des actualités…</small></div></section>`;
-    // Les quatre panneaux partagés arrivent d'index.html : on les met en place
-    // avant de les remplir (voir fzdPlaceCalendar, accueil-dash.js).
+    // Les panneaux partagés arrivent d'index.html : on les met en place avant
+    // de les remplir (voir fzdPlaceCalendar, accueil-dash.js). Le calendrier
+    // n'a pas d'emplacement ici — rien ne se joue avant la fin du repêchage —
+    // et reste donc masqué à sa place d'origine.
     fzdPlaceCalendar();
-    // « Voir tous » n'a plus qu'à amener le calendrier à l'écran : il est
-    // déroulé en permanence, juste plus bas.
-    root.querySelectorAll('[data-fzh-calendar]').forEach(button => button.addEventListener('click', () => {
-        document.getElementById('fzDashCalendarWrap')?.scrollIntoView({ behavior: offseasonScrollBehavior(), block:'start' });
-    }));
+    fzhRenderLineups(root, poolData, team.name);
     if (participants.length > 6) {
         const track = root.querySelector('.fzh-participant-track');
         const more = document.createElement('button');
@@ -101,7 +99,6 @@ function renderDraftHome({ tonight, activeName }) {
         });
         track.appendChild(more);
     }
-    renderCalendar();
     fzdRendreSurveiller();
     fzdRendreMouvements();
     fzhLoadNews(root);
@@ -114,6 +111,103 @@ function fzhLiveGames(tonight) {
 
 function fzhGamesHTML(games) {
     return games.map(g => `<article class="fzh-game"><p>${periodLabel(g.period, g.periodType)} période · ${escapeHTML(g.clock?.timeRemaining || '')}</p>${[g.away, g.home].map(t => `<div>${teamLogoImg(t.abbrev)}<strong>${escapeHTML(t.abbrev)}</strong><b>${t.score ?? '–'}</b></div>`).join('')}<span class="fzh-game-badge is-live">En direct</span></article>`).join('');
+}
+
+/* ---- Alignements ----
+   Ce que les autres ont pris décide souvent du prochain choix : une pastille
+   par équipe du pool, et l'alignement de celle qu'on choisit en dessous,
+   catégorie par catégorie. Même lecture que le rail de la salle de
+   repêchage (draftDesk.js), sans les places vides. */
+let fzhLineupTeam = null;
+
+const FZH_POSITIONS = { C: 'C', L: 'AG', R: 'AD', D: 'D', G: 'G' };
+
+/** Les équipes qui repêchent, dans l'ordre du premier tour. */
+function fzhLineupTeams(poolData) {
+    const teams = poolData.teams || {};
+    const names = [...new Set(poolData.draftOrder || [])];
+    Object.entries(teams).forEach(([name, t]) => {
+        if (!names.includes(name) && (t?.members || []).length) names.push(name);
+    });
+    return names.filter(name => teams[name]);
+}
+
+/** Les catégories d'une équipe, chacune avec la limite fixée par le pool. */
+function fzhLineupGroups(teamData, config, benchMax) {
+    const td = teamData || {};
+    const cfg = config || {};
+    return [
+        { label: 'Attaquants', names: td.offensive, max: cfg.numOffensive },
+        { label: 'Défenseurs', names: td.defensive, max: cfg.numDefensive },
+        { label: 'Gardiens', names: td.goalie, max: cfg.numGoalies },
+        { label: 'Recrues', names: td.rookie, max: cfg.numRookies },
+        { label: 'Équipes LNH', names: td.teams, max: cfg.numTeams, club: true },
+        // Le banc du tête-à-tête garde parfois des fiches, pas des noms.
+        { label: 'Banc', names: (td.bench || []).map(b => (typeof b === 'string' ? b : b?.nom)), max: benchMax }
+    ].map(g => ({ ...g, names: (g.names || []).filter(Boolean), max: Number(g.max) || 0 }))
+     .filter(g => g.max > 0 || g.names.length);
+}
+
+function fzhClubAbbrev(name) {
+    const fiches = (userData.teamsData && userData.teamsData.teams) || [];
+    return fiches.find(t => t.teamFullName === name)?.teamAbbrev || '';
+}
+
+function fzhLineupPlayerHTML(name, club) {
+    if (club) {
+        return `<li class="fzh-lineup-player is-club">${offPlayerFaceHTML(name, fzhClubAbbrev(name))}<span><strong>${escapeHTML(name)}</strong></span></li>`;
+    }
+    const stats = getPlayerStats(name);
+    const meta = [stats?.teamAbbrev, FZH_POSITIONS[stats?.position]].filter(Boolean).join(' · ');
+    return `<li class="fzh-lineup-player">${offPlayerFaceHTML(name, stats?.teamAbbrev)}<span><strong>${escapeHTML(name)}</strong>${meta ? `<small>${escapeHTML(meta)}</small>` : ''}</span></li>`;
+}
+
+function fzhLineupBodyHTML(groups) {
+    if (!groups.some(g => g.names.length)) return '<p class="fzh-empty">Aucun choix pour l’instant.</p>';
+    return groups.map(g => {
+        const count = g.max ? `${g.names.length} / ${g.max}` : g.names.length;
+        const players = g.names.length
+            ? `<ul class="fzh-lineup-players">${g.names.map(name => fzhLineupPlayerHTML(name, g.club)).join('')}</ul>`
+            : '<p class="fzh-lineup-none">Aucun choix</p>';
+        return `<div class="fzh-lineup-group"><p class="fzh-lineup-label">${g.label}<span>${count}</span></p>${players}</div>`;
+    }).join('');
+}
+
+function fzhLineupTabHTML(name, i, state) {
+    const { pressed, mine, onClock } = state;
+    const label = [name + (mine ? ' (vous)' : ''), onClock ? 'au choix' : ''].filter(Boolean).join(', ');
+    return `<button type="button" class="fzh-lineup-tab${onClock ? ' is-on-clock' : ''}" data-fzh-lineup="${i}" aria-pressed="${pressed}" aria-label="${escapeHTML(label)}">${onClock ? '<i aria-hidden="true"></i>' : ''}<span>${escapeHTML(name)}</span>${mine ? '<b aria-hidden="true">Toi</b>' : ''}</button>`;
+}
+
+function fzhRenderLineups(root, poolData, myTeam) {
+    const panel = root.querySelector('#fzhLineups');
+    if (!panel) return;
+    const teams = fzhLineupTeams(poolData);
+    if (!teams.length) { panel.remove(); return; }
+    // Le choix survit aux rafraîchissements (un par choix repêché), pas à un
+    // changement de pool où l'équipe vue n'existe plus.
+    if (!teams.includes(fzhLineupTeam)) fzhLineupTeam = teams.includes(myTeam) ? myTeam : teams[0];
+    const onClock = (poolData.draftOrder || [])[poolData.currentPickIndex || 0];
+    const benchMax = typeof window.fzQuotaBanc === 'function' ? window.fzQuotaBanc(poolData) : 0;
+    const tabs = panel.querySelector('.fzh-lineup-tabs');
+    const body = panel.querySelector('.fzh-lineup-body');
+    const show = () => {
+        body.innerHTML = fzhLineupBodyHTML(fzhLineupGroups(poolData.teams[fzhLineupTeam], poolData.config, benchMax));
+    };
+    tabs.innerHTML = teams.map((name, i) => fzhLineupTabHTML(name, i, {
+        pressed: name === fzhLineupTeam, mine: name === myTeam, onClock: name === onClock
+    })).join('');
+    tabs.querySelectorAll('[data-fzh-lineup]').forEach(button => button.addEventListener('click', () => {
+        fzhLineupTeam = teams[Number(button.dataset.fzhLineup)];
+        tabs.querySelectorAll('[data-fzh-lineup]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+        show();
+    }));
+    show();
+    // La rangée défile de côté au téléphone : l'équipe vue doit y rester en
+    // vue après un rafraîchissement. Pas de scrollIntoView, qui ferait aussi
+    // défiler la page.
+    const active = tabs.querySelector('[aria-pressed="true"]');
+    if (active && active.offsetLeft + active.offsetWidth > tabs.clientWidth) tabs.scrollLeft = active.offsetLeft - 16;
 }
 
 async function fzhLoadNews(root) {
