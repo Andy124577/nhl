@@ -4,15 +4,16 @@
  * dans quelle catégorie, ce que le joueur vaut DANS CE POOL, et si l'on peut
  * répondre — avec la raison quand on ne peut pas.
  *
- * Direction Broadcast Desk (DESIGN.md) : sobre, lisible, accent brique
- * réservé à ce sur quoi on peut agir.
+ * Direction Broadcast Desk (DESIGN.md) : sobre, lisible, rouge réservé à
+ * ce sur quoi on peut agir. Les --fz-* n'existent nulle part : la page
+ * charge index.css, ses jetons suivent le thème.
  */
 
 .tm-market {
     margin: 0 0 24px;
-    border: 1px solid var(--fz-border, rgba(255, 255, 255, .1));
+    border: 1px solid var(--border-light);
     border-radius: 14px;
-    background: var(--fz-surface, rgba(255, 255, 255, .03));
+    background: var(--card);
     overflow: hidden;
 }
 
@@ -21,7 +22,7 @@
     align-items: center;
     gap: 12px;
     padding: 14px 18px;
-    border-bottom: 1px solid var(--fz-border, rgba(255, 255, 255, .08));
+    border-bottom: 1px solid var(--border-light);
 }
 
 .tm-market-title {
@@ -39,7 +40,7 @@
 
 .tm-market-toggle {
     background: none;
-    border: 1px solid var(--fz-border, rgba(255, 255, 255, .14));
+    border: 1px solid var(--border-gray);
     border-radius: 8px;
     color: inherit;
     font-size: 12px;
@@ -51,7 +52,7 @@
 }
 
 .tm-market-toggle:focus-visible {
-    outline: 2px solid var(--fz-accent, #c8442f);
+    outline: 2px solid var(--primary);
     outline-offset: 2px;
 }
 
@@ -66,7 +67,7 @@
     align-items: center;
     gap: 12px;
     padding: 12px 18px;
-    border-bottom: 1px solid var(--fz-border-faint, rgba(255, 255, 255, .05));
+    border-bottom: 1px solid var(--border-light);
 }
 
 .tmm-row:last-child { border-bottom: 0; }
@@ -103,7 +104,7 @@
 .tmm-cat {
     padding: 3px 8px;
     border-radius: 6px;
-    border: 1px solid var(--fz-border, rgba(255, 255, 255, .12));
+    border: 1px solid var(--border-light);
     opacity: .85;
 }
 
@@ -120,9 +121,9 @@
 }
 
 .tmm-offrir {
-    border: 1px solid var(--fz-accent, #c8442f);
-    background: var(--fz-accent, #c8442f);
-    color: #fff;
+    border: 1px solid var(--primary);
+    background: var(--primary);
+    color: var(--on-primary);
     border-radius: 9px;
     font-size: 13px;
     font-weight: 650;
@@ -132,8 +133,13 @@
     white-space: nowrap;
 }
 
+.tmm-offrir:hover:not([disabled]) {
+    border-color: var(--primary-deep);
+    background: var(--primary-deep);
+}
+
 .tmm-offrir:focus-visible {
-    outline: 2px solid var(--fz-accent, #c8442f);
+    outline: 2px solid var(--primary);
     outline-offset: 3px;
 }
 
@@ -142,7 +148,7 @@
 .tmm-offrir[disabled] {
     background: transparent;
     color: inherit;
-    border-color: var(--fz-border, rgba(255, 255, 255, .16));
+    border-color: var(--border-gray);
     opacity: .55;
     cursor: not-allowed;
 }

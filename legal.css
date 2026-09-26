@@ -1,34 +1,57 @@
 /* Feuille de style commune aux pages légales (confidentialité, conditions). */
 
 :root {
-  /* Reprise de la rampe neutre d'index.css — voir son commentaire. Les
-     pages légales ne chargent pas index.css : sans cette copie, le
-     dégradé de navbar.css tomberait dans le vide ici. */
-  --bg: #121214;
-  --bg-page: #16161A;
-  --card: #1E1E22;
-  --navbar-bg: #0E0E10;
-  --navbar-border: #2A2A30;
-  --primary: #E8795E;
-  --primary-deep: #D4614A;
-  --primary-rgb: 232, 121, 94;
-  --danger: #FF4757;
+  /* Reprise des jetons d'index.css (échelle d'Apple, rouge signal) — voir
+     son commentaire. Les pages légales ne chargent pas index.css : sans
+     cette copie, navbar.css et fzDialog.css tomberaient dans le vide ici. */
+  --bg: #000000;
+  --bg-page: #000000;
+  --card: #1C1C1E;
+  --navbar-bg: #161617;
+  --navbar-glass: rgba(22, 22, 23, 0.8);
+  --navbar-border: #38383A;
+  --border-light: #38383A;
+  --border-gray: #636366;
+  --bg-hover: #2C2C2E;
+  --bg-gray-light: #2C2C2E;
+  /* Le rouge : l'aplat (identique dans les deux thèmes), son survol, son
+     libellé, et le rouge EN TEXTE, qui change de valeur par thème. */
+  --primary: #E62030;
+  --primary-deep: #C41A28;
+  --primary-rgb: 230, 32, 48;
+  --primary-text: #FF5C66;
+  --on-primary: #FFFFFF;
+  --danger: var(--primary-text);
+  --danger-deep: var(--primary);
+  --success: #30D158;
+  --on-success: #000000;
+  --warning: #FFD60A;
   --text-main: #F5F5F7;
-  --text-secondary: #A8A8B0;
+  --text-secondary: #A1A1A6;
+  --text-light-gray: #6E6E73;
+  --overlay-dark: rgba(0, 0, 0, 0.6);
 }
 
 html[data-theme="light"] {
-  --bg: #F2F2F0;
-  --bg-page: #EBEBE8;
+  --bg: #F5F5F7;
+  --bg-page: #F5F5F7;
   --card: #FFFFFF;
-  --navbar-bg: #FFFFFF;
-  --navbar-border: #E0E0DC;
-  --primary: #B93D28;
-  --primary-deep: #8F2E1A;
-  --primary-rgb: 185, 61, 40;
-  --danger: #E03040;
-  --text-main: #1C1C1E;
-  --text-secondary: #54545C;
+  --navbar-bg: #FBFBFD;
+  --navbar-glass: rgba(251, 251, 253, 0.8);
+  --navbar-border: #D2D2D7;
+  --border-light: #D2D2D7;
+  --border-gray: #86868B;
+  --bg-hover: #E8E8ED;
+  --bg-gray-light: #F5F5F7;
+  /* #D70015 : 4,94:1 sur la page, 5,38:1 sur une carte. */
+  --primary-text: #D70015;
+  --success: #1F7A35;
+  --on-success: #FFFFFF;
+  --warning: #B25000;
+  --text-main: #1D1D1F;
+  --text-secondary: #6E6E73;
+  --text-light-gray: #86868B;
+  --overlay-dark: rgba(0, 0, 0, 0.4);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -84,7 +107,7 @@ body {
 .legal-page strong { color: var(--text-main); }
 
 .legal-page a {
-  color: var(--primary);
+  color: var(--primary-text);
   text-decoration: none;
   font-weight: 600;
 }

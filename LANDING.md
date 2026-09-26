@@ -54,7 +54,7 @@ Retirés le 23 sept. 2026 (trop de texte, trop d'éléments pour une promesse de
 
 ## 5. Le bandeau
 
-Le héros et le dernier appel reprennent le haut de la fiche joueur (`career-modal.css`, `.cmh-name-banner`) : un aplat, un filigrane incliné à −13°, rogné, une bande sombre et une bande de couleur en biais à 132°, une trame fine à 24°, un filet de 3 px. Sur la fiche, ce sont les couleurs et l'écusson du club ; ici, **noir et rouge**, avec le mot-symbole Fantazy (`Icons/fantazy.png`) en filigrane. Les jetons sont en tête de `landing.css` (`--fzl-banner`, `--fzl-red`). Les scènes reprennent le fond du corps de la fiche (`#0D1013` et ses deux trames).
+Le héros et le dernier appel reprennent le haut de la fiche joueur (`career-modal.css`, `.cmh-name-banner`) : un aplat, un filigrane incliné à −13°, rogné, une bande sombre et une bande de couleur en biais à 132°, une trame fine à 24°, un filet de 3 px. Sur la fiche, ce sont les couleurs et l'écusson du club ; ici, **noir et rouge**, avec le mot-symbole Fantazy (`Icons/fantazy.png`) en filigrane. Les jetons sont en tête de `landing.css` (`--fzl-banner`, `--fzl-red`) ; le rouge est celui du site (`#E62030`, voir DESIGN.md). Les scènes reprennent le fond du corps de la fiche, passé au noir d'Apple (`#000000`), avec ses deux trames.
 
 Tout reste sombre dans les deux thèmes : ce sont des décors.
 

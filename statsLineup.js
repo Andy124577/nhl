@@ -115,7 +115,7 @@
         // blanc. Un contour dans la seconde couleur, souvent noire, empâtait
         // les chiffres sombres au point de fondre « 88 » en une tache.
         const clair = typeof hexLuminance === 'function' && hexLuminance(c1) > 0.3;
-        return `--lu-c1:${c1};--lu-c2:${c2};--lu-ink:${clair ? '#16181a' : '#ffffff'};--lu-stroke:${clair ? '#ffffff' : c2}`;
+        return `--lu-c1:${c1};--lu-c2:${c2};--lu-ink:${clair ? '#1D1D1F' : '#ffffff'};--lu-stroke:${clair ? '#ffffff' : c2}`;
     }
 
     function initiales(p) {

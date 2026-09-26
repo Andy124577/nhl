@@ -149,10 +149,14 @@
     box-shadow: none;
     animation: none;
   }
-  body.fz-draft .turn-banner.waiting,
-  body.fz-draft .turn-banner.done {
+  body.fz-draft .turn-banner.waiting {
     background: var(--fzd-solid);
     color: var(--fzd-on-solid);
+  }
+  /* Repêchage terminé : l'aplat vert du succès (DESIGN.md). */
+  body.fz-draft .turn-banner.done {
+    background: var(--success);
+    color: var(--on-success);
   }
   body.fz-draft .turn-banner.your-turn {
     background: var(--fzd-accent-fill);
@@ -392,29 +396,29 @@
     -webkit-line-clamp: 2;
     line-clamp: 2;
   }
-  /* La tuile du tour en cours garde le même brun sombre dans les deux
-     thèmes ; son texte doit donc en faire autant. draftActif-premium.css
-     le tire de --fzd-on-solid, qui bascule au noir en thème sombre — le
-     titre et le numéro du choix y disparaissaient sur leur propre fond.
-     D'où les valeurs en clair, posées juste sous celles du fond qu'elles
-     accompagnent. Le nom de l'équipe garde la brique, qu'il tient de
-     .pick-card.is-current et qui se lit dans les deux thèmes. */
-  body.fz-draft .picks-carousel .pick-card.is-current { background: #221a17; }
-  body.fz-draft .picks-carousel .pick-card.is-current .pick-card-name { color: #f2ebe6; }
-  /* La brique du thème clair (#b93d28) tombait à 3:1 sur cette tuile, qui
-     reste sombre dans les deux thèmes : elle prend la brique éclaircie. */
-  body.fz-draft .picks-carousel .pick-card.is-current :is(.pick-card-turn-num, .pick-card-owner) { color: #e8795e; }
+  /* La tuile du tour en cours reste sombre dans les deux thèmes (le
+     cran relevé de l'échelle sombre) ; son texte doit donc en faire
+     autant. draftActif-premium.css le tire de --fzd-on-solid, qui
+     bascule au noir en thème sombre — le titre et le numéro du choix y
+     disparaissaient sur leur propre fond. D'où les valeurs en clair,
+     posées juste sous celles du fond qu'elles accompagnent. */
+  body.fz-draft .picks-carousel .pick-card.is-current { background: #2C2C2E; }
+  body.fz-draft .picks-carousel .pick-card.is-current .pick-card-name { color: #F5F5F7; }
+  /* Le rouge texte du thème clair (#D70015) tomberait sous 3:1 sur cette
+     tuile, sombre dans les deux thèmes : elle prend celui du thème sombre
+     (#FF5C66, 4,63:1). */
+  body.fz-draft .picks-carousel .pick-card.is-current :is(.pick-card-turn-num, .pick-card-owner) { color: #FF5C66; }
   /* Le carré du portrait suit le même sort : son fond de tuile est clair
      en thème clair, et faisait un timbre blanc sur la tuile sombre. */
   body.fz-draft .picks-carousel .pick-card.is-current .pick-card-photo {
     background: rgba(255, 255, 255, .09);
   }
   body.fz-draft .picks-carousel .pick-card.is-current .pick-card-slot {
-    color: #f2ebe6;
+    color: #F5F5F7;
     opacity: .45;
   }
-  body.fz-draft .picks-carousel .pick-card.is-current .pick-card-turn-round { color: #8f8179; }
-  body.fz-draft .picks-carousel .pick-card.is-next { background: #181413; }
+  body.fz-draft .picks-carousel .pick-card.is-current .pick-card-turn-round { color: #A1A1A6; }
+  body.fz-draft .picks-carousel .pick-card.is-next { background: var(--fzd-bg-alt); }
 
   /* ==========================================================
      4. LES TROIS ONGLETS
@@ -480,13 +484,15 @@
     white-space: nowrap;
   }
   body.fz-draft .panel-tab .panel-tab-meta:empty { display: none; }
+  /* L'onglet actif prend l'aplat neutre des onglets de la page (inversé
+     en sombre) : l'aplat rouge reste à l'action, le « + » de repêchage. */
   body.fz-draft .panel-tab.is-active {
-    background: var(--fzd-accent-fill);
-    border-color: var(--fzd-accent-fill);
+    background: var(--fzd-solid);
+    border-color: var(--fzd-solid);
   }
-  body.fz-draft .panel-tab.is-active .panel-tab-label { color: var(--fzd-on-accent); }
-  /* Blanc plein : à 70 %, le compte tombait à 3:1 sur l'aplat. */
-  body.fz-draft .panel-tab.is-active .panel-tab-meta { color: #fff; }
+  body.fz-draft .panel-tab.is-active .panel-tab-label { color: var(--fzd-on-solid); }
+  /* Plein, pas à 70 % : le compte tombait à 3:1 sur l'aplat. */
+  body.fz-draft .panel-tab.is-active .panel-tab-meta { color: var(--fzd-on-solid); }
 
   body.fz-draft .panel-tabs-band .turn-skip-btn {
     flex: none;
@@ -880,11 +886,11 @@
     padding: 9px 11px;
     border: 1px solid var(--fzd-tile-bg-strong);
     border-radius: 8px;
-    background: #1e1917;
+    background: var(--fzd-bg-alt);
   }
   body.fz-draft .fzd-slot.is-empty {
     border-style: dashed;
-    border-color: #2e2624;
+    border-color: var(--fzd-border);
     background: none;
   }
   body.fz-draft .fzd-slot-avatar {
@@ -895,7 +901,7 @@
     overflow: hidden;
     background: var(--fzd-tile-bg-strong);
   }
-  body.fz-draft .fzd-slot.is-empty .fzd-slot-avatar { background: #211b19; border: 0; }
+  body.fz-draft .fzd-slot.is-empty .fzd-slot-avatar { background: var(--fzd-bg-alt); border: 0; }
   body.fz-draft .fzd-slot-avatar img { width: 100%; height: 100%; object-fit: cover; }
   body.fz-draft .fzd-slot-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
   body.fz-draft .fzd-slot-name {
@@ -960,7 +966,7 @@
     background: var(--fzd-tile-bg);
     overflow: hidden;
   }
-  body.fz-draft .fzd-limit-fill { height: 3px; background: var(--fzd-accent); }
+  body.fz-draft .fzd-limit-fill { height: 3px; background: var(--fzd-accent-fill); }
   body.fz-draft .fzd-limit-fill.is-full { background: var(--fzd-success); }
 
   /* ==========================================================
@@ -1229,7 +1235,7 @@
   body.fz-draft .bottom-nav-item:hover { background: none; color: var(--fzd-text); }
   body.fz-draft .bottom-nav-item::before { content: none; }
   body.fz-draft .bottom-nav-item.active {
-    border-top-color: var(--fzd-accent);
+    border-top-color: var(--fzd-accent-fill);
     background: var(--fzd-surface);
     color: var(--fzd-accent);
   }

@@ -1,16 +1,11 @@
-.draft-watch-badge { display:inline-flex; align-items:center; gap:3px; margin-left:5px; color:#26a6ff; font-size:10px; font-weight:600; white-space:nowrap; vertical-align:middle; }
+.draft-watch-badge { display:inline-flex; align-items:center; gap:3px; margin-left:5px; color:var(--position-def); font-size:10px; font-weight:600; white-space:nowrap; vertical-align:middle; }
 .draft-watch-badge svg { flex-shrink:0; }
 @media(max-width:1000px) { .draft-watch-badge > span { display:none; } }
 /* Page Stats : l'œil seul ; le titre porte la note au survol. */
 body.fz-stats #playerTable .draft-watch-badge > span { display:none; }
-/* Le bleu vif ne tient que sur fond sombre : 1,9:1 sur le papier clair. */
-html[data-theme="light"] .draft-watch-badge { color:#0b6fb8; }
+/* Le cyan du site (--position-def) bascule seul : 4,95:1 sur la page claire. */
 /* Note de la trousse dans la fiche du joueur. */
-#careerStatsModal .cmh-watch { margin:0 0 16px; padding:12px 16px; border-left:3px solid #26a6ff; border-radius:0 10px 10px 0; background:#26a6ff0f; }
-#careerStatsModal .cmh-watch-label { display:flex; align-items:center; gap:7px; margin-bottom:5px; color:#26a6ff; font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
+#careerStatsModal .cmh-watch { margin:0 0 16px; padding:12px 16px; border-left:3px solid var(--position-def); border-radius:0 10px 10px 0; background:color-mix(in srgb, var(--position-def) 6%, transparent); }
+#careerStatsModal .cmh-watch-label { display:flex; align-items:center; gap:7px; margin-bottom:5px; color:var(--position-def); font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
 #careerStatsModal .cmh-watch-label svg { flex:0 0 16px; width:16px; height:16px; }
-#careerStatsModal .cmh-watch p { margin:0; color:#c9d9e9; font-size:16px; line-height:1.5; }
-/* Fiche en thème clair : même bleu foncé que le badge ci-dessus. */
-html[data-theme="light"] #careerStatsModal .cmh-watch { border-left-color:#0b6fb8; background:#0b6fb80f; }
-html[data-theme="light"] #careerStatsModal .cmh-watch-label { color:#0b6fb8; }
-html[data-theme="light"] #careerStatsModal .cmh-watch p { color:var(--text-dark,#242428); }
+#careerStatsModal .cmh-watch p { margin:0; color:var(--text-main); font-size:16px; line-height:1.5; }

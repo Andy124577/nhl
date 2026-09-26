@@ -10,93 +10,103 @@
 .trade-empty-state .empty-icon[data-icon], .custom-alert-icon[data-icon] { display: flex; }
 
 :root {
-  /* ---- Neutres --------------------------------------------------------
-     Le bleu marine appuyé (#0A0A1A, texte blanc pur) lisait « noir et
-     blanc » malgré sa teinte : un contraste aussi tranché reste stark quelle
-     que soit la couleur en dessous. La rampe passe à un gris chaud, très
-     faiblement saturé (~2-3%), qui reste une base neutre plutôt qu'un
-     deuxième accent — c'est justement ce qui laisse la brique être le seul
-     signal vif de l'interface (Règle du Signal Unique). Primary, les
-     couleurs sémantiques et les halos/ombres liés à l'accent ou au noir ne
-     changent pas : le pop reste entièrement sur les boutons et les stats. */
-  --bg: #121214;
-  --bg-page: #16161A;
-  --card: #1E1E22;
-  --card-white: #26262B;
+  /* ---- Neutres : l'échelle de gris d'Apple ----------------------------
+     Trois paliers de surface, trois de texte, deux de bordure — rien entre
+     les deux (DESIGN.md, « Neutral »). En sombre, la page est un noir pur
+     comme sur iOS : les cartes s'en détachent sans ombre, et la barre de
+     navigation est la seule surface plus claire que la page (un verre
+     dépoli posé sur le noir). */
+  --bg: #000000;
+  --bg-page: #000000;
+  --card: #1C1C1E;
+  --card-white: #2C2C2E;
 
-  /* Navbar specific */
-  --navbar-bg: #0E0E10;
-  --navbar-border: #2A2A30;
+  /* Navbar specific. --navbar-bg est opaque : tiroirs, menus, rail et pied
+     de page s'en servent par-dessus le contenu. --navbar-glass est le verre
+     dépoli d'Apple, réservé aux deux barres collantes (haut et bas), qui
+     posent elles-mêmes le flou de 20px. */
+  --navbar-bg: #161617;
+  --navbar-glass: rgba(22, 22, 23, 0.8);
+  --navbar-border: #38383A;
 
   /* Colors */
-  /* ---- L'accent ------------------------------------------------------
-     La brique éditoriale, promue accent unique du site. Elle vivait
-     jusqu'ici dans quatre feuilles -premium.css (draftActif, échanges,
-     classement, statistiques) tandis que le reste du site — et, sur ces
-     mêmes pages, tout le mobilier partagé : fiche joueur, en-têtes
-     triables, liseré de survol, anneaux de focus — restait au cyan. Deux
-     accents sur un même écran, c'est zéro accent (Règle du Signal Unique) ;
-     c'est la brique qui gagne, elle porte les quatre pages reskinnées.
+  /* ---- Le rouge signal -----------------------------------------------
+     L'accent unique du site, à la place du bleu d'Apple : il marque ce
+     qu'on peut toucher (lien, bouton, onglet actif, focus, choix courant)
+     et rien d'autre. Une seule teinte (355°), trois valeurs, parce qu'aucun
+     rouge ne fait tous les métiers dans les deux thèmes :
+     - --primary, l'APLAT, identique dans les deux thèmes : le blanc posé
+       dessus lit 4,55:1 (--on-primary) — d'où un survol qui fonce
+       (--primary-deep, 5,96:1) et n'éclaircit jamais ;
+     - --primary-text, le rouge EN TEXTE : #E62030 ne lit que 3,74:1 sur une
+       carte sombre, #FF5C66 (même teinte) tient 4,63:1 ou mieux sur toutes
+       les surfaces sombres ;
+     - --on-primary, le libellé posé sur l'aplat. */
+  --primary: #E62030;
+  --primary-deep: #C41A28;
+  --primary-rgb: 230, 32, 48;
+  --primary-text: #FF5C66;
+  --on-primary: #FFFFFF;
 
-     La valeur suit le thème dans le même sens que le cyan qu'elle
-     remplace : claire sur fond sombre, foncée sur fond clair, pour que
-     `color: var(--bg)` reste le libellé correct sur un aplat plein.
-     #E8795E : 5,80:1 en texte sur carte, 6,53:1 pour le libellé posé
-     dessus. */
-  --primary: #E8795E;
-  /* Deuxième arrêt des dégradés d'action. Il traînait en dur dans treize
-     règles réparties sur cinq feuilles, sans équivalent en thème clair —
-     d'où un libellé de bouton à 2,51:1 sur fond pâle. */
-  --primary-deep: #D4614A;
-  /* Composantes de --primary, pour les teintes en rgba(). Elles étaient
-     écrites en dur (rgba(var(--primary-rgb),…) à plus de 150 endroits) et ne
-     suivaient donc aucun des deux thèmes. */
-  --primary-rgb: 232, 121, 94;
-  --success: #00E676;
-  /* Deuxième arrêt des dégradés « succès », même rôle que --primary-deep :
-     .finish-btn (draftActif.css) codait ce second arrêt en dur (#00A855),
-     qui se trouve être la valeur CLAIRE de --success — en thème clair, le
-     dégradé s'effondrait donc en aplat (mêmes deux arrêts), et en thème
-     sombre il restait fixe plutôt que de suivre le thème. */
-  --success-deep: #00A855;
-  --danger: #FF4757;
-  /* --danger lit à 3,34:1 pour du blanc — sous les 4,5:1 requis même en gros
-     texte. Réservé aux petites surfaces (badge de notification) où le blanc
-     est la seule option de contraste ; --danger reste inchangé partout où le
-     texte est déjà de la bonne couleur (icônes, bordures, libellés en
-     --danger sur fond neutre). */
-  --danger-deep: #D42E3F;
-  --warning: #FFB300;
+  /* ---- Ensemble sémantique : couleurs système d'Apple ---------------
+     Elles portent un sens (position, état), jamais de la variété. Le rouge
+     n'en fait pas partie : c'est la teinte d'action. */
+  --success: #30D158;
+  /* Aplat « succès » survolé ou pressé : même logique que --primary-deep. */
+  --success-deep: #248A3D;
+  /* Libellé sur un aplat --success : noir en sombre (10,39:1), blanc en
+     clair (5,39:1). */
+  --on-success: #000000;
+  /* Erreurs et actions destructrices : le rouge d'Apple est sa couleur
+     destructrice, et ici le rouge est aussi la teinte d'action. Les deux
+     partagent donc les mêmes valeurs et se distinguent par la FORME : une
+     erreur est du texte rouge avec une icône, une action destructrice est
+     un bouton texte rouge, jamais un aplat. --danger-deep reste l'aplat des
+     petites surfaces à libellé blanc (badge de notification). */
+  --danger: var(--primary-text);
+  --danger-deep: var(--primary);
+  --warning: #FFD60A;
+  /* Badge « défenseurs » : il portait l'accent ; en rouge, il se lirait
+     comme un lien. */
+  --position-def: #64D2FF;
+  /* Badge « recrues » : 4,83:1 sur carte, 3,96:1 sur le palier surélevé —
+     à garder sur les cartes et les rangées. */
+  --rookie: #BF5AF2;
 
-  /* Text colors */
+  /* Text colors — trois paliers. Libellé et texte courant partagent une
+     seule valeur : la hiérarchie vient de la taille et de la graisse.
+     Le tertiaire (--text-light-gray, 4,14:1 sur noir) est réservé aux
+     indications, placeholders et libellés désactivés. */
   --text-main: #F5F5F7;
-  --text-secondary: #A8A8B0;
-  --text-dark: #E4E4E8;
-  /* 4,98:1 sur carte et 3,10:1 — au-dessus des seuils AA (texte normal et
-     non-texte) avec la même marge que la rampe bleutée précédente. */
-  --text-gray: #8C8C95;
-  --text-light-gray: #6A6A72;
+  --text-secondary: #A1A1A6;
+  --text-dark: #F5F5F7;
+  --text-gray: #A1A1A6;
+  --text-light-gray: #6E6E73;
 
   /* Border colors */
-  --border-light: #2C2C32;
-  --border-gray: #38383F;
-  --border-table: #2C2C32;
+  --border-light: #38383A;
+  --border-gray: #636366;
+  --border-table: #38383A;
 
   /* Background variations */
-  --bg-hover: #2C2C32;
-  --bg-gray-light: #1A1A1E;
-  --bg-odd-row: #19191D;
+  --bg-hover: #2C2C2E;
+  --bg-gray-light: #2C2C2E;
+  --bg-odd-row: #1C1C1E;
+
+  /* Matériau d'Apple : carte translucide au-dessus d'un contenu qui défile
+     (flou de 20px posé par la règle qui l'utilise). */
+  --material: rgba(28, 28, 30, 0.72);
 
   /* Shadows and overlays */
-  --overlay-dark: rgba(8, 8, 9, 0.85);
+  --overlay-dark: rgba(0, 0, 0, 0.6);
   --shadow-sm: rgba(var(--primary-rgb), 0.06);
   --shadow-md: rgba(0, 0, 0, 0.3);
   --shadow-lg: rgba(0, 0, 0, 0.6);
 
   /* Glow effects */
   --glow-primary: 0 0 20px rgba(var(--primary-rgb), 0.25);
-  --glow-danger: 0 0 20px rgba(255, 71, 87, 0.25);
-  --glow-success: 0 0 20px rgba(0, 230, 118, 0.25);
+  --glow-danger: 0 0 20px rgba(var(--primary-rgb), 0.25);
+  --glow-success: 0 0 20px rgba(48, 209, 88, 0.25);
   --glow-primary-strong: 0 0 30px rgba(var(--primary-rgb), 0.4);
 
   /* ---- Profondeur ----------------------------------------------------
@@ -110,8 +120,8 @@
   --elevation-2: 0 2px 8px rgba(0, 0, 0, .32);
   --elevation-3: 0 8px 32px rgba(0, 0, 0, .38);
   --elevation-4: 0 20px 50px rgba(0, 0, 0, .55);
-  --focus-ring: 0 0 0 3px rgba(var(--primary-rgb), .22);
-  --glow-live: 0 0 20px rgba(var(--primary-rgb), .25);
+  --focus-ring: 0 0 0 3px rgba(var(--primary-rgb), .40);
+  --glow-live: 0 0 20px rgba(var(--primary-rgb), .30);
 
   /* Densité de l'interface. Ces valeurs sont la référence (mobile) ; elles
      sont resserrées sur grand écran dans le bloc « DENSITÉ » en fin de
@@ -134,46 +144,50 @@
 /* LIGHT MODE — variable overrides                               */
 /* ============================================================ */
 html[data-theme="light"] {
-  /* Même rampe neutre que le thème sombre, côté clair : gris chaud à faible
-     saturation plutôt que le bleu-blanc précédent — la même bascule de
-     fond. Primary et les couleurs sémantiques ne bougent pas. */
-  --bg: #F2F2F0;
-  --bg-page: #EBEBE8;
+  /* L'échelle claire d'Apple (apple.com) : page #F5F5F7, cartes blanches.
+     Aucune valeur n'est l'inverse de la sombre ; chacune est choisie pour
+     tenir son contraste sur son propre fond. L'aplat rouge, son survol et
+     son libellé sont les seuls jetons identiques dans les deux thèmes. */
+  --bg: #F5F5F7;
+  --bg-page: #F5F5F7;
   --card: #FFFFFF;
-  --card-white: #FAFAF8;
-  --navbar-bg: #FFFFFF;
-  --navbar-border: #E0E0DC;
-  /* Même brique, assombrie pour le fond pâle : 5,58:1 en texte sur carte
-     et 4,98:1 pour le libellé d'un bouton plein. La brique éditoriale
-     brute (#c4442e) n'y arrivait pas — 4,45:1 en libellé, sous le seuil —
-     d'où ce cran plus foncé, exactement le même arbitrage que le cyan
-     faisait avant elle en passant de var(--primary) à var(--primary). */
-  --primary: #B93D28;
-  --primary-deep: #8F2E1A;
-  --primary-rgb: 185, 61, 40;
-  --success: #00A855;
-  --success-deep: #00863F;
-  --danger: #E03040;
-  --danger-deep: #C4293A;
-  --warning: #CC8800;
-  --text-main: #1C1C1E;
-  --text-secondary: #54545C;
-  --text-dark: #242428;
-  --text-gray: #68686F;
-  --text-light-gray: #8E8E96;
-  --border-light: #E0E0DC;
-  --border-gray: #CCCCC8;
-  --border-table: #E0E0DC;
-  --bg-hover: #E6E6E2;
-  --bg-gray-light: #F5F5F3;
-  --bg-odd-row: #FAFAF8;
-  --overlay-dark: rgba(20, 20, 20, 0.55);
+  --card-white: #FBFBFD;
+  --navbar-bg: #FBFBFD;
+  --navbar-glass: rgba(251, 251, 253, 0.8);
+  --navbar-border: #D2D2D7;
+  /* Le rouge en texte sur fond pâle : #E62030 n'y lit que 4,18:1 sur la
+     page. #D70015 est le rouge système d'Apple en contraste renforcé —
+     4,94:1 sur la page, 5,38:1 sur une carte. */
+  --primary-text: #D70015;
+  /* Valeurs claires en contraste renforcé d'Apple : ce sont elles qui
+     tiennent l'AA en texte sur fond pâle. Le vert est descendu d'un cran
+     (#248A3D d'Apple lit 4,40:1 sur blanc). */
+  --success: #1F7A35;
+  --success-deep: #18612A;
+  --on-success: #FFFFFF;
+  --warning: #B25000;
+  --position-def: #0071A4;
+  --rookie: #8944AB;
+  --text-main: #1D1D1F;
+  --text-secondary: #6E6E73;
+  --text-dark: #1D1D1F;
+  --text-gray: #6E6E73;
+  --text-light-gray: #86868B;
+  --border-light: #D2D2D7;
+  /* Le trait des champs d'apple.com : 3,62:1 sur blanc. */
+  --border-gray: #86868B;
+  --border-table: #D2D2D7;
+  --bg-hover: #E8E8ED;
+  --bg-gray-light: #F5F5F7;
+  --bg-odd-row: #FFFFFF;
+  --material: rgba(255, 255, 255, 0.72);
+  --overlay-dark: rgba(0, 0, 0, 0.4);
   --shadow-sm: rgba(var(--primary-rgb), 0.06);
   --shadow-md: rgba(0, 0, 0, 0.08);
   --shadow-lg: rgba(0, 0, 0, 0.20);
   --glow-primary: 0 0 20px rgba(var(--primary-rgb), 0.12);
-  --glow-danger: 0 0 20px rgba(224, 48, 64, 0.12);
-  --glow-success: 0 0 20px rgba(0, 168, 85, 0.12);
+  --glow-danger: 0 0 20px rgba(var(--primary-rgb), 0.12);
+  --glow-success: 0 0 20px rgba(31, 122, 53, 0.12);
   --glow-primary-strong: 0 0 30px rgba(var(--primary-rgb), 0.20);
 }
 
@@ -206,7 +220,7 @@ body {
    sur sa moitié claire. La classe reste : elle est posée dans plusieurs
    gabarits, la supprimer casserait le balisage. */
 .gradient-text {
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 /* Scrollbar dark theme */
@@ -278,9 +292,10 @@ body {
 /* FILTERS SECTION (Glassmorphism Card)                          */
 /* ============================================================ */
 .filters-section {
-  background: rgba(26,26,30,.85);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  /* Matière d'Apple : carte translucide + flou de 20px, dans les deux thèmes. */
+  background: var(--material);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   padding: var(--d-filters-pad);
   border-radius: 18px;
   border: 1px solid var(--border-light);
@@ -343,7 +358,7 @@ body {
 }
 .filter-group select {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237B8CC4' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2386868B' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   padding-right: 36px;
@@ -353,7 +368,7 @@ body {
 /* TABLE CONTAINER                                               */
 /* ============================================================ */
 .table-container {
-  background: rgba(26,26,30,.75);
+  background: var(--card);
   border-radius: 18px;
   /* `clip` et non `hidden` : `hidden` fait de ce conteneur un conteneur de
      défilement, ce qui neutralise le position:sticky de l'en-tête. `clip`
@@ -384,10 +399,10 @@ body {
 .stats-show-more {
   padding: 12px 28px;
   min-height: 44px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
+  background: var(--primary);
   border: none;
   border-radius: 10px;
-  color: var(--bg);
+  color: var(--on-primary);
   font-size: 0.95rem;
   font-weight: 800;
   cursor: pointer;
@@ -475,8 +490,10 @@ tbody tr:nth-child(odd) {
   background: var(--bg-odd-row);
 }
 
+/* Zébrure : aucune en sombre (la rangée paire reste au niveau de la carte,
+   comme avant), un cran de gris en clair (voir plus bas). */
 tbody tr:nth-child(even) {
-  background: rgba(44,44,50, 0.35);
+  background: var(--bg-odd-row);
 }
 
 tbody tr:hover {
@@ -518,7 +535,7 @@ td.points-column {
   background: rgba(var(--primary-rgb),.08);
   font-weight: 800;
   font-size: 1.05rem;
-  color: var(--primary);
+  color: var(--primary-text);
   text-align: center; /* Right-align points like NHL.com */
   padding-right: 16px;
 }
@@ -585,7 +602,7 @@ tbody tr:hover .player-photo img.face {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+  background: linear-gradient(90deg, var(--bg-hover) 25%, var(--border-light) 50%, var(--bg-hover) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 6px;
@@ -774,7 +791,7 @@ tbody tr:hover .player-photo img.face {
 
 .player-position-team .position-badge {
   background: rgba(var(--primary-rgb),.12);
-  color: var(--primary);
+  color: var(--primary-text);
   padding: 2px 8px;
   border-radius: 5px;
   font-weight: 700;
@@ -892,8 +909,8 @@ tbody tr:hover .player-photo img.face {
 }
 
 .close-modal:hover {
-  background: var(--danger);
-  color: #fff;
+  background: var(--danger-deep);
+  color: var(--on-primary);
   border-color: var(--danger);
   transform: rotate(90deg);
   box-shadow: var(--glow-danger);
@@ -904,7 +921,8 @@ tbody tr:hover .player-photo img.face {
   display: flex;
   gap: 10px;
   padding: 10px 14px;
-  background: rgba(18,18,20,.6);
+  /* Un cran sous la modale en sombre (carte), un cran de gris en clair. */
+  background: var(--card);
   border-bottom: 1px solid var(--border-light);
   flex-wrap: wrap;
   align-items: flex-end;
@@ -937,7 +955,7 @@ tbody tr:hover .player-photo img.face {
   cursor: pointer;
   transition: border-color .2s ease, box-shadow .2s ease;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237B8CC4' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2386868B' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
   padding-right: 28px;
@@ -951,7 +969,7 @@ tbody tr:hover .player-photo img.face {
 
 .stats-count-badge {
   background: rgba(var(--primary-rgb),.08);
-  color: var(--primary);
+  color: var(--primary-text);
   padding: 6px 12px;
   border-radius: 8px;
   font-size: .78rem;
@@ -1015,11 +1033,11 @@ tbody tr:hover .player-photo img.face {
 }
 
 #careerStatsTable tbody tr:nth-child(odd) {
-  background: rgba(20,20,40,.4);
+  background: var(--card);
 }
 
 #careerStatsTable tbody tr:nth-child(even) {
-  background: rgba(44,44,50,.25);
+  background: var(--card-white);
 }
 
 #careerStatsTable tbody tr:hover {
@@ -1583,41 +1601,29 @@ tbody tr:hover .player-photo img.face {
 }
 
 /* ============================================================ */
-/* LIGHT MODE — hardcoded rgba overrides                         */
+/* THÈME CLAIR — surfaces qui changent de cran, pas seulement    */
+/* de valeur (les jetons couvrent tout le reste)                 */
 /* ============================================================ */
-html[data-theme="light"] .filters-section {
-  background: rgba(255, 255, 255, 0.95);
-}
-html[data-theme="light"] .table-container {
-  background: rgba(255, 255, 255, 0.95);
-}
 html[data-theme="light"] tbody tr:nth-child(even) {
-  background: rgba(216, 223, 240, 0.3);
-}
-html[data-theme="light"] .skeleton {
-  background: linear-gradient(90deg, rgba(0,0,0,.04) 25%, rgba(0,0,0,.08) 50%, rgba(0,0,0,.04) 75%);
-  background-size: 200% 100%;
+  background: var(--bg-gray-light);
 }
 html[data-theme="light"] .skeleton-table-header {
   background: rgba(var(--primary-rgb), 0.12);
 }
 html[data-theme="light"] .career-filters {
-  background: rgba(240, 244, 255, 0.90);
+  background: var(--bg-gray-light);
 }
 html[data-theme="light"] #careerStatsTable th {
-  background: rgba(240, 244, 255, 0.98);
+  background: var(--bg-gray-light);
   color: var(--text-dark);
 }
-html[data-theme="light"] #careerStatsTable tbody tr:nth-child(odd) {
-  background: rgba(247, 249, 255, 0.8);
-}
 html[data-theme="light"] #careerStatsTable tbody tr:nth-child(even) {
-  background: rgba(220, 228, 245, 0.4);
+  background: var(--bg-gray-light);
 }
 /* Keep the sticky th background opaque on scroll in light mode */
 @media (max-width: 768px) {
   html[data-theme="light"] #careerStatsTable th {
-    background: rgba(240, 244, 255, 0.98);
+    background: var(--bg-gray-light);
   }
 }
 

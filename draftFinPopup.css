@@ -5,7 +5,9 @@
  * terminé leurs sélections : un récapitulatif des joueurs repêchés par
  * l'utilisateur (photo, nom, position, ronde), puis accès au classement
  * et partage. Thème sombre du repêchage — palette propre, indépendante
- * des variables de la page pour garder l'aspect « salle de repêchage ».
+ * des variables de la page pour garder l'aspect « salle de repêchage » :
+ * l'échelle sombre d'Apple et le rouge du site, en dur (la page d'aperçu
+ * ne charge pas index.css).
  *
  * Maquette : Claude Design — « Fin de repechage.dc.html » (artboards 3A / 3B).
  * ========================================================================= */
@@ -16,7 +18,7 @@
   inset: 0;
   z-index: 10002;                     /* au-dessus de la confirmation de choix (10001) */
   padding: 40px;
-  background: rgba(8, 9, 10, .72);
+  background: rgba(0, 0, 0, .72);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   align-items: center;
@@ -36,8 +38,8 @@
   width: 1000px;
   max-width: 100%;
   margin: auto;
-  background: #17191b;
-  border: 1px solid #2a2d2f;
+  background: #1C1C1E;
+  border: 1px solid #38383A;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 30px 70px rgba(0, 0, 0, .55);
@@ -50,14 +52,15 @@
 
 .fz-end-head {
   padding: 26px 28px 20px;
-  border-bottom: 1px solid #2a2d2f;
+  border-bottom: 1px solid #38383A;
   display: flex;
   align-items: center;
   gap: 16px;
+  /* Un seul rouge, qui s'efface vers la carte. */
   background: linear-gradient(118deg,
-    rgba(142, 42, 26, .5) 0%,
-    rgba(196, 68, 46, .28) 62%,
-    rgba(23, 25, 27, 0) 100%);
+    rgba(230, 32, 48, .30) 0%,
+    rgba(230, 32, 48, .16) 62%,
+    rgba(230, 32, 48, 0) 100%);
 }
 .fz-end-crest {
   width: 34px;
@@ -68,7 +71,7 @@
   display: grid;
   place-items: center;
   font: 700 13px/1 Oswald, sans-serif;
-  color: #b03a26;
+  color: #D70015;              /* rouge texte sur l'écusson blanc : 5,38:1 */
 }
 .fz-end-titles { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .fz-end-eyebrow {
@@ -86,24 +89,24 @@
 }
 .fz-end-sub {
   font: 400 12.5px/1.4 "Helvetica Neue", Helvetica, sans-serif;
-  color: #a49f97;
+  color: #A1A1A6;
 }
 .fz-end-close {
   width: 30px;
   height: 30px;
   flex: 0 0 auto;
-  border: 1px solid #3c4044;
+  border: 1px solid #636366;
   border-radius: 999px;
   background: transparent;
   display: grid;
   place-items: center;
   font: 400 13px/1 "Helvetica Neue", Helvetica, sans-serif;
-  color: #8d8981;
+  color: #A1A1A6;
   cursor: pointer;
   transition: color .15s ease, border-color .15s ease, background .15s ease;
 }
-.fz-end-close:hover { color: #f2f0eb; border-color: #6f6b64; background: rgba(255, 255, 255, .04); }
-.fz-end-close:focus-visible { outline: 2px solid #c4442e; outline-offset: 2px; }
+.fz-end-close:hover { color: #F5F5F7; border-color: #A1A1A6; background: rgba(255, 255, 255, .04); }
+.fz-end-close:focus-visible { outline: 2px solid #E62030; outline-offset: 2px; }
 
 /* ---- Corps : grille de joueurs ----------------------------------------- */
 
@@ -117,7 +120,7 @@
   font: 600 10.5px/1 "Helvetica Neue", Helvetica, sans-serif;
   letter-spacing: .16em;
   text-transform: uppercase;
-  color: #8d8981;
+  color: #A1A1A6;
 }
 .fz-end-grid {
   display: grid;
@@ -126,9 +129,9 @@
 }
 
 .fz-end-card {
-  border: 1px solid #2a2d2f;
+  border: 1px solid #38383A;
   border-radius: 11px;
-  background: #1b1e20;
+  background: #2C2C2E;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -136,7 +139,7 @@
 .fz-end-photo {
   position: relative;
   aspect-ratio: 1 / 1;
-  background: repeating-linear-gradient(135deg, #212426 0 10px, #1b1e20 10px 20px);
+  background: repeating-linear-gradient(135deg, #3A3A3C 0 10px, #2C2C2E 10px 20px);
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -152,7 +155,7 @@
   font: 400 9px/1 "Helvetica Neue", Helvetica, sans-serif;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: #6f6b64;
+  color: #6E6E73;              /* tertiaire : un simple repère de place */
 }
 .fz-end-round {
   position: absolute;
@@ -160,8 +163,8 @@
   left: 7px;
   font: 600 8.5px/1 "Helvetica Neue", Helvetica, sans-serif;
   letter-spacing: .1em;
-  color: #8d8981;
-  background: rgba(14, 16, 17, .75);
+  color: #A1A1A6;
+  background: rgba(0, 0, 0, .75);
   padding: 4px 6px;
   border-radius: 4px;
 }
@@ -173,8 +176,10 @@
   text-align: center;
   font: 700 9.5px/1 Oswald, sans-serif;
   letter-spacing: .06em;
-  color: #fff;
-  background: #c4442e;
+  /* Neutre : le rouge est l'aplat de l'action principale, et la position
+     n'a pas de crochet (data-pos) pour prendre le jeu sémantique. */
+  color: #000000;
+  background: #F5F5F7;
   padding: 5px 6px;
   border-radius: 4px;
 }
@@ -186,28 +191,28 @@
 }
 .fz-end-name {
   font: 600 12.5px/1.25 "Helvetica Neue", Helvetica, sans-serif;
-  color: #f2f0eb;
+  color: #F5F5F7;
 }
 .fz-end-team {
   font: 400 10.5px/1 "Helvetica Neue", Helvetica, sans-serif;
-  color: #8d8981;
+  color: #A1A1A6;
 }
 .fz-end-empty {
   padding: 30px 0;
   text-align: center;
   font: 400 12.5px/1.5 "Helvetica Neue", Helvetica, sans-serif;
-  color: #8d8981;
+  color: #A1A1A6;
 }
 
 /* ---- Pied : actions --------------------------------------------------- */
 
 .fz-end-foot {
   padding: 18px 28px 24px;
-  border-top: 1px solid #2a2d2f;
+  border-top: 1px solid #38383A;
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  background: #131517;
+  background: #161617;
 }
 .fz-end-btn {
   flex: 1;
@@ -223,11 +228,11 @@
   transition: transform .15s ease, background .15s ease, border-color .15s ease;
 }
 .fz-end-btn:active { transform: translateY(1px); }
-.fz-end-btn:focus-visible { outline: 2px solid #c4442e; outline-offset: 2px; }
-.fz-end-btn--primary { background: #c4442e; color: #fff; }
-.fz-end-btn--primary:hover { background: #d1503a; }
-.fz-end-btn--ghost { border-color: #3c4044; color: #f2f0eb; background: transparent; }
-.fz-end-btn--ghost:hover { border-color: #6f6b64; background: rgba(255, 255, 255, .04); }
+.fz-end-btn:focus-visible { outline: 2px solid #E62030; outline-offset: 2px; }
+.fz-end-btn--primary { background: #E62030; color: #FFFFFF; }
+.fz-end-btn--primary:hover { background: #C41A28; }
+.fz-end-btn--ghost { border-color: #636366; color: #F5F5F7; background: transparent; }
+.fz-end-btn--ghost:hover { border-color: #A1A1A6; background: rgba(255, 255, 255, .04); }
 
 /* ---- Adaptatif ------------------------------------------------------------ */
 
@@ -268,15 +273,15 @@
   flex: 0 0 auto;
   min-height: 36px;
   padding: 0 14px;
-  border: 1px solid #2a2d2f;
+  border: 1px solid #38383A;
   border-radius: 999px;
   background: transparent;
-  color: #c9c5bd;
+  color: #A1A1A6;
   font: 600 13px/1 "Helvetica Neue", Helvetica, sans-serif;
   white-space: nowrap;
   cursor: pointer;
   transition: border-color .15s ease, color .15s ease, background .15s ease;
 }
-.fz-end-tab:hover { border-color: #E8795E; color: #f3efe7; }
-.fz-end-tab:focus-visible { outline: 2px solid #E8795E; outline-offset: 2px; }
-.fz-end-tab.is-active { background: #E8795E; border-color: #E8795E; color: #17191b; }
+.fz-end-tab:hover { border-color: #E62030; color: #F5F5F7; }
+.fz-end-tab:focus-visible { outline: 2px solid #E62030; outline-offset: 2px; }
+.fz-end-tab.is-active { background: #F5F5F7; border-color: #F5F5F7; color: #000000; }  /* un seul aplat rouge par vue : le bouton principal */

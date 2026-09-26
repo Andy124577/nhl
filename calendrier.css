@@ -35,7 +35,7 @@ body.fz-cal-page { background: var(--bg); }
     font-weight: 800;
     letter-spacing: .08em;
     text-transform: uppercase;
-    color: var(--primary);
+    color: var(--primary-text);
 }
 .cal-title {
     margin: 0;
@@ -65,7 +65,7 @@ body.fz-cal-page { background: var(--bg); }
 }
 .cal-today { padding: 0 14px; cursor: pointer; }
 .cal-jump input { padding: 0 10px; font-weight: 600; color-scheme: light dark; }
-.cal-today:hover { border-color: var(--primary); color: var(--primary); }
+.cal-today:hover { border-color: var(--primary); color: var(--primary-text); }
 
 /* Semaine : ‹ 21 sept. - 27 › dans une seule pastille. Les flèches n'ont
    pas de cadre à elles ; c'est la pastille qui en porte un. */
@@ -97,7 +97,7 @@ body.fz-cal-page { background: var(--bg); }
     stroke-linecap: round;
     stroke-linejoin: round;
 }
-.cal-nav:hover:not(:disabled) { color: var(--primary); }
+.cal-nav:hover:not(:disabled) { color: var(--primary-text); }
 .cal-nav:disabled { opacity: .35; cursor: default; }
 .cal-week-label {
     min-width: 8.5em;
@@ -160,7 +160,7 @@ body.fz-cal-page { background: var(--bg); }
     padding: 0 5px;
     border-radius: 9px;
     background: var(--primary);
-    color: #fff;
+    color: var(--on-primary);
     font-size: .66rem;
     font-weight: 800;
     line-height: 18px;
@@ -169,11 +169,13 @@ body.fz-cal-page { background: var(--bg); }
 .cal-chip.is-active {
     background: var(--primary);
     border-color: var(--primary);
-    color: #fff;
+    color: var(--on-primary);
 }
+/* Blanc plein : à 85 %, il tombait à 3,6:1 sur le rouge. La pastille reste
+   blanche dans les deux thèmes, d'où le rouge-texte du thème clair (5,38:1). */
 .cal-chip.is-active .cal-chip-dow,
-.cal-chip.is-active .cal-chip-count { color: rgba(255, 255, 255, .85); }
-.cal-chip.is-active .cal-chip-mine { background: #fff; color: var(--primary); }
+.cal-chip.is-active .cal-chip-count { color: var(--on-primary); }
+.cal-chip.is-active .cal-chip-mine { background: #fff; color: #d70015; }
 
 /* ---- Filtre « mes joueurs » ---- */
 .cal-filter {
@@ -239,7 +241,7 @@ body.fz-cal-page { background: var(--bg); }
     line-height: 1.4;
     color: var(--text-secondary);
 }
-.cal-game-mine strong { color: var(--primary); }
+.cal-game-mine strong { color: var(--primary-text); }
 
 /* Vers match.html : au pied de la carte, sur toute sa largeur. */
 .cal-game-box {
@@ -252,7 +254,7 @@ body.fz-cal-page { background: var(--bg); }
     padding: 0 14px;
     border-top: 1px solid var(--border-light);
     border-radius: 0 0 14px 14px;
-    color: var(--primary);
+    color: var(--primary-text);
     font-size: .86rem;
     font-weight: 700;
     text-decoration: none;
@@ -275,7 +277,7 @@ body.fz-cal-page { background: var(--bg); }
     letter-spacing: .03em;
 }
 .cal-tag.is-soon { background: transparent; border: 1px solid var(--border-gray); }
-.cal-tag.is-live { background: var(--danger); color: #fff; }
+.cal-tag.is-live { background: var(--danger-deep); color: var(--on-primary); }
 .cal-tag.is-live i {
     width: 7px; height: 7px; border-radius: 50%; background: #fff;
     animation: calPouls 1.4s ease-in-out infinite;

@@ -72,10 +72,10 @@ body.fz-pool-page { background: var(--bg); }
    ce qui le rendrait illisible sur son propre fond. */
 .pp-page a.ps-primary,
 .pp-page a.ps-primary:hover,
-.pp-page a.ps-primary:visited { color: #fff; text-decoration: none; }
+.pp-page a.ps-primary:visited { color: var(--on-primary); text-decoration: none; }
 .pp-page a.ps-secondary,
 .pp-page a.ps-secondary:visited { color: var(--text-main); text-decoration: none; }
-.pp-page a.ps-secondary:hover { color: var(--primary); }
+.pp-page a.ps-secondary:hover { color: var(--primary-text); }
 
 /* ---- En-tête ---- */
 
@@ -103,7 +103,7 @@ body.fz-pool-page { background: var(--bg); }
     font-weight: 800;
     letter-spacing: .08em;
     text-transform: uppercase;
-    color: var(--primary);
+    color: var(--primary-text);
 }
 
 .pp-title {

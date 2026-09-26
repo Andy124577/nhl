@@ -75,10 +75,10 @@
   /* ---- La tuile du tour ----
      « C'est votre tour » / « Au tour de », le choix et la ronde, l'équipe
      au bâton en grand et le temps écoulé. Aussi large que le rail de
-     gauche, dont elle prolonge la colonne. Sombre quand on attend, brique
+     gauche, dont elle prolonge la colonne. Sombre quand on attend, rouge
      quand c'est à soi — et alors elle s'allume puis pulse. */
   body.fz-draft .fzd-hero {
-    --fzd-hero-bg: #241f1a;
+    --fzd-hero-bg: #1D1D1F;
     position: relative;
     overflow: hidden;
     flex: none;
@@ -348,7 +348,7 @@
      passe son texte au blanc ; ici l'aplat est un lavis clair, sur lequel
      ce blanc ne se lisait plus — le titre et le numéro du choix y étaient
      invisibles. Les deux reprennent l'encre de la bande, et l'équipe au
-     bâton la brique, seul accent que la carte porte. */
+     bâton le rouge, seul accent que la carte porte. */
   body.fz-draft .fzd-strip .pick-card.is-current { background: var(--fzd-accent-wash); }
   body.fz-draft .fzd-strip .pick-card.is-current .pick-card-name { color: var(--fzd-ink); }
   body.fz-draft .fzd-strip .pick-card.is-current .pick-card-slot {
@@ -437,7 +437,7 @@
     color: var(--fzd-accent);
   }
   body.fz-draft .fzd-group-count.is-empty { color: var(--fzd-text-faint); }
-  body.fz-draft .fzd-group-count.is-full { color: var(--fzd-ok, #2e7d55); }
+  body.fz-draft .fzd-group-count.is-full { color: var(--fzd-success); }
   body.fz-draft .fzd-group-slots { display: flex; flex-direction: column; gap: 5px; }
 
   body.fz-draft .fzd-slot {
@@ -516,7 +516,7 @@
     overflow: hidden;
   }
   body.fz-draft .fzd-limit-fill { height: 100%; background: var(--fzd-accent-fill); }
-  body.fz-draft .fzd-limit-fill.is-full { background: var(--fzd-ok, #2e7d55); }
+  body.fz-draft .fzd-limit-fill.is-full { background: var(--fzd-success); }
 
 
   /* ==========================================================
@@ -670,7 +670,7 @@
   body.fz-draft .player-selection-card > #availabilityTabs .availability-tab.is-active {
     background: var(--fzd-surface);
     color: var(--fzd-ink);
-    box-shadow: 0 1px 2px rgba(22, 19, 15, .08);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
   }
   /* En sombre, --fzd-surface est plus foncée que la piste : l'onglet
      actif s'y enfonçait au lieu de ressortir. */
@@ -738,7 +738,7 @@
   body.fz-draft .fzd-pos-chip:disabled { opacity: .4; cursor: not-allowed; }
   body.fz-draft .fzd-pos-chip:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(196, 68, 46, .18);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .18);
   }
 
   /* Le sélecteur de position reste dans la page (les pastilles écrivent
@@ -758,7 +758,7 @@
   body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-block--sort:hover { border-color: var(--fzd-ink); }
   body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-block--sort:focus-within {
     border-color: var(--fzd-ink);
-    box-shadow: 0 0 0 3px rgba(196, 68, 46, .12);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .12);
   }
   body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-block--sort .list-filters-title {
     display: block;
@@ -1229,7 +1229,7 @@
   body.fz-draft .fzd-side-tab.is-active:hover { background: var(--fzd-solid); }
   body.fz-draft .fzd-side-tab:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(196, 68, 46, .35);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .35);
   }
   body.fz-draft .fzd-side-tab-count {
     min-width: 19px;
@@ -1426,16 +1426,18 @@
 /* ============================================================
    ÉTIQUETTES DE POSITION
    ------------------------------------------------------------
-   Une pastille par position, une couleur par pastille : dans une
-   liste de plusieurs centaines de lignes, la couleur se repère
-   avant que le texte ne se lise. Le code court (C, AG, AD, D, G,
-   Rec, Éq) tient dans la pastille ; le libellé complet reste dans
-   le title et dans l'étiquette accessible — la couleur ne porte
-   donc jamais l'information toute seule.
+   Une pastille par position, colorée par le jeu sémantique du site
+   (DESIGN.md) : attaquants (C, AG, AD) en vert, défenseurs en cyan,
+   gardiens en jaune, recrues en violet ; l'équipe de la LNH reste
+   neutre. Le code court (C, AG, AD, D, G, Rec, Éq) tient dans la
+   pastille ; le libellé complet reste dans le title et dans
+   l'étiquette accessible — la couleur ne porte donc jamais
+   l'information toute seule.
 
-   Chaque position porte ses deux jetons plutôt qu'une couleur en
-   dur : le thème sombre ne redéfinit que les jetons, jamais la
-   règle de dessin.
+   Chaque position ne pose que sa couleur (--fzd-tag-fg), qui bascule
+   déjà avec le thème ; le fond en est un lavis de 8 % posé sur le
+   blanc en clair, sur le noir en sombre — assez léger pour que le
+   texte garde 4,5:1 dans les deux thèmes, violet compris.
    ============================================================ */
 /* « 76 PJ · 44 B · 86 A », ecrite par fzDeskDecorateRows() pour la
    maquette telephone : sur bureau les colonnes disent deja tout,
@@ -1443,35 +1445,29 @@
 body.fz-draft .fzd-name-line { display: none; }
 
 body.fz-draft .fzd-pos-tag {
+  --fzd-tag-ground: var(--card);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 28px;
   padding: 1px 6px;
   border-radius: 4px;
-  background: var(--fzd-tag-bg, var(--fzd-tile-bg));
+  background: var(--fzd-tag-bg, color-mix(in srgb, var(--fzd-tag-fg, var(--fzd-text)) 8%, var(--fzd-tag-ground)));
   color: var(--fzd-tag-fg, var(--fzd-text));
   font: 700 .625rem/1.2 var(--fzd-font-cond);
   letter-spacing: .1em;
   text-transform: uppercase;
   white-space: nowrap;
 }
+html[data-theme="dark"] body.fz-draft .fzd-pos-tag { --fzd-tag-ground: var(--bg-page); }
 
-body.fz-draft .fzd-pos-tag[data-pos="C"] { --fzd-tag-bg: #dbe9fb; --fzd-tag-fg: #1b4d92; }
-body.fz-draft .fzd-pos-tag[data-pos="L"] { --fzd-tag-bg: #e8ddfa; --fzd-tag-fg: #5a2f9e; }
-body.fz-draft .fzd-pos-tag[data-pos="R"] { --fzd-tag-bg: #fbdcee; --fzd-tag-fg: #93206a; }
-body.fz-draft .fzd-pos-tag[data-pos="D"] { --fzd-tag-bg: #fde3cf; --fzd-tag-fg: #8f4d0e; }
-body.fz-draft .fzd-pos-tag[data-pos="G"] { --fzd-tag-bg: #d1efec; --fzd-tag-fg: #0d5f59; }
-body.fz-draft .fzd-pos-tag[data-pos="star"] { --fzd-tag-bg: #d9f2dc; --fzd-tag-fg: #1d6631; }
-body.fz-draft .fzd-pos-tag[data-pos="T"] { --fzd-tag-bg: #f7e6bf; --fzd-tag-fg: #75560f; }
-
-html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="C"] { --fzd-tag-bg: #1e3a4d; --fzd-tag-fg: #7fc4e8; }
-html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="L"] { --fzd-tag-bg: #1f3b2e; --fzd-tag-fg: #7fd8a6; }
-html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="R"] { --fzd-tag-bg: #3d2c14; --fzd-tag-fg: #e0b466; }
-html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="D"] { --fzd-tag-bg: #3a2030; --fzd-tag-fg: #e195bb; }
-html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="G"] { --fzd-tag-bg: #2c2540; --fzd-tag-fg: #b3a6ee; }
-html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="star"] { --fzd-tag-bg: #332925; --fzd-tag-fg: #c8bcb5; }
-html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="T"] { --fzd-tag-bg: #2a2320; --fzd-tag-fg: #b6a9a2; }
+body.fz-draft .fzd-pos-tag[data-pos="C"],
+body.fz-draft .fzd-pos-tag[data-pos="L"],
+body.fz-draft .fzd-pos-tag[data-pos="R"] { --fzd-tag-fg: var(--success); }
+body.fz-draft .fzd-pos-tag[data-pos="D"] { --fzd-tag-fg: var(--position-def); }
+body.fz-draft .fzd-pos-tag[data-pos="G"] { --fzd-tag-fg: var(--warning); }
+body.fz-draft .fzd-pos-tag[data-pos="star"] { --fzd-tag-fg: var(--rookie); }
+body.fz-draft .fzd-pos-tag[data-pos="T"] { --fzd-tag-bg: var(--fzd-tile-bg); --fzd-tag-fg: var(--fzd-text-muted); }
 
 
 /* Sous 1100px, les onglets reprennent la main et la rangée reste

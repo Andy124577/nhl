@@ -79,7 +79,7 @@
 
 .fz-pool-switch:hover,
 .fz-pool-switch.is-open {
-    color: var(--primary);
+    color: var(--primary-text);
     border-color: var(--primary);
     background: var(--bg-hover);
 }
@@ -95,7 +95,7 @@
     flex-shrink: 0;
     font-size: .7rem;
     font-weight: 800;
-    color: var(--primary);
+    color: var(--primary-text);
     background: rgba(var(--primary-rgb), .14);
     border-radius: 999px;
 }
@@ -166,10 +166,10 @@
     letter-spacing: .02em;
 }
 
-.fz-state-encours { background: rgba(255, 71, 87, .16); color: var(--danger); }
-.fz-state-pret    { background: rgba(0, 230, 118, .15); color: var(--success); }
-.fz-state-attente { background: rgba(255, 179, 0, .15); color: var(--warning); }
-.fz-state-termine { background: rgba(var(--primary-rgb), .14); color: var(--primary); }
+.fz-state-encours { background: rgba(var(--primary-rgb), .16); color: var(--danger); }
+.fz-state-pret    { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
+.fz-state-attente { background: color-mix(in srgb, var(--warning) 15%, transparent); color: var(--warning); }
+.fz-state-termine { background: rgba(var(--primary-rgb), .14); color: var(--primary-text); }
 
 /* ==================== LISTE DES POOLS ==================== */
 
@@ -233,7 +233,7 @@
     text-overflow: ellipsis;
 }
 
-.fz-pool-option-check { width: 16px; height: 16px; color: var(--primary); opacity: 0; flex-shrink: 0; }
+.fz-pool-option-check { width: 16px; height: 16px; color: var(--primary-text); opacity: 0; flex-shrink: 0; }
 .fz-pool-option-check svg { width: 100%; height: 100%; }
 .fz-pool-option.is-active .fz-pool-option-check { opacity: 1; }
 
@@ -252,8 +252,8 @@
 .fz-pool-empty-cta {
     display: block;
     padding: 9px 14px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
-    color: var(--bg);
+    background: var(--primary);
+    color: var(--on-primary);
     border-radius: 10px;
     font-weight: 800;
     font-size: .88rem;
@@ -268,7 +268,7 @@
     text-decoration: none;
 }
 
-.fz-pool-empty-link:hover { color: var(--primary); }
+.fz-pool-empty-link:hover { color: var(--primary-text); }
 
 /* ==================== LIENS DE GESTION ==================== */
 
@@ -301,7 +301,7 @@
     box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb), .3);
 }
 
-.fz-rail-icon { width: 19px; height: 19px; flex-shrink: 0; color: var(--primary); }
+.fz-rail-icon { width: 19px; height: 19px; flex-shrink: 0; color: var(--primary-text); }
 .fz-rail-icon svg { width: 100%; height: 100%; }
 .fz-rail-txt { display: flex; flex-direction: column; min-width: 0; }
 .fz-rail-title { font-weight: 700; font-size: .92rem; }
@@ -354,8 +354,8 @@
    dans l'état vide du rail. */
 .fz-navbar-pool-empty {
     padding: 7px 14px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
-    color: var(--bg);
+    background: var(--primary);
+    color: var(--on-primary);
     font-weight: 800;
     font-size: .88rem;
 }
@@ -468,7 +468,7 @@ body.fz-drawer-open { overflow: hidden; }
 .fz-drawer-page-img { display: inline-flex; width: 20px; height: 20px; color: var(--text-secondary); flex-shrink: 0; }
 .fz-drawer-page-img svg { width: 100%; height: 100%; }
 .fz-drawer-page.is-active .fz-drawer-page-img,
-.fz-drawer-page:hover .fz-drawer-page-img { color: var(--primary); }
+.fz-drawer-page:hover .fz-drawer-page-img { color: var(--primary-text); }
 
 /* ==================== CLOCHE DE NOTIFICATIONS ==================== */
 
@@ -497,7 +497,7 @@ body.fz-drawer-open { overflow: hidden; }
 .fz-notif-btn:hover,
 .fz-notif-btn:focus-visible,
 .fz-notif-btn[aria-expanded="true"] { background: var(--bg-hover); color: var(--text-main); }
-.fz-notif-btn.has-unread { color: var(--primary); }
+.fz-notif-btn.has-unread { color: var(--primary-text); }
 
 .fz-notif-badge {
     position: absolute;
@@ -511,7 +511,7 @@ body.fz-drawer-open { overflow: hidden; }
     justify-content: center;
     border-radius: 999px;
     background: var(--danger-deep);
-    color: #fff;
+    color: var(--on-primary);
     font-size: .7rem;
     font-weight: 800;
     line-height: 1;
@@ -596,7 +596,7 @@ body.fz-drawer-open { overflow: hidden; }
     border: 0;
     border-radius: 6px;
     background: transparent;
-    color: var(--primary);
+    color: var(--primary-text);
     font: inherit;
     font-size: .8rem;
     font-weight: 700;
@@ -685,7 +685,7 @@ body.fz-drawer-open { overflow: hidden; }
 .fz-notif-icon-invitation { background: var(--bg-hover); color: var(--text-secondary); }
 .is-urgent .fz-notif-icon-invitation {
     background: rgba(var(--primary-rgb), .14);
-    color: var(--primary);
+    color: var(--primary-text);
 }
 
 .fz-notif-txt { display: flex; flex: 1; flex-direction: column; gap: 5px; min-width: 0; overflow-wrap: anywhere; }
@@ -714,7 +714,7 @@ body.fz-drawer-open { overflow: hidden; }
     color: var(--text-main);
     font-weight: 800;
 }
-.fz-notif-action { color: var(--primary); font-size: .8rem; font-weight: 700; line-height: 1.5; }
+.fz-notif-action { color: var(--primary-text); font-size: .8rem; font-weight: 700; line-height: 1.5; }
 .fz-notif-item:hover .fz-notif-action,
 .fz-notif-item:focus-visible .fz-notif-action,
 .fz-notif-toast-link:hover .fz-notif-action,
@@ -840,7 +840,7 @@ body.fz-drawer-open { overflow: hidden; }
     flex-shrink: 0;
 }
 
-.fz-context-switch:hover { border-color: var(--primary); color: var(--primary); }
+.fz-context-switch:hover { border-color: var(--primary); color: var(--primary-text); }
 
 @media (min-width: 1100px) { .fz-context-bar { display: none; } }
 
@@ -872,7 +872,7 @@ body.fz-drawer-open { overflow: hidden; }
     font-size: .9rem;
 }
 
-.fz-empty-actions a.primary { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%); color: var(--bg); }
+.fz-empty-actions a.primary { background: var(--primary); color: var(--on-primary); }
 .fz-empty-actions a.secondary { border: 1px solid var(--border-gray); color: var(--text-secondary); }
 
 /* ==================== PETITS ÉCRANS ==================== */
@@ -901,8 +901,12 @@ body.fz-drawer-open { overflow: hidden; }
     .fz-notif-toast { animation: none; }
 }
 
-/* Thème clair : même ambre foncé que la pastille du salon (repechage.css). */
-html[data-theme="light"] .fz-state-attente { color: #7f5300; }
+/* Thème clair : le voile des pastilles descend à 7 % — au-delà, le texte
+   sémantique passe sous 4,5:1 sur le fond clair du rail. */
+html[data-theme="light"] .fz-state-encours,
+html[data-theme="light"] .fz-state-termine { background: rgba(var(--primary-rgb), .07); }
+html[data-theme="light"] .fz-state-pret    { background: color-mix(in srgb, var(--success) 7%, transparent); }
+html[data-theme="light"] .fz-state-attente { background: color-mix(in srgb, var(--warning) 7%, transparent); }
 
 /* ==================== RACCOURCIS & BASCULE DU RAIL ==================== */
 
@@ -916,8 +920,8 @@ html[data-theme="light"] .fz-state-attente { color: #7f5300; }
     align-items: center;
     justify-content: center;
     border-radius: 10px;
-    background: var(--danger);
-    color: #fff;
+    background: var(--danger-deep);
+    color: var(--on-primary);
     font-size: .72rem;
     font-weight: 800;
 }
@@ -947,7 +951,7 @@ html[data-theme="light"] .fz-state-attente { color: #7f5300; }
     }
     .fz-rail-toggle svg { width: 16px; height: 16px; transform: rotate(90deg); transition: transform .2s ease; }
     .fz-rail-toggle:hover,
-    .fz-rail-toggle:focus-visible { color: var(--primary); border-color: var(--primary); }
+    .fz-rail-toggle:focus-visible { color: var(--primary-text); border-color: var(--primary); }
     .fz-rail-toggle[hidden] { display: none; }
 
     body.fz-rail-ferme { --fz-rail-w: 0px; }

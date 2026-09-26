@@ -13,34 +13,40 @@
    ==================================================================== */
 
 body.fz-stats {
-  --fzs-bg: #f7f6f3;
-  --fzs-bg-alt: #f2f0eb;
-  --fzs-bg-page: #dedbd5;
-  --fzs-surface: #ffffff;
-  --fzs-ink: #16181a;
-  --fzs-text: #4b4843;
-  --fzs-text-muted: #6d6a64;
-  --fzs-text-faint: #8a877f;
-  --fzs-text-fainter: #a8a49c;
-  --fzs-border: #e2dfd8;
-  --fzs-border-strong: #cdcac3;
-  --fzs-border-soft: #eae7e0;
-  --fzs-border-input: #d6d3cc;
-  --fzs-accent: #b93d28;
-  --fzs-accent-dark: #8f2e1a;
-  --fzs-accent-wash: #f7e6e2;
-  --fzs-tile: #dcd8d0;
-  /* Aplat de la brique. --fzs-accent s'éclaircit en thème sombre pour
-     rester lisible EN TEXTE ; le fond plein, lui, ne bouge pas — c'est sur
-     lui que le blanc garde ses 5,58:1. Deux rôles, deux jetons. */
-  --fzs-accent-fill: #b93d28;
-  --fzs-on-accent: #ffffff;
-  /* Même dédoublement pour --fzs-ink, qui servait à la fois de couleur de
-     texte la plus appuyée et d'aplat plein : les deux s'inversent en thème
-     sombre, mais pas dans le même sens. */
-  --fzs-solid: #16181a;
-  --fzs-on-solid: #ffffff;
-  --fzs-on-solid-muted: #a8a49c;
+  /* Palette Apple (DESIGN.md, « Colors ») : chaque rôle pointe sur le jeton
+     global d'index.css, qui bascule déjà avec le thème. Plusieurs anciens
+     paliers se confondent — l'échelle d'Apple n'a rien entre deux marches. */
+  --fzs-bg: var(--bg-gray-light);
+  --fzs-bg-alt: var(--bg-gray-light);
+  --fzs-bg-page: var(--bg-page);
+  --fzs-surface: var(--card);
+  --fzs-ink: var(--text-main);
+  --fzs-text: var(--text-main);
+  --fzs-text-muted: var(--text-secondary);
+  --fzs-text-faint: var(--text-secondary);
+  /* Tertiaire : icônes et texte indicatif (placeholder) — jamais un texte à lire. */
+  --fzs-text-fainter: var(--text-light-gray);
+  --fzs-border: var(--border-light);
+  --fzs-border-strong: var(--border-light);
+  --fzs-border-soft: var(--border-light);
+  --fzs-border-input: var(--border-gray);
+  --fzs-accent: var(--primary-text);
+  /* Survol d'un lien rouge : il n'existe pas de troisième rouge texte. */
+  --fzs-accent-dark: var(--primary-text);
+  /* Lavis rouge à 6 % : le texte secondaire d'une rangée survolée y tient
+     encore 4,5:1 en clair (4,34:1 à 10 %). */
+  --fzs-accent-wash: color-mix(in srgb, var(--primary) 6%, var(--card));
+  --fzs-tile: var(--bg-gray-light);
+  /* Le rouge en APLAT (blanc dessus à 4,55:1), et son survol plus foncé ;
+     --fzs-accent est le rouge en TEXTE. */
+  --fzs-accent-fill: var(--primary);
+  --fzs-accent-fill-hover: var(--primary-deep);
+  --fzs-on-accent: var(--on-primary);
+  /* L'aplat « encre » s'inverse avec le thème : #1D1D1F sous libellé blanc
+     en clair, #F5F5F7 sous libellé noir en sombre (bloc suivant). */
+  --fzs-solid: var(--text-main);
+  --fzs-on-solid: #FFFFFF;
+  --fzs-on-solid-muted: #A1A1A6;
 
 
   margin: 0;
@@ -51,41 +57,15 @@ body.fz-stats {
   -webkit-font-smoothing: antialiased;
 }
 /* ============================================================ */
-/* THÈME SOMBRE — remappage des jetons éditoriaux                */
+/* THÈME SOMBRE                                                  */
 /* ------------------------------------------------------------ */
-/* La palette ci-dessus est du papier, posée en dur et sans      */
-/* contrepartie : la page restait blanche même sous              */
-/* data-theme="dark", alors que theme.js démarre en sombre par   */
-/* défaut. Rien d'autre ne change ici — mêmes rôles, mêmes noms, */
-/* mêmes règles en aval ; seules les VALEURS basculent, ce qui   */
-/* est exactement la raison d'être des jetons.                   */
-/*                                                               */
-/* La brique reste la brique là où elle sert d'APLAT             */
-/* (--*-accent-fill, blanc dessus à 5,58:1) ; là où elle sert de */
-/* TEXTE (--*-accent) elle s'éclaircit à #e8795e pour tenir      */
-/* 5,8:1 sur la carte sombre — 2,8:1 sinon, illisible.           */
+/* Les jetons ci-dessus suivent déjà le thème par index.css ;    */
+/* seuls les libellés posés sur l'aplat inversé --fzs-solid      */
+/* (#F5F5F7 en sombre) changent ici.                             */
 /* ============================================================ */
 html[data-theme="dark"] body.fz-stats {
-  --fzs-bg: #1a1a1e;
-  --fzs-bg-alt: #202025;
-  --fzs-bg-page: #131316;
-  --fzs-surface: #1e1e22;
-  --fzs-ink: #f5f5f2;
-  --fzs-text: #c9c6c0;
-  --fzs-text-muted: #a3a099;
-  --fzs-text-faint: #8a877f;
-  --fzs-text-fainter: #6e6b65;
-  --fzs-border: #2e2e33;
-  --fzs-border-strong: #3c3c43;
-  --fzs-border-soft: #27272c;
-  --fzs-border-input: #3a3a41;
-  --fzs-accent: #e8795e;
-  --fzs-accent-dark: #f19b85;
-  --fzs-accent-wash: #351d17;
-  --fzs-tile: #2a2a2f;
-  --fzs-solid: #f0eee9;
-  --fzs-on-solid: #16181a;
-  --fzs-on-solid-muted: #4b4843;
+  --fzs-on-solid: #000000;
+  --fzs-on-solid-muted: #6E6E73;
 }
 
 body.fz-stats * { box-sizing: border-box; }
@@ -105,7 +85,7 @@ body.fz-stats #fzDrawer {
 body.fz-stats nav a { color: var(--text-secondary); }
 body.fz-stats nav a:hover { color: var(--text-main); }
 body.fz-stats nav a.active:hover,
-body.fz-stats nav a.is-active:hover { color: var(--primary); }
+body.fz-stats nav a.is-active:hover { color: var(--primary-text); }
 
 /* ==================== HERO ==================== */
 /* Les halos néon de l'ancien accent appartiennent au thème sombre d'origine —
@@ -159,8 +139,8 @@ body.fz-stats .leader-card-empty { color: var(--fzs-text-faint); }
 
 body.fz-stats .leader-featured { background: var(--fzs-bg-alt); }
 body.fz-stats .leader-featured:hover,
-body.fz-stats .leader-featured:focus-visible { box-shadow: 0 0 0 1px var(--fzs-accent) inset; }
-body.fz-stats .leader-featured-photo { border-color: var(--fzs-accent); }
+body.fz-stats .leader-featured:focus-visible { box-shadow: 0 0 0 1px var(--fzs-accent-fill) inset; }
+body.fz-stats .leader-featured-photo { border-color: var(--fzs-accent-fill); }
 body.fz-stats .leader-featured-name { color: var(--fzs-ink); }
 body.fz-stats .leader-featured-meta { color: var(--fzs-text-faint); }
 body.fz-stats .leader-featured-val {
@@ -171,7 +151,7 @@ body.fz-stats .leader-featured-lbl { color: var(--fzs-text-faint); }
 
 body.fz-stats .leader-row:hover,
 body.fz-stats .leader-row:focus-visible { background: var(--fzs-bg-alt); }
-body.fz-stats .leader-row-rank { color: var(--fzs-text-fainter); }
+body.fz-stats .leader-row-rank { color: var(--fzs-text-faint); }
 body.fz-stats .leader-row-name { color: var(--fzs-ink); }
 body.fz-stats .leader-row-team { color: var(--fzs-text-faint); }
 body.fz-stats .leader-row-val {
@@ -212,8 +192,8 @@ body.fz-stats .player-card {
    d'IA. On garde juste l'ombre/bordure au survol, sans barre. */
 body.fz-stats .player-card::before { display: none; }
 body.fz-stats .player-card:hover {
-  border-color: var(--fzs-accent);
-  box-shadow: 0 4px 16px rgba(196,68,46,.12);
+  border-color: var(--fzs-accent-fill);
+  box-shadow: 0 4px 16px rgba(var(--primary-rgb),.12);
 }
 body.fz-stats .player-rank-badge.gold,
 body.fz-stats .player-rank-badge.silver,
@@ -223,7 +203,7 @@ body.fz-stats .player-rank-badge.bronze {
 }
 body.fz-stats .player-rank-badge.normal {
   background: var(--fzs-bg-alt);
-  color: var(--fzs-text-fainter);
+  color: var(--fzs-text-faint);
 }
 body.fz-stats .player-card-photo .no-photo { color: var(--fzs-text-fainter); }
 body.fz-stats .player-card-name { color: var(--fzs-ink); }
@@ -243,7 +223,7 @@ body.fz-stats .tp-error-retry {
   color: var(--fzs-on-accent);
   box-shadow: none;
 }
-body.fz-stats .tp-error-retry:hover { background: var(--fzs-accent-dark); }
+body.fz-stats .tp-error-retry:hover { background: var(--fzs-accent-fill-hover); }
 
 /* ==================== TOUS LES JOUEURS — filtres ==================== */
 body.fz-stats .filters-section {
@@ -260,15 +240,20 @@ body.fz-stats .filter-group select {
   border-color: var(--fzs-border-input);
   color: var(--fzs-ink);
 }
-body.fz-stats .filter-group input::placeholder { color: var(--fzs-text-faint); }
+body.fz-stats .filter-group input::placeholder { color: var(--fzs-text-fainter); }
 body.fz-stats .filter-group input:focus,
 body.fz-stats .filter-group select:focus {
-  border-color: var(--fzs-accent);
+  border-color: var(--fzs-accent-fill);
   box-shadow: 0 0 0 3px var(--fzs-accent-wash);
   background-color: var(--fzs-surface);
 }
 body.fz-stats .filter-group select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236d6a64' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236E6E73' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
+}
+/* Chevron dans l'URI : pas de var() possible, la teinte secondaire est
+   donc redonnée par thème. */
+html[data-theme="dark"] body.fz-stats .filter-group select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23A1A1A6' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
 }
 
 /* ==================== TOUS LES JOUEURS — tableau ==================== */
@@ -290,12 +275,12 @@ body.fz-stats th {
 }
 body.fz-stats #playerTable th.sortable:hover,
 body.fz-stats #playerTable th.sortable:focus-visible {
-  background: var(--fzs-border-soft);
+  background: var(--fzs-bg);
   color: var(--fzs-ink);
 }
 body.fz-stats #playerTable th.sortable:focus-visible { outline-color: var(--fzs-ink); }
 body.fz-stats #playerTable th.is-sorted {
-  background: var(--fzs-border-soft);
+  background: var(--fzs-bg);
   color: var(--fzs-accent);
 }
 
@@ -312,7 +297,7 @@ body.fz-stats #playerTable tbody tr.is-clickable:focus-visible { outline-color: 
 
 body.fz-stats td { color: var(--fzs-text-muted); }
 body.fz-stats td.rank-col {
-  color: var(--fzs-text-fainter);
+  color: var(--fzs-text-faint);
   font-family: 'Oswald', sans-serif;
 }
 body.fz-stats tbody tr:nth-child(1) td.rank-col,
@@ -328,7 +313,7 @@ body.fz-stats td.player-col { color: var(--fzs-ink); }
 body.fz-stats .player-pos { color: var(--fzs-text-faint); }
 body.fz-stats .player-photo img.face { border-color: var(--fzs-border); }
 body.fz-stats tbody tr:hover .player-photo img.face {
-  border-color: var(--fzs-accent);
+  border-color: var(--fzs-accent-fill);
   box-shadow: none;
 }
 body.fz-stats .player-photo img.logo { border-color: var(--fzs-border-input); }
@@ -346,7 +331,7 @@ body.fz-stats #playerTable tbody td:not(.player-col) {
   font-size: 1.08rem;
   color: var(--fzs-text);
 }
-body.fz-stats #playerTable tbody td.rank-col { font-size: 1rem; color: var(--fzs-text-fainter); }
+body.fz-stats #playerTable tbody td.rank-col { font-size: 1rem; color: var(--fzs-text-faint); }
 body.fz-stats #playerTable tbody tr:nth-child(-n+3) td.rank-col { color: var(--fzs-accent); }
 body.fz-stats #playerTable tbody td.points-column {
   font-weight: 800;
@@ -367,8 +352,9 @@ body.fz-stats .player-team {
   letter-spacing: .1em;
   color: var(--fzs-text-faint);
 }
-/* Pastilles de position : mêmes couleurs que draftDesk.css (.fzd-pos-tag),
-   pour qu'un AD de la salle de repêchage reste un AD ici. */
+/* Pastilles de position : l'ensemble sémantique de DESIGN.md — attaquants
+   (C, AG, AD) en vert, défenseurs en cyan, gardiens en jaune. Lavis à 10 %
+   mêlé à la carte : le libellé y tient 4,5:1 dans les deux thèmes. */
 body.fz-stats .pos-tag {
   display: inline-flex;
   align-items: center;
@@ -383,16 +369,11 @@ body.fz-stats .pos-tag {
   text-decoration: none;
   cursor: inherit;
 }
-body.fz-stats .pos-tag[data-pos="C"] { --pos-bg: #dbe9fb; --pos-fg: #1b4d92; }
-body.fz-stats .pos-tag[data-pos="L"] { --pos-bg: #e8ddfa; --pos-fg: #5a2f9e; }
-body.fz-stats .pos-tag[data-pos="R"] { --pos-bg: #fbdcee; --pos-fg: #93206a; }
-body.fz-stats .pos-tag[data-pos="D"] { --pos-bg: #fde3cf; --pos-fg: #8f4d0e; }
-body.fz-stats .pos-tag[data-pos="G"] { --pos-bg: #d1efec; --pos-fg: #0d5f59; }
-html[data-theme="dark"] body.fz-stats .pos-tag[data-pos="C"] { --pos-bg: #1e3a4d; --pos-fg: #7fc4e8; }
-html[data-theme="dark"] body.fz-stats .pos-tag[data-pos="L"] { --pos-bg: #1f3b2e; --pos-fg: #7fd8a6; }
-html[data-theme="dark"] body.fz-stats .pos-tag[data-pos="R"] { --pos-bg: #3d2c14; --pos-fg: #e0b466; }
-html[data-theme="dark"] body.fz-stats .pos-tag[data-pos="D"] { --pos-bg: #3a2030; --pos-fg: #e195bb; }
-html[data-theme="dark"] body.fz-stats .pos-tag[data-pos="G"] { --pos-bg: #2c2540; --pos-fg: #b3a6ee; }
+body.fz-stats .pos-tag[data-pos="C"],
+body.fz-stats .pos-tag[data-pos="L"],
+body.fz-stats .pos-tag[data-pos="R"] { --pos-bg: color-mix(in srgb, var(--success) 10%, var(--card)); --pos-fg: var(--success); }
+body.fz-stats .pos-tag[data-pos="D"] { --pos-bg: color-mix(in srgb, var(--position-def) 10%, var(--card)); --pos-fg: var(--position-def); }
+body.fz-stats .pos-tag[data-pos="G"] { --pos-bg: color-mix(in srgb, var(--warning) 10%, var(--card)); --pos-fg: var(--warning); }
 
 /* Téléphone : le logo remplace déjà la photo (index.css) et nomme le club,
    son sigle ferait doublon dans une colonne étroite. */
@@ -409,7 +390,7 @@ body.fz-stats .stats-show-more {
   box-shadow: none;
 }
 body.fz-stats .stats-show-more:hover {
-  background: var(--fzs-accent-dark);
+  background: var(--fzs-accent-fill-hover);
   transform: none;
   box-shadow: none;
 }
@@ -428,7 +409,7 @@ body.fz-stats .skeleton-table-row { border-bottom: 1px solid var(--fzs-border-so
 body.fz-stats .skeleton,
 body.fz-stats .leader-skeleton .skeleton,
 body.fz-stats .top-players-section .skeleton {
-  background: linear-gradient(90deg, var(--fzs-border-soft) 25%, var(--fzs-border) 50%, var(--fzs-border-soft) 75%);
+  background: linear-gradient(90deg, var(--fzs-bg-alt) 25%, var(--fzs-border) 50%, var(--fzs-bg-alt) 75%);
   background-size: 200% 100%;
 }
 

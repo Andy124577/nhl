@@ -231,8 +231,8 @@ body {
 
 .turn-banner.waiting { border-color: var(--border-gray); }
 .turn-banner.waiting.next {
-  border-color: rgba(255, 179, 0, .55);
-  box-shadow: 0 0 0 1px rgba(255, 179, 0, .25) inset;
+  border-color: color-mix(in srgb, var(--warning) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--warning) 25%, transparent) inset;
 }
 
 
@@ -251,8 +251,8 @@ body {
 
 .turn-banner.your-turn.is-unbranded { color: var(--text-main); }
 .turn-banner.done {
-  background: rgba(0, 230, 118, .14);
-  border-color: rgba(0, 230, 118, .32);
+  background: color-mix(in srgb, var(--success) 10%, var(--card));
+  border-color: color-mix(in srgb, var(--success) 32%, transparent);
   color: var(--success);
 }
 
@@ -309,14 +309,14 @@ body {
   flex: 0 0 auto;
 }
 .conn-chip.is-reconnecting {
-  background: rgba(255, 179, 0, .14);
-  border-color: rgba(255, 179, 0, .32);
+  background: color-mix(in srgb, var(--warning) 10%, var(--card));
+  border-color: color-mix(in srgb, var(--warning) 32%, transparent);
   color: var(--warning);
 }
 .conn-chip.is-reconnecting::before { animation: connPulse 1.4s ease-in-out infinite; }
 .conn-chip.is-offline {
-  background: rgba(255, 71, 87, .14);
-  border-color: rgba(255, 71, 87, .34);
+  background: color-mix(in srgb, var(--primary) 10%, var(--card));
+  border-color: rgba(var(--primary-rgb), .34);
   color: var(--danger);
 }
 @keyframes connPulse {
@@ -332,8 +332,8 @@ body {
   justify-content: center;
   min-height: 44px;
   padding: 10px 18px;
-  background: rgba(255, 179, 0, .10);
-  border: 1px solid rgba(255, 179, 0, .38);
+  background: color-mix(in srgb, var(--warning) 8%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--warning) 38%, transparent);
   border-radius: 12px;
   color: var(--warning);
   font-family: inherit;
@@ -347,7 +347,7 @@ body {
 }
 .turn-skip-btn[hidden] { display: none; }
 .turn-skip-btn:hover {
-  background: rgba(255, 179, 0, .18);
+  background: color-mix(in srgb, var(--warning) 10%, var(--card));
   border-color: var(--warning);
   transform: translateY(-2px);
 }
@@ -409,7 +409,7 @@ button.select-button.is-connection-blocked {
   width: 100%;
   transform: scaleX(0);
   transform-origin: left center;
-  background: linear-gradient(90deg, var(--primary), var(--primary-deep));
+  background: var(--primary);
   transition: transform .45s cubic-bezier(.4, 0, .2, 1);
 }
 
@@ -435,14 +435,9 @@ button.select-button.is-connection-blocked {
   padding: 16px;
   
 
-  background: rgba(26, 26, 30, .85);
+  background: var(--card);
   border: 1px solid var(--border-light);
   border-radius: 18px;
-}
-html[data-theme="light"] .progress-card,
-html[data-theme="light"] .recent-picks-card,
-html[data-theme="light"] .player-selection-card {
-  background: var(--card);
 }
 
 .progress-card h2,
@@ -483,7 +478,7 @@ html[data-theme="light"] .player-selection-card {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary);
+  color: var(--primary-text);
 }
 .progress-text {
   font-weight: 600;
@@ -550,7 +545,7 @@ html[data-theme="light"] .player-selection-card {
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: .5px;
-  color: var(--primary);
+  color: var(--primary-text);
 }
 .progress-players-grid {
   display: grid;
@@ -643,7 +638,7 @@ html[data-theme="light"] .player-selection-card {
 .carousel-btn:hover:not(:disabled) {
   background: rgba(var(--primary-rgb), .14);
   border-color: var(--primary);
-  color: var(--primary);
+  color: var(--primary-text);
 }
 .carousel-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .carousel-btn:disabled { opacity: .35; cursor: not-allowed; }
@@ -771,7 +766,7 @@ html[data-theme="light"] .player-selection-card {
   border-color: rgba(var(--primary-rgb), .5);
   animation: turnPulse 2.4s ease-in-out infinite;
 }
-.pick-card.is-current .pick-card-name { color: var(--primary); }
+.pick-card.is-current .pick-card-name { color: var(--primary-text); }
 
 
 
@@ -792,7 +787,7 @@ html[data-theme="light"] .player-selection-card {
   padding: 3px 10px;
   border-radius: 999px;
   background: var(--primary);
-  color: var(--bg);
+  color: var(--on-primary);
   font-size: .7rem;
   font-weight: 800;
   letter-spacing: .06em;
@@ -817,8 +812,8 @@ html[data-theme="light"] .player-selection-card {
   min-height: 36px;
   border: 0;
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
-  color: var(--bg);
+  background: var(--primary);
+  color: var(--on-primary);
   font-size: .7rem;
   font-weight: 800;
   letter-spacing: .02em;
@@ -983,7 +978,7 @@ html[data-theme="light"] .player-selection-card {
   color: var(--text-secondary);
   opacity: .18;
 }
-.pick-card.is-current .pick-card-slot { color: var(--primary); opacity: .35; }
+.pick-card.is-current .pick-card-slot { color: var(--primary-text); opacity: .35; }
 
 
 
@@ -996,7 +991,7 @@ html[data-theme="light"] .player-selection-card {
   padding: 3px 5px 4px;
   min-width: 0;
   z-index: 2;
-  background: rgba(10, 12, 16, .78);
+  background: rgba(28, 28, 30, .78);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   border-top: 1px solid rgba(255, 255, 255, .08);
@@ -1178,8 +1173,8 @@ button.select-button {
   min-height: 44px;
   border: 0;
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
-  color: var(--bg);
+  background: var(--primary);
+  color: var(--on-primary);
   font-size: .82rem;
   font-weight: 800;
   cursor: pointer;
@@ -1277,8 +1272,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   margin: 16px 0;
   padding: 22px 18px;
   text-align: center;
-  background: rgba(0, 230, 118, .08);
-  border: 1px solid rgba(0, 230, 118, .35);
+  background: color-mix(in srgb, var(--success) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 35%, transparent);
   border-radius: 14px;
 }
 .draft-status-box p { margin: 8px 0; font-size: .95rem; }
@@ -1294,8 +1289,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   min-height: 48px;
   border: 0;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--success) 0%, var(--success-deep) 100%);
-  color: var(--bg);
+  background: var(--success);
+  color: var(--on-success);
   font-size: .92rem;
   font-weight: 800;
   cursor: pointer;
@@ -1341,7 +1336,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
 }
 .custom-alert-icon.success { color: var(--success); }
 .custom-alert-icon.error   { color: var(--danger); }
-.custom-alert-icon.info    { color: var(--primary); }
+.custom-alert-icon.info    { color: var(--primary-text); }
 .custom-alert-icon.warning { color: var(--warning); }
 .custom-alert-message {
   margin-bottom: 20px;
@@ -1355,8 +1350,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   min-height: 46px;
   border: 0;
   border-radius: 11px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
-  color: var(--bg);
+  background: var(--primary);
+  color: var(--on-primary);
   font-size: .95rem;
   font-weight: 800;
   cursor: pointer;
@@ -1476,8 +1471,8 @@ button.favorite-btn.is-active svg { fill: currentColor; }
 .pick-confirm-btn.is-ghost:hover:not(:disabled) { border-color: var(--text-main); color: var(--text-main); }
 .pick-confirm-btn.is-primary {
   border: 0;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
-  color: var(--bg);
+  background: var(--primary);
+  color: var(--on-primary);
 }
 
 
@@ -1500,7 +1495,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   font-weight: 700;
   cursor: pointer;
 }
-.admin-dropdown-toggle:hover { border-color: var(--primary); color: var(--primary); }
+.admin-dropdown-toggle:hover { border-color: var(--primary); color: var(--primary-text); }
 .admin-dropdown-menu {
   position: absolute;
   top: calc(100% + 7px);
@@ -1733,7 +1728,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   color: var(--text-gray);
   transition: color .2s ease;
 }
-.search-field:focus-within .search-field-icon { color: var(--primary); }
+.search-field:focus-within .search-field-icon { color: var(--primary-text); }
 .search-field .search-input { flex: 1 1 auto; padding-left: 38px; }
 
 
@@ -1830,7 +1825,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
 }
 .panel-tab.is-active {
   background: var(--card);
-  color: var(--primary);
+  color: var(--primary-text);
   box-shadow: 0 1px 5px rgba(0, 0, 0, .28);
 }
 .panel-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
@@ -1865,7 +1860,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   transition: color .18s ease, border-color .18s ease;
 }
 .category-tab:hover { color: var(--text-main); }
-.category-tab.is-active { color: var(--primary); border-bottom-color: var(--primary); }
+.category-tab.is-active { color: var(--primary-text); border-bottom-color: var(--primary); }
 .category-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
 
 
@@ -1910,7 +1905,7 @@ button.favorite-btn.is-active svg { fill: currentColor; }
   outline-offset: -2px;
 }
 .progress-line.is-open { background: rgba(var(--primary-rgb), .11); }
-.progress-line.is-open::after { transform: rotate(180deg); color: var(--primary); }
+.progress-line.is-open::after { transform: rotate(180deg); color: var(--primary-text); }
 .progress-line.is-open .progress-text { color: var(--text-main); }
 
 
@@ -2287,7 +2282,7 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 
 #playerTable tbody tr td.points-column {
   background: rgba(var(--primary-rgb), .12);
-  color: var(--primary);
+  color: var(--primary-text);
   font-weight: 800;
 }
 #playerTable tbody tr:hover td.points-column { background: transparent; }
@@ -2295,7 +2290,7 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 
 #playerTable thead th.points-column {
   background: var(--primary);
-  color: var(--bg);
+  color: var(--on-primary);
 }
 
 
@@ -2351,12 +2346,12 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 .category-tab {
   background: rgba(var(--primary-rgb), .16);
   border-color: var(--primary);
-  color: var(--primary);
+  color: var(--primary-text);
 }
 .category-tab:hover:not(:disabled) {
   background: rgba(var(--primary-rgb), .26);
   border-color: var(--primary);
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 
@@ -2364,7 +2359,7 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 .category-tab.is-active:hover {
   background: var(--primary);
   border-color: var(--primary);
-  color: var(--bg);
+  color: var(--on-primary);
   font-weight: 800;
 }
 
@@ -2516,7 +2511,7 @@ button.select-button .select-icon { width: 14px; height: 14px; }
   padding: 15px 32px;
   background: var(--primary);
   border-radius: 14px;
-  color: var(--bg);
+  color: var(--on-primary);
   font-size: 1rem;
   font-weight: 800;
   letter-spacing: .02em;

@@ -13,40 +13,44 @@
    ==================================================================== */
 
 body.fz-classement {
-  --fzc-bg: #f7f6f3;
-  --fzc-bg-alt: #f2f0eb;
-  --fzc-bg-page: #dedbd5;
-  --fzc-surface: #ffffff;
-  --fzc-ink: #16181a;
-  --fzc-text: #4b4843;
-  --fzc-text-muted: #6d6a64;
-  --fzc-text-faint: #8a877f;
-  --fzc-text-fainter: #a8a49c;
-  --fzc-border: #e2dfd8;
-  --fzc-border-strong: #cdcac3;
-  --fzc-border-soft: #eae7e0;
-  --fzc-border-input: #d6d3cc;
-  --fzc-accent: #b93d28;
-  --fzc-accent-dark: #8f2e1a;
-  --fzc-tile: #dcd8d0;
-  --fzc-gold: #c9982e;
-  --fzc-good-bg: #e9f3ec;
-  --fzc-good: #2f7a4d;
-  --fzc-bad-bg: #fbeae6;
-  --fzc-bad: #b93d28;
-  --fzc-flat-bg: #ece9e2;
-  --fzc-leader-bg: #fbf7ee;
-  /* Aplat de la brique. --fzc-accent s'éclaircit en thème sombre pour
-     rester lisible EN TEXTE ; le fond plein, lui, ne bouge pas — c'est sur
-     lui que le blanc garde ses 5,58:1. Deux rôles, deux jetons. */
-  --fzc-accent-fill: #b93d28;
-  --fzc-on-accent: #ffffff;
-  /* Même dédoublement pour --fzc-ink, qui servait à la fois de couleur de
-     texte la plus appuyée et d'aplat plein : les deux s'inversent en thème
-     sombre, mais pas dans le même sens. */
-  --fzc-solid: #16181a;
-  --fzc-on-solid: #ffffff;
-  --fzc-on-solid-muted: #a8a49c;
+  /* Palette Apple (DESIGN.md, « Colors ») : chaque rôle pointe sur le jeton
+     global d'index.css, qui bascule déjà avec le thème. Plusieurs anciens
+     paliers se confondent — l'échelle d'Apple n'a rien entre deux marches. */
+  --fzc-bg: var(--bg-gray-light);
+  --fzc-bg-alt: var(--bg-gray-light);
+  --fzc-bg-page: var(--bg-page);
+  --fzc-surface: var(--card);
+  --fzc-ink: var(--text-main);
+  --fzc-text: var(--text-main);
+  --fzc-text-muted: var(--text-secondary);
+  --fzc-text-faint: var(--text-secondary);
+  /* Tertiaire : icônes, séparateurs, pastille « nul » — jamais un texte à lire. */
+  --fzc-text-fainter: var(--text-light-gray);
+  --fzc-border: var(--border-light);
+  --fzc-border-strong: var(--border-light);
+  --fzc-border-soft: var(--border-light);
+  --fzc-border-input: var(--border-gray);
+  --fzc-accent: var(--primary-text);
+  /* Survol d'un lien rouge : il n'existe pas de troisième rouge texte. */
+  --fzc-accent-dark: var(--primary-text);
+  --fzc-tile: var(--bg-gray-light);
+  --fzc-gold: var(--warning);
+  --fzc-good-bg: color-mix(in srgb, var(--success) 10%, var(--card));
+  --fzc-good: var(--success);
+  --fzc-bad-bg: color-mix(in srgb, var(--primary) 10%, var(--card));
+  --fzc-bad: var(--primary-text);
+  --fzc-flat-bg: var(--bg-gray-light);
+  --fzc-leader-bg: color-mix(in srgb, var(--warning) 8%, var(--card));
+  /* Le rouge en APLAT (blanc dessus à 4,55:1) ; --fzc-accent est le rouge
+     en TEXTE. Deux rôles, deux jetons. */
+  --fzc-accent-fill: var(--primary);
+  --fzc-on-accent: var(--on-primary);
+  /* L'aplat « encre » s'inverse avec le thème : #1D1D1F sous libellé blanc
+     en clair, #F5F5F7 sous libellé noir en sombre (bloc suivant). */
+  --fzc-solid: var(--text-main);
+  --fzc-on-solid: #FFFFFF;
+  --fzc-on-solid-muted: #A1A1A6;
+  --fzc-on-solid-gold: #FFD60A;
 
 
   margin: 0;
@@ -58,47 +62,16 @@ body.fz-classement {
   overflow-x: hidden;
 }
 /* ============================================================ */
-/* THÈME SOMBRE — remappage des jetons éditoriaux                */
+/* THÈME SOMBRE                                                  */
 /* ------------------------------------------------------------ */
-/* La palette ci-dessus est du papier, posée en dur et sans      */
-/* contrepartie : la page restait blanche même sous              */
-/* data-theme="dark", alors que theme.js démarre en sombre par   */
-/* défaut. Rien d'autre ne change ici — mêmes rôles, mêmes noms, */
-/* mêmes règles en aval ; seules les VALEURS basculent, ce qui   */
-/* est exactement la raison d'être des jetons.                   */
-/*                                                               */
-/* La brique reste la brique là où elle sert d'APLAT             */
-/* (--*-accent-fill, blanc dessus à 5,58:1) ; là où elle sert de */
-/* TEXTE (--*-accent) elle s'éclaircit à #e8795e pour tenir      */
-/* 5,8:1 sur la carte sombre — 2,8:1 sinon, illisible.           */
+/* Les jetons ci-dessus suivent déjà le thème par index.css ;    */
+/* seuls les libellés posés sur l'aplat inversé --fzc-solid      */
+/* (#F5F5F7 en sombre) changent ici.                             */
 /* ============================================================ */
 html[data-theme="dark"] body.fz-classement {
-  --fzc-bg: #1a1a1e;
-  --fzc-bg-alt: #202025;
-  --fzc-bg-page: #131316;
-  --fzc-surface: #1e1e22;
-  --fzc-ink: #f5f5f2;
-  --fzc-text: #c9c6c0;
-  --fzc-text-muted: #a3a099;
-  --fzc-text-faint: #8a877f;
-  --fzc-text-fainter: #6e6b65;
-  --fzc-border: #2e2e33;
-  --fzc-border-strong: #3c3c43;
-  --fzc-border-soft: #27272c;
-  --fzc-border-input: #3a3a41;
-  --fzc-accent: #e8795e;
-  --fzc-accent-dark: #f19b85;
-  --fzc-tile: #2a2a2f;
-  --fzc-gold: #e0b84d;
-  --fzc-good-bg: #17301f;
-  --fzc-good: #7fc08d;
-  --fzc-bad-bg: #351d17;
-  --fzc-bad: #e8795e;
-  --fzc-flat-bg: #26262b;
-  --fzc-leader-bg: #2a2418;
-  --fzc-solid: #f0eee9;
-  --fzc-on-solid: #16181a;
-  --fzc-on-solid-muted: #4b4843;
+  --fzc-on-solid: #000000;
+  --fzc-on-solid-muted: #6E6E73;
+  --fzc-on-solid-gold: #B25000;
 }
 
 body.fz-classement * { box-sizing: border-box; }
@@ -118,7 +91,7 @@ body.fz-classement #fzDrawer {
 body.fz-classement nav a { color: var(--text-secondary); }
 body.fz-classement nav a:hover { color: var(--text-main); }
 body.fz-classement nav a.active:hover,
-body.fz-classement nav a.is-active:hover { color: var(--primary); }
+body.fz-classement nav a.is-active:hover { color: var(--primary-text); }
 
 body.fz-classement .container {
   max-width: 960px;
@@ -194,11 +167,11 @@ body.fz-classement #standingsTable thead th {
 body.fz-classement #standingsTable th.points-column { color: var(--fzc-accent); }
 body.fz-classement #standingsTable th.sortable:hover,
 body.fz-classement #standingsTable th.sortable:focus-visible {
-  background: var(--fzc-border-soft);
+  background: var(--fzc-bg);
   color: var(--fzc-ink);
 }
 body.fz-classement #standingsTable th.is-sorted {
-  background: var(--fzc-border-soft);
+  background: var(--fzc-bg);
   color: var(--fzc-accent);
 }
 body.fz-classement #standingsTable th.sortable:focus-visible { outline-color: var(--fzc-ink); }
@@ -248,7 +221,7 @@ body.fz-classement .st-rank-badge {
 body.fz-classement .st-rank-badge.gold,
 body.fz-classement .st-rank-badge.silver,
 body.fz-classement .st-rank-badge.bronze { color: var(--fzc-accent); }
-body.fz-classement .st-rank-badge:not(.gold):not(.silver):not(.bronze) { color: var(--fzc-text-fainter); }
+body.fz-classement .st-rank-badge:not(.gold):not(.silver):not(.bronze) { color: var(--fzc-text-faint); }
 
 body.fz-classement .st-participant { gap: 10px; }
 body.fz-classement .st-avatar {
@@ -405,7 +378,10 @@ body.fz-classement .hof-card-label {
   text-transform: uppercase;
   color: var(--fzc-text-faint);
 }
-body.fz-classement .hof-card-hero .hof-card-label { color: var(--fzc-on-solid-muted); }
+body.fz-classement .hof-card-hero .hof-card-label,
+body.fz-classement .hof-card-hero .hof-card-date,
+body.fz-classement .hof-card-hero .hof-empty { color: var(--fzc-on-solid-muted); }
+body.fz-classement .hof-card-hero .hof-icon.is-best { fill: var(--fzc-on-solid-gold); }
 body.fz-classement .hof-card-value {
   margin: 0 0 6px;
   font: 700 24px/1 'Oswald', sans-serif;
@@ -443,13 +419,13 @@ body.fz-classement .leaderboard-row {
   border-color: var(--fzc-border);
   background: var(--fzc-surface);
 }
-body.fz-classement .lb-rank { color: var(--fzc-text-fainter); }
+body.fz-classement .lb-rank { color: var(--fzc-text-faint); }
 body.fz-classement .lb-rank.gold,
 body.fz-classement .lb-rank.silver,
 body.fz-classement .lb-rank.bronze { color: var(--fzc-accent); }
 body.fz-classement .lb-team { color: var(--fzc-ink); }
 body.fz-classement .lb-pts { color: var(--fzc-accent); }
-body.fz-classement .lb-source { color: var(--fzc-text-fainter); }
+body.fz-classement .lb-source { color: var(--fzc-text-faint); }
 
 /* ==================== SKELETON (chargement) ==================== */
 body.fz-classement .standings-table-skeleton {
@@ -524,7 +500,7 @@ body.fz-classement .phm-badge {
   padding: 5px 11px;
   border: 1px solid color-mix(in srgb, var(--fzc-accent-fill) 45%, transparent);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--fzc-accent-fill) 12%, transparent);
+  background: color-mix(in srgb, var(--fzc-accent-fill) 10%, var(--fzc-surface));
   color: var(--fzc-accent);
   font: 600 10.5px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -566,7 +542,7 @@ body.fz-classement .h2h-tab:hover {
   color: var(--fzc-ink);
 }
 body.fz-classement .h2h-tab.active {
-  background: color-mix(in srgb, var(--fzc-accent-fill) 16%, transparent);
+  background: color-mix(in srgb, var(--fzc-accent-fill) 10%, var(--fzc-surface));
   border-color: color-mix(in srgb, var(--fzc-accent-fill) 45%, transparent);
   color: var(--fzc-accent);
   box-shadow: none;
@@ -726,7 +702,7 @@ body.fz-classement .fz-empty-title {
 body.fz-classement .fz-empty-hint {
   margin: 0;
   font: 400 11px/1.4 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  color: var(--fzc-text-fainter);
+  color: var(--fzc-text-faint);
 }
 
 /* -------------------- Table de saison (carte) -------------------- */
@@ -756,13 +732,13 @@ body.fz-classement .st-card #standingsTable td.points-column {
 body.fz-classement .st-card #standingsTable tbody tr.is-leader,
 body.fz-classement .st-card #standingsTable tbody tr.is-leader td.rank-col,
 body.fz-classement .st-card #standingsTable tbody tr.is-leader td.player-col {
-  background: color-mix(in srgb, var(--fzc-accent-fill) 9%, var(--fzc-surface));
+  background: color-mix(in srgb, var(--fzc-accent-fill) 6%, var(--fzc-surface));
 }
 body.fz-classement .st-card #standingsTable tbody tr.is-leader td.points-column {
   background: color-mix(in srgb, var(--fzc-accent-fill) 34%, var(--fzc-surface));
   color: var(--fzc-ink);
 }
-/* Le meneur d'un pool H2H se marque en brique, pas en or : ici l'or ne dit
+/* Le meneur d'un pool H2H se marque en rouge, pas en or : ici l'or ne dit
    rien de plus que le rang 1 déjà lisible à gauche. */
 body.fz-classement .st-card #standingsTable tbody tr.is-leader.is-clickable::after {
   background: var(--fzc-accent-fill);
@@ -853,7 +829,7 @@ body.fz-classement .standings-insights.is-h2h .time-filter {
   text-align: center;
 }
 body.fz-classement .standings-insights.is-h2h .time-filter.active {
-  background: color-mix(in srgb, var(--fzc-accent-fill) 16%, transparent);
+  background: color-mix(in srgb, var(--fzc-accent-fill) 10%, var(--fzc-surface));
   border-color: color-mix(in srgb, var(--fzc-accent-fill) 45%, transparent);
   color: var(--fzc-accent);
 }
@@ -1000,7 +976,7 @@ body.fz-classement .st-summary {
   margin: 0 0 14px;
   padding: 14px 16px;
   border: 1px solid var(--fzc-border);
-  border-left: 4px solid var(--fzc-accent);
+  border-left: 4px solid var(--fzc-accent-fill);
   border-radius: 12px;
   background: var(--fzc-surface);
 }
@@ -1026,9 +1002,9 @@ body.fz-classement .st-period-label {
 }
 body.fz-classement .st-period-bar .st-period-chips { display: flex; margin: 0; }
 
-body.fz-classement #standingsTable tbody tr.is-me td { background: color-mix(in srgb, var(--fzc-accent) 7%, transparent); }
+body.fz-classement #standingsTable tbody tr.is-me td { background: color-mix(in srgb, var(--fzc-accent-fill) 6%, transparent); }
 body.fz-classement #standingsTable tbody tr.is-me td.player-col .st-name { font-weight: 800; color: var(--fzc-ink); }
-body.fz-classement #standingsTable tbody tr.is-me td.rank-col { box-shadow: inset 3px 0 0 var(--fzc-accent); }
+body.fz-classement #standingsTable tbody tr.is-me td.rank-col { box-shadow: inset 3px 0 0 var(--fzc-accent-fill); }
 
 body.fz-classement .st-legend {
   margin: 12px 0 0;
@@ -1082,7 +1058,7 @@ body.fz-classement .bench-pending {
   margin: 0 0 12px;
   padding: 10px 12px;
   list-style: none;
-  border-left: 3px solid var(--fzc-accent);
+  border-left: 3px solid var(--fzc-accent-fill);
   border-radius: 8px;
   background: var(--fzc-bg-alt);
   font-size: .86rem;
@@ -1122,8 +1098,8 @@ body.fz-classement .bench-go {
   padding: 0 14px;
   border: 0;
   border-radius: 10px;
-  background: var(--fzc-accent);
-  color: #fff;
+  background: var(--fzc-accent-fill);
+  color: var(--fzc-on-accent);
   font: 700 .86rem/1 inherit;
   cursor: pointer;
 }
@@ -1132,7 +1108,7 @@ body.fz-classement .bench-select:focus-visible,
 body.fz-classement .bench-go:focus-visible { outline: 2px solid var(--fzc-accent); outline-offset: 2px; }
 body.fz-classement .bench-empty { margin: 0; color: var(--fzc-text-faint); }
 body.fz-classement .bench-msg { margin: 12px 0 0; font-size: .86rem; font-weight: 600; color: var(--fzc-ink); }
-body.fz-classement .bench-msg.is-error { color: #c4293a; }
+body.fz-classement .bench-msg.is-error { color: var(--fzc-accent); }
 @media (max-width: 520px) {
   body.fz-classement .bench-swap { width: 100%; }
   body.fz-classement .bench-select { flex: 1 1 auto; }

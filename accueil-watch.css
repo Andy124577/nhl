@@ -19,7 +19,8 @@
     letter-spacing: .04em;
     cursor: pointer;
 }
-.fzh-watch-filter select:hover { border-color: var(--fzd-border-strong); }
+/* Un menu est un contrôle : au survol, le contour de contrôle d'Apple. */
+.fzh-watch-filter select:hover { border-color: var(--border-gray); }
 .fzh-watch-count {
     flex: 0 0 auto; white-space: nowrap;
     font: 500 11px/1 'Barlow Condensed', sans-serif;
@@ -34,7 +35,9 @@
 .fzd-off-tag.is-watch { background: var(--fzd-accent-tint); color: var(--fzd-accent); }
 .fzd-off-card.is-saved .fzd-off-tag.is-watch { background: var(--fzd-accent-fill); color: var(--fzd-on-accent); }
 [data-watch-panel] .fzh-watch-row[role=button] { cursor: pointer; }
-[data-watch-panel] .fzh-watch-row:hover { border-color: var(--fzd-border-strong); }
+/* Carte cliquable : le filet passe au rouge à 40 % au survol (DESIGN.md,
+   Cards) — le séparateur et le contour fort sont désormais la même valeur. */
+[data-watch-panel] .fzh-watch-row:hover { border-color: rgba(var(--primary-rgb), .4); }
 [data-watch-panel] .fzh-watch-row.is-saved { border-color: var(--fzd-accent); }
 /* La raison de suivre est une phrase, pas un chiffre : elle s'étale sur trois
    lignes et s'arrête là, sinon une fiche bavarde étirerait toute la rangée. */
@@ -62,7 +65,7 @@
 
 /* La fiche ouverte depuis une carte garde la note longue de la trousse en
    tête ; un buteur du calendrier n'en a pas, et la barre se retire. */
-.fzh-career-note { margin: 0 0 16px; padding: 12px; border-left: 3px solid #26a6ff; color: #c9d9e9; line-height: 1.5; }
+.fzh-career-note { margin: 0 0 16px; padding: 12px; border-left: 3px solid var(--position-def); color: var(--text-main); line-height: 1.5; }
 .fzh-career-note[hidden] { display: none; }
 
 [data-watch-panel] :focus-visible { outline: 2px solid var(--fzd-accent); outline-offset: 2px; }
@@ -73,9 +76,9 @@
    pas se paginer de deux façons. */
 .fzh .fzd-off-dots { gap: 5px; }
 .fzh .fzd-off-dot { width: 6px; height: 12px; }
-.fzh .fzd-off-dot::after { height: 3px; background: #2a3648; }
+.fzh .fzd-off-dot::after { height: 3px; background: #38383A; }
 .fzh .fzd-off-dot.is-active { width: 16px; }
-.fzh .fzd-off-dot.is-active::after { background: #f3372c; }
+.fzh .fzd-off-dot.is-active::after { background: var(--primary); }
 
 @media (max-width: 768px) {
     .fzh-watch-filter select { max-width: none; }
@@ -89,7 +92,7 @@
    change de contenu une fois les choix faits (fzdRendreSurveiller). */
 .fzd-off-tag.is-sale { background: var(--fzd-accent-tint); color: var(--fzd-accent); }
 a.fzh-ligue-card { color: inherit; text-decoration: none; }
-a.fzh-ligue-card:hover { border-color: var(--fzd-border-strong); }
+a.fzh-ligue-card:hover { border-color: rgba(var(--primary-rgb), .4); }
 a.fzh-ligue-card:focus-visible { outline: 2px solid var(--fzd-accent); outline-offset: 2px; }
 .fzh-ligue-card.is-sale .fzd-off-stat-val { color: var(--fzd-accent); }
 .fzh-ligue-text {

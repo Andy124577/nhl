@@ -12,7 +12,7 @@
    (DESIGN.md) veut qu'un nouvel état gagne l'une des quatre teintes
    existantes ou retombe sur l'échelle neutre. La gravité prend donc le
    rouge et l'ambre, et la suspension — qui n'est pas une blessure, mais
-   une indisponibilité — passe au neutre. L'orchidée reste au badge
+   une indisponibilité — passe au neutre. Le violet reste au badge
    « recrue », son unique fonction.
    ============================================================ */
 
@@ -59,12 +59,11 @@
 /* Réserve des blessés : la seule absence dont on sait qu'elle dure. Elle
    passe en aplat plein là où les autres restent en teinte, ce qui la
    distingue au coup d'œil sans ajouter de texte dans une rangée déjà
-   dense. Le libellé est fixé à scoreboard-white dans les deux thèmes :
-   --danger reste assez sombre de part et d'autre pour le porter, alors
-   que --text-main vire au quasi-noir en thème clair. */
+   dense. Aplat --danger-deep (le rouge de remplissage) et libellé
+   --on-primary, blanc dans les deux thèmes. */
 .inj-badge[data-status="Injured Reserve"] {
-  color: #F5F5F7;
-  background: var(--danger);
+  color: var(--on-primary);
+  background: var(--danger-deep);
 }
 
 .inj-badge[data-status="Day-To-Day"] {
@@ -117,14 +116,16 @@
   height: 17px;
   border-radius: 6px;
   flex: 0 0 auto;
-  color: #F5F5F7;
-  background: var(--danger);
+  color: var(--on-primary);
+  background: var(--danger-deep);
 }
 .cmh-inj-icon svg { display: block; width: 10px; height: 10px; }
-/* Même raisonnement que pour l'accent : l'ambre est trop lumineuse pour
-   porter un libellé clair — elle prend arena-black. */
-.cmh-injury[data-status="Day-To-Day"] .cmh-inj-icon { background: var(--warning); color: #121214; }
-.cmh-injury[data-status="Suspension"] .cmh-inj-icon { background: var(--text-gray); }
+/* L'ambre et le gris sont clairs en thème sombre et foncés en thème clair :
+   l'icône prend un libellé noir en sombre, blanc en clair. */
+.cmh-injury[data-status="Day-To-Day"] .cmh-inj-icon { background: var(--warning); color: #000000; }
+.cmh-injury[data-status="Suspension"] .cmh-inj-icon { background: var(--text-gray); color: #000000; }
+html[data-theme="light"] .cmh-injury[data-status="Day-To-Day"] .cmh-inj-icon,
+html[data-theme="light"] .cmh-injury[data-status="Suspension"] .cmh-inj-icon { color: #FFFFFF; }
 
 /* Le détail (statut complet, dates) reste accessible via l'attribut
    `title` posé par renderInjuryBanner() — la ligne visible ne porte plus

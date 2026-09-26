@@ -49,7 +49,7 @@
     background: rgba(var(--primary-rgb),.12);
     border: 1px solid rgba(var(--primary-rgb),.3);
     border-radius: 100px;
-    color: var(--primary);
+    color: var(--primary-text);
     font-size: .78rem;
     font-weight: 700;
     letter-spacing: 2px;
@@ -114,7 +114,7 @@
 }
 
 .sub-nav-btn:hover {
-    color: var(--primary);
+    color: var(--primary-text);
     background: rgba(var(--primary-rgb),.06);
 }
 
@@ -124,7 +124,7 @@
 }
 
 .sub-nav-btn.active {
-    color: var(--primary);
+    color: var(--primary-text);
     background: rgba(var(--primary-rgb),.12);
     border-color: rgba(var(--primary-rgb),.35);
     box-shadow: var(--glow-primary);
@@ -153,7 +153,7 @@
     color: var(--text-secondary);
 }
 .pool-page-foot a {
-    color: var(--primary);
+    color: var(--primary-text);
     font-weight: 700;
     text-decoration: none;
 }
@@ -215,7 +215,7 @@
 
 /* Pool image upload area in create form */
 .pool-img-upload-area {
-    border: 2px dashed var(--border-gray, rgba(255,255,255,.15));
+    border: 2px dashed var(--border-gray);
     border-radius: 10px; padding: 20px 16px;
     text-align: center; cursor: pointer;
     transition: border-color .2s ease, background .2s ease;
@@ -269,8 +269,8 @@
 /* ============================================================ */
 .pool-action-btn {
     padding: 11px 24px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
-    color: var(--bg);
+    background: var(--primary);
+    color: var(--on-primary);
     border: none;
     border-radius: 10px;
     font-weight: 800;
@@ -289,7 +289,7 @@
 
 .pool-action-btn.secondary {
     background: transparent;
-    color: var(--primary);
+    color: var(--primary-text);
     border: 2px solid rgba(var(--primary-rgb),.35);
     box-shadow: none;
 }
@@ -326,7 +326,7 @@
     margin-bottom: 4px;
 }
 .pool-empty-state a {
-    color: var(--primary);
+    color: var(--primary-text);
     font-weight: 700;
     text-decoration: none;
 }
@@ -344,9 +344,10 @@
 }
 
 .form-card {
-    background: rgba(26,26,30,.88);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    /* Matière d'Apple : carte translucide, flou de 20px (les deux thèmes). */
+    background: var(--material);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--border-light);
     border-radius: 18px;
     padding: 28px 28px 24px;
@@ -439,7 +440,7 @@
 .form-group input[type="number"] { text-align: center; font-size: 1.15rem; }
 
 .form-group select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237B8CC4' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2386868B' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 16px center;
     padding-right: 40px;
@@ -521,8 +522,8 @@
 .warning-message {
     margin-top: 14px;
     padding: 12px 16px;
-    background: rgba(255,179,0,.1);
-    border: 1px solid rgba(255,179,0,.3);
+    background: color-mix(in srgb, var(--warning) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
     border-radius: 12px;
     color: var(--warning);
     font-size: .88rem;
@@ -537,8 +538,8 @@
 .create-btn {
     width: 100%;
     padding: 17px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
-    color: var(--bg);
+    background: var(--primary);
+    color: var(--on-primary);
     border: none;
     border-radius: 14px;
     font-size: 1.1rem;
@@ -594,8 +595,8 @@
     min-width: 20px;
     height: 20px;
     padding: 0 6px;
-    background: var(--danger);
-    color: var(--text-main);
+    background: var(--danger-deep);
+    color: var(--on-primary);
     border-radius: 100px;
     font-size: .7rem;
     font-weight: 800;
@@ -610,12 +611,12 @@
 .draft-item { list-style: none; }
 
 .draft-item.active-draft {
-    border-color: rgba(255,71,87,.5) !important;
-    background: rgba(255,71,87,.06) !important;
+    border-color: rgba(var(--primary-rgb),.5) !important;
+    background: rgba(var(--primary-rgb),.06) !important;
 }
 .draft-item.ready-draft {
-    border-color: rgba(0,230,118,.5) !important;
-    background: rgba(0,230,118,.06) !important;
+    border-color: color-mix(in srgb, var(--success) 50%, transparent) !important;
+    background: color-mix(in srgb, var(--success) 6%, transparent) !important;
 }
 .draft-item.waiting-draft {
     border-color: var(--border-gray) !important;
@@ -623,15 +624,19 @@
 }
 
 .draft-active-badge {
-    background: rgba(255,71,87,.12) !important;
+    background: rgba(var(--primary-rgb),.12) !important;
     color: var(--danger) !important;
-    border-color: rgba(255,71,87,.25) !important;
+    border-color: rgba(var(--primary-rgb),.25) !important;
 }
 .draft-ready-badge {
-    background: rgba(0,230,118,.12) !important;
+    background: color-mix(in srgb, var(--success) 12%, transparent) !important;
     color: var(--success) !important;
-    border-color: rgba(0,230,118,.25) !important;
+    border-color: color-mix(in srgb, var(--success) 25%, transparent) !important;
 }
+/* Thème clair : au-delà de 7 % de voile, le rouge et le vert en texte
+   passent sous 4,5:1 sur la carte. */
+html[data-theme="light"] .draft-active-badge { background: rgba(var(--primary-rgb),.07) !important; }
+html[data-theme="light"] .draft-ready-badge { background: color-mix(in srgb, var(--success) 7%, transparent) !important; }
 .draft-waiting-badge {
     background: var(--bg-hover) !important;
     color: var(--text-gray) !important;
@@ -645,30 +650,32 @@
     overflow: hidden;
 }
 .draft-progress-fill {
-    background: linear-gradient(90deg, var(--danger), #FF6B7A);
+    background: var(--primary);
     height: 100%;
     border-radius: 6px;
     transition: width .3s ease;
 }
 
 .draft-resume-btn {
-    background: linear-gradient(135deg, var(--danger) 0%, #E03E4E 100%) !important;
-    color: var(--text-main) !important;
+    background: var(--danger-deep) !important;
+    color: var(--on-primary) !important;
     border: none !important;
     box-shadow: var(--glow-danger) !important;
 }
 .draft-resume-btn:hover {
-    box-shadow: 0 0 30px rgba(255,71,87,.4) !important;
+    background: var(--primary-deep) !important;
+    box-shadow: 0 0 30px rgba(var(--primary-rgb),.4) !important;
 }
 
 .draft-start-btn {
-    background: linear-gradient(135deg, var(--success) 0%, #00C864 100%) !important;
-    color: var(--bg) !important;
+    background: var(--success) !important;
+    color: var(--on-success) !important;
     border: none !important;
     box-shadow: var(--glow-success) !important;
 }
 .draft-start-btn:hover {
-    box-shadow: 0 0 30px rgba(0,230,118,.4) !important;
+    background: var(--success-deep) !important;
+    box-shadow: 0 0 30px color-mix(in srgb, var(--success) 40%, transparent) !important;
 }
 
 .draft-waiting-btn {
@@ -710,7 +717,7 @@
 }
 
 .modal-header {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
+    background: var(--primary);
     padding: 24px 28px;
     border-radius: 20px 20px 0 0;
     position: relative;
@@ -718,7 +725,7 @@
 .modal-content h2 {
     font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
     font-size: 1.6rem;
-    color: var(--bg);
+    color: var(--on-primary);
     margin: 0;
     font-weight: 400;
     letter-spacing: 1px;
@@ -733,7 +740,7 @@
     border: none;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    color: var(--bg);
+    color: var(--on-primary);
     font-size: 1.5rem;
     font-weight: 300;
     line-height: 1;
@@ -760,8 +767,8 @@
 
 .modal-content button {
     padding: 11px 22px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
-    color: var(--bg);
+    background: var(--primary);
+    color: var(--on-primary);
     border: none;
     border-radius: 10px;
     font-size: .95rem;
@@ -783,7 +790,7 @@
 .modal-content button.secondary:hover {
     background: var(--card-white);
     border-color: var(--primary);
-    color: var(--primary);
+    color: var(--primary-text);
 }
 
 #clanDetails {
@@ -797,7 +804,7 @@
     border: 1px solid var(--border-light);
     border-radius: 12px;
 }
-#clanDetails strong { color: var(--primary); font-weight: 700; }
+#clanDetails strong { color: var(--primary-text); font-weight: 700; }
 
 /* ============================================================ */
 /* MODALE « CHOISIR UNE ÉQUIPE » (#clan-members-modal)          */
@@ -1106,7 +1113,7 @@
 .modal-content .cm-rename-pencil:focus-visible {
     background: color-mix(in srgb, var(--primary) 14%, transparent);
     border-color: color-mix(in srgb, var(--primary) 40%, transparent);
-    color: var(--primary);
+    color: var(--primary-text);
 }
 /* Validation : même gabarit que le crayon, teinte d'accord. */
 .modal-content .cm-rename-ok {
@@ -1278,7 +1285,7 @@
     border-bottom: 1px solid var(--border-light);
 }
 .trade-items-list li:last-child { border-bottom: none; }
-.trade-arrow-icon { font-size: 2.2rem; color: var(--primary); }
+.trade-arrow-icon { font-size: 2.2rem; color: var(--primary-text); }
 
 .trade-proposal-actions {
     display: flex;
@@ -1294,22 +1301,23 @@
     transition: all .2s ease;
 }
 .trade-accept-btn {
-    background: linear-gradient(135deg, var(--success) 0%, #00C864 100%);
-    color: var(--bg);
+    background: var(--success);
+    color: var(--on-success);
     border: none;
     box-shadow: var(--glow-success);
 }
 .trade-accept-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 0 30px rgba(0,230,118,.4);
+    background: var(--success-deep);
+    box-shadow: 0 0 30px color-mix(in srgb, var(--success) 40%, transparent);
 }
 .trade-decline-btn {
     background: transparent;
     color: var(--danger);
-    border: 2px solid rgba(255,71,87,.35);
+    border: 2px solid rgba(var(--primary-rgb),.35);
 }
 .trade-decline-btn:hover {
-    background: rgba(255,71,87,.08);
+    background: rgba(var(--primary-rgb),.08);
     border-color: var(--danger);
     transform: translateY(-1px);
 }
@@ -1366,19 +1374,12 @@
 }
 
 /* ============================================================ */
-/* LIGHT MODE — hardcoded rgba overrides                         */
-/* ============================================================ */
-html[data-theme="light"] .form-card {
-    background: rgba(255, 255, 255, 0.95);
-}
-
-/* ============================================================ */
 /* DRAFTED PLAYERS SECTION (in viewClanTeams modal)             */
 /* ============================================================ */
 .picks-section {
     margin-top: 12px;
     padding-top: 10px;
-    border-top: 1px solid rgba(255,255,255,.08);
+    border-top: 1px solid var(--border-light);
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -1393,7 +1394,7 @@ html[data-theme="light"] .form-card {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .04em;
-    color: var(--primary, var(--primary));
+    color: var(--primary-text);
     min-width: 74px;
     padding-top: 6px;
     flex-shrink: 0;
@@ -1407,22 +1408,23 @@ html[data-theme="light"] .form-card {
     display: flex;
     align-items: center;
     gap: 5px;
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.1);
+    background: var(--bg-gray-light);
+    border: 1px solid var(--border-light);
     border-radius: 20px;
     padding: 3px 10px 3px 4px;
     font-size: .78rem;
-    color: var(--text-main, #eee);
+    color: var(--text-main);
     transition: background .15s;
 }
-.pick-chip:hover { background: rgba(255,255,255,.12); }
+/* Un cran au-dessus de la pastille : #3A3A3C en sombre, --bg-hover en clair. */
+.pick-chip:hover { background: #3A3A3C; }
 .pick-headshot {
     width: 28px;
     height: 28px;
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
-    background: rgba(255,255,255,.08);
+    background: #3A3A3C;
 }
 .pick-team-logo {
     border-radius: 4px;
@@ -1436,10 +1438,8 @@ html[data-theme="light"] .form-card {
     text-overflow: ellipsis;
 }
 
-html[data-theme="light"] .picks-section { border-top-color: rgba(0,0,0,.1); }
-html[data-theme="light"] .pick-chip { background: rgba(0,0,0,.05); border-color: rgba(0,0,0,.1); color: #222; }
-html[data-theme="light"] .pick-chip:hover { background: rgba(0,0,0,.1); }
-html[data-theme="light"] .pick-headshot { background: rgba(0,0,0,.05); }
+html[data-theme="light"] .pick-chip:hover,
+html[data-theme="light"] .pick-headshot { background: var(--bg-hover); }
 
 /* ==================== DENSITÉ SUR GRAND ÉCRAN ==================== */
 @media (min-width: 769px) {
@@ -1502,7 +1502,7 @@ html[data-theme="light"] .pick-headshot { background: rgba(0,0,0,.05); }
 .modal-content .password-toggle:focus-visible {
     background: color-mix(in srgb, var(--primary) 14%, transparent);
     border-color: color-mix(in srgb, var(--primary) 40%, transparent);
-    color: var(--primary);
+    color: var(--primary-text);
 }
 /* Les deux pictogrammes cohabitent dans le bouton : seul celui qui décrit
    l'action suivante s'affiche. Un échange en JS obligerait à recréer le
@@ -1536,12 +1536,12 @@ html[data-theme="light"] .pick-headshot { background: rgba(0,0,0,.05); }
     line-height: 1.5;
     color: var(--text-dark);
 }
-.pool-pw-intro strong { color: var(--primary); }
+.pool-pw-intro strong { color: var(--primary-text); }
 .pool-pw-error {
     margin-top: 12px;
     padding: 9px 12px;
-    background: color-mix(in srgb, var(--danger) 10%, transparent);
-    border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+    background: rgba(var(--primary-rgb), .07);
+    border: 1px solid rgba(var(--primary-rgb), .35);
     border-radius: 9px;
     color: var(--danger);
     font-size: .84rem;
@@ -1638,11 +1638,11 @@ html[data-theme="light"] .pick-headshot { background: rgba(0,0,0,.05); }
     cursor: pointer;
     transition: all .2s ease;
 }
-.pool-filter-chip:hover { border-color: var(--primary); color: var(--primary); }
+.pool-filter-chip:hover { border-color: var(--primary); color: var(--primary-text); }
 .pool-filter-chip.is-active {
     background: var(--primary);
     border-color: var(--primary);
-    color: var(--bg);
+    color: var(--on-primary);
 }
 
 /* Pastille d'accès dans la fiche du pool. */
@@ -1685,7 +1685,7 @@ html[data-theme="light"] .pick-headshot { background: rgba(0,0,0,.05); }
    liste qui la suit : ne rien choisir du tout. Elle est donc plus
    appuyée que les cartes voisines — c'est le chemin le plus court
    vers une partie — sans devenir un deuxième accent : le halo et le
-   liseré restent la brique du site (Règle du Signal Unique).         */
+   liseré restent le rouge du site (Règle du Signal Unique).          */
 /* ============================================================ */
 .fz-instant {
     position: relative;
@@ -1734,8 +1734,8 @@ html[data-theme="light"] .pick-headshot { background: rgba(0,0,0,.05); }
     width: 52px;
     height: 52px;
     border-radius: 14px;
-    color: var(--bg);
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
+    color: var(--on-primary);
+    background: var(--primary);
     box-shadow: var(--glow-primary);
 }
 .fz-instant-icon::after {
@@ -1787,7 +1787,7 @@ html[data-theme="light"] .pick-headshot { background: rgba(0,0,0,.05); }
     flex-shrink: 0;
     font-size: 1.6rem;
     line-height: 1;
-    color: var(--primary);
+    color: var(--primary-text);
     transition: transform .25s ease;
 }
 .fz-instant:hover:not(:disabled) .fz-instant-chev { transform: translateX(4px); }
@@ -1866,8 +1866,8 @@ html[data-theme="light"] .pick-headshot { background: rgba(0,0,0,.05); }
 .cm-join-error {
     margin: 6px 0 0;
     padding: 9px 12px;
-    background: color-mix(in srgb, var(--danger) 10%, transparent);
-    border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+    background: rgba(var(--primary-rgb), .07);
+    border: 1px solid rgba(var(--primary-rgb), .35);
     border-radius: 9px;
     color: var(--danger);
     font-size: .84rem;

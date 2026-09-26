@@ -32,7 +32,7 @@ h1 {
 
 /* Table Container */
 .table-container {
-    background: var(--card-white);
+    background: var(--card);
     border-radius: 12px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     overflow: hidden;
@@ -47,8 +47,8 @@ table {
 }
 
 thead {
-    background: linear-gradient(135deg, var(--danger) 0%, var(--danger) 100%);
-    color: var(--card-white);
+    background: var(--primary);
+    color: var(--on-primary);
 }
 
 thead th {
@@ -66,7 +66,7 @@ thead th:first-child {
 }
 
 tbody tr {
-    border-bottom: 1px solid var(--bg-gray-light);
+    border-bottom: 1px solid var(--border-light);
     transition: background-color 0.2s ease;
 }
 
@@ -86,13 +86,13 @@ tbody td {
 tbody td:first-child {
     text-align: center;
     font-weight: 700;
-    color: var(--danger);
+    color: var(--primary-text);
     font-size: 1.1rem;
 }
 
 /* Team name clickable */
 .team-name {
-    color: var(--danger);
+    color: var(--primary-text);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -101,8 +101,8 @@ tbody td:first-child {
 }
 
 .team-name:hover {
-    text-decoration-color: var(--danger);
-    color: var(--danger);
+    text-decoration-color: var(--primary-text);
+    color: var(--primary-text);
 }
 
 /* Position badges */
@@ -110,8 +110,8 @@ tbody td:first-child {
     display: inline-block;
     width: 35px;
     height: 35px;
-    background: var(--danger);
-    color: var(--card-white);
+    background: var(--primary);
+    color: var(--on-primary);
     border-radius: 50%;
     text-align: center;
     line-height: 35px;
@@ -137,7 +137,7 @@ tbody td:first-child {
 /* Stats highlighting */
 .stats-pts {
     font-weight: 700;
-    color: var(--danger);
+    color: var(--primary-text);
     font-size: 1.05rem;
 }
 
@@ -169,7 +169,7 @@ tbody td:first-child {
 }
 
 .modal-content {
-    background-color: var(--card-white);
+    background-color: var(--card);
     margin: 5% auto;
     width: 90%;
     max-width: 900px;
@@ -190,8 +190,8 @@ tbody td:first-child {
 }
 
 .modal-header {
-    background: linear-gradient(135deg, var(--danger) 0%, var(--danger) 100%);
-    color: var(--card-white);
+    background: var(--primary);
+    color: var(--on-primary);
     padding: 20px 25px;
     border-radius: 12px 12px 0 0;
     display: flex;
@@ -206,7 +206,7 @@ tbody td:first-child {
 }
 
 .close {
-    color: var(--card-white);
+    color: var(--on-primary);
     font-size: 2rem;
     font-weight: bold;
     cursor: pointer;
@@ -237,13 +237,13 @@ tbody td:first-child {
     align-items: center;
     gap: 15px;
     padding: 12px;
-    background: var(--bg-hover);
+    background: var(--bg-gray-light);
     border-radius: 8px;
     transition: all 0.2s ease;
 }
 
 .player-card:hover {
-    background: var(--bg-gray-light);
+    background: var(--bg-hover);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -329,7 +329,7 @@ tbody td:first-child {
 }
 
 .player-position {
-    color: var(--danger);
+    color: var(--primary-text);
     font-weight: 600;
     font-size: 0.85rem;
 }
@@ -371,7 +371,7 @@ tbody td:first-child {
 .today-label {
     font-size: 0.65rem;
     font-weight: 600;
-    color: var(--text-light-gray);
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -380,7 +380,7 @@ tbody td:first-child {
 .total-points {
     font-size: 1.3rem;
     font-weight: 700;
-    color: var(--danger);
+    color: var(--primary-text);
     min-width: 50px;
     text-align: center;
 }
@@ -388,7 +388,7 @@ tbody td:first-child {
 .pts-label {
     font-size: 0.65rem;
     font-weight: 600;
-    color: var(--danger);
+    color: var(--primary-text);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }

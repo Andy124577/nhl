@@ -631,7 +631,8 @@ function storyTeamVars(cote, abbrev) {
         // Les chiffres de pointage montent d'un cran : la couleur brute d'un
         // club sombre (Toronto, Vancouver) ne se lit pas en petit sur du noir.
         `--sl-${cote}-vif: ${teinter(accent, 0.22)}`,
-        `--sl-${cote}-puce: ${melanger(accent, '#0C1318', 0.45)}`
+        // Fond de la carte du tableau indicateur (#1C1C1E, accueil.css).
+        `--sl-${cote}-puce: ${melanger(accent, '#1C1C1E', 0.45)}`
     ].join('; ');
 }
 

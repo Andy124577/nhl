@@ -200,10 +200,10 @@
      * local prend son autre couleur, ou un gris neutre.
      */
     function couleursDuMatch(away, home) {
-        const fond = (getComputedStyle(document.documentElement).getPropertyValue('--card') || '').trim() || '#1E1E22';
+        const fond = (getComputedStyle(document.documentElement).getPropertyValue('--card') || '').trim() || '#1C1C1E';
         const lum = typeof hexLuminance === 'function' ? hexLuminance : () => 0.1;
         const nuance = typeof shadeHex === 'function' ? shadeHex : h => h;
-        const paire = typeof getTeamColors === 'function' ? getTeamColors : () => ['#8C8C95', '#8C8C95'];
+        const paire = typeof getTeamColors === 'function' ? getTeamColors : () => ['#A1A1A6', '#A1A1A6'];
         const contraste = (a, b) => {
             const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
             return (x + 0.05) / (y + 0.05);
@@ -229,7 +229,7 @@
         let H = lisible(h1);
         if (ecart(A, H) < 90) {
             const autre = lisible(h2);
-            H = ecart(A, autre) >= 90 ? autre : lisible('#8C8C95');
+            H = ecart(A, autre) >= 90 ? autre : lisible('#A1A1A6');
         }
         return { away: A, home: H };
     }

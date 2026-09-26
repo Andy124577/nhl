@@ -175,7 +175,7 @@ async function loadActiveDrafts() {
 
         // Populate Active Drafts tab
         if (activeDraftsList.length === 0) {
-            document.getElementById("activeDrafts").innerHTML = "<p style='text-align: center; color: #666; padding: 20px;'>Aucun draft actif en cours.</p>";
+            document.getElementById("activeDrafts").innerHTML = "<p style='text-align: center; color: var(--text-secondary); padding: 20px;'>Aucun draft actif en cours.</p>";
         } else {
             let activeDraftsHTML = "";
             activeDraftsList.forEach(clanName => {
@@ -194,7 +194,7 @@ async function loadActiveDrafts() {
 
     } catch (error) {
         console.error("❌ Erreur lors du chargement des drafts actifs :", error);
-        document.getElementById("activeDrafts").innerHTML = "<p style='text-align: center; color: #ff2e2e;'>Erreur de chargement.</p>";
+        document.getElementById("activeDrafts").innerHTML = "<p style='text-align: center; color: var(--primary-text);'>Erreur de chargement.</p>";
     }
 }
 

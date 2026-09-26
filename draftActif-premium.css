@@ -8,61 +8,71 @@ body.fz-draft {
   --fzd-font: 'Barlow', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --fzd-font-cond: 'Barlow Condensed', 'Oswald', 'Helvetica Neue', Helvetica, sans-serif;
 
-  --fzd-bg: #f7f6f3;
-  --fzd-bg-alt: #f2f0eb;
-  --fzd-bg-page: #dedbd5;
-  --fzd-surface: #ffffff;
-  --fzd-ink: #16181a;
-  --fzd-ink-soft: #3d3a35;
-  --fzd-text: #4b4843;
-  --fzd-text-muted: #65625c;
-  --fzd-text-faint: #68655f;   /* 4,6:1 sur les tuiles #e6e3db ; #8a877f restait à 3,3:1 */
-  --fzd-text-fainter: #68655f;
-  --fzd-text-dim: #68655f;    /* en-tete de tableau, code d'equipe */
-  --fzd-text-ghost: #68655f;  /* notes de rangee, codes de choix ; #a8a49c tombait à 2,3:1 */
-  --fzd-border: #e2dfd8;
-  --fzd-border-strong: #cdcac3;
-  --fzd-border-soft: #eae7e0;
-  --fzd-border-input: #d6d3cc;
-  --fzd-accent: #b93d28;
-  --fzd-accent-dark: #8f2e1a;
-  --fzd-accent-hover: #8f2e1a;
-  --fzd-accent-wash: #f7e6e2;
-  --fzd-accent-border: #eabdb2;
-  /* Aplat de la brique. --fzd-accent s'éclaircit en thème sombre pour rester
-     lisible EN TEXTE ; le fond plein, lui, ne bouge pas — c'est sur lui que
-     le blanc garde ses 5,58:1. Deux rôles, deux jetons. */
-  --fzd-accent-fill: #b93d28;
-  --fzd-on-accent: #ffffff;
-  --fzd-tile-bg: #e6e3db;
-  --fzd-tile-bg-strong: #d8d5cd;
-  --fzd-success: #2e7d54;
+  /* Palette Apple : chaque rôle pointe sur le jeton général d'index.css,
+     qui bascule déjà d'un thème à l'autre. Ne restent en dur que les rôles
+     sans jeton général (aplat inversé, piste d'onglets, tuile appuyée) —
+     leur valeur sombre est dans le bloc html[data-theme="dark"] plus bas. */
+  --fzd-bg: var(--navbar-bg);          /* bandes du haut : le prolongement de la barre */
+  --fzd-bg-alt: var(--bg-gray-light);
+  --fzd-bg-page: var(--bg-page);
+  --fzd-surface: var(--card);
+  --fzd-ink: var(--text-main);
+  --fzd-ink-soft: var(--text-main);
+  --fzd-text: var(--text-main);
+  --fzd-text-muted: var(--text-secondary);
+  /* Les quatre crans pâles portent du texte à lire : libellé secondaire
+     (4,66:1 au pire en clair, 5,42:1 en sombre), jamais le tertiaire. */
+  --fzd-text-faint: var(--text-secondary);
+  --fzd-text-fainter: var(--text-secondary);
+  --fzd-text-dim: var(--text-secondary);    /* en-tete de tableau, code d'equipe */
+  --fzd-text-ghost: var(--text-secondary);  /* notes de rangee, codes de choix */
+  --fzd-border: var(--border-light);
+  --fzd-border-strong: var(--border-light);
+  --fzd-border-soft: var(--border-light);
+  --fzd-border-input: var(--border-gray);
+  --fzd-accent: var(--primary-text);
+  --fzd-accent-dark: var(--primary-text);
+  --fzd-accent-hover: var(--primary-deep);
+  /* 6 % en clair : le libellé secondaire y garde 4,6:1 (10 % en sombre). */
+  --fzd-accent-wash: color-mix(in srgb, var(--primary) 6%, var(--card));
+  --fzd-accent-border: rgba(var(--primary-rgb), .35);
+  /* Le rouge a deux jetons : --fzd-accent est le rouge EN TEXTE (il change de
+     valeur selon le thème), --fzd-accent-fill l'aplat, identique partout —
+     blanc dessus à 4,55:1 ; son survol (--fzd-accent-hover) fonce. */
+  --fzd-accent-fill: var(--primary);
+  --fzd-on-accent: var(--on-primary);
+  --fzd-tile-bg: var(--bg-gray-light);
+  --fzd-tile-bg-strong: #E8E8ED;
+  --fzd-success: var(--success);
   /* Pastille de logo : les écussons de la LNH sont dessinés pour un fond
      clair et se noieraient sur une surface sombre. Ce jeton ne bascule pas —
      c'est le seul blanc volontairement fixe des deux thèmes. */
   --fzd-logo-bg: #ffffff;
-  --fzd-warning: #b8860b;
-  --fzd-warning-bg: #f4e9d8;
-  --fzd-warning-border: #e3c98b;
-  --fzd-warning-text: #8a6a17;
-  --fzd-danger: #b93d28;
+  --fzd-warning: var(--warning);
+  --fzd-warning-bg: color-mix(in srgb, var(--warning) 10%, var(--card));
+  --fzd-warning-border: color-mix(in srgb, var(--warning) 35%, var(--card));
+  --fzd-warning-text: var(--warning);
+  --fzd-danger: var(--danger);
 
   /* --fzd-ink portait deux rôles en thème clair : le texte le plus appuyé ET
      l'aplat des boutons primaires / onglets actifs / bandeau de tour. Les
      deux s'inversent en thème sombre (le texte s'éclaircit, l'aplat doit
      rester contrasté avec son libellé) : ils sont séparés ici. */
-  --fzd-solid: #16181a;
-  --fzd-solid-soft: #3d3a35;
+  --fzd-solid: #1D1D1F;
+  --fzd-solid-soft: #3A3A3C;
   --fzd-solid-hover: #000000;
-  --fzd-on-solid: #ffffff;
-  --fzd-on-solid-muted: #c9c5bd;
-  --fzd-on-solid-faint: #8a877f;
-  --fzd-on-solid-border: #4b4f53;
+  --fzd-on-solid: #FFFFFF;
+  --fzd-on-solid-muted: #A1A1A6;
+  --fzd-on-solid-faint: #A1A1A6;
+  --fzd-on-solid-border: #636366;
+  /* Le rouge en texte SUR l'aplat : l'aplat est sombre en clair et clair en
+     sombre, il prend donc la valeur de texte de l'autre thème. */
+  --fzd-accent-on-solid: #FF5C66;
 
   /* Onglets de panneau : la piste, son survol et son libellé au repos. */
-  --fzd-tab-track: #e7e4dd;
-  --fzd-tab-hover: #dedbd3;
-  --fzd-tab-text: #5e5b55;
+  --fzd-tab-track: var(--bg-gray-light);
+  --fzd-tab-hover: #E8E8ED;
+  --fzd-tab-text: var(--text-secondary);
 
   /* Vue Glace. La patinoire est une surface à part — de la glace, pas une
      carte — mais elle s'assombrit avec le reste : sinon c'est le seul
@@ -86,70 +96,28 @@ body.fz-draft {
 /* ============================================================ */
 /* THÈME SOMBRE — remappage des jetons éditoriaux                */
 /* ------------------------------------------------------------ */
-/* La palette ci-dessus est du papier, posée en dur et sans      */
-/* contrepartie : la page restait blanche même sous              */
-/* data-theme="dark", alors que theme.js démarre en sombre par   */
-/* défaut. Rien d'autre ne change ici — mêmes rôles, mêmes noms, */
-/* mêmes règles en aval ; seules les VALEURS basculent, ce qui   */
-/* est exactement la raison d'être des jetons.                   */
-/*                                                               */
-/* La brique reste la brique là où elle sert d'APLAT             */
-/* (--*-accent-fill, blanc dessus à 5,58:1) ; là où elle sert de */
-/* TEXTE (--*-accent) elle s'éclaircit à #e8795e pour tenir      */
-/* 5,8:1 sur la carte sombre — 2,8:1 sinon, illisible.           */
+/* La palette ci-dessus suit déjà le thème par les jetons         */
+/* généraux. Ne restent ici que les rôles sans jeton général :    */
+/* mêmes noms, mêmes règles en aval, seules les VALEURS basculent.*/
 /* ============================================================ */
 html[data-theme="dark"] body.fz-draft {
-  /* Valeurs relevees une a une sur Repechage.dc.html : un brun tres
-     sombre plutot qu'un gris neutre, et la brique remontee a #e2552c.
-     Les ROLES ne bougent pas — seules les valeurs. */
-  --fzd-bg: #0f0c0b;          /* bandes du haut, tuiles du carrousel   */
-  --fzd-bg-alt: #1c1715;      /* pastilles, champs, survol de rangee   */
-  --fzd-bg-page: #141110;     /* le fond de la page                    */
-  --fzd-surface: #171312;     /* rails, en-tete du tableau             */
-  --fzd-rail-foot: #131010;   /* pied du rail gauche (limites d'equipe)*/
-  --fzd-ink: #f2ebe6;
-  --fzd-ink-soft: #c8bcb5;
-  --fzd-text: #c8bcb5;
-  --fzd-text-muted: #b6a9a2;
-  --fzd-text-faint: #9a8d86;
-  --fzd-text-fainter: #8f837c; /* #7d716b : 3,8:1 sur les tuiles */
-  --fzd-text-dim: #8b7e78;    /* en-tete de tableau, code d'equipe */
-  --fzd-text-ghost: #8f837c;  /* notes de rangee, codes de choix ; #6f625c : 3:1 */
-  --fzd-border: #201a18;      /* filet entre deux rangees              */
-  --fzd-border-strong: #2a2320;
-  --fzd-border-soft: #241d1b;
-  --fzd-border-input: #2f2724;
-  --fzd-accent: #e2552c;
-  --fzd-accent-dark: #f07a56;
-  --fzd-accent-hover: #b03c1f;
-  --fzd-accent-wash: #1e1614;
-  --fzd-accent-border: #4a2c1f;
-  --fzd-accent-fill: #c94724; /* blanc dessus : 4,8:1 (#e2552c : 3,8:1) */
-  --fzd-on-accent: #ffffff;
-  --fzd-tile-bg: #2a2320;
-  --fzd-tile-bg-strong: #332925;
-  --fzd-success: #7fd8a6;
-  --fzd-warning: #e0b466;
-  --fzd-warning-bg: #3d2c14;
-  --fzd-warning-border: #4a2c1f;
-  --fzd-warning-text: #e0b466;
-  --fzd-danger: #e2552c;
+  --fzd-rail-foot: #161617;   /* pied du rail (limites d'equipe) : le chrome */
+  --fzd-accent-wash: color-mix(in srgb, var(--primary) 10%, var(--card));
+  --fzd-tile-bg-strong: #3A3A3C;
 
-  /* L'aplat plein reste clair sur sombre : c'est la tuile « en attente »
-     de la maquette (#e9e2d3, texte #1b1512). */
-  --fzd-solid: #e9e2d3;
-  --fzd-solid-soft: #d6cdb9;
-  --fzd-solid-hover: #f3ecdd;
-  --fzd-on-solid: #1b1512;
-  --fzd-on-solid-muted: #4a3f38;
-  --fzd-on-solid-faint: #6f625c;
-  --fzd-on-solid-border: #b8ad9a;
+  /* L'aplat plein s'inverse : clair sur sombre, libellé noir. */
+  --fzd-solid: #F5F5F7;
+  --fzd-solid-soft: #E8E8ED;
+  --fzd-solid-hover: #FFFFFF;
+  --fzd-on-solid: #000000;
+  --fzd-on-solid-muted: #6E6E73;
+  --fzd-on-solid-faint: #6E6E73;
+  --fzd-on-solid-border: #86868B;
+  --fzd-accent-on-solid: #D70015;
 
-  --fzd-tab-track: #1c1715;
-  --fzd-tab-hover: #241d1b;
-  --fzd-tab-text: #9a8d86;
+  --fzd-tab-hover: #3A3A3C;
 
-  --fzd-logo-bg: #f2ebe6;
+  --fzd-logo-bg: #F5F5F7;
 
   /* La maquette ne montre pas de patinoire (draftDesk.css la masque sur
      bureau) ; sous 1100px elle reste telle quelle. */
@@ -162,45 +130,9 @@ html[data-theme="dark"] body.fz-draft {
   --fzd-ice-empty: rgba(255, 255, 255, .07);
 }
 
-/* ============================================================ */
-/* LE MOBILIER PARTAGE, AU TON DE LA MAQUETTE                    */
-/* ------------------------------------------------------------ */
-/* La barre du haut, le rail des pools et tout ce que index.css  */
-/* dessine sur cette page lisent les jetons GENERAUX du site, pas */
-/* les --fzd-*. Ils restaient donc sur le gris neutre et le cyan- */
-/* brique du reste du site pendant que la page passait au brun de */
-/* Repechage.dc.html : deux palettes sur un meme ecran.          */
-/*                                                               */
-/* Remappage porte par body.fz-draft, donc STRICTEMENT sur cette */
-/* page : aucune autre vue ne change. Les jetons gardent leur     */
-/* role — seules les valeurs suivent la maquette.                */
-/* ============================================================ */
-html[data-theme="dark"] body.fz-draft {
-  --navbar-bg: #0f0c0b;
-  --navbar-border: #2a2320;
-
-  --bg: #141110;
-  --bg-page: #141110;
-  --card: #171312;
-  --card-white: #1c1715;
-  --bg-gray-light: #171312;
-  --bg-odd-row: #1c1715;
-  --bg-hover: #1c1715;
-
-  --primary: #e2552c;
-  --primary-deep: #c94724;
-  --primary-rgb: 226, 85, 44;
-
-  --text-main: #f2ebe6;
-  --text-dark: #c8bcb5;
-  --text-secondary: #9a8d86;
-  --text-gray: #8b7e78;
-  --text-light-gray: #8f837c;
-
-  --border-light: #201a18;
-  --border-gray: #2a2320;
-  --border-table: #201a18;
-}
+/* Le mobilier partagé (barre du haut, rail des pools) lit les jetons
+   généraux : ils portent déjà la même palette que la page, plus de
+   remappage ici. */
 
 body.fz-draft * { box-sizing: border-box; }
 body.fz-draft a { color: var(--fzd-accent); text-decoration: none; }
@@ -243,7 +175,7 @@ body.fz-draft nav a:hover {
    perdre sa couleur d'accent à l'onglet déjà actif au survol. */
 body.fz-draft nav a.active:hover,
 body.fz-draft nav a.is-active:hover {
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 
@@ -350,7 +282,8 @@ body.fz-draft .turn-banner-marquee-item {
   font-weight: 600;
 }
 
-body.fz-draft .turn-banner.done { background: var(--fzd-accent-wash); color: var(--fzd-accent-dark); }
+/* Repêchage terminé : l'aplat vert du succès, son libellé --on-success. */
+body.fz-draft .turn-banner.done { background: var(--success); color: var(--on-success); }
 body.fz-draft .turn-banner.done::before { content: none; }
 
 body.fz-draft .turn-clock { opacity: .85; font-weight: 600; }
@@ -416,7 +349,7 @@ body.fz-draft .turn-banner.your-turn .turn-banner-text {
   font-size: .78rem;
   font-weight: 400;
   letter-spacing: 0;
-  color: var(--fzd-text-faint);
+  color: var(--fzd-on-solid-muted);   /* sur l'aplat du bandeau */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -458,7 +391,7 @@ body.fz-draft .turn-skip-btn {
   letter-spacing: .04em;
 }
 body.fz-draft .turn-skip-btn:hover { border-color: var(--fzd-ink); background: var(--fzd-bg-alt); }
-body.fz-draft .turn-skip-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(196, 68, 46, .18); }
+body.fz-draft .turn-skip-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .18); }
 body.fz-draft .turn-skip-btn:disabled { opacity: .45; }
 
 
@@ -541,7 +474,7 @@ body.fz-draft .pick-card-turn-round { font-size: .6rem; color: var(--fzd-text-fa
 body.fz-draft .pick-card.is-current .pick-card-turn-num,
 body.fz-draft .pick-card.is-current .pick-card-turn-round { color: var(--fzd-on-solid-faint); }
 body.fz-draft .pick-card.is-my-turn .pick-card-turn-num {
-  color: var(--fzd-accent);
+  color: var(--fzd-accent-on-solid);
   font-weight: 700;
   letter-spacing: .12em;
 }
@@ -626,7 +559,7 @@ body.fz-draft .pick-card-foot {
   -webkit-backdrop-filter: none;
   border-top: 1px solid var(--fzd-border);
 }
-body.fz-draft .pick-card.is-current .pick-card-foot { border-top-color: rgba(255, 255, 255, .14); }
+body.fz-draft .pick-card.is-current .pick-card-foot { border-top-color: color-mix(in srgb, var(--fzd-on-solid) 14%, transparent); }
 body.fz-draft .pick-card-owner {
   display: block;
   font-size: .68rem;
@@ -638,7 +571,7 @@ body.fz-draft .pick-card-owner {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-body.fz-draft .pick-card.is-current .pick-card-owner { color: var(--fzd-accent); }
+body.fz-draft .pick-card.is-current .pick-card-owner { color: var(--fzd-accent-on-solid); }
 
 body.fz-draft .pick-card-meta { display: none; }
 
@@ -665,7 +598,7 @@ body.fz-draft .pick-card-select-btn {
   white-space: nowrap;
   box-shadow: none;
 }
-body.fz-draft .pick-card-select-btn:hover { background: var(--fzd-accent-dark); transform: none; }
+body.fz-draft .pick-card-select-btn:hover { background: var(--fzd-accent-hover); transform: none; }
 body.fz-draft .pick-card-initials { color: var(--fzd-text-muted); }
 body.fz-draft .pick-card-logo-chip { background: var(--fzd-logo-bg); border: 1px solid var(--fzd-border); }
 body.fz-draft .pick-card-club .pick-card-abbr { color: var(--fzd-text-muted); }
@@ -731,7 +664,7 @@ body.fz-draft .panel-tab.is-active {
   box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
 }
 body.fz-draft .panel-tab.is-active:hover { background: var(--fzd-solid); }
-body.fz-draft .panel-tab:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(196, 68, 46, .35); }
+body.fz-draft .panel-tab:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .35); }
 
 
 
@@ -975,7 +908,7 @@ body.fz-draft .suggestion-body[hidden] { display: none; }
 body.fz-draft .suggestion-photo {
   width: 44px; height: 44px;
   border-radius: 8px;
-  background: repeating-linear-gradient(135deg, var(--fzd-tile-bg) 0 5px, var(--fzd-border-input) 5px 10px);
+  background: repeating-linear-gradient(135deg, var(--fzd-tile-bg) 0 5px, var(--fzd-tile-bg-strong) 5px 10px);
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -1065,7 +998,7 @@ body.fz-draft .selected-player-head { display: flex; align-items: center; gap: 1
 body.fz-draft .selected-player-photo {
   width: 46px; height: 46px;
   border-radius: 8px;
-  background: repeating-linear-gradient(135deg, var(--fzd-tile-bg) 0 5px, var(--fzd-border-input) 5px 10px);
+  background: repeating-linear-gradient(135deg, var(--fzd-tile-bg) 0 5px, var(--fzd-tile-bg-strong) 5px 10px);
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -1142,7 +1075,7 @@ body.fz-draft .filter-select {
   font-weight: 500;
 }
 body.fz-draft .filter-select:hover { border-color: var(--fzd-ink); }
-body.fz-draft .filter-select:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(196, 68, 46, .18); }
+body.fz-draft .filter-select:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .18); }
 
 body.fz-draft .category-tabs {
   display: flex;
@@ -1244,7 +1177,7 @@ body.fz-draft .search-field {
   border: 1px solid var(--fzd-border-input);
   border-radius: 9px;
 }
-body.fz-draft .search-field:focus-within { border-color: var(--fzd-ink); box-shadow: 0 0 0 3px rgba(196, 68, 46, .12); }
+body.fz-draft .search-field:focus-within { border-color: var(--fzd-ink); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .12); }
 body.fz-draft .search-field-icon,
 body.fz-draft .search-field:focus-within .search-field-icon { color: var(--fzd-text-fainter); }
 body.fz-draft .search-input {
@@ -1436,7 +1369,7 @@ body.fz-draft .player-list-more[hidden] + .player-list-count { text-align: left;
 
 
 body.fz-draft #loading {
-  background: rgba(222, 219, 213, .85);
+  background: color-mix(in srgb, var(--fzd-bg-page) 85%, transparent);
   border-radius: 16px;
   padding: 18px;
 }
@@ -1447,7 +1380,7 @@ body.fz-draft .spinner {
 
 body.fz-draft .custom-alert-overlay,
 body.fz-draft .pick-confirm-overlay {
-  background: rgba(22, 24, 26, .55);
+  background: rgba(0, 0, 0, .55);
   backdrop-filter: blur(4px);
 }
 body.fz-draft .custom-alert-box,
@@ -1467,7 +1400,7 @@ body.fz-draft .pick-confirm-btn.is-primary {
   font-weight: 600;
 }
 body.fz-draft .custom-alert-button:hover,
-body.fz-draft .pick-confirm-btn.is-primary:hover { background: var(--fzd-accent-dark); }
+body.fz-draft .pick-confirm-btn.is-primary:hover { background: var(--fzd-accent-hover); }
 body.fz-draft .pick-confirm-btn.is-ghost {
   background: var(--fzd-surface);
   border: 1px solid var(--fzd-border-input);
@@ -1492,12 +1425,13 @@ body.fz-draft .admin-dropdown-item:hover { background: var(--fzd-bg-alt); }
 body.fz-draft .admin-dropdown-toggle:hover { border-color: var(--fzd-ink); color: var(--fzd-ink); }
 body.fz-draft .custom-alert-icon.info { color: var(--fzd-ink); }
 
+/* « Terminer » : l'aplat vert du succès (DESIGN.md), libellé --on-success. */
 body.fz-draft .finish-btn {
-  background: var(--fzd-solid);
-  color: var(--fzd-on-solid);
+  background: var(--success);
+  color: var(--on-success);
   box-shadow: 0 8px 22px rgba(0, 0, 0, .22);
 }
-body.fz-draft .finish-btn:hover { background: var(--fzd-solid-hover); }
+body.fz-draft .finish-btn:hover { background: var(--success-deep); }
 
 
 
@@ -1523,7 +1457,7 @@ body.fz-draft .draft-done-cta {
   text-transform: uppercase;
   font-size: .78rem;
 }
-body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-dark); color: var(--fzd-on-accent); }
+body.fz-draft .draft-done-cta:hover { background: var(--fzd-accent-hover); color: var(--fzd-on-accent); }
 
 
 
@@ -1708,12 +1642,10 @@ body.fz-draft.fz-list-lock #fzPickedList thead th {
 /* ============================================================ */
 /* THÈME CLAIR — la liste de joueurs sur le papier              */
 /* ------------------------------------------------------------ */
-/* draftDesk.css pose la liste sur --fzd-bg-page : en sombre, la */
-/* page et les cartes sont presque du même noir, et la liste     */
-/* s'y fond. En clair, #dedbd5 est nettement plus foncé que les  */
-/* cartes : la liste virait au beige sale sous un en-tête blanc, */
-/* et le texte secondaire y tombait sous 4:1. Elle reprend donc  */
-/* le papier (--fzd-bg), comme le reste des cartes claires.      */
+/* draftDesk.css pose la liste sur --fzd-bg-page : le noir en    */
+/* sombre. En clair, la liste reprend le blanc cassé des bandes  */
+/* (--fzd-bg, #FBFBFD) plutôt que le gris de la page, pour rester */
+/* d'un seul tenant avec l'en-tête blanc au-dessus.              */
 /* ============================================================ */
 html[data-theme="light"] body.fz-draft .player-selection-card,
 html[data-theme="light"] body.fz-draft .player-selection-card > :is(#playerTableWrapper, #fzPickedListWrapper) {

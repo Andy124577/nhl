@@ -8,12 +8,12 @@
 <!-- Le thème doit être posé avant les feuilles, comme sur les vraies pages. -->
 <script src="theme.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="index.css">
-<link rel="stylesheet" href="fzDialog.css?v=20260926a">
+<link rel="stylesheet" href="index.css?v=20260926b">
+<link rel="stylesheet" href="fzDialog.css?v=20260926b">
 <!-- Fenêtres de dialogue (fzAlert, fzConfirm) : avant tout script de page. -->
 <script src="fzDialog.js?v=20260926a"></script>
 <link rel="stylesheet" href="teamLogos.css?v=20260926">
-<link rel="stylesheet" href="pool.css?v=20260922">
+<link rel="stylesheet" href="pool.css?v=20260926b">
 
 <!--
   Aperçu de la modale « Choisir une équipe » (#clan-members-modal), rendue
@@ -28,18 +28,18 @@
   Même esprit que draftFinPopup.preview.html et h2h-classement.preview.html.
 -->
 <style>
-  body { margin: 0; min-height: 100vh; background: var(--bg, #141416);
+  body { margin: 0; min-height: 100vh; background: var(--bg, #000000);
          font-family: "Segoe UI", Helvetica, Arial, sans-serif; }
   .pv-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-            padding: 16px; border-bottom: 1px solid var(--border-light, #2c2c32); }
-  .pv-bar b { color: var(--text-gray, #8c8c95); font-size: .7rem; letter-spacing: .08em;
+            padding: 16px; border-bottom: 1px solid var(--border-light, #38383A); }
+  .pv-bar b { color: var(--text-gray, #A1A1A6); font-size: .7rem; letter-spacing: .08em;
               text-transform: uppercase; margin-right: 4px; }
   .pv-bar button { padding: 9px 14px; border-radius: 9px; cursor: pointer;
-                   border: 1px solid var(--border-gray, #3a3a42);
-                   background: var(--bg-odd-row, #19191d); color: var(--text-main, #fff);
+                   border: 1px solid var(--border-gray, #636366);
+                   background: var(--bg-odd-row, #1C1C1E); color: var(--text-main, #F5F5F7);
                    font: 600 .8rem "Segoe UI", sans-serif; }
-  .pv-bar button:hover { border-color: var(--primary, #e8795e); }
-  .pv-note { padding: 16px; color: var(--text-gray, #8c8c95); font-size: .84rem; line-height: 1.6; }
+  .pv-bar button:hover { border-color: var(--primary, #E62030); }
+  .pv-note { padding: 16px; color: var(--text-gray, #A1A1A6); font-size: .84rem; line-height: 1.6; }
 </style>
 </head>
 <body>

@@ -1,20 +1,22 @@
-/* Shared home palette, matching the charcoal calendar reference. */
+/* Palette commune des accueils : l'échelle d'Apple (DESIGN.md), branchée sur
+   les jetons globaux d'index.css, qui basculent d'eux-mêmes avec le thème. */
 #fzDashSection {
-    --fzh-page: #131316;
-    --fzh-panel: #1e1e22;
-    --fzh-raised: #26262b;
-    --fzh-border: #2e2e33;
-    --fzh-outline: #3c3c43;
-    --fzh-ink: #f5f5f2;
-    --fzh-text: #c9c6c0;
-    --fzh-muted: #a3a099;
-    --fzh-accent: #e8795e;
-    --fzh-accent-fill: #b93d28;
-    --fzh-tint: rgba(232, 121, 94, .16);
+    --fzh-page: var(--bg);
+    --fzh-panel: var(--card);
+    --fzh-raised: var(--bg-gray-light);
+    --fzh-border: var(--border-light);
+    --fzh-outline: var(--border-light);
+    --fzh-ink: var(--text-main);
+    /* Texte courant = encre : l'échelle n'a que deux niveaux de texte. */
+    --fzh-text: var(--text-main);
+    --fzh-muted: var(--text-secondary);
+    --fzh-accent: var(--primary-text);
+    --fzh-accent-fill: var(--primary);
+    --fzh-tint: rgba(var(--primary-rgb), .16);
 }
 html[data-theme="dark"] #fzDashSection,
 #fzDashSection:is(.is-drafting, .is-season) { background: var(--fzh-page); }
-body:is(.fz-draft-page, .fz-season-page) { background: #131316; }
+body:is(.fz-draft-page, .fz-season-page) { background: var(--bg); }
 html[data-theme="dark"] #fzDashSection .fz-dash,
 #fzDashSection:is(.is-drafting, .is-season) .fz-dash {
     --fzd-bg: var(--fzh-panel);
@@ -31,7 +33,7 @@ html[data-theme="dark"] #fzDashSection .fz-dash,
     --fzd-text-faint: var(--fzh-muted);
     --fzd-accent: var(--fzh-accent);
     --fzd-accent-fill: var(--fzh-accent-fill);
-    --fzd-accent-dark: #f19b85;
+    --fzd-accent-dark: var(--fzh-accent);
     --fzd-accent-tint: var(--fzh-tint);
 }
 html[data-theme="dark"] #fzDashSection .fz-mobile-home,
@@ -41,7 +43,8 @@ html[data-theme="dark"] #fzDashSection .fz-mobile-home,
     --fzm-surface: var(--fzh-panel);
     --fzm-border: var(--fzh-border);
     --fzm-ink: var(--fzh-ink);
-    --fzm-ink-soft: var(--fzh-text);
+    /* Le « gris doux » du téléphone est un texte secondaire, pas du courant. */
+    --fzm-ink-soft: var(--fzh-muted);
     --fzm-ink-faint: var(--fzh-muted);
     --fzm-red: var(--fzh-accent);
     --fzm-red-soft: var(--fzh-tint);
@@ -59,23 +62,35 @@ html[data-theme="dark"] #fzDashSection .fz-mobile-home,
     border-color: var(--fzh-border);
     color: var(--fzh-ink);
 }
+/* Le bouton contour « Classement » garde son contour : deux aplats rouges
+   côte à côte, c'est deux actions principales. */
 #fzDashSection :is(.fzh-cta, .fzs-cta, .fzm-draft-cta),
-html[data-theme="dark"] #fzDashSection .fzd-hero-cta {
+html[data-theme="dark"] #fzDashSection .fzd-hero-cta:not(.fzd-hero-cta--ghost) {
     background: var(--fzh-accent-fill);
-    border-color: var(--fzh-accent);
-    color: #fff;
+    border-color: var(--fzh-accent-fill);
+    color: var(--on-primary);
 }
+/* Survol : l'aplat fonce (--primary-deep), il ne s'éclaircit jamais. */
+#fzDashSection :is(.fzh-cta, .fzs-cta, .fzm-draft-cta):hover,
+html[data-theme="dark"] #fzDashSection .fzd-hero-cta:not(.fzd-hero-cta--ghost):hover {
+    background: var(--primary-deep);
+    border-color: var(--primary-deep);
+}
+/* Votre tour : le rouge a balayé la bannière. Comme en clair, le bouton
+   passe à l'aplat d'encre, sinon il se fond dans le rouge. */
+html[data-theme="dark"] #fzDashSection .fz-dash-hero.is-draft.is-myturn .fzd-hero-cta:not(.fzd-hero-cta--ghost) { background: #1D1D1F; border-color: #1D1D1F; }
+html[data-theme="dark"] #fzDashSection .fz-dash-hero.is-draft.is-myturn .fzd-hero-cta:not(.fzd-hero-cta--ghost):hover { background: #2C2C2E; border-color: #2C2C2E; }
 #fzDashSection :is(.fzh-link, .fzs a:not(.fzs-cta)) { color: var(--fzh-accent); }
-/* Le chevron garde le gris prévu pour l'aplat d'encre du thème clair : sur la
-   brique du thème sombre, il tombait à 1,6:1. */
-html[data-theme="dark"] #fzDashSection .fzd-hero-cta .fzd-hero-cta-chev { color: #fff; }
-/* Pastilles pleines portant du texte blanc : le rouge vif d'origine restait
-   sous 4,5:1. La brique pleine de la palette le tient dans les deux thèmes. */
-#fzDashSection :is(.fzh, .fzs) { --fzm-solid: var(--fzh-accent-fill); --fzm-on-solid: #fff; }
+/* Le chevron garde le gris prévu pour l'aplat d'encre du thème clair : sur
+   le rouge du thème sombre, il passe au blanc. */
+html[data-theme="dark"] #fzDashSection .fzd-hero-cta .fzd-hero-cta-chev { color: var(--on-primary); }
+/* Pastilles pleines portant du texte blanc : blanc sur --primary, 4,55:1
+   dans les deux thèmes. */
+#fzDashSection :is(.fzh, .fzs) { --fzm-solid: var(--fzh-accent-fill); --fzm-on-solid: var(--on-primary); }
 #fzDashSection .fzh-participant b { background: var(--fzh-accent-fill); }
 #fzDashSection .fzh-draft-bottom { border-color: var(--fzh-border); }
 #fzDashSection :is(.fzs-tag:not(.is-live), .fzs .fzd-off-face) { background: var(--fzh-raised); }
-#fzDashSection :is(.fzs-hero, .fzh-draft)::after { background: linear-gradient(90deg, #1e1e22 5%, #1e1e22b8 45%, transparent); }
+#fzDashSection :is(.fzs-hero, .fzh-draft)::after { background: linear-gradient(90deg, #1C1C1E 5%, #1C1C1Eb8 45%, transparent); }
 html[data-theme="dark"] #fzDashSection :is(.fz-dash-hero, #fzmHeroSlot.is-draft) {
     background: var(--fzh-panel);
     border-color: var(--fzh-outline);

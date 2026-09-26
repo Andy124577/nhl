@@ -1,9 +1,10 @@
-/* Shared player profile. Team tokens come from careerModal.js / teamColors.js. */
-#careerStatsModal { display:none; position:fixed; inset:0; z-index:10000; padding:42px 24px; overflow:auto; background:#05080dd1; backdrop-filter:blur(9px); -webkit-backdrop-filter:blur(9px); color:#f6f7f9; font:16px/1.3 'Barlow','Segoe UI',sans-serif; color-scheme:dark; }
+/* Shared player profile. Team tokens come from careerModal.js / teamColors.js;
+   neutrals are index.css tokens (Apple gray ladder). */
+#careerStatsModal { display:none; position:fixed; inset:0; z-index:10000; padding:42px 24px; overflow:auto; background:#000000d1; backdrop-filter:blur(9px); -webkit-backdrop-filter:blur(9px); color:var(--text-main); font:16px/1.3 'Barlow','Segoe UI',sans-serif; color-scheme:dark; }
 #careerStatsModal *, #careerStatsModal *::before, #careerStatsModal *::after { box-sizing:border-box; }
 #careerStatsModal [hidden] { display:none !important; }
-#careerStatsModal .career-modal { --team-primary:#3a414d; --team-secondary:#171a20; --team-surface:#3a414d; --team-edge:#8995a8; --team-trim:#8995a8; --team-rgb:58,65,77; --team-secondary-rgb:23,26,32; --team-logo:none; position:relative; display:flex; flex-direction:column; width:100%; max-width:1380px; max-height:calc(100dvh - 84px); margin:0 auto; padding:0; overflow:hidden; border:1px solid #3c434d; border-radius:19px; background:#0d1013; color:#f6f7f9; backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:0 30px 90px #000b,0 0 0 1px #ffffff04; animation:careerEnter .2s ease-out; }
-#careerStatsModal .cmh-name-banner { isolation:isolate; position:relative; display:flex; flex:0 0 auto; align-items:center; gap:22px; min-height:96px; margin:0; padding:8px 20px 8px 28px; overflow:hidden; border-radius:18px 18px 0 0; border-top:1px solid var(--team-edge); border-bottom:3px solid var(--team-trim); background:linear-gradient(100deg,#ffffff09,transparent 45%,#0005),var(--team-surface); color:#f6f7f9; }
+#careerStatsModal .career-modal { --team-primary:#3a414d; --team-secondary:#171a20; --team-surface:#3a414d; --team-edge:#8995a8; --team-trim:#8995a8; --team-rgb:58,65,77; --team-secondary-rgb:23,26,32; --team-logo:none; position:relative; display:flex; flex-direction:column; width:100%; max-width:1380px; max-height:calc(100dvh - 84px); margin:0 auto; padding:0; overflow:hidden; border:1px solid var(--border-light); border-radius:19px; background:var(--bg); color:var(--text-main); backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:0 30px 90px #000b,0 0 0 1px #ffffff04; animation:careerEnter .2s ease-out; }
+#careerStatsModal .cmh-name-banner { isolation:isolate; position:relative; display:flex; flex:0 0 auto; align-items:center; gap:22px; min-height:96px; margin:0; padding:8px 20px 8px 28px; overflow:hidden; border-radius:18px 18px 0 0; border-top:1px solid var(--team-edge); border-bottom:3px solid var(--team-trim); background:linear-gradient(100deg,#ffffff09,transparent 45%,#0005),var(--team-surface); color:#f5f5f7; }
 /* Upper-right motif: an oversized cropped crest beneath translucent diagonal
    panels and a fine woven texture, matching the portrait's layered artwork. */
 #careerStatsModal .cmh-name-banner::before { content:''; position:absolute; z-index:-2; inset:-105px 55px -115px auto; width:325px; background:var(--team-logo) center/contain no-repeat; opacity:.18; transform:rotate(-13deg); filter:saturate(.85) contrast(1.15); }
@@ -11,84 +12,84 @@
 #careerStatsModal .cmh-banner-logo { width:124px; height:76px; transform:scale(1.25); object-fit:contain; filter:drop-shadow(0 3px 3px #0007); }
 #careerStatsModal .cmh-banner-copy { min-width:0; flex:1; }
 #careerStatsModal #careerBannerName { font:800 clamp(28px,3.6vw,52px)/1 'Barlow Condensed','Arial Narrow',Impact,sans-serif; text-transform:uppercase; letter-spacing:.2px; overflow-wrap:anywhere; text-shadow:0 2px 3px #0004; }
-#careerStatsModal .cmh-team-caption { margin-top:6px; color:#e4e5e9; font-size:13px; font-weight:700; letter-spacing:.4em; text-transform:uppercase; }
-#careerStatsModal .close-modal { position:relative; inset:auto; display:grid; place-items:center; flex:0 0 48px; width:48px; height:48px; margin:0; padding:0 0 4px; border:1.5px solid var(--team-edge); border-radius:50%; background:#07090c99; color:#fff; font:500 34px/1 'Barlow',sans-serif; cursor:pointer; }
-#careerStatsModal .close-modal:hover { background:#07090ce0; transform:none; box-shadow:none; }
+#careerStatsModal .cmh-team-caption { margin-top:6px; color:#f5f5f7; font-size:13px; font-weight:700; letter-spacing:.4em; text-transform:uppercase; }
+#careerStatsModal .close-modal { position:relative; inset:auto; display:grid; place-items:center; flex:0 0 48px; width:48px; height:48px; margin:0; padding:0 0 4px; border:1.5px solid var(--team-edge); border-radius:50%; background:#00000099; color:#fff; font:500 34px/1 'Barlow',sans-serif; cursor:pointer; }
+#careerStatsModal .close-modal:hover { background:#000000e0; transform:none; box-shadow:none; }
 #careerStatsModal button:focus-visible, #careerStatsModal select:focus-visible, #careerStatsModal [tabindex]:focus-visible { outline:2px solid var(--team-edge); outline-offset:3px; }
-#careerStatsModal .career-profile-body { position:relative; min-height:0; padding:18px 26px 24px; overflow-y:auto; scrollbar-color:#49515c #101316; background:linear-gradient(132deg,transparent 0 54%,#ffffff02 54% 62%,transparent 62%),repeating-linear-gradient(126deg,#ffffff01 0 1px,transparent 1px 5px),#0d1013; }
+#careerStatsModal .career-profile-body { position:relative; min-height:0; padding:18px 26px 24px; overflow-y:auto; scrollbar-color:var(--border-gray) var(--bg); background:linear-gradient(132deg,transparent 0 54%,#ffffff02 54% 62%,transparent 62%),repeating-linear-gradient(126deg,#ffffff01 0 1px,transparent 1px 5px),var(--bg); }
 #careerStatsModal .career-modal-header { display:grid; grid-template-columns:minmax(210px,290px) minmax(0,1fr) minmax(230px,296px); grid-template-rows:minmax(150px,auto) auto auto; gap:10px 28px; margin:0; padding:0; background:none; border:0; backdrop-filter:none; -webkit-backdrop-filter:none; }
-#careerStatsModal .cmh-portrait { position:relative; isolation:isolate; grid-column:1; grid-row:1/3; align-self:stretch; min-height:272px; margin:0; overflow:hidden; border:2px solid var(--team-edge); border-radius:21px; background:#0b0c0f; box-shadow:0 8px 20px #0006,inset 0 0 30px #000; }
-#careerStatsModal .cmh-portrait-art { position:absolute; z-index:-2; inset:0; overflow:hidden; background:radial-gradient(ellipse at 20% 25%,rgba(var(--team-rgb),.66),transparent 68%),#090b0e; }
+#careerStatsModal .cmh-portrait { position:relative; isolation:isolate; grid-column:1; grid-row:1/3; align-self:stretch; min-height:272px; margin:0; overflow:hidden; border:2px solid var(--team-edge); border-radius:21px; background:#000000; box-shadow:0 8px 20px #0006,inset 0 0 30px #000; }
+#careerStatsModal .cmh-portrait-art { position:absolute; z-index:-2; inset:0; overflow:hidden; background:radial-gradient(ellipse at 20% 25%,rgba(var(--team-rgb),.66),transparent 68%),#000000; }
 #careerStatsModal .cmh-portrait-art::before { content:''; position:absolute; inset:12% 24% -2% -25%; background:var(--team-logo) center/contain no-repeat; opacity:.3; transform:rotate(-15deg) scale(1.12); filter:saturate(.7); }
-#careerStatsModal .cmh-portrait-art::after { content:''; position:absolute; inset:0; background:linear-gradient(145deg,transparent 18%,rgba(var(--team-rgb),.2) 18% 27%,transparent 27% 39%,rgba(var(--team-secondary-rgb),.15) 39% 41%,transparent 41%),linear-gradient(100deg,transparent 50%,#05070b99),radial-gradient(circle,rgba(var(--team-rgb),.16) .75px,transparent 1px) 0 0/4px 4px; box-shadow:inset 0 0 24px #0009,inset 0 1px 15px rgba(var(--team-rgb),.35); }
+#careerStatsModal .cmh-portrait-art::after { content:''; position:absolute; inset:0; background:linear-gradient(145deg,transparent 18%,rgba(var(--team-rgb),.2) 18% 27%,transparent 27% 39%,rgba(var(--team-secondary-rgb),.15) 39% 41%,transparent 41%),linear-gradient(100deg,transparent 50%,#00000099),radial-gradient(circle,rgba(var(--team-rgb),.16) .75px,transparent 1px) 0 0/4px 4px; box-shadow:inset 0 0 24px #0009,inset 0 1px 15px rgba(var(--team-rgb),.35); }
 #careerStatsModal .cmh-portrait-number { position:absolute; top:30%; right:5%; z-index:-1; color:transparent; -webkit-text-stroke:1px var(--team-edge); opacity:.65; font:700 98px/1 'Barlow Condensed',Impact,sans-serif; }
 #careerStatsModal .player-headshot-container { position:absolute; inset:4% -3% 24px; width:auto; height:auto; margin:0; border:0; border-radius:0; background:none; box-shadow:none; overflow:hidden; }
 #careerStatsModal .player-headshot-container img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:center bottom; transform:scale(1.23); transform-origin:center bottom; filter:drop-shadow(0 6px 9px #0008); }
-#careerStatsModal .no-photo { display:grid; place-items:center; height:100%; color:#bbc0c955; }
+#careerStatsModal .no-photo { display:grid; place-items:center; height:100%; color:#a1a1a655; }
 #careerStatsModal .no-photo svg { width:58%; height:70%; }
 #careerStatsModal .player-headshot-container.has-photo .no-photo { visibility:hidden; }
-#careerStatsModal .cmh-portrait figcaption { position:absolute; bottom:0; inset-inline:0; display:flex; align-items:center; height:34px; border-top:1px solid #7777; background:#080b0fee; }
-#careerStatsModal .cmh-portrait figcaption b { align-self:stretch; display:grid; place-items:center; padding:0 12px; border-right:1px solid #7777; color:var(--team-trim); font:700 26px/1 'Barlow Condensed',sans-serif; }
-#careerStatsModal .cmh-portrait figcaption span { flex:1; padding:0 8px; overflow:hidden; text-align:center; color:#b0b4bd; font-size:9px; font-weight:600; letter-spacing:.32em; text-transform:uppercase; }
+#careerStatsModal .cmh-portrait figcaption { position:absolute; bottom:0; inset-inline:0; display:flex; align-items:center; height:34px; border-top:1px solid #38383a; background:#000000ee; }
+#careerStatsModal .cmh-portrait figcaption b { align-self:stretch; display:grid; place-items:center; padding:0 12px; border-right:1px solid #38383a; color:var(--team-trim); font:700 26px/1 'Barlow Condensed',sans-serif; }
+#careerStatsModal .cmh-portrait figcaption span { flex:1; padding:0 8px; overflow:hidden; text-align:center; color:#a1a1a6; font-size:9px; font-weight:600; letter-spacing:.32em; text-transform:uppercase; }
 #careerStatsModal .cmh-ident-text { grid-column:2; min-width:0; align-self:center; }
-#careerStatsModal .cmh-position, #careerStatsModal .cmh-mini-lbl { display:block; color:#b9c0ce; font-size:12px; line-height:1.3; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
+#careerStatsModal .cmh-position, #careerStatsModal .cmh-mini-lbl { display:block; color:var(--text-gray); font-size:12px; line-height:1.3; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
 #careerStatsModal .cmh-position { margin-bottom:8px; white-space:pre-wrap; }
-#careerStatsModal #careerPlayerName { margin:0 0 10px; color:#f9fafc; font:800 clamp(38px,4.4vw,64px)/.98 'Barlow Condensed','Arial Narrow',Impact,sans-serif; text-transform:uppercase; overflow-wrap:anywhere; letter-spacing:-.3px; }
+#careerStatsModal #careerPlayerName { margin:0 0 10px; color:var(--text-main); font:800 clamp(38px,4.4vw,64px)/.98 'Barlow Condensed','Arial Narrow',Impact,sans-serif; text-transform:uppercase; overflow-wrap:anywhere; letter-spacing:-.3px; }
 #careerStatsModal .cmh-team-badge { display:inline-block; max-width:100%; padding:6px 18px; border:1px solid var(--team-edge); border-radius:7px; background:var(--team-surface); box-shadow:inset 0 1px 8px #ffffff0d; color:#fff; font-size:13px; font-weight:700; letter-spacing:.34em; text-transform:uppercase; }
 #careerStatsModal .cmh-actions { grid-column:3; align-self:center; display:grid; gap:12px; }
-#careerStatsModal .cmh-action { display:flex; justify-content:center; align-items:center; gap:16px; min-height:54px; padding:10px 14px; border:1px solid #626873; border-radius:10px; background:linear-gradient(115deg,#ffffff05,#ffffff02),#14171c; box-shadow:inset 0 0 0 1px #ffffff06; color:#f9fafc; font:600 17px/1.2 'Barlow','Segoe UI',sans-serif; cursor:pointer; }
+#careerStatsModal .cmh-action { display:flex; justify-content:center; align-items:center; gap:16px; min-height:54px; padding:10px 14px; border:1px solid var(--border-gray); border-radius:10px; background:var(--card); box-shadow:inset 0 0 0 1px #ffffff06; color:var(--text-main); font:600 17px/1.2 'Barlow','Segoe UI',sans-serif; cursor:pointer; }
 #careerStatsModal .cmh-action svg { flex:0 0 26px; width:26px; height:26px; }
-#careerStatsModal .cmh-action:hover { border-color:var(--team-edge); background-color:#22262d; }
+#careerStatsModal .cmh-action:hover { border-color:var(--team-edge); background-color:var(--bg-hover); }
 #careerStatsModal .cmh-action[aria-pressed="true"] svg { color:var(--team-trim); fill:var(--team-trim); }
 #careerStatsModal .cmh-action-pick { border-color:var(--team-edge); background:linear-gradient(120deg,#ffffff06,#0002),var(--team-surface); }
 #careerStatsModal .cmh-action-pick svg { border-radius:50%; background:#fff; color:var(--team-surface); padding:4px; stroke-width:3px; }
 #careerStatsModal .cmh-action:disabled { cursor:default; opacity:.5; }
-#careerStatsModal .cmh-stats { grid-column:2/4; display:grid; grid-template-columns:.95fr 1.15fr 1fr 1.5fr; align-items:center; gap:20px; padding:21px 0; border-block:1px solid #2b3037; }
+#careerStatsModal .cmh-stats { grid-column:2/4; display:grid; grid-template-columns:.95fr 1.15fr 1fr 1.5fr; align-items:center; gap:20px; padding:21px 0; border-block:1px solid var(--border-light); }
 #careerStatsModal .cmh-stat-row { min-width:0; }
-#careerStatsModal .cmh-stat-row + .cmh-stat-row { padding-left:20px; border-left:1px solid #555b64; }
-#careerStatsModal .cmh-stat-val { display:block; margin-top:6px; color:#f6f7f9; font-size:18px; font-weight:600; line-height:1.35; overflow-wrap:anywhere; }
+#careerStatsModal .cmh-stat-row + .cmh-stat-row { padding-left:20px; border-left:1px solid var(--border-gray); }
+#careerStatsModal .cmh-stat-val { display:block; margin-top:6px; color:var(--text-main); font-size:18px; font-weight:600; line-height:1.35; overflow-wrap:anywhere; }
 #careerStatsModal .cmh-season-highlight { grid-column:1/-1; display:grid; grid-template-columns:minmax(210px,290px) repeat(3,minmax(0,1fr)); gap:32px; margin:0; padding:0; border:0; }
-#careerStatsModal .cmh-season-label, #careerStatsModal .cmh-season-tile { position:relative; min-width:0; min-height:122px; padding:16px 24px; border:1px solid #373e48; border-radius:12px; background:linear-gradient(120deg,#ffffff02,#ffffff00 55%),#111519; box-shadow:inset 0 1px 12px #ffffff03; }
+#careerStatsModal .cmh-season-label, #careerStatsModal .cmh-season-tile { position:relative; min-width:0; min-height:122px; padding:16px 24px; border:1px solid var(--border-light); border-radius:12px; background:linear-gradient(120deg,#ffffff02,#ffffff00 55%),var(--card); box-shadow:inset 0 1px 12px #ffffff03; }
 #careerStatsModal .cmh-season-label { display:flex; flex-direction:column; justify-content:center; }
 #careerStatsModal .cmh-season-label strong { margin:3px 0 0; font:700 36px/1.15 'Barlow',sans-serif; }
-#careerStatsModal .cmh-season-label > span:last-child { margin-top:3px; color:#b9bec8; font-size:15px; letter-spacing:.03em; }
+#careerStatsModal .cmh-season-label > span:last-child { margin-top:3px; color:var(--text-gray); font-size:15px; letter-spacing:.03em; }
 #careerStatsModal .cmh-season-label::after { content:''; position:absolute; bottom:0; left:24px; width:36px; height:5px; background:var(--team-edge); }
-#careerStatsModal .cmh-season-tile { display:flex; align-items:center; justify-content:center; gap:30px; background:linear-gradient(115deg,#ffffff04,#ffffff00),#15191d; overflow:hidden; }
+#careerStatsModal .cmh-season-tile { display:flex; align-items:center; justify-content:center; gap:30px; background:linear-gradient(115deg,#ffffff04,#ffffff00),var(--card); overflow:hidden; }
 #careerStatsModal .cmh-season-tile::after { content:''; position:absolute; inset:auto 0 0; height:3px; background:var(--team-trim); }
 #careerStatsModal .cmh-season-tile > svg { flex:0 0 36px; width:36px; height:36px; color:var(--team-edge); }
 #careerStatsModal .cmh-season-tile > div { min-width:0; }
-#careerStatsModal .cmh-season-val { display:block; color:#fafbfd; font:700 50px/1.06 'Barlow',sans-serif; font-variant-numeric:tabular-nums; }
-#careerStatsModal .cmh-season-rank { display:block; margin-top:3px; color:#b9bec8; font-size:15px; letter-spacing:.025em; }
+#careerStatsModal .cmh-season-val { display:block; color:var(--text-main); font:700 50px/1.06 'Barlow',sans-serif; font-variant-numeric:tabular-nums; }
+#careerStatsModal .cmh-season-rank { display:block; margin-top:3px; color:var(--text-gray); font-size:15px; letter-spacing:.025em; }
 #careerStatsModal .cmh-injury { grid-column:1/-1; margin:0; }
-#careerStatsModal .career-filters { display:flex; align-items:center; flex-wrap:wrap; gap:24px; margin:18px -6px 14px; padding:16px 24px; border:1px solid #272d34; border-radius:12px; background:#ffffff02; }
+#careerStatsModal .career-filters { display:flex; align-items:center; flex-wrap:wrap; gap:24px; margin:18px -6px 14px; padding:16px 24px; border:1px solid var(--border-light); border-radius:12px; background:var(--card); }
 #careerStatsModal .filter-group-career { display:flex; flex-direction:row; align-items:center; flex:1 1 240px; gap:18px; min-width:0; }
-#careerStatsModal .filter-group-career label { flex-shrink:0; color:#b9c0ce; font-size:12px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; }
-#careerStatsModal .filter-group-career select { width:100%; min-width:0; min-height:48px; padding:10px 32px 10px 16px; border:1px solid #4b535f; border-radius:9px; background-color:#0d1014; color:#f6f7f9; font:600 17px/1.2 'Barlow',sans-serif; cursor:pointer; }
+#careerStatsModal .filter-group-career label { flex-shrink:0; color:var(--text-gray); font-size:12px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; }
+#careerStatsModal .filter-group-career select { width:100%; min-width:0; min-height:48px; padding:10px 32px 10px 16px; border:1px solid var(--border-gray); border-radius:9px; background-color:var(--bg-gray-light); color:var(--text-main); font:600 17px/1.2 'Barlow',sans-serif; cursor:pointer; }
 #careerStatsModal .stats-count-badge { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
-#careerStatsModal #careerStatsTable { margin:0; padding:0; overflow:auto; border:1px solid #3a414c; border-radius:12px; background:#101316; scrollbar-color:#49515c #101316; }
+#careerStatsModal #careerStatsTable { margin:0; padding:0; overflow:auto; border:1px solid var(--border-light); border-radius:12px; background:var(--card); scrollbar-color:var(--border-gray) var(--card); }
 #careerStatsModal #careerStatsTable:empty { display:none; }
-#careerStatsModal #careerStatsTable table { width:100%; min-width:690px; margin:0; border-collapse:collapse; table-layout:auto; color:#f6f7f9; font:500 18px/1.3 'Barlow',sans-serif; font-variant-numeric:tabular-nums; }
-#careerStatsModal #careerStatsTable th { position:sticky; top:0; z-index:1; height:41px; padding:10px 16px; background:#20242a; border-bottom:1px solid #424952; color:#c7cedb; font:700 13px/1.2 'Barlow','Segoe UI',sans-serif; letter-spacing:.09em; text-transform:uppercase; text-align:center; white-space:nowrap; }
-#careerStatsModal #careerStatsTable td { height:39px; padding:5px 16px; border-bottom:1px solid #2c333b; color:#f6f7f9; font-size:inherit; font-weight:inherit; text-align:center; white-space:nowrap; }
-#careerStatsModal #careerStatsTable tr { background:#101316; }
-#careerStatsModal #careerStatsTable tr:nth-child(even) { background:#15191d; }
-/* The legacy index.css hover is important; keep its light page color out of this dark table. */
-#careerStatsModal #careerStatsTable tbody tr:hover { background:#20252b !important; box-shadow:none; }
+#careerStatsModal #careerStatsTable table { width:100%; min-width:690px; margin:0; border-collapse:collapse; table-layout:auto; color:var(--text-main); font:500 18px/1.3 'Barlow',sans-serif; font-variant-numeric:tabular-nums; }
+#careerStatsModal #careerStatsTable th { position:sticky; top:0; z-index:1; height:41px; padding:10px 16px; background:var(--bg-gray-light); border-bottom:1px solid var(--border-gray); color:var(--text-secondary); font:700 13px/1.2 'Barlow','Segoe UI',sans-serif; letter-spacing:.09em; text-transform:uppercase; text-align:center; white-space:nowrap; }
+#careerStatsModal #careerStatsTable td { height:39px; padding:5px 16px; border-bottom:1px solid var(--border-light); color:var(--text-main); font-size:inherit; font-weight:inherit; text-align:center; white-space:nowrap; }
+#careerStatsModal #careerStatsTable tr { background:var(--card); }
+#careerStatsModal #careerStatsTable tr:nth-child(even) { background:var(--card-white); }
+/* index.css's row hover is !important. Dark hover sits one step above the #2c2c2e even rows. */
+#careerStatsModal #careerStatsTable tbody tr:hover { background:#3a3a3c !important; box-shadow:none; }
 #careerStatsModal #careerStatsTable .season-col, #careerStatsModal #careerStatsTable .team-col { text-align:left; }
 #careerStatsModal #careerStatsTable .season-col { width:12%; font-weight:600; padding-left:22px; }
 #careerStatsModal #careerStatsTable .team-col { width:15%; max-width:none; min-width:110px; overflow:visible; }
-#careerStatsModal #careerStatsTable .career-team-logo { display:inline-block; width:30px; height:28px; padding:0; margin-right:10px; vertical-align:middle; object-fit:contain; border:0; border-radius:0; background:none; box-shadow:none; filter:drop-shadow(0 0 1px #dbe3ef88); }
-#careerStatsModal #careerStatsTable .career-team-name { color:#c6cbd5; font-size:15px; vertical-align:middle; }
+#careerStatsModal #careerStatsTable .career-team-logo { display:inline-block; width:30px; height:28px; padding:0; margin-right:10px; vertical-align:middle; object-fit:contain; border:0; border-radius:0; background:none; box-shadow:none; filter:drop-shadow(0 0 1px #f5f5f788); }
+#careerStatsModal #careerStatsTable .career-team-name { color:var(--text-secondary); font-size:15px; vertical-align:middle; }
 #careerStatsModal #careerFilters:has(#leagueFilter option[value="nhl"]:checked) ~ #careerStatsTable .league-col { display:none; }
-#careerStatsModal #careerStatsTable tr.current-season { background:linear-gradient(90deg,rgba(var(--team-rgb),.43),rgba(var(--team-rgb),.28)),#101316; font-weight:700; }
+#careerStatsModal #careerStatsTable tr.current-season { background:linear-gradient(90deg,rgba(var(--team-rgb),.43),rgba(var(--team-rgb),.28)),var(--card); font-weight:700; }
 #careerStatsModal #careerStatsTable tr.current-season td { border-block:1px solid var(--team-edge); }
 #careerStatsModal #careerStatsTable tr.current-season td:first-child { box-shadow:inset 5px 0 var(--team-edge); }
-#careerStatsModal #careerStatsTable .career-totals-row { background:#0d1114; font-weight:700; }
+#careerStatsModal #careerStatsTable .career-totals-row { background:var(--bg-gray-light); font-weight:700; }
 #careerStatsModal #careerStatsTable .career-totals-row td { height:50px; border-top:1px solid var(--team-trim); border-bottom:0; }
 #careerStatsModal #careerStatsTable .career-totals-label { padding-left:22px; text-align:left; text-transform:uppercase; letter-spacing:.025em; }
-#careerStatsModal .no-stats-message { padding:32px 20px; margin:0; color:#c7cedb; text-align:center; }
-#careerStatsModal .career-loading { position:relative; display:grid; grid-template-columns:27% 1fr; gap:28px; min-height:410px; padding-bottom:70px; color:#bec6d3; }
-#careerStatsModal .career-loading > div { border-radius:16px; background:linear-gradient(100deg,#1b2027 20%,#282f38 40%,#1b2027 60%); background-size:300% 100%; animation:careerShimmer 1.8s ease-in-out infinite; }
+#careerStatsModal .no-stats-message { padding:32px 20px; margin:0; color:var(--text-secondary); text-align:center; }
+#careerStatsModal .career-loading { position:relative; display:grid; grid-template-columns:27% 1fr; gap:28px; min-height:410px; padding-bottom:70px; color:var(--text-gray); }
+#careerStatsModal .career-loading > div { border-radius:16px; background:linear-gradient(100deg,#1c1c1e 20%,#2c2c2e 40%,#1c1c1e 60%); background-size:300% 100%; animation:careerShimmer 1.8s ease-in-out infinite; }
 #careerStatsModal .cm-skeleton-lines { margin-top:22px; clip-path:polygon(0 0,70% 0,70% 20%,0 20%,0 34%,100% 34%,100% 52%,0 52%,0 68%,100% 68%,100% 100%,0 100%); }
 #careerStatsModal .career-loading > span { position:absolute; bottom:24px; inset-inline:0; text-align:center; }
 @keyframes careerEnter { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
@@ -174,41 +175,25 @@
    their dark team artwork; every other surface follows index.css's light tokens.
    --team-edge/--team-trim are brightened for dark ground, so accents on pale
    surfaces use the darkened --team-surface and the raw --team-secondary. */
-html[data-theme="light"] #careerStatsModal { background:var(--overlay-dark,#1414148c); color:var(--text-main,#1c1c1e); color-scheme:light; }
-html[data-theme="light"] #careerStatsModal .career-modal { border-color:var(--border-light,#e0e0dc); background:var(--bg,#f2f2f0); color:var(--text-main,#1c1c1e); box-shadow:0 30px 90px #0004,0 0 0 1px #0000000a; }
-html[data-theme="light"] #careerStatsModal .career-profile-body { scrollbar-color:#c4c4bf var(--bg,#f2f2f0); background:linear-gradient(132deg,transparent 0 54%,#00000003 54% 62%,transparent 62%),var(--bg,#f2f2f0); }
+html[data-theme="light"] #careerStatsModal { background:var(--overlay-dark); color-scheme:light; }
+html[data-theme="light"] #careerStatsModal .career-modal { box-shadow:0 30px 90px #0004,0 0 0 1px #0000000a; }
+html[data-theme="light"] #careerStatsModal .career-profile-body { background:linear-gradient(132deg,transparent 0 54%,#00000003 54% 62%,transparent 62%),var(--bg); }
 html[data-theme="light"] #careerStatsModal .career-profile-body button:focus-visible, html[data-theme="light"] #careerStatsModal .career-profile-body select:focus-visible, html[data-theme="light"] #careerStatsModal .career-profile-body [tabindex]:focus-visible { outline-color:var(--team-surface); }
 html[data-theme="light"] #careerStatsModal .cmh-portrait { box-shadow:0 8px 20px #0003,inset 0 0 30px #000; }
-html[data-theme="light"] #careerStatsModal .cmh-position, html[data-theme="light"] #careerStatsModal .cmh-mini-lbl, html[data-theme="light"] #careerStatsModal .filter-group-career label { color:var(--text-gray,#68686f); }
-html[data-theme="light"] #careerStatsModal #careerPlayerName, html[data-theme="light"] #careerStatsModal .cmh-stat-val, html[data-theme="light"] #careerStatsModal .cmh-season-val { color:var(--text-main,#1c1c1e); }
-html[data-theme="light"] #careerStatsModal .cmh-action { border-color:var(--border-gray,#ccccc8); background:var(--card,#fff); box-shadow:0 1px 2px #0000000d; color:var(--text-main,#1c1c1e); }
-html[data-theme="light"] #careerStatsModal .cmh-action:hover { border-color:var(--team-surface); background-color:var(--bg-gray-light,#f5f5f3); }
+html[data-theme="light"] #careerStatsModal .cmh-action { box-shadow:0 1px 2px #0000000d; }
+html[data-theme="light"] #careerStatsModal .cmh-action:hover { border-color:var(--team-surface); background-color:var(--bg-gray-light); }
 html[data-theme="light"] #careerStatsModal .cmh-action[aria-pressed="true"] svg { color:var(--team-surface); fill:var(--team-surface); }
-html[data-theme="light"] #careerStatsModal .cmh-action-pick, html[data-theme="light"] #careerStatsModal .cmh-action-pick:hover { border-color:var(--team-surface); background:linear-gradient(120deg,#ffffff06,#0002),var(--team-surface); color:#f9fafc; }
+html[data-theme="light"] #careerStatsModal .cmh-action-pick, html[data-theme="light"] #careerStatsModal .cmh-action-pick:hover { border-color:var(--team-surface); background:linear-gradient(120deg,#ffffff06,#0002),var(--team-surface); color:#f5f5f7; }
 html[data-theme="light"] #careerStatsModal .cmh-action-pick:not(:disabled):hover { box-shadow:0 4px 14px rgba(var(--team-rgb),.35); }
-html[data-theme="light"] #careerStatsModal .cmh-stats { border-color:var(--border-light,#e0e0dc); }
-html[data-theme="light"] #careerStatsModal .cmh-stat-row + .cmh-stat-row { border-left-color:var(--border-gray,#ccccc8); }
-html[data-theme="light"] #careerStatsModal .cmh-season-label, html[data-theme="light"] #careerStatsModal .cmh-season-tile { border-color:var(--border-light,#e0e0dc); background:var(--card,#fff); box-shadow:0 1px 2px #0000000a; }
-html[data-theme="light"] #careerStatsModal .cmh-season-label > span:last-child, html[data-theme="light"] #careerStatsModal .cmh-season-rank { color:var(--text-gray,#68686f); }
+html[data-theme="light"] #careerStatsModal .cmh-season-label, html[data-theme="light"] #careerStatsModal .cmh-season-tile { background:var(--card); box-shadow:0 1px 2px #0000000a; }
 html[data-theme="light"] #careerStatsModal .cmh-season-label::after { background:var(--team-surface); }
 html[data-theme="light"] #careerStatsModal .cmh-season-tile::after { background:var(--team-secondary); }
 html[data-theme="light"] #careerStatsModal .cmh-season-tile > svg { color:var(--team-surface); }
-html[data-theme="light"] #careerStatsModal .career-filters { border-color:var(--border-light,#e0e0dc); background:var(--card,#fff); }
-html[data-theme="light"] #careerStatsModal .filter-group-career select { border-color:var(--border-gray,#ccccc8); background-color:var(--bg-gray-light,#f5f5f3); color:var(--text-main,#1c1c1e); }
-html[data-theme="light"] #careerStatsModal #careerStatsTable { border-color:var(--border-light,#e0e0dc); background:var(--card,#fff); scrollbar-color:#c4c4bf var(--card,#fff); }
-html[data-theme="light"] #careerStatsModal #careerStatsTable table, html[data-theme="light"] #careerStatsModal #careerStatsTable td { color:var(--text-main,#1c1c1e); }
-html[data-theme="light"] #careerStatsModal #careerStatsTable th { background:var(--bg-gray-light,#f5f5f3); border-bottom-color:var(--border-gray,#ccccc8); color:var(--text-secondary,#54545c); }
-html[data-theme="light"] #careerStatsModal #careerStatsTable td { border-bottom-color:var(--border-light,#e0e0dc); }
-html[data-theme="light"] #careerStatsModal #careerStatsTable tr { background:var(--card,#fff); }
-html[data-theme="light"] #careerStatsModal #careerStatsTable tr:nth-child(even) { background:var(--card-white,#fafaf8); }
-html[data-theme="light"] #careerStatsModal #careerStatsTable tbody tr:hover { background:var(--bg-hover,#e6e6e2) !important; }
+html[data-theme="light"] #careerStatsModal #careerStatsTable tbody tr:hover { background:var(--bg-hover) !important; }
 html[data-theme="light"] #careerStatsModal #careerStatsTable .career-team-logo { filter:none; }
-html[data-theme="light"] #careerStatsModal #careerStatsTable .career-team-name { color:var(--text-secondary,#54545c); }
-html[data-theme="light"] #careerStatsModal #careerStatsTable tr.current-season { background:linear-gradient(90deg,rgba(var(--team-rgb),.18),rgba(var(--team-rgb),.08)),var(--card,#fff); }
+html[data-theme="light"] #careerStatsModal #careerStatsTable tr.current-season { background:linear-gradient(90deg,rgba(var(--team-rgb),.18),rgba(var(--team-rgb),.08)),var(--card); }
 html[data-theme="light"] #careerStatsModal #careerStatsTable tr.current-season td { border-block-color:var(--team-surface); }
 html[data-theme="light"] #careerStatsModal #careerStatsTable tr.current-season td:first-child { box-shadow:inset 5px 0 var(--team-surface); }
-html[data-theme="light"] #careerStatsModal #careerStatsTable tr.career-totals-row { background:var(--bg-gray-light,#f5f5f3); }
+html[data-theme="light"] #careerStatsModal #careerStatsTable tr.career-totals-row { background:var(--bg-gray-light); }
 html[data-theme="light"] #careerStatsModal #careerStatsTable .career-totals-row td { border-top-color:var(--team-surface); }
-html[data-theme="light"] #careerStatsModal .no-stats-message { color:var(--text-secondary,#54545c); }
-html[data-theme="light"] #careerStatsModal .career-loading { color:var(--text-gray,#68686f); }
-html[data-theme="light"] #careerStatsModal .career-loading > div { background-image:linear-gradient(100deg,#e4e4e0 20%,#f0f0ed 40%,#e4e4e0 60%); }
+html[data-theme="light"] #careerStatsModal .career-loading > div { background-image:linear-gradient(100deg,#e8e8ed 20%,#f5f5f7 40%,#e8e8ed 60%); }

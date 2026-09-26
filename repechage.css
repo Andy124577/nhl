@@ -45,9 +45,9 @@
     font-weight: 800;
 }
 
-.rp-state-attente { background: rgba(255, 179, 0, .15); color: var(--warning); }
-.rp-state-pret    { background: rgba(0, 230, 118, .15); color: var(--success); }
-.rp-state-termine { background: rgba(var(--primary-rgb), .14); color: var(--primary); }
+.rp-state-attente { background: color-mix(in srgb, var(--warning) 10%, var(--card)); color: var(--warning); }
+.rp-state-pret    { background: color-mix(in srgb, var(--success) 10%, var(--card)); color: var(--success); }
+.rp-state-termine { background: color-mix(in srgb, var(--primary) 10%, var(--card)); color: var(--primary-text); }
 
 /* ==================== CORPS ==================== */
 
@@ -65,7 +65,7 @@
 .rp-progress-fill {
     height: 100%;
     border-radius: 999px;
-    background: linear-gradient(90deg, var(--primary) 0%, var(--primary-deep) 100%);
+    background: var(--primary);
     transition: width .4s ease;
 }
 
@@ -91,8 +91,8 @@
 }
 
 .rp-btn.primary {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
-    color: var(--bg);
+    background: var(--primary);
+    color: var(--on-primary);
 }
 
 .rp-btn.primary:hover { transform: translateY(-1px); }
@@ -104,7 +104,7 @@
     color: var(--text-secondary);
 }
 
-.rp-btn.secondary:hover { border-color: var(--primary); color: var(--primary); }
+.rp-btn.secondary:hover { border-color: var(--primary); color: var(--primary-text); }
 
 /* ==================== CHARGEMENT ==================== */
 
@@ -226,7 +226,7 @@
     flex: 0 0 auto;
     border-radius: 50%;
     background: rgba(var(--primary-rgb), .1); /* à .18, l'initiale restait sous 4,5:1 */
-    color: var(--primary);
+    color: var(--primary-text);
     font-size: .68rem;
     font-weight: 800;
 }
@@ -241,7 +241,7 @@
     padding: 3px 7px;
     border-radius: 999px;
     background: var(--primary);
-    color: var(--bg);
+    color: var(--on-primary);
     font-size: .58rem;
     font-weight: 800;
     letter-spacing: .08em;
@@ -250,12 +250,12 @@
 .rp-seat.is-free {
     border-style: dashed;
     background: transparent;
-    color: var(--text-light-gray);
+    color: var(--text-secondary);
 }
 .rp-seat.is-free .rp-seat-ini {
     background: transparent;
     border: 1px dashed var(--border-gray);
-    color: var(--text-light-gray);
+    color: var(--text-secondary);
 }
 
 /* Quitter la file : offert, jamais poussé. Le rouge n'apparaît qu'au
@@ -265,14 +265,9 @@
     color: var(--danger);
 }
 
-/* Thème clair : l'ambre de --warning (#CC8800) est fait pour un aplat, pas
-   pour du texte — 2,6:1 sur sa propre teinte. Le libellé prend un ambre
-   foncé ; le fond ne change pas. Même chose pour les places libres. */
-html[data-theme="light"] .rp-state-attente { color: #7f5300; }
-html[data-theme="light"] .rp-seat.is-free,
-html[data-theme="light"] .rp-seat.is-free .rp-seat-ini { color: #6b6b73; }
-html[data-theme="dark"] .rp-seat.is-free,
-html[data-theme="dark"] .rp-seat.is-free .rp-seat-ini { color: #8c8c95; }
+/* Pastilles d'état : un lavis de 10 % posé sur la carte, où le texte
+   sémantique garde 4,5:1 dans les deux thèmes (--warning clair compris) ;
+   les places libres prennent le libellé secondaire, lisible partout. */
 
 /* ============================================================
    SALON — une personne, une équipe
@@ -337,7 +332,7 @@ html[data-theme="dark"] .rp-seat.is-free .rp-seat-ini { color: #8c8c95; }
     min-width: 1.4em;
     font-family: 'JetBrains Mono', ui-monospace, monospace;
     font-weight: 700;
-    color: var(--primary);
+    color: var(--primary-text);
 }
 .rp-order-nom { flex: 1 1 auto; min-width: 0; font-weight: 700; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rp-order-rang { flex: 0 0 auto; font-size: .76rem; color: var(--text-secondary); }
@@ -453,7 +448,7 @@ html[data-theme="dark"] .rp-seat.is-free .rp-seat-ini { color: #8c8c95; }
     display: grid;
     place-items: center;
     background: rgba(var(--primary-rgb), .1);
-    color: var(--primary);
+    color: var(--primary-text);
     font-size: .82rem;
     font-weight: 800;
 }
@@ -479,7 +474,7 @@ html[data-theme="dark"] .rp-seat.is-free .rp-seat-ini { color: #8c8c95; }
     border: 0;
     border-radius: 10px;
     background: var(--primary);
-    color: var(--bg);
+    color: var(--on-primary);
     font: inherit;
     font-size: .86rem;
     font-weight: 800;
@@ -545,7 +540,7 @@ html[data-theme="dark"] .rp-seat.is-free .rp-seat-ini { color: #8c8c95; }
     padding: 0 2px;
     border: 0;
     background: none;
-    color: var(--primary);
+    color: var(--primary-text);
     font: inherit;
     font-size: .86rem;
     font-weight: 800;
@@ -583,7 +578,7 @@ html[data-theme="dark"] .rp-seat.is-free .rp-seat-ini { color: #8c8c95; }
 }
 /* La croix est petite ; sa zone de clic ne l'est pas. */
 .rp-seat-cancel::after { content: ''; position: absolute; inset: -10px; }
-.rp-seat-cancel:hover { background: rgba(255, 71, 87, .12); color: var(--danger); }
+.rp-seat-cancel:hover { background: rgba(var(--primary-rgb), .12); color: var(--danger); }
 .rp-seat-cancel:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 .rp-seat-cancel:disabled { opacity: .5; cursor: default; }
 

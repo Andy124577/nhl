@@ -28,7 +28,7 @@ body.fz-draft .fzd-rail-select {
   padding: 8px 32px 8px 12px;
   border: 1px solid var(--fzd-border-strong, var(--border-gray));
   border-radius: 10px;
-  background: var(--fzd-surface, var(--card)) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23999' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E") no-repeat right 12px center;
+  background: var(--fzd-surface, var(--card)) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2386868B' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E") no-repeat right 12px center;
   color: var(--fzd-text, var(--text-main));
   font: 600 .88rem/1.2 var(--fzd-font, inherit);
   appearance: none;
@@ -78,8 +78,10 @@ body.fz-draft tr.fzd-picked-row.is-me .fzd-status-cell { color: var(--fzd-accent
   gap: 6px;
   padding: 2px 9px;
   border-radius: 999px;
-  background: rgba(var(--primary-rgb), .14);
-  color: var(--primary);
+  /* Lavis opaque posé sur la carte : la pastille garde son rouge lisible
+     (4,6:1 au pire) quel que soit l'aplat du bandeau dessous. */
+  background: color-mix(in srgb, var(--primary) 10%, var(--card));
+  color: var(--primary-text);
   font-weight: 800;
   font-size: .78em;
   letter-spacing: .02em;
@@ -94,7 +96,7 @@ body.fz-draft tr.fzd-picked-row.is-me .fzd-status-cell { color: var(--fzd-accent
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(8, 8, 10, .62);
+  background: rgba(0, 0, 0, .62);
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   opacity: 0;
@@ -133,8 +135,8 @@ body.fz-draft tr.fzd-picked-row.is-me .fzd-status-cell { color: var(--fzd-accent
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: var(--success, #00E676);
-  color: #0b0b0d;
+  background: var(--success);
+  color: var(--on-success);
   font-size: 1.9rem;
   font-weight: 900;
 }
@@ -152,7 +154,7 @@ body.fz-draft tr.fzd-picked-row.is-me .fzd-status-cell { color: var(--fzd-accent
   font-weight: 700;
   cursor: pointer;
 }
-.fz-conn-retry:hover { border-color: var(--primary); color: var(--primary); }
+.fz-conn-retry:hover { border-color: var(--primary); color: var(--primary-text); }
 .fz-conn-overlay.is-back .fz-conn-spinner { display: none; }
 .fz-conn-overlay.is-back .fz-conn-check { display: flex; animation: fzConnPop .45s cubic-bezier(.2, 1.4, .4, 1) both; }
 .fz-conn-overlay.is-back .fz-conn-retry { display: none; }

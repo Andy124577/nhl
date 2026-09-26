@@ -59,7 +59,7 @@ body.fz-stats .lu-team-select {
   border: 1px solid var(--fzs-border-input);
   border-radius: 12px;
   background-color: var(--fzs-surface);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236d6a64' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236E6E73' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   color: var(--fzs-ink);
@@ -68,9 +68,14 @@ body.fz-stats .lu-team-select {
   -webkit-appearance: none;
   cursor: pointer;
 }
+/* Chevron dans l'URI : pas de var() possible, la teinte secondaire est
+   donc redonnée par thème. */
+html[data-theme="dark"] body.fz-stats .lu-team-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23A1A1A6' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
+}
 body.fz-stats .lu-team-select:focus-visible {
   outline: none;
-  border-color: var(--fzs-accent);
+  border-color: var(--fzs-accent-fill);
   box-shadow: 0 0 0 3px var(--fzs-accent-wash);
 }
 
@@ -270,8 +275,10 @@ body.fz-stats .lu-jersey {
 }
 body.fz-stats .lu-j-c1 { fill: var(--lu-c1); }
 body.fz-stats .lu-j-c2 { fill: var(--lu-c2); }
-body.fz-stats .lu-j-trim { fill: #f4f3ef; }
-body.fz-stats .lu-j-inside { fill: #cfcdc7; }
+/* Liseré blanc et doublure du chandail : fixes dans les deux thèmes, pris
+   sur l'échelle neutre d'Apple (#F5F5F7, #D2D2D7). */
+body.fz-stats .lu-j-trim { fill: #F5F5F7; }
+body.fz-stats .lu-j-inside { fill: #D2D2D7; }
 body.fz-stats .lu-j-collar { fill: none; stroke: var(--lu-c2); stroke-width: 3; stroke-linecap: round; }
 body.fz-stats .lu-j-edge { fill: none; stroke: rgba(0,0,0,.28); stroke-width: .8; }
 body.fz-stats .lu-j-name,

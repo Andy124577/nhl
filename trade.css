@@ -1,8 +1,8 @@
 /* ============================================================ */
 /* TRADE PAGE — Premium editorial skin                          */
 /* ------------------------------------------------------------ */
-/* Same treatment as draftActif-premium.css: a fixed off-white/  */
-/* Oswald/brick-red editorial look, scoped entirely under        */
+/* Same treatment as draftActif-premium.css: an Oswald/red       */
+/* editorial look on Apple's gray ladder, scoped entirely under  */
 /* body.fz-trade so it never leaks into the shared navbar/rail   */
 /* (those keep index.css's own dark/light theme) and never       */
 /* redeclares index.css's own token names — see DESIGN.md's      */
@@ -12,43 +12,48 @@
 * { box-sizing: border-box; }
 
 body.fz-trade {
-    --fzt-bg: #f7f6f3;
-    --fzt-bg-alt: #f0eee8;
-    --fzt-bg-page: #dedbd5;
-    --fzt-surface: #ffffff;
-    --fzt-ink: #16181a;
-    --fzt-text: #4b4843;
-    --fzt-text-muted: #6d6a64;
-    --fzt-text-faint: #8a877f;
-    --fzt-text-fainter: #a8a49c;
-    --fzt-border: #e2dfd8;
-    --fzt-border-strong: #cdcac3;
-    --fzt-border-soft: #eae7e0;
-    --fzt-border-input: #d6d3cc;
-    --fzt-accent: #b93d28;
-    --fzt-accent-dark: #8f2e1a;
-    /* Aplat de la brique. --fzt-accent s'éclaircit en thème sombre pour
-       rester lisible EN TEXTE ; le fond plein, lui, ne bouge pas — c'est
-       sur lui que le blanc garde ses 5,58:1. Deux rôles, deux jetons. */
-    --fzt-accent-fill: #b93d28;
-    --fzt-on-accent: #ffffff;
+    /* trade.html charge index.css : les rôles pointent sur ses jetons, qui
+       basculent déjà d'un thème à l'autre. Restent en dur l'aplat neutre
+       (--fzt-solid) et le fond fort (--fzt-muted-fill), sans jeton global. */
+    --fzt-bg: var(--bg-gray-light);
+    --fzt-bg-alt: var(--bg-gray-light);
+    --fzt-bg-page: var(--bg-page);
+    --fzt-surface: var(--card);
+    --fzt-ink: var(--text-main);
+    --fzt-text: var(--text-main);
+    --fzt-text-muted: var(--text-secondary);
+    --fzt-text-faint: var(--text-secondary);
+    /* Tertiaire : indications, champs vides et états désactivés seulement. */
+    --fzt-text-fainter: var(--text-light-gray);
+    --fzt-border: var(--border-light);
+    --fzt-border-strong: var(--border-gray);
+    --fzt-border-soft: var(--border-light);
+    --fzt-border-input: var(--border-gray);
+    /* Le rouge a trois emplois : texte (--fzt-accent), aplat
+       (--fzt-accent-fill, blanc dessus à 4,55:1) et survol de l'aplat. */
+    --fzt-accent: var(--primary-text);
+    --fzt-accent-dark: var(--primary-text);
+    --fzt-accent-fill: var(--primary);
+    --fzt-accent-fill-hover: var(--primary-deep);
+    --fzt-on-accent: var(--on-primary);
     /* --fzt-ink porte deux rôles en thème clair : la couleur du texte le
-       plus appuyé ET l'aplat des boutons primaires / onglets actifs. Les
-       deux s'inversent en thème sombre (le texte s'éclaircit, l'aplat aussi,
-       et son libellé fonce avec lui) : ils sont séparés ici. */
-    --fzt-solid: #16181a;
+       plus appuyé ET l'aplat des boutons secondaires pleins / onglets
+       actifs. Les deux s'inversent en thème sombre (le texte s'éclaircit,
+       l'aplat aussi, et son libellé fonce avec lui) : ils sont séparés ici. */
+    --fzt-solid: #1D1D1F;
     --fzt-solid-hover: #000000;
-    --fzt-on-solid: #ffffff;
-    --fzt-surface-alt: #fbfaf8;
-    --fzt-row-hover: #f4f2ed;
-    --fzt-muted-fill: #ece9e2;
-    --fzt-success-bg: #e8efe6;
-    --fzt-success-text: #3f6b39;
-    --fzt-success-border: #c9d9c4;
-    --fzt-warning-bg: #f3e6c8;
-    --fzt-warning-text: #8a6a1f;
-    --fzt-danger-bg: #f7e6e2;
-    --fzt-danger-border: #e3bdb2;
+    --fzt-on-solid: #FFFFFF;
+    --fzt-surface-alt: var(--card-white);
+    --fzt-row-hover: var(--bg-hover);
+    --fzt-muted-fill: #E8E8ED;
+    /* Voiles à 10 % : au-delà, le texte sémantique passe sous 4,5:1 en clair. */
+    --fzt-success-bg: color-mix(in srgb, var(--success) 10%, var(--card));
+    --fzt-success-text: var(--success);
+    --fzt-success-border: color-mix(in srgb, var(--success) 30%, var(--card));
+    --fzt-warning-bg: color-mix(in srgb, var(--warning) 10%, var(--card));
+    --fzt-warning-text: var(--warning);
+    --fzt-danger-bg: color-mix(in srgb, var(--primary) 10%, var(--card));
+    --fzt-danger-border: rgba(var(--primary-rgb), .35);
 
     margin: 0;
     min-height: 100vh;
@@ -68,41 +73,19 @@ body.fz-trade {
 /* noms, mêmes règles en aval. Seules les VALEURS basculent, ce   */
 /* qui est exactement la raison d'être des jetons.                */
 /*                                                                */
-/* La brique reste la brique (--fzt-accent-fill) là où elle sert  */
-/* d'aplat ; --fzt-accent, qui sert de TEXTE, s'éclaircit à       */
-/* #e8795e pour tenir 5,8:1 sur la carte sombre (2,8:1 sinon).    */
+/* Les jetons globaux basculent seuls ; ne restent ici que les    */
+/* valeurs sans jeton global.                                     */
 /* ============================================================ */
 html[data-theme="dark"] body.fz-trade {
-    --fzt-bg: #1a1a1e;
-    --fzt-bg-alt: #202025;
-    --fzt-bg-page: #131316;
-    --fzt-surface: #1e1e22;
-    --fzt-surface-alt: #232328;
-    --fzt-ink: #f5f5f2;
-    --fzt-text: #c9c6c0;
-    --fzt-text-muted: #a3a099;
-    --fzt-text-faint: #8a877f;
-    --fzt-text-fainter: #6e6b65;
-    --fzt-border: #2e2e33;
-    --fzt-border-strong: #3c3c43;
-    --fzt-border-soft: #27272c;
-    --fzt-border-input: #3a3a41;
-    --fzt-accent: #e8795e;
-    --fzt-accent-dark: #f19b85;
-    --fzt-row-hover: #26262b;
-    --fzt-muted-fill: #26262b;
+    /* Le creux (carte fantôme, échange refusé) est au niveau de la
+       carte en sombre, un cran sous elle en clair. */
+    --fzt-bg: var(--card);
+    --fzt-muted-fill: #3A3A3C;
     /* L'aplat plein s'inverse avec le fond : clair sur sombre, comme il
        était sombre sur clair. Son libellé suit (--fzt-on-solid). */
-    --fzt-solid: #f0eee9;
-    --fzt-solid-hover: #ffffff;
-    --fzt-on-solid: #16181a;
-    --fzt-success-bg: #17301f;
-    --fzt-success-text: #7fc08d;
-    --fzt-success-border: #2c4d35;
-    --fzt-warning-bg: #33280f;
-    --fzt-warning-text: #dfb352;
-    --fzt-danger-bg: #351d17;
-    --fzt-danger-border: #5a3227;
+    --fzt-solid: #F5F5F7;
+    --fzt-solid-hover: #FFFFFF;
+    --fzt-on-solid: #000000;
 }
 
 body.fz-trade * { box-sizing: border-box; }
@@ -122,7 +105,7 @@ body.fz-trade #fzDrawer {
 body.fz-trade nav a { color: var(--text-secondary); }
 body.fz-trade nav a:hover { color: var(--text-main); }
 body.fz-trade nav a.active:hover,
-body.fz-trade nav a.is-active:hover { color: var(--primary); }
+body.fz-trade nav a.is-active:hover { color: var(--primary-text); }
 
 body.fz-trade .fzt-num {
     font-family: 'Oswald', 'Helvetica Neue', sans-serif;
@@ -192,7 +175,7 @@ body.fz-trade .trade-tab:hover {
 }
 body.fz-trade .trade-tab.active {
     color: var(--fzt-ink);
-    border-bottom-color: var(--fzt-accent);
+    border-bottom-color: var(--fzt-accent-fill);
     background: none;
     box-shadow: none;
 }
@@ -309,7 +292,7 @@ body.fz-trade .tm-dropdown-panel {
     max-height: 360px;
     overflow-y: auto;
     background: var(--fzt-surface);
-    border: 1px solid var(--fzt-border-strong);
+    border: 1px solid var(--fzt-border);
     border-radius: 12px;
     box-shadow: 0 18px 40px rgba(0,0,0,.18);
 }
@@ -507,7 +490,7 @@ body.fz-trade .rlh-name {
     font: 500 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: var(--fzt-text-fainter);
+    color: var(--fzt-text-faint);
 }
 body.fz-trade .rlh-stats {
     display: flex;
@@ -515,7 +498,7 @@ body.fz-trade .rlh-stats {
     font: 500 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: var(--fzt-text-fainter);
+    color: var(--fzt-text-faint);
 }
 body.fz-trade .rlh-stats span { width: 26px; text-align: right; }
 body.fz-trade .rlh-stats .rlh-pts { width: 34px; color: var(--fzt-ink); font-weight: 600; }
@@ -539,7 +522,7 @@ body.fz-trade .player-card-roster {
 }
 body.fz-trade .player-card-roster:hover { background: var(--fzt-bg-alt); }
 body.fz-trade .player-card-roster.selected {
-    border-left-color: var(--fzt-accent);
+    border-left-color: var(--fzt-accent-fill);
     background: var(--fzt-surface);
 }
 body.fz-trade .player-card-roster.selected:hover { background: var(--fzt-surface); }
@@ -680,7 +663,7 @@ body.fz-trade .tb-pair-row {
     align-items: stretch;
 }
 body.fz-trade .tb-card {
-    border: 1px solid var(--fzt-border-input);
+    border: 1px solid var(--fzt-border);
     border-radius: 10px;
     background: var(--fzt-surface);
     padding: 10px 12px;
@@ -758,7 +741,7 @@ body.fz-trade .tb-card.is-ghost .tb-card-name { color: var(--fzt-text-faint); fo
 body.fz-trade .tb-card.is-ghost .tb-card-meta { color: var(--fzt-text-fainter); }
 
 body.fz-trade .tb-equity {
-    border-top: 1px solid var(--fzt-border-input);
+    border-top: 1px solid var(--fzt-border);
     padding-top: 13px;
     display: flex;
     flex-direction: column;
@@ -812,8 +795,9 @@ body.fz-trade .btn-propose-trade {
     padding: 14px;
     border: none;
     border-radius: 10px;
-    background: var(--fzt-solid);
-    color: var(--fzt-on-solid);
+    /* L'action principale de la page : le seul aplat rouge de la vue. */
+    background: var(--fzt-accent-fill);
+    color: var(--fzt-on-accent);
     font: 600 12px/1 'Helvetica Neue', Helvetica, sans-serif;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -821,9 +805,9 @@ body.fz-trade .btn-propose-trade {
     box-shadow: none;
     transition: background .15s ease;
 }
-body.fz-trade .btn-propose-trade:hover:not(:disabled) { background: var(--fzt-solid-hover); transform: none; box-shadow: none; }
+body.fz-trade .btn-propose-trade:hover:not(:disabled) { background: var(--fzt-accent-fill-hover); transform: none; box-shadow: none; }
 body.fz-trade .btn-propose-trade:disabled {
-    background: var(--fzt-border-input);
+    background: var(--fzt-muted-fill);
     color: var(--fzt-text-faint);
     cursor: not-allowed;
     opacity: 1;
@@ -893,8 +877,8 @@ body.fz-trade .btn-success-secondary {
     gap: 8px;
     transition: background .15s ease, border-color .15s ease, color .15s ease;
 }
-body.fz-trade .btn-success-primary { background: var(--fzt-solid); border: none; color: var(--fzt-on-solid); }
-body.fz-trade .btn-success-primary:hover { background: var(--fzt-solid-hover); transform: none; box-shadow: none; }
+body.fz-trade .btn-success-primary { background: var(--fzt-accent-fill); border: none; color: var(--fzt-on-accent); }
+body.fz-trade .btn-success-primary:hover { background: var(--fzt-accent-fill-hover); transform: none; box-shadow: none; }
 body.fz-trade .btn-success-secondary { background: none; border: 1px solid var(--fzt-border-input); color: var(--fzt-text-muted); }
 body.fz-trade .btn-success-secondary:hover { border-color: var(--fzt-ink); color: var(--fzt-ink); }
 
@@ -909,7 +893,7 @@ body.fz-trade .received-trades-list {
 }
 
 body.fz-trade .received-trade-card {
-    border: 1px solid var(--fzt-border-input);
+    border: 1px solid var(--fzt-border);
     border-radius: 13px;
     background: var(--fzt-surface);
     overflow: hidden;
@@ -920,16 +904,16 @@ body.fz-trade .received-trade-card:hover { box-shadow: none; }
 body.fz-trade .received-trade-card.is-target,
 body.fz-trade .history-card.is-target,
 body.fz-trade .history-card.is-target.is-declined {
-    border-color: var(--fzt-accent);
-    outline: 2px solid var(--fzt-accent);
+    border-color: var(--fzt-accent-fill);
+    outline: 2px solid var(--fzt-accent-fill);
     outline-offset: 3px;
     scroll-margin-block: 100px;
     opacity: 1;
     animation: fztTargetPulse 1.6s ease-out 2;
 }
 @keyframes fztTargetPulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(196,68,46,.18); }
-    50% { box-shadow: 0 0 0 6px rgba(196,68,46,.12); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb),.18); }
+    50% { box-shadow: 0 0 0 6px rgba(var(--primary-rgb),.12); }
 }
 @media (prefers-reduced-motion: reduce) {
     body.fz-trade .received-trade-card.is-target,
@@ -1058,7 +1042,7 @@ body.fz-trade .received-empty {
     text-align: center;
     padding: 20px;
     font: 400 12px/1.4 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-text-fainter);
+    color: var(--fzt-text-faint);
 }
 
 /* ============================================================ */
@@ -1072,7 +1056,7 @@ body.fz-trade .history-cards {
 }
 
 body.fz-trade .history-card {
-    border: 1px solid var(--fzt-border-input);
+    border: 1px solid var(--fzt-border);
     border-radius: 10px;
     background: var(--fzt-surface);
     overflow: hidden;
@@ -1089,7 +1073,7 @@ body.fz-trade .history-card-head {
     gap: 14px;
     padding: 10px 18px;
     background: var(--fzt-bg-alt);
-    border-bottom: 1px solid var(--fzt-border-input);
+    border-bottom: 1px solid var(--fzt-border);
 }
 body.fz-trade .history-card.is-declined .history-card-head { background: var(--fzt-muted-fill); }
 body.fz-trade .history-card-date {
@@ -1110,7 +1094,7 @@ body.fz-trade .history-card-status {
 }
 body.fz-trade .history-card.is-declined .history-card-status {
     background: var(--fzt-border);
-    color: var(--fzt-text-faint);
+    color: var(--fzt-text);
 }
 
 body.fz-trade .history-card-sides {
@@ -1128,7 +1112,7 @@ body.fz-trade .history-side-dot {
     width: 22px;
     height: 22px;
     border-radius: 999px;
-    background: var(--fzt-border-input);
+    background: var(--fzt-muted-fill);
     flex-shrink: 0;
 }
 body.fz-trade .history-side-name {
@@ -1158,7 +1142,7 @@ body.fz-trade .history-player-dot {
     width: 30px;
     height: 30px;
     border-radius: 999px;
-    background: var(--fzt-border-input);
+    background: var(--fzt-muted-fill);
     flex-shrink: 0;
 }
 body.fz-trade .history-player-name {
@@ -1184,7 +1168,7 @@ body.fz-trade .history-divider-icon {
     height: 26px;
     border-radius: 999px;
     background: var(--fzt-surface);
-    border: 1px solid var(--fzt-border-input);
+    border: 1px solid var(--fzt-border);
     display: grid;
     place-items: center;
     font: 400 12px/1 'Helvetica Neue', Helvetica, sans-serif;
@@ -1195,7 +1179,7 @@ body.fz-trade .history-empty {
     text-align: center;
     padding: 48px 24px;
     font: 400 13px/1.4 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-text-fainter);
+    color: var(--fzt-text-faint);
 }
 
 /* ============================================================ */
@@ -1205,7 +1189,7 @@ body.fz-trade .trade-confirm-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(22,24,26,.5);
+    background: var(--overlay-dark);
     z-index: 10000;
     align-items: center;
     justify-content: center;
@@ -1219,7 +1203,7 @@ body.fz-trade .trade-confirm-overlay.show { display: flex; }
 }
 body.fz-trade .trade-confirm-box {
     background: var(--fzt-surface);
-    border: 1px solid var(--fzt-border-strong);
+    border: 1px solid var(--fzt-border);
     border-radius: 16px;
     padding: 26px 24px;
     width: 90%;
@@ -1286,8 +1270,8 @@ body.fz-trade .tc-btn {
 }
 body.fz-trade .tc-cancel { background: none; border: 1px solid var(--fzt-border-input); color: var(--fzt-text-muted); }
 body.fz-trade .tc-cancel:hover { border-color: var(--fzt-ink); color: var(--fzt-ink); }
-body.fz-trade .tc-ok { background: var(--fzt-solid); border: none; color: var(--fzt-on-solid); }
-body.fz-trade .tc-ok:hover { background: var(--fzt-solid-hover); transform: none; box-shadow: none; }
+body.fz-trade .tc-ok { background: var(--fzt-accent-fill); border: none; color: var(--fzt-on-accent); }
+body.fz-trade .tc-ok:hover { background: var(--fzt-accent-fill-hover); transform: none; box-shadow: none; }
 
 /* ============================================================ */
 /* MOBILE BOTTOM BAR                                             */
@@ -1317,7 +1301,7 @@ body.fz-trade .trade-notification {
     right: -400px;
     max-width: 380px;
     background: var(--fzt-surface);
-    border: 1px solid var(--fzt-border-strong);
+    border: 1px solid var(--fzt-border);
     border-radius: 12px;
     padding: 14px 18px;
     box-shadow: 0 12px 32px rgba(0,0,0,.18);
@@ -1366,7 +1350,7 @@ body.fz-trade .notification-message { color: var(--fzt-ink); font: 500 13px/1.4 
         cursor: pointer;
         transition: color .18s ease, border-color .18s ease;
     }
-    body.fz-trade .tm-tab.is-active { color: var(--fzt-ink); border-bottom-color: var(--fzt-accent); }
+    body.fz-trade .tm-tab.is-active { color: var(--fzt-ink); border-bottom-color: var(--fzt-accent-fill); }
     body.fz-trade .tm-tab-count {
         display: inline-grid;
         place-items: center;
@@ -1374,7 +1358,7 @@ body.fz-trade .notification-message { color: var(--fzt-ink); font: 500 13px/1.4 
         height: 15px;
         padding: 0 4px;
         border-radius: 999px;
-        background: var(--fzt-border-input);
+        background: var(--fzt-muted-fill);
         color: var(--fzt-text);
         font: 600 9px/1 'Helvetica Neue', Helvetica, sans-serif;
     }
@@ -1406,7 +1390,7 @@ body.fz-trade .notification-message { color: var(--fzt-ink); font: 500 13px/1.4 
         z-index: 998;
         padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
         background: var(--fzt-surface);
-        border-top: 1px solid var(--fzt-border-input);
+        border-top: 1px solid var(--fzt-border);
         box-shadow: 0 -8px 28px rgba(0,0,0,.14);
     }
     body.fz-trade .tm-balance {
@@ -1450,7 +1434,7 @@ body.fz-trade .notification-message { color: var(--fzt-ink); font: 500 13px/1.4 
         min-height: 50px;
         border: 0;
         border-radius: 10px;
-        background: var(--fzt-border-input);
+        background: var(--fzt-muted-fill);
         color: var(--fzt-text-faint);
         font: 600 1rem/1 'Helvetica Neue', Helvetica, sans-serif;
         letter-spacing: .06em;
@@ -1458,7 +1442,8 @@ body.fz-trade .notification-message { color: var(--fzt-ink); font: 500 13px/1.4 
         cursor: not-allowed;
         transition: background .2s ease;
     }
-    body.fz-trade .tm-cta.is-ready { background: var(--fzt-solid); color: var(--fzt-on-solid); cursor: pointer; }
+    body.fz-trade .tm-cta.is-ready { background: var(--fzt-accent-fill); color: var(--fzt-on-accent); cursor: pointer; }
+    body.fz-trade .tm-cta.is-ready:hover { background: var(--fzt-accent-fill-hover); }
     body.fz-trade .tm-cta.is-ready:active { transform: scale(.98); }
 
     body.fz-trade .trade-card-players { grid-template-columns: 1fr 32px 1fr; gap: 10px; padding: 14px 16px; }
@@ -1482,9 +1467,9 @@ body.fz-trade .tb-counter-note {
     flex-direction: column;
     gap: 3px;
     padding: 10px 12px;
-    border: 1px solid var(--fzt-accent);
+    border: 1px solid rgba(var(--primary-rgb), .35);
     border-radius: 10px;
-    background: color-mix(in srgb, var(--fzt-accent) 8%, transparent);
+    background: color-mix(in srgb, var(--fzt-accent-fill) 8%, transparent);
     font: 500 12px/1.4 'Helvetica Neue', Helvetica, sans-serif;
     color: var(--fzt-ink);
 }

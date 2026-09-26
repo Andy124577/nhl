@@ -5,7 +5,7 @@
 @keyframes glow-pulse   { 0%,100%{opacity:.25} 50%{opacity:.55} }
 @keyframes float-a      { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
 @keyframes float-b      { 0%,100%{transform:translateY(0) rotate(-4deg)} 50%{transform:translateY(-10px) rotate(-4deg)} }
-@keyframes live-ring    { 0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,230,118,.5)} 60%{transform:scale(1.15);box-shadow:0 0 0 7px rgba(0,230,118,0)} }
+@keyframes live-ring    { 0%,100%{transform:scale(1);box-shadow:0 0 0 0 color-mix(in srgb,var(--success) 50%,transparent)} 60%{transform:scale(1.15);box-shadow:0 0 0 7px transparent} }
 @keyframes pulse        { 0%,100%{opacity:1} 50%{opacity:.6} }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -70,7 +70,7 @@ body {
     background: rgba(var(--primary-rgb),.12);
     border: 1px solid rgba(var(--primary-rgb),.3);
     border-radius: 100px;
-    color: var(--primary);
+    color: var(--primary-text);
     font-size: .78rem;
     font-weight: 700;
     letter-spacing: 2px;
@@ -103,8 +103,8 @@ body {
 
 .btn-hero-primary {
     padding: 15px 32px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
-    color: var(--bg);
+    background: var(--primary);
+    color: var(--on-primary);
     border-radius: 12px;
     text-decoration: none;
     font-weight: 800;
@@ -134,7 +134,7 @@ body {
 .btn-hero-secondary:hover {
     background: rgba(255,255,255,.07);
     border-color: var(--primary);
-    color: var(--primary);
+    color: var(--primary-text);
     transform: translateY(-3px);
 }
 
@@ -154,7 +154,7 @@ body {
     cursor: pointer;
 }
 .btn-hero-tertiary:hover {
-    color: var(--primary);
+    color: var(--primary-text);
     transform: translateY(-2px);
 }
 
@@ -162,7 +162,7 @@ body {
 .hero-preview-wrap { position: relative; display: flex; justify-content: center; }
 
 .hero-floating-card {
-    background: rgba(26,26,30,.92);
+    background: rgba(28,28,30,.92);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border: 1px solid rgba(var(--primary-rgb),.22);
@@ -196,7 +196,7 @@ body {
 /* Decorative chips */
 .hero-stat-chip {
     position: absolute;
-    background: rgba(26,26,30,.9);
+    background: rgba(28,28,30,.9);
     border: 1px solid rgba(var(--primary-rgb),.28);
     border-radius: 100px;
     padding: 8px 16px;
@@ -248,14 +248,14 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
 .alert {
     display: flex; align-items: center; gap: 12px;
     padding: 14px 20px;
-    background: linear-gradient(135deg, rgba(245,158,11,.15), rgba(245,158,11,.08));
-    border: 1px solid rgba(245,158,11,.3);
+    background: color-mix(in srgb, var(--warning) 12%, var(--card));
+    border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
     border-radius: 10px;
     cursor: pointer;
     transition: all .2s ease;
     margin-bottom: 10px;
 }
-.alert:hover { transform: translateX(4px); background: linear-gradient(135deg, rgba(245,158,11,.22), rgba(245,158,11,.12)); }
+.alert:hover { transform: translateX(4px); background: color-mix(in srgb, var(--warning) 18%, var(--card)); }
 .alert-icon    { font-size: 1.3rem; }
 .alert-message { font-size: .95rem; font-weight: 600; color: var(--text-dark); }
 
@@ -286,7 +286,7 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
 .section-icon    { font-size: 1.7rem; }
 .section-title   { font-size: 1.75rem; font-weight: 800; color: var(--text-main); }
 .section-pool-name {
-    font-size: .82rem; color: var(--primary);
+    font-size: .82rem; color: var(--primary-text);
     padding: 4px 12px; background: rgba(var(--primary-rgb),.1);
     border: 1px solid rgba(var(--primary-rgb),.25); border-radius: 100px;
     font-weight: 700;
@@ -332,7 +332,7 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
 .step-card:hover::after { opacity: 1; }
 
 .step-number {
-    font-size: .72rem; font-weight: 800; color: var(--primary);
+    font-size: .72rem; font-weight: 800; color: var(--primary-text);
     letter-spacing: 2px; text-transform: uppercase;
     margin-bottom: 18px; opacity: .75;
 }
@@ -354,7 +354,7 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
     background: rgba(var(--primary-rgb),.1);
     border: 1px solid rgba(var(--primary-rgb),.25);
     border-radius: 100px;
-    color: var(--primary); text-decoration: none;
+    color: var(--primary-text); text-decoration: none;
     font-size: .85rem; font-weight: 700;
     transition: all .25s;
     margin-top: auto;
@@ -385,7 +385,7 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
     position: absolute;
     right: -9px; top: 50%;
     transform: translateY(-50%);
-    color: var(--primary); font-size: .6rem;
+    color: var(--primary-text); font-size: .6rem;
     line-height: 1;
 }
 
@@ -464,19 +464,23 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
     padding: 4px 12px;
     border-radius: 100px;
     font-size: .7rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
-    background: rgba(var(--primary-rgb),.16);
-    color: var(--primary);
+    /* Aplat plein : posée sur la photo nue, un voile et un texte rouges n'y
+       tiennent aucun contraste garanti. */
+    background: var(--primary);
+    color: var(--on-primary);
 }
 .stories-caption { position: relative; z-index: 1; padding: 12px 16px 16px; }
-.stories-source { display: block; font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px; }
+/* Sur le voile noir de la photo dans les deux thèmes : secondaire sombre, fixe
+   (#6E6E73, le secondaire clair, n'y ferait que 3,5:1). */
+.stories-source { display: block; font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #A1A1A6; margin-bottom: 4px; }
 .stories-title {
     font-size: 1.05rem; font-weight: 800; color: #fff; line-height: 1.3;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 
 /* ---- Live-game slide: le tableau indicateur d'un match en cours --------
-   Une surface de diffusion : fond noir bleuté dans les deux thèmes, comme
-   la fiche de carrière (voir teamLogos.css §3). Les crests et les couleurs
+   Une surface de diffusion : la carte de l'échelle sombre (#1C1C1E) dans
+   les deux thèmes, comme la fiche de carrière (voir teamLogos.css §3). Les crests et les couleurs
    de club ont besoin de ce fond-là ; un tableau indicateur blanc en thème
    clair ne ressemblerait à aucun tableau indicateur.
 
@@ -486,7 +490,7 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
    variable à ajuster, aucune requête média à tenir à jour. */
 .stories-card.is-live {
     height: auto;
-    background: #0C1318;
+    background: #1C1C1E;
     border-color: rgba(255,255,255,.14);
 }
 
@@ -508,10 +512,10 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
     display: inline-flex; align-items: center; gap: calc(var(--su) * 1);
     height: calc(var(--su) * 34);
     padding: 0 calc(var(--su) * 15) 0 calc(var(--su) * 2);
-    border: 1px solid rgba(248,70,60,.5);
+    border: 1px solid rgba(var(--primary-rgb),.5);
     border-radius: 100px;
-    background: linear-gradient(180deg, #8E1618 0%, #6C0E10 100%);
-    box-shadow: 0 0 calc(var(--su) * 18) rgba(233,45,38,.22);
+    background: rgba(var(--primary-rgb),.16);
+    box-shadow: 0 0 calc(var(--su) * 18) rgba(var(--primary-rgb),.22);
     color: #fff;
     font-family: 'Barlow Condensed', 'Barlow', 'Segoe UI', sans-serif;
     font-size: calc(var(--su) * 19); font-weight: 700; line-height: 1;
@@ -522,7 +526,7 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
     width: calc(var(--su) * 30); height: calc(var(--su) * 30);
     display: inline-flex; align-items: center; justify-content: center;
     border-radius: 50%;
-    background: radial-gradient(circle at 50% 45%, #F0392F 0%, #CE211D 100%);
+    background: var(--primary);
 }
 .sl-badge-dot::after {
     content: '';
@@ -540,7 +544,7 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
     padding: 0 calc(var(--su) * 16);
     border: 1px solid rgba(255,255,255,.13);
     border-radius: 100px;
-    color: #6F7C8B;
+    color: #A1A1A6;
     font-family: 'Barlow Condensed', 'Barlow', 'Segoe UI', sans-serif;
     font-size: calc(var(--su) * 19); font-weight: 700; line-height: 1;
     letter-spacing: .09em;
@@ -597,9 +601,9 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
     position: absolute; top: 50%; transform: translateY(-50%);
     width: calc(var(--su) * 1.5); height: calc(var(--su) * 76);
     background: linear-gradient(180deg,
-        rgba(245,53,44,0) 0%, rgba(245,53,44,.28) 25%,
-        rgba(245,53,44,.84) 50%, rgba(245,53,44,.28) 75%,
-        rgba(245,53,44,0) 100%);
+        rgba(var(--primary-rgb),0) 0%, rgba(var(--primary-rgb),.28) 25%,
+        rgba(var(--primary-rgb),.84) 50%, rgba(var(--primary-rgb),.28) 75%,
+        rgba(var(--primary-rgb),0) 100%);
 }
 .sl-rule-away { left: 33.333%; }
 .sl-rule-home { left: 66.666%; }
@@ -624,7 +628,7 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
 .sl-ident { display: flex; flex-direction: column; min-width: 0; }
 .sl-side-home .sl-ident { align-items: flex-end; text-align: right; }
 .sl-place {
-    color: #8A95A5;
+    color: #A1A1A6;
     font-size: calc(var(--su) * 16); font-weight: 500; line-height: 1;
     text-transform: uppercase; white-space: nowrap;
 }
@@ -639,7 +643,7 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
 .sl-name.is-xlong { font-size: calc(var(--su) * 21.5); }
 .sl-record {
     margin-top: calc(var(--su) * 3);
-    color: #78848F;
+    color: #A1A1A6;
     font-size: calc(var(--su) * 16); font-weight: 500; line-height: 1;
     white-space: nowrap;
 }
@@ -653,8 +657,9 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
     transform: translateY(calc(var(--su) * -7));
 }
 .sl-state { display: flex; flex-direction: column; align-items: center; }
+/* Rouge texte du thème sombre, fixe : la carte reste sombre en clair. */
 .sl-period {
-    color: #F5352C;
+    color: #FF5C66;
     font-size: calc(var(--su) * 19); font-weight: 700; line-height: 1;
     letter-spacing: .04em; white-space: nowrap;
 }
@@ -670,7 +675,7 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
     width: calc(var(--su) * 11); height: calc(var(--su) * 11);
     border-radius: 50%; background: rgba(255,255,255,.12);
 }
-.sl-dots i.is-on { background: #F5352C; }
+.sl-dots i.is-on { background: var(--primary); }
 
 /* ---- La liste des buts, du plus récent au plus ancien ---- */
 .sl-goals {
@@ -688,7 +693,7 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
 }
 .sl-goal-time {
     width: calc(var(--su) * 46); flex: none;
-    color: #8E9AA8;
+    color: #A1A1A6;
     font-size: calc(var(--su) * 16.5); font-weight: 500;
     font-variant-numeric: tabular-nums;
 }
@@ -706,7 +711,7 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
 .sl-goal-scorer {
     width: calc(var(--su) * 134); flex: none;
     margin-left: calc(var(--su) * 24);
-    color: #EDF1F5;
+    color: #F5F5F7;
     font-size: calc(var(--su) * 17); font-weight: 500;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
@@ -717,7 +722,7 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
 }
 .sl-goal-tag {
     margin-left: calc(var(--su) * 20);
-    color: #F5352C;
+    color: #FF5C66;
     font-size: calc(var(--su) * 17); font-weight: 700;
     letter-spacing: .02em; text-transform: uppercase;
 }
@@ -725,7 +730,7 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
    elle reste, à côté du but plutôt que collée au nom du marqueur. */
 .sl-goal-strength {
     margin-left: calc(var(--su) * 8);
-    color: #8E9AA8;
+    color: #A1A1A6;
     font-size: calc(var(--su) * 13); font-weight: 700; letter-spacing: .06em;
 }
 /* Les aides, sur la même ligne que le but : elles prennent l'espace resté
@@ -734,22 +739,22 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
 .sl-goal-assists {
     flex: 1 1 auto; min-width: 0;
     margin-left: calc(var(--su) * 18);
-    color: #9AA6B3;
+    color: #A1A1A6;
     font-size: calc(var(--su) * 15.5); font-weight: 500;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .sl-goal-assists i {
     font-style: normal; font-weight: 700;
     margin-right: calc(var(--su) * 7);
-    color: #6E7B8A;
+    color: #A1A1A6;
     letter-spacing: .06em;
 }
-.sl-goal-assists.is-none { color: #66717D; font-style: italic; }
+.sl-goal-assists.is-none { color: #A1A1A6; font-style: italic; }
 
 .sl-goal-score {
     margin-left: auto;
     display: inline-flex; align-items: baseline; gap: calc(var(--su) * 5);
-    color: #F5F7FA;
+    color: #F5F5F7;
     font-size: calc(var(--su) * 21); font-weight: 700;
     font-variant-numeric: tabular-nums;
 }
@@ -758,7 +763,7 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
     width: calc(var(--su) * 28); flex: none;
     margin-left: calc(var(--su) * 24);
     text-align: right;
-    color: #7A8798;
+    color: #A1A1A6;
     font-size: calc(var(--su) * 16.5); font-weight: 500;
 }
 /* ---- Un but qui tombe sous les yeux du membre ----
@@ -795,7 +800,7 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
 
 .sl-goal-none {
     justify-content: center;
-    color: #78848F;
+    color: #A1A1A6;
     font-size: calc(var(--su) * 16.5);
 }
 
@@ -869,9 +874,9 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
 .stories-chip.is-on {
     background: rgba(var(--primary-rgb),.14);
     border-color: rgba(var(--primary-rgb),.55);
-    color: var(--primary);
+    color: var(--primary-text);
 }
-.stories-chip.is-on .stories-chip-score { color: var(--primary); }
+.stories-chip.is-on .stories-chip-score { color: var(--primary-text); }
 
 /* Jeton d'actualité (soirs sans match) : vignette ronde et titre tronqué. */
 .stories-chip-news { padding-left: 4px; max-width: 240px; }

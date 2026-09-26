@@ -5,17 +5,19 @@
    boîte native porte le nom du domaine en titre, ignore le thème et
    bloque la page entière. Celles-ci suivent la charte (DESIGN.md) :
    carte « board-gray », rayon 18px, ombre elevation-4, un seul bouton
-   brique, et la couleur sémantique réservée à l'icône qui dit la
+   rouge plein, et la couleur sémantique réservée à l'icône qui dit la
    nature du message.
 
    Préfixe « fzd- » : chargé sur toutes les pages, à côté de feuilles
    qui définissent déjà .modal, .overlay ou .alert à leur façon. Chaque
-   variable a une valeur de repli : les pages légales ne chargent pas
-   index.css et ne déclarent qu'une partie des jetons.
+   variable a une valeur de repli (thème sombre d'Apple) : les pages
+   légales ne chargent pas index.css et ne déclarent qu'une partie des
+   jetons.
    ============================================================ */
 
 .fzd-overlay {
-    --fzd-tone: var(--primary, #E8795E);
+    /* La teinte colore l'icône : c'est un emploi « texte » du rouge. */
+    --fzd-tone: var(--primary-text, #FF5C66);
     position: fixed;
     inset: 0;
     /* Au-dessus de tout : fiche joueur, salle de repêchage, menus. */
@@ -24,17 +26,17 @@
     align-items: center;
     justify-content: center;
     padding: 16px;
-    background: var(--overlay-dark, rgba(8, 8, 9, .85));
+    background: var(--overlay-dark, rgba(0, 0, 0, .6));
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     overscroll-behavior: contain;
     animation: fzdFade .2s cubic-bezier(.4, 0, .2, 1);
 }
 
-.fzd-overlay[data-tone="success"] { --fzd-tone: var(--success, #00E676); }
+.fzd-overlay[data-tone="success"] { --fzd-tone: var(--success, #30D158); }
 .fzd-overlay[data-tone="error"],
-.fzd-overlay[data-tone="danger"]  { --fzd-tone: var(--danger, #FF4757); }
-.fzd-overlay[data-tone="warning"] { --fzd-tone: var(--warning, #FFB300); }
+.fzd-overlay[data-tone="danger"]  { --fzd-tone: var(--danger, #FF5C66); }
+.fzd-overlay[data-tone="warning"] { --fzd-tone: var(--warning, #FFD60A); }
 
 .fzd-overlay.is-leaving { animation: fzdFadeOut .16s ease forwards; }
 .fzd-overlay.is-leaving .fzd-card { animation: fzdSink .16s ease forwards; }
@@ -52,12 +54,12 @@ html.fzd-lock { overflow: hidden; }
     max-height: calc(100vh - 32px);
     max-height: calc(100dvh - 32px);
     overflow: hidden;
-    background: var(--card, #1E1E22);
+    background: var(--card, #1C1C1E);
     /* Un voile de la teinte du message, en haut seulement : il dit
        « réussi » ou « attention » avant même qu'on lise. */
     background-image: radial-gradient(120% 70% at 50% 0%,
         color-mix(in srgb, var(--fzd-tone) 9%, transparent) 0%, transparent 70%);
-    border: 1px solid var(--border-light, #2C2C32);
+    border: 1px solid var(--border-light, #38383A);
     border-radius: 18px;
     box-shadow: 0 20px 50px rgba(0, 0, 0, .55);
     color: var(--text-main, #F5F5F7);
@@ -82,14 +84,14 @@ html.fzd-lock { overflow: hidden; }
     border: 0;
     border-radius: 50%;
     background: transparent;
-    color: var(--text-secondary, #A8A8B0);
+    color: var(--text-secondary, #A1A1A6);
     cursor: pointer;
     transition: background .2s ease, color .2s ease;
 }
-.fzd-close:hover { background: var(--bg-hover, #2C2C32); color: var(--text-main, #F5F5F7); }
+.fzd-close:hover { background: var(--bg-hover, #2C2C2E); color: var(--text-main, #F5F5F7); }
 .fzd-close:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 232, 121, 94), .35);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 230, 32, 48), .35);
 }
 .fzd-close svg { width: 18px; height: 18px; }
 
@@ -110,7 +112,7 @@ html.fzd-lock { overflow: hidden; }
     flex: 0 0 auto;
     border-radius: 50%;
     color: var(--fzd-tone);
-    background: color-mix(in srgb, var(--fzd-tone) 15%, var(--card, #1E1E22));
+    background: color-mix(in srgb, var(--fzd-tone) 15%, var(--card, #1C1C1E));
     box-shadow: 0 0 0 7px color-mix(in srgb, var(--fzd-tone) 6%, transparent);
     animation: fzdPop .38s cubic-bezier(.4, 0, .2, 1) .04s both;
 }
@@ -147,7 +149,7 @@ html.fzd-lock { overflow: hidden; }
     overflow-y: auto;
     font-size: .95rem;
     line-height: 1.6;
-    color: var(--text-secondary, #A8A8B0);
+    color: var(--text-secondary, #A1A1A6);
     overflow-wrap: anywhere;
 }
 .fzd-body p { margin: 0 0 10px; }
@@ -163,9 +165,9 @@ html.fzd-lock { overflow: hidden; }
     align-items: flex-start;
     margin-top: 16px;
     padding: 13px 14px;
-    border: 1px solid var(--border-light, #2C2C32);
+    border: 1px solid var(--border-light, #38383A);
     border-radius: 12px;
-    background: var(--bg-gray-light, #1A1A1E);
+    background: var(--bg-gray-light, #2C2C2E);
     text-align: left;
     font-size: .88rem;
     line-height: 1.5;
@@ -177,8 +179,8 @@ html.fzd-lock { overflow: hidden; }
     height: 32px;
     flex: 0 0 auto;
     border-radius: 10px;
-    background: rgba(var(--primary-rgb, 232, 121, 94), .12);
-    color: var(--primary, #E8795E);
+    background: rgba(var(--primary-rgb, 230, 32, 48), .12);
+    color: var(--primary-text, #FF5C66);
 }
 .fzd-note-icon svg { width: 17px; height: 17px; }
 .fzd-note-title {
@@ -199,9 +201,9 @@ html.fzd-lock { overflow: hidden; }
     box-sizing: border-box;
     margin-top: 16px;
     padding: 13px 16px;
-    border: 2px solid var(--border-gray, #38383F);
+    border: 2px solid var(--border-gray, #636366);
     border-radius: 12px;
-    background: var(--bg-gray-light, #1A1A1E);
+    background: var(--bg-gray-light, #2C2C2E);
     color: var(--text-main, #F5F5F7);
     font: inherit;
     font-size: 1rem;           /* 16px : iOS ne zoome pas au focus */
@@ -209,11 +211,11 @@ html.fzd-lock { overflow: hidden; }
     text-align: left;
     transition: border-color .2s ease, box-shadow .2s ease;
 }
-.fzd-input::placeholder { color: var(--text-light-gray, #8C8C95); font-weight: 400; }
+.fzd-input::placeholder { color: var(--text-light-gray, #6E6E73); font-weight: 400; }
 .fzd-input:focus {
     outline: none;
-    border-color: var(--primary, #E8795E);
-    box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 232, 121, 94), .18);
+    border-color: var(--primary, #E62030);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 230, 32, 48), .18);
 }
 
 /* Lien à copier : le champ et son bouton sur une ligne. */
@@ -237,7 +239,7 @@ html.fzd-lock { overflow: hidden; }
     flex: 0 0 auto;
     padding: 0 16px;
     min-height: 48px;
-    border: 2px solid var(--border-gray, #38383F);
+    border: 2px solid var(--border-gray, #636366);
     border-radius: 12px;
     background: transparent;
     color: var(--text-main, #F5F5F7);
@@ -248,17 +250,17 @@ html.fzd-lock { overflow: hidden; }
     transition: border-color .2s ease, color .2s ease;
 }
 .fzd-copy-btn svg { width: 16px; height: 16px; }
-.fzd-copy-btn:hover { border-color: var(--primary, #E8795E); color: var(--primary, #E8795E); }
-.fzd-copy-btn.is-done { border-color: var(--success, #00E676); color: var(--success, #00E676); }
+.fzd-copy-btn:hover { border-color: var(--primary, #E62030); color: var(--primary-text, #FF5C66); }
+.fzd-copy-btn.is-done { border-color: var(--success, #30D158); color: var(--success, #30D158); }
 .fzd-copy-btn:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 232, 121, 94), .35);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 230, 32, 48), .35);
 }
 
 .fzd-error {
     min-height: 1.2em;
     margin-top: 10px;
-    color: var(--danger, #FF4757);
+    color: var(--danger, #FF5C66);
     font-size: .86rem;
     font-weight: 600;
     text-align: left;
@@ -300,27 +302,33 @@ html.fzd-lock { overflow: hidden; }
 .fzd-btn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
 .fzd-btn:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 232, 121, 94), .4);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 230, 32, 48), .4);
 }
 .fzd-btn:disabled { opacity: .6; cursor: not-allowed; }
 
-/* Brique pleine, texte foncé : blanc sur #E8795E ne tient pas 4,5:1. */
+/* Rouge plein, libellé blanc : 4,55:1 sur #E62030. Le survol fonce
+   l'aplat, il ne l'éclaircit jamais. */
 .fzd-btn--primary {
-    background: var(--primary, #E8795E);
-    color: var(--bg, #121214);
+    background: var(--primary, #E62030);
+    color: var(--on-primary, #FFFFFF);
 }
+.fzd-btn--primary:hover:not(:disabled) { background: var(--primary-deep, #C41A28); }
+/* Destructif : du rouge en TEXTE, jamais un aplat — l'aplat rouge veut
+   dire « allez-y » (DESIGN.md, The Destructive Is Text Rule). */
 .fzd-btn--danger {
-    background: var(--danger, #FF4757);
-    color: var(--bg, #121214);
+    background: transparent;
+    border-color: var(--danger, #FF5C66);
+    color: var(--danger, #FF5C66);
 }
+.fzd-btn--danger:hover:not(:disabled) { background: rgba(var(--primary-rgb, 230, 32, 48), .10); }
 .fzd-btn--ghost {
     background: transparent;
-    border-color: var(--border-gray, #38383F);
+    border-color: var(--border-gray, #636366);
     color: var(--text-main, #F5F5F7);
 }
 .fzd-btn--ghost:hover:not(:disabled) {
-    border-color: var(--primary, #E8795E);
-    color: var(--primary, #E8795E);
+    border-color: var(--primary, #E62030);
+    color: var(--primary-text, #FF5C66);
     background: rgba(255, 255, 255, .04);
 }
 
@@ -336,9 +344,6 @@ html.fzd-lock { overflow: hidden; }
 /* ==================== THÈME CLAIR ==================== */
 
 html[data-theme="light"] .fzd-card { box-shadow: 0 20px 50px rgba(20, 20, 20, .22); }
-/* Sur le rouge plus sombre du thème clair, le texte passe au blanc de la
-   carte : il reste au-dessus de 4,5:1. */
-html[data-theme="light"] .fzd-btn--danger { color: var(--card, #FFFFFF); }
 html[data-theme="light"] .fzd-btn--ghost:hover:not(:disabled) { background: rgba(0, 0, 0, .03); }
 
 /* ==================== TÉLÉPHONE ==================== */

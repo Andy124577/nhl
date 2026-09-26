@@ -42,7 +42,7 @@ body.fz-match-page { background: var(--bg); }
     font-weight: 700;
     text-decoration: none;
 }
-.mt-back:hover { color: var(--primary); }
+.mt-back:hover { color: var(--primary-text); }
 .mt-back span { font-size: 1.3rem; line-height: 1; }
 
 .mt-back:focus-visible,
@@ -58,7 +58,8 @@ a.mt-duel:focus-visible,
    club occupe sa moitié avec sa surface, son crest géant délavé et son
    liseré, et la marque se lit sur une plaque sombre au centre. Comme la
    fiche, il reste sur fond noir dans les deux thèmes ; ses couleurs
-   viennent de teamBannerTokens (teamColors.js), le même calcul qu'elle. */
+   viennent de teamBannerTokens (teamColors.js), le même calcul qu'elle ;
+   ses neutres sont ceux de l'échelle sombre d'Apple. */
 .mt-board {
     --away-surface: #3a414d; --away-edge: #8995a8; --away-trim: #8995a8; --away-crest: none;
     --home-surface: #3a414d; --home-edge: #8995a8; --home-trim: #8995a8; --home-crest: none;
@@ -71,16 +72,16 @@ a.mt-duel:focus-visible,
     min-height: 128px;
     padding: 16px 12px 19px;
     overflow: hidden;
-    border: 1px solid #3c434d;
+    border: 1px solid #38383a;
     border-radius: 18px;
     background:
         repeating-linear-gradient(24deg, #ffffff02 0 1px, transparent 1px 4px),
         linear-gradient(100deg, #ffffff09, transparent 38%),
         linear-gradient(280deg, #ffffff09, transparent 38%),
         radial-gradient(ellipse 34% 95% at 50% 50%, #0007, transparent),
-        linear-gradient(104deg, var(--away-surface) 0 calc(50% - 1px), #05070b calc(50% - 1px) calc(50% + 1px), var(--home-surface) calc(50% + 1px));
+        linear-gradient(104deg, var(--away-surface) 0 calc(50% - 1px), #000000 calc(50% - 1px) calc(50% + 1px), var(--home-surface) calc(50% + 1px));
     box-shadow: 0 12px 30px #0003;
-    color: #f6f7f9;
+    color: #f5f5f7;
     font-family: 'Barlow', 'Segoe UI', sans-serif;
 }
 /* Le filet du haut et le liseré du bas, chacun aux couleurs de sa moitié. */
@@ -127,7 +128,7 @@ a.mt-duel:focus-visible,
 }
 .mt-team-id { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .mt-team-name {
-    color: #f9fafc;
+    color: #f5f5f7;
     font: 800 24px/1 'Barlow Condensed', 'Arial Narrow', Impact, sans-serif;
     letter-spacing: .2px;
     text-transform: uppercase;
@@ -138,14 +139,14 @@ a.mt-duel:focus-visible,
 }
 .mt-team-place {
     display: none;
-    color: #e4e5e9;
+    color: #f5f5f7;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: .3em;
     text-transform: uppercase;
 }
 .mt-team-sog {
-    color: #b9c0ce;
+    color: #f5f5f7;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: .08em;
@@ -162,18 +163,18 @@ a.mt-duel:focus-visible,
     padding: 8px 10px;
     border: 1px solid #ffffff1f;
     border-radius: 12px;
-    background: #07090cb8;
+    background: #000000b8;
     box-shadow: inset 0 1px #ffffff12, 0 6px 18px #0006;
 }
 .mt-score {
     min-width: 1ch;
-    color: #f9fafc;
+    color: #f5f5f7;
     font: 800 44px/.9 'Barlow Condensed', 'Arial Narrow', Impact, sans-serif;
     font-variant-numeric: tabular-nums;
     text-align: center;
     text-shadow: 0 2px 3px #0005;
 }
-.mt-score.is-loser { color: #f9fafc80; }
+.mt-score.is-loser { color: #f5f5f780; }
 
 .mt-status {
     display: flex;
@@ -200,7 +201,7 @@ a.mt-duel:focus-visible,
 }
 /* « 22 h 00 » garde sa casse. */
 .mt-pill.is-soon { text-transform: none; letter-spacing: .06em; font-size: 13px; }
-.mt-pill.is-live { border-color: transparent; background: var(--danger); }
+.mt-pill.is-live { border-color: transparent; background: var(--danger-deep); }
 .mt-pill.is-live i {
     width: 7px; height: 7px; border-radius: 50%; background: #fff;
     animation: mtPouls 1.4s ease-in-out infinite;
@@ -208,7 +209,7 @@ a.mt-duel:focus-visible,
 @keyframes mtPouls { 50% { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .mt-pill.is-live i { animation: none; } }
 .mt-when {
-    color: #b9c0ce;
+    color: #a1a1a6;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: .12em;
@@ -316,19 +317,21 @@ a.mt-duel:focus-visible,
 .mt-seg-btn[data-cote="away"][aria-pressed="true"] { box-shadow: inset 0 -3px 0 var(--mt-away); }
 .mt-seg-btn[data-cote="home"][aria-pressed="true"] { box-shadow: inset 0 -3px 0 var(--mt-home); }
 .mt-seg-logo { width: 24px; height: 24px; object-fit: contain; flex: 0 0 auto; }
+/* Aplat rouge, libellé blanc : le rouge-texte sur un lavis rouge tombait
+   sous 4,5:1 (4,2 sur le bouton pressé, 4,2 sur blanc en thème clair). */
 .mt-seg-mine {
     flex: 0 0 auto;
     padding: 1px 6px;
     border-radius: 999px;
-    background: rgba(var(--primary-rgb), .16);
-    color: var(--primary);
+    background: var(--primary);
+    color: var(--on-primary);
     font-size: .72rem;
     font-weight: 800;
 }
 
 /* ---- Remise à zéro des tableaux ----------------------------------------------
    index.css habille TOUS les tableaux du site pour la page des statistiques :
-   largeurs fixes, en-têtes en Bebas sur fond brique, en-tête collant, rangées
+   largeurs fixes, en-têtes en Bebas sur fond rouge, en-tête collant, rangées
    qui se soulèvent au survol, colonnes 3 à 7 bridées à 55 px sur téléphone.
    Rien de cela ne convient à une feuille de match : on repart d'une base
    neutre, limitée aux deux tableaux de la page. */
@@ -437,9 +440,9 @@ a.mt-duel:focus-visible,
     text-align: left;
     cursor: pointer;
 }
-.mt-player:hover { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
+.mt-player:hover { color: var(--primary-text); text-decoration: underline; text-underline-offset: 2px; }
 .mt-player-name { font-weight: 600; }
-.mt-mine { margin-left: 5px; color: var(--primary); font-size: .8rem; }
+.mt-mine { margin-left: 5px; color: var(--primary-text); font-size: .8rem; }
 
 .mt-table td.is-zero { color: var(--text-gray); }
 .mt-table td.is-key { font-weight: 800; }
@@ -699,7 +702,7 @@ a.mt-duel:hover { border-color: var(--primary); }
     font-weight: 600;
     text-transform: uppercase;
 }
-.mt-duel-here { color: var(--primary); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
+.mt-duel-here { color: var(--primary-text); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
 
 /* ---- États ------------------------------------------------------------------- */
 .mt-empty,
@@ -734,7 +737,7 @@ a.mt-duel:hover { border-color: var(--primary); }
     text-decoration: none;
     cursor: pointer;
 }
-.mt-btn:hover { border-color: var(--primary); color: var(--primary); }
+.mt-btn:hover { border-color: var(--primary); color: var(--primary-text); }
 
 /* La fiche du joueur s'ouvre ici hors repêchage : « Choisir ce joueur » n'y a pas de sens. */
 .fz-match-page #careerStatsModal #careerPick { display: none; }

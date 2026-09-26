@@ -86,11 +86,12 @@ function resolvePickInfo(pick) {
 /**
  * Base sombre du mélange. Les couleurs d'équipe sont vives par nature ; les
  * poser telles quelles donnait une bande criarde qui écrasait le reste de la
- * page. Chaque teinte est donc ramenée vers ce gris bleuté, d'autant plus
- * fort que la couleur d'origine est claire.
+ * page. Chaque teinte est donc ramenée vers les gris sombres du site (la
+ * carte et le fond, comme le repli .is-unbranded), d'autant plus fort que la
+ * couleur d'origine est claire.
  */
-const PICK_CARD_BASE = '#151922';
-const PICK_CARD_BASE_DEEP = '#0d1016';
+const PICK_CARD_BASE = '#1C1C1E';
+const PICK_CARD_BASE_DEEP = '#000000';
 
 /** Dose d'assourdissement : les couleurs claires en reçoivent davantage. */
 function pickCardMuteRatio(couleur) {

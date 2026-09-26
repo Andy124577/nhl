@@ -64,8 +64,8 @@
     height: 24px;
     flex: 0 0 auto;
     border-radius: 50%;
-    background: rgba(var(--primary-rgb), .18);
-    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, var(--card)); /* opaque : 4,6:1 au pire */
+    color: var(--primary-text);
     font: 700 11px/1 'Helvetica Neue', Helvetica, sans-serif;
 }
 
@@ -82,12 +82,12 @@
 .fzid-slot.is-free {
     border-style: dashed;
     background: transparent;
-    color: var(--text-light-gray);
+    color: var(--text-secondary);
 }
 .fzid-slot.is-free .fzid-ini {
     background: transparent;
     border: 1px dashed var(--border-gray);
-    color: var(--text-light-gray);
+    color: var(--text-secondary);
 }
 
 .fzid-slot.is-me { border-color: var(--primary); }
@@ -96,7 +96,7 @@
     padding: 3px 7px;
     border-radius: 999px;
     background: var(--primary);
-    color: var(--bg);
+    color: var(--on-primary);
     font: 700 9px/1 'Helvetica Neue', Helvetica, sans-serif;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -123,7 +123,7 @@
 
 .fzid-btn.is-primary {
     background: var(--primary);
-    color: var(--bg);
+    color: var(--on-primary);
 }
 .fzid-btn.is-primary:hover { background: var(--primary-deep); }
 

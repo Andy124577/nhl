@@ -6,12 +6,12 @@
    mêmes champs que la page de création. Quelqu'un qui les regarde
    doit reconnaître ce qu'il verra ensuite.
 
-   Couleurs de position : ATT vert, DÉF neutre, GAR ambre, REC violet,
-   ÉQU orange. DÉF portait l'accent du site (cyan à l'époque, brique
-   aujourd'hui) — une position n'est ni vive, ni en cours, ni à vous, donc
-   elle n'a pas droit à l'accent (Règle du Signal Unique). L'ensemble
-   sémantique étant clos, elle retombe sur l'échelle neutre, exactement ce
-   que prévoit la Règle « L'ensemble sémantique est clos ».
+   Couleurs de position : ATT --success, DÉF --position-def, GAR
+   --warning, REC --rookie, ÉQU neutre. DÉF a quitté l'accent du site
+   (cyan, puis brique) pour sa propre couleur de l'ensemble sémantique ;
+   ÉQU, hors de l'ensemble, retombe sur l'échelle neutre (Règle
+   « L'ensemble sémantique est clos »). Voiles de 6 à 10 % seulement :
+   au-delà, le vert et le jaune clairs passent sous 4,5:1 sur leur voile.
    ============================================================ */
 
 /* ==================== CHOIX DE LA CARTE HÉROS ==================== */
@@ -26,7 +26,7 @@ html.fz-auth #heroCardDraft { display: none; }
     margin-left: auto;
     font-size: .72rem;
     font-weight: 800;
-    color: var(--primary);
+    color: var(--primary-text);
     letter-spacing: .02em;
     white-space: nowrap;
 }
@@ -49,24 +49,24 @@ html.fz-auth #heroCardDraft { display: none; }
     font-weight: 800;
     text-align: center;
     line-height: 1.3;
-    background: rgba(0,230,118,.14);
+    background: color-mix(in srgb, var(--success) 10%, transparent);
     color: var(--success);
-    box-shadow: inset 0 0 0 1px rgba(0,230,118,.3);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--success) 30%, transparent);
     transition: background .35s ease, color .35s ease, box-shadow .35s ease;
 }
 
 .dm-banner.is-waiting {
-    background: rgba(255,179,0,.13);
+    background: color-mix(in srgb, var(--warning) 8%, transparent);
     color: var(--warning);
-    box-shadow: inset 0 0 0 1px rgba(255,179,0,.28);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 28%, transparent);
     animation: none;
 }
 
 .dm-banner.is-your-turn { animation: dm-pulse 1.8s ease-in-out infinite; }
 
 @keyframes dm-pulse {
-    0%, 100% { box-shadow: inset 0 0 0 1px rgba(0,230,118,.3); }
-    50%      { box-shadow: inset 0 0 0 1px rgba(0,230,118,.75), 0 0 16px rgba(0,230,118,.22); }
+    0%, 100% { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--success) 30%, transparent); }
+    50%      { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--success) 75%, transparent), 0 0 16px color-mix(in srgb, var(--success) 22%, transparent); }
 }
 
 /* ==================== RANGÉES DE JOUEURS ==================== */
@@ -94,8 +94,8 @@ html.fz-auth #heroCardDraft { display: none; }
 }
 
 .dm-player.is-picked {
-    background: rgba(0,230,118,.14);
-    box-shadow: inset 0 0 0 1px rgba(0,230,118,.5);
+    background: color-mix(in srgb, var(--success) 10%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--success) 50%, transparent);
 }
 
 /* Repli de la rangée choisie : elle quitte la liste comme dans le
@@ -116,7 +116,7 @@ html.fz-auth #heroCardDraft { display: none; }
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: .66rem; font-weight: 800;
-    background: linear-gradient(135deg, rgba(var(--primary-rgb),.28), rgba(var(--primary-rgb),.08));
+    background: rgba(var(--primary-rgb),.16);
     color: var(--text-main);
 }
 
@@ -140,17 +140,19 @@ html.fz-auth #heroCardDraft { display: none; }
     letter-spacing: .04em;
 }
 
-.dm-tag.att { background: rgba(0,230,118,.2);  color: var(--success); }
-.dm-tag.def { background: var(--bg-hover);              color: var(--text-secondary); }
-.dm-tag.gar { background: rgba(255,193,7,.2);  color: var(--warning); }
-.dm-tag.rec { background: rgba(156,39,176,.2); color: #CE93D8; }
-.dm-tag.equ { background: rgba(255,152,0,.2);  color: #FFB74D; }
+.dm-tag.att { background: color-mix(in srgb, var(--success) 10%, transparent);      color: var(--success); }
+.dm-tag.def { background: color-mix(in srgb, var(--position-def) 10%, transparent); color: var(--position-def); }
+.dm-tag.gar { background: color-mix(in srgb, var(--warning) 8%, transparent);       color: var(--warning); }
+/* 6 % : le violet sombre n'a que 4,83:1 sur la carte, un voile plus dense
+   le ferait passer sous 4,5:1. */
+.dm-tag.rec { background: color-mix(in srgb, var(--rookie) 6%, transparent);        color: var(--rookie); }
+.dm-tag.equ { background: var(--bg-hover);                                           color: var(--text-secondary); }
 
 .dm-pts {
     flex: 0 0 auto;
     font-size: .78rem;
     font-weight: 800;
-    color: var(--primary);
+    color: var(--primary-text);
     min-width: 30px;
     text-align: right;
 }
@@ -162,7 +164,8 @@ html.fz-auth #heroCardDraft { display: none; }
     display: flex; align-items: center; justify-content: center;
     border: 0;
     border-radius: 8px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
+    background: var(--primary);
+    color: var(--on-primary);
     cursor: default;
     opacity: .55;
     transition: opacity .25s ease, transform .25s ease;
@@ -225,7 +228,7 @@ html.fz-auth #heroCardDraft { display: none; }
     display: block;
     height: 100%;
     border-radius: 99px;
-    background: linear-gradient(90deg, var(--primary), var(--primary-deep));
+    background: var(--primary);
     transition: width .55s cubic-bezier(.4,0,.2,1);
 }
 
@@ -252,7 +255,7 @@ html.fz-auth #heroCardDraft { display: none; }
     text-align: center;
     font-size: .78rem;
     font-weight: 800;
-    color: var(--primary);
+    color: var(--primary-text);
     text-decoration: none;
 }
 
@@ -278,7 +281,7 @@ html.fz-auth #heroCardDraft { display: none; }
     inset: 0;
     padding: 12px;
     border-radius: 14px;
-    background: rgba(18,18,20,.55);
+    background: rgba(0,0,0,.55);
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.07);
     display: flex;
     flex-direction: column;
@@ -383,7 +386,7 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
     transition: opacity .3s ease, transform .3s ease;
 }
 
-.hiw-chip b { color: var(--primary); font-weight: 900; }
+.hiw-chip b { color: var(--primary-text); font-weight: 900; }
 .hiw-chip.is-in { opacity: 1; transform: none; }
 
 .hiw-btn {
@@ -391,8 +394,8 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
     padding: 7px 10px;
     border: 0;
     border-radius: 8px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
-    color: var(--bg);
+    background: var(--primary);
+    color: var(--on-primary);
     font-size: .72rem;
     font-weight: 900;
     cursor: default;
@@ -400,7 +403,7 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
 }
 
 .hiw-btn.is-press { transform: scale(.96); }
-.hiw-btn.is-done  { background: linear-gradient(135deg, var(--success) 0%, #00C969 100%); }
+.hiw-btn.is-done  { background: var(--success); color: var(--on-success); }
 
 /* ==================== ÉTAPE 2 — REPÊCHER ==================== */
 
@@ -410,16 +413,16 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
     font-size: .62rem;
     font-weight: 800;
     text-align: center;
-    background: rgba(0,230,118,.14);
+    background: color-mix(in srgb, var(--success) 10%, transparent);
     color: var(--success);
-    box-shadow: inset 0 0 0 1px rgba(0,230,118,.3);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--success) 30%, transparent);
     transition: background .35s ease, color .35s ease, box-shadow .35s ease;
 }
 
 .hiw-turn.is-waiting {
-    background: rgba(255,179,0,.13);
+    background: color-mix(in srgb, var(--warning) 8%, transparent);
     color: var(--warning);
-    box-shadow: inset 0 0 0 1px rgba(255,179,0,.28);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 28%, transparent);
 }
 
 .hiw-rows { display: flex; flex-direction: column; gap: 4px; }
@@ -436,7 +439,7 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
 }
 
 .hiw-row.is-target { background: rgba(var(--primary-rgb),.12); box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb),.4); }
-.hiw-row.is-picked { background: rgba(0,230,118,.16); box-shadow: inset 0 0 0 1px rgba(0,230,118,.45); }
+.hiw-row.is-picked { background: color-mix(in srgb, var(--success) 10%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--success) 45%, transparent); }
 .hiw-row.is-gone   { opacity: 0; transform: translateX(20px); }
 .hiw-row.is-picked .hiw-row-pts::after { content: ' ✓'; color: var(--success); }
 
@@ -457,11 +460,11 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
     font-weight: 900;
 }
 
-.hiw-tag.att { background: rgba(0,230,118,.2);  color: var(--success); }
-.hiw-tag.def { background: var(--bg-hover);              color: var(--text-secondary); }
-.hiw-tag.gar { background: rgba(255,193,7,.2);  color: var(--warning); }
+.hiw-tag.att { background: color-mix(in srgb, var(--success) 10%, transparent);      color: var(--success); }
+.hiw-tag.def { background: color-mix(in srgb, var(--position-def) 10%, transparent); color: var(--position-def); }
+.hiw-tag.gar { background: color-mix(in srgb, var(--warning) 8%, transparent);       color: var(--warning); }
 
-.hiw-row-pts { font-weight: 900; color: var(--primary); font-size: .64rem; }
+.hiw-row-pts { font-weight: 900; color: var(--primary-text); font-size: .64rem; }
 
 .hiw-prog { display: flex; align-items: center; gap: 6px; margin-top: auto; }
 .hiw-prog-lbl { flex: 0 0 auto; font-size: .6rem; font-weight: 700; color: var(--text-secondary); }
@@ -477,7 +480,7 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
 .hiw-bar i {
     display: block;
     height: 100%;
-    background: linear-gradient(90deg, var(--primary), var(--primary-deep));
+    background: var(--primary);
     transition: width .55s cubic-bezier(.4,0,.2,1);
 }
 
@@ -515,7 +518,7 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
     transition: background .4s ease, color .4s ease;
 }
 
-.hiw-pos.gold   { background: rgba(255,179,0,.2);   color: var(--warning); }
+.hiw-pos.gold   { background: color-mix(in srgb, var(--warning) 8%, transparent); color: var(--warning); }
 .hiw-pos.silver { background: rgba(185,185,205,.16); color: #B8B8CC; }
 .hiw-pos.bronze { background: rgba(180,100,0,.2);   color: #CD7F32; }
 
@@ -529,7 +532,7 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
     text-overflow: ellipsis;
 }
 
-.hiw-rrow-pts { font-weight: 900; color: var(--primary); font-size: .7rem; }
+.hiw-rrow-pts { font-weight: 900; color: var(--primary-text); font-size: .7rem; }
 
 /* Gain de points qui s'envole, comme une soirée de hockey qui rapporte.
    Ancré en bas à droite : c'est de là que part la rangée « Mon équipe ». */

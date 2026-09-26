@@ -32,23 +32,30 @@ html.fz-anon #comment-ca-marche { display: none; }
 html.fz-anon .site-legal-footer { margin-top: 0; }
 
 .fzl {
-    --fzl-ink: #07090C;
-    --fzl-body-bg: #0D1013;
-    --fzl-panel: #141920;
-    --fzl-panel-2: #1B2128;
-    --fzl-hair: rgba(255, 255, 255, .09);
+    /* L'échelle sombre d'Apple, dans les deux thèmes (décor). */
+    --fzl-ink: #000000;
+    --fzl-body-bg: #000000;
+    --fzl-panel: #1C1C1E;
+    --fzl-panel-2: #2C2C2E;
+    --fzl-hair: #38383A;
     --fzl-white: #F5F5F7;
-    --fzl-dim: #B7BEC6;
-    --fzl-dim-2: #8D96A0;
-    --fzl-brick: #E8795E;
-    --fzl-gold: #FFB300;
+    --fzl-dim: #A1A1A6;
+    /* 4,70:1 sur --fzl-panel, mais 3,85:1 sur --fzl-panel-2 : jamais de
+       texte en --fzl-dim-2 sur le palier surélevé. */
+    --fzl-dim-2: #86868B;
+    --fzl-gold: #FFD60A;
     --fzl-silver: #C6CCD3;
     --fzl-bronze: #D38C5F;
-    --fzl-green: #00E676;
+    --fzl-green: #30D158;
+    /* Le rouge signal. --fzl-brick et --fzl-red sont l'aplat (--primary) ;
+       le rouge EN TEXTE garde la valeur sombre #FF5C66 même en thème clair,
+       car la page reste sombre (--primary-text y donnerait #D70015). */
+    --fzl-brick: var(--primary);
+    --fzl-red: var(--primary);
+    --fzl-red-text: #FF5C66;
+    --fzl-red-rgb: 230, 32, 48;
     /* Le bandeau : l'équivalent des couleurs d'équipe de la fiche joueur. */
-    --fzl-red: #D63A2A;
-    --fzl-red-rgb: 214, 58, 42;
-    --fzl-banner: #150A0C;
+    --fzl-banner: #150A0B;
 
     --fzl-gutter: 16px;
     --fzl-max: 1200px;
@@ -89,7 +96,7 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
     text-transform: uppercase;
     margin: 0;
 }
-.fzl-h2 em { font-style: normal; color: var(--fzl-brick); }
+.fzl-h2 em { font-style: normal; color: var(--fzl-red-text); }
 .fzl-h3 {
     font: 800 clamp(1.6rem, 4.4vw, 2.5rem)/1.08 var(--fzl-body);
     letter-spacing: -.015em;
@@ -102,7 +109,7 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
     padding: 6px 12px;
     border: 1px solid color-mix(in srgb, var(--fzl-brick) 45%, transparent);
     border-radius: 999px;
-    color: var(--fzl-brick);
+    color: var(--fzl-red-text);
     font-size: .72rem;
     font-weight: 700;
     letter-spacing: .14em;
@@ -128,9 +135,9 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
 .fzl-btn:active { transform: translateY(0); }
 .fzl-btn .fzl-arrow { transition: transform .2s var(--fzl-ease); }
 .fzl-btn:hover .fzl-arrow { transform: translateX(3px); }
-/* Libellé foncé sur la brique : jamais de blanc sur #E8795E (DESIGN.md). */
-.fzl-btn-primary { background: var(--fzl-brick); color: var(--fzl-ink); }
-.fzl-btn-primary:hover { background: #F08A70; }
+/* Aplat rouge, libellé blanc (4,55:1) : le survol fonce, jamais ne s'éclaircit (DESIGN.md). */
+.fzl-btn-primary { background: var(--fzl-brick); color: var(--on-primary); }
+.fzl-btn-primary:hover { background: var(--primary-deep); }
 
 /* ================================================================
    BANDEAU — le haut de la fiche joueur, en noir et rouge
@@ -199,7 +206,7 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
     text-transform: uppercase;
     margin: 0;
 }
-.fzl-h1 span { display: block; color: var(--fzl-brick); }
+.fzl-h1 span { display: block; color: var(--fzl-red-text); }
 /* « casse-tête » ne se coupe jamais à son trait d'union. */
 .fzl-h1 .nw { display: inline; color: inherit; white-space: nowrap; }
 .fzl-hero-copy .fzl-btn { width: 100%; }
@@ -228,8 +235,8 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
     margin: 0 auto;
     padding: 10px;
     border-radius: 40px;
-    background: linear-gradient(145deg, #2F363D, #0E1216 30%, #0A0D10 70%, #2B3238);
-    border: 1px solid #4A545D;
+    background: linear-gradient(145deg, #3A3A3C, #161617 30%, #000000 70%, #2C2C2E);
+    border: 1px solid #636366;
     box-shadow: 0 30px 60px rgba(0, 0, 0, .6), inset 0 0 0 1px rgba(255, 255, 255, .04);
 }
 .fzl-phone::before {
@@ -239,14 +246,14 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
     width: 72px; height: 20px;
     margin-left: -36px;
     border-radius: 12px;
-    background: #050608;
+    background: var(--fzl-ink);
     z-index: 2;
 }
 .fzl-screen {
     position: relative;
     overflow: hidden;
     border-radius: 31px;
-    background: #0D1014;
+    background: var(--fzl-ink);
     padding: 44px 12px 16px;
     font-size: 12px;
     color: var(--fzl-white);
@@ -269,13 +276,13 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
     width: 8px; height: 8px;
     border-radius: 50%;
     background: var(--fzl-brick);
-    box-shadow: 0 0 0 0 rgba(232, 121, 94, .6);
+    box-shadow: 0 0 0 0 rgba(var(--fzl-red-rgb), .6);
     animation: fzlLive 1.8s infinite;
 }
 @keyframes fzlLive {
-    0% { box-shadow: 0 0 0 0 rgba(232, 121, 94, .55); }
-    70% { box-shadow: 0 0 0 8px rgba(232, 121, 94, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(232, 121, 94, 0); }
+    0% { box-shadow: 0 0 0 0 rgba(var(--fzl-red-rgb), .55); }
+    70% { box-shadow: 0 0 0 8px rgba(var(--fzl-red-rgb), 0); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--fzl-red-rgb), 0); }
 }
 .fzl-ph-top .fzl-mono { font-family: var(--fzl-mono); letter-spacing: 0; font-weight: 500; }
 
@@ -295,10 +302,10 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
 }
 .fzl-ph-banner[data-state="turn"] {
     border-color: var(--fzl-brick);
-    background: linear-gradient(90deg, rgba(232, 121, 94, .22), rgba(232, 121, 94, .06));
-    box-shadow: 0 0 0 3px rgba(232, 121, 94, .12);
+    background: rgba(var(--fzl-red-rgb), .16);
+    box-shadow: 0 0 0 3px rgba(var(--fzl-red-rgb), .12);
 }
-.fzl-ph-banner[data-state="done"] { border-color: rgba(0, 230, 118, .5); background: rgba(0, 230, 118, .1); }
+.fzl-ph-banner[data-state="done"] { border-color: rgba(48, 209, 88, .5); background: rgba(48, 209, 88, .1); }
 .fzl-ph-label { font: 400 1.35rem/1 var(--fzl-display); letter-spacing: .04em; }
 .fzl-ph-label small { display: block; margin-top: 3px; font: 600 10px/1.3 var(--fzl-body); letter-spacing: .02em; color: var(--fzl-dim); }
 .fzl-ph-clock {
@@ -320,7 +327,7 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
 
 /* ---- Carte de choix — couleurs du club du joueur repêché ---- */
 .fzl-pk {
-    --c1: #2A3038; --c2: #3A424C;
+    --c1: #2C2C2E; --c2: #3A3A3C;
     position: relative;
     isolation: isolate;
     display: flex;
@@ -361,7 +368,7 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
 .fzl-pk-name, .fzl-pk-meta { position: relative; z-index: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fzl-pk-name { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .02em; }
 .fzl-pk-meta { font: 500 8.5px/1.3 var(--fzl-mono); opacity: .85; }
-.fzl-pk.is-empty { background: #12161B; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); }
+.fzl-pk.is-empty { background: var(--fzl-panel); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); }
 .fzl-pk.is-empty::after { display: none; }
 .fzl-pk.is-empty::before {
     content: '?';
@@ -372,8 +379,8 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
 }
 .fzl-pk.is-current { box-shadow: inset 0 0 0 2px var(--fzl-brick); animation: fzlTurn 2.4s var(--fzl-ease) infinite; }
 @keyframes fzlTurn {
-    0%, 100% { box-shadow: inset 0 0 0 2px var(--fzl-brick), 0 0 0 0 rgba(232, 121, 94, .45); }
-    60% { box-shadow: inset 0 0 0 2px var(--fzl-brick), 0 0 0 6px rgba(232, 121, 94, 0); }
+    0%, 100% { box-shadow: inset 0 0 0 2px var(--fzl-brick), 0 0 0 0 rgba(var(--fzl-red-rgb), .45); }
+    60% { box-shadow: inset 0 0 0 2px var(--fzl-brick), 0 0 0 6px rgba(var(--fzl-red-rgb), 0); }
 }
 /* Révélation : la carte arrive désaturée, la couleur monte, puis le nom.
    Un vrai moment de célébration : le rebond y est permis (DESIGN.md). */
@@ -409,7 +416,7 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
     border: 1px solid var(--fzl-hair);
     transition: opacity .4s var(--fzl-ease), transform .4s var(--fzl-ease), border-color .3s var(--fzl-ease);
 }
-.fzl-ph-face { position: relative; width: 38px; height: 38px; border-radius: 8px; background: #1F262E; overflow: hidden; }
+.fzl-ph-face { position: relative; width: 38px; height: 38px; border-radius: 8px; background: var(--fzl-panel-2); overflow: hidden; }
 .fzl-ph-face img { width: 100%; height: 100%; object-fit: cover; }
 .fzl-ph-who { min-width: 0; }
 .fzl-ph-who strong { display: block; font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -420,19 +427,19 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
     padding: 7px 10px;
     border-radius: 8px;
     background: var(--fzl-brick);
-    color: var(--fzl-ink);
+    color: var(--on-primary);
     font-size: 10.5px;
     font-weight: 800;
     transition: transform .15s var(--fzl-ease), filter .15s var(--fzl-ease);
 }
 .fzl-ph-row:not(:first-child) .fzl-ph-pick { background: transparent; color: var(--fzl-dim); box-shadow: inset 0 0 0 1px var(--fzl-hair); }
-.fzl-ph-row.is-armed .fzl-ph-pick { background: var(--fzl-brick); color: var(--fzl-ink); box-shadow: none; }
-.fzl-ph-row.is-armed { border-color: rgba(232, 121, 94, .6); }
+.fzl-ph-row.is-armed .fzl-ph-pick { background: var(--fzl-brick); color: var(--on-primary); box-shadow: none; }
+.fzl-ph-row.is-armed { border-color: rgba(var(--fzl-red-rgb), .6); }
 .fzl-ph-row.is-pressing .fzl-ph-pick { transform: scale(.9); filter: brightness(1.15); }
 .fzl-ph-row.is-taken { opacity: .38; border-color: var(--fzl-hair); }
 .fzl-ph-row.is-taken .fzl-ph-pick { background: transparent; color: var(--fzl-dim); box-shadow: inset 0 0 0 1px var(--fzl-hair); }
 .fzl-ph-prog { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; font-size: 10.5px; color: var(--fzl-dim); }
-.fzl-ph-bar { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.fzl-ph-bar { height: 6px; border-radius: 3px; background: var(--fzl-panel-2); overflow: hidden; }
 .fzl-ph-bar i { display: block; height: 100%; width: 100%; background: var(--fzl-brick); transform: scaleX(var(--p, 0)); transform-origin: left; transition: transform .5s var(--fzl-ease); }
 .fzl-ph-prog b { font: 700 11px/1 var(--fzl-mono); color: var(--fzl-white); }
 
@@ -501,7 +508,7 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
 }
 .fzl-standings-head span:nth-child(n+3) { text-align: right; }
 .fzl-standings li { padding: 14px 12px; border-top: 1px solid var(--fzl-hair); }
-.fzl-standings li.is-me { background: rgba(232, 121, 94, .07); border-radius: 10px; }
+.fzl-standings li.is-me { background: rgba(var(--fzl-red-rgb), .10); border-radius: 10px; }
 .fzl-standings .rk { font: 400 1.9rem/1 var(--fzl-display); color: var(--fzl-dim-2); }
 .fzl-standings li:nth-child(1) .rk { color: var(--fzl-gold); }
 .fzl-standings li:nth-child(2) .rk { color: var(--fzl-silver); }
@@ -512,6 +519,11 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
 .fzl-standings .pts { font: 700 1.25rem/1 var(--fzl-mono); text-align: right; }
 .fzl-standings .gap { font: 500 .82rem/1 var(--fzl-mono); color: var(--fzl-dim-2); text-align: right; }
 .fzl-note { margin: 14px 0 0; font-size: .78rem; line-height: 1.5; color: var(--fzl-dim-2); }
+/* Sur la rangée teintée et le palier surélevé, --fzl-dim-2 passe sous
+   4,5:1 : le gris secondaire prend le relais. */
+.fzl-standings li.is-me small,
+.fzl-standings li.is-me .gap,
+.fzl-help-list .fzl-ph-who small { color: var(--fzl-dim); }
 
 /* 03 · Échange */
 .fzl-trade { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; }
@@ -535,7 +547,7 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
 .fzl-trade-card strong { font-weight: 800; font-size: .98rem; line-height: 1.15; }
 .fzl-trade-card small { font: 500 .72rem/1.4 var(--fzl-mono); opacity: .85; }
 .fzl-trade-mid { display: grid; justify-items: center; gap: 10px; }
-.fzl-trade-mid svg { color: var(--fzl-brick); }
+.fzl-trade-mid svg { color: var(--fzl-red-text); }
 .fzl-trade-status { position: relative; display: grid; margin: 16px auto 0; width: max-content; }
 .fzl-trade-status span {
     grid-area: 1 / 1;
@@ -550,8 +562,8 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
     text-transform: uppercase;
     transition: opacity .35s var(--fzl-ease), transform .35s var(--fzl-ease);
 }
-.fzl-trade-status .sent { background: rgba(255, 179, 0, .14); color: var(--fzl-gold); }
-.fzl-trade-status .done { background: rgba(0, 230, 118, .14); color: var(--fzl-green); opacity: 0; transform: translateY(6px); }
+.fzl-trade-status .sent { background: rgba(255, 214, 10, .14); color: var(--fzl-gold); }
+.fzl-trade-status .done { background: rgba(48, 209, 88, .14); color: var(--fzl-green); opacity: 0; transform: translateY(6px); }
 .fzl-trade-status.is-done .sent { opacity: 0; transform: translateY(-6px); }
 .fzl-trade-status.is-done .done { opacity: 1; transform: none; }
 
@@ -565,7 +577,7 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
     margin-bottom: 16px;
     border-radius: 12px;
     border: 1px solid var(--fzl-brick);
-    background: linear-gradient(90deg, rgba(232, 121, 94, .2), rgba(232, 121, 94, .05));
+    background: rgba(var(--fzl-red-rgb), .12);
     font-size: .74rem;
     font-weight: 700;
     letter-spacing: .08em;
@@ -598,7 +610,7 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
     border: 1px solid var(--fzl-hair);
 }
 .fzl-help-head { grid-template-columns: minmax(0, 1fr) 44px 44px 22px; padding-left: 54px; }
-.fzl-help-list li.is-fav { border-color: rgba(255, 179, 0, .45); }
+.fzl-help-list li.is-fav { border-color: rgba(255, 214, 10, .45); }
 .fzl-help-list .n { font: 700 .88rem/1 var(--fzl-mono); text-align: right; color: var(--fzl-dim); }
 .fzl-help-list .n.is-proj { color: var(--fzl-white); }
 .fzl-help-list .st { color: var(--fzl-dim-2); display: grid; place-items: center; }
@@ -615,7 +627,7 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
     color: var(--fzl-dim-2);
 }
 .fzl-help-need span { margin-right: 4px; }
-.fzl-help-need b { padding: 5px 8px; border-radius: 6px; background: rgba(255, 255, 255, .06); font: 700 .72rem/1 var(--fzl-mono); letter-spacing: 0; color: var(--fzl-white); }
+.fzl-help-need b { padding: 5px 8px; border-radius: 6px; background: var(--fzl-panel-2); font: 700 .72rem/1 var(--fzl-mono); letter-spacing: 0; color: var(--fzl-white); }
 
 /* Les 32 clubs — la seule chroma libre du système, rattachée à son club. */
 .fzl-sub-h { font: 800 1.3rem/1.2 var(--fzl-body); margin: 0; }
@@ -666,13 +678,13 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
     display: grid; place-items: center;
     width: 30px; height: 30px;
     border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, .2);
+    border: 1px solid var(--fzl-hair);
     font: 500 1.1rem/1 var(--fzl-mono);
-    color: var(--fzl-brick);
+    color: var(--fzl-red-text);
     transition: transform .25s var(--fzl-ease);
 }
 .fzl-qa details[open] summary::after { transform: rotate(45deg); }
-.fzl-qa summary:hover { color: var(--fzl-brick); }
+.fzl-qa summary:hover { color: var(--fzl-red-text); }
 .fzl-qa details p { margin: 0 0 18px; color: var(--fzl-dim); line-height: 1.65; max-width: 62ch; }
 
 /* ================================================================
@@ -686,7 +698,7 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
 .fzl-cta .fzl-wrap { display: flex; flex-direction: column; align-items: center; gap: 28px; }
 .fzl-cta-alt { margin: 0; color: var(--fzl-dim); font-size: .95rem; }
 .fzl-cta-alt a { color: var(--fzl-white); font-weight: 700; text-underline-offset: 3px; }
-.fzl-cta-alt a:hover { color: var(--fzl-brick); }
+.fzl-cta-alt a:hover { color: var(--fzl-red-text); }
 @media (min-width: 1024px) { .fzl-cta { padding: 112px var(--fzl-gutter) 120px; } }
 
 /* ================================================================

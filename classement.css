@@ -44,11 +44,11 @@ body {
 }
 
 .breadcrumb-item:hover {
-    color: var(--danger);
+    color: var(--primary-text);
 }
 
 .breadcrumb-item.active {
-    color: var(--danger);
+    color: var(--primary-text);
     font-weight: 600;
 }
 
@@ -82,8 +82,8 @@ body {
 }
 
 .pool-card:hover {
-    border-color: var(--danger);
-    box-shadow: 0 4px 16px rgba(255, 46, 46, 0.15);
+    border-color: var(--primary);
+    box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.15);
     transform: translateY(-2px);
 }
 
@@ -91,7 +91,7 @@ body {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--danger) 0%, var(--danger) 100%);
+    background: var(--primary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -139,19 +139,20 @@ body {
 .pool-badge.type-h2h {
     /* Bleu Material auparavant : une seconde teinte vive, sans rapport avec
        l'accent du site. Reprend la teinte de l'accent, comme .position-badge
-       — l'orchidée de .type-cumulative juste en dessous suffit à distinguer
-       les deux types. */
-    background: rgba(var(--primary-rgb), 0.15);
-    color: var(--primary);
+       — le gris neutre de .type-cumulative juste en dessous suffit à
+       distinguer les deux types. */
+    background: color-mix(in srgb, var(--primary) 10%, var(--card));
+    color: var(--primary-text);
 }
 
 .pool-badge.type-cumulative {
-    background: rgba(156, 39, 176, 0.15);
-    color: #CE93D8;
+    /* Orchidée auparavant : le violet est réservé aux recrues. */
+    background: var(--bg-gray-light);
+    color: var(--text-secondary);
 }
 
 .pool-badge.players {
-    background: rgba(0, 230, 118, 0.12);
+    background: color-mix(in srgb, var(--success) 10%, var(--card));
     color: var(--success);
 }
 
@@ -163,7 +164,7 @@ body {
 
 .pool-card:hover .pool-arrow {
     transform: translateX(5px);
-    color: var(--danger);
+    color: var(--primary-text);
 }
 
 /* ==================== STANDINGS VIEW (Level 2) ==================== */
@@ -275,7 +276,7 @@ body {
 
 #standingsTable th.is-sorted {
     background: color-mix(in srgb, var(--primary) 16%, transparent);
-    color: var(--primary);
+    color: var(--primary-text);
     font-weight: 800;
 }
 
@@ -368,7 +369,7 @@ body {
 
 #standingsTable td.points-column {
     font-size: 1rem;
-    color: var(--primary);
+    color: var(--primary-text);
 }
 
 #standingsTable .st-diff-col {
@@ -568,12 +569,12 @@ body {
     transition: border-color .15s ease, color .15s ease;
 }
 
-.time-filter:hover { border-color: var(--primary); color: var(--primary); }
+.time-filter:hover { border-color: var(--primary); color: var(--primary-text); }
 
 .time-filter.active {
     background: var(--primary);
     border-color: var(--primary);
-    color: var(--bg);
+    color: var(--on-primary);
 }
 
 .leaderboard-list { display: flex; flex-direction: column; gap: 8px; }
@@ -593,7 +594,7 @@ body {
 .lb-rank.silver { color: #B8B8CC; }
 .lb-rank.bronze { color: #CD7F32; }
 .lb-team { flex: 1; min-width: 0; font-size: .92rem; font-weight: 700; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lb-pts { flex-shrink: 0; font-size: 1rem; font-weight: 800; color: var(--primary); }
+.lb-pts { flex-shrink: 0; font-size: 1rem; font-weight: 800; color: var(--primary-text); }
 .lb-source { flex-shrink: 0; font-size: .7rem; color: var(--text-light-gray); }
 
 /* ==================== ROSTER VIEW (Level 3) ==================== */
@@ -621,8 +622,8 @@ body {
 
 .roster-card.clickable:hover {
     background: var(--bg-hover);
-    border-color: var(--danger);
-    box-shadow: 0 4px 12px rgba(255, 46, 46, 0.15);
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.15);
     transform: translateY(-2px);
 }
 
@@ -691,7 +692,7 @@ body {
     color: var(--text-secondary);
     font-weight: 600;
     padding: 2px 8px;
-    background: rgba(156, 163, 175, 0.1);
+    background: var(--bg-gray-light);
     border-radius: 4px;
 }
 
@@ -700,7 +701,7 @@ body {
     color: var(--text-secondary);
     font-weight: 600;
     padding: 2px 6px;
-    background: rgba(156, 163, 175, 0.1);
+    background: var(--bg-gray-light);
     border-radius: 4px;
 }
 
@@ -959,8 +960,8 @@ body {
 }
 
 .career-modal-header {
-    background: linear-gradient(160deg, #c0392b 0%, #FF4757 100%);
-    color: #fff;
+    background: var(--primary);
+    color: var(--on-primary);
     padding: 22px 24px 20px;
     border-radius: 16px 16px 0 0;
     position: relative;
@@ -1135,7 +1136,7 @@ body {
     gap: 20px;
     padding: 20px 30px;
     background: var(--bg-hover);
-    border-bottom: 1px solid var(--text-main);
+    border-bottom: 1px solid var(--border-light);
     flex-wrap: wrap;
 }
 
@@ -1153,7 +1154,7 @@ body {
 
 .filter-group-career select {
     padding: 8px 12px;
-    border: 2px solid var(--text-main);
+    border: 2px solid var(--border-gray);
     border-radius: 8px;
     font-size: 0.9rem;
     background: var(--card-white);
@@ -1162,14 +1163,14 @@ body {
 }
 
 .filter-group-career select:hover {
-    border-color: var(--danger);
+    border-color: var(--primary);
 }
 
 .stats-count-badge {
     margin-left: auto;
     padding: 8px 16px;
-    background: var(--danger);
-    color: var(--card-white);
+    background: var(--danger-deep);
+    color: var(--on-primary);
     border-radius: 12px;
     font-size: 0.85rem;
     font-weight: 600;
@@ -1198,8 +1199,8 @@ body {
 }
 
 #careerStatsTable th {
-    background-color: #FF4757;
-    color: #fff;
+    background-color: var(--primary);
+    color: var(--on-primary);
     padding: 10px 10px;
     text-align: right;
     font-weight: 700;
@@ -1216,25 +1217,25 @@ body {
 #careerStatsTable td {
     padding: 9px 10px;
     text-align: right;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid var(--border-light);
     font-size: 0.875rem;
     white-space: nowrap;
 }
 
 #careerStatsTable tbody tr:hover {
-    background: rgba(255,255,255,0.04);
+    background: var(--bg-hover);
 }
 
 #careerStatsTable .season-col {
     text-align: left;
     padding-left: 14px;
     font-weight: 700;
-    color: #fff;
+    color: var(--text-main);
 }
 
 #careerStatsTable .league-col {
     text-align: left;
-    color: rgba(255,255,255,0.5);
+    color: var(--text-secondary);
     font-size: 0.8rem;
 }
 
@@ -1265,8 +1266,8 @@ body {
 }
 
 #careerStatsTable .career-totals-row {
-    background: rgba(255, 71, 87, 0.12);
-    border-top: 2px solid rgba(255, 71, 87, 0.4);
+    background: rgba(var(--primary-rgb), 0.06);
+    border-top: 2px solid rgba(var(--primary-rgb), 0.35);
 }
 
 #careerStatsTable .career-totals-row td {
@@ -1276,7 +1277,7 @@ body {
 
 #careerStatsTable .career-totals-label {
     text-align: left !important;
-    color: #FF4757;
+    color: var(--primary-text);
     padding-left: 14px;
 }
 
@@ -1574,10 +1575,10 @@ body {
     display: flex;
     gap: 4px;
     margin-bottom: 20px;
-    background: rgba(15, 15, 40, 0.6);
+    background: var(--card);
     border-radius: 12px;
     padding: 4px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid var(--border-light);
 }
 
 .h2h-tab {
@@ -1585,7 +1586,7 @@ body {
     padding: 10px 16px;
     border: none;
     background: transparent;
-    color: rgba(255,255,255,0.5);
+    color: var(--text-secondary);
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
@@ -1594,13 +1595,13 @@ body {
 }
 
 .h2h-tab:hover {
-    color: rgba(255,255,255,0.8);
-    background: rgba(255,255,255,0.05);
+    color: var(--text-main);
+    background: var(--bg-hover);
 }
 
 .h2h-tab.active {
-    background: rgba(var(--primary-rgb), 0.15);
-    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, var(--card));
+    color: var(--primary-text);
     box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.1);
 }
 
@@ -1614,9 +1615,9 @@ body {
 
 .h2h-period-btn {
     padding: 6px 20px;
-    border: 1px solid rgba(255,255,255,0.12);
+    border: 1px solid var(--border-gray);
     background: transparent;
-    color: rgba(255,255,255,0.45);
+    color: var(--text-secondary);
     font-size: 0.82rem;
     font-weight: 700;
     border-radius: 20px;
@@ -1626,14 +1627,14 @@ body {
 }
 
 .h2h-period-btn:hover {
-    color: rgba(255,255,255,0.8);
-    border-color: rgba(255,255,255,0.25);
+    color: var(--text-main);
+    border-color: var(--text-secondary);
 }
 
 .h2h-period-btn.active {
-    background: rgba(var(--primary-rgb), 0.15);
-    border-color: rgba(var(--primary-rgb), 0.4);
-    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, var(--card));
+    border-color: rgba(var(--primary-rgb), 0.35);
+    color: var(--primary-text);
 }
 
 /* Week Header */
@@ -1645,7 +1646,7 @@ body {
 .h2h-week-label {
     font-size: 1.4rem;
     font-weight: 800;
-    color: #fff;
+    color: var(--text-main);
     letter-spacing: 0.5px;
     display: flex;
     align-items: center;
@@ -1665,28 +1666,29 @@ body {
 }
 
 .h2h-week-status.status-upcoming {
-    background: rgba(156, 39, 176, 0.2);
-    color: #CE93D8;
-    border: 1px solid rgba(206, 147, 216, 0.3);
+    /* État neutre : le violet est réservé aux recrues. */
+    background: var(--bg-gray-light);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-light);
 }
 
 .h2h-week-status.status-ongoing {
-    background: rgba(var(--primary-rgb), 0.2);
-    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, var(--card));
+    color: var(--primary-text);
     border: 1px solid rgba(var(--primary-rgb), 0.3);
     animation: pulse-ongoing 2s ease-in-out infinite;
 }
 
 .h2h-week-status.status-completed {
-    background: rgba(0, 230, 118, 0.2);
-    color: #00e676;
-    border: 1px solid rgba(0, 230, 118, 0.3);
+    background: color-mix(in srgb, var(--success) 10%, var(--card));
+    color: var(--success);
+    border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
 }
 
 .h2h-week-status.status-awaiting {
-    background: rgba(255, 152, 0, 0.2);
-    color: #ff9800;
-    border: 1px solid rgba(255, 152, 0, 0.3);
+    background: color-mix(in srgb, var(--warning) 10%, var(--card));
+    color: var(--warning);
+    border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
 }
 
 @keyframes pulse-ongoing {
@@ -1696,7 +1698,7 @@ body {
 
 .h2h-week-dates {
     font-size: 0.85rem;
-    color: rgba(255,255,255,0.5);
+    color: var(--text-secondary);
     margin-top: 4px;
 }
 
@@ -1709,8 +1711,8 @@ body {
 
 /* Matchup card — vertical layout */
 .h2h-matchup-card {
-    background: rgba(26, 26, 30, 0.7);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: var(--card);
+    border: 1px solid var(--border-light);
     border-radius: 14px;
     overflow: hidden;
     transition: border-color 0.2s ease;
@@ -1726,8 +1728,8 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 14px 20px;
-    background: rgba(0,0,0,0.25);
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: var(--bg-gray-light);
+    border-bottom: 1px solid var(--border-light);
 }
 
 .h2h-header-team {
@@ -1745,7 +1747,7 @@ body {
 .h2h-header-team-name {
     font-size: 0.82rem;
     font-weight: 700;
-    color: rgba(255,255,255,0.55);
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     max-width: 100%;
@@ -1755,7 +1757,7 @@ body {
 }
 
 .h2h-header-team.leading .h2h-header-team-name {
-    color: #00e676;
+    color: var(--success);
 }
 
 .h2h-header-score {
@@ -1763,19 +1765,19 @@ body {
     font-weight: 900;
     font-family: 'Bebas Neue', sans-serif;
     letter-spacing: 1px;
-    color: rgba(255,255,255,0.75);
+    color: var(--text-main);
     line-height: 1.1;
 }
 
 .h2h-header-score.leading {
-    color: #00e676;
-    text-shadow: 0 0 12px rgba(0, 230, 118, 0.35);
+    color: var(--success);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--success) 35%, transparent);
 }
 
 .h2h-header-vs {
     font-size: 0.7rem;
     font-weight: 800;
-    color: rgba(255,255,255,0.2);
+    color: var(--text-light-gray);
     letter-spacing: 1px;
     padding: 0 12px;
     flex-shrink: 0;
@@ -1797,8 +1799,8 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.6px;
-    color: rgba(255,255,255,0.25);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-light);
     margin-bottom: 2px;
 }
 
@@ -1822,7 +1824,7 @@ body {
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     padding: 5px 14px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid var(--border-light);
     transition: background 0.15s;
 }
 
@@ -1831,7 +1833,7 @@ body {
 }
 
 .h2h-player-row:hover {
-    background: rgba(255,255,255,0.03);
+    background: var(--bg-gray-light);
 }
 
 .h2h-player-left,
@@ -1861,21 +1863,21 @@ body {
     border-radius: 50%;
     overflow: hidden;
     flex-shrink: 0;
-    background: rgba(255,255,255,0.06);
+    background: var(--bg-gray-light);
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .h2h-player-photo-wrap.is-empty {
-    background: rgba(255,255,255,0.03);
+    background: var(--bg-gray-light);
 }
 
 .h2h-player-initials {
     font-size: 0.62rem;
     font-weight: 800;
     letter-spacing: 0.5px;
-    color: rgba(255,255,255,0.4);
+    color: var(--text-secondary);
 }
 
 .h2h-player-photo {
@@ -1885,7 +1887,7 @@ body {
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    background: rgba(255,255,255,0.05);
+    background: var(--bg-gray-light);
 }
 
 
@@ -1905,7 +1907,7 @@ body {
 .h2h-player-name {
     font-size: 0.8rem;
     font-weight: 600;
-    color: rgba(255,255,255,0.75);
+    color: var(--text-main);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1917,7 +1919,7 @@ body {
 
 .h2h-player-sub {
     font-size: 0.65rem;
-    color: rgba(255,255,255,0.3);
+    color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1925,12 +1927,12 @@ body {
 }
 
 .h2h-player-winning .h2h-player-name {
-    color: #00e676;
+    color: var(--success);
 }
 
 .h2h-team-record {
     font-size: 0.7rem;
-    color: rgba(255,255,255,0.4);
+    color: var(--text-secondary);
     margin-top: 2px;
 }
 
@@ -1947,24 +1949,24 @@ body {
     font-size: 0.82rem;
     font-weight: 700;
     font-family: 'Bebas Neue', sans-serif;
-    color: rgba(255,255,255,0.45);
+    color: var(--text-secondary);
     min-width: 32px;
     text-align: center;
 }
 
 .h2h-pts-leading {
-    color: #00e676;
+    color: var(--success);
 }
 
 .h2h-player-sep {
     font-size: 0.6rem;
-    color: rgba(255,255,255,0.15);
+    color: var(--text-light-gray);
 }
 
 .h2h-no-players {
     text-align: center;
     padding: 16px;
-    color: rgba(255,255,255,0.25);
+    color: var(--text-secondary);
     font-size: 0.82rem;
 }
 
@@ -2022,7 +2024,7 @@ body {
 .h2h-empty {
     text-align: center;
     padding: 40px 20px;
-    color: rgba(255,255,255,0.4);
+    color: var(--text-secondary);
     font-size: 0.95rem;
 }
 
@@ -2034,8 +2036,8 @@ body {
 }
 
 .h2h-history-week {
-    background: rgba(26, 26, 30, 0.7);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: var(--card);
+    border: 1px solid var(--border-light);
     border-radius: 12px;
     overflow: hidden;
 }
@@ -2058,28 +2060,28 @@ body {
 }
 
 .h2h-history-header:hover {
-    background: rgba(255,255,255,0.03);
+    background: var(--bg-gray-light);
 }
 
 .h2h-history-title {
     font-weight: 700;
-    color: #fff;
+    color: var(--text-main);
     font-size: 0.95rem;
 }
 
 .h2h-history-dates {
-    color: rgba(255,255,255,0.4);
+    color: var(--text-secondary);
     font-size: 0.8rem;
 }
 
 .h2h-history-chevron {
-    color: rgba(255,255,255,0.3);
+    color: var(--text-secondary);
     font-size: 0.7rem;
     transition: transform 0.2s ease;
 }
 
 .h2h-history-body {
-    border-top: 1px solid rgba(255,255,255,0.06);
+    border-top: 1px solid var(--border-light);
     padding: 12px 18px;
 }
 
@@ -2088,7 +2090,7 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 8px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid var(--border-light);
 }
 
 .h2h-history-matchup:last-child {
@@ -2098,7 +2100,7 @@ body {
 .h2h-hist-team {
     flex: 1;
     font-size: 0.9rem;
-    color: rgba(255,255,255,0.6);
+    color: var(--text-secondary);
 }
 
 .h2h-hist-team:last-child {
@@ -2106,7 +2108,7 @@ body {
 }
 
 .h2h-hist-team.winner {
-    color: #00e676;
+    color: var(--success);
     font-weight: 700;
 }
 
@@ -2116,169 +2118,26 @@ body {
     gap: 8px;
     font-weight: 700;
     font-size: 0.9rem;
-    color: rgba(255,255,255,0.5);
+    color: var(--text-secondary);
     flex-shrink: 0;
     padding: 0 12px;
 }
 
 .h2h-hist-score .winner {
-    color: #00e676;
+    color: var(--success);
 }
 
 .h2h-hist-sep {
-    color: rgba(255,255,255,0.2);
+    color: var(--text-light-gray);
 }
 
 /* ============================================================ */
-/* LIGHT MODE — hardcoded rgba overrides                         */
+/* THÈME CLAIR                                                   */
+/* ------------------------------------------------------------ */
+/* Les règles H2H et de la modale ci-dessus passent par les      */
+/* jetons globaux (index.css), qui basculent seuls avec le       */
+/* thème : plus de surcharges rgba bleutées à tenir en phase.    */
 /* ============================================================ */
-
-/* --- H2H Tabs --- */
-html[data-theme="light"] .h2h-tabs {
-    background: rgba(224, 229, 248, 0.85);
-    border-color: rgba(0,0,0,0.08);
-}
-html[data-theme="light"] .h2h-tab {
-    color: rgba(30,40,100,0.5);
-}
-html[data-theme="light"] .h2h-tab:hover {
-    color: rgba(30,40,100,0.8);
-    background: rgba(0,0,0,0.04);
-}
-html[data-theme="light"] .h2h-tab.active {
-    background: rgba(var(--primary-rgb),0.15);
-    color: var(--primary);
-    box-shadow: 0 0 10px rgba(var(--primary-rgb),0.1);
-}
-
-/* --- H2H Period filter --- */
-html[data-theme="light"] .h2h-period-btn {
-    border-color: rgba(0,0,0,0.12);
-    color: rgba(30,40,100,0.45);
-}
-html[data-theme="light"] .h2h-period-btn:hover {
-    color: rgba(30,40,100,0.8);
-    border-color: rgba(0,0,0,0.25);
-}
-html[data-theme="light"] .h2h-period-btn.active {
-    background: rgba(var(--primary-rgb),0.12);
-    border-color: rgba(var(--primary-rgb),0.35);
-    color: var(--primary);
-}
-
-/* --- H2H Week header --- */
-html[data-theme="light"] .h2h-week-label {
-    color: var(--text-main);
-}
-html[data-theme="light"] .h2h-week-dates {
-    color: var(--text-secondary);
-}
-
-/* --- H2H Matchup cards --- */
-html[data-theme="light"] .h2h-matchup-card {
-    background: rgba(240, 244, 255, 0.92);
-    border-color: rgba(0,0,0,0.08);
-}
-html[data-theme="light"] .h2h-matchup-card:hover {
-    border-color: rgba(var(--primary-rgb),0.3);
-}
-html[data-theme="light"] .h2h-matchup-header {
-    background: rgba(0,0,0,0.04);
-    border-bottom-color: rgba(0,0,0,0.06);
-}
-html[data-theme="light"] .h2h-header-team-name {
-    color: rgba(30,40,100,0.6);
-}
-html[data-theme="light"] .h2h-header-score {
-    color: rgba(30,40,100,0.8);
-}
-html[data-theme="light"] .h2h-header-vs {
-    color: rgba(30,40,100,0.2);
-}
-
-/* --- H2H Player rows --- */
-html[data-theme="light"] .h2h-players-header {
-    color: rgba(30,40,100,0.35);
-    border-bottom-color: rgba(0,0,0,0.05);
-}
-html[data-theme="light"] .h2h-player-row {
-    border-bottom-color: rgba(0,0,0,0.04);
-}
-html[data-theme="light"] .h2h-player-row:hover {
-    background: rgba(0,0,0,0.02);
-}
-html[data-theme="light"] .h2h-player-name {
-    color: rgba(30,40,100,0.8);
-}
-html[data-theme="light"] .h2h-player-sub,
-html[data-theme="light"] .h2h-team-record {
-    color: rgba(30,40,100,0.4);
-}
-html[data-theme="light"] .h2h-player-pts {
-    color: rgba(30,40,100,0.5);
-}
-html[data-theme="light"] .h2h-player-sep {
-    color: rgba(30,40,100,0.15);
-}
-html[data-theme="light"] .h2h-player-photo {
-    background: rgba(0,0,0,0.06);
-}
-html[data-theme="light"] .h2h-player-photo-wrap {
-    background: rgba(0,0,0,0.07);
-}
-html[data-theme="light"] .h2h-player-initials {
-    color: rgba(30,40,100,0.45);
-}
-html[data-theme="light"] .h2h-no-players,
-html[data-theme="light"] .h2h-loading,
-html[data-theme="light"] .h2h-empty {
-    color: rgba(30,40,100,0.35);
-}
-
-/* --- H2H History --- */
-html[data-theme="light"] .h2h-history-week {
-    background: rgba(240, 244, 255, 0.92);
-    border-color: rgba(0,0,0,0.08);
-}
-html[data-theme="light"] .h2h-history-header:hover {
-    background: rgba(0,0,0,0.025);
-}
-html[data-theme="light"] .h2h-history-title {
-    color: var(--text-main);
-}
-html[data-theme="light"] .h2h-history-dates,
-html[data-theme="light"] .h2h-history-chevron {
-    color: rgba(30,40,100,0.4);
-}
-html[data-theme="light"] .h2h-history-body {
-    border-top-color: rgba(0,0,0,0.06);
-}
-html[data-theme="light"] .h2h-history-matchup {
-    border-bottom-color: rgba(0,0,0,0.04);
-}
-html[data-theme="light"] .h2h-hist-team {
-    color: rgba(30,40,100,0.65);
-}
-html[data-theme="light"] .h2h-hist-score {
-    color: rgba(30,40,100,0.55);
-}
-html[data-theme="light"] .h2h-hist-sep {
-    color: rgba(30,40,100,0.2);
-}
-
-/* --- Career stats table (classement.css version) --- */
-html[data-theme="light"] #careerStatsTable td {
-    border-bottom-color: rgba(0,0,0,0.06);
-}
-html[data-theme="light"] #careerStatsTable tbody tr:hover {
-    background: rgba(0,0,0,0.03) !important;
-}
-html[data-theme="light"] #careerStatsTable .season-col {
-    color: var(--text-main);
-}
-html[data-theme="light"] #careerStatsTable .league-col {
-    color: var(--text-secondary);
-}
 
 /* Les trois squelettes (.skeleton, .skeleton-circle, .skeleton-avatar) tirent
    désormais leurs deux arrêts de --bg et --card, donc ils suivent le thème
@@ -2309,13 +2168,13 @@ html[data-theme="light"] #careerStatsTable .league-col {
 .h2h-sched-title {
     font-size: 1.25rem;
     font-weight: 800;
-    color: #fff;
+    color: var(--text-main);
     letter-spacing: 0.4px;
 }
 
 .h2h-sched-sub {
     font-size: 0.82rem;
-    color: rgba(255,255,255,0.5);
+    color: var(--text-secondary);
     margin-top: 3px;
 }
 
@@ -2327,15 +2186,15 @@ html[data-theme="light"] #careerStatsTable .league-col {
     font-weight: 700;
     letter-spacing: 0.4px;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.45);
+    color: var(--text-secondary);
 }
 
 .h2h-sched-picker select {
     padding: 7px 12px;
     border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(15, 15, 40, 0.6);
-    color: #fff;
+    border: 1px solid var(--border-gray);
+    background: var(--bg-gray-light);
+    color: var(--text-main);
     font-size: 0.85rem;
     font-weight: 600;
     text-transform: none;
@@ -2381,9 +2240,9 @@ html[data-theme="light"] #careerStatsTable .league-col {
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(15, 15, 40, 0.6);
-    color: rgba(255,255,255,0.7);
+    border: 1px solid var(--border-gray);
+    background: var(--bg-gray-light);
+    color: var(--text-secondary);
     font-size: 1.3rem;
     line-height: 1;
     cursor: pointer;
@@ -2391,7 +2250,7 @@ html[data-theme="light"] #careerStatsTable .league-col {
 }
 
 .h2h-sched-arrow:hover {
-    color: var(--primary);
+    color: var(--primary-text);
     border-color: rgba(var(--primary-rgb),0.45);
     background: rgba(var(--primary-rgb),0.12);
 }
@@ -2405,8 +2264,8 @@ html[data-theme="light"] #careerStatsTable .league-col {
     gap: 8px;
     padding: 12px;
     border-radius: 14px;
-    background: rgba(26, 26, 30, 0.7);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: var(--card);
+    border: 1px solid var(--border-light);
     transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
@@ -2430,7 +2289,7 @@ html[data-theme="light"] #careerStatsTable .league-col {
 .h2h-sched-week {
     font-size: 0.78rem;
     font-weight: 800;
-    color: rgba(255,255,255,0.85);
+    color: var(--text-main);
     letter-spacing: 0.3px;
     white-space: nowrap;
 }
@@ -2446,27 +2305,28 @@ html[data-theme="light"] #careerStatsTable .league-col {
 }
 
 .h2h-sched-badge.is-done {
-    background: rgba(0, 230, 118, 0.16);
-    color: #00e676;
-    border: 1px solid rgba(0, 230, 118, 0.28);
+    background: color-mix(in srgb, var(--success) 10%, var(--card));
+    color: var(--success);
+    border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
 }
 
 .h2h-sched-badge.is-live {
-    background: rgba(var(--primary-rgb), 0.2);
-    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, var(--card));
+    color: var(--primary-text);
     border: 1px solid rgba(var(--primary-rgb), 0.3);
     animation: pulse-ongoing 2s ease-in-out infinite;
 }
 
 .h2h-sched-badge.is-next {
-    background: rgba(156, 39, 176, 0.18);
-    color: #CE93D8;
-    border: 1px solid rgba(206, 147, 216, 0.28);
+    /* État neutre : le violet est réservé aux recrues. */
+    background: var(--bg-gray-light);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-light);
 }
 
 .h2h-sched-dates {
     font-size: 0.72rem;
-    color: rgba(255,255,255,0.45);
+    color: var(--text-secondary);
 }
 
 .h2h-sched-opp {
@@ -2487,13 +2347,13 @@ html[data-theme="light"] #careerStatsTable .league-col {
     font-weight: 700;
     letter-spacing: 0.6px;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.35);
+    color: var(--text-secondary);
 }
 
 .h2h-sched-opp-name {
     font-size: 0.86rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text-main);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2509,12 +2369,12 @@ html[data-theme="light"] #careerStatsTable .league-col {
 .h2h-sched-pts {
     font-size: 1rem;
     font-weight: 800;
-    color: rgba(255,255,255,0.55);
+    color: var(--text-secondary);
 }
 
-.h2h-sched-pts.mine { color: #fff; }
+.h2h-sched-pts.mine { color: var(--text-main); }
 
-.h2h-sched-dash { color: rgba(255,255,255,0.25); }
+.h2h-sched-dash { color: var(--text-light-gray); }
 
 .h2h-sched-score.is-pending { justify-content: flex-start; }
 
@@ -2522,12 +2382,12 @@ html[data-theme="light"] #careerStatsTable .league-col {
     font-size: 0.78rem;
     font-weight: 800;
     letter-spacing: 1.5px;
-    color: rgba(255,255,255,0.28);
+    color: var(--text-light-gray);
 }
 
 /* La pastille V/D/N reprend la couleur du pointage gagnant. */
-.h2h-sched-score.r-win .h2h-sched-pts.mine { color: #00e676; }
-.h2h-sched-score.r-loss .h2h-sched-pts.mine { color: #ff5252; }
+.h2h-sched-score.r-win .h2h-sched-pts.mine { color: var(--success); }
+.h2h-sched-score.r-loss .h2h-sched-pts.mine { color: var(--primary-text); }
 
 .h2h-sched-result {
     align-self: flex-start;
@@ -2540,9 +2400,9 @@ html[data-theme="light"] #careerStatsTable .league-col {
     letter-spacing: 0.5px;
 }
 
-.h2h-sched-result.r-win  { background: rgba(0, 230, 118, 0.18); color: #00e676; }
-.h2h-sched-result.r-loss { background: rgba(255, 82, 82, 0.18); color: #ff5252; }
-.h2h-sched-result.r-tie  { background: rgba(255, 255, 255, 0.1); color: rgba(255,255,255,0.7); }
+.h2h-sched-result.r-win  { background: color-mix(in srgb, var(--success) 10%, var(--card)); color: var(--success); }
+.h2h-sched-result.r-loss { background: color-mix(in srgb, var(--primary) 10%, var(--card)); color: var(--primary-text); }
+.h2h-sched-result.r-tie  { background: var(--bg-gray-light); color: var(--text-secondary); }
 
 /* Téléphone : des cartes plus étroites, les flèches disparaissent —
    le geste de balayage remplace avantageusement deux boutons de 34 px. */
@@ -2559,37 +2419,7 @@ html[data-theme="light"] #careerStatsTable .league-col {
     .h2h-sched-badge.is-live { animation: none; }
 }
 
-/* --- Calendrier, thème clair --- */
-html[data-theme="light"] .h2h-sched-title { color: var(--text-main); }
-html[data-theme="light"] .h2h-sched-sub { color: var(--text-secondary); }
-html[data-theme="light"] .h2h-sched-picker { color: rgba(30,40,100,0.5); }
-html[data-theme="light"] .h2h-sched-picker select {
-    background: rgba(240, 244, 255, 0.95);
-    border-color: rgba(0,0,0,0.12);
-    color: var(--text-main);
-}
-html[data-theme="light"] .h2h-sched-arrow {
-    background: rgba(240, 244, 255, 0.95);
-    border-color: rgba(0,0,0,0.12);
-    color: rgba(30,40,100,0.6);
-}
-html[data-theme="light"] .h2h-sched-card {
-    background: rgba(240, 244, 255, 0.92);
-    border-color: rgba(0,0,0,0.08);
-}
-html[data-theme="light"] .h2h-sched-week { color: var(--text-main); }
-html[data-theme="light"] .h2h-sched-dates { color: var(--text-secondary); }
-html[data-theme="light"] .h2h-sched-opp-lbl { color: rgba(30,40,100,0.45); }
-html[data-theme="light"] .h2h-sched-opp-name { color: var(--text-main); }
-html[data-theme="light"] .h2h-sched-pts { color: rgba(30,40,100,0.55); }
-html[data-theme="light"] .h2h-sched-pts.mine { color: var(--text-main); }
-html[data-theme="light"] .h2h-sched-dash { color: rgba(30,40,100,0.25); }
-html[data-theme="light"] .h2h-sched-vs { color: rgba(30,40,100,0.3); }
-html[data-theme="light"] .h2h-sched-badge.is-done { color: #0a8f4d; }
-html[data-theme="light"] .h2h-sched-result.r-win { color: #0a8f4d; }
-html[data-theme="light"] .h2h-sched-result.r-tie { background: rgba(0,0,0,0.07); color: var(--text-secondary); }
-html[data-theme="light"] .h2h-sched-score.r-win .h2h-sched-pts.mine { color: #0a8f4d; }
-html[data-theme="light"] .h2h-sched-score.r-loss .h2h-sched-pts.mine { color: #d32f2f; }
+/* Thème clair : le calendrier suit les jetons globaux, sans surcharge. */
 
 /* ==================== DENSITÉ SUR GRAND ÉCRAN ==================== */
 @media (min-width: 769px) {

@@ -10,38 +10,41 @@
  *
  * La vedette suit la maquette « Alert Banner » (Design UX improvements) : une
  * seule rangée — signal, titre, détail, pool — puis un bouton. Direction
- * Broadcast Desk (DESIGN.md) : fond sombre, accent brique sur ce qui attend
+ * Broadcast Desk (DESIGN.md) : fond sombre, accent rouge sur ce qui attend
  * une action. Seul le point d'un élément urgent pulse : un signal, pas la
  * bande entière, et rien ne bouge en mouvement réduit.
  */
 
 .fzt {
+    /* Jetons globaux (index.css) : ils basculent d'eux-mêmes avec le thème ;
+       le bloc clair ne garde que les voiles et le survol du bouton calme.
+       Texte : l'encre d'Apple partout, le rouge n'est qu'aplat et filet. */
     /* Urgent : tour, repêchage, échange. */
-    --fzt-alert-bg: #1c100d;
-    --fzt-alert-bg-hover: #24140f;
-    --fzt-alert-border: #45211a;
-    --fzt-alert-border-hover: #5c2c22;
-    --fzt-alert-edge: #d94a2d;
-    --fzt-alert-signal: #ff7a5c;
-    --fzt-alert-ink: #fff;
-    --fzt-alert-text: #e3b3a6;
-    --fzt-alert-tag-bg: rgba(217, 74, 45, .14);
-    --fzt-alert-tag-ink: #ffb39f;
-    --fzt-alert-cta: #c8401f;
-    --fzt-alert-cta-hover: #e85c3e;
+    --fzt-alert-bg: color-mix(in srgb, var(--primary) 10%, var(--card));
+    --fzt-alert-bg-hover: color-mix(in srgb, var(--primary) 14%, var(--card));
+    --fzt-alert-border: rgba(var(--primary-rgb), .35);
+    --fzt-alert-border-hover: rgba(var(--primary-rgb), .55);
+    --fzt-alert-edge: var(--primary);
+    --fzt-alert-signal: var(--primary);
+    --fzt-alert-ink: var(--text-main);
+    --fzt-alert-text: var(--text-main);
+    --fzt-alert-tag-bg: rgba(var(--primary-rgb), .14);
+    --fzt-alert-tag-ink: var(--text-main);
+    --fzt-alert-cta: var(--primary);
+    --fzt-alert-cta-hover: var(--primary-deep);
     /* Calme : duel, résultat, information. Même forme, sans l'alarme. */
-    --fzt-calm-bg: #1e1e22;
-    --fzt-calm-border: #2e2e33;
-    --fzt-calm-border-hover: #3c3c43;
-    --fzt-calm-edge: #3c3c43;
-    --fzt-calm-signal: #a3a099;
-    --fzt-calm-ink: #f5f5f2;
-    --fzt-calm-text: #c9c6c0;
-    --fzt-calm-tag-bg: #26262b;
-    --fzt-calm-tag-ink: #c9c6c0;
-    --fzt-calm-cta: #26262b;
-    --fzt-calm-cta-hover: #2e2e33;
-    --fzt-calm-cta-ink: #f5f5f2;
+    --fzt-calm-bg: var(--card);
+    --fzt-calm-border: var(--border-light);
+    --fzt-calm-border-hover: var(--border-gray);
+    --fzt-calm-edge: var(--border-gray);
+    --fzt-calm-signal: var(--text-secondary);
+    --fzt-calm-ink: var(--text-main);
+    --fzt-calm-text: var(--text-main);
+    --fzt-calm-tag-bg: var(--bg-gray-light);
+    --fzt-calm-tag-ink: var(--text-main);
+    --fzt-calm-cta: var(--bg-gray-light);
+    --fzt-calm-cta-hover: #3A3A3C;
+    --fzt-calm-cta-ink: var(--text-main);
 
     display: flex;
     flex-direction: column;
@@ -52,30 +55,10 @@
 }
 
 html[data-theme="light"] .fzt {
-    --fzt-alert-bg: #fdf1ed;
-    --fzt-alert-bg-hover: #fbe7e0;
-    --fzt-alert-border: #f0cdc2;
-    --fzt-alert-border-hover: #e6b3a4;
-    --fzt-alert-edge: #d94a2d;
-    --fzt-alert-signal: #d94a2d;
-    --fzt-alert-ink: #16181a;
-    --fzt-alert-text: #8a3a26;
-    --fzt-alert-tag-bg: rgba(217, 74, 45, .1);
-    --fzt-alert-tag-ink: #a3371f;
-    --fzt-alert-cta: #c8401f;
-    --fzt-alert-cta-hover: #a8341a;
-    --fzt-calm-bg: #ffffff;
-    --fzt-calm-border: #e2dfd8;
-    --fzt-calm-border-hover: #cfcbc2;
-    --fzt-calm-edge: #cfcbc2;
-    --fzt-calm-signal: #8a877f;
-    --fzt-calm-ink: #16181a;
-    --fzt-calm-text: #4b4843;
-    --fzt-calm-tag-bg: #f0eee8;
-    --fzt-calm-tag-ink: #4b4843;
-    --fzt-calm-cta: #f0eee8;
-    --fzt-calm-cta-hover: #e2dfd8;
-    --fzt-calm-cta-ink: #16181a;
+    --fzt-alert-bg: color-mix(in srgb, var(--primary) 6%, var(--card));
+    --fzt-alert-bg-hover: color-mix(in srgb, var(--primary) 10%, var(--card));
+    --fzt-alert-tag-bg: rgba(var(--primary-rgb), .1);
+    --fzt-calm-cta-hover: #E8E8ED;
 }
 
 .fzt-item {
@@ -102,7 +85,7 @@ html[data-theme="light"] .fzt {
     outline-offset: 2px;
 }
 
-/* Le filet gauche brique marque ce qui attend une action, vedette ou non. */
+/* Le filet gauche rouge marque ce qui attend une action, vedette ou non. */
 .fzt-item--urgent {
     border-color: var(--fzt-alert-border);
     border-left: 3px solid var(--fzt-alert-edge);
@@ -278,7 +261,7 @@ html[data-theme="light"] .fzt {
 
 .fzt-item--vedette.fzt-item--urgent .fzt-action {
     background: var(--fzt-alert-cta);
-    color: #fff;
+    color: var(--on-primary);
 }
 
 .fzt-item--vedette.fzt-item--urgent:hover .fzt-action,
@@ -328,7 +311,7 @@ html[data-theme="light"] .fzt {
     gap: 6px;
     padding: 20px;
     border-radius: 12px;
-    border: 1px dashed var(--fz-border, rgba(255, 255, 255, .14));
+    border: 1px dashed var(--border-light);
     margin: 0 0 20px;
 }
 
@@ -345,7 +328,7 @@ html[data-theme="light"] .fzt {
 .fzt-vide-action {
     padding: 9px 14px;
     border-radius: 9px;
-    border: 1px solid var(--fz-border, rgba(255, 255, 255, .14));
+    border: 1px solid var(--border-light);
     text-decoration: none;
     color: inherit;
     font-size: 13px;
@@ -357,8 +340,8 @@ html[data-theme="light"] .fzt {
 }
 
 .fzt-vide-action:hover,
-.fzt-vide-action:focus-visible { border-color: var(--fz-accent, #c8442f); }
-.fzt-vide-action:focus-visible { outline: 2px solid var(--fz-accent, #c8442f); outline-offset: 2px; }
+.fzt-vide-action:focus-visible { border-color: var(--primary); }
+.fzt-vide-action:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 /* Écrans étroits : le bouton passe sous le texte, sur toute la largeur, plutôt
    que de le comprimer. Testé à 320, 360, 390 et 430 pixels CSS. */

@@ -12,18 +12,26 @@
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+        /* Page sombre seulement (pas de theme.js ici) : les valeurs sombres
+           d'index.css — échelle d'Apple et rouge signal. La carte est le
+           matériau translucide d'Apple, posé sur un flou de 20px. */
         :root {
-            --bg: #121214;
-            --card: rgba(255,255,255,0.05);
-            --border: rgba(255,255,255,0.10);
-            --primary: #e8795e;
-            --danger: #cc1e1e;
-            --text: #f5f5f7;
-            --text-muted: #a8a8b0;
-            --input-bg: rgba(255,255,255,0.07);
-            --input-border: rgba(255,255,255,0.12);
-            --input-focus: rgba(232,121,94,0.4);
-            --success: #28a745;
+            --bg: #000000;
+            --card: rgba(28,28,30,0.72);
+            --border: #38383A;
+            --primary: #E62030;
+            --primary-deep: #C41A28;
+            --primary-rgb: 230, 32, 48;
+            --primary-text: #FF5C66;
+            --on-primary: #FFFFFF;
+            --danger: var(--primary-text);
+            --text: #F5F5F7;
+            --text-muted: #A1A1A6;
+            --text-hint: #6E6E73;
+            --input-bg: #2C2C2E;
+            --input-border: #636366;
+            --input-focus: rgba(var(--primary-rgb),0.4);
+            --success: #30D158;
         }
 
         body {
@@ -46,12 +54,12 @@
         }
         body::before {
             width: 500px; height: 500px;
-            background: rgba(232,121,94,0.08);
+            background: rgba(var(--primary-rgb),0.08);
             top: -100px; right: -100px;
         }
         body::after {
             width: 400px; height: 400px;
-            background: rgba(204,30,30,0.08);
+            background: rgba(var(--primary-rgb),0.08);
             bottom: -80px; left: -80px;
         }
 
@@ -64,7 +72,7 @@
             justify-content: space-between;
             padding: 16px 32px;
             border-bottom: 1px solid var(--border);
-            background: rgba(10,10,31,0.8);
+            background: rgba(22,22,23,0.8);
             backdrop-filter: blur(12px);
         }
 
@@ -90,8 +98,8 @@
             text-decoration: none;
             transition: color 0.2s;
         }
-        .auth-topbar-link:hover { color: var(--primary); }
-        .auth-topbar-link strong { color: var(--primary); }
+        .auth-topbar-link:hover { color: var(--primary-text); }
+        .auth-topbar-link strong { color: var(--primary-text); }
 
         /* ── Main content ── */
         .auth-main {
@@ -126,7 +134,7 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            color: var(--primary);
+            color: var(--primary-text);
             margin-bottom: 8px;
         }
 
@@ -172,11 +180,11 @@
             transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
             outline: none;
         }
-        .form-input::placeholder { color: rgba(136,146,176,0.5); }
-        .form-input:hover { border-color: rgba(255,255,255,0.2); }
+        .form-input::placeholder { color: var(--text-hint); }
+        .form-input:hover { border-color: var(--text-muted); }
         .form-input:focus {
             border-color: var(--primary);
-            background: rgba(232,121,94,0.05);
+            background: rgba(var(--primary-rgb),0.05);
             box-shadow: 0 0 0 3px var(--input-focus);
         }
 
@@ -216,14 +224,14 @@
             font-weight: 500;
         }
         .msg-error {
-            background: rgba(204,30,30,0.15);
-            border: 1px solid rgba(204,30,30,0.4);
-            color: #ff6b7a;
+            background: rgba(var(--primary-rgb),0.12);
+            border: 1px solid rgba(var(--primary-rgb),0.35);
+            color: var(--danger);
         }
         .msg-success {
-            background: rgba(40,167,69,0.15);
-            border: 1px solid rgba(40,167,69,0.4);
-            color: #5cb85c;
+            background: rgba(48,209,88,0.12);
+            border: 1px solid rgba(48,209,88,0.35);
+            color: var(--success);
         }
 
         /* ── Submit button ── */
@@ -231,13 +239,10 @@
             width: 100%;
             padding: 13px;
             margin-top: 8px;
-            /* Primary action = --primary (cyan), matching every other primary
-               button on the site — this used --danger's red, which reads as
-               a warning on the page's single most inviting action. Le texte
-               foncé sur l'aplat d'accent est requis pour le contraste : il
-               emprunte --bg, comme partout ailleurs sur le site. */
-            background: linear-gradient(135deg, var(--primary) 0%, #d4614a 100%);
-            color: var(--bg);
+            /* Action principale : l'aplat rouge (--primary), libellé blanc
+               (--on-primary, 4,55:1), comme partout ailleurs sur le site. */
+            background: var(--primary);
+            color: var(--on-primary);
             border: none;
             border-radius: 10px;
             font-size: 1rem;
@@ -252,12 +257,12 @@
             transform: translateY(-2px);
             /* Glow is the hover/live signal, not a rest-state halo — matches
                how every other primary button on the site treats it. */
-            box-shadow: 0 8px 24px rgba(232,121,94,0.5);
-            background: linear-gradient(135deg, #f1907a 0%, #de6e56 100%);
+            box-shadow: 0 8px 24px rgba(var(--primary-rgb),0.4);
+            background: var(--primary-deep);
         }
         .btn-submit:active:not(:disabled) { transform: translateY(0); }
         .btn-submit:disabled {
-            background: rgba(255,255,255,0.1);
+            background: #2C2C2E;
             color: var(--text-muted);
             cursor: not-allowed;
             box-shadow: none;
@@ -336,7 +341,7 @@
             border: none;
             padding: 0;
             font: inherit;
-            color: var(--primary);
+            color: var(--primary-text);
             font-weight: 600;
             cursor: pointer;
         }
@@ -350,7 +355,7 @@
             color: var(--text-muted);
         }
         .login-link a {
-            color: var(--primary);
+            color: var(--primary-text);
             text-decoration: none;
             font-weight: 600;
             transition: opacity 0.2s;
@@ -369,7 +374,7 @@
             text-decoration: underline;
             font-weight: 600;
         }
-        .consent-note a:hover { color: var(--primary); }
+        .consent-note a:hover { color: var(--primary-text); }
 
         @media (max-width: 480px) {
             .auth-topbar { padding: 14px 20px; }
