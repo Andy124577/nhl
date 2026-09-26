@@ -254,80 +254,6 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
 
     
 
-    const FZ_LABELS_MANQUE = {
-        offensive: ["attaquant", "attaquants"],
-        defensive: ["défenseur", "défenseurs"],
-        rookie: ["recrue", "recrues"],
-        goalie: ["gardien", "gardiens"],
-        bench: ["joueur de banc", "joueurs de banc"]
-    };
-    function texteManques() {
-        const me = typeof getUserTeam === "function" ? getUserTeam() : null;
-        if (!me || !draftData || !draftData.teams || !draftData.teams[me]) return "";
-        const cfg = draftData.config || { numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1 };
-        const equipe = draftData.teams[me];
-        const banc = typeof window.fzQuotaBanc === "function" ? window.fzQuotaBanc(draftData) : 0;
-        const groupes = [
-            ["defensive", (cfg.numDefensive ?? 4) - (equipe.defensive || []).length],
-            ["goalie", (cfg.numGoalies ?? 1) - (equipe.goalie || []).length],
-            ["offensive", (cfg.numOffensive ?? 6) - (equipe.offensive || []).length],
-            ["rookie", (cfg.numRookies ?? 1) - (equipe.rookie || []).length],
-            ["bench", banc - (equipe.bench || []).length]
-        ].filter(function (g) { return g[1] > 0; });
-        if (!groupes.length) return "";
-        const morceaux = groupes.map(function (g) {
-            const n = g[1];
-            const labels = FZ_LABELS_MANQUE[g[0]];
-            return `${n} ${labels[n === 1 ? 0 : 1]}`;
-        });
-        if (morceaux.length === 1) return morceaux[0];
-        return morceaux.slice(0, -1).join(", ") + " et " + morceaux[morceaux.length - 1];
-    }
-
-    
-
-    function appliquerPanneauTour(myTurn) {
-        const hero = document.getElementById("turn-banner-hero");
-        const metric = document.getElementById("turn-banner-metric");
-        const num = document.getElementById("turn-banner-metric-num");
-        const label = document.getElementById("turn-banner-metric-label");
-        const needs = document.getElementById("turn-banner-needs");
-        const needsVal = document.getElementById("turn-banner-needs-value");
-        const actions = document.getElementById("turn-banner-actions");
-        const cta = document.getElementById("turn-banner-cta");
-        if (!hero) return;
-        hero.hidden = false;
-
-        if (metric) metric.hidden = !myTurn;
-        if (needs) {
-            const manques = myTurn ? texteManques() : "";
-            needs.hidden = !manques;
-            if (needsVal) needsVal.textContent = manques;
-        }
-        if (actions && cta) {
-            if (myTurn) {
-                // Bouton de repli : quand un favori encore libre est proposé
-                // dans la rangée, fzRenderTurnFavorite() (draftFavorites.js)
-                // le remasque au profit de son « Choisir », qui nomme le
-                // joueur au lieu de renvoyer à la liste. Il est rejoué après
-                // celui-ci dans refreshDraftViews().
-                actions.hidden = false;
-                cta.textContent = "Faire ma sélection";
-                cta.className = "turn-banner-cta";
-            } else {
-                actions.hidden = true;
-            }
-        }
-        if (!myTurn) {
-            const away = picksUntilMyTurn();
-            if (num) num.textContent = away >= 0 ? String(away) : "";
-            if (label) label.innerHTML = "choix<br> avant vous";
-            if (metric) metric.hidden = away < 0;
-        } else if (label) {
-            label.innerHTML = "depuis<br> votre tour";
-        }
-    }
-
     /**
      * Rappelle sous le bandeau quelle équipe est la sienne.
      *
@@ -348,7 +274,6 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
     function refreshTurnAlert() {
         const banner = document.getElementById("turn-banner");
         const header = document.querySelector(".draft-header");
-        const hero = document.getElementById("turn-banner-hero");
         const hasData = draftData && Array.isArray(draftData.draftOrder) && draftData.draftOrder.length > 0;
         const myTurn = hasData && typeof isUserTurn === "function" && isUserTurn();
         const done = typeof checkIfUserTeamIsDone === "function" && checkIfUserTeamIsDone();
@@ -366,7 +291,6 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
             if (!hasData) {
                 banner.className = "turn-banner";
                 arreterDefilement();
-                if (hero) hero.hidden = true;
                 texte.textContent = "";
                 if (sousTexte) sousTexte.textContent = "";
                 appliquerIdentiteBanniere(null);
@@ -374,7 +298,6 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
             } else if (done || away === -1) {
                 banner.className = "turn-banner done";
                 arreterDefilement();
-                if (hero) hero.hidden = true;
                 texte.textContent = "✓ Vous avez complété tous vos choix";
                 if (sousTexte) sousTexte.textContent = "";
                 appliquerIdentiteBanniere(null);
@@ -385,7 +308,6 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
                 appliquerIdentiteBanniere(null);
                 texte.textContent = contextePanneau();
                 ecrireMonEquipe(sousTexte, "À vous de choisir");
-                appliquerPanneauTour(true);
                 banner.setAttribute("aria-label", `C'est votre tour ! ${contextePanneau()}`);
             } else {
                 banner.className = "turn-banner waiting" + (away === 1 ? " next" : "");
@@ -395,7 +317,6 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
                 texte.textContent = [contextePanneau(), equipeActuelle ? `${equipeActuelle} choisit` : ""]
                     .filter(Boolean).join(" · ");
                 ecrireMonEquipe(sousTexte, "Votre équipe");
-                appliquerPanneauTour(false);
                 banner.setAttribute("aria-label", `En attente. ${texte.textContent}`);
             }
         }
@@ -435,15 +356,6 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
         return m + " min";
     }
 
-    
-
-    function formatElapsedClock(ms) {
-        const s = Math.max(0, Math.floor(ms / 1000));
-        const m = Math.floor(s / 60);
-        const reste = s % 60;
-        return m + ":" + (reste < 10 ? "0" : "") + reste;
-    }
-
     function currentTurnTeam() {
         if (!draftData || !Array.isArray(draftData.draftOrder)) return null;
         return draftData.draftOrder[draftData.currentPickIndex || 0] || null;
@@ -463,7 +375,6 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
     function refreshTurnClock() {
         const clock = document.getElementById("turn-clock");
         const skip = document.getElementById("turn-skip-btn");
-        const metricNum = document.getElementById("turn-banner-metric-num");
         if (!clock && !skip) return;
 
         const hasData = draftData && Array.isArray(draftData.draftOrder) && draftData.draftOrder.length > 0;
@@ -473,29 +384,12 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
         if (!hasData || complete || !started) {
             if (clock) clock.hidden = true;
             if (skip) skip.hidden = true;
-            
-            
-            
-            
-            const metricEnAttenteDeDonnees = hasData && !complete && !started
-                && typeof isUserTurn === "function" && isUserTurn();
-            if (metricEnAttenteDeDonnees) {
-                const metric = document.getElementById("turn-banner-metric");
-                if (metric) metric.hidden = true;
-            }
             stopClockTimer();
             syncLiveRow();
             return;
         }
 
         const elapsed = Date.now() - started;
-        const monTour = typeof isUserTurn === "function" && isUserTurn();
-
-        
-        
-        
-        
-        if (metricNum && monTour) metricNum.textContent = formatElapsedClock(elapsed);
 
         if (clock) {
             clock.hidden = false;
@@ -592,13 +486,6 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
     }
     document.addEventListener("DOMContentLoaded", function () {
         setTimeout(function () { try { refreshTurnAlert(); } catch (e) {} }, 600);
-        
-        
-        
-        const cta = document.getElementById("turn-banner-cta");
-        if (cta) cta.addEventListener("click", function () {
-            if (typeof window.fzOuvrirListeJoueurs === "function") window.fzOuvrirListeJoueurs();
-        });
     });
 })();
 

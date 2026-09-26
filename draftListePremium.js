@@ -1,5 +1,5 @@
 /**
- * Bascule Libres / Tous + liste des joueurs déjà pris.
+ * Bascule Disponibles / Tous + liste des joueurs déjà pris.
  *
  * Règle de conception : même discipline que draftActifUI.js — aucune
  * logique de repêchage ici, uniquement de la lecture des variables déjà
@@ -30,7 +30,7 @@ function initAvailabilityTabs() {
     if (!strip || !select || !vueLibres || !vueTous) return;
 
     const onglets = [
-        { valeur: 'available', libelle: 'Libres' },
+        { valeur: 'available', libelle: 'Disponibles' },
         { valeur: 'picked', libelle: 'Tous' }
     ];
 
@@ -57,6 +57,7 @@ function initAvailabilityTabs() {
         const surTous = select.value === 'picked';
         strip.querySelectorAll('.availability-tab').forEach(b => {
             b.classList.toggle('is-active', b.dataset.valeur === select.value);
+            b.setAttribute('aria-pressed', String(b.dataset.valeur === select.value));
         });
         vueLibres.hidden = surTous;
         vueTous.hidden = !surTous;

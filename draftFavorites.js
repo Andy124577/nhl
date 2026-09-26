@@ -5,15 +5,8 @@
  * et à la personne — voir fzFavKey) :
  *   - la colonne Action du tableau (#playerTable) : l'étoile à contour, à
  *     côté du bouton de sélection, qui ajoute ou retire un favori ;
- *   - le bandeau de tour (#turn-banner-fav) : au moment où le tour arrive,
- *     le meilleur favori encore libre y est montré avec un bouton
- *     « Choisir » qui le repêche sans passer par la liste.
- *
- * Il y avait en plus une carte « Mes favoris » qui rejouait toute la liste
- * dans l'onglet Aperçu. Elle disait la même chose que les étoiles du
- * tableau, en plus long : ce qui manquait n'était pas de revoir la liste,
- * mais de retrouver le prochain nom au moment de choisir — ce que le
- * bandeau fait maintenant en une ligne.
+ *   - la vue « Favoris » du rail de gauche (draftDesk.js) : la liste des
+ *     favoris encore libres, rangés par fzPointsCandidat().
  *
  * Rien n'est inventé ici : les fiches viennent des mêmes tableaux que le
  * reste de la page (fullPlayerData, goalieData, teamData), déjà chargés
@@ -235,12 +228,10 @@ function fzRefreshActionColumns() {
 }
 
 /* ============================================================
-   5. LE MEILLEUR FAVORI LIBRE, DANS LE BANDEAU DE TOUR
+   5. VALEUR D'UN FAVORI
    ------------------------------------------------------------
-   Les favoris se posent hors de son tour, à l'étoile de la colonne
-   Action. Ce qui manquait, c'était de les retrouver au moment où ils
-   servent : quand le tour arrive, le bandeau montre le meilleur de la
-   liste encore disponible et le repêche d'un seul bouton.
+   Sert à ranger la liste des favoris du rail de gauche
+   (fzDeskFavoris, draftDesk.js), du meilleur au moins bon.
    ============================================================ */
 
 /** Même mesure de valeur que fzComputeSuggestion (draftApercuExtra.js) :
@@ -248,130 +239,6 @@ function fzRefreshActionColumns() {
  *  projection inventée. */
 function fzPointsCandidat(rec, kind) {
     return kind === 'goalie' ? (rec.wins || 0) * 2 : (rec.points || 0);
-}
-
-/**
- * Favoris encore repêchables, du meilleur au moins bon. Deux exclusions,
- * les mêmes que la carte Suggestion : ce qu'une autre équipe a déjà pris,
- * et ce dont la position est déjà comblée chez moi (_isCategoryFull) — un
- * bouton qui mènerait à un refus du serveur ne doit pas être proposé.
- */
-function fzFavorisRepechables() {
-    const pris = fzPickedSet();
-    return fzGetFavorites()
-        .filter(nom => !pris.has(nom))
-        .map(nom => {
-            const trouve = fzFindRecord(nom);
-            if (!trouve) return null;
-            return {
-                nom,
-                rec: trouve.rec,
-                kind: trouve.kind,
-                code: fzPositionCode(trouve.rec, trouve.kind)
-            };
-        })
-        .filter(c => c && !(typeof _isCategoryFull === 'function' && _isCategoryFull(c.code)))
-        .sort((a, b) => fzPointsCandidat(b.rec, b.kind) - fzPointsCandidat(a.rec, a.kind));
-}
-
-function fzMeilleurFavoriLibre() {
-    return fzFavorisRepechables()[0] || null;
-}
-
-/** « Colorado · Centre · 51 B · 65 A » — les mêmes faits que la carte
- *  Suggestion. fzVilleEquipe vient de draftApercuExtra.js, chargé après ce
- *  fichier mais bien avant le premier rendu ; sans elle, la ligne se passe
- *  simplement de la ville. */
-function fzLigneFavoriBandeau(nom, rec, kind, code) {
-    const ville = typeof fzVilleEquipe === 'function' ? fzVilleEquipe(rec) : null;
-    const lieu = kind === 'team' ? null : ville;
-    return [lieu, fzPositionLabel(code), fzStatBlurb(rec, kind)].filter(Boolean).join(' · ');
-}
-
-function fzRenderTurnFavorite() {
-    const bloc = document.getElementById('turn-banner-fav');
-    if (!bloc) return;
-
-    const monTour = typeof isUserTurn === 'function' && isUserTurn()
-        && typeof checkIfUserTeamIsDone === 'function' && !checkIfUserTeamIsDone();
-    const meilleur = monTour ? fzMeilleurFavoriLibre() : null;
-
-    // Le bandeau ne porte qu'un bouton. Quand un favori est proposé, son
-    // « Choisir » remplace le « Faire ma sélection » générique
-    // (appliquerPanneauTour, draftActif.js) plutôt que de s'ajouter à lui :
-    // les deux mènent à un choix, mais celui-ci nomme lequel. La règle est
-    // énoncée ici dans les deux sens — cette fonction est aussi rejouée par
-    // fzToggleFavorite, sans que le bandeau soit repassé.
-    const actions = document.getElementById('turn-banner-actions');
-    if (actions) actions.hidden = meilleur ? true : !monTour;
-
-    const cta = document.getElementById('turn-banner-fav-cta');
-    bloc.hidden = !meilleur;
-    if (cta) cta.hidden = !meilleur;
-    if (!meilleur) {
-        delete bloc.dataset.player;
-        delete bloc.dataset.code;
-        return;
-    }
-
-    const { nom, rec, kind, code } = meilleur;
-    bloc.dataset.player = nom;
-    bloc.dataset.code = code;
-
-    const zonePhoto = document.getElementById('turn-banner-fav-photo');
-    if (zonePhoto) {
-        const { photo, logo } = fzPhotoAndLogo(nom, rec, kind);
-        zonePhoto.replaceChildren();
-        zonePhoto.classList.toggle('no-image', !photo);
-        if (photo) {
-            const img = document.createElement('img');
-            img.className = 'face';
-            img.src = photo;
-            img.alt = '';
-            img.loading = 'lazy';
-            img.addEventListener('error', () => img.remove());
-            zonePhoto.appendChild(img);
-        } else {
-            zonePhoto.textContent = nom.split(/\s+/).filter(Boolean).slice(0, 2)
-                .map(m => m[0]).join('').toUpperCase();
-        }
-        if (logo && kind !== 'team') {
-            const logoImg = document.createElement('img');
-            logoImg.className = 'logo';
-            logoImg.src = logo;
-            logoImg.alt = '';
-            logoImg.loading = 'lazy';
-            logoImg.addEventListener('error', () => logoImg.remove());
-            zonePhoto.appendChild(logoImg);
-        }
-    }
-
-    // Nom et contexte séparés : sous 769px la rangée n'a pas la largeur pour
-    // les deux, et c'est le contexte qui cède (voir draftActif-premium.css)
-    // plutôt qu'un nom coupé au milieu par l'ellipse.
-    const nomEl = document.getElementById('turn-banner-fav-name');
-    if (nomEl) nomEl.textContent = nom;
-    const metaEl = document.getElementById('turn-banner-fav-meta');
-    if (metaEl) {
-        const ligne = fzLigneFavoriBandeau(nom, rec, kind, code);
-        metaEl.textContent = ligne ? '/ ' + ligne : '';
-    }
-
-    if (cta) cta.setAttribute('aria-label', 'Choisir ' + nom);
-}
-
-/** Le bouton vit dans le HTML plutôt que d'être reconstruit à chaque
- *  rendu : il lit sa cible dans les data-* du bloc, posées juste au-dessus. */
-function fzWireTurnFavoriteCta() {
-    const cta = document.getElementById('turn-banner-fav-cta');
-    if (!cta) return;
-    cta.addEventListener('click', e => {
-        e.preventDefault();
-        const bloc = document.getElementById('turn-banner-fav');
-        const nom = bloc && bloc.dataset.player;
-        const code = bloc && bloc.dataset.code;
-        if (nom && typeof selectPlayer === 'function') selectPlayer(nom, code);
-    });
 }
 
 /* ============================================================
@@ -410,17 +277,12 @@ function fzWatchPlayerTable() {
    ------------------------------------------------------------
    Ajoutée à la liste `rendus` de refreshDraftViews() (draftRefresh.js) :
    rejouée après chaque updateTable() qui passe par le chemin complet
-   (sondage, socket, premier chargement) — le bloc du bandeau dépend de
-   draftData (tour courant, déjà repêché ou non), pas de la catégorie
-   affichée dans le tableau, donc pas besoin de l'observer ci-dessus.
+   (sondage, socket, premier chargement).
    ============================================================ */
 window.fzRefreshFavoritesUI = function () {
     try { fzRefreshActionColumns(); } catch (e) { console.error('[favoris] colonne action :', e); }
-    try { fzRenderTurnFavorite(); } catch (e) { console.error('[favoris] bandeau de tour :', e); }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    try { fzWireTurnFavoriteCta(); } catch (e) {}
-    try { fzRenderTurnFavorite(); } catch (e) {}
     try { fzWatchPlayerTable(); } catch (e) {}
 });

@@ -9,10 +9,12 @@
  *
  * Plan de la maquette (Repechage.dc.html), de haut en bas :
  *
- *   barre du haut     puce du pool actif (poolNav.js) + navigation
- *   bande de tour     chrono · équipe au bâton · carrousel des choix
+ *   barre du haut     puce du pool actif (poolNav.js) + navigation, et à
+ *                     droite « Votre tour dans N choix »
+ *   bande de tour     tuile du tour (C'est votre tour / Au tour de, choix,
+ *                     chrono) · carrousel des choix sur tout le reste
  *   rail de gauche    FAVORIS / CHOIX — deux pastilles, une seule vue
- *   colonne centrale  panneau de tour, filtres, liste des joueurs
+ *   colonne centrale  Disponibles / Tous, filtres, liste des joueurs
  *   rail de droite    MON ALIGNEMENT + LIMITES D'ÉQUIPE
  *
  * Les deux rails ont échangé leur contenu. L'alignement ne bouge qu'à mes
@@ -66,37 +68,108 @@ function fzDeskBoite(id, classe, parent, avant) {
 }
 
 /**
- * Bande de tour : le chrono, l'équipe au bâton et le carrousel des
- * choix sur une seule ligne pleine largeur, sous la barre du haut.
+ * Bande de tour : la tuile du tour à gauche, puis le carrousel des choix
+ * sur tout le reste de la largeur, sous la barre du haut.
  *
- * Les trois blocs existent déjà, dispersés dans .draft-header — on ne
- * fait que les rassembler. #turn-clock et #dop-round sortent du
- * bandeau de tour pour former le bloc chrono de gauche ; le panneau
- * (#turn-banner-hero : « N choix avant vous », ce qui manque, le
- * bouton) part au sommet de la colonne centrale, où la maquette met
- * son bandeau d'alerte.
+ * La tuile est propre au bureau (fzDeskRenderTour la remplit) : le
+ * bandeau de tour du téléphone (#turn-banner) et son chrono restent dans
+ * .draft-header, que draftDesk.css masque ici. Le carrousel, lui, est le
+ * même nœud sur les deux mises en page — on le déplace.
  */
 function fzDeskMonterBande() {
     const entete = document.querySelector('.draft-header');
-    const centre = document.querySelector('.draft-center');
     if (!entete) return;
 
     const bande = fzDeskBoite('fzdStrip', 'fzd-strip', entete);
-    const chrono = fzDeskBoite('fzdClock', 'fzd-clock', bande);
-    if (!chrono.querySelector('.fzd-clock-label')) {
-        const lbl = document.createElement('span');
-        lbl.className = 'fzd-clock-label';
-        lbl.textContent = 'Temps écoulé';
-        chrono.appendChild(lbl);
+    if (!document.getElementById('fzdHero')) {
+        // Le chrono change chaque seconde : la région annoncée aux lecteurs
+        // d'écran est à part, et ne parle qu'au changement de tour.
+        bande.insertAdjacentHTML('afterbegin', `
+            <div class="fzd-hero" id="fzdHero">
+                <div class="fzd-hero-top">
+                    <span class="fzd-hero-kicker" id="fzdHeroKicker"></span>
+                    <span class="fzd-hero-pick" id="fzdHeroPick"></span>
+                </div>
+                <div class="fzd-hero-mid">
+                    <span class="fzd-hero-team" id="fzdHeroTeam"></span>
+                    <span class="fzd-hero-clock" id="fzdHeroClock" hidden></span>
+                </div>
+                <span class="fzd-hero-label" id="fzdHeroLabel" hidden>Temps écoulé</span>
+                <span class="sr-only" id="fzdHeroLive" role="status" aria-live="polite"></span>
+            </div>`);
+    }
+    fzDeskDeplacer(document.querySelector('.recent-picks-card'), bande);
+}
+
+/* ---- Pastilles de position ------------------------------------- */
+
+/** Les options de #playerFilter, en pastilles — code court de la maquette. */
+const FZD_PASTILLES = [
+    { valeur: 'all', court: 'JOU' },
+    { valeur: 'offensive', court: 'ATT' },
+    { valeur: 'defensive', court: 'DÉF' },
+    { valeur: 'goalies', court: 'G' },
+    { valeur: 'rookies', court: 'REC' },
+    { valeur: 'teams', court: 'ÉQ' }
+];
+
+/**
+ * Les pastilles remplacent le sélecteur de position sur bureau, sans le
+ * remplacer dans le code : un clic écrit sa valeur dans #playerFilter et
+ * émet son « change », exactement comme si on l'avait choisi dans la
+ * liste. updateTable() et appliquerDisponibilite() (draftActifUI.js) ne
+ * savent pas que les pastilles existent.
+ */
+function fzDeskMonterPastilles(filtres) {
+    const select = document.getElementById('playerFilter');
+    if (!filtres || !select) return;
+
+    let groupe = document.getElementById('fzdPosChips');
+    if (!groupe) {
+        groupe = document.createElement('div');
+        groupe.id = 'fzdPosChips';
+        groupe.className = 'fzd-pos-chips';
+        groupe.setAttribute('role', 'group');
+        groupe.setAttribute('aria-label', 'Position');
+        FZD_PASTILLES.forEach(({ valeur, court }) => {
+            const bouton = document.createElement('button');
+            bouton.type = 'button';
+            bouton.className = 'fzd-pos-chip';
+            bouton.dataset.valeur = valeur;
+            bouton.textContent = court;
+            groupe.appendChild(bouton);
+        });
+        groupe.addEventListener('click', e => {
+            const bouton = e.target.closest('.fzd-pos-chip');
+            if (!bouton || bouton.disabled || select.value === bouton.dataset.valeur) return;
+            select.value = bouton.dataset.valeur;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        select.addEventListener('change', fzDeskSyncPastilles);
     }
 
-    fzDeskDeplacer(document.getElementById('dop-round'), chrono);
-    fzDeskDeplacer(document.getElementById('turn-clock'), chrono);
-    fzDeskDeplacer(document.getElementById('turn-banner'), bande);
-    fzDeskDeplacer(document.querySelector('.recent-picks-card'), bande);
-    if (centre) {
-        fzDeskDeplacer(document.getElementById('turn-banner-hero'), centre, centre.firstElementChild);
-    }
+    // Juste après la recherche, comme dans la maquette.
+    const recherche = filtres.querySelector('.list-filters-search');
+    if (recherche && recherche.nextSibling !== groupe) recherche.after(groupe);
+    fzDeskSyncPastilles();
+}
+
+/** Reflète #playerFilter : la valeur choisie, et les positions pleines
+ *  (option désactivée par appliquerDisponibilite). */
+function fzDeskSyncPastilles() {
+    const select = document.getElementById('playerFilter');
+    if (!select) return;
+    document.querySelectorAll('#fzdPosChips .fzd-pos-chip').forEach(bouton => {
+        const option = [...select.options].find(o => o.value === bouton.dataset.valeur);
+        const actif = select.value === bouton.dataset.valeur;
+        bouton.hidden = !option;
+        bouton.disabled = !option || option.disabled;
+        bouton.classList.toggle('is-active', actif);
+        bouton.setAttribute('aria-pressed', String(actif));
+        const libelle = option ? option.textContent.trim() : '';
+        bouton.setAttribute('aria-label', libelle);
+        bouton.title = option && option.disabled ? 'Plus de place à cette position' : libelle;
+    });
 }
 
 /**
@@ -347,10 +420,9 @@ function fzDeskCoteCompte(id, n) {
  * stockage — c'est un filtre d'affichage, pas un retrait : si le choix est
  * annulé, le nom revient de lui-même.
  *
- * Le filtre est celui de fzFavorisRepechables() moins l'exclusion des
- * positions déjà comblées : une liste à consulter n'est pas une
- * suggestion, et voir un attaquant qu'on ne peut plus prendre AUJOURD'HUI
- * reste utile.
+ * Les positions déjà comblées restent : une liste à consulter n'est pas
+ * une suggestion, et voir un attaquant qu'on ne peut plus prendre
+ * AUJOURD'HUI reste utile.
  *
  * Une fiche introuvable ne fait pas sauter la ligne : le nom et son étoile
  * suffisent à la retirer, ce qu'un favori escamoté interdirait.
@@ -619,13 +691,14 @@ function fzDeskApply() {
     // en queue, et fzDeskMonterRail() a besoin qu'il existe.
     fzDeskMonterRail();
 
-    // La colonne de filtres devient la bande de la maquette : pastilles
-    // de position à gauche, recherche et équipe à droite.
+    // La colonne de filtres devient la bande de la maquette : recherche,
+    // pastilles de position, tri.
     const filtres = document.getElementById('listFiltersSidebar');
     if (filtres) fzDeskDeplacer(filtres, carteListe, carteListe.firstElementChild);
+    fzDeskMonterPastilles(filtres);
 
-    // Les onglets « Disponibles / Tous les choix / Mes choix » prennent la
-    // place des onglets de la maquette, au-dessus des filtres.
+    // Les onglets « Disponibles / Tous » prennent la place de ceux de la
+    // maquette, au-dessus des filtres.
     const onglets = document.getElementById('availabilityTabs');
     if (onglets && filtres) fzDeskDeplacer(onglets, carteListe, filtres);
 
@@ -1005,18 +1078,190 @@ function fzDeskDecorateRows() {
 }
 
 /* ============================================================
-   4. MARQUE DU TOUR
+   4. LE TOUR — TUILE DE LA BANDE ET PASTILLE DE LA BARRE DU HAUT
    ------------------------------------------------------------
-   Une seule classe sur <body>, dont draftDesk.css se sert pour
-   colorer le bandeau d'alerte de la colonne centrale (celui qui
-   porte le favori proposé et son bouton « Choisir »). Le contenu du
-   bandeau, lui, est rendu par draftFavorites.js.
+   Deux lectures du même état : la tuile à gauche du carrousel dit
+   qui est au bâton (« C'est votre tour » / « Au tour de »), à quel
+   choix, et depuis combien de temps ; la pastille de la barre du
+   haut dit dans combien de choix vient le mien.
+
+   Rien n'est recalculé : l'équipe au bâton est draftOrder
+   [currentPickIndex], le décompte suit picksUntilMyTurn()
+   (draftActif.js) et la ronde fzRondeDe() (draftPickCards.js).
    ============================================================ */
 
-function fzDeskMarquerTour() {
-    const monTour = typeof isUserTurn === 'function' && isUserTurn()
-        && !(typeof checkIfUserTeamIsDone === 'function' && checkIfUserTeamIsDone());
-    document.body.classList.toggle('fzd-my-turn', monTour);
+/** Durée du « C'est votre tour » qui s'allume (éclair + reflet), après
+ *  quoi la tuile ne fait plus que pulser. */
+const FZD_ARRIVEE_MS = 4200;
+
+let fzDeskTourPrecedent = null;
+let fzDeskMinuteurArrivee = null;
+let fzDeskHorloge = null;
+let fzDeskAnnonce = '';
+
+function fzDeskEtatTour() {
+    const donnees = (typeof draftData !== 'undefined' && draftData) ? draftData : {};
+    const ordre = Array.isArray(donnees.draftOrder) ? donnees.draftOrder : [];
+    if (!ordre.length) return { etat: 'attente' };
+
+    const total = ordre.length;
+    const index = Math.min(Number.isInteger(donnees.currentPickIndex) ? donnees.currentPickIndex : 0, total);
+    const fini = index >= total
+        || (typeof checkIfAllTeamsAreDone === 'function' && checkIfAllTeamsAreDone());
+    if (fini) return { etat: 'fini', total };
+
+    const moi = typeof getUserTeam === 'function' ? getUserTeam() : null;
+    const complet = typeof checkIfUserTeamIsDone === 'function' && checkIfUserTeamIsDone();
+    const prochain = moi && !complet ? ordre.indexOf(moi, index) : -1;
+
+    return {
+        etat: 'enCours',
+        total,
+        index,
+        equipe: ordre[index] || '',
+        moi,
+        complet,
+        monTour: !complet && typeof isUserTurn === 'function' && isUserTurn(),
+        avant: prochain >= 0 ? prochain - index : -1,
+        ronde: typeof fzRondeDe === 'function'
+            ? fzRondeDe(index, donnees)
+            : Math.floor(index / (new Set(ordre).size || 1)) + 1,
+        depart: Number(donnees.turnStartedAt) || 0
+    };
+}
+
+/** 0:42, 12:05, 1:03:27 — puis en jours et heures : un tour laissé en
+ *  plan tout un week-end ne s'affiche pas en « 4320:00 ». */
+function fzDeskFormatHorloge(ms) {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    const deux = n => String(n).padStart(2, '0');
+    const jours = Math.floor(s / 86400);
+    const heures = Math.floor(s / 3600) % 24;
+    const minutes = Math.floor(s / 60) % 60;
+    if (jours) return `${jours} j ${heures} h`;
+    if (heures) return `${heures}:${deux(minutes)}:${deux(s % 60)}`;
+    return `${minutes}:${deux(s % 60)}`;
+}
+
+function fzDeskTicTac() {
+    const horloge = document.getElementById('fzdHeroClock');
+    const t = fzDeskTourPrecedent;
+    if (!horloge || !t || t.etat !== 'enCours' || !t.depart) return;
+    horloge.textContent = fzDeskFormatHorloge(Date.now() - t.depart);
+}
+
+function fzDeskDemarrerHorloge(actif) {
+    if (actif && !fzDeskHorloge) fzDeskHorloge = setInterval(fzDeskTicTac, 1000);
+    if (!actif && fzDeskHorloge) { clearInterval(fzDeskHorloge); fzDeskHorloge = null; }
+}
+
+function fzDeskEteindreTuile(tuile) {
+    clearTimeout(fzDeskMinuteurArrivee);
+    tuile.classList.remove('is-arriving');
+    tuile.querySelectorAll('.fzd-hero-flash, .fzd-hero-sweep').forEach(el => el.remove());
+}
+
+/** Le tour vient de m'arriver : un éclair blanc, un reflet qui balaie la
+ *  tuile, puis la pulsation reprend (draftDesk.css, .is-arriving). */
+function fzDeskAllumerTuile(tuile) {
+    fzDeskEteindreTuile(tuile);
+    tuile.insertAdjacentHTML('afterbegin',
+        '<span class="fzd-hero-flash" aria-hidden="true"></span>'
+        + '<span class="fzd-hero-sweep" aria-hidden="true"></span>');
+    tuile.classList.add('is-arriving');
+    fzDeskMinuteurArrivee = setTimeout(() => fzDeskEteindreTuile(tuile), FZD_ARRIVEE_MS);
+}
+
+function fzDeskRenderTuile(t, precedent) {
+    const tuile = document.getElementById('fzdHero');
+    if (!tuile) return;
+    const kicker = document.getElementById('fzdHeroKicker');
+    const choix = document.getElementById('fzdHeroPick');
+    const equipe = document.getElementById('fzdHeroTeam');
+    const horloge = document.getElementById('fzdHeroClock');
+    const legende = document.getElementById('fzdHeroLabel');
+
+    const enCours = t.etat === 'enCours';
+    const monTour = enCours && t.monTour;
+    tuile.classList.toggle('is-mine', monTour);
+    tuile.classList.toggle('is-idle', !enCours);
+
+    if (t.etat === 'attente') {
+        kicker.textContent = 'Repêchage';
+        choix.textContent = '';
+        equipe.textContent = 'Pas commencé';
+    } else if (t.etat === 'fini') {
+        kicker.textContent = 'Repêchage';
+        choix.textContent = `${t.total} choix`;
+        equipe.textContent = 'Terminé';
+    } else {
+        kicker.textContent = monTour ? "C'est votre tour" : 'Au tour de';
+        choix.textContent = `Choix ${t.index + 1}/${t.total}${t.ronde ? ' · R' + t.ronde : ''}`;
+        equipe.textContent = monTour ? 'Vous' : t.equipe;
+    }
+    equipe.title = enCours && !monTour ? t.equipe : '';
+
+    const chrono = enCours && !!t.depart;
+    horloge.hidden = !chrono;
+    legende.hidden = !chrono;
+
+    // L'équipe au bâton change : son nom monte en place. Pas au premier
+    // rendu, où rien ne « change ».
+    if (enCours && precedent && precedent.etat === 'enCours' && precedent.equipe !== t.equipe) {
+        equipe.classList.remove('is-new');
+        void equipe.offsetWidth;
+        equipe.classList.add('is-new');
+    }
+    if (monTour && !(precedent && precedent.monTour)) fzDeskAllumerTuile(tuile);
+    else if (!monTour) fzDeskEteindreTuile(tuile);
+
+    // Annoncé une fois par tour, jamais à chaque seconde du chrono.
+    const annonce = !enCours ? '' : monTour
+        ? `C'est votre tour. Choix ${t.index + 1} sur ${t.total}.`
+        : `Au tour de ${t.equipe}. Choix ${t.index + 1} sur ${t.total}.`;
+    if (annonce !== fzDeskAnnonce) {
+        fzDeskAnnonce = annonce;
+        const direct = document.getElementById('fzdHeroLive');
+        if (direct) direct.textContent = annonce;
+    }
+}
+
+/** « Votre tour dans N choix », à droite de la barre du haut. */
+function fzDeskRenderPastilleNav(t) {
+    const droite = document.querySelector('.navbar-desktop .navbar-right');
+    if (!droite) return;
+    let pastille = document.getElementById('fzdNavTurn');
+    if (!pastille) {
+        pastille = document.createElement('span');
+        pastille.id = 'fzdNavTurn';
+        pastille.className = 'fzd-nav-turn';
+    }
+    // En tête de la rangée, devant la cloche que notifications.js y
+    // insère elle aussi en tête — possiblement après nous.
+    if (droite.firstElementChild !== pastille) droite.prepend(pastille);
+
+    let texte = '';
+    if (t.etat === 'fini') texte = 'Repêchage terminé';
+    else if (t.etat === 'enCours' && t.moi) {
+        if (t.monTour) texte = "C'est votre tour";
+        else if (t.complet) texte = 'Alignement complet';
+        else if (t.avant > 0) texte = `Votre tour dans ${t.avant} choix`;
+    }
+    pastille.textContent = texte;
+    pastille.hidden = !texte;
+    pastille.classList.toggle('is-mine', t.etat === 'enCours' && !!t.monTour);
+}
+
+function fzDeskRenderTour() {
+    const t = fzDeskEtatTour();
+    const precedent = fzDeskTourPrecedent;
+    fzDeskTourPrecedent = t;
+
+    document.body.classList.toggle('fzd-my-turn', t.etat === 'enCours' && !!t.monTour);
+    fzDeskRenderTuile(t, precedent);
+    fzDeskRenderPastilleNav(t);
+    fzDeskTicTac();
+    fzDeskDemarrerHorloge(t.etat === 'enCours' && !!t.depart && fzDeskEstBureau());
 }
 
 /* ============================================================
@@ -1051,7 +1296,8 @@ window.fzRefreshDeskUI = function () {
     try { fzDeskDecorateRows(); } catch (e) { console.error('[bureau] rangées :', e); }
     try { fzDeskRenderRail(); } catch (e) { console.error('[bureau] rail :', e); }
     try { fzDeskRenderCote(); } catch (e) { console.error('[bureau] favoris/choix :', e); }
-    try { fzDeskMarquerTour(); } catch (e) { console.error('[bureau] marque du tour :', e); }
+    try { fzDeskRenderTour(); } catch (e) { console.error('[bureau] tour :', e); }
+    try { fzDeskSyncPastilles(); } catch (e) { console.error('[bureau] pastilles :', e); }
 };
 
 /**

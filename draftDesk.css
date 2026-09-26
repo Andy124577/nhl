@@ -9,9 +9,9 @@
    de la maquette (Repechage.dc.html) :
 
      barre du haut     puce du pool actif + navigation du site
-     bande de tour     chrono · équipe au bâton · carrousel des choix
+     bande de tour     tuile du tour · carrousel des choix
      rail de gauche    FAVORIS / CHOIX (deux pastilles, une seule vue)
-     colonne centrale  panneau de tour, filtres, liste des joueurs
+     colonne centrale  Disponibles / Tous, filtres, liste des joueurs
      rail de droite    MON ALIGNEMENT + LIMITES D'ÉQUIPE
 
    1100px et pas 769 : c'est le seuil auquel poolNav.css sort le rail
@@ -40,7 +40,7 @@
      pool. Les 66px d'origine ne tenaient qu'un nom tronqué ; la hauteur
      passe en jeton pour que les quatre calculs qui s'y accrochent — les
      deux rails, la hauteur de la liste — suivent d'eux-mêmes. */
-  body.fz-draft { --fz-rail-w: 284px; --fz-strip-h: 76px; }
+  body.fz-draft { --fz-rail-w: 284px; --fz-strip-h: 96px; }
 
   body.fz-draft .draft-header {
     position: sticky;
@@ -55,13 +55,12 @@
     border-bottom: 1px solid var(--fzd-border-strong);
   }
 
-  /* Ce que la bande ne reprend pas. #draft-overall-progress garde son
-     display en ligne (draftActif.js l'écrit lui-même) : une fois ses
-     trois blocs partis dans la bande, il ne reste qu'une boîte vide de
-     hauteur nulle, inutile à masquer. .draft-live-row reste, elle : la
-     pastille de connexion qu'elle porte n'apparaît que si le direct
-     tombe, et c'est justement là qu'il faut la voir. */
-  body.fz-draft #dop-label,
+  /* Ce que la bande ne reprend pas : le bandeau de tour du téléphone,
+     son chrono et sa ronde (.dop-info) — la tuile du tour les remplace.
+     .draft-live-row reste, elle : la pastille de connexion qu'elle porte
+     n'apparaît que si le direct tombe, et c'est justement là qu'il faut
+     la voir. */
+  body.fz-draft .dop-info,
   body.fz-draft .dop-bar { display: none; }
   body.fz-draft .draft-live-row { padding: 6px 20px; }
 
@@ -73,134 +72,137 @@
     background: var(--fzd-bg);
   }
 
-  body.fz-draft .fzd-clock {
+  /* ---- La tuile du tour ----
+     « C'est votre tour » / « Au tour de », le choix et la ronde, l'équipe
+     au bâton en grand et le temps écoulé. Aussi large que le rail de
+     gauche, dont elle prolonge la colonne. Sombre quand on attend, brique
+     quand c'est à soi — et alors elle s'allume puis pulse. */
+  body.fz-draft .fzd-hero {
+    --fzd-hero-bg: #241f1a;
+    position: relative;
+    overflow: hidden;
     flex: none;
     width: var(--fz-rail-w);
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    gap: 1px;
-    padding: 0 18px;
-    border-right: 1px solid var(--fzd-border-strong);
+    justify-content: space-between;
+    padding: 12px 20px 10px;
+    background: var(--fzd-hero-bg);
+    color: #ffffff;
+    transition: background-color .35s ease;
   }
-  body.fz-draft .fzd-clock-label,
-  body.fz-draft .fzd-clock #dop-round {
-    display: block;
-    font: 700 .62rem/1.25 var(--fzd-font-cond);
-    letter-spacing: .15em;
-    text-transform: uppercase;
-    color: var(--fzd-text-faint);
-  }
-  body.fz-draft .fzd-clock #dop-round { font-weight: 500; opacity: .85; }
-  body.fz-draft .fzd-clock .turn-clock {
-    display: block;
-    position: static;
-    margin: 1px 0 0;
-    padding: 0;
-    border: 0;
-    background: none;
-    font-family: var(--fzd-font-cond);
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: .03em;
-    line-height: 1;
-    color: var(--fzd-ink);
-    opacity: 1;
-  }
-  body.fz-draft .fzd-clock .turn-clock[hidden] { display: none; }
-  body.fz-draft .fzd-clock .turn-clock.is-long { color: var(--fzd-warning); }
-
-  /* Le bandeau de tour redevient ce qu'il est dans la maquette : une
-     tuile de largeur fixe, colorée quand c'est à vous. */
-  body.fz-draft .fzd-strip .turn-banner {
-    position: static;
-    order: 0;
-    flex: none;
-    width: 330px;
-    min-height: 0;
-    margin: 0;
-    padding: 0 18px;
-    border: 0;
-    border-radius: 0;
-    animation: none;
-  }
-  body.fz-draft .fzd-strip .turn-banner:not(.waiting):not(.your-turn):not(.done) {
-    display: flex;
-    background: var(--fzd-bg-alt);
-  }
-  body.fz-draft .fzd-strip .turn-banner.waiting,
-  body.fz-draft .fzd-strip .turn-banner.done {
-    background: var(--fzd-solid);
-    color: var(--fzd-on-solid);
-  }
-  body.fz-draft .fzd-strip .turn-banner.your-turn {
+  html[data-theme="dark"] body.fz-draft .fzd-hero { --fzd-hero-bg: var(--fzd-tile-bg); }
+  body.fz-draft .fzd-hero.is-mine {
     background: var(--fzd-accent-fill);
     color: var(--fzd-on-accent);
   }
-  body.fz-draft .fzd-strip .turn-banner .turn-banner-logo {
-    display: inline-flex;
-    width: 34px; height: 34px;
-    border: 0;
-    background: rgba(0, 0, 0, .22);
+  body.fz-draft .fzd-hero-top,
+  body.fz-draft .fzd-hero-mid {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
   }
-  body.fz-draft .fzd-strip .turn-banner .turn-banner-logo[hidden] { display: none; }
-  body.fz-draft .fzd-strip .turn-banner-body::before { content: none; }
-  body.fz-draft .fzd-strip .turn-banner-body {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1px;
-  }
-  body.fz-draft .fzd-strip .turn-banner-sub {
-    order: -1;
-    font-size: .62rem;
-    font-weight: 700;
-    letter-spacing: .15em;
+  body.fz-draft .fzd-hero-top { align-items: baseline; }
+  body.fz-draft .fzd-hero-mid { align-items: flex-end; }
+  body.fz-draft .fzd-hero-kicker,
+  body.fz-draft .fzd-hero-pick {
+    font: 600 .75rem/1.2 var(--fzd-font-cond);
     text-transform: uppercase;
-    opacity: .72;
+    white-space: nowrap;
+    opacity: .75;
   }
-  body.fz-draft .fzd-strip .turn-banner-text {
-    font-size: 1rem;
-    font-weight: 700;
+  body.fz-draft .fzd-hero-kicker { letter-spacing: .12em; }
+  body.fz-draft .fzd-hero-pick {
+    font-weight: 500;
+    letter-spacing: .06em;
+    font-variant-numeric: tabular-nums;
+  }
+  body.fz-draft .fzd-hero-team {
+    min-width: 0;
+    font: 700 1.875rem/1 var(--fzd-font-cond);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
-  /* draftActif-premium.css dessine le MEME bandeau autrement : une barre
-     pleine largeur ou le contexte tient dans une pastille « En attente »
-     posee en ::before, ou le sous-titre disparait et ou le nom de
-     l'equipe passe en petit gris. Sur la tuile de 330px de la maquette,
-     c'est l'inverse : le contexte EST le sur-titre en petites capitales,
-     et le nom de l'equipe est la ligne forte. Ses regles portent une
-     classe d'etat (.waiting/.your-turn) de plus que les notres, d'ou le
-     .fzd-strip repete ici pour repasser devant. */
-  body.fz-draft .fzd-strip .turn-banner.waiting .turn-banner-body,
-  body.fz-draft .fzd-strip .turn-banner.your-turn .turn-banner-body {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1px;
+  body.fz-draft .fzd-hero-team.is-new { animation: fzdHeroIn .45s cubic-bezier(.22, 1, .36, 1) both; }
+  body.fz-draft .fzd-hero.is-idle .fzd-hero-team { font-size: 1.5rem; }
+  body.fz-draft .fzd-hero-clock {
+    flex: none;
+    font: 600 1.625rem/1 var(--fzd-font-cond);
+    letter-spacing: .02em;
+    font-variant-numeric: tabular-nums;
   }
-  body.fz-draft .fzd-strip .turn-banner.waiting .turn-banner-body::before,
-  body.fz-draft .fzd-strip .turn-banner.your-turn .turn-banner-body::before { content: none; }
-  body.fz-draft .fzd-strip .turn-banner.waiting .turn-banner-text,
-  body.fz-draft .fzd-strip .turn-banner.your-turn .turn-banner-text {
-    font-family: var(--fzd-font);
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 0;
-    color: inherit;
-  }
-  body.fz-draft .fzd-strip .turn-banner.waiting .turn-banner-sub,
-  body.fz-draft .fzd-strip .turn-banner.your-turn .turn-banner-sub {
-    display: block;
-    order: -1;
-    font: 700 .6875rem/1.3 var(--fzd-font-cond);
-    letter-spacing: .16em;
+  body.fz-draft .fzd-hero-label {
+    position: relative;
+    font: 500 .6875rem/1.2 var(--fzd-font);
+    letter-spacing: .08em;
     text-transform: uppercase;
-    opacity: .72;
+    text-align: right;
+    opacity: .6;
   }
-  body.fz-draft .fzd-strip .turn-banner.waiting .turn-banner-sub:empty,
-  body.fz-draft .fzd-strip .turn-banner.your-turn .turn-banner-sub:empty { display: none; }
+  body.fz-draft .fzd-hero-clock[hidden],
+  body.fz-draft .fzd-hero-label[hidden] { display: none; }
+
+  /* À soi : un liseré blanc qui respire sur le pourtour de la tuile… */
+  body.fz-draft .fzd-hero.is-mine::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    animation: fzdHeroPulse 1.6s ease-in-out infinite;
+  }
+  /* …mais d'abord, à l'arrivée du tour, un éclair blanc qui s'efface et un
+     reflet qui balaie la tuile (draftDesk.js, fzDeskAllumerTuile). */
+  body.fz-draft .fzd-hero.is-arriving::after { animation: none; }
+  body.fz-draft .fzd-hero-flash,
+  body.fz-draft .fzd-hero-sweep {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  body.fz-draft .fzd-hero-flash {
+    background: #ffffff;
+    animation: fzdHeroFlash .7s ease-out .6s both;
+  }
+  body.fz-draft .fzd-hero-sweep {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .45), transparent);
+    animation: fzdHeroSweep 1.1s ease-out 1s both;
+  }
+  @keyframes fzdHeroPulse {
+    0%, 100% { box-shadow: inset 0 0 0 0 rgba(255, 255, 255, 0); }
+    50% { box-shadow: inset 0 0 0 3px rgba(255, 255, 255, .55); }
+  }
+  @keyframes fzdHeroFlash { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes fzdHeroSweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+  @keyframes fzdHeroIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    body.fz-draft .fzd-hero.is-mine::after,
+    body.fz-draft .fzd-hero-team.is-new { animation: none; }
+    body.fz-draft .fzd-hero-flash,
+    body.fz-draft .fzd-hero-sweep { display: none; }
+  }
+
+  /* ---- « Votre tour dans N choix », dans la barre du haut ---- */
+  body.fz-draft .fzd-nav-turn {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--fzd-bg-alt);
+    color: var(--fzd-ink);
+    font: 600 .8125rem/1.2 var(--fzd-font);
+    white-space: nowrap;
+  }
+  body.fz-draft .fzd-nav-turn.is-mine {
+    background: var(--fzd-accent-fill);
+    color: var(--fzd-on-accent);
+  }
+  body.fz-draft .fzd-nav-turn[hidden] { display: none; }
 
   /* Le carrousel prend tout ce qui reste de la bande. */
   body.fz-draft .fzd-strip .recent-picks-card {
@@ -227,13 +229,16 @@
     width: 172px;
     height: 100%;
     min-height: 0;
-    padding: 8px 11px;
+    padding: 13px 14px 12px;
     grid-template-columns: 38px minmax(0, 1fr);
+    /* Le repère du tour en haut, le joueur calé en bas : la bande a la
+       hauteur de la tuile du tour, la carte la remplit comme la maquette. */
+    grid-template-rows: auto 1fr auto;
     grid-template-areas:
       "turn  turn"
       "photo name"
       "photo foot";
-    align-content: start;
+    align-content: stretch;
     gap: 3px 9px;
     border: 0;
     border-right: 1px solid var(--fzd-border);
@@ -257,6 +262,7 @@
      numéro du choix (.pick-card-slot) leur tient lieu de vignette, posé
      sur le même carré pour que la colonne de gauche reste droite. */
   body.fz-draft .fzd-strip .pick-card-photo {
+    align-self: end;
     width: 38px;
     height: 38px;
     border-radius: 7px;
@@ -280,7 +286,7 @@
     letter-spacing: .1em;
     color: var(--fzd-text-fainter);
   }
-  body.fz-draft .fzd-strip .pick-card-head { margin: 0; }
+  body.fz-draft .fzd-strip .pick-card-head { margin: 0; align-self: end; }
   body.fz-draft .fzd-strip .pick-card-id { gap: 1px; }
   /* Le nom entier, sur deux lignes s'il le faut. Coupé à l'ellipse, la
      bande affichait « Jean-Gabriel P… » : deux joueurs d'un même prénom
@@ -632,94 +638,58 @@
      4. COLONNE CENTRALE
      ========================================================== */
 
-  /* ---- Bandeau d'alerte (le panneau du bandeau de tour, déplacé) ----
-     Ses règles d'origine ne l'affichaient qu'à l'intérieur d'un
-     .turn-banner en état ; hors de lui, c'est son propre attribut
-     hidden — celui que appliquerPanneauTour() pilote — qui décide. */
-  body.fz-draft .draft-center > .turn-banner-hero {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 16px;
-    margin: 0;
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--fzd-border-strong);
-    background: var(--fzd-surface);
-  }
-  body.fz-draft .draft-center > .turn-banner-hero[hidden] { display: none; }
-  body.fz-draft.fzd-my-turn .draft-center > .turn-banner-hero {
-    background: var(--fzd-accent-wash);
-    border-bottom-color: var(--fzd-accent-border);
-  }
-  body.fz-draft .draft-center > .turn-banner-hero .turn-banner-row {
-    flex: 1 1 auto;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    min-width: 0;
-  }
-  body.fz-draft .draft-center > .turn-banner-hero .turn-banner-actions { margin: 0; }
-
-  /* Le favori proposé occupe toute la largeur laissée par le chiffre et
-     les manques ; son bouton se cale à droite, comme l'action du
-     bandeau qu'il remplace. */
-  body.fz-draft .draft-center > .turn-banner-hero .turn-banner-fav { flex: 1 1 auto; }
-  body.fz-draft .draft-center > .turn-banner-hero .turn-banner-fav-photo { width: 40px; height: 40px; }
-  body.fz-draft .draft-center > .turn-banner-hero .turn-banner-fav-cta { padding: 10px 22px; }
-  body.fz-draft .draft-center > .turn-banner-hero .turn-banner-fav-title { display: block; }
-  /* Hors du bandeau, .turn-banner-metric-label perd le ::before que
-     draftActif-premium.css lui donnait par état (« écoulé » / « avant
-     vous ») — et avec lui sa raison d'être en font-size:0. Le texte
-     qu'appliquerPanneauTour() y écrit reprend donc sa taille. */
-  body.fz-draft .draft-center > .turn-banner-hero .turn-banner-metric-label {
-    display: block;
-    font-size: .62rem;
-    line-height: 1.25;
-    font-weight: 500;
-    letter-spacing: .11em;
-    text-transform: uppercase;
-    color: var(--fzd-text-faint);
-  }
-  body.fz-draft .draft-center > .turn-banner-hero .turn-banner-metric-label::before { content: none; }
-
-  /* ---- Onglets Disponibles / Tous les choix / Mes choix ---- */
+  /* ---- Onglets Disponibles / Tous ----
+     Le segment de la maquette : une piste grise, l'onglet actif en
+     pastille blanche. */
   body.fz-draft .player-selection-card > #availabilityTabs {
     display: flex;
-    align-items: center;
-    gap: 2px;
-    margin: 0;
-    padding: 0 20px;
-    border-bottom: 1px solid var(--fzd-border-strong);
-    background: none;
-    border-radius: 0;
+    flex: none;
+    align-self: flex-start;
+    gap: 0;
+    margin: 16px 20px 0;
+    padding: 3px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--fzd-tab-track);
   }
   body.fz-draft .player-selection-card > #availabilityTabs .availability-tab {
-    padding: 8px 14px;
+    height: 30px;
+    padding: 0 16px;
     border: 0;
-    border-bottom: 2px solid transparent;
-    border-radius: 0;
+    border-radius: 6px;
     background: none;
-    font-size: .82rem;
-    font-weight: 600;
-    color: var(--fzd-text-muted);
+    font: 600 .8125rem/1 var(--fzd-font);
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--fzd-tab-text);
     box-shadow: none;
+    cursor: pointer;
   }
+  body.fz-draft .player-selection-card > #availabilityTabs .availability-tab + .availability-tab { border-left: 0; }
   body.fz-draft .player-selection-card > #availabilityTabs .availability-tab:hover { color: var(--fzd-ink); }
   body.fz-draft .player-selection-card > #availabilityTabs .availability-tab.is-active {
+    background: var(--fzd-surface);
     color: var(--fzd-ink);
-    border-bottom-color: var(--fzd-accent);
-    background: none;
+    box-shadow: 0 1px 2px rgba(22, 19, 15, .08);
+  }
+  /* En sombre, --fzd-surface est plus foncée que la piste : l'onglet
+     actif s'y enfonçait au lieu de ressortir. */
+  html[data-theme="dark"] body.fz-draft .player-selection-card > #availabilityTabs .availability-tab.is-active {
+    background: var(--fzd-tile-bg-strong);
   }
 
-  /* ---- Recherche, position et tri ---- */
+  /* ---- Recherche, pastilles de position et tri ----
+     La rangée de la maquette : la recherche prend la place, les
+     pastilles (draftDesk.js, fzDeskMonterPastilles) remplacent le
+     sélecteur de position, le tri garde son <select> sous « Trier : ». */
   body.fz-draft .player-selection-card > .list-filters-sidebar {
     display: flex;
+    flex: none;
     flex-wrap: wrap;
     align-items: center;
-    column-gap: 10px;
-    row-gap: 8px;
+    gap: 10px;
     margin: 0;
-    padding: 7px 20px;
+    padding: 14px 20px 16px;
     border: 0;
     border-bottom: 1px solid var(--fzd-border-strong);
     background: none;
@@ -729,26 +699,93 @@
     display: contents;
   }
   body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-search {
-    flex: 1 1 180px;
-    min-width: 160px;
+    flex: 1 1 220px;
+    min-width: 220px;
     width: auto;
+    height: 40px;
     margin: 0;
+    border-radius: 8px;
   }
-  /* Le min-height de 44px de draftActif.css est une cible tactile : dans
-     cette bande, à la souris, elle ne sert qu'à l'épaissir. */
-  body.fz-draft .player-selection-card > .list-filters-sidebar .search-input,
-  body.fz-draft .player-selection-card > .list-filters-sidebar .filter-select {
-    min-height: 34px;
-    padding: 6px 12px;
+  body.fz-draft .player-selection-card > .list-filters-sidebar .search-input {
+    min-height: 38px;
+    padding: 0 12px 0 34px;
+    font-size: .875rem;
   }
-  body.fz-draft .player-selection-card > .list-filters-sidebar .search-input { padding-left: 34px; }
-  body.fz-draft .player-selection-card > .list-filters-sidebar .filter-select {
+
+  body.fz-draft .fzd-pos-chips {
+    display: flex;
+    gap: 4px;
+  }
+  body.fz-draft .fzd-pos-chip {
+    height: 40px;
+    min-width: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--fzd-border-input);
+    border-radius: 8px;
+    background: var(--fzd-surface);
+    color: var(--fzd-ink);
+    font: 600 .8125rem/1 var(--fzd-font);
+    cursor: pointer;
+    transition: border-color .15s ease, background-color .15s ease;
+  }
+  body.fz-draft .fzd-pos-chip[hidden] { display: none; }
+  body.fz-draft .fzd-pos-chip:hover:not(:disabled):not(.is-active) { border-color: var(--fzd-ink); }
+  body.fz-draft .fzd-pos-chip.is-active {
+    border-color: var(--fzd-solid);
+    background: var(--fzd-solid);
+    color: var(--fzd-on-solid);
+  }
+  body.fz-draft .fzd-pos-chip:disabled { opacity: .4; cursor: not-allowed; }
+  body.fz-draft .fzd-pos-chip:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(196, 68, 46, .18);
+  }
+
+  /* Le sélecteur de position reste dans la page (les pastilles écrivent
+     dedans) mais ne s'affiche plus. */
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-block--position { display: none; }
+
+  /* « Trier : Points » — le libellé et le <select> dans une même boîte. */
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-block--sort {
+    display: flex;
+    align-items: center;
+    height: 40px;
+    padding-left: 12px;
+    border: 1px solid var(--fzd-border-input);
+    border-radius: 8px;
+    background: var(--fzd-surface);
+  }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-block--sort:hover { border-color: var(--fzd-ink); }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-block--sort:focus-within {
+    border-color: var(--fzd-ink);
+    box-shadow: 0 0 0 3px rgba(196, 68, 46, .12);
+  }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-block--sort .list-filters-title {
     display: block;
-    flex: 0 1 150px;
-    width: auto;
-    min-width: 130px;
     margin: 0;
+    font: 500 .8125rem/1 var(--fzd-font);
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--fzd-text-muted);
+    white-space: nowrap;
+    cursor: pointer;
   }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-block--sort .filter-select {
+    display: block;
+    flex: none;
+    width: auto;
+    min-width: 0;
+    height: 38px;
+    min-height: 0;
+    margin: 0;
+    padding: 0 10px 0 4px;
+    border: 0;
+    background-color: transparent;
+    font: 600 .8125rem/1 var(--fzd-font);
+    color: var(--fzd-ink);
+    box-shadow: none;
+  }
+  body.fz-draft .player-selection-card > .list-filters-sidebar .list-filters-block--sort .filter-select:focus-visible { box-shadow: none; }
 
   /* ---- Reste de l'en-tête de la carte ---- */
   body.fz-draft .player-selection-card {
@@ -762,6 +799,14 @@
   }
   body.fz-draft .player-selection-card > .filters-header,
   body.fz-draft .player-selection-card > .filters-row { display: none; }
+  /* Pendant le repêchage, la carte tient dans la fenêtre sous la bande et
+     la liste prend ce qui reste, quelle que soit la hauteur de la rangée
+     de filtres au-dessus (elle passe sur deux lignes quand la colonne
+     rétrécit). Pas avant ni après : les panneaux « pas commencé » et
+     « terminé » gardent leur hauteur naturelle. */
+  body.fz-draft .player-selection-card:not(.is-draft-done):not(.is-draft-notstarted) {
+    max-height: calc(100vh - var(--fz-nav-h, 70px) - var(--fz-strip-h));
+  }
 
 
   /* ==========================================================
@@ -803,7 +848,6 @@
   body.fz-draft .player-selection-card > #fzPickedListWrapper {
     flex: 1 1 auto;
     min-height: 340px;
-    max-height: calc(100vh - var(--fz-nav-h, 70px) - var(--fz-strip-h) - 210px);
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior-y: contain;
@@ -1436,6 +1480,8 @@ html[data-theme="dark"] body.fz-draft .fzd-pos-tag[data-pos="T"] { --fzd-tag-bg:
 @media (max-width: 1099px) {
   body.fz-draft .fzd-name-meta,
   body.fz-draft .fzd-strip,
+  body.fz-draft .fzd-nav-turn,
+  body.fz-draft .fzd-pos-chips,
   body.fz-draft .draft-rail,
   body.fz-draft .fzd-side,
   body.fz-draft .fzd-rail-head,

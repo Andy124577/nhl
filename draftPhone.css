@@ -252,15 +252,6 @@
     opacity: .62;
   }
 
-  /* Le panneau « N tours avant vous / il vous manque / bouton » ne
-     figure pas dans la maquette téléphone : le sur-titre porte déjà
-     le rang du choix, et le bouton d'action vit dans la liste. Le
-     bouton « Sauter ce tour » reste, dans la bande d'onglets. */
-  body.fz-draft .turn-banner-hero,
-  body.fz-draft .turn-banner.waiting .turn-banner-hero,
-  body.fz-draft .turn-banner.your-turn .turn-banner-hero,
-  body.fz-draft .turn-banner .turn-banner-row { display: none; }
-
   /* ==========================================================
      3. LE CARROUSEL DES CHOIX
      ----------------------------------------------------------
