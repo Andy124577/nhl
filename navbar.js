@@ -177,10 +177,10 @@ function buildLoggedOutNavbar() {
 // Ordre : Accueil → Pools ▾ → Repêchage (🔴) → Échanges (🔴) → Classement
 //         → Calendrier → Stats
 //
-// « Pools » n'est pas une page : c'est un menu. Il réunit les trois gestes
-// qu'on cherchait dans la barre — consulter ses pools (et changer de pool
-// actif), en créer un, en rejoindre un — sans rien retirer au rail et au
-// tiroir (poolNav.js), qui restent là pour les réglages de chacun.
+// « Pools » mène droit à la page du pool actif (pool.html) : ses équipes,
+// ses règles, ses invitations. Changer de pool, en créer ou en rejoindre un
+// se fait dans le rail et le tiroir (poolNav.js) ; sans aucun pool, la page
+// elle-même propose de créer ou de rejoindre.
 //
 // Les pastilles ne comptent que le pool actif : c'est celui que ces liens
 // ouvriront. Ce qui se passe dans les autres pools est signalé par la
@@ -203,15 +203,10 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                         <span class="nav-icon-img" aria-hidden="true">${PAGE_ICON.accueil}</span>
                         <span class="nav-text">Accueil</span>
                     </a>
-                    <div class="nav-pools">
-                        <button type="button" class="nav-link nav-pools-btn ${'pools' === currentPage ? 'active' : ''}" id="navPoolsBtn"
-                                aria-haspopup="true" aria-expanded="false" aria-controls="navPoolsMenu">
-                            <span class="nav-icon-img" aria-hidden="true">${PAGE_ICON.pools}</span>
-                            <span class="nav-text">Pools</span>
-                            <span class="nav-caret" aria-hidden="true">▾</span>
-                        </button>
-                        <div class="nav-pools-menu user-dropdown" id="navPoolsMenu" role="menu"></div>
-                    </div>
+                    <a href="pool.html" class="nav-link ${'pools' === currentPage ? 'active' : ''}" id="navPoolsBtn">
+                        <span class="nav-icon-img" aria-hidden="true">${PAGE_ICON.pools}</span>
+                        <span class="nav-text">Pools</span>
+                    </a>
                     <a href="repechage.html" class="nav-link ${'repechage' === currentPage ? 'active' : ''}" id="desktopPoolLink">
                         <span class="nav-icon-img" aria-hidden="true">${PAGE_ICON.repechage}</span>
                         <span class="nav-text">Repêchage</span>
@@ -421,99 +416,8 @@ async function uploadUserAvatar(input) {
     input.value = '';
 }
 
-// ==================== MENU « POOLS » ====================
-const _navEchapper = t => String(t == null ? '' : t)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-
-const _NAV_ETAT_POOL = {
-    attente: 'En attente', pret: 'Prêt à repêcher', encours: 'Repêchage en cours', termine: 'Saison en cours'
-};
-
-/** Le contenu du menu, relu à chaque ouverture : la liste des pools bouge. */
-function rendreMenuPools() {
-    const menu = document.getElementById('navPoolsMenu');
-    if (!menu) return;
-    const mesPools = window.FZPool ? FZPool.mine() : [];
-    const actif = window.FZPool ? FZPool.get() : null;
-
-    const liste = mesPools.length
-        ? mesPools.map(p => {
-            const etat = FZPool.draftState(p.data);
-            return `
-                <button type="button" class="dropdown-item nav-pool-row${p.name === actif ? ' is-active' : ''}"
-                        role="menuitemradio" aria-checked="${p.name === actif}" data-nav-pool="${_navEchapper(p.name)}">
-                    <img src="${_navEchapper(FZPool.image(p.data))}" class="dropdown-user-thumb" alt=""
-                         onerror="this.src='Icons/grayGroup.png'">
-                    <span class="dropdown-text">
-                        <span class="dropdown-title">${_navEchapper(p.name)}</span>
-                        <span class="dropdown-hint">${_navEchapper(p.teamName)} · ${_NAV_ETAT_POOL[etat.etat] || ''}</span>
-                    </span>
-                    ${p.name === actif ? '<span class="nav-pool-check" aria-hidden="true">✓</span>' : ''}
-                </button>`;
-        }).join('')
-        : '<p class="nav-pools-empty">Vous n’êtes dans aucun pool pour l’instant.</p>';
-
-    // La page du pool actif : sous 1100px il n'y a plus de rail, et ce menu
-    // est le seul chemin qui y mène d'un clic.
-    const pageDuPool = actif ? `
-            <a class="dropdown-item" role="menuitem" href="pool.html">
-                <span class="dropdown-text"><span class="dropdown-title">Page du pool</span>
-                <span class="dropdown-hint">Équipes, règles et invitations de ${_navEchapper(actif)}</span></span>
-            </a>` : '';
-
-    menu.innerHTML = `
-        <div class="dropdown-group">
-            <p class="dropdown-label">Mes pools</p>
-            <div class="nav-pools-scroll">${liste}</div>
-        </div>
-        <div class="dropdown-group">${pageDuPool}
-            <a class="dropdown-item" role="menuitem" href="creer-pool.html">
-                <span class="dropdown-text"><span class="dropdown-title">Créer un pool</span>
-                <span class="dropdown-hint">Votre ligue, vos règles</span></span>
-            </a>
-            <a class="dropdown-item" role="menuitem" href="rejoindre-pool.html">
-                <span class="dropdown-text"><span class="dropdown-title">Rejoindre un pool</span>
-                <span class="dropdown-hint">Ligues ouvertes, ou pool rapide à 4</span></span>
-            </a>
-        </div>`;
-}
-
-function initialiserMenuPools() {
-    const bouton = document.getElementById('navPoolsBtn');
-    const menu = document.getElementById('navPoolsMenu');
-    if (!bouton || !menu) return;
-
-    const ouvrir = (oui) => {
-        if (oui) rendreMenuPools();
-        menu.classList.toggle('show', oui);
-        bouton.setAttribute('aria-expanded', String(oui));
-    };
-
-    bouton.addEventListener('click', e => {
-        e.stopPropagation();
-        ouvrir(!menu.classList.contains('show'));
-    });
-    document.addEventListener('click', e => {
-        if (!e.target.closest('.nav-pools')) ouvrir(false);
-    });
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && menu.classList.contains('show')) { ouvrir(false); bouton.focus(); }
-    });
-    // Choisir un pool en fait le pool actif, sur place : chaque page suit
-    // déjà FZPool.on() pour se redessiner.
-    menu.addEventListener('click', e => {
-        const ligne = e.target.closest('[data-nav-pool]');
-        if (!ligne || !window.FZPool) return;
-        FZPool.set(ligne.dataset.navPool);
-        ouvrir(false);
-    });
-}
-
 // ==================== EVENT LISTENERS ====================
 function initializeEventListeners(username, isAdmin) {
-    initialiserMenuPools();
-
     const avatarBtn = document.getElementById('userAvatarBtn');
     const dropdown = document.getElementById('userDropdownMenu');
 
