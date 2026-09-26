@@ -11,9 +11,10 @@ function getCurrentPage() {
     if (n.includes('trade.html')) return 'trade';
     // Une feuille de match s'ouvre depuis le calendrier : elle en garde l'onglet.
     if (n.includes('calendrier.html') || n.includes('match.html')) return 'calendrier';
-    // Créer et rejoindre vivent sous le menu « Pools », avec la liste des
-    // pools dont on est membre.
-    if (n.includes('creer-pool.html') || n.includes('rejoindre-pool.html')) return 'pools';
+    // Créer, rejoindre et la page du pool actif vivent sous le menu
+    // « Pools », avec la liste des pools dont on est membre.
+    if (n.includes('creer-pool.html') || n.includes('rejoindre-pool.html') ||
+        /(^|\/)pool\.html$/.test(n)) return 'pools';
     return '';
 }
 
@@ -453,12 +454,20 @@ function rendreMenuPools() {
         }).join('')
         : '<p class="nav-pools-empty">Vous n’êtes dans aucun pool pour l’instant.</p>';
 
+    // La page du pool actif : sous 1100px il n'y a plus de rail, et ce menu
+    // est le seul chemin qui y mène d'un clic.
+    const pageDuPool = actif ? `
+            <a class="dropdown-item" role="menuitem" href="pool.html">
+                <span class="dropdown-text"><span class="dropdown-title">Page du pool</span>
+                <span class="dropdown-hint">Équipes, règles et invitations de ${_navEchapper(actif)}</span></span>
+            </a>` : '';
+
     menu.innerHTML = `
         <div class="dropdown-group">
             <p class="dropdown-label">Mes pools</p>
             <div class="nav-pools-scroll">${liste}</div>
         </div>
-        <div class="dropdown-group">
+        <div class="dropdown-group">${pageDuPool}
             <a class="dropdown-item" role="menuitem" href="creer-pool.html">
                 <span class="dropdown-text"><span class="dropdown-title">Créer un pool</span>
                 <span class="dropdown-hint">Votre ligue, vos règles</span></span>

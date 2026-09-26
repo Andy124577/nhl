@@ -1,105 +1,14 @@
 /* ============================================================
-   RÉGLAGES DU POOL — le panneau derrière l'engrenage
+   POOL — les pièces de la page du pool (pool.html, poolSettings.js)
    ------------------------------------------------------------
    Reprend les variables d'index.css : rien n'est codé en dur, le thème
    clair suit sans règle supplémentaire.
 
-   Sur ordinateur le panneau est une fiche centrée ; sous 640px il monte
-   du bas de l'écran et occupe presque toute la hauteur — un pouce
-   n'atteint pas le haut d'un téléphone.
+   Onglets, blocs, équipes, recherche d'invitations : les pièces vivent
+   ici, la mise en page de la page dans poolPage.css. La fenêtre
+   d'invitation reçue (poolInvites.js), chargée sur toutes les pages,
+   reprend les mêmes champs et boutons.
    ============================================================ */
-
-.ps-scrim {
-    position: fixed;
-    inset: 0;
-    background: var(--overlay-dark);
-    backdrop-filter: blur(3px);
-    z-index: 1400;
-}
-
-.ps-panel {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -46%) scale(.97);
-    width: min(620px, calc(100vw - 32px));
-    max-height: min(760px, calc(100vh - 64px));
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-page);
-    border: 1px solid var(--border-gray);
-    border-radius: 20px;
-    box-shadow: 0 24px 70px var(--shadow-lg);
-    opacity: 0;
-    z-index: 1401;
-    transition: opacity .2s ease, transform .2s ease;
-}
-
-.ps-panel.is-open {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-}
-
-body.ps-open { overflow: hidden; }
-
-/* ==================== EN-TÊTE ==================== */
-
-.ps-head {
-    display: flex;
-    align-items: center;
-    gap: 13px;
-    padding: 18px 18px 15px;
-    border-bottom: 1px solid var(--border-light);
-}
-
-.ps-head-img {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    border-radius: 12px;
-    object-fit: cover;
-    border: 1px solid var(--border-gray);
-}
-
-.ps-head-txt { min-width: 0; flex: 1; }
-
-.ps-head-label {
-    margin: 0;
-    font-size: .68rem;
-    font-weight: 800;
-    letter-spacing: .09em;
-    text-transform: uppercase;
-    color: var(--text-gray);
-}
-
-.ps-head-name {
-    margin: 2px 0 0;
-    font-size: 1.22rem;
-    font-weight: 800;
-    color: var(--text-main);
-    /* Un nom de 30 caractères ne doit pas pousser la croix hors de la fiche. */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.ps-close {
-    width: 34px;
-    height: 34px;
-    min-width: 34px;
-    display: grid;
-    place-items: center;
-    font-size: 1.5rem;
-    line-height: 1;
-    color: var(--text-gray);
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background .15s ease, color .15s ease;
-}
-
-.ps-close:hover { background: var(--bg-hover); color: var(--text-main); }
 
 /* ==================== ONGLETS ==================== */
 
@@ -137,12 +46,6 @@ body.ps-open { overflow: hidden; }
 }
 
 /* ==================== CORPS ==================== */
-
-.ps-body {
-    padding: 18px;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-}
 
 .ps-block { margin-bottom: 22px; }
 .ps-block:last-child { margin-bottom: 0; }
@@ -502,14 +405,6 @@ body.ps-open { overflow: hidden; }
 
 .ps-state-actions { margin-top: 13px; }
 
-/* Un lien habillé en bouton : les pages colorent leurs liens (body.fz-stats a,
-   par exemple), ce qui le rendait illisible sur son propre fond. */
-.ps-panel a.ps-primary,
-.ps-panel a.ps-primary:hover,
-.ps-panel a.ps-primary:visited {
-    color: #fff;
-    text-decoration: none;
-}
 
 .ps-tiles {
     display: grid;
@@ -790,23 +685,6 @@ body.ps-open { overflow: hidden; }
 @media (max-width: 640px) {
     .ps-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-    .ps-panel {
-        top: auto;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        max-height: 88vh;
-        border-radius: 20px 20px 0 0;
-        border-bottom: none;
-        transform: translate(0, 100%);
-    }
-
-    .ps-panel.is-open { transform: translate(0, 0); }
-
-    .ps-head { padding: 16px 16px 13px; }
-    .ps-tabs { padding: 10px 16px 0; }
-    .ps-body { padding: 16px 16px 26px; }
-
     /* Le champ et son bouton ne tiennent plus côte à côte sans écraser
        l'un des deux. */
     .ps-field { flex-direction: column; align-items: stretch; }
@@ -815,10 +693,6 @@ body.ps-open { overflow: hidden; }
        noms de joueurs. */
     .ps-pick-cat { flex-direction: column; gap: 2px; }
     .ps-pick-label { flex: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .ps-panel { transition: none; }
 }
 
 /* ---- Saisons passées & nouvelle saison ---- */

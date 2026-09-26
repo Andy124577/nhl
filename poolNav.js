@@ -65,6 +65,7 @@
         const chemin = window.location.pathname;
         if (chemin.includes('creer-pool')) return 'creer';
         if (chemin.includes('rejoindre-pool')) return 'rejoindre';
+        if (/(^|\/)pool\.html$/.test(chemin)) return 'pool';
         if (chemin.includes('repechage') || chemin.includes('draftActif') ||
             chemin.includes('draftFini') || chemin.includes('draft.html')) return 'repechage';
         if (chemin.includes('classement')) return 'classement';
@@ -121,26 +122,28 @@
                 </li>`;
         }).join('');
 
-        // Deux gestes, deux boutons. Le pool actif lui-même ouvre sa fiche
-        // complète — état, équipes, règles, et pour la personne qui l'a créé,
-        // le mot de passe, les invitations et l'identité (poolSettings.js).
+        // Deux gestes, deux boutons. Le pool actif lui-même mène à sa page —
+        // état, équipes, règles, et pour la personne qui l'a créé, le mot de
+        // passe, les invitations et l'identité (pool.html, poolSettings.js).
         // Le chevron, à côté, déroule la liste pour changer de pool.
         const admin = !!(window.FZPoolSettings && FZPoolSettings.isCreator(courant.name));
         const enAttente = admin ? ((courant.data && courant.data.invitations) || []).length : 0;
+        const surLaPage = pageCourante() === 'pool';
 
         return `
             <div class="fz-pool-block">
                 <p class="fz-rail-label">Pool actif</p>
                 <div class="fz-pool-row">
-                    <button type="button" class="fz-active-pool" data-reglages="apercu"
-                            title="Tout sur ce pool" aria-label="${echapper(courant.name)} — voir tout le pool">
+                    <a href="pool.html" class="fz-active-pool${surLaPage ? ' is-active' : ''}"
+                       ${surLaPage ? 'aria-current="page"' : ''}
+                       title="Page du pool" aria-label="${echapper(courant.name)} — page du pool">
                         ${vignette(courant, 'fz-active-pool-img')}
                         <span class="fz-active-pool-txt">
                             <span class="fz-active-pool-name">${echapper(courant.name)}</span>
                             <span class="fz-active-pool-meta">${echapper(courant.teamName)}</span>
                         </span>
                         ${enAttente ? `<span class="fz-pool-invites" title="Invitations en attente">${enAttente}</span>` : ''}
-                    </button>
+                    </a>
                     <button type="button" class="fz-pool-switch" id="fzActiveBtn${suffixe}"
                             aria-expanded="false" aria-controls="fzPoolList${suffixe}"
                             title="Changer de pool" aria-label="Changer de pool">
@@ -166,15 +169,19 @@
                 <span class="fz-rail-detail">${lien.detail}</span>
             </span>`;
 
+        const surLaPage = page === 'pool';
+        const ongletDeLaPage = new URLSearchParams(window.location.search).get('onglet');
+
         return `
             <nav class="fz-rail-nav" aria-label="Gestion des pools">
                 <p class="fz-rail-label">Gestion</p>
                 ${LIENS_GESTION.map(lien => {
                     if (lien.onglet) {
                         if (sansPool) return '';
+                        const actif = surLaPage && ongletDeLaPage === lien.onglet;
                         return `
-                            <button type="button" class="fz-rail-link"
-                                    data-reglages="${lien.onglet}">${contenu(lien)}</button>`;
+                            <a href="pool.html?onglet=${lien.onglet}" class="fz-rail-link${actif ? ' is-active' : ''}"
+                               data-fz-reglages="${lien.onglet}">${contenu(lien)}</a>`;
                     }
                     return `
                         <a href="${lien.href}" class="fz-rail-link${cleParHref[lien.href] === page ? ' is-active' : ''}">
@@ -261,7 +268,6 @@
         if (document.body.dataset.fzRail !== 'page') {
             rail.innerHTML = blocPool('Rail') + blocRaccourcis() + blocGestion();
             brancherBlocPool(rail, 'Rail');
-            brancherReglages(rail);
         }
         document.body.classList.add('fz-has-sidebar');
         monterBasculeRail();
@@ -340,7 +346,6 @@
         const corps = document.getElementById('fzDrawerBody');
         corps.innerHTML = blocPool('Drawer') + blocGestion() + blocPages();
         brancherBlocPool(corps, 'Drawer');
-        brancherReglages(corps);
     }
 
     function monterHamburger() {
@@ -392,27 +397,6 @@
     }
 
     // ==================== INTERACTIONS ====================
-
-    /**
-     * Branche tout ce qui ouvre la fiche du pool : le pool actif lui-même,
-     * et « Participants » dans la Gestion.
-     *
-     * Appelé sur le rail comme sur le tiroir — les deux surfaces sont
-     * rendues par les mêmes fonctions, et un même identifiant ne peut pas
-     * servir deux fois.
-     */
-    function brancherReglages(racine) {
-        racine.querySelectorAll('[data-reglages]').forEach(bouton => {
-            bouton.addEventListener('click', e => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!window.FZPoolSettings) return;
-                // Le tiroir recouvrirait le panneau sur téléphone.
-                fermerTiroir();
-                FZPoolSettings.open(FZPool.get(), bouton.dataset.reglages);
-            });
-        });
-    }
 
     function brancherBlocPool(racine, suffixe) {
         const bouton = racine.querySelector(`#fzActiveBtn${suffixe}`);

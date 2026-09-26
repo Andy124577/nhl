@@ -1,0 +1,180 @@
+/* ============================================================
+   PAGE DU POOL — pool.html
+   ------------------------------------------------------------
+   La mise en page seulement : les pièces (onglets, blocs, équipes,
+   recherche) sont dans poolSettings.css. Jetons d'index.css, les deux
+   thèmes suivent sans règle de plus.
+
+   Téléphone d'abord : une colonne. Sur écran large, l'aperçu passe en
+   deux colonnes et les équipes en grille.
+   ============================================================ */
+
+body.fz-pool-page { background: var(--bg); }
+
+.pp-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 16px 56px;
+    color: var(--text-main);
+}
+
+/* ---- Chargement et page vide ---- */
+
+.pp-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 48px 0;
+    font-size: .92rem;
+    color: var(--text-gray);
+}
+
+.pp-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-gray);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: pp-tourne .8s linear infinite;
+}
+
+@keyframes pp-tourne { to { transform: rotate(360deg); } }
+
+.pp-empty {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 56px 0;
+    text-align: center;
+}
+
+.pp-empty-img {
+    width: 72px;
+    height: 72px;
+    margin-bottom: 14px;
+    border-radius: 18px;
+    opacity: .85;
+}
+
+.pp-empty p {
+    margin: 12px 0 22px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+.pp-empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* Un lien habillé en bouton : les feuilles des pages colorent leurs liens,
+   ce qui le rendrait illisible sur son propre fond. */
+.pp-page a.ps-primary,
+.pp-page a.ps-primary:hover,
+.pp-page a.ps-primary:visited { color: #fff; text-decoration: none; }
+.pp-page a.ps-secondary,
+.pp-page a.ps-secondary:visited { color: var(--text-main); text-decoration: none; }
+.pp-page a.ps-secondary:hover { color: var(--primary); }
+
+/* ---- En-tête ---- */
+
+.pp-hero {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 22px;
+}
+
+.pp-hero-img {
+    width: 76px;
+    height: 76px;
+    flex-shrink: 0;
+    border-radius: 18px;
+    object-fit: cover;
+    border: 1px solid var(--border-gray);
+}
+
+.pp-hero-txt { min-width: 0; }
+
+.pp-eyebrow {
+    margin: 0 0 4px;
+    font-size: .74rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--primary);
+}
+
+.pp-title {
+    margin: 0;
+    font-family: 'Bebas Neue', system-ui, sans-serif;
+    font-weight: 400;
+    font-size: clamp(2rem, 5vw, 3rem);
+    letter-spacing: .02em;
+    line-height: 1;
+    color: var(--text-main);
+    overflow-wrap: anywhere;
+}
+
+.pp-sub {
+    margin: 7px 0 0;
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* ---- Onglets ---- */
+
+.pp-tabs {
+    margin-bottom: 22px;
+    padding: 0;
+}
+
+.pp-tabs .ps-tab {
+    padding: 10px 16px 12px;
+    font-size: .93rem;
+}
+
+/* ---- Contenu ---- */
+
+/* Des réglages se lisent mieux sur une colonne étroite, même sur grand écran. */
+.pp-body [data-pane="regles"],
+.pp-body [data-pane="inviter"],
+.pp-body [data-pane="identite"] { max-width: 720px; }
+
+.pp-body [data-pane="equipes"] > .ps-note { margin: 0 2px 14px; }
+
+/* Les équipes, avec leur effectif complet : une grille dès qu'il y a la place. */
+.pp-body .ps-teams {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
+    gap: 14px;
+    align-items: start;
+}
+
+@media (min-width: 960px) {
+    .ps-apercu {
+        display: grid;
+        grid-template-columns: minmax(0, 1.65fr) minmax(300px, 1fr);
+        gap: 24px;
+        align-items: start;
+    }
+
+    /* La fiche du pool reste sous les yeux pendant qu'on parcourt les équipes. */
+    .ps-col-side {
+        position: sticky;
+        top: calc(var(--fz-nav-h, 70px) + 16px);
+    }
+}
+
+@media (max-width: 640px) {
+    .pp-page { padding-top: 16px; }
+    .pp-hero { gap: 14px; margin-bottom: 16px; }
+    .pp-hero-img { width: 56px; height: 56px; border-radius: 14px; }
+    .pp-tabs { margin: 0 -16px 18px; padding: 0 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pp-spinner { animation: none; }
+}

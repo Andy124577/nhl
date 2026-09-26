@@ -1,13 +1,18 @@
 /* ============================================================
-   FICHE DU POOL — le panneau ouvert d'un clic sur le pool actif
+   PAGE DU POOL — pool.html, ouverte d'un clic sur le pool actif
    ------------------------------------------------------------
-   Ce panneau remplace la page « Mes pools ». Celle-ci obligeait à quitter
-   l'écran en cours pour lire une règle ou renommer une équipe, et affichait
-   côte à côte des choses qui ne se ressemblent pas : la liste des pools (qui
-   vit désormais dans le rail, poolNav.js) et les réglages de chacun.
+   La liste des pools vit dans le rail (poolNav.js) ; tout ce qui porte
+   sur UN pool vit sur sa page, à un clic de son nom. C'était d'abord une
+   fenêtre posée par-dessus l'écran en cours ; une page se partage, se
+   garde en favori, et a la place de tout montrer — chaque équipe avec
+   son effectif complet.
 
-   Ne reste ici que ce qui porte sur un seul pool, à un clic de son nom
-   dans le rail :
+   Ce fichier est chargé sur toutes les pages qui portent le rail. Ailleurs
+   que sur pool.html, il ne dessine rien : il dit seulement qui a créé le
+   pool (isCreator) et mène à la page du pool depuis n'importe quel
+   bouton `data-fz-reglages="<onglet>"`.
+
+   Les onglets de la page :
 
      Aperçu   — tout le pool d'un coup d'œil : où en est le repêchage, le
                 format, l'accès, toutes les équipes. La personne qui a créé
@@ -22,7 +27,7 @@
      Identité — le nom du pool et sa vignette. Réservé à la personne qui a
                 créé le pool.
 
-   Aucune dépendance : ni jQuery, ni equipes.js. Le panneau est chargé sur
+   Aucune dépendance : ni jQuery, ni equipes.js. Ce fichier est chargé sur
    toutes les pages qui portent le rail, et plusieurs d'entre elles n'ont
    ni l'un ni l'autre.
    ============================================================ */
@@ -129,7 +134,7 @@
 
     let poolOuvert = null;      // nom du pool affiché, ou null
     let ongletActif = 'apercu';
-    let racine = null;          // l'élément du panneau, construit une fois
+    let racine = null;          // l'ossature de la page, posée une fois
     // L'équipe à montrer en ouvrant « Participants » depuis l'aperçu.
     let equipeVisee = null;
 
@@ -137,7 +142,7 @@
      * Le mot de passe relu, pour la seule personne qui a créé le pool.
      *
      * Jamais demandé à l'ouverture : il ne quitte le serveur que sur un clic
-     * « Afficher », et s'oublie à la fermeture du panneau. Le panneau se
+     * « Afficher », et s'oublie en quittant la page. La page se
      * redessine à chaque mise à jour temps réel ; sans cet état, le mot de
      * passe se recacherait sous les yeux de qui vient de l'afficher.
      */
@@ -554,29 +559,36 @@
                 <span aria-hidden="true">→</span>
             </button>` : '';
 
+        // Deux colonnes sur un écran large : ce qui se passe et qui joue à
+        // gauche, la fiche du pool à droite. Une seule colonne sur téléphone,
+        // dans cet ordre.
         return `
-            <div class="ps-pane" data-pane="apercu">
-                ${blocEtat(nom, donnees, etat)}
+            <div class="ps-pane ps-apercu" data-pane="apercu">
+                <div class="ps-col-main">
+                    ${blocEtat(nom, donnees, etat)}
 
-                <div class="ps-tiles">
-                    ${tuile(`${etat.inscrits}/${etat.max}`, 'Participants')}
-                    ${tuile(selections, 'Choix par équipe')}
-                    ${tuile(mode, 'Pointage')}
-                    ${tuile(donnees.allowTrades !== false ? 'Ouverts' : 'Fermés', 'Échanges')}
+                    <div class="ps-tiles">
+                        ${tuile(`${etat.inscrits}/${etat.max}`, 'Participants')}
+                        ${tuile(selections, 'Choix par équipe')}
+                        ${tuile(mode, 'Pointage')}
+                        ${tuile(donnees.allowTrades !== false ? 'Ouverts' : 'Fermés', 'Échanges')}
+                    </div>
+
+                    ${blocListeEquipes(donnees)}
                 </div>
 
-                ${rappelInvitations}
-                ${blocListeEquipes(donnees)}
-
-                <section class="ps-block">
-                    <h3 class="ps-block-title">Le pool</h3>
-                    <ul class="ps-facts">
-                        ${createur ? ligne('Créé par', createur) : ''}
-                        ${creeLe ? ligne('Créé le', creeLe) : ''}
-                        ${donnees.instant === true ? ligne('Type', 'Pool rapide') : ''}
-                        ${blocAcces(nom, donnees)}
-                    </ul>
-                </section>
+                <aside class="ps-col-side">
+                    ${rappelInvitations}
+                    <section class="ps-block">
+                        <h3 class="ps-block-title">Le pool</h3>
+                        <ul class="ps-facts">
+                            ${createur ? ligne('Créé par', createur) : ''}
+                            ${creeLe ? ligne('Créé le', creeLe) : ''}
+                            ${donnees.instant === true ? ligne('Type', 'Pool rapide') : ''}
+                            ${blocAcces(nom, donnees)}
+                        </ul>
+                    </section>
+                </aside>
             </div>`;
     }
 
@@ -659,51 +671,78 @@
 
     // ==================== RENDU ====================
 
+    /** L'hôte de la page du pool, ou null ailleurs. */
+    const hote = () => document.getElementById('fzPoolPage');
+
+    /** Pose l'ossature de la page, une fois : en-tête, onglets, contenu. */
     function construireCoquille() {
         if (racine) return racine;
-        const html = `
-            <div class="ps-scrim" id="psScrim" hidden></div>
-            <div class="ps-panel" id="psPanel" role="dialog" aria-modal="true"
-                 aria-labelledby="psTitre" hidden>
-                <header class="ps-head">
-                    <img src="Icons/grayGroup.png" class="ps-head-img" id="psHeadImg" alt=""
-                         onerror="this.src='Icons/grayGroup.png'">
-                    <div class="ps-head-txt">
-                        <p class="ps-head-label" id="psHeadLabel">Pool actif</p>
-                        <h2 class="ps-head-name" id="psTitre"></h2>
-                    </div>
-                    <button type="button" class="ps-close" id="psClose"
-                            aria-label="Fermer la fiche du pool">&times;</button>
-                </header>
-                <nav class="ps-tabs" id="psTabs" role="tablist"></nav>
-                <div class="ps-body" id="psBody"></div>
-            </div>`;
-        document.body.insertAdjacentHTML('beforeend', html);
-        racine = document.getElementById('psPanel');
-
-        document.getElementById('psClose').addEventListener('click', fermer);
-        document.getElementById('psScrim').addEventListener('click', fermer);
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape' && racine && !racine.hidden) fermer();
-        });
+        racine = hote();
+        if (!racine) return null;
+        racine.innerHTML = `
+            <header class="pp-hero">
+                <img src="Icons/grayGroup.png" class="pp-hero-img" id="psHeadImg" alt=""
+                     onerror="this.src='Icons/grayGroup.png'">
+                <div class="pp-hero-txt">
+                    <p class="pp-eyebrow" id="psHeadLabel">Pool actif</p>
+                    <h1 class="pp-title" id="psTitre"></h1>
+                    <p class="pp-sub" id="psHeadSub"></p>
+                </div>
+            </header>
+            <nav class="ps-tabs pp-tabs" id="psTabs" role="tablist" aria-label="Sections du pool"></nav>
+            <div class="pp-body" id="psBody" role="tabpanel"></div>`;
         return racine;
     }
 
+    /** Sans pool à montrer : pas connecté, ou membre d'aucun pool. */
+    function rendreVide() {
+        const cible = hote();
+        if (!cible) return;
+        racine = null;
+        const connecte = localStorage.getItem('isLoggedIn') === 'true';
+        document.title = 'Mon pool – Fantazy';
+        cible.innerHTML = connecte ? `
+            <section class="pp-empty">
+                <img src="Icons/grayGroup.png" alt="" class="pp-empty-img">
+                <h1 class="pp-title">Aucun pool pour l’instant</h1>
+                <p>Créez votre ligue et invitez vos amis, ou joignez-vous à un pool ouvert.</p>
+                <div class="pp-empty-actions">
+                    <a class="ps-primary" href="creer-pool.html">Créer un pool</a>
+                    <a class="ps-secondary" href="rejoindre-pool.html">Rejoindre un pool</a>
+                </div>
+            </section>` : `
+            <section class="pp-empty">
+                <h1 class="pp-title">Connectez-vous</h1>
+                <p>La page du pool montre ses équipes, ses règles et son repêchage aux membres.</p>
+                <div class="pp-empty-actions">
+                    <a class="ps-primary" href="login.html">Se connecter</a>
+                </div>
+            </section>`;
+    }
+
     function rendre() {
-        if (!poolOuvert) return;
-        const donnees = donneesDuPool(poolOuvert);
-        // Le pool a disparu sous le panneau — quitté, supprimé, renommé
-        // ailleurs. Il n'y a plus rien à régler.
-        if (!donnees) { fermer(); return; }
+        if (!hote()) return;
+        const donnees = poolOuvert ? donneesDuPool(poolOuvert) : null;
+        // Le pool a disparu sous la page — quitté, supprimé, renommé ailleurs.
+        if (!donnees) { rendreVide(); return; }
 
         construireCoquille();
         const createur = estCreateur(donnees);
         const visibles = ONGLETS.filter(o => !o.createurSeulement || createur);
         if (!visibles.some(o => o.cle === ongletActif)) ongletActif = visibles[0].cle;
 
+        const etat = FZPool.draftState(donnees);
+        const mode = (donnees.poolMode || 'cumulative') === 'head-to-head' ? 'Tête-à-tête' : 'Cumulatif';
+        const createurNom = createurDuPool(donnees);
+        document.title = `${poolOuvert} – Fantazy`;
         document.getElementById('psTitre').textContent = poolOuvert;
         document.getElementById('psHeadLabel').textContent =
             poolOuvert === FZPool.get() ? 'Pool actif' : 'Pool';
+        document.getElementById('psHeadSub').textContent = [
+            mode,
+            `${etat.inscrits} participant${etat.inscrits > 1 ? 's' : ''} sur ${etat.max}`,
+            createurNom ? `créé par ${createurNom}` : null
+        ].filter(Boolean).join(' · ');
         document.getElementById('psHeadImg').src = FZPool.image(donnees);
 
         document.getElementById('psTabs').innerHTML = visibles.map(onglet => `
@@ -712,7 +751,7 @@
                     data-onglet="${onglet.cle}">${onglet.titre}</button>`).join('');
 
         const corps = document.getElementById('psBody');
-        const defilement = corps.scrollTop;
+        const defilement = window.scrollY;
         if (ongletActif === 'apercu')   corps.innerHTML = blocApercu(poolOuvert, donnees);
         if (ongletActif === 'regles')   corps.innerHTML = blocRegles(poolOuvert, donnees);
         if (ongletActif === 'equipes')  corps.innerHTML = blocEquipes(poolOuvert, donnees);
@@ -720,7 +759,7 @@
         if (ongletActif === 'identite') corps.innerHTML = blocIdentite(poolOuvert, donnees);
         // Une mise à jour temps réel redessine l'onglet : elle ne doit pas
         // ramener en haut quelqu'un qui lisait la dixième équipe.
-        if (rendre.ongletPrecedent === ongletActif) corps.scrollTop = defilement;
+        if (rendre.ongletPrecedent === ongletActif) window.scrollTo(0, defilement);
         rendre.ongletPrecedent = ongletActif;
 
         brancher(corps, donnees);
@@ -736,7 +775,7 @@
         }
 
         // Les avatars arrivent après coup : on redessine l'onglet une fois le
-        // cache rempli, plutôt que de retarder l'ouverture du panneau.
+        // cache rempli, plutôt que de retarder l'affichage de la page.
         if (typeof prefetchAvatars === 'function' && !rendre.avatarsDemandes) {
             const noms = [
                 ...Object.values(donnees.teams || {}).flatMap(t => t.members || []),
@@ -749,19 +788,32 @@
         }
     }
 
-    /** Un champ du panneau a le focus : le redessiner effacerait la saisie. */
+    /** Un champ de la page a le focus : la redessiner effacerait la saisie. */
     function saisieEnCours() {
         const actif = document.activeElement;
         return !!(actif && racine && racine.contains(actif) && actif.tagName === 'INPUT');
     }
 
+    /**
+     * Changer d'onglet. L'onglet vit dans l'adresse (`?onglet=`) : un
+     * rechargement, un lien partagé ou le bouton Retour y ramènent.
+     */
     function allerA(onglet) {
         ongletActif = onglet;
-        // Un autre onglet repart du haut — sauf pour aller montrer une équipe,
-        // dont rendre() amène lui-même la carte à l'écran.
-        const corps = document.getElementById('psBody');
-        if (corps && !equipeVisee) corps.scrollTop = 0;
+        const url = new URL(window.location.href);
+        if (onglet === 'apercu') url.searchParams.delete('onglet');
+        else url.searchParams.set('onglet', onglet);
+        history.replaceState(null, '', url.toString());
         rendre();
+        // « Participants » dans le tiroir du téléphone mène ici sans
+        // rechargement : le tiroir se referme, et le rail suit l'onglet.
+        if (window.FZNav) { FZNav.closeDrawer(); FZNav.render(); }
+        // Un autre onglet se lit depuis son début — sauf pour aller montrer
+        // une équipe, dont rendre() amène lui-même la carte à l'écran.
+        const onglets = document.getElementById('psTabs');
+        if (!equipeVisee && onglets && onglets.getBoundingClientRect().top < 0) {
+            onglets.scrollIntoView({ block: 'start' });
+        }
     }
 
     function brancher(corps, donnees) {
@@ -844,7 +896,7 @@
      * Le mot de passe du pool : afficher, masquer, copier, changer, retirer.
      *
      * « Afficher » est le seul geste qui le fait sortir du serveur. Il reste
-     * ensuite en mémoire, le temps que le panneau est ouvert.
+     * ensuite en mémoire, le temps qu'on reste sur la page.
      */
     async function actionMotDePasse(action, bouton) {
         const nom = poolOuvert;
@@ -1268,67 +1320,62 @@
         }
     }
 
-    // ==================== OUVERTURE / FERMETURE ====================
+    // ==================== PAGE ====================
 
-    let elementAvant = null;
+    const ONGLETS_CONNUS = new Set(ONGLETS.map(o => o.cle));
 
+    /** L'adresse de la page du pool, sur un onglet donné. */
+    function adresse(nom, onglet) {
+        const params = new URLSearchParams();
+        if (nom && window.FZPool && nom !== FZPool.get()) params.set('pool', nom);
+        if (onglet && onglet !== 'apercu') params.set('onglet', onglet);
+        const requete = params.toString();
+        return requete ? `pool.html?${requete}` : 'pool.html';
+    }
+
+    /**
+     * Mener à la page du pool, sur cet onglet. Déjà dessus : changer
+     * d'onglet sur place, sans rechargement.
+     */
     function ouvrir(nom, onglet) {
         const cible = nom || (window.FZPool && FZPool.get());
-        if (!cible || !donneesDuPool(cible)) return;
+        if (hote() && (!cible || cible === poolOuvert)) {
+            allerA(ONGLETS_CONNUS.has(onglet) ? onglet : 'apercu');
+            return;
+        }
+        window.location.href = adresse(cible, onglet);
+    }
 
-        poolOuvert = cible;
-        ongletActif = onglet || 'apercu';
-        rendre.avatarsDemandes = false;
-        rendre.ongletPrecedent = null;
-        if (mdp && mdp.pool !== cible) mdp = null;
-        if (recherche.pool !== cible) recherche = { pool: cible, q: '', resultats: [], message: '', erreur: false };
+    /**
+     * Démarrage de la page : le pool actif (activePool.js a déjà appliqué un
+     * éventuel `?pool=`), l'onglet de l'adresse.
+     *
+     * La page suit les données en temps réel — une équipe rejointe, un
+     * choix fait, une invitation acceptée. On ne redessine pas pendant
+     * qu'un champ est en cours de saisie : le contenu s'effacerait sous
+     * les doigts.
+     */
+    async function demarrerPage() {
+        if (!hote()) return;
+        if (!window.FZPool || localStorage.getItem('isLoggedIn') !== 'true') { rendreVide(); return; }
+        await FZPool.ready();
 
-        construireCoquille();
+        poolOuvert = FZPool.get();
+        const demande = new URLSearchParams(window.location.search).get('onglet');
+        ongletActif = ONGLETS_CONNUS.has(demande) ? demande : 'apercu';
         rendre();
 
-        elementAvant = document.activeElement;
-        const voile = document.getElementById('psScrim');
-        racine.hidden = false;
-        voile.hidden = false;
-        document.body.classList.add('ps-open');
-        requestAnimationFrame(() => racine.classList.add('is-open'));
-
-        const premier = racine.querySelector('.ps-tab, button, input');
-        if (premier) premier.focus();
-    }
-
-    function fermer() {
-        if (!racine || racine.hidden) return;
-        poolOuvert = null;
-        // Le mot de passe relu ne survit pas à la fermeture du panneau.
-        mdp = null;
-        clearTimeout(minuterieRecherche);
-        racine.classList.remove('is-open');
-        document.body.classList.remove('ps-open');
-        setTimeout(() => {
-            racine.hidden = true;
-            const voile = document.getElementById('psScrim');
-            if (voile) voile.hidden = true;
-            if (elementAvant && elementAvant.focus) elementAvant.focus();
-        }, 200);
-    }
-
-    // Le panneau reste ouvert pendant un repêchage : les données bougent sous
-    // lui (une équipe rejointe, un choix fait) et il doit suivre. On ne
-    // redessine pas pendant qu'un champ est en cours de saisie — le contenu
-    // s'effacerait sous les doigts.
-    function abonner() {
-        if (!window.FZPool) return;
         FZPool.onData(() => {
-            if (!poolOuvert || !racine || racine.hidden) return;
             if (saisieEnCours()) return;
+            // Le pool actif a pu changer sous nous (départ, suppression).
+            poolOuvert = FZPool.get();
             rendre();
         });
     }
 
     /**
-     * N'importe quel élément portant `data-fz-reglages="<onglet>"` ouvre le
-     * panneau sur cet onglet.
+     * N'importe quel élément portant `data-fz-reglages="<onglet>"` mène à
+     * la page du pool, sur cet onglet.
      *
      * L'écoute est posée sur le document, une fois : ces déclencheurs sont
      * dessinés par des scripts qui redessinent leur écran entier (l'accueil,
@@ -1339,18 +1386,20 @@
         const declencheur = e.target.closest && e.target.closest('[data-fz-reglages]');
         if (!declencheur) return;
         e.preventDefault();
-        ouvrir(FZPool.get(), declencheur.dataset.fzReglages || 'apercu');
+        ouvrir(window.FZPool && FZPool.get(), declencheur.dataset.fzReglages || 'apercu');
     });
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', abonner);
+        document.addEventListener('DOMContentLoaded', demarrerPage);
     } else {
-        abonner();
+        demarrerPage();
     }
 
     window.FZPoolSettings = {
+        /** Mène à la page du pool (ou change d'onglet si on y est déjà). */
         open: ouvrir,
-        close: fermer,
+        /** L'adresse de la page du pool, pour un lien. */
+        url: adresse,
         /** Le pool est-il réglable par la personne connectée ? */
         isCreator: nom => estCreateur(donneesDuPool(nom || (window.FZPool && FZPool.get()))),
         creatorOf: nom => createurDuPool(donneesDuPool(nom))
