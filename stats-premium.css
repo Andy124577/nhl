@@ -302,7 +302,7 @@ body.fz-stats td.rank-col {
 }
 body.fz-stats tbody tr:nth-child(1) td.rank-col,
 body.fz-stats tbody tr:nth-child(2) td.rank-col,
-body.fz-stats tbody tr:nth-child(3) td.rank-col { color: var(--fzs-accent); }
+body.fz-stats tbody tr:nth-child(3) td.rank-col { color: var(--text-main); } /* le rouge est réservé à ce qui se touche */
 
 body.fz-stats td.points-column {
   background: transparent;
@@ -332,7 +332,7 @@ body.fz-stats #playerTable tbody td:not(.player-col) {
   color: var(--fzs-text);
 }
 body.fz-stats #playerTable tbody td.rank-col { font-size: 1rem; color: var(--fzs-text-faint); }
-body.fz-stats #playerTable tbody tr:nth-child(-n+3) td.rank-col { color: var(--fzs-accent); }
+body.fz-stats #playerTable tbody tr:nth-child(-n+3) td.rank-col { color: var(--text-main); }
 body.fz-stats #playerTable tbody td.points-column {
   font-weight: 800;
   font-size: 1.32rem;
