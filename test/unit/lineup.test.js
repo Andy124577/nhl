@@ -117,6 +117,27 @@ test('sans banc, une catégorie pleine reste un refus', () => {
     assert.equal(refus.ok, false);
 });
 
+test('un gardien ne va jamais au banc, même avec une place libre', () => {
+    const p = poolH2H();
+    p.config.numGoalies = 1;
+    p.draftOrder = ['A', 'B', 'B', 'A', 'A', 'B'];
+    poolOps.choisirJoueur(p, { username: 'alice', playerName: 'G1', position: 'goalie' });
+    poolOps.choisirJoueur(p, { username: 'bob', playerName: 'G2', position: 'goalie' });
+    poolOps.choisirJoueur(p, { username: 'bob', playerName: 'J1', position: 'offensive' });
+    poolOps.choisirJoueur(p, { username: 'alice', playerName: 'J2', position: 'offensive' });
+
+    const refus = poolOps.choisirJoueur(p, { username: 'alice', playerName: 'G3', position: 'goalie' });
+    assert.equal(refus.ok, false);
+    assert.equal(refus.code, 400);
+    assert.match(refus.message, /gardien ne peut pas aller au banc/);
+    assert.equal((p.teams.A.bench || []).length, 0, 'rien ne bouge sur un refus');
+    assert.equal(p.currentPickIndex, 4, 'le tour reste à Alice');
+
+    // La place de banc reste ouverte aux patineurs.
+    const patineur = poolOps.choisirJoueur(p, { username: 'alice', playerName: 'J3', position: 'offensive' });
+    assert.equal(patineur.banc, true);
+});
+
 // ───────────────────────────── Pointage ─────────────────────────────
 
 test('un match ne compte que si le joueur était partant ce jour-là', async () => {

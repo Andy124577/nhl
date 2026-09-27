@@ -66,15 +66,15 @@ function fzGroupesManquants() {
     const cfg = (typeof draftData !== 'undefined' && draftData && draftData.config)
         || { numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1, numTeams: 1 };
     const equipe = (me && typeof draftData !== 'undefined' && draftData && draftData.teams && draftData.teams[me]) || {};
-    // Une place de banc libre (tête-à-tête) rouvre toutes les positions de
-    // joueur : le prochain choix d'une catégorie pleine ira au banc.
+    // Une place de banc libre (tête-à-tête) rouvre les positions de patineur :
+    // le prochain choix d'une catégorie pleine ira au banc. Jamais un gardien.
     const bancLibre = typeof window.fzQuotaBanc === 'function' && typeof draftData !== 'undefined'
         && (equipe.bench || []).length < window.fzQuotaBanc(draftData);
     return {
         offensive: bancLibre || (equipe.offensive || []).length < (cfg.numOffensive ?? 6),
         defensive: bancLibre || (equipe.defensive || []).length < (cfg.numDefensive ?? 4),
         rookie: bancLibre || (equipe.rookie || []).length < (cfg.numRookies ?? 1),
-        goalie: bancLibre || (equipe.goalie || []).length < (cfg.numGoalies ?? 1),
+        goalie: (equipe.goalie || []).length < (cfg.numGoalies ?? 1),
         // « team » : même clé que fzGroupKeyFor pour un club LNH.
         team: (equipe.teams || []).length < (cfg.numTeams ?? 1)
     };

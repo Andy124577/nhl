@@ -128,13 +128,12 @@ function fzStatBlurb(rec, kind) {
     return `${rec.goals ?? '-'} B · ${rec.assists ?? '-'} A`;
 }
 
-/** Tout ce qui a déjà été pris, toutes équipes confondues — comme updateTable(). */
+/** Tout ce qui a déjà été pris, toutes équipes confondues, banc compris — comme updateTable(). */
 function fzPickedSet() {
     const set = new Set();
     if (typeof draftData !== 'undefined' && draftData && draftData.teams) {
         Object.values(draftData.teams).forEach(e => {
-            [].concat(e.offensive || [], e.defensive || [], e.rookie || [], e.goalie || [], e.teams || [])
-                .forEach(n => set.add(n));
+            window.fzNomsChoisis(e).forEach(n => set.add(n));
         });
     }
     return set;

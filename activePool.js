@@ -111,6 +111,21 @@
     }
     window.fzQuotaBanc = quotaBanc;
 
+    /**
+     * Tous les noms choisis par une équipe, banc compris. Le banc garde des
+     * objets { nom, categorie } (lib/poolOps.js), les autres cases des noms :
+     * l'oublier laisse un joueur repêché au banc dans la liste des autres.
+     */
+    function nomsChoisis(equipe) {
+        if (!equipe) return [];
+        return [].concat(
+            equipe.offensive || [], equipe.defensive || [], equipe.rookie || [],
+            equipe.goalie || [], equipe.teams || [],
+            (equipe.bench || []).map(b => (typeof b === 'string' ? b : b && b.nom))
+        ).filter(Boolean);
+    }
+    window.fzNomsChoisis = nomsChoisis;
+
     /** Un effectif existe-t-il ? Sert à savoir si échanges et classement ont du sens. */
     function aUnEffectif(teamData) {
         if (!teamData) return false;
