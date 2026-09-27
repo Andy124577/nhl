@@ -40,19 +40,8 @@ html[data-theme="light"] #fzDashSection:is(.is-drafting, .is-season) .fz-dash {
 
 html[data-theme="light"] .fzh h2 { color: var(--fzh-ink); }
 html[data-theme="light"] .fzh :is(.fzh-eyebrow, .fzh-game p, .fzh-empty) { color: var(--fzh-muted); }
-html[data-theme="light"] .fzh .fzh-draft-description { color: var(--fzh-text); }
-html[data-theme="light"] .fzh .fzh-draft-description span,
-html[data-theme="light"] .fzh .fzh-estimate .fzh-icon { color: var(--fzh-muted); }
-html[data-theme="light"] .fzh .fzh-draft-stats > div { border-left-color: var(--fzh-border); }
-html[data-theme="light"] .fzh .fzh-draft-stats dt { color: var(--fzh-muted); }
-html[data-theme="light"] .fzh .fzh-puck:after { background: var(--fzh-border); }
-
-/* Pastille « En cours » : accueil-draft.css la teinte déjà avec --success,
-   qui bascule seul — plus rien à reprendre ici. */
-
-html[data-theme="light"] .fzh .fzh-participant { color: var(--fzh-ink); }
-html[data-theme="light"] .fzh .fzh-participant i { background: var(--fzh-tint); }
-html[data-theme="light"] .fzh .fzh-participant:nth-child(n+5) i { background: var(--fzh-raised); color: var(--fzh-text); }
+/* Le héros du repêchage (accueil-draft-hero.css) reste sombre dans les deux
+   thèmes, comme sur la maquette : il n'a rien à reprendre ici. */
 
 html[data-theme="light"] .fzh .fzh-game-badge:not(.is-live) { background: var(--fzh-raised); color: var(--fzh-text); }
 
@@ -94,8 +83,8 @@ html[data-theme="light"] .fzs :is(.fzs-rank p span, .fzs-game footer, .fzs-playe
 html[data-theme="light"] .fzs :is(.fzs-player-name strong, .fzm-news-row, .fzm-news-headline) { color: var(--fzh-ink); }
 html[data-theme="light"] .fzs .fzs-player-stats { color: var(--fzh-text); }
 /* Le héros garde sa glace, fondue dans le panneau clair plutôt que noir. */
-html[data-theme="light"] #fzDashSection :is(.fzs-hero, .fzh-draft)::after { background: linear-gradient(90deg, #fff 5%, #ffffffd9 45%, transparent); }
-html[data-theme="light"] :is(.fzs .fzs-ice, .fzh .fzh-ice) { opacity: .18; }
+html[data-theme="light"] #fzDashSection .fzs-hero::after { background: linear-gradient(90deg, #fff 5%, #ffffffd9 45%, transparent); }
+html[data-theme="light"] .fzs .fzs-ice { opacity: .18; }
 /* La règle `.fzs p` ci-dessus l'emporterait sur les deux couleurs d'écart. */
 html[data-theme="light"] .fzs .fzs-green { color: var(--success); }
 html[data-theme="light"] .fzs .fzs-red { color: var(--primary-text); }
@@ -110,7 +99,6 @@ html[data-theme="light"] .fzs .fzs-dots .is-on { background: var(--success); }
     html[data-theme="light"] .fzs .fzs-player,
     html[data-theme="light"] .fzs .fzs-player:last-child { border-color: var(--fzh-border); }
     html[data-theme="light"] .fzs .fzs-player-stats small { border-top-color: var(--fzh-border); }
-    html[data-theme="light"] .fzh .fzh-participant { border-color: var(--fzh-border); }
 }
 
 /* ─────────────── 5. Accueil sans pool, carte d'actualité ─────────────── */

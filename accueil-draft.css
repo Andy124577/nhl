@@ -1,4 +1,5 @@
-﻿/* Draft-in-progress reference: Apple dark-ladder panels, condensed type, red actions. */
+﻿/* Draft home: Apple dark-ladder panels, condensed type, red actions. The hero
+   on top has its own sheet (accueil-draft-hero.css). */
 body.fz-draft-page { background:var(--bg); }
 .fz-draft-page #storiesSection { display:none!important; }
 #fzDashSection.is-drafting { padding:16px 22px 24px; background:var(--bg); }
@@ -22,31 +23,9 @@ body.fz-draft-page { background:var(--bg); }
 .fzh .fzh-news h2 { margin:8px 0 5px; font:700 25px/1.13 'Barlow Condensed',sans-serif; text-transform:none; display:block; }
 .fzh .fzh-news h2 a { color:#F5F5F7; }.fzh-news-copy p { margin:6px 0; font-size:16px; color:#F5F5F7; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }.fzh-news-copy small { display:block; margin-top:7px; color:#A1A1A6; font-size:14px; }.fzh-news-copy small span { margin:0 7px; }
 .fzh-news-controls { position:absolute; right:16px; bottom:12px; display:flex; align-items:center; gap:10px; }.fzh-news-controls > button { width:42px; height:42px; display:grid; place-items:center; border:1px solid #636366; border-radius:50%; background:rgba(28,28,30,.72); color:white; }.fzh-news-dots { display:flex; margin-right:28px; gap:10px; }.fzh-news-dots button { width:12px; height:12px; background:#636366; border:0; border-radius:50%; padding:0; }.fzh-news-dots button[aria-pressed=true] { background:var(--primary); }
-.fzh .fzh-draft { grid-column:1/-1; padding:12px 28px 16px; position:relative; overflow:hidden; background:repeating-radial-gradient(ellipse at 100% -140%,transparent 0 65px,#63636610 66px 67px),#1C1C1E; }
-.fzh-draft.is-my-turn { border-color:var(--primary); box-shadow:inset 0 0 40px rgba(var(--primary-rgb),.06); }
-/* Même glace que le héros de la saison (.fzs-ice) : la photo sous un fondu
-   qui laisse le texte de gauche sur un fond plein. */
-.fzh .fzh-draft { isolation:isolate; }
-.fzh-ice { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 62%; opacity:.3; z-index:-2; pointer-events:none; }
-.fzh-draft:after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,#1C1C1E 5%,#1C1C1Eb8 45%,transparent); z-index:-1; pointer-events:none; }
-/* Pastille « En cours » : c'est du direct, elle doit battre. Le point
-   respire et lance deux ondes décalées ; la pastille luit au même rythme.
-   Voile --success à 12 % sur la carte : le vert y tient 4,5:1 en clair
-   comme en sombre, et le tout suit le thème sans règle claire. */
-.fzh-status { display:inline-flex; align-items:center; gap:16px; border-radius:20px; padding:4px 18px 4px 12px; background:color-mix(in srgb,var(--success) 12%,var(--card)); color:var(--success); font-weight:600; text-transform:uppercase; font-size:14px; letter-spacing:.5px; box-shadow:0 0 0 1px color-mix(in srgb,var(--success) 20%,transparent); animation:fzh-live-glow 1.8s ease-in-out infinite; }
-.fzh-status i { position:relative; width:14px; height:14px; border-radius:50%; background:var(--success); box-shadow:0 0 13px color-mix(in srgb,var(--success) 40%,transparent); animation:fzh-live-dot 1.8s ease-in-out infinite; }
-.fzh-status i:before,.fzh-status i:after { content:''; position:absolute; inset:0; border-radius:50%; background:inherit; animation:fzh-live-ring 1.8s cubic-bezier(0,0,.2,1) infinite; }
-.fzh-status i:after { animation-delay:.9s; }
-@keyframes fzh-live-ring { 0% { transform:scale(1); opacity:.75; } 100% { transform:scale(2.9); opacity:0; } }
-@keyframes fzh-live-dot { 0%,100% { transform:scale(1); } 50% { transform:scale(.78); } }
-@keyframes fzh-live-glow { 0%,100% { box-shadow:0 0 0 1px color-mix(in srgb,var(--success) 20%,transparent),0 0 0 0 transparent; } 50% { box-shadow:0 0 0 1px color-mix(in srgb,var(--success) 40%,transparent),0 0 18px 2px color-mix(in srgb,var(--success) 20%,transparent); } }
-@media(prefers-reduced-motion:reduce) { .fzh-status,.fzh-status i,.fzh-status i:before,.fzh-status i:after { animation:none; } }
-.fzh-draft-main { display:flex; align-items:center; gap:30px; min-height:92px; }.fzh-draft-copy { flex:1; min-width:0; }.fzh-eyebrow { display:block; color:#A1A1A6; font:400 13px/1.4 'Oswald',sans-serif; text-transform:uppercase; letter-spacing:1.3px; margin:0; }
-.fzh h1 { font:700 clamp(25px,2.1vw,37px)/1.2 'Barlow Condensed',sans-serif; text-transform:uppercase; margin:3px 0; letter-spacing:.3px; }.fzh-draft-description { margin:0; color:#F5F5F7; font-size:17px; }.fzh-draft-description span { margin:0 10px; color:#A1A1A6; }
-.fzh-puck { position:relative; width:80px; height:67px; flex-shrink:0; margin-right:0; }.fzh-puck:before { content:''; position:absolute; top:14px; left:3px; width:71px; height:43px; border-radius:50%; background:linear-gradient(120deg,#2C2C2E,#000000 65%); border:1px solid #636366; box-shadow:0 13px 0 -1px #000000,0 14px 0 #636366,0 19px 12px #0009; transform:rotate(-23deg); }.fzh-puck:after { content:''; position:absolute; left:108px; top:0; width:1px; height:76px; background:#38383A; }
-.fzh-draft-stats { display:flex; margin:0; flex-shrink:0; }.fzh-draft-stats > div { padding:2px 24px; border-left:1px solid #38383A; }.fzh-draft-stats dt { color:#A1A1A6; font-size:14px; text-transform:uppercase; letter-spacing:1px; }.fzh-draft-stats dd { margin:6px 0 0; font:600 28px 'Barlow Condensed',sans-serif; white-space:nowrap; }.fzh-draft-stats .fzh-estimate { font-size:23px; }.fzh-estimate .fzh-icon { color:#A1A1A6; margin-left:5px; }
-.fzh-draft-bottom { display:flex; justify-content:space-between; align-items:end; gap:22px; margin-top:7px; }.fzh-participants { min-width:0; flex:1; }.fzh-participants > .fzh-eyebrow { font-size:12px; letter-spacing:1px; margin-bottom:6px; }.fzh-participant-track { display:flex; gap:17px; overflow-x:auto; scrollbar-width:thin; }.fzh-participant { display:flex; align-items:center; gap:12px; white-space:nowrap; color:#F5F5F7; font-size:14px; }.fzh-participant i { display:grid; place-items:center; width:35px; height:35px; border-radius:50%; font:600 17px 'Barlow Condensed',sans-serif; background:rgba(var(--primary-rgb),.16); color:var(--primary-text); flex-shrink:0; }.fzh-participant:nth-child(n+5) i { background:#3A3A3C; color:#F5F5F7; }.fzh-participant b { padding:2px 10px; background:var(--primary); color:var(--on-primary); border-radius:14px; text-transform:uppercase; font-size:14px; font-weight:500; }
-.fzh .fzh-cta { display:flex; gap:25px; justify-content:space-between; align-items:center; padding:18px 28px; min-width:280px; background:var(--primary); box-shadow:none; border-radius:10px; color:var(--on-primary); font:600 18px 'Barlow Condensed',sans-serif; text-transform:uppercase; }.fzh .fzh-cta:hover { background:var(--primary-deep); color:var(--on-primary); }
+
+.fzh-eyebrow { display:block; color:#A1A1A6; font:400 13px/1.4 'Oswald',sans-serif; text-transform:uppercase; letter-spacing:1.3px; margin:0; }
+
 /* Alignement : le texte à gauche, un schéma de la glace à droite — trio en
    haut, paire au milieu, gardien devant son filet —, le lien en dessous.
    Tout passe par les jetons --fzh-* : la carte suit le thème seule. */
@@ -114,28 +93,19 @@ body.fz-draft-page { background:var(--bg); }
 .fzh-picks-player.is-club .fzd-off-face img { object-fit:contain; padding:4px; background:transparent; }
 .fzh-picks-none { margin:10px 0 0; color:var(--fzh-muted); font-size:15px; }
 
-@media(min-width:769px) and (max-width:1350px) { .fzh-draft-main { gap:20px; }.fzh-draft-stats > div { padding:0 14px; }.fzh-draft-stats dd { font-size:23px; }.fzh-draft-stats .fzh-estimate { font-size:18px; }.fzh-puck { width:65px; transform:scale(.85); }.fzh-puck:after { left:83px; }.fzh-draft-description { font-size:15px; }.fzh .fzh-cta { min-width:225px; }.fzh .fzh-lines { gap:12px 18px; padding:16px 20px; } }
-@media(max-width:1000px) and (min-width:769px) { .fzh-draft-main { flex-wrap:wrap; }.fzh-draft-stats { margin-left:85px; margin-bottom:8px; }.fzh-draft-stats > div:first-child { padding-left:0; border:0; }.fzh-news-copy { max-width:65%; }.fzh-lines-legend { display:none; } }
+@media(min-width:769px) and (max-width:1350px) { .fzh .fzh-lines { gap:12px 18px; padding:16px 20px; } }
+@media(max-width:1000px) and (min-width:769px) { .fzh-news-copy { max-width:65%; }.fzh-lines-legend { display:none; } }
 @media(max-width:768px) {
  #fzDashSection.is-drafting { padding:14px 16px calc(90px + env(safe-area-inset-bottom)); }
  .fzh { grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; font-size:16px; }
  .fzh .fzh-panel { border-radius:12px; }.fzh .fzh-news { order:7; min-height:215px; }.fzh-news-copy { padding:18px 20px; max-width:65%; }.fzh .fzh-news h2 { font-size:23px; }.fzh-news-copy p { font-size:15px; }.fzh-news-copy small { margin-top:12px; font-size:13px; }.fzh-news-badge { font-size:12px; padding:4px 12px; }.fzh-news-controls { right:12px; bottom:12px; gap:7px; }.fzh-news-controls > button { width:36px; height:36px; }.fzh-news-dots { margin-right:10px; gap:7px; }.fzh-news-dots button { width:9px; height:9px; }
- .fzh .fzh-draft { order:1; padding:14px 18px 16px; }.fzh-status { font-size:12px; padding:4px 14px 4px 10px; gap:10px; }.fzh-status i { width:12px; height:12px; }.fzh-draft-main { display:grid; grid-template-columns:70px minmax(0,1fr); gap:0 24px; margin-top:8px; }.fzh-puck { width:68px; grid-row:span 2; transform:scale(.85); transform-origin:left center; }.fzh-puck:after { left:91px; height:76px; }.fzh h1 { font-size:30px; white-space:normal; line-height:1.1; margin:6px 0; }.fzh-eyebrow { font-size:11px; letter-spacing:1.1px; }.fzh-draft-description { display:none; }.fzh-draft-stats { display:flex; flex-wrap:wrap; gap:4px 10px; grid-column:2; }.fzh-draft-stats > div { border:0; padding:0; display:flex; align-items:baseline; gap:4px; }.fzh-draft-stats dt { font-size:13px; letter-spacing:0; text-transform:none; }.fzh-draft-stats dd,.fzh-draft-stats .fzh-estimate { margin:0; font:400 14px 'Barlow Condensed',sans-serif; }.fzh-estimate .fzh-icon { display:none; }.fzh-draft-bottom { gap:12px; align-items:center; margin-top:16px; }.fzh-participants > .fzh-eyebrow { display:none; }.fzh-participant-track { gap:8px; }.fzh-participant { gap:7px; font-size:13px; padding:3px 8px 3px 3px; border:1px solid #38383A; border-radius:22px; }.fzh-participant i { width:28px; height:28px; font-size:15px; }.fzh-participant b { font-size:11px; padding:1px 6px; }.fzh .fzh-cta { min-width:0; padding:14px 17px; font-size:15px; gap:10px; border-radius:8px; white-space:nowrap; }.fzh-cta svg { width:20px; }
+ .fzh-eyebrow { font-size:11px; letter-spacing:1.1px; }
  .fzh .fzh-lines { grid-column:1/-1; order:2; padding:14px 16px; column-gap:16px; }.fzh-lines-copy { align-self:center; }.fzh .fzh-lines h2 { font-size:24px; }.fzh-lines-text { font-size:14px; }
  .fzh-scores { grid-column:1/-1; display:block; order:3; padding:14px; }.fzh :is(#fzdOffCount, #fzdOffMoves, #fzdOffWatch) { grid-column:1/-1; }.fzh #fzdOffCount { order:2; padding:16px; }.fzh #fzdOffMoves { order:4; }.fzh #fzdOffWatch { order:5; padding:14px; }.fzh h2 { font-size:15px; gap:12px; }
  .fzh .fzh-picks { order:3; padding:14px; }.fzh-picks-group { grid-template-columns:minmax(0,1fr); gap:6px; }.fzh-picks-label { margin:0; justify-content:flex-start; }.fzh-picks-players { grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px; }.fzh-picks-player { gap:7px; padding:5px 8px 5px 5px; }.fzh-picks-player strong { font-size:15px; }.fzh .fzh-picks-player .fzd-off-face { width:30px; height:30px; }.fzh-picks-none { margin:0; }
 }
 @media(max-width:480px) {
- #fzDashSection.is-drafting { padding-left:12px; padding-right:12px; }.fzh-news-copy { max-width:86%; padding:17px; }.fzh .fzh-news h2 { max-width:260px; }.fzh-news-copy p { max-width:230px; }.fzh-news-copy small { max-width:190px; }.fzh-news-controls { bottom:12px; }.fzh-news-dots { display:none; }.fzh-news:after { background:linear-gradient(90deg,#1C1C1Ef5,#1C1C1Ead 60%,#1C1C1E66); }.fzh-news-image { object-position:65% center; }.fzh .fzh-draft { padding:14px; }.fzh-draft-main { grid-template-columns:45px minmax(0,1fr); column-gap:15px; }.fzh-puck { transform:scale(.58); }.fzh-puck:after { left:86px; }.fzh h1 { font-size:27px; }.fzh-draft-stats { column-gap:10px; }.fzh-draft-stats > div:last-child { flex-basis:100%; }.fzh-draft-bottom { flex-wrap:wrap; }.fzh-participants { flex-basis:100%; }.fzh .fzh-cta { width:100%; justify-content:center; padding:13px; }.fzh .fzh-lines { grid-template-areas:'copy visual' 'cta cta'; padding:14px; }.fzh .fzh-lines h2 { font-size:22px; }.fzh .fzh-lines-cta { justify-self:stretch; justify-content:center; }.fzh-lines-legend { display:none; }.fzh .fzh-link { font-size:13px; gap:6px; }
+ #fzDashSection.is-drafting { padding-left:12px; padding-right:12px; }.fzh-news-copy { max-width:86%; padding:17px; }.fzh .fzh-news h2 { max-width:260px; }.fzh-news-copy p { max-width:230px; }.fzh-news-copy small { max-width:190px; }.fzh-news-controls { bottom:12px; }.fzh-news-dots { display:none; }.fzh-news:after { background:linear-gradient(90deg,#1C1C1Ef5,#1C1C1Ead 60%,#1C1C1E66); }.fzh-news-image { object-position:65% center; }.fzh .fzh-lines { grid-template-areas:'copy visual' 'cta cta'; padding:14px; }.fzh .fzh-lines h2 { font-size:22px; }.fzh .fzh-lines-cta { justify-self:stretch; justify-content:center; }.fzh-lines-legend { display:none; }.fzh .fzh-link { font-size:13px; gap:6px; }
 }
 @media(prefers-reduced-motion:reduce) { .fzh * { scroll-behavior:auto!important; } }
-.fzh-participant-more { flex-shrink:0; width:38px; height:38px; border-radius:50%; border:1px solid #38383A; background:#1C1C1E; color:#F5F5F7; }
 
-@media(min-width:769px) { .fzh-participant-track:not(.is-expanded) .fzh-participant:nth-child(n+7) { display:none; } }
-@media(max-width:768px) {
- .fzh-participant-more { display:none; }
-}
-
-@media(min-width:1100px) {
- .fzh-draft-stats { flex:0 0 44%; }.fzh-draft-stats > div { flex:1; padding-left:24px; padding-right:16px; }.fzh h1 { font-size:37px; }
-}

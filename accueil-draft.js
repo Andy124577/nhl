@@ -4,6 +4,7 @@ let fzhNewsIndex = 0;
 
 function fzhReset() {
     if (!document.getElementById('fzDraftHome')) return;
+    if (typeof fzhHeroArreter === 'function') fzhHeroArreter();
     fzdRestoreCalendar();
     document.getElementById('fzDraftHome').remove();
     document.getElementById('fzDashSection')?.classList.remove('is-drafting');
@@ -28,9 +29,14 @@ function fzhHeading(icon, text, action = '') {
     return `<header class="fzh-heading"><h2>${fzhIcon(icon)}${text}</h2>${action}</header>`;
 }
 
+/**
+ * L'accueil du repêchage, du pool tout juste créé à la fin des choix : le
+ * héros (accueil-draft-hero.js) en haut, puis les blocs partagés. Avant le
+ * départ, le panneau « Sélections » n'a rien à montrer et reste absent.
+ */
 function renderDraftHome({ tonight, activeName }) {
     const state = fzdHeroState(tonight);
-    if (!state || state.mode !== 'draft') { fzhReset(); return false; }
+    if (!state || (state.mode !== 'draft' && state.mode !== 'predraft')) { fzhReset(); return false; }
     fzsReset();
     fzdRestoreCalendar();
     fzdStopHeroTimer('fzDashHero');
@@ -46,54 +52,26 @@ function renderDraftHome({ tonight, activeName }) {
         section.querySelector('.fz-dash').appendChild(root);
     }
     const { poolData, team } = state;
-    const order = poolData.draftOrder || [];
-    const pick = poolData.currentPickIndex || 0;
-    const teams = new Set(order).size || 1;
-    const round = Math.floor(pick / teams) + 1;
-    const rounds = Math.ceil(order.length / teams);
-    const next = order.indexOf(team.name, pick);
-    const away = next < 0 ? null : next - pick;
-    const participants = [...new Set(Object.values(poolData.teams || {}).flatMap(t => t.members || []))];
-    const url = `draftActif.html?pool=${encodeURIComponent(activeName)}`;
+    const started = state.mode === 'draft';
     const liveGames = fzhLiveGames(tonight);
     root.innerHTML = `
-        <section class="fzh-draft fzh-panel${away === 0 ? ' is-my-turn' : ''}" aria-labelledby="fzhDraftTitle">
-            <img class="fzh-ice" src="assets/hero/fantazy-ice-reference.png" alt="">
-            <span class="fzh-status"><i></i>${away === 0 ? 'À vous de jouer' : 'En cours'}</span>
-            <div class="fzh-draft-main"><div class="fzh-puck" aria-hidden="true"><i></i></div>
-                <div class="fzh-draft-copy"><p class="fzh-eyebrow" role="status">${away === 0 ? 'C’est votre tour' : away === null ? 'Tous vos choix sont faits' : `Votre tour dans ${away} choix`}</p><h1 id="fzhDraftTitle">Repêchage en cours</h1><p class="fzh-draft-description">${poolData.instant ? 'Pool rapide' : escapeHTML(activeName)} <span>•</span> ${teams} équipes <span>•</span> ${rounds} rondes</p></div>
-                <dl class="fzh-draft-stats"><div><dt>Ronde</dt><dd>${round} / ${rounds}</dd></div><div><dt>Choix actuel</dt><dd>${pick + 1} / ${order.length}</dd></div><div><dt>Tour estimé</dt><dd class="fzh-estimate">${away === 0 ? 'Maintenant' : away === null ? 'Terminé' : 'À déterminer'} <span title="Le délai dépend du rythme des prochains choix.">${fzhIcon('info', 17)}</span></dd></div></dl>
-            </div>
-            <div class="fzh-draft-bottom"><div class="fzh-participants"><span class="fzh-eyebrow">Participants (${participants.length})</span><div class="fzh-participant-track">${participants.map(name => `<span class="fzh-participant${name === userData.username ? ' is-me' : ''}"><i>${escapeHTML(name.charAt(0).toUpperCase())}</i><span>${escapeHTML(name)}</span>${name === userData.username ? '<b>Toi</b>' : ''}</span>`).join('')}</div></div><a class="fzh-cta" href="${url}">${away === 0 ? 'Faire mon choix' : 'Aller au repêchage'} ${fzhIcon('arrow-right', 26)}</a></div>
-        </section>
+        <div class="fzh-barre-place" data-fzh-barre></div>
+        <div class="fzh-hero-place" data-fzh-hero></div>
         <div class="fzh-slot" data-fz-bloc="horssaison"></div>
         ${fzhLinesHTML()}
         ${liveGames.length ? `<section class="fzh-scores fzh-panel">${fzhHeading('zap', 'Matchs en direct', '<a class="fzh-link" href="calendrier.html">Calendrier complet <span aria-hidden="true">→</span></a>')}<div class="fzh-score-track">${fzhGamesHTML(liveGames)}</div></section>` : ''}
-        <section class="fzh-picks fzh-panel" id="fzhPicks" aria-labelledby="fzhPicksTitle">${fzhHeading('users', '<span id="fzhPicksTitle">Sélections</span>')}<div class="fzh-picks-tabs" role="group" aria-label="Équipes du pool"></div><div class="fzh-picks-body" aria-live="polite"></div></section>
+        ${started ? '<section class="fzh-picks fzh-panel" id="fzhPicks" aria-labelledby="fzhPicksTitle">' + fzhHeading('users', '<span id="fzhPicksTitle">Sélections</span>') + '<div class="fzh-picks-tabs" role="group" aria-label="Équipes du pool"></div><div class="fzh-picks-body" aria-live="polite"></div></section>' : ''}
         <div class="fzh-slot" data-fz-bloc="mouvements"></div>
         <div class="fzh-slot" data-fz-bloc="surveiller"></div>
         <section class="fzh-news fzh-panel" id="fzhNews" aria-label="Actualités LNH"><div class="fzh-news-copy"><span class="fzh-news-badge">LNH</span><h2>Le hockey n’attend pas.</h2><p>Préparez votre prochain choix.</p><small>Chargement des actualités…</small></div></section>`;
+    fzhHeroBrancher(root);
+    fzhHeroRendre(root, { poolData, poolName: activeName, teamName: team.name });
     // Les panneaux partagés arrivent d'index.html : on les met en place avant
     // de les remplir (voir fzdPlaceCalendar, accueil-dash.js). Le calendrier
     // n'a pas d'emplacement ici — rien ne se joue avant la fin du repêchage —
     // et reste donc masqué à sa place d'origine.
     fzdPlaceCalendar();
-    fzhRenderPicks(root, poolData, team.name);
-    if (participants.length > 6) {
-        const track = root.querySelector('.fzh-participant-track');
-        const more = document.createElement('button');
-        more.type = 'button'; more.className = 'fzh-participant-more';
-        more.textContent = `+${participants.length - 6}`;
-        more.setAttribute('aria-label', 'Afficher tous les participants');
-        more.setAttribute('aria-expanded', 'false');
-        more.addEventListener('click', () => {
-            const expanded = track.classList.toggle('is-expanded');
-            more.setAttribute('aria-expanded', String(expanded));
-            more.setAttribute('aria-label', expanded ? 'Réduire les participants' : 'Afficher tous les participants');
-            more.textContent = expanded ? '−' : `+${participants.length - 6}`;
-        });
-        track.appendChild(more);
-    }
+    if (started) fzhRenderPicks(root, poolData, team.name);
     fzdRendreSurveiller();
     fzdRendreMouvements();
     fzhLoadNews(root);

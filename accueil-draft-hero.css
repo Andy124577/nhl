@@ -1,0 +1,358 @@
+/* ============================================================
+   ACCUEIL — HÉROS DU REPÊCHAGE (maquette « Accueil v2 »)
+   ------------------------------------------------------------
+   Rendu par accueil-draft-hero.js. Le bloc reste sombre dans les deux
+   thèmes, comme sur la maquette, et passe au rouge quand c'est mon tour.
+   Les rouges viennent des jetons du site (--primary, --primary-deep) : le
+   rouge de la maquette en est une variante à peine plus sombre.
+   ============================================================ */
+
+.fzh-hero-place,
+.fzh-barre-place { grid-column: 1 / -1; min-width: 0; }
+
+.fzh .fzh-hero,
+.fzh .fzh-barre {
+    --h-fond: #121316;
+    --h-panneau: #18191D;
+    --h-trait: #2A2C31;
+    --h-discret: #8A8D95;
+    --h-doux: #C9CBD1;
+    --h-sous: #A3A6AE;
+    --h-vert: #34D378;
+    --h-vert-texte: #5BE39A;
+    font-family: 'Barlow', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.fzh-sr {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+/* ---- Point vivant : la pastille et la barre ---- */
+.fzh .fzh-point {
+    width: 8px; height: 8px; flex-shrink: 0;
+    border-radius: 50%;
+    background: currentColor;
+    animation: fzh-point 1.6s infinite;
+}
+@keyframes fzh-point {
+    0%   { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 60%, transparent); }
+    70%  { box-shadow: 0 0 0 8px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* ==================== BARRE DU HAUT ==================== */
+
+.fzh .fzh-barre {
+    position: relative;
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 32px;
+    background: #141518;
+    color: #fff;
+    font-size: 13px; font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: opacity .15s;
+}
+/* Pleine largeur de la section : les marges négatives sont sur l'élément
+   collant lui-même — posées sur la barre, elles la feraient glisser sous
+   l'en-tête une fois collée. */
+/* `--fzh-nav` : la hauteur réelle de l'en-tête, mesurée par
+   accueil-draft-hero.js — elle varie d'un écran à l'autre. */
+.fzh-barre-place { position: sticky; top: var(--fzh-nav, 60px); z-index: 20; margin: -16px -22px 0; }
+.fzh .fzh-barre:hover { opacity: .92; color: #fff; }
+.fzh .fzh-barre:focus-visible { outline: 2px solid #fff; outline-offset: -4px; }
+.fzh-barre .fzh-point { color: var(--h-vert); }
+.fzh-barre.is-pre .fzh-point { color: var(--h-discret); animation: none; }
+.fzh-barre.is-onclock { background: var(--primary-deep); }
+.fzh-barre.is-onclock .fzh-point { color: #fff; }
+.fzh-barre-libelle,
+.fzh-barre-cta { font-family: 'Oswald', sans-serif; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; }
+.fzh-barre-pool { opacity: .75; font-weight: 600; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.fzh-barre-sep { opacity: .4; }
+.fzh-barre-texte { overflow: hidden; text-overflow: ellipsis; min-width: 0; font-variant-numeric: tabular-nums; }
+.fzh-barre-cta { margin-left: auto; flex-shrink: 0; }
+
+/* ==================== HÉROS ==================== */
+
+.fzh .fzh-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    background: var(--h-fond);
+    color: #fff;
+    transition: background .4s;
+}
+/* Sur le fond noir du thème sombre, le bloc se détache par son contour. */
+html:not([data-theme="light"]) .fzh .fzh-hero { box-shadow: 0 0 0 1px var(--h-trait); }
+
+/* Je suis le prochain : un liseré rouge en tête. */
+.fzh-hero.is-next::before {
+    content: ''; position: absolute; inset: 0 0 auto; height: 4px;
+    background: var(--primary);
+}
+
+/* Mon tour : tout passe au rouge. */
+.fzh .fzh-hero.is-onclock {
+    --h-fond: var(--primary-deep);
+    --h-panneau: color-mix(in srgb, var(--primary-deep) 82%, #000);
+    --h-discret: rgba(255, 255, 255, .75);
+    --h-doux: rgba(255, 255, 255, .9);
+    --h-trait: rgba(255, 255, 255, .2);
+    --h-sous: rgba(255, 255, 255, .75);
+    box-shadow: none;
+}
+
+.fzh-hero-grille {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+}
+
+.fzh-hero-principal {
+    display: flex; flex-direction: column; gap: 22px;
+    min-width: 0;
+    padding: 30px 36px;
+}
+
+.fzh-hero-haut { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fzh .fzh-puce {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 12px 5px 10px;
+    border-radius: 999px;
+    background: rgba(52, 211, 120, .12);
+    color: var(--h-vert-texte);
+    font: 500 13px/1.3 'Oswald', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.fzh-puce .fzh-point { color: var(--h-vert); }
+.fzh-hero.is-pre .fzh-puce { background: rgba(255, 255, 255, .08); color: #fff; }
+.fzh-hero.is-pre .fzh-puce .fzh-point { color: #fff; animation: none; }
+.fzh-hero.is-next .fzh-puce { background: rgba(var(--primary-rgb), .2); color: var(--primary-text); }
+.fzh-hero.is-next .fzh-puce .fzh-point { color: var(--primary-text); }
+.fzh-hero.is-onclock .fzh-puce { background: rgba(255, 255, 255, .18); color: #fff; }
+.fzh-hero.is-onclock .fzh-puce .fzh-point { color: #fff; }
+.fzh-hero-meta { font-size: 13px; color: var(--h-discret); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+.fzh-hero-copie { display: flex; flex-direction: column; gap: 10px; }
+.fzh .fzh-hero h1 {
+    margin: 0;
+    font: 600 clamp(36px, 4.8vw, 64px)/1 'Oswald', sans-serif;
+    letter-spacing: -.5px;
+    text-transform: uppercase;
+    color: #fff;
+    text-wrap: balance;
+}
+.fzh-hero-copie p { margin: 0; max-width: 540px; font-size: 16px; line-height: 1.45; color: var(--h-doux); text-wrap: pretty; }
+
+.fzh-hero-actions { display: flex; align-items: flex-end; gap: 28px; flex-wrap: wrap; }
+.fzh .fzh-hero-cta {
+    display: inline-flex; align-items: center; gap: 14px;
+    padding: 16px 26px;
+    border: 1px solid var(--primary);
+    border-radius: 10px;
+    background: var(--primary);
+    color: #fff;
+    font: 500 18px/1 'Oswald', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: filter .15s, background .15s;
+}
+.fzh .fzh-hero-cta > span { font-size: 20px; }
+.fzh .fzh-hero-cta:hover { color: #fff; filter: brightness(1.1); }
+.fzh .fzh-hero-cta.is-ghost { background: transparent; border-color: #5A5D65; }
+.fzh .fzh-hero-cta.is-ghost:hover { background: rgba(255, 255, 255, .06); filter: none; }
+.fzh .fzh-hero-cta.is-blanc { background: #fff; border-color: #fff; color: var(--primary-deep); }
+.fzh .fzh-hero-cta.is-blanc:hover { color: var(--primary-deep); filter: brightness(.96); }
+.fzh .fzh-hero-cta:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+.fzh-hero-temps { display: flex; flex-direction: column; gap: 6px; }
+.fzh-hero-temps > span { font-size: 11px; line-height: 14px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--h-discret); }
+.fzh-hero-temps strong { font: 500 30px/1 'Oswald', sans-serif; font-variant-numeric: tabular-nums; color: #fff; }
+.fzh-hero-temps.is-grand strong { font-size: 44px; }
+
+/* ---- Ordre de sélection ---- */
+.fzh-hero-ordre { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.fzh-hero-ordre-tete {
+    display: flex; justify-content: space-between; gap: 12px;
+    font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--h-discret);
+}
+.fzh .fzh-cases {
+    display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px;
+    margin: 0; padding: 0; list-style: none;
+}
+.fzh-case {
+    display: flex; flex-direction: column; gap: 2px;
+    min-width: 0;
+    padding: 8px 6px 7px;
+    border: 1.5px solid rgba(255, 255, 255, .12);
+    border-radius: 8px;
+}
+.fzh-case > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fzh-case-num { min-height: 13px; font: 400 11px/1.2 'Oswald', sans-serif; color: rgba(255, 255, 255, .55); }
+.fzh-case-nom { font-size: 12px; font-weight: 800; color: #fff; }
+.fzh-case-sous { min-height: 12px; font-size: 10px; color: rgba(255, 255, 255, .6); }
+.fzh-case.is-mine:not(.is-fait) { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .55); }
+.fzh-case.is-fait { opacity: .55; }
+.fzh-case.is-actuel { background: rgba(var(--primary-rgb), .18); border-color: var(--primary); }
+.fzh-hero.is-onclock .fzh-case.is-actuel { background: #fff; border-color: #fff; }
+.fzh-hero.is-onclock .fzh-case.is-actuel > span { color: var(--primary-deep); }
+
+.fzh-hero-activite { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0; font-size: 13px; color: var(--h-doux); }
+.fzh-hero-activite strong { font: 400 13px 'Oswald', sans-serif; font-variant-numeric: tabular-nums; color: #fff; }
+
+/* ==================== PANNEAU DE DROITE ==================== */
+
+.fzh-hero-panneau {
+    display: flex; flex-direction: column; gap: 14px;
+    min-width: 0;
+    padding: 30px 28px;
+    background: var(--h-panneau);
+}
+.fzh-hero-panneau > header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.fzh .fzh-hero .fzh-hero-panneau h2 { display: block; margin: 0; font: 500 16px/1.25 'Oswald', sans-serif; letter-spacing: 1.2px; text-transform: uppercase; color: #fff; }
+.fzh-hero-panneau > header > span { font-size: 12px; color: var(--h-discret); text-align: right; }
+.fzh-hero-panneau-corps { display: flex; flex-direction: column; gap: 14px; flex: 1; min-height: 0; }
+.fzh-panel-attente { margin: 0; font-size: 14px; color: var(--h-doux); }
+
+/* ---- Avant le début : ce qui reste à préparer ---- */
+.fzh .fzh-etapes { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.fzh-etape { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 10px; background: rgba(255, 255, 255, .05); }
+.fzh-etape-puce {
+    display: grid; place-items: center; flex-shrink: 0;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #3A3C42; color: #0B2A18;
+    font-size: 12px; font-weight: 800;
+}
+.fzh-etape.is-ok .fzh-etape-puce { background: var(--h-vert); }
+.fzh-etape-txt { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.fzh-etape-txt strong { font-size: 14px; font-weight: 700; }
+.fzh-etape-txt small { font-size: 12px; color: var(--h-sous); }
+.fzh .fzh-etape-action { flex-shrink: 0; font-size: 13px; font-weight: 700; color: #fff; text-decoration: none; }
+.fzh .fzh-etape-action:hover { color: #fff; text-decoration: underline; }
+
+/* ---- Choix probable, et choix en un clic ---- */
+.fzh .fzh-cands { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.fzh-cand {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--h-trait);
+    border-radius: 10px;
+}
+.fzh-cand.is-top { background: rgba(255, 255, 255, .07); border-color: rgba(255, 255, 255, .3); }
+.fzh-cand-ligne { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.fzh-cand-rang { width: 18px; flex-shrink: 0; font: 400 15px 'Oswald', sans-serif; color: var(--h-discret); }
+.fzh .fzh-cand .fzd-off-face {
+    position: relative; overflow: hidden;
+    display: grid; place-items: center;
+    width: 34px; height: 34px; flex-shrink: 0;
+    border-radius: 50%;
+    background: #2A2C31; color: #C9CBD1;
+    font-size: 12px; font-weight: 800;
+}
+.fzh .fzh-cand .fzd-off-face img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.fzh-cand-txt { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.fzh-cand-txt strong { font-size: 14px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fzh-cand-txt small { font-size: 12px; color: var(--h-sous); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fzh-cand-fav {
+    margin-left: 8px; padding: 1px 6px; border-radius: 4px;
+    background: rgba(var(--primary-rgb), .2); color: var(--primary-text);
+    font-size: 11px; font-weight: 800;
+}
+.fzh-cand-tag {
+    flex-shrink: 0;
+    padding: 3px 8px; border-radius: 4px;
+    background: #fff; color: #141518;
+    font: 400 11px/1.2 'Oswald', sans-serif; letter-spacing: 1px; text-transform: uppercase;
+}
+.fzh-panel-note { margin: 0; font-size: 13px; color: var(--h-doux); text-wrap: pretty; }
+
+.fzh-hero.is-onclock .fzh-cand { background: rgba(0, 0, 0, .15); border-color: rgba(255, 255, 255, .15); }
+.fzh-hero.is-onclock .fzh-cand.is-pending { background: rgba(0, 0, 0, .28); border-color: #fff; }
+.fzh-hero.is-onclock .fzh-cand-rang { color: rgba(255, 255, 255, .6); }
+.fzh-hero.is-onclock .fzh-cand .fzd-off-face { background: rgba(0, 0, 0, .25); color: #fff; }
+.fzh-hero.is-onclock .fzh-cand-fav { background: #FFD84D; color: #3A2A00; }
+
+.fzh .fzh-cand-choisir,
+.fzh .fzh-cand-ok {
+    flex-shrink: 0;
+    border: none; border-radius: 8px;
+    background: #fff; color: var(--primary-deep);
+    font: 500 14px/1 'Oswald', sans-serif; letter-spacing: 1px; text-transform: uppercase;
+    padding: 9px 16px;
+}
+.fzh-cand-confirmer { display: flex; gap: 8px; }
+.fzh .fzh-cand-ok { flex: 1; padding: 11px; font-size: 15px; }
+.fzh .fzh-cand-annuler {
+    border: 1px solid rgba(255, 255, 255, .5); border-radius: 8px;
+    background: none; color: #fff;
+    font: 700 13px/1 'Barlow', sans-serif;
+    padding: 11px 14px;
+}
+.fzh .fzh-cand-choisir:hover,
+.fzh .fzh-cand-ok:hover { filter: brightness(.95); }
+.fzh-hero :is(.fzh-cand-choisir, .fzh-cand-ok, .fzh-cand-annuler):disabled { opacity: .6; cursor: default; }
+.fzh-hero :is(.fzh-cand-choisir, .fzh-cand-ok, .fzh-cand-annuler):focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+.fzh-panel-pied {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    margin-top: auto; padding-top: 10px;
+    border-top: 1px solid var(--h-trait);
+    font-size: 13px; color: var(--h-doux);
+}
+.fzh .fzh-panel-pied a,
+.fzh .fzh-panel-lien { flex-shrink: 0; font-weight: 700; color: #fff; text-decoration: none; white-space: nowrap; }
+.fzh .fzh-panel-pied a:hover,
+.fzh .fzh-panel-lien:hover { color: #fff; text-decoration: underline; }
+.fzh .fzh-panel-lien { margin-top: auto; font-size: 13px; }
+
+/* ---- Mon équipe, après mon choix ---- */
+.fzh .fzh-equipe { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.fzh-equipe li {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--h-trait);
+    border-radius: 10px;
+}
+.fzh-equipe li.is-new { background: rgba(52, 211, 120, .1); border-color: rgba(52, 211, 120, .5); }
+.fzh-equipe span { width: 56px; flex-shrink: 0; font: 400 13px 'Oswald', sans-serif; color: var(--h-discret); }
+.fzh-equipe strong { flex: 1; min-width: 0; font-size: 14px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fzh-equipe small { font-size: 12px; color: var(--h-sous); }
+
+/* Mon tour : le reste de la page recule, l'actualité surtout. */
+.fzh.is-onclock .fzh-news { opacity: .7; transition: opacity .4s; }
+
+@media (prefers-reduced-motion: reduce) {
+    .fzh .fzh-point { animation: none; }
+    .fzh .fzh-hero { transition: none; }
+}
+
+/* ==================== TABLETTE ET TÉLÉPHONE ==================== */
+
+@media (max-width: 768px) {
+    .fzh-barre-place { order: -2; margin: -14px -16px 0; }
+    .fzh-hero-place { order: -1; }
+    .fzh .fzh-barre { padding: 9px 16px; }
+    .fzh-barre-libelle, .fzh-barre-pool, .fzh-barre-sep { display: none; }
+    .fzh-hero-principal { padding: 24px 20px; gap: 18px; }
+    .fzh-hero-panneau { padding: 22px 20px; }
+    .fzh-hero-actions { gap: 20px; }
+    .fzh .fzh-hero-cta { padding: 14px 20px; font-size: 16px; }
+    /* Huit cases ne tiennent pas dans la largeur d'un téléphone : elles
+       défilent de côté, à une taille lisible. */
+    .fzh .fzh-cases { grid-template-columns: repeat(8, minmax(74px, 1fr)); overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+    .fzh .fzh-cases::-webkit-scrollbar { display: none; }
+}
+@media (max-width: 480px) {
+    .fzh-barre-place { margin: -14px -12px 0; }
+    .fzh .fzh-barre { padding: 9px 12px; }
+    /* L'étoile suffit ; le mot ne tient plus à côté du bouton. */
+    .fzh-cand-fav span { display: none; }
+    .fzh-hero-principal { padding: 22px 16px; }
+    .fzh-hero-panneau { padding: 20px 16px; }
+    .fzh .fzh-hero-cta { width: 100%; justify-content: space-between; }
+    .fzh-hero-temps.is-grand strong { font-size: 38px; }
+}

@@ -1615,6 +1615,13 @@ function fzdHeroState(tonight) {
         return { mode: 'draft', poolData, team, activeName, pick, myTurn: ordre[pick] === team.name };
     }
 
+    // Repêchage à venir : c'est lui qui attend, avant la saison. Le héros du
+    // repêchage (accueil-draft-hero.js) le montre — sa date s'il en a une, ce
+    // qui reste à préparer. Un pool rapide a son propre salon, qui part seul.
+    if (!draftState.commence && !draftDone && poolData.instant !== true) {
+        return { mode: 'predraft', poolData, team, activeName };
+    }
+
     // Pool tête-à-tête, repêchage bouclé : la prochaine échéance n'est plus
     // l'ouverture de la saison mais le duel de la semaine. Il passe donc
     // devant le décompte d'avant-saison — mais derrière « en direct » plus
@@ -1847,7 +1854,9 @@ function renderHero(tonight, containerId = 'fzDashHero') {
     fzdStopHeroTimer(containerId);
 
     const state = fzdHeroState(tonight);
-    if (!state || state.mode === 'regular') {
+    // « predraft » appartient à l'accueil du repêchage (accueil-draft.js) : la
+    // bannière n'a rien à en dire.
+    if (!state || state.mode === 'regular' || state.mode === 'predraft') {
         container.style.display = 'none';
         container.innerHTML = '';
         container.classList.remove('is-draft', 'is-myturn');
@@ -2778,6 +2787,10 @@ async function renderDash() {
             renderLivePanel(dash.tonight, dash.movement, dash.activeName);
             renderMobileHome(dash.tonight, dash.movement, dash.activeName);
         } else {
+            // Sans les données du soir, le repêchage garde son accueil : il ne
+            // lit que le pool, les matchs en direct ne font que s'y ajouter.
+            if (typeof renderDraftHome === 'function'
+                && renderDraftHome({ tonight: { players: [], games: [] }, activeName: FZPool.get() })) return;
             if (typeof fzhReset === 'function') fzhReset();
             if (typeof fzsReset === 'function') fzsReset();
             renderHero(null);
