@@ -18,19 +18,27 @@
  * des pools et des échanges se taisent. Deux flux produiraient deux entrées
  * pour le même fait.
  *
- * Seuls un clic sur une notification ou « Tout marquer comme lu » changent la
- * lecture. Ouvrir le panneau ne marque rien. */
+ * Seuls un clic sur une notification ou « Tout marquer lu » changent la
+ * lecture. Ouvrir le panneau ne marque rien.
+ *
+ * Le panneau se lit d'un coup d'œil : ce qui attend une réponse d'abord
+ * (« À faire »), puis le reste par jour. Chaque ligne tient en quatre
+ * éléments — une icône dont la couleur dit l'issue, un titre court, un
+ * résumé (les deux équipes d'un échange, sinon une phrase) et le pool. Une
+ * notification non lue se reconnaît à son titre gras, son fond teinté et son
+ * point rouge ; une lue s'estompe. */
 (function () {
     const ICONES = {
         cloche: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>`,
-        echange: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`,
-        cible: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
-        depart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>`,
-        invitation: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>`
+        echange: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-4-4"/><path d="M20 16H6l4 4"/></svg>`,
+        cible: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>`,
+        depart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>`,
+        invitation: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>`,
+        semaine: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>`
     };
 
-    const ICONE_PAR_TYPE = { echange: 'echange', invitation: 'invitation' };
-
+    // La marque en coin de l'icône : l'issue se lit sans lire le titre.
+    const MARQUES = { refuse: '✕', accepte: '✓', attente: '!' };
 
     const echapper = texte => String(texte == null ? '' : texte)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -55,6 +63,8 @@
     let migration = new Set();
     let popupIds = [], popupTimer, popupRestant = DUREE_POPUP, popupDebut;
     let popupSurvole = false;
+    // « Toutes » ou « Non lues » : le choix tient le temps de la page.
+    let filtreNonLues = false;
 
     const compteActuel = () => localStorage.getItem('isLoggedIn') === 'true'
         && localStorage.getItem('username') === compte;
@@ -126,10 +136,13 @@
         elements.forEach(el => { if (selection.has(el.id)) el.read = true; });
         sauvegarder();
         // Mettre les lignes à jour en place préserve le lien en cours d'activation.
+        // La ligne garde sa place jusqu'au prochain rendu : la déplacer vers
+        // son jour pendant le clic ferait sauter la liste sous le doigt.
         parId('fzNotifList').querySelectorAll('[data-notification-id]').forEach(lien => {
             const el = elements.find(item => item.id === lien.dataset.notificationId);
             lien.classList.toggle('is-unread', !el.read);
-            lien.querySelector('.fz-notif-state').textContent = el.read ? 'Lue' : 'Non lue';
+            const etat = lien.querySelector('.fz-notif-state');
+            if (etat) etat.textContent = el.read ? '' : 'Non lue';
         });
         derniereListe = '';
         majBadge();
@@ -176,8 +189,8 @@
             return {
                 id: `invite:${inv.poolName}:${inv.invitedAt}`,
                 type: 'invitation', pool: inv.poolName,
-                titre: 'Invitation à rejoindre un pool',
-                detail: `${inv.invitedBy || 'On'} vous invite à rejoindre ${inv.poolName}.`,
+                titre: 'Invitation à un pool',
+                detail: `${inv.invitedBy || 'On'} vous invite à le rejoindre.`,
                 action: 'Voir l’invitation',
                 date: Number.isFinite(date) ? date : Date.now(),
                 href: `index.html?invitation=${encodeURIComponent(inv.poolName)}`,
@@ -189,7 +202,7 @@
             el.read = true;
             el.urgent = false;
             el.titre = 'Invitation traitée';
-            el.detail = `L’invitation à rejoindre ${el.pool} n’attend plus de réponse.`;
+            el.detail = 'Rien à faire de votre côté.';
             el.action = 'Voir mes pools';
             el.href = `index.html?${lienPool(el.pool)}`;
         });
@@ -203,11 +216,13 @@
         const date = echange.date ? new Date(echange.date).getTime() : NaN;
         return {
             id: 'trade:' + echange.id, type: 'echange', pool: echange.draftName,
-            titre: "Proposition d'échange reçue",
+            titre: "Nouvelle offre d'échange",
             detail: recus && donnes
                 ? `${echange.fromTeam} vous offre ${recus} contre ${donnes}. Votre réponse est attendue.`
                 : `${echange.fromTeam} vous propose un échange. Votre réponse est attendue.`,
-            action: 'Examiner la proposition',
+            equipes: echange.fromTeam && echange.toTeam ? [echange.fromTeam, echange.toTeam] : null,
+            resolue: false,
+            action: 'Voir l’offre',
             date: Number.isFinite(date) ? date : Date.now(),
             href: `trade.html?${lienPool(echange.draftName)}&trade=${encodeURIComponent(echange.id)}`,
             urgent: false
@@ -222,15 +237,15 @@
                 // Évènement « commencé » stable : aucun nouveau message à chaque choix adverse.
                 liste.push({
                     id: 'draft:' + pool.name, type: 'repechage', pool: pool.name,
-                    titre: 'Le repêchage a commencé',
-                    detail: 'Les équipes sélectionnent leurs joueurs. Suivez les choix en direct.',
-                    action: 'Ouvrir la salle de repêchage', date: Date.now(),
+                    titre: 'Repêchage commencé',
+                    detail: 'Les équipes choisissent leurs joueurs.',
+                    action: 'Rejoindre le repêchage', date: Date.now(),
                     href: `draftActif.html?${lienPool(pool.name)}`, urgent: false
                 });
                 if (etat.equipeAuTour === pool.teamName) liste.push({
                     id: `turn:${pool.name}:${etat.choixFait}`, type: 'repechage', pool: pool.name,
                     titre: "C'est à votre tour de choisir",
-                    detail: `Choix ${etat.choixFait + 1} sur ${etat.choixTotal}. Les autres équipes attendent votre sélection.`,
+                    detail: `Choix ${etat.choixFait + 1} sur ${etat.choixTotal}. Les autres équipes attendent.`,
                     action: 'Choisir un joueur', date: Date.now(),
                     href: `draftActif.html?${lienPool(pool.name)}`, urgent: true
                 });
@@ -238,7 +253,7 @@
                 liste.push({
                     id: 'ready:' + pool.name, type: 'repechage', pool: pool.name,
                     titre: 'Repêchage prêt à commencer',
-                    detail: `${etat.inscrits} participants inscrits (max. ${etat.max}). Le repêchage peut être lancé.`,
+                    detail: `${etat.inscrits} participants sur ${etat.max}. Il peut être lancé.`,
                     action: 'Préparer le repêchage', date: Date.now(),
                     href: `repechage.html?${lienPool(pool.name)}`, urgent: false
                 });
@@ -259,7 +274,7 @@
             const etat = FZPool.draftState(pool.data);
             if (etat.etat === 'termine') {
                 el.urgent = false;
-                el.detail = 'Ce repêchage est terminé. Retrouvez les sélections de votre pool.';
+                el.detail = 'Le repêchage est terminé.';
                 el.action = 'Voir les sélections';
                 el.href = `draftFini.html?${lienPool(el.pool)}`;
                 if (el.id.startsWith('turn:')) el.titre = 'Votre tour de repêchage est terminé';
@@ -267,11 +282,11 @@
                 && el.id !== `turn:${pool.name}:${etat.choixFait}`) {
                 el.urgent = false;
                 el.titre = 'Votre tour de repêchage est terminé';
-                el.detail = 'Le repêchage a avancé. Retrouvez les choix dans la salle.';
+                el.detail = 'Le repêchage a avancé.';
                 el.action = 'Voir les choix';
             } else if (el.id.startsWith('ready:') && etat.etat === 'encours') {
-                el.detail = 'Tous les participants ont rejoint le groupe. Le repêchage a maintenant commencé.';
-                el.action = 'Ouvrir la salle de repêchage';
+                el.detail = 'Le repêchage a commencé.';
+                el.action = 'Rejoindre le repêchage';
                 el.href = `draftActif.html?${lienPool(el.pool)}`;
             }
         });
@@ -331,26 +346,97 @@
             || Number(!!b.urgent) - Number(!!a.urgent) || b.date - a.date;
     }
 
+    const jour = date => new Date(date).toDateString();
+    const estAujourdhui = date => jour(date) === jour(Date.now());
+
     function horodatage(date) {
         const instant = new Date(date);
         const minutes = Math.max(0, Math.floor((Date.now() - date) / 60000));
+        const hier = jour(date) === jour(Date.now() - 86400000);
         const texte = minutes < 1 ? "À l'instant"
-            : minutes < 60 ? `Il y a ${minutes} min`
-            : minutes < 1440 ? `Il y a ${Math.floor(minutes / 60)} h`
+            : minutes < 60 ? `${minutes} min`
+            : minutes < 1440 ? `${Math.floor(minutes / 60)} h`
+            : hier ? 'Hier'
             : instant.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short',
                 ...(instant.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}) });
         const complet = instant.toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'short' });
         return `<time class="fz-notif-time" datetime="${instant.toISOString()}" title="${echapper(complet)}" aria-label="${echapper(complet)}">${texte}</time>`;
     }
 
-    function contenu(el, afficherEtat) {
-        return `<span class="fz-notif-icon fz-notif-icon-${el.type}" aria-hidden="true">${ICONES[ICONE_PAR_TYPE[el.type]] || ICONES.cible}</span>
+    /** Le repêchage de ce pool se joue-t-il en ce moment ? */
+    function repechageEnDirect(nom) {
+        try {
+            const pool = FZPool.mine().find(p => p.name === nom);
+            return !!pool && FZPool.draftState(pool.data).etat === 'encours';
+        } catch { return false; }
+    }
+
+    /**
+     * L'issue d'une notification, qui décide de sa couleur et de sa marque.
+     *
+     * Elle se lit dans l'identifiant stable (lib/events.js) et dans l'urgence
+     * que le serveur a déjà décidée : l'historique enregistré dans ce
+     * navigateur la retrouve donc sans migration.
+     */
+    function ton(el) {
+        const id = el.id || '';
+        if (id.startsWith('traderes:')) return id.endsWith(':accepte') ? 'accepte' : 'refuse';
+        // Une offre reçue attend une réponse tant qu'elle n'est pas traitée,
+        // même quand la source dérivée ne la marque pas urgente.
+        if (el.urgent || (id.startsWith('trade:') && el.resolue === false)) return 'attente';
+        if (id.startsWith('draft:') && repechageEnDirect(el.pool)) return 'direct';
+        return 'neutre';
+    }
+
+    const actionnable = el => ['attente', 'direct'].includes(ton(el));
+    const aFaire = el => !el.read && actionnable(el);
+
+    function icone(el) {
+        if (el.type === 'echange') return ICONES.echange;
+        if (el.type === 'invitation') return ICONES.invitation;
+        if (el.type === 'semaine') return ICONES.semaine;
+        if ((el.id || '').startsWith('ready:')) return ICONES.depart;
+        return ICONES.cible;
+    }
+
+    /** Une teinte stable par pool : deux pools se distinguent sans lire leur nom. */
+    function teinte(nom) {
+        let somme = 0;
+        for (const car of String(nom || '')) somme = (somme * 31 + car.codePointAt(0)) >>> 0;
+        return somme % 4;
+    }
+
+    /** « Vous » plutôt que le nom de sa propre équipe. */
+    function nomEquipe(nom, pool) {
+        let moi = null;
+        try { moi = (FZPool.mine().find(p => p.name === pool) || {}).teamName; } catch { /* sans pools */ }
+        return nom === moi ? 'Vous' : nom;
+    }
+
+    function resume(el) {
+        if (Array.isArray(el.equipes) && el.equipes.length === 2) {
+            const [a, b] = el.equipes.map(nom => echapper(nomEquipe(nom, el.pool)));
+            return `<span class="fz-notif-pair"><b>${a}</b><span class="fz-notif-pair-sep" aria-hidden="true">⇄</span><span class="nav-sr-only">et</span><b>${b}</b></span>`;
+        }
+        return el.detail ? `<span class="fz-notif-detail">${echapper(el.detail)}</span>` : '';
+    }
+
+    function contenu(el, dansLaListe) {
+        const issue = ton(el);
+        const marque = MARQUES[issue];
+        return `<span class="fz-notif-icon fz-tone-${issue}" aria-hidden="true">${icone(el)}${marque ? `<span class="fz-notif-mark">${marque}</span>` : ''}</span>
             <span class="fz-notif-txt">
-                <span class="fz-notif-title">${echapper(el.titre)}</span>
-                <span class="fz-notif-pool">${echapper(el.pool)}</span>
-                <span class="fz-notif-detail">${echapper(el.detail)}</span>
-                <span class="fz-notif-meta">${afficherEtat ? `<span class="fz-notif-state">${el.read ? 'Lue' : 'Non lue'}</span>` : ''}${horodatage(el.date)}</span>
-                <span class="fz-notif-action">${echapper(el.action)} <span aria-hidden="true">→</span></span>
+                ${dansLaListe ? `<span class="nav-sr-only fz-notif-state">${el.read ? '' : 'Non lue'}</span>` : ''}
+                <span class="fz-notif-top">
+                    <span class="fz-notif-heading">
+                        <span class="fz-notif-title">${echapper(el.titre)}</span>
+                        ${issue === 'direct' ? '<span class="fz-notif-live">En direct</span>' : ''}
+                    </span>
+                    <span class="fz-notif-when">${horodatage(el.date)}${dansLaListe ? '<span class="fz-notif-dot" aria-hidden="true"></span>' : ''}</span>
+                </span>
+                ${resume(el)}
+                <span class="fz-notif-pool fz-pool-${teinte(el.pool)}">${echapper(el.pool)}</span>
+                ${actionnable(el) && el.action ? `<span class="fz-notif-action">${echapper(el.action)} <span aria-hidden="true">→</span></span>` : ''}
             </span>`;
     }
 
@@ -364,25 +450,52 @@
         parId('fzNotifBtn').setAttribute('aria-label', libelle);
         parId('fzNotifBtn').title = libelle;
         parId('fzNotifBtn').classList.toggle('has-unread', nonLus > 0);
-        parId('fzNotifCount').textContent = nonLus ? `${nonLus} non lue${nonLus > 1 ? 's' : ''}` : '';
+        const compteur = parId('fzNotifCount');
+        compteur.innerHTML = nonLus ? `${nonLus}<span class="nav-sr-only"> non lue${nonLus > 1 ? 's' : ''}</span>` : '';
+        compteur.hidden = nonLus === 0;
         // aria-disabled garde le focus clavier sur l'action après activation.
         parId('fzNotifMarkAll').setAttribute('aria-disabled', String(nonLus === 0));
         parId('fzNotifMarkAll').hidden = elements.length === 0;
-        parId('fzNotifHelp').textContent = erreurStockage
+        // L'aide ne parle que pour signaler un problème : le reste du temps,
+        // le panneau se passe d'explication.
+        const aide = erreurStockage
             ? 'La lecture ne peut pas être enregistrée dans ce navigateur pour le moment.'
             : erreurReseau ? 'Mise à jour indisponible. Vos notifications sont conservées ; nouvel essai automatique.'
-            : 'Ouvrir ce panneau ne marque rien comme lu.';
+            : '';
+        parId('fzNotifHelp').textContent = aide;
+        parId('fzNotifHelp').hidden = !aide;
+    }
+
+    const GROUPES = [
+        { cle: 'afaire', titre: 'À faire', garde: aFaire },
+        { cle: 'jour', titre: "Aujourd'hui", garde: el => !aFaire(el) && estAujourdhui(el.date) },
+        { cle: 'avant', titre: 'Plus tôt', garde: el => !aFaire(el) && !estAujourdhui(el.date) }
+    ];
+
+    function ligne(el) {
+        return `<li class="fz-notif-entry"><a class="fz-notif-item${el.read ? '' : ' is-unread'}${el.urgent ? ' is-urgent' : ''}"
+            href="${echapper(el.href)}" data-notification-id="${echapper(el.id)}">${contenu(el, true)}</a></li>`;
+    }
+
+    function vide() {
+        const [titre, detail] = filtreNonLues && elements.length
+            ? ['Vous êtes à jour', 'Aucune notification non lue.']
+            : ['Aucune notification', 'Vos invitations, offres d’échange et repêchages apparaîtront ici.'];
+        return `<li class="fz-notif-empty"><strong>${titre}</strong><span>${detail}</span></li>`;
     }
 
     function rendreListe() {
         const liste = parId('fzNotifList');
         if (!liste) return;
-        const html = elements.length ? [...elements].sort(trier).map(el => `
-            <li class="fz-notif-entry"><a class="fz-notif-item${el.read ? '' : ' is-unread'}${el.urgent ? ' is-urgent' : ''}"
-                href="${echapper(el.href)}" data-notification-id="${echapper(el.id)}">${contenu(el, true)}</a></li>`).join('')
-            : `<li class="fz-notif-empty"><span class="fz-notif-empty-icon" aria-hidden="true">${ICONES.cloche}</span>
-                <p>Aucune notification pour le moment.</p>
-                <p>Vos invitations, propositions d’échange et nouvelles de repêchage apparaîtront ici.</p></li>`;
+        const visibles = elements.filter(el => !filtreNonLues || !el.read);
+        // « À faire » met l'urgence devant ; les jours suivent l'ordre du temps.
+        const html = visibles.length ? GROUPES.map(groupe => {
+            const membres = visibles.filter(groupe.garde).sort(groupe.cle === 'afaire' ? trier : (a, b) => b.date - a.date);
+            if (!membres.length) return '';
+            return `<li class="fz-notif-group${groupe.cle === 'afaire' ? ' is-todo' : ''}">
+                <h3 class="fz-notif-group-title" id="fzNotifGroup-${groupe.cle}">${groupe.titre}</h3>
+                <ul class="fz-notif-group-list" aria-labelledby="fzNotifGroup-${groupe.cle}">${membres.map(ligne).join('')}</ul></li>`;
+        }).join('') : vide();
         if (html !== derniereListe) {
             const focus = document.activeElement?.closest('[data-notification-id]');
             const focusId = focus && liste.contains(focus) ? focus.dataset.notificationId : null;
@@ -483,12 +596,16 @@
                 </button>
                 <section class="fz-notif-panel" id="fzNotifPanel" role="region" aria-labelledby="fzNotifTitle" hidden>
                     <div class="fz-notif-head"><h2 id="fzNotifTitle">Notifications</h2>
-                        <span class="fz-notif-count" id="fzNotifCount"></span>
+                        <span class="fz-notif-count" id="fzNotifCount" hidden></span>
+                        <button type="button" class="fz-notif-mark-all" id="fzNotifMarkAll" aria-disabled="true">Tout marquer lu</button>
                         <button type="button" class="fz-notif-close" id="fzNotifClose" aria-label="Fermer les notifications">×</button>
                     </div>
                     <div class="fz-notif-toolbar">
-                        <button type="button" class="fz-notif-mark-all" id="fzNotifMarkAll" aria-disabled="true">Tout marquer comme lu</button>
-                        <p class="fz-notif-help" id="fzNotifHelp"></p>
+                        <div class="fz-notif-tabs" role="group" aria-label="Afficher">
+                            <button type="button" class="fz-notif-tab" id="fzNotifTabAll" aria-pressed="true">Toutes</button>
+                            <button type="button" class="fz-notif-tab" id="fzNotifTabUnread" aria-pressed="false">Non lues</button>
+                        </div>
+                        <p class="fz-notif-help" id="fzNotifHelp" hidden></p>
                     </div>
                     <div class="fz-notif-today" id="fzTodayNotif" hidden><!-- Rempli par fzToday.js --></div>
                     <ul class="fz-notif-list" id="fzNotifList"></ul>
@@ -506,8 +623,21 @@
         parId('fzNotifBtn').addEventListener('click', () => ouvrirPanneau(parId('fzNotifPanel').hidden));
         parId('fzNotifClose').addEventListener('click', () => ouvrirPanneau(false, true));
         parId('fzNotifMarkAll').addEventListener('click', () => {
-            if (elements.some(el => !el.read)) marquerLus(elements.map(el => el.id));
+            if (!elements.some(el => !el.read)) return;
+            marquerLus(elements.map(el => el.id));
+            // Aucun lien n'est en cours d'activation : « À faire » peut se
+            // vider tout de suite, et chaque ligne rejoindre son jour.
+            rendreListe();
         });
+        const filtrer = nonLues => {
+            filtreNonLues = nonLues;
+            parId('fzNotifTabAll').setAttribute('aria-pressed', String(!nonLues));
+            parId('fzNotifTabUnread').setAttribute('aria-pressed', String(nonLues));
+            rendreListe();
+            parId('fzNotifList').scrollTop = 0;
+        };
+        parId('fzNotifTabAll').addEventListener('click', () => filtrer(false));
+        parId('fzNotifTabUnread').addEventListener('click', () => filtrer(true));
         ['click', 'auxclick'].forEach(type => {
             parId('fzNotifList').addEventListener(type, selectionner);
             parId('fzNotifToastLink').addEventListener(type, selectionner);
@@ -592,9 +722,11 @@
                     titre: el.titre,
                     detail: el.detail,
                     action: el.action,
+                    equipes: Array.isArray(el.equipes) && el.equipes.length === 2 ? el.equipes : null,
                     date: el.date,
                     href: el.href,
                     urgent: el.urgent === true,
+                    resolue: el.resolue === true,
                     read: el.read === true
                 }));
 
@@ -639,8 +771,11 @@
                     .map(notificationEchange);
                 const actifs = new Set(nouveaux.map(el => el.id));
                 elements.filter(el => el.type === 'echange' && !actifs.has(el.id)).forEach(el => {
-                    el.detail = 'Cette proposition ne demande plus de réponse. Consultez son suivi.';
-                    el.action = 'Voir le suivi de l’échange';
+                    el.titre = 'Échange clôturé';
+                    el.detail = 'Rien à faire de votre côté.';
+                    el.action = 'Voir le suivi';
+                    el.equipes = null;
+                    el.resolue = true;
                 });
                 erreurReseau = false;
                 const annoncer = echangesInitialises;

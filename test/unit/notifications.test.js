@@ -410,4 +410,59 @@ describe('notifications — receiving and deliberately reading updates', () => {
         await browser.updatePools();
         assert.equal(unread(browser), 2);
     });
+
+    test('what awaits an answer comes first, and moves to its day once read', async () => {
+        const now = '2026-09-06T16:00:00Z';
+        const browser = await createNotificationBrowser({ trades: [trade('one', { date: now }), trade('two', { date: now })] });
+        browser.setPools([{ name: 'Ligue des amis', teamName: 'Canadiens', data: { etat: 'termine' } }]);
+        await browser.updatePools();
+        browser.element('fzNotifBtn').click();
+        const groupe = id => findItem(browser, id).closest('.fz-notif-group');
+        assert.equal(groupe('trade:one').classList.contains('is-todo'), true);
+        assert.match(groupe('trade:one').querySelector('.fz-notif-group-title').textContent, /À faire/);
+        // An offer is summed up by its two teams, the viewer's own being « Vous ».
+        assert.match(findItem(browser, 'trade:one').querySelector('.fz-notif-pair').textContent, /Les Nordiques.*Vous/);
+        assert.ok(findItem(browser, 'trade:one').querySelector('.fz-notif-action'));
+
+        findItem(browser, 'trade:one').click();
+        await browser.emit('tradeUpdated');
+        assert.equal(groupe('trade:one').classList.contains('is-todo'), false);
+        assert.equal(groupe('trade:two').classList.contains('is-todo'), true);
+
+        browser.element('fzNotifMarkAll').click();
+        assert.equal(browser.element('fzNotifList').querySelectorAll('.is-todo').length, 0);
+        assert.equal(browser.items().length, 2);
+    });
+
+    test('the unread filter hides read items and says when everything is read', async () => {
+        const browser = await createNotificationBrowser({ trades: [trade('one'), trade('two')] });
+        browser.element('fzNotifBtn').click();
+        findItem(browser, 'trade:one').click();
+        browser.element('fzNotifTabUnread').click();
+        assert.equal(browser.element('fzNotifTabUnread').getAttribute('aria-pressed'), 'true');
+        assert.deepEqual([...browser.items()].map(item => item.dataset.notificationId), ['trade:two']);
+        assert.equal(browser.element('fzNotifCount').textContent.trim().startsWith('1'), true);
+
+        browser.element('fzNotifMarkAll').click();
+        assert.equal(browser.items().length, 0);
+        assert.match(browser.element('fzNotifList').textContent, /à jour/);
+        assert.equal(browser.element('fzNotifCount').hidden, true);
+
+        browser.element('fzNotifTabAll').click();
+        assert.equal(browser.items().length, 2);
+        assert.equal(browser.items().filter(item => item.classList.contains('is-unread')).length, 0);
+    });
+
+    test('an offer that no longer awaits an answer says so plainly', async () => {
+        const browser = await createNotificationBrowser({ trades: [trade('gone')] });
+        browser.setTrades([]);
+        await browser.emit('tradeUpdated');
+        const item = findItem(browser, 'trade:gone');
+        assert.match(item.textContent, /clôturé/);
+        assert.match(item.textContent, /Rien à faire/);
+        assert.equal(item.querySelector('.fz-notif-pair'), null);
+        assert.equal(item.querySelector('.fz-notif-action'), null);
+        assert.equal(item.closest('.fz-notif-group').classList.contains('is-todo'), false);
+    });
 });
+

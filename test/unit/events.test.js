@@ -96,3 +96,18 @@ test('une alerte de tour porte une durée de vie', () => {
     assert.ok(evenements.EXPIRATION_TOUR_MS <= 48 * 60 * 60 * 1000,
         'la pastille ne doit pas réclamer une action qui n existe plus');
 });
+
+test('un échange en cours se résume à ses deux équipes, une offre traitée non', () => {
+    const sujet = { tradeId: 7, fromTeam: 'Nordiques', toTeam: 'Canadiens' };
+    const recue = { id: 1, type: evenements.NOTIFICATION.ECHANGE_RECU, poolName: 'L', subject: sujet };
+    const resultat = { id: 2, type: evenements.NOTIFICATION.ECHANGE_RESULTAT, poolName: 'L',
+                       subject: { ...sujet, resultat: 'refuse' } };
+
+    assert.deepEqual(evenements.vueNotification(recue).equipes, ['Nordiques', 'Canadiens'],
+        'dans l ordre de l offre : qui propose, puis qui reçoit');
+    assert.deepEqual(evenements.vueNotification(resultat).equipes, ['Nordiques', 'Canadiens']);
+    assert.equal(evenements.vueNotification({ ...recue, resolvedAt: new Date() }).equipes, null,
+        'une offre traitée n attend plus rien : sa ligne le dit, sans les équipes');
+    assert.equal(evenements.equipesEchange({ type: evenements.NOTIFICATION.ECHANGE_RECU, subject: { tradeId: 7 } }), null);
+    assert.equal(evenements.equipesEchange({ type: evenements.NOTIFICATION.VOTRE_TOUR, subject: sujet }), null);
+});

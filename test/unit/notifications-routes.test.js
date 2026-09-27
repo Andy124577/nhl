@@ -113,7 +113,7 @@ test('une notification résolue le dit, et change de texte', async () => {
     const res = await h.appeler('GET', '/api/notifications', { auth: ALICE });
     assert.equal(res.body.notifications[0].resolue, true);
     assert.equal(res.body.notifications[0].urgent, false);
-    assert.match(res.body.notifications[0].detail, /ne demande plus/);
+    assert.match(res.body.notifications[0].detail, /Rien à faire/);
 });
 
 test('marquer les identifiants de quelqu un d autre ne fait rien', async () => {
