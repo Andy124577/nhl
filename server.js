@@ -4465,6 +4465,28 @@ setInterval(() => {
 
 console.log("✅ H2H auto-finalization scheduler initialized (checks every 6 hours)");
 
+/**
+ * Repêchages à date fixe : un passage au début de chaque minute, une seconde
+ * après — les dates sont arrondies à la minute (lib/poolOps.js), le départ
+ * tombe donc à l'heure annoncée. Un serveur redémarré rattrape au premier
+ * passage ce qui devait partir pendant qu'il était arrêté.
+ *
+ * Un minuteur qui se replanifie plutôt qu'un setInterval : il se recale sur
+ * l'horloge à chaque tour, et un passage lent ne chevauche jamais le suivant.
+ */
+function planifierRepechagesPrevus() {
+    const delai = 60000 - (Date.now() % 60000) + 1000;
+    setTimeout(async () => {
+        try {
+            await contexteRoutes.demarrerRepechagesPrevus();
+        } catch (erreur) {
+            console.error("❌ Départs de repêchage prévus :", erreur.message);
+        }
+        planifierRepechagesPrevus();
+    }, delai);
+}
+planifierRepechagesPrevus();
+
 // ===============================================
 // DATA INITIALIZATION FOR PRODUCTION
 // ===============================================

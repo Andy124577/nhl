@@ -421,6 +421,10 @@
             lead = 'Il faut au moins 2 équipes pour repêcher. Invitez quelqu’un à rejoindre le pool.';
         } else if (etat.raison === 'pair') {
             lead = `Tête-à-tête : les duels se jouent à deux, il faut donc un nombre pair d'équipes (${etat.equipes} pour l'instant).`;
+        } else if (etat.prevuLe) {
+            lead = jeSuisCreateur
+                ? `${etat.equipes} équipes sont prêtes. Le repêchage partira tout seul à l'heure prévue — ou lancez-le maintenant.`
+                : `${etat.equipes} équipes sont prêtes. Le repêchage commencera tout seul à l'heure prévue.`;
         } else if (jeSuisCreateur) {
             lead = `${etat.equipes} équipes sont prêtes. Vous pouvez lancer maintenant ou attendre d'autres participants (jusqu'à ${etat.max}).`;
         } else {
@@ -438,9 +442,9 @@
             if (jeSuisCreateur) {
                 depart = `
                         <button type="button" class="rp-btn primary" id="rpStart"${pret ? '' : ' disabled'}>
-                            Commencer le repêchage
+                            ${libelleDepart(etat)}
                         </button>`;
-            } else if (pret) {
+            } else if (pret && !etat.prevuLe) {
                 depart = `<p class="rp-wait-admin" role="status">En attente du lancement par ${echapper(createur || "l'admin du pool")}.</p>`;
             }
         }
@@ -464,6 +468,7 @@
                 ${entete(pool, pret ? 'Prêt' : 'En attente', pret ? 'pret' : 'attente')}
                 <div class="rp-body">
                     <p class="rp-lead">${lead}</p>
+                    ${instantane ? '' : blocDate(etat, jeSuisCreateur)}
                     ${barre}
                     ${rendreInscrits(pool, etat, createur)}
                     ${inviterParNom ? blocInviter(pool, etat) : ''}
@@ -481,6 +486,8 @@
 
         document.getElementById('rpQuitter')?.addEventListener('click', quitterLaFile);
         document.getElementById('rpStart')?.addEventListener('click', () => demarrer(pool.name));
+        document.getElementById('rpDateChoisir')?.addEventListener('click', () => choisirDate(pool));
+        document.getElementById('rpDateRetirer')?.addEventListener('click', () => retirerDate(pool));
         document.getElementById('rpInviter')?.addEventListener('click', () => inviter(pool.name));
         brancherInvitations(pool);
 
@@ -492,6 +499,148 @@
             }
         }
     }
+
+    // ==================== DATE DU REPÊCHAGE ====================
+    //
+    // Deux façons de repêcher, choisies à la création du pool : quand la
+    // personne qui l'a créé le décide, ou à une date fixée d'avance — le
+    // serveur lance alors le repêchage lui-même à l'heure dite
+    // (routes/pools.js, demarrerRepechagesPrevus). Jusqu'au départ, elle peut
+    // fixer, déplacer ou retirer la date d'ici.
+
+    function libelleDepart(etat) {
+        return etat.prevuLe ? 'Commencer maintenant' : 'Commencer le repêchage';
+    }
+
+    function blocDate(etat, jeSuisCreateur) {
+        if (etat.prevuLe) {
+            const delai = FZPool.timeUntil(etat.prevuLe);
+            // Une seule équipe, ou un nombre impair en tête-à-tête : à l'heure
+            // dite, rien ne partira. Mieux vaut le savoir d'avance.
+            const condition = etat.raison === 'deux'
+                ? '<p class="rp-note">Il faudra au moins 2 équipes à cette heure-là, sinon rien ne démarrera.</p>'
+                : etat.raison === 'pair'
+                    ? '<p class="rp-note">Il faudra un nombre pair d’équipes à cette heure-là, sinon rien ne démarrera.</p>'
+                    : '';
+            return `
+                    <section class="rp-date" aria-label="Date du repêchage">
+                        <span class="rp-date-ico" aria-hidden="true">${icone('clock', 20)}</span>
+                        <div class="rp-date-txt">
+                            <span class="rp-date-label">Repêchage prévu</span>
+                            <strong class="rp-date-quand">${echapper(FZPool.draftDate(etat.prevuLe))}</strong>
+                            <span class="rp-date-sub" id="rpDateDelai" data-date="${echapper(etat.prevuLe)}">${echapper(delai || 'Départ imminent…')}</span>
+                        </div>
+                        ${jeSuisCreateur ? `
+                        <div class="rp-date-tools">
+                            <button type="button" class="rp-date-btn" id="rpDateChoisir">Changer</button>
+                            <button type="button" class="rp-date-btn" id="rpDateRetirer">Retirer</button>
+                        </div>` : ''}
+                    </section>
+                    ${condition}`;
+        }
+        if (!jeSuisCreateur) return '';
+        if (etat.manqueLe) {
+            return `
+                    <section class="rp-date is-missed" aria-label="Date du repêchage">
+                        <span class="rp-date-ico" aria-hidden="true">${icone('warning', 20)}</span>
+                        <div class="rp-date-txt">
+                            <span class="rp-date-label">Le repêchage prévu n’a pas démarré</span>
+                            <span class="rp-date-sub">Il manquait des équipes le ${echapper(FZPool.draftDate(etat.manqueLe))}.
+                                Lancez-le quand vous êtes prêts, ou choisissez une autre date.</span>
+                        </div>
+                        <div class="rp-date-tools">
+                            <button type="button" class="rp-date-btn" id="rpDateChoisir">Nouvelle date</button>
+                        </div>
+                    </section>`;
+        }
+        return `
+                    <section class="rp-date is-open" aria-label="Date du repêchage">
+                        <span class="rp-date-ico" aria-hidden="true">${icone('clock', 20)}</span>
+                        <div class="rp-date-txt">
+                            <span class="rp-date-label">Pas de date fixée</span>
+                            <span class="rp-date-sub">Vous lancez quand vous voulez.</span>
+                        </div>
+                        <div class="rp-date-tools">
+                            <button type="button" class="rp-date-btn" id="rpDateChoisir">Fixer une date</button>
+                        </div>
+                    </section>`;
+    }
+
+    /** Enregistre la date (ISO) ou la retire (null). Renvoie un message d'erreur, ou null. */
+    async function enregistrerDate(nomPool, iso) {
+        try {
+            const reponse = await fetch(urlPool(nomPool, '/draft-schedule'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ draftScheduledAt: iso })
+            });
+            const donnees = await reponse.json().catch(() => ({}));
+            if (!reponse.ok) return donnees.message || 'La date n’a pas pu être enregistrée.';
+        } catch (erreur) {
+            return 'La date n’a pas pu être enregistrée. Vérifiez votre connexion.';
+        }
+        await FZPool.refresh();
+        rendre();
+        return null;
+    }
+
+    /** Demain, 20 h : l'heure où un pool entre amis se réunit. */
+    function dateParDefaut() {
+        const demain = new Date();
+        demain.setDate(demain.getDate() + 1);
+        demain.setHours(20, 0, 0, 0);
+        return demain.toISOString();
+    }
+
+    async function choisirDate(pool) {
+        const actuelle = pool.data.draftScheduledAt || null;
+        const valeur = FZPool.toDateInput(actuelle || dateParDefaut());
+        const min = FZPool.toDateInput(new Date(Date.now() + 60000).toISOString());
+        const erreur = texte => {
+            const zone = document.getElementById('rpDateErreur');
+            if (zone) zone.textContent = texte;
+            return texte;
+        };
+
+        await fzModal({
+            type: 'info',
+            icon: 'calendar',
+            title: actuelle ? 'Changer la date du repêchage' : 'Fixer la date du repêchage',
+            bodyHTML: `
+                <p>Le repêchage démarrera tout seul à cette heure. Les participants sont prévenus.</p>
+                <input type="datetime-local" class="fzd-input rp-date-champ" id="rpDateChamp"
+                       value="${echapper(valeur)}" min="${echapper(min)}" aria-label="Date et heure du repêchage">
+                <div class="fzd-error" id="rpDateErreur" aria-live="polite"></div>`,
+            confirmLabel: 'Enregistrer',
+            onSubmit: async () => {
+                const champ = document.getElementById('rpDateChamp');
+                const iso = FZPool.fromDateInput(champ ? champ.value : '');
+                if (!iso) return erreur('Choisissez une date et une heure.');
+                if (Date.parse(iso) < Date.now()) return erreur('Choisissez une date et une heure à venir.');
+                const refus = await enregistrerDate(pool.name, iso);
+                return refus ? erreur(refus) : null;
+            }
+        });
+    }
+
+    async function retirerDate(pool) {
+        const ok = await fzConfirm({
+            title: 'Retirer la date ?',
+            message: 'Le repêchage ne démarrera plus tout seul : vous le lancerez quand vous voudrez.',
+            confirmLabel: 'Retirer la date'
+        });
+        if (!ok) return;
+        const refus = await enregistrerDate(pool.name, null);
+        if (refus) fzAlert({ type: 'error', title: 'Date inchangée', message: refus });
+    }
+
+    // Le compte à rebours avance sans redessiner la carte : un champ de
+    // recherche en cours de saisie n'en perd pas le focus. Le départ, lui,
+    // arrive par le temps réel — le serveur fait foi, pas cette horloge.
+    setInterval(() => {
+        const delai = document.getElementById('rpDateDelai');
+        if (delai && window.FZPool) delai.textContent = FZPool.timeUntil(delai.dataset.date) || 'Départ imminent…';
+    }, 30000);
 
     /** Le lien « Rejoindre » filtré sur ce pool, dans le presse-papiers. */
     async function inviter(nomPool) {
@@ -563,6 +712,7 @@
 
     async function demarrer(nomPool) {
         const bouton = document.getElementById('rpStart');
+        const libelle = bouton ? bouton.textContent.trim() : '';
         if (bouton) { bouton.disabled = true; bouton.textContent = 'Démarrage…'; }
 
         try {
@@ -584,7 +734,7 @@
                     // vérité, on relit l'état plutôt que d'insister sur un
                     // départ déjà refusé.
                     fzAlert({ type: 'error', title: 'Démarrage impossible', message: donnees.message || 'Le repêchage n’a pas pu démarrer.' });
-                    if (bouton) { bouton.disabled = false; bouton.textContent = 'Commencer le repêchage'; }
+                    if (bouton) { bouton.disabled = false; bouton.textContent = libelle; }
                     await FZPool.refresh();
                     rendre();
                     return;
@@ -595,7 +745,7 @@
             window.location.href = 'draftActif.html';
         } catch (erreur) {
             console.error('Démarrage du repêchage impossible :', erreur);
-            if (bouton) { bouton.disabled = false; bouton.textContent = 'Commencer le repêchage'; }
+            if (bouton) { bouton.disabled = false; bouton.textContent = libelle; }
             fzAlert({ type: 'error', title: 'Démarrage impossible', message: 'Le repêchage n’a pas pu être préparé. Vérifiez votre connexion et réessayez.' });
         }
     }

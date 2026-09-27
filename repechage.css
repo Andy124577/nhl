@@ -591,3 +591,82 @@
     .rp-search-spin { animation-duration: 2s; }
     .rp-invite-btn:hover:not(:disabled) { transform: none; }
 }
+
+/* ==================== DATE DU REPÊCHAGE ====================
+   Le rendez-vous fixé à la création, ou l'invitation à en fixer un. La date
+   prévue porte l'accent du site ; une date manquée, l'avertissement ; l'absence
+   de date reste discrète — c'est le cas ordinaire, pas un manque. */
+
+.rp-date {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0 0 18px;
+    padding: 14px 16px;
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border-light));
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--primary) 7%, var(--card));
+}
+.rp-date.is-open {
+    border: 1px dashed var(--border-gray);
+    background: none;
+}
+.rp-date.is-missed {
+    border-color: color-mix(in srgb, var(--warning) 35%, var(--border-light));
+    background: color-mix(in srgb, var(--warning) 8%, var(--card));
+}
+
+.rp-date-ico {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    background: var(--card);
+    color: var(--primary-text);
+}
+.rp-date.is-open .rp-date-ico { background: var(--bg-gray-light); color: var(--text-secondary); }
+.rp-date.is-missed .rp-date-ico { color: var(--warning); }
+
+.rp-date-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rp-date-label {
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+.rp-date.is-missed .rp-date-label { color: var(--warning); }
+.rp-date-quand { font-size: 1.02rem; font-weight: 800; color: var(--text-main); }
+.rp-date-quand::first-letter { text-transform: uppercase; }
+.rp-date-sub { font-size: .84rem; line-height: 1.45; color: var(--text-secondary); }
+
+.rp-date-tools { display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
+.rp-date-btn {
+    font: inherit;
+    font-size: .84rem;
+    font-weight: 700;
+    min-height: 36px;
+    padding: 0 14px;
+    border: 1px solid var(--border-gray);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--text-main);
+    cursor: pointer;
+}
+.rp-date-btn:hover { border-color: var(--primary); color: var(--primary-text); }
+.rp-date-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Téléphone : les boutons passent sous le texte, pleine largeur. */
+@media (max-width: 520px) {
+    .rp-date { flex-wrap: wrap; }
+    .rp-date-tools { flex: 1 1 100%; }
+    .rp-date-btn { flex: 1; }
+}
+
+/* Le champ de la fenêtre « Fixer la date » : le sélecteur natif suit le
+   thème du site. */
+.rp-date-champ { color-scheme: dark; min-height: 50px; }
+html[data-theme="light"] .rp-date-champ { color-scheme: light; }

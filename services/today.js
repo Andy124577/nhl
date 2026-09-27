@@ -168,20 +168,26 @@ function creerServiceAujourdhui({ store, db, usePostgres, pointage, serviceH2H,
             // Le compte à rebours du salon est la SEULE échéance réelle qu'un
             // départ de repêchage possède. Sans lui, on n'annonce pas d'heure.
             const compte = salon && salon.pool === pool.nom ? salon.compteARebours : null;
+            // Une date fixée par la personne qui a créé le pool est l'autre
+            // échéance réelle : le serveur partira à cette heure-là.
+            const prevu = !compte && !pool.data.instant ? Date.parse(pool.data.draftScheduledAt) : NaN;
+            const quand = Number.isFinite(prevu) ? evenements.dateRepechage(pool.data.draftScheduledAt) : null;
             return priorite.element({
                 id: `ready:${pool.nom}`,
                 urgence: priorite.URGENCE.REPECHAGE,
                 pool: pool.nom,
-                titre: compte ? 'Le repêchage démarre' : 'Repêchage en préparation',
+                titre: compte ? 'Le repêchage démarre' : (quand ? 'Repêchage prévu' : 'Repêchage en préparation'),
                 detail: compte
                     ? 'Tout le monde est là. Le départ est imminent.'
-                    : `${inscrits} sur ${max} participants inscrits.`,
+                    : (quand
+                        ? `Le ${quand}. ${inscrits} sur ${max} participants inscrits.`
+                        : `${inscrits} sur ${max} participants inscrits.`),
                 action: compte ? 'Rejoindre maintenant' : 'Préparer le repêchage',
                 href: pool.data.instant
                     ? 'repechage.html'
                     : `repechage.html?pool=${encodeURIComponent(pool.nom)}`,
-                echeance: compte ? compte.finit : null,
-                donnees: { inscrits, max, compteARebours: compte || null }
+                echeance: compte ? compte.finit : (quand ? prevu : null),
+                donnees: { inscrits, max, compteARebours: compte || null, draftScheduledAt: quand ? pool.data.draftScheduledAt : null }
             });
         }
 

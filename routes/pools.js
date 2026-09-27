@@ -195,6 +195,7 @@ function monter(app, ctx) {
                 hasPassword: !!data.passwordHash,
                 imageUrl: data.imageUrl || '',
                 draftStarted: Array.isArray(data.draftOrder) && data.draftOrder.length > 0,
+                draftScheduledAt: data.draftScheduledAt || null,
                 maxParTeam: poolOps.MEMBRES_PAR_EQUIPE,
                 maxPlayers: poolOps.capacite(data),
                 participantCount: poolOps.nombreParticipants(data),
@@ -226,7 +227,7 @@ function monter(app, ctx) {
     app.post('/create-clan', auth.requireAuth, async (req, res) => {
         try {
             const nom = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
-            const { maxPlayers, config, poolMode, allowTrades, password } = req.body || {};
+            const { maxPlayers, config, poolMode, allowTrades, password, draftScheduledAt } = req.body || {};
             const username = req.auth.username;
             const nomEquipe = typeof req.body?.teamName === 'string' && req.body.teamName.trim()
                 ? req.body.teamName.trim()
@@ -254,6 +255,11 @@ function monter(app, ctx) {
 
             const refusEquipe = refusNomEquipe(nomEquipe);
             if (refusEquipe) return res.status(400).json({ message: refusEquipe });
+
+            // Repêcher quand on le décide (rien d'envoyé), ou à une date fixée
+            // d'avance : le serveur lancera alors le repêchage lui-même.
+            const datePrevue = poolOps.lireDateRepechage(draftScheduledAt);
+            if (!datePrevue.ok) return res.status(400).json({ message: datePrevue.message });
 
             const mode = poolMode === 'head-to-head' ? 'head-to-head' : 'cumulative';
             // Un plafond, pas un quota : le repêchage peut partir avant qu'il
@@ -288,6 +294,7 @@ function monter(app, ctx) {
                 createdAt: new Date().toISOString(),
                 teams
             };
+            if (datePrevue.date) poolData.draftScheduledAt = datePrevue.date;
             if (protection) {
                 poolData.passwordHash = protection.passwordHash;
                 if (protection.passwordSecret) poolData.passwordSecret = protection.passwordSecret;
@@ -645,6 +652,152 @@ function monter(app, ctx) {
 
     // ───────────────────────────── Repêchage ─────────────────────────────
 
+    /**
+     * Ce qui accompagne tout départ de repêchage, au clic comme à l'heure
+     * prévue : la pendule du premier tour, la saison repêchée, et l'alerte à
+     * chaque membre. Écrit dans la transaction du départ, jamais à côté.
+     */
+    function annoncerDepart({ data, poolId, journal, nom, equipes, acteur = null, maintenant = Date.now() }) {
+        data.turnStartedAt = maintenant;
+        data.saisonRepechage = seasonIdForDate(new Date(maintenant));
+
+        journal.evenement({
+            poolId,
+            type: evenements.ACTIVITE.REPECHAGE_DEMARRE,
+            actorUserId: acteur,
+            subject: { equipes },
+            dedupKey: evenements.clesActivite.repechageDemarre(poolId)
+        });
+
+        for (const membre of authz.membresDuPool(data)) {
+            journal.notifier({
+                recipient: membre,
+                poolId,
+                type: evenements.NOTIFICATION.REPECHAGE_DEMARRE,
+                subject: { poolName: nom },
+                dedupKey: evenements.clesNotification.repechageDemarre(poolId)
+            });
+        }
+    }
+
+    /**
+     * Fixer, déplacer ou retirer la date du repêchage. Réservé à la personne
+     * qui a créé le pool, tant que le repêchage n'est pas parti.
+     *
+     * Une date nouvelle est annoncée aux autres membres : c'est un rendez-vous,
+     * il ne doit pas se découvrir en ouvrant la salle trop tard.
+     */
+    app.post('/api/pools/:poolName/draft-schedule', auth.requireAuth, async (req, res) => {
+        try {
+            const nom = req.params.poolName;
+            const { valeur } = await store.muterPool(nom, {
+                scope: 'pool:date-repechage',
+                userId: req.auth.userId,
+                appliquer: async ({ data, poolId, journal }) => {
+                    if (!authz.peutAdministrer(data, { username: req.auth.username, isAdmin: req.auth.isAdmin })) {
+                        throw new ErreurMetier(403, "Seule la personne qui a créé le pool peut choisir la date du repêchage.");
+                    }
+                    const resultat = poolOps.programmerRepechage(data, { date: req.body?.draftScheduledAt });
+                    if (!resultat.ok) throw refus(resultat);
+
+                    if (resultat.date && resultat.change) {
+                        for (const membre of authz.membresDuPool(data)) {
+                            if (membre === req.auth.username) continue;
+                            journal.notifier({
+                                recipient: membre,
+                                poolId,
+                                type: evenements.NOTIFICATION.REPECHAGE_PREVU,
+                                subject: { poolName: nom, date: resultat.date },
+                                dedupKey: evenements.clesNotification.repechagePrevu(poolId, resultat.date)
+                            });
+                        }
+                    }
+                    return { valeur: { draftScheduledAt: resultat.date } };
+                }
+            });
+
+            const frais = await store.lire(nom);
+            diffusion.poolMisAJour(nom, frais.data, frais.revision);
+
+            res.json({
+                message: valeur.draftScheduledAt ? "Date du repêchage enregistrée." : "Date du repêchage retirée.",
+                draftScheduledAt: valeur.draftScheduledAt,
+                revision: valeur.revision
+            });
+        } catch (erreur) {
+            repondreErreur(res, erreur, '/draft-schedule');
+        }
+    });
+
+    /**
+     * Lance les repêchages dont l'heure est venue. Appelé par server.js au
+     * début de chaque minute — les dates sont arrondies à la minute.
+     *
+     * La lecture de tous les pools ne fait que trier les candidats : chaque
+     * départ se revalide sous le verrou de SON pool (poolOps.
+     * demarrerRepechagePrevu), si bien qu'un clic « Commencer » simultané, ou
+     * une deuxième instance du serveur, ne peut pas lancer deux fois le même
+     * repêchage.
+     *
+     * Un départ impossible (une seule équipe, un nombre impair en tête-à-tête)
+     * retire la date et le dit à la personne qui a créé le pool.
+     */
+    async function demarrerRepechagesPrevus(maintenant = Date.now()) {
+        const pools = await store.lireTous();
+        const candidats = Object.entries(pools)
+            .filter(([, enveloppe]) => poolOps.repechagePrevuEchu(enveloppe.data, maintenant))
+            .map(([nom]) => nom);
+
+        const bilan = [];
+        for (const nom of candidats) {
+            try {
+                const { valeur } = await store.muterPool(nom, {
+                    scope: 'pool:depart-prevu',
+                    appliquer: async ({ data, poolId, journal }) => {
+                        if (!poolOps.repechagePrevuEchu(data, maintenant)) {
+                            return { sauvegarder: false, valeur: { demarre: false, raison: 'deja' } };
+                        }
+                        const resultat = poolOps.demarrerRepechagePrevu(data, { maintenant, melanger });
+                        if (resultat.ok) {
+                            annoncerDepart({ data, poolId, journal, nom, equipes: resultat.equipes, maintenant });
+                            return { valeur: { demarre: true, premierTour: data.draftOrder[0] } };
+                        }
+
+                        const createur = authz.createurDuPool(data);
+                        if (createur) {
+                            journal.notifier({
+                                recipient: createur,
+                                poolId,
+                                type: evenements.NOTIFICATION.REPECHAGE_MANQUE,
+                                subject: { poolName: nom, date: resultat.prevu, raison: resultat.message },
+                                dedupKey: evenements.clesNotification.repechageManque(poolId, resultat.prevu)
+                            });
+                        }
+                        return { valeur: { demarre: false, raison: 'manque', message: resultat.message } };
+                    }
+                });
+
+                if (valeur.demarre || valeur.raison === 'manque') {
+                    const frais = await store.lire(nom);
+                    diffusion.poolMisAJour(nom, frais.data, frais.revision);
+                }
+                if (valeur.demarre) {
+                    diffusion.versPool(nom, 'draftDemarre', { poolName: nom, premierTour: valeur.premierTour });
+                    logger.log(`Repêchage démarré à l'heure prévue : ${nom}`);
+                } else if (valeur.raison === 'manque') {
+                    logger.log(`Repêchage prévu non démarré (${nom}) : ${valeur.message}`);
+                }
+                bilan.push({ pool: nom, ...valeur });
+            } catch (erreur) {
+                // Un pool en panne ne doit pas retenir les autres départs.
+                logger.error(`Départ prévu impossible (${nom}) :`, erreur.message);
+                bilan.push({ pool: nom, demarre: false, raison: 'erreur' });
+            }
+        }
+        return bilan;
+    }
+    ctx.demarrerRepechagesPrevus = demarrerRepechagesPrevus;
+
     /** Lancer le repêchage. Réservé à la personne qui a créé le pool. */
     app.post('/start-draft', auth.requireAuth, async (req, res) => {
         try {
@@ -666,26 +819,7 @@ function monter(app, ctx) {
                     const resultat = poolOps.demarrerRepechage(data, { melanger });
                     if (!resultat.ok) throw refus(resultat);
 
-                    data.turnStartedAt = Date.now();
-                    data.saisonRepechage = seasonIdForDate(new Date());
-
-                    journal.evenement({
-                        poolId,
-                        type: evenements.ACTIVITE.REPECHAGE_DEMARRE,
-                        actorUserId: req.auth.userId,
-                        subject: { equipes: resultat.equipes },
-                        dedupKey: evenements.clesActivite.repechageDemarre(poolId)
-                    });
-
-                    for (const membre of authz.membresDuPool(data)) {
-                        journal.notifier({
-                            recipient: membre,
-                            poolId,
-                            type: evenements.NOTIFICATION.REPECHAGE_DEMARRE,
-                            subject: { poolName: nom },
-                            dedupKey: evenements.clesNotification.repechageDemarre(poolId)
-                        });
-                    }
+                    annoncerDepart({ data, poolId, journal, nom, equipes: resultat.equipes, acteur: req.auth.userId });
 
                     return { valeur: { draftOrder: data.draftOrder, premierTour: data.draftOrder[0] } };
                 }

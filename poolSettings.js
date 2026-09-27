@@ -185,6 +185,7 @@
                         ${ligne('Échanges', donnees.allowTrades !== false ? 'Autorisés' : 'Désactivés')}
                         ${ligne('Accès', donnees.hasPassword ? 'Mot de passe' : 'Libre')}
                         ${ligne('Repêchage', LIBELLE_ETAT[etat.etat])}
+                        ${etat.prevuLe ? ligne('Date du repêchage', FZPool.draftDate(etat.prevuLe)) : ''}
                         ${createur ? ligne('Créé par', createur) : ''}
                     </ul>
                 </section>
@@ -408,13 +409,17 @@
                 </div>`;
             action = `<a class="ps-primary" href="${lien('draftActif.html')}">Ouvrir la salle de repêchage</a>`;
         } else if (etat.etat === 'pret') {
-            detail = `<p class="ps-state-line">${etat.inscrits} participant${etat.inscrits > 1 ? 's' : ''} inscrit${etat.inscrits > 1 ? 's' : ''}. Le repêchage peut partir quand ${estCreateur(donnees) ? 'vous le lancez' : `${echapper(createur || 'l’administration')} le lance`}.</p>`;
+            const depart = etat.prevuLe
+                ? `Il commencera tout seul le ${echapper(FZPool.draftDate(etat.prevuLe))}`
+                : `Le repêchage peut partir quand ${estCreateur(donnees) ? 'vous le lancez' : `${echapper(createur || 'l’administration')} le lance`}`;
+            detail = `<p class="ps-state-line">${etat.inscrits} participant${etat.inscrits > 1 ? 's' : ''} inscrit${etat.inscrits > 1 ? 's' : ''}. ${depart}.</p>`;
             if (estCreateur(donnees)) action = `<a class="ps-primary" href="${lien('repechage.html')}">Préparer le repêchage</a>`;
         } else if (etat.etat === 'attente') {
             const raison = donnees.instant === true
                 ? 'Le pool rapide part dès qu’il est plein.'
                 : (RAISON_ATTENTE[etat.raison] || 'En attente de participants.');
-            detail = `<p class="ps-state-line">${raison}</p>`;
+            const prevu = etat.prevuLe ? ` Repêchage prévu le ${echapper(FZPool.draftDate(etat.prevuLe))}.` : '';
+            detail = `<p class="ps-state-line">${raison}${prevu}</p>`;
         } else {
             const h2h = donnees.poolMode === 'head-to-head' && donnees.h2hData && donnees.h2hData.currentWeek;
             detail = `<p class="ps-state-line">Repêchage terminé${h2h ? ` · semaine ${echapper(donnees.h2hData.currentWeek)}` : ''}. Les points s’accumulent chaque soir de match.</p>`;

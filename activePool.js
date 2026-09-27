@@ -90,14 +90,67 @@
 
         const equipes = equipesActives.length;
         const plein = inscrits >= max;
+        // La date fixée d'avance, s'il y en a une ; celle qui vient d'être
+        // manquée, le temps de le dire à la personne qui a créé le pool.
+        const prevuLe = poolData.instant === true ? null : (poolData.draftScheduledAt || null);
+        const manqueLe = prevuLe ? null : (poolData.draftScheduleMissed || null);
         // Le pool rapide part tout seul, et seulement plein : c'est sa promesse.
         if (poolData.instant === true) {
-            return { etat: plein ? 'pret' : 'attente', inscrits, max, equipes, commence, plein };
+            return { etat: plein ? 'pret' : 'attente', inscrits, max, equipes, commence, plein, prevuLe: null, manqueLe: null };
         }
         let raison = null;
         if (equipes < 2) raison = 'deux';
         else if (poolData.poolMode === 'head-to-head' && equipes % 2 !== 0) raison = 'pair';
-        return { etat: raison ? 'attente' : 'pret', inscrits, max, equipes, commence, plein, raison };
+        return { etat: raison ? 'attente' : 'pret', inscrits, max, equipes, commence, plein, raison, prevuLe, manqueLe };
+    }
+
+    // ==================== DATE DU REPÊCHAGE ====================
+
+    /**
+     * « samedi 4 octobre à 20 h » : une date de repêchage, à l'heure de qui
+     * regarde. `court` : « sam. 4 oct., 20 h », pour une pastille.
+     */
+    function dateRepechage(iso, { court = false } = {}) {
+        const instant = Date.parse(iso);
+        if (!Number.isFinite(instant)) return '';
+        const date = new Date(instant);
+        const jour = date.toLocaleDateString('fr-CA', court
+            ? { weekday: 'short', day: 'numeric', month: 'short' }
+            : { weekday: 'long', day: 'numeric', month: 'long' });
+        const minutes = date.getMinutes();
+        const heure = `${date.getHours()} h${minutes ? ' ' + String(minutes).padStart(2, '0') : ''}`;
+        return court ? `${jour}, ${heure}` : `${jour} à ${heure}`;
+    }
+
+    /** « dans 2 j 4 h », « dans 35 min » — ou null une fois l'heure passée. */
+    function delaiAvant(iso, maintenant = Date.now()) {
+        const reste = Date.parse(iso) - maintenant;
+        if (!Number.isFinite(reste) || reste <= 0) return null;
+        const minutes = Math.ceil(reste / 60000);
+        if (minutes < 60) return `dans ${minutes} min`;
+        const heures = Math.floor(minutes / 60);
+        if (heures < 24) return `dans ${heures} h${minutes % 60 ? ' ' + (minutes % 60) + ' min' : ''}`;
+        const jours = Math.floor(heures / 24);
+        return `dans ${jours} j${heures % 24 ? ' ' + (heures % 24) + ' h' : ''}`;
+    }
+
+    /**
+     * La valeur d'un champ `datetime-local` (heure de l'appareil) à partir
+     * d'une date ISO, et l'inverse. Le champ n'a pas de fuseau : c'est
+     * l'appareil qui l'interprète, dans un sens comme dans l'autre.
+     */
+    function versChampDate(iso) {
+        const instant = Date.parse(iso);
+        if (!Number.isFinite(instant)) return '';
+        const d = new Date(instant);
+        const deux = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${deux(d.getMonth() + 1)}-${deux(d.getDate())}T${deux(d.getHours())}:${deux(d.getMinutes())}`;
+    }
+
+    function depuisChampDate(valeur) {
+        if (!valeur) return null;
+        const instant = new Date(valeur).getTime();
+        return Number.isFinite(instant) ? new Date(instant).toISOString() : null;
     }
 
     /**
@@ -538,6 +591,10 @@
         teamOf: equipeDe,
         hasRoster: aUnEffectif,
         isMember: estMembre,
+        draftDate: dateRepechage,
+        timeUntil: delaiAvant,
+        toDateInput: versChampDate,
+        fromDateInput: depuisChampDate,
 
         /** Vignette d'un pool : son image, sinon l'image générique. */
         image: data => (data && data.imageUrl) ? data.imageUrl : 'Icons/grayGroup.png',

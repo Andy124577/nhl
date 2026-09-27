@@ -253,6 +253,34 @@ $(document).ready(function() {
     $("#maxPlayers").on('change', updatePoolModeInfo);
 });
 
+/**
+ * Quand repêcher : « À une date précise » dévoile le champ de date. Le champ
+ * ne propose rien avant la minute suivante, et s'ouvre sur demain 20 h — une
+ * soirée, l'heure où un pool entre amis se réunit.
+ */
+function champDateLocale(date) {
+    const deux = n => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${deux(date.getMonth() + 1)}-${deux(date.getDate())}T${deux(date.getHours())}:${deux(date.getMinutes())}`;
+}
+
+function majDateRepechage() {
+    const groupe = document.getElementById('draftDateGroup');
+    const champ = document.getElementById('draftDate');
+    if (!groupe || !champ) return;
+    const aDate = $('input[name="draftWhen"]:checked').val() === 'date';
+    groupe.hidden = !aDate;
+    if (!aDate) return;
+
+    const bientot = new Date(Date.now() + 60000);
+    champ.min = champDateLocale(bientot);
+    if (!champ.value) {
+        const demain = new Date();
+        demain.setDate(demain.getDate() + 1);
+        demain.setHours(20, 0, 0, 0);
+        champ.value = champDateLocale(demain);
+    }
+}
+
 // Pool image preview (triggered by file input in pool.html)
 function previewPoolImage(input) {
     if (!input.files || !input.files[0]) return;
@@ -284,6 +312,8 @@ async function createClan() {
         ? Math.min(5, Math.max(0, parseInt($("#numBench").val(), 10) || 0)) : 0;
     const allowTrades = $("#allowTrades").is(':checked');
     const poolPassword = ($("#poolPassword").val() || "").trim();
+    const aDateRepechage = $('input[name="draftWhen"]:checked').val() === 'date';
+    const valeurDate = ($("#draftDate").val() || "").trim();
     const username = localStorage.getItem("username");
 
     // Un refus de formulaire : la fenêtre dit quoi corriger, puis rend la
@@ -324,6 +354,19 @@ async function createClan() {
         return refuser('Mot de passe trop court', 'Le mot de passe du pool doit contenir entre 4 et 72 caractères.', '#poolPassword');
     }
 
+    // La date est lue à l'heure de l'appareil ; le serveur la garde en UTC.
+    let draftScheduledAt = null;
+    if (aDateRepechage) {
+        const instant = valeurDate ? new Date(valeurDate).getTime() : NaN;
+        if (!Number.isFinite(instant)) {
+            return refuser('Date manquante', 'Choisissez la date et l’heure du repêchage, ou « Quand je le décide ».', '#draftDate');
+        }
+        if (instant < Date.now()) {
+            return refuser('Date passée', 'Choisissez une date et une heure à venir pour le repêchage.', '#draftDate');
+        }
+        draftScheduledAt = new Date(instant).toISOString();
+    }
+
     // Head-to-Head : le plafond reste pair, pour qu'un pool plein puisse
     // toujours partir. Le serveur vérifie la parité des équipes au départ.
     if (poolMode === 'head-to-head' && maxPlayers % 2 !== 0) {
@@ -341,6 +384,8 @@ async function createClan() {
         // Champ vide = pool ouvert. Le serveur ne hache que si la chaîne
         // est non vide, et ne renvoie jamais l'empreinte.
         password: poolPassword,
+        // Absent : le repêchage partira quand on le lancera.
+        ...(draftScheduledAt ? { draftScheduledAt } : {}),
         config: {
             numOffensive: numOffensive,
             numDefensive: numDefensive,
@@ -380,6 +425,7 @@ async function createClan() {
             // La suite logique est d'inviter : la page du repêchage, où
             // l'on arrive en fermant, porte la recherche de participants.
             const esc = fzDialog.escape;
+            const quand = draftScheduledAt && window.FZPool ? FZPool.draftDate(draftScheduledAt) : '';
             await fzAlert({
                 type: 'success',
                 title: 'Votre pool est créé !',
@@ -388,7 +434,9 @@ async function createClan() {
                 note: {
                     icon: 'users',
                     title: 'Prochaine étape',
-                    text: 'Invitez vos amis : le repêchage pourra commencer dès qu’il y aura 2 équipes.'
+                    text: quand
+                        ? `Invitez vos amis : le repêchage commencera le ${quand}.`
+                        : 'Invitez vos amis : le repêchage pourra commencer dès qu’il y aura 2 équipes.'
                 },
                 confirmLabel: 'Inviter des participants'
             });
@@ -402,6 +450,9 @@ async function createClan() {
             $("#numGoalies").val("1");
             $("#numRookies").val("1");
             $("#numTeams").val("1");
+            $('input[name="draftWhen"][value="manuel"]').prop('checked', true);
+            $("#draftDate").val("");
+            majDateRepechage();
             const poolImgPreview = document.getElementById('poolImgPreview');
             const poolImgHint = document.getElementById('poolImgUploadHint');
             if (poolImgPreview) { poolImgPreview.src = ''; poolImgPreview.style.display = 'none'; }
@@ -511,6 +562,10 @@ function updateUI(draftData) {
             const plafond = clan.maxPlayers || 10;
             const plein = totalParticipants >= plafond;
             const nomEchappe = cmEchapper(clanName);
+            // Un rendez-vous fixé compte autant que le format pour décider
+            // d'entrer : on sait si l'on sera là.
+            const prevu = clan.draftScheduledAt && window.FZPool
+                ? FZPool.draftDate(clan.draftScheduledAt, { court: true }) : '';
             $("#available-clans-list").append(`
                 <li data-nom="${nomEchappe.toLowerCase()}"
                     data-acces="${protege ? 'protege' : 'ouvert'}">
@@ -520,6 +575,7 @@ function updateUI(draftData) {
                         <div class="pool-item-info">
                             <span class="pool-item-badge">👥 ${totalParticipants}/${plafond} participants</span>
                             <span class="pool-item-badge">📋 ${totalPicks} sélections</span>
+                            ${prevu ? `<span class="pool-item-badge">🗓️ Repêchage ${cmEchapper(prevu)}</span>` : ''}
                             <span class="pool-item-badge pool-acces-badge ${protege ? 'is-protege' : 'is-ouvert'}">
                                 ${protege ? '🔒 Mot de passe' : '🔓 Accès libre'}
                             </span>
