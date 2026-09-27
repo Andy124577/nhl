@@ -1983,12 +1983,15 @@ async function renderActivityFeed() {
         }
 
         container.innerHTML = trades.slice(0, 8).map(trade => {
-            const offering = trade.offering && trade.offering[0];
-            const receiving = trade.receiving && trade.receiving[0];
+            // Tous les joueurs de l'échange, pas seulement la première paire.
+            const noms = liste => (liste || []).map(p => p && p.name).filter(Boolean)
+                .map(n => `<strong>${escapeHTML(n)}</strong>`).join(', ');
+            const offering = noms(trade.offering);
+            const receiving = noms(trade.receiving);
             const dateRaw = trade.completedDate || trade.date;
             const timeLabel = dateRaw ? relativeTimeFr(dateRaw) : '';
             const text = offering && receiving
-                ? `Échange complété : <strong>${escapeHTML(offering.name)}</strong> ↔ <strong>${escapeHTML(receiving.name)}</strong> (${escapeHTML(trade.fromTeam)} ⇄ ${escapeHTML(trade.toTeam)}).`
+                ? `Échange complété : ${offering} ↔ ${receiving} (${escapeHTML(trade.fromTeam)} ⇄ ${escapeHTML(trade.toTeam)}).`
                 : `Échange complété entre <strong>${escapeHTML(trade.fromTeam)}</strong> et <strong>${escapeHTML(trade.toTeam)}</strong>.`;
             return `<div class="fzd-activity-row"><div class="fzd-activity-time fzd-display">${timeLabel}</div><div class="fzd-activity-text">${text}</div></div>`;
         }).join('');

@@ -29,6 +29,14 @@ const { checkIfDraftComplete } = require('../lib/draft.js');
 /** Catégories échangeables. Un échange se fait toujours catégorie contre même catégorie. */
 const CATEGORIES = new Set(['offensive', 'defensive', 'goalie', 'rookie', 'team']);
 
+/**
+ * Joueurs par côté dans UNE proposition. Une proposition réunit des paires :
+ * `offering[i]` part contre `receiving[i]`, de la même catégorie, pour que les
+ * deux alignements gardent leurs quotas. Trois paires font un seul « 3 pour 3 »
+ * que le destinataire accepte ou refuse en bloc — pas trois offres séparées.
+ */
+const JOUEURS_MAX = 10;
+
 function monter(app, ctx) {
     const { auth, store, db, diffusion, usePostgres, logger = console } = ctx;
     const { ErreurMetier } = store;
@@ -197,20 +205,34 @@ function monter(app, ctx) {
             if (counterOf !== null && !Number.isInteger(counterOf)) {
                 return res.status(400).json({ message: "Identifiant de contre-offre invalide." });
             }
-            if (offering.length !== 1 || receiving.length !== 1) {
+            if (offering.length === 0 || offering.length !== receiving.length) {
                 return res.status(400).json({
-                    message: "Échanges 1 pour 1 seulement : exactement un joueur contre un joueur."
+                    message: "Un échange se fait joueur pour joueur : autant de joueurs offerts que reçus."
                 });
             }
-
-            const offert = offering[0];
-            const recu = receiving[0];
-            if (!CATEGORIES.has(offert.type) || offert.type !== recu.type) {
-                return res.status(400).json({
-                    message: `Les deux joueurs doivent être de la même catégorie. ` +
-                             `Vous offrez : ${getPositionLabel(offert.type)}, vous recevez : ${getPositionLabel(recu.type)}.`
-                });
+            if (offering.length > JOUEURS_MAX) {
+                return res.status(400).json({ message: `Au plus ${JOUEURS_MAX} joueurs de chaque côté par proposition.` });
             }
+            const nomValide = item => item && typeof item.name === 'string' && item.name.trim() !== '';
+            if (![...offering, ...receiving].every(nomValide)) {
+                return res.status(400).json({ message: "Données incomplètes." });
+            }
+            for (let i = 0; i < offering.length; i++) {
+                const offert = offering[i];
+                const recu = receiving[i];
+                if (!CATEGORIES.has(offert.type) || offert.type !== recu.type) {
+                    return res.status(400).json({
+                        message: `Chaque joueur doit être échangé contre un joueur de la même catégorie. ` +
+                                 `${offert.name} : ${getPositionLabel(offert.type)}, ${recu.name} : ${getPositionLabel(recu.type)}.`
+                    });
+                }
+            }
+            const enDouble = liste => new Set(liste.map(item => item.name)).size !== liste.length;
+            if (enDouble(offering) || enDouble(receiving)) {
+                return res.status(400).json({ message: "Un même joueur ne peut figurer qu'une fois dans la proposition." });
+            }
+            const nomsOfferts = offering.map(item => item.name).join(', ');
+            const nomsRecus = receiving.map(item => item.name).join(', ');
             if (fromTeam === toTeam) {
                 return res.status(400).json({ message: "Une équipe ne peut pas échanger avec elle-même." });
             }
@@ -254,11 +276,13 @@ function monter(app, ctx) {
 
                 // Propriété revérifiée sous verrou : l'écran a pu rester ouvert
                 // pendant qu'un autre échange changeait ces alignements.
-                if (!teamHasPlayer(data.teams[fromTeam], offert)) {
-                    throw new ErreurMetier(409, `Vous ne possédez pas ${offert.name}.`);
+                const pasAMoi = offering.filter(item => !teamHasPlayer(data.teams[fromTeam], item)).map(i => i.name);
+                if (pasAMoi.length > 0) {
+                    throw new ErreurMetier(409, `Vous ne possédez pas ${pasAMoi.join(', ')}.`);
                 }
-                if (!teamHasPlayer(data.teams[toTeam], recu)) {
-                    throw new ErreurMetier(409, `${toTeam} ne possède pas ${recu.name}.`);
+                const pasALui = receiving.filter(item => !teamHasPlayer(data.teams[toTeam], item)).map(i => i.name);
+                if (pasALui.length > 0) {
+                    throw new ErreurMetier(409, `${toTeam} ne possède pas ${pasALui.join(', ')}.`);
                 }
 
                 const tradeData = {
@@ -292,14 +316,14 @@ function monter(app, ctx) {
                         poolId: verrouille.id,
                         type: evenements.NOTIFICATION.ECHANGE_RECU,
                         subject: { tradeId, poolName: draftName, fromTeam, toTeam,
-                                   offering: offert.name, receiving: recu.name },
+                                   offering: nomsOfferts, receiving: nomsRecus },
                         dedupKey: evenements.clesNotification.echangeRecu(tradeId)
                     });
                 }
 
                 return { tradeId, destinataires: membresDe(data, toTeam) };
             }, { scope: 'echange:proposer', userId: req.auth.userId, operationId: req.body?.operationId,
-                 requete: { draftName, fromTeam, toTeam, offert: offert.name, recu: recu.name } });
+                 requete: { draftName, fromTeam, toTeam, offert: nomsOfferts, recu: nomsRecus } });
 
             for (const membre of valeur.destinataires) {
                 diffusion.versUtilisateur(membre, 'tradePending', { tradeId: valeur.tradeId, poolName: draftName });
@@ -308,7 +332,7 @@ function monter(app, ctx) {
 
             if (counterOf !== null) diffusion.versPool(draftName, 'tradeUpdated', { poolName: draftName, tradeId: counterOf });
 
-            logger.log(`📤 Échange proposé : ${fromTeam} → ${toTeam} (${offert.name} ↔ ${recu.name})${counterOf !== null ? ` — contre-offre à #${counterOf}` : ''}`);
+            logger.log(`📤 Échange proposé : ${fromTeam} → ${toTeam} (${nomsOfferts} ↔ ${nomsRecus})${counterOf !== null ? ` — contre-offre à #${counterOf}` : ''}`);
             res.json({
                 message: counterOf !== null
                     ? "Contre-offre envoyée. La proposition d'origine a été refusée."

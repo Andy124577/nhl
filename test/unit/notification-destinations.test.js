@@ -223,9 +223,12 @@ test('archived notification destinations focus the correct card and respect redu
             receiving: [{ name: 'Player B', type: 'offensive' }]
         };
         const { loadHistory } = chargerFonctions('trade.js', [
-            'loadHistory', 'focusTradeTarget', 'getCategory', 'getCategoryLabel'
+            'loadHistory', 'focusTradeTarget', 'getCategory', 'getCategoryLabel',
+            'historyPlayersHTML', 'tradeShotHTML', 'clubDuJoueur', 'getPlayerCurrentStats',
+            'getMatchingImage', 'initialesJoueur', 'escapeTradeHTML'
         ], {
             BASE_URL: '', currentUsername: 'recipient',
+            currentStats: null, fullPlayerData: [], goalieData: [], resolveHeadshotByName: () => null,
             document: { getElementById: () => container },
             window: { matchMedia: () => ({ matches: true }) },
             FZPool: { get: () => 'Pool' },
@@ -283,4 +286,139 @@ test("une contre-offre refuse l'offre d'origine dans la même transaction", asyn
         assert.equal(avant.data.counteredBy, res.body.tradeId);
         assert.equal(h.etat.trades.find(t => t.id === res.body.tradeId).data.counterOf, originale);
     } finally { h.nettoyer(); }
+});
+
+// ───────────────────────────── Plusieurs joueurs ─────────────────────────────
+
+function poolTroisPourTrois() {
+    return poolTermine({
+        config: { numOffensive: 2, numDefensive: 1, numGoalies: 0, numRookies: 0, numTeams: 0 },
+        teams: {
+            'Équipe 1': { members: ['alice'], offensive: ['A1', 'A2'], defensive: ['AD'], goalie: [], rookie: [], teams: [] },
+            'Équipe 2': { members: ['bob'], offensive: ['B1', 'B2'], defensive: ['BD'], goalie: [], rookie: [], teams: [] }
+        }
+    });
+}
+
+const joueur = (name, type = 'offensive') => ({ name, type });
+
+test('un 3 pour 3 est UNE proposition, acceptée en bloc', async () => {
+    const h = banc({ Pool: poolTroisPourTrois() });
+    try {
+        const res = await h.appeler('POST', '/trade/propose', {
+            auth: ALICE,
+            body: {
+                draftName: 'Pool', fromTeam: 'Équipe 1', toTeam: 'Équipe 2',
+                offering: [joueur('A1'), joueur('A2'), joueur('AD', 'defensive')],
+                receiving: [joueur('B1'), joueur('B2'), joueur('BD', 'defensive')]
+            }
+        });
+        assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+        assert.equal(h.etat.trades.length, 1, 'une seule proposition, pas trois');
+        assert.equal(h.etat.notifications.length, 1, 'une seule notification pour Bob');
+        assert.equal(h.etat.notifications[0].subject.offering, 'A1, A2, AD');
+        assert.equal(h.etat.notifications[0].subject.receiving, 'B1, B2, BD');
+
+        const recues = await h.appeler('GET', '/trades/pending/bob', { auth: BOB });
+        assert.equal(recues.body.length, 1);
+        assert.deepEqual(recues.body[0].offering.map(p => p.name), ['A1', 'A2', 'AD']);
+        assert.deepEqual(recues.body[0].receiving.map(p => p.name), ['B1', 'B2', 'BD']);
+
+        const accepte = await h.appeler('POST', '/trade/accept', { auth: BOB, body: { tradeId: res.body.tradeId } });
+        assert.equal(accepte.statusCode, 200, JSON.stringify(accepte.body));
+        const pool = h.lirePool('Pool');
+        assert.deepEqual(pool.teams['Équipe 1'].offensive, ['B1', 'B2']);
+        assert.deepEqual(pool.teams['Équipe 1'].defensive, ['BD']);
+        assert.deepEqual(pool.teams['Équipe 2'].offensive, ['A1', 'A2']);
+        assert.deepEqual(pool.teams['Équipe 2'].defensive, ['AD']);
+    } finally { h.nettoyer(); }
+});
+
+test('la page envoie trois paires en UNE requête, pas trois', async () => {
+    const appels = [];
+    const succes = [];
+    const { proposeTrade } = chargerFonctions('trade.js', ['proposeTrade', 'getCategoryType'], {
+        pairs: [
+            { give: { name: 'A1', category: 'F' }, get: { name: 'B1', category: 'F' } },
+            { give: { name: 'A2', category: 'F' }, get: { name: 'B2', category: 'F' } },
+            { give: { name: 'AD', category: 'D' }, get: { name: 'BD', category: 'D' } }
+        ],
+        selectedPool: 'Pool', myTeamName: 'Équipe 1', selectedPartnerTeam: 'Équipe 2', counterOfTradeId: 7,
+        BASE_URL: '',
+        showTradeConfirm: async () => true,
+        showLoading() {}, hideLoading() {}, loadReceivedTrades() {}, updateReceivedBadge() {},
+        showTradeSuccess(n) { succes.push(n); },
+        showNotification(m) { throw new Error('échec inattendu : ' + m); },
+        document: { getElementById: () => ({}) },
+        fetch: async (url, options) => {
+            appels.push({ url, corps: JSON.parse(options.body) });
+            return { ok: true, json: async () => ({ tradeId: 1 }) };
+        }
+    });
+    await proposeTrade();
+    assert.equal(appels.length, 1);
+    assert.equal(appels[0].url, '/trade/propose');
+    assert.deepEqual(appels[0].corps.offering.map(p => [p.name, p.type]),
+        [['A1', 'offensive'], ['A2', 'offensive'], ['AD', 'defensive']]);
+    assert.deepEqual(appels[0].corps.receiving.map(p => [p.name, p.type]),
+        [['B1', 'offensive'], ['B2', 'offensive'], ['BD', 'defensive']]);
+    assert.equal(appels[0].corps.counterOf, 7, 'la contre-offre part avec la proposition entière');
+    assert.deepEqual(succes, [3]);
+});
+
+test('une proposition 3 pour 3 reçue s’affiche en une seule carte, avec les six joueurs', async () => {
+    const conteneur = { innerHTML: '', querySelectorAll: () => [] };
+    const { loadReceivedTrades } = chargerFonctions('trade.js', [
+        'loadReceivedTrades', 'tradesRecusParId', 'relativeDate', 'initialsFor', 'tradePlayerBoxHTML',
+        'tradeShotHTML', 'clubDuJoueur', 'getPlayerCurrentStats', 'getMatchingImage', 'initialesJoueur',
+        'escapeTradeHTML', 'getCategory', 'getCategoryLabel', 'focusTradeTarget'
+    ], {
+        BASE_URL: '', currentUsername: 'bob',
+        currentStats: { players: [{ playerName: 'A1', teamAbbrev: 'MTL', headshot: 'https://assets.nhle.com/mugs/nhl/20262027/MTL/1.png' }] },
+        fullPlayerData: [], goalieData: [],
+        resolveHeadshotByName: nom => nom === 'A1' ? 'https://assets.nhle.com/mugs/nhl/20262027/MTL/1.png' : null,
+        getTeamColors: club => club === 'MTL' ? ['#AF1E2D', '#192168'] : ['#3A414D', '#171A20'],
+        updateReceivedBadge() {},
+        FZPool: { get: () => 'Pool' },
+        document: { getElementById: () => conteneur },
+        fetch: async () => ({ ok: true, json: async () => [{
+            id: 5, draftName: 'Pool', fromTeam: 'Équipe 1', toTeam: 'Équipe 2', date: new Date().toISOString(),
+            offering: [{ name: 'A1', type: 'offensive' }, { name: 'A2', type: 'offensive' }, { name: 'AD', type: 'defensive' }],
+            receiving: [{ name: 'B1', type: 'offensive' }, { name: 'B2', type: 'offensive' }, { name: 'BD', type: 'defensive' }]
+        }] })
+    });
+    await loadReceivedTrades();
+    const html = conteneur.innerHTML;
+    assert.equal((html.match(/class="received-trade-card/g) || []).length, 1);
+    assert.equal((html.match(/class="trade-player-box"/g) || []).length, 6);
+    for (const nom of ['A1', 'A2', 'AD', 'B1', 'B2', 'BD']) assert.match(html, new RegExp(`>${nom}<`));
+    assert.match(html, /3 pour 3/);
+    // La photo sur la couleur du club, comme à l'onglet Alignements.
+    assert.match(html, /class="tr-shot fz-shot" style="--fz-shot-team: #AF1E2D"/);
+    assert.match(html, /<img src="https:\/\/assets\.nhle\.com\/mugs\/nhl\/20262027\/MTL\/1\.png"/);
+});
+
+test('une proposition à plusieurs joueurs est refusée en entier si une paire cloche', async () => {
+    const cas = [
+        { quoi: 'plus de joueurs offerts que reçus', code: 400,
+          offering: [joueur('A1'), joueur('A2')], receiving: [joueur('B1')] },
+        { quoi: 'une paire de catégories différentes', code: 400,
+          offering: [joueur('A1'), joueur('AD', 'defensive')], receiving: [joueur('B1'), joueur('B2')] },
+        { quoi: 'le même joueur deux fois', code: 400,
+          offering: [joueur('A1'), joueur('A1')], receiving: [joueur('B1'), joueur('B2')] },
+        { quoi: 'un joueur que Bob ne possède pas', code: 409,
+          offering: [joueur('A1'), joueur('A2')], receiving: [joueur('B1'), joueur('Fantome')] }
+    ];
+    for (const c of cas) {
+        const h = banc({ Pool: poolTroisPourTrois() });
+        try {
+            const res = await h.appeler('POST', '/trade/propose', {
+                auth: ALICE,
+                body: { draftName: 'Pool', fromTeam: 'Équipe 1', toTeam: 'Équipe 2', offering: c.offering, receiving: c.receiving }
+            });
+            assert.equal(res.statusCode, c.code, c.quoi);
+            assert.equal(h.etat.trades.length, 0, `${c.quoi} : rien n'est enregistré`);
+            assert.equal(h.etat.notifications.length, 0, `${c.quoi} : personne n'est prévenu`);
+        } finally { h.nettoyer(); }
+    }
 });

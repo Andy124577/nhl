@@ -1495,11 +1495,15 @@ function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
                 headshot = getMatchingImage(player.name);
             }
 
-            if (headshot) {
-                imageHTML = `<img src="${headshot}" alt="${player.name}" class="lazy-image" data-src="${headshot}" onerror="this.style.display='none'; this.nextElementSibling?.style?.display ? (this.nextElementSibling.style.display = 'flex') : null;">`;
-            } else {
-                imageHTML = `<div class="no-photo">${player.position}</div>`;
-            }
+            // Sur la couleur du club, comme à l'onglet Alignements. Les
+            // initiales restent dessous : une photo qui ne charge pas se
+            // retire et les découvre. data-no-lazy : lazy-load.js poserait un
+            // carré gris opaque par-dessus la couleur le temps du chargement ;
+            // le loading="lazy" du navigateur suffit.
+            const initiales = escapeHtmlText(initialsFromName(player.name || ''));
+            imageHTML = (headshot
+                ? `<img src="${escapeAttr(headshot)}" alt="${escapeAttr(player.name)}" loading="lazy" data-no-lazy onerror="this.remove()">`
+                : '') + `<div class="no-photo">${initiales || escapeHtmlText(player.position)}</div>`;
         }
 
         // Calculate points
@@ -1554,7 +1558,7 @@ function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
 
         card.innerHTML = `
             <div class="pick-number">${pickNumber}</div>
-            <div class="player-avatar">
+            <div class="player-avatar${player.type === 'team' ? '' : ' fz-shot'}"${player.type === 'team' ? '' : ` style="${clubShotStyle(teamAbbrev)}"`}>
                 ${imageHTML}
             </div>
             <div class="roster-info">
@@ -1855,6 +1859,28 @@ function playerHeadshot(joueur) {
 }
 
 /**
+ * La couleur du club derrière une photo de joueur (.fz-shot, teamLogos.css) :
+ * le même fond qu'à l'onglet Alignements. `teamAbbrevs` liste parfois les
+ * clubs d'une saison (« TOR,MTL ») : le dernier est l'actuel. Club inconnu :
+ * le gris ardoise de teamColors.js.
+ */
+function clubShotStyle(teamAbbrev) {
+    const club = String(teamAbbrev || '').split(',').pop().trim();
+    const couleur = typeof getTeamColors === 'function' ? getTeamColors(club)[0] : '#3A414D';
+    return `--fz-shot-team: ${escapeAttr(couleur)}`;
+}
+
+/** Le club d'un joueur d'alignement : sa feuille de match, sinon les stats chargées. */
+function clubDuJoueur(joueur) {
+    if (joueur.teamAbbrev) return joueur.teamAbbrev;
+    const stats = getCurrentPlayerStats(joueur.name, joueur.playerId);
+    if (stats && stats.teamAbbrev) return stats.teamAbbrev;
+    const fiche = fullPlayerData.find(p => p.skaterFullName === joueur.name)
+        || goalieData.find(g => g.goalieFullName === joueur.name);
+    return fiche ? (fiche.teamAbbrev || fiche.teamAbbrevs) : null;
+}
+
+/**
  * La pastille d'un joueur : sa photo, ses initiales dessous.
  *
  * Les initiales sont dans le DOM dès le départ, sous l'image. Une photo qui
@@ -1866,9 +1892,12 @@ function h2hPlayerPhotoHTML(joueur) {
     const initiales = escapeHtmlText(initialsFromName(joueur.name || ''));
     const url = playerHeadshot(joueur);
     const image = url
-        ? `<img class="h2h-player-photo" src="${escapeAttr(url)}" alt="" loading="lazy" onerror="this.remove()">`
+        ? `<img class="h2h-player-photo" src="${escapeAttr(url)}" alt="" loading="lazy" data-no-lazy onerror="this.remove()">`
         : '';
-    return `<span class="h2h-player-photo-wrap"><span class="h2h-player-initials">${initiales}</span>${image}</span>`;
+    // L'image AVANT les initiales : la photo détourée est transparente, les
+    // initiales se voyaient à travers. Le CSS les cache tant qu'une image est
+    // là (.h2h-player-photo ~ .h2h-player-initials) ; son onerror les découvre.
+    return `<span class="h2h-player-photo-wrap fz-shot" style="${clubShotStyle(clubDuJoueur(joueur))}">${image}<span class="h2h-player-initials">${initiales}</span></span>`;
 }
 
 function buildMatchupCardHTML(m, poolName, showRecord) {

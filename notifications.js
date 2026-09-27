@@ -197,14 +197,15 @@
     }
 
     function notificationEchange(echange) {
-        const recu = (echange.offering || [])[0];
-        const donne = (echange.receiving || [])[0];
+        // Une proposition peut réunir plusieurs paires : on les nomme toutes.
+        const recus = (echange.offering || []).map(p => p && p.name).filter(Boolean).join(', ');
+        const donnes = (echange.receiving || []).map(p => p && p.name).filter(Boolean).join(', ');
         const date = echange.date ? new Date(echange.date).getTime() : NaN;
         return {
             id: 'trade:' + echange.id, type: 'echange', pool: echange.draftName,
             titre: "Proposition d'échange reçue",
-            detail: recu && donne
-                ? `${echange.fromTeam} vous offre ${recu.name} contre ${donne.name}. Votre réponse est attendue.`
+            detail: recus && donnes
+                ? `${echange.fromTeam} vous offre ${recus} contre ${donnes}. Votre réponse est attendue.`
                 : `${echange.fromTeam} vous propose un échange. Votre réponse est attendue.`,
             action: 'Examiner la proposition',
             date: Number.isFinite(date) ? date : Date.now(),

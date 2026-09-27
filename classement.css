@@ -652,11 +652,22 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: top;
 }
 
 .player-avatar .no-photo {
     font-size: 1.2rem;
     color: var(--text-light-gray);
+}
+
+/* Joueur : photo détourée sur la couleur de son club (.fz-shot, teamLogos.css),
+   comme à l'onglet Alignements. Les initiales ne servent que sans photo. */
+.player-avatar img ~ .no-photo { display: none; }
+.player-avatar.fz-shot .no-photo {
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
 }
 
 .roster-info {
@@ -1887,8 +1898,15 @@ body {
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
+    object-position: top;
     background: var(--bg-gray-light);
 }
+
+/* Sur la couleur du club (.fz-shot, teamLogos.css), comme à l'onglet
+   Alignements : la photo détourée laisse voir le fond de la pastille. */
+.h2h-player-photo-wrap.fz-shot .h2h-player-photo { background: transparent; }
+.h2h-player-photo-wrap.fz-shot .h2h-player-initials { color: #fff; }
+.h2h-player-photo ~ .h2h-player-initials { display: none; }
 
 
 .h2h-player-info {

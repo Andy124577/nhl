@@ -1,5 +1,7 @@
 /* ============================================================ */
-/* TRADE PAGE — single-screen builder, multi-pair, 1-for-1 each */
+/* TRADE PAGE — single-screen builder. Each pair is 1-for-1 at  */
+/* the same position; all pairs go out as ONE proposal (3 pairs */
+/* = one 3-for-3 the other team accepts or declines as a whole) */
 /* ============================================================ */
 
 const BASE_URL = window.location.hostname.includes('localhost')
@@ -43,8 +45,12 @@ let forSaleFilterActive = false;
 
 let teamSwitcherOpen = false;
 
-// Player images & stats
+// Player images & stats. fullPlayerData/goalieData (nhl_filtered_stats.json)
+// only serve photos: resolveHeadshotByName (headshots.js) falls back on them
+// for rookies who have no line in /current-stats yet.
 let currentStats = null;
+let fullPlayerData = [];
+let goalieData = [];
 
 // ============================================================
 // IMAGE & STATS HELPERS
@@ -88,6 +94,38 @@ function metaFor(player) {
     const stats = getPlayerCurrentStats(player.name);
     const abbrev = stats?.teamAbbrev && stats.teamAbbrev !== 'N/A' ? stats.teamAbbrev : '';
     return [getCategoryLabel(player.category), abbrev].filter(Boolean).join(' · ');
+}
+
+/** NHL club of a player: current stats first, then the draft kit (rookies). */
+function clubDuJoueur(name) {
+    const stats = getPlayerCurrentStats(name);
+    if (stats?.teamAbbrev && stats.teamAbbrev !== 'N/A') return stats.teamAbbrev;
+    const fiche = fullPlayerData.find(p => p.skaterFullName === name)
+        || goalieData.find(g => g.goalieFullName === name);
+    const brut = fiche && (fiche.teamAbbrev || fiche.teamAbbrevs);
+    return brut ? String(brut).split(',').pop().trim() || null : null;
+}
+
+function initialesJoueur(name) {
+    const mots = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (mots.length === 0) return '?';
+    return ((mots[0][0] || '') + (mots.length > 1 ? mots[mots.length - 1][0] : '')).toUpperCase();
+}
+
+/**
+ * A player's photo on his club's color — the same recipe as the Stats
+ * page's Alignements tab (.fz-shot, teamLogos.css). The initials sit under
+ * the image: a photo that fails to load removes itself (onerror) and
+ * uncovers them. An NHL-team entry has no photo, only initials on slate.
+ */
+function tradeShotHTML(player) {
+    const estClub = player.category === 'T';
+    const club = estClub ? null : clubDuJoueur(player.name);
+    const couleur = typeof getTeamColors === 'function' ? getTeamColors(club)[0] : '#3A414D';
+    const url = estClub ? null : getMatchingImage(player.name);
+    return `<span class="tr-shot fz-shot" style="--fz-shot-team: ${escapeTradeHTML(couleur)}" aria-hidden="true">`
+        + (url ? `<img src="${escapeTradeHTML(url)}" alt="" loading="lazy" onerror="this.remove()">` : '')
+        + `<span class="tr-shot-init">${escapeTradeHTML(initialesJoueur(player.name))}</span></span>`;
 }
 
 // ============================================================
@@ -283,10 +321,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const [statsRes] = await Promise.allSettled([
-        fetch(`${BASE_URL}/current-stats`, { cache: 'no-store' }).then(r => r.json())
+    const [statsRes, kitRes] = await Promise.allSettled([
+        fetch(`${BASE_URL}/current-stats`, { cache: 'no-store' }).then(r => r.json()),
+        fetch('nhl_filtered_stats.json').then(r => r.json())
     ]);
     if (statsRes.status === 'fulfilled') currentStats = statsRes.value;
+    if (kitRes.status === 'fulfilled' && kitRes.value) {
+        const kit = kitRes.value;
+        fullPlayerData = [...(kit.Top_50_Defenders || []), ...(kit.Top_100_Offensive_Players || []), ...(kit.Top_Rookies || [])];
+        goalieData = kit.Top_50_Goalies || [];
+    }
 
     // FZPool a déjà lu /draft : inutile de le redemander.
     await FZPool.ready();
@@ -579,8 +623,9 @@ function renderPlayerRowHTML(player, selected, locked, forSale) {
              data-player-name="${player.name.replace(/"/g, '&quot;')}"
              data-player-category="${player.category}">
             <div class="pcr-check">${selected ? '✓' : ''}</div>
+            ${tradeShotHTML(player)}
             <div class="pcr-info">
-                <div class="pcr-name">${player.name}${forSale ? '<span class="pcr-forsale-badge">À vendre</span>' : ''}</div>
+                <div class="pcr-name" title="${escapeTradeHTML(player.name)}">${escapeTradeHTML(player.category === 'T' ? player.name : tmAbrege(player.name))}${forSale ? '<span class="pcr-forsale-badge">À vendre</span>' : ''}</div>
                 <div class="pcr-team">${metaFor(player)}${locked ? ' · position non appariée' : ''}</div>
             </div>
             <div class="pcr-stats">
@@ -811,6 +856,7 @@ function pairRowHTML(give, get, idx) {
     return `
         <div class="tb-pair-row">
             <div class="tb-card">
+                ${tradeShotHTML(give)}
                 <div class="tb-card-text">
                     <div class="tb-card-name" title="${give.name.replace(/"/g, '&quot;')}">${lastName(give.name)}</div>
                     <div class="tb-card-meta">${metaFor(give)}${pairValue(give) != null ? ' · ' + pairValue(give) + ' pts' : ''}</div>
@@ -821,6 +867,7 @@ function pairRowHTML(give, get, idx) {
                 <div class="tb-pair-cat">${getCategoryLabel(give.category)}</div>
             </div>
             <div class="tb-card">
+                ${tradeShotHTML(get)}
                 <div class="tb-card-text">
                     <div class="tb-card-name" title="${get.name.replace(/"/g, '&quot;')}">${lastName(get.name)}</div>
                     <div class="tb-card-meta">${metaFor(get)}${pairValue(get) != null ? ' · ' + pairValue(get) + ' pts' : ''}</div>
@@ -833,10 +880,10 @@ function pairRowHTML(give, get, idx) {
 
 function draftRowHTML() {
     const giveCell = draftGive
-        ? `<div class="tb-card"><div class="tb-card-text"><div class="tb-card-name" title="${draftGive.name.replace(/"/g, '&quot;')}">${lastName(draftGive.name)}</div><div class="tb-card-meta">${metaFor(draftGive)}</div></div></div>`
+        ? `<div class="tb-card">${tradeShotHTML(draftGive)}<div class="tb-card-text"><div class="tb-card-name" title="${draftGive.name.replace(/"/g, '&quot;')}">${lastName(draftGive.name)}</div><div class="tb-card-meta">${metaFor(draftGive)}</div></div></div>`
         : `<div class="tb-card is-ghost"><div class="tb-card-text"><div class="tb-card-name">Ajouter un joueur</div><div class="tb-card-meta">Depuis la liste</div></div></div>`;
     const getCell = draftGet
-        ? `<div class="tb-card"><div class="tb-card-text"><div class="tb-card-name" title="${draftGet.name.replace(/"/g, '&quot;')}">${lastName(draftGet.name)}</div><div class="tb-card-meta">${metaFor(draftGet)}</div></div></div>`
+        ? `<div class="tb-card">${tradeShotHTML(draftGet)}<div class="tb-card-text"><div class="tb-card-name" title="${draftGet.name.replace(/"/g, '&quot;')}">${lastName(draftGet.name)}</div><div class="tb-card-meta">${metaFor(draftGet)}</div></div></div>`
         : `<div class="tb-card is-ghost"><div class="tb-card-text"><div class="tb-card-name">En attente…</div><div class="tb-card-meta">Même position</div></div></div>`;
     return `
         <div class="tb-pair-row">
@@ -900,9 +947,10 @@ function showTradeConfirm(detailHtml) {
 }
 
 // ============================================================
-// PROPOSE TRADE — one /trade/propose call per pair (the backend only
-// accepts exactly one offering + one receiving player per proposal), sent
-// in sequence so a partial failure doesn't leave the rest unsent.
+// PROPOSE TRADE — every pair goes out in ONE /trade/propose call:
+// offering[i] ⇄ receiving[i]. The other team sees a single 3-for-3 and
+// accepts or declines it as a whole. Sending one call per pair split it
+// into three unrelated 1-for-1 offers, each acceptable on its own.
 // ============================================================
 async function proposeTrade() {
     if (pairs.length === 0) {
@@ -929,61 +977,44 @@ async function proposeTrade() {
     const proposeBtn = document.getElementById('btnProposeTrade');
     showLoading(proposeBtn, 'Envoi...');
 
-    let succeeded = 0;
-    const failures = [];
-    // Une seule proposition répond à l'originale : la première envoyée.
-    let enReponseA = counterOfTradeId;
+    const proposal = {
+        draftName: selectedPool,
+        fromTeam: myTeamName,
+        toTeam: selectedPartnerTeam,
+        offering: pairs.map(p => ({ name: p.give.name, type: p.give.type || getCategoryType(p.give.category) })),
+        receiving: pairs.map(p => ({ name: p.get.name, type: p.get.type || getCategoryType(p.get.category) })),
+        ...(counterOfTradeId ? { counterOf: counterOfTradeId } : {})
+    };
 
-    for (const pair of pairs) {
-        const proposal = {
-            draftName: selectedPool,
-            fromTeam: myTeamName,
-            toTeam: selectedPartnerTeam,
-            offering: [{ name: pair.give.name, type: pair.give.type || getCategoryType(pair.give.category) }],
-            receiving: [{ name: pair.get.name, type: pair.get.type || getCategoryType(pair.get.category) }],
-            ...(enReponseA ? { counterOf: enReponseA } : {}),
-            status: 'pending',
-            date: new Date().toISOString()
-        };
-
-        try {
-            const res = await fetch(`${BASE_URL}/trade/propose`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(proposal)
-            });
-            const data = await res.json();
-            if (res.ok) { succeeded++; enReponseA = null; }
-            else failures.push(`${pair.give.name} ⇄ ${pair.get.name} : ${data.message || 'échec'}`);
-        } catch (err) {
-            console.error('Error proposing trade:', err);
-            failures.push(`${pair.give.name} ⇄ ${pair.get.name} : erreur réseau`);
+    try {
+        const res = await fetch(`${BASE_URL}/trade/propose`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(proposal)
+        });
+        const data = await res.json().catch(() => ({}));
+        hideLoading(proposeBtn);
+        if (!res.ok) {
+            showNotification(`❌ ${data.message || 'Erreur lors de l\'envoi de la proposition'}`, 'error');
+            return;
         }
-    }
-
-    hideLoading(proposeBtn);
-
-    if (succeeded > 0) {
         loadReceivedTrades();
         updateReceivedBadge();
-        showTradeSuccess(succeeded, failures);
-    } else {
-        showNotification(`❌ ${failures[0] || 'Erreur lors de l\'envoi de la proposition'}`, 'error');
+        showTradeSuccess(pairs.length);
+    } catch (err) {
+        console.error('Error proposing trade:', err);
+        hideLoading(proposeBtn);
+        showNotification('❌ Erreur réseau : la proposition n\'a pas été envoyée.', 'error');
     }
 }
 
 // ============================================================
 // TRADE SUCCESS SCREEN (Peak-End Rule)
 // ============================================================
-function showTradeSuccess(succeeded, failures) {
+function showTradeSuccess(nombre) {
     const detail = document.getElementById('tradeSuccessDetail');
     if (detail) {
-        const plural = succeeded > 1 ? 's' : '';
-        let html = `<strong>${succeeded}</strong> proposition${plural} envoyée${plural} à <strong>${selectedPartnerTeam}</strong>.<br>En attente de la réponse de l'autre équipe.`;
-        if (failures.length) {
-            html += `<br><br><span style="color:var(--fzt-accent)">${failures.length} paire${failures.length > 1 ? 's' : ''} n'${failures.length > 1 ? 'ont' : 'a'} pas pu être envoyée${failures.length > 1 ? 's' : ''} : ${failures.join('; ')}</span>`;
-        }
-        detail.innerHTML = html;
+        detail.innerHTML = `Proposition <strong>${nombre} pour ${nombre}</strong> envoyée à <strong>${escapeTradeHTML(selectedPartnerTeam)}</strong>.<br>En attente de la réponse de l'autre équipe.`;
     }
     document.getElementById('tmBuilder').classList.add('hidden');
     document.getElementById('tradeSuccessScreen').classList.remove('hidden');
@@ -1059,10 +1090,9 @@ async function loadReceivedTrades(idCible) {
             const date = new Date(trade.date);
             const relatif = relativeDate(date);
 
-            const offering = trade.offering[0];
-            const receiving = trade.receiving[0];
-            const offeringCategory = getCategory(offering.type);
-            const receivingCategory = getCategory(receiving.type);
+            const offering = trade.offering || [];
+            const receiving = trade.receiving || [];
+            const taille = Math.max(offering.length, receiving.length);
 
             const estCible = idCible && String(trade.id) === String(idCible);
             const initials = initialsFor(null, trade.fromTeam);
@@ -1072,8 +1102,8 @@ async function loadReceivedTrades(idCible) {
                     <div class="trade-card-header">
                         <div class="trade-card-avatar">${initials}</div>
                         <div class="trade-card-info">
-                            <div class="trade-card-teams">${trade.fromTeam}</div>
-                            <div class="trade-card-date">reçue ${relatif}</div>
+                            <div class="trade-card-teams">${escapeTradeHTML(trade.fromTeam)}</div>
+                            <div class="trade-card-date">reçue ${relatif}${taille > 1 ? ` · ${taille} pour ${taille}` : ''}</div>
                         </div>
                         <div class="trade-card-status">En attente</div>
                     </div>
@@ -1081,20 +1111,14 @@ async function loadReceivedTrades(idCible) {
                     <div class="trade-card-players">
                         <div class="trade-player">
                             <div class="trade-player-label">Vous recevriez</div>
-                            <div class="trade-player-box">
-                                <div class="trade-player-name">${offering.name}</div>
-                                <span class="trade-player-position">${getCategoryLabel(offeringCategory)}</span>
-                            </div>
+                            ${offering.map(tradePlayerBoxHTML).join('')}
                         </div>
 
                         <div class="trade-arrow-icon">⇄</div>
 
                         <div class="trade-player">
                             <div class="trade-player-label">Vous donneriez</div>
-                            <div class="trade-player-box">
-                                <div class="trade-player-name">${receiving.name}</div>
-                                <span class="trade-player-position">${getCategoryLabel(receivingCategory)}</span>
-                            </div>
+                            ${receiving.map(tradePlayerBoxHTML).join('')}
                         </div>
                     </div>
 
@@ -1113,6 +1137,19 @@ async function loadReceivedTrades(idCible) {
         console.error('Error loading received trades:', err);
         container.innerHTML = '<p class="empty-msg">Erreur lors du chargement des échanges reçus</p>';
     }
+}
+
+/** One player of a received proposal: photo, name, position. */
+function tradePlayerBoxHTML(item) {
+    const category = getCategory(item && item.type);
+    return `
+        <div class="trade-player-box">
+            ${tradeShotHTML({ name: item.name, category })}
+            <div class="trade-player-text">
+                <div class="trade-player-name">${escapeTradeHTML(item.name)}</div>
+                <span class="trade-player-position">${getCategoryLabel(category)}</span>
+            </div>
+        </div>`;
 }
 
 function relativeDate(date) {
@@ -1145,16 +1182,20 @@ function startCounterOffer(tradeId) {
 
     selectPartnerTeam(trade.fromTeam);   // vide le panier
 
-    const monJoueur = trade.receiving && trade.receiving[0];
-    const sonJoueur = trade.offering && trade.offering[0];
-    const mine = monJoueur && buildRosterPlayers(myTeamData).find(p => p.name === monJoueur.name);
-    const theirs = sonJoueur && buildRosterPlayers(partnerTeamData).find(p => p.name === sonJoueur.name);
-    if (mine && theirs && mine.category === theirs.category) {
-        pairs = [{
+    // Chaque paire de l'offre reçue, sens inversé. Une paire dont un joueur a
+    // changé d'équipe depuis est laissée de côté plutôt que devinée.
+    const mesJoueurs = buildRosterPlayers(myTeamData);
+    const sesJoueurs = buildRosterPlayers(partnerTeamData);
+    pairs = (trade.receiving || []).map((monJoueur, i) => {
+        const sonJoueur = (trade.offering || [])[i];
+        const mine = monJoueur && mesJoueurs.find(p => p.name === monJoueur.name);
+        const theirs = sonJoueur && sesJoueurs.find(p => p.name === sonJoueur.name);
+        if (!mine || !theirs || mine.category !== theirs.category) return null;
+        return {
             give: { name: mine.name, category: mine.category, data: mine, type: getCategoryType(mine.category) },
             get: { name: theirs.name, category: theirs.category, data: theirs, type: getCategoryType(theirs.category) }
-        }];
-    }
+        };
+    }).filter(Boolean);
     counterOfTradeId = trade.id;
 
     renderMyRoster();
@@ -1195,8 +1236,6 @@ async function loadHistory(idCible) {
             const declined = trade.status === 'declined' || cancelled;
             const date = new Date(trade.completedDate || trade.date);
             const dateStr = date.toLocaleDateString('fr-CA', { year: 'numeric', month: 'short', day: 'numeric' });
-            const offering = trade.offering?.[0];
-            const receiving = trade.receiving?.[0];
             const acquiresLbl = declined ? 'Aurait acquis :' : 'Acquiert :';
             const estCible = idCible && String(trade.id) === String(idCible);
 
@@ -1210,25 +1249,19 @@ async function loadHistory(idCible) {
                         <div>
                             <div class="history-side-team">
                                 <span class="history-side-dot"></span>
-                                <span class="history-side-name">${trade.toTeam}</span>
+                                <span class="history-side-name">${escapeTradeHTML(trade.toTeam)}</span>
                                 <span class="history-side-acquires-lbl">${acquiresLbl}</span>
                             </div>
-                            <div class="history-side-player">
-                                <span class="history-player-dot"></span>
-                                <span class="history-player-name">${offering?.name || '—'} <span>${getCategoryLabel(getCategory(offering?.type))}</span></span>
-                            </div>
+                            ${historyPlayersHTML(trade.offering)}
                         </div>
                         <div class="history-divider"><span class="history-divider-icon">⇄</span></div>
                         <div>
                             <div class="history-side-team">
                                 <span class="history-side-dot"></span>
-                                <span class="history-side-name">${trade.fromTeam}</span>
+                                <span class="history-side-name">${escapeTradeHTML(trade.fromTeam)}</span>
                                 <span class="history-side-acquires-lbl">${acquiresLbl}</span>
                             </div>
-                            <div class="history-side-player">
-                                <span class="history-player-dot"></span>
-                                <span class="history-player-name">${receiving?.name || '—'} <span>${getCategoryLabel(getCategory(receiving?.type))}</span></span>
-                            </div>
+                            ${historyPlayersHTML(trade.receiving)}
                         </div>
                     </div>
                 </div>
@@ -1241,6 +1274,22 @@ async function loadHistory(idCible) {
         console.error('Error loading history:', err);
         container.innerHTML = '<p class="history-empty">Erreur lors du chargement</p>';
     }
+}
+
+/** Every player one side acquires in a past trade, photo in the old dot's place. */
+function historyPlayersHTML(items) {
+    const liste = Array.isArray(items) ? items : [];
+    if (liste.length === 0) {
+        return '<div class="history-side-player"><span class="history-player-dot"></span><span class="history-player-name">—</span></div>';
+    }
+    return liste.map(item => {
+        const category = getCategory(item && item.type);
+        return `
+            <div class="history-side-player">
+                ${tradeShotHTML({ name: item.name, category })}
+                <span class="history-player-name">${escapeTradeHTML(item.name)} <span>${getCategoryLabel(category)}</span></span>
+            </div>`;
+    }).join('');
 }
 
 // La pastille de l'onglet compte les échanges du pool actif, comme la

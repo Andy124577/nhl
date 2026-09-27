@@ -477,8 +477,8 @@ body.fz-trade .pos-tab.active:hover { background: var(--fzt-solid); }
 body.fz-trade .roster-list-head {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px 22px 10px;
+    gap: 10px;
+    padding: 16px 16px 10px;
     margin-top: 14px;
     background: var(--fzt-bg-alt);
     border-top: 1px solid var(--fzt-border);
@@ -494,13 +494,13 @@ body.fz-trade .rlh-name {
 }
 body.fz-trade .rlh-stats {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     font: 500 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
     letter-spacing: .1em;
     text-transform: uppercase;
     color: var(--fzt-text-faint);
 }
-body.fz-trade .rlh-stats span { width: 26px; text-align: right; }
+body.fz-trade .rlh-stats span { width: 22px; text-align: right; }
 body.fz-trade .rlh-stats .rlh-pts { width: 34px; color: var(--fzt-ink); font-weight: 600; }
 
 body.fz-trade .roster-list {
@@ -512,8 +512,8 @@ body.fz-trade .roster-list {
 body.fz-trade .player-card-roster {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 22px;
+    gap: 10px;
+    padding: 12px 16px;
     border-bottom: 1px solid var(--fzt-border-soft);
     border-left: 3px solid transparent;
     cursor: pointer;
@@ -568,6 +568,40 @@ body.fz-trade .pcr-team {
     text-transform: uppercase;
     color: var(--fzt-text-faint);
 }
+
+/* Player photo — same recipe as the Stats page's Alignements tab: the NHL
+   cut-out on the player's club color (background from .fz-shot,
+   teamLogos.css; --fz-shot-team set inline by tradeShotHTML). Initials sit
+   under the image and show only when it's missing or fails to load. */
+body.fz-trade .tr-shot {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+body.fz-trade .tr-shot img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+body.fz-trade .tr-shot-init {
+    color: #fff;
+    font: 700 11px/1 'Helvetica Neue', Helvetica, sans-serif;
+    letter-spacing: .04em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+}
+body.fz-trade .tr-shot img ~ .tr-shot-init { display: none; }
+body.fz-trade .tb-card .tr-shot,
+body.fz-trade .history-side-player .tr-shot { width: 30px; height: 30px; }
+body.fz-trade .tb-card .tr-shot-init,
+body.fz-trade .history-side-player .tr-shot-init { font-size: 10px; }
 body.fz-trade .pcr-forsale-badge {
     font: 600 8.5px/1 'Helvetica Neue', Helvetica, sans-serif;
     letter-spacing: .1em;
@@ -581,13 +615,13 @@ body.fz-trade .pcr-forsale-badge {
 
 body.fz-trade .pcr-stats {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     font: 400 12.5px/1 'Helvetica Neue', Helvetica, sans-serif;
     color: var(--fzt-text-muted);
     font-variant-numeric: tabular-nums;
     margin: 0;
 }
-body.fz-trade .pcr-stat { width: 26px; text-align: right; font-weight: 400; }
+body.fz-trade .pcr-stat { width: 22px; text-align: right; font-weight: 400; }
 body.fz-trade .pcr-stat.pcr-pts {
     width: 34px;
     font: 600 16px/1 'Oswald', sans-serif;
@@ -969,7 +1003,7 @@ body.fz-trade .trade-card-players {
     padding: 18px 22px;
     align-items: center;
 }
-body.fz-trade .trade-player { background: none; padding: 0; border-radius: 0; display: flex; flex-direction: column; gap: 8px; }
+body.fz-trade .trade-player { background: none; padding: 0; border-radius: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 body.fz-trade .trade-player-label {
     font: 500 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
     letter-spacing: .12em;
@@ -982,11 +1016,19 @@ body.fz-trade .trade-player-box {
     border: 1px solid var(--fzt-border);
     border-radius: 9px;
     padding: 9px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
 }
+body.fz-trade .trade-player-text { flex: 1; min-width: 0; }
 body.fz-trade .trade-player-name {
-    font: 600 13.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+    font: 600 13.5px/1.15 'Helvetica Neue', Helvetica, sans-serif;
     color: var(--fzt-ink);
     margin: 0 0 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 body.fz-trade .trade-player-position {
     display: block;
@@ -1457,6 +1499,10 @@ body.fz-trade .notification-message { color: var(--fzt-ink); font: 500 13px/1.4 
 @media (max-width: 480px) {
     body.fz-trade .tc-trade-row { flex-direction: column; }
     body.fz-trade .tc-arrow { transform: rotate(90deg); }
+    /* Une offre reçue à plusieurs joueurs : les deux côtés l'un sous l'autre,
+       sinon trois photos et trois noms par colonne ne tiennent pas. */
+    body.fz-trade .trade-card-players { grid-template-columns: minmax(0, 1fr); }
+    body.fz-trade .trade-card-players .trade-arrow-icon { justify-self: center; transform: rotate(90deg); }
     body.fz-trade #partnerTeamTriggerName { max-width: 160px; }
 }
 
