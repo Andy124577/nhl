@@ -47,7 +47,28 @@ body.fz-draft-page { background:var(--bg); }
 .fzh-draft-stats { display:flex; margin:0; flex-shrink:0; }.fzh-draft-stats > div { padding:2px 24px; border-left:1px solid #38383A; }.fzh-draft-stats dt { color:#A1A1A6; font-size:14px; text-transform:uppercase; letter-spacing:1px; }.fzh-draft-stats dd { margin:6px 0 0; font:600 28px 'Barlow Condensed',sans-serif; white-space:nowrap; }.fzh-draft-stats .fzh-estimate { font-size:23px; }.fzh-estimate .fzh-icon { color:#A1A1A6; margin-left:5px; }
 .fzh-draft-bottom { display:flex; justify-content:space-between; align-items:end; gap:22px; margin-top:7px; }.fzh-participants { min-width:0; flex:1; }.fzh-participants > .fzh-eyebrow { font-size:12px; letter-spacing:1px; margin-bottom:6px; }.fzh-participant-track { display:flex; gap:17px; overflow-x:auto; scrollbar-width:thin; }.fzh-participant { display:flex; align-items:center; gap:12px; white-space:nowrap; color:#F5F5F7; font-size:14px; }.fzh-participant i { display:grid; place-items:center; width:35px; height:35px; border-radius:50%; font:600 17px 'Barlow Condensed',sans-serif; background:rgba(var(--primary-rgb),.16); color:var(--primary-text); flex-shrink:0; }.fzh-participant:nth-child(n+5) i { background:#3A3A3C; color:#F5F5F7; }.fzh-participant b { padding:2px 10px; background:var(--primary); color:var(--on-primary); border-radius:14px; text-transform:uppercase; font-size:14px; font-weight:500; }
 .fzh .fzh-cta { display:flex; gap:25px; justify-content:space-between; align-items:center; padding:18px 28px; min-width:280px; background:var(--primary); box-shadow:none; border-radius:10px; color:var(--on-primary); font:600 18px 'Barlow Condensed',sans-serif; text-transform:uppercase; }.fzh .fzh-cta:hover { background:var(--primary-deep); color:var(--on-primary); }
-.fzh .fzh-summary { grid-column:span 6; display:flex; text-align:left; align-items:center; gap:28px; padding:16px 28px; color:#F5F5F7; position:relative; overflow:hidden; min-height:100px; }.fzh-summary > span:nth-child(2) { flex:1; min-width:0; }.fzh-summary strong { display:block; font:700 29px/1.15 'Barlow Condensed',sans-serif; margin:3px 0; }.fzh-summary small { display:block; color:#A1A1A6; font:400 15px 'Barlow Condensed',sans-serif; }.fzh-team-progress { display:flex; align-items:center; gap:18px; }.fzh-progress { display:block; height:12px; background:#2C2C2E; border-radius:9px; width:min(280px,65%); overflow:hidden; }.fzh-progress i { display:block; height:100%; background:var(--primary); border-radius:9px; }
+/* Alignement : le texte à gauche, un schéma de la glace à droite — trio en
+   haut, paire au milieu, gardien devant son filet —, le lien en dessous.
+   Tout passe par les jetons --fzh-* : la carte suit le thème seule. */
+.fzh .fzh-lines { grid-column:span 6; display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-areas:'copy visual' 'cta visual'; align-content:center; align-items:center; gap:12px 24px; padding:16px 22px; min-height:100px; }
+.fzh-lines-copy { grid-area:copy; align-self:end; min-width:0; }
+.fzh .fzh-lines h2 { display:block; margin:3px 0 2px; color:var(--fzh-ink); font:700 27px/1.15 'Barlow Condensed',sans-serif; text-transform:none; }
+.fzh-lines-text { margin:0; color:var(--fzh-muted); font-size:15px; }
+.fzh .fzh-lines-cta { grid-area:cta; align-self:start; justify-self:start; display:inline-flex; align-items:center; gap:10px; padding:9px 16px; border-radius:8px; background:var(--fzh-tint); color:var(--fzh-accent); font:600 15px 'Barlow Condensed',sans-serif; letter-spacing:.4px; text-transform:uppercase; text-decoration:none; white-space:nowrap; transition:background .15s,color .15s; }
+.fzh .fzh-lines-cta:hover { background:var(--fzh-accent-fill); color:var(--on-primary); }
+.fzh-lines-visual { grid-area:visual; display:flex; gap:12px; }
+.fzh-lines-rink,.fzh-lines-legend { display:grid; grid-auto-rows:28px; gap:6px; }
+.fzh-lines-rink { position:relative; isolation:isolate; padding:10px 16px 14px; border:1px solid var(--fzh-border); border-radius:12px 12px 36px 36px; background:var(--fzh-raised); }
+/* La ligne des buts, rouge, et le demi-cercle du gardien sous son pion. */
+.fzh-lines-rink:before,.fzh-lines-rink:after { content:''; position:absolute; left:50%; z-index:-1; }
+.fzh-lines-rink:before { bottom:12px; width:48px; height:24px; margin-left:-24px; border-radius:24px 24px 0 0; background:var(--fzh-tint); }
+.fzh-lines-rink:after { bottom:11px; width:calc(100% - 24px); height:2px; margin-left:calc(12px - 50%); background:var(--fzh-accent); opacity:.6; }
+.fzh-lines-row { display:flex; justify-content:center; gap:8px; }
+.fzh-lines-row i { display:grid; place-items:center; width:28px; height:28px; border:1px solid var(--fzh-border); border-radius:50%; background:var(--fzh-panel); color:var(--fzh-ink); font:500 12px 'Oswald',sans-serif; font-style:normal; }
+/* Le premier trio en rouge : c'est lui qui récolte les points. */
+.fzh-lines-row:first-child i { background:var(--fzh-accent-fill); border-color:var(--fzh-accent-fill); color:var(--on-primary); }
+.fzh-lines-legend { margin:0; padding:11px 0 15px; list-style:none; }
+.fzh-lines-legend li { display:flex; align-items:center; color:var(--fzh-muted); font:400 12px 'Oswald',sans-serif; letter-spacing:1px; text-transform:uppercase; white-space:nowrap; }
 .fzh-scores { display:none; padding:16px; }.fzh-score-track { display:flex; gap:10px; overflow-x:auto; }.fzh-game { padding:8px 12px; flex:1 0 145px; border:1px solid #38383A; border-radius:10px; background:#1C1C1E; }.fzh-game p { font-size:12px; color:#A1A1A6; margin:0 0 8px; white-space:nowrap; }.fzh-game > div { display:grid; grid-template-columns:30px 1fr 28px; align-items:center; gap:10px; }.fzh-game img { width:30px; height:30px; object-fit:contain; }.fzh-game b { text-align:right; }.fzh-game-badge { display:inline-block; margin-top:7px; padding:2px 8px; border-radius:4px; background:#3A3A3C; text-transform:uppercase; font-size:13px; font-weight:600; }.fzh-game-badge.is-live { background:var(--primary); color:var(--on-primary); }
 /* Blocs partagés (accueil-dash.js) : ils arrivent avec leur propre balisage
    et leur propre mise en forme ; l'accueil de repêchage ne leur donne que
@@ -58,54 +79,54 @@ body.fz-draft-page { background:var(--bg); }
 /* Une demi-colonne, pas la largeur du tableau de bord : les cartes de
    mouvement s'y comptent par deux, sinon quatre s'y écrasent. */
 .fzh #fzdOffMoves .fzd-off-card { flex-basis:calc((100% - 12px) / 2); }
-/* Saison commencée, le compte à rebours se retire : « Mon équipe » prend
+/* Saison commencée, le compte à rebours se retire : « Alignement » prend
    alors la rangée entière plutôt que de laisser une moitié creuse. */
-.fzh:has(#fzdOffCount[hidden]) .fzh-team { grid-column:1/-1; }
+.fzh:has(#fzdOffCount[hidden]) .fzh-lines { grid-column:1/-1; }
 
 .fzh .fzd-off-face { width:37px; height:37px; flex-shrink:0; border-radius:50%; background:#2C2C2E; }
 .fzh-empty { color:#A1A1A6; padding:12px; font-size:15px; }
-/* Alignements : une pastille par équipe du pool, l'alignement de celle qui
-   est choisie en dessous, une rangée par catégorie. Le calendrier de la LNH
+/* Sélections : une pastille par équipe du pool, les choix de celle qui est
+   choisie en dessous, une rangée par catégorie. Le calendrier de la LNH
    n'a pas d'emplacement sur cet accueil : il reste masqué à sa place. */
-.fzh .fzh-lineups { grid-column:1/-1; padding:16px 22px 18px; }
-.fzh-lineup-tabs { position:relative; display:flex; gap:8px; overflow-x:auto; scrollbar-width:thin; margin-bottom:14px; padding-bottom:4px; }
-.fzh .fzh-lineup-tab { display:inline-flex; align-items:center; gap:8px; flex-shrink:0; padding:6px 14px; border:1px solid var(--fzh-border); border-radius:20px; background:transparent; color:var(--fzh-ink); font-size:15px; white-space:nowrap; }
-.fzh .fzh-lineup-tab:hover { border-color:var(--fzh-muted); }
-.fzh .fzh-lineup-tab[aria-pressed="true"] { background:var(--fzh-accent-fill); border-color:var(--fzh-accent-fill); color:var(--on-primary); }
-.fzh-lineup-tab b { padding:1px 8px; border-radius:12px; background:var(--fzh-tint); color:var(--fzh-accent); font-size:12px; font-weight:600; text-transform:uppercase; }
-.fzh-lineup-tab[aria-pressed="true"] b { background:rgba(255,255,255,.2); color:var(--on-primary); }
+.fzh .fzh-picks { grid-column:1/-1; padding:16px 22px 18px; }
+.fzh-picks-tabs { position:relative; display:flex; gap:8px; overflow-x:auto; scrollbar-width:thin; margin-bottom:14px; padding-bottom:4px; }
+.fzh .fzh-picks-tab { display:inline-flex; align-items:center; gap:8px; flex-shrink:0; padding:6px 14px; border:1px solid var(--fzh-border); border-radius:20px; background:transparent; color:var(--fzh-ink); font-size:15px; white-space:nowrap; }
+.fzh .fzh-picks-tab:hover { border-color:var(--fzh-muted); }
+.fzh .fzh-picks-tab[aria-pressed="true"] { background:var(--fzh-accent-fill); border-color:var(--fzh-accent-fill); color:var(--on-primary); }
+.fzh-picks-tab b { padding:1px 8px; border-radius:12px; background:var(--fzh-tint); color:var(--fzh-accent); font-size:12px; font-weight:600; text-transform:uppercase; }
+.fzh-picks-tab[aria-pressed="true"] b { background:rgba(255,255,255,.2); color:var(--on-primary); }
 /* L'équipe au choix : le point vert de la pastille « En cours ». */
-.fzh-lineup-tab i { width:8px; height:8px; border-radius:50%; background:var(--success); }
-.fzh-lineup-tab[aria-pressed="true"] i { background:var(--on-primary); }
-.fzh-lineup-body { display:grid; gap:12px; }
-.fzh-lineup-body > .fzh-empty { padding:4px 0; margin:0; }
-.fzh-lineup-group { display:grid; grid-template-columns:150px minmax(0,1fr); gap:14px; align-items:start; padding-top:12px; border-top:1px solid var(--fzh-border); }
-.fzh-lineup-group:first-child { padding-top:0; border-top:0; }
-.fzh-lineup-label { display:flex; justify-content:space-between; gap:8px; margin:10px 0 0; color:var(--fzh-muted); font:400 13px/1.4 'Oswald',sans-serif; text-transform:uppercase; letter-spacing:1px; }
-.fzh-lineup-label span { color:var(--fzh-ink); letter-spacing:0; }
-.fzh-lineup-players { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; margin:0; padding:0; list-style:none; }
-.fzh-lineup-player { display:flex; align-items:center; gap:10px; min-width:0; padding:6px 12px 6px 6px; border-radius:10px; background:var(--fzh-raised); }
-.fzh-lineup-player > span { min-width:0; }
-.fzh-lineup-player strong { display:block; overflow:hidden; font-size:16px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
-.fzh-lineup-player small { display:block; color:var(--fzh-muted); font-size:13px; }
-.fzh .fzh-lineup-player .fzd-off-face { width:34px; height:34px; background:var(--fzh-panel); }
+.fzh-picks-tab i { width:8px; height:8px; border-radius:50%; background:var(--success); }
+.fzh-picks-tab[aria-pressed="true"] i { background:var(--on-primary); }
+.fzh-picks-body { display:grid; gap:12px; }
+.fzh-picks-body > .fzh-empty { padding:4px 0; margin:0; }
+.fzh-picks-group { display:grid; grid-template-columns:150px minmax(0,1fr); gap:14px; align-items:start; padding-top:12px; border-top:1px solid var(--fzh-border); }
+.fzh-picks-group:first-child { padding-top:0; border-top:0; }
+.fzh-picks-label { display:flex; justify-content:space-between; gap:8px; margin:10px 0 0; color:var(--fzh-muted); font:400 13px/1.4 'Oswald',sans-serif; text-transform:uppercase; letter-spacing:1px; }
+.fzh-picks-label span { color:var(--fzh-ink); letter-spacing:0; }
+.fzh-picks-players { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; margin:0; padding:0; list-style:none; }
+.fzh-picks-player { display:flex; align-items:center; gap:10px; min-width:0; padding:6px 12px 6px 6px; border-radius:10px; background:var(--fzh-raised); }
+.fzh-picks-player > span { min-width:0; }
+.fzh-picks-player strong { display:block; overflow:hidden; font-size:16px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+.fzh-picks-player small { display:block; color:var(--fzh-muted); font-size:13px; }
+.fzh .fzh-picks-player .fzd-off-face { width:34px; height:34px; background:var(--fzh-panel); }
 /* Un logo de club se lit entier, pas recadré comme un portrait. */
-.fzh-lineup-player.is-club .fzd-off-face img { object-fit:contain; padding:4px; background:transparent; }
-.fzh-lineup-none { margin:10px 0 0; color:var(--fzh-muted); font-size:15px; }
+.fzh-picks-player.is-club .fzd-off-face img { object-fit:contain; padding:4px; background:transparent; }
+.fzh-picks-none { margin:10px 0 0; color:var(--fzh-muted); font-size:15px; }
 
-@media(min-width:769px) and (max-width:1350px) { .fzh-draft-main { gap:20px; }.fzh-draft-stats > div { padding:0 14px; }.fzh-draft-stats dd { font-size:23px; }.fzh-draft-stats .fzh-estimate { font-size:18px; }.fzh-puck { width:65px; transform:scale(.85); }.fzh-puck:after { left:83px; }.fzh-draft-description { font-size:15px; }.fzh .fzh-cta { min-width:225px; }.fzh .fzh-summary { gap:18px; padding:16px 20px; }.fzh-team-progress small { display:none; } }
-@media(max-width:1000px) and (min-width:769px) { .fzh-draft-main { flex-wrap:wrap; }.fzh-draft-stats { margin-left:85px; margin-bottom:8px; }.fzh-draft-stats > div:first-child { padding-left:0; border:0; }.fzh-news-copy { max-width:65%; } }
+@media(min-width:769px) and (max-width:1350px) { .fzh-draft-main { gap:20px; }.fzh-draft-stats > div { padding:0 14px; }.fzh-draft-stats dd { font-size:23px; }.fzh-draft-stats .fzh-estimate { font-size:18px; }.fzh-puck { width:65px; transform:scale(.85); }.fzh-puck:after { left:83px; }.fzh-draft-description { font-size:15px; }.fzh .fzh-cta { min-width:225px; }.fzh .fzh-lines { gap:12px 18px; padding:16px 20px; } }
+@media(max-width:1000px) and (min-width:769px) { .fzh-draft-main { flex-wrap:wrap; }.fzh-draft-stats { margin-left:85px; margin-bottom:8px; }.fzh-draft-stats > div:first-child { padding-left:0; border:0; }.fzh-news-copy { max-width:65%; }.fzh-lines-legend { display:none; } }
 @media(max-width:768px) {
  #fzDashSection.is-drafting { padding:14px 16px calc(90px + env(safe-area-inset-bottom)); }
  .fzh { grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; font-size:16px; }
  .fzh .fzh-panel { border-radius:12px; }.fzh .fzh-news { order:7; min-height:215px; }.fzh-news-copy { padding:18px 20px; max-width:65%; }.fzh .fzh-news h2 { font-size:23px; }.fzh-news-copy p { font-size:15px; }.fzh-news-copy small { margin-top:12px; font-size:13px; }.fzh-news-badge { font-size:12px; padding:4px 12px; }.fzh-news-controls { right:12px; bottom:12px; gap:7px; }.fzh-news-controls > button { width:36px; height:36px; }.fzh-news-dots { margin-right:10px; gap:7px; }.fzh-news-dots button { width:9px; height:9px; }
  .fzh .fzh-draft { order:1; padding:14px 18px 16px; }.fzh-status { font-size:12px; padding:4px 14px 4px 10px; gap:10px; }.fzh-status i { width:12px; height:12px; }.fzh-draft-main { display:grid; grid-template-columns:70px minmax(0,1fr); gap:0 24px; margin-top:8px; }.fzh-puck { width:68px; grid-row:span 2; transform:scale(.85); transform-origin:left center; }.fzh-puck:after { left:91px; height:76px; }.fzh h1 { font-size:30px; white-space:normal; line-height:1.1; margin:6px 0; }.fzh-eyebrow { font-size:11px; letter-spacing:1.1px; }.fzh-draft-description { display:none; }.fzh-draft-stats { display:flex; flex-wrap:wrap; gap:4px 10px; grid-column:2; }.fzh-draft-stats > div { border:0; padding:0; display:flex; align-items:baseline; gap:4px; }.fzh-draft-stats dt { font-size:13px; letter-spacing:0; text-transform:none; }.fzh-draft-stats dd,.fzh-draft-stats .fzh-estimate { margin:0; font:400 14px 'Barlow Condensed',sans-serif; }.fzh-estimate .fzh-icon { display:none; }.fzh-draft-bottom { gap:12px; align-items:center; margin-top:16px; }.fzh-participants > .fzh-eyebrow { display:none; }.fzh-participant-track { gap:8px; }.fzh-participant { gap:7px; font-size:13px; padding:3px 8px 3px 3px; border:1px solid #38383A; border-radius:22px; }.fzh-participant i { width:28px; height:28px; font-size:15px; }.fzh-participant b { font-size:11px; padding:1px 6px; }.fzh .fzh-cta { min-width:0; padding:14px 17px; font-size:15px; gap:10px; border-radius:8px; white-space:nowrap; }.fzh-cta svg { width:20px; }
- .fzh .fzh-summary { grid-column:span 1; order:2; padding:16px; min-height:96px; gap:17px; }.fzh-summary > .fzh-icon:first-child svg { width:30px; height:30px; }.fzh-summary strong { font-size:25px; }.fzh-summary small { font-size:13px; }.fzh-team-progress small { display:none; }.fzh-progress { width:100%; height:10px; margin-top:7px; }
+ .fzh .fzh-lines { grid-column:1/-1; order:2; padding:14px 16px; column-gap:16px; }.fzh-lines-copy { align-self:center; }.fzh .fzh-lines h2 { font-size:24px; }.fzh-lines-text { font-size:14px; }
  .fzh-scores { grid-column:1/-1; display:block; order:3; padding:14px; }.fzh :is(#fzdOffCount, #fzdOffMoves, #fzdOffWatch) { grid-column:1/-1; }.fzh #fzdOffCount { order:2; padding:16px; }.fzh #fzdOffMoves { order:4; }.fzh #fzdOffWatch { order:5; padding:14px; }.fzh h2 { font-size:15px; gap:12px; }
- .fzh .fzh-lineups { order:3; padding:14px; }.fzh-lineup-group { grid-template-columns:minmax(0,1fr); gap:6px; }.fzh-lineup-label { margin:0; justify-content:flex-start; }.fzh-lineup-players { grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px; }.fzh-lineup-player { gap:7px; padding:5px 8px 5px 5px; }.fzh-lineup-player strong { font-size:15px; }.fzh .fzh-lineup-player .fzd-off-face { width:30px; height:30px; }.fzh-lineup-none { margin:0; }
+ .fzh .fzh-picks { order:3; padding:14px; }.fzh-picks-group { grid-template-columns:minmax(0,1fr); gap:6px; }.fzh-picks-label { margin:0; justify-content:flex-start; }.fzh-picks-players { grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px; }.fzh-picks-player { gap:7px; padding:5px 8px 5px 5px; }.fzh-picks-player strong { font-size:15px; }.fzh .fzh-picks-player .fzd-off-face { width:30px; height:30px; }.fzh-picks-none { margin:0; }
 }
 @media(max-width:480px) {
- #fzDashSection.is-drafting { padding-left:12px; padding-right:12px; }.fzh-news-copy { max-width:86%; padding:17px; }.fzh .fzh-news h2 { max-width:260px; }.fzh-news-copy p { max-width:230px; }.fzh-news-copy small { max-width:190px; }.fzh-news-controls { bottom:12px; }.fzh-news-dots { display:none; }.fzh-news:after { background:linear-gradient(90deg,#1C1C1Ef5,#1C1C1Ead 60%,#1C1C1E66); }.fzh-news-image { object-position:65% center; }.fzh .fzh-draft { padding:14px; }.fzh-draft-main { grid-template-columns:45px minmax(0,1fr); column-gap:15px; }.fzh-puck { transform:scale(.58); }.fzh-puck:after { left:86px; }.fzh h1 { font-size:27px; }.fzh-draft-stats { column-gap:10px; }.fzh-draft-stats > div:last-child { flex-basis:100%; }.fzh-draft-bottom { flex-wrap:wrap; }.fzh-participants { flex-basis:100%; }.fzh .fzh-cta { width:100%; justify-content:center; padding:13px; }.fzh .fzh-summary { padding:13px 10px; gap:9px; }.fzh-summary > .fzh-icon:first-child svg { width:24px; }.fzh-summary > .fzh-icon:last-of-type { display:none; }.fzh-summary .fzh-eyebrow { font-size:10px; letter-spacing:.7px; }.fzh-summary strong { font-size:22px; }.fzh-summary small { font-size:12px; }.fzh .fzh-link { font-size:13px; gap:6px; }
+ #fzDashSection.is-drafting { padding-left:12px; padding-right:12px; }.fzh-news-copy { max-width:86%; padding:17px; }.fzh .fzh-news h2 { max-width:260px; }.fzh-news-copy p { max-width:230px; }.fzh-news-copy small { max-width:190px; }.fzh-news-controls { bottom:12px; }.fzh-news-dots { display:none; }.fzh-news:after { background:linear-gradient(90deg,#1C1C1Ef5,#1C1C1Ead 60%,#1C1C1E66); }.fzh-news-image { object-position:65% center; }.fzh .fzh-draft { padding:14px; }.fzh-draft-main { grid-template-columns:45px minmax(0,1fr); column-gap:15px; }.fzh-puck { transform:scale(.58); }.fzh-puck:after { left:86px; }.fzh h1 { font-size:27px; }.fzh-draft-stats { column-gap:10px; }.fzh-draft-stats > div:last-child { flex-basis:100%; }.fzh-draft-bottom { flex-wrap:wrap; }.fzh-participants { flex-basis:100%; }.fzh .fzh-cta { width:100%; justify-content:center; padding:13px; }.fzh .fzh-lines { grid-template-areas:'copy visual' 'cta cta'; padding:14px; }.fzh .fzh-lines h2 { font-size:22px; }.fzh .fzh-lines-cta { justify-self:stretch; justify-content:center; }.fzh-lines-legend { display:none; }.fzh .fzh-link { font-size:13px; gap:6px; }
 }
 @media(prefers-reduced-motion:reduce) { .fzh * { scroll-behavior:auto!important; } }
 .fzh-participant-more { flex-shrink:0; width:38px; height:38px; border-radius:50%; border:1px solid #38383A; background:#1C1C1E; color:#F5F5F7; }

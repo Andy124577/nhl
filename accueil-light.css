@@ -39,7 +39,7 @@ html[data-theme="light"] #fzDashSection:is(.is-drafting, .is-season) .fz-dash {
 /* ─────────────────── 2. Accueil repêchage (.fzh) ─────────────────── */
 
 html[data-theme="light"] .fzh h2 { color: var(--fzh-ink); }
-html[data-theme="light"] .fzh :is(.fzh-eyebrow, .fzh-summary small, .fzh-game p, .fzh-empty) { color: var(--fzh-muted); }
+html[data-theme="light"] .fzh :is(.fzh-eyebrow, .fzh-game p, .fzh-empty) { color: var(--fzh-muted); }
 html[data-theme="light"] .fzh .fzh-draft-description { color: var(--fzh-text); }
 html[data-theme="light"] .fzh .fzh-draft-description span,
 html[data-theme="light"] .fzh .fzh-estimate .fzh-icon { color: var(--fzh-muted); }
@@ -53,9 +53,6 @@ html[data-theme="light"] .fzh .fzh-puck:after { background: var(--fzh-border); }
 html[data-theme="light"] .fzh .fzh-participant { color: var(--fzh-ink); }
 html[data-theme="light"] .fzh .fzh-participant i { background: var(--fzh-tint); }
 html[data-theme="light"] .fzh .fzh-participant:nth-child(n+5) i { background: var(--fzh-raised); color: var(--fzh-text); }
-
-html[data-theme="light"] .fzh .fzh-summary { color: var(--fzh-ink); }
-html[data-theme="light"] .fzh .fzh-progress { background: #E8E8ED; }
 
 html[data-theme="light"] .fzh .fzh-game-badge:not(.is-live) { background: var(--fzh-raised); color: var(--fzh-text); }
 
