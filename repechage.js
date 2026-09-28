@@ -488,6 +488,7 @@
         document.getElementById('rpStart')?.addEventListener('click', () => demarrer(pool.name));
         document.getElementById('rpDateChoisir')?.addEventListener('click', () => choisirDate(pool));
         document.getElementById('rpDateRetirer')?.addEventListener('click', () => retirerDate(pool));
+        document.getElementById('rpDateCalendrier')?.addEventListener('click', () => ajouterAuCalendrier(pool));
         document.getElementById('rpInviter')?.addEventListener('click', () => inviter(pool.name));
         brancherInvitations(pool);
 
@@ -530,12 +531,14 @@
                             <strong class="rp-date-quand">${echapper(FZPool.draftDate(etat.prevuLe))}</strong>
                             <span class="rp-date-sub" id="rpDateDelai" data-date="${echapper(etat.prevuLe)}">${echapper(delai || 'Départ imminent…')}</span>
                         </div>
-                        ${jeSuisCreateur ? `
                         <div class="rp-date-tools">
+                            <button type="button" class="rp-date-btn is-main" id="rpDateCalendrier">${icone('clock', 15)} Ajouter au calendrier</button>
+                            ${jeSuisCreateur ? `
                             <button type="button" class="rp-date-btn" id="rpDateChoisir">Changer</button>
-                            <button type="button" class="rp-date-btn" id="rpDateRetirer">Retirer</button>
-                        </div>` : ''}
+                            <button type="button" class="rp-date-btn" id="rpDateRetirer">Retirer</button>` : ''}
+                        </div>
                     </section>
+                    <p class="rp-note">3 minutes par choix : passé ce délai, Fantazy prend le meilleur joueur disponible.</p>
                     ${condition}`;
         }
         if (!jeSuisCreateur) return '';
@@ -620,6 +623,33 @@
                 const refus = await enregistrerDate(pool.name, iso);
                 return refus ? erreur(refus) : null;
             }
+        });
+    }
+
+    /**
+     * Le repêchage dans l'agenda du téléphone, qui sonnera même site fermé
+     * (routes/pools.js, /calendar). Deux boutons, parce que l'iPhone ouvre
+     * le fichier .ics et que Google Agenda, sur Android, ne l'ouvre pas ; le
+     * bon est en premier. Le lien à partager, lui, choisit tout seul selon le
+     * téléphone qui l'ouvre : c'est celui qu'on colle dans le groupe.
+     */
+    async function ajouterAuCalendrier(pool) {
+        const lien = new URL(urlPool(pool.name, '/calendar'), window.location.href).href;
+        const android = /android/i.test(navigator.userAgent || '');
+        const apple = `<a class="rp-btn ${android ? 'secondary' : 'primary'}" href="${echapper(lien)}?app=ics">iPhone, Mac ou Outlook</a>`;
+        const google = `<a class="rp-btn ${android ? 'primary' : 'secondary'}" href="${echapper(lien)}?app=google" target="_blank" rel="noopener">Google Agenda</a>`;
+        await fzModal({
+            type: 'info',
+            icon: 'calendar',
+            title: 'Ajouter au calendrier',
+            bodyHTML: `
+                <p>Votre téléphone vous rappellera le repêchage 1 heure, puis 10 minutes avant.</p>
+                <div class="rp-cal-choix">${android ? google + apple : apple + google}</div>
+                <p class="rp-note">Google Agenda utilise vos rappels habituels. Pour prévenir le groupe, envoyez ce lien :</p>`,
+            copyValue: lien,
+            copyLabel: 'Lien du calendrier',
+            confirmLabel: 'Fermer',
+            cancelLabel: null
         });
     }
 

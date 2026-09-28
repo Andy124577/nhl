@@ -170,9 +170,10 @@ function creerDiffusion({ io, auth, store, crochets = {}, logger = console }) {
         // Tout ce qui est calculé À PARTIR de ce pool devient périmé au même
         // instant. Sans ce signal, un cache de quelques secondes cache à la
         // personne l'action qu'elle vient elle-même de faire — le pire moment
-        // possible pour servir une réponse d'il y a dix secondes.
+        // possible pour servir une réponse d'il y a dix secondes. L'état
+        // validé suit : le minuteur des choix s'y recale sans relire la base.
         if (crochets.auPoolMisAJour) {
-            try { crochets.auPoolMisAJour(nomPool, authz.membresDuPool(data)); }
+            try { crochets.auPoolMisAJour(nomPool, authz.membresDuPool(data), data); }
             catch (erreur) { logger.error('⚠️ Invalidation impossible :', erreur.message); }
         }
 

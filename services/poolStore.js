@@ -34,6 +34,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { echeanceChoix } = require('../lib/poolOps.js');
 
 /** Clé du verrou consultatif de la file instantanée. Inchangée. */
 const CLE_VERROU_INSTANTANE = 4815162342;
@@ -381,6 +382,62 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
             }
         }
         return prevus;
+    }
+
+    /**
+     * Les repêchages chronométrés dont un tour attend, `{ nom: extrait }`.
+     *
+     * Le minuteur des choix s'en sert au démarrage du serveur et, par
+     * sécurité, une fois par minute (services/minuteurChoix.js). Même
+     * contrainte que lireDepartsPrevus : l'extrait ne porte que ce qu'examine
+     * poolOps.echeanceChoix, l'ordre réduit à sa longueur, et le filtre
+     * s'applique dans PostgreSQL — un repêchage terminé garde sa limite, mais
+     * ses deux curseurs se sont rejoints et il ne sort plus.
+     *
+     * Les CASE gardent les conversions à l'abri : PostgreSQL n'évalue pas les
+     * conditions d'un WHERE dans l'ordre écrit.
+     */
+    async function lireChoixChronometres() {
+        if (usePostgres) {
+            const resultat = await db.query(
+                `SELECT pool_name, extrait FROM (
+                    SELECT pool_name,
+                           jsonb_build_object(
+                               'pickTimeLimitMs', pool_data->'pickTimeLimitMs',
+                               'turnStartedAt', pool_data->'turnStartedAt',
+                               'currentPickIndex', pool_data->'currentPickIndex',
+                               'lastPickIndex', pool_data->'lastPickIndex',
+                               'draftLength', CASE WHEN jsonb_typeof(pool_data->'draftOrder') = 'array'
+                                                   THEN jsonb_array_length(pool_data->'draftOrder') ELSE 0 END
+                           ) AS extrait,
+                           CASE WHEN jsonb_typeof(pool_data->'currentPickIndex') = 'number'
+                                THEN (pool_data->>'currentPickIndex')::numeric ELSE 0 END AS tour,
+                           CASE WHEN jsonb_typeof(pool_data->'lastPickIndex') = 'number'
+                                THEN (pool_data->>'lastPickIndex')::numeric ELSE -1 END AS joue
+                      FROM pools
+                     WHERE pool_data ? 'pickTimeLimitMs'
+                 ) AS chronometres
+                 WHERE joue < tour`
+            );
+            const enCours = {};
+            for (const ligne of resultat.rows) {
+                if (echeanceChoix(ligne.extrait) != null) enCours[ligne.pool_name] = ligne.extrait;
+            }
+            return enCours;
+        }
+        const enCours = {};
+        for (const [nom, data] of Object.entries(lireFichier())) {
+            if (data && echeanceChoix(data) != null) {
+                enCours[nom] = {
+                    pickTimeLimitMs: data.pickTimeLimitMs,
+                    turnStartedAt: data.turnStartedAt,
+                    currentPickIndex: data.currentPickIndex,
+                    lastPickIndex: data.lastPickIndex,
+                    draftLength: data.draftOrder.length
+                };
+            }
+        }
+        return enCours;
     }
 
     // ───────────────────────── Écritures ─────────────────────────
@@ -747,6 +804,7 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
         lireTous,
         lireDonneesBrutes,
         lireDepartsPrevus,
+        lireChoixChronometres,
         transaction,
         muterPool,
         estPostgres: () => usePostgres

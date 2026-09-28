@@ -346,14 +346,22 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
 
     
 
-    const SKIP_AFTER_MS = 180000;   
+    const SKIP_AFTER_MS = 180000;
     let clockTimer = null;
+    let clockDelay = 0;
 
     function formatElapsed(ms) {
         const s = Math.max(0, Math.floor(ms / 1000));
         const m = Math.floor(s / 60);
         if (m < 1) return s + " s";
         return m + " min";
+    }
+
+    // Repêchage à date fixe : chaque choix a sa limite (pickTimeLimitMs,
+    // lib/poolOps.js). Un compte à rebours se lit à la seconde : « 2:41 ».
+    function formatRemaining(ms) {
+        const s = Math.max(0, Math.ceil(ms / 1000));
+        return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
     }
 
     function currentTurnTeam() {
@@ -390,18 +398,26 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
         }
 
         const elapsed = Date.now() - started;
+        const limit = Number(draftData.pickTimeLimitMs) || 0;
 
         if (clock) {
             clock.hidden = false;
-            clock.textContent = "· " + formatElapsed(elapsed);
-            
-            
-            
-            clock.classList.toggle("is-long", elapsed >= SKIP_AFTER_MS);
+            if (limit) {
+                // Le serveur fait foi : à zéro, il choisit, et l'état arrive
+                // par le temps réel. L'horloge ne fait que l'annoncer.
+                const remaining = limit - elapsed;
+                clock.textContent = "· " + (remaining > 0 ? formatRemaining(remaining) : "choix automatique…");
+                clock.classList.toggle("is-long", remaining <= 30000);
+            } else {
+                clock.textContent = "· " + formatElapsed(elapsed);
+                clock.classList.toggle("is-long", elapsed >= SKIP_AFTER_MS);
+            }
         }
 
+        // Chronométré, le tour ne se saute pas : il se joue tout seul.
         if (skip) {
-            const eligible = elapsed >= SKIP_AFTER_MS
+            const eligible = !limit
+                && elapsed >= SKIP_AFTER_MS
                 && isPoolCreator()
                 && currentTurnTeam() !== (typeof getUserTeam === "function" ? getUserTeam() : null);
             if (eligible) {
@@ -412,15 +428,17 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
             }
         }
 
-        startClockTimer();
+        startClockTimer(limit ? 1000 : 5000);
         syncLiveRow();
     }
 
-    function startClockTimer() {
-        if (clockTimer) return;
+    function startClockTimer(delay) {
+        if (clockTimer && clockDelay === delay) return;
+        stopClockTimer();
+        clockDelay = delay;
         clockTimer = setInterval(function () {
             try { refreshTurnClock(); } catch (e) { stopClockTimer(); }
-        }, 5000);
+        }, delay);
     }
     function stopClockTimer() {
         if (clockTimer) { clearInterval(clockTimer); clockTimer = null; }

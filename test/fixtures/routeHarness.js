@@ -49,6 +49,12 @@ function creerReponse() {
         setHeader(nom, valeur) { this.entetes[nom] = valeur; return this; },
         json(corps) { this.body = corps; this.headersSent = true; return this; },
         send(corps) { this.body = corps; this.headersSent = true; return this; },
+        redirect(code, adresse) {
+            this.statusCode = code;
+            this.entetes.Location = adresse;
+            this.headersSent = true;
+            return this;
+        },
         type() { return this; }
     };
 }
@@ -335,6 +341,21 @@ function creerBaseSimulee(poolsInitiaux, users) {
                         draftOrder: p.data.draftOrder ?? null
                     } })) };
             }
+            // poolStore.lireChoixChronometres : le filtre SQL rejoué — une
+            // limite de temps, et un tour dont le curseur n'est pas consommé.
+            if (sql.includes('FROM pools') && sql.includes("pool_data ? 'pickTimeLimitMs'")) {
+                return { rows: [...etat.pools.values()]
+                    .filter(p => p.data.pickTimeLimitMs != null)
+                    .filter(p => (Number.isInteger(p.data.lastPickIndex) ? p.data.lastPickIndex : -1) <
+                                 (Number.isInteger(p.data.currentPickIndex) ? p.data.currentPickIndex : 0))
+                    .map(p => ({ pool_name: p.name, extrait: {
+                        pickTimeLimitMs: p.data.pickTimeLimitMs,
+                        turnStartedAt: p.data.turnStartedAt ?? null,
+                        currentPickIndex: p.data.currentPickIndex ?? null,
+                        lastPickIndex: p.data.lastPickIndex ?? null,
+                        draftLength: Array.isArray(p.data.draftOrder) ? p.data.draftOrder.length : 0
+                    } })) };
+            }
             if (sql.includes('FROM pools') && sql.includes('WHERE pool_name')) {
                 const pool = etat.pools.get(params[0]);
                 return { rows: pool ? [{ id: pool.id, pool_name: pool.name, pool_data: pool.data, revision: pool.revision }] : [] };
@@ -590,13 +611,13 @@ function monterRoutes(modules, { pools = {}, users = null, ctxExtra = {} } = {})
     for (const module of [].concat(modules)) module.monter(app, ctx);
 
     /** Appelle une route comme le ferait Express : chaîne de gestionnaires. */
-    async function appeler(methode, chemin, { body = {}, query = {}, auth: identite = null } = {}) {
+    async function appeler(methode, chemin, { body = {}, query = {}, auth: identite = null, headers = {} } = {}) {
         for (const route of app.routes) {
             if (route.methode !== methode) continue;
             const params = apparier(route.chemin, chemin);
             if (!params) continue;
 
-            const req = { method: methode, body, query, params, auth: identite, headers: {}, path: chemin };
+            const req = { method: methode, body, query, params, auth: identite, headers, protocol: 'http', path: chemin };
             const res = creerReponse();
 
             for (const gestionnaire of route.gestionnaires) {

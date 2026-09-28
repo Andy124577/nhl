@@ -144,6 +144,12 @@
   }
   body.fz-draft .fzd-hero-clock[hidden],
   body.fz-draft .fzd-hero-label[hidden] { display: none; }
+  /* Choix chronométré : les trente dernières secondes battent. */
+  body.fz-draft .fzd-hero-clock.is-urgent { animation: fzdHeroUrgent 1s ease-in-out infinite; }
+  @keyframes fzdHeroUrgent { 50% { opacity: .45; } }
+  @media (prefers-reduced-motion: reduce) {
+    body.fz-draft .fzd-hero-clock.is-urgent { animation: none; }
+  }
 
   /* À soi : un liseré blanc qui respire sur le pourtour de la tuile… */
   body.fz-draft .fzd-hero.is-mine::after {

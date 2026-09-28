@@ -245,6 +245,26 @@ describe('héros du repêchage — modèle', () => {
         assert.equal(m.ordreTitre, 'Ordre de sélection');
     });
 
+    test('au choix, dans un repêchage daté : le temps restant avant le choix automatique', () => {
+        const pool = poolEnCours({ tour: 0, pickTimeLimitMs: minutes(3) });
+        const m = H.fzhHeroModele({ poolData: pool, poolName: 'P', teamName: 'A', username: 'alice', maintenant: MAINTENANT });
+        assert.equal(m.temps.libelle, 'Temps restant');
+        assert.equal(m.temps.valeur, '2:00', 'une minute sur trois est déjà passée');
+        assert.equal(m.temps.rebours, MAINTENANT + minutes(2));
+        assert.equal(m.temps.chrono, undefined);
+        assert.match(m.sousTitre, /à zéro, Fantazy prend le meilleur joueur disponible\.$/);
+        assert.equal(m.barreRebours, MAINTENANT + minutes(2));
+        assert.equal(m.barreChrono, undefined);
+
+        const html = H.fzhHeroHTML(m, [], null);
+        assert.match(html, new RegExp(`data-fzh-rebours="${MAINTENANT + minutes(2)}">2:00<`));
+        assert.doesNotMatch(html, /data-fzh-depuis="\d+">2:00/);
+        assert.match(H.fzhHeroBarreHTML(m), /data-fzh-rebours=/);
+
+        const echu = H.fzhHeroModele({ poolData: pool, poolName: 'P', teamName: 'A', username: 'alice', maintenant: MAINTENANT + minutes(5) });
+        assert.equal(echu.temps.valeur, '0:00', 'jamais sous zéro');
+    });
+
     test('au choix : le temps écoulé, jamais un compte à rebours, et l’onglet qui le dit', () => {
         const m = H.fzhHeroModele({ poolData: poolEnCours({ tour: 0 }), poolName: 'P', teamName: 'A', username: 'alice', maintenant: MAINTENANT });
         assert.equal(m.phase, 'onclock');

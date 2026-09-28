@@ -24,6 +24,7 @@ const poolOps = require('../lib/poolOps.js');
 const evenements = require('../lib/events.js');
 const { checkIfDraftComplete } = require('../lib/draft.js');
 const { seasonIdForDate } = require('../lib/season.js');
+const calendrier = require('../lib/calendrier.js');
 
 /** Fisher-Yates : `sort(() => Math.random() - 0.5)` ne brasse pas uniformément. */
 function melangerEquipes(liste) {
@@ -726,6 +727,53 @@ function monter(app, ctx) {
             });
         } catch (erreur) {
             repondreErreur(res, erreur, '/draft-schedule');
+        }
+    });
+
+    /**
+     * Le repêchage prévu, à ajouter à son agenda : le fichier .ics (iPhone,
+     * Mac, Outlook) ou Google Agenda (Android), selon l'appareil ou
+     * `?app=google|ics` (lib/calendrier.js).
+     *
+     * Sans session : le lien se partage tel quel dans une conversation de
+     * groupe, et la date est déjà publique (authz.resumePublic). Rien d'autre
+     * du pool n'en sort. Une lecture d'un seul pool par clic ; un agenda ne
+     * revient pas le relire.
+     */
+    app.get('/api/pools/:poolName/calendar', async (req, res) => {
+        try {
+            const nom = req.params.poolName;
+            const enveloppe = await store.lire(nom);
+            const date = enveloppe && enveloppe.data.instant !== true ? enveloppe.data.draftScheduledAt : null;
+            if (!date) {
+                return res.status(404).json({ message: "Ce pool n'a pas de date de repêchage." });
+            }
+
+            const proto = String(req.headers['x-forwarded-proto'] || req.protocol || 'http').split(',')[0].trim();
+            const hote = req.headers.host || 'fantazy.ca';
+            const rendezVous = {
+                nom,
+                date,
+                url: `${proto}://${hote}/draftActif.html?pool=${encodeURIComponent(nom)}`,
+                // Un repêchage daté part chronométré (poolOps.demarrerRepechage).
+                limiteMs: poolOps.LIMITE_CHOIX_MS
+            };
+
+            if (calendrier.sortiePour(req.headers['user-agent'], req.query && req.query.app) === 'google') {
+                return res.redirect(302, calendrier.lienGoogle(rendezVous));
+            }
+
+            // L'identifiant de la ligne survit à un renommage ; en mode
+            // fichier, il n'y en a pas, et le nom en tient lieu.
+            const identifiant = enveloppe.id != null
+                ? `pool-${enveloppe.id}`
+                : calendrier.nomFichier(nom).replace(/^repechage-?|\.ics$/g, '') || 'pool';
+            res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+            res.setHeader('Content-Disposition', `inline; filename="${calendrier.nomFichier(nom)}"`);
+            res.setHeader('Cache-Control', 'no-store');
+            res.send(calendrier.fichierIcs({ ...rendezVous, uid: `repechage-${identifiant}@${hote.replace(/:\d+$/, '')}` }));
+        } catch (erreur) {
+            repondreErreur(res, erreur, '/calendar');
         }
     });
 

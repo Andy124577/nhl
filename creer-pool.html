@@ -179,7 +179,7 @@
                             <input type="radio" name="draftWhen" value="date" onchange="majDateRepechage()">
                             <span class="radio-label">
                                 <strong><span data-icon="clock" data-icon-size="15"></span> À une date précise</strong>
-                                <span class="mode-description">Il démarre tout seul à l'heure choisie</span>
+                                <span class="mode-description">Il démarre tout seul à l'heure choisie, 3 minutes par choix</span>
                             </span>
                         </label>
                     </div>
@@ -187,8 +187,9 @@
                 <div class="form-group draft-date-group" id="draftDateGroup" hidden>
                     <label for="draftDate">Date et heure du repêchage</label>
                     <input type="datetime-local" id="draftDate" aria-describedby="draftDateHint">
-                    <p class="form-hint" id="draftDateHint">Tout le monde la voit en entrant. Jusqu'au départ,
-                        vous pourrez la changer ou lancer plus tôt.</p>
+                    <p class="form-hint" id="draftDateHint">Tout le monde la voit en entrant et peut l'ajouter à son
+                        calendrier. Passé 3 minutes, Fantazy choisit à la place de l'absent. Jusqu'au départ,
+                        vous pourrez changer la date ou lancer plus tôt.</p>
                 </div>
             </div>
 
@@ -259,7 +260,7 @@
     <!-- Filtre de grossieretes, partage avec le serveur. Charge avant
          equipes.js, qui s'en sert. -->
     <script src="profanity.js"></script>
-    <script defer src="equipes.js?v=20260927d"></script>
+    <script defer src="equipes.js?v=20260928b"></script>
     <script defer src="navbar.js?v=20260926a"></script>
     <script defer src="avatars.js"></script>
     <script defer src="poolSettings.js?v=20260927d"></script>

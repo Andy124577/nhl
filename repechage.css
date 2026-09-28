@@ -658,12 +658,27 @@
 }
 .rp-date-btn:hover { border-color: var(--primary); color: var(--primary-text); }
 .rp-date-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+/* « Ajouter au calendrier » : le geste que tout le monde doit faire. */
+.rp-date-btn.is-main {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-color: color-mix(in srgb, var(--primary) 45%, var(--border-gray));
+    color: var(--primary-text);
+}
+.rp-date-btn.is-main svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+/* La fenêtre « Ajouter au calendrier » : un bouton par application. */
+.rp-cal-choix { display: flex; flex-direction: column; gap: 8px; margin: 14px 0 12px; }
+.rp-cal-choix .rp-btn { display: block; }
 
 /* Téléphone : les boutons passent sous le texte, pleine largeur. */
 @media (max-width: 520px) {
     .rp-date { flex-wrap: wrap; }
     .rp-date-tools { flex: 1 1 100%; }
     .rp-date-btn { flex: 1; }
+    .rp-date-btn.is-main { flex: 1 1 100%; }
 }
 
 /* Le champ de la fenêtre « Fixer la date » : le sélecteur natif suit le

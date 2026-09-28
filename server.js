@@ -53,6 +53,7 @@ const routesAujourdhui = require("./routes/today.js");
 const routesInvitations = require("./routes/invitations.js");
 const { creerServiceAujourdhui } = require("./services/today.js");
 const { creerServiceRecap } = require("./services/recap.js");
+const { creerMinuteurChoix } = require("./services/minuteurChoix.js");
 const { creerServicePointage } = require("./services/scoring.js");
 const { creerServiceH2H } = require("./services/h2h.js");
 const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
@@ -313,8 +314,11 @@ const diffusion = creerDiffusion({
          * `aujourdhui` est cree plus bas, d'ou la lecture paresseuse : la
          * diffusion existe avant lui parce que les routes s'en servent toutes.
          */
-        auPoolMisAJour(nomPool, membres) {
+        auPoolMisAJour(nomPool, membres, data) {
             if (typeof aujourdhui !== 'undefined' && aujourdhui) aujourdhui.oublierPool(membres);
+            // Repêchage chronométré : le réveil du tour suit le pool. Même
+            // lecture paresseuse, le minuteur est créé avec les routes.
+            if (typeof minuteurChoix !== 'undefined' && minuteurChoix) minuteurChoix.armer(nomPool, data);
         },
 
         // Une personne arrive : si elle attend dans un salon instantané, sa
@@ -585,6 +589,17 @@ routesRecords.monter(app, contexteRoutes);
 routesNotifications.monter(app, contexteRoutes);
 routesInvitations.monter(app, contexteRoutes);
 routesAujourdhui.monter(app, contexteRoutes);
+
+/**
+ * Repêchages à date fixe : trois minutes par choix, puis Fantazy choisit à la
+ * place de l'équipe (services/minuteurChoix.js). Le réveil se pose à chaque
+ * changement de pool (crochet auPoolMisAJour, plus haut) ; le rattrapage
+ * relit au démarrage, puis chaque minute, les tours qui attendent.
+ */
+const minuteurChoix = creerMinuteurChoix({
+    choisir: (nomPool, options) => contexteRoutes.choisirAutomatiquement(nomPool, options),
+    lireEnCours: () => poolStore.lireChoixChronometres()
+});
 
 
 
@@ -4505,6 +4520,13 @@ function planifierRepechagesPrevus() {
         } catch (erreur) {
             console.error("❌ Départs de repêchage prévus :", erreur.message);
         }
+        // Même passage, même rythme : un réveil de choix perdu (redémarrage,
+        // base indisponible au mauvais moment) se réarme dans la minute.
+        try {
+            await minuteurChoix.rattraper();
+        } catch (erreur) {
+            console.error("❌ Rattrapage des choix chronométrés :", erreur.message);
+        }
         planifierRepechagesPrevus();
     }, delai);
 }
@@ -4773,6 +4795,11 @@ async function startServer() {
             // the background if stale. Never blocks server startup.
             warmStatsOnStartup();
             seedRosterSnapshotOnStartup();
+
+            // Un tour chronométré échu pendant l'arrêt se joue tout de suite,
+            // sans attendre le passage de la minute.
+            minuteurChoix.rattraper().catch(erreur =>
+                console.error("❌ Rattrapage des choix chronométrés :", erreur.message));
         });
     } catch (error) {
         console.error('❌ Failed to start server:', error);

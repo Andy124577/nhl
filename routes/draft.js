@@ -1,5 +1,6 @@
 /**
- * Le repêchage : choisir un joueur, sauter un tour qui traîne.
+ * Le repêchage : choisir un joueur, sauter un tour qui traîne, et choisir à
+ * la place d'une équipe dont le temps est écoulé (repêchage à date fixe).
  *
  * C'est la route la plus sensible du site. Elle avait trois faiblesses :
  * l'identité venait du corps de la requête (donc on pouvait choisir à la place
@@ -19,9 +20,13 @@
 
 'use strict';
 
+const fs = require('node:fs');
+const path = require('node:path');
+
 const authz = require('../lib/authz.js');
 const poolOps = require('../lib/poolOps.js');
 const evenements = require('../lib/events.js');
+const choixAuto = require('../lib/choixAuto.js');
 const { checkIfDraftComplete } = require('../lib/draft.js');
 
 /** Délai avant qu'un tour puisse être sauté. Même seuil que côté client. */
@@ -30,6 +35,104 @@ const SAUT_APRES_MS = 180000;
 function monter(app, ctx) {
     const { auth, store, diffusion, construireCalendrierH2H, logger = console } = ctx;
     const { ErreurMetier } = store;
+
+    /**
+     * La trousse rangée pour le choix automatique, lue au premier besoin
+     * seulement : un serveur sans repêchage chronométré ne la charge jamais.
+     * `ctx.trousse` la remplace dans les tests.
+     */
+    let bassin = null;
+    function bassinTrousse() {
+        if (!bassin) {
+            const trousse = ctx.trousse ||
+                JSON.parse(fs.readFileSync(path.join(ctx.racine || process.cwd(), 'draftkit.json'), 'utf8'));
+            bassin = choixAuto.bassinDepuisTrousse(trousse);
+        }
+        return bassin;
+    }
+
+    /**
+     * Ce qu'un choix laisse derrière lui, dans SA transaction : l'activité,
+     * l'alerte du tour joué qui s'éteint, celle de l'équipe suivante qui
+     * s'allume, et la fin du repêchage. Commun au choix d'une personne et au
+     * choix automatique — les deux doivent raconter la même chose.
+     */
+    function journaliserChoix({ journal, data, poolId, nom, resultat, actorUserId }) {
+        if (resultat.playerName) {
+            journal.evenement({
+                poolId,
+                type: evenements.ACTIVITE.CHOIX,
+                actorUserId,
+                subject: {
+                    team: resultat.teamName,
+                    player: resultat.playerName,
+                    position: resultat.position,
+                    pickIndex: resultat.pickIndex,
+                    ...(resultat.auto ? { auto: true } : {})
+                },
+                dedupKey: evenements.clesActivite.choix(poolId, resultat.pickIndex)
+            });
+        }
+
+        // Le tour qui vient d'être joué ne réclame plus rien : son
+        // « C'est votre tour » quitte la cloche au lieu d'y rester jusqu'à
+        // expiration, un par tour.
+        journal.resoudre(evenements.clesNotification.votreTour(poolId, resultat.pickIndex));
+
+        // L'équipe qui vient de prendre la main est prévenue. La clé porte
+        // l'indice du tour : au renversement du serpentin la même équipe est
+        // alertée deux fois, mais pour deux tours différents — ce qui est exact.
+        if (resultat.tourSuivant) {
+            const prochainIndice = data.currentPickIndex;
+            const equipeSuivante = data.teams[resultat.tourSuivant];
+            const limiteMs = Number(data.pickTimeLimitMs) || 0;
+            for (const membre of (equipeSuivante?.members || [])) {
+                journal.notifier({
+                    recipient: membre,
+                    poolId,
+                    type: evenements.NOTIFICATION.VOTRE_TOUR,
+                    subject: {
+                        poolName: nom, teamName: resultat.tourSuivant, pickIndex: prochainIndice,
+                        ...(limiteMs ? { limiteMs } : {})
+                    },
+                    expiresAt: new Date(Date.now() + evenements.EXPIRATION_TOUR_MS),
+                    dedupKey: evenements.clesNotification.votreTour(poolId, prochainIndice)
+                });
+            }
+        }
+
+        if (resultat.draftComplet) {
+            journal.evenement({
+                poolId,
+                type: evenements.ACTIVITE.REPECHAGE_TERMINE,
+                actorUserId: null,
+                subject: { poolName: nom },
+                dedupKey: evenements.clesActivite.repechageTermine(poolId)
+            });
+        }
+    }
+
+    /**
+     * Après le COMMIT d'un choix : l'état relu part aux membres, et la fin du
+     * repêchage déclenche ce qui en dépend.
+     *
+     * Le calendrier de saison du tête-à-tête se construit à la fin du
+     * repêchage, dans SA propre transaction. Il ne peut pas tenir dans celle
+     * du choix : il lit la fenêtre de saison sur le réseau, et on ne garde
+     * jamais un verrou ouvert pendant un appel réseau.
+     */
+    async function diffuserChoix(nom, { draftComplet, rejouee = false }) {
+        const frais = await store.lire(nom);
+        diffusion.poolMisAJour(nom, frais.data, frais.revision);
+
+        if (draftComplet && !rejouee) {
+            diffusion.versPool(nom, 'draftComplete', { clanName: nom });
+            if (frais.data.poolMode === 'head-to-head' && frais.data.h2hData) {
+                construireCalendrierH2H(nom).catch(erreur =>
+                    logger.error('Construction du calendrier impossible :', erreur.message));
+            }
+        }
+    }
 
     function repondreErreur(res, erreur, contexte) {
         if (erreur.name === 'ErreurMetier' || erreur.name === 'ErreurConflit') {
@@ -78,52 +181,7 @@ function monter(app, ctx) {
                     });
                     if (!resultat.ok) throw refus(resultat);
 
-                    journal.evenement({
-                        poolId,
-                        type: evenements.ACTIVITE.CHOIX,
-                        actorUserId: req.auth.userId,
-                        subject: {
-                            team: resultat.teamName,
-                            player: playerName,
-                            position,
-                            pickIndex: resultat.pickIndex
-                        },
-                        dedupKey: evenements.clesActivite.choix(poolId, resultat.pickIndex)
-                    });
-
-                    // Le tour qui vient d'être joué ne réclame plus rien : son
-                    // « C'est votre tour » quitte la cloche au lieu d'y
-                    // rester jusqu'à expiration, un par tour.
-                    journal.resoudre(evenements.clesNotification.votreTour(poolId, resultat.pickIndex));
-
-                    // L'équipe qui vient de prendre la main est prévenue. La
-                    // clé porte l'indice du tour : au renversement du serpentin
-                    // la même équipe est alertée deux fois, mais pour deux
-                    // tours différents — ce qui est exact.
-                    if (resultat.tourSuivant) {
-                        const prochainIndice = data.currentPickIndex;
-                        const equipeSuivante = data.teams[resultat.tourSuivant];
-                        for (const membre of (equipeSuivante?.members || [])) {
-                            journal.notifier({
-                                recipient: membre,
-                                poolId,
-                                type: evenements.NOTIFICATION.VOTRE_TOUR,
-                                subject: { poolName: nom, teamName: resultat.tourSuivant, pickIndex: prochainIndice },
-                                expiresAt: new Date(Date.now() + evenements.EXPIRATION_TOUR_MS),
-                                dedupKey: evenements.clesNotification.votreTour(poolId, prochainIndice)
-                            });
-                        }
-                    }
-
-                    if (resultat.draftComplet) {
-                        journal.evenement({
-                            poolId,
-                            type: evenements.ACTIVITE.REPECHAGE_TERMINE,
-                            actorUserId: null,
-                            subject: { poolName: nom },
-                            dedupKey: evenements.clesActivite.repechageTermine(poolId)
-                        });
-                    }
+                    journaliserChoix({ journal, data, poolId, nom, resultat, actorUserId: req.auth.userId });
 
                     return {
                         valeur: {
@@ -139,20 +197,7 @@ function monter(app, ctx) {
                 }
             });
 
-            const frais = await store.lire(nom);
-            diffusion.poolMisAJour(nom, frais.data, frais.revision);
-
-            // Le calendrier de saison du tête-à-tête se construit à la fin du
-            // repêchage, dans SA propre transaction. Il ne peut pas tenir dans
-            // celle du choix : il lit la fenêtre de saison sur le réseau, et on
-            // ne garde jamais un verrou ouvert pendant un appel réseau.
-            if (valeur.draftComplet && !rejouee) {
-                diffusion.versPool(nom, 'draftComplete', { clanName: nom });
-                if (frais.data.poolMode === 'head-to-head' && frais.data.h2hData) {
-                    construireCalendrierH2H(nom).catch(erreur =>
-                        logger.error('Construction du calendrier impossible :', erreur.message));
-                }
-            }
+            await diffuserChoix(nom, { draftComplet: valeur.draftComplet, rejouee });
 
             res.json({
                 message: `${playerName} a été sélectionné par ${valeur.teamName}${valeur.banc ? ' (au banc)' : ''}.`,
@@ -167,11 +212,12 @@ function monter(app, ctx) {
     /**
      * Sauter un tour qui traîne.
      *
-     * Il n'y a pas de chronomètre dans Fantazy : le serveur ne saute jamais un
-     * tour de lui-même. Ceci est le recours quand une salle reste figée sur
-     * quelqu'un qui a perdu son réseau. Réservé à la personne qui a créé le
-     * pool, ouvert seulement après un délai, et impossible à utiliser sur son
-     * propre tour.
+     * Dans un repêchage lancé au clic, sans limite de temps, le serveur ne
+     * saute jamais un tour de lui-même. Ceci est le recours quand une salle
+     * reste figée sur quelqu'un qui a perdu son réseau. Réservé à la personne
+     * qui a créé le pool, ouvert seulement après un délai, et impossible à
+     * utiliser sur son propre tour. Un repêchage chronométré le refuse : il
+     * choisit lui-même à la fin du temps (choisirAutomatiquement, plus bas).
      */
     app.post('/skip-turn', auth.requireAuth, async (req, res) => {
         try {
@@ -223,7 +269,66 @@ function monter(app, ctx) {
         }
     });
 
-    return { SAUT_APRES_MS, checkIfDraftComplete };
+    /**
+     * Le temps d'un choix est écoulé : Fantazy choisit pour l'équipe.
+     *
+     * Appelé par le minuteur (services/minuteurChoix.js), jamais par une
+     * requête. Le minuteur ne fait qu'annoncer l'échéance qu'il attendait ;
+     * tout se revalide ici, sous le verrou du pool (poolOps.
+     * choisirAutomatiquement) : un choix arrivé à la dernière seconde, un
+     * deuxième minuteur ou un redémarrage ne peuvent pas jouer deux fois le
+     * même tour. Rien n'est écrit quand il n'y a rien à faire.
+     *
+     * Les membres de l'équipe apprennent ce qui a été pris pour eux : ils
+     * n'étaient pas là pour le voir.
+     */
+    async function choisirAutomatiquement(nom, { pickIndex = null, maintenant = Date.now() } = {}) {
+        const { valeur } = await store.muterPool(nom, {
+            scope: 'repechage:choix-auto',
+            appliquer: async ({ data, poolId, journal }) => {
+                const resultat = poolOps.choisirAutomatiquement(data, { bassin: bassinTrousse(), pickIndex, maintenant });
+                if (!resultat.ok) {
+                    return { sauvegarder: false, valeur: { fait: false, raison: resultat.message, echeance: resultat.echeance || null } };
+                }
+
+                journaliserChoix({ journal, data, poolId, nom, resultat, actorUserId: null });
+
+                for (const membre of (data.teams[resultat.teamName]?.members || [])) {
+                    journal.notifier({
+                        recipient: membre,
+                        poolId,
+                        type: evenements.NOTIFICATION.CHOIX_AUTO,
+                        subject: {
+                            poolName: nom,
+                            teamName: resultat.teamName,
+                            pickIndex: resultat.pickIndex,
+                            ...(resultat.playerName ? { player: resultat.playerName } : {})
+                        },
+                        dedupKey: evenements.clesNotification.choixAuto(poolId, resultat.pickIndex)
+                    });
+                }
+
+                return {
+                    valeur: {
+                        fait: true,
+                        teamName: resultat.teamName,
+                        playerName: resultat.playerName || null,
+                        pickIndex: resultat.pickIndex,
+                        draftComplet: !!resultat.draftComplet
+                    }
+                };
+            }
+        });
+
+        if (valeur.fait) {
+            await diffuserChoix(nom, { draftComplet: valeur.draftComplet });
+            logger.log(`Choix automatique (${nom}, choix ${valeur.pickIndex + 1}) : ${valeur.playerName || 'tour passé'} pour ${valeur.teamName}`);
+        }
+        return valeur;
+    }
+    ctx.choisirAutomatiquement = choisirAutomatiquement;
+
+    return { SAUT_APRES_MS, checkIfDraftComplete, choisirAutomatiquement };
 }
 
 module.exports = { monter, SAUT_APRES_MS };

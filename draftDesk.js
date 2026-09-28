@@ -1126,7 +1126,9 @@ function fzDeskEtatTour() {
         ronde: typeof fzRondeDe === 'function'
             ? fzRondeDe(index, donnees)
             : Math.floor(index / (new Set(ordre).size || 1)) + 1,
-        depart: Number(donnees.turnStartedAt) || 0
+        depart: Number(donnees.turnStartedAt) || 0,
+        // Repêchage à date fixe : le temps par choix (lib/poolOps.js). 0 = libre.
+        limite: Number(donnees.pickTimeLimitMs) || 0
     };
 }
 
@@ -1143,11 +1145,20 @@ function fzDeskFormatHorloge(ms) {
     return `${minutes}:${deux(s % 60)}`;
 }
 
+/** Le chrono de la tuile : temps écoulé, ou temps restant quand chaque
+ *  choix a sa limite. À zéro, le serveur choisit — l'état suit par le
+ *  temps réel, la tuile ne fait que l'annoncer. */
 function fzDeskTicTac() {
     const horloge = document.getElementById('fzdHeroClock');
     const t = fzDeskTourPrecedent;
     if (!horloge || !t || t.etat !== 'enCours' || !t.depart) return;
-    horloge.textContent = fzDeskFormatHorloge(Date.now() - t.depart);
+    if (!t.limite) {
+        horloge.textContent = fzDeskFormatHorloge(Date.now() - t.depart);
+        return;
+    }
+    const reste = t.depart + t.limite - Date.now();
+    horloge.textContent = reste > 0 ? fzDeskFormatHorloge(Math.ceil(reste / 1000) * 1000) : '0:00';
+    horloge.classList.toggle('is-urgent', reste <= 30000);
 }
 
 function fzDeskDemarrerHorloge(actif) {
@@ -1204,6 +1215,8 @@ function fzDeskRenderTuile(t, precedent) {
     const chrono = enCours && !!t.depart;
     horloge.hidden = !chrono;
     legende.hidden = !chrono;
+    legende.textContent = t.limite ? (monTour ? 'Avant le choix automatique' : 'Temps restant') : 'Temps écoulé';
+    if (!t.limite) horloge.classList.remove('is-urgent');
 
     // L'équipe au bâton change : son nom monte en place. Pas au premier
     // rendu, où rien ne « change ».

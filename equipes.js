@@ -435,7 +435,7 @@ async function createClan() {
                     icon: 'users',
                     title: 'Prochaine étape',
                     text: quand
-                        ? `Invitez vos amis : le repêchage commencera le ${quand}.`
+                        ? `Invitez vos amis : le repêchage commencera le ${quand}. Sur la page suivante, « Ajouter au calendrier » vous donne un lien de rappel à leur envoyer.`
                         : 'Invitez vos amis : le repêchage pourra commencer dès qu’il y aura 2 équipes.'
                 },
                 confirmLabel: 'Inviter des participants'

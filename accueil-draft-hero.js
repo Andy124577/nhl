@@ -14,10 +14,10 @@
      done     — mon dernier choix vient de passer, ou mon équipe est
                 complète.
 
-   Deux choses de la maquette n'ont pas été reprises parce que Fantazy ne
-   les a pas : une limite de temps par choix (le serveur ne saute jamais un
-   tour, lib/poolOps.js sauterTour) et le choix automatique en cas
-   d'absence. On affiche le temps écoulé, jamais un compte à rebours.
+   La limite de temps par choix n'existe que dans un repêchage à date fixe
+   (pickTimeLimitMs, lib/poolOps.js) : à zéro, le serveur choisit à la
+   place de l'équipe. Là, on affiche le temps restant ; ailleurs, le temps
+   écoulé, jamais un compte à rebours.
 
    Le calcul (fzhHero*) est pur : il lit l'état du pool et rend un modèle,
    que fzhHeroHTML() met en forme. Les tests l'appellent sans navigateur
@@ -344,18 +344,24 @@ function fzhHeroModele(options) {
 
     if (phase === 'onclock') {
         const autres = inscrites.filter(n => n !== teamName);
+        const limite = Number(poolData.pickTimeLimitMs) || 0;
+        const echeance = limite && depuis ? depuis + limite : null;
         return {
             ...base, ...commun,
             puce: "C'est ton tour",
             titre: "C'est ton tour",
-            sousTitre: `Ronde ${ronde}, choix ${tour + 1}. Choisis directement ici ou ouvre le repêchage.`,
+            sousTitre: echeance
+                ? `Ronde ${ronde}, choix ${tour + 1}. Choisis ici ou dans le repêchage : à zéro, Fantazy prend le meilleur joueur disponible.`
+                : `Ronde ${ronde}, choix ${tour + 1}. Choisis directement ici ou ouvre le repêchage.`,
             cta: { libelle: 'Ouvrir le repêchage', href: salle, style: 'blanc' },
-            temps: { libelle: 'Temps écoulé', chrono: depuis, valeur: fzhHeroChrono(depuis ? maintenant - depuis : 0), grand: true },
+            temps: echeance
+                ? { libelle: 'Temps restant', rebours: echeance, valeur: fzhHeroChrono(Math.max(0, echeance - maintenant)), grand: true }
+                : { libelle: 'Temps écoulé', chrono: depuis, valeur: fzhHeroChrono(depuis ? maintenant - depuis : 0), grand: true },
             activite: autres.length > 2 ? `Les ${autres.length} autres équipes attendent ton choix` : `${fzhHeroListe(autres)} ${autres.length > 1 ? 'attendent' : 'attend'} ton choix`,
             depuis: null,
             panneau: { type: 'choix', titre: 'Choisis en un clic', meta: 'Tes 3 meilleurs disponibles', salle, tour },
             barreTexte: "C'est ton tour",
-            barreChrono: depuis,
+            ...(echeance ? { barreRebours: echeance } : { barreChrono: depuis }),
             barreCta: 'Choisir',
             titreOnglet: "(C'est ton tour !) Fantazy"
         };
@@ -558,7 +564,9 @@ function fzhHeroMetaPanneau(modele, candidats) {
 
 /** La barre du haut : l'essentiel du héros, qui reste en vue en défilant. */
 function fzhHeroBarreHTML(modele) {
-    const chrono = modele.barreChrono ? ` · <span data-fzh-depuis="${modele.barreChrono}">${fzhHeroChrono(Date.now() - modele.barreChrono)}</span>` : '';
+    const chrono = modele.barreRebours
+        ? ` · <span data-fzh-rebours="${modele.barreRebours}">${fzhHeroChrono(Math.max(0, modele.barreRebours - Date.now()))}</span>`
+        : modele.barreChrono ? ` · <span data-fzh-depuis="${modele.barreChrono}">${fzhHeroChrono(Date.now() - modele.barreChrono)}</span>` : '';
     return `<a class="fzh-barre is-${modele.phase}" href="${fzhHeroEsc(modele.href)}">
             <i class="fzh-point" aria-hidden="true"></i>
             <span class="fzh-barre-libelle">${fzhHeroEsc(modele.barreLibelle)}</span>
@@ -574,7 +582,9 @@ function fzhHeroHTML(modele, candidats, etatChoix) {
     const titre = modele.compteARebours
         ? `${fzhHeroEsc(modele.titre)}<span data-fzh-avant="${fzhHeroEsc(modele.compteARebours.iso)}">${fzhHeroEsc(modele.compteARebours.texte)}</span>`
         : fzhHeroEsc(modele.titre);
-    const valeurTemps = t.chrono
+    const valeurTemps = t.rebours
+        ? `<strong data-fzh-rebours="${t.rebours}">${fzhHeroEsc(t.valeur)}</strong>`
+        : t.chrono
         ? `<strong data-fzh-depuis="${t.chrono}">${fzhHeroEsc(t.valeur)}</strong>`
         : t.eta
             ? `<strong data-fzh-eta="${fzhHeroEsc(JSON.stringify(t.eta))}">${fzhHeroEsc(t.valeur)}</strong>`
@@ -762,6 +772,10 @@ function fzhHeroDemarrerMinuterie() {
         const maintenant = Date.now();
         racine.querySelectorAll('[data-fzh-depuis]').forEach(el => {
             el.textContent = fzhHeroChrono(maintenant - Number(el.dataset.fzhDepuis));
+        });
+        // Choix chronométré : à zéro, le serveur choisit et l'état suit.
+        racine.querySelectorAll('[data-fzh-rebours]').forEach(el => {
+            el.textContent = fzhHeroChrono(Math.max(0, Number(el.dataset.fzhRebours) - maintenant));
         });
         racine.querySelectorAll('[data-fzh-eta]').forEach(el => {
             try {
