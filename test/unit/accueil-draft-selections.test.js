@@ -4,17 +4,24 @@
  * Accueil « repêchage en cours » (accueil-draft.js) : le panneau
  * « Sélections » remplace le calendrier de la LNH. Une pastille par équipe
  * du pool, et les choix de l'équipe choisie, catégorie par catégorie. La
- * carte « Alignement », à la place de l'ancien « Mes choix », mène aux trios
- * des clubs de la LNH (onglet « Alignements » de stats.html).
+ * carte « Alignements » (maquette « Accueil v2 »), à la place de l'ancien
+ * « Mes choix », mène aux trios des 32 clubs de la LNH (onglet
+ * « Alignements » de stats.html), chaque tuile à ceux de son club.
  */
 
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 const { chargerFonctions } = require('../fixtures/helpers.js');
 
 const SOURCE = fs.readFileSync(path.join(__dirname, '../../accueil-draft.js'), 'utf8');
+const LINEUP = fs.readFileSync(path.join(__dirname, '../../statsLineup.js'), 'utf8');
+
+// Un tableau sur plusieurs lignes n'a pas d'accolades à compter : on le lit
+// tel quel dans la source.
+const FZH_AL_CLUBS = vm.runInNewContext(SOURCE.match(/^const FZH_AL_CLUBS = (\[[\s\S]*?\n\]);/m)[1]);
 
 const STATS = {
     'Connor McDavid': { teamAbbrev: 'EDM', position: 'C', playerId: 8478402 },
@@ -28,8 +35,9 @@ const {
     'accueil-draft.js',
     ['FZH_POSITIONS', 'fzhPicksTeams', 'fzhPicksGroups', 'fzhClubAbbrev',
      'fzhPicksPlayerHTML', 'fzhPicksBodyHTML', 'fzhPicksTabHTML',
-     'fzhIcon', 'FZH_LINES_URL', 'FZH_LINES_ROWS', 'fzhLinesHTML'],
+     'fzhIcon', 'FZH_LINES_URL', 'fzhAlTuileHTML', 'fzhLinesHTML'],
     {
+        FZH_AL_CLUBS,
         escapeHTML: t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'),
         getPlayerStats: nom => STATS[nom] || null,
         offPlayerFaceHTML: (nom, equipe) => `<span class="fzd-off-face" data-team="${equipe || ''}"></span>`,
@@ -37,30 +45,58 @@ const {
     }
 );
 
-describe('accueil repêchage — alignement', () => {
-    test('« Alignement » remplace « Mes choix »', () => {
+describe('accueil repêchage — alignements', () => {
+    const tuiles = html => [...html.matchAll(/<a class="fzh-al-club( is-ombre)?" href="([^"]+)" style="([^"]+)"[^>]*>([A-Z]{3})<\/a>/g)]
+        .map(m => ({ ombre: !!m[1], href: m[2], style: m[3], code: m[4] }));
+
+    test('« Alignements » remplace « Mes choix »', () => {
         assert.ok(!SOURCE.includes('Mes choix'), 'le compte de mes choix n’a plus sa carte');
         assert.match(SOURCE, /\$\{fzhLinesHTML\(\)\}/);
     });
 
     test('la carte mène à l’onglet « Alignements » de stats.html', () => {
         const html = fzhLinesHTML();
-        assert.match(html, /<section class="fzh-lines fzh-panel" aria-labelledby="fzhLinesTitle">/);
-        assert.match(html, /<h2 id="fzhLinesTitle">Qui joue avec qui/);
-        assert.match(html, /<a class="fzh-lines-cta" href="stats\.html\?onglet=alignements">Voir les alignements/);
+        assert.match(html, /<section class="fzh-al" aria-labelledby="fzhAlTitre">/);
+        assert.match(html, /<a class="fzh-al-lien" href="stats\.html\?onglet=alignements">/);
+        assert.match(html, /<span class="fzh-al-sur">32 clubs · LNH<\/span><h2 id="fzhAlTitre">Alignements<\/h2>/);
+        assert.match(html, /<span class="fzh-al-fleche" aria-hidden="true">→<\/span>/);
+        assert.match(html, /Trios, paires et unités spéciales de chaque équipe/);
         // L'adresse ne sert que si stats.html l'ouvre encore sur cet onglet.
-        const lineup = fs.readFileSync(path.join(__dirname, '../../statsLineup.js'), 'utf8');
-        assert.match(lineup, /params\.get\('onglet'\) === 'alignements'/);
+        assert.match(LINEUP, /params\.get\('onglet'\) === 'alignements'/);
     });
 
-    test('le schéma dessine un trio, une paire et un gardien, sans rien dire au lecteur d’écran', () => {
-        const html = fzhLinesHTML();
-        assert.match(html, /<div class="fzh-lines-visual" aria-hidden="true">/);
-        assert.deepEqual(
-            [...html.matchAll(/<span class="fzh-lines-row">(.*?)<\/span>/g)].map(m => m[1].replace(/<\/?i>/g, ' ').trim().split(/\s+/)),
-            [['AG', 'C', 'AD'], ['D', 'D'], ['G']]
-        );
-        assert.deepEqual([...html.matchAll(/<li>(.*?)<\/li>/g)].map(m => m[1]), ['1er trio', '1re paire', 'Gardien']);
+    test('trente-deux tuiles, chacune vers l’alignement de son club', () => {
+        const liste = tuiles(fzhLinesHTML());
+        assert.equal(liste.length, 32);
+        assert.equal(new Set(liste.map(t => t.code)).size, 32, 'aucun club en double');
+        // Chaque code doit être un club que la page des alignements connaît,
+        // sinon ?equipe= retomberait sur le club par défaut.
+        const connus = new Set([...LINEUP.match(/const CLUBS = \[([\s\S]*?)\]\s*\.sort/)[1].matchAll(/\['([A-Z]{3})'/g)].map(m => m[1]));
+        assert.deepEqual([...liste.map(t => t.code)].sort(), [...connus].sort());
+        for (const t of liste) assert.equal(t.href, `stats.html?onglet=alignements&amp;equipe=${t.code}`);
+        assert.match(LINEUP, /params\.get\('equipe'\)/);
+        assert.match(fzhLinesHTML(), /aria-label="Alignement : Montréal Canadiens" title="Montréal Canadiens">MTL</);
+    });
+
+    test('les tuiles portent leurs couleurs, l’arc du survol et le damier du repos', () => {
+        const liste = tuiles(fzhLinesHTML());
+        const arc = t => Number(t.style.match(/--arc:(-?[\d.]+)px/)[1]);
+        const delai = t => Number(t.style.match(/--delai:(\d+)ms/)[1]);
+        assert.match(liste[0].style, /^--fond:#F47A38;--encre:#000;/);
+        // Huit par rangée : rien aux bords, l'arc le plus haut au centre.
+        assert.equal(arc(liste[0]), 0);
+        assert.equal(arc(liste[7]), 0);
+        assert.ok(arc(liste[3]) < -2.9 && arc(liste[4]) < -2.9);
+        // La vague part du coin : un cran par colonne, un par rangée.
+        assert.deepEqual([0, 1, 8, 9, 31].map(i => delai(liste[i])), [0, 25, 25, 50, 250]);
+        assert.deepEqual(liste.slice(0, 10).map(t => t.ombre), [false, true, false, true, false, true, false, true, true, false]);
+    });
+
+    test('la carte partage la rangée d’« À surveiller », le compte à rebours passe plus bas', () => {
+        const surveiller = SOURCE.indexOf('data-fz-bloc="surveiller"');
+        const carte = SOURCE.indexOf('${fzhLinesHTML()}');
+        const horssaison = SOURCE.indexOf('data-fz-bloc="horssaison"');
+        assert.ok(surveiller > 0 && surveiller < carte && carte < horssaison);
     });
 });
 

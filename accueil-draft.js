@@ -57,12 +57,12 @@ function renderDraftHome({ tonight, activeName }) {
     root.innerHTML = `
         <div class="fzh-barre-place" data-fzh-barre></div>
         <div class="fzh-hero-place" data-fzh-hero></div>
-        <div class="fzh-slot" data-fz-bloc="horssaison"></div>
+        <div class="fzh-slot" data-fz-bloc="surveiller"></div>
         ${fzhLinesHTML()}
         ${liveGames.length ? `<section class="fzh-scores fzh-panel">${fzhHeading('zap', 'Matchs en direct', '<a class="fzh-link" href="calendrier.html">Calendrier complet <span aria-hidden="true">→</span></a>')}<div class="fzh-score-track">${fzhGamesHTML(liveGames)}</div></section>` : ''}
         ${started ? '<section class="fzh-picks fzh-panel" id="fzhPicks" aria-labelledby="fzhPicksTitle">' + fzhHeading('users', '<span id="fzhPicksTitle">Sélections</span>') + '<div class="fzh-picks-tabs" role="group" aria-label="Équipes du pool"></div><div class="fzh-picks-body" aria-live="polite"></div></section>' : ''}
+        <div class="fzh-slot" data-fz-bloc="horssaison"></div>
         <div class="fzh-slot" data-fz-bloc="mouvements"></div>
-        <div class="fzh-slot" data-fz-bloc="surveiller"></div>
         <section class="fzh-news fzh-panel" id="fzhNews" aria-label="Actualités LNH"><div class="fzh-news-copy"><span class="fzh-news-badge">LNH</span><h2>Le hockey n’attend pas.</h2><p>Préparez votre prochain choix.</p><small>Chargement des actualités…</small></div></section>`;
     fzhHeroBrancher(root);
     fzhHeroRendre(root, { poolData, poolName: activeName, teamName: team.name });
@@ -86,24 +86,55 @@ function fzhGamesHTML(games) {
     return games.map(g => `<article class="fzh-game"><p>${periodLabel(g.period, g.periodType)} période · ${escapeHTML(g.clock?.timeRemaining || '')}</p>${[g.away, g.home].map(t => `<div>${teamLogoImg(t.abbrev)}<strong>${escapeHTML(t.abbrev)}</strong><b>${t.score ?? '–'}</b></div>`).join('')}<span class="fzh-game-badge is-live">En direct</span></article>`).join('');
 }
 
-/* ---- Alignement ----
+/* ---- Alignements (maquette « Accueil v2 ») ----
    Un joueur vaut aussi par sa place dans son club : au premier trio et à la
    première vague de l'avantage numérique, il récolte plus de points qu'au
-   quatrième trio. La carte montre d'un coup d'œil ce qu'est un alignement
-   (trio, paire, gardien) et mène à ceux des 32 clubs, dans l'onglet
-   « Alignements » de stats.html. Le schéma est décoratif : le texte dit la
-   même chose aux lecteurs d'écran. */
+   quatrième trio. La carte mène aux alignements des 32 clubs, dans l'onglet
+   « Alignements » de stats.html ; chaque tuile ouvre directement celui de
+   son club (?equipe=, statsLineup.js).
+
+   Au survol, les tuiles se soulèvent en arc, de gauche à droite, avec un
+   léger décalage par rangée : --arc et --delai sont calculés ici, une fois,
+   pour que la feuille de style n'ait qu'à les lire. */
 const FZH_LINES_URL = 'stats.html?onglet=alignements';
 
-const FZH_LINES_ROWS = [{ label: '1er trio', slots: ['AG', 'C', 'AD'] }, { label: '1re paire', slots: ['D', 'D'] }, { label: 'Gardien', slots: ['G'] }];
+/** [code, nom, couleur de la tuile, couleur du code] — les couleurs de la maquette. */
+const FZH_AL_CLUBS = [
+    ['ANA', 'Anaheim Ducks', '#F47A38', '#000'], ['BOS', 'Boston Bruins', '#FFB81C', '#000'],
+    ['BUF', 'Buffalo Sabres', '#003087', '#FFB81C'], ['CGY', 'Calgary Flames', '#C8102E', '#F1BE48'],
+    ['CAR', 'Caroline Hurricanes', '#CE1126', '#fff'], ['CHI', 'Chicago Blackhawks', '#CF0A2C', '#fff'],
+    ['COL', 'Colorado Avalanche', '#6F263D', '#fff'], ['CBJ', 'Columbus Blue Jackets', '#002654', '#fff'],
+    ['DAL', 'Dallas Stars', '#006847', '#fff'], ['DET', 'Détroit Red Wings', '#CE1126', '#fff'],
+    ['EDM', 'Edmonton Oilers', '#041E42', '#FF7A3D'], ['FLA', 'Floride Panthers', '#C8102E', '#fff'],
+    ['LAK', 'Los Angeles Kings', '#111111', '#fff'], ['MIN', 'Minnesota Wild', '#154734', '#DDCBA4'],
+    ['MTL', 'Montréal Canadiens', '#AF1E2D', '#fff'], ['NSH', 'Nashville Predators', '#FFB81C', '#041E42'],
+    ['NJD', 'New Jersey Devils', '#CE1126', '#000'], ['NYI', 'New York Islanders', '#00539B', '#F47D30'],
+    ['NYR', 'New York Rangers', '#0038A8', '#fff'], ['OTT', 'Ottawa Sénateurs', '#C52032', '#fff'],
+    ['PHI', 'Philadelphie Flyers', '#F74902', '#000'], ['PIT', 'Pittsburgh Penguins', '#FCB514', '#000'],
+    ['SJS', 'San Jose Sharks', '#006D75', '#fff'], ['SEA', 'Seattle Kraken', '#001628', '#99D9D9'],
+    ['STL', 'St. Louis Blues', '#002F87', '#FCB514'], ['TBL', 'Tampa Bay Lightning', '#002868', '#fff'],
+    ['TOR', 'Toronto Maple Leafs', '#00205B', '#fff'], ['UTA', 'Utah Mammoth', '#71AFE5', '#090909'],
+    ['VAN', 'Vancouver Canucks', '#00205B', '#fff'], ['VGK', 'Vegas Golden Knights', '#B4975A', '#333F42'],
+    ['WSH', 'Washington Capitals', '#C8102E', '#fff'], ['WPG', 'Winnipeg Jets', '#041E42', '#fff']
+];
+
+/** Huit tuiles par rangée : l'arc va de 0 aux bords à 3 px au centre. */
+function fzhAlTuileHTML([code, nom, fond, encre], i) {
+    const rangee = Math.floor(i / 8), colonne = i % 8;
+    // `|| 0` : aux bords, le sinus rend -0, qui s'écrirait « -0px ».
+    const arc = Math.round(-300 * Math.sin((colonne / 7) * Math.PI)) / 100 || 0;
+    const style = `--fond:${fond};--encre:${encre};--arc:${arc}px;--delai:${(rangee + colonne) * 25}ms`;
+    return `<li><a class="fzh-al-club${colonne % 2 === rangee % 2 ? '' : ' is-ombre'}" href="${FZH_LINES_URL}&amp;equipe=${code}" style="${style}" aria-label="Alignement : ${nom}" title="${nom}">${code}</a></li>`;
+}
 
 function fzhLinesHTML() {
-    const rows = FZH_LINES_ROWS.map(r => `<span class="fzh-lines-row">${r.slots.map(s => `<i>${s}</i>`).join('')}</span>`).join('');
-    const legend = FZH_LINES_ROWS.map(r => `<li>${r.label}</li>`).join('');
-    return `<section class="fzh-lines fzh-panel" aria-labelledby="fzhLinesTitle">
-            <div class="fzh-lines-copy"><p class="fzh-eyebrow">Alignement</p><h2 id="fzhLinesTitle">Qui joue avec qui ?</h2><p class="fzh-lines-text">Trios, paires et unités spéciales des 32 clubs de la LNH.</p></div>
-            <div class="fzh-lines-visual" aria-hidden="true"><div class="fzh-lines-rink">${rows}</div><ul class="fzh-lines-legend">${legend}</ul></div>
-            <a class="fzh-lines-cta" href="${FZH_LINES_URL}">Voir les alignements ${fzhIcon('arrow-right', 18)}</a>
+    return `<section class="fzh-al" aria-labelledby="fzhAlTitre">
+            <a class="fzh-al-lien" href="${FZH_LINES_URL}">
+                <span class="fzh-al-tete"><span class="fzh-al-sur">32 clubs · LNH</span><h2 id="fzhAlTitre">Alignements</h2></span>
+                <span class="fzh-al-fleche" aria-hidden="true">→</span>
+            </a>
+            <ul class="fzh-al-clubs" aria-label="Alignement d’un club">${FZH_AL_CLUBS.map(fzhAlTuileHTML).join('')}</ul>
+            <p class="fzh-al-note">Trios, paires et unités spéciales de chaque équipe</p>
         </section>`;
 }
 
