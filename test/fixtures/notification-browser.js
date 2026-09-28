@@ -227,6 +227,16 @@ async function createNotificationBrowser(options = {}) {
         mine: () => pools, draftState: data => data, onData: callback => dataListeners.push(callback),
         refresh: async () => { for (const callback of dataListeners) callback(); }
     };
+    // « Aujourd'hui » (fzToday.js) remplacé par un double : la cloche ne s'en
+    // sert que par surReponse et demarrer. `undefined` = page sans lui.
+    let aujourdhui = options.today;
+    const abonnesAujourdhui = [];
+    if (aujourdhui !== undefined) {
+        window.FZToday = {
+            surReponse: callback => { abonnesAujourdhui.push(callback); },
+            demarrer: async () => { abonnesAujourdhui.forEach(callback => callback(aujourdhui)); return aujourdhui; }
+        };
+    }
     const localStorage = {
         getItem: key => storage.get(key) ?? null,
         setItem: (key, value) => { if (options.storageFailure) throw new Error('Storage unavailable'); storage.set(key, String(value)); },
@@ -283,6 +293,14 @@ async function createNotificationBrowser(options = {}) {
         document, window, storage, requests, lectures, flush, advance,
         element: id => document.getElementById(id),
         items: () => document.getElementById('fzNotifList').querySelectorAll('a[data-notification-id]'),
+        todayItems: () => document.getElementById('fzNotifList').querySelectorAll('a[data-today-id]'),
+        /** Les identifiants des lignes d'un groupe (`afaire`, `maintenant`, `jour`, `avant`). */
+        group: key => {
+            const groupe = document.getElementById('fzNotifList').querySelectorAll('li.fz-notif-group')
+                .find(li => li.querySelector('h3')?.id === `fzNotifGroup-${key}`);
+            return groupe ? groupe.querySelectorAll('a').map(a => a.dataset.notificationId || a.dataset.todayId) : [];
+        },
+        setToday: async value => { aujourdhui = value; abonnesAujourdhui.forEach(callback => callback(value)); await flush(); },
         state: () => JSON.parse(storage.get(`fzNotifications:v1:${encodeURIComponent(username)}`) || 'null'),
         setTrades: value => { trades = value; },
         setServerNotifications: value => { notificationsServeur = value; },

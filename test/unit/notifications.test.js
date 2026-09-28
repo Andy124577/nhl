@@ -466,3 +466,77 @@ describe('notifications — receiving and deliberately reading updates', () => {
     });
 });
 
+
+describe('notifications — « Aujourd’hui » rows in the list', () => {
+    const today = (vedette, secondaires = []) => ({ vedette, secondaires, pools: [] });
+    const ready = {
+        id: 'ready:Ligue B', urgence: 2, pool: 'Ligue B', titre: 'Repêchage prévu',
+        detail: '3 sur 8 participants inscrits.', action: 'Préparer le repêchage',
+        href: 'repechage.html?pool=Ligue%20B', etat: 'ok'
+    };
+    const duel = {
+        id: 'duel:Ligue A:3', urgence: 4, pool: 'Ligue A', titre: 'Cette semaine : contre Les Nordiques',
+        detail: 'Semaine 3.', action: 'Voir le duel', href: 'classement.html?pool=Ligue%20A&onglet=h2h', etat: 'ok'
+    };
+
+    test('today items are ordinary list rows, grouped by whether they await a gesture', async () => {
+        const browser = await createNotificationBrowser({
+            today: today(ready, [duel, { id: 'ce-soir', urgence: 6, titre: 'Calendrier du jour indisponible', etat: 'indisponible' }])
+        });
+        assert.equal(browser.element('fzTodayNotif'), null, 'no separate strip above the list');
+        assert.deepEqual(browser.group('afaire'), ['ready:Ligue B']);
+        assert.deepEqual(browser.group('maintenant'), ['duel:Ligue A:3']);
+        assert.equal(browser.todayItems().length, 2, 'an item with nowhere to go stays out');
+
+        const [premiere, seconde] = browser.todayItems();
+        assert.ok(premiere.classList.contains('fz-notif-item') && premiere.classList.contains('is-current'));
+        assert.equal(premiere.getAttribute('href'), 'repechage.html?pool=Ligue%20B');
+        assert.equal(premiere.querySelector('.fz-notif-pool').textContent, 'Ligue B');
+        assert.equal(seconde.querySelector('.fz-notif-pool').textContent, 'Ligue A');
+        assert.equal(premiere.querySelector('.fz-notif-time'), null, 'a current state has no notification time');
+        assert.equal(browser.element('fzNotifBadge').hidden, true, 'the unread count only counts notifications');
+    });
+
+    test('clicking a today row reads nothing', async () => {
+        const browser = await createNotificationBrowser({ trades: [trade('one')], today: today(ready) });
+        browser.todayItems()[0].click();
+        assert.equal(browser.state().items.find(item => item.id === 'trade:one').read, false);
+        assert.equal(browser.lectures.length, 0);
+        assert.equal(browser.element('fzNotifBadge').textContent, '1');
+    });
+
+    test('a today item that is already a notification shows once, with its read state', async () => {
+        const offre = { id: 'trade:one', urgence: 3, pool: 'Ligue des amis', titre: "Nouvelle offre d'échange",
+            detail: 'Votre réponse est attendue.', action: 'Voir l’offre', href: 'trade.html?trade=one', etat: 'ok' };
+        const browser = await createNotificationBrowser({ trades: [trade('one')], today: today(offre) });
+        assert.equal(browser.todayItems().length, 0);
+        assert.deepEqual(browser.group('afaire'), ['trade:one']);
+
+        // Read but still unanswered: the offer stays where the action is.
+        browser.element('fzNotifMarkAll').click();
+        assert.equal(unread(browser), 0);
+        assert.deepEqual(browser.group('afaire'), ['trade:one']);
+        assert.deepEqual(browser.group('jour'), []);
+    });
+
+    test('today rows survive the unread filter and leave with the next answer', async () => {
+        const browser = await createNotificationBrowser({ today: today(ready) });
+        browser.element('fzNotifTabUnread').click();
+        assert.deepEqual(browser.group('afaire'), ['ready:Ligue B']);
+        assert.doesNotMatch(browser.element('fzNotifList').textContent, /à jour/);
+
+        await browser.setToday(today(null));
+        assert.equal(browser.todayItems().length, 0);
+        assert.match(browser.element('fzNotifList').textContent, /à jour|Aucune notification/);
+    });
+
+    test('server text in a today row is text, not markup', async () => {
+        const browser = await createNotificationBrowser({
+            today: today({ ...ready, titre: '<img src=x onerror=alert(1)>', pool: '"><script>' })
+        });
+        const liste = browser.element('fzNotifList');
+        assert.equal(liste.querySelectorAll('img').length, 0);
+        assert.equal(liste.querySelectorAll('script').length, 0);
+        assert.equal(browser.todayItems()[0].querySelector('.fz-notif-title').textContent, '<img src=x onerror=alert(1)>');
+    });
+});

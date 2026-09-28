@@ -22,7 +22,6 @@ function chargerFZToday({ pool = 'Ligue', connecte = true } = {}) {
     let prochain = 1;
     let horloge = 0;
 
-    const elements = new Map();
     const ecouteurs = new Map();
     const sockets = new Map();
     const requetes = [];
@@ -30,17 +29,8 @@ function chargerFZToday({ pool = 'Ligue', connecte = true } = {}) {
     let retard = null;
     let poolActif = pool;
 
-    const creerElement = (id) => ({
-        id, innerHTML: '', hidden: false,
-        set innerHTML_(v) { this.innerHTML = v; }
-    });
-
     const document = {
         visibilityState: 'visible',
-        getElementById: (id) => {
-            if (!elements.has(id)) elements.set(id, creerElement(id));
-            return elements.get(id);
-        },
         addEventListener: (type, fn) => {
             const liste = ecouteurs.get(type) || [];
             liste.push(fn);
@@ -71,6 +61,8 @@ function chargerFZToday({ pool = 'Ligue', connecte = true } = {}) {
         }
     };
     contexte.window.FZToday = undefined;
+    // Au navigateur, window est le global : fzToday.js lit window.FZPool.
+    contexte.window.FZPool = contexte.FZPool;
     contexte.window.matchMedia = () => ({ matches: false });
 
     vm.runInNewContext(
@@ -82,7 +74,6 @@ function chargerFZToday({ pool = 'Ligue', connecte = true } = {}) {
     return {
         FZToday: contexte.window.FZToday,
         requetes,
-        elements,
         setReponse: (r) => { reponse = r; },
         setPool: (p) => { poolActif = p; },
         /** Retient la prochaine réponse : c'est ce qui simule un aller-retour lent. */
@@ -126,7 +117,7 @@ describe('« Aujourd’hui » côté navigateur', () => {
     test('une rafale d’évènements ne produit qu’une requête', async () => {
         const banc = chargerFZToday();
         banc.setReponse({ vedette: vedette('a', 'À vous'), secondaires: [], pools: [] });
-        await banc.FZToday.demarrer(['fzTodayDash']);
+        await banc.FZToday.demarrer();
         const avant = banc.requetes.length;
 
         await banc.emettre('poolUpdated');
@@ -138,29 +129,39 @@ describe('« Aujourd’hui » côté navigateur', () => {
         assert.equal(banc.requetes.length, avant + 1, 'une seule requête pour toute la rafale');
     });
 
+    test('chaque réponse retenue va aux abonnés', async () => {
+        const banc = chargerFZToday();
+        const recues = [];
+        banc.FZToday.surReponse(charge => recues.push(charge.vedette.id));
+        banc.setReponse({ vedette: vedette('a', 'À vous'), secondaires: [], pools: [] });
+        await banc.FZToday.demarrer();
+        assert.deepEqual(recues, ['a']);
+        assert.equal(banc.FZToday.vedette().titre, 'À vous');
+    });
+
     test('une réponse arrivée après un changement de pool est jetée', async () => {
         const banc = chargerFZToday({ pool: 'Ligue A' });
+        const recues = [];
+        banc.FZToday.surReponse(charge => recues.push(charge.vedette.id));
         banc.setReponse({ vedette: vedette('a', 'Duel A'), secondaires: [], pools: [] });
-        await banc.FZToday.demarrer(['fzTodayDash']);
-        assert.match(banc.elements.get('fzTodayDash').innerHTML, /Duel A/);
+        await banc.FZToday.demarrer();
 
         // Une réponse pour « Ligue A » revient après qu'on soit passé sur B.
         const liberer = banc.retenir();
         const enVol = banc.FZToday.charger({ force: true });
         banc.setPool('Ligue B');
-        liberer({ vedette: vedette('a', 'Duel A'), secondaires: [], pools: [] });
+        liberer({ vedette: vedette('b', 'Duel périmé'), secondaires: [], pools: [] });
         await enVol;
         await banc.vider();
 
-        assert.match(banc.elements.get('fzTodayDash').innerHTML, /Duel A/,
-            "l'affichage ne bouge pas : la réponse périmée n'a pas été appliquée");
+        assert.deepEqual(recues, ['a'], "la réponse périmée n'atteint pas la cloche");
         assert.equal(banc.FZToday.derniere().vedette.id, 'a');
     });
 
     test('rien ne tourne pendant que l’onglet est caché', async () => {
         const banc = chargerFZToday();
         banc.setReponse({ vedette: vedette('a', 'À vous'), secondaires: [], pools: [] });
-        await banc.FZToday.demarrer(['fzTodayDash']);
+        await banc.FZToday.demarrer();
 
         await banc.cacherOnglet();
         const avant = banc.requetes.length;
@@ -171,44 +172,12 @@ describe('« Aujourd’hui » côté navigateur', () => {
         assert.ok(banc.requetes.length > avant, 'le retour sur l’onglet relit tout de suite');
     });
 
-    test('la vedette et les lignes secondaires nomment leur pool', async () => {
+    test('un échec réseau garde la dernière réponse', async () => {
         const banc = chargerFZToday();
-        banc.setReponse({
-            vedette: vedette('a', 'À vous de choisir'),
-            secondaires: [{ ...vedette('b', 'Duel de la semaine'), urgence: 4, pool: 'Autre Ligue' }],
-            pools: []
-        });
-        await banc.FZToday.demarrer(['fzTodayDash']);
-
-        const html = banc.elements.get('fzTodayDash').innerHTML;
-        assert.match(html, /À vous de choisir/);
-        assert.match(html, /Duel de la semaine/);
-        assert.match(html, /Ligue/);
-        assert.match(html, /Autre Ligue/,
-            '« c’est votre tour » sans dire dans quelle partie oblige à deviner');
-    });
-
-    test('l’état vide propose des gestes plutôt qu’une page blanche', async () => {
-        const banc = chargerFZToday();
-        banc.setReponse({
-            vedette: null, secondaires: [], pools: [],
-            vide: {
-                cas: 'aucun_pool', titre: 'Commencez par un pool', detail: 'Rejoignez-en un.',
-                actions: [{ titre: 'Pool rapide (4 joueurs)', href: 'rejoindre-pool.html' }]
-            }
-        });
-        await banc.FZToday.demarrer(['fzTodayDash']);
-
-        const html = banc.elements.get('fzTodayDash').innerHTML;
-        assert.match(html, /Commencez par un pool/);
-        assert.match(html, /rejoindre-pool\.html/);
-    });
-
-    test('un échec réseau garde ce qui est affiché', async () => {
-        const banc = chargerFZToday();
+        const recues = [];
+        banc.FZToday.surReponse(charge => recues.push(charge.vedette.id));
         banc.setReponse({ vedette: vedette('a', 'À vous'), secondaires: [], pools: [] });
-        await banc.FZToday.demarrer(['fzTodayDash']);
-        const avant = banc.elements.get('fzTodayDash').innerHTML;
+        await banc.FZToday.demarrer();
 
         const liberer = banc.retenir();
         const enVol = banc.FZToday.charger({ force: true });
@@ -216,27 +185,13 @@ describe('« Aujourd’hui » côté navigateur', () => {
         await enVol.catch(() => {});
         await banc.vider();
 
-        assert.equal(banc.elements.get('fzTodayDash').innerHTML, avant,
-            'vider l’accueil parce qu’une requête a échoué serait la pire réaction');
-    });
-
-    test('le texte du serveur est échappé avant d’atteindre la page', async () => {
-        const banc = chargerFZToday();
-        banc.setReponse({
-            vedette: { ...vedette('a', '<img src=x onerror=alert(1)>'), pool: '"><script>' },
-            secondaires: [], pools: []
-        });
-        await banc.FZToday.demarrer(['fzTodayDash']);
-
-        const html = banc.elements.get('fzTodayDash').innerHTML;
-        assert.ok(!html.includes('<img src=x'), 'un nom de pool est du texte, pas du balisage');
-        assert.ok(!html.includes('<script>'));
-        assert.match(html, /&lt;img/);
+        assert.deepEqual(recues, ['a'], 'vider la cloche parce qu’une requête a échoué serait la pire réaction');
+        assert.equal(banc.FZToday.derniere().vedette.id, 'a');
     });
 
     test('sans session, le module ne demande rien', async () => {
         const banc = chargerFZToday({ connecte: false });
-        const resultat = await banc.FZToday.demarrer(['fzTodayDash']);
+        const resultat = await banc.FZToday.demarrer();
         assert.equal(resultat, null);
         assert.equal(banc.requetes.length, 0);
     });

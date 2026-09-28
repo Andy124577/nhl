@@ -77,11 +77,10 @@
     <!-- Fenêtres de dialogue (fzAlert, fzConfirm) : avant tout script de page. -->
     <script src="fzDialog.js?v=20260926a"></script>
     <link rel="stylesheet" href="teamLogos.css?v=20260926">
-    <link rel="stylesheet" href="poolNav.css?v=20260927">
+    <link rel="stylesheet" href="poolNav.css?v=20260928a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="index.css?v=20260926b">
     <link rel="stylesheet" href="accueil.css?v=20260926b">
-    <link rel="stylesheet" href="fzToday.css?v=20260926b">
     <link rel="stylesheet" href="career-modal.css?v=20260926b">
     <link rel="stylesheet" href="accueil-dash.css?v=20260926b">
     <link rel="stylesheet" href="accueil-mobile.css?v=20260926b">
@@ -423,9 +422,9 @@
                  home téléphone (accueil-mobile.js) a son propre système
                  d'état à 4 modes. Voir renderHero() dans accueil-dash.js. -->
             <!-- « À faire maintenant » — la bande de priorité alimentée par
-                 GET /api/me/today (fzToday.js) ne s'affiche plus ici : elle
-                 est rendue dans le panneau de notifications, que notifications.js
-                 monte dans la navbar. -->
+                 GET /api/me/today (fzToday.js) ne s'affiche plus ici : ses
+                 éléments sont des lignes de la liste de notifications, que
+                 notifications.js monte dans la navbar. -->
 
             <div class="fz-dash-hero" id="fzDashHero" style="display:none;"><!-- Filled by accueil-dash.js --></div>
 
@@ -727,7 +726,7 @@
     <!-- « A faire maintenant » : une seule reponse serveur, la meme bande
          au bureau et au telephone. Doit preceder accueil-dash.js, qui
          l'appelle au chargement. -->
-    <script defer src="fzToday.js?v=20260920"></script>
+    <script defer src="fzToday.js?v=20260928a"></script>
     <script defer src="careerFetch.js"></script>
     <script defer src="careerModal.js?v=20260925"></script>
     <script defer src="careerTeamLogo.js"></script>
@@ -749,6 +748,6 @@
     <script defer src="poolSettings.js?v=20260927d"></script>
     <script defer src="poolNav.js?v=20260925f"></script>
     <script defer src="poolInvites.js?v=20260925e"></script>
-    <script defer src="notifications.js?v=20260927b"></script>
+    <script defer src="notifications.js?v=20260928a"></script>
 </body>
 </html>

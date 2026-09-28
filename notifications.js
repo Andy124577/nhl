@@ -26,7 +26,11 @@
  * éléments — une icône dont la couleur dit l'issue, un titre court, un
  * résumé (les deux équipes d'un échange, sinon une phrase) et le pool. Une
  * notification non lue se reconnaît à son titre gras, son fond teinté et son
- * point rouge ; une lue s'estompe. */
+ * point rouge ; une lue s'estompe.
+ *
+ * Ce qui se passe en ce moment (fzToday.js : le tour, un repêchage en cours,
+ * le duel de la semaine…) prend les mêmes lignes : en tête d'« À faire » ce
+ * qui attend un geste, dans « En ce moment » ce qui décrit la semaine. */
 (function () {
     const ICONES = {
         cloche: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>`,
@@ -65,6 +69,8 @@
     let popupSurvole = false;
     // « Toutes » ou « Non lues » : le choix tient le temps de la page.
     let filtreNonLues = false;
+    // La dernière réponse d'« Aujourd'hui » (fzToday.js), ou null.
+    let aujourdhui = null;
 
     const compteActuel = () => localStorage.getItem('isLoggedIn') === 'true'
         && localStorage.getItem('username') === compte;
@@ -432,10 +438,10 @@
                         <span class="fz-notif-title">${echapper(el.titre)}</span>
                         ${issue === 'direct' ? '<span class="fz-notif-live">En direct</span>' : ''}
                     </span>
-                    <span class="fz-notif-when">${horodatage(el.date)}${dansLaListe ? '<span class="fz-notif-dot" aria-hidden="true"></span>' : ''}</span>
+                    <span class="fz-notif-when">${el.actuel ? '' : horodatage(el.date)}${dansLaListe ? '<span class="fz-notif-dot" aria-hidden="true"></span>' : ''}</span>
                 </span>
                 ${resume(el)}
-                <span class="fz-notif-pool fz-pool-${teinte(el.pool)}">${echapper(el.pool)}</span>
+                ${el.pool ? `<span class="fz-notif-pool fz-pool-${teinte(el.pool)}">${echapper(el.pool)}</span>` : ''}
                 ${actionnable(el) && el.action ? `<span class="fz-notif-action">${echapper(el.action)} <span aria-hidden="true">→</span></span>` : ''}
             </span>`;
     }
@@ -466,13 +472,58 @@
         parId('fzNotifHelp').hidden = !aide;
     }
 
+    // fzToday.js classe ses éléments par urgence (lib/priority.js) : jusqu'à
+    // l'échange (3), ils attendent un geste ; au-delà — le duel, le résultat
+    // de la semaine, les matchs du jour —, ils décrivent la semaine.
+    const URGENCE_A_FAIRE = 3;
+
+    /**
+     * Les éléments d'« Aujourd'hui », prêts à ranger dans la liste.
+     *
+     * Plusieurs portent l'identifiant d'une notification (`turn:`, `draft:`,
+     * `trade:`, `week:`) : c'est alors la notification elle-même qui monte,
+     * avec son état de lecture — jamais deux lignes pour le même fait. Les
+     * autres deviennent des lignes sans lecture ni heure (`actuel`). Un
+     * élément sans destination (« calendrier indisponible ») n'a rien à
+     * ouvrir : il reste dehors.
+     */
+    function actuels() {
+        if (!aujourdhui || !aujourdhui.vedette) return [];
+        const connus = new Map(elements.map(el => [el.id, el]));
+        return [aujourdhui.vedette, ...(aujourdhui.secondaires || [])]
+            .filter(el => el && el.id && el.href)
+            .map(el => ({
+                aFaire: el.urgence <= URGENCE_A_FAIRE,
+                el: connus.get(el.id) || {
+                    id: el.id, pool: el.pool, titre: el.titre, detail: el.detail,
+                    action: el.action, href: el.href, date: null, read: true, actuel: true,
+                    type: /^(turn|draft|ready):/.test(el.id) ? 'repechage'
+                        : el.id.startsWith('trade:') ? 'echange' : 'semaine',
+                    // Un repêchage en cours se lit « En direct » (ton()), pas « à répondre ».
+                    urgent: el.urgence <= URGENCE_A_FAIRE && !el.id.startsWith('draft:')
+                }
+            }));
+    }
+
+    // `actuels` choisit, parmi les éléments d'« Aujourd'hui », ceux du groupe ;
+    // ils passent devant les notifications, dans l'ordre du serveur.
     const GROUPES = [
-        { cle: 'afaire', titre: 'À faire', garde: aFaire },
+        { cle: 'afaire', titre: 'À faire', garde: aFaire, actuels: a => a.aFaire },
+        { cle: 'maintenant', titre: 'En ce moment', garde: () => false, actuels: a => !a.aFaire },
         { cle: 'jour', titre: "Aujourd'hui", garde: el => !aFaire(el) && estAujourdhui(el.date) },
         { cle: 'avant', titre: 'Plus tôt', garde: el => !aFaire(el) && !estAujourdhui(el.date) }
     ];
 
+    // Une ligne d'« Aujourd'hui » n'est pas une notification : un clic n'a
+    // rien à marquer lu, d'où un autre attribut que `data-notification-id`.
+    const LIGNES = '[data-notification-id],[data-today-id]';
+    const cleDeLigne = lien => lien.dataset.notificationId || lien.dataset.todayId;
+
     function ligne(el) {
+        if (el.actuel) {
+            return `<li class="fz-notif-entry"><a class="fz-notif-item is-current${el.urgent ? ' is-urgent' : ''}"
+            href="${echapper(el.href)}" data-today-id="${echapper(el.id)}">${contenu(el, true)}</a></li>`;
+        }
         return `<li class="fz-notif-entry"><a class="fz-notif-item${el.read ? '' : ' is-unread'}${el.urgent ? ' is-urgent' : ''}"
             href="${echapper(el.href)}" data-notification-id="${echapper(el.id)}">${contenu(el, true)}</a></li>`;
     }
@@ -487,23 +538,30 @@
     function rendreListe() {
         const liste = parId('fzNotifList');
         if (!liste) return;
-        const visibles = elements.filter(el => !filtreNonLues || !el.read);
+        // Ce qui se passe en ce moment ignore le filtre « Non lues » : ce n'est
+        // pas de l'historique, et le masquer cacherait un tour qui attend.
+        const enCours = actuels();
+        const montees = new Set(enCours.map(a => a.el.id));
+        const visibles = elements.filter(el => !montees.has(el.id) && (!filtreNonLues || !el.read));
         // « À faire » met l'urgence devant ; les jours suivent l'ordre du temps.
-        const html = visibles.length ? GROUPES.map(groupe => {
-            const membres = visibles.filter(groupe.garde).sort(groupe.cle === 'afaire' ? trier : (a, b) => b.date - a.date);
+        const html = GROUPES.map(groupe => {
+            const membres = [
+                ...(groupe.actuels ? enCours.filter(groupe.actuels).map(a => a.el) : []),
+                ...visibles.filter(groupe.garde).sort(groupe.cle === 'afaire' ? trier : (a, b) => b.date - a.date)
+            ];
             if (!membres.length) return '';
             return `<li class="fz-notif-group${groupe.cle === 'afaire' ? ' is-todo' : ''}">
                 <h3 class="fz-notif-group-title" id="fzNotifGroup-${groupe.cle}">${groupe.titre}</h3>
                 <ul class="fz-notif-group-list" aria-labelledby="fzNotifGroup-${groupe.cle}">${membres.map(ligne).join('')}</ul></li>`;
-        }).join('') : vide();
+        }).join('') || vide();
         if (html !== derniereListe) {
-            const focus = document.activeElement?.closest('[data-notification-id]');
-            const focusId = focus && liste.contains(focus) ? focus.dataset.notificationId : null;
+            const focus = document.activeElement?.closest(LIGNES);
+            const focusId = focus && liste.contains(focus) ? cleDeLigne(focus) : null;
             const scroll = liste.scrollTop;
             liste.innerHTML = html;
             derniereListe = html;
-            if (focusId) [...liste.querySelectorAll('[data-notification-id]')]
-                .find(lien => lien.dataset.notificationId === focusId)?.focus({ preventScroll: true });
+            if (focusId) [...liste.querySelectorAll(LIGNES)]
+                .find(lien => cleDeLigne(lien) === focusId)?.focus({ preventScroll: true });
             liste.scrollTop = scroll;
         }
         majBadge();
@@ -607,7 +665,6 @@
                         </div>
                         <p class="fz-notif-help" id="fzNotifHelp" hidden></p>
                     </div>
-                    <div class="fz-notif-today" id="fzTodayNotif" hidden><!-- Rempli par fzToday.js --></div>
                     <ul class="fz-notif-list" id="fzNotifList"></ul>
                 </section>
             </div>`);
@@ -666,21 +723,23 @@
     }
 
     /**
-     * « À faire maintenant » en tête du panneau.
+     * « Aujourd'hui » dans la liste (voir actuels()).
      *
-     * La bande de priorité vivait sur l'accueil, au-dessus du tableau de bord.
-     * Elle dit la même chose que la cloche — ce qui réclame une action, tous
-     * pools confondus — et la répéter à deux endroits obligeait à lire deux
-     * fois la même liste. Elle vit donc ici, avec l'historique.
+     * La bande de priorité vivait sur l'accueil, puis en tête du panneau, dans
+     * son propre style. Elle dit la même chose que la cloche — ce qui réclame
+     * une action, tous pools confondus — : ses éléments sont donc devenus des
+     * lignes de la liste.
      *
-     * fzToday.js n'est chargé que sur les pages qui l'affichent : ailleurs,
-     * l'emplacement reste vide et le panneau garde sa forme habituelle.
+     * fzToday.js n'est chargé que sur l'accueil : ailleurs, la liste ne
+     * montre que les notifications.
      */
     function brancherAujourdhui() {
-        if (!window.FZToday) return;
-        // `demarrer` rend une première fois, puis à chaque réponse suivante :
-        // un seul abonnement, donc un seul rendu par réponse.
-        FZToday.demarrer(['fzTodayNotif']);
+        const client = window.FZToday;
+        if (!client) return;
+        // fzToday.js jette déjà les réponses périmées (pool changé en vol) et
+        // garde la dernière en cas d'échec : chaque réponse reçue fait foi.
+        client.surReponse(charge => { aujourdhui = charge; rendreListe(); });
+        client.demarrer();
     }
 
     /**

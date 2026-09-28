@@ -734,8 +734,9 @@ html[data-theme="light"] .fz-notif-toast {
 .fz-notif-item { padding: 12px 20px; }
 .fz-notif-item.is-unread { --fzn-row: var(--fzn-unread); }
 
-/* Lue : la ligne s'estompe, sans disparaître. */
-.fz-notif-item:not(.is-unread) > * { opacity: .78; }
+/* Lue : la ligne s'estompe, sans disparaître. Une ligne « en ce moment »
+   (fzToday.js) n'a pas d'état de lecture : elle reste nette. */
+.fz-notif-item:not(.is-unread, .is-current) > * { opacity: .78; }
 
 .fz-notif-item:hover,
 .fz-notif-item:focus-visible,

@@ -1,11 +1,11 @@
 /**
  * « Fantazy Aujourd'hui » côté navigateur.
  *
- * Une seule bande de priorité, alimentée par une seule réponse du serveur
- * (`/api/me/today`), rendue en tête du panneau de notifications — c'est
- * notifications.js qui pose l'emplacement et appelle `demarrer`. Elle a
- * quitté l'accueil : ce qui réclame une action se lit maintenant à un seul
- * endroit, et pas une fois dans la page et une fois dans la cloche.
+ * Ce qui réclame l'attention en ce moment, tous pools confondus, lu dans une
+ * seule réponse du serveur (`/api/me/today`). Ce module charge et prévient ;
+ * il ne dessine rien. notifications.js s'abonne (`surReponse`) et range ces
+ * éléments dans la liste de la cloche, comme des lignes ordinaires : ce qui
+ * réclame une action se lit à un seul endroit, dans un seul style.
  *
  * Ce qui change par rapport à l'existant :
  *
@@ -45,10 +45,6 @@
     let jeton = 0;                // identifie la requête en vol
     let vedetteAffichee = null;   // ce que l'écran montre déjà
     const abonnes = new Set();
-
-    const echapper = (texte) => String(texte == null ? '' : texte)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
     const poolActif = () => {
         try { return (window.FZPool && FZPool.get && FZPool.get()) || null; }
@@ -119,88 +115,6 @@
         }
     }
 
-    // ─────────────────────────── Rendu ───────────────────────────
-
-    /** L'icône d'une classe d'urgence. Sobre : la couleur porte déjà le sens. */
-    function icone(urgence) {
-        if (urgence <= 2) return '🏒';
-        if (urgence === 3) return '🔁';
-        if (urgence === 4) return '⚔️';
-        if (urgence === 5) return '📊';
-        return 'ℹ️';
-    }
-
-    function ligne(element, principal) {
-        const classes = ['fzt-item'];
-        if (principal) classes.push('fzt-item--vedette');
-        if (element.urgence <= 3) classes.push('fzt-item--urgent');
-        if (element.etat === 'indisponible') classes.push('fzt-item--indispo');
-
-        // Le pool est nommé sur chaque ligne : sans lui, « c'est votre tour »
-        // ne dit pas dans quelle partie, et suivre le lien ouvrirait le
-        // mauvais contexte.
-        const pool = element.pool
-            ? `<span class="fzt-pool"><span class="fzt-pool-label">Pool</span><span class="fzt-pool-nom">${echapper(element.pool)}</span></span>` : '';
-
-        // La vedette porte un signal (le point de la bannière d'alerte) ; les
-        // lignes secondaires gardent leur icône, plus lisible en petit.
-        const marque = principal
-            ? '<span class="fzt-signal" aria-hidden="true"></span>'
-            : `<span class="fzt-icone" aria-hidden="true">${icone(element.urgence)}</span>`;
-
-        const corps = `
-            ${marque}
-            <span class="fzt-texte">
-                <span class="fzt-titre">${echapper(element.titre)}</span>
-                ${element.detail ? `<span class="fzt-detail">${echapper(element.detail)}</span>` : ''}
-                ${pool}
-            </span>
-            ${element.action ? `<span class="fzt-action">${echapper(element.action)}</span>` : ''}`;
-
-        return element.href
-            ? `<a class="${classes.join(' ')}" href="${echapper(element.href)}" data-fzt-id="${echapper(element.id)}">${corps}</a>`
-            : `<div class="${classes.join(' ')}" data-fzt-id="${echapper(element.id)}">${corps}</div>`;
-    }
-
-    function videHTML(vide) {
-        if (!vide) return '';
-        const actions = (vide.actions || [])
-            .map(a => `<a class="fzt-vide-action" href="${echapper(a.href)}">${echapper(a.titre)}</a>`)
-            .join('');
-        return `<div class="fzt-vide">
-            <span class="fzt-vide-titre">${echapper(vide.titre)}</span>
-            <span class="fzt-vide-detail">${echapper(vide.detail)}</span>
-            ${actions ? `<div class="fzt-vide-actions">${actions}</div>` : ''}
-        </div>`;
-    }
-
-    /**
-     * Rend la bande dans un conteneur. Sans réponse, le conteneur reste vide
-     * plutôt que d'afficher un squelette qui ne se remplira peut-être jamais.
-     */
-    function rendre(idConteneur, charge = derniere) {
-        const conteneur = document.getElementById(idConteneur);
-        if (!conteneur) return;
-
-        if (!charge) { conteneur.innerHTML = ''; conteneur.hidden = true; return; }
-
-        if (!charge.vedette) {
-            conteneur.hidden = false;
-            conteneur.innerHTML = videHTML(charge.vide);
-            return;
-        }
-
-        // One horizontal row keeps every action reachable without increasing
-        // the strip height as pools accumulate; the urgent lead stays first.
-        const secondaires = (charge.secondaires || []).map(el => ligne(el, false)).join('');
-        conteneur.hidden = false;
-        conteneur.innerHTML = `
-            <section class="fzt" aria-label="À faire maintenant">
-                ${ligne(charge.vedette, true)}
-                ${secondaires ? `<div class="fzt-secondaires">${secondaires}</div>` : ''}
-            </section>`;
-    }
-
     // ─────────────────────────── Branchements ───────────────────────────
 
     function brancherSocket(essai = 0) {
@@ -241,20 +155,20 @@
     });
 
     window.FZToday = {
-        /** Charge, puis rend dans les conteneurs présents sur la page. */
-        async demarrer(conteneurs = []) {
+        /**
+         * Premier chargement, puis rafraîchissements (socket, minuteur,
+         * retour sur l'onglet). Chaque réponse retenue va aux abonnés.
+         */
+        async demarrer() {
             if (!connecte()) return null;
-            abonnes.add(() => conteneurs.forEach(id => rendre(id)));
             const charge = await charger({ force: true });
-            conteneurs.forEach(id => rendre(id));
             brancherSocket();
             demarrerPeriodique();
             return charge;
         },
         charger,
         demander,
-        rendre,
-        /** S'abonner aux réponses : la bannière d'état s'en sert. */
+        /** S'abonner aux réponses : la cloche (notifications.js) s'en sert. */
         surReponse(rappel) { abonnes.add(rappel); return () => abonnes.delete(rappel); },
         /** La dernière réponse connue, ou null. */
         derniere: () => derniere,
