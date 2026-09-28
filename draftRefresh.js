@@ -79,6 +79,49 @@ function shouldRefreshDraftView(clan) {
 }
 
 /* ============================================================
+   SONDAGE DE SECOURS
+   ============================================================ */
+
+/**
+ * Le sondage n'est qu'un filet : les choix arrivent par le socket
+ * (`draftUpdated`). Il relisait pourtant /draft toutes les sept secondes,
+ * onglet caché compris, et chaque réponse faisait sortir de la base l'état
+ * de tous les pools. Avec les autres lectures du même genre, c'est ce qui a
+ * épuisé le transfert réseau mensuel de la base (Neon, septembre 2026).
+ *
+ * Désormais : rien tant que l'onglet est caché — il se remet à jour en
+ * revenant —, sept secondes quand le socket est tombé, puisque c'est là que
+ * le filet sert, et trente quand il est en ligne.
+ */
+const DRAFT_POLL_TICK_MS = 7000;
+const DRAFT_POLL_SOCKET_OK_MS = 30000;
+
+/** Faut-il relire /draft à ce tic ? */
+function draftPollDue(etat) {
+  if (etat.hidden) return false;
+  if (!etat.socketConnected) return true;
+  return etat.sinceLastMs >= DRAFT_POLL_SOCKET_OK_MS;
+}
+
+/** Lance le sondage. `charger` est loadDraftData (draftActif.js). */
+function startDraftPoll(charger, socket) {
+  let dernier = Date.now();
+  const lancer = () => { dernier = Date.now(); charger(); };
+  setInterval(() => {
+    const du = draftPollDue({
+      hidden: document.hidden,
+      socketConnected: !!(socket && socket.connected),
+      sinceLastMs: Date.now() - dernier
+    });
+    if (du) lancer();
+  }, DRAFT_POLL_TICK_MS);
+  // Revenir sur l'onglet doit montrer l'état réel, pas celui d'avant la pause.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) lancer();
+  });
+}
+
+/* ============================================================
    RENDUS COMMUNS À TOUTES LES VUES
    ============================================================ */
 

@@ -300,6 +300,22 @@ function creerBaseSimulee(poolsInitiaux, users) {
         },
 
         async query(sql, params = []) {
+            if (sql.includes('FROM pools') && sql.includes('pool_name = ANY')) {
+                const noms = params[0] || [];
+                return { rows: noms.filter(nom => etat.pools.has(nom)).map(nom => {
+                    const pool = etat.pools.get(nom);
+                    return { id: pool.id, pool_name: pool.name, pool_data: pool.data, revision: pool.revision };
+                }) };
+            }
+            if (sql.includes('FROM pools') && sql.includes("pool_data->>'draftScheduledAt' IS NOT NULL")) {
+                return { rows: [...etat.pools.values()]
+                    .filter(p => p.data.draftScheduledAt != null)
+                    .map(p => ({ pool_name: p.name, extrait: {
+                        draftScheduledAt: p.data.draftScheduledAt,
+                        instant: p.data.instant ?? null,
+                        draftOrder: p.data.draftOrder ?? null
+                    } })) };
+            }
             if (sql.includes('FROM pools') && sql.includes('WHERE pool_name')) {
                 const pool = etat.pools.get(params[0]);
                 return { rows: pool ? [{ id: pool.id, pool_name: pool.name, pool_data: pool.data, revision: pool.revision }] : [] };

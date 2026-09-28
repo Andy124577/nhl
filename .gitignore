@@ -51,3 +51,4 @@ Oracle_JDK-24/
 # de la LNH à l'exécution et ne doivent pas être copiées dans le dépôt.
 faces/
 images.json
+.neon

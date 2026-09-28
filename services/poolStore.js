@@ -132,6 +132,34 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
     /** Idempotence du mode fichier : en mémoire, donc perdue au redémarrage. */
     const operationsMemoire = new Map();
 
+    /**
+     * Copie en mémoire de la table `pools`, pour `lireTous`.
+     *
+     * `lireTous` rapatriait la table entière — les données complètes de
+     * chaque pool — à chaque appel : le sondage de la salle de repêchage,
+     * chaque connexion socket, l'accueil du jour. C'est ce qui a épuisé le
+     * transfert réseau mensuel de la base (Neon, septembre 2026). Désormais
+     * un appel ne demande que la version de chaque ligne, et ne recharge que
+     * les pools qui ont bougé.
+     *
+     * La copie ne fait jamais foi : elle est revalidée à CHAQUE appel. Une
+     * écriture d'une autre instance ou d'un script se voit donc dès la
+     * lecture suivante. La version d'une ligne tient en trois valeurs : son
+     * id (un pool supprimé puis recréé sous le même nom), sa revision (que
+     * fait avancer savePoolInTx) et updated_at (que posent aussi les
+     * écritures qui ne passent pas par ce magasin — createOrUpdatePool,
+     * renamePool).
+     *
+     * Chaque appelant reçoit sa propre copie : modifier ce qu'on a lu ne
+     * doit pas modifier ce que lira le suivant. La base rendait des objets
+     * neufs à chaque requête ; le cache fait de même.
+     */
+    const copiesPools = new Map();
+    function versionLigne(ligne) {
+        const maj = ligne.updated_at instanceof Date ? ligne.updated_at.getTime() : (ligne.updated_at ?? '');
+        return `${ligne.id}:${Number(ligne.revision) || 1}:${maj}`;
+    }
+
     // ───────────────────────── Lectures ─────────────────────────
 
     async function lire(nomPool) {
@@ -151,15 +179,44 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
 
     async function lireTous() {
         if (usePostgres) {
-            const resultat = await db.query('SELECT id, pool_name, pool_data, revision FROM pools ORDER BY created_at DESC');
+            const versions = await db.query('SELECT id, pool_name, revision, updated_at::text AS updated_at FROM pools ORDER BY created_at DESC');
+            const aRecharger = versions.rows
+                .filter(ligne => copiesPools.get(ligne.pool_name)?.version !== versionLigne(ligne))
+                .map(ligne => ligne.pool_name);
+            if (aRecharger.length > 0) {
+                const frais = await db.query(
+                    'SELECT id, pool_name, pool_data, revision, updated_at::text AS updated_at FROM pools WHERE pool_name = ANY($1)',
+                    [aRecharger]
+                );
+                // La version gardée est celle de la ligne relue, pas celle
+                // annoncée juste avant : si le pool a bougé entre les deux
+                // requêtes, données et revision restent appariées.
+                for (const ligne of frais.rows) {
+                    copiesPools.set(ligne.pool_name, {
+                        version: versionLigne(ligne),
+                        id: ligne.id,
+                        revision: Number(ligne.revision) || 1,
+                        data: ligne.pool_data
+                    });
+                }
+            }
+
             const pools = {};
-            for (const ligne of resultat.rows) {
+            const presents = new Set();
+            for (const ligne of versions.rows) {
+                presents.add(ligne.pool_name);
+                const copie = copiesPools.get(ligne.pool_name);
+                // Supprimé ou renommé entre les deux requêtes.
+                if (!copie) continue;
                 pools[ligne.pool_name] = {
-                    id: ligne.id,
+                    id: copie.id,
                     name: ligne.pool_name,
-                    data: ligne.pool_data,
-                    revision: Number(ligne.revision) || 1
+                    data: structuredClone(copie.data),
+                    revision: copie.revision
                 };
+            }
+            for (const nom of copiesPools.keys()) {
+                if (!presents.has(nom)) copiesPools.delete(nom);
             }
             return pools;
         }
@@ -177,6 +234,44 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
         const plat = {};
         for (const [nom, enveloppe] of Object.entries(pools)) plat[nom] = enveloppe.data;
         return plat;
+    }
+
+    /**
+     * Les pools qui attendent un départ à heure fixe, `{ nom: extrait }`.
+     *
+     * L'extrait ne porte que ce qu'examine poolOps.repechagePrevuEchu : la
+     * date, le mode rapide, l'ordre de sélection. Cette lecture tourne chaque
+     * minute, jour et nuit ; lire les pools entiers y coûtait à lui seul plus
+     * que le transfert réseau mensuel du plan gratuit de la base. Le filtre
+     * s'applique dans PostgreSQL : un soir sans départ prévu, rien ne sort.
+     *
+     * L'ordre de sélection reste court ici : un départ le remplit et retire
+     * la date du même coup (poolOps.demarrerRepechage).
+     */
+    async function lireDepartsPrevus() {
+        if (usePostgres) {
+            const resultat = await db.query(
+                `SELECT pool_name,
+                        jsonb_build_object(
+                            'draftScheduledAt', pool_data->'draftScheduledAt',
+                            'instant', pool_data->'instant',
+                            'draftOrder', pool_data->'draftOrder'
+                        ) AS extrait
+                   FROM pools
+                  WHERE pool_data->>'draftScheduledAt' IS NOT NULL
+                  ORDER BY created_at DESC`
+            );
+            const prevus = {};
+            for (const ligne of resultat.rows) prevus[ligne.pool_name] = ligne.extrait;
+            return prevus;
+        }
+        const prevus = {};
+        for (const [nom, data] of Object.entries(lireFichier())) {
+            if (data && data.draftScheduledAt != null) {
+                prevus[nom] = { draftScheduledAt: data.draftScheduledAt, instant: data.instant ?? null, draftOrder: data.draftOrder ?? null };
+            }
+        }
+        return prevus;
     }
 
     // ───────────────────────── Écritures ─────────────────────────
@@ -487,6 +582,7 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
         lire,
         lireTous,
         lireDonneesBrutes,
+        lireDepartsPrevus,
         transaction,
         muterPool,
         estPostgres: () => usePostgres

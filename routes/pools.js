@@ -733,7 +733,7 @@ function monter(app, ctx) {
      * Lance les repêchages dont l'heure est venue. Appelé par server.js au
      * début de chaque minute — les dates sont arrondies à la minute.
      *
-     * La lecture de tous les pools ne fait que trier les candidats : chaque
+     * La lecture des départs prévus ne fait que trier les candidats : chaque
      * départ se revalide sous le verrou de SON pool (poolOps.
      * demarrerRepechagePrevu), si bien qu'un clic « Commencer » simultané, ou
      * une deuxième instance du serveur, ne peut pas lancer deux fois le même
@@ -743,9 +743,9 @@ function monter(app, ctx) {
      * retire la date et le dit à la personne qui a créé le pool.
      */
     async function demarrerRepechagesPrevus(maintenant = Date.now()) {
-        const pools = await store.lireTous();
-        const candidats = Object.entries(pools)
-            .filter(([, enveloppe]) => poolOps.repechagePrevuEchu(enveloppe.data, maintenant))
+        const prevus = await store.lireDepartsPrevus();
+        const candidats = Object.entries(prevus)
+            .filter(([, extrait]) => poolOps.repechagePrevuEchu(extrait, maintenant))
             .map(([nom]) => nom);
 
         const bilan = [];

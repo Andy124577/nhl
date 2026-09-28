@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "Neon": {
+      "type": "http",
+      "url": "https://mcp.neon.tech/mcp?projectId=twilight-block-21932078"
+    }
+  }
+}

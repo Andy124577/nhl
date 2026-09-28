@@ -333,10 +333,10 @@ test("un pool qui a démarré entre la lecture et le verrou n'est pas relancé",
     const h = monterRoutes([routesPools], { pools: { Ligue: pool } });
 
     // Le clic « Commencer » arrive pendant le tri des candidats.
-    const lireTous = h.store.lireTous;
+    const lireDepartsPrevus = h.store.lireDepartsPrevus;
     let apresClic = null;
-    h.store.lireTous = async () => {
-        const photo = JSON.parse(JSON.stringify(await lireTous()));
+    h.store.lireDepartsPrevus = async () => {
+        const photo = JSON.parse(JSON.stringify(await lireDepartsPrevus()));
         await h.appeler('POST', '/start-draft', { auth: ALICE, body: { clanName: 'Ligue' } });
         apresClic = h.revisionDe('Ligue');
         return photo;
