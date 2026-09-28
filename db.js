@@ -201,11 +201,13 @@ async function savePoolInTx(client, poolName, poolData) {
         `UPDATE pools
             SET pool_data = $2, revision = revision + 1, updated_at = NOW()
           WHERE pool_name = $1
-        RETURNING id, revision`,
+        RETURNING id, revision, updated_at::text AS updated_at`,
         [poolName, JSON.stringify(poolData)]
     );
     if (resultat.rows.length === 0) return null;
-    return { id: resultat.rows[0].id, revision: Number(resultat.rows[0].revision) };
+    // updated_at en texte, comme le relisent les versions du cache de pools
+    // (services/poolStore.js) : ce qui vient d'être écrit y reste valable.
+    return { id: resultat.rows[0].id, revision: Number(resultat.rows[0].revision), updatedAt: resultat.rows[0].updated_at };
 }
 
 /** Cree un pool dans la transaction en cours. Renvoie null si le nom est pris. */
@@ -214,11 +216,11 @@ async function createPoolInTx(client, poolName, poolData) {
         `INSERT INTO pools (pool_name, pool_data, revision)
          VALUES ($1, $2, 1)
          ON CONFLICT (pool_name) DO NOTHING
-         RETURNING id, revision`,
+         RETURNING id, revision, updated_at::text AS updated_at`,
         [poolName, JSON.stringify(poolData)]
     );
     if (resultat.rows.length === 0) return null;
-    return { id: resultat.rows[0].id, revision: Number(resultat.rows[0].revision) };
+    return { id: resultat.rows[0].id, revision: Number(resultat.rows[0].revision), updatedAt: resultat.rows[0].updated_at };
 }
 
 async function deletePoolInTx(client, poolName) {

@@ -111,14 +111,105 @@ function magasinPostgres(db) {
     };
 }
 
+/** Durée pendant laquelle une session lue en base est resservie de mémoire. */
+const DUREE_MEMOIRE_SESSION_MS = 60 * 1000;
+/** Au-delà, la plus ancienne entrée part : la mémoire reste bornée. */
+const MEMOIRE_SESSIONS_MAX = 5000;
+/** Même seuil que db.touchSession : `last_seen_at` s'écrit une fois par heure au plus. */
+const TOUCHER_APRES_MS = 60 * 60 * 1000;
+
+/**
+ * Une mémoire courte devant le magasin PostgreSQL.
+ *
+ * Chaque requête qui portait le cookie relisait sa session en base (deux
+ * jointures) puis tentait d'écrire `last_seen_at` : chaque sondage, chaque
+ * onglet, chaque connexion socket. C'était la requête la plus fréquente du
+ * site, et Neon facture ce qui sort de la base (septembre 2026).
+ *
+ * Une session lue est resservie pendant `dureeMs`. Ce qui la change passe par
+ * ce magasin — déconnexion, déconnexion partout, nouvelle photo de profil — et
+ * l'efface aussitôt. Ce qui la change par la bande (un script qui promeut un
+ * compte administrateur) se voit au plus tard au bout de ce délai.
+ *
+ * Le compteur de générations ferme la course « lecture partie avant une
+ * révocation, revenue après » : une lecture ne se range que si rien n'a été
+ * effacé pendant qu'elle attendait la base.
+ */
+function avecMemoireCourte(magasin, {
+    dureeMs = DUREE_MEMOIRE_SESSION_MS,
+    max = MEMOIRE_SESSIONS_MAX,
+    maintenant = () => Date.now()
+} = {}) {
+    const memoire = new Map(); // empreinte → { ligne, lueLe }
+    let generation = 0;
+
+    function effacerSi(predicat) {
+        generation += 1;
+        for (const [empreinte, entree] of memoire) {
+            if (predicat(entree.ligne, empreinte)) memoire.delete(empreinte);
+        }
+    }
+
+    return {
+        ...magasin,
+
+        async lire(empreinte) {
+            const entree = memoire.get(empreinte);
+            if (entree && maintenant() - entree.lueLe < dureeMs) return entree.ligne;
+
+            const avant = generation;
+            const ligne = await magasin.lire(empreinte);
+            if (generation === avant) {
+                memoire.delete(empreinte);
+                if (memoire.size >= max) memoire.delete(memoire.keys().next().value);
+                memoire.set(empreinte, { ligne, lueLe: maintenant() });
+            }
+            return ligne;
+        },
+
+        /**
+         * N'écrit que si la dernière visite connue a plus d'une heure. La base
+         * posait déjà cette condition, mais seulement après l'aller-retour.
+         */
+        async toucher(id, ligne) {
+            const vu = ligne && ligne.lastSeenAt ? new Date(ligne.lastSeenAt).getTime() : 0;
+            if (maintenant() - vu < TOUCHER_APRES_MS) return;
+            // La visite est notée en mémoire avant l'écriture : les requêtes de
+            // la même seconde ne la réécrivent pas chacune.
+            const vuLe = new Date(maintenant());
+            for (const entree of memoire.values()) {
+                if (entree.ligne && entree.ligne.id === id) entree.ligne = { ...entree.ligne, lastSeenAt: vuLe };
+            }
+            await magasin.toucher(id);
+        },
+
+        async revoquer(empreinte) {
+            const resultat = await magasin.revoquer(empreinte);
+            effacerSi((_, cle) => cle === empreinte);
+            return resultat;
+        },
+
+        async revoquerTout(userId) {
+            const resultat = await magasin.revoquerTout(userId);
+            effacerSi(ligne => ligne && String(ligne.userId) === String(userId));
+            return resultat;
+        },
+
+        /** Le compte a changé (photo, droits) : ses sessions seront relues. */
+        oublierUtilisateur(username) {
+            effacerSi(ligne => ligne && ligne.username === username);
+        }
+    };
+}
+
 /**
  * Méthodes qui modifient quelque chose. Ce sont celles qui exigent une origine
  * vérifiée ; une lecture ne change rien et n'a rien à protéger de ce côté.
  */
 const METHODES_MUTANTES = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
-function creerAuth({ db, usePostgres, secure = true, originesAutorisees = [] } = {}) {
-    const magasin = usePostgres ? magasinPostgres(db) : magasinMemoire();
+function creerAuth({ db, usePostgres, secure = true, originesAutorisees = [], memoireSessions = {} } = {}) {
+    const magasin = usePostgres ? avecMemoireCourte(magasinPostgres(db), memoireSessions) : magasinMemoire();
 
     /**
      * Ouvre une session et renvoie l'en-tête Set-Cookie à poser.
@@ -186,7 +277,7 @@ function creerAuth({ db, usePostgres, secure = true, originesAutorisees = [] } =
 
             // Sans await : marquer l'activité ne doit pas retarder la réponse,
             // et son échec n'invalide pas une session par ailleurs valable.
-            Promise.resolve(magasin.toucher(ligne.id)).catch(() => {});
+            Promise.resolve(magasin.toucher(ligne.id, ligne)).catch(() => {});
         } catch (erreur) {
             console.error('⚠️ Résolution de session impossible :', erreur.message);
         }
@@ -327,8 +418,10 @@ function creerAuth({ db, usePostgres, secure = true, originesAutorisees = [] } =
         ouvrirSession,
         fermerSession,
         revoquerTout,
+        /** À appeler quand une colonne de `users` lue par la session change. */
+        oublierUtilisateur: (username) => { if (magasin.oublierUtilisateur) magasin.oublierUtilisateur(username); },
         purger: () => magasin.purger()
     };
 }
 
-module.exports = { creerAuth, magasinMemoire, METHODES_MUTANTES };
+module.exports = { creerAuth, magasinMemoire, avecMemoireCourte, METHODES_MUTANTES };

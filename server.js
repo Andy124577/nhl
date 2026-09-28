@@ -155,12 +155,6 @@ const auth = creerAuth({
 const poolStore = creerPoolStore({ db, usePostgres: USE_POSTGRES, draftFile: DRAFT_FILE });
 const presence = creerPresence();
 
-// La session est résolue avant toute route : `req.auth` est la seule source
-// d'identité que les routes ont le droit de lire.
-app.use((req, res, next) => auth.sessionMiddleware(req, res, next));
-// Et une requête mutante authentifiée doit venir d'une origine connue.
-app.use(auth.csrfGuard);
-
 // Cache control middleware (must come BEFORE static file serving)
 app.use((req, res, next) => {
     const reqPath = req.path.toLowerCase();
@@ -207,6 +201,16 @@ app.use(express.static(__dirname, {
 
 // ✅ Serve uploaded images (user avatars, pool images)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// La session est résolue avant toute route : `req.auth` est la seule source
+// d'identité que les routes ont le droit de lire.
+//
+// Après les fichiers statiques, pas avant : aucun fichier servi ne lit
+// `req.auth`, et chaque script, feuille de style, photo ou logo d'une page
+// coûtait une lecture de session en base (Neon facture ce qui en sort).
+app.use((req, res, next) => auth.sessionMiddleware(req, res, next));
+// Et une requête mutante authentifiée doit venir d'une origine connue.
+app.use(auth.csrfGuard);
 
 // ─── Image upload configuration ───────────────────────────────────────────────
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
@@ -724,6 +728,9 @@ app.post("/upload/user-avatar", (req, res, next) => auth.requireAuth(req, res, n
                 if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
             }
             await db.updateUserAvatar(username, avatarUrl);
+            // La session en mémoire porte l'ancienne photo : /session doit
+            // montrer la nouvelle tout de suite, pas dans une minute.
+            auth.oublierUtilisateur(username);
         } else {
             const users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
             const idx = users.findIndex(u => u.username === username);
@@ -1105,6 +1112,12 @@ async function updateCurrentStats() {
 // is kept as a persistence layer but the in-memory object is always served.
 let memStatsCache = { lastUpdated: null, season: null, players: [] };
 let statsRefreshInProgress = false;
+
+// Classement des clubs en mémoire, sur le même principe (loadCurrentTeams).
+// Il change une fois par jour et seul ce processus l'écrit ; le relire en base
+// à chaque /current-teams (six pages) et à chaque calcul de classement faisait
+// sortir de Neon le même bloc à chaque ouverture de page.
+let memTeamsCache = null;
 
 async function loadCurrentStats() {
     // Return in-memory cache if populated
@@ -1678,6 +1691,7 @@ async function updateTeamStandings() {
     } else {
         fs.writeFileSync(CURRENT_TEAMS_FILE, JSON.stringify(teamStats, null, 2));
     }
+    memTeamsCache = teamStats;
     console.log(`✅ Team standings updated successfully! ${teams.length} teams cached.`);
 
     return teamStats;
@@ -1685,13 +1699,14 @@ async function updateTeamStandings() {
 
 // Load cached team standings
 async function loadCurrentTeams() {
+    if (memTeamsCache) return memTeamsCache;
     try {
         if (USE_POSTGRES) {
             const teams = await db.loadCachedStats('current-teams');
-            if (teams) return teams;
+            if (teams) return (memTeamsCache = teams);
         } else {
             if (fs.existsSync(CURRENT_TEAMS_FILE)) {
-                return JSON.parse(fs.readFileSync(CURRENT_TEAMS_FILE, 'utf-8'));
+                return (memTeamsCache = JSON.parse(fs.readFileSync(CURRENT_TEAMS_FILE, 'utf-8')));
             }
         }
     } catch (error) {
@@ -2278,9 +2293,10 @@ app.get('/team-lineup/:team', async (req, res) => {
 app.get('/pool-rank-movement/:poolName', async (req, res) => {
     try {
         const { poolName } = req.params;
-        const poolResult = await db.query('SELECT pool_data FROM pools WHERE pool_name = $1', [poolName]);
-        if (poolResult.rows.length === 0) return res.status(404).json({ message: 'Pool not found' });
-        const poolData = poolResult.rows[0].pool_data;
+        // Par le magasin : un pool inchangé sort du cache, pas de la base.
+        const enveloppe = await poolStore.lire(poolName);
+        if (!enveloppe) return res.status(404).json({ message: 'Pool not found' });
+        const poolData = enveloppe.data;
 
         const statsData = await loadCurrentStats();
         const teamsData = await loadCurrentTeams();
@@ -2511,13 +2527,19 @@ async function saveRosterSnapshot(snapshot) {
     }
 }
 
+// Le journal LNH en mémoire : /nhl-transactions le servait en le relisant en
+// base à chaque tableau de bord ouvert, alors qu'il ne change qu'à la photo
+// de minuit — écrite par ce processus, qui met la copie à jour du même coup.
+let memTransactionsCache = null;
+
 async function loadNhlTransactions() {
+    if (memTransactionsCache) return memTransactionsCache;
     try {
         if (USE_POSTGRES) {
             const log = await db.loadCachedStats('nhl-transactions');
-            if (log) return log;
+            if (log) return (memTransactionsCache = log);
         } else if (fs.existsSync(TRANSACTIONS_FILE)) {
-            return JSON.parse(fs.readFileSync(TRANSACTIONS_FILE, 'utf-8'));
+            return (memTransactionsCache = JSON.parse(fs.readFileSync(TRANSACTIONS_FILE, 'utf-8')));
         }
     } catch (error) {
         console.error('❌ Error loading NHL transactions:', error.message);
@@ -2531,6 +2553,7 @@ async function saveNhlTransactions(log) {
     } else {
         fs.writeFileSync(TRANSACTIONS_FILE, JSON.stringify(log, null, 2));
     }
+    memTransactionsCache = log;
 }
 
 /**

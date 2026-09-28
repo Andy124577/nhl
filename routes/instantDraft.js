@@ -200,7 +200,8 @@ function monter(app, ctx) {
                 // ensuite : un ordre unique et global, donc pas d'interblocage.
                 await tx.verrouConsultatif(CLE_VERROU_INSTANTANE);
 
-                const pools = await tx.listerPools();
+                // Seulement les salons qui la concernent — pas la table entière.
+                const pools = await tx.salonsInstantanes({ username, prefixes: instantDraft.PREFIXES_INSTANTANES });
                 const plat = {};
                 for (const [nom, enveloppe] of Object.entries(pools)) plat[nom] = enveloppe.data;
 
@@ -255,8 +256,9 @@ function monter(app, ctx) {
                 // 4. Aucun salon : on en ouvre un. Le nom se choisit contre
                 //    TOUS les pools, pas seulement les instantanés — le nom est
                 //    la clé primaire, et écraser un pool créé à la main serait
-                //    irréparable.
-                const nom = instantDraft.prochainNom(plat);
+                //    irréparable. Seuls les noms qui portent le préfixe peuvent
+                //    entrer en collision : ce sont les seuls qu'on lit.
+                const nom = instantDraft.prochainNom(await tx.nomsPris(instantDraft.PREFIXE_INSTANTANE));
                 const data = instantDraft.creerPool(username, {
                     season: saison,
                     formatVersion: instantDraft.VERSION_FORMAT
@@ -304,7 +306,7 @@ function monter(app, ctx) {
             const { valeur } = await store.transaction(async (tx) => {
                 await tx.verrouConsultatif(CLE_VERROU_INSTANTANE);
 
-                const pools = await tx.listerPools();
+                const pools = await tx.salonsInstantanes({ username, prefixes: instantDraft.PREFIXES_INSTANTANES });
                 const plat = {};
                 for (const [nom, enveloppe] of Object.entries(pools)) plat[nom] = enveloppe.data;
 

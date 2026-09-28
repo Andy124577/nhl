@@ -44,6 +44,39 @@ function empreinteRequete(requete) {
     return crypto.createHash('sha256').update(stable || 'null', 'utf8').digest('hex');
 }
 
+/** Ordre des clés d'un objet JSONB : par longueur en octets, puis octet par octet. */
+function ordreJsonb(a, b) {
+    const ea = Buffer.from(a, 'utf8');
+    const eb = Buffer.from(b, 'utf8');
+    return ea.length - eb.length || Buffer.compare(ea, eb);
+}
+
+function rangerCommeJsonb(valeur) {
+    if (Array.isArray(valeur)) return valeur.map(rangerCommeJsonb);
+    if (valeur === null || typeof valeur !== 'object') return valeur;
+    const sortie = {};
+    for (const cle of Object.keys(valeur).sort(ordreJsonb)) {
+        // Une équipe peut s'appeler « __proto__ » : une affectation changerait
+        // le prototype au lieu de créer la clé, comme JSON.parse le fait.
+        Object.defineProperty(sortie, cle, {
+            value: rangerCommeJsonb(valeur[cle]), enumerable: true, writable: true, configurable: true
+        });
+    }
+    return sortie;
+}
+
+/**
+ * Ce que PostgreSQL rendra de `valeur` une fois écrite dans une colonne JSONB.
+ *
+ * JSON.stringify fixe le contenu (plus de `undefined`, des dates en texte) ;
+ * JSONB, lui, ne garde pas l'ordre des clés. Une copie gardée après écriture
+ * doit être identique à une relecture, ordre des clés compris : sinon l'ordre
+ * des équipes d'un pool changerait selon qu'il sort du cache ou de la base.
+ */
+function commeJsonb(valeur) {
+    return rangerCommeJsonb(JSON.parse(JSON.stringify(valeur)));
+}
+
 /** Erreur métier : refus attendu, pas panne. Porte son code HTTP. */
 class ErreurMetier extends Error {
     constructor(code, message, extra = {}) {
@@ -133,14 +166,15 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
     const operationsMemoire = new Map();
 
     /**
-     * Copie en mémoire de la table `pools`, pour `lireTous`.
+     * Copie en mémoire de la table `pools`, pour `lire` et `lireTous`.
      *
      * `lireTous` rapatriait la table entière — les données complètes de
      * chaque pool — à chaque appel : le sondage de la salle de repêchage,
      * chaque connexion socket, l'accueil du jour. C'est ce qui a épuisé le
      * transfert réseau mensuel de la base (Neon, septembre 2026). Désormais
      * un appel ne demande que la version de chaque ligne, et ne recharge que
-     * les pools qui ont bougé.
+     * les pools qui ont bougé. `lire` fait de même pour un seul pool : chaque
+     * connexion socket relisait en entier chacun des pools de la personne.
      *
      * La copie ne fait jamais foi : elle est revalidée à CHAQUE appel. Une
      * écriture d'une autre instance ou d'un script se voit donc dès la
@@ -149,6 +183,10 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
      * fait avancer savePoolInTx) et updated_at (que posent aussi les
      * écritures qui ne passent pas par ce magasin — createOrUpdatePool,
      * renamePool).
+     *
+     * Une écriture de ce magasin range ce qu'elle vient d'écrire, après le
+     * COMMIT : sans ça, la relecture qui suit chaque mutation ressortait de la
+     * base le pool qu'on venait d'y mettre.
      *
      * Chaque appelant reçoit sa propre copie : modifier ce qu'on a lu ne
      * doit pas modifier ce que lira le suivant. La base rendait des objets
@@ -160,17 +198,97 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
         return `${ligne.id}:${Number(ligne.revision) || 1}:${maj}`;
     }
 
+    /** Range une ligne lue (ou écrite) et renvoie la copie gardée. */
+    function garderCopie(ligne, data) {
+        const copie = {
+            version: versionLigne(ligne),
+            id: ligne.id,
+            revision: Number(ligne.revision) || 1,
+            updatedAt: ligne.updated_at ?? null,
+            data
+        };
+        copiesPools.set(ligne.pool_name, copie);
+        empreinteMemo = null;
+        return copie;
+    }
+
+    function oublierCopie(nom) {
+        if (copiesPools.delete(nom)) empreinteMemo = null;
+    }
+
+    /**
+     * Empreinte de la table entière, calculée par PostgreSQL : une ligne de
+     * 32 caractères, quel que soit le nombre de pools.
+     *
+     * La liste des versions que lireTous comparait coûtait une ligne par pool
+     * et par appel — connexion socket, déconnexion, /draft sur huit pages —,
+     * donc un transfert qui grandissait avec le nombre de pools du site et
+     * non avec ceux de la personne. Elle ne sert plus que lorsque l'empreinte
+     * ne correspond pas à celle de la copie.
+     *
+     * Même texte, octet pour octet, que empreinteLocale() : id, revision,
+     * updated_at en texte, nom — une ligne par pool, triées par id.
+     */
+    const SQL_EMPREINTE = `SELECT md5(COALESCE(string_agg(
+            id || ':' || revision || ':' || COALESCE(updated_at::text, '') || ':' || pool_name,
+            E'\\n' ORDER BY id), '')) AS md5
+        FROM pools`;
+
+    const texteMaj = (valeur) => valeur instanceof Date ? valeur.toISOString() : (valeur ?? '');
+
+    let empreinteMemo = null;
+    function empreinteLocale() {
+        if (empreinteMemo === null) {
+            const lignes = [...copiesPools]
+                .sort(([, a], [, b]) => a.id - b.id)
+                .map(([nom, copie]) => `${copie.id}:${copie.revision}:${texteMaj(copie.updatedAt)}:${nom}`);
+            empreinteMemo = crypto.createHash('md5').update(lignes.join('\n'), 'utf8').digest('hex');
+        }
+        return empreinteMemo;
+    }
+
+    /** Noms dans l'ordre de la dernière liste complète (created_at décroissant). */
+    let ordrePools = null;
+
+    /** Tous les pools depuis la copie, dans l'ordre de la table. */
+    function servirTous() {
+        const connus = new Set(ordrePools);
+        // Créés par ce processus depuis la dernière liste : les plus récents
+        // en tête, comme le ORDER BY created_at DESC qu'ils auraient reçu.
+        const nouveaux = [...copiesPools.keys()].filter(nom => !connus.has(nom)).reverse();
+        const pools = {};
+        for (const nom of [...nouveaux, ...ordrePools]) {
+            const copie = copiesPools.get(nom);
+            // Supprimé depuis la dernière liste.
+            if (!copie) continue;
+            pools[nom] = { id: copie.id, name: nom, data: structuredClone(copie.data), revision: copie.revision };
+        }
+        return pools;
+    }
+
     // ───────────────────────── Lectures ─────────────────────────
 
     async function lire(nomPool) {
         if (usePostgres) {
+            // Une seule requête : la version de la ligne toujours, ses données
+            // seulement si la copie ne lui correspond plus. Un pool qui n'a
+            // pas bougé ne fait sortir de la base que sa version.
+            const copie = copiesPools.get(nomPool);
             const resultat = await db.query(
-                'SELECT id, pool_name, pool_data, revision FROM pools WHERE pool_name = $1',
-                [nomPool]
+                `SELECT id, pool_name, revision, updated_at::text AS updated_at,
+                        CASE WHEN id = $2 AND revision = $3 AND updated_at::text = $4
+                             THEN NULL ELSE pool_data END AS pool_data
+                   FROM pools WHERE pool_name = $1`,
+                [nomPool, copie ? copie.id : null, copie ? copie.revision : null, copie ? copie.updatedAt : null]
             );
-            if (resultat.rows.length === 0) return null;
+            if (resultat.rows.length === 0) {
+                oublierCopie(nomPool);
+                return null;
+            }
             const ligne = resultat.rows[0];
-            return { id: ligne.id, name: ligne.pool_name, data: ligne.pool_data, revision: Number(ligne.revision) || 1 };
+            // Données absentes = la base a confirmé la copie lue avant la requête.
+            const source = ligne.pool_data != null ? garderCopie(ligne, ligne.pool_data) : copie;
+            return { id: source.id, name: ligne.pool_name, data: structuredClone(source.data), revision: source.revision };
         }
         const tout = lireFichier();
         if (!tout[nomPool]) return null;
@@ -179,6 +297,14 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
 
     async function lireTous() {
         if (usePostgres) {
+            // L'empreinte d'abord. Si elle correspond, la copie EST la table :
+            // rien d'autre ne sort. Les écritures de ce processus rangent leur
+            // résultat dans la copie, donc elles ne la font pas diverger ;
+            // seule une écriture d'ailleurs (script, autre instance, renommage)
+            // oblige à relire la liste des versions.
+            const empreinte = await db.query(SQL_EMPREINTE);
+            if (ordrePools && empreinte.rows[0]?.md5 === empreinteLocale()) return servirTous();
+
             const versions = await db.query('SELECT id, pool_name, revision, updated_at::text AS updated_at FROM pools ORDER BY created_at DESC');
             const aRecharger = versions.rows
                 .filter(ligne => copiesPools.get(ligne.pool_name)?.version !== versionLigne(ligne))
@@ -191,34 +317,17 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
                 // La version gardée est celle de la ligne relue, pas celle
                 // annoncée juste avant : si le pool a bougé entre les deux
                 // requêtes, données et revision restent appariées.
-                for (const ligne of frais.rows) {
-                    copiesPools.set(ligne.pool_name, {
-                        version: versionLigne(ligne),
-                        id: ligne.id,
-                        revision: Number(ligne.revision) || 1,
-                        data: ligne.pool_data
-                    });
-                }
+                for (const ligne of frais.rows) garderCopie(ligne, ligne.pool_data);
             }
 
-            const pools = {};
-            const presents = new Set();
-            for (const ligne of versions.rows) {
-                presents.add(ligne.pool_name);
-                const copie = copiesPools.get(ligne.pool_name);
-                // Supprimé ou renommé entre les deux requêtes.
-                if (!copie) continue;
-                pools[ligne.pool_name] = {
-                    id: copie.id,
-                    name: ligne.pool_name,
-                    data: structuredClone(copie.data),
-                    revision: copie.revision
-                };
+            const presents = new Set(versions.rows.map(ligne => ligne.pool_name));
+            for (const nom of [...copiesPools.keys()]) {
+                if (!presents.has(nom)) oublierCopie(nom);
             }
-            for (const nom of copiesPools.keys()) {
-                if (!presents.has(nom)) copiesPools.delete(nom);
-            }
-            return pools;
+            // Un pool supprimé ou renommé entre les deux requêtes n'a pas de
+            // copie : servirTous() l'omet.
+            ordrePools = versions.rows.map(ligne => ligne.pool_name);
+            return servirTous();
         }
         const tout = lireFichier();
         const pools = {};
@@ -282,6 +391,9 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
      */
     async function transactionPostgres(travail, options = {}) {
         const journal = creerJournal();
+        // Ce que la transaction a écrit : `null` pour un pool supprimé. Rangé
+        // dans la copie après le COMMIT seulement — un ROLLBACK ne laisse rien.
+        const ecrits = new Map();
 
         const resultat = await db.withTransaction(async (client) => {
             const verrouilles = new Map();
@@ -312,23 +424,54 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
                 async sauvegarderPool(nom, data) {
                     const ecrit = await db.savePoolInTx(client, nom, data);
                     if (!ecrit) throw new ErreurMetier(404, `Pool introuvable : ${nom}`);
+                    ecrits.set(nom, { ...ecrit, data: commeJsonb(data) });
                     return ecrit;
                 },
 
-                async creerPool(nom, data) { return db.createPoolInTx(client, nom, data); },
-                async supprimerPool(nom) { return db.deletePoolInTx(client, nom); },
+                async creerPool(nom, data) {
+                    const cree = await db.createPoolInTx(client, nom, data);
+                    if (cree) ecrits.set(nom, { ...cree, data: commeJsonb(data) });
+                    return cree;
+                },
+                async supprimerPool(nom) {
+                    const id = await db.deletePoolInTx(client, nom);
+                    if (id != null) ecrits.set(nom, null);
+                    return id;
+                },
 
                 /**
-                 * Tous les pools, lus DANS la transaction.
+                 * Les salons de la file instantanée qui concernent cette
+                 * personne, lus DANS la transaction.
                  *
-                 * La file instantanée doit choisir entre « rejoindre un salon
-                 * qui attend » et « en ouvrir un ». Lire cette liste hors
-                 * transaction rouvrirait exactement la fenêtre que le verrou
-                 * ferme : deux requêtes verraient « aucun salon » et en
-                 * créeraient deux.
+                 * La file doit choisir entre « rejoindre un salon qui attend »
+                 * et « en ouvrir un ». Lire hors transaction rouvrirait
+                 * exactement la fenêtre que le verrou ferme : deux requêtes
+                 * verraient « aucun salon » et en créeraient deux.
+                 *
+                 * Cette lecture rapatriait la table entière — tous les pools,
+                 * données complètes — à chaque clic. Elle ne rend plus que ce
+                 * que la file examine : les pools instantanés (marque
+                 * `instant`, ou nom préfixé) qui attendent encore, et ceux déjà
+                 * partis dont la personne est membre. Un repêchage terminé
+                 * reste parmi ces derniers : c'est lib/draft.js qui le dit
+                 * terminé, pas une requête.
+                 *
+                 * « Parti » a le même sens que repechageCommence() : un
+                 * draftOrder qui est un tableau non vide. Pas `->0 IS NULL` :
+                 * sur un scalaire JSONB (`draftOrder: null`), `->0` rend le
+                 * scalaire lui-même, pas NULL (vérifié sur PostgreSQL 17).
                  */
-                async listerPools() {
-                    const r = await client.query('SELECT id, pool_name, pool_data, revision FROM pools');
+                async salonsInstantanes({ username, prefixes }) {
+                    const r = await client.query(
+                        `SELECT id, pool_name, pool_data, revision
+                           FROM pools
+                          WHERE (pool_data->'instant' = 'true'::jsonb OR pool_name ^@ ANY($2::text[]))
+                            AND (NOT COALESCE(jsonb_typeof(pool_data->'draftOrder') = 'array'
+                                              AND pool_data->'draftOrder' <> '[]'::jsonb, false)
+                                 OR jsonb_path_exists(pool_data, '$.teams.*.members[*] ? (@ == $u)',
+                                                      jsonb_build_object('u', $1::text), true))`,
+                        [username, prefixes]
+                    );
                     const pools = {};
                     for (const ligne of r.rows) {
                         pools[ligne.pool_name] = {
@@ -339,6 +482,16 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
                         };
                     }
                     return pools;
+                },
+
+                /**
+                 * Les noms pris qui commencent par `prefixe`, lus dans la
+                 * transaction. Seuls ceux-là peuvent entrer en collision avec
+                 * le prochain « Pool rapide #N » : pas besoin des autres.
+                 */
+                async nomsPris(prefixe) {
+                    const r = await client.query('SELECT pool_name FROM pools WHERE pool_name ^@ $1', [prefixe]);
+                    return r.rows.map(ligne => ligne.pool_name);
                 },
 
                 /** Résout des noms de comptes en identifiants, dans la transaction. */
@@ -380,6 +533,11 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
 
             return { rejouee: false, valeur };
         });
+
+        for (const [nom, ecrit] of ecrits) {
+            if (ecrit === null) oublierCopie(nom);
+            else garderCopie({ pool_name: nom, id: ecrit.id, revision: ecrit.revision, updated_at: ecrit.updatedAt }, ecrit.data);
+        }
 
         return { ...resultat, journal };
     }
@@ -485,12 +643,18 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
                     supprimes.add(nom);
                     return nom;
                 },
-                async listerPools() {
+                // Mode fichier : tout est déjà en mémoire, rien ne sort d'une
+                // base. Rendre tous les pools reste juste — la file les filtre
+                // elle-même — et évite de dupliquer ici le filtre de la requête.
+                async salonsInstantanes() {
                     const pools = {};
                     for (const [nom, data] of Object.entries(travailEnCours)) {
                         pools[nom] = { id: null, name: nom, data, revision: revisionFichier(nom) };
                     }
                     return pools;
+                },
+                async nomsPris(prefixe) {
+                    return Object.keys(travailEnCours).filter(nom => nom.startsWith(prefixe));
                 },
                 async identifiants() { return new Map(); }
             };

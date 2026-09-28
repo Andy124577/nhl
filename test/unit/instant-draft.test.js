@@ -245,6 +245,13 @@ describe('prochainNom', () => {
         const data = monde([nomInstantane(1), { teams: {} }]);
         assert.equal(prochainNom(data), nomInstantane(2));
     });
+
+    test('une simple liste de noms suffit — celle que la file lit désormais', () => {
+        // La route ne lit plus que les noms préfixés (poolStore.nomsPris) :
+        // même réponse que sur les pools complets.
+        assert.equal(prochainNom([nomInstantane(1), nomInstantane(3)]), nomInstantane(2));
+        assert.equal(prochainNom([]), nomInstantane(1));
+    });
 });
 
 describe('creerPool', () => {

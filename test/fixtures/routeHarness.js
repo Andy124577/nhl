@@ -132,6 +132,25 @@ function creerBaseSimulee(poolsInitiaux, users) {
      */
     const client = {
         async query(sql, params = []) {
+            // poolStore.salonsInstantanes : le filtre de la requête, rejoué —
+            // pool instantané (marque ou préfixe), puis en attente, ou parti
+            // avec la personne parmi ses membres.
+            if (sql.includes('FROM pools') && sql.includes('jsonb_path_exists')) {
+                const [username, prefixes] = params;
+                return { rows: [...etat.pools.values()]
+                    .filter(p => p.data.instant === true || prefixes.some(prefixe => p.name.startsWith(prefixe)))
+                    .filter(p => {
+                        const parti = Array.isArray(p.data.draftOrder) && p.data.draftOrder.length > 0;
+                        const membre = Object.values(p.data.teams || {})
+                            .some(equipe => Array.isArray(equipe && equipe.members) && equipe.members.includes(username));
+                        return !parti || membre;
+                    })
+                    .map(p => ({ id: p.id, pool_name: p.name, pool_data: p.data, revision: p.revision })) };
+            }
+            // poolStore.nomsPris : les noms seuls, filtrés par préfixe.
+            if (sql.includes('SELECT pool_name FROM pools WHERE pool_name ^@')) {
+                return { rows: [...etat.pools.keys()].filter(nom => nom.startsWith(params[0])).map(nom => ({ pool_name: nom })) };
+            }
             if (sql.includes('FROM pools') && !sql.includes('WHERE')) {
                 return { rows: [...etat.pools.values()].map(p => ({
                     id: p.id, pool_name: p.name, pool_data: p.data, revision: p.revision

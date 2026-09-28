@@ -355,7 +355,7 @@ describe('concurrence PostgreSQL', { skip: RAISON }, () => {
             await tx.verrouConsultatif(store.CLE_VERROU_INSTANTANE);
             await barriere();
 
-            const pools = await tx.listerPools();
+            const pools = await tx.salonsInstantanes({ username: qui, prefixes: instantDraft.PREFIXES_INSTANTANES });
             const plat = {};
             for (const [n, e] of Object.entries(pools)) plat[n] = e.data;
 
@@ -368,7 +368,7 @@ describe('concurrence PostgreSQL', { skip: RAISON }, () => {
                     return { salon: attente, cree: false };
                 }
             }
-            const nom = instantDraft.prochainNom(plat);
+            const nom = instantDraft.prochainNom(await tx.nomsPris(instantDraft.PREFIXE_INSTANTANE));
             const data = instantDraft.creerPool(qui, { season: '20262027' });
             const cree = await tx.creerPool(nom, data);
             if (!cree) throw new Error('nom déjà pris');
