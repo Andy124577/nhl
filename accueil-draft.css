@@ -77,7 +77,6 @@ body.fz-draft-page { background:var(--bg); }
  .fzh { grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; font-size:16px; }
  .fzh .fzh-panel { border-radius:12px; }.fzh .fzh-news { order:8; min-height:215px; }.fzh-news-copy { padding:18px 20px; max-width:65%; }.fzh .fzh-news h2 { font-size:23px; }.fzh-news-copy p { font-size:15px; }.fzh-news-copy small { margin-top:12px; font-size:13px; }.fzh-news-badge { font-size:12px; padding:4px 12px; }.fzh-news-controls { right:12px; bottom:12px; gap:7px; }.fzh-news-controls > button { width:36px; height:36px; }.fzh-news-dots { margin-right:10px; gap:7px; }.fzh-news-dots button { width:9px; height:9px; }
  .fzh-eyebrow { font-size:11px; letter-spacing:1.1px; }
- .fzh .fzh-al { grid-column:1/-1; order:3; }
  .fzh-scores { grid-column:1/-1; display:block; order:4; padding:14px; }.fzh :is(#fzdOffCount, #fzdOffMoves, #fzdOffWatch) { grid-column:1/-1; }.fzh #fzdOffCount { order:6; padding:16px; }.fzh #fzdOffMoves { order:7; }.fzh #fzdOffWatch { grid-column:1/-1; order:2; padding:14px; }.fzh h2 { font-size:15px; gap:12px; }
  .fzh .fzh-picks { order:5; padding:14px; }.fzh-picks-group { grid-template-columns:minmax(0,1fr); gap:6px; }.fzh-picks-label { margin:0; justify-content:flex-start; }.fzh-picks-players { grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px; }.fzh-picks-player { gap:7px; padding:5px 8px 5px 5px; }.fzh-picks-player strong { font-size:15px; }.fzh .fzh-picks-player .fzd-off-face { width:30px; height:30px; }.fzh-picks-none { margin:0; }
 }
@@ -153,7 +152,10 @@ html:not([data-theme="light"]) .fzh .fzh-al:hover { box-shadow:0 0 0 1px #2A2C31
     .fzh .fzh-al:hover, .fzh .fzh-al:hover .fzh-al-club, .fzh .fzh-al:hover .fzh-al-fleche { transform:none; }
 }
 @media (max-width:768px) {
-    .fzh .fzh-al { padding:18px 16px; gap:14px; }
+    /* Ici, après la règle de base : son span 6, plus loin que les deux
+       colonnes du téléphone, créerait des colonnes implicites et
+       rétrécirait tous les autres panneaux (1/-1). */
+    .fzh .fzh-al { grid-column:1/-1; order:3; padding:18px 16px; gap:14px; }
     .fzh .fzh-al .fzh-al-lien h2 { font-size:24px; }
     .fzh .fzh-al-club { font-size:12px; letter-spacing:0; }
 }
