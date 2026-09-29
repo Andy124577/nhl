@@ -58,7 +58,7 @@ function isDraftNotStarted(){return !draftData||!Array.isArray(draftData.draftOr
 function filterCareerStats(){if(!currentCareerData)return;const e=document.getElementById("leagueFilter").value,t=document.getElementById("gameTypeFilter").value,a=document.getElementById("careerStatsTable"),n=document.getElementById("statsCountBadge");let s=currentCareerData.seasons.filter(a=>{const n="all"===e||"nhl"===e&&"NHL"===a.league||"other"===e&&"NHL"!==a.league,s="all"===t||"regular"===t&&"regular"===a.gameType||"playoffs"===t&&"playoffs"===a.gameType;return n&&s});if(n.textContent=`${s.length} saison${s.length>1?"s":""} affichée${s.length>1?"s":""}`,0===s.length)return void(a.innerHTML='<p class="no-stats-message">Aucune statistique correspondant aux filtres sélectionnés</p>');let r="<table><thead><tr>";if(currentCareerData.isGoalie?r+='\n            <th class="season-col">Season</th>\n            <th class="league-col">League</th>\n            <th class="team-col">Team</th>\n            <th>GP</th>\n            <th>W</th>\n            <th>L</th>\n            <th>OTL</th>\n            <th>SV%</th>\n            <th>GAA</th>\n            <th>SO</th>\n        ':r+='\n            <th class="season-col">Season</th>\n            <th class="league-col">League</th>\n            <th class="team-col">Team</th>\n            <th>GP</th>\n            <th>G</th>\n            <th>A</th>\n            <th>PTS</th>\n            <th>+/-</th>\n            <th>PIM</th>\n            <th>SOG</th>\n        ',r+="</tr></thead><tbody>",s.forEach(e=>{r+="<tr>",r+=`<td class="season-col">${e.season}</td>`,r+=`<td class="league-col">${e.league}</td>`,r+=`<td class="team-col">${e.team?`<img src="teams/${e.team}.png" alt="${e.team}" title="${e.team}" onerror="this.style.opacity='0.3'">`:"-"}</td>`,r+=`<td>${e.gp}</td>`,currentCareerData.isGoalie?r+=`\n                <td>${e.wins}</td>\n                <td>${e.losses}</td>\n                <td>${e.otLosses}</td>\n                <td>${e.savePct!=null?e.savePct.toFixed(3):"—"}</td>\n                <td>${e.gaa?e.gaa.toFixed(2):"0.00"}</td>\n                <td>${e.shutouts}</td>\n            `:r+=`\n                <td>${e.goals}</td>\n                <td>${e.assists}</td>\n                <td>${e.points}</td>\n                <td>${e.plusMinus>=0?"+"+e.plusMinus:e.plusMinus}</td>\n                <td>${e.pim}</td>\n                <td>${e.shots}</td>\n            `,r+="</tr>"}),"nhl"===e&&s.length>0){const e={gp:0,goals:0,assists:0,points:0,plusMinus:0,pim:0,shots:0,wins:0,losses:0,otLosses:0,shutouts:0,gamesForAvg:0,totalGAA:0,svSaves:0,svShots:0};if(s.forEach(t=>{e.gp+=t.gp||0,currentCareerData.isGoalie?(e.wins+=t.wins||0,e.losses+=t.losses||0,e.otLosses+=t.otLosses||0,e.shutouts+=t.shutouts||0,t.gaa&&t.gp>0&&(e.totalGAA+=t.gaa*t.gp,e.gamesForAvg+=t.gp),t.savePct!=null&&t.shotsAgainst>0&&(e.svShots+=t.shotsAgainst,e.svSaves+=t.savePct*t.shotsAgainst)):(e.goals+=t.goals||0,e.assists+=t.assists||0,e.points+=t.points||0,e.plusMinus+=t.plusMinus||0,e.pim+=t.pim||0,e.shots+=t.shots||0)}),r+='<tr class="career-totals-row">',r+='<td colspan="3" class="career-totals-label">Carrière</td>',r+=`<td>${e.gp}</td>`,currentCareerData.isGoalie){const t=e.gamesForAvg>0?(e.totalGAA/e.gamesForAvg).toFixed(2):"0.00",a=e.svShots>0?(e.svSaves/e.svShots).toFixed(3):"—";r+=`\n                <td>${e.wins}</td>\n                <td>${e.losses}</td>\n                <td>${e.otLosses}</td>\n                <td>${a}</td>\n                <td>${t}</td>\n                <td>${e.shutouts}</td>\n            `}else r+=`\n                <td>${e.goals}</td>\n                <td>${e.assists}</td>\n                <td>${e.points}</td>\n                <td>${e.plusMinus>=0?"+"+e.plusMinus:e.plusMinus}</td>\n                <td>${e.pim}</td>\n                <td>${e.shots}</td>\n            `;r+="</tr>"}r+="</tbody></table>",a.innerHTML=r}function closeCareerModal() {
     fzCloseCareerModal();
     currentCareerData = null;
-}$("#sortBy").on("change",function(){currentSortBy=$(this).val(),updateTable()}),$("#toggleSelectedPlayers").on("click",function(){const e=$("#selectedPlayersContent"),t=e.is(":visible");e.slideToggle(200),$(this).text(t?"+":"−")}),$("#toggleTeamsOverview").on("click",function(){const e=$("#teamsContainer"),t=e.is(":visible");e.slideToggle(200),$(this).text(t?"+":"−")}),$("#availabilityFilter").on("change",updateTable),$("#searchInput").on("input",updateTable),$("#playerFilter").on("change",updateTable),$("#sortBy").on("change",updateTable),$("#selectedFilter").on("change",renderSelectedPlayers),$("#progressFilter").on("change",function(){showProgressDetails($(this).val())}),$("#carousel-prev").on("click",function(){this.disabled||scrollPickCarousel(-1)}),$("#carousel-next").on("click",function(){this.disabled||scrollPickCarousel(1)}),$(document).on("click",".clickable-player-row",function(){const e=$(this).data("playerid"),t=$(this).data("playername"),a=!0===$(this).data("isgoalie")||"true"===$(this).data("isgoalie");e&&t&&showCareerStats(e,t,a)}).on("keydown",".clickable-player-row",function(n){if("Enter"!==n.key&&" "!==n.key)return;n.preventDefault();const e=$(this).data("playerid"),t=$(this).data("playername"),a=!0===$(this).data("isgoalie")||"true"===$(this).data("isgoalie");e&&t&&showCareerStats(e,t,a)}),document.addEventListener("click",function(e){const t=document.getElementById("careerStatsModal");e.target===t&&closeCareerModal()});
+}$("#sortBy").on("change",function(){currentSortBy=$(this).val(),updateTable()}),$("#toggleSelectedPlayers").on("click",function(){const e=$("#selectedPlayersContent"),t=e.is(":visible");e.slideToggle(200),$(this).text(t?"+":"−")}),$("#toggleTeamsOverview").on("click",function(){const e=$("#teamsContainer"),t=e.is(":visible");e.slideToggle(200),$(this).text(t?"+":"−")}),$("#availabilityFilter").on("change",updateTable),$("#searchInput").on("input",updateTable),$("#playerFilter").on("change",updateTable),$("#sortBy").on("change",updateTable),$("#selectedFilter").on("change",renderSelectedPlayers),$("#progressFilter").on("change",function(){showProgressDetails($(this).val())}),$("#carousel-prev").on("click",function(){this.disabled||scrollPickCarousel(-1)}),$("#carousel-next").on("click",function(){this.disabled||scrollPickCarousel(1)}),$(document).on("click",".clickable-player-row",function(){const e=$(this).data("playerid"),t=$(this).data("playername"),a=!0===$(this).data("isgoalie")||"true"===$(this).data("isgoalie");e&&t&&showCareerStats(e,t,a)}).on("keydown",".clickable-player-row",function(n){if("Enter"!==n.key&&" "!==n.key||n.target!==this)return;n.preventDefault();const e=$(this).data("playerid"),t=$(this).data("playername"),a=!0===$(this).data("isgoalie")||"true"===$(this).data("isgoalie");e&&t&&showCareerStats(e,t,a)}),document.addEventListener("click",function(e){const t=document.getElementById("careerStatsModal");e.target===t&&closeCareerModal()});
 
 
 
@@ -948,3 +948,65 @@ function _availFilter(list, nameKey, positionCode, pickedSet, availability, user
     });
     window.fzAppliquerEtatRepechage = appliquerEtat;
 })();
+
+
+
+/* ============================================================
+   FICHE D'UN JOUEUR — depuis n'importe quelle liste de la salle
+   ------------------------------------------------------------
+   Le tableau ouvre la fiche de carrière d'un clic sur la ligne. Les
+   autres listes — mon alignement, le carrousel des choix, les favoris,
+   les derniers choix — marquent leurs joueurs avec fzMarquerFiche.
+   L'identifiant se retrouve au clic, par le nom : une carte dessinée
+   avant que les identifiants soient rattachés (draftkitData.js,
+   attacherIds) ouvre quand même la bonne fiche. Un club de la LNH n'a
+   pas de fiche : il n'est pas marqué.
+   ============================================================ */
+
+/**
+ * Rend `el` cliquable vers la fiche de `nom`. `focusable: false` pour une
+ * liste qui a déjà sa propre navigation au clavier (le carrousel) : cent
+ * cartes ne doivent pas devenir cent arrêts de tabulation.
+ */
+function fzMarquerFiche(el, nom, kind, options) {
+    if (!el || !nom || kind === 'team') return el;
+    el.dataset.ficheJoueur = nom;
+    el.classList.add('fz-fiche');
+    el.title = 'Voir la fiche de ' + nom;
+    if (!options || options.focusable !== false) {
+        el.tabIndex = 0;
+        el.setAttribute('role', 'button');
+    }
+    return el;
+}
+
+function fzOuvrirFiche(nom) {
+    const kit = window.FZDraftKit;
+    const canon = kit && typeof kit.nomCanonique === 'function' ? kit.nomCanonique(nom) : nom;
+    const trouve = typeof fzFindRecord === 'function' ? fzFindRecord(canon) : null;
+    if (trouve && trouve.kind === 'team') return;
+    const rec = trouve && trouve.rec;
+    const id = (rec && rec.playerId) || (getCurrentPlayerStats(canon, null) || {}).playerId;
+    if (!id) {
+        showCustomAlert(`La fiche de ${canon} n'est pas disponible.`, 'info');
+        return;
+    }
+    showCareerStats(id, canon, !!trouve && trouve.kind === 'goalie');
+}
+
+document.addEventListener('click', function (e) {
+    const cible = e.target.closest && e.target.closest('[data-fiche-joueur]');
+    if (!cible) return;
+    // L'étoile et le bouton de sélection d'une ligne gardent leur rôle.
+    const controle = e.target.closest('button, a, input, select, label');
+    if (controle && controle !== cible && cible.contains(controle)) return;
+    fzOuvrirFiche(cible.dataset.ficheJoueur);
+});
+
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const cible = e.target.closest && e.target.closest('[data-fiche-joueur]');
+    if (!cible || e.target !== cible) return;
+    e.preventDefault();
+    fzOuvrirFiche(cible.dataset.ficheJoueur);
+});

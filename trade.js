@@ -429,6 +429,14 @@ function applyActivePool() {
     myTeamName = pool.teamName;
     myTeamData = selectedPoolData.teams[myTeamName];
 
+    // One completed trade per team per month (lib/trades.js): the server
+    // refuses the next one, so don't let anyone build it.
+    const lastTrade = (selectedPoolData.echangesConclus || {})[myTeamName];
+    if (lastTrade && tradeMonthOf(lastTrade) === tradeMonthOf(Date.now())) {
+        showEmpty(`Votre échange du mois est fait. Prochain échange possible le ${nextTradeMonthLabel()}.`);
+        return;
+    }
+
     const partners = availablePartnerTeams();
     if (partners.length === 0) {
         showEmpty('Aucune autre équipe dans ce pool.');
@@ -444,6 +452,22 @@ function applyActivePool() {
     selectPartnerTeam(partners[0].name);
     loadForSaleListings();
     applyPrefillIfPresent();
+}
+
+/** Calendar month `YYYY-MM` in the pool's time zone — same rule as moisDe (lib/trades.js). */
+function tradeMonthOf(instant) {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Toronto', year: 'numeric', month: '2-digit' })
+        .formatToParts(new Date(instant));
+    const part = type => (parts.find(p => p.type === type) || {}).value;
+    return `${part('year')}-${part('month')}`;
+}
+
+/** « 1er octobre » : the first day a team can trade again. */
+function nextTradeMonthLabel() {
+    const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet',
+        'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+    const month = Number(tradeMonthOf(Date.now()).split('-')[1]);
+    return `1er ${months[month % 12]}`;
 }
 
 function availablePartnerTeams() {

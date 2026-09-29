@@ -357,6 +357,56 @@ test('sans saison précédente, le départ suit le brassage fourni', () => {
     assert.deepEqual(resultat.premiereRonde, ['C', 'B', 'A']);
 });
 
+// ───────────────────────────── La roue ─────────────────────────────
+
+/** Un tirage qui prend toujours la dernière équipe restante. */
+const DERNIERE = () => 0.999;
+
+test('la roue sort une équipe à la fois, et le départ garde ces rangs avant de brasser le reste', () => {
+    const p = pool({ nbEquipes: 0, membres: { A: ['a'], B: ['b'], C: ['c'], D: ['d'] } });
+    const premier = poolOps.tournerRoue(p, { aleatoire: DERNIERE });
+    assert.equal(premier.ok, true);
+    assert.deepEqual(premier.tirees, ['D']);
+    assert.deepEqual(premier.restantes, ['A', 'B', 'C']);
+    assert.deepEqual(poolOps.tournerRoue(p, { aleatoire: () => 0 }).ordre, ['D', 'A']);
+
+    const depart = poolOps.demarrerRepechage(p, { melanger: l => [...l].reverse() });
+    assert.deepEqual(depart.premiereRonde, ['D', 'A', 'C', 'B'], 'les rangs tirés d abord, le reste brassé');
+    assert.equal(p.tirageOrdre, undefined, 'le tirage vit dans l ordre, désormais');
+});
+
+test('« tout tirer » range toutes les équipes qui restent, puis la roue n a plus rien à tirer', () => {
+    const p = pool({ nbEquipes: 0, membres: { A: ['a'], B: ['b'], C: ['c'] } });
+    poolOps.tournerRoue(p, { aleatoire: DERNIERE });
+    const tout = poolOps.tournerRoue(p, { tout: true, aleatoire: () => 0 });
+    assert.deepEqual(tout.tirees, ['A', 'B']);
+    assert.deepEqual(p.tirageOrdre, ['C', 'A', 'B']);
+    assert.equal(poolOps.tournerRoue(p).code, 409);
+    assert.deepEqual(poolOps.demarrerRepechage(p, { melanger: l => [...l].reverse() }).premiereRonde, ['C', 'A', 'B']);
+});
+
+test('une équipe partie quitte le tirage, une équipe arrivée attend son tour, un renommage garde la place', () => {
+    const p = pool({ nbEquipes: 0, membres: { A: ['a'], B: ['b'], C: ['c'] } });
+    p.tirageOrdre = ['B', 'Partie', 'B', 'A'];
+    assert.deepEqual(poolOps.tirageRoue(p), { sorties: ['B', 'A'], restantes: ['C'] });
+
+    assert.equal(poolOps.renommerEquipe(p, { ancien: 'B', nouveau: 'Les Castors', username: 'b' }).ok, true);
+    assert.deepEqual(poolOps.tirageRoue(p).sorties, ['Les Castors', 'A']);
+});
+
+test('la roue ne tourne ni dans un pool rapide, ni après une saison, ni une fois parti', () => {
+    const rapide = pool();
+    rapide.instant = true;
+    assert.match(poolOps.tournerRoue(rapide).message, /rapide/);
+
+    const suite = pool();
+    suite.saisonsPrecedentes = [{ classement: [{ equipe: 'Équipe 1', rang: 1 }] }];
+    assert.match(poolOps.tournerRoue(suite).message, /classement/);
+
+    assert.equal(poolOps.tournerRoue(pool({ draftOrder: ['Équipe 1'] })).code, 409);
+    assert.equal(poolOps.refusRoue(pool()), null);
+});
+
 test('après une saison, le dernier au classement choisit en premier ; les nouveaux passent après', () => {
     const p = pool({ nbEquipes: 0, membres: { Or: ['a'], Argent: ['b'], Bronze: ['c'], Neuf: ['d'] } });
     p.saisonsPrecedentes = [{

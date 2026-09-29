@@ -1115,6 +1115,29 @@ button.select-button.is-connection-blocked {
   outline-offset: -2px;
 }
 
+/* Les joueurs des autres listes ouvrent aussi leur fiche : alignement,
+   carrousel, favoris, derniers choix (fzMarquerFiche, draftActif.js). */
+.fz-fiche { cursor: pointer; }
+.fz-fiche:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+@media (hover: hover) {
+  .fzd-slot.fz-fiche:hover .fzd-slot-name,
+  .fzd-pick-player.fz-fiche:hover .fzd-pick-name,
+  .fzd-fav-txt.fz-fiche:hover .fzd-fav-name {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+}
+.recent-feed-player.fz-fiche {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--primary-rgb), .45);
+  text-underline-offset: 2px;
+}
+
 
 #playerTable td.points-column { color: var(--text-main); font-weight: 800; }
 

@@ -685,3 +685,64 @@
    thème du site. */
 .rp-date-champ { color-scheme: dark; min-height: 50px; }
 html[data-theme="light"] .rp-date-champ { color-scheme: light; }
+
+/* ============================================================
+   LA ROUE — l'ordre du premier tour, tiré un rang à la fois
+   ------------------------------------------------------------
+   repechage.js dessine la roue en SVG et la fait tourner vers
+   l'équipe que le serveur a tirée. La pointe, fixe, est en haut.
+   ============================================================ */
+.rp-roue-zone {
+    position: relative;
+    width: min(260px, 72vw);
+    margin: 10px auto 18px;
+}
+.rp-roue {
+    display: block;
+    width: 100%;
+    height: auto;
+    transform: rotate(0deg);
+    will-change: transform;
+}
+.rp-roue-pointe {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    z-index: 1;
+    width: 0;
+    height: 0;
+    transform: translateX(-50%);
+    border-left: 11px solid transparent;
+    border-right: 11px solid transparent;
+    border-top: 20px solid var(--text-main);
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .25));
+}
+.rp-roue-bord { fill: var(--border-gray); }
+.rp-roue-seg { stroke: var(--card); stroke-width: 1.5; }
+.rp-roue-txt { fill: #fff; font-weight: 800; font-family: inherit; letter-spacing: .01em; }
+.rp-roue-moyeu { fill: var(--card); stroke: var(--border-gray); stroke-width: 2; }
+
+.rp-order-roue .is-libre .rp-order-nom { font-weight: 600; color: var(--text-secondary); }
+.rp-order-roue .is-tourne .rp-order-nom { color: var(--primary-text); }
+
+.rp-roue-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+
+.rp-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (max-width: 560px) {
+    .rp-roue-actions .rp-btn { flex: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rp-roue { transition: none !important; }
+}

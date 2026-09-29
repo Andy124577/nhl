@@ -496,6 +496,13 @@ function fzDeskBuildFavori(f) {
     txt.appendChild(meta);
     el.appendChild(txt);
 
+    // Le nom et la photo ouvrent la fiche ; l'étoile et le bouton de
+    // sélection gardent leur rôle (fzMarquerFiche, draftActif.js).
+    if (typeof fzMarquerFiche === 'function') {
+        fzMarquerFiche(txt, f.nom, f.kind);
+        fzMarquerFiche(pastille, f.nom, f.kind, { focusable: false });
+    }
+
     // Bouton de sélection aux mêmes conditions que la carte Suggestion
     // (fzPeutChoisir, draftApercuExtra.js) : c'est mon tour, mon équipe
     // n'est pas complète, et la position ne l'est pas non plus. Un bouton
@@ -631,6 +638,11 @@ function fzDeskBuildChoix(tour, moi) {
         txt.appendChild(meta);
         ligne.appendChild(txt);
         corps.appendChild(ligne);
+
+        const estClub = tour.pick.position === 'teams' || tour.pick.position === 'T';
+        if (!estClub && typeof fzMarquerFiche === 'function') {
+            fzMarquerFiche(ligne, nomJoueur, trouve && trouve.kind);
+        }
     } else {
         const saute = document.createElement('span');
         saute.className = 'fzd-pick-skip';
@@ -836,6 +848,10 @@ function fzDeskBuildSlot(slot) {
     code.textContent = slot.code || '';
     el.appendChild(code);
 
+    // Un clic ouvre la fiche du joueur (fzMarquerFiche, draftActif.js).
+    if (slot.nom && typeof fzMarquerFiche === 'function') {
+        fzMarquerFiche(el, slot.nom, slot.trouve && slot.trouve.kind);
+    }
     return el;
 }
 

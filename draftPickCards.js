@@ -124,6 +124,13 @@ function buildPickCard(options) {
   // blanc en thème clair.
   carte.className = 'pick-card is-' + etat + (marque ? '' : ' is-unbranded');
 
+  // Un choix fait ouvre la fiche du joueur. Pas d'arrêt de tabulation par
+  // carte : les flèches parcourent déjà le carrousel, et la liste des
+  // choix offre la même fiche au clavier (fzMarquerFiche, draftActif.js).
+  if (info && !info.estEquipe && typeof fzMarquerFiche === 'function') {
+    fzMarquerFiche(carte, info.nom, null, { focusable: false });
+  }
+
   if (marque) {
     const [couleurA, couleurB] = getTeamColors(marque.abbrev);
     carte.style.setProperty('--team-a', mixHex(couleurA, PICK_CARD_BASE, pickCardMuteRatio(couleurA)));

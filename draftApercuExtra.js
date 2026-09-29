@@ -263,7 +263,14 @@ function fzRenderRecentPicksFeed() {
         const fort = document.createElement('strong');
         fort.textContent = pick.team;
         texte.appendChild(fort);
-        texte.appendChild(document.createTextNode(' a repêché ' + pick.player + '.'));
+        texte.appendChild(document.createTextNode(' a repêché '));
+        const joueur = document.createElement('span');
+        joueur.className = 'recent-feed-player';
+        joueur.textContent = pick.player;
+        const estClub = pick.position === 'teams' || pick.position === 'T';
+        if (!estClub && typeof fzMarquerFiche === 'function') fzMarquerFiche(joueur, pick.player, null);
+        texte.appendChild(joueur);
+        texte.appendChild(document.createTextNode('.'));
         if (favoris.has(pick.player)) {
             const retire = document.createElement('span');
             retire.className = 'recent-feed-removed';

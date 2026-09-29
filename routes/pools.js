@@ -887,6 +887,44 @@ function monter(app, ctx) {
         }
     });
 
+    /**
+     * Faire tourner la roue de l'ordre : la prochaine place du premier tour,
+     * ou toutes celles qui restent (`tout`). Même droit que /start-draft.
+     *
+     * Le serveur tire ; le salon ne fait que jouer l'animation vers l'équipe
+     * sortie, à l'arrivée de l'état relu (repechage.js). Tout le monde voit
+     * donc la même roue s'arrêter sur la même équipe.
+     */
+    app.post('/api/pools/:poolName/draft-wheel', auth.requireAuth, async (req, res) => {
+        try {
+            const nom = req.params.poolName;
+            const { valeur } = await store.muterPool(nom, {
+                scope: 'pool:roue',
+                userId: req.auth.userId,
+                appliquer: async ({ data }) => {
+                    if (!authz.peutAdministrer(data, { username: req.auth.username, isAdmin: req.auth.isAdmin })) {
+                        throw new ErreurMetier(403, "Seule la personne qui a créé le pool peut faire tourner la roue.");
+                    }
+                    const resultat = poolOps.tournerRoue(data, { tout: req.body?.tout === true, aleatoire: ctx.aleatoire });
+                    if (!resultat.ok) throw refus(resultat);
+                    return { valeur: { tirees: resultat.tirees, ordre: resultat.ordre, restantes: resultat.restantes.length } };
+                }
+            });
+
+            const frais = await store.lire(nom);
+            diffusion.poolMisAJour(nom, frais.data, frais.revision);
+
+            res.json({
+                message: valeur.tirees.length === 1
+                    ? `${valeur.tirees[0]} choisira au rang ${valeur.ordre.length}.`
+                    : "L'ordre du premier tour est tiré.",
+                ...valeur
+            });
+        } catch (erreur) {
+            repondreErreur(res, erreur, '/api/pools/draft-wheel');
+        }
+    });
+
     /** Tirer un ordre aléatoire avant le départ. Même droit que /start-draft. */
     app.post('/randomize-draft-order', auth.requireAuth, async (req, res) => {
         try {

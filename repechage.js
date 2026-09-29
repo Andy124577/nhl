@@ -156,11 +156,221 @@
             </div>`;
     }
 
-    function blocOrdre(pool) {
-        const ordre = ordreAnnonce(pool.data);
-        if (!ordre) {
+    // ───────────────────────── La roue de l'ordre ─────────────────────────
+    //
+    // Sans saison précédente, la personne qui a créé le pool peut tirer
+    // l'ordre du premier tour à la roue, un rang à la fois, ou tout le reste
+    // d'un coup (lib/poolOps.js, tournerRoue). Le serveur tire ; chaque salon
+    // joue ensuite la même animation vers l'équipe sortie, à l'arrivée de
+    // l'état relu. Ce qui n'est pas tiré l'est au hasard au lancement.
+
+    const ROUE_MS = 4200;
+    /** Des teintes qui portent toutes un texte blanc lisible. */
+    const ROUE_TEINTES = ['#1f5fbf', '#c0392b', '#1e8449', '#7d3c98', '#b35309',
+        '#117a8b', '#a93266', '#4d6320', '#34495e', '#8e5a1f'];
+
+    /**
+     * Ce que ce salon a déjà montré de la roue : c'est ce qui dit quoi
+     * animer quand l'état change. Pendant l'animation, un redessin
+     * l'interromprait : rendre() attend la fin.
+     */
+    const roue = { pool: null, montrees: null, animation: null, focusApres: false };
+
+    const mouvementReduit = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /** Même lecture que le serveur (poolOps.tirageRoue) : les sorties encore inscrites, puis les autres. */
+    function tirageDe(poolData) {
+        const inscrites = equipesEligibles(poolData).map(([nom]) => nom);
+        const sorties = [];
+        for (const nom of (Array.isArray(poolData.tirageOrdre) ? poolData.tirageOrdre : [])) {
+            if (inscrites.includes(nom) && !sorties.includes(nom)) sorties.push(nom);
+        }
+        return { sorties, restantes: inscrites.filter(nom => !sorties.includes(nom)) };
+    }
+
+    /**
+     * La roue à dessiner. Une seule équipe sortie depuis le dernier dessin :
+     * on garde la roue d'avant le tirage, pour la faire tourner jusqu'à elle.
+     * Sinon (premier dessin, « tout tirer », une équipe partie), on montre
+     * l'état tel quel.
+     */
+    function etatRoue(pool) {
+        const { sorties, restantes } = tirageDe(pool.data);
+        const deja = roue.pool === pool.name ? roue.montrees : null;
+        const uneDePlus = deja && sorties.length === deja.length + 1 && deja.every((nom, i) => sorties[i] === nom);
+        if (uneDePlus && !mouvementReduit()) {
+            const cible = sorties[sorties.length - 1];
+            return { sorties: deja, segments: [...restantes, cible].sort((a, b) => a.localeCompare(b, 'fr')), cible, apres: sorties };
+        }
+        if (uneDePlus) annoncerRoue(sorties.length, sorties[sorties.length - 1]);
+        roue.pool = pool.name;
+        roue.montrees = sorties;
+        return { sorties, segments: restantes, cible: null };
+    }
+
+    /** Un lecteur d'écran apprend le résultat : hors du contenu redessiné, sinon il se perd. */
+    function annoncerRoue(numero, equipe) {
+        let zone = document.getElementById('rpRoueAnnonce');
+        if (!zone) {
+            zone = document.createElement('p');
+            zone.id = 'rpRoueAnnonce';
+            zone.className = 'rp-sr';
+            zone.setAttribute('aria-live', 'polite');
+            document.body.appendChild(zone);
+        }
+        zone.textContent = `Choix ${numero} du premier tour : ${equipe}.`;
+    }
+
+    function roueSvg(equipes) {
+        const n = equipes.length;
+        const R = 100;
+        const pas = 360 / n;
+        const point = angle => {
+            const rad = angle * Math.PI / 180;
+            return `${(R * Math.sin(rad)).toFixed(2)} ${(-R * Math.cos(rad)).toFixed(2)}`;
+        };
+        const taille = n <= 4 ? 13 : n <= 8 ? 11 : 9;
+        const court = nom => (nom.length > 13 ? `${nom.slice(0, 12)}…` : nom);
+        const parts = equipes.map((nom, i) => {
+            const teinte = ROUE_TEINTES[i % ROUE_TEINTES.length];
+            const forme = n === 1
+                ? `<circle r="${R}" class="rp-roue-seg" style="fill:${teinte}"/>`
+                : `<path d="M0 0 L${point(i * pas)} A${R} ${R} 0 ${pas > 180 ? 1 : 0} 1 ${point((i + 1) * pas)} Z" class="rp-roue-seg" style="fill:${teinte}"/>`;
+            // Le long du rayon, lisible des deux côtés de la roue.
+            const milieu = (i + 0.5) * pas;
+            const sens = milieu > 180 ? 90 : -90;
+            return `${forme}
+                <g transform="rotate(${milieu.toFixed(2)}) translate(0 -${R * 0.58}) rotate(${sens})">
+                    <text class="rp-roue-txt" text-anchor="middle" dominant-baseline="central" font-size="${taille}">${echapper(court(nom))}</text>
+                </g>`;
+        }).join('');
+        return `
+            <svg class="rp-roue" id="rpRoue" viewBox="-104 -104 208 208" aria-hidden="true">
+                <circle r="${R + 2}" class="rp-roue-bord"/>
+                ${parts}
+                <circle r="13" class="rp-roue-moyeu"/>
+            </svg>`;
+    }
+
+    function blocRoue(pool, jeSuisCreateur) {
+        const inscrites = equipesEligibles(pool.data).length;
+        if (inscrites < 2) {
             return `<p class="rp-note">L'ordre de sélection sera tiré au hasard au démarrage.</p>`;
         }
+        const e = etatRoue(pool);
+        roue.animation = e.cible ? { cible: e.cible, segments: e.segments, apres: e.apres, numero: e.sorties.length + 1 } : null;
+
+        const fini = e.segments.length === 0;
+        const lignes = [
+            ...e.sorties.map(nom => `<li><span class="rp-order-nom">${echapper(nom)}</span></li>`),
+            ...e.segments.map((_, k) => `
+                <li class="is-libre${k === 0 && e.cible ? ' is-tourne' : ''}">
+                    <span class="rp-order-nom">${k === 0 && e.cible ? 'La roue tourne…' : 'À tirer'}</span>
+                </li>`)
+        ].join('');
+
+        // Aux autres, la roue n'apparaît qu'une fois le tirage commencé :
+        // une roue que personne ne peut tourner n'annoncerait rien.
+        const montrerRoue = !fini && (jeSuisCreateur || e.sorties.length > 0 || e.cible);
+        const occupe = e.cible ? ' disabled' : '';
+        const actions = jeSuisCreateur && !fini ? `
+                <div class="rp-roue-actions">
+                    <button type="button" class="rp-btn primary" id="rpRoueTourner"${occupe}>Tourner la roue</button>
+                    ${e.segments.length > 1 ? `<button type="button" class="rp-btn secondary" id="rpRoueTout"${occupe}>Tirer le reste au hasard</button>` : ''}
+                </div>` : '';
+
+        const createur = createurDe(pool.data);
+        const note = fini
+            ? 'L’ordre du premier tour est prêt. Les tours suivants suivent le serpentin.'
+            : e.sorties.length === 0
+                ? (jeSuisCreateur
+                    ? 'Tournez la roue pour tirer l’ordre, un choix à la fois — ou lancez directement : il sera tiré au hasard.'
+                    : `L’ordre sera tiré au hasard au démarrage, ou à la roue par ${echapper(createur || 'l’admin du pool')}.`)
+                : 'Les choix pas encore tirés le seront au hasard au lancement.';
+
+        return `
+            <section class="rp-roster-wrap rp-roue-wrap" aria-labelledby="rpRoueTitre">
+                <h3 class="rp-roster-title" id="rpRoueTitre">Ordre du 1<sup>er</sup> tour</h3>
+                ${montrerRoue ? `
+                <div class="rp-roue-zone">
+                    <span class="rp-roue-pointe" aria-hidden="true"></span>
+                    ${roueSvg(e.segments)}
+                </div>` : ''}
+                ${e.sorties.length || e.cible || jeSuisCreateur ? `<ol class="rp-order rp-order-roue">${lignes}</ol>` : ''}
+                ${actions}
+                <p class="rp-note">${note}</p>
+            </section>`;
+    }
+
+    /** Fait tourner la roue dessinée jusqu'à l'équipe sortie, puis redessine. */
+    function jouerRoue() {
+        const anim = roue.animation;
+        const svg = document.getElementById('rpRoue');
+        if (!anim || !svg) {
+            if (anim) roue.montrees = anim.apres;
+            roue.animation = null;
+            return;
+        }
+
+        const pas = 360 / anim.segments.length;
+        const indice = anim.segments.indexOf(anim.cible);
+        // La pointe est en haut : l'équipe visée doit y arriver, pas toujours
+        // au centre de sa part, après plusieurs tours complets.
+        const decalage = (Math.random() - 0.5) * pas * 0.6;
+        const angle = 360 * 5 - ((indice + 0.5) * pas + decalage);
+
+        let fini = false;
+        const terminer = () => {
+            if (fini) return;
+            fini = true;
+            annoncerRoue(anim.numero, anim.cible);
+            const rangee = document.querySelector('.rp-order-roue .is-tourne .rp-order-nom');
+            if (rangee) rangee.textContent = anim.cible;
+            setTimeout(() => {
+                roue.montrees = anim.apres;
+                roue.animation = null;
+                rendre();
+                if (roue.focusApres) {
+                    roue.focusApres = false;
+                    (document.getElementById('rpRoueTourner') || document.getElementById('rpStart'))?.focus({ preventScroll: true });
+                }
+            }, 900);
+        };
+        svg.addEventListener('transitionend', terminer, { once: true });
+        setTimeout(terminer, ROUE_MS + 400); // onglet en arrière-plan : pas de transitionend
+
+        // Deux images : le navigateur doit d'abord peindre la roue au repos.
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            svg.style.transition = `transform ${ROUE_MS}ms cubic-bezier(.13,.62,.08,1)`;
+            svg.style.transform = `rotate(${angle}deg)`;
+        }));
+    }
+
+    async function tournerLaRoue(nomPool, tout) {
+        const boutons = ['rpRoueTourner', 'rpRoueTout'].map(id => document.getElementById(id)).filter(Boolean);
+        boutons.forEach(b => { b.disabled = true; });
+        roue.focusApres = !tout;
+        try {
+            const reponse = await fetch(urlPool(nomPool, '/draft-wheel'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tout: !!tout })
+            });
+            const corps = await reponse.json().catch(() => ({}));
+            if (!reponse.ok) throw new Error(corps.message || 'La roue n’a pas pu tourner.');
+        } catch (erreur) {
+            roue.focusApres = false;
+            boutons.forEach(b => { b.disabled = false; });
+            fzAlert({ type: 'error', title: 'Tirage impossible', message: erreur.message || 'Erreur de connexion au serveur.' });
+        }
+        // L'état relu déclenche l'animation — ici comme chez les autres.
+        await FZPool.refresh();
+        rendre();
+    }
+
+    function blocOrdre(pool, jeSuisCreateur) {
+        const ordre = ordreAnnonce(pool.data);
+        if (!ordre) return blocRoue(pool, jeSuisCreateur);
         return `
             <div class="rp-roster-wrap">
                 <h3 class="rp-roster-title">Ordre du 1<sup>er</sup> tour · classement inversé</h3>
@@ -473,7 +683,7 @@
                     ${barre}
                     ${rendreInscrits(pool, etat, createur)}
                     ${inviterParNom ? blocInviter(pool, etat) : ''}
-                    ${instantane ? '' : blocOrdre(pool)}
+                    ${instantane ? '' : blocOrdre(pool, jeSuisCreateur)}
                     <div class="rp-actions">
                         ${depart}
                         ${lienSeul}
@@ -491,7 +701,10 @@
         document.getElementById('rpDateRetirer')?.addEventListener('click', () => retirerDate(pool));
         document.getElementById('rpDateCalendrier')?.addEventListener('click', () => ajouterAuCalendrier(pool));
         document.getElementById('rpInviter')?.addEventListener('click', () => inviter(pool.name));
+        document.getElementById('rpRoueTourner')?.addEventListener('click', () => tournerLaRoue(pool.name, false));
+        document.getElementById('rpRoueTout')?.addEventListener('click', () => tournerLaRoue(pool.name, true));
         brancherInvitations(pool);
+        if (roue.animation) jouerRoue();
 
         if (saisie) {
             const champ = document.getElementById('rpInviteQ');
@@ -783,6 +996,8 @@
 
     function rendre() {
         if (!conteneur()) return;
+        // La roue tourne : le redessin attend qu'elle s'arrête (jouerRoue).
+        if (roue.animation && document.getElementById('rpRoue')) return;
 
         const nom = FZPool.get();
         const pool = FZPool.mine().find(p => p.name === nom);

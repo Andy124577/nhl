@@ -23,7 +23,9 @@
 
 const authz = require('../lib/authz.js');
 const evenements = require('../lib/events.js');
-const { teamHasPlayer, removeFromTeam, addToTeam, getPositionLabel } = require('../lib/trades.js');
+const {
+    teamHasPlayer, removeFromTeam, addToTeam, getPositionLabel, refusEchangeDuMois, noterEchangeConclu
+} = require('../lib/trades.js');
 const { checkIfDraftComplete } = require('../lib/draft.js');
 
 /** Catégories échangeables. Un échange se fait toujours catégorie contre même catégorie. */
@@ -273,6 +275,10 @@ function monter(app, ctx) {
                 if (membresDe(data, toTeam).length === 0) {
                     throw new ErreurMetier(400, "Cette équipe n'a aucun participant : elle ne peut rien accepter.");
                 }
+                // Un échange conclu par équipe et par mois : inutile de
+                // proposer ce qui ne pourrait pas être accepté.
+                const limite = refusEchangeDuMois(data, { fromTeam, toTeam, moi: fromTeam });
+                if (limite) throw new ErreurMetier(409, limite, { code: 'echange_du_mois' });
 
                 // Propriété revérifiée sous verrou : l'écran a pu rester ouvert
                 // pendant qu'un autre échange changeait ces alignements.
@@ -388,6 +394,13 @@ function monter(app, ctx) {
                     throw new ErreurMetier(403, "Seule l'équipe destinataire peut accepter cette proposition.");
                 }
 
+                // Un échange conclu par équipe et par mois, revérifié sous le
+                // verrou du pool : deux acceptations simultanées ne passent pas.
+                const limite = refusEchangeDuMois(data, {
+                    fromTeam: trade.fromTeam, toTeam: trade.toTeam, moi: authz.equipeDe(data, req.auth.username)
+                });
+                if (limite) throw new ErreurMetier(409, limite, { code: 'echange_du_mois' });
+
                 const equipeA = data.teams[trade.fromTeam];
                 const equipeB = data.teams[trade.toTeam];
                 if (!equipeA || !equipeB) throw new ErreurMetier(404, "Une des équipes n'existe plus.");
@@ -410,6 +423,7 @@ function monter(app, ctx) {
 
                 trade.offering.forEach(item => { removeFromTeam(equipeA, item); addToTeam(equipeB, item); });
                 trade.receiving.forEach(item => { removeFromTeam(equipeB, item); addToTeam(equipeA, item); });
+                noterEchangeConclu(data, { fromTeam: trade.fromTeam, toTeam: trade.toTeam });
 
                 const conclu = {
                     ...trade,

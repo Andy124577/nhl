@@ -168,6 +168,30 @@ test('le départ du repêchage prévient chaque participant une seule fois', asy
     assert.equal(evenements.length, 1);
 });
 
+// ───────────────────────────── La roue ─────────────────────────────
+
+test('la roue est réservée au créateur, et chaque tour est diffusé au salon', async () => {
+    const h = banc({ Ligue: poolNeuf({ membres: { 'Équipe 1': ['alice'], 'Équipe 2': ['bob'] } }) });
+
+    assert.equal((await h.appeler('POST', '/api/pools/Ligue/draft-wheel', { auth: BOB, body: {} })).statusCode, 403);
+
+    const tour = await h.appeler('POST', '/api/pools/Ligue/draft-wheel', { auth: ALICE, body: {} });
+    assert.equal(tour.statusCode, 200, JSON.stringify(tour.body));
+    assert.equal(tour.body.tirees.length, 1);
+    assert.equal(tour.body.restantes, 1);
+    assert.deepEqual(h.lirePool('Ligue').tirageOrdre, tour.body.tirees);
+    assert.ok(h.etat.emissions.some(([evenement]) => evenement === 'poolMisAJour'));
+
+    const reste = await h.appeler('POST', '/api/pools/Ligue/draft-wheel', { auth: ALICE, body: { tout: true } });
+    assert.equal(reste.statusCode, 200);
+    assert.equal(reste.body.ordre.length, 2);
+    assert.equal((await h.appeler('POST', '/api/pools/Ligue/draft-wheel', { auth: ALICE, body: {} })).statusCode, 409,
+        'plus rien à tirer');
+
+    await h.appeler('POST', '/start-draft', { auth: ALICE, body: { clanName: 'Ligue' } });
+    assert.deepEqual(h.lirePool('Ligue').draftOrder.slice(0, 2), reste.body.ordre, 'le premier tour suit la roue');
+});
+
 // ───────────────────────────── Choix ─────────────────────────────
 
 async function poolPret() {
