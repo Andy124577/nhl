@@ -263,7 +263,18 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                             </div>
                         </div>
 
-                        ${isAdmin ? '<div id="adminUsersList" class="dropdown-group"></div>' : ''}
+                        ${isAdmin ? `
+                        <div class="dropdown-group">
+                            <p class="dropdown-label">Administration</p>
+                            <button type="button" class="dropdown-item" role="menuitem" onclick="ouvrirPhotosAdmin()">
+                                <span class="dropdown-icon">${NAV_ICON.camera}</span>
+                                <span class="dropdown-text">
+                                    <span class="dropdown-title">Photos téléversées</span>
+                                    <span class="dropdown-hint">Vérifier et retirer</span>
+                                </span>
+                            </button>
+                        </div>
+                        <div id="adminUsersList" class="dropdown-group"></div>` : ''}
 
                         <!-- Les deux thèmes côte à côte : on voit celui qui est
                              actif, et le menu reste ouvert pendant la bascule. -->
@@ -512,6 +523,35 @@ async function loadAdminUsers() {
     } catch (error) {
         console.error('Error loading admin users:', error);
     }
+}
+
+// L'écran des photos téléversées ne sert qu'à l'administration : son code
+// (adminPhotos.js) n'est téléchargé qu'au premier clic, pas sur chaque page
+// de chaque membre. Changer adminPhotos.js/.css demande d'avancer ce tampon.
+const ADMIN_PHOTOS_VERSION = '20260929';
+let _adminPhotosChargement = null;
+
+function ouvrirPhotosAdmin() {
+    document.getElementById('userDropdownMenu')?.classList.remove('show');
+    document.getElementById('userAvatarBtn')?.setAttribute('aria-expanded', 'false');
+
+    if (!_adminPhotosChargement) {
+        _adminPhotosChargement = new Promise((resolve, reject) => {
+            const feuille = document.createElement('link');
+            feuille.rel = 'stylesheet';
+            feuille.href = `adminPhotos.css?v=${ADMIN_PHOTOS_VERSION}`;
+            document.head.appendChild(feuille);
+
+            const script = document.createElement('script');
+            script.src = `adminPhotos.js?v=${ADMIN_PHOTOS_VERSION}`;
+            script.onload = resolve;
+            script.onerror = () => { _adminPhotosChargement = null; script.remove(); reject(new Error('adminPhotos.js')); };
+            document.head.appendChild(script);
+        });
+    }
+    _adminPhotosChargement
+        .then(() => window.fzAdminPhotos.ouvrir())
+        .catch(() => fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' }));
 }
 
 async function switchToUser(username) {

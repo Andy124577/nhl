@@ -1,0 +1,159 @@
+/* ============================================================
+   PHOTOS TÉLÉVERSÉES — adminPhotos.js
+   ------------------------------------------------------------
+   Une grille de vignettes dans une fenêtre fzDialog. La carte « large »
+   de fzDialog (480px) ne tient que deux colonnes : celle-ci s'élargit
+   quand elle porte la grille. Mêmes jetons et mêmes replis que
+   fzDialog.css.
+   ============================================================ */
+
+.fzd-card.is-wide:has(.fzap) { max-width: 760px; }
+
+.fzap { text-align: left; padding-bottom: 4px; }
+
+.fzap-alerte {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border: 1px solid color-mix(in srgb, var(--warning, #FFD60A) 45%, transparent);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--warning, #FFD60A) 10%, transparent);
+    color: var(--text-main, #F5F5F7);
+    font-size: .88rem;
+    line-height: 1.45;
+}
+
+.fzap-resume {
+    margin: 0 0 12px;
+    font-size: .88rem;
+    color: var(--text-secondary, #A1A1A6);
+}
+
+.fzap-vide {
+    margin: 8px 0 4px;
+    color: var(--text-secondary, #A1A1A6);
+}
+
+/* `.fzd-body ul` indente et espace les listes de texte : pas cette grille. */
+.fzd-body .fzap-grille {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.fzd-body .fzap-grille li { margin: 0; }
+
+.fzap-carte {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--border-light, #38383A);
+    border-radius: 12px;
+    background: var(--bg-gray-light, #2C2C2E);
+    transition: opacity .18s ease, transform .18s ease;
+}
+.fzap-carte.is-retiree { opacity: 0; transform: scale(.96); }
+
+/* Carré quelle que soit l'image : sortie du flux, elle ne peut pas étirer
+   la vignette (un élément flex laisse son contenu dépasser aspect-ratio). */
+.fzap-vignette {
+    position: relative;
+    display: block;
+    flex: none;
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: var(--card, #1C1C1E);
+}
+.fzap-vignette img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.fzap-vignette.is-absente {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    text-align: center;
+    font-size: .82rem;
+    color: var(--text-light-gray, #6E6E73);
+    background: repeating-linear-gradient(45deg,
+        transparent 0 8px, color-mix(in srgb, var(--text-light-gray, #6E6E73) 12%, transparent) 8px 16px);
+}
+
+.fzap-infos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 10px 8px;
+    min-width: 0;
+    line-height: 1.35;
+}
+.fzap-type {
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: var(--text-light-gray, #6E6E73);
+}
+.fzap-nom {
+    font-size: .92rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.fzap-meta {
+    font-size: .8rem;
+    color: var(--text-secondary, #A1A1A6);
+}
+
+.fzap-etat {
+    align-self: flex-start;
+    margin-top: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: .74rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+.fzap-etat.is-ok {
+    color: var(--success, #30D158);
+    border-color: color-mix(in srgb, var(--success, #30D158) 45%, transparent);
+}
+.fzap-etat.is-non {
+    color: var(--text-main, #F5F5F7);
+    background: color-mix(in srgb, var(--warning, #FFD60A) 18%, transparent);
+    border-color: color-mix(in srgb, var(--warning, #FFD60A) 55%, transparent);
+}
+.fzap-etat.is-inconnu {
+    color: var(--text-secondary, #A1A1A6);
+    border-color: var(--border-light, #38383A);
+}
+
+.fzap-retirer {
+    margin: auto 10px 10px;
+    min-height: 40px;
+    border: 2px solid var(--danger, #FF5C66);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--danger, #FF5C66);
+    font: inherit;
+    font-size: .88rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.fzap-retirer:hover:not(:disabled) { background: rgba(var(--primary-rgb, 230, 32, 48), .10); }
+.fzap-retirer:focus-visible { outline: 2px solid var(--danger, #FF5C66); outline-offset: 2px; }
+.fzap-retirer:disabled { opacity: .5; cursor: default; }
+
+@media (max-width: 420px) {
+    .fzap-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fzap-carte { transition: none; }
+}

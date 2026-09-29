@@ -16,8 +16,6 @@
 'use strict';
 
 const bcrypt = require('bcryptjs');
-const path = require('path');
-const fs = require('fs');
 
 const { contientGrossierete } = require('../profanity.js');
 const poolOps = require('../lib/poolOps.js');
@@ -30,7 +28,7 @@ const ECHEC_CONNEXION = "Nom d'utilisateur ou mot de passe incorrect.";
 
 function monter(app, ctx) {
     const { auth, store, db, usePostgres, chargerUtilisateurs, sauvegarderUtilisateurs,
-            racine, diffusion, logger = console } = ctx;
+            photos, diffusion, logger = console } = ctx;
 
     /** Récupère un compte avec son empreinte, quel que soit le magasin. */
     async function lireCompte(username) {
@@ -336,11 +334,7 @@ function monter(app, ctx) {
                 }
             }
 
-            if (compte.avatarUrl && compte.avatarUrl.startsWith('/uploads/avatars/')) {
-                const chemin = path.join(racine, compte.avatarUrl.replace(/^\//, ''));
-                try { if (fs.existsSync(chemin)) fs.unlinkSync(chemin); }
-                catch (erreur) { logger.warn('⚠️ Photo de profil non supprimée :', erreur.message); }
-            }
+            if (compte.avatarUrl) await photos.supprimer(compte.avatarUrl);
 
             if (usePostgres) {
                 await db.deleteUser(username);

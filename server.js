@@ -14,7 +14,6 @@ const path = require("path"); // ✅ for static paths
 const cron = require("node-cron");
 const db = require("./db"); // ✅ PostgreSQL database module
 const multer = require("multer");
-const { v4: uuidv4 } = require("uuid");
 
 // Logique métier pure, extraite de ce fichier vers lib/ pour être testable
 // unitairement (voir UNIT_TESTS.md). Les corps de fonctions sont inchangés.
@@ -51,6 +50,7 @@ const routesRecords = require("./routes/records.js");
 const routesNotifications = require("./routes/notifications.js");
 const routesAujourdhui = require("./routes/today.js");
 const routesInvitations = require("./routes/invitations.js");
+const routesPhotos = require("./routes/photos.js");
 const { creerServiceAujourdhui } = require("./services/today.js");
 const { creerServiceRecap } = require("./services/recap.js");
 const { creerMinuteurChoix } = require("./services/minuteurChoix.js");
@@ -60,6 +60,7 @@ const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
 const { creerFeuillesDeMatch, MatchIntrouvable } = require("./services/feuilleMatch.js");
 const { creerAlignements, EquipeInconnue } = require("./services/alignement.js");
 const { creerModerateur } = require("./services/moderationImage.js");
+const { creerMagasinPhotos } = require("./services/magasinPhotos.js");
 const { creerCoffre, clesDepuisEnvironnement } = require("./lib/poolSecret.js");
 const datesPool = require("./lib/dates.js");
 
@@ -191,6 +192,12 @@ app.use((req, res, next) => {
 // les scripts de migration, et .env s'il se trouve là. La garde ci-dessous
 // laisse passer ce qui est public et répond 404 pour le reste — 404 et non
 // 403, qui confirmerait l'existence du fichier.
+// Photos téléversées, rangées en base (services/magasinPhotos.js). Avant la
+// garde, qui ne connaît que les fichiers du dépôt, et avant la session : une
+// image ne lit pas de compte.
+const photos = creerMagasinPhotos({ db, usePostgres: USE_POSTGRES, racine: __dirname, logger: console });
+app.get('/photos/:fichier', (req, res) => photos.servir(req, res));
+
 app.use(creerGardeStatique());
 app.use(express.static(__dirname, {
     maxAge: 0, // le middleware de cache plus haut décide
@@ -215,14 +222,7 @@ app.use(auth.csrfGuard);
 
 // ─── Image upload configuration ───────────────────────────────────────────────
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
-const EXT_MAP = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
 
-function makeStorage(folder) {
-    return multer.diskStorage({
-        destination: (req, file, cb) => cb(null, path.join(__dirname, 'uploads', folder)),
-        filename: (req, file, cb) => cb(null, uuidv4() + EXT_MAP[file.mimetype]),
-    });
-}
 function imgFilter(req, file, cb) {
     if (ALLOWED_MIME.includes(file.mimetype)) {
         cb(null, true);
@@ -231,18 +231,16 @@ function imgFilter(req, file, cb) {
     }
 }
 
-const uploadAvatar = multer({ storage: makeStorage('avatars'), fileFilter: imgFilter, limits: { fileSize: 2 * 1024 * 1024 } });
-const uploadPool   = multer({ storage: makeStorage('pools'),   fileFilter: imgFilter, limits: { fileSize: 2 * 1024 * 1024 } });
+// En mémoire, pas sur le disque : l'image est optimisée puis rangée en base
+// (services/magasinPhotos.js). 8 Mo acceptés — une photo de téléphone dépasse
+// souvent 2 Mo, et ce qui est gardé n'en pèse plus que quelques dizaines de Ko.
+const TAILLE_TELEVERSEMENT_MAX = 8 * 1024 * 1024;
+const uploadAvatar = multer({ storage: multer.memoryStorage(), fileFilter: imgFilter, limits: { fileSize: TAILLE_TELEVERSEMENT_MAX } });
+const uploadPool   = multer({ storage: multer.memoryStorage(), fileFilter: imgFilter, limits: { fileSize: TAILLE_TELEVERSEMENT_MAX } });
 
 // Vérification du contenu des images (services/moderationImage.js) : signature
 // du fichier toujours, analyse par Claude quand ANTHROPIC_API_KEY est définie.
 const moderationImages = creerModerateur({ logger: console });
-
-/** Retire un fichier téléversé qu'on ne garde pas. */
-function retirerTeleversement(fichier) {
-    if (!fichier || !fichier.path) return;
-    fs.promises.unlink(fichier.path).catch(() => {});
-}
 // ──────────────────────────────────────────────────────────────────────────────
 
 // ✅ Optional: Force / to serve index.html
@@ -558,6 +556,7 @@ contexteRoutes.serviceRecap = serviceRecap;
 contexteRoutes.calendrierLNH = calendrierLNH;
 contexteRoutes.fenetreSaison = () => getSeasonWindow();
 contexteRoutes.moderationImages = moderationImages;
+contexteRoutes.photos = photos;
 // Classement cumulatif d'un pool avec les statistiques de saison en mémoire :
 // le même calcul que l'instantané quotidien des rangs.
 contexteRoutes.scoresSaison = async (poolData) => {
@@ -589,6 +588,7 @@ routesRecords.monter(app, contexteRoutes);
 routesNotifications.monter(app, contexteRoutes);
 routesInvitations.monter(app, contexteRoutes);
 routesAujourdhui.monter(app, contexteRoutes);
+routesPhotos.monter(app, contexteRoutes);
 
 /**
  * Repêchages à date fixe : trois minutes par choix, puis Fantazy choisit à la
@@ -724,25 +724,29 @@ app.post("/upload/user-avatar", (req, res, next) => auth.requireAuth(req, res, n
         // remplacer la photo de profil de n'importe qui.
         const username = req.auth.username;
 
+        // Optimisée d'abord (512 px, WebP, sans métadonnées) : c'est cette
+        // version qui sera publiée, donc celle qu'on vérifie.
+        const photo = await photos.preparer(req.file.buffer);
+        if (!photo.ok) return res.status(photo.code).json({ message: photo.message });
+
         // Une photo de profil est vue par tous les membres de ses pools : elle
         // passe la vérification avant d'être publiée, et part sinon.
-        const verification = await moderationImages.verifier({ chemin: req.file.path, mimetype: req.file.mimetype });
-        if (!verification.ok) {
-            retirerTeleversement(req.file);
-            return res.status(verification.code).json({ message: verification.message });
-        }
+        const verification = await moderationImages.verifier({ tampon: photo.tampon, mimetype: photo.contentType });
+        if (!verification.ok) return res.status(verification.code).json({ message: verification.message });
 
-        const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-
+        let ancienne = null;
+        let avatarUrl = null;
         if (USE_POSTGRES) {
             const existing = await db.getUserByUsername(username);
             if (!existing) return res.status(404).json({ message: "Utilisateur non trouvé." });
-            // Delete old file if it was a local upload
-            if (existing.avatarUrl && existing.avatarUrl.startsWith('/uploads/')) {
-                const oldPath = path.join(__dirname, existing.avatarUrl);
-                if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+            ancienne = existing.avatarUrl || null;
+            avatarUrl = await photos.enregistrer({ tampon: photo.tampon, dossier: 'avatars' });
+            try {
+                await db.updateUserAvatar(username, avatarUrl, verification.verifiee);
+            } catch (erreur) {
+                await photos.supprimer(avatarUrl);   // pas de photo orpheline
+                throw erreur;
             }
-            await db.updateUserAvatar(username, avatarUrl);
             // La session en mémoire porte l'ancienne photo : /session doit
             // montrer la nouvelle tout de suite, pas dans une minute.
             auth.oublierUtilisateur(username);
@@ -750,14 +754,18 @@ app.post("/upload/user-avatar", (req, res, next) => auth.requireAuth(req, res, n
             const users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
             const idx = users.findIndex(u => u.username === username);
             if (idx === -1) return res.status(404).json({ message: "Utilisateur non trouvé." });
-            // Delete old file
-            if (users[idx].avatarUrl && users[idx].avatarUrl.startsWith('/uploads/')) {
-                const oldPath = path.join(__dirname, users[idx].avatarUrl);
-                if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-            }
+            ancienne = users[idx].avatarUrl || null;
+            avatarUrl = await photos.enregistrer({ tampon: photo.tampon, dossier: 'avatars' });
             users[idx].avatarUrl = avatarUrl;
+            // Pour l'écran « Photos téléversées » (routes/photos.js).
+            users[idx].avatarUploadedAt = new Date().toISOString();
+            users[idx].avatarChecked = verification.verifiee;
             fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
         }
+
+        // Après l'écriture seulement : l'ancienne photo ne part qu'une fois
+        // la nouvelle en place.
+        if (ancienne && ancienne !== avatarUrl) await photos.supprimer(ancienne);
 
         res.json({ avatarUrl });
     } catch (error) {
@@ -776,6 +784,9 @@ app.post("/upload/user-avatar", (req, res, next) => auth.requireAuth(req, res, n
 
 // Multer error handler (file type / size rejections)
 app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ message: "Cette image dépasse 8 Mo. Choisissez-en une plus légère." });
+    }
     if (err instanceof multer.MulterError || err.message?.includes('non autorisé')) {
         return res.status(400).json({ message: err.message });
     }

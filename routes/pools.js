@@ -15,8 +15,6 @@
 'use strict';
 
 const bcrypt = require('bcryptjs');
-const path = require('path');
-const fs = require('fs');
 
 const { contientGrossierete } = require('../profanity.js');
 const authz = require('../lib/authz.js');
@@ -67,7 +65,7 @@ function refusNomEquipe(nomEquipe) {
 }
 
 function monter(app, ctx) {
-    const { auth, store, diffusion, racine, uploadPool, logger = console } = ctx;
+    const { auth, store, diffusion, uploadPool, photos, logger = console } = ctx;
     // Chiffre la copie lisible du mot de passe (lib/poolSecret.js). Absent,
     // le pool garde sa seule empreinte, comme avant.
     const coffre = ctx.coffre || null;
@@ -347,6 +345,7 @@ function monter(app, ctx) {
             const nom = typeof req.body?.clanName === 'string' ? req.body.clanName.trim() : '';
             if (!nom) return res.status(400).json({ message: "Nom du pool requis." });
 
+            let image = null;
             const { valeur: membres } = await store.transaction(async (tx) => {
                 const verrouille = await tx.verrouillerPool(nom);
                 if (!verrouille) throw new ErreurMetier(404, "Ce pool n'existe pas.");
@@ -354,9 +353,13 @@ function monter(app, ctx) {
                     throw new ErreurMetier(403, "Seule la personne qui a créé le pool peut le supprimer.");
                 }
                 const noms = authz.membresDuPool(verrouille.data);
+                image = verrouille.data.imageUrl || null;
                 await tx.supprimerPool(nom);
                 return noms;
             }, { scope: 'pool:suppression', userId: req.auth.userId });
+
+            // Après le COMMIT : l'image du pool part avec lui.
+            if (image) await photos.supprimer(image);
 
             // Les lignes rattachées au nom du pool partent avec lui : sinon
             // un pool recréé sous le même nom hériterait des échanges et des
@@ -1145,31 +1148,38 @@ function monter(app, ctx) {
     // ───────────────────────────── Image du pool ─────────────────────────────
 
     app.post('/upload/pool-image', auth.requireAuth, uploadPool.single('image'), async (req, res) => {
-        // multer a déjà écrit le fichier : tout refus doit le retirer, sinon il
-        // reste orphelin dans uploads/ — et servi publiquement.
-        const retirer = () => { if (req.file && req.file.path) fs.promises.unlink(req.file.path).catch(() => {}); };
+        // L'image arrive en mémoire (multer) ; seule sa version optimisée est
+        // rangée, par ctx.photos (services/magasinPhotos.js).
+        let imageUrl = null;
+        let enPlace = false;
         try {
             const nom = typeof req.body?.poolName === 'string' ? req.body.poolName.trim() : '';
             if (!req.file) return res.status(400).json({ message: "Aucune image reçue." });
-            if (!nom) { retirer(); return res.status(400).json({ message: "Nom du pool requis." }); }
+            if (!nom) return res.status(400).json({ message: "Nom du pool requis." });
 
             // Le droit d'abord : on n'envoie pas à l'analyse l'image de
             // quelqu'un qui ne pourrait de toute façon pas la poser.
             const avant = await store.lire(nom);
-            if (!avant) { retirer(); return res.status(404).json({ message: "Pool introuvable." }); }
+            if (!avant) return res.status(404).json({ message: "Pool introuvable." });
             if (!authz.peutAdministrer(avant.data, { username: req.auth.username, isAdmin: req.auth.isAdmin })) {
-                retirer();
                 return res.status(403).json({ message: "Seule la personne qui a créé le pool peut changer son image." });
             }
+
+            // Optimisée d'abord : c'est cette version qui sera publiée, donc
+            // celle qu'on vérifie.
+            const image = await photos.preparer(req.file.buffer);
+            if (!image.ok) return res.status(image.code).json({ message: image.message });
+
+            let verifiee = false;
             if (ctx.moderationImages) {
-                const verification = await ctx.moderationImages.verifier({ chemin: req.file.path, mimetype: req.file.mimetype });
-                if (!verification.ok) {
-                    retirer();
-                    return res.status(verification.code).json({ message: verification.message });
-                }
+                const verification = await ctx.moderationImages.verifier({ tampon: image.tampon, mimetype: image.contentType });
+                if (!verification.ok) return res.status(verification.code).json({ message: verification.message });
+                verifiee = !!verification.verifiee;
             }
 
-            const imageUrl = `/uploads/pools/${req.file.filename}`;
+            imageUrl = await photos.enregistrer({ tampon: image.tampon, dossier: 'pools' });
+            // Pour l'écran « Photos téléversées » de l'administration (routes/photos.js).
+            const imageMeta = { par: req.auth.username, le: new Date().toISOString(), verifiee };
             let ancienne = null;
 
             await store.muterPool(nom, {
@@ -1181,24 +1191,23 @@ function monter(app, ctx) {
                     }
                     ancienne = data.imageUrl || null;
                     data.imageUrl = imageUrl;
+                    data.imageMeta = imageMeta;
                     return { valeur: { imageUrl } };
                 }
             });
+            enPlace = true;
 
             // Après le COMMIT seulement : supprimer l'ancienne avant aurait
             // effacé une image encore référencée si la transaction échouait.
-            if (ancienne && ancienne.startsWith('/uploads/')) {
-                const chemin = path.join(racine, ancienne.replace(/^\//, ''));
-                try { if (fs.existsSync(chemin)) fs.unlinkSync(chemin); }
-                catch (erreur) { logger.warn('⚠️ Ancienne image non supprimée :', erreur.message); }
-            }
+            if (ancienne && ancienne !== imageUrl) await photos.supprimer(ancienne);
 
             const frais = await store.lire(nom);
             diffusion.poolMisAJour(nom, frais.data, frais.revision);
 
             res.json({ imageUrl });
         } catch (erreur) {
-            retirer();
+            // Rangée mais jamais posée sur le pool : elle ne resterait qu'orpheline.
+            if (imageUrl && !enPlace) await photos.supprimer(imageUrl).catch(() => {});
             repondreErreur(res, erreur, '/upload/pool-image');
         }
     });

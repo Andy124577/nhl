@@ -4,6 +4,9 @@
   "private": true,
   "description": "Pools de hockey entre amis — service gratuit, sans affiliation avec la LNH.",
   "main": "server.js",
+  "engines": {
+    "node": ">=20.9.0 <25"
+  },
   "scripts": {
     "test": "npm run test:unit",
     "test:unit": "node --test \"test/**/*.test.js\"",
@@ -35,6 +38,7 @@
     "multer": "^2.1.1",
     "node-cron": "^3.0.3",
     "pg": "^8.17.1",
+    "sharp": "^0.35.5",
     "socket.io": "^4.8.1",
     "uuid": "^14.0.0"
   },

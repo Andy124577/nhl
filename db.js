@@ -288,11 +288,86 @@ async function linkGoogleAccount(username, googleSub) {
     return result.rowCount > 0;
 }
 
-async function updateUserAvatar(username, avatarUrl) {
+/** `verifiee` : l'analyse automatique a-t-elle regardé la photo ? */
+async function updateUserAvatar(username, avatarUrl, verifiee = null) {
     await pool.query(
-        'UPDATE users SET avatar_url = $1 WHERE username = $2',
-        [avatarUrl, username]
+        'UPDATE users SET avatar_url = $1, avatar_uploaded_at = NOW(), avatar_checked = $3 WHERE username = $2',
+        [avatarUrl, username, verifiee]
     );
+}
+
+/** Retire une photo de profil — seulement si c'est encore celle-là. */
+async function clearUserAvatar(username, avatarUrl) {
+    const result = await pool.query(
+        `UPDATE users SET avatar_url = NULL, avatar_uploaded_at = NULL, avatar_checked = NULL
+          WHERE username = $1 AND avatar_url = $2`,
+        [username, avatarUrl]
+    );
+    return result.rowCount > 0;
+}
+
+/** Les photos de profil téléversées, pour l'écran de vérification. */
+async function listUploadedAvatars() {
+    const result = await pool.query(
+        `SELECT username, avatar_url, avatar_uploaded_at, avatar_checked
+           FROM users WHERE avatar_url LIKE '/uploads/%' OR avatar_url LIKE '/photos/%'`
+    );
+    return result.rows.map(row => ({
+        username: row.username,
+        url: row.avatar_url,
+        le: row.avatar_uploaded_at || null,
+        verifiee: typeof row.avatar_checked === 'boolean' ? row.avatar_checked : null
+    }));
+}
+
+/**
+ * Les images de pool téléversées. Les champs sont extraits dans la base :
+ * lire pool_data pour trois valeurs ferait sortir chaque pool au complet
+ * (quota de transfert Neon).
+ */
+async function listPoolImages() {
+    const result = await pool.query(
+        `SELECT pool_name,
+                pool_data->>'imageUrl' AS image_url,
+                pool_data->'imageMeta' AS image_meta,
+                COALESCE(pool_data->>'creator', pool_data->'teams'->'Équipe 1'->'members'->>0) AS createur
+           FROM pools
+          WHERE pool_data->>'imageUrl' LIKE '/uploads/%' OR pool_data->>'imageUrl' LIKE '/photos/%'`
+    );
+    return result.rows.map(row => ({
+        pool: row.pool_name,
+        url: row.image_url,
+        meta: row.image_meta || null,
+        createur: row.createur || null
+    }));
+}
+
+// =============================================
+// PHOTOS (services/magasinPhotos.js)
+// =============================================
+
+async function insertPhoto(id, contentType, data) {
+    await pool.query(
+        'INSERT INTO photos (id, content_type, data) VALUES ($1, $2, $3)',
+        [id, contentType, data]
+    );
+}
+
+async function getPhoto(id) {
+    const result = await pool.query('SELECT content_type, data FROM photos WHERE id = $1', [id]);
+    return result.rows.length === 0 ? null : { contentType: result.rows[0].content_type, data: result.rows[0].data };
+}
+
+async function deletePhoto(id) {
+    const result = await pool.query('DELETE FROM photos WHERE id = $1', [id]);
+    return result.rowCount > 0;
+}
+
+/** Parmi ces identifiants, ceux qui existent — sans lire les images. */
+async function existingPhotoIds(ids) {
+    if (!ids.length) return [];
+    const result = await pool.query('SELECT id FROM photos WHERE id = ANY($1::uuid[])', [ids]);
+    return result.rows.map(row => row.id);
 }
 
 async function createUser(username, hashedPassword, isAdmin = false, googleSub = null) {
@@ -1373,6 +1448,14 @@ module.exports = {
     createUser,
     deleteUser,
     updateUserAvatar,
+    clearUserAvatar,
+    listUploadedAvatars,
+    listPoolImages,
+    // Photos
+    insertPhoto,
+    getPhoto,
+    deletePhoto,
+    existingPhotoIds,
     // Pools
     getAllPools,
     getPoolByName,

@@ -90,6 +90,8 @@ function creerBaseSimulee(poolsInitiaux, users) {
         finalizedWeeks: [],
         recaps: [],
         operations: new Map(),
+        photos: new Map(),
+        lecturesPhotos: 0,
         users: users.slice(),
         emissions: [],
         ecritures: []
@@ -513,6 +515,39 @@ function creerBaseSimulee(poolsInitiaux, users) {
         async getUserByUsername(username) {
             return etat.users.find(u => u.username === username) || null;
         },
+        async listUploadedAvatars() {
+            return etat.users
+                .filter(u => typeof u.avatarUrl === 'string' && /^\/(uploads|photos)\//.test(u.avatarUrl))
+                .map(u => ({ username: u.username, url: u.avatarUrl, le: u.avatarUploadedAt || null,
+                             verifiee: typeof u.avatarChecked === 'boolean' ? u.avatarChecked : null }));
+        },
+        async clearUserAvatar(username, avatarUrl) {
+            const u = etat.users.find(x => x.username === username);
+            if (!u || u.avatarUrl !== avatarUrl) return false;
+            u.avatarUrl = '';
+            delete u.avatarUploadedAt;
+            delete u.avatarChecked;
+            return true;
+        },
+        async listPoolImages() {
+            return [...etat.pools.values()]
+                .filter(p => typeof p.data.imageUrl === 'string' && /^\/(uploads|photos)\//.test(p.data.imageUrl))
+                .map(p => ({ pool: p.name, url: p.data.imageUrl, meta: p.data.imageMeta ? copie(p.data.imageMeta) : null,
+                             createur: p.data.creator || null }));
+        },
+        async insertPhoto(id, contentType, data) {
+            etat.photos.set(id, { contentType, data: Buffer.from(data) });
+        },
+        async getPhoto(id) {
+            etat.lecturesPhotos += 1;
+            return etat.photos.get(id) || null;
+        },
+        async deletePhoto(id) {
+            return etat.photos.delete(id);
+        },
+        async existingPhotoIds(ids) {
+            return ids.filter(id => etat.photos.has(id));
+        },
         async deletePoolDependencies(poolName) {
             etat.trades = etat.trades.filter(t => t.poolName !== poolName);
             etat.listings = etat.listings.filter(l => l.poolName !== poolName);
@@ -562,7 +597,9 @@ function creerFauxAuth() {
         async ouvrirSession() {},
         async fermerSession() {},
         async revoquerTout() {},
-        async identifierSocket() { return null; }
+        async identifierSocket() { return null; },
+        oublis: [],
+        oublierUtilisateur(username) { this.oublis.push(username); }
     };
 }
 
@@ -607,6 +644,12 @@ function monterRoutes(modules, { pools = {}, users = null, ctxExtra = {} } = {})
     // etre dans le contexte AVANT le montage — les routes lisent le contexte
     // une seule fois, a l'enregistrement.
     Object.assign(ctx, typeof ctxExtra === 'function' ? ctxExtra(ctx) : ctxExtra);
+    // Le vrai magasin de photos, sur la base simulée — après ctxExtra, qui
+    // peut déplacer `racine` (les anciennes photos vivent sur le disque).
+    if (!ctx.photos) {
+        const { creerMagasinPhotos } = require('../../services/magasinPhotos.js');
+        ctx.photos = creerMagasinPhotos({ db, usePostgres: true, racine: ctx.racine, logger: silencieux });
+    }
 
     for (const module of [].concat(modules)) module.monter(app, ctx);
 
