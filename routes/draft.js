@@ -1,6 +1,7 @@
 /**
- * Le repêchage : choisir un joueur, sauter un tour qui traîne, et choisir à
- * la place d'une équipe dont le temps est écoulé (repêchage à date fixe).
+ * Le repêchage : choisir un joueur, et choisir à la place d'une équipe dont
+ * le tour traîne (la personne qui a créé le pool) ou dont le temps est écoulé
+ * (repêchage à date fixe).
  *
  * C'est la route la plus sensible du site. Elle avait trois faiblesses :
  * l'identité venait du corps de la requête (donc on pouvait choisir à la place
@@ -29,7 +30,7 @@ const evenements = require('../lib/events.js');
 const choixAuto = require('../lib/choixAuto.js');
 const { checkIfDraftComplete } = require('../lib/draft.js');
 
-/** Délai avant qu'un tour puisse être sauté. Même seuil que côté client. */
+/** Délai avant qu'on puisse choisir à la place d'une équipe. Même seuil que côté client. */
 const SAUT_APRES_MS = 180000;
 
 function monter(app, ctx) {
@@ -210,64 +211,97 @@ function monter(app, ctx) {
     });
 
     /**
-     * Sauter un tour qui traîne.
+     * Un choix joué à la place de l'équipe, par le minuteur ou par la
+     * personne qui a créé le pool : il se raconte comme un autre choix, et
+     * les membres de l'équipe apprennent ce qui a été pris pour eux — ils
+     * n'étaient pas là pour le voir.
+     */
+    function journaliserChoixAuto({ journal, data, poolId, nom, resultat, actorUserId, parCreateur = false }) {
+        journaliserChoix({ journal, data, poolId, nom, resultat, actorUserId });
+
+        for (const membre of (data.teams[resultat.teamName]?.members || [])) {
+            journal.notifier({
+                recipient: membre,
+                poolId,
+                type: evenements.NOTIFICATION.CHOIX_AUTO,
+                subject: {
+                    poolName: nom,
+                    teamName: resultat.teamName,
+                    pickIndex: resultat.pickIndex,
+                    ...(resultat.playerName ? { player: resultat.playerName } : {}),
+                    ...(parCreateur ? { parCreateur: true } : {})
+                },
+                dedupKey: evenements.clesNotification.choixAuto(poolId, resultat.pickIndex)
+            });
+        }
+    }
+
+    /**
+     * Choisir à la place d'une équipe dont le tour traîne.
      *
      * Dans un repêchage lancé au clic, sans limite de temps, le serveur ne
-     * saute jamais un tour de lui-même. Ceci est le recours quand une salle
-     * reste figée sur quelqu'un qui a perdu son réseau. Réservé à la personne
-     * qui a créé le pool, ouvert seulement après un délai, et impossible à
-     * utiliser sur son propre tour. Un repêchage chronométré le refuse : il
-     * choisit lui-même à la fin du temps (choisirAutomatiquement, plus bas).
+     * choisit jamais de lui-même. Ceci est le recours quand une salle reste
+     * figée sur quelqu'un qui a perdu son réseau : l'équipe reçoit le joueur
+     * que le minuteur lui aurait donné, au lieu de perdre son tour. Réservé à
+     * la personne qui a créé le pool, ouvert seulement après un délai, et
+     * refusé sur son propre tour (poolOps.choisirALaPlace). Un repêchage
+     * chronométré le refuse : il choisit lui-même à la fin du temps
+     * (choisirAutomatiquement, plus bas).
+     *
+     * `/skip-turn` est l'ancien nom : une salle restée ouverte pendant la mise
+     * en ligne l'appelle encore, et obtient le même choix.
      */
-    app.post('/skip-turn', auth.requireAuth, async (req, res) => {
+    async function choisirPourEquipe(req, res) {
         try {
             const nom = typeof req.body?.clanName === 'string' ? req.body.clanName.trim() : '';
             if (!nom) return res.status(400).json({ message: "Nom du pool requis." });
 
-            const { valeur } = await store.muterPool(nom, {
-                scope: 'repechage:saut',
+            const { valeur, rejouee } = await store.muterPool(nom, {
+                scope: 'repechage:choix-a-la-place',
                 userId: req.auth.userId,
                 operationId: req.body?.operationId,
-                requete: { pool: nom, action: 'skip', username: req.auth.username },
+                requete: { pool: nom, action: 'autopick', username: req.auth.username },
                 appliquer: async ({ data, poolId, journal }) => {
                     if (!authz.peutAdministrer(data, { username: req.auth.username, isAdmin: req.auth.isAdmin })) {
-                        throw new ErreurMetier(403, "Seule la personne qui a créé le pool peut sauter un tour.");
+                        throw new ErreurMetier(403, "Seule la personne qui a créé le pool peut choisir à la place d'une équipe.");
                     }
-                    const resultat = poolOps.sauterTour(data, {
+                    const resultat = poolOps.choisirALaPlace(data, {
+                        bassin: bassinTrousse(),
                         username: req.auth.username,
-                        delaiMs: SAUT_APRES_MS,
-                        estAdmin: false // sauter son propre tour reste interdit, admin ou non
+                        delaiMs: SAUT_APRES_MS
                     });
                     if (!resultat.ok) throw refus(resultat);
 
-                    // Le tour sauté est fini aussi : son alerte s'éteint.
-                    journal.resoudre(evenements.clesNotification.votreTour(poolId, data.currentPickIndex - 1));
+                    journaliserChoixAuto({ journal, data, poolId, nom, resultat, actorUserId: req.auth.userId, parCreateur: true });
 
-                    const prochainIndice = data.currentPickIndex;
-                    const equipeSuivante = data.teams[resultat.tourSuivant];
-                    for (const membre of (equipeSuivante?.members || [])) {
-                        journal.notifier({
-                            recipient: membre,
-                            poolId,
-                            type: evenements.NOTIFICATION.VOTRE_TOUR,
-                            subject: { poolName: nom, teamName: resultat.tourSuivant, pickIndex: prochainIndice },
-                            expiresAt: new Date(Date.now() + evenements.EXPIRATION_TOUR_MS),
-                            dedupKey: evenements.clesNotification.votreTour(poolId, prochainIndice)
-                        });
-                    }
-
-                    return { valeur: { skipped: resultat.saute, tourSuivant: resultat.tourSuivant } };
+                    return {
+                        valeur: {
+                            teamName: resultat.teamName,
+                            playerName: resultat.playerName || null,
+                            position: resultat.position || null,
+                            pickIndex: resultat.pickIndex,
+                            tourSuivant: resultat.tourSuivant,
+                            draftComplet: !!resultat.draftComplet
+                        }
+                    };
                 }
             });
 
-            const frais = await store.lire(nom);
-            diffusion.poolMisAJour(nom, frais.data, frais.revision);
+            await diffuserChoix(nom, { draftComplet: valeur.draftComplet, rejouee });
 
-            res.json({ message: `Tour de ${valeur.skipped} sauté.`, ...valeur });
+            res.json({
+                message: valeur.playerName
+                    ? `${valeur.playerName} a été choisi pour ${valeur.teamName}.`
+                    : `Il ne restait rien à prendre pour ${valeur.teamName} : son tour est passé.`,
+                ...valeur,
+                rejouee: !!rejouee
+            });
         } catch (erreur) {
-            repondreErreur(res, erreur, '/skip-turn');
+            repondreErreur(res, erreur, req.path || '/autopick-turn');
         }
-    });
+    }
+    app.post('/autopick-turn', auth.requireAuth, choisirPourEquipe);
+    app.post('/skip-turn', auth.requireAuth, choisirPourEquipe);
 
     /**
      * Le temps d'un choix est écoulé : Fantazy choisit pour l'équipe.
@@ -291,22 +325,7 @@ function monter(app, ctx) {
                     return { sauvegarder: false, valeur: { fait: false, raison: resultat.message, echeance: resultat.echeance || null } };
                 }
 
-                journaliserChoix({ journal, data, poolId, nom, resultat, actorUserId: null });
-
-                for (const membre of (data.teams[resultat.teamName]?.members || [])) {
-                    journal.notifier({
-                        recipient: membre,
-                        poolId,
-                        type: evenements.NOTIFICATION.CHOIX_AUTO,
-                        subject: {
-                            poolName: nom,
-                            teamName: resultat.teamName,
-                            pickIndex: resultat.pickIndex,
-                            ...(resultat.playerName ? { player: resultat.playerName } : {})
-                        },
-                        dedupKey: evenements.clesNotification.choixAuto(poolId, resultat.pickIndex)
-                    });
-                }
+                journaliserChoixAuto({ journal, data, poolId, nom, resultat, actorUserId: null });
 
                 return {
                     valeur: {

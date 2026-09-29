@@ -193,38 +193,64 @@ test('le dernier tour ne fait pas déborder l index', () => {
     assert.equal(p.currentPickIndex, 0);
 });
 
-// ───────────────────────────── Saut de tour ─────────────────────────────
+// ─────────────────── Choisir à la place d'une équipe ───────────────────
 
-test('un tour ne se saute qu après le délai', () => {
+const choixAuto = require('../../lib/choixAuto.js');
+const BASSIN = choixAuto.bassinDepuisTrousse({
+    skaters: [
+        { fullName: 'Connor McDavid', position: 'C', projection: { points: 135 } },
+        { fullName: 'Cale Makar', position: 'D', projection: { points: 95 } }
+    ],
+    goalies: [{ fullName: 'Andrei Vasilevskiy', projection: { wins: 38 } }]
+});
+
+test('choisir à la place d une équipe ne s ouvre qu après le délai', () => {
     const debut = Date.parse('2026-09-11T12:00:00Z');
     const p = pool({ draftOrder: ['Équipe 1', 'Équipe 2'], turnStartedAt: debut });
-    const trop = poolOps.sauterTour(p, { username: 'bob', maintenant: debut + 60000, delaiMs: 180000 });
+    const trop = poolOps.choisirALaPlace(p, { bassin: BASSIN, username: 'bob', maintenant: debut + 60000, delaiMs: 180000 });
     assert.equal(trop.ok, false);
     assert.match(trop.message, /2 min/);
+    assert.equal(p.picksHistory, undefined);
+});
 
-    const apres = poolOps.sauterTour(p, { username: 'bob', maintenant: debut + 200000, delaiMs: 180000 });
-    assert.equal(apres.ok, true);
-    assert.equal(apres.saute, 'Équipe 1');
+test('l équipe en retard reçoit le meilleur joueur qu il lui faut, au lieu de perdre son tour', () => {
+    const debut = Date.parse('2026-09-11T12:00:00Z');
+    const p = pool({ draftOrder: ['Équipe 1', 'Équipe 2'], turnStartedAt: debut });
+    p.teams['Équipe 1'].offensive = ['A', 'B']; // attaque pleine : c'est en défense qu'il manque quelqu'un
+
+    const r = poolOps.choisirALaPlace(p, { bassin: BASSIN, username: 'bob', maintenant: debut + 200000, delaiMs: 180000 });
+    assert.equal(r.ok, true);
+    assert.equal(r.auto, true);
+    assert.equal(r.teamName, 'Équipe 1');
+    assert.equal(r.playerName, 'Cale Makar');
+    assert.deepEqual(p.teams['Équipe 1'].defensive, ['Cale Makar']);
+    assert.equal(p.picksHistory.at(-1).auto, true);
     assert.equal(p.currentPickIndex, 1);
-    assert.equal(p.picksHistory, undefined,
-        'aucune entrée : c est ainsi que le client reconnaît un tour sauté');
+    assert.equal(p.turnStartedAt, debut + 200000);
 });
 
-test('on ne saute pas son propre tour pour repousser son choix', () => {
+test('le dernier tour se joue aussi, puis il n y a plus rien à jouer', () => {
+    const p = pool({ draftOrder: ['Équipe 1'], turnStartedAt: Date.parse('2026-09-11T12:00:00Z') });
+    const r = poolOps.choisirALaPlace(p, { bassin: BASSIN, username: 'bob', maintenant: 1e13 });
+    assert.equal(r.ok, true);
+    assert.equal(r.playerName, 'Connor McDavid');
+    assert.equal(r.tourSuivant, null);
+    assert.equal(poolOps.choisirALaPlace(p, { bassin: BASSIN, username: 'bob', maintenant: 1e13 }).code, 409,
+        'le dernier tour est consommé');
+});
+
+test('on ne fait pas choisir Fantazy à sa place sur son propre tour', () => {
     const p = pool({ draftOrder: ['Équipe 1', 'Équipe 2'], turnStartedAt: Date.parse('2026-09-11T12:00:00Z') });
-    const resultat = poolOps.sauterTour(p, { username: 'alice', maintenant: 999999 });
+    const resultat = poolOps.choisirALaPlace(p, { bassin: BASSIN, username: 'alice', maintenant: 1e13 });
     assert.equal(resultat.code, 403);
+    assert.equal(p.currentPickIndex, 0);
 });
 
-test('un pool sans pendule ne se saute pas : l absence d heure de départ n est pas une heure ancienne', () => {
+test('un pool sans pendule, ou pas commencé, n offre rien à jouer', () => {
     const p = pool({ draftOrder: ['Équipe 1', 'Équipe 2'] });
-    assert.equal(poolOps.sauterTour(p, { username: 'bob', maintenant: Date.now() }).ok, false);
-});
-
-test('le dernier tour et un repêchage non commencé n offrent rien à sauter', () => {
-    assert.equal(poolOps.sauterTour(pool(), { username: 'bob' }).code, 400);
-    const dernier = pool({ draftOrder: ['Équipe 1'], currentPickIndex: 0, turnStartedAt: Date.parse('2026-09-11T12:00:00Z') });
-    assert.equal(poolOps.sauterTour(dernier, { username: 'bob', maintenant: 999999 }).code, 400);
+    assert.equal(poolOps.choisirALaPlace(p, { bassin: BASSIN, username: 'bob', maintenant: Date.now() }).ok, false,
+        'l absence d heure de départ n est pas une heure ancienne');
+    assert.equal(poolOps.choisirALaPlace(pool(), { bassin: BASSIN, username: 'bob' }).code, 400);
 });
 
 // ───────────────────────────── Ménage ─────────────────────────────

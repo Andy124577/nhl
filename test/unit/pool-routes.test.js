@@ -274,25 +274,52 @@ test('le dernier choix marque le repêchage terminé', async () => {
     assert.equal(h.etat.activity.filter(a => a.type === 'draft_complete').length, 1);
 });
 
-// ───────────────────────────── Saut de tour ─────────────────────────────
+// ─────────────────── Choisir à la place d'une équipe ───────────────────
 
-test('sauter un tour est réservé au créateur et refusé sur son propre tour', async () => {
+/**
+ * Le pool prêt, Équipe 2 (bob) au bâton depuis dix minutes. L'ordre tiré au
+ * sort est inversé au besoin : le serpentin reste un serpentin.
+ */
+async function tourQuiTraine() {
     const h = await poolPret();
     const pool = h.lirePool('Ligue');
+    if (pool.draftOrder[0] !== 'Équipe 2') {
+        pool.draftOrder = pool.draftOrder.map(e => (e === 'Équipe 1' ? 'Équipe 2' : 'Équipe 1'));
+    }
     pool.turnStartedAt = Date.now() - 10 * 60 * 1000;
     h.etat.pools.get('Ligue').data = pool;
+    return h;
+}
 
-    assert.equal((await h.appeler('POST', '/skip-turn', { auth: BOB, body: { clanName: 'Ligue' } })).statusCode, 403);
+test("le créateur fait choisir Fantazy pour l'équipe qui traîne : elle reçoit un joueur au lieu de perdre son tour", async () => {
+    const h = await tourQuiTraine();
 
-    const premier = pool.draftOrder[0];
+    assert.equal((await h.appeler('POST', '/autopick-turn', { auth: BOB, body: { clanName: 'Ligue' } })).statusCode, 403,
+        'réservé à la personne qui a créé le pool');
+
+    const res = await h.appeler('POST', '/autopick-turn', { auth: ALICE, body: { clanName: 'Ligue' } });
+    assert.equal(res.statusCode, 200, JSON.stringify(res.body));
+    assert.equal(res.body.teamName, 'Équipe 2');
+    assert.ok(res.body.playerName);
+    const apres = h.lirePool('Ligue');
+    assert.equal(apres.currentPickIndex, 1);
+    assert.equal(apres.picksHistory.at(-1).auto, true);
+    assert.equal(apres.picksHistory.at(-1).player, res.body.playerName);
+
+    const alerte = h.etat.notifications.find(n => n.type === 'pick_auto');
+    assert.equal(alerte.recipientUserId, 'bob');
+    assert.equal(alerte.subject.parCreateur, true);
+    assert.equal(h.etat.activity.find(a => a.type === 'pick').actorUserId, 'alice');
+
+    // Au tour d'alice maintenant : elle choisit elle-même.
+    assert.equal((await h.appeler('POST', '/autopick-turn', { auth: ALICE, body: { clanName: 'Ligue' } })).statusCode, 403);
+});
+
+test("l'ancien /skip-turn, appelé par une salle restée ouverte, choisit aussi", async () => {
+    const h = await tourQuiTraine();
     const res = await h.appeler('POST', '/skip-turn', { auth: ALICE, body: { clanName: 'Ligue' } });
-    if (premier === 'Équipe 1') {
-        assert.equal(res.statusCode, 403, 'alice ne saute pas son propre tour');
-    } else {
-        assert.equal(res.statusCode, 200);
-        assert.equal(h.lirePool('Ligue').picksHistory, undefined,
-            'un tour sauté ne consomme pas d entrée d historique');
-    }
+    assert.equal(res.statusCode, 200);
+    assert.equal(h.lirePool('Ligue').picksHistory.length, 1);
 });
 
 // ───────────────────────── Une personne, une équipe ─────────────────────────

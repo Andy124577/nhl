@@ -414,7 +414,7 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
             }
         }
 
-        // Chronométré, le tour ne se saute pas : il se joue tout seul.
+        // Chronométré, le serveur choisit lui-même à la fin du temps.
         if (skip) {
             const eligible = !limit
                 && elapsed >= SKIP_AFTER_MS
@@ -422,7 +422,7 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
                 && currentTurnTeam() !== (typeof getUserTeam === "function" ? getUserTeam() : null);
             if (eligible) {
                 skip.hidden = false;
-                skip.textContent = "Sauter le tour de " + (currentTurnTeam() || "cette équipe");
+                skip.textContent = "Choisir pour " + (currentTurnTeam() || "cette équipe");
             } else {
                 skip.hidden = true;
             }
@@ -463,30 +463,32 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
         skip.addEventListener("click", async function () {
             const equipe = currentTurnTeam();
             if (!equipe) return;
+            // L'équipe ne perd pas son tour : Fantazy lui donne le meilleur
+            // joueur disponible à une position qu'il lui reste à combler.
             const ok = await fzConfirm({
-                danger: true,
                 icon: "skip",
-                title: "Sauter le tour de " + equipe + " ?",
-                message: "Cette équipe perdra ce choix et le repêchage passera à la suivante. "
+                title: "Choisir pour " + equipe + " ?",
+                message: "Fantazy prendra pour cette équipe le meilleur joueur disponible "
+                    + "à une position qu'il lui reste à combler, puis le repêchage passera à la suivante. "
                     + "L'action est définitive.",
-                confirmLabel: "Sauter le tour"
+                confirmLabel: "Choisir pour eux"
             });
             if (!ok) return;
             skip.disabled = true;
             try {
-                const r = await fetch(BASE_URL + "/skip-turn", {
+                const r = await fetch(BASE_URL + "/autopick-turn", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ clanName: currentClan, username: username })
                 });
                 const data = await r.json().catch(() => ({}));
                 if (!r.ok) {
-                    showCustomAlert(data.message || "Impossible de sauter ce tour.", "error");
+                    showCustomAlert(data.message || "Impossible de choisir pour cette équipe.", "error");
                 } else if (typeof loadDraftData === "function") {
                     loadDraftData();
                 }
             } catch (e) {
-                showCustomAlert("Connexion perdue — le tour n'a pas été sauté. Réessayez.", "error");
+                showCustomAlert("Connexion perdue — aucun joueur n'a été choisi. Réessayez.", "error");
             } finally {
                 skip.disabled = false;
             }

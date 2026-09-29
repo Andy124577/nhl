@@ -100,9 +100,9 @@ test('une nouvelle saison repart sans limite : la prochaine date décidera', () 
     assert.equal('pickTimeLimitMs' in pool, false);
 });
 
-test('un repêchage chronométré ne se saute pas : il choisit lui-même', () => {
+test('dans un repêchage chronométré, on ne choisit pas à la place d une équipe : il choisit lui-même', () => {
     const pool = poolChronometre({ ilYa: 10 * 60 * 1000 });
-    const saut = poolOps.sauterTour(pool, { username: 'bob', maintenant: MAINTENANT });
+    const saut = poolOps.choisirALaPlace(pool, { bassin: BASSIN, username: 'bob', maintenant: MAINTENANT });
     assert.equal(saut.ok, false);
     assert.equal(saut.code, 409);
     assert.match(saut.message, /chronométré/);
@@ -237,6 +237,8 @@ test("l'alerte de tour dit la limite, et le choix automatique se raconte", () =>
     assert.equal(vue.href, 'draftActif.html?pool=Ligue');
     assert.equal(vue.id, 'autopick:Ligue:4');
     assert.match(evenements.presenter({ ...auto, subject: {} }).detail, /votre tour est passé/);
+    assert.equal(evenements.presenter({ ...auto, subject: { ...auto.subject, parCreateur: true } }).detail,
+        'Votre tour traînait : Connor McDavid rejoint votre équipe.');
     assert.equal(evenements.clesNotification.choixAuto(7, 4), evenements.clesNotification.choixAuto(7, 4));
     assert.notEqual(evenements.clesNotification.choixAuto(7, 4), evenements.clesNotification.votreTour(7, 4));
 });
@@ -308,12 +310,12 @@ test('un choix fait à temps reste le choix de la personne, et le minuteur arriv
     assert.equal(h.etat.notifications.find(n => n.type === 'turn_current').subject.limiteMs, LIMITE);
 });
 
-test('/skip-turn refuse un repêchage chronométré, même à la personne qui a créé le pool', async () => {
+test('/autopick-turn refuse un repêchage chronométré, même à la personne qui a créé le pool', async () => {
     const pool = poolChronometre({ ilYa: 10 * 60 * 1000 });
-    pool.currentPickIndex = 1; // au tour de bob : alice pourrait le sauter sans chronomètre
+    pool.currentPickIndex = 1; // au tour de bob : alice pourrait choisir pour lui sans chronomètre
     pool.lastPickIndex = 0;
     const h = banc(pool);
-    const refus = await h.appeler('POST', '/skip-turn', { auth: ALICE, body: { clanName: 'Ligue' } });
+    const refus = await h.appeler('POST', '/autopick-turn', { auth: ALICE, body: { clanName: 'Ligue' } });
     assert.equal(refus.statusCode, 409);
     assert.match(refus.body.message, /chronométré/);
     assert.equal(h.lirePool('Ligue').currentPickIndex, 1);
