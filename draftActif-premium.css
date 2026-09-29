@@ -1289,6 +1289,25 @@ body.fz-draft #fzPickedList td.points-column {
 body.fz-draft .fzd-status-cell { white-space: normal; }
 body.fz-draft #fzPickedListWrapper .player-photo { width: 32px; height: 32px; border-radius: 6px; background: var(--fzd-tile-bg); }
 body.fz-draft #fzPickedListWrapper .player-photo .logo { border: 1px solid var(--fzd-border); background: var(--fzd-logo-bg); }
+/* Le portrait remplit sa boîte, comme ceux du tableau principal
+   (draftDesk.css) : à sa taille d'origine, il débordait sur la rangée. */
+body.fz-draft #fzPickedListWrapper .player-photo img.face {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  border-radius: inherit;
+  object-fit: cover;
+  object-position: top center;
+}
+/* Taille figée : sur téléphone, la règle générique d'index.css lui
+   donnait 22px et plus, et l'écusson couvrait tout le visage. */
+body.fz-draft #fzPickedListWrapper .player-photo img.logo {
+  right: -3px;
+  bottom: -1px;
+  width: 16px;
+  height: 16px;
+  padding: 1px;
+}
 body.fz-draft .player-photo { width: 32px; height: 32px; border-radius: 6px; background: var(--fzd-tile-bg); }
 body.fz-draft .player-photo .logo { border: 1px solid var(--fzd-border); background: var(--fzd-logo-bg); }
 

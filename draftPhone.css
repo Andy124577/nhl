@@ -585,6 +585,10 @@
     overscroll-behavior-y: contain;
     background: var(--fzd-bg-page);
   }
+  /* Mes choix, une fois l'équipe complète (draftListePremium.js) : seul
+     chemin vers cette liste ici, l'onglet « Tous » étant masqué. Ses
+     480px minimum la coupaient après A ; elle suit plutôt l'écran. */
+  body.fz-draft #fzPickedList { min-width: 0; }
   body.fz-draft #playerTable#playerTable thead { display: none; }
   body.fz-draft #playerTable#playerTable {
     width: 100%;
@@ -1251,4 +1255,11 @@
     letter-spacing: .1em;
     text-transform: uppercase;
   }
+}
+
+/* Mes choix sur un écran étroit : GP · B · A tombent pour laisser PTS et
+   le statut, comme la liste principale qui n'en garde que PTS. */
+@media (max-width: 560px) {
+  body.fz-draft #fzPickedList :is(th, td):nth-child(n+3):nth-child(-n+5) { display: none; }
+  body.fz-draft #fzPickedList tbody td.fzd-status-cell { white-space: normal; }
 }

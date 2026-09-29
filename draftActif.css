@@ -2319,6 +2319,16 @@ button.select-button .select-icon { width: 14px; height: 14px; }
 
 #playerTable tbody tr.draft-empty-row { display: block; }
 #playerTable tbody tr.draft-empty-row td { flex: 1 1 100%; padding: 0; }
+/* Sa cellule unique est à la fois td:first-child et td:last-child : les
+   règles de colonne du bureau et du téléphone (id doublé) la réduisaient
+   à la colonne ACTION, et le compteur de RANG y affichait « 1 ». */
+body.fz-draft #playerTable#playerTable tbody tr.draft-empty-row td {
+  flex: 1 1 100%;
+  max-width: none;
+  padding: 0;
+  text-align: center;
+}
+body.fz-draft #playerTable#playerTable tbody tr.draft-empty-row td::before { content: none; }
 
 
 @media (max-width: 900px) {

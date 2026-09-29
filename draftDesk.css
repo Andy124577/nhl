@@ -905,6 +905,10 @@
     text-align: right;
     color: var(--fzd-text-dim);
   }
+  /* STATUT : la même marge de page de 20px que la colonne ACTION du
+     tableau principal — sans elle, « C1 » touchait la barre de défilement. */
+  body.fz-draft #fzPickedList thead th:last-child,
+  body.fz-draft #fzPickedList tbody td:last-child { padding-right: 20px; }
   body.fz-draft #playerTable#playerTable thead th.points-column {
     background: none;
     color: var(--fzd-accent);

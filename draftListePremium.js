@@ -53,18 +53,37 @@ function initAvailabilityTabs() {
         strip.appendChild(bouton);
     });
 
-    const refleter = () => {
-        const surTous = select.value === 'picked';
-        strip.querySelectorAll('.availability-tab').forEach(b => {
-            b.classList.toggle('is-active', b.dataset.valeur === select.value);
-            b.setAttribute('aria-pressed', String(b.dataset.valeur === select.value));
-        });
-        vueLibres.hidden = surTous;
-        vueTous.hidden = !surTous;
-        if (surTous) fzRefreshPickedList();
-    };
-    select.addEventListener('change', refleter);
-    refleter();
+    select.addEventListener('change', fzRefreshPickedList);
+    fzRefreshPickedList();
+}
+
+/** Mon équipe est complète : _isCategoryFull() (draftActif.js) vide alors
+ *  chaque vue de « Disponibles », qui n'affichait plus que « Aucun joueur
+ *  disponible pour ce filtre ». La liste montre plutôt mes choix. */
+function fzVueMesChoix() {
+    const select = document.getElementById('availabilityFilter');
+    if (!select || select.value !== 'available') return false;
+    try { return typeof checkIfUserTeamIsDone === 'function' && checkIfUserTeamIsDone(); }
+    catch (e) { return false; }
+}
+
+/** Laquelle des deux listes est à l'écran. Rejouée à chaque rendu, pas
+ *  seulement au changement d'onglet : l'équipe se complète sans que
+ *  l'onglet bouge. */
+function fzSyncAvailabilityView() {
+    const strip = document.getElementById('availabilityTabs');
+    const select = document.getElementById('availabilityFilter');
+    const vueLibres = document.getElementById('playerTableWrapper');
+    const vueTous = document.getElementById('fzPickedListWrapper');
+    if (!select || !vueLibres || !vueTous) return;
+
+    const surTous = select.value === 'picked' || fzVueMesChoix();
+    if (strip) strip.querySelectorAll('.availability-tab').forEach(b => {
+        b.classList.toggle('is-active', b.dataset.valeur === select.value);
+        b.setAttribute('aria-pressed', String(b.dataset.valeur === select.value));
+    });
+    vueLibres.hidden = surTous;
+    vueTous.hidden = !surTous;
 }
 
 /* ============================================================
@@ -74,21 +93,24 @@ function initAvailabilityTabs() {
 /** Trouve la fiche d'un joueur déjà repêché dans les mêmes tableaux que
  *  le reste de la page (rien n'est recalculé ni inventé). */
 function fzTrouverFichePick(pick) {
-    const nom = pick.player;
+    // Même orthographe que la trousse, comme les effectifs en mémoire
+    // (normaliserNomsChoix, draftActif.js) : l'historique garde le nom
+    // sous lequel le joueur a été repêché.
+    const nom = (typeof FZDraftKit !== 'undefined' && typeof FZDraftKit.nomCanonique === 'function')
+        ? FZDraftKit.nomCanonique(pick.player) : pick.player;
     const skater = (typeof fullPlayerData !== 'undefined' ? fullPlayerData : []).find(j => j.skaterFullName === nom);
-    if (skater) return { categorie: 'skater', data: skater };
+    if (skater) return { categorie: 'skater', data: skater, nom };
     const goalie = (typeof goalieData !== 'undefined' ? goalieData : []).find(j => j.goalieFullName === nom);
-    if (goalie) return { categorie: 'goalie', data: goalie };
+    if (goalie) return { categorie: 'goalie', data: goalie, nom };
     const equipe = (typeof teamData !== 'undefined' ? teamData : []).find(j => j.teamFullName === nom);
-    if (equipe) return { categorie: 'team', data: equipe };
+    if (equipe) return { categorie: 'team', data: equipe, nom };
     return null;
 }
 
-function fzBuildPickedRow(pick, numeroChoix) {
+function fzBuildPickedRow(pick, numeroChoix, mesChoix) {
     const fiche = fzTrouverFichePick(pick);
     if (!fiche) return null;
-    const { categorie, data } = fiche;
-    const nom = pick.player;
+    const { categorie, data, nom } = fiche;
 
     const tr = document.createElement('tr');
     tr.className = 'fzd-picked-row';
@@ -165,7 +187,7 @@ function fzBuildPickedRow(pick, numeroChoix) {
     tdStatut.className = 'fzd-status-cell';
     const ronde = typeof fzRondeDe === 'function' && typeof draftData !== 'undefined'
         ? fzRondeDe(numeroChoix - 1, draftData) : 0;
-    tdStatut.textContent = [moi && pick.team === moi ? 'Vous' : pick.team,
+    tdStatut.textContent = [mesChoix ? '' : (moi && pick.team === moi ? 'Vous' : pick.team),
         ronde ? `R${ronde}` : '', `C${numeroChoix}`].filter(Boolean).join(' · ');
     tr.appendChild(tdStatut);
 
@@ -173,12 +195,16 @@ function fzBuildPickedRow(pick, numeroChoix) {
 }
 
 /** Rejouée par refreshDraftViews() (draftRefresh.js) après chaque rendu du
- *  tableau — ne reconstruit que si la vue "Tous" est bien celle affichée. */
+ *  tableau — ne reconstruit que si cette liste est bien celle affichée :
+ *  la vue "Tous", ou mes seuls choix quand mon équipe est complète. */
 function fzRefreshPickedList() {
+    fzSyncAvailabilityView();
     const wrapper = document.getElementById('fzPickedListWrapper');
     const corps = document.querySelector('#fzPickedList tbody');
     if (!wrapper || !corps || wrapper.hidden) return;
 
+    const mesChoix = fzVueMesChoix();
+    const moi = mesChoix && typeof getUserTeam === 'function' ? getUserTeam() : null;
     const historique = (typeof draftData !== 'undefined' && draftData && draftData.picksHistory) || [];
     corps.innerHTML = '';
 
@@ -198,14 +224,14 @@ function fzRefreshPickedList() {
         // Le numéro du tour, pas le rang dans l'historique : un tour sauté
         // ne consomme pas d'entrée, et décalait tous les numéros suivants.
         .map((pick, i) => ({ pick, numero: (Number.isInteger(pick.pickIndex) ? pick.pickIndex : i) + 1 }))
-        .filter(({ pick }) => fzTrouverFichePick(pick))
+        .filter(({ pick }) => (!mesChoix || pick.team === moi) && fzTrouverFichePick(pick))
         .sort((a, b) => {
             const fa = fzTrouverFichePick(a.pick).data, fb = fzTrouverFichePick(b.pick).data;
             return (fb[tri] || 0) - (fa[tri] || 0);
         });
 
     lignes.forEach(({ pick, numero }) => {
-        const tr = fzBuildPickedRow(pick, numero);
+        const tr = fzBuildPickedRow(pick, numero, mesChoix);
         if (tr) corps.appendChild(tr);
     });
 }
