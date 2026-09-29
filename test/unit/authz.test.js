@@ -109,6 +109,33 @@ test('un pool sans créateur identifiable refuse l action au lieu de l ouvrir à
         "il faut bien quelqu'un pour dépanner un pool dont le créateur a disparu");
 });
 
+test('dans un pool sans mot de passe, tout membre invite ; dans un pool protégé, le créateur seul', () => {
+    const ouvert = pool({ creator: 'alice', passwordHash: null });
+    assert.equal(authz.peutInviter(ouvert, { username: 'alice' }), true);
+    assert.equal(authz.peutInviter(ouvert, { username: 'bob' }), true, 'bob est membre');
+    assert.equal(authz.peutInviter(ouvert, { username: 'carl' }), false, 'carl n est pas dans le pool');
+    assert.equal(authz.peutInviter(ouvert, {}), false);
+
+    const protege = pool({ creator: 'alice' });
+    assert.equal(authz.peutInviter(protege, { username: 'alice' }), true);
+    assert.equal(authz.peutInviter(protege, { username: 'bob' }), false,
+        'une invitation fait entrer sans le mot de passe');
+    assert.equal(authz.peutInviter(protege, { username: 'admin', isAdmin: true }), true);
+    assert.equal(authz.peutInviter(null, { username: 'bob' }), false);
+});
+
+test('une invitation se retire par le créateur, ou par le membre qui l a envoyée', () => {
+    const p = pool({ creator: 'alice', passwordHash: null });
+    const deBob = { username: 'dora', invitedBy: 'bob' };
+    const dAlice = { username: 'eve', invitedBy: 'alice' };
+    assert.equal(authz.peutAnnulerInvitation(p, deBob, { username: 'bob' }), true);
+    assert.equal(authz.peutAnnulerInvitation(p, dAlice, { username: 'bob' }), false);
+    assert.equal(authz.peutAnnulerInvitation(p, deBob, { username: 'alice' }), true);
+    assert.equal(authz.peutAnnulerInvitation(p, null, { username: 'bob' }), false);
+    assert.equal(authz.peutAnnulerInvitation(p, { username: 'x', invitedBy: 'carl' }, { username: 'carl' }), false,
+        'carl a quitté le pool : ses invitations ne sont plus les siennes à gérer');
+});
+
 test('appartenance et équipe se lisent sur l état, jamais sur ce que le client annonce', () => {
     const p = pool({ creator: 'alice' });
     assert.equal(authz.equipeDe(p, 'bob'), 'Équipe 2');

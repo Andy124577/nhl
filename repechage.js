@@ -131,17 +131,17 @@
             </li>`);
 
         // Les invitations en attente prennent place à la suite, en
-        // pointillé : on voit qui doit encore arriver. Seule la personne qui
-        // a créé le pool peut en retirer une.
-        const gerer = !!createur && createur === moi;
+        // pointillé : on voit qui doit encore arriver. La personne qui a créé
+        // le pool peut en retirer une ; un membre, celles qu'il a envoyées.
+        const gerer = inv => (!!createur && createur === moi) || inv.invitedBy === moi;
         const invites = invitationsEnAttente(pool.data).map(inv => `
             <li class="rp-seat is-invited">
                 <span class="rp-seat-ini" aria-hidden="true">${echapper((inv.username.charAt(0) || '?').toUpperCase())}</span>
                 <span class="rp-seat-txt">
                     <span class="rp-seat-nom">${echapper(inv.username)}</span>
-                    <span class="rp-seat-qui">Invitation envoyée</span>
+                    <span class="rp-seat-qui">Invitation envoyée${inv.invitedBy && inv.invitedBy !== moi ? ` par ${echapper(inv.invitedBy)}` : ''}</span>
                 </span>
-                ${gerer ? `
+                ${gerer(inv) ? `
                 <button type="button" class="rp-seat-cancel" data-annuler-invitation="${echapper(inv.username)}"
                         aria-label="Annuler l’invitation de ${echapper(inv.username)}" title="Annuler l’invitation">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4"
@@ -449,9 +449,10 @@
             }
         }
 
-        // La recherche d'invités : pour qui a créé le pool, tant qu'il n'est
-        // pas une file instantanée (celle-ci se remplit toute seule).
-        const inviterParNom = jeSuisCreateur && !instantane;
+        // La recherche d'invités : pour qui a créé le pool — ou pour tout
+        // membre d'un pool sans mot de passe (authz.peutInviter) —, tant qu'il
+        // n'est pas une file instantanée (celle-ci se remplit toute seule).
+        const inviterParNom = (jeSuisCreateur || !pool.data.hasPassword) && !instantane;
         const lienSeul = !instantane && !inviterParNom
             ? '<button type="button" class="rp-btn secondary" id="rpInviter"><span>Copier le lien d’invitation</span></button>'
             : '';

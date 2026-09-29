@@ -48,7 +48,7 @@
         { cle: 'apercu',   titre: 'Aperçu' },
         { cle: 'equipes',  titre: 'Participants' },
         { cle: 'regles',   titre: 'Règles' },
-        { cle: 'inviter',  titre: 'Inviter', createurSeulement: true },
+        { cle: 'inviter',  titre: 'Inviter', inviteursSeulement: true },
         { cle: 'identite', titre: 'Identité', createurSeulement: true }
     ];
 
@@ -82,6 +82,21 @@
     function estCreateur(donnees) {
         const createur = createurDuPool(donnees);
         return !!createur && createur === utilisateur();
+    }
+
+    /**
+     * Peut-on inviter dans ce pool ? Même règle que le serveur
+     * (authz.peutInviter) : la personne qui l'a créé, ou tout membre d'un
+     * pool sans mot de passe — celui-ci est déjà ouvert à tous.
+     */
+    function peutInviter(donnees) {
+        if (!donnees) return false;
+        return estCreateur(donnees) || (donnees.isMember === true && !donnees.hasPassword);
+    }
+
+    /** Le créateur retire toutes les invitations ; un membre, celles qu'il a envoyées. */
+    function peutAnnulerInvitation(donnees, invitation) {
+        return estCreateur(donnees) || (!!invitation && invitation.invitedBy === utilisateur());
     }
 
     /**
@@ -634,9 +649,9 @@
                             ${avatar(inv.username, 28)}
                             <span class="ps-invite-txt">
                                 <span class="ps-invite-name">${echapper(inv.username)}</span>
-                                <span class="ps-invite-meta">Invité ${echapper(ilYa(inv.invitedAt))}</span>
+                                <span class="ps-invite-meta">Invité ${echapper(ilYa(inv.invitedAt))}${inv.invitedBy && inv.invitedBy !== utilisateur() ? ` par ${echapper(inv.invitedBy)}` : ''}</span>
                             </span>
-                            <button type="button" class="ps-link-btn is-danger" data-annuler-invitation="${echapper(inv.username)}">Annuler</button>
+                            ${peutAnnulerInvitation(donnees, inv) ? `<button type="button" class="ps-link-btn is-danger" data-annuler-invitation="${echapper(inv.username)}">Annuler</button>` : ''}
                         </li>`).join('')}
                 </ul>`
             : '<p class="ps-empty">Aucune invitation en attente.</p>';
@@ -733,7 +748,9 @@
 
         construireCoquille();
         const createur = estCreateur(donnees);
-        const visibles = ONGLETS.filter(o => !o.createurSeulement || createur);
+        const inviteur = peutInviter(donnees);
+        const visibles = ONGLETS.filter(o =>
+            (!o.createurSeulement || createur) && (!o.inviteursSeulement || inviteur));
         if (!visibles.some(o => o.cle === ongletActif)) ongletActif = visibles[0].cle;
 
         const etat = FZPool.draftState(donnees);

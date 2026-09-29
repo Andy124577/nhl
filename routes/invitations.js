@@ -1,10 +1,12 @@
 /**
- * Invitations : l'administration d'un pool fait venir quelqu'un.
+ * Invitations : un pool fait venir quelqu'un.
  *
  * Deux côtés, deux familles de routes :
  *
- *   - l'administration du pool (la personne qui l'a créé) cherche un compte,
- *     l'invite, et peut annuler ;
+ *   - le pool cherche un compte, l'invite, et peut annuler. La personne qui
+ *     l'a créé le peut toujours ; dans un pool sans mot de passe, tout membre
+ *     le peut aussi (authz.peutInviter), et retire les invitations qu'il a
+ *     lui-même envoyées ;
  *   - la personne invitée lit ses invitations, les accepte ou les refuse.
  *
  * L'invitation vit dans les données du pool (`pool.invitations`, voir
@@ -12,8 +14,8 @@
  * elle-même, suit le pool quand il est renommé, part avec lui quand il est
  * supprimé, et marche en mode fichier comme en PostgreSQL.
  *
- * Accepter une invitation fait entrer SANS le mot de passe du pool : c'est la
- * personne qui l'a choisi qui ouvre la porte.
+ * Accepter une invitation fait entrer SANS le mot de passe du pool : dans un
+ * pool protégé, c'est la personne qui l'a choisi qui ouvre la porte.
  *
  * Le signal temps réel `poolInvitation` part vers la salle personnelle de la
  * personne invitée (services/diffusion.js) : c'est lui qui fait surgir la
@@ -46,13 +48,22 @@ function monter(app, ctx) {
 
     const refus = (resultat) => new ErreurMetier(resultat.code || 400, resultat.message);
 
-    /** Le pool, et le droit de l'administrer. Lève une erreur métier sinon. */
-    async function poolAdministre(req) {
+    const REFUS_INVITER = "Ce pool est protégé par un mot de passe : seule la personne qui l'a créé peut inviter des participants.";
+
+    /** Lève une erreur métier si cette personne ne peut pas inviter dans ce pool. */
+    function verifierInviteur(data, req) {
+        if (!authz.peutInviter(data, { username: req.auth.username, isAdmin: req.auth.isAdmin })) {
+            throw new ErreurMetier(403, authz.estMembre(data, req.auth.username)
+                ? REFUS_INVITER
+                : "Seuls les membres du pool peuvent inviter des participants.");
+        }
+    }
+
+    /** Le pool, et le droit d'y inviter. Lève une erreur métier sinon. */
+    async function poolOuInviter(req) {
         const enveloppe = await store.lire(req.params.poolName);
         if (!enveloppe) throw new ErreurMetier(404, "Pool introuvable.");
-        if (!authz.peutAdministrer(enveloppe.data, { username: req.auth.username, isAdmin: req.auth.isAdmin })) {
-            throw new ErreurMetier(403, "Seule la personne qui a créé le pool peut inviter des participants.");
-        }
+        verifierInviteur(enveloppe.data, req);
         return enveloppe;
     }
 
@@ -64,22 +75,22 @@ function monter(app, ctx) {
             .map(u => ({ username: u.username, avatarUrl: u.avatarUrl || '' }));
     }
 
-    // ───────────────────────────── Côté administration ─────────────────────────────
+    // ───────────────────────────── Côté pool ─────────────────────────────
 
     /**
      * Chercher des comptes à inviter.
      *
-     * Réservé à l'administration du pool : un annuaire ouvert à tous les
-     * comptes du site dirait à n'importe qui quels noms existent. Ce qu'on
-     * renvoie reste un nom et un avatar, déjà visibles par tous les membres
-     * d'un pool commun.
+     * Réservé à qui peut inviter dans ce pool (authz.peutInviter) : un
+     * annuaire ouvert à tous les comptes du site dirait à n'importe qui quels
+     * noms existent. Ce qu'on renvoie reste un nom et un avatar, déjà visibles
+     * par tous les membres d'un pool commun.
      *
      * Les noms qui COMMENCENT par la recherche passent devant ceux qui la
      * contiennent, casse et accents ignorés : on tape le début d'un nom.
      */
     app.get('/api/pools/:poolName/invite-search', auth.requireAuth, async (req, res) => {
         try {
-            const enveloppe = await poolAdministre(req);
+            const enveloppe = await poolOuInviter(req);
             const q = poolOps.reduireNom(typeof req.query.q === 'string' ? req.query.q.slice(0, 40) : '');
             if (q.length < RECHERCHE_MIN) return res.json({ resultats: [] });
 
@@ -114,7 +125,7 @@ function monter(app, ctx) {
             const cible = typeof req.body?.username === 'string' ? req.body.username.trim() : '';
             if (!cible) return res.status(400).json({ message: "Personne à inviter requise." });
 
-            await poolAdministre(req);
+            await poolOuInviter(req);
             const compte = (await comptes()).find(c => c.username === cible);
             if (!compte) return res.status(404).json({ message: "Ce compte n'existe pas." });
 
@@ -122,9 +133,8 @@ function monter(app, ctx) {
                 scope: 'pool:inviter',
                 userId: req.auth.userId,
                 appliquer: async ({ data }) => {
-                    if (!authz.peutAdministrer(data, { username: req.auth.username, isAdmin: req.auth.isAdmin })) {
-                        throw new ErreurMetier(403, "Seule la personne qui a créé le pool peut inviter des participants.");
-                    }
+                    // Revérifié sous le verrou : un mot de passe a pu être posé entre-temps.
+                    verifierInviteur(data, req);
                     const resultat = poolOps.inviter(data, { username: cible, invitedBy: req.auth.username });
                     if (!resultat.ok) throw refus(resultat);
                     return { valeur: { invitation: resultat.invitation } };
@@ -155,11 +165,16 @@ function monter(app, ctx) {
                 scope: 'pool:annuler-invitation',
                 userId: req.auth.userId,
                 appliquer: async ({ data }) => {
-                    if (!authz.peutAdministrer(data, { username: req.auth.username, isAdmin: req.auth.isAdmin })) {
-                        throw new ErreurMetier(403, "Seule la personne qui a créé le pool peut annuler une invitation.");
+                    const qui = { username: req.auth.username, isAdmin: req.auth.isAdmin };
+                    const invitation = poolOps.invitationPour(data, cible);
+                    // Déjà partie : un membre peut l'apprendre, il voit la liste des invitations.
+                    if (!invitation && (authz.estMembre(data, qui.username) || authz.peutAdministrer(data, qui))) {
+                        throw new ErreurMetier(404, "Cette invitation n'existe plus.");
                     }
-                    const resultat = poolOps.retirerInvitation(data, cible);
-                    if (!resultat.retiree) throw new ErreurMetier(404, "Cette invitation n'existe plus.");
+                    if (!authz.peutAnnulerInvitation(data, invitation, qui)) {
+                        throw new ErreurMetier(403, "Seule la personne qui a créé le pool, ou celle qui a envoyé l'invitation, peut l'annuler.");
+                    }
+                    poolOps.retirerInvitation(data, cible);
                     return { valeur: {} };
                 }
             });

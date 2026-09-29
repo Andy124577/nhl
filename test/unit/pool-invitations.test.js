@@ -160,11 +160,21 @@ test('entrer dans le pool, par l invitation ou par la porte, consomme l invitati
 
 // ───────────────────────────── Recherche ─────────────────────────────
 
-test('seule l administration du pool cherche des comptes, et le début du nom passe devant', async () => {
+test('seul qui peut inviter cherche des comptes, et le début du nom passe devant', async () => {
     const users = ['alice', 'bob', 'Bobette', 'jimbo', 'Élodie', 'carl'].map(n => ({ username: n, id: n }));
-    const h = banc({ Ligue: poolNeuf({ membres: { 'Équipe 1': ['alice'], 'Équipe 2': ['bob'] } }) }, { users });
+    const membres = { 'Équipe 1': ['alice'], 'Équipe 2': ['bob'] };
+    const h = banc({
+        Ligue: { ...poolNeuf({ membres }), passwordHash: '$2a$10$empreinte' },
+        Ouvert: poolNeuf({ membres })
+    }, { users });
 
-    assert.equal((await h.appeler('GET', '/api/pools/Ligue/invite-search', { auth: BOB, query: { q: 'bo' } })).statusCode, 403);
+    const protege = await h.appeler('GET', '/api/pools/Ligue/invite-search', { auth: BOB, query: { q: 'bo' } });
+    assert.equal(protege.statusCode, 403, 'pool protégé : le créateur seul');
+    assert.match(protege.body.message, /mot de passe/);
+    assert.equal((await h.appeler('GET', '/api/pools/Ouvert/invite-search', { auth: CARL, query: { q: 'bo' } })).statusCode, 403,
+        'il faut être membre');
+    assert.deepEqual((await h.appeler('GET', '/api/pools/Ouvert/invite-search', { auth: BOB, query: { q: 'car' } })).body.resultats
+        .map(r => r.username), ['carl'], 'pool sans mot de passe : un membre cherche aussi');
     assert.equal((await h.appeler('GET', '/api/pools/Ligue/invite-search', { query: { q: 'bo' } })).statusCode, 401);
 
     const court = await h.appeler('GET', '/api/pools/Ligue/invite-search', { auth: ALICE, query: { q: 'b' } });
@@ -219,6 +229,32 @@ test('inviter prévient la personne, qui voit l invitation et entre sans le mot 
     assert.deepEqual(h.lirePool('Ligue').teams['Les Castors'].members, ['carl']);
     assert.equal(h.lirePool('Ligue').invitations, undefined);
     assert.equal((await h.appeler('GET', '/api/invitations', { auth: CARL })).body.invitations.length, 0);
+});
+
+test('dans un pool sans mot de passe, un membre invite et retire ses propres invitations', async () => {
+    const users = ['alice', 'bob', 'carl', 'dora'].map(n => ({ username: n, id: n }));
+    const h = banc({ Ligue: poolNeuf({ membres: { 'Équipe 1': ['alice'], 'Équipe 2': ['bob'] } }) }, { users });
+
+    const envoi = await h.appeler('POST', '/api/pools/Ligue/invitations', { auth: BOB, body: { username: 'carl' } });
+    assert.equal(envoi.statusCode, 200, JSON.stringify(envoi.body));
+    assert.equal(h.lirePool('Ligue').invitations[0].invitedBy, 'bob');
+    assert.ok(h.etat.emissions.some(([evt, salle, charge]) =>
+        evt === 'poolInvitation' && salle === 'user:carl' && charge.invitedBy === 'bob'));
+    await h.appeler('POST', '/api/pools/Ligue/invitations', { auth: ALICE, body: { username: 'dora' } });
+
+    assert.equal((await h.appeler('POST', '/api/pools/Ligue/invitations/cancel', { auth: BOB, body: { username: 'dora' } })).statusCode, 403,
+        'l invitation d alice n est pas celle de bob');
+    assert.equal((await h.appeler('POST', '/api/pools/Ligue/invitations/cancel', { auth: BOB, body: { username: 'carl' } })).statusCode, 200);
+    assert.equal((await h.appeler('POST', '/api/pools/Ligue/invitations/cancel', { auth: BOB, body: { username: 'carl' } })).statusCode, 404,
+        'déjà partie : le client s en contente');
+    assert.deepEqual(h.lirePool('Ligue').invitations.map(i => i.username), ['dora']);
+
+    // Un mot de passe posé ferme la porte aux invitations des membres.
+    h.etat.pools.get('Ligue').data = { ...h.lirePool('Ligue'), passwordHash: '$2a$10$empreinte' };
+    const ferme = await h.appeler('POST', '/api/pools/Ligue/invitations', { auth: BOB, body: { username: 'carl' } });
+    assert.equal(ferme.statusCode, 403);
+    assert.match(ferme.body.message, /mot de passe/);
+    assert.equal((await h.appeler('POST', '/api/pools/Ligue/invitations', { auth: ALICE, body: { username: 'carl' } })).statusCode, 200);
 });
 
 test('refuser ou annuler retire l invitation des deux côtés', async () => {
