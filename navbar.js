@@ -34,6 +34,7 @@ function initModernNavbar() {
         // fermés. Dans la même tâche que la construction, donc jamais peints.
         appliquerVisibiliteMemorisee();
         initializeEventListeners(username, isAdmin);
+        if (isAdmin) verifierBascule();
         checkPendingTrades();
         checkActiveDrafts();
         updateTradeLinkVisibility();
@@ -531,9 +532,12 @@ async function loadAdminUsers() {
 const ADMIN_PHOTOS_VERSION = '20260929';
 let _adminPhotosChargement = null;
 
-function ouvrirPhotosAdmin() {
+async function ouvrirPhotosAdmin() {
     document.getElementById('userDropdownMenu')?.classList.remove('show');
     document.getElementById('userAvatarBtn')?.setAttribute('aria-expanded', 'false');
+
+    const pilote = await piloteDeLaBascule();
+    if (pilote) return proposerRetourPourPhotos(pilote);
 
     if (!_adminPhotosChargement) {
         _adminPhotosChargement = new Promise((resolve, reject) => {
@@ -552,6 +556,67 @@ function ouvrirPhotosAdmin() {
     _adminPhotosChargement
         .then(() => window.fzAdminPhotos.ouvrir())
         .catch(() => fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' }));
+}
+
+// ==================== BASCULE D'ADMINISTRATION ====================
+// Après « Changer d'utilisateur », la session EST celle du compte visité : le
+// serveur lui refuse l'administration (requireBascule, middleware/auth.js)
+// pour que le dépannage montre ce que la personne voit vraiment. localStorage
+// garde pourtant l'isAdmin du compte d'origine : le menu affichait
+// « Administrateur » et des outils que le serveur refusait. /session dit qui
+// on est — lue une fois par page, et seulement pour l'administration.
+let _sessionAdmin = null;
+
+function lireSessionAdmin() {
+    if (!_sessionAdmin) {
+        _sessionAdmin = fetch(`${navbarBaseUrl()}/session`, { cache: 'no-store' })
+            .then(r => (r.ok ? r.json() : null))
+            .catch(() => null);
+    }
+    return _sessionAdmin;
+}
+
+/** Le compte administrateur qui pilote la bascule en cours, ou null. */
+async function piloteDeLaBascule() {
+    const session = await lireSessionAdmin();
+    return session && session.authenticated && session.impersonatedBy && !session.isAdmin
+        ? session.impersonatedBy
+        : null;
+}
+
+async function verifierBascule() {
+    const pilote = await piloteDeLaBascule();
+    if (pilote) {
+        const role = document.querySelector('.udh-role');
+        if (role) {
+            role.classList.remove('is-admin');
+            role.innerHTML = `${NAV_ICON.shield}<span></span>`;
+            role.querySelector('span').textContent = `Bascule depuis ${pilote}`;
+        }
+    }
+
+    // Revenu d'une bascule pour vérifier les photos : l'écran se rouvre.
+    let rouvrir = false;
+    try {
+        rouvrir = sessionStorage.getItem('fzOuvrirPhotos') === '1';
+        sessionStorage.removeItem('fzOuvrirPhotos');
+    } catch { /* stockage indisponible : on n'insiste pas */ }
+    const session = await lireSessionAdmin();
+    if (rouvrir && session && session.isAdmin) ouvrirPhotosAdmin();
+}
+
+/** Les photos se vérifient depuis le compte administrateur : on propose d'y revenir. */
+async function proposerRetourPourPhotos(pilote) {
+    const visite = localStorage.getItem('username') || '';
+    const ok = await fzConfirm({
+        title: `Revenir à ${pilote} ?`,
+        message: `Vous naviguez en ce moment en tant que ${visite}. Les photos se vérifient depuis votre compte administrateur : on y revient, puis l’écran s’ouvre.`,
+        confirmLabel: `Revenir à ${pilote}`,
+        icon: 'swap'
+    });
+    if (!ok) return;
+    try { sessionStorage.setItem('fzOuvrirPhotos', '1'); } catch { /* il faudra recliquer */ }
+    switchToUser(pilote);
 }
 
 async function switchToUser(username) {
