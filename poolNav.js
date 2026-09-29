@@ -128,13 +128,16 @@
         // Le chevron, à côté, déroule la liste pour changer de pool.
         const admin = !!(window.FZPoolSettings && FZPoolSettings.isCreator(courant.name));
         const enAttente = admin ? ((courant.data && courant.data.invitations) || []).length : 0;
-        const surLaPage = pageCourante() === 'pool';
+        // pool.html seule est l'accueil des pools ; la page du pool porte
+        // toujours son onglet.
+        const surLaPage = pageCourante() === 'pool' &&
+            new URLSearchParams(window.location.search).has('onglet');
 
         return `
             <div class="fz-pool-block">
                 <p class="fz-rail-label">Pool actif</p>
                 <div class="fz-pool-row">
-                    <a href="pool.html" class="fz-active-pool${surLaPage ? ' is-active' : ''}"
+                    <a href="pool.html?onglet=apercu" class="fz-active-pool${surLaPage ? ' is-active' : ''}"
                        ${surLaPage ? 'aria-current="page"' : ''}
                        title="Page du pool" aria-label="${echapper(courant.name)} — page du pool">
                         ${vignette(courant, 'fz-active-pool-img')}

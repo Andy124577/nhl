@@ -12,6 +12,11 @@
    pool (isCreator) et mène à la page du pool depuis n'importe quel
    bouton `data-fz-reglages="<onglet>"`.
 
+   pool.html seule — le lien « Pools » de la barre — est l'accueil des
+   pools : trois boutons, Créer un pool, Rejoindre un pool, et le pool
+   actif sous son nom. Ce dernier mène à la page du pool, qui porte
+   toujours un `?onglet=`.
+
    Les onglets de la page :
 
      Aperçu   — tout le pool d'un coup d'œil : où en est le repêchage, le
@@ -714,28 +719,67 @@
         return racine;
     }
 
-    /** Sans pool à montrer : pas connecté, ou membre d'aucun pool. */
-    function rendreVide() {
+    const ICONE_REJOINDRE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>`;
+
+    /**
+     * pool.html seule, sans onglet ni pool demandé, est l'accueil des
+     * pools : trois boutons — créer, rejoindre, et le pool actif sous son
+     * nom. La page du pool elle-même porte toujours un `?onglet=`.
+     */
+    function surLAccueil() {
+        const params = new URLSearchParams(window.location.search);
+        return !params.has('onglet') && !params.has('pool');
+    }
+
+    /**
+     * L'accueil des pools. Sans aucun pool, le troisième bouton n'aurait
+     * rien à ouvrir : il reste les deux premiers. Hors connexion, un seul.
+     */
+    function rendreAccueil() {
         const cible = hote();
         if (!cible) return;
         racine = null;
-        const connecte = localStorage.getItem('isLoggedIn') === 'true';
-        document.title = 'Mon pool – Fantazy';
-        cible.innerHTML = connecte ? `
-            <section class="pp-empty">
-                <img src="Icons/grayGroup.png" alt="" class="pp-empty-img">
-                <h1 class="pp-title">Aucun pool pour l’instant</h1>
-                <p>Créez votre ligue et invitez vos amis, ou joignez-vous à un pool ouvert.</p>
-                <div class="pp-empty-actions">
-                    <a class="ps-primary" href="creer-pool.html">Créer un pool</a>
-                    <a class="ps-secondary" href="rejoindre-pool.html">Rejoindre un pool</a>
-                </div>
-            </section>` : `
-            <section class="pp-empty">
-                <h1 class="pp-title">Connectez-vous</h1>
-                <p>La page du pool montre ses équipes, ses règles et son repêchage aux membres.</p>
-                <div class="pp-empty-actions">
-                    <a class="ps-primary" href="login.html">Se connecter</a>
+        document.title = 'Pools – Fantazy';
+
+        if (localStorage.getItem('isLoggedIn') !== 'true') {
+            cible.innerHTML = `
+                <section class="pp-empty">
+                    <h1 class="pp-title">Connectez-vous</h1>
+                    <p>La page du pool montre ses équipes, ses règles et son repêchage aux membres.</p>
+                    <div class="pp-empty-actions">
+                        <a class="ps-primary" href="login.html">Se connecter</a>
+                    </div>
+                </section>`;
+            return;
+        }
+
+        const nom = window.FZPool && FZPool.get();
+        const donnees = nom ? donneesDuPool(nom) : null;
+        const bouton = (href, visuel, libelle, surtitre) => `
+            <a class="pp-hub-btn" href="${href}">
+                ${visuel}
+                <span class="pp-hub-txt">
+                    ${surtitre ? `<span class="pp-hub-eyebrow">${surtitre}</span>` : ''}
+                    <span class="pp-hub-label">${libelle}</span>
+                </span>
+                <span class="pp-hub-chevron" aria-hidden="true">›</span>
+            </a>`;
+
+        cible.innerHTML = `
+            <section class="pp-hub">
+                <h1 class="pp-title">Pools</h1>
+                ${donnees ? '' : '<p class="pp-sub">Vous n’êtes dans aucun pool pour l’instant.</p>'}
+                <div class="pp-hub-actions">
+                    ${bouton('creer-pool.html',
+                        `<span class="pp-hub-icon" aria-hidden="true">${icone('plus', 24)}</span>`,
+                        'Créer un pool')}
+                    ${bouton('rejoindre-pool.html',
+                        `<span class="pp-hub-icon">${ICONE_REJOINDRE}</span>`,
+                        'Rejoindre un pool')}
+                    ${donnees ? bouton(echapper(adresse(nom, 'apercu')),
+                        `<img src="${echapper(FZPool.image(donnees))}" class="pp-hub-img" alt=""
+                              onerror="this.src='Icons/grayGroup.png'">`,
+                        echapper(nom), 'Mon pool') : ''}
                 </div>
             </section>`;
     }
@@ -744,7 +788,7 @@
         if (!hote()) return;
         const donnees = poolOuvert ? donneesDuPool(poolOuvert) : null;
         // Le pool a disparu sous la page — quitté, supprimé, renommé ailleurs.
-        if (!donnees) { rendreVide(); return; }
+        if (!donnees) { rendreAccueil(); return; }
 
         construireCoquille();
         const createur = estCreateur(donnees);
@@ -818,13 +862,13 @@
 
     /**
      * Changer d'onglet. L'onglet vit dans l'adresse (`?onglet=`) : un
-     * rechargement, un lien partagé ou le bouton Retour y ramènent.
+     * rechargement, un lien partagé ou le bouton Retour y ramènent. Même
+     * l'Aperçu le garde — sans lui, pool.html est l'accueil des pools.
      */
     function allerA(onglet) {
         ongletActif = onglet;
         const url = new URL(window.location.href);
-        if (onglet === 'apercu') url.searchParams.delete('onglet');
-        else url.searchParams.set('onglet', onglet);
+        url.searchParams.set('onglet', onglet);
         history.replaceState(null, '', url.toString());
         rendre();
         // « Participants » dans le tiroir du téléphone mène ici sans
@@ -1363,13 +1407,15 @@
 
     const ONGLETS_CONNUS = new Set(ONGLETS.map(o => o.cle));
 
-    /** L'adresse de la page du pool, sur un onglet donné. */
+    /**
+     * L'adresse de la page du pool, sur un onglet donné. Toujours avec son
+     * `?onglet=` : pool.html seule est l'accueil des pools.
+     */
     function adresse(nom, onglet) {
         const params = new URLSearchParams();
         if (nom && window.FZPool && nom !== FZPool.get()) params.set('pool', nom);
-        if (onglet && onglet !== 'apercu') params.set('onglet', onglet);
-        const requete = params.toString();
-        return requete ? `pool.html?${requete}` : 'pool.html';
+        params.set('onglet', ONGLETS_CONNUS.has(onglet) ? onglet : 'apercu');
+        return `pool.html?${params}`;
     }
 
     /**
@@ -1386,8 +1432,9 @@
     }
 
     /**
-     * Démarrage de la page : le pool actif (activePool.js a déjà appliqué un
-     * éventuel `?pool=`), l'onglet de l'adresse.
+     * Démarrage de la page : l'accueil des pools si l'adresse ne demande
+     * rien ; sinon le pool actif (activePool.js a déjà appliqué un
+     * éventuel `?pool=`), sur l'onglet de l'adresse.
      *
      * La page suit les données en temps réel — une équipe rejointe, un
      * choix fait, une invitation acceptée. On ne redessine pas pendant
@@ -1396,8 +1443,15 @@
      */
     async function demarrerPage() {
         if (!hote()) return;
-        if (!window.FZPool || localStorage.getItem('isLoggedIn') !== 'true') { rendreVide(); return; }
+        if (!window.FZPool || localStorage.getItem('isLoggedIn') !== 'true') { rendreAccueil(); return; }
         await FZPool.ready();
+
+        // Le nom du pool actif peut changer sous l'accueil (renommé ailleurs).
+        if (surLAccueil()) {
+            rendreAccueil();
+            FZPool.onData(rendreAccueil);
+            return;
+        }
 
         poolOuvert = FZPool.get();
         const demande = new URLSearchParams(window.location.search).get('onglet');

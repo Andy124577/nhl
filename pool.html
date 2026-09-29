@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon pool – Fantazy</title>
+    <title>Pools – Fantazy</title>
     <!-- L'ancienne page « Pools » a été scindée : la création, l'adhésion et le
          repêchage vivent chacun sur leur page. Ses anciens liens (?tab=…)
-         continuent d'aboutir ; sans eux, cette adresse est la page du pool
-         actif. -->
+         continuent d'aboutir. Sans paramètre, cette adresse est l'accueil
+         des pools (créer, rejoindre, mon pool) ; ?onglet=… est la page du
+         pool actif. -->
     <script>
         (function () {
             var onglet = new URLSearchParams(window.location.search).get('tab');
@@ -34,7 +35,7 @@
     <link rel="stylesheet" href="poolNav.css?v=20260928a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="index.css?v=20260926b">
-    <link rel="stylesheet" href="poolPage.css?v=20260926b">
+    <link rel="stylesheet" href="poolPage.css?v=20260929a">
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit précéder tout script de page. -->
     <script defer src="activePool.js?v=20260927d"></script>
@@ -50,8 +51,8 @@
     <script defer src="navbar.js?v=20260929b"></script>
     <script defer src="avatars.js"></script>
     <script defer src="profanity.js"></script>
-    <script defer src="poolSettings.js?v=20260928a"></script>
-    <script defer src="poolNav.js?v=20260925f"></script>
+    <script defer src="poolSettings.js?v=20260929a"></script>
+    <script defer src="poolNav.js?v=20260929a"></script>
     <script defer src="poolInvites.js?v=20260925f"></script>
     <script defer src="notifications.js?v=20260928a"></script>
 </body>

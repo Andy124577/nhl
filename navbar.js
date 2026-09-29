@@ -178,10 +178,10 @@ function buildLoggedOutNavbar() {
 // Ordre : Accueil → Pools ▾ → Repêchage (🔴) → Échanges (🔴) → Classement
 //         → Calendrier → Stats
 //
-// « Pools » mène droit à la page du pool actif (pool.html) : ses équipes,
-// ses règles, ses invitations. Changer de pool, en créer ou en rejoindre un
-// se fait dans le rail et le tiroir (poolNav.js) ; sans aucun pool, la page
-// elle-même propose de créer ou de rejoindre.
+// « Pools » mène à l'accueil des pools (pool.html) : trois boutons, créer
+// un pool, en rejoindre un, ou ouvrir le pool actif sous son nom — ses
+// équipes, ses règles, ses invitations (pool.html?onglet=…). Changer de
+// pool se fait dans le rail et le tiroir (poolNav.js).
 //
 // Les pastilles ne comptent que le pool actif : c'est celui que ces liens
 // ouvriront. Ce qui se passe dans les autres pools est signalé par la
