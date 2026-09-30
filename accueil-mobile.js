@@ -151,7 +151,19 @@ function fzmPreseasonExtras(draftState, activeName) {
 // mouvement de rang réel via /pool-rank-movement (partagé avec le
 // panneau bureau, voir loadDashData dans accueil-dash.js).
 // ============================================================
+// Les points du soir (pointsDirect.js) redessinent la bande sur place :
+// voir fzmActualiserRang.
+let fzmRangContexte = null;
+function fzmActualiserRang() {
+    const bande = document.querySelector('#fzMobileHome .fzm-rank-strip');
+    if (!bande || !fzmRangContexte) return;
+    const html = fzmRankStrip(fzmRangContexte.activeName, fzmRangContexte.movement);
+    if (html) bande.outerHTML = html;
+}
+
 function fzmRankStrip(activeName, movement) {
+    const avant = fzmRangContexte && fzmRangContexte.activeName === activeName ? fzmRangContexte.live : null;
+    fzmRangContexte = { activeName, movement, live: 0 };
     const pool = (userData.userPools || []).find(p => p.name === activeName);
     if (!pool) return '';
     const scores = buildTeamScores(pool);
@@ -160,6 +172,8 @@ function fzmRankStrip(activeName, movement) {
     const idx = list.findIndex(t => t.isCurrentUser);
     if (idx < 0) return '';
     const mine = list[idx];
+    fzmRangContexte.live = mine.live || 0;
+    const neuf = avant !== null && fzmRangContexte.live > avant ? ' is-new' : '';
 
     let gapHTML = '';
     if (list.length > 1) {
@@ -174,8 +188,11 @@ function fzmRankStrip(activeName, movement) {
 
     let trendHTML = '—';
     const teamRow = movement?.teams?.find(t => t.teamName === mine.teamName);
-    if (teamRow && movement.hasSnapshot && teamRow.rankToday != null && teamRow.rankToday !== teamRow.rankNow) {
-        const moved = teamRow.rankToday - teamRow.rankNow; // positive = moved up
+    // Avec des points du soir dans ce pool, le rang affiché fait foi : celui
+    // du serveur ne les compte pas (même règle que fzsRangHTML).
+    const rangActuel = list.some(t => t.live) ? idx + 1 : teamRow?.rankNow;
+    if (teamRow && movement.hasSnapshot && teamRow.rankToday != null && rangActuel != null && teamRow.rankToday !== rangActuel) {
+        const moved = teamRow.rankToday - rangActuel; // positive = moved up
         trendHTML = `${moved > 0 ? '▲' : '▼'} ${Math.abs(moved)} place${Math.abs(moved) > 1 ? 's' : ''}`;
     }
     const trendCls = trendHTML.startsWith('▲') ? ' is-up' : trendHTML.startsWith('▼') ? ' is-down' : '';
@@ -187,6 +204,7 @@ function fzmRankStrip(activeName, movement) {
                 <div class="fzm-rank-pos-row">
                     <span class="fzm-rank-pos">${frOrdinal(idx + 1)}</span>
                     <span class="fzm-rank-pts">${Math.round(mine.score)} pts</span>
+                    ${mine.live ? `<span class="fzm-rank-live${neuf}">+${Math.round(mine.live)} ce soir</span>` : ''}
                 </div>
             </div>
             <div class="fzm-rank-side">

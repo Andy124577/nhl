@@ -37,6 +37,11 @@ let teamData = [];
 let imageList = [];
 let currentStats = null;
 let currentTeams = null;
+// Les relevés de minuit tels que reçus. currentStats / currentTeams en sont
+// la copie augmentée des points du soir (pointsDirect.js) : c'est elle que
+// tout le classement lit.
+let currentStatsBase = null;
+let currentTeamsBase = null;
 let currentCareerData = null;
 let allPoolsData = {}; // Store all pools data
 let currentPoolName = null; // Track current pool
@@ -107,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load current stats
     try {
         const statsResponse = await fetch(`${BASE_URL}/current-stats`, { cache: 'no-cache' });
-        currentStats = await statsResponse.json();
+        currentStats = currentStatsBase = await statsResponse.json();
         console.log(`✅ Current stats loaded: ${currentStats.players.length} players`);
     } catch (error) {
         console.warn('⚠️ Could not load current stats:', error);
@@ -116,7 +121,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load current team standings
     try {
         const teamsResponse = await fetch(`${BASE_URL}/current-teams`, { cache: 'no-cache' });
-        currentTeams = await teamsResponse.json();
+        currentTeams = currentTeamsBase = await teamsResponse.json();
         console.log(`✅ Current team standings loaded: ${currentTeams.teams.length} teams`);
     } catch (error) {
         console.warn('⚠️ Could not load current team standings:', error);
@@ -127,7 +132,55 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Changer de pool depuis le rail rejoue le classement sur place.
     FZPool.on(() => loadAllUserPools());
+
+    // Les points du soir : un but d'un joueur du pool fait bouger le
+    // classement sur place. En saison seulement — avant, aucun match ne compte.
+    if (window.FZPointsDirect && seasonStarted) {
+        FZPointsDirect.surChangement(() => {
+            appliquerPointsDirect();
+            rafraichirClassementEnDirect();
+        });
+        FZPointsDirect.suivre();
+    }
 });
+
+/** currentStats / currentTeams = relevés de minuit + points du soir. */
+function appliquerPointsDirect() {
+    if (!window.FZPointsDirect) return;
+    if (currentStatsBase && Array.isArray(currentStatsBase.players)) {
+        currentStats = { ...currentStatsBase, players: FZPointsDirect.joueurs(currentStatsBase.players) };
+    }
+    if (currentTeamsBase && Array.isArray(currentTeamsBase.teams)) {
+        currentTeams = { ...currentTeamsBase, teams: FZPointsDirect.clubs(currentTeamsBase.teams) };
+    }
+}
+
+/**
+ * Redessine le classement cumulatif affiché, sans rien relire : les points
+ * par période sont en mémoire (periodPointsCache), le tri choisi est gardé.
+ * Un classement H2H ne lit pas ces totaux ; la fiche d'une équipe prendra
+ * les nouveaux au prochain affichage.
+ */
+function rafraichirClassementEnDirect() {
+    if (currentView !== VIEW_STATES.POOL_STANDINGS || !currentPoolName) return;
+    const poolData = allPoolsData[currentPoolName];
+    if (!poolData || (poolData.poolMode || 'cumulative') === 'head-to-head') return;
+    renderPoolStandings(poolData, currentPoolName).catch(console.error);
+}
+
+// Ce que le soir a ajouté au total d'une équipe, en pastille à côté des points.
+// Retient la dernière valeur de chaque équipe : la pastille ne s'allume que
+// si elle vient de monter.
+const pointsSoirAffiches = new Map();
+function pointsSoirHTML(standing) {
+    const cle = `${currentPoolName}|${standing.teamName}`;
+    const avant = pointsSoirAffiches.get(cle);
+    const n = standing.enDirect || 0;
+    pointsSoirAffiches.set(cle, n);
+    if (!n) return '';
+    const neuf = avant !== undefined && n > avant ? ' is-new' : '';
+    return ` <span class="st-live-pts${neuf}" title="Points marqués ce soir, ajoutés en direct">+${n}</span>`;
+}
 
 // Le rail ne recharge pas la page : le classement se reconstruit seul.
 window.FZ_POOL_EN_PLACE = true;
@@ -922,6 +975,7 @@ async function renderPoolStandings(poolData, poolName) {
             evoHTML = evolutionBadgeHTML(move, hasData);
         }
 
+        const soirHTML = enH2H ? '' : pointsSoirHTML(standing);
         const statCells = enH2H
             ? `<td>${standing.gamesPlayed}</td>
                <td class="st-vdn-col">${standing.wins} - ${standing.losses} - ${standing.ties}</td>
@@ -937,7 +991,7 @@ async function renderPoolStandings(poolData, poolName) {
                <td class="st-period-col">${fmtPeriodPts(byDays[1].get(standing.teamName))}</td>
                <td class="st-period-col">${fmtPeriodPts(byDays[7].get(standing.teamName))}</td>
                <td class="st-period-col">${fmtPeriodPts(byDays[30].get(standing.teamName))}</td>
-               <td class="points-column">${standing.points}</td>
+               <td class="points-column">${standing.points}${soirHTML}</td>
                <td>${standing.ppg.toFixed(2)}</td>
                <td class="st-evo-col">${evoHTML}</td>`;
 
@@ -963,7 +1017,7 @@ async function renderPoolStandings(poolData, poolName) {
                         <span class="st-mobile-name" title="${displayName}">${displayName}</span>
                         <span class="st-mobile-sub">Forme ${standingsPeriod === 1 ? '24 h' : `${standingsPeriod} j`} : ${periodPts} pts</span>
                     </div>
-                    <span class="st-mobile-pts">${standing.points}</span>
+                    <span class="st-mobile-pts">${standing.points}${soirHTML}</span>
                     ${evoHTML}
                 </div>`);
         }
@@ -1773,6 +1827,9 @@ function calculateTeamPoints(roster) {
     let totalGoals = 0;
     let totalAssists = 0;
     let totalPoints = 0;
+    // La part du total marquée ce soir (voir appliquerPointsDirect).
+    let totalEnDirect = 0;
+    const soir = stats => (seasonStarted && stats && stats.pointsEnDirect) || 0;
 
     // Process skaters
     ['offensive', 'defensive', 'rookie'].forEach(position => {
@@ -1784,6 +1841,7 @@ function calculateTeamPoints(roster) {
                 totalGoals += seasonStat(stats, playerData, 'goals');
                 totalAssists += seasonStat(stats, playerData, 'assists');
                 totalPoints += seasonStat(stats, playerData, 'points');
+                totalEnDirect += soir(stats);
             }
         });
     });
@@ -1803,6 +1861,7 @@ function calculateTeamPoints(roster) {
 
             totalGP += gp;
             totalPoints += points;
+            totalEnDirect += soir(stats);
         }
     });
 
@@ -1818,6 +1877,7 @@ function calculateTeamPoints(roster) {
 
             totalGP += gp;
             totalPoints += points;
+            totalEnDirect += soir(stats);
         }
     });
 
@@ -1825,7 +1885,8 @@ function calculateTeamPoints(roster) {
         gamesPlayed: totalGP,
         goals: totalGoals,
         assists: totalAssists,
-        points: totalPoints
+        points: totalPoints,
+        enDirect: totalEnDirect
     };
 }
 

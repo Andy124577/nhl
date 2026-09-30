@@ -56,6 +56,8 @@ const { creerServiceRecap } = require("./services/recap.js");
 const { creerMinuteurChoix } = require("./services/minuteurChoix.js");
 const { creerAgendaDeparts } = require("./services/agendaDeparts.js");
 const { creerScoresEnDirect } = require("./services/scoresEnDirect.js");
+const { creerPointsEnDirect } = require("./services/pointsEnDirect.js");
+const { dernierMatchDeFiche } = require("./lib/pointsEnDirect.js");
 const { creerServicePointage } = require("./services/scoring.js");
 const { creerServiceH2H } = require("./services/h2h.js");
 const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
@@ -1020,6 +1022,7 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
                     otLosses: 0,
                     savePct: 0,
                     points: 0,
+                    dernierMatch: dernierMatchDeFiche(data),
                     lastUpdated: new Date().toISOString()
                 };
             }
@@ -1065,6 +1068,9 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
             otLosses: otLosses,
             savePct: savePct,
             points: calculatedPoints,
+            // Le dernier match que ce total comprend : les points en direct
+            // (lib/pointsEnDirect.js) ne comptent que les matchs plus récents.
+            dernierMatch: dernierMatchDeFiche(data),
             lastUpdated: new Date().toISOString()
         };
     } catch (error) {
@@ -1135,6 +1141,16 @@ async function updateCurrentStats() {
         }
     }
 
+    // Le dernier match compris dans chaque total, rangé à part des lignes :
+    // seul le direct du soir s'en sert (voir lib/pointsEnDirect.js), et
+    // /current-stats ne l'envoie pas aux pages. Un joueur dont la fiche n'a
+    // pas répondu n'y figure pas — le direct se rabat alors sur l'heure.
+    const derniersMatchs = {};
+    for (const p of newPlayers) {
+        if (Object.prototype.hasOwnProperty.call(p, 'dernierMatch')) derniersMatchs[p.playerId] = p.dernierMatch;
+        delete p.dernierMatch;
+    }
+
     const currentStats = {
         lastUpdated: new Date().toISOString(),
         season: saison.seasonId,
@@ -1142,7 +1158,8 @@ async function updateCurrentStats() {
         // la dernière saison complétée. Le classement et l'accueil s'en
         // servent pour ne pas compter les points de l'an passé dans un pool.
         seasonStarted: saison.hasStarted,
-        players: newPlayers
+        players: newPlayers,
+        derniersMatchs
     };
 
     // Save to database or file
@@ -1312,7 +1329,8 @@ app.get("/current-stats", async (req, res) => {
             // Les visiteurs suivants attendent la même collecte au lieu d'en lancer une chacun.
             console.log("📊 No stats in memory, fetching synchronously...");
             const fresh = await rafraichirStatsUneFois('aucune statistique en mémoire');
-            return res.json(fresh);
+            const { derniersMatchs: _dm, ...fraiches } = fresh || {};
+            return res.json(fraiches);
         }
 
         if (needsRefresh) {
@@ -1328,7 +1346,9 @@ app.get("/current-stats", async (req, res) => {
         // Un cache écrit avant l'introduction de la règle ne porte pas le
         // drapeau : on le renseigne à la volée pour que le classement et
         // l'accueil sachent toujours à quoi s'en tenir.
-        res.json({ seasonStarted: saison.hasStarted, ...stats });
+        // derniersMatchs ne sert qu'au direct, côté serveur.
+        const { derniersMatchs: _dm, ...publiques } = stats;
+        res.json({ seasonStarted: saison.hasStarted, ...publiques });
     } catch (error) {
         console.error("❌ Error in /current-stats route:", error);
         res.status(500).json({ message: "Error fetching current stats" });
@@ -1862,9 +1882,19 @@ async function updateTeamStandings() {
         return await loadCurrentTeams();
     }
 
+    // Les matchs déjà terminés au moment du relevé : le classement les
+    // comprend, les points en direct ne doivent pas les recompter (voir
+    // lib/pointsEnDirect.js). Sans réponse de la LNH, le direct se rabat sur
+    // l'heure du relevé.
+    const matchsDuSoir = await lireMatchsBruts().catch(() => null);
     const teamStats = {
         lastUpdated: new Date().toISOString(),
-        teams: teams
+        teams: teams,
+        ...(matchsDuSoir ? {
+            matchsComptes: matchsDuSoir
+                .filter(g => g.gameState === 'FINAL' || g.gameState === 'OFF')
+                .map(g => Number(g.id))
+        } : {})
     };
 
     // Save to database or file
@@ -1937,7 +1967,7 @@ app.get('/current-teams', async (req, res) => {
 // honest empty list rather than a 500 — the carousel just skips this
 // slide type instead of breaking, exactly like "no games today."
 // ============================================================
-let liveGamesCache = { data: null, fetchedAt: 0 };
+let liveGamesCache = { data: null, brut: null, fetchedAt: 0 };
 // Cinq secondes : c'est ce cache qui fixait le gros du retard d'un but sur la
 // carte d'accueil (jusqu'à 25 s d'attente avant même que le client redemande).
 // Il reste partagé par tous les membres — la LNH n'est donc sollicitée qu'une
@@ -2010,8 +2040,17 @@ async function releverMatchsEnDirect() {
         });
 
     const payload = { games: liveGames, generatedAt: new Date().toISOString() };
-    liveGamesCache = { data: payload, fetchedAt: now };
+    // Le relevé brut reste à côté : les points en direct ont besoin de ce
+    // que la carte d'accueil n'affiche pas (type de match, heure de début,
+    // matchs terminés).
+    liveGamesCache = { data: payload, brut: allGames, fetchedAt: now };
     return { ...payload, lu: now };
+}
+
+/** Tous les matchs de /v1/score/now, tels quels, du même relevé partagé. null sans réponse. */
+async function lireMatchsBruts() {
+    const charge = await lireMatchsEnDirect();
+    return charge ? (liveGamesCache.brut || []) : null;
 }
 
 app.get('/live-games', async (req, res) => {
@@ -2030,6 +2069,38 @@ app.get('/live-games', async (req, res) => {
 // Le même relevé, poussé aux pages qui suivent le direct au lieu de sonder.
 const scoresEnDirect = creerScoresEnDirect({ io, lire: lireMatchsEnDirect });
 io.on('connection', (socket) => scoresEnDirect.brancher(socket));
+
+// ============================================================
+// POINTS EN DIRECT — ce que les matchs du soir ajoutent aux totaux de pool
+// avant le relevé de minuit : un but, une aide, la victoire d'un gardien ou
+// d'un club. Poussé aux pages de classement (salle `points`), et servi à
+// /live-points pour une page sans socket. Aucune lecture de la base : les
+// totaux sont ceux en mémoire (voir services/pointsEnDirect.js).
+// ============================================================
+const pointsEnDirect = creerPointsEnDirect({
+    io,
+    lireMatchs: lireMatchsBruts,
+    lireFeuille: async (id) => {
+        const reponse = await fetch(`https://api-web.nhle.com/v1/gamecenter/${id}/boxscore`, { signal: AbortSignal.timeout(8000) });
+        return reponse.ok ? reponse.json() : null;
+    },
+    lireReleves: () => ({
+        stats: memStatsCache && memStatsCache.players.length ? memStatsCache : null,
+        clubs: memTeamsCache
+    })
+});
+io.on('connection', (socket) => pointsEnDirect.brancher(socket));
+
+app.get('/live-points', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const vide = () => ({ joueurs: {}, clubs: {}, generatedAt: new Date().toISOString() });
+    try {
+        res.json((await pointsEnDirect.lire()) || vide());
+    } catch (error) {
+        console.error('❌ Error computing live points:', error.message);
+        res.json(vide());
+    }
+});
 
 // ============================================================
 // SAISON EN COURS — numéro (20262027), phase, dates d'ouverture et de
@@ -2374,6 +2445,14 @@ app.get('/tonight-boxscores', async (req, res) => {
             } catch { return null; }
         }));
 
+        // Les effectifs de pool portent le nom complet (« Connor McDavid ») ;
+        // la feuille de match, l'initiale (« C. McDavid »). Comparées telles
+        // quelles, aucune ligne du soir ne retrouvait son joueur de pool :
+        // « Mes joueurs ce soir » et « Total ce soir » restaient vides. Le
+        // relevé en mémoire fait le lien par numéro de joueur.
+        const nomsComplets = new Map((memStatsCache.players || []).map(p => [Number(p.playerId), p.playerName]));
+        const nomDe = p => nomsComplets.get(Number(p.playerId)) || p.name?.default || '';
+
         const players = [];
         boxscores.forEach((box, i) => {
             if (!box) return;
@@ -2385,7 +2464,8 @@ app.get('/tonight-boxscores', async (req, res) => {
                 ['forwards', 'defense'].forEach(group => {
                     (roster[group] || []).forEach(p => {
                         players.push({
-                            playerName: p.name?.default || '',
+                            playerId: p.playerId,
+                            playerName: nomDe(p),
                             teamAbbrev,
                             position: 'F',
                             goals: p.goals || 0,
@@ -2409,7 +2489,8 @@ app.get('/tonight-boxscores', async (req, res) => {
                     const decision = p.decision || null;
                     const shutout = (p.goalsAgainst === 0) && decision === 'W';
                     players.push({
-                        playerName: p.name?.default || '',
+                        playerId: p.playerId,
+                        playerName: nomDe(p),
                         teamAbbrev,
                         position: 'G',
                         saves: p.saveShotsAgainst ? parseInt((p.saveShotsAgainst.split('/')[0] || '0'), 10) : 0,

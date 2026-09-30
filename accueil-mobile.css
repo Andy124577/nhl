@@ -383,3 +383,20 @@ html[data-theme="dark"] .fz-mobile-home {
     .fzm-player-tag.is-upcoming { display: none; }
     .fzm-player-line { font-size: 10px; line-height: 1.3; }
 }
+
+/* Points du soir, ajoutés au total dès qu'ils tombent (pointsDirect.js). */
+.fzm-rank-live {
+    align-self: center;
+    padding: 2px 8px;
+    border-radius: 100px;
+    background: color-mix(in srgb, var(--fzm-green) 15%, transparent);
+    color: var(--fzm-green);
+    font: 700 12px/1.3 'Archivo', sans-serif;
+    white-space: nowrap;
+}
+.fzm-rank-live.is-new { animation: fzm-live-bump 1.6s ease-out; }
+@keyframes fzm-live-bump {
+    0%   { transform: scale(1.18); }
+    60%  { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .fzm-rank-live.is-new { animation: none; } }

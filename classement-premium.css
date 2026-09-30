@@ -1113,3 +1113,28 @@ body.fz-classement .bench-msg.is-error { color: var(--fzc-accent); }
   body.fz-classement .bench-swap { width: 100%; }
   body.fz-classement .bench-select { flex: 1 1 auto; }
 }
+
+/* ==================== POINTS DU SOIR ====================
+   Ce que les matchs du soir ont ajouté au total, en direct (pointsDirect.js).
+   S'allume une fois quand la valeur monte (classement.js, pointsSoirHTML). */
+body.fz-classement .st-live-pts {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 100px;
+  background: var(--fzc-good-bg);
+  color: var(--fzc-good);
+  font: 700 11px/1.2 'Oswald', sans-serif;
+  letter-spacing: .02em;
+  vertical-align: 2px;
+  white-space: nowrap;
+}
+body.fz-classement .st-live-pts.is-new { animation: st-live-bump 1.6s ease-out; }
+@keyframes st-live-bump {
+  0%   { transform: scale(1.25); box-shadow: 0 0 0 0 color-mix(in srgb, var(--fzc-good) 45%, transparent); }
+  60%  { transform: scale(1); box-shadow: 0 0 0 8px transparent; }
+  100% { transform: scale(1); box-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.fz-classement .st-live-pts.is-new { animation: none; }
+}

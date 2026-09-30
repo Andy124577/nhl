@@ -37,6 +37,7 @@ test('les dossiers privés restent privés, même pour un fichier d apparence an
 test('lib/ n ouvre que les modules que le navigateur charge vraiment', () => {
     assert.equal(servi('/lib/scoring.js'), true);
     assert.equal(servi('/lib/season.js'), true);
+    assert.equal(servi('/lib/pointsEnDirect.js'), true);
     assert.equal(servi('/lib/instantDraft.js'), false);
     assert.equal(servi('/lib/poolOps.js'), false);
     assert.equal(servi('/lib/session.js'), false, 'surtout pas celui-là');

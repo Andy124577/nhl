@@ -1032,13 +1032,19 @@ function buildTeamScores(pool) {
     // pointage de pool. Un pool repêché en septembre afficherait sinon les
     // points de l'an dernier comme s'ils avaient été marqués pour lui —
     // le même garde-fou existe déjà dans classement.js (seasonStat).
+    //
+    // Les points du soir s'ajoutent aux totaux de minuit dès qu'ils tombent
+    // (pointsDirect.js) ; `enDirect` garde la part de ce soir, pour l'afficher.
+    const enDirect = lignes => (window.FZPointsDirect ? FZPointsDirect.joueurs(lignes) : lignes);
     const playerPts = {};
+    const playerLive = {};
     if (stats && stats.players && stats.seasonStarted !== false) {
-        stats.players.forEach(p => {
+        enDirect(stats.players).forEach(p => {
             const name = p.playerName;
             if (!name) return;
             // Formule partagée (lib/scoring.js), plus recopiée ici.
             playerPts[name] = p.position === 'G' ? goaliePoolPoints(p) : (p.points || 0);
+            if (p.pointsEnDirect) playerLive[name] = p.pointsEnDirect;
         });
     }
 
@@ -1047,9 +1053,13 @@ function buildTeamScores(pool) {
     // lui, l'aperçu de la page d'accueil pouvait classer deux équipes
     // dans un autre ordre que le classement lui-même.
     const clubPts = {};
+    const clubLive = {};
     if (!stats || stats.seasonStarted !== false) {
-        ((userData.teamsData && userData.teamsData.teams) || []).forEach(t => {
-            if (t && t.teamFullName) clubPts[t.teamFullName] = clubPoolPoints(t);
+        const fiches = (userData.teamsData && userData.teamsData.teams) || [];
+        (window.FZPointsDirect ? FZPointsDirect.clubs(fiches) : fiches).forEach(t => {
+            if (!t || !t.teamFullName) return;
+            clubPts[t.teamFullName] = clubPoolPoints(t);
+            if (t.pointsEnDirect) clubLive[t.teamFullName] = t.pointsEnDirect;
         });
     }
 
@@ -1063,8 +1073,10 @@ function buildTeamScores(pool) {
         ];
         const score = players.reduce((s, n) => s + (playerPts[n] || 0), 0)
             + (td.teams || []).reduce((s, n) => s + (clubPts[n] || 0), 0);
+        const live = players.reduce((s, n) => s + (playerLive[n] || 0), 0)
+            + (td.teams || []).reduce((s, n) => s + (clubLive[n] || 0), 0);
         const isCurrentUser = !!td.members && td.members.includes(userData.username);
-        return { teamName, score, isCurrentUser, memberCount: (td.members || []).length };
+        return { teamName, score, live, isCurrentUser, memberCount: (td.members || []).length };
     });
 
     rows.sort((a, b) => b.score - a.score);

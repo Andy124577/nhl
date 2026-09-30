@@ -94,3 +94,23 @@ body.fz-season-page { background:var(--bg); }
  .fzs-duel { grid-column:1/-1; order:1; }
  .fzs-duel-side strong { font-size:28px; }
 }
+
+/* ---- Points du soir, ajoutés au total dès qu'ils tombent (pointsDirect.js) ----
+   Un <b> et non un <span> : `.fzs-rank p span` teinte ses span en gris. */
+.fzs-live-pts {
+    display:inline-flex; align-items:center; gap:5px;
+    margin-left:8px; padding:2px 9px 2px 7px;
+    border-radius:100px;
+    background:color-mix(in srgb, var(--success) 15%, transparent);
+    color:var(--success);
+    font:600 13px/1.3 'Barlow Condensed',sans-serif; letter-spacing:.02em;
+    white-space:nowrap; vertical-align:2px;
+}
+.fzs-live-pts::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+.fzs-live-pts.is-new { animation:fzs-live-bump 1.6s ease-out; }
+@keyframes fzs-live-bump {
+    0%   { transform:scale(1.18); box-shadow:0 0 0 0 color-mix(in srgb, var(--success) 45%, transparent); }
+    60%  { transform:scale(1); box-shadow:0 0 0 8px transparent; }
+    100% { transform:scale(1); box-shadow:none; }
+}
+@media (prefers-reduced-motion: reduce) { .fzs-live-pts.is-new { animation:none; } }

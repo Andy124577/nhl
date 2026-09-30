@@ -2827,4 +2827,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     renderDash();
     FZPool.onData(renderDash);
+
+    // Les points du soir (pointsDirect.js) : un but d'un joueur du pool
+    // redessine les totaux sur place. En saison seulement — avant, aucun
+    // match ne compte.
+    if (window.FZPointsDirect && FZPool.get() && userData.statsData?.seasonStarted !== false) {
+        FZPointsDirect.surChangement(fzdActualiserPointsDirect);
+        FZPointsDirect.suivre();
+    }
 });
+
+/**
+ * Seuls les blocs qui affichent un total de pool se redessinent : renderDash()
+ * relancerait à chaque but toutes ses lectures (matchs du soir, mouvement de
+ * rang), pour rien.
+ */
+function fzdActualiserPointsDirect() {
+    renderMyPoolsList();
+    if (typeof fzsActualiserRang === 'function') fzsActualiserRang();
+    if (typeof fzmActualiserRang === 'function') fzmActualiserRang();
+}

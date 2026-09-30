@@ -6,6 +6,50 @@ function fzsReset() {
     document.body.classList.remove('fz-season-page');
 }
 
+function fzsHeading(title, link, label = 'Voir tout') {
+    return `<header class="fzs-head"><h2>${title}</h2>${link ? `<a href="${escapeHTML(link)}">${label} <span aria-hidden="true">→</span></a>` : ''}</header>`;
+}
+
+/* ---- Ma position ----
+   Le rang et le total vivent avec les points du soir (pointsDirect.js) :
+   un but d'un de mes joueurs les fait bouger sur place, sans redessiner
+   tout l'accueil (voir fzsActualiserRang). */
+let fzsRangContexte = null;
+function fzsRangHTML(activeName, movement) {
+    const pool = (userData.userPools || []).find(p => p.name === activeName);
+    const scores = pool ? buildTeamScores(pool) : [];
+    const claimed = scores.filter(t => t.memberCount > 0);
+    const ranking = claimed.length ? claimed : scores;
+    const rank = ranking.findIndex(t => t.isCurrentUser);
+    const mine = ranking[rank];
+    const change = movement?.teams?.find(t => t.teamName === FZPool.team().name);
+    // Le rang « maintenant » du serveur ignore les points du soir : dès
+    // qu'il y en a dans ce pool, c'est le rang affiché qui fait foi. Sans
+    // eux, on garde celui du serveur — les égalités s'y départagent pareil
+    // que dans l'instantané du matin.
+    const soir = ranking.some(t => t.live);
+    const rangActuel = soir && rank >= 0 ? rank + 1 : change?.rankNow;
+    const delta = movement?.hasSnapshot && change?.rankToday != null && rangActuel != null ? change.rankToday - rangActuel : null;
+    // La pastille s'allume quand elle vient de monter — pas à chaque
+    // redessin, que le but d'un autre pool suffit à provoquer.
+    const avant = fzsRangContexte && fzsRangContexte.activeName === activeName ? fzsRangContexte.live : null;
+    const soirMoi = (mine && mine.live) || 0;
+    fzsRangContexte = { activeName, movement, live: soirMoi };
+    const neuf = avant !== null && soirMoi > avant ? ' is-new' : '';
+    const live = soirMoi ? `<b class="fzs-live-pts${neuf}">+${soirMoi.toLocaleString('fr-CA')} ce soir</b>` : '';
+    return `${fzsHeading('♜ &nbsp; Ma position', `classement.html?pool=${encodeURIComponent(activeName)}`, 'Voir le classement')}
+            <strong class="fzs-number">${rank >= 0 ? `${ordinalHTML(rank + 1)} <small>/ ${ranking.length}</small>` : '—'}</strong>
+            <p>${mine ? `${Number(mine.score).toLocaleString('fr-CA')} pts ${live}` : 'Classement à venir'}</p>
+            ${delta ? `<p class="${delta > 0 ? 'fzs-green' : 'fzs-red'}">${delta > 0 ? '↑ +' : '↓ '}${delta} <span>depuis le début de la journée</span></p>` : ''}
+            <div class="fzs-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>`;
+}
+
+function fzsActualiserRang() {
+    const bloc = document.querySelector('#fzSeasonHome .fzs-rank');
+    if (!bloc || !fzsRangContexte) return;
+    bloc.innerHTML = fzsRangHTML(fzsRangContexte.activeName, fzsRangContexte.movement);
+}
+
 function renderSeasonHome({ tonight, movement, activeName }) {
     const state = fzdHeroState(tonight);
     if (!state || state.mode === 'draft' || fzdSeasonStarted() === false) {
@@ -37,15 +81,7 @@ function renderSeasonHome({ tonight, movement, activeName }) {
     const playing = lines.filter(p => live(games.find(g => g.id === p.gameId))).length;
     const total = lines.reduce((n, p) => n + (Number(p.fantasyPointsTonight) || 0), 0);
     const href = fzdMonEffectifHref(activeName, FZPool.team().name);
-    const pool = (userData.userPools || []).find(p => p.name === activeName);
-    const scores = pool ? buildTeamScores(pool) : [];
-    const claimed = scores.filter(t => t.memberCount > 0);
-    const ranking = claimed.length ? claimed : scores;
-    const rank = ranking.findIndex(t => t.isCurrentUser);
-    const mine = ranking[rank];
-    const change = movement?.teams?.find(t => t.teamName === FZPool.team().name);
-    const delta = movement?.hasSnapshot && change?.rankToday != null ? change.rankToday - change.rankNow : null;
-    const heading = (title, link, label = 'Voir tout') => `<header class="fzs-head"><h2>${title}</h2>${link ? `<a href="${esc(link)}">${label} <span aria-hidden="true">→</span></a>` : ''}</header>`;
+    const heading = fzsHeading;
     const empty = text => `<p class="fzs-empty">${text}</p>`;
     const estH2H = (FZPool.data() || {}).poolMode === 'head-to-head';
     const leader = lines[0];
@@ -61,12 +97,7 @@ function renderSeasonHome({ tonight, movement, activeName }) {
             </div>
         </section>
         ${estH2H ? `<section class="fzs-duel fzs-panel" id="fzsDuel" aria-live="polite">${heading('⚔ &nbsp; Mon duel', `classement.html?pool=${encodeURIComponent(activeName)}&h2h=duel`, 'Voir le duel')}<div class="fzs-duel-body">${empty('Chargement du duel…')}</div></section>` : ''}
-        <section class="fzs-rank fzs-panel">${heading('♜ &nbsp; Ma position', `classement.html?pool=${encodeURIComponent(activeName)}`, 'Voir le classement')}
-            <strong class="fzs-number">${rank >= 0 ? `${ordinalHTML(rank + 1)} <small>/ ${ranking.length}</small>` : '—'}</strong>
-            <p>${mine ? `${Number(mine.score).toLocaleString('fr-CA')} pts` : 'Classement à venir'}</p>
-            ${delta ? `<p class="${delta > 0 ? 'fzs-green' : 'fzs-red'}">${delta > 0 ? '↑ +' : '↓ '}${delta} <span>depuis le début de la journée</span></p>` : ''}
-            <div class="fzs-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-        </section>
+        <section class="fzs-rank fzs-panel">${fzsRangHTML(activeName, movement)}</section>
         <section class="fzs-scores fzs-panel">${heading(`${games.some(live) ? '<i class="fzs-dot"></i> Matchs en direct' : 'Matchs du soir'}`, 'calendrier.html', 'Calendrier complet')}
             <div class="fzs-score-track">${allGames.length ? allGames.map(g => `<article class="fzs-game">${[g.away, g.home].map(t => `<div>${teamLogoImg(t.abbrev)}<span>${esc(t.abbrev)}</span><b>${['FUT', 'PRE'].includes(g.state) ? '—' : t.score ?? '—'}</b></div>`).join('')}<footer><span class="fzs-tag ${live(g) ? 'is-live' : ''}">${live(g) ? 'En direct' : ['OFF', 'FINAL'].includes(g.state) ? 'Final' : 'À venir'}</span> ${live(g) ? `${periodLabel(g.period, g.periodType)} · ${esc(g.clock?.timeRemaining || '')}` : g.startTimeUTC ? gameTimeLabel(g.startTimeUTC) : ''}</footer></article>`).join('') : empty('Aucun match à l’horaire ce soir.')}</div>
         </section>
