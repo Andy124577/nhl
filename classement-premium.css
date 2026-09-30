@@ -281,7 +281,10 @@ body.fz-classement .st-mobile-list { display: none; }
 
 @media (max-width: 680px) {
   body.fz-classement .standings-table-container { display: none; }
-  body.fz-classement .st-period-chips { display: flex; }
+  /* La maquette « Classement » va droit à la liste : ni tuile de synthèse
+     ni puces de période (la tendance reste calculée sur 7 j). */
+  body.fz-classement #standingsList .st-summary,
+  body.fz-classement #standingsList .st-period-bar { display: none; }
   /* Une bande d'un bord à l'autre, rangées de 64px : comme la liste des
      joueurs d'une équipe (classement.css, .roster-rows). */
   body.fz-classement .st-mobile-list {
@@ -296,37 +299,37 @@ body.fz-classement .st-mobile-list { display: none; }
   }
   body.fz-classement .st-mobile-row {
     display: grid;
-    grid-template-columns: 22px 34px minmax(0, 1fr) auto auto 12px;
+    grid-template-columns: 22px 44px minmax(0, 1fr) auto 14px;
     align-items: center;
     column-gap: 8px;
-    min-height: 64px;
-    padding: 0 10px 0 12px;
+    min-height: 58px;
+    padding: 8px 10px 8px 12px;
     cursor: pointer;
     transition: background .15s ease;
   }
   body.fz-classement .st-mobile-row + .st-mobile-row { border-top: 1px solid var(--rr-line); }
   body.fz-classement .st-mobile-row:hover,
   body.fz-classement .st-mobile-row:focus-visible { background: var(--rr-hover); }
-  body.fz-classement .st-mobile-row.is-me { box-shadow: inset 3px 0 0 var(--fzc-accent-fill); }
+  body.fz-classement .st-mobile-row:first-child { box-shadow: inset 3px 0 0 var(--fzc-accent-fill); }
   body.fz-classement .st-mobile-rank {
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 700;
     color: var(--rr-muted);
     text-align: center;
   }
-  body.fz-classement .st-mobile-row:nth-child(-n+3) .st-mobile-rank { color: var(--rr-strong); }
+  body.fz-classement .st-mobile-row:nth-child(-n+3) .st-mobile-rank { color: var(--fzc-accent); }
   body.fz-classement .st-mobile-logo {
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--rr-line);
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  body.fz-classement .st-mobile-logo img { width: 34px; height: 34px; object-fit: contain; }
+  body.fz-classement .st-mobile-logo img { width: 28px; height: 28px; object-fit: contain; }
   body.fz-classement .st-mobile-logo .st-avatar-fallback {
-    width: 34px; height: 34px; border-radius: 50%; font-size: 11px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--rr-hover); color: var(--rr-muted);
+    font-size: 13px; font-weight: 700; color: var(--rr-num);
   }
   body.fz-classement .st-mobile-info {
     min-width: 0;
@@ -345,7 +348,9 @@ body.fz-classement .st-mobile-list { display: none; }
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  body.fz-classement .st-mini-row { display: flex; gap: 2px; min-width: 0; }
+  body.fz-classement .st-mobile-name-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  body.fz-classement .st-mobile-name .st-evo { flex: none; }
+  body.fz-classement .st-mini-row { display: flex; min-width: 0; }
   body.fz-classement .st-mini,
   body.fz-classement .st-mobile-avg,
   body.fz-classement .st-mobile-pts {
@@ -354,15 +359,14 @@ body.fz-classement .st-mobile-list { display: none; }
     align-items: center;
     line-height: 1.1;
   }
-  body.fz-classement .st-mini { flex: 0 1 28px; min-width: 22px; }
+  body.fz-classement .st-mini { flex: 0 1 30px; min-width: 24px; padding: 1px 0; }
+  body.fz-classement .st-mini.has-sep { border-left: 1px solid var(--rr-line); }
   body.fz-classement .st-mini-v { font-size: 12.5px; color: var(--rr-num); }
   body.fz-classement .st-mini.is-zero .st-mini-v { color: var(--rr-dim); }
   body.fz-classement .st-mini-l { font-size: 9.5px; color: var(--rr-dim); }
-  body.fz-classement .st-mobile-avg { min-width: 34px; }
-  body.fz-classement .st-mobile-avg .st-mini-v { font-size: 13px; color: var(--rr-muted); }
   body.fz-classement .st-mobile-pts { min-width: 40px; }
   body.fz-classement .st-mobile-pts-v {
-    font: 700 18px/1.1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 700 20px/1.1 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: var(--rr-strong);
   }
   body.fz-classement .st-mobile-pts .st-mini-l { color: var(--rr-muted); }
@@ -373,8 +377,9 @@ body.fz-classement .st-mobile-list { display: none; }
   }
 }
 @media (max-width: 380px) {
-  body.fz-classement .st-mobile-avg { display: none; }
-  body.fz-classement .st-mobile-row { grid-template-columns: 20px 34px minmax(0, 1fr) auto 12px; column-gap: 6px; }
+  body.fz-classement .st-mobile-row { grid-template-columns: 20px 40px minmax(0, 1fr) auto 12px; column-gap: 6px; }
+  body.fz-classement .st-mobile-logo { width: 40px; height: 40px; }
+  body.fz-classement .st-mini { flex-basis: 26px; min-width: 22px; }
 }
 
 /* ==================== TEMPLE DE LA RENOMMÉE ==================== */

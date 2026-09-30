@@ -1050,22 +1050,19 @@ async function renderPoolStandings(poolData, poolName) {
         tbody.appendChild(tr);
 
         if (poolMode !== 'head-to-head') {
-            const periodPts = fmtPeriodPts(byDays[standingsPeriod].get(standing.teamName));
-            // Même langage que la liste des joueurs (fiche d'équipe) : rang,
-            // logo, nom, mini-colonnes dessous ; la colonne de droite porte
-            // la moyenne et les points en gros.
-            const mini = (valeur, libelle) =>
-                `<div class="st-mini${valeur ? '' : ' is-zero'}"><span class="st-mini-v">${valeur}</span><span class="st-mini-l">${libelle}</span></div>`;
-            const periodeLibelle = standingsPeriod === 1 ? '24 h' : `${standingsPeriod} j`;
+            // Maquette « Classement » (Claude Design) : rang, rond du club, nom
+            // + tendance, PJ puis les points des trois périodes, Pts en gros.
+            const mini = (valeur, libelle, cls = '') =>
+                `<div class="st-mini${cls}${valeur ? '' : ' is-zero'}"><span class="st-mini-v">${valeur}</span><span class="st-mini-l">${libelle}</span></div>`;
+            const per = d => fmtPeriodPts(byDays[d].get(standing.teamName));
             mobileRowsHTML.push(`
                 <div class="st-mobile-row is-clickable${estMoi ? ' is-me' : ''}" tabindex="0" role="button" aria-label="Voir l'équipe de ${displayName}" data-team="${standing.teamName.replace(/"/g, '&quot;')}">
                     <span class="st-mobile-rank">${standing.rank}</span>
-                    <span class="st-mobile-logo">${getTeamLogoHTML(standing.nhlTeams, 34) || `<span class="st-avatar-fallback">${initialsFromName(displayName)}</span>`}</span>
+                    <span class="st-mobile-logo">${getTeamLogoHTML(standing.nhlTeams, 28) || `<span class="st-avatar-fallback">${initialsFromName(displayName)}</span>`}</span>
                     <div class="st-mobile-info">
-                        <span class="st-mobile-name" title="${displayName}">${displayName}${evoHTML}</span>
-                        <div class="st-mini-row">${mini(standing.gamesPlayed, 'PJ')}${mini(standing.goals, 'B')}${mini(standing.assists, 'P')}${mini(periodPts, periodeLibelle)}</div>
+                        <span class="st-mobile-name"><span class="st-mobile-name-txt" title="${displayName}">${displayName}</span>${evoHTML}</span>
+                        <div class="st-mini-row">${mini(standing.gamesPlayed, 'PJ')}${mini(per(1), '1 j', ' has-sep')}${mini(per(7), '7 j')}${mini(per(30), '30 j')}</div>
                     </div>
-                    <div class="st-mobile-avg"><span class="st-mini-v">${standing.ppg.toFixed(2)}</span><span class="st-mini-l">Moy.</span></div>
                     <div class="st-mobile-pts"><span class="st-mobile-pts-v">${standing.points}${soirHTML}</span><span class="st-mini-l">Pts</span></div>
                     <span class="st-mobile-chev" aria-hidden="true">›</span>
                 </div>`);
