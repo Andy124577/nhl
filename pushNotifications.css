@@ -91,10 +91,11 @@
 .fz-alertes-msg.is-ok { color: var(--success); }
 .fz-alertes-msg.is-erreur { color: var(--primary-text); }
 
-/* Téléphone : les boutons passent sous le texte, pleine largeur. */
+/* Téléphone : les boutons de la carte passent sous le texte, pleine largeur.
+   La carte seule — la ligne de la cloche garde ses boutons à droite. */
 @media (max-width: 520px) {
-    .fz-alertes-outils { flex: 1 1 100%; }
-    .fz-alertes-btn { flex: 1; }
+    .fz-alertes .fz-alertes-outils { flex: 1 1 100%; }
+    .fz-alertes .fz-alertes-btn { flex: 1; }
 }
 
 /* ---------- Le pied de la cloche ---------- */
@@ -107,8 +108,9 @@
 
 .fz-alertes-reglage {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
+    gap: 8px 10px;
     font-size: .82rem;
     line-height: 1.35;
     color: var(--text-secondary);
@@ -120,7 +122,12 @@
 }
 .fz-alertes-reglage.is-actif .fz-alertes-ico { color: var(--success); }
 .fz-alertes-reglage.is-refuse .fz-alertes-ico { color: var(--warning); }
-.fz-alertes-reglage-txt { flex: 1; min-width: 0; }
+/* Sous 120 px de texte (petit téléphone, deux boutons), les boutons passent
+   à la ligne, à droite. */
+.fz-alertes-reglage-txt { flex: 1 1 120px; min-width: 0; }
 .fz-alertes-reglage-txt strong { display: block; color: var(--text-main); font-weight: 700; }
-.fz-alertes-reglage .fz-alertes-btn { min-height: 32px; padding: 0 10px; font-size: .8rem; }
+/* Les boutons gardent leur largeur naturelle : c'est le texte qui passe à la
+   ligne, jamais lui qui se réduit à un mot par ligne. */
+.fz-alertes-reglage .fz-alertes-outils { flex: 0 0 auto; flex-wrap: nowrap; margin-left: auto; }
+.fz-alertes-reglage .fz-alertes-btn { flex: none; min-height: 32px; padding: 0 10px; font-size: .8rem; white-space: nowrap; }
 .fz-notif-foot .fz-alertes-msg { margin-top: 6px; }
