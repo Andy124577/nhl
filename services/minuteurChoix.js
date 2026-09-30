@@ -17,8 +17,14 @@
  * Ce qui vit en mémoire se perd au redémarrage : `rattraper()` relit les
  * repêchages chronométrés en cours (un extrait filtré dans PostgreSQL,
  * poolStore.lireChoixChronometres) et réarme chacun. Le serveur l'appelle au
- * démarrage puis chaque minute, ce qui rattrape aussi un réveil perdu sur une
- * erreur de base.
+ * démarrage, toutes les six heures, et chaque minute TANT QU'UN TOUR ATTEND
+ * (`enCours()`) — pas au-delà : une lecture par minute, jour et nuit,
+ * empêchait la base (Neon) de s'endormir, et son plan gratuit ne compte que
+ * 100 heures de calcul par mois.
+ *
+ * Un réveil qui échoue (base qui se réveille, coupure brève) se retente de
+ * lui-même : sans lecture de chaque minute hors repêchage, rien d'autre ne le
+ * reprendrait.
  */
 
 'use strict';
@@ -27,6 +33,9 @@ const { echeanceChoix } = require('../lib/poolOps.js');
 
 /** Un peu après l'échéance : le réveil ne doit pas arriver avant elle. */
 const MARGE_MS = 250;
+
+/** Délai avant de retenter un réveil qui a échoué. */
+const RELANCE_MS = 30 * 1000;
 
 function creerMinuteurChoix({
     choisir,
@@ -61,12 +70,15 @@ function creerMinuteurChoix({
         if (deja && deja.echeance === echeance && deja.pickIndex === pickIndex) return echeance;
 
         desarmer(nom);
-        const delai = Math.max(0, echeance - horloge()) + MARGE_MS;
+        poser(nom, pickIndex, echeance, Math.max(0, echeance - horloge()) + MARGE_MS);
+        return echeance;
+    }
+
+    function poser(nom, pickIndex, echeance, delai) {
         const poignee = minuterie.planifier(() => declencher(nom, pickIndex, echeance), delai);
         // Un réveil en attente ne doit pas, à lui seul, garder le processus en vie.
         if (poignee && typeof poignee.unref === 'function') poignee.unref();
         armes.set(nom, { echeance, pickIndex, poignee });
-        return echeance;
     }
 
     async function declencher(nom, pickIndex, echeance) {
@@ -75,10 +87,19 @@ function creerMinuteurChoix({
         try {
             await choisir(nom, { pickIndex });
         } catch (erreur) {
-            // La transaction est annulée, rien n'est écrit : le prochain
-            // rattrapage, dans la minute, réarme ce tour.
             logger.error(`❌ Choix automatique impossible (${nom}) :`, erreur.message);
+            // Un pool disparu (supprimé, renommé) n'a plus de tour à jouer
+            // sous ce nom : le nouveau nom est armé par sa propre écriture.
+            if (erreur && erreur.code === 404) return;
+            // La transaction est annulée, rien n'est écrit. Le même tour est
+            // retenté, sauf si un changement du pool l'a réarmé entre-temps.
+            if (!armes.has(nom)) poser(nom, pickIndex, echeance, RELANCE_MS);
         }
+    }
+
+    /** Un tour chronométré attend-il son réveil ? */
+    function enCours() {
+        return armes.size > 0;
     }
 
     /** Réarme les repêchages chronométrés en cours, d'après la base. */
@@ -100,7 +121,7 @@ function creerMinuteurChoix({
         return vue;
     }
 
-    return { armer, rattraper, arreter, etat };
+    return { armer, rattraper, arreter, etat, enCours };
 }
 
-module.exports = { creerMinuteurChoix, MARGE_MS };
+module.exports = { creerMinuteurChoix, MARGE_MS, RELANCE_MS };

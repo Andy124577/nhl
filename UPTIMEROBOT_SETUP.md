@@ -35,8 +35,13 @@ Remplissez le formulaire:
 - Entrez: `Willie Pooler NHL`
 
 **URL (or IP):**
-- Entrez: `https://fantazy.ca`
-  - (Remplacez par votre URL Render réelle)
+- Entrez: `https://fantazy.ca/healthz`
+  - Une réponse de quelques octets, qui ne touche pas la base. La page
+    d'accueil pèse 67 Ko : à 8 640 vérifications par mois, elle mangeait la
+    bande passante incluse de Render.
+  - ⚠️ Ne surveillez aucune adresse qui lit la base (`/draft`, `/current-stats`,
+    une page connectée…) : une requête toutes les 5 minutes empêche Neon de
+    s'endormir, et son plan gratuit ne compte que 100 heures de calcul par mois.
 
 **Monitoring Interval:**
 - Sélectionnez **"Every 5 minutes"** (le minimum gratuit)
@@ -87,29 +92,18 @@ Vous serez notifié si:
 - ❌ Votre app est lente (>30s)
 - ✅ Votre app se rétablit
 
-### Moniteurs multiples (gratuit)
+### Un seul moniteur
 
-Le plan gratuit permet **50 moniteurs**! Vous pouvez ajouter:
-- Moniteur principal: `https://fantazy.ca`
-- Moniteur API: `https://fantazy.ca/draft`
-- Moniteur santé: Un endpoint `/health` personnalisé
+Un seul moniteur suffit : `https://fantazy.ca/healthz`. N'en ajoutez pas sur
+`/draft` ni sur une autre route de l'application : elles lisent la base, et
+un moniteur toutes les 5 minutes la garderait éveillée jour et nuit (voir
+plus haut).
 
-### Endpoint de santé personnalisé
+### La sonde `/healthz`
 
-Ajoutez dans votre `server.js`:
-
-```javascript
-// Health check endpoint pour UptimeRobot
-app.get('/health', (req, res) => {
-    res.status(200).json({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime()
-    });
-});
-```
-
-Puis configurez UptimeRobot pour ping: `https://fantazy.ca/health`
+Elle existe déjà dans `server.js`, avant les fichiers statiques et la
+session. Elle répond `{"ok":true,"uptimeS":…}` sans rien lire en base :
+`uptimeS` qui retombe près de zéro signale un redémarrage de Render.
 
 ---
 
@@ -230,7 +224,7 @@ Votre configuration devrait ressembler à:
 ```
 Monitor Name: Willie Pooler NHL
 Type: HTTP(s)
-URL: https://fantazy.ca
+URL: https://fantazy.ca/healthz
 Interval: Every 5 minutes
 Timeout: 30 seconds
 Status: Up ✅

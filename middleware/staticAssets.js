@@ -160,11 +160,23 @@ function estPublic(urlPath) {
  * fichier existe.
  */
 function creerGardeStatique({ ignorer = [] } = {}) {
-    const prefixesIgnores = ['/uploads', '/socket.io', ...ignorer];
+    // Préfixes servis par quelqu'un d'autre que la racine du dépôt (Socket.IO
+    // livre son propre client). Ils se comparent au chemin DÉCODÉ et
+    // normalisé, jamais au chemin brut : `/uploads/..%2fserver.js` commence
+    // par /uploads mais désigne server.js, et express.static le décode avant
+    // de le servir. C'est exactement ainsi que la garde se contournait —
+    // `uploads` figurait ici alors que estPublic l'autorise déjà.
+    const prefixesIgnores = ['socket.io', ...ignorer]
+        .map(p => String(p).replace(/^\/+|\/+$/g, ''))
+        .filter(Boolean);
 
     return function gardeStatique(req, res, next) {
         if (req.method !== 'GET' && req.method !== 'HEAD') return next();
-        if (prefixesIgnores.some(p => req.path.startsWith(p))) return next();
+
+        const chemin = normaliser(req.path);
+        if (chemin !== null && prefixesIgnores.some(p => chemin === p || chemin.startsWith(`${p}/`))) {
+            return next();
+        }
 
         const verdict = estPublic(req.path);
         if (verdict.ok) return next();

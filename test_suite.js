@@ -320,8 +320,11 @@ async function testStats() {
   const gl = await api('GET', '/player-gamelog/8478402');
   gl.ok ? ok('GET /player-gamelog') : sk('GET /player-gamelog', 'No DB game logs');
 
+  // Réservée à l'administration : un compte ordinaire doit être refusé.
   const dbg = await api('GET', '/debug-player/8478402');
-  dbg.ok ? ok('GET /debug-player/8478402') : ko('GET /debug-player', JSON.stringify(dbg.body));
+  dbg.ok || dbg.status === 403
+    ? ok(`GET /debug-player/8478402 (${dbg.ok ? 'admin' : 'refusée hors administration'})`)
+    : ko('GET /debug-player', JSON.stringify(dbg.body));
 }
 
 // ────────────────────────────────────────────────────────────

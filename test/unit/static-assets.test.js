@@ -91,6 +91,35 @@ test('la garde laisse passer les routes applicatives sans extension', () => {
     assert.equal(appeler('/users.json'), false);
 });
 
+test('un préfixe laissé passer ne sert pas de tremplin vers la racine', () => {
+    // express.static décode %2f puis résout `..` : `/uploads/..%2fserver.js`
+    // lui désigne server.js. La garde doit juger le chemin qu'il servira.
+    const garde = statiques.creerGardeStatique();
+    const appeler = (chemin) => {
+        const req = { method: 'GET', path: chemin };
+        const res = { status() { return this; }, type() { return this; }, send() { this.envoye = true; return this; } };
+        let suivant = false;
+        garde(req, res, () => { suivant = true; });
+        return suivant && res.envoye !== true;
+    };
+
+    for (const chemin of [
+        '/uploads/..%2fserver.js',
+        '/uploads/..%2Fdraft.json',
+        '/uploads/..%2fusers.json',
+        '/uploadsfoo/..%2fusers.json',
+        '/uploads/avatars/..%2f..%2fdb.js',
+        '/socket.io/..%2fdb.js',
+        '/socket.iox/..%2fdb.js'
+    ]) {
+        assert.equal(appeler(chemin), false, `${chemin} devrait être refusé`);
+    }
+
+    assert.equal(appeler('/uploads/avatars/x.png'), true, 'une vraie photo passe toujours');
+    assert.equal(appeler('/uploads/pools/x.jpg'), true);
+    assert.equal(appeler('/socket.io/socket.io.js'), true, 'le client Socket.IO passe toujours');
+});
+
 test('une écriture ne passe jamais par la garde de fichiers', () => {
     const garde = statiques.creerGardeStatique();
     let suivant = false;

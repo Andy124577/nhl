@@ -54,6 +54,7 @@ const routesPhotos = require("./routes/photos.js");
 const { creerServiceAujourdhui } = require("./services/today.js");
 const { creerServiceRecap } = require("./services/recap.js");
 const { creerMinuteurChoix } = require("./services/minuteurChoix.js");
+const { creerAgendaDeparts } = require("./services/agendaDeparts.js");
 const { creerServicePointage } = require("./services/scoring.js");
 const { creerServiceH2H } = require("./services/h2h.js");
 const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
@@ -156,6 +157,9 @@ const auth = creerAuth({
 
 const poolStore = creerPoolStore({ db, usePostgres: USE_POSTGRES, draftFile: DRAFT_FILE });
 const presence = creerPresence();
+// Départs de repêchage prévus, en mémoire : la passe de chaque minute ne lit
+// la base que lorsqu'un départ est dû (services/agendaDeparts.js).
+const agendaDeparts = creerAgendaDeparts({ lireDepartsPrevus: () => poolStore.lireDepartsPrevus() });
 
 // Cache control middleware (must come BEFORE static file serving)
 app.use((req, res, next) => {
@@ -197,6 +201,15 @@ app.use((req, res, next) => {
 // image ne lit pas de compte.
 const photos = creerMagasinPhotos({ db, usePostgres: USE_POSTGRES, racine: __dirname, logger: console });
 app.get('/photos/:fichier', (req, res) => photos.servir(req, res));
+
+// Sonde de disponibilité, pour UptimeRobot. Quelques octets au lieu de
+// index.html (67 Ko) toutes les cinq minutes, et SURTOUT sans toucher la base :
+// une requête toutes les cinq minutes empêcherait Neon de s'endormir, et son
+// plan gratuit ne compte que 100 heures de calcul par mois.
+app.get('/healthz', (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json({ ok: true, uptimeS: Math.round(process.uptime()) });
+});
 
 app.use(creerGardeStatique());
 app.use(express.static(__dirname, {
@@ -317,6 +330,8 @@ const diffusion = creerDiffusion({
             // Repêchage chronométré : le réveil du tour suit le pool. Même
             // lecture paresseuse, le minuteur est créé avec les routes.
             if (typeof minuteurChoix !== 'undefined' && minuteurChoix) minuteurChoix.armer(nomPool, data);
+            // Départ à heure fixe : l'agenda suit la date du pool.
+            agendaDeparts.noter(nomPool, data);
         },
 
         // Une personne arrive : si elle attend dans un salon instantané, sa
@@ -1104,12 +1119,26 @@ async function updateCurrentStats() {
     memStatsCache = currentStats;
     console.log(`✅ NHL stats updated successfully! ${currentStats.players.length} players in memory.`);
 
+    synchroniserStatsFiltrees(newPlayers);
+
+    return currentStats;
+}
+
+/**
+ * Recopie les totaux dans nhl_filtered_stats.json, que plusieurs pages lisent
+ * directement (classement, équipes, échanges, statistiques).
+ *
+ * Séparé de la collecte : sur Render gratuit, le disque revient à la copie du
+ * dépôt à chaque redémarrage. Le démarrage relance donc cette recopie depuis
+ * le cache de la base — sans rappeler 547 fois la LNH comme il le faisait.
+ */
+function synchroniserStatsFiltrees(joueurs) {
     // Also write stats back into nhl_filtered_stats.json so the frontend fallback is always current.
     // This guarantees correct stats even if the cache system (Postgres/file) fails to load.
     try {
         const statsFileData = JSON.parse(fs.readFileSync(NHL_STATS_FILE, 'utf-8'));
         const statsById = {};
-        for (const p of newPlayers) {
+        for (const p of joueurs || []) {
             if (p.playerId) statsById[p.playerId] = p;
         }
         const updateSection = (arr, isGoalie) => arr.map(player => {
@@ -1129,15 +1158,45 @@ async function updateCurrentStats() {
     } catch (err) {
         console.error('⚠️ Could not update nhl_filtered_stats.json:', err.message);
     }
-
-    return currentStats;
 }
 
 // ── In-memory stats cache (bypasses Postgres entirely) ──────────────────────
 // This is the single source of truth for /current-stats. Postgres/file cache
 // is kept as a persistence layer but the in-memory object is always served.
 let memStatsCache = { lastUpdated: null, season: null, players: [] };
-let statsRefreshInProgress = false;
+
+/**
+ * Une seule collecte à la fois, partagée par tous ceux qui la demandent.
+ *
+ * Le démarrage, le cron de minuit, /refresh-stats et la route /current-stats
+ * appelaient chacun updateCurrentStats de leur côté : deux collectes de 547
+ * joueurs pouvaient tourner ensemble, et une base indisponible au démarrage
+ * en lançait une par visiteur. Un second appel reçoit maintenant la promesse
+ * de la collecte en cours.
+ */
+let collecteStatsEnCours = null;
+function rafraichirStatsUneFois(raison) {
+    if (!collecteStatsEnCours) {
+        console.log(`📊 Collecte des statistiques : ${raison}`);
+        collecteStatsEnCours = updateCurrentStats()
+            .finally(() => { collecteStatsEnCours = null; });
+    }
+    return collecteStatsEnCours;
+}
+
+/**
+ * Nombre de joueurs suivis dans nhl_filtered_stats.json. /current-stats en a
+ * besoin à chaque visite, et le relisait — 170 Ko lus et décodés d'un bloc,
+ * sur un serveur à 0,1 processeur. Seuls les totaux changent dans ce
+ * fichier (synchroniserStatsFiltrees) ; la liste des joueurs, jamais.
+ */
+let nombreJoueursSuivisMemo = null;
+function nombreJoueursSuivis() {
+    if (nombreJoueursSuivisMemo === null || nombreJoueursSuivisMemo === 0) {
+        nombreJoueursSuivisMemo = loadAllPlayers().length;
+    }
+    return nombreJoueursSuivisMemo;
+}
 
 // Classement des clubs en mémoire, sur le même principe (loadCurrentTeams).
 // Il change une fois par jour et seul ce processus l'écrit ; le relire en base
@@ -1175,13 +1234,10 @@ async function loadCurrentStats() {
 // Kicks off updateCurrentStats() in the background if a refresh isn't already
 // running. Safe to call from the route or at startup — it never blocks.
 function triggerBackgroundStatsRefresh(reason) {
-    if (statsRefreshInProgress) return;
-    console.log(`📊 Background stats refresh triggered: ${reason}`);
-    statsRefreshInProgress = true;
-    updateCurrentStats()
+    if (collecteStatsEnCours) return;
+    rafraichirStatsUneFois(reason)
         .then(() => console.log("✅ Background stats refresh done"))
-        .catch(e => console.error("❌ Background stats refresh failed:", e))
-        .finally(() => { statsRefreshInProgress = false; });
+        .catch(e => console.error("❌ Background stats refresh failed:", e));
 }
 
 // Route to get current stats
@@ -1189,12 +1245,13 @@ app.get("/current-stats", async (req, res) => {
     try {
         const stats = await loadCurrentStats();
         const saison = await getStatsSeason();
-        const { needsRefresh, reason } = getStatsRefreshStatus(stats, loadAllPlayers().length, saison.seasonId);
+        const { needsRefresh, reason } = getStatsRefreshStatus(stats, nombreJoueursSuivis(), saison.seasonId);
 
         if (!stats.lastUpdated) {
-            // Nothing in memory or persistence — block and fetch now (first ever start)
+            // Nothing in memory or persistence — block and fetch now (first ever start).
+            // Les visiteurs suivants attendent la même collecte au lieu d'en lancer une chacun.
             console.log("📊 No stats in memory, fetching synchronously...");
-            const fresh = await updateCurrentStats();
+            const fresh = await rafraichirStatsUneFois('aucune statistique en mémoire');
             return res.json(fresh);
         }
 
@@ -1251,7 +1308,14 @@ async function snapshotAllPoolRanks() {
 // Schedule daily stats update at midnight (00:00)
 cron.schedule('0 0 * * *', async () => {
     console.log("⏰ Daily stats update triggered at midnight");
-    await updateCurrentStats();
+    // Une collecte en échec ne doit pas emporter le classement des clubs, le
+    // relevé des rangs et les transactions : ils tournaient après elle, et une
+    // exception les sautait tous.
+    try {
+        await rafraichirStatsUneFois('minuit');
+    } catch (erreur) {
+        console.error("❌ Collecte des statistiques de minuit :", erreur.message);
+    }
     await updateTeamStandings();
     await snapshotAllPoolRanks();
     // En dernier : c'est la seule tâche qui tolère d'être sautée (voir la
@@ -1262,27 +1326,43 @@ cron.schedule('0 0 * * *', async () => {
     timezone: "America/New_York" // Adjust to your timezone
 });
 
-// Schedule daily game logs fetch at 3 AM
-cron.schedule('0 3 * * *', async () => {
-    console.log("🏒 Daily game logs fetch triggered at 3 AM");
-
+/**
+ * Collecte complète des feuilles de match, dans un processus à part
+ * (fetch_game_logs.js). Une seule à la fois : chaque appel lançait un
+ * processus Node de plus, et le serveur n'a que 512 Mo.
+ *
+ * Renvoie false si une collecte tourne déjà.
+ */
+let collecteJournauxEnCours = false;
+function lancerCollecteJournaux(origine) {
+    if (collecteJournauxEnCours) {
+        console.log(`⏭️  Collecte des feuilles de match déjà en cours (${origine})`);
+        return false;
+    }
+    collecteJournauxEnCours = true;
+    console.log(`🏒 Collecte des feuilles de match (${origine})`);
     try {
         const { exec } = require('child_process');
-
         exec('node fetch_game_logs.js', (error, stdout, stderr) => {
+            collecteJournauxEnCours = false;
             if (error) {
                 console.error('❌ Game logs fetch failed:', error);
                 console.error('stderr:', stderr);
                 return;
             }
-
             console.log('✅ Game logs fetch completed');
             console.log('stdout:', stdout);
         });
-
     } catch (error) {
+        collecteJournauxEnCours = false;
         console.error('❌ Error starting game logs fetch:', error);
     }
+    return true;
+}
+
+// Schedule daily game logs fetch at 3 AM
+cron.schedule('0 3 * * *', () => {
+    lancerCollecteJournaux('3 h');
 }, {
     timezone: "America/New_York" // Adjust to your timezone
 });
@@ -1381,8 +1461,32 @@ function getPlayersForTeams(teamAbbrevs) {
     }
 }
 
+/**
+ * Les matchs, parmi `ids`, dont au moins une feuille est déjà en base. null si
+ * on ne peut pas le savoir (mode fichier, base indisponible).
+ */
+async function matchsDejaEnregistres(ids) {
+    if (!USE_POSTGRES || ids.length === 0) return null;
+    try {
+        const resultat = await db.query(
+            'SELECT DISTINCT game_id::text AS game_id FROM player_game_logs WHERE game_id = ANY($1::bigint[])',
+            [ids]
+        );
+        return new Set(resultat.rows.map(ligne => ligne.game_id));
+    } catch (erreur) {
+        console.error('⚠️  Smart update: feuilles déjà enregistrées illisibles :', erreur.message);
+        return null;
+    }
+}
+
 // Core smart-poll: check which games just finished, update only those players
-async function checkAndUpdateFinishedGames() {
+//
+// `demarrage` : la mémoire des états est vide au premier passage, si bien que
+// chaque match déjà terminé avait l'air « tout juste fini » — chaque
+// redémarrage d'un soir de match rechargeait les feuilles de toute la
+// journée. Au démarrage, seuls les matchs finis dont la base n'a encore
+// aucune feuille sont repris : ceux qui se sont terminés pendant l'arrêt.
+async function checkAndUpdateFinishedGames({ demarrage = false } = {}) {
     if (smartUpdateRunning) {
         console.log('⏭️  Smart update: previous run still in progress, skipping');
         return;
@@ -1421,6 +1525,21 @@ async function checkAndUpdateFinishedGames() {
                     label: `${game.awayTeam?.abbrev} ${game.awayTeam?.score ?? 0}-${game.homeTeam?.score ?? 0} ${game.homeTeam?.abbrev}`
                 });
             }
+        }
+
+        if (demarrage && newlyFinished.length > 0) {
+            const enregistres = await matchsDejaEnregistres(newlyFinished.map(g => g.id));
+            // Sans réponse de la base, rien n'est repris : la collecte de 3 h
+            // complétera, plutôt que de tout recharger à l'aveugle.
+            const aReprendre = enregistres
+                ? newlyFinished.filter(g => !enregistres.has(String(g.id)))
+                : [];
+            if (!enregistres) {
+                console.log(`⏭️  Smart update: ${newlyFinished.length} match(s) terminé(s) laissé(s) à la collecte de 3 h (base non consultable)`);
+            } else if (aReprendre.length < newlyFinished.length) {
+                console.log(`⏭️  Smart update: ${newlyFinished.length - aReprendre.length} match(s) déjà en base, non rechargé(s)`);
+            }
+            newlyFinished.splice(0, newlyFinished.length, ...aReprendre);
         }
 
         if (newlyFinished.length === 0) {
@@ -1466,21 +1585,22 @@ cron.schedule('*/15 18-23,0,1 * * *', () => {
 }, { timezone: 'America/New_York' });
 
 // Populate the cache on startup so the first poll only triggers genuinely new finals
-checkAndUpdateFinishedGames();
+checkAndUpdateFinishedGames({ demarrage: true });
 
-// Populate in-memory stats cache on startup (30s delay to let server fully boot)
-setTimeout(async () => {
-    console.log("🚀 Startup: loading player stats into memory...");
-    try {
-        await updateCurrentStats();
-        console.log(`✅ Startup stats ready: ${memStatsCache.players.length} players in memory`);
-    } catch (e) {
-        console.error("❌ Startup stats load failed:", e.message);
-    }
-}, 30000);
+// Plus de collecte complète 30 s après chaque démarrage : elle rappelait 547
+// fois la LNH (environ 7 minutes) même quand le cache avait une heure, et
+// Render gratuit redémarre souvent. warmStatsOnStartup (à l'écoute du port)
+// charge le cache de la base et ne lance une collecte que s'il est périmé.
 
 // Debug endpoint — shows raw season data from NHL API for any player
-app.get("/debug-player/:id", async (req, res) => {
+// Les routes de maintenance ci-dessous étaient ouvertes à tous : la garde
+// d'origine laisse passer une requête sans Origin ni Referer (un simple curl),
+// et aucune ne demandait de session. /run-migration exécutait un fichier qui
+// commence par DROP TABLE player_game_logs ; /fetch-game-logs lançait un
+// processus Node de plus à chaque appel. Elles sont réservées à
+// l'administration, et /run-migration a disparu : le registre de migrations
+// (db.runMigrations) s'applique seul au démarrage.
+app.get("/debug-player/:id", auth.requireAdmin, async (req, res) => {
     try {
         const response = await fetch(`https://api-web.nhle.com/v1/player/${req.params.id}/landing`);
         const data = await response.json();
@@ -1504,10 +1624,10 @@ app.get("/debug-player/:id", async (req, res) => {
 });
 
 // Optional: Manual trigger endpoint for testing
-app.post("/refresh-stats", async (req, res) => {
+app.post("/refresh-stats", auth.requireAdmin, async (req, res) => {
     try {
         console.log("🔄 Manual stats refresh triggered");
-        const stats = await updateCurrentStats();
+        const stats = await rafraichirStatsUneFois('manuel');
         const teams = await updateTeamStandings();
         res.json({
             message: "Stats refreshed successfully",
@@ -1522,69 +1642,19 @@ app.post("/refresh-stats", async (req, res) => {
 });
 
 // Manual trigger endpoint for game logs fetch
-app.post("/fetch-game-logs", async (req, res) => {
-    try {
-        console.log("🏒 Manual game logs fetch triggered");
-
-        const { exec } = require('child_process');
-
-        // Start fetch in background
-        exec('node fetch_game_logs.js', (error, stdout, stderr) => {
-            if (error) {
-                console.error('❌ Game logs fetch failed:', error);
-                console.error('stderr:', stderr);
-            } else {
-                console.log('✅ Game logs fetch completed');
-                console.log('stdout:', stdout);
-            }
-        });
-
-        // Return immediately (fetch runs in background)
-        res.json({
-            message: "Game logs fetch started in background",
-            note: "Check server logs for progress"
-        });
-
-    } catch (error) {
-        console.error("❌ Error starting game logs fetch:", error);
-        res.status(500).json({ message: "Error starting game logs fetch" });
-    }
+app.post("/fetch-game-logs", auth.requireAdmin, (req, res) => {
+    // Return immediately (fetch runs in background)
+    const lancee = lancerCollecteJournaux('manuel');
+    res.json({
+        message: lancee ? "Game logs fetch started in background" : "Game logs fetch already running",
+        note: "Check server logs for progress"
+    });
 });
 
 // Manual trigger: force a smart update check right now
-app.post("/check-games-now", async (req, res) => {
+app.post("/check-games-now", auth.requireAdmin, async (req, res) => {
     res.json({ message: "Smart game check triggered — watch server logs" });
     checkAndUpdateFinishedGames();
-});
-
-// Manual trigger endpoint for database migration
-app.post("/run-migration", async (req, res) => {
-    try {
-        console.log("🗄️ Database migration triggered");
-
-        const { exec } = require('child_process');
-
-        // Run migration
-        exec('node run_migration.js', (error, stdout, stderr) => {
-            if (error) {
-                console.error('❌ Migration failed:', error);
-                console.error('stderr:', stderr);
-            } else {
-                console.log('✅ Migration completed');
-                console.log('stdout:', stdout);
-            }
-        });
-
-        // Return immediately
-        res.json({
-            message: "Database migration started",
-            note: "Check server logs for results"
-        });
-
-    } catch (error) {
-        console.error("❌ Error starting migration:", error);
-        res.status(500).json({ message: "Error starting migration" });
-    }
 });
 
 // Status endpoint to check game logs setup
@@ -4504,12 +4574,26 @@ console.log("🔍 Verification des semaines tete-a-tete terminees...");
 verifierSemainesH2H();
 menageDonneesDurables();
 
+/**
+ * Relit dans la base ce que la mémoire tient pour les repêchages : l'agenda
+ * des départs prévus et les tours chronométrés en attente. Au démarrage et
+ * toutes les six heures — ce qui rattrape une écriture faite hors du serveur
+ * (script, console SQL), la seule que le crochet auPoolMisAJour ne voit pas.
+ */
+function relirePlanificationRepechages() {
+    agendaDeparts.recharger().catch(erreur =>
+        console.error("❌ Agenda des départs prévus :", erreur.message));
+    minuteurChoix.rattraper().catch(erreur =>
+        console.error("❌ Rattrapage des choix chronométrés :", erreur.message));
+}
+
 // Run check every 6 hours (21600000 ms)
 const SIX_HOURS = 6 * 60 * 60 * 1000;
 setInterval(() => {
     console.log("🔍 Verification periodique des semaines terminees...");
     verifierSemainesH2H();
     menageDonneesDurables();
+    relirePlanificationRepechages();
 }, SIX_HOURS);
 
 console.log("✅ H2H auto-finalization scheduler initialized (checks every 6 hours)");
@@ -4520,23 +4604,44 @@ console.log("✅ H2H auto-finalization scheduler initialized (checks every 6 hou
  * tombe donc à l'heure annoncée. Un serveur redémarré rattrape au premier
  * passage ce qui devait partir pendant qu'il était arrêté.
  *
+ * Le passage ne lit la base que s'il a quelque chose à y faire : un départ
+ * prévu arrivé à son heure (agendaDeparts), ou un tour chronométré en attente
+ * (minuteurChoix.enCours). Il la lisait à chaque minute, jour et nuit, ce qui
+ * empêchait Neon de s'endormir : sur son plan gratuit (100 heures de calcul
+ * par mois), le quota tombait vers le milieu du mois, et le site avec lui.
+ * Pendant un repêchage chronométré, la lecture de chaque minute reste : des
+ * gens sont là, la base est éveillée de toute façon.
+ *
  * Un minuteur qui se replanifie plutôt qu'un setInterval : il se recale sur
  * l'horloge à chaque tour, et un passage lent ne chevauche jamais le suivant.
  */
 function planifierRepechagesPrevus() {
     const delai = 60000 - (Date.now() % 60000) + 1000;
     setTimeout(async () => {
-        try {
-            await contexteRoutes.demarrerRepechagesPrevus();
-        } catch (erreur) {
-            console.error("❌ Départs de repêchage prévus :", erreur.message);
+        if (agendaDeparts.echu()) {
+            try {
+                await contexteRoutes.demarrerRepechagesPrevus();
+            } catch (erreur) {
+                console.error("❌ Départs de repêchage prévus :", erreur.message);
+            }
+            // Ce qui est parti a quitté l'agenda par son écriture ; relire la
+            // base en retire aussi ce qui n'y est plus (pool supprimé, date
+            // changée hors du serveur). Un départ en échec y reste, et le
+            // passage suivant le retente.
+            try {
+                await agendaDeparts.recharger();
+            } catch (erreur) {
+                console.error("❌ Agenda des départs prévus :", erreur.message);
+            }
         }
-        // Même passage, même rythme : un réveil de choix perdu (redémarrage,
-        // base indisponible au mauvais moment) se réarme dans la minute.
-        try {
-            await minuteurChoix.rattraper();
-        } catch (erreur) {
-            console.error("❌ Rattrapage des choix chronométrés :", erreur.message);
+        // Même passage, même rythme : un réveil de choix perdu se réarme dans
+        // la minute, tant qu'un repêchage chronométré tourne.
+        if (minuteurChoix.enCours()) {
+            try {
+                await minuteurChoix.rattraper();
+            } catch (erreur) {
+                console.error("❌ Rattrapage des choix chronométrés :", erreur.message);
+            }
         }
         planifierRepechagesPrevus();
     }, delai);
@@ -4729,12 +4834,15 @@ async function warmStatsOnStartup() {
         const stats = await loadCurrentStats();
         if (stats.lastUpdated) {
             console.log(`📊 Local player stats loaded: ${stats.players.length} players (last updated ${stats.lastUpdated})`);
+            // Le disque est revenu à la copie du dépôt : on y remet les
+            // totaux du cache, sans appeler la LNH.
+            synchroniserStatsFiltrees(stats.players);
         } else {
             console.log('📊 No local player stats cache found on disk.');
         }
 
         const saison = await getStatsSeason();
-        const { needsRefresh, reason } = getStatsRefreshStatus(stats, loadAllPlayers().length, saison.seasonId);
+        const { needsRefresh, reason } = getStatsRefreshStatus(stats, nombreJoueursSuivis(), saison.seasonId);
         if (needsRefresh) {
             triggerBackgroundStatsRefresh(`startup check — ${reason}`);
         } else {
@@ -4808,9 +4916,10 @@ async function startServer() {
             seedRosterSnapshotOnStartup();
 
             // Un tour chronométré échu pendant l'arrêt se joue tout de suite,
-            // sans attendre le passage de la minute.
-            minuteurChoix.rattraper().catch(erreur =>
-                console.error("❌ Rattrapage des choix chronométrés :", erreur.message));
+            // sans attendre le passage de la minute ; l'agenda des départs
+            // prévus se remplit, et un départ manqué pendant l'arrêt part au
+            // passage suivant.
+            relirePlanificationRepechages();
         });
     } catch (error) {
         console.error('❌ Failed to start server:', error);

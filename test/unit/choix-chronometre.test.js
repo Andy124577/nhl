@@ -20,7 +20,7 @@ const choixAuto = require('../../lib/choixAuto.js');
 const evenements = require('../../lib/events.js');
 const lineup = require('../../lib/lineup.js');
 const routesRepechage = require('../../routes/draft.js');
-const { creerMinuteurChoix, MARGE_MS } = require('../../services/minuteurChoix.js');
+const { creerMinuteurChoix, MARGE_MS, RELANCE_MS } = require('../../services/minuteurChoix.js');
 const { monterRoutes, poolNeuf } = require('../fixtures/routeHarness.js');
 const { chargerFonctions } = require('../fixtures/helpers.js');
 
@@ -380,7 +380,7 @@ test('le réveil se pose sur l’échéance, une seule fois, et tombe quand le t
     assert.equal(m.armer('Autre', null), null);
 });
 
-test('une échéance déjà passée se joue tout de suite ; une erreur attend le rattrapage', async () => {
+test('une échéance déjà passée se joue tout de suite ; une erreur se retente d’elle-même', async () => {
     const minuterie = fausseMinuterie();
     const erreurs = [];
     const m = creerMinuteurChoix({
@@ -391,16 +391,57 @@ test('une échéance déjà passée se joue tout de suite ; une erreur attend le
         minuterie
     });
 
+    assert.equal(m.enCours(), false);
     assert.equal(await m.rattraper(), 1);
+    assert.equal(m.enCours(), true);
     assert.equal(minuterie.poses[0].delai, MARGE_MS);
     await minuterie.poses[0].fn();
     assert.equal(erreurs.length, 1);
     assert.match(erreurs[0], /base indisponible/);
 
-    assert.equal(await m.rattraper(), 1, 'le passage suivant réarme le tour');
+    // Hors repêchage, plus aucune passe de chaque minute ne relit la base :
+    // le réveil raté doit se reposer seul, sur le même tour.
+    assert.equal(minuterie.poses.length, 2);
+    assert.equal(minuterie.poses[1].delai, RELANCE_MS);
+    assert.deepEqual(m.etat(), { Ligue: { echeance: MAINTENANT - 9 * LIMITE, pickIndex: 2 } });
+    assert.equal(m.enCours(), true, 'le tour retenté compte comme en attente');
+
+    assert.equal(await m.rattraper(), 1, 'un rattrapage ne double pas le réveil retenté');
+    assert.equal(minuterie.poses.length, 2);
     m.arreter();
     assert.deepEqual(m.etat(), {});
     assert.equal(minuterie.poses[1].annule, true);
+    assert.equal(m.enCours(), false);
+});
+
+test('un pool disparu n’est pas retenté ; un tour réarmé entre-temps n’est pas doublé', async () => {
+    const minuterie = fausseMinuterie();
+    const introuvable = Object.assign(new Error('Pool introuvable.'), { code: 404 });
+    let rejet = introuvable;
+    const m = creerMinuteurChoix({
+        choisir: async () => { throw rejet; },
+        lireEnCours: async () => ({}),
+        logger: { error: () => {} },
+        horloge: () => MAINTENANT,
+        minuterie
+    });
+
+    m.armer('Ancien nom', poolChronometre({ ilYa: LIMITE }));
+    await minuterie.poses[0].fn();
+    assert.equal(minuterie.poses.length, 1, 'un pool renommé ou supprimé ne se retente pas');
+    assert.equal(m.enCours(), false);
+
+    // Le réveil échoue, mais le pool a changé pendant la transaction : le
+    // nouveau tour est déjà armé, le retenté serait de trop.
+    rejet = new Error('base indisponible');
+    m.armer('Ligue', poolChronometre({ ilYa: LIMITE }));
+    const tire = minuterie.poses[1].fn;
+    const pendant = tire();
+    m.armer('Ligue', { ...poolChronometre({ ilYa: 0 }), currentPickIndex: 1 });
+    await pendant;
+    assert.equal(minuterie.poses.length, 3, 'aucun retenté posé par-dessus le nouveau tour');
+    assert.equal(m.etat().Ligue.pickIndex, 1);
+    m.arreter();
 });
 
 test('les vrais minuteurs ne retiennent pas le processus', () => {

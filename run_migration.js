@@ -31,7 +31,15 @@ async function main() {
     console.log('🗄️  NHL Database Migration Runner');
     console.log('================================\n');
 
-    const migrationFile = process.argv[2] || 'create_player_game_logs.sql';
+    // Plus de fichier par défaut : c'était create_player_game_logs.sql, qui
+    // commence par DROP TABLE player_game_logs. Les migrations numérotées
+    // s'appliquent seules au démarrage (db.runMigrations) ; ce script ne sert
+    // plus qu'à exécuter un fichier nommé explicitement.
+    const migrationFile = process.argv[2];
+    if (!migrationFile) {
+        console.error('Usage : node run_migration.js <fichier.sql>  (dans migrations/)');
+        process.exit(1);
+    }
 
     try {
         await runMigration(migrationFile);
