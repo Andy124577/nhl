@@ -5117,6 +5117,37 @@ function relirePlanificationRepechages() {
         console.error("❌ Rattrapage des choix chronométrés :", erreur.message));
 }
 
+/**
+ * Réaligne les historiques de choix restés à l'ancien nom d'une équipe
+ * renommée pendant son repêchage (poolOps.choixDesalignes) : la salle
+ * affichait « Tour sauté » à la place des joueurs choisis. Le renommage suit
+ * désormais l'historique ; ceci répare les pools abîmés avant. Au démarrage :
+ * une lecture, et une écriture seulement pour un pool concerné, sous son
+ * verrou. Les salles ouvertes sont prévenues.
+ */
+async function reparerHistoriquesChoix() {
+    const pools = await poolStore.lireTous();
+    for (const [nom, enveloppe] of Object.entries(pools)) {
+        if (poolOps.choixDesalignes(enveloppe.data).length === 0) continue;
+        try {
+            const { valeur } = await poolStore.muterPool(nom, {
+                scope: 'pool:reparer-historique-choix',
+                appliquer: async ({ data }) => {
+                    const corriges = poolOps.alignerHistoriqueChoix(data);
+                    return corriges > 0 ? { valeur: { corriges } } : { sauvegarder: false, valeur: { corriges: 0 } };
+                }
+            });
+            if (valeur.corriges > 0) {
+                const frais = await poolStore.lire(nom);
+                if (frais) diffusion.poolMisAJour(nom, frais.data, frais.revision);
+                console.log(`🩹 Historique des choix réaligné (${nom}) : ${valeur.corriges} choix`);
+            }
+        } catch (erreur) {
+            console.error(`❌ Réalignement de l'historique impossible (${nom}) :`, erreur.message);
+        }
+    }
+}
+
 // Run check every 6 hours (21600000 ms)
 const SIX_HOURS = 6 * 60 * 60 * 1000;
 setInterval(() => {
@@ -5496,6 +5527,8 @@ async function startServer() {
             // prévus se remplit, et un départ manqué pendant l'arrêt part au
             // passage suivant.
             relirePlanificationRepechages();
+            reparerHistoriquesChoix().catch(erreur =>
+                console.error("❌ Réalignement des historiques de choix :", erreur.message));
         });
     } catch (error) {
         console.error('❌ Failed to start server:', error);
