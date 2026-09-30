@@ -1162,23 +1162,24 @@ function trophyIconHTML(cls) {
     return `<svg class="hof-icon ${cls}" viewBox="0 0 24 24" width="18" height="18"><path d="M5 4h14v2h2v3a5 5 0 0 1-5 5h-.26A6 6 0 0 1 13 17.65V20h3v2H8v-2h3v-2.35A6 6 0 0 1 8.26 14H8a5 5 0 0 1-5-5V6h2V4zm0 4H5v1a3 3 0 0 0 2.6 2.97A8.9 8.9 0 0 1 5 8zm14 0a8.9 8.9 0 0 1-2.6 3.97A3 3 0 0 0 19 9V8z"></path></svg>`;
 }
 
-function hofCardHTML(entry, kind, label, dateFormatter) {
-    const icon = trophyIconHTML(kind === 'worst' ? 'is-worst' : 'is-best');
-    if (!entry) {
-        return `
-            <div class="hof-card hof-card-${kind}">
-                ${icon}
-                <p class="hof-card-label">${label}</p>
-                <p class="hof-empty">Aucune donnée</p>
-            </div>`;
-    }
-    const displayName = getDisplayName(entry.teamName, entry.members);
+/** Une case du tableau des records : les points, l'équipe, la date. */
+function hofCellHTML(entry, kind, dateFormatter) {
+    if (!entry) return `<div class="hof-cell is-${kind} is-empty"><span class="hof-empty">—</span></div>`;
+    const displayName = escapeHtmlText(getDisplayName(entry.teamName, entry.members));
     return `
-        <div class="hof-card hof-card-${kind}">
-            ${icon}
-            <p class="hof-card-label">${label}</p>
-            <p class="hof-card-value">${entry.points}</p>
-            <p class="hof-card-name"><span title="${displayName}">${displayName}</span> <span class="hof-card-date">· ${dateFormatter(entry.date)}</span></p>
+        <div class="hof-cell is-${kind}">
+            <span class="hof-card-value">${entry.points}<small>pts</small></span>
+            <span class="hof-card-name" title="${displayName}">${displayName}</span>
+            <span class="hof-card-date">${dateFormatter(entry.date)}</span>
+        </div>`;
+}
+
+function hofRowHTML(label, best, worst, dateFormatter) {
+    return `
+        <div class="hof-row">
+            <p class="hof-row-label">${label}</p>
+            ${hofCellHTML(best, 'best', dateFormatter)}
+            ${hofCellHTML(worst, 'worst', dateFormatter)}
         </div>`;
 }
 
@@ -1202,17 +1203,16 @@ function buildHallOfFameHTML(data) {
             'Pas encore de records',
             "Il faut au moins un match joué cette saison.");
     }
-    // Ordre du mockup : la meilleure semaine sert de carte « héro » (fond
-    // sombre), puis meilleurs mois/jour, puis les trois pires en fin de
-    // grille — pas un simple appariement best/worst par ligne.
+    // Un tableau plutôt que six cartes : une ligne par période, le meilleur
+    // à gauche (or) et le pire à droite (rouge) — on compare d'un coup d'œil.
     return `${head}
-        <div class="hof-grid">
-            ${hofCardHTML(data.bestWeek, 'hero', 'Meilleure semaine', formatHofDate)}
-            ${hofCardHTML(data.bestMonth, 'best', 'Meilleur mois', formatHofMonth)}
-            ${hofCardHTML(data.bestDay, 'best', 'Meilleure journée', formatHofDate)}
-            ${hofCardHTML(data.worstWeek, 'worst', 'Pire semaine', formatHofDate)}
-            ${hofCardHTML(data.worstMonth, 'worst', 'Pire mois', formatHofMonth)}
-            ${hofCardHTML(data.worstDay, 'worst', 'Pire journée', formatHofDate)}
+        <div class="hof-board">
+            <div class="hof-col-heads" aria-hidden="true">
+                <span></span><span class="is-best">${trophyIconHTML('is-best')}Meilleur</span><span class="is-worst">Pire</span>
+            </div>
+            ${hofRowHTML('Journée', data.bestDay, data.worstDay, formatHofDate)}
+            ${hofRowHTML('Semaine', data.bestWeek, data.worstWeek, formatHofDate)}
+            ${hofRowHTML('Mois', data.bestMonth, data.worstMonth, formatHofMonth)}
         </div>`;
 }
 
