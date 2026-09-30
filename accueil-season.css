@@ -114,3 +114,37 @@ body.fz-season-page { background:var(--bg); }
 .fzs-tag.is-time { background:transparent; border:1px solid #48484A; color:#F5F5F7; text-transform:none; font-variant-numeric:tabular-nums; }
 .fzs-player.is-upcoming .fzs-player-stats small { color:#A1A1A6; }
 html[data-theme="light"] .fzs-tag.is-time { border-color:var(--fzh-outline); color:var(--fzh-muted); }
+
+/* ---- Mes joueurs en direct : carrousel de cartes (maquette Claude Design) ----
+   Le joueur en grand sur la couleur de son club, le logo du club en filigrane ;
+   ceux qui jouent sont à gauche, marqués EN DIRECT. */
+.fzs-players .fzs-player-list { display:flex; flex-direction:row; flex-wrap:nowrap; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; padding:0 0 6px; }
+.fzs-players .fzs-player-list::-webkit-scrollbar { display:none; }
+.fzs-pc, .fzs-pc:hover { text-decoration:none; }
+.fzs-pc { flex:none; width:172px; scroll-snap-align:start; display:flex; flex-direction:column; overflow:hidden; border-radius:12px; border:1px solid #2E2E33; background:#232326; color:#F2F2F3; font-variant-numeric:tabular-nums; }
+.fzs-pc.is-live { border-color:#8A2A30; }
+.fzs-pc:hover { color:#F2F2F3; border-color:#55555C; }
+.fzs-pc-top { position:relative; height:132px; overflow:hidden; display:flex; align-items:flex-end; justify-content:center; background:linear-gradient(180deg, color-mix(in srgb, var(--pc-team) 82%, #fff 6%), color-mix(in srgb, var(--pc-team) 55%, #000)); }
+.fzs-pc-logo { position:absolute; inset:-12% -18% auto auto; width:120%; height:120%; object-fit:contain; opacity:.22; pointer-events:none; }
+.fzs-pc .fzd-off-face { position:relative; width:100%; height:118px; flex:none; border-radius:0; background:transparent; display:block; font-size:0; }
+.fzs-pc .fzd-off-face img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:center bottom; background:transparent; }
+.fzs-pc-live { position:absolute; left:8px; top:8px; display:flex; align-items:center; gap:4px; height:18px; padding:0 6px; border-radius:4px; background:var(--primary); color:var(--on-primary); font:700 11px/1 'Barlow Condensed',Helvetica,sans-serif; letter-spacing:.06em; }
+.fzs-pc-live i { width:5px; height:5px; border-radius:50%; background:#fff; }
+.fzs-pc-body { display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px; border-top:1px solid #2E2E33; min-height:70px; }
+.fzs-pc-name { display:flex; align-items:baseline; gap:4px; max-width:100%; }
+.fzs-pc-name strong { font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#F2F2F3; }
+.fzs-pc-name span { flex:none; font-size:11px; font-weight:700; color:#8A8A90; }
+.fzs-pc-season { display:flex; align-items:baseline; gap:6px; font-size:13px; color:#A3A3AA; }
+.fzs-pc-season b { font-weight:700; color:#8A8A90; }
+.fzs-pc-stats { display:flex; gap:10px; font:600 14px/1 'Barlow Condensed',Helvetica,sans-serif; color:#C9C9CF; }
+.fzs-pc-stats small { font-size:11px; color:#6F6F76; }
+.fzs-pc .is-up { color:var(--success); }
+.fzs-pc-stats .is-up small { color:inherit; }
+.fzs-pc-foot { margin-top:auto; padding:7px 8px; background:#1C1C1F; text-align:center; font:600 12.5px/1.2 'Barlow Condensed',Helvetica,sans-serif; letter-spacing:.03em; color:#8A8A90; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fzs-pc.is-live .fzs-pc-foot { background:#2B1C1D; color:#F2F2F3; }
+html[data-theme="light"] .fzs-pc { background:#fff; border-color:var(--fzh-outline); }
+html[data-theme="light"] .fzs-pc, html[data-theme="light"] .fzs-pc:hover, html[data-theme="light"] .fzs-pc-name strong { color:#1D1D1F; }
+html[data-theme="light"] .fzs-pc-body { border-color:var(--fzh-outline); }
+html[data-theme="light"] .fzs-pc-foot { background:#F5F5F7; }
+html[data-theme="light"] .fzs-pc.is-live .fzs-pc-foot { background:#FDECEC; color:#1D1D1F; }
+@media(max-width:768px) { .fzs-pc { flex-basis:160px; width:160px; } }

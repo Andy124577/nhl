@@ -106,11 +106,73 @@ function fzsRepartition(lines) {
     return [['Buts', somme('goals')], ['Aides', somme('assists')], ['Pts gardiens', gardiens]];
 }
 
+/** Les points de la saison d'un joueur, au barème du pool. */
+function fzsPointsSaison(info) {
+    if (!info) return 0;
+    return info.position === 'G' ? goaliePoolPoints(info) : (info.points || 0);
+}
+
+/**
+ * Les cartes du carrousel « Mes joueurs en direct » : d'abord ceux qui jouent
+ * (à gauche), puis ceux dont le match approche — le plus proche en tête —,
+ * puis ceux dont le match est fini.
+ */
+function fzsCartes(lines, avant, games) {
+    const cartes = [];
+    lines.forEach(p => {
+        const g = games.find(x => x.id === p.gameId);
+        const live = !!FZS_EN_DIRECT(g);
+        const gardien = p.position === 'G';
+        cartes.push({
+            rang: live ? 0 : 2, tri: -fzdPointsCeSoir(p), live, final: !live,
+            nom: p.playerName, equipe: p.teamAbbrev,
+            pos: getPlayerStats(p.playerName)?.position || p.position,
+            saison: fzsPointsSaison(getPlayerStats(p.playerName)),
+            soir: fzdPointsCeSoir(p),
+            stats: [[gardien ? p.saves : p.goals, gardien ? 'ARR' : 'B'], [gardien ? p.goalsAgainst : p.assists, gardien ? 'BA' : 'A']],
+            match: gameLineFor(p, games) || (live ? 'En direct' : 'Final')
+        });
+    });
+    avant.forEach(a => cartes.push({
+        rang: 1, tri: Date.parse(a.depart) || 0, live: false, final: false,
+        nom: a.name, equipe: a.info.teamAbbrev,
+        pos: a.info.position && a.info.position !== 'N/A' ? a.info.position : '',
+        saison: a.saison, soir: 0, stats: null,
+        match: `Ce soir ${gameTimeLabel(a.depart)} vs ${a.contre}`
+    }));
+    return cartes.sort((x, y) => x.rang - y.rang || x.tri - y.tri);
+}
+
+/** Une carte : le joueur sur la couleur de son club, le logo du club en filigrane. */
+function fzsCarteHTML(c, href) {
+    const esc = escapeHTML;
+    const couleur = typeof getTeamColors === 'function' ? getTeamColors(c.equipe)[0] : '#3A414D';
+    const mots = c.nom.split(' ');
+    const court = mots.length > 1 ? `${mots[0][0]}. ${mots.slice(1).join(' ')}` : c.nom;
+    const pts = n => Number(n || 0).toLocaleString('fr-CA', { maximumFractionDigits: 2 });
+    const soir = c.live || c.final;
+    const soirLibelle = c.soir > 0 ? `+${pts(c.soir)} ↑` : '+0';
+    return `<a class="fzs-pc${c.live ? ' is-live' : ''}${c.final ? ' is-final' : ''}" href="${esc(href)}" style="--pc-team:${esc(couleur)}">
+        <div class="fzs-pc-top">
+            <img class="fzs-pc-logo" src="teams/${esc(c.equipe)}.png" alt="" loading="lazy" onerror="this.remove()">
+            ${offPlayerFaceHTML(c.nom, c.equipe)}
+            ${c.live ? '<span class="fzs-pc-live"><i></i>EN DIRECT</span>' : ''}
+        </div>
+        <div class="fzs-pc-body">
+            <div class="fzs-pc-name"><strong title="${esc(c.nom)}">${esc(court)}</strong><span>${esc(c.pos)}</span></div>
+            <div class="fzs-pc-season"><span>Saison ${pts(c.saison)} pts</span>${soir ? `<b class="${c.soir > 0 ? 'is-up' : ''}">${soirLibelle}</b>` : ''}</div>
+            ${c.stats ? `<div class="fzs-pc-stats">${c.stats.map(([v, l]) => `<span>${v} <small>${l}</small></span>`).join('')}<span class="${c.soir > 0 ? 'is-up' : ''}">${pts(c.soir)} <small>PTS</small></span></div>` : ''}
+        </div>
+        <div class="fzs-pc-foot">${esc(c.match)}</div>
+    </a>`;
+}
+
 /** Les quatre panneaux de la soirée, et la ligne d'accroche de la bannière. */
 function fzsSoireeHTML(tonight, activeName) {
     const esc = escapeHTML;
     const { names, games, lines, playing, total } = fzsLignesDuSoir(tonight);
     const avant = fzsJoueursAvantMatch(tonight, names);
+    const cartes = fzsCartes(lines, avant, games);
     const href = fzdMonEffectifHref(activeName, FZPool.team().name);
     const empty = text => `<p class="fzs-empty">${text}</p>`;
     const pts = n => Number(n || 0).toLocaleString('fr-CA', { maximumFractionDigits: 2 });
@@ -120,11 +182,8 @@ function fzsSoireeHTML(tonight, activeName) {
         accroche: `<span class="fzs-eyebrow">${playing ? '<i class="fzs-dot"></i> En direct' : 'Votre soirée de hockey'}</span>
                 <h1>Soir de hockey</h1><p>${playing ? `${playing} de vos joueurs sont en action ce soir.` : 'Chaque match compte. Suivez votre équipe.'}</p>
                 <a class="fzs-cta" href="${esc(href)}">Suivre mes joueurs <span aria-hidden="true">→</span></a>`,
-        joueurs: `<section class="fzs-players fzs-panel">${fzsHeading(`${playing ? '<i class="fzs-dot"></i> Mes joueurs en direct' : 'Mes joueurs ce soir'} (${lines.length + avant.length})`, href, 'Voir mon équipe')}
-            <div class="fzs-player-list">${lines.length || avant.length ? avant.map(a => `<a class="fzs-player is-upcoming" href="${esc(href)}">${offPlayerFaceHTML(a.name, a.info.teamAbbrev)}<div class="fzs-player-name"><strong>${esc(a.name)}</strong><small>${esc(a.info.position && a.info.position !== 'N/A' ? a.info.position : '')} · ${esc(a.info.teamAbbrev)}</small><span class="fzs-tag is-time">${esc(gameTimeLabel(a.depart))}</span></div><div class="fzs-player-stats"><span><b>${pts(a.saison)}</b> PTS SAISON</span><small>${esc(gameTimeLabel(a.depart))} · vs ${esc(a.contre)}</small></div>${teamLogoImg(a.info.teamAbbrev)}</a>`).join('') + lines.map(p => {
-                const g = games.find(g => g.id === p.gameId);
-                return `<a class="fzs-player" href="${esc(href)}">${offPlayerFaceHTML(p.playerName, p.teamAbbrev)}<div class="fzs-player-name"><strong>${esc(p.playerName)}</strong><small>${esc(getPlayerStats(p.playerName)?.position || p.position)} · ${esc(p.teamAbbrev)}</small><span class="fzs-tag ${FZS_EN_DIRECT(g) ? 'is-live' : ''}">${FZS_EN_DIRECT(g) ? 'En direct' : 'Final'}</span></div><div class="fzs-player-stats"><span><b>${p.position === 'G' ? p.saves : p.goals}</b> ${p.position === 'G' ? 'ARR' : 'B'}</span><span><b>${p.position === 'G' ? p.goalsAgainst : p.assists}</b> ${p.position === 'G' ? 'BA' : 'A'}</span><strong class="fzs-green">${pts(fzdPointsCeSoir(p))} PTS</strong><small>${gameLineFor(p, games)}</small></div>${teamLogoImg(p.teamAbbrev)}</a>`;
-            }).join('') : empty('Aucun de vos joueurs n’a commencé son match aujourd’hui.')}</div>
+        joueurs: `<section class="fzs-players fzs-panel">${fzsHeading(`${playing ? '<i class="fzs-dot"></i> Mes joueurs en direct' : 'Mes joueurs ce soir'} (${playing || cartes.length})`, href, 'Voir mon équipe')}
+            <div class="fzs-player-list">${cartes.length ? cartes.map(c => fzsCarteHTML(c, href)).join('') : empty('Aucun de vos joueurs ne joue aujourd’hui.')}</div>
         </section>`,
         total: `<section class="fzs-total fzs-panel">${fzsHeading('▥ &nbsp; Total ce soir')}<strong class="fzs-number">${pts(total)} pts</strong><p>${fzdPoolH2H() ? 'Points fantasy de votre équipe' : 'Points de vos joueurs (buts + aides, gardiens)'}</p></section>`,
         repartition: `<section class="fzs-breakdown fzs-panel">${fzsHeading('Répartition des statistiques · ce soir')}${repartition.map(([label, value]) =>
