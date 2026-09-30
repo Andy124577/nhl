@@ -1430,8 +1430,13 @@ async function toggleForSale(btn) {
             btn.classList.add('is-listed');
             btn.dataset.listingId = data.id;
         }
+        // Le libellé dit l'état (« En vente ») ; title et aria-label disent
+        // l'action — seuls lisibles quand la bande étroite masque le libellé.
+        const listed = btn.classList.contains('is-listed');
         const label = btn.querySelector('.fst-label');
-        if (label) label.textContent = btn.classList.contains('is-listed') ? 'Retirer de la vente' : 'Mettre en vente';
+        if (label) label.textContent = listed ? 'En vente' : 'Mettre en vente';
+        btn.title = listed ? 'Retirer de la vente' : 'Mettre en vente';
+        btn.setAttribute('aria-label', btn.title);
     } catch (err) {
         console.error('Error toggling trade listing:', err);
         fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
@@ -1543,24 +1548,37 @@ function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
         }
     });
 
-    // Render player cards
+    // Liste « comfortable » (Claude Design, Roster Table v2) : une bande
+    // continue de rangées de 64px séparées d'un filet, plutôt qu'une carte
+    // par joueur. Sur une bande étroite, le prénom se réduit à son initiale
+    // et le bouton de vente à son icône — requêtes de conteneur sur
+    // .roster-rows (classement.css).
+    const bloc = document.createElement('section');
+    bloc.className = 'roster-block';
+    bloc.innerHTML = `<p class="roster-count">Joueurs actifs · ${players.length}</p>`;
+    const rangees = document.createElement('div');
+    rangees.className = 'roster-rows';
+    bloc.appendChild(rangees);
+    rosterList.appendChild(bloc);
+
     players.forEach((player, index) => {
-        const card = document.createElement('div');
-        card.className = 'roster-card';
+        const row = document.createElement('div');
+        row.className = isOwner ? 'roster-row has-sell' : 'roster-row';
 
         // Only make clickable if it has a playerId (not teams)
         if (player.playerId) {
-            card.classList.add('clickable');
-            card.onclick = () => showCareerStats(player.playerId, player.name, player.type === 'goalie');
+            row.classList.add('clickable');
+            row.onclick = () => showCareerStats(player.playerId, player.name, player.type === 'goalie');
         }
 
         const pickNumber = index + 1;
+        const estClub = player.type === 'team';
 
         // Get player image
         let imageHTML = '';
-        if (player.type === 'team') {
+        if (estClub) {
             const teamLogo = `teams/${player.teamAbbrev}.png`;
-            imageHTML = `<img src="${teamLogo}" alt="${player.name}" onerror="this.style.display='none'">`;
+            imageHTML = `<img src="${escapeAttr(teamLogo)}" alt="${escapeAttr(player.name)}" onerror="this.style.display='none'">`;
         } else {
             // Try multiple sources for player headshot
             let headshot = null;
@@ -1588,7 +1606,7 @@ function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
             const initiales = escapeHtmlText(initialsFromName(player.name || ''));
             imageHTML = (headshot
                 ? `<img src="${escapeAttr(headshot)}" alt="${escapeAttr(player.name)}" loading="lazy" data-no-lazy onerror="this.remove()">`
-                : '') + `<div class="no-photo">${initiales || escapeHtmlText(player.position)}</div>`;
+                : '') + `<div class="rr-initials">${initiales || escapeHtmlText(player.position)}</div>`;
         }
 
         // Calculate points
@@ -1627,59 +1645,58 @@ function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
 
         // Get team abbreviation for display
         const teamAbbrev = player.teamAbbrev || '';
+        // `teamAbbrevs` liste parfois les clubs d'une saison (« TOR,MTL ») :
+        // le dernier est l'actuel.
+        const club = String(teamAbbrev).split(',').pop().trim();
+        const meta = [club, estClub ? 'Équipe' : player.position].filter(Boolean).join(' · ');
+
+        // « N. Kucherov » quand la bande est trop étroite pour le nom complet.
+        const mots = player.name.split(' ');
+        const nomCourt = !estClub && mots.length > 1 ? `${mots[0][0]}. ${mots.slice(1).join(' ')}` : '';
+        const nomHTML = nomCourt
+            ? `<span class="rr-name-full">${escapeHtmlText(player.name)}</span><span class="rr-name-short">${escapeHtmlText(nomCourt)}</span>`
+            : escapeHtmlText(player.name);
+
+        // Un zéro s'efface : l'œil va droit aux joueurs qui ont produit.
+        const stat = (valeur, libelle) =>
+            `<div class="rr-stat${valeur ? '' : ' is-zero'}"><span class="rr-v">${valeur}</span><span class="rr-l">${libelle}</span></div>`;
 
         // Only the roster's own team sees the list/unlist toggle.
         const existingListing = listingByPlayer[player.name];
         const isListed = !!existingListing;
+        const sellAction = isListed ? 'Retirer de la vente' : 'Mettre en vente';
         const sellToggleHTML = isOwner ? `
                 <button type="button" class="for-sale-toggle${isListed ? ' is-listed' : ''}"
-                        data-player="${player.name.replace(/"/g, '&quot;')}"
+                        data-player="${escapeAttr(player.name)}"
                         data-category="${player.category || ''}"
                         data-listing-id="${isListed ? existingListing.id : ''}"
+                        title="${sellAction}" aria-label="${sellAction}"
                         onclick="event.stopPropagation(); toggleForSale(this)">
-                    ${typeof getIcon === 'function' ? getIcon('tag', 14) : ''}
-                    <span class="fst-label">${isListed ? 'Retirer de la vente' : 'Mettre en vente'}</span>
+                    ${typeof getIcon === 'function' ? getIcon('tag', 12) : ''}
+                    <span class="fst-label">${isListed ? 'En vente' : 'Mettre en vente'}</span>
                 </button>` : '';
 
-        card.innerHTML = `
-            <div class="pick-number">${pickNumber}</div>
-            <div class="player-avatar${player.type === 'team' ? '' : ' fz-shot'}"${player.type === 'team' ? '' : ` style="${clubShotStyle(teamAbbrev)}"`}>
+        row.innerHTML = `
+            <div class="rr-rank">${pickNumber}</div>
+            <div class="rr-avatar${estClub ? ' is-club' : ' fz-shot'}"${estClub ? '' : ` style="${clubShotStyle(teamAbbrev)}"`}>
                 ${imageHTML}
             </div>
-            <div class="roster-info">
-                <div class="player-name-row">
-                    <span class="player-name">${player.name}</span>${player.type === 'team' ? '' : injBadge(player.name, teamAbbrev)}
-                    <span class="player-team-abbrev">${teamAbbrev}</span>
-                    <span class="player-position">${player.position}</span>
-                    ${sellToggleHTML}
+            <div class="rr-main">
+                <div class="rr-name-line">
+                    <span class="rr-name">${nomHTML}</span>${estClub ? '' : injBadge(player.name, teamAbbrev)}
+                    <span class="rr-meta">${escapeHtmlText(meta)}</span>
                 </div>
-                <div class="player-stats-grid">
-                    <div class="stats-row-top">
-                        <span>${gp}</span>
-                        <span>${stat1}</span>
-                        <span>${stat2}</span>
-                        <span>${points}</span>
-                    </div>
-                    <div class="stats-row-bottom">
-                        <span>PJ</span>
-                        <span>${stat1Label}</span>
-                        <span>${stat2Label}</span>
-                        <span>Pts</span>
-                    </div>
+                <div class="rr-stats">
+                    ${stat(gp, 'PJ')}${stat(stat1, stat1Label)}${stat(stat2, stat2Label)}${stat(points, 'Pts')}
                 </div>
             </div>
-            <div class="roster-points-section">
-                <div class="pptsa-value">0</div>
-                <div class="pptsa-label">PPtsA</div>
-            </div>
-            <div class="roster-points-section">
-                <div class="ppts-value">${points}</div>
-                <div class="ppts-label">PPts</div>
-            </div>
-            <div class="roster-arrow">›</div>
+            <div class="rr-pptsa is-zero"><span class="rr-v">0</span><span class="rr-l">PPtsA</span></div>
+            <div class="rr-ppts${points ? '' : ' is-zero'}"><span class="rr-v">${points}</span><span class="rr-l">PPts</span></div>
+            ${sellToggleHTML}
+            <span class="rr-chev" aria-hidden="true">${player.playerId ? '›' : ''}</span>
         `;
 
-        rosterList.appendChild(card);
+        rangees.appendChild(row);
     });
 
     renderBenchPanel(rosterList, roster);
