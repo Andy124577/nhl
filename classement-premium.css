@@ -1072,18 +1072,15 @@ body.fz-classement #standingsTable tbody tr.is-me td.player-col .st-name { font-
 body.fz-classement #standingsTable tbody tr.is-me td.rank-col { box-shadow: inset 3px 0 0 var(--fzc-accent-fill); }
 
 body.fz-classement .st-legend {
-  margin: 12px 0 0;
-  border: 1px solid var(--fzc-border);
-  border-radius: 12px;
-  background: var(--fzc-surface);
+  margin: 4px 0 0;
 }
 body.fz-classement .st-legend summary {
-  padding: 12px 16px;
+  padding: 12px 0;
   min-height: 44px;
   box-sizing: border-box;
   cursor: pointer;
   font: 600 13px/1.3 'Helvetica Neue', Helvetica, sans-serif;
-  color: var(--fzc-accent);
+  color: var(--fzc-text-faint);
 }
 body.fz-classement .st-legend summary:focus-visible { outline: 2px solid var(--fzc-accent); outline-offset: 2px; }
 body.fz-classement .st-legend dl {
@@ -1091,7 +1088,7 @@ body.fz-classement .st-legend dl {
   grid-template-columns: minmax(90px, max-content) 1fr;
   gap: 8px 16px;
   margin: 0;
-  padding: 0 16px 14px;
+  padding: 0 0 14px;
   font-size: .86rem;
   line-height: 1.45;
 }
