@@ -342,6 +342,17 @@ La personne qui crée un pool peut relire son mot de passe dans la fiche du pool
 - Sans elle, la clé est dérivée de `DATABASE_URL` (ou d'un fichier local `.pool-password.key` en mode fichier). Poser `POOL_PASSWORD_KEY` après coup ne casse rien : les anciennes copies restent lisibles.
 - **Ne changez plus la clé une fois posée.** Les mots de passe continueraient d'ouvrir les pools, mais leur créateur devrait en choisir un nouveau pour pouvoir le relire. C'est aussi le cas des pools protégés avant cette fonction.
 
+### Alertes « C'est à votre tour » (Web Push)
+
+Pendant un repêchage, l'équipe qui prend la main reçoit une alerte sur ses appareils abonnés (téléphone, ordinateur), même Fantazy fermé. On les active depuis le salon du repêchage, la salle (une seule proposition, pendant qu'on attend son tour) ou le pied de la cloche. Envoi : `services/push.js`, après chaque COMMIT d'une notification de tour ; chiffrement et signature : `lib/webPush.js`, sans dépendance.
+
+- Exige PostgreSQL (les abonnements vivent dans la table `push_subscriptions`, migration `0012`) et HTTPS (Render le fournit ; `localhost` suffit en développement).
+- `VAPID_PRIVATE_KEY` = la clé qui signe les envois. Le Blueprint la génère (`generateValue: true`) ; une clé produite par `npx web-push generate-vapid-keys` fonctionne aussi. Sans elle, la clé est dérivée de `DATABASE_URL`. Le journal de démarrage dit laquelle sert : `🔔 Alertes sur l'appareil actives (clé : …)`.
+- `VAPID_SUBJECT` (facultatif) = le contact annoncé aux services de push, `mailto:fantazyhockey@outlook.com` par défaut.
+- **Évitez de changer la clé.** Si elle change quand même (clé posée après coup, mot de passe de la base renouvelé), les alertes cessent jusqu'à la prochaine visite de chaque personne, dont le navigateur se réabonne alors tout seul.
+- iPhone et iPad (iOS 16.4 et plus) : Safari n'offre les alertes qu'à un site ajouté à l'écran d'accueil et ouvert depuis son icône (`manifest.webmanifest`). Le réglage l'explique à la personne.
+- Pour vérifier : activez les alertes, puis **Envoyer un essai**. Un refus du service de push apparaît dans les logs (`⚠️ Alerte refusée par …`).
+
 ### Custom Domain
 
 Pour utiliser votre propre domaine:

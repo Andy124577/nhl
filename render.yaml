@@ -28,6 +28,13 @@ services:
         # afterwards or existing passwords become unreadable (they still work to
         # join — the creator would just have to set a new one to see it).
         generateValue: true
+      - key: VAPID_PRIVATE_KEY
+        # Signs the "it's your turn" push alerts (lib/webPush.js). Generated once
+        # by Render; avoid changing it afterwards: browsers subscribed with the
+        # old key stop receiving alerts until their next visit, when they
+        # resubscribe on their own. Without it, the key is derived from
+        # DATABASE_URL.
+        generateValue: true
       - key: ANTHROPIC_API_KEY
         # Set this manually in Render Dashboard. Used to check uploaded avatars and
         # pool images (services/moderationImage.js). Without it, uploads are still

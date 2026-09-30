@@ -141,6 +141,10 @@ function monter(app, ctx) {
                         dedupKey: evenements.clesNotification.repechageDemarre(verrouille.id)
                     });
                 }
+                // Le premier tour, comme les suivants (routes/draft.js).
+                for (const alerte of evenements.alertesTour({ data, poolId: verrouille.id, poolName: nom })) {
+                    tx.journal.notifier(alerte);
+                }
 
                 await tx.sauvegarderPool(nom, data);
                 return { demarre: true, premierTour: data.draftOrder[0] };

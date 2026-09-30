@@ -80,26 +80,10 @@ function monter(app, ctx) {
         // expiration, un par tour.
         journal.resoudre(evenements.clesNotification.votreTour(poolId, resultat.pickIndex));
 
-        // L'équipe qui vient de prendre la main est prévenue. La clé porte
-        // l'indice du tour : au renversement du serpentin la même équipe est
-        // alertée deux fois, mais pour deux tours différents — ce qui est exact.
+        // L'équipe qui vient de prendre la main est prévenue — dans la cloche,
+        // et sur ses appareils abonnés une fois le COMMIT fait (services/push.js).
         if (resultat.tourSuivant) {
-            const prochainIndice = data.currentPickIndex;
-            const equipeSuivante = data.teams[resultat.tourSuivant];
-            const limiteMs = Number(data.pickTimeLimitMs) || 0;
-            for (const membre of (equipeSuivante?.members || [])) {
-                journal.notifier({
-                    recipient: membre,
-                    poolId,
-                    type: evenements.NOTIFICATION.VOTRE_TOUR,
-                    subject: {
-                        poolName: nom, teamName: resultat.tourSuivant, pickIndex: prochainIndice,
-                        ...(limiteMs ? { limiteMs } : {})
-                    },
-                    expiresAt: new Date(Date.now() + evenements.EXPIRATION_TOUR_MS),
-                    dedupKey: evenements.clesNotification.votreTour(poolId, prochainIndice)
-                });
-            }
+            for (const alerte of evenements.alertesTour({ data, poolId, poolName: nom })) journal.notifier(alerte);
         }
 
         if (resultat.draftComplet) {

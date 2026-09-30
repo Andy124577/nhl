@@ -687,8 +687,10 @@ function monter(app, ctx) {
 
     /**
      * Ce qui accompagne tout départ de repêchage, au clic comme à l'heure
-     * prévue : la pendule du premier tour, la saison repêchée, et l'alerte à
-     * chaque membre. Écrit dans la transaction du départ, jamais à côté.
+     * prévue : la pendule du premier tour, la saison repêchée, l'alerte à
+     * chaque membre, et « c'est votre tour » à l'équipe qui ouvre le bal — à
+     * l'heure prévue, elle n'est peut-être pas devant son écran. Écrit dans la
+     * transaction du départ, jamais à côté.
      */
     function annoncerDepart({ data, poolId, journal, nom, equipes, acteur = null, maintenant = Date.now() }) {
         data.turnStartedAt = maintenant;
@@ -711,6 +713,7 @@ function monter(app, ctx) {
                 dedupKey: evenements.clesNotification.repechageDemarre(poolId)
             });
         }
+        for (const alerte of evenements.alertesTour({ data, poolId, poolName: nom, maintenant })) journal.notifier(alerte);
     }
 
     /**

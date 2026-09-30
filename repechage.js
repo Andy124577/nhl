@@ -680,6 +680,7 @@
                 <div class="rp-body">
                     <p class="rp-lead">${lead}</p>
                     ${instantane ? '' : blocDate(etat, jeSuisCreateur)}
+                    <div data-fz-alertes="carte" hidden></div>
                     ${barre}
                     ${rendreInscrits(pool, etat, createur)}
                     ${inviterParNom ? blocInviter(pool, etat) : ''}

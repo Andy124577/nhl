@@ -666,6 +666,7 @@
                         <p class="fz-notif-help" id="fzNotifHelp" hidden></p>
                     </div>
                     <ul class="fz-notif-list" id="fzNotifList"></ul>
+                    <div class="fz-notif-foot" data-fz-alertes="reglage" hidden></div>
                 </section>
             </div>`);
         document.body.insertAdjacentHTML('beforeend', `
@@ -881,6 +882,23 @@
         } catch { /* Le sondage et le retour sur l'onglet prennent le relais. */ }
     }
 
+    /**
+     * Les alertes sur l'appareil (pushNotifications.js) : leur réglage vit au
+     * pied du panneau, et le salon et la salle de repêchage s'en servent. Chargé
+     * d'ici pour suivre la cloche sur chaque page sans toucher à chacune.
+     */
+    function chargerAlertes() {
+        // La cloche ne dépend pas des alertes : un échec ici ne l'arrête pas.
+        try {
+            if (window.FZAlertes || document.querySelector('script[data-fz-alertes-script]')) return;
+            const script = document.createElement('script');
+            script.src = 'pushNotifications.js?v=20260930c';
+            script.defer = true;
+            script.dataset.fzAlertesScript = '';
+            (document.head || document.body).appendChild(script);
+        } catch { /* la cloche continue sans elles */ }
+    }
+
     async function demarrer() {
         compte = localStorage.getItem('username');
         if (!compte || !compteActuel() || !window.FZPool) return;
@@ -896,6 +914,7 @@
             } catch { /* Stockage ancien invalide. */ }
         }
         if (!monterCloche()) return;
+        chargerAlertes();
         brancherAujourdhui();
         rendreListe();
         await FZPool.ready();

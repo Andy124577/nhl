@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <!-- Écran d’accueil : nom, icône, et sur iPhone la condition des alertes. -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="Icons/apple-touch-icon.png">
   <title>Repêchage en cours – Fantazy</title>
   
 
@@ -149,6 +152,9 @@
         
       </div>
     </div>
+
+    <!-- Téléphone : les alertes, sous le carrousel (pushNotifications.js). -->
+    <div class="fz-alertes-bande fz-alertes-bande--tel" data-fz-alertes="bande" hidden></div>
   </div>
 
   
@@ -343,6 +349,10 @@
 
         <div class="availability-tabs" id="availabilityTabs" role="group" aria-label="Joueurs libres ou tous"></div>
 
+        <!-- Alertes sur l'appareil, tant qu'elles sont coupées (pushNotifications.js).
+             Bureau : à droite de « Disponibles / Tous ». -->
+        <div class="fz-alertes-bande fz-alertes-bande--bureau" data-fz-alertes="bande" hidden></div>
+
         <div class="filters-row" hidden>
           
 
@@ -531,11 +541,11 @@
   <script defer src="careerTeamLogo.js"></script>
   
   <script defer src="careerTotals.js"></script>
-  <script defer src="navbar.js?v=20260929b"></script>
+  <script defer src="navbar.js?v=20260930a"></script>
   <script defer src="profanity.js"></script>
   <script defer src="poolSettings.js?v=20260929a"></script>
   <script defer src="poolNav.js?v=20260929a"></script>
   <script defer src="poolInvites.js?v=20260925e"></script>
-  <script defer src="notifications.js?v=20260929n"></script>
+  <script defer src="notifications.js?v=20260930c"></script>
 </body>
 </html>

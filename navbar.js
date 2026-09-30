@@ -868,6 +868,7 @@ async function updateClassementLinkVisibility() {
  */
 async function logout(event) {
     if (event && event.preventDefault) event.preventDefault();
+    await retirerAlertesAppareil();
     try {
         await fetch(`${typeof BASE_URL !== 'undefined' ? BASE_URL : ''}/logout`, {
             method: 'POST',
@@ -875,9 +876,36 @@ async function logout(event) {
         });
     } catch { /* le cookie expirera de lui-même */ }
 
-    ['isLoggedIn', 'username', 'isAdmin', 'activeUser', 'avatarUrl', 'activePool', 'draftClan']
+    ['isLoggedIn', 'username', 'isAdmin', 'activeUser', 'avatarUrl', 'activePool', 'draftClan', 'fzAlertes:v1']
         .forEach(cle => localStorage.removeItem(cle));
     window.location.href = 'index.html';
+}
+
+/**
+ * Les alertes sur l'appareil suivent le compte, pas le navigateur : après la
+ * déconnexion, un appareil partagé ne doit plus annoncer les tours de la
+ * personne partie. Le serveur oublie l'abonnement (avant /logout, tant que la
+ * session vaut encore), et le navigateur le détruit. Borné : une déconnexion
+ * n'attend pas un réseau lent plus d'une seconde et demie.
+ */
+async function retirerAlertesAppareil() {
+    try {
+        if (!('serviceWorker' in navigator)) return;
+        const enregistrement = await navigator.serviceWorker.getRegistration('/');
+        const abonnement = enregistrement && enregistrement.pushManager
+            ? await enregistrement.pushManager.getSubscription()
+            : null;
+        if (!abonnement) return;
+        await Promise.race([
+            fetch(`${typeof BASE_URL !== 'undefined' ? BASE_URL : ''}/api/push/unsubscribe`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint: abonnement.endpoint })
+            }).catch(() => {}),
+            new Promise(resolve => setTimeout(resolve, 1500))
+        ]);
+        await abonnement.unsubscribe();
+    } catch { /* le service de push répondra 410 au prochain envoi */ }
 }
 
 

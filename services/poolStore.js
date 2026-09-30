@@ -125,8 +125,13 @@ function creerJournal() {
  * resservir SANS demander sa version à la base. Seulement quand ce processus
  * est le seul à écrire (une seule instance) — server.js décide. Voir
  * `copieDeConfiance` plus bas.
+ *
+ * `apresCommit({ notifications })` : appelé une fois la transaction validée,
+ * avec les notifications qu'elle a réellement créées — pas celles qu'un
+ * réessai a retrouvées déjà écrites. C'est par là que partent les alertes sur
+ * l'appareil (services/push.js). Jamais attendu : la réponse n'en dépend pas.
  */
-function creerPoolStore({ db, usePostgres, draftFile, logger = console, confianceMs = 0, horloge = () => Date.now() }) {
+function creerPoolStore({ db, usePostgres, draftFile, logger = console, confianceMs = 0, horloge = () => Date.now(), apresCommit = null }) {
 
     // ───────────────────────── Mode fichier ─────────────────────────
 
@@ -510,6 +515,8 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console, confianc
         // Ce que la transaction a écrit : `null` pour un pool supprimé. Rangé
         // dans la copie après le COMMIT seulement — un ROLLBACK ne laisse rien.
         const ecrits = new Map();
+        // Les notifications réellement créées, remises à `apresCommit`.
+        let creees = [];
 
         const resultat = await db.withTransaction(async (client) => {
             const verrouilles = new Map();
@@ -635,7 +642,7 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console, confianc
 
             const valeur = await travail(tx);
 
-            await ecrireJournal(client, journal);
+            creees = await ecrireJournal(client, journal);
 
             if (options.operationId) {
                 await db.recordOperation(client, {
@@ -655,16 +662,28 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console, confianc
             else garderCopie({ pool_name: nom, id: ecrit.id, revision: ecrit.revision, updated_at: ecrit.updatedAt }, ecrit.data);
         }
 
+        if (apresCommit && !resultat.rejouee && creees.length > 0) {
+            Promise.resolve()
+                .then(() => apresCommit({ notifications: creees }))
+                .catch(erreur => logger.error('⚠️ Suite du commit impossible :', erreur.message));
+        }
+
         return { ...resultat, journal };
     }
 
-    /** Écrit activité et notifications accumulées, dans la transaction en cours. */
+    /**
+     * Écrit activité et notifications accumulées, dans la transaction en cours.
+     *
+     * Renvoie les notifications que cette écriture a CRÉÉES, avec leur
+     * destinataire résolu. Une clé de déduplication déjà présente ne crée rien :
+     * elle n'y figure pas.
+     */
     async function ecrireJournal(client, journal) {
         const { evenements, notifications, resolutions } = journal.contenu;
         if (resolutions.length > 0 && typeof db.resolveNotificationsByKeyInTx === 'function') {
             await db.resolveNotificationsByKeyInTx(client, resolutions);
         }
-        if (evenements.length === 0 && notifications.length === 0) return;
+        if (evenements.length === 0 && notifications.length === 0) return [];
 
         const idsEvenements = new Map();
         for (const evenement of evenements) {
@@ -680,10 +699,11 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console, confianc
             ids = new Map(r.rows.map(x => [x.username, x.id]));
         }
 
+        const creees = [];
         for (const notification of notifications) {
             const destinataireId = notification.recipientUserId || ids.get(notification.recipient);
             if (!destinataireId) continue;
-            await db.insertNotificationInTx(client, {
+            const id = await db.insertNotificationInTx(client, {
                 recipientUserId: destinataireId,
                 type: notification.type,
                 poolId: notification.poolId || null,
@@ -693,7 +713,9 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console, confianc
                 expiresAt: notification.expiresAt || null,
                 dedupKey: notification.dedupKey
             });
+            if (id != null) creees.push({ ...notification, id, recipientUserId: destinataireId });
         }
+        return creees;
     }
 
     /**
