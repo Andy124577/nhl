@@ -1358,6 +1358,74 @@ async function purgeOldActivity(jours = 365) {
 }
 
 // =============================================
+// ALERTES SUR L'APPAREIL (WEB PUSH)
+// =============================================
+
+/** Combien de navigateurs une personne garde abonnés. Les plus anciens partent. */
+const MAX_ABONNEMENTS_PUSH = 10;
+
+/**
+ * Enregistre l'abonnement d'un navigateur pour cette personne.
+ *
+ * L'adresse identifie le navigateur : un autre compte qui s'y connecte le
+ * reprend, plutot que de faire alerter les deux. Rien n'est reecrit quand rien
+ * n'a change — la page le reconfirme de temps en temps.
+ */
+async function upsertPushSubscription({ userId, endpoint, p256dh, auth, userAgent = null }) {
+    await pool.query(
+        `INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, user_agent)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (endpoint) DO UPDATE
+            SET user_id = EXCLUDED.user_id, p256dh = EXCLUDED.p256dh, auth = EXCLUDED.auth,
+                user_agent = EXCLUDED.user_agent, updated_at = NOW()
+          WHERE push_subscriptions.user_id IS DISTINCT FROM EXCLUDED.user_id
+             OR push_subscriptions.p256dh IS DISTINCT FROM EXCLUDED.p256dh
+             OR push_subscriptions.auth IS DISTINCT FROM EXCLUDED.auth`,
+        [userId, endpoint, p256dh, auth, userAgent ? String(userAgent).slice(0, 300) : null]
+    );
+    await pool.query(
+        `DELETE FROM push_subscriptions
+          WHERE user_id = $1
+            AND id NOT IN (SELECT id FROM push_subscriptions WHERE user_id = $1
+                            ORDER BY updated_at DESC, id DESC LIMIT $2)`,
+        [userId, MAX_ABONNEMENTS_PUSH]
+    );
+}
+
+/** Retire l'abonnement d'un navigateur — seulement s'il appartient a cette personne. */
+async function deletePushSubscription(userId, endpoint) {
+    const resultat = await pool.query(
+        'DELETE FROM push_subscriptions WHERE user_id = $1 AND endpoint = $2', [userId, endpoint]);
+    return resultat.rowCount;
+}
+
+/** Le service de push dit que l'abonnement n'existe plus (404, 410). */
+async function deletePushSubscriptionByEndpoint(endpoint) {
+    const resultat = await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [endpoint]);
+    return resultat.rowCount;
+}
+
+/** Les navigateurs a prevenir, pour ces comptes. */
+async function getPushSubscriptionsForUsers(userIds) {
+    if (!userIds || userIds.length === 0) return [];
+    const resultat = await pool.query(
+        `SELECT user_id AS "userId", endpoint, p256dh, auth
+           FROM push_subscriptions WHERE user_id = ANY($1)`,
+        [userIds]
+    );
+    return resultat.rows;
+}
+
+/** Les navigateurs abonnes d'une personne — export Loi 25. Pas les cles. */
+async function exportPushSubscriptionsForUser(userId) {
+    const resultat = await pool.query(
+        `SELECT user_agent, created_at FROM push_subscriptions WHERE user_id = $1 ORDER BY created_at`,
+        [userId]
+    );
+    return resultat.rows;
+}
+
+// =============================================
 // RESULTATS H2H FINALISES ET RECAPS
 // =============================================
 
@@ -1518,6 +1586,12 @@ module.exports = {
     exportNotificationsForUser,
     purgeOldNotifications,
     purgeOldActivity,
+    // Alertes sur l'appareil (Web Push)
+    upsertPushSubscription,
+    deletePushSubscription,
+    deletePushSubscriptionByEndpoint,
+    getPushSubscriptionsForUsers,
+    exportPushSubscriptionsForUser,
     // H2H fige et recaps
     insertFinalizedWeekInTx,
     getFinalizedWeek,

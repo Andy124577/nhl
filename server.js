@@ -50,6 +50,7 @@ const routesNotifications = require("./routes/notifications.js");
 const routesAujourdhui = require("./routes/today.js");
 const routesInvitations = require("./routes/invitations.js");
 const routesPhotos = require("./routes/photos.js");
+const routesPush = require("./routes/push.js");
 const { creerServiceAujourdhui } = require("./services/today.js");
 const { creerServiceRecap } = require("./services/recap.js");
 const { creerMinuteurChoix } = require("./services/minuteurChoix.js");
@@ -66,6 +67,8 @@ const { creerFeuillesDeMatch, MatchIntrouvable } = require("./services/feuilleMa
 const { creerAlignements, EquipeInconnue } = require("./services/alignement.js");
 const { creerModerateur } = require("./services/moderationImage.js");
 const { creerMagasinPhotos } = require("./services/magasinPhotos.js");
+const { creerServicePush } = require("./services/push.js");
+const webPush = require("./lib/webPush.js");
 const { creerCoffre, clesDepuisEnvironnement } = require("./lib/poolSecret.js");
 const datesPool = require("./lib/dates.js");
 
@@ -181,7 +184,18 @@ const auth = creerAuth({
     memoireSessions: CONFIANCE_MS > 0 ? { dureeMs: CONFIANCE_MS } : {}
 });
 
-const poolStore = creerPoolStore({ db, usePostgres: USE_POSTGRES, draftFile: DRAFT_FILE, confianceMs: CONFIANCE_MS });
+// Alertes sur l'appareil (Web Push) : « C'est à votre tour » même Fantazy
+// fermé. Les abonnements vivent dans PostgreSQL ; la clé du serveur vient de
+// VAPID_PRIVATE_KEY, sinon de DATABASE_URL (lib/webPush.js). Le magasin de
+// pools lui passe, après chaque COMMIT, les notifications qu'il a créées.
+const clesPush = USE_POSTGRES ? webPush.clesDepuisEnvironnement(process.env) : null;
+const push = creerServicePush({ db, cles: clesPush, logger: console });
+if (clesPush) console.log(`🔔 Alertes sur l'appareil actives (clé : ${clesPush.source})`);
+
+const poolStore = creerPoolStore({
+    db, usePostgres: USE_POSTGRES, draftFile: DRAFT_FILE, confianceMs: CONFIANCE_MS,
+    apresCommit: (suite) => push.apresCommit(suite)
+});
 const presence = creerPresence();
 // Départs de repêchage prévus, en mémoire : la passe de chaque minute ne lit
 // la base que lorsqu'un départ est dû (services/agendaDeparts.js).
@@ -191,7 +205,11 @@ const agendaDeparts = creerAgendaDeparts({ lireDepartsPrevus: () => poolStore.li
 app.use((req, res, next) => {
     const reqPath = req.path.toLowerCase();
 
-    if (reqPath.match(/\.(jpg|jpeg|png|gif|ico|svg|webp)$/)) {
+    if (reqPath === '/sw.js') {
+        // Le service worker des alertes (sw.js) : toujours revérifié, sinon une
+        // correction mettrait une semaine à atteindre les navigateurs abonnés.
+        res.setHeader("Cache-Control", "no-cache");
+    } else if (reqPath.match(/\.(jpg|jpeg|png|gif|ico|svg|webp)$/)) {
         // Cache images for 1 year (immutable means never needs revalidation)
         res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
     } else if (reqPath.match(/\.(woff|woff2|ttf|eot|otf)$/)) {
@@ -529,6 +547,7 @@ const contexteRoutes = {
     store: poolStore,
     diffusion,
     presence,
+    push,
     usePostgres: USE_POSTGRES,
     racine: __dirname,
     uploadPool,
@@ -651,6 +670,7 @@ routesNotifications.monter(app, contexteRoutes);
 routesInvitations.monter(app, contexteRoutes);
 routesAujourdhui.monter(app, contexteRoutes);
 routesPhotos.monter(app, contexteRoutes);
+routesPush.monter(app, contexteRoutes);
 
 /**
  * Repêchages à date fixe : trois minutes par choix, puis Fantazy choisit à la

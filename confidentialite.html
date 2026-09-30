@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Écran d’accueil : nom, icône, et sur iPhone la condition des alertes. -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="Icons/apple-touch-icon.png">
     <title>Politique de confidentialité — Fantazy</title>
     <script src="theme.js"></script>
     <link rel="stylesheet" href="legal.css?v=20260926b">
@@ -16,7 +19,7 @@
         <a href="index.html" class="legal-back">← Retour à l'accueil</a>
 
         <h1>Politique de confidentialité</h1>
-        <p class="legal-updated">Dernière mise à jour : 25 septembre 2026</p>
+        <p class="legal-updated">Dernière mise à jour : 30 septembre 2026</p>
 
         <p>Fantazy est un service gratuit de pools de hockey entre amis. Nous recueillons
         le strict minimum de renseignements nécessaires au fonctionnement du service.
@@ -51,6 +54,15 @@
                         <td>Photo de profil (facultatif)</td>
                         <td>Personnaliser votre affichage. Fournie seulement si vous en
                         téléversez une.</td>
+                    </tr>
+                    <tr>
+                        <td>Alertes sur l'appareil (facultatif)</td>
+                        <td>Vous prévenir quand c'est votre tour de repêcher, même si Fantazy
+                        est fermé. Seulement si vous les activez : votre navigateur nous remet
+                        alors une adresse d'abonnement auprès du service de notifications de
+                        son fabricant, deux clés de chiffrement et le nom du navigateur. Ils
+                        sont effacés quand vous désactivez les alertes, quand vous vous
+                        déconnectez et quand vous supprimez votre compte.</td>
                     </tr>
                     <tr>
                         <td>Activité de jeu</td>
@@ -97,6 +109,11 @@
             <li><strong>Google</strong> — seulement si vous choisissez « Continuer avec
             Google » : vous vous identifiez alors directement chez Google, qui nous
             confirme votre identité.</li>
+            <li><strong>Le service de notifications de votre navigateur</strong> (Google,
+            Apple, Mozilla ou Microsoft) — seulement si vous activez les alertes sur
+            l'appareil : il relaie chaque alerte jusqu'à vous. Le contenu de l'alerte (son
+            texte et le nom du pool) est chiffré pour votre appareil seul : ce service ne
+            peut pas le lire.</li>
         </ul>
         <p>Nous ne leur transmettons volontairement aucun renseignement vous concernant,
         sauf l'exception ci-dessous.</p>
@@ -162,6 +179,6 @@
         haut de cette page.</p>
     </main>
 
-    <script src="navbar.js?v=20260929b"></script>
+    <script src="navbar.js?v=20260930a"></script>
 </body>
 </html>

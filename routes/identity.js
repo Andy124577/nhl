@@ -272,10 +272,19 @@ function monter(app, ctx) {
             }
 
             let notifications = [];
+            // Les navigateurs abonnés aux alertes : lequel, et depuis quand.
+            // Pas leurs clés, qui ne servent qu'à chiffrer pour eux.
+            let appareilsAlertes = [];
             if (usePostgres) {
                 try {
                     const identifiant = await db.getUserId(username);
-                    if (identifiant) notifications = await db.exportNotificationsForUser(identifiant);
+                    if (identifiant) {
+                        notifications = await db.exportNotificationsForUser(identifiant);
+                        if (typeof db.exportPushSubscriptionsForUser === 'function') {
+                            appareilsAlertes = (await db.exportPushSubscriptionsForUser(identifiant))
+                                .map(a => ({ navigateur: a.user_agent || null, depuis: a.created_at }));
+                        }
+                    }
                 } catch (erreur) {
                     logger.error('Export des notifications impossible :', erreur.message);
                 }
@@ -285,7 +294,8 @@ function monter(app, ctx) {
                 genereLe: new Date().toISOString(),
                 compte: { username, avatarUrl: compte.avatarUrl || '', connexionGoogle: !!compte.googleSub },
                 pools,
-                notifications
+                notifications,
+                appareilsAlertes
             });
         } catch (erreur) {
             logger.error("Erreur à l'export du compte :", erreur);

@@ -607,15 +607,17 @@ function creerFauxAuth() {
  * Monte un ou plusieurs modules de routes et renvoie de quoi les appeler.
  *
  * `pools` est l'état initial, sous sa forme réelle `{ nom: donnéesDuPool }`.
+ * `apresCommit` reçoit ce que le magasin transmet après chaque COMMIT (les
+ * notifications créées), comme en production (services/push.js).
  */
-function monterRoutes(modules, { pools = {}, users = null, ctxExtra = {} } = {}) {
+function monterRoutes(modules, { pools = {}, users = null, ctxExtra = {}, apresCommit = null } = {}) {
     const { creerPoolStore } = require('../../services/poolStore.js');
 
     const comptes = users || ['alice', 'bob', 'carl', 'dora'].map(n => ({ username: n, id: n }));
     const { db, etat } = creerBaseSimulee(pools, comptes);
 
     const silencieux = { log() {}, warn() {}, error() {} };
-    const store = creerPoolStore({ db, usePostgres: true, draftFile: null, logger: silencieux });
+    const store = creerPoolStore({ db, usePostgres: true, draftFile: null, logger: silencieux, apresCommit });
     const diffusion = creerFausseDiffusion(etat);
     const auth = creerFauxAuth();
     const app = creerApp();

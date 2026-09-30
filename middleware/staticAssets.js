@@ -26,7 +26,10 @@ const EXT_PUBLIQUES = new Set([
     '.html', '.css', '.js', '.mjs', '.map',
     '.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif', '.ico',
     '.woff', '.woff2', '.ttf', '.otf', '.eot',
-    '.json', '.txt'
+    '.json', '.txt',
+    // Le manifeste de l'application web : l'icône et le nom sur l'écran
+    // d'accueil — et, sur iPhone, la condition des alertes.
+    '.webmanifest'
 ]);
 
 /**

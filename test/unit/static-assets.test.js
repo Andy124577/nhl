@@ -147,3 +147,15 @@ test('chaque script chargé par une page du site est effectivement servi', () =>
 
     assert.deepEqual(manquants, [], 'des ressources de page sont refusées par la liste de permis');
 });
+
+test('les alertes sur l appareil : le service worker et le manifeste sont publics, leur moteur non', () => {
+    for (const chemin of ['/sw.js', '/manifest.webmanifest', '/pushNotifications.js', '/pushNotifications.css',
+                          '/Icons/app-192.png', '/Icons/apple-touch-icon.png']) {
+        assert.equal(servi(chemin), true, `${chemin} devrait être servi`);
+        assert.ok(fs.existsSync(path.join(racine, chemin)), `${chemin} doit exister`);
+    }
+    for (const chemin of ['/lib/webPush.js', '/services/push.js', '/routes/push.js',
+                          '/migrations/0012_push_subscriptions.sql']) {
+        assert.equal(servi(chemin), false, `${chemin} devrait être refusé`);
+    }
+});
