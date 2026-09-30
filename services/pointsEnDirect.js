@@ -4,9 +4,10 @@
  * Une page qui montre des totaux de pool demande `points:suivre` sur sa
  * connexion Socket.IO et entre dans la salle `points`. Tant qu'il y a
  * quelqu'un dans la salle, le serveur relit les matchs du soir (le relevé
- * partagé de /live-games) toutes les `intervalleMs`, en tire ce qui manque
- * encore aux totaux de minuit (lib/pointsEnDirect.js), et ne pousse que ce
- * qui a changé. Personne dans la salle : aucun relevé, aucun envoi.
+ * partagé de /live-games) et ceux des journées que le relevé de la nuit peut
+ * encore ignorer, toutes les `intervalleMs`, en tire ce qui manque encore aux
+ * totaux (lib/pointsEnDirect.js), et ne pousse que ce qui a changé. Personne
+ * dans la salle : aucun relevé, aucun envoi.
  *
  * Message : `points:direct` { joueurs, clubs, generatedAt } — à l'arrivée,
  * puis à chaque but, aide, victoire ou défaite en prolongation.
@@ -23,23 +24,35 @@
 
 'use strict';
 
-const { calculerPointsEnDirect, matchsASuivre, signature } = require('../lib/pointsEnDirect.js');
+const { calculerPointsEnDirect, apportsDuMatch, matchsASuivre, joursASuivre, signature } = require('../lib/pointsEnDirect.js');
 
 const SALLE = 'points';
 const FEUILLE_MAX_MS = 2 * 60 * 1000;
+/**
+ * Une feuille officielle (OFF) ne bouge presque plus — mais la LNH corrige
+ * encore une aide ou un but après coup. Relue toutes les demi-heures tant
+ * qu'elle sert, plutôt que figée pour la nuit.
+ */
+const FEUILLE_OFF_MS = 30 * 60 * 1000;
+
+/** Rang d'un état : à venir, en cours, fini, officiel. Un état ne recule pas. */
+const RANG = { FUT: 0, PRE: 0, LIVE: 1, CRIT: 1, FINAL: 2, OFF: 3 };
+const rang = m => RANG[m && m.gameState] ?? 0;
 
 function creerPointsEnDirect({
     io,
     lireMatchs,                 // async () => [matchs bruts de /v1/score/now] | null
+    lireMatchsDuJour = null,    // async (jour) => [matchs bruts de /v1/score/{jour}] | null
     lireFeuille,                // async (id) => boxscore brut | null
     lireReleves,                // () => { stats, clubs } — en mémoire
+    aujourdhui = null,          // () => 'YYYY-MM-DD', journée du pool
     intervalleMs = 10000,
     logger = console,
     horloge = () => Date.now(),
     minuterie = { repeter: setInterval, arreter: clearInterval }
 }) {
     const feuilles = new Map();         // id → { box, cle, lu }
-    let dernier = null;                 // { charge, lu }
+    let dernier = null;                 // { charge, parMatch, lu }
     let enVol = null;
     let envoyee = null;                 // signature du dernier envoi à la salle
     let minuteur = null;
@@ -61,7 +74,8 @@ function creerPointsEnDirect({
         const cle = [m.gameState, a.score, h.score].join('|');
         const connue = feuilles.get(id);
         const officielle = m.gameState === 'OFF';
-        if (connue && connue.cle === cle && (officielle || horloge() - connue.lu < FEUILLE_MAX_MS)) return connue.box;
+        const garde = officielle ? FEUILLE_OFF_MS : FEUILLE_MAX_MS;
+        if (connue && connue.cle === cle && horloge() - connue.lu < garde) return connue.box;
         try {
             const box = await lireFeuille(id);
             if (!box) return connue ? connue.box : null;
@@ -75,10 +89,41 @@ function creerPointsEnDirect({
         }
     }
 
+    /**
+     * Les matchs à considérer : ceux de /score/now, plus ceux des journées
+     * qu'un relevé peut encore ignorer (joursASuivre) — la veille surtout,
+     * dont le dernier match finit après minuit et dont /score/now ne dit plus
+     * rien une fois passé au jour suivant. Un match vu deux fois garde l'état
+     * le plus avancé.
+     */
+    async function matchsDesJours(stats, clubs) {
+        const jours = lireMatchsDuJour && aujourdhui
+            ? joursASuivre({ stats, clubs, aujourdhui: aujourdhui() })
+            : [];
+        const listes = await Promise.all([
+            Promise.resolve().then(lireMatchs).catch(erreur => {
+                logger.warn?.('⚠️ /score/now indisponible :', erreur.message);
+                return null;
+            }),
+            ...jours.map(jour => Promise.resolve(jour).then(lireMatchsDuJour).catch(erreur => {
+                logger.warn?.(`⚠️ Matchs du ${jour} indisponibles :`, erreur.message);
+                return null;
+            }))
+        ]);
+        if (listes.every(l => !l)) return null;
+        const parId = new Map();
+        for (const m of listes.flat()) {
+            if (!m || m.id == null) continue;
+            const connu = parId.get(Number(m.id));
+            if (!connu || rang(m) > rang(connu)) parId.set(Number(m.id), m);
+        }
+        return [...parId.values()];
+    }
+
     async function calculer() {
-        const matchs = await lireMatchs();
-        if (!matchs) return null;
         const { stats, clubs } = lireReleves() || {};
+        const matchs = await matchsDesJours(stats, clubs);
+        if (!matchs) return null;
         const suivis = matchsASuivre(matchs, stats && stats.season);
 
         // Les matchs sortis du relevé (la LNH passe au jour suivant) : leurs
@@ -92,7 +137,15 @@ function creerPointsEnDirect({
             if (box) lues.set(Number(m.id), box);
         }));
         const points = calculerPointsEnDirect({ matchs: suivis, feuilles: lues, stats, clubs });
-        return { ...points, generatedAt: new Date(horloge()).toISOString() };
+        // Ce que chaque match apporte, relevé ou non : les colonnes 24 h, 7 j
+        // et 30 j le comparent aux feuilles déjà en base (routes/records.js).
+        const parMatch = suivis.map(m => ({
+            id: Number(m.id),
+            jour: typeof m.gameDate === 'string' ? m.gameDate.slice(0, 10) : null,
+            etat: m.gameState,
+            ...apportsDuMatch(m, lues.get(Number(m.id)))
+        }));
+        return { charge: { ...points, generatedAt: new Date(horloge()).toISOString() }, parMatch };
     }
 
     /**
@@ -103,9 +156,9 @@ function creerPointsEnDirect({
         if (dernier && horloge() - dernier.lu < intervalleMs) return dernier.charge;
         if (!enVol) {
             enVol = calculer()
-                .then(charge => {
-                    if (charge) dernier = { charge, lu: horloge() };
-                    return charge || (dernier ? dernier.charge : null);
+                .then(calcul => {
+                    if (calcul) dernier = { ...calcul, lu: horloge() };
+                    return dernier ? dernier.charge : null;
                 })
                 .catch(erreur => {
                     logger.error?.('⚠️ Points en direct indisponibles :', erreur.message);
@@ -114,6 +167,15 @@ function creerPointsEnDirect({
                 .finally(() => { enVol = null; });
         }
         return enVol;
+    }
+
+    /**
+     * Ce que chaque match suivi apporte à chacun, qu'un relevé le compte ou
+     * non : [{ id, jour, etat, joueurs, clubs }]. Même fraîcheur que lire().
+     */
+    async function lireParMatch() {
+        await lire();
+        return dernier ? dernier.parMatch : [];
     }
 
     function arreter() {
@@ -155,7 +217,7 @@ function creerPointsEnDirect({
         });
     }
 
-    return { brancher, lire, tic, arreter, abonnes, SALLE };
+    return { brancher, lire, lireParMatch, tic, arreter, abonnes, SALLE };
 }
 
-module.exports = { creerPointsEnDirect, SALLE, FEUILLE_MAX_MS };
+module.exports = { creerPointsEnDirect, SALLE, FEUILLE_MAX_MS, FEUILLE_OFF_MS };

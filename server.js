@@ -17,8 +17,7 @@ const multer = require("multer");
 
 // Logique métier pure, extraite de ce fichier vers lib/ pour être testable
 // unitairement (voir UNIT_TESTS.md). Les corps de fonctions sont inchangés.
-const { FANTASY_SCORING, goaliePoolPoints, clubPoolPoints, computeTeamSeasonScores,
-    skaterFantasyPointsTonight, goalieFantasyPointsTonight } = require("./lib/scoring.js");
+const { FANTASY_SCORING, goaliePoolPoints, clubPoolPoints, computeTeamSeasonScores } = require("./lib/scoring.js");
 const { generateSeasonSchedule, ensureStandingsEntry, lundiDepartSaison } = require("./lib/h2h.js");
 const instantDraft = require("./lib/instantDraft.js");
 const { NHL_CLUB_FULLNAME, diffRosterSnapshots, trimTransactionLog, getTeamAbbreviationFromName } = require("./lib/roster.js");
@@ -57,7 +56,9 @@ const { creerMinuteurChoix } = require("./services/minuteurChoix.js");
 const { creerAgendaDeparts } = require("./services/agendaDeparts.js");
 const { creerScoresEnDirect } = require("./services/scoresEnDirect.js");
 const { creerPointsEnDirect } = require("./services/pointsEnDirect.js");
-const { dernierMatchDeFiche } = require("./lib/pointsEnDirect.js");
+const { lignesDuSoir, appliquerAuxJoueurs, appliquerAuxClubs } = require("./lib/pointsEnDirect.js");
+const releveSaison = require("./lib/releveSaison.js");
+const horaireLNH = require("./lib/horaire.js");
 const { creerServicePointage } = require("./services/scoring.js");
 const { creerServiceH2H } = require("./services/h2h.js");
 const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
@@ -561,7 +562,15 @@ const calendrierLNH = creerCalendrierLNH({ db });
 const pointage = creerServicePointage({
     db,
     calendrierDuJour: (journee) => calendrierLNH.matchsTermines(journee),
-    confianceMs: CONFIANCE_MS
+    confianceMs: CONFIANCE_MS,
+    // Le cumulatif seulement (colonnes 24 h / 7 j / 30 j) : les matchs du
+    // soir pas encore en base, et les résultats des clubs repêchés.
+    apportsEnDirect: () => pointsEnDirect.lireParMatch(),
+    resultatsClubs: (demande) => resultatsClubsLNH(demande),
+    idDuJoueur: (nom) => {
+        const ligne = (memStatsCache.players || []).find(p => p.playerName === nom);
+        return ligne ? ligne.playerId : null;
+    }
 });
 
 /** Le service de finalisation, partage par la route manuelle et le travail de fond. */
@@ -613,11 +622,11 @@ contexteRoutes.photos = photos;
 // Classement cumulatif d'un pool avec les statistiques de saison en mémoire :
 // le même calcul que l'instantané quotidien des rangs.
 contexteRoutes.scoresSaison = async (poolData) => {
-    const statsData = await loadCurrentStats();
-    const teamsData = await loadCurrentTeams();
-    return computeTeamSeasonScores(poolData, statsData.players || [], teamsData.teams || []);
+    const { players, teams } = await relevesAvecDirect();
+    return computeTeamSeasonScores(poolData, players, teams);
 };
 contexteRoutes.saisonCommencee = (fenetre) => seasonHasStarted(fenetre);
+contexteRoutes.resultatsClubs = (demande) => resultatsClubsLNH(demande);
 
 const comptes = routesIdentite.monter(app, contexteRoutes);
 // Connexion avec Google : inactive (bouton masqué) tant que les deux clés ne
@@ -902,31 +911,41 @@ function loadAllPlayers() {
     }
 }
 
+/** Un appel à la LNH, relancé une fois après trois secondes si elle limite (429). null si refusé. */
+async function lireJsonLNH(url, etiquette) {
+    let response = await fetch(url);
+    if (!response.ok && response.status === 429) {
+        console.log(`⏳ Rate limited on ${etiquette}, retrying in 3s...`);
+        await new Promise(r => setTimeout(r, 3000));
+        response = await fetch(url);
+    }
+    if (!response.ok) {
+        console.log(`⚠️ Failed to fetch ${etiquette} — HTTP ${response.status}`);
+        return null;
+    }
+    return response.json();
+}
+
 // Function to fetch current season stats from NHL API
-async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false, statsSeason = null) {
+//
+// `fenetre` ({ depuis, etats }, saison commencée seulement) : les totaux
+// viennent alors du journal de matchs du joueur, un match par ligne, et la
+// ligne rendue porte son `inclusion` — la liste exacte des matchs récents
+// qu'elle compte (lib/releveSaison.js). Sans journal lisible, la fiche
+// (/landing) sert de repli.
+//
+// Rend null si la LNH ne répond pas : updateCurrentStats garde alors la
+// ligne précédente. Elle rendait des zéros, qui remplaçaient les vrais
+// totaux du joueur jusqu'au relevé suivant.
+async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false, statsSeason = null, fenetre = null) {
     // Saison de référence : celle que la règle partagée désigne (voir
     // statsSeasonId dans lib/season.js). Le paramètre est résolu une seule
     // fois par updateCurrentStats plutôt qu'à chaque joueur — 547 appels au
     // calendrier de la LNH pour une réponse identique n'apporteraient rien.
     const SAISON_STATS = Number(statsSeason) || currentSeasonId();
     try {
-        const url = `https://api-web.nhle.com/v1/player/${playerId}/landing`;
-        let response = await fetch(url);
-
-        if (!response.ok) {
-            if (response.status === 429) {
-                // Rate limited — wait 3 seconds and retry once
-                console.log(`⏳ Rate limited on ${playerName}, retrying in 3s...`);
-                await new Promise(r => setTimeout(r, 3000));
-                response = await fetch(url);
-            }
-            if (!response.ok) {
-                console.log(`⚠️ Failed to fetch stats for ${playerName} (${playerId}) — HTTP ${response.status}`);
-                return null;
-            }
-        }
-
-        const data = await response.json();
+        const data = await lireJsonLNH(`https://api-web.nhle.com/v1/player/${playerId}/landing`, `${playerName} (${playerId})`);
+        if (!data) return null;
 
         // Construct headshot URL - NHL API provides headshots at this URL format
         const headshotUrl = data.headshot || `https://assets.nhle.com/mugs/nhl/${SAISON_STATS}/${data.currentTeamAbbrev || 'NJD'}/${playerId}.png`;
@@ -1022,7 +1041,9 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
                     otLosses: 0,
                     savePct: 0,
                     points: 0,
-                    dernierMatch: dernierMatchDeFiche(data),
+                    // Aucun match compté : tout match de la fenêtre revient
+                    // au direct, même celui que la fiche montre déjà.
+                    ...(fenetre ? { inclusion: { depuis: fenetre.depuis, matchs: [] } } : {}),
                     lastUpdated: new Date().toISOString()
                 };
             }
@@ -1052,7 +1073,7 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
         }
 
         // Return structured stats
-        return {
+        const ligne = {
             playerId: playerId,
             playerName: playerName,
             teamAbbrev: data.currentTeamAbbrev || "N/A",
@@ -1068,32 +1089,28 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
             otLosses: otLosses,
             savePct: savePct,
             points: calculatedPoints,
-            // Le dernier match que ce total comprend : les points en direct
-            // (lib/pointsEnDirect.js) ne comptent que les matchs plus récents.
-            dernierMatch: dernierMatchDeFiche(data),
             lastUpdated: new Date().toISOString()
         };
+        if (!fenetre) return ligne;
+
+        // Saison en cours : le journal de matchs fait foi, match par match.
+        // La fiche dit ses totaux sans dire quels matchs ils comptent — le
+        // soir d'un match en cours, elle les montrait sans les compter.
+        const journal = await lireJsonLNH(
+            `https://api-web.nhle.com/v1/player/${playerId}/game-log/${SAISON_STATS}/2`,
+            `journal de ${playerName} (${playerId})`
+        ).catch(() => null);
+        if (!journal || !Array.isArray(journal.gameLog)) {
+            console.log(`↩︎ ${playerName} : journal illisible, totaux de la fiche`);
+            return { ...ligne, inclusion: releveSaison.inclusionDeFiche(data, fenetre) };
+        }
+        const { totaux, inclusion } = releveSaison.totauxDuJournal(journal.gameLog, {
+            depuis: fenetre.depuis, etats: fenetre.etats, gardien: isGoalie
+        });
+        return { ...ligne, ...totaux, inclusion };
     } catch (error) {
         console.error(`❌ Error fetching stats for ${playerName}:`, error.message);
-        // Return zeros if fetch fails (network error, API down, etc.)
-        return {
-            playerId: playerId,
-            playerName: playerName,
-            teamAbbrev: "N/A",
-            headshot: null,
-            teamLogo: null,
-            position: "N/A",
-            gamesPlayed: 0,
-            goals: 0,
-            assists: 0,
-            wins: 0,
-            losses: 0,
-            shutouts: 0,
-            otLosses: 0,
-            savePct: 0,
-            points: 0,
-            lastUpdated: new Date().toISOString()
-        };
+        return null;
     }
 }
 
@@ -1108,15 +1125,36 @@ async function updateCurrentStats() {
     // Load existing stats to preserve as "previous"
     const existingStats = await loadCurrentStats();
     const previousPlayers = existingStats.players || [];
+    const precedents = new Map(previousPlayers.map(p => [Number(p.playerId), p]));
+    // Une ligne précédente ne se garde que pour la même saison, et son
+    // inclusion avec elle — sans quoi elle ne dirait plus ce qu'elle compte.
+    const memeSaison = Number(existingStats.season) === Number(saison.seasonId);
+    const inclusionsPrecedentes = (memeSaison && existingStats.inclusion) || {};
+
+    // La fenêtre du relevé (lib/releveSaison.js) : la veille et le jour. Les
+    // matchs d'avant sont tous finis et tous comptés ; ceux de la fenêtre ne
+    // le sont que s'ils sont officiels au moment où le joueur est relevé.
+    // L'état est relu à chaque paquet : la passe dure plusieurs minutes, et
+    // un match peut finir pendant ce temps.
+    const journee = datesPool.journeeLocale();
+    const depuis = releveSaison.debutFenetre(journee);
+    const fenetreDuPaquet = async () => {
+        if (!saison.hasStarted) return null;
+        const listes = await Promise.all([depuis, journee].map(j => lireScoreDuJourBrut(j).catch(() => null)));
+        return { depuis, etats: releveSaison.etatsDesMatchs(listes) };
+    };
 
     const allPlayers = loadAllPlayers();
     const newPlayers = [];
+    const inclusion = {};
+    let gardes = 0;
 
     // Fetch stats 3 at a time with 2s between batches — NHL API rate-limits at ~50 req/burst
     const STATS_BATCH = 3;
     for (let i = 0; i < allPlayers.length; i += STATS_BATCH) {
         const batch = allPlayers.slice(i, i + STATS_BATCH);
         console.log(`Fetching ${i + 1}–${Math.min(i + STATS_BATCH, allPlayers.length)}/${allPlayers.length}`);
+        const fenetre = await fenetreDuPaquet();
 
         const batchResults = await Promise.all(batch.map(async (player) => {
             const playerName = player.skaterFullName || player.goalieFullName;
@@ -1124,32 +1162,37 @@ async function updateCurrentStats() {
                 player.playerId,
                 playerName,
                 player.isGoalie,
-                saison.seasonId
+                saison.seasonId,
+                fenetre
             );
             if (stats) {
-                const previousStats = previousPlayers.find(p => p.playerId === stats.playerId);
+                const previousStats = precedents.get(Number(stats.playerId));
                 const previousPoints = previousStats ? previousStats.points : 0;
                 stats.todayPoints = stats.points - previousPoints;
+                return stats;
             }
-            return stats;
+            // La LNH n'a pas répondu pour ce joueur : sa ligne d'avant reste,
+            // plutôt qu'un trou (le classement retombait alors sur les totaux
+            // de la trousse de repêchage, ceux de l'an passé).
+            const garde = memeSaison ? precedents.get(Number(player.playerId)) : null;
+            if (!garde) return null;
+            gardes += 1;
+            const inclusionGardee = inclusionsPrecedentes[garde.playerId];
+            return { ...garde, ...(inclusionGardee ? { inclusion: inclusionGardee } : {}) };
         }));
 
-        newPlayers.push(...batchResults.filter(Boolean));
+        for (const ligne of batchResults) {
+            if (!ligne) continue;
+            const { inclusion: inclusionLigne, dernierMatch: _ancien, ...publique } = ligne;
+            if (inclusionLigne) inclusion[publique.playerId] = inclusionLigne;
+            newPlayers.push(publique);
+        }
 
         if (i + STATS_BATCH < allPlayers.length) {
             await new Promise(resolve => setTimeout(resolve, 2000));
         }
     }
-
-    // Le dernier match compris dans chaque total, rangé à part des lignes :
-    // seul le direct du soir s'en sert (voir lib/pointsEnDirect.js), et
-    // /current-stats ne l'envoie pas aux pages. Un joueur dont la fiche n'a
-    // pas répondu n'y figure pas — le direct se rabat alors sur l'heure.
-    const derniersMatchs = {};
-    for (const p of newPlayers) {
-        if (Object.prototype.hasOwnProperty.call(p, 'dernierMatch')) derniersMatchs[p.playerId] = p.dernierMatch;
-        delete p.dernierMatch;
-    }
+    if (gardes) console.log(`↩︎ ${gardes} joueur(s) sans réponse de la LNH : ligne précédente gardée`);
 
     const currentStats = {
         lastUpdated: new Date().toISOString(),
@@ -1159,7 +1202,10 @@ async function updateCurrentStats() {
         // servent pour ne pas compter les points de l'an passé dans un pool.
         seasonStarted: saison.hasStarted,
         players: newPlayers,
-        derniersMatchs
+        // Ce que chaque total comprend, match par match (lib/releveSaison.js).
+        // Seul le direct s'en sert ; /current-stats ne l'envoie pas aux pages.
+        format: releveSaison.FORMAT_RELEVE,
+        inclusion
     };
 
     // Save to database or file
@@ -1317,20 +1363,35 @@ function etiquetteDe(...parties) {
     return require('crypto').createHash('sha1').update(parties.map(String).join('|')).digest('base64url').slice(0, 20);
 }
 
+/**
+ * Ce que /current-stats envoie aux pages : tout, sauf ce qui ne sert qu'au
+ * direct, côté serveur (l'inclusion des relevés, et les derniers matchs des
+ * relevés d'avant elle).
+ */
+function statsPubliques(stats) {
+    const { derniersMatchs: _dm, inclusion: _inclusion, ...publiques } = stats || {};
+    return publiques;
+}
+
+/** Le format de relevé exigé : seulement une fois la saison commencée. */
+function formatReleveAttendu(saison) {
+    return saison && saison.hasStarted ? releveSaison.FORMAT_RELEVE : null;
+}
+
 // Route to get current stats
 app.get("/current-stats", async (req, res) => {
     try {
         const stats = await loadCurrentStats();
         const saison = await getStatsSeason();
-        const { needsRefresh, reason } = getStatsRefreshStatus(stats, nombreJoueursSuivis(), saison.seasonId);
+        const { needsRefresh, reason } = getStatsRefreshStatus(stats, nombreJoueursSuivis(), saison.seasonId,
+            Date.now(), formatReleveAttendu(saison));
 
         if (!stats.lastUpdated) {
             // Nothing in memory or persistence — block and fetch now (first ever start).
             // Les visiteurs suivants attendent la même collecte au lieu d'en lancer une chacun.
             console.log("📊 No stats in memory, fetching synchronously...");
             const fresh = await rafraichirStatsUneFois('aucune statistique en mémoire');
-            const { derniersMatchs: _dm, ...fraiches } = fresh || {};
-            return res.json(fraiches);
+            return res.json(statsPubliques(fresh || {}));
         }
 
         if (needsRefresh) {
@@ -1346,9 +1407,7 @@ app.get("/current-stats", async (req, res) => {
         // Un cache écrit avant l'introduction de la règle ne porte pas le
         // drapeau : on le renseigne à la volée pour que le classement et
         // l'accueil sachent toujours à quoi s'en tenir.
-        // derniersMatchs ne sert qu'au direct, côté serveur.
-        const { derniersMatchs: _dm, ...publiques } = stats;
-        res.json({ seasonStarted: saison.hasStarted, ...publiques });
+        res.json({ seasonStarted: saison.hasStarted, ...statsPubliques(stats) });
     } catch (error) {
         console.error("❌ Error in /current-stats route:", error);
         res.status(500).json({ message: "Error fetching current stats" });
@@ -1359,24 +1418,42 @@ app.get("/current-stats", async (req, res) => {
 // after stats refresh — this is the baseline /pool-rank-movement diffs the
 // live rank against. Must run AFTER updateCurrentStats() (needs fresh season
 // totals) and BEFORE that evening's games (so it's a true start-of-day mark).
+/**
+ * Les relevés en mémoire, augmentés de ce que le direct leur ajoute
+ * (lib/pointsEnDirect.js) : le Total tel que le classement et l'accueil
+ * l'affichent. Sans direct (LNH muette, saison pas commencée), les relevés
+ * seuls.
+ */
+async function relevesAvecDirect() {
+    const statsData = await loadCurrentStats();
+    const teamsData = await loadCurrentTeams();
+    const direct = statsData.seasonStarted === false ? null : await pointsEnDirect.lire().catch(() => null);
+    return {
+        players: direct ? appliquerAuxJoueurs(statsData.players || [], direct) : (statsData.players || []),
+        teams: direct ? appliquerAuxClubs(teamsData.teams || [], direct) : (teamsData.teams || [])
+    };
+}
+
 async function snapshotAllPoolRanks() {
     try {
         // La copie en mémoire du magasin, pas db.getAllPools() : celle-ci
         // faisait sortir de Neon toutes les données de tous les pools, chaque
         // nuit, pour les relire telles qu'on les avait déjà.
         const pools = await poolStore.lireDonneesBrutes();
-        const statsData = await loadCurrentStats();
         // Les clubs repêchés comptent dans le classement (2×V + DP) : sans
         // eux, le rang enregistré ici ne correspondrait pas au total que
-        // classement.js affiche sur la même ligne.
-        const teamsData = await loadCurrentTeams();
+        // classement.js affiche sur la même ligne. Le direct aussi : pris
+        // avant le premier match du jour, il ne porte que des matchs d'avant
+        // — un match de la veille pas encore relevé fait partie du départ de
+        // la journée, pas de ce qu'elle a ajouté.
+        const { players, teams } = await relevesAvecDirect();
         // La journée du pool, pas celle d'UTC : la tâche tourne à minuit à
         // l'Est, et c'est cette journée-là que /pool-rank-movement relira.
         const todayISO = datesPool.journeeLocale();
 
         const lignes = [];
         for (const [poolName, poolData] of Object.entries(pools)) {
-            const scores = computeTeamSeasonScores(poolData, statsData.players || [], teamsData.teams || []);
+            const scores = computeTeamSeasonScores(poolData, players, teams);
             for (const t of scores) lignes.push([poolName, t.teamName, t.rank, t.score]);
         }
 
@@ -1406,9 +1483,45 @@ async function snapshotAllPoolRanks() {
     }
 }
 
+/**
+ * Le relevé de la nuit attend que les matchs de la veille soient officiels.
+ *
+ * Pris à minuit pile, il tombait en plein match de la côte Ouest : le 29
+ * septembre 2026, Vancouver-Edmonton et Chicago-Vegas jouaient encore. Le
+ * relevé exact (lib/releveSaison.js) ne perd plus ces matchs — le direct les
+ * compte —, mais l'instantané des rangs du matin, pris juste après, doit
+ * partir d'une journée close. On revérifie toutes les dix minutes, au plus
+ * jusqu'à 4 h 30 : un match resté FINAL au-delà revient simplement au direct.
+ */
+const ATTENTE_RELEVE_PAS_MS = 10 * 60 * 1000;
+const ATTENTE_RELEVE_MAX_MS = 4.5 * 60 * 60 * 1000;
+const ETATS_PAS_OFFICIELS = ['LIVE', 'CRIT', 'FINAL'];
+
+async function matchsPasOfficiels(jour) {
+    const matchs = await lireScoreDuJourBrut(jour).catch(() => null);
+    if (!matchs) return null;
+    return matchs.filter(g => Number(g.gameType) === 2 && ETATS_PAS_OFFICIELS.includes(g.gameState));
+}
+
+async function attendreFinDesMatchs() {
+    const limite = Date.now() + ATTENTE_RELEVE_MAX_MS;
+    for (;;) {
+        const hier = releveSaison.decalerJour(datesPool.journeeLocale(), -1);
+        const restants = await matchsPasOfficiels(hier);
+        if (!restants || restants.length === 0) return;
+        if (Date.now() + ATTENTE_RELEVE_PAS_MS > limite) {
+            console.log(`⏭️  Relevé de la nuit : ${restants.length} match(s) pas encore officiel(s) — relevé quand même, le direct les comptera`);
+            return;
+        }
+        console.log(`⏳ Relevé de la nuit : ${restants.length} match(s) pas encore officiel(s), nouvel essai dans 10 min`);
+        await new Promise(r => setTimeout(r, ATTENTE_RELEVE_PAS_MS));
+    }
+}
+
 // Schedule daily stats update at midnight (00:00)
 cron.schedule('0 0 * * *', async () => {
     console.log("⏰ Daily stats update triggered at midnight");
+    await attendreFinDesMatchs();
     // Une collecte en échec ne doit pas emporter le classement des clubs, le
     // relevé des rangs et les transactions : ils tournaient après elle, et une
     // exception les sautait tous.
@@ -1871,6 +1984,51 @@ async function fetchCurrentTeamStandings() {
     }
 }
 
+/**
+ * Les fiches des clubs, exactes au match près, et leur inclusion. null si la
+ * saison n'est pas commencée (le classement du jour suffit alors : il ne
+ * compte rien) ou si la LNH ne donne pas de quoi être exact.
+ */
+async function releverClubsExactement(teams) {
+    const saison = await getStatsSeason();
+    if (!saison.hasStarted) return null;
+
+    const journee = datesPool.journeeLocale();
+    const depuis = releveSaison.debutFenetre(journee);
+    const veille = releveSaison.decalerJour(depuis, -1);
+    const ouverture = saison.window && saison.window.regularSeasonStartDate;
+
+    // Avant le premier match, le classement daté est vide — et c'est juste.
+    let base = {};
+    if (!ouverture || veille >= ouverture) {
+        const date = await lireJsonLNH(`https://api-web.nhle.com/v1/standings/${veille}`, `classement du ${veille}`);
+        const lignes = (date && date.standings) || [];
+        if (!lignes.length) return null;
+        for (const t of lignes) {
+            const abbrev = t.teamAbbrev && t.teamAbbrev.default;
+            if (abbrev) base[abbrev] = { gamesPlayed: t.gamesPlayed, wins: t.wins, losses: t.losses, otLosses: t.otLosses };
+        }
+    }
+
+    const listes = await Promise.all([depuis, journee].map(j => lireScoreDuJourBrut(j).catch(() => null)));
+    if (listes.some(l => !l)) return null;
+
+    const { parClub, inclusion } = releveSaison.releveDesClubs({
+        base, matchs: listes.flat(), depuis, saison: saison.seasonId,
+        abbrevs: teams.map(t => t.teamAbbrev)
+    });
+
+    let ecarts = 0;
+    const exactes = teams.map(t => {
+        const fiche = parClub[t.teamAbbrev];
+        if (!fiche) return t;
+        if (fiche.gamesPlayed !== t.gamesPlayed || fiche.wins !== t.wins) ecarts += 1;
+        return { ...t, ...fiche, points: clubPoolPoints(fiche) };
+    });
+    if (ecarts) console.log(`ℹ️ Relevé des clubs : ${ecarts} fiche(s) différente(s) du classement du jour (matchs en cours ou classement en retard)`);
+    return { teams: exactes, depuis, inclusion };
+}
+
 // Function to update and cache team standings
 async function updateTeamStandings() {
     console.log('🔄 Updating team standings...');
@@ -1882,20 +2040,37 @@ async function updateTeamStandings() {
         return await loadCurrentTeams();
     }
 
-    // Les matchs déjà terminés au moment du relevé : le classement les
-    // comprend, les points en direct ne doivent pas les recompter (voir
-    // lib/pointsEnDirect.js). Sans réponse de la LNH, le direct se rabat sur
-    // l'heure du relevé.
-    const matchsDuSoir = await lireMatchsBruts().catch(() => null);
-    const teamStats = {
-        lastUpdated: new Date().toISOString(),
-        teams: teams,
-        ...(matchsDuSoir ? {
-            matchsComptes: matchsDuSoir
-                .filter(g => g.gameState === 'FINAL' || g.gameState === 'OFF')
-                .map(g => Number(g.id))
-        } : {})
-    };
+    // Ce que chaque fiche comprend, match par match (lib/releveSaison.js) :
+    // le classement DATÉ de l'avant-veille, complet, plus les matchs finis de
+    // la fenêtre. Le classement du jour, lui, ne dit pas quels matchs il
+    // compte : relevé pendant un match de la côte Ouest, il le comptait ou
+    // non selon l'heure, et le direct devinait. Sans réponse de la LNH, on
+    // retombe sur l'ancienne règle (matchsComptes).
+    const exact = await releverClubsExactement(teams).catch(erreur => {
+        console.error('⚠️ Relevé exact des clubs impossible :', erreur.message);
+        return null;
+    });
+    let teamStats;
+    if (exact) {
+        teamStats = {
+            lastUpdated: new Date().toISOString(),
+            teams: exact.teams,
+            format: releveSaison.FORMAT_RELEVE,
+            depuis: exact.depuis,
+            inclusion: exact.inclusion
+        };
+    } else {
+        const matchsDuSoir = await lireMatchsBruts().catch(() => null);
+        teamStats = {
+            lastUpdated: new Date().toISOString(),
+            teams: teams,
+            ...(matchsDuSoir ? {
+                matchsComptes: matchsDuSoir
+                    .filter(g => g.gameState === 'FINAL' || g.gameState === 'OFF')
+                    .map(g => Number(g.id))
+            } : {})
+        };
+    }
 
     // Save to database or file
     if (USE_POSTGRES) {
@@ -1932,6 +2107,21 @@ async function loadCurrentTeams() {
 }
 
 // Route to get current team standings
+/**
+ * Un relevé des clubs d'avant l'inclusion (lib/releveSaison.js), en pleine
+ * saison : à refaire. Une tentative au plus toutes les dix minutes — sans la
+ * LNH, le relevé retombe sur l'ancien format, et chaque visite relancerait.
+ */
+let derniereReleveFormatClubs = 0;
+async function clubsAReleverAuFormat(stats) {
+    if (stats && stats.format === releveSaison.FORMAT_RELEVE) return false;
+    if (Date.now() - derniereReleveFormatClubs < 10 * 60 * 1000) return false;
+    const saison = await getStatsSeason().catch(() => null);
+    if (!saison || !saison.hasStarted) return false;
+    derniereReleveFormatClubs = Date.now();
+    return true;
+}
+
 app.get('/current-teams', async (req, res) => {
     try {
         let stats = await loadCurrentTeams();
@@ -1947,12 +2137,17 @@ app.get('/current-teams', async (req, res) => {
             if (hoursSinceUpdate > 24) {
                 console.log('📊 Cached team standings are old, fetching fresh data...');
                 stats = await updateTeamStandings();
+            } else if (await clubsAReleverAuFormat(stats)) {
+                console.log('📊 Team standings in an old snapshot format, recomputing...');
+                stats = await updateTeamStandings();
             }
         }
 
         res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400');
         if (repondreSiInchange(req, res, etiquetteDe('clubs', stats.lastUpdated, (stats.teams || []).length))) return;
-        res.json(stats);
+        // L'inclusion ne sert qu'au direct, côté serveur.
+        const { inclusion: _inclusion, ...publiques } = stats;
+        res.json(publiques);
     } catch (error) {
         console.error('❌ Error in /current-teams route:', error);
         res.status(500).json({ message: 'Error fetching current team standings' });
@@ -2001,7 +2196,9 @@ async function releverMatchsEnDirect() {
     const response = await fetch('https://api-web.nhle.com/v1/score/now', { signal: AbortSignal.timeout(8000) });
     if (!response.ok) return null;
     const data = await response.json();
-    const allGames = data.games || [];
+    // Un match dit en cours trois heures après sa mise au jeu : sa feuille
+    // tranche (voir lireScoreDuJourBrut).
+    const allGames = await verifierMatchsFiges(data.games || []);
 
     const liveGames = allGames
         .filter(g => g.gameState === 'LIVE' || g.gameState === 'CRIT')
@@ -2053,6 +2250,65 @@ async function lireMatchsBruts() {
     return charge ? (liveGamesCache.brut || []) : null;
 }
 
+/**
+ * Les matchs bruts d'une journée (/v1/score/{jour}), partagés par le direct
+ * des points (les journées qu'un relevé peut encore ignorer), le relevé de la
+ * nuit (l'état de chaque match de sa fenêtre), le classement des clubs et
+ * /day-goals. Une journée toute officielle se garde une demi-heure ; une
+ * journée qui joue encore, trente secondes. Lève si la LNH ne répond pas et
+ * qu'aucune copie n'est en main.
+ *
+ * `/v1/score/{jour}` peut décrocher et resservir une vieille copie (vu le
+ * 20 septembre 2026) : un match qu'elle dit encore en cours trois heures après
+ * la mise au jeu est revérifié sur sa feuille, la source de match.html. Son
+ * état n'est jamais déduit de l'heure.
+ */
+const scoreDuJourCache = new Map(); // jour → { games, lu }
+const scoreDuJourEnVol = new Map(); // jour → Promise
+const SCORE_JOUR_CHAUD_MS = 30 * 1000;
+const SCORE_JOUR_FROID_MS = 30 * 60 * 1000;
+
+async function lireScoreDuJourBrut(jour) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(jour))) return null;
+    const connu = scoreDuJourCache.get(jour);
+    if (connu) {
+        const officielle = connu.games.length
+            ? connu.games.every(g => g.gameState === 'OFF' || g.gameState === 'PPD')
+            : jour < datesPool.journeeLocale();
+        if (Date.now() - connu.lu < (officielle ? SCORE_JOUR_FROID_MS : SCORE_JOUR_CHAUD_MS)) return connu.games;
+    }
+    if (scoreDuJourEnVol.has(jour)) return scoreDuJourEnVol.get(jour);
+
+    const requete = (async () => {
+        try {
+            const reponse = await fetch(`https://api-web.nhle.com/v1/score/${jour}`, { signal: AbortSignal.timeout(8000) });
+            if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+            const brut = await reponse.json();
+            const games = await verifierMatchsFiges(brut.games || []);
+            scoreDuJourCache.delete(jour);
+            scoreDuJourCache.set(jour, { games, lu: Date.now() });
+            while (scoreDuJourCache.size > 12) scoreDuJourCache.delete(scoreDuJourCache.keys().next().value);
+            return games;
+        } catch (erreur) {
+            if (connu) return connu.games;
+            throw erreur;
+        }
+    })().finally(() => scoreDuJourEnVol.delete(jour));
+    scoreDuJourEnVol.set(jour, requete);
+    return requete;
+}
+
+/** Les matchs dits en cours depuis trop longtemps, avancés d'après leur feuille. */
+async function verifierMatchsFiges(games) {
+    const aVerifier = horaireLNH.brutsAVerifier(games, Date.now());
+    if (!aVerifier.length) return games;
+    const feuilles = new Map();
+    await Promise.all(aVerifier.map(async id => {
+        try { feuilles.set(id, await feuillesDeMatch.lire(id)); } catch { /* la copie reste telle quelle */ }
+    }));
+    return games.map(g => horaireLNH.avancerMatchBrut(g, feuilles.get(Number(g.id))));
+}
+
 app.get('/live-games', async (req, res) => {
     res.set('Cache-Control', 'no-store');
     try {
@@ -2080,6 +2336,10 @@ io.on('connection', (socket) => scoresEnDirect.brancher(socket));
 const pointsEnDirect = creerPointsEnDirect({
     io,
     lireMatchs: lireMatchsBruts,
+    // La veille surtout : son dernier match finit après minuit, et /score/now
+    // n'en dit plus rien une fois passé au jour suivant.
+    lireMatchsDuJour: lireScoreDuJourBrut,
+    aujourdhui: () => datesPool.journeeLocale(),
     lireFeuille: async (id) => {
         const reponse = await fetch(`https://api-web.nhle.com/v1/gamecenter/${id}/boxscore`, { signal: AbortSignal.timeout(8000) });
         return reponse.ok ? reponse.json() : null;
@@ -2090,6 +2350,53 @@ const pointsEnDirect = creerPointsEnDirect({
     })
 });
 io.on('connection', (socket) => pointsEnDirect.brancher(socket));
+
+/**
+ * Les points de pool des clubs de la LNH sur une période, pour le cumulatif
+ * (colonnes 24 h / 7 j / 30 j, temple de la renommée) — la même règle que le
+ * Total : 2 par victoire, 1 par défaite en prolongation. Le calendrier de
+ * chaque club (gardé une demi-heure) pour les matchs passés ; le direct pour
+ * ceux qu'il suit, plus frais. Aucune lecture de la base.
+ *
+ * `clubs` : les noms complets, tels que les effectifs de pool les portent.
+ * null si le calendrier d'un club manque : on ne prétend pas savoir.
+ */
+const calendrierClubCache = new Map(); // `${abrév.}|${saison}` → { games, lu }
+const CALENDRIER_CLUB_MS = 30 * 60 * 1000;
+
+async function calendrierDuClub(abbrev, saison) {
+    const cle = `${abbrev}|${saison}`;
+    const connu = calendrierClubCache.get(cle);
+    if (connu && Date.now() - connu.lu < CALENDRIER_CLUB_MS) return connu.games;
+    const brut = await lireJsonLNH(`https://api-web.nhle.com/v1/club-schedule-season/${abbrev}/${saison}`,
+        `calendrier de ${abbrev}`).catch(() => null);
+    if (!brut || !Array.isArray(brut.games)) return connu ? connu.games : null;
+    // Seulement ce que le pointage lit : la saison régulière, en bref.
+    const games = brut.games.filter(g => Number(g.gameType) === 2).map(g => ({
+        id: g.id, season: g.season, gameType: g.gameType, gameDate: g.gameDate, gameState: g.gameState,
+        awayTeam: { abbrev: g.awayTeam?.abbrev, score: g.awayTeam?.score },
+        homeTeam: { abbrev: g.homeTeam?.abbrev, score: g.homeTeam?.score },
+        ...(g.gameOutcome ? { gameOutcome: { lastPeriodType: g.gameOutcome.lastPeriodType } } : {}),
+        ...(g.periodDescriptor ? { periodDescriptor: { periodType: g.periodDescriptor.periodType } } : {})
+    }));
+    calendrierClubCache.set(cle, { games, lu: Date.now() });
+    return games;
+}
+
+async function resultatsClubsLNH({ clubs, debut, fin, saison, direct = null }) {
+    const fiches = (await loadCurrentTeams()).teams || [];
+    const abbrevDe = new Map(fiches.map(t => [t.teamFullName, t.teamAbbrev]));
+    const paires = (clubs || [])
+        .map(nom => [nom, abbrevDe.get(nom) || getTeamAbbreviationFromName(nom)])
+        .filter(([, abbrev]) => abbrev);
+    if (!paires.length) return {};
+    const frais = direct || await pointsEnDirect.lireParMatch().catch(() => []);
+    const abbrevs = [...new Set(paires.map(([, abbrev]) => abbrev))];
+    const calendriers = await Promise.all(abbrevs.map(abbrev => calendrierDuClub(abbrev, saison)));
+    if (calendriers.some(c => !c)) return null;
+    const parAbbrev = releveSaison.pointsDesClubs({ matchs: calendriers.flat(), direct: frais, abbrevs, debut, fin, saison });
+    return Object.fromEntries(paires.map(([nom, abbrev]) => [nom, parAbbrev[abbrev]]));
+}
 
 app.get('/live-points', async (req, res) => {
     res.set('Cache-Control', 'no-store');
@@ -2150,17 +2457,20 @@ const HORAIRE_VIDE = {
  * journée déjà affichée au calendrier ne coûte pas un appel de plus.
  */
 async function chargerHoraireLNH(date) {
-    // « Proche » se mesure en journées du pool. Lue en UTC, la journée
-    // en cours passait au lendemain dès 20 h à l'Est : les matchs du soir
-    // tombaient alors dans le cache de 12 heures et leurs scores figeaient
-    // en pleine 3è période.
-    const todayISO = datesPool.journeeLocale();
-    const [tot, tard] = date < todayISO ? [date, todayISO] : [todayISO, date];
-    const daysFromToday = datesPool.nombreDeJours(tot, tard);
-    const ttl = daysFromToday <= 1 ? SCHEDULE_NEAR_TTL_MS : SCHEDULE_FAR_TTL_MS;
-
+    // « Proche » se mesure en journées du pool (lue en UTC, la journée en
+    // cours passait au lendemain dès 20 h à l'Est), et sur toute la SEMAINE
+    // rendue, pas sur la date demandée : calendrier.html demande toujours le
+    // lundi, et dès le mercredi la semaine en cours passait dans le cache de
+    // douze heures — un match lu en direct y restait « En direct » le
+    // lendemain (voir lib/horaire.js).
     const cached = scheduleCache.get(date);
-    if (cached && (Date.now() - cached.fetchedAt) < ttl) return cached.data;
+    if (cached) {
+        const ttl = horaireLNH.dureeGardeHoraire(cached.data, {
+            aujourdhui: datesPool.journeeLocale(), demande: date,
+            courtMs: SCHEDULE_NEAR_TTL_MS, longMs: SCHEDULE_FAR_TTL_MS
+        });
+        if ((Date.now() - cached.fetchedAt) < ttl) return cached.data;
+    }
 
     const response = await fetch(`https://api-web.nhle.com/v1/schedule/${date}`);
     if (!response.ok) return HORAIRE_VIDE;
@@ -2193,6 +2503,35 @@ async function chargerHoraireLNH(date) {
     return payload;
 }
 
+/**
+ * L'horaire, chaque match à l'état que lui donne la source la plus fraîche :
+ * /score/now (le relevé partagé du direct) d'abord, puis, pour un match encore
+ * dit en cours que /score/now ne vouche pas — ou depuis plus de trois heures —,
+ * sa feuille de match, celle que match.html affiche. Un état n'avance que ;
+ * la fin d'un match ne se déduit jamais de l'heure.
+ */
+async function horaireAJour(horaire) {
+    if (!horaire || !Array.isArray(horaire.days) || !horaire.days.length) return horaire;
+    const frais = new Map();
+    for (const g of (await lireMatchsBruts().catch(() => null)) || []) {
+        const etat = horaireLNH.etatDeScore(g);
+        if (etat) frais.set(etat.id, etat);
+    }
+    let fusion = horaireLNH.fusionnerHoraire(horaire, frais);
+    const aVerifier = horaireLNH.matchsAVerifier(fusion, { connus: new Set(frais.keys()), maintenant: Date.now() });
+    if (aVerifier.length) {
+        const feuilles = new Map();
+        await Promise.all(aVerifier.slice(0, 16).map(async id => {
+            try {
+                const etat = horaireLNH.etatDeFeuille(await feuillesDeMatch.lire(id));
+                if (etat) feuilles.set(id, etat);
+            } catch { /* le match garde l'état qu'on lui connaît */ }
+        }));
+        fusion = horaireLNH.fusionnerHoraire(fusion, feuilles);
+    }
+    return fusion;
+}
+
 app.get('/schedule/:date', async (req, res) => {
     const { date } = req.params;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -2200,7 +2539,7 @@ app.get('/schedule/:date', async (req, res) => {
     }
 
     try {
-        res.json(await chargerHoraireLNH(date));
+        res.json(await horaireAJour(await chargerHoraireLNH(date)));
     } catch (error) {
         console.error('❌ Error fetching schedule:', error.message);
         res.json(HORAIRE_VIDE);
@@ -2303,10 +2642,11 @@ app.get('/day-goals/:date', async (req, res) => {
         // Une feuille du jour en panne ne vaut pas mieux qu'une feuille vide :
         // dans les deux cas l'horaire, plus bas, reprend la main. C'est pour
         // ça qu'un échec ne sort plus d'ici les mains vides.
+        // Lue par le relevé partagé (lireScoreDuJourBrut) : le direct des
+        // points et le relevé de la nuit lisent la même copie.
         let brut = null;
         try {
-            const reponse = await fetch(`https://api-web.nhle.com/v1/score/${date}`);
-            if (reponse.ok) brut = await reponse.json();
+            brut = { games: await lireScoreDuJourBrut(date) };
         } catch (erreur) {
             console.warn('⚠️  Feuille du jour indisponible:', erreur.message);
         }
@@ -2376,10 +2716,29 @@ app.get('/day-goals/:date', async (req, res) => {
         // un match marqué reparti d'ici sans un seul but est un trou, pas un
         // match sans but, et un 0-0 n'envoie personne lire une feuille vide.
         // `manquants` reste vide les soirs où la LNH répond bien.
-        const horaire = await chargerHoraireLNH(date).catch(() => HORAIRE_VIDE);
+        const horaire = await chargerHoraireLNH(date).then(horaireAJour).catch(() => HORAIRE_VIDE);
         const duJour = (horaire.days || []).find(j => j.date === date);
         const parties = duJour?.games || [];
-        if (parties.some(g => g.state === 'LIVE' || g.state === 'CRIT')) enCours = true;
+
+        // L'état de chaque match, le plus avancé des deux flux : la feuille
+        // du jour peut décrocher et resservir une vieille copie, et l'horaire
+        // est recoupé avec /score/now et la feuille de match (horaireAJour).
+        // Une carte ne reste plus « En direct » sur un match que sa feuille
+        // dit terminé.
+        for (const g of parties) {
+            if (!MATCH_COMMENCE.includes(g.state)) continue;
+            const connu = live[g.id];
+            if (connu && horaireLNH.rangEtat(connu.state) >= horaireLNH.rangEtat(g.state)) continue;
+            live[g.id] = {
+                state: g.state,
+                period: g.period ?? connu?.period ?? null,
+                periodType: g.periodType || connu?.periodType || 'REG',
+                clock: g.state === 'LIVE' || g.state === 'CRIT' ? (connu?.clock || null) : null,
+                away: g.away?.score ?? connu?.away ?? null,
+                home: g.home?.score ?? connu?.home ?? null
+            };
+        }
+        enCours = Object.values(live).some(e => e.state === 'LIVE' || e.state === 'CRIT');
 
         const manquants = parties.filter(g => MATCH_COMMENCE.includes(g.state)
             && marqueTotale(g) > 0 && !(games[g.id] || []).length);
@@ -2416,9 +2775,12 @@ app.get('/day-goals/:date', async (req, res) => {
 // directly rather than player_game_logs: that table is only written once a
 // game goes FINAL (see checkAndUpdateFinishedGames's 15-min poll below), so
 // it can't reflect a game still in progress. Boxscore has the current line
-// either way. fantasyPointsTonight uses the same FANTASY_SCORING weights as
-// getTeamPointsForDateRange, computed here so the client never re-derives
-// scoring math itself.
+// either way. Each line carries both scores, computed here so the client
+// never re-derives scoring math itself: pointsTonight (cumulative pools —
+// goals + assists, goalie W/SO/OTL at the final horn, the same numbers the
+// live standings add) and fantasyPointsTonight (head-to-head FANTASY_SCORING).
+// Game states come from the shared /score/now snapshot (lireMatchsBruts), the
+// one /live-games and the live points read.
 // ============================================================
 let tonightBoxscoresCache = { data: null, fetchedAt: 0 };
 const TONIGHT_BOXSCORES_TTL_MS = 25 * 1000;
@@ -2431,10 +2793,9 @@ app.get('/tonight-boxscores', async (req, res) => {
             return res.json(tonightBoxscoresCache.data);
         }
 
-        const scoreResponse = await fetch('https://api-web.nhle.com/v1/score/now');
-        if (!scoreResponse.ok) return res.json({ players: [], games: [], generatedAt: new Date().toISOString() });
-        const scoreData = await scoreResponse.json();
-        const startedGames = (scoreData.games || []).filter(g =>
+        const bruts = await lireMatchsBruts().catch(() => null);
+        if (!bruts) return res.json({ players: [], games: [], generatedAt: new Date().toISOString() });
+        const startedGames = bruts.filter(g =>
             ['LIVE', 'CRIT', 'FINAL', 'OFF'].includes(g.gameState));
 
         const boxscores = await Promise.all(startedGames.map(async g => {
@@ -2453,62 +2814,12 @@ app.get('/tonight-boxscores', async (req, res) => {
         const nomsComplets = new Map((memStatsCache.players || []).map(p => [Number(p.playerId), p.playerName]));
         const nomDe = p => nomsComplets.get(Number(p.playerId)) || p.name?.default || '';
 
-        const players = [];
-        boxscores.forEach((box, i) => {
-            if (!box) return;
-            const game = startedGames[i];
-            const stats = box.playerByGameStats || {};
-            ['awayTeam', 'homeTeam'].forEach(side => {
-                const teamAbbrev = box[side]?.abbrev || (side === 'awayTeam' ? game.awayTeam?.abbrev : game.homeTeam?.abbrev) || '';
-                const roster = stats[side] || {};
-                ['forwards', 'defense'].forEach(group => {
-                    (roster[group] || []).forEach(p => {
-                        players.push({
-                            playerId: p.playerId,
-                            playerName: nomDe(p),
-                            teamAbbrev,
-                            position: 'F',
-                            goals: p.goals || 0,
-                            assists: p.assists || 0,
-                            shots: p.sog || 0,
-                            plusMinus: p.plusMinus || 0,
-                            // toi : « 14:22 ». Sert la ligne meta des cartes
-                            // joueur du calendrier (voir gamePlayersHTML,
-                            // accueil-dash.js) — la seule donnée « en jeu »
-                            // que la maquette Canvas-12 demande en plus.
-                            toi: p.toi || '',
-                            gameId: game.id,
-                            gameState: game.gameState,
-                            fantasyPointsTonight: skaterFantasyPointsTonight({
-                                goals: p.goals, assists: p.assists, shots: p.sog, plusMinus: p.plusMinus
-                            })
-                        });
-                    });
-                });
-                (roster.goalies || []).forEach(p => {
-                    const decision = p.decision || null;
-                    const shutout = (p.goalsAgainst === 0) && decision === 'W';
-                    players.push({
-                        playerId: p.playerId,
-                        playerName: nomDe(p),
-                        teamAbbrev,
-                        position: 'G',
-                        saves: p.saveShotsAgainst ? parseInt((p.saveShotsAgainst.split('/')[0] || '0'), 10) : 0,
-                        shotsAgainst: p.saveShotsAgainst ? parseInt((p.saveShotsAgainst.split('/')[1] || '0'), 10) : 0,
-                        goalsAgainst: p.goalsAgainst || 0,
-                        decision,
-                        shutout,
-                        toi: p.toi || '',
-                        gameId: game.id,
-                        gameState: game.gameState,
-                        fantasyPointsTonight: goalieFantasyPointsTonight({
-                            decision, shutout, saves: p.saveShotsAgainst ? parseInt((p.saveShotsAgainst.split('/')[0] || '0'), 10) : 0,
-                            goalsAgainst: p.goalsAgainst
-                        })
-                    });
-                });
-            });
-        });
+        // Une ligne par joueur et par match, avec les deux pointages : les
+        // vrais points du cumulatif (pointsTonight) et les points fantasy du
+        // tête-à-tête (fantasyPointsTonight). Voir lignesDuSoir.
+        const feuilles = new Map();
+        boxscores.forEach((box, i) => { if (box) feuilles.set(Number(startedGames[i].id), box); });
+        const players = lignesDuSoir({ matchs: startedGames, feuilles, nomDe });
 
         const games = startedGames.map(g => ({
             id: g.id,
@@ -2593,9 +2904,9 @@ app.get('/pool-rank-movement/:poolName', async (req, res) => {
         if (!enveloppe) return res.status(404).json({ message: 'Pool not found' });
         const poolData = enveloppe.data;
 
-        const statsData = await loadCurrentStats();
-        const teamsData = await loadCurrentTeams();
-        const liveScores = computeTeamSeasonScores(poolData, statsData.players || [], teamsData.teams || []);
+        // Le Total tel que le classement l'affiche : relevé + direct.
+        const releves = await relevesAvecDirect();
+        const liveScores = computeTeamSeasonScores(poolData, releves.players, releves.teams);
 
         // Même journée que celle sous laquelle snapshotAllPoolRanks écrit.
         // Lue en UTC, elle passait au lendemain dès 20 h à l'Est : la requête
@@ -5024,11 +5335,45 @@ if (process.env.NODE_ENV !== 'production') {
 // SERVER INITIALIZATION
 // ===============================================
 
+/**
+ * L'instantané des rangs du matin (pool_rank_snapshots), refait sur un relevé
+ * corrigé.
+ *
+ * Celui du 30 septembre 2026 avait été pris sur un relevé qui manquait les
+ * deux derniers matchs de la veille : les flèches « depuis le début de la
+ * journée » partaient de totaux faux. On le refait une fois le relevé
+ * corrigé, mais seulement si la veille est close et qu'aucun match du jour
+ * n'a commencé — après, ce ne serait plus le début de la journée.
+ */
+async function reecrireInstantaneDuJour() {
+    if (!USE_POSTGRES) return;
+    const jour = datesPool.journeeLocale();
+    const [hier, aujourdhui] = await Promise.all([
+        matchsPasOfficiels(releveSaison.decalerJour(jour, -1)),
+        lireScoreDuJourBrut(jour).catch(() => null)
+    ]);
+    const commence = (aujourdhui || []).some(g => Number(g.gameType) === 2
+        && ['LIVE', 'CRIT', 'FINAL', 'OFF'].includes(g.gameState));
+    if (!hier || hier.length || !aujourdhui || commence) {
+        console.log('⏭️  Instantané des rangs du jour gardé tel quel (veille pas close ou matchs du jour commencés)');
+        return;
+    }
+    await snapshotAllPoolRanks();
+    console.log(`✅ Instantané des rangs du ${jour} refait sur le relevé corrigé`);
+}
+
 // Loads the local stats/team cache into memory right away (so the app never
 // starts with no data), then checks in the background whether that cache is
 // stale and refreshes it from the NHL API if needed. Runs once at boot,
 // independent of any client hitting /current-stats or /current-teams first.
+//
+// Un relevé d'un format antérieur (sans inclusion) est refait, joueurs et
+// clubs, puis l'instantané des rangs du jour avec lui : c'est ce qui corrige
+// les totaux enregistrés avant lib/releveSaison.js.
 async function warmStatsOnStartup() {
+    let refaitStats = null;
+    let refaitClubs = null;
+    let ancienFormat = false;
     try {
         const stats = await loadCurrentStats();
         if (stats.lastUpdated) {
@@ -5041,9 +5386,13 @@ async function warmStatsOnStartup() {
         }
 
         const saison = await getStatsSeason();
-        const { needsRefresh, reason } = getStatsRefreshStatus(stats, nombreJoueursSuivis(), saison.seasonId);
+        const { needsRefresh, reason, oldFormat } = getStatsRefreshStatus(
+            stats, nombreJoueursSuivis(), saison.seasonId, Date.now(), formatReleveAttendu(saison));
         if (needsRefresh) {
-            triggerBackgroundStatsRefresh(`startup check — ${reason}`);
+            ancienFormat = !!oldFormat && !!stats.lastUpdated;
+            console.log(`📊 Background stats refresh triggered: startup check — ${reason}`);
+            refaitStats = rafraichirStatsUneFois(`startup check — ${reason}`)
+                .then(() => console.log("✅ Background stats refresh done"));
         } else {
             console.log(`📊 Local player stats are fresh (${reason}) — no refresh needed.`);
         }
@@ -5063,17 +5412,25 @@ async function warmStatsOnStartup() {
             console.log('📊 No local team standings cache found on disk.');
         }
 
-        if (!teams.lastUpdated || teamsAgeHours > 24) {
-            const reason = teams.lastUpdated ? `cache is ${teamsAgeHours.toFixed(1)}h old` : 'no local cache yet';
+        const ancienFormatClubs = teams.lastUpdated && await clubsAReleverAuFormat(teams);
+        if (!teams.lastUpdated || teamsAgeHours > 24 || ancienFormatClubs) {
+            const reason = !teams.lastUpdated ? 'no local cache yet'
+                : ancienFormatClubs ? 'old snapshot format' : `cache is ${teamsAgeHours.toFixed(1)}h old`;
+            if (ancienFormatClubs) ancienFormat = true;
             console.log(`📊 Background team standings refresh triggered: startup check — ${reason}`);
-            updateTeamStandings()
-                .then(() => console.log('✅ Background team standings refresh done'))
-                .catch(e => console.error('❌ Background team standings refresh failed:', e));
+            refaitClubs = updateTeamStandings()
+                .then(() => console.log('✅ Background team standings refresh done'));
         } else {
             console.log(`📊 Local team standings are fresh (${teamsAgeHours.toFixed(1)}h old) — no refresh needed.`);
         }
     } catch (error) {
         console.error('❌ Error warming team standings on startup:', error);
+    }
+
+    if (refaitStats || refaitClubs) {
+        Promise.all([refaitStats, refaitClubs])
+            .then(() => (ancienFormat ? reecrireInstantaneDuJour() : null))
+            .catch(e => console.error('❌ Background refresh failed:', e));
     }
 }
 

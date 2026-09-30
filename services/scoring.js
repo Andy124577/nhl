@@ -32,6 +32,7 @@
 const scoring = require('../lib/scoring.js');
 const dates = require('../lib/dates.js');
 const lineup = require('../lib/lineup.js');
+const { pointsApport } = require('../lib/pointsEnDirect.js');
 const { creerMemoireLectures } = require('../lib/memoireLectures.js');
 
 /**
@@ -84,7 +85,13 @@ function alignementDe(teamData) {
     return { patineurs, gardiens, clubs, joueurs: [...patineurs, ...gardiens] };
 }
 
-function creerServicePointage({ db, calendrierDuJour = null, logger = console, confianceMs = 0 }) {
+function creerServicePointage({
+    db, calendrierDuJour = null, logger = console, confianceMs = 0,
+    // Pointage cumulatif seulement — le tête-à-tête n'y touche pas :
+    apportsEnDirect = null,     // async () => [{ id, jour, joueurs }] (services/pointsEnDirect.js, lireParMatch)
+    resultatsClubs = null,      // async ({ clubs, debut, fin, saison, direct }) => { [nom]: { points } } | null
+    idDuJoueur = null           // (nom) => identifiant LNH | null
+}) {
 
     /**
      * Les feuilles de match ne changent qu'à l'ingestion — un match qui se
@@ -196,8 +203,9 @@ function creerServicePointage({ db, calendrierDuJour = null, logger = console, c
      * point » et « aucune donnée » est portée par `matchs`, pas devinée par
      * l'affichage.
      */
-    async function detailEquipe(teamData, { debut, fin, saison }) {
+    async function detailEquipe(teamData, { debut, fin, saison, mode = scoring.MODES.H2H, direct = null }) {
         const alignement = alignementDe(teamData);
+        const cumulatif = mode === scoring.MODES.CUMULATIF;
 
         // Le banc du tête-à-tête : un changement compte à partir de sa date
         // (lib/lineup.js). On lit donc les feuilles de TOUS ceux qui ont été
@@ -225,18 +233,23 @@ function creerServicePointage({ db, calendrierDuJour = null, logger = console, c
             meta.set(ligne.player_name, { playerId: ligne.player_id, teamAbbrev: ligne.team_abbrev });
         }
 
+        const vide = () => ({
+            fantasyPoints: 0, points: 0, enDirect: 0, matchs: 0,
+            goals: 0, assists: 0, shots: 0,
+            wins: 0, saves: 0, shutouts: 0
+        });
         const cumul = new Map();
+        // Les matchs déjà en base, par joueur : un match du direct qui y est
+        // n'est pas recompté.
+        const enBase = new Map();
         for (const ligne of lignes) {
             const cle = ligne.player_name;
-            if (!cumul.has(cle)) {
-                cumul.set(cle, {
-                    fantasyPoints: 0, matchs: 0,
-                    goals: 0, assists: 0, shots: 0,
-                    wins: 0, saves: 0, shutouts: 0
-                });
-            }
+            if (!cumul.has(cle)) cumul.set(cle, vide());
+            if (!enBase.has(cle)) enBase.set(cle, new Set());
+            enBase.get(cle).add(Number(ligne.game_id));
             const total = cumul.get(cle);
             total.fantasyPoints += scoring.pointsFeuilleDeMatch(ligne);
+            total.points += scoring.pointsFeuilleSelonMode(ligne, mode);
             total.matchs += 1;
             if (scoring.estGardien(ligne)) {
                 total.wins += ligne.decision === 'W' ? 1 : 0;
@@ -246,6 +259,37 @@ function creerServicePointage({ db, calendrierDuJour = null, logger = console, c
                 total.goals += ligne.goals || 0;
                 total.assists += ligne.assists || 0;
                 total.shots += ligne.shots || 0;
+            }
+        }
+
+        // Le cumulatif compte aussi les matchs du soir que la base n'a pas
+        // encore : une feuille n'y entre qu'au final, et la colonne 24 h
+        // restait à zéro pendant qu'un joueur marquait. `direct` vient des
+        // points en direct (services/pointsEnDirect.js) : un apport par match
+        // et par joueur, compté ici seulement si ce match manque en base.
+        if (cumulatif && Array.isArray(direct) && direct.length) {
+            for (const joueur of joueursPeriode) {
+                const id = Number((meta.get(joueur.nom) || {}).playerId || (idDuJoueur && idDuJoueur(joueur.nom)));
+                if (!id) continue;
+                const dejaLa = enBase.get(joueur.nom) || new Set();
+                for (const match of direct) {
+                    const apport = match && match.joueurs && match.joueurs[id];
+                    if (!apport || !match.jour || match.jour < debut || match.jour >= fin) continue;
+                    if (dejaLa.has(Number(match.id))) continue;
+                    if (estPartant && !estPartant(joueur.nom, match.jour)) continue;
+                    if (!cumul.has(joueur.nom)) cumul.set(joueur.nom, vide());
+                    const total = cumul.get(joueur.nom);
+                    const points = pointsApport(apport, joueur.gardien);
+                    total.points += points;
+                    total.enDirect += points;
+                    if (joueur.gardien) {
+                        total.wins += apport.v || 0;
+                        total.shutouts += apport.bl || 0;
+                    } else {
+                        total.goals += apport.b || 0;
+                        total.assists += apport.p || 0;
+                    }
+                }
             }
         }
 
@@ -259,6 +303,10 @@ function creerServicePointage({ db, calendrierDuJour = null, logger = console, c
                 playerId: infos.playerId || null,
                 teamAbbrev: infos.teamAbbrev || null,
                 fantasyPoints: total ? scoring.arrondi(total.fantasyPoints) : 0,
+                // Les points du mode : les vrais points au cumulatif, les
+                // points fantasy au tête-à-tête (alors égaux à fantasyPoints).
+                points: total ? scoring.arrondi(total.points) : 0,
+                enDirect: total ? total.enDirect : 0,
                 matchs: total ? total.matchs : 0,
                 goals: total ? total.goals : 0,
                 assists: total ? total.assists : 0,
@@ -291,8 +339,16 @@ function creerServicePointage({ db, calendrierDuJour = null, logger = console, c
             });
         }
 
-        const joueurs = await detailEquipe(teamData, { debut, fin, saison });
-        const total = joueurs.reduce((somme, j) => somme + j.fantasyPoints, 0);
+        const cumulatif = mode === scoring.MODES.CUMULATIF;
+        // Au cumulatif : les matchs du soir pas encore en base, et les
+        // victoires des clubs repêchés — le Total les compte, la période aussi.
+        const direct = cumulatif && apportsEnDirect ? await lireSansPanne(apportsEnDirect, []) : null;
+        const joueurs = await detailEquipe(teamData, { debut, fin, saison, mode, direct });
+        const club = cumulatif
+            ? await composanteClubCumulatif(alignement, { debut, fin, saison, direct })
+            : composanteClub(alignement, mode);
+        const total = joueurs.reduce((somme, j) => somme + (cumulatif ? j.points : j.fantasyPoints), 0)
+            + (club.inclus ? club.points : 0);
         const etat = ingestion || await etatIngestion({ debut, fin, saison });
 
         return scoring.resultatPointage({
@@ -302,8 +358,17 @@ function creerServicePointage({ db, calendrierDuJour = null, logger = console, c
             completude: etat.completude,
             matchsAttendus: etat.attendus,
             matchsRecus: etat.recus,
-            detail: { joueurs, club: composanteClub(alignement, mode) }
+            detail: { joueurs, club }
         });
+    }
+
+    /** Une source facultative qui tombe ne fait pas tomber le pointage. */
+    async function lireSansPanne(lire, defaut) {
+        try { return (await lire()) ?? defaut; }
+        catch (erreur) {
+            logger.error?.('⚠️ Pointage : source indisponible :', erreur.message);
+            return defaut;
+        }
     }
 
     /**
@@ -323,6 +388,29 @@ function creerServicePointage({ db, calendrierDuJour = null, logger = console, c
                 ? 'Le club repêché compte au classement cumulatif, pas dans un duel hebdomadaire.'
                 : null
         };
+    }
+
+    /**
+     * Au cumulatif, le club repêché compte sur la période comme au Total :
+     * 2 par victoire, 1 par défaite en prolongation, match fini par match
+     * fini. `resultatsClubs` (injecté) dit ce que chaque club a obtenu ; sans
+     * lui, la composante se déclare non comptée plutôt que de valoir zéro.
+     */
+    async function composanteClubCumulatif(alignement, { debut, fin, saison, direct }) {
+        if (alignement.clubs.length === 0) {
+            return { clubs: [], inclus: true, points: 0, raison: null };
+        }
+        const resultats = resultatsClubs
+            ? await lireSansPanne(() => resultatsClubs({ clubs: alignement.clubs, debut, fin, saison, direct }), null)
+            : null;
+        if (!resultats) {
+            return {
+                clubs: alignement.clubs, inclus: false, points: 0,
+                raison: 'Résultats des clubs de la LNH indisponibles pour cette période.'
+            };
+        }
+        const points = alignement.clubs.reduce((somme, nom) => somme + ((resultats[nom] && resultats[nom].points) || 0), 0);
+        return { clubs: alignement.clubs, inclus: true, points, raison: null };
     }
 
     /** Le pointage des deux équipes d'un duel, sur la même période exactement. */

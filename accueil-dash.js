@@ -233,6 +233,50 @@ async function fetchSchedule(date) {
     }
 }
 
+/** 'YYYY-MM-DD' décalé de `n` jours (arithmétique de calendrier, midi UTC). */
+function fzdDecalerJour(iso, n) {
+    const d = new Date(`${iso}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Le lundi de la semaine d'une date. La LNH rend sept jours à partir de la
+ * date DEMANDÉE : l'accueil demandait aujourd'hui, et un mercredi montrait du
+ * mercredi au mardi. Demander le lundi fixe la semaine du lundi au dimanche,
+ * comme la page Calendrier (calendrier.js).
+ */
+function fzdLundiDe(iso) {
+    const d = new Date(`${iso}T12:00:00Z`);
+    return fzdDecalerJour(iso, -((d.getUTCDay() + 6) % 7));
+}
+
+/**
+ * La semaine du lundi `lundi` au dimanche, qu'un jour ait des matchs ou non :
+ * en bord de calendrier la LNH peut rendre moins de sept jours, et le jour
+ * manquant s'affiche vide plutôt que de décaler la semaine. Une réponse vide
+ * reste vide (calendrier indisponible).
+ */
+function fzdSemaineLundiDimanche(lundi, horaire) {
+    const jours = (horaire && horaire.days) || [];
+    if (!jours.length) return { ...(horaire || {}), days: [], lundi };
+    const parDate = new Map(jours.map(d => [d.date, d]));
+    return {
+        ...horaire,
+        lundi,
+        days: Array.from({ length: 7 }, (_, i) => {
+            const date = fzdDecalerJour(lundi, i);
+            return parDate.get(date) || { date, games: [] };
+        })
+    };
+}
+
+/** La semaine (lundi → dimanche) qui contient `date`. */
+async function fetchWeek(date) {
+    const lundi = fzdLundiDe(date);
+    return fzdSemaineLundiDimanche(lundi, await fetchSchedule(lundi));
+}
+
 /**
  * Les buts de la journée affichée, chargés en arrière-plan.
  *
@@ -330,7 +374,7 @@ function fzdPrecharger() {
     if (fzdPrecharge) return fzdPrecharge;
     fzdPrecharge = {
         jour: todayISO(),
-        horaire: fetchSchedule(todayISO()),
+        horaire: fetchWeek(todayISO()),
         equipes: loadNhlTeams(),
         tonight: fetchTonightBoxscores()
     };
@@ -355,7 +399,7 @@ function fzdPrise(cle) {
 async function initCalendar() {
     const today = todayISO();
     const [schedule] = await Promise.all([
-        fzdPrise('horaire') || fetchSchedule(today),
+        fzdPrise('horaire') || fetchWeek(today),
         fzdPrise('equipes') || loadNhlTeams()
     ]);
     calData = schedule;
@@ -369,7 +413,62 @@ function renderCalendar() {
     renderDayStrip();
     renderDayHead();
     renderDayGames();
+    reglerVeilleHoraire();
 }
+
+/* ---- L'horaire à jour ----
+   `calData` était lu une fois pour toute la session : une carte vue « En
+   direct » le restait, et seule la feuille du jour (/day-goals) pouvait la
+   faire avancer — pour la journée affichée seulement, et à condition qu'elle
+   réponde. L'horaire se relit maintenant chaque minute tant qu'un match de la
+   semaine joue, ou qu'un match du jour devrait avoir commencé. Le serveur
+   recoupe chaque état avec /score/now et la feuille de match, celle que
+   match.html affiche (horaireAJour, server.js) : la carte et la feuille
+   disent la même chose. Onglet caché : rien. */
+const CAL_HORAIRE_MS = 60 * 1000;
+let calHoraireMinuteur = null;
+
+function fzdSignatureHoraire(horaire) {
+    return JSON.stringify(((horaire && horaire.days) || []).map(d =>
+        (d.games || []).map(g => [g.id, g.state, g.period, g.away?.score, g.home?.score])));
+}
+
+function fzdHoraireAVeiller() {
+    if (!calData || !calData.lundi) return false;
+    const jour = calData.days.find(d => d.date === todayISO());
+    const maintenant = Date.now();
+    return calData.days.some(d => (d.games || []).some(g => g.state === 'LIVE' || g.state === 'CRIT'))
+        || ((jour && jour.games) || []).some(g => ['FUT', 'PRE'].includes(g.state)
+            && Date.parse(g.startTimeUTC) <= maintenant);
+}
+
+async function fzdRafraichirHoraire() {
+    if (document.hidden || !calData || !calData.lundi) return;
+    const lundi = calData.lundi;
+    const neuf = await fetchWeek(lundi);
+    // La personne a pu changer de semaine pendant la requête.
+    if (!calData || calData.lundi !== lundi || !neuf.days.length) return;
+    if (fzdSignatureHoraire(neuf) !== fzdSignatureHoraire(calData)) {
+        calData = neuf;
+        // Le lecteur n'a rien demandé : la piste des matchs garde sa place.
+        const piste = document.getElementById('fzdCalGames');
+        const garde = piste ? piste.scrollLeft : 0;
+        renderCalendar();
+        if (piste) piste.scrollLeft = garde;
+        return;
+    }
+    reglerVeilleHoraire();
+}
+
+function reglerVeilleHoraire() {
+    const besoin = fzdHoraireAVeiller();
+    if (besoin && !calHoraireMinuteur) calHoraireMinuteur = setInterval(fzdRafraichirHoraire, CAL_HORAIRE_MS);
+    else if (!besoin && calHoraireMinuteur) { clearInterval(calHoraireMinuteur); calHoraireMinuteur = null; }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && calHoraireMinuteur) fzdRafraichirHoraire();
+});
 
 /** « 18 – 24 oct. » : la semaine que /schedule/:date vient de renvoyer. */
 function renderCalRange() {
@@ -1119,23 +1218,27 @@ async function selectCalendarDay(dateStr) {
         renderCalendar();
         return;
     }
-    calData = await fetchSchedule(dateStr);
+    calData = await fetchWeek(dateStr);
     // A preseason date without games is still the date the user selected.
     calSelectedDate = dateStr;
     renderCalendar();
 }
 
+// D'un lundi à l'autre. Les dates de la LNH ne servent qu'à savoir s'il
+// existe une semaine avant ou après.
 async function calGoPrevWeek() {
     if (!calData || !calData.previousStartDate) return;
-    calData = await fetchSchedule(calData.previousStartDate);
-    calSelectedDate = calData.days[calData.days.length - 1]?.date || calData.previousStartDate;
+    const lundi = fzdDecalerJour(calData.lundi || fzdLundiDe(todayISO()), -7);
+    calData = await fetchWeek(lundi);
+    calSelectedDate = calData.days[calData.days.length - 1]?.date || lundi;
     renderCalendar();
 }
 
 async function calGoNextWeek() {
     if (!calData || !calData.nextStartDate) return;
-    calData = await fetchSchedule(calData.nextStartDate);
-    calSelectedDate = calData.days[0]?.date || calData.nextStartDate;
+    const lundi = fzdDecalerJour(calData.lundi || fzdLundiDe(todayISO()), 7);
+    calData = await fetchWeek(lundi);
+    calSelectedDate = calData.days[0]?.date || lundi;
     renderCalendar();
 }
 
@@ -1210,6 +1313,25 @@ async function fetchTonightBoxscores() {
     }
 }
 
+/** Le pool actif se joue-t-il en tête-à-tête ? Sinon, il est cumulatif (le défaut). */
+function fzdPoolH2H() {
+    return (window.FZPool && (FZPool.data() || {}).poolMode) === 'head-to-head';
+}
+
+/**
+ * Les points d'une ligne du soir, au barème du pool actif. Chaque ligne de
+ * /tonight-boxscores porte les deux (voir lignesDuSoir, lib/pointsEnDirect.js) :
+ *   - cumulatif : les vrais points — buts + aides ; un gardien, 2 par
+ *     victoire, 5 par blanchissage, 1 par défaite en prolongation, au final.
+ *     Evan Bouchard, 3 buts et 2 aides : 5 points, pas les 17 du barème
+ *     fantasy que l'accueil additionnait ;
+ *   - tête-à-tête : les points fantasy, inchangés.
+ */
+function fzdPointsCeSoir(ligne) {
+    if (!ligne) return 0;
+    return Number(fzdPoolH2H() ? ligne.fantasyPointsTonight : ligne.pointsTonight) || 0;
+}
+
 async function fetchRankMovement(poolName) {
     try {
         const res = await fetch(`${BASE_URL}/pool-rank-movement/${encodeURIComponent(poolName)}`, { cache: 'no-store' });
@@ -1242,7 +1364,7 @@ function renderLivePanel(tonight, movement, activeName) {
     const rosterNames = new Set(activeRosterNames());
     const myLines = (tonight.players || [])
         .filter(p => rosterNames.has(p.playerName))
-        .sort((a, b) => (b.fantasyPointsTonight || 0) - (a.fantasyPointsTonight || 0));
+        .sort((a, b) => fzdPointsCeSoir(b) - fzdPointsCeSoir(a));
 
     renderPlayersList(playersContainer, myLines, tonight.games || []);
 
@@ -1272,7 +1394,7 @@ function renderPlayersList(container, myLines, games) {
     }
 
     container.innerHTML = myLines.map(p => {
-        const pts = p.fantasyPointsTonight || 0;
+        const pts = fzdPointsCeSoir(p);
         return `
             <div class="fzd-player-row">
                 <div class="fzd-player-badge">${teamLogoImg(p.teamAbbrev)}</div>
@@ -1286,7 +1408,7 @@ function renderPlayersList(container, myLines, games) {
 }
 
 function renderLiveActive(container, myLines, games, movement, activeName) {
-    const totalPts = myLines.reduce((s, p) => s + (p.fantasyPointsTonight || 0), 0);
+    const totalPts = myLines.reduce((s, p) => s + fzdPointsCeSoir(p), 0);
     const playersInAction = myLines.filter(p => {
         const g = games.find(x => x.id === p.gameId);
         return g && (g.state === 'LIVE' || g.state === 'CRIT');
@@ -1649,7 +1771,7 @@ function fzdHeroState(tonight) {
         return g && (g.state === 'LIVE' || g.state === 'CRIT');
     }).length;
     if (liveCount > 0) {
-        const totalPts = myLines.reduce((s, p) => s + (p.fantasyPointsTonight || 0), 0);
+        const totalPts = myLines.reduce((s, p) => s + fzdPointsCeSoir(p), 0);
         return { mode: 'live', liveCount, totalPts };
     }
 
@@ -2846,4 +2968,7 @@ function fzdActualiserPointsDirect() {
     renderMyPoolsList();
     if (typeof fzsActualiserRang === 'function') fzsActualiserRang();
     if (typeof fzmActualiserRang === 'function') fzmActualiserRang();
+    // Un point est tombé : « Mes joueurs ce soir » et « Total ce soir » le
+    // montrent aussi, sans attendre le prochain passage (accueil-season.js).
+    if (typeof fzsRafraichirSoiree === 'function') fzsRafraichirSoiree();
 }

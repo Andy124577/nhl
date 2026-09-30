@@ -136,13 +136,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Les points du soir : un but d'un joueur du pool fait bouger le
     // classement sur place. En saison seulement — avant, aucun match ne compte.
     if (window.FZPointsDirect && seasonStarted) {
+        let premierDirect = true;
         FZPointsDirect.surChangement(() => {
             appliquerPointsDirect();
             rafraichirClassementEnDirect();
+            // Le premier envoi n'est que l'état du moment, que les colonnes
+            // de période lues au chargement comptent déjà.
+            if (premierDirect) { premierDirect = false; return; }
+            relirePeriodesEnDirect();
         });
         FZPointsDirect.suivre();
     }
 });
+
+/**
+ * Les colonnes 24 h / 7 j / 30 j comptent aussi les matchs en cours : le
+ * serveur ajoute à ce que la base contient déjà les points du soir, un match
+ * à la fois, sans jamais recompter un match déjà enregistré
+ * (services/scoring.js). Elles se relisent quand un point tombe — au plus
+ * une fois toutes les PERIODES_DIRECT_MS, et la dernière relecture part
+ * toujours : aucun point ne reste en plan.
+ */
+const PERIODES_DIRECT_MS = 20000;
+let periodesMinuteur = null;
+let periodesDerniere = 0;
+function relirePeriodesEnDirect() {
+    if (periodesMinuteur) return;
+    const attente = Math.max(0, PERIODES_DIRECT_MS - (Date.now() - periodesDerniere));
+    periodesMinuteur = setTimeout(() => {
+        periodesMinuteur = null;
+        periodesDerniere = Date.now();
+        periodPointsCache = null;
+        recentFormCache = { poolName: null, byDays: new Map() };
+        rafraichirClassementEnDirect();
+    }, attente);
+}
 
 /** currentStats / currentTeams = relevés de minuit + points du soir. */
 function appliquerPointsDirect() {
@@ -368,9 +396,11 @@ function getStandingsColumns(poolMode) {
         { label: 'PJ', sort: 'gamesPlayed', title: 'Parties jouées' },
         { label: 'B', sort: 'goals', title: 'Buts' },
         { label: 'P', sort: 'assists', title: 'Passes décisives' },
-        { label: '24 h', cls: 'st-period-col', title: 'Forme : points fantasy des dernières 24 heures' },
-        { label: '7 j', cls: 'st-period-col', title: 'Forme : points fantasy des 7 derniers jours' },
-        { label: '30 j', cls: 'st-period-col', title: 'Forme : points fantasy des 30 derniers jours' },
+        // Mêmes règles que le Total (buts + passes, gardiens, clubs) : une
+        // colonne 30 j égale au Total en début de saison, pas une autre unité.
+        { label: '24 h', cls: 'st-period-col', title: 'Points marqués aujourd’hui (depuis minuit, heure de l’Est)' },
+        { label: '7 j', cls: 'st-period-col', title: 'Points marqués ces 7 derniers jours' },
+        { label: '30 j', cls: 'st-period-col', title: 'Points marqués ces 30 derniers jours' },
         { label: 'Total', sort: 'points', cls: 'points-column', title: 'Points de la saison — ce qui décide du classement' },
         { label: 'Moy./PJ', sort: 'ppg', title: 'Points de la saison par partie jouée' },
         { label: 'Tendance', cls: 'st-evo-col', title: 'Places gagnées ou perdues si l’on classait seulement sur la période choisie' }
@@ -409,6 +439,7 @@ async function fetchStandingsPeriodPoints(poolName) {
     }));
 
     periodPointsCache = { poolName, byDays };
+    periodesDerniere = Date.now();
     return byDays;
 }
 
@@ -502,7 +533,7 @@ function standingsLegendHTML(poolMode) {
         ]
         : [
             ['Total', 'Ce qui décide du classement : les points de la saison. Patineurs : 1 par but et 1 par passe. Gardiens : 2 par victoire, 5 par blanchissage, 1 par défaite en prolongation. Clubs de la LNH : 2 par victoire, 1 par défaite en prolongation.'],
-            ['24 h · 7 j · 30 j', 'La forme récente, en points fantasy (but 3, passe 2, tir 0,5…). Elle ne change pas le classement : elle montre qui monte.'],
+            ['24 h · 7 j · 30 j', 'Les points marqués sur la période — aujourd’hui, 7 jours, 30 jours —, selon les mêmes règles que le Total. Ils ne changent pas le classement : ils montrent qui monte.'],
             ['Tendance', 'Les places qu’une équipe gagnerait (▲) ou perdrait (▼) si l’on classait seulement sur la période choisie.'],
             ['PJ · B · P', 'Parties jouées, buts et passes de tout l’alignement.']
         ];

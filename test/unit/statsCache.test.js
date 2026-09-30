@@ -115,6 +115,22 @@ describe('getStatsRefreshStatus', () => {
         assert.equal(getStatsRefreshStatus(frais, ATTENDUS).needsRefresh, false);
     });
 
+    test('un relevé sans inclusion (ancien format) est refait une fois la saison commencée', () => {
+        // Les relevés d'avant lib/releveSaison.js ne disent pas quels matchs
+        // ils comptent : celui du 30 septembre 2026 manquait deux matchs.
+        const ancien = cache(ATTENDUS, 1);
+        const r = getStatsRefreshStatus(ancien, ATTENDUS, SAISON, MAINTENANT, 2);
+        assert.equal(r.needsRefresh, true);
+        assert.equal(r.oldFormat, true);
+        assert.match(r.reason, /old snapshot format \(none → 2\)/);
+
+        const neuf = cache(ATTENDUS, 1, { format: 2 });
+        assert.equal(getStatsRefreshStatus(neuf, ATTENDUS, SAISON, MAINTENANT, 2).needsRefresh, false);
+        // Avant la saison, aucun format n'est exigé (le serveur passe null).
+        assert.equal(getStatsRefreshStatus(ancien, ATTENDUS, SAISON, MAINTENANT, null).needsRefresh, false);
+        assert.equal(getStatsRefreshStatus(ancien, ATTENDUS, SAISON, MAINTENANT).oldFormat, false);
+    });
+
     test("la saison en cours se déduit de la date, elle n'est plus figée", () => {
         // Elle valait 20252026 en dur : chaque automne, tant qu'on ne l'avait
         // pas changée à la main, un cache rempli des totaux de l'an passé

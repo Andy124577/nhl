@@ -331,3 +331,137 @@ describe('le service', () => {
         assert.equal(await service.lire(), null);
     });
 });
+
+describe('l’inclusion du relevé (lib/releveSaison.js)', () => {
+    const { dejaInclus, joursASuivre, JOURS_MAX } = require('../../lib/pointsEnDirect.js');
+    const m = (id, gameDate) => ({ id, gameDate });
+
+    test('avant `depuis` : compté ; à partir de là, la liste fait foi', () => {
+        const inclusion = { depuis: '2026-09-29', matchs: [2026020001] };
+        assert.equal(dejaInclus(m(2026019999, '2026-09-28'), inclusion), true);
+        assert.equal(dejaInclus(m(2026020001, '2026-09-29'), inclusion), true);
+        assert.equal(dejaInclus(m(2026020004, '2026-09-29'), inclusion), false);
+        assert.equal(dejaInclus({ id: 2026020001 }, inclusion), true, 'sans date : la liste seule');
+    });
+
+    test('un club absent d’un relevé à inclusion : rien de compté dans la fenêtre', () => {
+        const clubs = { inclusion: {}, depuis: '2026-09-29' };
+        const stats = { ...releve(), inclusion: {} };
+        const fini = { ...match(2026020004, { etat: 'OFF', away: 6, home: 5, fin: 'OT' }), gameDate: '2026-09-29' };
+        const r = calculerPointsEnDirect({ matchs: [fini], feuilles: new Map(), stats, clubs });
+        assert.deepEqual(r.clubs, { VAN: { v: 1 }, EDM: { dp: 1 } });
+        const avant = { ...fini, id: 2026019990, gameDate: '2026-09-27' };
+        assert.deepEqual(calculerPointsEnDirect({ matchs: [avant], feuilles: new Map(), stats, clubs }).clubs, {},
+            'un match d’avant la fenêtre est dans la fiche');
+    });
+
+    test('les journées à relire : la veille et le jour, ou plus loin si un relevé est plus ancien', () => {
+        assert.deepEqual(joursASuivre({ aujourdhui: '2026-09-30' }), ['2026-09-29', '2026-09-30']);
+        assert.deepEqual(joursASuivre({ aujourdhui: '2026-10-02', stats: { inclusion: { 1: { depuis: '2026-09-30' } } } }),
+            ['2026-09-30', '2026-10-01', '2026-10-02']);
+        assert.equal(joursASuivre({ aujourdhui: '2026-10-02', clubs: { inclusion: { EDM: { depuis: '2026-09-01' } } } }).length, JOURS_MAX,
+            'au plus JOURS_MAX journées');
+        assert.deepEqual(joursASuivre({}), []);
+    });
+});
+
+describe('le service, sur plusieurs journées', () => {
+    const { apportsDuMatch } = require('../../lib/pointsEnDirect.js');
+    const { FEUILLE_OFF_MS } = require('../../services/pointsEnDirect.js');
+    const HIER = '2026-10-14', AUJ = '2026-10-15';
+
+    function monterJours({ maintenant, hier, feuilleDe = () => null, releves }) {
+        let t = 5_000_000;
+        const lectures = [];
+        const jours = [];
+        const io = { sockets: { adapter: { rooms: { get: () => undefined } } }, to: () => ({ emit() {} }) };
+        const service = creerPointsEnDirect({
+            io, intervalleMs: 10000, horloge: () => t, logger: { warn() {}, error() {} },
+            minuterie: { repeter: () => ({}), arreter() {} },
+            aujourdhui: () => AUJ,
+            lireMatchs: async () => maintenant(),
+            lireMatchsDuJour: async (jour) => { jours.push(jour); return jour === HIER ? hier() : []; },
+            lireFeuille: async (id) => { lectures.push(id); return feuilleDe(id); },
+            lireReleves: () => releves
+        });
+        return { service, lectures, jours, avancer: ms => { t += ms; } };
+    }
+
+    // Relevé de minuit : aucun match de la veille compté.
+    const releves = {
+        stats: { ...releve(), inclusion: { [MCDAVID]: { depuis: HIER, matchs: [] }, [SKINNER]: { depuis: HIER, matchs: [] } } },
+        clubs: { format: 2, depuis: HIER, inclusion: {} }
+    };
+    const matchHier = etat => ({ ...match(2026020012, { etat, away: 1, home: 3, debut: '2026-10-15T02:00:00Z' }), gameDate: HIER });
+    const feuilleHier = () => feuille({ away: 1, home: 3, edm: [patineur(MCDAVID, 1, 2)], gardiensEdm: [gardien(SKINNER, 'W', 1)] });
+
+    test('le match de la veille, fini après minuit, compte encore le lendemain matin — une seule fois', async () => {
+        // /score/now est passé au jour suivant : il ne montre plus le match de la veille.
+        const { service, jours } = monterJours({ maintenant: () => [], hier: () => [matchHier('OFF')], feuilleDe: feuilleHier, releves });
+        const charge = await service.lire();
+        assert.deepEqual(jours, [HIER, AUJ]);
+        assert.deepEqual(charge.joueurs, { [MCDAVID]: { b: 1, p: 2 }, [SKINNER]: { v: 1 } });
+        assert.deepEqual(charge.clubs, { EDM: { v: 1 } });
+    });
+
+    test('vu par /score/now ET par la journée : compté une fois, à l’état le plus avancé', async () => {
+        const { service } = monterJours({
+            maintenant: () => [matchHier('LIVE')], hier: () => [matchHier('OFF')], feuilleDe: feuilleHier, releves
+        });
+        const charge = await service.lire();
+        assert.deepEqual(charge.joueurs[MCDAVID], { b: 1, p: 2 });
+        assert.deepEqual(charge.joueurs[SKINNER], { v: 1 }, 'OFF l’emporte sur LIVE : la victoire compte');
+    });
+
+    test('lireParMatch : ce que chaque match apporte, relevé ou non', async () => {
+        const { service } = monterJours({ maintenant: () => [], hier: () => [matchHier('OFF')], feuilleDe: feuilleHier, releves });
+        const parMatch = await service.lireParMatch();
+        assert.equal(parMatch.length, 1);
+        assert.deepEqual(parMatch[0], { id: 2026020012, jour: HIER, etat: 'OFF', ...apportsDuMatch(matchHier('OFF'), feuilleHier()) });
+    });
+
+    test('une feuille officielle se relit toutes les demi-heures, pour les corrections tardives', async () => {
+        const { service, lectures, avancer } = monterJours({ maintenant: () => [], hier: () => [matchHier('OFF')], feuilleDe: feuilleHier, releves });
+        await service.lire();
+        avancer(60 * 1000); await service.lire();
+        assert.equal(lectures.length, 1, 'une minute plus tard : la feuille gardée sert');
+        avancer(FEUILLE_OFF_MS); await service.lire();
+        assert.equal(lectures.length, 2);
+    });
+
+    test('une journée muette ne fait pas tomber les autres', async () => {
+        let t = 0;
+        const service = creerPointsEnDirect({
+            io: { sockets: { adapter: { rooms: { get: () => undefined } } } }, horloge: () => (t += 20000),
+            logger: { warn() {}, error() {} }, minuterie: { repeter: () => ({}), arreter() {} },
+            aujourdhui: () => AUJ,
+            lireMatchs: async () => [{ ...match(2026020050, { home: 1 }), gameDate: AUJ }],
+            lireMatchsDuJour: async () => { throw new Error('HTTP 500'); },
+            lireFeuille: async () => feuille({ home: 1, edm: [patineur(MCDAVID, 1, 0)] }),
+            lireReleves: () => releves
+        });
+        assert.deepEqual((await service.lire()).joueurs, { [MCDAVID]: { b: 1 } });
+    });
+
+    test('reconnexion : l’état complet à nouveau, jamais cumulé', async () => {
+        const salle = new Set();
+        const io = { sockets: { adapter: { rooms: { get: () => (salle.size ? salle : undefined) } } }, to: () => ({ emit() {} }) };
+        const recus = [];
+        const ecoutes = new Map();
+        const socket = { on: (e, f) => ecoutes.set(e, f), emit: (e, c) => recus.push(c), join: () => salle.add('a'), leave: () => salle.delete('a') };
+        let t = 0;
+        const service = creerPointsEnDirect({
+            io, horloge: () => (t += 20000), logger: { warn() {}, error() {} },
+            minuterie: { repeter: () => ({}), arreter() {} }, aujourdhui: () => AUJ,
+            lireMatchs: async () => [], lireMatchsDuJour: async (j) => (j === HIER ? [matchHier('OFF')] : []),
+            lireFeuille: async () => feuilleHier(), lireReleves: () => releves
+        });
+        service.brancher(socket);
+        await ecoutes.get('points:suivre')();
+        ecoutes.get('points:arreter')();
+        await ecoutes.get('points:suivre')();
+        await ecoutes.get('points:suivre')();
+        assert.equal(recus.length, 3);
+        recus.forEach(c => assert.deepEqual(c.joueurs[MCDAVID], { b: 1, p: 2 }));
+    });
+});

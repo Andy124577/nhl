@@ -179,13 +179,32 @@ test('le club repêché est exclu du tête-à-tête, et le dit', async () => {
         "l'omettre en silence sur une surface et le compter sur une autre produisait deux totaux");
 });
 
-test('le club est inclus en mode cumulatif', async () => {
-    const pointage = creerServicePointage({ db: creerDb([]), calendrierDuJour: async () => 0 });
+test('le club est inclus en mode cumulatif, avec ses points de la période', async () => {
+    const demandes = [];
+    const pointage = creerServicePointage({
+        db: creerDb([]), calendrierDuJour: async () => 0,
+        resultatsClubs: async (demande) => { demandes.push(demande); return { 'Canadiens de Montréal': { points: 4 } }; }
+    });
     const resultat = await pointage.pointsEquipe(
         equipe({ teams: ['Canadiens de Montréal'] }),
         { debut: '2026-11-02', fin: '2026-11-09', saison: SAISON, mode: 'cumulative' }
     );
     assert.equal(resultat.detail.club.inclus, true);
+    assert.equal(resultat.detail.club.points, 4);
+    assert.equal(resultat.points, 4, 'deux victoires du club : 4 points, comme au Total');
+    assert.deepEqual(demandes[0].clubs, ['Canadiens de Montréal']);
+    assert.equal(demandes[0].debut, '2026-11-02');
+    assert.equal(demandes[0].fin, '2026-11-09');
+});
+
+test('sans résultats de clubs, la composante se déclare non comptée plutôt que de valoir zéro', async () => {
+    const pointage = creerServicePointage({ db: creerDb([]), calendrierDuJour: async () => 0 });
+    const resultat = await pointage.pointsEquipe(
+        equipe({ teams: ['Canadiens de Montréal'] }),
+        { debut: '2026-11-02', fin: '2026-11-09', saison: SAISON, mode: 'cumulative' }
+    );
+    assert.equal(resultat.detail.club.inclus, false);
+    assert.match(resultat.detail.club.raison, /indisponibles/);
 });
 
 test('le détail par joueur garde tout le monde, avec le compte de matchs', async () => {

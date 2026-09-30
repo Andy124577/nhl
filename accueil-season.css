@@ -33,12 +33,7 @@ body.fz-season-page { background:var(--bg); }
 .fzs-bars { position:absolute; right:20px; bottom:25px; display:flex; align-items:end; gap:8px; height:72px; opacity:.6; }
 .fzs-bars i { width:12px; height:25%; background:#38383A; }
 .fzs-bars i:nth-child(2) { height:40%; }.fzs-bars i:nth-child(3) { height:60%; }.fzs-bars i:nth-child(4) { height:85%; }.fzs-bars i:nth-child(5) { height:65%; }.fzs-bars i:nth-child(6) { height:100%; }
-.fzs-scores { grid-column:span 12; }
-.fzs-score-track { display:flex; gap:14px; overflow-x:auto; scrollbar-width:thin; }
-.fzs-game { flex:1 0 175px; padding:10px; border:1px solid #38383A; border-radius:8px; }
-.fzs-game > div { display:grid; grid-template-columns:30px 1fr 1fr; align-items:center; gap:14px; margin-bottom:5px; }
 .fzs .fzd-team-logo { width:30px; height:30px; object-fit:contain; }
-.fzs-game b { font-size:21px; }.fzs-game footer { font-size:13px; color:#A1A1A6; white-space:nowrap; margin-top:8px; }
 .fzs-tag { display:inline-block; border-radius:3px; padding:1px 6px; background:#2C2C2E; color:#F5F5F7; font-size:11px; font-weight:700; text-transform:uppercase; width:max-content; }
 .fzs-tag.is-live { background:var(--primary); color:var(--on-primary); } /* blanc dessus : 4,55:1 */
 .fzs-players { grid-column:span 6; grid-row:span 2; }
@@ -58,9 +53,11 @@ body.fz-season-page { background:var(--bg); }
 .fzs :is(#fzDashCalendarWrap, #fzdOffMoves) { grid-column:span 12; min-width:0; }
 /* Le fond et la bordure viennent des jetons --fzd-* que la palette remappe
    pour cet accueil (accueil-palette.css) : ils suivent donc les deux thèmes. */
-.fzs #fzdOffWatch { grid-column:span 4; min-width:0; padding:16px; border:1px solid var(--fzd-border); border-radius:11px; overflow:hidden; }
+/* Seul sur sa rangée depuis que « Actualités NHL » a quitté l'accueil de
+   saison : il la prend entière, comme « Mouvements récents ». */
+.fzs #fzdOffWatch { grid-column:span 12; min-width:0; padding:16px; border:1px solid var(--fzd-border); border-radius:11px; overflow:hidden; }
 .fzs #fzDashCalendarWrap { display:block!important; margin:0; padding:16px; border-radius:11px; }.fzs .fzd-cal-games { grid-template-columns:repeat(4,minmax(0,1fr)); }.fzs .fzd-game-players { display:none; }.fzs .fzd-cal-strip { margin-bottom:12px; }
-.fzs-activity,.fzs-news { grid-column:span 4; }
+.fzs-activity { grid-column:span 4; }
 .fzs .fzm-news-list { display:grid; gap:10px; }.fzs .fzm-news-row { color:#F5F5F7; }.fzs .fzm-list-card { background:transparent; border:0; }.fzs .fzm-list-row { border-color:#38383A; }.fzs .fzm-activity-text { color:#F5F5F7; }.fzs-empty { padding:20px 0; font-size:15px; }
 @media(max-width:1100px) and (min-width:769px) { .fzs-player { grid-template-columns:42px 1fr; }.fzs-player-stats { grid-column:2; }.fzs-player > .fzd-team-logo { display:none; }.fzs .fzd-cal-games { grid-template-columns:repeat(2,minmax(0,1fr)); }.fzs-head a { font-size:12px; }.fzs-bars { opacity:.25; } }
 @media(max-width:768px) {
@@ -70,12 +67,11 @@ body.fz-season-page { background:var(--bg); }
  .fzs .fzs-hero { grid-column:1/-1; order:0; min-height:225px; padding:20px; }
  .fzs-hero-copy { max-width:75%; }.fzs h1 { font-size:34px; max-width:250px; }.fzs-cover { right:-15%; width:80%; opacity:.7; }.fzs-hero p { max-width:210px; }
  .fzs-players { grid-column:1/-1; grid-row:auto; order:1; }.fzs-player-list { display:flex; overflow-x:auto; scroll-snap-type:x proximity; gap:12px; padding-bottom:5px; }.fzs-player { flex:0 0 205px; display:grid; grid-template-columns:48px 1fr; border:1px solid #38383A; border-radius:8px; padding:10px; scroll-snap-align:start; gap:8px; }.fzs-player:last-child { border:1px solid #38383A; }.fzs-player .fzd-off-face { width:48px; height:48px; }.fzs-player-stats { grid-column:1/-1; }.fzs-player > .fzd-team-logo { display:none; }.fzs-player-stats small { text-align:center; border-top:1px solid #38383A; padding-top:6px; }
- .fzs-rank { grid-column:span 1; order:2; }.fzs-playing { grid-column:span 1; order:3; }.fzs-number { font-size:30px; }.fzs-number small { font-size:22px; }.fzs-rank .fzs-head a { display:none; }.fzs-bars { display:none; }.fzs #fzDashCalendarWrap { grid-column:1/-1; order:4; }.fzs #fzdOffMoves { grid-column:1/-1; order:5; }.fzs-news { grid-column:1/-1; order:6; }.fzs-scores { grid-column:1/-1; order:7; }.fzs-total { grid-column:span 1; order:8; }.fzs-breakdown { grid-column:1/-1; order:9; }.fzs-activity { grid-column:1/-1; order:10; }.fzs #fzdOffWatch { grid-column:1/-1; order:11; }
+ .fzs-rank { grid-column:span 1; order:2; }.fzs-playing { grid-column:span 1; order:3; }.fzs-number { font-size:30px; }.fzs-number small { font-size:22px; }.fzs-rank .fzs-head a { display:none; }.fzs-bars { display:none; }.fzs #fzDashCalendarWrap { grid-column:1/-1; order:4; }.fzs #fzdOffMoves { grid-column:1/-1; order:5; }.fzs-total { grid-column:span 1; order:8; }.fzs-breakdown { grid-column:1/-1; order:9; }.fzs-activity { grid-column:1/-1; order:10; }.fzs #fzdOffWatch { grid-column:1/-1; order:11; }
  .fzs h2 { font-size:13px; }.fzs-head { gap:8px; }.fzs-head a { font-size:13px; }.fzs .fzd-cal-games { display:flex; }.fzs .fzd-game-card { flex:0 0 85%; }.fzs .fzd-cal-strip { display:flex; overflow-x:auto; }.fzs .fzd-day-chip { flex:0 0 64px; }.fzs-stat { grid-template-columns:80px 25px 1fr; }
 }
 @media(prefers-reduced-motion:reduce) { .fzs * { scroll-behavior:auto!important; } }
 .fzs { --fzm-bg:#000000; --fzm-panel:#1C1C1E; --fzm-surface:#1C1C1E; --fzm-ink:#F5F5F7; --fzm-ink-soft:#A1A1A6; --fzm-ink-faint:#A1A1A6; --fzm-border:#38383A; --fzm-red:var(--primary-text); --fzm-red-soft:rgba(var(--primary-rgb),.16); --fzm-green:var(--success); --fzm-solid:var(--primary); --fzm-on-solid:var(--on-primary); }
-.fzs .fzm-news-card { margin-bottom:10px; }.fzs .fzm-news-headline { color:#F5F5F7; }.fzs-news-image { width:90px; height:70px; object-fit:cover; border-radius:6px; float:left; margin-right:12px; }.fzs .fzm-news-card:after { content:''; display:block; clear:both; }
 
 /* Mon duel (tête-à-tête) : en cours, sinon à venir, sinon le dernier joué. */
 .fzs-duel { grid-column:span 4; }

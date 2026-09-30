@@ -262,7 +262,7 @@ function fzmPlayersRow(tonight, rosterNames) {
 
         if (live) {
             const isLiveGame = game.state === 'LIVE' || game.state === 'CRIT';
-            const pts = live.fantasyPointsTonight || 0;
+            const pts = fzdPointsCeSoir(live);
             tiles.push({
                 name, meta,
                 tag: isLiveGame ? 'DIRECT' : 'FINAL',

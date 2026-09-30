@@ -29,7 +29,7 @@ const FENETRES = [1, 7, 14, 30, 90, 180, 365];
 
 function monter(app, ctx) {
     const { auth, store, db, pointage, saisonCourante, fenetreSaison,
-            saisonCommencee, serviceRecap, logger = console } = ctx;
+            saisonCommencee, serviceRecap, resultatsClubs = null, logger = console } = ctx;
 
     function repondreErreur(res, erreur, contexte) {
         if (erreur.name === 'ErreurMetier' || erreur.name === 'ErreurConflit') {
@@ -53,6 +53,10 @@ function monter(app, ctx) {
     /** Les équipes qui ont au moins un participant. */
     const equipesActives = (poolData) => Object.entries(poolData.teams || {})
         .filter(([, td]) => (td?.members || []).length > 0);
+
+    /** Le mode d'un pool ; un pool sans mode est cumulatif (le défaut). */
+    const modeDuPool = (poolData) => (poolData && poolData.poolMode === scoring.MODES.H2H)
+        ? scoring.MODES.H2H : scoring.MODES.CUMULATIF;
 
     // ───────────────────────────── Palmarès glissant ─────────────────────────────
 
@@ -87,9 +91,13 @@ function monter(app, ctx) {
             const debut = dates.ajouterJours(aujourdhui, -(jours - 1));
             const fin = dates.ajouterJours(aujourdhui, 1);
             const saison = saisonCourante();
+            // Le barème du pool : les vrais points (buts + aides, gardiens,
+            // clubs) pour un cumulatif — les mêmes que son Total —, les points
+            // fantasy pour un tête-à-tête, comme avant.
+            const mode = modeDuPool(enveloppe.data);
 
             const contexte = {
-                debut, fin, saison, mode: 'cumulative',
+                debut, fin, saison, mode,
                 baseAlignement: pointage.BASE_ALIGNEMENT.COURANT
             };
             const ingestion = await pointage.etatIngestion(contexte);
@@ -117,6 +125,7 @@ function monter(app, ctx) {
                 generatedAt: new Date().toISOString(),
                 seasonStarted: true,
                 season: saison,
+                mode,
                 scoringVersion: scoring.VERSION_BAREME,
                 rosterBasis: pointage.BASE_ALIGNEMENT.COURANT,
                 completude: ingestion.completude,
@@ -196,17 +205,49 @@ function monter(app, ctx) {
 
             if (lignes.rows.length === 0) return res.json(vide);
 
+            // Même barème que le classement du pool : une « meilleure
+            // journée » en points fantasy à côté d'un Total en buts + aides
+            // comparait deux unités.
+            const mode = modeDuPool(enveloppe.data);
+
             // équipe → journée locale → points
             const parEquipe = new Map();
+            const crediter = (nomEquipe, journee, points) => {
+                if (!parEquipe.has(nomEquipe)) parEquipe.set(nomEquipe, new Map());
+                const journees = parEquipe.get(nomEquipe);
+                journees.set(journee, (journees.get(journee) || 0) + points);
+            };
             for (const ligne of lignes.rows) {
                 const nomEquipe = equipeDuJoueur.get(ligne.player_name);
                 if (!nomEquipe) continue;
                 const journee = dates.journeeDe(ligne.game_date);
                 if (!journee) continue;
+                crediter(nomEquipe, journee, scoring.pointsFeuilleSelonMode(ligne, mode));
+            }
 
-                if (!parEquipe.has(nomEquipe)) parEquipe.set(nomEquipe, new Map());
-                const journees = parEquipe.get(nomEquipe);
-                journees.set(journee, (journees.get(journee) || 0) + scoring.pointsFeuilleDeMatch(ligne));
+            // Au cumulatif, le club repêché compte ses soirs de victoire,
+            // comme au Total.
+            if (mode === scoring.MODES.CUMULATIF && resultatsClubs) {
+                const clubsDe = new Map();
+                for (const [nomEquipe, teamData] of equipesActives(enveloppe.data)) {
+                    for (const club of pointage.alignementDe(teamData).clubs) {
+                        if (!clubsDe.has(club)) clubsDe.set(club, []);
+                        clubsDe.get(club).push(nomEquipe);
+                    }
+                }
+                if (clubsDe.size) {
+                    const debutSaison = (fenetre && fenetre.regularSeasonStartDate) || '0000-01-01';
+                    const resultats = await resultatsClubs({
+                        clubs: [...clubsDe.keys()], saison,
+                        debut: debutSaison, fin: dates.ajouterJours(dates.journeeLocale(), 1)
+                    }).catch(() => null);
+                    for (const [club, equipes] of clubsDe) {
+                        const parJour = (resultats && resultats[club] && resultats[club].parJour) || {};
+                        for (const [journee, points] of Object.entries(parJour)) {
+                            equipes.forEach(nomEquipe => crediter(nomEquipe, journee, points));
+                        }
+                    }
+                }
             }
 
             const journees = [];
