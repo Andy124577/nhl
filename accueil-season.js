@@ -130,7 +130,8 @@ function fzsCartes(lines, avant, games) {
             saison: fzsPointsSaison(getPlayerStats(p.playerName)),
             soir: fzdPointsCeSoir(p),
             stats: [[gardien ? p.saves : p.goals, gardien ? 'ARR' : 'B'], [gardien ? p.goalsAgainst : p.assists, gardien ? 'BA' : 'A']],
-            match: gameLineFor(p, games) || (live ? 'En direct' : 'Final')
+            // gameLineFor rend déjà du HTML (1<sup>re</sup>, horloge échappée).
+            matchHTML: gameLineFor(p, games) || (live ? 'En direct' : 'Final')
         });
     });
     avant.forEach(a => cartes.push({
@@ -138,7 +139,7 @@ function fzsCartes(lines, avant, games) {
         nom: a.name, equipe: a.info.teamAbbrev,
         pos: a.info.position && a.info.position !== 'N/A' ? a.info.position : '',
         saison: a.saison, soir: 0, stats: null,
-        match: `Ce soir ${gameTimeLabel(a.depart)} vs ${a.contre}`
+        matchHTML: escapeHTML(`Ce soir ${gameTimeLabel(a.depart)} vs ${a.contre}`)
     }));
     return cartes.sort((x, y) => x.rang - y.rang || x.tri - y.tri);
 }
@@ -163,7 +164,7 @@ function fzsCarteHTML(c, href) {
             <div class="fzs-pc-season"><span>Saison ${pts(c.saison)} pts</span>${soir ? `<b class="${c.soir > 0 ? 'is-up' : ''}">${soirLibelle}</b>` : ''}</div>
             ${c.stats ? `<div class="fzs-pc-stats">${c.stats.map(([v, l]) => `<span>${v} <small>${l}</small></span>`).join('')}<span class="${c.soir > 0 ? 'is-up' : ''}">${pts(c.soir)} <small>PTS</small></span></div>` : ''}
         </div>
-        <div class="fzs-pc-foot">${esc(c.match)}</div>
+        <div class="fzs-pc-foot">${c.matchHTML}</div>
     </a>`;
 }
 

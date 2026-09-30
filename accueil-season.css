@@ -124,10 +124,14 @@ html[data-theme="light"] .fzs-tag.is-time { border-color:var(--fzh-outline); col
 .fzs-pc { flex:none; width:172px; scroll-snap-align:start; display:flex; flex-direction:column; overflow:hidden; border-radius:12px; border:1px solid #2E2E33; background:#232326; color:#F2F2F3; font-variant-numeric:tabular-nums; }
 .fzs-pc.is-live { border-color:#8A2A30; }
 .fzs-pc:hover { color:#F2F2F3; border-color:#55555C; }
-.fzs-pc-top { position:relative; height:132px; overflow:hidden; display:flex; align-items:flex-end; justify-content:center; background:linear-gradient(180deg, color-mix(in srgb, var(--pc-team) 82%, #fff 6%), color-mix(in srgb, var(--pc-team) 55%, #000)); }
-.fzs-pc-logo { position:absolute; inset:-12% -18% auto auto; width:120%; height:120%; object-fit:contain; opacity:.22; pointer-events:none; }
-.fzs-pc .fzd-off-face { position:relative; width:100%; height:118px; flex:none; border-radius:0; background:transparent; display:block; font-size:0; }
-.fzs-pc .fzd-off-face img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:center bottom; background:transparent; }
+#fzDashSection .fzs-pc, #fzDashSection .fzs-pc:hover { color:#F2F2F3; }
+.fzs-pc-top { position:relative; height:140px; overflow:hidden; background:linear-gradient(180deg, color-mix(in srgb, var(--pc-team) 70%, #000) 0%, color-mix(in srgb, var(--pc-team) 35%, #000) 100%); }
+/* Le logo du club en grand derrière le joueur, comme sur les fiches LNH. */
+.fzs-pc-logo { position:absolute; left:50%; top:50%; width:150%; height:150%; transform:translate(-50%,-50%); object-fit:contain; opacity:.2; pointer-events:none; }
+/* La règle de palette (#fzDashSection … .fzd-off-face) pose un fond gris : la photo reste détourée sur la couleur du club. */
+#fzDashSection .fzs .fzs-pc .fzd-off-face { position:absolute; inset:8px 0 0; width:auto; height:auto; flex:none; border-radius:0; background:transparent; display:block; font-size:0; overflow:visible; }
+#fzDashSection .fzs .fzs-pc .fzd-off-face img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:center bottom; background:transparent; }
+#fzDashSection .fzs-pc-body { border-top:1px solid rgba(255,255,255,.08); }
 .fzs-pc-live { position:absolute; left:8px; top:8px; display:flex; align-items:center; gap:4px; height:18px; padding:0 6px; border-radius:4px; background:var(--primary); color:var(--on-primary); font:700 11px/1 'Barlow Condensed',Helvetica,sans-serif; letter-spacing:.06em; }
 .fzs-pc-live i { width:5px; height:5px; border-radius:50%; background:#fff; }
 .fzs-pc-body { display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px; border-top:1px solid #2E2E33; min-height:70px; }
