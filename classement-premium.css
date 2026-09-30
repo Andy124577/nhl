@@ -449,6 +449,34 @@ body.fz-classement .skeleton-avatar {
   body.fz-classement #rosterSkeleton { margin-inline: -32px; }
 }
 
+/* ==================== TÉLÉPHONE : EN-TÊTE ====================
+   Le fil d'Ariane (« Accueil > Pool > Équipe », des liens de 12px) ne sert
+   à rien sur téléphone : l'accueil est dans la barre du bas, le pool dans
+   la pastille du haut. Il s'efface — !important parce que classement.js
+   l'affiche en style en ligne — et la fiche d'équipe prend à la place un
+   vrai bouton de retour de 44px. La marge du haut de 40px, faite pour le
+   bureau, repoussait tout le contenu sous la ligne de flottaison. */
+@media (max-width: 680px) {
+  body.fz-classement .container { padding-top: 16px; }
+  body.fz-classement .breadcrumb { display: none !important; }
+  body.fz-classement .rh-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-height: 44px;
+    margin: 0 0 2px -10px;
+    padding: 0 12px 0 4px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--fzc-accent);
+    font: 600 15px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    cursor: pointer;
+  }
+  body.fz-classement .rh-back:active { background: var(--fzc-tile); }
+  body.fz-classement .rh-name { font-size: 24px; }
+}
+
 /* ====================================================================
    H2H — ONGLET CLASSEMENT
    --------------------------------------------------------------------

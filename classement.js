@@ -289,6 +289,7 @@ function showPoolStandings(poolName) {
     if (!poolData) return;
 
     // Update UI — show pool image next to pool name in page title
+    setRosterViewMode(false);
     const poolImg = poolData.imageUrl
         ? `<img src="${poolData.imageUrl}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;vertical-align:middle;margin-right:10px;" onerror="this.style.display='none'" alt="${poolName}">`
         : `<img src="Icons/grayGroup.png" style="width:32px;height:32px;border-radius:8px;object-fit:cover;vertical-align:middle;margin-right:10px;flex-shrink:0;" alt="${poolName}">`;
@@ -868,11 +869,13 @@ function fzEmptyHTML(icone, titre, indice) {
         </div>`;
 }
 
-async function renderPoolStandings(poolData, poolName) {
+/**
+ * Le classement d'un pool dans son ordre canonique — le rang réel de chaque
+ * équipe : victoires puis différentiel en H2H, points en cumulatif. Lu par
+ * la table du classement et par l'en-tête de la fiche d'équipe.
+ */
+function computeStandings(poolData) {
     const poolMode = poolData.poolMode || 'cumulative';
-    const standingsList = document.getElementById('standingsList');
-
-    // Calcule le classement (ordre canonique = rang réel de chaque équipe).
     let standings = [];
 
     if (poolMode === 'head-to-head') {
@@ -916,6 +919,14 @@ async function renderPoolStandings(poolData, poolName) {
         standings.forEach(s => { s.diff = leaderPoints - s.points; });
     }
     standings.forEach((s, i) => { s.rank = i + 1; });
+    return standings;
+}
+
+async function renderPoolStandings(poolData, poolName) {
+    const poolMode = poolData.poolMode || 'cumulative';
+    const standingsList = document.getElementById('standingsList');
+
+    const standings = computeStandings(poolData);
 
     // Bande de contexte H2H : au-dessus de la table, et masquée d'elle-même
     // quand il n'y a pas encore d'équipe complète.
@@ -1342,9 +1353,10 @@ function showTeamRoster(poolName, teamName) {
     const teamData = poolData.teams[teamName];
     if (!teamData) return;
 
-    // Update UI
+    // Update UI — la fiche a son propre en-tête (renderRosterHeader) : le
+    // titre commun de la page s'efface le temps qu'elle est affichée.
+    setRosterViewMode(true);
     const displayTeamName = getDisplayName(teamName, teamData.members || []);
-    document.getElementById('pageTitle').textContent = displayTeamName;
     document.getElementById('breadcrumb').style.display = 'flex';
     document.getElementById('poolBreadcrumb').textContent = poolName;
     document.getElementById('poolBreadcrumb').style.display = 'inline';
@@ -1359,16 +1371,25 @@ function showTeamRoster(poolName, teamName) {
     document.getElementById('poolStandingsView').style.display = 'none';
     document.getElementById('teamRosterView').style.display = 'block';
 
+    // Un pool sans échanges n'a rien à mettre en vente : on saute l'appel
+    // aux annonces et le bouton disparaît de la fiche. Seule l'équipe
+    // elle-même peut mettre ses joueurs en vente.
+    const tradesAllowed = poolData.allowTrades !== false;
+    rosterSale = {
+        poolName,
+        teamName,
+        canSell: tradesAllowed && (teamData.members || []).includes(localStorage.getItem('username')),
+        listings: {},
+        players: []
+    };
+    renderRosterHeader(poolName, teamName);
+
     // Show skeleton initially
     document.getElementById('rosterSkeleton').style.display = 'flex';
     document.getElementById('rosterList').style.display = 'none';
 
-    // Un pool sans échanges n'a rien à mettre en vente : on saute l'appel
-    // aux annonces et le bouton disparaît de la fiche.
-    const tradesAllowed = poolData.allowTrades !== false;
-
     // Render roster after short delay — fetch this team's active for-sale
-    // listings first so the toggle starts in the right state on first paint.
+    // listings first so the marks start in the right state on first paint.
     setTimeout(async () => {
         let activeListings = [];
         if (tradesAllowed) {
@@ -1382,23 +1403,91 @@ function showTeamRoster(poolName, teamName) {
                 console.warn('Could not load trade listings:', err);
             }
         }
-        renderTeamRoster(teamData, activeListings, tradesAllowed);
+        // Le sélecteur d'équipe a pu changer de fiche pendant l'appel.
+        if (currentView !== VIEW_STATES.TEAM_ROSTER || currentTeamName !== teamName || currentPoolName !== poolName) return;
+        renderTeamRoster(teamData, activeListings);
     }, 100);
 }
 
-// Lists or unlists a player as "open to offers" — a visibility signal
-// only; the 1-for-1 same-category trade rule itself is unchanged.
-async function toggleForSale(btn) {
-    const playerName = btn.dataset.player;
-    const category = btn.dataset.category;
-    const isListed = btn.classList.contains('is-listed');
-    const username = localStorage.getItem('username');
-    if (!username) return;
+/** La fiche d'équipe remplace le titre commun de la page par le sien. */
+function setRosterViewMode(on) {
+    document.body.classList.toggle('fz-view-roster', on);
+}
 
-    btn.disabled = true;
+const RH_ICON = {
+    back: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>',
+    caret: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
+    close: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+};
+const tagIcon = size => (typeof getIcon === 'function' ? getIcon('tag', size) : '');
+
+/**
+ * L'en-tête de la fiche d'équipe. Sur téléphone, le fil d'Ariane (trois
+ * liens de 12px) laisse la place à un vrai bouton de retour. Le nom de
+ * l'équipe ouvre la liste des équipes du pool — un <select> posé dessus,
+ * donc la roulette native du téléphone — et la ligne dessous dit où
+ * l'équipe se situe. Le bouton « Mettre en vente » n'existe que sur sa
+ * propre équipe : un seul point d'entrée au lieu d'un bouton par rangée.
+ */
+function renderRosterHeader(poolName, teamName) {
+    const poolData = allPoolsData[poolName];
+    const teamData = poolData.teams[teamName];
+    const standings = computeStandings(poolData);
+    const moi = standings.find(s => s.teamName === teamName);
+
+    let sous = '';
+    if (moi) {
+        const rang = moi.rank === 1 ? '1<sup>er</sup>' : `${moi.rank}<sup>e</sup>`;
+        const bilan = (poolData.poolMode || 'cumulative') === 'head-to-head'
+            ? `${moi.wins}-${moi.losses}-${moi.ties}`
+            : `${Math.round(moi.points).toLocaleString('fr-CA')} pts`;
+        sous = `${rang} sur ${standings.length} · ${bilan}`;
+    }
+
+    const picker = moi && standings.length > 1 ? `
+        <select class="rh-picker" aria-label="Voir une autre équipe du pool">
+            ${standings.map(s => `<option value="${escapeAttr(s.teamName)}"${s.teamName === teamName ? ' selected' : ''}>${s.rank}. ${escapeHtmlText(getDisplayName(s.teamName, s.members))}</option>`).join('')}
+        </select>` : '';
+
+    const header = document.getElementById('rosterHeader');
+    header.innerHTML = `
+        <button type="button" class="rh-back" data-rh-back>${RH_ICON.back}<span>Classement</span></button>
+        <div class="rh-top">
+            <div class="rh-title${picker ? ' has-picker' : ''}">
+                <h1 class="rh-name">${escapeHtmlText(getDisplayName(teamName, teamData.members || []))}</h1>
+                ${picker ? `<span class="rh-caret">${RH_ICON.caret}</span>${picker}` : ''}
+            </div>
+            ${rosterSale.canSell ? `
+            <button type="button" class="rh-sale" data-rh-sale aria-haspopup="dialog">
+                ${tagIcon(14)}<span>Mettre en vente</span><span class="rh-sale-count" hidden></span>
+            </button>` : ''}
+        </div>
+        ${sous ? `<p class="rh-sub">${sous}</p>` : ''}`;
+
+    header.querySelector('[data-rh-back]').addEventListener('click', () => showPoolStandings(poolName));
+    const select = header.querySelector('.rh-picker');
+    if (select) select.addEventListener('change', () => showTeamRoster(poolName, select.value));
+    const vendre = header.querySelector('[data-rh-sale]');
+    if (vendre) vendre.addEventListener('click', openSaleSheet);
+}
+
+// ==================== MISE EN VENTE ====================
+// Mettre un joueur « en vente » le signale aux autres équipes comme
+// disponible — un signal seulement ; la règle d'échange 1 pour 1 dans la
+// même catégorie ne change pas. Tout passe par un panneau unique, ouvert
+// depuis l'en-tête de sa propre équipe ; la liste n'en garde qu'une marque.
+
+/** La fiche affichée : qui peut vendre, les annonces actives, les joueurs. */
+let rosterSale = { poolName: null, teamName: null, canSell: false, listings: {}, players: [] };
+
+async function setForSale(player, veutVendre) {
+    const username = localStorage.getItem('username');
+    if (!username) return false;
+    const annonce = rosterSale.listings[player.name];
     try {
-        if (isListed) {
-            const res = await fetch(`${BASE_URL}/trade-listings/${btn.dataset.listingId}/remove`, {
+        if (!veutVendre) {
+            if (!annonce) return true;
+            const res = await fetch(`${BASE_URL}/trade-listings/${annonce.id}/remove`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username })
@@ -1406,56 +1495,155 @@ async function toggleForSale(btn) {
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
                 fzAlert({ type: 'error', title: 'Retrait impossible', message: data.message || 'Impossible de retirer ce joueur de la vente.' });
-                return;
+                return false;
             }
-            btn.classList.remove('is-listed');
-            btn.dataset.listingId = '';
+            delete rosterSale.listings[player.name];
         } else {
+            if (annonce) return true;
             const res = await fetch(`${BASE_URL}/trade-listings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    poolName: currentPoolName,
-                    teamName: currentTeamName,
-                    playerName,
-                    category,
+                    poolName: rosterSale.poolName,
+                    teamName: rosterSale.teamName,
+                    playerName: player.name,
+                    category: player.category,
                     username
                 })
             });
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
             if (!res.ok) {
                 fzAlert({ type: 'error', title: 'Mise en vente impossible', message: data.message || 'Impossible de mettre ce joueur en vente.' });
-                return;
+                return false;
             }
-            btn.classList.add('is-listed');
-            btn.dataset.listingId = data.id;
+            rosterSale.listings[player.name] = { id: data.id, playerName: player.name };
         }
-        // Le libellé dit l'état (« En vente ») ; title et aria-label disent
-        // l'action — seuls lisibles quand la bande étroite masque le libellé.
-        const listed = btn.classList.contains('is-listed');
-        const label = btn.querySelector('.fst-label');
-        if (label) label.textContent = listed ? 'En vente' : 'Mettre en vente';
-        btn.title = listed ? 'Retirer de la vente' : 'Mettre en vente';
-        btn.setAttribute('aria-label', btn.title);
+        return true;
     } catch (err) {
         console.error('Error toggling trade listing:', err);
         fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
-    } finally {
-        btn.disabled = false;
+        return false;
     }
 }
 
-function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
+/** Les marques « En vente » de la liste et le compteur du bouton d'en-tête. */
+function refreshSaleMarks() {
+    document.querySelectorAll('#rosterList .roster-row[data-player]').forEach(row => {
+        row.classList.toggle('is-for-sale', !!rosterSale.listings[row.dataset.player]);
+    });
+    const compte = document.querySelector('#rosterHeader .rh-sale-count');
+    if (compte) {
+        const n = Object.keys(rosterSale.listings).length;
+        compte.textContent = n;
+        compte.hidden = !n;
+        compte.closest('.rh-sale').setAttribute('aria-label', n
+            ? `Mettre en vente — ${n} joueur${n > 1 ? 's' : ''} en vente`
+            : 'Mettre en vente');
+    }
+}
+
+/**
+ * Le panneau de mise en vente : un interrupteur par joueur, appliqué tout
+ * de suite. Feuille qui monte du bas sur téléphone, fenêtre centrée sur
+ * grand écran. Échap, le fond ou « Terminé » le ferment.
+ */
+function openSaleSheet() {
+    if (!rosterSale.canSell || document.querySelector('.ss-overlay')) return;
+    // Le focus revient au bouton d'en-tête à la fermeture — Safari ne le
+    // lui donne pas au clic, activeElement serait le corps de la page.
+    const retour = document.querySelector('#rosterHeader [data-rh-sale]');
+    const joueurs = rosterSale.players;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'ss-overlay';
+    overlay.innerHTML = `
+        <div class="ss-sheet" role="dialog" aria-modal="true" aria-labelledby="ssTitle" aria-describedby="ssHint">
+            <div class="ss-head">
+                <h2 class="ss-title" id="ssTitle">Mettre en vente</h2>
+                <button type="button" class="ss-close" data-ss-close aria-label="Fermer">${RH_ICON.close}</button>
+                <p class="ss-hint" id="ssHint">Les autres équipes voient vos joueurs en vente comme disponibles pour un échange.</p>
+            </div>
+            <ul class="ss-list">
+                ${joueurs.map((j, i) => `
+                <li>
+                    <label class="ss-row" for="ssSwitch${i}">
+                        ${j.avatarHTML}
+                        <span class="ss-id">
+                            <span class="ss-name">${escapeHtmlText(j.name)}</span>
+                            <span class="ss-meta">${escapeHtmlText(j.meta)} · ${j.points} PPts</span>
+                        </span>
+                        <input type="checkbox" role="switch" class="ss-switch" id="ssSwitch${i}" data-i="${i}"${rosterSale.listings[j.name] ? ' checked' : ''}>
+                    </label>
+                </li>`).join('')}
+            </ul>
+            <div class="ss-foot">
+                <button type="button" class="ss-done" data-ss-close>Terminé</button>
+            </div>
+        </div>`;
+
+    const sheet = overlay.querySelector('.ss-sheet');
+    const enCours = new Set();
+    let ferme = false;
+
+    function fermer() {
+        if (ferme) return;
+        ferme = true;
+        document.documentElement.classList.remove('ss-lock');
+        overlay.classList.add('is-leaving');
+        const retirer = () => overlay.remove();
+        overlay.addEventListener('animationend', e => { if (e.target === sheet) retirer(); });
+        setTimeout(retirer, 260);   // mouvement réduit : pas d'animationend
+        if (retour && document.contains(retour)) retour.focus({ preventScroll: true });
+    }
+
+    overlay.addEventListener('click', e => {
+        if (e.target === overlay || e.target.closest('[data-ss-close]')) fermer();
+    });
+
+    overlay.addEventListener('change', async e => {
+        const sw = e.target.closest('.ss-switch');
+        if (!sw) return;
+        const i = Number(sw.dataset.i);
+        // Un appel à la fois par joueur : un double toucher ne crée pas deux annonces.
+        if (enCours.has(i)) { sw.checked = !sw.checked; return; }
+        enCours.add(i);
+        const rangee = sw.closest('.ss-row');
+        rangee.classList.add('is-busy');
+        const ok = await setForSale(joueurs[i], sw.checked);
+        if (!ok) sw.checked = !sw.checked;
+        rangee.classList.remove('is-busy');
+        enCours.delete(i);
+        refreshSaleMarks();
+    });
+
+    overlay.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { e.preventDefault(); fermer(); return; }
+        if (e.key !== 'Tab') return;
+        // Le focus reste dans le panneau : derrière, rien n'est accessible.
+        const liste = [...sheet.querySelectorAll('button, input')];
+        const premier = liste[0];
+        const dernier = liste[liste.length - 1];
+        if (e.shiftKey && document.activeElement === premier) { e.preventDefault(); dernier.focus(); }
+        else if (!e.shiftKey && document.activeElement === dernier) { e.preventDefault(); premier.focus(); }
+    });
+
+    document.documentElement.classList.add('ss-lock');
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => {
+        (sheet.querySelector('.ss-switch') || sheet.querySelector('.ss-done')).focus({ preventScroll: true });
+    });
+}
+
+function renderTeamRoster(roster, activeListings = []) {
     const rosterList = document.getElementById('rosterList');
     rosterList.innerHTML = '';
 
-    // Only the roster's own team can list/unlist its players, and only when
-    // the pool allows trades at all. category matches the vocabulary
-    // /trade/propose already validates against.
-    const currentUsername = localStorage.getItem('username');
-    const isOwner = tradesAllowed && (roster.members || []).includes(currentUsername);
-    const listingByPlayer = {};
-    activeListings.forEach(l => { listingByPlayer[l.playerName] = l; });
+    // Les annonces actives de l'équipe : une marque « En vente » dans la
+    // liste, visible de tous, et l'état de départ du panneau de mise en
+    // vente (openSaleSheet), réservé à l'équipe elle-même.
+    rosterSale.listings = {};
+    rosterSale.players = [];
+    activeListings.forEach(l => { rosterSale.listings[l.playerName] = l; });
 
     const players = [];
 
@@ -1551,8 +1739,7 @@ function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
     // Liste « comfortable » (Claude Design, Roster Table v2) : une bande
     // continue de rangées de 64px séparées d'un filet, plutôt qu'une carte
     // par joueur. Sur une bande étroite, le prénom se réduit à son initiale
-    // et le bouton de vente à son icône — requêtes de conteneur sur
-    // .roster-rows (classement.css).
+    // — requêtes de conteneur sur .roster-rows (classement.css).
     const bloc = document.createElement('section');
     bloc.className = 'roster-block';
     bloc.innerHTML = `<p class="roster-count">Joueurs actifs · ${players.length}</p>`;
@@ -1563,7 +1750,8 @@ function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
 
     players.forEach((player, index) => {
         const row = document.createElement('div');
-        row.className = isOwner ? 'roster-row has-sell' : 'roster-row';
+        row.className = 'roster-row';
+        row.dataset.player = player.name;
 
         // Only make clickable if it has a playerId (not teams)
         if (player.playerId) {
@@ -1661,30 +1849,26 @@ function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
         const stat = (valeur, libelle) =>
             `<div class="rr-stat${valeur ? '' : ' is-zero'}"><span class="rr-v">${valeur}</span><span class="rr-l">${libelle}</span></div>`;
 
-        // Only the roster's own team sees the list/unlist toggle.
-        const existingListing = listingByPlayer[player.name];
-        const isListed = !!existingListing;
-        const sellAction = isListed ? 'Retirer de la vente' : 'Mettre en vente';
-        const sellToggleHTML = isOwner ? `
-                <button type="button" class="for-sale-toggle${isListed ? ' is-listed' : ''}"
-                        data-player="${escapeAttr(player.name)}"
-                        data-category="${player.category || ''}"
-                        data-listing-id="${isListed ? existingListing.id : ''}"
-                        title="${sellAction}" aria-label="${sellAction}"
-                        onclick="event.stopPropagation(); toggleForSale(this)">
-                    ${typeof getIcon === 'function' ? getIcon('tag', 12) : ''}
-                    <span class="fst-label">${isListed ? 'En vente' : 'Mettre en vente'}</span>
-                </button>` : '';
-
-        row.innerHTML = `
-            <div class="rr-rank">${pickNumber}</div>
+        const avatarHTML = `
             <div class="rr-avatar${estClub ? ' is-club' : ' fz-shot'}"${estClub ? '' : ` style="${clubShotStyle(teamAbbrev)}"`}>
                 ${imageHTML}
+            </div>`;
+        // Le panneau de mise en vente reprend la même photo et la même ligne.
+        rosterSale.players.push({ name: player.name, category: player.category, meta, points, avatarHTML });
+
+        // « En vente » : une pastille après le club · position quand la bande
+        // a la place, une étiquette sur la photo sinon (classement.css).
+        row.innerHTML = `
+            <div class="rr-rank">${pickNumber}</div>
+            <div class="rr-shot">
+                ${avatarHTML}
+                <span class="rr-sale-dot" aria-hidden="true">${tagIcon(10)}</span>
             </div>
             <div class="rr-main">
                 <div class="rr-name-line">
                     <span class="rr-name">${nomHTML}</span>${estClub ? '' : injBadge(player.name, teamAbbrev)}
                     <span class="rr-meta">${escapeHtmlText(meta)}</span>
+                    <span class="rr-sale">En vente</span>
                 </div>
                 <div class="rr-stats">
                     ${stat(gp, 'PJ')}${stat(stat1, stat1Label)}${stat(stat2, stat2Label)}${stat(points, 'Pts')}
@@ -1692,13 +1876,13 @@ function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
             </div>
             <div class="rr-pptsa is-zero"><span class="rr-v">0</span><span class="rr-l">PPtsA</span></div>
             <div class="rr-ppts${points ? '' : ' is-zero'}"><span class="rr-v">${points}</span><span class="rr-l">PPts</span></div>
-            ${sellToggleHTML}
             <span class="rr-chev" aria-hidden="true">${player.playerId ? '›' : ''}</span>
         `;
 
         rangees.appendChild(row);
     });
 
+    refreshSaleMarks();
     renderBenchPanel(rosterList, roster);
 
     // Hide skeleton, show content
@@ -2642,6 +2826,7 @@ function showError(title, message) {
     document.getElementById('poolListView').style.display = 'block';
     document.getElementById('poolStandingsView').style.display = 'none';
     document.getElementById('teamRosterView').style.display = 'none';
+    setRosterViewMode(false);
     document.getElementById('breadcrumb').style.display = 'none';
     document.getElementById('pageTitle').textContent = 'Classement';
     document.getElementById('poolHeaderMeta').style.display = 'none';

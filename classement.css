@@ -600,17 +600,17 @@ body {
 /* ==================== ROSTER VIEW (Level 3) ==================== */
 /* Liste « comfortable » (Claude Design, Roster Table v2) : une bande
    continue, une rangée de 64px par joueur séparée d'un filet — rang, photo,
-   nom + club · position, les quatre stats en mini-colonnes, PPtsA, PPts, le
-   bouton de vente et le chevron. Les teintes sont celles du mockup (sombre),
-   reprises en clair plus bas. */
+   nom + club · position, les quatre stats en mini-colonnes, PPtsA, PPts et
+   le chevron. Les teintes sont celles du mockup (sombre), reprises en clair
+   plus bas ; posées sur body parce que le panneau de mise en vente, ajouté
+   à la fin de la page, s'en sert aussi. */
 .roster-list {
     display: flex;
     flex-direction: column;
     gap: 24px;
 }
 
-.roster-block,
-#rosterSkeleton {
+body {
     --rr-surface: #141416;
     --rr-hover: #1C1C1F;
     --rr-line: #26262A;
@@ -621,16 +621,16 @@ body {
     --rr-dim: #6F6F76;
     --rr-chev: #55555C;
     --rr-btn-line: #34343A;
-    --rr-btn-ink: #A3A3AA;
+    --rr-btn-ink: #C7C7CC;
     --rr-btn-hover-line: #55555C;
     --rr-btn-hover-ink: #FFFFFF;
-    /* oklch(0.35 0.12 25) et oklch(0.55 0.17 25) du mockup. */
-    --rr-listed-bg: #6C1517;
-    --rr-listed-line: #C13C3B;
-    --rr-listed-ink: #FFFFFF;
+    /* oklch(0.35 0.12 25) et oklch(0.55 0.17 25) du mockup : l'état
+       « en vente ». */
+    --rr-sale-bg: #6C1517;
+    --rr-sale-line: #C13C3B;
+    --rr-sale-ink: #FFFFFF;
 }
-html[data-theme="light"] .roster-block,
-html[data-theme="light"] #rosterSkeleton {
+html[data-theme="light"] body {
     --rr-surface: #FFFFFF;
     --rr-hover: #F5F5F7;
     --rr-line: #E5E5EA;
@@ -641,14 +641,113 @@ html[data-theme="light"] #rosterSkeleton {
     --rr-dim: #8E8E93;
     --rr-chev: #C7C7CC;
     --rr-btn-line: #D2D2D7;
-    --rr-btn-ink: #6E6E73;
+    --rr-btn-ink: #1D1D1F;
     --rr-btn-hover-line: #86868B;
     --rr-btn-hover-ink: #1D1D1F;
-    --rr-listed-bg: var(--primary);
-    --rr-listed-line: var(--primary);
-    --rr-listed-ink: var(--on-primary);
+    --rr-sale-bg: var(--primary);
+    --rr-sale-line: var(--primary);
+    --rr-sale-ink: var(--on-primary);
 }
 
+/* -------------------- En-tête de la fiche -------------------- */
+/* Le titre commun de la page s'efface : la fiche a le sien, avec le
+   sélecteur d'équipe (renderRosterHeader). */
+body.fz-view-roster #pageTitle { display: none; }
+/* Les 30px de .view-container passaient sous ce titre : l'en-tête de la
+   fiche suit directement le fil d'Ariane (ou le haut de page sur téléphone). */
+body.fz-view-roster #teamRosterView { margin-top: 6px; }
+
+.roster-header { margin-bottom: 22px; }
+
+/* Téléphone seulement (plus bas) : le fil d'Ariane y est masqué. */
+.rh-back { display: none; }
+
+.rh-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* Le <select> transparent couvre le nom et sa flèche : un toucher ouvre la
+   roulette native, le clavier et les lecteurs d'écran y ont accès. */
+.rh-title {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    border-radius: 8px;
+}
+.rh-name {
+    min-width: 0;
+    margin: 0;
+    font: 700 28px/1.2 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.rh-caret {
+    flex: none;
+    display: flex;
+    color: var(--text-secondary);
+    transition: color .15s ease;
+}
+.rh-title.has-picker:hover .rh-caret { color: var(--text-main); }
+.rh-title:focus-within { outline: 2px solid var(--primary); outline-offset: 4px; }
+.rh-picker {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    /* 16px : sous cette taille, iOS zoome la page à l'ouverture. */
+    font-size: 16px;
+}
+
+.rh-sub {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+.rh-sub sup { font-size: 0.7em; line-height: 0; }
+
+.rh-sale {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--rr-btn-line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--rr-btn-ink);
+    font: 600 13px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color .15s ease, color .15s ease;
+}
+.rh-sale svg { flex: none; }
+.rh-sale:hover { border-color: var(--rr-btn-hover-line); color: var(--rr-btn-hover-ink); }
+.rh-sale:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.rh-sale-count {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--rr-sale-bg);
+    color: var(--rr-sale-ink);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+}
+.rh-sale-count[hidden] { display: none; }
+
+/* -------------------- La liste -------------------- */
 .roster-count {
     margin: 0 0 8px;
     font-size: 12px;
@@ -656,7 +755,7 @@ html[data-theme="light"] #rosterSkeleton {
 }
 
 /* Le conteneur des requêtes plus bas : c'est la largeur de la bande, pas
-   celle de l'écran, qui décide du nom court et du bouton-icône. */
+   celle de l'écran, qui décide du nom court et de la marque « En vente ». */
 .roster-rows {
     container-type: inline-size;
     background: var(--rr-surface);
@@ -674,10 +773,6 @@ html[data-theme="light"] #rosterSkeleton {
     min-height: 64px;
     padding: 0 10px 0 12px;
 }
-/* Colonne du bouton de vente : seulement sur sa propre équipe. */
-.roster-row.has-sell {
-    grid-template-columns: 22px 34px minmax(0, 1fr) 44px 44px auto 14px;
-}
 .roster-row + .roster-row { border-top: 1px solid var(--rr-line); }
 .roster-row.clickable { cursor: pointer; }
 .roster-row.clickable:hover { background: var(--rr-hover); }
@@ -688,6 +783,8 @@ html[data-theme="light"] #rosterSkeleton {
     color: var(--rr-muted);
     text-align: center;
 }
+
+.rr-shot { position: relative; width: 34px; height: 34px; }
 
 .rr-avatar {
     position: relative;
@@ -746,6 +843,37 @@ html[data-theme="light"] #rosterSkeleton {
     letter-spacing: 0.03em;
 }
 
+/* « En vente » : pastille après club · position sur une bande large,
+   étiquette sur le coin de la photo sur une bande étroite (plus bas). */
+.rr-sale,
+.rr-sale-dot { display: none; }
+.roster-row.is-for-sale .rr-sale {
+    flex: none;
+    display: inline-block;
+    align-self: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--rr-sale-bg);
+    color: var(--rr-sale-ink);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+}
+.rr-sale-dot {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--rr-surface);
+    background: var(--rr-sale-line);
+    color: #FFFFFF;
+    align-items: center;
+    justify-content: center;
+}
+
 /* Les mini-colonnes gardent 26px tant qu'il y a la place et ne se tassent
    que sur les plus petits téléphones. */
 .rr-stats {
@@ -780,71 +908,196 @@ html[data-theme="light"] #rosterSkeleton {
 .rr-ppts.is-zero .rr-v { color: var(--rr-muted); }
 .rr-ppts .rr-l { font-size: 9.5px; color: var(--rr-muted); }
 
-.for-sale-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    height: 28px;
-    min-width: 28px;
-    padding: 0 7px;
-    border: 1px solid var(--rr-btn-line);
-    border-radius: 6px;
-    background: transparent;
-    color: var(--rr-btn-ink);
-    font: 600 11px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: border-color .15s ease, color .15s ease, background-color .15s ease;
-}
-.for-sale-toggle svg { flex: none; }
-/* Toujours la largeur de « Mettre en vente », même quand le libellé dit
-   « En vente » : chaque rangée est sa propre grille, un bouton plus court
-   décalerait PPtsA et PPts de cette rangée seule. */
-.fst-label {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-}
-.fst-label::after {
-    content: 'Mettre en vente';
-    height: 0;
-    overflow: hidden;
-    visibility: hidden;
-}
-.for-sale-toggle:hover { border-color: var(--rr-btn-hover-line); color: var(--rr-btn-hover-ink); }
-.for-sale-toggle.is-listed {
-    background: var(--rr-listed-bg);
-    border-color: var(--rr-listed-line);
-    color: var(--rr-listed-ink);
-}
-.for-sale-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.for-sale-toggle:disabled { opacity: 0.6; cursor: not-allowed; }
-
 .rr-chev {
     font-size: 16px;
     color: var(--rr-chev);
     text-align: center;
 }
 
-@container (max-width: 599px) {
-    .for-sale-toggle .fst-label { display: none; }
-}
 @container (max-width: 399px) {
     .rr-name-full { display: none; }
     .rr-name-short { display: inline; }
+    /* La pastille reste lue par les lecteurs d'écran ; l'œil a l'étiquette. */
+    .roster-row.is-for-sale .rr-sale {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+    .roster-row.is-for-sale .rr-sale-dot { display: flex; }
 }
-/* Petits téléphones (360px) : on reprend une trentaine de pixels sur les
-   marges et les colonnes fixes pour que le nom court reste lisible. */
-@container (max-width: 369px) {
-    .roster-row {
-        grid-template-columns: 20px 34px minmax(0, 1fr) 38px 40px 12px;
-        column-gap: 6px;
-        padding: 0 8px 0 10px;
+
+/* -------------------- Panneau « Mettre en vente » -------------------- */
+/* Feuille qui monte du bas sur téléphone, fenêtre centrée au-delà de
+   680px (plus bas). Un interrupteur par joueur (openSaleSheet). */
+html.ss-lock { overflow: hidden; }
+
+.ss-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    animation: ssFade .2s ease;
+}
+.ss-sheet {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: 88vh;
+    max-height: 88dvh;
+    border-radius: 16px 16px 0 0;
+    background: var(--rr-surface);
+    color: var(--rr-ink);
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
+    animation: ssRise .24s cubic-bezier(.2, .8, .2, 1);
+}
+.ss-overlay.is-leaving { animation: ssFade .2s ease reverse forwards; }
+.ss-overlay.is-leaving .ss-sheet { animation: ssRise .2s ease-in reverse forwards; }
+
+.ss-head {
+    position: relative;
+    padding: 18px 56px 12px 16px;
+    border-bottom: 1px solid var(--rr-line);
+}
+.ss-title {
+    margin: 0;
+    font: 700 18px/1.25 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--rr-ink);
+}
+.ss-hint {
+    margin: 4px 0 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--rr-muted);
+}
+.ss-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--rr-muted);
+    cursor: pointer;
+}
+.ss-close:hover { color: var(--rr-ink); background: var(--rr-hover); }
+
+.ss-list {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    font-variant-numeric: tabular-nums;
+}
+.ss-list li + li .ss-row { border-top: 1px solid var(--rr-line); }
+.ss-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 60px;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+.ss-row:hover { background: var(--rr-hover); }
+.ss-row .rr-avatar { flex: none; }
+.ss-id {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.ss-name {
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ss-meta { font-size: 12px; color: var(--rr-muted); }
+.ss-row.is-busy { opacity: 0.6; }
+
+/* Interrupteur : la case à cocher native (clavier, lecteurs d'écran), habillée. */
+.ss-switch {
+    flex: none;
+    position: relative;
+    width: 46px;
+    height: 28px;
+    margin: 0;
+    border-radius: 14px;
+    background: var(--rr-btn-line);
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    transition: background-color .18s ease;
+}
+.ss-switch::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: transform .18s ease;
+}
+.ss-switch:checked { background: var(--rr-sale-line); }
+.ss-switch:checked::after { transform: translateX(18px); }
+.ss-switch:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.ss-foot {
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--rr-line);
+}
+.ss-done {
+    width: 100%;
+    min-height: 48px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--rr-ink);
+    color: var(--rr-surface);
+    font: 700 15px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    cursor: pointer;
+}
+.ss-done:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+@keyframes ssFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ssRise { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes ssPop { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+
+@media (min-width: 681px) {
+    .ss-overlay { align-items: center; padding: 24px; }
+    .ss-sheet {
+        max-width: 440px;
+        max-height: 80vh;
+        border-radius: 16px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        animation-name: ssPop;
     }
-    .roster-row.has-sell {
-        grid-template-columns: 20px 34px minmax(0, 1fr) 38px 40px auto 12px;
-    }
+    .ss-overlay.is-leaving .ss-sheet { animation-name: ssPop; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ss-overlay,
+    .ss-sheet,
+    .ss-overlay.is-leaving,
+    .ss-overlay.is-leaving .ss-sheet { animation: none; }
 }
 
 /* ==================== SKELETON LOADERS ==================== */
