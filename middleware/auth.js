@@ -111,12 +111,16 @@ function magasinPostgres(db) {
     };
 }
 
-/** Durée pendant laquelle une session lue en base est resservie de mémoire. */
+/**
+ * Durée pendant laquelle une session lue en base est resservie de mémoire, par
+ * défaut. server.js l'allonge quand il est seul à écrire (MEMOIRE_CONFIANCE_MIN) :
+ * tout ce qui change une session passe alors par ce magasin et l'efface.
+ */
 const DUREE_MEMOIRE_SESSION_MS = 60 * 1000;
 /** Au-delà, la plus ancienne entrée part : la mémoire reste bornée. */
 const MEMOIRE_SESSIONS_MAX = 5000;
-/** Même seuil que db.touchSession : `last_seen_at` s'écrit une fois par heure au plus. */
-const TOUCHER_APRES_MS = 60 * 60 * 1000;
+/** Même seuil que db.touchSession : `last_seen_at` s'écrit une fois toutes les six heures au plus. */
+const TOUCHER_APRES_MS = 6 * 60 * 60 * 1000;
 
 /**
  * Une mémoire courte devant le magasin PostgreSQL.

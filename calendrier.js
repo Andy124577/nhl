@@ -128,7 +128,7 @@
         if (!noms.length && !clubsLNH.length) return;
 
         try {
-            const reponse = await fetch(`${BASE_URL}/current-stats`, { cache: 'no-store' });
+            const reponse = await fetch(`${BASE_URL}/current-stats`, { cache: 'no-cache' });
             const stats = reponse.ok ? await reponse.json() : null;
             const parNom = new Map(((stats && stats.players) || []).map(p => [p.playerName, p.teamAbbrev]));
             mesClubs = new Map();

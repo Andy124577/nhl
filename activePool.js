@@ -34,6 +34,22 @@
 
     const utilisateur = () => localStorage.getItem('username') || '';
 
+    /**
+     * LA connexion Socket.IO de l'onglet, partagée par tous les scripts.
+     *
+     * Deux appels à io() sur la même adresse ouvrent deux connexions (le
+     * client ne réutilise pas un espace de noms déjà ouvert) : la salle de
+     * repêchage en tenait deux par onglet, chacune authentifiée, abonnée à
+     * ses salles et servie par le serveur. activePool.js est chargé tôt sur
+     * chaque page ; les autres scripts passent par ici.
+     */
+    window.fzSocketPartage = function () {
+        if (window.__fzSocketPool) return window.__fzSocketPool;
+        if (typeof io === 'undefined') return null;
+        try { window.__fzSocketPool = io(BASE_URL); } catch { return null; }
+        return window.__fzSocketPool;
+    };
+
     // ==================== LECTURE DES POOLS ====================
 
     function equipeDe(poolData, username) {
@@ -249,6 +265,41 @@
         tousLesPools = JSON.parse(texte);
         construireMesPools();
         return true;
+    }
+
+    /**
+     * Range des pools reçus un par un — `{ nom: vue }`, la forme de /draft et
+     * de l'évènement socket `draftUpdated`. Renvoie true si quelque chose a
+     * changé, false sinon, null si la charge est illisible.
+     *
+     * `draftUpdated` porte déjà la vue du pool qui vient de changer : chaque
+     * onglet relisait pourtant /draft au complet — tous les pools du site —
+     * à chaque choix d'un repêchage.
+     */
+    function appliquerPools(charge) {
+        if (!charge || typeof charge !== 'object' || Array.isArray(charge)) return null;
+        let change = false;
+        for (const [nom, vue] of Object.entries(charge)) {
+            if (!vue || typeof vue !== 'object') continue;
+            const avant = tousLesPools[nom];
+            if (avant && JSON.stringify(avant) === JSON.stringify(vue)) continue;
+            tousLesPools = { ...tousLesPools, [nom]: vue };
+            change = true;
+        }
+        if (change) {
+            construireMesPools();
+            // L'empreinte du dernier /draft complet ne décrit plus ce qu'on a
+            // en main : la prochaine lecture complète sera prise pour neuve.
+            empreinteDraft = '';
+        }
+        return change;
+    }
+
+    /** Relit UN pool (`/draft?pool=`) ; un 304 quand il n'a pas bougé. */
+    async function chargerUnPool(nom) {
+        const reponse = await fetch(`${BASE_URL}/draft?pool=${encodeURIComponent(nom)}`, { cache: 'no-cache' });
+        if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+        return appliquerPools(await reponse.json()) === true;
     }
 
     function poolDeLUrl() {
@@ -478,7 +529,25 @@
         // tout leur écran, ce qui perd le défilement en cours, referme ce qui
         // était ouvert et relance des appels réseau — pour le même contenu.
         if (!change) return;
+        signalerDonnees();
+    }
 
+    /** Le filet et le retour sur l'onglet : seul le pool actif est relu. */
+    async function rafraichirActif() {
+        if (!utilisateur()) return;
+        if (!actif) return rafraichir();
+        let change;
+        try {
+            change = await chargerUnPool(actif);
+        } catch (erreur) {
+            console.error('Rafraîchissement du pool impossible :', erreur);
+            return;
+        }
+        if (change) signalerDonnees();
+    }
+
+    /** Les données ont changé : prévenir les abonnés. */
+    function signalerDonnees() {
         // Le pool actif a pu disparaître entre-temps (départ, suppression).
         if (actif && !estMembre(actif)) {
             actif = poolParDefaut();
@@ -494,27 +563,36 @@
     // Les mises à jour temps réel du serveur gardent la liste fraîche sans
     // qu'aucune page n'ait à s'en occuper.
     function brancherSocket() {
-        if (window.__fzSocketPool) return;
+        if (brancherSocket.branche) return;
 
         // socket.io est chargé en bas de page (et peut tarder, voire ne
         // jamais arriver derrière un proxy). Abandonner en silence au
         // premier essai laissait l'Accueil figé sur un tour périmé jusqu'à
         // un rechargement manuel : on réessaie, puis le filet plus bas prend
         // le relais si la bibliothèque ne vient jamais.
-        if (typeof io === 'undefined') {
+        const socket = window.fzSocketPartage();
+        if (!socket) {
             brancherSocket.essais = (brancherSocket.essais || 0) + 1;
             if (brancherSocket.essais <= 40) setTimeout(brancherSocket, 250);
             return;
         }
+        // La connexion a pu être ouverte avant nous (la salle de repêchage
+        // l'ouvre à son chargement) : on s'y branche au lieu d'en ouvrir une
+        // autre, et sans perdre nos propres écoutes.
+        brancherSocket.branche = true;
 
         try {
-            window.__fzSocketPool = io(BASE_URL);
-            window.__fzSocketPool.on('draftUpdated', () => { rafraichir(); });
+            socket.on('draftUpdated', (charge) => {
+                const change = appliquerPools(charge);
+                if (change === null) rafraichir();
+                else if (change) signalerDonnees();
+            });
             // Une coupure (veille du téléphone, changement de réseau) fait
             // manquer les évènements émis pendant l'absence : on resynchronise
-            // à la reconnexion, pas seulement au premier branchement.
-            let dejaConnecte = false;
-            window.__fzSocketPool.on('connect', () => {
+            // à la reconnexion, pas seulement au premier branchement. Relecture
+            // complète : un pool rejoint ou quitté pendant l'absence compte.
+            let dejaConnecte = !!socket.connected;
+            socket.on('connect', () => {
                 if (dejaConnecte) rafraichir();
                 dejaConnecte = true;
             });
@@ -536,14 +614,16 @@
             const donnees = API.data();
             return !!donnees && etatRepechage(donnees).etat === 'encours';
         };
+        // Le pool actif seulement : c'est lui que le filet surveille, et sa
+        // relecture est un 304 de quelques octets tant qu'il n'a pas bougé.
         setInterval(() => {
             if (document.hidden || !enRepechage()) return;
-            rafraichir();
+            rafraichirActif();
         }, 20000);
         // Revenir sur l'onglet doit montrer l'état réel, pas celui d'il y a
         // dix minutes.
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && enRepechage()) rafraichir();
+            if (!document.hidden && enRepechage()) rafraichirActif();
         });
     }
     filetRepechage();

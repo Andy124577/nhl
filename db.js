@@ -21,6 +21,84 @@ pool.on('error', (err) => {
 });
 
 // =============================================
+// COMPTEUR D'ÉCRITURES
+// =============================================
+//
+// Neon (plan gratuit) s'endort après cinq minutes sans requête et ne compte
+// que 100 heures de calcul par mois. Une page ouverte relisait pourtant la
+// base à chaque sondage — notifications, pointage des duels, pools — pour
+// retrouver exactement ce qu'elle avait lu la minute d'avant.
+//
+// Ce compteur avance à chaque écriture que CE processus fait, quelle que soit
+// la table. Une lecture mise en mémoire (lib/memoireLectures.js) reste
+// valable tant qu'il n'a pas bougé : rien n'a pu changer en base, sauf par un
+// autre processus — script, console Neon, fetch_game_logs.js — d'où la durée
+// maximale que garde aussi chaque mémoire, et noterEcritureExterne().
+//
+// Le compteur avance quand l'écriture est TERMINÉE (validée, pour une
+// transaction : le COMMIT est lui-même une écriture). Une lecture note le
+// compteur AVANT d'interroger la base : si une écriture se termine pendant
+// qu'elle attend, sa valeur est rangée sous l'ancien compteur et ne resservira
+// jamais.
+
+let generationEcritures = 0;
+
+/** Une requête qui ne peut rien changer. Tout le reste compte comme écriture. */
+const MOTIF_LECTURE = /^\s*(select|show|explain)\b/i;
+
+function estLecture(texte) {
+    return typeof texte === 'string' && MOTIF_LECTURE.test(texte);
+}
+
+function noterEcriture() {
+    generationEcritures += 1;
+}
+
+/** Valeur courante du compteur d'écritures. */
+function generationDonnees() {
+    return generationEcritures;
+}
+
+/**
+ * Une écriture faite hors de ce processus vient de se terminer (la collecte
+ * de 3 h tourne dans un processus à part). Tout ce qui est en mémoire sera
+ * relu.
+ */
+function noterEcritureExterne() {
+    noterEcriture();
+}
+
+/**
+ * Branche le compteur sur un client `pg`. Toutes les requêtes passent par
+ * `client.query` : celles des transactions, et `pool.query`, qui emprunte un
+ * client et lui passe un rappel plutôt qu'une promesse.
+ */
+function instrumenterClient(client, noter = noterEcriture) {
+    const originale = client.query;
+    client.query = function (config, ...reste) {
+        const texte = typeof config === 'string' ? config : (config && config.text);
+        if (estLecture(texte)) return originale.call(this, config, ...reste);
+
+        const dernier = reste[reste.length - 1];
+        if (typeof dernier === 'function') {
+            reste[reste.length - 1] = function (...args) {
+                noter();
+                return dernier.apply(this, args);
+            };
+            return originale.call(this, config, ...reste);
+        }
+
+        const resultat = originale.call(this, config, ...reste);
+        if (resultat && typeof resultat.then === 'function') resultat.then(noter, noter);
+        else noter();
+        return resultat;
+    };
+    return client;
+}
+
+pool.on('connect', (client) => instrumenterClient(client));
+
+// =============================================
 // REGISTRE DE MIGRATIONS
 // =============================================
 
@@ -960,14 +1038,17 @@ async function getSessionByTokenHash(tokenHash) {
 /**
  * Note qu'une session sert encore.
  *
- * Ecrit au plus une fois par heure : une ecriture a chaque requete ferait de
- * cette table le goulot de toutes les pages, pour une precision dont personne
- * n'a besoin.
+ * Ecrit au plus une fois toutes les six heures : une ecriture a chaque requete
+ * ferait de cette table le goulot de toutes les pages, pour une precision dont
+ * personne n'a besoin. Six heures et non une : `last_seen_at` ne sert qu'a
+ * expirer une session inactive depuis quatorze jours (lib/session.js), et
+ * chaque ecriture reveille la base (Neon, plan gratuit) — une par heure et
+ * par personne connectee l'empechait de dormir de la journee.
  */
 async function touchSession(sessionId) {
     await pool.query(
         `UPDATE sessions SET last_seen_at = NOW()
-          WHERE id = $1 AND last_seen_at < NOW() - INTERVAL '1 hour'`,
+          WHERE id = $1 AND last_seen_at < NOW() - INTERVAL '6 hours'`,
         [sessionId]
     );
 }
@@ -1383,6 +1464,11 @@ const query = (text, params) => pool.query(text, params);
 module.exports = {
     pool,
     query, // Export query function for direct database access
+    // Compteur d'écritures (voir plus haut)
+    generationDonnees,
+    noterEcritureExterne,
+    instrumenterClient,
+    estLecture,
     initializeDatabase,
     runMigrations,
     // Transactions

@@ -186,7 +186,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // Load current season stats from API
         try {
-            const currentStatsResponse = await fetch(`${BASE_URL}/current-stats`, { cache: "no-store" });
+            const currentStatsResponse = await fetch(`${BASE_URL}/current-stats`, { cache: "no-cache" });
             currentStats = await currentStatsResponse.json();
             console.log(`✅ Current stats loaded: ${currentStats.players.length} players, last updated: ${currentStats.lastUpdated}`);
         } catch (error) {
@@ -195,7 +195,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // Load current team standings from API
         try {
-            const currentTeamsResponse = await fetch(`${BASE_URL}/current-teams`, { cache: "no-store" });
+            const currentTeamsResponse = await fetch(`${BASE_URL}/current-teams`, { cache: "no-cache" });
             currentTeams = await currentTeamsResponse.json();
             console.log(`✅ Current team standings loaded: ${currentTeams.teams.length} teams, last updated: ${currentTeams.lastUpdated}`);
         } catch (error) {

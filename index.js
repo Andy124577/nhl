@@ -163,7 +163,7 @@ async function fetchPlayerData() {
         fullPlayerData = [...e.Top_50_Defenders, ...e.Top_100_Offensive_Players, ...e.Top_Rookies], rookiePlayerData = e.Top_Rookies || [], teamData = e.Teams, goalieData = e.Top_50_Goalies;
         try {
             const t = await fetch(`${BASE_URL}/current-stats`, {
-                cache: "no-store"
+                cache: "no-cache"
             });
             currentStats = await t.json(), console.log(`✅ Current stats loaded: ${currentStats.players.length} players, last updated: ${currentStats.lastUpdated}`)
         } catch (t) {
@@ -171,7 +171,7 @@ async function fetchPlayerData() {
         }
         try {
             const t = await fetch(`${BASE_URL}/current-teams`, {
-                cache: "no-store"
+                cache: "no-cache"
             });
             currentTeams = await t.json(), console.log(`✅ Current team standings loaded: ${currentTeams.teams.length} teams, last updated: ${currentTeams.lastUpdated}`)
         } catch (t) {

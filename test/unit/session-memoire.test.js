@@ -152,7 +152,7 @@ describe('mémoire courte des sessions', () => {
             'mais la lecture périmée n a pas été rangée');
     });
 
-    test("last_seen_at ne s'écrit qu'une fois par heure, et pas à chaque requête de la minute", async () => {
+    test("last_seen_at ne s'écrit qu'une fois toutes les six heures, et pas à chaque requête", async () => {
         const h = horloge();
         const base = faux({ h1: ligne({ lastSeenAt: new Date(h.maintenant() - 10 * 60000) }) });
         const magasin = avecMemoireCourte(base, { maintenant: h.maintenant });
@@ -162,6 +162,11 @@ describe('mémoire courte des sessions', () => {
         assert.equal(base.appels.toucher, 0, 'vue il y a 10 minutes : rien à écrire');
 
         h.avancer(HEURE);
+        lu = await magasin.lire('h1');
+        await magasin.toucher(lu.id, lu);
+        assert.equal(base.appels.toucher, 0, 'vue il y a 70 minutes : toujours rien — chaque écriture réveille Neon');
+
+        h.avancer(5 * HEURE);
         lu = await magasin.lire('h1');
         await magasin.toucher(lu.id, lu);
         assert.equal(base.appels.toucher, 1);

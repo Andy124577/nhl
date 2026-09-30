@@ -34,12 +34,26 @@ const priorite = require('../lib/priority.js');
 const evenements = require('../lib/events.js');
 const dates = require('../lib/dates.js');
 const instantDraft = require('../lib/instantDraft.js');
+const { creerMemoireLectures } = require('../lib/memoireLectures.js');
 
 /** Le cache d'une réponse personnalisée est PAR COMPTE, jamais partagé. */
 const TTL_CACHE_MS = 15 * 1000;
 
 function creerServiceAujourdhui({ store, db, usePostgres, pointage, serviceH2H,
-                                 saisonCourante, calendrierLNH, logger = console }) {
+                                 saisonCourante, calendrierLNH, logger = console, confianceMs = 0 }) {
+
+    /**
+     * Les notifications d'une personne, gardées tant que rien n'a été écrit
+     * en base (lib/memoireLectures.js). L'accueil ouvert les relisait chaque
+     * minute — deux requêtes par sondage, et Neon qui ne s'endormait plus.
+     * Une notification naît ou change par une écriture : la mémoire s'efface
+     * d'elle-même au même moment.
+     */
+    const lectures = creerMemoireLectures({
+        generation: typeof db?.generationDonnees === 'function' ? () => db.generationDonnees() : () => null,
+        dureeMs: confianceMs,
+        max: 2000
+    });
 
     /** username → { charge, calculeLe } */
     const cache = new Map();
@@ -374,9 +388,13 @@ function creerServiceAujourdhui({ store, db, usePostgres, pointage, serviceH2H,
         // durables : la même source que la cloche, donc les mêmes destinations.
         if (usePostgres) {
             try {
-                const userId = await db.getUserId(username);
+                const lu = await lectures.obtenir(`notifications|${username}`, async () => {
+                    const id = await db.getUserId(username);
+                    return id ? { userId: id, notifications: await db.getNotificationsForUser(id, { limite: 60 }) } : null;
+                });
+                const userId = lu ? lu.userId : null;
                 if (userId) {
-                    const notifications = await db.getNotificationsForUser(userId, { limite: 60 });
+                    const notifications = lu.notifications;
                     for (const notification of notifications) {
                         if (notification.type === evenements.NOTIFICATION.ECHANGE_RECU && !notification.resolvedAt) {
                             elements.push(elementEchange(notification));

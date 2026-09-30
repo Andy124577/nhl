@@ -123,7 +123,7 @@
             return;
         }
         try {
-            const socket = window.__fzSocketPool || io(BASE);
+            const socket = (window.fzSocketPartage && window.fzSocketPartage()) || window.__fzSocketPool || io(BASE);
             // Tous ces signaux peuvent changer ce qui mérite l'attention ; ils
             // se regroupent en une requête.
             ['poolUpdated', 'draftUpdated', 'tradePending', 'tradeUpdated',

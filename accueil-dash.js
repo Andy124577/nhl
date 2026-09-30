@@ -193,7 +193,7 @@ async function loadNhlTeams() {
     if (nhlTeamIndex) return;
     nhlTeamIndex = {};
     try {
-        const res = await fetch(`${BASE_URL}/current-teams`, { cache: 'no-store' });
+        const res = await fetch(`${BASE_URL}/current-teams`, { cache: 'no-cache' });
         if (!res.ok) return;
         const data = await res.json();
         (data.teams || []).forEach(t => {

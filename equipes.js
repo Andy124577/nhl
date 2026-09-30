@@ -1022,7 +1022,7 @@ $(document).ready(function() {
 
 // Setup WebSocket for real-time trade updates (if Socket.IO is available)
 if (typeof io !== 'undefined') {
-    const socket = io(BASE_URL);
+    const socket = (window.fzSocketPartage && window.fzSocketPartage()) || io(BASE_URL);
 
     socket.on('tradePending', () => {
         console.log("New trade pending notification received");

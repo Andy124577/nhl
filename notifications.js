@@ -871,7 +871,7 @@
             return;
         }
         try {
-            const socket = window.__fzSocketPool || io(FZPool.BASE_URL);
+            const socket = (window.fzSocketPartage && window.fzSocketPartage()) || window.__fzSocketPool || io(FZPool.BASE_URL);
             const tout = () => { rafraichirServeur(); rafraichirEchanges(); };
             socket.on('tradePending', tout);
             socket.on('tradeUpdated', tout);

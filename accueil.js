@@ -91,7 +91,7 @@ async function loadPools() {
 // ============================================================
 async function loadCurrentStats() {
     try {
-        const res = await fetch(`${BASE_URL}/current-stats`, { cache: 'no-store' });
+        const res = await fetch(`${BASE_URL}/current-stats`, { cache: 'no-cache' });
         userData.statsData = await res.json();
     } catch (err) {
         console.warn('Could not load current stats:', err);
@@ -103,7 +103,7 @@ async function loadCurrentStats() {
 // alors 0, comme avant.
 async function loadCurrentTeamsData() {
     try {
-        const res = await fetch(`${BASE_URL}/current-teams`, { cache: 'no-store' });
+        const res = await fetch(`${BASE_URL}/current-teams`, { cache: 'no-cache' });
         userData.teamsData = await res.json();
     } catch (err) {
         console.warn('Could not load current teams:', err);
@@ -199,6 +199,23 @@ let storyPinnedKey = null;
 const STORY_LIVE_POLL_MS = 5000;
 let storyLiveTimer = null;
 
+// Le direct arrive maintenant par Socket.IO (services/scoresEnDirect.js) : le
+// serveur relève la LNH une fois pour tout le monde et ne pousse que ce qui
+// change — un but, une période, un arrêt de jeu. Chaque onglet redemandait
+// tous les matchs toutes les cinq secondes. Le sondage ne sert plus que de
+// secours, le temps que la connexion temps réel revienne.
+let storySuiviSocket = false;   // la page suit le direct par le socket
+let storySocketBranche = false; // écoutes posées, une fois pour toutes
+// Entre deux envois, l'horloge avance dans la page (clock.running) : le
+// serveur ne la recale qu'aux arrêts, aux reprises et aux écarts.
+let storyChronoTimer = null;
+// Un tour complet du carrousel rechargeait tout — /live-games et /nhl-news —,
+// soit toutes les vingt secondes avec trois diapos. Une fois par minute au
+// plus suffit : les matchs arrivent par le socket, les actualités changent à
+// l'heure.
+const STORY_RELOAD_MIN_MS = 60000;
+let storyDernierChargement = 0;
+
 // Durée du clignotement d'un but, animation comprise (voir .sl-goal.is-new
 // dans accueil.css). Passé ce délai la classe retombe : sans ça le dernier
 // but resterait teinté pour toujours chez qui a désactivé les animations,
@@ -216,8 +233,10 @@ async function loadStories() {
     if (!section) return;
     stopStoryTimer();
     stopStoryLivePoll();
+    storyDernierChargement = Date.now();
 
     const [liveGames, news] = await Promise.all([fetchLiveGames(), fetchNhlNews()]);
+    (liveGames || []).forEach(g => storyRecu(g, 0));
 
     storySlides = [
         ...(liveGames || []).map(game => ({ type: 'live', game })),
@@ -282,11 +301,70 @@ function startStoryLivePoll() {
     // Un onglet caché ne consomme ni réseau ni batterie — même règle que le
     // calendrier du tableau de bord et que fzToday.
     if (document.visibilityState !== 'visible') return;
-    storyLiveTimer = setInterval(refreshStoryLive, STORY_LIVE_POLL_MS);
+    demarrerStoryChrono();
+    if (suivreStoryParSocket()) return;
+    demarrerStorySecours();
 }
 
 function stopStoryLivePoll() {
+    arreterStorySecours();
+    arreterStoryChrono();
+    if (storySuiviSocket) {
+        storySuiviSocket = false;
+        const socket = storySocket();
+        if (socket && socket.connected) socket.emit('scores:arreter');
+    }
+}
+
+function demarrerStorySecours() {
+    if (!storyLiveTimer) storyLiveTimer = setInterval(refreshStoryLive, STORY_LIVE_POLL_MS);
+}
+
+function arreterStorySecours() {
     if (storyLiveTimer) { clearInterval(storyLiveTimer); storyLiveTimer = null; }
+}
+
+/** La connexion Socket.IO de l'onglet (activePool.js), ou null. */
+function storySocket() {
+    return typeof window.fzSocketPartage === 'function' ? window.fzSocketPartage() : null;
+}
+
+/** S'abonne au direct poussé. false : pas de socket, le sondage prend le relais. */
+function suivreStoryParSocket() {
+    const socket = storySocket();
+    if (!socket) return false;
+    brancherStoryDirect(socket);
+    storySuiviSocket = true;
+    // Connecté : on s'abonne tout de suite, et le serveur renvoie l'état
+    // complet. Pas encore : l'écoute « connect » le fera, et le sondage
+    // couvre l'attente.
+    if (socket.connected) socket.emit('scores:suivre');
+    else demarrerStorySecours();
+    return true;
+}
+
+function brancherStoryDirect(socket) {
+    if (storySocketBranche) return;
+    storySocketBranche = true;
+    socket.on('scores:tout', charge => {
+        if (storySuiviSocket && charge) appliquerStoryDirect(charge.games, charge.ageMs);
+    });
+    socket.on('scores:match', charge => {
+        if (storySuiviSocket && charge && charge.game) appliquerStoryMatch(charge.game, charge.ageMs);
+    });
+    socket.on('scores:chronos', liste => {
+        if (storySuiviSocket && Array.isArray(liste)) liste.forEach(appliquerStoryChrono);
+    });
+    // La salle du direct ne survit pas à une reconnexion : on s'y réabonne,
+    // et le sondage, qui couvrait la coupure, s'arrête.
+    socket.on('connect', () => {
+        if (!storySuiviSocket) return;
+        arreterStorySecours();
+        socket.emit('scores:suivre');
+    });
+    socket.on('disconnect', () => {
+        if (storySuiviSocket) demarrerStorySecours();
+    });
 }
 
 async function refreshStoryLive() {
@@ -296,6 +374,20 @@ async function refreshStoryLive() {
     // Panne réseau : on garde ce qui est à l'écran. Traiter l'échec comme
     // « plus aucun match » effacerait un tableau indicateur bien vivant.
     if (matchs === null) return;
+    appliquerStoryDirect(matchs, 0);
+}
+
+/** Note l'instant où ce relevé du match est arrivé, pour l'horloge. */
+function storyRecu(g, ageMs) {
+    if (!g) return g;
+    g._recuLe = Date.now();
+    g._ageMs = Number(ageMs) || 0;
+    return g;
+}
+
+/** Tous les matchs en cours — sondage, ou `scores:tout` du socket. */
+function appliquerStoryDirect(matchs, ageMs) {
+    if (!Array.isArray(matchs)) return;
 
     const avant = storySlides.filter(s => s.type === 'live').map(s => String(s.game.id)).join('|');
     const apres = matchs.map(g => String(g.id)).join('|');
@@ -306,13 +398,45 @@ async function refreshStoryLive() {
 
     matchs.forEach(g => {
         const slide = storySlides.find(s => s.type === 'live' && String(s.game.id) === String(g.id));
-        if (slide) slide.game = g;
+        if (slide) slide.game = storyRecu(g, ageMs);
     });
 
     updateStoryPickerScores();
 
     const courant = storySlides[storyIndex];
     if (courant && courant.type === 'live') patchStoryLive(courant.game);
+}
+
+/** Un match dont l'affichage a bougé (`scores:match`). */
+function appliquerStoryMatch(g, ageMs) {
+    const slide = storySlides.find(s => s.type === 'live' && String(s.game.id) === String(g.id));
+    // Un match que la page ne connaît pas : la liste a changé sous elle.
+    if (!slide) { loadStories(); return; }
+    slide.game = storyRecu(g, ageMs);
+    updateStoryPickerScores();
+    if (storySlides[storyIndex] === slide) patchStoryLive(slide.game);
+}
+
+/** Une horloge arrêtée, repartie ou recalée (`scores:chronos`). */
+function appliquerStoryChrono(c) {
+    if (!c || !c.clock) return;
+    const slide = storySlides.find(s => s.type === 'live' && String(s.game.id) === String(c.id));
+    if (!slide) return;
+    slide.game = storyRecu({ ...slide.game, clock: c.clock }, c.ageMs);
+    if (storySlides[storyIndex] === slide) patchStoryClock(slide.game);
+}
+
+function demarrerStoryChrono() {
+    if (storyChronoTimer) return;
+    storyChronoTimer = setInterval(() => {
+        if (document.hidden) return;
+        const courant = storySlides[storyIndex];
+        if (courant && courant.type === 'live') patchStoryClock(courant.game);
+    }, 1000);
+}
+
+function arreterStoryChrono() {
+    if (storyChronoTimer) { clearInterval(storyChronoTimer); storyChronoTimer = null; }
 }
 
 /**
@@ -332,16 +456,22 @@ function patchStoryLive(g) {
     const periode = live.querySelector('.sl-period');
     if (periode) periode.textContent = storyPeriodLabel(g);
 
-    const chrono = live.querySelector('.sl-clock');
-    if (chrono) {
-        chrono.textContent = storyClockLabel(g);
-        chrono.classList.toggle('is-word', storyEnEntracte(g));
-    }
+    patchStoryClock(g);
 
     const pastilles = live.querySelector('.sl-dots');
     if (pastilles) pastilles.innerHTML = storyPeriodDots(g);
 
     patchStoryGoals(live, g);
+}
+
+/** L'horloge seule : à chaque seconde, et à chaque arrêt ou reprise. */
+function patchStoryClock(g) {
+    const card = document.getElementById('storiesCard');
+    const chrono = card && card.querySelector('.sl-live .sl-clock');
+    if (!chrono) return;
+    const texte = storyClockLabel(g);
+    if (chrono.textContent !== texte) chrono.textContent = texte;
+    chrono.classList.toggle('is-word', storyEnEntracte(g));
 }
 
 /**
@@ -406,12 +536,13 @@ function updateStoryPickerScores() {
 }
 
 // Revenir sur l'onglet doit montrer le pointage actuel, pas celui d'il
-// y a dix minutes : on rattrape d'abord, on reprend le suivi ensuite.
+// y a dix minutes. Par le socket, l'abonnement renvoie l'état complet ; sans
+// lui, on rattrape d'abord par une requête.
 document.addEventListener('visibilitychange', () => {
     if (!storySlides.length) return;
     if (document.hidden) { stopStoryLivePoll(); return; }
-    refreshStoryLive();
     startStoryLivePoll();
+    if (!storySuiviSocket) refreshStoryLive();
 });
 
 // ---- Sélecteur de diapo -------------------------------------------------
@@ -708,7 +839,22 @@ function storyPeriodLabel(g) {
 }
 
 function storyClockLabel(g) {
-    return storyEnEntracte(g) ? 'ENTRACTE' : ((g.clock && g.clock.timeRemaining) || '');
+    if (storyEnEntracte(g)) return 'ENTRACTE';
+    const c = g.clock;
+    if (!c) return '';
+    // L'horloge tourne : elle avance ici, depuis l'instant du relevé.
+    if (c.running === true && Number.isFinite(c.secondsRemaining) && g._recuLe) {
+        const ecoule = Math.floor((Date.now() - g._recuLe + (g._ageMs || 0)) / 1000);
+        return storyFormatChrono(Math.max(0, c.secondsRemaining - ecoule));
+    }
+    return c.timeRemaining || '';
+}
+
+/** 754 → « 12:34 », la forme qu'emploie la LNH. */
+function storyFormatChrono(secondes) {
+    const m = Math.floor(secondes / 60);
+    const s = secondes % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
 function storyPeriodDots(g) {
@@ -810,7 +956,9 @@ function startStoryTimer() {
     if (fill) fill.style.width = '0%';
 
     storyTimer = setInterval(() => {
-        if (storyPaused) return;
+        // Onglet caché : la rotation s'arrête là où elle est — elle
+        // rechargeait les diapos à chaque tour, même sans personne devant.
+        if (storyPaused || document.hidden) return;
         storyElapsed += 100;
         const pct = Math.min(100, (storyElapsed / STORY_SLIDE_MS) * 100);
         if (fill) fill.style.width = `${pct}%`;
@@ -820,7 +968,15 @@ function startStoryTimer() {
             if (fill) fill.style.width = '0%';
             storyIndex++;
             if (storyIndex >= storySlides.length) {
-                loadStories(); // completed a full loop — refresh with live data
+                // Un tour complet. Les matchs sont déjà à jour (socket ou
+                // sondage) ; recharger ne sert qu'aux actualités et aux matchs
+                // qui commencent — au plus une fois par minute.
+                if (Date.now() - storyDernierChargement >= STORY_RELOAD_MIN_MS) {
+                    loadStories();
+                } else {
+                    storyIndex = 0;
+                    renderStorySlide();
+                }
             } else {
                 renderStorySlide();
             }

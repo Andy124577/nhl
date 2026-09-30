@@ -32,6 +32,7 @@
 const scoring = require('../lib/scoring.js');
 const dates = require('../lib/dates.js');
 const lineup = require('../lib/lineup.js');
+const { creerMemoireLectures } = require('../lib/memoireLectures.js');
 
 /**
  * Le club de la LNH repêché compte-t-il dans un pointage de tête-à-tête ?
@@ -83,7 +84,21 @@ function alignementDe(teamData) {
     return { patineurs, gardiens, clubs, joueurs: [...patineurs, ...gardiens] };
 }
 
-function creerServicePointage({ db, calendrierDuJour = null, logger = console }) {
+function creerServicePointage({ db, calendrierDuJour = null, logger = console, confianceMs = 0 }) {
+
+    /**
+     * Les feuilles de match ne changent qu'à l'ingestion — un match qui se
+     * termine, la collecte de 3 h. Le pointage d'un duel était pourtant relu
+     * en base à chaque ouverture de l'accueil et à chaque sondage : ~20 à
+     * 40 Ko par équipe, chaque minute par page ouverte, et une base (Neon)
+     * qui ne s'endormait plus. Les lectures sont gardées tant que rien n'a
+     * été écrit (lib/memoireLectures.js) ; l'ingestion, qui écrit, les efface.
+     */
+    const lectures = creerMemoireLectures({
+        generation: typeof db?.generationDonnees === 'function' ? () => db.generationDonnees() : () => null,
+        dureeMs: confianceMs,
+        max: 300
+    });
 
     /**
      * Les feuilles de match d'une liste de joueurs sur un intervalle
@@ -95,6 +110,11 @@ function creerServicePointage({ db, calendrierDuJour = null, logger = console })
      */
     async function feuilles({ noms, debut, fin, saison }) {
         if (!noms || noms.length === 0) return [];
+        const cle = `feuilles|${saison}|${String(debut)}|${String(fin)}|${[...noms].sort().join('\u0001')}`;
+        return lectures.obtenir(cle, () => lireFeuilles({ noms, debut, fin, saison }));
+    }
+
+    async function lireFeuilles({ noms, debut, fin, saison }) {
         const resultat = await db.query(`
             SELECT player_name, player_id, team_abbrev, position, game_id, game_date,
                    goals, assists, points, shots, plus_minus,
@@ -127,15 +147,18 @@ function creerServicePointage({ db, calendrierDuJour = null, logger = console })
             return { completude: scoring.COMPLETUDE.SANS_OBJET, attendus: 0, recus: 0, journees: [] };
         }
 
-        const resultat = await db.query(`
-            SELECT game_date, COUNT(DISTINCT game_id)::int AS matchs
-              FROM player_game_logs
-             WHERE season = $1 AND game_date >= $2 AND game_date < $3
-             GROUP BY game_date
-        `, [saison, debut, fin]);
+        const lignes = await lectures.obtenir(`ingestion|${saison}|${String(debut)}|${String(fin)}`, async () => {
+            const resultat = await db.query(`
+                SELECT game_date, COUNT(DISTINCT game_id)::int AS matchs
+                  FROM player_game_logs
+                 WHERE season = $1 AND game_date >= $2 AND game_date < $3
+                 GROUP BY game_date
+            `, [saison, debut, fin]);
+            return resultat.rows;
+        });
 
         const recusParJour = new Map(
-            resultat.rows.map(r => [dates.journeeDe(r.game_date), r.matchs])
+            lignes.map(r => [dates.journeeDe(r.game_date), r.matchs])
         );
 
         const detail = [];

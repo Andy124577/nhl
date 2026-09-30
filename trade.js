@@ -322,7 +322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const [statsRes, kitRes] = await Promise.allSettled([
-        fetch(`${BASE_URL}/current-stats`, { cache: 'no-store' }).then(r => r.json()),
+        fetch(`${BASE_URL}/current-stats`, { cache: 'no-cache' }).then(r => r.json()),
         fetch('nhl_filtered_stats.json').then(r => r.json())
     ]);
     if (statsRes.status === 'fulfilled') currentStats = statsRes.value;

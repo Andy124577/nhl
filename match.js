@@ -181,7 +181,7 @@
             .flatMap(c => (equipe.data[c] || []).map(nomDe)).filter(Boolean));
         if (!noms.size) { mesJoueurs = new Set(); return rendre(); }
         try {
-            const reponse = await fetch(`${BASE_URL}/current-stats`, { cache: 'no-store' });
+            const reponse = await fetch(`${BASE_URL}/current-stats`, { cache: 'no-cache' });
             const stats = reponse.ok ? await reponse.json() : null;
             mesJoueurs = new Set(((stats && stats.players) || [])
                 .filter(p => noms.has(p.playerName) && p.playerId)

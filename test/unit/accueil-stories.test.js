@@ -316,10 +316,13 @@ describe('accueil — le suivi rapproché', () => {
     test('/live-games interdit toute remise en cache en aval', () => {
         // Sans ça, un cache de navigateur ou un intermédiaire pourrait
         // resservir un pointage périmé par-dessus un cache déjà court.
+        // Posé une fois, avant toute sortie : cache chaud, réponse fraîche et
+        // panne le portent toutes (le relevé vit dans lireMatchsEnDirect).
         const route = SERVER.slice(SERVER.indexOf("app.get('/live-games'"));
         const corps = route.slice(0, route.indexOf('\n});'));
-        assert.equal(corps.match(/Cache-Control', 'no-store'/g).length, 2,
-            'les deux sorties — cache chaud et réponse fraîche — doivent le poser');
+        const pose = corps.indexOf("res.set('Cache-Control', 'no-store')");
+        assert.ok(pose > 0, 'la route pose no-store');
+        assert.ok(pose < corps.search(/res\.(json|send)\(/), 'avant la première réponse');
     });
 
     test('un onglet caché ne consomme rien', () => {

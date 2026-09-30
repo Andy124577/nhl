@@ -469,3 +469,111 @@ describe('lireDepartsPrevus', () => {
         }
     });
 });
+
+describe('confiance — une seule instance, compteur d’écritures', () => {
+    /**
+     * La même fausse base, plus ce que db.js ajoute : un compteur qui avance
+     * quand une écriture de CE processus se termine (ici, à la fin de chaque
+     * transaction, comme le COMMIT), et le décompte de toutes les requêtes —
+     * chacune réveille Neon.
+     */
+    function monterConfiance(pools, { confianceMs = 60 * 60 * 1000 } = {}) {
+        const db = fausseBase(pools);
+        let generation = 0;
+        let t = Date.UTC(2026, 9, 1);
+        db.requetes = 0;
+        db.generationDonnees = () => generation;
+        db.ecritureDuProcessus = () => { generation += 1; };
+        const query = db.query;
+        db.query = async (...args) => { db.requetes += 1; return query(...args); };
+        const withTransaction = db.withTransaction;
+        db.withTransaction = async (travail) => {
+            const resultat = await withTransaction(travail);
+            generation += 1;
+            return resultat;
+        };
+        const horloge = { maintenant: () => t, avancer: (ms) => { t += ms; } };
+        const store = creerPoolStore({
+            db, usePostgres: true, draftFile: null, logger: silencieux,
+            confianceMs, horloge: horloge.maintenant
+        });
+        return { db, store, horloge };
+    }
+
+    test('sans écriture, une page qui sonde ne réveille plus la base', async () => {
+        const { db, store } = monterConfiance({ A: pool(), B: pool() });
+        await store.lireTous();
+        const apresChargement = db.requetes;
+
+        for (let i = 0; i < 10; i++) {
+            await store.lireTous();
+            await store.lire('A');
+        }
+        assert.equal(db.requetes, apresChargement, 'aucune requête : ni empreinte, ni version');
+    });
+
+    test('une écriture de ce processus fait revérifier une fois, puis la confiance revient', async () => {
+        const { db, store } = monterConfiance({ A: pool(), B: pool() });
+        await store.lireTous();
+
+        await store.muterPool('A', { appliquer: ({ data }) => { data.currentPickIndex = 3; return { valeur: {} }; } });
+        const avant = db.requetes;
+        assert.equal((await store.lire('A')).data.currentPickIndex, 3, 'la copie porte l’écriture, sans requête');
+        assert.equal(db.requetes, avant);
+
+        assert.equal((await store.lireTous()).A.data.currentPickIndex, 3);
+        assert.equal(db.requetes, avant + 1, 'une empreinte pour revalider la table');
+        await store.lireTous();
+        assert.equal(db.requetes, avant + 1, 'puis plus rien');
+    });
+
+    test('n’importe quelle écriture — même hors des pools — fait revérifier', async () => {
+        const { db, store } = monterConfiance({ A: pool() });
+        await store.lireTous();
+        db.ecritureDuProcessus(); // une notification, un échange, un renommage par db.renamePool…
+        db.renommer('A', 'A2');
+        const apres = await store.lireTous();
+        assert.deepEqual(Object.keys(apres), ['A2']);
+    });
+
+    test('ce que le compteur ne voit pas (console, script) se voit après la durée de confiance', async () => {
+        const { db, store, horloge } = monterConfiance({ A: pool() }, { confianceMs: 60 * 60 * 1000 });
+        await store.lireTous();
+
+        db.ecrire('A', pool({ creator: 'console' })); // pas de compteur : une autre porte
+        assert.equal((await store.lire('A')).data.creator, 'alice', 'dans la fenêtre, la copie fait foi');
+
+        horloge.avancer(60 * 60 * 1000);
+        assert.equal((await store.lire('A')).data.creator, 'console');
+        assert.equal((await store.lireTous()).A.data.creator, 'console');
+    });
+
+    test('un pool inconnu de la copie est toujours demandé à la base', async () => {
+        const { db, store } = monterConfiance({ A: pool() });
+        await store.lireTous();
+        db.creer('Neuf', pool({ creator: 'dora' })); // hors compteur
+        const avant = db.requetes;
+        assert.equal((await store.lire('Neuf')).data.creator, 'dora');
+        assert.equal(db.requetes, avant + 1);
+    });
+
+    test('la copie de confiance reste une copie : modifier ce qu’on lit ne change rien', async () => {
+        const { store } = monterConfiance({ A: pool() });
+        await store.lireTous();
+        const lu = await store.lire('A');
+        lu.data.teams.Castors.members.push('intrus');
+        assert.deepEqual((await store.lire('A')).data.teams.Castors.members, ['alice']);
+        const tous = await store.lireTous();
+        tous.A.data.creator = 'intrus';
+        assert.equal((await store.lireTous()).A.data.creator, 'alice');
+    });
+
+    test('confiance à zéro : le comportement d’avant, une empreinte à chaque appel', async () => {
+        const { db, store } = monterConfiance({ A: pool() }, { confianceMs: 0 });
+        await store.lireTous();
+        const avant = db.requetes;
+        await store.lireTous();
+        await store.lire('A');
+        assert.equal(db.requetes, avant + 2);
+    });
+});

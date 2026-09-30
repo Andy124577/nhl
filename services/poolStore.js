@@ -120,7 +120,13 @@ function creerJournal() {
     };
 }
 
-function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
+/**
+ * `confianceMs` : combien de temps la copie en mémoire des pools peut
+ * resservir SANS demander sa version à la base. Seulement quand ce processus
+ * est le seul à écrire (une seule instance) — server.js décide. Voir
+ * `copieDeConfiance` plus bas.
+ */
+function creerPoolStore({ db, usePostgres, draftFile, logger = console, confianceMs = 0, horloge = () => Date.now() }) {
 
     // ───────────────────────── Mode fichier ─────────────────────────
 
@@ -199,14 +205,46 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
         return `${ligne.id}:${Number(ligne.revision) || 1}:${maj}`;
     }
 
+    /**
+     * Confiance dans la copie, quand ce processus est seul à écrire.
+     *
+     * Même revalidée par sa seule version, chaque lecture était une requête :
+     * une page ouverte qui sondait chaque minute réveillait Neon chaque
+     * minute. Avec une seule instance, toute écriture de pool passe par ce
+     * processus — par ce magasin, ou par db.js, dont le compteur d'écritures
+     * (db.generationDonnees) avance à chaque écriture, quelle qu'elle soit.
+     * Tant qu'il n'a pas bougé depuis la dernière vérification, rien n'a pu
+     * changer : la copie ressert sans requête.
+     *
+     * Ce que le compteur ne voit pas — un script, la console Neon — se voit au
+     * plus tard après `confianceMs`, ou au redémarrage.
+     *
+     * `verifiee` : { generation, le } de la dernière confirmation par la base,
+     * pour toute la table (lireTous) ou pour une copie (lire, écriture).
+     */
+    const generationActuelle = typeof db?.generationDonnees === 'function'
+        ? () => db.generationDonnees()
+        : () => null;
+    let tableVerifiee = null;
+
+    function encoreValable(verif, generation) {
+        return confianceMs > 0 && generation !== null && !!verif &&
+            verif.generation === generation && horloge() - verif.le < confianceMs;
+    }
+
+    function copieDeConfiance(copie, generation) {
+        return !!copie && (encoreValable(tableVerifiee, generation) || encoreValable(copie.verifiee, generation));
+    }
+
     /** Range une ligne lue (ou écrite) et renvoie la copie gardée. */
-    function garderCopie(ligne, data) {
+    function garderCopie(ligne, data, generation = generationActuelle()) {
         const copie = {
             version: versionLigne(ligne),
             id: ligne.id,
             revision: Number(ligne.revision) || 1,
             updatedAt: ligne.updated_at ?? null,
-            data
+            data,
+            verifiee: { generation, le: horloge() }
         };
         copiesPools.set(ligne.pool_name, copie);
         empreinteMemo = null;
@@ -271,10 +309,16 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
 
     async function lire(nomPool) {
         if (usePostgres) {
+            // Compteur lu AVANT la requête : une écriture terminée pendant
+            // qu'elle attend fera relire la fois suivante.
+            const generation = generationActuelle();
+            const copie = copiesPools.get(nomPool);
+            if (copieDeConfiance(copie, generation)) {
+                return { id: copie.id, name: nomPool, data: structuredClone(copie.data), revision: copie.revision };
+            }
             // Une seule requête : la version de la ligne toujours, ses données
             // seulement si la copie ne lui correspond plus. Un pool qui n'a
             // pas bougé ne fait sortir de la base que sa version.
-            const copie = copiesPools.get(nomPool);
             const resultat = await db.query(
                 `SELECT id, pool_name, revision, updated_at::text AS updated_at,
                         CASE WHEN id = $2 AND revision = $3 AND updated_at::text = $4
@@ -288,7 +332,13 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
             }
             const ligne = resultat.rows[0];
             // Données absentes = la base a confirmé la copie lue avant la requête.
-            const source = ligne.pool_data != null ? garderCopie(ligne, ligne.pool_data) : copie;
+            let source;
+            if (ligne.pool_data != null) {
+                source = garderCopie(ligne, ligne.pool_data, generation);
+            } else {
+                source = copie;
+                source.verifiee = { generation, le: horloge() };
+            }
             return { id: source.id, name: ligne.pool_name, data: structuredClone(source.data), revision: source.revision };
         }
         const tout = lireFichier();
@@ -298,13 +348,21 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
 
     async function lireTous() {
         if (usePostgres) {
+            // Rien d'écrit depuis la dernière vérification : la copie EST la
+            // table, sans même demander l'empreinte (voir copieDeConfiance).
+            const generation = generationActuelle();
+            if (ordrePools && encoreValable(tableVerifiee, generation)) return servirTous();
+
             // L'empreinte d'abord. Si elle correspond, la copie EST la table :
             // rien d'autre ne sort. Les écritures de ce processus rangent leur
             // résultat dans la copie, donc elles ne la font pas diverger ;
             // seule une écriture d'ailleurs (script, autre instance, renommage)
             // oblige à relire la liste des versions.
             const empreinte = await db.query(SQL_EMPREINTE);
-            if (ordrePools && empreinte.rows[0]?.md5 === empreinteLocale()) return servirTous();
+            if (ordrePools && empreinte.rows[0]?.md5 === empreinteLocale()) {
+                tableVerifiee = { generation, le: horloge() };
+                return servirTous();
+            }
 
             const versions = await db.query('SELECT id, pool_name, revision, updated_at::text AS updated_at FROM pools ORDER BY created_at DESC');
             const aRecharger = versions.rows
@@ -318,7 +376,7 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
                 // La version gardée est celle de la ligne relue, pas celle
                 // annoncée juste avant : si le pool a bougé entre les deux
                 // requêtes, données et revision restent appariées.
-                for (const ligne of frais.rows) garderCopie(ligne, ligne.pool_data);
+                for (const ligne of frais.rows) garderCopie(ligne, ligne.pool_data, generation);
             }
 
             const presents = new Set(versions.rows.map(ligne => ligne.pool_name));
@@ -328,6 +386,7 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console }) {
             // Un pool supprimé ou renommé entre les deux requêtes n'a pas de
             // copie : servirTous() l'omet.
             ordrePools = versions.rows.map(ligne => ligne.pool_name);
+            tableVerifiee = { generation, le: horloge() };
             return servirTous();
         }
         const tout = lireFichier();

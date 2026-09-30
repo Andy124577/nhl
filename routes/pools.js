@@ -14,6 +14,7 @@
 
 'use strict';
 
+const crypto = require('node:crypto');
 const bcrypt = require('bcryptjs');
 
 const { contientGrossierete } = require('../profanity.js');
@@ -115,6 +116,13 @@ function monter(app, ctx) {
      */
     app.get('/draft', async (req, res) => {
         try {
+            // Un seul pool : `?pool=NOM`. La salle de repêchage et le filet
+            // de l'accueil n'en suivent qu'un, mais relisaient l'état de TOUS
+            // les pools du site — à chaque choix, par onglet ouvert. Même forme
+            // de réponse (`{ nom: vue }`), mêmes droits.
+            const seul = typeof req.query?.pool === 'string' ? req.query.pool.trim() : '';
+            if (seul) return repondreUnPool(req, res, seul);
+
             const pools = await store.lireTous();
             const sortie = {};
             for (const [nom, enveloppe] of Object.entries(pools)) {
@@ -128,6 +136,27 @@ function monter(app, ctx) {
             repondreErreur(res, erreur, '/draft');
         }
     });
+
+    /**
+     * Un pool, avec un 304 tant que sa révision n'a pas bougé : le sondage de
+     * secours de la salle de repêchage ne fait plus sortir que quelques
+     * octets quand rien n'a changé. L'étiquette porte la personne — deux
+     * comptes dans le même navigateur ne voient pas la même vue.
+     */
+    async function repondreUnPool(req, res, nom) {
+        const enveloppe = await store.lire(nom);
+        if (!enveloppe) return res.json({});
+        const membre = !!(req.auth && (req.auth.isAdmin || authz.estMembre(enveloppe.data, req.auth.username)));
+        const qui = crypto.createHash('sha1').update(String(req.auth?.username || '')).digest('base64url').slice(0, 10);
+        res.set('Cache-Control', 'no-cache');
+        res.set('ETag', `W/"pool-${enveloppe.id ?? 'f'}-${enveloppe.revision}-${membre ? 'm' : 'p'}-${qui}"`);
+        if (req.fresh) return res.status(304).end();
+        res.json({
+            [nom]: membre
+                ? authz.vueMembre(nom, enveloppe.data, enveloppe.revision)
+                : authz.resumePublic(nom, enveloppe.data)
+        });
+    }
 
     /** Les pools dont la personne connectée est membre. */
     app.get('/active-drafts', auth.requireAuth, async (req, res) => {

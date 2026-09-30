@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Load current stats
     try {
-        const statsResponse = await fetch(`${BASE_URL}/current-stats`, { cache: 'no-store' });
+        const statsResponse = await fetch(`${BASE_URL}/current-stats`, { cache: 'no-cache' });
         currentStats = await statsResponse.json();
         console.log(`✅ Current stats loaded: ${currentStats.players.length} players`);
     } catch (error) {
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Load current team standings
     try {
-        const teamsResponse = await fetch(`${BASE_URL}/current-teams`, { cache: 'no-store' });
+        const teamsResponse = await fetch(`${BASE_URL}/current-teams`, { cache: 'no-cache' });
         currentTeams = await teamsResponse.json();
         console.log(`✅ Current team standings loaded: ${currentTeams.teams.length} teams`);
     } catch (error) {

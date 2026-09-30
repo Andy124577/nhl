@@ -54,6 +54,14 @@ const TYPES_COMPTES = new Set([2]);
 
 function creerCalendrierLNH({ db = null, fetchImpl = null, logger = console, maintenant = () => new Date() } = {}) {
     const memoire = new Map(); // journée → { matchs, lu }
+    /**
+     * journée passée → compte déjà rangé en base. La semaine revient à chaque
+     * relecture du jour (toutes les cinq minutes tant que l'accueil est
+     * ouvert), et ses jours passés étaient réécrits à chaque fois : une
+     * écriture toutes les cinq minutes suffisait à garder Neon éveillé. Un jour
+     * passé ne s'écrit plus que si son compte a changé.
+     */
+    const ranges = new Map();
 
     const recuperer = fetchImpl || ((...args) => fetch(...args));
 
@@ -67,7 +75,10 @@ function creerCalendrierLNH({ db = null, fetchImpl = null, logger = console, mai
         if (!db || !db.loadCachedStats) return null;
         try {
             const range = await db.loadCachedStats(CLE_CACHE(journee));
-            if (range && Number.isFinite(range.matchs)) return range.matchs;
+            if (range && Number.isFinite(range.matchs)) {
+                ranges.set(journee, range.matchs);
+                return range.matchs;
+            }
         } catch (erreur) {
             logger.error?.('⚠️ Cache de calendrier illisible :', erreur.message);
         }
@@ -76,8 +87,11 @@ function creerCalendrierLNH({ db = null, fetchImpl = null, logger = console, mai
 
     async function versLaBase(journee, matchs) {
         if (!db || !db.saveCachedStats) return;
-        try { await db.saveCachedStats(CLE_CACHE(journee), { journee, matchs }); }
-        catch (erreur) { logger.error?.('⚠️ Cache de calendrier non écrit :', erreur.message); }
+        if (ranges.get(journee) === matchs) return;
+        try {
+            await db.saveCachedStats(CLE_CACHE(journee), { journee, matchs });
+            ranges.set(journee, matchs);
+        } catch (erreur) { logger.error?.('⚠️ Cache de calendrier non écrit :', erreur.message); }
     }
 
     /**

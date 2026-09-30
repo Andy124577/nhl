@@ -55,6 +55,7 @@ const { creerServiceAujourdhui } = require("./services/today.js");
 const { creerServiceRecap } = require("./services/recap.js");
 const { creerMinuteurChoix } = require("./services/minuteurChoix.js");
 const { creerAgendaDeparts } = require("./services/agendaDeparts.js");
+const { creerScoresEnDirect } = require("./services/scoresEnDirect.js");
 const { creerServicePointage } = require("./services/scoring.js");
 const { creerServiceH2H } = require("./services/h2h.js");
 const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
@@ -83,6 +84,25 @@ const TRANSACTIONS_FILE = `${DATA_DIR}/nhl_transactions.json`;
 
 // Use PostgreSQL if DATABASE_URL is set, otherwise use JSON files
 const USE_POSTGRES = !!process.env.DATABASE_URL;
+
+/**
+ * Combien de temps une lecture en mémoire ressert sans redemander à la base,
+ * tant que ce processus n'a rien écrit (db.generationDonnees) : pools,
+ * sessions, notifications, pointages des duels.
+ *
+ * Neon (plan gratuit) s'endort après cinq minutes sans requête et ne compte
+ * que 100 heures de calcul par mois ; une page ouverte qui relisait la base à
+ * chaque sondage l'empêchait de dormir. Avec une seule instance — Render
+ * gratuit n'en permet pas d'autre —, toute écriture passe par ce processus et
+ * se voit aussitôt. Ce délai ne borne que ce qui change par une autre porte :
+ * un script, la console Neon.
+ *
+ * MEMOIRE_CONFIANCE_MIN=0 le coupe : à faire AVANT de lancer une deuxième
+ * instance, dont les écritures ne passeraient pas par ce compteur.
+ */
+const CONFIANCE_MS = USE_POSTGRES
+    ? Math.max(0, Number(process.env.MEMOIRE_CONFIANCE_MIN ?? 60)) * 60 * 1000
+    : 0;
 
 /**
  * Codes des 32 clubs de la LNH (alignements, transactions).
@@ -152,10 +172,13 @@ const auth = creerAuth({
     // Le cookie n'est marqué Secure qu'en production : en développement le
     // serveur répond en clair, et un cookie Secure n'y serait jamais renvoyé.
     secure: process.env.NODE_ENV === 'production',
-    originesAutorisees: ORIGINES_AUTORISEES
+    originesAutorisees: ORIGINES_AUTORISEES,
+    // Tout ce qui change une session passe par ce magasin et l'efface : seul
+    // un changement fait par la bande (un script qui promeut un compte) attend.
+    memoireSessions: CONFIANCE_MS > 0 ? { dureeMs: CONFIANCE_MS } : {}
 });
 
-const poolStore = creerPoolStore({ db, usePostgres: USE_POSTGRES, draftFile: DRAFT_FILE });
+const poolStore = creerPoolStore({ db, usePostgres: USE_POSTGRES, draftFile: DRAFT_FILE, confianceMs: CONFIANCE_MS });
 const presence = creerPresence();
 // Départs de repêchage prévus, en mémoire : la passe de chaque minute ne lit
 // la base que lorsqu'un départ est dû (services/agendaDeparts.js).
@@ -177,6 +200,17 @@ app.use((req, res, next) => {
     } else if (reqPath.match(/\.(html|htm)$/)) {
         // HTML files: cache for 5 minutes with revalidation
         res.setHeader("Cache-Control", "public, max-age=300, must-revalidate");
+    } else if (reqPath === '/draftkit.json' || reqPath === '/draftkit-watchlist.json') {
+        // La trousse de repêchage (1 Mo, 134 Ko compressée) : chargée avec un
+        // tampon ?v= par draftkitData.js, comme un script. Servie « no-store »,
+        // elle repartait en entier à chaque ouverture de l'accueil et de la
+        // salle de repêchage — le plus gros poste de la bande passante de
+        // Render, dont le plan gratuit n'inclut que 5 Go par mois.
+        res.setHeader("Cache-Control", "public, max-age=604800, must-revalidate");
+    } else if (reqPath === '/nhl_filtered_stats.json') {
+        // Réécrit chaque nuit : gardé par le navigateur, mais revérifié à
+        // chaque fois — un 304 de quelques octets tant qu'il n'a pas changé.
+        res.setHeader("Cache-Control", "no-cache");
     } else {
         // Default: no cache for dynamic content
         res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -524,7 +558,8 @@ const calendrierLNH = creerCalendrierLNH({ db });
 /** Le service de pointage : une seule porte vers « combien vaut cette equipe ». */
 const pointage = creerServicePointage({
     db,
-    calendrierDuJour: (journee) => calendrierLNH.matchsTermines(journee)
+    calendrierDuJour: (journee) => calendrierLNH.matchsTermines(journee),
+    confianceMs: CONFIANCE_MS
 });
 
 /** Le service de finalisation, partage par la route manuelle et le travail de fond. */
@@ -548,7 +583,8 @@ const aujourdhui = creerServiceAujourdhui({
     pointage,
     serviceH2H,
     saisonCourante: () => currentSeasonString(),
-    calendrierLNH
+    calendrierLNH,
+    confianceMs: CONFIANCE_MS
 });
 
 contexteRoutes.pointage = pointage;
@@ -1240,6 +1276,30 @@ function triggerBackgroundStatsRefresh(reason) {
         .catch(e => console.error("❌ Background stats refresh failed:", e));
 }
 
+/**
+ * Répond 304 si le navigateur a déjà cette version.
+ *
+ * `/current-stats` (≈ 24 Ko compressés) et `/current-teams` repartaient en
+ * entier à chaque page, alors qu'ils ne changent qu'une fois par jour : sur
+ * le plan gratuit de Render (5 Go par mois), c'est de la bande passante
+ * payée pour rien. L'étiquette est calculée d'après la date de mise à jour,
+ * sans sérialiser la réponse — le serveur n'a qu'un dixième de processeur.
+ *
+ * Renvoie true si le 304 est parti.
+ */
+function repondreSiInchange(req, res, etiquette) {
+    res.set('ETag', `W/"${etiquette}"`);
+    if (req.fresh) {
+        res.status(304).end();
+        return true;
+    }
+    return false;
+}
+
+function etiquetteDe(...parties) {
+    return require('crypto').createHash('sha1').update(parties.map(String).join('|')).digest('base64url').slice(0, 20);
+}
+
 // Route to get current stats
 app.get("/current-stats", async (req, res) => {
     try {
@@ -1259,7 +1319,12 @@ app.get("/current-stats", async (req, res) => {
             triggerBackgroundStatsRefresh(reason);
         }
 
-        res.set('Cache-Control', 'no-store');
+        // Gardé par le navigateur mais revérifié à chaque fois : un 304 tant
+        // que la collecte n'a pas tourné.
+        res.set('Cache-Control', 'no-cache');
+        if (repondreSiInchange(req, res, etiquetteDe(
+            'stats', stats.lastUpdated, stats.season, stats.players.length, stats.seasonStarted, saison.hasStarted
+        ))) return;
         // Un cache écrit avant l'introduction de la règle ne porte pas le
         // drapeau : on le renseigne à la volée pour que le classement et
         // l'accueil sachent toujours à quoi s'en tenir.
@@ -1276,7 +1341,10 @@ app.get("/current-stats", async (req, res) => {
 // totals) and BEFORE that evening's games (so it's a true start-of-day mark).
 async function snapshotAllPoolRanks() {
     try {
-        const pools = await db.getAllPools();
+        // La copie en mémoire du magasin, pas db.getAllPools() : celle-ci
+        // faisait sortir de Neon toutes les données de tous les pools, chaque
+        // nuit, pour les relire telles qu'on les avait déjà.
+        const pools = await poolStore.lireDonneesBrutes();
         const statsData = await loadCurrentStats();
         // Les clubs repêchés comptent dans le classement (2×V + DP) : sans
         // eux, le rang enregistré ici ne correspondrait pas au total que
@@ -1285,21 +1353,34 @@ async function snapshotAllPoolRanks() {
         // La journée du pool, pas celle d'UTC : la tâche tourne à minuit à
         // l'Est, et c'est cette journée-là que /pool-rank-movement relira.
         const todayISO = datesPool.journeeLocale();
-        let rowCount = 0;
 
+        const lignes = [];
         for (const [poolName, poolData] of Object.entries(pools)) {
             const scores = computeTeamSeasonScores(poolData, statsData.players || [], teamsData.teams || []);
-            for (const t of scores) {
-                await db.query(`
-                    INSERT INTO pool_rank_snapshots (pool_name, team_name, rank, points, snapshot_date)
-                    VALUES ($1, $2, $3, $4, $5)
-                    ON CONFLICT (pool_name, team_name, snapshot_date)
-                    DO UPDATE SET rank = EXCLUDED.rank, points = EXCLUDED.points
-                `, [poolName, t.teamName, t.rank, t.score, todayISO]);
-                rowCount++;
-            }
+            for (const t of scores) lignes.push([poolName, t.teamName, t.rank, t.score]);
         }
-        console.log(`✅ Pool rank snapshot done: ${rowCount} team rows across ${Object.keys(pools).length} pools`);
+
+        // Par paquets plutôt qu'une requête par équipe : mille pools, c'était
+        // dix mille allers-retours vers la base, l'un après l'autre.
+        const PAQUET = 1000;
+        for (let i = 0; i < lignes.length; i += PAQUET) {
+            const paquet = lignes.slice(i, i + PAQUET);
+            await db.query(`
+                INSERT INTO pool_rank_snapshots (pool_name, team_name, rank, points, snapshot_date)
+                SELECT pool_name, team_name, rank, points, $5::date
+                  FROM unnest($1::text[], $2::text[], $3::int[], $4::numeric[])
+                       AS t(pool_name, team_name, rank, points)
+                ON CONFLICT (pool_name, team_name, snapshot_date)
+                DO UPDATE SET rank = EXCLUDED.rank, points = EXCLUDED.points
+            `, [
+                paquet.map(l => l[0]),
+                paquet.map(l => l[1]),
+                paquet.map(l => l[2]),
+                paquet.map(l => l[3]),
+                todayISO
+            ]);
+        }
+        console.log(`✅ Pool rank snapshot done: ${lignes.length} team rows across ${Object.keys(pools).length} pools`);
     } catch (error) {
         console.error('❌ Error snapshotting pool ranks:', error.message);
     }
@@ -1345,6 +1426,11 @@ function lancerCollecteJournaux(origine) {
         const { exec } = require('child_process');
         exec('node fetch_game_logs.js', (error, stdout, stderr) => {
             collecteJournauxEnCours = false;
+            // Le processus à part a écrit des feuilles de match que le
+            // compteur d'écritures de ce processus n'a pas vues : tout ce qui
+            // en est tiré (pointages des duels) sera relu. Même en échec — il a
+            // pu écrire une partie avant de tomber.
+            if (typeof db.noterEcritureExterne === 'function') db.noterEcritureExterne();
             if (error) {
                 console.error('❌ Game logs fetch failed:', error);
                 console.error('stderr:', stderr);
@@ -1835,6 +1921,7 @@ app.get('/current-teams', async (req, res) => {
         }
 
         res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400');
+        if (repondreSiInchange(req, res, etiquetteDe('clubs', stats.lastUpdated, (stats.teams || []).length))) return;
         res.json(stats);
     } catch (error) {
         console.error('❌ Error in /current-teams route:', error);
@@ -1856,62 +1943,93 @@ let liveGamesCache = { data: null, fetchedAt: 0 };
 // Il reste partagé par tous les membres — la LNH n'est donc sollicitée qu'une
 // fois par tranche de cinq secondes, quel que soit le nombre de spectateurs.
 const LIVE_GAMES_TTL_MS = 5 * 1000;
+/** Un relevé en cours : les demandes simultanées l'attendent au lieu d'en lancer un chacune. */
+let liveGamesEnVol = null;
+
+/**
+ * Le relevé partagé des matchs en cours : { games, generatedAt, lu } — `lu`,
+ * l'instant du relevé. null si la LNH n'a pas répondu : c'est à l'appelant de
+ * décider (la route renvoie une liste vide honnête, le direct poussé garde ce
+ * que les pages affichent).
+ *
+ * Servi à /live-games et au direct poussé par Socket.IO
+ * (services/scoresEnDirect.js), qui en tire une seule fois pour tous.
+ */
+async function lireMatchsEnDirect() {
+    const now = Date.now();
+    if (liveGamesCache.data && (now - liveGamesCache.fetchedAt) < LIVE_GAMES_TTL_MS) {
+        return { ...liveGamesCache.data, lu: liveGamesCache.fetchedAt };
+    }
+    if (!liveGamesEnVol) {
+        liveGamesEnVol = releverMatchsEnDirect().finally(() => { liveGamesEnVol = null; });
+    }
+    return liveGamesEnVol;
+}
+
+async function releverMatchsEnDirect() {
+    const now = Date.now();
+    const response = await fetch('https://api-web.nhle.com/v1/score/now', { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) return null;
+    const data = await response.json();
+    const allGames = data.games || [];
+
+    const liveGames = allGames
+        .filter(g => g.gameState === 'LIVE' || g.gameState === 'CRIT')
+        .map(g => {
+            // Most recent goals first — a story slide only has room for a
+            // few, and "what just happened" matters more than the opener.
+            const recentGoals = (g.goals || []).slice(-4).reverse().map(goal => ({
+                team: goal.teamAbbrev,
+                scorer: goal.name?.default || '',
+                assists: (goal.assists || []).map(a => a.name?.default).filter(Boolean),
+                period: goal.periodDescriptor?.number ?? goal.period ?? null,
+                timeInPeriod: goal.timeInPeriod || '',
+                strength: goal.strength || 'ev',
+                awayScore: goal.awayScore,
+                homeScore: goal.homeScore
+            }));
+
+            return {
+                id: g.id,
+                state: g.gameState,
+                period: g.periodDescriptor?.number ?? g.period ?? null,
+                periodType: g.periodDescriptor?.periodType || null,
+                clock: g.clock ? {
+                    timeRemaining: g.clock.timeRemaining || '',
+                    inIntermission: !!g.clock.inIntermission,
+                    // De quoi faire avancer l'horloge dans la page entre
+                    // deux envois (voir lib/scoresEnDirect.js) : elle ne
+                    // repart du serveur qu'aux arrêts et aux reprises.
+                    secondsRemaining: Number.isFinite(g.clock.secondsRemaining) ? g.clock.secondsRemaining : null,
+                    running: typeof g.clock.running === 'boolean' ? g.clock.running : null
+                } : null,
+                away: { abbrev: g.awayTeam?.abbrev || '', name: g.awayTeam?.name?.default || '', score: g.awayTeam?.score ?? 0 },
+                home: { abbrev: g.homeTeam?.abbrev || '', name: g.homeTeam?.name?.default || '', score: g.homeTeam?.score ?? 0 },
+                events: recentGoals
+            };
+        });
+
+    const payload = { games: liveGames, generatedAt: new Date().toISOString() };
+    liveGamesCache = { data: payload, fetchedAt: now };
+    return { ...payload, lu: now };
+}
 
 app.get('/live-games', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
     try {
-        const now = Date.now();
-        if (liveGamesCache.data && (now - liveGamesCache.fetchedAt) < LIVE_GAMES_TTL_MS) {
-            res.set('Cache-Control', 'no-store');
-            return res.json(liveGamesCache.data);
-        }
-
-        const response = await fetch('https://api-web.nhle.com/v1/score/now');
-        if (!response.ok) {
-            return res.json({ games: [], generatedAt: new Date().toISOString() });
-        }
-        const data = await response.json();
-        const allGames = data.games || [];
-
-        const liveGames = allGames
-            .filter(g => g.gameState === 'LIVE' || g.gameState === 'CRIT')
-            .map(g => {
-                // Most recent goals first — a story slide only has room for a
-                // few, and "what just happened" matters more than the opener.
-                const recentGoals = (g.goals || []).slice(-4).reverse().map(goal => ({
-                    team: goal.teamAbbrev,
-                    scorer: goal.name?.default || '',
-                    assists: (goal.assists || []).map(a => a.name?.default).filter(Boolean),
-                    period: goal.periodDescriptor?.number ?? goal.period ?? null,
-                    timeInPeriod: goal.timeInPeriod || '',
-                    strength: goal.strength || 'ev',
-                    awayScore: goal.awayScore,
-                    homeScore: goal.homeScore
-                }));
-
-                return {
-                    id: g.id,
-                    state: g.gameState,
-                    period: g.periodDescriptor?.number ?? g.period ?? null,
-                    periodType: g.periodDescriptor?.periodType || null,
-                    clock: g.clock ? {
-                        timeRemaining: g.clock.timeRemaining || '',
-                        inIntermission: !!g.clock.inIntermission
-                    } : null,
-                    away: { abbrev: g.awayTeam?.abbrev || '', name: g.awayTeam?.name?.default || '', score: g.awayTeam?.score ?? 0 },
-                    home: { abbrev: g.homeTeam?.abbrev || '', name: g.homeTeam?.name?.default || '', score: g.homeTeam?.score ?? 0 },
-                    events: recentGoals
-                };
-            });
-
-        const payload = { games: liveGames, generatedAt: new Date().toISOString() };
-        liveGamesCache = { data: payload, fetchedAt: now };
-        res.set('Cache-Control', 'no-store');
+        const charge = await lireMatchsEnDirect();
+        if (!charge) return res.json({ games: [], generatedAt: new Date().toISOString() });
+        const { lu, ...payload } = charge;
         res.json(payload);
     } catch (error) {
         console.error('❌ Error fetching live games:', error.message);
         res.json({ games: [], generatedAt: new Date().toISOString() });
     }
 });
+
+// Le même relevé, poussé aux pages qui suivent le direct au lieu de sonder.
+const scoresEnDirect = creerScoresEnDirect({ io, lire: lireMatchsEnDirect });
+io.on('connection', (socket) => scoresEnDirect.brancher(socket));
 
 // ============================================================
 // SAISON EN COURS — numéro (20262027), phase, dates d'ouverture et de
