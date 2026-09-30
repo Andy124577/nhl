@@ -892,7 +892,7 @@
         try {
             if (window.FZAlertes || document.querySelector('script[data-fz-alertes-script]')) return;
             const script = document.createElement('script');
-            script.src = 'pushNotifications.js?v=20260930b';
+            script.src = 'pushNotifications.js?v=20260930c';
             script.defer = true;
             script.dataset.fzAlertesScript = '';
             (document.head || document.body).appendChild(script);

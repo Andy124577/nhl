@@ -131,3 +131,98 @@
 .fz-alertes-reglage .fz-alertes-outils { flex: 0 0 auto; flex-wrap: nowrap; margin-left: auto; }
 .fz-alertes-reglage .fz-alertes-btn { flex: none; min-height: 32px; padding: 0 10px; font-size: .8rem; white-space: nowrap; }
 .fz-notif-foot .fz-alertes-msg { margin-top: 6px; }
+
+/* ---------- La bande de la salle de repêchage ----------
+   Sous le carrousel des choix, seulement tant que les alertes sont coupées.
+   Bureau : dans l'espace libre à droite de « Disponibles / Tous », à la même
+   hauteur. Positionnée dans la colonne plutôt que glissée entre les onglets
+   et les filtres : draftDesk.js déplace ces éléments, pas elle. */
+
+.fz-alertes-bande-corps {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 36px;
+    font-size: .8125rem;
+    color: var(--text-secondary);
+}
+.fz-alertes-bande .fz-alertes-ico {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    color: var(--primary-text);
+}
+.fz-alertes-bande-txt {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.fz-alertes-bande-txt strong { margin-right: 4px; color: var(--text-main); font-weight: 700; }
+.fz-alertes-bande-txt .is-erreur { color: var(--primary-text); }
+.fz-alertes-bande-court { display: none; }
+.fz-alertes-bande .fz-alertes-btn { flex: none; min-height: 30px; padding: 0 14px; font-size: .8rem; }
+.fz-alertes-masquer {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    margin-left: -4px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+}
+.fz-alertes-masquer:hover { color: var(--text-main); background: var(--bg-gray-light); }
+.fz-alertes-masquer:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+/* Deux emplacements dans la salle, un par disposition : chacun se tait dans
+   l'autre. */
+@media (min-width: 1100px) {
+    body.fz-draft .fz-alertes-bande--tel { display: none !important; }
+    body.fz-draft .player-selection-card { position: relative; }
+    /* Même rangée que les onglets (marge du haut 16 px, hauteur 36 px), sans
+       jamais les chevaucher : ils tiennent dans les 220 px de gauche. */
+    body.fz-draft .player-selection-card > .fz-alertes-bande--bureau {
+        position: absolute;
+        top: 16px;
+        right: 20px;
+        max-width: calc(100% - 240px);
+        z-index: 1;
+    }
+}
+/* Bureau étroit : la colonne centrale n'a pas la place du libellé entier —
+   un mot entier plutôt qu'un « Alertes sur ce… » tronqué. */
+@media (min-width: 1100px) and (max-width: 1199px) {
+    body.fz-draft .fz-alertes-bande--bureau .fz-alertes-bande-long { display: none; }
+    body.fz-draft .fz-alertes-bande--bureau .fz-alertes-bande-court { display: inline; }
+    body.fz-draft .fz-alertes-bande--bureau .fz-alertes-bande-sous:not(.is-erreur) { display: none; }
+}
+
+/* Téléphone : juste sous le carrousel, dans le cadre fixe de la salle — donc
+   visible sur les trois onglets. Compacte : c'est de la place prise à la
+   liste, tant que les alertes sont coupées et la bande pas masquée. */
+@media (max-width: 1099px) {
+    body.fz-draft .fz-alertes-bande--bureau { display: none !important; }
+    body.fz-draft .fz-alertes-bande--tel {
+        margin: 8px 12px;
+        padding: 5px 4px 5px 7px;
+        border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border-light));
+        border-radius: 10px;
+        background: color-mix(in srgb, var(--primary) 6%, var(--card));
+    }
+    body.fz-draft .fz-alertes-bande--tel .fz-alertes-bande-corps { gap: 8px; min-height: 32px; font-size: .78rem; }
+    body.fz-draft .fz-alertes-bande--tel .fz-alertes-bande-txt {
+        flex: 1 1 auto;
+        white-space: normal;
+        line-height: 1.25;
+    }
+    body.fz-draft .fz-alertes-bande--tel .fz-alertes-bande-long { display: block; margin: 0; }
+    body.fz-draft .fz-alertes-bande--tel .fz-alertes-btn { min-height: 30px; padding: 0 12px; }
+}

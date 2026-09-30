@@ -6,11 +6,9 @@
  *   - l'abonnement de CE navigateur : service worker (sw.js), autorisation,
  *     pushManager, puis remise au serveur (/api/push/subscribe) ;
  *   - le réglage, là où une page pose `data-fz-alertes` : « carte » dans le
- *     salon du repêchage, « reglage » au pied de la cloche. Une page qui se
- *     redessine (le salon, à chaque signal temps réel) retrouve le sien tout
- *     seul ;
- *   - une seule proposition dans la salle de repêchage, au moment où elle a
- *     du sens : pendant qu'on attend son tour, jamais pendant qu'on choisit.
+ *     salon du repêchage, « reglage » au pied de la cloche, « bande » sous le
+ *     carrousel de la salle de repêchage. Une page qui se redessine (le salon,
+ *     à chaque signal temps réel) retrouve le sien tout seul.
  *
  * L'autorisation n'est demandée qu'après un clic : un navigateur ne l'accorde
  * pas autrement (Safari), ou la relègue en silence (Chrome).
@@ -23,12 +21,12 @@
     if (window.FZAlertes) return;
 
     const CLE_SYNCHRO = 'fzAlertes:v1';
-    const CLE_PROPOSEE = 'fzAlertes:proposee';
+    const CLE_MASQUEE = 'fzAlertes:bande-masquee';
     // La page reconfirme son abonnement au serveur de temps en temps, pas à
     // chaque ouverture : chaque confirmation est une écriture en base.
     const RESYNCHRO_MS = 7 * 24 * 60 * 60 * 1000;
-    // « Plus tard » dans la salle de repêchage : on ne redemande pas avant.
-    const REPROPOSER_MS = 30 * 24 * 60 * 60 * 1000;
+    // La bande de la salle masquée d'un clic : elle ne revient pas avant.
+    const MASQUEE_MS = 30 * 24 * 60 * 60 * 1000;
 
     const moi = document.currentScript;
 
@@ -98,8 +96,6 @@
     let occupe = false;
     let message = null;          // { texte, ton: 'ok' | 'erreur' | '' }
     let clePublique = null;
-    // Coupées pendant cette visite : la salle ne les repropose pas aussitôt.
-    let coupeesIci = false;
     const ecouteurs = new Set();
 
     function changer(nouveau) {
@@ -200,7 +196,7 @@
      * Activer : appelé depuis un clic, et l'autorisation AVANT tout `await` —
      * Safari n'ouvre la question qu'au cours du geste lui-même.
      */
-    async function activer({ dialogue = false } = {}) {
+    async function activer() {
         if (occupe || !clePublique) return false;
         const autorisation = demanderAutorisation();
         occupe = true;
@@ -218,12 +214,7 @@
             changer('actif');
             return true;
         } catch {
-            const texte = 'L’abonnement a échoué dans ce navigateur. Réessayez dans un instant, ou essayez un autre navigateur.';
-            if (dialogue && typeof window.fzAlert === 'function') {
-                window.fzAlert({ type: 'error', title: 'Alertes non activées', message: texte });
-            } else {
-                dire(texte, 'erreur');
-            }
+            dire('L’abonnement a échoué dans ce navigateur. Réessayez dans un instant, ou essayez un autre navigateur.', 'erreur');
             return false;
         } finally {
             occupe = false;
@@ -234,7 +225,6 @@
     async function desactiver() {
         if (occupe) return;
         occupe = true;
-        coupeesIci = true;
         dire(null);
         try {
             const enregistrement = await enregistrementExistant();
@@ -329,7 +319,32 @@
             ${ligneMessage()}`;
     }
 
-    const RENDUS = { carte, reglage };
+    const bandeMasquee = () => {
+        const le = lire(CLE_MASQUEE);
+        return !!le && Date.now() - le < MASQUEE_MS;
+    };
+
+    /**
+     * La salle de repêchage : une ligne sous le carrousel, seulement tant que
+     * les alertes sont coupées — c'est là qu'on attend son tour. Activées,
+     * bloquées ou impossibles ici, elle s'efface : la cloche garde le réglage
+     * complet. La croix la masque un mois sur cet appareil.
+     */
+    function bande() {
+        if (etat !== 'inactif' || bandeMasquee()) return '';
+        const sous = message ? message.texte : 'Être averti à votre tour de repêcher.';
+        return `
+            <div class="fz-alertes-bande-corps">
+                <span class="fz-alertes-ico" aria-hidden="true">${svg('cloche', 16)}</span>
+                <span class="fz-alertes-bande-txt"><strong class="fz-alertes-bande-long">Alertes sur cet appareil</strong><strong class="fz-alertes-bande-court">Alertes</strong>
+                    <span class="fz-alertes-bande-sous${message && message.ton === 'erreur' ? ' is-erreur' : ''}" role="status">${echapper(sous)}</span></span>
+                ${bouton('activer', 'Activer', true)}
+                <button type="button" class="fz-alertes-masquer" data-fz-alertes-action="masquer"
+                    aria-label="Masquer cette suggestion pendant un mois" title="Masquer">×</button>
+            </div>`;
+    }
+
+    const RENDUS = { carte, reglage, bande };
     let version = 0;
     let planifie = false;
 
@@ -378,6 +393,7 @@
         if (action === 'activer') activer();
         else if (action === 'desactiver') desactiver();
         else if (action === 'essai') essayer();
+        else if (action === 'masquer') { ecrire(CLE_MASQUEE, Date.now()); rendre(); }
     });
 
     // Une page qui redessine son contenu (le salon) remet un emplacement vide.
@@ -386,40 +402,6 @@
     }).observe(document.documentElement, { childList: true, subtree: true });
 
     // ───────────────────────── Salle de repêchage ─────────────────────────
-
-    /**
-     * Une proposition, une seule, quand elle a du sens : dans la salle, pendant
-     * que c'est le tour de quelqu'un d'autre (le bandeau porte `waiting`). Pas
-     * pendant son propre tour, pas par-dessus une autre fenêtre, et pas deux
-     * fois en un mois sur le même appareil.
-     */
-    function proposerDansLaSalle() {
-        const banniere = document.getElementById('turn-banner');
-        if (!banniere || typeof window.fzConfirm !== 'function' || etat !== 'inactif') return;
-
-        const deja = lire(CLE_PROPOSEE);
-        if (deja && Date.now() - deja < REPROPOSER_MS) return;
-
-        let fait = false;
-        const verifier = () => {
-            if (fait || occupe || coupeesIci || etat !== 'inactif') return;
-            if (!banniere.classList.contains('waiting')) return;
-            if (document.querySelector('.fzd-overlay, [aria-modal="true"]')) return;
-            fait = true;
-            observateur.disconnect();
-            ecrire(CLE_PROPOSEE, Date.now());
-            window.fzConfirm({
-                type: 'info',
-                title: 'Être averti à votre tour ?',
-                message: 'Fantazy peut vous envoyer une alerte sur cet appareil quand c’est à vous de choisir — même si vous changez d’application ou fermez la page.',
-                confirmLabel: 'Activer les alertes',
-                cancelLabel: 'Plus tard'
-            }).then(oui => { if (oui) activer({ dialogue: true }); });
-        };
-        const observateur = new MutationObserver(verifier);
-        observateur.observe(banniere, { attributes: true, attributeFilter: ['class'] });
-        verifier();
-    }
 
     /**
      * L'alerte du tour de CE pool n'a plus rien à dire une fois dans la salle :
@@ -456,7 +438,6 @@
 
     function lancer() {
         demarrer().then(() => {
-            proposerDansLaSalle();
             if (etat === 'actif') effacerAlertesDuPool();
         });
     }
