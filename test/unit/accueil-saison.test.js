@@ -40,10 +40,16 @@ describe('accueil de saison', () => {
     test('le calendrier, les panneaux de la soirée et le bandeau du haut restent', () => {
         const rendu = corpsRendu();
         assert.match(rendu, /data-fz-bloc="calendrier"/);
-        for (const bloc of ['soiree.joueurs', 'soiree.total', 'soiree.enJeu', 'soiree.repartition']) {
+        for (const bloc of ['soiree.joueurs', 'soiree.total', 'soiree.repartition']) {
             assert.ok(rendu.includes(bloc), `${bloc} devrait rester`);
         }
         assert.match(lire('accueil.js'), /fetchNhlNews/, 'le bandeau d’histoires lit toujours les actualités');
+    });
+
+    test('« Joueurs en jeu » a quitté l’accueil ; les joueurs au match à venir y figurent avec leur heure', () => {
+        assert.doesNotMatch(SAISON, /Joueurs en jeu|fzs-playing|soiree\.enJeu/);
+        assert.match(SAISON, /fzsJoueursAvantMatch/);
+        assert.match(SAISON, /gameTimeLabel\(a\.depart\)/);
     });
 
     test('l’avant-saison garde ses actualités', () => {
