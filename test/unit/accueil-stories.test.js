@@ -44,7 +44,7 @@ const {
     'storyTeamIdentity', 'storyTeamAccent', 'storyHexToRgb', 'storyTeamVars',
     'storyNomLong', 'storyAssistsHTML', 'storyGoalScore', 'storyGoalKey',
     'storyEnEntracte', 'storyPeriodLabel', 'storyClockLabel', 'storyPeriodDots',
-    'storyGoalsHTML', 'storyLiveHTML'
+    'storyGoalsHTML', 'storyGoalsBlocHTML', 'storyLiveHTML'
 ], { escapeHTML, userData });
 
 /** Un match en cours plausible, avec les quatre cas d'aide qui existent. */

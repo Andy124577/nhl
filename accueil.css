@@ -842,7 +842,8 @@ html.fz-home-pending #fzDashSection { min-height: 100vh; }
 .stories-picker {
     display: flex; gap: 8px;
     max-width: 1200px;
-    margin: 10px auto 0;
+    /* Au-dessus de la carte (index.html) : l'écart va dessous. */
+    margin: 0 auto 10px;
     padding-bottom: 3px;
     overflow-x: auto;
     scrollbar-width: thin;
@@ -1072,4 +1073,44 @@ html[data-theme="light"] .btn-hero-secondary:hover {
    marqueur et le pointage passent avant. */
 @media (max-width: 359px) {
     .stories-card.is-live .sl-goal-assists { display: none; }
+}
+
+/* ============================================================
+   STORIES — les buts en carrousel
+   ------------------------------------------------------------
+   Le même carrousel que le calendrier de l'accueil (.fzd-goals,
+   accueil-dash.css) : une carte par but, le plus récent à gauche, qu'on
+   fait glisser. La carte d'histoire reste sombre dans les deux thèmes, d'où
+   ses propres jetons --fzd-*.
+   ============================================================ */
+.sl-goals-carousel {
+    --fzd-ink: #F5F5F7;
+    --fzd-text-muted: #A1A1A6;
+    --fzd-text-faint: #A1A1A6;
+    --fzd-text-fainter: #8A8A90;
+    --fzd-border: rgba(255, 255, 255, .09);
+    --fzd-border-strong: rgba(255, 255, 255, .24);
+    --fzd-surface: rgba(255, 255, 255, .04);
+    --fzd-bg-alt: rgba(255, 255, 255, .08);
+    --fzd-accent: var(--primary-text);
+    padding-top: 0;
+    border-top: 0;
+    min-width: 0;
+}
+.stories-card.is-live .sl-goals:has(.sl-goals-carousel) { overflow: hidden; }
+/* Le carrousel a toujours la même hauteur — une rangée de cartes : la
+   carte d'histoire n'a plus besoin de sa hauteur fixe, faite pour une
+   liste qui défilait, et ne laisse plus de vide sous les buts. */
+.stories-card.is-live:has(.sl-goals-carousel) { height: auto !important; }
+.stories-card.is-live:has(.sl-goals-carousel) .sl-goals { flex: none; margin-bottom: calc(var(--su) * 14); }
+.sl-goals-carousel .fzd-goal-card { color: #F5F5F7; }
+.sl-goals-carousel .fzd-goal-card.is-new {
+    animation: sl-goal-arrive .3s ease-out, sl-goal-card-flash 2.6s ease-out .3s;
+}
+@keyframes sl-goal-card-flash {
+    0%   { border-color: var(--primary); box-shadow: 0 0 18px rgba(var(--primary-rgb), .35); }
+    100% { border-color: rgba(255, 255, 255, .09); box-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .sl-goals-carousel .fzd-goal-card.is-new { animation: none; border-color: var(--primary); }
 }

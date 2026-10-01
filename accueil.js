@@ -493,7 +493,14 @@ function patchStoryGoals(live, g) {
     // marqués avant l'ouverture de la page ne viennent pas de tomber.
     const nouvelles = etat ? new Set(cles.filter(c => !etat.vues.has(c))) : new Set();
 
-    liste.innerHTML = storyGoalsHTML(g, nouvelles);
+    // Le lecteur a pu faire glisser les buts : un nouveau but ne le ramène
+    // pas au début, sauf s'il regardait déjà le plus récent.
+    const piste = liste.querySelector('.fzd-goals-track');
+    const garde = piste ? piste.scrollLeft : 0;
+    liste.innerHTML = storyGoalsBlocHTML(g, nouvelles) || '<div class="sl-goal sl-goal-none">Aucun but pour l’instant.</div>';
+    const nouvellePiste = liste.querySelector('.fzd-goals-track');
+    if (nouvellePiste && garde && !nouvelles.size) nouvellePiste.scrollLeft = garde;
+    bindStoryGoals(liste);
     storyGoalState.set(id, { ordre, vues: new Set(cles) });
     if (nouvelles.size) eteindreFlash(liste);
 }
@@ -507,7 +514,7 @@ function eteindreFlash(liste) {
     const jeton = ++storyFlashSeq;
     setTimeout(() => {
         if (jeton !== storyFlashSeq) return;
-        liste.querySelectorAll('.sl-goal.is-new').forEach(el => el.classList.remove('is-new'));
+        liste.querySelectorAll('.is-new').forEach(el => el.classList.remove('is-new'));
     }, STORY_FLASH_MS);
 }
 
@@ -821,6 +828,7 @@ function renderStorySlide() {
     }
 
     card.innerHTML = storyLiveHTML(slide.game);
+    bindStoryGoals(card.querySelector('.sl-goals'));
     seedStoryGoalState(slide.game);
 }
 
@@ -889,6 +897,57 @@ function storyGoalsHTML(g, nouvelles) {
 }
 
 /**
+ * Les buts d'un match en direct en carrousel, le même que celui du calendrier
+ * de l'accueil (gameGoalsHTML / goalCardHTML, accueil-dash.js) : photo du
+ * buteur sur la couleur de son club, ses aides, la marque après le but. Le
+ * plus récent à gauche. Sans le code du calendrier (tests, page qui ne le
+ * charge pas), l'ancienne liste prend le relais.
+ */
+function storyGoalsBlocHTML(g, nouvelles) {
+    if (typeof goalCardHTML !== 'function') return storyGoalsHTML(g, nouvelles);
+    const evenements = g.events || [];
+    if (!evenements.length) return '';
+    const neufs = nouvelles || new Set();
+    const equipes = { away: g.away.abbrev || '', home: g.home.abbrev || '' };
+    const cartes = evenements.map(e => {
+        const but = {
+            name: e.scorer || '',
+            playerId: e.scorerId || 0,
+            headshot: e.headshot || (typeof fzdHeadshotByName === 'function' ? fzdHeadshotByName(e.scorer) : null),
+            teamAbbrev: e.team,
+            goalsToDate: e.goalsToDate,
+            assists: Array.isArray(e.assistsDetail) && e.assistsDetail.length
+                ? e.assistsDetail
+                : (e.assists || []).filter(Boolean).map(name => ({ name })),
+            awayScore: e.awayScore,
+            homeScore: e.homeScore,
+            period: e.period,
+            periodType: e.periodType || (Number(e.period) > 3 ? 'OT' : 'REG'),
+            timeInPeriod: e.timeInPeriod
+        };
+        const html = goalCardHTML(but, equipes);
+        return neufs.has(storyGoalKey(e)) ? html.replace('class="fzd-goal-card"', 'class="fzd-goal-card is-new"') : html;
+    });
+    return `
+        <div class="fzd-goals sl-goals-carousel">
+            <div class="fzd-goals-head">
+                <span class="fzd-goals-title">Buts</span>
+                <span class="fzd-goals-sub">Le plus récent d’abord</span>
+                <span class="fzd-goals-nav">
+                    <button type="button" class="fzd-goals-arrow" data-dir="prev" aria-label="But précédent">‹</button>
+                    <button type="button" class="fzd-goals-arrow" data-dir="next" aria-label="But suivant">›</button>
+                </span>
+            </div>
+            <div class="fzd-goals-track">${cartes.join('')}</div>
+        </div>`;
+}
+
+/** Flèches et fiche du buteur, comme au calendrier — si son code est chargé. */
+function bindStoryGoals(racine) {
+    if (racine && typeof bindGoalTracks === 'function') bindGoalTracks(racine);
+}
+
+/**
  * Le tableau indicateur d'un match en cours : bandeau des deux clubs
  * (crest, ville, surnom, fiche, pointage, période et chrono) puis la liste
  * des buts, du plus récent au plus ancien. Fonction pure — elle ne lit que
@@ -913,7 +972,7 @@ function storyLiveHTML(g) {
                     </span>
                 </div>`;
 
-    const buts = storyGoalsHTML(g);
+    const buts = storyGoalsBlocHTML(g);
 
     return `
         <div class="sl-live" style="${storyTeamVars('away', g.away.abbrev)}; ${storyTeamVars('home', g.home.abbrev)}">

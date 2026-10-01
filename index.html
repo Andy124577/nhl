@@ -83,7 +83,7 @@
     <link rel="stylesheet" href="poolNav.css?v=20260928a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="index.css?v=20260926b">
-    <link rel="stylesheet" href="accueil.css?v=20260930a">
+    <link rel="stylesheet" href="accueil.css?v=20260930c">
     <link rel="stylesheet" href="career-modal.css?v=20260926b">
     <link rel="stylesheet" href="accueil-dash.css?v=20260926b">
     <link rel="stylesheet" href="accueil-mobile.css?v=20260930a">
@@ -91,7 +91,7 @@
     <!-- Landing des visiteurs (html.fz-anon) : remplace l'ancien héros
          « aréna » (hero.css). Voir LANDING.md. -->
     <link rel="stylesheet" href="landing.css?v=20260926b">
-    <link rel="stylesheet" href="accueil-season.css?v=20260930g">
+    <link rel="stylesheet" href="accueil-season.css?v=20260930i">
     <link rel="stylesheet" href="accueil-draft.css?v=20260928a">
     <link rel="stylesheet" href="accueil-draft-hero.css?v=20260927f">
     <link rel="stylesheet" href="accueil-watch.css?v=20260926b">
@@ -123,16 +123,17 @@
     <!-- ============================================================ -->
     <section class="home-section stories-section" id="storiesSection" style="display:none;">
         <div class="section-container">
+            <!-- Sélecteur de match : un jeton par match en cours, plus « Auto ».
+                 Rempli par renderStoryPicker() (accueil.js) ; masqué tant qu'il
+                 n'y a rien à choisir. Au-dessus de la carte : on choisit le
+                 match, puis on le regarde. -->
+            <div class="stories-picker" id="storiesPicker" style="display:none;"></div>
             <div class="stories-card" id="storiesCard">
                 <!-- Filled by JS: a .stories-news or .sl-live slide -->
             </div>
             <div class="stories-progress-track">
                 <div class="stories-progress-fill" id="storiesProgressFill"></div>
             </div>
-            <!-- Sélecteur de match : un jeton par match en cours, plus « Auto ».
-                 Rempli par renderStoryPicker() (accueil.js) ; masqué tant qu'il
-                 n'y a rien à choisir. -->
-            <div class="stories-picker" id="storiesPicker" style="display:none;"></div>
         </div>
     </section>
 
@@ -727,7 +728,7 @@
     <script defer src="lib/pointsEnDirect.js?v=20260930b"></script>
     <script defer src="pointsDirect.js?v=20260930a"></script>
     <script defer src="lib/duelAccueil.js?v=20260922"></script>
-    <script defer src="accueil.js?v=20260930a"></script>
+    <script defer src="accueil.js?v=20260930b"></script>
     <!-- « A faire maintenant » : une seule reponse serveur, la meme bande
          au bureau et au telephone. Doit preceder accueil-dash.js, qui
          l'appelle au chargement. -->
@@ -742,7 +743,7 @@
     <script defer src="accueil-dash.js?v=20260930b"></script>
     <script defer src="instantDraft.js?v=20260926a"></script>
     <script defer src="accueil-mobile.js?v=20260930b"></script>
-    <script defer src="accueil-season.js?v=20260930h"></script>
+    <script defer src="accueil-season.js?v=20260930i"></script>
     <script defer src="accueil-draft-hero.js?v=20260928b"></script>
     <script defer src="accueil-draft.js?v=20260927f"></script>
     <script defer src="demos.js"></script>
