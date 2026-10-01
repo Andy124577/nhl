@@ -207,7 +207,17 @@ function fzsActualiserSoiree(tonight) {
     };
     const accroche = root.querySelector('.fzs-hero-copy');
     if (accroche) accroche.innerHTML = soiree.accroche;
+    // Le carrousel garde sa position : un rafraîchissement toutes les 30 s
+    // ne doit pas ramener au premier joueur celui qui a glissé plus loin.
+    const avant = root.querySelector('.fzs-players .fzs-player-list');
+    const defile = avant ? avant.scrollLeft : 0;
     remplacer('.fzs-players', soiree.joueurs);
+    const apres = root.querySelector('.fzs-players .fzs-player-list');
+    if (apres && defile) {
+        apres.style.scrollBehavior = 'auto';
+        apres.scrollLeft = defile;
+        apres.style.scrollBehavior = '';
+    }
     remplacer('.fzs-total', soiree.total);
     remplacer('.fzs-breakdown', soiree.repartition);
     fzsReglerSuiviSoiree(tonight);
