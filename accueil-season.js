@@ -138,7 +138,7 @@ function fzsCartes(lines, avant, games) {
         rang: 1, tri: Date.parse(a.depart) || 0, live: false, final: false,
         nom: a.name, equipe: a.info.teamAbbrev,
         pos: a.info.position && a.info.position !== 'N/A' ? a.info.position : '',
-        saison: a.saison, soir: 0, stats: null,
+        saison: a.saison, soir: 0, stats: null, heure: gameTimeLabel(a.depart),
         matchHTML: escapeHTML(`Ce soir ${gameTimeLabel(a.depart)} vs ${a.contre}`)
     }));
     return cartes.sort((x, y) => x.rang - y.rang || x.tri - y.tri);
@@ -157,7 +157,7 @@ function fzsCarteHTML(c, href) {
         <div class="fzs-pc-top">
             <img class="fzs-pc-logo" src="teams/${esc(c.equipe)}.png" alt="" loading="lazy" onerror="this.remove()">
             ${offPlayerFaceHTML(c.nom, c.equipe)}
-            ${c.live ? '<span class="fzs-pc-live"><i></i>EN DIRECT</span>' : ''}
+            ${c.live ? '<span class="fzs-pc-live"><i></i>EN DIRECT</span>' : c.heure ? `<span class="fzs-pc-time">${esc(c.heure)}</span>` : c.final ? '<span class="fzs-pc-time">FINAL</span>' : ''}
         </div>
         <div class="fzs-pc-body">
             <div class="fzs-pc-name"><strong title="${esc(c.nom)}">${esc(court)}</strong><span>${esc(c.pos)}</span></div>
