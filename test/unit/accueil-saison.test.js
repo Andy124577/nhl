@@ -37,9 +37,9 @@ describe('accueil de saison', () => {
         assert.doesNotMatch(SAISON, /fzsLoadNews|fzmNewsWrap/);
     });
 
-    test('de haut en bas : joueurs du soir, position et total, À surveiller, alignement', () => {
+    test('de haut en bas : joueurs du soir, position et total, À surveiller, alignements des 32 clubs', () => {
         const rendu = corpsRendu();
-        const ordre = ['soiree.joueurs', 'fzsRangHTML', 'soiree.total', 'data-fz-bloc="surveiller"', 'fzsAlignementHTML']
+        const ordre = ['soiree.joueurs', 'fzsRangHTML', 'soiree.total', 'data-fz-bloc="surveiller"', 'fzhLinesHTML']
             .map(cle => rendu.indexOf(cle));
         ordre.forEach((pos, i) => assert.ok(pos >= 0, `bloc ${i} absent`));
         assert.deepEqual([...ordre].sort((x, y) => x - y), ordre, 'les blocs doivent suivre cet ordre');

@@ -158,43 +158,21 @@ html[data-theme="light"] .fzs-pc.is-live .fzs-pc-foot { background:#FDECEC; colo
 /* ---- Disposition de saison (de haut en bas) ----
    Les histoires du haut de page (accueil.js), puis : mes joueurs ce soir ;
    ma position et le total du soir côte à côte ; mon duel (tête-à-tête) ;
-   À surveiller ; mon alignement. */
+   À surveiller ; les alignements des 32 clubs (.fzh-al, accueil-draft.css). */
 .fzs .fzs-players { grid-column:1/-1; grid-row:auto; order:1; }
 .fzs .fzs-rank { grid-column:span 6; order:2; }
 .fzs .fzs-total { grid-column:span 6; order:3; }
 .fzs .fzs-duel { grid-column:1/-1; order:4; }
-.fzs #fzdOffWatch { order:5; }
-.fzs .fzs-align { grid-column:1/-1; order:6; }
+/* À surveiller et les alignements côte à côte, comme à l'accueil de
+   repêchage : en pleine largeur, les 32 tuiles deviendraient des pavés. */
+#fzSeasonHome #fzdOffWatch { grid-column:span 6; order:5; }
+#fzSeasonHome .fzh-al { grid-column:span 6; order:6; }
+#fzSeasonHome:has(#fzdOffWatch[hidden]) .fzh-al { grid-column:1/-1; }
+/* La palette teint en rouge tout lien de l'accueil de saison (#fzDashSection
+   .fzs a) : les tuiles gardent l'encre de leur club, le titre son blanc. */
+#fzDashSection #fzSeasonHome a.fzh-al-club { color:var(--encre); }
+#fzDashSection #fzSeasonHome a.fzh-al-lien { color:#fff; }
 @media(max-width:768px) {
  .fzs .fzs-rank, .fzs .fzs-total { grid-column:span 1; }
- .fzs #fzdOffWatch { grid-column:1/-1; }
+ #fzSeasonHome #fzdOffWatch, #fzSeasonHome .fzh-al { grid-column:1/-1; }
 }
-
-/* ---- Mon alignement : la liste de la fiche d'équipe ---- */
-.fzs-al-list { display:flex; flex-direction:column; margin:0 -20px -20px; border-top:1px solid #26262A; font-variant-numeric:tabular-nums; }
-.fzs a.fzs-al-row { display:grid; grid-template-columns:22px 34px minmax(0,1fr) 52px; align-items:center; column-gap:10px; min-height:60px; padding:6px 16px 6px 12px; color:#F2F2F3; text-decoration:none; }
-.fzs a.fzs-al-row:hover { background:#1C1C1F; color:#F2F2F3; }
-.fzs-al-row + .fzs-al-row { border-top:1px solid #26262A; }
-.fzs-al-rank { font-size:13px; font-weight:600; color:#8A8A90; text-align:center; }
-.fzs-al-shot { position:relative; width:34px; height:34px; border-radius:50%; overflow:hidden; background:var(--al-team); background-image:linear-gradient(160deg, rgba(255,255,255,.12), rgba(0,0,0,.28)); }
-#fzDashSection .fzs .fzs-al-shot .fzd-off-face { position:absolute; inset:0; width:100%; height:100%; border-radius:0; background:transparent; font-size:0; }
-#fzDashSection .fzs .fzs-al-shot .fzd-off-face img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:top; background:transparent; }
-#fzDashSection .fzs .fzs-al-shot .fzd-off-face.is-club img { object-fit:contain; padding:4px; }
-.fzs-al-main { min-width:0; display:flex; flex-direction:column; gap:3px; }
-.fzs-al-name { display:flex; align-items:baseline; gap:6px; min-width:0; }
-.fzs-al-name strong { min-width:0; font-size:14.5px; font-weight:600; color:#F2F2F3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.fzs-al-name small { flex:none; font-size:10.5px; color:#8A8A90; letter-spacing:.03em; }
-.fzs-al-stats { display:flex; gap:2px; }
-.fzs-al-stats span { width:28px; display:flex; flex-direction:column; align-items:center; line-height:1.1; }
-.fzs-al-stats b { font-size:12.5px; font-weight:400; color:#E4E4E8; }
-.fzs-al-stats i, .fzs-al-pts i { font-style:normal; font-size:9.5px; color:#6F6F76; }
-.fzs-al-stats .is-zero b { color:#6F6F76; }
-.fzs-al-pts { display:flex; flex-direction:column; align-items:center; line-height:1.1; }
-.fzs-al-pts b { font-size:18px; font-weight:700; color:#FFFFFF; }
-.fzs-al-pts b.is-zero { color:#8A8A90; }
-.fzs-al-pts em { font-style:normal; font-weight:700; color:var(--success); }
-@media(max-width:768px) { .fzs-al-list { margin:0 -13px -13px; } }
-html[data-theme="light"] .fzs-al-list, html[data-theme="light"] .fzs-al-row + .fzs-al-row { border-color:var(--fzh-border); }
-html[data-theme="light"] .fzs a.fzs-al-row, html[data-theme="light"] .fzs a.fzs-al-row:hover, html[data-theme="light"] .fzs-al-name strong, html[data-theme="light"] .fzs-al-pts b { color:#1D1D1F; }
-html[data-theme="light"] .fzs a.fzs-al-row:hover { background:#F5F5F7; }
-html[data-theme="light"] .fzs-al-stats b { color:#1D1D1F; }
