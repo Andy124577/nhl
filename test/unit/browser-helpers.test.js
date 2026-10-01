@@ -600,7 +600,7 @@ describe('stats — tri sur une seule saison', () => {
             statsMode: mode,
             projectionPools: pools,
             currentStats: joueursCourants ? { season: 20252026, players: liste } : null,
-            goaliePoolPoints: g => (g.shutouts || 0) * 5 + (g.wins || 0) * 2 + (g.otLosses || 0),
+            goaliePoolPoints: require('../../lib/scoring.js').goaliePoolPoints,
             getCurrentPlayerStats: (nom, id) =>
                 liste.find(p => (id && p.playerId === id) || p.playerName === nom) || null
         };
@@ -682,7 +682,7 @@ describe('stats — tri sur une seule saison', () => {
         // 2 blanchissages + 10 victoires + 3 défaites en prolongation.
         const courants = [{ playerName: 'Gardien', playerId: 8, shutouts: 2, wins: 10, otLosses: 3, points: 0 }];
         const { valeurDeTri } = charger(courants);
-        assert.equal(valeurDeTri({}, 'Gardien', 8, 'points', true), 2 * 5 + 10 * 2 + 3);
+        assert.equal(valeurDeTri({}, 'Gardien', 8, 'points', true), 2 * 5 + (10 - 2) * 2 + 3);
     });
 
     test('en projection, tout le tableau lit la trousse, même quand /current-stats a répondu', () => {
@@ -691,7 +691,7 @@ describe('stats — tri sur une seule saison', () => {
         const { valeurDeTri, modeProjection } = charger(courants, 'projection');
         assert.equal(modeProjection(), true);
         assert.equal(valeurDeTri({ points: 95 }, 'Joueur Actif', 2, 'points', false), 95);
-        assert.equal(valeurDeTri({ shutouts: 4, wins: 30, otLosses: 5 }, 'Gardien', 8, 'points', true), 4 * 5 + 30 * 2 + 5);
+        assert.equal(valeurDeTri({ shutouts: 4, wins: 30, otLosses: 5 }, 'Gardien', 8, 'points', true), 4 * 5 + (30 - 4) * 2 + 5);
     });
 
     test('« Projections » choisi mais trousse pas encore chargée : les vrais totaux restent', () => {

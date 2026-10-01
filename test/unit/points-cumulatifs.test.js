@@ -38,10 +38,10 @@ describe('le barème du cumulatif', () => {
         assert.equal(scoring.pointsReelsPatineur(null), 0);
     });
 
-    test('un gardien : victoire 2, blanchissage 5, défaite en prolongation 1', () => {
+    test('un gardien : victoire 2, victoire par blanchissage 5 (pas 7), défaite en prolongation 1', () => {
         assert.equal(scoring.pointsCumulatifsGardien({ decision: 'W', shutouts: 0 }), 2);
-        assert.equal(scoring.pointsCumulatifsGardien({ decision: 'W', shutouts: 1 }), 7);
-        assert.equal(scoring.pointsCumulatifsGardien({ decision: 'W', shutout: true }), 7);
+        assert.equal(scoring.pointsCumulatifsGardien({ decision: 'W', shutouts: 1 }), 5);
+        assert.equal(scoring.pointsCumulatifsGardien({ decision: 'W', shutout: true }), 5);
         assert.equal(scoring.pointsCumulatifsGardien({ decision: 'O' }), 1);
         assert.equal(scoring.pointsCumulatifsGardien({ decision: 'OTL' }), 1);
         assert.equal(scoring.pointsCumulatifsGardien({ decision: 'L' }), 0);

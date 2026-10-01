@@ -187,8 +187,9 @@ describe('côté page', () => {
         const lignes = releve().players;
         const skinner = appliquerAuxJoueurs(lignes, { joueurs: { [SKINNER]: { v: 1, bl: 1 } } })[3];
         assert.deepEqual([skinner.wins, skinner.shutouts, skinner.goals, skinner.assists], [4, 1, 4, 1]);
-        assert.equal(skinner.points, 1 * 5 + 4 * 2 + 1);
-        assert.equal(skinner.pointsEnDirect, 7);
+        // La victoire par blanchissage du soir vaut 5, pas 2 + 5.
+        assert.equal(skinner.points, 1 * 5 + (4 - 1) * 2 + 1);
+        assert.equal(skinner.pointsEnDirect, 5);
     });
 
     test('un club : victoires et défaites en prolongation', () => {

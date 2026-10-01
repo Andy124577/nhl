@@ -57,10 +57,12 @@
     var saisonWatchlist = null;
 
     // Barème du pool, identique à celui du serveur (server.js) : un gardien
-    // vaut shutouts*5 + wins*2 + otLosses, une équipe wins*2 + otLosses. On
+    // vaut une victoire ×2, une victoire par blanchissage ×5 (pas 2 + 5) et
+    // une défaite en prolongation ×1 ; une équipe wins*2 + otLosses. On
     // l'applique aux chiffres PROJETÉS de la trousse.
     function pointsGardien(s) {
-        return (s.shutouts || 0) * 5 + (s.wins || 0) * 2 + (s.otLosses || 0);
+        var blanchissages = s.shutouts || 0;
+        return blanchissages * 5 + Math.max(0, (s.wins || 0) - blanchissages) * 2 + (s.otLosses || 0);
     }
     function pointsEquipe(s) {
         return (s.wins || 0) * 2 + (s.otLosses || 0);
