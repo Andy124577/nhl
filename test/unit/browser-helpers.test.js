@@ -424,9 +424,10 @@ describe('draftkitData — FZDraftKit', () => {
 // Voir test/fixtures/helpers.js pour le pourquoi de ce chargement.
 
 describe('classement — helpers de tableau', () => {
-    const { rankByPeriodPoints, fmtPeriodPts, initialsFromName, formatHofDate, formatHofMonth } =
+    const { rankByPeriodPoints, fmtPeriodPts, initialsFromName, hofDateJour, hofDateSemaine, hofDateMois, hofEnCours } =
         chargerFonctions('classement.js',
-            ['rankByPeriodPoints', 'fmtPeriodPts', 'initialsFromName', 'formatHofDate', 'formatHofMonth']);
+            ['rankByPeriodPoints', 'fmtPeriodPts', 'initialsFromName',
+                'hofJour', 'hofDecaler', 'hofFormat', 'hofDateJour', 'hofDateSemaine', 'hofDateMois', 'hofEnCours']);
 
     test('rankByPeriodPoints numérote de 1 à n, du plus fort au plus faible', () => {
         const standings = [{ teamName: 'A' }, { teamName: 'B' }, { teamName: 'C' }];
@@ -479,20 +480,53 @@ describe('classement — helpers de tableau', () => {
         assert.equal(initialsFromName(''), '');
     });
 
-    test('formatHofDate rend un jour et un mois abrégé en français', () => {
-        assert.equal(formatHofDate('2026-01-15'), '15 janv.');
-        assert.equal(formatHofDate(''), '');
+    test('hofDateJour rend le jour de la semaine, le jour et le mois abrégés', () => {
+        assert.equal(hofDateJour('2026-01-15'), 'jeu. 15 janv.');
+        assert.equal(hofDateJour(''), '');
     });
 
-    test('formatHofMonth rend le mois en toutes lettres, capitalisé', () => {
-        assert.equal(formatHofMonth('2026-01-15'), 'Janvier');
-        assert.equal(formatHofMonth(''), '');
+    test('hofDateSemaine rend la semaine du lundi au dimanche', () => {
+        assert.equal(hofDateSemaine('2026-10-05'), '5 – 11 oct.');
+        assert.equal(hofDateSemaine(''), '');
+    });
+
+    test('hofDateSemaine nomme les deux mois quand la semaine en chevauche deux', () => {
+        assert.equal(hofDateSemaine('2026-09-28'), '28 sept. – 4 oct.');
+        assert.equal(hofDateSemaine('2026-12-28'), '28 déc. – 3 janv.');
+    });
+
+    test('hofDateMois rend le mois en toutes lettres, capitalisé', () => {
+        assert.equal(hofDateMois('2026-01-01'), 'Janvier');
+        assert.equal(hofDateMois(''), '');
     });
 
     test('les dates du panthéon sont lues en UTC', () => {
         // Sans timeZone: 'UTC', un 1er du mois basculerait au dernier jour du
         // mois précédent pour un lecteur à l'ouest de Greenwich.
-        assert.equal(formatHofDate('2026-03-01'), '1 mars');
+        assert.equal(hofDateJour('2026-03-01'), 'dim. 1 mars');
+        assert.equal(hofDateMois('2026-03-01'), 'Mars');
+    });
+
+    test("hofEnCours : une journée n'est en cours que le jour même", () => {
+        assert.equal(hofEnCours('Day', '2026-10-01', '2026-10-01'), true);
+        assert.equal(hofEnCours('Day', '2026-09-30', '2026-10-01'), false);
+    });
+
+    test('hofEnCours : une semaine est en cours du lundi au dimanche inclus', () => {
+        assert.equal(hofEnCours('Week', '2026-09-28', '2026-09-28'), true);
+        assert.equal(hofEnCours('Week', '2026-09-28', '2026-10-04'), true);
+        assert.equal(hofEnCours('Week', '2026-09-28', '2026-10-05'), false);
+        assert.equal(hofEnCours('Week', '2026-10-05', '2026-10-04'), false);
+    });
+
+    test("hofEnCours : un mois est en cours tant qu'on y est", () => {
+        assert.equal(hofEnCours('Month', '2026-10-01', '2026-10-31'), true);
+        assert.equal(hofEnCours('Month', '2026-09-01', '2026-10-01'), false);
+    });
+
+    test("hofEnCours : sans date, rien n'est en cours", () => {
+        assert.equal(hofEnCours('Week', '', '2026-10-01'), false);
+        assert.equal(hofEnCours('Day', '2026-10-01', ''), false);
     });
 });
 

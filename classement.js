@@ -177,7 +177,6 @@ function relirePeriodesEnDirect() {
         periodesMinuteur = null;
         periodesDerniere = Date.now();
         periodPointsCache = null;
-        recentFormCache = { poolName: null, byDays: new Map() };
         rafraichirClassementEnDirect();
     }, attente);
 }
@@ -319,7 +318,6 @@ function showPoolStandings(poolName) {
     // Reset on every pool switch — only the cumulative branch below re-shows
     // it, and a stale record from the previous pool must not linger.
     document.getElementById('hallOfFame').style.display = 'none';
-    document.getElementById('recentFormLeaderboard').style.display = 'none';
     document.getElementById('h2hRecentResults').style.display = 'none';
     const bandeH2H = document.getElementById('h2hStandingsStrip');
     bandeH2H.innerHTML = '';
@@ -603,8 +601,7 @@ function handleStandingsSort(key) {
 //      participant, points marqués, prochain duel) ;
 //   2. une colonne « Forme » dans la table — cinq pastilles disent mieux
 //      qu'un différentiel qui monte et qui coule ;
-//   3. les derniers résultats en bas, à côté du temple de la renommée et
-//      des meilleures équipes récentes.
+//   3. les derniers résultats en bas, à côté du temple de la renommée.
 //
 // Rien de tout cela n'a besoin du réseau : le bilan, l'historique et la
 // semaine en cours sont déjà dans poolData.h2hData, chargé une fois par
@@ -1141,68 +1138,177 @@ async function renderPoolStandings(poolData, poolName) {
     document.getElementById('standingsSkeleton').style.display = 'none';
     standingsList.style.display = 'block';
 
-    // En H2H les trois blocs du bas se rangent côte à côte ; en cumulatif ils
-    // restent empilés, comme avant.
+    // En H2H les deux blocs du bas se rangent côte à côte ; en cumulatif le
+    // temple de la renommée occupe seul la pleine largeur.
     const insights = document.getElementById('standingsInsights');
     if (insights) insights.classList.toggle('is-h2h', enH2H);
 
     renderHallOfFame(poolName);
-    renderRecentFormLeaderboard(poolName);
     if (enH2H) renderH2HRecentResults(poolName);
 }
 
-// ==================== HALL OF FAME ====================
-// Season records (best/worst single day, week, month of pool points),
-// computed server-side from real game logs — see GET /pool-hall-of-fame.
+// ==================== TEMPLE DE LA RENOMMÉE ====================
+// Les records de la saison (meilleure et pire journée, semaine, mois en
+// points de pool), calculés côté serveur à partir des vrais matchs — voir
+// GET /pool-hall-of-fame.
+//
+// Une tuile par période. Le record mène — le chiffre en or, l'équipe, la
+// date — et le pire suit en une ligne discrète : c'est un temple, pas un
+// tableau à deux colonnes de même poids. Chaque nom d'équipe ouvre sa fiche,
+// comme une rangée du classement.
 
-function formatHofDate(dateStr) {
-    if (!dateStr) return '';
-    return new Date(dateStr + 'T00:00:00Z').toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+const HOF_PERIODES = [
+    { cle: 'Day', titre: 'Meilleure journée', date: hofDateJour },
+    { cle: 'Week', titre: 'Meilleure semaine', date: hofDateSemaine },
+    { cle: 'Month', titre: 'Meilleur mois', date: hofDateMois }
+];
+
+/** Une journée AAAA-MM-JJ lue comme date de calendrier (minuit UTC). */
+function hofJour(journee) {
+    return new Date(journee + 'T00:00:00Z');
 }
 
-function formatHofMonth(dateStr) {
-    if (!dateStr) return '';
-    const month = new Date(dateStr + 'T00:00:00Z').toLocaleDateString('fr-CA', { month: 'long', timeZone: 'UTC' });
-    return month.charAt(0).toUpperCase() + month.slice(1);
+function hofDecaler(journee, jours) {
+    const d = hofJour(journee);
+    d.setUTCDate(d.getUTCDate() + jours);
+    return d.toISOString().slice(0, 10);
 }
 
-// Icône trophée du mockup ; la variante « pire » la reprend grisée et
-// retournée plutôt que d'introduire une deuxième icône.
+/**
+ * La période d'un record n'est pas finie : il peut encore tomber. Le serveur
+ * compte la semaine et le mois entamés, et une « pire semaine » de trois
+ * jours se lisait comme un vrai creux. `journee` est la journée, le lundi ou
+ * le 1er du mois que donne /pool-hall-of-fame.
+ */
+function hofEnCours(cle, journee, aujourdhui) {
+    if (!journee || !aujourdhui) return false;
+    if (cle === 'Day') return journee === aujourdhui;
+    if (cle === 'Week') return journee <= aujourdhui && aujourdhui <= hofDecaler(journee, 6);
+    return journee.slice(0, 7) === aujourdhui.slice(0, 7);
+}
+
+/** Aujourd'hui en journée locale : « en cours » se juge à l'heure du lecteur. */
+function hofAujourdhui() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function hofFormat(journee, options) {
+    return hofJour(journee).toLocaleDateString('fr-CA', { ...options, timeZone: 'UTC' });
+}
+
+/** « sam. 12 oct. » */
+function hofDateJour(journee) {
+    if (!journee) return '';
+    return hofFormat(journee, { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+/** « 6 – 12 oct. », ou « 29 sept. – 5 oct. » à cheval sur deux mois. Le
+ *  serveur donne le lundi : la date seule laissait deviner la semaine. */
+function hofDateSemaine(lundi) {
+    if (!lundi) return '';
+    const dimanche = hofDecaler(lundi, 6);
+    const memeMois = lundi.slice(0, 7) === dimanche.slice(0, 7);
+    const debut = memeMois ? String(hofJour(lundi).getUTCDate()) : hofFormat(lundi, { day: 'numeric', month: 'short' });
+    return `${debut} – ${hofFormat(dimanche, { day: 'numeric', month: 'short' })}`;
+}
+
+/** « Octobre » */
+function hofDateMois(premier) {
+    if (!premier) return '';
+    const mois = hofFormat(premier, { month: 'long' });
+    return mois.charAt(0).toUpperCase() + mois.slice(1);
+}
+
+// Icône trophée pleine, reprise de l'ancien tableau.
 function trophyIconHTML(cls) {
-    return `<svg class="hof-icon ${cls}" viewBox="0 0 24 24" width="18" height="18"><path d="M5 4h14v2h2v3a5 5 0 0 1-5 5h-.26A6 6 0 0 1 13 17.65V20h3v2H8v-2h3v-2.35A6 6 0 0 1 8.26 14H8a5 5 0 0 1-5-5V6h2V4zm0 4H5v1a3 3 0 0 0 2.6 2.97A8.9 8.9 0 0 1 5 8zm14 0a8.9 8.9 0 0 1-2.6 3.97A3 3 0 0 0 19 9V8z"></path></svg>`;
+    return `<svg class="hof-icon ${cls}" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M5 4h14v2h2v3a5 5 0 0 1-5 5h-.26A6 6 0 0 1 13 17.65V20h3v2H8v-2h3v-2.35A6 6 0 0 1 8.26 14H8a5 5 0 0 1-5-5V6h2V4zm0 4H5v1a3 3 0 0 0 2.6 2.97A8.9 8.9 0 0 1 5 8zm14 0a8.9 8.9 0 0 1-2.6 3.97A3 3 0 0 0 19 9V8z"></path></svg>`;
 }
 
-/** Une case du tableau des records : les points, l'équipe, la date. */
-function hofCellHTML(entry, kind, dateFormatter) {
-    if (!entry) return `<div class="hof-cell is-${kind} is-empty"><span class="hof-empty">—</span></div>`;
-    const displayName = escapeHtmlText(getDisplayName(entry.teamName, entry.members));
+/**
+ * Le nom d'une équipe du temple : un bouton vers sa fiche si l'équipe est
+ * encore dans le pool, du texte sinon. `avecLogo` pour la ligne du record.
+ */
+function hofEquipeHTML(entry, ctx, cls, avecLogo) {
+    const equipe = ctx.equipes[entry.teamName];
+    const nom = getDisplayName(entry.teamName, entry.members);
+    const logo = avecLogo
+        ? `<span class="hof-avatar">${(equipe && getTeamLogoHTML(equipe.teams, 14))
+            || `<span class="st-avatar-fallback">${escapeHtmlText(initialsFromName(nom))}</span>`}</span>`
+        : '';
+    const moi = entry.teamName === ctx.mienne ? '<span class="hof-me">Vous</span>' : '';
+    const contenu = `${logo}<span class="hof-team-name">${escapeHtmlText(nom)}</span>${moi}`;
+    if (!equipe) return `<span class="${cls}" title="${escapeAttr(nom)}">${contenu}</span>`;
+    return `<button type="button" class="${cls} is-link" data-hof-team="${escapeAttr(entry.teamName)}"
+                title="Voir l’équipe ${escapeAttr(nom)}">${contenu}</button>`;
+}
+
+function hofQuandHTML(entry, periode, ctx, cls) {
+    const enCours = hofEnCours(periode.cle, entry.date, ctx.aujourdhui)
+        ? '<span class="hof-live">en cours</span>' : '';
+    return `<span class="${cls}">${escapeHtmlText(periode.date(entry.date))}${enCours}</span>`;
+}
+
+function hofTuileHTML(periode, best, worst, ctx) {
+    const record = best
+        ? `<div class="hof-record">
+                <span class="hof-pts">${fmtPeriodPts(best.points)}<small>pts</small></span>
+                <span class="hof-who">
+                    ${hofEquipeHTML(best, ctx, 'hof-team', true)}
+                    ${hofQuandHTML(best, periode, ctx, 'hof-when')}
+                </span>
+            </div>`
+        : `<div class="hof-record is-empty"><span class="hof-pts">—</span><span class="hof-when">Aucun match encore</span></div>`;
+    // Une seule équipe a joué : son meilleur est aussi son pire, inutile de
+    // le répéter.
+    const memeEntree = best && worst && best.teamName === worst.teamName
+        && best.date === worst.date && best.points === worst.points;
+    const pire = worst && !memeEntree
+        ? `<div class="hof-low">
+                <span class="hof-low-label">Pire</span>
+                <span class="hof-low-pts">${fmtPeriodPts(worst.points)}<small>pts</small></span>
+                ${hofEquipeHTML(worst, ctx, 'hof-low-team', false)}
+                ${hofQuandHTML(worst, periode, ctx, 'hof-low-when')}
+            </div>`
+        : '';
     return `
-        <div class="hof-cell is-${kind}">
-            <span class="hof-card-value">${entry.points}<small>pts</small></span>
-            <span class="hof-card-name" title="${displayName}">${displayName}</span>
-            <span class="hof-card-date">${dateFormatter(entry.date)}</span>
-        </div>`;
+        <article class="hof-tile">
+            <h3 class="hof-tile-label">${trophyIconHTML('is-best')}${periode.titre}</h3>
+            ${record}
+            ${pire}
+        </article>`;
 }
 
-function hofRowHTML(label, best, worst, dateFormatter) {
+function hofTeteHTML(saison) {
+    let libelle = 'Saison en cours';
+    if (typeof seasonLabel === 'function') {
+        try { libelle = `Saison ${seasonLabel(saison || currentSeasonId())}`; } catch (_) { /* libellé générique */ }
+    }
+    // Les classes fz-* portent l'en-tête de carte du mode H2H ; en cumulatif
+    // le titre reste en capitales, la saison en pastille à droite.
     return `
-        <div class="hof-row">
-            <p class="hof-row-label">${label}</p>
-            ${hofCellHTML(best, 'best', dateFormatter)}
-            ${hofCellHTML(worst, 'worst', dateFormatter)}
-        </div>`;
-}
-
-function buildHallOfFameHTML(data) {
-    // Même en-tête que les autres cartes de bas de classement : icône,
-    // titre, mention à droite. Les classes historiques (hof-*) restent pour
-    // l'habillage cumulatif, les fz-* portent celui des cartes H2H.
-    const head = `
         <div class="hof-head fz-card-head">
             <span class="fz-card-icon">${H2H_ICON.trophee}</span>
-            <p class="hof-title fz-card-title">Temple de la renommée</p>
-            <span class="hof-subtitle fz-card-note">Saison en cours</span>
+            <h2 class="hof-title fz-card-title">Temple de la renommée</h2>
+            <span class="hof-season fz-card-note">${escapeHtmlText(libelle)}</span>
         </div>`;
+}
+
+/** Trois tuiles fantômes, le temps que /pool-hall-of-fame réponde. */
+function hofChargementHTML() {
+    const tuile = `
+        <div class="hof-tile is-loading" aria-hidden="true">
+            <span class="skeleton hof-sk-label"></span>
+            <div class="hof-record">
+                <span class="skeleton hof-sk-pts"></span>
+                <span class="hof-who"><span class="skeleton hof-sk-line"></span><span class="skeleton hof-sk-line is-short"></span></span>
+            </div>
+        </div>`;
+    return `${hofTeteHTML(null)}<div class="hof-grid" aria-busy="true">${tuile}${tuile}${tuile}</div>`;
+}
+
+function buildHallOfFameHTML(data, poolName) {
+    const head = hofTeteHTML(data && data.season);
     if (data && data.seasonStarted === false) {
         return head + fzEmptyHTML(H2H_ICON.trophee,
             "La saison n'est pas commencée",
@@ -1213,147 +1319,47 @@ function buildHallOfFameHTML(data) {
             'Pas encore de records',
             "Il faut au moins un match joué cette saison.");
     }
-    // Un tableau plutôt que six cartes : une ligne par période, le meilleur
-    // à gauche (or) et le pire à droite (rouge) — on compare d'un coup d'œil.
-    return `${head}
-        <div class="hof-board">
-            <div class="hof-col-heads" aria-hidden="true">
-                <span></span><span class="is-best">${trophyIconHTML('is-best')}Meilleur</span><span class="is-worst">Pire</span>
-            </div>
-            ${hofRowHTML('Journée', data.bestDay, data.worstDay, formatHofDate)}
-            ${hofRowHTML('Semaine', data.bestWeek, data.worstWeek, formatHofDate)}
-            ${hofRowHTML('Mois', data.bestMonth, data.worstMonth, formatHofMonth)}
-        </div>`;
+    const ctx = {
+        equipes: (allPoolsData[poolName] && allPoolsData[poolName].teams) || {},
+        mienne: myTeamIn(poolName),
+        aujourdhui: hofAujourdhui()
+    };
+    const tuiles = HOF_PERIODES
+        .map(p => hofTuileHTML(p, data[`best${p.cle}`], data[`worst${p.cle}`], ctx))
+        .join('');
+    return `${head}<div class="hof-grid">${tuiles}</div>`;
 }
 
 async function renderHallOfFame(poolName) {
     const container = document.getElementById('hallOfFame');
     if (!container) return;
+
+    // Le classement cumulatif se redessine toutes les 20 s pendant les
+    // matchs : on garde alors le temple affiché pendant qu'il se relit, les
+    // tuiles fantômes ne servent qu'à la première ouverture du pool.
+    const dejaAffiche = container.dataset.pool === poolName && container.style.display !== 'none';
+    if (!dejaAffiche) {
+        container.dataset.pool = poolName;
+        container.innerHTML = hofChargementHTML();
+        container.style.display = 'block';
+    }
+    container.onclick = (e) => {
+        const bouton = e.target.closest('[data-hof-team]');
+        if (bouton) showTeamRoster(poolName, bouton.dataset.hofTeam);
+    };
+
     try {
         const response = await fetch(`${BASE_URL}/pool-hall-of-fame/${encodeURIComponent(poolName)}`, { cache: 'no-store' });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        container.innerHTML = buildHallOfFameHTML(data);
+        if (currentPoolName !== poolName) return;
+        container.innerHTML = buildHallOfFameHTML(data, poolName);
         container.style.display = 'block';
     } catch (error) {
         console.warn('⚠️ Could not load hall of fame:', error);
-        container.style.display = 'none';
+        // Un rafraîchissement raté laisse les records déjà affichés.
+        if (!dejaAffiche && currentPoolName === poolName) container.style.display = 'none';
     }
-}
-
-// ==================== RECENT FORM (windowed best-team leaderboard) ====================
-// Relocated from the old homepage Activity tab (see accueil-dash.js) — that
-// was the only place GET /pool-leaderboard was ever surfaced. Same windows,
-// same rank/points shape, just re-homed next to the season standings it
-// complements.
-
-const RECENT_FORM_WINDOWS = [7, 14, 30, 90, 180, 365];
-let recentFormWindow = 7;
-
-function recentFormRankClass(rank) {
-    return rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
-}
-
-function changeRecentFormWindow(poolName, days) {
-    recentFormWindow = days;
-    document.querySelectorAll('#recentFormLeaderboard .time-filter').forEach(btn => {
-        btn.classList.toggle('active', Number(btn.dataset.days) === days);
-    });
-    loadRecentFormRows(poolName, days);
-}
-
-/** Réponses de /pool-leaderboard par fenêtre, pour le pool affiché. */
-let recentFormCache = { poolName: null, byDays: new Map() };
-
-async function fetchRecentForm(poolName, days) {
-    if (recentFormCache.poolName !== poolName) recentFormCache = { poolName, byDays: new Map() };
-    if (recentFormCache.byDays.has(days)) return recentFormCache.byDays.get(days);
-    let data = null;
-    try {
-        const res = await fetch(`${BASE_URL}/pool-leaderboard/${encodeURIComponent(poolName)}?days=${days}`, { cache: 'no-store' });
-        data = res.ok ? await res.json() : null;
-    } catch (error) {
-        console.warn('⚠️ Could not load recent-form leaderboard:', error);
-    }
-    recentFormCache.byDays.set(days, data);
-    return data;
-}
-
-/** Une fenêtre qui a de vrais points sur SA période — pas le repli « saison ». */
-function recentFormHasData(data) {
-    return !!(data && (data.teams || []).some(t => t.points !== null && t.source !== 'seasonFallback'));
-}
-
-async function loadRecentFormRows(poolName, days) {
-    const list = document.getElementById('recentFormLeaderboardRows');
-    if (!list) return;
-    const data = await fetchRecentForm(poolName, days);
-    if (!list.isConnected) return;
-    if (data === null) {
-        list.innerHTML = `<p class="hof-empty">Impossible de charger ce classement.</p>`;
-        return;
-    }
-    const teams = (data && data.teams) || [];
-
-    if (!teams.length) {
-        list.innerHTML = data && data.seasonStarted === false
-            ? fzEmptyHTML(H2H_ICON.graphique, "La saison n'est pas commencée", "Aucune équipe n'a encore joué.")
-            : fzEmptyHTML(H2H_ICON.graphique, 'Pas assez de données', 'Aucun résultat sur cette période.');
-        return;
-    }
-
-    // "Real data, just not from the exact window" vs. "nothing at all" —
-    // the caption keeps the fallback honest instead of implying precision.
-    const sourceLabel = { seasonFallback: '(saison)', none: '' };
-    const equipes = (allPoolsData[poolName] && allPoolsData[poolName].teams) || {};
-
-    list.innerHTML = teams.map(t => `
-        <div class="leaderboard-row">
-            <span class="lb-rank ${recentFormRankClass(t.rank)}">${t.rank}</span>
-            <span class="lb-team">${escapeHtmlText(getDisplayName(t.teamName, (equipes[t.teamName] && equipes[t.teamName].members) || []))}</span>
-            ${t.points === null
-                ? '<span class="lb-pts">—</span>'
-                : `<span class="lb-pts">${t.points} pts</span><span class="lb-source">${sourceLabel[t.source] || ''}</span>`}
-        </div>`).join('');
-}
-
-/**
- * « Meilleures équipes récentes » : seulement les fenêtres qui ont quelque
- * chose à dire.
- *
- * Six boutons (7 j à 365 j) dont la moitié ouvrait sur « Pas assez de
- * données » en début de saison : on interroge les six d'un coup, on retire
- * ceux qui sont vides, et le panneau ouvre sur la plus courte qui a des
- * points. Si aucune n'en a, plus de boutons du tout — seulement le message.
- */
-async function renderRecentFormLeaderboard(poolName) {
-    const container = document.getElementById('recentFormLeaderboard');
-    if (!container) return;
-
-    container.innerHTML = `
-        <div class="recent-form-head fz-card-head">
-            <span class="fz-card-icon">${H2H_ICON.graphique}</span>
-            <p class="hof-title fz-card-title">Meilleures équipes récentes</p>
-            <div class="time-filters" hidden></div>
-        </div>
-        <div class="leaderboard-list" id="recentFormLeaderboardRows"><p class="hof-empty">Chargement…</p></div>`;
-    container.style.display = 'block';
-
-    const reponses = await Promise.all(RECENT_FORM_WINDOWS.map(d => fetchRecentForm(poolName, d)));
-    if (!container.isConnected) return;
-    const disponibles = RECENT_FORM_WINDOWS.filter((d, i) => recentFormHasData(reponses[i]));
-    recentFormWindow = disponibles[0] || RECENT_FORM_WINDOWS[0];
-
-    const filtres = container.querySelector('.time-filters');
-    if (disponibles.length > 1) {
-        filtres.innerHTML = disponibles.map(d =>
-            `<button type="button" class="time-filter${d === recentFormWindow ? ' active' : ''}" data-days="${d}">${d} j</button>`).join('');
-        filtres.hidden = false;
-        filtres.querySelectorAll('.time-filter').forEach(btn => {
-            btn.addEventListener('click', () => changeRecentFormWindow(poolName, Number(btn.dataset.days)));
-        });
-    }
-    loadRecentFormRows(poolName, recentFormWindow);
 }
 
 // Level 3: Team Roster View
@@ -2410,7 +2416,7 @@ function switchH2HTab(tab) {
     document.getElementById('h2hScheduleView').style.display = (tab === 'calendrier') ? 'block' : 'none';
     document.getElementById('h2hHistoryView').style.display = (tab === 'history') ? 'block' : 'none';
 
-    // La bande de tuiles et les trois blocs du bas appartiennent au seul
+    // La bande de tuiles et les blocs du bas appartiennent au seul
     // onglet Classement. Sans ce ménage ils restaient affichés sous les
     // duels en cours et sous le calendrier, une fois l'onglet visité.
     const surClassement = tab === 'standings';

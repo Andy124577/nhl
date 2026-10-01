@@ -443,10 +443,8 @@ body {
 
 /* ==================== HALL OF FAME ==================== */
 /* Season records: best/worst single day, week, and month of pool points.
-   No cards — a title, then rows of label/name/number separated by
-   hairlines, same flat register as the standings table above it. "Best"
-   takes --warning (gold), matching how the standings table already marks
-   the leader; --primary stays reserved for live/interactive elements. */
+   The tiles themselves live in classement-premium.css; this is only the
+   spacing that separates the block from the standings above it. */
 .hall-of-fame {
     margin-top: 36px;
     padding-top: 24px;
@@ -459,143 +457,8 @@ body {
     letter-spacing: .1em;
     text-transform: uppercase;
     color: var(--text-main);
-    margin: 0 0 20px;
-}
-
-.hof-rows {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
-.hof-divider {
-    height: 1px;
-    background: var(--border-light);
-}
-
-.hof-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-.hof-row.single {
-    grid-template-columns: 1fr;
-}
-
-.hof-cell {
-    min-width: 0;
-}
-
-.hof-cell-label {
-    font-size: .7rem;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--text-light-gray);
-    margin: 0 0 8px;
-}
-
-.hof-cell-name {
-    font-size: .88rem;
-    font-weight: 600;
-    color: var(--text-main);
-    margin: 0 0 2px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.hof-cell-value-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.hof-value {
-    font-size: 1.3rem;
-    font-weight: 700;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-}
-
-.hof-value.is-best { color: var(--warning); }
-.hof-value.is-worst { color: var(--text-light-gray); }
-
-.hof-date {
-    font-size: .78rem;
-    color: var(--text-secondary);
-}
-
-.hof-empty {
-    color: var(--text-secondary);
-    font-size: .85rem;
     margin: 0;
 }
-
-/* Recent form: windowed best-team leaderboard, relocated from the old
-   homepage Activity tab (see accueil-dash.js). Same flat register as the
-   Hall of Fame block above it, just with a window switcher up top. */
-.recent-form-leaderboard {
-    margin-top: 36px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border-light);
-}
-
-.recent-form-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 16px;
-}
-
-.recent-form-head .hof-title { margin: 0; }
-
-.time-filters { display: flex; gap: 6px; flex-wrap: wrap; }
-
-.time-filter {
-    padding: 6px 12px;
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    background: var(--card);
-    color: var(--text-secondary);
-    font-size: .75rem;
-    font-weight: 700;
-    letter-spacing: .03em;
-    cursor: pointer;
-    transition: border-color .15s ease, color .15s ease;
-}
-
-.time-filter:hover { border-color: var(--primary); color: var(--primary-text); }
-
-.time-filter.active {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: var(--on-primary);
-}
-
-.leaderboard-list { display: flex; flex-direction: column; gap: 8px; }
-
-.leaderboard-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    border: 1px solid var(--border-light);
-    border-radius: 10px;
-    background: var(--card);
-}
-
-.lb-rank { flex-shrink: 0; width: 26px; text-align: center; font-size: 1rem; font-weight: 800; color: var(--text-light-gray); }
-.lb-rank.gold   { color: var(--warning); }
-.lb-rank.silver { color: #B8B8CC; }
-.lb-rank.bronze { color: #CD7F32; }
-.lb-team { flex: 1; min-width: 0; font-size: .92rem; font-weight: 700; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lb-pts { flex-shrink: 0; font-size: 1rem; font-weight: 800; color: var(--primary-text); }
-.lb-source { flex-shrink: 0; font-size: .7rem; color: var(--text-light-gray); }
 
 /* ==================== ROSTER VIEW (Level 3) ==================== */
 /* Liste « comfortable » (Claude Design, Roster Table v2) : une bande
