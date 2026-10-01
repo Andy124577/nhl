@@ -2365,13 +2365,25 @@ async function releverMatchsEnDirect() {
     const liveGames = allGames
         .filter(g => g.gameState === 'LIVE' || g.gameState === 'CRIT')
         .map(g => {
-            // Most recent goals first — a story slide only has room for a
-            // few, and "what just happened" matters more than the opener.
-            const recentGoals = (g.goals || []).slice(-4).reverse().map(goal => ({
+            // Tous les buts, le plus récent d'abord : la carte d'histoire les
+            // fait défiler en carrousel (celui du calendrier, accueil.js).
+            // Photo, identifiant et compteurs de saison en plus, pour la même
+            // carte de but que le calendrier.
+            const recentGoals = (g.goals || []).slice().reverse().map(goal => ({
                 team: goal.teamAbbrev,
                 scorer: goal.name?.default || '',
+                // Le nom complet (« William Nylander ») : `name` est abrégé
+                // (« W. Nylander »), et c'est le nom complet que la carte
+                // de but du calendrier affiche.
+                scorerName: [goal.firstName?.default, goal.lastName?.default].filter(Boolean).join(' ') || null,
+                scorerId: goal.playerId || null,
+                // `mugshot` dans score/now — le même champ que lit /day-goals.
+                headshot: goal.mugshot || goal.headshot || null,
+                goalsToDate: goal.goalsToDate ?? null,
                 assists: (goal.assists || []).map(a => a.name?.default).filter(Boolean),
+                assistsDetail: (goal.assists || []).map(a => ({ name: a.name?.default || '', assistsToDate: a.assistsToDate ?? null })).filter(a => a.name),
                 period: goal.periodDescriptor?.number ?? goal.period ?? null,
+                periodType: goal.periodDescriptor?.periodType || null,
                 timeInPeriod: goal.timeInPeriod || '',
                 strength: goal.strength || 'ev',
                 awayScore: goal.awayScore,

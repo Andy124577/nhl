@@ -14,12 +14,12 @@
     <script src="theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="classement.css?v=20260927" />
+    <link rel="stylesheet" href="classement.css?v=20260930b" />
     <link rel="stylesheet" href="teamLogos.css?v=20260926">
     <link rel="stylesheet" href="fzDialog.css?v=20260926b">
     <!-- Fenêtres de dialogue (fzAlert, fzConfirm) : avant tout script de page. -->
     <script src="fzDialog.js?v=20260926a"></script>
-    <link rel="stylesheet" href="classement-premium.css?v=20260930a" />
+    <link rel="stylesheet" href="classement-premium.css?v=20260930g" />
     <link rel="stylesheet" href="index.css?v=20260926b" />
     <link rel="stylesheet" href="injuries.css?v=20260926b" />
     <link rel="stylesheet" href="skeleton-loader.css?v=20260926b" />
@@ -115,6 +115,7 @@
         </div>
 
         <div id="teamRosterView" class="view-container" style="display: none;">
+            <div id="rosterHeader" class="roster-header"></div>
             <div class="skeleton-loader" id="rosterSkeleton"></div>
             <div id="rosterList" class="roster-list" style="display: none;"></div>
         </div>
@@ -228,12 +229,12 @@
         // Le mockup montre l'onglet Classement : on y ouvre directement.
         history.replaceState(null, '', location.pathname + '?h2h=standings');
     </script>
-    <script src="lib/scoring.js?v=20260930b"></script>
+    <script src="lib/scoring.js?v=20260930c"></script>
     <script src="lib/season.js"></script>
     <script src="headshots.js"></script>
     <script src="avatars.js"></script>
     <script src="injuries.js"></script>
-    <script src="classement.js?v=20260930b"></script>
+    <script src="classement.js?v=20260930h"></script>
     <script src="teamColors.js"></script>
     <script src="careerFetch.js"></script>
     <script src="careerModal.js"></script>

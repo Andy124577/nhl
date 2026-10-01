@@ -299,6 +299,7 @@ function showPoolStandings(poolName) {
     if (!poolData) return;
 
     // Update UI — show pool image next to pool name in page title
+    setRosterViewMode(false);
     const poolImg = poolData.imageUrl
         ? `<img src="${poolData.imageUrl}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;vertical-align:middle;margin-right:10px;" onerror="this.style.display='none'" alt="${poolName}">`
         : `<img src="Icons/grayGroup.png" style="width:32px;height:32px;border-radius:8px;object-fit:cover;vertical-align:middle;margin-right:10px;flex-shrink:0;" alt="${poolName}">`;
@@ -542,7 +543,7 @@ function standingsLegendHTML(poolMode) {
             ['Forme', 'Vos 5 dernières semaines, la plus récente à gauche.']
         ]
         : [
-            ['Total', 'Ce qui décide du classement : les points de la saison. Patineurs : 1 par but et 1 par passe. Gardiens : 2 par victoire, 5 par blanchissage, 1 par défaite en prolongation. Clubs de la LNH : 2 par victoire, 1 par défaite en prolongation.'],
+            ['Total', 'Ce qui décide du classement : les points de la saison. Patineurs : 1 par but et 1 par passe. Gardiens : 2 par victoire, 5 pour une victoire par blanchissage (pas 2 + 5), 1 par défaite en prolongation. Clubs de la LNH : 2 par victoire, 1 par défaite en prolongation.'],
             ['24 h · 7 j · 30 j', 'Les points marqués sur la période — aujourd’hui, 7 jours, 30 jours —, selon les mêmes règles que le Total. Ils ne changent pas le classement : ils montrent qui monte.'],
             ['Tendance', 'Les places qu’une équipe gagnerait (▲) ou perdrait (▼) si l’on classait seulement sur la période choisie.'],
             ['PJ · B · P', 'Parties jouées, buts et passes de tout l’alignement.']
@@ -878,11 +879,13 @@ function fzEmptyHTML(icone, titre, indice) {
         </div>`;
 }
 
-async function renderPoolStandings(poolData, poolName) {
+/**
+ * Le classement d'un pool dans son ordre canonique — le rang réel de chaque
+ * équipe : victoires puis différentiel en H2H, points en cumulatif. Lu par
+ * la table du classement et par l'en-tête de la fiche d'équipe.
+ */
+function computeStandings(poolData) {
     const poolMode = poolData.poolMode || 'cumulative';
-    const standingsList = document.getElementById('standingsList');
-
-    // Calcule le classement (ordre canonique = rang réel de chaque équipe).
     let standings = [];
 
     if (poolMode === 'head-to-head') {
@@ -926,6 +929,14 @@ async function renderPoolStandings(poolData, poolName) {
         standings.forEach(s => { s.diff = leaderPoints - s.points; });
     }
     standings.forEach((s, i) => { s.rank = i + 1; });
+    return standings;
+}
+
+async function renderPoolStandings(poolData, poolName) {
+    const poolMode = poolData.poolMode || 'cumulative';
+    const standingsList = document.getElementById('standingsList');
+
+    const standings = computeStandings(poolData);
 
     // Bande de contexte H2H : au-dessus de la table, et masquée d'elle-même
     // quand il n'y a pas encore d'équipe complète.
@@ -1049,17 +1060,21 @@ async function renderPoolStandings(poolData, poolName) {
         tbody.appendChild(tr);
 
         if (poolMode !== 'head-to-head') {
-            const periodPts = fmtPeriodPts(byDays[standingsPeriod].get(standing.teamName));
+            // Maquette « Classement » (Claude Design) : rang, rond du club, nom
+            // + tendance, PJ puis les points des trois périodes, Pts en gros.
+            const mini = (valeur, libelle, cls = '') =>
+                `<div class="st-mini${cls}${valeur ? '' : ' is-zero'}"><span class="st-mini-v">${valeur}</span><span class="st-mini-l">${libelle}</span></div>`;
+            const per = d => fmtPeriodPts(byDays[d].get(standing.teamName));
             mobileRowsHTML.push(`
-                <div class="st-mobile-row is-clickable" tabindex="0" role="button" aria-label="Voir l'équipe de ${displayName}" data-team="${standing.teamName.replace(/"/g, '&quot;')}">
-                    <span class="st-mobile-rank">${rankBadgeHTML(standing.rank)}</span>
-                    <span class="st-avatar">${avatarHTML}</span>
+                <div class="st-mobile-row is-clickable${estMoi ? ' is-me' : ''}" tabindex="0" role="button" aria-label="Voir l'équipe de ${displayName}" data-team="${standing.teamName.replace(/"/g, '&quot;')}">
+                    <span class="st-mobile-rank">${standing.rank}</span>
+                    <span class="st-mobile-logo">${getTeamLogoHTML(standing.nhlTeams, 28) || `<span class="st-avatar-fallback">${initialsFromName(displayName)}</span>`}</span>
                     <div class="st-mobile-info">
-                        <span class="st-mobile-name" title="${displayName}">${displayName}</span>
-                        <span class="st-mobile-sub">Forme ${standingsPeriod === 1 ? '24 h' : `${standingsPeriod} j`} : ${periodPts} pts</span>
+                        <span class="st-mobile-name"><span class="st-mobile-name-txt" title="${displayName}">${displayName}</span>${evoHTML}</span>
+                        <div class="st-mini-row">${mini(standing.gamesPlayed, 'PJ')}${mini(per(1), '1 j', ' has-sep')}${mini(per(7), '7 j')}${mini(per(30), '30 j')}</div>
                     </div>
-                    <span class="st-mobile-pts">${standing.points}${soirHTML}</span>
-                    ${evoHTML}
+                    <div class="st-mobile-pts"><span class="st-mobile-pts-v">${standing.points}${soirHTML}</span><span class="st-mini-l">Pts</span></div>
+                    <span class="st-mobile-chev" aria-hidden="true">›</span>
                 </div>`);
         }
     });
@@ -1157,23 +1172,24 @@ function trophyIconHTML(cls) {
     return `<svg class="hof-icon ${cls}" viewBox="0 0 24 24" width="18" height="18"><path d="M5 4h14v2h2v3a5 5 0 0 1-5 5h-.26A6 6 0 0 1 13 17.65V20h3v2H8v-2h3v-2.35A6 6 0 0 1 8.26 14H8a5 5 0 0 1-5-5V6h2V4zm0 4H5v1a3 3 0 0 0 2.6 2.97A8.9 8.9 0 0 1 5 8zm14 0a8.9 8.9 0 0 1-2.6 3.97A3 3 0 0 0 19 9V8z"></path></svg>`;
 }
 
-function hofCardHTML(entry, kind, label, dateFormatter) {
-    const icon = trophyIconHTML(kind === 'worst' ? 'is-worst' : 'is-best');
-    if (!entry) {
-        return `
-            <div class="hof-card hof-card-${kind}">
-                ${icon}
-                <p class="hof-card-label">${label}</p>
-                <p class="hof-empty">Aucune donnée</p>
-            </div>`;
-    }
-    const displayName = getDisplayName(entry.teamName, entry.members);
+/** Une case du tableau des records : les points, l'équipe, la date. */
+function hofCellHTML(entry, kind, dateFormatter) {
+    if (!entry) return `<div class="hof-cell is-${kind} is-empty"><span class="hof-empty">—</span></div>`;
+    const displayName = escapeHtmlText(getDisplayName(entry.teamName, entry.members));
     return `
-        <div class="hof-card hof-card-${kind}">
-            ${icon}
-            <p class="hof-card-label">${label}</p>
-            <p class="hof-card-value">${entry.points}</p>
-            <p class="hof-card-name"><span title="${displayName}">${displayName}</span> <span class="hof-card-date">· ${dateFormatter(entry.date)}</span></p>
+        <div class="hof-cell is-${kind}">
+            <span class="hof-card-value">${entry.points}<small>pts</small></span>
+            <span class="hof-card-name" title="${displayName}">${displayName}</span>
+            <span class="hof-card-date">${dateFormatter(entry.date)}</span>
+        </div>`;
+}
+
+function hofRowHTML(label, best, worst, dateFormatter) {
+    return `
+        <div class="hof-row">
+            <p class="hof-row-label">${label}</p>
+            ${hofCellHTML(best, 'best', dateFormatter)}
+            ${hofCellHTML(worst, 'worst', dateFormatter)}
         </div>`;
 }
 
@@ -1197,17 +1213,16 @@ function buildHallOfFameHTML(data) {
             'Pas encore de records',
             "Il faut au moins un match joué cette saison.");
     }
-    // Ordre du mockup : la meilleure semaine sert de carte « héro » (fond
-    // sombre), puis meilleurs mois/jour, puis les trois pires en fin de
-    // grille — pas un simple appariement best/worst par ligne.
+    // Un tableau plutôt que six cartes : une ligne par période, le meilleur
+    // à gauche (or) et le pire à droite (rouge) — on compare d'un coup d'œil.
     return `${head}
-        <div class="hof-grid">
-            ${hofCardHTML(data.bestWeek, 'hero', 'Meilleure semaine', formatHofDate)}
-            ${hofCardHTML(data.bestMonth, 'best', 'Meilleur mois', formatHofMonth)}
-            ${hofCardHTML(data.bestDay, 'best', 'Meilleure journée', formatHofDate)}
-            ${hofCardHTML(data.worstWeek, 'worst', 'Pire semaine', formatHofDate)}
-            ${hofCardHTML(data.worstMonth, 'worst', 'Pire mois', formatHofMonth)}
-            ${hofCardHTML(data.worstDay, 'worst', 'Pire journée', formatHofDate)}
+        <div class="hof-board">
+            <div class="hof-col-heads" aria-hidden="true">
+                <span></span><span class="is-best">${trophyIconHTML('is-best')}Meilleur</span><span class="is-worst">Pire</span>
+            </div>
+            ${hofRowHTML('Journée', data.bestDay, data.worstDay, formatHofDate)}
+            ${hofRowHTML('Semaine', data.bestWeek, data.worstWeek, formatHofDate)}
+            ${hofRowHTML('Mois', data.bestMonth, data.worstMonth, formatHofMonth)}
         </div>`;
 }
 
@@ -1352,9 +1367,10 @@ function showTeamRoster(poolName, teamName) {
     const teamData = poolData.teams[teamName];
     if (!teamData) return;
 
-    // Update UI
+    // Update UI — la fiche a son propre en-tête (renderRosterHeader) : le
+    // titre commun de la page s'efface le temps qu'elle est affichée.
+    setRosterViewMode(true);
     const displayTeamName = getDisplayName(teamName, teamData.members || []);
-    document.getElementById('pageTitle').textContent = displayTeamName;
     document.getElementById('breadcrumb').style.display = 'flex';
     document.getElementById('poolBreadcrumb').textContent = poolName;
     document.getElementById('poolBreadcrumb').style.display = 'inline';
@@ -1369,16 +1385,25 @@ function showTeamRoster(poolName, teamName) {
     document.getElementById('poolStandingsView').style.display = 'none';
     document.getElementById('teamRosterView').style.display = 'block';
 
+    // Un pool sans échanges n'a rien à mettre en vente : on saute l'appel
+    // aux annonces et le bouton disparaît de la fiche. Seule l'équipe
+    // elle-même peut mettre ses joueurs en vente.
+    const tradesAllowed = poolData.allowTrades !== false;
+    rosterSale = {
+        poolName,
+        teamName,
+        canSell: tradesAllowed && (teamData.members || []).includes(localStorage.getItem('username')),
+        listings: {},
+        players: []
+    };
+    renderRosterHeader(poolName, teamName);
+
     // Show skeleton initially
     document.getElementById('rosterSkeleton').style.display = 'flex';
     document.getElementById('rosterList').style.display = 'none';
 
-    // Un pool sans échanges n'a rien à mettre en vente : on saute l'appel
-    // aux annonces et le bouton disparaît de la fiche.
-    const tradesAllowed = poolData.allowTrades !== false;
-
     // Render roster after short delay — fetch this team's active for-sale
-    // listings first so the toggle starts in the right state on first paint.
+    // listings first so the marks start in the right state on first paint.
     setTimeout(async () => {
         let activeListings = [];
         if (tradesAllowed) {
@@ -1392,23 +1417,91 @@ function showTeamRoster(poolName, teamName) {
                 console.warn('Could not load trade listings:', err);
             }
         }
-        renderTeamRoster(teamData, activeListings, tradesAllowed);
+        // Le sélecteur d'équipe a pu changer de fiche pendant l'appel.
+        if (currentView !== VIEW_STATES.TEAM_ROSTER || currentTeamName !== teamName || currentPoolName !== poolName) return;
+        renderTeamRoster(teamData, activeListings);
     }, 100);
 }
 
-// Lists or unlists a player as "open to offers" — a visibility signal
-// only; the 1-for-1 same-category trade rule itself is unchanged.
-async function toggleForSale(btn) {
-    const playerName = btn.dataset.player;
-    const category = btn.dataset.category;
-    const isListed = btn.classList.contains('is-listed');
-    const username = localStorage.getItem('username');
-    if (!username) return;
+/** La fiche d'équipe remplace le titre commun de la page par le sien. */
+function setRosterViewMode(on) {
+    document.body.classList.toggle('fz-view-roster', on);
+}
 
-    btn.disabled = true;
+const RH_ICON = {
+    back: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>',
+    caret: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
+    close: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+};
+const tagIcon = size => (typeof getIcon === 'function' ? getIcon('tag', size) : '');
+
+/**
+ * L'en-tête de la fiche d'équipe. Sur téléphone, le fil d'Ariane (trois
+ * liens de 12px) laisse la place à un vrai bouton de retour. Le nom de
+ * l'équipe ouvre la liste des équipes du pool — un <select> posé dessus,
+ * donc la roulette native du téléphone — et la ligne dessous dit où
+ * l'équipe se situe. Le bouton « Mettre en vente » n'existe que sur sa
+ * propre équipe : un seul point d'entrée au lieu d'un bouton par rangée.
+ */
+function renderRosterHeader(poolName, teamName) {
+    const poolData = allPoolsData[poolName];
+    const teamData = poolData.teams[teamName];
+    const standings = computeStandings(poolData);
+    const moi = standings.find(s => s.teamName === teamName);
+
+    let sous = '';
+    if (moi) {
+        const rang = moi.rank === 1 ? '1<sup>er</sup>' : `${moi.rank}<sup>e</sup>`;
+        const bilan = (poolData.poolMode || 'cumulative') === 'head-to-head'
+            ? `${moi.wins}-${moi.losses}-${moi.ties}`
+            : `${Math.round(moi.points).toLocaleString('fr-CA')} pts`;
+        sous = `${rang} sur ${standings.length} · ${bilan}`;
+    }
+
+    const picker = moi && standings.length > 1 ? `
+        <select class="rh-picker" aria-label="Voir une autre équipe du pool">
+            ${standings.map(s => `<option value="${escapeAttr(s.teamName)}"${s.teamName === teamName ? ' selected' : ''}>${s.rank}. ${escapeHtmlText(getDisplayName(s.teamName, s.members))}</option>`).join('')}
+        </select>` : '';
+
+    const header = document.getElementById('rosterHeader');
+    header.innerHTML = `
+        <button type="button" class="rh-back" data-rh-back>${RH_ICON.back}<span>Classement</span></button>
+        <div class="rh-top">
+            <div class="rh-title${picker ? ' has-picker' : ''}">
+                <h1 class="rh-name">${escapeHtmlText(getDisplayName(teamName, teamData.members || []))}</h1>
+                ${picker ? `<span class="rh-caret">${RH_ICON.caret}</span>${picker}` : ''}
+            </div>
+            ${rosterSale.canSell ? `
+            <button type="button" class="rh-sale" data-rh-sale aria-haspopup="dialog">
+                ${tagIcon(14)}<span>Mettre en vente</span><span class="rh-sale-count" hidden></span>
+            </button>` : ''}
+        </div>
+        ${sous ? `<p class="rh-sub">${sous}</p>` : ''}`;
+
+    header.querySelector('[data-rh-back]').addEventListener('click', () => showPoolStandings(poolName));
+    const select = header.querySelector('.rh-picker');
+    if (select) select.addEventListener('change', () => showTeamRoster(poolName, select.value));
+    const vendre = header.querySelector('[data-rh-sale]');
+    if (vendre) vendre.addEventListener('click', openSaleSheet);
+}
+
+// ==================== MISE EN VENTE ====================
+// Mettre un joueur « en vente » le signale aux autres équipes comme
+// disponible — un signal seulement ; la règle d'échange 1 pour 1 dans la
+// même catégorie ne change pas. Tout passe par un panneau unique, ouvert
+// depuis l'en-tête de sa propre équipe ; la liste n'en garde qu'une marque.
+
+/** La fiche affichée : qui peut vendre, les annonces actives, les joueurs. */
+let rosterSale = { poolName: null, teamName: null, canSell: false, listings: {}, players: [] };
+
+async function setForSale(player, veutVendre) {
+    const username = localStorage.getItem('username');
+    if (!username) return false;
+    const annonce = rosterSale.listings[player.name];
     try {
-        if (isListed) {
-            const res = await fetch(`${BASE_URL}/trade-listings/${btn.dataset.listingId}/remove`, {
+        if (!veutVendre) {
+            if (!annonce) return true;
+            const res = await fetch(`${BASE_URL}/trade-listings/${annonce.id}/remove`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username })
@@ -1416,51 +1509,155 @@ async function toggleForSale(btn) {
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
                 fzAlert({ type: 'error', title: 'Retrait impossible', message: data.message || 'Impossible de retirer ce joueur de la vente.' });
-                return;
+                return false;
             }
-            btn.classList.remove('is-listed');
-            btn.dataset.listingId = '';
+            delete rosterSale.listings[player.name];
         } else {
+            if (annonce) return true;
             const res = await fetch(`${BASE_URL}/trade-listings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    poolName: currentPoolName,
-                    teamName: currentTeamName,
-                    playerName,
-                    category,
+                    poolName: rosterSale.poolName,
+                    teamName: rosterSale.teamName,
+                    playerName: player.name,
+                    category: player.category,
                     username
                 })
             });
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
             if (!res.ok) {
                 fzAlert({ type: 'error', title: 'Mise en vente impossible', message: data.message || 'Impossible de mettre ce joueur en vente.' });
-                return;
+                return false;
             }
-            btn.classList.add('is-listed');
-            btn.dataset.listingId = data.id;
+            rosterSale.listings[player.name] = { id: data.id, playerName: player.name };
         }
-        const label = btn.querySelector('.fst-label');
-        if (label) label.textContent = btn.classList.contains('is-listed') ? 'Retirer de la vente' : 'Mettre en vente';
+        return true;
     } catch (err) {
         console.error('Error toggling trade listing:', err);
         fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
-    } finally {
-        btn.disabled = false;
+        return false;
     }
 }
 
-function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
+/** Les marques « En vente » de la liste et le compteur du bouton d'en-tête. */
+function refreshSaleMarks() {
+    document.querySelectorAll('#rosterList .roster-row[data-player]').forEach(row => {
+        row.classList.toggle('is-for-sale', !!rosterSale.listings[row.dataset.player]);
+    });
+    const compte = document.querySelector('#rosterHeader .rh-sale-count');
+    if (compte) {
+        const n = Object.keys(rosterSale.listings).length;
+        compte.textContent = n;
+        compte.hidden = !n;
+        compte.closest('.rh-sale').setAttribute('aria-label', n
+            ? `Mettre en vente — ${n} joueur${n > 1 ? 's' : ''} en vente`
+            : 'Mettre en vente');
+    }
+}
+
+/**
+ * Le panneau de mise en vente : un interrupteur par joueur, appliqué tout
+ * de suite. Feuille qui monte du bas sur téléphone, fenêtre centrée sur
+ * grand écran. Échap, le fond ou « Terminé » le ferment.
+ */
+function openSaleSheet() {
+    if (!rosterSale.canSell || document.querySelector('.ss-overlay')) return;
+    // Le focus revient au bouton d'en-tête à la fermeture — Safari ne le
+    // lui donne pas au clic, activeElement serait le corps de la page.
+    const retour = document.querySelector('#rosterHeader [data-rh-sale]');
+    const joueurs = rosterSale.players;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'ss-overlay';
+    overlay.innerHTML = `
+        <div class="ss-sheet" role="dialog" aria-modal="true" aria-labelledby="ssTitle" aria-describedby="ssHint">
+            <div class="ss-head">
+                <h2 class="ss-title" id="ssTitle">Mettre en vente</h2>
+                <button type="button" class="ss-close" data-ss-close aria-label="Fermer">${RH_ICON.close}</button>
+                <p class="ss-hint" id="ssHint">Les autres équipes voient vos joueurs en vente comme disponibles pour un échange.</p>
+            </div>
+            <ul class="ss-list">
+                ${joueurs.map((j, i) => `
+                <li>
+                    <label class="ss-row" for="ssSwitch${i}">
+                        ${j.avatarHTML}
+                        <span class="ss-id">
+                            <span class="ss-name">${escapeHtmlText(j.name)}</span>
+                            <span class="ss-meta">${escapeHtmlText(j.meta)} · ${j.points} PPts</span>
+                        </span>
+                        <input type="checkbox" role="switch" class="ss-switch" id="ssSwitch${i}" data-i="${i}"${rosterSale.listings[j.name] ? ' checked' : ''}>
+                    </label>
+                </li>`).join('')}
+            </ul>
+            <div class="ss-foot">
+                <button type="button" class="ss-done" data-ss-close>Terminé</button>
+            </div>
+        </div>`;
+
+    const sheet = overlay.querySelector('.ss-sheet');
+    const enCours = new Set();
+    let ferme = false;
+
+    function fermer() {
+        if (ferme) return;
+        ferme = true;
+        document.documentElement.classList.remove('ss-lock');
+        overlay.classList.add('is-leaving');
+        const retirer = () => overlay.remove();
+        overlay.addEventListener('animationend', e => { if (e.target === sheet) retirer(); });
+        setTimeout(retirer, 260);   // mouvement réduit : pas d'animationend
+        if (retour && document.contains(retour)) retour.focus({ preventScroll: true });
+    }
+
+    overlay.addEventListener('click', e => {
+        if (e.target === overlay || e.target.closest('[data-ss-close]')) fermer();
+    });
+
+    overlay.addEventListener('change', async e => {
+        const sw = e.target.closest('.ss-switch');
+        if (!sw) return;
+        const i = Number(sw.dataset.i);
+        // Un appel à la fois par joueur : un double toucher ne crée pas deux annonces.
+        if (enCours.has(i)) { sw.checked = !sw.checked; return; }
+        enCours.add(i);
+        const rangee = sw.closest('.ss-row');
+        rangee.classList.add('is-busy');
+        const ok = await setForSale(joueurs[i], sw.checked);
+        if (!ok) sw.checked = !sw.checked;
+        rangee.classList.remove('is-busy');
+        enCours.delete(i);
+        refreshSaleMarks();
+    });
+
+    overlay.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { e.preventDefault(); fermer(); return; }
+        if (e.key !== 'Tab') return;
+        // Le focus reste dans le panneau : derrière, rien n'est accessible.
+        const liste = [...sheet.querySelectorAll('button, input')];
+        const premier = liste[0];
+        const dernier = liste[liste.length - 1];
+        if (e.shiftKey && document.activeElement === premier) { e.preventDefault(); dernier.focus(); }
+        else if (!e.shiftKey && document.activeElement === dernier) { e.preventDefault(); premier.focus(); }
+    });
+
+    document.documentElement.classList.add('ss-lock');
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => {
+        (sheet.querySelector('.ss-switch') || sheet.querySelector('.ss-done')).focus({ preventScroll: true });
+    });
+}
+
+function renderTeamRoster(roster, activeListings = []) {
     const rosterList = document.getElementById('rosterList');
     rosterList.innerHTML = '';
 
-    // Only the roster's own team can list/unlist its players, and only when
-    // the pool allows trades at all. category matches the vocabulary
-    // /trade/propose already validates against.
-    const currentUsername = localStorage.getItem('username');
-    const isOwner = tradesAllowed && (roster.members || []).includes(currentUsername);
-    const listingByPlayer = {};
-    activeListings.forEach(l => { listingByPlayer[l.playerName] = l; });
+    // Les annonces actives de l'équipe : une marque « En vente » dans la
+    // liste, visible de tous, et l'état de départ du panneau de mise en
+    // vente (openSaleSheet), réservé à l'équipe elle-même.
+    rosterSale.listings = {};
+    rosterSale.players = [];
+    activeListings.forEach(l => { rosterSale.listings[l.playerName] = l; });
 
     const players = [];
 
@@ -1500,24 +1697,37 @@ function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
         });
     });
 
-    // Render player cards
+    // Liste « comfortable » (Claude Design, Roster Table v2) : une bande
+    // continue de rangées de 64px séparées d'un filet, plutôt qu'une carte
+    // par joueur. Sur une bande étroite, le prénom se réduit à son initiale
+    // — requêtes de conteneur sur .roster-rows (classement.css).
+    const bloc = document.createElement('section');
+    bloc.className = 'roster-block';
+    bloc.innerHTML = `<p class="roster-count">Joueurs actifs · ${players.length}</p>`;
+    const rangees = document.createElement('div');
+    rangees.className = 'roster-rows';
+    bloc.appendChild(rangees);
+    rosterList.appendChild(bloc);
+
     players.forEach((player, index) => {
-        const card = document.createElement('div');
-        card.className = 'roster-card';
+        const row = document.createElement('div');
+        row.className = 'roster-row';
+        row.dataset.player = player.name;
 
         // Only make clickable if it has a playerId (not teams)
         if (player.playerId) {
-            card.classList.add('clickable');
-            card.onclick = () => showCareerStats(player.playerId, player.name, player.type === 'goalie');
+            row.classList.add('clickable');
+            row.onclick = () => showCareerStats(player.playerId, player.name, player.type === 'goalie');
         }
 
         const pickNumber = index + 1;
+        const estClub = player.type === 'team';
 
         // Get player image
         let imageHTML = '';
-        if (player.type === 'team') {
+        if (estClub) {
             const teamLogo = `teams/${player.teamAbbrev}.png`;
-            imageHTML = `<img src="${teamLogo}" alt="${player.name}" onerror="this.style.display='none'">`;
+            imageHTML = `<img src="${escapeAttr(teamLogo)}" alt="${escapeAttr(player.name)}" onerror="this.style.display='none'">`;
         } else {
             // Try multiple sources for player headshot
             let headshot = null;
@@ -1545,7 +1755,7 @@ function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
             const initiales = escapeHtmlText(initialsFromName(player.name || ''));
             imageHTML = (headshot
                 ? `<img src="${escapeAttr(headshot)}" alt="${escapeAttr(player.name)}" loading="lazy" data-no-lazy onerror="this.remove()">`
-                : '') + `<div class="no-photo">${initiales || escapeHtmlText(player.position)}</div>`;
+                : '') + `<div class="rr-initials">${initiales || escapeHtmlText(player.position)}</div>`;
         }
 
         // Calculate points
@@ -1584,61 +1794,56 @@ function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
 
         // Get team abbreviation for display
         const teamAbbrev = player.teamAbbrev || '';
+        // `teamAbbrevs` liste parfois les clubs d'une saison (« TOR,MTL ») :
+        // le dernier est l'actuel.
+        const club = String(teamAbbrev).split(',').pop().trim();
+        const meta = [club, estClub ? 'Équipe' : player.position].filter(Boolean).join(' · ');
 
-        // Only the roster's own team sees the list/unlist toggle.
-        const existingListing = listingByPlayer[player.name];
-        const isListed = !!existingListing;
-        const sellToggleHTML = isOwner ? `
-                <button type="button" class="for-sale-toggle${isListed ? ' is-listed' : ''}"
-                        data-player="${player.name.replace(/"/g, '&quot;')}"
-                        data-category="${player.category || ''}"
-                        data-listing-id="${isListed ? existingListing.id : ''}"
-                        onclick="event.stopPropagation(); toggleForSale(this)">
-                    ${typeof getIcon === 'function' ? getIcon('tag', 14) : ''}
-                    <span class="fst-label">${isListed ? 'Retirer de la vente' : 'Mettre en vente'}</span>
-                </button>` : '';
+        // « N. Kucherov » quand la bande est trop étroite pour le nom complet.
+        const mots = player.name.split(' ');
+        const nomCourt = !estClub && mots.length > 1 ? `${mots[0][0]}. ${mots.slice(1).join(' ')}` : '';
+        const nomHTML = nomCourt
+            ? `<span class="rr-name-full">${escapeHtmlText(player.name)}</span><span class="rr-name-short">${escapeHtmlText(nomCourt)}</span>`
+            : escapeHtmlText(player.name);
 
-        card.innerHTML = `
-            <div class="pick-number">${pickNumber}</div>
-            <div class="player-avatar${player.type === 'team' ? '' : ' fz-shot'}"${player.type === 'team' ? '' : ` style="${clubShotStyle(teamAbbrev)}"`}>
+        // Un zéro s'efface : l'œil va droit aux joueurs qui ont produit.
+        const stat = (valeur, libelle) =>
+            `<div class="rr-stat${valeur ? '' : ' is-zero'}"><span class="rr-v">${valeur}</span><span class="rr-l">${libelle}</span></div>`;
+
+        const avatarHTML = `
+            <div class="rr-avatar${estClub ? ' is-club' : ' fz-shot'}"${estClub ? '' : ` style="${clubShotStyle(teamAbbrev)}"`}>
                 ${imageHTML}
+            </div>`;
+        // Le panneau de mise en vente reprend la même photo et la même ligne.
+        rosterSale.players.push({ name: player.name, category: player.category, meta, points, avatarHTML });
+
+        // « En vente » : une pastille après le club · position quand la bande
+        // a la place, une étiquette sur la photo sinon (classement.css).
+        row.innerHTML = `
+            <div class="rr-rank">${pickNumber}</div>
+            <div class="rr-shot">
+                ${avatarHTML}
+                <span class="rr-sale-dot" aria-hidden="true">${tagIcon(10)}</span>
             </div>
-            <div class="roster-info">
-                <div class="player-name-row">
-                    <span class="player-name">${player.name}</span>${player.type === 'team' ? '' : injBadge(player.name, teamAbbrev)}
-                    <span class="player-team-abbrev">${teamAbbrev}</span>
-                    <span class="player-position">${player.position}</span>
-                    ${sellToggleHTML}
+            <div class="rr-main">
+                <div class="rr-name-line">
+                    <span class="rr-name">${nomHTML}</span>${estClub ? '' : injBadge(player.name, teamAbbrev)}
+                    <span class="rr-meta">${escapeHtmlText(meta)}</span>
+                    <span class="rr-sale">En vente</span>
                 </div>
-                <div class="player-stats-grid">
-                    <div class="stats-row-top">
-                        <span>${gp}</span>
-                        <span>${stat1}</span>
-                        <span>${stat2}</span>
-                        <span>${points}</span>
-                    </div>
-                    <div class="stats-row-bottom">
-                        <span>PJ</span>
-                        <span>${stat1Label}</span>
-                        <span>${stat2Label}</span>
-                        <span>Pts</span>
-                    </div>
+                <div class="rr-stats">
+                    ${stat(gp, 'PJ')}${stat(stat1, stat1Label)}${stat(stat2, stat2Label)}${stat(points, 'Pts')}
                 </div>
             </div>
-            <div class="roster-points-section">
-                <div class="pptsa-value">0</div>
-                <div class="pptsa-label">PPtsA</div>
-            </div>
-            <div class="roster-points-section">
-                <div class="ppts-value">${points}</div>
-                <div class="ppts-label">PPts</div>
-            </div>
-            <div class="roster-arrow">›</div>
+            <div class="rr-pptsa is-zero"><span class="rr-v">0</span><span class="rr-l">PPtsA</span></div>
+            <div class="rr-ppts${points ? '' : ' is-zero'}"><span class="rr-v">${points}</span><span class="rr-l">PPts</span></div>
+            <span class="rr-chev" aria-hidden="true">${player.playerId ? '›' : ''}</span>
         `;
 
-        rosterList.appendChild(card);
+        rangees.appendChild(row);
     });
 
+    refreshSaleMarks();
     renderBenchPanel(rosterList, roster);
 
     // Hide skeleton, show content
@@ -2697,6 +2902,7 @@ function showError(title, message) {
     document.getElementById('poolListView').style.display = 'block';
     document.getElementById('poolStandingsView').style.display = 'none';
     document.getElementById('teamRosterView').style.display = 'none';
+    setRosterViewMode(false);
     document.getElementById('breadcrumb').style.display = 'none';
     document.getElementById('pageTitle').textContent = 'Classement';
     document.getElementById('poolHeaderMeta').style.display = 'none';

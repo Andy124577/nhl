@@ -598,208 +598,506 @@ body {
 .lb-source { flex-shrink: 0; font-size: .7rem; color: var(--text-light-gray); }
 
 /* ==================== ROSTER VIEW (Level 3) ==================== */
+/* Liste « comfortable » (Claude Design, Roster Table v2) : une bande
+   continue, une rangée de 64px par joueur séparée d'un filet — rang, photo,
+   nom + club · position, les quatre stats en mini-colonnes, PPtsA, PPts et
+   le chevron. Les teintes sont celles du mockup (sombre), reprises en clair
+   plus bas ; posées sur body parce que le panneau de mise en vente, ajouté
+   à la fin de la page, s'en sert aussi. */
 .roster-list {
     display: flex;
     flex-direction: column;
+    gap: 24px;
+}
+
+body {
+    --rr-surface: #141416;
+    --rr-hover: #1C1C1F;
+    --rr-line: #26262A;
+    --rr-ink: #F2F2F3;
+    --rr-num: #E4E4E8;
+    --rr-strong: #FFFFFF;
+    --rr-muted: #8A8A90;
+    --rr-dim: #6F6F76;
+    --rr-chev: #55555C;
+    --rr-btn-line: #34343A;
+    --rr-btn-ink: #C7C7CC;
+    --rr-btn-hover-line: #55555C;
+    --rr-btn-hover-ink: #FFFFFF;
+    /* oklch(0.35 0.12 25) et oklch(0.55 0.17 25) du mockup : l'état
+       « en vente ». */
+    --rr-sale-bg: #6C1517;
+    --rr-sale-line: #C13C3B;
+    --rr-sale-ink: #FFFFFF;
+}
+html[data-theme="light"] body {
+    --rr-surface: #FFFFFF;
+    --rr-hover: #F5F5F7;
+    --rr-line: #E5E5EA;
+    --rr-ink: #1D1D1F;
+    --rr-num: #1D1D1F;
+    --rr-strong: #1D1D1F;
+    --rr-muted: #6E6E73;
+    --rr-dim: #8E8E93;
+    --rr-chev: #C7C7CC;
+    --rr-btn-line: #D2D2D7;
+    --rr-btn-ink: #1D1D1F;
+    --rr-btn-hover-line: #86868B;
+    --rr-btn-hover-ink: #1D1D1F;
+    --rr-sale-bg: var(--primary);
+    --rr-sale-line: var(--primary);
+    --rr-sale-ink: var(--on-primary);
+}
+
+/* -------------------- En-tête de la fiche -------------------- */
+/* Le titre commun de la page s'efface : la fiche a le sien, avec le
+   sélecteur d'équipe (renderRosterHeader). */
+body.fz-view-roster #pageTitle { display: none; }
+/* Les 30px de .view-container passaient sous ce titre : l'en-tête de la
+   fiche suit directement le fil d'Ariane (ou le haut de page sur téléphone). */
+body.fz-view-roster #teamRosterView { margin-top: 6px; }
+
+.roster-header { margin-bottom: 22px; }
+
+/* Téléphone seulement (plus bas) : le fil d'Ariane y est masqué. */
+.rh-back { display: none; }
+
+.rh-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 12px;
 }
 
-.roster-card {
-    background: var(--card-white);
-    border-radius: 12px;
-    padding: 16px 20px;
-    display: flex;
+/* Le <select> transparent couvre le nom et sa flèche : un toucher ouvre la
+   roulette native, le clavier et les lecteurs d'écran y ont accès. */
+.rh-title {
+    position: relative;
+    display: inline-flex;
     align-items: center;
-    gap: 16px;
-    transition: all 0.3s ease;
-    border: 2px solid var(--border-light);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    gap: 4px;
+    min-width: 0;
+    border-radius: 8px;
 }
-
-.roster-card.clickable {
-    cursor: pointer;
+.rh-name {
+    min-width: 0;
+    margin: 0;
+    font: 700 28px/1.2 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-
-.roster-card.clickable:hover {
-    background: var(--bg-hover);
-    border-color: var(--primary);
-    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.15);
-    transform: translateY(-2px);
-}
-
-.pick-number {
-    font-size: 1.1rem;
-    font-weight: 600;
+.rh-caret {
+    flex: none;
+    display: flex;
     color: var(--text-secondary);
-    min-width: 25px;
-    text-align: left;
+    transition: color .15s ease;
+}
+.rh-title.has-picker:hover .rh-caret { color: var(--text-main); }
+.rh-title:focus-within { outline: 2px solid var(--primary); outline-offset: 4px; }
+.rh-picker {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    /* 16px : sous cette taille, iOS zoome la page à l'ouverture. */
+    font-size: 16px;
 }
 
-.player-avatar {
-    width: 50px;
-    height: 50px;
+.rh-sub {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+.rh-sub sup { font-size: 0.7em; line-height: 0; }
+
+.rh-sale {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--rr-btn-line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--rr-btn-ink);
+    font: 600 13px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color .15s ease, color .15s ease;
+}
+.rh-sale svg { flex: none; }
+.rh-sale:hover { border-color: var(--rr-btn-hover-line); color: var(--rr-btn-hover-ink); }
+.rh-sale:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.rh-sale-count {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--rr-sale-bg);
+    color: var(--rr-sale-ink);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+}
+.rh-sale-count[hidden] { display: none; }
+
+/* -------------------- La liste -------------------- */
+.roster-count {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: var(--rr-muted);
+}
+
+/* Le conteneur des requêtes plus bas : c'est la largeur de la bande, pas
+   celle de l'écran, qui décide du nom court et de la marque « En vente ». */
+.roster-rows {
+    container-type: inline-size;
+    background: var(--rr-surface);
+    border-top: 1px solid var(--rr-line);
+    border-bottom: 1px solid var(--rr-line);
+    color: var(--rr-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.roster-row {
+    display: grid;
+    grid-template-columns: 22px 34px minmax(0, 1fr) 44px 44px 14px;
+    align-items: center;
+    column-gap: 8px;
+    min-height: 64px;
+    padding: 0 10px 0 12px;
+}
+.roster-row + .roster-row { border-top: 1px solid var(--rr-line); }
+.roster-row.clickable { cursor: pointer; }
+.roster-row.clickable:hover { background: var(--rr-hover); }
+
+.rr-rank {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--rr-muted);
+    text-align: center;
+}
+
+.rr-shot { position: relative; width: 34px; height: 34px; }
+
+.rr-avatar {
+    position: relative;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     overflow: hidden;
-    background: var(--bg-page);
-    flex-shrink: 0;
-    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
 }
-
-.player-avatar img {
+.rr-avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: top;
 }
-
-.player-avatar .no-photo {
-    font-size: 1.2rem;
-    color: var(--text-light-gray);
-}
+.rr-avatar.is-club img { object-fit: contain; }
 
 /* Joueur : photo détourée sur la couleur de son club (.fz-shot, teamLogos.css),
    comme à l'onglet Alignements. Les initiales ne servent que sans photo. */
-.player-avatar img ~ .no-photo { display: none; }
-.player-avatar.fz-shot .no-photo {
-    color: #fff;
-    font-size: 0.95rem;
+.rr-avatar img ~ .rr-initials { display: none; }
+.rr-initials {
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.5px;
+    color: #FFFFFF;
 }
 
-.roster-info {
+.rr-main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.rr-name-line {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+}
+.rr-name {
+    min-width: 0;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--rr-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.rr-name-short { display: none; }
+.rr-name-line .inj-slot { flex: none; align-self: center; }
+.rr-meta {
+    flex: none;
+    font-size: 10.5px;
+    color: var(--rr-muted);
+    letter-spacing: 0.03em;
+}
+
+/* « En vente » : pastille après club · position sur une bande large,
+   étiquette sur le coin de la photo sur une bande étroite (plus bas). */
+.rr-sale,
+.rr-sale-dot { display: none; }
+.roster-row.is-for-sale .rr-sale {
+    flex: none;
+    display: inline-block;
+    align-self: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--rr-sale-bg);
+    color: var(--rr-sale-ink);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+}
+.rr-sale-dot {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--rr-surface);
+    background: var(--rr-sale-line);
+    color: #FFFFFF;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Les mini-colonnes gardent 26px tant qu'il y a la place et ne se tassent
+   que sur les plus petits téléphones. */
+.rr-stats {
+    display: flex;
+    gap: 2px;
+    min-width: 0;
+}
+.rr-stat {
+    flex: 0 1 26px;
+    min-width: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.1;
+}
+.rr-stat .rr-v { font-size: 12.5px; color: var(--rr-num); }
+.rr-stat .rr-l { font-size: 9.5px; color: var(--rr-dim); }
+.rr-stat.is-zero .rr-v { color: var(--rr-dim); }
+
+.rr-pptsa,
+.rr-ppts {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.rr-pptsa { line-height: 1.15; }
+.rr-pptsa .rr-v { font-size: 13px; color: var(--rr-num); }
+.rr-pptsa.is-zero .rr-v { color: var(--rr-dim); }
+.rr-pptsa .rr-l { font-size: 9.5px; color: var(--rr-dim); }
+.rr-ppts { line-height: 1.1; }
+.rr-ppts .rr-v { font-size: 18px; font-weight: 700; color: var(--rr-strong); }
+.rr-ppts.is-zero .rr-v { color: var(--rr-muted); }
+.rr-ppts .rr-l { font-size: 9.5px; color: var(--rr-muted); }
+
+.rr-chev {
+    font-size: 16px;
+    color: var(--rr-chev);
+    text-align: center;
+}
+
+@container (max-width: 399px) {
+    .rr-name-full { display: none; }
+    .rr-name-short { display: inline; }
+    /* La pastille reste lue par les lecteurs d'écran ; l'œil a l'étiquette. */
+    .roster-row.is-for-sale .rr-sale {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+    .roster-row.is-for-sale .rr-sale-dot { display: flex; }
+}
+
+/* -------------------- Panneau « Mettre en vente » -------------------- */
+/* Feuille qui monte du bas sur téléphone, fenêtre centrée au-delà de
+   680px (plus bas). Un interrupteur par joueur (openSaleSheet). */
+html.ss-lock { overflow: hidden; }
+
+.ss-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    animation: ssFade .2s ease;
+}
+.ss-sheet {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: 88vh;
+    max-height: 88dvh;
+    border-radius: 16px 16px 0 0;
+    background: var(--rr-surface);
+    color: var(--rr-ink);
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
+    animation: ssRise .24s cubic-bezier(.2, .8, .2, 1);
+}
+.ss-overlay.is-leaving { animation: ssFade .2s ease reverse forwards; }
+.ss-overlay.is-leaving .ss-sheet { animation: ssRise .2s ease-in reverse forwards; }
+
+.ss-head {
+    position: relative;
+    padding: 18px 56px 12px 16px;
+    border-bottom: 1px solid var(--rr-line);
+}
+.ss-title {
+    margin: 0;
+    font: 700 18px/1.25 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--rr-ink);
+}
+.ss-hint {
+    margin: 4px 0 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--rr-muted);
+}
+.ss-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--rr-muted);
+    cursor: pointer;
+}
+.ss-close:hover { color: var(--rr-ink); background: var(--rr-hover); }
+
+.ss-list {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    font-variant-numeric: tabular-nums;
+}
+.ss-list li + li .ss-row { border-top: 1px solid var(--rr-line); }
+.ss-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 60px;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+.ss-row:hover { background: var(--rr-hover); }
+.ss-row .rr-avatar { flex: none; }
+.ss-id {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-}
-
-/* Wraps rather than truncating the name: with the for-sale toggle now
-   sharing this row, a long name plus both badges plus the toggle's own
-   label doesn't reliably fit on one line, and shrinking the name down to
-   a couple of characters reads worse than letting the toggle (pinned to
-   the end via margin-left: auto below) drop to its own line. */
-.player-name-row {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    row-gap: 6px;
-    margin-bottom: 4px;
-}
-
-.player-name {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--text-dark);
-}
-
-.player-team-abbrev {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    font-weight: 600;
-    padding: 2px 8px;
-    background: var(--bg-gray-light);
-    border-radius: 4px;
-}
-
-.player-position {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    font-weight: 600;
-    padding: 2px 6px;
-    background: var(--bg-gray-light);
-    border-radius: 4px;
-}
-
-.player-stats-grid {
-    display: flex;
-    flex-direction: column;
     gap: 2px;
 }
-
-.player-stats-grid .stats-row-top {
-    display: flex;
-    gap: 10px;
+.ss-name {
+    font-size: 15px;
     font-weight: 600;
-    color: var(--text-dark);
-    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
+.ss-meta { font-size: 12px; color: var(--rr-muted); }
+.ss-row.is-busy { opacity: 0.6; }
 
-.player-stats-grid .stats-row-top span {
-    min-width: 30px;
-    text-align: left;
-}
-
-.player-stats-grid .stats-row-bottom {
-    display: flex;
-    gap: 10px;
-    font-size: 0.7rem;
-    color: var(--text-light-gray);
-}
-
-.player-stats-grid .stats-row-bottom span {
-    min-width: 30px;
-    text-align: left;
-}
-
-.for-sale-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-left: auto;
-    flex-shrink: 0;
-    padding: 5px 10px;
-    background: transparent;
-    border: 1px solid var(--border-light);
-    border-radius: 100px;
-    color: var(--text-secondary);
-    font-size: 0.72rem;
-    font-weight: 700;
+/* Interrupteur : la case à cocher native (clavier, lecteurs d'écran), habillée. */
+.ss-switch {
+    flex: none;
+    position: relative;
+    width: 46px;
+    height: 28px;
+    margin: 0;
+    border-radius: 14px;
+    background: var(--rr-btn-line);
+    -webkit-appearance: none;
+    appearance: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color .18s ease;
 }
-.for-sale-toggle:hover { border-color: var(--warning); color: var(--warning); }
-.for-sale-toggle.is-listed {
-    background: var(--warning);
-    border-color: var(--warning);
-    color: var(--bg);
+.ss-switch::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: transform .18s ease;
 }
-.for-sale-toggle:disabled { opacity: 0.6; cursor: not-allowed; }
+.ss-switch:checked { background: var(--rr-sale-line); }
+.ss-switch:checked::after { transform: translateX(18px); }
+.ss-switch:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-.roster-points-section {
-    text-align: center;
-    min-width: 50px;
+.ss-foot {
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--rr-line);
+}
+.ss-done {
+    width: 100%;
+    min-height: 48px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--rr-ink);
+    color: var(--rr-surface);
+    font: 700 15px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    cursor: pointer;
+}
+.ss-done:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+@keyframes ssFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ssRise { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes ssPop { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+
+@media (min-width: 681px) {
+    .ss-overlay { align-items: center; padding: 24px; }
+    .ss-sheet {
+        max-width: 440px;
+        max-height: 80vh;
+        border-radius: 16px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        animation-name: ssPop;
+    }
+    .ss-overlay.is-leaving .ss-sheet { animation-name: ssPop; }
 }
 
-.pptsa-value,
-.ppts-value {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--text-dark);
-    line-height: 1;
-}
-
-.pptsa-label,
-.ppts-label {
-    font-size: 0.65rem;
-    color: var(--text-light-gray);
-    margin-top: 2px;
-}
-
-.roster-arrow {
-    font-size: 1.5rem;
-    color: var(--border-gray);
-    transition: transform 0.3s ease;
-}
-
-.roster-card:hover .roster-arrow {
-    transform: translateX(3px);
-    color: var(--text-light-gray);
+@media (prefers-reduced-motion: reduce) {
+    .ss-overlay,
+    .ss-sheet,
+    .ss-overlay.is-leaving,
+    .ss-overlay.is-leaving .ss-sheet { animation: none; }
 }
 
 /* ==================== SKELETON LOADERS ==================== */
@@ -886,20 +1184,32 @@ body {
     border-radius: 50%;
 }
 
-/* Roster Card Skeleton */
-.roster-card-skeleton {
-    background: var(--card-white);
-    border-radius: 12px;
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
+/* Roster Skeleton — la même bande que la liste chargée (rangées de 64px,
+   photo ronde de 34px), décalée de la hauteur de « Joueurs actifs » pour
+   que rien ne saute à l'arrivée des données. */
+#rosterSkeleton {
+    gap: 0;
+    margin-top: 25px;
+    background: var(--rr-surface);
+    border-top: 1px solid var(--rr-line);
+    border-bottom: 1px solid var(--rr-line);
 }
 
-.skeleton-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 8px;
+.roster-card-skeleton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 64px;
+    padding: 0 10px 0 42px;
+}
+.roster-card-skeleton + .roster-card-skeleton { border-top: 1px solid var(--rr-line); }
+.roster-card-skeleton .skeleton-content { gap: 6px; }
+
+/* Scopé : skeleton-loader.css, chargé après, remet .skeleton-avatar à 60px. */
+.roster-card-skeleton .skeleton-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
     background: linear-gradient(90deg, var(--bg) 25%, var(--card) 50%, var(--bg) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
@@ -907,18 +1217,18 @@ body {
 }
 
 .skeleton-player-name {
-    width: 50%;
-    height: 18px;
-}
-
-.skeleton-player-stats {
-    width: 60%;
+    width: 40%;
     height: 14px;
 }
 
+.skeleton-player-stats {
+    width: 110px;
+    height: 20px;
+}
+
 .skeleton-player-points {
-    width: 70px;
-    height: 35px;
+    width: 44px;
+    height: 28px;
 }
 
 /* ==================== MODAL STYLES ==================== */
@@ -1349,70 +1659,8 @@ body {
         font-size: 1.1rem;
     }
 
-    .stats-row-top {
-        gap: 10px;
-        font-size: 1rem;
-    }
-
-    .stats-row-top span {
-        min-width: 30px;
-    }
-
-    .stats-row-bottom {
-        gap: 10px;
-    }
-
-    .stats-row-bottom span {
-        min-width: 30px;
-    }
-
     .points-value {
         font-size: 1.6rem;
-    }
-
-    .roster-card {
-        padding: 10px 12px;
-        gap: 10px;
-    }
-
-    .pick-number {
-        font-size: 1rem;
-        min-width: 20px;
-    }
-
-    .player-avatar {
-        width: 45px;
-        height: 45px;
-    }
-
-    .player-name {
-        font-size: 0.95rem;
-    }
-
-    .player-stats-grid .stats-row-top {
-        gap: 8px;
-        font-size: 0.9rem;
-    }
-
-    .player-stats-grid .stats-row-top span {
-        min-width: 28px;
-    }
-
-    .player-stats-grid .stats-row-bottom {
-        gap: 8px;
-    }
-
-    .player-stats-grid .stats-row-bottom span {
-        min-width: 28px;
-    }
-
-    .roster-points-section {
-        min-width: 45px;
-    }
-
-    .pptsa-value,
-    .ppts-value {
-        font-size: 1.1rem;
     }
 
     .career-modal-header {
@@ -1501,76 +1749,6 @@ body {
     .pool-badge {
         font-size: 0.75rem;
         padding: 3px 10px;
-    }
-
-    .stats-row-top {
-        gap: 8px;
-        font-size: 0.95rem;
-    }
-
-    .stats-row-top span {
-        min-width: 28px;
-    }
-
-    .stats-row-bottom {
-        gap: 8px;
-        font-size: 0.7rem;
-    }
-
-    .stats-row-bottom span {
-        min-width: 28px;
-    }
-
-    .roster-card {
-        padding: 8px 10px;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-
-    .pick-number {
-        font-size: 0.9rem;
-        min-width: 18px;
-    }
-
-    .player-avatar {
-        width: 40px;
-        height: 40px;
-    }
-
-    .player-name {
-        font-size: 0.9rem;
-    }
-
-    .player-team-abbrev,
-    .player-position {
-        font-size: 0.75rem;
-    }
-
-    .player-stats-grid .stats-row-top {
-        gap: 6px;
-        font-size: 0.85rem;
-    }
-
-    .player-stats-grid .stats-row-top span {
-        min-width: 24px;
-    }
-
-    .player-stats-grid .stats-row-bottom {
-        gap: 6px;
-        font-size: 0.65rem;
-    }
-
-    .player-stats-grid .stats-row-bottom span {
-        min-width: 24px;
-    }
-
-    .roster-points-section {
-        min-width: 40px;
-    }
-
-    .pptsa-value,
-    .ppts-value {
-        font-size: 1rem;
     }
 
     .modal-content {

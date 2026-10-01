@@ -44,7 +44,7 @@ body.fz-season-page { background:var(--bg); }
 .fzs-player-name small { display:block; color:#A1A1A6; margin:2px 0 4px; font-size:13px; }
 .fzs-player-stats { display:flex; flex-wrap:wrap; justify-content:space-between; gap:5px; color:#F5F5F7; font-size:12px; }
 .fzs-player-stats b,.fzs-player-stats strong { font-size:20px; }.fzs-player-stats small { flex-basis:100%; font-size:12px; }
-.fzs-total,.fzs-playing { grid-column:span 3; }
+.fzs-total { grid-column:span 4; }
 .fzs-dots { display:flex; gap:6px; flex-wrap:wrap; margin-top:15px; }.fzs-dots i { width:13px; height:13px; border-radius:50%; background:#38383A; }.fzs-dots .is-on { background:var(--success); }
 .fzs-breakdown { grid-column:span 6; }.fzs-stat { display:grid; grid-template-columns:115px 30px 1fr; align-items:center; gap:12px; border-bottom:1px solid #38383A; padding:7px 0; font-size:14px; }.fzs-stat > div { background:#2C2C2E; border-radius:10px; height:9px; overflow:hidden; }.fzs-stat i { display:block; height:100%; background:var(--primary); border-radius:10px; }
 /* Blocs partagés (accueil-dash.js) : l'accueil de saison ne leur donne que
@@ -67,7 +67,7 @@ body.fz-season-page { background:var(--bg); }
  .fzs .fzs-hero { grid-column:1/-1; order:0; min-height:225px; padding:20px; }
  .fzs-hero-copy { max-width:75%; }.fzs h1 { font-size:34px; max-width:250px; }.fzs-cover { right:-15%; width:80%; opacity:.7; }.fzs-hero p { max-width:210px; }
  .fzs-players { grid-column:1/-1; grid-row:auto; order:1; }.fzs-player-list { display:flex; overflow-x:auto; scroll-snap-type:x proximity; gap:12px; padding-bottom:5px; }.fzs-player { flex:0 0 205px; display:grid; grid-template-columns:48px 1fr; border:1px solid #38383A; border-radius:8px; padding:10px; scroll-snap-align:start; gap:8px; }.fzs-player:last-child { border:1px solid #38383A; }.fzs-player .fzd-off-face { width:48px; height:48px; }.fzs-player-stats { grid-column:1/-1; }.fzs-player > .fzd-team-logo { display:none; }.fzs-player-stats small { text-align:center; border-top:1px solid #38383A; padding-top:6px; }
- .fzs-rank { grid-column:span 1; order:2; }.fzs-playing { grid-column:span 1; order:3; }.fzs-number { font-size:30px; }.fzs-number small { font-size:22px; }.fzs-rank .fzs-head a { display:none; }.fzs-bars { display:none; }.fzs #fzDashCalendarWrap { grid-column:1/-1; order:4; }.fzs #fzdOffMoves { grid-column:1/-1; order:5; }.fzs-total { grid-column:span 1; order:8; }.fzs-breakdown { grid-column:1/-1; order:9; }.fzs-activity { grid-column:1/-1; order:10; }.fzs #fzdOffWatch { grid-column:1/-1; order:11; }
+ .fzs-rank { grid-column:span 1; order:2; }.fzs-total { grid-column:span 1; order:3; }.fzs-number { font-size:30px; }.fzs-number small { font-size:22px; }.fzs-rank .fzs-head a { display:none; }.fzs-bars { display:none; }.fzs #fzDashCalendarWrap { grid-column:1/-1; order:4; }.fzs #fzdOffMoves { grid-column:1/-1; order:5; }.fzs-breakdown { grid-column:1/-1; order:9; }.fzs-activity { grid-column:1/-1; order:10; }.fzs #fzdOffWatch { grid-column:1/-1; order:11; }
  .fzs h2 { font-size:13px; }.fzs-head { gap:8px; }.fzs-head a { font-size:13px; }.fzs .fzd-cal-games { display:flex; }.fzs .fzd-game-card { flex:0 0 85%; }.fzs .fzd-cal-strip { display:flex; overflow-x:auto; }.fzs .fzd-day-chip { flex:0 0 64px; }.fzs-stat { grid-template-columns:80px 25px 1fr; }
 }
 @media(prefers-reduced-motion:reduce) { .fzs * { scroll-behavior:auto!important; } }
@@ -110,3 +110,69 @@ body.fz-season-page { background:var(--bg); }
     100% { transform:scale(1); box-shadow:none; }
 }
 @media (prefers-reduced-motion: reduce) { .fzs-live-pts.is-new { animation:none; } }
+/* Joueur dont le match n'a pas commencé : l'heure de mise au jeu en pastille. */
+.fzs-tag.is-time { background:transparent; border:1px solid #48484A; color:#F5F5F7; text-transform:none; font-variant-numeric:tabular-nums; }
+.fzs-player.is-upcoming .fzs-player-stats small { color:#A1A1A6; }
+html[data-theme="light"] .fzs-tag.is-time { border-color:var(--fzh-outline); color:var(--fzh-muted); }
+
+/* ---- Mes joueurs en direct : carrousel de cartes (maquette Claude Design) ----
+   Le joueur en grand sur la couleur de son club, le logo du club en filigrane ;
+   ceux qui jouent sont à gauche, marqués EN DIRECT. */
+.fzs-players .fzs-player-list { display:flex; flex-direction:row; flex-wrap:nowrap; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; padding:0 0 6px; }
+.fzs-players .fzs-player-list::-webkit-scrollbar { display:none; }
+.fzs-pc, .fzs-pc:hover { text-decoration:none; }
+.fzs-pc { flex:none; width:172px; scroll-snap-align:start; display:flex; flex-direction:column; overflow:hidden; border-radius:12px; border:1px solid #2E2E33; background:#232326; color:#F2F2F3; font-variant-numeric:tabular-nums; }
+.fzs-pc.is-live { border-color:#8A2A30; }
+.fzs-pc:hover { color:#F2F2F3; border-color:#55555C; }
+#fzDashSection .fzs-pc, #fzDashSection .fzs-pc:hover { color:#F2F2F3; }
+.fzs-pc-top { position:relative; height:112px; overflow:hidden; background:linear-gradient(180deg, color-mix(in srgb, var(--pc-team) 85%, #fff 5%) 0%, color-mix(in srgb, var(--pc-team) 45%, #0b0b0d) 100%); }
+/* Le logo du club en grand derrière le joueur, comme sur les fiches LNH. */
+.fzs-pc-logo { position:absolute; left:50%; top:50%; width:130%; height:130%; transform:translate(-50%,-50%); object-fit:contain; opacity:.2; filter:brightness(.6) saturate(.6); pointer-events:none; }
+/* La règle de palette (#fzDashSection … .fzd-off-face) pose un fond gris : la photo reste détourée sur la couleur du club. */
+#fzDashSection .fzs .fzs-pc .fzd-off-face { position:absolute; inset:6px 0 0; width:auto; height:auto; flex:none; border-radius:0; background:transparent; display:block; font-size:0; overflow:visible; }
+#fzDashSection .fzs .fzs-pc .fzd-off-face img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:center bottom; background:transparent; transform:none; }
+#fzDashSection .fzs-pc-body { border-top:1px solid rgba(255,255,255,.08); }
+.fzs-pc-live { position:absolute; left:8px; top:8px; display:flex; align-items:center; gap:4px; height:18px; padding:0 6px; border-radius:4px; background:var(--primary); color:var(--on-primary); font:700 11px/1 'Barlow Condensed',Helvetica,sans-serif; letter-spacing:.06em; }
+.fzs-pc-time { position:absolute; left:8px; top:8px; z-index:1; display:flex; align-items:center; height:18px; padding:0 6px; border-radius:4px; background:rgba(0,0,0,.55); color:#fff; font:700 11px/1 'Barlow Condensed',Helvetica,sans-serif; letter-spacing:.06em; font-variant-numeric:tabular-nums; }
+.fzs-pc-live { z-index:1; }
+.fzs-pc-live i { width:5px; height:5px; border-radius:50%; background:#fff; }
+.fzs-pc-body { display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px; border-top:1px solid #2E2E33; min-height:70px; }
+.fzs-pc-name { display:flex; align-items:baseline; gap:4px; max-width:100%; }
+.fzs-pc-name strong { font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#F2F2F3; }
+.fzs-pc-name span { flex:none; font-size:11px; font-weight:700; color:#8A8A90; }
+.fzs-pc-season { display:flex; align-items:baseline; gap:6px; font-size:13px; color:#A3A3AA; }
+.fzs-pc-season b { font-weight:700; color:#8A8A90; }
+.fzs-pc-stats { display:flex; gap:10px; font:600 14px/1 'Barlow Condensed',Helvetica,sans-serif; color:#C9C9CF; }
+.fzs-pc-stats small { font-size:11px; color:#6F6F76; }
+.fzs-pc .is-up { color:var(--success); }
+.fzs-pc-stats .is-up small { color:inherit; }
+.fzs-pc-foot { margin-top:auto; padding:7px 8px; background:#1C1C1F; text-align:center; font:600 12.5px/1.2 'Barlow Condensed',Helvetica,sans-serif; letter-spacing:.03em; color:#8A8A90; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fzs-pc.is-live .fzs-pc-foot { background:#2B1C1D; color:#F2F2F3; }
+html[data-theme="light"] .fzs-pc { background:#fff; border-color:var(--fzh-outline); }
+html[data-theme="light"] .fzs-pc, html[data-theme="light"] .fzs-pc:hover, html[data-theme="light"] .fzs-pc-name strong { color:#1D1D1F; }
+html[data-theme="light"] .fzs-pc-body { border-color:var(--fzh-outline); }
+html[data-theme="light"] .fzs-pc-foot { background:#F5F5F7; }
+html[data-theme="light"] .fzs-pc.is-live .fzs-pc-foot { background:#FDECEC; color:#1D1D1F; }
+@media(max-width:768px) { .fzs-pc { flex-basis:160px; width:160px; } }
+
+/* ---- Disposition de saison (de haut en bas) ----
+   Les histoires du haut de page (accueil.js), puis : mes joueurs ce soir ;
+   ma position et le total du soir côte à côte ; mon duel (tête-à-tête) ;
+   À surveiller ; les alignements des 32 clubs (.fzh-al, accueil-draft.css). */
+.fzs .fzs-players { grid-column:1/-1; grid-row:auto; order:1; }
+.fzs .fzs-rank { grid-column:span 6; order:2; }
+.fzs .fzs-total { grid-column:span 6; order:3; }
+.fzs .fzs-duel { grid-column:1/-1; order:4; }
+/* À surveiller et les alignements côte à côte, comme à l'accueil de
+   repêchage : en pleine largeur, les 32 tuiles deviendraient des pavés. */
+#fzSeasonHome #fzdOffWatch { grid-column:span 6; order:5; }
+#fzSeasonHome .fzh-al { grid-column:span 6; order:6; }
+#fzSeasonHome:has(#fzdOffWatch[hidden]) .fzh-al { grid-column:1/-1; }
+/* La palette teint en rouge tout lien de l'accueil de saison (#fzDashSection
+   .fzs a) : les tuiles gardent l'encre de leur club, le titre son blanc. */
+#fzDashSection #fzSeasonHome a.fzh-al-club { color:var(--encre); }
+#fzDashSection #fzSeasonHome a.fzh-al-lien { color:#fff; }
+@media(max-width:768px) {
+ .fzs .fzs-rank, .fzs .fzs-total { grid-column:span 1; }
+ #fzSeasonHome #fzdOffWatch, #fzSeasonHome .fzh-al { grid-column:1/-1; }
+}

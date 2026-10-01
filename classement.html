@@ -12,8 +12,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="classement.css?v=20260927" />
-    <link rel="stylesheet" href="classement-premium.css?v=20260930a" />
+    <link rel="stylesheet" href="classement.css?v=20260930b" />
+    <link rel="stylesheet" href="classement-premium.css?v=20260930g" />
     <link rel="stylesheet" href="index.css?v=20260926b" />
     <link rel="stylesheet" href="injuries.css?v=20260926b" />
     <link rel="stylesheet" href="skeleton-loader.css?v=20260926b" />
@@ -28,7 +28,7 @@
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
     <script defer src="activePool.js?v=20260929n"></script>
-    <!-- Icônes injectées dans les cartes de rôle (toggle "mettre en vente") -->
+    <!-- Icône d’étiquette du bouton et du panneau « Mettre en vente » -->
     <script defer src="icons.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="career-modal.css?v=20260926b">
@@ -212,6 +212,9 @@
 
         <!-- Level 3: Team Roster View -->
         <div id="teamRosterView" class="view-container" style="display: none;">
+            <!-- En-tête de la fiche : retour, nom (sélecteur d'équipe), rang,
+                 bouton « Mettre en vente ». Rempli par renderRosterHeader(). -->
+            <div id="rosterHeader" class="roster-header"></div>
             <!-- Skeleton Loader -->
             <div class="skeleton-loader" id="rosterSkeleton">
                 <div class="roster-card-skeleton">

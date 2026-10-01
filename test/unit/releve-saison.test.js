@@ -83,7 +83,7 @@ describe('totauxDuJournal', () => {
             { gameId: 1, gameDate: '2026-09-01', decision: 'W', shutouts: 1 },
             { gameId: 2, gameDate: '2026-09-02', decision: 'L', shutouts: 0 }
         ], { depuis: '2026-09-29', gardien: true }).totaux;
-        assert.deepEqual([blanchi.wins, blanchi.losses, blanchi.shutouts, blanchi.points], [1, 1, 1, 7]);
+        assert.deepEqual([blanchi.wins, blanchi.losses, blanchi.shutouts, blanchi.points], [1, 1, 1, 5]);
     });
 
     test('lignes vides ou sans identifiant : ignorées', () => {

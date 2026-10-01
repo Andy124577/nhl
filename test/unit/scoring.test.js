@@ -46,8 +46,17 @@ describe('goaliePoolPoints', () => {
         assert.equal(goaliePoolPoints({ otLosses: 1 }), 1);
     });
 
-    test('une saison complète : 4 BL, 30 V, 6 DP = 86', () => {
-        assert.equal(goaliePoolPoints({ shutouts: 4, wins: 30, otLosses: 6 }), 86);
+    test('une victoire par blanchissage vaut 5, pas 2 + 5', () => {
+        assert.equal(goaliePoolPoints({ wins: 1, shutouts: 1 }), 5);
+    });
+
+    test('une saison complète : 4 BL, 30 V, 6 DP = 78', () => {
+        // 4 blanchissages × 5 + les 26 autres victoires × 2 + 6 DP.
+        assert.equal(goaliePoolPoints({ shutouts: 4, wins: 30, otLosses: 6 }), 78);
+    });
+
+    test('des blanchissages au-delà des victoires ne retirent rien', () => {
+        assert.equal(goaliePoolPoints({ shutouts: 2, wins: 1 }), 10);
     });
 
     test('une fiche vide ou absente vaut 0', () => {
@@ -78,14 +87,14 @@ describe('clubPoolPoints', () => {
 });
 
 describe('computeTeamSeasonScores', () => {
-    test('un gardien vaut blanchissages×5 + victoires×2 + défaites en prolongation', () => {
+    test('un gardien vaut blanchissages×5 + autres victoires×2 + défaites en prolongation', () => {
         const pool = makePool({
             teams: { Rouge: makeTeam({ goalie: ['Hellebuyck'] }) }
         });
         const stats = [makeGoalieStat('Hellebuyck', { shutouts: 4, wins: 30, otLosses: 6 })];
 
-        // 4×5 + 30×2 + 6×1 = 86
-        assert.equal(computeTeamSeasonScores(pool, stats)[0].score, 86);
+        // 4×5 + (30 − 4)×2 + 6×1 = 78
+        assert.equal(computeTeamSeasonScores(pool, stats)[0].score, 78);
     });
 
     test('un patineur vaut ses points, sans transformation', () => {
@@ -107,10 +116,10 @@ describe('computeTeamSeasonScores', () => {
             makeSkaterStat('A', { points: 10 }),
             makeSkaterStat('B', { points: 20 }),
             makeSkaterStat('C', { points: 5 }),
-            makeGoalieStat('G', { shutouts: 1, wins: 2, otLosses: 0 })   // 5 + 4 = 9
+            makeGoalieStat('G', { shutouts: 1, wins: 2, otLosses: 0 })   // 5 + 2 = 7
         ];
 
-        assert.equal(computeTeamSeasonScores(pool, stats)[0].score, 44);
+        assert.equal(computeTeamSeasonScores(pool, stats)[0].score, 42);
     });
 
     test('une équipe sans membre est écartée du classement', () => {
@@ -390,18 +399,18 @@ describe('getTeamWeeklyPoints', () => {
 
     test('un gardien vaut la même chose que dans le classement de saison', () => {
         // Les deux fonctions ont l'air de diverger — celle-ci lit `points`,
-        // computeTeamSeasonScores recalcule BL×5 + V×2 + DP×1 — mais elles
+        // computeTeamSeasonScores recalcule BL×5 + (V−BL)×2 + DP×1 — mais elles
         // s'accordent, parce que le cache de statistiques pose déjà cette
         // formule dans `points` au moment de la construction
         // (server.js, calculatedPoints). Vérifié sur les 58 gardiens du
-        // cache réel : points === BL×5 + V×2 + DP×1, sans exception.
+        // cache réel : points === BL×5 + (V−BL)×2 + DP×1, sans exception.
         //
         // C'est cette CONCORDANCE qu'il faut verrouiller : la formule est
         // écrite à trois endroits (le constructeur du cache, ici, et
         // classement.js). Si l'une des trois change seule, ce test tombe.
         const team = makeTeam({ goalie: ['Hellebuyck'] });
         const brut = { shutouts: 4, wins: 30, otLosses: 6 };
-        const points = brut.shutouts * 5 + brut.wins * 2 + brut.otLosses;   // 86, comme le cache
+        const points = brut.shutouts * 5 + (brut.wins - brut.shutouts) * 2 + brut.otLosses;   // 78, comme le cache
         const statsGardien = { players: [makeGoalieStat('Hellebuyck', { ...brut, points })] };
 
         const hebdo = getTeamWeeklyPoints(team, statsGardien);
@@ -409,8 +418,8 @@ describe('getTeamWeeklyPoints', () => {
             makePool({ teams: { Rouge: team } }), statsGardien.players
         )[0].score;
 
-        assert.equal(hebdo, 86);
-        assert.equal(saison, 86);
+        assert.equal(hebdo, 78);
+        assert.equal(saison, 78);
         assert.equal(hebdo, saison, 'les deux chemins de pointage doivent rester d\'accord');
     });
 

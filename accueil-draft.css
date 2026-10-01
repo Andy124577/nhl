@@ -90,8 +90,9 @@ body.fz-draft-page { background:var(--bg); }
    clubs. Toute la carte mène à l'onglet « Alignements » (le lien du titre
    s'étend sur elle) ; chaque tuile, posée par-dessus, ouvre son club.
    Au survol, la carte se soulève, la flèche pivote, et les tuiles montent en
-   arc — --arc et --delai viennent d'accueil-draft.js. */
-.fzh .fzh-al {
+   arc — --arc et --delai viennent d'accueil-draft.js. Le même bloc ferme
+   l'accueil de saison (.fzs, accueil-season.js). */
+:is(.fzh, .fzs) .fzh-al {
     grid-column:span 6; min-width:0;
     position:relative; isolation:isolate;
     display:flex; flex-direction:column; gap:18px;
@@ -101,17 +102,17 @@ body.fz-draft-page { background:var(--bg); }
     font-family:'Barlow',system-ui,sans-serif;
     transition:transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s;
 }
-html:not([data-theme="light"]) .fzh .fzh-al { box-shadow:0 0 0 1px #2A2C31; }
-.fzh .fzh-al:hover { transform:translateY(-3px); box-shadow:0 18px 40px rgba(20,21,24,.28); }
-html:not([data-theme="light"]) .fzh .fzh-al:hover { box-shadow:0 0 0 1px #2A2C31, 0 18px 40px rgba(0,0,0,.5); }
+html:not([data-theme="light"]) :is(.fzh, .fzs) .fzh-al { box-shadow:0 0 0 1px #2A2C31; }
+:is(.fzh, .fzs) .fzh-al:hover { transform:translateY(-3px); box-shadow:0 18px 40px rgba(20,21,24,.28); }
+html:not([data-theme="light"]) :is(.fzh, .fzs) .fzh-al:hover { box-shadow:0 0 0 1px #2A2C31, 0 18px 40px rgba(0,0,0,.5); }
 
-.fzh .fzh-al-lien { display:flex; align-items:flex-end; gap:12px; color:#fff; text-decoration:none; }
-.fzh .fzh-al-lien::after { content:''; position:absolute; inset:0; border-radius:inherit; z-index:0; }
-.fzh .fzh-al-lien:focus-visible { outline:none; }
-.fzh .fzh-al-lien:focus-visible::after { outline:2px solid #fff; outline-offset:-4px; }
+:is(.fzh, .fzs) .fzh-al-lien { display:flex; align-items:flex-end; gap:12px; color:#fff; text-decoration:none; }
+:is(.fzh, .fzs) .fzh-al-lien::after { content:''; position:absolute; inset:0; border-radius:inherit; z-index:0; }
+:is(.fzh, .fzs) .fzh-al-lien:focus-visible { outline:none; }
+:is(.fzh, .fzs) .fzh-al-lien:focus-visible::after { outline:2px solid #fff; outline-offset:-4px; }
 .fzh-al-tete { display:flex; flex-direction:column; gap:4px; }
 .fzh-al-sur { font:400 12px/1.2 'Oswald',sans-serif; letter-spacing:1.4px; text-transform:uppercase; color:#8A8D95; }
-.fzh .fzh-al .fzh-al-lien h2 { display:block; margin:0; color:#fff; font:600 28px/1.1 'Oswald',sans-serif; letter-spacing:.5px; text-transform:uppercase; }
+:is(.fzh, .fzs) .fzh-al .fzh-al-lien h2 { display:block; margin:0; color:#fff; font:600 28px/1.1 'Oswald',sans-serif; letter-spacing:.5px; text-transform:uppercase; }
 .fzh-al-fleche {
     display:grid; place-items:center;
     width:40px; height:40px; margin-left:auto; flex-shrink:0;
@@ -119,14 +120,14 @@ html:not([data-theme="light"]) .fzh .fzh-al:hover { box-shadow:0 0 0 1px #2A2C31
     background:var(--primary); color:#fff; font-size:18px;
     transition:transform .35s cubic-bezier(.2,.8,.2,1);
 }
-.fzh .fzh-al:hover .fzh-al-fleche { transform:translateX(4px) rotate(-45deg); }
+:is(.fzh, .fzs) .fzh-al:hover .fzh-al-fleche { transform:translateX(4px) rotate(-45deg); }
 
-.fzh .fzh-al-clubs {
+:is(.fzh, .fzs) .fzh-al-clubs {
     position:relative; z-index:1;
     display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:6px;
     margin:0; padding:0; list-style:none;
 }
-.fzh .fzh-al-club {
+:is(.fzh, .fzs) .fzh-al-club {
     position:relative;
     display:grid; place-items:center;
     aspect-ratio:1/1;
@@ -138,28 +139,28 @@ html:not([data-theme="light"]) .fzh .fzh-al:hover { box-shadow:0 0 0 1px #2A2C31
     transition-delay:var(--delai, 0ms);
 }
 /* Au repos, un damier à peine marqué ; au survol de la carte, tout s'allume. */
-.fzh .fzh-al-club.is-ombre { opacity:.88; }
-.fzh .fzh-al:hover .fzh-al-club { opacity:1; transform:translateY(var(--arc, 0)); }
-.fzh .fzh-al .fzh-al-club:hover,
-.fzh .fzh-al .fzh-al-club:focus-visible { z-index:2; opacity:1; transform:translateY(-6px) scale(1.12); transition-delay:0ms; }
-.fzh .fzh-al-club:focus-visible { outline:2px solid #fff; outline-offset:2px; }
-.fzh .fzh-al-club:hover { color:var(--encre); }
+:is(.fzh, .fzs) .fzh-al-club.is-ombre { opacity:.88; }
+:is(.fzh, .fzs) .fzh-al:hover .fzh-al-club { opacity:1; transform:translateY(var(--arc, 0)); }
+:is(.fzh, .fzs) .fzh-al .fzh-al-club:hover,
+:is(.fzh, .fzs) .fzh-al .fzh-al-club:focus-visible { z-index:2; opacity:1; transform:translateY(-6px) scale(1.12); transition-delay:0ms; }
+:is(.fzh, .fzs) .fzh-al-club:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+:is(.fzh, .fzs) .fzh-al-club:hover { color:var(--encre); }
 
 .fzh-al-note { position:relative; z-index:0; margin:0; font-size:13px; color:#A3A6AE; pointer-events:none; }
 
 @media (prefers-reduced-motion: reduce) {
-    .fzh .fzh-al, .fzh .fzh-al-fleche, .fzh .fzh-al-club { transition:none; }
-    .fzh .fzh-al:hover, .fzh .fzh-al:hover .fzh-al-club, .fzh .fzh-al:hover .fzh-al-fleche { transform:none; }
+    :is(.fzh, .fzs) .fzh-al, :is(.fzh, .fzs) .fzh-al-fleche, :is(.fzh, .fzs) .fzh-al-club { transition:none; }
+    :is(.fzh, .fzs) .fzh-al:hover, :is(.fzh, .fzs) .fzh-al:hover .fzh-al-club, :is(.fzh, .fzs) .fzh-al:hover .fzh-al-fleche { transform:none; }
 }
 @media (max-width:768px) {
     /* Ici, après la règle de base : son span 6, plus loin que les deux
        colonnes du téléphone, créerait des colonnes implicites et
        rétrécirait tous les autres panneaux (1/-1). */
     .fzh .fzh-al { grid-column:1/-1; order:3; padding:18px 16px; gap:14px; }
-    .fzh .fzh-al .fzh-al-lien h2 { font-size:24px; }
-    .fzh .fzh-al-club { font-size:12px; letter-spacing:0; }
+    :is(.fzh, .fzs) .fzh-al .fzh-al-lien h2 { font-size:24px; }
+    :is(.fzh, .fzs) .fzh-al-club { font-size:12px; letter-spacing:0; }
 }
 @media (max-width:380px) {
-    .fzh .fzh-al-clubs { gap:4px; }
-    .fzh .fzh-al-club { font-size:11px; }
+    :is(.fzh, .fzs) .fzh-al-clubs { gap:4px; }
+    :is(.fzh, .fzs) .fzh-al-club { font-size:11px; }
 }

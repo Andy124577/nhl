@@ -281,51 +281,105 @@ body.fz-classement .st-mobile-list { display: none; }
 
 @media (max-width: 680px) {
   body.fz-classement .standings-table-container { display: none; }
-  body.fz-classement .st-period-chips { display: flex; }
+  /* La maquette « Classement » va droit à la liste : ni tuile de synthèse
+     ni puces de période (la tendance reste calculée sur 7 j). */
+  body.fz-classement #standingsList .st-summary,
+  body.fz-classement #standingsList .st-period-bar { display: none; }
+  /* Une bande d'un bord à l'autre, rangées de 64px : comme la liste des
+     joueurs d'une équipe (classement.css, .roster-rows). */
   body.fz-classement .st-mobile-list {
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--fzc-border);
-    border-radius: 12px;
-    background: var(--fzc-surface);
-    overflow: hidden;
+    margin-inline: -32px;
+    border-top: 1px solid var(--rr-line);
+    border-bottom: 1px solid var(--rr-line);
+    background: var(--rr-surface);
+    color: var(--rr-ink);
+    font-variant-numeric: tabular-nums;
   }
   body.fz-classement .st-mobile-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 22px 44px minmax(0, 1fr) auto 14px;
     align-items: center;
-    gap: 10px;
-    padding: 11px 14px;
-    border-bottom: 1px solid var(--fzc-border-soft);
+    column-gap: 8px;
+    min-height: 58px;
+    padding: 8px 10px 8px 12px;
     cursor: pointer;
     transition: background .15s ease;
   }
-  body.fz-classement .st-mobile-row:last-child { border-bottom: none; }
+  body.fz-classement .st-mobile-row + .st-mobile-row { border-top: 1px solid var(--rr-line); }
   body.fz-classement .st-mobile-row:hover,
-  body.fz-classement .st-mobile-row:focus-visible { background: var(--fzc-bg); }
-  body.fz-classement .st-mobile-rank { width: 20px; flex-shrink: 0; }
+  body.fz-classement .st-mobile-row:focus-visible { background: var(--rr-hover); }
+  body.fz-classement .st-mobile-row:first-child { box-shadow: inset 3px 0 0 var(--fzc-accent-fill); }
+  body.fz-classement .st-mobile-rank {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--rr-muted);
+    text-align: center;
+  }
+  body.fz-classement .st-mobile-row:nth-child(-n+3) .st-mobile-rank { color: var(--fzc-accent); }
+  body.fz-classement .st-mobile-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--rr-line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  body.fz-classement .st-mobile-logo img { width: 28px; height: 28px; object-fit: contain; }
+  body.fz-classement .st-mobile-logo .st-avatar-fallback {
+    font-size: 13px; font-weight: 700; color: var(--rr-num);
+  }
   body.fz-classement .st-mobile-info {
-    flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
+    gap: 3px;
   }
   body.fz-classement .st-mobile-name {
-    font: 600 12.5px/1.2 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzc-ink);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font: 600 14.5px/1.2 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--rr-ink);
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
   }
-  body.fz-classement .st-mobile-sub {
-    margin-top: 2px;
-    font: 400 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzc-text-faint);
-  }
+  body.fz-classement .st-mobile-name-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  body.fz-classement .st-mobile-name .st-evo { flex: none; }
+  body.fz-classement .st-mini-row { display: flex; min-width: 0; }
+  body.fz-classement .st-mini,
+  body.fz-classement .st-mobile-avg,
   body.fz-classement .st-mobile-pts {
-    font: 700 14px/1 'Oswald', sans-serif;
-    color: var(--fzc-ink);
-    margin-right: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.1;
   }
+  body.fz-classement .st-mini { flex: 0 1 30px; min-width: 24px; padding: 1px 0; }
+  body.fz-classement .st-mini.has-sep { border-left: 1px solid var(--rr-line); }
+  body.fz-classement .st-mini-v { font-size: 12.5px; color: var(--rr-num); }
+  body.fz-classement .st-mini.is-zero .st-mini-v { color: var(--rr-dim); }
+  body.fz-classement .st-mini-l { font-size: 9.5px; color: var(--rr-dim); }
+  body.fz-classement .st-mobile-pts { min-width: 40px; }
+  body.fz-classement .st-mobile-pts-v {
+    font: 700 20px/1.1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--rr-strong);
+  }
+  body.fz-classement .st-mobile-pts .st-mini-l { color: var(--rr-muted); }
+  body.fz-classement .st-mobile-chev {
+    font-size: 16px;
+    color: var(--rr-chev);
+    text-align: center;
+  }
+}
+@media (max-width: 380px) {
+  body.fz-classement .st-mobile-row { grid-template-columns: 20px 40px minmax(0, 1fr) auto 12px; column-gap: 6px; }
+  body.fz-classement .st-mobile-logo { width: 40px; height: 40px; }
+  body.fz-classement .st-mini { flex-basis: 26px; min-width: 22px; }
 }
 
 /* ==================== TEMPLE DE LA RENOMMÉE ==================== */
@@ -351,54 +405,74 @@ body.fz-classement .hof-subtitle {
   font: 400 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
   color: var(--fzc-text-faint);
 }
-body.fz-classement .hof-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-}
-body.fz-classement .hof-card {
-  border-radius: 12px;
-  padding: 18px 18px 20px;
+body.fz-classement .hof-board {
   border: 1px solid var(--fzc-border);
+  border-radius: 12px;
   background: var(--fzc-surface);
+  overflow: hidden;
 }
-body.fz-classement .hof-card-hero {
-  border: none;
-  background: var(--fzc-solid);
-  color: var(--fzc-on-solid);
+body.fz-classement .hof-col-heads,
+body.fz-classement .hof-row {
+  display: grid;
+  grid-template-columns: 82px 1fr 1fr;
+  align-items: stretch;
 }
-body.fz-classement .hof-card-worst { background: var(--fzc-bg); }
-body.fz-classement .hof-icon { display: block; margin-bottom: 10px; }
-body.fz-classement .hof-icon.is-best { fill: var(--fzc-gold); }
-body.fz-classement .hof-icon.is-worst { fill: var(--fzc-text-fainter); transform: rotate(180deg); }
-body.fz-classement .hof-card-label {
-  margin: 0 0 8px;
-  font: 600 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+body.fz-classement .hof-col-heads {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--fzc-border);
+  font: 700 10px/1 'Helvetica Neue', Helvetica, sans-serif;
   letter-spacing: .09em;
+  text-transform: uppercase;
+}
+body.fz-classement .hof-col-heads span { display: flex; align-items: center; gap: 5px; padding: 0 14px; }
+body.fz-classement .hof-col-heads .is-best { color: var(--fzc-gold); }
+body.fz-classement .hof-col-heads .is-worst { color: var(--fzc-bad); }
+body.fz-classement .hof-icon { fill: currentColor; flex: none; width: 13px; height: 13px; }
+body.fz-classement .hof-row + .hof-row { border-top: 1px solid var(--fzc-border-soft); }
+body.fz-classement .hof-row-label {
+  margin: 0;
+  padding: 16px 0 16px 14px;
+  font: 600 12.5px/1.2 'Helvetica Neue', Helvetica, sans-serif;
+  color: var(--fzc-text-muted);
+}
+body.fz-classement .hof-cell {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 14px;
+}
+body.fz-classement .hof-cell.is-empty { justify-content: center; }
+body.fz-classement .hof-cell.is-best { background: var(--fzc-leader-bg); }
+body.fz-classement .hof-card-value {
+  font: 700 24px/1 'Oswald', sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+body.fz-classement .hof-card-value small {
+  margin-left: 3px;
+  font: 600 10px/1 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .04em;
   text-transform: uppercase;
   color: var(--fzc-text-faint);
 }
-body.fz-classement .hof-card-hero .hof-card-label,
-body.fz-classement .hof-card-hero .hof-card-date,
-body.fz-classement .hof-card-hero .hof-empty { color: var(--fzc-on-solid-muted); }
-body.fz-classement .hof-card-hero .hof-icon.is-best { fill: var(--fzc-on-solid-gold); }
-body.fz-classement .hof-card-value {
-  margin: 0 0 6px;
-  font: 700 24px/1 'Oswald', sans-serif;
-  color: var(--fzc-accent);
-}
-body.fz-classement .hof-card-hero .hof-card-value { color: var(--fzc-on-solid); }
-body.fz-classement .hof-card-worst .hof-card-value { color: var(--fzc-text-faint); }
+body.fz-classement .hof-cell.is-best .hof-card-value { color: var(--fzc-gold); }
+body.fz-classement .hof-cell.is-worst .hof-card-value { color: var(--fzc-bad); }
 body.fz-classement .hof-card-name {
-  margin: 0;
-  font: 600 12.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+  font: 600 12.5px/1.25 'Helvetica Neue', Helvetica, sans-serif;
   color: var(--fzc-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-body.fz-classement .hof-card-hero .hof-card-name { color: var(--fzc-on-solid); }
-body.fz-classement .hof-card-date { color: var(--fzc-text-faint); font-weight: 400; }
+body.fz-classement .hof-card-date { font-size: 11.5px; color: var(--fzc-text-faint); }
 
 @media (max-width: 680px) {
-  body.fz-classement .hof-grid { grid-template-columns: 1fr; }
+  body.fz-classement .hof-col-heads,
+  body.fz-classement .hof-row { grid-template-columns: 62px 1fr 1fr; }
+  body.fz-classement .hof-col-heads span,
+  body.fz-classement .hof-cell { padding-inline: 10px; }
+  body.fz-classement .hof-row-label { padding-left: 12px; font-size: 12px; }
+  body.fz-classement .hof-card-value { font-size: 21px; }
 }
 
 /* ==================== ÉQUIPES RÉCENTES ==================== */
@@ -433,37 +507,48 @@ body.fz-classement .standings-table-skeleton {
   border: 1px solid var(--fzc-border);
 }
 body.fz-classement .skeleton,
-body.fz-classement .skeleton-circle {
+body.fz-classement .skeleton-circle,
+body.fz-classement .skeleton-avatar {
   background: linear-gradient(90deg, var(--fzc-border-soft) 25%, var(--fzc-tile) 50%, var(--fzc-border-soft) 75%);
   background-size: 200% 100%;
 }
 
-/* ==================== FICHE D'ÉQUIPE : bouton "mettre en vente" ====================
-   Pas une reprise du mockup (voir la note en tête de fichier) — juste un
-   correctif de mise en page. .player-name-row (classement.css) mélange nom
-   + badges d'équipe/position + ce bouton dans une seule ligne flex-wrap :
-   sous ~680px, le bouton retombe seul sur sa ligne, mais reste coincé dans
-   la colonne étroite de .roster-info (~110-150px, le reste de la carte
-   étant pris par PPtsA/PPts/le chevron) — pas assez large pour "Mettre en
-   vente" sur une ligne, ce qui le coupait en deux au hasard.
-   On le sort du flux flex (position absolute, ancré à .roster-card) pour
-   lui donner toute la largeur de la carte plutôt que celle, trop étroite,
-   de sa colonne — un vrai bandeau d'action pleine largeur en bas de
-   carte, une place prévisible quelle que soit la longueur du nom. */
+/* ==================== FICHE D'ÉQUIPE : liste pleine largeur ====================
+   Sur téléphone, la bande des joueurs (.roster-rows, classement.css) va d'un
+   bord à l'autre de l'écran, comme dans le mockup : laissée dans les 32px de
+   marge de .container, la colonne du nom n'a plus la place des quatre
+   stats. Le titre et « Joueurs actifs » gardent la marge. */
 @media (max-width: 680px) {
-  body.fz-classement .roster-card {
-    position: relative;
-    padding-bottom: 46px;
+  body.fz-classement .roster-rows,
+  body.fz-classement #rosterSkeleton { margin-inline: -32px; }
+}
+
+/* ==================== TÉLÉPHONE : EN-TÊTE ====================
+   Le fil d'Ariane (« Accueil > Pool > Équipe », des liens de 12px) ne sert
+   à rien sur téléphone : l'accueil est dans la barre du bas, le pool dans
+   la pastille du haut. Il s'efface — !important parce que classement.js
+   l'affiche en style en ligne — et la fiche d'équipe prend à la place un
+   vrai bouton de retour de 44px. La marge du haut de 40px, faite pour le
+   bureau, repoussait tout le contenu sous la ligne de flottaison. */
+@media (max-width: 680px) {
+  body.fz-classement .container { padding-top: 16px; }
+  body.fz-classement .breadcrumb { display: none !important; }
+  body.fz-classement .rh-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-height: 44px;
+    margin: 0 0 2px -10px;
+    padding: 0 12px 0 4px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--fzc-accent);
+    font: 600 15px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    cursor: pointer;
   }
-  body.fz-classement .for-sale-toggle {
-    position: absolute;
-    left: 12px;
-    right: 12px;
-    bottom: 10px;
-    width: auto;
-    justify-content: center;
-    margin: 0;
-  }
+  body.fz-classement .rh-back:active { background: var(--fzc-tile); }
+  body.fz-classement .rh-name { font-size: 24px; }
 }
 
 /* ====================================================================
@@ -790,18 +875,10 @@ body.fz-classement .standings-insights.is-h2h > div {
   background: var(--fzc-surface);
   overflow: hidden;
 }
-body.fz-classement .standings-insights.is-h2h .hof-grid,
 body.fz-classement .standings-insights.is-h2h .leaderboard-list {
   padding: 14px 15px;
 }
-/* Une colonne du trio est trop étroite pour les trois cartes de records
-   côte à côte : elles s'empilent. */
-body.fz-classement .standings-insights.is-h2h .hof-grid {
-  grid-template-columns: 1fr;
-  gap: 10px;
-}
-body.fz-classement .standings-insights.is-h2h .hof-card { padding: 13px 14px; }
-
+body.fz-classement .standings-insights.is-h2h .hof-board { margin: 14px 15px; }
 /* Le sélecteur de période passe sous le titre, en bandeau pleine largeur —
    six puces ne tiennent pas à droite d'un titre dans une colonne étroite. */
 body.fz-classement .standings-insights.is-h2h .recent-form-head {
@@ -1007,18 +1084,15 @@ body.fz-classement #standingsTable tbody tr.is-me td.player-col .st-name { font-
 body.fz-classement #standingsTable tbody tr.is-me td.rank-col { box-shadow: inset 3px 0 0 var(--fzc-accent-fill); }
 
 body.fz-classement .st-legend {
-  margin: 12px 0 0;
-  border: 1px solid var(--fzc-border);
-  border-radius: 12px;
-  background: var(--fzc-surface);
+  margin: 4px 0 0;
 }
 body.fz-classement .st-legend summary {
-  padding: 12px 16px;
+  padding: 12px 0;
   min-height: 44px;
   box-sizing: border-box;
   cursor: pointer;
   font: 600 13px/1.3 'Helvetica Neue', Helvetica, sans-serif;
-  color: var(--fzc-accent);
+  color: var(--fzc-text-faint);
 }
 body.fz-classement .st-legend summary:focus-visible { outline: 2px solid var(--fzc-accent); outline-offset: 2px; }
 body.fz-classement .st-legend dl {
@@ -1026,7 +1100,7 @@ body.fz-classement .st-legend dl {
   grid-template-columns: minmax(90px, max-content) 1fr;
   gap: 8px 16px;
   margin: 0;
-  padding: 0 16px 14px;
+  padding: 0 0 14px;
   font-size: .86rem;
   line-height: 1.45;
 }

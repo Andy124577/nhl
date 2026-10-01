@@ -37,13 +37,33 @@ describe('accueil de saison', () => {
         assert.doesNotMatch(SAISON, /fzsLoadNews|fzmNewsWrap/);
     });
 
-    test('le calendrier, les panneaux de la soirée et le bandeau du haut restent', () => {
+    test('de haut en bas : joueurs du soir, position et total, À surveiller, alignements des 32 clubs', () => {
         const rendu = corpsRendu();
-        assert.match(rendu, /data-fz-bloc="calendrier"/);
-        for (const bloc of ['soiree.joueurs', 'soiree.total', 'soiree.enJeu', 'soiree.repartition']) {
-            assert.ok(rendu.includes(bloc), `${bloc} devrait rester`);
-        }
+        const ordre = ['soiree.joueurs', 'fzsRangHTML', 'soiree.total', 'data-fz-bloc="surveiller"', 'fzhLinesHTML']
+            .map(cle => rendu.indexOf(cle));
+        ordre.forEach((pos, i) => assert.ok(pos >= 0, `bloc ${i} absent`));
+        assert.deepEqual([...ordre].sort((x, y) => x - y), ordre, 'les blocs doivent suivre cet ordre');
+        // Ce qui a quitté l'accueil de saison.
+        assert.doesNotMatch(rendu, /fzs-hero|soiree\.repartition|data-fz-bloc="(calendrier|mouvements)"/);
         assert.match(lire('accueil.js'), /fetchNhlNews/, 'le bandeau d’histoires lit toujours les actualités');
+    });
+
+    test('le sélecteur d’histoires précède la carte', () => {
+        const index = lire('index.html');
+        assert.ok(index.indexOf('id="storiesPicker"') < index.indexOf('id="storiesCard"'));
+    });
+
+    test('les buts d’une histoire passent par la carte de but du calendrier', () => {
+        const accueil = lire('accueil.js');
+        assert.match(accueil, /function storyGoalsBlocHTML/);
+        assert.match(accueil, /goalCardHTML\(but, equipes\)/);
+        assert.match(accueil, /const buts = storyGoalsBlocHTML\(g\);/);
+    });
+
+    test('« Joueurs en jeu » a quitté l’accueil ; les joueurs au match à venir y figurent avec leur heure', () => {
+        assert.doesNotMatch(SAISON, /Joueurs en jeu|fzs-playing|soiree\.enJeu/);
+        assert.match(SAISON, /fzsJoueursAvantMatch/);
+        assert.match(SAISON, /gameTimeLabel\(a\.depart\)/);
     });
 
     test('l’avant-saison garde ses actualités', () => {

@@ -1322,7 +1322,8 @@ function fzdPoolH2H() {
  * Les points d'une ligne du soir, au barème du pool actif. Chaque ligne de
  * /tonight-boxscores porte les deux (voir lignesDuSoir, lib/pointsEnDirect.js) :
  *   - cumulatif : les vrais points — buts + aides ; un gardien, 2 par
- *     victoire, 5 par blanchissage, 1 par défaite en prolongation, au final.
+ *     victoire, 5 pour une victoire par blanchissage (pas 7), 1 par défaite
+ *     en prolongation, au final.
  *     Evan Bouchard, 3 buts et 2 aides : 5 points, pas les 17 du barème
  *     fantasy que l'accueil additionnait ;
  *   - tête-à-tête : les points fantasy, inchangés.
