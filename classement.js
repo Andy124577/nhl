@@ -291,7 +291,6 @@ function showPoolStandings(poolName) {
     h2hSchedTeam = null;
     standingsSortKey = null; // reset to canonical rank order for the new pool
     standingsSortDir = 'desc';
-    standingsPeriod = 7; // reset rank-evolution period for the new pool
     periodPointsCache = null;
 
     const poolData = allPoolsData[poolName];
@@ -412,18 +411,19 @@ function getStandingsColumns(poolMode) {
         { label: '30 j', cls: 'st-period-col', title: 'Points marqués ces 30 derniers jours' },
         { label: 'Total', sort: 'points', cls: 'points-column', title: 'Points de la saison — ce qui décide du classement' },
         { label: 'Moy./PJ', sort: 'ppg', title: 'Points de la saison par partie jouée' },
-        { label: 'Tendance', cls: 'st-evo-col', title: 'Places gagnées ou perdues si l’on classait seulement sur la période choisie' }
+        { label: 'Tendance', cls: 'st-evo-col', title: 'Places gagnées ou perdues si l’on classait seulement sur les 7 derniers jours' }
     ];
 }
 
 // ==================== RANG : ÉVOLUTION PAR PÉRIODE ====================
 // Le rang (Pos) reste fixé par le total de la saison. Le badge en bout de
 // ligne compare ce rang à celui qu'aurait l'équipe si le classement portait
-// uniquement sur les points marqués pendant la période choisie (1/7/30
-// jours, même formule que le temple de la renommée et /pool-leaderboard) :
-// mieux classée sur la période que sur la saison → ▲, moins bien → ▼.
+// uniquement sur les points des 7 derniers jours (même formule que le temple
+// de la renommée et /pool-leaderboard) : mieux classée sur la semaine que
+// sur la saison → ▲, moins bien → ▼. Les trois périodes restent lues pour
+// les colonnes 24 h / 7 j / 30 j.
 const STANDINGS_PERIODS = [1, 7, 30];
-let standingsPeriod = 7;
+const TENDANCE_JOURS = 7;
 let periodPointsCache = null; // { poolName, byDays: { 1: Map, 7: Map, 30: Map } }
 
 const EVO_ARROW_UP = '<svg viewBox="0 0 24 24" width="8" height="8"><path d="M12 4l8 10H4z"></path></svg>';
@@ -477,22 +477,13 @@ function initialsFromName(name) {
 
 function evolutionBadgeHTML(move, hasData) {
     if (hasData && move > 0) {
-        return `<span class="st-evo st-evo-up" title="A gagné ${move} rang${move > 1 ? 's' : ''} sur la période">${EVO_ARROW_UP}${move}</span>`;
+        return `<span class="st-evo st-evo-up" title="A gagné ${move} rang${move > 1 ? 's' : ''} sur 7 jours">${EVO_ARROW_UP}${move}</span>`;
     }
     if (hasData && move < 0) {
-        return `<span class="st-evo st-evo-down" title="A perdu ${-move} rang${-move > 1 ? 's' : ''} sur la période">${EVO_ARROW_DOWN}${-move}</span>`;
+        return `<span class="st-evo st-evo-down" title="A perdu ${-move} rang${-move > 1 ? 's' : ''} sur 7 jours">${EVO_ARROW_DOWN}${-move}</span>`;
     }
-    const title = hasData ? 'Rang inchangé sur la période' : 'Pas assez de données récentes';
+    const title = hasData ? 'Rang inchangé sur 7 jours' : 'Pas assez de données récentes';
     return `<span class="st-evo st-evo-flat" title="${title}">—</span>`;
-}
-
-function standingsPeriodChipsHTML() {
-    return `<div class="st-period-bar">
-        <span class="st-period-label" id="stPeriodLabel">Tendance sur</span>
-        <div class="st-period-chips" role="group" aria-labelledby="stPeriodLabel">
-            ${STANDINGS_PERIODS.map(d => `<button type="button" class="st-period-chip${d === standingsPeriod ? ' active' : ''}" data-period="${d}" aria-pressed="${d === standingsPeriod}">${d === 1 ? '24 h' : `${d} j`}</button>`).join('')}
-        </div>
-    </div>`;
 }
 
 /**
@@ -543,7 +534,7 @@ function standingsLegendHTML(poolMode) {
         : [
             ['Total', 'Ce qui décide du classement : les points de la saison. Patineurs : 1 par but et 1 par passe. Gardiens : 2 par victoire, 5 pour une victoire par blanchissage (pas 2 + 5), 1 par défaite en prolongation. Clubs de la LNH : 2 par victoire, 1 par défaite en prolongation.'],
             ['24 h · 7 j · 30 j', 'Les points marqués sur la période — aujourd’hui, 7 jours, 30 jours —, selon les mêmes règles que le Total. Ils ne changent pas le classement : ils montrent qui monte.'],
-            ['Tendance', 'Les places qu’une équipe gagnerait (▲) ou perdrait (▼) si l’on classait seulement sur la période choisie.'],
+            ['Tendance', 'Les places qu’une équipe gagnerait (▲) ou perdrait (▼) si l’on classait seulement sur les 7 derniers jours.'],
             ['PJ · B · P', 'Parties jouées, buts et passes de tout l’alignement.']
         ];
     return `
@@ -971,13 +962,12 @@ async function renderPoolStandings(poolData, poolName) {
     // Points par période (1/7/30j) et rang « période » associé : pas de
     // pendant H2H, qui n'a ni colonnes période ni badge d'évolution.
     const byDays = poolMode === 'head-to-head' ? null : await fetchStandingsPeriodPoints(poolName);
-    const periodRankByTeam = byDays ? rankByPeriodPoints(standings, byDays[standingsPeriod]) : null;
+    const periodRankByTeam = byDays ? rankByPeriodPoints(standings, byDays[TENDANCE_JOURS]) : null;
 
     // En H2H la table vit dans une carte titrée — elle n'est plus qu'un bloc
     // parmi d'autres sur l'onglet. En cumulatif elle reste à plat sur la
-    // page, avec ses chips de période et sa liste téléphone.
+    // page, avec sa liste téléphone.
     const enH2H = poolMode === 'head-to-head';
-    const chipsHTML = enH2H ? '' : standingsPeriodChipsHTML();
     const mobileListHTML = enH2H ? '' : '<div class="st-mobile-list"></div>';
     const tableHTML = `<div class="standings-table-container"><table id="standingsTable">${buildStandingsHead(columns, activeSortKey)}</table></div>`;
 
@@ -992,7 +982,7 @@ async function renderPoolStandings(poolData, poolName) {
                ${tableHTML}
                ${legendeHTML}
            </section>`
-        : `${resumeHTML}${chipsHTML}${tableHTML}${mobileListHTML}${legendeHTML}`;
+        : `${resumeHTML}${tableHTML}${mobileListHTML}${legendeHTML}`;
     const table = document.getElementById('standingsTable');
 
     const tbody = document.createElement('tbody');
@@ -1020,7 +1010,7 @@ async function renderPoolStandings(poolData, poolName) {
         if (periodRankByTeam) {
             const periodRank = periodRankByTeam.get(standing.teamName);
             const move = periodRank !== undefined ? standing.rank - periodRank : 0;
-            const hasData = byDays[standingsPeriod].get(standing.teamName) != null;
+            const hasData = byDays[TENDANCE_JOURS].get(standing.teamName) != null;
             evoHTML = evolutionBadgeHTML(move, hasData);
         }
 
@@ -1112,16 +1102,10 @@ async function renderPoolStandings(poolData, poolName) {
         table.appendChild(tfoot);
     }
 
-    // Délégation sur le conteneur : reconstruit à chaque tri/période/rendu, un
-    // écouteur par <th>/.st-period-chip/.st-mobile-row fuirait à chaque passe
+    // Délégation sur le conteneur : reconstruit à chaque tri/rendu, un
+    // écouteur par <th>/.st-mobile-row fuirait à chaque passe
     // (comme initStatsHeaderSorting).
     standingsList.onclick = (e) => {
-        const chip = e.target.closest('.st-period-chip');
-        if (chip) {
-            standingsPeriod = Number(chip.dataset.period);
-            renderPoolStandings(poolData, poolName).catch(console.error);
-            return;
-        }
         const th = e.target.closest('th[data-sort]');
         if (th) { handleStandingsSort(th.dataset.sort); return; }
         const mobileRow = e.target.closest('.st-mobile-row');

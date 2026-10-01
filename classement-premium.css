@@ -115,37 +115,6 @@ body.fz-classement .breadcrumb-item:hover,
 body.fz-classement .breadcrumb-item.active { color: var(--fzc-accent); }
 body.fz-classement .breadcrumb-separator { color: var(--fzc-text-fainter); }
 
-/* ==================== PÉRIODE (1J / 7J / 30J) ==================== */
-/* Comme dans le mockup : les puces de période n'existent que dans la vue
-   téléphone (le tableau desktop affiche déjà les 3 colonnes 1/7/30 côte à
-   côte, la puce ne sert qu'à choisir la période du badge de rang — utile
-   seulement une fois qu'on n'a plus la place pour les trois colonnes). */
-body.fz-classement .st-period-chips {
-  display: none;
-  gap: 6px;
-  margin: 0 0 14px;
-}
-body.fz-classement .st-period-chip {
-  padding: 7px 15px;
-  border-radius: 8px;
-  border: 1px solid var(--fzc-border-input);
-  background: transparent;
-  color: var(--fzc-text-muted);
-  font: 600 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-  letter-spacing: .04em;
-  cursor: pointer;
-  transition: background .15s ease, color .15s ease, border-color .15s ease;
-}
-body.fz-classement .st-period-chip:hover {
-  border-color: var(--fzc-ink);
-  color: var(--fzc-ink);
-}
-body.fz-classement .st-period-chip.active {
-  background: var(--fzc-solid);
-  border-color: var(--fzc-solid);
-  color: var(--fzc-on-solid);
-}
-
 /* ==================== TABLEAU (DESKTOP) ==================== */
 body.fz-classement .standings-table-container {
   border: 1px solid var(--fzc-border);
@@ -280,10 +249,8 @@ body.fz-classement .st-mobile-list { display: none; }
 
 @media (max-width: 680px) {
   body.fz-classement .standings-table-container { display: none; }
-  /* La maquette « Classement » va droit à la liste : ni tuile de synthèse
-     ni puces de période (la tendance reste calculée sur 7 j). */
-  body.fz-classement #standingsList .st-summary,
-  body.fz-classement #standingsList .st-period-bar { display: none; }
+  /* La maquette « Classement » va droit à la liste, sans tuile de synthèse. */
+  body.fz-classement #standingsList .st-summary { display: none; }
   /* Une bande d'un bord à l'autre, rangées de 64px : comme la liste des
      joueurs d'une équipe (classement.css, .roster-rows). */
   body.fz-classement .st-mobile-list {
@@ -1163,11 +1130,8 @@ body.fz-classement .h2h-res-more:hover { color: var(--fzc-accent-dark); }
 
 /* ==================== LISIBILITÉ DU CLASSEMENT ====================
    1. « Où en suis-je ? » avant le tableau.
-   2. La période de la tendance, nommée et choisissable partout — elle ne
-      l'était qu'au téléphone, alors que la colonne « Tendance » en dépend
-      aussi sur ordinateur.
-   3. Ma rangée repérée dans le tableau.
-   4. Une légende repliée : ce que veut dire chaque colonne. */
+   2. Ma rangée repérée dans le tableau.
+   3. Une légende repliée : ce que veut dire chaque colonne. */
 body.fz-classement .st-summary {
   display: flex;
   align-items: center;
@@ -1191,15 +1155,6 @@ body.fz-classement .st-summary-rank sup { font-size: .55em; }
 body.fz-classement .st-summary-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 body.fz-classement .st-summary-txt strong { color: var(--fzc-ink); }
 body.fz-classement .st-summary-txt span { font-size: .9rem; color: var(--fzc-text); }
-
-body.fz-classement .st-period-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; }
-body.fz-classement .st-period-label {
-  font: 600 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--fzc-text-muted);
-}
-body.fz-classement .st-period-bar .st-period-chips { display: flex; margin: 0; }
 
 body.fz-classement #standingsTable tbody tr.is-me td { background: color-mix(in srgb, var(--fzc-accent-fill) 6%, transparent); }
 body.fz-classement #standingsTable tbody tr.is-me td.player-col .st-name { font-weight: 800; color: var(--fzc-ink); }
