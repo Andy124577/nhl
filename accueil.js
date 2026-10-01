@@ -486,7 +486,10 @@ function patchStoryGoals(live, g) {
     const id = String(g.id);
     const etat = storyGoalState.get(id);
     const cles = (g.events || []).map(storyGoalKey);
-    const ordre = cles.join('~');
+    // La feuille du jour (photos, noms complets) peut arriver après la carte :
+    // son arrivée compte comme un changement, et les cartes se redessinent.
+    const duJour = (g.events || []).filter(e => storyButDuJour(g, e)).length;
+    const ordre = `${cles.join('~')}#${duJour}`;
     if (etat && etat.ordre === ordre) return;
 
     // Au tout premier passage sur un match, rien ne clignote : les buts déjà
@@ -526,7 +529,8 @@ function storyGoalKey(e) {
 /** Note les buts d'un match comme « déjà vus », sans les faire clignoter. */
 function seedStoryGoalState(g) {
     const cles = (g.events || []).map(storyGoalKey);
-    storyGoalState.set(String(g.id), { ordre: cles.join('~'), vues: new Set(cles) });
+    const duJour = (g.events || []).filter(e => storyButDuJour(g, e)).length;
+    storyGoalState.set(String(g.id), { ordre: `${cles.join('~')}#${duJour}`, vues: new Set(cles) });
 }
 
 /** Les pointages des jetons suivent le direct, même hors de la diapo affichée. */
@@ -903,6 +907,47 @@ function storyGoalsHTML(g, nouvelles) {
  * plus récent à gauche. Sans le code du calendrier (tests, page qui ne le
  * charge pas), l'ancienne liste prend le relais.
  */
+/**
+ * Le même but sur la feuille du jour (/day-goals), que le calendrier de
+ * l'accueil a déjà chargée : elle porte la photo, le nom complet et les
+ * compteurs de saison que le flux en direct n'avait pas toujours. Même
+ * période, même temps : c'est le même but.
+ */
+function storyButDuJour(g, e) {
+    if (typeof calGoals === 'undefined' || !calGoals || !calGoals.games) return null;
+    const buts = calGoals.games[g.id] || calGoals.games[String(g.id)] || [];
+    return buts.find(b => String(b.period) === String(e.period) && b.timeInPeriod === e.timeInPeriod) || null;
+}
+
+/**
+ * La photo d'un buteur, du plus sûr au plus approché : celle du flux, celle
+ * de la feuille du jour, l'identifiant LNH, puis le nom — complet, ou abrégé
+ * (« W. Nylander ») retrouvé par l'initiale, le nom de famille et le club.
+ */
+function storyGoalHeadshot(e, duJour) {
+    // headshots.js n'est pas chargé sur l'accueil : l'adresse LNH par identifiant.
+    const parId = (id, club) => typeof buildHeadshotUrl === 'function'
+        ? buildHeadshotUrl(id, club)
+        : `https://assets.web.nhl.com/mugs/nhl/latest/${encodeURIComponent(id)}.png`;
+    if (e.headshot) return e.headshot;
+    if (duJour && duJour.headshot) return duJour.headshot;
+    const id = e.scorerId || (duJour && duJour.playerId);
+    if (id) return parId(id, e.team);
+    const parNom = typeof fzdHeadshotByName === 'function' ? fzdHeadshotByName : () => '';
+    const complet = e.scorerName || (duJour && duJour.name);
+    if (complet && parNom(complet)) return parNom(complet);
+    const abrege = String(e.scorer || '').match(/^(\S)\.\s+(.+)$/);
+    const joueurs = (userData.statsData && userData.statsData.players) || [];
+    if (abrege) {
+        const [, initiale, famille] = abrege;
+        const trouve = joueurs.find(p => p.teamAbbrev === e.team
+            && String(p.playerName || '').endsWith(` ${famille}`)
+            && String(p.playerName || '').startsWith(initiale));
+        if (trouve) return trouve.headshot || (trouve.playerId ? parId(trouve.playerId, e.team) : null);
+    }
+    return parNom(e.scorer) || null;
+}
+
 function storyGoalsBlocHTML(g, nouvelles) {
     if (typeof goalCardHTML !== 'function') return storyGoalsHTML(g, nouvelles);
     const evenements = g.events || [];
@@ -910,19 +955,23 @@ function storyGoalsBlocHTML(g, nouvelles) {
     const neufs = nouvelles || new Set();
     const equipes = { away: g.away.abbrev || '', home: g.home.abbrev || '' };
     const cartes = evenements.map(e => {
+        const duJour = storyButDuJour(g, e);
+        const aides = Array.isArray(e.assistsDetail) && e.assistsDetail.length
+            ? e.assistsDetail
+            : duJour && (duJour.assists || []).length
+                ? duJour.assists
+                : (e.assists || []).filter(Boolean).map(name => ({ name }));
         const but = {
-            name: e.scorer || '',
-            playerId: e.scorerId || 0,
-            headshot: e.headshot || (typeof fzdHeadshotByName === 'function' ? fzdHeadshotByName(e.scorer) : null),
+            name: e.scorerName || (duJour && duJour.name) || e.scorer || '',
+            playerId: e.scorerId || (duJour && duJour.playerId) || 0,
+            headshot: storyGoalHeadshot(e, duJour),
             teamAbbrev: e.team,
-            goalsToDate: e.goalsToDate,
-            assists: Array.isArray(e.assistsDetail) && e.assistsDetail.length
-                ? e.assistsDetail
-                : (e.assists || []).filter(Boolean).map(name => ({ name })),
+            goalsToDate: e.goalsToDate ?? (duJour && duJour.goalsToDate),
+            assists: aides,
             awayScore: e.awayScore,
             homeScore: e.homeScore,
             period: e.period,
-            periodType: e.periodType || (Number(e.period) > 3 ? 'OT' : 'REG'),
+            periodType: e.periodType || (duJour && duJour.periodType) || (Number(e.period) > 3 ? 'OT' : 'REG'),
             timeInPeriod: e.timeInPeriod
         };
         const html = goalCardHTML(but, equipes);

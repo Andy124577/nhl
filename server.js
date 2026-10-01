@@ -2230,8 +2230,13 @@ async function releverMatchsEnDirect() {
             const recentGoals = (g.goals || []).slice().reverse().map(goal => ({
                 team: goal.teamAbbrev,
                 scorer: goal.name?.default || '',
+                // Le nom complet (« William Nylander ») : `name` est abrégé
+                // (« W. Nylander »), et c'est le nom complet que la carte
+                // de but du calendrier affiche.
+                scorerName: [goal.firstName?.default, goal.lastName?.default].filter(Boolean).join(' ') || null,
                 scorerId: goal.playerId || null,
-                headshot: goal.headshot || null,
+                // `mugshot` dans score/now — le même champ que lit /day-goals.
+                headshot: goal.mugshot || goal.headshot || null,
                 goalsToDate: goal.goalsToDate ?? null,
                 assists: (goal.assists || []).map(a => a.name?.default).filter(Boolean),
                 assistsDetail: (goal.assists || []).map(a => ({ name: a.name?.default || '', assistsToDate: a.assistsToDate ?? null })).filter(a => a.name),
