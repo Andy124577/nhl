@@ -10,7 +10,7 @@ const NHL_ABBREV = {
     "New York Islanders": "NYI", "New York Rangers": "NYR", "Ottawa Senators": "OTT",
     "Philadelphia Flyers": "PHI", "Pittsburgh Penguins": "PIT", "San Jose Sharks": "SJS",
     "Seattle Kraken": "SEA", "St. Louis Blues": "STL", "Tampa Bay Lightning": "TBL",
-    "Toronto Maple Leafs": "TOR", "Utah Hockey Club": "UTA", "Vancouver Canucks": "VAN",
+    "Toronto Maple Leafs": "TOR", "Utah Hockey Club": "UTA", "Utah Mammoth": "UTA", "Vancouver Canucks": "VAN",
     "Vegas Golden Knights": "VGK", "Washington Capitals": "WSH", "Winnipeg Jets": "WPG"
 };
 
@@ -93,6 +93,13 @@ function seasonStat(stats, cached, key) {
 document.addEventListener('DOMContentLoaded', async () => {
     await fetchImageData();
 
+    // La trousse de repêchage : la fiche des joueurs repêchés que
+    // nhl_filtered_stats.json ne contient pas (voir ficheJoueur). Chargée en
+    // parallèle ; sans elle, ces joueurs paraissent quand même.
+    const trousse = window.FZDraftKit
+        ? FZDraftKit.charger().catch(error => { console.warn('⚠️ Could not load draft kit:', error); })
+        : Promise.resolve();
+
     // Load player data
     const response = await fetch('nhl_filtered_stats.json');
     const data = await response.json();
@@ -126,6 +133,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.warn('⚠️ Could not load current team standings:', error);
     }
+
+    await trousse;
+    indexerFiches();
 
     // Charge le pool actif
     await loadAllUserPools();
@@ -1454,93 +1464,40 @@ function renderTeamRoster(roster, activeListings = [], tradesAllowed = true) {
 
     const players = [];
 
-    // Add offensive players
-    (roster.offensive || []).forEach(playerName => {
-        const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
-        if (playerData) {
-            const stats = getCurrentPlayerStats(playerName, playerData.playerId);
+    // Chaque choix paraît, case par case — même un joueur que
+    // nhl_filtered_stats.json ne connaît pas (voir ficheJoueur). Une recrue
+    // gardienne est comptée en gardienne.
+    const POSITION_PAR_DEFAUT = { offensive: 'F', defensive: 'D', goalie: 'G', rookie: 'R' };
+    ['offensive', 'defensive', 'goalie', 'rookie'].forEach(category => {
+        (roster[category] || []).forEach(playerName => {
+            const fiche = ficheJoueur(playerName, category);
+            const stats = getCurrentPlayerStats(playerName, fiche.playerId);
             players.push({
                 name: playerName,
-                position: playerData.positionCode || 'F',
-                type: 'player',
-                category: 'offensive',
-                playerId: playerData.playerId,
+                position: fiche.gardien ? 'G' : (fiche.position || POSITION_PAR_DEFAUT[category]),
+                type: fiche.gardien ? 'goalie' : 'player',
+                category,
+                playerId: fiche.playerId || stats?.playerId || null,
                 stats: stats,
-                cached: playerData,
-                teamAbbrev: stats?.teamAbbrev || playerData.teamAbbrevs
+                cached: fiche.cache,
+                teamAbbrev: stats?.teamAbbrev || fiche.club
             });
-        }
-    });
-
-    // Add defensive players
-    (roster.defensive || []).forEach(playerName => {
-        const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
-        if (playerData) {
-            const stats = getCurrentPlayerStats(playerName, playerData.playerId);
-            players.push({
-                name: playerName,
-                position: playerData.positionCode || 'D',
-                type: 'player',
-                category: 'defensive',
-                playerId: playerData.playerId,
-                stats: stats,
-                cached: playerData,
-                teamAbbrev: stats?.teamAbbrev || playerData.teamAbbrevs
-            });
-        }
-    });
-
-    // Add goalies
-    (roster.goalie || []).forEach(playerName => {
-        const playerData = goalieData.find(p => p.goalieFullName === playerName);
-        if (playerData) {
-            const stats = getCurrentPlayerStats(playerName, playerData.playerId);
-            players.push({
-                name: playerName,
-                position: 'G',
-                type: 'goalie',
-                category: 'goalie',
-                playerId: playerData.playerId,
-                stats: stats,
-                cached: playerData,
-                teamAbbrev: stats?.teamAbbrev || playerData.teamAbbrevs
-            });
-        }
-    });
-
-    // Add rookies
-    (roster.rookie || []).forEach(playerName => {
-        const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
-        if (playerData) {
-            const stats = getCurrentPlayerStats(playerName, playerData.playerId);
-            players.push({
-                name: playerName,
-                position: playerData.positionCode || 'R',
-                type: 'player',
-                category: 'rookie',
-                playerId: playerData.playerId,
-                stats: stats,
-                cached: playerData,
-                teamAbbrev: stats?.teamAbbrev || playerData.teamAbbrevs
-            });
-        }
+        });
     });
 
     // Add teams
     (roster.teams || []).forEach(teamName => {
-        const teamInfo = teamData.find(t => t.teamFullName === teamName);
-        if (teamInfo) {
-            const stats = getCurrentTeamStats(teamName);
-            players.push({
-                name: teamName,
-                position: 'TEAM',
-                type: 'team',
-                category: 'team',
-                stats: stats,
-                cached: teamInfo,
-                teamAbbrev: stats?.teamAbbrev || teamInfo.teamAbbrevs
-            });
-        }
+        const teamInfo = ficheClub(teamName);
+        const stats = getCurrentTeamStats(teamName);
+        players.push({
+            name: teamName,
+            position: 'TEAM',
+            type: 'team',
+            category: 'team',
+            stats: stats,
+            cached: teamInfo,
+            teamAbbrev: stats?.teamAbbrev || NHL_ABBREV[teamName] || ''
+        });
     });
 
     // Render player cards
@@ -1701,19 +1658,16 @@ let benchMessageEnAttente = '';
 
 /** Points de la saison d'un joueur, pour choisir qui sort en connaissance de cause. */
 function benchSeasonPoints(nom, categorie) {
-    if (categorie === 'goalie') {
-        const fiche = goalieData.find(p => p.goalieFullName === nom);
-        if (!fiche) return null;
-        const stats = getCurrentPlayerStats(nom, fiche.playerId);
+    const fiche = ficheJoueur(nom, categorie);
+    const stats = getCurrentPlayerStats(nom, fiche.playerId);
+    if (fiche.gardien) {
         return goaliePoolPoints({
-            shutouts: seasonStat(stats, fiche, 'shutouts'),
-            wins: seasonStat(stats, fiche, 'wins'),
-            otLosses: seasonStat(stats, fiche, 'otLosses')
+            shutouts: seasonStat(stats, fiche.cache, 'shutouts'),
+            wins: seasonStat(stats, fiche.cache, 'wins'),
+            otLosses: seasonStat(stats, fiche.cache, 'otLosses')
         });
     }
-    const fiche = fullPlayerData.find(p => p.skaterFullName === nom);
-    if (!fiche) return null;
-    return seasonStat(getCurrentPlayerStats(nom, fiche.playerId), fiche, 'points');
+    return seasonStat(stats, fiche.cache, 'points');
 }
 
 function renderBenchPanel(rosterList, roster) {
@@ -1835,22 +1789,153 @@ function getMatchingImage(playerName) {
     return resolveHeadshotByName(playerName);
 }
 
+// ==================== FICHES DES CHOIX ====================
+// Un choix paraît toujours au classement. Le repêchage puise dans la trousse
+// (draftkit.json, plus de mille joueurs) ; nhl_filtered_stats.json, que cette
+// page lisait seule, n'en compte qu'environ 550. Un joueur hors de cette
+// liste (Alexandre Texier, Jayden Struble…) disparaissait de la fiche de son
+// équipe et de son total ; une recrue gardienne aussi (Sergei Murashov),
+// cherchée parmi les patineurs seulement. Même chose pour un nom écrit
+// autrement (« Tim Stützle » / « Tim Stutzle ») ou un club renommé (« Utah
+// Mammoth » / « Utah Hockey Club »).
+//
+// Les noms se rapprochent sans accent ni ponctuation (cleDeNom, lib/scoring.js,
+// la même règle que le classement du serveur).
+
+let fichesIndex = null;
+
+function indexerNoms(liste, champ) {
+    const exact = new Map();
+    const parCle = new Map();
+    (liste || []).forEach(fiche => {
+        const nom = fiche && fiche[champ];
+        if (!nom) return;
+        if (!exact.has(nom)) exact.set(nom, fiche);
+        const cle = cleDeNom(nom);
+        if (!parCle.has(cle)) parCle.set(cle, fiche);
+    });
+    return { exact, parCle };
+}
+
+function chercherNom(index, nom) {
+    if (!nom) return null;
+    return index.exact.get(nom) || index.parCle.get(cleDeNom(nom)) || null;
+}
+
+/** Les index de noms, une fois les listes chargées. */
+function indexerFiches() {
+    const kit = (window.FZDraftKit && FZDraftKit.donnees) || null;
+    fichesIndex = {
+        patineurs: indexerNoms(fullPlayerData, 'skaterFullName'),
+        gardiens: indexerNoms(goalieData, 'goalieFullName'),
+        kitPatineurs: indexerNoms(kit && kit.skaters, 'fullName'),
+        kitGardiens: indexerNoms(kit && kit.goalies, 'fullName'),
+        clubs: indexerNoms(teamData, 'teamFullName')
+    };
+}
+
+/**
+ * Ce qu'on sait d'un joueur repêché, sans jamais rendre null :
+ * { gardien, playerId, position, club, cache }.
+ *
+ * Cherché dans nhl_filtered_stats.json, puis dans la trousse, puis dans le
+ * relevé de la saison. `cache` (repli de seasonStat) ne vient que du
+ * premier : les chiffres de la trousse sont des projections ou ceux de l'an
+ * passé, jamais la saison en cours. `categorie` est la case du choix ; une
+ * recrue (ou un joueur de banc sans case) peut être un gardien.
+ */
+function ficheJoueur(nom, categorie) {
+    if (!fichesIndex) indexerFiches();
+    const patineurPossible = categorie !== 'goalie';
+    const gardienPossible = !categorie || categorie === 'goalie' || categorie === 'rookie';
+
+    const patineur = patineurPossible ? chercherNom(fichesIndex.patineurs, nom) : null;
+    if (patineur) {
+        return { gardien: patineur.positionCode === 'G', playerId: patineur.playerId || null, position: patineur.positionCode || null,
+            club: patineur.teamAbbrevs || null, cache: patineur };
+    }
+    const gardien = gardienPossible ? chercherNom(fichesIndex.gardiens, nom) : null;
+    if (gardien) {
+        return { gardien: true, playerId: gardien.playerId || null, position: 'G',
+            club: gardien.teamAbbrevs || null, cache: gardien };
+    }
+
+    const canonique = window.FZDraftKit ? FZDraftKit.nomCanonique(nom) : nom;
+    const dansKit = (index) => chercherNom(index, nom) || chercherNom(index, canonique);
+    const kitPatineur = patineurPossible ? dansKit(fichesIndex.kitPatineurs) : null;
+    const kitGardien = !kitPatineur && gardienPossible ? dansKit(fichesIndex.kitGardiens) : null;
+    const ligne = ligneDuReleveParNom(nom);
+    const kit = kitPatineur || kitGardien;
+    if (kit) {
+        return { gardien: !!kitGardien, playerId: kit.playerId || (ligne && ligne.playerId) || null,
+            position: kitGardien ? 'G' : (kit.position || null), club: kit.team || null, cache: null };
+    }
+    if (ligne) {
+        return { gardien: ligne.position === 'G', playerId: ligne.playerId || null,
+            position: ligne.position || null, club: ligne.teamAbbrev || null, cache: null };
+    }
+    return { gardien: categorie === 'goalie', playerId: null, position: null, club: null, cache: null };
+}
+
+/** La fiche d'un club repêché dans nhl_filtered_stats.json, ou null. */
+function ficheClub(nom) {
+    if (!fichesIndex) indexerFiches();
+    return chercherNom(fichesIndex.clubs, nom)
+        || fichesIndex.clubs.parCle.get(CLUBS_RENOMMES[cleDeNom(nom)]) || null;
+}
+
+// Le relevé indexé, refait quand il change (les points du soir le remplacent).
+let releveIndex = { joueurs: null, parId: null, parNom: null, parCle: null };
+function indexDuReleve() {
+    const joueurs = currentStats && currentStats.players;
+    if (!Array.isArray(joueurs)) return null;
+    if (releveIndex.joueurs !== joueurs) {
+        // Lignes du relevé dont l'identifiant est celui d'un autre joueur
+        // (draftkitData.js) : jamais rapprochées par le nom.
+        const errones = new Set(window.FZ_IDS_ERRONES || []);
+        const parId = new Map();
+        const parNom = new Map();
+        const parCle = new Map();
+        joueurs.forEach(p => {
+            if (p.playerId && !parId.has(Number(p.playerId))) parId.set(Number(p.playerId), p);
+            if (!p.playerName || errones.has(Number(p.playerId))) return;
+            if (!parNom.has(p.playerName)) parNom.set(p.playerName, p);
+            const cle = cleDeNom(p.playerName);
+            if (!parCle.has(cle)) parCle.set(cle, p);
+        });
+        releveIndex = { joueurs, parId, parNom, parCle };
+    }
+    return releveIndex;
+}
+
+function ligneDuReleveParNom(nom) {
+    const index = indexDuReleve();
+    if (!index || !nom) return null;
+    return index.parNom.get(nom) || index.parCle.get(cleDeNom(nom)) || null;
+}
+
 function getCurrentPlayerStats(playerName, playerId) {
-    if (!currentStats || !currentStats.players) return null;
+    const index = indexDuReleve();
+    if (!index) return null;
 
     // Try to find by playerId first
     if (playerId) {
-        const byId = currentStats.players.find(p => p.playerId === playerId);
+        const byId = index.parId.get(Number(playerId));
         if (byId) return byId;
     }
 
     // Fallback to name match
-    return currentStats.players.find(p => p.playerName === playerName);
+    return ligneDuReleveParNom(playerName);
 }
 
 function getCurrentTeamStats(teamName) {
     if (!currentTeams || !currentTeams.teams) return null;
-    return currentTeams.teams.find(t => t.teamFullName === teamName);
+    const cle = cleDeNom(teamName);
+    const autre = CLUBS_RENOMMES[cle];
+    return currentTeams.teams.find(t => t.teamFullName === teamName)
+        || currentTeams.teams.find(t => cleDeNom(t.teamFullName) === cle)
+        || (autre ? currentTeams.teams.find(t => cleDeNom(t.teamFullName) === autre) : null)
+        || null;
 }
 
 function calculateTeamPoints(roster) {
@@ -1862,54 +1947,42 @@ function calculateTeamPoints(roster) {
     let totalEnDirect = 0;
     const soir = stats => (seasonStarted && stats && stats.pointsEnDirect) || 0;
 
-    // Process skaters
-    ['offensive', 'defensive', 'rookie'].forEach(position => {
-        (roster[position] || []).forEach(playerName => {
-            const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
-            if (playerData) {
-                const stats = getCurrentPlayerStats(playerName, playerData.playerId);
-                totalGP += seasonStat(stats, playerData, 'gamesPlayed');
-                totalGoals += seasonStat(stats, playerData, 'goals');
-                totalAssists += seasonStat(stats, playerData, 'assists');
-                totalPoints += seasonStat(stats, playerData, 'points');
-                totalEnDirect += soir(stats);
+    // Tous les choix comptent, même hors de nhl_filtered_stats.json (voir
+    // ficheJoueur) ; une recrue gardienne est comptée en gardienne.
+    ['offensive', 'defensive', 'goalie', 'rookie'].forEach(category => {
+        (roster[category] || []).forEach(playerName => {
+            const fiche = ficheJoueur(playerName, category);
+            const stats = getCurrentPlayerStats(playerName, fiche.playerId);
+            totalGP += seasonStat(stats, fiche.cache, 'gamesPlayed');
+            if (fiche.gardien) {
+                // Formule partagée avec le serveur et la page d'accueil
+                // (lib/scoring.js) : recopiée ici, elle finissait par diverger.
+                totalPoints += goaliePoolPoints({
+                    shutouts: seasonStat(stats, fiche.cache, 'shutouts'),
+                    wins: seasonStat(stats, fiche.cache, 'wins'),
+                    otLosses: seasonStat(stats, fiche.cache, 'otLosses')
+                });
+            } else {
+                totalGoals += seasonStat(stats, fiche.cache, 'goals');
+                totalAssists += seasonStat(stats, fiche.cache, 'assists');
+                totalPoints += seasonStat(stats, fiche.cache, 'points');
             }
-        });
-    });
-
-    // Process goalies
-    (roster.goalie || []).forEach(playerName => {
-        const playerData = goalieData.find(p => p.goalieFullName === playerName);
-        if (playerData) {
-            const stats = getCurrentPlayerStats(playerName, playerData.playerId);
-            const gp = seasonStat(stats, playerData, 'gamesPlayed');
-            const wins = seasonStat(stats, playerData, 'wins');
-            const shutouts = seasonStat(stats, playerData, 'shutouts');
-            const otLosses = seasonStat(stats, playerData, 'otLosses');
-            // Formule partagée avec le serveur et la page d'accueil
-            // (lib/scoring.js) : recopiée ici, elle finissait par diverger.
-            const points = goaliePoolPoints({ shutouts, wins, otLosses });
-
-            totalGP += gp;
-            totalPoints += points;
             totalEnDirect += soir(stats);
-        }
+        });
     });
 
     // Process teams
     (roster.teams || []).forEach(teamName => {
-        const teamInfo = teamData.find(t => t.teamFullName === teamName);
-        if (teamInfo) {
-            const stats = getCurrentTeamStats(teamName);
-            const gp = seasonStat(stats, teamInfo, 'gamesPlayed');
-            const wins = seasonStat(stats, teamInfo, 'wins');
-            const otLosses = seasonStat(stats, teamInfo, 'otLosses');
-            const points = clubPoolPoints({ wins, otLosses });
+        const teamInfo = ficheClub(teamName);
+        const stats = getCurrentTeamStats(teamName);
+        const gp = seasonStat(stats, teamInfo, 'gamesPlayed');
+        const wins = seasonStat(stats, teamInfo, 'wins');
+        const otLosses = seasonStat(stats, teamInfo, 'otLosses');
+        const points = clubPoolPoints({ wins, otLosses });
 
-            totalGP += gp;
-            totalPoints += points;
-            totalEnDirect += soir(stats);
-        }
+        totalGP += gp;
+        totalPoints += points;
+        totalEnDirect += soir(stats);
     });
 
     return {
@@ -1965,11 +2038,10 @@ function clubShotStyle(teamAbbrev) {
 /** Le club d'un joueur d'alignement : sa feuille de match, sinon les stats chargées. */
 function clubDuJoueur(joueur) {
     if (joueur.teamAbbrev) return joueur.teamAbbrev;
-    const stats = getCurrentPlayerStats(joueur.name, joueur.playerId);
+    const fiche = ficheJoueur(joueur.name, null);
+    const stats = getCurrentPlayerStats(joueur.name, joueur.playerId || fiche.playerId);
     if (stats && stats.teamAbbrev) return stats.teamAbbrev;
-    const fiche = fullPlayerData.find(p => p.skaterFullName === joueur.name)
-        || goalieData.find(g => g.goalieFullName === joueur.name);
-    return fiche ? (fiche.teamAbbrev || fiche.teamAbbrevs) : null;
+    return fiche.club;
 }
 
 /**

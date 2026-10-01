@@ -23,6 +23,7 @@ const instantDraft = require("./lib/instantDraft.js");
 const { NHL_CLUB_FULLNAME, diffRosterSnapshots, trimTransactionLog, getTeamAbbreviationFromName } = require("./lib/roster.js");
 const { savePctFromSeasons } = require("./lib/savePct.js");
 const { getStatsRefreshStatus } = require("./lib/statsCache.js");
+const joueursRepeches = require("./lib/joueursRepeches.js");
 const { currentSeasonId, currentSeasonString, getSeasonWindow, seasonHasStarted,
     seasonPhase, statsSeasonId, statsSeasonString, cachedStatsSeasonString,
     getStatsSeason } = require("./lib/season.js");
@@ -931,6 +932,68 @@ function loadAllPlayers() {
     }
 }
 
+// ── Les repêchés hors de la liste de suivi ─────────────────────────────────
+// Le repêchage puise dans draftkit.json (plus de mille joueurs), la collecte
+// dans nhl_filtered_stats.json (≈ 550). Un choix hors de cette liste n'avait
+// jamais de statistiques : absent du classement, zéro point. Voir
+// lib/joueursRepeches.js.
+
+// La trousse pèse 1 Mo : lue une fois, réduite à ce qui sert au rapprochement.
+let trousseRepere = null;
+function trousseDeRepere() {
+    if (!trousseRepere) {
+        try {
+            const kit = JSON.parse(fs.readFileSync(path.join(__dirname, 'draftkit.json'), 'utf-8'));
+            const garder = p => ({ fullName: p.fullName, playerId: p.playerId || null, team: p.team || null });
+            trousseRepere = { skaters: (kit.skaters || []).map(garder), goalies: (kit.goalies || []).map(garder) };
+        } catch (erreur) {
+            console.error('⚠️ draftkit.json illisible :', erreur.message);
+            return { skaters: [], goalies: [] };
+        }
+    }
+    return trousseRepere;
+}
+
+// La photo des 32 effectifs ne change qu'une fois par jour : gardée six
+// heures plutôt que relue en base à chaque vérification.
+const EFFECTIFS_REPERE_MS = 6 * 60 * 60 * 1000;
+let effectifsRepere = null;
+async function effectifsDeRepere() {
+    if (!effectifsRepere || Date.now() - effectifsRepere.le > EFFECTIFS_REPERE_MS) {
+        effectifsRepere = { valeur: await loadRosterSnapshot(), le: Date.now() };
+    }
+    return effectifsRepere.valeur;
+}
+
+/**
+ * Les repêchés absents de nhl_filtered_stats.json, dans la forme de
+ * loadAllPlayers. Ne lève jamais : sans pools lisibles, aucun ajout.
+ */
+async function repechesHorsSuivi(suivis = loadAllPlayers()) {
+    try {
+        const [pools, effectifs] = await Promise.all([
+            poolStore.lireDonneesBrutes(),
+            effectifsDeRepere()
+        ]);
+        const { ajouts, introuvables } = joueursRepeches.joueursAAjouter(suivis, pools, {
+            trousse: trousseDeRepere(), effectifs
+        });
+        if (introuvables.length) {
+            console.log(`ℹ️ ${introuvables.length} repêché(s) sans identifiant LNH (hors des effectifs) : ${introuvables.slice(0, 10).join(', ')}${introuvables.length > 10 ? '…' : ''}`);
+        }
+        return ajouts;
+    } catch (erreur) {
+        console.error('⚠️ Repêchés hors suivi illisibles :', erreur.message);
+        return [];
+    }
+}
+
+/** Tous les joueurs à relever : la liste de suivi, plus les repêchés qu'elle n'a pas. */
+async function joueursARelever() {
+    const suivis = loadAllPlayers();
+    return [...suivis, ...await repechesHorsSuivi(suivis)];
+}
+
 /** Un appel à la LNH, relancé une fois après trois secondes si elle limite (429). null si refusé. */
 async function lireJsonLNH(url, etiquette) {
     let response = await fetch(url);
@@ -1134,6 +1197,23 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
     }
 }
 
+/**
+ * La fenêtre du relevé (lib/releveSaison.js) : la veille et le jour. Les
+ * matchs d'avant sont tous finis et tous comptés ; ceux de la fenêtre ne le
+ * sont que s'ils sont officiels au moment où le joueur est relevé. L'état est
+ * relu à chaque paquet : la passe dure plusieurs minutes, et un match peut
+ * finir pendant ce temps.
+ */
+function lecteurFenetreReleve(saison) {
+    const journee = datesPool.journeeLocale();
+    const depuis = releveSaison.debutFenetre(journee);
+    return async () => {
+        if (!saison.hasStarted) return null;
+        const listes = await Promise.all([depuis, journee].map(j => lireScoreDuJourBrut(j).catch(() => null)));
+        return { depuis, etats: releveSaison.etatsDesMatchs(listes) };
+    };
+}
+
 // Function to fetch and cache all current stats
 async function updateCurrentStats() {
     // Une seule résolution de la saison pour toute la passe : la règle
@@ -1151,20 +1231,9 @@ async function updateCurrentStats() {
     const memeSaison = Number(existingStats.season) === Number(saison.seasonId);
     const inclusionsPrecedentes = (memeSaison && existingStats.inclusion) || {};
 
-    // La fenêtre du relevé (lib/releveSaison.js) : la veille et le jour. Les
-    // matchs d'avant sont tous finis et tous comptés ; ceux de la fenêtre ne
-    // le sont que s'ils sont officiels au moment où le joueur est relevé.
-    // L'état est relu à chaque paquet : la passe dure plusieurs minutes, et
-    // un match peut finir pendant ce temps.
-    const journee = datesPool.journeeLocale();
-    const depuis = releveSaison.debutFenetre(journee);
-    const fenetreDuPaquet = async () => {
-        if (!saison.hasStarted) return null;
-        const listes = await Promise.all([depuis, journee].map(j => lireScoreDuJourBrut(j).catch(() => null)));
-        return { depuis, etats: releveSaison.etatsDesMatchs(listes) };
-    };
+    const fenetreDuPaquet = lecteurFenetreReleve(saison);
 
-    const allPlayers = loadAllPlayers();
+    const allPlayers = await joueursARelever();
     const newPlayers = [];
     const inclusion = {};
     let gardes = 0;
@@ -1360,6 +1429,77 @@ function triggerBackgroundStatsRefresh(reason) {
 }
 
 /**
+ * Les repêchés sans ligne dans le relevé, relevés seuls.
+ *
+ * Sans quoi un joueur repêché hors de nhl_filtered_stats.json attendait la
+ * collecte de minuit : jusqu'à un jour à zéro au classement. Quelques appels
+ * à la LNH, pas une collecte complète. Vérifié au plus toutes les
+ * VERIF_REPECHES_MS ; un joueur que la LNH n'a pas rendu n'est retenté
+ * qu'après REESSAI_REPECHES_MS. Ne bloque jamais l'appelant.
+ */
+const VERIF_REPECHES_MS = 5 * 60 * 1000;
+const REESSAI_REPECHES_MS = 6 * 60 * 60 * 1000;
+let verifRepechesLe = 0;
+let completionRepechesEnCours = null;
+const repechesSansReponse = new Map(); // playerId → dernière tentative
+
+function completerRepechesEnFond() {
+    if (completionRepechesEnCours || collecteStatsEnCours) return;
+    if (Date.now() - verifRepechesLe < VERIF_REPECHES_MS) return;
+    verifRepechesLe = Date.now();
+    completionRepechesEnCours = completerRepeches()
+        .catch(e => console.error('❌ Complétion des repêchés :', e.message))
+        .finally(() => { completionRepechesEnCours = null; });
+}
+
+async function completerRepeches() {
+    const releve = await loadCurrentStats();
+    // Pas encore de relevé : la première collecte complète les prendra.
+    if (!releve.lastUpdated) return 0;
+    const saison = await getStatsSeason();
+    // Relevé d'une autre saison : la collecte complète le refera en entier.
+    if (Number(releve.season) !== Number(saison.seasonId)) return 0;
+
+    const presents = new Set((releve.players || []).map(p => Number(p.playerId)));
+    const maintenant = Date.now();
+    const manquants = (await repechesHorsSuivi()).filter(p =>
+        !presents.has(Number(p.playerId)) &&
+        maintenant - (repechesSansReponse.get(p.playerId) || 0) > REESSAI_REPECHES_MS);
+    if (!manquants.length) return 0;
+
+    console.log(`➕ ${manquants.length} repêché(s) sans statistiques : relevé(s) sans attendre minuit`);
+    const fenetreDuPaquet = lecteurFenetreReleve(saison);
+    const lignes = [];
+    // Même cadence que la collecte complète : la LNH limite au-delà.
+    const PAQUET = 3;
+    for (let i = 0; i < manquants.length; i += PAQUET) {
+        const paquet = manquants.slice(i, i + PAQUET);
+        const fenetre = await fenetreDuPaquet();
+        const resultats = await Promise.all(paquet.map(p => fetchCurrentStatsForPlayer(
+            p.playerId, p.skaterFullName || p.goalieFullName, p.isGoalie, saison.seasonId, fenetre)));
+        resultats.forEach((ligne, j) => {
+            if (ligne) lignes.push({ ...ligne, todayPoints: 0 });
+            else repechesSansReponse.set(paquet[j].playerId, Date.now());
+        });
+        if (i + PAQUET < manquants.length) await new Promise(r => setTimeout(r, 2000));
+    }
+
+    // Fusionné dans le relevé du moment : une collecte complète a pu le
+    // remplacer pendant ces appels. En mémoire seulement : réécrit en base,
+    // le relevé prendrait l'heure de cet ajout pour date de mise à jour
+    // (db.loadCachedStats) et la règle des 24 h le croirait frais. Après un
+    // redémarrage, ces quelques joueurs sont simplement relevés de nouveau ;
+    // la collecte de minuit les enregistre avec les autres.
+    const courant = await loadCurrentStats();
+    if (Number(courant.season) !== Number(saison.seasonId)) return 0;
+    const { stats, ajoutees } = joueursRepeches.fusionnerReleves(courant, lignes);
+    if (!ajoutees) return 0;
+    memStatsCache = stats;
+    console.log(`✅ ${ajoutees} repêché(s) ajouté(s) au relevé`);
+    return ajoutees;
+}
+
+/**
  * Répond 304 si le navigateur a déjà cette version.
  *
  * `/current-stats` (≈ 24 Ko compressés) et `/current-teams` repartaient en
@@ -1416,6 +1556,8 @@ app.get("/current-stats", async (req, res) => {
 
         if (needsRefresh) {
             triggerBackgroundStatsRefresh(reason);
+        } else {
+            completerRepechesEnFond();
         }
 
         // Gardé par le navigateur mais revérifié à chaque fois : un 304 tant
@@ -5446,6 +5588,7 @@ async function warmStatsOnStartup() {
                 .then(() => console.log("✅ Background stats refresh done"));
         } else {
             console.log(`📊 Local player stats are fresh (${reason}) — no refresh needed.`);
+            completerRepechesEnFond();
         }
     } catch (error) {
         console.error('❌ Error warming player stats on startup:', error);

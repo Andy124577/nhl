@@ -275,11 +275,30 @@ async function main() {
         });
     });
 
+    // Les repêchés absents de cette liste (lib/joueursRepeches.js) : le
+    // serveur les relève dans /current-stats, sous le nom repêché. Leurs
+    // feuilles comptent aux colonnes 7 j / 30 j et aux duels comme les autres.
+    let drafted = 0;
+    try {
+        const releve = await db.loadCachedStats('current-stats');
+        const known = new Set(players.map(p => Number(p.playerId)));
+        for (const p of (releve && releve.players) || []) {
+            const id = Number(p.playerId);
+            if (!id || known.has(id) || !p.playerName) continue;
+            known.add(id);
+            players.push({ playerId: id, playerName: p.playerName, position: p.position });
+            drafted++;
+        }
+    } catch (error) {
+        console.error('⚠️  Could not read cached /current-stats, drafted players outside the list skipped:', error.message);
+    }
+
     console.log(`📊 Total players to fetch: ${players.length}`);
     console.log(`   - Forwards: ${offensivePlayers.length}`);
     console.log(`   - Defenders: ${defenders.length}`);
     console.log(`   - Rookies: ${rookies.length}`);
-    console.log(`   - Goalies: ${goalies.length}\n`);
+    console.log(`   - Goalies: ${goalies.length}`);
+    console.log(`   - Drafted, outside the list: ${drafted}\n`);
 
     // Fetch game logs and save to database
     const startTime = Date.now();
