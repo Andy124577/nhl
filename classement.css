@@ -610,8 +610,6 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
     transition: border-color .15s ease, color .15s ease;
 }
 .rh-sale svg { flex: none; }
-/* Libellé court sur téléphone (classement-premium.css). */
-.rh-sale-short { display: none; }
 .rh-sale:hover { border-color: var(--rr-btn-hover-line); color: var(--rr-btn-hover-ink); }
 .rh-sale:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .rh-sale-count {
@@ -642,7 +640,7 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
 
 .roster-row {
     display: grid;
-    grid-template-columns: 22px 44px minmax(0, 1fr) 44px 44px 14px;
+    grid-template-columns: 22px 52px minmax(0, 1fr) 44px 44px 14px;
     align-items: center;
     column-gap: 8px;
     min-height: 76px;
@@ -659,7 +657,11 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
     text-align: center;
 }
 
-.rr-shot { position: relative; width: 44px; height: 44px; }
+/* 52px dans la liste ; ailleurs (panneau de mise en vente), la photo garde
+   les 44px de .rr-avatar. */
+.rr-shot { position: relative; width: 52px; height: 52px; }
+.rr-shot .rr-avatar { width: 100%; height: 100%; }
+.rr-shot .rr-initials { font-size: 15px; }
 
 .rr-avatar {
     position: relative;
@@ -803,6 +805,13 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
     font-size: 16px;
     color: var(--rr-chev);
     text-align: center;
+}
+
+/* Les plus petits téléphones (320px) : la photo rend 8px au nom et aux
+   quatre mini-colonnes, qui sinon se chevauchent. */
+@container (max-width: 339px) {
+    .roster-row { grid-template-columns: 22px 44px minmax(0, 1fr) 44px 44px 14px; }
+    .rr-shot { width: 44px; height: 44px; }
 }
 
 @container (max-width: 399px) {
@@ -1098,8 +1107,8 @@ html.ss-lock { overflow: hidden; }
 
 /* Scopé : skeleton-loader.css, chargé après, remet .skeleton-avatar à 60px. */
 .roster-card-skeleton .skeleton-avatar {
-    width: 44px;
-    height: 44px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     background: linear-gradient(90deg, var(--bg) 25%, var(--card) 50%, var(--bg) 75%);
     background-size: 200% 100%;

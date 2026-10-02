@@ -645,31 +645,34 @@ body.fz-classement .skeleton-avatar {
    Le fil d'Ariane (« Accueil > Pool > Équipe », des liens de 12px) ne sert
    à rien sur téléphone : l'accueil est dans la barre du bas, le pool dans
    la pastille du haut. Il s'efface — !important parce que classement.js
-   l'affiche en style en ligne — et la fiche d'équipe prend à la place un
-   chevron de retour, sur la rangée du nom : retour, nom, « Vendre » tiennent
-   sur une ligne de 44px, rang · bilan · actifs dessous, alignés sur le nom.
-   La marge du haut de 40px, faite pour le bureau, repoussait tout le
-   contenu sous la ligne de flottaison. */
+   l'affiche en style en ligne. La fiche prend à la place une barre de
+   navigation : retour à gauche, nom de l'équipe (et sa liste) au centre,
+   l'étiquette « Mettre en vente » à droite ; rang · bilan · actifs centrés
+   dessous. Deux colonnes de 44px de part et d'autre : le nom reste au
+   centre, même sans le bouton de vente (l'équipe d'un autre). La marge du
+   haut de 40px, faite pour le bureau, repoussait tout le contenu sous la
+   ligne de flottaison. */
 @media (max-width: 680px) {
   body.fz-classement .container { padding-top: 16px; }
   body.fz-classement .breadcrumb { display: none !important; }
   body.fz-classement .roster-header {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
     grid-template-areas:
       "back title sale"
-      ".    sub   sub";
-    column-gap: 6px;
+      "sub  sub   sub";
+    column-gap: 8px;
     margin-bottom: 14px;
   }
-  /* 36 × 44 : la zone de toucher déborde dans la marge de gauche, le
-     chevron lui-même reste aligné sur le bord du contenu. */
+  /* Le chevron sur le bord du contenu ; la zone de toucher de 44px
+     déborde un peu dans la marge. */
   body.fz-classement .rh-back {
     display: inline-flex;
     align-items: center;
-    justify-content: flex-end;
-    width: 36px;
+    justify-content: flex-start;
+    justify-self: start;
+    width: 44px;
     height: 44px;
-    margin-left: -22px;
+    margin-left: -8px;
     padding: 0;
     border: 0;
     border-radius: 10px;
@@ -679,11 +682,29 @@ body.fz-classement .skeleton-avatar {
   }
   body.fz-classement .rh-back:active { background: var(--fzc-tile); }
   body.fz-classement .rh-back:focus-visible { outline: 2px solid var(--primary); outline-offset: 0; }
-  body.fz-classement .rh-name { font-size: 22px; }
-  body.fz-classement .rh-sale { min-height: 40px; margin-left: 6px; padding: 0 14px; }
+  body.fz-classement .rh-title { justify-self: center; }
+  body.fz-classement .rh-name { font-size: 20px; }
+  /* L'étiquette seule, dans un rond ; son nom vient d'aria-label
+     (renderRosterHeader, refreshSaleMarks). Le compte passe en pastille
+     sur le coin. */
+  body.fz-classement .rh-sale {
+    position: relative;
+    justify-self: end;
+    justify-content: center;
+    width: 40px;
+    min-height: 40px;
+    height: 40px;
+    padding: 0;
+  }
+  body.fz-classement .rh-sale svg { width: 18px; height: 18px; }
   body.fz-classement .rh-sale-long { display: none; }
-  body.fz-classement .rh-sale-short { display: inline; }
-  body.fz-classement .rh-sub { margin-top: -4px; }
+  body.fz-classement .rh-sale-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    box-shadow: 0 0 0 2px var(--bg);
+  }
+  body.fz-classement .rh-sub { justify-self: center; margin-top: -2px; text-align: center; }
 }
 
 /* ====================================================================

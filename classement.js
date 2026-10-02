@@ -1475,9 +1475,10 @@ function renderRosterHeader(poolName, teamName) {
             ${standings.map(s => `<option value="${escapeAttr(s.teamName)}"${s.teamName === teamName ? ' selected' : ''}>${s.rank}. ${escapeHtmlText(getDisplayName(s.teamName, s.members))}</option>`).join('')}
         </select>` : '';
 
-    // Une seule rangée — retour, nom, « Vendre » — et une ligne dessous qui
-    // dit tout le reste : rang, bilan, nombre d'actifs (renderTeamRoster).
-    // La grille de .roster-header place chaque morceau (classement.css).
+    // Une seule rangée — retour, nom, mise en vente — et une ligne dessous
+    // qui dit tout le reste : rang, bilan, nombre d'actifs (renderTeamRoster).
+    // La grille de .roster-header place chaque morceau (classement.css,
+    // classement-premium.css sur téléphone).
     const header = document.getElementById('rosterHeader');
     header.innerHTML = `
         <button type="button" class="rh-back" data-rh-back aria-label="Retour au classement">${RH_ICON.back}</button>
@@ -1487,7 +1488,7 @@ function renderRosterHeader(poolName, teamName) {
         </div>
         ${rosterSale.canSell ? `
         <button type="button" class="rh-sale" data-rh-sale aria-haspopup="dialog" aria-label="Mettre en vente">
-            ${tagIcon(14)}<span class="rh-sale-long">Mettre en vente</span><span class="rh-sale-short">Vendre</span><span class="rh-sale-count" hidden></span>
+            ${tagIcon(14)}<span class="rh-sale-long">Mettre en vente</span><span class="rh-sale-count" hidden></span>
         </button>` : ''}
         <p class="rh-sub"><span class="rh-rank">${sous}</span><span class="rh-count"></span></p>`;
 
