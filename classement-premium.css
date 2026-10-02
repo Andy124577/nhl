@@ -251,8 +251,9 @@ body.fz-classement .st-mobile-list { display: none; }
   body.fz-classement .standings-table-container { display: none; }
   /* La maquette « Classement » va droit à la liste, sans tuile de synthèse. */
   body.fz-classement #standingsList .st-summary { display: none; }
-  /* Une bande d'un bord à l'autre, rangées de 64px : comme la liste des
-     joueurs d'une équipe (classement.css, .roster-rows). */
+  /* Une bande d'un bord à l'autre, rangées de 76px et rond de 52px : les
+     mesures de la liste des joueurs d'une équipe (classement.css,
+     .roster-row). */
   body.fz-classement .st-mobile-list {
     display: flex;
     flex-direction: column;
@@ -265,11 +266,11 @@ body.fz-classement .st-mobile-list { display: none; }
   }
   body.fz-classement .st-mobile-row {
     display: grid;
-    grid-template-columns: 22px 44px minmax(0, 1fr) auto 14px;
+    grid-template-columns: 22px 52px minmax(0, 1fr) auto 14px;
     align-items: center;
     column-gap: 8px;
-    min-height: 58px;
-    padding: 8px 10px 8px 12px;
+    min-height: 76px;
+    padding: 6px 10px 6px 12px;
     cursor: pointer;
     transition: background .15s ease;
   }
@@ -285,17 +286,17 @@ body.fz-classement .st-mobile-list { display: none; }
   }
   body.fz-classement .st-mobile-row:nth-child(-n+3) .st-mobile-rank { color: var(--fzc-accent); }
   body.fz-classement .st-mobile-logo {
-    width: 44px;
-    height: 44px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     background: var(--rr-line);
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  body.fz-classement .st-mobile-logo img { width: 28px; height: 28px; object-fit: contain; }
+  body.fz-classement .st-mobile-logo img { width: 34px; height: 34px; object-fit: contain; }
   body.fz-classement .st-mobile-logo .st-avatar-fallback {
-    font-size: 13px; font-weight: 700; color: var(--rr-num);
+    font-size: 15px; font-weight: 700; color: var(--rr-num);
   }
   body.fz-classement .st-mobile-info {
     min-width: 0;
@@ -343,9 +344,16 @@ body.fz-classement .st-mobile-list { display: none; }
   }
 }
 @media (max-width: 380px) {
-  body.fz-classement .st-mobile-row { grid-template-columns: 20px 40px minmax(0, 1fr) auto 12px; column-gap: 6px; }
-  body.fz-classement .st-mobile-logo { width: 40px; height: 40px; }
   body.fz-classement .st-mini { flex-basis: 26px; min-width: 22px; }
+}
+/* Les plus petits téléphones (320px) : le rond rend 8px au nom et aux
+   mini-colonnes, comme la photo de la liste des joueurs. Mêmes colonnes
+   qu'elle partout ailleurs : rang, rond et nom s'alignent d'une liste à
+   l'autre. */
+@media (max-width: 339px) {
+  body.fz-classement .st-mobile-row { grid-template-columns: 22px 44px minmax(0, 1fr) auto 14px; }
+  body.fz-classement .st-mobile-logo { width: 44px; height: 44px; }
+  body.fz-classement .st-mobile-logo img { width: 28px; height: 28px; }
 }
 
 /* ==================== TEMPLE DE LA RENOMMÉE ==================== */
