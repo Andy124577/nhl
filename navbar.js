@@ -19,23 +19,45 @@ function getCurrentPage() {
 }
 
 // ==================== INITIALIZATION ====================
+/**
+ * Les deux barres elles-mêmes : rien qui attende le réseau ni un autre
+ * script, donc constructibles avant le premier rendu.
+ *
+ * Une page qui charge navbar.js sans `defer`, juste après <nav class="navbar">
+ * (calendrier.html), les obtient pendant l'analyse du HTML : son premier
+ * rendu les montre déjà, au lieu d'un contenu nu qui les voit arriver ensuite
+ * — on aurait dit que toute la page, barres comprises, se rechargeait.
+ * Ailleurs, initModernNavbar s'en charge au DOMContentLoaded.
+ */
+let _barresConstruites = false;
+
+function construireBarres() {
+    if (_barresConstruites || !document.querySelector('.navbar')) return;
+    _barresConstruites = true;
+    const currentPage = getCurrentPage();
+
+    if (localStorage.getItem('isLoggedIn') !== 'true') { buildLoggedOutNavbar(); return; }
+
+    buildLoggedInNavbar(localStorage.getItem('username') || '', localStorage.getItem('isAdmin') === 'true', currentPage);
+    buildBottomNav(currentPage);
+    // Avant tout : replier les onglets que le dernier passage savait
+    // fermés. Dans la même tâche que la construction, donc jamais peints.
+    appliquerVisibiliteMemorisee();
+    // La pastille se pose une fois les onglets repliés : elle tombe
+    // directement sous l'onglet actif.
+    initPastilleBas(currentPage);
+}
+
 function initModernNavbar() {
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     const username = localStorage.getItem('username') || '';
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
-    const currentPage = getCurrentPage();
 
     if (!document.querySelector('.navbar')) return;
 
+    construireBarres();
+
     if (isLoggedIn) {
-        buildLoggedInNavbar(username, isAdmin, currentPage);
-        buildBottomNav(currentPage);
-        // Avant tout : replier les onglets que le dernier passage savait
-        // fermés. Dans la même tâche que la construction, donc jamais peints.
-        appliquerVisibiliteMemorisee();
-        // La pastille se pose une fois les onglets repliés : elle tombe
-        // directement sous l'onglet actif.
-        initPastilleBas(currentPage);
         initializeEventListeners(username, isAdmin);
         if (isAdmin) verifierBascule();
         checkPendingTrades();
@@ -55,8 +77,6 @@ function initModernNavbar() {
         }
         // Fetch latest avatar in background and update if changed
         refreshNavbarAvatar(username);
-    } else {
-        buildLoggedOutNavbar();
     }
 }
 
@@ -1266,6 +1286,9 @@ function surveillerPiedDePage() {
 }
 
 // ==================== INIT ====================
+// Sans `defer`, pendant l'analyse : les barres tout de suite. Le reste
+// (écouteurs, pastilles, FZPool) attend comme avant que le DOM soit complet.
+if (document.readyState === 'loading') construireBarres();
 document.addEventListener('DOMContentLoaded', () => {
     initModernNavbar();
     renderLegalFooter();

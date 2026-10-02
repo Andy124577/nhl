@@ -359,7 +359,13 @@
 
     function suivreScores() {
         const s = socketPartage();
-        if (!s) return;
+        if (!s) {
+            // socket.io se charge en `async` (calendrier.html) : la semaine
+            // peut le précéder. On repasse quand il aura pu arriver.
+            suivreScores.essais = (suivreScores.essais || 0) + 1;
+            if (suivreScores.essais <= 40) setTimeout(reglerSuivi, 250);
+            return;
+        }
         brancherSocket(s);
         suitScores = true;
         if (s.connected) s.emit('scores:suivre');

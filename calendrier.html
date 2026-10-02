@@ -26,6 +26,10 @@
 </head>
 <body data-page="calendrier" class="fz-cal-page">
     <nav class="navbar"></nav>
+    <!-- Sans `defer` : les barres du haut et du bas sont construites ici,
+         avant le premier rendu (navbar.js, construireBarres). Différées, elles
+         arrivaient après l'en-tête du calendrier, qui s'affichait seul. -->
+    <script src="navbar.js?v=20261002b"></script>
 
     <main class="cal-page" id="calPage">
         <header class="cal-head">
@@ -62,9 +66,11 @@
         </button>
     </main>
 
-    <script defer src="/socket.io/socket.io.js"></script>
-    <script defer src="calendrier.js?v=20261002c"></script>
-    <script defer src="navbar.js?v=20261002a"></script>
+    <!-- `async` : servi avec max-age=0, il repasse par le serveur à chaque
+         visite. En `defer`, cet aller-retour retenait tous les scripts qui le
+         suivent ; ceux qui s'en servent l'attendent d'eux-mêmes. -->
+    <script async src="/socket.io/socket.io.js"></script>
+    <script defer src="calendrier.js?v=20261002d"></script>
     <script defer src="avatars.js"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20260929a"></script>
