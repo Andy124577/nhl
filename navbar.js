@@ -396,7 +396,7 @@ function buildBottomNav(currentPage) {
     };
     const html = `
         <nav class="bottom-nav" aria-label="Navigation principale">
-            <span class="bottom-nav-pill" aria-hidden="true"></span>
+            <span class="bottom-nav-pill" aria-hidden="true"><span class="bottom-nav-pill-ring"></span></span>
             ${onglet('accueil', 'index.html', PAGE_ICON.accueil, 'Accueil')}
             </a>
             ${onglet('repechage', 'repechage.html', PAGE_ICON.repechage, 'Repêchage', ' id="bottomPoolLink"')}
@@ -427,10 +427,137 @@ function buildBottomNav(currentPage) {
  * avec un délai négatif de ce qui s'est déjà écoulé. Une navigation lente
  * finit le geste avant de partir ; une rapide le termine en arrivant ; dans
  * les deux cas la pastille ne revient jamais en arrière.
+ *
+ * Le reste du geste (navbar.css, « BARRE DU BAS ») suit la même horloge :
+ * l'icône qui rebondit et l'anneau que la pastille lâche en se posant
+ * reprennent eux aussi sur la page d'arrivée.
  */
 const PASTILLE_MS = 420;
 const PASTILLE_COURBE = 'cubic-bezier(.32, .72, 0, 1)';
 const PASTILLE_CLE = 'fzBarreBasGlisse';
+const REBOND_MS = 520;
+// Sur cette courbe, la pastille a fait 95 % du trajet à 170 ms : c'est
+// là qu'on la voit se poser, bien avant la fin de l'adoucissement.
+const ANNEAU_DELAI = 170;
+const ANNEAU_MS = 420;
+const GESTE_MS = Math.max(PASTILLE_MS, REBOND_MS, ANNEAU_DELAI + ANNEAU_MS);
+
+function mouvementReduit() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+
+/**
+ * Un tic sous le doigt. Android a l'API de vibration ; Safari iOS ne l'a
+ * pas, mais depuis iOS 18 basculer un <input switch> fait vibrer
+ * l'appareil, et c'est la seule voie. Ailleurs, rien ne se passe.
+ */
+function ticHaptique() {
+    try {
+        if (navigator.vibrate) { navigator.vibrate(12); return; }
+        const etiquette = document.createElement('label');
+        etiquette.setAttribute('aria-hidden', 'true');
+        etiquette.style.display = 'none';
+        const bascule = document.createElement('input');
+        bascule.type = 'checkbox';
+        bascule.setAttribute('switch', '');
+        etiquette.appendChild(bascule);
+        document.head.appendChild(etiquette);
+        etiquette.click();
+        etiquette.remove();
+    } catch { /* pas de tic : la couleur et l'onde suffisent */ }
+}
+
+/**
+ * L'onde du toucher : un disque qui part du doigt et s'étend jusqu'au coin
+ * le plus loin de l'onglet. Elle tient tant que le doigt reste posé ; la
+ * fonction rendue l'efface. Sans point de contact (clavier), elle part du
+ * centre.
+ */
+function ondeOnglet(onglet, point) {
+    if (typeof onglet.animate !== 'function') return () => {};
+    let calque = onglet.querySelector('.bottom-nav-waves');
+    if (!calque) {
+        calque = document.createElement('span');
+        calque.className = 'bottom-nav-waves';
+        calque.setAttribute('aria-hidden', 'true');
+        onglet.prepend(calque);
+    }
+    const r = onglet.getBoundingClientRect();
+    const x = point ? point.clientX - r.left : r.width / 2;
+    const y = point ? point.clientY - r.top : r.height / 2;
+    const rayon = Math.hypot(Math.max(x, r.width - x), Math.max(y, r.height - y));
+    const onde = document.createElement('span');
+    onde.className = 'bottom-nav-wave';
+    onde.style.cssText = `left:${x - rayon}px;top:${y - rayon}px;width:${2 * rayon}px;height:${2 * rayon}px`;
+    calque.appendChild(onde);
+    // Mouvement réduit : un éclat sur place, sans expansion.
+    onde.animate(mouvementReduit()
+        ? [{ transform: 'scale(1)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }]
+        : [{ transform: 'scale(0)' }, { transform: 'scale(1)' }],
+        { duration: mouvementReduit() ? 120 : 480, easing: 'cubic-bezier(.2, .8, .2, 1)', fill: 'forwards' });
+    let effacee = false;
+    return () => {
+        if (effacee) return;
+        effacee = true;
+        onde.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, easing: 'ease-out', fill: 'forwards' })
+            .onfinish = () => onde.remove();
+    };
+}
+
+/**
+ * Le geste d'un onglet choisi, vu `ecoule` ms après le toucher : joué au
+ * clic (0), puis repris par la page d'arrivée là où il en est.
+ *
+ * La pastille, déjà posée sous `vers`, part de `depuis` en s'étirant dans
+ * le sens de sa course et en s'écrasant d'autant — étirement à son comble
+ * au début, quand elle va le plus vite. Sans onglet de départ, elle éclot
+ * sur place. L'icône rebondit depuis son enfoncement, et la pastille lâche
+ * un anneau en se posant.
+ */
+function jouerGeste(nav, depuis, vers, ecoule) {
+    const pastille = nav.querySelector('.bottom-nav-pill');
+    if (!pastille || typeof pastille.animate !== 'function' || mouvementReduit()) return;
+    const x1 = pastilleX(pastille, vers);
+    if (x1 === null) return;
+    const x0 = pastilleX(pastille, depuis);
+    const delay = -ecoule;
+
+    if (x0 !== null && x0 !== x1) {
+        // D'un onglet à son voisin, 15 % ; d'un bout à l'autre, 38 %.
+        const etire = 1 + Math.min(.38, Math.max(.15, Math.abs(x1 - x0) / 500));
+        const ecrase = 1 - (etire - 1) * .4;
+        pastille.animate([
+            { transform: `translateX(${x0}px) scale(1, 1)` },
+            { transform: `translateX(${x0 + (x1 - x0) * .4}px) scale(${etire}, ${ecrase})`, offset: .4 },
+            { transform: `translateX(${x1}px) scale(1, 1)` }
+        ], { duration: PASTILLE_MS, easing: PASTILLE_COURBE, delay });
+    } else {
+        pastille.animate([
+            { transform: `translateX(${x1}px) scale(.4, .6)`, opacity: 0 },
+            { transform: `translateX(${x1}px) scale(1.06, 1.04)`, opacity: 1, offset: .6 },
+            { transform: `translateX(${x1}px) scale(1, 1)`, opacity: 1 }
+        ], { duration: 380, easing: 'cubic-bezier(.2, .8, .2, 1)', delay });
+    }
+
+    // Part de 0,84, l'enfoncement du toucher (navbar.css, .is-pressed). La
+    // transition CSS qui ramène l'icône au relâcher passerait devant le
+    // rebond dans la cascade : elle s'efface.
+    const icone = vers.querySelector('.bottom-nav-icon');
+    if (icone) {
+        if (typeof icone.getAnimations === 'function') icone.getAnimations().forEach(a => a.cancel());
+        icone.animate([
+            { transform: 'translateY(0) scale(.84)', easing: 'cubic-bezier(.2, .8, .2, 1)' },
+            { transform: 'translateY(-2px) scale(1.16)', offset: .38, easing: 'cubic-bezier(.4, 0, .2, 1)' },
+            { transform: 'translateY(0) scale(.97)', offset: .72, easing: 'ease-out' },
+            { transform: 'translateY(0) scale(1)' }
+        ], { duration: REBOND_MS, delay });
+    }
+
+    pastille.querySelector('.bottom-nav-pill-ring')?.animate([
+        { transform: 'scale(1)', opacity: .9 },
+        { transform: 'scale(1.26, 1.45)', opacity: 0 }
+    ], { duration: ANNEAU_MS, easing: 'cubic-bezier(.2, .8, .2, 1)', delay: ANNEAU_DELAI - ecoule });
+}
 
 /** L'abscisse de la pastille centrée sous un onglet, ou null s'il est caché. */
 function pastilleX(pastille, onglet) {
@@ -464,7 +591,7 @@ function initPastilleBas(currentPage) {
     const onglets = () => [...nav.querySelectorAll('.bottom-nav-item')];
 
     placerPastille(nav);
-    reprendreGlissement(nav, pastille, onglets());
+    reprendreGlissement(nav, onglets());
 
     // Un onglet qui paraît ou disparaît (updateDraftLinkVisibility…), un
     // écran qui tourne : la pastille suit son onglet en glissant.
@@ -473,30 +600,55 @@ function initPastilleBas(currentPage) {
         onglets().forEach(o => suivre.observe(o));
     }
 
+    // Le contact se voit avant le relâcher — le clic n'arrive qu'au
+    // relâcher, trop tard pour paraître immédiat : l'onglet s'enfonce et
+    // l'onde part du doigt dès le pointerdown.
+    let relacher = null;
+    const finContact = () => {
+        nav.querySelectorAll('.bottom-nav-item.is-pressed').forEach(o => o.classList.remove('is-pressed'));
+        if (relacher) { relacher(); relacher = null; }
+    };
+    nav.addEventListener('pointerdown', e => {
+        const onglet = e.target.closest('.bottom-nav-item');
+        if (!onglet || e.button !== 0) return;
+        finContact();
+        onglet.classList.add('is-pressed');
+        relacher = ondeOnglet(onglet, e);
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(type => nav.addEventListener(type, finContact));
+
     nav.addEventListener('click', e => {
         const onglet = e.target.closest('.bottom-nav-item');
-        if (!onglet || onglet.classList.contains('active')) return;
+        if (!onglet) return;
         if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        ticHaptique();
+        // Au clavier, pas de pointerdown : l'onde part du centre.
+        if (e.detail === 0) ondeOnglet(onglet, null)();
+        if (onglet.classList.contains('active')) return;
         const depuis = nav.querySelector('.bottom-nav-item.active');
-        if (navigator.vibrate) navigator.vibrate(8);
         // L'onglet touché prend la couleur tout de suite ; la pastille part.
         onglets().forEach(o => {
             o.classList.toggle('active', o === onglet);
             if (o === onglet) o.setAttribute('aria-current', 'page'); else o.removeAttribute('aria-current');
         });
-        placerPastille(nav, { glisser: true });
-        if (!depuis) return;
+        placerPastille(nav);
+        jouerGeste(nav, depuis, onglet, 0);
         try {
             sessionStorage.setItem(PASTILLE_CLE, JSON.stringify({
-                depuis: depuis.getAttribute('href'), vers: onglet.getAttribute('href'), t: Date.now()
+                depuis: depuis ? depuis.getAttribute('href') : null, vers: onglet.getAttribute('href'), t: Date.now()
             }));
-        } catch { /* stockage refusé : la page d'arrivée pose la pastille sans glisser */ }
+        } catch { /* stockage refusé : la page d'arrivée pose la pastille sans geste */ }
     });
 
     // Retour arrière depuis le cache : la page revient telle qu'on l'a
-    // quittée, pastille partie vers l'autre onglet. On la ramène.
+    // quittée, pastille partie vers l'autre onglet et geste en cours. On
+    // arrête tout et on la ramène.
     window.addEventListener('pageshow', e => {
         if (!e.persisted) return;
+        relacher = null;
+        nav.querySelectorAll('.bottom-nav-item.is-pressed').forEach(o => o.classList.remove('is-pressed'));
+        nav.querySelectorAll('.bottom-nav-wave').forEach(o => o.remove());
+        if (typeof nav.getAnimations === 'function') nav.getAnimations({ subtree: true }).forEach(a => a.cancel());
         onglets().forEach(o => {
             const actif = o.dataset.page === currentPage;
             o.classList.toggle('active', actif);
@@ -506,8 +658,11 @@ function initPastilleBas(currentPage) {
     });
 }
 
-/** La page d'arrivée reprend le glissement commencé sur la page quittée. */
-function reprendreGlissement(nav, pastille, onglets) {
+/**
+ * La page d'arrivée reprend le geste commencé sur la page quittée. Un
+ * onglet de départ caché ici fait éclore la pastille plutôt que glisser.
+ */
+function reprendreGlissement(nav, onglets) {
     let geste = null;
     try {
         geste = JSON.parse(sessionStorage.getItem(PASTILLE_CLE));
@@ -516,15 +671,9 @@ function reprendreGlissement(nav, pastille, onglets) {
     const actif = nav.querySelector('.bottom-nav-item.active');
     if (!geste || !actif || actif.getAttribute('href') !== geste.vers) return;
     const ecoule = Date.now() - geste.t;
-    if (!(ecoule >= 0 && ecoule < PASTILLE_MS) || typeof pastille.animate !== 'function') return;
-    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const x0 = pastilleX(pastille, onglets.find(o => o.getAttribute('href') === geste.depuis));
-    const x1 = pastilleX(pastille, actif);
-    if (x0 === null || x1 === null) return;
-    pastille.animate(
-        [{ transform: `translateX(${x0}px)` }, { transform: `translateX(${x1}px)` }],
-        { duration: PASTILLE_MS, easing: PASTILLE_COURBE, delay: -ecoule }
-    );
+    if (!(ecoule >= 0 && ecoule < GESTE_MS)) return;
+    const depuis = geste.depuis ? onglets.find(o => o.getAttribute('href') === geste.depuis) : null;
+    jouerGeste(nav, depuis, actif, ecoule);
 }
 
 // ==================== USER AVATAR UPLOAD ====================

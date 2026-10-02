@@ -649,7 +649,17 @@ html[data-theme="light"] .theme-switch-thumb {
    glisse d'un onglet à l'autre (navbar.js, initPastilleBas) : plus de
    trait rouge au-dessus de l'onglet, plus de halo autour de l'icône.
    L'onglet actif prend la couleur de marque, un trait d'icône et un
-   libellé plus appuyés ; un toucher enfonce l'onglet (0,92).
+   libellé plus appuyés, et une icône un peu plus grande.
+
+   Le toucher se répond en quatre temps (navbar.js, jouerGeste) :
+     1. au contact, avant le relâcher : l'icône s'enfonce, l'onglet
+        rougit, une onde part du doigt — la réponse arrive sous les
+        100 ms, et naît là où l'on a touché ;
+     2. au relâcher : un tic haptique, et l'icône rebondit ;
+     3. la pastille s'étire dans le sens de sa course, d'autant plus
+        que le trajet est long : l'élan se lit dans sa forme ;
+     4. posée, elle lâche un anneau — la fin du geste, celle dont on
+        se souvient.
 
    Ces règles reprennent celles de la feuille minifiée en tête de fichier
    et des blocs plus haut ; venues après, elles l'emportent.
@@ -660,12 +670,19 @@ body {
     --bn-ink: #8A8A90;
     --bn-ink-active: var(--primary-text);
     --bn-pill: rgba(var(--primary-rgb), .16);
+    --bn-pill-edge: rgba(var(--primary-rgb), .22);
+    --bn-wave: rgba(var(--primary-rgb), .20);
+    --bn-ring: rgba(var(--primary-rgb), .55);
+    --bn-spring: cubic-bezier(.34, 1.56, .64, 1);
 }
 html[data-theme="light"] body {
     --bn-bg: rgba(250, 250, 251, .82);
     --bn-line: rgba(0, 0, 0, .07);
     --bn-ink: #55555C;
     --bn-pill: rgba(var(--primary-rgb), .10);
+    --bn-pill-edge: rgba(var(--primary-rgb), .16);
+    --bn-wave: rgba(var(--primary-rgb), .12);
+    --bn-ring: rgba(var(--primary-rgb), .40);
 }
 
 .bottom-nav {
@@ -688,12 +705,24 @@ html[data-theme="light"] body {
     height: 32px;
     border-radius: 16px;
     background: var(--bn-pill);
+    box-shadow: inset 0 0 0 1px var(--bn-pill-edge);
     opacity: 0;
     pointer-events: none;
     transition: transform 420ms cubic-bezier(.32, .72, 0, 1), opacity 200ms ease;
     will-change: transform;
 }
 .bottom-nav-pill.is-placed { opacity: 1; }
+
+/* L'anneau d'arrivée : invisible au repos, il s'élargit et s'efface quand
+   la pastille se pose (navbar.js). Assez petit pour ne pas déborder de
+   la barre par le haut. */
+.bottom-nav-pill-ring {
+    position: absolute;
+    inset: 0;
+    border: 1.5px solid var(--bn-ring);
+    border-radius: inherit;
+    opacity: 0;
+}
 
 .bottom-nav-item {
     flex: 1 1 0;
@@ -710,13 +739,18 @@ html[data-theme="light"] body {
     color: var(--bn-ink);
     text-decoration: none;
     touch-action: manipulation;
-    transition: color 200ms ease, transform 160ms ease;
+    /* L'onde se glisse sous l'icône et le libellé sans passer sous la
+       pastille : z-index -1 ne quitte pas l'onglet. */
+    isolation: isolate;
+    transition: color 200ms ease;
 }
 .bottom-nav-item:hover { background: none; color: var(--bn-ink); }
 .bottom-nav-item.active,
 .bottom-nav-item.active:hover { background: none; color: var(--bn-ink-active); }
 .bottom-nav-item.active::before { content: none; }
-.bottom-nav-item:active { transform: scale(.92); }
+/* Posée au pointerdown par navbar.js plutôt que :active, que Safari iOS
+   n'applique pas sans écouteur tactile : l'onglet rougit dès le contact. */
+.bottom-nav-item.is-pressed { color: var(--bn-ink-active); transition-duration: 80ms; }
 .bottom-nav-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
 
 .bottom-nav-icon,
@@ -731,15 +765,40 @@ html[data-theme="light"] body {
     font-size: inherit;
     filter: none;
     transform: none;
-    transition: none;
+    /* Le retour après un toucher annulé rebondit ; l'enfoncement, lui,
+       est sec (règle suivante). */
+    transition: transform 320ms var(--bn-spring);
 }
+.bottom-nav-item.is-pressed .bottom-nav-icon {
+    transform: scale(.84);
+    transition: transform 100ms ease-out;
+}
+/* La taille de repos de l'onglet actif vit sur le SVG, le rebond sur son
+   conteneur (navbar.js) : les deux se composent sans se disputer. */
 .bottom-nav-icon svg {
     width: 22px;
     height: 22px;
     stroke-width: 1.8;
-    transition: stroke-width 200ms ease;
+    transition: stroke-width 200ms ease, transform 320ms var(--bn-spring);
 }
-.bottom-nav-item.active .bottom-nav-icon svg { stroke-width: 2.2; }
+.bottom-nav-item.active .bottom-nav-icon svg { stroke-width: 2.2; transform: scale(1.08); }
+
+/* L'onde du toucher : un disque né sous le doigt (navbar.js, ondeOnglet),
+   borné à l'onglet. Le calque est créé au premier toucher. */
+.bottom-nav-waves {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
+}
+.bottom-nav-wave {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--bn-wave);
+    transform: scale(0);
+}
 
 .bottom-nav-label {
     max-width: 100%;
@@ -762,7 +821,12 @@ html[data-theme="light"] body {
     .bottom-nav-label { font-size: 10px; letter-spacing: 0; }
 }
 
+/* Mouvement réduit : la couleur, le tic et un éclat sans expansion
+   (navbar.js) disent encore le toucher ; rien ne glisse ni ne rebondit. */
 @media (prefers-reduced-motion: reduce) {
     .bottom-nav-pill { transition: opacity 200ms ease; }
-    .bottom-nav-item:active { transform: none; }
+    .bottom-nav-icon,
+    .bottom-nav-item.active .bottom-nav-icon,
+    .bottom-nav-icon svg { transition: none; }
+    .bottom-nav-item.is-pressed .bottom-nav-icon { transform: none; }
 }
