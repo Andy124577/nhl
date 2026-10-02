@@ -65,6 +65,7 @@ const { creerServicePointage } = require("./services/scoring.js");
 const { creerServiceH2H } = require("./services/h2h.js");
 const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
 const { creerFeuillesDeMatch, MatchIntrouvable } = require("./services/feuilleMatch.js");
+const { creerFeuillesBrutes, ageTolere } = require("./services/feuillesBrutes.js");
 const { creerAlignements, EquipeInconnue } = require("./services/alignement.js");
 const { creerModerateur } = require("./services/moderationImage.js");
 const { creerMagasinPhotos } = require("./services/magasinPhotos.js");
@@ -2507,6 +2508,11 @@ io.on('connection', (socket) => scoresEnDirect.brancher(socket));
 // /live-points pour une page sans socket. Aucune lecture de la base : les
 // totaux sont ceux en mémoire (voir services/pointsEnDirect.js).
 // ============================================================
+
+// Les feuilles brutes du soir, partagées par le direct des points et
+// /tonight-boxscores : une feuille lue pour l'un sert à l'autre.
+const feuillesBrutes = creerFeuillesBrutes();
+
 const pointsEnDirect = creerPointsEnDirect({
     io,
     lireMatchs: lireMatchsBruts,
@@ -2514,10 +2520,10 @@ const pointsEnDirect = creerPointsEnDirect({
     // n'en dit plus rien une fois passé au jour suivant.
     lireMatchsDuJour: lireScoreDuJourBrut,
     aujourdhui: () => datesPool.journeeLocale(),
-    lireFeuille: async (id) => {
-        const reponse = await fetch(`https://api-web.nhle.com/v1/gamecenter/${id}/boxscore`, { signal: AbortSignal.timeout(8000) });
-        return reponse.ok ? reponse.json() : null;
-    },
+    // Le service ne relit une feuille que quand le pointage bouge : il la veut
+    // fraîche. Cinq secondes laissent servir celle que /tonight-boxscores
+    // vient de lire.
+    lireFeuille: (id) => feuillesBrutes.lire(id, { ageMaxMs: 5000 }),
     lireReleves: () => ({
         stats: memStatsCache && memStatsCache.players.length ? memStatsCache : null,
         clubs: memTeamsCache
@@ -2955,30 +2961,34 @@ app.get('/day-goals/:date', async (req, res) => {
 // live standings add) and fantasyPointsTonight (head-to-head FANTASY_SCORING).
 // Game states come from the shared /score/now snapshot (lireMatchsBruts), the
 // one /live-games and the live points read.
+//
+// Les feuilles viennent du cache partagé avec le direct des points
+// (feuillesBrutes), à l'âge que tolère l'état du match : un match en jeu se
+// relit toutes les 20 s, un match officiel toutes les demi-heures. Avant, les
+// feuilles de TOUS les matchs commencés étaient relues toutes les 25 s, même
+// celles de matchs finis depuis des heures. La réponse se recalcule dès
+// qu'une feuille, un état, un pointage ou une horloge change — un but que le
+// direct des points vient de lire se voit donc ici à la requête suivante.
 // ============================================================
-let tonightBoxscoresCache = { data: null, fetchedAt: 0 };
-const TONIGHT_BOXSCORES_TTL_MS = 25 * 1000;
-
+let tonightBoxscoresCache = { data: null, cle: null };
 
 app.get('/tonight-boxscores', async (req, res) => {
     try {
-        const now = Date.now();
-        if (tonightBoxscoresCache.data && (now - tonightBoxscoresCache.fetchedAt) < TONIGHT_BOXSCORES_TTL_MS) {
-            return res.json(tonightBoxscoresCache.data);
-        }
-
         const bruts = await lireMatchsBruts().catch(() => null);
         if (!bruts) return res.json({ players: [], games: [], generatedAt: new Date().toISOString() });
         const startedGames = bruts.filter(g =>
             ['LIVE', 'CRIT', 'FINAL', 'OFF'].includes(g.gameState));
 
-        const boxscores = await Promise.all(startedGames.map(async g => {
-            try {
-                const res2 = await fetch(`https://api-web.nhle.com/v1/gamecenter/${g.id}/boxscore`);
-                if (!res2.ok) return null;
-                return await res2.json();
-            } catch { return null; }
-        }));
+        const boxscores = await Promise.all(startedGames.map(g =>
+            feuillesBrutes.lire(g.id, { ageMaxMs: ageTolere(g.gameState) }).catch(() => null)));
+
+        const cle = [memStatsCache.lastUpdated, memStatsCache.players.length, ...startedGames.map(g => [
+            g.id, g.gameState, g.awayTeam?.score, g.homeTeam?.score, g.periodDescriptor?.number,
+            g.clock?.timeRemaining, g.clock?.inIntermission, feuillesBrutes.luLe(g.id)
+        ].join(':'))].join('|');
+        if (tonightBoxscoresCache.data && tonightBoxscoresCache.cle === cle) {
+            return res.json(tonightBoxscoresCache.data);
+        }
 
         // Les effectifs de pool portent le nom complet (« Connor McDavid ») ;
         // la feuille de match, l'initiale (« C. McDavid »). Comparées telles
@@ -3006,7 +3016,7 @@ app.get('/tonight-boxscores', async (req, res) => {
         }));
 
         const payload = { players, games, generatedAt: new Date().toISOString() };
-        tonightBoxscoresCache = { data: payload, fetchedAt: now };
+        tonightBoxscoresCache = { data: payload, cle };
         res.json(payload);
     } catch (error) {
         console.error('❌ Error fetching tonight boxscores:', error.message);

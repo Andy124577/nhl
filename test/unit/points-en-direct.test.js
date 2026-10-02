@@ -14,7 +14,7 @@ const {
     calculerPointsEnDirect, appliquerAuxJoueurs, appliquerAuxClubs,
     dernierMatchDeFiche, signature, matchAdmissible
 } = require('../../lib/pointsEnDirect.js');
-const { creerPointsEnDirect, SALLE, FEUILLE_MAX_MS } = require('../../services/pointsEnDirect.js');
+const { creerPointsEnDirect, versionDesReleves, SALLE, FEUILLE_MAX_MS } = require('../../services/pointsEnDirect.js');
 
 const SAISON = 20262027;
 const MCDAVID = 8478402, DRAISAITL = 8477934, SKINNER = 8479973, DEMKO = 8477967, BOESER = 8478444;
@@ -212,6 +212,59 @@ describe('côté page', () => {
             signature({ joueurs: { 2: { p: 1 }, 1: { b: 1 } }, clubs: {}, generatedAt: 'autre' })
         );
         assert.notEqual(signature({ joueurs: { 1: { b: 1 } } }), signature({ joueurs: { 1: { b: 2 } } }));
+    });
+
+    test('de nouveaux relevés de minuit changent la signature, même sans point de plus', () => {
+        const soir = { joueurs: { 1: { b: 1 } }, clubs: {} };
+        assert.notEqual(signature({ ...soir, releve: 'a' }), signature({ ...soir, releve: 'b' }));
+        assert.equal(signature({ ...soir, releve: 'a' }), signature({ ...soir, releve: 'a', generatedAt: 'x' }));
+    });
+});
+
+describe('la version des relevés', () => {
+    test('date, saison et nombre de joueurs du relevé, date des clubs', () => {
+        assert.equal(versionDesReleves(releve(), CLUBS), `2026-10-15T04:00:00Z|${SAISON}|5|2026-10-15T04:00:00Z`);
+        assert.equal(versionDesReleves(null, null), null);
+        assert.equal(versionDesReleves(null, CLUBS), '|||2026-10-15T04:00:00Z');
+    });
+
+    test('un repêché ajouté au relevé en cours de journée change la version', () => {
+        const avant = releve();
+        const apres = { ...avant, players: [...avant.players, { playerId: 1, playerName: 'Nouveau' }] };
+        assert.notEqual(versionDesReleves(avant, CLUBS), versionDesReleves(apres, CLUBS));
+    });
+
+    test('la collecte de minuit est poussée aux pages ouvertes, même quand le soir n’ajoute rien', async () => {
+        let t = 1_000_000;
+        let stats = releve(DERNIERS);
+        const envois = [];
+        const salle = new Set(['a']);
+        const io = {
+            sockets: { adapter: { rooms: { get: nom => (nom === SALLE && salle.size ? salle : undefined) } } },
+            to: () => ({ emit: (evt, charge) => envois.push(charge) })
+        };
+        const service = creerPointsEnDirect({
+            io, intervalleMs: 10000, horloge: () => t, logger: { warn() {}, error() {} },
+            minuterie: { repeter: () => ({}), arreter() {} },
+            lireMatchs: async () => [],
+            lireFeuille: async () => null,
+            lireReleves: () => ({ stats, clubs: CLUBS })
+        });
+
+        await service.tic();
+        assert.equal(envois.length, 1);
+        assert.equal(envois[0].releve, versionDesReleves(stats, CLUBS));
+
+        t += 10000;
+        await service.tic();
+        assert.equal(envois.length, 1, 'rien n’a changé : rien ne part');
+
+        stats = { ...stats, lastUpdated: '2026-10-16T04:10:00Z' };
+        t += 10000;
+        await service.tic();
+        assert.equal(envois.length, 2, 'nouveau relevé : la page doit relire le sien');
+        assert.equal(envois[1].releve, versionDesReleves(stats, CLUBS));
+        assert.deepEqual(envois[1].joueurs, {});
     });
 });
 

@@ -147,9 +147,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // classement sur place. En saison seulement — avant, aucun match ne compte.
     if (window.FZPointsDirect && seasonStarted) {
         let premierDirect = true;
+        FZPointsDirect.surNouveauReleve(relireRelevesDeMinuit);
         FZPointsDirect.surChangement(() => {
             appliquerPointsDirect();
             rafraichirClassementEnDirect();
+            rafraichirFicheEnDirect();
             // Le premier envoi n'est que l'état du moment, que les colonnes
             // de période lues au chargement comptent déjà.
             if (premierDirect) { premierDirect = false; return; }
@@ -181,6 +183,22 @@ function relirePeriodesEnDirect() {
     }, attente);
 }
 
+/**
+ * La collecte de minuit a tourné pendant que la page était ouverte : ses
+ * relevés sont relus avant que le nouveau direct ne s'y ajoute (voir
+ * pointsDirect.js). Un échec garde les anciens — mieux qu'un classement vide.
+ */
+async function relireRelevesDeMinuit() {
+    const [stats, clubs] = await Promise.all([
+        fetch(`${BASE_URL}/current-stats`, { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`${BASE_URL}/current-teams`, { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null)
+    ]);
+    if (stats && Array.isArray(stats.players)) currentStats = currentStatsBase = stats;
+    if (clubs && Array.isArray(clubs.teams)) currentTeams = currentTeamsBase = clubs;
+    // Les colonnes 24 h / 7 j / 30 j changent de base avec le relevé.
+    periodPointsCache = null;
+}
+
 /** currentStats / currentTeams = relevés de minuit + points du soir. */
 function appliquerPointsDirect() {
     if (!window.FZPointsDirect) return;
@@ -195,8 +213,8 @@ function appliquerPointsDirect() {
 /**
  * Redessine le classement cumulatif affiché, sans rien relire : les points
  * par période sont en mémoire (periodPointsCache), le tri choisi est gardé.
- * Un classement H2H ne lit pas ces totaux ; la fiche d'une équipe prendra
- * les nouveaux au prochain affichage.
+ * Un classement H2H ne lit pas ces totaux ; la fiche d'une équipe a son
+ * propre rafraîchissement (rafraichirFicheEnDirect).
  */
 function rafraichirClassementEnDirect() {
     if (currentView !== VIEW_STATES.POOL_STANDINGS || !currentPoolName) return;
@@ -1433,20 +1451,23 @@ const tagIcon = size => (typeof getIcon === 'function' ? getIcon('tag', size) : 
  * l'équipe se situe. Le bouton « Mettre en vente » n'existe que sur sa
  * propre équipe : un seul point d'entrée au lieu d'un bouton par rangée.
  */
+/** « 3<sup>e</sup> sur 10 · 245 pts » : où l'équipe se situe, ou '' hors classement. */
+function sousTitreFiche(poolData, standings, teamName) {
+    const moi = standings.find(s => s.teamName === teamName);
+    if (!moi) return '';
+    const rang = moi.rank === 1 ? '1<sup>er</sup>' : `${moi.rank}<sup>e</sup>`;
+    const bilan = (poolData.poolMode || 'cumulative') === 'head-to-head'
+        ? `${moi.wins}-${moi.losses}-${moi.ties}`
+        : `${Math.round(moi.points).toLocaleString('fr-CA')} pts`;
+    return `${rang} sur ${standings.length} · ${bilan}`;
+}
+
 function renderRosterHeader(poolName, teamName) {
     const poolData = allPoolsData[poolName];
     const teamData = poolData.teams[teamName];
     const standings = computeStandings(poolData);
     const moi = standings.find(s => s.teamName === teamName);
-
-    let sous = '';
-    if (moi) {
-        const rang = moi.rank === 1 ? '1<sup>er</sup>' : `${moi.rank}<sup>e</sup>`;
-        const bilan = (poolData.poolMode || 'cumulative') === 'head-to-head'
-            ? `${moi.wins}-${moi.losses}-${moi.ties}`
-            : `${Math.round(moi.points).toLocaleString('fr-CA')} pts`;
-        sous = `${rang} sur ${standings.length} · ${bilan}`;
-    }
+    const sous = sousTitreFiche(poolData, standings, teamName);
 
     const picker = moi && standings.length > 1 ? `
         <select class="rh-picker" aria-label="Voir une autre équipe du pool">
@@ -1748,39 +1769,8 @@ function renderTeamRoster(roster, activeListings = []) {
                 : '') + `<div class="rr-initials">${initiales || escapeHtmlText(player.position)}</div>`;
         }
 
-        // Calculate points
-        let points = 0;
-        let gp = 0;
-        let stat1 = 0;
-        let stat2 = 0;
-        let stat1Label = 'B';
-        let stat2Label = 'P';
-
-        if (player.type === 'goalie') {
-            gp = seasonStat(player.stats, player.cached, 'gamesPlayed');
-            const wins = seasonStat(player.stats, player.cached, 'wins');
-            const shutouts = seasonStat(player.stats, player.cached, 'shutouts');
-            const otLosses = seasonStat(player.stats, player.cached, 'otLosses');
-            points = goaliePoolPoints({ shutouts, wins, otLosses });
-            stat1 = wins;
-            stat2 = shutouts;
-            stat1Label = 'V';
-            stat2Label = 'BL';
-        } else if (player.type === 'team') {
-            gp = seasonStat(player.stats, player.cached, 'gamesPlayed');
-            const wins = seasonStat(player.stats, player.cached, 'wins');
-            const otLosses = seasonStat(player.stats, player.cached, 'otLosses');
-            points = clubPoolPoints({ wins, otLosses });
-            stat1 = wins;
-            stat2 = otLosses;
-            stat1Label = 'V';
-            stat2Label = 'DP';
-        } else {
-            gp = seasonStat(player.stats, player.cached, 'gamesPlayed');
-            stat1 = seasonStat(player.stats, player.cached, 'goals');
-            stat2 = seasonStat(player.stats, player.cached, 'assists');
-            points = seasonStat(player.stats, player.cached, 'points');
-        }
+        const chiffres = statsDeRangee(player);
+        const { points } = chiffres;
 
         // Get team abbreviation for display
         const teamAbbrev = player.teamAbbrev || '';
@@ -1795,10 +1785,6 @@ function renderTeamRoster(roster, activeListings = []) {
         const nomHTML = nomCourt
             ? `<span class="rr-name-full">${escapeHtmlText(player.name)}</span><span class="rr-name-short">${escapeHtmlText(nomCourt)}</span>`
             : escapeHtmlText(player.name);
-
-        // Un zéro s'efface : l'œil va droit aux joueurs qui ont produit.
-        const stat = (valeur, libelle) =>
-            `<div class="rr-stat${valeur ? '' : ' is-zero'}"><span class="rr-v">${valeur}</span><span class="rr-l">${libelle}</span></div>`;
 
         const avatarHTML = `
             <div class="rr-avatar${estClub ? ' is-club' : ' fz-shot'}"${estClub ? '' : ` style="${clubShotStyle(teamAbbrev)}"`}>
@@ -1821,9 +1807,7 @@ function renderTeamRoster(roster, activeListings = []) {
                     <span class="rr-meta">${escapeHtmlText(meta)}</span>
                     <span class="rr-sale">En vente</span>
                 </div>
-                <div class="rr-stats">
-                    ${stat(gp, 'PJ')}${stat(stat1, stat1Label)}${stat(stat2, stat2Label)}${stat(points, 'Pts')}
-                </div>
+                <div class="rr-stats">${statsRangeeHTML(chiffres)}</div>
             </div>
             <div class="rr-pptsa is-zero"><span class="rr-v">0</span><span class="rr-l">PPtsA</span></div>
             <div class="rr-ppts${points ? '' : ' is-zero'}"><span class="rr-v">${points}</span><span class="rr-l">PPts</span></div>
@@ -1832,6 +1816,7 @@ function renderTeamRoster(roster, activeListings = []) {
 
         rangees.appendChild(row);
     });
+    rosterAffiche = players;
 
     refreshSaleMarks();
     renderBenchPanel(rosterList, roster);
@@ -1839,6 +1824,69 @@ function renderTeamRoster(roster, activeListings = []) {
     // Hide skeleton, show content
     document.getElementById('rosterSkeleton').style.display = 'none';
     rosterList.style.display = 'flex';
+}
+
+/** Les rangées de la fiche affichée, telles que renderTeamRoster les a bâties. */
+let rosterAffiche = [];
+
+/** Les chiffres d'une rangée de fiche : matchs, deux statistiques, points de pool. */
+function statsDeRangee(player) {
+    const s = key => seasonStat(player.stats, player.cached, key);
+    const gp = s('gamesPlayed');
+    if (player.type === 'goalie') {
+        const wins = s('wins'), shutouts = s('shutouts');
+        return { gp, stat1: wins, stat1Label: 'V', stat2: shutouts, stat2Label: 'BL',
+            points: goaliePoolPoints({ shutouts, wins, otLosses: s('otLosses') }) };
+    }
+    if (player.type === 'team') {
+        const wins = s('wins'), otLosses = s('otLosses');
+        return { gp, stat1: wins, stat1Label: 'V', stat2: otLosses, stat2Label: 'DP',
+            points: clubPoolPoints({ wins, otLosses }) };
+    }
+    return { gp, stat1: s('goals'), stat1Label: 'B', stat2: s('assists'), stat2Label: 'P', points: s('points') };
+}
+
+function statsRangeeHTML(chiffres) {
+    const { gp, stat1, stat1Label, stat2, stat2Label, points } = chiffres;
+    // Un zéro s'efface : l'œil va droit aux joueurs qui ont produit.
+    const stat = (valeur, libelle) =>
+        `<div class="rr-stat${valeur ? '' : ' is-zero'}"><span class="rr-v">${valeur}</span><span class="rr-l">${libelle}</span></div>`;
+    return `${stat(gp, 'PJ')}${stat(stat1, stat1Label)}${stat(stat2, stat2Label)}${stat(points, 'Pts')}`;
+}
+
+/**
+ * La fiche d'équipe affichée suit les points du soir. Seuls les chiffres de
+ * chaque rangée et la ligne de rang de l'en-tête sont réécrits : le banc, le
+ * panneau de mise en vente et le sélecteur d'équipe restent tels quels, et
+ * aucune requête ne part.
+ */
+function rafraichirFicheEnDirect() {
+    if (currentView !== VIEW_STATES.TEAM_ROSTER || !currentPoolName || !currentTeamName) return;
+    const poolData = allPoolsData[currentPoolName];
+    if (!poolData || !rosterAffiche.length) return;
+
+    const parNom = new Map(rosterAffiche.map(p => [p.name, p]));
+    document.querySelectorAll('#rosterList .roster-row[data-player]').forEach(row => {
+        const player = parNom.get(row.dataset.player);
+        if (!player) return;
+        player.stats = player.type === 'team'
+            ? getCurrentTeamStats(player.name)
+            : getCurrentPlayerStats(player.name, player.playerId);
+        const chiffres = statsDeRangee(player);
+        const bloc = row.querySelector('.rr-stats');
+        if (bloc) bloc.innerHTML = statsRangeeHTML(chiffres);
+        const ppts = row.querySelector('.rr-ppts');
+        if (ppts) {
+            ppts.classList.toggle('is-zero', !chiffres.points);
+            ppts.querySelector('.rr-v').textContent = chiffres.points;
+        }
+        const vente = rosterSale.players.find(v => v.name === player.name);
+        if (vente) vente.points = chiffres.points;
+    });
+
+    const sous = document.querySelector('#rosterHeader .rh-sub');
+    const texte = sousTitreFiche(poolData, computeStandings(poolData), currentTeamName);
+    if (sous && texte) sous.innerHTML = texte;
 }
 
 // ==================== BANC (TÊTE-À-TÊTE) ====================

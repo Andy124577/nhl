@@ -9,8 +9,9 @@
  * totaux (lib/pointsEnDirect.js), et ne pousse que ce qui a changé. Personne
  * dans la salle : aucun relevé, aucun envoi.
  *
- * Message : `points:direct` { joueurs, clubs, generatedAt } — à l'arrivée,
- * puis à chaque but, aide, victoire ou défaite en prolongation.
+ * Message : `points:direct` { joueurs, clubs, releve, generatedAt } — à
+ * l'arrivée, puis à chaque but, aide, victoire ou défaite en prolongation, et
+ * quand les relevés de minuit changent (`releve`, voir versionDesReleves).
  *
  * Aucune lecture de la base : les totaux sont ceux déjà en mémoire, les
  * matchs et les feuilles viennent de la LNH. Une feuille n'est relue que
@@ -38,6 +39,24 @@ const FEUILLE_OFF_MS = 30 * 60 * 1000;
 /** Rang d'un état : à venir, en cours, fini, officiel. Un état ne recule pas. */
 const RANG = { FUT: 0, PRE: 0, LIVE: 1, CRIT: 1, FINAL: 2, OFF: 3 };
 const rang = m => RANG[m && m.gameState] ?? 0;
+
+/**
+ * Les relevés sur lesquels ce direct s'applique. Le direct ne compte que ce
+ * que les relevés ne comptent pas encore : une page restée ouverte pendant la
+ * collecte de minuit garde ses anciens totaux, alors que le direct, lui,
+ * laisse tomber les matchs que le nouveau relevé a pris — les points de la
+ * veille disparaissaient de ses totaux jusqu'au rechargement. La page compare
+ * cette version à la précédente et relit /current-stats et /current-teams
+ * quand elle change (pointsDirect.js). Le nombre de joueurs suit les
+ * repêchés ajoutés en cours de journée, comme l'étiquette de /current-stats.
+ */
+function versionDesReleves(stats, clubs) {
+    if (!stats && !clubs) return null;
+    return [
+        stats && stats.lastUpdated, stats && stats.season, stats && (stats.players || []).length,
+        clubs && clubs.lastUpdated
+    ].map(v => (v == null ? '' : String(v))).join('|');
+}
 
 function creerPointsEnDirect({
     io,
@@ -145,7 +164,10 @@ function creerPointsEnDirect({
             etat: m.gameState,
             ...apportsDuMatch(m, lues.get(Number(m.id)))
         }));
-        return { charge: { ...points, generatedAt: new Date(horloge()).toISOString() }, parMatch };
+        return {
+            charge: { ...points, releve: versionDesReleves(stats, clubs), generatedAt: new Date(horloge()).toISOString() },
+            parMatch
+        };
     }
 
     /**
@@ -220,4 +242,4 @@ function creerPointsEnDirect({
     return { brancher, lire, lireParMatch, tic, arreter, abonnes, SALLE };
 }
 
-module.exports = { creerPointsEnDirect, SALLE, FEUILLE_MAX_MS, FEUILLE_OFF_MS };
+module.exports = { creerPointsEnDirect, versionDesReleves, SALLE, FEUILLE_MAX_MS, FEUILLE_OFF_MS };

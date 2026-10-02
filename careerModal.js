@@ -161,8 +161,51 @@
         const value = String(season || '');
         return value.length === 8 ? `${value.slice(0, 4)}-${value.slice(6)}` : value;
     }
+
+    /**
+     * Les totaux de minuit que la page a chargés (/current-stats), sous le
+     * nom qu'elle leur donne. classement.js garde les siens dans
+     * currentStatsBase, et dans currentStats leur copie augmentée du soir :
+     * on part de la base, pour ne pas compter ce soir deux fois.
+     */
+    function releveDeLaPage() {
+        if (typeof currentStatsBase !== 'undefined' && currentStatsBase) return currentStatsBase;
+        if (typeof currentStats !== 'undefined' && currentStats) return currentStats;
+        if (typeof userData !== 'undefined' && userData && userData.statsData) return userData.statsData;
+        return null;
+    }
+
+    /** Les totaux de la page, avec les points du soir quand elle les suit (pointsDirect.js). */
+    function statsDeSaison() {
+        const base = releveDeLaPage();
+        if (!base || !Array.isArray(base.players) || !window.FZPointsDirect || base.seasonStarted === false) return base;
+        return { ...base, players: FZPointsDirect.joueurs(base.players) };
+    }
+
+    // Fiche ouverte : elle suit les points du soir, et ses tuiles de saison se
+    // redessinent à chaque but. Fermée : elle rend la main (pointsDirect.js
+    // compte les suivis, la page garde le sien).
+    let activeId = null, suitDirect = false, directBranche = false;
+    function suivreDirect() {
+        const base = releveDeLaPage();
+        if (suitDirect || !window.FZPointsDirect || !base || base.seasonStarted === false) return;
+        if (!directBranche) {
+            directBranche = true;
+            FZPointsDirect.surChangement(() => {
+                if (active && activeId != null) renderSeason(active, activeId);
+            });
+        }
+        suitDirect = true;
+        FZPointsDirect.suivre();
+    }
+    function arreterDirect() {
+        if (!suitDirect) return;
+        suitDirect = false;
+        FZPointsDirect.arreter();
+    }
+
     function renderSeason(data, playerId) {
-        const stats = typeof currentStats !== 'undefined' ? currentStats : null;
+        const stats = statsDeSaison();
         const pool = (stats?.players || []).filter(p => (p.position === 'G') === Boolean(data.isGoalie));
         const current = pool.find(p => String(p.playerId) === String(playerId));
         const latest = (data.seasons || []).filter(s => s.league === 'NHL' && s.gameType === 'regular')
@@ -267,7 +310,9 @@
             const data = await fzChargerCarriere(playerId, typeof BASE_URL === 'string' ? BASE_URL : '');
             if (token !== request) return;
             adapter.onData(data);
+            activeId = playerId;
             renderProfile(data, playerId);
+            suivreDirect();
             el('careerModalHeader').hidden = false; el('careerFilters').hidden = false;
             adapter.renderStats();
         } catch (error) {
@@ -278,7 +323,8 @@
         } finally { if (token === request) el('careerLoading').hidden = true; }
     };
     window.fzCloseCareerModal = function () {
-        ++request; active = null;
+        ++request; active = null; activeId = null;
+        arreterDirect();
         el('careerStatsModal').style.display = 'none';
         document.body.style.overflow = previousOverflow;
         if (previousFocus?.isConnected) previousFocus.focus();

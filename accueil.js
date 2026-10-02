@@ -89,10 +89,12 @@ async function loadPools() {
 // ============================================================
 // CURRENT STATS LOADING (for leaderboard)
 // ============================================================
+// Relue aussi quand la collecte de minuit tourne, page ouverte
+// (accueil-dash.js) : une réponse en erreur garde les totaux qu'on a.
 async function loadCurrentStats() {
     try {
         const res = await fetch(`${BASE_URL}/current-stats`, { cache: 'no-cache' });
-        userData.statsData = await res.json();
+        if (res.ok) userData.statsData = await res.json();
     } catch (err) {
         console.warn('Could not load current stats:', err);
     }
@@ -104,7 +106,7 @@ async function loadCurrentStats() {
 async function loadCurrentTeamsData() {
     try {
         const res = await fetch(`${BASE_URL}/current-teams`, { cache: 'no-cache' });
-        userData.teamsData = await res.json();
+        if (res.ok) userData.teamsData = await res.json();
     } catch (err) {
         console.warn('Could not load current teams:', err);
     }
@@ -1200,11 +1202,21 @@ function buildTeamScores(pool) {
 
 // Player name → current-season stats, built once from /current-stats
 let playerStatsIndex = null;
+let playerStatsSource = null;
+/**
+ * La ligne de saison d'un joueur : les totaux de minuit (/current-stats),
+ * avec les points du soir (pointsDirect.js). La carte d'un joueur qui vient
+ * de marquer montre ainsi sa saison à jour, comme le classement. L'index se
+ * refait quand l'un ou l'autre change.
+ */
 function getPlayerStats(name) {
-    if (!playerStatsIndex) {
+    const players = userData.statsData?.players || [];
+    const direct = window.FZPointsDirect ? FZPointsDirect.charge() : null;
+    if (!playerStatsIndex || playerStatsSource.players !== players || playerStatsSource.direct !== direct) {
+        const lignes = direct && userData.statsData?.seasonStarted !== false ? FZPointsDirect.joueurs(players) : players;
         playerStatsIndex = {};
-        const players = userData.statsData?.players || [];
-        players.forEach(p => { if (p.playerName) playerStatsIndex[p.playerName] = p; });
+        lignes.forEach(p => { if (p.playerName) playerStatsIndex[p.playerName] = p; });
+        playerStatsSource = { players, direct };
     }
     return playerStatsIndex[name] || null;
 }

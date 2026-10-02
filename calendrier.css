@@ -216,6 +216,8 @@ body.fz-cal-page { background: var(--bg); }
 }
 .cal-game.is-mine { border-color: rgba(var(--primary-rgb), .55); box-shadow: inset 3px 0 0 var(--primary); }
 .cal-game-status { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--text-secondary); }
+/* L'horloge avance chaque seconde (calendrier.js) : chiffres à chasse fixe. */
+.cal-clock { font-variant-numeric: tabular-nums; }
 .cal-team {
     display: grid;
     grid-template-columns: 32px 1fr auto;
