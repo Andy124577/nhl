@@ -91,6 +91,11 @@ function seasonStat(stats, cached, key) {
 
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', async () => {
+    // Le temple du squelette (classement.html) : les mêmes tuiles fantômes
+    // que renderHallOfFame pose en attendant ses records.
+    const templeSquelette = document.getElementById('standingsSkeletonHof');
+    if (templeSquelette) templeSquelette.innerHTML = hofChargementHTML();
+
     await fetchImageData();
 
     // La trousse de repêchage : la fiche des joueurs repêchés que
@@ -382,14 +387,43 @@ function showPoolStandings(poolName) {
         h2hHistoryView.style.display = 'none';
         document.getElementById('h2hScheduleView').style.display = 'none';
 
-        // Show skeleton initially
-        document.getElementById('standingsSkeleton').style.display = 'flex';
+        // Le squelette, à la taille du pool, le temps de lire les points
+        // par période (renderPoolStandings).
+        ajusterSqueletteClassement(Object.values(poolData.teams || {})
+            .filter(td => td.members && td.members.length > 0).length);
+        document.getElementById('standingsSkeleton').style.display = 'block';
         document.getElementById('standingsList').style.display = 'none';
 
         setTimeout(() => {
             renderPoolStandings(poolData, poolName).catch(console.error);
         }, 100);
     }
+}
+
+/**
+ * Le squelette prend le nombre de rangées du pool dès qu'il est connu : le
+ * classement chargé arrive à la même hauteur, la légende et le temple ne
+ * sautent pas. Les rangées ajoutées reprennent les largeurs des premières ;
+ * au-delà de 12, le reste est sous la ligne de flottaison.
+ */
+function ajusterSqueletteClassement(nombre) {
+    const voulu = Math.max(1, Math.min(nombre || 7, 12));
+    const classeRang = n => (n === 1 ? 'gold' : n === 2 ? 'silver' : n === 3 ? 'bronze' : 'normal');
+    document.querySelectorAll('#standingsSkeleton .st-sk-table tbody, #standingsSkeleton .st-sk-list').forEach(hote => {
+        const modeles = [...hote.children];
+        if (!modeles.length) return;
+        while (hote.children.length > voulu) hote.lastElementChild.remove();
+        while (hote.children.length < voulu) {
+            const i = hote.children.length;
+            const rangee = modeles[i % modeles.length].cloneNode(true);
+            rangee.style.setProperty('--i', i);
+            const badge = rangee.querySelector('.st-rank-badge');
+            if (badge) { badge.className = `st-rank-badge ${classeRang(i + 1)}`; badge.textContent = i + 1; }
+            const rang = rangee.querySelector('.st-mobile-rank');
+            if (rang) rang.textContent = i + 1;
+            hote.appendChild(rangee);
+        }
+    });
 }
 
 // Colonnes du tableau de classement, par mode de pool. `sort` doit
@@ -1297,17 +1331,31 @@ function hofTeteHTML(saison) {
         </div>`;
 }
 
-/** Trois tuiles fantômes, le temps que /pool-hall-of-fame réponde. */
+/**
+ * Trois tuiles fantômes, le temps que /pool-hall-of-fame réponde — et dans
+ * le squelette du classement. Les vrais titres restent ; des os prennent la
+ * place du record, de l'équipe, de la date et de la ligne « Pire », dans la
+ * structure de la tuile chargée (hofTuileHTML) : elle garde sa forme.
+ */
 function hofChargementHTML() {
-    const tuile = `
+    const tuiles = HOF_PERIODES.map(periode => `
         <div class="hof-tile is-loading" aria-hidden="true">
-            <span class="skeleton hof-sk-label"></span>
+            <span class="hof-tile-label">${trophyIconHTML('is-best')}${periode.titre}</span>
             <div class="hof-record">
-                <span class="skeleton hof-sk-pts"></span>
-                <span class="hof-who"><span class="skeleton hof-sk-line"></span><span class="skeleton hof-sk-line is-short"></span></span>
+                <span class="fz-bone hof-sk-pts"></span>
+                <span class="hof-who">
+                    <span class="hof-team"><span class="hof-avatar fz-bone"></span><span class="fz-bone hof-sk-name"></span></span>
+                    <span class="hof-sk-flat hof-sk-when"></span>
+                </span>
             </div>
-        </div>`;
-    return `${hofTeteHTML(null)}<div class="hof-grid" aria-busy="true">${tuile}${tuile}${tuile}</div>`;
+            <div class="hof-low">
+                <span class="hof-low-label">Pire</span>
+                <span class="hof-sk-flat hof-sk-low-pts"></span>
+                <span class="hof-sk-flat hof-sk-low-team"></span>
+                <span class="hof-sk-flat hof-sk-low-when"></span>
+            </div>
+        </div>`).join('');
+    return `${hofTeteHTML(null)}<div class="hof-grid" aria-busy="true">${tuiles}</div>`;
 }
 
 function buildHallOfFameHTML(data, poolName) {
@@ -3155,7 +3203,6 @@ function showError(title, message) {
             <p style="font-size: 1.1rem; color: var(--text-secondary);">${message}</p>
         </div>
     `;
-    document.getElementById('poolListSkeleton').style.display = 'none';
 }
 
 // ==================== CAREER STATS MODAL ====================

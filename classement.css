@@ -492,6 +492,10 @@ body {
     --rr-sale-bg: #6C1517;
     --rr-sale-line: #C13C3B;
     --rr-sale-ink: #FFFFFF;
+    /* Os des squelettes (classement-premium.css, .fz-bone) : translucides,
+       lisibles sur la bande (#141416) comme sur la carte (#1C1C1E). */
+    --rr-bone: rgba(255, 255, 255, 0.05);
+    --rr-bone-shine: rgba(255, 255, 255, 0.11);
 }
 html[data-theme="light"] body {
     --rr-surface: #FFFFFF;
@@ -510,6 +514,8 @@ html[data-theme="light"] body {
     --rr-sale-bg: var(--primary);
     --rr-sale-line: var(--primary);
     --rr-sale-ink: var(--on-primary);
+    --rr-bone: rgba(0, 0, 0, 0.06);
+    --rr-bone-shine: rgba(0, 0, 0, 0.025);
 }
 
 /* -------------------- En-tête de la fiche -------------------- */
@@ -1017,71 +1023,6 @@ html.ss-lock { overflow: hidden; }
 @keyframes shimmer {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
-}
-
-/* Pool Card Skeleton */
-.pool-card-skeleton {
-    background: var(--card-white);
-    border-radius: 16px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.skeleton-circle {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(90deg, var(--bg) 25%, var(--card) 50%, var(--bg) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    flex-shrink: 0;
-}
-
-.skeleton-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.skeleton-title {
-    width: 60%;
-    height: 20px;
-}
-
-.skeleton-subtitle {
-    width: 40%;
-    height: 16px;
-}
-
-/* Standings Table Skeleton — mirrors the real table's column rhythm so
-   the loading state doesn't jump in shape once data arrives. */
-.standings-table-skeleton {
-    background: var(--card-white);
-    border-radius: 18px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.standings-skeleton-row {
-    display: grid;
-    grid-template-columns: 44px 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
-    gap: 10px;
-    align-items: center;
-    padding: 10px 8px;
-}
-
-.standings-skeleton-row .skeleton {
-    height: 16px;
-}
-
-.standings-skeleton-row .skeleton:first-child {
-    height: 26px;
-    border-radius: 50%;
 }
 
 /* Roster Skeleton — la même bande que la liste chargée (rangées de 64px,
@@ -2235,11 +2176,9 @@ html.ss-lock { overflow: hidden; }
 /* thème : plus de surcharges rgba bleutées à tenir en phase.    */
 /* ============================================================ */
 
-/* Les trois squelettes (.skeleton, .skeleton-circle, .skeleton-avatar) tirent
-   désormais leurs deux arrêts de --bg et --card, donc ils suivent le thème
-   d'eux-mêmes. Le correctif html[data-theme="dark"] .skeleton qui vivait ici
-   ne rattrapait que le premier des trois — les deux autres restaient des
-   aplats blancs pleins pendant tout le chargement. */
+/* Les squelettes (.skeleton, .skeleton-avatar) tirent leurs deux arrêts de
+   --bg et --card, donc ils suivent le thème d'eux-mêmes ; ceux du classement
+   (.fz-bone, classement-premium.css) passent par --rr-bone. */
 
 
 /* ============================================================ */

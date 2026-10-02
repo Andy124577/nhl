@@ -572,12 +572,21 @@ body.fz-classement .hof-low-team {
 }
 body.fz-classement .hof-low-team .hof-me { font-size: 8.5px; }
 
-/* -------------------- Chargement -------------------- */
-body.fz-classement .hof-tile.is-loading .skeleton { display: block; border-radius: 6px; }
-body.fz-classement .hof-sk-label { width: 120px; height: 10px; }
-body.fz-classement .hof-sk-pts { flex: none; width: 70px; height: 28px; }
-body.fz-classement .hof-sk-line { width: 150px; max-width: 100%; height: 12px; }
-body.fz-classement .hof-sk-line.is-short { width: 84px; height: 10px; }
+/* -------------------- Chargement (hofChargementHTML) --------------------
+   La tuile chargée, des os à la place des données : titre et « Pire »
+   restent lisibles, estompés ; le trophée attend son or. */
+body.fz-classement .hof-tile.is-loading .hof-tile-label { opacity: .55; }
+body.fz-classement .hof-tile.is-loading .hof-tile-label .hof-icon { color: currentColor; }
+body.fz-classement .hof-tile.is-loading .hof-low-label { opacity: .7; }
+/* À la largeur du chiffre chargé (min-width de .hof-pts) : l'équipe ne
+   se décale pas à l'arrivée. */
+body.fz-classement .hof-sk-pts { flex: none; width: 58px; height: 26px; margin-right: 40px; border-radius: 5px; }
+body.fz-classement .hof-avatar.fz-bone { border-radius: 50%; }
+body.fz-classement .hof-sk-name { width: 80px; height: 12px; }
+body.fz-classement .hof-sk-when { width: 64px; height: 9px; margin-top: 2px; }
+body.fz-classement .hof-sk-low-pts { width: 26px; height: 10px; }
+body.fz-classement .hof-sk-low-team { width: 110px; max-width: 100%; height: 10px; }
+body.fz-classement .hof-sk-low-when { width: 60px; height: 10px; }
 
 /* -------------------- Bloc large : trois tuiles -------------------- */
 @container hof (min-width: 600px) {
@@ -603,6 +612,7 @@ body.fz-classement .hof-sk-line.is-short { width: 84px; height: 10px; }
     gap: 10px;
   }
   body.fz-classement .hof-pts { min-width: 0; font-size: 34px; }
+  body.fz-classement .hof-sk-pts { width: 72px; height: 34px; margin-right: 0; }
   /* Le pire se cale en bas : les trois lignes s'alignent d'une tuile à
      l'autre, quelle que soit la longueur des noms au-dessus. */
   body.fz-classement .hof-low {
@@ -617,18 +627,184 @@ body.fz-classement .hof-sk-line.is-short { width: 84px; height: 10px; }
   body.fz-classement .hof-tile { padding-inline: 14px; }
   body.fz-classement .hof-record { gap: 12px; }
   body.fz-classement .hof-pts { min-width: 84px; font-size: 24px; }
+  body.fz-classement .hof-sk-pts { margin-right: 26px; }
 }
 
 /* ==================== SKELETON (chargement) ==================== */
-body.fz-classement .standings-table-skeleton {
-  background: var(--fzc-surface);
-  border: 1px solid var(--fzc-border);
-}
 body.fz-classement .skeleton,
-body.fz-classement .skeleton-circle,
 body.fz-classement .skeleton-avatar {
   background: linear-gradient(90deg, var(--fzc-border-soft) 25%, var(--fzc-tile) 50%, var(--fzc-border-soft) 75%);
   background-size: 200% 100%;
+}
+
+/* ==================== SQUELETTE DU CLASSEMENT ====================
+   Claude Design, « Classement Skeleton » (#standingsSkeleton,
+   classement.html). Le squelette reprend les classes du classement
+   chargé — tableau sur bureau, bande sur téléphone — et n'ajoute que
+   ses os.
+
+   Un os (.fz-bone) est un aplat translucide (--rr-bone, classement.css).
+   Son reflet est fixé à l'écran (background-attachment: fixed) : un seul
+   balayage traverse tous les os à la fois, de gauche à droite, au lieu
+   d'un reflet par os qui scintille chacun de son côté. Les os secondaires
+   (pastille, tendance, dates) restent mats : l'œil va d'abord à ce qui
+   brille. Les rangées montent l'une après l'autre (--i, 45 ms d'écart). */
+body.fz-classement .fz-bone {
+  display: block;
+  border-radius: 4px;
+  background: linear-gradient(100deg, var(--rr-bone) 40%, var(--rr-bone-shine) 50%, var(--rr-bone) 60%) fixed;
+  background-size: 300% 100%;
+  animation: fzOsReflet 1.6s linear infinite;
+}
+body.fz-classement .hof-sk-flat,
+body.fz-classement .st-sk-pill,
+body.fz-classement .st-sk-evo {
+  display: block;
+  border-radius: 5px;
+  background: var(--rr-bone);
+}
+@keyframes fzOsReflet {
+  from { background-position: 100% 0; }
+  to { background-position: 0% 0; }
+}
+@keyframes fzOsMonte {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+body.fz-classement .st-sk-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Titre et fil d'Ariane, avant que le pool soit connu : l'image (32px,
+   arrondie à 8px) et le nom, aux mesures de showPoolStandings. */
+body.fz-classement .st-sk-pool-img {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  margin-right: 10px;
+  border-radius: 8px;
+  vertical-align: middle;
+}
+body.fz-classement .st-sk-pool-name {
+  display: inline-block;
+  width: 150px;
+  max-width: 50vw;
+  height: 22px;
+  border-radius: 6px;
+  vertical-align: middle;
+}
+body.fz-classement .st-sk-crumb {
+  display: inline-block;
+  width: 72px;
+  height: 9px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
+body.fz-classement .st-sk { position: relative; }
+body.fz-classement .st-sk-table tbody tr,
+body.fz-classement .st-sk-list .st-mobile-row {
+  opacity: 0;
+  animation: fzOsMonte .35s ease-out forwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+body.fz-classement .st-sk-insights {
+  opacity: 0;
+  animation: fzOsMonte .35s ease-out .32s forwards;
+}
+
+/* La tuile « où en suis-je » (bureau) : neutre tant qu'on ne sait pas. */
+body.fz-classement .st-summary.st-sk-summary { border-left-color: var(--fzc-border); }
+body.fz-classement .st-sk-sum-rank { flex: none; width: 52px; height: 38px; border-radius: 6px; }
+body.fz-classement .st-sk-sum-name { width: 120px; height: 13px; margin: 2px 0; }
+body.fz-classement .st-sk-sum-detail { width: 240px; max-width: 100%; height: 11px; margin: 5px 0 2px; }
+
+/* Le tableau (bureau), aux mesures de #standingsTable — qui défait comme
+   lui les réglages globaux des tables (index.css : colonnes fixes, en-tête
+   collant, flouté et ombré). */
+body.fz-classement .st-sk-table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+body.fz-classement .st-sk-table thead { position: static; }
+body.fz-classement .st-sk-table th {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
+  padding: 10px;
+  background: var(--fzc-bg-alt);
+  border-bottom: 1px solid var(--fzc-border-strong);
+  color: var(--fzc-text-muted);
+  font: 600 10px/1 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .09em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+body.fz-classement .st-sk-table th.points-column { color: var(--fzc-accent); }
+body.fz-classement .st-sk-table td {
+  padding: 9px 10px;
+  background: var(--fzc-surface);
+  text-align: center;
+}
+body.fz-classement .st-sk-table tbody tr {
+  background: var(--fzc-surface);
+  border-bottom: 1px solid var(--fzc-border-soft);
+  cursor: default;
+}
+body.fz-classement .st-sk-table tbody tr:last-child { border-bottom: 0; }
+body.fz-classement .st-sk-table .rank-col { width: 40px; padding-inline: 4px; }
+body.fz-classement .st-sk-table .player-col { min-width: 110px; padding-left: 12px; text-align: left; }
+body.fz-classement .st-sk-table .st-evo-col { text-align: right; }
+body.fz-classement .st-sk-who { display: flex; align-items: center; gap: 10px; }
+body.fz-classement .st-sk-av { flex: none; width: 26px; height: 26px; border-radius: 50%; }
+body.fz-classement .st-sk-name { flex: none; width: var(--w); height: 12px; }
+body.fz-classement .st-sk-n { width: var(--w); height: 10px; margin: 0 auto; border-radius: 3px; }
+body.fz-classement .st-sk-total { width: 26px; height: 14px; margin: 0 auto; }
+body.fz-classement .st-sk-evo { width: 34px; height: 18px; margin-left: auto; border-radius: 6px; }
+
+/* La bande (téléphone) : les rangées chargées, des os à la place des
+   chiffres. Les hauteurs d'os égalent celles des lignes de texte qu'ils
+   remplacent : la rangée garde ses 64px. */
+body.fz-classement .st-sk-list .st-mobile-logo.fz-bone { border-radius: 50%; }
+body.fz-classement .st-sk-mname {
+  flex: 0 1 auto;
+  width: var(--w);
+  max-width: calc(100% - 28px);
+  height: 13px;
+  margin: 2px 0;
+}
+body.fz-classement .st-sk-pill { flex: none; width: 22px; height: 14px; }
+body.fz-classement .st-sk-mv { width: var(--w); height: 9px; margin: 2.5px 0; border-radius: 3px; }
+body.fz-classement .st-sk-mpts { width: 22px; height: 18px; margin: 2px 0; }
+body.fz-classement .st-sk-list .st-mini-l,
+body.fz-classement .st-sk-list .st-mobile-chev { opacity: .65; }
+
+body.fz-classement .st-sk-legend summary { opacity: .5; }
+
+@media (max-width: 680px) {
+  body.fz-classement #standingsSkeleton .st-summary { display: none; }
+  body.fz-classement .st-sk-list .st-mobile-row { cursor: default; }
+  /* Le filet rouge du meneur attend de savoir qui mène. */
+  body.fz-classement .st-sk-list .st-mobile-row:first-child { box-shadow: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.fz-classement .fz-bone { animation: none; }
+  body.fz-classement .st-sk-table tbody tr,
+  body.fz-classement .st-sk-list .st-mobile-row,
+  body.fz-classement .st-sk-insights { opacity: 1; animation: none; }
 }
 
 /* ==================== FICHE D'ÉQUIPE : liste pleine largeur ====================
