@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="poolNav.css?v=20260928a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="index.css?v=20260926b">
-    <link rel="stylesheet" href="calendrier.css?v=20261002b">
+    <link rel="stylesheet" href="calendrier.css?v=20261002c">
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit précéder tout script de page. -->
     <script defer src="activePool.js?v=20260929n"></script>
@@ -30,8 +30,7 @@
     <main class="cal-page" id="calPage">
         <header class="cal-head">
             <div class="cal-head-txt">
-                <p class="cal-eyebrow">Calendrier de la LNH</p>
-                <h1 class="cal-title" id="calTitle">Matchs de la semaine</h1>
+                <h1 class="cal-eyebrow">Calendrier de la LNH</h1>
                 <p class="cal-season" id="calSeason" hidden></p>
             </div>
             <div class="cal-controls">
@@ -49,14 +48,6 @@
 
         <div class="cal-strip" id="calStrip" role="tablist" aria-label="Jours de la semaine"></div>
 
-        <div class="cal-filter" id="calFilter" hidden>
-            <label class="cal-toggle">
-                <input type="checkbox" id="calMine">
-                <span>Seulement les matchs de mes joueurs</span>
-            </label>
-            <span class="cal-filter-note" id="calMineNote"></span>
-        </div>
-
         <section class="cal-day" aria-live="polite">
             <h2 class="cal-day-title" id="calDayTitle"></h2>
             <div class="cal-games" id="calGames">
@@ -72,7 +63,7 @@
     </main>
 
     <script defer src="/socket.io/socket.io.js"></script>
-    <script defer src="calendrier.js?v=20261002b"></script>
+    <script defer src="calendrier.js?v=20261002c"></script>
     <script defer src="navbar.js?v=20260930a"></script>
     <script defer src="avatars.js"></script>
     <script defer src="profanity.js"></script>

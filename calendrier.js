@@ -74,7 +74,6 @@
     let semaine = null;      // réponse de /schedule/:date
     let jourChoisi = null;   // ISO
     let mesClubs = new Map(); // abbrev → [noms de mes joueurs]
-    let seulementMiens = false;
     let chargement = 0;
     // Le lundi DEMANDÉ, posé avant la réponse : deux clics rapides sur une
     // flèche reculent de deux semaines, pas deux fois de la même.
@@ -138,10 +137,8 @@
                 if (!mesClubs.has(club)) mesClubs.set(club, []);
                 mesClubs.get(club).push(nom);
             });
-        } catch (e) { /* le filtre reste simplement masqué */ }
+        } catch (e) { /* les matchs restent simplement sans repère */ }
 
-        const filtre = document.getElementById('calFilter');
-        if (filtre) filtre.hidden = mesClubs.size === 0;
         rendre();
     }
 
@@ -266,41 +263,18 @@
         const jour = ((semaine && semaine.days) || []).find(d => d.date === jourChoisi);
         titre.textContent = jourChoisi ? jourLong(jourChoisi).replace(/^./, c => c.toUpperCase()) : '';
 
-        let matchs = (jour && jour.games) || [];
-        const total = matchs.length;
-        if (seulementMiens) matchs = matchs.filter(estAMoi);
-
-        const note = document.getElementById('calMineNote');
-        if (note) {
-            const n = ((jour && jour.games) || []).filter(estAMoi).length;
-            note.textContent = mesClubs.size ? `${n} match${n > 1 ? 's' : ''} avec vos joueurs ce jour-là` : '';
-        }
+        const matchs = (jour && jour.games) || [];
 
         if (!semaine || !semaine.days.length) {
             zone.innerHTML = '<p class="cal-empty">Le calendrier de la LNH est indisponible pour le moment. Réessayez dans un instant.</p>';
             return;
         }
-        if (!total) {
-            zone.innerHTML = '<p class="cal-empty">Aucun match cette journée.</p>';
-            return;
-        }
         if (!matchs.length) {
-            zone.innerHTML = '<p class="cal-empty">Aucun de vos joueurs ne joue cette journée.</p>';
+            zone.innerHTML = '<p class="cal-empty">Aucun match cette journée.</p>';
             return;
         }
         zone.innerHTML = matchs.map(carteMatch).join('');
         reglerHorloges();
-    }
-
-    function rendreTitre() {
-        const jours = (semaine && semaine.days) || [];
-        const titre = document.getElementById('calTitle');
-        if (!titre) return;
-        if (!jours.length) { titre.textContent = 'Matchs de la semaine'; return; }
-        const d1 = dateUTC(jours[0].date), d2 = dateUTC(jours[jours.length - 1].date);
-        titre.textContent = d1.getUTCMonth() === d2.getUTCMonth()
-            ? `Du ${d1.getUTCDate()} au ${d2.getUTCDate()} ${MOIS[d2.getUTCMonth()]}`
-            : `Du ${d1.getUTCDate()} ${MOIS[d1.getUTCMonth()]} au ${d2.getUTCDate()} ${MOIS[d2.getUTCMonth()]}`;
     }
 
     /**
@@ -323,7 +297,6 @@
     }
 
     function rendre() {
-        rendreTitre();
         rendreSemaine();
         libelleSaison();
         rendreBande();
@@ -518,10 +491,6 @@
         document.getElementById('calReturn').addEventListener('click', () => {
             jourChoisi = aujourdhui();
             chargerSemaine(jourChoisi).then(() => document.querySelector('.cal-chip.is-today')?.focus());
-        });
-        document.getElementById('calMine').addEventListener('change', e => {
-            seulementMiens = e.target.checked;
-            rendreJour();
         });
     }
 

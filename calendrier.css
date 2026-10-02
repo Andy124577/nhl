@@ -19,26 +19,19 @@ body.fz-cal-page { background: var(--bg); }
 .cal-head {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
     gap: 14px;
     margin-bottom: 16px;
 }
+/* Seul titre de la page : discret, la semaine porte l'en-tête. */
 .cal-eyebrow {
-    margin: 0 0 4px;
+    margin: 0;
     font-size: .74rem;
     font-weight: 800;
     letter-spacing: .08em;
     text-transform: uppercase;
     color: var(--primary-text);
-}
-.cal-title {
-    margin: 0;
-    font-family: 'Bebas Neue', system-ui, sans-serif;
-    font-weight: 400;
-    font-size: clamp(1.8rem, 5vw, 2.6rem);
-    letter-spacing: .02em;
-    line-height: 1;
 }
 .cal-season {
     margin: 6px 0 0;
@@ -198,19 +191,6 @@ body.fz-cal-page { background: var(--bg); }
 .cal-chip.is-active .cal-chip-dow,
 .cal-chip.is-active .cal-chip-count { color: var(--on-primary); }
 .cal-chip.is-active .cal-chip-mine { background: #fff; color: #d70015; }
-
-/* ---- Filtre « mes joueurs » ---- */
-.cal-filter {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px 16px;
-    margin-bottom: 14px;
-}
-.cal-filter[hidden] { display: none; }
-.cal-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 600; cursor: pointer; }
-.cal-toggle input { width: 20px; height: 20px; accent-color: var(--primary); }
-.cal-filter-note { font-size: .82rem; color: var(--text-secondary); }
 
 /* ---- Journée ---- */
 .cal-day-title {
