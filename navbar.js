@@ -33,6 +33,9 @@ function initModernNavbar() {
         // Avant tout : replier les onglets que le dernier passage savait
         // fermés. Dans la même tâche que la construction, donc jamais peints.
         appliquerVisibiliteMemorisee();
+        // La pastille se pose une fois les onglets repliés : elle tombe
+        // directement sous l'onglet actif.
+        initPastilleBas(currentPage);
         initializeEventListeners(username, isAdmin);
         if (isAdmin) verifierBascule();
         checkPendingTrades();
@@ -362,37 +365,146 @@ function buildBottomNav(currentPage) {
     const existing = document.querySelector('.bottom-nav');
     if (existing) existing.remove();
 
+    // `data-page` : l'onglet que la page désigne comme actif (getCurrentPage),
+    // relu au retour arrière (initPastilleBas).
+    const onglet = (page, href, icone, libelle, extra = '') => {
+        const actif = page === currentPage;
+        return `
+            <a href="${href}" class="bottom-nav-item${actif ? ' active' : ''}" data-page="${page}"${actif ? ' aria-current="page"' : ''}${extra}>
+                <span class="bottom-nav-icon" aria-hidden="true">${icone}</span>
+                <span class="bottom-nav-label">${libelle}</span>`;
+    };
     const html = `
-        <nav class="bottom-nav">
-            <a href="index.html" class="bottom-nav-item ${'accueil' === currentPage ? 'active' : ''}">
-                <span class="bottom-nav-icon">${PAGE_ICON.accueil}</span>
-                <span class="bottom-nav-label">Accueil</span>
+        <nav class="bottom-nav" aria-label="Navigation principale">
+            <span class="bottom-nav-pill" aria-hidden="true"></span>
+            ${onglet('accueil', 'index.html', PAGE_ICON.accueil, 'Accueil')}
             </a>
-            <a href="repechage.html" class="bottom-nav-item ${'repechage' === currentPage ? 'active' : ''}" id="bottomPoolLink">
-                <span class="bottom-nav-icon">${PAGE_ICON.repechage}</span>
-                <span class="bottom-nav-label">Repêchage</span>
+            ${onglet('repechage', 'repechage.html', PAGE_ICON.repechage, 'Repêchage', ' id="bottomPoolLink"')}
                 <span class="notif-badge" id="bottomDraftBadge" style="display: none;"></span>
             </a>
-            <a href="trade.html" class="bottom-nav-item ${'trade' === currentPage ? 'active' : ''}" id="bottomTradeLink">
-                <span class="bottom-nav-icon">${PAGE_ICON.echanges}</span>
-                <span class="bottom-nav-label">Échanges</span>
+            ${onglet('trade', 'trade.html', PAGE_ICON.echanges, 'Échanges', ' id="bottomTradeLink"')}
                 <span class="notif-badge" id="bottomTradeBadge" style="display: none;">0</span>
             </a>
-            <a href="classement.html" class="bottom-nav-item ${'classement' === currentPage ? 'active' : ''}" id="bottomClassementLink">
-                <span class="bottom-nav-icon">${PAGE_ICON.classement}</span>
-                <span class="bottom-nav-label">Classement</span>
+            ${onglet('classement', 'classement.html', PAGE_ICON.classement, 'Classement', ' id="bottomClassementLink"')}
             </a>
-            <a href="calendrier.html" class="bottom-nav-item ${'calendrier' === currentPage ? 'active' : ''}">
-                <span class="bottom-nav-icon">${PAGE_ICON.calendrier}</span>
-                <span class="bottom-nav-label">Calendrier</span>
+            ${onglet('calendrier', 'calendrier.html', PAGE_ICON.calendrier, 'Calendrier')}
             </a>
-            <a href="stats.html" class="bottom-nav-item ${'stats' === currentPage ? 'active' : ''}">
-                <span class="bottom-nav-icon">${PAGE_ICON.stats}</span>
-                <span class="bottom-nav-label">Stats</span>
+            ${onglet('stats', 'stats.html', PAGE_ICON.stats, 'Stats')}
             </a>
         </nav>
     `;
     document.body.insertAdjacentHTML('beforeend', html);
+}
+
+// ==================== BARRE DU BAS : LA PASTILLE ====================
+/*
+ * Claude Design, « Footer Nav » : une pastille teintée sous l'onglet actif,
+ * qui glisse jusqu'à l'onglet touché (navbar.css, .bottom-nav-pill).
+ *
+ * Chaque onglet est une autre page : le glissement commence sur la page
+ * qu'on quitte, au toucher, et la page d'arrivée le reprend là où il en
+ * est — l'heure du toucher passe par sessionStorage, et l'animation repart
+ * avec un délai négatif de ce qui s'est déjà écoulé. Une navigation lente
+ * finit le geste avant de partir ; une rapide le termine en arrivant ; dans
+ * les deux cas la pastille ne revient jamais en arrière.
+ */
+const PASTILLE_MS = 420;
+const PASTILLE_COURBE = 'cubic-bezier(.32, .72, 0, 1)';
+const PASTILLE_CLE = 'fzBarreBasGlisse';
+
+/** L'abscisse de la pastille centrée sous un onglet, ou null s'il est caché. */
+function pastilleX(pastille, onglet) {
+    if (!onglet || onglet.offsetParent === null) return null;
+    return onglet.offsetLeft + (onglet.offsetWidth - pastille.offsetWidth) / 2;
+}
+
+/** Pose la pastille sous l'onglet actif — en glissant, ou d'un coup. */
+function placerPastille(nav, { glisser = false } = {}) {
+    const pastille = nav.querySelector('.bottom-nav-pill');
+    if (!pastille) return;
+    const x = pastilleX(pastille, nav.querySelector('.bottom-nav-item.active'));
+    if (x === null) { pastille.classList.remove('is-placed'); return; }
+    if (!glisser || !pastille.classList.contains('is-placed')) {
+        // D'un coup, et sans fondu : la pastille est déjà là au premier
+        // rendu de chaque page, elle ne clignote pas à chaque onglet.
+        pastille.style.transition = 'none';
+        pastille.style.transform = `translateX(${x}px)`;
+        pastille.classList.add('is-placed');
+        void pastille.offsetWidth;   // position et opacité comptent avant que la transition revienne
+        pastille.style.transition = '';
+    } else {
+        pastille.style.transform = `translateX(${x}px)`;
+    }
+}
+
+function initPastilleBas(currentPage) {
+    const nav = document.querySelector('.bottom-nav');
+    const pastille = nav && nav.querySelector('.bottom-nav-pill');
+    if (!pastille) return;
+    const onglets = () => [...nav.querySelectorAll('.bottom-nav-item')];
+
+    placerPastille(nav);
+    reprendreGlissement(nav, pastille, onglets());
+
+    // Un onglet qui paraît ou disparaît (updateDraftLinkVisibility…), un
+    // écran qui tourne : la pastille suit son onglet en glissant.
+    if (window.ResizeObserver) {
+        const suivre = new ResizeObserver(() => placerPastille(nav, { glisser: true }));
+        onglets().forEach(o => suivre.observe(o));
+    }
+
+    nav.addEventListener('click', e => {
+        const onglet = e.target.closest('.bottom-nav-item');
+        if (!onglet || onglet.classList.contains('active')) return;
+        if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        const depuis = nav.querySelector('.bottom-nav-item.active');
+        if (navigator.vibrate) navigator.vibrate(8);
+        // L'onglet touché prend la couleur tout de suite ; la pastille part.
+        onglets().forEach(o => {
+            o.classList.toggle('active', o === onglet);
+            if (o === onglet) o.setAttribute('aria-current', 'page'); else o.removeAttribute('aria-current');
+        });
+        placerPastille(nav, { glisser: true });
+        if (!depuis) return;
+        try {
+            sessionStorage.setItem(PASTILLE_CLE, JSON.stringify({
+                depuis: depuis.getAttribute('href'), vers: onglet.getAttribute('href'), t: Date.now()
+            }));
+        } catch { /* stockage refusé : la page d'arrivée pose la pastille sans glisser */ }
+    });
+
+    // Retour arrière depuis le cache : la page revient telle qu'on l'a
+    // quittée, pastille partie vers l'autre onglet. On la ramène.
+    window.addEventListener('pageshow', e => {
+        if (!e.persisted) return;
+        onglets().forEach(o => {
+            const actif = o.dataset.page === currentPage;
+            o.classList.toggle('active', actif);
+            if (actif) o.setAttribute('aria-current', 'page'); else o.removeAttribute('aria-current');
+        });
+        placerPastille(nav);
+    });
+}
+
+/** La page d'arrivée reprend le glissement commencé sur la page quittée. */
+function reprendreGlissement(nav, pastille, onglets) {
+    let geste = null;
+    try {
+        geste = JSON.parse(sessionStorage.getItem(PASTILLE_CLE));
+        sessionStorage.removeItem(PASTILLE_CLE);
+    } catch { return; }
+    const actif = nav.querySelector('.bottom-nav-item.active');
+    if (!geste || !actif || actif.getAttribute('href') !== geste.vers) return;
+    const ecoule = Date.now() - geste.t;
+    if (!(ecoule >= 0 && ecoule < PASTILLE_MS) || typeof pastille.animate !== 'function') return;
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const x0 = pastilleX(pastille, onglets.find(o => o.getAttribute('href') === geste.depuis));
+    const x1 = pastilleX(pastille, actif);
+    if (x0 === null || x1 === null) return;
+    pastille.animate(
+        [{ transform: `translateX(${x0}px)` }, { transform: `translateX(${x1}px)` }],
+        { duration: PASTILLE_MS, easing: PASTILLE_COURBE, delay: -ecoule }
+    );
 }
 
 // ==================== USER AVATAR UPLOAD ====================

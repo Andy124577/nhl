@@ -641,3 +641,128 @@ html[data-theme="light"] .theme-switch-thumb {
        (aria-label, posés par navbar.js). */
     .nav-links .nav-link .nav-text { display: none; }
 }
+
+/* ============================================================
+   BARRE DU BAS (téléphone) — Claude Design, « Footer Nav »
+   ------------------------------------------------------------
+   Verre dépoli, filet d'un pixel, et une pastille teintée de 56 × 32 qui
+   glisse d'un onglet à l'autre (navbar.js, initPastilleBas) : plus de
+   trait rouge au-dessus de l'onglet, plus de halo autour de l'icône.
+   L'onglet actif prend la couleur de marque, un trait d'icône et un
+   libellé plus appuyés ; un toucher enfonce l'onglet (0,92).
+
+   Ces règles reprennent celles de la feuille minifiée en tête de fichier
+   et des blocs plus haut ; venues après, elles l'emportent.
+   ============================================================ */
+body {
+    --bn-bg: rgba(18, 18, 20, .78);
+    --bn-line: rgba(255, 255, 255, .07);
+    --bn-ink: #8A8A90;
+    --bn-ink-active: var(--primary-text);
+    --bn-pill: rgba(var(--primary-rgb), .16);
+}
+html[data-theme="light"] body {
+    --bn-bg: rgba(250, 250, 251, .82);
+    --bn-line: rgba(0, 0, 0, .07);
+    --bn-ink: #55555C;
+    --bn-pill: rgba(var(--primary-rgb), .10);
+}
+
+.bottom-nav {
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    background: var(--bn-bg);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-top: 1px solid var(--bn-line);
+    box-shadow: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Sous l'icône de l'onglet actif : 6px de barre + 2px d'onglet. Invisible
+   tant que navbar.js ne l'a pas posée (is-placed). */
+.bottom-nav-pill {
+    position: absolute;
+    top: 8px;
+    left: 0;
+    width: 56px;
+    height: 32px;
+    border-radius: 16px;
+    background: var(--bn-pill);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 420ms cubic-bezier(.32, .72, 0, 1), opacity 200ms ease;
+    will-change: transform;
+}
+.bottom-nav-pill.is-placed { opacity: 1; }
+
+.bottom-nav-item {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    min-height: 56px;
+    padding: 2px 0 4px;
+    border-radius: 12px;
+    background: none;
+    color: var(--bn-ink);
+    text-decoration: none;
+    touch-action: manipulation;
+    transition: color 200ms ease, transform 160ms ease;
+}
+.bottom-nav-item:hover { background: none; color: var(--bn-ink); }
+.bottom-nav-item.active,
+.bottom-nav-item.active:hover { background: none; color: var(--bn-ink-active); }
+.bottom-nav-item.active::before { content: none; }
+.bottom-nav-item:active { transform: scale(.92); }
+.bottom-nav-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+
+.bottom-nav-icon,
+.bottom-nav-item:hover .bottom-nav-icon,
+.bottom-nav-item.active .bottom-nav-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    margin: 0;
+    color: inherit;
+    font-size: inherit;
+    filter: none;
+    transform: none;
+    transition: none;
+}
+.bottom-nav-icon svg {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.8;
+    transition: stroke-width 200ms ease;
+}
+.bottom-nav-item.active .bottom-nav-icon svg { stroke-width: 2.2; }
+
+.bottom-nav-label {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: .01em;
+    text-overflow: ellipsis;
+    text-transform: none;
+    white-space: nowrap;
+}
+.bottom-nav-item.active .bottom-nav-label { font-weight: 700; }
+
+/* Le point ou le compte, au coin haut droit de l'icône. */
+.bottom-nav-item .notif-badge { top: 3px; right: auto; left: calc(50% + 5px); }
+
+/* Six onglets sur 360px : « Classement » tient encore à 10px. */
+@media (max-width: 400px) {
+    .bottom-nav-label { font-size: 10px; letter-spacing: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bottom-nav-pill { transition: opacity 200ms ease; }
+    .bottom-nav-item:active { transform: none; }
+}
