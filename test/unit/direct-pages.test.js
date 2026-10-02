@@ -100,7 +100,7 @@ describe('classement — fiche d’équipe en direct', () => {
             computeStandings: () => [{ teamName: 'Les Castors', rank: 2, points: 102 }],
             document: {
                 querySelectorAll: () => rangees,
-                querySelector: sel => (sel === '#rosterHeader .rh-sub' ? entete : null)
+                querySelector: sel => (sel === '#rosterHeader .rh-rank' ? entete : null)
             }
         };
         const f = chargerFonctions('classement.js', FONCTIONS_FICHE, ctx);

@@ -1475,20 +1475,21 @@ function renderRosterHeader(poolName, teamName) {
             ${standings.map(s => `<option value="${escapeAttr(s.teamName)}"${s.teamName === teamName ? ' selected' : ''}>${s.rank}. ${escapeHtmlText(getDisplayName(s.teamName, s.members))}</option>`).join('')}
         </select>` : '';
 
+    // Une seule rangée — retour, nom, « Vendre » — et une ligne dessous qui
+    // dit tout le reste : rang, bilan, nombre d'actifs (renderTeamRoster).
+    // La grille de .roster-header place chaque morceau (classement.css).
     const header = document.getElementById('rosterHeader');
     header.innerHTML = `
-        <button type="button" class="rh-back" data-rh-back>${RH_ICON.back}<span>Classement</span></button>
-        <div class="rh-top">
-            <div class="rh-title${picker ? ' has-picker' : ''}">
-                <h1 class="rh-name">${escapeHtmlText(getDisplayName(teamName, teamData.members || []))}</h1>
-                ${picker ? `<span class="rh-caret">${RH_ICON.caret}</span>${picker}` : ''}
-            </div>
-            ${rosterSale.canSell ? `
-            <button type="button" class="rh-sale" data-rh-sale aria-haspopup="dialog">
-                ${tagIcon(14)}<span>Mettre en vente</span><span class="rh-sale-count" hidden></span>
-            </button>` : ''}
+        <button type="button" class="rh-back" data-rh-back aria-label="Retour au classement">${RH_ICON.back}</button>
+        <div class="rh-title${picker ? ' has-picker' : ''}">
+            <h1 class="rh-name">${escapeHtmlText(getDisplayName(teamName, teamData.members || []))}</h1>
+            ${picker ? `<span class="rh-caret">${RH_ICON.caret}</span>${picker}` : ''}
         </div>
-        ${sous ? `<p class="rh-sub">${sous}</p>` : ''}`;
+        ${rosterSale.canSell ? `
+        <button type="button" class="rh-sale" data-rh-sale aria-haspopup="dialog" aria-label="Mettre en vente">
+            ${tagIcon(14)}<span class="rh-sale-long">Mettre en vente</span><span class="rh-sale-short">Vendre</span><span class="rh-sale-count" hidden></span>
+        </button>` : ''}
+        <p class="rh-sub"><span class="rh-rank">${sous}</span><span class="rh-count"></span></p>`;
 
     header.querySelector('[data-rh-back]').addEventListener('click', () => showPoolStandings(poolName));
     const select = header.querySelector('.rh-picker');
@@ -1715,12 +1716,15 @@ function renderTeamRoster(roster, activeListings = []) {
     const extremes = extremesDuPool(allPoolsData[currentPoolName]);
 
     // Liste « comfortable » (Claude Design, Roster Table v2) : une bande
-    // continue de rangées de 64px séparées d'un filet, plutôt qu'une carte
+    // continue de rangées de 76px séparées d'un filet, plutôt qu'une carte
     // par joueur. Sur une bande étroite, le prénom se réduit à son initiale
     // — requêtes de conteneur sur .roster-rows (classement.css).
     const bloc = document.createElement('section');
     bloc.className = 'roster-block';
-    bloc.innerHTML = `<p class="roster-count">Joueurs actifs · ${players.length}</p>`;
+    bloc.setAttribute('aria-label', 'Joueurs actifs');
+    // Le compte des actifs va dans la ligne de l'en-tête, plus une ligne à lui.
+    const compteActifs = document.querySelector('#rosterHeader .rh-count');
+    if (compteActifs) compteActifs.textContent = `${players.length} actif${players.length > 1 ? 's' : ''}`;
     const rangees = document.createElement('div');
     rangees.className = 'roster-rows';
     bloc.appendChild(rangees);
@@ -1920,7 +1924,7 @@ function rafraichirFicheEnDirect() {
         if (vente) vente.points = chiffres.points;
     });
 
-    const sous = document.querySelector('#rosterHeader .rh-sub');
+    const sous = document.querySelector('#rosterHeader .rh-rank');
     const texte = sousTitreFiche(poolData, computeStandings(poolData), currentTeamName);
     if (sous && texte) sous.innerHTML = texte;
 }

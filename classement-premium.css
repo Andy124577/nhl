@@ -635,7 +635,7 @@ body.fz-classement .skeleton-avatar {
    Sur téléphone, la bande des joueurs (.roster-rows, classement.css) va d'un
    bord à l'autre de l'écran, comme dans le mockup : laissée dans les 32px de
    marge de .container, la colonne du nom n'a plus la place des quatre
-   stats. Le titre et « Joueurs actifs » gardent la marge. */
+   stats. L'en-tête garde la marge. */
 @media (max-width: 680px) {
   body.fz-classement .roster-rows,
   body.fz-classement #rosterSkeleton { margin-inline: -32px; }
@@ -646,27 +646,44 @@ body.fz-classement .skeleton-avatar {
    à rien sur téléphone : l'accueil est dans la barre du bas, le pool dans
    la pastille du haut. Il s'efface — !important parce que classement.js
    l'affiche en style en ligne — et la fiche d'équipe prend à la place un
-   vrai bouton de retour de 44px. La marge du haut de 40px, faite pour le
-   bureau, repoussait tout le contenu sous la ligne de flottaison. */
+   chevron de retour, sur la rangée du nom : retour, nom, « Vendre » tiennent
+   sur une ligne de 44px, rang · bilan · actifs dessous, alignés sur le nom.
+   La marge du haut de 40px, faite pour le bureau, repoussait tout le
+   contenu sous la ligne de flottaison. */
 @media (max-width: 680px) {
   body.fz-classement .container { padding-top: 16px; }
   body.fz-classement .breadcrumb { display: none !important; }
+  body.fz-classement .roster-header {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "back title sale"
+      ".    sub   sub";
+    column-gap: 6px;
+    margin-bottom: 14px;
+  }
+  /* 36 × 44 : la zone de toucher déborde dans la marge de gauche, le
+     chevron lui-même reste aligné sur le bord du contenu. */
   body.fz-classement .rh-back {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    min-height: 44px;
-    margin: 0 0 2px -10px;
-    padding: 0 12px 0 4px;
+    justify-content: flex-end;
+    width: 36px;
+    height: 44px;
+    margin-left: -22px;
+    padding: 0;
     border: 0;
     border-radius: 10px;
     background: transparent;
     color: var(--fzc-accent);
-    font: 600 15px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
     cursor: pointer;
   }
   body.fz-classement .rh-back:active { background: var(--fzc-tile); }
-  body.fz-classement .rh-name { font-size: 24px; }
+  body.fz-classement .rh-back:focus-visible { outline: 2px solid var(--primary); outline-offset: 0; }
+  body.fz-classement .rh-name { font-size: 22px; }
+  body.fz-classement .rh-sale { min-height: 40px; margin-left: 6px; padding: 0 14px; }
+  body.fz-classement .rh-sale-long { display: none; }
+  body.fz-classement .rh-sale-short { display: inline; }
+  body.fz-classement .rh-sub { margin-top: -4px; }
 }
 
 /* ====================================================================

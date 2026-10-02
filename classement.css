@@ -520,21 +520,31 @@ body.fz-view-roster #pageTitle { display: none; }
    fiche suit directement le fil d'Ariane (ou le haut de page sur téléphone). */
 body.fz-view-roster #teamRosterView { margin-top: 6px; }
 
-.roster-header { margin-bottom: 22px; }
-
-/* Téléphone seulement (plus bas) : le fil d'Ariane y est masqué. */
-.rh-back { display: none; }
-
-.rh-top {
-    display: flex;
+/* Une grille : le nom et « Mettre en vente » sur la première rangée, la
+   ligne rang · bilan · actifs dessous. Le bouton de retour n'y prend une
+   colonne que sur téléphone (classement-premium.css). */
+.roster-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "title sale"
+        "sub   sub";
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    column-gap: 12px;
+    margin-bottom: 18px;
 }
 
+/* Téléphone seulement : le fil d'Ariane y est masqué. */
+.rh-back { display: none; grid-area: back; }
+
 /* Le <select> transparent couvre le nom et sa flèche : un toucher ouvre la
-   roulette native, le clavier et les lecteurs d'écran y ont accès. */
+   roulette native, le clavier et les lecteurs d'écran y ont accès. Collé à
+   gauche et pas plus large que sa colonne : le vide à droite du nom
+   n'ouvre pas la liste. */
 .rh-title {
+    grid-area: title;
+    justify-self: start;
+    max-width: 100%;
     position: relative;
     display: inline-flex;
     align-items: center;
@@ -571,14 +581,20 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
 }
 
 .rh-sub {
+    grid-area: sub;
     margin: 4px 0 0;
     font-size: 13px;
     color: var(--text-secondary);
 }
 .rh-sub sup { font-size: 0.7em; line-height: 0; }
+/* « 1er sur 7 · 22 pts · 13 actifs » : le point ne sépare que deux
+   morceaux présents (le compte arrive avec la liste). */
+.rh-rank:empty,
+.rh-count:empty { display: none; }
+.rh-rank:not(:empty) + .rh-count::before { content: ' · '; white-space: pre; }
 
 .rh-sale {
-    flex: none;
+    grid-area: sale;
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -594,6 +610,8 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
     transition: border-color .15s ease, color .15s ease;
 }
 .rh-sale svg { flex: none; }
+/* Libellé court sur téléphone (classement-premium.css). */
+.rh-sale-short { display: none; }
 .rh-sale:hover { border-color: var(--rr-btn-hover-line); color: var(--rr-btn-hover-ink); }
 .rh-sale:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .rh-sale-count {
@@ -611,12 +629,6 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
 .rh-sale-count[hidden] { display: none; }
 
 /* -------------------- La liste -------------------- */
-.roster-count {
-    margin: 0 0 8px;
-    font-size: 12px;
-    color: var(--rr-muted);
-}
-
 /* Le conteneur des requêtes plus bas : c'est la largeur de la bande, pas
    celle de l'écran, qui décide du nom court et de la marque « En vente ». */
 .roster-rows {
@@ -630,11 +642,11 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
 
 .roster-row {
     display: grid;
-    grid-template-columns: 22px 34px minmax(0, 1fr) 44px 44px 14px;
+    grid-template-columns: 22px 44px minmax(0, 1fr) 44px 44px 14px;
     align-items: center;
     column-gap: 8px;
-    min-height: 64px;
-    padding: 0 10px 0 12px;
+    min-height: 76px;
+    padding: 6px 10px 6px 12px;
 }
 .roster-row + .roster-row { border-top: 1px solid var(--rr-line); }
 .roster-row.clickable { cursor: pointer; }
@@ -647,12 +659,12 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
     text-align: center;
 }
 
-.rr-shot { position: relative; width: 34px; height: 34px; }
+.rr-shot { position: relative; width: 44px; height: 44px; }
 
 .rr-avatar {
     position: relative;
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     overflow: hidden;
     display: flex;
@@ -671,7 +683,7 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
    comme à l'onglet Alignements. Les initiales ne servent que sans photo. */
 .rr-avatar img ~ .rr-initials { display: none; }
 .rr-initials {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
     color: #FFFFFF;
 }
@@ -1078,16 +1090,16 @@ html.ss-lock { overflow: hidden; }
     display: flex;
     align-items: center;
     gap: 8px;
-    min-height: 64px;
-    padding: 0 10px 0 42px;
+    min-height: 76px;
+    padding: 6px 10px 6px 42px;
 }
 .roster-card-skeleton + .roster-card-skeleton { border-top: 1px solid var(--rr-line); }
 .roster-card-skeleton .skeleton-content { gap: 6px; }
 
 /* Scopé : skeleton-loader.css, chargé après, remet .skeleton-avatar à 60px. */
 .roster-card-skeleton .skeleton-avatar {
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: linear-gradient(90deg, var(--bg) 25%, var(--card) 50%, var(--bg) 75%);
     background-size: 200% 100%;
