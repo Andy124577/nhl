@@ -25,7 +25,7 @@
 
 'use strict';
 
-const { calculerPointsEnDirect, apportsDuMatch, matchsASuivre, joursASuivre, signature } = require('../lib/pointsEnDirect.js');
+const { calculerPointsEnDirect, apportsDuMatch, matchsASuivre, joursASuivre, signature, soireesDuJour } = require('../lib/pointsEnDirect.js');
 
 const SALLE = 'points';
 const FEUILLE_MAX_MS = 2 * 60 * 1000;
@@ -164,9 +164,13 @@ function creerPointsEnDirect({
             etat: m.gameState,
             ...apportsDuMatch(m, lues.get(Number(m.id)))
         }));
+        // La soirée de chacun pour la fiche d'équipe (/live-roster) : tirée
+        // des mêmes matchs et des mêmes feuilles, matchs à venir compris.
+        const soirees = soireesDuJour({ matchs, feuilles: lues, stats, clubs, aujourdhui: aujourdhui ? aujourdhui() : null });
         return {
             charge: { ...points, releve: versionDesReleves(stats, clubs), generatedAt: new Date(horloge()).toISOString() },
-            parMatch
+            parMatch,
+            soirees
         };
     }
 
@@ -198,6 +202,15 @@ function creerPointsEnDirect({
     async function lireParMatch() {
         await lire();
         return dernier ? dernier.parMatch : [];
+    }
+
+    /**
+     * La soirée de chaque joueur et club (lib/pointsEnDirect.js,
+     * soireesDuJour) : { joueurs, clubs }. Même fraîcheur que lire().
+     */
+    async function lireSoirees() {
+        await lire();
+        return (dernier && dernier.soirees) || { joueurs: {}, clubs: {} };
     }
 
     function arreter() {
@@ -239,7 +252,7 @@ function creerPointsEnDirect({
         });
     }
 
-    return { brancher, lire, lireParMatch, tic, arreter, abonnes, SALLE };
+    return { brancher, lire, lireParMatch, lireSoirees, tic, arreter, abonnes, SALLE };
 }
 
 module.exports = { creerPointsEnDirect, versionDesReleves, SALLE, FEUILLE_MAX_MS, FEUILLE_OFF_MS };

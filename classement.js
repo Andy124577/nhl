@@ -152,6 +152,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             appliquerPointsDirect();
             rafraichirClassementEnDirect();
             rafraichirFicheEnDirect();
+            relireSoireeBientot();
             // Le premier envoi n'est que l'état du moment, que les colonnes
             // de période lues au chargement comptent déjà.
             if (premierDirect) { premierDirect = false; return; }
@@ -1703,10 +1704,15 @@ function renderTeamRoster(roster, activeListings = []) {
             type: 'team',
             category: 'team',
             stats: stats,
+            // Le relevé de minuit, pour la colonne PJ (statsDeRangee).
+            base: getCurrentTeamStats(teamName, currentTeamsBase),
             cached: teamInfo,
             teamAbbrev: stats?.teamAbbrev || NHL_ABBREV[teamName] || ''
         });
     });
+
+    // Meilleur et pire choix du pool, par catégorie : repères des rangées.
+    const extremes = extremesDuPool(allPoolsData[currentPoolName]);
 
     // Liste « comfortable » (Claude Design, Roster Table v2) : une bande
     // continue de rangées de 64px séparées d'un filet, plutôt qu'une carte
@@ -1769,8 +1775,10 @@ function renderTeamRoster(roster, activeListings = []) {
                 : '') + `<div class="rr-initials">${initiales || escapeHtmlText(player.position)}</div>`;
         }
 
-        const chiffres = statsDeRangee(player);
+        const soiree = soireeDe(player);
+        const chiffres = statsDeRangee(player, soiree);
         const { points } = chiffres;
+        const ppa = ppaDe(soiree);
 
         // Get team abbreviation for display
         const teamAbbrev = player.teamAbbrev || '';
@@ -1809,8 +1817,8 @@ function renderTeamRoster(roster, activeListings = []) {
                 </div>
                 <div class="rr-stats">${statsRangeeHTML(chiffres)}</div>
             </div>
-            <div class="rr-pptsa is-zero"><span class="rr-v">0</span><span class="rr-l">PPtsA</span></div>
-            <div class="rr-ppts${points ? '' : ' is-zero'}"><span class="rr-v">${points}</span><span class="rr-l">PPts</span></div>
+            <div class="rr-pptsa${ppa ? '' : ' is-zero'}" title="${PPTSA_TITRE}"><span class="rr-v">${ppa}</span><span class="rr-l">PPtsA</span></div>
+            <div class="rr-ppts${points ? '' : ' is-zero'}"><span class="rr-marks">${marquesHTML(player, points, soiree, extremes)}</span><span class="rr-v">${points}</span><span class="rr-l">PPts</span></div>
             <span class="rr-chev" aria-hidden="true">${player.playerId ? '›' : ''}</span>
         `;
 
@@ -1824,15 +1832,30 @@ function renderTeamRoster(roster, activeListings = []) {
     // Hide skeleton, show content
     document.getElementById('rosterSkeleton').style.display = 'none';
     rosterList.style.display = 'flex';
+
+    // La soirée de l'équipe affichée : repères, PPtsA et PJ du soir.
+    if (soireeFiche.cle !== cleFicheAffichee()) soireeFiche = { cle: null, joueurs: {}, clubs: {} };
+    chargerSoireeFiche();
 }
 
 /** Les rangées de la fiche affichée, telles que renderTeamRoster les a bâties. */
 let rosterAffiche = [];
 
-/** Les chiffres d'une rangée de fiche : matchs, deux statistiques, points de pool. */
-function statsDeRangee(player) {
+/**
+ * Les chiffres d'une rangée de fiche : matchs, deux statistiques, points de pool.
+ *
+ * PJ compte le match du soir dès la mise au jeu : `soiree.mj`, les matchs
+ * commencés que le relevé de minuit ne compte pas encore (soireeDe). Un club
+ * part alors de son relevé de minuit (`base`) : le direct ajoute déjà à sa
+ * fiche les victoires et défaites en prolongation du soir, qui seraient
+ * comptées deux fois.
+ */
+function statsDeRangee(player, soiree) {
     const s = key => seasonStat(player.stats, player.cached, key);
-    const gp = s('gamesPlayed');
+    const mj = (seasonStarted && soiree && soiree.mj) || 0;
+    const gp = (soiree && player.type === 'team' && player.base
+        ? seasonStat(player.base, player.cached, 'gamesPlayed')
+        : s('gamesPlayed')) + mj;
     if (player.type === 'goalie') {
         const wins = s('wins'), shutouts = s('shutouts');
         return { gp, stat1: wins, stat1Label: 'V', stat2: shutouts, stat2Label: 'BL',
@@ -1856,23 +1879,28 @@ function statsRangeeHTML(chiffres) {
 
 /**
  * La fiche d'équipe affichée suit les points du soir. Seuls les chiffres de
- * chaque rangée et la ligne de rang de l'en-tête sont réécrits : le banc, le
- * panneau de mise en vente et le sélecteur d'équipe restent tels quels, et
- * aucune requête ne part.
+ * chaque rangée, ses repères et la ligne de rang de l'en-tête sont réécrits :
+ * le banc, le panneau de mise en vente et le sélecteur d'équipe restent tels
+ * quels, et aucune requête ne part.
  */
 function rafraichirFicheEnDirect() {
     if (currentView !== VIEW_STATES.TEAM_ROSTER || !currentPoolName || !currentTeamName) return;
     const poolData = allPoolsData[currentPoolName];
     if (!poolData || !rosterAffiche.length) return;
 
+    const extremes = extremesDuPool(poolData);
     const parNom = new Map(rosterAffiche.map(p => [p.name, p]));
     document.querySelectorAll('#rosterList .roster-row[data-player]').forEach(row => {
         const player = parNom.get(row.dataset.player);
         if (!player) return;
-        player.stats = player.type === 'team'
-            ? getCurrentTeamStats(player.name)
-            : getCurrentPlayerStats(player.name, player.playerId);
-        const chiffres = statsDeRangee(player);
+        if (player.type === 'team') {
+            player.stats = getCurrentTeamStats(player.name);
+            player.base = getCurrentTeamStats(player.name, currentTeamsBase);
+        } else {
+            player.stats = getCurrentPlayerStats(player.name, player.playerId);
+        }
+        const soiree = soireeDe(player);
+        const chiffres = statsDeRangee(player, soiree);
         const bloc = row.querySelector('.rr-stats');
         if (bloc) bloc.innerHTML = statsRangeeHTML(chiffres);
         const ppts = row.querySelector('.rr-ppts');
@@ -1880,6 +1908,14 @@ function rafraichirFicheEnDirect() {
             ppts.classList.toggle('is-zero', !chiffres.points);
             ppts.querySelector('.rr-v').textContent = chiffres.points;
         }
+        const pptsa = row.querySelector('.rr-pptsa');
+        if (pptsa) {
+            const ppa = ppaDe(soiree);
+            pptsa.classList.toggle('is-zero', !ppa);
+            pptsa.querySelector('.rr-v').textContent = ppa;
+        }
+        const marques = row.querySelector('.rr-marks');
+        if (marques) marques.innerHTML = marquesHTML(player, chiffres.points, soiree, extremes);
         const vente = rosterSale.players.find(v => v.name === player.name);
         if (vente) vente.points = chiffres.points;
     });
@@ -1887,6 +1923,165 @@ function rafraichirFicheEnDirect() {
     const sous = document.querySelector('#rosterHeader .rh-sub');
     const texte = sousTitreFiche(poolData, computeStandings(poolData), currentTeamName);
     if (sous && texte) sous.innerHTML = texte;
+}
+
+// ==================== SOIRÉE DES JOUEURS (FICHE D'ÉQUIPE) ====================
+// Ce que la fiche montre de la soirée de chacun (/live-roster, voir
+// soireesDuJour dans lib/pointsEnDirect.js) : un repère s'il joue en ce
+// moment ou plus tard aujourd'hui, la colonne PPtsA — les points de sa
+// dernière soirée — et PJ, qui compte son match dès la mise au jeu. Relue à
+// chaque point qui tombe, et en attendant les mises au jeu et les fins de
+// match. Le serveur la tire du calcul du direct : aucun appel de plus à la LNH.
+
+let soireeFiche = { cle: null, joueurs: {}, clubs: {} };
+let soireeMinuteur = null;
+let soireeRelecture = null;
+const SOIREE_EN_JEU_MS = 60 * 1000;
+const SOIREE_MAX_MS = 30 * 60 * 1000;
+
+const PPTSA_TITRE = 'Points de pool de sa dernière soirée : ceux d’aujourd’hui dès que son match commence, sinon ceux d’hier';
+
+const cleFicheAffichee = () => `${currentPoolName}|${currentTeamName}`;
+
+/** L'abréviation du club d'une rangée (« TOR,MTL » : le dernier est l'actuel). */
+function clubDeRangee(player) {
+    return String(player.teamAbbrev || '').split(',').pop().trim().toUpperCase();
+}
+
+/** La soirée d'une rangée ; undefined tant que celle de l'équipe affichée n'est pas lue. */
+function soireeDe(player) {
+    if (soireeFiche.cle !== cleFicheAffichee()) return undefined;
+    const club = player.type === 'team';
+    const table = club ? soireeFiche.clubs : soireeFiche.joueurs;
+    const cle = club ? clubDeRangee(player) : player.playerId;
+    return (cle && table[cle]) || {};
+}
+
+/** PPtsA d'une rangée : les points de pool de sa dernière soirée. */
+function ppaDe(soiree) {
+    return (seasonStarted && soiree && soiree.ppa) || 0;
+}
+
+async function chargerSoireeFiche() {
+    if (!seasonStarted || currentView !== VIEW_STATES.TEAM_ROSTER || !rosterAffiche.length) return;
+    const cle = cleFicheAffichee();
+    const joueurs = [...new Set(rosterAffiche.filter(p => p.type !== 'team' && p.playerId).map(p => String(p.playerId)))];
+    const clubs = [...new Set(rosterAffiche.filter(p => p.type === 'team').map(clubDeRangee).filter(Boolean))];
+    try {
+        const res = await fetch(`${BASE_URL}/live-roster?joueurs=${joueurs.join(',')}&clubs=${clubs.join(',')}`, { cache: 'no-store' });
+        if (res.ok) {
+            const data = await res.json();
+            // Le sélecteur d'équipe a pu changer de fiche pendant l'appel.
+            if (cle !== cleFicheAffichee() || currentView !== VIEW_STATES.TEAM_ROSTER) return;
+            soireeFiche = { cle, joueurs: data.joueurs || {}, clubs: data.clubs || {} };
+            rafraichirFicheEnDirect();
+        }
+    } catch (error) {
+        console.warn('⚠️ Soirée des joueurs indisponible :', error);
+    }
+    planifierSoireeFiche();
+}
+
+/**
+ * La prochaine relecture : chaque minute tant qu'un joueur de la fiche est
+ * en jeu (pour la fin de son match), sinon à la prochaine mise au jeu — au
+ * plus tard dans une demi-heure. Rien sans match à venir, hors de la fiche
+ * ou onglet caché.
+ */
+function planifierSoireeFiche() {
+    clearTimeout(soireeMinuteur);
+    soireeMinuteur = null;
+    if (currentView !== VIEW_STATES.TEAM_ROSTER || document.hidden) return;
+    const lignes = [...Object.values(soireeFiche.joueurs), ...Object.values(soireeFiche.clubs)];
+    let attente = null;
+    if (lignes.some(s => s.etat === 'LIVE')) {
+        attente = SOIREE_EN_JEU_MS;
+    } else {
+        const debuts = lignes.filter(s => s.etat === 'FUT').map(s => Date.parse(s.debut)).filter(Number.isFinite);
+        if (debuts.length) attente = Math.min(Math.max(Math.min(...debuts) - Date.now(), SOIREE_EN_JEU_MS), SOIREE_MAX_MS);
+    }
+    if (attente !== null) soireeMinuteur = setTimeout(chargerSoireeFiche, attente);
+}
+
+/** Un point vient de tomber : PPtsA le montre, sans relire à chaque envoi. */
+function relireSoireeBientot() {
+    if (currentView !== VIEW_STATES.TEAM_ROSTER || soireeRelecture) return;
+    soireeRelecture = setTimeout(() => {
+        soireeRelecture = null;
+        chargerSoireeFiche();
+    }, 1500);
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (currentView !== VIEW_STATES.TEAM_ROSTER) return;
+    if (document.hidden) planifierSoireeFiche();
+    else chargerSoireeFiche();
+});
+
+/** Les libellés du meilleur et du pire choix de chaque catégorie de rangée. */
+const CHOIX_LIBELLES = {
+    offensive: ['Meilleur attaquant', 'Pire attaquant'],
+    defensive: ['Meilleur défenseur', 'Pire défenseur'],
+    goalie: ['Meilleur gardien', 'Pire gardien'],
+    rookie: ['Meilleure recrue', 'Pire recrue'],
+    team: ['Meilleure équipe', 'Pire équipe']
+};
+
+/** Les points de pool d'un choix, comme sa rangée de fiche les affiche. */
+function pointsDuChoix(nom, categorie) {
+    if (categorie !== 'teams') return benchSeasonPoints(nom, categorie);
+    const stats = getCurrentTeamStats(nom);
+    const fiche = ficheClub(nom);
+    return clubPoolPoints({ wins: seasonStat(stats, fiche, 'wins'), otLosses: seasonStat(stats, fiche, 'otLosses') });
+}
+
+/**
+ * Le meilleur et le pire total de chaque catégorie, tous les choix du pool
+ * confondus — les partants des équipes du classement ; le banc ne compte
+ * pas. Une catégorie où tous sont à égalité n'a ni meilleur ni pire.
+ * Clés : celles de `player.category` (offensive … rookie, team).
+ */
+function extremesDuPool(poolData) {
+    const extremes = {};
+    const equipes = Object.values((poolData && poolData.teams) || {}).filter(t => (t.members || []).length > 0);
+    for (const categorie of ['offensive', 'defensive', 'goalie', 'rookie', 'teams']) {
+        const totaux = equipes.flatMap(t => (t[categorie] || []).map(nom => pointsDuChoix(nom, categorie)));
+        if (totaux.length < 2) continue;
+        const max = Math.max(...totaux), min = Math.min(...totaux);
+        if (max > min) extremes[categorie === 'teams' ? 'team' : categorie] = { max, min };
+    }
+    return extremes;
+}
+
+const MARQUES_SVG = {
+    enJeu: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#16A34A"/><path d="M6.3 4.8v6.4L11.4 8z" fill="#FFFFFF"/></svg>',
+    plusTard: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.1" fill="#FFFFFF" stroke="#111111" stroke-width="1.6"/><path d="M8 4.4V8l2.4 1.6" fill="none" stroke="#111111" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    meilleur: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#F97316"/><path d="M8 3.4l1.18 2.98 3.19.2-2.47 2.04.8 3.1L8 10l-2.7 1.72.8-3.1-2.47-2.04 3.19-.2z" fill="#FFFFFF"/></svg>',
+    pire: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#DC2626"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/></svg>'
+};
+
+/**
+ * Les repères d'une rangée, côte à côte en haut à droite de ses PPts : il
+ * joue en ce moment (rond vert) ou plus tard aujourd'hui (horloge), il est
+ * le meilleur (étoile) ou le pire (X) choix du pool dans sa catégorie.
+ */
+function marquesHTML(player, points, soiree, extremes) {
+    const marques = [];
+    if (seasonStarted && soiree && soiree.etat === 'LIVE') {
+        marques.push(['is-live', 'enJeu', 'En jeu en ce moment']);
+    } else if (seasonStarted && soiree && soiree.etat === 'FUT') {
+        const debut = soiree.debut ? new Date(soiree.debut) : null;
+        const heure = debut && !isNaN(debut)
+            ? debut.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' }) : '';
+        marques.push(['is-later', 'plusTard', heure ? `Joue aujourd’hui à ${heure}` : 'Joue plus tard aujourd’hui']);
+    }
+    const extreme = extremes && extremes[player.category];
+    const [meilleur, pire] = CHOIX_LIBELLES[player.category] || [];
+    if (extreme && points === extreme.max) marques.push(['is-best', 'meilleur', `${meilleur} du pool`]);
+    if (extreme && points === extreme.min) marques.push(['is-worst', 'pire', `${pire} du pool`]);
+    return marques.map(([classe, icone, titre]) =>
+        `<span class="rr-mark ${classe}" role="img" aria-label="${escapeAttr(titre)}" title="${escapeAttr(titre)}">${MARQUES_SVG[icone]}</span>`
+    ).join('');
 }
 
 // ==================== BANC (TÊTE-À-TÊTE) ====================
@@ -2171,13 +2366,14 @@ function getCurrentPlayerStats(playerName, playerId) {
     return ligneDuReleveParNom(playerName);
 }
 
-function getCurrentTeamStats(teamName) {
-    if (!currentTeams || !currentTeams.teams) return null;
+/** La fiche d'un club : avec le direct par défaut, ou dans `releve` (currentTeamsBase, celui de minuit). */
+function getCurrentTeamStats(teamName, releve = currentTeams) {
+    if (!releve || !releve.teams) return null;
     const cle = cleDeNom(teamName);
     const autre = CLUBS_RENOMMES[cle];
-    return currentTeams.teams.find(t => t.teamFullName === teamName)
-        || currentTeams.teams.find(t => cleDeNom(t.teamFullName) === cle)
-        || (autre ? currentTeams.teams.find(t => cleDeNom(t.teamFullName) === autre) : null)
+    return releve.teams.find(t => t.teamFullName === teamName)
+        || releve.teams.find(t => cleDeNom(t.teamFullName) === cle)
+        || (autre ? releve.teams.find(t => cleDeNom(t.teamFullName) === autre) : null)
         || null;
 }
 

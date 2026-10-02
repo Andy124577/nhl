@@ -2589,6 +2589,34 @@ app.get('/live-points', async (req, res) => {
     }
 });
 
+/**
+ * La soirée des joueurs et clubs demandés, pour la fiche d'équipe du
+ * classement : son match du jour (en jeu, plus tard), les matchs commencés
+ * que les relevés ne comptent pas encore (colonne PJ) et les points de sa
+ * dernière soirée (colonne PPtsA). Voir soireesDuJour (lib/pointsEnDirect.js).
+ *
+ * Tiré du même calcul que /live-points : aucun appel de plus à la LNH. La
+ * page ne demande que les lignes qu'elle affiche (une équipe de pool).
+ *
+ *   ?joueurs=8478402,8477934&clubs=EDM,TOR
+ */
+app.get('/live-roster', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const liste = (valeur, motif, max) => [...new Set(String(valeur || '').split(','))]
+        .map(v => v.trim()).filter(v => motif.test(v)).slice(0, max);
+    const ids = liste(req.query.joueurs, /^\d{1,10}$/, 80);
+    const abbrevs = liste(String(req.query.clubs || '').toUpperCase(), /^[A-Z]{2,3}$/, 40);
+    const vide = { jour: datesPool.journeeLocale(), joueurs: {}, clubs: {}, generatedAt: new Date().toISOString() };
+    try {
+        const soirees = await pointsEnDirect.lireSoirees();
+        const garder = (table, cles) => Object.fromEntries(cles.filter(c => table[c]).map(c => [c, table[c]]));
+        res.json({ ...vide, joueurs: garder(soirees.joueurs, ids), clubs: garder(soirees.clubs, abbrevs) });
+    } catch (error) {
+        console.error('❌ Error computing live roster:', error.message);
+        res.json(vide);
+    }
+});
+
 // ============================================================
 // SAISON EN COURS — numéro (20262027), phase, dates d'ouverture et de
 // clôture de la saison régulière. Le classement s'en sert pour ne rien

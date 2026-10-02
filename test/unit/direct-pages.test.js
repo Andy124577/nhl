@@ -21,7 +21,7 @@ describe('classement — fiche d’équipe en direct', () => {
 
     test('les chiffres d’une rangée : patineur, gardien, club', () => {
         const { statsDeRangee, statsRangeeHTML } = chargerFonctions('classement.js',
-            ['statsDeRangee', 'statsRangeeHTML'], { seasonStat, goaliePoolPoints, clubPoolPoints });
+            ['statsDeRangee', 'statsRangeeHTML'], { seasonStat, goaliePoolPoints, clubPoolPoints, seasonStarted: true });
 
         const patineur = statsDeRangee({ type: 'player', stats: { gamesPlayed: 4, goals: 3, assists: 2, points: 5 } });
         assert.deepEqual({ ...patineur }, { gp: 4, stat1: 3, stat1Label: 'B', stat2: 2, stat2Label: 'P', points: 5 });
@@ -48,44 +48,62 @@ describe('classement — fiche d’équipe en direct', () => {
         assert.equal(sousTitreFiche({}, standings, 'Z'), '');
     });
 
-    function fausseRangee(nom) {
-        const classes = new Set(['rr-ppts', 'is-zero']);
-        const bloc = { innerHTML: 'avant' };
+    function fausseCellule() {
+        const classes = new Set(['is-zero']);
         const valeur = { textContent: '0' };
-        const ppts = {
+        return {
+            classes, valeur,
             classList: { toggle: (c, oui) => (oui ? classes.add(c) : classes.delete(c)) },
             querySelector: () => valeur
         };
+    }
+
+    function fausseRangee(nom) {
+        const bloc = { innerHTML: 'avant' };
+        const ppts = fausseCellule();
+        const pptsa = fausseCellule();
+        const marques = { innerHTML: '' };
+        const cellules = { '.rr-stats': bloc, '.rr-ppts': ppts, '.rr-pptsa': pptsa, '.rr-marks': marques };
         return {
-            dataset: { player: nom }, bloc, valeur, classes,
-            querySelector: sel => (sel === '.rr-stats' ? bloc : sel === '.rr-ppts' ? ppts : null)
+            dataset: { player: nom }, bloc, ppts, pptsa, marques,
+            valeur: ppts.valeur, classes: ppts.classes,
+            querySelector: sel => cellules[sel] || null
         };
     }
 
-    function monterFiche({ vue = 'teamRoster' } = {}) {
+    const OILERS = { gamesPlayed: 5, wins: 3, otLosses: 1 };
+    const FONCTIONS_FICHE = ['statsDeRangee', 'statsRangeeHTML', 'sousTitreFiche', 'rafraichirFicheEnDirect',
+        'cleFicheAffichee', 'clubDeRangee', 'soireeDe', 'ppaDe', 'marquesHTML', 'CHOIX_LIBELLES', 'MARQUES_SVG'];
+
+    function monterFiche({ vue = 'teamRoster', soiree = null, extremes = {} } = {}) {
         const rangees = [fausseRangee('Connor McDavid'), fausseRangee('Edmonton Oilers')];
         const entete = { innerHTML: '3<sup>e</sup> sur 4 · 100 pts' };
         let statsMcDavid = { gamesPlayed: 4, goals: 3, assists: 2, points: 5 };
         const rosterSale = { players: [{ name: 'Connor McDavid', points: 5 }] };
         const ctx = {
-            seasonStat, goaliePoolPoints, clubPoolPoints, rosterSale,
+            seasonStat, goaliePoolPoints, clubPoolPoints, rosterSale, seasonStarted: true,
             currentView: vue, VIEW_STATES: { TEAM_ROSTER: 'teamRoster' },
             currentPoolName: 'Pool', currentTeamName: 'Les Castors',
             allPoolsData: { Pool: { poolMode: 'cumulative' } },
             rosterAffiche: [
-                { name: 'Connor McDavid', type: 'player', playerId: 8478402 },
-                { name: 'Edmonton Oilers', type: 'team' }
+                { name: 'Connor McDavid', type: 'player', category: 'offensive', playerId: 8478402 },
+                { name: 'Edmonton Oilers', type: 'team', category: 'team', teamAbbrev: 'EDM' }
             ],
+            soireeFiche: soiree ? { cle: 'Pool|Les Castors', ...soiree } : { cle: null, joueurs: {}, clubs: {} },
+            currentTeamsBase: { teams: [] },
+            extremesDuPool: () => extremes,
+            escapeAttr: s => String(s),
             getCurrentPlayerStats: () => statsMcDavid,
-            getCurrentTeamStats: () => ({ gamesPlayed: 5, wins: 3, otLosses: 1 }),
+            // Le direct a ajouté la victoire du soir à la fiche du club : 6 PJ
+            // avec le direct, 5 au relevé de minuit.
+            getCurrentTeamStats: (nom, releve) => (releve ? OILERS : { ...OILERS, gamesPlayed: 6, wins: 4 }),
             computeStandings: () => [{ teamName: 'Les Castors', rank: 2, points: 102 }],
             document: {
                 querySelectorAll: () => rangees,
                 querySelector: sel => (sel === '#rosterHeader .rh-sub' ? entete : null)
             }
         };
-        const f = chargerFonctions('classement.js',
-            ['statsDeRangee', 'statsRangeeHTML', 'sousTitreFiche', 'rafraichirFicheEnDirect'], ctx);
+        const f = chargerFonctions('classement.js', FONCTIONS_FICHE, ctx);
         return { ...f, rangees, entete, rosterSale, marquer: s => { statsMcDavid = s; } };
     }
 
@@ -98,9 +116,74 @@ describe('classement — fiche d’équipe en direct', () => {
         assert.match(mcdavid.bloc.innerHTML, /<span class="rr-v">4<\/span><span class="rr-l">B<\/span>/);
         assert.equal(mcdavid.valeur.textContent, 6);
         assert.ok(!mcdavid.classes.has('is-zero'));
-        assert.equal(club.valeur.textContent, clubPoolPoints({ wins: 3, otLosses: 1 }));
+        assert.equal(club.valeur.textContent, clubPoolPoints({ wins: 4, otLosses: 1 }));
         assert.equal(rosterSale.players[0].points, 6, 'le panneau de mise en vente suit aussi');
         assert.equal(entete.innerHTML, '2<sup>e</sup> sur 1 · 102 pts');
+    });
+
+    test('la soirée : PJ compte le match commencé, PPtsA ses points, et le repère dit qu’il joue', () => {
+        const { rafraichirFicheEnDirect, rangees } = monterFiche({
+            soiree: {
+                joueurs: { 8478402: { etat: 'LIVE', debut: '2026-10-15T23:00:00Z', mj: 1, ppa: 2 } },
+                clubs: { EDM: { etat: 'FINAL', mj: 1, ppa: 2 } }
+            },
+            extremes: { offensive: { max: 5, min: 1 } }
+        });
+        rafraichirFicheEnDirect();
+        const [mcdavid, club] = rangees;
+
+        assert.match(mcdavid.bloc.innerHTML, /<span class="rr-v">5<\/span><span class="rr-l">PJ<\/span>/, '4 au relevé, plus ce soir');
+        assert.equal(mcdavid.pptsa.valeur.textContent, 2);
+        assert.ok(!mcdavid.pptsa.classes.has('is-zero'));
+        assert.match(mcdavid.marques.innerHTML, /rr-mark is-live/);
+        assert.match(mcdavid.marques.innerHTML, /rr-mark is-best/, 'un repère de plus, à côté');
+
+        // Le club part de son relevé de minuit : la victoire du soir, déjà
+        // ajoutée par le direct, n'est pas comptée deux fois.
+        assert.match(club.bloc.innerHTML, /<span class="rr-v">6<\/span><span class="rr-l">PJ<\/span>/);
+        assert.equal(club.marques.innerHTML, '', 'match fini : plus de repère');
+    });
+
+    test('soirée pas encore lue : PJ et PPtsA tels que le relevé et le direct les donnent', () => {
+        const { rafraichirFicheEnDirect, rangees } = monterFiche();
+        rafraichirFicheEnDirect();
+        const [mcdavid, club] = rangees;
+        assert.match(mcdavid.bloc.innerHTML, /<span class="rr-v">4<\/span><span class="rr-l">PJ<\/span>/);
+        assert.equal(mcdavid.pptsa.valeur.textContent, 0);
+        assert.ok(mcdavid.pptsa.classes.has('is-zero'));
+        assert.match(club.bloc.innerHTML, /<span class="rr-v">6<\/span><span class="rr-l">PJ<\/span>/);
+    });
+
+    test('les repères : en jeu ou plus tard, meilleur ou pire du pool, côte à côte', () => {
+        const { marquesHTML } = monterFiche();
+        const joueur = { category: 'rookie' };
+        const extremes = { rookie: { max: 30, min: 2 } };
+
+        const plusTard = marquesHTML(joueur, 30, { etat: 'FUT', debut: '2026-10-15T23:00:00Z' }, extremes);
+        assert.match(plusTard, /^<span class="rr-mark is-later"[^>]*aria-label="Joue aujourd’hui à [^"]+"/);
+        assert.match(plusTard, /<span class="rr-mark is-best"[^>]*aria-label="Meilleure recrue du pool"/);
+
+        assert.match(marquesHTML(joueur, 2, {}, extremes), /^<span class="rr-mark is-worst"[^>]*aria-label="Pire recrue du pool"/);
+        assert.equal(marquesHTML(joueur, 10, { etat: 'FINAL' }, extremes), '', 'ni en jeu, ni à venir, ni extrême');
+        assert.equal(marquesHTML({ category: 'team' }, 4, undefined, {}), '');
+    });
+
+    test('meilleur et pire choix de chaque catégorie, tout le pool confondu — sans égalité générale', () => {
+        const points = { McDavid: 20, Crosby: 8, Hughes: 12, Makar: 9, Fox: 9, Oilers: 6, Leafs: 4 };
+        const { extremesDuPool } = chargerFonctions('classement.js', ['extremesDuPool'], {
+            pointsDuChoix: nom => points[nom]
+        });
+        const extremes = extremesDuPool({
+            teams: {
+                A: { members: ['a'], offensive: ['McDavid', 'Crosby'], defensive: ['Makar'], teams: ['Oilers'] },
+                B: { members: ['b'], offensive: ['Hughes'], defensive: ['Fox'], teams: ['Leafs'] },
+                Vide: { members: [], offensive: ['Personne'] }
+            }
+        });
+        assert.deepEqual({ ...extremes.offensive }, { max: 20, min: 8 });
+        assert.deepEqual({ ...extremes.team }, { max: 6, min: 4 });
+        assert.equal(extremes.defensive, undefined, 'tous à égalité : ni meilleur ni pire');
+        assert.equal(extremes.goalie, undefined);
     });
 
     test('hors de la fiche d’équipe : rien n’est touché', () => {

@@ -519,3 +519,126 @@ describe('le service, sur plusieurs journées', () => {
         recus.forEach(c => assert.deepEqual(c.joueurs[MCDAVID], { b: 1, p: 2 }));
     });
 });
+
+describe('la soirée de chacun (fiche d’équipe du classement)', () => {
+    const { soireesDuJour, enUniforme } = require('../../lib/pointsEnDirect.js');
+    const HIER = '2026-10-14', AUJ = '2026-10-15';
+    const BOUCHARD = 8480803, PICKARD = 8475717;
+    const DEBUT = '2026-10-15T23:00:00Z';
+
+    // Relevé de minuit pris le 15 au matin : la veille comprise.
+    const stats = {
+        season: SAISON, seasonStarted: true, lastUpdated: '2026-10-15T04:00:00Z',
+        players: [
+            { playerId: MCDAVID, playerName: 'Connor McDavid', position: 'C', teamAbbrev: 'EDM', points: 15 },
+            { playerId: BOUCHARD, playerName: 'Evan Bouchard', position: 'D', teamAbbrev: 'EDM', points: 9 },
+            { playerId: SKINNER, playerName: 'Stuart Skinner', position: 'G', teamAbbrev: 'EDM', points: 7 },
+            { playerId: PICKARD, playerName: 'Calvin Pickard', position: 'G', teamAbbrev: 'EDM', points: 2 },
+            { playerId: BOESER, playerName: 'Brock Boeser', position: 'R', teamAbbrev: 'VAN', points: 4 },
+            { playerId: DEMKO, playerName: 'Thatcher Demko', position: 'G', teamAbbrev: 'VAN', points: 9 }
+        ],
+        inclusion: Object.fromEntries([MCDAVID, BOUCHARD, SKINNER, PICKARD, BOESER, DEMKO]
+            .map(id => [id, { depuis: AUJ, matchs: [] }]))
+    };
+    const clubs = { format: 2, depuis: AUJ, inclusion: { EDM: { depuis: AUJ, matchs: [] }, VAN: { depuis: AUJ, matchs: [] } } };
+
+    const hier = { ...match(2026020012, { etat: 'OFF', away: 1, home: 3, debut: '2026-10-14T23:00:00Z' }), gameDate: HIER };
+    const feuilleHier = feuille({
+        away: 1, home: 3, edm: [patineur(MCDAVID, 1, 2), patineur(BOUCHARD)],
+        gardiensEdm: [gardien(SKINNER, 'W', 1), gardien(PICKARD, null, 0, '00:00')], van: [patineur(BOESER, 1, 0)]
+    });
+    const ce = (etat, score = {}) => ({ ...match(2026020050, { etat, debut: DEBUT, ...score }), gameDate: AUJ });
+
+    const soirees = (matchs, feuilles = {}) => soireesDuJour({
+        matchs, feuilles: new Map(Object.entries(feuilles).map(([id, f]) => [Number(id), f])),
+        stats, clubs, aujourdhui: AUJ
+    });
+
+    test('pas de match aujourd’hui : PPtsA garde les points de la veille, PJ ne bouge pas', () => {
+        const s = soirees([hier], { 2026020012: feuilleHier });
+        assert.deepEqual(s.joueurs[MCDAVID], { ppa: 3 });
+        assert.deepEqual(s.joueurs[SKINNER], { ppa: 2 }, 'la victoire du gardien, au barème du pool');
+        assert.equal(s.joueurs[BOUCHARD], undefined, 'en uniforme sans point : rien à dire');
+        assert.deepEqual(s.clubs.EDM, { ppa: 2 });
+        assert.equal(s.clubs.VAN, undefined);
+    });
+
+    test('il joue plus tard aujourd’hui : horloge, et la veille reste affichée jusqu’à la mise au jeu', () => {
+        const s = soirees([hier, ce('FUT')], { 2026020012: feuilleHier });
+        assert.deepEqual(s.joueurs[MCDAVID], { etat: 'FUT', debut: DEBUT, ppa: 3 });
+        assert.deepEqual(s.joueurs[BOESER], { etat: 'FUT', debut: DEBUT, ppa: 1 });
+        assert.equal(s.clubs.EDM.etat, 'FUT');
+    });
+
+    test('mise au jeu : il est en jeu, PJ prend un match, PPtsA repart des points de ce soir', () => {
+        const s = soirees([hier, ce('LIVE', { home: 1 })], {
+            2026020012: feuilleHier,
+            2026020050: feuille({
+                home: 1, edm: [patineur(MCDAVID, 0, 1), patineur(BOUCHARD)],
+                gardiensEdm: [gardien(SKINNER, null, 0, '12:00'), gardien(PICKARD, null, 0, '00:00')], van: [patineur(BOESER)]
+            })
+        });
+        assert.deepEqual(s.joueurs[MCDAVID], { etat: 'LIVE', debut: DEBUT, mj: 1, ppa: 1 });
+        assert.deepEqual(s.joueurs[BOUCHARD], { etat: 'LIVE', debut: DEBUT, mj: 1 });
+        assert.deepEqual(s.joueurs[BOESER], { etat: 'LIVE', debut: DEBUT, mj: 1 }, 'son but d’hier ne compte plus');
+        assert.deepEqual(s.joueurs[SKINNER], { etat: 'LIVE', debut: DEBUT, mj: 1 }, 'la victoire attend le final');
+        assert.equal(s.joueurs[PICKARD], undefined, 'le réserviste ne joue pas');
+        assert.equal(s.joueurs[DEMKO], undefined, 'pas sur la feuille : laissé de côté');
+        assert.deepEqual(s.clubs.EDM, { etat: 'LIVE', debut: DEBUT, mj: 1 });
+    });
+
+    test('match fini : plus en jeu, mais PJ et PPtsA restent jusqu’au relevé', () => {
+        const s = soirees([ce('FINAL', { home: 2, away: 1 })], {
+            2026020050: feuille({ home: 2, away: 1, edm: [patineur(MCDAVID, 1, 1)], gardiensEdm: [gardien(SKINNER, 'W', 1)] })
+        });
+        assert.deepEqual(s.joueurs[MCDAVID], { etat: 'FINAL', debut: DEBUT, mj: 1, ppa: 2 });
+        assert.deepEqual(s.joueurs[SKINNER], { etat: 'FINAL', debut: DEBUT, mj: 1, ppa: 2 });
+        assert.deepEqual(s.clubs.EDM, { etat: 'FINAL', debut: DEBUT, mj: 1, ppa: 2 });
+        assert.deepEqual(s.clubs.VAN, { etat: 'FINAL', debut: DEBUT, mj: 1 });
+    });
+
+    test('un match déjà compté au relevé n’ajoute pas de PJ', () => {
+        const s = soireesDuJour({
+            matchs: [ce('OFF')], aujourdhui: AUJ,
+            stats: { ...stats, inclusion: { [MCDAVID]: { depuis: AUJ, matchs: [2026020050] } } },
+            clubs: { ...clubs, inclusion: { EDM: { depuis: AUJ, matchs: [2026020050] } } },
+            feuilles: new Map([[2026020050, feuille({ edm: [patineur(MCDAVID)] })]])
+        });
+        assert.equal(s.joueurs[MCDAVID].mj, undefined);
+        assert.equal(s.clubs.EDM.mj, undefined);
+    });
+
+    test('feuille pas encore lue : le club décide qui est en jeu, sans PJ deviné', () => {
+        const s = soirees([ce('LIVE')]);
+        assert.deepEqual(s.joueurs[MCDAVID], { etat: 'LIVE', debut: DEBUT });
+        assert.equal(s.clubs.EDM.mj, 1, 'un club est toujours en uniforme');
+    });
+
+    test('présaison, autre saison, saison pas commencée ou journée inconnue : rien', () => {
+        const rien = { joueurs: {}, clubs: {} };
+        assert.deepEqual(soirees([{ ...ce('LIVE'), gameType: 1 }]), rien);
+        assert.deepEqual(soirees([{ ...ce('LIVE'), season: 20252026 }]), rien);
+        assert.deepEqual(soireesDuJour({ matchs: [ce('LIVE')], stats: { ...stats, seasonStarted: false }, aujourdhui: AUJ }), rien);
+        assert.deepEqual(soireesDuJour({ matchs: [ce('LIVE')], stats }), rien);
+    });
+
+    test('en uniforme : tous les patineurs, les gardiens qui ont joué', () => {
+        assert.deepEqual([...enUniforme(feuilleHier)].sort(), [BOESER, MCDAVID, BOUCHARD, SKINNER].sort());
+        assert.equal(enUniforme(null), null);
+    });
+
+    test('le service les tire du même calcul que le direct', async () => {
+        const service = creerPointsEnDirect({
+            io: { sockets: { adapter: { rooms: { get: () => undefined } } }, to: () => ({ emit() {} }) },
+            intervalleMs: 10000, horloge: () => 1, logger: { warn() {}, error() {} },
+            minuterie: { repeter: () => ({}), arreter() {} },
+            aujourdhui: () => AUJ,
+            lireMatchs: async () => [ce('LIVE', { home: 1 })],
+            lireMatchsDuJour: async () => [],
+            lireFeuille: async () => feuille({ home: 1, edm: [patineur(MCDAVID, 1, 0)] }),
+            lireReleves: () => ({ stats, clubs })
+        });
+        const s = await service.lireSoirees();
+        assert.deepEqual(s.joueurs[MCDAVID], { etat: 'LIVE', debut: DEBUT, mj: 1, ppa: 1 });
+    });
+});

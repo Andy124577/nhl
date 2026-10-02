@@ -766,10 +766,26 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
 .rr-pptsa .rr-v { font-size: 13px; color: var(--rr-num); }
 .rr-pptsa.is-zero .rr-v { color: var(--rr-dim); }
 .rr-pptsa .rr-l { font-size: 9.5px; color: var(--rr-dim); }
-.rr-ppts { line-height: 1.1; }
+.rr-ppts { position: relative; line-height: 1.1; }
 .rr-ppts .rr-v { font-size: 18px; font-weight: 700; color: var(--rr-strong); }
 .rr-ppts.is-zero .rr-v { color: var(--rr-muted); }
 .rr-ppts .rr-l { font-size: 9.5px; color: var(--rr-muted); }
+
+/* Repères de la rangée, côte à côte en haut à droite des PPts (classement.js,
+   marquesHTML) : en jeu, joue plus tard aujourd'hui, meilleur ou pire choix
+   du pool dans sa catégorie. Au plus deux à la fois : ils tiennent dans la
+   colonne, au-dessus du chiffre. */
+.rr-marks {
+    position: absolute;
+    bottom: 100%;
+    right: -4px;
+    display: flex;
+    gap: 2px;
+    margin-bottom: 1px;
+}
+.rr-marks:empty { display: none; }
+.rr-mark { display: block; width: 13px; height: 13px; }
+.rr-mark svg { display: block; width: 100%; height: 100%; }
 
 .rr-chev {
     font-size: 16px;
