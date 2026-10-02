@@ -1025,53 +1025,6 @@ html.ss-lock { overflow: hidden; }
     100% { background-position: -200% 0; }
 }
 
-/* Roster Skeleton — la même bande que la liste chargée (rangées de 64px,
-   photo ronde de 34px), décalée de la hauteur de « Joueurs actifs » pour
-   que rien ne saute à l'arrivée des données. */
-#rosterSkeleton {
-    gap: 0;
-    margin-top: 25px;
-    background: var(--rr-surface);
-    border-top: 1px solid var(--rr-line);
-    border-bottom: 1px solid var(--rr-line);
-}
-
-.roster-card-skeleton {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 76px;
-    padding: 6px 10px 6px 42px;
-}
-.roster-card-skeleton + .roster-card-skeleton { border-top: 1px solid var(--rr-line); }
-.roster-card-skeleton .skeleton-content { gap: 6px; }
-
-/* Scopé : skeleton-loader.css, chargé après, remet .skeleton-avatar à 60px. */
-.roster-card-skeleton .skeleton-avatar {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: linear-gradient(90deg, var(--bg) 25%, var(--card) 50%, var(--bg) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    flex-shrink: 0;
-}
-
-.skeleton-player-name {
-    width: 40%;
-    height: 14px;
-}
-
-.skeleton-player-stats {
-    width: 110px;
-    height: 20px;
-}
-
-.skeleton-player-points {
-    width: 44px;
-    height: 28px;
-}
-
 /* ==================== MODAL STYLES ==================== */
 .modal {
     display: none;

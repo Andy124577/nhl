@@ -1455,8 +1455,15 @@ function showTeamRoster(poolName, teamName) {
     };
     renderRosterHeader(poolName, teamName);
 
-    // Show skeleton initially
-    document.getElementById('rosterSkeleton').style.display = 'flex';
+    // Le squelette, rangée pour rangée, le temps de lire les annonces. Le
+    // compte des actifs est connu d'avance : la ligne de l'en-tête est
+    // complète dès maintenant.
+    const actifs = actifsDeLaFiche(teamData);
+    const compteActifs = document.querySelector('#rosterHeader .rh-count');
+    if (compteActifs) compteActifs.textContent = `${actifs.length} actif${actifs.length > 1 ? 's' : ''}`;
+    const squelette = document.getElementById('rosterSkeleton');
+    squelette.innerHTML = rosterSqueletteHTML(actifs);
+    squelette.style.display = 'block';
     document.getElementById('rosterList').style.display = 'none';
 
     // Render roster after short delay — fetch this team's active for-sale
@@ -1478,6 +1485,53 @@ function showTeamRoster(poolName, teamName) {
         if (currentView !== VIEW_STATES.TEAM_ROSTER || currentTeamName !== teamName || currentPoolName !== poolName) return;
         renderTeamRoster(teamData, activeListings);
     }, 100);
+}
+
+/**
+ * Les actifs d'une fiche, dans l'ordre de la liste (renderTeamRoster) :
+ * attaquants, défenseurs, gardiens, recrues, puis les clubs. Le type dit
+ * quels libellés porte la rangée — une recrue gardienne compte en gardienne.
+ */
+function actifsDeLaFiche(roster) {
+    const actifs = [];
+    ['offensive', 'defensive', 'goalie', 'rookie'].forEach(categorie => {
+        (roster[categorie] || []).forEach(nom => {
+            actifs.push({ nom, type: ficheJoueur(nom, categorie).gardien ? 'goalie' : 'player' });
+        });
+    });
+    (roster.teams || []).forEach(nom => actifs.push({ nom, type: 'team' }));
+    return actifs;
+}
+
+/**
+ * Le squelette de la fiche : une rangée par actif, aux classes de la liste
+ * chargée (.roster-row) — rien ne bouge à l'arrivée des données. Le rang et
+ * les libellés (PJ, B, P, Pts ; V, BL pour un gardien ; V, DP pour un club)
+ * sont les vrais ; des os prennent la place de la photo, du nom, du club et
+ * des chiffres. Les longueurs de nom suivent celles des vrais noms.
+ */
+function rosterSqueletteHTML(actifs) {
+    const LIBELLES = { player: ['B', 'P'], goalie: ['V', 'BL'], team: ['V', 'DP'] };
+    const os = (cls, largeur) => `<span class="fz-bone ${cls}"${largeur ? ` style="--w:${largeur}px"` : ''}></span>`;
+    const stat = (largeur, libelle) => `<div class="rr-stat">${os('rr-sk-v', largeur)}<span class="rr-l">${libelle}</span></div>`;
+    const rangees = actifs.map((a, i) => {
+        const [l1, l2] = LIBELLES[a.type];
+        const nom = Math.max(64, Math.min(150, a.nom.length * 7.5));
+        return `
+            <div class="roster-row" style="--i:${i}">
+                <div class="rr-rank">${i + 1}</div>
+                <div class="rr-shot"><div class="rr-avatar fz-bone"></div></div>
+                <div class="rr-main">
+                    <div class="rr-name-line">${os('rr-sk-name', Math.round(nom))}<span class="rr-sk-meta"></span></div>
+                    <div class="rr-stats">${stat(12, 'PJ')}${stat(8, l1)}${stat(8, l2)}${stat(12, 'Pts')}</div>
+                </div>
+                <div class="rr-pptsa">${os('rr-sk-v', 10)}<span class="rr-l">PPtsA</span></div>
+                <div class="rr-ppts">${os('rr-sk-pts')}<span class="rr-l">PPts</span></div>
+                <span class="rr-chev">›</span>
+            </div>`;
+    }).join('');
+    return `<p class="st-sk-sr" role="status">Chargement des joueurs…</p>
+        <div class="roster-rows" inert>${rangees}</div>`;
 }
 
 /** La fiche d'équipe remplace le titre commun de la page par le sien. */

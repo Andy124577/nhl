@@ -12,8 +12,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="classement.css?v=20261002g" />
-    <link rel="stylesheet" href="classement-premium.css?v=20261002c" />
+    <link rel="stylesheet" href="classement.css?v=20261002h" />
+    <link rel="stylesheet" href="classement-premium.css?v=20261002d" />
     <link rel="stylesheet" href="index.css?v=20260926b" />
     <link rel="stylesheet" href="injuries.css?v=20260926b" />
     <link rel="stylesheet" href="skeleton-loader.css?v=20260926b" />
@@ -354,33 +354,10 @@
             <!-- En-tête de la fiche : retour, nom (sélecteur d'équipe), rang,
                  bouton « Mettre en vente ». Rempli par renderRosterHeader(). -->
             <div id="rosterHeader" class="roster-header"></div>
-            <!-- Skeleton Loader -->
-            <div class="skeleton-loader" id="rosterSkeleton">
-                <div class="roster-card-skeleton">
-                    <div class="skeleton-avatar"></div>
-                    <div class="skeleton-content">
-                        <div class="skeleton skeleton-player-name"></div>
-                        <div class="skeleton skeleton-player-stats"></div>
-                    </div>
-                    <div class="skeleton skeleton-player-points"></div>
-                </div>
-                <div class="roster-card-skeleton">
-                    <div class="skeleton-avatar"></div>
-                    <div class="skeleton-content">
-                        <div class="skeleton skeleton-player-name"></div>
-                        <div class="skeleton skeleton-player-stats"></div>
-                    </div>
-                    <div class="skeleton skeleton-player-points"></div>
-                </div>
-                <div class="roster-card-skeleton">
-                    <div class="skeleton-avatar"></div>
-                    <div class="skeleton-content">
-                        <div class="skeleton skeleton-player-name"></div>
-                        <div class="skeleton skeleton-player-stats"></div>
-                    </div>
-                    <div class="skeleton skeleton-player-points"></div>
-                </div>
-            </div>
+            <!-- Squelette de la fiche : les rangées de la liste, une par joueur
+                 actif, rangs et libellés réels, des os à la place des données.
+                 Rempli par showTeamRoster (rosterSqueletteHTML). -->
+            <div class="rr-sk" id="rosterSkeleton" aria-busy="true" style="display: none;"></div>
             <!-- Actual Content -->
             <div id="rosterList" class="roster-list" style="display: none;">
                 <!-- Player cards will be injected here -->
@@ -407,7 +384,7 @@
     <script defer src="careerTeamLogo.js"></script>
     <script defer src="careerTotals.js"></script>
     <script defer src="draftkitData.js?v=20260925"></script>
-    <script defer src="classement.js?v=20261002f"></script>
+    <script defer src="classement.js?v=20261002g"></script>
     <script defer src="navbar.js?v=20260930a"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20260929a"></script>

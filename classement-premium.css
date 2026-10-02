@@ -793,6 +793,36 @@ body.fz-classement .st-sk-list .st-mobile-chev { opacity: .65; }
 
 body.fz-classement .st-sk-legend summary { opacity: .5; }
 
+/* La fiche d'équipe (#rosterSkeleton, rosterSqueletteHTML) : les rangées
+   de la liste, des os aux hauteurs des lignes qu'ils remplacent — la
+   rangée garde ses 76px, la photo ses 52px. */
+body.fz-classement .rr-sk .roster-row {
+  opacity: 0;
+  animation: fzOsMonte .35s ease-out forwards;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+body.fz-classement .rr-sk .rr-avatar.fz-bone { border-radius: 50%; }
+body.fz-classement .rr-sk .rr-name-line { align-items: center; }
+body.fz-classement .rr-sk-name {
+  flex: 0 1 auto;
+  width: var(--w);
+  max-width: calc(100% - 40px);
+  height: 12px;
+  margin: 2.5px 0;
+}
+body.fz-classement .rr-sk-meta {
+  flex: none;
+  display: block;
+  width: 34px;
+  height: 9px;
+  border-radius: 3px;
+  background: var(--rr-bone);
+}
+body.fz-classement .rr-sk-v { width: var(--w); height: 9px; margin: 2.5px 0; border-radius: 3px; }
+body.fz-classement .rr-sk-pts { width: 22px; height: 16px; margin: 2px 0; }
+body.fz-classement .rr-sk .rr-l,
+body.fz-classement .rr-sk .rr-chev { opacity: .65; }
+
 @media (max-width: 680px) {
   body.fz-classement #standingsSkeleton .st-summary { display: none; }
   body.fz-classement .st-sk-list .st-mobile-row { cursor: default; }
@@ -804,7 +834,8 @@ body.fz-classement .st-sk-legend summary { opacity: .5; }
   body.fz-classement .fz-bone { animation: none; }
   body.fz-classement .st-sk-table tbody tr,
   body.fz-classement .st-sk-list .st-mobile-row,
-  body.fz-classement .st-sk-insights { opacity: 1; animation: none; }
+  body.fz-classement .st-sk-insights,
+  body.fz-classement .rr-sk .roster-row { opacity: 1; animation: none; }
 }
 
 /* ==================== FICHE D'ÉQUIPE : liste pleine largeur ====================
@@ -813,8 +844,7 @@ body.fz-classement .st-sk-legend summary { opacity: .5; }
    marge de .container, la colonne du nom n'a plus la place des quatre
    stats. L'en-tête garde la marge. */
 @media (max-width: 680px) {
-  body.fz-classement .roster-rows,
-  body.fz-classement #rosterSkeleton { margin-inline: -32px; }
+  body.fz-classement .roster-rows { margin-inline: -32px; }
 }
 
 /* ==================== TÉLÉPHONE : EN-TÊTE ====================
