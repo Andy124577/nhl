@@ -316,6 +316,10 @@
         el.textContent = d1.getUTCMonth() === d2.getUTCMonth()
             ? `${debut} - ${d2.getUTCDate()}`
             : `${debut} - ${d2.getUTCDate()} ${MOIS_COURTS[d2.getUTCMonth()]}`;
+        // Partie vers une autre semaine : la pastille flottante ramène à
+        // aujourd'hui. Dans la semaine en cours, elle n'a rien à faire.
+        const retour = document.getElementById('calReturn');
+        if (retour) retour.hidden = lundiVise === lundiDe(aujourdhui());
     }
 
     function rendre() {
@@ -324,8 +328,6 @@
         libelleSaison();
         rendreBande();
         rendreJour();
-        const champ = document.getElementById('calDate');
-        if (champ && jourChoisi) champ.value = jourChoisi;
         document.getElementById('calPrev').disabled = !(semaine && semaine.previousStartDate);
         document.getElementById('calNext').disabled = !(semaine && semaine.nextStartDate);
         reglerSuivi();
@@ -491,8 +493,6 @@
             jourChoisi = puce.dataset.jour;
             rendreBande();
             rendreJour();
-            const champ = document.getElementById('calDate');
-            if (champ) champ.value = jourChoisi;
         });
         document.getElementById('calStrip').addEventListener('keydown', e => {
             if (!['ArrowLeft', 'ArrowRight'].includes(e.key) || !semaine) return;
@@ -513,15 +513,11 @@
         document.getElementById('calNext').addEventListener('click', () => {
             if (semaine && semaine.nextStartDate) { jourChoisi = null; chargerSemaine(decaler(lundiVise, 7)); }
         });
-        document.getElementById('calToday').addEventListener('click', () => {
+        // La pastille disparaît sous le doigt : le focus passe au jour
+        // d'aujourd'hui plutôt que de retomber sur la page.
+        document.getElementById('calReturn').addEventListener('click', () => {
             jourChoisi = aujourdhui();
-            chargerSemaine(jourChoisi);
-        });
-        document.getElementById('calDate').addEventListener('change', e => {
-            if (/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)) {
-                jourChoisi = e.target.value;
-                chargerSemaine(e.target.value);
-            }
+            chargerSemaine(jourChoisi).then(() => document.querySelector('.cal-chip.is-today')?.focus());
         });
         document.getElementById('calMine').addEventListener('change', e => {
             seulementMiens = e.target.checked;

@@ -19,15 +19,13 @@
     <link rel="stylesheet" href="poolNav.css?v=20260928a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="index.css?v=20260926b">
-    <link rel="stylesheet" href="calendrier.css?v=20261002a">
+    <link rel="stylesheet" href="calendrier.css?v=20261002b">
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit précéder tout script de page. -->
     <script defer src="activePool.js?v=20260929n"></script>
 </head>
 <body data-page="calendrier" class="fz-cal-page">
     <nav class="navbar"></nav>
-
-    <div data-fz-context></div>
 
     <main class="cal-page" id="calPage">
         <header class="cal-head">
@@ -46,11 +44,6 @@
                         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M9 18l6-6-6-6"/></svg>
                     </button>
                 </div>
-                <button type="button" class="cal-today" id="calToday">Aujourd’hui</button>
-                <label class="cal-jump">
-                    <span class="cal-sr">Aller à une date</span>
-                    <input type="date" id="calDate" aria-label="Aller à une date">
-                </label>
             </div>
         </header>
 
@@ -70,10 +63,16 @@
                 <div class="cal-loading"><span class="cal-spinner" aria-hidden="true"></span>Chargement du calendrier…</div>
             </div>
         </section>
+
+        <!-- Hors de la semaine en cours seulement (calendrier.js). -->
+        <button type="button" class="cal-return" id="calReturn" hidden>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+            Revenir à aujourd’hui
+        </button>
     </main>
 
     <script defer src="/socket.io/socket.io.js"></script>
-    <script defer src="calendrier.js?v=20261002a"></script>
+    <script defer src="calendrier.js?v=20261002b"></script>
     <script defer src="navbar.js?v=20260930a"></script>
     <script defer src="avatars.js"></script>
     <script defer src="profanity.js"></script>

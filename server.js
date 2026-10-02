@@ -4522,18 +4522,40 @@ app.get('/hot-players', async (req, res) => {
 });
 
 // Route to get top-5 stat leaders (points/goals/assists/wins) for the homepage hero.
-// Reads the same cached file as /hot-players, which updateCurrentStats() keeps
-// patched with live current-season points/goals/assists/wins.
+// nhl_filtered_stats.json ne sert qu'à classer les joueurs (attaquants,
+// défenseurs, recrues, gardiens) : ses totaux sont ceux de l'an passé, et la
+// recopie des relevés saute les joueurs à zéro match, qui les gardaient. Les
+// chiffres viennent donc des relevés de la saison courante (direct compris).
 app.get('/stats-leaders', async (req, res) => {
     try {
         const filteredStatsPath = path.join(__dirname, 'nhl_filtered_stats.json');
+        const vide = { forwardsPoints: [], defensePoints: [], goalsLeaders: [], assistsLeaders: [], rookiePoints: [], goalieWins: [] };
 
         if (!fs.existsSync(filteredStatsPath)) {
             console.error('❌ nhl_filtered_stats.json not found');
-            return res.json({ forwardsPoints: [], defensePoints: [], goalsLeaders: [], assistsLeaders: [], rookiePoints: [], goalieWins: [] });
+            return res.json(vide);
         }
 
+        const saison = await getStatsSeason();
+        const releve = await loadCurrentStats();
+        if (Number(releve.season) !== Number(saison.seasonId)) {
+            // Relevé d'une autre saison : on rafraîchit sans afficher l'an passé.
+            triggerBackgroundStatsRefresh('meneurs : relevé d\'une autre saison');
+            return res.json(vide);
+        }
+
+        const { players: relevesJoueurs } = await relevesAvecDirect();
+        const frais = new Map(relevesJoueurs.map(p => [Number(p.playerId), p]));
+        const enSaison = arr => (arr || []).map(p => {
+            const f = frais.get(Number(p.playerId));
+            return f ? { ...p, gamesPlayed: f.gamesPlayed, goals: f.goals, assists: f.assists, wins: f.wins, points: f.points } : { ...p, gamesPlayed: 0 };
+        });
+
         const filteredStats = JSON.parse(fs.readFileSync(filteredStatsPath, 'utf-8'));
+        filteredStats.Top_100_Offensive_Players = enSaison(filteredStats.Top_100_Offensive_Players);
+        filteredStats.Top_50_Defenders = enSaison(filteredStats.Top_50_Defenders);
+        filteredStats.Top_Rookies = enSaison(filteredStats.Top_Rookies);
+        filteredStats.Top_50_Goalies = enSaison(filteredStats.Top_50_Goalies);
 
         const toSkater = p => ({
             playerId: p.playerId,

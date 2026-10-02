@@ -15,11 +15,6 @@ body.fz-cal-page { background: var(--bg); }
     color: var(--text-main);
 }
 
-.cal-sr {
-    position: absolute; width: 1px; height: 1px; overflow: hidden;
-    clip: rect(0 0 0 0); white-space: nowrap;
-}
-
 /* ---- En-tête ---- */
 .cal-head {
     display: flex;
@@ -53,19 +48,6 @@ body.fz-cal-page { background: var(--bg); }
 }
 
 .cal-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.cal-today,
-.cal-jump input {
-    min-height: 44px;
-    border: 1px solid var(--border-gray);
-    border-radius: 12px;
-    background: var(--card);
-    color: var(--text-main);
-    font: inherit;
-    font-weight: 700;
-}
-.cal-today { padding: 0 14px; cursor: pointer; }
-.cal-jump input { padding: 0 10px; font-weight: 600; color-scheme: light dark; }
-.cal-today:hover { border-color: var(--primary); color: var(--primary-text); }
 
 /* Semaine : ‹ 21 sept. - 27 › dans une seule pastille. Les flèches n'ont
    pas de cadre à elles ; c'est la pastille qui en porte un. */
@@ -116,9 +98,49 @@ body.fz-cal-page { background: var(--bg); }
     .cal-week-label { flex: 1; }
 }
 .cal-nav:focus-visible,
-.cal-today:focus-visible,
-.cal-jump input:focus-visible,
 .cal-chip:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* ---- Retour à aujourd'hui ----
+   Flotte au centre, au-dessus des onglets fixes du téléphone, dès qu'on
+   quitte la semaine en cours (calendrier.js, rendreSemaine). */
+.cal-return {
+    position: fixed;
+    left: 50%;
+    bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    z-index: 990;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 18px 0 14px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--primary);
+    color: var(--on-primary);
+    font: inherit;
+    font-size: .92rem;
+    font-weight: 800;
+    white-space: nowrap;
+    box-shadow: var(--elevation-4);
+    cursor: pointer;
+    transform: translateX(-50%);
+    animation: calSurgit .2s cubic-bezier(.4, 0, .2, 1);
+}
+.cal-return[hidden] { display: none; }
+.cal-return svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.cal-return:hover { background: var(--primary-deep); }
+.cal-return:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+@media (min-width: 769px) { .cal-return { bottom: 40px; } }
+@keyframes calSurgit { from { opacity: 0; transform: translate(-50%, 10px); } }
+@media (prefers-reduced-motion: reduce) { .cal-return { animation: none; } }
+/* La dernière carte peut toujours remonter au-dessus de la pastille. */
+.cal-page:has(.cal-return:not([hidden])) { padding-bottom: 112px; }
 
 /* ---- Bande des jours ---- */
 .cal-strip {
