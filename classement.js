@@ -2056,7 +2056,7 @@ function extremesDuPool(poolData) {
 const MARQUES_SVG = {
     enJeu: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#16A34A"/><path d="M6.3 4.8v6.4L11.4 8z" fill="#FFFFFF"/></svg>',
     plusTard: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.1" fill="#FFFFFF" stroke="#111111" stroke-width="1.6"/><path d="M8 4.4V8l2.4 1.6" fill="none" stroke="#111111" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    meilleur: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#F97316"/><path d="M8 3.4l1.18 2.98 3.19.2-2.47 2.04.8 3.1L8 10l-2.7 1.72.8-3.1-2.47-2.04 3.19-.2z" fill="#FFFFFF"/></svg>',
+    meilleur: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#2563EB"/><path d="M8 3.4l1.18 2.98 3.19.2-2.47 2.04.8 3.1L8 10l-2.7 1.72.8-3.1-2.47-2.04 3.19-.2z" fill="#FFFFFF"/></svg>',
     pire: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#DC2626"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/></svg>'
 };
 
