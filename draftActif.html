@@ -32,7 +32,7 @@
   <link rel="stylesheet" href="poolSettings.css?v=20260926b">
   <link rel="stylesheet" href="skeleton-loader.css?v=20260926b" />
   <link rel="stylesheet" href="draftActif.css?v=20260928b" />
-  <link rel="stylesheet" href="draftActif-premium.css?v=20260928a" />
+  <link rel="stylesheet" href="draftActif-premium.css?v=20261003a" />
   <!-- Après les deux précédents : la mise en page bureau (trois colonnes,
        portraits agrandis, filtres de joueurs) reprend leurs règles. -->
   <link rel="stylesheet" href="draftDesk.css?v=20260928c" />
@@ -375,11 +375,27 @@
                 <th>GP</th>
                 <th>G</th>
                 <th>A</th>
-                <th title="Points projetés 2026-2027 (Trousse de repêchage)">PTS proj.</th>
-                <th>Action</th>
+                <th class="points-column" title="Points projetés 2026-2027 (Trousse de repêchage)">PTS proj.</th>
+                <th class="action-column">Action</th>
               </tr>
             </thead>
-            <tbody></tbody>
+            <!-- Squelette de la liste (fzSquelette.css) : dix rangées qui
+                 reprennent la forme des vraies — rang, portrait, nom, ligne
+                 de méta, chiffres, PTS, étoile. populateTable() vide ce
+                 tbody à l'arrivée du repêchage ; d'ici là, rien ne dit
+                 « pas encore commencé » (appliquerEtat, draftActif.js). -->
+            <tbody>
+              <tr class="fzd-sk-row fz-sk-rise" style="--i:0" data-fz-sk><td><span class="fz-sk-sr" role="status">Chargement des joueurs…</span></td><td class="fzd-name-cell"><div class="fzd-name-inner"><span class="fz-bone is-round fzd-sk-photo"></span><span class="fzd-name-txt"><span class="fz-bone fzd-sk-name" style="--w:132px"></span><span class="fz-bone-flat fzd-sk-meta" style="--w:58px"></span></span></div></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td class="points-column"><span class="fz-bone fzd-sk-pts"></span></td><td class="action-column"><span class="fz-bone-flat fzd-sk-star"></span></td></tr>
+              <tr class="fzd-sk-row fz-sk-rise" style="--i:1" data-fz-sk aria-hidden="true"><td></td><td class="fzd-name-cell"><div class="fzd-name-inner"><span class="fz-bone is-round fzd-sk-photo"></span><span class="fzd-name-txt"><span class="fz-bone fzd-sk-name" style="--w:108px"></span><span class="fz-bone-flat fzd-sk-meta" style="--w:64px"></span></span></div></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td class="points-column"><span class="fz-bone fzd-sk-pts"></span></td><td class="action-column"><span class="fz-bone-flat fzd-sk-star"></span></td></tr>
+              <tr class="fzd-sk-row fz-sk-rise" style="--i:2" data-fz-sk aria-hidden="true"><td></td><td class="fzd-name-cell"><div class="fzd-name-inner"><span class="fz-bone is-round fzd-sk-photo"></span><span class="fzd-name-txt"><span class="fz-bone fzd-sk-name" style="--w:146px"></span><span class="fz-bone-flat fzd-sk-meta" style="--w:52px"></span></span></div></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td class="points-column"><span class="fz-bone fzd-sk-pts"></span></td><td class="action-column"><span class="fz-bone-flat fzd-sk-star"></span></td></tr>
+              <tr class="fzd-sk-row fz-sk-rise" style="--i:3" data-fz-sk aria-hidden="true"><td></td><td class="fzd-name-cell"><div class="fzd-name-inner"><span class="fz-bone is-round fzd-sk-photo"></span><span class="fzd-name-txt"><span class="fz-bone fzd-sk-name" style="--w:120px"></span><span class="fz-bone-flat fzd-sk-meta" style="--w:70px"></span></span></div></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td class="points-column"><span class="fz-bone fzd-sk-pts"></span></td><td class="action-column"><span class="fz-bone-flat fzd-sk-star"></span></td></tr>
+              <tr class="fzd-sk-row fz-sk-rise" style="--i:4" data-fz-sk aria-hidden="true"><td></td><td class="fzd-name-cell"><div class="fzd-name-inner"><span class="fz-bone is-round fzd-sk-photo"></span><span class="fzd-name-txt"><span class="fz-bone fzd-sk-name" style="--w:98px"></span><span class="fz-bone-flat fzd-sk-meta" style="--w:60px"></span></span></div></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td class="points-column"><span class="fz-bone fzd-sk-pts"></span></td><td class="action-column"><span class="fz-bone-flat fzd-sk-star"></span></td></tr>
+              <tr class="fzd-sk-row fz-sk-rise" style="--i:5" data-fz-sk aria-hidden="true"><td></td><td class="fzd-name-cell"><div class="fzd-name-inner"><span class="fz-bone is-round fzd-sk-photo"></span><span class="fzd-name-txt"><span class="fz-bone fzd-sk-name" style="--w:138px"></span><span class="fz-bone-flat fzd-sk-meta" style="--w:56px"></span></span></div></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td class="points-column"><span class="fz-bone fzd-sk-pts"></span></td><td class="action-column"><span class="fz-bone-flat fzd-sk-star"></span></td></tr>
+              <tr class="fzd-sk-row fz-sk-rise" style="--i:6" data-fz-sk aria-hidden="true"><td></td><td class="fzd-name-cell"><div class="fzd-name-inner"><span class="fz-bone is-round fzd-sk-photo"></span><span class="fzd-name-txt"><span class="fz-bone fzd-sk-name" style="--w:114px"></span><span class="fz-bone-flat fzd-sk-meta" style="--w:66px"></span></span></div></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td class="points-column"><span class="fz-bone fzd-sk-pts"></span></td><td class="action-column"><span class="fz-bone-flat fzd-sk-star"></span></td></tr>
+              <tr class="fzd-sk-row fz-sk-rise" style="--i:7" data-fz-sk aria-hidden="true"><td></td><td class="fzd-name-cell"><div class="fzd-name-inner"><span class="fz-bone is-round fzd-sk-photo"></span><span class="fzd-name-txt"><span class="fz-bone fzd-sk-name" style="--w:126px"></span><span class="fz-bone-flat fzd-sk-meta" style="--w:54px"></span></span></div></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td class="points-column"><span class="fz-bone fzd-sk-pts"></span></td><td class="action-column"><span class="fz-bone-flat fzd-sk-star"></span></td></tr>
+              <tr class="fzd-sk-row fz-sk-rise" style="--i:8" data-fz-sk aria-hidden="true"><td></td><td class="fzd-name-cell"><div class="fzd-name-inner"><span class="fz-bone is-round fzd-sk-photo"></span><span class="fzd-name-txt"><span class="fz-bone fzd-sk-name" style="--w:104px"></span><span class="fz-bone-flat fzd-sk-meta" style="--w:62px"></span></span></div></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td class="points-column"><span class="fz-bone fzd-sk-pts"></span></td><td class="action-column"><span class="fz-bone-flat fzd-sk-star"></span></td></tr>
+              <tr class="fzd-sk-row fz-sk-rise" style="--i:9" data-fz-sk aria-hidden="true"><td></td><td class="fzd-name-cell"><div class="fzd-name-inner"><span class="fz-bone is-round fzd-sk-photo"></span><span class="fzd-name-txt"><span class="fz-bone fzd-sk-name" style="--w:140px"></span><span class="fz-bone-flat fzd-sk-meta" style="--w:58px"></span></span></div></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td><span class="fz-bone-flat fzd-sk-n"></span></td><td class="points-column"><span class="fz-bone fzd-sk-pts"></span></td><td class="action-column"><span class="fz-bone-flat fzd-sk-star"></span></td></tr>
+            </tbody>
           </table>
           
 
@@ -453,12 +469,6 @@
 
   </div>
 
-  <div id="loading-container">
-    <div id="loading">
-      <span class="spinner"></span>
-    </div>
-  </div>
-
   
 
   <div id="pickConfirmOverlay" class="pick-confirm-overlay" role="dialog"
@@ -511,8 +521,8 @@
   <!-- Trousse de repêchage 2026-2027 : bassin, gardiens, équipes et
        projections. Doit précéder draftActif.js, qui l'appelle. -->
   <script defer src="draftkitData.js?v=20260930a"></script>
-  <script defer src="draftRefresh.js?v=20260928a"></script>
-  <script defer src="draftActif.js?v=20260929n"></script>
+  <script defer src="draftRefresh.js?v=20261003a"></script>
+  <script defer src="draftActif.js?v=20261003a"></script>
 
 
   <script defer src="draftPickFlow.js?v=20260922"></script>
@@ -521,7 +531,7 @@
   <script defer src="draftFavorites.js?v=20260927"></script>
 
 
-  <script defer src="draftApercuExtra.js?v=20260928a"></script>
+  <script defer src="draftApercuExtra.js?v=20261003a"></script>
   
 
   <script defer src="draftListePremium.js?v=20260928a"></script>

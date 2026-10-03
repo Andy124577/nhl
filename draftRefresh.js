@@ -24,9 +24,6 @@
 /** Empreinte du dernier état effectivement rendu. */
 let draftViewSignature = null;
 
-/** Premier chargement fait : le voile d'attente ne resservira plus. */
-let draftFirstLoadDone = false;
-
 /**
  * Empreinte de ce que la page montre. Volontairement limitée à ces
  * champs : tout ce que la vue affiche en dépend, et rien d'autre ne doit

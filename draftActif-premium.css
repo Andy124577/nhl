@@ -1261,6 +1261,32 @@ body.fz-draft #playerTable tbody tr.draft-empty-row:hover {
 }
 body.fz-draft .draft-empty { color: var(--fzd-text-faint); white-space: normal; }
 body.fz-draft .draft-empty-icon { color: var(--fzd-text-fainter); }
+
+/* Squelette de la liste (draftActif.html) : les rangées portent déjà les
+   classes que draftDesk.js pose sur les vraies (fzd-name-cell,
+   fzd-name-inner…), donc bureau et téléphone leur donnent les mêmes
+   colonnes. Seuls les os sont dimensionnés ici. */
+body.fz-draft #playerTable tbody tr.fzd-sk-row,
+body.fz-draft #playerTable tbody tr.fzd-sk-row:hover {
+  background: none !important;
+  cursor: default;
+}
+body.fz-draft .fzd-sk-photo { flex: none; width: 34px; height: 34px; }
+body.fz-draft .fzd-sk-name { width: var(--w); max-width: 100%; height: 12px; margin: 2px 0; }
+body.fz-draft .fzd-sk-meta { width: var(--w); max-width: 100%; height: 9px; }
+body.fz-draft .fzd-sk-n { width: 18px; height: 10px; margin-left: auto; border-radius: 3px; }
+body.fz-draft .fzd-sk-pts { width: 24px; height: 14px; margin-left: auto; }
+/* L'étoile : la boîte du bouton, bordure comprise. */
+body.fz-draft .fzd-sk-star {
+  display: inline-block;
+  vertical-align: middle;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+}
+@media (max-width: 1099px) {
+  body.fz-draft .fzd-sk-star { width: 36px; height: 36px; border-radius: 8px; }
+}
 body.fz-draft #playerTable tbody td,
 body.fz-draft #fzPickedList tbody td {
   background: none;

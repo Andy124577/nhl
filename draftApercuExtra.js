@@ -693,7 +693,9 @@ function fzApplyPagination() {
     const corps = document.querySelector('#playerTable tbody');
     if (!pied || !corps) return;
 
-    const lignes = [...corps.querySelectorAll('tr')].filter(tr => !tr.classList.contains('draft-empty-row'));
+    // Ni la rangée « aucun joueur », ni le squelette du chargement.
+    const lignes = [...corps.querySelectorAll('tr')]
+        .filter(tr => !tr.classList.contains('draft-empty-row') && !tr.hasAttribute('data-fz-sk'));
     if (!lignes.length) { pied.hidden = true; return; }
 
     const limite = FZ_TAILLE_LOT * fzLotsAffiches;
