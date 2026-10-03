@@ -2,9 +2,10 @@
    REPÊCHAGE INSTANTANÉ — le panneau sous le bouton
    ------------------------------------------------------------
    Qui attend déjà, et combien de places restent. Le panneau est écrit
-   par instantDraft.js et glissé juste après le bouton, sur les trois
-   pages qui l'affichent : l'Accueil (bandeau rouge, cartes sombres),
-   Mes pools (grille de cartes) et Rejoindre (grande carte éclair).
+   par instantDraft.js et glissé juste après le bouton, sur les pages
+   qui l'affichent : l'Accueil (bandeau rouge, cartes sombres) et Mes
+   pools (grille de cartes). L'accueil sans pool et Rejoindre un pool
+   montrent plutôt la carte à sièges, en fin de feuille.
 
    D'où la forme de cette feuille : un habillage neutre bâti sur les
    variables du site, puis un bloc par contexte — chacune de ces pages a
@@ -244,20 +245,57 @@
     margin-top: 0;
 }
 
-/* ------------------------------------------------------------
-   REJOINDRE UN POOL — la grande carte éclair
-   Elle porte 28px de marge basse ; le panneau se recolle dessous et
-   reprend cette marge à son compte.
-   ------------------------------------------------------------ */
-.fz-instant + .fzid {
-    margin-top: -20px;
-    margin-bottom: 28px;
-    border-color: rgba(var(--primary-rgb), .25);
-    border-radius: 18px;
-}
-
 @media (max-width: 600px) {
     .fzid { padding: 11px 12px; }
     .fzid-nom { max-width: 110px; }
     .fzid-btn { flex: 1 1 auto; text-align: center; }
 }
+
+/* ------------------------------------------------------------
+   LA CARTE À SIÈGES — accueil sans pool, Rejoindre un pool
+   Quatre sièges qui se remplissent sous les yeux, une ligne qui
+   compte, un seul bouton. Rendu par instantDraft.js (rendreCarte).
+
+   Sur l'accueil elle prend la palette du tableau de bord (--fzd-*,
+   thème sombre compris) ; ailleurs, les jetons du site. Les replis
+   sont posés une fois ici, sur la carte, pour que ses enfants n'aient
+   qu'un nom à lire.
+   ------------------------------------------------------------ */
+.fzo-start {
+    --fzo-surface: var(--fzd-surface, var(--card));
+    --fzo-well: var(--fzd-bg-alt, var(--bg-gray-light));
+    --fzo-line: var(--fzd-border, var(--border-light));
+    --fzo-line-strong: var(--fzd-border-strong, var(--border-light));
+    --fzo-ink: var(--fzd-ink, var(--text-main));
+    --fzo-muted: var(--fzd-text-muted, var(--text-secondary));
+    --fzo-faint: var(--fzd-text-faint, var(--text-secondary));
+    --fzo-accent: var(--fzd-accent, var(--primary-text));
+    --fzo-fill: var(--fzd-accent-fill, var(--primary));
+    --fzo-on-fill: var(--fzd-on-accent, var(--on-primary));
+    display:flex; flex-direction:column; gap:18px; padding:24px 28px; border:1px solid var(--fzo-line-strong); border-radius:14px; background:var(--fzo-surface); font-family:'Barlow',system-ui,sans-serif;
+}
+.fzo-start-head { display:flex; align-items:center; gap:14px; }
+.fzo-start-bolt { width:28px; height:28px; flex:none; fill:var(--fzo-accent); }
+.fzo-start-copy { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.fzo-start h3 { margin:0; color:var(--fzo-ink); font:700 30px/1 'Barlow Condensed',sans-serif; letter-spacing:.5px; text-transform:uppercase; }
+.fzo-start-copy p { margin:0; font-size:15px; line-height:1.4; color:var(--fzo-muted); }
+.fzo-start-well { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:20px; padding:20px 24px; border-radius:10px; background:var(--fzo-well); }
+.fzo-start-queue { display:flex; flex-direction:column; gap:10px; min-width:0; }
+.fzo-seats { display:flex; gap:12px; margin:0; padding:0; list-style:none; }
+.fzo-seat { position:relative; display:flex; align-items:center; justify-content:center; width:52px; height:52px; flex:none; border-radius:50%; background:transparent; color:#fff; font:700 18px/1 'Barlow Condensed',sans-serif; letter-spacing:.02em; transition:background-color .3s; }
+.fzo-seat.is-taken { background:var(--fzo-seat,var(--fzo-muted)); }
+.fzo-seat.is-me { background:var(--fzo-fill); color:var(--fzo-on-fill); }
+.fzo-seat-ring { position:absolute; inset:0; border:4px solid var(--fzo-line); border-top-color:var(--fzo-faint); border-radius:50%; animation:fzo-seat-spin 1s linear infinite; }
+@keyframes fzo-seat-spin { to { transform:rotate(360deg); } }
+.fzo-start-status { margin:0; color:var(--fzo-ink); font:600 14px/1.4 'Barlow',sans-serif; }
+.fzo-start-button { padding:14px 30px; border:0; border-radius:999px; background:var(--fzo-fill); color:var(--fzo-on-fill); font:600 17px/1.2 'Barlow',sans-serif; white-space:nowrap; cursor:pointer; transition:background-color .15s; }
+.fzo-start-button:hover { background:var(--primary-deep); }
+.fzo-start-button:disabled { opacity:.7; cursor:default; }
+.fzo-start-button:focus-visible { outline:2px solid var(--fzo-accent); outline-offset:4px; }
+.fzo-sr { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+@media (prefers-reduced-motion: reduce) { .fzo-seat-ring { animation:none; border-top-color:var(--fzo-line); border-style:dashed; } }
+@media (max-width:580px) { .fzo-start { padding:18px; } .fzo-start h3 { font-size:25px; } .fzo-start-copy p { font-size:14px; } .fzo-start-well { padding:16px; } .fzo-seats { gap:10px; } .fzo-start-button { width:100%; } }
+
+/* Rejoindre un pool : la carte précède le séparateur « ou choisissez
+   votre pool », qui ne porte qu'une marge basse. */
+.pool-page-container > .fzo-start { margin-bottom: 28px; }

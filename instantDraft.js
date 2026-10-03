@@ -22,12 +22,12 @@
    verrouillé dit déjà où en est le repêchage.
 
    Le bouton se branche tout seul sur n'importe quel élément portant
-   `data-instant-draft`, pour que les trois pages qui l'affichent
-   (Accueil, Mes pools, Rejoindre) n'aient qu'à poser le balisage.
+   `data-instant-draft`, pour que les pages qui l'affichent n'aient qu'à
+   poser le balisage.
 
-   L'accueil sans pool montre plutôt une carte (`data-instant-card`) :
-   les sièges de la file en ronds, et un bouton unique qui change de
-   rôle selon l'état. Voir rendreCarte().
+   L'accueil sans pool et Rejoindre un pool montrent plutôt une carte
+   (`data-instant-card`) : les sièges de la file en ronds, et un bouton
+   unique qui change de rôle selon l'état. Voir rendreCarte().
    ============================================================ */
 (function () {
     const BASE_URL = window.location.hostname.includes('localhost')

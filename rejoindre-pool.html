@@ -9,16 +9,18 @@
     <title>Rejoindre un pool – Fantazy</title>
     <script src="theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <!-- Carte du repêchage instantané (instantDraft.css), comme sur l'accueil. -->
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Condensed:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css?v=20260926b">
     <link rel="stylesheet" href="fzDialog.css?v=20260926b">
     <!-- Fenêtres de dialogue (fzAlert, fzConfirm) : avant tout script de page. -->
     <script src="fzDialog.js?v=20260926a"></script>
     <link rel="stylesheet" href="teamLogos.css?v=20260926">
     <link rel="stylesheet" href="index.css?v=20260926b">
-    <link rel="stylesheet" href="pool.css?v=20260927d">
+    <link rel="stylesheet" href="pool.css?v=20261003a">
     <link rel="stylesheet" href="poolNav.css?v=20260928a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
-    <link rel="stylesheet" href="instantDraft.css?v=20260926b">
+    <link rel="stylesheet" href="instantDraft.css?v=20261003a">
     <link rel="stylesheet" href="skeleton-loader.css?v=20260926b">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
@@ -53,17 +55,31 @@
 
         <!-- Le chemin le plus court : aucun choix à faire. Placé avant la
              liste parce que c'est ce que cherche la majorité de ceux qui
-             arrivent ici — jouer, pas comparer des ligues. -->
-        <button type="button" class="fz-instant" data-instant-draft>
-            <span class="fz-instant-icon" data-icon="bolt" data-icon-size="26"></span>
-            <span class="fz-instant-txt">
-                <span class="fz-instant-title" data-instant-label>Pool rapide : jouer maintenant à 4</span>
-                <span class="fz-instant-sub" data-instant-desc>On vous place dans un pool avec les 3 prochains joueurs
-                    disponibles. Rien à créer, rien à choisir.</span>
-                <span class="fz-instant-meta">4 joueurs · cumulatif · le repêchage démarre tout seul dès que vous êtes 4</span>
-            </span>
-            <span class="fz-instant-chev" aria-hidden="true">›</span>
-        </button>
+             arrivent ici — jouer, pas comparer des ligues. Même carte que
+             l'accueil sans pool (index.html) : les sièges, la ligne d'état
+             et le bouton suivent la file en direct (instantDraft.js,
+             rendreCarte). -->
+        <section class="fzo-start" data-instant-card aria-labelledby="fzoInstantTitle">
+            <header class="fzo-start-head">
+                <svg class="fzo-start-bolt" viewBox="0 0 24 24" aria-hidden="true"><polygon points="13,2 4,14 11,14 10,22 20,9 13,9"/></svg>
+                <div class="fzo-start-copy">
+                    <h3 id="fzoInstantTitle">Repêchage instantané</h3>
+                    <p>Dès que les 4 places sont prises, le repêchage commence.</p>
+                </div>
+            </header>
+            <div class="fzo-start-well">
+                <div class="fzo-start-queue">
+                    <ul class="fzo-seats" data-instant-seats aria-label="Places du pool rapide">
+                        <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
+                        <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
+                        <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
+                        <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
+                    </ul>
+                    <p class="fzo-start-status" data-instant-status role="status">0 / 4 joueurs · encore 4 places</p>
+                </div>
+                <button type="button" class="fzo-start-button" data-instant-action="rejoindre">Repêcher maintenant</button>
+            </div>
+        </section>
 
         <p class="fz-instant-or"><span>ou choisissez votre pool</span></p>
 
