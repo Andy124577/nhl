@@ -115,37 +115,6 @@ body.fz-classement .breadcrumb-item:hover,
 body.fz-classement .breadcrumb-item.active { color: var(--fzc-accent); }
 body.fz-classement .breadcrumb-separator { color: var(--fzc-text-fainter); }
 
-/* ==================== PÉRIODE (1J / 7J / 30J) ==================== */
-/* Comme dans le mockup : les puces de période n'existent que dans la vue
-   téléphone (le tableau desktop affiche déjà les 3 colonnes 1/7/30 côte à
-   côte, la puce ne sert qu'à choisir la période du badge de rang — utile
-   seulement une fois qu'on n'a plus la place pour les trois colonnes). */
-body.fz-classement .st-period-chips {
-  display: none;
-  gap: 6px;
-  margin: 0 0 14px;
-}
-body.fz-classement .st-period-chip {
-  padding: 7px 15px;
-  border-radius: 8px;
-  border: 1px solid var(--fzc-border-input);
-  background: transparent;
-  color: var(--fzc-text-muted);
-  font: 600 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-  letter-spacing: .04em;
-  cursor: pointer;
-  transition: background .15s ease, color .15s ease, border-color .15s ease;
-}
-body.fz-classement .st-period-chip:hover {
-  border-color: var(--fzc-ink);
-  color: var(--fzc-ink);
-}
-body.fz-classement .st-period-chip.active {
-  background: var(--fzc-solid);
-  border-color: var(--fzc-solid);
-  color: var(--fzc-on-solid);
-}
-
 /* ==================== TABLEAU (DESKTOP) ==================== */
 body.fz-classement .standings-table-container {
   border: 1px solid var(--fzc-border);
@@ -270,8 +239,7 @@ body.fz-classement #standingsTable tfoot .standings-avg-row td {
 body.fz-classement .standings-avg-label { color: var(--fzc-text-muted); }
 
 body.fz-classement .st-empty-title { color: var(--fzc-ink); }
-body.fz-classement .st-empty-hint,
-body.fz-classement .hof-empty { color: var(--fzc-text-faint); }
+body.fz-classement .st-empty-hint { color: var(--fzc-text-faint); }
 
 /* ==================== TABLEAU (MOBILE : cartes) ==================== */
 /* Le mockup montre une vue "phone" distincte, pas juste le même tableau
@@ -281,12 +249,11 @@ body.fz-classement .st-mobile-list { display: none; }
 
 @media (max-width: 680px) {
   body.fz-classement .standings-table-container { display: none; }
-  /* La maquette « Classement » va droit à la liste : ni tuile de synthèse
-     ni puces de période (la tendance reste calculée sur 7 j). */
-  body.fz-classement #standingsList .st-summary,
-  body.fz-classement #standingsList .st-period-bar { display: none; }
-  /* Une bande d'un bord à l'autre, rangées de 64px : comme la liste des
-     joueurs d'une équipe (classement.css, .roster-rows). */
+  /* La maquette « Classement » va droit à la liste, sans tuile de synthèse. */
+  body.fz-classement #standingsList .st-summary { display: none; }
+  /* Une bande d'un bord à l'autre, rangées de 76px et rond de 52px : les
+     mesures de la liste des joueurs d'une équipe (classement.css,
+     .roster-row). */
   body.fz-classement .st-mobile-list {
     display: flex;
     flex-direction: column;
@@ -299,11 +266,11 @@ body.fz-classement .st-mobile-list { display: none; }
   }
   body.fz-classement .st-mobile-row {
     display: grid;
-    grid-template-columns: 22px 44px minmax(0, 1fr) auto 14px;
+    grid-template-columns: 22px 52px minmax(0, 1fr) auto 14px;
     align-items: center;
     column-gap: 8px;
-    min-height: 58px;
-    padding: 8px 10px 8px 12px;
+    min-height: 76px;
+    padding: 6px 10px 6px 12px;
     cursor: pointer;
     transition: background .15s ease;
   }
@@ -319,17 +286,17 @@ body.fz-classement .st-mobile-list { display: none; }
   }
   body.fz-classement .st-mobile-row:nth-child(-n+3) .st-mobile-rank { color: var(--fzc-accent); }
   body.fz-classement .st-mobile-logo {
-    width: 44px;
-    height: 44px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     background: var(--rr-line);
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  body.fz-classement .st-mobile-logo img { width: 28px; height: 28px; object-fit: contain; }
+  body.fz-classement .st-mobile-logo img { width: 34px; height: 34px; object-fit: contain; }
   body.fz-classement .st-mobile-logo .st-avatar-fallback {
-    font-size: 13px; font-weight: 700; color: var(--rr-num);
+    font-size: 15px; font-weight: 700; color: var(--rr-num);
   }
   body.fz-classement .st-mobile-info {
     min-width: 0;
@@ -377,22 +344,36 @@ body.fz-classement .st-mobile-list { display: none; }
   }
 }
 @media (max-width: 380px) {
-  body.fz-classement .st-mobile-row { grid-template-columns: 20px 40px minmax(0, 1fr) auto 12px; column-gap: 6px; }
-  body.fz-classement .st-mobile-logo { width: 40px; height: 40px; }
   body.fz-classement .st-mini { flex-basis: 26px; min-width: 22px; }
+}
+/* Les plus petits téléphones (320px) : le rond rend 8px au nom et aux
+   mini-colonnes, comme la photo de la liste des joueurs. Mêmes colonnes
+   qu'elle partout ailleurs : rang, rond et nom s'alignent d'une liste à
+   l'autre. */
+@media (max-width: 339px) {
+  body.fz-classement .st-mobile-row { grid-template-columns: 22px 44px minmax(0, 1fr) auto 14px; }
+  body.fz-classement .st-mobile-logo { width: 44px; height: 44px; }
+  body.fz-classement .st-mobile-logo img { width: 28px; height: 28px; }
 }
 
 /* ==================== TEMPLE DE LA RENOMMÉE ==================== */
+/* Une tuile par période : le record en or devant, le pire en une ligne
+   discrète dessous. Étroit (téléphone, carte H2H) : les tuiles s'empilent
+   dans un seul cadre, le chiffre à gauche pour qu'ils s'alignent en
+   colonne. Large : trois tuiles côte à côte. La bascule suit la largeur du
+   bloc, pas celle de l'écran — le même temple vit en pleine largeur en
+   cumulatif et en demi-colonne en H2H. */
 body.fz-classement .hall-of-fame {
+  container: hof / inline-size;
   margin-top: 44px;
   padding-top: 0;
   border-top: none;
 }
 body.fz-classement .hof-head {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-bottom: 16px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
 }
 body.fz-classement .hof-title {
   margin: 0;
@@ -401,154 +382,543 @@ body.fz-classement .hof-title {
   text-transform: uppercase;
   color: var(--fzc-ink);
 }
-body.fz-classement .hof-subtitle {
-  font: 400 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-  color: var(--fzc-text-faint);
+/* En H2H, la mention reprend celle des autres cartes (.fz-card-note). */
+body.fz-classement .standings-insights:not(.is-h2h) .hof-season {
+  margin-left: auto;
+  padding: 5px 10px;
+  border: 1px solid var(--fzc-border);
+  border-radius: 999px;
+  background: var(--fzc-surface);
+  font: 600 10.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+  color: var(--fzc-text-muted);
+  white-space: nowrap;
 }
-body.fz-classement .hof-board {
+body.fz-classement .standings-insights:not(.is-h2h) .hall-of-fame .fz-empty {
+  border: 1px solid var(--fzc-border);
+  border-radius: 12px;
+  background: var(--fzc-surface);
+}
+
+body.fz-classement .hof-grid {
+  display: grid;
   border: 1px solid var(--fzc-border);
   border-radius: 12px;
   background: var(--fzc-surface);
   overflow: hidden;
 }
-body.fz-classement .hof-col-heads,
-body.fz-classement .hof-row {
-  display: grid;
-  grid-template-columns: 82px 1fr 1fr;
-  align-items: stretch;
-}
-body.fz-classement .hof-col-heads {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--fzc-border);
-  font: 700 10px/1 'Helvetica Neue', Helvetica, sans-serif;
-  letter-spacing: .09em;
-  text-transform: uppercase;
-}
-body.fz-classement .hof-col-heads span { display: flex; align-items: center; gap: 5px; padding: 0 14px; }
-body.fz-classement .hof-col-heads .is-best { color: var(--fzc-gold); }
-body.fz-classement .hof-col-heads .is-worst { color: var(--fzc-bad); }
-body.fz-classement .hof-icon { fill: currentColor; flex: none; width: 13px; height: 13px; }
-body.fz-classement .hof-row + .hof-row { border-top: 1px solid var(--fzc-border-soft); }
-body.fz-classement .hof-row-label {
-  margin: 0;
-  padding: 16px 0 16px 14px;
-  font: 600 12.5px/1.2 'Helvetica Neue', Helvetica, sans-serif;
-  color: var(--fzc-text-muted);
-}
-body.fz-classement .hof-cell {
+body.fz-classement .hof-tile {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 14px;
+  gap: 10px;
+  padding: 14px 16px;
 }
-body.fz-classement .hof-cell.is-empty { justify-content: center; }
-body.fz-classement .hof-cell.is-best { background: var(--fzc-leader-bg); }
-body.fz-classement .hof-card-value {
-  font: 700 24px/1 'Oswald', sans-serif;
+body.fz-classement .hof-tile + .hof-tile { border-top: 1px solid var(--fzc-border-soft); }
+body.fz-classement .hof-tile-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font: 700 10px/1 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--fzc-text-muted);
+}
+body.fz-classement .hof-icon { fill: currentColor; flex: none; width: 13px; height: 13px; }
+body.fz-classement .hof-tile-label .hof-icon { color: var(--fzc-gold); }
+
+/* -------------------- Le record -------------------- */
+body.fz-classement .hof-record {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+body.fz-classement .hof-pts {
+  flex: none;
+  min-width: 98px;
+  font: 700 28px/1 'Oswald', sans-serif;
   font-variant-numeric: tabular-nums;
+  color: var(--fzc-gold);
 }
-body.fz-classement .hof-card-value small {
+body.fz-classement .hof-pts small,
+body.fz-classement .hof-low-pts small {
   margin-left: 3px;
   font: 600 10px/1 'Helvetica Neue', Helvetica, sans-serif;
   letter-spacing: .04em;
   text-transform: uppercase;
   color: var(--fzc-text-faint);
 }
-body.fz-classement .hof-cell.is-best .hof-card-value { color: var(--fzc-gold); }
-body.fz-classement .hof-cell.is-worst .hof-card-value { color: var(--fzc-bad); }
-body.fz-classement .hof-card-name {
-  font: 600 12.5px/1.25 'Helvetica Neue', Helvetica, sans-serif;
+body.fz-classement .hof-record.is-empty .hof-pts { color: var(--fzc-text-fainter); }
+body.fz-classement .hof-who {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+/* Le nom d'équipe ouvre sa fiche, comme une rangée du classement : un
+   bouton habillé en texte, rouge au survol. */
+body.fz-classement .hof-team,
+body.fz-classement .hof-low-team {
+  min-width: 0;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+body.fz-classement .hof-team {
+  font: 600 13.5px/1.25 'Helvetica Neue', Helvetica, sans-serif;
   color: var(--fzc-ink);
+}
+body.fz-classement .hof-team-name {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: color .15s ease;
 }
-body.fz-classement .hof-card-date { font-size: 11.5px; color: var(--fzc-text-faint); }
-
-@media (max-width: 680px) {
-  body.fz-classement .hof-col-heads,
-  body.fz-classement .hof-row { grid-template-columns: 62px 1fr 1fr; }
-  body.fz-classement .hof-col-heads span,
-  body.fz-classement .hof-cell { padding-inline: 10px; }
-  body.fz-classement .hof-row-label { padding-left: 12px; font-size: 12px; }
-  body.fz-classement .hof-card-value { font-size: 21px; }
+body.fz-classement .hof-team.is-link,
+body.fz-classement .hof-low-team.is-link { cursor: pointer; }
+body.fz-classement .hof-team.is-link:hover .hof-team-name,
+body.fz-classement .hof-low-team.is-link:hover .hof-team-name {
+  color: var(--fzc-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
-
-/* ==================== ÉQUIPES RÉCENTES ==================== */
-body.fz-classement .recent-form-leaderboard { margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--fzc-border); }
-body.fz-classement .recent-form-head .hof-title { text-transform: uppercase; }
-body.fz-classement .time-filter {
-  border-color: var(--fzc-border-input);
-  background: transparent;
+body.fz-classement .hof-team.is-link:focus-visible,
+body.fz-classement .hof-low-team.is-link:focus-visible {
+  outline: 2px solid var(--fzc-accent-fill);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+body.fz-classement .hof-avatar {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--fzc-tile);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+body.fz-classement .hof-avatar .st-avatar-fallback {
+  font: 700 8.5px/1 'Helvetica Neue', Helvetica, sans-serif;
   color: var(--fzc-text-muted);
 }
-body.fz-classement .time-filter:hover { border-color: var(--fzc-ink); color: var(--fzc-ink); }
-body.fz-classement .time-filter.active {
-  background: var(--fzc-solid);
-  border-color: var(--fzc-solid);
-  color: var(--fzc-on-solid);
+body.fz-classement .hof-me {
+  flex: none;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fzc-accent-fill) 12%, var(--fzc-surface));
+  color: var(--fzc-accent);
+  font: 700 9px/1.2 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .05em;
+  text-transform: uppercase;
 }
-body.fz-classement .leaderboard-row {
-  border-color: var(--fzc-border);
-  background: var(--fzc-surface);
+body.fz-classement .hof-when,
+body.fz-classement .hof-low-when {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 400 11.5px/1.2 'Helvetica Neue', Helvetica, sans-serif;
+  color: var(--fzc-text-faint);
+  white-space: nowrap;
 }
-body.fz-classement .lb-rank { color: var(--fzc-text-faint); }
-body.fz-classement .lb-rank.gold,
-body.fz-classement .lb-rank.silver,
-body.fz-classement .lb-rank.bronze { color: var(--fzc-accent); }
-body.fz-classement .lb-team { color: var(--fzc-ink); }
-body.fz-classement .lb-pts { color: var(--fzc-accent); }
-body.fz-classement .lb-source { color: var(--fzc-text-faint); }
+/* Une semaine ou un mois pas fini : le record peut encore tomber. */
+body.fz-classement .hof-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 600 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--fzc-good);
+}
+body.fz-classement .hof-live::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* -------------------- Le pire, en retrait -------------------- */
+body.fz-classement .hof-low {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 8px;
+  font: 400 12px/1.2 'Helvetica Neue', Helvetica, sans-serif;
+  color: var(--fzc-text-muted);
+}
+body.fz-classement .hof-low-label {
+  font: 700 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--fzc-text-faint);
+}
+body.fz-classement .hof-low-pts {
+  font: 600 13px/1 'Oswald', sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: var(--fzc-text-muted);
+  white-space: nowrap;
+}
+body.fz-classement .hof-low-pts small { margin-left: 2px; font-size: 9px; }
+body.fz-classement .hof-low-team {
+  font: 500 12px/1.2 'Helvetica Neue', Helvetica, sans-serif;
+  color: var(--fzc-text-muted);
+}
+body.fz-classement .hof-low-team .hof-me { font-size: 8.5px; }
+
+/* -------------------- Chargement (hofChargementHTML) --------------------
+   La tuile chargée, des os à la place des données : titre et « Pire »
+   restent lisibles, estompés ; le trophée attend son or. */
+body.fz-classement .hof-tile.is-loading .hof-tile-label { opacity: .55; }
+body.fz-classement .hof-tile.is-loading .hof-tile-label .hof-icon { color: currentColor; }
+body.fz-classement .hof-tile.is-loading .hof-low-label { opacity: .7; }
+/* À la largeur du chiffre chargé (min-width de .hof-pts) : l'équipe ne
+   se décale pas à l'arrivée. */
+body.fz-classement .hof-sk-pts { flex: none; width: 58px; height: 26px; margin-right: 40px; border-radius: 5px; }
+body.fz-classement .hof-avatar.fz-bone { border-radius: 50%; }
+body.fz-classement .hof-sk-name { width: 80px; height: 12px; }
+body.fz-classement .hof-sk-when { width: 64px; height: 9px; margin-top: 2px; }
+body.fz-classement .hof-sk-low-pts { width: 26px; height: 10px; }
+body.fz-classement .hof-sk-low-team { width: 110px; max-width: 100%; height: 10px; }
+body.fz-classement .hof-sk-low-when { width: 60px; height: 10px; }
+
+/* -------------------- Bloc large : trois tuiles -------------------- */
+@container hof (min-width: 600px) {
+  body.fz-classement .hof-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    overflow: visible;
+  }
+  body.fz-classement .hof-tile,
+  body.fz-classement .hof-tile + .hof-tile {
+    gap: 14px;
+    padding: 16px 18px;
+    border: 1px solid var(--fzc-border);
+    border-radius: 12px;
+    background: var(--fzc-surface);
+  }
+  body.fz-classement .hof-record {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  body.fz-classement .hof-pts { min-width: 0; font-size: 34px; }
+  body.fz-classement .hof-sk-pts { width: 72px; height: 34px; margin-right: 0; }
+  /* Le pire se cale en bas : les trois lignes s'alignent d'une tuile à
+     l'autre, quelle que soit la longueur des noms au-dessus. */
+  body.fz-classement .hof-low {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--fzc-border-soft);
+  }
+  body.fz-classement .standings-insights.is-h2h .hof-grid { padding: 14px 15px; }
+}
+
+@media (max-width: 380px) {
+  body.fz-classement .hof-tile { padding-inline: 14px; }
+  body.fz-classement .hof-record { gap: 12px; }
+  body.fz-classement .hof-pts { min-width: 84px; font-size: 24px; }
+  body.fz-classement .hof-sk-pts { margin-right: 26px; }
+}
 
 /* ==================== SKELETON (chargement) ==================== */
-body.fz-classement .standings-table-skeleton {
-  background: var(--fzc-surface);
-  border: 1px solid var(--fzc-border);
-}
 body.fz-classement .skeleton,
-body.fz-classement .skeleton-circle,
 body.fz-classement .skeleton-avatar {
   background: linear-gradient(90deg, var(--fzc-border-soft) 25%, var(--fzc-tile) 50%, var(--fzc-border-soft) 75%);
   background-size: 200% 100%;
+}
+
+/* ==================== SQUELETTE DU CLASSEMENT ====================
+   Claude Design, « Classement Skeleton » (#standingsSkeleton,
+   classement.html). Le squelette reprend les classes du classement
+   chargé — tableau sur bureau, bande sur téléphone — et n'ajoute que
+   ses os.
+
+   Un os (.fz-bone) est un aplat translucide (--rr-bone, classement.css).
+   Son reflet est fixé à l'écran (background-attachment: fixed) : un seul
+   balayage traverse tous les os à la fois, de gauche à droite, au lieu
+   d'un reflet par os qui scintille chacun de son côté. Les os secondaires
+   (pastille, tendance, dates) restent mats : l'œil va d'abord à ce qui
+   brille. Les rangées montent l'une après l'autre (--i, 45 ms d'écart). */
+body.fz-classement .fz-bone {
+  display: block;
+  border-radius: 4px;
+  background: linear-gradient(100deg, var(--rr-bone) 40%, var(--rr-bone-shine) 50%, var(--rr-bone) 60%) fixed;
+  background-size: 300% 100%;
+  animation: fzOsReflet 1.6s linear infinite;
+}
+body.fz-classement .hof-sk-flat,
+body.fz-classement .st-sk-pill,
+body.fz-classement .st-sk-evo {
+  display: block;
+  border-radius: 5px;
+  background: var(--rr-bone);
+}
+@keyframes fzOsReflet {
+  from { background-position: 100% 0; }
+  to { background-position: 0% 0; }
+}
+@keyframes fzOsMonte {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+body.fz-classement .st-sk-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Titre et fil d'Ariane, avant que le pool soit connu : l'image (32px,
+   arrondie à 8px) et le nom, aux mesures de showPoolStandings. */
+body.fz-classement .st-sk-pool-img {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  margin-right: 10px;
+  border-radius: 8px;
+  vertical-align: middle;
+}
+body.fz-classement .st-sk-pool-name {
+  display: inline-block;
+  width: 150px;
+  max-width: 50vw;
+  height: 22px;
+  border-radius: 6px;
+  vertical-align: middle;
+}
+body.fz-classement .st-sk-crumb {
+  display: inline-block;
+  width: 72px;
+  height: 9px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
+body.fz-classement .st-sk { position: relative; }
+body.fz-classement .st-sk-table tbody tr,
+body.fz-classement .st-sk-list .st-mobile-row {
+  opacity: 0;
+  animation: fzOsMonte .35s ease-out forwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+body.fz-classement .st-sk-insights {
+  opacity: 0;
+  animation: fzOsMonte .35s ease-out .32s forwards;
+}
+
+/* La tuile « où en suis-je » (bureau) : neutre tant qu'on ne sait pas. */
+body.fz-classement .st-summary.st-sk-summary { border-left-color: var(--fzc-border); }
+body.fz-classement .st-sk-sum-rank { flex: none; width: 52px; height: 38px; border-radius: 6px; }
+body.fz-classement .st-sk-sum-name { width: 120px; height: 13px; margin: 2px 0; }
+body.fz-classement .st-sk-sum-detail { width: 240px; max-width: 100%; height: 11px; margin: 5px 0 2px; }
+
+/* Le tableau (bureau), aux mesures de #standingsTable — qui défait comme
+   lui les réglages globaux des tables (index.css : colonnes fixes, en-tête
+   collant, flouté et ombré). */
+body.fz-classement .st-sk-table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+body.fz-classement .st-sk-table thead { position: static; }
+body.fz-classement .st-sk-table th {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
+  padding: 10px;
+  background: var(--fzc-bg-alt);
+  border-bottom: 1px solid var(--fzc-border-strong);
+  color: var(--fzc-text-muted);
+  font: 600 10px/1 'Helvetica Neue', Helvetica, sans-serif;
+  letter-spacing: .09em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+body.fz-classement .st-sk-table th.points-column { color: var(--fzc-accent); }
+body.fz-classement .st-sk-table td {
+  padding: 9px 10px;
+  background: var(--fzc-surface);
+  text-align: center;
+}
+body.fz-classement .st-sk-table tbody tr {
+  background: var(--fzc-surface);
+  border-bottom: 1px solid var(--fzc-border-soft);
+  cursor: default;
+}
+body.fz-classement .st-sk-table tbody tr:last-child { border-bottom: 0; }
+body.fz-classement .st-sk-table .rank-col { width: 40px; padding-inline: 4px; }
+body.fz-classement .st-sk-table .player-col { min-width: 110px; padding-left: 12px; text-align: left; }
+body.fz-classement .st-sk-table .st-evo-col { text-align: right; }
+body.fz-classement .st-sk-who { display: flex; align-items: center; gap: 10px; }
+body.fz-classement .st-sk-av { flex: none; width: 26px; height: 26px; border-radius: 50%; }
+body.fz-classement .st-sk-name { flex: none; width: var(--w); height: 12px; }
+body.fz-classement .st-sk-n { width: var(--w); height: 10px; margin: 0 auto; border-radius: 3px; }
+body.fz-classement .st-sk-total { width: 26px; height: 14px; margin: 0 auto; }
+body.fz-classement .st-sk-evo { width: 34px; height: 18px; margin-left: auto; border-radius: 6px; }
+
+/* La bande (téléphone) : les rangées chargées, des os à la place des
+   chiffres. Les hauteurs d'os égalent celles des lignes de texte qu'ils
+   remplacent : la rangée garde ses 64px. */
+body.fz-classement .st-sk-list .st-mobile-logo.fz-bone { border-radius: 50%; }
+body.fz-classement .st-sk-mname {
+  flex: 0 1 auto;
+  width: var(--w);
+  max-width: calc(100% - 28px);
+  height: 13px;
+  margin: 2px 0;
+}
+body.fz-classement .st-sk-pill { flex: none; width: 22px; height: 14px; }
+body.fz-classement .st-sk-mv { width: var(--w); height: 9px; margin: 2.5px 0; border-radius: 3px; }
+body.fz-classement .st-sk-mpts { width: 22px; height: 18px; margin: 2px 0; }
+body.fz-classement .st-sk-list .st-mini-l,
+body.fz-classement .st-sk-list .st-mobile-chev { opacity: .65; }
+
+body.fz-classement .st-sk-legend summary { opacity: .5; }
+
+/* La fiche d'équipe (#rosterSkeleton, rosterSqueletteHTML) : les rangées
+   de la liste, des os aux hauteurs des lignes qu'ils remplacent — la
+   rangée garde ses 76px, la photo ses 52px. */
+body.fz-classement .rr-sk .roster-row {
+  opacity: 0;
+  animation: fzOsMonte .35s ease-out forwards;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+body.fz-classement .rr-sk .rr-avatar.fz-bone { border-radius: 50%; }
+body.fz-classement .rr-sk .rr-name-line { align-items: center; }
+body.fz-classement .rr-sk-name {
+  flex: 0 1 auto;
+  width: var(--w);
+  max-width: calc(100% - 40px);
+  height: 12px;
+  margin: 2.5px 0;
+}
+body.fz-classement .rr-sk-meta {
+  flex: none;
+  display: block;
+  width: 34px;
+  height: 9px;
+  border-radius: 3px;
+  background: var(--rr-bone);
+}
+body.fz-classement .rr-sk-v { width: var(--w); height: 9px; margin: 2.5px 0; border-radius: 3px; }
+body.fz-classement .rr-sk-pts { width: 22px; height: 16px; margin: 2px 0; }
+body.fz-classement .rr-sk .rr-l,
+body.fz-classement .rr-sk .rr-chev { opacity: .65; }
+
+@media (max-width: 680px) {
+  body.fz-classement #standingsSkeleton .st-summary { display: none; }
+  body.fz-classement .st-sk-list .st-mobile-row { cursor: default; }
+  /* Le filet rouge du meneur attend de savoir qui mène. */
+  body.fz-classement .st-sk-list .st-mobile-row:first-child { box-shadow: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.fz-classement .fz-bone { animation: none; }
+  body.fz-classement .st-sk-table tbody tr,
+  body.fz-classement .st-sk-list .st-mobile-row,
+  body.fz-classement .st-sk-insights,
+  body.fz-classement .rr-sk .roster-row { opacity: 1; animation: none; }
 }
 
 /* ==================== FICHE D'ÉQUIPE : liste pleine largeur ====================
    Sur téléphone, la bande des joueurs (.roster-rows, classement.css) va d'un
    bord à l'autre de l'écran, comme dans le mockup : laissée dans les 32px de
    marge de .container, la colonne du nom n'a plus la place des quatre
-   stats. Le titre et « Joueurs actifs » gardent la marge. */
+   stats. L'en-tête garde la marge. */
 @media (max-width: 680px) {
-  body.fz-classement .roster-rows,
-  body.fz-classement #rosterSkeleton { margin-inline: -32px; }
+  body.fz-classement .roster-rows { margin-inline: -32px; }
 }
 
 /* ==================== TÉLÉPHONE : EN-TÊTE ====================
    Le fil d'Ariane (« Accueil > Pool > Équipe », des liens de 12px) ne sert
    à rien sur téléphone : l'accueil est dans la barre du bas, le pool dans
    la pastille du haut. Il s'efface — !important parce que classement.js
-   l'affiche en style en ligne — et la fiche d'équipe prend à la place un
-   vrai bouton de retour de 44px. La marge du haut de 40px, faite pour le
-   bureau, repoussait tout le contenu sous la ligne de flottaison. */
+   l'affiche en style en ligne. La fiche prend à la place une barre de
+   navigation : retour à gauche, nom de l'équipe (et sa liste) au centre,
+   l'étiquette « Mettre en vente » à droite ; rang · bilan · actifs centrés
+   dessous. Deux colonnes de 44px de part et d'autre : le nom reste au
+   centre, même sans le bouton de vente (l'équipe d'un autre). La marge du
+   haut de 40px, faite pour le bureau, repoussait tout le contenu sous la
+   ligne de flottaison. */
 @media (max-width: 680px) {
   body.fz-classement .container { padding-top: 16px; }
   body.fz-classement .breadcrumb { display: none !important; }
+  body.fz-classement .roster-header {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    grid-template-areas:
+      "back title sale"
+      "sub  sub   sub";
+    column-gap: 8px;
+    margin-bottom: 14px;
+  }
+  /* Le chevron sur le bord du contenu ; la zone de toucher de 44px
+     déborde un peu dans la marge. */
   body.fz-classement .rh-back {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    min-height: 44px;
-    margin: 0 0 2px -10px;
-    padding: 0 12px 0 4px;
+    justify-content: flex-start;
+    justify-self: start;
+    width: 44px;
+    height: 44px;
+    margin-left: -8px;
+    padding: 0;
     border: 0;
     border-radius: 10px;
     background: transparent;
     color: var(--fzc-accent);
-    font: 600 15px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
     cursor: pointer;
   }
   body.fz-classement .rh-back:active { background: var(--fzc-tile); }
-  body.fz-classement .rh-name { font-size: 24px; }
+  body.fz-classement .rh-back:focus-visible { outline: 2px solid var(--primary); outline-offset: 0; }
+  body.fz-classement .rh-title { justify-self: center; }
+  body.fz-classement .rh-name { font-size: 20px; }
+  /* L'étiquette seule, dans un rond ; son nom vient d'aria-label
+     (renderRosterHeader, refreshSaleMarks). Le compte passe en pastille
+     sur le coin. */
+  body.fz-classement .rh-sale {
+    position: relative;
+    justify-self: end;
+    justify-content: center;
+    width: 40px;
+    min-height: 40px;
+    height: 40px;
+    padding: 0;
+  }
+  body.fz-classement .rh-sale svg { width: 18px; height: 18px; }
+  body.fz-classement .rh-sale-long { display: none; }
+  body.fz-classement .rh-sale-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    box-shadow: 0 0 0 2px var(--bg);
+  }
+  body.fz-classement .rh-sub { justify-self: center; margin-top: -2px; text-align: center; }
 }
 
 /* ====================================================================
@@ -557,8 +927,8 @@ body.fz-classement .skeleton-avatar {
    Le mockup d'origine s'arrêtait au pool cumulatif (voir la note en tête
    de fichier) ; l'onglet Classement d'un pool H2H est maintenant couvert
    lui aussi. Il se lit en trois temps : une bande de tuiles de contexte,
-   la table de saison dans une carte titrée, puis trois cartes côte à côte
-   (temple de la renommée, équipes récentes, derniers résultats).
+   la table de saison dans une carte titrée, puis deux cartes côte à côte
+   (temple de la renommée, derniers résultats).
 
    Tout est scopé : `.st-card` pour la table H2H, `.standings-insights
    .is-h2h` pour le bas de page. Un pool cumulatif ne traverse aucune de
@@ -710,10 +1080,10 @@ body.fz-classement .h2h-strip-sub {
 }
 
 /* -------------------- En-tête de carte partagé -------------------- */
-/* Les classes fz-* voyagent avec le balisage du temple de la renommée et
-   des équipes récentes, qui servent aux deux modes de pool. Leur mise en
-   page n'est donc appliquée que dans les contextes H2H — un pool
-   cumulatif ne voit ni l'icône ni le titre en casse normale. */
+/* Les classes fz-* voyagent avec le balisage du temple de la renommée,
+   qui sert aux deux modes de pool. Leur mise en page n'est donc appliquée
+   que dans les contextes H2H — un pool cumulatif ne voit ni l'icône ni le
+   titre en casse normale. */
 body.fz-classement .st-card .fz-card-head,
 body.fz-classement .standings-insights.is-h2h .fz-card-head {
   display: flex;
@@ -855,16 +1225,16 @@ body.fz-classement .st-form-dot.is-w { background: var(--fzc-good); }
 body.fz-classement .st-form-dot.is-l { background: var(--fzc-bad); }
 body.fz-classement .st-form-dot.is-t { background: var(--fzc-text-fainter); }
 
-/* -------------------- Bas de page : trois cartes -------------------- */
+/* -------------------- Bas de page : deux cartes -------------------- */
 body.fz-classement .standings-insights.is-h2h {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 14px;
   margin-top: 16px;
 }
-/* Les trois cartes s'alignent en haut ET en bas : leur contenu est de
-   longueur très inégale (un état vide contre trois semaines de résultats),
-   et trois hauteurs différentes se voient plus que le vide gagné. */
+/* Les cartes s'alignent en haut ET en bas : leur contenu est de longueur
+   très inégale (un état vide contre trois semaines de résultats), et deux
+   hauteurs différentes se voient plus que le vide gagné. */
 body.fz-classement .standings-insights.is-h2h > div {
   display: flex;
   flex-direction: column;
@@ -875,40 +1245,11 @@ body.fz-classement .standings-insights.is-h2h > div {
   background: var(--fzc-surface);
   overflow: hidden;
 }
-body.fz-classement .standings-insights.is-h2h .leaderboard-list {
-  padding: 14px 15px;
-}
-body.fz-classement .standings-insights.is-h2h .hof-board { margin: 14px 15px; }
-/* Le sélecteur de période passe sous le titre, en bandeau pleine largeur —
-   six puces ne tiennent pas à droite d'un titre dans une colonne étroite. */
-body.fz-classement .standings-insights.is-h2h .recent-form-head {
-  justify-content: flex-start;
-  flex-wrap: wrap;
-  row-gap: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-}
-body.fz-classement .standings-insights.is-h2h .time-filters {
-  flex-basis: 100%;
-  display: flex;
-  gap: 4px;
-  margin: 13px -15px 0;
-  padding: 11px 15px;
-  border-top: 1px solid var(--fzc-border-soft);
-  border-bottom: 1px solid var(--fzc-border-soft);
-}
-body.fz-classement .standings-insights.is-h2h .time-filter {
-  flex: 1 1 0;
-  min-width: 0;
-  padding: 6px 2px;
-  border-radius: 7px;
-  font: 600 10.5px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  text-align: center;
-}
-body.fz-classement .standings-insights.is-h2h .time-filter.active {
-  background: color-mix(in srgb, var(--fzc-accent-fill) 10%, var(--fzc-surface));
-  border-color: color-mix(in srgb, var(--fzc-accent-fill) 45%, transparent);
-  color: var(--fzc-accent);
+/* La carte porte déjà le cadre : les tuiles du temple s'y empilent à plat. */
+body.fz-classement .standings-insights.is-h2h .hof-grid {
+  border: 0;
+  border-radius: 0;
+  background: none;
 }
 
 /* -------------------- Derniers résultats -------------------- */
@@ -1041,11 +1382,8 @@ body.fz-classement .h2h-res-more:hover { color: var(--fzc-accent-dark); }
 
 /* ==================== LISIBILITÉ DU CLASSEMENT ====================
    1. « Où en suis-je ? » avant le tableau.
-   2. La période de la tendance, nommée et choisissable partout — elle ne
-      l'était qu'au téléphone, alors que la colonne « Tendance » en dépend
-      aussi sur ordinateur.
-   3. Ma rangée repérée dans le tableau.
-   4. Une légende repliée : ce que veut dire chaque colonne. */
+   2. Ma rangée repérée dans le tableau.
+   3. Une légende repliée : ce que veut dire chaque colonne. */
 body.fz-classement .st-summary {
   display: flex;
   align-items: center;
@@ -1069,15 +1407,6 @@ body.fz-classement .st-summary-rank sup { font-size: .55em; }
 body.fz-classement .st-summary-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 body.fz-classement .st-summary-txt strong { color: var(--fzc-ink); }
 body.fz-classement .st-summary-txt span { font-size: .9rem; color: var(--fzc-text); }
-
-body.fz-classement .st-period-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; }
-body.fz-classement .st-period-label {
-  font: 600 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--fzc-text-muted);
-}
-body.fz-classement .st-period-bar .st-period-chips { display: flex; margin: 0; }
 
 body.fz-classement #standingsTable tbody tr.is-me td { background: color-mix(in srgb, var(--fzc-accent-fill) 6%, transparent); }
 body.fz-classement #standingsTable tbody tr.is-me td.player-col .st-name { font-weight: 800; color: var(--fzc-ink); }

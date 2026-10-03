@@ -74,7 +74,6 @@
     let semaine = null;      // réponse de /schedule/:date
     let jourChoisi = null;   // ISO
     let mesClubs = new Map(); // abbrev → [noms de mes joueurs]
-    let seulementMiens = false;
     let chargement = 0;
     // Le lundi DEMANDÉ, posé avant la réponse : deux clics rapides sur une
     // flèche reculent de deux semaines, pas deux fois de la même.
@@ -138,10 +137,8 @@
                 if (!mesClubs.has(club)) mesClubs.set(club, []);
                 mesClubs.get(club).push(nom);
             });
-        } catch (e) { /* le filtre reste simplement masqué */ }
+        } catch (e) { /* les matchs restent simplement sans repère */ }
 
-        const filtre = document.getElementById('calFilter');
-        if (filtre) filtre.hidden = mesClubs.size === 0;
         rendre();
     }
 
@@ -198,10 +195,28 @@
         return m.period ? `${m.period}e période` : 'En cours';
     }
 
+    /** « 08:23 » : minutes sur deux chiffres, la largeur ne bouge pas à 9:59. */
+    const mmss = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+
+    /**
+     * L'horloge d'un match en cours. Une horloge que le direct dit en marche
+     * avance seule dans la page (battreHorloges) : le serveur ne la repousse
+     * qu'aux arrêts de jeu et aux reprises.
+     */
+    function horloge(m) {
+        const c = m.clock;
+        if (!c) return '';
+        if (c.inIntermission) return 'Entracte';
+        const s = Number.isFinite(c.secondsRemaining) ? c.secondsRemaining : null;
+        if (s === null || !m._recuLe) return echapper(c.timeRemaining || '');
+        const restant = c.running ? Math.max(0, s - Math.floor((Date.now() - m._recuLe) / 1000)) : s;
+        return `<span class="cal-clock" data-cal-s="${s}" data-cal-at="${m._recuLe}" data-cal-run="${c.running ? 1 : 0}">${mmss(restant)}</span>`;
+    }
+
     function statut(m) {
         if (m.state === 'LIVE' || m.state === 'CRIT') {
-            const temps = m.clock && m.clock.inIntermission ? 'Entracte' : (m.clock && m.clock.timeRemaining) || '';
-            return `<span class="cal-tag is-live"><i aria-hidden="true"></i>En direct</span> ${echapper(periode(m))}${temps ? ` · ${echapper(temps)}` : ''}`;
+            const temps = horloge(m);
+            return `<span class="cal-tag is-live"><i aria-hidden="true"></i>En direct</span> ${echapper(periode(m))}${temps ? ` · ${temps}` : ''}`;
         }
         if (m.state === 'FINAL' || m.state === 'OFF') {
             const suffixe = m.periodType === 'OT' ? ' (prol.)' : m.periodType === 'SO' ? ' (t.b.)' : '';
@@ -222,7 +237,8 @@
             </div>`;
     }
 
-    function carteMatch(m) {
+    function carteMatch(horaire) {
+        const m = etatAffiche(horaire);
         const joue = !['FUT', 'PRE', 'PPD'].includes(m.state);
         const a = m.away || {}, h = m.home || {};
         const fini = m.state === 'FINAL' || m.state === 'OFF';
@@ -232,7 +248,7 @@
             ? `<a class="cal-game-box" href="match.html?id=${encodeURIComponent(m.id)}">Feuille de match<span aria-hidden="true">›</span></a>`
             : '';
         return `
-            <article class="cal-game${miens.length ? ' is-mine' : ''}${m.state === 'LIVE' || m.state === 'CRIT' ? ' is-live' : ''}">
+            <article class="cal-game${miens.length ? ' is-mine' : ''}${m.state === 'LIVE' || m.state === 'CRIT' ? ' is-live' : ''}" data-match="${echapper(m.id)}">
                 <div class="cal-game-status">${statut(m)}</div>
                 ${carteEquipe(a, fini && a.score > h.score, joue)}
                 ${carteEquipe(h, fini && h.score > a.score, joue)}
@@ -247,40 +263,18 @@
         const jour = ((semaine && semaine.days) || []).find(d => d.date === jourChoisi);
         titre.textContent = jourChoisi ? jourLong(jourChoisi).replace(/^./, c => c.toUpperCase()) : '';
 
-        let matchs = (jour && jour.games) || [];
-        const total = matchs.length;
-        if (seulementMiens) matchs = matchs.filter(estAMoi);
-
-        const note = document.getElementById('calMineNote');
-        if (note) {
-            const n = ((jour && jour.games) || []).filter(estAMoi).length;
-            note.textContent = mesClubs.size ? `${n} match${n > 1 ? 's' : ''} avec vos joueurs ce jour-là` : '';
-        }
+        const matchs = (jour && jour.games) || [];
 
         if (!semaine || !semaine.days.length) {
             zone.innerHTML = '<p class="cal-empty">Le calendrier de la LNH est indisponible pour le moment. Réessayez dans un instant.</p>';
             return;
         }
-        if (!total) {
+        if (!matchs.length) {
             zone.innerHTML = '<p class="cal-empty">Aucun match cette journée.</p>';
             return;
         }
-        if (!matchs.length) {
-            zone.innerHTML = '<p class="cal-empty">Aucun de vos joueurs ne joue cette journée.</p>';
-            return;
-        }
         zone.innerHTML = matchs.map(carteMatch).join('');
-    }
-
-    function rendreTitre() {
-        const jours = (semaine && semaine.days) || [];
-        const titre = document.getElementById('calTitle');
-        if (!titre) return;
-        if (!jours.length) { titre.textContent = 'Matchs de la semaine'; return; }
-        const d1 = dateUTC(jours[0].date), d2 = dateUTC(jours[jours.length - 1].date);
-        titre.textContent = d1.getUTCMonth() === d2.getUTCMonth()
-            ? `Du ${d1.getUTCDate()} au ${d2.getUTCDate()} ${MOIS[d2.getUTCMonth()]}`
-            : `Du ${d1.getUTCDate()} ${MOIS[d1.getUTCMonth()]} au ${d2.getUTCDate()} ${MOIS[d2.getUTCMonth()]}`;
+        reglerHorloges();
     }
 
     /**
@@ -296,18 +290,177 @@
         el.textContent = d1.getUTCMonth() === d2.getUTCMonth()
             ? `${debut} - ${d2.getUTCDate()}`
             : `${debut} - ${d2.getUTCDate()} ${MOIS_COURTS[d2.getUTCMonth()]}`;
+        // Partie vers une autre semaine : la pastille flottante ramène à
+        // aujourd'hui. Dans la semaine en cours, elle n'a rien à faire.
+        const retour = document.getElementById('calReturn');
+        if (retour) retour.hidden = lundiVise === lundiDe(aujourdhui());
     }
 
     function rendre() {
-        rendreTitre();
         rendreSemaine();
         libelleSaison();
         rendreBande();
         rendreJour();
-        const champ = document.getElementById('calDate');
-        if (champ && jourChoisi) champ.value = jourChoisi;
         document.getElementById('calPrev').disabled = !(semaine && semaine.previousStartDate);
         document.getElementById('calNext').disabled = !(semaine && semaine.nextStartDate);
+        reglerSuivi();
+    }
+
+    // ---------------------------------------------------------- direct
+    //
+    // Les matchs en cours de la semaine affichée suivent le direct que le
+    // serveur pousse (salle `scores`, services/scoresEnDirect.js) : le même
+    // relevé de la LNH que l'accueil, fait une fois pour tout le monde. La
+    // page relisait toute la semaine chaque minute, matchs ou pas. Un match
+    // qui sort de la liste des matchs en cours vient de finir : la semaine est
+    // alors relue une fois, pour son état final. Sans socket, ou coupé, la
+    // relecture reprend — mais seulement quand un match joue ou aurait dû
+    // commencer.
+
+    const RANG_ETAT = { FUT: 0, PRE: 0, PPD: 0, LIVE: 1, CRIT: 1, FINAL: 2, OFF: 2 };
+    const rangEtat = e => RANG_ETAT[e] ?? 0;
+    const enJeu = m => m && (m.state === 'LIVE' || m.state === 'CRIT');
+
+    let enDirect = new Map();   // id → match de /live-games, avec _recuLe
+    let suitScores = false;
+    let socketBranche = false;
+    let horlogesMinuteur = null;
+
+    function socketPartage() {
+        return typeof window.fzSocketPartage === 'function' ? window.fzSocketPartage() : null;
+    }
+
+    /**
+     * Le match tel qu'il est maintenant : l'horaire, avancé par le direct.
+     * Le direct ne fait jamais reculer un match que l'horaire dit plus loin.
+     */
+    function etatAffiche(m) {
+        const d = enDirect.get(String(m.id));
+        if (!d || rangEtat(d.state) < rangEtat(m.state)) return m;
+        return {
+            ...m,
+            state: d.state,
+            period: d.period ?? m.period,
+            periodType: d.periodType || m.periodType,
+            clock: d.clock || m.clock,
+            _recuLe: d._recuLe,
+            away: { ...m.away, score: d.away && d.away.score != null ? d.away.score : m.away && m.away.score },
+            home: { ...m.home, score: d.home && d.home.score != null ? d.home.score : m.home && m.home.score }
+        };
+    }
+
+    const matchsDeLaSemaine = () => ((semaine && semaine.days) || []).flatMap(d => d.games || []);
+
+    function reglerSuivi() {
+        const voulu = !document.hidden && matchsDeLaSemaine().some(m => enJeu(etatAffiche(m)));
+        if (voulu && !suitScores) suivreScores();
+        else if (!voulu && suitScores) arreterScores();
+    }
+
+    function suivreScores() {
+        const s = socketPartage();
+        if (!s) {
+            // socket.io se charge en `async` (calendrier.html) : la semaine
+            // peut le précéder. On repasse quand il aura pu arriver.
+            suivreScores.essais = (suivreScores.essais || 0) + 1;
+            if (suivreScores.essais <= 40) setTimeout(reglerSuivi, 250);
+            return;
+        }
+        brancherSocket(s);
+        suitScores = true;
+        if (s.connected) s.emit('scores:suivre');
+    }
+
+    function arreterScores() {
+        suitScores = false;
+        enDirect = new Map();
+        const s = socketPartage();
+        if (s && s.connected) s.emit('scores:arreter');
+    }
+
+    function brancherSocket(s) {
+        if (socketBranche) return;
+        socketBranche = true;
+        s.on('scores:tout', c => { if (suitScores && c) recevoirTout(c.games, c.ageMs); });
+        s.on('scores:match', c => { if (suitScores && c && c.game) recevoirMatch(c.game, c.ageMs); });
+        s.on('scores:chronos', liste => { if (suitScores && Array.isArray(liste)) liste.forEach(recevoirChrono); });
+        // La salle ne survit pas à une reconnexion : on s'y réabonne, et le
+        // serveur renvoie l'état complet.
+        s.on('connect', () => { if (suitScores) s.emit('scores:suivre'); });
+    }
+
+    const recu = (g, ageMs) => ({ ...g, _recuLe: Date.now() - (Number(ageMs) || 0) });
+
+    /** Tous les matchs en cours. Un match qui n'y est plus vient de finir. */
+    function recevoirTout(matchs, ageMs) {
+        if (!Array.isArray(matchs)) return;
+        const avant = matchsDeLaSemaine().filter(m => enJeu(etatAffiche(m))).map(m => String(m.id));
+        enDirect = new Map(matchs.map(g => [String(g.id), recu(g, ageMs)]));
+        rendreJour();
+        if (avant.some(id => !enDirect.has(id))) {
+            chargerSemaine(jourChoisi || aujourdhui(), { silencieux: true });
+        } else {
+            reglerSuivi();
+        }
+    }
+
+    /** Un match dont le pointage, la période ou l'état a bougé. */
+    function recevoirMatch(g, ageMs) {
+        enDirect.set(String(g.id), recu(g, ageMs));
+        majCarte(g.id);
+    }
+
+    /** Une horloge arrêtée, repartie ou recalée. */
+    function recevoirChrono(c) {
+        const connu = c && enDirect.get(String(c.id));
+        if (!connu || !c.clock) return;
+        enDirect.set(String(c.id), recu({ ...connu, clock: c.clock }, c.ageMs));
+        majCarte(c.id);
+    }
+
+    /** Redessine la seule carte d'un match, s'il est à l'écran. */
+    function majCarte(id) {
+        const carte = document.querySelector(`.cal-game[data-match="${CSS.escape(String(id))}"]`);
+        const m = matchsDeLaSemaine().find(x => String(x.id) === String(id));
+        if (!carte || !m) return;
+        carte.outerHTML = carteMatch(m);
+        reglerHorloges();
+    }
+
+    /** Un battement par seconde pour toutes les horloges qui avancent. */
+    function battreHorloges() {
+        const pendules = document.querySelectorAll('.cal-clock[data-cal-run="1"]');
+        if (!pendules.length) { reglerHorloges(); return; }
+        pendules.forEach(el => {
+            const restant = Math.max(0, Number(el.dataset.calS) - Math.floor((Date.now() - Number(el.dataset.calAt)) / 1000));
+            const texte = mmss(restant);
+            if (el.textContent !== texte) el.textContent = texte;
+            if (!restant) el.dataset.calRun = '0';
+        });
+    }
+
+    function reglerHorloges() {
+        const besoin = !document.hidden && !!document.querySelector('.cal-clock[data-cal-run="1"]');
+        if (besoin && !horlogesMinuteur) horlogesMinuteur = setInterval(battreHorloges, 1000);
+        else if (!besoin && horlogesMinuteur) { clearInterval(horlogesMinuteur); horlogesMinuteur = null; }
+    }
+
+    /**
+     * La semaine vaut-elle d'être relue ? Un match en cours que le direct ne
+     * couvre pas, ou un match d'hier ou d'aujourd'hui qui aurait dû commencer
+     * et que l'horaire dit encore à venir.
+     */
+    function relectureUtile() {
+        if (!semaine) return false;
+        const direct = suitScores && !!(socketPartage() && socketPartage().connected);
+        const hier = decaler(aujourdhui(), -1);
+        const bientot = Date.now() + 60000;
+        return semaine.days.some(d => (d.games || []).some(horaire => {
+            const m = etatAffiche(horaire);
+            if (enJeu(m)) return !direct;
+            return (m.state === 'FUT' || m.state === 'PRE') && d.date >= hier
+                && Date.parse(m.startTimeUTC) <= bientot;
+        }));
     }
 
     // ---------------------------------------------------------- gestes
@@ -319,8 +472,6 @@
             jourChoisi = puce.dataset.jour;
             rendreBande();
             rendreJour();
-            const champ = document.getElementById('calDate');
-            if (champ) champ.value = jourChoisi;
         });
         document.getElementById('calStrip').addEventListener('keydown', e => {
             if (!['ArrowLeft', 'ArrowRight'].includes(e.key) || !semaine) return;
@@ -341,19 +492,11 @@
         document.getElementById('calNext').addEventListener('click', () => {
             if (semaine && semaine.nextStartDate) { jourChoisi = null; chargerSemaine(decaler(lundiVise, 7)); }
         });
-        document.getElementById('calToday').addEventListener('click', () => {
+        // La pastille disparaît sous le doigt : le focus passe au jour
+        // d'aujourd'hui plutôt que de retomber sur la page.
+        document.getElementById('calReturn').addEventListener('click', () => {
             jourChoisi = aujourdhui();
-            chargerSemaine(jourChoisi);
-        });
-        document.getElementById('calDate').addEventListener('change', e => {
-            if (/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)) {
-                jourChoisi = e.target.value;
-                chargerSemaine(e.target.value);
-            }
-        });
-        document.getElementById('calMine').addEventListener('change', e => {
-            seulementMiens = e.target.checked;
-            rendreJour();
+            chargerSemaine(jourChoisi).then(() => document.querySelector('.cal-chip.is-today')?.focus());
         });
     }
 
@@ -364,12 +507,24 @@
         chargerSemaine(jourChoisi);
         chargerMesClubs();
         if (window.FZPool && typeof FZPool.on === 'function') FZPool.on(chargerMesClubs);
-        // Les scores d'un soir de match bougent : on relit la semaine affichée
-        // toutes les 60 secondes, seulement si elle contient aujourd'hui.
+        // Le direct (reglerSuivi) porte les matchs en cours. La semaine n'est
+        // relue que pour ce qu'il ne dit pas : un match qui aurait dû
+        // commencer, ou tout le direct quand le socket manque.
         setInterval(() => {
-            if (document.hidden || !semaine) return;
-            const auj = aujourdhui();
-            if (semaine.days.some(d => d.date === auj)) chargerSemaine(jourChoisi || auj, { silencieux: true });
+            if (document.hidden || !relectureUtile()) return;
+            chargerSemaine(jourChoisi || aujourdhui(), { silencieux: true });
         }, 60000);
+        // Onglet caché : ni direct ni horloge. Au retour, la semaine du jour
+        // est relue — elle a pu finir des matchs pendant l'absence.
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (suitScores) arreterScores();
+                reglerHorloges();
+                return;
+            }
+            const auj = aujourdhui();
+            if (semaine && semaine.days.some(d => d.date === auj)) chargerSemaine(jourChoisi || auj, { silencieux: true });
+            else reglerSuivi();
+        });
     });
 })();

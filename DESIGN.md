@@ -409,7 +409,8 @@ Tactile and confident: real weight, a clear press, and hit areas built for a thu
 - **Desktop (≥769px):** a 70px sticky frosted bar (`--navbar-glass` with a 20px backdrop blur) and a bottom separator. Links are 600-weight pills in `--text-secondary` at `10px 16px`, 44px minimum.
   - **Hover:** the label turns to the label color, the pill takes a `--bg-hover` fill, and it lifts 2px.
   - **Active:** a `--primary-text` label plus a 3px `--primary` rule along the bottom edge.
-- **Phone (≤768px):** the bar compresses and a fixed bottom nav appears in the same frosted material: 5 icon+label items, 64px minimum height, label at 0.75rem/700. Inactive items are `--text-secondary`. The active item turns red, like Apple's tab bar: `--primary-text` for icon and label, and a 3px `--primary` rule along its *top* edge, mirroring the desktop treatment.
+- **Phone (≤768px):** the bar compresses and a fixed bottom nav appears in the same frosted material: up to 6 icon+label items, 56px minimum height, 11px labels. Inactive items are a muted grey (`--bn-ink`). The active item turns red, like Apple's tab bar: `--primary-text` for icon and label, a heavier stroke, an icon at 1.08×, and a 56 × 32 tinted pill (`rgba(var(--primary-rgb), .16)` with a 1px inner edge) under the icon.
+  - **Touch feedback** (navbar.js, `jouerGeste`): on contact, before release, the icon presses to 0.84, the item tints red and a wave spreads from the finger. On release: a haptic tick, the icon springs back past full size, the pill glides to the new tab stretched along its path (more for longer trips) and drops a fading ring as it lands. The arriving page resumes the gesture where the old one left off. Under `prefers-reduced-motion`, only the color, the tick and a non-expanding flash remain.
 - **Notification badge:** a `--primary` pill with a white label at the avatar's top-right. A 2px ring in `--navbar-bg` (`#161617` / `#FBFBFD`) separates it from whatever is behind it.
 
 ### Tables

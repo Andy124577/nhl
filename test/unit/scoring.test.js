@@ -323,6 +323,43 @@ describe('computeTeamSeasonScores', () => {
 
         assert.equal(computeTeamSeasonScores(pool, stats)[0].score, 0);
     });
+
+    test('un nom repêché avec accent retrouve le relevé écrit sans', () => {
+        // La trousse écrit « Tim Stützle », la LNH « Tim Stutzle ».
+        const pool = makePool({ teams: { Rouge: makeTeam({ offensive: ['Tim Stützle'] }) } });
+        const stats = [makeSkaterStat('Tim Stutzle', { points: 40 })];
+
+        assert.equal(computeTeamSeasonScores(pool, stats)[0].score, 40);
+    });
+
+    test('le nom exact passe avant la clé sans accent', () => {
+        const pool = makePool({ teams: { Rouge: makeTeam({ offensive: ['Jean Double'] }) } });
+        const stats = [makeSkaterStat('Jean Doublé', { points: 5 }), makeSkaterStat('Jean Double', { points: 9 })];
+
+        assert.equal(computeTeamSeasonScores(pool, stats)[0].score, 9);
+    });
+
+    test('une recrue gardienne est comptée en gardienne', () => {
+        const pool = makePool({ teams: { Rouge: makeTeam({ rookie: ['Sergei Murashov'] }) } });
+        const stats = [makeGoalieStat('Sergei Murashov', { wins: 2, shutouts: 1, otLosses: 1 })];
+
+        assert.equal(computeTeamSeasonScores(pool, stats)[0].score, 10);   // 5 + 4 + 1
+    });
+
+    test('« Utah Mammoth » repêché compte les résultats de « Utah Hockey Club »', () => {
+        // La trousse a le nouveau nom, le classement des clubs de la LNH l'ancien.
+        const pool = makePool({ teams: { Rouge: makeTeam({ teams: ['Utah Mammoth'] }) } });
+        const clubs = [{ teamFullName: 'Utah Hockey Club', wins: 40, otLosses: 6 }];
+
+        assert.equal(computeTeamSeasonScores(pool, [], clubs)[0].score, 86);
+    });
+
+    test('un club écrit sans accent retrouve sa fiche', () => {
+        const pool = makePool({ teams: { Rouge: makeTeam({ teams: ['Montreal Canadiens'] }) } });
+        const clubs = [{ teamFullName: 'Montréal Canadiens', wins: 45, otLosses: 9 }];
+
+        assert.equal(computeTeamSeasonScores(pool, [], clubs)[0].score, 99);
+    });
 });
 
 describe('getTeamWeeklyPoints', () => {

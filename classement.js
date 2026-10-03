@@ -10,7 +10,7 @@ const NHL_ABBREV = {
     "New York Islanders": "NYI", "New York Rangers": "NYR", "Ottawa Senators": "OTT",
     "Philadelphia Flyers": "PHI", "Pittsburgh Penguins": "PIT", "San Jose Sharks": "SJS",
     "Seattle Kraken": "SEA", "St. Louis Blues": "STL", "Tampa Bay Lightning": "TBL",
-    "Toronto Maple Leafs": "TOR", "Utah Hockey Club": "UTA", "Vancouver Canucks": "VAN",
+    "Toronto Maple Leafs": "TOR", "Utah Hockey Club": "UTA", "Utah Mammoth": "UTA", "Vancouver Canucks": "VAN",
     "Vegas Golden Knights": "VGK", "Washington Capitals": "WSH", "Winnipeg Jets": "WPG"
 };
 
@@ -91,7 +91,19 @@ function seasonStat(stats, cached, key) {
 
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', async () => {
+    // Le temple du squelette (classement.html) : les mêmes tuiles fantômes
+    // que renderHallOfFame pose en attendant ses records.
+    const templeSquelette = document.getElementById('standingsSkeletonHof');
+    if (templeSquelette) templeSquelette.innerHTML = hofChargementHTML();
+
     await fetchImageData();
+
+    // La trousse de repêchage : la fiche des joueurs repêchés que
+    // nhl_filtered_stats.json ne contient pas (voir ficheJoueur). Chargée en
+    // parallèle ; sans elle, ces joueurs paraissent quand même.
+    const trousse = window.FZDraftKit
+        ? FZDraftKit.charger().catch(error => { console.warn('⚠️ Could not load draft kit:', error); })
+        : Promise.resolve();
 
     // Load player data
     const response = await fetch('nhl_filtered_stats.json');
@@ -127,6 +139,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn('⚠️ Could not load current team standings:', error);
     }
 
+    await trousse;
+    indexerFiches();
+
     // Charge le pool actif
     await loadAllUserPools();
 
@@ -137,9 +152,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // classement sur place. En saison seulement — avant, aucun match ne compte.
     if (window.FZPointsDirect && seasonStarted) {
         let premierDirect = true;
+        FZPointsDirect.surNouveauReleve(relireRelevesDeMinuit);
         FZPointsDirect.surChangement(() => {
             appliquerPointsDirect();
             rafraichirClassementEnDirect();
+            rafraichirFicheEnDirect();
+            relireSoireeBientot();
             // Le premier envoi n'est que l'état du moment, que les colonnes
             // de période lues au chargement comptent déjà.
             if (premierDirect) { premierDirect = false; return; }
@@ -167,9 +185,24 @@ function relirePeriodesEnDirect() {
         periodesMinuteur = null;
         periodesDerniere = Date.now();
         periodPointsCache = null;
-        recentFormCache = { poolName: null, byDays: new Map() };
         rafraichirClassementEnDirect();
     }, attente);
+}
+
+/**
+ * La collecte de minuit a tourné pendant que la page était ouverte : ses
+ * relevés sont relus avant que le nouveau direct ne s'y ajoute (voir
+ * pointsDirect.js). Un échec garde les anciens — mieux qu'un classement vide.
+ */
+async function relireRelevesDeMinuit() {
+    const [stats, clubs] = await Promise.all([
+        fetch(`${BASE_URL}/current-stats`, { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`${BASE_URL}/current-teams`, { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null)
+    ]);
+    if (stats && Array.isArray(stats.players)) currentStats = currentStatsBase = stats;
+    if (clubs && Array.isArray(clubs.teams)) currentTeams = currentTeamsBase = clubs;
+    // Les colonnes 24 h / 7 j / 30 j changent de base avec le relevé.
+    periodPointsCache = null;
 }
 
 /** currentStats / currentTeams = relevés de minuit + points du soir. */
@@ -186,8 +219,8 @@ function appliquerPointsDirect() {
 /**
  * Redessine le classement cumulatif affiché, sans rien relire : les points
  * par période sont en mémoire (periodPointsCache), le tri choisi est gardé.
- * Un classement H2H ne lit pas ces totaux ; la fiche d'une équipe prendra
- * les nouveaux au prochain affichage.
+ * Un classement H2H ne lit pas ces totaux ; la fiche d'une équipe a son
+ * propre rafraîchissement (rafraichirFicheEnDirect).
  */
 function rafraichirClassementEnDirect() {
     if (currentView !== VIEW_STATES.POOL_STANDINGS || !currentPoolName) return;
@@ -282,7 +315,6 @@ function showPoolStandings(poolName) {
     h2hSchedTeam = null;
     standingsSortKey = null; // reset to canonical rank order for the new pool
     standingsSortDir = 'desc';
-    standingsPeriod = 7; // reset rank-evolution period for the new pool
     periodPointsCache = null;
 
     const poolData = allPoolsData[poolName];
@@ -309,7 +341,6 @@ function showPoolStandings(poolName) {
     // Reset on every pool switch — only the cumulative branch below re-shows
     // it, and a stale record from the previous pool must not linger.
     document.getElementById('hallOfFame').style.display = 'none';
-    document.getElementById('recentFormLeaderboard').style.display = 'none';
     document.getElementById('h2hRecentResults').style.display = 'none';
     const bandeH2H = document.getElementById('h2hStandingsStrip');
     bandeH2H.innerHTML = '';
@@ -356,14 +387,43 @@ function showPoolStandings(poolName) {
         h2hHistoryView.style.display = 'none';
         document.getElementById('h2hScheduleView').style.display = 'none';
 
-        // Show skeleton initially
-        document.getElementById('standingsSkeleton').style.display = 'flex';
+        // Le squelette, à la taille du pool, le temps de lire les points
+        // par période (renderPoolStandings).
+        ajusterSqueletteClassement(Object.values(poolData.teams || {})
+            .filter(td => td.members && td.members.length > 0).length);
+        document.getElementById('standingsSkeleton').style.display = 'block';
         document.getElementById('standingsList').style.display = 'none';
 
         setTimeout(() => {
             renderPoolStandings(poolData, poolName).catch(console.error);
         }, 100);
     }
+}
+
+/**
+ * Le squelette prend le nombre de rangées du pool dès qu'il est connu : le
+ * classement chargé arrive à la même hauteur, la légende et le temple ne
+ * sautent pas. Les rangées ajoutées reprennent les largeurs des premières ;
+ * au-delà de 12, le reste est sous la ligne de flottaison.
+ */
+function ajusterSqueletteClassement(nombre) {
+    const voulu = Math.max(1, Math.min(nombre || 7, 12));
+    const classeRang = n => (n === 1 ? 'gold' : n === 2 ? 'silver' : n === 3 ? 'bronze' : 'normal');
+    document.querySelectorAll('#standingsSkeleton .st-sk-table tbody, #standingsSkeleton .st-sk-list').forEach(hote => {
+        const modeles = [...hote.children];
+        if (!modeles.length) return;
+        while (hote.children.length > voulu) hote.lastElementChild.remove();
+        while (hote.children.length < voulu) {
+            const i = hote.children.length;
+            const rangee = modeles[i % modeles.length].cloneNode(true);
+            rangee.style.setProperty('--i', i);
+            const badge = rangee.querySelector('.st-rank-badge');
+            if (badge) { badge.className = `st-rank-badge ${classeRang(i + 1)}`; badge.textContent = i + 1; }
+            const rang = rangee.querySelector('.st-mobile-rank');
+            if (rang) rang.textContent = i + 1;
+            hote.appendChild(rangee);
+        }
+    });
 }
 
 // Colonnes du tableau de classement, par mode de pool. `sort` doit
@@ -404,18 +464,19 @@ function getStandingsColumns(poolMode) {
         { label: '30 j', cls: 'st-period-col', title: 'Points marqués ces 30 derniers jours' },
         { label: 'Total', sort: 'points', cls: 'points-column', title: 'Points de la saison — ce qui décide du classement' },
         { label: 'Moy./PJ', sort: 'ppg', title: 'Points de la saison par partie jouée' },
-        { label: 'Tendance', cls: 'st-evo-col', title: 'Places gagnées ou perdues si l’on classait seulement sur la période choisie' }
+        { label: 'Tendance', cls: 'st-evo-col', title: 'Places gagnées ou perdues si l’on classait seulement sur les 7 derniers jours' }
     ];
 }
 
 // ==================== RANG : ÉVOLUTION PAR PÉRIODE ====================
 // Le rang (Pos) reste fixé par le total de la saison. Le badge en bout de
 // ligne compare ce rang à celui qu'aurait l'équipe si le classement portait
-// uniquement sur les points marqués pendant la période choisie (1/7/30
-// jours, même formule que le temple de la renommée et /pool-leaderboard) :
-// mieux classée sur la période que sur la saison → ▲, moins bien → ▼.
+// uniquement sur les points des 7 derniers jours (même formule que le temple
+// de la renommée et /pool-leaderboard) : mieux classée sur la semaine que
+// sur la saison → ▲, moins bien → ▼. Les trois périodes restent lues pour
+// les colonnes 24 h / 7 j / 30 j.
 const STANDINGS_PERIODS = [1, 7, 30];
-let standingsPeriod = 7;
+const TENDANCE_JOURS = 7;
 let periodPointsCache = null; // { poolName, byDays: { 1: Map, 7: Map, 30: Map } }
 
 const EVO_ARROW_UP = '<svg viewBox="0 0 24 24" width="8" height="8"><path d="M12 4l8 10H4z"></path></svg>';
@@ -469,22 +530,13 @@ function initialsFromName(name) {
 
 function evolutionBadgeHTML(move, hasData) {
     if (hasData && move > 0) {
-        return `<span class="st-evo st-evo-up" title="A gagné ${move} rang${move > 1 ? 's' : ''} sur la période">${EVO_ARROW_UP}${move}</span>`;
+        return `<span class="st-evo st-evo-up" title="A gagné ${move} rang${move > 1 ? 's' : ''} sur 7 jours">${EVO_ARROW_UP}${move}</span>`;
     }
     if (hasData && move < 0) {
-        return `<span class="st-evo st-evo-down" title="A perdu ${-move} rang${-move > 1 ? 's' : ''} sur la période">${EVO_ARROW_DOWN}${-move}</span>`;
+        return `<span class="st-evo st-evo-down" title="A perdu ${-move} rang${-move > 1 ? 's' : ''} sur 7 jours">${EVO_ARROW_DOWN}${-move}</span>`;
     }
-    const title = hasData ? 'Rang inchangé sur la période' : 'Pas assez de données récentes';
+    const title = hasData ? 'Rang inchangé sur 7 jours' : 'Pas assez de données récentes';
     return `<span class="st-evo st-evo-flat" title="${title}">—</span>`;
-}
-
-function standingsPeriodChipsHTML() {
-    return `<div class="st-period-bar">
-        <span class="st-period-label" id="stPeriodLabel">Tendance sur</span>
-        <div class="st-period-chips" role="group" aria-labelledby="stPeriodLabel">
-            ${STANDINGS_PERIODS.map(d => `<button type="button" class="st-period-chip${d === standingsPeriod ? ' active' : ''}" data-period="${d}" aria-pressed="${d === standingsPeriod}">${d === 1 ? '24 h' : `${d} j`}</button>`).join('')}
-        </div>
-    </div>`;
 }
 
 /**
@@ -535,7 +587,7 @@ function standingsLegendHTML(poolMode) {
         : [
             ['Total', 'Ce qui décide du classement : les points de la saison. Patineurs : 1 par but et 1 par passe. Gardiens : 2 par victoire, 5 pour une victoire par blanchissage (pas 2 + 5), 1 par défaite en prolongation. Clubs de la LNH : 2 par victoire, 1 par défaite en prolongation.'],
             ['24 h · 7 j · 30 j', 'Les points marqués sur la période — aujourd’hui, 7 jours, 30 jours —, selon les mêmes règles que le Total. Ils ne changent pas le classement : ils montrent qui monte.'],
-            ['Tendance', 'Les places qu’une équipe gagnerait (▲) ou perdrait (▼) si l’on classait seulement sur la période choisie.'],
+            ['Tendance', 'Les places qu’une équipe gagnerait (▲) ou perdrait (▼) si l’on classait seulement sur les 7 derniers jours.'],
             ['PJ · B · P', 'Parties jouées, buts et passes de tout l’alignement.']
         ];
     return `
@@ -593,8 +645,7 @@ function handleStandingsSort(key) {
 //      participant, points marqués, prochain duel) ;
 //   2. une colonne « Forme » dans la table — cinq pastilles disent mieux
 //      qu'un différentiel qui monte et qui coule ;
-//   3. les derniers résultats en bas, à côté du temple de la renommée et
-//      des meilleures équipes récentes.
+//   3. les derniers résultats en bas, à côté du temple de la renommée.
 //
 // Rien de tout cela n'a besoin du réseau : le bilan, l'historique et la
 // semaine en cours sont déjà dans poolData.h2hData, chargé une fois par
@@ -964,13 +1015,12 @@ async function renderPoolStandings(poolData, poolName) {
     // Points par période (1/7/30j) et rang « période » associé : pas de
     // pendant H2H, qui n'a ni colonnes période ni badge d'évolution.
     const byDays = poolMode === 'head-to-head' ? null : await fetchStandingsPeriodPoints(poolName);
-    const periodRankByTeam = byDays ? rankByPeriodPoints(standings, byDays[standingsPeriod]) : null;
+    const periodRankByTeam = byDays ? rankByPeriodPoints(standings, byDays[TENDANCE_JOURS]) : null;
 
     // En H2H la table vit dans une carte titrée — elle n'est plus qu'un bloc
     // parmi d'autres sur l'onglet. En cumulatif elle reste à plat sur la
-    // page, avec ses chips de période et sa liste téléphone.
+    // page, avec sa liste téléphone.
     const enH2H = poolMode === 'head-to-head';
-    const chipsHTML = enH2H ? '' : standingsPeriodChipsHTML();
     const mobileListHTML = enH2H ? '' : '<div class="st-mobile-list"></div>';
     const tableHTML = `<div class="standings-table-container"><table id="standingsTable">${buildStandingsHead(columns, activeSortKey)}</table></div>`;
 
@@ -985,7 +1035,7 @@ async function renderPoolStandings(poolData, poolName) {
                ${tableHTML}
                ${legendeHTML}
            </section>`
-        : `${resumeHTML}${chipsHTML}${tableHTML}${mobileListHTML}${legendeHTML}`;
+        : `${resumeHTML}${tableHTML}${mobileListHTML}${legendeHTML}`;
     const table = document.getElementById('standingsTable');
 
     const tbody = document.createElement('tbody');
@@ -1013,7 +1063,7 @@ async function renderPoolStandings(poolData, poolName) {
         if (periodRankByTeam) {
             const periodRank = periodRankByTeam.get(standing.teamName);
             const move = periodRank !== undefined ? standing.rank - periodRank : 0;
-            const hasData = byDays[standingsPeriod].get(standing.teamName) != null;
+            const hasData = byDays[TENDANCE_JOURS].get(standing.teamName) != null;
             evoHTML = evolutionBadgeHTML(move, hasData);
         }
 
@@ -1105,16 +1155,10 @@ async function renderPoolStandings(poolData, poolName) {
         table.appendChild(tfoot);
     }
 
-    // Délégation sur le conteneur : reconstruit à chaque tri/période/rendu, un
-    // écouteur par <th>/.st-period-chip/.st-mobile-row fuirait à chaque passe
+    // Délégation sur le conteneur : reconstruit à chaque tri/rendu, un
+    // écouteur par <th>/.st-mobile-row fuirait à chaque passe
     // (comme initStatsHeaderSorting).
     standingsList.onclick = (e) => {
-        const chip = e.target.closest('.st-period-chip');
-        if (chip) {
-            standingsPeriod = Number(chip.dataset.period);
-            renderPoolStandings(poolData, poolName).catch(console.error);
-            return;
-        }
         const th = e.target.closest('th[data-sort]');
         if (th) { handleStandingsSort(th.dataset.sort); return; }
         const mobileRow = e.target.closest('.st-mobile-row');
@@ -1131,68 +1175,191 @@ async function renderPoolStandings(poolData, poolName) {
     document.getElementById('standingsSkeleton').style.display = 'none';
     standingsList.style.display = 'block';
 
-    // En H2H les trois blocs du bas se rangent côte à côte ; en cumulatif ils
-    // restent empilés, comme avant.
+    // En H2H les deux blocs du bas se rangent côte à côte ; en cumulatif le
+    // temple de la renommée occupe seul la pleine largeur.
     const insights = document.getElementById('standingsInsights');
     if (insights) insights.classList.toggle('is-h2h', enH2H);
 
     renderHallOfFame(poolName);
-    renderRecentFormLeaderboard(poolName);
     if (enH2H) renderH2HRecentResults(poolName);
 }
 
-// ==================== HALL OF FAME ====================
-// Season records (best/worst single day, week, month of pool points),
-// computed server-side from real game logs — see GET /pool-hall-of-fame.
+// ==================== TEMPLE DE LA RENOMMÉE ====================
+// Les records de la saison (meilleure et pire journée, semaine, mois en
+// points de pool), calculés côté serveur à partir des vrais matchs — voir
+// GET /pool-hall-of-fame.
+//
+// Une tuile par période. Le record mène — le chiffre en or, l'équipe, la
+// date — et le pire suit en une ligne discrète : c'est un temple, pas un
+// tableau à deux colonnes de même poids. Chaque nom d'équipe ouvre sa fiche,
+// comme une rangée du classement.
 
-function formatHofDate(dateStr) {
-    if (!dateStr) return '';
-    return new Date(dateStr + 'T00:00:00Z').toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+const HOF_PERIODES = [
+    { cle: 'Day', titre: 'Meilleure journée', date: hofDateJour },
+    { cle: 'Week', titre: 'Meilleure semaine', date: hofDateSemaine },
+    { cle: 'Month', titre: 'Meilleur mois', date: hofDateMois }
+];
+
+/** Une journée AAAA-MM-JJ lue comme date de calendrier (minuit UTC). */
+function hofJour(journee) {
+    return new Date(journee + 'T00:00:00Z');
 }
 
-function formatHofMonth(dateStr) {
-    if (!dateStr) return '';
-    const month = new Date(dateStr + 'T00:00:00Z').toLocaleDateString('fr-CA', { month: 'long', timeZone: 'UTC' });
-    return month.charAt(0).toUpperCase() + month.slice(1);
+function hofDecaler(journee, jours) {
+    const d = hofJour(journee);
+    d.setUTCDate(d.getUTCDate() + jours);
+    return d.toISOString().slice(0, 10);
 }
 
-// Icône trophée du mockup ; la variante « pire » la reprend grisée et
-// retournée plutôt que d'introduire une deuxième icône.
+/**
+ * La période d'un record n'est pas finie : il peut encore tomber. Le serveur
+ * compte la semaine et le mois entamés, et une « pire semaine » de trois
+ * jours se lisait comme un vrai creux. `journee` est la journée, le lundi ou
+ * le 1er du mois que donne /pool-hall-of-fame.
+ */
+function hofEnCours(cle, journee, aujourdhui) {
+    if (!journee || !aujourdhui) return false;
+    if (cle === 'Day') return journee === aujourdhui;
+    if (cle === 'Week') return journee <= aujourdhui && aujourdhui <= hofDecaler(journee, 6);
+    return journee.slice(0, 7) === aujourdhui.slice(0, 7);
+}
+
+/** Aujourd'hui en journée locale : « en cours » se juge à l'heure du lecteur. */
+function hofAujourdhui() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function hofFormat(journee, options) {
+    return hofJour(journee).toLocaleDateString('fr-CA', { ...options, timeZone: 'UTC' });
+}
+
+/** « sam. 12 oct. » */
+function hofDateJour(journee) {
+    if (!journee) return '';
+    return hofFormat(journee, { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+/** « 6 – 12 oct. », ou « 29 sept. – 5 oct. » à cheval sur deux mois. Le
+ *  serveur donne le lundi : la date seule laissait deviner la semaine. */
+function hofDateSemaine(lundi) {
+    if (!lundi) return '';
+    const dimanche = hofDecaler(lundi, 6);
+    const memeMois = lundi.slice(0, 7) === dimanche.slice(0, 7);
+    const debut = memeMois ? String(hofJour(lundi).getUTCDate()) : hofFormat(lundi, { day: 'numeric', month: 'short' });
+    return `${debut} – ${hofFormat(dimanche, { day: 'numeric', month: 'short' })}`;
+}
+
+/** « Octobre » */
+function hofDateMois(premier) {
+    if (!premier) return '';
+    const mois = hofFormat(premier, { month: 'long' });
+    return mois.charAt(0).toUpperCase() + mois.slice(1);
+}
+
+// Icône trophée pleine, reprise de l'ancien tableau.
 function trophyIconHTML(cls) {
-    return `<svg class="hof-icon ${cls}" viewBox="0 0 24 24" width="18" height="18"><path d="M5 4h14v2h2v3a5 5 0 0 1-5 5h-.26A6 6 0 0 1 13 17.65V20h3v2H8v-2h3v-2.35A6 6 0 0 1 8.26 14H8a5 5 0 0 1-5-5V6h2V4zm0 4H5v1a3 3 0 0 0 2.6 2.97A8.9 8.9 0 0 1 5 8zm14 0a8.9 8.9 0 0 1-2.6 3.97A3 3 0 0 0 19 9V8z"></path></svg>`;
+    return `<svg class="hof-icon ${cls}" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M5 4h14v2h2v3a5 5 0 0 1-5 5h-.26A6 6 0 0 1 13 17.65V20h3v2H8v-2h3v-2.35A6 6 0 0 1 8.26 14H8a5 5 0 0 1-5-5V6h2V4zm0 4H5v1a3 3 0 0 0 2.6 2.97A8.9 8.9 0 0 1 5 8zm14 0a8.9 8.9 0 0 1-2.6 3.97A3 3 0 0 0 19 9V8z"></path></svg>`;
 }
 
-/** Une case du tableau des records : les points, l'équipe, la date. */
-function hofCellHTML(entry, kind, dateFormatter) {
-    if (!entry) return `<div class="hof-cell is-${kind} is-empty"><span class="hof-empty">—</span></div>`;
-    const displayName = escapeHtmlText(getDisplayName(entry.teamName, entry.members));
+/**
+ * Le nom d'une équipe du temple : un bouton vers sa fiche si l'équipe est
+ * encore dans le pool, du texte sinon. `avecLogo` pour la ligne du record.
+ */
+function hofEquipeHTML(entry, ctx, cls, avecLogo) {
+    const equipe = ctx.equipes[entry.teamName];
+    const nom = getDisplayName(entry.teamName, entry.members);
+    const logo = avecLogo
+        ? `<span class="hof-avatar">${(equipe && getTeamLogoHTML(equipe.teams, 14))
+            || `<span class="st-avatar-fallback">${escapeHtmlText(initialsFromName(nom))}</span>`}</span>`
+        : '';
+    const moi = entry.teamName === ctx.mienne ? '<span class="hof-me">Vous</span>' : '';
+    const contenu = `${logo}<span class="hof-team-name">${escapeHtmlText(nom)}</span>${moi}`;
+    if (!equipe) return `<span class="${cls}" title="${escapeAttr(nom)}">${contenu}</span>`;
+    return `<button type="button" class="${cls} is-link" data-hof-team="${escapeAttr(entry.teamName)}"
+                title="Voir l’équipe ${escapeAttr(nom)}">${contenu}</button>`;
+}
+
+function hofQuandHTML(entry, periode, ctx, cls) {
+    const enCours = hofEnCours(periode.cle, entry.date, ctx.aujourdhui)
+        ? '<span class="hof-live">en cours</span>' : '';
+    return `<span class="${cls}">${escapeHtmlText(periode.date(entry.date))}${enCours}</span>`;
+}
+
+function hofTuileHTML(periode, best, worst, ctx) {
+    const record = best
+        ? `<div class="hof-record">
+                <span class="hof-pts">${fmtPeriodPts(best.points)}<small>pts</small></span>
+                <span class="hof-who">
+                    ${hofEquipeHTML(best, ctx, 'hof-team', true)}
+                    ${hofQuandHTML(best, periode, ctx, 'hof-when')}
+                </span>
+            </div>`
+        : `<div class="hof-record is-empty"><span class="hof-pts">—</span><span class="hof-when">Aucun match encore</span></div>`;
+    // Une seule équipe a joué : son meilleur est aussi son pire, inutile de
+    // le répéter.
+    const memeEntree = best && worst && best.teamName === worst.teamName
+        && best.date === worst.date && best.points === worst.points;
+    const pire = worst && !memeEntree
+        ? `<div class="hof-low">
+                <span class="hof-low-label">Pire</span>
+                <span class="hof-low-pts">${fmtPeriodPts(worst.points)}<small>pts</small></span>
+                ${hofEquipeHTML(worst, ctx, 'hof-low-team', false)}
+                ${hofQuandHTML(worst, periode, ctx, 'hof-low-when')}
+            </div>`
+        : '';
     return `
-        <div class="hof-cell is-${kind}">
-            <span class="hof-card-value">${entry.points}<small>pts</small></span>
-            <span class="hof-card-name" title="${displayName}">${displayName}</span>
-            <span class="hof-card-date">${dateFormatter(entry.date)}</span>
-        </div>`;
+        <article class="hof-tile">
+            <h3 class="hof-tile-label">${trophyIconHTML('is-best')}${periode.titre}</h3>
+            ${record}
+            ${pire}
+        </article>`;
 }
 
-function hofRowHTML(label, best, worst, dateFormatter) {
+function hofTeteHTML(saison) {
+    let libelle = 'Saison en cours';
+    if (typeof seasonLabel === 'function') {
+        try { libelle = `Saison ${seasonLabel(saison || currentSeasonId())}`; } catch (_) { /* libellé générique */ }
+    }
+    // Les classes fz-* portent l'en-tête de carte du mode H2H ; en cumulatif
+    // le titre reste en capitales, la saison en pastille à droite.
     return `
-        <div class="hof-row">
-            <p class="hof-row-label">${label}</p>
-            ${hofCellHTML(best, 'best', dateFormatter)}
-            ${hofCellHTML(worst, 'worst', dateFormatter)}
-        </div>`;
-}
-
-function buildHallOfFameHTML(data) {
-    // Même en-tête que les autres cartes de bas de classement : icône,
-    // titre, mention à droite. Les classes historiques (hof-*) restent pour
-    // l'habillage cumulatif, les fz-* portent celui des cartes H2H.
-    const head = `
         <div class="hof-head fz-card-head">
             <span class="fz-card-icon">${H2H_ICON.trophee}</span>
-            <p class="hof-title fz-card-title">Temple de la renommée</p>
-            <span class="hof-subtitle fz-card-note">Saison en cours</span>
+            <h2 class="hof-title fz-card-title">Temple de la renommée</h2>
+            <span class="hof-season fz-card-note">${escapeHtmlText(libelle)}</span>
         </div>`;
+}
+
+/**
+ * Trois tuiles fantômes, le temps que /pool-hall-of-fame réponde — et dans
+ * le squelette du classement. Les vrais titres restent ; des os prennent la
+ * place du record, de l'équipe, de la date et de la ligne « Pire », dans la
+ * structure de la tuile chargée (hofTuileHTML) : elle garde sa forme.
+ */
+function hofChargementHTML() {
+    const tuiles = HOF_PERIODES.map(periode => `
+        <div class="hof-tile is-loading" aria-hidden="true">
+            <span class="hof-tile-label">${trophyIconHTML('is-best')}${periode.titre}</span>
+            <div class="hof-record">
+                <span class="fz-bone hof-sk-pts"></span>
+                <span class="hof-who">
+                    <span class="hof-team"><span class="hof-avatar fz-bone"></span><span class="fz-bone hof-sk-name"></span></span>
+                    <span class="hof-sk-flat hof-sk-when"></span>
+                </span>
+            </div>
+            <div class="hof-low">
+                <span class="hof-low-label">Pire</span>
+                <span class="hof-sk-flat hof-sk-low-pts"></span>
+                <span class="hof-sk-flat hof-sk-low-team"></span>
+                <span class="hof-sk-flat hof-sk-low-when"></span>
+            </div>
+        </div>`).join('');
+    return `${hofTeteHTML(null)}<div class="hof-grid" aria-busy="true">${tuiles}</div>`;
+}
+
+function buildHallOfFameHTML(data, poolName) {
+    const head = hofTeteHTML(data && data.season);
     if (data && data.seasonStarted === false) {
         return head + fzEmptyHTML(H2H_ICON.trophee,
             "La saison n'est pas commencée",
@@ -1203,147 +1370,47 @@ function buildHallOfFameHTML(data) {
             'Pas encore de records',
             "Il faut au moins un match joué cette saison.");
     }
-    // Un tableau plutôt que six cartes : une ligne par période, le meilleur
-    // à gauche (or) et le pire à droite (rouge) — on compare d'un coup d'œil.
-    return `${head}
-        <div class="hof-board">
-            <div class="hof-col-heads" aria-hidden="true">
-                <span></span><span class="is-best">${trophyIconHTML('is-best')}Meilleur</span><span class="is-worst">Pire</span>
-            </div>
-            ${hofRowHTML('Journée', data.bestDay, data.worstDay, formatHofDate)}
-            ${hofRowHTML('Semaine', data.bestWeek, data.worstWeek, formatHofDate)}
-            ${hofRowHTML('Mois', data.bestMonth, data.worstMonth, formatHofMonth)}
-        </div>`;
+    const ctx = {
+        equipes: (allPoolsData[poolName] && allPoolsData[poolName].teams) || {},
+        mienne: myTeamIn(poolName),
+        aujourdhui: hofAujourdhui()
+    };
+    const tuiles = HOF_PERIODES
+        .map(p => hofTuileHTML(p, data[`best${p.cle}`], data[`worst${p.cle}`], ctx))
+        .join('');
+    return `${head}<div class="hof-grid">${tuiles}</div>`;
 }
 
 async function renderHallOfFame(poolName) {
     const container = document.getElementById('hallOfFame');
     if (!container) return;
+
+    // Le classement cumulatif se redessine toutes les 20 s pendant les
+    // matchs : on garde alors le temple affiché pendant qu'il se relit, les
+    // tuiles fantômes ne servent qu'à la première ouverture du pool.
+    const dejaAffiche = container.dataset.pool === poolName && container.style.display !== 'none';
+    if (!dejaAffiche) {
+        container.dataset.pool = poolName;
+        container.innerHTML = hofChargementHTML();
+        container.style.display = 'block';
+    }
+    container.onclick = (e) => {
+        const bouton = e.target.closest('[data-hof-team]');
+        if (bouton) showTeamRoster(poolName, bouton.dataset.hofTeam);
+    };
+
     try {
         const response = await fetch(`${BASE_URL}/pool-hall-of-fame/${encodeURIComponent(poolName)}`, { cache: 'no-store' });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        container.innerHTML = buildHallOfFameHTML(data);
+        if (currentPoolName !== poolName) return;
+        container.innerHTML = buildHallOfFameHTML(data, poolName);
         container.style.display = 'block';
     } catch (error) {
         console.warn('⚠️ Could not load hall of fame:', error);
-        container.style.display = 'none';
+        // Un rafraîchissement raté laisse les records déjà affichés.
+        if (!dejaAffiche && currentPoolName === poolName) container.style.display = 'none';
     }
-}
-
-// ==================== RECENT FORM (windowed best-team leaderboard) ====================
-// Relocated from the old homepage Activity tab (see accueil-dash.js) — that
-// was the only place GET /pool-leaderboard was ever surfaced. Same windows,
-// same rank/points shape, just re-homed next to the season standings it
-// complements.
-
-const RECENT_FORM_WINDOWS = [7, 14, 30, 90, 180, 365];
-let recentFormWindow = 7;
-
-function recentFormRankClass(rank) {
-    return rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
-}
-
-function changeRecentFormWindow(poolName, days) {
-    recentFormWindow = days;
-    document.querySelectorAll('#recentFormLeaderboard .time-filter').forEach(btn => {
-        btn.classList.toggle('active', Number(btn.dataset.days) === days);
-    });
-    loadRecentFormRows(poolName, days);
-}
-
-/** Réponses de /pool-leaderboard par fenêtre, pour le pool affiché. */
-let recentFormCache = { poolName: null, byDays: new Map() };
-
-async function fetchRecentForm(poolName, days) {
-    if (recentFormCache.poolName !== poolName) recentFormCache = { poolName, byDays: new Map() };
-    if (recentFormCache.byDays.has(days)) return recentFormCache.byDays.get(days);
-    let data = null;
-    try {
-        const res = await fetch(`${BASE_URL}/pool-leaderboard/${encodeURIComponent(poolName)}?days=${days}`, { cache: 'no-store' });
-        data = res.ok ? await res.json() : null;
-    } catch (error) {
-        console.warn('⚠️ Could not load recent-form leaderboard:', error);
-    }
-    recentFormCache.byDays.set(days, data);
-    return data;
-}
-
-/** Une fenêtre qui a de vrais points sur SA période — pas le repli « saison ». */
-function recentFormHasData(data) {
-    return !!(data && (data.teams || []).some(t => t.points !== null && t.source !== 'seasonFallback'));
-}
-
-async function loadRecentFormRows(poolName, days) {
-    const list = document.getElementById('recentFormLeaderboardRows');
-    if (!list) return;
-    const data = await fetchRecentForm(poolName, days);
-    if (!list.isConnected) return;
-    if (data === null) {
-        list.innerHTML = `<p class="hof-empty">Impossible de charger ce classement.</p>`;
-        return;
-    }
-    const teams = (data && data.teams) || [];
-
-    if (!teams.length) {
-        list.innerHTML = data && data.seasonStarted === false
-            ? fzEmptyHTML(H2H_ICON.graphique, "La saison n'est pas commencée", "Aucune équipe n'a encore joué.")
-            : fzEmptyHTML(H2H_ICON.graphique, 'Pas assez de données', 'Aucun résultat sur cette période.');
-        return;
-    }
-
-    // "Real data, just not from the exact window" vs. "nothing at all" —
-    // the caption keeps the fallback honest instead of implying precision.
-    const sourceLabel = { seasonFallback: '(saison)', none: '' };
-    const equipes = (allPoolsData[poolName] && allPoolsData[poolName].teams) || {};
-
-    list.innerHTML = teams.map(t => `
-        <div class="leaderboard-row">
-            <span class="lb-rank ${recentFormRankClass(t.rank)}">${t.rank}</span>
-            <span class="lb-team">${escapeHtmlText(getDisplayName(t.teamName, (equipes[t.teamName] && equipes[t.teamName].members) || []))}</span>
-            ${t.points === null
-                ? '<span class="lb-pts">—</span>'
-                : `<span class="lb-pts">${t.points} pts</span><span class="lb-source">${sourceLabel[t.source] || ''}</span>`}
-        </div>`).join('');
-}
-
-/**
- * « Meilleures équipes récentes » : seulement les fenêtres qui ont quelque
- * chose à dire.
- *
- * Six boutons (7 j à 365 j) dont la moitié ouvrait sur « Pas assez de
- * données » en début de saison : on interroge les six d'un coup, on retire
- * ceux qui sont vides, et le panneau ouvre sur la plus courte qui a des
- * points. Si aucune n'en a, plus de boutons du tout — seulement le message.
- */
-async function renderRecentFormLeaderboard(poolName) {
-    const container = document.getElementById('recentFormLeaderboard');
-    if (!container) return;
-
-    container.innerHTML = `
-        <div class="recent-form-head fz-card-head">
-            <span class="fz-card-icon">${H2H_ICON.graphique}</span>
-            <p class="hof-title fz-card-title">Meilleures équipes récentes</p>
-            <div class="time-filters" hidden></div>
-        </div>
-        <div class="leaderboard-list" id="recentFormLeaderboardRows"><p class="hof-empty">Chargement…</p></div>`;
-    container.style.display = 'block';
-
-    const reponses = await Promise.all(RECENT_FORM_WINDOWS.map(d => fetchRecentForm(poolName, d)));
-    if (!container.isConnected) return;
-    const disponibles = RECENT_FORM_WINDOWS.filter((d, i) => recentFormHasData(reponses[i]));
-    recentFormWindow = disponibles[0] || RECENT_FORM_WINDOWS[0];
-
-    const filtres = container.querySelector('.time-filters');
-    if (disponibles.length > 1) {
-        filtres.innerHTML = disponibles.map(d =>
-            `<button type="button" class="time-filter${d === recentFormWindow ? ' active' : ''}" data-days="${d}">${d} j</button>`).join('');
-        filtres.hidden = false;
-        filtres.querySelectorAll('.time-filter').forEach(btn => {
-            btn.addEventListener('click', () => changeRecentFormWindow(poolName, Number(btn.dataset.days)));
-        });
-    }
-    loadRecentFormRows(poolName, recentFormWindow);
 }
 
 // Level 3: Team Roster View
@@ -1388,8 +1455,15 @@ function showTeamRoster(poolName, teamName) {
     };
     renderRosterHeader(poolName, teamName);
 
-    // Show skeleton initially
-    document.getElementById('rosterSkeleton').style.display = 'flex';
+    // Le squelette, rangée pour rangée, le temps de lire les annonces. Le
+    // compte des actifs est connu d'avance : la ligne de l'en-tête est
+    // complète dès maintenant.
+    const actifs = actifsDeLaFiche(teamData);
+    const compteActifs = document.querySelector('#rosterHeader .rh-count');
+    if (compteActifs) compteActifs.textContent = `${actifs.length} actif${actifs.length > 1 ? 's' : ''}`;
+    const squelette = document.getElementById('rosterSkeleton');
+    squelette.innerHTML = rosterSqueletteHTML(actifs);
+    squelette.style.display = 'block';
     document.getElementById('rosterList').style.display = 'none';
 
     // Render roster after short delay — fetch this team's active for-sale
@@ -1413,6 +1487,53 @@ function showTeamRoster(poolName, teamName) {
     }, 100);
 }
 
+/**
+ * Les actifs d'une fiche, dans l'ordre de la liste (renderTeamRoster) :
+ * attaquants, défenseurs, gardiens, recrues, puis les clubs. Le type dit
+ * quels libellés porte la rangée — une recrue gardienne compte en gardienne.
+ */
+function actifsDeLaFiche(roster) {
+    const actifs = [];
+    ['offensive', 'defensive', 'goalie', 'rookie'].forEach(categorie => {
+        (roster[categorie] || []).forEach(nom => {
+            actifs.push({ nom, type: ficheJoueur(nom, categorie).gardien ? 'goalie' : 'player' });
+        });
+    });
+    (roster.teams || []).forEach(nom => actifs.push({ nom, type: 'team' }));
+    return actifs;
+}
+
+/**
+ * Le squelette de la fiche : une rangée par actif, aux classes de la liste
+ * chargée (.roster-row) — rien ne bouge à l'arrivée des données. Le rang et
+ * les libellés (PJ, B, P, Pts ; V, BL pour un gardien ; V, DP pour un club)
+ * sont les vrais ; des os prennent la place de la photo, du nom, du club et
+ * des chiffres. Les longueurs de nom suivent celles des vrais noms.
+ */
+function rosterSqueletteHTML(actifs) {
+    const LIBELLES = { player: ['B', 'P'], goalie: ['V', 'BL'], team: ['V', 'DP'] };
+    const os = (cls, largeur) => `<span class="fz-bone ${cls}"${largeur ? ` style="--w:${largeur}px"` : ''}></span>`;
+    const stat = (largeur, libelle) => `<div class="rr-stat">${os('rr-sk-v', largeur)}<span class="rr-l">${libelle}</span></div>`;
+    const rangees = actifs.map((a, i) => {
+        const [l1, l2] = LIBELLES[a.type];
+        const nom = Math.max(64, Math.min(150, a.nom.length * 7.5));
+        return `
+            <div class="roster-row" style="--i:${i}">
+                <div class="rr-rank">${i + 1}</div>
+                <div class="rr-shot"><div class="rr-avatar fz-bone"></div></div>
+                <div class="rr-main">
+                    <div class="rr-name-line">${os('rr-sk-name', Math.round(nom))}<span class="rr-sk-meta"></span></div>
+                    <div class="rr-stats">${stat(12, 'PJ')}${stat(8, l1)}${stat(8, l2)}${stat(12, 'Pts')}</div>
+                </div>
+                <div class="rr-pptsa">${os('rr-sk-v', 10)}<span class="rr-l">PPtsA</span></div>
+                <div class="rr-ppts">${os('rr-sk-pts')}<span class="rr-l">PPts</span></div>
+                <span class="rr-chev">›</span>
+            </div>`;
+    }).join('');
+    return `<p class="st-sk-sr" role="status">Chargement des joueurs…</p>
+        <div class="roster-rows" inert>${rangees}</div>`;
+}
+
 /** La fiche d'équipe remplace le titre commun de la page par le sien. */
 function setRosterViewMode(on) {
     document.body.classList.toggle('fz-view-roster', on);
@@ -1433,40 +1554,45 @@ const tagIcon = size => (typeof getIcon === 'function' ? getIcon('tag', size) : 
  * l'équipe se situe. Le bouton « Mettre en vente » n'existe que sur sa
  * propre équipe : un seul point d'entrée au lieu d'un bouton par rangée.
  */
+/** « 3<sup>e</sup> sur 10 · 245 pts » : où l'équipe se situe, ou '' hors classement. */
+function sousTitreFiche(poolData, standings, teamName) {
+    const moi = standings.find(s => s.teamName === teamName);
+    if (!moi) return '';
+    const rang = moi.rank === 1 ? '1<sup>er</sup>' : `${moi.rank}<sup>e</sup>`;
+    const bilan = (poolData.poolMode || 'cumulative') === 'head-to-head'
+        ? `${moi.wins}-${moi.losses}-${moi.ties}`
+        : `${Math.round(moi.points).toLocaleString('fr-CA')} pts`;
+    return `${rang} sur ${standings.length} · ${bilan}`;
+}
+
 function renderRosterHeader(poolName, teamName) {
     const poolData = allPoolsData[poolName];
     const teamData = poolData.teams[teamName];
     const standings = computeStandings(poolData);
     const moi = standings.find(s => s.teamName === teamName);
-
-    let sous = '';
-    if (moi) {
-        const rang = moi.rank === 1 ? '1<sup>er</sup>' : `${moi.rank}<sup>e</sup>`;
-        const bilan = (poolData.poolMode || 'cumulative') === 'head-to-head'
-            ? `${moi.wins}-${moi.losses}-${moi.ties}`
-            : `${Math.round(moi.points).toLocaleString('fr-CA')} pts`;
-        sous = `${rang} sur ${standings.length} · ${bilan}`;
-    }
+    const sous = sousTitreFiche(poolData, standings, teamName);
 
     const picker = moi && standings.length > 1 ? `
         <select class="rh-picker" aria-label="Voir une autre équipe du pool">
             ${standings.map(s => `<option value="${escapeAttr(s.teamName)}"${s.teamName === teamName ? ' selected' : ''}>${s.rank}. ${escapeHtmlText(getDisplayName(s.teamName, s.members))}</option>`).join('')}
         </select>` : '';
 
+    // Une seule rangée — retour, nom, mise en vente — et une ligne dessous
+    // qui dit tout le reste : rang, bilan, nombre d'actifs (renderTeamRoster).
+    // La grille de .roster-header place chaque morceau (classement.css,
+    // classement-premium.css sur téléphone).
     const header = document.getElementById('rosterHeader');
     header.innerHTML = `
-        <button type="button" class="rh-back" data-rh-back>${RH_ICON.back}<span>Classement</span></button>
-        <div class="rh-top">
-            <div class="rh-title${picker ? ' has-picker' : ''}">
-                <h1 class="rh-name">${escapeHtmlText(getDisplayName(teamName, teamData.members || []))}</h1>
-                ${picker ? `<span class="rh-caret">${RH_ICON.caret}</span>${picker}` : ''}
-            </div>
-            ${rosterSale.canSell ? `
-            <button type="button" class="rh-sale" data-rh-sale aria-haspopup="dialog">
-                ${tagIcon(14)}<span>Mettre en vente</span><span class="rh-sale-count" hidden></span>
-            </button>` : ''}
+        <button type="button" class="rh-back" data-rh-back aria-label="Retour au classement">${RH_ICON.back}</button>
+        <div class="rh-title${picker ? ' has-picker' : ''}">
+            <h1 class="rh-name">${escapeHtmlText(getDisplayName(teamName, teamData.members || []))}</h1>
+            ${picker ? `<span class="rh-caret">${RH_ICON.caret}</span>${picker}` : ''}
         </div>
-        ${sous ? `<p class="rh-sub">${sous}</p>` : ''}`;
+        ${rosterSale.canSell ? `
+        <button type="button" class="rh-sale" data-rh-sale aria-haspopup="dialog" aria-label="Mettre en vente">
+            ${tagIcon(14)}<span class="rh-sale-long">Mettre en vente</span><span class="rh-sale-count" hidden></span>
+        </button>` : ''}
+        <p class="rh-sub"><span class="rh-rank">${sous}</span><span class="rh-count"></span></p>`;
 
     header.querySelector('[data-rh-back]').addEventListener('click', () => showPoolStandings(poolName));
     const select = header.querySelector('.rh-picker');
@@ -1651,102 +1777,57 @@ function renderTeamRoster(roster, activeListings = []) {
 
     const players = [];
 
-    // Add offensive players
-    (roster.offensive || []).forEach(playerName => {
-        const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
-        if (playerData) {
-            const stats = getCurrentPlayerStats(playerName, playerData.playerId);
+    // Chaque choix paraît, case par case — même un joueur que
+    // nhl_filtered_stats.json ne connaît pas (voir ficheJoueur). Une recrue
+    // gardienne est comptée en gardienne.
+    const POSITION_PAR_DEFAUT = { offensive: 'F', defensive: 'D', goalie: 'G', rookie: 'R' };
+    ['offensive', 'defensive', 'goalie', 'rookie'].forEach(category => {
+        (roster[category] || []).forEach(playerName => {
+            const fiche = ficheJoueur(playerName, category);
+            const stats = getCurrentPlayerStats(playerName, fiche.playerId);
             players.push({
                 name: playerName,
-                position: playerData.positionCode || 'F',
-                type: 'player',
-                category: 'offensive',
-                playerId: playerData.playerId,
+                position: fiche.gardien ? 'G' : (fiche.position || POSITION_PAR_DEFAUT[category]),
+                type: fiche.gardien ? 'goalie' : 'player',
+                category,
+                playerId: fiche.playerId || stats?.playerId || null,
                 stats: stats,
-                cached: playerData,
-                teamAbbrev: stats?.teamAbbrev || playerData.teamAbbrevs
+                cached: fiche.cache,
+                teamAbbrev: stats?.teamAbbrev || fiche.club
             });
-        }
-    });
-
-    // Add defensive players
-    (roster.defensive || []).forEach(playerName => {
-        const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
-        if (playerData) {
-            const stats = getCurrentPlayerStats(playerName, playerData.playerId);
-            players.push({
-                name: playerName,
-                position: playerData.positionCode || 'D',
-                type: 'player',
-                category: 'defensive',
-                playerId: playerData.playerId,
-                stats: stats,
-                cached: playerData,
-                teamAbbrev: stats?.teamAbbrev || playerData.teamAbbrevs
-            });
-        }
-    });
-
-    // Add goalies
-    (roster.goalie || []).forEach(playerName => {
-        const playerData = goalieData.find(p => p.goalieFullName === playerName);
-        if (playerData) {
-            const stats = getCurrentPlayerStats(playerName, playerData.playerId);
-            players.push({
-                name: playerName,
-                position: 'G',
-                type: 'goalie',
-                category: 'goalie',
-                playerId: playerData.playerId,
-                stats: stats,
-                cached: playerData,
-                teamAbbrev: stats?.teamAbbrev || playerData.teamAbbrevs
-            });
-        }
-    });
-
-    // Add rookies
-    (roster.rookie || []).forEach(playerName => {
-        const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
-        if (playerData) {
-            const stats = getCurrentPlayerStats(playerName, playerData.playerId);
-            players.push({
-                name: playerName,
-                position: playerData.positionCode || 'R',
-                type: 'player',
-                category: 'rookie',
-                playerId: playerData.playerId,
-                stats: stats,
-                cached: playerData,
-                teamAbbrev: stats?.teamAbbrev || playerData.teamAbbrevs
-            });
-        }
+        });
     });
 
     // Add teams
     (roster.teams || []).forEach(teamName => {
-        const teamInfo = teamData.find(t => t.teamFullName === teamName);
-        if (teamInfo) {
-            const stats = getCurrentTeamStats(teamName);
-            players.push({
-                name: teamName,
-                position: 'TEAM',
-                type: 'team',
-                category: 'team',
-                stats: stats,
-                cached: teamInfo,
-                teamAbbrev: stats?.teamAbbrev || teamInfo.teamAbbrevs
-            });
-        }
+        const teamInfo = ficheClub(teamName);
+        const stats = getCurrentTeamStats(teamName);
+        players.push({
+            name: teamName,
+            position: 'TEAM',
+            type: 'team',
+            category: 'team',
+            stats: stats,
+            // Le relevé de minuit, pour la colonne PJ (statsDeRangee).
+            base: getCurrentTeamStats(teamName, currentTeamsBase),
+            cached: teamInfo,
+            teamAbbrev: stats?.teamAbbrev || NHL_ABBREV[teamName] || ''
+        });
     });
 
+    // Meilleur et pire choix du pool, par catégorie : repères des rangées.
+    const extremes = extremesDuPool(allPoolsData[currentPoolName]);
+
     // Liste « comfortable » (Claude Design, Roster Table v2) : une bande
-    // continue de rangées de 64px séparées d'un filet, plutôt qu'une carte
+    // continue de rangées de 76px séparées d'un filet, plutôt qu'une carte
     // par joueur. Sur une bande étroite, le prénom se réduit à son initiale
     // — requêtes de conteneur sur .roster-rows (classement.css).
     const bloc = document.createElement('section');
     bloc.className = 'roster-block';
-    bloc.innerHTML = `<p class="roster-count">Joueurs actifs · ${players.length}</p>`;
+    bloc.setAttribute('aria-label', 'Joueurs actifs');
+    // Le compte des actifs va dans la ligne de l'en-tête, plus une ligne à lui.
+    const compteActifs = document.querySelector('#rosterHeader .rh-count');
+    if (compteActifs) compteActifs.textContent = `${players.length} actif${players.length > 1 ? 's' : ''}`;
     const rangees = document.createElement('div');
     rangees.className = 'roster-rows';
     bloc.appendChild(rangees);
@@ -1801,39 +1882,10 @@ function renderTeamRoster(roster, activeListings = []) {
                 : '') + `<div class="rr-initials">${initiales || escapeHtmlText(player.position)}</div>`;
         }
 
-        // Calculate points
-        let points = 0;
-        let gp = 0;
-        let stat1 = 0;
-        let stat2 = 0;
-        let stat1Label = 'B';
-        let stat2Label = 'P';
-
-        if (player.type === 'goalie') {
-            gp = seasonStat(player.stats, player.cached, 'gamesPlayed');
-            const wins = seasonStat(player.stats, player.cached, 'wins');
-            const shutouts = seasonStat(player.stats, player.cached, 'shutouts');
-            const otLosses = seasonStat(player.stats, player.cached, 'otLosses');
-            points = goaliePoolPoints({ shutouts, wins, otLosses });
-            stat1 = wins;
-            stat2 = shutouts;
-            stat1Label = 'V';
-            stat2Label = 'BL';
-        } else if (player.type === 'team') {
-            gp = seasonStat(player.stats, player.cached, 'gamesPlayed');
-            const wins = seasonStat(player.stats, player.cached, 'wins');
-            const otLosses = seasonStat(player.stats, player.cached, 'otLosses');
-            points = clubPoolPoints({ wins, otLosses });
-            stat1 = wins;
-            stat2 = otLosses;
-            stat1Label = 'V';
-            stat2Label = 'DP';
-        } else {
-            gp = seasonStat(player.stats, player.cached, 'gamesPlayed');
-            stat1 = seasonStat(player.stats, player.cached, 'goals');
-            stat2 = seasonStat(player.stats, player.cached, 'assists');
-            points = seasonStat(player.stats, player.cached, 'points');
-        }
+        const soiree = soireeDe(player);
+        const chiffres = statsDeRangee(player, soiree);
+        const { points } = chiffres;
+        const ppa = ppaDe(soiree);
 
         // Get team abbreviation for display
         const teamAbbrev = player.teamAbbrev || '';
@@ -1848,10 +1900,6 @@ function renderTeamRoster(roster, activeListings = []) {
         const nomHTML = nomCourt
             ? `<span class="rr-name-full">${escapeHtmlText(player.name)}</span><span class="rr-name-short">${escapeHtmlText(nomCourt)}</span>`
             : escapeHtmlText(player.name);
-
-        // Un zéro s'efface : l'œil va droit aux joueurs qui ont produit.
-        const stat = (valeur, libelle) =>
-            `<div class="rr-stat${valeur ? '' : ' is-zero'}"><span class="rr-v">${valeur}</span><span class="rr-l">${libelle}</span></div>`;
 
         const avatarHTML = `
             <div class="rr-avatar${estClub ? ' is-club' : ' fz-shot'}"${estClub ? '' : ` style="${clubShotStyle(teamAbbrev)}"`}>
@@ -1874,17 +1922,16 @@ function renderTeamRoster(roster, activeListings = []) {
                     <span class="rr-meta">${escapeHtmlText(meta)}</span>
                     <span class="rr-sale">En vente</span>
                 </div>
-                <div class="rr-stats">
-                    ${stat(gp, 'PJ')}${stat(stat1, stat1Label)}${stat(stat2, stat2Label)}${stat(points, 'Pts')}
-                </div>
+                <div class="rr-stats">${statsRangeeHTML(chiffres)}</div>
             </div>
-            <div class="rr-pptsa is-zero"><span class="rr-v">0</span><span class="rr-l">PPtsA</span></div>
-            <div class="rr-ppts${points ? '' : ' is-zero'}"><span class="rr-v">${points}</span><span class="rr-l">PPts</span></div>
+            <div class="rr-pptsa${ppa ? '' : ' is-zero'}" title="${PPTSA_TITRE}"><span class="rr-v">${ppa}</span><span class="rr-l">PPtsA</span></div>
+            <div class="rr-ppts${points ? '' : ' is-zero'}"><span class="rr-marks">${marquesHTML(player, points, soiree, extremes)}</span><span class="rr-v">${points}</span><span class="rr-l">PPts</span></div>
             <span class="rr-chev" aria-hidden="true">${player.playerId ? '›' : ''}</span>
         `;
 
         rangees.appendChild(row);
     });
+    rosterAffiche = players;
 
     refreshSaleMarks();
     renderBenchPanel(rosterList, roster);
@@ -1892,6 +1939,256 @@ function renderTeamRoster(roster, activeListings = []) {
     // Hide skeleton, show content
     document.getElementById('rosterSkeleton').style.display = 'none';
     rosterList.style.display = 'flex';
+
+    // La soirée de l'équipe affichée : repères, PPtsA et PJ du soir.
+    if (soireeFiche.cle !== cleFicheAffichee()) soireeFiche = { cle: null, joueurs: {}, clubs: {} };
+    chargerSoireeFiche();
+}
+
+/** Les rangées de la fiche affichée, telles que renderTeamRoster les a bâties. */
+let rosterAffiche = [];
+
+/**
+ * Les chiffres d'une rangée de fiche : matchs, deux statistiques, points de pool.
+ *
+ * PJ compte le match du soir dès la mise au jeu : `soiree.mj`, les matchs
+ * commencés que le relevé de minuit ne compte pas encore (soireeDe). Un club
+ * part alors de son relevé de minuit (`base`) : le direct ajoute déjà à sa
+ * fiche les victoires et défaites en prolongation du soir, qui seraient
+ * comptées deux fois.
+ */
+function statsDeRangee(player, soiree) {
+    const s = key => seasonStat(player.stats, player.cached, key);
+    const mj = (seasonStarted && soiree && soiree.mj) || 0;
+    const gp = (soiree && player.type === 'team' && player.base
+        ? seasonStat(player.base, player.cached, 'gamesPlayed')
+        : s('gamesPlayed')) + mj;
+    if (player.type === 'goalie') {
+        const wins = s('wins'), shutouts = s('shutouts');
+        return { gp, stat1: wins, stat1Label: 'V', stat2: shutouts, stat2Label: 'BL',
+            points: goaliePoolPoints({ shutouts, wins, otLosses: s('otLosses') }) };
+    }
+    if (player.type === 'team') {
+        const wins = s('wins'), otLosses = s('otLosses');
+        return { gp, stat1: wins, stat1Label: 'V', stat2: otLosses, stat2Label: 'DP',
+            points: clubPoolPoints({ wins, otLosses }) };
+    }
+    return { gp, stat1: s('goals'), stat1Label: 'B', stat2: s('assists'), stat2Label: 'P', points: s('points') };
+}
+
+function statsRangeeHTML(chiffres) {
+    const { gp, stat1, stat1Label, stat2, stat2Label, points } = chiffres;
+    // Un zéro s'efface : l'œil va droit aux joueurs qui ont produit.
+    const stat = (valeur, libelle) =>
+        `<div class="rr-stat${valeur ? '' : ' is-zero'}"><span class="rr-v">${valeur}</span><span class="rr-l">${libelle}</span></div>`;
+    return `${stat(gp, 'PJ')}${stat(stat1, stat1Label)}${stat(stat2, stat2Label)}${stat(points, 'Pts')}`;
+}
+
+/**
+ * La fiche d'équipe affichée suit les points du soir. Seuls les chiffres de
+ * chaque rangée, ses repères et la ligne de rang de l'en-tête sont réécrits :
+ * le banc, le panneau de mise en vente et le sélecteur d'équipe restent tels
+ * quels, et aucune requête ne part.
+ */
+function rafraichirFicheEnDirect() {
+    if (currentView !== VIEW_STATES.TEAM_ROSTER || !currentPoolName || !currentTeamName) return;
+    const poolData = allPoolsData[currentPoolName];
+    if (!poolData || !rosterAffiche.length) return;
+
+    const extremes = extremesDuPool(poolData);
+    const parNom = new Map(rosterAffiche.map(p => [p.name, p]));
+    document.querySelectorAll('#rosterList .roster-row[data-player]').forEach(row => {
+        const player = parNom.get(row.dataset.player);
+        if (!player) return;
+        if (player.type === 'team') {
+            player.stats = getCurrentTeamStats(player.name);
+            player.base = getCurrentTeamStats(player.name, currentTeamsBase);
+        } else {
+            player.stats = getCurrentPlayerStats(player.name, player.playerId);
+        }
+        const soiree = soireeDe(player);
+        const chiffres = statsDeRangee(player, soiree);
+        const bloc = row.querySelector('.rr-stats');
+        if (bloc) bloc.innerHTML = statsRangeeHTML(chiffres);
+        const ppts = row.querySelector('.rr-ppts');
+        if (ppts) {
+            ppts.classList.toggle('is-zero', !chiffres.points);
+            ppts.querySelector('.rr-v').textContent = chiffres.points;
+        }
+        const pptsa = row.querySelector('.rr-pptsa');
+        if (pptsa) {
+            const ppa = ppaDe(soiree);
+            pptsa.classList.toggle('is-zero', !ppa);
+            pptsa.querySelector('.rr-v').textContent = ppa;
+        }
+        const marques = row.querySelector('.rr-marks');
+        if (marques) marques.innerHTML = marquesHTML(player, chiffres.points, soiree, extremes);
+        const vente = rosterSale.players.find(v => v.name === player.name);
+        if (vente) vente.points = chiffres.points;
+    });
+
+    const sous = document.querySelector('#rosterHeader .rh-rank');
+    const texte = sousTitreFiche(poolData, computeStandings(poolData), currentTeamName);
+    if (sous && texte) sous.innerHTML = texte;
+}
+
+// ==================== SOIRÉE DES JOUEURS (FICHE D'ÉQUIPE) ====================
+// Ce que la fiche montre de la soirée de chacun (/live-roster, voir
+// soireesDuJour dans lib/pointsEnDirect.js) : un repère s'il joue en ce
+// moment ou plus tard aujourd'hui, la colonne PPtsA — les points de sa
+// dernière soirée — et PJ, qui compte son match dès la mise au jeu. Relue à
+// chaque point qui tombe, et en attendant les mises au jeu et les fins de
+// match. Le serveur la tire du calcul du direct : aucun appel de plus à la LNH.
+
+let soireeFiche = { cle: null, joueurs: {}, clubs: {} };
+let soireeMinuteur = null;
+let soireeRelecture = null;
+const SOIREE_EN_JEU_MS = 60 * 1000;
+const SOIREE_MAX_MS = 30 * 60 * 1000;
+
+const PPTSA_TITRE = 'Points de pool de sa dernière soirée : ceux d’aujourd’hui dès que son match commence, sinon ceux d’hier';
+
+const cleFicheAffichee = () => `${currentPoolName}|${currentTeamName}`;
+
+/** L'abréviation du club d'une rangée (« TOR,MTL » : le dernier est l'actuel). */
+function clubDeRangee(player) {
+    return String(player.teamAbbrev || '').split(',').pop().trim().toUpperCase();
+}
+
+/** La soirée d'une rangée ; undefined tant que celle de l'équipe affichée n'est pas lue. */
+function soireeDe(player) {
+    if (soireeFiche.cle !== cleFicheAffichee()) return undefined;
+    const club = player.type === 'team';
+    const table = club ? soireeFiche.clubs : soireeFiche.joueurs;
+    const cle = club ? clubDeRangee(player) : player.playerId;
+    return (cle && table[cle]) || {};
+}
+
+/** PPtsA d'une rangée : les points de pool de sa dernière soirée. */
+function ppaDe(soiree) {
+    return (seasonStarted && soiree && soiree.ppa) || 0;
+}
+
+async function chargerSoireeFiche() {
+    if (!seasonStarted || currentView !== VIEW_STATES.TEAM_ROSTER || !rosterAffiche.length) return;
+    const cle = cleFicheAffichee();
+    const joueurs = [...new Set(rosterAffiche.filter(p => p.type !== 'team' && p.playerId).map(p => String(p.playerId)))];
+    const clubs = [...new Set(rosterAffiche.filter(p => p.type === 'team').map(clubDeRangee).filter(Boolean))];
+    try {
+        const res = await fetch(`${BASE_URL}/live-roster?joueurs=${joueurs.join(',')}&clubs=${clubs.join(',')}`, { cache: 'no-store' });
+        if (res.ok) {
+            const data = await res.json();
+            // Le sélecteur d'équipe a pu changer de fiche pendant l'appel.
+            if (cle !== cleFicheAffichee() || currentView !== VIEW_STATES.TEAM_ROSTER) return;
+            soireeFiche = { cle, joueurs: data.joueurs || {}, clubs: data.clubs || {} };
+            rafraichirFicheEnDirect();
+        }
+    } catch (error) {
+        console.warn('⚠️ Soirée des joueurs indisponible :', error);
+    }
+    planifierSoireeFiche();
+}
+
+/**
+ * La prochaine relecture : chaque minute tant qu'un joueur de la fiche est
+ * en jeu (pour la fin de son match), sinon à la prochaine mise au jeu — au
+ * plus tard dans une demi-heure. Rien sans match à venir, hors de la fiche
+ * ou onglet caché.
+ */
+function planifierSoireeFiche() {
+    clearTimeout(soireeMinuteur);
+    soireeMinuteur = null;
+    if (currentView !== VIEW_STATES.TEAM_ROSTER || document.hidden) return;
+    const lignes = [...Object.values(soireeFiche.joueurs), ...Object.values(soireeFiche.clubs)];
+    let attente = null;
+    if (lignes.some(s => s.etat === 'LIVE')) {
+        attente = SOIREE_EN_JEU_MS;
+    } else {
+        const debuts = lignes.filter(s => s.etat === 'FUT').map(s => Date.parse(s.debut)).filter(Number.isFinite);
+        if (debuts.length) attente = Math.min(Math.max(Math.min(...debuts) - Date.now(), SOIREE_EN_JEU_MS), SOIREE_MAX_MS);
+    }
+    if (attente !== null) soireeMinuteur = setTimeout(chargerSoireeFiche, attente);
+}
+
+/** Un point vient de tomber : PPtsA le montre, sans relire à chaque envoi. */
+function relireSoireeBientot() {
+    if (currentView !== VIEW_STATES.TEAM_ROSTER || soireeRelecture) return;
+    soireeRelecture = setTimeout(() => {
+        soireeRelecture = null;
+        chargerSoireeFiche();
+    }, 1500);
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (currentView !== VIEW_STATES.TEAM_ROSTER) return;
+    if (document.hidden) planifierSoireeFiche();
+    else chargerSoireeFiche();
+});
+
+/** Les libellés du meilleur et du pire choix de chaque catégorie de rangée. */
+const CHOIX_LIBELLES = {
+    offensive: ['Meilleur attaquant', 'Pire attaquant'],
+    defensive: ['Meilleur défenseur', 'Pire défenseur'],
+    goalie: ['Meilleur gardien', 'Pire gardien'],
+    rookie: ['Meilleure recrue', 'Pire recrue'],
+    team: ['Meilleure équipe', 'Pire équipe']
+};
+
+/** Les points de pool d'un choix, comme sa rangée de fiche les affiche. */
+function pointsDuChoix(nom, categorie) {
+    if (categorie !== 'teams') return benchSeasonPoints(nom, categorie);
+    const stats = getCurrentTeamStats(nom);
+    const fiche = ficheClub(nom);
+    return clubPoolPoints({ wins: seasonStat(stats, fiche, 'wins'), otLosses: seasonStat(stats, fiche, 'otLosses') });
+}
+
+/**
+ * Le meilleur et le pire total de chaque catégorie, tous les choix du pool
+ * confondus — les partants des équipes du classement ; le banc ne compte
+ * pas. Une catégorie où tous sont à égalité n'a ni meilleur ni pire.
+ * Clés : celles de `player.category` (offensive … rookie, team).
+ */
+function extremesDuPool(poolData) {
+    const extremes = {};
+    const equipes = Object.values((poolData && poolData.teams) || {}).filter(t => (t.members || []).length > 0);
+    for (const categorie of ['offensive', 'defensive', 'goalie', 'rookie', 'teams']) {
+        const totaux = equipes.flatMap(t => (t[categorie] || []).map(nom => pointsDuChoix(nom, categorie)));
+        if (totaux.length < 2) continue;
+        const max = Math.max(...totaux), min = Math.min(...totaux);
+        if (max > min) extremes[categorie === 'teams' ? 'team' : categorie] = { max, min };
+    }
+    return extremes;
+}
+
+const MARQUES_SVG = {
+    enJeu: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#16A34A"/><path d="M6.3 4.8v6.4L11.4 8z" fill="#FFFFFF"/></svg>',
+    plusTard: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.1" fill="#FFFFFF" stroke="#111111" stroke-width="1.6"/><path d="M8 4.4V8l2.4 1.6" fill="none" stroke="#111111" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    meilleur: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#2563EB"/><path d="M8 3.4l1.18 2.98 3.19.2-2.47 2.04.8 3.1L8 10l-2.7 1.72.8-3.1-2.47-2.04 3.19-.2z" fill="#FFFFFF"/></svg>',
+    pire: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#DC2626"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/></svg>'
+};
+
+/**
+ * Les repères d'une rangée, côte à côte en haut à droite de ses PPts : il
+ * joue en ce moment (rond vert) ou plus tard aujourd'hui (horloge), il est
+ * le meilleur (étoile) ou le pire (X) choix du pool dans sa catégorie.
+ */
+function marquesHTML(player, points, soiree, extremes) {
+    const marques = [];
+    if (seasonStarted && soiree && soiree.etat === 'LIVE') {
+        marques.push(['is-live', 'enJeu', 'En jeu en ce moment']);
+    } else if (seasonStarted && soiree && soiree.etat === 'FUT') {
+        const debut = soiree.debut ? new Date(soiree.debut) : null;
+        const heure = debut && !isNaN(debut)
+            ? debut.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' }) : '';
+        marques.push(['is-later', 'plusTard', heure ? `Joue aujourd’hui à ${heure}` : 'Joue plus tard aujourd’hui']);
+    }
+    const extreme = extremes && extremes[player.category];
+    const [meilleur, pire] = CHOIX_LIBELLES[player.category] || [];
+    if (extreme && points === extreme.max) marques.push(['is-best', 'meilleur', `${meilleur} du pool`]);
+    if (extreme && points === extreme.min) marques.push(['is-worst', 'pire', `${pire} du pool`]);
+    return marques.map(([classe, icone, titre]) =>
+        `<span class="rr-mark ${classe}" role="img" aria-label="${escapeAttr(titre)}" title="${escapeAttr(titre)}">${MARQUES_SVG[icone]}</span>`
+    ).join('');
 }
 
 // ==================== BANC (TÊTE-À-TÊTE) ====================
@@ -1906,19 +2203,16 @@ let benchMessageEnAttente = '';
 
 /** Points de la saison d'un joueur, pour choisir qui sort en connaissance de cause. */
 function benchSeasonPoints(nom, categorie) {
-    if (categorie === 'goalie') {
-        const fiche = goalieData.find(p => p.goalieFullName === nom);
-        if (!fiche) return null;
-        const stats = getCurrentPlayerStats(nom, fiche.playerId);
+    const fiche = ficheJoueur(nom, categorie);
+    const stats = getCurrentPlayerStats(nom, fiche.playerId);
+    if (fiche.gardien) {
         return goaliePoolPoints({
-            shutouts: seasonStat(stats, fiche, 'shutouts'),
-            wins: seasonStat(stats, fiche, 'wins'),
-            otLosses: seasonStat(stats, fiche, 'otLosses')
+            shutouts: seasonStat(stats, fiche.cache, 'shutouts'),
+            wins: seasonStat(stats, fiche.cache, 'wins'),
+            otLosses: seasonStat(stats, fiche.cache, 'otLosses')
         });
     }
-    const fiche = fullPlayerData.find(p => p.skaterFullName === nom);
-    if (!fiche) return null;
-    return seasonStat(getCurrentPlayerStats(nom, fiche.playerId), fiche, 'points');
+    return seasonStat(stats, fiche.cache, 'points');
 }
 
 function renderBenchPanel(rosterList, roster) {
@@ -2040,22 +2334,154 @@ function getMatchingImage(playerName) {
     return resolveHeadshotByName(playerName);
 }
 
+// ==================== FICHES DES CHOIX ====================
+// Un choix paraît toujours au classement. Le repêchage puise dans la trousse
+// (draftkit.json, plus de mille joueurs) ; nhl_filtered_stats.json, que cette
+// page lisait seule, n'en compte qu'environ 550. Un joueur hors de cette
+// liste (Alexandre Texier, Jayden Struble…) disparaissait de la fiche de son
+// équipe et de son total ; une recrue gardienne aussi (Sergei Murashov),
+// cherchée parmi les patineurs seulement. Même chose pour un nom écrit
+// autrement (« Tim Stützle » / « Tim Stutzle ») ou un club renommé (« Utah
+// Mammoth » / « Utah Hockey Club »).
+//
+// Les noms se rapprochent sans accent ni ponctuation (cleDeNom, lib/scoring.js,
+// la même règle que le classement du serveur).
+
+let fichesIndex = null;
+
+function indexerNoms(liste, champ) {
+    const exact = new Map();
+    const parCle = new Map();
+    (liste || []).forEach(fiche => {
+        const nom = fiche && fiche[champ];
+        if (!nom) return;
+        if (!exact.has(nom)) exact.set(nom, fiche);
+        const cle = cleDeNom(nom);
+        if (!parCle.has(cle)) parCle.set(cle, fiche);
+    });
+    return { exact, parCle };
+}
+
+function chercherNom(index, nom) {
+    if (!nom) return null;
+    return index.exact.get(nom) || index.parCle.get(cleDeNom(nom)) || null;
+}
+
+/** Les index de noms, une fois les listes chargées. */
+function indexerFiches() {
+    const kit = (window.FZDraftKit && FZDraftKit.donnees) || null;
+    fichesIndex = {
+        patineurs: indexerNoms(fullPlayerData, 'skaterFullName'),
+        gardiens: indexerNoms(goalieData, 'goalieFullName'),
+        kitPatineurs: indexerNoms(kit && kit.skaters, 'fullName'),
+        kitGardiens: indexerNoms(kit && kit.goalies, 'fullName'),
+        clubs: indexerNoms(teamData, 'teamFullName')
+    };
+}
+
+/**
+ * Ce qu'on sait d'un joueur repêché, sans jamais rendre null :
+ * { gardien, playerId, position, club, cache }.
+ *
+ * Cherché dans nhl_filtered_stats.json, puis dans la trousse, puis dans le
+ * relevé de la saison. `cache` (repli de seasonStat) ne vient que du
+ * premier : les chiffres de la trousse sont des projections ou ceux de l'an
+ * passé, jamais la saison en cours. `categorie` est la case du choix ; une
+ * recrue (ou un joueur de banc sans case) peut être un gardien.
+ */
+function ficheJoueur(nom, categorie) {
+    if (!fichesIndex) indexerFiches();
+    const patineurPossible = categorie !== 'goalie';
+    const gardienPossible = !categorie || categorie === 'goalie' || categorie === 'rookie';
+
+    const patineur = patineurPossible ? chercherNom(fichesIndex.patineurs, nom) : null;
+    if (patineur) {
+        return { gardien: patineur.positionCode === 'G', playerId: patineur.playerId || null, position: patineur.positionCode || null,
+            club: patineur.teamAbbrevs || null, cache: patineur };
+    }
+    const gardien = gardienPossible ? chercherNom(fichesIndex.gardiens, nom) : null;
+    if (gardien) {
+        return { gardien: true, playerId: gardien.playerId || null, position: 'G',
+            club: gardien.teamAbbrevs || null, cache: gardien };
+    }
+
+    const canonique = window.FZDraftKit ? FZDraftKit.nomCanonique(nom) : nom;
+    const dansKit = (index) => chercherNom(index, nom) || chercherNom(index, canonique);
+    const kitPatineur = patineurPossible ? dansKit(fichesIndex.kitPatineurs) : null;
+    const kitGardien = !kitPatineur && gardienPossible ? dansKit(fichesIndex.kitGardiens) : null;
+    const ligne = ligneDuReleveParNom(nom);
+    const kit = kitPatineur || kitGardien;
+    if (kit) {
+        return { gardien: !!kitGardien, playerId: kit.playerId || (ligne && ligne.playerId) || null,
+            position: kitGardien ? 'G' : (kit.position || null), club: kit.team || null, cache: null };
+    }
+    if (ligne) {
+        return { gardien: ligne.position === 'G', playerId: ligne.playerId || null,
+            position: ligne.position || null, club: ligne.teamAbbrev || null, cache: null };
+    }
+    return { gardien: categorie === 'goalie', playerId: null, position: null, club: null, cache: null };
+}
+
+/** La fiche d'un club repêché dans nhl_filtered_stats.json, ou null. */
+function ficheClub(nom) {
+    if (!fichesIndex) indexerFiches();
+    return chercherNom(fichesIndex.clubs, nom)
+        || fichesIndex.clubs.parCle.get(CLUBS_RENOMMES[cleDeNom(nom)]) || null;
+}
+
+// Le relevé indexé, refait quand il change (les points du soir le remplacent).
+let releveIndex = { joueurs: null, parId: null, parNom: null, parCle: null };
+function indexDuReleve() {
+    const joueurs = currentStats && currentStats.players;
+    if (!Array.isArray(joueurs)) return null;
+    if (releveIndex.joueurs !== joueurs) {
+        // Lignes du relevé dont l'identifiant est celui d'un autre joueur
+        // (draftkitData.js) : jamais rapprochées par le nom.
+        const errones = new Set(window.FZ_IDS_ERRONES || []);
+        const parId = new Map();
+        const parNom = new Map();
+        const parCle = new Map();
+        joueurs.forEach(p => {
+            if (p.playerId && !parId.has(Number(p.playerId))) parId.set(Number(p.playerId), p);
+            if (!p.playerName || errones.has(Number(p.playerId))) return;
+            if (!parNom.has(p.playerName)) parNom.set(p.playerName, p);
+            const cle = cleDeNom(p.playerName);
+            if (!parCle.has(cle)) parCle.set(cle, p);
+        });
+        releveIndex = { joueurs, parId, parNom, parCle };
+    }
+    return releveIndex;
+}
+
+function ligneDuReleveParNom(nom) {
+    const index = indexDuReleve();
+    if (!index || !nom) return null;
+    return index.parNom.get(nom) || index.parCle.get(cleDeNom(nom)) || null;
+}
+
 function getCurrentPlayerStats(playerName, playerId) {
-    if (!currentStats || !currentStats.players) return null;
+    const index = indexDuReleve();
+    if (!index) return null;
 
     // Try to find by playerId first
     if (playerId) {
-        const byId = currentStats.players.find(p => p.playerId === playerId);
+        const byId = index.parId.get(Number(playerId));
         if (byId) return byId;
     }
 
     // Fallback to name match
-    return currentStats.players.find(p => p.playerName === playerName);
+    return ligneDuReleveParNom(playerName);
 }
 
-function getCurrentTeamStats(teamName) {
-    if (!currentTeams || !currentTeams.teams) return null;
-    return currentTeams.teams.find(t => t.teamFullName === teamName);
+/** La fiche d'un club : avec le direct par défaut, ou dans `releve` (currentTeamsBase, celui de minuit). */
+function getCurrentTeamStats(teamName, releve = currentTeams) {
+    if (!releve || !releve.teams) return null;
+    const cle = cleDeNom(teamName);
+    const autre = CLUBS_RENOMMES[cle];
+    return releve.teams.find(t => t.teamFullName === teamName)
+        || releve.teams.find(t => cleDeNom(t.teamFullName) === cle)
+        || (autre ? releve.teams.find(t => cleDeNom(t.teamFullName) === autre) : null)
+        || null;
 }
 
 function calculateTeamPoints(roster) {
@@ -2067,54 +2493,42 @@ function calculateTeamPoints(roster) {
     let totalEnDirect = 0;
     const soir = stats => (seasonStarted && stats && stats.pointsEnDirect) || 0;
 
-    // Process skaters
-    ['offensive', 'defensive', 'rookie'].forEach(position => {
-        (roster[position] || []).forEach(playerName => {
-            const playerData = fullPlayerData.find(p => p.skaterFullName === playerName);
-            if (playerData) {
-                const stats = getCurrentPlayerStats(playerName, playerData.playerId);
-                totalGP += seasonStat(stats, playerData, 'gamesPlayed');
-                totalGoals += seasonStat(stats, playerData, 'goals');
-                totalAssists += seasonStat(stats, playerData, 'assists');
-                totalPoints += seasonStat(stats, playerData, 'points');
-                totalEnDirect += soir(stats);
+    // Tous les choix comptent, même hors de nhl_filtered_stats.json (voir
+    // ficheJoueur) ; une recrue gardienne est comptée en gardienne.
+    ['offensive', 'defensive', 'goalie', 'rookie'].forEach(category => {
+        (roster[category] || []).forEach(playerName => {
+            const fiche = ficheJoueur(playerName, category);
+            const stats = getCurrentPlayerStats(playerName, fiche.playerId);
+            totalGP += seasonStat(stats, fiche.cache, 'gamesPlayed');
+            if (fiche.gardien) {
+                // Formule partagée avec le serveur et la page d'accueil
+                // (lib/scoring.js) : recopiée ici, elle finissait par diverger.
+                totalPoints += goaliePoolPoints({
+                    shutouts: seasonStat(stats, fiche.cache, 'shutouts'),
+                    wins: seasonStat(stats, fiche.cache, 'wins'),
+                    otLosses: seasonStat(stats, fiche.cache, 'otLosses')
+                });
+            } else {
+                totalGoals += seasonStat(stats, fiche.cache, 'goals');
+                totalAssists += seasonStat(stats, fiche.cache, 'assists');
+                totalPoints += seasonStat(stats, fiche.cache, 'points');
             }
-        });
-    });
-
-    // Process goalies
-    (roster.goalie || []).forEach(playerName => {
-        const playerData = goalieData.find(p => p.goalieFullName === playerName);
-        if (playerData) {
-            const stats = getCurrentPlayerStats(playerName, playerData.playerId);
-            const gp = seasonStat(stats, playerData, 'gamesPlayed');
-            const wins = seasonStat(stats, playerData, 'wins');
-            const shutouts = seasonStat(stats, playerData, 'shutouts');
-            const otLosses = seasonStat(stats, playerData, 'otLosses');
-            // Formule partagée avec le serveur et la page d'accueil
-            // (lib/scoring.js) : recopiée ici, elle finissait par diverger.
-            const points = goaliePoolPoints({ shutouts, wins, otLosses });
-
-            totalGP += gp;
-            totalPoints += points;
             totalEnDirect += soir(stats);
-        }
+        });
     });
 
     // Process teams
     (roster.teams || []).forEach(teamName => {
-        const teamInfo = teamData.find(t => t.teamFullName === teamName);
-        if (teamInfo) {
-            const stats = getCurrentTeamStats(teamName);
-            const gp = seasonStat(stats, teamInfo, 'gamesPlayed');
-            const wins = seasonStat(stats, teamInfo, 'wins');
-            const otLosses = seasonStat(stats, teamInfo, 'otLosses');
-            const points = clubPoolPoints({ wins, otLosses });
+        const teamInfo = ficheClub(teamName);
+        const stats = getCurrentTeamStats(teamName);
+        const gp = seasonStat(stats, teamInfo, 'gamesPlayed');
+        const wins = seasonStat(stats, teamInfo, 'wins');
+        const otLosses = seasonStat(stats, teamInfo, 'otLosses');
+        const points = clubPoolPoints({ wins, otLosses });
 
-            totalGP += gp;
-            totalPoints += points;
-            totalEnDirect += soir(stats);
-        }
+        totalGP += gp;
+        totalPoints += points;
+        totalEnDirect += soir(stats);
     });
 
     return {
@@ -2170,11 +2584,10 @@ function clubShotStyle(teamAbbrev) {
 /** Le club d'un joueur d'alignement : sa feuille de match, sinon les stats chargées. */
 function clubDuJoueur(joueur) {
     if (joueur.teamAbbrev) return joueur.teamAbbrev;
-    const stats = getCurrentPlayerStats(joueur.name, joueur.playerId);
+    const fiche = ficheJoueur(joueur.name, null);
+    const stats = getCurrentPlayerStats(joueur.name, joueur.playerId || fiche.playerId);
     if (stats && stats.teamAbbrev) return stats.teamAbbrev;
-    const fiche = fullPlayerData.find(p => p.skaterFullName === joueur.name)
-        || goalieData.find(g => g.goalieFullName === joueur.name);
-    return fiche ? (fiche.teamAbbrev || fiche.teamAbbrevs) : null;
+    return fiche.club;
 }
 
 /**
@@ -2338,7 +2751,7 @@ function switchH2HTab(tab) {
     document.getElementById('h2hScheduleView').style.display = (tab === 'calendrier') ? 'block' : 'none';
     document.getElementById('h2hHistoryView').style.display = (tab === 'history') ? 'block' : 'none';
 
-    // La bande de tuiles et les trois blocs du bas appartiennent au seul
+    // La bande de tuiles et les blocs du bas appartiennent au seul
     // onglet Classement. Sans ce ménage ils restaient affichés sous les
     // duels en cours et sous le calendrier, une fois l'onglet visité.
     const surClassement = tab === 'standings';
@@ -2844,7 +3257,6 @@ function showError(title, message) {
             <p style="font-size: 1.1rem; color: var(--text-secondary);">${message}</p>
         </div>
     `;
-    document.getElementById('poolListSkeleton').style.display = 'none';
 }
 
 // ==================== CAREER STATS MODAL ====================

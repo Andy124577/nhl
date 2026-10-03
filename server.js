@@ -23,6 +23,7 @@ const instantDraft = require("./lib/instantDraft.js");
 const { NHL_CLUB_FULLNAME, diffRosterSnapshots, trimTransactionLog, getTeamAbbreviationFromName } = require("./lib/roster.js");
 const { savePctFromSeasons } = require("./lib/savePct.js");
 const { getStatsRefreshStatus } = require("./lib/statsCache.js");
+const joueursRepeches = require("./lib/joueursRepeches.js");
 const { currentSeasonId, currentSeasonString, getSeasonWindow, seasonHasStarted,
     seasonPhase, statsSeasonId, statsSeasonString, cachedStatsSeasonString,
     getStatsSeason } = require("./lib/season.js");
@@ -64,6 +65,7 @@ const { creerServicePointage } = require("./services/scoring.js");
 const { creerServiceH2H } = require("./services/h2h.js");
 const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
 const { creerFeuillesDeMatch, MatchIntrouvable } = require("./services/feuilleMatch.js");
+const { creerFeuillesBrutes, ageTolere } = require("./services/feuillesBrutes.js");
 const { creerAlignements, EquipeInconnue } = require("./services/alignement.js");
 const { creerModerateur } = require("./services/moderationImage.js");
 const { creerMagasinPhotos } = require("./services/magasinPhotos.js");
@@ -931,6 +933,68 @@ function loadAllPlayers() {
     }
 }
 
+// ── Les repêchés hors de la liste de suivi ─────────────────────────────────
+// Le repêchage puise dans draftkit.json (plus de mille joueurs), la collecte
+// dans nhl_filtered_stats.json (≈ 550). Un choix hors de cette liste n'avait
+// jamais de statistiques : absent du classement, zéro point. Voir
+// lib/joueursRepeches.js.
+
+// La trousse pèse 1 Mo : lue une fois, réduite à ce qui sert au rapprochement.
+let trousseRepere = null;
+function trousseDeRepere() {
+    if (!trousseRepere) {
+        try {
+            const kit = JSON.parse(fs.readFileSync(path.join(__dirname, 'draftkit.json'), 'utf-8'));
+            const garder = p => ({ fullName: p.fullName, playerId: p.playerId || null, team: p.team || null });
+            trousseRepere = { skaters: (kit.skaters || []).map(garder), goalies: (kit.goalies || []).map(garder) };
+        } catch (erreur) {
+            console.error('⚠️ draftkit.json illisible :', erreur.message);
+            return { skaters: [], goalies: [] };
+        }
+    }
+    return trousseRepere;
+}
+
+// La photo des 32 effectifs ne change qu'une fois par jour : gardée six
+// heures plutôt que relue en base à chaque vérification.
+const EFFECTIFS_REPERE_MS = 6 * 60 * 60 * 1000;
+let effectifsRepere = null;
+async function effectifsDeRepere() {
+    if (!effectifsRepere || Date.now() - effectifsRepere.le > EFFECTIFS_REPERE_MS) {
+        effectifsRepere = { valeur: await loadRosterSnapshot(), le: Date.now() };
+    }
+    return effectifsRepere.valeur;
+}
+
+/**
+ * Les repêchés absents de nhl_filtered_stats.json, dans la forme de
+ * loadAllPlayers. Ne lève jamais : sans pools lisibles, aucun ajout.
+ */
+async function repechesHorsSuivi(suivis = loadAllPlayers()) {
+    try {
+        const [pools, effectifs] = await Promise.all([
+            poolStore.lireDonneesBrutes(),
+            effectifsDeRepere()
+        ]);
+        const { ajouts, introuvables } = joueursRepeches.joueursAAjouter(suivis, pools, {
+            trousse: trousseDeRepere(), effectifs
+        });
+        if (introuvables.length) {
+            console.log(`ℹ️ ${introuvables.length} repêché(s) sans identifiant LNH (hors des effectifs) : ${introuvables.slice(0, 10).join(', ')}${introuvables.length > 10 ? '…' : ''}`);
+        }
+        return ajouts;
+    } catch (erreur) {
+        console.error('⚠️ Repêchés hors suivi illisibles :', erreur.message);
+        return [];
+    }
+}
+
+/** Tous les joueurs à relever : la liste de suivi, plus les repêchés qu'elle n'a pas. */
+async function joueursARelever() {
+    const suivis = loadAllPlayers();
+    return [...suivis, ...await repechesHorsSuivi(suivis)];
+}
+
 /** Un appel à la LNH, relancé une fois après trois secondes si elle limite (429). null si refusé. */
 async function lireJsonLNH(url, etiquette) {
     let response = await fetch(url);
@@ -1134,6 +1198,23 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
     }
 }
 
+/**
+ * La fenêtre du relevé (lib/releveSaison.js) : la veille et le jour. Les
+ * matchs d'avant sont tous finis et tous comptés ; ceux de la fenêtre ne le
+ * sont que s'ils sont officiels au moment où le joueur est relevé. L'état est
+ * relu à chaque paquet : la passe dure plusieurs minutes, et un match peut
+ * finir pendant ce temps.
+ */
+function lecteurFenetreReleve(saison) {
+    const journee = datesPool.journeeLocale();
+    const depuis = releveSaison.debutFenetre(journee);
+    return async () => {
+        if (!saison.hasStarted) return null;
+        const listes = await Promise.all([depuis, journee].map(j => lireScoreDuJourBrut(j).catch(() => null)));
+        return { depuis, etats: releveSaison.etatsDesMatchs(listes) };
+    };
+}
+
 // Function to fetch and cache all current stats
 async function updateCurrentStats() {
     // Une seule résolution de la saison pour toute la passe : la règle
@@ -1151,20 +1232,9 @@ async function updateCurrentStats() {
     const memeSaison = Number(existingStats.season) === Number(saison.seasonId);
     const inclusionsPrecedentes = (memeSaison && existingStats.inclusion) || {};
 
-    // La fenêtre du relevé (lib/releveSaison.js) : la veille et le jour. Les
-    // matchs d'avant sont tous finis et tous comptés ; ceux de la fenêtre ne
-    // le sont que s'ils sont officiels au moment où le joueur est relevé.
-    // L'état est relu à chaque paquet : la passe dure plusieurs minutes, et
-    // un match peut finir pendant ce temps.
-    const journee = datesPool.journeeLocale();
-    const depuis = releveSaison.debutFenetre(journee);
-    const fenetreDuPaquet = async () => {
-        if (!saison.hasStarted) return null;
-        const listes = await Promise.all([depuis, journee].map(j => lireScoreDuJourBrut(j).catch(() => null)));
-        return { depuis, etats: releveSaison.etatsDesMatchs(listes) };
-    };
+    const fenetreDuPaquet = lecteurFenetreReleve(saison);
 
-    const allPlayers = loadAllPlayers();
+    const allPlayers = await joueursARelever();
     const newPlayers = [];
     const inclusion = {};
     let gardes = 0;
@@ -1360,6 +1430,77 @@ function triggerBackgroundStatsRefresh(reason) {
 }
 
 /**
+ * Les repêchés sans ligne dans le relevé, relevés seuls.
+ *
+ * Sans quoi un joueur repêché hors de nhl_filtered_stats.json attendait la
+ * collecte de minuit : jusqu'à un jour à zéro au classement. Quelques appels
+ * à la LNH, pas une collecte complète. Vérifié au plus toutes les
+ * VERIF_REPECHES_MS ; un joueur que la LNH n'a pas rendu n'est retenté
+ * qu'après REESSAI_REPECHES_MS. Ne bloque jamais l'appelant.
+ */
+const VERIF_REPECHES_MS = 5 * 60 * 1000;
+const REESSAI_REPECHES_MS = 6 * 60 * 60 * 1000;
+let verifRepechesLe = 0;
+let completionRepechesEnCours = null;
+const repechesSansReponse = new Map(); // playerId → dernière tentative
+
+function completerRepechesEnFond() {
+    if (completionRepechesEnCours || collecteStatsEnCours) return;
+    if (Date.now() - verifRepechesLe < VERIF_REPECHES_MS) return;
+    verifRepechesLe = Date.now();
+    completionRepechesEnCours = completerRepeches()
+        .catch(e => console.error('❌ Complétion des repêchés :', e.message))
+        .finally(() => { completionRepechesEnCours = null; });
+}
+
+async function completerRepeches() {
+    const releve = await loadCurrentStats();
+    // Pas encore de relevé : la première collecte complète les prendra.
+    if (!releve.lastUpdated) return 0;
+    const saison = await getStatsSeason();
+    // Relevé d'une autre saison : la collecte complète le refera en entier.
+    if (Number(releve.season) !== Number(saison.seasonId)) return 0;
+
+    const presents = new Set((releve.players || []).map(p => Number(p.playerId)));
+    const maintenant = Date.now();
+    const manquants = (await repechesHorsSuivi()).filter(p =>
+        !presents.has(Number(p.playerId)) &&
+        maintenant - (repechesSansReponse.get(p.playerId) || 0) > REESSAI_REPECHES_MS);
+    if (!manquants.length) return 0;
+
+    console.log(`➕ ${manquants.length} repêché(s) sans statistiques : relevé(s) sans attendre minuit`);
+    const fenetreDuPaquet = lecteurFenetreReleve(saison);
+    const lignes = [];
+    // Même cadence que la collecte complète : la LNH limite au-delà.
+    const PAQUET = 3;
+    for (let i = 0; i < manquants.length; i += PAQUET) {
+        const paquet = manquants.slice(i, i + PAQUET);
+        const fenetre = await fenetreDuPaquet();
+        const resultats = await Promise.all(paquet.map(p => fetchCurrentStatsForPlayer(
+            p.playerId, p.skaterFullName || p.goalieFullName, p.isGoalie, saison.seasonId, fenetre)));
+        resultats.forEach((ligne, j) => {
+            if (ligne) lignes.push({ ...ligne, todayPoints: 0 });
+            else repechesSansReponse.set(paquet[j].playerId, Date.now());
+        });
+        if (i + PAQUET < manquants.length) await new Promise(r => setTimeout(r, 2000));
+    }
+
+    // Fusionné dans le relevé du moment : une collecte complète a pu le
+    // remplacer pendant ces appels. En mémoire seulement : réécrit en base,
+    // le relevé prendrait l'heure de cet ajout pour date de mise à jour
+    // (db.loadCachedStats) et la règle des 24 h le croirait frais. Après un
+    // redémarrage, ces quelques joueurs sont simplement relevés de nouveau ;
+    // la collecte de minuit les enregistre avec les autres.
+    const courant = await loadCurrentStats();
+    if (Number(courant.season) !== Number(saison.seasonId)) return 0;
+    const { stats, ajoutees } = joueursRepeches.fusionnerReleves(courant, lignes);
+    if (!ajoutees) return 0;
+    memStatsCache = stats;
+    console.log(`✅ ${ajoutees} repêché(s) ajouté(s) au relevé`);
+    return ajoutees;
+}
+
+/**
  * Répond 304 si le navigateur a déjà cette version.
  *
  * `/current-stats` (≈ 24 Ko compressés) et `/current-teams` repartaient en
@@ -1416,6 +1557,8 @@ app.get("/current-stats", async (req, res) => {
 
         if (needsRefresh) {
             triggerBackgroundStatsRefresh(reason);
+        } else {
+            completerRepechesEnFond();
         }
 
         // Gardé par le navigateur mais revérifié à chaque fois : un 304 tant
@@ -2365,6 +2508,11 @@ io.on('connection', (socket) => scoresEnDirect.brancher(socket));
 // /live-points pour une page sans socket. Aucune lecture de la base : les
 // totaux sont ceux en mémoire (voir services/pointsEnDirect.js).
 // ============================================================
+
+// Les feuilles brutes du soir, partagées par le direct des points et
+// /tonight-boxscores : une feuille lue pour l'un sert à l'autre.
+const feuillesBrutes = creerFeuillesBrutes();
+
 const pointsEnDirect = creerPointsEnDirect({
     io,
     lireMatchs: lireMatchsBruts,
@@ -2372,10 +2520,10 @@ const pointsEnDirect = creerPointsEnDirect({
     // n'en dit plus rien une fois passé au jour suivant.
     lireMatchsDuJour: lireScoreDuJourBrut,
     aujourdhui: () => datesPool.journeeLocale(),
-    lireFeuille: async (id) => {
-        const reponse = await fetch(`https://api-web.nhle.com/v1/gamecenter/${id}/boxscore`, { signal: AbortSignal.timeout(8000) });
-        return reponse.ok ? reponse.json() : null;
-    },
+    // Le service ne relit une feuille que quand le pointage bouge : il la veut
+    // fraîche. Cinq secondes laissent servir celle que /tonight-boxscores
+    // vient de lire.
+    lireFeuille: (id) => feuillesBrutes.lire(id, { ageMaxMs: 5000 }),
     lireReleves: () => ({
         stats: memStatsCache && memStatsCache.players.length ? memStatsCache : null,
         clubs: memTeamsCache
@@ -2438,6 +2586,34 @@ app.get('/live-points', async (req, res) => {
     } catch (error) {
         console.error('❌ Error computing live points:', error.message);
         res.json(vide());
+    }
+});
+
+/**
+ * La soirée des joueurs et clubs demandés, pour la fiche d'équipe du
+ * classement : son match du jour (en jeu, plus tard), les matchs commencés
+ * que les relevés ne comptent pas encore (colonne PJ) et les points de sa
+ * dernière soirée (colonne PPtsA). Voir soireesDuJour (lib/pointsEnDirect.js).
+ *
+ * Tiré du même calcul que /live-points : aucun appel de plus à la LNH. La
+ * page ne demande que les lignes qu'elle affiche (une équipe de pool).
+ *
+ *   ?joueurs=8478402,8477934&clubs=EDM,TOR
+ */
+app.get('/live-roster', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const liste = (valeur, motif, max) => [...new Set(String(valeur || '').split(','))]
+        .map(v => v.trim()).filter(v => motif.test(v)).slice(0, max);
+    const ids = liste(req.query.joueurs, /^\d{1,10}$/, 80);
+    const abbrevs = liste(String(req.query.clubs || '').toUpperCase(), /^[A-Z]{2,3}$/, 40);
+    const vide = { jour: datesPool.journeeLocale(), joueurs: {}, clubs: {}, generatedAt: new Date().toISOString() };
+    try {
+        const soirees = await pointsEnDirect.lireSoirees();
+        const garder = (table, cles) => Object.fromEntries(cles.filter(c => table[c]).map(c => [c, table[c]]));
+        res.json({ ...vide, joueurs: garder(soirees.joueurs, ids), clubs: garder(soirees.clubs, abbrevs) });
+    } catch (error) {
+        console.error('❌ Error computing live roster:', error.message);
+        res.json(vide);
     }
 });
 
@@ -2813,30 +2989,34 @@ app.get('/day-goals/:date', async (req, res) => {
 // live standings add) and fantasyPointsTonight (head-to-head FANTASY_SCORING).
 // Game states come from the shared /score/now snapshot (lireMatchsBruts), the
 // one /live-games and the live points read.
+//
+// Les feuilles viennent du cache partagé avec le direct des points
+// (feuillesBrutes), à l'âge que tolère l'état du match : un match en jeu se
+// relit toutes les 20 s, un match officiel toutes les demi-heures. Avant, les
+// feuilles de TOUS les matchs commencés étaient relues toutes les 25 s, même
+// celles de matchs finis depuis des heures. La réponse se recalcule dès
+// qu'une feuille, un état, un pointage ou une horloge change — un but que le
+// direct des points vient de lire se voit donc ici à la requête suivante.
 // ============================================================
-let tonightBoxscoresCache = { data: null, fetchedAt: 0 };
-const TONIGHT_BOXSCORES_TTL_MS = 25 * 1000;
-
+let tonightBoxscoresCache = { data: null, cle: null };
 
 app.get('/tonight-boxscores', async (req, res) => {
     try {
-        const now = Date.now();
-        if (tonightBoxscoresCache.data && (now - tonightBoxscoresCache.fetchedAt) < TONIGHT_BOXSCORES_TTL_MS) {
-            return res.json(tonightBoxscoresCache.data);
-        }
-
         const bruts = await lireMatchsBruts().catch(() => null);
         if (!bruts) return res.json({ players: [], games: [], generatedAt: new Date().toISOString() });
         const startedGames = bruts.filter(g =>
             ['LIVE', 'CRIT', 'FINAL', 'OFF'].includes(g.gameState));
 
-        const boxscores = await Promise.all(startedGames.map(async g => {
-            try {
-                const res2 = await fetch(`https://api-web.nhle.com/v1/gamecenter/${g.id}/boxscore`);
-                if (!res2.ok) return null;
-                return await res2.json();
-            } catch { return null; }
-        }));
+        const boxscores = await Promise.all(startedGames.map(g =>
+            feuillesBrutes.lire(g.id, { ageMaxMs: ageTolere(g.gameState) }).catch(() => null)));
+
+        const cle = [memStatsCache.lastUpdated, memStatsCache.players.length, ...startedGames.map(g => [
+            g.id, g.gameState, g.awayTeam?.score, g.homeTeam?.score, g.periodDescriptor?.number,
+            g.clock?.timeRemaining, g.clock?.inIntermission, feuillesBrutes.luLe(g.id)
+        ].join(':'))].join('|');
+        if (tonightBoxscoresCache.data && tonightBoxscoresCache.cle === cle) {
+            return res.json(tonightBoxscoresCache.data);
+        }
 
         // Les effectifs de pool portent le nom complet (« Connor McDavid ») ;
         // la feuille de match, l'initiale (« C. McDavid »). Comparées telles
@@ -2864,7 +3044,7 @@ app.get('/tonight-boxscores', async (req, res) => {
         }));
 
         const payload = { players, games, generatedAt: new Date().toISOString() };
-        tonightBoxscoresCache = { data: payload, fetchedAt: now };
+        tonightBoxscoresCache = { data: payload, cle };
         res.json(payload);
     } catch (error) {
         console.error('❌ Error fetching tonight boxscores:', error.message);
@@ -4342,18 +4522,40 @@ app.get('/hot-players', async (req, res) => {
 });
 
 // Route to get top-5 stat leaders (points/goals/assists/wins) for the homepage hero.
-// Reads the same cached file as /hot-players, which updateCurrentStats() keeps
-// patched with live current-season points/goals/assists/wins.
+// nhl_filtered_stats.json ne sert qu'à classer les joueurs (attaquants,
+// défenseurs, recrues, gardiens) : ses totaux sont ceux de l'an passé, et la
+// recopie des relevés saute les joueurs à zéro match, qui les gardaient. Les
+// chiffres viennent donc des relevés de la saison courante (direct compris).
 app.get('/stats-leaders', async (req, res) => {
     try {
         const filteredStatsPath = path.join(__dirname, 'nhl_filtered_stats.json');
+        const vide = { forwardsPoints: [], defensePoints: [], goalsLeaders: [], assistsLeaders: [], rookiePoints: [], goalieWins: [] };
 
         if (!fs.existsSync(filteredStatsPath)) {
             console.error('❌ nhl_filtered_stats.json not found');
-            return res.json({ forwardsPoints: [], defensePoints: [], goalsLeaders: [], assistsLeaders: [], rookiePoints: [], goalieWins: [] });
+            return res.json(vide);
         }
 
+        const saison = await getStatsSeason();
+        const releve = await loadCurrentStats();
+        if (Number(releve.season) !== Number(saison.seasonId)) {
+            // Relevé d'une autre saison : on rafraîchit sans afficher l'an passé.
+            triggerBackgroundStatsRefresh('meneurs : relevé d\'une autre saison');
+            return res.json(vide);
+        }
+
+        const { players: relevesJoueurs } = await relevesAvecDirect();
+        const frais = new Map(relevesJoueurs.map(p => [Number(p.playerId), p]));
+        const enSaison = arr => (arr || []).map(p => {
+            const f = frais.get(Number(p.playerId));
+            return f ? { ...p, gamesPlayed: f.gamesPlayed, goals: f.goals, assists: f.assists, wins: f.wins, points: f.points } : { ...p, gamesPlayed: 0 };
+        });
+
         const filteredStats = JSON.parse(fs.readFileSync(filteredStatsPath, 'utf-8'));
+        filteredStats.Top_100_Offensive_Players = enSaison(filteredStats.Top_100_Offensive_Players);
+        filteredStats.Top_50_Defenders = enSaison(filteredStats.Top_50_Defenders);
+        filteredStats.Top_Rookies = enSaison(filteredStats.Top_Rookies);
+        filteredStats.Top_50_Goalies = enSaison(filteredStats.Top_50_Goalies);
 
         const toSkater = p => ({
             playerId: p.playerId,
@@ -5458,6 +5660,7 @@ async function warmStatsOnStartup() {
                 .then(() => console.log("✅ Background stats refresh done"));
         } else {
             console.log(`📊 Local player stats are fresh (${reason}) — no refresh needed.`);
+            completerRepechesEnFond();
         }
     } catch (error) {
         console.error('❌ Error warming player stats on startup:', error);

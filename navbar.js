@@ -19,20 +19,45 @@ function getCurrentPage() {
 }
 
 // ==================== INITIALIZATION ====================
+/**
+ * Les deux barres elles-mêmes : rien qui attende le réseau ni un autre
+ * script, donc constructibles avant le premier rendu.
+ *
+ * Une page qui charge navbar.js sans `defer`, juste après <nav class="navbar">
+ * (calendrier.html), les obtient pendant l'analyse du HTML : son premier
+ * rendu les montre déjà, au lieu d'un contenu nu qui les voit arriver ensuite
+ * — on aurait dit que toute la page, barres comprises, se rechargeait.
+ * Ailleurs, initModernNavbar s'en charge au DOMContentLoaded.
+ */
+let _barresConstruites = false;
+
+function construireBarres() {
+    if (_barresConstruites || !document.querySelector('.navbar')) return;
+    _barresConstruites = true;
+    const currentPage = getCurrentPage();
+
+    if (localStorage.getItem('isLoggedIn') !== 'true') { buildLoggedOutNavbar(); return; }
+
+    buildLoggedInNavbar(localStorage.getItem('username') || '', localStorage.getItem('isAdmin') === 'true', currentPage);
+    buildBottomNav(currentPage);
+    // Avant tout : replier les onglets que le dernier passage savait
+    // fermés. Dans la même tâche que la construction, donc jamais peints.
+    appliquerVisibiliteMemorisee();
+    // La pastille se pose une fois les onglets repliés : elle tombe
+    // directement sous l'onglet actif.
+    initPastilleBas(currentPage);
+}
+
 function initModernNavbar() {
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     const username = localStorage.getItem('username') || '';
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
-    const currentPage = getCurrentPage();
 
     if (!document.querySelector('.navbar')) return;
 
+    construireBarres();
+
     if (isLoggedIn) {
-        buildLoggedInNavbar(username, isAdmin, currentPage);
-        buildBottomNav(currentPage);
-        // Avant tout : replier les onglets que le dernier passage savait
-        // fermés. Dans la même tâche que la construction, donc jamais peints.
-        appliquerVisibiliteMemorisee();
         initializeEventListeners(username, isAdmin);
         if (isAdmin) verifierBascule();
         checkPendingTrades();
@@ -52,8 +77,6 @@ function initModernNavbar() {
         }
         // Fetch latest avatar in background and update if changed
         refreshNavbarAvatar(username);
-    } else {
-        buildLoggedOutNavbar();
     }
 }
 
@@ -362,37 +385,295 @@ function buildBottomNav(currentPage) {
     const existing = document.querySelector('.bottom-nav');
     if (existing) existing.remove();
 
+    // `data-page` : l'onglet que la page désigne comme actif (getCurrentPage),
+    // relu au retour arrière (initPastilleBas).
+    const onglet = (page, href, icone, libelle, extra = '') => {
+        const actif = page === currentPage;
+        return `
+            <a href="${href}" class="bottom-nav-item${actif ? ' active' : ''}" data-page="${page}"${actif ? ' aria-current="page"' : ''}${extra}>
+                <span class="bottom-nav-icon" aria-hidden="true">${icone}</span>
+                <span class="bottom-nav-label">${libelle}</span>`;
+    };
     const html = `
-        <nav class="bottom-nav">
-            <a href="index.html" class="bottom-nav-item ${'accueil' === currentPage ? 'active' : ''}">
-                <span class="bottom-nav-icon">${PAGE_ICON.accueil}</span>
-                <span class="bottom-nav-label">Accueil</span>
+        <nav class="bottom-nav" aria-label="Navigation principale">
+            <span class="bottom-nav-pill" aria-hidden="true"><span class="bottom-nav-pill-ring"></span></span>
+            ${onglet('accueil', 'index.html', PAGE_ICON.accueil, 'Accueil')}
             </a>
-            <a href="repechage.html" class="bottom-nav-item ${'repechage' === currentPage ? 'active' : ''}" id="bottomPoolLink">
-                <span class="bottom-nav-icon">${PAGE_ICON.repechage}</span>
-                <span class="bottom-nav-label">Repêchage</span>
+            ${onglet('repechage', 'repechage.html', PAGE_ICON.repechage, 'Repêchage', ' id="bottomPoolLink"')}
                 <span class="notif-badge" id="bottomDraftBadge" style="display: none;"></span>
             </a>
-            <a href="trade.html" class="bottom-nav-item ${'trade' === currentPage ? 'active' : ''}" id="bottomTradeLink">
-                <span class="bottom-nav-icon">${PAGE_ICON.echanges}</span>
-                <span class="bottom-nav-label">Échanges</span>
+            ${onglet('trade', 'trade.html', PAGE_ICON.echanges, 'Échanges', ' id="bottomTradeLink"')}
                 <span class="notif-badge" id="bottomTradeBadge" style="display: none;">0</span>
             </a>
-            <a href="classement.html" class="bottom-nav-item ${'classement' === currentPage ? 'active' : ''}" id="bottomClassementLink">
-                <span class="bottom-nav-icon">${PAGE_ICON.classement}</span>
-                <span class="bottom-nav-label">Classement</span>
+            ${onglet('classement', 'classement.html', PAGE_ICON.classement, 'Classement', ' id="bottomClassementLink"')}
             </a>
-            <a href="calendrier.html" class="bottom-nav-item ${'calendrier' === currentPage ? 'active' : ''}">
-                <span class="bottom-nav-icon">${PAGE_ICON.calendrier}</span>
-                <span class="bottom-nav-label">Calendrier</span>
+            ${onglet('calendrier', 'calendrier.html', PAGE_ICON.calendrier, 'Calendrier')}
             </a>
-            <a href="stats.html" class="bottom-nav-item ${'stats' === currentPage ? 'active' : ''}">
-                <span class="bottom-nav-icon">${PAGE_ICON.stats}</span>
-                <span class="bottom-nav-label">Stats</span>
+            ${onglet('stats', 'stats.html', PAGE_ICON.stats, 'Stats')}
             </a>
         </nav>
     `;
     document.body.insertAdjacentHTML('beforeend', html);
+}
+
+// ==================== BARRE DU BAS : LA PASTILLE ====================
+/*
+ * Claude Design, « Footer Nav » : une pastille teintée sous l'onglet actif,
+ * qui glisse jusqu'à l'onglet touché (navbar.css, .bottom-nav-pill).
+ *
+ * Chaque onglet est une autre page : le glissement commence sur la page
+ * qu'on quitte, au toucher, et la page d'arrivée le reprend là où il en
+ * est — l'heure du toucher passe par sessionStorage, et l'animation repart
+ * avec un délai négatif de ce qui s'est déjà écoulé. Une navigation lente
+ * finit le geste avant de partir ; une rapide le termine en arrivant ; dans
+ * les deux cas la pastille ne revient jamais en arrière.
+ *
+ * Le reste du geste (navbar.css, « BARRE DU BAS ») suit la même horloge :
+ * l'icône qui rebondit et l'anneau que la pastille lâche en se posant
+ * reprennent eux aussi sur la page d'arrivée.
+ */
+const PASTILLE_MS = 420;
+const PASTILLE_COURBE = 'cubic-bezier(.32, .72, 0, 1)';
+const PASTILLE_CLE = 'fzBarreBasGlisse';
+const REBOND_MS = 520;
+// Sur cette courbe, la pastille a fait 95 % du trajet à 170 ms : c'est
+// là qu'on la voit se poser, bien avant la fin de l'adoucissement.
+const ANNEAU_DELAI = 170;
+const ANNEAU_MS = 420;
+const GESTE_MS = Math.max(PASTILLE_MS, REBOND_MS, ANNEAU_DELAI + ANNEAU_MS);
+
+function mouvementReduit() {
+    return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+
+/**
+ * Un tic sous le doigt. Android a l'API de vibration ; Safari iOS ne l'a
+ * pas, mais depuis iOS 18 basculer un <input switch> fait vibrer
+ * l'appareil, et c'est la seule voie. Ailleurs, rien ne se passe.
+ */
+function ticHaptique() {
+    try {
+        if (navigator.vibrate) { navigator.vibrate(12); return; }
+        const etiquette = document.createElement('label');
+        etiquette.setAttribute('aria-hidden', 'true');
+        etiquette.style.display = 'none';
+        const bascule = document.createElement('input');
+        bascule.type = 'checkbox';
+        bascule.setAttribute('switch', '');
+        etiquette.appendChild(bascule);
+        document.head.appendChild(etiquette);
+        etiquette.click();
+        etiquette.remove();
+    } catch { /* pas de tic : la couleur et l'onde suffisent */ }
+}
+
+/**
+ * L'onde du toucher : un disque qui part du doigt et s'étend jusqu'au coin
+ * le plus loin de l'onglet. Elle tient tant que le doigt reste posé ; la
+ * fonction rendue l'efface. Sans point de contact (clavier), elle part du
+ * centre.
+ */
+function ondeOnglet(onglet, point) {
+    if (typeof onglet.animate !== 'function') return () => {};
+    let calque = onglet.querySelector('.bottom-nav-waves');
+    if (!calque) {
+        calque = document.createElement('span');
+        calque.className = 'bottom-nav-waves';
+        calque.setAttribute('aria-hidden', 'true');
+        onglet.prepend(calque);
+    }
+    const r = onglet.getBoundingClientRect();
+    const x = point ? point.clientX - r.left : r.width / 2;
+    const y = point ? point.clientY - r.top : r.height / 2;
+    const rayon = Math.hypot(Math.max(x, r.width - x), Math.max(y, r.height - y));
+    const onde = document.createElement('span');
+    onde.className = 'bottom-nav-wave';
+    onde.style.cssText = `left:${x - rayon}px;top:${y - rayon}px;width:${2 * rayon}px;height:${2 * rayon}px`;
+    calque.appendChild(onde);
+    // Mouvement réduit : un éclat sur place, sans expansion.
+    onde.animate(mouvementReduit()
+        ? [{ transform: 'scale(1)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }]
+        : [{ transform: 'scale(0)' }, { transform: 'scale(1)' }],
+        { duration: mouvementReduit() ? 120 : 480, easing: 'cubic-bezier(.2, .8, .2, 1)', fill: 'forwards' });
+    let effacee = false;
+    return () => {
+        if (effacee) return;
+        effacee = true;
+        onde.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, easing: 'ease-out', fill: 'forwards' })
+            .onfinish = () => onde.remove();
+    };
+}
+
+/**
+ * Le geste d'un onglet choisi, vu `ecoule` ms après le toucher : joué au
+ * clic (0), puis repris par la page d'arrivée là où il en est.
+ *
+ * La pastille, déjà posée sous `vers`, part de `depuis` en s'étirant dans
+ * le sens de sa course et en s'écrasant d'autant — étirement à son comble
+ * au début, quand elle va le plus vite. Sans onglet de départ, elle éclot
+ * sur place. L'icône rebondit depuis son enfoncement, et la pastille lâche
+ * un anneau en se posant.
+ */
+function jouerGeste(nav, depuis, vers, ecoule) {
+    const pastille = nav.querySelector('.bottom-nav-pill');
+    if (!pastille || typeof pastille.animate !== 'function' || mouvementReduit()) return;
+    const x1 = pastilleX(pastille, vers);
+    if (x1 === null) return;
+    const x0 = pastilleX(pastille, depuis);
+    const delay = -ecoule;
+
+    if (x0 !== null && x0 !== x1) {
+        // D'un onglet à son voisin, 15 % ; d'un bout à l'autre, 38 %.
+        const etire = 1 + Math.min(.38, Math.max(.15, Math.abs(x1 - x0) / 500));
+        const ecrase = 1 - (etire - 1) * .4;
+        pastille.animate([
+            { transform: `translateX(${x0}px) scale(1, 1)` },
+            { transform: `translateX(${x0 + (x1 - x0) * .4}px) scale(${etire}, ${ecrase})`, offset: .4 },
+            { transform: `translateX(${x1}px) scale(1, 1)` }
+        ], { duration: PASTILLE_MS, easing: PASTILLE_COURBE, delay });
+    } else {
+        pastille.animate([
+            { transform: `translateX(${x1}px) scale(.4, .6)`, opacity: 0 },
+            { transform: `translateX(${x1}px) scale(1.06, 1.04)`, opacity: 1, offset: .6 },
+            { transform: `translateX(${x1}px) scale(1, 1)`, opacity: 1 }
+        ], { duration: 380, easing: 'cubic-bezier(.2, .8, .2, 1)', delay });
+    }
+
+    // Part de 0,84, l'enfoncement du toucher (navbar.css, .is-pressed). La
+    // transition CSS qui ramène l'icône au relâcher passerait devant le
+    // rebond dans la cascade : elle s'efface.
+    const icone = vers.querySelector('.bottom-nav-icon');
+    if (icone) {
+        if (typeof icone.getAnimations === 'function') icone.getAnimations().forEach(a => a.cancel());
+        icone.animate([
+            { transform: 'translateY(0) scale(.84)', easing: 'cubic-bezier(.2, .8, .2, 1)' },
+            { transform: 'translateY(-2px) scale(1.16)', offset: .38, easing: 'cubic-bezier(.4, 0, .2, 1)' },
+            { transform: 'translateY(0) scale(.97)', offset: .72, easing: 'ease-out' },
+            { transform: 'translateY(0) scale(1)' }
+        ], { duration: REBOND_MS, delay });
+    }
+
+    pastille.querySelector('.bottom-nav-pill-ring')?.animate([
+        { transform: 'scale(1)', opacity: .9 },
+        { transform: 'scale(1.26, 1.45)', opacity: 0 }
+    ], { duration: ANNEAU_MS, easing: 'cubic-bezier(.2, .8, .2, 1)', delay: ANNEAU_DELAI - ecoule });
+}
+
+/** L'abscisse de la pastille centrée sous un onglet, ou null s'il est caché. */
+function pastilleX(pastille, onglet) {
+    if (!onglet || onglet.offsetParent === null) return null;
+    return onglet.offsetLeft + (onglet.offsetWidth - pastille.offsetWidth) / 2;
+}
+
+/** Pose la pastille sous l'onglet actif — en glissant, ou d'un coup. */
+function placerPastille(nav, { glisser = false } = {}) {
+    const pastille = nav.querySelector('.bottom-nav-pill');
+    if (!pastille) return;
+    const x = pastilleX(pastille, nav.querySelector('.bottom-nav-item.active'));
+    if (x === null) { pastille.classList.remove('is-placed'); return; }
+    if (!glisser || !pastille.classList.contains('is-placed')) {
+        // D'un coup, et sans fondu : la pastille est déjà là au premier
+        // rendu de chaque page, elle ne clignote pas à chaque onglet.
+        pastille.style.transition = 'none';
+        pastille.style.transform = `translateX(${x}px)`;
+        pastille.classList.add('is-placed');
+        void pastille.offsetWidth;   // position et opacité comptent avant que la transition revienne
+        pastille.style.transition = '';
+    } else {
+        pastille.style.transform = `translateX(${x}px)`;
+    }
+}
+
+function initPastilleBas(currentPage) {
+    const nav = document.querySelector('.bottom-nav');
+    const pastille = nav && nav.querySelector('.bottom-nav-pill');
+    if (!pastille) return;
+    const onglets = () => [...nav.querySelectorAll('.bottom-nav-item')];
+
+    placerPastille(nav);
+    reprendreGlissement(nav, onglets());
+
+    // Un onglet qui paraît ou disparaît (updateDraftLinkVisibility…), un
+    // écran qui tourne : la pastille suit son onglet en glissant.
+    if (window.ResizeObserver) {
+        const suivre = new ResizeObserver(() => placerPastille(nav, { glisser: true }));
+        onglets().forEach(o => suivre.observe(o));
+    }
+
+    // Le contact se voit avant le relâcher — le clic n'arrive qu'au
+    // relâcher, trop tard pour paraître immédiat : l'onglet s'enfonce et
+    // l'onde part du doigt dès le pointerdown.
+    let relacher = null;
+    const finContact = () => {
+        nav.querySelectorAll('.bottom-nav-item.is-pressed').forEach(o => o.classList.remove('is-pressed'));
+        if (relacher) { relacher(); relacher = null; }
+    };
+    nav.addEventListener('pointerdown', e => {
+        const onglet = e.target.closest('.bottom-nav-item');
+        if (!onglet || e.button !== 0) return;
+        finContact();
+        onglet.classList.add('is-pressed');
+        relacher = ondeOnglet(onglet, e);
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(type => nav.addEventListener(type, finContact));
+
+    nav.addEventListener('click', e => {
+        const onglet = e.target.closest('.bottom-nav-item');
+        if (!onglet) return;
+        if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        ticHaptique();
+        // Au clavier, pas de pointerdown : l'onde part du centre.
+        if (e.detail === 0) ondeOnglet(onglet, null)();
+        if (onglet.classList.contains('active')) return;
+        const depuis = nav.querySelector('.bottom-nav-item.active');
+        // L'onglet touché prend la couleur tout de suite ; la pastille part.
+        onglets().forEach(o => {
+            o.classList.toggle('active', o === onglet);
+            if (o === onglet) o.setAttribute('aria-current', 'page'); else o.removeAttribute('aria-current');
+        });
+        placerPastille(nav);
+        jouerGeste(nav, depuis, onglet, 0);
+        try {
+            sessionStorage.setItem(PASTILLE_CLE, JSON.stringify({
+                depuis: depuis ? depuis.getAttribute('href') : null, vers: onglet.getAttribute('href'), t: Date.now()
+            }));
+        } catch { /* stockage refusé : la page d'arrivée pose la pastille sans geste */ }
+    });
+
+    // Retour arrière depuis le cache : la page revient telle qu'on l'a
+    // quittée, pastille partie vers l'autre onglet et geste en cours. On
+    // arrête tout et on la ramène.
+    window.addEventListener('pageshow', e => {
+        if (!e.persisted) return;
+        relacher = null;
+        nav.querySelectorAll('.bottom-nav-item.is-pressed').forEach(o => o.classList.remove('is-pressed'));
+        nav.querySelectorAll('.bottom-nav-wave').forEach(o => o.remove());
+        if (typeof nav.getAnimations === 'function') nav.getAnimations({ subtree: true }).forEach(a => a.cancel());
+        onglets().forEach(o => {
+            const actif = o.dataset.page === currentPage;
+            o.classList.toggle('active', actif);
+            if (actif) o.setAttribute('aria-current', 'page'); else o.removeAttribute('aria-current');
+        });
+        placerPastille(nav);
+    });
+}
+
+/**
+ * La page d'arrivée reprend le geste commencé sur la page quittée. Un
+ * onglet de départ caché ici fait éclore la pastille plutôt que glisser.
+ */
+function reprendreGlissement(nav, onglets) {
+    let geste = null;
+    try {
+        geste = JSON.parse(sessionStorage.getItem(PASTILLE_CLE));
+        sessionStorage.removeItem(PASTILLE_CLE);
+    } catch { return; }
+    const actif = nav.querySelector('.bottom-nav-item.active');
+    if (!geste || !actif || actif.getAttribute('href') !== geste.vers) return;
+    const ecoule = Date.now() - geste.t;
+    if (!(ecoule >= 0 && ecoule < GESTE_MS)) return;
+    const depuis = geste.depuis ? onglets.find(o => o.getAttribute('href') === geste.depuis) : null;
+    jouerGeste(nav, depuis, actif, ecoule);
 }
 
 // ==================== USER AVATAR UPLOAD ====================
@@ -1154,6 +1435,9 @@ function surveillerPiedDePage() {
 }
 
 // ==================== INIT ====================
+// Sans `defer`, pendant l'analyse : les barres tout de suite. Le reste
+// (écouteurs, pastilles, FZPool) attend comme avant que le DOM soit complet.
+if (document.readyState === 'loading') construireBarres();
 document.addEventListener('DOMContentLoaded', () => {
     initModernNavbar();
     renderLegalFooter();

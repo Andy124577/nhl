@@ -424,9 +424,10 @@ describe('draftkitData — FZDraftKit', () => {
 // Voir test/fixtures/helpers.js pour le pourquoi de ce chargement.
 
 describe('classement — helpers de tableau', () => {
-    const { rankByPeriodPoints, fmtPeriodPts, initialsFromName, formatHofDate, formatHofMonth } =
+    const { rankByPeriodPoints, fmtPeriodPts, initialsFromName, hofDateJour, hofDateSemaine, hofDateMois, hofEnCours } =
         chargerFonctions('classement.js',
-            ['rankByPeriodPoints', 'fmtPeriodPts', 'initialsFromName', 'formatHofDate', 'formatHofMonth']);
+            ['rankByPeriodPoints', 'fmtPeriodPts', 'initialsFromName',
+                'hofJour', 'hofDecaler', 'hofFormat', 'hofDateJour', 'hofDateSemaine', 'hofDateMois', 'hofEnCours']);
 
     test('rankByPeriodPoints numérote de 1 à n, du plus fort au plus faible', () => {
         const standings = [{ teamName: 'A' }, { teamName: 'B' }, { teamName: 'C' }];
@@ -479,20 +480,174 @@ describe('classement — helpers de tableau', () => {
         assert.equal(initialsFromName(''), '');
     });
 
-    test('formatHofDate rend un jour et un mois abrégé en français', () => {
-        assert.equal(formatHofDate('2026-01-15'), '15 janv.');
-        assert.equal(formatHofDate(''), '');
+    test('hofDateJour rend le jour de la semaine, le jour et le mois abrégés', () => {
+        assert.equal(hofDateJour('2026-01-15'), 'jeu. 15 janv.');
+        assert.equal(hofDateJour(''), '');
     });
 
-    test('formatHofMonth rend le mois en toutes lettres, capitalisé', () => {
-        assert.equal(formatHofMonth('2026-01-15'), 'Janvier');
-        assert.equal(formatHofMonth(''), '');
+    test('hofDateSemaine rend la semaine du lundi au dimanche', () => {
+        assert.equal(hofDateSemaine('2026-10-05'), '5 – 11 oct.');
+        assert.equal(hofDateSemaine(''), '');
+    });
+
+    test('hofDateSemaine nomme les deux mois quand la semaine en chevauche deux', () => {
+        assert.equal(hofDateSemaine('2026-09-28'), '28 sept. – 4 oct.');
+        assert.equal(hofDateSemaine('2026-12-28'), '28 déc. – 3 janv.');
+    });
+
+    test('hofDateMois rend le mois en toutes lettres, capitalisé', () => {
+        assert.equal(hofDateMois('2026-01-01'), 'Janvier');
+        assert.equal(hofDateMois(''), '');
     });
 
     test('les dates du panthéon sont lues en UTC', () => {
         // Sans timeZone: 'UTC', un 1er du mois basculerait au dernier jour du
         // mois précédent pour un lecteur à l'ouest de Greenwich.
-        assert.equal(formatHofDate('2026-03-01'), '1 mars');
+        assert.equal(hofDateJour('2026-03-01'), 'dim. 1 mars');
+        assert.equal(hofDateMois('2026-03-01'), 'Mars');
+    });
+
+    test("hofEnCours : une journée n'est en cours que le jour même", () => {
+        assert.equal(hofEnCours('Day', '2026-10-01', '2026-10-01'), true);
+        assert.equal(hofEnCours('Day', '2026-09-30', '2026-10-01'), false);
+    });
+
+    test('hofEnCours : une semaine est en cours du lundi au dimanche inclus', () => {
+        assert.equal(hofEnCours('Week', '2026-09-28', '2026-09-28'), true);
+        assert.equal(hofEnCours('Week', '2026-09-28', '2026-10-04'), true);
+        assert.equal(hofEnCours('Week', '2026-09-28', '2026-10-05'), false);
+        assert.equal(hofEnCours('Week', '2026-10-05', '2026-10-04'), false);
+    });
+
+    test("hofEnCours : un mois est en cours tant qu'on y est", () => {
+        assert.equal(hofEnCours('Month', '2026-10-01', '2026-10-31'), true);
+        assert.equal(hofEnCours('Month', '2026-09-01', '2026-10-01'), false);
+    });
+
+    test("hofEnCours : sans date, rien n'est en cours", () => {
+        assert.equal(hofEnCours('Week', '', '2026-10-01'), false);
+        assert.equal(hofEnCours('Day', '2026-10-01', ''), false);
+    });
+});
+
+describe('classement — chaque choix paraît et compte', () => {
+    // Le repêchage puise dans la trousse ; la page ne lisait que
+    // nhl_filtered_stats.json. Un choix hors de cette liste disparaissait de
+    // la fiche de son équipe et de son total.
+    const { cleDeNom, CLUBS_RENOMMES, goaliePoolPoints, clubPoolPoints } = require('../../lib/scoring.js');
+
+    const FICHIER_STATS = {
+        fullPlayerData: [
+            { playerId: 8478402, skaterFullName: 'Connor McDavid', teamAbbrevs: 'EDM', positionCode: 'C', points: 0 },
+            { playerId: 8482116, skaterFullName: 'Tim Stutzle', teamAbbrevs: 'OTT', positionCode: 'C', points: 0 }
+        ],
+        goalieData: [
+            { playerId: 8483703, goalieFullName: 'Sergei Murashov', teamAbbrevs: 'PIT', wins: 0, shutouts: 0, otLosses: 0 }
+        ],
+        teamData: [{ teamFullName: 'Utah Hockey Club', wins: 0, otLosses: 0 }]
+    };
+    const TROUSSE = {
+        donnees: {
+            skaters: [
+                // Les chiffres de la trousse sont ceux de l'an passé : jamais la saison en cours.
+                { fullName: 'Alexandre Texier', playerId: null, team: 'MTL', position: 'C', points: 21 },
+                { fullName: 'Jayden Struble', playerId: null, team: 'MTL', position: 'D', points: 12 }
+            ],
+            goalies: [{ fullName: 'Nikke Kokko', playerId: null, team: 'SEA', points: 30 }]
+        },
+        nomCanonique: nom => nom
+    };
+
+    function charger({ joueurs = [], clubs = [], trousse = TROUSSE } = {}) {
+        return chargerFonctions('classement.js', [
+            'indexerNoms', 'chercherNom', 'indexerFiches', 'ficheJoueur', 'ficheClub',
+            'indexDuReleve', 'ligneDuReleveParNom', 'getCurrentPlayerStats', 'getCurrentTeamStats',
+            'seasonStat', 'calculateTeamPoints'
+        ], {
+            ...FICHIER_STATS,
+            fichesIndex: null,
+            releveIndex: { joueurs: null },
+            currentStats: { players: joueurs },
+            currentTeams: { teams: clubs },
+            seasonStarted: true,
+            cleDeNom, CLUBS_RENOMMES, goaliePoolPoints, clubPoolPoints,
+            FZDraftKit: trousse,
+            window: { location: { pathname: '/' }, FZDraftKit: trousse, FZ_IDS_ERRONES: [] }
+        });
+    }
+
+    test('un repêché hors de nhl_filtered_stats.json est trouvé dans la trousse, et compte au relevé', () => {
+        const { ficheJoueur, calculateTeamPoints } = charger({
+            joueurs: [{ playerId: 8480074, playerName: 'Alexandre Texier', teamAbbrev: 'MTL', position: 'C', gamesPlayed: 3, goals: 1, assists: 2, points: 3 }]
+        });
+
+        const fiche = ficheJoueur('Alexandre Texier', 'offensive');
+        assert.equal(fiche.gardien, false);
+        assert.equal(fiche.playerId, 8480074);
+        assert.equal(fiche.club, 'MTL');
+        assert.equal(fiche.cache, null);
+        assert.equal(calculateTeamPoints({ offensive: ['Alexandre Texier'] }).points, 3);
+    });
+
+    test('sans ligne au relevé, un repêché de la trousse vaut 0 — jamais les chiffres de la trousse', () => {
+        const { ficheJoueur, calculateTeamPoints } = charger();
+
+        assert.equal(ficheJoueur('Jayden Struble', 'defensive').position, 'D');
+        assert.equal(calculateTeamPoints({ defensive: ['Jayden Struble'] }).points, 0);
+    });
+
+    test('une recrue gardienne est trouvée parmi les gardiens et comptée en gardienne', () => {
+        const { ficheJoueur, calculateTeamPoints } = charger({
+            joueurs: [{ playerId: 8483703, playerName: 'Sergei Murashov', position: 'G', gamesPlayed: 4, wins: 2, shutouts: 1, otLosses: 1, goals: 2, assists: 1, points: 10 }]
+        });
+
+        assert.equal(ficheJoueur('Sergei Murashov', 'rookie').gardien, true);
+        const total = calculateTeamPoints({ rookie: ['Sergei Murashov'] });
+        assert.equal(total.points, 10);   // 5 + 4 + 1
+        assert.equal(total.goals, 0);     // ses victoires ne sont pas des buts
+    });
+
+    test('une recrue gardienne absente de nhl_filtered_stats.json est reconnue par la trousse', () => {
+        const { ficheJoueur } = charger();
+
+        assert.equal(ficheJoueur('Nikke Kokko', 'rookie').gardien, true);
+    });
+
+    test('un nom écrit avec accent retrouve la fiche écrite sans', () => {
+        const { ficheJoueur } = charger();
+
+        const fiche = ficheJoueur('Tim Stützle', 'offensive');
+        assert.equal(fiche.playerId, 8482116);
+        assert.notEqual(fiche.cache, null);
+    });
+
+    test('un nom que rien ne connaît paraît quand même, à zéro', () => {
+        const { ficheJoueur, calculateTeamPoints } = charger({ trousse: { donnees: null, nomCanonique: n => n } });
+
+        assert.deepEqual(
+            JSON.parse(JSON.stringify(ficheJoueur('Joueur Inconnu', 'goalie'))),
+            { gardien: true, playerId: null, position: null, club: null, cache: null });
+        assert.equal(calculateTeamPoints({ goalie: ['Joueur Inconnu'] }).points, 0);
+    });
+
+    test('le relevé est cherché par identifiant d\'abord, puis par nom sans accent', () => {
+        const { getCurrentPlayerStats } = charger({
+            joueurs: [
+                { playerId: 1, playerName: 'Homonyme', points: 1 },
+                { playerId: 2, playerName: 'Homonyme', points: 2 },
+                { playerId: 3, playerName: 'Tim Stutzle', points: 3 }
+            ]
+        });
+
+        assert.equal(getCurrentPlayerStats('Homonyme', 2).points, 2);
+        assert.equal(getCurrentPlayerStats('Tim Stützle', null).points, 3);
+        assert.equal(getCurrentPlayerStats('Personne', null), null);
+    });
+
+    test('« Utah Mammoth » repêché compte les résultats de « Utah Hockey Club »', () => {
+        const { calculateTeamPoints } = charger({ clubs: [{ teamFullName: 'Utah Hockey Club', teamAbbrev: 'UTA', wins: 3, otLosses: 1 }] });
+
+        assert.equal(calculateTeamPoints({ teams: ['Utah Mammoth'] }).points, 7);
     });
 });
 

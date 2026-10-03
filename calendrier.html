@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="navbar.css?v=20260926b">
+    <link rel="stylesheet" href="navbar.css?v=20261002b">
     <link rel="stylesheet" href="fzDialog.css?v=20260926b">
     <!-- Fenêtres de dialogue (fzAlert, fzConfirm) : avant tout script de page. -->
     <script src="fzDialog.js?v=20260926a"></script>
@@ -19,21 +19,22 @@
     <link rel="stylesheet" href="poolNav.css?v=20260928a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="index.css?v=20260926b">
-    <link rel="stylesheet" href="calendrier.css?v=20260926b">
+    <link rel="stylesheet" href="calendrier.css?v=20261002c">
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit précéder tout script de page. -->
     <script defer src="activePool.js?v=20260929n"></script>
 </head>
 <body data-page="calendrier" class="fz-cal-page">
     <nav class="navbar"></nav>
-
-    <div data-fz-context></div>
+    <!-- Sans `defer` : les barres du haut et du bas sont construites ici,
+         avant le premier rendu (navbar.js, construireBarres). Différées, elles
+         arrivaient après l'en-tête du calendrier, qui s'affichait seul. -->
+    <script src="navbar.js?v=20261002c"></script>
 
     <main class="cal-page" id="calPage">
         <header class="cal-head">
             <div class="cal-head-txt">
-                <p class="cal-eyebrow">Calendrier de la LNH</p>
-                <h1 class="cal-title" id="calTitle">Matchs de la semaine</h1>
+                <h1 class="cal-eyebrow">Calendrier de la LNH</h1>
                 <p class="cal-season" id="calSeason" hidden></p>
             </div>
             <div class="cal-controls">
@@ -46,23 +47,10 @@
                         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M9 18l6-6-6-6"/></svg>
                     </button>
                 </div>
-                <button type="button" class="cal-today" id="calToday">Aujourd’hui</button>
-                <label class="cal-jump">
-                    <span class="cal-sr">Aller à une date</span>
-                    <input type="date" id="calDate" aria-label="Aller à une date">
-                </label>
             </div>
         </header>
 
         <div class="cal-strip" id="calStrip" role="tablist" aria-label="Jours de la semaine"></div>
-
-        <div class="cal-filter" id="calFilter" hidden>
-            <label class="cal-toggle">
-                <input type="checkbox" id="calMine">
-                <span>Seulement les matchs de mes joueurs</span>
-            </label>
-            <span class="cal-filter-note" id="calMineNote"></span>
-        </div>
 
         <section class="cal-day" aria-live="polite">
             <h2 class="cal-day-title" id="calDayTitle"></h2>
@@ -70,11 +58,19 @@
                 <div class="cal-loading"><span class="cal-spinner" aria-hidden="true"></span>Chargement du calendrier…</div>
             </div>
         </section>
+
+        <!-- Hors de la semaine en cours seulement (calendrier.js). -->
+        <button type="button" class="cal-return" id="calReturn" hidden>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+            Revenir à aujourd’hui
+        </button>
     </main>
 
-    <script defer src="/socket.io/socket.io.js"></script>
-    <script defer src="calendrier.js?v=20260929n"></script>
-    <script defer src="navbar.js?v=20260930a"></script>
+    <!-- `async` : servi avec max-age=0, il repasse par le serveur à chaque
+         visite. En `defer`, cet aller-retour retenait tous les scripts qui le
+         suivent ; ceux qui s'en servent l'attendent d'eux-mêmes. -->
+    <script async src="/socket.io/socket.io.js"></script>
+    <script defer src="calendrier.js?v=20261002d"></script>
     <script defer src="avatars.js"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20260929a"></script>

@@ -2955,6 +2955,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // redessine les totaux sur place. En saison seulement — avant, aucun
     // match ne compte.
     if (window.FZPointsDirect && FZPool.get() && userData.statsData?.seasonStarted !== false) {
+        // La collecte de minuit a tourné, page ouverte : les totaux sont relus
+        // avant que le nouveau direct ne s'y ajoute (pointsDirect.js).
+        FZPointsDirect.surNouveauReleve(() => Promise.all([loadCurrentStats(), loadCurrentTeamsData()]));
         FZPointsDirect.surChangement(fzdActualiserPointsDirect);
         FZPointsDirect.suivre();
     }

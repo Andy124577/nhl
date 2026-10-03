@@ -443,10 +443,8 @@ body {
 
 /* ==================== HALL OF FAME ==================== */
 /* Season records: best/worst single day, week, and month of pool points.
-   No cards — a title, then rows of label/name/number separated by
-   hairlines, same flat register as the standings table above it. "Best"
-   takes --warning (gold), matching how the standings table already marks
-   the leader; --primary stays reserved for live/interactive elements. */
+   The tiles themselves live in classement-premium.css; this is only the
+   spacing that separates the block from the standings above it. */
 .hall-of-fame {
     margin-top: 36px;
     padding-top: 24px;
@@ -459,143 +457,8 @@ body {
     letter-spacing: .1em;
     text-transform: uppercase;
     color: var(--text-main);
-    margin: 0 0 20px;
-}
-
-.hof-rows {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
-.hof-divider {
-    height: 1px;
-    background: var(--border-light);
-}
-
-.hof-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-.hof-row.single {
-    grid-template-columns: 1fr;
-}
-
-.hof-cell {
-    min-width: 0;
-}
-
-.hof-cell-label {
-    font-size: .7rem;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--text-light-gray);
-    margin: 0 0 8px;
-}
-
-.hof-cell-name {
-    font-size: .88rem;
-    font-weight: 600;
-    color: var(--text-main);
-    margin: 0 0 2px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.hof-cell-value-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.hof-value {
-    font-size: 1.3rem;
-    font-weight: 700;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-}
-
-.hof-value.is-best { color: var(--warning); }
-.hof-value.is-worst { color: var(--text-light-gray); }
-
-.hof-date {
-    font-size: .78rem;
-    color: var(--text-secondary);
-}
-
-.hof-empty {
-    color: var(--text-secondary);
-    font-size: .85rem;
     margin: 0;
 }
-
-/* Recent form: windowed best-team leaderboard, relocated from the old
-   homepage Activity tab (see accueil-dash.js). Same flat register as the
-   Hall of Fame block above it, just with a window switcher up top. */
-.recent-form-leaderboard {
-    margin-top: 36px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border-light);
-}
-
-.recent-form-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 16px;
-}
-
-.recent-form-head .hof-title { margin: 0; }
-
-.time-filters { display: flex; gap: 6px; flex-wrap: wrap; }
-
-.time-filter {
-    padding: 6px 12px;
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    background: var(--card);
-    color: var(--text-secondary);
-    font-size: .75rem;
-    font-weight: 700;
-    letter-spacing: .03em;
-    cursor: pointer;
-    transition: border-color .15s ease, color .15s ease;
-}
-
-.time-filter:hover { border-color: var(--primary); color: var(--primary-text); }
-
-.time-filter.active {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: var(--on-primary);
-}
-
-.leaderboard-list { display: flex; flex-direction: column; gap: 8px; }
-
-.leaderboard-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    border: 1px solid var(--border-light);
-    border-radius: 10px;
-    background: var(--card);
-}
-
-.lb-rank { flex-shrink: 0; width: 26px; text-align: center; font-size: 1rem; font-weight: 800; color: var(--text-light-gray); }
-.lb-rank.gold   { color: var(--warning); }
-.lb-rank.silver { color: #B8B8CC; }
-.lb-rank.bronze { color: #CD7F32; }
-.lb-team { flex: 1; min-width: 0; font-size: .92rem; font-weight: 700; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lb-pts { flex-shrink: 0; font-size: 1rem; font-weight: 800; color: var(--primary-text); }
-.lb-source { flex-shrink: 0; font-size: .7rem; color: var(--text-light-gray); }
 
 /* ==================== ROSTER VIEW (Level 3) ==================== */
 /* Liste « comfortable » (Claude Design, Roster Table v2) : une bande
@@ -629,6 +492,10 @@ body {
     --rr-sale-bg: #6C1517;
     --rr-sale-line: #C13C3B;
     --rr-sale-ink: #FFFFFF;
+    /* Os des squelettes (classement-premium.css, .fz-bone) : translucides,
+       lisibles sur la bande (#141416) comme sur la carte (#1C1C1E). */
+    --rr-bone: rgba(255, 255, 255, 0.05);
+    --rr-bone-shine: rgba(255, 255, 255, 0.11);
 }
 html[data-theme="light"] body {
     --rr-surface: #FFFFFF;
@@ -647,6 +514,8 @@ html[data-theme="light"] body {
     --rr-sale-bg: var(--primary);
     --rr-sale-line: var(--primary);
     --rr-sale-ink: var(--on-primary);
+    --rr-bone: rgba(0, 0, 0, 0.06);
+    --rr-bone-shine: rgba(0, 0, 0, 0.025);
 }
 
 /* -------------------- En-tête de la fiche -------------------- */
@@ -657,21 +526,31 @@ body.fz-view-roster #pageTitle { display: none; }
    fiche suit directement le fil d'Ariane (ou le haut de page sur téléphone). */
 body.fz-view-roster #teamRosterView { margin-top: 6px; }
 
-.roster-header { margin-bottom: 22px; }
-
-/* Téléphone seulement (plus bas) : le fil d'Ariane y est masqué. */
-.rh-back { display: none; }
-
-.rh-top {
-    display: flex;
+/* Une grille : le nom et « Mettre en vente » sur la première rangée, la
+   ligne rang · bilan · actifs dessous. Le bouton de retour n'y prend une
+   colonne que sur téléphone (classement-premium.css). */
+.roster-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "title sale"
+        "sub   sub";
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    column-gap: 12px;
+    margin-bottom: 18px;
 }
 
+/* Téléphone seulement : le fil d'Ariane y est masqué. */
+.rh-back { display: none; grid-area: back; }
+
 /* Le <select> transparent couvre le nom et sa flèche : un toucher ouvre la
-   roulette native, le clavier et les lecteurs d'écran y ont accès. */
+   roulette native, le clavier et les lecteurs d'écran y ont accès. Collé à
+   gauche et pas plus large que sa colonne : le vide à droite du nom
+   n'ouvre pas la liste. */
 .rh-title {
+    grid-area: title;
+    justify-self: start;
+    max-width: 100%;
     position: relative;
     display: inline-flex;
     align-items: center;
@@ -708,14 +587,20 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
 }
 
 .rh-sub {
+    grid-area: sub;
     margin: 4px 0 0;
     font-size: 13px;
     color: var(--text-secondary);
 }
 .rh-sub sup { font-size: 0.7em; line-height: 0; }
+/* « 1er sur 7 · 22 pts · 13 actifs » : le point ne sépare que deux
+   morceaux présents (le compte arrive avec la liste). */
+.rh-rank:empty,
+.rh-count:empty { display: none; }
+.rh-rank:not(:empty) + .rh-count::before { content: ' · '; white-space: pre; }
 
 .rh-sale {
-    flex: none;
+    grid-area: sale;
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -748,12 +633,6 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
 .rh-sale-count[hidden] { display: none; }
 
 /* -------------------- La liste -------------------- */
-.roster-count {
-    margin: 0 0 8px;
-    font-size: 12px;
-    color: var(--rr-muted);
-}
-
 /* Le conteneur des requêtes plus bas : c'est la largeur de la bande, pas
    celle de l'écran, qui décide du nom court et de la marque « En vente ». */
 .roster-rows {
@@ -767,11 +646,11 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
 
 .roster-row {
     display: grid;
-    grid-template-columns: 22px 34px minmax(0, 1fr) 44px 44px 14px;
+    grid-template-columns: 22px 52px minmax(0, 1fr) 44px 44px 14px;
     align-items: center;
     column-gap: 8px;
-    min-height: 64px;
-    padding: 0 10px 0 12px;
+    min-height: 76px;
+    padding: 6px 10px 6px 12px;
 }
 .roster-row + .roster-row { border-top: 1px solid var(--rr-line); }
 .roster-row.clickable { cursor: pointer; }
@@ -784,12 +663,16 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
     text-align: center;
 }
 
-.rr-shot { position: relative; width: 34px; height: 34px; }
+/* 52px dans la liste ; ailleurs (panneau de mise en vente), la photo garde
+   les 44px de .rr-avatar. */
+.rr-shot { position: relative; width: 52px; height: 52px; }
+.rr-shot .rr-avatar { width: 100%; height: 100%; }
+.rr-shot .rr-initials { font-size: 15px; }
 
 .rr-avatar {
     position: relative;
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     overflow: hidden;
     display: flex;
@@ -808,7 +691,7 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
    comme à l'onglet Alignements. Les initiales ne servent que sans photo. */
 .rr-avatar img ~ .rr-initials { display: none; }
 .rr-initials {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
     color: #FFFFFF;
 }
@@ -903,15 +786,38 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
 .rr-pptsa .rr-v { font-size: 13px; color: var(--rr-num); }
 .rr-pptsa.is-zero .rr-v { color: var(--rr-dim); }
 .rr-pptsa .rr-l { font-size: 9.5px; color: var(--rr-dim); }
-.rr-ppts { line-height: 1.1; }
+.rr-ppts { position: relative; line-height: 1.1; }
 .rr-ppts .rr-v { font-size: 18px; font-weight: 700; color: var(--rr-strong); }
 .rr-ppts.is-zero .rr-v { color: var(--rr-muted); }
 .rr-ppts .rr-l { font-size: 9.5px; color: var(--rr-muted); }
+
+/* Repères de la rangée, côte à côte en haut à droite des PPts (classement.js,
+   marquesHTML) : en jeu, joue plus tard aujourd'hui, meilleur ou pire choix
+   du pool dans sa catégorie. Au plus deux à la fois : ils tiennent dans la
+   colonne, au-dessus du chiffre. */
+.rr-marks {
+    position: absolute;
+    bottom: 100%;
+    right: -4px;
+    display: flex;
+    gap: 2px;
+    margin-bottom: 1px;
+}
+.rr-marks:empty { display: none; }
+.rr-mark { display: block; width: 13px; height: 13px; }
+.rr-mark svg { display: block; width: 100%; height: 100%; }
 
 .rr-chev {
     font-size: 16px;
     color: var(--rr-chev);
     text-align: center;
+}
+
+/* Les plus petits téléphones (320px) : la photo rend 8px au nom et aux
+   quatre mini-colonnes, qui sinon se chevauchent. */
+@container (max-width: 339px) {
+    .roster-row { grid-template-columns: 22px 44px minmax(0, 1fr) 44px 44px 14px; }
+    .rr-shot { width: 44px; height: 44px; }
 }
 
 @container (max-width: 399px) {
@@ -1117,118 +1023,6 @@ html.ss-lock { overflow: hidden; }
 @keyframes shimmer {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
-}
-
-/* Pool Card Skeleton */
-.pool-card-skeleton {
-    background: var(--card-white);
-    border-radius: 16px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.skeleton-circle {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(90deg, var(--bg) 25%, var(--card) 50%, var(--bg) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    flex-shrink: 0;
-}
-
-.skeleton-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.skeleton-title {
-    width: 60%;
-    height: 20px;
-}
-
-.skeleton-subtitle {
-    width: 40%;
-    height: 16px;
-}
-
-/* Standings Table Skeleton — mirrors the real table's column rhythm so
-   the loading state doesn't jump in shape once data arrives. */
-.standings-table-skeleton {
-    background: var(--card-white);
-    border-radius: 18px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.standings-skeleton-row {
-    display: grid;
-    grid-template-columns: 44px 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
-    gap: 10px;
-    align-items: center;
-    padding: 10px 8px;
-}
-
-.standings-skeleton-row .skeleton {
-    height: 16px;
-}
-
-.standings-skeleton-row .skeleton:first-child {
-    height: 26px;
-    border-radius: 50%;
-}
-
-/* Roster Skeleton — la même bande que la liste chargée (rangées de 64px,
-   photo ronde de 34px), décalée de la hauteur de « Joueurs actifs » pour
-   que rien ne saute à l'arrivée des données. */
-#rosterSkeleton {
-    gap: 0;
-    margin-top: 25px;
-    background: var(--rr-surface);
-    border-top: 1px solid var(--rr-line);
-    border-bottom: 1px solid var(--rr-line);
-}
-
-.roster-card-skeleton {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 64px;
-    padding: 0 10px 0 42px;
-}
-.roster-card-skeleton + .roster-card-skeleton { border-top: 1px solid var(--rr-line); }
-.roster-card-skeleton .skeleton-content { gap: 6px; }
-
-/* Scopé : skeleton-loader.css, chargé après, remet .skeleton-avatar à 60px. */
-.roster-card-skeleton .skeleton-avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: linear-gradient(90deg, var(--bg) 25%, var(--card) 50%, var(--bg) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    flex-shrink: 0;
-}
-
-.skeleton-player-name {
-    width: 40%;
-    height: 14px;
-}
-
-.skeleton-player-stats {
-    width: 110px;
-    height: 20px;
-}
-
-.skeleton-player-points {
-    width: 44px;
-    height: 28px;
 }
 
 /* ==================== MODAL STYLES ==================== */
@@ -2335,11 +2129,9 @@ html.ss-lock { overflow: hidden; }
 /* thème : plus de surcharges rgba bleutées à tenir en phase.    */
 /* ============================================================ */
 
-/* Les trois squelettes (.skeleton, .skeleton-circle, .skeleton-avatar) tirent
-   désormais leurs deux arrêts de --bg et --card, donc ils suivent le thème
-   d'eux-mêmes. Le correctif html[data-theme="dark"] .skeleton qui vivait ici
-   ne rattrapait que le premier des trois — les deux autres restaient des
-   aplats blancs pleins pendant tout le chargement. */
+/* Les squelettes (.skeleton, .skeleton-avatar) tirent leurs deux arrêts de
+   --bg et --card, donc ils suivent le thème d'eux-mêmes ; ceux du classement
+   (.fz-bone, classement-premium.css) passent par --rr-bone. */
 
 
 /* ============================================================ */

@@ -1238,6 +1238,9 @@
   }
   body.fz-draft .bottom-nav-item:hover { background: none; color: var(--fzd-text); }
   body.fz-draft .bottom-nav-item::before { content: none; }
+  /* La salle de repêchage garde son onglet actif à elle (filet et aplat) :
+     pas de pastille glissante (navbar.css) par-dessus. */
+  body.fz-draft .bottom-nav-pill { display: none; }
   body.fz-draft .bottom-nav-item.active {
     border-top-color: var(--fzd-accent-fill);
     background: var(--fzd-surface);

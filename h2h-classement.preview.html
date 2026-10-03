@@ -14,12 +14,12 @@
     <script src="theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="classement.css?v=20260930b" />
+    <link rel="stylesheet" href="classement.css?v=20261001a" />
     <link rel="stylesheet" href="teamLogos.css?v=20260926">
     <link rel="stylesheet" href="fzDialog.css?v=20260926b">
     <!-- Fenêtres de dialogue (fzAlert, fzConfirm) : avant tout script de page. -->
     <script src="fzDialog.js?v=20260926a"></script>
-    <link rel="stylesheet" href="classement-premium.css?v=20260930g" />
+    <link rel="stylesheet" href="classement-premium.css?v=20261001b" />
     <link rel="stylesheet" href="index.css?v=20260926b" />
     <link rel="stylesheet" href="injuries.css?v=20260926b" />
     <link rel="stylesheet" href="skeleton-loader.css?v=20260926b" />
@@ -89,7 +89,6 @@
 
             <div id="standingsInsights" class="standings-insights">
                 <div id="hallOfFame" class="hall-of-fame" style="display: none;"></div>
-                <div id="recentFormLeaderboard" class="recent-form-leaderboard" style="display: none;"></div>
                 <div id="h2hRecentResults" class="h2h-recent-results" style="display: none;"></div>
             </div>
 
@@ -126,7 +125,7 @@
     <script>
         // Les données du banc d'essai. Deux participants, huit semaines
         // jouées : de quoi voir les pastilles de forme se remplir, la ligne
-        // de tête se colorer, et les trois cartes du bas se ranger.
+        // de tête se colorer, et les cartes du bas se ranger.
         const APERCU_POOL = 'h2h_01';
         localStorage.setItem('username', 'user1');
 
@@ -199,7 +198,7 @@
             on: () => {}
         };
 
-        // Le temple de la renommée et les équipes récentes interrogent le
+        // Le temple de la renommée et la tendance par période interrogent le
         // serveur ; ici on répond « saison pas commencée » pour montrer les
         // états vides du mockup, et on laisse passer le reste.
         const vraiFetch = window.fetch.bind(window);
@@ -234,7 +233,7 @@
     <script src="headshots.js"></script>
     <script src="avatars.js"></script>
     <script src="injuries.js"></script>
-    <script src="classement.js?v=20260930h"></script>
+    <script src="classement.js?v=20261001c"></script>
     <script src="teamColors.js"></script>
     <script src="careerFetch.js"></script>
     <script src="careerModal.js"></script>
