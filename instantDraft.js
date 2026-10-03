@@ -380,17 +380,24 @@
 
         // Réécrite seulement si elle change : c'est une région `status`,
         // chaque écriture serait relue par un lecteur d'écran.
+        //
+        // Un inscrit voit SON pool, pas la file ouverte aux autres. Parti,
+        // ce repêchage peut l'être depuis des jours : « le repêchage
+        // commence » ferait croire que la file des autres vient de se
+        // remplir, alors qu'elle attend peut-être encore un joueur.
         const statut = carte.querySelector('[data-instant-status]');
-        const texte = complet
-            ? 'Complet — le repêchage commence !'
-            : `${occupes} / ${etat.places} joueurs · encore ${pluriel(manque, 'place')}`;
+        const texte = etat.situation === 'encours'
+            ? 'Ton repêchage est en cours.'
+            : complet
+                ? 'Complet — le repêchage commence !'
+                : `${occupes} / ${etat.places} joueurs · encore ${pluriel(manque, 'place')}`;
         if (statut && statut.textContent !== texte) statut.textContent = texte;
 
         // Pendant un appel, c'est occuper() qui tient le bouton.
         const bouton = carte.querySelector('[data-instant-action]');
         if (bouton && !bouton.classList.contains('is-loading')) {
             const [action, libelle] = complet
-                ? ['aller', 'Aller au repêchage →']
+                ? ['aller', etat.situation === 'encours' ? 'Reprendre le repêchage →' : 'Aller au repêchage →']
                 : etat.situation === 'inscrit'
                     ? ['quitter', 'Quitter']
                     : ['rejoindre', 'Repêcher maintenant'];
