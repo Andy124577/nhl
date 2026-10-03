@@ -35,10 +35,11 @@
     <link rel="stylesheet" href="fzDialog.css?v=20260926b">
     <!-- Fenêtres de dialogue (fzAlert, fzConfirm) : avant tout script de page. -->
     <script src="fzDialog.js?v=20260926a"></script>
-    <link rel="stylesheet" href="poolNav.css?v=20260928a">
+    <link rel="stylesheet" href="poolNav.css?v=20261003a">
+    <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="index.css?v=20260926b">
-    <link rel="stylesheet" href="poolPage.css?v=20260929a">
+    <link rel="stylesheet" href="poolPage.css?v=20261003a">
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit précéder tout script de page. -->
     <script defer src="activePool.js?v=20260929n"></script>
@@ -46,8 +47,81 @@
 <body data-page="pool" class="fz-pool-page">
     <nav class="navbar"></nav>
 
-    <main class="pp-page" id="fzPoolPage">
-        <div class="pp-loading"><span class="pp-spinner" aria-hidden="true"></span>Chargement du pool…</div>
+    <!-- Squelettes de la page, le temps que FZPool lise les pools : celui de
+         la page d'un pool (avec ?onglet= ou ?pool=) ou celui de l'accueil des
+         pools. Mêmes classes que la page chargée (poolSettings.js, rendre et
+         rendreAccueil) ; les libellés connus restent lisibles, des os
+         (fzSquelette.css) tiennent la place des données. poolSettings.js
+         remplace tout le contenu de <main>. -->
+    <main class="pp-page" id="fzPoolPage" data-vue="pool">
+        <script>
+            (function () {
+                var p = new URLSearchParams(window.location.search);
+                if (!p.has('onglet') && !p.has('pool')) document.getElementById('fzPoolPage').dataset.vue = 'accueil';
+            })();
+        </script>
+        <p class="fz-sk-sr" role="status">Chargement du pool…</p>
+        <div class="pp-sk pp-sk-pool" data-fz-sk inert>
+            <header class="pp-hero">
+                <span class="pp-hero-img fz-bone"></span>
+                <div class="pp-hero-txt">
+                    <span class="fz-bone-flat pp-sk-eyebrow"></span>
+                    <span class="fz-bone pp-sk-title"></span>
+                    <span class="fz-bone-flat pp-sk-sub"></span>
+                    <span class="fz-bone-flat pp-sk-sub is-2"></span>
+                </div>
+            </header>
+            <nav class="ps-tabs pp-tabs"><button type="button" class="ps-tab" tabindex="-1">Aperçu</button><button type="button" class="ps-tab" tabindex="-1">Participants</button><button type="button" class="ps-tab" tabindex="-1">Règles</button></nav>
+            <div class="pp-body">
+                <div class="ps-pane ps-apercu">
+                    <div class="ps-col-main">
+                        <section class="ps-state-card">
+                            <span class="fz-bone-flat pp-sk-pill"></span>
+                            <span class="fz-bone pp-sk-line"></span>
+                            <span class="fz-bone pp-sk-line is-2"></span>
+                            <span class="fz-bone pp-sk-btn"></span>
+                        </section>
+                        <div class="ps-tiles">
+                            <div class="ps-tile"><span class="fz-bone pp-sk-tile"></span><span>Participants</span></div>
+                            <div class="ps-tile"><span class="fz-bone pp-sk-tile"></span><span>Choix par équipe</span></div>
+                            <div class="ps-tile"><span class="fz-bone pp-sk-tile"></span><span>Pointage</span></div>
+                            <div class="ps-tile"><span class="fz-bone pp-sk-tile"></span><span>Échanges</span></div>
+                        </div>
+                        <section class="ps-block">
+                            <h3 class="ps-block-title">Équipes</h3>
+                            <ul class="ps-team-rows">
+                                <li class="ps-team-row" style="--i:0"><span class="fz-bone is-round pp-sk-av"></span><span class="ps-team-row-txt"><span class="fz-bone pp-sk-name" style="--w:118px"></span><span class="fz-bone-flat pp-sk-meta" style="--w:84px"></span></span></li>
+                                <li class="ps-team-row" style="--i:1"><span class="fz-bone is-round pp-sk-av"></span><span class="ps-team-row-txt"><span class="fz-bone pp-sk-name" style="--w:96px"></span><span class="fz-bone-flat pp-sk-meta" style="--w:72px"></span></span></li>
+                                <li class="ps-team-row" style="--i:2"><span class="fz-bone is-round pp-sk-av"></span><span class="ps-team-row-txt"><span class="fz-bone pp-sk-name" style="--w:132px"></span><span class="fz-bone-flat pp-sk-meta" style="--w:66px"></span></span></li>
+                                <li class="ps-team-row" style="--i:3"><span class="fz-bone is-round pp-sk-av"></span><span class="ps-team-row-txt"><span class="fz-bone pp-sk-name" style="--w:104px"></span><span class="fz-bone-flat pp-sk-meta" style="--w:90px"></span></span></li>
+                                <li class="ps-team-row" style="--i:4"><span class="fz-bone is-round pp-sk-av"></span><span class="ps-team-row-txt"><span class="fz-bone pp-sk-name" style="--w:124px"></span><span class="fz-bone-flat pp-sk-meta" style="--w:60px"></span></span></li>
+                                <li class="ps-team-row" style="--i:5"><span class="fz-bone is-round pp-sk-av"></span><span class="ps-team-row-txt"><span class="fz-bone pp-sk-name" style="--w:90px"></span><span class="fz-bone-flat pp-sk-meta" style="--w:78px"></span></span></li>
+                            </ul>
+                        </section>
+                    </div>
+                    <aside class="ps-col-side">
+                        <section class="ps-block">
+                            <h3 class="ps-block-title">Le pool</h3>
+                            <ul class="ps-facts">
+                                <li><span>Créé par</span><span class="fz-bone pp-sk-fact" style="--w:96px"></span></li>
+                                <li><span>Créé le</span><span class="fz-bone pp-sk-fact" style="--w:120px"></span></li>
+                                <li><span>Accès</span><span class="fz-bone pp-sk-fact" style="--w:44px"></span></li>
+                            </ul>
+                        </section>
+                    </aside>
+                </div>
+            </div>
+        </div>
+        <div class="pp-sk pp-sk-accueil" data-fz-sk inert>
+            <section class="pp-hub">
+                <h1 class="pp-title">Pools</h1>
+                <div class="pp-hub-actions">
+                    <span class="pp-hub-btn"><span class="pp-hub-icon fz-bone"></span><span class="pp-hub-txt"><span class="pp-hub-label">Créer un pool</span></span></span>
+                    <span class="pp-hub-btn"><span class="pp-hub-icon fz-bone"></span><span class="pp-hub-txt"><span class="pp-hub-label">Rejoindre un pool</span></span></span>
+                    <span class="pp-hub-btn"><span class="pp-hub-img fz-bone"></span><span class="pp-hub-txt"><span class="fz-bone-flat pp-sk-hub-eyebrow"></span><span class="fz-bone pp-sk-hub-label"></span></span></span>
+                </div>
+            </section>
+        </div>
     </main>
 
     <script defer src="/socket.io/socket.io.js"></script>
@@ -55,7 +129,7 @@
     <script defer src="avatars.js"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20260929a"></script>
-    <script defer src="poolNav.js?v=20260929a"></script>
+    <script defer src="poolNav.js?v=20261003a"></script>
     <script defer src="poolInvites.js?v=20260925f"></script>
     <script defer src="notifications.js?v=20260930c"></script>
 </body>

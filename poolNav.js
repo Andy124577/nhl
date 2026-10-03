@@ -253,6 +253,77 @@
 
     // ==================== MONTAGE ====================
 
+    /**
+     * Le rail en os, le temps que FZPool lise les pools.
+     *
+     * Le rail n'arrivait qu'avec les données : la page s'affichait pleine
+     * largeur, puis tout son contenu sautait de 268px vers la droite. Monté
+     * tout de suite, il décale la page dès le départ. Mêmes classes que le
+     * rail chargé (blocPool, blocGestion) ; monterBarreLaterale() le remplace.
+     * La salle de repêchage prend le rail à son compte : elle garde le sien.
+     */
+    function monterRailSquelette() {
+        if (document.getElementById('fzSidebar') || window.location.pathname.includes('draftActif')) return;
+        const lien = (titre, detail) => `
+            <span class="fz-rail-link">
+                <span class="fz-rail-icon fz-bone-flat"></span>
+                <span class="fz-rail-txt">
+                    <span class="fz-bone fz-sk-rail-title" style="--w:${titre}px"></span>
+                    <span class="fz-bone-flat fz-sk-rail-detail" style="--w:${detail}px"></span>
+                </span>
+            </span>`;
+        const rail = document.createElement('aside');
+        rail.className = 'fz-sidebar';
+        rail.id = 'fzSidebar';
+        rail.setAttribute('aria-label', 'Navigation des pools');
+        rail.innerHTML = `
+            <div data-fz-sk inert>
+                <div class="fz-pool-block">
+                    <p class="fz-rail-label">Pool actif</p>
+                    <div class="fz-pool-row">
+                        <span class="fz-active-pool">
+                            <span class="fz-active-pool-img fz-bone"></span>
+                            <span class="fz-active-pool-txt">
+                                <span class="fz-bone fz-sk-rail-name"></span>
+                                <span class="fz-bone-flat fz-sk-rail-meta"></span>
+                            </span>
+                        </span>
+                        <span class="fz-pool-switch"><span class="fz-chevron">${ICONES.chevron}</span></span>
+                    </div>
+                    <span class="fz-bone-flat fz-sk-rail-state"></span>
+                </div>
+                <nav class="fz-rail-nav">
+                    <p class="fz-rail-label">Gestion</p>
+                    ${lien(86, 128)}${lien(96, 76)}${lien(118, 88)}
+                </nav>
+            </div>`;
+        document.body.appendChild(rail);
+        document.body.classList.add('fz-has-sidebar');
+        monterBasculeRail();
+    }
+
+    /**
+     * Le bandeau de contexte en os (téléphone et tablette), pour la même
+     * raison : arrivé avec les données, il poussait toute la page vers le
+     * bas. Seulement si ce navigateur a un pool actif — sans pool, il n'y
+     * aura pas de bandeau. monterBandeaux() le remplace.
+     */
+    function monterBandeauxSquelette() {
+        if (!localStorage.getItem('activePool')) return;
+        document.querySelectorAll('[data-fz-context]').forEach(hote => {
+            if (hote.childElementCount) return;
+            hote.innerHTML = `
+                <div class="fz-context-bar" data-fz-sk inert>
+                    <span class="fz-context-img fz-bone"></span>
+                    <span class="fz-context-txt">
+                        <span class="fz-context-label">Pool actif</span>
+                        <span class="fz-bone fz-sk-context-name"></span>
+                    </span>
+                    <span class="fz-context-switch">Changer</span>
+                </div>`;
+        });
+    }
+
     function monterBarreLaterale() {
         let rail = document.getElementById('fzSidebar');
         if (!rail) {
@@ -534,6 +605,8 @@
 
     async function demarrer() {
         if (localStorage.getItem('isLoggedIn') !== 'true') return;
+        monterRailSquelette();
+        monterBandeauxSquelette();
         await FZPool.ready();
         rendre();
         // Le rail reflète l'état des repêchages : il doit suivre les mises

@@ -15,11 +15,11 @@
     <script src="fzDialog.js?v=20260926a"></script>
     <link rel="stylesheet" href="teamLogos.css?v=20260926">
     <link rel="stylesheet" href="index.css?v=20260926b">
-    <link rel="stylesheet" href="pool.css?v=20261003a">
-    <link rel="stylesheet" href="poolNav.css?v=20260928a">
+    <link rel="stylesheet" href="pool.css?v=20261003b">
+    <link rel="stylesheet" href="poolNav.css?v=20261003a">
+    <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="instantDraft.css?v=20261003a">
-    <link rel="stylesheet" href="skeleton-loader.css?v=20260926b">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
@@ -104,18 +104,13 @@
                 </div>
             </div>
             <!-- Squelette -->
-            <div class="skeleton-loader" id="availablePoolsSkeleton">
-                <div class="skeleton-list">
-                    <div class="skeleton-card"><div class="skeleton-card-content">
-                        <div class="skeleton" style="width:200px;height:24px;margin-bottom:12px;border-radius:8px;"></div>
-                        <div class="skeleton" style="width:300px;height:16px;border-radius:8px;"></div>
-                    </div></div>
-                    <div class="skeleton-card"><div class="skeleton-card-content">
-                        <div class="skeleton" style="width:200px;height:24px;margin-bottom:12px;border-radius:8px;"></div>
-                        <div class="skeleton" style="width:300px;height:16px;border-radius:8px;"></div>
-                    </div></div>
-                </div>
-            </div>
+            <!-- Les pools ouverts en os (fzSquelette.css), aux classes des rangées
+                 chargées ; equipes.js (updateUI) les masque à l'arrivée de la liste. -->
+            <ul class="pool-list pk-sk" id="availablePoolsSkeleton" aria-hidden="true">
+                <li style="--i:0"><span class="pool-item-img-wrap"><span class="pool-item-img fz-bone"></span></span><span class="pool-item-content"><span class="fz-bone pk-sk-name" style="--w:176px"></span><span class="pool-item-info"><span class="fz-bone-flat pk-sk-badge" style="--w:128px"></span><span class="fz-bone-flat pk-sk-badge" style="--w:110px"></span><span class="fz-bone-flat pk-sk-badge" style="--w:84px"></span></span></span><span class="fz-bone pk-sk-btn"></span></li>
+                <li style="--i:1"><span class="pool-item-img-wrap"><span class="pool-item-img fz-bone"></span></span><span class="pool-item-content"><span class="fz-bone pk-sk-name" style="--w:140px"></span><span class="pool-item-info"><span class="fz-bone-flat pk-sk-badge" style="--w:128px"></span><span class="fz-bone-flat pk-sk-badge" style="--w:110px"></span><span class="fz-bone-flat pk-sk-badge" style="--w:84px"></span></span></span><span class="fz-bone pk-sk-btn"></span></li>
+                <li style="--i:2"><span class="pool-item-img-wrap"><span class="pool-item-img fz-bone"></span></span><span class="pool-item-content"><span class="fz-bone pk-sk-name" style="--w:200px"></span><span class="pool-item-info"><span class="fz-bone-flat pk-sk-badge" style="--w:128px"></span><span class="fz-bone-flat pk-sk-badge" style="--w:110px"></span><span class="fz-bone-flat pk-sk-badge" style="--w:84px"></span></span></span><span class="fz-bone pk-sk-btn"></span></li>
+            </ul>
             <!-- Contenu -->
             <ul id="available-clans-list" class="pool-list actual-content" style="display:none;"></ul>
             <p class="pool-no-result" id="poolNoResult" hidden>Aucun pool ne correspond à votre recherche.</p>
@@ -153,7 +148,7 @@
     <script defer src="instantDraft.js?v=20261003a"></script>
     <script defer src="navbar.js?v=20261002c"></script>
     <script defer src="poolSettings.js?v=20260929a"></script>
-    <script defer src="poolNav.js?v=20260929a"></script>
+    <script defer src="poolNav.js?v=20261003a"></script>
     <script defer src="poolInvites.js?v=20260925e"></script>
     <script defer src="notifications.js?v=20260930c"></script>
 </body>

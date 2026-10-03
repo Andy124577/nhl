@@ -234,11 +234,14 @@ html.fz-auth #comment-ca-marche.fzo-revealed { display: block; }
    <head> et fzdRevelerAccueil dans accueil-dash.js). Le repêchage et la
    saison masquent chacun le tableau de bord par défaut et les histoires —
    mais seulement une fois leurs données arrivées. Avant, on ne montre rien
-   de ce qui pourrait disparaître. La hauteur réservée garde le pied de page
+   de ce qui pourrait disparaître : le squelette de l'accueil
+   (accueilSquelette.js, accueil-squelette.css) tient la place. La section,
+   masquée jusqu'à renderDash() (accueil-dash.css), s'ouvre pour lui, sans
+   les marges du tableau de bord. La hauteur réservée garde le pied de page
    hors de l'écran pendant l'attente. */
 html.fz-home-pending #storiesSection,
-html.fz-home-pending #fzDashSection .fz-dash > * { display: none !important; }
-html.fz-home-pending #fzDashSection { min-height: 100vh; }
+html.fz-home-pending #fzDashSection .fz-dash { display: none !important; }
+html.fz-home-pending #fzDashSection { display: block; min-height: 100vh; padding: 0; background: var(--bg); }
 
 /* ============================================================ */
 /* ALERTS STRIP                                                  */

@@ -1,0 +1,88 @@
+/* ============================================================
+   SQUELETTES DE CHARGEMENT — les os partagés
+   ------------------------------------------------------------
+   Le principe vient du classement (classement.html, « Classement
+   Skeleton ») : un squelette reprend les classes de la page chargée et
+   n'y ajoute que des os. Titres, libellés et colonnes déjà connus restent
+   lisibles ; seules les données attendues sont en os. Rien ne bouge à
+   l'arrivée des données.
+
+   Un os (.fz-bone) est un aplat translucide, posé sur n'importe quelle
+   surface. Son reflet est fixé à l'écran (background-attachment: fixed) :
+   un seul balayage traverse tous les os à la fois, de gauche à droite, au
+   lieu d'un reflet par os qui scintille chacun de son côté. Les os
+   secondaires (.fz-bone-flat : dates, pastilles, méta) restent mats :
+   l'œil va d'abord à ce qui brille. Les blocs montent l'un après l'autre
+   (.fz-sk-rise, --i, 45 ms d'écart).
+
+   Une surface toujours sombre, quel que soit le thème (bandeau de la
+   fiche joueur, tableau d'affichage d'un match), redéfinit --fz-bone et
+   --fz-bone-shine pour elle-même.
+   ============================================================ */
+
+:root {
+    --fz-bone: rgba(255, 255, 255, 0.06);
+    --fz-bone-shine: rgba(255, 255, 255, 0.12);
+}
+html[data-theme="light"] {
+    --fz-bone: rgba(0, 0, 0, 0.065);
+    --fz-bone-shine: rgba(0, 0, 0, 0.025);
+}
+
+.fz-bone {
+    display: block;
+    border-radius: 4px;
+    background: linear-gradient(100deg, var(--fz-bone) 40%, var(--fz-bone-shine) 50%, var(--fz-bone) 60%) fixed;
+    background-size: 300% 100%;
+    animation: fzOsReflet 1.6s linear infinite;
+}
+.fz-bone-flat {
+    display: block;
+    border-radius: 4px;
+    background: var(--fz-bone);
+}
+/* Un os dans une ligne de texte garde la hauteur de la ligne. */
+.fz-bone.is-inline,
+.fz-bone-flat.is-inline {
+    display: inline-block;
+    vertical-align: middle;
+}
+.fz-bone.is-round,
+.fz-bone-flat.is-round { border-radius: 50%; }
+
+.fz-sk-rise {
+    opacity: 0;
+    animation: fzOsMonte .35s ease-out forwards;
+    animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+/* « Chargement de… » pour les lecteurs d'écran ; rien à l'écran. */
+.fz-sk-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* Un squelette ne se clique pas : il est posé avec `inert`, et ses libellés
+   réels ne doivent pas avoir l'air de boutons actifs. */
+[data-fz-sk] { cursor: default; }
+
+@keyframes fzOsReflet {
+    from { background-position: 100% 0; }
+    to { background-position: 0% 0; }
+}
+@keyframes fzOsMonte {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fz-bone { animation: none; }
+    .fz-sk-rise { opacity: 1; animation: none; }
+}

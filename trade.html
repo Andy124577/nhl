@@ -15,11 +15,12 @@
     <!-- Fenêtres de dialogue (fzAlert, fzConfirm) : avant tout script de page. -->
     <script src="fzDialog.js?v=20260926a"></script>
     <link rel="stylesheet" href="teamLogos.css?v=20260926">
-    <link rel="stylesheet" href="poolNav.css?v=20260928a">
+    <link rel="stylesheet" href="poolNav.css?v=20261003a">
+    <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="index.css?v=20260926b">
     <link rel="stylesheet" href="tradeMarket.css?v=20260926b">
-    <link rel="stylesheet" href="trade.css?v=20260927">
+    <link rel="stylesheet" href="trade.css?v=20261003a">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="icons.js" defer></script>
@@ -92,7 +93,7 @@
                     <div class="tm-partner-switch">
                         <span class="tm-partner-switch-lbl">Échanger avec</span>
                         <button type="button" class="tm-team-trigger" id="partnerTeamTrigger" onclick="toggleTeamSwitcher()">
-                            <span id="partnerTeamTriggerName">—</span>
+                            <span id="partnerTeamTriggerName"><span class="fz-bone tr-sk-trigger"></span></span>
                             <span class="tm-team-caret" id="teamSwitchCaret">▾</span>
                         </button>
                         <div class="tm-team-dropdown hidden" id="teamSwitchDropdown">
@@ -123,10 +124,10 @@
                     <!-- Left: My Team -->
                     <div class="roster-column">
                         <div class="roster-col-header">
-                            <div class="rc-avatar" id="myAvatar">--</div>
+                            <div class="rc-avatar" id="myAvatar"></div>
                             <div class="rc-headtext">
                                 <span class="rc-label">Vous donnez</span>
-                                <h3 class="rc-teamname" id="myTeamName"></h3>
+                                <h3 class="rc-teamname" id="myTeamName"><span class="fz-bone tr-sk-team"></span></h3>
                             </div>
                         </div>
 
@@ -152,7 +153,18 @@
                             <span class="rlh-stats"><span>PJ</span><span>B</span><span>A</span><span class="rlh-pts">Pts</span></span>
                         </div>
 
-                        <div class="roster-list" id="myRoster"><!-- Filled by JS --></div>
+                        <!-- Rempli par trade.js (renderMyRoster / renderPartnerRoster). D'ici là,
+                             des rangées en os (fzSquelette.css), aux classes des rangées chargées. -->
+                        <div class="roster-list" id="myRoster">
+                            <div class="player-card-roster tr-sk-row" style="--i:0"><div class="pcr-check"></div><span class="tr-shot fz-bone"></span><div class="pcr-info"><span class="fz-bone tr-sk-name" style="--w:112px"></span><span class="fz-bone-flat tr-sk-meta" style="--w:58px"></span></div><div class="pcr-stats"><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat pcr-pts"><span class="fz-bone tr-sk-pts"></span></span></div></div>
+                            <div class="player-card-roster tr-sk-row" style="--i:1"><div class="pcr-check"></div><span class="tr-shot fz-bone"></span><div class="pcr-info"><span class="fz-bone tr-sk-name" style="--w:96px"></span><span class="fz-bone-flat tr-sk-meta" style="--w:64px"></span></div><div class="pcr-stats"><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat pcr-pts"><span class="fz-bone tr-sk-pts"></span></span></div></div>
+                            <div class="player-card-roster tr-sk-row" style="--i:2"><div class="pcr-check"></div><span class="tr-shot fz-bone"></span><div class="pcr-info"><span class="fz-bone tr-sk-name" style="--w:124px"></span><span class="fz-bone-flat tr-sk-meta" style="--w:52px"></span></div><div class="pcr-stats"><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat pcr-pts"><span class="fz-bone tr-sk-pts"></span></span></div></div>
+                            <div class="player-card-roster tr-sk-row" style="--i:3"><div class="pcr-check"></div><span class="tr-shot fz-bone"></span><div class="pcr-info"><span class="fz-bone tr-sk-name" style="--w:88px"></span><span class="fz-bone-flat tr-sk-meta" style="--w:60px"></span></div><div class="pcr-stats"><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat pcr-pts"><span class="fz-bone tr-sk-pts"></span></span></div></div>
+                            <div class="player-card-roster tr-sk-row" style="--i:4"><div class="pcr-check"></div><span class="tr-shot fz-bone"></span><div class="pcr-info"><span class="fz-bone tr-sk-name" style="--w:108px"></span><span class="fz-bone-flat tr-sk-meta" style="--w:56px"></span></div><div class="pcr-stats"><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat pcr-pts"><span class="fz-bone tr-sk-pts"></span></span></div></div>
+                            <div class="player-card-roster tr-sk-row" style="--i:5"><div class="pcr-check"></div><span class="tr-shot fz-bone"></span><div class="pcr-info"><span class="fz-bone tr-sk-name" style="--w:100px"></span><span class="fz-bone-flat tr-sk-meta" style="--w:62px"></span></div><div class="pcr-stats"><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat pcr-pts"><span class="fz-bone tr-sk-pts"></span></span></div></div>
+                            <div class="player-card-roster tr-sk-row" style="--i:6"><div class="pcr-check"></div><span class="tr-shot fz-bone"></span><div class="pcr-info"><span class="fz-bone tr-sk-name" style="--w:118px"></span><span class="fz-bone-flat tr-sk-meta" style="--w:54px"></span></div><div class="pcr-stats"><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat pcr-pts"><span class="fz-bone tr-sk-pts"></span></span></div></div>
+                            <div class="player-card-roster tr-sk-row" style="--i:7"><div class="pcr-check"></div><span class="tr-shot fz-bone"></span><div class="pcr-info"><span class="fz-bone tr-sk-name" style="--w:92px"></span><span class="fz-bone-flat tr-sk-meta" style="--w:58px"></span></div><div class="pcr-stats"><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat pcr-pts"><span class="fz-bone tr-sk-pts"></span></span></div></div>
+                        </div>
                     </div>
 
                     <!-- Center: Trade Summary / Basket -->
@@ -196,10 +208,10 @@
                     <!-- Right: Partner Team -->
                     <div class="roster-column">
                         <div class="roster-col-header">
-                            <div class="rc-avatar" id="partnerAvatar">--</div>
+                            <div class="rc-avatar" id="partnerAvatar"></div>
                             <div class="rc-headtext">
                                 <span class="rc-label">Vous recevez</span>
-                                <h3 class="rc-teamname" id="partnerTeamName"></h3>
+                                <h3 class="rc-teamname" id="partnerTeamName"><span class="fz-bone tr-sk-team"></span></h3>
                             </div>
                         </div>
 
@@ -228,7 +240,18 @@
                             <span class="rlh-stats"><span>PJ</span><span>B</span><span>A</span><span class="rlh-pts">Pts</span></span>
                         </div>
 
-                        <div class="roster-list" id="partnerRoster"><!-- Filled by JS --></div>
+                        <!-- Rempli par trade.js (renderMyRoster / renderPartnerRoster). D'ici là,
+                             des rangées en os (fzSquelette.css), aux classes des rangées chargées. -->
+                        <div class="roster-list" id="partnerRoster">
+                            <div class="player-card-roster tr-sk-row" style="--i:0"><div class="pcr-check"></div><span class="tr-shot fz-bone"></span><div class="pcr-info"><span class="fz-bone tr-sk-name" style="--w:88px"></span><span class="fz-bone-flat tr-sk-meta" style="--w:60px"></span></div><div class="pcr-stats"><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat pcr-pts"><span class="fz-bone tr-sk-pts"></span></span></div></div>
+                            <div class="player-card-roster tr-sk-row" style="--i:1"><div class="pcr-check"></div><span class="tr-shot fz-bone"></span><div class="pcr-info"><span class="fz-bone tr-sk-name" style="--w:108px"></span><span class="fz-bone-flat tr-sk-meta" style="--w:56px"></span></div><div class="pcr-stats"><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat pcr-pts"><span class="fz-bone tr-sk-pts"></span></span></div></div>
+                            <div class="player-card-roster tr-sk-row" style="--i:2"><div class="pcr-check"></div><span class="tr-shot fz-bone"></span><div class="pcr-info"><span class="fz-bone tr-sk-name" style="--w:100px"></span><span class="fz-bone-flat tr-sk-meta" style="--w:62px"></span></div><div class="pcr-stats"><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat pcr-pts"><span class="fz-bone tr-sk-pts"></span></span></div></div>
+                            <div class="player-card-roster tr-sk-row" style="--i:3"><div class="pcr-check"></div><span class="tr-shot fz-bone"></span><div class="pcr-info"><span class="fz-bone tr-sk-name" style="--w:118px"></span><span class="fz-bone-flat tr-sk-meta" style="--w:54px"></span></div><div class="pcr-stats"><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat pcr-pts"><span class="fz-bone tr-sk-pts"></span></span></div></div>
+                            <div class="player-card-roster tr-sk-row" style="--i:4"><div class="pcr-check"></div><span class="tr-shot fz-bone"></span><div class="pcr-info"><span class="fz-bone tr-sk-name" style="--w:92px"></span><span class="fz-bone-flat tr-sk-meta" style="--w:58px"></span></div><div class="pcr-stats"><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat pcr-pts"><span class="fz-bone tr-sk-pts"></span></span></div></div>
+                            <div class="player-card-roster tr-sk-row" style="--i:5"><div class="pcr-check"></div><span class="tr-shot fz-bone"></span><div class="pcr-info"><span class="fz-bone tr-sk-name" style="--w:112px"></span><span class="fz-bone-flat tr-sk-meta" style="--w:58px"></span></div><div class="pcr-stats"><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat pcr-pts"><span class="fz-bone tr-sk-pts"></span></span></div></div>
+                            <div class="player-card-roster tr-sk-row" style="--i:6"><div class="pcr-check"></div><span class="tr-shot fz-bone"></span><div class="pcr-info"><span class="fz-bone tr-sk-name" style="--w:96px"></span><span class="fz-bone-flat tr-sk-meta" style="--w:64px"></span></div><div class="pcr-stats"><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat pcr-pts"><span class="fz-bone tr-sk-pts"></span></span></div></div>
+                            <div class="player-card-roster tr-sk-row" style="--i:7"><div class="pcr-check"></div><span class="tr-shot fz-bone"></span><div class="pcr-info"><span class="fz-bone tr-sk-name" style="--w:124px"></span><span class="fz-bone-flat tr-sk-meta" style="--w:52px"></span></div><div class="pcr-stats"><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat"><span class="fz-bone-flat tr-sk-n"></span></span><span class="pcr-stat pcr-pts"><span class="fz-bone tr-sk-pts"></span></span></div></div>
+                        </div>
                     </div>
                 </div>
 
@@ -306,7 +329,7 @@
     <script defer src="avatars.js"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20260929a"></script>
-    <script defer src="poolNav.js?v=20260929a"></script>
+    <script defer src="poolNav.js?v=20261003a"></script>
     <script defer src="poolInvites.js?v=20260925e"></script>
     <script defer src="notifications.js?v=20260930c"></script>
     <script src="lib/season.js"></script>

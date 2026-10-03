@@ -705,8 +705,7 @@ a.mt-duel:hover { border-color: var(--primary); }
 .mt-duel-here { color: var(--primary-text); font-size: .68rem; font-weight: 800; text-transform: uppercase; }
 
 /* ---- États ------------------------------------------------------------------- */
-.mt-empty,
-.mt-loading {
+.mt-empty {
     margin: 0;
     padding: 36px 16px;
     border: 1px dashed var(--border-gray);
@@ -716,13 +715,48 @@ a.mt-duel:hover { border-color: var(--primary); }
 }
 .mt-empty.is-page { display: flex; flex-direction: column; align-items: center; gap: 14px; }
 .mt-empty.is-page p { margin: 0; }
-.mt-loading { display: flex; align-items: center; justify-content: center; gap: 10px; }
-.mt-spinner {
-    width: 18px; height: 18px; border-radius: 50%;
-    border: 3px solid var(--border-gray); border-top-color: var(--primary);
-    animation: mtTourne .8s linear infinite;
+/* ---- Chargement : la feuille en os (match.html) ----
+   Os de fzSquelette.css. Le tableau d'affichage reste sombre dans les deux
+   thèmes : ses os aussi. Hauteurs de ligne de la feuille chargée. */
+.mt-sk .mt-board { --fz-bone: rgba(255, 255, 255, .1); --fz-bone-shine: rgba(255, 255, 255, .2); }
+.mt-sk .mt-tab,
+.mt-sk .mt-seg-btn { cursor: default; }
+.mt-sk .mt-team-id { align-items: center; }
+.mt-sk-name { width: 54px; height: 22px; border-radius: 5px; }
+.mt-sk-place { display: none; width: 130px; height: 10px; }
+.mt-sk-sog { width: 48px; height: 9px; }
+.mt-sk-score { width: 24px; height: 38px; border-radius: 6px; }
+.mt-sk-pill { width: 58px; height: 22px; border-radius: 7px; }
+.mt-sk-when { width: 64px; height: 9px; }
+.mt-sk-mini { flex: none; width: 24px; height: 24px; }
+.mt-sk-team { width: 92px; max-width: 60%; height: 13px; }
+.mt-sk-n { display: inline-block; width: 14px; height: 9px; vertical-align: middle; }
+.mt-sk-player { display: inline-block; width: var(--w); height: 12px; vertical-align: middle; }
+.mt-sk-cell { width: 14px; height: 11px; margin: 0 auto; }
+.mt-sk-lines { padding-top: 33px; }
+.mt-sk-line { display: grid; grid-template-columns: 24px 40px repeat(4, minmax(0, 1fr)); align-items: center; gap: 8px; height: 42px; border-top: 1px solid var(--border-light); }
+.mt-sk-abbr { width: 34px; height: 12px; }
+.mt-sk-stat { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 6px 10px; }
+.mt-sk-stat + .mt-sk-stat { margin-top: 16px; }
+.mt-sk-val { width: 30px; height: 20px; }
+.mt-sk-lbl { justify-self: center; width: 110px; height: 10px; }
+.mt-sk-bar { grid-column: 1 / -1; height: 5px; border-radius: 3px; }
+@media (min-width: 720px) {
+    .mt-sk .mt-team.is-away .mt-team-id { align-items: flex-start; }
+    .mt-sk .mt-team.is-home .mt-team-id { align-items: flex-end; }
+    .mt-sk .mt-logo { width: 72px; transform: none; margin: 0 6px; }
+    .mt-sk-name { width: 210px; max-width: 100%; height: 38px; }
+    .mt-sk-place { display: block; }
+    .mt-sk-sog { width: 60px; height: 10px; }
+    .mt-sk-score { width: 40px; height: 62px; }
+    .mt-sk-pill { width: 92px; height: 26px; }
+    .mt-sk-when { width: 170px; height: 10px; }
 }
-@keyframes mtTourne { to { transform: rotate(360deg); } }
+@media (min-width: 720px) and (max-width: 999px) {
+    .mt-sk-place { display: none; }
+    .mt-sk-name { width: 120px; }
+    .mt-sk .mt-logo { width: 56px; height: 56px; }
+}
 .mt-btn {
     display: inline-flex;
     align-items: center;

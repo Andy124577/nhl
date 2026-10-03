@@ -88,12 +88,40 @@
 #careerStatsModal #careerStatsTable .career-totals-row td { height:50px; border-top:1px solid var(--team-trim); border-bottom:0; }
 #careerStatsModal #careerStatsTable .career-totals-label { padding-left:22px; text-align:left; text-transform:uppercase; letter-spacing:.025em; }
 #careerStatsModal .no-stats-message { padding:32px 20px; margin:0; color:var(--text-secondary); text-align:center; }
-#careerStatsModal .career-loading { position:relative; display:grid; grid-template-columns:27% 1fr; gap:28px; min-height:410px; padding-bottom:70px; color:var(--text-gray); }
-#careerStatsModal .career-loading > div { border-radius:16px; background:linear-gradient(100deg,#1c1c1e 20%,#2c2c2e 40%,#1c1c1e 60%); background-size:300% 100%; animation:careerShimmer 1.8s ease-in-out infinite; }
-#careerStatsModal .cm-skeleton-lines { margin-top:22px; clip-path:polygon(0 0,70% 0,70% 20%,0 20%,0 34%,100% 34%,100% 52%,0 52%,0 68%,100% 68%,100% 100%,0 100%); }
-#careerStatsModal .career-loading > span { position:absolute; bottom:24px; inset-inline:0; text-align:center; }
+/* Chargement (poserSquelette, careerModal.js) : la fiche elle-même, des os à la place des données,
+   aux tailles des valeurs qu'ils remplacent (en em : ils suivent les tailles de chaque format).
+   Le bandeau et le portrait restent sombres dans les deux thèmes : leurs os aussi. */
+#careerStatsModal :is(.cmh-name-banner, .cmh-portrait) { --fz-bone:rgba(255,255,255,.1); --fz-bone-shine:rgba(255,255,255,.2); }
+#careerStatsModal .cm-sk-caption { width:15em; max-width:100%; height:.85em; margin:.25em 0; }
+#careerStatsModal .cm-sk-caption.is-short { width:9em; margin:0 auto; }
+#careerStatsModal .cm-sk-position { width:11em; height:.9em; margin:.2em 0; }
+#careerStatsModal .is-loading .cmh-team-badge { padding:0; border-color:transparent; background:none; box-shadow:none; }
+#careerStatsModal .cm-sk-badge { width:14em; height:2.25em; border-radius:7px; }
+#careerStatsModal .cm-sk-jersey { width:1.3em; height:.75em; }
+#careerStatsModal .cm-sk-photo { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:5%; }
+#careerStatsModal .cm-sk-head { width:34%; aspect-ratio:1; border-radius:50%; }
+#careerStatsModal .cm-sk-shoulders { width:72%; height:30%; border-radius:50% 50% 0 0 / 70% 70% 0 0; }
+#careerStatsModal .is-loading .cmh-stat-val { color:transparent; }
+#careerStatsModal .cm-sk-val { display:inline-block; width:var(--w); max-width:100%; height:.8em; vertical-align:middle; }
+#careerStatsModal .cm-sk-mini { width:7em; max-width:100%; height:10px; }
+#careerStatsModal .cm-sk-mini.is-long { width:150px; max-width:100%; height:12px; margin-top:6px; }
+#careerStatsModal .cm-sk-mini.is-rank { width:64px; height:12px; margin-top:12px; }
+#careerStatsModal .cm-sk-season { width:118px; height:32px; margin:7px 0 4px; border-radius:6px; }
+#careerStatsModal .cm-sk-icon { flex:0 0 36px; width:36px; height:36px; border-radius:50%; }
+#careerStatsModal .cm-sk-big { width:44px; max-width:100%; height:48px; margin:9px 0 6px; border-radius:6px; }
+#careerStatsModal .cm-sk-table { min-width:690px; }
+#careerStatsModal .cm-sk-row { display:grid; grid-template-columns:12% 15% repeat(7,minmax(0,1fr)); align-items:center; column-gap:16px; height:39px; padding:0 16px 0 22px; border-bottom:1px solid var(--border-light); }
+#careerStatsModal .cm-sk-row:nth-child(odd):not(.is-head) { background:var(--card-white); }
+#careerStatsModal .cm-sk-row:last-child { border-bottom:0; }
+#careerStatsModal .cm-sk-row.is-head { height:41px; background:var(--bg-gray-light); border-bottom-color:var(--border-gray); }
+#careerStatsModal .cm-sk-th { justify-self:center; width:60%; height:9px; }
+#careerStatsModal .cm-sk-th:nth-child(-n+2) { justify-self:start; width:48px; }
+#careerStatsModal .cm-sk-team { display:flex; align-items:center; gap:10px; min-width:0; }
+#careerStatsModal .cm-sk-logo { flex:none; width:28px; height:26px; border-radius:6px; }
+#careerStatsModal .cm-sk-cell { width:var(--w,60%); height:12px; }
+#careerStatsModal .cm-sk-cell.is-season { width:62px; }
+#careerStatsModal .cm-sk-cell.is-num { justify-self:center; width:22px; }
 @keyframes careerEnter { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-@keyframes careerShimmer { to { background-position:-150% 0; } }
 @media (max-width:1100px) {
   #careerStatsModal .career-modal-header { grid-template-columns:220px minmax(0,1fr) 230px; gap:16px 20px; }
   #careerStatsModal .cmh-season-highlight { grid-template-columns:220px repeat(3,minmax(0,1fr)); gap:20px; }
@@ -121,6 +149,8 @@
   #careerStatsModal .cmh-season-label { grid-column:1/-1; min-height:64px; flex-direction:row; align-items:center; justify-content:flex-start; gap:16px; padding:12px 18px; }
   #careerStatsModal .cmh-season-label strong { font-size:26px; }
   #careerStatsModal .cmh-season-label > span:last-child { font-size:13px; }
+  #careerStatsModal .cmh-season-label .cm-sk-mini.is-long { margin-top:0; }
+  #careerStatsModal .cmh-season-label .cm-sk-season { margin:0; }
   #careerStatsModal .cmh-season-tile { min-height:105px; }
   #careerStatsModal .cmh-season-val { font-size:42px; }
 }
@@ -161,15 +191,21 @@
   #careerStatsModal .cmh-season-val { font-size:32px; }
   #careerStatsModal .cmh-season-rank { font-size:10px; letter-spacing:0; }
   #careerStatsModal .career-filters { margin:14px 0 12px; padding:12px; gap:10px; }
+  #careerStatsModal .cm-sk-icon { flex-basis:19px; width:19px; height:19px; }
+  #careerStatsModal .cm-sk-big { width:30px; height:30px; margin:6px 0 2px; }
+  #careerStatsModal .cm-sk-mini { width:5em; }
+  #careerStatsModal .cm-sk-mini.is-rank { width:40px; height:9px; }
+  #careerStatsModal .cm-sk-season { width:84px; height:24px; margin:0; }
+  #careerStatsModal .cmh-season-label .cm-sk-mini.is-long { width:110px; }
+  #careerStatsModal .cm-sk-table { min-width:660px; }
   #careerStatsModal .filter-group-career { flex-basis:100%; display:grid; grid-template-columns:91px minmax(0,1fr); }
   #careerStatsModal .filter-group-career label { font-size:10px; letter-spacing:.08em; }
   #careerStatsModal .filter-group-career select { min-height:44px; font-size:14px; padding-left:10px; }
   #careerStatsModal #careerStatsTable table { min-width:660px; font-size:14px; }
   #careerStatsModal #careerStatsTable td, #careerStatsModal #careerStatsTable th { padding-inline:12px; }
-  #careerStatsModal .career-loading { min-height:460px; grid-template-columns:35% 1fr; gap:14px; }
 }
 @media (prefers-reduced-motion:reduce) {
-  #careerStatsModal .career-modal, #careerStatsModal .career-loading > div { animation:none; }
+  #careerStatsModal .career-modal { animation:none; }
 }
 /* Light theme. The name banner, team badge, pick button and portrait card keep
    their dark team artwork; every other surface follows index.css's light tokens.
@@ -196,4 +232,3 @@ html[data-theme="light"] #careerStatsModal #careerStatsTable tr.current-season t
 html[data-theme="light"] #careerStatsModal #careerStatsTable tr.current-season td:first-child { box-shadow:inset 5px 0 var(--team-surface); }
 html[data-theme="light"] #careerStatsModal #careerStatsTable tr.career-totals-row { background:var(--bg-gray-light); }
 html[data-theme="light"] #careerStatsModal #careerStatsTable .career-totals-row td { border-top-color:var(--team-surface); }
-html[data-theme="light"] #careerStatsModal .career-loading > div { background-image:linear-gradient(100deg,#e8e8ed 20%,#f5f5f7 40%,#e8e8ed 60%); }

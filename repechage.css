@@ -108,6 +108,21 @@
 
 /* ==================== CHARGEMENT ==================== */
 
+/* Chargement de la page : la carte du salon en os (repechage.html). Les os
+   viennent de fzSquelette.css, à la hauteur des lignes qu'ils remplacent. */
+.rp-sk-title { width: 190px; max-width: 100%; height: 20px; margin: 2px 0 1px; border-radius: 5px; }
+.rp-sk-state { flex-shrink: 0; width: 78px; height: 26px; border-radius: 999px; }
+.rp-sk-lead { width: 92%; height: 14px; margin: 5px 0 9px; }
+.rp-sk-lead.is-short { width: 46%; margin-bottom: 24px; }
+.rp-sk-label { width: 120px; height: 10px; margin: 2px 0 5px; }
+.rp-sk-label.is-section { width: 170px; margin: 4px 0 12px; }
+.rp-sk-quand { width: 180px; max-width: 100%; height: 14px; margin: 2px 0; }
+.rp-sk-datebtn { flex-shrink: 0; width: 120px; height: 36px; border-radius: 10px; }
+.rp-sk-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+.rp-sk-chip { width: 132px; height: 40px; border-radius: 999px; }
+.rp-sk-btn { width: 210px; height: 46px; border-radius: 10px; }
+.rp-sk-btn.is-second { width: 190px; }
+
 .rp-loading { padding: 70px 20px; text-align: center; color: var(--text-secondary); }
 .rp-loading p { margin: 16px 0 0; font-size: .95rem; }
 .rp-loading strong { color: var(--text-main); }

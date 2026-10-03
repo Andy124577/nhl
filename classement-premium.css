@@ -656,13 +656,13 @@ body.fz-classement .skeleton-avatar {
    balayage traverse tous les os à la fois, de gauche à droite, au lieu
    d'un reflet par os qui scintille chacun de son côté. Les os secondaires
    (pastille, tendance, dates) restent mats : l'œil va d'abord à ce qui
-   brille. Les rangées montent l'une après l'autre (--i, 45 ms d'écart). */
-body.fz-classement .fz-bone {
-  display: block;
-  border-radius: 4px;
-  background: linear-gradient(100deg, var(--rr-bone) 40%, var(--rr-bone-shine) 50%, var(--rr-bone) 60%) fixed;
-  background-size: 300% 100%;
-  animation: fzOsReflet 1.6s linear infinite;
+   brille. Les rangées montent l'une après l'autre (--i, 45 ms d'écart).
+
+   Les os eux-mêmes, leur reflet et leur montée viennent de fzSquelette.css,
+   partagé par toutes les pages ; le classement n'y verse que ses teintes. */
+body.fz-classement {
+  --fz-bone: var(--rr-bone);
+  --fz-bone-shine: var(--rr-bone-shine);
 }
 body.fz-classement .hof-sk-flat,
 body.fz-classement .st-sk-pill,
@@ -670,14 +670,6 @@ body.fz-classement .st-sk-evo {
   display: block;
   border-radius: 5px;
   background: var(--rr-bone);
-}
-@keyframes fzOsReflet {
-  from { background-position: 100% 0; }
-  to { background-position: 0% 0; }
-}
-@keyframes fzOsMonte {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: none; }
 }
 
 body.fz-classement .st-sk-sr {
@@ -839,7 +831,6 @@ body.fz-classement .rr-sk .rr-chev { opacity: .65; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body.fz-classement .fz-bone { animation: none; }
   body.fz-classement .st-sk-table tbody tr,
   body.fz-classement .st-sk-list .st-mobile-row,
   body.fz-classement .st-sk-insights,

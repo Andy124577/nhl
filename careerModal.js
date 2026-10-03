@@ -47,7 +47,7 @@
                 <button class="close-modal" type="button" aria-label="Fermer la fiche du joueur">×</button>
             </header>
             <div class="career-profile-body" id="careerProfileBody">
-                <div id="careerLoading" class="career-loading" role="status" hidden><div class="cm-skeleton-photo"></div><div class="cm-skeleton-lines"></div><span>Chargement de la fiche du joueur…</span></div>
+                <p id="careerLoading" class="fz-sk-sr" role="status"></p>
                 <aside class="cmh-watch" id="careerWatchBanner" aria-label="Joueur à surveiller" hidden><span class="cmh-watch-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>À surveiller</span><p></p></aside>
                 <div class="career-modal-header" id="careerModalHeader" hidden>
                     <figure class="cmh-portrait"><div class="cmh-portrait-art" aria-hidden="true"></div><span class="cmh-portrait-number" id="careerArtNumber" aria-hidden="true"></span>
@@ -274,6 +274,65 @@
         if (typeof handleViewChange === 'function' && el('viewFilter').options.length === 1) el('viewFilter').add(new Option('Historique de match', 'gamelog'));
     }
 
+    /**
+     * La fiche telle qu'elle s'affichera, des os à la place des données, le
+     * temps que /player-career réponde. Le nom est déjà connu ; les libellés
+     * (Taille / Poids, Né le…), les boutons et les filtres sont les vrais,
+     * désactivés jusqu'à la fiche. renderProfile() remplace chaque os par sa
+     * valeur, au même endroit : rien ne bouge à l'arrivée. Os et reflet :
+     * fzSquelette.css ; mesures : career-modal.css (.is-loading).
+     */
+    const CONTROLES = ['careerFavorite', 'careerPick', 'viewFilter', 'leagueFilter', 'gameTypeFilter'];
+    const os = (cls, largeur) => `<span class="fz-bone ${cls}"${largeur ? ` style="--w:${largeur}"` : ''}></span>`;
+
+    function tableauSquelette() {
+        const rangee = i => `<div class="cm-sk-row">
+                ${os('cm-sk-cell is-season')}
+                <span class="cm-sk-team">${os('cm-sk-logo')}${os('cm-sk-cell', `${[58, 64, 52, 70, 60, 66][i]}%`)}</span>
+                ${Array.from({ length: 7 }, () => os('cm-sk-cell is-num')).join('')}
+            </div>`;
+        return `<div class="cm-sk-table" aria-hidden="true">
+                <div class="cm-sk-row is-head">${Array.from({ length: 9 }, () => '<span class="fz-bone-flat cm-sk-th"></span>').join('')}</div>
+                ${Array.from({ length: 6 }, (_, i) => rangee(i)).join('')}
+            </div>`;
+    }
+
+    function poserSquelette(playerName) {
+        const card = el('careerStatsModal').querySelector('.career-modal');
+        card.classList.add('is-loading');
+        card.setAttribute('aria-busy', 'true');
+        el('careerLoading').textContent = `Chargement de la fiche de ${playerName || 'ce joueur'}…`;
+        el('careerBannerTeam').innerHTML = os('cm-sk-caption');
+        el('careerPlayerPosition').innerHTML = os('cm-sk-position');
+        el('careerPlayerTeam').innerHTML = os('cm-sk-badge');
+        el('careerArtNumber').textContent = '';
+        el('careerJerseyNumber').innerHTML = os('cm-sk-jersey');
+        el('careerPortraitTeam').innerHTML = os('cm-sk-caption is-short');
+        const photo = el('playerHeadshotContainer');
+        photo.classList.remove('has-photo');
+        photo.innerHTML = `<div class="cm-sk-photo">${os('cm-sk-head')}${os('cm-sk-shoulders')}</div>`;
+        [['playerHeight', '7em'], ['playerBirthDate', '8em'], ['playerBirthPlace', '9.5em'], ['playerDraft', '11em']]
+            .forEach(([id, largeur]) => { el(id).innerHTML = os('cm-sk-val', largeur); });
+        el('playerWeight').textContent = '';
+        el('careerSeasonHighlight').innerHTML =
+            `<div class="cmh-season-label">${os('cm-sk-mini')}${os('cm-sk-season')}${os('cm-sk-mini is-long')}</div>`
+            + Array.from({ length: 3 }, () =>
+                `<div class="cmh-season-tile">${os('cm-sk-icon')}<div>${os('cm-sk-mini')}${os('cm-sk-big')}${os('cm-sk-mini is-rank')}</div></div>`).join('');
+        el('careerInjuryBanner').hidden = true;
+        el('careerStatsTable').innerHTML = tableauSquelette();
+        CONTROLES.forEach(id => { el(id).disabled = true; });
+        el('careerModalHeader').hidden = false;
+        el('careerFilters').hidden = false;
+    }
+
+    function retirerSquelette() {
+        const card = el('careerStatsModal').querySelector('.career-modal');
+        card.classList.remove('is-loading');
+        card.removeAttribute('aria-busy');
+        el('careerLoading').textContent = '';
+        CONTROLES.forEach(id => { if (id !== 'careerPick') el(id).disabled = false; });
+    }
+
     function decorateTable() {
         const table = el('careerStatsTable').querySelector('table');
         if (!table || table.dataset.premium) return;
@@ -299,12 +358,10 @@
         applyTeam('');
         el('careerBannerName').textContent = playerName || 'Fiche du joueur';
         el('careerPlayerName').textContent = playerName || 'Fiche du joueur';
-        el('careerBannerTeam').textContent = '';
-        el('careerLoading').hidden = false;
-        el('careerModalHeader').hidden = true; el('careerFilters').hidden = true; el('careerWatchBanner').hidden = true;
-        el('careerStatsTable').replaceChildren();
+        el('careerWatchBanner').hidden = true;
         el('viewFilter').value = 'career'; el('leagueFilter').value = 'nhl'; el('gameTypeFilter').value = 'regular';
         el('leagueFilter').parentElement.style.display = ''; el('gameTypeFilter').parentElement.style.display = '';
+        poserSquelette(playerName);
         modal.querySelector('.close-modal').focus();
         try {
             const data = await fzChargerCarriere(playerId, typeof BASE_URL === 'string' ? BASE_URL : '');
@@ -312,16 +369,20 @@
             adapter.onData(data);
             activeId = playerId;
             renderProfile(data, playerId);
+            retirerSquelette();
             suivreDirect();
-            el('careerModalHeader').hidden = false; el('careerFilters').hidden = false;
             adapter.renderStats();
         } catch (error) {
             if (token !== request) return;
+            retirerSquelette();
+            el('careerModalHeader').hidden = true; el('careerFilters').hidden = true;
             const message = document.createElement('p'); message.className = 'no-stats-message'; message.setAttribute('role', 'alert');
             message.textContent = error.fzMessage || 'Impossible d’afficher la fiche du joueur. Veuillez réessayer.';
             el('careerStatsTable').replaceChildren(message);
-        } finally { if (token === request) el('careerLoading').hidden = true; }
+        }
     };
+    /** Les rangées en os du tableau, pour un tableau qui se recharge (historique de match). */
+    window.fzCareerTableSkeleton = tableauSquelette;
     window.fzCloseCareerModal = function () {
         ++request; active = null; activeId = null;
         arreterDirect();

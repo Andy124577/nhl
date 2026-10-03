@@ -80,11 +80,11 @@
     <!-- Fenêtres de dialogue (fzAlert, fzConfirm) : avant tout script de page. -->
     <script src="fzDialog.js?v=20260926a"></script>
     <link rel="stylesheet" href="teamLogos.css?v=20260926">
-    <link rel="stylesheet" href="poolNav.css?v=20260928a">
+    <link rel="stylesheet" href="poolNav.css?v=20261003a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="index.css?v=20260926b">
     <link rel="stylesheet" href="accueil.css?v=20260930c">
-    <link rel="stylesheet" href="career-modal.css?v=20260926b">
+    <link rel="stylesheet" href="career-modal.css?v=20261003a">
     <link rel="stylesheet" href="accueil-dash.css?v=20261003a">
     <link rel="stylesheet" href="accueil-mobile.css?v=20260930a">
     <link rel="stylesheet" href="demos.css?v=20260926b">
@@ -95,7 +95,6 @@
     <link rel="stylesheet" href="accueil-draft.css?v=20260930a">
     <link rel="stylesheet" href="accueil-draft-hero.css?v=20260927f">
     <link rel="stylesheet" href="accueil-watch.css?v=20260926b">
-    <link rel="stylesheet" href="skeleton-loader.css?v=20260926b">
     <!-- Panneau de la file du repêchage instantané (instantDraft.js). -->
     <link rel="stylesheet" href="instantDraft.css?v=20261003a">
     <!-- Récapitulatif de repêchage : le même popup qu'à la fin du repêchage,
@@ -104,6 +103,9 @@
     <link rel="stylesheet" href="accueil-palette.css?v=20260927e">
     <!-- Thème clair des accueils repêchage et saison : APRÈS la palette. -->
     <link rel="stylesheet" href="accueil-light.css?v=20260927e">
+    <!-- Squelettes : les os partagés, puis celui de l'accueil d'un membre. -->
+    <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
+    <link rel="stylesheet" href="accueil-squelette.css?v=20261003a">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
@@ -589,6 +591,12 @@
                 </div>
             </div>
         </div>
+        <!-- Squelette de l'accueil, le temps que la disposition soit choisie
+             (html.fz-home-pending) : la dernière vue par ce navigateur —
+             saison, repêchage ou sans pool. Dessiné avant le premier rendu,
+             retiré par fzdRevelerAccueil (accueil-dash.js). -->
+        <div class="fz-home-sk" id="fzHomeSkeleton" aria-busy="true"></div>
+        <script src="accueilSquelette.js?v=20261003a"></script>
     </section>
 
     <!-- ============================================================ -->
@@ -734,7 +742,7 @@
          l'appelle au chargement. -->
     <script defer src="fzToday.js?v=20260929n"></script>
     <script defer src="careerFetch.js"></script>
-    <script defer src="careerModal.js?v=20261002a"></script>
+    <script defer src="careerModal.js?v=20261003a"></script>
     <script defer src="careerTeamLogo.js"></script>
     <script defer src="teamColors.js"></script>
     <script defer src="careerTotals.js"></script>
@@ -752,7 +760,7 @@
     <script defer src="avatars.js"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20260929a"></script>
-    <script defer src="poolNav.js?v=20260929a"></script>
+    <script defer src="poolNav.js?v=20261003a"></script>
     <script defer src="poolInvites.js?v=20260925e"></script>
     <script defer src="notifications.js?v=20260930c"></script>
 </body>

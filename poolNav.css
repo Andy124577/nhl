@@ -166,6 +166,16 @@
     letter-spacing: .02em;
 }
 
+/* Le rail en os (monterRailSquelette, poolNav.js) : les os aux hauteurs des
+   lignes qu'ils remplacent — le bloc du pool garde sa taille. */
+.fz-sidebar [data-fz-sk] .fz-active-pool { cursor: default; }
+.fz-sk-rail-name { width: 104px; max-width: 100%; height: 14px; margin: 2px 0 3px; }
+.fz-sk-rail-meta { width: 70px; height: 10px; margin: 2px 0; }
+.fz-sk-rail-state { width: 88px; height: 20px; margin: 8px 0 0 4px; border-radius: 999px; }
+.fz-sidebar [data-fz-sk] .fz-rail-icon { border-radius: 5px; }
+.fz-sk-rail-title { width: var(--w); height: 13px; margin: 3px 0; }
+.fz-sk-rail-detail { width: var(--w); height: 9px; margin: 3px 0 2px; }
+
 .fz-state-encours { background: rgba(var(--primary-rgb), .16); color: var(--danger); }
 .fz-state-pret    { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
 .fz-state-attente { background: color-mix(in srgb, var(--warning) 15%, transparent); color: var(--warning); }
@@ -1004,6 +1014,9 @@ html[data-theme="light"] .fz-notif-toast {
 .fz-context-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .fz-context-label { font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--text-gray); }
 .fz-context-name { font-weight: 800; font-size: .95rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Le bandeau en os (monterBandeauxSquelette, poolNav.js) : la ligne du nom garde sa hauteur. */
+.fz-sk-context-name { width: 120px; max-width: 100%; height: 14px; margin: 3px 0; }
+.fz-context-bar[data-fz-sk] .fz-context-switch { cursor: default; }
 
 .fz-context-switch {
     padding: 7px 12px;

@@ -81,15 +81,38 @@
 
     // ---------------------------------------------------------- données
 
+    // Les cartes de match en os de calendrier.html, reprises à chaque semaine
+    // qui se charge : le script est différé, la page est déjà lue.
+    const CARTES_SQUELETTE = document.getElementById('calGames').innerHTML;
+
+    /**
+     * La semaine en os, le temps que /schedule réponde. Ses sept jours sont
+     * déjà connus — seul leur compte de matchs attend —, la journée garde son
+     * titre, et les cartes de match sont en os. rendre() pose la semaine
+     * chargée aux mêmes places.
+     */
+    function rendreSquelette(lundi, date) {
+        const auj = aujourdhui();
+        document.getElementById('calStrip').innerHTML = Array.from({ length: 7 }, (_, i) => {
+            const jour = decaler(lundi, i);
+            const d = dateUTC(jour);
+            return `
+                <span class="cal-chip${jour === date ? ' is-active' : ''}${jour === auj ? ' is-today' : ''}" aria-hidden="true">
+                    <span class="cal-chip-dow">${jour === auj ? 'Auj.' : JOURS_COURTS[d.getUTCDay()]}</span>
+                    <span class="cal-chip-num">${d.getUTCDate()}</span>
+                    <span class="fz-bone-flat cal-sk-count"></span>
+                </span>`;
+        }).join('');
+        document.getElementById('calDayTitle').textContent = jourLong(date).replace(/^./, c => c.toUpperCase());
+        document.getElementById('calGames').innerHTML = CARTES_SQUELETTE;
+    }
+
     async function chargerSemaine(date, { silencieux = false } = {}) {
         const jeton = ++chargement;
         const lundi = lundiDe(date);
         lundiVise = lundi;
         rendreSemaine();
-        if (!silencieux) {
-            document.getElementById('calGames').innerHTML =
-                '<div class="cal-loading"><span class="cal-spinner" aria-hidden="true"></span>Chargement du calendrier…</div>';
-        }
+        if (!silencieux) rendreSquelette(lundi, date);
         try {
             const reponse = await fetch(`${BASE_URL}/schedule/${lundi}`, { cache: 'no-store' });
             const donnees = reponse.ok ? await reponse.json() : null;

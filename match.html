@@ -16,12 +16,13 @@
     <!-- Fenêtres de dialogue (fzAlert, fzConfirm) : avant tout script de page. -->
     <script src="fzDialog.js?v=20260926a"></script>
     <link rel="stylesheet" href="teamLogos.css?v=20260926">
-    <link rel="stylesheet" href="poolNav.css?v=20260928a">
+    <link rel="stylesheet" href="poolNav.css?v=20261003a">
+    <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="index.css?v=20260926b">
-    <link rel="stylesheet" href="match.css?v=20260926b">
+    <link rel="stylesheet" href="match.css?v=20261003a">
     <!-- Fiche du joueur : même modale que l'accueil, ouverte d'un nom de la feuille. -->
-    <link rel="stylesheet" href="career-modal.css?v=20260926b">
+    <link rel="stylesheet" href="career-modal.css?v=20261003a">
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit précéder tout script de page. -->
     <script defer src="activePool.js?v=20260929n"></script>
@@ -34,7 +35,47 @@
     <main class="mt-page" id="mtPage">
         <a class="mt-back" id="mtBack" href="calendrier.html"><span aria-hidden="true">‹</span> Calendrier</a>
         <div id="mtRoot">
-            <div class="mt-loading" role="status"><span class="mt-spinner" aria-hidden="true"></span>Chargement de la feuille de match…</div>
+            <!-- La feuille en os, le temps que /game/:id/boxscore réponde : le tableau
+                 d'affichage, les onglets, la feuille des attaquants et la colonne de
+                 chiffres, aux classes de rendre() (match.js) ; les intitulés sont les
+                 vrais, des os (fzSquelette.css) tiennent la place des données. match.js
+                 la reprend telle quelle pour « Réessayer ». -->
+            <p class="fz-sk-sr" role="status">Chargement de la feuille de match…</p>
+            <div class="mt-sk" data-fz-sk inert>
+                <section class="mt-board">
+                    <div class="mt-team is-away"><span class="mt-logo fz-bone is-round"></span><div class="mt-team-id"><span class="fz-bone mt-sk-name"></span><span class="fz-bone-flat mt-sk-place"></span><span class="fz-bone-flat mt-sk-sog"></span></div></div>
+                    <div class="mt-plate"><span class="fz-bone mt-sk-score"></span><div class="mt-status"><span class="fz-bone-flat mt-sk-pill"></span><span class="fz-bone-flat mt-sk-when"></span></div><span class="fz-bone mt-sk-score"></span></div>
+                    <div class="mt-team is-home"><span class="mt-logo fz-bone is-round"></span><div class="mt-team-id"><span class="fz-bone mt-sk-name"></span><span class="fz-bone-flat mt-sk-place"></span><span class="fz-bone-flat mt-sk-sog"></span></div></div>
+                </section>
+                <div class="mt-layout">
+                    <div class="mt-main">
+                        <div class="mt-tabs"><span class="mt-tab" aria-selected="true">Feuille de pointage</span><span class="mt-tab">Résumé</span></div>
+                        <div class="mt-seg"><span class="mt-seg-btn" aria-pressed="true"><span class="fz-bone is-round mt-sk-mini"></span><span class="fz-bone mt-sk-team"></span></span><span class="mt-seg-btn"><span class="fz-bone is-round mt-sk-mini"></span><span class="fz-bone mt-sk-team"></span></span></div>
+                        <div class="mt-scroll">
+                            <table class="mt-table">
+                                <thead><tr><th class="mt-group">Attaquants</th><th>POS</th><th>B</th><th>A</th><th>PTS</th><th>+/−</th><th>T</th><th>PUN</th><th>BAN</th><th>MÉ</th><th>TB</th><th>REV</th><th>REVP</th><th>PRÉS</th><th>TG</th></tr></thead>
+                                <tbody>
+                                <tr><th><span class="mt-num"><span class="fz-bone-flat mt-sk-n"></span></span><span class="fz-bone mt-sk-player" style="--w:60px"></span></th><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td></tr>
+                                <tr><th><span class="mt-num"><span class="fz-bone-flat mt-sk-n"></span></span><span class="fz-bone mt-sk-player" style="--w:80px"></span></th><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td></tr>
+                                <tr><th><span class="mt-num"><span class="fz-bone-flat mt-sk-n"></span></span><span class="fz-bone mt-sk-player" style="--w:98px"></span></th><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td></tr>
+                                <tr><th><span class="mt-num"><span class="fz-bone-flat mt-sk-n"></span></span><span class="fz-bone mt-sk-player" style="--w:86px"></span></th><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td></tr>
+                                <tr><th><span class="mt-num"><span class="fz-bone-flat mt-sk-n"></span></span><span class="fz-bone mt-sk-player" style="--w:102px"></span></th><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td></tr>
+                                <tr><th><span class="mt-num"><span class="fz-bone-flat mt-sk-n"></span></span><span class="fz-bone mt-sk-player" style="--w:92px"></span></th><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td></tr>
+                                <tr><th><span class="mt-num"><span class="fz-bone-flat mt-sk-n"></span></span><span class="fz-bone mt-sk-player" style="--w:76px"></span></th><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td></tr>
+                                <tr><th><span class="mt-num"><span class="fz-bone-flat mt-sk-n"></span></span><span class="fz-bone mt-sk-player" style="--w:84px"></span></th><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td></tr>
+                                <tr><th><span class="mt-num"><span class="fz-bone-flat mt-sk-n"></span></span><span class="fz-bone mt-sk-player" style="--w:100px"></span></th><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td></tr>
+                                <tr><th><span class="mt-num"><span class="fz-bone-flat mt-sk-n"></span></span><span class="fz-bone mt-sk-player" style="--w:88px"></span></th><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td><td><span class="fz-bone mt-sk-cell"></span></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <aside class="mt-rail">
+                        <section class="mt-card"><h3 class="mt-card-title">Pointage</h3><div class="mt-sk-lines"><div class="mt-sk-line"><span class="fz-bone is-round mt-sk-mini"></span><span class="fz-bone mt-sk-abbr"></span><span class="fz-bone mt-sk-cell"></span><span class="fz-bone mt-sk-cell"></span><span class="fz-bone mt-sk-cell"></span><span class="fz-bone mt-sk-cell"></span></div><div class="mt-sk-line"><span class="fz-bone is-round mt-sk-mini"></span><span class="fz-bone mt-sk-abbr"></span><span class="fz-bone mt-sk-cell"></span><span class="fz-bone mt-sk-cell"></span><span class="fz-bone mt-sk-cell"></span><span class="fz-bone mt-sk-cell"></span></div></div></section>
+                        <section class="mt-card"><h3 class="mt-card-title">Tirs au but</h3><div class="mt-sk-lines"><div class="mt-sk-line"><span class="fz-bone is-round mt-sk-mini"></span><span class="fz-bone mt-sk-abbr"></span><span class="fz-bone mt-sk-cell"></span><span class="fz-bone mt-sk-cell"></span><span class="fz-bone mt-sk-cell"></span><span class="fz-bone mt-sk-cell"></span></div><div class="mt-sk-line"><span class="fz-bone is-round mt-sk-mini"></span><span class="fz-bone mt-sk-abbr"></span><span class="fz-bone mt-sk-cell"></span><span class="fz-bone mt-sk-cell"></span><span class="fz-bone mt-sk-cell"></span><span class="fz-bone mt-sk-cell"></span></div></div></section>
+                        <section class="mt-card"><h3 class="mt-card-title mt-card-title-teams"><span class="fz-bone is-round mt-sk-mini"></span><span>Statistiques du match</span><span class="fz-bone is-round mt-sk-mini"></span></h3><div class="mt-sk-stat"><span class="fz-bone mt-sk-val"></span><span class="fz-bone-flat mt-sk-lbl"></span><span class="fz-bone mt-sk-val"></span><span class="fz-bone-flat mt-sk-bar"></span></div><div class="mt-sk-stat"><span class="fz-bone mt-sk-val"></span><span class="fz-bone-flat mt-sk-lbl"></span><span class="fz-bone mt-sk-val"></span><span class="fz-bone-flat mt-sk-bar"></span></div><div class="mt-sk-stat"><span class="fz-bone mt-sk-val"></span><span class="fz-bone-flat mt-sk-lbl"></span><span class="fz-bone mt-sk-val"></span><span class="fz-bone-flat mt-sk-bar"></span></div><div class="mt-sk-stat"><span class="fz-bone mt-sk-val"></span><span class="fz-bone-flat mt-sk-lbl"></span><span class="fz-bone mt-sk-val"></span><span class="fz-bone-flat mt-sk-bar"></span></div><div class="mt-sk-stat"><span class="fz-bone mt-sk-val"></span><span class="fz-bone-flat mt-sk-lbl"></span><span class="fz-bone mt-sk-val"></span><span class="fz-bone-flat mt-sk-bar"></span></div></section>
+                    </aside>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -43,15 +84,15 @@
     <script defer src="/socket.io/socket.io.js"></script>
     <script defer src="teamColors.js?v=20260925"></script>
     <script defer src="careerFetch.js"></script>
-    <script defer src="careerModal.js?v=20261002a"></script>
+    <script defer src="careerModal.js?v=20261003a"></script>
     <script defer src="careerTeamLogo.js"></script>
     <script defer src="careerTotals.js"></script>
-    <script defer src="match.js?v=20260929n"></script>
+    <script defer src="match.js?v=20261003a"></script>
     <script defer src="navbar.js?v=20261002c"></script>
     <script defer src="avatars.js"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20260929a"></script>
-    <script defer src="poolNav.js?v=20260929a"></script>
+    <script defer src="poolNav.js?v=20261003a"></script>
     <script defer src="poolInvites.js?v=20260925e"></script>
     <script defer src="notifications.js?v=20260930c"></script>
 </body>

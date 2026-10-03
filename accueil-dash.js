@@ -2798,8 +2798,19 @@ function fzdApplyPreseasonLayout(hasPool) {
  * par défaut, mais seulement une fois leurs données arrivées. Sans cette
  * attente, le tableau de bord par défaut — et le bandeau d'histoires —
  * s'affichaient une seconde avant d'être remplacés.
+ *
+ * La disposition choisie est notée pour la prochaine visite : le squelette
+ * de l'attente (accueilSquelette.js) en prend la forme.
  */
-function fzdRevelerAccueil() {
+function fzdRevelerAccueil(noter = true) {
+    const section = document.getElementById('fzDashSection');
+    if (noter && section && userData.username && window.FZPool) {
+        const disposition = !FZPool.get() ? 'vide'
+            : section.classList.contains('is-drafting') ? 'repechage'
+            : section.classList.contains('is-season') ? 'saison' : 'tableau';
+        try { localStorage.setItem('fzAccueilDisposition', disposition); } catch (e) { /* navigation privée */ }
+    }
+    document.getElementById('fzHomeSkeleton')?.remove();
     document.documentElement.classList.remove('fz-home-pending');
 }
 
@@ -2945,7 +2956,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await Promise.all([FZPool.ready(), loadCurrentStats(), loadPendingTrades(), loadOffseasonWatchlist()]);
     } catch (erreur) {
         // renderDash() ne passera pas : rien ne choisirait de disposition.
-        fzdRevelerAccueil();
+        fzdRevelerAccueil(false);
         throw erreur;
     }
     renderDash();

@@ -15,10 +15,11 @@
     <script src="fzDialog.js?v=20260926a"></script>
     <link rel="stylesheet" href="teamLogos.css?v=20260926">
     <link rel="stylesheet" href="index.css?v=20260926b">
-    <link rel="stylesheet" href="pool.css?v=20261003a">
-    <link rel="stylesheet" href="poolNav.css?v=20260928a">
+    <link rel="stylesheet" href="pool.css?v=20261003b">
+    <link rel="stylesheet" href="poolNav.css?v=20261003a">
+    <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
-    <link rel="stylesheet" href="repechage.css?v=20260928c">
+    <link rel="stylesheet" href="repechage.css?v=20261003a">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
@@ -31,11 +32,29 @@
 
     <div class="pool-page-container rp-container">
         <div id="rpContent" class="rp-content">
-            <!-- Rempli par repechage.js -->
-            <div class="rp-loading">
-                <div class="rp-spinner" aria-hidden="true"></div>
-                <p>Chargement du repêchage…</p>
-            </div>
+            <!-- Rempli par repechage.js. D'ici là, la carte du salon en os
+                 (fzSquelette.css) : l'en-tête, la ligne d'état, la date, les
+                 inscrits et les boutons, aux classes de rendreSalon(). -->
+            <p class="fz-sk-sr" role="status">Chargement du repêchage…</p>
+            <article class="rp-card rp-sk" data-fz-sk inert>
+                <header class="rp-head">
+                    <span class="rp-img fz-bone"></span>
+                    <div class="rp-head-txt"><p class="rp-eyebrow">Repêchage</p><span class="fz-bone rp-sk-title"></span></div>
+                    <span class="fz-bone-flat rp-sk-state"></span>
+                </header>
+                <div class="rp-body">
+                    <span class="fz-bone rp-sk-lead"></span>
+                    <span class="fz-bone rp-sk-lead is-short"></span>
+                    <div class="rp-date is-open">
+                        <span class="rp-date-ico"></span>
+                        <span class="rp-date-txt"><span class="fz-bone-flat rp-sk-label"></span><span class="fz-bone rp-sk-quand"></span></span>
+                        <span class="fz-bone rp-sk-datebtn"></span>
+                    </div>
+                    <span class="fz-bone-flat rp-sk-label is-section"></span>
+                    <div class="rp-sk-chips"><span class="fz-bone rp-sk-chip"></span><span class="fz-bone rp-sk-chip"></span><span class="fz-bone rp-sk-chip"></span></div>
+                    <div class="rp-actions"><span class="fz-bone rp-sk-btn"></span><span class="fz-bone rp-sk-btn is-second"></span></div>
+                </div>
+            </article>
         </div>
     </div>
 
@@ -48,7 +67,7 @@
     <script defer src="avatars.js"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20260929a"></script>
-    <script defer src="poolNav.js?v=20260929a"></script>
+    <script defer src="poolNav.js?v=20261003a"></script>
     <script defer src="poolInvites.js?v=20260925e"></script>
     <script defer src="notifications.js?v=20260930c"></script>
 </body>

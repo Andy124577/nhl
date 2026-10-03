@@ -569,29 +569,13 @@ html[data-theme="light"] .form-group input[type="datetime-local"] { color-scheme
 }
 
 /* ============================================================ */
-/* SKELETON LOADERS                                              */
+/* CHARGEMENT — les pools ouverts en os (rejoindre-pool.html)  */
 /* ============================================================ */
-.skeleton-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-.skeleton-card {
-    background: var(--card-white);
-    border: 1px solid var(--border-light);
-    border-radius: 16px;
-    padding: 20px 24px;
-}
-.skeleton-card-content .skeleton {
-    background: linear-gradient(90deg, var(--bg-hover) 25%, var(--border-light) 50%, var(--bg-hover) 75%);
-    background-size: 200% 100%;
-    animation: skeleton-shimmer 1.5s infinite;
-    border-radius: 8px;
-}
-@keyframes skeleton-shimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
+.pk-sk li { cursor: default; animation-delay: calc(var(--i, 0) * 50ms); }
+.pk-sk li:hover { border-color: var(--border-light); box-shadow: none; transform: none; }
+.pk-sk-name { width: var(--w); max-width: 100%; height: 17px; margin: 1px 0 11px; border-radius: 5px; }
+.pk-sk-badge { width: var(--w); height: 26px; border-radius: 100px; }
+.pk-sk-btn { flex-shrink: 0; width: 104px; height: 42px; border-radius: 12px; }
 
 /* ============================================================ */
 /* DRAFT TAB — Item Variants                                     */

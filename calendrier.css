@@ -289,8 +289,7 @@ body.fz-cal-page { background: var(--bg); }
 @keyframes calPouls { 50% { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .cal-tag.is-live i { animation: none; } }
 
-.cal-empty,
-.cal-loading {
+.cal-empty {
     grid-column: 1 / -1;
     margin: 0;
     padding: 36px 16px;
@@ -299,10 +298,17 @@ body.fz-cal-page { background: var(--bg); }
     text-align: center;
     color: var(--text-secondary);
 }
-.cal-loading { display: flex; align-items: center; justify-content: center; gap: 10px; }
-.cal-spinner {
-    width: 18px; height: 18px; border-radius: 50%;
-    border: 3px solid var(--border-gray); border-top-color: var(--primary);
-    animation: calTourne .8s linear infinite;
-}
-@keyframes calTourne { to { transform: rotate(360deg); } }
+/* ---- Chargement : la semaine en os (calendrier.html, rendreSquelette) ----
+   Os de fzSquelette.css, aux hauteurs des lignes qu'ils remplacent : la
+   puce garde ses 76px, la carte la taille d'un match à venir. */
+.cal-strip > .cal-chip:not([data-jour]) { cursor: default; }
+.cal-sk-dow { width: 30px; height: 9px; margin: 3px 0 2px; }
+.cal-sk-num { width: 22px; height: 24px; border-radius: 5px; }
+.cal-sk-count { width: 44px; height: 8px; margin: 5px 0 2px; }
+.cal-chip.is-active .cal-sk-count { background: rgba(255, 255, 255, .35); }
+.cal-sk-title { width: 160px; height: 14px; margin: 3px 0; }
+.cal-sk-tag { width: 58px; height: 22px; border-radius: 6px; }
+.cal-sk-logo { width: 32px; height: 32px; }
+.cal-sk-abbr { width: 42px; height: 14px; }
+.cal-sk-game { opacity: 0; animation: fzOsMonte .35s ease-out forwards; animation-delay: calc(var(--i, 0) * 45ms); }
+@media (prefers-reduced-motion: reduce) { .cal-sk-game { opacity: 1; animation: none; } }

@@ -628,6 +628,17 @@ body.fz-trade .pcr-stat.pcr-pts {
     color: var(--fzt-ink);
 }
 
+/* Chargement : les rangées en os de trade.html, en attendant renderMyRoster /
+   renderPartnerRoster. Os de fzSquelette.css, aux hauteurs des lignes. */
+body.fz-trade .tr-sk-row { cursor: default; pointer-events: none; opacity: 0; animation: fzOsMonte .35s ease-out forwards; animation-delay: calc(var(--i, 0) * 40ms); }
+body.fz-trade .tr-sk-name { width: var(--w); max-width: 100%; height: 12px; margin: 1px 0; }
+body.fz-trade .tr-sk-meta { width: var(--w); max-width: 100%; height: 8px; margin: 1px 0; }
+body.fz-trade .tr-sk-n { width: 9px; height: 9px; margin: 2px 0 2px auto; }
+body.fz-trade .tr-sk-pts { width: 18px; height: 14px; margin: 1px 0 1px auto; }
+body.fz-trade .tr-sk-team { width: 132px; max-width: 100%; height: 16px; margin: 3px 0 2px; }
+body.fz-trade .tr-sk-trigger { width: 96px; height: 14px; }
+@media (prefers-reduced-motion: reduce) { body.fz-trade .tr-sk-row { opacity: 1; animation: none; } }
+
 body.fz-trade .rc-showmore {
     padding: 14px 22px 18px;
     font: 400 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;

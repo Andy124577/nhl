@@ -403,15 +403,32 @@ body.fz-stats .stats-empty-state p { color: var(--fzs-text-faint); }
 body.fz-stats .table-empty-title { color: var(--fzs-ink); }
 body.fz-stats .table-empty-hint { color: var(--fzs-text-muted); }
 
-body.fz-stats .skeleton-table-header { background: var(--fzs-bg-alt); }
-body.fz-stats .skeleton-table-header,
-body.fz-stats .skeleton-table-row { border-bottom: 1px solid var(--fzs-border-soft); }
-body.fz-stats .skeleton,
-body.fz-stats .leader-skeleton .skeleton,
-body.fz-stats .top-players-section .skeleton {
-  background: linear-gradient(90deg, var(--fzs-bg-alt) 25%, var(--fzs-border) 50%, var(--fzs-bg-alt) 75%);
-  background-size: 200% 100%;
-}
+/* Chargement : rangées du tableau, palmarès et cartes en os (stats.html).
+   Os de fzSquelette.css, aux hauteurs des lignes qu'ils remplacent. */
+body.fz-stats .st-sk-rows tr { opacity: 0; animation: fzOsMonte .35s ease-out forwards; animation-delay: calc(var(--i, 0) * 40ms); }
+body.fz-stats .st-sk-face { width: var(--d-photo); height: var(--d-photo); border-radius: 10px; }
+body.fz-stats .st-sk-name { width: var(--w); max-width: 100%; height: 14px; margin: 2px 0; }
+body.fz-stats .st-sk-team { width: 30px; height: 10px; }
+body.fz-stats .st-sk-pos { width: 18px; height: 14px; border-radius: 4px; }
+body.fz-stats .st-sk-n { width: 16px; height: 13px; margin: 0 auto; }
+body.fz-stats .st-sk-pts { width: 22px; height: 18px; margin: 0 auto; }
+body.fz-stats .leader-skeleton .leader-featured,
+body.fz-stats .leader-skeleton .leader-row { cursor: default; }
+body.fz-stats .lk-photo { flex-shrink: 0; width: 46px; height: 46px; }
+body.fz-stats .lk-name { width: 110px; max-width: 100%; height: 13px; margin-bottom: 6px; }
+body.fz-stats .lk-meta { width: 34px; height: 9px; }
+body.fz-stats .lk-val { flex-shrink: 0; width: 30px; height: 24px; }
+body.fz-stats .lk-rank { flex-shrink: 0; width: 10px; height: 10px; }
+body.fz-stats .lk-row-name { width: var(--w); max-width: 60%; height: 11px; }
+body.fz-stats .lk-team { width: 26px; height: 9px; margin-left: auto; }
+body.fz-stats .lk-row-val { flex-shrink: 0; width: 18px; height: 12px; }
+body.fz-stats .tp-sk-card { cursor: default; }
+body.fz-stats .tp-sk-card:hover { border-color: var(--border-light); box-shadow: none; transform: none; }
+body.fz-stats .tp-sk-name { width: var(--w); height: 12px; margin: 0 auto 7px; }
+body.fz-stats .tp-sk-team { width: 70px; height: 9px; margin: 0 auto 16px; }
+body.fz-stats .tp-sk-val { width: 22px; height: 16px; }
+body.fz-stats .tp-sk-lbl { width: 26px; height: 7px; margin-top: 5px; }
+@media (prefers-reduced-motion: reduce) { body.fz-stats .st-sk-rows tr { opacity: 1; animation: none; } }
 
 @media (max-width: 640px) {
   body.fz-stats .stats-subnav-inner { background: var(--fzs-surface); }

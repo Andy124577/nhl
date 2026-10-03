@@ -403,7 +403,7 @@
     }
 
     function squelette() {
-        return `<div class="lu-loading" role="status">${'<span class="skeleton lu-skel"></span>'.repeat(6)}<span class="lu-sr">Chargement de l’alignement…</span></div>`;
+        return `<div class="lu-loading" role="status">${'<span class="fz-bone lu-skel"></span>'.repeat(6)}<span class="lu-sr">Chargement de l’alignement…</span></div>`;
     }
 
     // ---------------------------------------------------------- gestes

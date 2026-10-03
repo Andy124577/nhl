@@ -21,6 +21,10 @@
 
     const RELECTURE_MS = 30000;
 
+    // La feuille en os de match.html, reprise pour « Réessayer » : le script est
+    // différé, la page est déjà lue.
+    const SQUELETTE = document.getElementById('mtRoot')?.innerHTML || '';
+
     const echapper = t => String(t == null ? '' : t)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -787,7 +791,7 @@
                 return;
             }
             if (e.target.closest('[data-action="reessayer"]')) {
-                racine.innerHTML = '<div class="mt-loading" role="status"><span class="mt-spinner" aria-hidden="true"></span>Chargement de la feuille de match…</div>';
+                racine.innerHTML = SQUELETTE;
                 erreur = null;
                 charger();
             }

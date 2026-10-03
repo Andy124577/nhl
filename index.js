@@ -104,7 +104,6 @@ async function changerModeSaison() {
             console.warn("⚠️ Projections indisponibles :", err);
             select.value = statsMode = "stats";
         }
-        hideSkeletonLoader();
     }
     libellerModesSaison();
     updateTable();
@@ -177,7 +176,7 @@ async function fetchPlayerData() {
         } catch (t) {
             console.warn("⚠️ Could not load current team standings, using cached data:", t)
         }
-        libellerModesSaison(), updateTable(), hideSkeletonLoader()
+        libellerModesSaison(), updateTable()
     } catch (t) {
         console.error("Failed to fetch player data:", t), hideSkeletonLoader()
     }
@@ -643,6 +642,9 @@ async function handleViewChange() {
 async function showGameLog(t) {
     const stillViewing = () => currentCareerData && String(currentPlayerId) === String(t)
         && document.getElementById("viewFilter").value === "gamelog";
+    // Le tableau de carrière ne reste pas affiché sous « Chargement… » : des
+    // rangées en os (careerModal.js) tiennent sa place jusqu'aux matchs.
+    if (typeof fzCareerTableSkeleton === "function") document.getElementById("careerStatsTable").innerHTML = fzCareerTableSkeleton();
     try {
         const e = await fetch(`/player-gamelog/${t}`),
             a = await e.json();
@@ -680,16 +682,19 @@ function renderGameLogTable(t, e) {
     }), n += "</tbody></table>", a.innerHTML = n
 }
 
+// Le tableau de stats.html tel qu'il arrive : son vrai en-tête et des rangées
+// en os. Repris à chaque relecture (projections) ; le script est différé, la
+// page est déjà lue. populatePlayerTable remplace tout le tableau.
+const TABLEAU_SQUELETTE = document.getElementById("playerTable")?.innerHTML || "";
+
 function showSkeletonLoader() {
-    const t = document.getElementById("tableSkeleton"),
-        e = document.getElementById("actualTable");
-    t && (t.style.display = "block"), e && (e.style.display = "none")
+    const table = document.getElementById("playerTable");
+    if (table && TABLEAU_SQUELETTE) table.innerHTML = TABLEAU_SQUELETTE;
 }
 
+/** Lecture ratée : rien ne viendra remplacer les rangées en os. */
 function hideSkeletonLoader() {
-    const t = document.getElementById("tableSkeleton"),
-        e = document.getElementById("actualTable");
-    t && (t.style.display = "none"), e && (e.style.display = "block")
+    document.querySelector("#playerTable tbody[data-fz-sk]")?.remove();
 }
 
 function showModalSkeleton() {
