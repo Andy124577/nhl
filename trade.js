@@ -1229,14 +1229,21 @@ function startCounterOffer(tradeId) {
 }
 
 // ============================================================
-// HISTORY — completed, declined and cancelled trades for the active pool.
+// HISTORY — every team's completed trades in the active pool, plus the
+// declined and cancelled proposals that involve me (/trades/history).
 // ============================================================
 async function loadHistory(idCible) {
     const container = document.getElementById('historyTradesContent');
     if (!container) return;
 
+    const poolActif = FZPool.get();
+    if (!poolActif) {
+        container.innerHTML = '<p class="history-empty">Aucun pool actif.</p>';
+        return false;
+    }
+
     try {
-        const res = await fetch(`${BASE_URL}/trades/completed/${currentUsername}`, { cache: 'no-store' });
+        const res = await fetch(`${BASE_URL}/trades/history/${encodeURIComponent(poolActif)}`, { cache: 'no-store' });
 
         if (!res.ok) {
             console.error('Failed to fetch history:', res.status);
@@ -1245,13 +1252,10 @@ async function loadHistory(idCible) {
         }
 
         const tous = await res.json();
-        const poolActif = FZPool.get();
-        const trades = Array.isArray(tous)
-            ? (poolActif ? tous.filter(t => t.draftName === poolActif) : tous)
-            : [];
+        const trades = Array.isArray(tous) ? tous : [];
 
         if (trades.length === 0) {
-            container.innerHTML = '<p class="history-empty">Aucun échange traité pour le moment.</p>';
+            container.innerHTML = '<p class="history-empty">Aucun échange dans ce pool pour le moment.</p>';
             return false;
         }
 

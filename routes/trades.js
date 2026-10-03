@@ -172,6 +172,49 @@ function monter(app, ctx) {
         }
     });
 
+    /**
+     * L'historique d'un pool, tel que l'onglet « Historique » le montre :
+     * les échanges conclus de TOUTES les équipes, plus les propositions
+     * refusées ou annulées qui concernent la personne connectée.
+     *
+     * Un refus entre deux autres équipes reste entre elles : c'est une
+     * négociation, pas un mouvement d'alignement. Un seul pool est lu.
+     */
+    app.get('/trades/history/:draftName', auth.requireAuth, async (req, res) => {
+        try {
+            exigerPostgres();
+            const nom = req.params.draftName;
+            const enveloppe = await store.lire(nom);
+            if (!enveloppe) return res.status(404).json({ message: "Pool introuvable." });
+            if (!req.auth.isAdmin && !authz.estMembre(enveloppe.data, req.auth.username)) {
+                return res.status(403).json({ message: "Vous n'êtes pas membre de ce pool." });
+            }
+
+            const username = req.auth.username;
+            const echanges = await db.getTradesForPools([nom], ['completed', 'declined', 'cancelled']);
+
+            const visibles = echanges
+                .filter(t => t.status === 'completed' ||
+                             membresDe(enveloppe.data, t.data.fromTeam).includes(username) ||
+                             membresDe(enveloppe.data, t.data.toTeam).includes(username))
+                .map(t => ({
+                    id: t.id,
+                    draftName: t.poolName,
+                    fromTeam: t.data.fromTeam,
+                    toTeam: t.data.toTeam,
+                    offering: t.data.offering,
+                    receiving: t.data.receiving,
+                    status: t.status,
+                    date: t.data.date,
+                    completedDate: t.data.completedDate || t.updatedAt || t.createdAt
+                }));
+
+            res.json(visibles);
+        } catch (erreur) {
+            repondreErreur(res, erreur, '/trades/history');
+        }
+    });
+
     /** Échanges conclus d'un pool. Réservé à ses membres. */
     app.get('/trades/:draftName', auth.requireAuth, async (req, res) => {
         try {

@@ -200,6 +200,52 @@ test('/trades/all est atteignable et ne deborde pas sur les pools des autres', a
     } finally { h.nettoyer(); }
 });
 
+test("l'historique d'un pool montre les échanges conclus de tous, et les refus des seuls concernés", async () => {
+    const h = monterRoutes(routesEchanges, {
+        pools: {
+            Pool: poolTermine({
+                draftOrder: ['Équipe 1', 'Équipe 2', 'Équipe 3'],
+                teams: {
+                    'Équipe 1': { members: ['alice'], offensive: ['Joueur A'], defensive: [], goalie: [], rookie: [], teams: [] },
+                    'Équipe 2': { members: ['bob'], offensive: ['Joueur B'], defensive: [], goalie: [], rookie: [], teams: [] },
+                    'Équipe 3': { members: ['carl'], offensive: ['Joueur C'], defensive: [], goalie: [], rookie: [], teams: [] }
+                }
+            }),
+            Autre: poolTermine({
+                teams: {
+                    'Équipe 1': { members: ['carl'], offensive: ['Joueur C'], defensive: [], goalie: [], rookie: [], teams: [] },
+                    'Équipe 2': { members: ['dora'], offensive: ['Joueur D'], defensive: [], goalie: [], rookie: [], teams: [] }
+                }
+            })
+        }
+    });
+    try {
+        const entre = (fromTeam, toTeam) => ({ fromTeam, toTeam, offering: offre, receiving: retour });
+        h.etat.trades.push(
+            // Conclu entre Bob et Carl : Alice le voit aussi.
+            { id: 1, poolName: 'Pool', status: 'completed', createdAt: new Date(), data: entre('Équipe 2', 'Équipe 3') },
+            // Refusé entre Bob et Carl : leur négociation, pas celle d'Alice.
+            { id: 2, poolName: 'Pool', status: 'declined', createdAt: new Date(), data: entre('Équipe 3', 'Équipe 2') },
+            // Refusé par Alice elle-même.
+            { id: 3, poolName: 'Pool', status: 'declined', createdAt: new Date(), data: entre('Équipe 2', 'Équipe 1') },
+            // Encore en attente : n'appartient pas à l'historique.
+            { id: 4, poolName: 'Pool', status: 'pending', createdAt: new Date(), data: entre('Équipe 1', 'Équipe 3') },
+            // Un autre pool.
+            { id: 5, poolName: 'Autre', status: 'completed', createdAt: new Date(), data: entre('Équipe 1', 'Équipe 2') }
+        );
+
+        const alice = await h.appeler('GET', '/trades/history/Pool', { auth: ALICE });
+        assert.equal(alice.statusCode, 200);
+        assert.deepEqual(alice.body.map(t => t.id).sort(), [1, 3]);
+
+        const carl = await h.appeler('GET', '/trades/history/Pool', { auth: CARL });
+        assert.deepEqual(carl.body.map(t => t.id).sort(), [1, 2]);
+
+        const dora = await h.appeler('GET', '/trades/history/Pool', { auth: { username: 'dora', userId: 'dora', isAdmin: false } });
+        assert.equal(dora.statusCode, 403, "l'historique est réservé aux membres du pool");
+    } finally { h.nettoyer(); }
+});
+
 test('archived notification destinations focus the correct card and respect reduced motion', async () => {
     for (const status of ['completed', 'declined', 'cancelled']) {
         const focused = [];
@@ -222,6 +268,7 @@ test('archived notification destinations focus the correct card and respect redu
             offering: [{ name: 'Player A', type: 'offensive' }],
             receiving: [{ name: 'Player B', type: 'offensive' }]
         };
+        const urls = [];
         const { loadHistory } = chargerFonctions('trade.js', [
             'loadHistory', 'focusTradeTarget', 'getCategory', 'getCategoryLabel',
             'historyPlayersHTML', 'tradeShotHTML', 'clubDuJoueur', 'getPlayerCurrentStats',
@@ -232,15 +279,15 @@ test('archived notification destinations focus the correct card and respect redu
             document: { getElementById: () => container },
             window: { matchMedia: () => ({ matches: true }) },
             FZPool: { get: () => 'Pool' },
-            fetch: async () => ({ ok: true, json: async () => [
-                { ...trade, id: 99, draftName: 'Other pool' },
-                { ...trade, id: 41 }, trade
-            ] })
+            fetch: async (url) => {
+                urls.push(url);
+                return { ok: true, json: async () => [{ ...trade, id: 41 }, trade] };
+            }
         });
         assert.equal(await loadHistory('42'), true);
+        assert.deepEqual(urls, ['/trades/history/Pool'], "l'historique est celui du pool actif");
         assert.deepEqual(focused, ['42']);
         assert.deepEqual(scrolled, ['auto']);
-        assert.doesNotMatch(container.html, /data-trade-id="99"/);
         assert.match(container.html, status === 'completed' ? /Complété/ : status === 'declined' ? /Refusé/ : /Annulé/);
         focused.length = 0;
         assert.equal(await loadHistory('missing'), false);
