@@ -73,7 +73,7 @@ describe('classement — fiche d’équipe en direct', () => {
 
     const OILERS = { gamesPlayed: 5, wins: 3, otLosses: 1 };
     const FONCTIONS_FICHE = ['statsDeRangee', 'statsRangeeHTML', 'sousTitreFiche', 'rafraichirFicheEnDirect',
-        'cleFicheAffichee', 'clubDeRangee', 'soireeDe', 'ppaDe', 'soireeBadgeHTML', 'SOIREE_TITRE', 'EVO_ARROW_UP',
+        'cleFicheAffichee', 'clubDeRangee', 'soireeDe', 'ppaDe', 'soireeBadgeHTML', 'SOIREE_TITRE',
         'marquesHTML', 'CHOIX_LIBELLES', 'MARQUES_SVG'];
 
     function monterFiche({ vue = 'teamRoster', soiree = null, extremes = {} } = {}) {
@@ -134,7 +134,7 @@ describe('classement — fiche d’équipe en direct', () => {
         const [mcdavid, club] = rangees;
 
         assert.match(mcdavid.bloc.innerHTML, /<span class="rr-v">5<\/span><span class="rr-l">PJ<\/span>/, '4 au relevé, plus ce soir');
-        assert.match(mcdavid.pastille.innerHTML, /^<span class="st-evo st-evo-up" title="2 points de pool[^"]*"><svg[^]*<\/svg>2<\/span>$/);
+        assert.match(mcdavid.pastille.innerHTML, /^<span class="st-evo st-evo-up" title="2 points de pool[^"]*">\+2<\/span>$/);
         assert.match(mcdavid.marques.innerHTML, /rr-mark is-live/);
         assert.match(mcdavid.marques.innerHTML, /rr-mark is-best/, 'un repère de plus, à côté');
 

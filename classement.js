@@ -2068,12 +2068,12 @@ function ppaDe(soiree) {
 
 /**
  * La pastille des points de la dernière soirée, faite comme celle de la
- * tendance du classement (evolutionBadgeHTML) : flèche verte et les points
- * marqués, un trait gris sans point.
+ * tendance du classement (evolutionBadgeHTML) : « +3 » en vert, un trait
+ * gris sans point.
  */
 function soireeBadgeHTML(ppa) {
     if (ppa > 0) {
-        return `<span class="st-evo st-evo-up" title="${ppa} point${ppa > 1 ? 's' : ''} de pool à sa dernière soirée, ${SOIREE_TITRE}">${EVO_ARROW_UP}${ppa}</span>`;
+        return `<span class="st-evo st-evo-up" title="${ppa} point${ppa > 1 ? 's' : ''} de pool à sa dernière soirée, ${SOIREE_TITRE}">+${ppa}</span>`;
     }
     return `<span class="st-evo st-evo-flat" title="Aucun point à sa dernière soirée, ${SOIREE_TITRE}">—</span>`;
 }
