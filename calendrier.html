@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="index.css?v=20260926b">
-    <link rel="stylesheet" href="calendrier.css?v=20261004c">
+    <link rel="stylesheet" href="calendrier.css?v=20261004d">
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit précéder tout script de page. -->
     <script defer src="activePool.js?v=20260929n"></script>
@@ -76,6 +76,12 @@
                 <article class="cal-game cal-sk-game" style="--i:4" aria-hidden="true"><div class="cal-game-status"><span class="fz-bone cal-sk-time"></span></div><div class="cal-game-teams"><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div></div></article>
             </div>
         </section>
+
+        <!-- Dès qu'on regarde un autre jour qu'aujourd'hui (calendrier.js, majRetour). -->
+        <button type="button" class="cal-return" id="calReturn" hidden>
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+            Revenir à aujourd’hui
+        </button>
     </main>
 
     <!-- `async` : servi avec max-age=0, il repasse par le serveur à chaque
@@ -83,7 +89,7 @@
          suivent ; ceux qui s'en servent l'attendent d'eux-mêmes. -->
     <script async src="/socket.io/socket.io.js"></script>
     <script defer src="teamColors.js"></script>
-    <script defer src="calendrier.js?v=20261004c"></script>
+    <script defer src="calendrier.js?v=20261004d"></script>
     <script defer src="avatars.js"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20260929a"></script>

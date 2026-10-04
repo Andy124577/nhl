@@ -38,18 +38,55 @@ html[data-theme="light"] .fz-cal-page {
 
 body.fz-cal-page { background: var(--cal-bg); }
 
+/* --cal-gutter : la marge de côté, que les carrousels reprennent pour
+   défiler d'un bord de l'écran à l'autre. */
 .cal-page {
+    --cal-gutter: 20px;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 24px 20px 48px;
+    padding: 24px var(--cal-gutter) 48px;
     color: var(--cal-ink);
     font-family: Geist, system-ui, -apple-system, 'Segoe UI', sans-serif;
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
 }
 .cal-page button { font-family: inherit; }
-@media (min-width: 640px) { .cal-page { padding: 40px 32px 56px; } }
-@media (min-width: 1100px) { .cal-page { padding: 48px 72px 56px; } }
+@media (min-width: 640px) { .cal-page { --cal-gutter: 32px; padding: 40px var(--cal-gutter) 56px; } }
+@media (min-width: 1100px) { .cal-page { --cal-gutter: 72px; padding: 48px var(--cal-gutter) 56px; } }
+
+/* ---- Retour à aujourd'hui ----
+   Flotte au centre, au-dessus des onglets fixes du téléphone, dès qu'on
+   regarde un autre jour (calendrier.js, majRetour). Pleine encre, comme
+   le rond du jour choisi. */
+.cal-return {
+    position: fixed;
+    left: 50%;
+    bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    z-index: 990;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 18px 0 14px;
+    border: 0;
+    border-radius: 22px;
+    background: var(--cal-ink);
+    color: var(--cal-bg);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .12), 0 8px 24px rgba(0, 0, 0, .24);
+    cursor: pointer;
+    transform: translateX(-50%);
+    animation: calSurgit .2s cubic-bezier(.4, 0, .2, 1);
+}
+.cal-return[hidden] { display: none; }
+.cal-return svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cal-page .cal-return:focus-visible { outline-offset: 3px; }
+@media (min-width: 769px) { .cal-return { bottom: 40px; } }
+@keyframes calSurgit { from { opacity: 0; transform: translate(-50%, 10px); } }
+/* Le dernier match peut toujours remonter au-dessus de la pastille. */
+.cal-page:has(.cal-return:not([hidden])) { padding-bottom: 112px; }
 
 .cal-page :is(button, a, [tabindex]):focus-visible { outline: 2px solid var(--cal-accent); outline-offset: 2px; }
 
@@ -367,16 +404,88 @@ body.fz-cal-page { background: var(--cal-bg); }
 }
 
 /* ---- Sous les équipes (calendrier.js, « listes ») ----
-   Les buts d'un match commencé ; d'un match à venir, mes joueurs ou les
-   meneurs des deux clubs. Une rangée par joueur : photo, nom, chiffres
-   à droite, une dernière ligne dessous. Au téléphone, chaque rangée est
-   un pavé. */
+   Les buts d'un match commencé et les meneurs d'un match à venir : un
+   carrousel de pavés. Mes joueurs d'un match à venir : une liste, une
+   rangée par joueur — photo, nom, chiffres à droite, une dernière ligne
+   dessous ; pavés au téléphone, rangées ouvertes à 900px et plus. */
 .cal-car { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.cal-car-head { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; color: var(--cal-muted); }
-.cal-car-title { font-weight: 500; color: var(--cal-ink); }
+.cal-car-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: 12px;
+    color: var(--cal-muted);
+}
+.cal-car-title { flex: none; font-weight: 500; color: var(--cal-ink); }
+.cal-car-sub {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 .cal-car-sub::before { content: '·'; margin-right: 6px; }
 .cal-car-list { display: flex; flex-direction: column; gap: 10px; }
 .cal-car-empty { margin: 0; font-size: 12px; color: var(--cal-muted); }
+
+/* La piste va d'un bord de l'écran à l'autre tant qu'elle prend toute la
+   largeur ; à 900px, elle tient dans sa colonne. La carte suivante dépasse
+   à droite : c'est ce qui dit qu'elle défile. */
+/* `position: relative` : le « (mon joueur) » caché aux yeux (.fz-sk-sr) est
+   en absolu ; sans lui, celui d'une carte hors de vue élargissait la page. */
+.cal-car-track {
+    position: relative;
+    display: flex;
+    gap: 8px;
+    margin-inline: calc(-1 * var(--cal-gutter));
+    padding: 0 var(--cal-gutter) 2px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-padding-inline: var(--cal-gutter);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+}
+.cal-car-track::-webkit-scrollbar { display: none; }
+.cal-car-track > .cal-car-card { flex: 0 0 86%; max-width: 300px; min-width: 0; scroll-snap-align: start; }
+.cal-car-track > .cal-car-card:only-child { flex-basis: 100%; max-width: none; }
+.cal-page .cal-car-track:focus-visible { outline-offset: -2px; border-radius: 14px; }
+@media (min-width: 900px) {
+    .cal-car-track { margin-inline: 0; padding-inline: 0; scroll-padding-inline: 0; }
+    .cal-car-track > .cal-car-card { flex-basis: 280px; }
+}
+
+/* Flèches : seulement à la souris, et seulement quand la piste déborde
+   (`has-nav`). Au téléphone, le pouce fait le travail. */
+.cal-car-nav { display: none; flex: none; gap: 4px; margin-left: auto; }
+@media (hover: hover) and (pointer: fine) {
+    .cal-car.has-nav .cal-car-nav { display: flex; }
+}
+.cal-car-arrow {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid var(--cal-line);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--cal-ink);
+    cursor: pointer;
+}
+.cal-car-arrow svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cal-car-arrow:hover:not(.is-off) { background: var(--cal-hover); }
+.cal-car-arrow.is-off { opacity: .35; cursor: default; }
+
+.cal-car-dots { display: flex; justify-content: center; gap: 4px; }
+.cal-car-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--cal-muted);
+    opacity: .4;
+    transition: width .18s ease, opacity .18s ease, background-color .18s ease;
+}
+.cal-car-dot.is-on { width: 14px; background: var(--cal-accent); opacity: 1; }
 
 .cal-car-card {
     display: grid;
@@ -460,9 +569,10 @@ body.fz-cal-page { background: var(--cal-bg); }
 .cal-goal-when { margin-left: 6px; font-weight: 400; color: var(--cal-muted); }
 .cal-goal-when sup { font-size: .75em; line-height: 0; }
 
+/* La liste de mes joueurs, en rangées ouvertes : celles de la maquette. */
 @media (min-width: 900px) {
     .cal-car-list { gap: 20px; }
-    .cal-car-card {
+    .cal-car-list > .cal-car-card {
         grid-template-columns: 36px minmax(0, 1fr) auto;
         grid-template-areas:
             "photo id   stats"
@@ -473,15 +583,13 @@ body.fz-cal-page { background: var(--cal-bg); }
         border-radius: 0;
         background: none;
     }
-    .cal-car-photo { width: 36px; height: 36px; background: var(--cal-surface); font-size: 12px; }
-    .cal-car-id { gap: 3px; }
-    .cal-pl-stats { gap: 20px; }
-    .cal-pl-stats div { min-width: 28px; }
-    .cal-pl-stats dt { font-size: 10px; }
-    .cal-pl-stats dd { font-size: 16px; }
-    .cal-pl-form,
-    .cal-goal-run,
-    .cal-sk-form { margin-top: 7px; }
+    .cal-car-list .cal-car-photo { width: 36px; height: 36px; background: var(--cal-surface); font-size: 12px; }
+    .cal-car-list .cal-car-id { gap: 3px; }
+    .cal-car-list .cal-pl-stats { gap: 20px; }
+    .cal-car-list .cal-pl-stats div { min-width: 28px; }
+    .cal-car-list .cal-pl-stats dt { font-size: 10px; }
+    .cal-car-list .cal-pl-stats dd { font-size: 16px; }
+    .cal-car-list :is(.cal-pl-form, .cal-sk-form) { margin-top: 7px; }
 }
 
 .cal-empty {
@@ -515,6 +623,8 @@ body.fz-cal-page { background: var(--cal-bg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .cal-return { animation: none; }
+    .cal-car-dot { transition: none; }
     .cal-live i { animation: none; }
     .cal-sk-game { opacity: 1; animation: none; }
 }

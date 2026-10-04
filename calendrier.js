@@ -248,6 +248,7 @@
         const bande = document.getElementById('calStrip');
         const auj = aujourdhui();
         const jours = (semaine && semaine.days) || [];
+        majRetour();
         if (!jours.length) { bande.innerHTML = ''; return; }
         const miensSeuls = filtreActif();
         bande.innerHTML = jours.map(d => {
@@ -347,12 +348,12 @@
         const feuille = joue && m.id
             ? `<a class="cal-game-box" href="match.html?id=${encodeURIComponent(m.id)}">Feuille de match<span aria-hidden="true">›</span></a>`
             : '';
-        // À côté des équipes : les buts d'un match commencé ; d'un match à
-        // venir, mes joueurs qui y sont — ou, sans eux, les meneurs des deux
-        // clubs à leurs derniers matchs.
-        const cote = (joue ? listeButs(m, fini)
+        // À côté des équipes : le carrousel des buts d'un match commencé ;
+        // d'un match à venir, la liste de mes joueurs qui y sont — ou, sans
+        // eux, le carrousel des meneurs des deux clubs à leurs derniers matchs.
+        const cote = (joue ? carrouselButs(m, fini)
             : miens.length ? listeMesJoueurs(miens)
-            : listeMeneurs(m))
+            : carrouselMeneurs(m))
             + (joue && miens.length ? `<p class="cal-game-mine"><strong>Mes joueurs</strong> · ${miens.map(j => echapper(j.nom)).join(', ')}</p>` : '');
         const issue = (moi, autre) => (!fini || moi.score === autre.score ? '' : moi.score > autre.score ? 'gagnant' : 'perdant');
         return `
@@ -389,11 +390,27 @@
             zone.innerHTML = `<p class="cal-empty">${matchs.length ? 'Aucun de vos joueurs ne joue ce jour-là.' : 'Aucun match ce jour-là.'}</p>`;
             return;
         }
-        // Avant le dessin : une requête qui part dessine ses listes en os.
+        // Avant le dessin : une requête qui part dessine ses carrousels en os.
         chargerButs(jourChoisi);
         chargerForme(affiches);
+        // La journée se redessine aussi sans qu'on l'ait demandé — le direct,
+        // des buts ou une forme qui arrivent. Chaque carrousel garde alors sa
+        // place : voir une piste revenir au premier but sous le pouce serait
+        // une main sur l'épaule. Un autre jour n'a aucune piste à retrouver.
+        const places = new Map();
+        document.querySelectorAll('#calGames .cal-car').forEach(car => {
+            const carte = car.closest('[data-match]');
+            const piste = car.querySelector('.cal-car-track');
+            if (carte && piste && piste.scrollLeft) places.set(`${carte.dataset.match}|${car.dataset.car}`, piste.scrollLeft);
+        });
         zone.innerHTML = affiches.map(carteMatch).join('');
+        places.forEach((x, cle) => {
+            const [id, genre] = cle.split('|');
+            const piste = document.querySelector(`.cal-game[data-match="${CSS.escape(id)}"] .cal-car[data-car="${genre}"] .cal-car-track`);
+            if (piste) piste.scrollLeft = x;
+        });
         reglerHorloges();
+        majCarrousels();
     }
 
     /**
@@ -409,6 +426,29 @@
         el.textContent = d1.getUTCMonth() === d2.getUTCMonth()
             ? `${d1.getUTCDate()} – ${fin}`
             : `${d1.getUTCDate()} ${MOIS_COURTS[d1.getUTCMonth()]} – ${fin}`;
+        majRetour();
+    }
+
+    /**
+     * La pastille flottante « Revenir à aujourd’hui » : dès qu'on regarde un
+     * autre jour, de cette semaine ou d'une autre — et pendant qu'une autre
+     * semaine se charge, quand aucun jour n'est encore choisi.
+     */
+    function majRetour() {
+        const retour = document.getElementById('calReturn');
+        if (retour) retour.hidden = jourChoisi === aujourdhui();
+    }
+
+    /** Aujourd'hui : sa journée, et sa semaine si on en était parti. Dans la semaine déjà affichée, rien à relire. */
+    function allerAujourdhui() {
+        const auj = aujourdhui();
+        jourChoisi = auj;
+        if (semaine && lundiVise === lundiDe(auj) && semaine.days.some(d => d.date === auj)) {
+            rendreBande();
+            rendreJour();
+            return Promise.resolve();
+        }
+        return chargerSemaine(auj);
     }
 
     function rendre() {
@@ -548,7 +588,7 @@
             `<div${cles.includes(l) ? ' class="is-key"' : ''}><dt>${l}</dt><dd>${echapper(v ?? 0)}</dd></div>`).join('')}</dl>`;
     }
 
-    /** Une liste de rangées, son titre discret au-dessus quand elle en a un. */
+    /** Une liste de rangées (mes joueurs), son titre discret au-dessus quand elle en a un. */
     function liste(genre, titre, sous, rangees, etiquette) {
         if (!rangees.length) return '';
         const tete = titre
@@ -561,14 +601,38 @@
             </section>`;
     }
 
-    /** La liste en os, le temps que sa requête réponde. */
-    function listeEnOs(genre, titre) {
+    const FLECHE = d => `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false"><path d="${d}"/></svg>`;
+
+    /**
+     * Une piste qui défile au pouce (les buts, les meneurs) : la carte
+     * suivante dépasse à droite, c'est ce qui dit qu'elle défile. Flèches à
+     * la souris seulement, puce de la carte en vue dessous.
+     */
+    function carrousel(genre, titre, sous, cartes, etiquette) {
+        if (!cartes.length) return '';
+        return `
+            <section class="cal-car" data-car="${genre}" aria-label="${echapper(etiquette)}">
+                <div class="cal-car-head">
+                    <span class="cal-car-title">${echapper(titre)}</span>
+                    ${sous ? `<span class="cal-car-sub">${echapper(sous)}</span>` : ''}
+                    <span class="cal-car-nav">
+                        <button type="button" class="cal-car-arrow" data-car-dir="-1" aria-label="Précédent">${FLECHE('M15 18l-6-6 6-6')}</button>
+                        <button type="button" class="cal-car-arrow" data-car-dir="1" aria-label="Suivant">${FLECHE('M9 18l6-6-6-6')}</button>
+                    </span>
+                </div>
+                <div class="cal-car-track" tabindex="0">${cartes.join('')}</div>
+                ${cartes.length > 1 ? `<div class="cal-car-dots" aria-hidden="true">${cartes.map((_, i) => `<i class="cal-car-dot${i ? '' : ' is-on'}"></i>`).join('')}</div>` : ''}
+            </section>`;
+    }
+
+    /** Le carrousel en os, le temps que sa requête réponde. */
+    function carrouselEnOs(genre, titre) {
         const os = '<div class="cal-car-card"><span class="fz-bone is-round cal-car-photo"></span>'
             + '<span class="cal-car-id"><span class="fz-bone cal-sk-name"></span><span class="fz-bone-flat cal-sk-meta"></span></span></div>';
         return `
             <section class="cal-car" data-car="${genre}" aria-hidden="true">
                 <div class="cal-car-head"><span class="cal-car-title">${echapper(titre)}</span></div>
-                <div class="cal-car-list">${os}${os}</div>
+                <div class="cal-car-track">${os}${os}</div>
             </section>`;
     }
 
@@ -580,26 +644,26 @@
     }
 
     /**
-     * Les buts d'un match commencé. En cours, le plus récent en haut — on
+     * Les buts d'un match commencé. En cours, le plus récent à gauche — on
      * vient voir ce qui vient d'arriver ; fini, du premier au dernier — on
      * relit comment ça s'est joué. La liste arrive dans l'ordre de la LNH et
      * n'est retournée que sur une copie : elle resert au rendu suivant.
      */
-    function listeButs(m, fini) {
+    function carrouselButs(m, fini) {
         const marque = ((m.away && m.away.score) || 0) + ((m.home && m.home.score) || 0);
-        if (buts.date !== jourChoisi) return marque > 0 && butsEnVol === jourChoisi ? listeEnOs('buts', 'Buts') : '';
+        if (buts.date !== jourChoisi) return marque > 0 && butsEnVol === jourChoisi ? carrouselEnOs('buts', 'Buts') : '';
         const tous = buts.games[m.id] || [];
         if (!tous.length) return '';
         const ordonnes = fini ? tous : tous.slice().reverse();
         const equipes = { away: (m.away && m.away.abbrev) || '', home: (m.home && m.home.abbrev) || '' };
         const miens = new Set([...mesClubs.values()].flat().map(idDe).filter(Boolean));
-        return liste('buts', 'Buts', fini ? 'Du premier au dernier' : 'Le plus récent d’abord',
+        return carrousel('buts', 'Buts', fini ? 'Du premier au dernier' : 'Le plus récent d’abord',
             ordonnes.map(b => carteBut(b, equipes, miens)), 'Buts du match');
     }
 
     /**
      * Qui a marqué (son total de la saison), qui a aidé, et la marque APRÈS
-     * ce but : de haut en bas, la liste raconte la soirée.
+     * ce but : de gauche à droite, la piste raconte la soirée.
      *
      * Un de mes joueurs, buteur ou passeur, a son nom à l'accent. Reconnu par
      * son numéro : la feuille abrège les passeurs (« N. Suzuki »), le pool
@@ -677,24 +741,24 @@
     }
 
     /**
-     * Le meilleur buteur et le meilleur pointeur de chaque club — une rangée
+     * Le meilleur buteur et le meilleur pointeur de chaque club — une carte
      * par meneur, une seule quand c'est le même joueur.
      */
-    function listeMeneurs(m) {
+    function carrouselMeneurs(m) {
         const clubs = [m.away && m.away.abbrev, m.home && m.home.abbrev].filter(Boolean);
-        if (clubs.some(c => !formeClubs.has(c) && formeEnVol.has(c))) return listeEnOs('meneurs', 'Meneurs');
+        if (clubs.some(c => !formeClubs.has(c) && formeEnVol.has(c))) return carrouselEnOs('meneurs', 'Meneurs');
         const formes = clubs.map(c => [c, formeClubs.get(c)]).filter(([, f]) => f);
         if (!formes.length) return '';
 
-        const rangees = [];
+        const cartes = [];
         formes.forEach(([club, { buteur, pointeur }]) => {
-            if (buteur && pointeur && buteur.id === pointeur.id) rangees.push(carteMeneur(buteur, club, 'les-deux'));
+            if (buteur && pointeur && buteur.id === pointeur.id) cartes.push(carteMeneur(buteur, club, 'les-deux'));
             else {
-                if (buteur) rangees.push(carteMeneur(buteur, club, 'buteur'));
-                if (pointeur) rangees.push(carteMeneur(pointeur, club, 'pointeur'));
+                if (buteur) cartes.push(carteMeneur(buteur, club, 'buteur'));
+                if (pointeur) cartes.push(carteMeneur(pointeur, club, 'pointeur'));
             }
         });
-        if (!rangees.length) {
+        if (!cartes.length) {
             const aucun = formes.every(([, f]) => !f.matchs);
             return `
                 <section class="cal-car" data-car="meneurs">
@@ -705,23 +769,59 @@
         const n = formes.map(([, f]) => f.matchs);
         const sous = n.every(x => x === n[0]) ? derniers(n[0])
             : `Derniers matchs · ${formes.map(([c, f]) => `${c} ${f.matchs}`).join(' · ')}`;
-        return liste('meneurs', 'Meneurs', sous, rangees, 'Meneurs des deux clubs');
+        return carrousel('meneurs', 'Meneurs', sous, cartes, 'Meneurs des deux clubs');
     }
 
     const ROLES = { buteur: 'Meilleur buteur', pointeur: 'Meilleur pointeur', 'les-deux': 'Meilleur buteur et pointeur' };
     const CLES_ROLE = { buteur: ['B'], pointeur: ['Pts'], 'les-deux': ['B', 'Pts'] };
 
-    /** La rangée d'un meneur : ses chiffres aux derniers matchs, celui qui lui vaut sa place à l'accent. */
+    /**
+     * La carte d'un meneur : buts et points à droite — celui qui lui vaut la
+     * carte à l'accent —, le reste de sa ligne dessous. Deux chiffres et non
+     * quatre : la carte est étroite, le nom doit tenir.
+     */
     function carteMeneur(j, club, role) {
         return `
             <div class="cal-car-card">
                 ${photo(j.photo, j.nom)}
                 <div class="cal-car-id">
                     <div class="cal-car-name">${echapper(j.nom)}</div>
-                    <div class="cal-car-meta">${ROLES[role]} · ${echapper([club, position(j.pos)].filter(Boolean).join(' · '))}</div>
+                    <div class="cal-car-meta">${ROLES[role]} · ${echapper(club)}</div>
                 </div>
-                ${chiffres([['PJ', j.pj], ['B', j.b], ['A', j.a], ['Pts', j.p]], CLES_ROLE[role])}
+                ${chiffres([['B', j.b], ['Pts', j.p]], CLES_ROLE[role])}
+                <p class="cal-pl-form">${echapper([position(j.pos), `${j.pj} PJ`, `${j.a} A`].filter(Boolean).join(' · '))}</p>
             </div>`;
+    }
+
+    /** Flèches grisées aux deux bouts, puce de la carte en vue. */
+    function majCarrousel(car) {
+        const piste = car && car.querySelector('.cal-car-track');
+        if (!piste) return;
+        const max = piste.scrollWidth - piste.clientWidth;
+        car.classList.toggle('has-nav', max > 1);
+        car.querySelector('[data-car-dir="-1"]')?.classList.toggle('is-off', piste.scrollLeft <= 1);
+        car.querySelector('[data-car-dir="1"]')?.classList.toggle('is-off', piste.scrollLeft >= max - 1);
+        const puces = car.querySelectorAll('.cal-car-dot');
+        if (!puces.length) return;
+        const carte = piste.firstElementChild;
+        const pas = carte ? carte.offsetWidth + (parseFloat(getComputedStyle(piste).columnGap) || 0) : 0;
+        // Au bout de la piste, la dernière carte ne peut pas venir au bord :
+        // c'est quand même elle qu'on regarde.
+        const i = piste.scrollLeft >= max - 1 ? puces.length - 1
+            : Math.min(puces.length - 1, Math.round(piste.scrollLeft / (pas || 1)));
+        puces.forEach((p, k) => p.classList.toggle('is-on', k === i));
+    }
+
+    function majCarrousels() {
+        document.querySelectorAll('#calGames .cal-car').forEach(majCarrousel);
+    }
+
+    /** Une carte à la fois : on lit une suite, pas des pages. */
+    function defiler(piste, sens) {
+        const carte = piste && piste.firstElementChild;
+        if (!carte) return;
+        const pas = carte.offsetWidth + (parseFloat(getComputedStyle(piste).columnGap) || 0);
+        piste.scrollBy({ left: sens * pas, behavior: 'smooth' });
     }
 
     // ---------------------------------------------------------- direct
@@ -837,15 +937,24 @@
     }
 
     /**
-     * Redessine la seule rangée d'un match, s'il est à l'écran. Un pointage
-     * qui bouge peut vouloir dire un but : les buts de la journée sont
-     * redemandés (chargerButs garde sa cadence).
+     * Redessine la seule rangée d'un match, s'il est à l'écran — sa piste à
+     * la même place. Un pointage qui bouge peut vouloir dire un but : les
+     * buts de la journée sont redemandés (chargerButs garde sa cadence).
      */
     function majCarte(id) {
-        const carte = document.querySelector(`.cal-game[data-match="${CSS.escape(String(id))}"]`);
+        const selecteur = `.cal-game[data-match="${CSS.escape(String(id))}"]`;
+        const carte = document.querySelector(selecteur);
         const m = matchsDeLaSemaine().find(x => String(x.id) === String(id));
         if (!carte || !m) return;
+        const piste = carte.querySelector('.cal-car-track');
+        const x = piste ? piste.scrollLeft : 0;
         carte.outerHTML = carteMatch(m);
+        const neuve = document.querySelector(selecteur);
+        if (neuve) {
+            const nouvelle = neuve.querySelector('.cal-car-track');
+            if (nouvelle && x) nouvelle.scrollLeft = x;
+            neuve.querySelectorAll('.cal-car').forEach(majCarrousel);
+        }
         reglerHorloges();
         chargerButs(jourChoisi);
     }
@@ -918,17 +1027,11 @@
         document.getElementById('calNext').addEventListener('click', () => {
             if (semaine && semaine.nextStartDate) { jourChoisi = null; chargerSemaine(decaler(lundiVise, 7)); }
         });
-        // Aujourd'hui : sa journée, et sa semaine si on en était parti. Dans
-        // la semaine déjà affichée, rien à relire.
-        document.getElementById('calToday').addEventListener('click', () => {
-            const auj = aujourdhui();
-            jourChoisi = auj;
-            if (semaine && lundiVise === lundiDe(auj) && semaine.days.some(d => d.date === auj)) {
-                rendreBande();
-                rendreJour();
-            } else {
-                chargerSemaine(auj);
-            }
+        document.getElementById('calToday').addEventListener('click', allerAujourdhui);
+        // La pastille disparaît sous le doigt : le focus passe au jour
+        // d'aujourd'hui plutôt que de retomber sur la page.
+        document.getElementById('calReturn').addEventListener('click', () => {
+            allerAujourdhui().then(() => document.querySelector('.cal-chip.is-today')?.focus());
         });
         // Le filtre se redessine à chaque choix : le focus revient au bouton
         // pressé plutôt que de retomber sur la page.
@@ -942,6 +1045,19 @@
             rendreJour();
             document.querySelector(`#calFilter [data-filtre="${filtre}"]`)?.focus();
         });
+        // Les carrousels se redessinent avec leur match : leurs écouteurs
+        // vivent sur la zone des matchs, qui reste. `scroll` ne remonte pas
+        // d'un élément à l'autre, d'où l'écoute à la capture.
+        const zone = document.getElementById('calGames');
+        zone.addEventListener('click', e => {
+            const fleche = e.target.closest && e.target.closest('[data-car-dir]');
+            if (!fleche || fleche.classList.contains('is-off')) return;
+            defiler(fleche.closest('.cal-car').querySelector('.cal-car-track'), Number(fleche.dataset.carDir));
+        });
+        zone.addEventListener('scroll', e => {
+            const piste = e.target;
+            if (piste.classList && piste.classList.contains('cal-car-track')) majCarrousel(piste.closest('.cal-car'));
+        }, { capture: true, passive: true });
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -961,6 +1077,8 @@
         // Les buts d'un match qui joue : chargerButs ne demande rien tant
         // qu'aucun match de la journée affichée n'en attend.
         setInterval(() => { if (!document.hidden && jourChoisi) chargerButs(jourChoisi); }, BUTS_FRAIS_MS);
+        // Une fenêtre élargie peut faire tenir une piste entière : ses flèches s'en vont.
+        if (typeof window.addEventListener === 'function') window.addEventListener('resize', majCarrousels);
         // Onglet caché : ni direct ni horloge. Au retour, la semaine du jour
         // est relue — elle a pu finir des matchs pendant l'absence.
         document.addEventListener('visibilitychange', () => {
