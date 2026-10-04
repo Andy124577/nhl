@@ -343,6 +343,7 @@ body.fz-cal-page { background: var(--cal-bg); }
 /* Une équipe : sa couleur en filet, son sigle, son nom, sa marque. */
 .cal-team { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .cal-team-bar { flex: none; width: 3px; height: 16px; border-radius: 2px; background: var(--cal-team, var(--cal-line)); }
+.cal-team-logo { flex: none; width: 22px; height: 22px; object-fit: contain; }
 .cal-team-abbr { flex: none; width: 40px; font-size: 15px; font-weight: 600; }
 .cal-team-name {
     min-width: 0;
@@ -411,6 +412,7 @@ body.fz-cal-page { background: var(--cal-bg); }
     .cal-game-side { margin-top: 16px; }
     .cal-team { gap: 12px; }
     .cal-team-bar { height: 18px; }
+    .cal-team-logo { width: 26px; height: 26px; }
     .cal-team-abbr { width: 44px; }
     .cal-team-name { font-size: 14px; }
 }
@@ -546,6 +548,18 @@ body.fz-cal-page { background: var(--cal-bg); }
 .cal-car-tally { font-weight: 400; color: var(--cal-muted); }
 /* Passes et rôle de meneur : ils passent à la ligne plutôt que d'être coupés. */
 .cal-car-meta { font-size: 12px; line-height: 1.35; color: var(--cal-muted); }
+/* Buteur et passeurs ouvrent leur fiche : du texte qui se souligne au survol. */
+.cal-player {
+    padding: 0;
+    border: 0;
+    border-radius: 3px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.cal-player:hover { text-decoration: underline; text-underline-offset: 2px; }
 /* Mon joueur au pointage, buteur ou passeur. */
 .cal-car-mine { color: var(--cal-accent); }
 .cal-car-meta .cal-car-mine { font-weight: 500; }

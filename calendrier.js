@@ -322,7 +322,13 @@
         return h ? `<span class="cal-time">${echapper(h)}</span>` : '<span class="cal-time is-muted">À confirmer</span>';
     }
 
-    /** Le filet à la couleur du club, le sigle, le nom, la marque ; le perdant en gris. */
+    /**
+     * Le filet à la couleur du club, son logo, le sigle, le nom, la marque ;
+     * le perdant en gris. Les quatre logos marine (EDM, TBL, TOR, WSH)
+     * passent à leur variante blanche en thème sombre d'eux-mêmes
+     * (teamLogos.css). Un logo manquant garde sa place : les sigles restent
+     * alignés.
+     */
     function carteEquipe(t, issue, joue) {
         const abbr = (t && t.abbrev) || '?';
         const [nom, couleur] = EQUIPES[abbr] || ['', ''];
@@ -330,6 +336,9 @@
         return `
             <div class="cal-team${issue ? ` is-${issue}` : ''}"${couleur ? ` style="--cal-team: ${couleur}"` : ''}>
                 <span class="cal-team-bar" aria-hidden="true"></span>
+                ${EQUIPES[abbr]
+                    ? `<img class="cal-team-logo" src="teams/${abbr}.png" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
+                    : '<span class="cal-team-logo" aria-hidden="true"></span>'}
                 <span class="cal-team-abbr">${echapper(abbr)}</span>
                 <span class="cal-team-name">${echapper(nom)}</span>
                 <span class="cal-team-score">${echapper(score)}</span>
@@ -669,11 +678,19 @@
      * son numéro : la feuille abrège les passeurs (« N. Suzuki »), le pool
      * porte le nom complet. La couleur ne se lit pas à l'oreille : un mot
      * caché le dit aux lecteurs d'écran.
+     *
+     * Buteur et passeurs ouvrent leur fiche (ouvrirFiche), quand la feuille
+     * donne leur numéro.
      */
     function carteBut(b, equipes, miens = new Set()) {
-        const nom = (texte, id) => (id != null && miens.has(String(id))
-            ? `<span class="cal-car-mine">${echapper(texte)}<span class="fz-sk-sr"> (mon joueur)</span></span>`
-            : echapper(texte));
+        const nom = (texte, id) => {
+            const affiche = id != null && miens.has(String(id))
+                ? `<span class="cal-car-mine">${echapper(texte)}<span class="fz-sk-sr"> (mon joueur)</span></span>`
+                : echapper(texte);
+            return id != null
+                ? `<button type="button" class="cal-player" data-player="${echapper(id)}" data-name="${echapper(texte)}">${affiche}</button>`
+                : affiche;
+        };
         const aides = (b.assists || []).filter(a => a.name);
         const aide = aides.length ? aides.map(a => nom(a.name, a.playerId) + compteur(a.assistsToDate)).join(' et ') : 'Sans aide';
         const marque = b.awayScore != null && b.homeScore != null
@@ -995,6 +1012,49 @@
         }));
     }
 
+    // ---------------------------------------------------------- fiche joueur
+    //
+    // La fiche partagée (careerModal.js), comme sur la feuille de match
+    // (match.js) : elle demande à la page de dessiner le tableau de carrière
+    // (filterCareerStats) et de la refermer (closeCareerModal).
+
+    let carriere = null;
+
+    window.filterCareerStats = function () {
+        if (!carriere) return;
+        const ligue = document.getElementById('leagueFilter').value;
+        const type = document.getElementById('gameTypeFilter').value;
+        const rangs = (carriere.seasons || []).filter(s =>
+            (ligue === 'all' || (ligue === 'nhl' ? s.league === 'NHL' : s.league !== 'NHL'))
+            && (type === 'all' || s.gameType === type));
+        const colonnes = [['season', 'Saison'], ['league', 'Ligue'], ['team', 'Équipe'], ['gp', 'MJ'],
+            ...(carriere.isGoalie
+                ? [['wins', 'V'], ['losses', 'D'], ['otLosses', 'DP'], ['savePct', '% ARR'], ['gaa', 'MBC'], ['shutouts', 'BL']]
+                : [['goals', 'B'], ['assists', 'A'], ['points', 'PTS'], ['plusMinus', '+/−'], ['pim', 'PUN'], ['shots', 'Tirs']])];
+        document.getElementById('statsCountBadge').textContent =
+            `${rangs.length} saison${rangs.length === 1 ? '' : 's'} affichée${rangs.length === 1 ? '' : 's'}`;
+        const valeur = (r, k) => k === 'savePct' && r[k] != null ? Number(r[k]).toFixed(3)
+            : k === 'gaa' && r[k] != null ? Number(r[k]).toFixed(2) : (r[k] ?? '—');
+        document.getElementById('careerStatsTable').innerHTML = rangs.length
+            ? `<table><thead><tr>${colonnes.map(([k, l]) => `<th scope="col" class="${echapper(k)}-col">${echapper(l)}</th>`).join('')}</tr></thead><tbody>${rangs.map(r => `<tr>${colonnes.map(([k]) => `<td class="${echapper(k)}-col">${echapper(String(valeur(r, k)))}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+            : '<p class="no-stats-message">Aucune statistique correspondant aux filtres sélectionnés.</p>';
+    };
+
+    window.closeCareerModal = function () {
+        if (typeof fzCloseCareerModal === 'function') fzCloseCareerModal();
+        carriere = null;
+    };
+
+    function ouvrirFiche(bouton) {
+        const id = Number(bouton.dataset.player);
+        if (!Number.isInteger(id) || id <= 0 || typeof fzOpenCareerModal !== 'function') return;
+        carriere = null;
+        fzOpenCareerModal(id, bouton.dataset.name || '', {
+            onData(data) { data.isGoalie = data.position === 'G'; carriere = data; },
+            renderStats: window.filterCareerStats
+        });
+    }
+
     // ---------------------------------------------------------- gestes
 
     function brancher() {
@@ -1050,6 +1110,8 @@
         // d'un élément à l'autre, d'où l'écoute à la capture.
         const zone = document.getElementById('calGames');
         zone.addEventListener('click', e => {
+            const joueur = e.target.closest && e.target.closest('[data-player]');
+            if (joueur) return ouvrirFiche(joueur);
             const fleche = e.target.closest && e.target.closest('[data-car-dir]');
             if (!fleche || fleche.classList.contains('is-off')) return;
             defiler(fleche.closest('.cal-car').querySelector('.cal-car-track'), Number(fleche.dataset.carDir));

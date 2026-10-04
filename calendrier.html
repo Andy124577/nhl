@@ -20,7 +20,8 @@
     <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="index.css?v=20260926b">
-    <link rel="stylesheet" href="calendrier.css?v=20261004e">
+    <link rel="stylesheet" href="calendrier.css?v=20261004g">
+    <link rel="stylesheet" href="career-modal.css?v=20261003a">
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit précéder tout script de page. -->
     <script defer src="activePool.js?v=20260929n"></script>
@@ -69,11 +70,11 @@
                  les reprend tels quels à chaque semaine qui se charge. -->
             <div class="cal-games" id="calGames">
                 <p class="fz-sk-sr" role="status">Chargement du calendrier…</p>
-                <article class="cal-game cal-sk-game" style="--i:0" aria-hidden="true"><div class="cal-game-status"><span class="fz-bone cal-sk-time"></span></div><div class="cal-game-teams"><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div></div></article>
-                <article class="cal-game cal-sk-game" style="--i:1" aria-hidden="true"><div class="cal-game-status"><span class="fz-bone cal-sk-time"></span></div><div class="cal-game-teams"><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div></div></article>
-                <article class="cal-game cal-sk-game" style="--i:2" aria-hidden="true"><div class="cal-game-status"><span class="fz-bone cal-sk-time"></span></div><div class="cal-game-teams"><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div></div></article>
-                <article class="cal-game cal-sk-game" style="--i:3" aria-hidden="true"><div class="cal-game-status"><span class="fz-bone cal-sk-time"></span></div><div class="cal-game-teams"><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div></div></article>
-                <article class="cal-game cal-sk-game" style="--i:4" aria-hidden="true"><div class="cal-game-status"><span class="fz-bone cal-sk-time"></span></div><div class="cal-game-teams"><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div></div></article>
+                <article class="cal-game cal-sk-game" style="--i:0" aria-hidden="true"><div class="cal-game-status"><span class="fz-bone cal-sk-time"></span></div><div class="cal-game-teams"><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone is-round cal-team-logo"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone is-round cal-team-logo"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div></div></article>
+                <article class="cal-game cal-sk-game" style="--i:1" aria-hidden="true"><div class="cal-game-status"><span class="fz-bone cal-sk-time"></span></div><div class="cal-game-teams"><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone is-round cal-team-logo"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone is-round cal-team-logo"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div></div></article>
+                <article class="cal-game cal-sk-game" style="--i:2" aria-hidden="true"><div class="cal-game-status"><span class="fz-bone cal-sk-time"></span></div><div class="cal-game-teams"><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone is-round cal-team-logo"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone is-round cal-team-logo"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div></div></article>
+                <article class="cal-game cal-sk-game" style="--i:3" aria-hidden="true"><div class="cal-game-status"><span class="fz-bone cal-sk-time"></span></div><div class="cal-game-teams"><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone is-round cal-team-logo"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone is-round cal-team-logo"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div></div></article>
+                <article class="cal-game cal-sk-game" style="--i:4" aria-hidden="true"><div class="cal-game-status"><span class="fz-bone cal-sk-time"></span></div><div class="cal-game-teams"><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone is-round cal-team-logo"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div><div class="cal-team"><span class="fz-bone-flat cal-team-bar"></span><span class="fz-bone is-round cal-team-logo"></span><span class="fz-bone cal-sk-abbr"></span><span class="fz-bone-flat cal-sk-team"></span></div></div></article>
             </div>
         </section>
 
@@ -84,12 +85,19 @@
         </button>
     </main>
 
+    <!-- La fiche du joueur (careerModal.js), ouverte d'un nom au pointage. -->
+    <div id="careerStatsModal" class="modal"></div>
+
     <!-- `async` : servi avec max-age=0, il repasse par le serveur à chaque
          visite. En `defer`, cet aller-retour retenait tous les scripts qui le
          suivent ; ceux qui s'en servent l'attendent d'eux-mêmes. -->
     <script async src="/socket.io/socket.io.js"></script>
     <script defer src="teamColors.js"></script>
-    <script defer src="calendrier.js?v=20261004e"></script>
+    <script defer src="careerFetch.js"></script>
+    <script defer src="careerModal.js?v=20261003a"></script>
+    <script defer src="careerTeamLogo.js"></script>
+    <script defer src="careerTotals.js"></script>
+    <script defer src="calendrier.js?v=20261004g"></script>
     <script defer src="avatars.js"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20260929a"></script>
