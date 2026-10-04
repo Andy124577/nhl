@@ -648,6 +648,9 @@ contexteRoutes.scoresSaison = async (poolData) => {
 };
 contexteRoutes.saisonCommencee = (fenetre) => seasonHasStarted(fenetre);
 contexteRoutes.resultatsClubs = (demande) => resultatsClubsLNH(demande);
+// La journée entamée ou non : la tendance du classement garde la semaine qui
+// finit hier jusqu'au premier match du jour (routes/records.js).
+contexteRoutes.etatDeLaJournee = () => pointsEnDirect.lireJournee();
 
 const comptes = routesIdentite.monter(app, contexteRoutes);
 // Connexion avec Google : inactive (bouton masqué) tant que les deux clés ne

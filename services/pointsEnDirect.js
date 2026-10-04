@@ -25,7 +25,9 @@
 
 'use strict';
 
-const { calculerPointsEnDirect, apportsDuMatch, matchsASuivre, joursASuivre, signature, soireesDuJour } = require('../lib/pointsEnDirect.js');
+const {
+    calculerPointsEnDirect, apportsDuMatch, matchsASuivre, joursASuivre, signature, soireesDuJour, etatDeLaJournee
+} = require('../lib/pointsEnDirect.js');
 
 const SALLE = 'points';
 const FEUILLE_MAX_MS = 2 * 60 * 1000;
@@ -166,11 +168,16 @@ function creerPointsEnDirect({
         }));
         // La soirée de chacun pour la fiche d'équipe (/live-roster) : tirée
         // des mêmes matchs et des mêmes feuilles, matchs à venir compris.
-        const soirees = soireesDuJour({ matchs, feuilles: lues, stats, clubs, aujourdhui: aujourdhui ? aujourdhui() : null });
+        const jour = aujourdhui ? aujourdhui() : null;
+        const soirees = soireesDuJour({ matchs, feuilles: lues, stats, clubs, aujourdhui: jour });
+        // La journée entamée ou non (tendance du classement) : les matchs
+        // seuls en décident, relevés lus ou pas.
+        const journee = jour ? etatDeLaJournee(matchs, jour, stats && stats.season) : null;
         return {
             charge: { ...points, releve: versionDesReleves(stats, clubs), generatedAt: new Date(horloge()).toISOString() },
             parMatch,
-            soirees
+            soirees,
+            journee
         };
     }
 
@@ -213,6 +220,16 @@ function creerPointsEnDirect({
         return (dernier && dernier.soirees) || { joueurs: {}, clubs: {} };
     }
 
+    /**
+     * La journée du pool entamée ou non (lib/pointsEnDirect.js,
+     * etatDeLaJournee) : { entamee, bascule }. null tant qu'aucun calcul n'a
+     * abouti — on ne sait pas. Même fraîcheur que lire().
+     */
+    async function lireJournee() {
+        await lire();
+        return (dernier && dernier.journee) || null;
+    }
+
     function arreter() {
         if (minuteur) minuterie.arreter(minuteur);
         minuteur = null;
@@ -252,7 +269,7 @@ function creerPointsEnDirect({
         });
     }
 
-    return { brancher, lire, lireParMatch, lireSoirees, tic, arreter, abonnes, SALLE };
+    return { brancher, lire, lireParMatch, lireSoirees, lireJournee, tic, arreter, abonnes, SALLE };
 }
 
 module.exports = { creerPointsEnDirect, versionDesReleves, SALLE, FEUILLE_MAX_MS, FEUILLE_OFF_MS };

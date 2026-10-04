@@ -29,7 +29,8 @@ const FENETRES = [1, 7, 14, 30, 90, 180, 365];
 
 function monter(app, ctx) {
     const { auth, store, db, pointage, saisonCourante, fenetreSaison,
-            saisonCommencee, serviceRecap, resultatsClubs = null, logger = console } = ctx;
+            saisonCommencee, serviceRecap, resultatsClubs = null, etatDeLaJournee = null,
+            logger = console } = ctx;
 
     function repondreErreur(res, erreur, contexte) {
         if (erreur.name === 'ErreurMetier' || erreur.name === 'ErreurConflit') {
@@ -66,6 +67,11 @@ function monter(app, ctx) {
      * La fenêtre est semi-ouverte et se ferme à AUJOURD'HUI inclus : `[il y a
      * N-1 jours, demain)`. Sans cette précision, « 7 derniers jours » désignait
      * parfois six journées, parfois huit, selon l'heure de la requête.
+     *
+     * `?ancre=soiree` (la tendance du classement) : la fenêtre se ferme à la
+     * dernière soirée — HIER tant qu'aucun match du jour n'est commencé —, et
+     * `bascule` dit quand le premier commence. Sans quoi la tendance changeait
+     * à minuit, sans un match joué. Si l'on ne sait pas, aujourd'hui.
      */
     app.get('/pool-leaderboard/:poolName', auth.requireAuth, async (req, res) => {
         try {
@@ -88,8 +94,17 @@ function monter(app, ctx) {
             }
 
             const aujourdhui = dates.journeeLocale();
-            const debut = dates.ajouterJours(aujourdhui, -(jours - 1));
-            const fin = dates.ajouterJours(aujourdhui, 1);
+            let dernierJour = aujourdhui;
+            let bascule = null;
+            if (req.query.ancre === 'soiree' && etatDeLaJournee) {
+                const journee = await Promise.resolve().then(etatDeLaJournee).catch(() => null);
+                if (journee && !journee.entamee) {
+                    dernierJour = dates.ajouterJours(aujourdhui, -1);
+                    bascule = journee.bascule || null;
+                }
+            }
+            const debut = dates.ajouterJours(dernierJour, -(jours - 1));
+            const fin = dates.ajouterJours(dernierJour, 1);
             const saison = saisonCourante();
             // Le barème du pool : les vrais points (buts + aides, gardiens,
             // clubs) pour un cumulatif — les mêmes que son Total —, les points
@@ -121,7 +136,8 @@ function monter(app, ctx) {
             res.json({
                 poolName: nomPool,
                 days: jours,
-                periode: { debut, fin, dernierJour: aujourdhui },
+                periode: { debut, fin, dernierJour },
+                ...(bascule ? { bascule } : {}),
                 generatedAt: new Date().toISOString(),
                 seasonStarted: true,
                 season: saison,

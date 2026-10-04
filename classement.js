@@ -460,11 +460,11 @@ function getStandingsColumns(poolMode) {
         // Mêmes règles que le Total (buts + passes, gardiens, clubs) : une
         // colonne 30 j égale au Total en début de saison, pas une autre unité.
         { label: '24 h', cls: 'st-period-col', title: 'Points marqués aujourd’hui (depuis minuit, heure de l’Est)' },
-        { label: '7 j', cls: 'st-period-col', title: 'Points marqués ces 7 derniers jours' },
+        { label: '7 j', cls: 'st-period-col', title: 'Points marqués ces 7 derniers jours — jusqu’à hier tant que le premier match du jour n’est pas commencé' },
         { label: '30 j', cls: 'st-period-col', title: 'Points marqués ces 30 derniers jours' },
         { label: 'Total', sort: 'points', cls: 'points-column', title: 'Points de la saison — ce qui décide du classement' },
         { label: 'Moy./PJ', sort: 'ppg', title: 'Points de la saison par partie jouée' },
-        { label: 'Tendance', cls: 'st-evo-col', title: 'Places gagnées ou perdues si l’on classait seulement sur les 7 derniers jours' }
+        { label: 'Tendance', cls: 'st-evo-col', title: 'Places gagnées ou perdues si l’on classait seulement sur les 7 derniers jours — gardée jusqu’au premier match du jour suivant' }
     ];
 }
 
@@ -475,9 +475,17 @@ function getStandingsColumns(poolMode) {
 // de la renommée et /pool-leaderboard) : mieux classée sur la semaine que
 // sur la saison → ▲, moins bien → ▼. Les trois périodes restent lues pour
 // les colonnes 24 h / 7 j / 30 j.
+//
+// La semaine de la tendance (et de la colonne 7 j) finit à la dernière
+// soirée : hier tant qu'aucun match du jour n'est commencé (ancre=soiree,
+// routes/records.js). Sans quoi la tendance changeait à minuit, sans un
+// match joué. Au premier match du jour, la page se relit (`bascule`).
 const STANDINGS_PERIODS = [1, 7, 30];
 const TENDANCE_JOURS = 7;
 let periodPointsCache = null; // { poolName, byDays: { 1: Map, 7: Map, 30: Map } }
+let tendanceMinuteur = null;
+const TENDANCE_ATTENTE_MIN_MS = 60 * 1000;
+const TENDANCE_ATTENTE_MAX_MS = 30 * 60 * 1000;
 
 const EVO_ARROW_UP = '<svg viewBox="0 0 24 24" width="8" height="8"><path d="M12 4l8 10H4z"></path></svg>';
 const EVO_ARROW_DOWN = '<svg viewBox="0 0 24 24" width="8" height="8"><path d="M12 20L4 10h16z"></path></svg>';
@@ -486,13 +494,16 @@ async function fetchStandingsPeriodPoints(poolName) {
     if (periodPointsCache && periodPointsCache.poolName === poolName) return periodPointsCache.byDays;
 
     const byDays = {};
+    let bascule = null;
     await Promise.all(STANDINGS_PERIODS.map(async (days) => {
         const map = new Map();
+        const ancre = days === TENDANCE_JOURS ? '&ancre=soiree' : '';
         try {
-            const res = await fetch(`${BASE_URL}/pool-leaderboard/${encodeURIComponent(poolName)}?days=${days}`, { cache: 'no-store' });
+            const res = await fetch(`${BASE_URL}/pool-leaderboard/${encodeURIComponent(poolName)}?days=${days}${ancre}`, { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 (data.teams || []).forEach(t => map.set(t.teamName, t.points));
+                if (ancre && data.bascule) bascule = data.bascule;
             }
         } catch (error) {
             console.warn(`⚠️ Could not load ${days}-day points for rank evolution:`, error);
@@ -502,7 +513,27 @@ async function fetchStandingsPeriodPoints(poolName) {
 
     periodPointsCache = { poolName, byDays };
     periodesDerniere = Date.now();
+    planifierBasculeTendance(bascule);
     return byDays;
+}
+
+/**
+ * Au premier match du jour, la tendance passe à la semaine qui finit
+ * aujourd'hui : la page se relit à ce moment-là — au plus tard dans une
+ * demi-heure, pour ne pas dépendre d'un minuteur que la veille de l'appareil
+ * aurait retardé.
+ */
+function planifierBasculeTendance(bascule) {
+    clearTimeout(tendanceMinuteur);
+    tendanceMinuteur = null;
+    const instant = Date.parse(bascule);
+    if (!Number.isFinite(instant)) return;
+    const attente = Math.min(Math.max(instant - Date.now(), TENDANCE_ATTENTE_MIN_MS), TENDANCE_ATTENTE_MAX_MS);
+    tendanceMinuteur = setTimeout(() => {
+        tendanceMinuteur = null;
+        periodPointsCache = null;
+        rafraichirClassementEnDirect();
+    }, attente);
 }
 
 // Classe les équipes par points marqués pendant la période ; une équipe
@@ -587,7 +618,7 @@ function standingsLegendHTML(poolMode) {
         : [
             ['Total', 'Ce qui décide du classement : les points de la saison. Patineurs : 1 par but et 1 par passe. Gardiens : 2 par victoire, 5 pour une victoire par blanchissage (pas 2 + 5), 1 par défaite en prolongation. Clubs de la LNH : 2 par victoire, 1 par défaite en prolongation.'],
             ['24 h · 7 j · 30 j', 'Les points marqués sur la période — aujourd’hui, 7 jours, 30 jours —, selon les mêmes règles que le Total. Ils ne changent pas le classement : ils montrent qui monte.'],
-            ['Tendance', 'Les places qu’une équipe gagnerait (▲) ou perdrait (▼) si l’on classait seulement sur les 7 derniers jours.'],
+            ['Tendance', 'Les places qu’une équipe gagnerait (▲) ou perdrait (▼) si l’on classait seulement sur les 7 derniers jours. Elle reste celle de la veille jusqu’au premier match du jour, comme la colonne 7 j.'],
             ['PJ · B · P', 'Parties jouées, buts et passes de tout l’alignement.']
         ];
     return `
