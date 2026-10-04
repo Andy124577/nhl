@@ -199,9 +199,11 @@ body.fz-cal-page { background: var(--bg); }
     font-weight: 800;
     color: var(--text-main);
 }
+/* minmax(0, …) : une colonne `1fr` s'élargit à la piste d'un carrousel,
+   et la page débordait du téléphone. */
 .cal-games {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 10px;
 }
 @media (min-width: 640px) { .cal-games { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -246,6 +248,233 @@ body.fz-cal-page { background: var(--bg); }
     color: var(--text-secondary);
 }
 .cal-game-mine strong { color: var(--primary-text); }
+
+/* ---- Carrousels sous le pointage (calendrier.js, « carrousels ») ----
+   Les buts d'un match commencé ; d'un match à venir, mes joueurs ou les
+   meneurs des deux clubs. La piste va d'un bord à l'autre de la carte et
+   la suivante dépasse à droite : c'est ce qui dit qu'elle défile. */
+.cal-car {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-light);
+}
+.cal-car-head { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 20px; }
+.cal-car-title {
+    flex: 0 0 auto;
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-main);
+}
+.cal-car-sub {
+    min-width: 0;
+    overflow: hidden;
+    font-size: .76rem;
+    color: var(--text-secondary);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/* Flèches : seulement à la souris, et seulement quand la piste déborde
+   (`has-nav`). Au téléphone, le pouce fait le travail. */
+.cal-car-nav { display: none; flex: 0 0 auto; gap: 2px; margin-left: auto; }
+@media (hover: hover) and (pointer: fine) {
+    .cal-car.has-nav .cal-car-nav { display: flex; }
+}
+.cal-car-arrow {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.cal-car-arrow svg { fill: none; stroke: currentColor; stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
+.cal-car-arrow:hover:not(.is-off) { background: var(--bg-hover); color: var(--text-main); }
+.cal-car-arrow.is-off { opacity: .35; cursor: default; }
+.cal-car-arrow:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+.cal-car-track {
+    display: flex;
+    gap: 8px;
+    margin: 0 -14px;
+    padding: 0 14px 2px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-padding-inline: 14px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+}
+.cal-car-track::-webkit-scrollbar { display: none; }
+.cal-car-track:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; border-radius: 10px; }
+/* La barre rouge de « mes joueurs » reste visible sous une piste défilée. */
+.cal-game.is-mine .cal-car-track { margin-left: -11px; padding-left: 11px; scroll-padding-left: 11px; }
+
+.cal-car-card {
+    display: flex;
+    flex: 0 0 86%;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    max-width: 300px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    background: var(--bg);
+    scroll-snap-align: start;
+}
+.cal-car-card:only-child { flex-basis: 100%; max-width: none; }
+.cal-car-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.cal-car-photo {
+    position: relative;
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+    border-radius: 50%;
+    color: #fff;
+    font-size: .72rem;
+    font-weight: 800;
+}
+.cal-car-photo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+/* La photo de la LNH est détourée : les initiales transparaîtraient derrière
+   le visage. Elles ne reviennent que si la photo manque (onerror l'enlève). */
+.cal-car-photo:has(img) .cal-car-initials { visibility: hidden; }
+.cal-car-id { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+.cal-car-name,
+.cal-car-meta,
+.cal-goal-run {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.cal-car-name { font-size: .9rem; font-weight: 800; color: var(--text-main); }
+.cal-car-tally { font-weight: 600; color: var(--text-secondary); }
+.cal-car-meta { font-size: .76rem; color: var(--text-secondary); }
+.cal-car-empty { margin: 0; font-size: .82rem; color: var(--text-secondary); }
+
+.cal-car-dots { display: flex; justify-content: center; gap: 5px; }
+.cal-car-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border-light);
+    transition: width .18s ease, background-color .18s ease;
+}
+.cal-car-dot.is-on { width: 16px; background: var(--primary); }
+@media (prefers-reduced-motion: reduce) { .cal-car-dot { transition: none; } }
+
+/* Un but : la marque APRÈS lui, et quand. */
+.cal-goal-run {
+    font-size: .76rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+}
+.cal-goal-when { font-weight: 500; color: var(--text-secondary); }
+.cal-goal-when sup { font-size: .75em; line-height: 0; }
+
+/* Mon joueur : sa saison en quatre cases, sa forme dessous. */
+.cal-pl-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    margin: 0;
+}
+.cal-pl-stats div {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 0 5px;
+    border-radius: 8px;
+    background: var(--card);
+}
+.cal-pl-stats dt {
+    font-size: .6rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+.cal-pl-stats dd {
+    margin: 0;
+    font-family: 'Bebas Neue', system-ui, sans-serif;
+    font-size: 1.3rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+}
+.cal-pl-stats .is-key dd { color: var(--primary-text); }
+.cal-pl-form {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0;
+    font-size: .76rem;
+    color: var(--text-secondary);
+}
+.cal-pl-form span { flex: 0 0 auto; }
+.cal-pl-form b {
+    min-width: 0;
+    overflow: hidden;
+    font-weight: 700;
+    color: var(--text-main);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Un meneur : son rôle et son club en tête, buts et points à droite — le
+   chiffre qui lui vaut la carte en rouge. */
+.cal-lead-kicker {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+    font-size: .64rem;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.cal-lead-kicker img { flex: 0 0 auto; width: 16px; height: 16px; object-fit: contain; }
+.cal-lead-stats { display: flex; flex: 0 0 auto; gap: 10px; }
+.cal-lead-stats span { display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 22px; }
+.cal-lead-stats b {
+    font-family: 'Bebas Neue', system-ui, sans-serif;
+    font-size: 1.5rem;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--text-main);
+}
+.cal-lead-stats i {
+    font-size: .6rem;
+    font-style: normal;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+.cal-lead-stats .is-key b { color: var(--primary-text); }
 
 /* Vers match.html : au pied de la carte, sur toute sa largeur. */
 .cal-game-box {
@@ -311,4 +540,8 @@ body.fz-cal-page { background: var(--bg); }
 .cal-sk-logo { width: 32px; height: 32px; }
 .cal-sk-abbr { width: 42px; height: 14px; }
 .cal-sk-game { opacity: 0; animation: fzOsMonte .35s ease-out forwards; animation-delay: calc(var(--i, 0) * 45ms); }
+/* Un carrousel en os, le temps que ses buts ou sa forme répondent. */
+.cal-sk-name { width: 62%; height: 12px; margin: 2px 0; }
+.cal-sk-meta { width: 40%; height: 9px; margin: 2px 0; }
+.cal-sk-form { width: 70%; height: 10px; margin: 2px 0; }
 @media (prefers-reduced-motion: reduce) { .cal-sk-game { opacity: 1; animation: none; } }
