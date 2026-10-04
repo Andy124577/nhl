@@ -536,17 +536,26 @@
         if (!liste.length) return '';
         const ordonnes = fini ? liste : liste.slice().reverse();
         const equipes = { away: (m.away && m.away.abbrev) || '', home: (m.home && m.home.abbrev) || '' };
+        const miens = new Set([...mesClubs.values()].flat().map(idDe).filter(Boolean));
         return carrousel('buts', 'Buts', fini ? 'Du premier au dernier' : 'Le plus récent d’abord',
-            ordonnes.map(b => carteBut(b, equipes)), 'Buts du match');
+            ordonnes.map(b => carteBut(b, equipes, miens)), 'Buts du match');
     }
 
     /**
      * Qui a marqué (son total de la saison), qui a aidé, et la marque APRÈS
      * ce but : de gauche à droite, la piste raconte la soirée.
+     *
+     * Un de mes joueurs, buteur ou passeur, a son nom en rouge. Reconnu par
+     * son numéro : la feuille abrège les passeurs (« N. Suzuki »), le pool
+     * porte le nom complet. Le rouge ne se lit pas à l'oreille : un mot caché
+     * le dit aux lecteurs d'écran.
      */
-    function carteBut(b, equipes) {
+    function carteBut(b, equipes, miens = new Set()) {
+        const nom = (texte, id) => (id != null && miens.has(String(id))
+            ? `<span class="cal-car-mine">${echapper(texte)}<span class="fz-sk-sr"> (mon joueur)</span></span>`
+            : echapper(texte));
         const aides = (b.assists || []).filter(a => a.name);
-        const aide = aides.length ? aides.map(a => echapper(a.name) + compteur(a.assistsToDate)).join(' et ') : 'Sans aide';
+        const aide = aides.length ? aides.map(a => nom(a.name, a.playerId) + compteur(a.assistsToDate)).join(' et ') : 'Sans aide';
         const marque = b.awayScore != null && b.homeScore != null
             ? `${echapper(equipes.away)} ${echapper(b.awayScore)} - ${echapper(equipes.home)} ${echapper(b.homeScore)}`
             : '';
@@ -556,7 +565,7 @@
                 <div class="cal-car-row">
                     ${photo(b.headshot, b.name, b.teamAbbrev)}
                     <div class="cal-car-id">
-                        <div class="cal-car-name">${echapper(b.name)}${compteur(b.goalsToDate)}</div>
+                        <div class="cal-car-name">${nom(b.name, b.playerId)}${compteur(b.goalsToDate)}</div>
                         <div class="cal-car-meta">${aide}</div>
                         ${marque || quand ? `<div class="cal-goal-run">${marque}${quand ? ` <span class="cal-goal-when">${quand}</span>` : ''}</div>` : ''}
                     </div>

@@ -388,6 +388,10 @@ body.fz-cal-page { background: var(--bg); }
     color: var(--text-main);
 }
 .cal-goal-when { font-weight: 500; color: var(--text-secondary); }
+/* Mon joueur au pointage, buteur ou passeur. Le passeur passe aussi en gras :
+   sur la ligne grise des passes, le rouge seul se perdait. */
+.cal-car-mine { color: var(--primary-text); }
+.cal-car-meta .cal-car-mine { font-weight: 700; }
 .cal-goal-when sup { font-size: .75em; line-height: 0; }
 
 /* Mon joueur : sa saison en quatre cases, sa forme dessous. */

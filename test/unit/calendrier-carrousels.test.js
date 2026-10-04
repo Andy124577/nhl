@@ -88,6 +88,27 @@ describe('calendrier — carrousels sous les matchs', () => {
         assert.match(html, /N\. Suzuki <span class="cal-car-tally">\(6\)<\/span>/, 'l’aide et son total');
     });
 
+    test('mon joueur au pointage, buteur ou passeur : son nom en rouge, reconnu par son numéro', async () => {
+        const butDeSuzuki = {
+            ...but('Nick Suzuki', 1, 0, 1, '04:12'), playerId: 8480018,
+            assists: [{ playerId: 8481540, name: 'C. Caufield', assistsToDate: 2 }, { playerId: 99, name: 'L. Hutson', assistsToDate: 5 }]
+        };
+        const page = monter({
+            games: [match(11, 'OFF', 'MTL', 'PIT', [1, 0])],
+            buts: { 11: [butDeSuzuki] },
+            monEquipe: { offensive: ['Nick Suzuki', 'Cole Caufield'] },
+            stats: [
+                { playerId: 8480018, playerName: 'Nick Suzuki', teamAbbrev: 'MTL', position: 'C' },
+                { playerId: 8481540, playerName: 'Cole Caufield', teamAbbrev: 'MTL', position: 'R' }
+            ]
+        });
+        await page.demarrer();
+        const html = page.cartes();
+        assert.match(html, /<span class="cal-car-mine">Nick Suzuki<span class="fz-sk-sr"> \(mon joueur\)<\/span><\/span>/, 'le buteur');
+        assert.match(html, /<span class="cal-car-mine">C\. Caufield<span class="fz-sk-sr">/, 'le passeur, nom abrégé par la LNH');
+        assert.doesNotMatch(html, /cal-car-mine">L\. Hutson/, 'pas les autres');
+    });
+
     test('match en cours : le but le plus récent d’abord', async () => {
         const page = monter({
             games: [match(7, 'LIVE', 'MTL', 'PIT', [2, 0])],
