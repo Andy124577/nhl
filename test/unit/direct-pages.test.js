@@ -61,11 +61,11 @@ describe('classement — fiche d’équipe en direct', () => {
     function fausseRangee(nom) {
         const bloc = { innerHTML: 'avant' };
         const ppts = fausseCellule();
-        const pptsa = fausseCellule();
+        const pastille = { innerHTML: '' };
         const marques = { innerHTML: '' };
-        const cellules = { '.rr-stats': bloc, '.rr-ppts': ppts, '.rr-pptsa': pptsa, '.rr-marks': marques };
+        const cellules = { '.rr-stats': bloc, '.rr-ppts': ppts, '.rr-soiree': pastille, '.rr-marks': marques };
         return {
-            dataset: { player: nom }, bloc, ppts, pptsa, marques,
+            dataset: { player: nom }, bloc, ppts, pastille, marques,
             valeur: ppts.valeur, classes: ppts.classes,
             querySelector: sel => cellules[sel] || null
         };
@@ -73,7 +73,8 @@ describe('classement — fiche d’équipe en direct', () => {
 
     const OILERS = { gamesPlayed: 5, wins: 3, otLosses: 1 };
     const FONCTIONS_FICHE = ['statsDeRangee', 'statsRangeeHTML', 'sousTitreFiche', 'rafraichirFicheEnDirect',
-        'cleFicheAffichee', 'clubDeRangee', 'soireeDe', 'ppaDe', 'marquesHTML', 'CHOIX_LIBELLES', 'MARQUES_SVG'];
+        'cleFicheAffichee', 'clubDeRangee', 'soireeDe', 'ppaDe', 'soireeBadgeHTML', 'SOIREE_TITRE', 'EVO_ARROW_UP',
+        'marquesHTML', 'CHOIX_LIBELLES', 'MARQUES_SVG'];
 
     function monterFiche({ vue = 'teamRoster', soiree = null, extremes = {} } = {}) {
         const rangees = [fausseRangee('Connor McDavid'), fausseRangee('Edmonton Oilers')];
@@ -121,7 +122,7 @@ describe('classement — fiche d’équipe en direct', () => {
         assert.equal(entete.innerHTML, '2<sup>e</sup> sur 1 · 102 pts');
     });
 
-    test('la soirée : PJ compte le match commencé, PPtsA ses points, et le repère dit qu’il joue', () => {
+    test('la soirée : PJ compte le match commencé, la pastille ses points, et le repère dit qu’il joue', () => {
         const { rafraichirFicheEnDirect, rangees } = monterFiche({
             soiree: {
                 joueurs: { 8478402: { etat: 'LIVE', debut: '2026-10-15T23:00:00Z', mj: 1, ppa: 2 } },
@@ -133,8 +134,7 @@ describe('classement — fiche d’équipe en direct', () => {
         const [mcdavid, club] = rangees;
 
         assert.match(mcdavid.bloc.innerHTML, /<span class="rr-v">5<\/span><span class="rr-l">PJ<\/span>/, '4 au relevé, plus ce soir');
-        assert.equal(mcdavid.pptsa.valeur.textContent, 2);
-        assert.ok(!mcdavid.pptsa.classes.has('is-zero'));
+        assert.match(mcdavid.pastille.innerHTML, /^<span class="st-evo st-evo-up" title="2 points de pool[^"]*"><svg[^]*<\/svg>2<\/span>$/);
         assert.match(mcdavid.marques.innerHTML, /rr-mark is-live/);
         assert.match(mcdavid.marques.innerHTML, /rr-mark is-best/, 'un repère de plus, à côté');
 
@@ -144,13 +144,12 @@ describe('classement — fiche d’équipe en direct', () => {
         assert.equal(club.marques.innerHTML, '', 'match fini : plus de repère');
     });
 
-    test('soirée pas encore lue : PJ et PPtsA tels que le relevé et le direct les donnent', () => {
+    test('soirée pas encore lue : PJ tel que le relevé et le direct le donnent, la pastille à plat', () => {
         const { rafraichirFicheEnDirect, rangees } = monterFiche();
         rafraichirFicheEnDirect();
         const [mcdavid, club] = rangees;
         assert.match(mcdavid.bloc.innerHTML, /<span class="rr-v">4<\/span><span class="rr-l">PJ<\/span>/);
-        assert.equal(mcdavid.pptsa.valeur.textContent, 0);
-        assert.ok(mcdavid.pptsa.classes.has('is-zero'));
+        assert.match(mcdavid.pastille.innerHTML, /^<span class="st-evo st-evo-flat" title="Aucun point[^"]*">—<\/span>$/);
         assert.match(club.bloc.innerHTML, /<span class="rr-v">6<\/span><span class="rr-l">PJ<\/span>/);
     });
 

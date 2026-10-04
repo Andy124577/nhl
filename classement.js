@@ -1525,7 +1525,7 @@ function rosterSqueletteHTML(actifs) {
                     <div class="rr-name-line">${os('rr-sk-name', Math.round(nom))}<span class="rr-sk-meta"></span></div>
                     <div class="rr-stats">${stat(12, 'PJ')}${stat(8, l1)}${stat(8, l2)}${stat(12, 'Pts')}</div>
                 </div>
-                <div class="rr-pptsa">${os('rr-sk-v', 10)}<span class="rr-l">PPtsA</span></div>
+                <div class="rr-soiree"><span class="st-sk-evo rr-sk-evo"></span></div>
                 <div class="rr-ppts">${os('rr-sk-pts')}<span class="rr-l">PPts</span></div>
                 <span class="rr-chev">›</span>
             </div>`;
@@ -1924,7 +1924,7 @@ function renderTeamRoster(roster, activeListings = []) {
                 </div>
                 <div class="rr-stats">${statsRangeeHTML(chiffres)}</div>
             </div>
-            <div class="rr-pptsa${ppa ? '' : ' is-zero'}" title="${PPTSA_TITRE}"><span class="rr-v">${ppa}</span><span class="rr-l">PPtsA</span></div>
+            <div class="rr-soiree">${soireeBadgeHTML(ppa)}</div>
             <div class="rr-ppts${points ? '' : ' is-zero'}"><span class="rr-marks">${marquesHTML(player, points, soiree, extremes)}</span><span class="rr-v">${points}</span><span class="rr-l">PPts</span></div>
             <span class="rr-chev" aria-hidden="true">${player.playerId ? '›' : ''}</span>
         `;
@@ -1940,8 +1940,8 @@ function renderTeamRoster(roster, activeListings = []) {
     document.getElementById('rosterSkeleton').style.display = 'none';
     rosterList.style.display = 'flex';
 
-    // La soirée de l'équipe affichée : repères, PPtsA et PJ du soir.
-    if (soireeFiche.cle !== cleFicheAffichee()) soireeFiche = { cle: null, joueurs: {}, clubs: {} };
+    // La soirée de l'équipe affichée : repères, pastille de la soirée et PJ du soir.
+    if (soireeFiche.cle !== cleFicheAffichee()) soireeFiche = { cle: null, joueurs: {}, clubs: {}, bascule: null };
     chargerSoireeFiche();
 }
 
@@ -2015,12 +2015,8 @@ function rafraichirFicheEnDirect() {
             ppts.classList.toggle('is-zero', !chiffres.points);
             ppts.querySelector('.rr-v').textContent = chiffres.points;
         }
-        const pptsa = row.querySelector('.rr-pptsa');
-        if (pptsa) {
-            const ppa = ppaDe(soiree);
-            pptsa.classList.toggle('is-zero', !ppa);
-            pptsa.querySelector('.rr-v').textContent = ppa;
-        }
+        const pastille = row.querySelector('.rr-soiree');
+        if (pastille) pastille.innerHTML = soireeBadgeHTML(ppaDe(soiree));
         const marques = row.querySelector('.rr-marks');
         if (marques) marques.innerHTML = marquesHTML(player, chiffres.points, soiree, extremes);
         const vente = rosterSale.players.find(v => v.name === player.name);
@@ -2035,18 +2031,19 @@ function rafraichirFicheEnDirect() {
 // ==================== SOIRÉE DES JOUEURS (FICHE D'ÉQUIPE) ====================
 // Ce que la fiche montre de la soirée de chacun (/live-roster, voir
 // soireesDuJour dans lib/pointsEnDirect.js) : un repère s'il joue en ce
-// moment ou plus tard aujourd'hui, la colonne PPtsA — les points de sa
-// dernière soirée — et PJ, qui compte son match dès la mise au jeu. Relue à
-// chaque point qui tombe, et en attendant les mises au jeu et les fins de
-// match. Le serveur la tire du calcul du direct : aucun appel de plus à la LNH.
+// moment ou plus tard aujourd'hui, la pastille des points de sa dernière
+// soirée — gardée jusqu'au premier match du lendemain — et PJ, qui compte son
+// match dès la mise au jeu. Relue à chaque point qui tombe, et en attendant
+// les mises au jeu et les fins de match. Le serveur la tire du calcul du
+// direct : aucun appel de plus à la LNH.
 
-let soireeFiche = { cle: null, joueurs: {}, clubs: {} };
+let soireeFiche = { cle: null, joueurs: {}, clubs: {}, bascule: null };
 let soireeMinuteur = null;
 let soireeRelecture = null;
 const SOIREE_EN_JEU_MS = 60 * 1000;
 const SOIREE_MAX_MS = 30 * 60 * 1000;
 
-const PPTSA_TITRE = 'Points de pool de sa dernière soirée : ceux d’aujourd’hui dès que son match commence, sinon ceux d’hier';
+const SOIREE_TITRE = 'jusqu’au premier match du jour suivant';
 
 const cleFicheAffichee = () => `${currentPoolName}|${currentTeamName}`;
 
@@ -2064,9 +2061,21 @@ function soireeDe(player) {
     return (cle && table[cle]) || {};
 }
 
-/** PPtsA d'une rangée : les points de pool de sa dernière soirée. */
+/** Les points de pool de la dernière soirée d'une rangée. */
 function ppaDe(soiree) {
     return (seasonStarted && soiree && soiree.ppa) || 0;
+}
+
+/**
+ * La pastille des points de la dernière soirée, faite comme celle de la
+ * tendance du classement (evolutionBadgeHTML) : flèche verte et les points
+ * marqués, un trait gris sans point.
+ */
+function soireeBadgeHTML(ppa) {
+    if (ppa > 0) {
+        return `<span class="st-evo st-evo-up" title="${ppa} point${ppa > 1 ? 's' : ''} de pool à sa dernière soirée, ${SOIREE_TITRE}">${EVO_ARROW_UP}${ppa}</span>`;
+    }
+    return `<span class="st-evo st-evo-flat" title="Aucun point à sa dernière soirée, ${SOIREE_TITRE}">—</span>`;
 }
 
 async function chargerSoireeFiche() {
@@ -2080,7 +2089,7 @@ async function chargerSoireeFiche() {
             const data = await res.json();
             // Le sélecteur d'équipe a pu changer de fiche pendant l'appel.
             if (cle !== cleFicheAffichee() || currentView !== VIEW_STATES.TEAM_ROSTER) return;
-            soireeFiche = { cle, joueurs: data.joueurs || {}, clubs: data.clubs || {} };
+            soireeFiche = { cle, joueurs: data.joueurs || {}, clubs: data.clubs || {}, bascule: data.bascule || null };
             rafraichirFicheEnDirect();
         }
     } catch (error) {
@@ -2091,9 +2100,10 @@ async function chargerSoireeFiche() {
 
 /**
  * La prochaine relecture : chaque minute tant qu'un joueur de la fiche est
- * en jeu (pour la fin de son match), sinon à la prochaine mise au jeu — au
- * plus tard dans une demi-heure. Rien sans match à venir, hors de la fiche
- * ou onglet caché.
+ * en jeu (pour la fin de son match), sinon à la prochaine mise au jeu — la
+ * sienne, ou le premier match du jour qui efface les pastilles de la veille
+ * (`bascule`) — au plus tard dans une demi-heure. Rien sans match à venir,
+ * hors de la fiche ou onglet caché.
  */
 function planifierSoireeFiche() {
     clearTimeout(soireeMinuteur);
@@ -2104,13 +2114,14 @@ function planifierSoireeFiche() {
     if (lignes.some(s => s.etat === 'LIVE')) {
         attente = SOIREE_EN_JEU_MS;
     } else {
-        const debuts = lignes.filter(s => s.etat === 'FUT').map(s => Date.parse(s.debut)).filter(Number.isFinite);
+        const debuts = [...lignes.filter(s => s.etat === 'FUT').map(s => s.debut), soireeFiche.bascule]
+            .map(d => Date.parse(d)).filter(Number.isFinite);
         if (debuts.length) attente = Math.min(Math.max(Math.min(...debuts) - Date.now(), SOIREE_EN_JEU_MS), SOIREE_MAX_MS);
     }
     if (attente !== null) soireeMinuteur = setTimeout(chargerSoireeFiche, attente);
 }
 
-/** Un point vient de tomber : PPtsA le montre, sans relire à chaque envoi. */
+/** Un point vient de tomber : la pastille de la soirée le montre, sans relire à chaque envoi. */
 function relireSoireeBientot() {
     if (currentView !== VIEW_STATES.TEAM_ROSTER || soireeRelecture) return;
     soireeRelecture = setTimeout(() => {

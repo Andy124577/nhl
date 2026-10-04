@@ -2593,7 +2593,9 @@ app.get('/live-points', async (req, res) => {
  * La soirée des joueurs et clubs demandés, pour la fiche d'équipe du
  * classement : son match du jour (en jeu, plus tard), les matchs commencés
  * que les relevés ne comptent pas encore (colonne PJ) et les points de sa
- * dernière soirée (colonne PPtsA). Voir soireesDuJour (lib/pointsEnDirect.js).
+ * dernière soirée (la pastille à côté des PPts), plus `bascule` : la mise au
+ * jeu du premier match du jour tant qu'aucun n'est commencé. Voir
+ * soireesDuJour (lib/pointsEnDirect.js).
  *
  * Tiré du même calcul que /live-points : aucun appel de plus à la LNH. La
  * page ne demande que les lignes qu'elle affiche (une équipe de pool).
@@ -2610,7 +2612,10 @@ app.get('/live-roster', async (req, res) => {
     try {
         const soirees = await pointsEnDirect.lireSoirees();
         const garder = (table, cles) => Object.fromEntries(cles.filter(c => table[c]).map(c => [c, table[c]]));
-        res.json({ ...vide, joueurs: garder(soirees.joueurs, ids), clubs: garder(soirees.clubs, abbrevs) });
+        res.json({
+            ...vide, joueurs: garder(soirees.joueurs, ids), clubs: garder(soirees.clubs, abbrevs),
+            ...(soirees.bascule ? { bascule: soirees.bascule } : {})
+        });
     } catch (error) {
         console.error('❌ Error computing live roster:', error.message);
         res.json(vide);

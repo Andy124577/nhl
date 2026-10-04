@@ -463,8 +463,8 @@ body {
 /* ==================== ROSTER VIEW (Level 3) ==================== */
 /* Liste « comfortable » (Claude Design, Roster Table v2) : une bande
    continue, une rangée de 64px par joueur séparée d'un filet — rang, photo,
-   nom + club · position, les quatre stats en mini-colonnes, PPtsA, PPts et
-   le chevron. Les teintes sont celles du mockup (sombre), reprises en clair
+   nom + club · position, les quatre stats en mini-colonnes, la pastille des
+   points de la dernière soirée, PPts et le chevron. Les teintes sont celles du mockup (sombre), reprises en clair
    plus bas ; posées sur body parce que le panneau de mise en vente, ajouté
    à la fin de la page, s'en sert aussi. */
 .roster-list {
@@ -776,17 +776,20 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
 .rr-stat .rr-l { font-size: 9.5px; color: var(--rr-dim); }
 .rr-stat.is-zero .rr-v { color: var(--rr-dim); }
 
-.rr-pptsa,
+/* La pastille de la dernière soirée : celle de la tendance du classement
+   (.st-evo, classement-premium.css), centrée dans sa colonne. */
+.rr-soiree {
+    display: flex;
+    justify-content: center;
+}
+.rr-soiree .st-evo { white-space: nowrap; }
 .rr-ppts {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
+    line-height: 1.1;
 }
-.rr-pptsa { line-height: 1.15; }
-.rr-pptsa .rr-v { font-size: 13px; color: var(--rr-num); }
-.rr-pptsa.is-zero .rr-v { color: var(--rr-dim); }
-.rr-pptsa .rr-l { font-size: 9.5px; color: var(--rr-dim); }
-.rr-ppts { position: relative; line-height: 1.1; }
 .rr-ppts .rr-v { font-size: 18px; font-weight: 700; color: var(--rr-strong); }
 .rr-ppts.is-zero .rr-v { color: var(--rr-muted); }
 .rr-ppts .rr-l { font-size: 9.5px; color: var(--rr-muted); }
