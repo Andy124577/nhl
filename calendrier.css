@@ -2,8 +2,9 @@
    CALENDRIER — page à part entière
    ------------------------------------------------------------
    Maquette « Calendar redesign · minimalism focus » : du blanc, des
-   filets, une seule couleur d'accent. Pas de cartes : chaque match est
-   une rangée entre deux filets, la journée choisie est un rond plein.
+   filets, une seule couleur d'accent, la journée choisie en rond plein.
+   Au bureau, les matchs en cartes de trois de large plutôt que la
+   rangée de la maquette : on en voit deux fois plus d'un coup d'œil.
 
    Ses jetons à elle, pas ceux d'index.css : la maquette a son gris et
    son accent. Deux écarts voulus, au thème clair seulement — le gris
@@ -11,9 +12,9 @@
    n'atteignaient pas 4,5:1 sous les libellés de 12px ; ils sont un ton
    plus sombres.
 
-   Téléphone d'abord. À 640px, l'en-tête et la bande des jours passent
-   en bureau ; à 900px, les matchs passent sur trois colonnes (heure,
-   équipes, joueurs).
+   Téléphone d'abord : une rangée par match. À 640px, l'en-tête et la
+   bande des jours passent en bureau ; à 760px, les matchs passent en
+   cartes, deux par rangée, trois à 1100px.
    ============================================================ */
 
 .fz-cal-page {
@@ -52,7 +53,7 @@ body.fz-cal-page { background: var(--cal-bg); }
 }
 .cal-page button { font-family: inherit; }
 @media (min-width: 640px) { .cal-page { --cal-gutter: 32px; padding: 40px var(--cal-gutter) 56px; } }
-@media (min-width: 1100px) { .cal-page { --cal-gutter: 72px; padding: 48px var(--cal-gutter) 56px; } }
+@media (min-width: 1100px) { .cal-page { --cal-gutter: 40px; padding: 48px var(--cal-gutter) 56px; } }
 
 /* ---- Retour à aujourd'hui ----
    Flotte au centre, au-dessus des onglets fixes du téléphone, dès qu'on
@@ -285,9 +286,9 @@ body.fz-cal-page { background: var(--cal-bg); }
 }
 
 /* ---- Les matchs ----
-   Téléphone : l'heure et les équipes côte à côte, les joueurs dessous en
-   pavés. 900px et plus : heure, équipes, joueurs sur trois colonnes ; la
-   feuille de match se range sous l'heure. */
+   Téléphone : une rangée par match, l'heure et les équipes côte à côte,
+   les buts ou les joueurs dessous. Plus large : des cartes en grille
+   (plus bas). */
 .cal-games { display: flex; flex-direction: column; }
 .cal-game {
     display: grid;
@@ -379,35 +380,49 @@ body.fz-cal-page { background: var(--cal-bg); }
 .cal-game-mine { margin: 0; font-size: 12px; line-height: 1.4; color: var(--cal-muted); }
 .cal-game-mine strong { font-weight: 500; color: var(--cal-ink); }
 
-@media (min-width: 900px) {
-    /* La rangée du bas prend la hauteur que demandent équipes et joueurs :
-       la feuille de match reste collée sous l'heure. */
-    .cal-game {
-        grid-template-columns: 110px minmax(0, 1fr) minmax(0, 1.4fr);
-        grid-template-rows: auto 1fr;
-        grid-template-areas:
-            "status teams side"
-            "box    teams side";
-        column-gap: 24px;
-        padding: 24px 0;
-        border-top: 1px solid var(--cal-line);
-        border-bottom: 0;
+/* 760px et plus : une carte par match, deux par rangée, trois à 1100px.
+   L'heure et la feuille de match en tête, les équipes, puis les buts ou
+   les joueurs dessous. Les cartes d'une rangée prennent la même hauteur. */
+@media (min-width: 760px) {
+    .cal-games {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 8px;
     }
-    .cal-game-teams { gap: 12px; }
-    .cal-game-side { gap: 20px; margin-top: 0; }
-    .cal-time { padding-top: 2px; font-size: 14px; }
+    .cal-game {
+        --cal-bleed: 16px;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-rows: auto auto 1fr;
+        grid-template-areas:
+            "status box"
+            "teams  teams"
+            "side   side";
+        align-content: start;
+        column-gap: 12px;
+        padding: 16px;
+        border: 1px solid var(--cal-line);
+        border-radius: 16px;
+    }
+    .cal-game-status { flex-direction: row; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+    .cal-time { font-size: 14px; }
+    .cal-game-box { align-self: center; min-height: 0; margin: 0; }
+    .cal-game-teams { gap: 12px; margin-top: 14px; }
+    .cal-game-side { margin-top: 16px; }
     .cal-team { gap: 12px; }
     .cal-team-bar { height: 18px; }
     .cal-team-abbr { width: 44px; }
     .cal-team-name { font-size: 14px; }
-    .cal-game-box { justify-self: start; margin-top: 8px; }
+}
+@media (min-width: 1100px) {
+    .cal-games { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 /* ---- Sous les équipes (calendrier.js, « listes ») ----
    Les buts d'un match commencé et les meneurs d'un match à venir : un
-   carrousel de pavés. Mes joueurs d'un match à venir : une liste, une
-   rangée par joueur — photo, nom, chiffres à droite, une dernière ligne
-   dessous ; pavés au téléphone, rangées ouvertes à 900px et plus. */
+   carrousel de pavés. Mes joueurs d'un match à venir : une liste de
+   pavés, un par joueur — photo, nom, chiffres à droite, une dernière
+   ligne dessous. */
 .cal-car { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .cal-car-head {
     display: flex;
@@ -428,20 +443,20 @@ body.fz-cal-page { background: var(--cal-bg); }
 .cal-car-list { display: flex; flex-direction: column; gap: 10px; }
 .cal-car-empty { margin: 0; font-size: 12px; color: var(--cal-muted); }
 
-/* La piste va d'un bord de l'écran à l'autre tant qu'elle prend toute la
-   largeur ; à 900px, elle tient dans sa colonne. La carte suivante dépasse
-   à droite : c'est ce qui dit qu'elle défile. */
+/* La piste va d'un bord à l'autre de ce qui la contient : l'écran au
+   téléphone, la carte du match plus large (--cal-bleed). La carte suivante
+   dépasse à droite : c'est ce qui dit qu'elle défile. */
 /* `position: relative` : le « (mon joueur) » caché aux yeux (.fz-sk-sr) est
    en absolu ; sans lui, celui d'une carte hors de vue élargissait la page. */
 .cal-car-track {
     position: relative;
     display: flex;
     gap: 8px;
-    margin-inline: calc(-1 * var(--cal-gutter));
-    padding: 0 var(--cal-gutter) 2px;
+    margin-inline: calc(-1 * var(--cal-bleed, var(--cal-gutter)));
+    padding: 0 var(--cal-bleed, var(--cal-gutter)) 2px;
     overflow-x: auto;
     overscroll-behavior-x: contain;
-    scroll-padding-inline: var(--cal-gutter);
+    scroll-padding-inline: var(--cal-bleed, var(--cal-gutter));
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
 }
@@ -449,10 +464,6 @@ body.fz-cal-page { background: var(--cal-bg); }
 .cal-car-track > .cal-car-card { flex: 0 0 86%; max-width: 300px; min-width: 0; scroll-snap-align: start; }
 .cal-car-track > .cal-car-card:only-child { flex-basis: 100%; max-width: none; }
 .cal-page .cal-car-track:focus-visible { outline-offset: -2px; border-radius: 14px; }
-@media (min-width: 900px) {
-    .cal-car-track { margin-inline: 0; padding-inline: 0; scroll-padding-inline: 0; }
-    .cal-car-track > .cal-car-card { flex-basis: 280px; }
-}
 
 /* Flèches : seulement à la souris, et seulement quand la piste déborde
    (`has-nav`). Au téléphone, le pouce fait le travail. */
@@ -569,30 +580,9 @@ body.fz-cal-page { background: var(--cal-bg); }
 .cal-goal-when { margin-left: 6px; font-weight: 400; color: var(--cal-muted); }
 .cal-goal-when sup { font-size: .75em; line-height: 0; }
 
-/* La liste de mes joueurs, en rangées ouvertes : celles de la maquette. */
-@media (min-width: 900px) {
-    .cal-car-list { gap: 20px; }
-    .cal-car-list > .cal-car-card {
-        grid-template-columns: 36px minmax(0, 1fr) auto;
-        grid-template-areas:
-            "photo id   stats"
-            "photo last stats";
-        align-items: start;
-        column-gap: 14px;
-        padding: 0;
-        border-radius: 0;
-        background: none;
-    }
-    .cal-car-list .cal-car-photo { width: 36px; height: 36px; background: var(--cal-surface); font-size: 12px; }
-    .cal-car-list .cal-car-id { gap: 3px; }
-    .cal-car-list .cal-pl-stats { gap: 20px; }
-    .cal-car-list .cal-pl-stats div { min-width: 28px; }
-    .cal-car-list .cal-pl-stats dt { font-size: 10px; }
-    .cal-car-list .cal-pl-stats dd { font-size: 16px; }
-    .cal-car-list :is(.cal-pl-form, .cal-sk-form) { margin-top: 7px; }
-}
 
 .cal-empty {
+    grid-column: 1 / -1;
     margin: 0;
     padding: 48px 0;
     font-size: 14px;
