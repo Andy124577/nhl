@@ -529,6 +529,26 @@ async function loadDraftData() {
 // ============================================================
 // TEAM SWITCHER (dropdown)
 // ============================================================
+
+/**
+ * Téléphone : « Échanger avec » monte en tête de page (#tmContext), à la
+ * place du bandeau « Pool actif » que les autres pages affichent. Au-delà
+ * de 900 px, il reste dans le bandeau partenaire. Appelé dès le chargement
+ * du script, en bas de page : le sélecteur est déjà en place au premier
+ * affichage.
+ */
+function placerSelecteurPartenaire() {
+    const selecteur = document.querySelector('.tm-partner-switch');
+    const haut = document.getElementById('tmContext');
+    const bandeau = document.querySelector('.tm-partner-bar');
+    if (!selecteur || !haut || !bandeau) return;
+    const telephone = window.matchMedia('(max-width: 900px)');
+    const placer = () => (telephone.matches ? haut : bandeau).appendChild(selecteur);
+    placer();
+    telephone.addEventListener('change', placer);
+}
+placerSelecteurPartenaire();
+
 function toggleTeamSwitcher() {
     teamSwitcherOpen ? closeTeamSwitcher() : openTeamSwitcher();
 }
@@ -579,6 +599,10 @@ function renderTeamSwitcherList() {
         row.addEventListener('click', () => {
             selectPartnerTeam(row.dataset.team);
             closeTeamSwitcher();
+            // En tête de page (téléphone), le sélecteur reste visible depuis
+            // « Reçus » et « Historique » : choisir une équipe, c'est vouloir
+            // lui proposer un échange.
+            if (currentTradeTab !== 'propose') switchTradeTab('propose');
         });
     });
 }

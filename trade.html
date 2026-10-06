@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="index.css?v=20260926b">
     <link rel="stylesheet" href="tradeMarket.css?v=20260926b">
-    <link rel="stylesheet" href="trade.css?v=20261003a">
+    <link rel="stylesheet" href="trade.css?v=20261005a">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="icons.js" defer></script>
@@ -31,7 +31,9 @@
     <!-- Navigation -->
     <nav class="navbar"></nav>
 
-    <div data-fz-context></div>
+    <!-- Téléphone : « Échanger avec » à la place du bandeau « Pool actif »
+         (data-fz-context), inutile ici. trade.js y déplace le sélecteur. -->
+    <div class="tm-context" id="tmContext"></div>
 
     <!-- Main Container -->
     <div class="trade-container">
@@ -335,6 +337,6 @@
     <script src="lib/season.js"></script>
     <script src="headshots.js"></script>
     <script src="teamColors.js"></script>
-    <script src="trade.js?v=20261003a"></script>
+    <script src="trade.js?v=20261005a"></script>
 </body>
 </html>
