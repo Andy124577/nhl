@@ -69,6 +69,7 @@ const { creerServiceH2H } = require("./services/h2h.js");
 const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
 const { creerFeuillesDeMatch, MatchIntrouvable } = require("./services/feuilleMatch.js");
 const { creerFeuillesBrutes, ageTolere } = require("./services/feuillesBrutes.js");
+const { creerFormeClubs } = require("./services/formeClubs.js");
 const { creerAlignements, EquipeInconnue } = require("./services/alignement.js");
 const { creerModerateur } = require("./services/moderationImage.js");
 const { creerMagasinPhotos } = require("./services/magasinPhotos.js");
@@ -651,6 +652,9 @@ contexteRoutes.scoresSaison = async (poolData) => {
 };
 contexteRoutes.saisonCommencee = (fenetre) => seasonHasStarted(fenetre);
 contexteRoutes.resultatsClubs = (demande) => resultatsClubsLNH(demande);
+// La journée entamée ou non : la tendance du classement garde la semaine qui
+// finit hier jusqu'au premier match du jour (routes/records.js).
+contexteRoutes.etatDeLaJournee = () => pointsEnDirect.lireJournee();
 
 const comptes = routesIdentite.monter(app, contexteRoutes);
 // Connexion avec Google : inactive (bouton masqué) tant que les deux clés ne
@@ -2603,7 +2607,9 @@ app.get('/live-points', async (req, res) => {
  * La soirée des joueurs et clubs demandés, pour la fiche d'équipe du
  * classement : son match du jour (en jeu, plus tard), les matchs commencés
  * que les relevés ne comptent pas encore (colonne PJ) et les points de sa
- * dernière soirée (colonne PPtsA). Voir soireesDuJour (lib/pointsEnDirect.js).
+ * dernière soirée (la pastille à côté des PPts), plus `bascule` : la mise au
+ * jeu du premier match du jour tant qu'aucun n'est commencé. Voir
+ * soireesDuJour (lib/pointsEnDirect.js).
  *
  * Tiré du même calcul que /live-points : aucun appel de plus à la LNH. La
  * page ne demande que les lignes qu'elle affiche (une équipe de pool).
@@ -2620,7 +2626,10 @@ app.get('/live-roster', async (req, res) => {
     try {
         const soirees = await pointsEnDirect.lireSoirees();
         const garder = (table, cles) => Object.fromEntries(cles.filter(c => table[c]).map(c => [c, table[c]]));
-        res.json({ ...vide, joueurs: garder(soirees.joueurs, ids), clubs: garder(soirees.clubs, abbrevs) });
+        res.json({
+            ...vide, joueurs: garder(soirees.joueurs, ids), clubs: garder(soirees.clubs, abbrevs),
+            ...(soirees.bascule ? { bascule: soirees.bascule } : {})
+        });
     } catch (error) {
         console.error('❌ Error computing live roster:', error.message);
         res.json(vide);
@@ -2984,6 +2993,49 @@ app.get('/day-goals/:date', async (req, res) => {
     } catch (error) {
         console.error('❌ Error fetching day goals:', error.message);
         res.json(vide);
+    }
+});
+
+// ============================================================
+// FORME DES CLUBS — sous un match à venir du calendrier : le meilleur buteur
+// et le meilleur pointeur de chaque club à ses cinq derniers matchs, et la
+// ligne de nos joueurs sur ces mêmes matchs. Tiré des feuilles de match de la
+// LNH, qui couvrent tout l'effectif (voir lib/formeClub.js et
+// services/formeClubs.js).
+//
+//   ?clubs=MTL,TOR&joueurs=8481540,8479318
+// ============================================================
+let nomsLNHParId = { cle: null, noms: new Map() };
+
+/** « Cole Caufield » plutôt que « C. Caufield » : la feuille n'a que l'initiale. */
+function nomCompletLNH(id) {
+    const cle = `${memStatsCache.lastUpdated}|${(memStatsCache.players || []).length}`;
+    if (nomsLNHParId.cle !== cle) {
+        nomsLNHParId = { cle, noms: new Map((memStatsCache.players || []).map(p => [Number(p.playerId), p.playerName])) };
+    }
+    return nomsLNHParId.noms.get(Number(id)) || null;
+}
+
+const formeClubs = creerFormeClubs({
+    calendrierDuClub,
+    lireFeuille: (id) => lireJsonLNH(`https://api-web.nhle.com/v1/gamecenter/${id}/boxscore`, `feuille ${id}`),
+    saison: () => currentSeasonId(),
+    nomComplet: nomCompletLNH
+});
+
+app.get('/team-form', async (req, res) => {
+    const liste = (valeur, motif, max) => [...new Set(String(valeur || '').split(','))]
+        .map(v => v.trim()).filter(v => motif.test(v)).slice(0, max);
+    const clubs = liste(String(req.query.clubs || '').toUpperCase(), /^[A-Z]{2,3}$/, 32);
+    const joueurs = liste(req.query.joueurs, /^\d{1,10}$/, 80);
+    try {
+        // Ne change qu'à la fin d'un match : cinq minutes dans le navigateur.
+        res.set('Cache-Control', 'private, max-age=300');
+        res.json(await formeClubs.lire({ clubs, joueurs }));
+    } catch (error) {
+        console.error('❌ Error computing team form:', error.message);
+        res.set('Cache-Control', 'no-store');
+        res.json({ clubs: {}, joueurs: {} });
     }
 });
 

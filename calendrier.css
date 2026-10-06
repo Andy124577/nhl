@@ -1,101 +1,64 @@
 /* ============================================================
    CALENDRIER — page à part entière
    ------------------------------------------------------------
-   Jetons d'index.css : les deux thèmes suivent sans règle de plus.
-   Téléphone d'abord : la bande des jours défile à l'horizontale, les
-   matchs s'empilent ; sur écran large, les cartes passent en grille.
+   Maquette « Calendar redesign · minimalism focus » : du blanc, des
+   filets, une seule couleur d'accent, la journée choisie en rond plein.
+   Au bureau, les matchs en cartes de trois de large plutôt que la
+   rangée de la maquette : on en voit deux fois plus d'un coup d'œil.
+
+   Ses jetons à elle, pas ceux d'index.css : la maquette a son gris et
+   son accent. Deux écarts voulus, au thème clair seulement — le gris
+   secondaire (#77777a, 4,3:1) et l'accent (oklch 0.63 0.2 25, 3,7:1)
+   n'atteignaient pas 4,5:1 sous les libellés de 12px ; ils sont un ton
+   plus sombres.
+
+   Téléphone d'abord : une rangée par match. À 640px, l'en-tête et la
+   bande des jours passent en bureau ; à 760px, les matchs passent en
+   cartes, deux par rangée, trois à 1100px.
    ============================================================ */
 
-body.fz-cal-page { background: var(--bg); }
+.fz-cal-page {
+    --cal-bg: #0f0f11;
+    --cal-surface: #1a1a1d;
+    --cal-hover: #151518;
+    --cal-ink: #f2f2f0;
+    --cal-muted: #8c8c91;
+    --cal-line: #232327;
+    --cal-accent: #e94646;   /* oklch(0.63 0.2 25) */
+    --cal-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+html[data-theme="light"] .fz-cal-page {
+    --cal-bg: #fbfbfa;
+    --cal-surface: #f1f1ef;
+    --cal-hover: #f4f4f2;
+    --cal-ink: #18181a;
+    --cal-muted: #6b6b6f;
+    --cal-line: #e8e8e5;
+    --cal-accent: #cc272e;   /* oklch(0.55 0.2 25) */
+}
 
+body.fz-cal-page { background: var(--cal-bg); }
+
+/* --cal-gutter : la marge de côté, que les carrousels reprennent pour
+   défiler d'un bord de l'écran à l'autre. */
 .cal-page {
-    max-width: 1100px;
+    --cal-gutter: 20px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 20px 16px 48px;
-    color: var(--text-main);
+    padding: 24px var(--cal-gutter) 48px;
+    color: var(--cal-ink);
+    font-family: Geist, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
 }
-
-/* ---- En-tête ---- */
-.cal-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    margin-bottom: 16px;
-}
-/* Seul titre de la page : discret, la semaine porte l'en-tête. */
-.cal-eyebrow {
-    margin: 0;
-    font-size: .74rem;
-    font-weight: 800;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--primary-text);
-}
-.cal-season {
-    margin: 6px 0 0;
-    font-size: .88rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-}
-
-.cal-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-
-/* Semaine : ‹ 21 sept. - 27 › dans une seule pastille. Les flèches n'ont
-   pas de cadre à elles ; c'est la pastille qui en porte un. */
-.cal-week {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    padding: 0 2px;
-    border: 1px solid var(--border-light);
-    border-radius: 12px;
-    background: var(--card);
-}
-.cal-nav {
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    border: 0;
-    border-radius: 10px;
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-}
-.cal-nav svg {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2.25;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-.cal-nav:hover:not(:disabled) { color: var(--primary-text); }
-.cal-nav:disabled { opacity: .35; cursor: default; }
-.cal-week-label {
-    min-width: 8.5em;
-    padding: 0 2px;
-    text-align: center;
-    font-weight: 800;
-    font-size: .95rem;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    color: var(--text-main);
-}
-@media (max-width: 559px) {
-    /* Téléphone : la pastille prend la ligne, la date au centre. */
-    .cal-controls { width: 100%; }
-    .cal-week { flex: 1 1 100%; }
-    .cal-week-label { flex: 1; }
-}
-.cal-nav:focus-visible,
-.cal-chip:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.cal-page button { font-family: inherit; }
+@media (min-width: 640px) { .cal-page { --cal-gutter: 32px; padding: 40px var(--cal-gutter) 56px; } }
+@media (min-width: 1100px) { .cal-page { --cal-gutter: 40px; padding: 48px var(--cal-gutter) 56px; } }
 
 /* ---- Retour à aujourd'hui ----
    Flotte au centre, au-dessus des onglets fixes du téléphone, dès qu'on
-   quitte la semaine en cours (calendrier.js, rendreSemaine). */
+   regarde un autre jour (calendrier.js, majRetour). Pleine encre, comme
+   le rond du jour choisi. */
 .cal-return {
     position: fixed;
     left: 50%;
@@ -104,211 +67,568 @@ body.fz-cal-page { background: var(--bg); }
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    min-height: 44px;
+    height: 44px;
     padding: 0 18px 0 14px;
     border: 0;
-    border-radius: 999px;
-    background: var(--primary);
-    color: var(--on-primary);
-    font: inherit;
-    font-size: .92rem;
-    font-weight: 800;
+    border-radius: 22px;
+    background: var(--cal-ink);
+    color: var(--cal-bg);
+    font-size: 13px;
+    font-weight: 500;
     white-space: nowrap;
-    box-shadow: var(--elevation-4);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .12), 0 8px 24px rgba(0, 0, 0, .24);
     cursor: pointer;
     transform: translateX(-50%);
     animation: calSurgit .2s cubic-bezier(.4, 0, .2, 1);
 }
 .cal-return[hidden] { display: none; }
-.cal-return svg {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2.25;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-.cal-return:hover { background: var(--primary-deep); }
-.cal-return:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.cal-return svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cal-page .cal-return:focus-visible { outline-offset: 3px; }
 @media (min-width: 769px) { .cal-return { bottom: 40px; } }
 @keyframes calSurgit { from { opacity: 0; transform: translate(-50%, 10px); } }
-@media (prefers-reduced-motion: reduce) { .cal-return { animation: none; } }
-/* La dernière carte peut toujours remonter au-dessus de la pastille. */
+/* Le dernier match peut toujours remonter au-dessus de la pastille. */
 .cal-page:has(.cal-return:not([hidden])) { padding-bottom: 112px; }
 
-/* ---- Bande des jours ---- */
-.cal-strip {
+.cal-page :is(button, a, [tabindex]):focus-visible { outline: 2px solid var(--cal-accent); outline-offset: 2px; }
+
+/* ---- En-tête ----
+   Téléphone : le nom et « Aujourd’hui » sur une ligne, la journée
+   dessous, puis ‹ semaine ›. Bureau : le nom et la journée à gauche, la
+   semaine et « Aujourd’hui » à droite, au pied de la journée. */
+.cal-head {
     display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(72px, 1fr);
-    gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    margin-bottom: 14px;
-    scrollbar-width: thin;
-    scroll-snap-type: x proximity;
-}
-.cal-chip {
-    position: relative;
-    display: flex;
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "eyebrow today"
+        "title   title"
+        "week    week";
     align-items: center;
-    gap: 2px;
-    min-height: 76px;
-    padding: 10px 6px;
-    border: 1px solid var(--border-light);
-    border-radius: 14px;
-    background: var(--card);
-    color: var(--text-main);
-    font: inherit;
-    cursor: pointer;
-    scroll-snap-align: start;
 }
-.cal-chip-dow { font-size: .72rem; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); }
-.cal-chip-num { font-family: 'Bebas Neue', system-ui, sans-serif; font-size: 1.6rem; line-height: 1; }
-.cal-chip-count { font-size: .7rem; color: var(--text-gray); }
-.cal-chip-mine {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    border-radius: 9px;
-    background: var(--primary);
-    color: var(--on-primary);
-    font-size: .66rem;
-    font-weight: 800;
-    line-height: 18px;
-}
-.cal-chip.is-today { border-color: var(--primary); }
-.cal-chip.is-active {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: var(--on-primary);
-}
-/* Blanc plein : à 85 %, il tombait à 3,6:1 sur le rouge. La pastille reste
-   blanche dans les deux thèmes, d'où le rouge-texte du thème clair (5,38:1). */
-.cal-chip.is-active .cal-chip-dow,
-.cal-chip.is-active .cal-chip-count { color: var(--on-primary); }
-.cal-chip.is-active .cal-chip-mine { background: #fff; color: #d70015; }
-
-/* ---- Journée ---- */
-.cal-day-title {
-    margin: 0 0 10px;
-    font-size: 1rem;
-    font-weight: 800;
-    color: var(--text-main);
-}
-.cal-games {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-}
-@media (min-width: 640px) { .cal-games { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 1000px) { .cal-games { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-
-.cal-game {
+.cal-eyebrow {
+    grid-area: eyebrow;
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 14px;
-    border: 1px solid var(--border-light);
-    border-radius: 14px;
-    background: var(--card);
-}
-.cal-game.is-mine { border-color: rgba(var(--primary-rgb), .55); box-shadow: inset 3px 0 0 var(--primary); }
-.cal-game-status { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--text-secondary); }
-/* L'horloge avance chaque seconde (calendrier.js) : chiffres à chasse fixe. */
-.cal-clock { font-variant-numeric: tabular-nums; }
-.cal-team {
-    display: grid;
-    grid-template-columns: 32px 1fr auto;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
+    gap: 4px 8px;
+    min-width: 0;
+    font-size: 13px;
+    color: var(--cal-muted);
 }
-.cal-team img { width: 32px; height: 32px; object-fit: contain; }
-.cal-team-abbr { font-weight: 700; letter-spacing: .02em; }
-.cal-team-score {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 1.2rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
+.cal-dot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--cal-accent); }
+.cal-eyebrow-title { margin: 0; font: inherit; color: inherit; }
+.cal-season::before { content: '·'; margin-right: 8px; }
+.cal-title {
+    grid-area: title;
+    margin: 14px 0 0;
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--cal-ink);
 }
-.cal-team.is-winner .cal-team-abbr,
-.cal-team.is-winner .cal-team-score { color: var(--text-main); }
-.cal-game:has(.cal-team.is-winner) .cal-team:not(.is-winner) { opacity: .6; }
-.cal-game-mine {
-    margin: 2px 0 0;
-    padding-top: 8px;
-    border-top: 1px solid var(--border-light);
-    font-size: .8rem;
-    line-height: 1.4;
-    color: var(--text-secondary);
-}
-.cal-game-mine strong { color: var(--primary-text); }
-
-/* Vers match.html : au pied de la carte, sur toute sa largeur. */
-.cal-game-box {
+.cal-week {
+    grid-area: week;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    min-height: 44px;
-    margin: auto -14px -14px;
-    padding: 0 14px;
-    border-top: 1px solid var(--border-light);
-    border-radius: 0 0 14px 14px;
-    color: var(--primary-text);
-    font-size: .86rem;
-    font-weight: 700;
-    text-decoration: none;
+    margin-top: 20px;
 }
-.cal-game-box span { font-size: 1.2rem; line-height: 1; }
-.cal-game-box:hover { background: var(--bg-hover); }
-.cal-game-box:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.cal-range {
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--cal-muted);
+}
+.cal-nav {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin: 0 -12px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--cal-ink);
+    cursor: pointer;
+}
+.cal-nav svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cal-nav:disabled { opacity: .35; cursor: default; }
+.cal-today {
+    grid-area: today;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--cal-line);
+    border-radius: 16px;
+    background: transparent;
+    color: var(--cal-ink);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+}
+@media (hover: hover) {
+    .cal-nav:hover:not(:disabled),
+    .cal-today:hover { background: var(--cal-hover); }
+}
 
-.cal-tag {
+@media (min-width: 640px) {
+    .cal-head {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        grid-template-areas:
+            "eyebrow week today"
+            "title   week today";
+        align-items: end;
+    }
+    .cal-title { margin-top: 8px; font-size: 32px; }
+    .cal-week { gap: 6px; margin: 0 0 0 24px; }
+    .cal-range { order: -1; margin-right: 10px; font-size: 14px; }
+    .cal-nav { width: 36px; height: 36px; margin: 0; border: 1px solid var(--cal-line); }
+    .cal-today { height: 36px; margin-left: 12px; padding: 0 16px; border-radius: 18px; font-size: 13px; }
+}
+
+/* ---- Bande des jours ----
+   Téléphone : l'initiale, le rond, un point s'il y a des matchs.
+   Bureau : l'abréviation, le rond, le compte, entre deux filets. */
+.cal-strip {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--cal-line);
+}
+.cal-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 4px 0;
+    border: 0;
+    background: transparent;
+    color: var(--cal-ink);
+    font: inherit;
+    cursor: pointer;
+}
+.cal-chip:focus-visible { outline-offset: -2px; }
+.cal-chip-dow {
+    font-size: 11px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--cal-muted);
+}
+.cal-chip-long { display: none; }
+.cal-chip-num {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    font-size: 16px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+.cal-chip-count { display: none; }
+.cal-chip-dot { width: 4px; height: 4px; border-radius: 50%; }
+.cal-chip.has-games .cal-chip-dot { background: var(--cal-muted); }
+.cal-chip.is-today .cal-chip-dow,
+.cal-chip.is-today .cal-chip-num { color: var(--cal-accent); }
+.cal-chip.is-active .cal-chip-num { background: var(--cal-ink); color: var(--cal-bg); }
+.cal-chip.is-active.has-games .cal-chip-dot { background: var(--cal-ink); }
+
+@media (min-width: 640px) {
+    .cal-strip { margin-top: 36px; padding-bottom: 0; border-top: 1px solid var(--cal-line); }
+    .cal-chip { gap: 8px; padding: 18px 0; }
+    .cal-chip-dow { font-size: 12px; letter-spacing: .06em; }
+    .cal-chip-long { display: inline; }
+    .cal-chip-short { display: none; }
+    .cal-chip-num { width: 44px; height: 44px; font-size: 19px; }
+    .cal-chip-count { display: block; font-size: 12px; color: var(--cal-muted); white-space: nowrap; }
+    .cal-chip-dot { display: none; }
+}
+@media (min-width: 640px) and (hover: hover) {
+    .cal-chip[data-jour]:hover { background: var(--cal-hover); }
+}
+
+/* ---- Compte de la journée et filtre ---- */
+.cal-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 34px;
+    margin: 16px 0 4px;
+}
+.cal-summary { font-size: 13px; color: var(--cal-muted); }
+.cal-filter {
+    display: flex;
+    flex: none;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 10px;
+    background: var(--cal-surface);
+}
+.cal-filter[hidden] { display: none; }
+.cal-filter button {
+    padding: 6px 12px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--cal-muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+.cal-filter button[aria-pressed="true"] { background: var(--cal-bg); color: var(--cal-ink); }
+@media (min-width: 640px) {
+    .cal-bar { margin: 32px 0 8px; }
+    .cal-summary { font-size: 14px; }
+    .cal-filter button { padding: 6px 14px; font-size: 13px; }
+}
+
+/* ---- Les matchs ----
+   Téléphone : une rangée par match, l'heure et les équipes côte à côte,
+   les buts ou les joueurs dessous. Plus large : des cartes en grille
+   (plus bas). */
+.cal-games { display: flex; flex-direction: column; }
+.cal-game {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    grid-template-areas:
+        "status teams"
+        "side   side"
+        "box    box";
+    align-items: start;
+    column-gap: 12px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--cal-line);
+}
+.cal-game-status { grid-area: status; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.cal-game-teams { grid-area: teams; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.cal-game-side { grid-area: side; display: flex; flex-direction: column; gap: 14px; min-width: 0; margin-top: 14px; }
+
+.cal-time {
+    padding-top: 1px;
+    font: 500 13px/1.3 var(--cal-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--cal-ink);
+}
+.cal-time.is-muted { color: var(--cal-muted); }
+/* La période et l'horloge d'un match en cours, la prolongation d'un final. */
+.cal-when {
+    font: 400 12px/1.3 var(--cal-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--cal-muted);
+}
+.cal-when sup { font-size: .75em; line-height: 0; }
+/* L'horloge avance chaque seconde (calendrier.js) : chiffres à chasse fixe. */
+.cal-clock { font-variant-numeric: tabular-nums; }
+.cal-live {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 2px 8px;
-    border-radius: 6px;
-    background: var(--bg-hover);
-    color: var(--text-main);
-    font-size: .72rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: .03em;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--cal-accent);
 }
-.cal-tag.is-soon { background: transparent; border: 1px solid var(--border-gray); }
-.cal-tag.is-live { background: var(--danger-deep); color: var(--on-primary); }
-.cal-tag.is-live i {
-    width: 7px; height: 7px; border-radius: 50%; background: #fff;
+.cal-live i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
     animation: calPouls 1.4s ease-in-out infinite;
 }
 @keyframes calPouls { 50% { opacity: .35; } }
-@media (prefers-reduced-motion: reduce) { .cal-tag.is-live i { animation: none; } }
+
+/* Une équipe : sa couleur en filet, son sigle, son nom, sa marque. */
+.cal-team { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.cal-team-bar { flex: none; width: 3px; height: 16px; border-radius: 2px; background: var(--cal-team, var(--cal-line)); }
+.cal-team-logo { flex: none; width: 22px; height: 22px; object-fit: contain; }
+.cal-team-abbr { flex: none; width: 40px; font-size: 15px; font-weight: 600; }
+.cal-team-name {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 13px;
+    color: var(--cal-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.cal-team-score {
+    flex: none;
+    margin-left: auto;
+    font: 500 15px var(--cal-mono);
+    font-variant-numeric: tabular-nums;
+}
+.cal-team.is-perdant .cal-team-abbr,
+.cal-team.is-perdant .cal-team-score { color: var(--cal-muted); }
+
+/* Vers match.html, une fois la rondelle au jeu. */
+.cal-game-box {
+    grid-area: box;
+    justify-self: end;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 32px;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--cal-muted);
+    text-decoration: none;
+}
+.cal-game-box span { font-size: 15px; line-height: 1; }
+.cal-game-box:hover { color: var(--cal-ink); }
+
+.cal-game-mine { margin: 0; font-size: 12px; line-height: 1.4; color: var(--cal-muted); }
+.cal-game-mine strong { font-weight: 500; color: var(--cal-ink); }
+
+/* 760px et plus : une carte par match, deux par rangée, trois à 1100px.
+   L'heure et la feuille de match en tête, les équipes, puis les buts ou
+   les joueurs dessous. Les cartes d'une rangée prennent la même hauteur. */
+@media (min-width: 760px) {
+    .cal-games {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 8px;
+    }
+    .cal-game {
+        --cal-bleed: 16px;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-rows: auto auto 1fr;
+        grid-template-areas:
+            "status box"
+            "teams  teams"
+            "side   side";
+        align-content: start;
+        column-gap: 12px;
+        padding: 16px;
+        border: 1px solid var(--cal-line);
+        border-radius: 16px;
+    }
+    .cal-game-status { flex-direction: row; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+    .cal-time { font-size: 14px; }
+    .cal-game-box { align-self: center; min-height: 0; margin: 0; }
+    .cal-game-teams { gap: 12px; margin-top: 14px; }
+    .cal-game-side { margin-top: 16px; }
+    .cal-team { gap: 12px; }
+    .cal-team-bar { height: 18px; }
+    .cal-team-logo { width: 26px; height: 26px; }
+    .cal-team-abbr { width: 44px; }
+    .cal-team-name { font-size: 14px; }
+}
+@media (min-width: 1100px) {
+    .cal-games { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ---- Sous les équipes (calendrier.js, « listes ») ----
+   Les buts d'un match commencé et les meneurs d'un match à venir : un
+   carrousel de pavés. Mes joueurs d'un match à venir : une liste de
+   pavés, un par joueur — photo, nom, chiffres à droite, une dernière
+   ligne dessous. */
+.cal-car { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.cal-car-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: 12px;
+    color: var(--cal-muted);
+}
+.cal-car-title { flex: none; font-weight: 500; color: var(--cal-ink); }
+.cal-car-sub {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.cal-car-sub::before { content: '·'; margin-right: 6px; }
+.cal-car-list { display: flex; flex-direction: column; gap: 10px; }
+.cal-car-empty { margin: 0; font-size: 12px; color: var(--cal-muted); }
+
+/* La piste va d'un bord à l'autre de ce qui la contient : l'écran au
+   téléphone, la carte du match plus large (--cal-bleed). La carte suivante
+   dépasse à droite : c'est ce qui dit qu'elle défile. */
+/* `position: relative` : le « (mon joueur) » caché aux yeux (.fz-sk-sr) est
+   en absolu ; sans lui, celui d'une carte hors de vue élargissait la page. */
+.cal-car-track {
+    position: relative;
+    display: flex;
+    gap: 8px;
+    margin-inline: calc(-1 * var(--cal-bleed, var(--cal-gutter)));
+    padding: 0 var(--cal-bleed, var(--cal-gutter)) 2px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-padding-inline: var(--cal-bleed, var(--cal-gutter));
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+}
+.cal-car-track::-webkit-scrollbar { display: none; }
+.cal-car-track > .cal-car-card { flex: 0 0 86%; max-width: 300px; min-width: 0; scroll-snap-align: start; }
+.cal-car-track > .cal-car-card:only-child { flex-basis: 100%; max-width: none; }
+.cal-page .cal-car-track:focus-visible { outline-offset: -2px; border-radius: 14px; }
+
+/* Flèches : seulement à la souris, et seulement quand la piste déborde
+   (`has-nav`). Au téléphone, le pouce fait le travail. */
+.cal-car-nav { display: none; flex: none; gap: 4px; margin-left: auto; }
+@media (hover: hover) and (pointer: fine) {
+    .cal-car.has-nav .cal-car-nav { display: flex; }
+}
+.cal-car-arrow {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid var(--cal-line);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--cal-ink);
+    cursor: pointer;
+}
+.cal-car-arrow svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cal-car-arrow:hover:not(.is-off) { background: var(--cal-hover); }
+.cal-car-arrow.is-off { opacity: .35; cursor: default; }
+
+.cal-car-dots { display: flex; justify-content: center; gap: 4px; }
+.cal-car-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--cal-muted);
+    opacity: .4;
+    transition: width .18s ease, opacity .18s ease, background-color .18s ease;
+}
+.cal-car-dot.is-on { width: 14px; background: var(--cal-accent); opacity: 1; }
+
+.cal-car-card {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    grid-template-areas:
+        "photo id   stats"
+        "last  last last";
+    align-items: center;
+    column-gap: 10px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: var(--cal-surface);
+}
+.cal-car-photo {
+    grid-area: photo;
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--cal-bg);
+    color: var(--cal-muted);
+    font-size: 11px;
+    font-weight: 500;
+}
+.cal-car-photo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+/* La photo de la LNH est détourée : les initiales transparaîtraient derrière
+   le visage. Elles ne reviennent que si la photo manque (onerror l'enlève). */
+.cal-car-photo:has(img) .cal-car-initials { visibility: hidden; }
+.cal-car-id { grid-area: id; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cal-car-name {
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.cal-car-tally { font-weight: 400; color: var(--cal-muted); }
+/* Passes et rôle de meneur : ils passent à la ligne plutôt que d'être coupés. */
+.cal-car-meta { font-size: 12px; line-height: 1.35; color: var(--cal-muted); }
+/* Buteur et passeurs ouvrent leur fiche : du texte qui se souligne au survol. */
+.cal-player {
+    padding: 0;
+    border: 0;
+    border-radius: 3px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.cal-player:hover { text-decoration: underline; text-underline-offset: 2px; }
+/* Mon joueur au pointage, buteur ou passeur. */
+.cal-car-mine { color: var(--cal-accent); }
+.cal-car-meta .cal-car-mine { font-weight: 500; }
+
+/* Les chiffres, valeur au-dessus du libellé ; celui qui compte à l'accent. */
+.cal-pl-stats { grid-area: stats; display: flex; gap: 12px; margin: 0; }
+.cal-pl-stats div { display: flex; flex-direction: column-reverse; align-items: flex-end; gap: 2px; }
+.cal-pl-stats dt { font-size: 9px; letter-spacing: .06em; text-transform: uppercase; color: var(--cal-muted); }
+.cal-pl-stats dd {
+    margin: 0;
+    font: 500 15px/1.2 var(--cal-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--cal-ink);
+}
+.cal-pl-stats .is-key dd { color: var(--cal-accent); }
+
+/* La dernière ligne : la forme de mon joueur, ou la marque après un but. */
+.cal-pl-form,
+.cal-goal-run,
+.cal-sk-form { grid-area: last; margin-top: 10px; }
+.cal-pl-form { margin-bottom: 0; font-size: 12px; color: var(--cal-muted); }
+.cal-pl-form b { font-weight: 400; }
+.cal-pl-form b::before { content: ' · '; }
+.cal-goal-run {
+    overflow: hidden;
+    font-size: 12px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.cal-goal-when { margin-left: 6px; font-weight: 400; color: var(--cal-muted); }
+.cal-goal-when sup { font-size: .75em; line-height: 0; }
+
 
 .cal-empty {
     grid-column: 1 / -1;
     margin: 0;
-    padding: 36px 16px;
-    border: 1px dashed var(--border-gray);
-    border-radius: 14px;
+    padding: 48px 0;
+    font-size: 14px;
     text-align: center;
-    color: var(--text-secondary);
+    color: var(--cal-muted);
 }
+@media (min-width: 640px) { .cal-empty { padding: 64px 0; border-top: 1px solid var(--cal-line); } }
+
 /* ---- Chargement : la semaine en os (calendrier.html, rendreSquelette) ----
-   Os de fzSquelette.css, aux hauteurs des lignes qu'ils remplacent : la
-   puce garde ses 76px, la carte la taille d'un match à venir. */
+   Os de fzSquelette.css, aux tailles de ce qu'ils remplacent. */
 .cal-strip > .cal-chip:not([data-jour]) { cursor: default; }
-.cal-sk-dow { width: 30px; height: 9px; margin: 3px 0 2px; }
-.cal-sk-num { width: 22px; height: 24px; border-radius: 5px; }
-.cal-sk-count { width: 44px; height: 8px; margin: 5px 0 2px; }
-.cal-chip.is-active .cal-sk-count { background: rgba(255, 255, 255, .35); }
-.cal-sk-title { width: 160px; height: 14px; margin: 3px 0; }
-.cal-sk-tag { width: 58px; height: 22px; border-radius: 6px; }
-.cal-sk-logo { width: 32px; height: 32px; }
-.cal-sk-abbr { width: 42px; height: 14px; }
+.cal-sk-dow { width: 12px; height: 9px; margin: 2px 0; }
+.cal-sk-num { width: 38px; height: 38px; }
+.cal-sk-count { display: none; }
+.cal-sk-title { width: 220px; max-width: 100%; height: 24px; margin: 3px 0 4px; border-radius: 6px; }
+.cal-sk-time { width: 48px; height: 13px; margin-top: 2px; }
+.cal-sk-abbr { flex: none; width: 36px; height: 13px; }
+.cal-sk-team { width: 84px; height: 10px; }
 .cal-sk-game { opacity: 0; animation: fzOsMonte .35s ease-out forwards; animation-delay: calc(var(--i, 0) * 45ms); }
-@media (prefers-reduced-motion: reduce) { .cal-sk-game { opacity: 1; animation: none; } }
+.cal-sk-name { width: 62%; height: 12px; margin: 2px 0; }
+.cal-sk-meta { width: 40%; height: 9px; margin: 2px 0; }
+.cal-sk-form { width: 70%; height: 10px; }
+@media (min-width: 640px) {
+    .cal-sk-dow { width: 30px; }
+    .cal-sk-num { width: 44px; height: 44px; }
+    .cal-sk-count { display: block; width: 44px; height: 8px; margin: 2px 0; }
+    .cal-sk-title { height: 30px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cal-return { animation: none; }
+    .cal-car-dot { transition: none; }
+    .cal-live i { animation: none; }
+    .cal-sk-game { opacity: 1; animation: none; }
+}

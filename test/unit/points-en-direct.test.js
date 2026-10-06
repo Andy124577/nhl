@@ -521,7 +521,7 @@ describe('le service, sur plusieurs journées', () => {
 });
 
 describe('la soirée de chacun (fiche d’équipe du classement)', () => {
-    const { soireesDuJour, enUniforme } = require('../../lib/pointsEnDirect.js');
+    const { soireesDuJour, enUniforme, etatDeLaJournee } = require('../../lib/pointsEnDirect.js');
     const HIER = '2026-10-14', AUJ = '2026-10-15';
     const BOUCHARD = 8480803, PICKARD = 8475717;
     const DEBUT = '2026-10-15T23:00:00Z';
@@ -554,7 +554,7 @@ describe('la soirée de chacun (fiche d’équipe du classement)', () => {
         stats, clubs, aujourdhui: AUJ
     });
 
-    test('pas de match aujourd’hui : PPtsA garde les points de la veille, PJ ne bouge pas', () => {
+    test('pas de match aujourd’hui : la pastille garde les points de la veille, PJ ne bouge pas', () => {
         const s = soirees([hier], { 2026020012: feuilleHier });
         assert.deepEqual(s.joueurs[MCDAVID], { ppa: 3 });
         assert.deepEqual(s.joueurs[SKINNER], { ppa: 2 }, 'la victoire du gardien, au barème du pool');
@@ -563,14 +563,25 @@ describe('la soirée de chacun (fiche d’équipe du classement)', () => {
         assert.equal(s.clubs.VAN, undefined);
     });
 
-    test('il joue plus tard aujourd’hui : horloge, et la veille reste affichée jusqu’à la mise au jeu', () => {
+    test('il joue plus tard aujourd’hui : horloge, et la veille reste affichée jusqu’au premier match du jour', () => {
         const s = soirees([hier, ce('FUT')], { 2026020012: feuilleHier });
         assert.deepEqual(s.joueurs[MCDAVID], { etat: 'FUT', debut: DEBUT, ppa: 3 });
         assert.deepEqual(s.joueurs[BOESER], { etat: 'FUT', debut: DEBUT, ppa: 1 });
         assert.equal(s.clubs.EDM.etat, 'FUT');
+        assert.equal(s.bascule, DEBUT, 'la page se relit à la première mise au jeu');
     });
 
-    test('mise au jeu : il est en jeu, PJ prend un match, PPtsA repart des points de ce soir', () => {
+    test('le premier match du jour commence ailleurs : les points de la veille s’effacent pour tous', () => {
+        const ailleurs = { ...match(2026020049, { etat: 'LIVE', debut: '2026-10-15T17:00:00Z' }), gameDate: AUJ,
+            awayTeam: { abbrev: 'NYR', score: 0 }, homeTeam: { abbrev: 'BOS', score: 0 } };
+        const s = soirees([hier, ailleurs, ce('FUT')], { 2026020012: feuilleHier });
+        assert.deepEqual(s.joueurs[MCDAVID], { etat: 'FUT', debut: DEBUT }, 'il joue plus tard : plus rien de la veille');
+        assert.deepEqual(s.joueurs[SKINNER], { etat: 'FUT', debut: DEBUT });
+        assert.deepEqual(s.clubs.EDM, { etat: 'FUT', debut: DEBUT });
+        assert.equal(s.bascule, undefined, 'la journée est entamée');
+    });
+
+    test('mise au jeu : il est en jeu, PJ prend un match, la pastille repart des points de ce soir', () => {
         const s = soirees([hier, ce('LIVE', { home: 1 })], {
             2026020012: feuilleHier,
             2026020050: feuille({
@@ -587,7 +598,7 @@ describe('la soirée de chacun (fiche d’équipe du classement)', () => {
         assert.deepEqual(s.clubs.EDM, { etat: 'LIVE', debut: DEBUT, mj: 1 });
     });
 
-    test('match fini : plus en jeu, mais PJ et PPtsA restent jusqu’au relevé', () => {
+    test('match fini : plus en jeu, mais PJ et la pastille restent jusqu’au relevé', () => {
         const s = soirees([ce('FINAL', { home: 2, away: 1 })], {
             2026020050: feuille({ home: 2, away: 1, edm: [patineur(MCDAVID, 1, 1)], gardiensEdm: [gardien(SKINNER, 'W', 1)] })
         });
@@ -622,6 +633,18 @@ describe('la soirée de chacun (fiche d’équipe du classement)', () => {
         assert.deepEqual(soireesDuJour({ matchs: [ce('LIVE')], stats }), rien);
     });
 
+    test('la journée : entamée au premier match commencé, sinon la mise au jeu du premier à venir', () => {
+        const tot = { ...match(2026020049, { etat: 'FUT', debut: '2026-10-15T17:00:00Z' }), gameDate: AUJ };
+        const reporte = { ...match(2026020048, { etat: 'PPD', debut: '2026-10-15T16:00:00Z' }), gameDate: AUJ };
+        assert.deepEqual(etatDeLaJournee([hier, ce('FUT'), tot, reporte], AUJ, SAISON),
+            { entamee: false, bascule: '2026-10-15T17:00:00Z' }, 'le plus tôt, sans le match reporté');
+        assert.deepEqual(etatDeLaJournee([hier, ce('LIVE'), tot], AUJ, SAISON), { entamee: true, bascule: null });
+        assert.deepEqual(etatDeLaJournee([hier], AUJ, SAISON), { entamee: false, bascule: null }, 'pas de match aujourd’hui');
+        assert.deepEqual(etatDeLaJournee([{ ...ce('LIVE'), gameType: 1 }], AUJ, SAISON), { entamee: false, bascule: null },
+            'un match préparatoire ne compte pas');
+        assert.deepEqual(etatDeLaJournee(null, AUJ, SAISON), { entamee: false, bascule: null });
+    });
+
     test('en uniforme : tous les patineurs, les gardiens qui ont joué', () => {
         assert.deepEqual([...enUniforme(feuilleHier)].sort(), [BOESER, MCDAVID, BOUCHARD, SKINNER].sort());
         assert.equal(enUniforme(null), null);
@@ -640,5 +663,6 @@ describe('la soirée de chacun (fiche d’équipe du classement)', () => {
         });
         const s = await service.lireSoirees();
         assert.deepEqual(s.joueurs[MCDAVID], { etat: 'LIVE', debut: DEBUT, mj: 1, ppa: 1 });
+        assert.deepEqual(await service.lireJournee(), { entamee: true, bascule: null });
     });
 });

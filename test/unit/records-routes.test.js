@@ -60,7 +60,7 @@ function pool(poolMode) {
     };
 }
 
-function monter(poolMode, { clubs = null } = {}) {
+function monter(poolMode, { clubs = null, etatDeLaJournee = null } = {}) {
     const routes = new Map();
     const app = { get: (chemin, ...gestionnaires) => routes.set(chemin, gestionnaires.at(-1)) };
     const resultatsClubs = clubs ? async ({ debut, fin }) => ({
@@ -79,6 +79,7 @@ function monter(poolMode, { clubs = null } = {}) {
         fenetreSaison: async () => ({ regularSeasonStartDate: IL_Y_A_20_JOURS }),
         saisonCommencee: () => true,
         resultatsClubs,
+        etatDeLaJournee,
         logger: { error() {} }
     });
     const appeler = async (chemin, req) => {
@@ -88,7 +89,7 @@ function monter(poolMode, { clubs = null } = {}) {
         return { statut, corps };
     };
     return {
-        leaderboard: days => appeler('/pool-leaderboard/:poolName', { params: { poolName: 'P' }, query: { days: String(days) } }),
+        leaderboard: (days, query = {}) => appeler('/pool-leaderboard/:poolName', { params: { poolName: 'P' }, query: { days: String(days), ...query } }),
         hallOfFame: () => appeler('/pool-hall-of-fame/:poolName', { params: { poolName: 'P' }, query: {} })
     };
 }
@@ -111,6 +112,33 @@ describe('/pool-leaderboard suit le mode du pool', () => {
         assert.equal(await points(1), 5);
         assert.equal(await points(7), 6 + 2);
         assert.equal(await points(30), 7 + 3);
+    });
+
+    test('ancre=soiree : la semaine finit hier jusqu’au premier match du jour, puis aujourd’hui', async () => {
+        const HIER = dates.ajouterJours(AUJ, -1);
+        const BASCULE = '2026-10-15T23:00:00Z';
+        let journee = { entamee: false, bascule: BASCULE };
+        const r = monter('cumulative', { clubs: {}, etatDeLaJournee: async () => journee });
+
+        const avant = (await r.leaderboard(7, { ancre: 'soiree' })).corps;
+        assert.equal(avant.teams[0].points, 1, 'les 5 points d’aujourd’hui ne comptent pas encore');
+        assert.deepEqual(avant.periode, { debut: dates.ajouterJours(HIER, -6), fin: AUJ, dernierJour: HIER });
+        assert.equal(avant.bascule, BASCULE);
+
+        journee = { entamee: true, bascule: null };
+        const apres = (await r.leaderboard(7, { ancre: 'soiree' })).corps;
+        assert.equal(apres.teams[0].points, 6);
+        assert.equal(apres.periode.dernierJour, AUJ);
+        assert.equal(apres.bascule, undefined);
+    });
+
+    test('ancre=soiree : sans réponse sur la journée, ou sans ancre, la fenêtre finit aujourd’hui', async () => {
+        const inconnue = monter('cumulative', { clubs: {}, etatDeLaJournee: async () => null });
+        assert.equal((await inconnue.leaderboard(7, { ancre: 'soiree' })).corps.periode.dernierJour, AUJ);
+        const enPanne = monter('cumulative', { clubs: {}, etatDeLaJournee: async () => { throw new Error('LNH'); } });
+        assert.equal((await enPanne.leaderboard(7, { ancre: 'soiree' })).corps.periode.dernierJour, AUJ);
+        const sansAncre = monter('cumulative', { clubs: {}, etatDeLaJournee: async () => ({ entamee: false, bascule: null }) });
+        assert.equal((await sansAncre.leaderboard(7)).corps.teams[0].points, 6, 'les colonnes 24 h et 30 j ne bougent pas');
     });
 
     test('un pool sans mode est cumulatif', async () => {
