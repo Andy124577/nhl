@@ -482,7 +482,7 @@ function getStandingsColumns(poolMode) {
 // match joué. Au premier match du jour, la page se relit (`bascule`).
 const STANDINGS_PERIODS = [1, 7, 30];
 const TENDANCE_JOURS = 7;
-let periodPointsCache = null; // { poolName, byDays: { 1: Map, 7: Map, 30: Map } }
+let periodPointsCache = null; // { poolName, promesse → { 1: Map, 7: Map, 30: Map } }
 let tendanceMinuteur = null;
 const TENDANCE_ATTENTE_MIN_MS = 60 * 1000;
 const TENDANCE_ATTENTE_MAX_MS = 30 * 60 * 1000;
@@ -490,9 +490,18 @@ const TENDANCE_ATTENTE_MAX_MS = 30 * 60 * 1000;
 const EVO_ARROW_UP = '<svg viewBox="0 0 24 24" width="8" height="8"><path d="M12 4l8 10H4z"></path></svg>';
 const EVO_ARROW_DOWN = '<svg viewBox="0 0 24 24" width="8" height="8"><path d="M12 20L4 10h16z"></path></svg>';
 
-async function fetchStandingsPeriodPoints(poolName) {
-    if (periodPointsCache && periodPointsCache.poolName === poolName) return periodPointsCache.byDays;
+/**
+ * Les points par période, partagés tant que la lecture court : le premier
+ * rendu et celui qu'ouvre l'arrivée du direct partent à quelques
+ * millisecondes d'écart, et chacun relisait les trois périodes en base.
+ */
+function fetchStandingsPeriodPoints(poolName) {
+    if (periodPointsCache && periodPointsCache.poolName === poolName) return periodPointsCache.promesse;
+    periodPointsCache = { poolName, promesse: lirePointsParPeriode(poolName) };
+    return periodPointsCache.promesse;
+}
 
+async function lirePointsParPeriode(poolName) {
     const byDays = {};
     let bascule = null;
     await Promise.all(STANDINGS_PERIODS.map(async (days) => {
@@ -511,7 +520,6 @@ async function fetchStandingsPeriodPoints(poolName) {
         byDays[days] = map;
     }));
 
-    periodPointsCache = { poolName, byDays };
     periodesDerniere = Date.now();
     planifierBasculeTendance(bascule);
     return byDays;
@@ -1004,7 +1012,17 @@ function computeStandings(poolData) {
     return standings;
 }
 
+/**
+ * Numéro du dernier rendu lancé. Le premier rendu attend les points par
+ * période ; le direct arrive pendant ce temps et en lance un second, avec les
+ * points du soir. Le premier finissait parfois après — ses lectures
+ * revenaient plus tard — et réécrivait le tableau avec les totaux de minuit,
+ * jusqu'au prochain but. Un rendu dépassé ne touche plus au tableau.
+ */
+let renduClassement = 0;
+
 async function renderPoolStandings(poolData, poolName) {
+    const rendu = ++renduClassement;
     const poolMode = poolData.poolMode || 'cumulative';
     const standingsList = document.getElementById('standingsList');
 
@@ -1046,6 +1064,7 @@ async function renderPoolStandings(poolData, poolName) {
     // Points par période (1/7/30j) et rang « période » associé : pas de
     // pendant H2H, qui n'a ni colonnes période ni badge d'évolution.
     const byDays = poolMode === 'head-to-head' ? null : await fetchStandingsPeriodPoints(poolName);
+    if (rendu !== renduClassement) return;
     const periodRankByTeam = byDays ? rankByPeriodPoints(standings, byDays[TENDANCE_JOURS]) : null;
 
     // En H2H la table vit dans une carte titrée — elle n'est plus qu'un bloc
