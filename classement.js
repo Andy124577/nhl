@@ -408,63 +408,43 @@ function showPoolStandings(poolName) {
  */
 function ajusterSqueletteClassement(nombre) {
     const voulu = Math.max(1, Math.min(nombre || 7, 12));
-    const classeRang = n => (n === 1 ? 'gold' : n === 2 ? 'silver' : n === 3 ? 'bronze' : 'normal');
-    document.querySelectorAll('#standingsSkeleton .st-sk-table tbody, #standingsSkeleton .st-sk-list').forEach(hote => {
-        const modeles = [...hote.children];
-        if (!modeles.length) return;
-        while (hote.children.length > voulu) hote.lastElementChild.remove();
-        while (hote.children.length < voulu) {
-            const i = hote.children.length;
-            const rangee = modeles[i % modeles.length].cloneNode(true);
-            rangee.style.setProperty('--i', i);
-            const badge = rangee.querySelector('.st-rank-badge');
-            if (badge) { badge.className = `st-rank-badge ${classeRang(i + 1)}`; badge.textContent = i + 1; }
-            const rang = rangee.querySelector('.st-mobile-rank');
-            if (rang) rang.textContent = i + 1;
-            hote.appendChild(rangee);
-        }
-    });
+    const hote = document.querySelector('#standingsSkeleton .st-sk-list');
+    const modeles = hote ? [...hote.children] : [];
+    if (!modeles.length) return;
+    while (hote.children.length > voulu) hote.lastElementChild.remove();
+    while (hote.children.length < voulu) {
+        const i = hote.children.length;
+        const rangee = modeles[i % modeles.length].cloneNode(true);
+        rangee.style.setProperty('--i', i);
+        const rang = rangee.querySelector('.st-mobile-rank');
+        if (rang) rang.textContent = i + 1;
+        hote.appendChild(rangee);
+    }
 }
 
-// Colonnes du tableau de classement, par mode de pool. `sort` doit
+// Colonnes du tableau de classement H2H — un pool cumulatif n'a plus de
+// tableau, sa liste sert sur téléphone comme sur bureau. `sort` doit
 // correspondre à une clé numérique présente sur chaque objet `standing`
-// construit dans renderPoolStandings (ex.: gamesPlayed, ppg, diff...).
+// construit dans computeStandings (ex.: gamesPlayed, diff...).
 // Les largeurs viennent de min-width en CSS (table-layout: auto) : sous une
 // largeur de phone, la table déborde et le conteneur défile plutôt que de
 // couper les nombres en plusieurs lignes.
-function getStandingsColumns(poolMode) {
-    if (poolMode === 'head-to-head') {
-        // V/D/N existent en deux versions : trois colonnes triables sur
-        // grand écran, une seule « V - D - N » sur téléphone. Les deux sont
-        // toujours rendues ; le CSS n'en montre qu'une, ce qui évite de
-        // re-rendre la table au redimensionnement.
-        return [
-            { label: 'Pos', cls: 'rank-col' },
-            { label: 'Participant', cls: 'player-col' },
-            { label: 'PJ', sort: 'gamesPlayed', title: 'Parties jouées' },
-            { label: 'V - D - N', cls: 'st-vdn-col', title: 'Victoires - défaites - nulles' },
-            { label: 'V', sort: 'wins', cls: 'st-wlt-col', title: 'Victoires' },
-            { label: 'D', sort: 'losses', cls: 'st-wlt-col', title: 'Défaites' },
-            { label: 'N', sort: 'ties', cls: 'st-wlt-col', title: 'Nuls' },
-            { label: 'Pts marqués', sort: 'points', cls: 'points-column', title: 'Points fantasy marqués dans tous vos duels' },
-            { label: 'Écart', sort: 'diff', title: 'Points marqués moins points encaissés' },
-            { label: 'Forme', cls: 'st-form-col', title: 'Résultats des 5 dernières semaines, du plus récent au plus ancien' }
-        ];
-    }
+function getStandingsColumns() {
+    // V/D/N existent en deux versions : trois colonnes triables sur
+    // grand écran, une seule « V - D - N » sur téléphone. Les deux sont
+    // toujours rendues ; le CSS n'en montre qu'une, ce qui évite de
+    // re-rendre la table au redimensionnement.
     return [
         { label: 'Pos', cls: 'rank-col' },
         { label: 'Participant', cls: 'player-col' },
         { label: 'PJ', sort: 'gamesPlayed', title: 'Parties jouées' },
-        { label: 'B', sort: 'goals', title: 'Buts' },
-        { label: 'P', sort: 'assists', title: 'Passes décisives' },
-        // Mêmes règles que le Total (buts + passes, gardiens, clubs) : une
-        // colonne 30 j égale au Total en début de saison, pas une autre unité.
-        { label: '24 h', cls: 'st-period-col', title: 'Points marqués aujourd’hui (depuis minuit, heure de l’Est)' },
-        { label: '7 j', cls: 'st-period-col', title: 'Points marqués ces 7 derniers jours — jusqu’à hier tant que le premier match du jour n’est pas commencé' },
-        { label: '30 j', cls: 'st-period-col', title: 'Points marqués ces 30 derniers jours' },
-        { label: 'Total', sort: 'points', cls: 'points-column', title: 'Points de la saison — ce qui décide du classement' },
-        { label: 'Moy./PJ', sort: 'ppg', title: 'Points de la saison par partie jouée' },
-        { label: 'Tendance', cls: 'st-evo-col', title: 'Places gagnées ou perdues si l’on classait seulement sur les 7 derniers jours — gardée jusqu’au premier match du jour suivant' }
+        { label: 'V - D - N', cls: 'st-vdn-col', title: 'Victoires - défaites - nulles' },
+        { label: 'V', sort: 'wins', cls: 'st-wlt-col', title: 'Victoires' },
+        { label: 'D', sort: 'losses', cls: 'st-wlt-col', title: 'Défaites' },
+        { label: 'N', sort: 'ties', cls: 'st-wlt-col', title: 'Nuls' },
+        { label: 'Pts marqués', sort: 'points', cls: 'points-column', title: 'Points fantasy marqués dans tous vos duels' },
+        { label: 'Écart', sort: 'diff', title: 'Points marqués moins points encaissés' },
+        { label: 'Forme', cls: 'st-form-col', title: 'Résultats des 5 dernières semaines, du plus récent au plus ancien' }
     ];
 }
 
@@ -579,37 +559,24 @@ function evolutionBadgeHTML(move, hasData) {
 }
 
 /**
- * « Où en suis-je ? » — la réponse, avant le tableau.
+ * « Où en suis-je ? » — la réponse, avant le tableau H2H (bureau).
  *
- * Un tableau de onze colonnes répond à tout sauf à la seule question qu'on
- * se pose en l'ouvrant. Une phrase la donne d'abord : son rang, et ce qui le
- * sépare de la place d'au-dessus (ou d'en dessous, quand on mène).
+ * Un tableau répond à tout sauf à la seule question qu'on se pose en
+ * l'ouvrant. Une phrase la donne d'abord : son rang et son bilan. Un pool
+ * cumulatif n'en a pas : sa liste va droit au classement, comme sur
+ * téléphone.
  */
-function standingsSummaryHTML(standings, poolMode) {
+function standingsSummaryHTML(standings) {
     const moi = localStorage.getItem('username');
     const mienne = standings.find(s => (s.members || []).includes(moi));
     if (!mienne) return '';
-    const total = standings.length;
-    const nom = s => escapeHtmlText(getDisplayName(s.teamName, s.members));
+    const nom = escapeHtmlText(getDisplayName(mienne.teamName, mienne.members));
     const ordinal = n => n === 1 ? '1<sup>er</sup>' : `${n}<sup>e</sup>`;
-    let detail;
-    if (poolMode === 'head-to-head') {
-        detail = `Bilan ${mienne.wins} V · ${mienne.losses} D · ${mienne.ties} N, ${fmtH2HPts(mienne.points)} points marqués.`;
-    } else if (mienne.rank === 1 && total > 1) {
-        const second = standings[1];
-        detail = `Vous menez par <strong>${second ? mienne.points - second.points : 0} pts</strong> devant ${second ? nom(second) : '—'}.`;
-    } else if (mienne.rank > 1) {
-        const devant = standings[mienne.rank - 2];
-        const leader = standings[0];
-        detail = `<strong>${devant.points - mienne.points} pts</strong> derrière ${nom(devant)}`
-            + (mienne.rank > 2 ? ` · ${leader.points - mienne.points} pts du 1<sup>er</sup>` : '') + '.';
-    } else {
-        detail = 'Seule équipe du pool pour l’instant.';
-    }
+    const detail = `Bilan ${mienne.wins} V · ${mienne.losses} D · ${mienne.ties} N, ${fmtH2HPts(mienne.points)} points marqués.`;
     return `
         <div class="st-summary" role="status">
-            <span class="st-summary-rank fz-display">${ordinal(mienne.rank)}<small> / ${total}</small></span>
-            <span class="st-summary-txt"><strong>${nom(mienne)}</strong><span>${detail}</span></span>
+            <span class="st-summary-rank fz-display">${ordinal(mienne.rank)}<small> / ${standings.length}</small></span>
+            <span class="st-summary-txt"><strong>${nom}</strong><span>${detail}</span></span>
         </div>`;
 }
 
@@ -624,10 +591,10 @@ function standingsLegendHTML(poolMode) {
             ['Forme', 'Vos 5 dernières semaines, la plus récente à gauche.']
         ]
         : [
-            ['Total', 'Ce qui décide du classement : les points de la saison. Patineurs : 1 par but et 1 par passe. Gardiens : 2 par victoire, 5 pour une victoire par blanchissage (pas 2 + 5), 1 par défaite en prolongation. Clubs de la LNH : 2 par victoire, 1 par défaite en prolongation.'],
-            ['24 h · 7 j · 30 j', 'Les points marqués sur la période — aujourd’hui, 7 jours, 30 jours —, selon les mêmes règles que le Total. Ils ne changent pas le classement : ils montrent qui monte.'],
-            ['Tendance', 'Les places qu’une équipe gagnerait (▲) ou perdrait (▼) si l’on classait seulement sur les 7 derniers jours. Elle reste celle de la veille jusqu’au premier match du jour, comme la colonne 7 j.'],
-            ['PJ · B · P', 'Parties jouées, buts et passes de tout l’alignement.']
+            ['Pts', 'Ce qui décide du classement : les points de la saison. Patineurs : 1 par but et 1 par passe. Gardiens : 2 par victoire, 5 pour une victoire par blanchissage (pas 2 + 5), 1 par défaite en prolongation. Clubs de la LNH : 2 par victoire, 1 par défaite en prolongation.'],
+            ['1 j · 7 j · 30 j', 'Les points marqués sur la période — aujourd’hui, 7 jours, 30 jours —, selon les mêmes règles que les Pts. Ils ne changent pas le classement : ils montrent qui monte.'],
+            ['▲ ▼', 'La pastille à côté du nom : les places qu’une équipe gagnerait (▲) ou perdrait (▼) si l’on classait seulement sur les 7 derniers jours. Elle reste celle de la veille jusqu’au premier match du jour, comme le 7 j.'],
+            ['PJ', 'Parties jouées par tout l’alignement.']
         ];
     return `
         <details class="st-legend">
@@ -1032,130 +999,109 @@ async function renderPoolStandings(poolData, poolName) {
     // quand il n'y a pas encore d'équipe complète.
     if (poolMode === 'head-to-head') renderH2HStandingsStrip(poolName, standings);
 
-    const columns = getStandingsColumns(poolMode);
-
     if (standings.length === 0) {
         standingsList.innerHTML = `
-            <div class="standings-table-container">
-                <div class="st-empty">
-                    <p class="st-empty-title">Aucune équipe complète pour le moment</p>
-                    <p class="st-empty-hint">Le classement apparaît une fois les équipes formées.</p>
-                </div>
+            <div class="st-empty">
+                <p class="st-empty-title">Aucune équipe complète pour le moment</p>
+                <p class="st-empty-hint">Le classement apparaît une fois les équipes formées.</p>
             </div>`;
         document.getElementById('standingsSkeleton').style.display = 'none';
         standingsList.style.display = 'block';
         return;
     }
 
-    // Le tri d'affichage réordonne les rangées ; la colonne Pos garde
-    // toujours le rang réel calculé plus haut. Sans tri explicite, l'ordre
-    // canonique (déjà départagé par égalité) sert aussi d'indicateur —
-    // l'en-tête PTS/Victoires s'affiche donc actif dès le premier rendu.
-    const defaultSortKey = poolMode === 'head-to-head' ? 'wins' : 'points';
-    const activeSortKey = standingsSortKey || defaultSortKey;
-    let displayList = standings;
-    if (standingsSortKey) {
-        displayList = [...standings].sort((a, b) => {
-            const delta = (b[standingsSortKey] || 0) - (a[standingsSortKey] || 0);
-            return standingsSortDir === 'asc' ? -delta : delta;
-        });
-    }
+    const enH2H = poolMode === 'head-to-head';
 
     // Points par période (1/7/30j) et rang « période » associé : pas de
     // pendant H2H, qui n'a ni colonnes période ni badge d'évolution.
-    const byDays = poolMode === 'head-to-head' ? null : await fetchStandingsPeriodPoints(poolName);
+    const byDays = enH2H ? null : await fetchStandingsPeriodPoints(poolName);
     if (rendu !== renduClassement) return;
-    const periodRankByTeam = byDays ? rankByPeriodPoints(standings, byDays[TENDANCE_JOURS]) : null;
 
-    // En H2H la table vit dans une carte titrée — elle n'est plus qu'un bloc
-    // parmi d'autres sur l'onglet. En cumulatif elle reste à plat sur la
-    // page, avec sa liste téléphone.
-    const enH2H = poolMode === 'head-to-head';
-    const mobileListHTML = enH2H ? '' : '<div class="st-mobile-list"></div>';
-    const tableHTML = `<div class="standings-table-container"><table id="standingsTable">${buildStandingsHead(columns, activeSortKey)}</table></div>`;
-
-    const resumeHTML = standingsSummaryHTML(standings, poolMode);
     const legendeHTML = standingsLegendHTML(poolMode);
-    standingsList.innerHTML = enH2H
-        ? `${resumeHTML}<section class="fz-card st-card">
+
+    if (enH2H) {
+        // Le tri d'affichage réordonne les rangées ; la colonne Pos garde
+        // toujours le rang réel calculé plus haut. Sans tri explicite, l'ordre
+        // canonique (déjà départagé par égalité) sert aussi d'indicateur —
+        // l'en-tête Victoires s'affiche donc actif dès le premier rendu.
+        const activeSortKey = standingsSortKey || 'wins';
+        let displayList = standings;
+        if (standingsSortKey) {
+            displayList = [...standings].sort((a, b) => {
+                const delta = (b[standingsSortKey] || 0) - (a[standingsSortKey] || 0);
+                return standingsSortDir === 'asc' ? -delta : delta;
+            });
+        }
+
+        // La table vit dans une carte titrée — elle n'est plus qu'un bloc
+        // parmi d'autres sur l'onglet.
+        standingsList.innerHTML = `${standingsSummaryHTML(standings)}<section class="fz-card st-card">
                <div class="fz-card-head">
                    <span class="fz-card-icon">${H2H_ICON.graphique}</span>
                    <h2 class="fz-card-title">Classement de la saison</h2>
                </div>
-               ${tableHTML}
+               <div class="standings-table-container"><table id="standingsTable">${buildStandingsHead(getStandingsColumns(), activeSortKey)}</table></div>
                ${legendeHTML}
-           </section>`
-        : `${resumeHTML}${tableHTML}${mobileListHTML}${legendeHTML}`;
-    const table = document.getElementById('standingsTable');
+           </section>`;
 
-    const tbody = document.createElement('tbody');
-    const mobileRowsHTML = [];
-    // Les pastilles de forme se lisent dans l'historique des semaines
-    // finalisées, pas dans le bilan cumulé : une passe pour tout le tableau.
-    const h2hForms = enH2H ? computeH2HForm(poolData) : null;
-    displayList.forEach(standing => {
-        const displayName = getDisplayName(standing.teamName, standing.members);
-        const logoHTML = getTeamLogoHTML(standing.nhlTeams, 20);
-        const avatarHTML = logoHTML || `<span class="st-avatar-fallback">${initialsFromName(displayName)}</span>`;
+        const tbody = document.createElement('tbody');
+        // Les pastilles de forme se lisent dans l'historique des semaines
+        // finalisées, pas dans le bilan cumulé : une passe pour tout le tableau.
+        const h2hForms = computeH2HForm(poolData);
+        displayList.forEach(standing => {
+            const displayName = getDisplayName(standing.teamName, standing.members);
+            const logoHTML = getTeamLogoHTML(standing.nhlTeams, 20);
+            const avatarHTML = logoHTML || `<span class="st-avatar-fallback">${initialsFromName(displayName)}</span>`;
 
-        const tr = document.createElement('tr');
-        const estMoi = (standing.members || []).includes(localStorage.getItem('username'));
-        tr.className = (standing.rank === 1 ? 'is-clickable is-leader' : 'is-clickable') + (estMoi ? ' is-me' : '');
-        tr.tabIndex = 0;
-        tr.setAttribute('role', 'button');
-        tr.setAttribute('aria-label', `Voir l'équipe de ${displayName}`);
-        tr.onclick = () => showTeamRoster(poolName, standing.teamName);
-        tr.onkeydown = (e) => {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showTeamRoster(poolName, standing.teamName); }
-        };
+            const tr = document.createElement('tr');
+            const estMoi = (standing.members || []).includes(localStorage.getItem('username'));
+            tr.className = (standing.rank === 1 ? 'is-clickable is-leader' : 'is-clickable') + (estMoi ? ' is-me' : '');
+            tr.tabIndex = 0;
+            tr.setAttribute('role', 'button');
+            tr.setAttribute('aria-label', `Voir l'équipe de ${displayName}`);
+            tr.onclick = () => showTeamRoster(poolName, standing.teamName);
+            tr.onkeydown = (e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showTeamRoster(poolName, standing.teamName); }
+            };
 
-        let evoHTML = '';
-        if (periodRankByTeam) {
+            tr.innerHTML = `
+                <td class="rank-col">${rankBadgeHTML(standing.rank)}</td>
+                <td class="player-col">
+                    <div class="st-participant">
+                        <span class="st-avatar">${avatarHTML}</span>
+                        <span class="st-name" title="${displayName}">${displayName}</span>
+                    </div>
+                </td>
+                <td>${standing.gamesPlayed}</td>
+                <td class="st-vdn-col">${standing.wins} - ${standing.losses} - ${standing.ties}</td>
+                <td class="st-wlt-col">${standing.wins}</td>
+                <td class="st-wlt-col">${standing.losses}</td>
+                <td class="st-wlt-col">${standing.ties}</td>
+                <td class="points-column">${fmtH2HPts(standing.points)}</td>
+                <td class="st-diff-col">${fmtH2HDiff(standing.diff)}</td>
+                <td class="st-form-col">${h2hFormDotsHTML(h2hForms.get(standing.teamName))}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+        document.getElementById('standingsTable').appendChild(tbody);
+    } else {
+        // Une seule liste, sur téléphone comme sur bureau — maquette
+        // « Classement » (Claude Design) : rang, rond du club, nom + tendance,
+        // PJ puis les points des trois périodes, Pts en gros. Pos reste le
+        // rang du total ; la tendance le compare au rang sur 7 jours.
+        const periodRankByTeam = rankByPeriodPoints(standings, byDays[TENDANCE_JOURS]);
+        const moi = localStorage.getItem('username');
+        const mini = (valeur, libelle, cls = '') =>
+            `<div class="st-mini${cls}${valeur ? '' : ' is-zero'}"><span class="st-mini-v">${valeur}</span><span class="st-mini-l">${libelle}</span></div>`;
+        const rangees = standings.map(standing => {
+            const displayName = getDisplayName(standing.teamName, standing.members);
+            const estMoi = (standing.members || []).includes(moi);
             const periodRank = periodRankByTeam.get(standing.teamName);
             const move = periodRank !== undefined ? standing.rank - periodRank : 0;
-            const hasData = byDays[TENDANCE_JOURS].get(standing.teamName) != null;
-            evoHTML = evolutionBadgeHTML(move, hasData);
-        }
-
-        const soirHTML = enH2H ? '' : pointsSoirHTML(standing);
-        const statCells = enH2H
-            ? `<td>${standing.gamesPlayed}</td>
-               <td class="st-vdn-col">${standing.wins} - ${standing.losses} - ${standing.ties}</td>
-               <td class="st-wlt-col">${standing.wins}</td>
-               <td class="st-wlt-col">${standing.losses}</td>
-               <td class="st-wlt-col">${standing.ties}</td>
-               <td class="points-column">${fmtH2HPts(standing.points)}</td>
-               <td class="st-diff-col">${fmtH2HDiff(standing.diff)}</td>
-               <td class="st-form-col">${h2hFormDotsHTML(h2hForms.get(standing.teamName))}</td>`
-            : `<td>${standing.gamesPlayed}</td>
-               <td>${standing.goals}</td>
-               <td>${standing.assists}</td>
-               <td class="st-period-col">${fmtPeriodPts(byDays[1].get(standing.teamName))}</td>
-               <td class="st-period-col">${fmtPeriodPts(byDays[7].get(standing.teamName))}</td>
-               <td class="st-period-col">${fmtPeriodPts(byDays[30].get(standing.teamName))}</td>
-               <td class="points-column">${standing.points}${soirHTML}</td>
-               <td>${standing.ppg.toFixed(2)}</td>
-               <td class="st-evo-col">${evoHTML}</td>`;
-
-        tr.innerHTML = `
-            <td class="rank-col">${rankBadgeHTML(standing.rank)}</td>
-            <td class="player-col">
-                <div class="st-participant">
-                    <span class="st-avatar">${avatarHTML}</span>
-                    <span class="st-name" title="${displayName}">${displayName}</span>
-                </div>
-            </td>
-            ${statCells}
-        `;
-        tbody.appendChild(tr);
-
-        if (poolMode !== 'head-to-head') {
-            // Maquette « Classement » (Claude Design) : rang, rond du club, nom
-            // + tendance, PJ puis les points des trois périodes, Pts en gros.
-            const mini = (valeur, libelle, cls = '') =>
-                `<div class="st-mini${cls}${valeur ? '' : ' is-zero'}"><span class="st-mini-v">${valeur}</span><span class="st-mini-l">${libelle}</span></div>`;
+            const evoHTML = evolutionBadgeHTML(move, byDays[TENDANCE_JOURS].get(standing.teamName) != null);
+            const soirHTML = pointsSoirHTML(standing);
             const per = d => fmtPeriodPts(byDays[d].get(standing.teamName));
-            mobileRowsHTML.push(`
+            return `
                 <div class="st-mobile-row is-clickable${estMoi ? ' is-me' : ''}" tabindex="0" role="button" aria-label="Voir l'équipe de ${displayName}" data-team="${standing.teamName.replace(/"/g, '&quot;')}">
                     <span class="st-mobile-rank">${standing.rank}</span>
                     <span class="st-mobile-logo">${getTeamLogoHTML(standing.nhlTeams, 28) || `<span class="st-avatar-fallback">${initialsFromName(displayName)}</span>`}</span>
@@ -1165,44 +1111,9 @@ async function renderPoolStandings(poolData, poolName) {
                     </div>
                     <div class="st-mobile-pts"><span class="st-mobile-pts-v">${standing.points}${soirHTML}</span><span class="st-mini-l">Pts</span></div>
                     <span class="st-mobile-chev" aria-hidden="true">›</span>
-                </div>`);
-        }
-    });
-    table.appendChild(tbody);
-
-    if (poolMode !== 'head-to-head') {
-        const mobileList = standingsList.querySelector('.st-mobile-list');
-        if (mobileList) mobileList.innerHTML = mobileRowsHTML.join('');
-    }
-
-    // Ligne « Moyenne » : elle situe une équipe dans le peloton, ce qui n'a
-    // de sens que sur un classement cumulatif. En H2H la moyenne d'un bilan
-    // V-D-N ne veut rien dire — chaque victoire est la défaite d'un autre.
-    if (!enH2H) {
-        const n = standings.length;
-        const rawAvg = (key) => standings.reduce((sum, s) => sum + (s[key] || 0), 0) / n;
-        const avg = (key) => Math.round(rawAvg(key));
-        const avgPeriod = (days) => {
-            const vals = [...byDays[days].values()].filter(v => v !== null && v !== undefined);
-            return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-        };
-        const tfoot = document.createElement('tfoot');
-        tfoot.innerHTML = `
-            <tr class="standings-avg-row">
-                <td class="rank-col">—</td>
-                <td class="player-col standings-avg-label">Moyenne</td>
-                <td>${avg('gamesPlayed')}</td>
-                <td>${avg('goals')}</td>
-                <td>${avg('assists')}</td>
-                <td class="st-period-col">${fmtPeriodPts(avgPeriod(1))}</td>
-                <td class="st-period-col">${fmtPeriodPts(avgPeriod(7))}</td>
-                <td class="st-period-col">${fmtPeriodPts(avgPeriod(30))}</td>
-                <td class="points-column">${avg('points')}</td>
-                <td>${rawAvg('ppg').toFixed(2)}</td>
-                <td class="st-evo-col">—</td>
-            </tr>
-        `;
-        table.appendChild(tfoot);
+                </div>`;
+        }).join('');
+        standingsList.innerHTML = `<div class="st-mobile-list">${rangees}</div>${legendeHTML}`;
     }
 
     // Délégation sur le conteneur : reconstruit à chaque tri/rendu, un

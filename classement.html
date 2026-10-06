@@ -12,8 +12,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="classement.css?v=20261004a" />
-    <link rel="stylesheet" href="classement-premium.css?v=20261004a" />
+    <link rel="stylesheet" href="classement.css?v=20261006a" />
+    <link rel="stylesheet" href="classement-premium.css?v=20261006a" />
     <link rel="stylesheet" href="index.css?v=20260926b" />
     <link rel="stylesheet" href="injuries.css?v=20260926b" />
     <link rel="stylesheet" href="skeleton-loader.css?v=20260926b" />
@@ -106,8 +106,8 @@
             </div>
 
             <!-- Squelette du classement (Claude Design, « Classement Skeleton ») :
-                 les mêmes classes que le classement chargé — tableau sur
-                 bureau, bande sur téléphone —, donc rien ne bouge à l'arrivée
+                 les mêmes classes que la liste chargée — la même bande sur
+                 téléphone et sur bureau —, donc rien ne bouge à l'arrivée
                  des données. Un seul reflet balaie tous les os à la fois ; les
                  rangées montent l'une après l'autre. Le nombre de rangées suit
                  celui des équipes dès que le pool est connu
@@ -116,116 +116,12 @@
             <div class="st-sk" id="standingsSkeleton" aria-busy="true">
                 <p class="st-sk-sr" role="status">Chargement du classement…</p>
                 <div class="st-sk-body" inert>
-                    <div class="st-summary st-sk-summary">
-                        <span class="fz-bone st-sk-sum-rank"></span>
-                        <span class="st-summary-txt"><span class="fz-bone st-sk-sum-name"></span><span class="fz-bone st-sk-sum-detail"></span></span>
-                    </div>
-                    <div class="standings-table-container">
-                        <table class="st-sk-table">
-                            <thead>
-                                <tr><th class="rank-col">Pos</th><th class="player-col">Participant</th><th>PJ</th><th>B</th><th>P</th><th>24 h</th><th>7 j</th><th>30 j</th><th class="points-column">Total</th><th>Moy./PJ</th><th class="st-evo-col">Tendance</th></tr>
-                            </thead>
-                            <tbody>
-                            <tr style="--i:0">
-                                <td class="rank-col"><span class="st-rank-badge gold">1</span></td>
-                                <td class="player-col"><span class="st-sk-who"><span class="fz-bone st-sk-av"></span><span class="fz-bone st-sk-name" style="--w:118px"></span></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:20px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:16px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:18px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:14px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:18px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:20px"></span></td>
-                                <td class="points-column"><span class="fz-bone st-sk-total"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:32px"></span></td>
-                                <td class="st-evo-col"><span class="st-sk-evo"></span></td>
-                            </tr>
-                            <tr style="--i:1">
-                                <td class="rank-col"><span class="st-rank-badge silver">2</span></td>
-                                <td class="player-col"><span class="st-sk-who"><span class="fz-bone st-sk-av"></span><span class="fz-bone st-sk-name" style="--w:164px"></span></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:20px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:16px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:18px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:14px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:18px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:20px"></span></td>
-                                <td class="points-column"><span class="fz-bone st-sk-total"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:32px"></span></td>
-                                <td class="st-evo-col"><span class="st-sk-evo"></span></td>
-                            </tr>
-                            <tr style="--i:2">
-                                <td class="rank-col"><span class="st-rank-badge bronze">3</span></td>
-                                <td class="player-col"><span class="st-sk-who"><span class="fz-bone st-sk-av"></span><span class="fz-bone st-sk-name" style="--w:132px"></span></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:20px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:16px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:18px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:14px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:18px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:20px"></span></td>
-                                <td class="points-column"><span class="fz-bone st-sk-total"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:32px"></span></td>
-                                <td class="st-evo-col"><span class="st-sk-evo"></span></td>
-                            </tr>
-                            <tr style="--i:3">
-                                <td class="rank-col"><span class="st-rank-badge normal">4</span></td>
-                                <td class="player-col"><span class="st-sk-who"><span class="fz-bone st-sk-av"></span><span class="fz-bone st-sk-name" style="--w:176px"></span></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:20px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:16px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:18px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:14px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:18px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:20px"></span></td>
-                                <td class="points-column"><span class="fz-bone st-sk-total"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:32px"></span></td>
-                                <td class="st-evo-col"><span class="st-sk-evo"></span></td>
-                            </tr>
-                            <tr style="--i:4">
-                                <td class="rank-col"><span class="st-rank-badge normal">5</span></td>
-                                <td class="player-col"><span class="st-sk-who"><span class="fz-bone st-sk-av"></span><span class="fz-bone st-sk-name" style="--w:104px"></span></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:20px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:16px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:18px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:14px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:18px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:20px"></span></td>
-                                <td class="points-column"><span class="fz-bone st-sk-total"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:32px"></span></td>
-                                <td class="st-evo-col"><span class="st-sk-evo"></span></td>
-                            </tr>
-                            <tr style="--i:5">
-                                <td class="rank-col"><span class="st-rank-badge normal">6</span></td>
-                                <td class="player-col"><span class="st-sk-who"><span class="fz-bone st-sk-av"></span><span class="fz-bone st-sk-name" style="--w:146px"></span></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:20px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:16px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:18px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:14px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:18px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:20px"></span></td>
-                                <td class="points-column"><span class="fz-bone st-sk-total"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:32px"></span></td>
-                                <td class="st-evo-col"><span class="st-sk-evo"></span></td>
-                            </tr>
-                            <tr style="--i:6">
-                                <td class="rank-col"><span class="st-rank-badge normal">7</span></td>
-                                <td class="player-col"><span class="st-sk-who"><span class="fz-bone st-sk-av"></span><span class="fz-bone st-sk-name" style="--w:120px"></span></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:20px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:16px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:18px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:14px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:18px"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:20px"></span></td>
-                                <td class="points-column"><span class="fz-bone st-sk-total"></span></td>
-                                <td><span class="fz-bone st-sk-n" style="--w:32px"></span></td>
-                                <td class="st-evo-col"><span class="st-sk-evo"></span></td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
                     <div class="st-mobile-list st-sk-list">
                         <div class="st-mobile-row" style="--i:0">
                             <span class="st-mobile-rank">1</span>
                             <span class="st-mobile-logo fz-bone"></span>
                             <div class="st-mobile-info">
-                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:46%"></span><span class="st-sk-pill"></span></span>
+                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:min(96px, 46%)"></span><span class="st-sk-pill"></span></span>
                                 <div class="st-mini-row"><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:14px"></span><span class="st-mini-l">PJ</span></div><div class="st-mini has-sep"><span class="fz-bone st-sk-mv" style="--w:8px"></span><span class="st-mini-l">1 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">7 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">30 j</span></div></div>
                             </div>
                             <div class="st-mobile-pts"><span class="fz-bone st-sk-mpts"></span><span class="st-mini-l">Pts</span></div>
@@ -235,7 +131,7 @@
                             <span class="st-mobile-rank">2</span>
                             <span class="st-mobile-logo fz-bone"></span>
                             <div class="st-mobile-info">
-                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:78%"></span><span class="st-sk-pill"></span></span>
+                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:min(162px, 78%)"></span><span class="st-sk-pill"></span></span>
                                 <div class="st-mini-row"><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:14px"></span><span class="st-mini-l">PJ</span></div><div class="st-mini has-sep"><span class="fz-bone st-sk-mv" style="--w:8px"></span><span class="st-mini-l">1 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">7 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">30 j</span></div></div>
                             </div>
                             <div class="st-mobile-pts"><span class="fz-bone st-sk-mpts"></span><span class="st-mini-l">Pts</span></div>
@@ -245,7 +141,7 @@
                             <span class="st-mobile-rank">3</span>
                             <span class="st-mobile-logo fz-bone"></span>
                             <div class="st-mobile-info">
-                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:58%"></span><span class="st-sk-pill"></span></span>
+                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:min(121px, 58%)"></span><span class="st-sk-pill"></span></span>
                                 <div class="st-mini-row"><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:14px"></span><span class="st-mini-l">PJ</span></div><div class="st-mini has-sep"><span class="fz-bone st-sk-mv" style="--w:8px"></span><span class="st-mini-l">1 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">7 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">30 j</span></div></div>
                             </div>
                             <div class="st-mobile-pts"><span class="fz-bone st-sk-mpts"></span><span class="st-mini-l">Pts</span></div>
@@ -255,7 +151,7 @@
                             <span class="st-mobile-rank">4</span>
                             <span class="st-mobile-logo fz-bone"></span>
                             <div class="st-mobile-info">
-                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:82%"></span><span class="st-sk-pill"></span></span>
+                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:min(171px, 82%)"></span><span class="st-sk-pill"></span></span>
                                 <div class="st-mini-row"><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:14px"></span><span class="st-mini-l">PJ</span></div><div class="st-mini has-sep"><span class="fz-bone st-sk-mv" style="--w:8px"></span><span class="st-mini-l">1 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">7 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">30 j</span></div></div>
                             </div>
                             <div class="st-mobile-pts"><span class="fz-bone st-sk-mpts"></span><span class="st-mini-l">Pts</span></div>
@@ -265,7 +161,7 @@
                             <span class="st-mobile-rank">5</span>
                             <span class="st-mobile-logo fz-bone"></span>
                             <div class="st-mobile-info">
-                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:44%"></span><span class="st-sk-pill"></span></span>
+                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:min(92px, 44%)"></span><span class="st-sk-pill"></span></span>
                                 <div class="st-mini-row"><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:14px"></span><span class="st-mini-l">PJ</span></div><div class="st-mini has-sep"><span class="fz-bone st-sk-mv" style="--w:8px"></span><span class="st-mini-l">1 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">7 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">30 j</span></div></div>
                             </div>
                             <div class="st-mobile-pts"><span class="fz-bone st-sk-mpts"></span><span class="st-mini-l">Pts</span></div>
@@ -275,7 +171,7 @@
                             <span class="st-mobile-rank">6</span>
                             <span class="st-mobile-logo fz-bone"></span>
                             <div class="st-mobile-info">
-                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:64%"></span><span class="st-sk-pill"></span></span>
+                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:min(133px, 64%)"></span><span class="st-sk-pill"></span></span>
                                 <div class="st-mini-row"><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:14px"></span><span class="st-mini-l">PJ</span></div><div class="st-mini has-sep"><span class="fz-bone st-sk-mv" style="--w:8px"></span><span class="st-mini-l">1 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">7 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">30 j</span></div></div>
                             </div>
                             <div class="st-mobile-pts"><span class="fz-bone st-sk-mpts"></span><span class="st-mini-l">Pts</span></div>
@@ -285,7 +181,7 @@
                             <span class="st-mobile-rank">7</span>
                             <span class="st-mobile-logo fz-bone"></span>
                             <div class="st-mobile-info">
-                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:50%"></span><span class="st-sk-pill"></span></span>
+                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:min(104px, 50%)"></span><span class="st-sk-pill"></span></span>
                                 <div class="st-mini-row"><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:14px"></span><span class="st-mini-l">PJ</span></div><div class="st-mini has-sep"><span class="fz-bone st-sk-mv" style="--w:8px"></span><span class="st-mini-l">1 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">7 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">30 j</span></div></div>
                             </div>
                             <div class="st-mobile-pts"><span class="fz-bone st-sk-mpts"></span><span class="st-mini-l">Pts</span></div>
@@ -385,7 +281,7 @@
     <script defer src="careerTeamLogo.js"></script>
     <script defer src="careerTotals.js"></script>
     <script defer src="draftkitData.js?v=20260925"></script>
-    <script defer src="classement.js?v=20261005a"></script>
+    <script defer src="classement.js?v=20261006a"></script>
     <script defer src="navbar.js?v=20261002c"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20260929a"></script>

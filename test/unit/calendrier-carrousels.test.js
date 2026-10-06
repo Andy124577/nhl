@@ -2,9 +2,8 @@
 
 /**
  * Les carrousels sous chaque match du calendrier (calendrier.js) : les buts
- * d'un match commencé ; d'un match à venir, mes joueurs qui y sont avec leurs
- * statistiques, ou, sans eux, les meneurs des deux clubs à leurs derniers
- * matchs.
+ * d'un match commencé ; d'un match à venir, les meneurs des deux clubs cette
+ * saison et leur fiche (GET /day-preview), puis mes joueurs qui y sont.
  */
 
 const { test, describe } = require('node:test');
@@ -29,9 +28,9 @@ const but = (name, awayScore, homeScore, period, timeInPeriod) => ({
     playerId: 1, name, goalsToDate: 4, headshot: '', teamAbbrev: 'MTL', period, periodType: 'REG',
     timeInPeriod, awayScore, homeScore, assists: [{ name: 'N. Suzuki', assistsToDate: 6 }]
 });
-const meneur = (id, nom, b, a) => ({ id, nom, pos: 'R', pj: 2, b, a, p: b + a, photo: '' });
+const meneur = (id, prenom, nom, club, numero, pos, cat, val) => ({ id, prenom, nom, photo: '', club, numero, pos, cat, val });
 
-function monter({ games, buts = {}, forme = { clubs: {}, joueurs: {} }, monEquipe = null, stats = [] }) {
+function monter({ games, buts = {}, apercu = {}, monEquipe = null, stats = [] }) {
     const elements = new Map();
     const el = id => {
         if (!elements.has(id)) elements.set(id, { innerHTML: '', textContent: '', hidden: false, disabled: false, addEventListener() {} });
@@ -51,7 +50,7 @@ function monter({ games, buts = {}, forme = { clubs: {}, joueurs: {} }, monEquip
         const ok = donnees => ({ ok: true, json: async () => donnees });
         if (url.includes('/schedule/')) return ok({ days: [{ date: JOUR, games }], previousStartDate: null, nextStartDate: null });
         if (url.includes('/day-goals/')) return ok({ date: JOUR, games: buts, live: {} });
-        if (url.includes('/team-form?')) return ok(forme);
+        if (url.includes('/day-preview/')) return ok({ date: JOUR, games: apercu });
         if (url.includes('/current-stats')) return ok({ seasonStarted: true, players: stats });
         return { ok: false, json: async () => ({}) };
     };
@@ -120,62 +119,75 @@ describe('calendrier — carrousels sous les matchs', () => {
         assert.ok(html.indexOf('Nick Suzuki') < html.indexOf('Cole Caufield'));
     });
 
-    test('match à venir avec mes joueurs : leur saison et leurs derniers matchs', async () => {
+    test('match à venir sans mes joueurs : la fiche des clubs et leurs meneurs, comme à la LNH', async () => {
         const page = monter({
-            games: [match(8, 'FUT', 'MTL', 'TOR')],
-            monEquipe: { offensive: ['Nick Suzuki'] },
-            stats: [{ playerId: 8480018, playerName: 'Nick Suzuki', teamAbbrev: 'MTL', position: 'C', headshot: '', gamesPlayed: 2, goals: 1, assists: 3, points: 4 }],
-            forme: {
-                clubs: { MTL: { matchs: 2, buteur: meneur(1, 'Cole Caufield', 3, 0), pointeur: null }, TOR: { matchs: 3, buteur: null, pointeur: null } },
-                joueurs: { 8480018: { club: 'MTL', matchs: 2, pos: 'C', pj: 2, b: 1, a: 3, p: 4 } }
+            games: [match(9, 'FUT', 'CAR', 'MTL')],
+            apercu: {
+                9: {
+                    away: { fiche: '1-1-1' }, home: { fiche: '1-0-1' },
+                    meneurs: [
+                        meneur(8478427, 'Sebastian', 'Aho', 'CAR', 20, 'C', 'goals', 3),
+                        meneur(8481540, 'Cole', 'Caufield', 'MTL', 13, 'R', 'goals', 1),
+                        meneur(8480018, 'Nick', 'Suzuki', 'MTL', 14, 'C', 'assists', 0),
+                        meneur(8478470, 'Sam', 'Montembeault', 'MTL', 35, 'G', 'wins', 2)
+                    ]
+                }
             }
         });
         await page.demarrer();
         const html = page.cartes();
-        assert.match(html, /data-car="miens"/);
-        assert.doesNotMatch(html, /data-car="meneurs"/, 'mes joueurs prennent la place des meneurs');
-        assert.match(html, /<div class="is-key"><dt>Pts<\/dt><dd>4<\/dd><\/div>/);
-        assert.match(html, /MTL · C/);
-        assert.match(html, /<span>2 derniers matchs<\/span><b>1 B · 3 A · 4 Pts<\/b>/);
-        const forme = page.lectures.filter(u => u.includes('/team-form?'));
-        assert.ok(forme.some(u => /joueurs=8480018/.test(u)), 'ma ligne est demandée');
+        assert.match(html, /<span class="cal-team-rec"><span class="fz-sk-sr">Fiche <\/span>1-1-1<\/span>/);
+        assert.match(html, /1-0-1/);
+        assert.match(html, /data-car="meneurs"/);
+        assert.match(html, /Meneurs par équipe/);
+        assert.match(html, /<span class="cal-lead-first">Sebastian<\/span>/);
+        assert.match(html, /data-player="8478427" data-name="Sebastian Aho">Aho<\/button>/, 'le nom ouvre sa fiche');
+        assert.match(html, /CAR • #20 • C/);
+        assert.match(html, /<b>3<\/b><span>Buts<\/span>/);
+        assert.match(html, /MTL • #13 • AD[\s\S]*<b>1<\/b><span>But<\/span>/, 'le singulier jusqu’à un');
+        assert.match(html, /<b>2<\/b><span>Victoires<\/span>/);
+        assert.doesNotMatch(html, /Suzuki/, 'un meneur à zéro n’en est pas un');
+        assert.doesNotMatch(html, /data-car="miens"/);
+        assert.match(html, /<a class="cal-game-box" href="match.html\?id=9">Zone de match<\/a>/);
+        assert.equal(page.lectures.filter(u => u.includes('/day-preview/')).length, 1, 'une seule requête, pas de boucle');
     });
 
-    test('match à venir sans mes joueurs : buteur et pointeur de chaque club, une seule carte s’ils ne font qu’un', async () => {
-        const nylander = meneur(8, 'William Nylander', 2, 1);
+    test('match à venir avec mes joueurs : les meneurs, puis mes joueurs et leur saison', async () => {
         const page = monter({
-            games: [match(9, 'FUT', 'MTL', 'TOR')],
-            forme: {
-                clubs: {
-                    MTL: { matchs: 2, buteur: meneur(1, 'Cole Caufield', 3, 0), pointeur: meneur(2, 'Nick Suzuki', 1, 3) },
-                    TOR: { matchs: 2, buteur: nylander, pointeur: nylander }
-                },
-                joueurs: {}
-            }
+            games: [match(8, 'FUT', 'MTL', 'TOR')],
+            monEquipe: { offensive: ['Nick Suzuki'], goalie: ['Sam Montembeault'] },
+            stats: [
+                { playerId: 8480018, playerName: 'Nick Suzuki', teamAbbrev: 'MTL', position: 'C', headshot: '', points: 4 },
+                { playerId: 8478470, playerName: 'Sam Montembeault', teamAbbrev: 'MTL', position: 'G', headshot: '', wins: 1 }
+            ],
+            apercu: { 8: { away: { fiche: '2-0-0' }, home: { fiche: '0-2-0' }, meneurs: [meneur(1, 'Cole', 'Caufield', 'MTL', 13, 'R', 'goals', 3)] } }
         });
         await page.demarrer();
         const html = page.cartes();
         assert.match(html, /data-car="meneurs"/);
-        assert.match(html, /<span class="cal-car-sub">2 derniers matchs<\/span>/);
-        assert.match(html, /Meilleur buteur · MTL/);
-        assert.match(html, /Meilleur pointeur · MTL/);
-        assert.match(html, /Meilleur buteur et pointeur · TOR/);
-        assert.equal((html.match(/William Nylander/g) || []).length, 1);
-        assert.equal(page.lectures.filter(u => u.includes('/team-form?')).length, 1, 'une seule requête, pas de boucle');
+        assert.match(html, /data-car="miens"/);
+        assert.ok(html.indexOf('data-car="meneurs"') < html.indexOf('data-car="miens"'), 'les meneurs d’abord');
+        assert.match(html, /<span class="cal-lead-first">Nick<\/span>/);
+        assert.match(html, /data-name="Nick Suzuki">Suzuki<\/button>/);
+        assert.match(html, /MTL • C<\/span>/);
+        assert.match(html, /<b>4<\/b><span>Points<\/span>/);
+        assert.match(html, /<b>1<\/b><span>Victoire<\/span>/, 'un gardien : ses victoires');
+        assert.match(html, /class="cal-game is-mine"/);
     });
 
-    test('clubs à des nombres de matchs différents : le sous-titre le dit', async () => {
-        const page = monter({
-            games: [match(10, 'FUT', 'MTL', 'TOR')],
-            forme: {
-                clubs: {
-                    MTL: { matchs: 2, buteur: meneur(1, 'Cole Caufield', 3, 0), pointeur: null },
-                    TOR: { matchs: 3, buteur: meneur(8, 'William Nylander', 2, 1), pointeur: null }
-                },
-                joueurs: {}
-            }
-        });
+    test('match absent de l’aperçu : ni meneurs ni fiche, et une seule requête pour la journée', async () => {
+        const page = monter({ games: [match(12, 'FUT', 'MTL', 'TOR'), match(13, 'OFF', 'BOS', 'NYR', [1, 0])] });
         await page.demarrer();
-        assert.match(page.cartes(), /Derniers matchs · MTL 2 · TOR 3/);
+        const html = page.cartes();
+        assert.doesNotMatch(html, /data-car="meneurs"/);
+        assert.doesNotMatch(html, /cal-team-rec/);
+        assert.equal(page.lectures.filter(u => u.includes('/day-preview/')).length, 1);
+    });
+
+    test('une journée sans match à venir ne demande pas d’aperçu', async () => {
+        const page = monter({ games: [match(14, 'OFF', 'BOS', 'NYR', [1, 0])] });
+        await page.demarrer();
+        assert.equal(page.lectures.filter(u => u.includes('/day-preview/')).length, 0);
+        assert.match(page.cartes(), /<span class="cal-pill">Final<\/span>/);
     });
 });

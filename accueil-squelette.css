@@ -65,12 +65,23 @@ html.fz-home-pending .fz-home-sk { display: block; }
 .ask-season .fzs { max-width: 1500px; margin: 0 auto; }
 .ask-season .fzs-head { min-height: 30px; }
 .ask-season .fzs-players { min-height: 297px; }
-.ask-season :is(.fzs-rank, .fzs-total) { min-height: 153px; }
+.ask-season :is(.fzs-rank, .fzs-total) { min-height: 308px; }
 .ask-season .ask-half { grid-column: span 6; order: 5; min-height: 369px; }
 .ask-season .ask-al { order: 6; }
 .ask-number { width: 96px; height: 34px; margin: 12px 0 10px; border-radius: 5px; }
 .ask-sub { width: 56px; height: 12px; }
 .ask-sub.is-long { width: 72%; }
+/* Ma position : la semaine du rang et les trois périodes (accueil-season.css
+   en donne la grille) ; Total ce soir : les matchs à venir. */
+.ask-week-cap { width: 92px; height: 11px; margin: 3px 0 12px; }
+.ask-week { height: 86px; border-radius: 8px; }
+.ask-period-l { width: 46px; height: 10px; margin: 3px 0 9px; }
+.ask-period-v { width: 58px; height: 24px; border-radius: 5px; }
+.ask-tonight { margin-top: 40px; border-top: 1px solid var(--fzh-border); }
+.ask-tonight-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 37px; border-bottom: 1px solid var(--fzh-border); }
+.ask-tonight-row:last-child { border-bottom: 0; }
+.ask-tonight-l { width: 128px; height: 12px; }
+.ask-tonight-r { width: var(--w); height: 10px; }
 
 /* Les cartes des joueurs du soir (.fzs-pc), sans la couleur du club. */
 .ask-pc .fzs-pc-top { display: flex; justify-content: center; padding-top: 28px; background: var(--fz-bone); }
@@ -157,8 +168,10 @@ html.fz-home-pending .fz-home-sk { display: block; }
 @media (max-width: 768px) {
     .ask-season { padding: 12px 12px calc(90px + env(safe-area-inset-bottom)); }
     .ask-season .fzs-players { min-height: 291px; }
-    .ask-season :is(.fzs-rank, .fzs-total) { min-height: 148px; }
-    .ask-season .fzs-rank .ask-link { display: none; }
+    /* Avant les matchs, sans la ligne « depuis le début de la journée ». */
+    .ask-season .fzs-rank { min-height: 353px; }
+    .ask-season .fzs-rank-now { min-height: 77px; }
+    .ask-season .fzs-total { min-height: 294px; }
     .ask-season .ask-half { grid-column: 1 / -1; min-height: 200px; }
     .ask-season .ask-al { min-height: 308px; }
     .ask-season .ask-half .ask-row:nth-child(n + 4) { display: none; }

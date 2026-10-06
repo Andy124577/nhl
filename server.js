@@ -64,6 +64,7 @@ const { creerPointsEnDirect } = require("./services/pointsEnDirect.js");
 const { lignesDuSoir, appliquerAuxJoueurs, appliquerAuxClubs } = require("./lib/pointsEnDirect.js");
 const releveSaison = require("./lib/releveSaison.js");
 const horaireLNH = require("./lib/horaire.js");
+const { apercuDeScore } = require("./lib/apercuMatchs.js");
 const { creerServicePointage } = require("./services/scoring.js");
 const { creerServiceH2H } = require("./services/h2h.js");
 const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
@@ -2997,6 +2998,31 @@ app.get('/day-goals/:date', async (req, res) => {
 });
 
 // ============================================================
+// APERÇU D'UNE JOURNÉE — sur la carte d'un match à venir du calendrier : la
+// fiche des deux clubs et leurs meneurs de la saison (buts, aides,
+// victoires), ceux que la LNH affiche sur sa propre page des pointages. Même
+// relevé que /day-goals (lireScoreDuJourBrut) : une journée déjà lue ne coûte
+// aucun appel de plus. Aucune lecture de la base. Voir lib/apercuMatchs.js.
+// ============================================================
+app.get('/day-preview/:date', async (req, res) => {
+    const { date } = req.params;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ message: 'Invalid date, expected YYYY-MM-DD' });
+    }
+    try {
+        const games = await lireScoreDuJourBrut(date);
+        // Ne change qu'à la fin d'un match : cinq minutes dans le navigateur.
+        res.set('Cache-Control', 'private, max-age=300');
+        res.json({ date, games: apercuDeScore(games) });
+    } catch (error) {
+        // Un échec n'est pas une journée sans meneurs : la page redemande.
+        console.error('❌ Error fetching day preview:', error.message);
+        res.set('Cache-Control', 'no-store');
+        res.status(502).json({ date, games: {} });
+    }
+});
+
+// ============================================================
 // FORME DES CLUBS — sous un match à venir du calendrier : le meilleur buteur
 // et le meilleur pointeur de chaque club à ses cinq derniers matchs, et la
 // ligne de nos joueurs sur ces mêmes matchs. Tiré des feuilles de match de la
@@ -3170,6 +3196,8 @@ app.get('/team-lineup/:team', async (req, res) => {
 // today, hasSnapshot is false and the frontend shows the plain current rank
 // with no movement badge.
 // ============================================================
+// Cinq matins avant celui du jour : six soirs, plus maintenant, font la semaine.
+const RANG_SEMAINE_MATINS = 5;
 app.get('/pool-rank-movement/:poolName', async (req, res) => {
     try {
         const { poolName } = req.params;
@@ -3187,19 +3215,38 @@ app.get('/pool-rank-movement/:poolName', async (req, res) => {
         // cherchait un instantané pas encore pris, et les flèches de
         // progression disparaissaient tous les soirs jusqu'à minuit.
         const todayISO = datesPool.journeeLocale();
+        // La semaine de « Ma position » (accueil) : les six derniers matins de
+        // l'équipe demandée (?team=), chacun son rang au soir de la veille.
+        // Lus avec ceux d'aujourd'hui, dans la même requête — cinq lignes de
+        // plus, pas un aller-retour de plus.
+        const equipe = typeof req.query.team === 'string' && req.query.team ? req.query.team : null;
+        const debutSemaine = datesPool.ajouterJours(todayISO, -RANG_SEMAINE_MATINS);
         const snapResult = await db.query(
-            `SELECT team_name, rank, points FROM pool_rank_snapshots WHERE pool_name = $1 AND snapshot_date = $2`,
-            [poolName, todayISO]
+            `SELECT team_name, rank, points, snapshot_date::text AS jour
+               FROM pool_rank_snapshots
+              WHERE pool_name = $1
+                AND (snapshot_date = $2 OR (team_name = $3 AND snapshot_date >= $4 AND snapshot_date < $2))`,
+            [poolName, todayISO, equipe, debutSemaine]
         );
+        const duJour = snapResult.rows.filter(r => r.jour === todayISO);
+        // Un matin d'avant l'ouverture classe des équipes à zéro point : son
+        // rang ne dit rien. Celui du jour de l'ouverture non plus — il fige
+        // la veille.
+        const ouverture = await getSeasonWindow().then(f => f && f.regularSeasonStartDate).catch(() => null);
+        const history = snapResult.rows
+            .filter(r => equipe && r.team_name === equipe && (!ouverture || r.jour > ouverture))
+            .sort((a, b) => a.jour.localeCompare(b.jour))
+            .map(r => ({ date: r.jour, rank: r.rank, points: Number(r.points) }));
 
-        if (snapResult.rows.length === 0) {
+        if (duJour.length === 0) {
             return res.json({
                 hasSnapshot: false,
-                teams: liveScores.map(t => ({ teamName: t.teamName, rankNow: t.rank, pointsNow: t.score }))
+                teams: liveScores.map(t => ({ teamName: t.teamName, rankNow: t.rank, pointsNow: t.score })),
+                history
             });
         }
 
-        const snapByTeam = new Map(snapResult.rows.map(r => [r.team_name, r]));
+        const snapByTeam = new Map(duJour.map(r => [r.team_name, r]));
         const teams = liveScores.map(t => {
             const snap = snapByTeam.get(t.teamName);
             return {
@@ -3211,10 +3258,10 @@ app.get('/pool-rank-movement/:poolName', async (req, res) => {
             };
         });
 
-        res.json({ hasSnapshot: true, teams });
+        res.json({ hasSnapshot: true, teams, history });
     } catch (error) {
         console.error('❌ Error computing pool rank movement:', error.message);
-        res.json({ hasSnapshot: false, teams: [] });
+        res.json({ hasSnapshot: false, teams: [], history: [] });
     }
 });
 

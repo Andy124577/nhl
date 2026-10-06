@@ -30,9 +30,6 @@ body.fz-season-page { background:var(--bg); }
 .fzs .fzs-green { color:var(--success); }
 .fzs .fzs-red { color:var(--primary-text); }
 .fzs-rank p span { color:#A1A1A6; font-size:13px; }
-.fzs-bars { position:absolute; right:20px; bottom:25px; display:flex; align-items:end; gap:8px; height:72px; opacity:.6; }
-.fzs-bars i { width:12px; height:25%; background:#38383A; }
-.fzs-bars i:nth-child(2) { height:40%; }.fzs-bars i:nth-child(3) { height:60%; }.fzs-bars i:nth-child(4) { height:85%; }.fzs-bars i:nth-child(5) { height:65%; }.fzs-bars i:nth-child(6) { height:100%; }
 .fzs .fzd-team-logo { width:30px; height:30px; object-fit:contain; }
 .fzs-tag { display:inline-block; border-radius:3px; padding:1px 6px; background:#2C2C2E; color:#F5F5F7; font-size:11px; font-weight:700; text-transform:uppercase; width:max-content; }
 .fzs-tag.is-live { background:var(--primary); color:var(--on-primary); } /* blanc dessus : 4,55:1 */
@@ -59,7 +56,7 @@ body.fz-season-page { background:var(--bg); }
 .fzs #fzDashCalendarWrap { display:block!important; margin:0; padding:16px; border-radius:11px; }.fzs .fzd-cal-games { grid-template-columns:repeat(4,minmax(0,1fr)); }.fzs .fzd-game-players { display:none; }.fzs .fzd-cal-strip { margin-bottom:12px; }
 .fzs-activity { grid-column:span 4; }
 .fzs .fzm-news-list { display:grid; gap:10px; }.fzs .fzm-news-row { color:#F5F5F7; }.fzs .fzm-list-card { background:transparent; border:0; }.fzs .fzm-list-row { border-color:#38383A; }.fzs .fzm-activity-text { color:#F5F5F7; }.fzs-empty { padding:20px 0; font-size:15px; }
-@media(max-width:1100px) and (min-width:769px) { .fzs-player { grid-template-columns:42px 1fr; }.fzs-player-stats { grid-column:2; }.fzs-player > .fzd-team-logo { display:none; }.fzs .fzd-cal-games { grid-template-columns:repeat(2,minmax(0,1fr)); }.fzs-head a { font-size:12px; }.fzs-bars { opacity:.25; } }
+@media(max-width:1100px) and (min-width:769px) { .fzs-player { grid-template-columns:42px 1fr; }.fzs-player-stats { grid-column:2; }.fzs-player > .fzd-team-logo { display:none; }.fzs .fzd-cal-games { grid-template-columns:repeat(2,minmax(0,1fr)); }.fzs-head a { font-size:12px; } }
 @media(max-width:768px) {
  #fzDashSection.is-season { padding:12px 12px calc(90px + env(safe-area-inset-bottom)); }
  .fzs { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; font-size:15px; }
@@ -67,7 +64,7 @@ body.fz-season-page { background:var(--bg); }
  .fzs .fzs-hero { grid-column:1/-1; order:0; min-height:225px; padding:20px; }
  .fzs-hero-copy { max-width:75%; }.fzs h1 { font-size:34px; max-width:250px; }.fzs-cover { right:-15%; width:80%; opacity:.7; }.fzs-hero p { max-width:210px; }
  .fzs-players { grid-column:1/-1; grid-row:auto; order:1; }.fzs-player-list { display:flex; overflow-x:auto; scroll-snap-type:x proximity; gap:12px; padding-bottom:5px; }.fzs-player { flex:0 0 205px; display:grid; grid-template-columns:48px 1fr; border:1px solid #38383A; border-radius:8px; padding:10px; scroll-snap-align:start; gap:8px; }.fzs-player:last-child { border:1px solid #38383A; }.fzs-player .fzd-off-face { width:48px; height:48px; }.fzs-player-stats { grid-column:1/-1; }.fzs-player > .fzd-team-logo { display:none; }.fzs-player-stats small { text-align:center; border-top:1px solid #38383A; padding-top:6px; }
- .fzs-rank { grid-column:span 1; order:2; }.fzs-total { grid-column:span 1; order:3; }.fzs-number { font-size:30px; }.fzs-number small { font-size:22px; }.fzs-rank .fzs-head a { display:none; }.fzs-bars { display:none; }.fzs #fzDashCalendarWrap { grid-column:1/-1; order:4; }.fzs #fzdOffMoves { grid-column:1/-1; order:5; }.fzs-breakdown { grid-column:1/-1; order:9; }.fzs-activity { grid-column:1/-1; order:10; }.fzs #fzdOffWatch { grid-column:1/-1; order:11; }
+ .fzs-rank { grid-column:span 1; order:2; }.fzs-total { grid-column:span 1; order:3; }.fzs-number { font-size:30px; }.fzs-number small { font-size:22px; }.fzs-rank .fzs-head a { display:none; }.fzs #fzDashCalendarWrap { grid-column:1/-1; order:4; }.fzs #fzdOffMoves { grid-column:1/-1; order:5; }.fzs-breakdown { grid-column:1/-1; order:9; }.fzs-activity { grid-column:1/-1; order:10; }.fzs #fzdOffWatch { grid-column:1/-1; order:11; }
  .fzs h2 { font-size:13px; }.fzs-head { gap:8px; }.fzs-head a { font-size:13px; }.fzs .fzd-cal-games { display:flex; }.fzs .fzd-game-card { flex:0 0 85%; }.fzs .fzd-cal-strip { display:flex; overflow-x:auto; }.fzs .fzd-day-chip { flex:0 0 64px; }.fzs-stat { grid-template-columns:80px 25px 1fr; }
 }
 @media(prefers-reduced-motion:reduce) { .fzs * { scroll-behavior:auto!important; } }
@@ -173,6 +170,66 @@ html[data-theme="light"] .fzs-pc.is-live .fzs-pc-foot { background:#FDECEC; colo
 #fzDashSection #fzSeasonHome a.fzh-al-club { color:var(--encre); }
 #fzDashSection #fzSeasonHome a.fzh-al-lien { color:#fff; }
 @media(max-width:768px) {
- .fzs .fzs-rank, .fzs .fzs-total { grid-column:span 1; }
+ /* Pleine largeur : la semaine du rang et les matchs du soir ne tiennent
+    pas dans une demi-colonne de téléphone. */
+ .fzs .fzs-rank, .fzs .fzs-total { grid-column:1/-1; }
+ .fzs .fzs-rank .fzs-head a { display:inline; }
  #fzSeasonHome #fzdOffWatch, #fzSeasonHome .fzh-al { grid-column:1/-1; }
 }
+
+/* ---- Ma position : le rang, sa semaine, les points par période ----
+   Les jetons --fzh-* (accueil-palette.css) suivent le thème d'eux-mêmes. */
+.fzs .fzs-rank { container-type:inline-size; display:flex; flex-direction:column; }
+.fzs-rank-main { display:grid; gap:10px 24px; margin-bottom:14px; }
+.fzs-rank-now { min-width:0; }
+@container (min-width:500px) {
+ .fzs-rank-main { grid-template-columns:minmax(150px,auto) minmax(0,1fr); align-items:center; }
+}
+.fzs-week { margin:0; min-width:0; }
+.fzs-week-cap { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:8px; font-size:13px; color:var(--fzh-muted); }
+.fzs-week-cap b { font-size:13px; font-weight:700; }
+.fzs-week-cap b:not(.fzs-green):not(.fzs-red) { color:var(--fzh-muted); }
+.fzs-week-empty { display:flex; align-items:center; min-height:94px; margin:0 !important; font-size:14px; color:var(--fzh-muted) !important; }
+/* 72 px de tracé, 20 px pour les jours ; à gauche, la place des repères. */
+.fzs-week-plot { position:relative; height:94px; margin-left:30px; }
+.fzs-week-plot svg { position:absolute; left:0; top:0; width:100%; height:72px; overflow:visible; }
+.fzs-week-line { fill:none; stroke:var(--fzh-accent-fill); stroke-width:2; stroke-linejoin:round; stroke-linecap:round; vector-effect:non-scaling-stroke; }
+.fzs-week-grid { stroke:var(--fzh-border); stroke-width:1; vector-effect:non-scaling-stroke; }
+.fzs-week-tick { position:absolute; left:-30px; top:calc(var(--y) * .72px); transform:translateY(-50%); font-size:11px; line-height:1; color:var(--fzh-muted); font-variant-numeric:tabular-nums; }
+.fzs-week-col { position:absolute; top:0; bottom:0; left:calc(var(--i) * 100% / 7); width:calc(100% / 7); }
+.fzs-week-pt { position:absolute; left:50%; top:calc(var(--y) * .72px); width:8px; height:8px; border-radius:50%; background:var(--fzh-accent-fill); box-shadow:0 0 0 2px var(--fzh-panel); transform:translate(-50%,-50%); transition:transform .2s cubic-bezier(.4,0,.2,1); }
+.fzs-week-col.is-now .fzs-week-pt { width:12px; height:12px; }
+.fzs-week-col:hover .fzs-week-pt { transform:translate(-50%,-50%) scale(1.3); }
+.fzs-week-day { position:absolute; left:0; right:0; bottom:0; text-align:center; font-size:12px; line-height:16px; color:var(--fzh-muted); }
+.fzs-week-col.is-now .fzs-week-day { color:var(--fzh-ink); font-weight:700; }
+.fzs-week-tip { position:absolute; z-index:2; left:50%; top:calc(var(--y, 50) * .72px - 12px); transform:translate(-50%,-100%); padding:3px 8px; border-radius:6px; background:var(--fzh-ink); color:var(--fzh-panel); font:600 12px/1.3 'Barlow Condensed',sans-serif; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .15s; }
+/* Aux deux bouts, la bulle s'aligne sur le bord au lieu de déborder du panneau. */
+.fzs-week-col.is-first .fzs-week-tip { left:0; transform:translateY(-100%); }
+.fzs-week-col.is-now .fzs-week-tip { left:auto; right:0; transform:translateY(-100%); }
+.fzs-week-col:hover .fzs-week-tip { opacity:1; }
+.fzs-sr { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+.fzs-periods { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin:auto 0 0; padding-top:12px; border-top:1px solid var(--fzh-border); }
+.fzs-periods > div { min-width:0; padding:0 14px; border-left:1px solid var(--fzh-border); }
+.fzs-periods > div:first-child { padding-left:0; border-left:0; }
+.fzs-periods dt { font:500 12px/1.2 'Oswald',sans-serif; text-transform:uppercase; letter-spacing:.45px; color:var(--fzh-muted); }
+.fzs-periods dd { margin:4px 0 0; font-size:14px; color:var(--fzh-muted); white-space:nowrap; }
+.fzs-periods dd b { font:600 24px/1.15 'Oswald',sans-serif; color:var(--fzh-ink); }
+.fzs-periods.is-loading dd b { color:var(--fzh-muted); }
+
+/* ---- Total ce soir : avant, pendant, après les matchs, ou relâche ---- */
+.fzs .fzs-total { display:flex; flex-direction:column; }
+.fzs .fzs-total .fzs-total-start { color:var(--fzh-muted); font-size:15px; }
+.fzs-total-start b { color:var(--fzh-ink); font-weight:700; font-variant-numeric:tabular-nums; }
+.fzs .fzs-total .fzs-total-status { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 4px; }
+.fzs-total-status span { display:inline-flex; align-items:center; gap:6px; padding:2px 10px; border-radius:100px; background:var(--fzh-raised); color:var(--fzh-ink); font-size:13px; font-weight:600; }
+.fzs-total-status .fzs-dot { width:7px; height:7px; box-shadow:none; }
+.fzs-tonight { list-style:none; margin:12px 0 0; padding:0; border-top:1px solid var(--fzh-border); }
+.fzs-tonight li { display:grid; grid-template-columns:auto auto minmax(0,1fr); align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--fzh-border); font-size:14px; }
+.fzs-tonight li:last-child { border-bottom:0; }
+.fzs-tonight time { min-width:46px; font-weight:700; color:var(--fzh-ink); font-variant-numeric:tabular-nums; }
+.fzs-tonight-match { display:inline-flex; align-items:center; gap:5px; font-weight:600; color:var(--fzh-ink); }
+.fzs-tonight-match i { font-style:normal; font-size:12px; color:var(--fzh-muted); }
+.fzs .fzs-tonight .fzd-team-logo { width:20px; height:20px; }
+.fzs-tonight-who { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:right; color:var(--fzh-muted); }
+.fzs .fzs-total .fzs-tonight-more { margin:6px 0 0; font-size:13px; color:var(--fzh-muted); }
+@media(prefers-reduced-motion:reduce) { .fzs-week-pt, .fzs-week-tip { transition:none; } }

@@ -88,7 +88,6 @@ html[data-theme="light"] .fzs .fzs-ice { opacity: .18; }
 /* La règle `.fzs p` ci-dessus l'emporterait sur les deux couleurs d'écart. */
 html[data-theme="light"] .fzs .fzs-green { color: var(--success); }
 html[data-theme="light"] .fzs .fzs-red { color: var(--primary-text); }
-html[data-theme="light"] .fzs .fzs-bars i { background: var(--fzh-outline); }
 html[data-theme="light"] #fzDashSection .fzs-tag:not(.is-live) { color: var(--fzh-ink); }
 html[data-theme="light"] .fzs :is(.fzs-player, .fzs-stat) { border-bottom-color: var(--fzh-border); }
 html[data-theme="light"] .fzs .fzm-list-row { border-color: var(--fzh-border); }

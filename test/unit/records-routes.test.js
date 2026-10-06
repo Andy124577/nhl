@@ -60,7 +60,7 @@ function pool(poolMode) {
     };
 }
 
-function monter(poolMode, { clubs = null, etatDeLaJournee = null } = {}) {
+function monter(poolMode, { clubs = null, etatDeLaJournee = null, saisonCommencee = () => true } = {}) {
     const routes = new Map();
     const app = { get: (chemin, ...gestionnaires) => routes.set(chemin, gestionnaires.at(-1)) };
     const resultatsClubs = clubs ? async ({ debut, fin }) => ({
@@ -77,7 +77,7 @@ function monter(poolMode, { clubs = null, etatDeLaJournee = null } = {}) {
         pointage: creerServicePointage({ db, calendrierDuJour: async () => 0, resultatsClubs, apportsEnDirect: async () => [] }),
         saisonCourante: () => SAISON,
         fenetreSaison: async () => ({ regularSeasonStartDate: IL_Y_A_20_JOURS }),
-        saisonCommencee: () => true,
+        saisonCommencee,
         resultatsClubs,
         etatDeLaJournee,
         logger: { error() {} }
@@ -90,7 +90,8 @@ function monter(poolMode, { clubs = null, etatDeLaJournee = null } = {}) {
     };
     return {
         leaderboard: (days, query = {}) => appeler('/pool-leaderboard/:poolName', { params: { poolName: 'P' }, query: { days: String(days), ...query } }),
-        hallOfFame: () => appeler('/pool-hall-of-fame/:poolName', { params: { poolName: 'P' }, query: {} })
+        hallOfFame: () => appeler('/pool-hall-of-fame/:poolName', { params: { poolName: 'P' }, query: {} }),
+        mesPoints: (req = {}) => appeler('/pool-my-points/:poolName', { params: { poolName: 'P' }, query: {}, ...req })
     };
 }
 
@@ -174,5 +175,49 @@ describe('/pool-hall-of-fame suit le mode du pool', () => {
     test('tête-à-tête : points fantasy, et aucun club', async () => {
         const { corps } = await monter('head-to-head').hallOfFame();
         assert.equal(corps.bestDay.points, 17);
+    });
+});
+
+describe('/pool-my-points : « Ma position » de l’accueil', () => {
+    const HIER = dates.ajouterJours(AUJ, -1);
+    const valeurs = corps => Object.fromEntries(Object.entries(corps.periods).map(([j, p]) => [j, p.points]));
+
+    test('soirée entamée : 24 h, 7 j et 30 j de MON équipe, comme les colonnes du classement', async () => {
+        const r = monter('cumulative', { clubs: {}, etatDeLaJournee: async () => ({ entamee: true, bascule: null }) });
+        const { statut, corps } = await r.mesPoints();
+        assert.equal(statut, 200);
+        assert.equal(corps.teamName, 'Les Huiles');
+        assert.deepEqual(valeurs(corps), { 1: 5, 7: 6, 30: 7 });
+        assert.equal(corps.periods[1].dernierJour, AUJ);
+        assert.equal(corps.bascule, undefined);
+    });
+
+    test('avant le premier match : 24 h et 7 j finissent hier, 30 j aujourd’hui — et la bascule est dite', async () => {
+        const BASCULE = '2026-10-15T23:00:00Z';
+        const r = monter('cumulative', { clubs: {}, etatDeLaJournee: async () => ({ entamee: false, bascule: BASCULE }) });
+        const { corps } = await r.mesPoints();
+        assert.deepEqual(valeurs(corps), { 1: 0, 7: 1, 30: 7 });
+        assert.equal(corps.periods[1].dernierJour, HIER);
+        assert.equal(corps.periods[7].debut, dates.ajouterJours(HIER, -6));
+        assert.equal(corps.periods[30].dernierJour, AUJ, '30 j : la colonne du classement, sans ancre');
+        assert.equal(corps.bascule, BASCULE);
+    });
+
+    test('tête-à-tête : les vrais points, ceux du total affiché au-dessus — pas 17', async () => {
+        const r = monter('head-to-head', { clubs: {}, etatDeLaJournee: async () => ({ entamee: true }) });
+        const { corps } = await r.mesPoints();
+        assert.equal(corps.mode, 'cumulative');
+        assert.equal(corps.periods[1].points, 5);
+    });
+
+    test('sans équipe à son nom : 404, même pour un administrateur', async () => {
+        const { statut } = await monter('cumulative', { clubs: {} }).mesPoints({ auth: { username: 'admin', isAdmin: true } });
+        assert.equal(statut, 404);
+    });
+
+    test('saison pas commencée : aucune période', async () => {
+        const { corps } = await monter('cumulative', { clubs: {}, saisonCommencee: () => false }).mesPoints();
+        assert.equal(corps.seasonStarted, false);
+        assert.deepEqual(corps.periods, {});
     });
 });
