@@ -22,6 +22,9 @@ const { generateSeasonSchedule, ensureStandingsEntry, lundiDepartSaison } = requ
 const instantDraft = require("./lib/instantDraft.js");
 const { NHL_CLUB_FULLNAME, diffRosterSnapshots, trimTransactionLog, getTeamAbbreviationFromName } = require("./lib/roster.js");
 const { savePctFromSeasons } = require("./lib/savePct.js");
+const ficheCarriere = require("./lib/ficheCarriere.js");
+// Fiches de carrière gardées : /player-career les sert, la collecte les range.
+const fichesCarriere = ficheCarriere.creerMemoireFiches();
 const { getStatsRefreshStatus } = require("./lib/statsCache.js");
 const joueursRepeches = require("./lib/joueursRepeches.js");
 const { currentSeasonId, currentSeasonString, getSeasonWindow, seasonHasStarted,
@@ -1030,6 +1033,13 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
     try {
         const data = await lireJsonLNH(`https://api-web.nhle.com/v1/player/${playerId}/landing`, `${playerName} (${playerId})`);
         if (!data) return null;
+        // La page que /player-career demanderait : la fiche est prête pour
+        // le jour où la LNH limitera notre adresse (lib/ficheCarriere.js).
+        try {
+            fichesCarriere.ranger(playerId, ficheCarriereDe(playerId, data));
+        } catch (erreur) {
+            console.error(`⚠️ Fiche de carrière de ${playerName} non gardée :`, erreur.message);
+        }
 
         // Construct headshot URL - NHL API provides headshots at this URL format
         const headshotUrl = data.headshot || `https://assets.nhle.com/mugs/nhl/${SAISON_STATS}/${data.currentTeamAbbrev || 'NJD'}/${playerId}.png`;
@@ -3856,132 +3866,128 @@ app.get('/player-career/:playerId', async (req, res) => {
             return res.status(400).json({ message: 'Invalid player id' });
         }
 
-        const url = `https://api-web.nhle.com/v1/player/${playerId}/landing`;
-
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            // Un 404 de la LNH signifie « ce joueur n'existe pas » ; tout le
-            // reste (429, 5xx, maintenance) est une panne en amont. Les
-            // confondre envoyait chercher un mauvais identifiant alors que
-            // l'API était simplement indisponible.
-            if (response.status === 404) {
-                return res.status(404).json({ message: 'Player not found' });
-            }
-            console.error(`❌ NHL API ${response.status} for player ${playerId}`);
-            return res.status(502).json({
-                message: 'NHL API unavailable',
-                upstreamStatus: response.status
-            });
-        }
-
-        const data = await response.json();
-
-        // Extract player info
-        const playerName = data.firstName?.default && data.lastName?.default
-            ? `${data.firstName.default} ${data.lastName.default}`
-            : 'Unknown Player';
-        const position = data.position || 'N/A';
-        const isGoalie = position === 'G';
-        const currentTeam = data.currentTeamAbbrev || null;
-        // Construct headshot URL - use API's headshot or construct from player ID and current team
-        const headshot = data.headshot || (currentTeam ? `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${currentTeam}/${playerId}.png` : null);
-        const teamLogo = data.teamLogo || null;
-
-        // Extract player bio details
-        const heightInInches = data.heightInInches || null;
-        const heightFeetInches = heightInInches ? `${Math.floor(heightInInches / 12)}′${heightInInches % 12}″` : null;
-        const weightInPounds = data.weightInPounds || null;
-        const birthDate = data.birthDate || null;
-        const birthCity = data.birthCity?.default || null;
-        const birthStateProvince = data.birthStateProvince?.default || null;
-        const birthCountry = data.birthCountry || null;
-        const shootsCatches = data.shootsCatches || null;
-
-        // Extract draft details
-        const draftDetails = data.draftDetails;
-        let draftInfo = null;
-        if (draftDetails) {
-            draftInfo = {
-                year: draftDetails.year,
-                teamAbbrev: draftDetails.teamAbbrev,
-                round: draftDetails.round,
-                pickInRound: draftDetails.pickInRound,
-                overallPick: draftDetails.overallPick
-            };
-        }
-
-        // Extract all seasons from seasonTotals (regular season + playoffs combined in one array)
-        const allSeasons = data.seasonTotals || [];
-
-        // Format seasons for display
-        const formattedSeasons = allSeasons.map(season => {
-            const seasonId = season.season;
-            const seasonDisplay = `${seasonId.toString().substring(0, 4)}-${seasonId.toString().substring(6, 8)}`;
-            const leagueAbbrev = season.leagueAbbrev || 'NHL';
-            const teamAbbrev = season.teamName?.default || season.teamAbbrev || 'N/A';
-            const gameType = season.gameTypeId === 3 ? 'playoffs' : 'regular';
-
-            if (isGoalie) {
-                return {
-                    season: seasonDisplay,
-                    league: leagueAbbrev,
-                    team: teamAbbrev,
-                    gameType: gameType,
-                    gp: season.gamesPlayed || 0,
-                    wins: season.wins || 0,
-                    losses: season.losses || 0,
-                    otLosses: season.otLosses || 0,
-                    // null, pas 0, quand la saison n'a pas de tirs (avant
-                    // 1983, certaines ligues mineures) ; shotsAgainst sert à
-                    // pondérer la rangée « Carrière ».
-                    savePct: savePctFromSeasons([season]),
-                    shotsAgainst: typeof season.shotsAgainst === 'number' ? season.shotsAgainst : null,
-                    gaa: season.goalsAgainstAvg || 0,
-                    shutouts: season.shutouts || 0
-                };
-            } else {
-                return {
-                    season: seasonDisplay,
-                    league: leagueAbbrev,
-                    team: teamAbbrev,
-                    gameType: gameType,
-                    gp: season.gamesPlayed || 0,
-                    goals: season.goals || 0,
-                    assists: season.assists || 0,
-                    points: season.points || 0,
-                    plusMinus: season.plusMinus || 0,
-                    pim: season.pim || 0,
-                    shots: season.shots || 0
-                };
-            }
+        // La LNH limite notre adresse par moments (lib/ficheCarriere.js) :
+        // une fiche récente ne la rappelle pas, une vieille sert de repli.
+        // Un 404 de la LNH reste « ce joueur n'existe pas » ; tout le reste
+        // (429, 5xx, maintenance) est une panne en amont, rendue en 502.
+        const { status, corps } = await ficheCarriere.obtenirFiche(playerId, {
+            memoire: fichesCarriere,
+            mettreEnForme: ficheCarriereDe
         });
-
-        res.json({
-            playerId,
-            playerName,
-            position,
-            isGoalie,
-            headshot,
-            teamLogo,
-            currentTeam,
-            sweaterNumber: data.sweaterNumber ?? null,
-            seasons: formattedSeasons,
-            // Bio details
-            height: heightFeetInches,
-            weight: weightInPounds,
-            birthDate,
-            birthCity,
-            birthStateProvince,
-            birthCountry,
-            shootsCatches,
-            draftInfo
-        });
+        res.status(status).json(corps);
     } catch (error) {
         console.error('❌ Error fetching player career stats:', error);
         res.status(500).json({ message: 'Error fetching player career stats' });
     }
 });
+
+/**
+ * La fiche de carrière telle que /player-career la rend, depuis la page
+ * /landing de la LNH. La collecte des statistiques lit la même page : elle
+ * range la fiche au passage (fetchCurrentStatsForPlayer).
+ */
+function ficheCarriereDe(playerId, data) {
+    // Extract player info
+    const playerName = data.firstName?.default && data.lastName?.default
+        ? `${data.firstName.default} ${data.lastName.default}`
+        : 'Unknown Player';
+    const position = data.position || 'N/A';
+    const isGoalie = position === 'G';
+    const currentTeam = data.currentTeamAbbrev || null;
+    // Construct headshot URL - use API's headshot or construct from player ID and current team
+    const headshot = data.headshot || (currentTeam ? `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${currentTeam}/${playerId}.png` : null);
+    const teamLogo = data.teamLogo || null;
+
+    // Extract player bio details
+    const heightInInches = data.heightInInches || null;
+    const heightFeetInches = heightInInches ? `${Math.floor(heightInInches / 12)}′${heightInInches % 12}″` : null;
+    const weightInPounds = data.weightInPounds || null;
+    const birthDate = data.birthDate || null;
+    const birthCity = data.birthCity?.default || null;
+    const birthStateProvince = data.birthStateProvince?.default || null;
+    const birthCountry = data.birthCountry || null;
+    const shootsCatches = data.shootsCatches || null;
+
+    // Extract draft details
+    const draftDetails = data.draftDetails;
+    let draftInfo = null;
+    if (draftDetails) {
+        draftInfo = {
+            year: draftDetails.year,
+            teamAbbrev: draftDetails.teamAbbrev,
+            round: draftDetails.round,
+            pickInRound: draftDetails.pickInRound,
+            overallPick: draftDetails.overallPick
+        };
+    }
+
+    // Extract all seasons from seasonTotals (regular season + playoffs combined in one array)
+    const allSeasons = data.seasonTotals || [];
+
+    // Format seasons for display
+    const formattedSeasons = allSeasons.map(season => {
+        const seasonId = season.season;
+        const seasonDisplay = `${seasonId.toString().substring(0, 4)}-${seasonId.toString().substring(6, 8)}`;
+        const leagueAbbrev = season.leagueAbbrev || 'NHL';
+        const teamAbbrev = season.teamName?.default || season.teamAbbrev || 'N/A';
+        const gameType = season.gameTypeId === 3 ? 'playoffs' : 'regular';
+
+        if (isGoalie) {
+            return {
+                season: seasonDisplay,
+                league: leagueAbbrev,
+                team: teamAbbrev,
+                gameType: gameType,
+                gp: season.gamesPlayed || 0,
+                wins: season.wins || 0,
+                losses: season.losses || 0,
+                otLosses: season.otLosses || 0,
+                // null, pas 0, quand la saison n'a pas de tirs (avant
+                // 1983, certaines ligues mineures) ; shotsAgainst sert à
+                // pondérer la rangée « Carrière ».
+                savePct: savePctFromSeasons([season]),
+                shotsAgainst: typeof season.shotsAgainst === 'number' ? season.shotsAgainst : null,
+                gaa: season.goalsAgainstAvg || 0,
+                shutouts: season.shutouts || 0
+            };
+        } else {
+            return {
+                season: seasonDisplay,
+                league: leagueAbbrev,
+                team: teamAbbrev,
+                gameType: gameType,
+                gp: season.gamesPlayed || 0,
+                goals: season.goals || 0,
+                assists: season.assists || 0,
+                points: season.points || 0,
+                plusMinus: season.plusMinus || 0,
+                pim: season.pim || 0,
+                shots: season.shots || 0
+            };
+        }
+    });
+
+    return {
+        playerId: String(playerId),
+        playerName,
+        position,
+        isGoalie,
+        headshot,
+        teamLogo,
+        currentTeam,
+        sweaterNumber: data.sweaterNumber ?? null,
+        seasons: formattedSeasons,
+        // Bio details
+        height: heightFeetInches,
+        weight: weightInPounds,
+        birthDate,
+        birthCity,
+        birthStateProvince,
+        birthCountry,
+        shootsCatches,
+        draftInfo
+    };
+}
 
 // Route to get player game log for current season (from PostgreSQL)
 app.get('/player-gamelog/:playerId', async (req, res) => {
