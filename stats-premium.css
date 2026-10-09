@@ -324,18 +324,27 @@ body.fz-stats .player-photo img.logo { border-color: var(--fzs-border-input); }
    chiffres tabulaires pour s'aligner d'une rangée à l'autre. 'Oswald',
    demandée plus haut, n'est pas chargée sur cette page : le rang et les
    points retombaient sur la police système. */
+/* Mêmes mesures que la liste du classement cumulatif (.roster-row,
+   classement.css) : rangées de 76px, photo ronde de 52px sur la couleur du
+   club, nom à 14,5px, chiffres à 12,5px et points à 18px. Les deux listes
+   se lisent pareil d'une page à l'autre, téléphone compris. */
+body.fz-stats #playerTable tbody td {
+  height: 76px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
 body.fz-stats #playerTable tbody td:not(.player-col) {
-  font-family: 'Barlow Condensed', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: inherit;
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  font-size: 1.08rem;
+  font-weight: 500;
+  font-size: 12.5px;
   color: var(--fzs-text);
 }
-body.fz-stats #playerTable tbody td.rank-col { font-size: 1rem; color: var(--fzs-text-faint); }
+body.fz-stats #playerTable tbody td.rank-col { font-size: 13px; font-weight: 600; color: var(--fzs-text-faint); }
 body.fz-stats #playerTable tbody tr:nth-child(-n+3) td.rank-col { color: var(--text-main); }
 body.fz-stats #playerTable tbody td.points-column {
-  font-weight: 800;
-  font-size: 1.32rem;
+  font-weight: 700;
+  font-size: 18px;
   color: var(--fzs-ink);
 }
 /* La colonne triée se suit du regard jusqu'en bas, pas seulement dans
@@ -345,11 +354,49 @@ body.fz-stats #playerTable tbody td.is-sorted-col {
   color: var(--fzs-ink);
 }
 
-body.fz-stats #playerTable .player-name { font-size: .95rem; color: var(--fzs-ink); }
-body.fz-stats .player-meta { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+/* La photo (photoJoueur, index.js) : visage détouré dans un rond à la couleur
+   du club, initiales dessous tant qu'il n'y a pas d'image. */
+body.fz-stats { --d-photo: 52px; }
+body.fz-stats .player-cell { gap: 10px; }
+body.fz-stats .player-photo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--d-photo);
+  height: var(--d-photo);
+  border-radius: 50%;
+  overflow: hidden;
+}
+body.fz-stats .player-photo img.face {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  object-fit: cover;
+  object-position: top;
+}
+body.fz-stats tbody tr:hover .player-photo img.face { border: 0; box-shadow: none; }
+body.fz-stats .player-photo img.face ~ .player-initials { display: none; }
+body.fz-stats .player-initials { font-size: 15px; font-weight: 700; color: #fff; }
+body.fz-stats .team-logo-cell { width: 44px; height: 44px; }
+
+body.fz-stats #playerTable .player-name {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--fzs-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.fz-stats .pn-short { display: none; }
+body.fz-stats .player-meta { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
 body.fz-stats .player-team {
-  font: 700 .74rem/1.2 'Barlow Condensed', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  letter-spacing: .1em;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: .03em;
   color: var(--fzs-text-faint);
 }
 /* Pastilles de position : l'ensemble sémantique de DESIGN.md — attaquants
@@ -364,7 +411,7 @@ body.fz-stats .pos-tag {
   border-radius: 4px;
   background: var(--pos-bg, var(--fzs-tile));
   color: var(--pos-fg, var(--fzs-text));
-  font: 700 .7rem/1.3 'Barlow Condensed', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font: 700 10px/1.3 'Barlow Condensed', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   letter-spacing: .08em;
   text-decoration: none;
   cursor: inherit;
@@ -375,12 +422,26 @@ body.fz-stats .pos-tag[data-pos="R"] { --pos-bg: color-mix(in srgb, var(--succes
 body.fz-stats .pos-tag[data-pos="D"] { --pos-bg: color-mix(in srgb, var(--position-def) 10%, var(--card)); --pos-fg: var(--position-def); }
 body.fz-stats .pos-tag[data-pos="G"] { --pos-bg: color-mix(in srgb, var(--warning) 10%, var(--card)); --pos-fg: var(--warning); }
 
-/* Téléphone : le logo remplace déjà la photo (index.css) et nomme le club,
-   son sigle ferait doublon dans une colonne étroite. */
+/* Téléphone : la rangée suit le classement cumulatif — rang étroit, photo
+   collée au nom, chiffres serrés. La photo passe à 44px sur les plus petits
+   écrans (320px), comme là-bas. */
 @media (max-width: 450px) {
-  body.fz-stats .player-team { display: none; }
-  body.fz-stats #playerTable tbody td:not(.player-col) { font-size: 1rem; }
-  body.fz-stats #playerTable tbody td.points-column { font-size: 1.15rem; }
+  body.fz-stats #playerTable colgroup col:first-child { width: 28px; }
+  body.fz-stats #playerTable th.rank-col,
+  body.fz-stats #playerTable td.rank-col { padding-left: 2px; padding-right: 2px; }
+  body.fz-stats #playerTable th.player-col,
+  body.fz-stats #playerTable td.player-col { padding-left: 4px; }
+  body.fz-stats .player-cell { gap: 8px; }
+  body.fz-stats .pn-full { display: none; }
+  body.fz-stats .pn-short { display: inline; }
+  /* Patineurs (six colonnes) : les points gardent 44px, comme les PPts du
+     classement, et le nom prend ce qui reste. Sans cela, à 320px, un total à
+     trois chiffres débordait de sa colonne. */
+  body.fz-stats #playerTable:has(col:nth-child(6):last-child) col:nth-child(n+3) { width: 34px; }
+  body.fz-stats #playerTable:has(col:nth-child(6):last-child) col:last-child { width: 44px; }
+}
+@media (max-width: 359px) {
+  body.fz-stats { --d-photo: 44px; }
 }
 
 /* ==================== PAGINATION ==================== */
@@ -406,7 +467,7 @@ body.fz-stats .table-empty-hint { color: var(--fzs-text-muted); }
 /* Chargement : rangées du tableau, palmarès et cartes en os (stats.html).
    Os de fzSquelette.css, aux hauteurs des lignes qu'ils remplacent. */
 body.fz-stats .st-sk-rows tr { opacity: 0; animation: fzOsMonte .35s ease-out forwards; animation-delay: calc(var(--i, 0) * 40ms); }
-body.fz-stats .st-sk-face { width: var(--d-photo); height: var(--d-photo); border-radius: 10px; }
+body.fz-stats .st-sk-face { width: var(--d-photo); height: var(--d-photo); border-radius: 50%; }
 body.fz-stats .st-sk-name { width: var(--w); max-width: 100%; height: 14px; margin: 2px 0; }
 body.fz-stats .st-sk-team { width: 30px; height: 10px; }
 body.fz-stats .st-sk-pos { width: 18px; height: 14px; border-radius: 4px; }

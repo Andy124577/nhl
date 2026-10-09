@@ -322,10 +322,10 @@ async function populatePlayerTable(t) {
             u = nombreStat(src && src.goals),
             m = nombreStat(src && src.assists),
             h = nombreStat(src && src.points);
-        const g = d && i ? `\n            <div class="player-photo">\n                <img src="${d}" alt="" class="face">\n                <img src="${i}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n            </div>\n            ` : "",
+        const g = photoJoueur(d, o, a),
             p = n?.position || t.positionCode || "N/A",
             y = document.createElement("tr");
-        y.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${g}<div class="player-ident"><span class="player-name">${a}${injBadge(a, o)}${watchBadge(a, o)}</span>${metaJoueur(o, p)}</div></div></td>\n            <td>${c}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n            <td class="points-column">${h}</td>\n        `;
+        y.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${g}<div class="player-ident"><span class="player-name">${nomJoueurHTML(a)}${injBadge(a, o)}${watchBadge(a, o)}</span>${metaJoueur(o, p)}</div></div></td>\n            <td>${c}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n            <td class="points-column">${h}</td>\n        `;
         // Une fiche de la trousse sans identifiant LNH n'a pas de fiche à ouvrir.
         t.playerId && makeRowInteractive(y, () => showCareerStats(t.playerId, t.skaterFullName, !1),
             `Voir la fiche de ${a}`);
@@ -333,6 +333,31 @@ async function populatePlayerTable(t) {
     });
     marquerColonneTriee(e);
     renderStatsPagination(t.length)
+}
+
+/**
+ * Le nom, et sa forme courte « N. MacKinnon » que le téléphone affiche à la
+ * place (stats-premium.css), comme le classement cumulatif.
+ */
+function nomJoueurHTML(nom) {
+    const mots = String(nom || "").split(" ");
+    if (mots.length < 2) return nom;
+    return `<span class="pn-full">${nom}</span><span class="pn-short">${mots[0][0]}. ${mots.slice(1).join(" ")}</span>`;
+}
+
+/**
+ * La photo d'une rangée, comme au classement cumulatif (.rr-avatar,
+ * classement.css) : visage détouré dans un rond à la couleur du club
+ * (.fz-shot, teamLogos.css), initiales dessous. Une photo qui ne charge pas
+ * se retire et les découvre. Le club se lit déjà sous le nom : plus de logo
+ * en médaillon. data-no-lazy : lazy-load.js poserait un carré gris opaque
+ * par-dessus la couleur le temps du chargement.
+ */
+function photoJoueur(url, club, nom) {
+    const couleur = typeof getTeamColors === "function" && club ? getTeamColors(club)[0] : "#3A414D";
+    const initiales = String(nom || "").split(/\s+/).filter(Boolean).slice(0, 2).map(m => m[0]).join("").toUpperCase();
+    const image = url ? `<img src="${url}" alt="" class="face" loading="lazy" data-no-lazy onerror="this.remove()">` : "";
+    return `<span class="player-photo fz-shot" style="--fz-shot-team:${couleur}">${image}<span class="player-initials">${initiales}</span></span>`;
 }
 
 /**
@@ -483,9 +508,10 @@ function populateGoalieTable(t) {
         // voir lib/savePct.js), pas de pourcentage : « — », pas 0.000.
         c = o > 0 && nombreStat(srcG && srcG.savePct) > 0 ? nombreStat(srcG.savePct) : null, u = nombreStat(srcG && srcG.shutouts),
         m = valeurDeTri(t, a, t.playerId, "points", !0);
-        const h = s && l ? `<div class="player-photo">\n                    <img src="${s}" alt="${a}" class="face">\n                    <img src="${l}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n               </div>` : "",
+        const clubG = n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim(),
+            h = photoJoueur(s || (t.playerId && clubG ? buildHeadshotUrl(t.playerId, clubG) : null), clubG, a),
             g = document.createElement("tr");
-        g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${h}<div class="player-ident"><span class="player-name">${a}${injBadge(a, n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}${watchBadge(a, n?.teamAbbrev || t.teamAbbrevs)}</span>${metaJoueur(n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}</div></div></td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c != null ? c.toFixed(3) : "—"}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
+        g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${h}<div class="player-ident"><span class="player-name">${nomJoueurHTML(a)}${injBadge(a, n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}${watchBadge(a, n?.teamAbbrev || t.teamAbbrevs)}</span>${metaJoueur(n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}</div></div></td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c != null ? c.toFixed(3) : "—"}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
         t.playerId && makeRowInteractive(g, () => showCareerStats(t.playerId, t.goalieFullName, !0),
             `Voir la fiche de ${a}`);
         tbody.appendChild(g)
