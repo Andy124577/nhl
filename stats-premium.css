@@ -16,27 +16,29 @@ body.fz-stats {
   /* Palette Apple (DESIGN.md, « Colors ») : chaque rôle pointe sur le jeton
      global d'index.css, qui bascule déjà avec le thème. Plusieurs anciens
      paliers se confondent — l'échelle d'Apple n'a rien entre deux marches. */
-  --fzs-bg: var(--bg-gray-light);
-  --fzs-bg-alt: var(--bg-gray-light);
+  /* Mêmes couleurs que le classement : la bande de ses listes (--rr-*,
+     index.css) sert de surface, de filets et de texte à toute la page. */
+  --fzs-bg: var(--rr-hover);
+  --fzs-bg-alt: var(--rr-hover);
   --fzs-bg-page: var(--bg-page);
-  --fzs-surface: var(--card);
-  --fzs-ink: var(--text-main);
-  --fzs-text: var(--text-main);
-  --fzs-text-muted: var(--text-secondary);
-  --fzs-text-faint: var(--text-secondary);
+  --fzs-surface: var(--rr-surface);
+  --fzs-ink: var(--rr-ink);
+  --fzs-text: var(--rr-num);
+  --fzs-text-muted: var(--rr-muted);
+  --fzs-text-faint: var(--rr-muted);
   /* Tertiaire : icônes et texte indicatif (placeholder) — jamais un texte à lire. */
-  --fzs-text-fainter: var(--text-light-gray);
-  --fzs-border: var(--border-light);
-  --fzs-border-strong: var(--border-light);
-  --fzs-border-soft: var(--border-light);
-  --fzs-border-input: var(--border-gray);
+  --fzs-text-fainter: var(--rr-dim);
+  --fzs-border: var(--rr-line);
+  --fzs-border-strong: var(--rr-line);
+  --fzs-border-soft: var(--rr-line);
+  --fzs-border-input: var(--rr-btn-line);
   --fzs-accent: var(--primary-text);
   /* Survol d'un lien rouge : il n'existe pas de troisième rouge texte. */
   --fzs-accent-dark: var(--primary-text);
   /* Lavis rouge à 6 % : le texte secondaire d'une rangée survolée y tient
      encore 4,5:1 en clair (4,34:1 à 10 %). */
-  --fzs-accent-wash: color-mix(in srgb, var(--primary) 6%, var(--card));
-  --fzs-tile: var(--bg-gray-light);
+  --fzs-accent-wash: color-mix(in srgb, var(--primary) 6%, var(--rr-surface));
+  --fzs-tile: var(--rr-hover);
   /* Le rouge en APLAT (blanc dessus à 4,55:1), et son survol plus foncé ;
      --fzs-accent est le rouge en TEXTE. */
   --fzs-accent-fill: var(--primary);
@@ -284,11 +286,13 @@ body.fz-stats #playerTable th.is-sorted {
   color: var(--fzs-accent);
 }
 
-body.fz-stats tbody tr { border-bottom: 1px solid var(--fzs-border-soft); }
-body.fz-stats tbody tr:nth-child(odd) { background: var(--fzs-surface); }
-body.fz-stats tbody tr:nth-child(even) { background: var(--fzs-bg-alt); }
+/* Une bande unie à filets, comme la liste du classement : pas de rangées
+   alternées, et le survol est le gris de sa rangée survolée. */
+body.fz-stats tbody tr { border-bottom: 1px solid var(--rr-line); }
+body.fz-stats tbody tr:nth-child(odd),
+body.fz-stats tbody tr:nth-child(even) { background: var(--rr-surface); }
 body.fz-stats tbody tr:hover {
-  background: var(--fzs-accent-wash) !important;
+  background: var(--rr-hover) !important;
   transform: none;
   box-shadow: none;
 }
@@ -302,7 +306,7 @@ body.fz-stats td.rank-col {
 }
 body.fz-stats tbody tr:nth-child(1) td.rank-col,
 body.fz-stats tbody tr:nth-child(2) td.rank-col,
-body.fz-stats tbody tr:nth-child(3) td.rank-col { color: var(--text-main); } /* le rouge est réservé à ce qui se touche */
+body.fz-stats tbody tr:nth-child(3) td.rank-col { color: var(--fzs-accent); } /* les trois premiers en rouge, comme au classement */
 
 body.fz-stats td.points-column {
   background: transparent;
@@ -340,19 +344,17 @@ body.fz-stats #playerTable tbody td:not(.player-col) {
   font-size: 12.5px;
   color: var(--fzs-text);
 }
-body.fz-stats #playerTable tbody td.rank-col { font-size: 13px; font-weight: 600; color: var(--fzs-text-faint); }
-body.fz-stats #playerTable tbody tr:nth-child(-n+3) td.rank-col { color: var(--text-main); }
+body.fz-stats #playerTable tbody td.rank-col { font-size: 13px; font-weight: 600; color: var(--rr-muted); }
+body.fz-stats #playerTable tbody tr:nth-child(-n+3) td.rank-col { color: var(--fzs-accent); }
 body.fz-stats #playerTable tbody td.points-column {
   font-weight: 700;
   font-size: 18px;
-  color: var(--fzs-ink);
+  color: var(--rr-strong);
 }
-/* La colonne triée se suit du regard jusqu'en bas, pas seulement dans
-   l'en-tête (marquerColonneTriee, index.js). */
-body.fz-stats #playerTable tbody td.is-sorted-col {
-  background: color-mix(in srgb, var(--fzs-ink) 4%, transparent);
-  color: var(--fzs-ink);
-}
+/* La colonne triée se suit du regard jusqu'en bas (marquerColonneTriee,
+   index.js) : son chiffre passe au blanc, sans fond — la bande du
+   classement n'a pas de colonne grisée. */
+body.fz-stats #playerTable tbody td.is-sorted-col { color: var(--rr-strong); }
 
 /* La photo (photoJoueur, index.js) : visage détouré dans un rond à la couleur
    du club, initiales dessous tant qu'il n'y a pas d'image. */

@@ -1896,3 +1896,53 @@ td.player-col {
 
 /* La page des statistiques garde la photo du joueur sur téléphone, comme le
    classement cumulatif : voir « TOUS LES JOUEURS » dans stats-premium.css. */
+
+/* ==================== BANDE DES LISTES ====================
+   Couleurs de la liste du classement (classement.css, .roster-row et
+   .st-mobile-list), reprises par la page des statistiques
+   (stats-premium.css) : une seule palette pour les deux listes de joueurs.
+   Sombre par défaut, clair sous data-theme="light". */
+body {
+    --rr-surface: #141416;
+    --rr-hover: #1C1C1F;
+    --rr-line: #26262A;
+    --rr-ink: #F2F2F3;
+    --rr-num: #E4E4E8;
+    --rr-strong: #FFFFFF;
+    --rr-muted: #8A8A90;
+    --rr-dim: #6F6F76;
+    --rr-chev: #55555C;
+    --rr-btn-line: #34343A;
+    --rr-btn-ink: #C7C7CC;
+    --rr-btn-hover-line: #55555C;
+    --rr-btn-hover-ink: #FFFFFF;
+    /* oklch(0.35 0.12 25) et oklch(0.55 0.17 25) du mockup : l'état
+       « en vente ». */
+    --rr-sale-bg: #6C1517;
+    --rr-sale-line: #C13C3B;
+    --rr-sale-ink: #FFFFFF;
+    /* Os des squelettes (classement-premium.css, .fz-bone) : translucides,
+       lisibles sur la bande (#141416) comme sur la carte (#1C1C1E). */
+    --rr-bone: rgba(255, 255, 255, 0.05);
+    --rr-bone-shine: rgba(255, 255, 255, 0.11);
+}
+html[data-theme="light"] body {
+    --rr-surface: #FFFFFF;
+    --rr-hover: #F5F5F7;
+    --rr-line: #E5E5EA;
+    --rr-ink: #1D1D1F;
+    --rr-num: #1D1D1F;
+    --rr-strong: #1D1D1F;
+    --rr-muted: #6E6E73;
+    --rr-dim: #8E8E93;
+    --rr-chev: #C7C7CC;
+    --rr-btn-line: #D2D2D7;
+    --rr-btn-ink: #1D1D1F;
+    --rr-btn-hover-line: #86868B;
+    --rr-btn-hover-ink: #1D1D1F;
+    --rr-sale-bg: var(--primary);
+    --rr-sale-line: var(--primary);
+    --rr-sale-ink: var(--on-primary);
+    --rr-bone: rgba(0, 0, 0, 0.06);
+    --rr-bone-shine: rgba(0, 0, 0, 0.025);
+}
