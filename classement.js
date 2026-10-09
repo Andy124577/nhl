@@ -111,47 +111,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     const templeSquelette = document.getElementById('standingsSkeletonHof');
     if (templeSquelette) templeSquelette.innerHTML = hofChargementHTML();
 
-    await fetchImageData();
-
     // La trousse de repêchage : la fiche des joueurs repêchés que
-    // nhl_filtered_stats.json ne contient pas (voir ficheJoueur). Chargée en
-    // parallèle ; sans elle, ces joueurs paraissent quand même.
+    // nhl_filtered_stats.json ne contient pas (voir ficheJoueur). Sans elle,
+    // ces joueurs paraissent quand même.
     const trousse = window.FZDraftKit
         ? FZDraftKit.charger().catch(error => { console.warn('⚠️ Could not load draft kit:', error); })
         : Promise.resolve();
 
-    // Load player data
-    const response = await fetch('nhl_filtered_stats.json');
-    const data = await response.json();
-    fullPlayerData = [...data.Top_50_Defenders, ...data.Top_100_Offensive_Players, ...data.Top_Rookies];
-    goalieData = data.Top_50_Goalies;
-    teamData = data.Teams;
-
-    // Avant le premier match, tout vaut zéro : sans ce garde-fou, le
-    // classement d'un pool repêché l'été affiche les totaux de l'an passé.
-    try {
-        const seasonResponse = await fetch(`${BASE_URL}/season-window`, { cache: 'no-store' });
-        if (seasonResponse.ok) seasonStarted = (await seasonResponse.json()).hasStarted !== false;
-    } catch (error) {
-        console.warn('⚠️ Could not resolve season window:', error);
+    // Les colonnes 1 j / 7 j / 30 j d'un pool cumulatif : demandées dès que
+    // le pool actif est connu, pendant que le reste se charge.
+    if (window.FZPool) {
+        FZPool.ready().then(() => {
+            const nom = FZPool.get();
+            const pool = nom && FZPool.all()[nom];
+            if (pool && (pool.poolMode || 'cumulative') !== 'head-to-head') fetchStandingsPeriodPoints(nom);
+        }).catch(() => {});
     }
 
-    // Load current stats
-    try {
-        const statsResponse = await fetch(`${BASE_URL}/current-stats`, { cache: 'no-cache' });
-        currentStats = currentStatsBase = await statsResponse.json();
+    // Tout part en même temps : ces lectures ne dépendent pas l'une de
+    // l'autre, et les enchaîner faisait attendre le classement cinq
+    // allers-retours de suite.
+    const lireJson = (url, options) => fetch(url, options).then(r => (r.ok ? r.json() : null));
+    const [fiches, fenetre, stats, clubs] = await Promise.all([
+        lireJson('nhl_filtered_stats.json').catch(error => { console.warn('⚠️ Could not load player list:', error); return null; }),
+        // Avant le premier match, tout vaut zéro : sans ce garde-fou, le
+        // classement d'un pool repêché l'été affiche les totaux de l'an passé.
+        lireJson(`${BASE_URL}/season-window`, { cache: 'no-store' }).catch(error => { console.warn('⚠️ Could not resolve season window:', error); return null; }),
+        lireJson(`${BASE_URL}/current-stats`, { cache: 'no-cache' }).catch(error => { console.warn('⚠️ Could not load current stats:', error); return null; }),
+        lireJson(`${BASE_URL}/current-teams`, { cache: 'no-cache' }).catch(error => { console.warn('⚠️ Could not load current team standings:', error); return null; })
+    ]);
+
+    if (fiches) {
+        fullPlayerData = [...fiches.Top_50_Defenders, ...fiches.Top_100_Offensive_Players, ...fiches.Top_Rookies];
+        goalieData = fiches.Top_50_Goalies;
+        teamData = fiches.Teams;
+    }
+    if (fenetre) seasonStarted = fenetre.hasStarted !== false;
+    if (stats && Array.isArray(stats.players)) {
+        currentStats = currentStatsBase = stats;
         console.log(`✅ Current stats loaded: ${currentStats.players.length} players`);
-    } catch (error) {
-        console.warn('⚠️ Could not load current stats:', error);
     }
-
-    // Load current team standings
-    try {
-        const teamsResponse = await fetch(`${BASE_URL}/current-teams`, { cache: 'no-cache' });
-        currentTeams = currentTeamsBase = await teamsResponse.json();
+    if (clubs && Array.isArray(clubs.teams)) {
+        currentTeams = currentTeamsBase = clubs;
         console.log(`✅ Current team standings loaded: ${currentTeams.teams.length} teams`);
-    } catch (error) {
-        console.warn('⚠️ Could not load current team standings:', error);
     }
 
     await trousse;
@@ -262,10 +264,6 @@ function pointsSoirHTML(standing) {
 window.FZ_POOL_EN_PLACE = true;
 
 // ==================== DATA LOADING ====================
-async function fetchImageData() {
-    // Les photos viennent du CDN de la LNH (voir headshots.js) : rien à charger.
-}
-
 async function loadAllUserPools() {
     const username = localStorage.getItem('username');
     if (!username) {
@@ -464,21 +462,21 @@ function getStandingsColumns() {
     ];
 }
 
-// ==================== RANG : ÉVOLUTION PAR PÉRIODE ====================
-// Le rang (Pos) reste fixé par le total de la saison. Le badge en bout de
-// ligne compare ce rang à celui qu'aurait l'équipe si le classement portait
-// uniquement sur les points des 7 derniers jours (même formule que le temple
-// de la renommée et /pool-leaderboard) : mieux classée sur la semaine que
-// sur la saison → ▲, moins bien → ▼. Les trois périodes restent lues pour
-// les colonnes 24 h / 7 j / 30 j.
+// ==================== RANG : MOUVEMENT DE LA SOIRÉE ====================
+// Le rang (Pos) est fixé par le total de la saison. La pastille à côté du
+// nom dit combien de places l'équipe a gagnées (▲) ou perdues (▼) pendant
+// la dernière soirée : son rang au total, comparé à celui qu'elle avait
+// avant les points de cette soirée (total − colonne 1 j).
 //
-// La semaine de la tendance (et de la colonne 7 j) finit à la dernière
-// soirée : hier tant qu'aucun match du jour n'est commencé (ancre=soiree,
-// routes/records.js). Sans quoi la tendance changeait à minuit, sans un
-// match joué. Au premier match du jour, la page se relit (`bascule`).
+// La dernière soirée, c'est hier tant qu'aucun match du jour n'est commencé
+// (ancre=soiree, routes/records.js) : le matin, on voit le mouvement de la
+// veille. À la première mise au jeu, la page se relit (`bascule`) : la
+// soirée devient celle du jour, personne n'a encore de point, la pastille
+// repart à « — » et suit ensuite le direct. Même ancre pour 1 j et 7 j.
 const STANDINGS_PERIODS = [1, 7, 30];
-const TENDANCE_JOURS = 7;
-let periodPointsCache = null; // { poolName, promesse → { 1: Map, 7: Map, 30: Map } }
+const PERIODES_ANCREES = new Set([1, 7]);
+let periodPointsCache = null; // { poolName, promesse, valeur → { 1: Map, 7: Map, 30: Map } | null, precedente }
+let dernieresPeriodes = { poolName: null, valeur: null };
 let tendanceMinuteur = null;
 const TENDANCE_ATTENTE_MIN_MS = 60 * 1000;
 const TENDANCE_ATTENTE_MAX_MS = 30 * 60 * 1000;
@@ -490,11 +488,24 @@ const EVO_ARROW_DOWN = '<svg viewBox="0 0 24 24" width="8" height="8"><path d="M
  * Les points par période, partagés tant que la lecture court : le premier
  * rendu et celui qu'ouvre l'arrivée du direct partent à quelques
  * millisecondes d'écart, et chacun relisait les trois périodes en base.
+ *
+ * Le classement ne les attend plus : il se dessine avec les totaux, et se
+ * redessine quand elles arrivent (`valeur`).
  */
 function fetchStandingsPeriodPoints(poolName) {
-    if (periodPointsCache && periodPointsCache.poolName === poolName) return periodPointsCache.promesse;
-    periodPointsCache = { poolName, promesse: lirePointsParPeriode(poolName) };
-    return periodPointsCache.promesse;
+    if (periodPointsCache && periodPointsCache.poolName === poolName) return periodPointsCache;
+    // Une relecture (un but, la bascule) garde l'affichage précédent du même
+    // pool jusqu'à sa réponse : pas de cases qui clignotent à chaque point.
+    const precedente = dernieresPeriodes.poolName === poolName ? dernieresPeriodes.valeur : null;
+    const entree = { poolName, valeur: null, precedente, promesse: null };
+    entree.promesse = lirePointsParPeriode(poolName).then(byDays => {
+        entree.valeur = byDays;
+        dernieresPeriodes = { poolName, valeur: byDays };
+        if (periodPointsCache === entree) rafraichirClassementEnDirect();
+        return byDays;
+    });
+    periodPointsCache = entree;
+    return entree;
 }
 
 async function lirePointsParPeriode(poolName) {
@@ -502,7 +513,7 @@ async function lirePointsParPeriode(poolName) {
     let bascule = null;
     await Promise.all(STANDINGS_PERIODS.map(async (days) => {
         const map = new Map();
-        const ancre = days === TENDANCE_JOURS ? '&ancre=soiree' : '';
+        const ancre = PERIODES_ANCREES.has(days) ? '&ancre=soiree' : '';
         try {
             const res = await fetch(`${BASE_URL}/pool-leaderboard/${encodeURIComponent(poolName)}?days=${days}${ancre}`, { cache: 'no-store' });
             if (res.ok) {
@@ -522,10 +533,10 @@ async function lirePointsParPeriode(poolName) {
 }
 
 /**
- * Au premier match du jour, la tendance passe à la semaine qui finit
- * aujourd'hui : la page se relit à ce moment-là — au plus tard dans une
- * demi-heure, pour ne pas dépendre d'un minuteur que la veille de l'appareil
- * aurait retardé.
+ * Au premier match du jour, la dernière soirée devient celle du jour (1 j,
+ * 7 j et la pastille) : la page se relit à ce moment-là — au plus tard dans
+ * une demi-heure, pour ne pas dépendre d'un minuteur que la veille de
+ * l'appareil aurait retardé.
  */
 function planifierBasculeTendance(bascule) {
     clearTimeout(tendanceMinuteur);
@@ -540,15 +551,28 @@ function planifierBasculeTendance(bascule) {
     }, attente);
 }
 
-// Classe les équipes par points marqués pendant la période ; une équipe
-// sans donnée (aucun log de match trouvé) reste en fin de classement plutôt
-// que d'être exclue, pour que le badge ait toujours un rang à comparer.
-function rankByPeriodPoints(standings, pointsMap) {
-    const withPts = standings.map(s => ({ teamName: s.teamName, pts: pointsMap.get(s.teamName) }));
-    withPts.sort((a, b) => (b.pts ?? -Infinity) - (a.pts ?? -Infinity));
-    const rankByTeam = new Map();
-    withPts.forEach((t, i) => rankByTeam.set(t.teamName, i + 1));
-    return rankByTeam;
+/**
+ * Le rang de chaque équipe AVANT la dernière soirée : classée sur son total
+ * moins ses points de la soirée. `standings` arrive dans l'ordre du
+ * classement actuel ; à égalité, cet ordre est gardé, pour qu'une égalité
+ * ne fasse pas bouger une pastille sans un point marqué.
+ *
+ * Une équipe dont la soirée est inconnue (null) est classée comme si elle
+ * n'avait rien marqué, mais n'a pas de rang d'avant : sa pastille dit « — »
+ * plutôt qu'un mouvement inventé. Sans aucune soirée connue, aucun rang.
+ */
+function rangsAvantSoiree(standings, pointsSoiree) {
+    const rangs = new Map();
+    if (!pointsSoiree || pointsSoiree.size === 0) return rangs;
+    const connue = v => v !== null && v !== undefined;
+    standings
+        .map((s, ordre) => {
+            const soiree = pointsSoiree.get(s.teamName);
+            return { teamName: s.teamName, ordre, connue: connue(soiree), avant: (Number(s.points) || 0) - (connue(soiree) ? soiree : 0) };
+        })
+        .sort((a, b) => (b.avant - a.avant) || (a.ordre - b.ordre))
+        .forEach((t, i) => { if (t.connue) rangs.set(t.teamName, i + 1); });
+    return rangs;
 }
 
 function fmtPeriodPts(value) {
@@ -565,12 +589,12 @@ function initialsFromName(name) {
 
 function evolutionBadgeHTML(move, hasData) {
     if (hasData && move > 0) {
-        return `<span class="st-evo st-evo-up" title="A gagné ${move} rang${move > 1 ? 's' : ''} sur 7 jours">${EVO_ARROW_UP}${move}</span>`;
+        return `<span class="st-evo st-evo-up" title="A gagné ${move} place${move > 1 ? 's' : ''} pendant la dernière soirée">${EVO_ARROW_UP}${move}</span>`;
     }
     if (hasData && move < 0) {
-        return `<span class="st-evo st-evo-down" title="A perdu ${-move} rang${-move > 1 ? 's' : ''} sur 7 jours">${EVO_ARROW_DOWN}${-move}</span>`;
+        return `<span class="st-evo st-evo-down" title="A perdu ${-move} place${-move > 1 ? 's' : ''} pendant la dernière soirée">${EVO_ARROW_DOWN}${-move}</span>`;
     }
-    const title = hasData ? 'Rang inchangé sur 7 jours' : 'Pas assez de données récentes';
+    const title = hasData ? 'Aucune place gagnée ni perdue pendant la dernière soirée' : 'Mouvement de la soirée pas encore connu';
     return `<span class="st-evo st-evo-flat" title="${title}">—</span>`;
 }
 
@@ -608,8 +632,8 @@ function standingsLegendHTML(poolMode) {
         ]
         : [
             ['Pts', 'Ce qui décide du classement : les points de la saison. Patineurs : 1 par but et 1 par passe. Gardiens : 2 par victoire, 5 pour une victoire par blanchissage (pas 2 + 5), 1 par défaite en prolongation. Clubs de la LNH : 2 par victoire, 1 par défaite en prolongation.'],
-            ['1 j · 7 j · 30 j', 'Les points marqués sur la période — aujourd’hui, 7 jours, 30 jours —, selon les mêmes règles que les Pts. Ils ne changent pas le classement : ils montrent qui monte.'],
-            ['▲ ▼', 'La pastille à côté du nom : les places qu’une équipe gagnerait (▲) ou perdrait (▼) si l’on classait seulement sur les 7 derniers jours. Elle reste celle de la veille jusqu’au premier match du jour, comme le 7 j.'],
+            ['1 j · 7 j · 30 j', 'Les points marqués sur la période — la dernière soirée, 7 jours, 30 jours —, selon les mêmes règles que les Pts. La dernière soirée est celle d’hier jusqu’au premier match du jour.'],
+            ['▲ ▼', 'La pastille à côté du nom : les places gagnées (▲) ou perdues (▼) au classement pendant la dernière soirée. Le matin, c’est le mouvement d’hier ; à la première mise au jeu, elle repart à zéro et suit la soirée en direct.'],
             ['PJ', 'Parties jouées par tout l’alignement.']
         ];
     return `
@@ -996,16 +1020,11 @@ function computeStandings(poolData) {
 }
 
 /**
- * Numéro du dernier rendu lancé. Le premier rendu attend les points par
- * période ; le direct arrive pendant ce temps et en lance un second, avec les
- * points du soir. Le premier finissait parfois après — ses lectures
- * revenaient plus tard — et réécrivait le tableau avec les totaux de minuit,
- * jusqu'au prochain but. Un rendu dépassé ne touche plus au tableau.
+ * Le rendu ne lit plus rien : les points par période arrivent à part et le
+ * redemandent (fetchStandingsPeriodPoints). Un rendu lent ne peut donc plus
+ * finir après un plus récent et réécrire les totaux de minuit.
  */
-let renduClassement = 0;
-
 async function renderPoolStandings(poolData, poolName) {
-    const rendu = ++renduClassement;
     const poolMode = poolData.poolMode || 'cumulative';
     const standingsList = document.getElementById('standingsList');
 
@@ -1028,10 +1047,12 @@ async function renderPoolStandings(poolData, poolName) {
 
     const enH2H = poolMode === 'head-to-head';
 
-    // Points par période (1/7/30j) et rang « période » associé : pas de
-    // pendant H2H, qui n'a ni colonnes période ni badge d'évolution.
-    const byDays = enH2H ? null : await fetchStandingsPeriodPoints(poolName);
-    if (rendu !== renduClassement) return;
+    // Points par période (1/7/30j) et mouvement de la soirée : pas de
+    // pendant H2H, qui n'a ni colonnes période ni pastille. Pas attendus :
+    // tant qu'ils courent, les cases restent en attente, et leur arrivée
+    // redessine la liste (fetchStandingsPeriodPoints).
+    const periodes = enH2H ? null : fetchStandingsPeriodPoints(poolName);
+    const byDays = periodes ? (periodes.valeur || periodes.precedente) : null;
 
     const legendeHTML = standingsLegendHTML(poolMode);
 
@@ -1102,21 +1123,21 @@ async function renderPoolStandings(poolData, poolName) {
         document.getElementById('standingsTable').appendChild(tbody);
     } else {
         // Une seule liste, sur téléphone comme sur bureau — maquette
-        // « Classement » (Claude Design) : rang, rond du club, nom + tendance,
-        // PJ puis les points des trois périodes, Pts en gros. Pos reste le
-        // rang du total ; la tendance le compare au rang sur 7 jours.
-        const periodRankByTeam = rankByPeriodPoints(standings, byDays[TENDANCE_JOURS]);
+        // « Classement » (Claude Design) : rang, rond du club, nom + mouvement
+        // de la soirée, PJ puis les points des trois périodes, Pts en gros.
+        const rangAvant = rangsAvantSoiree(standings, byDays && byDays[1]);
         const moi = localStorage.getItem('username');
         const mini = (valeur, libelle, cls = '') =>
             `<div class="st-mini${cls}${valeur ? '' : ' is-zero'}"><span class="st-mini-v">${valeur}</span><span class="st-mini-l">${libelle}</span></div>`;
         const rangees = standings.map(standing => {
             const displayName = getDisplayName(standing.teamName, standing.members);
             const estMoi = (standing.members || []).includes(moi);
-            const periodRank = periodRankByTeam.get(standing.teamName);
-            const move = periodRank !== undefined ? standing.rank - periodRank : 0;
-            const evoHTML = evolutionBadgeHTML(move, byDays[TENDANCE_JOURS].get(standing.teamName) != null);
+            const avant = rangAvant.get(standing.teamName);
+            const evoHTML = byDays
+                ? evolutionBadgeHTML(avant !== undefined ? avant - standing.rank : 0, avant !== undefined)
+                : '<span class="st-evo st-evo-flat is-loading" aria-hidden="true">·</span>';
             const soirHTML = pointsSoirHTML(standing);
-            const per = d => fmtPeriodPts(byDays[d].get(standing.teamName));
+            const per = d => (byDays ? fmtPeriodPts(byDays[d].get(standing.teamName)) : '·');
             return `
                 <div class="st-mobile-row is-clickable${estMoi ? ' is-me' : ''}" tabindex="0" role="button" aria-label="Voir l'équipe de ${displayName}" data-team="${standing.teamName.replace(/"/g, '&quot;')}">
                     <span class="st-mobile-rank">${standing.rank}</span>

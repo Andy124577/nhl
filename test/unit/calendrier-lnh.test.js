@@ -75,3 +75,32 @@ test('une écriture en échec sera retentée', async () => {
     await calendrier.matchsTermines('2026-10-08');
     assert.equal(ecrits.length, 2, 'rien n’avait été noté comme rangé');
 });
+
+test('des journées demandées en même temps ne rappellent pas la LNH pour la même semaine', async () => {
+    const db = fausseDb();
+    let appels = 0;
+    const calendrier = creerCalendrierLNH({
+        db,
+        fetchImpl: async () => { appels += 1; await new Promise(r => setImmediate(r)); return semaine(); },
+        maintenant: () => AUJOURDHUI,
+        logger: { error() {} }
+    });
+
+    const comptes = await Promise.all(['2026-10-06', '2026-10-07', '2026-10-08'].map(j => calendrier.matchsTermines(j)));
+
+    assert.deepEqual(comptes, [2, 3, 1]);
+    assert.equal(appels, 1, 'la semaine du premier appel a servi aux deux autres');
+});
+
+test('un appel en échec ne bloque pas la file des suivants', async () => {
+    let appels = 0;
+    const calendrier = creerCalendrierLNH({
+        fetchImpl: async () => { appels += 1; if (appels === 1) throw new Error('réseau'); return semaine(); },
+        maintenant: () => AUJOURDHUI,
+        logger: { error() {} }
+    });
+
+    const [premier, second] = await Promise.all([calendrier.matchsTermines('2026-10-08'), calendrier.matchsTermines('2026-10-07')]);
+    assert.equal(premier, null, 'on ne sait pas, plutôt que zéro');
+    assert.equal(second, 3);
+});
