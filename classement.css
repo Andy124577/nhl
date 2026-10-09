@@ -1674,6 +1674,66 @@ html.ss-lock { overflow: hidden; }
     margin-top: 4px;
 }
 
+/* Mode « Semaine » : ‹ Semaine N › pour parcourir les semaines passées et à venir. */
+.h2h-week-nav-row {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    gap: 8px;
+}
+
+.h2h-week-nav {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--border-light);
+    background: var(--card);
+    color: var(--text-main);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.h2h-week-nav:hover:not(:disabled) { border-color: var(--text-secondary); }
+.h2h-week-nav:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.h2h-week-nav:disabled { opacity: 0.35; cursor: default; }
+
+/* Faits saillants d'une semaine close (récap, lib/recap.js). */
+.h2h-recap {
+    background: var(--card);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    padding: 14px 16px;
+}
+
+.h2h-recap-title {
+    margin: 0 0 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.h2h-recap-list { margin: 0; }
+
+.h2h-recap-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 34%) 1fr;
+    gap: 12px;
+    padding: 8px 0;
+    border-top: 1px solid var(--border-light);
+    font-size: 0.88rem;
+}
+
+.h2h-recap-row:first-child { border-top: 0; }
+.h2h-recap-row dt { color: var(--text-secondary); }
+.h2h-recap-row dd { margin: 0; color: var(--text-main); font-weight: 600; overflow-wrap: anywhere; }
+
+@media (max-width: 480px) {
+    .h2h-recap-row { grid-template-columns: 1fr; gap: 2px; }
+}
+
 /* Matchup Cards */
 .h2h-matchups-list {
     display: flex;
