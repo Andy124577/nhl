@@ -603,7 +603,7 @@ describe('classement — chaque choix paraît et compte', () => {
 
         assert.equal(ficheJoueur('Sergei Murashov', 'rookie').gardien, true);
         const total = calculateTeamPoints({ rookie: ['Sergei Murashov'] });
-        assert.equal(total.points, 10);   // 5 + 4 + 1
+        assert.equal(total.points, 8);    // blanchissage 5 + l'autre victoire 2 + prolongation 1
         assert.equal(total.goals, 0);     // ses victoires ne sont pas des buts
     });
 

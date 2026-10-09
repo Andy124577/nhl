@@ -343,7 +343,7 @@ describe('computeTeamSeasonScores', () => {
         const pool = makePool({ teams: { Rouge: makeTeam({ rookie: ['Sergei Murashov'] }) } });
         const stats = [makeGoalieStat('Sergei Murashov', { wins: 2, shutouts: 1, otLosses: 1 })];
 
-        assert.equal(computeTeamSeasonScores(pool, stats)[0].score, 10);   // 5 + 4 + 1
+        assert.equal(computeTeamSeasonScores(pool, stats)[0].score, 8);    // blanchissage 5 + l'autre victoire 2 + prolongation 1
     });
 
     test('« Utah Mammoth » repêché compte les résultats de « Utah Hockey Club »', () => {

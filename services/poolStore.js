@@ -88,6 +88,18 @@ class ErreurMetier extends Error {
     }
 }
 
+/**
+ * Un identifiant d'opération vient du client : une chaîne d'au plus 128
+ * caractères (operations.operation_id), ou rien. Sans ce contrôle, un objet
+ * ou une chaîne trop longue faisait échouer la requête en 500.
+ */
+function verifierIdentifiantOperation(id) {
+    if (id === undefined || id === null || id === '') return;
+    if (typeof id !== 'string' || id.length > 128) {
+        throw new ErreurMetier(400, "Identifiant d'opération invalide.", { code: 'operation_invalide' });
+    }
+}
+
 /** Refus « votre état est périmé » : le client doit resynchroniser ce pool. */
 class ErreurConflit extends ErreurMetier {
     constructor(message, extra = {}) {
@@ -825,6 +837,7 @@ function creerPoolStore({ db, usePostgres, draftFile, logger = console, confianc
 
     /** Point d'entrée unique : la bonne transaction selon le magasin actif. */
     async function transaction(travail, options = {}) {
+        verifierIdentifiantOperation(options.operationId);
         return usePostgres ? transactionPostgres(travail, options) : transactionFichier(travail, options);
     }
 
