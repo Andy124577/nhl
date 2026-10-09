@@ -574,7 +574,7 @@ let currentCareerData = null;
 async function showCareerStats(playerId, playerName, isGoalie = false) {
     currentCareerData = null;
     return fzOpenCareerModal(playerId, playerName, {
-        onData(data) { currentCareerData = data; currentPlayerId = playerId; currentGameLogData = null; },
+        onData(data) { currentCareerData = data; },
         renderStats: filterCareerStats
     });
 }
@@ -628,60 +628,8 @@ function filterCareerStats() {
 
 function closeCareerModal() {
     fzCloseCareerModal();
-    currentCareerData = null; currentGameLogData = null;
+    currentCareerData = null;
 }
-let currentGameLogData = null,
-    currentPlayerId = null;
-async function handleViewChange() {
-    const t = document.getElementById("viewFilter").value,
-        e = document.querySelector(".filter-group-career:has(#leagueFilter)"),
-        a = document.querySelector(".filter-group-career:has(#gameTypeFilter)"),
-        n = document.getElementById("statsCountBadge");
-    "gamelog" === t ? (e && (e.style.display = "none"), a && (a.style.display = "none"), n.style.display = "block", n.textContent = "Chargement...", await showGameLog(currentPlayerId)) : (e && (e.style.display = "flex"), a && (a.style.display = "flex"), filterCareerStats())
-}
-async function showGameLog(t) {
-    const stillViewing = () => currentCareerData && String(currentPlayerId) === String(t)
-        && document.getElementById("viewFilter").value === "gamelog";
-    // Le tableau de carrière ne reste pas affiché sous « Chargement… » : des
-    // rangées en os (careerModal.js) tiennent sa place jusqu'aux matchs.
-    if (typeof fzCareerTableSkeleton === "function") document.getElementById("careerStatsTable").innerHTML = fzCareerTableSkeleton();
-    try {
-        const e = await fetch(`/player-gamelog/${t}`),
-            a = await e.json();
-        if (!stillViewing()) return;
-        if (currentGameLogData = a, !a.gameLog || 0 === a.gameLog.length) return document.getElementById("careerStatsTable").innerHTML = '<p style="text-align: center; padding: 20px;">Aucun match joué cette saison.</p>', void(document.getElementById("statsCountBadge").textContent = "0 matchs");
-        document.getElementById("statsCountBadge").textContent = `${a.gameLog.length} matchs`, renderGameLogTable(a.gameLog, a.playerInfo.isGoalie)
-    } catch (t) {
-        if (!stillViewing()) return;
-        console.error("Error fetching game log:", t), document.getElementById("careerStatsTable").innerHTML = '<p style="text-align: center; padding: 20px; color: red;">Erreur lors du chargement des statistiques de match.</p>'
-    }
-}
-
-function renderGameLogTable(t, e) {
-    const a = document.getElementById("careerStatsTable");
-    let n = "<table><thead><tr>";
-    n += e ? "\n            <th>DATE</th>\n            <th>OPP</th>\n            <th>RÉS</th>\n            <th>DÉC</th>\n            <th>GA</th>\n            <th>SA</th>\n            <th>SV</th>\n            <th>SV%</th>\n            <th>BL</th>\n            <th>PUN</th>\n            <th>TG</th>\n        " : "\n            <th>DATE</th>\n            <th>OPP</th>\n            <th>RÉS</th>\n            <th>B</th>\n            <th>P</th>\n            <th>PTS</th>\n            <th>+/-</th>\n            <th>PUN</th>\n            <th>TIR</th>\n            <th>TG</th>\n            <th>PP</th>\n            <th>SH</th>\n        ", n += "</tr></thead><tbody>", t.forEach((t, a) => {
-        const s = a % 2 == 0 ? "even-row" : "odd-row",
-            l = "H" === t.homeRoadFlag ? "vs" : "@",
-            o = new Date(t.gameDate).toLocaleDateString("fr-CA", {
-                month: "2-digit",
-                day: "2-digit"
-            });
-        if (n += `<tr class="${s}">`, n += `<td>${o}</td>`, n += `<td>${l} ${t.opponentAbbrev}</td>`, n += `<td>${t.gameResult||"-"}</td>`, e) {
-            const e = t.shotsAgainst || 0,
-                a = t.goalsAgainst || 0;
-            let s = t.saves || 0;
-            e > 0 && (!s || 0 === s) && (s = e - a);
-            let l = "-";
-            if (e > 0) {
-                l = (s / e).toFixed(3)
-            }
-            n += `<td>${t.decision||"-"}</td>`, n += `<td>${a}</td>`, n += `<td>${e}</td>`, n += `<td>${s}</td>`, n += `<td>${l}</td>`, n += `<td>${t.shutouts||0}</td>`, n += `<td>${t.pim||0}</td>`, n += `<td>${t.toi||"0:00"}</td>`
-        } else n += `<td>${t.goals||0}</td>`, n += `<td>${t.assists||0}</td>`, n += `<td>${t.points||0}</td>`, n += `<td>${t.plusMinus>=0?"+":""}${t.plusMinus||0}</td>`, n += `<td>${t.pim||0}</td>`, n += `<td>${t.shots||0}</td>`, n += `<td>${t.toi||"0:00"}</td>`, n += `<td>${t.powerPlayPoints||0}</td>`, n += `<td>${t.shorthandedPoints||0}</td>`;
-        n += "</tr>"
-    }), n += "</tbody></table>", a.innerHTML = n
-}
-
 // Le tableau de stats.html tel qu'il arrive : son vrai en-tête et des rangées
 // en os. Repris à chaque relecture (projections) ; le script est différé, la
 // page est déjà lue. populatePlayerTable remplace tout le tableau.
