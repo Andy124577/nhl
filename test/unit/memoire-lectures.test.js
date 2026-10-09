@@ -117,15 +117,15 @@ describe('mémoire de lectures', () => {
 });
 
 describe('compteur d’écritures de db.js', () => {
-    function fauxClient({ echec = false } = {}) {
+    function fauxClient({ echec = false, resultat = { rows: [] } } = {}) {
         const appels = [];
         return {
             appels,
             query(config, valeurs, rappel) {
                 appels.push(typeof config === 'string' ? config : config.text);
                 const cb = typeof valeurs === 'function' ? valeurs : rappel;
-                if (cb) { setImmediate(() => cb(echec ? new Error('x') : null, { rows: [] })); return undefined; }
-                return echec ? Promise.reject(new Error('x')) : Promise.resolve({ rows: [] });
+                if (cb) { setImmediate(() => cb(echec ? new Error('x') : null, echec ? undefined : resultat)); return undefined; }
+                return echec ? Promise.reject(new Error('x')) : Promise.resolve(resultat);
             }
         };
     }
@@ -168,6 +168,57 @@ describe('compteur d’écritures de db.js', () => {
         await assert.rejects(client.query('DELETE FROM sessions'));
         await new Promise(r => setImmediate(r));
         assert.equal(n, 1);
+    });
+
+    test('une écriture qui ne touche aucune ligne ne compte pas', async () => {
+        let n = 0;
+        const sansEffet = db.instrumenterClient(
+            fauxClient({ resultat: { command: 'UPDATE', rowCount: 0, rows: [] } }), () => { n += 1; });
+        await sansEffet.query("DELETE FROM sessions WHERE expires_at < NOW()");
+        await new Promise(r => setImmediate(r));
+        assert.equal(n, 0, 'promesse : rien purgé, rien compté');
+
+        await new Promise((resolve) => {
+            sansEffet.query('UPDATE sessions SET last_seen_at = NOW() WHERE id = $1', [1], (erreur, res) => {
+                assert.equal(erreur, null);
+                assert.equal(res.rowCount, 0, 'le rappel reçoit le résultat intact');
+                resolve();
+            });
+        });
+        assert.equal(n, 0, 'rappel : rien changé, rien compté');
+
+        const avecEffet = db.instrumenterClient(
+            fauxClient({ resultat: { command: 'INSERT', rowCount: 3, rows: [] } }), () => { n += 1; });
+        await avecEffet.query('INSERT INTO player_game_logs VALUES ($1)', [1]);
+        await new Promise(r => setImmediate(r));
+        assert.equal(n, 1, 'des lignes écrites comptent');
+    });
+
+    test('rowCount 0 ne dispense que les INSERT, UPDATE, DELETE, MERGE', async () => {
+        let n = 0;
+        // Un WITH … DELETE … SELECT annonce SELECT : il compte, même vide.
+        const cte = db.instrumenterClient(
+            fauxClient({ resultat: { command: 'SELECT', rowCount: 0, rows: [] } }), () => { n += 1; });
+        await cte.query('WITH x AS (DELETE FROM a RETURNING *) SELECT * FROM x');
+        // Un COMMIT n'a pas de rowCount : il compte.
+        const commit = db.instrumenterClient(
+            fauxClient({ resultat: { command: 'COMMIT', rowCount: null, rows: [] } }), () => { n += 1; });
+        await commit.query('COMMIT');
+        // Plusieurs instructions d'un coup : un tableau de résultats, il compte.
+        const multiple = db.instrumenterClient(
+            fauxClient({ resultat: [{ command: 'UPDATE', rowCount: 0 }, { command: 'UPDATE', rowCount: 0 }] }),
+            () => { n += 1; });
+        await multiple.query('UPDATE a SET x = 1; UPDATE b SET y = 2');
+        await new Promise(r => setImmediate(r));
+        assert.equal(n, 3);
+    });
+
+    test('ecritureSansEffet', () => {
+        assert.equal(db.ecritureSansEffet({ command: 'MERGE', rowCount: 0 }), true);
+        assert.equal(db.ecritureSansEffet({ command: 'DELETE', rowCount: 1 }), false);
+        assert.equal(db.ecritureSansEffet({ command: 'BEGIN', rowCount: null }), false);
+        assert.equal(db.ecritureSansEffet(undefined), false);
+        assert.equal(db.ecritureSansEffet([{ command: 'UPDATE', rowCount: 0 }]), false);
     });
 
     test('estLecture ne prend pour lecture que SELECT, SHOW, EXPLAIN', () => {
