@@ -137,7 +137,8 @@ function monter(app, ctx) {
      * `operationId` et `expectedPickIndex` sont facultatifs : un client qui ne
      * les envoie pas garde le comportement d'avant, protégé par le verrou mais
      * sans la garantie de non-répétition. Les envoyer est ce qui rend le
-     * réessai sûr, et le client de Fantazy les envoie.
+     * réessai sûr : la salle de repêchage (draftActif.js) envoie les deux,
+     * l'accueil (accueil-draft-hero.js) le tour attendu.
      */
     app.post('/pick-player', auth.requireAuth, async (req, res) => {
         try {
