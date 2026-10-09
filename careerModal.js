@@ -151,6 +151,12 @@
         }
         updateFavorite();
     }
+    // Repêchage du pool actif terminé : plus rien à choisir ni à garder en
+    // favori pour le repêcher, la fiche ne montre que le joueur.
+    function repechageTermine() {
+        const pool = window.FZPool;
+        return Boolean(pool && pool.data() && pool.draftState(pool.data()).etat === 'termine');
+    }
     function canPick() {
         return active && typeof selectPlayer === 'function' && typeof isUserTurn === 'function' && isUserTurn()
             && typeof checkIfUserTeamIsDone === 'function' && !checkIfUserTeamIsDone()
@@ -418,6 +424,7 @@
         el('careerBannerName').textContent = playerName || 'Fiche du joueur';
         el('careerPlayerName').textContent = playerName || 'Fiche du joueur';
         el('careerWatchBanner').hidden = true;
+        el('careerActions').hidden = repechageTermine();
         el('viewFilter').value = 'career'; el('leagueFilter').value = 'nhl'; el('gameTypeFilter').value = 'regular';
         el('leagueFilter').parentElement.style.display = ''; el('gameTypeFilter').parentElement.style.display = '';
         poserSquelette(playerName);
