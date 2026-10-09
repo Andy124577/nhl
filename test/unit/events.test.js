@@ -68,6 +68,16 @@ test('chaque notification mène à une destination, et le pool y figure toujours
     }
 });
 
+test('« semaine N commencée » mène aux résultats de la semaine N − 1', () => {
+    const url = (weekNumber) => evenements.urlDestination({
+        type: evenements.NOTIFICATION.NOUVELLE_SEMAINE, poolName: 'Ligue', subject: { weekNumber }
+    });
+    assert.match(url(4), /[?&]onglet=h2h&semaine=3$/);
+    // Sans semaine passée, la semaine 1 elle-même.
+    assert.match(url(1), /[?&]semaine=1$/);
+    assert.doesNotMatch(url(undefined), /semaine=/);
+});
+
 test('une offre reçue et son résultat ne mènent pas au même endroit', () => {
     const recue = evenements.urlDestination({
         type: evenements.NOTIFICATION.ECHANGE_RECU, poolName: 'L', subject: { tradeId: 7 }

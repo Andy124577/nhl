@@ -62,6 +62,21 @@ let currentView = VIEW_STATES.POOL_LIST;
 let currentH2HTab = 'matchups'; // 'matchups' | 'standings' | 'calendrier' | 'history'
 let h2hWeekCache = null; // cached full-week matchup data
 let h2hPeriod = 'today'; // 'today' | 'week'
+// Semaine affichée en mode « Semaine » ; null = la semaine en cours.
+let h2hSemaineVue = null;
+// Jeton de rendu des duels : une réponse arrivée après un changement de pool
+// ou de semaine est jetée au lieu d'écraser l'écran courant.
+let h2hRenduDuels = 0;
+// ?onglet=h2h&semaine=N (lib/events.js, services/today.js) : lu une seule fois,
+// à l'arrivée. Un changement de pool ensuite ne doit pas le rejouer.
+let h2hDemandeUrl = (() => {
+    const p = new URLSearchParams(window.location.search);
+    const semaine = Number(p.get('semaine'));
+    return {
+        onglet: p.get('h2h') || (p.get('onglet') === 'h2h' || semaine > 0 ? 'matchups' : null),
+        semaine: Number.isInteger(semaine) && semaine > 0 ? semaine : null
+    };
+})();
 
 // null sortKey = canonical rank order (points, or wins for H2H)
 let standingsSortKey = null;
@@ -372,14 +387,15 @@ function showPoolStandings(poolName) {
         // ?h2h=calendrier ouvre directement le carrousel : c'est la cible du
         // bouton « Calendrier de la saison » de la bannière d'accueil, qui
         // annonce le prochain duel et doit pouvoir montrer les suivants.
-        const ongletDemande = new URLSearchParams(window.location.search).get('h2h');
-        const onglet = ['matchups', 'standings', 'calendrier', 'history'].includes(ongletDemande)
-            ? ongletDemande : 'matchups';
+        const demande = h2hDemandeUrl;
+        h2hDemandeUrl = { onglet: null, semaine: null };
+        const onglet = ['matchups', 'standings', 'calendrier', 'history'].includes(demande.onglet)
+            ? demande.onglet : 'matchups';
 
         h2hTabs.style.display = 'flex';
         currentH2HTab = onglet;
         switchH2HTab(onglet);
-        if (onglet === 'matchups') loadH2HCurrentWeek(poolName);
+        if (onglet === 'matchups') loadH2HCurrentWeek(poolName, demande.semaine);
     } else {
         // Hide H2H elements for cumulative pools
         h2hTabs.style.display = 'none';
@@ -2514,9 +2530,31 @@ function calculateTeamPoints(roster) {
 
 function setH2HPeriod(period) {
     h2hPeriod = period;
+    // « Aujourd'hui » et « Semaine » ramènent à la semaine en cours.
+    h2hSemaineVue = null;
     document.getElementById('filterToday').classList.toggle('active', period === 'today');
     document.getElementById('filterWeek').classList.toggle('active', period === 'week');
     if (currentPoolName) renderH2HMatchupsForPeriod(currentPoolName);
+}
+
+/** Semaine en cours du pool, et nombre de semaines au calendrier. */
+function h2hBornesSemaines(poolName) {
+    const h2h = (allPoolsData[poolName] && allPoolsData[poolName].h2hData) || {};
+    const enCours = Number(h2h.currentWeek) || 1;
+    const total = Math.max(enCours, (h2h.matchups || []).length);
+    return { enCours, total };
+}
+
+/** Flèches ‹ › du mode « Semaine » : une semaine passée, en cours ou à venir. */
+function naviguerSemaineH2H(sens) {
+    if (!currentPoolName) return;
+    const { enCours, total } = h2hBornesSemaines(currentPoolName);
+    const cible = Math.min(total, Math.max(1, (h2hSemaineVue || enCours) + sens));
+    h2hPeriod = 'week';
+    h2hSemaineVue = cible === enCours ? null : cible;
+    document.getElementById('filterToday').classList.remove('active');
+    document.getElementById('filterWeek').classList.add('active');
+    renderH2HMatchupsForPeriod(currentPoolName);
 }
 
 // ==================== H2H SHARED HELPERS ====================
@@ -2600,8 +2638,15 @@ function buildMatchupCardHTML(m, poolName, showRecord) {
     // attaquant qui ne voulait rien dire. Les points restent côte à côte ;
     // plus aucune comparaison implicite.
     const parPoints = liste => [...(liste || [])].sort((a, b) => (b.fantasyPoints || 0) - (a.fantasyPoints || 0));
-    const t1p = parPoints(m.team1Players);
-    const t2p = parPoints(m.team2Players);
+    // Une semaine close (/h2h/matchup, résultat figé) ne garde que les trois
+    // meilleurs pointeurs de chaque équipe, pas l'alignement entier.
+    const fige = !m.team1Players && !m.team2Players && !!(m.team1Top || m.team2Top);
+    const t1p = parPoints(fige ? m.team1Top : m.team1Players);
+    const t2p = parPoints(fige ? m.team2Top : m.team2Players);
+    const sousLigne = j => !j ? '' : j.position === 'G'
+        ? `${j.wins}V ${j.saves}ARR${j.shutouts ? ' ' + j.shutouts + 'BL' : ''}`
+        : j.goals != null ? `${j.goals}B ${j.assists}A`
+        : j.matchs != null ? `${j.matchs} PJ` : '';
     const maxRows = Math.max(t1p.length, t2p.length);
     let playerRowsHTML = '';
 
@@ -2613,12 +2658,8 @@ function buildMatchupCardHTML(m, poolName, showRecord) {
         const lpBetter = false;
         const rpBetter = false;
 
-        const lpSub = lp ? (lp.position === 'G'
-            ? `${lp.wins}V ${lp.saves}ARR${lp.shutouts ? ' ' + lp.shutouts + 'BL' : ''}`
-            : `${lp.goals}B ${lp.assists}A`) : '';
-        const rpSub = rp ? (rp.position === 'G'
-            ? `${rp.wins}V ${rp.saves}ARR${rp.shutouts ? ' ' + rp.shutouts + 'BL' : ''}`
-            : `${rp.goals}B ${rp.assists}A`) : '';
+        const lpSub = sousLigne(lp);
+        const rpSub = sousLigne(rp);
 
         playerRowsHTML += `
             <div class="h2h-player-row">
@@ -2675,6 +2716,7 @@ function buildMatchupCardHTML(m, poolName, showRecord) {
                     <span title="${titre2}">${nom2}</span>
                 </div>
                 ${playerRowsHTML || '<div class="h2h-no-players">Aucun joueur à afficher</div>'}
+                ${fige && playerRowsHTML ? '<div class="h2h-no-players">Résultat final : les 3 meilleurs pointeurs de chaque équipe.</div>' : ''}
             </div>
         </div>`;
 }
@@ -2746,11 +2788,14 @@ function switchH2HTab(tab) {
     }
 }
 
-async function loadH2HCurrentWeek(poolName) {
-    // Reset to today filter when entering the tab
-    h2hPeriod = 'today';
-    document.getElementById('filterToday').classList.add('active');
-    document.getElementById('filterWeek').classList.remove('active');
+async function loadH2HCurrentWeek(poolName, semaine = null) {
+    // Arrivée sur l'onglet : « Aujourd'hui », sauf si un lien vise une
+    // semaine précise (notification « nouvelle semaine », accueil).
+    const { enCours } = h2hBornesSemaines(poolName);
+    h2hPeriod = semaine ? 'week' : 'today';
+    h2hSemaineVue = semaine && semaine !== enCours ? semaine : null;
+    document.getElementById('filterToday').classList.toggle('active', h2hPeriod === 'today');
+    document.getElementById('filterWeek').classList.toggle('active', h2hPeriod === 'week');
 
     const weekHeader = document.getElementById('h2hWeekHeader');
     weekHeader.innerHTML = '';
@@ -2761,14 +2806,18 @@ async function loadH2HCurrentWeek(poolName) {
 async function renderH2HMatchupsForPeriod(poolName) {
     const matchupsList = document.getElementById('h2hMatchupsList');
     const weekHeader = document.getElementById('h2hWeekHeader');
+    const jeton = ++h2hRenduDuels;
+    const perime = () => jeton !== h2hRenduDuels || currentPoolName !== poolName;
     matchupsList.innerHTML = '<div class="h2h-loading">Chargement...</div>';
 
     try {
         let data;
+        let recap = null;
         if (h2hPeriod === 'today') {
             const res = await fetch(`${BASE_URL}/h2h/today-scores?poolName=${encodeURIComponent(poolName)}`, { cache: 'no-store' });
             if (!res.ok) throw new Error('Failed');
             data = await res.json();
+            if (perime()) return;
 
             // L'état vient du serveur. En dur, la bandeau annonçait « EN COURS »
             // sur une semaine 1 qui n'ouvre qu'au premier match de la saison.
@@ -2780,24 +2829,30 @@ async function renderH2HMatchupsForPeriod(poolName) {
             weekHeader.innerHTML = `
                 <div class="h2h-week-label">Semaine ${data.currentWeek} <span class="h2h-week-status ${H2H_WEEK_STATUS_CLASS[ws] || ''}">${H2H_WEEK_STATUS_LABEL[ws] || ''}</span></div>
                 <div class="h2h-week-dates">${escapeHtmlText(sousTitre)}</div>`;
+        } else if (h2hSemaineVue) {
+            // Une autre semaine que la courante : /h2h/matchup la sert figée
+            // si elle est close (un échange de mardi ne la réécrit pas),
+            // provisoire sinon. Le récap n'existe que pour une semaine close.
+            const semaine = h2hSemaineVue;
+            const q = `poolName=${encodeURIComponent(poolName)}&week=${semaine}`;
+            const res = await fetch(`${BASE_URL}/h2h/matchup?${q}`, { cache: 'no-store' });
+            if (!res.ok) throw new Error('Failed');
+            data = await res.json();
+            if (data.fige) recap = await lireRecapH2H(poolName, semaine);
+            if (perime()) return;
+            weekHeader.innerHTML = h2hEnteteSemaineHTML(poolName, data.weekNumber, data);
         } else {
             // Use cache if available
             if (!h2hWeekCache || h2hWeekCache.poolName !== poolName) {
                 const res = await fetch(`${BASE_URL}/h2h/current-week-scores?poolName=${encodeURIComponent(poolName)}`, { cache: 'no-store' });
                 if (!res.ok) throw new Error('Failed');
                 data = await res.json();
+                if (perime()) return;
                 h2hWeekCache = { poolName, data };
             } else {
                 data = h2hWeekCache.data;
             }
-
-            // `weekEnd` est le lundi SUIVANT : la plage recule d'un jour pour
-            // se lire « lundi au dimanche », comme partout ailleurs.
-            const dateRange = h2hSchedDateRange(data.weekStart, data.weekEnd) || 'Semaine en cours';
-            const ws = data.weekStatus || 'ongoing';
-            weekHeader.innerHTML = `
-                <div class="h2h-week-label">Semaine ${data.currentWeek} <span class="h2h-week-status ${H2H_WEEK_STATUS_CLASS[ws] || ''}">${H2H_WEEK_STATUS_LABEL[ws] || ''}</span></div>
-                <div class="h2h-week-dates">${dateRange}</div>`;
+            weekHeader.innerHTML = h2hEnteteSemaineHTML(poolName, data.currentWeek, data);
         }
 
         if (!data.matchups || data.matchups.length === 0) {
@@ -2805,12 +2860,95 @@ async function renderH2HMatchupsForPeriod(poolName) {
             return;
         }
 
-        matchupsList.innerHTML = data.matchups.map(m => buildMatchupCardHTML(m, poolName, false)).join('');
+        matchupsList.innerHTML = (recap ? h2hFaitsSaillantsHTML(recap, poolName) : '')
+            + data.matchups.map(m => buildMatchupCardHTML(m, poolName, false)).join('');
 
     } catch (err) {
+        if (perime()) return;
         console.error('Error loading H2H matchups:', err);
         matchupsList.innerHTML = '<div class="h2h-empty">Erreur lors du chargement</div>';
     }
+}
+
+/**
+ * En-tête du mode « Semaine » : ‹ Semaine N [état] › et ses dates.
+ * `weekEnd` est le lundi SUIVANT : la plage recule d'un jour pour se lire
+ * « lundi au dimanche », comme partout ailleurs.
+ */
+function h2hEnteteSemaineHTML(poolName, numero, data) {
+    const { total } = h2hBornesSemaines(poolName);
+    const ws = data.weekStatus || 'ongoing';
+    const plage = h2hSchedDateRange(data.weekStart, data.weekEnd) || 'Semaine en cours';
+    const corrige = data.fige && Number(data.revision) > 1 ? ' · résultat corrigé' : '';
+    const fleche = (sens, etiquette, inactif) => `<button type="button" class="h2h-week-nav"
+        onclick="naviguerSemaineH2H(${sens})" aria-label="${etiquette}"${inactif ? ' disabled' : ''}>${sens < 0 ? '‹' : '›'}</button>`;
+    return `
+        <div class="h2h-week-nav-row">
+            ${fleche(-1, 'Semaine précédente', numero <= 1)}
+            <div>
+                <div class="h2h-week-label">Semaine ${numero} <span class="h2h-week-status ${H2H_WEEK_STATUS_CLASS[ws] || ''}">${H2H_WEEK_STATUS_LABEL[ws] || ''}</span></div>
+                <div class="h2h-week-dates">${escapeHtmlText(plage + corrige)}</div>
+            </div>
+            ${fleche(1, 'Semaine suivante', numero >= total)}
+        </div>`;
+}
+
+/** Le récap figé d'une semaine close (routes/records.js), ou null. */
+async function lireRecapH2H(poolName, semaine) {
+    try {
+        const res = await fetch(`${BASE_URL}/api/pools/${encodeURIComponent(poolName)}/recap?week=${semaine}`, { cache: 'no-store' });
+        if (!res.ok) return null;
+        const corps = await res.json();
+        return corps && corps.recap && Number(corps.weekNumber) === Number(semaine) ? corps.recap : null;
+    } catch (_) {
+        return null;
+    }
+}
+
+/**
+ * Faits saillants d'une semaine close, tirés du récap (lib/recap.js). Chaque
+ * catégorie absente du récap est simplement absente ici : le serveur l'a
+ * retirée faute de donnée fiable, et rien ne la remplace.
+ */
+function h2hFaitsSaillantsHTML(recap, poolName) {
+    const equipes = (allPoolsData[poolName] && allPoolsData[poolName].teams) || {};
+    const nom = cle => escapeHtmlText(getDisplayName(cle, (equipes[cle] && equipes[cle].members) || []));
+    const pts = v => fmtH2HPts(v);
+    const duel = d => `${nom(d.team1)} ${pts(d.team1Points)} – ${pts(d.team2Points)} ${nom(d.team2)}`;
+    const lignes = [];
+
+    for (const section of recap.sections || []) {
+        switch (section.categorie) {
+            case 'meilleur_score':
+                lignes.push(['Meilleur score', `${section.equipes.map(nom).join(', ')} · ${pts(section.points)}`]);
+                break;
+            case 'duel_serre':
+                lignes.push([section.egalite ? 'Égalité parfaite' : 'Duel le plus serré', section.duels.map(duel).join('<br>')]);
+                break;
+            case 'plus_gros_ecart':
+                lignes.push(['Plus gros écart', `${section.duels.map(duel).join('<br>')} (${pts(section.ecart)})`]);
+                break;
+            case 'joueur_semaine':
+                lignes.push(['Joueur de la semaine', section.joueurs
+                    .map(j => `${escapeHtmlText(j.name)}${j.equipe ? ` (${nom(j.equipe)})` : ''}`)
+                    .join(', ') + ` · ${pts(section.points)}`]);
+                break;
+            case 'serie':
+                lignes.push(['Séries en cours', section.series.slice(0, 3)
+                    .map(x => `${nom(x.equipe)} : ${x.longueur} ${x.issue === 'victoire' ? 'victoires' : 'défaites'}`)
+                    .join('<br>')]);
+                break;
+        }
+    }
+    if (lignes.length === 0) return '';
+
+    return `
+        <section class="h2h-recap" aria-label="Faits saillants de la semaine">
+            <h3 class="h2h-recap-title">Faits saillants</h3>
+            <dl class="h2h-recap-list">
+                ${lignes.map(([cle, valeur]) => `<div class="h2h-recap-row"><dt>${cle}</dt><dd>${valeur}</dd></div>`).join('')}
+            </dl>
+        </section>`;
 }
 
 // ==================== H2H — CALENDRIER DE LA SAISON ====================
