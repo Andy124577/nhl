@@ -1894,28 +1894,5 @@ td.player-col {
 .player-cell .player-photo { flex: 0 0 auto; margin: 0; }
 .player-cell, .player-ident { text-align: left; }
 
-/* Sous 450px, la vignette du joueur est sacrifiée : dans une cellule aussi
-   étroite elle mange la place du nom, qui est l'information utile. Seul le
-   logo d'équipe reste — il identifie l'équipe en une fraction de la largeur.
-   Nom et logo restent sur une même ligne, logo à gauche. */
-/* Portée limitée à la page des statistiques : index.css est chargé par
-   toutes les pages, et masquer la vignette du joueur n'a de sens que dans
-   ce tableau-ci. Sans cette portée, la règle supprimait aussi les photos
-   du tableau de repêchage. */
-@media (max-width: 450px) {
-  body[data-page="stats"] #playerTable th.player-col,
-  body[data-page="stats"] #playerTable td.player-col { padding-left: 0; }
-
-  body[data-page="stats"] .player-cell { gap: 8px; }
-
-  /* La vignette servait de cadre positionné au badge d'équipe ; sans elle,
-     le badge redevient un élément de flux normal. */
-  body[data-page="stats"] .player-photo { width: auto; height: auto; }
-  body[data-page="stats"] .player-photo img.face { display: none; }
-  body[data-page="stats"] .player-photo img.logo {
-    position: static;
-    width: 26px;
-    height: 26px;
-    flex: 0 0 auto;
-  }
-}
+/* La page des statistiques garde la photo du joueur sur téléphone, comme le
+   classement cumulatif : voir « TOUS LES JOUEURS » dans stats-premium.css. */
