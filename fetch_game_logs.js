@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const db = require('./db');
 const { currentSeasonString } = require('./lib/season.js');
+const { enregistrerFeuilles } = require('./lib/feuillesJoueurs.js');
 
 // Configuration
 const CURRENT_SEASON = currentSeasonString();
@@ -9,6 +10,15 @@ const GAME_TYPE = '2'; // Regular season
 const STATS_FILE = path.join(__dirname, 'nhl_filtered_stats.json');
 const DELAY_BETWEEN_REQUESTS = 100; // ms to avoid rate limiting
 const MAX_CONCURRENT = 10; // Max concurrent requests
+
+// Ce qu'un match déjà connu reçoit : tout sauf la clé et la saison.
+const COLONNES_NUIT = [
+    'player_name', 'position', 'game_date', 'home_road_flag', 'opponent_abbrev',
+    'team_abbrev', 'game_result', 'goals', 'assists', 'points', 'plus_minus', 'pim',
+    'shots', 'power_play_goals', 'power_play_points', 'shorthanded_goals',
+    'shorthanded_points', 'game_winning_goals', 'toi', 'games_started', 'decision',
+    'shots_against', 'goals_against', 'saves', 'save_pct', 'shutouts'
+];
 
 // Utility: Delay function
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -23,70 +33,21 @@ async function saveGamesToDatabase(playerData) {
     }
 
     try {
-        // Use upsert (INSERT ... ON CONFLICT UPDATE) for each game
-        const queries = gameLog.map(game => {
-            return db.query(`
-                INSERT INTO player_game_logs (
-                    player_id, player_name, position, season, game_id, game_date,
-                    home_road_flag, opponent_abbrev, team_abbrev, game_result,
-                    goals, assists, points, plus_minus, pim, shots,
-                    power_play_goals, power_play_points, shorthanded_goals, shorthanded_points,
-                    game_winning_goals, toi,
-                    games_started, decision, shots_against, goals_against, saves, save_pct, shutouts,
-                    last_updated
-                )
-                VALUES (
-                    $1, $2, $3, $4, $5, $6,
-                    $7, $8, $9, $10,
-                    $11, $12, $13, $14, $15, $16,
-                    $17, $18, $19, $20,
-                    $21, $22,
-                    $23, $24, $25, $26, $27, $28, $29,
-                    NOW()
-                )
-                ON CONFLICT (player_id, game_id)
-                DO UPDATE SET
-                    player_name = EXCLUDED.player_name,
-                    position = EXCLUDED.position,
-                    game_date = EXCLUDED.game_date,
-                    home_road_flag = EXCLUDED.home_road_flag,
-                    opponent_abbrev = EXCLUDED.opponent_abbrev,
-                    team_abbrev = EXCLUDED.team_abbrev,
-                    game_result = EXCLUDED.game_result,
-                    goals = EXCLUDED.goals,
-                    assists = EXCLUDED.assists,
-                    points = EXCLUDED.points,
-                    plus_minus = EXCLUDED.plus_minus,
-                    pim = EXCLUDED.pim,
-                    shots = EXCLUDED.shots,
-                    power_play_goals = EXCLUDED.power_play_goals,
-                    power_play_points = EXCLUDED.power_play_points,
-                    shorthanded_goals = EXCLUDED.shorthanded_goals,
-                    shorthanded_points = EXCLUDED.shorthanded_points,
-                    game_winning_goals = EXCLUDED.game_winning_goals,
-                    toi = EXCLUDED.toi,
-                    games_started = EXCLUDED.games_started,
-                    decision = EXCLUDED.decision,
-                    shots_against = EXCLUDED.shots_against,
-                    goals_against = EXCLUDED.goals_against,
-                    saves = EXCLUDED.saves,
-                    save_pct = EXCLUDED.save_pct,
-                    shutouts = EXCLUDED.shutouts,
-                    last_updated = NOW()
-            `, [
-                playerId, playerName, position, CURRENT_SEASON, game.gameId, game.gameDate,
-                game.homeRoadFlag, game.opponentAbbrev, game.teamAbbrev, game.gameResult,
-                game.goals, game.assists, game.points, game.plusMinus, game.pim, game.shots,
-                game.powerPlayGoals, game.powerPlayPoints, game.shorthandedGoals, game.shorthandedPoints,
-                game.gameWinningGoals, game.toi,
-                game.gamesStarted, game.decision, game.shotsAgainst, game.goalsAgainst,
-                game.saves, game.savePct, game.shutouts
-            ]);
-        });
+        // Une requête par joueur ; un match inchangé n'est pas réécrit
+        // (lib/feuillesJoueurs.js).
+        const lignes = gameLog.map(game => [
+            playerId, playerName, position, CURRENT_SEASON, game.gameId, game.gameDate,
+            game.homeRoadFlag, game.opponentAbbrev, game.teamAbbrev, game.gameResult,
+            game.goals, game.assists, game.points, game.plusMinus, game.pim, game.shots,
+            game.powerPlayGoals, game.powerPlayPoints, game.shorthandedGoals, game.shorthandedPoints,
+            game.gameWinningGoals, game.toi,
+            game.gamesStarted, game.decision, game.shotsAgainst, game.goalsAgainst,
+            game.saves, game.savePct, game.shutouts
+        ]);
 
-        await Promise.all(queries);
-        console.log(`💾 Saved ${gameLog.length} games for ${playerName} to database`);
-        return gameLog.length;
+        const ecrits = await enregistrerFeuilles((texte, valeurs) => db.query(texte, valeurs), lignes, COLONNES_NUIT);
+        console.log(`💾 ${playerName}: ${gameLog.length} games, ${ecrits} new or changed`);
+        return ecrits;
 
     } catch (error) {
         console.error(`❌ Error saving ${playerName} to database:`, error.message);
@@ -306,7 +267,7 @@ async function main() {
     const endTime = Date.now();
 
     console.log(`\n✅ Completed in ${((endTime - startTime) / 1000).toFixed(1)}s`);
-    console.log(`💾 Total games saved to database: ${totalGamesSaved}`);
+    console.log(`💾 Games new or changed: ${totalGamesSaved}`);
 
     // Get database stats
     try {

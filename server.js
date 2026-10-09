@@ -20,6 +20,7 @@ const multer = require("multer");
 const { FANTASY_SCORING, goaliePoolPoints, clubPoolPoints, computeTeamSeasonScores } = require("./lib/scoring.js");
 const { generateSeasonSchedule, ensureStandingsEntry, lundiDepartSaison } = require("./lib/h2h.js");
 const instantDraft = require("./lib/instantDraft.js");
+const feuillesJoueurs = require("./lib/feuillesJoueurs.js");
 const { NHL_CLUB_FULLNAME, diffRosterSnapshots, trimTransactionLog, getTeamAbbreviationFromName } = require("./lib/roster.js");
 const { savePctFromSeasons } = require("./lib/savePct.js");
 const ficheCarriere = require("./lib/ficheCarriere.js");
@@ -1696,24 +1697,63 @@ async function attendreFinDesMatchs() {
     }
 }
 
+/**
+ * La nuit, en une seule fenêtre d'éveil de la base.
+ *
+ * Neon (plan gratuit, 100 heures de calcul par mois) s'endort cinq minutes
+ * après la dernière requête, et chaque réveil coûte ces cinq minutes. La nuit
+ * le réveillait trois fois et plus : à minuit pour les statistiques, à 3 h
+ * pour les feuilles de match, et toutes les six heures pour le ménage, à
+ * l'heure où le serveur avait démarré. Tout s'enchaîne maintenant :
+ * statistiques, puis feuilles de match, puis le ménage (semaines tête-à-tête,
+ * données périmées, agenda des repêchages). Le ménage vient en dernier : la
+ * finalisation d'une semaine tête-à-tête lit les feuilles de match de la nuit.
+ *
+ * Le démarrage du serveur fait aussi un passage de ménage (plus bas).
+ */
+let nuitEnCours = false;
+let collecteNuitLanceeLe = 0;
+
+function menageDeNuit() {
+    console.log("🧹 Passage de nuit : semaines tête-à-tête, ménage, repêchages prévus");
+    verifierSemainesH2H();
+    menageDonneesDurables();
+    relirePlanificationRepechages();
+}
+
+function collecteDeNuit(origine) {
+    collecteNuitLanceeLe = Date.now();
+    // Une collecte déjà en cours (lancée à la main) : le ménage n'attend pas.
+    if (!lancerCollecteJournaux(origine, { apres: menageDeNuit })) menageDeNuit();
+}
+
 // Schedule daily stats update at midnight (00:00)
 cron.schedule('0 0 * * *', async () => {
     console.log("⏰ Daily stats update triggered at midnight");
-    await attendreFinDesMatchs();
-    // Une collecte en échec ne doit pas emporter le classement des clubs, le
-    // relevé des rangs et les transactions : ils tournaient après elle, et une
-    // exception les sautait tous.
+    nuitEnCours = true;
     try {
-        await rafraichirStatsUneFois('minuit');
+        await attendreFinDesMatchs();
+        // Une collecte en échec ne doit pas emporter le classement des clubs, le
+        // relevé des rangs et les transactions : ils tournaient après elle, et une
+        // exception les sautait tous.
+        try {
+            await rafraichirStatsUneFois('minuit');
+        } catch (erreur) {
+            console.error("❌ Collecte des statistiques de minuit :", erreur.message);
+        }
+        await updateTeamStandings();
+        await snapshotAllPoolRanks();
+        // En dernier : c'est la seule tâche qui tolère d'être sautée (voir la
+        // règle tout-ou-rien dans refreshNhlTransactions), les stats du pool
+        // passent avant.
+        await refreshNhlTransactions();
     } catch (erreur) {
-        console.error("❌ Collecte des statistiques de minuit :", erreur.message);
+        console.error("❌ Passage de minuit :", erreur.message);
+    } finally {
+        nuitEnCours = false;
+        // Les feuilles de match partent même si ce qui précède a échoué.
+        collecteDeNuit('nuit');
     }
-    await updateTeamStandings();
-    await snapshotAllPoolRanks();
-    // En dernier : c'est la seule tâche qui tolère d'être sautée (voir la
-    // règle tout-ou-rien dans refreshNhlTransactions), les stats du pool
-    // passent avant.
-    await refreshNhlTransactions();
 }, {
     timezone: "America/New_York" // Adjust to your timezone
 });
@@ -1723,14 +1763,20 @@ cron.schedule('0 0 * * *', async () => {
  * (fetch_game_logs.js). Une seule à la fois : chaque appel lançait un
  * processus Node de plus, et le serveur n'a que 512 Mo.
  *
- * Renvoie false si une collecte tourne déjà.
+ * `apres` est appelé quand la collecte se termine, réussie ou non.
+ *
+ * Renvoie false si une collecte tourne déjà (`apres` n'est alors pas appelé).
  */
 let collecteJournauxEnCours = false;
-function lancerCollecteJournaux(origine) {
+function lancerCollecteJournaux(origine, { apres = null } = {}) {
     if (collecteJournauxEnCours) {
         console.log(`⏭️  Collecte des feuilles de match déjà en cours (${origine})`);
         return false;
     }
+    const terminer = () => {
+        if (!apres) return;
+        try { apres(); } catch (erreur) { console.error('❌ Après la collecte des feuilles de match :', erreur.message); }
+    };
     collecteJournauxEnCours = true;
     console.log(`🏒 Collecte des feuilles de match (${origine})`);
     try {
@@ -1740,26 +1786,36 @@ function lancerCollecteJournaux(origine) {
             // Le processus à part a écrit des feuilles de match que le
             // compteur d'écritures de ce processus n'a pas vues : tout ce qui
             // en est tiré (pointages des duels) sera relu. Même en échec — il a
-            // pu écrire une partie avant de tomber.
-            if (typeof db.noterEcritureExterne === 'function') db.noterEcritureExterne();
+            // pu écrire une partie avant de tomber. Seule une collecte réussie
+            // qui annonce n'avoir rien changé laisse la mémoire en place.
+            const changes = /Games new or changed: (\d+)/.exec(stdout || '');
+            if (error || !changes || Number(changes[1]) > 0) {
+                if (typeof db.noterEcritureExterne === 'function') db.noterEcritureExterne();
+            }
             if (error) {
                 console.error('❌ Game logs fetch failed:', error);
                 console.error('stderr:', stderr);
-                return;
+            } else {
+                console.log('✅ Game logs fetch completed');
+                console.log('stdout:', stdout);
             }
-            console.log('✅ Game logs fetch completed');
-            console.log('stdout:', stdout);
+            terminer();
         });
     } catch (error) {
         collecteJournauxEnCours = false;
         console.error('❌ Error starting game logs fetch:', error);
+        terminer();
     }
     return true;
 }
 
-// Schedule daily game logs fetch at 3 AM
+// Filet de 3 h : la collecte part d'habitude à la fin du passage de minuit.
+// Si le serveur a redémarré entre-temps, ce passage n'a jamais eu lieu ; la
+// collecte part alors ici. Sinon, rien — pas même une lecture de la base.
 cron.schedule('0 3 * * *', () => {
-    lancerCollecteJournaux('3 h');
+    if (nuitEnCours) return;
+    if (Date.now() - collecteNuitLanceeLe < 6 * 60 * 60 * 1000) return;
+    collecteDeNuit('3 h (filet)');
 }, {
     timezone: "America/New_York" // Adjust to your timezone
 });
@@ -1773,6 +1829,14 @@ cron.schedule('0 3 * * *', () => {
 const gameStatusCache = new Map(); // gameId → last known gameState
 let smartUpdateRunning = false;
 
+// Ce qu'un match déjà connu reçoit de la mise à jour des soirs de match. Moins
+// que la collecte de la nuit (fetch_game_logs.js), qui garde le reste.
+const COLONNES_SOIREE = [
+    'goals', 'assists', 'points', 'plus_minus', 'shots',
+    'power_play_goals', 'power_play_points', 'shorthanded_goals', 'shorthanded_points',
+    'game_winning_goals', 'decision', 'saves', 'goals_against', 'shutouts', 'team_abbrev'
+];
+
 // Fetch one player's full season game log and upsert to DB
 async function fetchAndSavePlayerLog(playerId, playerName, position) {
     const url = `https://api-web.nhle.com/v1/player/${playerId}/game-log/${currentSeasonString()}/2`;
@@ -1782,50 +1846,26 @@ async function fetchAndSavePlayerLog(playerId, playerName, position) {
         const data = await response.json();
         if (!data?.gameLog?.length) return 0;
 
-        const queries = data.gameLog.map(game => {
-            const saves = game.saves ?? ((game.shotsAgainst || 0) - (game.goalsAgainst || 0));
-            return db.query(`
-                INSERT INTO player_game_logs (
-                    player_id, player_name, position, season, game_id, game_date,
-                    home_road_flag, opponent_abbrev, team_abbrev, game_result,
-                    goals, assists, points, plus_minus, pim, shots,
-                    power_play_goals, power_play_points, shorthanded_goals, shorthanded_points,
-                    game_winning_goals, toi,
-                    games_started, decision, shots_against, goals_against, saves, save_pct, shutouts,
-                    last_updated
-                ) VALUES (
-                    $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
-                    $11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
-                    $21,$22,$23,$24,$25,$26,$27,$28,$29,NOW()
-                )
-                ON CONFLICT (player_id, game_id) DO UPDATE SET
-                    goals=EXCLUDED.goals, assists=EXCLUDED.assists, points=EXCLUDED.points,
-                    plus_minus=EXCLUDED.plus_minus, shots=EXCLUDED.shots,
-                    power_play_goals=EXCLUDED.power_play_goals,
-                    power_play_points=EXCLUDED.power_play_points,
-                    shorthanded_goals=EXCLUDED.shorthanded_goals,
-                    shorthanded_points=EXCLUDED.shorthanded_points,
-                    game_winning_goals=EXCLUDED.game_winning_goals,
-                    decision=EXCLUDED.decision, saves=EXCLUDED.saves,
-                    goals_against=EXCLUDED.goals_against, shutouts=EXCLUDED.shutouts,
-                    team_abbrev=EXCLUDED.team_abbrev, last_updated=NOW()
-            `, [
-                playerId, playerName, position, currentSeasonString(),
-                game.gameId, game.gameDate, game.homeRoadFlag, game.opponentAbbrev,
-                game.teamAbbrev, game.gameResult,
-                game.goals||0, game.assists||0, game.points||0, game.plusMinus||0,
-                game.pim||0, game.shots||0,
-                game.powerPlayGoals||0, game.powerPlayPoints||0,
-                game.shorthandedGoals||0, game.shorthandedPoints||0,
-                game.gameWinningGoals||0, game.toi||'0:00',
-                game.gamesStarted||0, game.decision||null,
-                game.shotsAgainst||0, game.goalsAgainst||0,
-                saves, game.savePct||null, game.shutouts||0
-            ]);
-        });
-
-        await Promise.all(queries);
-        return data.gameLog.length;
+        // Une requête par joueur ; seuls les matchs nouveaux ou modifiés sont
+        // écrits (lib/feuillesJoueurs.js). La saison complète reste relue :
+        // une correction de la LNH sur un ancien match est rattrapée.
+        const saison = currentSeasonString();
+        const lignes = data.gameLog.map(game => [
+            playerId, playerName, position, saison,
+            game.gameId, game.gameDate, game.homeRoadFlag, game.opponentAbbrev,
+            game.teamAbbrev, game.gameResult,
+            game.goals||0, game.assists||0, game.points||0, game.plusMinus||0,
+            game.pim||0, game.shots||0,
+            game.powerPlayGoals||0, game.powerPlayPoints||0,
+            game.shorthandedGoals||0, game.shorthandedPoints||0,
+            game.gameWinningGoals||0, game.toi||'0:00',
+            game.gamesStarted||0, game.decision||null,
+            game.shotsAgainst||0, game.goalsAgainst||0,
+            game.saves ?? ((game.shotsAgainst || 0) - (game.goalsAgainst || 0)),
+            game.savePct||null, game.shutouts||0
+        ]);
+        return await feuillesJoueurs.enregistrerFeuilles(
+            (texte, valeurs) => db.query(texte, valeurs), lignes, COLONNES_SOIREE);
     } catch (err) {
         console.error(`⚠️  Smart update: failed to fetch ${playerName}:`, err.message);
         return 0;
@@ -1966,7 +2006,7 @@ async function checkAndUpdateFinishedGames({ demarrage = false } = {}) {
             if (i + BATCH < players.length) await new Promise(r => setTimeout(r, 200));
         }
 
-        console.log(`✅ Smart update done: ${totalRows} rows upserted for ${players.length} players`);
+        console.log(`✅ Smart update done: ${totalRows} game rows new or changed for ${players.length} players`);
 
     } catch (err) {
         console.error('❌ Smart update error:', err.message);
@@ -5418,7 +5458,7 @@ function verifierSemainesH2H() {
         .catch(() => 0);
 }
 
-// Un passage au demarrage, puis toutes les six heures.
+// Un passage au demarrage, puis chaque nuit (menageDeNuit).
 console.log("🔍 Verification des semaines tete-a-tete terminees...");
 verifierSemainesH2H();
 menageDonneesDurables();
@@ -5426,7 +5466,7 @@ menageDonneesDurables();
 /**
  * Relit dans la base ce que la mémoire tient pour les repêchages : l'agenda
  * des départs prévus et les tours chronométrés en attente. Au démarrage et
- * toutes les six heures — ce qui rattrape une écriture faite hors du serveur
+ * chaque nuit — ce qui rattrape une écriture faite hors du serveur
  * (script, console SQL), la seule que le crochet auPoolMisAJour ne voit pas.
  */
 function relirePlanificationRepechages() {
@@ -5467,16 +5507,10 @@ async function reparerHistoriquesChoix() {
     }
 }
 
-// Run check every 6 hours (21600000 ms)
-const SIX_HOURS = 6 * 60 * 60 * 1000;
-setInterval(() => {
-    console.log("🔍 Verification periodique des semaines terminees...");
-    verifierSemainesH2H();
-    menageDonneesDurables();
-    relirePlanificationRepechages();
-}, SIX_HOURS);
-
-console.log("✅ H2H auto-finalization scheduler initialized (checks every 6 hours)");
+// Plus de passage toutes les six heures : il réveillait Neon quatre fois par
+// jour, à l'heure où le serveur avait démarré. Le même passage se fait la
+// nuit, après les feuilles de match (menageDeNuit), et à chaque démarrage.
+console.log("✅ H2H auto-finalization scheduled nightly, after the game logs");
 
 /**
  * Repêchages à date fixe : un passage au début de chaque minute, une seconde
