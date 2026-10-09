@@ -203,16 +203,17 @@ function monter(app, ctx) {
             };
             const ingestion = await pointage.etatIngestion(contexte);
 
-            const equipes = [];
-            for (const [nomEquipe, teamData] of equipesActives(enveloppe.data)) {
+            // Les équipes en même temps : une requête par équipe, qui
+            // s'attendaient l'une l'autre.
+            const equipes = await Promise.all(equipesActives(enveloppe.data).map(async ([nomEquipe, teamData]) => {
                 const resultat = await pointage.pointsEquipe(teamData, { ...contexte, ingestion });
-                equipes.push({
+                return {
                     teamName: nomEquipe,
                     members: teamData.members || [],
                     points: resultat.points,
                     completude: resultat.completude
-                });
-            }
+                };
+            }));
 
             // Une équipe sans données passe derrière celles qui en ont, mais son
             // absence reste lisible : `points: null`, pas un zéro inventé.
