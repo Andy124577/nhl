@@ -7,9 +7,10 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="Icons/apple-touch-icon.png">
     <title>Connexion — Fantazy</title>
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
-    <script defer src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
-    <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Aucune bibliothèque externe : bcrypt, Socket.IO et jQuery étaient
+         chargés ici sans servir, et DOMContentLoaded les attendait — trois
+         serveurs de plus à joindre avant que la page soit prête, ce qui se
+         sentait surtout sur le réseau cellulaire. -->
 
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -433,6 +434,22 @@
             showError(fzGoogle.MESSAGES.erreur);
         }
 
+        /**
+         * Déjà connecté ? Safari efface localStorage d'un site qu'on n'a pas
+         * ouvert depuis sept jours mais garde le cookie de session : la
+         * personne arrivait ici alors que sa session était intacte. On la
+         * renvoie à l'accueil sans lui redemander son mot de passe.
+         */
+        async function sessionDejaOuverte() {
+            try {
+                const response = await fetch(`${BASE_URL}/session`, { cache: "no-store" });
+                const session = await response.json();
+                if (!session.authenticated) return;
+                fzGoogle.memoriser(session);
+                window.location.replace("index.html");
+            } catch { /* le formulaire reste là */ }
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             document.querySelectorAll("#username, #password").forEach(el => {
                 el.addEventListener("keydown", e => { if (e.key === "Enter") login(); });
@@ -442,6 +459,7 @@
             const code = fzGoogle.codeRetour();
             if (code === "ok") terminerConnexionGoogle();
             else if (fzGoogle.MESSAGES[code]) showError(fzGoogle.MESSAGES[code]);
+            else sessionDejaOuverte();
         });
     </script>
     <script defer src="authGoogle.js?v=20260925"></script>

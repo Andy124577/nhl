@@ -53,6 +53,8 @@ function initModernNavbar() {
     const username = localStorage.getItem('username') || '';
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
+    if (!isLoggedIn) retrouverSession();
+
     if (!document.querySelector('.navbar')) return;
 
     construireBarres();
@@ -78,6 +80,39 @@ function initModernNavbar() {
         // Fetch latest avatar in background and update if changed
         refreshNavbarAvatar(username);
     }
+}
+
+// ==================== SESSION RETROUVÉE ====================
+/**
+ * La session vit dans un cookie HttpOnly de trente jours ; l'interface, elle,
+ * lit localStorage pour savoir qui est connecté. Safari (iPhone surtout)
+ * efface localStorage d'un site qu'on n'a pas ouvert depuis sept jours, mais
+ * garde le cookie posé par le serveur : la page se croyait déconnectée et
+ * renvoyait au mot de passe une personne dont la session était intacte.
+ *
+ * Sans trace locale, on demande donc au serveur. Une session valide est
+ * recopiée et la page rechargée, pour que chaque script la relise d'emblée.
+ * Un seul rechargement par onglet : si l'écriture ne tient pas (stockage
+ * bloqué), la page reste en visiteur au lieu de tourner en boucle.
+ */
+async function retrouverSession() {
+    try {
+        const res = await fetch(`${navbarBaseUrl()}/session`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const session = await res.json();
+        if (!session || !session.authenticated || !session.username) return;
+
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('username', session.username);
+        localStorage.setItem('avatarUrl', session.avatarUrl || '');
+        if (session.isAdmin) localStorage.setItem('isAdmin', 'true');
+        else localStorage.removeItem('isAdmin');
+
+        if (localStorage.getItem('isLoggedIn') !== 'true') return;
+        if (sessionStorage.getItem('fzSessionRetrouvee')) return;
+        sessionStorage.setItem('fzSessionRetrouvee', '1');
+        location.reload();
+    } catch { /* hors ligne ou stockage bloqué : la page reste en visiteur */ }
 }
 
 // ==================== ICÔNES ====================
