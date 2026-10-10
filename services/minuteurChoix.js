@@ -17,7 +17,7 @@
  * Ce qui vit en mémoire se perd au redémarrage : `rattraper()` relit les
  * repêchages chronométrés en cours (un extrait filtré dans PostgreSQL,
  * poolStore.lireChoixChronometres) et réarme chacun. Le serveur l'appelle au
- * démarrage, toutes les six heures, et chaque minute TANT QU'UN TOUR ATTEND
+ * démarrage, chaque nuit, et chaque minute TANT QU'UN TOUR ATTEND
  * (`enCours()`) — pas au-delà : une lecture par minute, jour et nuit,
  * empêchait la base (Neon) de s'endormir, et son plan gratuit ne compte que
  * 100 heures de calcul par mois.

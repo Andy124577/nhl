@@ -92,11 +92,16 @@
                     </section>
                     <section class="fzs-rank fzs-panel ask-panel" style="--i:2">
                         <div class="fzs-head"><h2>Ma position</h2>${mat('ask-link')}</div>
-                        ${os('ask-number')}${mat('ask-sub')}
+                        <div class="fzs-rank-main">
+                            <div class="fzs-rank-now">${os('ask-number')}${mat('ask-sub')}</div>
+                            <div class="fzs-week">${mat('ask-week-cap')}${mat('ask-week')}</div>
+                        </div>
+                        <div class="fzs-periods">${repete(3, () => `<div>${mat('ask-period-l')}${os('ask-period-v')}</div>`)}</div>
                     </section>
                     <section class="fzs-total fzs-panel ask-panel" style="--i:3">
                         <div class="fzs-head"><h2>Total ce soir</h2></div>
                         ${os('ask-number')}${mat('ask-sub is-long')}
+                        <div class="ask-tonight">${repete(3, i => `<span class="ask-tonight-row">${mat('ask-tonight-l')}${mat('ask-tonight-r', `${[34, 22, 28][i]}%`)}</span>`)}</div>
                     </section>
                     ${panneauListe('Activité de la ligue', 'ask-half')}
                     ${panneauAlignements('ask-half')}

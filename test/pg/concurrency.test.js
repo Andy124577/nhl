@@ -59,7 +59,33 @@ function creerBarriere(nombre) {
     };
 }
 
-describe('concurrence PostgreSQL', { skip: RAISON }, () => {
+/**
+ * Sous un verrou exclusif, la barrière ne convient pas : la seconde
+ * transaction bute sur le verrou et n'arrive jamais au rendez-vous. Le
+ * premier qui tient le verrou attend donc plutôt que PostgreSQL montre une
+ * autre connexion de cette base EN ATTENTE d'un verrou — la preuve que les
+ * deux transactions se chevauchaient au moment décisif. Les suivants passent.
+ */
+function creerAttenteDuRival(lecteur, delaiMs = 5000) {
+    let premier = true;
+    return async function attendre() {
+        if (!premier) return;
+        premier = false;
+        const limite = Date.now() + delaiMs;
+        for (;;) {
+            const r = await lecteur().query(
+                `SELECT 1 FROM pg_locks l JOIN pg_stat_activity a ON a.pid = l.pid
+                  WHERE NOT l.granted AND a.datname = current_database() LIMIT 1`);
+            if (r.rowCount > 0) return;
+            if (Date.now() > limite) throw new Error('la transaction rivale n’a jamais buté sur le verrou');
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    };
+}
+
+// `|| false` : Node 22 traite `skip: null` comme un saut, et la suite
+// entière s'ignorait même avec une base jetable.
+describe('concurrence PostgreSQL', { skip: RAISON || false }, () => {
     let pool;
     let db;
     let store;
@@ -88,6 +114,16 @@ describe('concurrence PostgreSQL', { skip: RAISON }, () => {
         await pool.query("DELETE FROM pools WHERE pool_name LIKE 'ZZTest%'");
         await pool.query("DELETE FROM users WHERE username LIKE 'zztest_%'");
         await pool.query("DELETE FROM operations WHERE scope LIKE 'zztest%'");
+    }
+
+    /**
+     * Les salons instantanés portent un nom de série (« Pool rapide #N », ou
+     * l'ancien préfixe), pas le préfixe ZZTest : un salon laissé par une
+     * exécution précédente serait sinon rejoint par la suivante.
+     */
+    async function effacerSalonsInstantanes() {
+        await pool.query('DELETE FROM pools WHERE pool_name ^@ ANY($1::text[])',
+            [instantDraft.PREFIXES_INSTANTANES]);
     }
 
     async function creerCompte(nom) {
@@ -125,10 +161,11 @@ describe('concurrence PostgreSQL', { skip: RAISON }, () => {
         const nom = 'ZZTest lost update';
         await creerPool(nom, { teams: { A: { members: [], offensive: [] } }, marqueurs: [] });
 
-        const barriere = creerBarriere(2);
+        const barriere = creerAttenteDuRival(() => pool);
 
-        // Les deux transactions LISENT avant que l'autre écrive. Sans verrou,
-        // la seconde écraserait le marqueur de la première.
+        // La première tient le verrou jusqu'à ce que la seconde bute dessus.
+        // Sans verrou, les deux liraient la même version et la seconde
+        // écraserait le marqueur de la première.
         const ecrire = (marqueur) => store.muterPool(nom, {
             scope: 'zztest:lost-update',
             appliquer: async ({ data }) => {
@@ -175,7 +212,7 @@ describe('concurrence PostgreSQL', { skip: RAISON }, () => {
         await creerCompte('zztest_b');
         await creerPool(nom, poolEnRepechage(['E1', 'E2']));
 
-        const barriere = creerBarriere(2);
+        const barriere = creerAttenteDuRival(() => pool);
         const choisir = (joueur) => store.muterPool(nom, {
             scope: 'zztest:pick',
             appliquer: async ({ data }) => {
@@ -343,11 +380,11 @@ describe('concurrence PostgreSQL', { skip: RAISON }, () => {
     // ─────────────────────── File instantanée ───────────────────────
 
     test('deux arrivées simultanées dans une file vide ouvrent UN seul salon', async () => {
-        await pool.query("DELETE FROM pools WHERE pool_name LIKE 'Repêchage instantané%'");
+        await effacerSalonsInstantanes();
         await creerCompte('zztest_a');
         await creerCompte('zztest_b');
 
-        const barriere = creerBarriere(2);
+        const barriere = creerAttenteDuRival(() => pool);
 
         // Le cas qu'aucun verrou de LIGNE ne peut couvrir : il n'y a pas de
         // ligne à verrouiller tant que le salon n'existe pas.
@@ -384,7 +421,7 @@ describe('concurrence PostgreSQL', { skip: RAISON }, () => {
         const frais = await store.lire([...salons][0]);
         assert.equal(instantDraft.participants(frais.data), 2);
 
-        await pool.query("DELETE FROM pools WHERE pool_name LIKE 'Repêchage instantané%'");
+        await effacerSalonsInstantanes();
     });
 
     test('la dernière place ne s’attribue qu’une fois', async () => {
@@ -396,7 +433,7 @@ describe('concurrence PostgreSQL', { skip: RAISON }, () => {
         await creerPool(nom, data);
         for (const q of ['zztest_a', 'zztest_b', 'zztest_c', 'zztest_d', 'zztest_e']) await creerCompte(q);
 
-        const barriere = creerBarriere(2);
+        const barriere = creerAttenteDuRival(() => pool);
         const entrer = (qui) => store.transaction(async (tx) => {
             await tx.verrouConsultatif(store.CLE_VERROU_INSTANTANE);
             await barriere();
@@ -579,7 +616,7 @@ describe('concurrence PostgreSQL', { skip: RAISON }, () => {
         try {
             await assert.rejects(
                 () => db.runMigrations({ dossier: path.join(__dirname, '../../migrations'), silencieux: true }),
-                /[Dd]érive|derive/
+                /[Dd][ée]rive/
             );
         } finally {
             await pool.query('UPDATE schema_migrations SET empreinte = $1 WHERE numero = $2',

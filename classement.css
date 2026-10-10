@@ -409,20 +409,6 @@ body {
     color: var(--text-main);
 }
 
-#standingsTable tfoot .standings-avg-row td {
-    background: var(--bg-hover);
-    color: var(--text-secondary);
-    font-weight: 700;
-    border-top: 2px solid var(--border-light);
-}
-
-.standings-avg-label {
-    text-transform: uppercase;
-    font-size: .74rem;
-    letter-spacing: .06em;
-    color: var(--text-secondary);
-}
-
 .st-empty {
     text-align: center;
     padding: 52px 24px;
@@ -473,50 +459,8 @@ body {
     gap: 24px;
 }
 
-body {
-    --rr-surface: #141416;
-    --rr-hover: #1C1C1F;
-    --rr-line: #26262A;
-    --rr-ink: #F2F2F3;
-    --rr-num: #E4E4E8;
-    --rr-strong: #FFFFFF;
-    --rr-muted: #8A8A90;
-    --rr-dim: #6F6F76;
-    --rr-chev: #55555C;
-    --rr-btn-line: #34343A;
-    --rr-btn-ink: #C7C7CC;
-    --rr-btn-hover-line: #55555C;
-    --rr-btn-hover-ink: #FFFFFF;
-    /* oklch(0.35 0.12 25) et oklch(0.55 0.17 25) du mockup : l'état
-       « en vente ». */
-    --rr-sale-bg: #6C1517;
-    --rr-sale-line: #C13C3B;
-    --rr-sale-ink: #FFFFFF;
-    /* Os des squelettes (classement-premium.css, .fz-bone) : translucides,
-       lisibles sur la bande (#141416) comme sur la carte (#1C1C1E). */
-    --rr-bone: rgba(255, 255, 255, 0.05);
-    --rr-bone-shine: rgba(255, 255, 255, 0.11);
-}
-html[data-theme="light"] body {
-    --rr-surface: #FFFFFF;
-    --rr-hover: #F5F5F7;
-    --rr-line: #E5E5EA;
-    --rr-ink: #1D1D1F;
-    --rr-num: #1D1D1F;
-    --rr-strong: #1D1D1F;
-    --rr-muted: #6E6E73;
-    --rr-dim: #8E8E93;
-    --rr-chev: #C7C7CC;
-    --rr-btn-line: #D2D2D7;
-    --rr-btn-ink: #1D1D1F;
-    --rr-btn-hover-line: #86868B;
-    --rr-btn-hover-ink: #1D1D1F;
-    --rr-sale-bg: var(--primary);
-    --rr-sale-line: var(--primary);
-    --rr-sale-ink: var(--on-primary);
-    --rr-bone: rgba(0, 0, 0, 0.06);
-    --rr-bone-shine: rgba(0, 0, 0, 0.025);
-}
+/* Jetons --rr-* de la bande : dans index.css, partagés avec la page des
+   statistiques. */
 
 /* -------------------- En-tête de la fiche -------------------- */
 /* Le titre commun de la page s'efface : la fiche a le sien, avec le
@@ -1686,6 +1630,66 @@ html.ss-lock { overflow: hidden; }
     font-size: 0.85rem;
     color: var(--text-secondary);
     margin-top: 4px;
+}
+
+/* Mode « Semaine » : ‹ Semaine N › pour parcourir les semaines passées et à venir. */
+.h2h-week-nav-row {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    gap: 8px;
+}
+
+.h2h-week-nav {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--border-light);
+    background: var(--card);
+    color: var(--text-main);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.h2h-week-nav:hover:not(:disabled) { border-color: var(--text-secondary); }
+.h2h-week-nav:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.h2h-week-nav:disabled { opacity: 0.35; cursor: default; }
+
+/* Faits saillants d'une semaine close (récap, lib/recap.js). */
+.h2h-recap {
+    background: var(--card);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    padding: 14px 16px;
+}
+
+.h2h-recap-title {
+    margin: 0 0 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.h2h-recap-list { margin: 0; }
+
+.h2h-recap-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 34%) 1fr;
+    gap: 12px;
+    padding: 8px 0;
+    border-top: 1px solid var(--border-light);
+    font-size: 0.88rem;
+}
+
+.h2h-recap-row:first-child { border-top: 0; }
+.h2h-recap-row dt { color: var(--text-secondary); }
+.h2h-recap-row dd { margin: 0; color: var(--text-main); font-weight: 600; overflow-wrap: anywhere; }
+
+@media (max-width: 480px) {
+    .h2h-recap-row { grid-template-columns: 1fr; gap: 2px; }
 }
 
 /* Matchup Cards */

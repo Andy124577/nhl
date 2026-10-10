@@ -424,34 +424,63 @@ describe('draftkitData — FZDraftKit', () => {
 // Voir test/fixtures/helpers.js pour le pourquoi de ce chargement.
 
 describe('classement — helpers de tableau', () => {
-    const { rankByPeriodPoints, fmtPeriodPts, initialsFromName, hofDateJour, hofDateSemaine, hofDateMois, hofEnCours } =
+    const { rangsAvantSoiree, evolutionBadgeHTML, fmtPeriodPts, initialsFromName, hofDateJour, hofDateSemaine, hofDateMois, hofEnCours } =
         chargerFonctions('classement.js',
-            ['rankByPeriodPoints', 'fmtPeriodPts', 'initialsFromName',
+            ['rangsAvantSoiree', 'EVO_ARROW_UP', 'EVO_ARROW_DOWN', 'evolutionBadgeHTML', 'fmtPeriodPts', 'initialsFromName',
                 'hofJour', 'hofDecaler', 'hofFormat', 'hofDateJour', 'hofDateSemaine', 'hofDateMois', 'hofEnCours']);
 
-    test('rankByPeriodPoints numérote de 1 à n, du plus fort au plus faible', () => {
-        const standings = [{ teamName: 'A' }, { teamName: 'B' }, { teamName: 'C' }];
-        const points = new Map([['A', 10], ['B', 50], ['C', 30]]);
+    // Le classement actuel, dans son ordre : A 100, B 95, C 90.
+    const classement = () => [
+        { teamName: 'A', points: 100, rank: 1 },
+        { teamName: 'B', points: 95, rank: 2 },
+        { teamName: 'C', points: 90, rank: 3 }
+    ];
+    const mouvement = (rangs, s) => rangs.get(s.teamName) - s.rank;
 
-        const rangs = rankByPeriodPoints(standings, points);
-
-        assert.equal(rangs.get('B'), 1);
-        assert.equal(rangs.get('C'), 2);
-        assert.equal(rangs.get('A'), 3);
+    test('rangsAvantSoiree : le rang d’avant la soirée, sur le total moins ses points', () => {
+        // Avant la soirée : A 90, B 95, C 88 → B 1er, A 2e, C 3e.
+        const rangs = rangsAvantSoiree(classement(), new Map([['A', 10], ['B', 0], ['C', 2]]));
+        const [a, b, c] = classement();
+        assert.equal(mouvement(rangs, a), 1, 'A a gagné une place');
+        assert.equal(mouvement(rangs, b), -1, 'B en a perdu une');
+        assert.equal(mouvement(rangs, c), 0);
     });
 
-    test('une équipe sans points de période est classée dernière', () => {
-        const standings = [{ teamName: 'Sans' }, { teamName: 'Avec' }];
-        const points = new Map([['Avec', 5]]);
-
-        const rangs = rankByPeriodPoints(standings, points);
-
-        assert.equal(rangs.get('Avec'), 1);
-        assert.equal(rangs.get('Sans'), 2);
+    test('à la première mise au jeu, personne n’a de point : aucun mouvement', () => {
+        const rangs = rangsAvantSoiree(classement(), new Map([['A', 0], ['B', 0], ['C', 0]]));
+        classement().forEach(s => assert.equal(mouvement(rangs, s), 0));
     });
 
-    test('un classement vide rend une table vide', () => {
-        assert.equal(rankByPeriodPoints([], new Map()).size, 0);
+    test('une égalité d’avant garde l’ordre actuel : pas de pastille sans point marqué', () => {
+        const standings = [
+            { teamName: 'A', points: 50, rank: 1 },
+            { teamName: 'B', points: 50, rank: 2 }
+        ];
+        const rangs = rangsAvantSoiree(standings, new Map([['A', 0], ['B', 0]]));
+        assert.equal(rangs.get('A'), 1);
+        assert.equal(rangs.get('B'), 2);
+    });
+
+    test('une soirée inconnue ne donne pas de rang à cette équipe, les autres gardent le leur', () => {
+        // B inconnue (alignement vide, par ex.) compte pour 0 : avant, A 90,
+        // B 95, C 90 → B, A, C. A et C restent classées ; B n'a pas de pastille.
+        const rangs = rangsAvantSoiree(classement(), new Map([['A', 10], ['B', null], ['C', 0]]));
+        assert.equal(rangs.has('B'), false);
+        assert.equal(rangs.get('A'), 2);
+        assert.equal(rangs.get('C'), 3);
+    });
+
+    test('aucune soirée connue (lecture en échec) : aucun rang', () => {
+        assert.equal(rangsAvantSoiree(classement(), new Map()).size, 0);
+        assert.equal(rangsAvantSoiree(classement(), null).size, 0);
+        assert.equal(rangsAvantSoiree([], new Map()).size, 0);
+    });
+
+    test('evolutionBadgeHTML : places gagnées, perdues, ou un trait', () => {
+        assert.match(evolutionBadgeHTML(2, true), /st-evo-up.*A gagné 2 places pendant la dernière soirée.*>2<\/span>$/s);
+        assert.match(evolutionBadgeHTML(-1, true), /st-evo-down.*A perdu 1 place pendant.*>1<\/span>$/s);
+        assert.match(evolutionBadgeHTML(0, true), /st-evo-flat.*Aucune place gagnée ni perdue/);
+        assert.match(evolutionBadgeHTML(3, false), /st-evo-flat.*pas encore connu/);
     });
 
     test('fmtPeriodPts : rien à afficher devient un tiret cadratin', () => {
@@ -603,7 +632,7 @@ describe('classement — chaque choix paraît et compte', () => {
 
         assert.equal(ficheJoueur('Sergei Murashov', 'rookie').gardien, true);
         const total = calculateTeamPoints({ rookie: ['Sergei Murashov'] });
-        assert.equal(total.points, 10);   // 5 + 4 + 1
+        assert.equal(total.points, 8);    // blanchissage 5 + l'autre victoire 2 + prolongation 1
         assert.equal(total.goals, 0);     // ses victoires ne sont pas des buts
     });
 

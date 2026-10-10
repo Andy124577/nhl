@@ -173,16 +173,21 @@ function creerServicePointage({
         let recus = 0;
         let calendrierConnu = true;
 
-        for (const journee of journees) {
-            const recuJour = recusParJour.get(journee) || 0;
-            let prevuJour = null;
-            if (calendrierDuJour) {
-                try { prevuJour = await calendrierDuJour(journee); }
-                catch (erreur) {
-                    logger.error?.('⚠️ Calendrier du jour indisponible :', erreur.message);
-                    prevuJour = null;
-                }
+        // Les journées en même temps : une fenêtre de 30 jours en attendait
+        // trente, l'une après l'autre (une lecture en base ou à la LNH
+        // chacune après un redémarrage), avant que la colonne 30 j réponde.
+        const prevus = await Promise.all(journees.map(async (journee) => {
+            if (!calendrierDuJour) return null;
+            try { return await calendrierDuJour(journee); }
+            catch (erreur) {
+                logger.error?.('⚠️ Calendrier du jour indisponible :', erreur.message);
+                return null;
             }
+        }));
+
+        for (const [i, journee] of journees.entries()) {
+            const recuJour = recusParJour.get(journee) || 0;
+            const prevuJour = prevus[i];
             if (prevuJour == null) calendrierConnu = false;
             else attendus += prevuJour;
             recus += recuJour;

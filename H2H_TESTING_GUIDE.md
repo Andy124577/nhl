@@ -18,7 +18,7 @@ This document outlines the testing procedures for the newly implemented Head-to-
 - ✅ Team points calculation (skaters + goalies)
 - ✅ Standings tracking (W-L-T-PF-PA)
 - ✅ Manual finalization endpoint: POST /h2h/finalize-week
-- ✅ Automatic week finalization (runs every 6 hours)
+- ✅ Automatic week finalization (runs nightly, after the game logs, and at startup)
 
 ### 3. Adaptive Classement Interface (classement.html/js/css)
 - ✅ Detects pool mode and shows appropriate interface
@@ -233,7 +233,7 @@ curl -X POST http://localhost:3000/h2h/finalize-week \
 🔔 Auto-finalizing Week 1 for pool: TestPool
 ✅ Week 1 finalized, advanced to Week 2
 💾 H2H data saved after auto-finalization
-✅ H2H auto-finalization scheduler initialized (checks every 6 hours)
+✅ H2H auto-finalization scheduled nightly, after the game logs
 ```
 
 ---
@@ -541,7 +541,7 @@ Manually finalize current week and advance to next week.
 - [ ] New week matchups generated
 - [ ] weekStart advanced by 7 days
 - [ ] Automatic finalization on server startup
-- [ ] Automatic finalization runs every 6 hours
+- [ ] Automatic finalization runs nightly
 - [ ] Trade link visible when allowTrades=true
 - [ ] Trade link hidden when allowTrades=false
 - [ ] Trade link hidden when no pool selected

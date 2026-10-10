@@ -281,6 +281,23 @@ body.fz-trade .tm-team-caret {
     flex-shrink: 0;
 }
 
+/* Téléphone : le sélecteur en tête de page, là où les autres pages mettent
+   le bandeau « Pool actif » (trade.js, placerSelecteurPartenaire). Caché
+   avec l'assistant — aucun pool, échanges désactivés, envoi réussi : il
+   n'y aurait personne à choisir. */
+body.fz-trade .tm-context { display: none; }
+@media (max-width: 900px) {
+    body.fz-trade .tm-context {
+        display: block;
+        margin: 16px 16px 0;
+        padding: 10px 14px;
+        background: var(--fzt-surface);
+        border: 1px solid var(--fzt-border);
+        border-radius: 13px;
+    }
+    body.fz-trade:has(#tmBuilder.hidden) .tm-context { display: none; }
+}
+
 body.fz-trade .tm-team-dropdown.hidden { display: none; }
 body.fz-trade .tm-dropdown-scrim { position: fixed; inset: 0; z-index: 80; background: transparent; }
 body.fz-trade .tm-dropdown-panel {

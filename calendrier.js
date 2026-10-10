@@ -6,10 +6,10 @@
    source que l'accueil (GET /schedule/:date, une semaine de la LNH
    par appel, avec les dates de la semaine d'avant et d'après), et
    une chose de plus : repérer les matchs où jouent SES joueurs — le
-   filtre « Mes joueurs » ne garde qu'eux. À côté de chaque match, une
-   liste : ses buts une fois commencé ; à venir, mes joueurs qui y
-   sont, ou les meneurs des deux clubs à leurs cinq derniers matchs
-   (voir « listes »).
+   filtre « Mes joueurs » ne garde qu'eux. Chaque match est une carte
+   à la manière de la page des pointages de la LNH : l'heure, les deux
+   clubs et leur fiche, puis ses buts une fois commencé ; à venir, les
+   meneurs des deux clubs et mes joueurs qui y sont (voir « listes »).
 
    Tout ce qui est affiché vient de la LNH ou du pool actif. Aucune
    heure ni aucun score n'est deviné : un match sans heure connue dit
@@ -32,9 +32,10 @@
                          'sept.', 'oct.', 'nov.', 'déc.'];
 
     /**
-     * Nom court et couleur de chaque club. Les couleurs sont celles de la
-     * maquette, pas de teamColors.js : éclaircies pour qu'un filet de 3px
-     * se voie sur le fond sombre (le marine de WPG, FLA ou EDM y disparaît).
+     * Nom court et couleur de chaque club. La couleur est le fond rond de la
+     * photo d'un joueur, comme sur la page des pointages de la LNH ; ce sont
+     * celles de la maquette, pas de teamColors.js : éclaircies pour se voir
+     * sur le fond sombre (le marine de WPG, FLA ou EDM y disparaît).
      */
     const EQUIPES = {
         ANA: ['Ducks', '#f07a38'], BOS: ['Bruins', '#e8a812'], BUF: ['Sabres', '#2f5fb5'],
@@ -43,7 +44,7 @@
         DET: ['Red Wings', '#d1283a'], EDM: ['Oilers', '#ff5a14'], FLA: ['Panthers', '#c8263a'],
         LAK: ['Kings', '#9aa2a6'], MIN: ['Wild', '#2e8a5e'], MTL: ['Canadiens', '#b8283a'],
         NJD: ['Devils', '#c81f30'], NSH: ['Predators', '#f2b01c'], NYI: ['Islanders', '#f07d30'],
-        NYR: ['Rangers', '#3a64c8'], OTT: ['Senators', '#c52032'], PHI: ['Flyers', '#f75a10'],
+        NYR: ['Rangers', '#3a64c8'], OTT: ['Sénateurs', '#c52032'], PHI: ['Flyers', '#f75a10'],
         PIT: ['Penguins', '#e0aa18'], SEA: ['Kraken', '#68a2b9'], SJS: ['Sharks', '#00a3b0'],
         STL: ['Blues', '#3a6fd0'], TBL: ['Lightning', '#3d6fc0'], TOR: ['Maple Leafs', '#3a6fd0'],
         UTA: ['Mammoth', '#6cace4'], VAN: ['Canucks', '#1f9a52'], VGK: ['Golden Knights', '#b4975a'],
@@ -131,7 +132,6 @@
                 <span class="cal-chip${jour === date ? ' is-active' : ''}${jour === auj ? ' is-today' : ''}" aria-hidden="true">
                     ${jourDeBande(jour)}
                     <span class="fz-bone-flat cal-sk-count"></span>
-                    <span class="cal-chip-dot"></span>
                 </span>`;
         }).join('');
         document.getElementById('calDayTitle').textContent = jourLong(date).replace(/^./, c => c.toUpperCase());
@@ -230,18 +230,18 @@
         }
     }
 
-    /** « dim. » au bureau, « d » au téléphone (calendrier.css), puis le quantième. */
+    /** « MAR. » (en capitales par calendrier.css), puis le quantième. */
     function jourDeBande(iso) {
         const d = dateUTC(iso);
-        const court = JOURS_COURTS[d.getUTCDay()];
-        return `<span class="cal-chip-dow"><span class="cal-chip-long">${court}</span><span class="cal-chip-short">${court[0]}</span></span>`
+        return `<span class="cal-chip-dow">${JOURS_COURTS[d.getUTCDay()]}</span>`
             + `<span class="cal-chip-num">${d.getUTCDate()}</span>`;
     }
 
     const nMatchs = n => `${n} match${n > 1 ? 's' : ''}`;
 
     /**
-     * Les sept jours. Leur compte suit le filtre : sous « Mes joueurs »,
+     * Les sept jours, chacun dans sa case : l'abréviation, le quantième, le
+     * nombre de matchs. Leur compte suit le filtre : sous « Mes joueurs »,
      * chaque jour dit combien de ses matchs ont un de mes joueurs.
      */
     function rendreBande() {
@@ -260,8 +260,7 @@
                 <button type="button" role="tab" class="cal-chip${actif ? ' is-active' : ''}${d.date === auj ? ' is-today' : ''}${n ? ' has-games' : ''}"
                         aria-selected="${actif}" aria-label="${etiquette}" data-jour="${d.date}">
                     ${jourDeBande(d.date)}
-                    <span class="cal-chip-count">${n ? nMatchs(n) : '—'}</span>
-                    <span class="cal-chip-dot"></span>
+                    <span class="cal-chip-count">${n || '–'}</span>
                 </button>`;
         }).join('');
     }
@@ -278,11 +277,14 @@
         return mesClubs.has(match.away && match.away.abbrev) || mesClubs.has(match.home && match.home.abbrev);
     }
 
-    /** « 19 h 00 » ; null tant que la LNH n'a pas d'heure lisible. */
+    /**
+     * « 19 h 00 HAE » : l'heure de l'appareil, et son fuseau, comme la LNH.
+     * null tant que la LNH n'a pas d'heure lisible.
+     */
     function heure(iso) {
         const d = iso ? new Date(iso) : null;
         if (!d || Number.isNaN(d.getTime())) return null;
-        return d.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+        return d.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
     }
 
     /** « 08:23 » : minutes sur deux chiffres, la largeur ne bouge pas à 9:59. */
@@ -304,43 +306,44 @@
     }
 
     /**
-     * La colonne de l'heure. À venir : l'heure. En cours : « En direct », la
-     * période et l'horloge. Fini : « Final », et sa prolongation s'il y en a eu.
+     * La pastille en tête de carte. À venir : l'heure. En cours : « En
+     * direct », la période et l'horloge. Fini : « Final », et sa
+     * prolongation s'il y en a eu.
      */
     function statut(m) {
         if (m.state === 'LIVE' || m.state === 'CRIT') {
             const quand = [periodeCourte(m.period, m.periodType), horloge(m)].filter(Boolean).join(' · ');
-            return '<span class="cal-live"><i aria-hidden="true"></i>En direct</span>'
-                + (quand ? `<span class="cal-when">${quand}</span>` : '');
+            return '<span class="cal-pill is-live"><i aria-hidden="true"></i>En direct'
+                + (quand ? `<span class="cal-when"> · ${quand}</span>` : '') + '</span>';
         }
         if (m.state === 'FINAL' || m.state === 'OFF') {
             const prol = m.periodType === 'OT' || m.periodType === 'SO' ? periodeCourte(null, m.periodType) : '';
-            return `<span class="cal-time">Final</span>${prol ? `<span class="cal-when">${prol}</span>` : ''}`;
+            return `<span class="cal-pill">Final${prol ? `<span class="cal-when"> · ${prol}</span>` : ''}</span>`;
         }
-        if (m.state === 'PPD') return '<span class="cal-time is-muted">Reporté</span>';
+        if (m.state === 'PPD') return '<span class="cal-pill is-muted">Reporté</span>';
         const h = heure(m.startTimeUTC);
-        return h ? `<span class="cal-time">${echapper(h)}</span>` : '<span class="cal-time is-muted">À confirmer</span>';
+        return h ? `<span class="cal-pill">${echapper(h)}</span>` : '<span class="cal-pill is-muted">À confirmer</span>';
     }
 
     /**
-     * Le filet à la couleur du club, son logo, le sigle, le nom, la marque ;
-     * le perdant en gris. Les quatre logos marine (EDM, TBL, TOR, WSH)
-     * passent à leur variante blanche en thème sombre d'eux-mêmes
-     * (teamLogos.css). Un logo manquant garde sa place : les sigles restent
-     * alignés.
+     * Le logo du club, son nom et sa fiche dessous, la marque à droite ; le
+     * perdant en gris. Les quatre logos marine (EDM, TBL, TOR, WSH) passent à
+     * leur variante blanche en thème sombre d'eux-mêmes (teamLogos.css). Un
+     * logo manquant garde sa place : les noms restent alignés.
      */
-    function carteEquipe(t, issue, joue) {
+    function carteEquipe(t, issue, joue, fiche) {
         const abbr = (t && t.abbrev) || '?';
-        const [nom, couleur] = EQUIPES[abbr] || ['', ''];
+        const nom = EQUIPES[abbr] ? EQUIPES[abbr][0] : abbr;
         const score = joue && t && t.score != null ? t.score : '';
         return `
-            <div class="cal-team${issue ? ` is-${issue}` : ''}"${couleur ? ` style="--cal-team: ${couleur}"` : ''}>
-                <span class="cal-team-bar" aria-hidden="true"></span>
+            <div class="cal-team${issue ? ` is-${issue}` : ''}">
                 ${EQUIPES[abbr]
                     ? `<img class="cal-team-logo" src="teams/${abbr}.png" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
                     : '<span class="cal-team-logo" aria-hidden="true"></span>'}
-                <span class="cal-team-abbr">${echapper(abbr)}</span>
-                <span class="cal-team-name">${echapper(nom)}</span>
+                <span class="cal-team-id">
+                    <span class="cal-team-name">${echapper(nom)}</span>
+                    ${fiche ? `<span class="cal-team-rec"><span class="fz-sk-sr">Fiche </span>${echapper(fiche)}</span>` : ''}
+                </span>
                 <span class="cal-team-score">${echapper(score)}</span>
             </div>`;
     }
@@ -353,27 +356,22 @@
         const a = m.away || {}, h = m.home || {};
         const fini = m.state === 'FINAL' || m.state === 'OFF';
         const miens = [...(mesClubs.get(a.abbrev) || []), ...(mesClubs.get(h.abbrev) || [])];
-        // La feuille de match n'existe qu'une fois la rondelle au jeu.
-        const feuille = joue && m.id
-            ? `<a class="cal-game-box" href="match.html?id=${encodeURIComponent(m.id)}">Feuille de match<span aria-hidden="true">›</span></a>`
-            : '';
-        // À côté des équipes : le carrousel des buts d'un match commencé ;
-        // d'un match à venir, la liste de mes joueurs qui y sont — ou, sans
-        // eux, le carrousel des meneurs des deux clubs à leurs derniers matchs.
-        const cote = (joue ? carrouselButs(m, fini)
-            : miens.length ? listeMesJoueurs(miens)
-            : carrouselMeneurs(m))
-            + (joue && miens.length ? `<p class="cal-game-mine"><strong>Mes joueurs</strong> · ${miens.map(j => echapper(j.nom)).join(', ')}</p>` : '');
+        const apercu = joue ? null : apercuDe(m.id);
+        // Sous les équipes : les buts d'un match commencé ; d'un match à
+        // venir, les meneurs des deux clubs, puis mes joueurs qui y sont.
+        const cote = joue
+            ? carrouselButs(m, fini) + (miens.length ? `<p class="cal-game-mine"><strong>Mes joueurs</strong> · ${miens.map(j => echapper(j.nom)).join(', ')}</p>` : '')
+            : carrouselMeneurs(apercu) + (miens.length ? carrouselMesJoueurs(miens) : '');
         const issue = (moi, autre) => (!fini || moi.score === autre.score ? '' : moi.score > autre.score ? 'gagnant' : 'perdant');
         return `
             <article class="cal-game${miens.length ? ' is-mine' : ''}${m.state === 'LIVE' || m.state === 'CRIT' ? ' is-live' : ''}" data-match="${echapper(m.id)}">
                 <div class="cal-game-status">${statut(m)}</div>
                 <div class="cal-game-teams">
-                    ${carteEquipe(a, issue(a, h), joue)}
-                    ${carteEquipe(h, issue(h, a), joue)}
+                    ${carteEquipe(a, issue(a, h), joue, apercu && apercu.away.fiche)}
+                    ${carteEquipe(h, issue(h, a), joue, apercu && apercu.home.fiche)}
                 </div>
                 ${cote ? `<div class="cal-game-side">${cote}</div>` : ''}
-                ${feuille}
+                ${m.id ? `<div class="cal-game-foot"><a class="cal-game-box" href="match.html?id=${encodeURIComponent(m.id)}">Zone de match</a></div>` : ''}
             </article>`;
     }
 
@@ -401,9 +399,9 @@
         }
         // Avant le dessin : une requête qui part dessine ses carrousels en os.
         chargerButs(jourChoisi);
-        chargerForme(affiches);
+        chargerApercu(jourChoisi);
         // La journée se redessine aussi sans qu'on l'ait demandé — le direct,
-        // des buts ou une forme qui arrivent. Chaque carrousel garde alors sa
+        // des buts ou des meneurs qui arrivent. Chaque carrousel garde alors sa
         // place : voir une piste revenir au premier but sous le pouce serait
         // une main sur l'épaule. Un autre jour n'a aucune piste à retrouver.
         const places = new Map();
@@ -473,14 +471,12 @@
 
     // ---------------------------------------------------------- listes
     //
-    // À côté de chaque match, une rangée par joueur :
+    // Sous les équipes de chaque match, un carrousel de cartes :
     //   - match commencé : ses buts (GET /day-goals/:date, la feuille de
     //     pointage de la journée, la même que l'accueil) ;
-    //   - match à venir où j'ai des joueurs : eux, avec leur saison
-    //     (/current-stats) et leurs derniers matchs ;
-    //   - match à venir sans eux : le meilleur buteur et le meilleur pointeur
-    //     de chaque club à ses cinq derniers matchs.
-    // Les deux derniers lisent GET /team-form (services/formeClubs.js).
+    //   - match à venir : les meneurs des deux clubs cette saison, avec la
+    //     fiche des clubs (GET /day-preview/:date, lib/apercuMatchs.js), puis
+    //     mes joueurs qui y sont, avec leur saison (/current-stats).
 
     let buts = { date: null, games: {}, at: 0 };
     let butsEnVol = null;
@@ -515,129 +511,95 @@
             });
     }
 
-    const formeClubs = new Map();     // abrév. → { matchs, buteur, pointeur }
-    const formeJoueurs = new Map();   // playerId → sa ligne aux derniers matchs de son club
-    const formeDemandee = new Set();  // clubs, et joueurs (« j:<id> »), déjà demandés
-    const formeEnVol = new Set();     // clubs et joueurs de la requête en cours
-    let formePause = 0;
+    // L'aperçu des matchs à venir de la journée affichée : la fiche des deux
+    // clubs et leurs meneurs de la saison. Une journée lue se garde une
+    // demi-heure dans la page ; une lecture ratée se redemande au rendu
+    // suivant, mais pas avant une minute.
+    const apercus = new Map(); // date → { games, at, ok }
+    let apercuEnVol = null;
+    const APERCU_FRAIS_MS = 30 * 60 * 1000;
+    const APERCU_PAUSE_MS = 60 * 1000;
 
-    const idDe = j => (j && j.stats && j.stats.playerId ? String(j.stats.playerId) : null);
+    function chargerApercu(date) {
+        const jour = ((semaine && semaine.days) || []).find(d => d.date === date);
+        const aVenir = ((jour && jour.games) || []).map(etatAffiche).some(m => !aCommence(m));
+        if (!date || !aVenir || apercuEnVol === date) return;
+        const connu = apercus.get(date);
+        if (connu && Date.now() - connu.at < (connu.ok ? APERCU_FRAIS_MS : APERCU_PAUSE_MS)) return;
 
-    /**
-     * La forme des clubs des matchs à venir de la journée, et celle de mes
-     * joueurs qui y jouent — une requête pour tout ce qui manque. Un joueur se
-     * lit dans la forme de son club : son club repart avec lui. Une réponse
-     * manquée se redemande au rendu suivant, mais pas avant une minute.
-     */
-    function chargerForme(matchs) {
-        if (Date.now() < formePause) return;
-        const clubs = new Set();
-        const ids = new Map(); // id → club
-        matchs.map(etatAffiche).filter(m => !aCommence(m)).forEach(m => {
-            [m.away && m.away.abbrev, m.home && m.home.abbrev].forEach(club => {
-                if (!club) return;
-                if (!formeDemandee.has(club)) clubs.add(club);
-                (mesClubs.get(club) || []).forEach(j => {
-                    const id = idDe(j);
-                    if (id && !formeDemandee.has(`j:${id}`)) { ids.set(id, club); clubs.add(club); }
-                });
-            });
-        });
-        if (!clubs.size) return;
-
-        const listeClubs = [...clubs];
-        const listeIds = [...ids.keys()];
-        listeClubs.forEach(c => { formeDemandee.add(c); formeEnVol.add(c); });
-        listeIds.forEach(id => { formeDemandee.add(`j:${id}`); formeEnVol.add(`j:${id}`); });
-        const params = new URLSearchParams({ clubs: listeClubs.join(',') });
-        if (listeIds.length) params.set('joueurs', listeIds.join(','));
-        fetch(`${BASE_URL}/team-form?${params}`)
+        apercuEnVol = date;
+        fetch(`${BASE_URL}/day-preview/${date}`)
             .then(r => (r.ok ? r.json() : null))
             .catch(() => null)
             .then(donnees => {
-                const recus = (donnees && donnees.clubs) || {};
-                const rates = new Set();
-                listeClubs.forEach(c => {
-                    formeEnVol.delete(c);
-                    if (recus[c]) formeClubs.set(c, recus[c]);
-                    else { formeDemandee.delete(c); rates.add(c); }
-                });
-                listeIds.forEach(id => {
-                    formeEnVol.delete(`j:${id}`);
-                    if (rates.has(ids.get(id))) formeDemandee.delete(`j:${id}`);
-                });
-                Object.entries((donnees && donnees.joueurs) || {}).forEach(([id, l]) => formeJoueurs.set(String(id), l));
-                if (rates.size) formePause = Date.now() + 60 * 1000;
-                rendreJour();
+                if (apercuEnVol === date) apercuEnVol = null;
+                const ok = !!(donnees && donnees.games);
+                // Sans réponse, l'aperçu déjà en main reste.
+                apercus.set(date, { games: ok ? donnees.games : (connu ? connu.games : {}), at: Date.now(), ok });
+                if (jourChoisi === date) rendreJour();
             });
     }
+
+    /** L'aperçu d'un match de la journée affichée ; null tant qu'il n'est pas lu. */
+    function apercuDe(id) {
+        const connu = apercus.get(jourChoisi);
+        return (connu && connu.games[id]) || null;
+    }
+
+    const idDe = j => (j && j.stats && j.stats.playerId ? String(j.stats.playerId) : null);
 
     const POSITIONS = { C: 'C', L: 'AG', R: 'AD', D: 'D', G: 'G' };
     const position = p => POSITIONS[p] || p || '';
     const initiales = nom => String(nom || '').split(/\s+/).map(m => m[0] || '').join('').slice(0, 2).toUpperCase();
-    const pourcentage = x => (Number(x) > 0 ? Number(x).toFixed(3).replace(/^0/, '') : '—');
-    const derniers = n => (n === 1 ? 'Dernier match' : `${n} derniers matchs`);
     /** « (12) » : le total de la saison après ce jeu ; rien plutôt que « (0) ». */
     const compteur = n => (n ? ` <span class="cal-car-tally">(${echapper(n)})</span>` : '');
+    /** « 1 But », « 3 Buts » : le singulier jusqu'à un, à la française. */
+    const accorder = (n, [un, plusieurs]) => (Number(n) > 1 ? plusieurs : un);
 
     /**
-     * Photo détourée sur un rond neutre, les initiales dessous : une photo
-     * que le CDN de la LNH n'a pas laisse voir qui c'est, plutôt qu'un rond
-     * vide.
+     * Photo détourée sur un rond à la couleur de son club, comme à la LNH ;
+     * les initiales dessous : une photo que le CDN de la LNH n'a pas laisse
+     * voir qui c'est, plutôt qu'un rond vide.
      */
-    function photo(url, nom) {
-        return '<span class="cal-car-photo" aria-hidden="true">'
+    function photo(url, nom, club) {
+        const couleur = EQUIPES[club] ? EQUIPES[club][1] : '';
+        return `<span class="cal-car-photo${couleur ? ' has-team' : ''}"${couleur ? ` style="--cal-team: ${couleur}"` : ''} aria-hidden="true">`
             + `<span class="cal-car-initials">${echapper(initiales(nom))}</span>`
             + `${url ? `<img src="${echapper(url)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
     }
 
-    /** Les chiffres d'une rangée, valeur sur libellé ; ceux de `cles` à l'accent. */
-    function chiffres(cases, cles) {
-        return `<dl class="cal-pl-stats">${cases.map(([l, v]) =>
-            `<div${cles.includes(l) ? ' class="is-key"' : ''}><dt>${l}</dt><dd>${echapper(v ?? 0)}</dd></div>`).join('')}</dl>`;
-    }
-
-    /** Une liste de rangées (mes joueurs), son titre discret au-dessus quand elle en a un. */
-    function liste(genre, titre, sous, rangees, etiquette) {
-        if (!rangees.length) return '';
-        const tete = titre
-            ? `<div class="cal-car-head"><span class="cal-car-title">${echapper(titre)}</span>${sous ? `<span class="cal-car-sub">${echapper(sous)}</span>` : ''}</div>`
-            : '';
-        return `
-            <section class="cal-car" data-car="${genre}" aria-label="${echapper(etiquette)}">
-                ${tete}
-                <div class="cal-car-list">${rangees.join('')}</div>
-            </section>`;
-    }
-
-    const FLECHE = d => `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false"><path d="${d}"/></svg>`;
+    const FLECHE = d => `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="${d}"/></svg>`;
 
     /**
-     * Une piste qui défile au pouce (les buts, les meneurs) : la carte
-     * suivante dépasse à droite, c'est ce qui dit qu'elle défile. Flèches à
-     * la souris seulement, puce de la carte en vue dessous.
+     * Une piste qui défile au pouce : la carte suivante dépasse à droite,
+     * c'est ce qui dit qu'elle défile. Dessous, comme à la LNH, ‹ un tiret
+     * par carte › — celui de la carte en vue à l'accent. Seulement quand la
+     * piste déborde (`has-nav`, majCarrousel).
      */
     function carrousel(genre, titre, sous, cartes, etiquette) {
         if (!cartes.length) return '';
+        const navigation = cartes.length > 1 ? `
+                <div class="cal-car-pager">
+                    <button type="button" class="cal-car-arrow is-off" data-car-dir="-1" aria-label="Précédent">${FLECHE('M15 18l-6-6 6-6')}</button>
+                    <span class="cal-car-dots" aria-hidden="true">${cartes.map((_, i) => `<i class="cal-car-dot${i ? '' : ' is-on'}"></i>`).join('')}</span>
+                    <button type="button" class="cal-car-arrow" data-car-dir="1" aria-label="Suivant">${FLECHE('M9 18l6-6-6-6')}</button>
+                </div>` : '';
         return `
             <section class="cal-car" data-car="${genre}" aria-label="${echapper(etiquette)}">
                 <div class="cal-car-head">
                     <span class="cal-car-title">${echapper(titre)}</span>
                     ${sous ? `<span class="cal-car-sub">${echapper(sous)}</span>` : ''}
-                    <span class="cal-car-nav">
-                        <button type="button" class="cal-car-arrow" data-car-dir="-1" aria-label="Précédent">${FLECHE('M15 18l-6-6 6-6')}</button>
-                        <button type="button" class="cal-car-arrow" data-car-dir="1" aria-label="Suivant">${FLECHE('M9 18l6-6-6-6')}</button>
-                    </span>
                 </div>
                 <div class="cal-car-track" tabindex="0">${cartes.join('')}</div>
-                ${cartes.length > 1 ? `<div class="cal-car-dots" aria-hidden="true">${cartes.map((_, i) => `<i class="cal-car-dot${i ? '' : ' is-on'}"></i>`).join('')}</div>` : ''}
+                ${navigation}
             </section>`;
     }
 
     /** Le carrousel en os, le temps que sa requête réponde. */
     function carrouselEnOs(genre, titre) {
-        const os = '<div class="cal-car-card"><span class="fz-bone is-round cal-car-photo"></span>'
-            + '<span class="cal-car-id"><span class="fz-bone cal-sk-name"></span><span class="fz-bone-flat cal-sk-meta"></span></span></div>';
+        const os = '<div class="cal-car-card cal-lead"><span class="fz-bone is-round cal-car-photo"></span>'
+            + '<span class="cal-car-id"><span class="fz-bone-flat cal-sk-first"></span><span class="fz-bone cal-sk-name"></span>'
+            + '<span class="fz-bone-flat cal-sk-meta"></span></span></div>';
         return `
             <section class="cal-car" data-car="${genre}" aria-hidden="true">
                 <div class="cal-car-head"><span class="cal-car-title">${echapper(titre)}</span></div>
@@ -698,8 +660,8 @@
             : '';
         const quand = [periodeCourte(b.period, b.periodType), echapper(b.timeInPeriod || '')].filter(Boolean).join(' · ');
         return `
-            <div class="cal-car-card">
-                ${photo(b.headshot, b.name)}
+            <div class="cal-car-card cal-goal">
+                ${photo(b.headshot, b.name, b.teamAbbrev)}
                 <div class="cal-car-id">
                     <div class="cal-car-name">${nom(b.name, b.playerId)}${compteur(b.goalsToDate)}</div>
                     <div class="cal-car-meta">${aide}</div>
@@ -709,105 +671,63 @@
     }
 
     /**
-     * Mes joueurs du match, sans titre : leur rangée dit déjà tout. Avant le
-     * premier match de la saison, les chiffres sont ceux de l'an passé, et
-     * le titre revient pour le dire.
+     * La carte d'un joueur, à la manière de la LNH : la photo sur la couleur
+     * de son club, le prénom, le nom en gras — qui ouvre sa fiche —,
+     * « CAR • #20 • C » dessous, et à droite le chiffre qui lui vaut la carte.
      */
-    function listeMesJoueurs(miens) {
-        return liste('miens', saisonCommencee ? '' : 'Mes joueurs', 'Saison dernière',
+    function carteJoueur({ id, prenom, nom, complet, url, club, meta, val, libelle }) {
+        const nomAffiche = id
+            ? `<button type="button" class="cal-player cal-lead-last" data-player="${echapper(id)}" data-name="${echapper(complet)}">${echapper(nom)}</button>`
+            : `<span class="cal-lead-last">${echapper(nom)}</span>`;
+        return `
+            <div class="cal-car-card cal-lead">
+                ${photo(url, complet, club)}
+                <div class="cal-car-id">
+                    <span class="cal-lead-first">${echapper(prenom) || '&nbsp;'}</span>
+                    ${nomAffiche}
+                    <span class="cal-lead-meta">${echapper(meta.filter(Boolean).join(' • '))}</span>
+                </div>
+                <div class="cal-lead-stat"><b>${echapper(val)}</b><span>${accorder(val, libelle)}</span></div>
+            </div>`;
+    }
+
+    const CATEGORIES = { goals: ['But', 'Buts'], assists: ['Aide', 'Aides'], wins: ['Victoire', 'Victoires'] };
+
+    /**
+     * Les meneurs des deux clubs cette saison, ceux de la page des pointages
+     * de la LNH : buts, aides et victoires, le visiteur avant le receveur. Un
+     * meneur à zéro — avant le premier match — n'en est pas un.
+     */
+    function carrouselMeneurs(apercu) {
+        if (!apercu) return apercuEnVol === jourChoisi ? carrouselEnOs('meneurs', 'Meneurs par équipe') : '';
+        const cartes = (apercu.meneurs || []).filter(l => l.val > 0 && CATEGORIES[l.cat]).map(l => carteJoueur({
+            id: l.id, prenom: l.prenom, nom: l.nom, complet: `${l.prenom} ${l.nom}`.trim(), url: l.photo, club: l.club,
+            meta: [l.club, l.numero != null ? `#${l.numero}` : '', position(l.pos)],
+            val: l.val, libelle: CATEGORIES[l.cat]
+        }));
+        return carrousel('meneurs', 'Meneurs par équipe', '', cartes, 'Meneurs des deux clubs cette saison');
+    }
+
+    /**
+     * Mes joueurs d'un match à venir, en cartes comme les meneurs : leur
+     * saison en un chiffre — les points, les victoires d'un gardien. Avant le
+     * premier match de la saison, ce sont ceux de l'an passé : le titre le dit.
+     */
+    function carrouselMesJoueurs(miens) {
+        return carrousel('miens', 'Mes joueurs', saisonCommencee ? '' : 'Saison dernière',
             miens.map(carteMonJoueur), 'Mes joueurs dans ce match');
     }
 
-    /** Ma rangée de joueur : sa saison en quatre chiffres, sa forme dessous. */
     function carteMonJoueur({ nom, stats }) {
         const s = stats || {};
-        const club = s.teamAbbrev || '';
         const gardien = s.position === 'G';
-        const cases = gardien
-            ? [['PJ', s.gamesPlayed], ['V', s.wins], ['BL', s.shutouts], ['%Arr', pourcentage(s.savePct)]]
-            : [['PJ', s.gamesPlayed], ['B', s.goals], ['A', s.assists], ['Pts', s.points]];
-        return `
-            <div class="cal-car-card">
-                ${photo(s.headshot, nom)}
-                <div class="cal-car-id">
-                    <div class="cal-car-name">${echapper(nom)}</div>
-                    <div class="cal-car-meta">${echapper([club, position(s.position)].filter(Boolean).join(' · '))}</div>
-                </div>
-                ${chiffres(cases, [gardien ? 'V' : 'Pts'])}
-                ${ligneForme(s, club, gardien)}
-            </div>`;
-    }
-
-    /** « 5 derniers matchs · 2 B · 1 A · 3 Pts », ou ce qu'on en sait. */
-    function ligneForme(s, club, gardien) {
-        const id = s.playerId ? String(s.playerId) : null;
-        const f = formeClubs.get(club);
-        if (!id || !f || formeEnVol.has(`j:${id}`)) {
-            return formeEnVol.has(club) || formeEnVol.has(`j:${id}`) ? '<span class="fz-bone-flat cal-sk-form"></span>' : '';
-        }
-        if (!f.matchs || !formeDemandee.has(`j:${id}`)) return '';
-        const l = formeJoueurs.get(id);
-        if (!l) {
-            return `<p class="cal-pl-form"><span>${derniers(f.matchs)}</span><b>Pas joué</b></p>`;
-        }
-        const texte = gardien
-            ? `${l.v || 0} V · ${l.tirs ? pourcentage(l.arrets / l.tirs) : '—'}`
-            : `${l.b} B · ${l.a} A · ${l.p} Pts`;
-        const sur = l.pj < f.matchs ? ` en ${l.pj} PJ` : '';
-        return `<p class="cal-pl-form"><span>${derniers(f.matchs)}</span><b>${texte}${sur}</b></p>`;
-    }
-
-    /**
-     * Le meilleur buteur et le meilleur pointeur de chaque club — une carte
-     * par meneur, une seule quand c'est le même joueur.
-     */
-    function carrouselMeneurs(m) {
-        const clubs = [m.away && m.away.abbrev, m.home && m.home.abbrev].filter(Boolean);
-        if (clubs.some(c => !formeClubs.has(c) && formeEnVol.has(c))) return carrouselEnOs('meneurs', 'Meneurs');
-        const formes = clubs.map(c => [c, formeClubs.get(c)]).filter(([, f]) => f);
-        if (!formes.length) return '';
-
-        const cartes = [];
-        formes.forEach(([club, { buteur, pointeur }]) => {
-            if (buteur && pointeur && buteur.id === pointeur.id) cartes.push(carteMeneur(buteur, club, 'les-deux'));
-            else {
-                if (buteur) cartes.push(carteMeneur(buteur, club, 'buteur'));
-                if (pointeur) cartes.push(carteMeneur(pointeur, club, 'pointeur'));
-            }
+        const [premier, ...reste] = String(nom).split(' ');
+        return carteJoueur({
+            id: s.playerId, prenom: reste.length ? premier : '', nom: reste.length ? reste.join(' ') : premier,
+            complet: nom, url: s.headshot, club: s.teamAbbrev, meta: [s.teamAbbrev, position(s.position)],
+            val: Number(gardien ? s.wins : s.points) || 0,
+            libelle: gardien ? ['Victoire', 'Victoires'] : ['Point', 'Points']
         });
-        if (!cartes.length) {
-            const aucun = formes.every(([, f]) => !f.matchs);
-            return `
-                <section class="cal-car" data-car="meneurs">
-                    <div class="cal-car-head"><span class="cal-car-title">Meneurs</span></div>
-                    <p class="cal-car-empty">${aucun ? 'Aucun match joué cette saison.' : 'Aucun point aux derniers matchs.'}</p>
-                </section>`;
-        }
-        const n = formes.map(([, f]) => f.matchs);
-        const sous = n.every(x => x === n[0]) ? derniers(n[0])
-            : `Derniers matchs · ${formes.map(([c, f]) => `${c} ${f.matchs}`).join(' · ')}`;
-        return carrousel('meneurs', 'Meneurs', sous, cartes, 'Meneurs des deux clubs');
-    }
-
-    const ROLES = { buteur: 'Meilleur buteur', pointeur: 'Meilleur pointeur', 'les-deux': 'Meilleur buteur et pointeur' };
-    const CLES_ROLE = { buteur: ['B'], pointeur: ['Pts'], 'les-deux': ['B', 'Pts'] };
-
-    /**
-     * La carte d'un meneur : buts et points à droite — celui qui lui vaut la
-     * carte à l'accent —, le reste de sa ligne dessous. Deux chiffres et non
-     * quatre : la carte est étroite, le nom doit tenir.
-     */
-    function carteMeneur(j, club, role) {
-        return `
-            <div class="cal-car-card">
-                ${photo(j.photo, j.nom)}
-                <div class="cal-car-id">
-                    <div class="cal-car-name">${echapper(j.nom)}</div>
-                    <div class="cal-car-meta">${ROLES[role]} · ${echapper(club)}</div>
-                </div>
-                ${chiffres([['B', j.b], ['Pts', j.p]], CLES_ROLE[role])}
-                <p class="cal-pl-form">${echapper([position(j.pos), `${j.pj} PJ`, `${j.a} A`].filter(Boolean).join(' · '))}</p>
-            </div>`;
     }
 
     /** Flèches grisées aux deux bouts, puce de la carte en vue. */
@@ -1087,8 +1007,8 @@
         document.getElementById('calNext').addEventListener('click', () => {
             if (semaine && semaine.nextStartDate) { jourChoisi = null; chargerSemaine(decaler(lundiVise, 7)); }
         });
-        document.getElementById('calToday').addEventListener('click', allerAujourdhui);
-        // La pastille disparaît sous le doigt : le focus passe au jour
+        // La pastille est le seul chemin vers aujourd'hui : l'en-tête n'a plus
+        // de bouton. Elle disparaît sous le doigt : le focus passe au jour
         // d'aujourd'hui plutôt que de retomber sur la page.
         document.getElementById('calReturn').addEventListener('click', () => {
             allerAujourdhui().then(() => document.querySelector('.cal-chip.is-today')?.focus());

@@ -17,7 +17,7 @@
  *     création, la date, le départ, la nouvelle saison et le renommage y
  *     passent tous ;
  *   - il se recharge depuis la base au démarrage, après chaque passe qui a
- *     trouvé un départ échu, et toutes les six heures, ce qui rattrape une
+ *     trouvé un départ échu, et chaque nuit, ce qui rattrape une
  *     écriture faite hors du serveur (script, console SQL) ou un pool
  *     supprimé ;
  *   - un départ en échec reste dans l'agenda, et la passe suivante le retente.

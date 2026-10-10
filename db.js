@@ -50,6 +50,25 @@ function estLecture(texte) {
     return typeof texte === 'string' && MOTIF_LECTURE.test(texte);
 }
 
+/**
+ * Une écriture qui n'a touché aucune ligne : un UPDATE, DELETE, INSERT ou
+ * MERGE terminé avec rowCount 0. Rien n'a changé en base, la mémoire des
+ * lectures reste juste. Le ménage aux heures fixes (rien à purger) et les
+ * feuilles de match déjà à jour (ON CONFLICT … WHERE … IS DISTINCT FROM)
+ * vidaient pourtant toute la mémoire : chaque page ouverte relisait alors la
+ * base, et Neon ne s'endormait plus de la soirée.
+ *
+ * Tout le reste compte : BEGIN, COMMIT, DDL, un résultat multiple, un
+ * `WITH … DELETE … SELECT` (sa commande est SELECT), un échec.
+ */
+const COMMANDES_LIGNES = new Set(['INSERT', 'UPDATE', 'DELETE', 'MERGE']);
+
+function ecritureSansEffet(resultat) {
+    return !!resultat && !Array.isArray(resultat)
+        && COMMANDES_LIGNES.has(resultat.command)
+        && resultat.rowCount === 0;
+}
+
 function noterEcriture() {
     generationEcritures += 1;
 }
@@ -81,16 +100,17 @@ function instrumenterClient(client, noter = noterEcriture) {
 
         const dernier = reste[reste.length - 1];
         if (typeof dernier === 'function') {
-            reste[reste.length - 1] = function (...args) {
-                noter();
-                return dernier.apply(this, args);
+            reste[reste.length - 1] = function (erreur, res, ...args) {
+                if (erreur || !ecritureSansEffet(res)) noter();
+                return dernier.call(this, erreur, res, ...args);
             };
             return originale.call(this, config, ...reste);
         }
 
         const resultat = originale.call(this, config, ...reste);
-        if (resultat && typeof resultat.then === 'function') resultat.then(noter, noter);
-        else noter();
+        if (resultat && typeof resultat.then === 'function') {
+            resultat.then(res => { if (!ecritureSansEffet(res)) noter(); }, noter);
+        } else noter();
         return resultat;
     };
     return client;
@@ -1537,6 +1557,7 @@ module.exports = {
     noterEcritureExterne,
     instrumenterClient,
     estLecture,
+    ecritureSansEffet,
     initializeDatabase,
     runMigrations,
     // Transactions

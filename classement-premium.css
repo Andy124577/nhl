@@ -182,7 +182,6 @@ body.fz-classement #standingsTable td.points-column {
   font: 700 15px/1 'Oswald', sans-serif;
   color: var(--fzc-ink);
 }
-body.fz-classement #standingsTable td.st-period-col { color: var(--fzc-text-faint); }
 
 body.fz-classement .st-rank-badge {
   font: 700 14px/1 'Oswald', sans-serif;
@@ -229,119 +228,111 @@ body.fz-classement .st-evo-up svg { fill: var(--fzc-good); }
 body.fz-classement .st-evo-down { background: var(--fzc-bad-bg); color: var(--fzc-bad); }
 body.fz-classement .st-evo-down svg { fill: var(--fzc-bad); }
 body.fz-classement .st-evo-flat { background: var(--fzc-flat-bg); color: var(--fzc-text-faint); }
-body.fz-classement td.st-evo-col { text-align: right; }
-
-body.fz-classement #standingsTable tfoot .standings-avg-row td {
-  background: var(--fzc-bg-alt);
-  color: var(--fzc-text-muted);
-  border-top: 2px solid var(--fzc-border-strong);
-}
-body.fz-classement .standings-avg-label { color: var(--fzc-text-muted); }
 
 body.fz-classement .st-empty-title { color: var(--fzc-ink); }
 body.fz-classement .st-empty-hint { color: var(--fzc-text-faint); }
 
-/* ==================== TABLEAU (MOBILE : cartes) ==================== */
-/* Le mockup montre une vue "phone" distincte, pas juste le même tableau
-   qui déborde : sous 680px on bascule sur des lignes en carte plutôt que
-   de scroller le tableau horizontalement. */
-body.fz-classement .st-mobile-list { display: none; }
+/* ==================== LISTE DU CLASSEMENT ==================== */
+/* Un pool cumulatif n'a pas de tableau : la liste de la maquette
+   « Classement » sert sur téléphone comme sur bureau (les classes gardent
+   leur préfixe st-mobile- d'origine). Rangées de 76px et rond de 52px : les
+   mesures de la liste des joueurs d'une équipe (classement.css,
+   .roster-row), dont elle reprend aussi la bande — un filet dessus et
+   dessous, sans cadre. Sur téléphone, elle va d'un bord à l'autre (plus
+   bas). */
+body.fz-classement .st-mobile-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--rr-line);
+  border-bottom: 1px solid var(--rr-line);
+  background: var(--rr-surface);
+  color: var(--rr-ink);
+  font-variant-numeric: tabular-nums;
+}
+body.fz-classement .st-mobile-row {
+  display: grid;
+  grid-template-columns: 22px 52px minmax(0, 1fr) auto 14px;
+  align-items: center;
+  column-gap: 8px;
+  min-height: 76px;
+  padding: 6px 10px 6px 12px;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+body.fz-classement .st-mobile-row + .st-mobile-row { border-top: 1px solid var(--rr-line); }
+body.fz-classement .st-mobile-row:hover,
+body.fz-classement .st-mobile-row:focus-visible { background: var(--rr-hover); }
+body.fz-classement .st-mobile-row:first-child { box-shadow: inset 3px 0 0 var(--fzc-accent-fill); }
+body.fz-classement .st-mobile-rank {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--rr-muted);
+  text-align: center;
+}
+body.fz-classement .st-mobile-row:nth-child(-n+3) .st-mobile-rank { color: var(--fzc-accent); }
+body.fz-classement .st-mobile-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--rr-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+body.fz-classement .st-mobile-logo img { width: 34px; height: 34px; object-fit: contain; }
+body.fz-classement .st-mobile-logo .st-avatar-fallback {
+  font-size: 15px; font-weight: 700; color: var(--rr-num);
+}
+body.fz-classement .st-mobile-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+body.fz-classement .st-mobile-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font: 600 14.5px/1.2 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--rr-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.fz-classement .st-mobile-name-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+body.fz-classement .st-mobile-name .st-evo { flex: none; }
+body.fz-classement .st-mini-row { display: flex; min-width: 0; }
+body.fz-classement .st-mini,
+body.fz-classement .st-mobile-pts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+body.fz-classement .st-mini { flex: 0 1 30px; min-width: 24px; padding: 1px 0; }
+body.fz-classement .st-mini.has-sep { border-left: 1px solid var(--rr-line); }
+body.fz-classement .st-mini-v { font-size: 12.5px; color: var(--rr-num); }
+body.fz-classement .st-mini.is-zero .st-mini-v { color: var(--rr-dim); }
+body.fz-classement .st-mini-l { font-size: 9.5px; color: var(--rr-dim); }
+body.fz-classement .st-mobile-pts { min-width: 40px; }
+body.fz-classement .st-mobile-pts-v {
+  font: 700 20px/1.1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--rr-strong);
+}
+body.fz-classement .st-mobile-pts .st-mini-l { color: var(--rr-muted); }
+body.fz-classement .st-mobile-chev {
+  font-size: 16px;
+  color: var(--rr-chev);
+  text-align: center;
+}
 
 @media (max-width: 680px) {
-  body.fz-classement .standings-table-container { display: none; }
-  /* La maquette « Classement » va droit à la liste, sans tuile de synthèse. */
+  /* La tuile de synthèse (pool H2H seulement) s'efface : la maquette va
+     droit au classement. */
   body.fz-classement #standingsList .st-summary { display: none; }
-  /* Une bande d'un bord à l'autre, rangées de 76px et rond de 52px : les
-     mesures de la liste des joueurs d'une équipe (classement.css,
-     .roster-row). */
-  body.fz-classement .st-mobile-list {
-    display: flex;
-    flex-direction: column;
-    margin-inline: -32px;
-    border-top: 1px solid var(--rr-line);
-    border-bottom: 1px solid var(--rr-line);
-    background: var(--rr-surface);
-    color: var(--rr-ink);
-    font-variant-numeric: tabular-nums;
-  }
-  body.fz-classement .st-mobile-row {
-    display: grid;
-    grid-template-columns: 22px 52px minmax(0, 1fr) auto 14px;
-    align-items: center;
-    column-gap: 8px;
-    min-height: 76px;
-    padding: 6px 10px 6px 12px;
-    cursor: pointer;
-    transition: background .15s ease;
-  }
-  body.fz-classement .st-mobile-row + .st-mobile-row { border-top: 1px solid var(--rr-line); }
-  body.fz-classement .st-mobile-row:hover,
-  body.fz-classement .st-mobile-row:focus-visible { background: var(--rr-hover); }
-  body.fz-classement .st-mobile-row:first-child { box-shadow: inset 3px 0 0 var(--fzc-accent-fill); }
-  body.fz-classement .st-mobile-rank {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--rr-muted);
-    text-align: center;
-  }
-  body.fz-classement .st-mobile-row:nth-child(-n+3) .st-mobile-rank { color: var(--fzc-accent); }
-  body.fz-classement .st-mobile-logo {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: var(--rr-line);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  body.fz-classement .st-mobile-logo img { width: 34px; height: 34px; object-fit: contain; }
-  body.fz-classement .st-mobile-logo .st-avatar-fallback {
-    font-size: 15px; font-weight: 700; color: var(--rr-num);
-  }
-  body.fz-classement .st-mobile-info {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-  body.fz-classement .st-mobile-name {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    font: 600 14.5px/1.2 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: var(--rr-ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  body.fz-classement .st-mobile-name-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  body.fz-classement .st-mobile-name .st-evo { flex: none; }
-  body.fz-classement .st-mini-row { display: flex; min-width: 0; }
-  body.fz-classement .st-mini,
-  body.fz-classement .st-mobile-avg,
-  body.fz-classement .st-mobile-pts {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    line-height: 1.1;
-  }
-  body.fz-classement .st-mini { flex: 0 1 30px; min-width: 24px; padding: 1px 0; }
-  body.fz-classement .st-mini.has-sep { border-left: 1px solid var(--rr-line); }
-  body.fz-classement .st-mini-v { font-size: 12.5px; color: var(--rr-num); }
-  body.fz-classement .st-mini.is-zero .st-mini-v { color: var(--rr-dim); }
-  body.fz-classement .st-mini-l { font-size: 9.5px; color: var(--rr-dim); }
-  body.fz-classement .st-mobile-pts { min-width: 40px; }
-  body.fz-classement .st-mobile-pts-v {
-    font: 700 20px/1.1 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: var(--rr-strong);
-  }
-  body.fz-classement .st-mobile-pts .st-mini-l { color: var(--rr-muted); }
-  body.fz-classement .st-mobile-chev {
-    font-size: 16px;
-    color: var(--rr-chev);
-    text-align: center;
-  }
+  /* D'un bord à l'écran à l'autre, comme la liste des joueurs. */
+  body.fz-classement .st-mobile-list { margin-inline: -32px; }
 }
 @media (max-width: 380px) {
   body.fz-classement .st-mini { flex-basis: 26px; min-width: 22px; }
@@ -647,8 +638,8 @@ body.fz-classement .skeleton-avatar {
 
 /* ==================== SQUELETTE DU CLASSEMENT ====================
    Claude Design, « Classement Skeleton » (#standingsSkeleton,
-   classement.html). Le squelette reprend les classes du classement
-   chargé — tableau sur bureau, bande sur téléphone — et n'ajoute que
+   classement.html). Le squelette reprend les classes de la liste
+   chargée — la même bande sur téléphone et sur bureau — et n'ajoute que
    ses os.
 
    Un os (.fz-bone) est un aplat translucide (--rr-bone, classement.css).
@@ -711,7 +702,6 @@ body.fz-classement .st-sk-crumb {
 }
 
 body.fz-classement .st-sk { position: relative; }
-body.fz-classement .st-sk-table tbody tr,
 body.fz-classement .st-sk-list .st-mobile-row {
   opacity: 0;
   animation: fzOsMonte .35s ease-out forwards;
@@ -722,61 +712,12 @@ body.fz-classement .st-sk-insights {
   animation: fzOsMonte .35s ease-out .32s forwards;
 }
 
-/* La tuile « où en suis-je » (bureau) : neutre tant qu'on ne sait pas. */
-body.fz-classement .st-summary.st-sk-summary { border-left-color: var(--fzc-border); }
-body.fz-classement .st-sk-sum-rank { flex: none; width: 52px; height: 38px; border-radius: 6px; }
-body.fz-classement .st-sk-sum-name { width: 120px; height: 13px; margin: 2px 0; }
-body.fz-classement .st-sk-sum-detail { width: 240px; max-width: 100%; height: 11px; margin: 5px 0 2px; }
-
-/* Le tableau (bureau), aux mesures de #standingsTable — qui défait comme
-   lui les réglages globaux des tables (index.css : colonnes fixes, en-tête
-   collant, flouté et ombré). */
-body.fz-classement .st-sk-table {
-  width: 100%;
-  min-width: 620px;
-  border-collapse: collapse;
-  table-layout: auto;
-}
-body.fz-classement .st-sk-table thead { position: static; }
-body.fz-classement .st-sk-table th {
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  box-shadow: none;
-  padding: 10px;
-  background: var(--fzc-bg-alt);
-  border-bottom: 1px solid var(--fzc-border-strong);
-  color: var(--fzc-text-muted);
-  font: 600 10px/1 'Helvetica Neue', Helvetica, sans-serif;
-  letter-spacing: .09em;
-  text-align: center;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-body.fz-classement .st-sk-table th.points-column { color: var(--fzc-accent); }
-body.fz-classement .st-sk-table td {
-  padding: 9px 10px;
-  background: var(--fzc-surface);
-  text-align: center;
-}
-body.fz-classement .st-sk-table tbody tr {
-  background: var(--fzc-surface);
-  border-bottom: 1px solid var(--fzc-border-soft);
-  cursor: default;
-}
-body.fz-classement .st-sk-table tbody tr:last-child { border-bottom: 0; }
-body.fz-classement .st-sk-table .rank-col { width: 40px; padding-inline: 4px; }
-body.fz-classement .st-sk-table .player-col { min-width: 110px; padding-left: 12px; text-align: left; }
-body.fz-classement .st-sk-table .st-evo-col { text-align: right; }
-body.fz-classement .st-sk-who { display: flex; align-items: center; gap: 10px; }
-body.fz-classement .st-sk-av { flex: none; width: 26px; height: 26px; border-radius: 50%; }
-body.fz-classement .st-sk-name { flex: none; width: var(--w); height: 12px; }
-body.fz-classement .st-sk-n { width: var(--w); height: 10px; margin: 0 auto; border-radius: 3px; }
-body.fz-classement .st-sk-total { width: 26px; height: 14px; margin: 0 auto; }
-body.fz-classement .st-sk-evo { width: 34px; height: 18px; margin-left: auto; border-radius: 6px; }
-
-/* La bande (téléphone) : les rangées chargées, des os à la place des
-   chiffres. Les hauteurs d'os égalent celles des lignes de texte qu'ils
-   remplacent : la rangée garde ses 64px. */
+/* La bande : les rangées chargées, des os à la place des chiffres. Les
+   hauteurs d'os égalent celles des lignes de texte qu'ils remplacent : la
+   rangée garde ses 76px. */
+body.fz-classement .st-sk-list .st-mobile-row { cursor: default; }
+/* Le filet rouge du meneur attend de savoir qui mène. */
+body.fz-classement .st-sk-list .st-mobile-row:first-child { box-shadow: none; }
 body.fz-classement .st-sk-list .st-mobile-logo.fz-bone { border-radius: 50%; }
 body.fz-classement .st-sk-mname {
   flex: 0 1 auto;
@@ -820,19 +761,11 @@ body.fz-classement .rr-sk-meta {
 }
 body.fz-classement .rr-sk-v { width: var(--w); height: 9px; margin: 2.5px 0; border-radius: 3px; }
 body.fz-classement .rr-sk-pts { width: 22px; height: 16px; margin: 2px 0; }
-body.fz-classement .st-sk-evo.rr-sk-evo { width: 28px; height: 16px; margin: 0; }
+body.fz-classement .st-sk-evo.rr-sk-evo { width: 28px; height: 16px; margin: 0; border-radius: 6px; }
 body.fz-classement .rr-sk .rr-l,
 body.fz-classement .rr-sk .rr-chev { opacity: .65; }
 
-@media (max-width: 680px) {
-  body.fz-classement #standingsSkeleton .st-summary { display: none; }
-  body.fz-classement .st-sk-list .st-mobile-row { cursor: default; }
-  /* Le filet rouge du meneur attend de savoir qui mène. */
-  body.fz-classement .st-sk-list .st-mobile-row:first-child { box-shadow: none; }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  body.fz-classement .st-sk-table tbody tr,
   body.fz-classement .st-sk-list .st-mobile-row,
   body.fz-classement .st-sk-insights,
   body.fz-classement .rr-sk .roster-row { opacity: 1; animation: none; }
@@ -1332,13 +1265,8 @@ body.fz-classement .h2h-res-more:hover { color: var(--fzc-accent-dark); }
 
 /* -------------------- Téléphone -------------------- */
 @media (max-width: 680px) {
-  /* Le bloc "TABLEAU (MOBILE : cartes)" plus haut masque la table au profit
-     de .st-mobile-list, qui n'existe qu'en cumulatif. Un pool H2H garde donc
-     sa table — comme le mockup —, en la faisant défiler si besoin. */
-  body.fz-classement .st-card .standings-table-container {
-    display: block;
-    overflow-x: auto;
-  }
+  /* Un pool H2H garde sa table — comme le mockup —, resserrée, et la fait
+     défiler si besoin (.st-card .standings-table-container, plus haut). */
   body.fz-classement .st-card #standingsTable { min-width: 340px; }
   body.fz-classement .st-card #standingsTable th,
   body.fz-classement .st-card #standingsTable td {

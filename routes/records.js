@@ -61,6 +61,102 @@ function monter(app, ctx) {
 
     // ───────────────────────────── Palmarès glissant ─────────────────────────────
 
+    /** La journée entamée ou non (etatDeLaJournee) ; null si l'on ne sait pas. */
+    async function lireJournee() {
+        if (!etatDeLaJournee) return null;
+        return Promise.resolve().then(etatDeLaJournee).catch(() => null);
+    }
+
+    /**
+     * La fenêtre semi-ouverte des N derniers jours, `[il y a N-1 jours,
+     * demain)`. Avec l'état de la journée (l'ancre « soirée »), elle se ferme
+     * à la dernière soirée : hier tant qu'aucun match du jour n'est commencé,
+     * et `bascule` dit quand le premier commence.
+     */
+    function fenetreGlissante(jours, journee = null) {
+        const aujourdhui = dates.journeeLocale();
+        const avantLesMatchs = Boolean(journee && !journee.entamee);
+        const dernierJour = avantLesMatchs ? dates.ajouterJours(aujourdhui, -1) : aujourdhui;
+        return {
+            debut: dates.ajouterJours(dernierJour, -(jours - 1)),
+            fin: dates.ajouterJours(dernierJour, 1),
+            dernierJour,
+            bascule: avantLesMatchs ? (journee.bascule || null) : null
+        };
+    }
+
+    /**
+     * Les périodes de « Ma position » (accueil). 7 j et 30 j sont les colonnes
+     * du classement à l'identique — 7 j avec son ancre. « 24 h » prend l'ancre
+     * elle aussi : comptée depuis minuit comme la colonne 24 h, elle
+     * afficherait zéro chaque matin, au moment où l'on vient voir sa soirée
+     * de la veille.
+     */
+    const PERIODES_ACCUEIL = [
+        { jours: 1, ancre: true },
+        { jours: 7, ancre: true },
+        { jours: 30, ancre: false }
+    ];
+
+    /**
+     * Ce que l'équipe de la personne connectée a marqué sur 24 h, 7 jours et
+     * 30 jours.
+     *
+     * Le calcul des colonnes du classement, pour la seule équipe de la
+     * personne : l'accueil, la page la plus ouverte, ne relit pas les
+     * feuilles de match de tout le pool pour trois nombres. Toujours au
+     * barème cumulatif, même en tête-à-tête : ce sont les mêmes points que le
+     * total affiché au-dessus d'eux (buildTeamScores, accueil.js), pas des
+     * points fantasy à côté de vrais points.
+     */
+    app.get('/pool-my-points/:poolName', auth.requireAuth, async (req, res) => {
+        try {
+            const nomPool = req.params.poolName;
+            const enveloppe = await poolMembre(req, res, nomPool);
+            if (!enveloppe) return;
+            const nomEquipe = authz.equipeDe(enveloppe.data, req.auth.username);
+            if (!nomEquipe) return res.status(404).json({ message: "Aucune équipe à votre nom dans ce pool." });
+
+            const fenetre = fenetreSaison ? await fenetreSaison() : null;
+            if (saisonCommencee && !saisonCommencee(fenetre)) {
+                return res.json({ poolName: nomPool, teamName: nomEquipe, seasonStarted: false, periods: {} });
+            }
+
+            const journee = await lireJournee();
+            const saison = saisonCourante();
+            const mode = scoring.MODES.CUMULATIF;
+            const teamData = enveloppe.data.teams[nomEquipe];
+            let bascule = null;
+            const periods = {};
+            await Promise.all(PERIODES_ACCUEIL.map(async ({ jours, ancre }) => {
+                const periode = fenetreGlissante(jours, ancre ? journee : null);
+                if (periode.bascule) bascule = periode.bascule;
+                const resultat = await pointage.pointsEquipe(teamData, {
+                    debut: periode.debut, fin: periode.fin, saison, mode,
+                    baseAlignement: pointage.BASE_ALIGNEMENT.COURANT
+                });
+                periods[jours] = {
+                    points: resultat.points,
+                    completude: resultat.completude,
+                    debut: periode.debut,
+                    dernierJour: periode.dernierJour
+                };
+            }));
+
+            res.json({
+                poolName: nomPool,
+                teamName: nomEquipe,
+                seasonStarted: true,
+                season: saison,
+                mode,
+                ...(bascule ? { bascule } : {}),
+                periods
+            });
+        } catch (erreur) {
+            repondreErreur(res, erreur, '/pool-my-points');
+        }
+    });
+
     /**
      * La meilleure équipe sur les N derniers jours.
      *
@@ -93,18 +189,8 @@ function monter(app, ctx) {
                 });
             }
 
-            const aujourdhui = dates.journeeLocale();
-            let dernierJour = aujourdhui;
-            let bascule = null;
-            if (req.query.ancre === 'soiree' && etatDeLaJournee) {
-                const journee = await Promise.resolve().then(etatDeLaJournee).catch(() => null);
-                if (journee && !journee.entamee) {
-                    dernierJour = dates.ajouterJours(aujourdhui, -1);
-                    bascule = journee.bascule || null;
-                }
-            }
-            const debut = dates.ajouterJours(dernierJour, -(jours - 1));
-            const fin = dates.ajouterJours(dernierJour, 1);
+            const journee = req.query.ancre === 'soiree' ? await lireJournee() : null;
+            const { debut, fin, dernierJour, bascule } = fenetreGlissante(jours, journee);
             const saison = saisonCourante();
             // Le barème du pool : les vrais points (buts + aides, gardiens,
             // clubs) pour un cumulatif — les mêmes que son Total —, les points
@@ -117,16 +203,17 @@ function monter(app, ctx) {
             };
             const ingestion = await pointage.etatIngestion(contexte);
 
-            const equipes = [];
-            for (const [nomEquipe, teamData] of equipesActives(enveloppe.data)) {
+            // Les équipes en même temps : une requête par équipe, qui
+            // s'attendaient l'une l'autre.
+            const equipes = await Promise.all(equipesActives(enveloppe.data).map(async ([nomEquipe, teamData]) => {
                 const resultat = await pointage.pointsEquipe(teamData, { ...contexte, ingestion });
-                equipes.push({
+                return {
                     teamName: nomEquipe,
                     members: teamData.members || [],
                     points: resultat.points,
                     completude: resultat.completude
-                });
-            }
+                };
+            }));
 
             // Une équipe sans données passe derrière celles qui en ont, mais son
             // absence reste lisible : `points: null`, pas un zéro inventé.

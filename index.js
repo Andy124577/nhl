@@ -322,10 +322,10 @@ async function populatePlayerTable(t) {
             u = nombreStat(src && src.goals),
             m = nombreStat(src && src.assists),
             h = nombreStat(src && src.points);
-        const g = d && i ? `\n            <div class="player-photo">\n                <img src="${d}" alt="" class="face">\n                <img src="${i}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n            </div>\n            ` : "",
+        const g = photoJoueur(d, o, a),
             p = n?.position || t.positionCode || "N/A",
             y = document.createElement("tr");
-        y.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${g}<div class="player-ident"><span class="player-name">${a}${injBadge(a, o)}${watchBadge(a, o)}</span>${metaJoueur(o, p)}</div></div></td>\n            <td>${c}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n            <td class="points-column">${h}</td>\n        `;
+        y.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${g}<div class="player-ident"><span class="player-name">${nomJoueurHTML(a)}${injBadge(a, o)}${watchBadge(a, o)}</span>${metaJoueur(o, p)}</div></div></td>\n            <td>${c}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n            <td class="points-column">${h}</td>\n        `;
         // Une fiche de la trousse sans identifiant LNH n'a pas de fiche à ouvrir.
         t.playerId && makeRowInteractive(y, () => showCareerStats(t.playerId, t.skaterFullName, !1),
             `Voir la fiche de ${a}`);
@@ -333,6 +333,31 @@ async function populatePlayerTable(t) {
     });
     marquerColonneTriee(e);
     renderStatsPagination(t.length)
+}
+
+/**
+ * Le nom, et sa forme courte « N. MacKinnon » que le téléphone affiche à la
+ * place (stats-premium.css), comme le classement cumulatif.
+ */
+function nomJoueurHTML(nom) {
+    const mots = String(nom || "").split(" ");
+    if (mots.length < 2) return nom;
+    return `<span class="pn-full">${nom}</span><span class="pn-short">${mots[0][0]}. ${mots.slice(1).join(" ")}</span>`;
+}
+
+/**
+ * La photo d'une rangée, comme au classement cumulatif (.rr-avatar,
+ * classement.css) : visage détouré dans un rond à la couleur du club
+ * (.fz-shot, teamLogos.css), initiales dessous. Une photo qui ne charge pas
+ * se retire et les découvre. Le club se lit déjà sous le nom : plus de logo
+ * en médaillon. data-no-lazy : lazy-load.js poserait un carré gris opaque
+ * par-dessus la couleur le temps du chargement.
+ */
+function photoJoueur(url, club, nom) {
+    const couleur = typeof getTeamColors === "function" && club ? getTeamColors(club)[0] : "#3A414D";
+    const initiales = String(nom || "").split(/\s+/).filter(Boolean).slice(0, 2).map(m => m[0]).join("").toUpperCase();
+    const image = url ? `<img src="${url}" alt="" class="face" loading="lazy" data-no-lazy onerror="this.remove()">` : "";
+    return `<span class="player-photo fz-shot" style="--fz-shot-team:${couleur}">${image}<span class="player-initials">${initiales}</span></span>`;
 }
 
 /**
@@ -483,9 +508,10 @@ function populateGoalieTable(t) {
         // voir lib/savePct.js), pas de pourcentage : « — », pas 0.000.
         c = o > 0 && nombreStat(srcG && srcG.savePct) > 0 ? nombreStat(srcG.savePct) : null, u = nombreStat(srcG && srcG.shutouts),
         m = valeurDeTri(t, a, t.playerId, "points", !0);
-        const h = s && l ? `<div class="player-photo">\n                    <img src="${s}" alt="${a}" class="face">\n                    <img src="${l}" alt="${n?.teamAbbrev||t.teamAbbrevs}" class="logo">\n               </div>` : "",
+        const clubG = n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim(),
+            h = photoJoueur(s || (t.playerId && clubG ? buildHeadshotUrl(t.playerId, clubG) : null), clubG, a),
             g = document.createElement("tr");
-        g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${h}<div class="player-ident"><span class="player-name">${a}${injBadge(a, n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}${watchBadge(a, n?.teamAbbrev || t.teamAbbrevs)}</span>${metaJoueur(n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}</div></div></td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c != null ? c.toFixed(3) : "—"}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
+        g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${h}<div class="player-ident"><span class="player-name">${nomJoueurHTML(a)}${injBadge(a, n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}${watchBadge(a, n?.teamAbbrev || t.teamAbbrevs)}</span>${metaJoueur(n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}</div></div></td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c != null ? c.toFixed(3) : "—"}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
         t.playerId && makeRowInteractive(g, () => showCareerStats(t.playerId, t.goalieFullName, !0),
             `Voir la fiche de ${a}`);
         tbody.appendChild(g)
@@ -574,7 +600,7 @@ let currentCareerData = null;
 async function showCareerStats(playerId, playerName, isGoalie = false) {
     currentCareerData = null;
     return fzOpenCareerModal(playerId, playerName, {
-        onData(data) { currentCareerData = data; currentPlayerId = playerId; currentGameLogData = null; },
+        onData(data) { currentCareerData = data; },
         renderStats: filterCareerStats
     });
 }
@@ -628,60 +654,8 @@ function filterCareerStats() {
 
 function closeCareerModal() {
     fzCloseCareerModal();
-    currentCareerData = null; currentGameLogData = null;
+    currentCareerData = null;
 }
-let currentGameLogData = null,
-    currentPlayerId = null;
-async function handleViewChange() {
-    const t = document.getElementById("viewFilter").value,
-        e = document.querySelector(".filter-group-career:has(#leagueFilter)"),
-        a = document.querySelector(".filter-group-career:has(#gameTypeFilter)"),
-        n = document.getElementById("statsCountBadge");
-    "gamelog" === t ? (e && (e.style.display = "none"), a && (a.style.display = "none"), n.style.display = "block", n.textContent = "Chargement...", await showGameLog(currentPlayerId)) : (e && (e.style.display = "flex"), a && (a.style.display = "flex"), filterCareerStats())
-}
-async function showGameLog(t) {
-    const stillViewing = () => currentCareerData && String(currentPlayerId) === String(t)
-        && document.getElementById("viewFilter").value === "gamelog";
-    // Le tableau de carrière ne reste pas affiché sous « Chargement… » : des
-    // rangées en os (careerModal.js) tiennent sa place jusqu'aux matchs.
-    if (typeof fzCareerTableSkeleton === "function") document.getElementById("careerStatsTable").innerHTML = fzCareerTableSkeleton();
-    try {
-        const e = await fetch(`/player-gamelog/${t}`),
-            a = await e.json();
-        if (!stillViewing()) return;
-        if (currentGameLogData = a, !a.gameLog || 0 === a.gameLog.length) return document.getElementById("careerStatsTable").innerHTML = '<p style="text-align: center; padding: 20px;">Aucun match joué cette saison.</p>', void(document.getElementById("statsCountBadge").textContent = "0 matchs");
-        document.getElementById("statsCountBadge").textContent = `${a.gameLog.length} matchs`, renderGameLogTable(a.gameLog, a.playerInfo.isGoalie)
-    } catch (t) {
-        if (!stillViewing()) return;
-        console.error("Error fetching game log:", t), document.getElementById("careerStatsTable").innerHTML = '<p style="text-align: center; padding: 20px; color: red;">Erreur lors du chargement des statistiques de match.</p>'
-    }
-}
-
-function renderGameLogTable(t, e) {
-    const a = document.getElementById("careerStatsTable");
-    let n = "<table><thead><tr>";
-    n += e ? "\n            <th>DATE</th>\n            <th>OPP</th>\n            <th>RÉS</th>\n            <th>DÉC</th>\n            <th>GA</th>\n            <th>SA</th>\n            <th>SV</th>\n            <th>SV%</th>\n            <th>BL</th>\n            <th>PUN</th>\n            <th>TG</th>\n        " : "\n            <th>DATE</th>\n            <th>OPP</th>\n            <th>RÉS</th>\n            <th>B</th>\n            <th>P</th>\n            <th>PTS</th>\n            <th>+/-</th>\n            <th>PUN</th>\n            <th>TIR</th>\n            <th>TG</th>\n            <th>PP</th>\n            <th>SH</th>\n        ", n += "</tr></thead><tbody>", t.forEach((t, a) => {
-        const s = a % 2 == 0 ? "even-row" : "odd-row",
-            l = "H" === t.homeRoadFlag ? "vs" : "@",
-            o = new Date(t.gameDate).toLocaleDateString("fr-CA", {
-                month: "2-digit",
-                day: "2-digit"
-            });
-        if (n += `<tr class="${s}">`, n += `<td>${o}</td>`, n += `<td>${l} ${t.opponentAbbrev}</td>`, n += `<td>${t.gameResult||"-"}</td>`, e) {
-            const e = t.shotsAgainst || 0,
-                a = t.goalsAgainst || 0;
-            let s = t.saves || 0;
-            e > 0 && (!s || 0 === s) && (s = e - a);
-            let l = "-";
-            if (e > 0) {
-                l = (s / e).toFixed(3)
-            }
-            n += `<td>${t.decision||"-"}</td>`, n += `<td>${a}</td>`, n += `<td>${e}</td>`, n += `<td>${s}</td>`, n += `<td>${l}</td>`, n += `<td>${t.shutouts||0}</td>`, n += `<td>${t.pim||0}</td>`, n += `<td>${t.toi||"0:00"}</td>`
-        } else n += `<td>${t.goals||0}</td>`, n += `<td>${t.assists||0}</td>`, n += `<td>${t.points||0}</td>`, n += `<td>${t.plusMinus>=0?"+":""}${t.plusMinus||0}</td>`, n += `<td>${t.pim||0}</td>`, n += `<td>${t.shots||0}</td>`, n += `<td>${t.toi||"0:00"}</td>`, n += `<td>${t.powerPlayPoints||0}</td>`, n += `<td>${t.shorthandedPoints||0}</td>`;
-        n += "</tr>"
-    }), n += "</tbody></table>", a.innerHTML = n
-}
-
 // Le tableau de stats.html tel qu'il arrive : son vrai en-tête et des rangées
 // en os. Repris à chaque relecture (projections) ; le script est différé, la
 // page est déjà lue. populatePlayerTable remplace tout le tableau.

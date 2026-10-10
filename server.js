@@ -20,8 +20,12 @@ const multer = require("multer");
 const { FANTASY_SCORING, goaliePoolPoints, clubPoolPoints, computeTeamSeasonScores } = require("./lib/scoring.js");
 const { generateSeasonSchedule, ensureStandingsEntry, lundiDepartSaison } = require("./lib/h2h.js");
 const instantDraft = require("./lib/instantDraft.js");
+const feuillesJoueurs = require("./lib/feuillesJoueurs.js");
 const { NHL_CLUB_FULLNAME, diffRosterSnapshots, trimTransactionLog, getTeamAbbreviationFromName } = require("./lib/roster.js");
 const { savePctFromSeasons } = require("./lib/savePct.js");
+const ficheCarriere = require("./lib/ficheCarriere.js");
+// Fiches de carrière gardées : /player-career les sert, la collecte les range.
+const fichesCarriere = ficheCarriere.creerMemoireFiches();
 const { getStatsRefreshStatus } = require("./lib/statsCache.js");
 const joueursRepeches = require("./lib/joueursRepeches.js");
 const { currentSeasonId, currentSeasonString, getSeasonWindow, seasonHasStarted,
@@ -61,6 +65,7 @@ const { creerPointsEnDirect } = require("./services/pointsEnDirect.js");
 const { lignesDuSoir, appliquerAuxJoueurs, appliquerAuxClubs } = require("./lib/pointsEnDirect.js");
 const releveSaison = require("./lib/releveSaison.js");
 const horaireLNH = require("./lib/horaire.js");
+const { apercuDeScore } = require("./lib/apercuMatchs.js");
 const { creerServicePointage } = require("./services/scoring.js");
 const { creerServiceH2H } = require("./services/h2h.js");
 const { creerCalendrierLNH } = require("./services/calendrierLNH.js");
@@ -1034,6 +1039,13 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
     try {
         const data = await lireJsonLNH(`https://api-web.nhle.com/v1/player/${playerId}/landing`, `${playerName} (${playerId})`);
         if (!data) return null;
+        // La page que /player-career demanderait : la fiche est prête pour
+        // le jour où la LNH limitera notre adresse (lib/ficheCarriere.js).
+        try {
+            fichesCarriere.ranger(playerId, ficheCarriereDe(playerId, data));
+        } catch (erreur) {
+            console.error(`⚠️ Fiche de carrière de ${playerName} non gardée :`, erreur.message);
+        }
 
         // Construct headshot URL - NHL API provides headshots at this URL format
         const headshotUrl = data.headshot || `https://assets.nhle.com/mugs/nhl/${SAISON_STATS}/${data.currentTeamAbbrev || 'NJD'}/${playerId}.png`;
@@ -1685,24 +1697,63 @@ async function attendreFinDesMatchs() {
     }
 }
 
+/**
+ * La nuit, en une seule fenêtre d'éveil de la base.
+ *
+ * Neon (plan gratuit, 100 heures de calcul par mois) s'endort cinq minutes
+ * après la dernière requête, et chaque réveil coûte ces cinq minutes. La nuit
+ * le réveillait trois fois et plus : à minuit pour les statistiques, à 3 h
+ * pour les feuilles de match, et toutes les six heures pour le ménage, à
+ * l'heure où le serveur avait démarré. Tout s'enchaîne maintenant :
+ * statistiques, puis feuilles de match, puis le ménage (semaines tête-à-tête,
+ * données périmées, agenda des repêchages). Le ménage vient en dernier : la
+ * finalisation d'une semaine tête-à-tête lit les feuilles de match de la nuit.
+ *
+ * Le démarrage du serveur fait aussi un passage de ménage (plus bas).
+ */
+let nuitEnCours = false;
+let collecteNuitLanceeLe = 0;
+
+function menageDeNuit() {
+    console.log("🧹 Passage de nuit : semaines tête-à-tête, ménage, repêchages prévus");
+    verifierSemainesH2H();
+    menageDonneesDurables();
+    relirePlanificationRepechages();
+}
+
+function collecteDeNuit(origine) {
+    collecteNuitLanceeLe = Date.now();
+    // Une collecte déjà en cours (lancée à la main) : le ménage n'attend pas.
+    if (!lancerCollecteJournaux(origine, { apres: menageDeNuit })) menageDeNuit();
+}
+
 // Schedule daily stats update at midnight (00:00)
 cron.schedule('0 0 * * *', async () => {
     console.log("⏰ Daily stats update triggered at midnight");
-    await attendreFinDesMatchs();
-    // Une collecte en échec ne doit pas emporter le classement des clubs, le
-    // relevé des rangs et les transactions : ils tournaient après elle, et une
-    // exception les sautait tous.
+    nuitEnCours = true;
     try {
-        await rafraichirStatsUneFois('minuit');
+        await attendreFinDesMatchs();
+        // Une collecte en échec ne doit pas emporter le classement des clubs, le
+        // relevé des rangs et les transactions : ils tournaient après elle, et une
+        // exception les sautait tous.
+        try {
+            await rafraichirStatsUneFois('minuit');
+        } catch (erreur) {
+            console.error("❌ Collecte des statistiques de minuit :", erreur.message);
+        }
+        await updateTeamStandings();
+        await snapshotAllPoolRanks();
+        // En dernier : c'est la seule tâche qui tolère d'être sautée (voir la
+        // règle tout-ou-rien dans refreshNhlTransactions), les stats du pool
+        // passent avant.
+        await refreshNhlTransactions();
     } catch (erreur) {
-        console.error("❌ Collecte des statistiques de minuit :", erreur.message);
+        console.error("❌ Passage de minuit :", erreur.message);
+    } finally {
+        nuitEnCours = false;
+        // Les feuilles de match partent même si ce qui précède a échoué.
+        collecteDeNuit('nuit');
     }
-    await updateTeamStandings();
-    await snapshotAllPoolRanks();
-    // En dernier : c'est la seule tâche qui tolère d'être sautée (voir la
-    // règle tout-ou-rien dans refreshNhlTransactions), les stats du pool
-    // passent avant.
-    await refreshNhlTransactions();
 }, {
     timezone: "America/New_York" // Adjust to your timezone
 });
@@ -1712,14 +1763,20 @@ cron.schedule('0 0 * * *', async () => {
  * (fetch_game_logs.js). Une seule à la fois : chaque appel lançait un
  * processus Node de plus, et le serveur n'a que 512 Mo.
  *
- * Renvoie false si une collecte tourne déjà.
+ * `apres` est appelé quand la collecte se termine, réussie ou non.
+ *
+ * Renvoie false si une collecte tourne déjà (`apres` n'est alors pas appelé).
  */
 let collecteJournauxEnCours = false;
-function lancerCollecteJournaux(origine) {
+function lancerCollecteJournaux(origine, { apres = null } = {}) {
     if (collecteJournauxEnCours) {
         console.log(`⏭️  Collecte des feuilles de match déjà en cours (${origine})`);
         return false;
     }
+    const terminer = () => {
+        if (!apres) return;
+        try { apres(); } catch (erreur) { console.error('❌ Après la collecte des feuilles de match :', erreur.message); }
+    };
     collecteJournauxEnCours = true;
     console.log(`🏒 Collecte des feuilles de match (${origine})`);
     try {
@@ -1729,26 +1786,36 @@ function lancerCollecteJournaux(origine) {
             // Le processus à part a écrit des feuilles de match que le
             // compteur d'écritures de ce processus n'a pas vues : tout ce qui
             // en est tiré (pointages des duels) sera relu. Même en échec — il a
-            // pu écrire une partie avant de tomber.
-            if (typeof db.noterEcritureExterne === 'function') db.noterEcritureExterne();
+            // pu écrire une partie avant de tomber. Seule une collecte réussie
+            // qui annonce n'avoir rien changé laisse la mémoire en place.
+            const changes = /Games new or changed: (\d+)/.exec(stdout || '');
+            if (error || !changes || Number(changes[1]) > 0) {
+                if (typeof db.noterEcritureExterne === 'function') db.noterEcritureExterne();
+            }
             if (error) {
                 console.error('❌ Game logs fetch failed:', error);
                 console.error('stderr:', stderr);
-                return;
+            } else {
+                console.log('✅ Game logs fetch completed');
+                console.log('stdout:', stdout);
             }
-            console.log('✅ Game logs fetch completed');
-            console.log('stdout:', stdout);
+            terminer();
         });
     } catch (error) {
         collecteJournauxEnCours = false;
         console.error('❌ Error starting game logs fetch:', error);
+        terminer();
     }
     return true;
 }
 
-// Schedule daily game logs fetch at 3 AM
+// Filet de 3 h : la collecte part d'habitude à la fin du passage de minuit.
+// Si le serveur a redémarré entre-temps, ce passage n'a jamais eu lieu ; la
+// collecte part alors ici. Sinon, rien — pas même une lecture de la base.
 cron.schedule('0 3 * * *', () => {
-    lancerCollecteJournaux('3 h');
+    if (nuitEnCours) return;
+    if (Date.now() - collecteNuitLanceeLe < 6 * 60 * 60 * 1000) return;
+    collecteDeNuit('3 h (filet)');
 }, {
     timezone: "America/New_York" // Adjust to your timezone
 });
@@ -1762,6 +1829,14 @@ cron.schedule('0 3 * * *', () => {
 const gameStatusCache = new Map(); // gameId → last known gameState
 let smartUpdateRunning = false;
 
+// Ce qu'un match déjà connu reçoit de la mise à jour des soirs de match. Moins
+// que la collecte de la nuit (fetch_game_logs.js), qui garde le reste.
+const COLONNES_SOIREE = [
+    'goals', 'assists', 'points', 'plus_minus', 'shots',
+    'power_play_goals', 'power_play_points', 'shorthanded_goals', 'shorthanded_points',
+    'game_winning_goals', 'decision', 'saves', 'goals_against', 'shutouts', 'team_abbrev'
+];
+
 // Fetch one player's full season game log and upsert to DB
 async function fetchAndSavePlayerLog(playerId, playerName, position) {
     const url = `https://api-web.nhle.com/v1/player/${playerId}/game-log/${currentSeasonString()}/2`;
@@ -1771,50 +1846,26 @@ async function fetchAndSavePlayerLog(playerId, playerName, position) {
         const data = await response.json();
         if (!data?.gameLog?.length) return 0;
 
-        const queries = data.gameLog.map(game => {
-            const saves = game.saves ?? ((game.shotsAgainst || 0) - (game.goalsAgainst || 0));
-            return db.query(`
-                INSERT INTO player_game_logs (
-                    player_id, player_name, position, season, game_id, game_date,
-                    home_road_flag, opponent_abbrev, team_abbrev, game_result,
-                    goals, assists, points, plus_minus, pim, shots,
-                    power_play_goals, power_play_points, shorthanded_goals, shorthanded_points,
-                    game_winning_goals, toi,
-                    games_started, decision, shots_against, goals_against, saves, save_pct, shutouts,
-                    last_updated
-                ) VALUES (
-                    $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
-                    $11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
-                    $21,$22,$23,$24,$25,$26,$27,$28,$29,NOW()
-                )
-                ON CONFLICT (player_id, game_id) DO UPDATE SET
-                    goals=EXCLUDED.goals, assists=EXCLUDED.assists, points=EXCLUDED.points,
-                    plus_minus=EXCLUDED.plus_minus, shots=EXCLUDED.shots,
-                    power_play_goals=EXCLUDED.power_play_goals,
-                    power_play_points=EXCLUDED.power_play_points,
-                    shorthanded_goals=EXCLUDED.shorthanded_goals,
-                    shorthanded_points=EXCLUDED.shorthanded_points,
-                    game_winning_goals=EXCLUDED.game_winning_goals,
-                    decision=EXCLUDED.decision, saves=EXCLUDED.saves,
-                    goals_against=EXCLUDED.goals_against, shutouts=EXCLUDED.shutouts,
-                    team_abbrev=EXCLUDED.team_abbrev, last_updated=NOW()
-            `, [
-                playerId, playerName, position, currentSeasonString(),
-                game.gameId, game.gameDate, game.homeRoadFlag, game.opponentAbbrev,
-                game.teamAbbrev, game.gameResult,
-                game.goals||0, game.assists||0, game.points||0, game.plusMinus||0,
-                game.pim||0, game.shots||0,
-                game.powerPlayGoals||0, game.powerPlayPoints||0,
-                game.shorthandedGoals||0, game.shorthandedPoints||0,
-                game.gameWinningGoals||0, game.toi||'0:00',
-                game.gamesStarted||0, game.decision||null,
-                game.shotsAgainst||0, game.goalsAgainst||0,
-                saves, game.savePct||null, game.shutouts||0
-            ]);
-        });
-
-        await Promise.all(queries);
-        return data.gameLog.length;
+        // Une requête par joueur ; seuls les matchs nouveaux ou modifiés sont
+        // écrits (lib/feuillesJoueurs.js). La saison complète reste relue :
+        // une correction de la LNH sur un ancien match est rattrapée.
+        const saison = currentSeasonString();
+        const lignes = data.gameLog.map(game => [
+            playerId, playerName, position, saison,
+            game.gameId, game.gameDate, game.homeRoadFlag, game.opponentAbbrev,
+            game.teamAbbrev, game.gameResult,
+            game.goals||0, game.assists||0, game.points||0, game.plusMinus||0,
+            game.pim||0, game.shots||0,
+            game.powerPlayGoals||0, game.powerPlayPoints||0,
+            game.shorthandedGoals||0, game.shorthandedPoints||0,
+            game.gameWinningGoals||0, game.toi||'0:00',
+            game.gamesStarted||0, game.decision||null,
+            game.shotsAgainst||0, game.goalsAgainst||0,
+            game.saves ?? ((game.shotsAgainst || 0) - (game.goalsAgainst || 0)),
+            game.savePct||null, game.shutouts||0
+        ]);
+        return await feuillesJoueurs.enregistrerFeuilles(
+            (texte, valeurs) => db.query(texte, valeurs), lignes, COLONNES_SOIREE);
     } catch (err) {
         console.error(`⚠️  Smart update: failed to fetch ${playerName}:`, err.message);
         return 0;
@@ -1955,7 +2006,7 @@ async function checkAndUpdateFinishedGames({ demarrage = false } = {}) {
             if (i + BATCH < players.length) await new Promise(r => setTimeout(r, 200));
         }
 
-        console.log(`✅ Smart update done: ${totalRows} rows upserted for ${players.length} players`);
+        console.log(`✅ Smart update done: ${totalRows} game rows new or changed for ${players.length} players`);
 
     } catch (err) {
         console.error('❌ Smart update error:', err.message);
@@ -2987,6 +3038,31 @@ app.get('/day-goals/:date', async (req, res) => {
 });
 
 // ============================================================
+// APERÇU D'UNE JOURNÉE — sur la carte d'un match à venir du calendrier : la
+// fiche des deux clubs et leurs meneurs de la saison (buts, aides,
+// victoires), ceux que la LNH affiche sur sa propre page des pointages. Même
+// relevé que /day-goals (lireScoreDuJourBrut) : une journée déjà lue ne coûte
+// aucun appel de plus. Aucune lecture de la base. Voir lib/apercuMatchs.js.
+// ============================================================
+app.get('/day-preview/:date', async (req, res) => {
+    const { date } = req.params;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ message: 'Invalid date, expected YYYY-MM-DD' });
+    }
+    try {
+        const games = await lireScoreDuJourBrut(date);
+        // Ne change qu'à la fin d'un match : cinq minutes dans le navigateur.
+        res.set('Cache-Control', 'private, max-age=300');
+        res.json({ date, games: apercuDeScore(games) });
+    } catch (error) {
+        // Un échec n'est pas une journée sans meneurs : la page redemande.
+        console.error('❌ Error fetching day preview:', error.message);
+        res.set('Cache-Control', 'no-store');
+        res.status(502).json({ date, games: {} });
+    }
+});
+
+// ============================================================
 // FORME DES CLUBS — sous un match à venir du calendrier : le meilleur buteur
 // et le meilleur pointeur de chaque club à ses cinq derniers matchs, et la
 // ligne de nos joueurs sur ces mêmes matchs. Tiré des feuilles de match de la
@@ -3160,6 +3236,8 @@ app.get('/team-lineup/:team', async (req, res) => {
 // today, hasSnapshot is false and the frontend shows the plain current rank
 // with no movement badge.
 // ============================================================
+// Cinq matins avant celui du jour : six soirs, plus maintenant, font la semaine.
+const RANG_SEMAINE_MATINS = 5;
 app.get('/pool-rank-movement/:poolName', async (req, res) => {
     try {
         const { poolName } = req.params;
@@ -3177,19 +3255,38 @@ app.get('/pool-rank-movement/:poolName', async (req, res) => {
         // cherchait un instantané pas encore pris, et les flèches de
         // progression disparaissaient tous les soirs jusqu'à minuit.
         const todayISO = datesPool.journeeLocale();
+        // La semaine de « Ma position » (accueil) : les six derniers matins de
+        // l'équipe demandée (?team=), chacun son rang au soir de la veille.
+        // Lus avec ceux d'aujourd'hui, dans la même requête — cinq lignes de
+        // plus, pas un aller-retour de plus.
+        const equipe = typeof req.query.team === 'string' && req.query.team ? req.query.team : null;
+        const debutSemaine = datesPool.ajouterJours(todayISO, -RANG_SEMAINE_MATINS);
         const snapResult = await db.query(
-            `SELECT team_name, rank, points FROM pool_rank_snapshots WHERE pool_name = $1 AND snapshot_date = $2`,
-            [poolName, todayISO]
+            `SELECT team_name, rank, points, snapshot_date::text AS jour
+               FROM pool_rank_snapshots
+              WHERE pool_name = $1
+                AND (snapshot_date = $2 OR (team_name = $3 AND snapshot_date >= $4 AND snapshot_date < $2))`,
+            [poolName, todayISO, equipe, debutSemaine]
         );
+        const duJour = snapResult.rows.filter(r => r.jour === todayISO);
+        // Un matin d'avant l'ouverture classe des équipes à zéro point : son
+        // rang ne dit rien. Celui du jour de l'ouverture non plus — il fige
+        // la veille.
+        const ouverture = await getSeasonWindow().then(f => f && f.regularSeasonStartDate).catch(() => null);
+        const history = snapResult.rows
+            .filter(r => equipe && r.team_name === equipe && (!ouverture || r.jour > ouverture))
+            .sort((a, b) => a.jour.localeCompare(b.jour))
+            .map(r => ({ date: r.jour, rank: r.rank, points: Number(r.points) }));
 
-        if (snapResult.rows.length === 0) {
+        if (duJour.length === 0) {
             return res.json({
                 hasSnapshot: false,
-                teams: liveScores.map(t => ({ teamName: t.teamName, rankNow: t.rank, pointsNow: t.score }))
+                teams: liveScores.map(t => ({ teamName: t.teamName, rankNow: t.rank, pointsNow: t.score })),
+                history
             });
         }
 
-        const snapByTeam = new Map(snapResult.rows.map(r => [r.team_name, r]));
+        const snapByTeam = new Map(duJour.map(r => [r.team_name, r]));
         const teams = liveScores.map(t => {
             const snap = snapByTeam.get(t.teamName);
             return {
@@ -3201,10 +3298,10 @@ app.get('/pool-rank-movement/:poolName', async (req, res) => {
             };
         });
 
-        res.json({ hasSnapshot: true, teams });
+        res.json({ hasSnapshot: true, teams, history });
     } catch (error) {
         console.error('❌ Error computing pool rank movement:', error.message);
-        res.json({ hasSnapshot: false, teams: [] });
+        res.json({ hasSnapshot: false, teams: [], history: [] });
     }
 });
 
@@ -3908,132 +4005,128 @@ app.get('/player-career/:playerId', async (req, res) => {
             return res.status(400).json({ message: 'Invalid player id' });
         }
 
-        const url = `https://api-web.nhle.com/v1/player/${playerId}/landing`;
-
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            // Un 404 de la LNH signifie « ce joueur n'existe pas » ; tout le
-            // reste (429, 5xx, maintenance) est une panne en amont. Les
-            // confondre envoyait chercher un mauvais identifiant alors que
-            // l'API était simplement indisponible.
-            if (response.status === 404) {
-                return res.status(404).json({ message: 'Player not found' });
-            }
-            console.error(`❌ NHL API ${response.status} for player ${playerId}`);
-            return res.status(502).json({
-                message: 'NHL API unavailable',
-                upstreamStatus: response.status
-            });
-        }
-
-        const data = await response.json();
-
-        // Extract player info
-        const playerName = data.firstName?.default && data.lastName?.default
-            ? `${data.firstName.default} ${data.lastName.default}`
-            : 'Unknown Player';
-        const position = data.position || 'N/A';
-        const isGoalie = position === 'G';
-        const currentTeam = data.currentTeamAbbrev || null;
-        // Construct headshot URL - use API's headshot or construct from player ID and current team
-        const headshot = data.headshot || (currentTeam ? `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${currentTeam}/${playerId}.png` : null);
-        const teamLogo = data.teamLogo || null;
-
-        // Extract player bio details
-        const heightInInches = data.heightInInches || null;
-        const heightFeetInches = heightInInches ? `${Math.floor(heightInInches / 12)}′${heightInInches % 12}″` : null;
-        const weightInPounds = data.weightInPounds || null;
-        const birthDate = data.birthDate || null;
-        const birthCity = data.birthCity?.default || null;
-        const birthStateProvince = data.birthStateProvince?.default || null;
-        const birthCountry = data.birthCountry || null;
-        const shootsCatches = data.shootsCatches || null;
-
-        // Extract draft details
-        const draftDetails = data.draftDetails;
-        let draftInfo = null;
-        if (draftDetails) {
-            draftInfo = {
-                year: draftDetails.year,
-                teamAbbrev: draftDetails.teamAbbrev,
-                round: draftDetails.round,
-                pickInRound: draftDetails.pickInRound,
-                overallPick: draftDetails.overallPick
-            };
-        }
-
-        // Extract all seasons from seasonTotals (regular season + playoffs combined in one array)
-        const allSeasons = data.seasonTotals || [];
-
-        // Format seasons for display
-        const formattedSeasons = allSeasons.map(season => {
-            const seasonId = season.season;
-            const seasonDisplay = `${seasonId.toString().substring(0, 4)}-${seasonId.toString().substring(6, 8)}`;
-            const leagueAbbrev = season.leagueAbbrev || 'NHL';
-            const teamAbbrev = season.teamName?.default || season.teamAbbrev || 'N/A';
-            const gameType = season.gameTypeId === 3 ? 'playoffs' : 'regular';
-
-            if (isGoalie) {
-                return {
-                    season: seasonDisplay,
-                    league: leagueAbbrev,
-                    team: teamAbbrev,
-                    gameType: gameType,
-                    gp: season.gamesPlayed || 0,
-                    wins: season.wins || 0,
-                    losses: season.losses || 0,
-                    otLosses: season.otLosses || 0,
-                    // null, pas 0, quand la saison n'a pas de tirs (avant
-                    // 1983, certaines ligues mineures) ; shotsAgainst sert à
-                    // pondérer la rangée « Carrière ».
-                    savePct: savePctFromSeasons([season]),
-                    shotsAgainst: typeof season.shotsAgainst === 'number' ? season.shotsAgainst : null,
-                    gaa: season.goalsAgainstAvg || 0,
-                    shutouts: season.shutouts || 0
-                };
-            } else {
-                return {
-                    season: seasonDisplay,
-                    league: leagueAbbrev,
-                    team: teamAbbrev,
-                    gameType: gameType,
-                    gp: season.gamesPlayed || 0,
-                    goals: season.goals || 0,
-                    assists: season.assists || 0,
-                    points: season.points || 0,
-                    plusMinus: season.plusMinus || 0,
-                    pim: season.pim || 0,
-                    shots: season.shots || 0
-                };
-            }
+        // La LNH limite notre adresse par moments (lib/ficheCarriere.js) :
+        // une fiche récente ne la rappelle pas, une vieille sert de repli.
+        // Un 404 de la LNH reste « ce joueur n'existe pas » ; tout le reste
+        // (429, 5xx, maintenance) est une panne en amont, rendue en 502.
+        const { status, corps } = await ficheCarriere.obtenirFiche(playerId, {
+            memoire: fichesCarriere,
+            mettreEnForme: ficheCarriereDe
         });
-
-        res.json({
-            playerId,
-            playerName,
-            position,
-            isGoalie,
-            headshot,
-            teamLogo,
-            currentTeam,
-            sweaterNumber: data.sweaterNumber ?? null,
-            seasons: formattedSeasons,
-            // Bio details
-            height: heightFeetInches,
-            weight: weightInPounds,
-            birthDate,
-            birthCity,
-            birthStateProvince,
-            birthCountry,
-            shootsCatches,
-            draftInfo
-        });
+        res.status(status).json(corps);
     } catch (error) {
         console.error('❌ Error fetching player career stats:', error);
         res.status(500).json({ message: 'Error fetching player career stats' });
     }
 });
+
+/**
+ * La fiche de carrière telle que /player-career la rend, depuis la page
+ * /landing de la LNH. La collecte des statistiques lit la même page : elle
+ * range la fiche au passage (fetchCurrentStatsForPlayer).
+ */
+function ficheCarriereDe(playerId, data) {
+    // Extract player info
+    const playerName = data.firstName?.default && data.lastName?.default
+        ? `${data.firstName.default} ${data.lastName.default}`
+        : 'Unknown Player';
+    const position = data.position || 'N/A';
+    const isGoalie = position === 'G';
+    const currentTeam = data.currentTeamAbbrev || null;
+    // Construct headshot URL - use API's headshot or construct from player ID and current team
+    const headshot = data.headshot || (currentTeam ? `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${currentTeam}/${playerId}.png` : null);
+    const teamLogo = data.teamLogo || null;
+
+    // Extract player bio details
+    const heightInInches = data.heightInInches || null;
+    const heightFeetInches = heightInInches ? `${Math.floor(heightInInches / 12)}′${heightInInches % 12}″` : null;
+    const weightInPounds = data.weightInPounds || null;
+    const birthDate = data.birthDate || null;
+    const birthCity = data.birthCity?.default || null;
+    const birthStateProvince = data.birthStateProvince?.default || null;
+    const birthCountry = data.birthCountry || null;
+    const shootsCatches = data.shootsCatches || null;
+
+    // Extract draft details
+    const draftDetails = data.draftDetails;
+    let draftInfo = null;
+    if (draftDetails) {
+        draftInfo = {
+            year: draftDetails.year,
+            teamAbbrev: draftDetails.teamAbbrev,
+            round: draftDetails.round,
+            pickInRound: draftDetails.pickInRound,
+            overallPick: draftDetails.overallPick
+        };
+    }
+
+    // Extract all seasons from seasonTotals (regular season + playoffs combined in one array)
+    const allSeasons = data.seasonTotals || [];
+
+    // Format seasons for display
+    const formattedSeasons = allSeasons.map(season => {
+        const seasonId = season.season;
+        const seasonDisplay = `${seasonId.toString().substring(0, 4)}-${seasonId.toString().substring(6, 8)}`;
+        const leagueAbbrev = season.leagueAbbrev || 'NHL';
+        const teamAbbrev = season.teamName?.default || season.teamAbbrev || 'N/A';
+        const gameType = season.gameTypeId === 3 ? 'playoffs' : 'regular';
+
+        if (isGoalie) {
+            return {
+                season: seasonDisplay,
+                league: leagueAbbrev,
+                team: teamAbbrev,
+                gameType: gameType,
+                gp: season.gamesPlayed || 0,
+                wins: season.wins || 0,
+                losses: season.losses || 0,
+                otLosses: season.otLosses || 0,
+                // null, pas 0, quand la saison n'a pas de tirs (avant
+                // 1983, certaines ligues mineures) ; shotsAgainst sert à
+                // pondérer la rangée « Carrière ».
+                savePct: savePctFromSeasons([season]),
+                shotsAgainst: typeof season.shotsAgainst === 'number' ? season.shotsAgainst : null,
+                gaa: season.goalsAgainstAvg || 0,
+                shutouts: season.shutouts || 0
+            };
+        } else {
+            return {
+                season: seasonDisplay,
+                league: leagueAbbrev,
+                team: teamAbbrev,
+                gameType: gameType,
+                gp: season.gamesPlayed || 0,
+                goals: season.goals || 0,
+                assists: season.assists || 0,
+                points: season.points || 0,
+                plusMinus: season.plusMinus || 0,
+                pim: season.pim || 0,
+                shots: season.shots || 0
+            };
+        }
+    });
+
+    return {
+        playerId: String(playerId),
+        playerName,
+        position,
+        isGoalie,
+        headshot,
+        teamLogo,
+        currentTeam,
+        sweaterNumber: data.sweaterNumber ?? null,
+        seasons: formattedSeasons,
+        // Bio details
+        height: heightFeetInches,
+        weight: weightInPounds,
+        birthDate,
+        birthCity,
+        birthStateProvince,
+        birthCountry,
+        shootsCatches,
+        draftInfo
+    };
+}
 
 // Route to get player game log for current season (from PostgreSQL)
 app.get('/player-gamelog/:playerId', async (req, res) => {
@@ -5365,7 +5458,7 @@ function verifierSemainesH2H() {
         .catch(() => 0);
 }
 
-// Un passage au demarrage, puis toutes les six heures.
+// Un passage au demarrage, puis chaque nuit (menageDeNuit).
 console.log("🔍 Verification des semaines tete-a-tete terminees...");
 verifierSemainesH2H();
 menageDonneesDurables();
@@ -5373,7 +5466,7 @@ menageDonneesDurables();
 /**
  * Relit dans la base ce que la mémoire tient pour les repêchages : l'agenda
  * des départs prévus et les tours chronométrés en attente. Au démarrage et
- * toutes les six heures — ce qui rattrape une écriture faite hors du serveur
+ * chaque nuit — ce qui rattrape une écriture faite hors du serveur
  * (script, console SQL), la seule que le crochet auPoolMisAJour ne voit pas.
  */
 function relirePlanificationRepechages() {
@@ -5414,16 +5507,10 @@ async function reparerHistoriquesChoix() {
     }
 }
 
-// Run check every 6 hours (21600000 ms)
-const SIX_HOURS = 6 * 60 * 60 * 1000;
-setInterval(() => {
-    console.log("🔍 Verification periodique des semaines terminees...");
-    verifierSemainesH2H();
-    menageDonneesDurables();
-    relirePlanificationRepechages();
-}, SIX_HOURS);
-
-console.log("✅ H2H auto-finalization scheduler initialized (checks every 6 hours)");
+// Plus de passage toutes les six heures : il réveillait Neon quatre fois par
+// jour, à l'heure où le serveur avait démarré. Le même passage se fait la
+// nuit, après les feuilles de match (menageDeNuit), et à chaque démarrage.
+console.log("✅ H2H auto-finalization scheduled nightly, after the game logs");
 
 /**
  * Repêchages à date fixe : un passage au début de chaque minute, une seconde

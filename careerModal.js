@@ -88,7 +88,7 @@
         });
         el('leagueFilter').addEventListener('change', () => window.filterCareerStats());
         el('gameTypeFilter').addEventListener('change', () => window.filterCareerStats());
-        el('viewFilter').addEventListener('change', () => { if (typeof handleViewChange === 'function') handleViewChange(); });
+        el('viewFilter').addEventListener('change', changerVue);
         el('careerFavorite').addEventListener('click', toggleFavorite);
         el('careerPick').addEventListener('click', () => {
             if (!active || !canPick()) return;
@@ -150,6 +150,12 @@
             catch (_) { el('careerFavorite').querySelector('span').textContent = 'Stockage indisponible'; return; }
         }
         updateFavorite();
+    }
+    // Repêchage du pool actif terminé : plus rien à choisir ni à garder en
+    // favori pour le repêcher, la fiche ne montre que le joueur.
+    function repechageTermine() {
+        const pool = window.FZPool;
+        return Boolean(pool && pool.data() && pool.draftState(pool.data()).etat === 'termine');
     }
     function canPick() {
         return active && typeof selectPlayer === 'function' && typeof isUserTurn === 'function' && isUserTurn()
@@ -271,7 +277,65 @@
         updateFavorite();
         el('careerPick').disabled = !canPick();
         el('careerPick').title = canPick() ? '' : 'Disponible pendant votre tour au repêchage, pour un joueur non sélectionné.';
-        if (typeof handleViewChange === 'function' && el('viewFilter').options.length === 1) el('viewFilter').add(new Option('Historique de match', 'gamelog'));
+        if (el('viewFilter').options.length === 1) el('viewFilter').add(new Option('Historique de match', 'gamelog'));
+    }
+
+    /*
+     * Historique de match : partagé par toutes les pages qui ouvrent la fiche.
+     * Il ne vivait que dans index.js, donc seule la page Stats l'offrait.
+     * Lu à la demande (/player-gamelog), jamais à l'ouverture de la fiche.
+     */
+    let renderCarriere = null;
+    function changerVue() {
+        const matchs = el('viewFilter').value === 'gamelog';
+        el('leagueFilter').parentElement.style.display = matchs ? 'none' : '';
+        el('gameTypeFilter').parentElement.style.display = matchs ? 'none' : '';
+        if (matchs) return afficherMatchs(activeId, id => active && String(activeId) === String(id) && el('viewFilter').value === 'gamelog');
+        (renderCarriere || window.filterCareerStats)();
+    }
+
+    async function afficherMatchs(playerId, toujoursLa) {
+        if (playerId == null) return;
+        const badge = el('statsCountBadge'), table = el('careerStatsTable');
+        badge.style.display = 'block'; badge.textContent = 'Chargement…';
+        table.innerHTML = tableauSquelette();
+        try {
+            const response = await fetch(`${typeof BASE_URL === 'string' ? BASE_URL : ''}/player-gamelog/${playerId}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (!toujoursLa(playerId)) return;
+            const games = data.gameLog || [];
+            badge.textContent = `${games.length} match${games.length > 1 ? 's' : ''}`;
+            if (!games.length) { table.innerHTML = '<p class="no-stats-message">Aucun match joué cette saison.</p>'; return; }
+            table.innerHTML = tableauMatchs(games, Boolean(data.playerInfo?.isGoalie));
+        } catch (error) {
+            if (!toujoursLa(playerId)) return;
+            console.error('Historique de match :', error);
+            badge.textContent = '';
+            table.innerHTML = '<p class="no-stats-message" role="alert">Impossible de charger les matchs du joueur. Veuillez réessayer.</p>';
+        }
+    }
+
+    const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    // game_date est une DATE : le serveur la sérialise à minuit UTC. new Date()
+    // la ramenait à la veille dans l'Est ; on lit le jour tel qu'il est écrit.
+    const jourMatch = value => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value || '')); return m ? `${m[3]}/${m[2]}` : '—'; };
+
+    function tableauMatchs(games, isGoalie) {
+        const heads = isGoalie ? ['Date', 'Adv.', 'Rés.', 'Déc.', 'GA', 'SA', 'SV', 'SV%', 'BL', 'PUN', 'TG']
+            : ['Date', 'Adv.', 'Rés.', 'B', 'P', 'PTS', '+/-', 'PUN', 'TIR', 'TG', 'PP', 'SH'];
+        const rows = games.map(g => {
+            const cells = [jourMatch(g.gameDate), `${g.homeRoadFlag === 'H' ? 'vs' : '@'} ${esc(g.opponentAbbrev)}`, esc(g.gameResult || '—')];
+            if (isGoalie) {
+                const sa = g.shotsAgainst || 0, ga = g.goalsAgainst || 0, sv = g.saves || (sa ? sa - ga : 0);
+                cells.push(esc(g.decision || '—'), ga, sa, sv, sa ? (sv / sa).toFixed(3) : '—', g.shutouts || 0, g.pim || 0, esc(g.toi || '0:00'));
+            } else {
+                const pm = g.plusMinus || 0;
+                cells.push(g.goals || 0, g.assists || 0, g.points || 0, pm > 0 ? `+${pm}` : pm, g.pim || 0, g.shots || 0, esc(g.toi || '0:00'), g.powerPlayPoints || 0, g.shorthandedPoints || 0);
+            }
+            return `<tr>${cells.map(c => `<td>${c}</td>`).join('')}</tr>`;
+        }).join('');
+        return `<table class="career-gamelog"><thead><tr>${heads.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`;
     }
 
     /**
@@ -351,6 +415,7 @@
     window.fzOpenCareerModal = async function (playerId, playerName, adapter) {
         mount();
         const token = ++request, modal = el('careerStatsModal');
+        renderCarriere = adapter.renderStats;
         if (modal.style.display !== 'block') { previousFocus = document.activeElement; previousOverflow = document.body.style.overflow; }
         active = null;
         modal.style.display = 'block'; document.body.style.overflow = 'hidden';
@@ -359,6 +424,7 @@
         el('careerBannerName').textContent = playerName || 'Fiche du joueur';
         el('careerPlayerName').textContent = playerName || 'Fiche du joueur';
         el('careerWatchBanner').hidden = true;
+        el('careerActions').hidden = repechageTermine();
         el('viewFilter').value = 'career'; el('leagueFilter').value = 'nhl'; el('gameTypeFilter').value = 'regular';
         el('leagueFilter').parentElement.style.display = ''; el('gameTypeFilter').parentElement.style.display = '';
         poserSquelette(playerName);

@@ -139,18 +139,37 @@ function creerCalendrierLNH({ db = null, fetchImpl = null, logger = console, mai
             }
         }
 
-        try {
-            const comptes = await interroger(jour);
-            const maintenantMs = Date.now();
-            for (const [date, matchs] of comptes) {
-                memoire.set(date, { matchs, lu: maintenantMs });
-                if (estPassee(date)) await versLaBase(date, matchs);
+        return aTourDeRole(async () => {
+            // Un appel parti avant celui-ci a pu ranger cette journée : sa
+            // semaine la contenait.
+            const rangee = memoire.get(jour);
+            if (rangee && (Date.now() - rangee.lu) < ttl) return rangee.matchs;
+            try {
+                const comptes = await interroger(jour);
+                const maintenantMs = Date.now();
+                for (const [date, matchs] of comptes) {
+                    memoire.set(date, { matchs, lu: maintenantMs });
+                    if (estPassee(date)) await versLaBase(date, matchs);
+                }
+                return comptes.has(jour) ? comptes.get(jour) : 0;
+            } catch (erreur) {
+                logger.error?.(`⚠️ Calendrier LNH indisponible pour ${jour} :`, erreur.message);
+                return null;
             }
-            return comptes.has(jour) ? comptes.get(jour) : 0;
-        } catch (erreur) {
-            logger.error?.(`⚠️ Calendrier LNH indisponible pour ${jour} :`, erreur.message);
-            return null;
-        }
+        });
+    }
+
+    /**
+     * Les appels à la LNH passent un à un. Les journées d'une période sont
+     * demandées en même temps (services/scoring.js, etatIngestion) : ce qui
+     * est en mémoire ou en base répond aussitôt, mais une semaine absente
+     * aurait sinon été demandée sept fois, une par journée.
+     */
+    let fileLNH = Promise.resolve();
+    function aTourDeRole(travail) {
+        const suite = fileLNH.then(travail, travail);
+        fileLNH = suite.catch(() => {});
+        return suite;
     }
 
     /** Le total d'une période semi-ouverte, ou null si une journée manque. */

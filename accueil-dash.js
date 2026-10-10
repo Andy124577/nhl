@@ -1334,8 +1334,11 @@ function fzdPointsCeSoir(ligne) {
 }
 
 async function fetchRankMovement(poolName) {
+    // ?team= : la semaine de mon rang, sous « Ma position » (accueil-season.js).
+    const equipe = FZPool.team()?.name;
+    const url = `${BASE_URL}/pool-rank-movement/${encodeURIComponent(poolName)}${equipe ? `?team=${encodeURIComponent(equipe)}` : ''}`;
     try {
-        const res = await fetch(`${BASE_URL}/pool-rank-movement/${encodeURIComponent(poolName)}`, { cache: 'no-store' });
+        const res = await fetch(url, { cache: 'no-store' });
         return res.ok ? await res.json() : { hasSnapshot: false, teams: [] };
     } catch (err) {
         console.warn('Could not load rank movement:', err);
