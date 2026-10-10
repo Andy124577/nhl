@@ -1,0 +1,117 @@
+/* Installer Fantazy (installerApp.js).
+   Le rappel flotte au-dessus de la barre du bas des téléphones ; le guide vit
+   dans une fenêtre fzDialog. Les teintes viennent des jetons du site
+   (index.css) : elles suivent le thème. */
+
+/* ---------- Le rappel ---------- */
+
+.fz-installer-rappel {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    /* --fz-installer-bas : la barre du bas, mesurée par le script (zone sûre
+       comprise). Sans elle, la zone sûre de l'écran seule. */
+    bottom: calc(max(var(--fz-installer-bas, 0px), env(safe-area-inset-bottom, 0px)) + 12px);
+    /* Sous la barre du bas (999) et les fenêtres (10100), au-dessus du contenu. */
+    z-index: 998;
+    max-width: 480px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: var(--navbar-bg);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .35);
+    color: var(--text-main);
+    animation: fz-installer-entree .35s cubic-bezier(.16, 1, .3, 1);
+}
+
+@keyframes fz-installer-entree {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.fz-installer-icone {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: block;
+}
+
+.fz-installer-txt { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fz-installer-titre { font-size: .98rem; font-weight: 800; color: var(--text-main); }
+.fz-installer-sous { font-size: .84rem; line-height: 1.4; color: var(--text-secondary); }
+
+.fz-installer-outils {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.fz-installer-btn {
+    font: inherit;
+    font-size: .9rem;
+    font-weight: 700;
+    min-height: 44px;
+    padding: 0 18px;
+    border: 1px solid var(--border-gray);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--text-main);
+    cursor: pointer;
+}
+.fz-installer-btn:hover { border-color: var(--primary); color: var(--primary-text); }
+.fz-installer-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.fz-installer-btn.is-main {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: var(--on-primary, #fff);
+}
+.fz-installer-btn.is-main:hover { background: var(--primary-deep); border-color: var(--primary-deep); color: var(--on-primary, #fff); }
+
+@media (prefers-reduced-motion: reduce) {
+    .fz-installer-rappel { animation: none; }
+}
+
+/* ---------- Le guide (dans une fenêtre fzDialog) ---------- */
+
+.fz-installer-etapes {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: fz-etape;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.fz-installer-etapes li {
+    counter-increment: fz-etape;
+    position: relative;
+    padding-left: 38px;
+    line-height: 1.5;
+}
+.fz-installer-etapes li::before {
+    content: counter(fz-etape);
+    position: absolute;
+    left: 0;
+    top: -1px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .82rem;
+    font-weight: 800;
+    background: var(--bg-gray-light);
+    color: var(--text-main);
+}
+.fz-installer-glyphe {
+    display: inline-block;
+    vertical-align: -3px;
+    color: var(--primary-text);
+}

@@ -126,6 +126,7 @@ const NAV_ICON = {
     shield: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
     shieldCheck: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11.5 11.2 13.7 15.2 9.7"/></svg>`,
     fileText: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>`,
+    smartphone: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>`,
     sun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></svg>`,
     moon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.1A8.5 8.5 0 1 1 9.9 3.5a6.6 6.6 0 0 0 10.6 10.6z"/></svg>`
 };
@@ -334,6 +335,20 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                             </button>
                         </div>
                         <div id="adminUsersList" class="dropdown-group"></div>` : ''}
+
+                        <!-- Caché tant qu'installerApp.js ne sait pas que Fantazy
+                             peut s'installer ici : déjà installée, ou navigateur
+                             sans moyen de le faire, la rangée n'a rien à offrir. -->
+                        <div class="dropdown-group" data-fz-installer-menu style="display: none;">
+                            <p class="dropdown-label">Application</p>
+                            <button type="button" class="dropdown-item" role="menuitem" data-fz-installer="menu">
+                                <span class="dropdown-icon">${NAV_ICON.smartphone}</span>
+                                <span class="dropdown-text">
+                                    <span class="dropdown-title">Installer l'application</span>
+                                    <span class="dropdown-hint">Fantazy en plein écran</span>
+                                </span>
+                            </button>
+                        </div>
 
                         <!-- Les deux thèmes côte à côte : on voit celui qui est
                              actif, et le menu reste ouvert pendant la bascule. -->

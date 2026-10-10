@@ -265,6 +265,12 @@
         return `<button type="button" class="fz-alertes-btn${principal ? ' is-main' : ''}" data-fz-alertes-action="${action}"${occupe ? ' disabled aria-busy="true"' : ''}>${echapper(libelle)}</button>`;
     }
 
+    /** « Voir comment » : le guide d'installation (installerApp.js), s'il peut servir ici. */
+    function boutonGuide(libelle, principal) {
+        if (!window.FZInstallation || !window.FZInstallation.possible()) return '';
+        return `<button type="button" class="fz-alertes-btn${principal ? ' is-main' : ''}" data-fz-installer="alertes">${echapper(libelle)}</button>`;
+    }
+
     function ligneMessage() {
         return `<p class="fz-alertes-msg${message && message.ton ? ` is-${message.ton}` : ''}" role="status">${message ? echapper(message.texte) : ''}</p>`;
     }
@@ -283,7 +289,7 @@
                 outils: '' },
             'ios-installer': { classe: 'is-inactif', icone: 'telephone', titre: 'Alertes sur iPhone et iPad',
                 texte: 'Ajoutez d’abord Fantazy à l’écran d’accueil : bouton Partager, puis « Sur l’écran d’accueil ». Ouvrez Fantazy depuis cette icône : vous pourrez alors activer les alertes.',
-                outils: '' }
+                outils: boutonGuide('Voir comment', true) }
         }[etat];
         if (!vue) return '';
         return `
@@ -307,7 +313,8 @@
             actif: { texte: '<strong>Alertes activées</strong> sur cet appareil.',
                 outils: bouton('essai', 'Essai') + bouton('desactiver', 'Désactiver') },
             refuse: { texte: '<strong>Alertes bloquées</strong> dans les réglages de ce navigateur.', outils: '' },
-            'ios-installer': { texte: '<strong>Alertes</strong> Ajoutez Fantazy à l’écran d’accueil pour les recevoir.', outils: '' }
+            'ios-installer': { texte: '<strong>Alertes</strong> Ajoutez Fantazy à l’écran d’accueil pour les recevoir.',
+                outils: boutonGuide('Comment', true) }
         }[etat];
         if (!vue) return '';
         return `
